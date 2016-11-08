@@ -1,0 +1,122 @@
+% This file should be compiled with V2.5 of "sig-alternate.cls" May 2012
+% This file has been modified by Brian Chen (bchen12@ucsc.edu) for the purpose of simplifying the sections
+%
+% This example file demonstrates the use of the 'sig-alternate.cls'
+% V2.5 LaTeX2e document class file. It is for those submitting
+% articles to ACM Conference Proceedings WHO DO NOT WISH TO
+% STRICTLY ADHERE TO THE SIGS (PUBS-BOARD-ENDORSED) STYLE.
+% The 'sig-alternate.cls' file will produce a similar-looking,
+% albeit, 'tighter' paper resulting in, invariably, fewer pages.
+%
+% ----------------------------------------------------------------------------------------------------------------
+% This .tex file (and associated .cls V2.5) produces:
+%       1) The Permission Statement
+%       2) The Conference (location) Info information
+%       3) The Copyright Line with ACM data
+%       4) NO page numbers
+%
+% as against the acm_proc_article-sp.cls file which
+% DOES NOT produce 1) thru' 3) above.
+%
+% Using 'sig-alternate.cls' you have control, however, from within
+% the source .tex file, over both the CopyrightYear
+% (defaulted to 200X) and the ACM Copyright Data
+% (defaulted to X-XXXXX-XX-X/XX/XX).
+% e.g.
+% \CopyrightYear{2007} will cause 2007 to appear in the copyright line.
+% \crdata{0-12345-67-8/90/12} will cause 0-12345-67-8/90/12 to appear in the copyright line.
+%
+% ---------------------------------------------------------------------------------------------------------------
+% This .tex source is an example which *does* use
+% the .bib file (from which the .bbl file % is produced).
+% REMEMBER HOWEVER: After having produced the .bbl file,
+% and prior to final submission, you *NEED* to 'insert'
+% your .bbl file into your source .tex file so as to provide
+% ONE 'self-contained' source file.
+%
+% ================= IF YOU HAVE QUESTIONS =======================
+% Questions regarding the SIGS styles, SIGS policies and
+% procedures, Conferences etc. should be sent to
+% Adrienne Griscti (griscti@acm.org)
+%
+% Technical questions _only_ to
+% Gerald Murray (murray@hq.acm.org)
+% ===============================================================
+%
+% For tracking purposes - this is V2.0 - May 2012
+% Custom Modified Version - November 2013
+
+\documentclass{sig-alternate-05-2015}
+%\RequirePackage[pdftex]{hyperref}
+\usepackage{comment}
+\usepackage{graphicx}
+\usepackage[autostyle]{csquotes}
+\usepackage{subfigure}
+
+\newcommand{\fixme}[1]{{\Large FIXME:} {\bf #1}}
+\newcommand{\todo}[1]{{\bf TODO: {#1}}\\}
+\newcommand{\note}[1]{{\bf Note:} \{#1\}\\}
+\newcommand{\comm}[1]{\small{\it{  //{#1}}}}
+
+
+% --- Author Metadata here ---
+\conferenceinfo{ICCAD}{International Conference on Computer-Aided Design}
+%\CopyrightYear{2007} % Allows default copyright year (20XX) to be over-ridden - IF NEED BE.
+%\crdata{0-12345-67-8/90/01}  % Allows default copyright data (0-89791-88-6/97/05) to be over-ridden - IF NEED BE.
+% --- End of Author Metadata ---
+
+\title{OpenRAM: An Open-Source Memory Compiler\\
+\vspace{-0.5cm}\center{\normalsize{Invited Paper}}}
+%\titlenote{Some Copyright info about OpenRAM??????}}
+
+\numberofauthors{1}
+\author{
+  %% TO DAC: Guthaus, Stine, Ataei, Chen, Wu, Sarwar
+\alignauthor Matthew R. Guthaus$^1$, James E. Stine$^2$, Samira Ataei$^2$, \\Brian Chen$^1$, Bin Wu$^1$, Mehedi Sarwar$^2$ \\
+\affaddr{$^1$ Department of Computer Engineering, University of California Santa Cruz, Santa Cruz, CA 95064}\\
+\affaddr\{mrg, bchen12, bwu8\}@ucsc.edu \\ 
+\affaddr{$^2$ Electrical and Computer Engineering Department, Oklahoma State University, Stillwater, OK 74078}\\
+\affaddr\{james.stine, ataei, mehedis\}@okstate.edu}
+ 
+ %% \alignauthor Matthew Guthaus, Brian Chen, Bin Wu \\
+ %%     \affaddr{Department of Computer Engineering} \\
+ %%     \affaddr{University of California Santa Cruz} \\
+ %%     \affaddr{Santa Cruz, CA 95064, USA} \\
+ %%     \affaddr{\{mrg,bchen12,bwu8\}@ucsc.edu}
+ %% \and
+ %% \alignauthor James Stine, Samira Ataei, Mehedi Sarwar \\
+ %%     \affaddr{Electrical and Computer Engineering Department} \\
+ %%     \affaddr{Oklahoma State University} \\
+ %%     \affaddr{Stillwater, OK 74078} \\
+ %%     \affaddr{\{james.stine,ataei,XXXX\}@okstate.edu}
+ %%} 
+
+
+\begin{document}
+
+\CopyrightYear{2016} 
+\setcopyright{acmlicensed}
+\conferenceinfo{ICCAD '16,}{November 07 - 10, 2016, Austin, TX, USA}
+\isbn{978-1-4503-4466-1/16/11}\acmPrice{\$15.00}
+\doi{http://dx.doi.org/10.1145/2966986.2980098}
+\maketitle
+
+\input{abstract}
+
+%\category{J.6}{COMPUTER-AIDED ENGINEERING}{\\Computer-aided design (CAD)}
+%\terms{Design, Algorithms}
+%\keywords{OpenRAM, Memory Compiler, Open-source}
+
+\input{introduction}
+\input{background}
+\input{architecture}
+\input{implementation}
+\input{results}
+\input{conclusion}
+\input{acknowledgments}
+
+\bibliographystyle{abbrv}
+\bibliography{references} % Create bibliography using the file: references.bib
+
+%\input{appendix}
+\end{document}

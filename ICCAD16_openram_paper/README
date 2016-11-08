@@ -1,0 +1,11 @@
+#To create a PDF version of the paper, named: openram.pdf,
+#use this command: ./t.sh
+#
+#This script is used to correctly setup the references/bib 
+#for the paper and uses pdflatex to create the PDF.
+#
+#DEBUGGING:
+#If the generation of the PDF failed, read the error messages
+#and line numbers and use these keyboard commands to get out
+#of the current error messages: Ctrl+D
+

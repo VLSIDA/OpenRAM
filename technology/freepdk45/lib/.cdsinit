@@ -1,0 +1,47 @@
+
+envSetVal( "graphic" "drfPath" 'string
+            strcat( getShellEnvVar("PDK_DIR") "/ncsu_basekit/cdssetup/display.drf"))
+
+
+loadi( strcat( getShellEnvVar("PDK_DIR") "/ncsu_basekit/cdssetup/common_bindkeys.il"))
+if( getShellEnvVar("MGC_HOME") then
+  loadi( strcat( getShellEnvVar("MGC_HOME") "/shared/pkgs/icv/tools/queryskl/calibre.OA.skl"))
+) ;if
+procedure( prependNCSUCDKInstallPath( dir) 
+           strcat( getShellEnvVar("PDK_DIR") "/ncsu_basekit/" dir))
+(envLoadVals
+?envFile ( prependNCSUCDKInstallPath "cdssetup/cdsenv")
+?tool "layout")
+
+printf( strcat( 
+"---------------------------------------------------------------------------\n"
+"Welcome to the FreePDK 45nm Free, Open-Source Process Design Kit\n"
+"\n"
+"This initiative is brought to you by the Semiconductor Research\n"
+"Corporation (SRC), the National Science Foundation (NSF), Silicon\n" 
+"Integration Initiative (Si2), Mentor Graphics, and Synopsys.\n"
+"\n"
+"This version of the kit was created by Rhett Davis, Paul Franzon,\n"
+"Michael Bucher, and Sunil Basavarajaiah of North Carolina State University,\n"
+"and James Stine and Ivan Castellanos of Oklahoma State University.\n"
+"\n"
+"Contributions and modifications to this kit are welcomed and encouraged.\n"
+"\n"
+"Copyright 2008 North Carolina State University (ncsu_basekit subtree)\n"
+"               and Oklahoma State University (osu_soc subtree)\n"
+"\n"
+"Licensed under the Apache License, Version 2.0 (the \"License\");\n"
+"you may not use this file except in compliance with the License.\n"
+"You may obtain a copy of the License at\n"
+"\n"
+"    http://www.apache.org/licenses/LICENSE-2.0\n"
+"\n"
+"Unless required by applicable law or agreed to in writing, software\n"
+"distributed under the License is distributed on an \"AS IS\" BASIS,\n"
+"WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n"
+"See the License for the specific language governing permissions and\n"
+"limitations under the License.\n"
+"---------------------------------------------------------------------------\n"
+"\n"
+"Done loading FreePDK customizations.\n"
+))

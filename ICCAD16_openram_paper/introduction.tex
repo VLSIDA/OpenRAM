@@ -1,0 +1,68 @@
+\section{Introduction}
+\label{sec:introduction}
+
+% why memory compilers are important
+Static Random Access Memories (SRAMs) have become a standard component
+embedded in all System-on-Chip (SoC), Application-Specific Integrated
+Circuit (ASIC), and micro-processor designs. Their wide application
+leads to a variety of requirements in circuit design and memory
+configuration. However, manual design is 
+too time consuming. The
+regular structure of memories leads well to automation that produces
+size and configuration variations quickly, but developing this with
+multiple technologies and tool methodologies is challenging. In
+addition, memory designs play a significant role in overall system
+performance and costs, so optimization is important. Thus, a memory
+compiler is a critical tool.
+
+% why academics need memory compilers
+Most academic ICs design methodologies are limited by the availability
+of memories. Many standard-cell Process Design Kits (PDKs) are
+available from foundries and vendors, but these PDKs frequently do not
+come with memory arrays or memory compilers. If a memory compiler is
+freely available, it often only supports a generic process technology
+that is not fabricable.  Due to academic funding restrictions,
+commercial industry solutions are often not feasible for
+researchers. In addition, these commercial solutions are limited in
+customization of the memory sizes and specific components of the
+memory. PDKs may have the options to request \enquote{black box}
+memory models, but these are also not modifiable and have limited
+available configurations. These restrictions and licensing issues make
+comparison and experimentation with real world memories impossible.
+
+% manually designing is time consuming
+Academic researchers are able to design their own custom memories, but
+this can be a tedious and time-consuming task and may not be the intended
+purpose of the research. Frequently, the memory design is the bare
+minimum that the research project requires,
+and, because of this, the memory designs are often inferior and are not
+optimized. In memory research, peripheral circuits are often not
+considered when comparing memory performance and density. The
+lack of a customizable compiler makes it difficult for researchers to
+prototype and verify circuits and methodologies beyond a single row or
+column of memory cells.
+
+% what are the goals of OpenRAM
+The OpenRAM project aims to provide an open-source memory compiler
+development framework for memories. It provides reference circuit and
+physical implementations in a generic $45$nm technology and fabricable
+Scalable CMOS (SCMOS), but it has also been ported to several
+commercial technology nodes using a simple technology file. OpenRAM
+also includes a characterization methodology so that it can generate
+the timing and power characterization results in addition to circuits and
+layout while remaining independent of specific commercial tools. Most
+importantly, OpenRAM is completely user-modifiable since all source
+code is open source at:
+\begin{center}
+\url{https://openram.soe.ucsc.edu/}
+\end{center}
+
+The remainder of this paper is organized as follows:
+Section~\ref{sec:background} provides a background on previous memory
+compilers. Section~\ref{sec:architecture} presents the reference
+memory architecture in OpenRAM. Section~\ref{sec:implementation}
+specifically introduces the implementation and main features of the
+OpenRAM memory compiler. In Section~\ref{sec:results}, an analysis of
+the area, timing and power is shown for different sizes and
+technologies of memory. Finally, the paper is summarized in
+Section~\ref{sec:conclusions}.

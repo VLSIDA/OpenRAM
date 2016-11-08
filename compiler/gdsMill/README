@@ -1,0 +1,30 @@
+README BY TOM GOLUBEV
+
+gdsMill was adapted from gdsMill by Michael Wieckowski.
+
+gdsMill allows one to work with GDS files, opening, reading, writing and altering.
+It is a library and does not work by itself.  To get started, refer to ExampleUserDir.
+To look at sram compiler related example, refer to the sram_examples subdir.
+
+gdsMill takes a layermap, in a standard format (virtuoso .map files).  This is necessary
+for drawing text and rectangles, since those functions take layernames, and gdsMill needs layer numbers.
+
+
+gdsMill funcionality:
+
+The main functions are from vlsilayout.  They allow creating a new layout, fill in a box, text, and instancing other structures.
+
+Files:
+
+ sram_examples:
+
+	gdsMill.sh:  Adds gdsMill to python path. 
+		Source this before working
+
+	printGDS.py: will dump a text version structures within the gds file. 
+	  usage: python printGDS.py file
+
+	cell6tDemo.py: Will tile cell6t from sram_lib2.gds and output into layoutB.gds. All cells from source are copied into layoutB.gds.
+	  usage: python ./cell6tDemo.py 
+
+		

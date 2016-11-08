@@ -1,0 +1,98 @@
+% Copyright (C) 2002 Jörg Lehmann <joergl@users.sourceforge.net>
+% Copyright (C) 2002 André Wobst <wobsta@users.sourceforge.net>
+%
+% This file is part of PyX (http://pyx.sourceforge.net/).
+%
+% PyX is free software; you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation; either version 2 of the License, or
+% (at your option) any later version.
+%
+% PyX is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with PyX; if not, write to the Free Software
+% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+\endlinechar=-1 % don't add tailing space while \read
+
+\message{latex style name (e.g. 12ptex)? }
+\read-1 to\latexstylename
+
+\message{latex class name (e.g. article)? }
+\read-1 to\latexclassname
+
+\message{latex class options (e.g. 12pt)? }
+\read-1 to\latexclassopt
+
+\message{initial commands (e.g. \string\usepackage\string{exscale\string})? }
+\read-1 to\latexinit
+
+\endlinechar=13
+
+\newwrite\myfile
+
+\newbox\mybox
+
+\documentclass[\latexclassopt]{\latexclassname}
+
+\latexinit
+
+\newcommand{\writefontsize}[1]{
+  \setbox\mybox=\hbox{#1
+    a $a$
+    \immediate\write\myfile{%
+      \string\def\string#1{%
+        \string\font\string\pyxfont=\fontname\font
+        \string\pyxfont
+        \string\font\string\pyxfonttfa=\fontname\textfont0
+        \string\textfont0=\string\pyxfonttfa
+        \string\font\string\pyxfontsfa=\fontname\scriptfont0
+        \string\scriptfont0=\string\pyxfontsfa
+        \string\font\string\pyxfontssfa=\fontname\scriptscriptfont0
+        \string\scriptscriptfont0=\string\pyxfontssfa
+        \string\font\string\pyxfonttfb=\fontname\textfont1
+        \string\textfont1=\string\pyxfonttfb
+        \string\font\string\pyxfontsfb=\fontname\scriptfont1
+        \string\scriptfont1=\string\pyxfontsfb
+        \string\font\string\pyxfontssfb=\fontname\scriptscriptfont1
+        \string\scriptscriptfont1=\string\pyxfontssfb
+        \string\font\string\pyxfonttfc=\fontname\textfont2
+        \string\textfont2=\string\pyxfonttfc
+        \string\font\string\pyxfontsfc=\fontname\scriptfont2
+        \string\scriptfont2=\string\pyxfontsfc
+        \string\font\string\pyxfontssfc=\fontname\scriptscriptfont2
+        \string\scriptscriptfont2=\string\pyxfontssfc
+        \string\font\string\pyxfonttfd=\fontname\textfont3
+        \string\textfont3=\string\pyxfonttfd
+        \string\font\string\pyxfontsfd=\fontname\scriptfont3
+        \string\scriptfont3=\string\pyxfontsfd
+        \string\font\string\pyxfontssfd=\fontname\scriptscriptfont3
+        \string\scriptscriptfont3=\string\pyxfontssfd
+      }%
+    }
+  }
+}
+
+\begin{document}
+\immediate\openout\myfile=\latexstylename.lfs
+{\catcode`\%=12\immediate\write\myfile{% This automatically generated file is part of PyX (http://pyx.sourceforge.net/).}}
+{\catcode`\%=12\immediate\write\myfile{% \string\latexstylename="\expandafter\string\latexstylename"}}
+{\catcode`\%=12\immediate\write\myfile{% \string\latexclassname="\expandafter\string\latexclassname"}}
+{\catcode`\%=12\immediate\write\myfile{% \string\latexclassopt="\expandafter\string\latexclassopt"}}
+{\catcode`\%=12\immediate\write\myfile{% \string\latexinit="\expandafter\string\latexinit"}}
+\writefontsize{\tiny}
+\writefontsize{\scriptsize}
+\writefontsize{\footnotesize}
+\writefontsize{\small}
+\writefontsize{\normalsize}
+\writefontsize{\large}
+\writefontsize{\Large}
+\writefontsize{\LARGE}
+\writefontsize{\huge}
+\writefontsize{\Huge}
+\immediate\closeout\myfile
+\end{document}

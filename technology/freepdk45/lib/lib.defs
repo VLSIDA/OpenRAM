@@ -1,0 +1,16 @@
+DEFINE analogLib $CDSHOME/tools/dfII/etc/cdslib/artist/analogLib
+ASSIGN analogLib libMode shared
+DEFINE US_8ths $CDSHOME/tools/dfII/etc/cdslib/sheets/US_8ths
+ASSIGN US_8ths libMode shared
+DEFINE basic $CDSHOME/tools/dfII/etc/cdslib/basic
+ASSIGN basic libMode shared
+DEFINE cdsDefTechLib $CDSHOME/tools/dfII/etc/cdsDefTechLib
+ASSIGN cdsDefTechLib libMode shared
+DEFINE NCSU_TechLib_FreePDK45 $PDK_DIR/ncsu_basekit/lib/NCSU_TechLib_FreePDK45
+ASSIGN NCSU_TechLib_FreePDK45 libMode shared
+DEFINE NCSU_Devices_FreePDK45 $PDK_DIR/ncsu_basekit/lib/NCSU_Devices_FreePDK45
+ASSIGN NCSU_Devices_FreePDK45 libMode shared
+DEFINE sram $OPENRAM_HOME/lib/sram
+ASSIGN sram libMode shared
+DEFINE sub_sram $OPENRAM_HOME/lib/sub_sram
+ASSIGN sub_sram libMode shared

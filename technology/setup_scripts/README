@@ -1,0 +1,4 @@
+THIS DIRECTORY SHOULD ONLY CONTAIN SETUP SCRIPTS FOR TECHNOLOGIES.
+
+These scripts will be called automatically by the import_tech functions in
+globals.py in the compiler directory. 

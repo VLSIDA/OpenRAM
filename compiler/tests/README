@@ -1,0 +1,3 @@
+Note that the tests turn off DRC/LVS when they perform their own check
+for performance improvement. However, it must be turned back on before
+the test runs an assert.

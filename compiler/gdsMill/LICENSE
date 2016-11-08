@@ -1,0 +1,78 @@
+Delivered-To: mrg@ucsc.edu
+Received: by 10.216.164.197 with SMTP id c47cs36474wel;
+        Sat, 19 Nov 2011 21:23:28 -0800 (PST)
+Received: by 10.216.133.5 with SMTP id p5mr1106280wei.105.1321766513080;
+        Sat, 19 Nov 2011 21:21:53 -0800 (PST)
+Received-SPF: softfail (google.com: best guess record for domain of transitioning wieckows@umich.edu does not designate 128.114.48.32 as permitted sender) client-ip=128.114.48.32;
+Received: by 10.241.242.69 with POP3 id 5mf3470160wwf.5;
+        Sat, 19 Nov 2011 21:21:53 -0800 (PST)
+X-Gmail-Fetch-Info: mguthaus@gmail.com 1 smtp.gmail.com 995 mguthaus
+Delivered-To: mguthaus@gmail.com
+Received: by 10.231.207.15 with SMTP id fw15cs52829ibb;
+        Thu, 14 Oct 2010 12:49:35 -0700 (PDT)
+Received: by 10.142.224.8 with SMTP id w8mr3585480wfg.123.1287085774723;
+        Thu, 14 Oct 2010 12:49:34 -0700 (PDT)
+Return-Path: <wieckows@umich.edu>
+Received: from mail-01.cse.ucsc.edu (mail-01.cse.ucsc.edu [128.114.48.32])
+        by mx.google.com with ESMTP id x31si25240170wfd.118.2010.10.14.12.49.34;
+        Thu, 14 Oct 2010 12:49:34 -0700 (PDT)
+Received-SPF: neutral (google.com: 128.114.48.32 is neither permitted nor denied by best guess record for domain of wieckows@umich.edu) client-ip=128.114.48.32;
+Authentication-Results: mx.google.com; spf=neutral (google.com: 128.114.48.32 is neither permitted nor denied by best guess record for domain of wieckows@umich.edu) smtp.mail=wieckows@umich.edu
+Received: from services.cse.ucsc.edu (services.cse.ucsc.edu [128.114.48.10])
+	by mail-01.cse.ucsc.edu (Postfix) with ESMTP id 60660100985C
+	for <mrg@mail-01.cse.ucsc.edu>; Thu, 14 Oct 2010 12:49:34 -0700 (PDT)
+Received: from mailgw.soe.ucsc.edu (mailgw.cse.ucsc.edu [128.114.48.9])
+	by services.cse.ucsc.edu (8.13.6/8.13.6) with ESMTP id o9EJnXcg026705
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=FAIL)
+	for <mrg@soe.ucsc.edu>; Thu, 14 Oct 2010 12:49:34 -0700 (PDT)
+X-ASG-Debug-ID: 1287085773-35c0a0820001-k66d7V
+Received: from hellskitchen.mr.itd.umich.edu (smtp.mail.umich.edu [141.211.14.82]) by mailgw.soe.ucsc.edu with ESMTP id iCFqYJFhVj1wHPNy for <mrg@soe.ucsc.edu>; Thu, 14 Oct 2010 12:49:33 -0700 (PDT)
+X-Barracuda-Envelope-From: wieckows@umich.edu
+X-Barracuda-Apparent-Source-IP: 141.211.14.82
+Received: FROM [10.0.1.4] (adsl-99-67-97-169.dsl.sfldmi.sbcglobal.net [99.67.97.169])
+	By hellskitchen.mr.itd.umich.edu ID 4CB75ECA.5F7DC.12653 ;
+	Authuser wieckows;
+	14 Oct 2010 15:49:30 EDT
+Content-Type: text/plain; charset=us-ascii
+Mime-Version: 1.0 (Apple Message framework v1081)
+Subject: Re: GDS Mill
+From: Michael Wieckowski <wieckows@umich.edu>
+X-ASG-Orig-Subj: Re: GDS Mill
+In-Reply-To: <BEC6726E-7B98-43D8-8AAA-2AA259DFFDA8@soe.ucsc.edu>
+Date: Thu, 14 Oct 2010 15:49:29 -0400
+Content-Transfer-Encoding: quoted-printable
+Message-Id: <7C1B8C49-7D87-4BF2-8ABF-6555CF7B37AD@umich.edu>
+References: <BEC6726E-7B98-43D8-8AAA-2AA259DFFDA8@soe.ucsc.edu>
+To: Matthew Guthaus <mrg@soe.ucsc.edu>
+X-Mailer: Apple Mail (2.1081)
+X-Barracuda-Connect: smtp.mail.umich.edu[141.211.14.82]
+X-Barracuda-Start-Time: 1287085773
+X-Barracuda-URL: http://mailgw.cse.ucsc.edu:8000/cgi-mod/mark.cgi
+X-Virus-Scanned: by bsmtpd at soe.ucsc.edu
+
+Hi Matt,
+
+Feel free to use / modify / distribute the code as you like.
+
+-Mike
+
+
+On Oct 14, 2010, at 3:07 PM, Matthew Guthaus wrote:
+
+> Hi Michael (& Dennis),
+>=20
+> A student and I were looking at your GDS tools, but we noticed that =
+there is no license. What is the license?
+>=20
+> Thanks,
+>=20
+> Matt
+>=20
+> ---
+> Matthew Guthaus
+> Assistant Professor, Computer Engineering
+> University of California Santa Cruz
+> http://vlsida.soe.ucsc.edu/
+>=20
+>=20
+>=20

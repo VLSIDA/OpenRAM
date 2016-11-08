@@ -1,0 +1,34 @@
+
+Develop set of vector/point manipulation functions and replace
+everywhere. (Bin)
+
+Use signal names from the technology file. Right now they are hard
+coded everywhere. For example: DATA, ADDR, etc.
+
+Cell name (ms_flop) is hard coded in characterizer, pin names are hard
+coded too. This should come from the config file which dynamically
+loads the module names.
+
+Autodetect ideal number of threads for hspice.
+
+vdd and gnd are hard coded in some places. The names should come from
+the tech file.
+
+Some modules use upper/lower via layer instead of min width DRC rule
+from tech file.
+
+Fix the size of labels. For some reason, they are HUGE. (Samira)
+
+Add the clock buffer internal to control logic. Simulation uses
+1-4-8-16 inverters right now.  Replace simulation with simple clock
+buffer after fixing.
+
+Check out the multibank organization in sram.py and bank.py to see if
+it can be reduced or made more readable.
+
+Move/modify similar functions in hierarchical_predecode2x4 and 
+hierarchical_predecode3x8 to hierarchical_predecode class
+
+Fix stimuli.py to be more readable.
+
+Add tests for bitcell, ms_flop, replica_bitcell, sens_amp, tri_gate, write_driver?

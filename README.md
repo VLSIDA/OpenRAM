@@ -1,1 +1,0 @@
-# OpenRAM v1

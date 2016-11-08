@@ -9,7 +9,7 @@ BASIC SETUP
 4) a technology directory for each technology with the base cells
 
 - You must set two environment variables: OPENRAM_HOME should point to
-the compiler source directory OPENERAM_TECH should point to a root
+the compiler source directory. OPENERAM_TECH should point to a root
 technology directory that contains subdirs of all other technologies.
 For example:
 
@@ -24,8 +24,8 @@ $OPENRAM_TECH/setup_scripts/setup_openram_freepdk45.py
 
 Each setup script should be named as: setup_openram_{tech name}.py.
 
--Each specific technology (e.g. freepdk45) should be a subdirectory
-and include certain folders and files:
+-Each specific technology (e.g., freepdk45) should be a subdirectory
+(e.g., $OPENRAM_TECH/freepdk45) and include certain folders and files:
 
 1) gds_lib folder with all the .gds (premade) library cells. At a
 minimum this includes:
@@ -40,11 +40,11 @@ minimum this includes:
 
 3) layers.map 
 
-4) References in tech.py to spice models that correspond to the
-transistors in the cells
-
-5) OpenRAM tech file (tech.py) that contains library, DRC/LVS
-information, layer information, etc. for the technology
+4) A valid tech Python module (tech directory with __init__.py and tech.py) with:
+   References in tech.py to spice models
+   DRC/LVS rules needed for dynamic cells and routing
+   Layer information
+   Etc.
 
 - In order to debug, it is useful to have a GDS viewer. In addition to
 normal layout tools, we recommend the following viewers:

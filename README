@@ -11,15 +11,21 @@ BASIC SETUP
 - You must set two environment variables: OPENRAM_HOME should point to
 the compiler source directory OPENERAM_TECH should point to a root
 technology directory that contains subdirs of all other technologies.
+For example:
+
+export OPENRAM_HOME="/Users/mrg/openram/compiler"
+export OPENRAM_TECH="/Users/mrg/openram/technology"
 
 -All setup scripts should be in the setup_scripts directory under the
-technology directory.  Please look at the file
-setup_openram_freepdk45.py for an example of what is needed for
-OpenRAM.  Each setup script should be named as: setup_openram_{tech
-folder name}.py.
+technology directory.  Please look at the following file for an
+example of what is needed for OpenRAM:
+
+$OPENRAM_TECH/setup_scripts/setup_openram_freepdk45.py
+
+Each setup script should be named as: setup_openram_{tech name}.py.
 
 -Each specific technology (e.g. freepdk45) should be a subdirectory
- and include certain folders and files:
+and include certain folders and files:
 
 1) gds_lib folder with all the .gds (premade) library cells. At a
 minimum this includes:
@@ -83,19 +89,19 @@ Regression testing  performs a number of tests for all modules in OpenRAM.
 
 Steps to run regression testing:
 1) First, ensure your setup_scripts is correctly setup.
-2) Navigate to the compiler directory (trunk/compiler/tests)
+2) Navigate to the compiler directory: cd $OPENRAM_HOME
 3) Use the command: 
-   python regress.py 
+   python tests/regress.py -t freepdk45
 4) To run a specific test:
-   python {unit test}.py 
+   python tests/{unit test}.py -t freepdk45
 
 The unit tests take the same arguments as openram.py itself. 
 
 To increase the verbosity of the test, add one (or more) -v options:
-python tests/00_code_format_check_test.py -v
+python tests/00_code_format_check_test.py -v -t freepdk45
 
 To specify a particular technology use "-t <techname>" such as
-"-t scn3me_subm"
+"-t scn3me_subm". 
 
 A regression daemon script that can be used with cron is included:
 regress_daemon.py

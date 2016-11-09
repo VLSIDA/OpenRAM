@@ -19,8 +19,8 @@ os.environ["MGC_TMPDIR"] = "/tmp"
 
 ###########################
 # OpenRAM Paths
-
-DRCLVS_HOME="$OPENRAM_TECH/scn3me_subm/tech"
+OPENRAM_TECH=os.path.abspath(os.environ.get("OPENRAM_TECH"))
+DRCLVS_HOME=OPENRAM_TECH+"/scn3me_subm/tech"
 os.environ["DRCLVS_HOME"] = DRCLVS_HOME 
 
 ##########################

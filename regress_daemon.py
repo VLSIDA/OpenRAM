@@ -15,8 +15,8 @@ import datetime
 
 
 USER = getpass.getuser()
-#TO_FIELD = "openram@soe.ucsc.edu"
-TO_FIELD = "mrg@ucsc.edu"
+TO_FIELD = "openram@soe.ucsc.edu"
+#TO_FIELD = "mrg@ucsc.edu"
 #TO_FIELD = "bchen12@ucsc.edu"
 FROM_FIELD = USER+"@ucsc.edu"
 

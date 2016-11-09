@@ -1,5 +1,5 @@
 import sys
-from tech import drc, parameter, cell
+from tech import drc, parameter
 import debug
 import design
 import math

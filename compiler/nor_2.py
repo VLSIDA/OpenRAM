@@ -1,7 +1,7 @@
 import contact
 import design
 import debug
-from tech import drc, cell
+from tech import drc
 from ptx import ptx
 from vector import vector
 from globals import OPTS

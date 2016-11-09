@@ -1,7 +1,7 @@
 import contact
 import design
 import debug
-from tech import drc, parameter, cell
+from tech import drc, parameter
 from ptx import ptx
 from vector import vector
 from math import ceil

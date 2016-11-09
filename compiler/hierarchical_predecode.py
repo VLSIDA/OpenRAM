@@ -1,7 +1,7 @@
 import debug
 import design
 import math
-from tech import drc, cell
+from tech import drc
 from contact import contact
 from nand_2 import nand_2
 from nand_3 import nand_3

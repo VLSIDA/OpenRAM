@@ -1,6 +1,6 @@
 import design
 import debug
-from tech import drc, cell
+from tech import drc
 from vector import vector
 from contact import contact
 from ptx import ptx

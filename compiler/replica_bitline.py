@@ -1,6 +1,6 @@
 import debug
 import design
-from tech import drc, cell
+from tech import drc
 from pinv import pinv
 from contact import contact
 from bitcell_array import bitcell_array

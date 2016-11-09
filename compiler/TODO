@@ -28,3 +28,5 @@ hierarchical_predecode3x8 to hierarchical_predecode class
 
 Fix stimuli.py to be more readable.
 
+Change the delay measurement to be from the negative clock edge to 
+remove the dependency on the clock period.

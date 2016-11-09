@@ -1,6 +1,6 @@
 from math import log
 import design
-from tech import drc, parameter, cell
+from tech import drc, parameter
 import debug
 from ms_flop_array import ms_flop_array
 from wordline_driver import wordline_driver

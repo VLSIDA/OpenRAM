@@ -1,4 +1,4 @@
-from tech import drc, cell
+from tech import drc
 import debug
 import design
 from math import log

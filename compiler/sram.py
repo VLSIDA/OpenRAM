@@ -1,6 +1,6 @@
 import math
 import sys
-from tech import drc, spice, cell
+from tech import drc, spice
 import debug
 import design
 from math import log,sqrt,ceil

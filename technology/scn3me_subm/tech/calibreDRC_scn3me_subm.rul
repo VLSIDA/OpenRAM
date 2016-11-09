@@ -1,0 +1,225 @@
+////////////////////////////////////////////////////////////
+// DEFINE BOOLEAN LAYERS
+////////////////////////////////////////////////////////////
+LAYOUT USE DATABASE PRECISION YES
+
+layer pwell              41
+layer nwell              42
+layer active             43
+layer poly               46
+layer nimplant           45
+layer pimplant           44
+layer contact            25
+layer active_contact     48
+layer poly_contact       47
+layer metal1             49
+layer via1               50
+layer metal2             51
+layer via2               61
+layer metal3             62
+layer glass              52
+layer pad                26
+
+//Enabling incremental connectivity for antenna rule checks
+DRC Incremental Connect Yes
+
+well = nwell OR pwell
+gate = poly AND active
+implant = nimplant OR pimplant
+fieldpoly = poly NOT active
+
+contactenc1 = active OR poly
+contactenc = contactenc1 AND metal1
+diode = contact AND active
+act_poly = interact poly active
+
+GROUP mask_check
+//Well.2 Well.4 
+Poly.1 Poly.2 Poly.3 Poly.4 Poly.5 
+Active.1 Active.2 // Active.3  
+Contact.1 Contact.2 Contact.3 Contact.4
+Contact.5 Contact.6 Metal1.1 Metal1.2 Metal1.3 
+
+
+
+//Well.1 {
+//@Nwell and Pwell must not overlap
+//AND nwell pwell
+//}
+
+//Well.2 {
+//@Min spacing of pwell to nwell = 0.00  
+//EXTERNAL nwell pwell < 0.00    
+//}
+
+//Well.4 {
+//@Min width of nwell = 3.6      
+//INTERNAL nwell < 3.6       
+//}
+
+Poly.1 {
+@Min width of poly = 0.6    
+INTERNAL poly < 0.6        
+}
+
+Poly.2 {
+@Min spacing of gate poly = 0.9    
+EXTERNAL gate < 0.9
+}
+
+Poly.3 {
+@Min extension of poly past active = 0.6  
+ENCLOSURE active poly < 0.6     
+}
+
+Poly.4 {
+@Minimum active enclosure of gate =0.6     
+ENCLOSURE poly active < 0.6         
+}
+
+Poly.5 {
+@Minimum spacing of poly to active = 0.3    
+EXTERNAL act_poly active < 0.3      
+}
+
+Active.1 {
+@Minimum width of active = 0.9
+INTERNAL active < 0.9
+}
+
+Active.2 {
+@Minimum spacing of active areas =  0.9
+EXTERNAL active < 0.9
+}
+
+//Active.3 {
+//@Minimum well enclosure of active = 1.8
+//ENCLOSURE active well < 1.8
+//}
+
+Contact.1 {
+@Minimum width of contact = 0.6                 
+INTERNAL contact < 0.6                    
+}
+
+Contact.2 {
+@Minimum spacing of contact = 0.9         
+EXTERNAL contact < 0.9                    
+}
+
+Contact.3 {
+@Contact must be inside metal1 and active or poly
+NOT contact contactenc
+}
+
+Contact.4 {
+@Minimum active enclosure of contact = 0.3       
+ENCLOSURE contact active < 0.3                    
+}
+
+Contact.5 {
+@Minimum poly enclosure of contact = 0.3          
+ENCLOSURE contact poly < 0.3                      
+}
+
+Contact.6 {
+@Minimum spacing of contact to poly = 0.6         
+EXTERNAL poly contact < 0.6                     
+}
+
+Metal1.1 {
+@Minimum width of metal1 = 0.9                   
+INTERNAL metal1 < 0.9                           
+}
+
+Metal1.2 {
+@Minimum spacing of metal1 = 0.9                
+EXTERNAL metal1 < 0.9                           
+}
+
+Metal1.3 {
+@Metal1 must extend past contact by 0.3 on two opposite sides     
+RECTANGLE ENCLOSURE contact metal1
+GOOD 0.00 0.3 OPPOSITE 0.00 0.3 OPPOSITE
+}
+
+Metal1.4 {
+@Metal1 must extend past via1 by 0.3 on two opposite sides       
+RECTANGLE ENCLOSURE via1 metal1
+GOOD 0.00 0.3 OPPOSITE 0.00 0.3 OPPOSITE
+}
+
+Via1.1 {
+@Minimum width of via1 = 0.6           
+INTERNAL via1 < 0.6                   
+}
+
+Via1.2 {
+@Minimum spacing of via1 = 0.6       
+EXTERNAL via1 < 0.6                 
+}
+
+Via1.3 {
+@Via1 must be inside metal1
+NOT via1 metal1
+}
+
+
+Metal2.1 {
+@Minimum width of metal2 = 0.9
+INTERNAL metal2 < 0.9
+}
+
+Metal2.2 {
+@Minimum spacing of metal2 = 0.9  
+EXTERNAL metal2 < 0.9             
+}
+
+Metal2.3 {
+@Metal2 must extend past via1 by 0.3 on two opposite sides          
+RECTANGLE ENCLOSURE via1 metal2
+GOOD 0.00 0.3 OPPOSITE 0.00 0.3 OPPOSITE                       
+}
+
+Metal2.4 {
+@Metal2 must extend past via2 by 0.3 on two opposite sides          
+RECTANGLE ENCLOSURE via2 metal2
+GOOD 0.00 0.3 OPPOSITE 0.00 0.3 OPPOSITE                          
+}
+
+Via2.1 {
+@Minimum width of via2 = 0.6     
+INTERNAL via2 < 0.6             
+}
+
+Via2.2 {
+@Minimum spacing of via2 = 0.9            
+EXTERNAL via2 < 0.9                     
+}
+
+Via2.3 {
+@Via2 must be inside metal2
+NOT via2 metal2
+}
+
+Via2.4 {
+@Via2 must be inside metal3
+NOT via2 metal3
+}
+
+Metal3.1 {
+@Minimum width of metal3 = 1.5             
+INTERNAL metal3 < 1.5                      
+}
+
+Metal3.2 {
+@Minimum spacing of metal3 = 0.9           
+EXTERNAL metal3 < 0.9                      
+}
+
+Metal3.3 {
+@Metal3 must extend past via2 by 0.6 on two opposite sides               
+RECTANGLE ENCLOSURE via2 metal3
+GOOD 0.00 0.6 OPPOSITE 0.00 0.6 OPPOSITE            
+}
+

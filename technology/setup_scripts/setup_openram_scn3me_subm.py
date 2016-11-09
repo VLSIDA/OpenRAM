@@ -10,20 +10,21 @@ TECHNOLOGY = "scn3me_subm"
 
 
 ##########################
-# CDK paths?
+# CDK paths
 
-#os.environ["CDK_DIR"] = CDK_DIR #PDK path
-#os.environ["SYSTEM_CDS_LIB_DIR"] = "{0}/cdssetup".format(CDK_DIR) #CDS library path
-#os.environ["CDS_SITE"] = CDK_DIR #CDS path
-os.environ["MGC_TMPDIR"] = "/tmp" #temp folder path
+# os.environ["CDK_DIR"] = CDK_DIR #PDK path
+# os.environ["SYSTEM_CDS_LIB_DIR"] = "{0}/cdssetup".format(CDK_DIR) 
+# os.environ["CDS_SITE"] = CDK_DIR 
+os.environ["MGC_TMPDIR"] = "/tmp" 
 
 ###########################
-#Openram Paths
-# DON'T DELETE THIS LINE
-DRCLVS_HOME="/mada/software/techfiles/scn3me_subm"
-os.environ["DRCLVS_HOME"] = DRCLVS_HOME #DRC and LVS path
+# OpenRAM Paths
+
+DRCLVS_HOME="$OPENRAM_TECH/scn3me_subm/tech"
+os.environ["DRCLVS_HOME"] = DRCLVS_HOME 
 
 ##########################
-#Paths required for OPENRAM to function
-LOCAL = "{0}/..".format(os.path.dirname(__file__)) #OPENRAM Trunk path
+# Paths required for OPENRAM to function
+
+LOCAL = "{0}/..".format(os.path.dirname(__file__)) 
 sys.path.append("{0}/{1}".format(LOCAL,TECHNOLOGY))

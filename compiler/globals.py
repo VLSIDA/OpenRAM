@@ -141,7 +141,10 @@ def setup_paths():
 
     global OPTS
 
-    OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
+    try:
+        OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
+    except:
+        debug.error("OPENRAM_HOME is not properly defined.",1)
     sys.path.append("{0}".format(OPENRAM_HOME))
     sys.path.append("{0}/gdsMill".format(OPENRAM_HOME)) 
     sys.path.append("{0}/tests".format(OPENRAM_HOME))
@@ -209,7 +212,12 @@ def import_tech():
         OPTS.tech_name = OPTS.config.tech_name
 
         # environment variable should point to the technology dir
-    OPTS.openram_tech = os.path.abspath(os.environ.get("OPENRAM_TECH")) + "/" + OPTS.tech_name
+    try:
+        OPENRAM_TECH = os.path.abspath(os.environ.get("OPENRAM_TECH"))
+    except:
+        debug.error("OPENRAM_TECH is not properly defined.",1)
+
+    OPTS.openram_tech = OPENRAM_TECH + "/" + OPTS.tech_name
     if not OPTS.openram_tech.endswith('/'):
         OPTS.openram_tech += "/"
     debug.info(1, "Technology path is " + OPTS.openram_tech)

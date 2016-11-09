@@ -31,7 +31,8 @@ TECH_NAME = "NONE"
 
 #REPOS = "http://gforge.soe.ucsc.edu/svn/openram/trunk"
 #REPOS = "http://svn.soe.ucsc.edu/svn/openram/trunk"
-REPOS = "gitosis@mada0.soe.ucsc.edu:openram.git"
+#REPOS = "gitosis@mada0.soe.ucsc.edu:openram.git"
+REPOS = "git@github.com:mguthaus/OpenRAM.git"
 
 
 MAIL = "/usr/sbin/sendmail"

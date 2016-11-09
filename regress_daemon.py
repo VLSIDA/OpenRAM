@@ -15,8 +15,8 @@ import datetime
 
 
 USER = getpass.getuser()
-TO_FIELD = "openram@soe.ucsc.edu"
-#TO_FIELD = "mrg@ucsc.edu"
+#TO_FIELD = "openram@soe.ucsc.edu"
+TO_FIELD = "mrg@ucsc.edu"
 #TO_FIELD = "bchen12@ucsc.edu"
 FROM_FIELD = USER+"@ucsc.edu"
 
@@ -100,7 +100,7 @@ def remove_cached_files():
 def regress():
     print "Running Regressions"
     try:
-        os.chdir(LOCAL+"/trunk/compiler")
+        os.chdir(LOCAL+"/compiler")
     except OSError:
         print "Cannot find repository at " + LOCAL
         sys.exit(-2)

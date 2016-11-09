@@ -23,9 +23,9 @@ FROM_FIELD = USER+"@ucsc.edu"
 
 LOCAL = "/soe/"+USER+"/unit_test"
 
-sys.path.append(LOCAL+"/trunk/setup_scripts")
-sys.path.append(LOCAL+"/trunk/compiler")
-sys.path.append(LOCAL+"/trunk/compiler/tests")
+sys.path.append(LOCAL+"/setup_scripts")
+sys.path.append(LOCAL+"/compiler")
+sys.path.append(LOCAL+"/compiler/tests")
 
 TECH_NAME = "NONE"
 

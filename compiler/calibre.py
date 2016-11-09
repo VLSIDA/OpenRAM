@@ -103,7 +103,10 @@ def run_drc(name, gds_name):
     # TOTAL Original Layer Geometries: 106 (157)
     # TOTAL DRC RuleChecks Executed:   156
     # TOTAL DRC Results Generated:     0 (0)
-    f = open(drc_runset['drcSummaryFile'], "r")
+    try:
+        f = open(drc_runset['drcSummaryFile'], "r")
+    except:
+        debug.error("Unable to retrieve DRC results file. Is calibre set up?",1)
     results = f.readlines()
     f.close()
     # those lines should be the last 3

@@ -23,15 +23,16 @@ FROM_FIELD = USER+"@ucsc.edu"
 
 LOCAL = "/soe/"+USER+"/unit_test"
 
-sys.path.append(LOCAL+"/trunk/setup_scripts")
-sys.path.append(LOCAL+"/trunk/compiler")
-sys.path.append(LOCAL+"/trunk/compiler/tests")
+sys.path.append(LOCAL+"/setup_scripts")
+sys.path.append(LOCAL+"/compiler")
+sys.path.append(LOCAL+"/compiler/tests")
 
 TECH_NAME = "NONE"
 
 #REPOS = "http://gforge.soe.ucsc.edu/svn/openram/trunk"
 #REPOS = "http://svn.soe.ucsc.edu/svn/openram/trunk"
-REPOS = "gitosis@mada0.soe.ucsc.edu:openram.git"
+#REPOS = "gitosis@mada0.soe.ucsc.edu:openram.git"
+REPOS = "git@github.com:mguthaus/OpenRAM.git"
 
 
 MAIL = "/usr/sbin/sendmail"
@@ -99,7 +100,7 @@ def remove_cached_files():
 def regress():
     print "Running Regressions"
     try:
-        os.chdir(LOCAL+"/trunk/compiler")
+        os.chdir(LOCAL+"/compiler")
     except OSError:
         print "Cannot find repository at " + LOCAL
         sys.exit(-2)

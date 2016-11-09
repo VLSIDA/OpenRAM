@@ -252,10 +252,9 @@ drc["metal10_enclosure_via9"] = 0
 spice = {}
 spice["nmos"] = "nmos_vtg"
 spice["pmos"] = "pmos_vtg"
-spice["fet_models"] = ["/mada/software/techfiles/FreePDK45-1.4/ncsu_basekit/models/hspice/tran_models/models_nom/NMOS_VTG.inc",
-                       "/mada/software/techfiles/FreePDK45-1.4/ncsu_basekit/models/hspice/tran_models/models_nom/PMOS_VTG.inc"]
-#spice["nmos_model"] = "/import/comet1/Freepdk/ncsu_basekit/models/hspice/tran_models/models_nom/NMOS_VTG.inc"
-#spice["pmos_model"] = "/import/comet1/Freepdk/ncsu_basekit/models/hspice/tran_models/models_nom/PMOS_VTG.inc"
+SPICE_MODEL_DIR=os.environ.get("SPICE_MODEL_DIR")
+spice["fet_models"] = [SPICE_MODEL_DIR+"/NMOS_VTG.inc",
+                       SPICE_MODEL_DIR+"/PMOS_VTG.inc"]
 
 #spice stimulus related variables
 spice["clock_period"] = 2.0

@@ -165,7 +165,7 @@ class setup_hold():
     def write_control(self, period):
         # transient window
         end_time = 2 * period
-        self.sf.write(".TRAN 1n {0}n\n".format(end_time))
+        self.sf.write(".TRAN 5p {0}n\n".format(end_time))
         self.sf.write(".OPTIONS POST=1 PROBE\n")
 
         if OPTS.spice_version == "hspice":
@@ -175,6 +175,7 @@ class setup_hold():
         else:
             self.sf.write(".control\n")
             self.sf.write("run\n")
+            self.sf.write("* plot clk_buf data_buf doutrun\n")
             self.sf.write("quit\n")
             self.sf.write(".endc\n")
             self.sf.write(".end\n")
@@ -278,7 +279,7 @@ class setup_hold():
             else:
                 setuphold_time = period - target_time
 
-        debug.info(2,"Converged on {0} time {1}, data at {1}, clock at {2}.  ".format(mode,setuphold_time,target_time,period))
+        debug.info(2,"Converged on {0} time {1}, data at {2}, clock at {3}.".format(mode,setuphold_time,target_time,period))
         return setuphold_time
 
 

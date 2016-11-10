@@ -23,21 +23,23 @@ class timing_setup_test(unittest.TestCase):
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
         OPTS.use_pex = False
-
+        OPTS.spice_version="ngspice"
+        OPTS.force_spice = True
+        globals.set_spice()
+        
         import sram
         import setup_hold
         
         sh = setup_hold.setup_hold()
-        [one_setup_time, zero_setup_time] = sh.hold_time()
+        [one_setup_time, zero_setup_time] = sh.setup_time()
 
         OPTS.check_lvsdrc = True
-
         if OPTS.tech_name == "freepdk45":
-            self.assertTrue(isclose(one_setup_time,-0.0048828125))
-            self.assertTrue(isclose(zero_setup_time,-0.010986328125))
+            self.assertTrue(isclose(one_setup_time,0.0146484375)) 
+            self.assertTrue(isclose(zero_setup_time,0.008544921875)) 
         elif OPTS.tech_name == "scn3me_subm":
-            self.assertTrue(isclose(one_setup_time,0.04638671875))
-            self.assertTrue(isclose(zero_setup_time,-0.0830078125))
+            self.assertTrue(isclose(one_setup_time,0.0927734375))
+            self.assertTrue(isclose(zero_setup_time,-0.0244140625))
         else:
             self.assertTrue(False) # other techs fail
 

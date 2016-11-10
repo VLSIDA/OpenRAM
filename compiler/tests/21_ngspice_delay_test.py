@@ -23,7 +23,10 @@ class timing_sram_test(unittest.TestCase):
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
         OPTS.use_pex = False
-
+        OPTS.spice_version="ngspice"
+        OPTS.force_spice = True
+        globals.set_spice()
+        
         import sram
 
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")

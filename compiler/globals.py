@@ -185,37 +185,48 @@ def set_spice():
     debug.info(2,"Finding spice...")
     global OPTS
 
-    # set the input dir for spice files if using ngspice (not needed for
-    # hspice)
+    OPTS.spice_exe = ""
+    
+    # Check if the preferred spice option exists in the path
+    for path in os.environ["PATH"].split(os.pathsep):
+        spice_exe = os.path.join(path, OPTS.spice_version)
+        # if it is found, then break and use first version
+        if is_exe(spice_exe):
+            debug.info(1, "Using spice: " + spice_exe)
+            OPTS.spice_exe = spice_exe
+            break
+        
+    if not OPTS.force_spice:
+        # if we didn't find the preferred version, try the other version and warn
+        prev_version=OPTS.spice_version
+        if OPTS.spice_version == "hspice":
+            OPTS.spice_version = "ngspice"
+        else:
+            OPTS.spice_version = "hspice"
+        debug.warning("Unable to find {0} so trying {1}".format(prev_version,OPTS.spice_version))
+
+        for path in os.environ["PATH"].split(os.pathsep):
+            spice_exe = os.path.join(path, OPTS.spice_version)
+            # if it is found, then break and use first version
+            if is_exe(spice_exe):
+                found_spice = True
+                debug.info(1, "Using spice: " + spice_exe)
+                OPTS.spice_exe = spice_exe
+                break
+
+    # set the input dir for spice files if using ngspice 
     if OPTS.spice_version == "ngspice":
         os.environ["NGSPICE_INPUT_DIR"] = "{0}".format(OPTS.openram_temp)
 
-    for path in os.environ["PATH"].split(os.pathsep):
-        OPTS.spice_exe = os.path.join(path, OPTS.spice_version)
-        # if it is found, then break and use first version
-        if is_exe(OPTS.spice_exe):
-            debug.info(1, "Using spice: " + OPTS.spice_exe)
-            return
-
-    # if we didn't find the previous version, try the other version
-    if OPTS.spice_version == "hspice":
-        OPTS.spice_version = "ngspice"
-    else:
-        OPTS.spice_version = "hspice"
-    debug.warning("Unable to find spice so trying other: " + OPTS.spice_version)
-
-    for path in os.environ["PATH"].split(os.pathsep):
-        OPTS.spice_exe = os.path.join(path, OPTS.spice_version)
-        # if it is found, then break and use first version
-        if is_exe(OPTS.spice_exe):
-            found_spice = True
-            debug.info(1, "Using spice: " + OPTS.spice_exe)
-            break
-    else:
+    if OPTS.spice_exe == "":
         # otherwise, give warning and procede
-        debug.warning("Spice not found. Unable to perform characterization.")
+        if OPTS.force_spice:
+            debug.error("{0} not found. Unable to perform characterization.".format(OPTS.spice_version),1)
+        else:
+            debug.error("Neither hspice/ngspice not found. Unable to perform characterization.",1)
+                        
 
-
+        
 # imports correct technology directories for testing
 def import_tech():
     global OPTS

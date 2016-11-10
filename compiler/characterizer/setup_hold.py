@@ -186,9 +186,11 @@ class setup_hold():
         depending on whether we are doing setup or hold. 
         """
         period = tech.spice["feasible_period"]
-
+        debug.info(2,"Feasible period from technology file: {0} ".format(period))
+                   
+        
         # The clock will start being offset by a period, so we want to look before and after
-        # theis time. 
+        # this time by half a period. 
         if mode == "HOLD":
             target_time = 1.5 * period
             lower_bound = 0.5*period
@@ -199,8 +201,6 @@ class setup_hold():
             upper_bound = 1.5*period
 
         previous_time = target_time
-        debug.info(2,"Checking initial setup/hold time: {0} ".format(target_time))
-                   
         # Initial Check if reference setup time passes for correct_value 
         self.write_stimulus(mode=mode, 
                             target_time=target_time, 
@@ -214,6 +214,8 @@ class setup_hold():
             setuphold_time = target_time - period
         else:
             setuphold_time = period - target_time
+        debug.info(2,"Checked initial {0} time {1}, data at {2}, clock at {3} ".format(mode,setuphold_time,
+                                                                                       target_time,period))
         debug.info(3,"Target time: {0} Low: {1} Up: {2} Measured: {3}".format(target_time,
                                                                               lower_bound,
                                                                               upper_bound,
@@ -222,9 +224,10 @@ class setup_hold():
             debug.error("Initial period/target hold time fails for data value",2)
 
         # We already found it feasible, so advance one step first thing.
-        debug.info(2,"Performing bidir search on setup/hold time: {2} LB: {0} UB: {1} ".format(lower_bound,
-                                                                                               upper_bound,
-                                                                                               setuphold_time))
+        debug.info(2,"Performing bidir search on {3} time: {2} LB: {0} UB: {1} ".format(lower_bound,
+                                                                                        upper_bound,
+                                                                                        setuphold_time,
+                                                                                        mode))
         if mode == "HOLD":
             target_time -= 0.5 * (upper_bound - lower_bound)
         else:
@@ -275,7 +278,7 @@ class setup_hold():
             else:
                 setuphold_time = period - target_time
 
-        debug.info(2,"Converged on setup/hold time: {0} ".format(setuphold_time))                
+        debug.info(2,"Converged on {0} time {1}, data at {1}, clock at {2}.  ".format(mode,setuphold_time,target_time,period))
         return setuphold_time
 
 

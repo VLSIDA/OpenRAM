@@ -447,20 +447,21 @@ def run_sim():
     temp_stim = "{0}stim.sp".format(OPTS.openram_temp)
     if OPTS.spice_version == "hspice":
         # TODO: Should make multithreading parameter a configuration option
-        cmd_args = "-mt 8 -i {1} -o {2}timing 2>&1 /dev/null".format(OPTS.spice_exe,
-                                                                     temp_stim,
-                                                                     OPTS.openram_temp)
+        cmd_args = [OPTS.spice_exe, "-mt 8", "-i {0}".format(temp_stim), "-o {0}timing".format(OPTS.openram_temp)]
+        valid_retcode=0
     else:
-        cmd_args = "-b  -i {1} -o {2}timing.lis 2>&1 /dev/null".format(OPTS.spice_exe,
-                                                                       temp_stim,
-                                                                       OPTS.openram_temp)
-
-    FNULL = open(os.devnull, 'w')
-    debug.info(2, OPTS.spice_exe + " " + cmd_args)
-    retcode = subprocess.call([OPTS.spice_exe, cmd_args], stdout=FNULL, stderr=FNULL)
-    FNULL.close()
-
-    if (retcode > 0):
+        cmd_args = [OPTS.spice_exe, "-b", "-o {0}timing.lis".format(OPTS.openram_temp), "{0}".format(temp_stim)]
+        # for some reason, ngspice-25 returns 1 when it only has acceptable warnings
+        valid_retcode=1
+        
+    spice_stdout = open("{0}spice_stdout.log".format(OPTS.openram_temp), 'w')
+    spice_stderr = open("{0}spice_stderr.log".format(OPTS.openram_temp), 'w')
+    debug.info(1, " ".join(cmd_args))
+    retcode = subprocess.call(cmd_args, stdout=spice_stdout, stderr=spice_stderr)
+    spice_stdout.close()
+    spice_stderr.close()
+    
+    if (retcode > valid_retcode):
         debug.error("Spice simulation error: " + OPTS.spice_exe + " " + cmd_args)
         sys.exit(-1)
 

@@ -190,11 +190,25 @@ def set_spice():
     if OPTS.spice_version == "ngspice":
         os.environ["NGSPICE_INPUT_DIR"] = "{0}".format(OPTS.openram_temp)
 
-    # search for calibre in the path
     for path in os.environ["PATH"].split(os.pathsep):
         OPTS.spice_exe = os.path.join(path, OPTS.spice_version)
         # if it is found, then break and use first version
         if is_exe(OPTS.spice_exe):
+            debug.info(1, "Using spice: " + OPTS.spice_exe)
+            return
+
+    # if we didn't find the previous version, try the other version
+    if OPTS.spice_version == "hspice":
+        OPTS.spice_version = "ngspice"
+    else:
+        OPTS.spice_version = "hspice"
+    debug.warning("Unable to find spice so trying other: " + OPTS.spice_version)
+
+    for path in os.environ["PATH"].split(os.pathsep):
+        OPTS.spice_exe = os.path.join(path, OPTS.spice_version)
+        # if it is found, then break and use first version
+        if is_exe(OPTS.spice_exe):
+            found_spice = True
             debug.info(1, "Using spice: " + OPTS.spice_exe)
             break
     else:

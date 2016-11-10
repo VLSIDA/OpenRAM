@@ -172,7 +172,7 @@ drc["minarea_metal3"] = 0
 spice={}
 spice["nmos"]="n"
 spice["pmos"]="p"
-spice["fet_models"] = [os.environ.get("DRCLVS_HOME")+"/on_c5n.sp"]
+spice["fet_models"] = [os.environ.get("SPICE_MODEL_DIR")+"/on_c5n.sp"]
 
 #spice stimulus related variables
 spice["clock_period"] = 10.0

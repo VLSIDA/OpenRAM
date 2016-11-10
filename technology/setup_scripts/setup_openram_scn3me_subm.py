@@ -22,6 +22,7 @@ os.environ["MGC_TMPDIR"] = "/tmp"
 OPENRAM_TECH=os.path.abspath(os.environ.get("OPENRAM_TECH"))
 DRCLVS_HOME=OPENRAM_TECH+"/scn3me_subm/tech"
 os.environ["DRCLVS_HOME"] = DRCLVS_HOME 
+os.environ["SPICE_MODEL_DIR"] = "/mada/software/techfiles/scn3me_subm"
 
 ##########################
 # Paths required for OPENRAM to function

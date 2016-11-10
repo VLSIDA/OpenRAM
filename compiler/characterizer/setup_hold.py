@@ -199,6 +199,8 @@ class setup_hold():
             upper_bound = 1.5*period
 
         previous_time = target_time
+        debug.info(2,"Checking initial setup/hold time: {0} ".format(target_time))
+                   
         # Initial Check if reference setup time passes for correct_value 
         self.write_stimulus(mode=mode, 
                             target_time=target_time, 
@@ -220,6 +222,9 @@ class setup_hold():
             debug.error("Initial period/target hold time fails for data value",2)
 
         # We already found it feasible, so advance one step first thing.
+        debug.info(2,"Performing bidir search on setup/hold time: {2} LB: {0} UB: {1} ".format(lower_bound,
+                                                                                               upper_bound,
+                                                                                               setuphold_time))
         if mode == "HOLD":
             target_time -= 0.5 * (upper_bound - lower_bound)
         else:
@@ -269,6 +274,8 @@ class setup_hold():
                 setuphold_time = target_time - period
             else:
                 setuphold_time = period - target_time
+
+        debug.info(2,"Converged on setup/hold time: {0} ".format(setuphold_time))                
         return setuphold_time
 
 

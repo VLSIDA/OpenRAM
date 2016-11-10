@@ -196,7 +196,7 @@ def set_spice():
             OPTS.spice_exe = spice_exe
             break
         
-    if not OPTS.force_spice:
+    if not OPTS.force_spice and OPTS.spice_exe == "":
         # if we didn't find the preferred version, try the other version and warn
         prev_version=OPTS.spice_version
         if OPTS.spice_version == "hspice":

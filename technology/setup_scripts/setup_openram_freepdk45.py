@@ -23,11 +23,9 @@ os.environ["MGC_TMPDIR"] = "/tmp"
 #OpenRAM Paths
 
 DRCLVS_HOME= PDK_DIR+"/ncsu_basekit/techfile/calibre"
-os.environ["DRCLVS_HOME"] = DRCLVS_HOME 
-try:
-    SPICE_MODEL_DIR = os.path.abspath(os.environ.get("SPICE_MODEL_DIR"))
-except:
-    os.environ["SPICE_MODEL_DIR"] = PDK_DIR+"/ncsu_basekit/models/hspice/tran_models/models_nom"
+os.environ["DRCLVS_HOME"] = DRCLVS_HOME
+
+os.environ["SPICE_MODEL_DIR"] = PDK_DIR+"/ncsu_basekit/models/hspice/tran_models/models_nom"
 
 ##########################
 #Paths required for OPENRAM to function

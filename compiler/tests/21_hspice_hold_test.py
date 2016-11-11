@@ -4,7 +4,7 @@ Run a regresion test on various srams
 """
 
 import unittest
-from header import header
+from testutils import header,isclose
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
@@ -43,10 +43,6 @@ class timing_setup_test(unittest.TestCase):
             self.assertTrue(isclose(zero_setup_time,-0.0830078125))
         else:
             self.assertTrue(False) # other techs fail
-
-def isclose(value1,value2):
-    """ This is used to compare relative values for convergence. """
-    return (abs(value1 - value2) / max(value1,value2) <= 1e-2)
 
 
 # instantiate a copdsay of the class to actually run the test

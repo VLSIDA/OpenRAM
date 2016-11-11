@@ -4,7 +4,7 @@ Check the LEF file for an SRMA
 """
 
 import unittest
-from header import header
+from testutils import header
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals

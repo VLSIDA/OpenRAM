@@ -6,6 +6,7 @@ import tech
 import math
 import stimuli
 import charutils as ch
+import utils
 
 OPTS = globals.get_opts()
 

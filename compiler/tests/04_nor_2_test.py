@@ -5,7 +5,7 @@ This module doesn't generate multi_finger 2_input nor gate
 It generate only the minimum size 2_input nor gate that is nmos_width=2*tech.drc[minwidth_tx]
 """
 import unittest
-from header import header
+from testutils import header
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals

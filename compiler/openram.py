@@ -117,5 +117,6 @@ libname = OPTS.out_path + s.name + ".lib"
 print "LIB: Writing to {0}".format(libname)
 lib.lib(libname,s,sram_file)
 
+globals.end_openram()
 
 print "End: ", datetime.datetime.now()

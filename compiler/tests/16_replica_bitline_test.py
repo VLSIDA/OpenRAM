@@ -31,6 +31,8 @@ class replica_bitline_test(unittest.TestCase):
         OPTS.check_lvsdrc = True
         self.local_check(a)
 
+        globals.end_openram()
+        
     def local_check(self, a):
         tempspice = OPTS.openram_temp + "temp.sp"
         tempgds = OPTS.openram_temp + "temp.gds"

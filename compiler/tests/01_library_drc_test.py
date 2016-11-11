@@ -33,7 +33,7 @@ class library_drc_test(unittest.TestCase):
 
         # fails if there are any DRC errors on any cells
         self.assertEqual(drc_errors, 0)
-
+        globals.end_openram()
 
 def setup_files():
     gds_dir = OPTS.openram_tech + "/gds_lib"

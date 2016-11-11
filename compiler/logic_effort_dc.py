@@ -160,11 +160,11 @@ class logic_effort_dc(design.design):
             if end_inv < half_length:
                 end_i_offset =  end_inv_offset + \
                                 self.inv.input_position.scale(1,-1)
-                M2_end = [end_i_offset[0], end_i_offset[1] - 0.5 * drc["minwidth_metal2"]]
+                M2_end = end_i_offset - vector(0, 0.5 * drc["minwidth_metal2"])
             else:
                 end_i_offset =  end_inv_offset + \
                                 self.inv.input_position.scale(-1,1)
-                M2_end = [end_i_offset[0], end_i_offset[1] + 0.5 * drc["minwidth_metal2"]]
+                M2_end = end_i_offset + vector(0, 0.5 * drc["minwidth_metal2"])
 
             if start_inv < half_length and end_inv >= half_length:
                 mid = [half_length * self.inv.width \

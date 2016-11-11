@@ -150,12 +150,12 @@ class hierarchical_predecode(design.design):
                 y_off = nand_input * (self.nand.height)
                 mirror = "R0"
                 offset = [self.x_off_nand + self.nand.width,
-                          y_off + self.nand.Z_position[1]]
+                          y_off + self.nand.Z_position.y]
             else:
                 y_off = (nand_input + 1) * (self.nand.height)
                 mirror = "MX"
                 offset =[self.x_off_nand + self.nand.width,
-                         y_off - self.nand.Z_position[1] - drc["minwidth_metal1"]]
+                         y_off - self.nand.Z_position.y - drc["minwidth_metal1"]]
             self.add_inst(name=name,
                           mod=self.nand,
                           offset=[self.x_off_nand, y_off],
@@ -175,22 +175,22 @@ class hierarchical_predecode(design.design):
     def route_input_inverters_input(self,inv_rout,inv_in_offset):
         self.add_rect(layer="metal1",
                       offset=[self.rails_x_offset[inv_rout],
-                              inv_in_offset[1]],
-                      width=inv_in_offset[0] - self.rails_x_offset[inv_rout] + drc["minwidth_metal2"],
+                              inv_in_offset.y],
+                      width=inv_in_offset.x - self.rails_x_offset[inv_rout] + drc["minwidth_metal2"],
                       height=drc["minwidth_metal1"])
         self.add_via(layers=("metal1", "via1", "metal2"),
                      offset=[self.rails_x_offset[inv_rout] + self.gap_between_rails,
-                             inv_in_offset[1] - self.via_shift],
+                             inv_in_offset.y - self.via_shift],
                      rotate=90)
 
     def route_input_inverters_vdd(self,inv_vdd_offset):
         self.add_rect(layer="metal1",
                       offset=inv_vdd_offset,
-                      width=self.rails_x_offset[self.number_of_inputs] - inv_vdd_offset[0] + drc["minwidth_metal2"],
+                      width=self.rails_x_offset[self.number_of_inputs] - inv_vdd_offset.x + drc["minwidth_metal2"],
                       height=drc["minwidth_metal1"])
 
     def route_input_inverters_gnd(self,inv_gnd_offset):
         self.add_rect(layer="metal1",
                       offset=inv_gnd_offset,
-                      width=self.rails_x_offset[self.number_of_inputs+1] - inv_gnd_offset[0] + drc["minwidth_metal2"],
+                      width=self.rails_x_offset[self.number_of_inputs+1] - inv_gnd_offset.x + drc["minwidth_metal2"],
                       height=drc["minwidth_metal1"])

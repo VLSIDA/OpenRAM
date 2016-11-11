@@ -92,3 +92,10 @@ class vector():
             y_factor=x_factor[1]
             x_factor=x_factor[0]
         return vector(self.x*x_factor,self.y*y_factor)
+
+    def rotate_scale(self, x_factor, y_factor=None):
+        """ pass a copy of scaled vector, without altering the vector! """
+        if y_factor==None:
+            y_factor=x_factor[1]
+            x_factor=x_factor[0]
+        return vector(self.y*x_factor,self.x*y_factor)

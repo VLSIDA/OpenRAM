@@ -35,3 +35,5 @@ Remove duplicate clock inverter in MS flop.
 
 Make lib file have delay relative to negedge for DATA. Must update
 timing code too.
+
+Convert characterizer into a Python package

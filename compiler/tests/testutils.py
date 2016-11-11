@@ -6,7 +6,7 @@ def isclose(value1,value2,error_tolerance=1e-2):
     relative_diff = abs(value1 - value2) / max(value1,value2)
     check = relative_diff <= error_tolerance
     if not check:
-        debug.info(2,"NOT CLOSE {0} {1} relative diff={2}".format(value1,value2,relative_diff))
+        debug.info(1,"NOT CLOSE {0} {1} relative diff={2}".format(value1,value2,relative_diff))
     else:
         debug.info(2,"CLOSE {0} {1} relative diff={2}".format(value1,value2,relative_diff))
     return (check)

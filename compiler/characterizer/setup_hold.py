@@ -170,16 +170,17 @@ class setup_hold():
 
         if OPTS.spice_version == "hspice":
             self.sf.write(".probe V(*)\n")
-            # end the stimulus file
-            self.sf.write(".end\n")
         else:
-            self.sf.write(".control\n")
-            self.sf.write("run\n")
-            self.sf.write("* plot clk_buf data_buf doutrun\n")
-            self.sf.write("quit\n")
-            self.sf.write(".endc\n")
-            self.sf.write(".end\n")
+            pass
+            # This is only needed for ngspice <26
+            # self.sf.write(".control\n")
+            # self.sf.write("run\n")
+            # self.sf.write("* plot clk_buf data_buf doutrun\n")
+            # self.sf.write("quit\n")
+            # self.sf.write(".endc\n")
 
+        # end the stimulus file
+        self.sf.write(".end\n")
 
     def bidir_search(self, correct_value, noise_margin, measure_name, mode):
         """ This will perform a bidirectional search for either setup or hold times.

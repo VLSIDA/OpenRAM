@@ -167,18 +167,8 @@ class setup_hold():
         end_time = 2 * period
         self.sf.write(".TRAN 5p {0}n\n".format(end_time))
         self.sf.write(".OPTIONS POST=1 PROBE\n")
-
-        if OPTS.spice_version == "hspice":
-            self.sf.write(".probe V(*)\n")
-        else:
-            pass
-            # This is only needed for ngspice <26
-            # self.sf.write(".control\n")
-            # self.sf.write("run\n")
-            # self.sf.write("* plot clk_buf data_buf doutrun\n")
-            # self.sf.write("quit\n")
-            # self.sf.write(".endc\n")
-
+        # create plots for all signals
+        self.sf.write(".probe V(*)\n")
         # end the stimulus file
         self.sf.write(".end\n")
 

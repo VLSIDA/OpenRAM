@@ -32,3 +32,6 @@ Change the delay measurement to be from the negative clock edge to
 remove the dependency on the clock period.
 
 Remove duplicate clock inverter in MS flop.
+
+Make lib file have delay relative to negedge for DATA. Must update
+timing code too.

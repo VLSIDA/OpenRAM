@@ -272,11 +272,15 @@ class delay():
             self.sf.write(".end\n")
             self.sf.close()
         else:
-            self.sf.write(".control\n")
-            self.sf.write("run\n")
-            self.sf.write("quit\n")
-            self.sf.write(".endc\n")
-            self.sf.write(".end\n")
+            pass
+            # This is only needed for ngspice <26
+            # self.sf.write(".control\n")
+            # self.sf.write("run\n")
+            # self.sf.write("quit\n")
+            # self.sf.write(".endc\n")
+
+        # end the stimulus file
+        self.sf.write(".end\n")
 
 
 

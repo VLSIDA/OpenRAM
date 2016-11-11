@@ -13,9 +13,7 @@ import calibre
 
 OPTS = globals.get_opts()
 
-#@unittest.skip("SKIPPING 21_timing_sram_test")
-
-
+@unittest.skip("SKIPPING 21_ngspice_delay_test")
 class timing_sram_test(unittest.TestCase):
 
     def runTest(self):
@@ -55,7 +53,7 @@ class timing_sram_test(unittest.TestCase):
             self.assertTrue(isclose(data['min_period1'],0.078582763671875))
             self.assertTrue(isclose(data['min_period0'],0.25543212890625))
         elif OPTS.tech_name == "scn3me_subm":
-            self.assertTrue(isclose(data['delay1'],1.5335))
+            self.assertTrue(isclose(data['delay1'],1.618362))
             self.assertTrue(isclose(data['delay0'],2.2635000000000005))
             self.assertTrue(isclose(data['min_period1'],1.53564453125))
             self.assertTrue(isclose(data['min_period0'],2.998046875))

@@ -16,14 +16,14 @@ def isdiff(file1,file2):
     import debug
     import filecmp
     import difflib
-    check = filecmp.cmp(libname,golden)
+    check = filecmp.cmp(file1,file2)
     if not check:
         debug.info(2,"MISMATCH {0} {1}".format(file1,file2))
         f1 = open(file1,"r")
         s1 = f1.readlines()
         f2 = open(file2,"r")
         s2 = f2.readlines()
-        for line in unified_diff(s1, s2):
+        for line in difflib.unified_diff(s1, s2):
             debug.error(line)   
     else:
         debug.info(2,"MATCH {0} {1}".format(file1,file2))

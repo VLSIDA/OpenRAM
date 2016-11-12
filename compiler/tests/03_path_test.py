@@ -75,7 +75,8 @@ class path_test(unittest.TestCase):
 
         # return it back to it's normal state
         OPTS.check_lvsdrc = True
-
+        globals.end_openram()
+        
     def local_check(self, w):
         tempgds = OPTS.openram_temp + "temp.gds"
         w.gds_write(tempgds)

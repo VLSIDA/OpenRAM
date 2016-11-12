@@ -42,6 +42,7 @@ class pinv_test(unittest.TestCase):
         OPTS.check_lvsdrc = True
         self.local_check(tx)
 
+        globals.end_openram()        
 
     def local_check(self, tx):
         tempspice = OPTS.openram_temp + "temp.sp"

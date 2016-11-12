@@ -45,6 +45,8 @@ class verilog_test(unittest.TestCase):
 
         os.system("rm {0}".format(vname))
 
+        globals.end_openram()
+        
 # instantiate a copdsay of the class to actually run the test
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

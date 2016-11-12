@@ -37,7 +37,7 @@ class library_lvs_test(unittest.TestCase):
 
         # fail if the error count is not zero
         self.assertEqual(lvs_errors, 0)
-
+        globals.end_openram()
 
 def setup_files():
     gds_dir = OPTS.openram_tech + "/gds_lib"

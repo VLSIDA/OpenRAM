@@ -60,6 +60,9 @@ class timing_sram_test(unittest.TestCase):
             self.assertTrue(False) # other techs fail
 
         os.remove(tempspice)
+        
+        globals.end_openram()
+        
 
 def isclose(value1,value2):
     """ This is used to compare relative values for convergence. """

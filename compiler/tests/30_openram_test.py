@@ -24,10 +24,8 @@ class openram_test(unittest.TestCase):
 
         debug.info(1, "Testing top-level openram.py with 2-bit, 16 word SRAM.")
         out_file = "testsram"
-        # get the directory under the test modules
-        out_path=os.path.dirname(os.path.realpath(__file__)) 
           # make a temp directory for output
-        out_path += "/testsram"
+        out_path = OPTS.openram_temp + out_file
 
         # make sure we start without the files existing
         if os.path.exists(out_path):

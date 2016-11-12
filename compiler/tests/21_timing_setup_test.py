@@ -40,6 +40,8 @@ class timing_setup_test(unittest.TestCase):
         else:
             self.assertTrue(False) # other techs fail
 
+        globals.end_openram()
+        
 def isclose(value1,value2):
     """ This is used to compare relative values for convergence. """
     return (abs(value1 - value2) / max(value1,value2) <= 1e-2)

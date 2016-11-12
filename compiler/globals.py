@@ -134,7 +134,16 @@ def set_calibre():
             debug.warning("Calibre not found. Not performing inline LVS/DRC.")
             OPTS.check_lvsdrc = False
 
+def end_openram():
+    """ Clean up openram for a proper exit """
+    cleanup_paths()
+    
+def cleanup_paths():
+    # we should clean up this temp directory after execution...
 
+    if os.path.exists(OPTS.openram_temp):
+        shutil.rmtree(OPTS.openram_temp, ignore_errors=True)
+            
 def setup_paths():
     """ Set up the non-tech related paths. """
     debug.info(2,"Setting up paths...")
@@ -150,14 +159,11 @@ def setup_paths():
     sys.path.append("{0}/tests".format(OPENRAM_HOME))
     sys.path.append("{0}/characterizer".format(OPENRAM_HOME))
 
-
     if not OPTS.openram_temp.endswith('/'):
         OPTS.openram_temp += "/"
     debug.info(1, "Temporary files saved in " + OPTS.openram_temp)
 
-    # we should clean up this temp directory after execution...
-    if os.path.exists(OPTS.openram_temp):
-        shutil.rmtree(OPTS.openram_temp, ignore_errors=True)
+    cleanup_paths()
 
     # make the directory if it doesn't exist
     try:

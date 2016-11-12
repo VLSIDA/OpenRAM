@@ -51,6 +51,8 @@ class sram_func_test(unittest.TestCase):
 
         os.remove(tempspice)
 
+        globals.end_openram()
+        
 # instantiate a copdsay of the class to actually run the test
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

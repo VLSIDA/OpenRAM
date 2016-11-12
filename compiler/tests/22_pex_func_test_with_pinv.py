@@ -24,6 +24,8 @@ class sram_func_test(unittest.TestCase):
         self.func_test(bank_num=2)
         self.func_test(bank_num=4)
 
+        globals.end_openram()
+        
     def func_test(self, bank_num):
 
         import sram

@@ -54,7 +54,8 @@ class contact_test(unittest.TestCase):
             self.local_check(c)
 
         OPTS.check_lvsdrc = True
-
+        globals.end_openram()
+        
     def local_check(self, c):
         tempgds = OPTS.openram_temp + "temp.gds"
         c.gds_write(tempgds)

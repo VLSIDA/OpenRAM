@@ -44,6 +44,8 @@ class timing_setup_test(unittest.TestCase):
         else:
             self.assertTrue(False) # other techs fail
 
+        globals.end_openram()
+        
 # instantiate a copdsay of the class to actually run the test
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

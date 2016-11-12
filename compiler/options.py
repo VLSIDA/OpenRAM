@@ -1,5 +1,6 @@
 import optparse
 import getpass 
+import os
 
 class options(optparse.Values):
     """
@@ -10,7 +11,7 @@ class options(optparse.Values):
     # This is the name of the technology.
     tech_name = ""
     # This is the temp directory where all intermediate results are stored.
-    openram_temp = "/tmp/openram_{0}_temp/".format(getpass.getuser())
+    openram_temp = "/tmp/openram_{0}_{1}_temp/".format(getpass.getuser(),os.getpid())
     # This is the verbosity level to control debug information. 0 is none, 1
     # is minimal, etc.
     debug_level = 0

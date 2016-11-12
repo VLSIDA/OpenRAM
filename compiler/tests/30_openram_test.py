@@ -73,6 +73,7 @@ class openram_test(unittest.TestCase):
             shutil.rmtree(out_path, ignore_errors=True)
         self.assertEqual(os.path.exists(out_path),False)
 
+        globals.end_openram()        
 
 # instantiate a copdsay of the class to actually run the test
 if __name__ == "__main__":

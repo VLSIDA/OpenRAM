@@ -4,7 +4,7 @@ Check the  .v file for an SRAM
 """
 
 import unittest
-from testutils import header
+from testutils import header,isdiff
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
@@ -23,7 +23,6 @@ class verilog_test(unittest.TestCase):
 
         import sram
         import verilog
-        import filecmp
 
         debug.info(1, "Testing Verilog for sample 2 bit, 16 words SRAM with 1 bank")
         s = sram.sram(word_size=2,
@@ -41,7 +40,7 @@ class verilog_test(unittest.TestCase):
 
         # let's diff the result with a golden model
         golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),vfile)
-        self.assertEqual(filecmp.cmp(vname,golden),True)
+        self.assertEqual(isdiff(vname,golden),True)
 
         os.system("rm {0}".format(vname))
 

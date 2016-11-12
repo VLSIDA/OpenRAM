@@ -32,13 +32,11 @@ class lib_test(unittest.TestCase):
                       name="sram_2_16_1_{0}".format(OPTS.tech_name))
         OPTS.check_lvsdrc = True
 
-
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)
 
-        curpath=os.path.dirname(os.path.realpath(__file__)) + "/"
         filename = s.name + ".lib"        
-        libname = curpath + filename
+        libname = OPTS.openram_temp + filename
         lib.lib(libname,s,tempspice)
         
         # let's diff the result with a golden model

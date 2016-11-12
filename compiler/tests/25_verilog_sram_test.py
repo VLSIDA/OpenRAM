@@ -32,9 +32,8 @@ class verilog_test(unittest.TestCase):
 
         OPTS.check_lvsdrc = True
 
-        curpath=os.path.dirname(os.path.realpath(__file__)) + "/"
         vfile = s.name + ".v"
-        vname = curpath + vfile
+        vname = OPTS.openram_temp + vfile
         verilog.verilog(vname,s)
 
 

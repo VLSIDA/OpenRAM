@@ -32,11 +32,10 @@ class lef_test(unittest.TestCase):
 
         OPTS.check_lvsdrc = True
 
-        curpath=os.path.dirname(os.path.realpath(__file__)) + "/"
         gdsfile = s.name + ".gds"
         leffile = s.name + ".lef"
-        gdsname = curpath + gdsfile
-        lefname = curpath + leffile
+        gdsname = OPTS.openram_temp + gdsfile
+        lefname = OPTS.openram_temp + leffile
         s.gds_write(gdsname)
         lef.lef(gdsname,lefname,s)
 

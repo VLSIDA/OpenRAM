@@ -14,19 +14,6 @@ import importlib
 # Current version of OpenRAM.
 VERSION = "1.0"
 
-# Output banner for file output and program execution.
-BANNER = """\
-##############################################################
-#                                                            #                                           
-#                OpenRAM Compiler v""" + VERSION + """                       #
-#                                                            #                                           
-#                VLSI Design Automation Lab                  #
-#                UCSC CE Department                          #
-#                                                            #
-#                VLSI Computer Architecture Research Group   #
-#                Oklahoma State University ECE Department    #
-#                                                            #
-##############################################################\n"""
 
 USAGE = "usage: openram.py [options] <config file>\n"
 
@@ -80,6 +67,25 @@ def parse_args():
 
 def get_opts():
     return(OPTS)
+
+def print_banner():
+    """ Conditionally print the banner to stdout """
+    global OPTS
+    if not OPTS.print_banner:
+        return
+
+    print "|==============================================================================|"
+    name = "OpenRAM Compiler v"+VERSION
+    print "|=========" + name.center(60) + "=========|"
+    print "|=========" + " ".center(60) + "=========|"
+    print "|=========" + "VLSI Design and Automation Lab".center(60) + "=========|"
+    print "|=========" + "University of California Santa Cruz CE Department".center(60) + "=========|"
+    print "|=========" + " ".center(60) + "=========|"
+    print "|=========" + "VLSI Computer Architecture Research Group".center(60) + "=========|"
+    print "|=========" + "Oklahoma State University ECE Department".center(60) + "=========|"
+    print "|=========" + " ".center(60) + "=========|"
+    print "|=========" + OPTS.openram_temp.center(60) + "=========|"
+    print "|==============================================================================|"
 
 
 def init_openram(config_file):

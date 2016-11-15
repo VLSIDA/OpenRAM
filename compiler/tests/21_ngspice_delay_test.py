@@ -56,10 +56,10 @@ class timing_sram_test(unittest.TestCase):
             self.assertTrue(isclose(data['min_period1'],0.078582763671875)) # diff than hspice
             self.assertTrue(isclose(data['min_period0'],0.25543212890625)) # diff than hspice
         elif OPTS.tech_name == "scn3me_subm":
-            self.assertTrue(isclose(data['delay1'],1.617351)) # diff than hspice
-            self.assertTrue(isclose(data['delay0'],0.2980481)) # diff than hspice
-            self.assertTrue(isclose(data['min_period1'],1.6650390625)) # diff than hspice
-            self.assertTrue(isclose(data['min_period0'],1.25244140625)) # diff than hspice
+            self.assertTrue(isclose(data['delay1'],1.5342000000000002)) # diff than hspice
+            self.assertTrue(isclose(data['delay0'],2.2698)) # diff than hspice
+            self.assertTrue(isclose(data['min_period1'],1.534423828125)) # diff than hspice
+            self.assertTrue(isclose(data['min_period0'],2.99560546875)) # diff than hspice
         else:
             self.assertTrue(False) # other techs fail
 

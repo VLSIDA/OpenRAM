@@ -140,7 +140,6 @@ def end_openram():
     
 def cleanup_paths():
     # we should clean up this temp directory after execution...
-
     if os.path.exists(OPTS.openram_temp):
         shutil.rmtree(OPTS.openram_temp, ignore_errors=True)
             
@@ -161,7 +160,7 @@ def setup_paths():
 
     if not OPTS.openram_temp.endswith('/'):
         OPTS.openram_temp += "/"
-    debug.info(1, "Temporary files saved in " + OPTS.openram_temp)
+    debug.info(0, "Temporary files saved in " + OPTS.openram_temp)
 
     cleanup_paths()
 

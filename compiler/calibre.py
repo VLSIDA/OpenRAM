@@ -90,6 +90,7 @@ def run_drc(name, gds_name):
     f.close()
 
     # run drc
+    cwd = os.getcwd()
     os.chdir(OPTS.openram_temp)
     errfile = "%s%s.drc.err" % (OPTS.openram_temp, name)
     outfile = "%s%s.drc.out" % (OPTS.openram_temp, name)
@@ -98,6 +99,7 @@ def run_drc(name, gds_name):
         OPTS.calibre_exe, OPTS.openram_temp, errfile, outfile)
     debug.info(1, cmd)
     os.system(cmd)
+    os.chdir(cwd)
 
     # check the result for these lines in the summary:
     # TOTAL Original Layer Geometries: 106 (157)
@@ -163,6 +165,7 @@ def run_lvs(name, gds_name, sp_name):
     f.close()
 
     # run LVS
+    cwd = os.getcwd()
     os.chdir(OPTS.openram_temp)
     errfile = "%s%s.lvs.err" % (OPTS.openram_temp, name)
     outfile = "%s%s.lvs.out" % (OPTS.openram_temp, name)
@@ -171,6 +174,7 @@ def run_lvs(name, gds_name, sp_name):
         OPTS.openram_temp, errfile, outfile)
     debug.info(2, cmd)
     os.system(cmd)
+    os.chdir(cwd)
 
     # check the result for these lines in the summary:
     f = open(lvs_runset['lvsReportFile'], "r")
@@ -265,6 +269,7 @@ def run_pex(name, gds_name, sp_name, output=None):
     f.close()
 
     # run pex
+    cwd = os.getcwd()
     os.chdir(OPTS.openram_temp)
     errfile = "{0}{1}.pex.err".format(OPTS.openram_temp, name)
     outfile = "{0}{1}.pex.out".format(OPTS.openram_temp, name)
@@ -275,6 +280,7 @@ def run_pex(name, gds_name, sp_name, output=None):
                                                                     outfile)
     debug.info(2, cmd)
     os.system(cmd)
+    os.chdir(cwd)
 
     # also check the output file
     f = open(outfile, "r")

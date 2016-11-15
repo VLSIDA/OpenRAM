@@ -47,12 +47,11 @@ class timing_sram_test(unittest.TestCase):
         d = delay.delay(s,tempspice)
         data = d.analyze(probe_address, probe_data)
 
-        print data
         if OPTS.tech_name == "freepdk45":
-            self.assertTrue(isclose(data['delay1'],0.013649))
-            self.assertTrue(isclose(data['delay0'],0.22893))
-            self.assertTrue(isclose(data['min_period1'],0.078582763671875))
-            self.assertTrue(isclose(data['min_period0'],0.25543212890625))
+            self.assertTrue(isclose(data['delay1'],0.01333683)) # diff than hspice
+            self.assertTrue(isclose(data['delay0'],0.23396480000000003)) # diff than hspice
+            self.assertTrue(isclose(data['min_period1'],0.079193115234375)) # diff than hspice
+            self.assertTrue(isclose(data['min_period0'],0.260162353515625)) # diff than hspice
         elif OPTS.tech_name == "scn3me_subm":
             self.assertTrue(isclose(data['delay1'],1.617351)) # diff than hspice
             self.assertTrue(isclose(data['delay0'],0.2980481)) # diff than hspice

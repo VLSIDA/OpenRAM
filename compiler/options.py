@@ -6,6 +6,7 @@ class options(optparse.Values):
     """
     Class for holding all of the OpenRAM options.
     """
+
     # This is the technology directory.
     openram_tech = ""
     # This is the name of the technology.

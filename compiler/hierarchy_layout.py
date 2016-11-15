@@ -47,13 +47,13 @@ class layout:
         #***1,000,000 number is used to avoid empty sequences errors***
         # FIXME Is this hard coded value ok??
         try:
-            lowestx1 = min(rect.offset[0] for rect in self.objs)
-            lowesty1 = min(rect.offset[1] for rect in self.objs)
+            lowestx1 = min(rect.offset.x for rect in self.objs)
+            lowesty1 = min(rect.offset.y for rect in self.objs)
         except:
             [lowestx1, lowesty1] = [1000000.0, 1000000.0]
         try:
-            lowestx2 = min(inst.offset[0] for inst in self.insts)
-            lowesty2 = min(inst.offset[1] for inst in self.insts)
+            lowestx2 = min(inst.offset.x for inst in self.insts)
+            lowesty2 = min(inst.offset.y for inst in self.insts)
         except:
             [lowestx2, lowesty2] = [1000000.0, 1000000.0]
         return vector(min(lowestx1, lowestx2), min(lowesty1, lowesty2))
@@ -77,21 +77,18 @@ class layout:
                 for i in range(len(attr_val)):
                     # each unit in the list is a list coordinates
                     if isinstance(attr_val[i], (list,vector)):
-                        attr_val[i] = vector([attr_val[i][0] - coordinate.x, 
-                                              attr_val[i][1] - coordinate.y])
+                        attr_val[i] = vector(attr_val[i] - coordinate)
                     # the list itself is a coordinate
                     else:
                         if len(attr_val)!=2: continue
                         for val in attr_val:
                             if not isinstance(val, (int, long, float)): continue
-                        setattr(self,attr_key, vector([attr_val[0] - coordinate.x, 
-                                               attr_val[1] - coordinate.y]))
+                        setattr(self,attr_key, vector(attr_val - coordinate))
                         break
 
             # if is a vector coordinate
             if isinstance(attr_val, vector):
-                setattr(self, attr_key, vector(attr_val[0] - coordinate.x, 
-                                       attr_val[1] - coordinate.y))
+                setattr(self, attr_key, vector(attr_val - coordinate))
 
 
 
@@ -99,11 +96,9 @@ class layout:
         """Translates all 2d cartesian coordinates in a layout given
         the (x,y) offset"""
         for obj in self.objs:
-            obj.offset = snap_to_grid([obj.offset[0] - coordinate.x,
-                                       obj.offset[1] - coordinate.y])
+            obj.offset = vector(snap_to_grid(obj.offset - coordinate)) 
         for inst in self.insts:
-            inst.offset = snap_to_grid([inst.offset[0] - coordinate.x,
-                                        inst.offset[1] - coordinate.y])
+            inst.offset = vector(snap_to_grid(inst.offset - coordinate))
 
     # FIXME: Make name optional and pick a random one if not specified
     def add_inst(self, name, mod, offset=[0,0], mirror="R0",rotate=0):

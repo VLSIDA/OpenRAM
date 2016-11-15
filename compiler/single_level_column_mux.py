@@ -79,7 +79,7 @@ class single_level_column_mux(design.design):
         self.poly_offset = (self.nmos1_position 
                                 + self.nmos1.poly_positions[0]
                                 + vector(0,self.nmos1.poly_height))
-        width=self.nmos2_position[0] - self.nmos1_position[0] + drc["minwidth_poly"]
+        width=self.nmos2_position.x- self.nmos1_position.x+ drc["minwidth_poly"]
         self.poly = self.add_rect(layer="poly",
                                   offset=self.poly_offset,
                                   width=width,
@@ -91,7 +91,7 @@ class single_level_column_mux(design.design):
     def connect_to_bitlines(self):
         offset = [self.nmos1.active_contact_positions[0].x + self.m1m2_via.contact_width / 2 
                   + 3 * (self.m1m2_via.second_layer_width - self.m1m2_via.first_layer_width) / 2,
-                  self.nmos1.active_position[1] + self.nmos1.active_height]
+                  self.nmos1.active_position.y+ self.nmos1.active_height]
         offset = self.nmos1_position + offset
         connection = vector(0, 
                             self.nmos2.active_height+ 2 * drc["poly_extend_active"] \
@@ -101,7 +101,7 @@ class single_level_column_mux(design.design):
                       width=drc["minwidth_metal2"],
                       height=connection.y - drc["minwidth_metal2"])
 
-        self.BL_position = (vector(self.bitcell_chars["BL"][0] - 0.5 * self.m1m2_via.width,
+        self.BL_position = (vector(self.bitcell_chars["BL"][0]- 0.5 * self.m1m2_via.width,
                                    offset.y)
                                 + connection)
         self.add_via(layers=("metal1", "via1", "metal2"),
@@ -116,10 +116,10 @@ class single_level_column_mux(design.design):
                       width=drc["minwidth_metal2"],
                       height=2 * drc["minwidth_metal2"])
 
-        width = self.bitcell_chars["BL"][0] - 0.5 * self.m1m2_via.width - offset[0] + drc["minwidth_metal2"]
+        width = self.bitcell_chars["BL"][0]- 0.5 * self.m1m2_via.width - offset.x+ drc["minwidth_metal2"]
         self.add_rect(layer="metal2",
                       offset=[offset[0],
-                              self.BL_position[1] - 2*drc["minwidth_metal2"]],
+                              self.BL_position.y- 2*drc["minwidth_metal2"]],
                       width=width,
                       height=drc["minwidth_metal2"])
 
@@ -127,24 +127,24 @@ class single_level_column_mux(design.design):
         self.add_via(layers=("metal1", "via1", "metal2"),
                      offset=offset)
         self.add_rect(layer="metal2",
-                      offset=[self.bitcell_chars["BL"][0] - 0.5 * self.m1m2_via.width,
+                      offset=[self.bitcell_chars["BL"][0]- 0.5 * self.m1m2_via.width,
                               0],
                       width=drc["minwidth_metal2"],
                       height=(drc["minwidth_metal2"] + offset[1]))
         self.add_rect(layer="metal2",
-                      offset=[self.bitcell_chars["BL"][0] - 0.5 * self.m1m2_via.width,
+                      offset=[self.bitcell_chars["BL"][0]- 0.5 * self.m1m2_via.width,
                               offset[1]],
-                      width=(offset[0] - self.bitcell_chars["BL"][0] - 0.5 * self.m1m2_via.width
+                      width=(offset.x- self.bitcell_chars["BL"][0]- 0.5 * self.m1m2_via.width
                              + 2 * drc["minwidth_metal2"]),
                       height=drc["minwidth_metal2"])
-        self.BL_out_position = vector(self.bitcell_chars["BL"][0] - 0.5*  self.m1m2_via.width, 
+        self.BL_out_position = vector(self.bitcell_chars["BL"][0]- 0.5*  self.m1m2_via.width, 
                                       0)
         self.add_label(text="bl_out",
                        layer="metal2",
                        offset=self.BL_out_position)
 
         offset = [self.nmos2.active_contact_positions[1].x - self.m1m2_via.contact_width / 2,
-                  self.nmos2.active_position[1] + self.nmos2.active_height]
+                  self.nmos2.active_position.y+ self.nmos2.active_height]
         offset = self.nmos2_position + offset
         self.add_via(layers=("metal1", "via1", "metal2"),
                      offset=offset,
@@ -152,21 +152,21 @@ class single_level_column_mux(design.design):
         mid = offset + vector(drc["minwidth_metal2"],0)
         self.add_rect(layer="metal2",
                       offset= mid,
-                      width= (self.bitcell_chars["BR"][0] - mid[0] + 0.5*self.m1m2_via.width),
+                      width= (self.bitcell_chars["BR"][0]- mid.x+ 0.5*self.m1m2_via.width),
                       height=-drc["minwidth_metal2"])
         self.add_rect(layer="metal2",
-                      offset=[self.bitcell_chars["BR"][0] - 0.5*self.m1m2_via.width,
-                              offset[1] - drc["metal1_to_metal1"]],
+                      offset=[self.bitcell_chars["BR"][0]- 0.5*self.m1m2_via.width,
+                              offset.y- drc["metal1_to_metal1"]],
                       width=drc["minwidth_metal2"],
                       height=2*drc["minwidth_metal2"])
-        self.BR_position = vector(self.bitcell_chars["BR"][0] - 0.5 * self.m1m2_via.width,
+        self.BR_position = vector(self.bitcell_chars["BR"][0]- 0.5 * self.m1m2_via.width,
                                   self.BL_position.y)
         self.add_label(text="br",
                        layer="metal2",
                        offset=self.BR_position)
 
         offset = self.nmos2_position + self.nmos2.active_contact_positions[0]
-        self.BR_out_position = vector(self.bitcell_chars["BR"][0] - 0.5 * self.m1m2_via.width,
+        self.BR_out_position = vector(self.bitcell_chars["BR"][0]- 0.5 * self.m1m2_via.width,
                                       0)
         self.add_label(text="br_out",
                        layer="metal2",
@@ -179,12 +179,12 @@ class single_level_column_mux(design.design):
                       height=drc["minwidth_metal2"])
         self.add_rect(layer="metal2",
                       offset=[self.BR_out_position.x,
-                              offset[1] + drc["minwidth_metal2"]],
+                              offset.y+ drc["minwidth_metal2"]],
                       width=drc["minwidth_metal2"],
-                      height=-(offset[1] + drc["minwidth_metal2"]))
+                      height=-(offset.y+ drc["minwidth_metal2"]))
 
     def add_gnd_rail(self):
-        self.gnd_position = vector(self.bitcell_chars["gnd"][0] - 0.5 * self.m1m2_via.width,
+        self.gnd_position = vector(self.bitcell_chars["gnd"][0]- 0.5 * self.m1m2_via.width,
                                    0)
         self.add_layout_pin(text="gnd",
                       layer="metal2",
@@ -193,7 +193,7 @@ class single_level_column_mux(design.design):
                       height=self.BL_position[1])
 
     def add_well_contacts(self):
-        offset = vector(self.gnd_position[0] + drc["minwidth_metal2"],
+        offset = vector(self.gnd_position.x+ drc["minwidth_metal2"],
                         self.nmos1.poly_height / 2)
         self.add_via(layers=("metal1", "via1", "metal2"),
                      offset=offset - vector(self.m1m2_via.width / 2, 0),
@@ -212,11 +212,11 @@ class single_level_column_mux(design.design):
         offset_well = self.nmos1_position + vector(self.nmos1.width, 0)
         self.add_rect(layer="pwell",
                       offset=offset_well,
-                      width=self.gnd_position[0] + drc["minwidth_metal2"] - offset_well[0],
+                      width=self.gnd_position.x+ drc["minwidth_metal2"] - offset_well[0],
                       height=self.nmos1.height + drc["minwidth_poly"])
         self.add_rect(layer="vtg",
                       offset=offset_well,
-                      width=self.gnd_position[0] + drc["minwidth_metal2"] - offset_well[0],
+                      width=self.gnd_position.x+ drc["minwidth_metal2"] - offset_well[0],
                       height=self.nmos1.height + drc["minwidth_poly"])
 
     def setup_layout_constants(self):

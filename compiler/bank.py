@@ -867,7 +867,7 @@ class bank(design.design):
             for i in range(2):
                 ff_index = i + self.row_addr_size
                 current_dout = self.msf_address.dout_positions[ff_index]
-                msf_row_addr_line_position = (current_dout.rotate().scale(1,-1)
+                msf_row_addr_line_position = (current_dout.rotate_scale(1,-1)
                                                   + self.msf_address_offset)
 
                 line_index = self.num_central_bus - 2 + i
@@ -922,9 +922,9 @@ class bank(design.design):
         elif(self.col_addr_size == 1):
             ff_index = self.row_addr_size
             base = self.msf_address_offset - vector(0, 0.5 * drc["minwidth_metal3"])
-            dout_position = (self.msf_address.dout_positions[ff_index].rotate().scale(1,-1)
+            dout_position = (self.msf_address.dout_positions[ff_index].rotate_scale(1,-1)
                                  + base)
-            dout_bar_position = (self.msf_address.dout_bar_positions[ff_index].rotate().scale(1,-1)
+            dout_bar_position = (self.msf_address.dout_bar_positions[ff_index].rotate_scale(1,-1)
                                      + base)
 
             y_offset = self.msf_address_offset.y - self.msf_address.width
@@ -988,7 +988,7 @@ class bank(design.design):
 
             # addres translation should take care of the 270 degree CCW  rotation
             # addres translation should take care of the 270 degree CCW  rotation
-            msf_row_addr_line_position = (self.msf_address.dout_positions[i].rotate().scale(1,-1)
+            msf_row_addr_line_position = (self.msf_address.dout_positions[i].rotate_scale(1,-1)
                                               + self.msf_address_offset
                                               - vector(0, 0.5 * drc["minwidth_metal3"]))
             connection_width = (self.central_line_xoffset[line_index] + drc["minwidth_metal2"]
@@ -1008,7 +1008,7 @@ class bank(design.design):
 
         for i in range(self.addr_size):
             # Route msf address inputs
-            msf_din_position = (self.msf_address.din_positions[i].rotate().scale(1,-1) 
+            msf_din_position = (self.msf_address.din_positions[i].rotate_scale(1,-1) 
                                     + self.msf_address_offset
                                     - vector(0, 0.5 * drc["minwidth_metal3"]))
             address_position = vector(self.left_vdd_x_offset, 
@@ -1083,7 +1083,7 @@ class bank(design.design):
         """ CLK connection from central bus to MSF address
         should we move this somewhere else hard to find when modify""" 
         msf_address_clk_position = (self.msf_address_offset 
-                                        + self.msf_address.clk_positions[0].rotate().scale(1,-1) 
+                                        + self.msf_address.clk_positions[0].rotate_scale(1,-1) 
                                         + vector(- 0.5 * drc["minwidth_metal1"], 
                                                  2 * drc["minwidth_metal2"]))
         clk_connection_position = (self.msf_address_offset 

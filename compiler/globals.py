@@ -160,7 +160,7 @@ def setup_paths():
 
     if not OPTS.openram_temp.endswith('/'):
         OPTS.openram_temp += "/"
-    debug.info(0, "Temporary files saved in " + OPTS.openram_temp)
+    debug.info(1, "Temporary files saved in " + OPTS.openram_temp)
 
     cleanup_paths()
 

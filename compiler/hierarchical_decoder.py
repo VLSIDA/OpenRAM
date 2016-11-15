@@ -329,7 +329,7 @@ class hierarchical_decoder(design.design):
         # ADDING LABELS FOR OUTPUT SIDE OF THE 3:8 PRE-DECODER
         for inv_3x8 in range(8):
             if (self.num_inputs == 3):
-                xoffset = self.pre3_8.x_off_inv_2 + self.inv.Z_position[0]
+                xoffset = self.pre3_8.x_off_inv_2 + self.inv.Z_position.x
             else:
                 xoffset = 0
 
@@ -403,7 +403,7 @@ class hierarchical_decoder(design.design):
                           mirror=mirror)
             self.add_rect(layer="metal1",
                           offset=[nand.width - correct,
-                                  y_off + y_dir * (nand.Z_position[1]-correct)],
+                                  y_off + y_dir * (nand.Z_position.y-correct)],
                           width=drc["minwidth_metal1"],
                           height=y_dir * drc["minwidth_metal1"])
 
@@ -454,9 +454,9 @@ class hierarchical_decoder(design.design):
 
         # add output label for Row Decoder INVERTER array.
         if (self.num_inputs == 4 or self.num_inputs == 5):
-            x_off = self.nand2.width + self.inv.Z_position[0]
+            x_off = self.nand2.width + self.inv.Z_position.x
         else:
-            x_off = self.nand3.width  + self.inv.Z_position[0]
+            x_off = self.nand3.width  + self.inv.Z_position.x
 
         for row in range(self.rows):
             if ((row % 2) == 0):
@@ -502,10 +502,10 @@ class hierarchical_decoder(design.design):
                                       + inv_2x4 * (self.inv.height))
 
             if (inv_2x4 % 2 == 0):
-                pin_y = self.inv.Z_position[1]
+                pin_y = self.inv.Z_position.y
             else:
                 pin_y = (self.inv.height - drc["minwidth_metal1"]
-                             - self.inv.Z_position[1])
+                             - self.inv.Z_position.y)
             yoffset = current_inv_height + pin_y
 
             self.add_extend_rails(yoffset = yoffset, 
@@ -519,10 +519,10 @@ class hierarchical_decoder(design.design):
                 + self.no_of_pre2x4 * self.pre2_4.height
 
             if (inv_3x8 % 2 == 0):
-                pin_y = self.inv.Z_position[1]
+                pin_y = self.inv.Z_position.y
             else:
                 pin_y = (self.inv.height - drc["minwidth_metal1"] 
-                         - self.inv.Z_position[1])
+                         - self.inv.Z_position.y)
             yoffset = current_inv_height + pin_y
 
             self.add_extend_rails(yoffset = yoffset, 
@@ -545,13 +545,13 @@ class hierarchical_decoder(design.design):
 
                     current_inv_height = self.predecoder_height + row_index * (self.inv.height)
                     if (row_index % 2 == 0):
-                        yoffset_A = current_inv_height + self.nand2.A_position[1]
-                        yoffset_B = current_inv_height + self.nand2.B_position[1]
+                        yoffset_A = current_inv_height + self.nand2.A_position.y
+                        yoffset_B = current_inv_height + self.nand2.B_position.y
 
                     else:
                         base = current_inv_height + self.inv.height - drc["minwidth_metal1"]
-                        yoffset_A = base - self.nand2.A_position[1]
-                        yoffset_B = base - self.nand2.B_position[1]
+                        yoffset_A = base - self.nand2.A_position.y
+                        yoffset_B = base - self.nand2.B_position.y
 
                     row_index = row_index + 1
                     self.add_extend_rails(yoffset =yoffset_A, 
@@ -567,15 +567,15 @@ class hierarchical_decoder(design.design):
                         current_inv_height = self.predecoder_height + row_index * (self.inv.height)
 
                         if (row_index % 2 == 0):
-                            yoffset_A = current_inv_height + self.nand3.A_position[1]
-                            yoffset_B = current_inv_height + self.nand3.B_position[1]
-                            yoffset_C = current_inv_height + self.nand3.C_position[1]
+                            yoffset_A = current_inv_height + self.nand3.A_position.y
+                            yoffset_B = current_inv_height + self.nand3.B_position.y
+                            yoffset_C = current_inv_height + self.nand3.C_position.y
                             contact_C_yoffset = yoffset_C - self.contact_shift
                         else:
                             base = current_inv_height + self.inv.height - drc["minwidth_metal1"]
-                            yoffset_A = base - self.nand3.A_position[1]
-                            yoffset_B = base - self.nand3.B_position[1]
-                            yoffset_C = base - self.nand3.C_position[1]
+                            yoffset_A = base - self.nand3.A_position.y
+                            yoffset_B = base - self.nand3.B_position.y
+                            yoffset_C = base - self.nand3.C_position.y
                             contact_C_yoffset = yoffset_C
 
                         row_index = row_index + 1

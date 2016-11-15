@@ -5,6 +5,7 @@ This provides a set of useful generic types for the gdsMill interface.
 import tech
 import debug
 from utils import snap_to_grid
+from vector import vector
 
 class geometry:
     """
@@ -37,7 +38,7 @@ class instance(geometry):
         self.mod = mod
         self.gds = mod.gds
         self.rotate = rotate
-        self.offset = snap_to_grid(offset)
+        self.offset = vector(snap_to_grid(offset))
         self.mirror = mirror
 
 
@@ -104,7 +105,7 @@ class label(geometry):
         self.name = "label"
         self.text = text
         self.layerNumber = layerNumber
-        self.offset = snap_to_grid(offset)
+        self.offset = vector(snap_to_grid(offset))
         self.zoom = zoom
         self.size = 0
 
@@ -134,7 +135,7 @@ class rectangle(geometry):
         geometry.__init__(self)
         self.name = "rect"
         self.layerNumber = layerNumber
-        self.offset = snap_to_grid(offset)
+        self.offset = vector(snap_to_grid(offset))
         self.size = snap_to_grid([width, height])
         self.width = self.size[0]
         self.height = self.size[1]

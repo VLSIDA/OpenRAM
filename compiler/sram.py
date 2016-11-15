@@ -380,14 +380,14 @@ class sram(design.design):
 
         self.width = self.bank.width + self.control.height + 2*drc["minwidth_metal3"]
         self.height = self.bank.height
-        self.control.CSb_position.rotate().scale(-1,1)
-        self.CSb_position = (self.control.CSb_position.rotate().scale(-1,1)
+        self.control.CSb_position.rotate_scale(-1,1)
+        self.CSb_position = (self.control.CSb_position.rotate_scale(-1,1)
                                 +self.control_position)
-        self.OEb_position = (self.control.OEb_position.rotate().scale(-1,1)
+        self.OEb_position = (self.control.OEb_position.rotate_scale(-1,1)
                                 +self.control_position)
-        self.WEb_position = (self.control.WEb_position.rotate().scale(-1,1)
+        self.WEb_position = (self.control.WEb_position.rotate_scale(-1,1)
                                 +self.control_position)
-        self.clk_position = (self.control.clk_position.rotate().scale(-1,1)
+        self.clk_position = (self.control.clk_position.rotate_scale(-1,1)
                                 +self.control_position)
         for i in range(0, self.word_size):
             self.add_label(text="DATA[{0}]".format(i),
@@ -612,7 +612,7 @@ class sram(design.design):
                 bank_attr = self.sram_property[attr_index]
                 self.add_rect(layer="metal3",
                               offset=getattr(self,bank_attr)[left_bank_index], 
-                              width=getattr(self,bank_attr)[right_bank_index].x - getattr(self,bank_attr)[left_bank_index][0],
+                              width=getattr(self,bank_attr)[right_bank_index].x - getattr(self,bank_attr)[left_bank_index].x,
                               height=drc["minwidth_metal3"])
                 self.add_via(layers=("metal2", "via2", "metal3"),
                              offset=[self.vertical_line_positions[attr_index].x,
@@ -710,17 +710,17 @@ class sram(design.design):
             # 0 = s_en
 
             control_side = []
-            control_side.append(self.control.clk_position.rotate().scale(-1, 1)
+            control_side.append(self.control.clk_position.rotate_scale(-1, 1)
                                      + self.control_position)
-            control_side.append(self.control.clk_bar_position.rotate().scale(-1, 1)
+            control_side.append(self.control.clk_bar_position.rotate_scale(-1, 1)
                                      + self.control_position)
-            control_side.append(self.control.tri_en_position.rotate().scale(-1, 1)
+            control_side.append(self.control.tri_en_position.rotate_scale(-1, 1)
                                      + self.control_position)
-            control_side.append(self.control.tri_en_bar_position.rotate().scale(-1, 1)
+            control_side.append(self.control.tri_en_bar_position.rotate_scale(-1, 1)
                                      + self.control_position)
-            control_side.append(self.control.w_en_position.rotate().scale(-1, 1)
+            control_side.append(self.control.w_en_position.rotate_scale(-1, 1)
                                      + self.control_position)
-            control_side.append(self.control.s_en_position.rotate().scale(-1, 1)
+            control_side.append(self.control.s_en_position.rotate_scale(-1, 1)
                                      + self.control_position)
 
             bank_side = []
@@ -763,14 +763,14 @@ class sram(design.design):
                 msb_line = self.control_size + self.num_banks/2 - 1 - i
                 bank_select_start_line = msb_line + 2 + self.bank_addr_size
 
-                msf_msb_din = (self.msf_msb_address.din_positions[i].rotate().scale(1, -1)
+                msf_msb_din = (self.msf_msb_address.din_positions[i].rotate_scale(1, -1)
                                    + self.msf_msb_address_position) 
 
-                contact_pos = [self.vertical_line_positions[msb_line].x, 
-                               msf_msb_din.y - 0.5*self.m2m3_via.width]
+                contact_pos = vector(self.vertical_line_positions[msb_line].x, 
+                                     msf_msb_din.y - 0.5*self.m2m3_via.width)
                 self.add_rect(layer="metal3",
                               offset=contact_pos,
-                              width=msf_msb_din[0] - contact_pos[0],
+                              width=msf_msb_din.x - contact_pos.x,
                               height=drc["minwidth_metal3"])
                 self.add_via(layers=("metal2", "via2", "metal3"),
                              offset=contact_pos)
@@ -785,9 +785,9 @@ class sram(design.design):
                           height=drc["minwidth_metal1"])
 
             if(self.num_banks == 2):
-                msb_msf_dout_position = (self.msf_msb_address.dout_positions[i].rotate().scale(1, -1)
+                msb_msf_dout_position = (self.msf_msb_address.dout_positions[i].rotate_scale(1, -1)
                                              + self.msf_msb_address_position)
-                msb_msf_dout_bar_position = (self.msf_msb_address.dout_bar_positions[i].rotate().scale(1, -1)
+                msb_msf_dout_bar_position = (self.msf_msb_address.dout_bar_positions[i].rotate_scale(1, -1)
                                              + self.msf_msb_address_position)
                 starts = [msb_msf_dout_bar_position,
                           msb_msf_dout_position]
@@ -801,7 +801,7 @@ class sram(design.design):
                                       + self.msf_msb_address.height 
                                       + 4 * (i + 1) * drc["minwidth_metal2"],
                                   start.y)
-                    end = vector(mid1.x, self.msf_msb_address_position[1] 
+                    end = vector(mid1.x, self.msf_msb_address_position.y
                                              + 4 * (i + 1) * drc["minwidth_metal2"])
                     self.add_wire(("metal1", "via1", "metal2"), [start, mid1, end])
 
@@ -818,7 +818,7 @@ class sram(design.design):
 
             if(self.num_banks == 4):
                 for i in range(2):
-                    msb_msf_out_position = (self.msf_msb_address.dout_positions[i].rotate().scale(1, -1)
+                    msb_msf_out_position = (self.msf_msb_address.dout_positions[i].rotate_scale(1, -1)
                                              + self.msf_msb_address_position)
                     msb_decoder_in_position =(self.msb_decoder.A_positions[i].scale(-1, 1)
                                                   + self.msb_decoder_position
@@ -827,7 +827,7 @@ class sram(design.design):
                     start = msb_msf_out_position
                     mid1 = start + vector(4 * (i + 1) * drc["minwidth_metal1"], 0)
                     mid2 = vector(mid1.x, msb_decoder_in_position.y)
-                    end = vector(self.msb_decoder_position[0] 
+                    end = vector(self.msb_decoder_position.x 
                                      + 3*drc["minwidth_metal3"],
                                  mid2.y)
 
@@ -874,9 +874,9 @@ class sram(design.design):
 
         # control logic
         self.control_vdd1_position = (self.control_position
-                                          + self.control.vdd1_position.rotate().scale(-1, 1))
+                                          + self.control.vdd1_position.rotate_scale(-1, 1))
         self.control_vdd2_position = (self.control_position
-                                          + self.control.vdd2_position.rotate().scale(-1, 1))
+                                          + self.control.vdd2_position.rotate_scale(-1, 1))
 
         self.add_rect(layer="metal1",
                       offset=self.control_vdd1_position,
@@ -974,7 +974,7 @@ class sram(design.design):
 
         # msf_msb_address
         start = msf_address_vdd_position = (self.msf_msb_address_position
-                                                 + self.msf_msb_address.vdd_positions[0].rotate().scale(1,-1))
+                                                 + self.msf_msb_address.vdd_positions[0].rotate_scale(1,-1))
         mid1 = vector(start.x,
                       self.msf_msb_address_position.y 
                           - self.msf_msb_address.width 
@@ -1029,7 +1029,7 @@ class sram(design.design):
                        offset=self.gnd_offset)
 
         self.control_gnd_position = (self.control_position
-                                        + self.control.gnd_position.rotate().scale(-1,1) 
+                                        + self.control.gnd_position.rotate_scale(-1,1) 
                                         + vector(drc["minwidth_metal2"],0))
 
         self.add_rect(layer="metal3",
@@ -1070,12 +1070,12 @@ class sram(design.design):
         self.add_rect(layer="metal2",
                       offset=self.sram_bank_left_gnd_positions[0],
                       width=drc["minwidth_metal2"],
-                      height=control_gnd_supply[1] + drc["minwidth_metal1"]
+                      height=control_gnd_supply.y + drc["minwidth_metal1"]
                                  - self.sram_bank_left_gnd_positions[0].y)
         self.add_via(layers=("metal1", "via1", "metal2"),
                      offset=[self.sram_bank_left_gnd_positions[0].x
                                   + drc["minwidth_metal2"],
-                             control_gnd_supply[1]],
+                             control_gnd_supply.y],
                      mirror="R90")
         # Control gnd
         self.add_via(layers=("metal1", "via1", "metal2"),

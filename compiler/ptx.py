@@ -56,10 +56,10 @@ class ptx(design.design):
 
         # We can do this in ptx because we have offset all modules it uses.
         # Is this really true considering the paths that connect the src/drain?
-        self.height = max(max(obj.offset[1] + obj.height for obj in self.objs),
-                                  max(inst.offset[1] + inst.mod.height for inst in self.insts))
-        self.width = max(max(obj.offset[0] + obj.width for obj in self.objs),
-                                 max(inst.offset[0] + inst.mod.width for inst in self.insts))
+        self.height = max(max(obj.offset.y + obj.height for obj in self.objs),
+                                  max(inst.offset.y + inst.mod.height for inst in self.insts))
+        self.width = max(max(obj.offset.x + obj.width for obj in self.objs),
+                                 max(inst.offset.x + inst.mod.width for inst in self.insts))
 
     def create_spice(self):
         self.spice.append("\n.SUBCKT {0} {1}".format(self.name,
@@ -78,29 +78,27 @@ class ptx(design.design):
         self.mults_poly_to_poly = max(2 * drc["contact_to_poly"] + drc["minwidth_contact"],
                                       drc["poly_to_poly"])
         outeractive_to_contact = max(drc["active_enclosure_contact"],
-                                     (drc["minwidth_active"] - drc["minwidth_contact"]) / 2)
-        self.active_width = 2 * (outeractive_to_contact \
-                                         + drc["minwidth_contact"] \
-                                         + drc["contact_to_poly"]) \
-                                         + drc["minwidth_poly"] \
-                                         + (self.mults - 1) * (
-                                             self.mults_poly_to_poly + drc["minwidth_poly"])
+                                    (drc["minwidth_active"] - drc["minwidth_contact"]) / 2)
+        self.active_width = (2 * (outeractive_to_contact + drc["minwidth_contact"] 
+                                     + drc["contact_to_poly"])
+                                 + drc["minwidth_poly"]
+                                 + (self.mults - 1) * (self.mults_poly_to_poly 
+                                                           + drc["minwidth_poly"]))
         self.active_height = max(drc["minarea_active"] / self.active_width,
-                                         self.gate_width)
+                                 self.gate_width)
         self.poly_width = drc["minwidth_poly"]  # horizontal
         self.poly_height = max(drc["minarea_poly"] / self.poly_width,
-                                       self.gate_width \
-                                       + 2 * drc["poly_extend_active"])  # vertical
-        self.well_width = self.active_width \
-                                  + 2 * (drc["well_enclosure_active"])
+                               self.gate_width 
+                                   + 2 * drc["poly_extend_active"])  # vertical
+        self.well_width = (self.active_width
+                               + 2 * (drc["well_enclosure_active"]))
         self.well_height = max(self.gate_width + 2 * (drc["well_enclosure_active"]),
-                                       drc["minwidth_well"])
+                               drc["minwidth_well"])
 
     def connect_fingered_poly(self):
-        poly_connect_length = self.poly_positions[-1][0] + self.poly_width \
-                              - self.poly_positions[0][0]
-        poly_connect_position = [self.poly_positions[0][0],
-                                 self.poly_positions[0][1] - self.poly_width]
+        poly_connect_length = self.poly_positions[-1].x + self.poly_width \
+                              - self.poly_positions[0].x
+        poly_connect_position = self.poly_positions[0] - vector(0, self.poly_width)
         if len(self.poly_positions) > 1:
             self.add_rect(layer="poly",
                            offset=poly_connect_position,
@@ -127,8 +125,8 @@ class ptx(design.design):
                                   drc["minwidth_metal1"] + drc["minwidth_contact"]),
                            0.5 * (self.active_contact.height - drc["minwidth_contact"]) 
                                - drc["metal1_extend_contact"])
-            connected=vector(b[0] + drc["minwidth_metal1"],
-                             a[1] + self.active_contact.height + drc["metal1_to_metal1"])  
+            connected=vector(b.x + drc["minwidth_metal1"],
+                             a.y + self.active_contact.height + drc["metal1_to_metal1"])  
             self.source_positions.append(a + correct)
             self.source_positions.append(vector(a.x + correct.x, connected.y))
             self.source_positions.append(vector(b.x + correct.x,
@@ -144,10 +142,10 @@ class ptx(design.design):
                                   + drc["minwidth_contact"]),
                              0.5*(self.active_contact.height - drc["minwidth_contact"])
                                - drc["metal1_extend_contact"])
-            connected = vector(d[0] + drc["minwidth_metal1"], c[1] - drc["metal1_to_metal1"])
+            connected = vector(d.x + drc["minwidth_metal1"], c.y - drc["metal1_to_metal1"])
             self.drain_positions.append(vector(c + correct))
-            self.drain_positions.append(vector(c[0] + correct.x, connected.y))
-            self.drain_positions.append(vector(d[0] + correct.x,
+            self.drain_positions.append(vector(c.x + correct.x, connected.y))
+            self.drain_positions.append(vector(d.x + correct.x,
                                                connected.y - 0.5 * drc["minwidth_metal1"]))
             self.drain_positions.append(vector(d + correct))
 
@@ -165,7 +163,7 @@ class ptx(design.design):
 
     def add_poly(self):
         # left_most poly
-        poly_xoffset = self.active_contact.via_layer_position[0] \
+        poly_xoffset = self.active_contact.via_layer_position.x \
                        + drc["minwidth_contact"] + drc["contact_to_poly"]
         poly_yoffset = -drc["poly_extend_active"]
         self.poly_positions = []
@@ -255,10 +253,10 @@ class ptx(design.design):
 
         # middle contact columns
         for i in range(self.mults - 1):
-            contact_xoffset = self.poly_positions[i][0] + self.poly_width \
+            contact_xoffset = self.poly_positions[i].x + self.poly_width \
                               + (self.mults_poly_to_poly / 2) \
                               - (drc["minwidth_contact"] / 2) - \
-                              self.active_contact.via_layer_position[0]
+                              self.active_contact.via_layer_position.x
             offset = vector(contact_xoffset, contact_yoffset)
             self.add_contact(layers=("active", "contact", "metal1"),
                              offset=offset,
@@ -267,9 +265,9 @@ class ptx(design.design):
             self.active_contact_positions.append(offset)
 
         # right_most contact column
-        contact_xoffset = self.poly_positions[-1][0] \
+        contact_xoffset = self.poly_positions[-1].x \
                           + self.poly_width + drc["contact_to_poly"] - \
-                          self.active_contact.via_layer_position[0]
+                          self.active_contact.via_layer_position.x
         offset = vector(contact_xoffset, contact_yoffset)
         self.add_contact(layers=("active", "contact", "metal1"),
                          offset=offset,

@@ -146,7 +146,7 @@ class control_logic(design.design):
 
         # Height and width
         self.height = self.logic_height + self.output_port_gap
-        self.width = self.offset_replica_bitline[0] + self.replica_bitline.height
+        self.width = self.offset_replica_bitline.x + self.replica_bitline.height
 
     def add_routing(self):
         """ Routing between modules """
@@ -175,11 +175,11 @@ class control_logic(design.design):
         # msf_control inputs
         correct = vector(0, 0.5 * drc["minwidth_metal2"])
         def translate_inputs(pt1,pt2):
-            return pt1 + pt2.rotate().scale(1,-1) - correct
+            return pt1 + pt2.rotate_scale(1,-1) - correct
 
         # msf_control outputs
         def translate_outputs(pt1,pt2):
-            return pt1 - correct + vector(self.msf_control.height,- pt2[0])
+            return pt1 - correct + vector(self.msf_control.height,- pt2.x)
 
         # set CSS WE OE signal groups(in, out, bar)
         pt1 = self.offset_msf_control
@@ -197,21 +197,21 @@ class control_logic(design.design):
 
         # clk , vdd
         base = self.offset_msf_control - vector(0.5 * drc["minwidth_metal2"], 0)
-        msf_clk = self.msf_control.clk_positions[0].rotate().scale(1,-1) 
+        msf_clk = self.msf_control.clk_positions[0].rotate_scale(1,-1) 
         self.msf_control_clk_position = base + msf_clk
-        msf_vdd = self.msf_control.vdd_positions[0].rotate().scale(1,-1) 
+        msf_vdd = self.msf_control.vdd_positions[0].rotate_scale(1,-1) 
         self.msf_control_vdd_position = base + msf_vdd 
 
         # gnd
         self.msf_control_gnd_positions = []
         for gnd_offset in self.msf_control.gnd_positions:
             offset = self.offset_msf_control + vector(self.msf_control.height, 
-                                                          - gnd_offset[0])
+                                                          - gnd_offset.x)
             self.msf_control_gnd_positions.append(offset - correct)
 
     def add_1st_row(self,y_off):
         # inv1 with clk as gate input.
-        msf_control_rotate_x = self.offset_msf_control[0] + self.msf_control.height 
+        msf_control_rotate_x = self.offset_msf_control.x + self.msf_control.height 
         self.offset_inv1 = vector(msf_control_rotate_x - self.inv4.width, y_off)
         self.add_inst(name="clk_inverter",
                       mod=self.inv4,
@@ -246,7 +246,7 @@ class control_logic(design.design):
         self.set_nand2_nor2_pin("nand2",[1,1])
 
         # REPLICA BITLINE
-        base_x = self.nand_array_position[0] + self.NAND3.width + 3 * self.inv.width
+        base_x = self.nand_array_position.x + self.NAND3.width + 3 * self.inv.width
         total_rail_gap = self.rail_offset_gap + self.overall_rail_2_gap
         x_off = base_x + total_rail_gap + self.replica_bitline_gap
         self.offset_replica_bitline = vector(x_off, y_off)
@@ -284,7 +284,7 @@ class control_logic(design.design):
 
     def add_2nd_row(self, y_off):
         # Nand3_1 input: OE, clk_bar,CS output: rblk_bar
-        self.offset_nand3_1 = vector(self.nand_array_position[0], y_off)
+        self.offset_nand3_1 = vector(self.nand_array_position.x, y_off)
         self.add_inst(name="NAND3_rblk_bar",
                       mod=self.NAND3,
                       offset=self.offset_nand3_1,
@@ -294,7 +294,7 @@ class control_logic(design.design):
         self.set_Nand3_pins(nand_name = "nand3_1",nand_scale = [0,-1])
 
         # Nand3_2 input: WE, clk_bar,CS output: w_en_bar
-        self.offset_nand3_2 = vector(self.nand_array_position[0], y_off)
+        self.offset_nand3_2 = vector(self.nand_array_position.x, y_off)
         self.add_inst(name="NAND3_w_en_bar",
                       mod=self.NAND3,
                       offset=self.offset_nand3_2,
@@ -304,7 +304,7 @@ class control_logic(design.design):
         self.set_Nand3_pins(nand_name = "nand3_2",nand_scale = [0,1])
 
         # connect nand2 and nand3 to inv
-        nand3_to_inv_connection_height = self.NAND3.Z_position[1] - self.inv.A_position[1] + drc["minwidth_metal1"]
+        nand3_to_inv_connection_height = self.NAND3.Z_position.y- self.inv.A_position.y+ drc["minwidth_metal1"]
         self.add_rect(layer="metal1",
                       offset=self.nand3_1_Z_position,
                       width=drc["minwidth_metal1"],
@@ -315,7 +315,7 @@ class control_logic(design.design):
                       height=-nand3_to_inv_connection_height)
 
         # inv_2 input: rblk_bar, output: rblk
-        x_off = self.nand_array_position[0] + self.NAND3.width
+        x_off = self.nand_array_position.x + self.NAND3.width
         self.offset_inv2 = vector(x_off, y_off)
         self.add_inst(name="inv_rblk",
                       mod=self.inv,
@@ -336,7 +336,7 @@ class control_logic(design.design):
         self.set_inv2345_pins(inv_name="inv3", inv_scale=[1, 1])
 
         # BUFFER INVERTERS FOR W_EN
-        x_off = self.nand_array_position[0] + self.NAND3.width + self.inv.width
+        x_off = self.nand_array_position.x + self.NAND3.width + self.inv.width
         self.offset_inv6 = vector(x_off, y_off)
         self.add_inst(name="inv_w_en1",
                       mod=self.inv,
@@ -344,7 +344,7 @@ class control_logic(design.design):
                       mirror="RO")
         self.connect_inst(["pre_w_en", "pre_w_en1",  "vdd", "gnd"])
 
-        x_off = self.nand_array_position[0] + self.NAND3.width + 2 * self.inv.width
+        x_off = self.nand_array_position.x + self.NAND3.width + 2 * self.inv.width
         self.offset_inv7 = [x_off,  y_off]
         self.add_inst(name="inv_w_en2",
                       mod=self.inv,
@@ -392,7 +392,7 @@ class control_logic(design.design):
 
     def add_msf_control_routing(self):
         # FIRST RAIL : MSF_CONTROL OUTPUT RAIL
-        rail1_start = vector(self.msf_control_WE_position[0], 
+        rail1_start = vector(self.msf_control_WE_position.x, 
                              self.output_port_gap)
         for i in range(self.num_rails_1):
             correct = vector((i+1) * self.rail_offset_gap, 0)
@@ -401,18 +401,18 @@ class control_logic(design.design):
                           offset=offset,
                           width=drc["minwidth_metal2"],
                           height=self.logic_height)
-            self.rail_1_x_offsets.append(offset[0])
+            self.rail_1_x_offsets.append(offset.x)
 
-        rail2_start_x = (self.nand_array_position[0] + self.NAND3.width 
+        rail2_start_x = (self.nand_array_position.x + self.NAND3.width 
                              + 3 * self.inv.width + self.rail_offset_gap)
         for i in range(self.num_rails_2):
-            offset = [rail2_start_x + i * self.rail_offset_gap,
-                      self.output_port_gap]
+            offset = vector(rail2_start_x + i * self.rail_offset_gap,
+                            self.output_port_gap)
             self.add_rect(layer="metal2",
                           offset=offset,
                           width=drc["minwidth_metal2"],
                           height=self.logic_height)
-            self.rail_2_x_offsets.append(offset[0])
+            self.rail_2_x_offsets.append(offset.x)
 
     def add_1st_row_routing(self):
         # First rail routing left
@@ -425,7 +425,7 @@ class control_logic(design.design):
             line_x_offset = self.rail_1_x_offsets[line_indices[i]]
             self.add_rect(layer="metal1",
                           offset=offset,
-                          width=line_x_offset - offset[0] + drc["minwidth_metal2"],
+                          width=line_x_offset - offset.x + drc["minwidth_metal2"],
                           height=drc["minwidth_metal1"])
             correct1 = vector(self.gap_between_rails, - self.via_shift)
             correct2 = vector(self.contact_shift + drc["minwidth_metal2"],0)
@@ -450,7 +450,7 @@ class control_logic(design.design):
             base = vector(line_x_offset, offset[1])
             self.add_rect(layer="metal1",
                           offset=base,
-                          width=offset[0] - line_x_offset,
+                          width=offset.x - line_x_offset,
                           height=drc["minwidth_metal1"])
             self.add_via(layers=("metal1", "via1", "metal2"),
                          offset=base + correct1,
@@ -459,18 +459,21 @@ class control_logic(design.design):
         # OE_bar [Bus # 1] to nor2 B input
         layer_stack = ("metal2", "via1", "metal1")
         start = self.nor2_1_B_position
-        mid1 = [self.nor2_1_B_position[0] + 2 * drc["minwidth_metal2"], start[1]]
-        mid2 = [mid1[0], self.nor2_1_gnd_position[1] - 2 * drc["minwidth_metal1"]]
-        mid3 = [self.rail_1_x_offsets[1] + 0.5 * drc["minwidth_metal2"], mid2[1]]
-        end = [mid3[0], self.output_port_gap]
+        mid1 = vector(self.nor2_1_B_position.x+ 2 * drc["minwidth_metal2"], 
+                      start.y)
+        mid2 = vector(mid1.x, 
+                      self.nor2_1_gnd_position.y- 2 * drc["minwidth_metal1"])
+        mid3 = vector(self.rail_1_x_offsets[1] + 0.5 * drc["minwidth_metal2"], 
+                      mid2.y)
+        end = [mid3.x, self.output_port_gap]
         self.add_wire(layer_stack, [start, mid1, mid2, mid3, end])
 
         layer_stack = ("metal1")
-        start = [self.inv1_Z_position[0], self.inv1_Z_position[1] + 0.5 * drc["minwidth_metal1"]]
-        mid1 = [start[0] + drc["minwidth_metal2"], start[1]]
-        mid2 = [mid1[0], self.nand2_1_B_position
-                [1] + 0.5 * drc["minwidth_metal1"]]
-        end = [self.nand2_1_B_position[0], mid2[1]]
+        start = self.inv1_Z_position+ vector(0, + 0.5 * drc["minwidth_metal1"])
+        mid1 = start + vector(drc["minwidth_metal2"], 0)
+        mid2 = vector(mid1.x, 
+                      self.nand2_1_B_position.y + 0.5 * drc["minwidth_metal1"])
+        end = [self.nand2_1_B_position.x, mid2.y]
         self.add_path(layer_stack, [start, mid1, mid2, end])
 
     def add_2nd_row_routing(self):
@@ -486,23 +489,23 @@ class control_logic(design.design):
             line_x_offset = self.rail_2_x_offsets[line_indices[i]]
             self.add_rect(layer="metal1",
                           offset=offset,
-                          width=line_x_offset - offset[0] + drc["minwidth_metal2"],
+                          width=line_x_offset - offset.x+ drc["minwidth_metal2"],
                           height=drc["minwidth_metal1"])
             self.add_via(layers=("metal1", "via1", "metal2"),
                          offset=[line_x_offset + self.gap_between_rails,
-                                 offset[1] - self.via_shift],
+                                 offset.y- self.via_shift],
                          rotate=90)
 
         # Replica bitline (rblk to replica bitline input)
         layer_stack = ("metal2", "via1", "metal1")
-        start = [self.rail_2_x_offsets[1] + 0.5 * drc["minwidth_metal2"],
-                 self.output_port_gap]
-        mid1 = [start[0], 0.5 * drc["minwidth_metal1"]]
-        end = [self.replica_en_offset[0], mid1[1]]
+        start = vector(self.rail_2_x_offsets[1] + 0.5 * drc["minwidth_metal2"],
+                       self.output_port_gap)
+        mid1 = vector(start.x, 0.5 * drc["minwidth_metal1"])
+        end = vector(self.replica_en_offset.x, mid1.y)
 
         self.add_wire(layer_stack, [start, mid1,  end])
 
-        height = self.replica_en_offset[1] - end[1] + 0.5 * drc["minwidth_metal1"]
+        height = self.replica_en_offset.y- end.y+ 0.5 * drc["minwidth_metal1"]
 
         self.add_rect(layer="metal1",
                       offset=end - vector([0.5 * drc["minwidth_metal1"]] * 2),
@@ -514,7 +517,7 @@ class control_logic(design.design):
         end = self.replica_out_offset - vector(0.5 * drc["minwidth_metal1"],0)
         self.add_rect(layer="metal3",
                       offset=start, 
-                      width=self.replica_out_offset[0] - self.rail_2_x_offsets[2],
+                      width=self.replica_out_offset.x- self.rail_2_x_offsets[2],
                       height=drc["minwidth_metal3"])
         self.add_via(layers=("metal2", "via2", "metal3"),
                      offset=start)
@@ -536,7 +539,7 @@ class control_logic(design.design):
         self.add_rect(layer="metal1",
                       offset=self.nand3_2_vdd_position,
                       width=(rail_2_x + drc["minwidth_metal2"]
-                                 - self.nand3_2_vdd_position[0]),
+                                 - self.nand3_2_vdd_position.x),
                       height=drc["minwidth_metal1"])
 
         # Connection in horizontal metal2 vdd rail
@@ -551,10 +554,10 @@ class control_logic(design.design):
 
         # Connection of msf_vdd to inv1 vdd
         self.add_rect(layer="metal1",
-                      offset=[self.msf_control_vdd_position[0],
+                      offset=[self.msf_control_vdd_position.x,
                               self.inv1_vdd_position[1]],
                       width=drc["minwidth_metal1"],
-                      height=self.msf_control_vdd_position[1] - self.inv1_vdd_position[1])
+                      height=self.msf_control_vdd_position.y- self.inv1_vdd_position[1])
 
         vdd_offset = vector(self.replica_bitline.height,3 * drc["minwidth_metal1"])
 
@@ -569,25 +572,25 @@ class control_logic(design.design):
         for gnd_offset in self.msf_control_gnd_positions:
             self.add_rect(layer="metal2",
                           offset=gnd_offset,
-                          width=(self.rail_1_x_offsets[0] - gnd_offset[0] 
+                          width=(self.rail_1_x_offsets[0] - gnd_offset.x
                                      + drc["minwidth_metal2"]),
                           height=drc["minwidth_metal2"])
 
         # Connect msf_control gnd to nand3 gnd
         self.add_rect(layer="metal1",
                       offset=self.nor2_1_gnd_position,
-                      width=self.offset_replica_bitline[0],
+                      width=self.offset_replica_bitline.x,
                       height=drc["minwidth_metal1"])
         self.add_via(layers=("metal1", "via1", "metal2"),
                      offset=[self.rail_1_x_offsets[0] + self.gap_between_rails,
-                             self.nor2_1_gnd_position[1] - self.via_shift],
+                             self.nor2_1_gnd_position.y- self.via_shift],
                      rotate=90)
 
         # nand3 gnd to replica bitline gnd
         self.add_rect(layer="metal1",
                       offset=self.nand3_2_gnd_position,
-                      width=(self.offset_replica_bitline[0]
-                                 - self.nand3_2_gnd_position[0]),
+                      width=(self.offset_replica_bitline.x
+                                 - self.nand3_2_gnd_position.x),
                       height=drc["minwidth_metal1"])
 
     def add_input_routing(self):
@@ -598,13 +601,13 @@ class control_logic(design.design):
         self.OEb_position = self.msf_control_OEb_position
 
         # Clk
-        clk_y = self.inv1_vdd_position[1] + 6 * drc["minwidth_metal1"]
+        clk_y = self.inv1_vdd_position.y+ 6 * drc["minwidth_metal1"]
         self.clk_position = vector(0, clk_y)
 
         # clk port to inv1 A
         layer_stack = ("metal2", "via1", "metal1")
         start = self.inv1_A_position + vector(0, 0.5 * drc["minwidth_metal1"])
-        mid1 = vector(self.inv1_A_position[0] - 2 * drc["minwidth_metal2"],
+        mid1 = vector(self.inv1_A_position.x- 2 * drc["minwidth_metal2"],
                       start.y)
         mid2 = vector(mid1.x, clk_y)
         self.clk_position = vector(0, mid2[1])
@@ -614,17 +617,17 @@ class control_logic(design.design):
 
         # clk line to msf_control_clk
         self.add_rect(layer="metal1",
-                      offset=[self.msf_control_clk_position[0],
+                      offset=[self.msf_control_clk_position.x,
                               self.clk_position[1]],
                       width=drc["minwidth_metal1"],
-                      height=(self.msf_control_clk_position[1] 
+                      height=(self.msf_control_clk_position.y
                                   - self.clk_position[1]))
 
         # clk connection to nor2 A input
-        start = [self.inv1_A_position[0] - 2 * drc["minwidth_metal2"],
-                 self.inv1_A_position[1] + 0.5 * drc["minwidth_metal1"]]
-        mid1 = [start[0] - 3 * drc["minwidth_metal2"], start[1]]
-        mid2 = [mid1[0], self.nor2_1_A_position[1]]
+        start = self.inv1_A_position + vector(- 2 * drc["minwidth_metal2"],
+                                              0.5 * drc["minwidth_metal1"])
+        mid1 = start - vector(3 * drc["minwidth_metal2"], 0)
+        mid2 = [mid1.x, self.nor2_1_A_position.y]
 
         self.add_path("metal1", [start, mid1, mid2, self.nor2_1_A_position])
 
@@ -661,7 +664,7 @@ class control_logic(design.design):
                       height=self.nor2_1_Z_position.y + correct.y)
         self.add_via(layers=("metal2", "via2", "metal3"),
                      offset=self.nor2_1_Z_position.scale(1, 0))
-        self.tri_en_position = vector(self.nor2_1_Z_position[0], 0)
+        self.tri_en_position = vector(self.nor2_1_Z_position.x, 0)
 
         # tri_en_bar
         correct = vector(drc["minwidth_metal2"], 0)
@@ -671,7 +674,7 @@ class control_logic(design.design):
         self.add_rect(layer="metal2",
                       offset=self.tri_en_bar_position,
                       width=drc["minwidth_metal2"],
-                      height=self.nand2_1_Z_position[1] + drc["minwidth_metal1"])
+                      height=self.nand2_1_Z_position.y+ drc["minwidth_metal1"])
         self.add_via(layers=("metal2", "via2", "metal3"),
                       offset=self.tri_en_bar_position)
 
@@ -691,6 +694,6 @@ class control_logic(design.design):
         self.add_rect(layer="metal2",
                       offset=self.s_en_position,
                       width=drc["minwidth_metal2"],
-                      height=self.inv4_Z_position[1] + drc["minwidth_metal1"])
+                      height=self.inv4_Z_position.y+ drc["minwidth_metal1"])
         self.add_via(layers=("metal2", "via2", "metal3"),
                       offset=self.s_en_position)

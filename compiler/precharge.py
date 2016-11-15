@@ -185,7 +185,7 @@ class precharge(design.design):
     def add_vdd_rail(self):
         """Adds a vdd rail at the top of the cell"""
         # adds the rail across the width of the cell
-        self.vdd_position = vector(self.pclk_position[0],
+        self.vdd_position = vector(self.pclk_position.x,
                                    self.height - drc["minwidth_metal1"])
         self.add_layout_pin(text="vdd",
                             layer="metal1",

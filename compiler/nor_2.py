@@ -81,10 +81,10 @@ class nor_2(design.design):
                                0.5 * gate_to_gate - test_pmos.poly_positions[0].y)
             route_margin = .5 * (self.poly_contact.second_layer_width 
                                  + drc["minwidth_metal1"]) + drc["metal1_to_metal1"]
-            pmos_position = [0, self.height - 0.5 * drc["minwidth_metal1"]
-                             - edge_to_pmos - test_pmos.height]
-            nmos_position = [0, 0.5 * drc["minwidth_metal1"] + edge_to_nmos]
-            leftspace = (0.7 * (pmos_position[1] - nmos_position[1]) 
+            pmos_position = vector(0, self.height - 0.5 * drc["minwidth_metal1"]
+                                      - edge_to_pmos - test_pmos.height)
+            nmos_position = vector(0, 0.5 * drc["minwidth_metal1"] + edge_to_nmos)
+            leftspace = (0.7 * (pmos_position.y - nmos_position.y) 
                          - 3 * route_margin - 2 * drc["metal1_to_metal1"])
             if leftspace >= 0:
                 break
@@ -209,10 +209,10 @@ class nor_2(design.design):
         self.nwell_contact_position = vector(xoffset, yoffset)
         self.nwell_contact=self.add_contact(layer_stack,self.nwell_contact_position,(1,self.pmos1.num_of_tacts))
 
-        xoffset = self.nmos_position2[0] + (self.nmos1.active_position[0] 
+        xoffset = self.nmos_position2.x + (self.nmos1.active_position.x 
                                                 + self.nmos1.active_width 
                                                 + drc["active_to_body_active"])
-        yoffset = (self.nmos_position1[1] + self.nmos1.height 
+        yoffset = (self.nmos_position1.y + self.nmos1.height 
                        - self.nmos1.active_contact_positions[0].y
                        - self.nmos1.active_contact.height)
         self.pwell_contact_position = vector(xoffset, yoffset)
@@ -222,7 +222,7 @@ class nor_2(design.design):
     def route(self):
         self.route_pins()
         self.connect_well_contacts()
-        M1_track = (self.B_position[1] + drc["metal1_to_metal1"]
+        M1_track = (self.B_position.y + drc["metal1_to_metal1"]
                         + .5 * (self.poly_contact.second_layer_width 
                                     + drc["minwidth_metal1"]))
         self.connect_tx(M1_track)
@@ -230,11 +230,11 @@ class nor_2(design.design):
 
     def connect_well_contacts(self):
         """ Connect well contacts to vdd and gnd rail """
-        well_tap_length = self.height - self.nwell_contact_position[1]
+        well_tap_length = self.height - self.nwell_contact_position.y
         xoffset = (self.nwell_contact_position.x 
                        + self.nwell_contact.second_layer_position.x 
                        - self.nwell_contact.first_layer_position.x)
-        offset = [xoffset, self.nwell_contact_position[1]]
+        offset = [xoffset, self.nwell_contact_position.y]
         self.add_rect(layer="metal1",
                       offset=offset,
                       width=drc["minwidth_metal1"],
@@ -243,7 +243,7 @@ class nor_2(design.design):
         offset = (self.pwell_contact_position.scale(1,0)
                       + self.pwell_contact.second_layer_position.scale(1,0)
                       - self.pwell_contact.first_layer_position.scale(1,0))
-        well_tap_length = self.pwell_contact_position[1]
+        well_tap_length = self.pwell_contact_position.y
         self.add_rect(layer="metal1",
                       offset=offset,
                       width=drc["minwidth_metal1"],
@@ -257,7 +257,7 @@ class nor_2(design.design):
             if i % 2 == 0:
                 correct = self.pmos1.active_contact.second_layer_position.scale(1,0)    
                 drain_posistion = contact_pos + correct  
-                height = self.vdd_position[1] - drain_posistion[1]
+                height = self.vdd_position.y - drain_posistion.y
                 self.add_rect(layer="metal1",
                               offset=drain_posistion,
                               width=drc["minwidth_metal1"],
@@ -268,7 +268,7 @@ class nor_2(design.design):
                                + vector(self.pmos1.active_contact.second_layer_width,
                                         0).scale(.5,0))
                 source_position = contact_pos + correct
-                mid = [self.pmos_position2[0], M1_track]
+                mid = [self.pmos_position2.x, M1_track]
                 self.add_path("metal1", [source_position, mid])
 
         # the second pmos
@@ -279,13 +279,13 @@ class nor_2(design.design):
                 correct= (self.pmos2.active_contact.second_layer_position.scale(1,0)
                               + vector(0.5 * self.pmos2.active_contact.second_layer_width,0))
                 source_position = pmos_active + correct
-                mid = [self.pmos_position2[0], M1_track]
+                mid = [self.pmos_position2.x, M1_track]
                 self.add_path("metal1", [source_position, mid])
         # two nmos source to gnd
         source_posistion1 = (self.nmos_position1
                                  + self.nmos1.active_contact_positions[0]
                                  + self.nmos1.active_contact.second_layer_position.scale(1,0))
-        height = self.gnd_position[1] - source_posistion1[1]
+        height = self.gnd_position.y - source_posistion1.y
         self.add_rect(layer="metal1",
                       offset=source_posistion1,
                       width=drc["minwidth_metal1"],
@@ -294,7 +294,7 @@ class nor_2(design.design):
         source_posistion2 = (self.nmos_position2
                                  + self.nmos2.active_contact_positions[1]
                                  + self.nmos2.active_contact.second_layer_position.scale(1,0))        
-        height = self.gnd_position[1] - source_posistion2[1]
+        height = self.gnd_position.y - source_posistion2.y
         self.add_rect(layer="metal1",
                       offset=source_posistion2,
                       width=drc["minwidth_metal1"],
@@ -310,22 +310,22 @@ class nor_2(design.design):
             pmos_gate = (self.pmos_position1 
                              + self.pmos1.poly_positions[i]
                              + vector(0.5 * drc["minwidth_poly"], 0))
-            mid1 = [pmos_gate[0], pmos_gate[1] - drc["poly_to_active"]]
+            mid1 = [pmos_gate.x, pmos_gate.y - drc["poly_to_active"]]
             self.add_path("poly", [nmos_gate, mid1, pmos_gate])
 
         # connect pmos2 poly
-        nmos_gate = [self.nmos_position2[0] \
-                     + self.nmos2.poly_positions[0][0]
-                     + 0.5 * drc["minwidth_poly"], \
-                     self.nmos_position1[1] \
-                     + self.nmos1.poly_positions[0][1]]
+        nmos_gate = vector(self.nmos_position2[0] 
+                               + self.nmos2.poly_positions[0].x
+                               + 0.5 * drc["minwidth_poly"], 
+                           self.nmos_position1.y 
+                               + self.nmos1.poly_positions[0].y)
         for i in range(len(self.pmos2.poly_positions)):
             pmos_gate = (self.pmos_position2
                              + self.pmos2.poly_positions[i]
                              + vector(0.5 * drc["minwidth_poly"], 0))
-            mid1 = [pmos_gate[0],
-                    nmos_gate[1] + self.nmos2.height \
-                    + drc["poly_to_active"]]
+            mid1 = vector(pmos_gate.x,
+                          nmos_gate.y + self.nmos2.height 
+                              + drc["poly_to_active"])
             self.add_path("poly", [nmos_gate, mid1, pmos_gate])
 
     def route_pins(self):
@@ -350,15 +350,15 @@ class nor_2(design.design):
                          rotate=90)
 
         # connect gate input to tx gate
-        offset = self.A_position - vector(self.poly_contact.first_layer_position[1],
+        offset = self.A_position - vector(self.poly_contact.first_layer_position.y,
                                           0.5 * self.poly_contact.width)
         self.add_rect(layer="poly",
                       offset=offset,
-                      width=self.poly_contact.first_layer_position[1] + drc["minwidth_poly"],
+                      width=self.poly_contact.first_layer_position.y + drc["minwidth_poly"],
                       height=self.poly_contact.first_layer_width)
         # extend the metal to the boundary of the cell
-        input_length = self.A_position[0]
-        offset = [0, self.A_position[1] - 0.5 * drc["minwidth_metal1"]]
+        input_length = self.A_position.x
+        offset = [0, self.A_position.y - 0.5 * drc["minwidth_metal1"]]
         self.add_layout_pin(text="A",
                       layer="metal1",
                       offset=offset,
@@ -367,9 +367,9 @@ class nor_2(design.design):
 
     def route_input_B(self):
         """create input B layout """
-        xoffset = self.pmos2.poly_positions[0][0] \
-                  + self.pmos_position2[0]
-        yoffset = self.A_position[1] \
+        xoffset = self.pmos2.poly_positions[0].x \
+                  + self.pmos_position2.x
+        yoffset = self.A_position.y \
                   + 0.5 * (self.poly_contact.second_layer_width \
                            + drc["minwidth_metal1"]) + drc["metal1_to_metal1"]
         self.B_position = vector(xoffset, yoffset)
@@ -380,13 +380,13 @@ class nor_2(design.design):
 
         self.add_rect(layer="poly",
                       offset=offset,
-                      width=-(self.poly_contact.first_layer_position[1] + drc["minwidth_poly"]),
+                      width=-(self.poly_contact.first_layer_position.y + drc["minwidth_poly"]),
                       height=self.poly_contact.first_layer_width)
         self.add_layout_pin(text="B",
                       layer="metal1",
                       offset=[0,
-                              self.B_position[1] - 0.5 * drc["minwidth_metal1"]],
-                      width=self.B_position[0],
+                              self.B_position.y - 0.5 * drc["minwidth_metal1"]],
+                      width=self.B_position.x,
                       height=drc["minwidth_metal1"])
 
     def route_output(self):
@@ -398,7 +398,7 @@ class nor_2(design.design):
                             + self.nmos1.active_contact.second_layer_position
                             + vector(self.nmos1.active_contact.second_layer_width,
                                      0).scale(0.5, 0))
-        mid = [nmos_contact[0], self.A_position[1]]
+        mid = [nmos_contact.x, self.A_position.y]
         self.add_path("metal1", [self.Z_position, mid, nmos_contact])
 
         for i in range(len(self.pmos2.poly_positions) + 1):
@@ -412,19 +412,19 @@ class nor_2(design.design):
                 offset = pmos_contact - vector(0.5 * self.m1m2_via.width, 0)
                 self.add_via(layers=("metal1", "via1", "metal2"),
                              offset=offset)
-                mid = [pmos_contact[0], self.Z_position[1]]
+                mid = [pmos_contact.x, self.Z_position.y]
                 self.add_wire(("metal2", "via1", "metal1"),
                               [self.Z_position, mid, pmos_contact])
 
     def extend_wells(self):
         """ extend well for well contact"""
-        middle_point = (self.nmos_position1[1] 
-                            + self.nmos1.pwell_position[1] 
+        middle_point = (self.nmos_position1.y 
+                            + self.nmos1.pwell_position.y 
                             + self.nmos1.well_height 
-                            + (self.pmos_position1[1] 
-                                   + self.pmos1.nwell_position[1] 
-                                   - self.nmos_position1[1] 
-                                   - self.nmos1.pwell_position[1] 
+                            + (self.pmos_position1.y
+                                   + self.pmos1.nwell_position.y 
+                                   - self.nmos_position1.y 
+                                   - self.nmos1.pwell_position.y 
                                    - self.nmos1.well_height) / 2 )
         self.nwell_position = vector(0, middle_point)
         self.nwell_height = self.height - middle_point

@@ -6,7 +6,7 @@ It generate only the minimum size 3_input nand gate that is nmos_width=3*tech.dr
 """
 
 import unittest
-from header import header
+from testutils import header
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals

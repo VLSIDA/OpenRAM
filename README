@@ -3,7 +3,7 @@ BASIC SETUP
 
 -The OpenRAM compiler has very few dependencies:
 
-1) ngspice v20 or later or HSpice I-2013.12-1 or later
+1) ngspice-25 or later or HSpice I-2013.12-1 or later
 2) Python 2.7 and higher (currently excludes Python 3 and up)
 3) a setup script for each technology
 4) a technology directory for each technology with the base cells

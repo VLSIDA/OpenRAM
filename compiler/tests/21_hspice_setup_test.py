@@ -4,7 +4,7 @@ Run a regresion test on various srams
 """
 
 import unittest
-from header import header
+from testutils import header,isclose
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
@@ -20,9 +20,12 @@ class timing_setup_test(unittest.TestCase):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
-        OPTS.use_pex = False
+        OPTS.spice_version="hspice"
+        OPTS.force_spice = True
+        globals.set_spice()
 
         import sram
         import setup_hold
@@ -42,11 +45,6 @@ class timing_setup_test(unittest.TestCase):
 
         globals.end_openram()
         
-def isclose(value1,value2):
-    """ This is used to compare relative values for convergence. """
-    return (abs(value1 - value2) / max(value1,value2) <= 1e-2)
-
-
 # instantiate a copdsay of the class to actually run the test
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

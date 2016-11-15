@@ -4,7 +4,7 @@ Run a regresion test on a hierarchical_predecode2x4.
 """
 
 import unittest
-from header import header
+from testutils import header
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals

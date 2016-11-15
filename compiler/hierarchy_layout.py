@@ -245,14 +245,14 @@ class layout:
            Otherwise, start a new layout for dynamic generation."""
         # open the gds file if it exists or else create a blank layout
         if os.path.isfile(self.gds_file):
-            debug.info(2, "opening %s" % self.gds_file)
+            debug.info(3, "opening %s" % self.gds_file)
             self.gds = gdsMill.VlsiLayout(units=GDS["unit"])
             reader = gdsMill.Gds2reader(self.gds)
             reader.loadFromFile(self.gds_file)
             # TODO: parse the width/height
             # TODO: parse the pin locations
         else:
-            debug.info(2, "creating structure %s" % self.name)
+            debug.info(3, "creating structure %s" % self.name)
             self.gds = gdsMill.VlsiLayout(
                 name=self.name, units=GDS["unit"])
 

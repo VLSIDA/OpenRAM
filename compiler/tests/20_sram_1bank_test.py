@@ -4,7 +4,7 @@ Run a regresion test on a 1 bank SRAM
 """
 
 import unittest
-from header import header
+from testutils import header
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals

@@ -27,7 +27,11 @@ def relative_compare(value1,value2):
 
 def parse_output(filename, key):
     """Parses a hspice output.lis file for a key value"""
-    f = open("{0}/{1}.lis".format(OPTS.openram_temp, filename), "r")
+    full_filename="{0}{1}.lis".format(OPTS.openram_temp, filename)
+    try:
+        f = open(full_filename, "r")
+    except IOError:
+        debug.error("Unable to open spice output file: {0}".format(full_filename),1)
     contents = f.read()
     val = re.search(r"{0}\s*=\s*(-?\d+.?\d*\S*)\s+.*".format(key), contents)
     if val != None:

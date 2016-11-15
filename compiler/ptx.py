@@ -16,7 +16,7 @@ class ptx(design.design):
         name = "{0}{1}".format(name, ptx.unique_mos_id)
         ptx.unique_mos_id += 1
         design.design.__init__(self, name)
-        debug.info(2, "create ptx structure {0}".format(name))
+        debug.info(3, "create ptx structure {0}".format(name))
 
         self.tx_type = tx_type
         self.mults = mults

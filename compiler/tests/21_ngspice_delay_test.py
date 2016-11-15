@@ -20,7 +20,6 @@ class timing_sram_test(unittest.TestCase):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
-        OPTS.use_pex = False
         OPTS.spice_version="ngspice"
         OPTS.force_spice = True
         globals.set_spice()
@@ -33,7 +32,11 @@ class timing_sram_test(unittest.TestCase):
                       num_banks=OPTS.config.num_banks,
                       name="test_sram1")
 
+        # reset these options
         OPTS.check_lvsdrc = True
+        OPTS.spice_version="hspice"
+        OPTS.force_spice = False
+        globals.set_spice()
 
         import delay
 

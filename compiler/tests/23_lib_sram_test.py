@@ -20,7 +20,6 @@ class lib_test(unittest.TestCase):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
-        OPTS.use_pex = False
 
         import sram
         import lib

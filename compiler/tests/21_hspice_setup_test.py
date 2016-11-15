@@ -23,7 +23,6 @@ class timing_setup_test(unittest.TestCase):
 
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
-        OPTS.use_pex = False
         OPTS.spice_version="hspice"
         OPTS.force_spice = True
         globals.set_spice()

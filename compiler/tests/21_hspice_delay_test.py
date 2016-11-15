@@ -22,7 +22,6 @@ class timing_sram_test(unittest.TestCase):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
-        OPTS.use_pex = False
         OPTS.spice_version="hspice"
         OPTS.force_spice = True
         globals.set_spice()

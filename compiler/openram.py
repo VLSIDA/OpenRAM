@@ -22,10 +22,6 @@ import re
 import importlib
 import globals
 
-global OPTS
-
-(OPTS, args) = globals.parse_args()
-
 # These depend on arguments, so don't load them until now.
 import debug
 
@@ -34,10 +30,10 @@ if len(args) < 1:
     print globals.USAGE
     sys.exit(2)
         
+globals.init_openram(args[0])
+
 if OPTS.print_banner:
     print globals.BANNER
-
-globals.init_openram(args[0])
 
 # Check if all arguments are integers for bits, size, banks
 if type(OPTS.config.word_size)!=int:
@@ -94,7 +90,7 @@ s.gds_write(gdsname)
 
 # Run Characterizer on the design
 sram_file = spname
-if OPTS.run_pex:
+if OPTS.use_pex:
     sram_file = OPTS.out_path + "temp_pex.sp"
     calibre.run_pex(s.name, gdsname, spname, output=sram_file)
 

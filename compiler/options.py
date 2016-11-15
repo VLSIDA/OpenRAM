@@ -29,7 +29,7 @@ class options(optparse.Values):
     # The spice executable being used which is derived from the user PATH.
     spice_exe = ""
     # Run with extracted parasitics
-    run_pex = False
+    use_pex = False
     # Trim noncritical memory cells for simulation speed-up
     trim_noncritical = False
     # Define the output file paths

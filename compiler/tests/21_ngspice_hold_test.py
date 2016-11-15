@@ -22,7 +22,6 @@ class timing_setup_test(unittest.TestCase):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
-        OPTS.use_pex = False
         OPTS.spice_version="ngspice"
         OPTS.force_spice = True
         globals.set_spice()
@@ -33,7 +32,11 @@ class timing_setup_test(unittest.TestCase):
         sh = setup_hold.setup_hold()
         [one_setup_time, zero_setup_time] = sh.hold_time()
 
+        # reset these options
         OPTS.check_lvsdrc = True
+        OPTS.spice_version="hspice"
+        OPTS.force_spice = False
+        globals.set_spice()
 
         if OPTS.tech_name == "freepdk45":
             self.assertTrue(isclose(one_setup_time,-0.0048828125))

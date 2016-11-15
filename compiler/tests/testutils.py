@@ -29,12 +29,15 @@ def isdiff(file1,file2):
         debug.info(2,"MATCH {0} {1}".format(file1,file2))
     return (check)
 
-def header(str, tec):
+def header(filename, technology):
     tst = "Running Test for:"
     print "\n"
     print " ______________________________________________________________________________ "
     print "|==============================================================================|"
     print "|=========" + tst.center(60) + "=========|"
-    print "|=========" + tec.center(60) + "=========|"
-    print "|=========" + str.center(60) + "=========|"
+    print "|=========" + technology.center(60) + "=========|"
+    print "|=========" + filename.center(60) + "=========|"
+    import globals
+    OPTS = globals.get_opts()
+    print "|=========" + OPTS.openram_temp.center(60) + "=========|"
     print "|==============================================================================|"

@@ -33,9 +33,8 @@ import debug
 if len(args) < 1:
     print globals.USAGE
     sys.exit(2)
-        
-if OPTS.print_banner:
-    print globals.BANNER
+
+globals.print_banner()        
 
 globals.init_openram(args[0])
 

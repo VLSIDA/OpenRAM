@@ -602,9 +602,9 @@ class VlsiLayout:
         for boundary in self.structures[self.rootStructureName].boundaries:
             if boundary.drawingLayer==borderlayer:
                 debug.info(debug_level,"Find border "+str(boundary.coordinates))
-                left_button=boundary.coordinates[0]
+                left_bottom=boundary.coordinates[0]
                 right_top=boundary.coordinates[2]
-                cellSize=[right_top[0]-left_button[0],right_top[1]-left_button[1]]
+                cellSize=[right_top[0]-left_bottom[0],right_top[1]-left_bottom[1]]
                 cellSizeMicron=[cellSize[0]*self.units[0],cellSize[1]*self.units[0]]
         if not(cellSizeMicron):
             debug.error("Error: "+str(self.rootStructureName)+".cell_size information not found yet")
@@ -620,6 +620,15 @@ class VlsiLayout:
         cellSizeMicron=[cellSize[0]*self.units[0],cellSize[1]*self.units[0]]
         return cellSizeMicron
 
+    def measureBoundary(self,startStructure):
+        self.rootStructureName=startStructure
+        self.populateCoordinateMap()
+        cellBoundary = [None, None, None, None]
+        for TreeUnit in self.xyTree:
+            cellBoundary=self.measureSizeInStruture(TreeUnit,cellBoundary)
+        return [[self.units[0]*cellBoundary[0],self.units[0]*cellBoundary[1]],
+                [self.units[0]*cellBoundary[2],self.units[0]*cellBoundary[3]]]
+    
     def measureSizeInStruture(self,Struture,cellBoundary):
         StrutureName=Struture[0]
         StrutureOrgin=[Struture[1][0],Struture[1][1]]
@@ -631,9 +640,9 @@ class VlsiLayout:
         debug.info(debug_level,"-Structure direction: vVector["+str(StruturevVector)+"]")
         
         for boundary in self.structures[str(StrutureName)].boundaries:
-            left_button=boundary.coordinates[0]
+            left_bottom=boundary.coordinates[0]
             right_top=boundary.coordinates[2]
-            thisBoundary=[left_button[0],left_button[1],right_top[0],right_top[1]]
+            thisBoundary=[left_bottom[0],left_bottom[1],right_top[0],right_top[1]]
             thisBoundary=self.tranformRectangle(thisBoundary,StrutureuVector,StruturevVector)
             thisBoundary=[thisBoundary[0]+StrutureOrgin[0],thisBoundary[1]+StrutureOrgin[1],
             thisBoundary[2]+StrutureOrgin[0],thisBoundary[3]+StrutureOrgin[1]]
@@ -670,7 +679,8 @@ class VlsiLayout:
         pin_boundary=self.readPinInStructureList(label_coordinate, label_layer)
         debug.info(debug_level, "Find pin covers "+str(label_name)+" at "+str(pin_boundary))
 
-        pin_boundary=[pin_boundary[0]*self.units[0],pin_boundary[1]*self.units[0],pin_boundary[2]*self.units[0],pin_boundary[3]*self.units[0]]
+        pin_boundary=[pin_boundary[0]*self.units[0],pin_boundary[1]*self.units[0],
+                      pin_boundary[2]*self.units[0],pin_boundary[3]*self.units[0]]
         return [label_name, label_layer, pin_boundary]
 
     def readPinInStructureList(self,label_coordinates,layer):
@@ -692,9 +702,9 @@ class VlsiLayout:
 
         for boundary in self.structures[str(StrutureName)].boundaries:
             if layer==boundary.drawingLayer:
-                left_button=boundary.coordinates[0]
+                left_bottom=boundary.coordinates[0]
                 right_top=boundary.coordinates[2]
-                MetalBoundary=[left_button[0],left_button[1],right_top[0],right_top[1]]
+                MetalBoundary=[left_bottom[0],left_bottom[1],right_top[0],right_top[1]]
                 MetalBoundary=self.tranformRectangle(MetalBoundary,StrutureuVector,StruturevVector)
                 MetalBoundary=[MetalBoundary[0]+StrutureOrgin[0],MetalBoundary[1]+StrutureOrgin[1],
                 MetalBoundary[2]+StrutureOrgin[0],MetalBoundary[3]+StrutureOrgin[1]]
@@ -707,18 +717,18 @@ class VlsiLayout:
         return label_boundary
 
     def tranformRectangle(self,orignalRectangle,uVector,vVector):
-        LeftButton=mpmath.matrix([orignalRectangle[0],orignalRectangle[1]])
-        LeftButton=self.tranformCoordinate(LeftButton,uVector,vVector)
+        LeftBottom=mpmath.matrix([orignalRectangle[0],orignalRectangle[1]])
+        LeftBottom=self.tranformCoordinate(LeftBottom,uVector,vVector)
 
         RightUp=mpmath.matrix([orignalRectangle[2],orignalRectangle[3]])
         RightUp=self.tranformCoordinate(RightUp,uVector,vVector)
 
-        Left=min(LeftButton[0],RightUp[0])
-        Button=min(LeftButton[1],RightUp[1])
-        Right=max(LeftButton[0],RightUp[0])
-        Up=max(LeftButton[1],RightUp[1])
+        Left=min(LeftBottom[0],RightUp[0])
+        Bottom=min(LeftBottom[1],RightUp[1])
+        Right=max(LeftBottom[0],RightUp[0])
+        Up=max(LeftBottom[1],RightUp[1])
 
-        return [Left,Button,Right,Up]
+        return [Left,Bottom,Right,Up]
 
     def tranformCoordinate(self,Coordinate,uVector,vVector):
         x=Coordinate[0]*uVector[0]+Coordinate[1]*uVector[1]

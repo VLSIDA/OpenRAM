@@ -93,7 +93,7 @@ class router:
         # repack the shape as a pair of vectors rather than four values
         shape=[vector(pin_shape[0],pin_shape[1]),vector(pin_shape[2],pin_shape[3])]
         print shape
-        new_shape = self.convert_to_tracks(shape,round_bigger=False)
+        new_shape = self.convert_shape_to_tracks(shape,round_bigger=False)
         print new_shape
         self.pin_names.append(pin_name)
         self.pin_shapes[str(pin)] = new_shape
@@ -119,9 +119,12 @@ class router:
         debug.info(0,"Found path. ")
         debug.info(2,str(path))
         self.set_path(path)
+        # First, simplify the path.
+        contracted_path = self.contract_path(path)
+        debug.info(1,str(contracted_path))                
         # convert the path back to absolute units from tracks
-        abs_path = self.convert_path_to_units(path)
-        debug.info(2,str(abs_path))        
+        abs_path = self.convert_path_to_units(contracted_path)
+        debug.info(1,str(abs_path))        
         return abs_path
     
     def create_steiner_routes(self,pins):
@@ -175,7 +178,6 @@ class router:
         """ 
         Remove intermediate points in a rectilinear path.
         """
-        debug.info(0,"Initial path:"+str(path))
         newpath = [path[0]]
         for i in range(len(path)-1):
             if i==0:
@@ -189,11 +191,11 @@ class router:
                 continue
 
         newpath.append(path[-1])
-        debug.info(0,"Final path:"+str(newpath))
+
         return newpath
     
     def set_path(self,path):
-        debug.info(2,"Set path: " + str(path))        
+        debug.info(3,"Set path: " + str(path))        
         self.rg.set_path(path)
 
     def set_source(self,name):
@@ -219,12 +221,12 @@ class router:
 
             if boundary.drawingLayer in [self.vert_layer_number,self.horiz_layer_number]:
                 # We round the pins down, so we must do this to skip them
-                pin_shape_tracks=self.convert_to_tracks(shape,round_bigger=False)
+                pin_shape_tracks=self.convert_shape_to_tracks(shape,round_bigger=False)
 
                 # don't add a blockage if this shape was a pin shape
                 if pin_shape_tracks not in self.pin_shapes.values():
                     # inflate the ll and ur by 1 track in each direction
-                    [ll,ur]=self.convert_to_tracks(shape)
+                    [ll,ur]=self.convert_shape_to_tracks(shape)
                     zlayer = 0 if boundary.drawingLayer==self.horiz_layer_number else 1
                     self.rg.add_blockage(ll,ur,zlayer)
                 else:
@@ -252,9 +254,6 @@ class router:
         """ 
         Convert a path set of tracks to center line path.
         """
-        # First, simplify the path.
-        path = self.contract_path(path)
-
         newpath = []
         track_factor = [self.track_width] * 2        
         for p in path:
@@ -266,7 +265,7 @@ class router:
             newpath.append(pt)
         return newpath
 
-    def convert_to_tracks(self,shape,round_bigger=True):
+    def convert_shape_to_tracks(self,shape,round_bigger=True):
         """ 
         Convert a rectangular shape into track units.
         """
@@ -286,9 +285,14 @@ class router:
             ur = ur.scale(track_factor).ceil()
         # Always round pin shapes down
         else:
-            ll = ll.scale(track_factor).round()
-            ur = ur.scale(track_factor).round()
-
+            ll = ll.scale(track_factor).ceil()
+            ur = ur.scale(track_factor).floor()
+            # if they were within one grid, we must
+            # not let it round away the pin
+            if ur.x<ll.x:
+                ur.x=ll.x
+            if ur.y<ll.y:
+                ur.y=ll.y
 
         return [ll,ur]
             

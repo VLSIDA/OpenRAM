@@ -413,7 +413,7 @@ class nor_2(design.design):
                 self.add_via(layers=("metal1", "via1", "metal2"),
                              offset=offset)
                 mid = [pmos_contact.x, self.Z_position.y]
-                self.add_wire(("metal2", "via1", "metal1"),
+                self.add_wire(("metal1", "via1", "metal2"),
                               [self.Z_position, mid, pmos_contact])
 
     def extend_wells(self):

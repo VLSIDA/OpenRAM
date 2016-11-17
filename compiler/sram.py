@@ -803,7 +803,7 @@ class sram(design.design):
                                   start.y)
                     end = vector(mid1.x, self.msf_msb_address_position.y
                                              + 4 * (i + 1) * drc["minwidth_metal2"])
-                    self.add_wire(("metal1", "via1", "metal2"), [start, mid1, end])
+                    self.add_wire(("metal2", "via1", "metal1"), [start, mid1, end])
 
                     x_off = self.vertical_line_positions[bank_select_line].x
                     contact_pos = vector(x_off,
@@ -831,7 +831,7 @@ class sram(design.design):
                                      + 3*drc["minwidth_metal3"],
                                  mid2.y)
 
-                    layer_stack = ("metal1", "via1", "metal2")
+                    layer_stack = ("metal2", "via1", "metal1")
                     self.add_wire(layer_stack, [start, mid1, mid2, end])
 
                     self.add_rect(layer="metal1",

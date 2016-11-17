@@ -169,7 +169,7 @@ class logic_effort_dc(design.design):
             if start_inv < half_length and end_inv >= half_length:
                 mid = [half_length * self.inv.width \
                        - 0.5 * drc["minwidth_metal2"], M2_start[1]]
-                self.add_wire(("metal3", "via2", "metal2"),
+                self.add_wire(("metal2", "via2", "metal3"),
                               [M2_start, mid, M2_end])
             else:
                 self.add_path(("metal2"), [M2_start, M2_end])

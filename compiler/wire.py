@@ -37,7 +37,7 @@ class wire(path):
         # wires and paths should not be offset to (0,0)
 
     def setup_layers(self):
-        (vert_layer, via_layer, horiz_layer) = self.layer_stack
+        (horiz_layer, via_layer, vert_layer) = self.layer_stack
         if (via_layer != None):
             self.via_layer_name = via_layer
         else:

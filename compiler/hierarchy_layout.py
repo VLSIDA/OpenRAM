@@ -244,12 +244,9 @@ class layout:
             self.gds = gdsMill.VlsiLayout(units=GDS["unit"])
             reader = gdsMill.Gds2reader(self.gds)
             reader.loadFromFile(self.gds_file)
-            # TODO: parse the width/height
-            # TODO: parse the pin locations
         else:
             debug.info(3, "creating structure %s" % self.name)
-            self.gds = gdsMill.VlsiLayout(
-                name=self.name, units=GDS["unit"])
+            self.gds = gdsMill.VlsiLayout(name=self.name, units=GDS["unit"])
 
     def print_gds(self, gds_file=None):
         """Print the gds file (not the vlsi class) to the terminal """

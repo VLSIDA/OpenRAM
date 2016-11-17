@@ -154,11 +154,12 @@ class grid:
         """
         # expand from the last point
         point = path[-1]
+
         neighbors = []
         # check z layer for enforced direction routing
         if point.z==0:
             east = point + vector3d(1,0,0)
-            west= point + vector3d(-11,0,0)
+            west= point + vector3d(-1,0,0)
             if east.x<self.width and not self.map[east].blocked and not self.map[east].visited:
                 neighbors.append(east)
             if west.x>=0 and not self.map[west].blocked and not self.map[west].visited:

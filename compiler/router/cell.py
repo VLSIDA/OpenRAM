@@ -24,7 +24,7 @@ class cell:
             b+=b1
             count+=1
 
-            if self.source or self.target:
+        if self.source or self.target:
             [r1,g1,b1] = ImageColor.getrgb("Red")
             r+=r1
             g+=g1

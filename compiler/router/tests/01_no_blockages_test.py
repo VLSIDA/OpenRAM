@@ -10,46 +10,73 @@ import globals
 import debug
 import calibre
 
+
 class no_blockages_test(unittest.TestCase):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))        
-        
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
+
+        import design
         import router
-        import wire
-        import tech
-        #r=router.router("A_to_B_no_blockages.gds")
-        #r=router.router("A_to_B_m1m2_blockages.gds")
-        #r=router.router("A_to_B_m1m2_same_layer_pins.gds")
-        r=router.router("A_to_B_m1m2_diff_layer_pins.gds")
-        layer_stack =("metal1","via1","metal2")
-        path=r.route(layer_stack,src="A",dest="B")
 
-        # For debug, to view the result as an image
-        r.rg.set_path(path)
-        r.rg.view()
-        OPTS.check_lvsdrc = False
+        class gdscell(design.design):
+            """
+            A generic GDS design that we can route on.
+            """
+            def __init__(self, name):
+                #design.design.__init__(self, name)
+                debug.info(2, "Create {0} object".format(name))
+                self.name = name
+                self.gds_file = name + ".gds"
+                self.sp_file = name + ".sp"                                
+                design.hierarchy_layout.layout.__init__(self, name)
+                design.hierarchy_spice.spice.__init__(self, name)
+            
+        class routing(design.design):
+            """
+            A generic GDS design that we can route on.
+            """
+            def __init__(self, name, gdsname):
+                design.design.__init__(self, name)
+                debug.info(2, "Create {0} object".format(name))
 
-        #w = wire.wire(layer_stack, path)
-        OPTS.check_lvsdrc = True
-        #self.local_check(w)
+                cell = gdscell(gdsname)
+                self.add_inst(name=gdsname,
+                              mod=cell,
+                              offset=[0,0])
+                self.connect_inst([])
+                
+                r=router.router(gdsname+".gds")
+                layer_stack =("metal1","via1","metal2")
+                path=r.route(layer_stack,src="A",dest="B")
+                r.rg.view()
+                
+                self.add_wire(layer_stack,path)
 
-        #drc_errors = calibre.run_drc(name, gds_name)
-        drc_errors = 1
+        
+        r = routing("test1", "A_to_B_no_blockages")
+        self.local_check(r)
+        
+        r = routing("A_to_B_m1m2_blockages")
+        self.local_check(r)
+        
+        r = routing("A_to_B_m1m2_same_layer_pins")
+        self.local_check(r)
+        
+        r = routing("A_to_B_m1m2_diff_layer_pins")
+        self.local_check(r)
         
         # fails if there are any DRC errors on any cells
         self.assertEqual(drc_errors, 0)
         globals.end_openram()
 
 
-
-
-    def local_check(self, w):
+    def local_check(self, r):
         tempgds = OPTS.openram_temp + "temp.gds"
-        w.gds_write(tempgds)
-        self.assertFalse(calibre.run_drc(w.name, tempgds))
+        r.gds_write(tempgds)
+        self.assertFalse(calibre.run_drc(r.name, tempgds))
         os.remove(tempgds)
-
+        assert(0)
 
                              
 

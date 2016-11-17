@@ -62,9 +62,6 @@ class router:
         self.track_width = max(self.horiz_track_width,self.vert_track_width)
         print "Track width:",self.track_width
 
-        # to scale coordinates to tracks
-        self.track_factor = [1/self.track_width] * 2
-
 
 
     def create_routing_grid(self):
@@ -117,15 +114,16 @@ class router:
         self.set_source(src)
         self.set_target(dest)
         self.find_blockages()
+        # returns the path in tracks
         path = self.rg.route()
         debug.info(0,"Found path. ")
         debug.info(2,str(path))
-        return path
+        self.set_path(path)
+        # convert the path back to absolute units from tracks
+        abs_path = self.convert_path_to_units(path)
+        debug.info(2,str(abs_path))        
+        return abs_path
     
-    def add_route(self,start, end, layerstack):
-        """ Add a wire route from the start to the end point"""
-        pass
-
     def create_steiner_routes(self,pins):
         """Find a set of steiner points and then return the list of
         point-to-point routes."""
@@ -162,6 +160,41 @@ class router:
         coordinate += [vector(minx, miny)]
         coordinate += [vector(maxx, maxy)]
         return coordinate
+
+    def get_inertia(self,p0,p1):
+        # direction (index) of movement
+        if p0.x==p1.x:
+            inertia = 1
+        elif p0.y==p1.y:
+            inertia = 0
+        else:
+            inertia = 2
+        return inertia
+        
+    def contract_path(self,path):
+        """ 
+        Remove intermediate points in a rectilinear path.
+        """
+        debug.info(0,"Initial path:"+str(path))
+        newpath = [path[0]]
+        for i in range(len(path)-1):
+            if i==0:
+                continue
+            prev_inertia=self.get_inertia(path[i-1],path[i])
+            next_inertia=self.get_inertia(path[i],path[i+1])
+
+            if prev_inertia!=next_inertia:
+                newpath.append(path[i])
+            else:
+                continue
+
+        newpath.append(path[-1])
+        debug.info(0,"Final path:"+str(newpath))
+        return newpath
+    
+    def set_path(self,path):
+        debug.info(2,"Set path: " + str(path))        
+        self.rg.set_path(path)
 
     def set_source(self,name):
         shape = self.find_pin(name)
@@ -215,6 +248,24 @@ class router:
             
             self.write_obstacle(cur_sref.sName, sMirr, sAngle, sxyShift)
 
+    def convert_path_to_units(self,path):
+        """ 
+        Convert a path set of tracks to center line path.
+        """
+        # First, simplify the path.
+        path = self.contract_path(path)
+
+        newpath = []
+        track_factor = [self.track_width] * 2        
+        for p in path:
+            # we can ignore the layers here
+            # add_wire will filter out duplicates
+            pt = vector(p[0],p[1])
+            pt=pt.scale(track_factor)
+            pt=snap_to_grid(pt+self.offset)
+            newpath.append(pt)
+        return newpath
+
     def convert_to_tracks(self,shape,round_bigger=True):
         """ 
         Convert a rectangular shape into track units.
@@ -225,14 +276,18 @@ class router:
         ll = snap_to_grid(ll-self.offset)
         ur = snap_to_grid(ur-self.offset)
 
+        # to scale coordinates to tracks
+        track_factor = [1/self.track_width] * 2
+
+
         # Always round blockage shapes up.
         if round_bigger:
-            ll = ll.scale(self.track_factor).floor()
-            ur = ur.scale(self.track_factor).ceil()
+            ll = ll.scale(track_factor).floor()
+            ur = ur.scale(track_factor).ceil()
         # Always round pin shapes down
         else:
-            ll = ll.scale(self.track_factor).round()
-            ur = ur.scale(self.track_factor).round()
+            ll = ll.scale(track_factor).round()
+            ur = ur.scale(track_factor).round()
 
 
         return [ll,ur]

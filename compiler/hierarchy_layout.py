@@ -175,7 +175,7 @@ class layout:
 
     def add_wire(self, layers, coordinates, offset=None):
         """Connects a routing path on given layer,coordinates,width.
-        The layers are the (horizontal, via, vertical). """
+        The layers are the (vertical, via, horizontal). """
         import wire
         debug.info(3,"add wire " + str(layers) + " " + str(coordinates))
         # Wires/paths are created so that the first point is (0,0)

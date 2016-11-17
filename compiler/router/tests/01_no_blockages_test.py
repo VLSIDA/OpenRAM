@@ -23,12 +23,10 @@ class no_blockages_test(unittest.TestCase):
         r.set_layers(("metal1","via1","metal2"))
 
         r.create_routing_grid()
-
         r.set_source("A")
-        
         r.set_target("B")
-        
         r.find_blockages()
+        r.route()
         r.rg.view()
             
         #drc_errors = calibre.run_drc(name, gds_name)

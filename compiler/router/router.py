@@ -6,6 +6,8 @@ import debug
 from vector import vector
 import grid
 
+ 
+
 
 class router:
     """A router class to read an obstruction map from a gds and plan a
@@ -51,15 +53,10 @@ class router:
         """ If we want to route something besides the top-level cell."""
         self.top_name = top_name
 
-
     def set_layers(self, layers):
         """ Allows us to change the layers that we are routing on. """
         self.layers = layers
         (horiz_layer, via_layer, vert_layer) = self.layers
-        if (via_layer != None):
-            self.via_layer_name = via_layer
-        else:
-            self.via_layer_name = None
 
         self.vert_layer_name = vert_layer
         self.vert_layer_width = tech.drc["minwidth_{0}".format(vert_layer)]
@@ -111,7 +108,11 @@ class router:
         for layer in self.layers:
             self.write_obstacle(self.top_name)
 
-            
+
+    def route(self):
+        path = self.rg.route()
+        debug.info(0,"Found path: " + str(path))
+        self.rg.set_path(path)
     
     def add_route(self,start, end, layerstack):
         """ Add a wire route from the start to the end point"""
@@ -136,7 +137,7 @@ class router:
         return coordinate
 
     def min_max_coord(self, coordTrans):
-        """Find the lowest and highest conner of a Rectangle"""
+        """Find the lowest and highest corner of a Rectangle"""
         coordinate = []
         minx = min(coordTrans[0][0], coordTrans[1][0], coordTrans[2][0], coordTrans[3][0])
         maxx = max(coordTrans[0][0], coordTrans[1][0], coordTrans[2][0], coordTrans[3][0])
@@ -151,6 +152,7 @@ class router:
         zindex = 0 if self.pin_layers[name]==self.horiz_layer_number else 1
         debug.info(0,"Set source: " + str(name) + " " + str(shape) + " z=" + str(zindex))
         self.rg.set_source(shape[0],shape[1],zindex)
+
 
     def set_target(self,name):
         shape = self.find_pin(name)
@@ -171,6 +173,7 @@ class router:
                 
                 shape_tracks=self.convert_to_tracks([ll_microns,ur_microns])
 
+                # don't add a blockage if this shape was a pin shape
                 if shape_tracks not in self.pin_shapes.values():
                     # inflate the ll and ur by 1 track in each direction
                     [ll,ur]=shape_tracks
@@ -182,7 +185,6 @@ class router:
                 else:
                     debug.info(2,"Skip: "+str(shape_tracks))
                 
-
 
         # recurse given the mirror, angle, etc.
         for cur_sref in self.layout.structures[sref].srefs:
@@ -201,22 +203,19 @@ class router:
             
             self.write_obstacle(cur_sref.sName, layer,sMirr, sAngle, sxyShift)
 
-    def inflate_obstacle(self,shape):
-        # TODO: inflate by the layer design rules
-        return shape
-        
     def convert_to_tracks(self,shape):
         """ 
         Convert a rectangular shape into track units.
         """
         [ll,ur] = shape
 
-        # fix offset
+        # offset lowest corner object to to (0,0)
         ll = snap_to_grid(ll-self.offset)
         ur = snap_to_grid(ur-self.offset)
 
         # always round down, because we will add a track
-        # to inflate each object later
+        # to inflate each obstacle object later.
+        # whereas pins should be conservative 
         ll = ll.scale(self.track_factor).ceil()
         ur = ur.scale(self.track_factor).floor()
 

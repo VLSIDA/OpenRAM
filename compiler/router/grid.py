@@ -46,7 +46,6 @@ class grid:
 
         # We shouldn't have a path greater than 50% the HPWL
         # so scale all visited indices by this value for colorization
-        cell.scale = 1.5 * (self.width+self.height)
         for x in range(self.width):
             for y in range(self.height):
                 h_map[x,y] = self.map[vector3d(x,y,0)].get_color()
@@ -62,6 +61,7 @@ class grid:
         img.paste(mid_img, (self.width,0))        
         img.paste(v_img, (self.width+25,0))
         img.show()
+        img.save("test.png")
 
     def set_property(self,ll,ur,z,name,value=True):
         for x in range(int(ll[0]),int(ur[0])):
@@ -175,7 +175,7 @@ class grid:
         debug.info(0,"Initializing queue.")
         for s in self.source:
             cost = self.cost_to_target(s)
-            debug.info(1,"Init: cost=" + str(cost) + " " + str([s]))
+            debug.info(2,"Init: cost=" + str(cost) + " " + str([s]))
             self.q.put((cost,[s]))
 
     def cost_to_target(self,source):

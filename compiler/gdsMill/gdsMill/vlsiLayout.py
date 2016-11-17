@@ -678,7 +678,6 @@ class VlsiLayout:
 
         pin_boundary=self.readPinInStructureList(label_coordinate, label_layer)
         debug.info(debug_level, "Find pin covers "+str(label_name)+" at "+str(pin_boundary))
-
         pin_boundary=[pin_boundary[0]*self.units[0],pin_boundary[1]*self.units[0],
                       pin_boundary[2]*self.units[0],pin_boundary[3]*self.units[0]]
         return [label_name, label_layer, pin_boundary]

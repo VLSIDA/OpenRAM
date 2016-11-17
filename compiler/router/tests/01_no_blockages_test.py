@@ -9,7 +9,6 @@ sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 import debug
 import calibre
-import vector
 
 class no_blockages_test(unittest.TestCase):
 
@@ -17,18 +16,24 @@ class no_blockages_test(unittest.TestCase):
         globals.init_openram("config_{0}".format(OPTS.tech_name))        
         
         import router
+        import wire
+        import tech
         #r=router.router("A_to_B_no_blockages.gds")
-        r=router.router("A_to_B_m1m2_blockages.gds")
+        #r=router.router("A_to_B_m1m2_blockages.gds")
+        #r=router.router("A_to_B_m1m2_same_layer_pins.gds")
+        r=router.router("A_to_B_m1m2_diff_layer_pins.gds")
+        layer_stack =("metal1","via1","metal2")
+        path=r.route(layer_stack,src="A",dest="B")
 
-        r.set_layers(("metal1","via1","metal2"))
-
-        r.create_routing_grid()
-        r.set_source("A")
-        r.set_target("B")
-        r.find_blockages()
-        r.route()
+        # For debug, to view the result as an image
+        r.rg.set_path(path)
         r.rg.view()
-            
+        OPTS.check_lvsdrc = False
+
+        #w = wire.wire(layer_stack, path)
+        OPTS.check_lvsdrc = True
+        #self.local_check(w)
+
         #drc_errors = calibre.run_drc(name, gds_name)
         drc_errors = 1
         
@@ -39,6 +44,11 @@ class no_blockages_test(unittest.TestCase):
 
 
 
+    def local_check(self, w):
+        tempgds = OPTS.openram_temp + "temp.gds"
+        w.gds_write(tempgds)
+        self.assertFalse(calibre.run_drc(w.name, tempgds))
+        os.remove(tempgds)
 
 
                              

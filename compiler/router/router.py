@@ -20,34 +20,21 @@ class router:
 
         """
         self.gds_name = gds_name
-        self.layout = gdsMill.VlsiLayout()
+        self.layout = gdsMill.VlsiLayout(units=tech.GDS["unit"])
         self.reader = gdsMill.Gds2reader(self.layout)
         self.reader.loadFromFile(gds_name)
         self.top_name = self.layout.rootStructureName
-        self.unit = float(self.layout.info['units'][0])
-        print "Units:",self.unit
 
         self.pin_names = []
         self.pin_shapes = {}
         self.pin_layers = {}
         
         self.boundary = self.layout.measureBoundary(self.top_name)
+        #print "Boundary: ",self.boundary
         self.ll = vector(self.boundary[0])
         self.ur = vector(self.boundary[1])
         self.size = self.ur - self.ll
-        self.width = self.size.x
-        self.height = self.size.y
-        
-        print "Boundary: ",self.boundary
-        print "Size: ", self.width,self.height
-        
-        # to scale coordinates by units
-        self.unit_factor = [self.unit] * 2
-        
-        # We will offset so ll is at (0,0)
-        self.offset = self.ll 
-        print "Offset: ",self.offset
-        
+
 
     def set_top(self,top_name):
         """ If we want to route something besides the top-level cell."""
@@ -82,9 +69,20 @@ class router:
 
     def create_routing_grid(self):
         """ Create a routing grid that spans given area. Wires cannot exist outside region. """
+        # We will add a halo around the boundary
+        # of this many tracks
+        track_halo = 2
+        # We will offset so ll is at (-track_halo*track_width,-track_halo*track_width)
+        track_width_offset = vector([track_halo*self.track_width]*2)
+        self.offset = self.ll - track_width_offset
+        print "Offset: ",self.offset
+        width = self.size.x
+        height = self.size.y
+        print "Size: ", width,height
 
-        self.width_in_tracks = int(math.ceil(self.width/self.track_width))
-        self.height_in_tracks = int(math.ceil(self.height/self.track_width))
+        # pad the tracks on each side by the halo as well
+        self.width_in_tracks = int(math.ceil(width/self.track_width)) + 2*track_halo
+        self.height_in_tracks = int(math.ceil(height/self.track_width)) + 2*track_halo
 
         print "Size (in tracks): ", self.width_in_tracks, self.height_in_tracks
         
@@ -94,8 +92,12 @@ class router:
     def find_pin(self,pin):
         """ Finds the offsets to the gds pins """
         (pin_name,pin_layer,pin_shape) = self.layout.readPin(str(pin))
+        debug.info(3,"Find pin {0} layer {1} shape {2}".format(pin_name,str(pin_layer),str(pin_shape)))
         # repack the shape as a pair of vectors rather than four values
-        new_shape = self.convert_to_tracks([vector(pin_shape[0],pin_shape[1]),vector(pin_shape[2],pin_shape[3])])
+        shape=[vector(pin_shape[0],pin_shape[1]),vector(pin_shape[2],pin_shape[3])]
+        print shape
+        new_shape = self.convert_to_tracks(shape,round_bigger=False)
+        print new_shape
         self.pin_names.append(pin_name)
         self.pin_shapes[str(pin)] = new_shape
         self.pin_layers[str(pin)] = pin_layer
@@ -109,10 +111,16 @@ class router:
             self.write_obstacle(self.top_name)
 
 
-    def route(self):
+    def route(self,layers,src, dest):
+        self.set_layers(layers)
+        self.create_routing_grid()
+        self.set_source(src)
+        self.set_target(dest)
+        self.find_blockages()
         path = self.rg.route()
-        debug.info(0,"Found path: " + str(path))
-        self.rg.set_path(path)
+        debug.info(0,"Found path. ")
+        debug.info(2,str(path))
+        return path
     
     def add_route(self,start, end, layerstack):
         """ Add a wire route from the start to the end point"""
@@ -136,13 +144,21 @@ class router:
             coordinate += [(x, y)]
         return coordinate
 
-    def min_max_coord(self, coordTrans):
+    def convert_shape_to_units(self, shape):
+        """ Scale a shape (two vector list) to user units """
+        unit_factor = [tech.GDS["unit"][0]] * 2
+        ll=shape[0].scale(unit_factor)
+        ur=shape[1].scale(unit_factor)
+        return [ll,ur]
+
+        
+    def min_max_coord(self, coord):
         """Find the lowest and highest corner of a Rectangle"""
         coordinate = []
-        minx = min(coordTrans[0][0], coordTrans[1][0], coordTrans[2][0], coordTrans[3][0])
-        maxx = max(coordTrans[0][0], coordTrans[1][0], coordTrans[2][0], coordTrans[3][0])
-        miny = min(coordTrans[0][1], coordTrans[1][1], coordTrans[2][1], coordTrans[3][1])
-        maxy = max(coordTrans[0][1], coordTrans[1][1], coordTrans[2][1], coordTrans[3][1])
+        minx = min(coord[0][0], coord[1][0], coord[2][0], coord[3][0])
+        maxx = max(coord[0][0], coord[1][0], coord[2][0], coord[3][0])
+        miny = min(coord[0][1], coord[1][1], coord[2][1], coord[3][1])
+        maxy = max(coord[0][1], coord[1][1], coord[2][1], coord[3][1])
         coordinate += [vector(minx, miny)]
         coordinate += [vector(maxx, maxy)]
         return coordinate
@@ -150,49 +166,45 @@ class router:
     def set_source(self,name):
         shape = self.find_pin(name)
         zindex = 0 if self.pin_layers[name]==self.horiz_layer_number else 1
-        debug.info(0,"Set source: " + str(name) + " " + str(shape) + " z=" + str(zindex))
+        debug.info(1,"Set source: " + str(name) + " " + str(shape) + " z=" + str(zindex))
         self.rg.set_source(shape[0],shape[1],zindex)
 
 
     def set_target(self,name):
         shape = self.find_pin(name)
         zindex = 0 if self.pin_layers[name]==self.horiz_layer_number else 1        
-        debug.info(0,"Set target: " + str(name) + " " + str(shape) + " z=" + str(zindex))
+        debug.info(1,"Set target: " + str(name) + " " + str(shape) + " z=" + str(zindex))
         self.rg.set_target(shape[0],shape[1],zindex)
         
     def write_obstacle(self, sref, mirr = 1, angle = math.radians(float(0)), xyShift = (0, 0)): 
         """Recursive write boundaries on each Structure in GDS file to LEF"""
 
         for boundary in self.layout.structures[sref].boundaries:
-            coordTrans = self.translate_coordinates(boundary.coordinates, mirr, angle, xyShift)
-            shape = self.min_max_coord(coordTrans)
+            coord_trans = self.translate_coordinates(boundary.coordinates, mirr, angle, xyShift)
+            shape_coords = self.min_max_coord(coord_trans)
+            shape = self.convert_shape_to_units(shape_coords)
 
             if boundary.drawingLayer in [self.vert_layer_number,self.horiz_layer_number]:
-                ll_microns=shape[0].scale(self.unit_factor)
-                ur_microns=shape[1].scale(self.unit_factor)
-                
-                shape_tracks=self.convert_to_tracks([ll_microns,ur_microns])
+                # We round the pins down, so we must do this to skip them
+                pin_shape_tracks=self.convert_to_tracks(shape,round_bigger=False)
 
                 # don't add a blockage if this shape was a pin shape
-                if shape_tracks not in self.pin_shapes.values():
+                if pin_shape_tracks not in self.pin_shapes.values():
                     # inflate the ll and ur by 1 track in each direction
-                    [ll,ur]=shape_tracks
-                    ll = vector(0,0).max(ll + vector(-1,-1))
-                    ur = vector(self.width_in_tracks-1,self.height_in_tracks-1).min(ur + vector(1,1))
+                    [ll,ur]=self.convert_to_tracks(shape)
                     zlayer = 0 if boundary.drawingLayer==self.horiz_layer_number else 1
-                    debug.info(1,"Blockage: "+str([ll,ur])+" z="+str(zlayer))
                     self.rg.add_blockage(ll,ur,zlayer)
                 else:
-                    debug.info(2,"Skip: "+str(shape_tracks))
+                    debug.info(2,"Skip: "+str(pin_shape_tracks))
                 
 
         # recurse given the mirror, angle, etc.
         for cur_sref in self.layout.structures[sref].srefs:
             sMirr = 1
-            if sref.transFlags[0] == True:
+            if cur_sref.transFlags[0] == True:
                 sMirr = -1
             sAngle = math.radians(float(0))
-            if sref.rotateAngle:
+            if cur_sref.rotateAngle:
                 sAngle = math.radians(float(cur_sref.rotateAngle))
             sAngle += angle
             x = cur_sref.coordinates[0]
@@ -201,23 +213,27 @@ class router:
             newY = (x)*math.sin(angle) + mirr*(y)*math.cos(angle) + xyShift[1] 
             sxyShift = (newX, newY)
             
-            self.write_obstacle(cur_sref.sName, layer,sMirr, sAngle, sxyShift)
+            self.write_obstacle(cur_sref.sName, sMirr, sAngle, sxyShift)
 
-    def convert_to_tracks(self,shape):
+    def convert_to_tracks(self,shape,round_bigger=True):
         """ 
         Convert a rectangular shape into track units.
         """
         [ll,ur] = shape
 
-        # offset lowest corner object to to (0,0)
+        # offset lowest corner object to to (-track halo,-track halo)
         ll = snap_to_grid(ll-self.offset)
         ur = snap_to_grid(ur-self.offset)
 
-        # always round down, because we will add a track
-        # to inflate each obstacle object later.
-        # whereas pins should be conservative 
-        ll = ll.scale(self.track_factor).ceil()
-        ur = ur.scale(self.track_factor).floor()
+        # Always round blockage shapes up.
+        if round_bigger:
+            ll = ll.scale(self.track_factor).floor()
+            ur = ur.scale(self.track_factor).ceil()
+        # Always round pin shapes down
+        else:
+            ll = ll.scale(self.track_factor).round()
+            ur = ur.scale(self.track_factor).round()
+
 
         return [ll,ur]
             

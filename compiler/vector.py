@@ -23,11 +23,11 @@ class vector():
 
     def __str__(self):
         """ override print function output """
-        return "vector:["+str(self.x)+", "+str(self.y)+"]"
+        return "["+str(self.x)+","+str(self.y)+"]"
 
     def __repr__(self):
         """ override print function output """
-        return "["+str(self.x)+", "+str(self.y)+"]"
+        return "["+str(self.x)+","+str(self.y)+"]"
 
     def __setitem__(self, index, value):
         """ 
@@ -113,6 +113,13 @@ class vector():
         """
         return vector(int(math.ceil(self.x)),int(math.ceil(self.y)))
 
+    def round(self):
+        """
+        Override round function
+        """
+        return vector(int(round(self.x)),int(round(self.y)))
+    
+    
     def __eq__(self, other):
         """Override the default Equals behavior"""
         if isinstance(other, self.__class__):

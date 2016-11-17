@@ -256,7 +256,7 @@ class layout:
         if gds_file == None:
             gds_file = self.gds_file
         debug.info(3, "Printing %s" % gds_file)
-        arrayCellLayout = gdsMill.VlsiLayout()
+        arrayCellLayout = gdsMill.VlsiLayout(units=GDS["unit"])
         reader = gdsMill.Gds2reader(arrayCellLayout, debugToTerminal=1)
         reader.loadFromFile(gds_file)
 

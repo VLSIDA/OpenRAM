@@ -6,26 +6,41 @@ class cell:
     visited, etc.
     """
     def __init__(self):
+        self.visited = False
         self.path = False
-
         self.blocked = False
-
         self.source = False
         self.target = False
 
 
     def get_color(self):
-
+        r=g=b=0
+        count=0
         # Blues are horizontal
         if self.blocked:
-            return ImageColor.getrgb("Green")
-        # Reds are source/sink    
-        if self.source or self.target:
-            return ImageColor.getrgb("Red")
+            [r1,g1,b1] = ImageColor.getrgb("Green")
+            r+=r1
+            g+=g1
+            b+=b1
+            count+=1
+
+            if self.source or self.target:
+            [r1,g1,b1] = ImageColor.getrgb("Red")
+            r+=r1
+            g+=g1
+            b+=b1
+            count+=1
 
         if self.path:
-            return ImageColor.getrgb("Blue")
+            [r1,g1,b1] = ImageColor.getrgb("Blue")
+            r+=r1
+            g+=g1
+            b+=b1
+            count+=1
 
-        return [255,255,255]
+        if count>0:
+            return [int(r/count),int(g/count),int(b/count)]
+        else:
+            return [255,255,255]
             
             

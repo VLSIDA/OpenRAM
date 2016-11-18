@@ -75,7 +75,7 @@ drc["grid"] = 0.0025
 drc["drc_rules"]=drclvs_home+"/calibreDRC.rul"
 drc["lvs_rules"]=drclvs_home+"/calibreLVS.rul"
 drc["xrc_rules"]=drclvs_home+"/calibrexRC.rul"
-drc["layer_map"]=os.environ.get("OPENRAM_TECH")+"freepdk45/layers.map"
+drc["layer_map"]=os.environ.get("OPENRAM_TECH")+"/freepdk45/layers.map"
 
 # minwidth_tx withcontact
 drc["minwidth_tx"]=0.09

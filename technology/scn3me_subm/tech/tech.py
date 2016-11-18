@@ -59,7 +59,7 @@ drc["grid"]=0.15
 #DRC/LVS test set_up
 drc["drc_rules"]=drclvs_home+"/calibreDRC_scn3me_subm.rul"
 drc["lvs_rules"]=drclvs_home+"/calibreLVS_scn3me_subm.rul"
-drc["layer_map"]=os.environ.get("OPENRAM_TECH")+"/layers.map"
+drc["layer_map"]=os.environ.get("OPENRAM_TECH")+"scn3me_subm/layers.map"
 
         	      					
 # minwidth_tx withcontact

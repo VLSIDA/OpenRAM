@@ -49,13 +49,17 @@ class no_blockages_test(unittest.TestCase):
                 r=router.router(gdsname+".gds")
                 layer_stack =("metal1","via1","metal2")
                 path=r.route(layer_stack,src="A",dest="B")
+                self.add_wire(layer_stack,path)
+
+                path=r.route(layer_stack,src="C",dest="D")
+                self.add_wire(layer_stack,path)
+                
                 r.rg.view()
                 
-                self.add_wire(layer_stack,path)
 
         
         
-        r = routing("test1", "AB_diff_layer_pins")
+        r = routing("test1", "ABCD_two_nets")
         self.local_check(r)
         
         # fails if there are any DRC errors on any cells

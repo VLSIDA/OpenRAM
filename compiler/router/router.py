@@ -104,12 +104,21 @@ class router:
         for layer in self.layers:
             self.write_obstacle(self.top_name)
 
+    def clear_pins(self):
+        self.source = []
+        self.dest = []
 
-    def route(self,layers,src, dest):
+    def route(self, layers, src, dest):
+        """ 
+        Route a single source-destination net and return
+        the simplified rectilinear path.
+        """
+        self.clear_pins()
         self.set_layers(layers)
         self.create_routing_grid()
         self.set_source(src)
         self.set_target(dest)
+        
         self.find_blockages()
         # returns the path in tracks
         path = self.rg.route()

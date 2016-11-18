@@ -457,7 +457,7 @@ class control_logic(design.design):
                          rotate=90)
 
         # OE_bar [Bus # 1] to nor2 B input
-        layer_stack = ("metal3", "via1", "metal2")
+        layer_stack = ("metal1", "via1", "metal2")
         start = self.nor2_1_B_position
         mid1 = vector(self.nor2_1_B_position.x+ 2 * drc["minwidth_metal2"], 
                       start.y)

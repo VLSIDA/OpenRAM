@@ -601,7 +601,7 @@ class VlsiLayout:
         self.populateCoordinateMap()
         cellBoundary = [None, None, None, None]
         for TreeUnit in self.xyTree:
-            cellBoundary=self.measureSizeInStruture(TreeUnit,cellBoundary)
+            cellBoundary=self.measureSizeInStructure(TreeUnit,cellBoundary)
         cellSize=[cellBoundary[2]-cellBoundary[0],cellBoundary[3]-cellBoundary[1]]
         cellSizeMicron=[cellSize[0]*self.units[0],cellSize[1]*self.units[0]]
         return cellSizeMicron
@@ -611,27 +611,27 @@ class VlsiLayout:
         self.populateCoordinateMap()
         cellBoundary = [None, None, None, None]
         for TreeUnit in self.xyTree:
-            cellBoundary=self.measureSizeInStruture(TreeUnit,cellBoundary)
+            cellBoundary=self.measureSizeInStructure(TreeUnit,cellBoundary)
         return [[self.units[0]*cellBoundary[0],self.units[0]*cellBoundary[1]],
                 [self.units[0]*cellBoundary[2],self.units[0]*cellBoundary[3]]]
     
-    def measureSizeInStruture(self,Struture,cellBoundary):
-        StrutureName=Struture[0]
-        StrutureOrgin=[Struture[1][0],Struture[1][1]]
-        StrutureuVector=[Struture[2][0],Struture[2][1],Struture[2][2]]
-        StruturevVector=[Struture[3][0],Struture[3][1],Struture[3][2]]
-        #debug.info(debug_level,"Checking Structure: "+str(StrutureName))
-        #debug.info(debug_level,"-Structure Struture Orgin:"+str(StrutureOrgin))
-        #debug.info(debug_level,"-Structure direction: uVector["+str(StrutureuVector)+"]")
-        #debug.info(debug_level,"-Structure direction: vVector["+str(StruturevVector)+"]")
+    def measureSizeInStructure(self,Structure,cellBoundary):
+        StructureName=Structure[0]
+        StructureOrigin=[Structure[1][0],Structure[1][1]]
+        StructureuVector=[Structure[2][0],Structure[2][1],Structure[2][2]]
+        StructurevVector=[Structure[3][0],Structure[3][1],Structure[3][2]]
+        #debug.info(debug_level,"Checking Structure: "+str(StructureName))
+        #debug.info(debug_level,"-Structure Structure Origin:"+str(StructureOrigin))
+        #debug.info(debug_level,"-Structure direction: uVector["+str(StructureuVector)+"]")
+        #debug.info(debug_level,"-Structure direction: vVector["+str(StructurevVector)+"]")
         
-        for boundary in self.structures[str(StrutureName)].boundaries:
+        for boundary in self.structures[str(StructureName)].boundaries:
             left_bottom=boundary.coordinates[0]
             right_top=boundary.coordinates[2]
             thisBoundary=[left_bottom[0],left_bottom[1],right_top[0],right_top[1]]
-            thisBoundary=self.tranformRectangle(thisBoundary,StrutureuVector,StruturevVector)
-            thisBoundary=[thisBoundary[0]+StrutureOrgin[0],thisBoundary[1]+StrutureOrgin[1],
-            thisBoundary[2]+StrutureOrgin[0],thisBoundary[3]+StrutureOrgin[1]]
+            thisBoundary=self.tranformRectangle(thisBoundary,StructureuVector,StructurevVector)
+            thisBoundary=[thisBoundary[0]+StructureOrigin[0],thisBoundary[1]+StructureOrigin[1],
+            thisBoundary[2]+StructureOrigin[0],thisBoundary[3]+StructureOrigin[1]]
             cellBoundary=self.update_boundary(thisBoundary,cellBoundary)
         return cellBoundary
         
@@ -650,9 +650,10 @@ class VlsiLayout:
                 cellBoundary[3]=right_top_Y
         return cellBoundary
         
-    def readPin(self,label_name,mod="offset"):
+    def readPin(self,label_name):
         """
-        Search for a pin label and return all the largest enclosing rectangle.
+        Search for a pin label and return the largest enclosing rectangle
+        on the same layer as the pin label.
         """
         label_layer = None
         label_coordinate = [None, None]
@@ -662,50 +663,80 @@ class VlsiLayout:
                 label_layer = Text.drawingLayer
                 label_coordinate = Text.coordinates
 
-        pin_boundary=self.readPinInStructureList(label_coordinate, label_layer)
+        pin_boundaries=self.readAllPinInStructureList(label_coordinate, label_layer)
+
+        # sort the boundaries, return the max area pin boundary
+        pin_boundaries.sort(cmpBoundaryAreas,reverse=True)
+        pin_boundary=pin_boundaries[0]
+        
         # Convert to user units
         pin_boundary=[pin_boundary[0]*self.units[0],pin_boundary[1]*self.units[0],
                       pin_boundary[2]*self.units[0],pin_boundary[3]*self.units[0]]
+        
         return [label_name, label_layer, pin_boundary]
 
-    def readPinInStructureList(self,label_coordinates,layer):
+    def readAllPin(self,label_name):
+        """
+        Search for a pin label and return ALL the enclosing rectangles on the same layer
+        as the pin label.
+        """
+        label_layer = None
+        label_coordinate = [None, None]
+
+        for Text in self.structures[self.rootStructureName].texts:
+            if Text.textString == label_name or Text.textString == label_name+"\x00":
+                label_layer = Text.drawingLayer
+                label_coordinate = Text.coordinates
+
+        pin_boundaries=self.readAllPinInStructureList(label_coordinate, label_layer)
+
+        # Convert to user units
+        new_boundaries = []
+        for pin_boundary in pin_boundaries:
+            new_boundaries.append([pin_boundary[0]*self.units[0],pin_boundary[1]*self.units[0],
+                                   pin_boundary[2]*self.units[0],pin_boundary[3]*self.units[0]])
+            
+        
+        return [label_name, label_layer, new_boundaries]
+    
+    def readAllPinInStructureList(self,label_coordinates,layer):
         """
         Given the label coordinate, search for enclosing structures on the given layer.
         Return the single biggest area rectangle.
         """
-        label_boundary = [None,None,None,None]
+        label_boundaries = []
         for TreeUnit in self.xyTree:
-            label_boundary=self.readPinInStruture(label_coordinates,layer,TreeUnit,label_boundary)
-        return label_boundary
+            boundaries = self.readPinInStructure(label_coordinates,layer,TreeUnit)
+            label_boundaries += boundaries
+
+        return label_boundaries
 
 
-    def readPinInStruture(self,label_coordinates,layer,Struture,label_boundary):
+    def readPinInStructure(self,label_coordinates,layer,Structure):
         """ 
+        Go through all the shapes in a strutcure and return the list of shapes
+        that the label coordinates are inside.
         """
-        StrutureName=Struture[0]
-        StrutureOrgin=[Struture[1][0],Struture[1][1]]
-        StrutureuVector=[Struture[2][0],Struture[2][1],Struture[2][2]]
-        StruturevVector=[Struture[3][0],Struture[3][1],Struture[3][2]]
-        #debug.info(debug_level,"Checking Structure: "+str(StrutureName))
-        #debug.info(debug_level,"-Structure Struture Orgin:"+str(StrutureOrgin))
-        #debug.info(debug_level,"-Structure direction: uVector["+str(StrutureuVector)+"]")
-        #debug.info(debug_level,"-Structure direction: vVector["+str(StruturevVector)+"]")
+        StructureName=Structure[0]
+        StructureOrigin=[Structure[1][0],Structure[1][1]]
+        StructureuVector=[Structure[2][0],Structure[2][1],Structure[2][2]]
+        StructurevVector=[Structure[3][0],Structure[3][1],Structure[3][2]]
 
-        for boundary in self.structures[str(StrutureName)].boundaries:
+        boundaries = []
+        
+        for boundary in self.structures[str(StructureName)].boundaries:
             if layer==boundary.drawingLayer:
                 left_bottom=boundary.coordinates[0]
                 right_top=boundary.coordinates[2]
                 MetalBoundary=[left_bottom[0],left_bottom[1],right_top[0],right_top[1]]
-                MetalBoundary=self.tranformRectangle(MetalBoundary,StrutureuVector,StruturevVector)
-                MetalBoundary=[MetalBoundary[0]+StrutureOrgin[0],MetalBoundary[1]+StrutureOrgin[1],
-                MetalBoundary[2]+StrutureOrgin[0],MetalBoundary[3]+StrutureOrgin[1]]
+                MetalBoundary=self.tranformRectangle(MetalBoundary,StructureuVector,StructurevVector)
+                MetalBoundary=[MetalBoundary[0]+StructureOrigin[0],MetalBoundary[1]+StructureOrigin[1],
+                MetalBoundary[2]+StructureOrigin[0],MetalBoundary[3]+StructureOrigin[1]]
 
-                result = self.labelInRectangle(label_coordinates[0],MetalBoundary)
-                if (result):
-                    #debug.info(debug_level,"Rectangle(layer"+str(layer)+") at "+str(MetalBoundary))
-                    #debug.info(debug_level,"covers label (offset"+str(label_coordinates)+")")
-                    label_boundary=self.returnBiggerBoundary(MetalBoundary,label_boundary)
-        return label_boundary
+                if self.labelInRectangle(label_coordinates[0],MetalBoundary):
+                    boundaries.append(MetalBoundary)
+                    
+        return boundaries
 
     def tranformRectangle(self,orignalRectangle,uVector,vVector):
         """
@@ -746,18 +777,18 @@ class VlsiLayout:
         else:
             return False
 
-    def returnBiggerBoundary(self,comparedRectangle,label_boundary):
-        """
-        Compares two rectangles and returns the bigger in terms of area.
-        """
-        if label_boundary[0]== None:
-            label_boundary=comparedRectangle
-            #debug.info(debug_level,"The label_boundary is initialized to "+str(label_boundary))
-        else:
-            area_label_boundary=(label_boundary[2]-label_boundary[0])*(label_boundary[3]-label_boundary[1])
-            area_comparedRectangle=(comparedRectangle[2]-comparedRectangle[0])*(comparedRectangle[3]-comparedRectangle[1])
-            if area_label_boundary<=area_comparedRectangle:
-                label_boundary = comparedRectangle
-                #debug.info(debug_level,"The label_boundary is updated to "+str(label_boundary))
-        return label_boundary
+def cmpBoundaryAreas(A,B):
+    """
+    Compares two rectangles and returns the bigger in terms of area.
+    """
+    area_A=(A[2]-A[0])*(A[3]-A[1])
+    area_B=(B[2]-B[0])*(B[3]-B[1])
+    if area_A>area_B:
+        return 1
+    elif area_A==area_B:
+        return 0
+    else:
+        return -1
 
+
+    

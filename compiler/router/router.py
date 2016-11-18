@@ -27,6 +27,8 @@ class router:
 
         self.pin_names = []
         self.pin_shapes = {}
+        # Used to track which shapes should not become blockages
+        self.all_pin_shapes = []
         self.pin_layers = {}
         
         self.boundary = self.layout.measureBoundary(self.top_name)
@@ -86,16 +88,22 @@ class router:
         
 
     def find_pin(self,pin):
-        """ Finds the offsets to the gds pins """
-        (pin_name,pin_layer,pin_shape) = self.layout.readPin(str(pin))
-        debug.info(3,"Find pin {0} layer {1} shape {2}".format(pin_name,str(pin_layer),str(pin_shape)))
-        # repack the shape as a pair of vectors rather than four values
-        shape=[vector(pin_shape[0],pin_shape[1]),vector(pin_shape[2],pin_shape[3])]
-        new_shape = self.convert_shape_to_tracks(shape,round_bigger=False)
+        """ Finds the pin shapes and converts to tracks """
+        (pin_name,pin_layer,pin_shapes) = self.layout.readAllPin(str(pin))
+
+        self.pin_shapes[str(pin)]=[]
         self.pin_names.append(pin_name)
-        self.pin_shapes[str(pin)] = new_shape
-        self.pin_layers[str(pin)] = pin_layer
-        return new_shape
+        
+        for pin_shape in pin_shapes:
+            debug.info(3,"Find pin {0} layer {1} shape {2}".format(pin_name,str(pin_layer),str(pin_shape)))
+            # repack the shape as a pair of vectors rather than four values
+            shape=[vector(pin_shape[0],pin_shape[1]),vector(pin_shape[2],pin_shape[3])]
+            new_shape = self.convert_shape_to_tracks(shape,round_bigger=False)
+            self.pin_shapes[str(pin)].append(new_shape)
+            self.all_pin_shapes.append(new_shape)            
+            self.pin_layers[str(pin)] = pin_layer
+            
+        return self.pin_shapes[str(pin)]
 
     def find_blockages(self):
         if len(self.pin_names)!=2:
@@ -205,17 +213,19 @@ class router:
         self.rg.set_path(path)
 
     def set_source(self,name):
-        shape = self.find_pin(name)
+        shapes = self.find_pin(name)
         zindex = 0 if self.pin_layers[name]==self.horiz_layer_number else 1
-        debug.info(1,"Set source: " + str(name) + " " + str(shape) + " z=" + str(zindex))
-        self.rg.set_source(shape[0],shape[1],zindex)
+        for shape in shapes:
+            debug.info(1,"Set source: " + str(name) + " " + str(shape) + " z=" + str(zindex))
+            self.rg.set_source(shape[0],shape[1],zindex)
 
 
     def set_target(self,name):
-        shape = self.find_pin(name)
-        zindex = 0 if self.pin_layers[name]==self.horiz_layer_number else 1        
-        debug.info(1,"Set target: " + str(name) + " " + str(shape) + " z=" + str(zindex))
-        self.rg.set_target(shape[0],shape[1],zindex)
+        shapes = self.find_pin(name)
+        zindex = 0 if self.pin_layers[name]==self.horiz_layer_number else 1
+        for shape in shapes:
+            debug.info(1,"Set target: " + str(name) + " " + str(shape) + " z=" + str(zindex))
+            self.rg.set_target(shape[0],shape[1],zindex)
         
     def write_obstacle(self, sref, mirr = 1, angle = math.radians(float(0)), xyShift = (0, 0)): 
         """Recursive write boundaries on each Structure in GDS file to LEF"""
@@ -230,7 +240,7 @@ class router:
                 pin_shape_tracks=self.convert_shape_to_tracks(shape,round_bigger=False)
 
                 # don't add a blockage if this shape was a pin shape
-                if pin_shape_tracks not in self.pin_shapes.values():
+                if pin_shape_tracks not in self.all_pin_shapes:
                     # inflate the ll and ur by 1 track in each direction
                     [ll,ur]=self.convert_shape_to_tracks(shape)
                     zlayer = 0 if boundary.drawingLayer==self.horiz_layer_number else 1

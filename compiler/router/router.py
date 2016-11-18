@@ -5,7 +5,6 @@ import math
 import debug
 from vector import vector
 import grid
-
  
 
 
@@ -137,7 +136,7 @@ class router:
         contracted_path = self.contract_path(path)
         debug.info(1,str(contracted_path))                
         # convert the path back to absolute units from tracks
-        abs_path = self.convert_path_to_units(contracted_path)
+        abs_path = map(self.convert_point_to_units,contracted_path)
         debug.info(1,str(abs_path))        
         return abs_path
     
@@ -266,20 +265,16 @@ class router:
             
             self.write_obstacle(cur_sref.sName, sMirr, sAngle, sxyShift)
 
-    def convert_path_to_units(self,path):
+    def convert_point_to_units(self,p):
         """ 
         Convert a path set of tracks to center line path.
         """
-        newpath = []
         track_factor = [self.track_width] * 2        
-        for p in path:
-            # we can ignore the layers here
-            # add_wire will filter out duplicates
-            pt = vector(p[0],p[1])
-            pt=pt.scale(track_factor)
-            pt=snap_to_grid(pt+self.offset)
-            newpath.append(pt)
-        return newpath
+        # we can ignore the layers here
+        # add_wire will filter out duplicates
+        pt = vector(p[0],p[1])
+        pt=pt.scale(track_factor)+self.offset
+        return snap_to_double_grid(pt)
 
     def convert_shape_to_tracks(self,shape,round_bigger=True):
         """ 
@@ -314,6 +309,23 @@ class router:
             
 
 # FIXME: This should be replaced with vector.snap_to_grid at some point
+def snap_to_double_grid(offset):
+    """
+    Changes the coodrinate to match the grid settings
+    """
+    # This is special because we are using the centerline
+    # technique, so the edges could be off grid if we
+    # have an odd width (e.g. metal1 width = 0.065)
+    grid = 2*tech.drc["grid"]  
+    x = offset[0]
+    y = offset[1]
+    # this gets the nearest integer value
+    xgrid = int(round(round((x / grid), 2), 0))
+    ygrid = int(round(round((y / grid), 2), 0))
+    xoff = xgrid * grid
+    yoff = ygrid * grid
+    return vector(xoff, yoff)
+
 def snap_to_grid(offset):
     """
     Changes the coodrinate to match the grid settings
@@ -327,4 +339,4 @@ def snap_to_grid(offset):
     xoff = xgrid * grid
     yoff = ygrid * grid
     return vector(xoff, yoff)
-            
+

@@ -77,7 +77,6 @@ class grid:
         assert(ur[1]<self.height and ur[1]>=0)
         for x in range(int(ll[0]),int(ur[0])+1):
             for y in range(int(ll[1]),int(ur[1])+1):
-                debug.info(3,"  Adding {3} x={0} y={1} z={2}".format(str(ll),str(ur),z,name))
                 setattr (self.map[vector3d(x,y,z)], name, True)
                 getattr (self, name).append(vector3d(x,y,z))
 
@@ -118,12 +117,11 @@ class grid:
         # Keep expanding and adding to the priority queue until we are done
         while not self.q.empty():
             (cost,path) = self.q.get()
-            debug.info(2,"Expanding: cost=" + str(cost))
-            debug.info(3,str(path))
+            debug.info(4,"Expanding: cost=" + str(cost) + " " + str(path))
             
             # expand the last element
             neighbors =  self.expand_dirs(path)
-            debug.info(2,"Neighbors: " + str(neighbors))
+            debug.info(4,"Neighbors: " + str(neighbors))
             
             for n in neighbors:
                 newpath = path + [n]
@@ -196,7 +194,7 @@ class grid:
         debug.info(1,"Initializing queue.")
         for s in self.source:
             cost = self.cost_to_target(s)
-            debug.info(2,"Init: cost=" + str(cost) + " " + str([s]))
+            debug.info(4,"Init: cost=" + str(cost) + " " + str([s]))
             self.q.put((cost,[s]))
 
     def cost_to_target(self,source):

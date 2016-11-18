@@ -4,7 +4,7 @@ Check the .lib file for an SRAM
 """
 
 import unittest
-from header import header
+from testutils import header,isdiff
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
@@ -20,11 +20,9 @@ class lib_test(unittest.TestCase):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
-        OPTS.use_pex = False
 
         import sram
         import lib
-        import filecmp
 
         debug.info(1, "Testing timing for sample 2 bit, 16 words SRAM with 1 bank")
         s = sram.sram(word_size=2,
@@ -33,22 +31,20 @@ class lib_test(unittest.TestCase):
                       name="sram_2_16_1_{0}".format(OPTS.tech_name))
         OPTS.check_lvsdrc = True
 
-
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)
 
-        curpath=os.path.dirname(os.path.realpath(__file__)) + "/"
         filename = s.name + ".lib"        
-        libname = curpath + filename
+        libname = OPTS.openram_temp + filename
         lib.lib(libname,s,tempspice)
         
         # let's diff the result with a golden model
         golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),filename)
-        self.assertEqual(filecmp.cmp(libname,golden),True)
+        self.assertEqual(isdiff(libname,golden),True)
 
         os.system("rm {0}".format(libname))
 
-
+        globals.end_openram()
 
 # instantiate a copdsay of the class to actually run the test
 if __name__ == "__main__":

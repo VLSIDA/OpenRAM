@@ -6,7 +6,7 @@ check that these files are right.
 """
 
 import unittest
-from header import header
+from testutils import header
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
@@ -24,10 +24,8 @@ class openram_test(unittest.TestCase):
 
         debug.info(1, "Testing top-level openram.py with 2-bit, 16 word SRAM.")
         out_file = "testsram"
-        # get the directory under the test modules
-        out_path=os.path.dirname(os.path.realpath(__file__)) 
           # make a temp directory for output
-        out_path += "/testsram"
+        out_path = OPTS.openram_temp + out_file
 
         # make sure we start without the files existing
         if os.path.exists(out_path):
@@ -73,6 +71,7 @@ class openram_test(unittest.TestCase):
             shutil.rmtree(out_path, ignore_errors=True)
         self.assertEqual(os.path.exists(out_path),False)
 
+        globals.end_openram()        
 
 # instantiate a copdsay of the class to actually run the test
 if __name__ == "__main__":

@@ -49,11 +49,11 @@ class hierarchical_predecode3x8(hierarchical_predecode):
             # output connection
             correct = y_dir * (output_shift + drc["minwidth_metal1"])
             off_via = [self.rails_x_offset[inv_rout + 5] + self.gap_between_rails,
-                       inv_vdd_offset[1] - self.via_shift - correct]
-            path1 = vector(inv_out_offset[0] + 0.5*drc["minwidth_metal1"],
-                           inv_out_offset[1]- 1.5*drc["minwidth_metal1"] - correct)
+                       inv_vdd_offset.y - self.via_shift - correct]
+            path1 = inv_out_offset + vector(0.5*drc["minwidth_metal1"],
+                                            - 1.5*drc["minwidth_metal1"] - correct)
             path2 = vector(path1.x,
-                           inv_vdd_offset[1] + 0.5 * drc["minwidth_metal1"] - correct)
+                           inv_vdd_offset.y + 0.5 * drc["minwidth_metal1"] - correct)
             path3 = vector(self.rails_x_offset[inv_rout + 5]  + drc["minwidth_metal2"],
                            path2.y) 
             self.add_path("metal1", [path1,path2,path3])           

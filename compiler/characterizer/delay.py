@@ -6,6 +6,7 @@ import tech
 import math
 import stimuli
 import charutils as ch
+import utils
 
 OPTS = globals.get_opts()
 
@@ -262,20 +263,11 @@ class delay():
         # run until the last cycle time
         end_time = self.cycle_times[-1]
         self.sf.write(".TRAN 5p {0}n\n".format(end_time))
-
-        if OPTS.spice_version == "hspice":
-            # create plots for all signals
-            self.sf.write(".OPTIONS POST=1 PROBE\n")
-            self.sf.write(".probe V(*)\n")
-            # end the stimulus file
-            self.sf.write(".end\n")
-            self.sf.close()
-        else:
-            self.sf.write(".control\n")
-            self.sf.write("run\n")
-            self.sf.write("quit\n")
-            self.sf.write(".endc\n")
-            self.sf.write(".end\n")
+        self.sf.write(".OPTIONS POST=1 PROBE\n")
+        # create plots for all signals
+        self.sf.write(".probe V(*)\n")
+        # end the stimulus file
+        self.sf.write(".end\n")
 
 
 
@@ -353,20 +345,19 @@ class delay():
 
             target_period = 0.5 * (ub_period + lb_period)
             debug.info(1, "MinPeriod Search: {0}ns (ub: {1} lb: {2})".format(target_period,
-                                                                                                       ub_period,
-                                                                                                       lb_period))
+                                                                             ub_period,
+                                                                             lb_period))
 
             (success, delay_out) = self.try_period(feasible_period, target_period, data_value)
             if success:
-                if ch.relative_compare(ub_period, target_period):
-                    # use the two values to compare, but only return the ub since it is guaranteed feasible
-                    (success, delay_out) = self.try_period(feasible_period, ub_period, data_value)
-                    return (ub_period, delay_out)
-                fail_flag = False
                 ub_period = target_period
             else:
                 lb_period = target_period
 
+            if ch.relative_compare(ub_period, lb_period):
+                # use the two values to compare, but only return the ub since it is guaranteed feasible
+                (success, delay_out) = self.try_period(feasible_period, ub_period, data_value)
+                return (ub_period, delay_out)
 
         self.error("Should not reach here.",-1)
         return (target_period, delay_out)

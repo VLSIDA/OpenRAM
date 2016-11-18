@@ -18,7 +18,7 @@ class contact(design.design):
                                            dimensions[1],
                                            contact.unique_contact_id)
         design.design.__init__(self, name)
-        debug.info(2, "create contact object {0}".format(name))
+        debug.info(3, "create contact object {0}".format(name))
         contact.unique_contact_id += 1
 
         self.layer_stack = layer_stack
@@ -40,8 +40,8 @@ class contact(design.design):
         self.offset_attributes(coordinate)
         self.translate(coordinate)
 
-        self.height = max(obj.offset[1] + obj.height for obj in self.objs)
-        self.width = max(obj.offset[0] + obj.width for obj in self.objs)
+        self.height = max(obj.offset.y + obj.height for obj in self.objs)
+        self.width = max(obj.offset.x + obj.width for obj in self.objs)
 
     def setup_layers(self):
         (first_layer, via_layer, second_layer) = self.layer_stack

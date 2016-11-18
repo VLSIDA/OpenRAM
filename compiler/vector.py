@@ -83,6 +83,16 @@ class vector():
         """
         return vector(other[0]- self.x, other[1] - self.y)
 
+    def snap_to_grid(self, offset):
+        """
+        Changes the coodrinate to match the grid settings
+        """
+        grid = tech.drc["grid"]  
+        # this gets the nearest integer value
+        off_in_grid = int(round(round((offset / grid), 2), 0))
+        offset = off_in_grid * grid
+        return offset
+
     def rotate(self):
         """ pass a copy of rotated vector, without altering the vector! """
         return vector(self.y,self.x)
@@ -94,12 +104,9 @@ class vector():
             x_factor=x_factor[0]
         return vector(self.x*x_factor,self.y*y_factor)
 
-    def snap_to_grid(self, offset):
-        """
-        Changes the coodrinate to match the grid settings
-        """
-        grid = tech.drc["grid"]  
-        # this gets the nearest integer value
-        off_in_grid = int(round(round((offset / grid), 2), 0))
-        offset = off_in_grid * grid
-        return offset
+    def rotate_scale(self, x_factor, y_factor=None):
+        """ pass a copy of scaled vector, without altering the vector! """
+        if y_factor==None:
+            y_factor=x_factor[1]
+            x_factor=x_factor[0]
+        return vector(self.y*x_factor,self.x*y_factor)

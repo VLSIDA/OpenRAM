@@ -20,7 +20,7 @@ class wire(path):
         name = "wire_{0}".format(wire.unique_wire_id)
         wire.unique_wire_id += 1
         design.design.__init__(self, name)
-        debug.info(2, "create wire obj {0}".format(name))
+        debug.info(3, "create wire obj {0}".format(name))
 
         self.layer_stack = layer_stack
         self.position_list = position_list
@@ -37,7 +37,7 @@ class wire(path):
         # wires and paths should not be offset to (0,0)
 
     def setup_layers(self):
-        (vert_layer, via_layer, horiz_layer) = self.layer_stack
+        (horiz_layer, via_layer, vert_layer) = self.layer_stack
         if (via_layer != None):
             self.via_layer_name = via_layer
         else:

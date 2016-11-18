@@ -6,7 +6,7 @@ size 2_input nand gate that is nmos_width=2*tech.drc[minwidth_tx].
 """
 
 import unittest
-from header import header
+from testutils import header
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
@@ -33,7 +33,8 @@ class nand_2_test(unittest.TestCase):
         tx = nand_2.nand_2(name="a_nand_1", nmos_width=2 * tech.drc["minwidth_tx"])
         OPTS.check_lvsdrc = True
         self.local_check(tx)
-
+        globals.end_openram()
+        
 
     def local_check(self, tx):
         tempspice = OPTS.openram_temp + "temp.sp"

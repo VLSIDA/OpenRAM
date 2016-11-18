@@ -4,7 +4,7 @@ Run a regression test on an extracted SRAM to ensure functionality.
 """
 
 import unittest
-from header import header
+from testutils import header
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
@@ -24,6 +24,8 @@ class sram_func_test(unittest.TestCase):
         self.func_test(bank_num=2)
         self.func_test(bank_num=4)
 
+        globals.end_openram()
+        
     def func_test(self, bank_num):
 
         import sram

@@ -2,7 +2,7 @@
 "Run a regresion test on a basic path"
 
 import unittest
-from header import header
+from testutils import header
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
@@ -75,7 +75,8 @@ class path_test(unittest.TestCase):
 
         # return it back to it's normal state
         OPTS.check_lvsdrc = True
-
+        globals.end_openram()
+        
     def local_check(self, w):
         tempgds = OPTS.openram_temp + "temp.gds"
         w.gds_write(tempgds)

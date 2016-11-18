@@ -445,23 +445,31 @@ def write_supply(stim_file, vdd_name, gnd_name, vdd_voltage, gnd_voltage):
 def run_sim():
     """Run hspice in batch mode and output rawfile to parse."""
     temp_stim = "{0}stim.sp".format(OPTS.openram_temp)
+    
     if OPTS.spice_version == "hspice":
         # TODO: Should make multithreading parameter a configuration option
-        cmd_args = "-mt 8 -i {1} -o {2}timing 2>&1 /dev/null".format(OPTS.spice_exe,
+        cmd = "{0} -mt 8 -i {1} -o {2}timing".format(OPTS.spice_exe,
                                                                      temp_stim,
                                                                      OPTS.openram_temp)
+        valid_retcode=0
     else:
-        cmd_args = "-b  -i {1} -o {2}timing.lis 2>&1 /dev/null".format(OPTS.spice_exe,
-                                                                       temp_stim,
-                                                                       OPTS.openram_temp)
+        cmd = "{0} -b -o {2}timing.lis {1}".format(OPTS.spice_exe,
+                                                        temp_stim,
+                                                        OPTS.openram_temp)
+        # for some reason, ngspice-25 returns 1 when it only has acceptable warnings
+        valid_retcode=1
 
-    FNULL = open(os.devnull, 'w')
-    debug.info(2, OPTS.spice_exe + " " + cmd_args)
-    retcode = subprocess.call([OPTS.spice_exe, cmd_args], stdout=FNULL, stderr=FNULL)
-    FNULL.close()
+        
+    spice_stdout = open("{0}spice_stdout.log".format(OPTS.openram_temp), 'w')
+    spice_stderr = open("{0}spice_stderr.log".format(OPTS.openram_temp), 'w')
 
-    if (retcode > 0):
-        debug.error("Spice simulation error: " + OPTS.spice_exe + " " + cmd_args)
-        sys.exit(-1)
+    debug.info(3, cmd)
+    retcode = subprocess.call(cmd, stdout=spice_stdout, stderr=spice_stderr, shell=True)
+
+    spice_stdout.close()
+    spice_stderr.close()
+    
+    if (retcode > valid_retcode):
+        debug.error("Spice simulation error: " + cmd, -1)
 
     

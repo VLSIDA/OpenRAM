@@ -65,22 +65,22 @@ class hierarchical_predecode2x4(hierarchical_predecode):
             inv_in_offset = base + self.inv.A_position.scale(1,y_dir)
             inv_vdd_offset = base + self.inv.vdd_position.scale(1,y_dir)
             inv_gnd_offset = base + self.inv.gnd_position.scale(1,y_dir)
-            out_y_mirrored = inv_vdd_offset[1] + output_shift + drc["minwidth_metal1"]
-            out_offset = [inv_out_offset[0],
-                          inv_out_offset[1] * (1 + y_dir) / 2
+            out_y_mirrored = inv_vdd_offset.y+ output_shift + drc["minwidth_metal1"]
+            out_offset = [inv_out_offset.x,
+                          inv_out_offset.y* (1 + y_dir) / 2
                               + out_y_mirrored * (1 - y_dir) / 2]  
             # output connection
             correct = y_dir * (output_shift + drc["minwidth_metal1"])
             off_via = [self.rails_x_offset[inv_rout + 4] + self.gap_between_rails,
-                       inv_vdd_offset[1] - self.via_shift - correct]
+                       inv_vdd_offset.y- self.via_shift - correct]
             self.add_rect(layer="metal1",
                           offset=out_offset,
                           width=drc["minwidth_metal1"],
-                          height=(inv_vdd_offset[1] - inv_out_offset[1]) * y_dir - output_shift)
+                          height=(inv_vdd_offset.y- inv_out_offset.y) * y_dir - output_shift)
             self.add_rect(layer="metal1",
-                          offset=[inv_out_offset[0],
-                                  inv_vdd_offset[1] - correct],
-                          width=self.rails_x_offset[inv_rout + 4] - inv_out_offset[0] + drc["minwidth_metal2"],
+                          offset=[inv_out_offset.x,
+                                  inv_vdd_offset.y- correct],
+                          width=self.rails_x_offset[inv_rout + 4] - inv_out_offset.x+ drc["minwidth_metal2"],
                           height=drc["minwidth_metal1"])
             self.add_via(layers = ("metal1", "via1", "metal2"),
                          offset=off_via,

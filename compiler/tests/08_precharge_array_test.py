@@ -4,7 +4,7 @@ Run a regresion test on a precharge array
 """
 
 import unittest
-from header import header
+from testutils import header
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
@@ -38,7 +38,8 @@ class precharge_test(unittest.TestCase):
         OPTS.check_lvsdrc = True
         self.local_check(pc)
 
-
+        globals.end_openram()
+        
     def local_check(self, pc):
         tempspice = OPTS.openram_temp + "temp.sp"
         tempgds = OPTS.openram_temp + "temp.gds"

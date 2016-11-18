@@ -19,7 +19,7 @@ class path(design.design):
         name = "path_{0}".format(path.unique_path_id)
         path.unique_path_id += 1
         design.design.__init__(self, name)
-        debug.info(2, "create path obj {0}".format(name))
+        debug.info(3, "create path obj {0}".format(name))
 
         self.name = name
         self.layer_name = layer

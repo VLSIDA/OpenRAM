@@ -68,7 +68,7 @@ class spice:
         """Reads the sp file (and parse the pins) from the library 
            Otherwise, initialize it to null for dynamic generation"""
         if os.path.isfile(self.sp_file):
-            debug.info(2, "opening {0}".format(self.sp_file))
+            debug.info(3, "opening {0}".format(self.sp_file))
             f = open(self.sp_file)
             self.spice = f.readlines()
             for i in range(len(self.spice)):

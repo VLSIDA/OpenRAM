@@ -2,7 +2,7 @@
 "Run a regresion test for DRC on basic contacts of different array sizes"
 
 import unittest
-from header import header
+from testutils import header
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
@@ -54,7 +54,8 @@ class contact_test(unittest.TestCase):
             self.local_check(c)
 
         OPTS.check_lvsdrc = True
-
+        globals.end_openram()
+        
     def local_check(self, c):
         tempgds = OPTS.openram_temp + "temp.gds"
         c.gds_write(tempgds)

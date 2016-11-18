@@ -46,13 +46,13 @@ class layout:
         #***1,000,000 number is used to avoid empty sequences errors***
         # FIXME Is this hard coded value ok??
         try:
-            lowestx1 = min(rect.offset[0] for rect in self.objs)
-            lowesty1 = min(rect.offset[1] for rect in self.objs)
+            lowestx1 = min(rect.offset.x for rect in self.objs)
+            lowesty1 = min(rect.offset.y for rect in self.objs)
         except:
             [lowestx1, lowesty1] = [1000000.0, 1000000.0]
         try:
-            lowestx2 = min(inst.offset[0] for inst in self.insts)
-            lowesty2 = min(inst.offset[1] for inst in self.insts)
+            lowestx2 = min(inst.offset.x for inst in self.insts)
+            lowesty2 = min(inst.offset.y for inst in self.insts)
         except:
             [lowestx2, lowesty2] = [1000000.0, 1000000.0]
         return vector(min(lowestx1, lowestx2), min(lowesty1, lowesty2))
@@ -76,21 +76,18 @@ class layout:
                 for i in range(len(attr_val)):
                     # each unit in the list is a list coordinates
                     if isinstance(attr_val[i], (list,vector)):
-                        attr_val[i] = vector([attr_val[i][0] - coordinate.x, 
-                                              attr_val[i][1] - coordinate.y])
+                        attr_val[i] = vector(attr_val[i] - coordinate)
                     # the list itself is a coordinate
                     else:
                         if len(attr_val)!=2: continue
                         for val in attr_val:
                             if not isinstance(val, (int, long, float)): continue
-                        setattr(self,attr_key, vector([attr_val[0] - coordinate.x, 
-                                               attr_val[1] - coordinate.y]))
+                        setattr(self,attr_key, vector(attr_val - coordinate))
                         break
 
             # if is a vector coordinate
             if isinstance(attr_val, vector):
-                setattr(self, attr_key, vector(attr_val[0] - coordinate.x, 
-                                       attr_val[1] - coordinate.y))
+                setattr(self, attr_key, vector(attr_val - coordinate))
 
 
 
@@ -98,9 +95,9 @@ class layout:
         """Translates all 2d cartesian coordinates in a layout given
         the (x,y) offset"""
         for obj in self.objs:
-            obj.offset = obj.offset - coordinate
+            obj.offset = vector(obj.offset - coordinate)
         for inst in self.insts:
-            inst.offset = inst.offset - coordinate
+            inst.offset = vector(inst.offset - coordinate)
 
     # FIXME: Make name optional and pick a random one if not specified
     def add_inst(self, name, mod, offset=[0,0], mirror="R0",rotate=0):
@@ -177,7 +174,7 @@ class layout:
 
     def add_wire(self, layers, coordinates, offset=None):
         """Connects a routing path on given layer,coordinates,width.
-        The layers are the (vertical, via, horizontal). """
+        The layers are the (horizontal, via, vertical). """
         import wire
         debug.info(3,"add wire " + str(layers) + " " + str(coordinates))
         # Wires/paths are created so that the first point is (0,0)
@@ -242,14 +239,14 @@ class layout:
            Otherwise, start a new layout for dynamic generation."""
         # open the gds file if it exists or else create a blank layout
         if os.path.isfile(self.gds_file):
-            debug.info(2, "opening %s" % self.gds_file)
+            debug.info(3, "opening %s" % self.gds_file)
             self.gds = gdsMill.VlsiLayout(units=GDS["unit"])
             reader = gdsMill.Gds2reader(self.gds)
             reader.loadFromFile(self.gds_file)
             # TODO: parse the width/height
             # TODO: parse the pin locations
         else:
-            debug.info(2, "creating structure %s" % self.name)
+            debug.info(3, "creating structure %s" % self.name)
             self.gds = gdsMill.VlsiLayout(
                 name=self.name, units=GDS["unit"])
 

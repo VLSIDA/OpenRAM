@@ -4,7 +4,7 @@ Run a regresion test on a 2 bank SRAM
 """
 
 import unittest
-from header import header
+from testutils import header
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
@@ -30,6 +30,8 @@ class sram_2bank_test(unittest.TestCase):
         OPTS.check_lvsdrc = True
         self.local_check(a)
 
+        globals.end_openram()
+        
     def local_check(self, a):
         tempspice = OPTS.openram_temp + "temp.sp"
         tempgds = OPTS.openram_temp + "temp.gds"

@@ -4,7 +4,7 @@ Run a regresion test on various srams
 """
 
 import unittest
-from header import header
+from testutils import header,isclose
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
@@ -13,17 +13,17 @@ import calibre
 
 OPTS = globals.get_opts()
 
-#@unittest.skip("SKIPPING 21_timing_sram_test")
-
-
+#@unittest.skip("SKIPPING 21_ngspice_delay_test")
 class timing_sram_test(unittest.TestCase):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
-        OPTS.use_pex = False
-
+        OPTS.spice_version="ngspice"
+        OPTS.force_spice = True
+        globals.set_spice()
+        
         import sram
 
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
@@ -32,7 +32,11 @@ class timing_sram_test(unittest.TestCase):
                       num_banks=OPTS.config.num_banks,
                       name="test_sram1")
 
+        # reset these options
         OPTS.check_lvsdrc = True
+        OPTS.spice_version="hspice"
+        OPTS.force_spice = False
+        globals.set_spice()
 
         import delay
 
@@ -47,24 +51,19 @@ class timing_sram_test(unittest.TestCase):
         data = d.analyze(probe_address, probe_data)
 
         if OPTS.tech_name == "freepdk45":
-            self.assertTrue(isclose(data['delay1'],0.013649))
-            self.assertTrue(isclose(data['delay0'],0.22893))
-            self.assertTrue(isclose(data['min_period1'],0.078582763671875))
-            self.assertTrue(isclose(data['min_period0'],0.25543212890625))
+            self.assertTrue(isclose(data['delay1'],0.013649)) # diff than hspice
+            self.assertTrue(isclose(data['delay0'],0.22893)) # diff than hspice
+            self.assertTrue(isclose(data['min_period1'],0.078582763671875)) # diff than hspice
+            self.assertTrue(isclose(data['min_period0'],0.25543212890625)) # diff than hspice
         elif OPTS.tech_name == "scn3me_subm":
-            self.assertTrue(isclose(data['delay1'],1.5335))
-            self.assertTrue(isclose(data['delay0'],2.2635000000000005))
-            self.assertTrue(isclose(data['min_period1'],1.53564453125))
-            self.assertTrue(isclose(data['min_period0'],2.998046875))
+            self.assertTrue(isclose(data['delay1'],1.5342000000000002)) # diff than hspice
+            self.assertTrue(isclose(data['delay0'],2.2698)) # diff than hspice
+            self.assertTrue(isclose(data['min_period1'],1.534423828125)) # diff than hspice
+            self.assertTrue(isclose(data['min_period0'],2.99560546875)) # diff than hspice
         else:
             self.assertTrue(False) # other techs fail
 
         os.remove(tempspice)
-
-def isclose(value1,value2):
-    """ This is used to compare relative values for convergence. """
-    return (abs(value1 - value2) / max(value1,value2) <= 1e-2)
-                        
 
 # instantiate a copdsay of the class to actually run the test
 if __name__ == "__main__":

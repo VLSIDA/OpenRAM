@@ -55,8 +55,11 @@ class router:
 
         # contacted track spacing
         via_connect = contact(self.layers, (1, 1))
-        self.horiz_track_width = tech.drc[str(self.horiz_layer_name)+"_to_"+str(self.horiz_layer_name)] + via_connect.width
-        self.vert_track_width = tech.drc[str(self.vert_layer_name)+"_to_"+str(self.vert_layer_name)] + via_connect.width
+        max_via_size = max(via_connect.width,via_connect.height)
+        horiz_layer_spacing = tech.drc[str(self.horiz_layer_name)+"_to_"+str(self.horiz_layer_name)] 
+        vert_layer_spacing = tech.drc[str(self.vert_layer_name)+"_to_"+str(self.vert_layer_name)] 
+        self.horiz_track_width = max_via_size + horiz_layer_spacing
+        self.vert_track_width = max_via_size + vert_layer_spacing
 
         # This is so we can use a single resolution grid for both layers
         self.track_width = max(self.horiz_track_width,self.vert_track_width)

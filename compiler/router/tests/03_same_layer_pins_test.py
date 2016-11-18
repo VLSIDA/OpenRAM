@@ -27,8 +27,8 @@ class no_blockages_test(unittest.TestCase):
                 #design.design.__init__(self, name)
                 debug.info(2, "Create {0} object".format(name))
                 self.name = name
-                self.gds_file = name + ".gds"
-                self.sp_file = name + ".sp"                                
+                self.gds_file = "{0}/{1}.gds".format(os.path.dirname(os.path.realpath(__file__)),name)
+                self.sp_file = "{0}/{1}.sp".format(os.path.dirname(os.path.realpath(__file__)),name)
                 design.hierarchy_layout.layout.__init__(self, name)
                 design.hierarchy_spice.spice.__init__(self, name)
             
@@ -46,7 +46,8 @@ class no_blockages_test(unittest.TestCase):
                               offset=[0,0])
                 self.connect_inst([])
                 
-                r=router.router(gdsname+".gds")
+                self.gdsname = "{0}/{1}.gds".format(os.path.dirname(os.path.realpath(__file__)),gdsname)
+                r=router.router(self.gdsname)
                 layer_stack =("metal1","via1","metal2")
                 path=r.route(layer_stack,src="A",dest="B")
                 r.rg.view()

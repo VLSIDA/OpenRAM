@@ -1,4 +1,5 @@
 import debug
+import tech
 
 
 class vector():
@@ -14,12 +15,12 @@ class vector():
         """ init function support two init method"""
         # will take single input as a coordinate
         if y==None:
-            self.x = x[0]
-            self.y = x[1]
+            self.x = self.snap_to_grid(x[0])
+            self.y = self.snap_to_grid(x[1])
         #will take two inputs as the values of a coordinate
         else:
-            self.x = x
-            self.y = y
+            self.x = self.snap_to_grid(x)
+            self.y = self.snap_to_grid(y)
 
     def __str__(self):
         """ override print function output """
@@ -92,3 +93,13 @@ class vector():
             y_factor=x_factor[1]
             x_factor=x_factor[0]
         return vector(self.x*x_factor,self.y*y_factor)
+
+    def snap_to_grid(self, offset):
+        """
+        Changes the coodrinate to match the grid settings
+        """
+        grid = tech.drc["grid"]  
+        # this gets the nearest integer value
+        off_in_grid = int(round(round((offset / grid), 2), 0))
+        offset = off_in_grid * grid
+        return offset

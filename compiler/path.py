@@ -3,7 +3,6 @@ from tech import layer as techlayer
 import debug
 import design
 from vector import vector
-from utils import snap_to_grid
 
 class path(design.design):
     """

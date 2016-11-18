@@ -5,7 +5,6 @@ import debug
 from tech import drc, GDS
 from tech import layer as techlayer
 import os
-from utils import snap_to_grid
 from vector import vector
 
 class layout:
@@ -99,11 +98,9 @@ class layout:
         """Translates all 2d cartesian coordinates in a layout given
         the (x,y) offset"""
         for obj in self.objs:
-            obj.offset = snap_to_grid([obj.offset[0] - coordinate.x,
-                                       obj.offset[1] - coordinate.y])
+            obj.offset = obj.offset - coordinate
         for inst in self.insts:
-            inst.offset = snap_to_grid([inst.offset[0] - coordinate.x,
-                                        inst.offset[1] - coordinate.y])
+            inst.offset = inst.offset - coordinate
 
     # FIXME: Make name optional and pick a random one if not specified
     def add_inst(self, name, mod, offset=[0,0], mirror="R0",rotate=0):

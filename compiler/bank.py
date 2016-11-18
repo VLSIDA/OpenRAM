@@ -913,7 +913,7 @@ class bank(design.design):
                 mid2 = col_decoder_out_position + vector(connection_width,
                                                          -self.central_line_y_offset)
 
-                self.add_wire(layers=("metal2", "via1", "metal1"),
+                self.add_wire(layers=("metal1", "via1", "metal2"),
                               coordinates=[col_decoder_out_position,mid1,mid2],
                               offset=col_decoder_out_position)
                 
@@ -1150,7 +1150,7 @@ class bank(design.design):
         start = self.bank_select_inv_position + self.inv4x.A_position
         end = vector(self.left_vdd_x_offset, start.y + 3 * drc["minwidth_metal3"])
         mid = vector(start.x, end.y)
-        self.add_wire(("metal1", "via1", "metal2"), [start, mid, end])
+        self.add_wire(("metal2", "via1", "metal1"), [start, mid, end])
 
         # save position
         self.bank_select_position = end - vector(0, 0.5 * drc["minwidth_metal2"])
@@ -1235,7 +1235,7 @@ class bank(design.design):
                 correct_y = (2 * self.NOR2.A_position.y + drc["minwidth_metal1"]
                                  - self.m1m2_via.width)
                 end = start +  vector(0, correct_y)
-                self.add_wire(("metal2", "via2", "metal3"), [start, mid, end])
+                self.add_wire(("metal3", "via2", "metal2"), [start, mid, end])
 
             # Save position
             setattr(self,"{0}_position".format(self.control_signals[i]),

@@ -457,7 +457,7 @@ class control_logic(design.design):
                          rotate=90)
 
         # OE_bar [Bus # 1] to nor2 B input
-        layer_stack = ("metal2", "via1", "metal1")
+        layer_stack = ("metal1", "via1", "metal2")
         start = self.nor2_1_B_position
         mid1 = vector(self.nor2_1_B_position.x+ 2 * drc["minwidth_metal2"], 
                       start.y)
@@ -497,7 +497,7 @@ class control_logic(design.design):
                          rotate=90)
 
         # Replica bitline (rblk to replica bitline input)
-        layer_stack = ("metal2", "via1", "metal1")
+        layer_stack = ("metal1", "via1", "metal2")
         start = vector(self.rail_2_x_offsets[1] + 0.5 * drc["minwidth_metal2"],
                        self.output_port_gap)
         mid1 = vector(start.x, 0.5 * drc["minwidth_metal1"])
@@ -605,7 +605,7 @@ class control_logic(design.design):
         self.clk_position = vector(0, clk_y)
 
         # clk port to inv1 A
-        layer_stack = ("metal2", "via1", "metal1")
+        layer_stack = ("metal1", "via1", "metal2")
         start = self.inv1_A_position + vector(0, 0.5 * drc["minwidth_metal1"])
         mid1 = vector(self.inv1_A_position.x- 2 * drc["minwidth_metal2"],
                       start.y)

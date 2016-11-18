@@ -221,7 +221,7 @@ class replica_bitline(design.design):
                       self.replica_bitline_offset.y - self.replica_bitcell.height
                           - 0.5 * (self.m1m2_via.height + drc["metal1_to_metal1"])
                           - 2 * drc["metal1_to_metal1"])
-        self.add_wire(layers=("metal1", "via1", "metal2"),
+        self.add_wire(layers=("metal2", "via1", "metal1"),
                       coordinates=[BL_inv_in, mid1, mid2, mid3])
 
         # need to fix the mid point as this is done with two wire
@@ -233,7 +233,7 @@ class replica_bitline(design.design):
                       height=drc["minwidth_metal1"])
 
         mid4 = [BL_offset.x, mid3.y]
-        self.add_wire(layers=("metal2", "via1", "metal1"),
+        self.add_wire(layers=("metal1", "via1", "metal2"),
                       coordinates=[BL_offset, mid4, mid3])
 
     def route_access_tx(self, delay_chain_output, BL_inv_in, vdd_offset):
@@ -265,7 +265,7 @@ class replica_bitline(design.design):
         mid1 = vector(offset.x, self.delay_chain_offset.y - 3 * m2rail_space)
         mid2 = [delay_chain_output.x, mid1.y]
         # Note the inverted wire stack
-        self.add_wire(layers=("metal2", "via1", "metal1"),
+        self.add_wire(layers=("metal1", "via1", "metal2"),
                       coordinates=[offset, mid1, mid2, delay_chain_output])
         self.add_via(layers=("metal1", "via1", "metal2"),
                      offset=delay_chain_output,
@@ -310,7 +310,7 @@ class replica_bitline(design.design):
         self.add_path("metal1", [drain_offset, close_Vdd_offset])
 
         mid = [vdd_offset.x, close_Vdd_offset.y]
-        self.add_wire(layers=("metal2", "via1", "metal1"),
+        self.add_wire(layers=("metal1", "via1", "metal2"),
                       coordinates=[close_Vdd_offset, mid, vdd_offset])
 
     def route_tx_source(self, BL_inv_in):
@@ -337,7 +337,7 @@ class replica_bitline(design.design):
         end = [mid2.x, vdd_offset.y]
         self.add_path(layer=("metal1"), 
                       coordinates=[start, mid1, mid2])
-        self.add_wire(layers=("metal2", "via1", "metal1"), 
+        self.add_wire(layers=("metal1", "via1", "metal2"), 
                       coordinates=[mid1, mid2, end])
 
     def route_gnd(self):
@@ -354,7 +354,7 @@ class replica_bitline(design.design):
         share_gnd = vector(self.gnd_position.x, mid2.y)
         # Note the inverted stacks
         lst = [BL_gnd_offset, mid1, mid2, share_gnd, self.gnd_position]
-        self.add_wire(layers=("metal2", "via1", "metal1"),
+        self.add_wire(layers=("metal1", "via1", "metal2"),
                       coordinates=lst)
         self.add_label(text="gnd",
                        layer="metal1",
@@ -384,13 +384,13 @@ class replica_bitline(design.design):
                              + self.bitline_load.WL_positions[i].scale(0,1))
             mid = [self.delay_chain_offset.x  + 6 * drc["minwidth_metal2"],
                    gnd_offset.y]
-            self.add_wire(layers=("metal2", "via1", "metal1"), 
+            self.add_wire(layers=("metal1", "via1", "metal2"), 
                           coordinates=[gnd_offset, mid, WL_offset])
             if i % 2 == 0:
                 load_vdd_offset = (self.replica_bitline_offset
                                        + self.bitline_load.vdd_positions[i])
                 mid = [vdd_offset.x, load_vdd_offset.y]
-                self.add_wire(layers=("metal2", "via1", "metal1"), 
+                self.add_wire(layers=("metal1", "via1", "metal2"), 
                               coordinates=[vdd_offset, mid, load_vdd_offset])
 
     def route_RC(self,vdd_offset):
@@ -399,17 +399,17 @@ class replica_bitline(design.design):
         RC_vdd = self.replica_bitline_offset + vector(1,-1).scale(self.bitcell_chars["vdd"])
         mid = [vdd_offset.x, RC_vdd.y]
         # Note the inverted stacks
-        self.add_wire(layers=("metal2", "via1", "metal1"), 
+        self.add_wire(layers=("metal1", "via1", "metal2"), 
                       coordinates=[vdd_offset, mid, RC_vdd])
 
         gnd_offset = self.BL_inv_offset - vector(self.inv.width, 0)
         load_gnd = self.replica_bitline_offset + vector(self.bitcell_chars["gnd"][0], 
                                                         self.bitline_load.height)
         mid = [load_gnd.x, gnd_offset.y]
-        self.add_wire(layers=("metal2", "via1", "metal1"), 
+        self.add_wire(layers=("metal1", "via1", "metal2"), 
                       coordinates=[gnd_offset, mid, load_gnd])
 
         load_gnd = self.replica_bitline_offset + vector(0, 
                                                         self.bitline_load.height)
         mid = [load_gnd.x, gnd_offset.y]
-        self.add_wire(("metal2", "via1", "metal1"), [gnd_offset, mid, load_gnd])
+        self.add_wire(("metal1", "via1", "metal2"), [gnd_offset, mid, load_gnd])

@@ -71,10 +71,10 @@ class router:
         """ Create a routing grid that spans given area. Wires cannot exist outside region. """
         # We will add a halo around the boundary
         # of this many tracks
-        track_halo = 2
+        track_halo = 3
         # We will offset so ll is at (-track_halo*track_width,-track_halo*track_width)
         track_width_offset = vector([track_halo*self.track_width]*2)
-        self.offset = self.ll - track_width_offset
+        self.offset = self.ll + track_width_offset
         debug.info(1,"Offset: "+str(self.offset))
         width = self.size.x
         height = self.size.y
@@ -276,7 +276,7 @@ class router:
         # we can ignore the layers here
         # add_wire will filter out duplicates
         pt = vector(p[0],p[1])
-        pt=pt.scale(track_factor)+self.offset
+        pt=pt.scale(track_factor) - self.offset
         return snap_to_grid(pt)
 
     def convert_shape_to_tracks(self,shape,round_bigger=True):
@@ -286,19 +286,22 @@ class router:
         [ll,ur] = shape
 
         # offset lowest corner object to to (-track halo,-track halo)
-        ll = snap_to_grid(ll-self.offset)
-        ur = snap_to_grid(ur-self.offset)
+        ll = snap_to_grid(ll + self.offset)
+        ur = snap_to_grid(ur + self.offset)
 
         # to scale coordinates to tracks
         track_factor = [1/self.track_width] * 2
 
 
-        # Always round blockage shapes up.
-        if round_bigger:
+
+        if round_bigger: # Always round blockage shapes up.
             ll = ll.scale(track_factor).floor()
             ur = ur.scale(track_factor).ceil()
-        # Always round pin shapes down
-        else:
+            if ll.x<0:
+                ll.x=0
+            if ll.y<0:
+                ll.y=0
+        else: # Always round pin shapes down
             ll = ll.scale(track_factor).ceil()
             ur = ur.scale(track_factor).floor()
             # if they were within one grid, we must
@@ -307,7 +310,11 @@ class router:
                 ur.x=ll.x
             if ur.y<ll.y:
                 ur.y=ll.y
-
+            if ll.x<0:
+                ll.x=0
+            if ll.y<0:
+                ll.y=0
+                
         return [ll,ur]
             
 

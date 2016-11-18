@@ -4,7 +4,6 @@ import design
 from contact import contact
 from path import path
 
-
 class wire(path):
     """ 
     Object metal wire; given the layer type
@@ -38,10 +37,7 @@ class wire(path):
 
     def setup_layers(self):
         (horiz_layer, via_layer, vert_layer) = self.layer_stack
-        if (via_layer != None):
-            self.via_layer_name = via_layer
-        else:
-            self.via_layer_name = None
+        self.via_layer_name = via_layer
 
         self.vert_layer_name = vert_layer
         self.vert_layer_width = drc["minwidth_{0}".format(vert_layer)]
@@ -60,14 +56,9 @@ class wire(path):
         """ Add a via and corner square at every corner of the path."""
         pl = self.pairwise(self.position_list)
         from itertools import izip
-        if self.via_layer_name == None:
-            c_height = 0
-            c_width = 0
-            c = None
-        else:
-            c = self.c = contact(self.layer_stack, (1, 1))
-            c_width = c.width
-            c_height = c.height
+        self.c=contact(self.layer_stack, (1, 1))
+        c_width = self.c.width
+        c_height = self.c.height
         orient = None  # orientation toggler
         offset = [0, 0]
 
@@ -96,11 +87,9 @@ class wire(path):
                                        offset[1] - 0.5*self.horiz_layer_width]
                     self.switch_pos_list.append(temp_offset)
                     via_offset = self.switch_pos_list[-1]
-                    if c:
-                        self.add_inst(name="via_{0}_{1}".format(v, w),
-                                      mod=c,
-                                      offset=via_offset,
-                                      rotate=90)
+                    self.add_via(layers=self.layer_stack,
+                                 offset=via_offset,
+                                 rotate=90)
                     corner_offset = [via_offset[0] \
                                          - 0.5*(c_height + self.vert_layer_width),
                                      via_offset[1] \
@@ -121,11 +110,9 @@ class wire(path):
                                        offset[1] - 0.5*c_width]
                     self.switch_pos_list.append(temp_offset)
                     via_offset = self.switch_pos_list[-1]
-                    if c:
-                        self.add_inst(name="via{0}_{1}".format(v, w),
-                                      mod=c,
-                                      offset=self.switch_pos_list[-1],
-                                      rotate=90)
+                    self.add_via(layers=self.layer_stack,
+                                 offset=self.switch_pos_list[-1],
+                                 rotate=90)
                     corner_offset = [via_offset[0] \
                                          - 0.5*(c_height + self.vert_layer_width),
                                      via_offset[1] \

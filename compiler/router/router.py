@@ -274,7 +274,7 @@ class router:
         # add_wire will filter out duplicates
         pt = vector(p[0],p[1])
         pt=pt.scale(track_factor)+self.offset
-        return snap_to_double_grid(pt)
+        return snap_to_grid(pt)
 
     def convert_shape_to_tracks(self,shape,round_bigger=True):
         """ 
@@ -309,22 +309,6 @@ class router:
             
 
 # FIXME: This should be replaced with vector.snap_to_grid at some point
-def snap_to_double_grid(offset):
-    """
-    Changes the coodrinate to match the grid settings
-    """
-    # This is special because we are using the centerline
-    # technique, so the edges could be off grid if we
-    # have an odd width (e.g. metal1 width = 0.065)
-    grid = 2*tech.drc["grid"]  
-    x = offset[0]
-    y = offset[1]
-    # this gets the nearest integer value
-    xgrid = int(round(round((x / grid), 2), 0))
-    ygrid = int(round(round((y / grid), 2), 0))
-    xoff = xgrid * grid
-    yoff = ygrid * grid
-    return vector(xoff, yoff)
 
 def snap_to_grid(offset):
     """

@@ -41,11 +41,11 @@ class instance(geometry):
         self.offset = vector(snap_to_grid(offset))
         self.mirror = mirror
 
-
+        debug.info(3, "creating instance: " + self.name)
 
     def gds_write_file(self, newLayout):
         """Recursively writes all the sub-modules in this instance"""
-        debug.info(3, "writing instance:" + self.name)
+        debug.info(3, "writing instance: " + self.name)
         # make sure to write out my module/structure 
         # (it will only be written the first time though)
         self.mod.gds_write_file(self.gds)
@@ -81,7 +81,7 @@ class path(geometry):
 
     def gds_write_file(self, newLayout):
         """Writes the path to GDS"""
-        debug.info(3, "writing path (" + str(self.layerNumber) +  "):" + self.coordinates)
+        debug.info(3, "writing path (" + str(self.layerNumber) +  "): " + self.coordinates)
         newLayout.addPath(layerNumber=self.layerNumber,
                           purposeNumber=0,
                           coordinates=self.coordinates,
@@ -109,9 +109,11 @@ class label(geometry):
         self.zoom = zoom
         self.size = 0
 
+        debug.info(3,"creating label " + self.text + " " + str(self.layerNumber) + " " + str(self.offset))
+
     def gds_write_file(self, newLayout):
         """Writes the text label to GDS"""
-        debug.info(3, "writing label (" + str(self.layerNumber) + "):" + self.text)
+        debug.info(3, "writing label (" + str(self.layerNumber) + "): " + self.text)
         newLayout.addText(text=self.text,
                           layerNumber=self.layerNumber,
                           purposeNumber=0,
@@ -140,14 +142,17 @@ class rectangle(geometry):
         self.width = self.size[0]
         self.height = self.size[1]
 
+        debug.info(3, "creating rectangle (" + str(self.layerNumber) + "): " 
+                   + str(self.width) + "x" + str(self.height) + " @ " + str(self.offset))
+
+
     def gds_write_file(self, newLayout):
         """Writes the rectangular shape to GDS"""
-        snapped_offset=snap_to_grid(self.offset)
-        debug.info(3, "writing rectangle (" + str(self.layerNumber) + "):" 
-                   + str(self.width) + "x" + str(self.height) + " @ " + str(snapped_offset))
+        debug.info(3, "writing rectangle (" + str(self.layerNumber) + "): " 
+                   + str(self.width) + "x" + str(self.height) + " @ " + str(self.offset))
         newLayout.addBox(layerNumber=self.layerNumber,
                          purposeNumber=0,
-                         offsetInMicrons=snapped_offset,
+                         offsetInMicrons=self.offset,
                          width=self.width,
                          height=self.height,
                          center=False)

@@ -111,9 +111,6 @@ class layout:
 
     def add_rect(self, layer, offset, width, height):
         """Adds a rectangle on a given layer,offset with width and height"""
-        debug.info(3, "adding rectangle (" + str(layer) + ") :" 
-                   + str(width) + "x" + str(height) + " @ " + str(offset))
-
         # negative layers indicate "unused" layers in a given technology
         layerNumber = techlayer[layer]
         if layerNumber >= 0:
@@ -132,7 +129,6 @@ class layout:
 
     def add_label(self, text, layer, offset=[0,0],zoom=1):
         """Adds a text label on the given layer,offset, and zoom level"""
-        debug.info(3,"add label " + text + " " + str(layer) + " " + str(offset))
         # negative layers indicate "unused" layers in a given technology
         layerNumber = techlayer[layer]
         if layerNumber >= 0:

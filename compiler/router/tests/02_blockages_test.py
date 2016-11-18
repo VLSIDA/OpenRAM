@@ -50,7 +50,7 @@ class no_blockages_test(unittest.TestCase):
                 r=router.router(self.gdsname)
                 layer_stack =("metal1","via1","metal2")
                 path=r.route(layer_stack,src="A",dest="B")
-                r.rg.view()
+                #r.rg.view()
                 
                 self.add_wire(layer_stack,path)
 

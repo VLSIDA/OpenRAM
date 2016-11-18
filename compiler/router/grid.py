@@ -134,7 +134,7 @@ class grid:
                     return newpath
                 else:
                     # path cost + predicted cost
-                    cost = len(newpath) +  self.cost_to_target(n) 
+                    cost = self.cost(newpath) +  self.cost_to_target(n) 
                     self.q.put((cost,newpath))
 
         self.view()
@@ -151,6 +151,7 @@ class grid:
         Expand each of the four cardinal directions plus up or down
         but not expanding to blocked cells. Always follow horizontal/vertical
         routing layer requirements. Extend in the future if not routable?
+        Future: Do we want to allow non-preferred direction routing?
         """
         # expand from the last point
         point = path[-1]
@@ -160,24 +161,24 @@ class grid:
         if point.z==0:
             east = point + vector3d(1,0,0)
             west= point + vector3d(-1,0,0)
-            if east.x<self.width and not self.map[east].blocked and not self.map[east].visited:
+            if east.x<self.width and not self.map[east].blocked and not east in path:
                 neighbors.append(east)
-            if west.x>=0 and not self.map[west].blocked and not self.map[west].visited:
+            if west.x>=0 and not self.map[west].blocked and not west in path:
                 neighbors.append(west)
 
             up = point + vector3d(0,0,1)
-            if not self.map[up].blocked and not self.map[up].visited:
+            if not self.map[up].blocked and not up in path:
                 neighbors.append(up)
         elif point.z==1:
             north = point + vector3d(0,1,0)
             south = point + vector3d(0,-1,0)
-            if north.y<self.height and not self.map[north].blocked and not self.map[north].visited:
+            if north.y<self.height and not self.map[north].blocked and not north in path:
                 neighbors.append(north)
-            if south.y>=0 and not self.map[south].blocked and not self.map[south].visited:
+            if south.y>=0 and not self.map[south].blocked and not south in path:
                 neighbors.append(south)
                 
             down = point + vector3d(0,0,-1)
-            if not self.map[down].blocked and not self.map[down].visited:
+            if not self.map[down].blocked and not down in path:
                 neighbors.append(down)
 
             
@@ -206,3 +207,19 @@ class grid:
         for t in self.target:
             cost = min(source.hpwl(t),cost)
         return cost
+
+    def cost(self,path):
+        """ 
+        The cost of the path is the length plus a penalty for the number
+        of vias.
+        Future: Do we want to allow non-preferred direction routing?
+        """
+        prev_layer = path[0].z
+        via_cost = 0
+        for p in path:
+            if p.z != prev_layer:
+                via_cost += 2 # we count a via as 2x a wire track
+                prev_layer = p.z
+                
+        return len(path)+via_cost
+    

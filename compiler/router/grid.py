@@ -192,7 +192,7 @@ class grid:
         We will use an A* search, so this cost must be pessimistic.
         Cost so far will be the length of the path.
         """
-        debug.info(0,"Initializing queue.")
+        debug.info(1,"Initializing queue.")
         for s in self.source:
             cost = self.cost_to_target(s)
             debug.info(2,"Init: cost=" + str(cost) + " " + str([s]))

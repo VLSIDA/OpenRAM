@@ -30,7 +30,6 @@ class router:
         self.pin_layers = {}
         
         self.boundary = self.layout.measureBoundary(self.top_name)
-        #print "Boundary: ",self.boundary
         self.ll = vector(self.boundary[0])
         self.ur = vector(self.boundary[1])
         self.size = self.ur - self.ll
@@ -60,7 +59,7 @@ class router:
 
         # This is so we can use a single resolution grid for both layers
         self.track_width = max(self.horiz_track_width,self.vert_track_width)
-        print "Track width:",self.track_width
+        debug.info(1,"Track width:"+str(self.track_width))
 
 
 
@@ -72,16 +71,16 @@ class router:
         # We will offset so ll is at (-track_halo*track_width,-track_halo*track_width)
         track_width_offset = vector([track_halo*self.track_width]*2)
         self.offset = self.ll - track_width_offset
-        print "Offset: ",self.offset
+        debug.info(1,"Offset: "+str(self.offset))
         width = self.size.x
         height = self.size.y
-        print "Size: ", width,height
+        debug.info(1,"Size: {0} x {1}".format(width,height))
 
         # pad the tracks on each side by the halo as well
         self.width_in_tracks = int(math.ceil(width/self.track_width)) + 2*track_halo
         self.height_in_tracks = int(math.ceil(height/self.track_width)) + 2*track_halo
 
-        print "Size (in tracks): ", self.width_in_tracks, self.height_in_tracks
+        debug.info(1,"Size (in tracks): {0} x {1}".format(self.width_in_tracks, self.height_in_tracks))
         
         self.rg = grid.grid(self.width_in_tracks,self.height_in_tracks)
         
@@ -92,9 +91,7 @@ class router:
         debug.info(3,"Find pin {0} layer {1} shape {2}".format(pin_name,str(pin_layer),str(pin_shape)))
         # repack the shape as a pair of vectors rather than four values
         shape=[vector(pin_shape[0],pin_shape[1]),vector(pin_shape[2],pin_shape[3])]
-        print shape
         new_shape = self.convert_shape_to_tracks(shape,round_bigger=False)
-        print new_shape
         self.pin_names.append(pin_name)
         self.pin_shapes[str(pin)] = new_shape
         self.pin_layers[str(pin)] = pin_layer
@@ -116,7 +113,7 @@ class router:
         self.find_blockages()
         # returns the path in tracks
         path = self.rg.route()
-        debug.info(0,"Found path. ")
+        debug.info(1,"Found path. ")
         debug.info(2,str(path))
         self.set_path(path)
         # First, simplify the path.

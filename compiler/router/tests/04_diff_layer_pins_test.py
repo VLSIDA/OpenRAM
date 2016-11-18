@@ -54,7 +54,8 @@ class no_blockages_test(unittest.TestCase):
                 self.add_wire(layer_stack,path)
 
         
-        r = routing("test1", "AB_no_blockages")
+        
+        r = routing("test1", "AB_diff_layer_pins")
         self.local_check(r)
         
         # fails if there are any DRC errors on any cells

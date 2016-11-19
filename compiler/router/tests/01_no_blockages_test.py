@@ -49,7 +49,7 @@ class no_blockages_test(unittest.TestCase):
                 self.gdsname = "{0}/{1}.gds".format(os.path.dirname(os.path.realpath(__file__)),gdsname)
                 r=router.router(self.gdsname)
                 layer_stack =("metal1","via1","metal2")
-                path=r.route(layer_stack,src="A",dest="B")
+                (src_rect,path,dest_rect)=r.route(layer_stack,src="A",dest="B")
                 #r.rg.view()
                 self.add_rect(layer=layer_stack[0],
                               offset=src_rect[0],

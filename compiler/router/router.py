@@ -71,7 +71,7 @@ class router:
         """ Create a routing grid that spans given area. Wires cannot exist outside region. """
         # We will add a halo around the boundary
         # of this many tracks
-        track_halo = 3
+        track_halo = 5
         # We will offset so ll is at (-track_halo*track_width,-track_halo*track_width)
         track_width_offset = vector([track_halo*self.track_width]*2)
         self.offset = self.ll + track_width_offset
@@ -81,12 +81,12 @@ class router:
         debug.info(1,"Size: {0} x {1}".format(width,height))
 
         # pad the tracks on each side by the halo as well
-        self.width_in_tracks = int(math.ceil(width/self.track_width)) + 2*track_halo
-        self.height_in_tracks = int(math.ceil(height/self.track_width)) + 2*track_halo
+        self.width_in_tracks = int(math.ceil(width/self.track_width)) + 2*track_halo + 1
+        self.height_in_tracks = int(math.ceil(height/self.track_width)) + 2*track_halo + 1
 
         debug.info(1,"Size (in tracks): {0} x {1}".format(self.width_in_tracks, self.height_in_tracks))
         
-        self.rg = grid.grid(self.width_in_tracks,self.height_in_tracks)
+        self.rg = grid.grid(self.height_in_tracks,self.width_in_tracks)
         
 
     def find_pin(self,pin):
@@ -97,7 +97,7 @@ class router:
         self.pin_names.append(pin_name)
         
         for pin_shape in pin_shapes:
-            debug.info(3,"Find pin {0} layer {1} shape {2}".format(pin_name,str(pin_layer),str(pin_shape)))
+            debug.info(2,"Find pin {0} layer {1} shape {2}".format(pin_name,str(pin_layer),str(pin_shape)))
             # repack the shape as a pair of vectors rather than four values
             shape=[vector(pin_shape[0],pin_shape[1]),vector(pin_shape[2],pin_shape[3])]
             new_shape = self.convert_shape_to_tracks(shape,round_bigger=False)
@@ -140,8 +140,13 @@ class router:
         debug.info(1,str(contracted_path))                
         # convert the path back to absolute units from tracks
         abs_path = map(self.convert_point_to_units,contracted_path)
-        debug.info(1,str(abs_path))        
-        return abs_path
+        debug.info(1,str(abs_path))
+
+        # Make sure there's a pin enclosure on the source and dest
+        src_shape = self.convert_track_to_shape(contracted_path[0])
+        dest_shape = self.convert_track_to_shape(contracted_path[-1])
+        
+        return (src_shape,abs_path,dest_shape)
     
     def create_steiner_routes(self,pins):
         """Find a set of steiner points and then return the list of
@@ -247,8 +252,6 @@ class router:
                     [ll,ur]=self.convert_shape_to_tracks(shape)
                     zlayer = 0 if boundary.drawingLayer==self.horiz_layer_number else 1
                     self.rg.add_blockage(ll,ur,zlayer)
-                else:
-                    debug.info(2,"Skip: "+str(pin_shape_tracks))
                 
 
         # recurse given the mirror, angle, etc.
@@ -316,7 +319,21 @@ class router:
                 ll.y=0
                 
         return [ll,ur]
-            
+
+
+    def convert_track_to_shape(self,tracks):
+        """ 
+        Convert a set of track units into a rectangle shape.
+        """
+        
+        # to scale coordinates to tracks
+        x = tracks.x*self.track_width - 0.5*self.track_width
+        y = tracks.y*self.track_width - 0.5*self.track_width
+        # offset lowest corner object to to (-track halo,-track halo)
+        ll = snap_to_grid(vector(x,y)-self.offset)
+        ur = ll + vector(self.track_width,self.track_width)
+
+        return [ll,ur]
 
 # FIXME: This should be replaced with vector.snap_to_grid at some point
 

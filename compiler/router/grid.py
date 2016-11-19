@@ -81,7 +81,7 @@ class grid:
                 getattr (self, name).append(vector3d(x,y,z))
 
     def add_blockage(self,ll,ur,z):
-        debug.info(2,"Adding blockage ll={0} ur={1} z={2}".format(str(ll),str(ur),z))
+        debug.info(3,"Adding blockage ll={0} ur={1} z={2}".format(str(ll),str(ur),z))
         self.set_property(ll,ur,z,"blocked")
 
     def set_source(self,ll,ur,z):

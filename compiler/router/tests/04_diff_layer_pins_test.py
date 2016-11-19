@@ -51,7 +51,16 @@ class no_blockages_test(unittest.TestCase):
                 layer_stack =("metal1","via1","metal2")
                 path=r.route(layer_stack,src="A",dest="B")
                 
+                self.add_rect(layer=layer_stack[0],
+                              offset=src_rect[0],
+                              width=src_rect[1].x-src_rect[0].x,
+                              height=src_rect[1].y-src_rect[0].y)
                 self.add_wire(layer_stack,path)
+                self.add_rect(layer=layer_stack[0],
+                              offset=dest_rect[0],
+                              width=dest_rect[1].x-dest_rect[0].x,
+                              height=dest_rect[1].y-dest_rect[0].y)
+
 
         
         

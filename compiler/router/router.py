@@ -72,18 +72,20 @@ class router:
         # We will add a halo around the boundary
         # of this many tracks
         track_halo = 5
-        # We will offset so ll is at (-track_halo*track_width,-track_halo*track_width)
-        track_width_offset = vector([track_halo*self.track_width]*2)
-        self.offset = self.ll + track_width_offset
-        debug.info(1,"Offset: "+str(self.offset))
-        width = self.size.x
-        height = self.size.y
-        debug.info(1,"Size: {0} x {1}".format(width,height))
+        debug.info(1,"Size: {0} x {1}".format(self.size.x,self.size.y))
 
         # pad the tracks on each side by the halo as well
-        self.width_in_tracks = int(math.ceil(width/self.track_width)) + 2*track_halo + 1
-        self.height_in_tracks = int(math.ceil(height/self.track_width)) + 2*track_halo + 1
+        self.left_in_tracks = int(math.floor(self.ll.x/self.track_width)) - track_halo
+        self.bottom_in_tracks = int(math.floor(self.ll.y/self.track_width)) - track_halo
+        self.right_in_tracks = int(math.ceil(self.ur.x/self.track_width)) + track_halo
+        self.top_in_tracks = int(math.ceil(self.ur.y/self.track_width)) + track_halo        
 
+        # We will offset so th lower left is track 0,0
+        self.track_offset = vector(-self.left_in_tracks,-self.bottom_in_tracks)
+
+        self.width_in_tracks = self.right_in_tracks - self.left_in_tracks
+        self.height_in_tracks = self.top_in_tracks - self.bottom_in_tracks
+        
         debug.info(1,"Size (in tracks): {0} x {1}".format(self.width_in_tracks, self.height_in_tracks))
         
         self.rg = grid.grid(self.height_in_tracks,self.width_in_tracks)
@@ -244,12 +246,12 @@ class router:
 
             if boundary.drawingLayer in [self.vert_layer_number,self.horiz_layer_number]:
                 # We round the pins down, so we must do this to skip them
-                pin_shape_tracks=self.convert_shape_to_tracks(shape,round_bigger=False)
+                pin_shape_tracks=self.convert_units_to_tracks(shape,round_bigger=False)
 
                 # don't add a blockage if this shape was a pin shape
                 if pin_shape_tracks not in self.all_pin_shapes:
                     # inflate the ll and ur by 1 track in each direction
-                    [ll,ur]=self.convert_shape_to_tracks(shape)
+                    [ll,ur]=self.convert_units_to_tracks(shape)
                     zlayer = 0 if boundary.drawingLayer==self.horiz_layer_number else 1
                     self.rg.add_blockage(ll,ur,zlayer)
                 
@@ -279,18 +281,18 @@ class router:
         # we can ignore the layers here
         # add_wire will filter out duplicates
         pt = vector(p[0],p[1])
-        pt=pt.scale(track_factor) - self.offset
+        pt=pt.scale(track_factor)
         return snap_to_grid(pt)
 
-    def convert_shape_to_tracks(self,shape,round_bigger=True):
+    def convert_units_to_tracks(self,shape,round_bigger=True):
         """ 
         Convert a rectangular shape into track units.
         """
         [ll,ur] = shape
 
         # offset lowest corner object to to (-track halo,-track halo)
-        ll = snap_to_grid(ll + self.offset)
-        ur = snap_to_grid(ur + self.offset)
+        ll = snap_to_grid(ll)
+        ur = snap_to_grid(ur)
 
         # to scale coordinates to tracks
         track_factor = [1/self.track_width] * 2
@@ -298,25 +300,15 @@ class router:
 
 
         if round_bigger: # Always round blockage shapes up.
-            ll = ll.scale(track_factor).floor()
-            ur = ur.scale(track_factor).ceil()
+            ll = ll.scale(track_factor).floor() + self.track_offset
+            ur = ur.scale(track_factor).ceil() + self.track_offset
             if ll.x<0:
                 ll.x=0
             if ll.y<0:
                 ll.y=0
         else: # Always round pin shapes down
-            ll = ll.scale(track_factor).ceil()
-            ur = ur.scale(track_factor).floor()
-            # if they were within one grid, we must
-            # not let it round away the pin
-            if ur.x<ll.x:
-                ur.x=ll.x
-            if ur.y<ll.y:
-                ur.y=ll.y
-            if ll.x<0:
-                ll.x=0
-            if ll.y<0:
-                ll.y=0
+            ll = ll.scale(track_factor).round()
+            ur = ur.scale(track_factor).round()
                 
         return [ll,ur]
 
@@ -325,13 +317,15 @@ class router:
         """ 
         Convert a set of track units into a rectangle shape.
         """
-        
+
+        tracks = tracks - self.track_offset
         # to scale coordinates to tracks
-        x = tracks.x*self.track_width - 0.5*self.track_width
-        y = tracks.y*self.track_width - 0.5*self.track_width
+        # FIXME: should be offset by spacing, not track width
+        x = tracks.x*self.track_width - 0.25*self.track_width
+        y = tracks.y*self.track_width - 0.25*self.track_width
         # offset lowest corner object to to (-track halo,-track halo)
-        ll = snap_to_grid(vector(x,y)-self.offset)
-        ur = ll + vector(self.track_width,self.track_width)
+        ll = snap_to_grid(vector(x,y))
+        ur = snap_to_grid(ll + vector(0.5*self.track_width,0.5*self.track_width))
 
         return [ll,ur]
 

@@ -36,7 +36,7 @@ class instance(geometry):
         self.mod = mod
         self.gds = mod.gds
         self.rotate = rotate
-        self.offset = vector(offset)
+        self.offset = vector(offset).snap_to_grid()
         self.mirror = mirror
 
 
@@ -70,7 +70,7 @@ class path(geometry):
         self.name = "path"
         self.layerNumber = layerNumber
         self.coordinates = map(lambda x: [x[0], x[1]], coordinates)
-        self.coordinates = vector(self.coordinates)
+        self.coordinates = vector(self.coordinates).snap_to_grid()
         self.path_width = path_width
 
         # FIXME figure out the width/height. This type of path is not
@@ -103,7 +103,7 @@ class label(geometry):
         self.name = "label"
         self.text = text
         self.layerNumber = layerNumber
-        self.offset = vector(offset)
+        self.offset = vector(offset).snap_to_grid()
         self.zoom = zoom
         self.size = 0
 
@@ -133,10 +133,10 @@ class rectangle(geometry):
         geometry.__init__(self)
         self.name = "rect"
         self.layerNumber = layerNumber
-        self.offset = vector(offset)
-        self.size = vector([width, height])
-        self.width = self.size[0]
-        self.height = self.size[1]
+        self.offset = vector(offset).snap_to_grid()
+        self.size = vector(width, height).snap_to_grid()
+        self.width = self.size.x
+        self.height = self.size.y
 
     def gds_write_file(self, newLayout):
         """Writes the rectangular shape to GDS"""

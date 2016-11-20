@@ -5,7 +5,7 @@ library (sram_2_16_1_scn3me_subm_lib){
     current_unit : "1mA" ;
     resistance_unit : "1kohm" ;
     capacitive_load_unit(1 ,fF) ;
-    leakage_power_unit : "1uW" ;
+    leakage_power_unit : "1mW" ;
     pulling_resistance_unit :"1kohm" ;
     operating_conditions(TT){
     voltage : 5.0 ;
@@ -69,6 +69,16 @@ library (sram_2_16_1_scn3me_subm_lib){
         index_1 ("0.5");
     }
 
+    power_lut_template(INPUT_BY_TRANS_FOR_CLOCK){
+        variable_1 : input_transition_time;
+        index_1 ("0.5");
+    }
+
+    power_lut_template(INPUT_BY_TRANS_FOR_SIGNAL){
+        variable_1 : input_transition_time;
+        index_1 ("0.5");
+    }
+
     default_operating_conditions : TT; 
 
 
@@ -106,10 +116,19 @@ cell (sram_2_16_1_scn3me_subm){
         max_capacitance : 11.3222;  
         pin(DATA[1:0]){
         }
-        three_state : "OEb & !clk"; 
+        three_state : "!OEb & !clk"; 
         memory_write(){ 
             address : ADDR; 
             clocked_on  : clk; 
+        }
+        internal_power(){
+            when : "OEb & !clk"; 
+            rise_power(INPUT_BY_TRANS_FOR_SIGNAL){
+                values("15.6576");
+            }
+            fall_power(INPUT_BY_TRANS_FOR_SIGNAL){
+                values("15.6576");
+            }
         }
         timing(){ 
             timing_type : setup_rising; 
@@ -133,6 +152,15 @@ cell (sram_2_16_1_scn3me_subm){
         }
         memory_read(){ 
             address : ADDR; 
+        }
+        internal_power(){
+            when : "!OEb & !clk"; 
+            rise_power(INPUT_BY_TRANS_FOR_SIGNAL){
+                values("6.2822");
+            }
+            fall_power(INPUT_BY_TRANS_FOR_SIGNAL){
+                values("6.2822");
+            }
         }
         timing(){ 
             timing_sense : non_unate; 
@@ -262,26 +290,24 @@ cell (sram_2_16_1_scn3me_subm){
         clock             : true;
         direction  : input; 
         capacitance : 9.8242;  
-        min_pulse_width_high : 1.658 ; 
-        min_pulse_width_low : 3.428 ; 
         timing(){ 
             timing_type :"min_pulse_width"; 
             related_pin  : clk; 
             rise_constraint(CLK_TRAN) {
-                values("0"); 
+                values("2.543"); 
             }
             fall_constraint(CLK_TRAN) {
-                values("0"); 
+                values("2.543"); 
             }
          }
         timing(){ 
             timing_type :"minimum_period"; 
             related_pin  : clk; 
             rise_constraint(CLK_TRAN) {
-                values("0"); 
+                values("5.086"); 
             }
             fall_constraint(CLK_TRAN) {
-                values("0"); 
+                values("5.086"); 
             }
          }
     }

@@ -5,7 +5,7 @@ library (sram_2_16_1_freepdk45_lib){
     current_unit : "1mA" ;
     resistance_unit : "1kohm" ;
     capacitive_load_unit(1 ,fF) ;
-    leakage_power_unit : "1uW" ;
+    leakage_power_unit : "1mW" ;
     pulling_resistance_unit :"1kohm" ;
     operating_conditions(TT){
     voltage : 1.0 ;
@@ -69,6 +69,16 @@ library (sram_2_16_1_freepdk45_lib){
         index_1 ("0.5");
     }
 
+    power_lut_template(INPUT_BY_TRANS_FOR_CLOCK){
+        variable_1 : input_transition_time;
+        index_1 ("0.5");
+    }
+
+    power_lut_template(INPUT_BY_TRANS_FOR_SIGNAL){
+        variable_1 : input_transition_time;
+        index_1 ("0.5");
+    }
+
     default_operating_conditions : TT; 
 
 
@@ -106,10 +116,19 @@ cell (sram_2_16_1_freepdk45){
         max_capacitance : 0.62166;  
         pin(DATA[1:0]){
         }
-        three_state : "OEb & !clk"; 
+        three_state : "!OEb & !clk"; 
         memory_write(){ 
             address : ADDR; 
             clocked_on  : clk; 
+        }
+        internal_power(){
+            when : "OEb & !clk"; 
+            rise_power(INPUT_BY_TRANS_FOR_SIGNAL){
+                values("0.6942568");
+            }
+            fall_power(INPUT_BY_TRANS_FOR_SIGNAL){
+                values("0.6942568");
+            }
         }
         timing(){ 
             timing_type : setup_rising; 
@@ -134,21 +153,30 @@ cell (sram_2_16_1_freepdk45){
         memory_read(){ 
             address : ADDR; 
         }
+        internal_power(){
+            when : "!OEb & !clk"; 
+            rise_power(INPUT_BY_TRANS_FOR_SIGNAL){
+                values("0.0290396");
+            }
+            fall_power(INPUT_BY_TRANS_FOR_SIGNAL){
+                values("0.0290396");
+            }
+        }
         timing(){ 
             timing_sense : non_unate; 
             related_pin : "clk"; 
             timing_type : rising_edge; 
             cell_rise(CELL_UP_FOR_CLOCK) {
-                values("0.042"); 
+                values("0.061"); 
             }
             cell_fall(CELL_DN_FOR_CLOCK) {
-                values("0.241"); 
+                values("0.24"); 
             }
         rise_transition(TRAN) {
-                values("0.042"); 
+                values("0.061"); 
               }
         fall_transition(TRAN) {
-                values("0.241"); 
+                values("0.24"); 
             }
         }
     }
@@ -262,26 +290,24 @@ cell (sram_2_16_1_freepdk45){
         clock             : true;
         direction  : input; 
         capacitance : 0.2091;  
-        min_pulse_width_high : 0.081 ; 
-        min_pulse_width_low : 0.267 ; 
         timing(){ 
             timing_type :"min_pulse_width"; 
             related_pin  : clk; 
             rise_constraint(CLK_TRAN) {
-                values("0"); 
+                values("0.1745"); 
             }
             fall_constraint(CLK_TRAN) {
-                values("0"); 
+                values("0.1745"); 
             }
          }
         timing(){ 
             timing_type :"minimum_period"; 
             related_pin  : clk; 
             rise_constraint(CLK_TRAN) {
-                values("0"); 
+                values("0.349"); 
             }
             fall_constraint(CLK_TRAN) {
-                values("0"); 
+                values("0.349"); 
             }
          }
     }

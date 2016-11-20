@@ -384,10 +384,14 @@ class delay():
         if (min_period0 == None) or (delay0 == None):
             return None
         debug.info(1, "Min Period for high_to_low transistion: {0}n with a delay of {1}".format(min_period0, delay0))
-        data = {"min_period1": min_period1,  # period in ns
+        read_power=ch.convert_to_float(ch.parse_output("timing", "power_read"))
+	write_power=ch.convert_to_float(ch.parse_output("timing", "power_write"))
+	data = {"min_period1": min_period1,  # period in ns
                 "delay1": delay1, # delay in s
                 "min_period0": min_period0,
-                "delay0": delay0
+                "delay0": delay0,
+		"Read_Power": read_power,
+		"Write_Power": write_power
                 }
         return data
 

@@ -389,11 +389,12 @@ class delay():
 	data = {"min_period1": min_period1,  # period in ns
                 "delay1": delay1, # delay in s
                 "min_period0": min_period0,
-                "delay0": delay0,
-		"Read_Power": read_power,
-		"Write_Power": write_power
+                "delay0": delay0
                 }
-        return data
+        power = {"Read_Power": read_power,
+		 "Write_Power": write_power
+		 }
+	return data, power
 
 
     def obtain_cycle_times(self, slow_period, fast_period):

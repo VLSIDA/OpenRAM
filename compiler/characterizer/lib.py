@@ -61,12 +61,14 @@ class lib:
         probe_address = "1" * self.addr_size
         probe_data = self.word_size - 1
 
-        data , power = self.d.analyze(probe_address, probe_data)
+        data = self.d.analyze(probe_address, probe_data)
         for i in data.keys():
+            if i == "read_power" or i == "write_power":
+                continue
             data[i] = ch.round_time(data[i])
 
       
-        self.write_data_bus(data, power, times)
+        self.write_data_bus(data, times)
         self.write_addr_bus(times)
         self.write_control_pins(times)
         self.write_clk(data)
@@ -199,7 +201,7 @@ class lib:
 
 
 
-    def write_data_bus(self, data, power, times):
+    def write_data_bus(self, data, times):
         """ Adds data bus timing results."""
         self.lib.write("    bus(DATA){\n")
         self.lib.write("        bus_type  : DATA; \n")
@@ -217,10 +219,10 @@ class lib:
 	self.lib.write("        internal_power(){\n")
 	self.lib.write("            when : \"OEb & !clk\"; \n")
 	self.lib.write("            rise_power(INPUT_BY_TRANS_FOR_SIGNAL){\n")
-	self.lib.write("                values(\"{0}\");\n".format(power["Write_Power"]* 1e3))
+	self.lib.write("                values(\"{0}\");\n".format(data["write_power"]* 1e3))
 	self.lib.write("            }\n")
 	self.lib.write("            fall_power(INPUT_BY_TRANS_FOR_SIGNAL){\n")
-	self.lib.write("                values(\"{0}\");\n".format(power["Write_Power"]* 1e3))
+	self.lib.write("                values(\"{0}\");\n".format(data["write_power"]* 1e3))
 	self.lib.write("            }\n")
         self.lib.write("        }\n")
 	self.write_timing(times)
@@ -231,10 +233,10 @@ class lib:
 	self.lib.write("        internal_power(){\n")
 	self.lib.write("            when : \"!OEb & !clk\"; \n")
 	self.lib.write("            rise_power(INPUT_BY_TRANS_FOR_SIGNAL){\n")
-	self.lib.write("                values(\"{0}\");\n".format(power["Read_Power"]* 1e3))
+	self.lib.write("                values(\"{0}\");\n".format(data["read_power"]* 1e3))
 	self.lib.write("            }\n")
 	self.lib.write("            fall_power(INPUT_BY_TRANS_FOR_SIGNAL){\n")
-	self.lib.write("                values(\"{0}\");\n".format(power["Read_Power"]* 1e3))
+	self.lib.write("                values(\"{0}\");\n".format(data["read_power"]* 1e3))
 	self.lib.write("            }\n")
         self.lib.write("        }\n")
 	self.lib.write("        timing(){ \n")

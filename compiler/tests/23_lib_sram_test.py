@@ -4,7 +4,7 @@ Check the .lib file for an SRAM
 """
 
 import unittest
-from testutils import header,isdiff
+from testutils import header,isapproxdiff
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
@@ -40,7 +40,8 @@ class lib_test(unittest.TestCase):
         
         # let's diff the result with a golden model
         golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),filename)
-        self.assertEqual(isdiff(libname,golden),True)
+        # Randomly decided 10% difference between spice simulators is ok.
+        self.assertEqual(isapproxdiff(libname,golden,0.10),True)
 
         os.system("rm {0}".format(libname))
 

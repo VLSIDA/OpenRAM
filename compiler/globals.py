@@ -62,6 +62,12 @@ def parse_args():
 
     (options, args) = parser.parse_args(values=OPTS)
 
+    # If we don't specify a tech, assume freepdk45.
+    # This may be overridden when we read a config file though...
+    if OPTS.tech_name == "":
+        OPTS.tech_name = "freepdk45"
+    
+
     return (options, args)
 
 
@@ -244,9 +250,10 @@ def import_tech():
 
     debug.info(2,"Importing technology: " + OPTS.tech_name)
 
-    if OPTS.tech_name == "":
-        OPTS.tech_name = OPTS.config.tech_name
-
+    # Set the tech to the config file we read in instead of the command line value.
+    OPTS.tech_name = OPTS.config.tech_name
+    
+    
         # environment variable should point to the technology dir
     try:
         OPENRAM_TECH = os.path.abspath(os.environ.get("OPENRAM_TECH"))

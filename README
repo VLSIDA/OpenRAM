@@ -91,9 +91,9 @@ Steps to run regression testing:
 1) First, ensure your setup_scripts is correctly setup.
 2) Navigate to the compiler directory: cd $OPENRAM_HOME
 3) Use the command: 
-   python tests/regress.py -t freepdk45
+   python tests/regress.py 
 4) To run a specific test:
-   python tests/{unit test}.py -t freepdk45
+   python tests/{unit test}.py 
 
 The unit tests take the same arguments as openram.py itself. 
 
@@ -101,7 +101,8 @@ To increase the verbosity of the test, add one (or more) -v options:
 python tests/00_code_format_check_test.py -v -t freepdk45
 
 To specify a particular technology use "-t <techname>" such as
-"-t scn3me_subm". 
+"-t scn3me_subm". The default for a unit test is freepdk45 whereas
+the default for openram.py is specified in the configuration file.
 
 A regression daemon script that can be used with cron is included:
 regress_daemon.py

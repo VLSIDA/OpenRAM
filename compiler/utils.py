@@ -28,7 +28,6 @@ def gds_pin_center(gdsPin):
     boundary = gdsPin[2]
     return [0.5 * (boundary[0] + boundary[2]), 0.5 * (boundary[1] + boundary[3])]
 
-
 def auto_measure_libcell(pin_list, name, units, layer):
     """
     Open a GDS file and find the pins in pin_list as text on a given layer.

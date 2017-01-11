@@ -1,5 +1,6 @@
 import debug
 import math
+import tech
 
 class vector():
     """
@@ -82,6 +83,21 @@ class vector():
         Override - function (right)
         """
         return vector(other[0]- self.x, other[1] - self.y)
+
+    def snap_to_grid(self):
+        self.x = self.snap_offset_to_grid(self.x)
+        self.y = self.snap_offset_to_grid(self.y)
+        return self
+
+    def snap_offset_to_grid(self, offset):
+        """
+        Changes the coodrinate to match the grid settings
+        """
+        grid = tech.drc["grid"]  
+        # this gets the nearest integer value
+        off_in_grid = int(round(round((offset / grid), 2), 0))
+        offset = off_in_grid * grid
+        return offset
 
     def rotate(self):
         """ pass a copy of rotated vector, without altering the vector! """

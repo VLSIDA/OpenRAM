@@ -5,7 +5,6 @@ import globals
 
 OPTS = globals.OPTS
 
-<<<<<<< HEAD
 def snap_to_grid(offset):
     """
     Changes the coodrinate to match the grid settings
@@ -26,9 +25,6 @@ def gds_pin_center(gdsPin):
     """
     This returns the center of a pin shape
     """
-=======
-def gdsPinToOffset(gdsPin):
->>>>>>> master
     boundary = gdsPin[2]
     return [0.5 * (boundary[0] + boundary[2]), 0.5 * (boundary[1] + boundary[3])]
 

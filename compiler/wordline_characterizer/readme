@@ -1,0 +1,71 @@
+################################################################################
+Organzation of the code:
+1. Testbench(sample_test, Optimzation): with some setup run the test
+2. Test(WL_delay_test): run the test, either scan/at a WL porotion point
+3. Testmodule(WL_delay_test_module): build the minmum set of module togother 
+   to Measure Delay
+################################################################################
+
+
+################################################################################
+Flow of the optimization:
+1. Run border sitation(driver strength fixed?)
+2. Calibre analytical model RC: with same setup from step 1 run the test
+3. run analytical model to give prediction
+4. see if prediction match the pex simulation
+################################################################################
+
+
+################################################################################
+Things to do:
+1. merge new wordlinedriver and nand2 module(can size dynamically issues see below)
+2. make sure wordline driver still work after 1.
+3. merge delay analytical model
+4. merge delay optimization module
+################################################################################
+
+
+################################################################################
+wordlinedriver merging issues:
+
+wordlinedriver used pinverter as the name of inv which is also used in 
+hierarchy_decoder. Hence, genrated golden one is problematic, worddriver 
+will use 
+        c = reload(__import__(OPTS.config.bitcell))
+        self.mod_bitcell = getattr(c, OPTS.config.bitcell)
+        self.inv = pinv(name="pinverter1",
+                        nmos_width=drc["minwidth_tx"],
+                        beta=2,
+                        height=self.mod_bitcell.chars["height"])
+        self.add_mod(self.inv)
+
+in layout as spice due to the same refernce name but will use pin information of this inverter
+beta3_inv = pinv(name="beta3_inv",
+                    nmos_width=drc["minwidth_tx"],
+                    beta=parameter["pinv_beta"]) 
+
+Thus the gernaertaed sram.gds has weird connection shape, but sill pass lvs/drc.
+The wordline driver itself is not influenced as hierarchy_decoder is not used in 
+that test driver.
+
+I was tring to do some fix without changing the golden file.
+But I could not. 
+This reason does not matter cause its messy fix
+Following code will not pass wordline_driver unit test but will pass lef test
+# someone used pinverter as the name of inv which is also used in hierarchy_decoder as 
+beta3_inv = pinv(name="beta3_inv",
+                    nmos_width=drc["minwidth_tx"],
+                    beta=parameter["pinv_beta"])
+correct_A = beta3_inv.A_position
+correct_Z = beta3_inv.Z_position
+
+c = reload(__import__(OPTS.config.bitcell))
+self.mod_bitcell = getattr(c, OPTS.config.bitcell)
+self.inv = pinv(name="pinverter1",
+                nmos_width=drc["minwidth_tx"],
+                beta=2,
+                height=self.mod_bitcell.chars["height"])
+self.add_mod(self.inv)
+self.inv.A_position = correct_A
+self.inv.Z_position = correct_Z
+################################################################################

@@ -2,7 +2,7 @@
 """
 Run a regresion test on a wordline_driver array
 """
-from WL_utils import header
+from wl_utils import header, setup_output_path
 import unittest
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
@@ -14,11 +14,11 @@ OPTS = globals.OPTS
 
 class wl_delay():
     def __init__(self):
-        self.output_path, self.log_file = self.check_output_path()
+        self.output_path, self.log_file = self.setup_output_path()
 
-    def check_output_path(self):
+    def setup_output_path(self):
         # find the home path of test code 
-        home_path = os.path.realpath(os.path.join(os.path.realpath(__file__), '..'))
+        home_path = setup_output_path()
         output_path = home_path +"/OpenRAM_output/"
         log_file = home_path+"/exp_log"
         # make the directory if it doesn't exist
@@ -72,7 +72,8 @@ class wl_delay():
         exp_log.write("Max diff in delay"+str(diff)+"\n")
         exp_log.write("Avg delay"+str(avg)+".\n\n")
         exp_log.close()
-        
+        return set_result        
+
     def convert_delay_unit(self, unit):
         # convert time to ps
         convert_table={"p":1, "n":1000}

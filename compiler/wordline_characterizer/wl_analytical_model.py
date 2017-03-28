@@ -2,28 +2,39 @@
 Generate word line analytical spice code
 
 """
-import os
+from wl_utils import header, setup_output_path
+import sys,os
+sys.path.append(os.path.join(sys.path[0],".."))
+import globals
+OPTS = globals.OPTS
+
+
 
 class wl_analytical_model():
-    def __init__(self, target_path, setup, mos_model):
+    def __init__(self, target_path, setup):
+        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        import tech
         if target_path==None:
             self.output_path = self.check_output_path()
         self.net_list = []
-        self.net_list.append("*RC delay\n")
-        for  item in mos_model:
-            self.net_list.append(item+"\n")
+        self.net_list.append("*wl analytical model\n")
+        for model in tech.spice["fet_models"]:
+            self.net_list.append(".include "+str(model)+"\n")
         self.net_list.append("vvdd vdd 0 dc 1v \n")
         self.net_list.append("VWEb_trans sel 0 PWL (0 0v 0.9ns 0v 1ns 1v)\n")
         self.net_list.append("Vclk clk 0 PWL (0 1v 0.9ns 1v 1ns 0v)\n")
-        strength, mults, wl = setup
+        wl, strength, mults  = setup
         self.driver_strength = strength
         self.driver_mults = mults
         self.wl_range = wl
         self.target_log =  self.output_path +"model_log"
+        # set rc default value
+        self.resistance = 1
+        self.capacitance = 0.02
+
 
     def check_output_path(self):
-        # find the home path of test code 
-        home_path = os.path.realpath(os.path.join(os.path.realpath(__file__), '..'))
+        home_path = setup_output_path()
         output_path = home_path +"/Model_output/"
         # make the directory if it doesn't exist
         try:
@@ -34,7 +45,7 @@ class wl_analytical_model():
         return output_path
 
     def genrate_file(self):
-        self.spice_file_name = self.output_path+"rc.sp"
+        self.spice_file_name = self.output_path+"wl_analytical_model.sp"
         spice_file = open(self.spice_file_name, "w")
         for code in self.net_list:
             spice_file.write(code)
@@ -63,7 +74,7 @@ class wl_analytical_model():
 
         self.define_wire(self.net_list)
         self.define_driver(self.net_list, self.driver_strength)
-        self.define_pand(self.net_list)
+        self.define_pand(self.net_list, 2)
         self.define_measurement(self.net_list)
 
     def calibre_wire(self):
@@ -86,7 +97,7 @@ class wl_analytical_model():
 
         self.define_wire(self.net_list)
         self.define_driver(self.net_list, self.driver_strength)
-        self.define_pand(self.net_list)
+        self.define_pand(self.net_list, 2)
         self.define_measurement(self.net_list)
 
     def add_driver(self,source_file):
@@ -127,7 +138,10 @@ class wl_analytical_model():
             end = "wl"+str(i+1)
             source_file.append("xwl_gate"+str(i)+" "+end+" 0 cell_gate\n")
 
-
+    def set_rc(self, r, c):
+        self.resistance =  "{:f}".format(r)
+        self.capacitance = "{:f}".format(c)
+    
     def define_wire(self, source_file):
         # rc increase, rc ratio decrease
         #Max diff in delay0.4391
@@ -139,8 +153,10 @@ class wl_analytical_model():
         #source_file.append("cwl out rcgnd "+str(self.capacitance)+"p\n")
         #source_file.append(".ends\n\n")
 
-        self.resistance = 2
-        self.capacitance = "0.0255"
+        #self.resistance = 2
+        #self.capacitance = "0.0255"
+        # 148.5985 - 117.4447 diff 31.4239
+
 
         source_file.append("\n.subckt wire_rc in out rcgnd\n")
         source_file.append("rwls in mid "+str(self.resistance)+"\n")
@@ -163,7 +179,9 @@ class wl_analytical_model():
         source_file.append("cwl net0 rcgnd "+str(gate_c)+"p\n")
         source_file.append(".ends\n\n")
 
-    def define_pand(self, source_file):
+
+    def define_pand(self, source_file, nand_size):
+        size = str(0.09*nand_size)
         source_file.append("\n")
         source_file.append(".SUBCKT pnand2 A B Z vdd gnd\n")
         source_file.append("MM1 Z A net1 gnd NMOS_VTG  W=0.18u L=0.05u\n")
@@ -219,7 +237,6 @@ class wl_analytical_model():
 
     def run_sim(self):
         import os
-        print self.spice_file_name
         os.system("hspice "+self.spice_file_name+" > "+self.target_log)
 
     def grep_key(self,key):
@@ -249,8 +266,8 @@ class wl_analytical_model():
         log_file = open(self.target_log, "r")
         contents = log_file.read() 
         import re
-        print "set up: [word line size]", self.wl_range,"[unit r]",self.resistance,"[unit c]",self.capacitance
-        print "[driver_strength]",self.driver_strength,"x",self.driver_mults
+        #print "set up: [word line size]", self.wl_range,"[unit r]",self.resistance,"[unit c]",self.capacitance
+        #print "[driver_strength]",self.driver_strength,"x",self.driver_mults
         results = []
         for i in range(wl_range):
             key = "tdlay"+str(i)
@@ -266,20 +283,20 @@ class wl_analytical_model():
                 unit_val = 1000
             results.append(value*unit_val)
         if len(results)!= 0:
-            print "worst", max(results)
-            print "avg",sum(results)/len(results)
+            #print "worst", max(results)
+            #print "avg",sum(results)/len(results)
             r_avg = sum(results)/len(results)/430
-            print "diff", max(results)- min(results) 
+            #print "diff", max(results)- min(results) 
             r_diff = (max(results)- min(results))/241
         #print "rc ratio", r_avg/r_diff
         return results
 
 if __name__ == "__main__":
-    setup_lst =[[8,1],[4,2],[2,4],[1,8]]
-    mos_model = [".include /mada/software/techfiles/FreePDK45/ncsu_basekit/models/hspice/tran_models/models_nom/NMOS_VTG.inc",
-                 ".include /mada/software/techfiles/FreePDK45/ncsu_basekit/models/hspice/tran_models/models_nom/PMOS_VTG.inc"]
+    (OPTS, args) = globals.parse_args()
+    del sys.argv[1:]
+    setup_lst =[[128, 8 ,1], [64, 8 ,1], [1, 8 ,1]]
     for setup in setup_lst:
-        model = wl_analytical_model(None, setup+[16], mos_model)
+        model = wl_analytical_model(None, setup)
         model.main_setup()
         model.genrate_file()
         model.run_sim()

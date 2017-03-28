@@ -9,7 +9,7 @@ Organzation of the code:
 
 ################################################################################
 Flow of the optimization:
-1. Run border sitation(driver strength fixed?)
+1. Run 2 small sram(driver strength fixed?)
 2. Calibre analytical model RC: with same setup from step 1 run the test
 3. run analytical model to give prediction
 4. see if prediction match the pex simulation

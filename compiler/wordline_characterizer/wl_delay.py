@@ -29,34 +29,37 @@ class wl_delay():
                 os.chmod(output_path, 0750)
         return output_path, log_file
     
-    def runTest(self):
+
+    def single_test(self, config, wl_pos, cell_load=True):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
         debug.info(2, "Checking driver")
-        config = [128,1,2]
-        self.single_test(config)
 
-    def single_test(self,config):
         name="test_mod"
         import test_module
         word_size, strength, extra = config
-        print "strength",strength,"x",extra,". Word size ", word_size
+        #print "strength",strength,"x",extra,". Word size ", word_size
         exp_log =  open(self.log_file, "a")
         exp_log.write("Word size "+str(word_size)+". Strength "+str(strength)+"x"+str(extra)+"\n")
         exp_log.close()
         set_result = []
         for i in range(10,11):
             WL_pos = 0.1*i
-            tm = test_module.test_module(name, word_size,  WL_pos, extra)
+            #tm = test_module.test_module(name, word_size,  WL_pos, extra, strength)
+            tm = test_module.test_module(name = name, word_size = word_size, driver_size = strength, mults = extra)
+            tm.set_wl_label(wl_pos)
+            tm.create_layout(cell_load = cell_load)
+            #tm = test_module.test_module(name, word_size,  WL_pos, extra) #do not specify to auto size
+
             strength =  tm.inv_size
             nand_size = tm.nand_size        
             OPTS.check_lvsdrc = True
             pex_lib = self.generate_pex(tm, self.output_path)
             #value, unit  = self.setup_hspice(self.output_path, pex_lib)
             #pex_file = self.local_check(tm,strength, extra, word_size, WL_pos, nand_size)
-            value, unit = self.setup_hspice( self.output_path, pex_lib)
-            print strength," ", extra," ", word_size," ", nand_size," ",value, unit
+            value, unit = self.setup_hspice(self.output_path, pex_lib)
+            #print strength," ", extra," ", word_size," ", nand_size," ",value, unit
             exp_log =  open(self.log_file, "a")
             exp_log.write("WL "+ str(WL_pos)+". delay "+str(value)+str(unit)+"\n")
             exp_log.close()
@@ -128,5 +131,5 @@ if __name__ == "__main__":
     del sys.argv[1:]
     test = wl_delay()
     header(__file__, OPTS.tech_name,test.output_path)
-
-    test.runTest()
+    config = [16,8,4]
+    test.single_test(config, wire_only = True)

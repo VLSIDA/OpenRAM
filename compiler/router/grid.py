@@ -34,14 +34,14 @@ class grid:
         
                     
 
-    def view(self):
+    def view(self,filename="test.png"):
         """
         View the data by creating an RGB array and mapping the data
         structure to the RGB color palette.
         """
 
         v_map = np.zeros((self.width,self.height,3), 'uint8')
-        mid_map = np.ones((25,self.height,3), 'uint8')
+        mid_map = np.ones((10,self.height,3), 'uint8')
         h_map = np.ones((self.width,self.height,3), 'uint8')        
 
         # We shouldn't have a path greater than 50% the HPWL
@@ -62,12 +62,12 @@ class grid:
         #h_img.show()
         
         # concatenate them into a plot with the two layers
-        img = Image.new('RGB', (2*self.width+25, self.height))
+        img = Image.new('RGB', (2*self.width+10, self.height))
         img.paste(h_img, (0,0))
         img.paste(mid_img, (self.width,0))        
-        img.paste(v_img, (self.width+25,0))
-        img.show()
-        img.save("test.png")
+        img.paste(v_img, (self.width+10,0))
+        #img.show()
+        img.save(filename)
 
     def set_property(self,ll,ur,z,name,value=True):
         assert(ur[1] >= ll[1] and ur[0] >= ll[0])
@@ -135,7 +135,6 @@ class grid:
                     cost = self.cost(newpath) +  self.cost_to_target(n) 
                     self.q.put((cost,newpath))
 
-        self.view()
         debug.error("Unable to route path. Expand area?",-1)
 
     def is_target(self,point):

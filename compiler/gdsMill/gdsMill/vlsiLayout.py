@@ -650,7 +650,7 @@ class VlsiLayout:
                 cellBoundary[3]=right_top_Y
         return cellBoundary
         
-    def readPin(self,label_name):
+    def readPinShape(self,label_name):
         """
         Search for a pin label and return the largest enclosing rectangle
         on the same layer as the pin label.
@@ -663,7 +663,7 @@ class VlsiLayout:
                 label_layer = Text.drawingLayer
                 label_coordinate = Text.coordinates
 
-        pin_boundaries=self.readAllPinInStructureList(label_coordinate, label_layer)
+        pin_boundaries=self.readAllPinShapesInStructureList(label_coordinate, label_layer)
 
         # sort the boundaries, return the max area pin boundary
         pin_boundaries.sort(cmpBoundaryAreas,reverse=True)
@@ -675,7 +675,7 @@ class VlsiLayout:
         
         return [label_name, label_layer, pin_boundary]
 
-    def readAllPin(self,label_name):
+    def readAllPinShapes(self,label_name):
         """
         Search for a pin label and return ALL the enclosing rectangles on the same layer
         as the pin label.
@@ -688,7 +688,7 @@ class VlsiLayout:
                 label_layer = Text.drawingLayer
                 label_coordinate = Text.coordinates
 
-        pin_boundaries=self.readAllPinInStructureList(label_coordinate, label_layer)
+        pin_boundaries=self.readAllPinShapesInStructureList(label_coordinate, label_layer)
 
         # Convert to user units
         new_boundaries = []
@@ -699,7 +699,7 @@ class VlsiLayout:
         
         return [label_name, label_layer, new_boundaries]
     
-    def readAllPinInStructureList(self,label_coordinates,layer):
+    def readAllPinShapesInStructureList(self,label_coordinates,layer):
         """
         Given the label coordinate, search for enclosing structures on the given layer.
         Return the single biggest area rectangle.

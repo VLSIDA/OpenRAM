@@ -45,7 +45,7 @@ def auto_measure_libcell(pin_list, name, units, layer):
     [cell["width"], cell["height"]] = measure_result
 
     for pin in pin_list:
-        cell[str(pin)] = gds_pin_center(cell_vlsi.readPin(str(pin)))
+        cell[str(pin)] = gds_pin_center(cell_vlsi.readPinShape(str(pin)))
     return cell
 
 

@@ -154,34 +154,35 @@ class router:
         
         self.find_blockages()
 
-        self.rg.view("preroute.png")
+        #self.rg.view("preroute.png")
 
         # returns the path in tracks
-        self.path = self.rg.route()
-        debug.info(1,"Found path. ")
+        (self.path,cost) = self.rg.route()
+        debug.info(1,"Found path: cost={0} ".format(cost))
         debug.info(2,str(self.path))
         self.set_path(self.path)
         
-        self.rg.view("postroute.png")
+        #self.rg.view("postroute.png")
         return 
 
     def add_route(self,cell):
         """ 
         Add the current wire route to the given design instance.
         """
-        # First, simplify the path for 
+        # First, simplify the path for
+        debug.info(1,str(self.path))        
         contracted_path = self.contract_path(self.path)
         debug.info(1,str(contracted_path))
         
         # Make sure there's a pin enclosure on the source and dest
         src_shape = self.convert_track_to_shape(contracted_path[0])
-        cell.add_rect(layer=self.layers[0],
+        cell.add_rect(layer=self.layers[contracted_path[0].z],
                       offset=src_shape[0],
                       width=src_shape[1].x-src_shape[0].x,
                       height=src_shape[1].y-src_shape[0].y)
 
         dest_shape = self.convert_track_to_shape(contracted_path[-1])
-        cell.add_rect(layer=self.layers[0],
+        cell.add_rect(layer=self.layers[contracted_path[-1].z],
                       offset=dest_shape[0],
                       width=dest_shape[1].x-dest_shape[0].x,
                       height=dest_shape[1].y-dest_shape[0].y)
@@ -189,8 +190,22 @@ class router:
 
         # convert the path back to absolute units from tracks
         abs_path = map(self.convert_point_to_units,contracted_path)
-        debug.info(1,str(abs_path))
         cell.add_wire(self.layers,abs_path)
+        debug.info(1,str(abs_path))
+
+        # Check if a via is needed at the start point
+        if (contracted_path[0].z!=contracted_path[1].z):
+            # offset this by 1/2 the via size
+            c=contact(self.layers, (1, 1))
+            via_offset = vector(-0.5*c.width,-0.5*c.height)
+            cell.add_via(self.layers,abs_path[0]+via_offset)
+        # Check if a via is needed at the end point
+        if (contracted_path[-1].z!=contracted_path[-2].z):
+            # offset this by 1/2 the via size
+            c=contact(self.layers, (1, 1))
+            via_offset = vector(-0.5*c.width,-0.5*c.height)
+            cell.add_via(self.layers,abs_path[-1]+via_offset)
+
         
     
     def create_steiner_routes(self,pins):
@@ -245,10 +260,10 @@ class router:
         Sets the direction based on the previous direction we came from. 
         """
         # direction (index) of movement
-        if p0.x==p1.x:
-            return 1
-        elif p0.y==p1.y:
+        if p0.x!=p1.x:
             return 0
+        elif p0.y!=p1.y:
+            return 1
         else:
             # z direction
             return 2

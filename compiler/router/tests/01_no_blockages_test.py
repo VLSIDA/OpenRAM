@@ -51,7 +51,6 @@ class no_blockages_test(unittest.TestCase):
                 layer_stack =("metal1","via1","metal2")
                 r.route(layer_stack,src="A",dest="B")
                 r.add_route(self)
-                self.gds_write("mytemp.gds")
 
         
         r = routing("test1", "01_no_blockages_test")

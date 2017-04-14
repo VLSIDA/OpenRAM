@@ -17,20 +17,16 @@ class grid:
 
     """
 
-    def __init__(self, width, height):
+    def __init__(self):
         """ Create a routing map of width x height cells and 2 in the z-axis. """
-        self.width=width
-        self.height=height
+        self.NONPREFERRED_COST = 5
+        self.VIA_COST = 3
         self.source = []
         self.target = []
         self.blocked = []
-        self.map={}
 
-        # let's leave this sparse, create cells on demand
-        # for x in range(width):
-        #     for y in range(height):
-        #         for z in range(2):
-        #             self.map[vector3d(x,y,z)]=cell()
+        # let's leave the map sparse, cells are created on demand
+        self.map={}
 
         # priority queue for the maze routing
         self.q = Q.PriorityQueue()
@@ -73,11 +69,6 @@ class grid:
     #     img.save(filename)
 
     def set_property(self,ll,ur,z,name,value=True):
-        assert(ur[1] >= ll[1] and ur[0] >= ll[0])
-        assert(ll[0]<self.width and ll[0]>=0)
-        assert(ll[1]<self.height and ll[1]>=0)
-        assert(ur[0]<self.width and ur[0]>=0)
-        assert(ur[1]<self.height and ur[1]>=0)
         for x in range(int(ll[0]),int(ur[0])+1):
             for y in range(int(ll[1]),int(ur[1])+1):
                 n = vector3d(x,y,z)
@@ -252,21 +243,14 @@ class grid:
         cost = 0
         for p0,p1 in plist:
             if p0.z != p1.z: # via
-                cost += 2
+                cost += self.VIA_COST
             elif p0.x != p1.x: # horizontal
-                cost += 2 if (p0.z == 1) else 1
+                cost += self.NONPREFERRED_COST if (p0.z == 1) else 1
             elif p0.y != p1.y: # vertical
-                cost += 2 if (p0.z == 0) else 1
+                cost += self.NONPREFERRED_COST if (p0.z == 0) else 1
             else:
                 debug.error("Non-changing direction!")
         
-        # for p in path:
-        #     if p.z != prev_p.z:
-        #         via_cost += 2 # we count a via as 2x a wire track
-        #         prev_layer = p.z
-        #     prev_p = p
-        #
-        #return len(path)+via_cost
         return cost
     
     def get_inertia(self,p0,p1):

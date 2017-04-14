@@ -84,14 +84,7 @@ class router:
         size = self.ur - self.ll
         debug.info(1,"Size: {0} x {1}".format(size.x,size.y))
 
-        # The routing grid starts at the self.ll and goes up/right
-        # The +1 is because the source/dest object may get expanded outside the region
-        self.height_in_tracks = int(math.ceil(self.ur.x/self.track_width))+2
-        self.width_in_tracks = int(math.ceil(self.ur.y/self.track_width))+2
-
-        debug.info(1,"Size (in tracks, from ll): {0} x {1}".format(self.width_in_tracks, self.height_in_tracks))
-        
-        self.rg = grid.grid(self.height_in_tracks,self.width_in_tracks)
+        self.rg = grid.grid()
         
 
     def find_pin(self,pin):
@@ -370,7 +363,7 @@ class router:
         ur = snap_to_grid(ur)
 
         # to scale coordinates to tracks
-        debug.info(1,"Converting [ {0} , {1} ]".format(ll,ur))
+        #debug.info(1,"Converting [ {0} , {1} ]".format(ll,ur))
         ll=ll.scale(self.track_factor)
         ur=ur.scale(self.track_factor)
         ll = ll.floor() if round_bigger else ll.round()

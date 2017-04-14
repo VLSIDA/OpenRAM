@@ -49,21 +49,11 @@ class no_blockages_test(unittest.TestCase):
                 self.gdsname = "{0}/{1}.gds".format(os.path.dirname(os.path.realpath(__file__)),gdsname)
                 r=router.router(self.gdsname)
                 layer_stack =("metal1","via1","metal2")
-                (src_rect,path,dest_rect)=r.route(layer_stack,src="A",dest="B")
-                #r.rg.view()
-                self.add_rect(layer=layer_stack[0],
-                              offset=src_rect[0],
-                              width=src_rect[1].x-src_rect[0].x,
-                              height=src_rect[1].y-src_rect[0].y)
-                self.add_wire(layer_stack,path)
-                self.add_rect(layer=layer_stack[0],
-                              offset=dest_rect[0],
-                              width=dest_rect[1].x-dest_rect[0].x,
-                              height=dest_rect[1].y-dest_rect[0].y)
-                
+                r.route(layer_stack,src="A",dest="B")
+                r.add_route(self)
 
         
-        r = routing("test1", "AB_same_layer_pins")
+        r = routing("test1", "03_same_layer_pins_test")
         self.local_check(r)
         
         

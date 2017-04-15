@@ -11,7 +11,7 @@ import debug
 import calibre
 
 
-class no_blockages_test(unittest.TestCase):
+class same_layer_pins_test(unittest.TestCase):
 
     def runTest(self):
         globals.init_openram("config_{0}".format(OPTS.tech_name))

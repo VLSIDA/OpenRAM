@@ -118,12 +118,17 @@ class router:
         for layer in self.layers:
             self.write_obstacle(self.top_name)
 
-    def clear_pins(self):
+    def clear(self):
         """
         Reset the source and destination pins to start a new routing.
+        Convert the source/dest to blockages.
+        Keep the other blockages.
+        Clear other pins from blockages?
+        
         """
         self.source = []
         self.dest = []
+        
 
     def route(self, layers, src, dest):
         """ 

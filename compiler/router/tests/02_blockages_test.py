@@ -12,6 +12,9 @@ import calibre
 
 
 class blockages_test(unittest.TestCase):
+    """
+    Simple two pin route test with multilayer blockages.
+    """
 
     def runTest(self):
         globals.init_openram("config_{0}".format(OPTS.tech_name))

@@ -118,7 +118,7 @@ class router:
         for layer in self.layers:
             self.write_obstacle(self.top_name)
 
-    def clear(self):
+    def clear_pins(self):
         """
         Reset the source and destination pins to start a new routing.
         Convert the source/dest to blockages.

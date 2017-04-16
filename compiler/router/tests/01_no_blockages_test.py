@@ -12,6 +12,9 @@ import calibre
 
 
 class no_blockages_test(unittest.TestCase):
+    """
+    Simplest two pin route test with no blockages.
+    """
 
     def runTest(self):
         globals.init_openram("config_{0}".format(OPTS.tech_name))

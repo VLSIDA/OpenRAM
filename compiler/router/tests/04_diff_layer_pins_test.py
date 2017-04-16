@@ -12,6 +12,10 @@ import calibre
 
 
 class diff_layer_pins_test(unittest.TestCase):
+    """
+    Two pin route test with pins on different layers and blockages.
+    Pins are smaller than grid size.
+    """
 
     def runTest(self):
         globals.init_openram("config_{0}".format(OPTS.tech_name))

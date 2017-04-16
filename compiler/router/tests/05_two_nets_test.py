@@ -12,6 +12,10 @@ import calibre
 
 
 class two_nets_test(unittest.TestCase):
+    """
+    Route two nets in the same GDS file. The routes will interact,
+    so they must block eachother.
+    """
 
     def runTest(self):
         globals.init_openram("config_{0}".format(OPTS.tech_name))
@@ -51,7 +55,7 @@ class two_nets_test(unittest.TestCase):
                 layer_stack =("metal1","via1","metal2")
                 r.route(layer_stack,src="A",dest="B")
                 r.add_route(self)
-
+                
                 r.route(layer_stack,src="A",dest="B")
                 r.add_route(self)
 

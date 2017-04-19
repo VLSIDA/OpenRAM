@@ -53,7 +53,6 @@ class same_layer_pins_test(unittest.TestCase):
                 layer_stack =("metal1","via1","metal2")
                 r.route(layer_stack,src="A",dest="B")
                 r.add_route(self)
-                self.gds_write("temp.gds")
         
         r = routing("test1", "03_same_layer_pins_test")
         self.local_check(r)

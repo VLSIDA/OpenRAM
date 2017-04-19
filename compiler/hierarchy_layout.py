@@ -168,6 +168,24 @@ class layout:
         self.connect_inst([])
         return route
 
+    def add_route(self, layers, coordinates):
+        """Connects a routing path on given layer,coordinates,width. The
+        layers are the (horizontal, via, vertical). add_wire assumes
+        preferred direction routing whereas this includes layers in
+        the coordinates.
+        """
+        import route
+        debug.info(3,"add route " + str(layers) + " " + str(coordinates))
+        # add an instance of our path that breaks down into rectangles and contacts
+        route = route.route(layer_stack=layers, 
+                            path=coordinates)
+        self.add_mod(route)
+        self.add_inst(name=route.name,
+                      mod=route)
+        # We don't model the logical connectivity of wires/paths
+        self.connect_inst([])
+        return route
+    
     def add_wire(self, layers, coordinates, offset=None):
         """Connects a routing path on given layer,coordinates,width.
         The layers are the (horizontal, via, vertical). """

@@ -15,7 +15,7 @@ A calibre DRC runset file contains, at the minimum, the following information:
 *drcLayoutPrimary: cell_6t
 *drcLayoutSystem: GDSII
 *drcResultsformat: ASCII
-*drcResultsFile: cell_6t.drc.results
+*drcResultsFile: cell_6t.drc.db
 *drcSummaryFile: cell_6t.drc.summary
 *cmnFDILayerMapFile: ./layer.map
 *cmnFDIUseLayerMap: 1
@@ -26,7 +26,12 @@ calibre -gui -drc example_drc_runset  -batch
 
 To open the results, you can do this:
 
-calibre -rve cell_6t.drc.results
+calibredrv cell_6t.gds
+Select Verification->Start RVE.
+Select the cell_6t.drc.db file.
+Click on the errors and they will highlight in the design layout viewer.
+
+For LVS:
 
 *lvsRulesFile: /mada/software/techfiles/FreePDK45/ncsu_basekit/techfile/calibre/calibreLVS.rul
 *lvsRunDir: .
@@ -39,7 +44,7 @@ calibre -rve cell_6t.drc.results
 *lvsPowerNames: vdd 
 *lvsGroundNames: vss
 *lvsIgnorePorts: 1
-*lvsERCDatabase: cell_6t.erc.results
+*lvsERCDatabase: cell_6t.erc.db
 *lvsERCSummaryFile: cell_6t.erc.summary
 *lvsReportFile: cell_6t.lvs.report
 *lvsMaskDBFile: cell_6t.maskdb
@@ -77,7 +82,7 @@ def run_drc(name, gds_name):
         'drcLayoutPrimary': name,
         'drcLayoutSystem': 'GDSII',
         'drcResultsformat': 'ASCII',
-        'drcResultsFile': OPTS.openram_temp + name + ".drc.results",
+        'drcResultsFile': OPTS.openram_temp + name + ".drc.db",
         'drcSummaryFile': OPTS.openram_temp + name + ".drc.summary",
         'cmnFDILayerMapFile': drc["layer_map"],
         'cmnFDIUseLayerMap': 1
@@ -148,7 +153,7 @@ def run_lvs(name, gds_name, sp_name):
         'lvsIncludeSVRFCmds': 1,
         'lvsSVRFCmds': '{VIRTUAL CONNECT NAME VDD? GND? ?}',
         'lvsIgnorePorts': 1,
-        'lvsERCDatabase': OPTS.openram_temp + name + ".erc.results",
+        'lvsERCDatabase': OPTS.openram_temp + name + ".erc.db",
         'lvsERCSummaryFile': OPTS.openram_temp + name + ".erc.summary",
         'lvsReportFile': OPTS.openram_temp + name + ".lvs.report",
         'lvsMaskDBFile': OPTS.openram_temp + name + ".maskdb",

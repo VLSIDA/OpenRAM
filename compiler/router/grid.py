@@ -45,6 +45,8 @@ class grid:
         
         self.convert_pins_to_blockages()
 
+        self.reset_cells()
+        
         # clear source and target pins
         self.source=[]
         self.target=[]
@@ -163,6 +165,13 @@ class grid:
                 self.map[n].blocked=False
                 self.target.append(n)                
 
+    def reset_cells(self):
+        """
+        Reset the path and costs for all the grid cells.
+        """
+        for p in self.map.values():
+            p.reset()
+            
     def convert_pins_to_blockages(self):
         """
         Convert all the pins to blockages and reset the pin sets.
@@ -189,16 +198,15 @@ class grid:
         for p in path:
             self.map[p].path=True
         
-    def route(self,cost_bound=0):
+    def route(self,factor):
         """
         This does the A* maze routing with preferred direction routing.
         """
 
-        # We set a cost bound of 2.5 x the HPWL for run-time. This can be 
+        # We set a cost bound of the HPWL for run-time. This can be 
         # over-ridden if the route fails due to pruning a feasible solution.
-        if (cost_bound==0):
-            cost_bound = self.cost_to_target(self.source[0])*self.NONPREFERRED_COST
-            
+        cost_bound = factor*self.cost_to_target(self.source[0])*self.NONPREFERRED_COST
+
         # Make sure the queue is empty if we run another route
         while not self.q.empty():
             self.q.get()
@@ -210,19 +218,18 @@ class grid:
         
         # Keep expanding and adding to the priority queue until we are done
         while not self.q.empty():
+            # should we keep the path in the queue as well or just the final node?
             (cost,path) = self.q.get()
             debug.info(2,"Queue size: size=" + str(self.q.qsize()) + " " + str(cost))            
             debug.info(3,"Expanding: cost=" + str(cost) + " " + str(path))
             
             # expand the last element
             neighbors =  self.expand_dirs(path)
-            debug.info(4,"Neighbors: " + str(neighbors))
+            debug.info(3,"Neighbors: " + str(neighbors))
             
             for n in neighbors:
+                # node is added to the map by the expand routine
                 newpath = path + [n]
-                if n not in self.map.keys():
-                    self.map[n]=cell()
-
                 # check if we hit the target and are done
                 if self.is_target(n):
                     return (newpath,self.cost(newpath))
@@ -242,6 +249,7 @@ class grid:
                             self.q.put((predicted_cost,newpath))
             #self.view()
 
+        self.view()
         debug.error("Unable to route path. Expand area?",-1)
 
     def is_target(self,point):

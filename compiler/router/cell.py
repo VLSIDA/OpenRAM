@@ -14,6 +14,15 @@ class cell:
         # -1 means it isn't visited yet
         self.min_cost = -1 
 
+    def reset(self):
+        """ 
+        Reset the dynamic info about routing. The pins/blockages are not reset so
+        that they can be reused.
+        """
+        self.visited=False
+        self.min_cost=-1
+        self.min_path=None
+        
     def get_type(self):
         if self.blocked:
             return "X"

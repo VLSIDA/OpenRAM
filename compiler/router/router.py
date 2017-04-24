@@ -30,9 +30,6 @@ class router:
         self.pin_shapes = {}
         # The corresponding layers of the above pin shapes
         self.pin_layers = {}
-        # Used to track which shapes should not become blockages. This
-        # will contain all of both source and dest pin shapes in units not tracks.
-        self.all_pin_shapes = []
 
         # The boundary will determine the limits to the size of the routing grid
         self.boundary = self.layout.measureBoundary(self.top_name)
@@ -105,16 +102,15 @@ class router:
             shape=[vector(pin_shape[0],pin_shape[1]),vector(pin_shape[2],pin_shape[3])]
             # convert the pin coordinates to tracks and round the sizes down
             self.pin_shapes[str(pin)].append(shape)
-            self.all_pin_shapes.append(shape)
             
         return self.pin_shapes[str(pin)]
 
     def find_blockages(self):
         """
         Iterate through all the layers and write the obstacles to the routing grid.
+        This doesn't consider whether the obstacles will be pins or not. They get reset later
+        if they are not actually a blockage.
         """
-        if len(self.pin_names)!=2:
-            debug.error("Must set pins before creating blockages.",-1)
         for layer in self.layers:
             self.write_obstacle(self.top_name)
 
@@ -122,50 +118,46 @@ class router:
     def clear_pins(self):
         """
         Reset the source and destination pins to start a new routing.
-        Convert the source/dest to blockages.
-        Keep the other blockages.
-        Clear other pins from blockages?
-        
+        Convert the source/dest pins to blockages.
+        Convert the routed path to blockages.
+        Keep the other blockages unchanged.
         """
 
         self.pin_names = []
         self.pin_shapes = {}
         self.pin_layers = {}
-        self.all_pin_shapes = []
         
         self.rg.reinit()
         
 
-    def route(self, layers, src, dest):
+    def route(self, layers, src, dest, cost_factor=1):
         """ 
         Route a single source-destination net and return
-        the simplified rectilinear path.
+        the simplified rectilinear path. Cost factor is how sub-optimal to explore for a feasible route. 
+        This is used to speed up the routing when there is not much detouring needed.
         """
         # Clear the pins if we have previously routed
         if (hasattr(self,'rg')):
-            self.num=self.num+1
             self.clear_pins()
         else:
-            self.num=0
-
-        # Set up layers and track sizes
-        self.set_layers(layers)
-
-        # Creat a routing grid over the entire area
-        # FIXME: This could be created only over the routing region,
-        # but this is simplest for now.
-        self.create_routing_grid()
+            # Set up layers and track sizes
+            self.set_layers(layers)
+            # Creat a routing grid over the entire area
+            # FIXME: This could be created only over the routing region,
+            # but this is simplest for now.
+            self.create_routing_grid()
+            # This will write all shapes as blockages, but setting pins will
+            # clear the blockage attribute
+            self.find_blockages()
 
         self.set_source(src)
 
         self.set_target(dest)
-        
-        self.find_blockages()
 
         self.rg.view()
         
         # returns the path in tracks
-        (self.path,cost) = self.rg.route()
+        (self.path,cost) = self.rg.route(cost_factor)
         debug.info(1,"Found path: cost={0} ".format(cost))
         debug.info(2,str(self.path))
         self.set_path(self.path)
@@ -341,10 +333,8 @@ class router:
             # only consider the two layers that we are routing on
             if boundary.drawingLayer in [self.vert_layer_number,self.horiz_layer_number]:
                 zlayer = 0 if boundary.drawingLayer==self.horiz_layer_number else 1
-                # don't add a blockage if this shape was a pin shape
-                if shape not in self.all_pin_shapes:
-                    [ll,ur]=self.convert_shape_to_tracks(shape)
-                    self.rg.add_blockage(ll,ur,zlayer)
+                [ll,ur]=self.convert_shape_to_tracks(shape)
+                self.rg.add_blockage(ll,ur,zlayer)
                 
 
         # recurse given the mirror, angle, etc.

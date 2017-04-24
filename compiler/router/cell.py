@@ -11,36 +11,24 @@ class cell:
         self.blocked = False
         self.source = False
         self.target = False
+        # -1 means it isn't visited yet
+        self.min_cost = -1 
 
-
-    def get_color(self):
-        r=g=b=0
-        count=0
-        # Blues are horizontal
+    def get_type(self):
         if self.blocked:
-            [r1,g1,b1] = ImageColor.getrgb("Green")
-            r+=r1
-            g+=g1
-            b+=b1
-            count+=1
+            return "X"
 
-        if self.source or self.target:
-            [r1,g1,b1] = ImageColor.getrgb("Red")
-            r+=r1
-            g+=g1
-            b+=b1
-            count+=1
+        if self.source:
+            return "S"
+
+        if self.target:
+            return "T"
 
         if self.path:
-            [r1,g1,b1] = ImageColor.getrgb("Blue")
-            r+=r1
-            g+=g1
-            b+=b1
-            count+=1
+            return "P"
 
-        if count>0:
-            return [int(r/count),int(g/count),int(b/count)]
-        else:
-            return [255,255,255]
-            
-            
+        # We can display the cost of the frontier
+        if self.min_cost > 0:
+            return str(self.min_cost)
+        
+        return "."

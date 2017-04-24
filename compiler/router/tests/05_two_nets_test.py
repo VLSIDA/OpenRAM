@@ -55,14 +55,15 @@ class two_nets_test(unittest.TestCase):
                 layer_stack =("metal1","via1","metal2")
                 r.route(layer_stack,src="A",dest="B")
                 r.add_route(self)
+                #self.gds_write("temp1.gds")
                 
-                #r.route(layer_stack,src="C",dest="D")
-                #r.add_route(self)
+                r.route(layer_stack,src="C",dest="D")
+                r.add_route(self)
+                #self.gds_write("temp2.gds")
 
 
         
         r = routing("test1", "05_two_nets_test")
-        r.gds_write("temp.gds")        
         self.local_check(r)
         
         # fails if there are any DRC errors on any cells

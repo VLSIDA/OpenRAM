@@ -118,6 +118,7 @@ class router:
         for layer in self.layers:
             self.write_obstacle(self.top_name)
 
+            
     def clear_pins(self):
         """
         Reset the source and destination pins to start a new routing.
@@ -126,8 +127,13 @@ class router:
         Clear other pins from blockages?
         
         """
-        self.source = []
-        self.dest = []
+
+        self.pin_names = []
+        self.pin_shapes = {}
+        self.pin_layers = {}
+        self.all_pin_shapes = []
+        
+        self.rg.reinit()
         
 
     def route(self, layers, src, dest):
@@ -136,7 +142,11 @@ class router:
         the simplified rectilinear path.
         """
         # Clear the pins if we have previously routed
-        self.clear_pins()
+        if (hasattr(self,'rg')):
+            self.num=self.num+1
+            self.clear_pins()
+        else:
+            self.num=0
 
         # Set up layers and track sizes
         self.set_layers(layers)
@@ -152,15 +162,15 @@ class router:
         
         self.find_blockages()
 
-        #self.rg.view("preroute.png")
-
+        self.rg.view()
+        
         # returns the path in tracks
         (self.path,cost) = self.rg.route()
         debug.info(1,"Found path: cost={0} ".format(cost))
         debug.info(2,str(self.path))
         self.set_path(self.path)
+        self.rg.view()        
         
-        #self.rg.view("postroute.png")
         return 
 
     def add_route(self,cell):
@@ -197,6 +207,7 @@ class router:
             c=contact(self.layers, (1, 1))
             via_offset = vector(-0.5*c.width,-0.5*c.height)
             cell.add_via(self.layers,abs_path[0]+via_offset)
+
         # Check if a via is needed at the end point
         if (contracted_path[-1].z!=self.target_pin_layer):
             # offset this by 1/2 the via size

@@ -136,10 +136,3 @@ class vector3d():
         """ Min of both values """
         return vector3d(min(self.x,other.x),min(self.y,other.y),min(self.z,other.z))
 
-    def hpwl(self, other):
-        """ Return half perimeter wire length from point to another.
-        Either point can have positive or negative coordinates. """
-        hpwl = max(abs(self.x-other.x),abs(other.x-self.x))
-        hpwl += max(abs(self.y-other.y),abs(other.y-self.y))
-        hpwl += max(abs(self.z-other.z),abs(other.z-self.z))  
-        return hpwl

@@ -62,9 +62,9 @@ class grid:
         #os.system('clear')
           
         xmin=-10
-        xmax=25
+        xmax=10
         ymin=-10
-        ymax=25
+        ymax=10
         for v in self.map.keys():
             xmin = min(xmin,v.x)
             xmax = max(xmax,v.x)

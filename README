@@ -3,7 +3,7 @@ BASIC SETUP
 
 -The OpenRAM compiler has very few dependencies:
 
-1) ngspice-25 or later or HSpice I-2013.12-1 or later
+1) ngspice-26 or later or HSpice I-2013.12-1 or later
 2) Python 2.7 and higher (currently excludes Python 3 and up)
 3) a setup script for each technology
 4) a technology directory for each technology with the base cells
@@ -13,11 +13,16 @@ the compiler source directory. OPENERAM_TECH should point to a root
 technology directory that contains subdirs of all other technologies.
 For example:
 
-export OPENRAM_HOME="/Users/mrg/openram/compiler"
-export OPENRAM_TECH="/Users/mrg/openram/technology"
+export OPENRAM_HOME="$HOME/OpenRAM/compiler"
+export OPENRAM_TECH="$HOME/OpenRAM/technology"
+
+- If you are using FreePDK, you should also have that set up and have the
+environment variable point to the PDK:
+
+export FREEPDK45="/bsoe/software/design-kits/FreePDK45"
 
 -All setup scripts should be in the setup_scripts directory under the
-technology directory.  Please look at the following file for an
+$OPENRAM_TECH directory.  Please look at the following file for an
 example of what is needed for OpenRAM:
 
 $OPENRAM_TECH/setup_scripts/setup_openram_freepdk45.py
@@ -60,26 +65,10 @@ compiler - openram compiler itself (pointed to by OPENRAM_HOME)
 compiler/characterizer - timing characterization code
 compiler/gdsMill - gds reader/writer
 compiler/tests - unit tests
+technology - openram technology directory (pointed to by OPENRAM_TECH)
 technology/freepdk45 - example configuration library for freepdk45 technology node
 technology/scn3me_subm - example configuration library SCMOS technology node
 technology/setup_scripts - setup scripts to customize your PDKs and OpenRAM technologies
-
-###############################################################################
-Example to output/input .gds layout files from/to Cadence
-
-1) To create your component layouts, you should stream them to
-individual gds files using our provided layermap and flatten
-cells. For example,
-
-  strmout -layerMap layers.map -library sram -topCell $i -view layout -flattenVias -flattenPcells -strmFile ../gds_lib/$i.gds
-
-2) To stream a layout back into Cadence, do this:
-
-  strmin -layerMap layers.map -attachTechFileOfLib NCSU_TechLib_FreePDK45 -library sram_4_32 -strmFile sram_4_32.gds
-
-When you import a gds file, make sure to attach the correct tech lib
-or you will get incorrect layers in the resulting library.
-
 
 
 ###############################################################################
@@ -111,4 +100,21 @@ regress_daemon.sh
 This updates a git repository, checks out code, and sends an email
 report with status information.
 
+
+
+###############################################################################
+Example to output/input .gds layout files from/to Cadence
+
+1) To create your component layouts, you should stream them to
+individual gds files using our provided layermap and flatten
+cells. For example,
+
+  strmout -layerMap layers.map -library sram -topCell $i -view layout -flattenVias -flattenPcells -strmFile ../gds_lib/$i.gds
+
+2) To stream a layout back into Cadence, do this:
+
+  strmin -layerMap layers.map -attachTechFileOfLib NCSU_TechLib_FreePDK45 -library sram_4_32 -strmFile sram_4_32.gds
+
+When you import a gds file, make sure to attach the correct tech lib
+or you will get incorrect layers in the resulting library.
 

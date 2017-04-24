@@ -10,6 +10,7 @@ import globals
 import debug
 import calibre
 
+OPTS = globals.OPTS
 
 class diff_layer_pins_test(unittest.TestCase):
     """

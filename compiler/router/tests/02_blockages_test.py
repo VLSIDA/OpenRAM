@@ -10,6 +10,7 @@ import globals
 import debug
 import calibre
 
+OPTS = globals.OPTS
 
 class blockages_test(unittest.TestCase):
     """

@@ -10,6 +10,7 @@ import globals
 import debug
 import calibre
 
+OPTS = globals.OPTS
 
 class two_nets_test(unittest.TestCase):
     """
@@ -55,11 +56,9 @@ class two_nets_test(unittest.TestCase):
                 layer_stack =("metal1","via1","metal2")
                 r.route(layer_stack,src="A",dest="B")
                 r.add_route(self)
-                #self.gds_write("temp1.gds")
                 
                 r.route(layer_stack,src="C",dest="D")
                 r.add_route(self)
-                #self.gds_write("temp2.gds")
 
 
         

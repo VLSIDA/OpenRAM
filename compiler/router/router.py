@@ -178,13 +178,13 @@ class router:
         
         # Make sure there's a pin enclosure on the source and dest
         src_shape = self.convert_track_to_shape(contracted_path[0])
-        cell.add_rect(layer=self.layers[contracted_path[0].z],
+        cell.add_rect(layer=self.layers[2*contracted_path[0].z],
                       offset=src_shape[0],
                       width=src_shape[1].x-src_shape[0].x,
                       height=src_shape[1].y-src_shape[0].y)
 
         dest_shape = self.convert_track_to_shape(contracted_path[-1])
-        cell.add_rect(layer=self.layers[contracted_path[-1].z],
+        cell.add_rect(layer=self.layers[2*contracted_path[-1].z],
                       offset=dest_shape[0],
                       width=dest_shape[1].x-dest_shape[0].x,
                       height=dest_shape[1].y-dest_shape[0].y)

@@ -57,8 +57,11 @@ class route(design.design):
         plist = pairwise(self.path)
         for p0,p1 in plist:
             if p0.z != p1.z: # via
-                via_offset = vector(p0.x-0.5*self.c.width,p0.y-0.5*self.c.height)
-                self.add_via(self.layer_stack,via_offset)
+                # offset if not rotated
+                #via_offset = vector(p0.x+0.5*self.c.width,p0.y+0.5*self.c.height)
+                # offset if rotated
+                via_offset = vector(p0.x+0.5*self.c.height,p0.y-0.5*self.c.width)
+                self.add_via(self.layer_stack,via_offset,rotate=90)
             elif p0.x != p1.x and p0.y != p1.y: # diagonal!
                 debug.error("Non-changing direction!")
             else:

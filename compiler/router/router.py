@@ -163,7 +163,7 @@ class router:
         debug.info(2,str(self.path))
         self.set_path(self.path)
 	# View the final route for debugging
-        self.rg.view()        
+        #self.rg.view()        
         
         return 
 

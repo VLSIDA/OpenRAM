@@ -154,13 +154,15 @@ class router:
 
         self.set_target(dest)
 
-        self.rg.view()
+	# View the initial route pins and blockages for debugging
+        #self.rg.view()
         
         # returns the path in tracks
         (self.path,cost) = self.rg.route(cost_factor)
         debug.info(1,"Found path: cost={0} ".format(cost))
         debug.info(2,str(self.path))
         self.set_path(self.path)
+	# View the final route for debugging
         self.rg.view()        
         
         return 

@@ -249,7 +249,7 @@ class grid:
                             self.q.put((predicted_cost,newpath))
             #self.view()
 
-	# View the unable to route result.
+        # View the unable to route result.
         self.view()
         debug.error("Unable to route path. Expand area?",-1)
 

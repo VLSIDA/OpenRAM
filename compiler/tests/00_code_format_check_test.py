@@ -34,6 +34,8 @@ class code_format_test(unittest.TestCase):
                 continue
             if re.search("testutils.py$", code):
                 continue
+            if re.search("grid.py$", code):
+                continue
             if re.search("globals.py$", code):
                 continue
             if re.search("openram.py$", code):

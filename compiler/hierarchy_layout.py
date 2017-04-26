@@ -220,8 +220,7 @@ class layout:
         """ Add a three layer via structure. """
         import contact
         via = contact.contact(layer_stack=layers,
-                              dimensions=size,
-                              offset=offset)
+                              dimensions=size)
         self.add_mod(via)
         self.add_inst(name=via.name, 
                       mod=via, 

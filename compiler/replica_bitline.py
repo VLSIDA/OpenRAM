@@ -109,8 +109,7 @@ class replica_bitline(design.design):
                          nmos_width=drc["minwidth_tx"])
         self.add_mod(self.nor)
 
-        self.access_tx = ptx(name="access_tx",
-                             width=drc["minwidth_tx"],
+        self.access_tx = ptx(width=drc["minwidth_tx"],
                              mults=1,
                              tx_type="pmos")
         self.add_mod(self.access_tx)

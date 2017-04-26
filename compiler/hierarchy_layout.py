@@ -126,7 +126,7 @@ class layout:
                        offset=offset)
 
 
-    def add_label(self, text, layer, offset=[0,0],zoom=1):
+    def add_label(self, text, layer, offset=[0,0],zoom=0.05):
         """Adds a text label on the given layer,offset, and zoom level"""
         # negative layers indicate "unused" layers in a given technology
         layerNumber = techlayer[layer]
@@ -231,11 +231,10 @@ class layout:
         self.connect_inst([])
         return via
 
-    def add_ptx(self, name, offset, mirror="R0", rotate=0, width=1, mults=1, tx_type="nmos"):
+    def add_ptx(self, offset, mirror="R0", rotate=0, width=1, mults=1, tx_type="nmos"):
         """Adds a ptx module to the design."""
         import ptx
-        mos = ptx.ptx(name=name,
-                      width=width,
+        mos = ptx.ptx(width=width,
                       mults=mults,
                       tx_type=tx_type)
         self.add_mod(mos)

@@ -65,34 +65,28 @@ class nand_3(design.design):
 
     def create_ptx(self):
         """ Create ptx  but not yet placed"""
-        self.nmos1 = ptx(name="nand_3_nmos1",
-                         width=self.nmos_size,
+        self.nmos1 = ptx(width=self.nmos_size,
                          mults=self.tx_mults,
                          tx_type="nmos")
         self.add_mod(self.nmos1)
-        self.nmos2 = ptx(name="nand_3_nmos2",
-                         width=self.nmos_size,
+        self.nmos2 = ptx(width=self.nmos_size,
                          mults=self.tx_mults,
                          tx_type="nmos")
         self.add_mod(self.nmos2)
-        self.nmos3 = ptx(name="nand_3_nmos3",
-                         width=self.nmos_size,
+        self.nmos3 = ptx(width=self.nmos_size,
                          mults=self.tx_mults,
                          tx_type="nmos")
         self.add_mod(self.nmos3)
 
-        self.pmos1 = ptx(name="nand_3_pmos1",
-                         width=self.pmos_size,
+        self.pmos1 = ptx(width=self.pmos_size,
                          mults=self.tx_mults,
                          tx_type="pmos")
         self.add_mod(self.pmos1)
-        self.pmos2 = ptx(name="nand_3_pmos2",
-                         width=self.pmos_size,
+        self.pmos2 = ptx(width=self.pmos_size,
                          mults=self.tx_mults,
                          tx_type="pmos")
         self.add_mod(self.pmos2)
-        self.pmos3 = ptx(name="nand_3_pmos3",
-                         width=self.pmos_size,
+        self.pmos3 = ptx(width=self.pmos_size,
                          mults=self.tx_mults,
                          tx_type="pmos")
         self.add_mod(self.pmos3)

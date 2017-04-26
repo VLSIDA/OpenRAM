@@ -90,15 +90,13 @@ class pinv(design.design):
 
     def create_ptx(self):
         """Intiializes a ptx object"""
-        self.nmos = ptx(name="inv_nmos1",
-                        width=self.nmos_size,
+        self.nmos = ptx(width=self.nmos_size,
                         mults=self.tx_mults,
                         tx_type="nmos")
         self.nmos.connect_fingered_poly()
         self.nmos.connect_fingered_active()
         self.add_mod(self.nmos)
-        self.pmos = ptx(name="inv_pmos1",
-                        width=self.pmos_size,
+        self.pmos = ptx(width=self.pmos_size,
                         mults=self.tx_mults,
                         tx_type="pmos")
         self.pmos.connect_fingered_poly()

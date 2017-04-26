@@ -44,13 +44,11 @@ class single_level_column_mux(design.design):
 
     def create_ptx(self):
         """Initializes the nmos1 and nmos2 transistors"""
-        self.nmos1 = ptx(name="nmos1",
-                         width=self.ptx_width,
+        self.nmos1 = ptx(width=self.ptx_width,
                          mults=1,
                          tx_type="nmos")
         self.add_mod(self.nmos1)
-        self.nmos2 = ptx(name="nmos2",
-                         width=self.ptx_width,
+        self.nmos2 = ptx(width=self.ptx_width,
                          mults=1,
                          tx_type="nmos")
         self.nmos2 = self.nmos2        

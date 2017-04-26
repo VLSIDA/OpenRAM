@@ -61,12 +61,10 @@ class nor_2(design.design):
         for pmos_mults in range(1, 5):
             nmos_size = self.nmos_width
             pmos_size = 4 * self.nmos_width / pmos_mults
-            test_nmos = ptx(name="testp",
-                            width=nmos_size,
+            test_nmos = ptx(width=nmos_size,
                             mults=nmos_mults,
                             tx_type="nmos")
-            test_pmos = ptx(name="testn",
-                            width=pmos_size,
+            test_pmos = ptx(width=pmos_size,
                             mults=pmos_mults,
                             tx_type="nmos")
             
@@ -96,24 +94,20 @@ class nor_2(design.design):
 
     def create_modules(self):
         """transistors are created as modules"""
-        self.nmos1 = ptx(name="nor_2_nmos1",
-                         width=self.nmos_size,
+        self.nmos1 = ptx(width=self.nmos_size,
                          mults=self.nmos_mults,
                          tx_type="nmos")
         self.add_mod(self.nmos1)
-        self.nmos2 = ptx(name="nor_2_nmos2",
-                         width=self.nmos_size,
+        self.nmos2 = ptx(width=self.nmos_size,
                          mults=self.nmos_mults,
                          tx_type="nmos")
         self.add_mod(self.nmos2)
 
-        self.pmos1 = ptx(name="nor_2_pmos1",
-                         width=self.pmos_size,
+        self.pmos1 = ptx(width=self.pmos_size,
                          mults=self.pmos_mults,
                          tx_type="pmos")
         self.add_mod(self.pmos1)
-        self.pmos2 = ptx(name="nor_2_pmos2",
-                         width=self.pmos_size,
+        self.pmos2 = ptx(width=self.pmos_size,
                          mults=self.pmos_mults,
                          tx_type="pmos")
         self.add_mod(self.pmos2)

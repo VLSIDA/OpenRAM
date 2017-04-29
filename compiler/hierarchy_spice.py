@@ -238,7 +238,7 @@ class spice:
             if "via" not in inst.mod.name and \
                 "wire" not in inst.mod.name and\
                 "path" not in inst.mod.name:
-                print self.name,"[inst]",inst#,inst.mod.pins
+                debug.info(3, " {0} inst {1}".format(self.name, inst))
 
     def gernerate_wire(self, lump_num, wire_length, wire_width):
         wire_r, wire_c = self.cal_wire_rc(wire_length, wire_width)

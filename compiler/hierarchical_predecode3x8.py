@@ -97,7 +97,6 @@ class hierarchical_predecode3x8(hierarchical_predecode):
                                 "Z[7]")
         load_cir = self.find_load_cir("A[2]", 
                                       "Z[7]")[0]
-        print "load_cir", load_cir
         b_t_z_delay = mod.delay(slope=slope, load = load_cir.input_load())
 
         # Z -> out
@@ -105,7 +104,6 @@ class hierarchical_predecode3x8(hierarchical_predecode):
                                 "out[7]")
         a_t_out_delay = mod.delay(slope=b_t_z_delay["slope"],load = load_cir.input_load())
         result = self.sum_delay(b_t_z_delay,a_t_out_delay)
-        print "end of pre2x4"
         return result
 
     def input_load(self):

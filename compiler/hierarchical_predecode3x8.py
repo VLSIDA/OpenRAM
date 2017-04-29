@@ -90,3 +90,25 @@ class hierarchical_predecode3x8(hierarchical_predecode):
         yoffset = (self.number_of_outputs * self.inv.height 
                        - 0.5 * drc["minwidth_metal1"])
         return yoffset
+
+    def delay(self, slope, load = 0.0 ):
+        # A -> z
+        mod = self.find_sub_cir("A[2]", 
+                                "Z[7]")
+        load_cir = self.find_load_cir("A[2]", 
+                                      "Z[7]")[0]
+        print "load_cir", load_cir
+        b_t_z_delay = mod.delay(slope=slope, load = load_cir.input_load())
+
+        # Z -> out
+        mod = self.find_sub_cir("Z[7]", 
+                                "out[7]")
+        a_t_out_delay = mod.delay(slope=b_t_z_delay["slope"],load = load_cir.input_load())
+        result = self.sum_delay(b_t_z_delay,a_t_out_delay)
+        print "end of pre2x4"
+        return result
+
+    def input_load(self):
+        mod = self.find_sub_cir("A[0]", 
+                                "B[0]")
+        return mod.input_load()

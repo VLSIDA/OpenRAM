@@ -146,3 +146,144 @@ class spice:
         self.sp_write_file(spfile, usedMODS)
         del usedMODS
         spfile.close()
+
+    def delay(self, slope, load=0.0):
+        """Inform users undefined delay module while building new modules"""
+        debug.warning("Design Class {0} delay function needs to be defined"
+                      .format(self.__class__.__name__))
+        debug.warning("Class {0} name {1}"
+                      .format(self.__class__.__name__, 
+                              self.name))         
+        # return 0 to keep code running while building
+        return {"delay":0.0, "slope":0.0}
+
+    def cal_delay_over_path(self, path, slope):
+        result = {"delay":0.0, "slope":0.0}
+        for i in range(len(path)-1):
+            start = path[i]
+            end = path[i+1]
+            delay = self.cal_delay_between_port(start, end, slope)
+            if isinstance(delay["delay"],float):
+                result =  self.sum_delay(result, delay)
+                slope = result["slope"]
+            else:
+                delay_used = {"delay":delay["delay"][0], 
+                              "slope":delay["slope"][0]}
+                result = self.sum_delay(result, delay)
+                slope = delay        
+        return result
+
+    def cal_delay_between_port(self, start, end, slope):
+        mod = self.find_sub_cir(start, end)
+        stage_load = self.find_load(start, end)
+        try:
+            mod_delay = mod.delay(slope=slope, load=stage_load)    
+        except:
+            mod_delay = mod.delay(wire_delay=slope, load=stage_load)    
+        
+        return mod_delay
+
+    def find_sub_cir(self, start, end):
+        """Find sub cir in inst list by matching ports"""
+        result = None
+        for inst in self.insts:
+            index = self.insts.index(inst)
+            if start in self.conns[index] and end in self.conns[index]:
+                result = inst.mod
+        if result == None:
+            debug.error("Could not find matching circuit in {0} \
+                         with target ports {1} and {2}"
+                        .format(self.name, start, end))
+        else:     
+            return result
+
+    def find_load_cir(self, start, end):
+        """Find load cir in inst list by only matching end"""
+        result = []
+        for inst in self.insts:
+            index = self.insts.index(inst)
+            if start not in self.conns[index] and\
+               end in self.conns[index]:
+                result.append(inst.mod)
+        return result
+
+    def find_load(self, start, end):
+        """Calculate sum of load cir """
+        cir_lst = self.find_load_cir(start, end)
+        if len (cir_lst)==1:
+            return cir_lst[0].input_load()
+        else: # merge load has not consider rc net work yet
+            result = 0
+            for cir in cir_lst:
+                result = result + cir.input_load()
+            return result
+
+    def sum_delay(self, start, end):
+        if not isinstance(start["delay"],float):
+            start_delay =  start["delay"][-1]
+        else:
+            start_delay = start["delay"]
+
+        if isinstance(end["delay"],float):
+            result = {"delay": start_delay + end["delay"],
+                      "slope": end["slope"]}
+        else:
+            for index in range(len(end["delay"])):
+                end["delay"][index]=end["delay"][index]+ start_delay 
+            result = end
+        return result
+
+    def view_mod(self):
+        for inst in self.insts:
+            if "via" not in inst.mod.name and \
+                "wire" not in inst.mod.name and\
+                "path" not in inst.mod.name:
+                print self.name,"[inst]",inst#,inst.mod.pins
+
+    def gernerate_wire(self, lump_num, wire_length, wire_width):
+        wire_r, wire_c = self.cal_wire_rc(wire_length, wire_width)
+        result = {}
+        result["lump_num"] = lump_num
+        result["wire_r"] = wire_r 
+        result["wire_c"] = wire_c               
+        return result
+
+    def cal_wire_rc(self, wire_length, wire_width):
+        wire_uint_c = 0.64 # this should be a tech parameter eventually
+        wire_uint_r = 0.075  # this should be a tech parameter eventually
+        wire_r = wire_uint_r * wire_length/wire_width
+        wire_c = wire_uint_r * (wire_length*wire_width)
+        return wire_r, wire_c
+
+    def cal_delay_with_rc(self, r, c ,slope):
+        delay = 0.7*r*c#this value is in fs
+        delay = delay*0.001#make the unit to ps
+        #slope = 3 + 0.01* slope + delay*0.8*2# this is just a quick fit
+        slope = delay*0.6*2 + 0.005* slope # the constant before slope should be explained as r change
+        return {"delay":delay, "slope":slope}
+
+    def wire_delay(self, slope, driver, wire):
+        r , c = driver
+        delay_to_out_node = 0.7*r*(c+wire["lump_num"]*0.5*wire["wire_c"])
+        delay_to_out_node = delay_to_out_node*0.001#make the unit to ps
+        slope_at_out_node = delay_to_out_node*0.6*2 + 0.005* slope # the constant before slope should be explained as r change
+        result = self.propagate_delay_over_wire(slope=slope_at_out_node, 
+                                 driver_r=r,
+                                 wire=wire)
+        init = {"delay":delay_to_out_node, "slope":0}
+        result = self.sum_delay(init,result)
+        return result
+
+    def propagate_delay_over_wire(self, slope, driver_r, wire):
+        r = driver_r
+        delay_lst = []
+        slope_lst = []
+        for i in range(wire["lump_num"]):
+            faction = (i+1.0)/wire["lump_num"]
+            delay = (r + faction * wire["wire_r"])*wire["wire_c"]/wire["lump_num"]
+            local_slope = delay*2 + slope
+
+            delay_lst.append(delay)
+            slope_lst.append(local_slope)
+        result={"delay":delay_lst, "slope":slope_lst}
+        return result

@@ -21,3 +21,12 @@ class bitcell(design.design):
         self.width = bitcell.chars["width"]
         self.height = bitcell.chars["height"]
 
+    def delay(self, slope, load=0):
+        r = 9250.0*3
+        c_para = 0.7#ff
+        if isinstance(load, float):
+            result = self.cal_delay_with_rc(r = r, c =  c_para+load, slope =slope)
+        else:
+            driver = [r,c_para]
+            result= self.wire_delay(slope=slope, driver=driver, wire=load)
+        return result

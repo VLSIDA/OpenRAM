@@ -601,3 +601,31 @@ class hierarchical_decoder(design.design):
                      offset=[xoffset + self.gap_between_rails,
                              yoffset - self.via_shift],
                      rotate=90)
+
+    def delay(self, slope, load = 0.0):
+        # A -> out
+        if self.determine_predecodes(self.num_inputs)[1]==0:
+            index = 3
+            index_o = 7
+        else:
+            index =4
+            index_o =11
+        mod = self.find_sub_cir("A["+str(index)+"]", "out["+str(index_o)+"]")
+        load_cir = self.find_load("A["+str(index)+"]", "out["+str(index_o)+"]")
+        a_t_out_delay = mod.delay(slope=slope,load = load_cir)
+
+        # out -> z
+        mod = self.find_sub_cir("out[0]", "Z[0]")
+        load_cir = self.find_load("out[0]", "Z[0]")
+        out_t_z_delay = mod.delay(slope=slope,load = load_cir)
+        result = self.sum_delay(a_t_out_delay, out_t_z_delay)
+
+        # Z -> decode_out
+        mod = self.find_sub_cir("Z[0]", "decode_out[0]")
+        z_t_decodeout_delay = mod.delay(slope = slope , load = load)
+        result = self.sum_delay(result, z_t_decodeout_delay)
+        return result
+
+    def input_load(self):
+        mod = self.find_sub_cir("A[0]", "out[0]")
+        return mod.input_load()

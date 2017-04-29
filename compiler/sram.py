@@ -1170,3 +1170,15 @@ class sram(design.design):
         self.sp_write_file(sp, usedMODS)
         del usedMODS
         sp.close()
+
+    def analytical_model(self,slope):
+        #control_delay = self.control.delay(slope=slope)
+        bank_delay = self.bank.delay(slope = slope) 
+        data ={'delay1': bank_delay["delay"], 'delay0': bank_delay["delay"], 
+               'min_period1': 0, 
+               'min_period0': 0, 
+               'read_power': 0, 
+               'write_power': 0}
+        debug.warning("analytical_model only has delay data now")
+        debug.warning(data)        
+        return data

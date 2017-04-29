@@ -403,3 +403,16 @@ class pinv(design.design):
     def setup_layout_offsets(self):
         self.A_position = self.input_position
         self.Z_position = self.output_position
+
+    def input_load(self):
+        return (self.nmos_size/parameter["min_tx_size"])*0.3
+
+    def delay(self, slope, load=0.0):
+        r = 9250.0/(self.nmos_size/parameter["min_tx_size"])
+        c_para = 0.7*(self.nmos_size/parameter["min_tx_size"])#ff
+        if isinstance(load, float):
+            result = self.cal_delay_with_rc(r = r, c =  c_para+load, slope =slope)
+        else:
+            driver = [r,c_para]
+            result= self.wire_delay(slope=slope, driver=driver, wire=load)
+        return result

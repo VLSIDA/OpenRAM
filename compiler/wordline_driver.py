@@ -211,3 +211,19 @@ class wordline_driver(design.design):
             self.WL_positions.append(wl_offset)
             self.vdd_positions.append(vdd_offset)
             self.gnd_positions.append(gnd_offset)
+
+    def delay(self, slope, load=0):
+        # decode_out -> net
+        mod = self.find_sub_cir("decode_out[0]", "net[0]")
+        decode_t_net = mod.delay(slope)
+
+        # net -> wl
+        mod = self.find_sub_cir("net[0]", "wl[0]")
+        net_t_wl = mod.delay(slope, load)
+
+        result = self.sum_delay(decode_t_net, net_t_wl)
+        return result
+    
+    def input_load(self):
+        mod = self.find_sub_cir("decode_out[0]", "net[0]")
+        return mod.input_load()

@@ -38,3 +38,12 @@ timing code too.
 
 Convert characterizer into a Python package
 
+cal_delay_over_path functions in hierarchy_spice  
+can wire as output(it only take capcitance now).
+maybe consider make rc_net a class
+
+dont use dictionary in analytical model make it like vector class
+
+add wire delay model for bank connection
+
+

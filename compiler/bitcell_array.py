@@ -140,3 +140,28 @@ class bitcell_array(design.design):
                 offset.y += self.cell.height
             # increments to the next column width
             offset.x += self.cell.width
+
+    def delay(self, wire_delay, input_node = ["wl0","bl_0"],output_cap = 1):
+        wl_distance = int(input_node[0][-1])
+        bl_distance = int(input_node[1][-1])
+        # wl to cell delay
+        wl_to_cell_delay = wire_delay["delay"][wl_distance] - wire_delay["delay"][0]
+        wl_to_cell_slope = wire_delay["slope"][wl_distance]
+        # hypothetical delay from cell to bl end without sense amp
+        cell_load = self.output_load(bl_distance)
+        bl_delay = self.cell.delay(wl_to_cell_slope, cell_load)
+
+        result= {"delay":bl_delay["delay"][-1]+wl_to_cell_delay, "slope":bl_delay["slope"][-1]}
+        return result
+
+    def input_load(self):
+        from tech import drc
+        setup = design.design.gernerate_wire(self, int(self.column_size), self.width, drc["minwidth_metal1"])
+        setup["wire_c"] = 2*0.3*self.column_size + setup["wire_c"] # 2 access tx  per cell
+        return setup
+
+    def output_load(self, bl_pos=0):
+        from tech import drc
+        setup = design.design.gernerate_wire(self, int(self.row_size-bl_pos), self.height, drc["minwidth_metal1"])
+        setup["wire_c"] = 0.3*(self.row_size-bl_pos) + setup["wire_c"] # 1 access tx per cell
+        return setup

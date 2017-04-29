@@ -110,9 +110,6 @@ class layout:
 
     def add_rect(self, layer, offset, width, height):
         """Adds a rectangle on a given layer,offset with width and height"""
-        debug.info(3, "adding rectangle (" + str(layer) + ") :" 
-                   + str(width) + "x" + str(height) + " @ " + str(offset))
-
         # negative layers indicate "unused" layers in a given technology
         layerNumber = techlayer[layer]
         if layerNumber >= 0:
@@ -129,9 +126,8 @@ class layout:
                        offset=offset)
 
 
-    def add_label(self, text, layer, offset=[0,0],zoom=1):
+    def add_label(self, text, layer, offset=[0,0],zoom=0.05):
         """Adds a text label on the given layer,offset, and zoom level"""
-        debug.info(3,"add label " + text + " " + str(layer) + " " + str(offset))
         # negative layers indicate "unused" layers in a given technology
         layerNumber = techlayer[layer]
         if layerNumber >= 0:
@@ -172,6 +168,24 @@ class layout:
         self.connect_inst([])
         return route
 
+    def add_route(self, layers, coordinates):
+        """Connects a routing path on given layer,coordinates,width. The
+        layers are the (horizontal, via, vertical). add_wire assumes
+        preferred direction routing whereas this includes layers in
+        the coordinates.
+        """
+        import route
+        debug.info(3,"add route " + str(layers) + " " + str(coordinates))
+        # add an instance of our path that breaks down into rectangles and contacts
+        route = route.route(layer_stack=layers, 
+                            path=coordinates)
+        self.add_mod(route)
+        self.add_inst(name=route.name,
+                      mod=route)
+        # We don't model the logical connectivity of wires/paths
+        self.connect_inst([])
+        return route
+    
     def add_wire(self, layers, coordinates, offset=None):
         """Connects a routing path on given layer,coordinates,width.
         The layers are the (horizontal, via, vertical). """
@@ -206,8 +220,7 @@ class layout:
         """ Add a three layer via structure. """
         import contact
         via = contact.contact(layer_stack=layers,
-                              dimensions=size,
-                              offset=offset)
+                              dimensions=size)
         self.add_mod(via)
         self.add_inst(name=via.name, 
                       mod=via, 
@@ -218,11 +231,10 @@ class layout:
         self.connect_inst([])
         return via
 
-    def add_ptx(self, name, offset, mirror="R0", rotate=0, width=1, mults=1, tx_type="nmos"):
+    def add_ptx(self, offset, mirror="R0", rotate=0, width=1, mults=1, tx_type="nmos"):
         """Adds a ptx module to the design."""
         import ptx
-        mos = ptx.ptx(name=name,
-                      width=width,
+        mos = ptx.ptx(width=width,
                       mults=mults,
                       tx_type=tx_type)
         self.add_mod(mos)
@@ -243,19 +255,16 @@ class layout:
             self.gds = gdsMill.VlsiLayout(units=GDS["unit"])
             reader = gdsMill.Gds2reader(self.gds)
             reader.loadFromFile(self.gds_file)
-            # TODO: parse the width/height
-            # TODO: parse the pin locations
         else:
             debug.info(3, "creating structure %s" % self.name)
-            self.gds = gdsMill.VlsiLayout(
-                name=self.name, units=GDS["unit"])
+            self.gds = gdsMill.VlsiLayout(name=self.name, units=GDS["unit"])
 
     def print_gds(self, gds_file=None):
         """Print the gds file (not the vlsi class) to the terminal """
         if gds_file == None:
             gds_file = self.gds_file
         debug.info(3, "Printing %s" % gds_file)
-        arrayCellLayout = gdsMill.VlsiLayout()
+        arrayCellLayout = gdsMill.VlsiLayout(units=GDS["unit"])
         reader = gdsMill.Gds2reader(arrayCellLayout, debugToTerminal=1)
         reader.loadFromFile(gds_file)
 

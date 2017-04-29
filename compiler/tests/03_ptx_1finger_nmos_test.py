@@ -25,8 +25,7 @@ class ptx_test(unittest.TestCase):
         import tech
 
         debug.info(2, "Checking min size NMOS with 1 finger")
-        fet = ptx.ptx(name="nmos_1_finger",
-                      width=tech.drc["minwidth_tx"],
+        fet = ptx.ptx(width=tech.drc["minwidth_tx"],
                       mults=1,
                       tx_type="nmos")
         # return it back to it's normal state

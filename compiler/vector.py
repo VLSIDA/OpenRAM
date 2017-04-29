@@ -1,6 +1,6 @@
 import debug
+import math
 import tech
-
 
 class vector():
     """
@@ -24,11 +24,11 @@ class vector():
 
     def __str__(self):
         """ override print function output """
-        return "vector:["+str(self.x)+", "+str(self.y)+"]"
+        return "["+str(self.x)+","+str(self.y)+"]"
 
     def __repr__(self):
         """ override print function output """
-        return "["+str(self.x)+", "+str(self.y)+"]"
+        return "["+str(self.x)+","+str(self.y)+"]"
 
     def __setitem__(self, index, value):
         """ 
@@ -61,6 +61,7 @@ class vector():
         Can add by vector(x1,y1)+vector(x2,y2)
         """
         return vector(self.x + other[0], self.y + other[1])
+
 
     def __radd__(self, other):
         """
@@ -115,3 +116,40 @@ class vector():
             y_factor=x_factor[1]
             x_factor=x_factor[0]
         return vector(self.y*x_factor,self.x*y_factor)
+
+    def floor(self):
+        """
+        Override floor function
+        """
+        return vector(int(math.floor(self.x)),int(math.floor(self.y)))
+
+    def ceil(self):
+        """
+        Override ceil function
+        """
+        return vector(int(math.ceil(self.x)),int(math.ceil(self.y)))
+
+    def round(self):
+        """
+        Override round function
+        """
+        return vector(int(round(self.x)),int(round(self.y)))
+    
+    
+    def __eq__(self, other):
+        """Override the default Equals behavior"""
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        return False
+
+    def __ne__(self, other):
+        """Override the default non-equality behavior"""
+        return not self.__eq__(other)
+
+    def max(self, other):
+        """ Max of both values """
+        return vector(max(self.x,other.x),max(self.y,other.y))
+
+    def min(self, other):
+        """ Min of both values """
+        return vector(min(self.x,other.x),min(self.y,other.y))

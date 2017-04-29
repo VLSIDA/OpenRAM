@@ -16,7 +16,7 @@ class code_format_test(unittest.TestCase):
     "Run a test to check for tabs instead of spaces in the all source files."
 
     def runTest(self):
-        source_code_dir = os.environ["OPENRAM_HOME"] + "/compiler"
+        source_code_dir = os.environ["OPENRAM_HOME"]
         source_codes = setup_files(source_code_dir)
         errors = 0
 
@@ -32,7 +32,11 @@ class code_format_test(unittest.TestCase):
                 continue
             if re.search("debug.py$", code):
                 continue
-            if re.search("header.py$", code):
+            if re.search("testutils.py$", code):
+                continue
+            if re.search("grid.py$", code):
+                continue
+            if re.search("globals.py$", code):
                 continue
             if re.search("openram.py$", code):
                 continue

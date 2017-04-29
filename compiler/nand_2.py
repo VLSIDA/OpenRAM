@@ -66,24 +66,20 @@ class nand_2(design.design):
     # transistors are created here but not yet placed or added as a module
     def create_ptx(self):
         """ Add required modules """
-        self.nmos1 = ptx(name="nand_2_nmos1",
-                         width=self.nmos_size,
+        self.nmos1 = ptx(width=self.nmos_size,
                          mults=self.tx_mults,
                          tx_type="nmos")
         self.add_mod(self.nmos1)
-        self.nmos2 = ptx(name="nand_2_nmos2",
-                         width=self.nmos_size,
+        self.nmos2 = ptx(width=self.nmos_size,
                          mults=self.tx_mults,
                          tx_type="nmos")
         self.add_mod(self.nmos2)
 
-        self.pmos1 = ptx(name="nand_2_pmos1",
-                         width=self.pmos_size,
+        self.pmos1 = ptx(width=self.pmos_size,
                          mults=self.tx_mults,
                          tx_type="pmos")
         self.add_mod(self.pmos1)
-        self.pmos2 = ptx(name="nand_2_pmos2",
-                         width=self.pmos_size,
+        self.pmos2 = ptx(width=self.pmos_size,
                          mults=self.tx_mults,
                          tx_type="pmos")
         self.add_mod(self.pmos2)

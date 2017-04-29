@@ -5,25 +5,23 @@ from vector import vector
 
 class contact(design.design):
     """
-    Object for a contact shape with its conductor enclosures
+    Object for a contact shape with its conductor enclosures.
     Creates a contact array minimum active or poly enclosure and metal1 enclosure.
     This class has enclosure on multiple sides of the contact whereas a via may
     have extension on two or four sides.
     """
-    unique_contact_id = 1
-
-    def __init__(self, layer_stack, dimensions=[1,1], offset=(0,0)):
-        name = "{0}_{1}x{2}_num{3}".format(layer_stack[1],
-                                           dimensions[0],
-                                           dimensions[1],
-                                           contact.unique_contact_id)
+    def __init__(self, layer_stack, dimensions=[1,1]):
+        name = "{0}_{1}_{2}_{3}x{4}".format(layer_stack[0],
+                                            layer_stack[1],
+                                            layer_stack[2],
+                                            dimensions[0],
+                                            dimensions[1])
         design.design.__init__(self, name)
         debug.info(3, "create contact object {0}".format(name))
-        contact.unique_contact_id += 1
 
         self.layer_stack = layer_stack
         self.dimensions = dimensions
-        self.offset = offset
+        self.offset = vector(0,0)
         self.pins = [] # used for matching parm lengths
         self.create_layout()
 

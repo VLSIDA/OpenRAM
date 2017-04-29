@@ -1,0 +1,3 @@
+
+.SUBCKT cell 
+.ENDS cell

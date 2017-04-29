@@ -9,12 +9,8 @@ class ptx(design.design):
     This module generates gds and spice of a parametrically NMOS or PMOS sized transistor. 
     Creates a simple MOS transistor
     """
-    # This is used to create a unique MOS ID name by avoiding collisions
-    unique_mos_id = 1
-
-    def __init__(self, name, width=1, mults=1, tx_type="nmos"):
-        name = "{0}{1}".format(name, ptx.unique_mos_id)
-        ptx.unique_mos_id += 1
+    def __init__(self, width=1, mults=1, tx_type="nmos"):
+        name = "{0}_m{1}_w{2}".format(tx_type, mults, width)
         design.design.__init__(self, name)
         debug.info(3, "create ptx structure {0}".format(name))
 
@@ -281,6 +277,8 @@ class ptx(design.design):
             del self.insts[self.drain_connect_index]
             del self.drain_connect_index
             self.offset_all_coordinates()
+            # change the name so it is unique
+            self.name = self.name + "_rd"
         except:
             pass
 
@@ -292,6 +290,8 @@ class ptx(design.design):
             if isinstance(self.drain_connect_index, int):
                 self.drain_connect_index -= 1
             self.offset_all_coordinates()
+            # change the name so it is unique
+            self.name = self.name + "_rs"
         except:
             pass
 
@@ -300,5 +300,7 @@ class ptx(design.design):
         try:
             del self.objs[self.poly_connect_index]
             self.offset_all_coordinates()
+            # change the name so it is unique
+            self.name = self.name + "_rp"
         except:
             pass

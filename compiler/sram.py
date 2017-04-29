@@ -1178,7 +1178,5 @@ class sram(design.design):
                'min_period1': 0, 
                'min_period0': 0, 
                'read_power': 0, 
-               'write_power': 0}
-        debug.warning("analytical_model only has delay data now")
-        debug.warning(data)        
+               'write_power': 0}      
         return data

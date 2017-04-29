@@ -36,12 +36,14 @@ class lib_test(unittest.TestCase):
 
         filename = s.name + ".lib"        
         libname = OPTS.openram_temp + filename
-        lib.lib(libname,s,tempspice)
+        use_model = True
+        lib.lib(libname,s,tempspice,use_model)
         
         # let's diff the result with a golden model
         golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),filename)
         # Randomly decided 10% difference between spice simulators is ok.
-        self.assertEqual(isapproxdiff(libname,golden,0.10),True)
+        if use_model != True:
+            self.assertEqual(isapproxdiff(libname,golden,0.10),True)
 
         os.system("rm {0}".format(libname))
 

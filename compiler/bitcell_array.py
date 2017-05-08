@@ -141,7 +141,8 @@ class bitcell_array(design.design):
             # increments to the next column width
             offset.x += self.cell.width
 
-    def delay(self, wire_delay, input_node = ["wl0","bl_0"],output_cap = 1):
+    def delay(self, wire_delay, input_node = ["wl0","bl_0"], load=0):
+        # load is going to be ignored here
         wl_distance = int(input_node[0][-1])
         bl_distance = int(input_node[1][-1])
         # wl to cell delay

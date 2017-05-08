@@ -158,20 +158,32 @@ class spice:
         return {"delay":0.0, "slope":0.0}
 
     def cal_delay_over_path(self, path, slope):
-        result = {"delay":0.0, "slope":0.0}
+        result = []
         for i in range(len(path)-1):
             start = path[i]
             end = path[i+1]
             delay = self.cal_delay_between_port(start, end, slope)
             if isinstance(delay["delay"],float):
-                result =  self.sum_delay(result, delay)
-                slope = result["slope"]
+                result.append(delay)
+                slope = delay["slope"]
             else:
                 delay_used = {"delay":delay["delay"][0], 
                               "slope":delay["slope"][0]}
-                result = self.sum_delay(result, delay)
+                result.append(delay_used)
                 slope = delay        
         return result
+
+    def merge_delay_list(self, result):
+        sum_delay = {"delay":0, "slope":0}
+        for item in result:
+            if isinstance(item["delay"], float):
+                sum_delay["delay"]= sum_delay["delay"] + item["delay"]
+                sum_delay["slope"]= item["slope"]  
+            else:
+                sum_delay["delay"]= sum_delay["delay"][0] + item["delay"] 
+                sum_delay["slope"]= item["slope"][0]
+        return sum_delay
+            
 
     def cal_delay_between_port(self, start, end, slope):
         mod = self.find_sub_cir(start, end)
@@ -180,7 +192,6 @@ class spice:
             mod_delay = mod.delay(slope=slope, load=stage_load)    
         except:
             mod_delay = mod.delay(wire_delay=slope, load=stage_load)    
-        
         return mod_delay
 
     def find_sub_cir(self, start, end):
@@ -215,7 +226,12 @@ class spice:
         else: # merge load has not consider rc net work yet
             result = 0
             for cir in cir_lst:
-                result = result + cir.input_load()
+                try:
+                    load = cir.input_load()
+                    result = result + load
+                except:
+                    load = None
+                    debug.warning("cir inputload skipped{0}".format(cir))
             return result
 
     def sum_delay(self, start, end):

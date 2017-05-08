@@ -1522,37 +1522,29 @@ class bank(design.design):
         max_address = self.num_rows-1 # should able to cal delay over different path later 
         max_bit_add = self.num_cols-1
         # ADDRESS FLIP FLOP & Decoder Delay
-        data_path = ["ADDR["+str(max_address_size)+"]", 
-                     "A["+str(max_address_size)+"]",
-                     "decode_out["+str(max_address)+"]"]
+        data_path =["ADDR["+str(max_address_size)+"]", 
+                        "A["+str(max_address_size)+"]",
+                        "decode_out["+str(max_address)+"]",
+                        "wl["+str(max_address)+"]",
+                        "bl["+str(max_bit_add)+"]"
+                    ]
         result = self.cal_delay_over_path(data_path, slope)
 
+        # Things to do to make this sense amp and tri_gate can be calculated using data_path
+        # 1. change the path basing on col_addr_size
+        # 2. mux not build yet, add its delay function so
+        #    we can call data_path on it
+        # 3. how to make sense amp find its load (bl) like data_path used?
+        #    maybe we cant... 
+        # if 3 is true we cant add sense amp and tri gate signal to data path
 
-        #data_path = data_path + ["wl["+str(max_address)+"]", "bl["+str(max_bit_add)+"]"]
-        #result_alt = self.cal_delay_over_path(data_path, slope)
-        # word driver
-        mod = self.find_sub_cir("decode_out["+str(max_address)+"]", 
-                                "wl["+str(max_address)+"]")
-        bl_load = self.find_load("decode_out["+str(max_address)+"]", 
-                                      "wl["+str(max_address)+"]")
-        decode_t_wl_delay = mod.delay(slope, bl_load)
-        used_decode_t_wl_delay = {"delay":decode_t_wl_delay["delay"][0],
-                                  "slope":decode_t_wl_delay["slope"][0]}
-        result = self.sum_delay(result,
-                                used_decode_t_wl_delay)
-        #print "result",result
-        #print "result_alt",result_alt 
-        
-        # bit cell array
 
-        mod = self.find_sub_cir("wl["+str(max_address)+"]", 
-                                "bl["+str(max_bit_add)+"]")
-        wl_t_bl_delay = mod.delay(decode_t_wl_delay)
-        bl_load = mod.output_load()
-        result = self.sum_delay(result,wl_t_bl_delay)
-
-        # mux not considered yet, how to model it
         # sense amp colum 
+        # find bit cell array output cap as sense amp input
+        cell_array = self.find_sub_cir("wl["+str(max_address)+"]", 
+                                "bl["+str(max_bit_add)+"]")
+        bl_load = cell_array.output_load()
+
         bl_out_index = self.num_cols-self.words_per_row
         data_out_index = self.num_cols/self.words_per_row-1
         if self.col_addr_size == 0:
@@ -1561,12 +1553,14 @@ class bank(design.design):
         else:
             mod = self.find_sub_cir("bl_out[0]", 
                                     "data_out[0]")
-        bl_t_data_out_delay = mod.delay(wl_t_bl_delay,bl_load)
-        result = self.sum_delay(result,bl_t_data_out_delay)
+        bl_t_data_out_delay = mod.delay(result[-1],bl_load)
+        result.append(bl_t_data_out_delay) # append delay manually
 
         # tri_gate
         mod = self.find_sub_cir("data_out["+str(data_out_index)+"]", 
                                 "DATA["+str(data_out_index)+"]")
-        data_t_DATA_delay = mod.delay(slope)
-        result = self.sum_delay(result,data_t_DATA_delay)
+        data_t_DATA_delay = mod.delay(bl_t_data_out_delay["slope"])
+        result.append(data_t_DATA_delay) # append delay manually
+
+        result = self.merge_delay_list(result)
         return result

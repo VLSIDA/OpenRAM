@@ -9,6 +9,12 @@ import sys
 # 2 = verbose
 # n = custom setting
 
+def check(check,str):
+    (frame, filename, line_number, function_name, lines,
+     index) = inspect.getouterframes(inspect.currentframe())[1]
+    if not check:
+        print "ERROR: file ", os.path.basename(filename), ": line ", line_number, ": ", str
+        sys.exit(-1)
 
 def error(str,return_value=None):
     (frame, filename, line_number, function_name, lines,

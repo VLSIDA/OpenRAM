@@ -149,11 +149,11 @@ class spice:
 
     def delay(self, slope, load=0.0):
         """Inform users undefined delay module while building new modules"""
-        debug.warning("Design Class {0} delay function needs to be defined"
-                      .format(self.__class__.__name__))
-        debug.warning("Class {0} name {1}"
-                      .format(self.__class__.__name__, 
-                              self.name))         
+        #debug.warning("Design Class {0} delay function needs to be defined"
+        #              .format(self.__class__.__name__))
+        #debug.warning("Class {0} name {1}"
+        #              .format(self.__class__.__name__, 
+        #                      self.name))         
         # return 0 to keep code running while building
         return {"delay":0.0, "slope":0.0}
 
@@ -176,7 +176,7 @@ class spice:
     def merge_delay_list(self, result):
         sum_delay = {"delay":0, "slope":0}
         for item in result:
-            if isinstance(item["delay"], float):
+            if not isinstance(item["delay"], dict):
                 sum_delay["delay"]= sum_delay["delay"] + item["delay"]
                 sum_delay["slope"]= item["slope"]  
             else:
@@ -188,9 +188,9 @@ class spice:
     def cal_delay_between_port(self, start, end, slope):
         mod = self.find_sub_cir(start, end)
         stage_load = self.find_load(start, end)
-        try:
+        if not isinstance(slope, dict):
             mod_delay = mod.delay(slope=slope, load=stage_load)    
-        except:
+        else:
             mod_delay = mod.delay(wire_delay=slope, load=stage_load)    
         return mod_delay
 
@@ -231,16 +231,16 @@ class spice:
                     result = result + load
                 except:
                     load = None
-                    debug.warning("cir inputload skipped{0}".format(cir))
+                    debug.warning("cir input load skipped {0}".format(cir))
             return result
 
     def sum_delay(self, start, end):
-        if not isinstance(start["delay"],float):
+        if isinstance(start["delay"],list): # start delay is list
             start_delay =  start["delay"][-1]
         else:
             start_delay = start["delay"]
 
-        if isinstance(end["delay"],float):
+        if not isinstance(end["delay"],list): # end delay not list
             result = {"delay": start_delay + end["delay"],
                       "slope": end["slope"]}
         else:

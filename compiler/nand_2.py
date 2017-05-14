@@ -441,7 +441,7 @@ class nand_2(design.design):
 
     def input_load(self):
         from tech import parameter
-        return (self.nmos_size/parameter["min_tx_size"])*0.4
+        return (self.nmos_size/parameter["min_tx_size"])*0.5
 
     def delay(self, slope, load=0.0):
         from tech import parameter

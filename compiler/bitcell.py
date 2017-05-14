@@ -22,9 +22,14 @@ class bitcell(design.design):
         self.height = bitcell.chars["height"]
 
     def delay(self, slope, load=0):
+        # delay of bit cell is not like a driver(from WL)
+        # so the slope used should be 0
+        # it should not be slope dependent?
+        # because the value is there
+        # the delay is only over half transsmission gate
         r = 9250.0*3
         c_para = 0.7#ff
-        if isinstance(load, float):
+        if not isinstance(load, dict):
             result = self.cal_delay_with_rc(r = r, c =  c_para+load, slope =slope)
         else:
             driver = [r,c_para]

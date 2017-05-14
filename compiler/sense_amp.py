@@ -22,12 +22,11 @@ class sense_amp(design.design):
         self.height = sense_amp.chars["height"]
 
     def delay(self, bl_delay, load=0.0):
-        #init_point = {"delay":- 0.5 * bl_delay["slope"], "slope":0}
         init_point = - 0.5 * bl_delay["slope"]
         slope =  0
         r = 9250.0/(10)
         c_para = 0.7#ff
-        if isinstance(load, float):
+        if not isinstance(load, dict):
             result = self.cal_delay_with_rc(r = r, c =  c_para+load, slope =slope)
         else:
             delay_to_out_node = 0.7*r*(c_para+load["lump_num"]*0.5*load["wire_c"])

@@ -1538,6 +1538,8 @@ class bank(design.design):
         #    maybe we cant... 
         # if 3 is true we cant add sense amp and tri gate signal to data path
 
+        # just wl delay 
+        wl_delay = result[-2]["delay"]
 
         # sense amp colum 
         # find bit cell array output cap as sense amp input
@@ -1555,12 +1557,12 @@ class bank(design.design):
                                     "data_out[0]")
         bl_t_data_out_delay = mod.delay(result[-1],bl_load)
         result.append(bl_t_data_out_delay) # append delay manually
+        really_bl_t_date = self.merge_delay_list(result[-2:])
 
         # tri_gate
         mod = self.find_sub_cir("data_out["+str(data_out_index)+"]", 
                                 "DATA["+str(data_out_index)+"]")
         data_t_DATA_delay = mod.delay(bl_t_data_out_delay["slope"])
         result.append(data_t_DATA_delay) # append delay manually
-
         result = self.merge_delay_list(result)
         return result

@@ -58,12 +58,6 @@ class VlsiLayout:
         self.tempCoordinates=None
         self.tempPassFail = True
 
-    def strip_non_ascii(string):
-        ''' Returns the string without non ASCII characters'''
-        stripped = (c for c in string if 0 < ord(c) < 127)
-        return ''.join(stripped)
-
-    
     def rotatedCoordinates(self,coordinatesToRotate,rotateAngle):
         #helper method to rotate a list of coordinates
         angle=math.radians(float(0))
@@ -584,7 +578,7 @@ class VlsiLayout:
                 passFailIndex+=1
         print "Done\n\n"
 
-    def readLayoutBorder(self,borderlayer):
+    def getLayoutBorder(self,borderlayer):
         for boundary in self.structures[self.rootStructureName].boundaries:
             if boundary.drawingLayer==borderlayer:
                 if self.debug: print "Find border "+str(boundary.coordinates)
@@ -629,92 +623,131 @@ class VlsiLayout:
             left_bottom=boundary.coordinates[0]
             right_top=boundary.coordinates[2]
             thisBoundary=[left_bottom[0],left_bottom[1],right_top[0],right_top[1]]
-            thisBoundary=self.tranformRectangle(thisBoundary,StructureuVector,StructurevVector)
+            thisBoundary=self.transformRectangle(thisBoundary,StructureuVector,StructurevVector)
             thisBoundary=[thisBoundary[0]+StructureOrigin[0],thisBoundary[1]+StructureOrigin[1],
             thisBoundary[2]+StructureOrigin[0],thisBoundary[3]+StructureOrigin[1]]
-            cellBoundary=self.update_boundary(thisBoundary,cellBoundary)
+            cellBoundary=self.updateBoundary(thisBoundary,cellBoundary)
         return cellBoundary
         
-    def update_boundary(self,thisBoundary,cellBoundary):   
-        [left_butt_X,left_butt_Y,right_top_X,right_top_Y]=thisBoundary
+    def updateBoundary(self,thisBoundary,cellBoundary):
+        [left_bott_X,left_bott_Y,right_top_X,right_top_Y]=thisBoundary
         if cellBoundary==[None,None,None,None]:
             cellBoundary=thisBoundary
         else:
-            if cellBoundary[0]>left_butt_X:
-                cellBoundary[0]=left_butt_X
-            if cellBoundary[1]>left_butt_Y:
-                cellBoundary[1]=left_butt_Y
+            if cellBoundary[0]>left_bott_X:
+                cellBoundary[0]=left_bott_X
+            if cellBoundary[1]>left_bott_Y:
+                cellBoundary[1]=left_bott_Y
             if cellBoundary[2]<right_top_X:
                 cellBoundary[2]=right_top_X
             if cellBoundary[3]<right_top_Y:
                 cellBoundary[3]=right_top_Y
         return cellBoundary
-        
-    def readPinShape(self,label_name):
+
+
+    def getLabelDBInfo(self,label_name):
         """
-        Search for a pin label and return the largest enclosing rectangle
-        on the same layer as the pin label.
+        Return the coordinates in DB units and layer of a label
         """
         label_layer = None
         label_coordinate = [None, None]
 
+        # Why must this be the last one found? It breaks if we return the first.
         for Text in self.structures[self.rootStructureName].texts:
             if Text.textString == label_name or Text.textString == label_name+"\x00":
                 label_layer = Text.drawingLayer
                 label_coordinate = Text.coordinates
 
-        pin_boundaries=self.readAllPinShapesInStructureList(label_coordinate, label_layer)
+        return (label_coordinate, label_layer)
+
+
+    def getLabelInfo(self,label_name):
+        """
+        Return the coordinates in USER units and layer of a label
+        """
+        (label_coordinate,label_layer)=getLabelDBInfo(label_name)
+        user_coordinates = [x*self.units[0] for x in label_coordinates]
+        return (user_coordinates,layer)
+    
+    def getPinShapeByLocLayer(self, coordinate, layer):
+        """
+        Return the largest enclosing rectangle on a layer and at a location.
+        Coordinates should be in user units.
+        """
+        db_coordinates = [x/self.units[0] for x in coordinate]
+        return self.getPinShapeByDBLocLayer(db_coordinate, layer)
+
+    def getPinShapeByDBLocLayer(self, coordinate, layer):
+        """
+        Return the largest enclosing rectangle on a layer and at a location.
+        Coordinates should be in db units.
+        """
+        pin_boundaries=self.getAllPinShapesInStructureList(coordinate, layer)
 
         # sort the boundaries, return the max area pin boundary
         pin_boundaries.sort(cmpBoundaryAreas,reverse=True)
         pin_boundary=pin_boundaries[0]
-        
+
         # Convert to user units
         pin_boundary=[pin_boundary[0]*self.units[0],pin_boundary[1]*self.units[0],
                       pin_boundary[2]*self.units[0],pin_boundary[3]*self.units[0]]
         
-        return [label_name, label_layer, pin_boundary]
+        return [None, layer, pin_boundary]
 
-    def readAllPinShapes(self,label_name):
+    def getAllPinShapesByLocLayer(self, coordinate, layer):
         """
-        Search for a pin label and return ALL the enclosing rectangles on the same layer
-        as the pin label.
+        Return ALL the enclosing rectangles on the same layer
+        at the given coordinate. Coordinates should be in user units.
         """
-        label_layer = None
-        label_coordinate = [None, None]
+        db_coordinates = [x/self.units[0] for x in coordinate]
+        return self.getAllPinShapesByDBLocLayer(db_coordinate, layer)
 
-        for Text in self.structures[self.rootStructureName].texts:
-            if Text.textString == label_name or Text.textString == label_name+"\x00":
-                label_layer = Text.drawingLayer
-                label_coordinate = Text.coordinates
-
-        pin_boundaries=self.readAllPinShapesInStructureList(label_coordinate, label_layer)
+    def getAllPinShapesByDBLocLayer(self, coordinate, layer):
+        """
+        Return ALL the enclosing rectangles on the same layer
+        at the given coordinate. Coordinates should be in db units.
+        """
+        pin_boundaries=self.getAllPinShapesInStructureList(coordinate, layer)
 
         # Convert to user units
         new_boundaries = []
         for pin_boundary in pin_boundaries:
             new_boundaries.append([pin_boundary[0]*self.units[0],pin_boundary[1]*self.units[0],
                                    pin_boundary[2]*self.units[0],pin_boundary[3]*self.units[0]])
-            
-        
-        return [label_name, label_layer, new_boundaries]
     
-    def readAllPinShapesInStructureList(self,label_coordinates,layer):
+    
+    def getPinShapeByLabel(self,label_name):
         """
-        Given the label coordinate, search for enclosing structures on the given layer.
-        Return the single biggest area rectangle.
+        Search for a pin label and return the largest enclosing rectangle
+        on the same layer as the pin label.
         """
-        label_boundaries = []
+        (label_coordinate,label_layer)=self.getLabelDBInfo(label_name)
+        return self.getPinShapeByDBLocLayer(label_coordinate, label_layer)
+
+    def getAllPinShapesByLabel(self,label_name):
+        """
+        Search for a pin label and return ALL the enclosing rectangles on the same layer
+        as the pin label.
+        """
+        (label_coordinate,label_layer)=self.getLabelDBInfo(label_name)
+        return self.getAllPinShapesByDBLocLayer(label_coordinate, label_layer)
+    
+    def getAllPinShapesInStructureList(self,coordinates,layer):
+        """
+        Given a coordinate, search for enclosing structures on the given layer.
+        Return all pin shapes.
+        """
+        boundaries = []
+
         for TreeUnit in self.xyTree:
-            boundaries = self.readPinInStructure(label_coordinates,layer,TreeUnit)
-            label_boundaries += boundaries
+            boundaries += self.getPinInStructure(coordinates,layer,TreeUnit)
 
-        return label_boundaries
+        return boundaries
 
 
-    def readPinInStructure(self,label_coordinates,layer,Structure):
+    def getPinInStructure(self,coordinates,layer,Structure):
         """ 
-        Go through all the shapes in a strutcure and return the list of shapes
+        Go through all the shapes in a structure and return the list of shapes
         that the label coordinates are inside.
         """
         StructureName=Structure[0]
@@ -729,49 +762,50 @@ class VlsiLayout:
                 left_bottom=boundary.coordinates[0]
                 right_top=boundary.coordinates[2]
                 MetalBoundary=[left_bottom[0],left_bottom[1],right_top[0],right_top[1]]
-                MetalBoundary=self.tranformRectangle(MetalBoundary,StructureuVector,StructurevVector)
+                MetalBoundary=self.transformRectangle(MetalBoundary,StructureuVector,StructurevVector)
                 MetalBoundary=[MetalBoundary[0]+StructureOrigin[0],MetalBoundary[1]+StructureOrigin[1],
                 MetalBoundary[2]+StructureOrigin[0],MetalBoundary[3]+StructureOrigin[1]]
 
-                if self.labelInRectangle(label_coordinates[0],MetalBoundary):
+                if self.labelInRectangle(coordinates[0],MetalBoundary):
                     boundaries.append(MetalBoundary)
                     
         return boundaries
 
-    def tranformRectangle(self,orignalRectangle,uVector,vVector):
+    def transformRectangle(self,orignalRectangle,uVector,vVector):
         """
         Transforms the four coordinates of a rectangle in space
-        and recomputes the left, bottom, right, up values.
+        and recomputes the left, bottom, right, top values.
         """
-        LeftBottom=mpmath.matrix([orignalRectangle[0],orignalRectangle[1]])
-        LeftBottom=self.tranformCoordinate(LeftBottom,uVector,vVector)
+        leftBottom=mpmath.matrix([orignalRectangle[0],orignalRectangle[1]])
+        leftBottom=self.transformCoordinate(leftBottom,uVector,vVector)
 
-        RightUp=mpmath.matrix([orignalRectangle[2],orignalRectangle[3]])
-        RightUp=self.tranformCoordinate(RightUp,uVector,vVector)
+        rightTop=mpmath.matrix([orignalRectangle[2],orignalRectangle[3]])
+        rightTop=self.transformCoordinate(rightTop,uVector,vVector)
 
-        Left=min(LeftBottom[0],RightUp[0])
-        Bottom=min(LeftBottom[1],RightUp[1])
-        Right=max(LeftBottom[0],RightUp[0])
-        Up=max(LeftBottom[1],RightUp[1])
+        left=min(leftBottom[0],rightTop[0])
+        bottom=min(leftBottom[1],rightTop[1])
+        right=max(leftBottom[0],rightTop[0])
+        top=max(leftBottom[1],rightTop[1])
 
-        return [Left,Bottom,Right,Up]
+        return [left,bottom,right,top]
 
-    def tranformCoordinate(self,Coordinate,uVector,vVector):
+    def transformCoordinate(self,coordinate,uVector,vVector):
         """
         Rotate a coordinate in space.
         """
-        x=Coordinate[0]*uVector[0]+Coordinate[1]*uVector[1]
-        y=Coordinate[1]*vVector[1]+Coordinate[0]*vVector[0]
-        tranformCoordinate=[x,y]
-        return tranformCoordinate
+        x=coordinate[0]*uVector[0]+coordinate[1]*uVector[1]
+        y=coordinate[1]*vVector[1]+coordinate[0]*vVector[0]
+        transformCoordinate=[x,y]
+
+        return transformCoordinate
 
 
-    def labelInRectangle(self,label_coordinate,Rectangle):
+    def labelInRectangle(self,coordinate,rectangle):
         """
         Checks if a coordinate is within a given rectangle.
         """
-        coordinate_In_Rectangle_x_range=(label_coordinate[0]>=int(Rectangle[0]))&(label_coordinate[0]<=int(Rectangle[2]))
-        coordinate_In_Rectangle_y_range=(label_coordinate[1]>=int(Rectangle[1]))&(label_coordinate[1]<=int(Rectangle[3]))
+        coordinate_In_Rectangle_x_range=(coordinate[0]>=int(rectangle[0]))&(coordinate[0]<=int(rectangle[2]))
+        coordinate_In_Rectangle_y_range=(coordinate[1]>=int(rectangle[1]))&(coordinate[1]<=int(rectangle[3]))
         if coordinate_In_Rectangle_x_range & coordinate_In_Rectangle_y_range:
             return True
         else:
@@ -779,7 +813,7 @@ class VlsiLayout:
 
 def cmpBoundaryAreas(A,B):
     """
-    Compares two rectangles and returns the bigger in terms of area.
+    Compares two rectangles and return true if Area(A)>Area(B).
     """
     area_A=(A[2]-A[0])*(A[3]-A[1])
     area_B=(B[2]-B[0])*(B[3]-B[1])

@@ -90,7 +90,7 @@ class router:
         """
 
         # Returns all the shapes that enclose a pin on a given layer
-        (pin_name,pin_layer,pin_shapes) = self.layout.readAllPinShapes(str(pin))
+        (pin_name,pin_layer,pin_shapes) = self.layout.getAllPinShapes(str(pin))
 
         self.pin_shapes[str(pin)]=[]
         self.pin_names.append(pin_name)

@@ -198,14 +198,14 @@ class grid:
         for p in path:
             self.map[p].path=True
         
-    def route(self,factor):
+    def route(self,cost_bound_factor):
         """
         This does the A* maze routing with preferred direction routing.
         """
 
         # We set a cost bound of the HPWL for run-time. This can be 
         # over-ridden if the route fails due to pruning a feasible solution.
-        cost_bound = factor*self.cost_to_target(self.source[0])*self.NONPREFERRED_COST
+        cost_bound = cost_bound_factor*self.cost_to_target(self.source[0])*self.NONPREFERRED_COST
 
         # Make sure the queue is empty if we run another route
         while not self.q.empty():

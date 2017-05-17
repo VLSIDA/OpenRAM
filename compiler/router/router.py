@@ -24,12 +24,10 @@ class router:
         self.reader.loadFromFile(gds_name)
         self.top_name = self.layout.rootStructureName
 
-        # A list of pin names for source and dest
-        self.pin_names = []
-        # The map of pin names to list of all pin shapes for a pin.
-        self.pin_shapes = {}
-        # The corresponding layers of the above pin shapes
-        self.pin_layers = {}
+        self.source_pin_shapes = []
+        self.source_pin_zindex = None
+        self.target_pin_shapes = []
+        self.target_pin_zindex = None
 
         # The boundary will determine the limits to the size of the routing grid
         self.boundary = self.layout.measureBoundary(self.top_name)
@@ -86,24 +84,22 @@ class router:
 
     def find_pin(self,pin):
         """ 
-        Finds the pin shapes and converts to tracks 
+        Finds the pin shapes and converts to tracks. 
+        Pin can either be a label or a location,layer pair: [[x,y],layer].
         """
 
-        # Returns all the shapes that enclose a pin on a given layer
-        (pin_name,pin_layer,pin_shapes) = self.layout.getAllPinShapes(str(pin))
+        if type(pin)==str:
+            (pin_name,pin_layer,pin_shapes) = self.layout.getAllPinShapesByLabel(str(pin))
+        else:
+            (pin_name,pin_layer,pin_shapes) = self.layout.getAllPinShapesByLocLayer(pin[0],pin[1])
 
-        self.pin_shapes[str(pin)]=[]
-        self.pin_names.append(pin_name)
-        self.pin_layers[str(pin)] = pin_layer
-        
+        new_pin_shapes = []
         for pin_shape in pin_shapes:
             debug.info(2,"Find pin {0} layer {1} shape {2}".format(pin_name,str(pin_layer),str(pin_shape)))
             # repack the shape as a pair of vectors rather than four values
-            shape=[vector(pin_shape[0],pin_shape[1]),vector(pin_shape[2],pin_shape[3])]
-            # convert the pin coordinates to tracks and round the sizes down
-            self.pin_shapes[str(pin)].append(shape)
+            new_pin_shapes.append([vector(pin_shape[0],pin_shape[1]),vector(pin_shape[2],pin_shape[3])])
             
-        return self.pin_shapes[str(pin)]
+        return (pin_layer,new_pin_shapes)
 
     def find_blockages(self):
         """
@@ -122,15 +118,14 @@ class router:
         Convert the routed path to blockages.
         Keep the other blockages unchanged.
         """
-
-        self.pin_names = []
-        self.pin_shapes = {}
-        self.pin_layers = {}
-        
+        self.source_pin_shapes = []
+        self.source_pin_zindex = None
+        self.target_pin_shapes = []
+        self.target_pin_zindex = None
         self.rg.reinit()
         
 
-    def route(self, layers, src, dest, cost_factor=1):
+    def route(self, layers, src, dest, cost_bound_scale=1):
         """ 
         Route a single source-destination net and return
         the simplified rectilinear path. Cost factor is how sub-optimal to explore for a feasible route. 
@@ -158,7 +153,7 @@ class router:
         #self.rg.view()
         
         # returns the path in tracks
-        (self.path,cost) = self.rg.route(cost_factor)
+        (self.path,cost) = self.rg.route(cost_bound_scale)
         debug.info(1,"Found path: cost={0} ".format(cost))
         debug.info(2,str(self.path))
         self.set_path(self.path)
@@ -196,14 +191,14 @@ class router:
         cell.add_route(self.layers,abs_path)
 
         # Check if a via is needed at the start point
-        if (contracted_path[0].z!=self.source_pin_layer):
+        if (contracted_path[0].z!=self.source_pin_zindex):
             # offset this by 1/2 the via size
             c=contact(self.layers, (1, 1))
             via_offset = vector(-0.5*c.width,-0.5*c.height)
             cell.add_via(self.layers,abs_path[0]+via_offset)
 
         # Check if a via is needed at the end point
-        if (contracted_path[-1].z!=self.target_pin_layer):
+        if (contracted_path[-1].z!=self.target_pin_zindex):
             # offset this by 1/2 the via size
             c=contact(self.layers, (1, 1))
             via_offset = vector(-0.5*c.width,-0.5*c.height)
@@ -295,31 +290,29 @@ class router:
         debug.info(3,"Set path: " + str(path))        
         self.rg.set_path(path)
 
-    def set_source(self,name):
+    def set_source(self,src):
         """ 
         Mark the grids that are in the pin rectangle ranges to have the source property. 
         """
-        self.source_pin_name = name
-        shapes = self.find_pin(name)
-        zindex = 0 if self.pin_layers[name]==self.horiz_layer_number else 1
-        self.source_pin_layer = zindex
-        for shape in shapes:
+        (pin_layer,self.source_pin_shapes) = self.find_pin(src)
+        zindex = 0 if pin_layer==self.horiz_layer_number else 1
+        self.source_pin_zindex = zindex
+        for shape in self.source_pin_shapes:
             shape_in_tracks=self.convert_shape_to_tracks(shape)
-            debug.info(1,"Set source: " + str(name) + " " + str(shape_in_tracks) + " z=" + str(zindex))
+            debug.info(1,"Set source: " + str(src) + " " + str(shape_in_tracks) + " z=" + str(zindex))
             self.rg.set_source(shape_in_tracks[0],shape_in_tracks[1],zindex)
 
 
-    def set_target(self,name):
+    def set_target(self,src):
         """ 
         Mark the grids that are in the pin rectangle ranges to have the target property. 
         """
-        self.target_pin_name = name        
-        shapes = self.find_pin(name)
-        zindex = 0 if self.pin_layers[name]==self.horiz_layer_number else 1
-        self.target_pin_layer = zindex
-        for shape in shapes:
+        (pin_layer,self.target_pin_shapes) = self.find_pin(src)
+        zindex = 0 if pin_layer==self.horiz_layer_number else 1
+        self.target_pin_zindex = zindex
+        for shape in self.target_pin_shapes:
             shape_in_tracks=self.convert_shape_to_tracks(shape)  
-            debug.info(1,"Set target: " + str(name) + " " + str(shape_in_tracks) + " z=" + str(zindex))
+            debug.info(1,"Set target: " + str(src) + " " + str(shape_in_tracks) + " z=" + str(zindex))
             self.rg.set_target(shape_in_tracks[0],shape_in_tracks[1],zindex)
         
     def write_obstacle(self, sref, mirr = 1, angle = math.radians(float(0)), xyShift = (0, 0)): 

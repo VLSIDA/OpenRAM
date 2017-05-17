@@ -656,7 +656,7 @@ class VlsiLayout:
         for Text in self.structures[self.rootStructureName].texts:
             if Text.textString == label_name or Text.textString == label_name+"\x00":
                 label_layer = Text.drawingLayer
-                label_coordinate = Text.coordinates
+                label_coordinate = Text.coordinates[0]
 
         return (label_coordinate, label_layer)
 
@@ -665,22 +665,22 @@ class VlsiLayout:
         """
         Return the coordinates in USER units and layer of a label
         """
-        (label_coordinate,label_layer)=getLabelDBInfo(label_name)
-        user_coordinates = [x*self.units[0] for x in label_coordinates]
-        return (user_coordinates,layer)
+        (label_coordinate,label_layer)=self.getLabelDBInfo(label_name)
+        user_coordinates = [x*self.units[0] for x in label_coordinate]
+        return (user_coordinates,label_layer)
     
     def getPinShapeByLocLayer(self, coordinate, layer):
         """
         Return the largest enclosing rectangle on a layer and at a location.
-        Coordinates should be in user units.
+        Coordinates should be in USER units.
         """
-        db_coordinates = [x/self.units[0] for x in coordinate]
+        db_coordinate = [x/self.units[0] for x in coordinate]
         return self.getPinShapeByDBLocLayer(db_coordinate, layer)
 
     def getPinShapeByDBLocLayer(self, coordinate, layer):
         """
         Return the largest enclosing rectangle on a layer and at a location.
-        Coordinates should be in db units.
+        Coordinates should be in DB units.
         """
         pin_boundaries=self.getAllPinShapesInStructureList(coordinate, layer)
 
@@ -688,24 +688,25 @@ class VlsiLayout:
         pin_boundaries.sort(cmpBoundaryAreas,reverse=True)
         pin_boundary=pin_boundaries[0]
 
-        # Convert to user units
+        # Convert to USER units
         pin_boundary=[pin_boundary[0]*self.units[0],pin_boundary[1]*self.units[0],
                       pin_boundary[2]*self.units[0],pin_boundary[3]*self.units[0]]
         
-        return [None, layer, pin_boundary]
+        # Make a name if we don't have the pin name
+        return ["p"+str(coordinate)+"_"+str(layer), layer, pin_boundary]
 
     def getAllPinShapesByLocLayer(self, coordinate, layer):
         """
         Return ALL the enclosing rectangles on the same layer
-        at the given coordinate. Coordinates should be in user units.
+        at the given coordinate. Coordinates should be in USER units.
         """
-        db_coordinates = [x/self.units[0] for x in coordinate]
+        db_coordinate = [int(x/self.units[0]) for x in coordinate]
         return self.getAllPinShapesByDBLocLayer(db_coordinate, layer)
 
     def getAllPinShapesByDBLocLayer(self, coordinate, layer):
         """
         Return ALL the enclosing rectangles on the same layer
-        at the given coordinate. Coordinates should be in db units.
+        at the given coordinate. Coordinates should be in DB units.
         """
         pin_boundaries=self.getAllPinShapesInStructureList(coordinate, layer)
 
@@ -714,7 +715,9 @@ class VlsiLayout:
         for pin_boundary in pin_boundaries:
             new_boundaries.append([pin_boundary[0]*self.units[0],pin_boundary[1]*self.units[0],
                                    pin_boundary[2]*self.units[0],pin_boundary[3]*self.units[0]])
-    
+
+        # Make a name if we don't have the pin name
+        return ["p"+str(coordinate)+"_"+str(layer), layer, new_boundaries]
     
     def getPinShapeByLabel(self,label_name):
         """
@@ -766,7 +769,7 @@ class VlsiLayout:
                 MetalBoundary=[MetalBoundary[0]+StructureOrigin[0],MetalBoundary[1]+StructureOrigin[1],
                 MetalBoundary[2]+StructureOrigin[0],MetalBoundary[3]+StructureOrigin[1]]
 
-                if self.labelInRectangle(coordinates[0],MetalBoundary):
+                if self.labelInRectangle(coordinates,MetalBoundary):
                     boundaries.append(MetalBoundary)
                     
         return boundaries

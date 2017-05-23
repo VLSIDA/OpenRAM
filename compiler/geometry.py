@@ -1,9 +1,9 @@
 """
 This provides a set of useful generic types for the gdsMill interface. 
 """
-import tech
 import debug
 from vector import vector
+from tech import GDS
 
 class geometry:
     """
@@ -97,14 +97,19 @@ class path(geometry):
 class label(geometry):
     """Represents a text label"""
 
-    def __init__(self, text, layerNumber, offset, zoom=1):
+    def __init__(self, text, layerNumber, offset, zoom=-1):
         """Initializes a text label for specified layer"""
         geometry.__init__(self)
         self.name = "label"
         self.text = text
         self.layerNumber = layerNumber
         self.offset = vector(offset).snap_to_grid()
-        self.zoom = zoom
+        if zoom<0:
+            self.zoom = GDS["zoom"]
+        else:
+            self.zoom = zoom
+
+
         self.size = 0
 
         debug.info(3,"creating label " + self.text + " " + str(self.layerNumber) + " " + str(self.offset))

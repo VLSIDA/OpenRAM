@@ -176,6 +176,9 @@ def setup_paths():
     debug.check(os.path.isdir(OPENRAM_HOME+"/characterizer"),
                 "$OPENRAM_HOME/characterizer does not exist: {0}".format(OPENRAM_HOME+"/characterizer"))
     sys.path.append("{0}/characterizer".format(OPENRAM_HOME))
+    debug.check(os.path.isdir(OPENRAM_HOME+"/router"),
+                "$OPENRAM_HOME/router does not exist: {0}".format(OPENRAM_HOME+"/router"))
+    sys.path.append("{0}/router".format(OPENRAM_HOME))
 
     if not OPTS.openram_temp.endswith('/'):
         OPTS.openram_temp += "/"

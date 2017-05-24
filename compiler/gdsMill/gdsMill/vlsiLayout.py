@@ -2,6 +2,7 @@ from gdsPrimitives import *
 from datetime import *
 import mpmath
 import gdsPrimitives
+import debug
 
 class VlsiLayout:
     """Class represent a hierarchical layout"""
@@ -252,7 +253,8 @@ class VlsiLayout:
         Method to change the root pointer to another layout.
         """
 
-        if self.debug: print "DEBUG:  GdsMill vlsiLayout: changeRoot: %s "%newRoot
+        if self.debug:
+            debug.info(0,"DEBUG:  GdsMill vlsiLayout: changeRoot: %s "%newRoot)
     
         # Determine if newRoot exists
         #  layoutToAdd (default) or nameOfLayout
@@ -272,7 +274,7 @@ class VlsiLayout:
         """
         offsetInLayoutUnits = (self.userUnits(offsetInMicrons[0]),self.userUnits(offsetInMicrons[1]))
         if self.debug==1: 
-            print "DEBUG:  GdsMill vlsiLayout: addInstance: type %s, nameOfLayout "%type(layoutToAdd),nameOfLayout
+            debug.info(0,"DEBUG:  GdsMill vlsiLayout: addInstance: type %s, nameOfLayout "%type(layoutToAdd),nameOfLayout)
 
 
 
@@ -286,7 +288,8 @@ class VlsiLayout:
             StructureFound = False
             for structure in layoutToAdd.structures:
                 if StructureName in structure: 
-                    if self.debug: print "DEBUG:  Structure %s Found"%StructureName
+                    if self.debug:
+                        debug.info(1,"DEBUG:  Structure %s Found"%StructureName)
                     StructureFound = True
 
 
@@ -581,7 +584,8 @@ class VlsiLayout:
     def getLayoutBorder(self,borderlayer):
         for boundary in self.structures[self.rootStructureName].boundaries:
             if boundary.drawingLayer==borderlayer:
-                if self.debug: print "Find border "+str(boundary.coordinates)
+                if self.debug:
+                    debug.info(1,"Find border "+str(boundary.coordinates))
                 left_bottom=boundary.coordinates[0]
                 right_top=boundary.coordinates[2]
                 cellSize=[right_top[0]-left_bottom[0],right_top[1]-left_bottom[1]]
@@ -658,6 +662,7 @@ class VlsiLayout:
                 label_layer = Text.drawingLayer
                 label_coordinate = Text.coordinates[0]
 
+        debug.check(label_layer!=None,"Did not find label {0}.".format(label_name))
         return (label_coordinate, label_layer)
 
 

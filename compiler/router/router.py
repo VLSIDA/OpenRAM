@@ -99,6 +99,8 @@ class router:
             # repack the shape as a pair of vectors rather than four values
             new_pin_shapes.append([vector(pin_shape[0],pin_shape[1]),vector(pin_shape[2],pin_shape[3])])
             
+        debug.check(len(new_pin_shapes)>0,"Did not find any pin shapes for {0}.".format(str(pin)))
+        
         return (pin_layer,new_pin_shapes)
 
     def find_blockages(self):
@@ -295,8 +297,10 @@ class router:
         Mark the grids that are in the pin rectangle ranges to have the source property. 
         """
         (pin_layer,self.source_pin_shapes) = self.find_pin(src)
+
         zindex = 0 if pin_layer==self.horiz_layer_number else 1
         self.source_pin_zindex = zindex
+
         for shape in self.source_pin_shapes:
             shape_in_tracks=self.convert_shape_to_tracks(shape)
             debug.info(1,"Set source: " + str(src) + " " + str(shape_in_tracks) + " z=" + str(zindex))
@@ -308,8 +312,10 @@ class router:
         Mark the grids that are in the pin rectangle ranges to have the target property. 
         """
         (pin_layer,self.target_pin_shapes) = self.find_pin(src)
+
         zindex = 0 if pin_layer==self.horiz_layer_number else 1
         self.target_pin_zindex = zindex
+        
         for shape in self.target_pin_shapes:
             shape_in_tracks=self.convert_shape_to_tracks(shape)  
             debug.info(1,"Set target: " + str(src) + " " + str(shape_in_tracks) + " z=" + str(zindex))

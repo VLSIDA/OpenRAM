@@ -56,8 +56,7 @@ class no_blockages_test(unittest.TestCase):
                 r.route(layer_stack,src="A",dest="B")
                 r.add_route(self)
 
-        
-        r = routing("test1", "01_no_blockages_test")
+        r = routing("test1", "01_no_blockages_test_{0}".format(OPTS.tech_name))
         self.local_check(r)
         
         # fails if there are any DRC errors on any cells

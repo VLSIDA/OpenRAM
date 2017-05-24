@@ -62,7 +62,7 @@ class two_nets_test(unittest.TestCase):
 
 
         
-        r = routing("test1", "05_two_nets_test")
+        r = routing("test1", "05_two_nets_test_{0}".format(OPTS.tech_name))
         self.local_check(r)
         
         # fails if there are any DRC errors on any cells

@@ -12,7 +12,7 @@ import calibre
 
 OPTS = globals.OPTS
 
-class big_scmos_test(unittest.TestCase):
+class big_test(unittest.TestCase):
     """
     Simplest two pin route test with no blockages using the pin locations instead of labels.
     """
@@ -58,11 +58,12 @@ class big_scmos_test(unittest.TestCase):
                 r.route(layer_stack,src="A",dest="B")
                 r.add_route(self)
 
+        # This test only runs on scn3me_subm tech
         if OPTS.tech_name=="scn3me_subm":
-            r = routing("test1", "07_big_scmos_test")
+            r = routing("test1", "07_big_test_{0}".format(OPTS.tech_name))
             self.local_check(r)
         else:
-            debug.warning("Test must be run in scn3me_subm")
+            debug.warning("This test does not support technology {0}".format(OPTS.tech_name))
                 
         # fails if there are any DRC errors on any cells
         globals.end_openram()

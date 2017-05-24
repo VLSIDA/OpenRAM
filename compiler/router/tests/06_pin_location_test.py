@@ -60,9 +60,12 @@ class pin_location_test(unittest.TestCase):
                 #r.route(layer_stack,src="A",dest="B")
                 r.add_route(self)
 
-        
-        r = routing("test1", "01_no_blockages_test")
-        self.local_check(r)
+        # This only works for freepdk45 since the coordinates are hard coded
+        if OPTS.tech_name == "freepdk45":
+            r = routing("test1", "06_pin_location_test_{0}".format(OPTS.tech_name))
+            self.local_check(r)
+        else:
+            debug.warning("This test does not support technology {0}".format(OPTS.tech_name))
         
         # fails if there are any DRC errors on any cells
         globals.end_openram()

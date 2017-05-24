@@ -55,7 +55,7 @@ class same_layer_pins_test(unittest.TestCase):
                 r.route(layer_stack,src="A",dest="B")
                 r.add_route(self)
         
-        r = routing("test1", "03_same_layer_pins_test")
+        r = routing("test1", "03_same_layer_pins_test_{0}".format(OPTS.tech_name))
         self.local_check(r)
         
         

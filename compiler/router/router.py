@@ -413,8 +413,8 @@ class router:
         #debug.info(1,"Converting [ {0} , {1} ]".format(ll,ur))
         ll=ll.scale(self.track_factor)
         ur=ur.scale(self.track_factor)
-        ll = ll.floor() if round_bigger else ll.round()
-        ur = ur.ceil() if round_bigger else ur.round()
+        ll = ll.ceil()
+        ur = ur.floor()
         #debug.info(1,"Converted [ {0} , {1} ]".format(ll,ur))
         return [ll,ur]
 

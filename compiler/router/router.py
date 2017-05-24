@@ -323,7 +323,7 @@ class router:
         self.source_pin_zindex = zindex
 
         for shape in self.source_pin_shapes:
-            shape_in_tracks=self.convert_shape_to_tracks(shape)
+            shape_in_tracks=self.convert_pin_to_tracks(shape)
             debug.info(1,"Set source: " + str(src) + " " + str(shape_in_tracks) + " z=" + str(zindex))
             self.rg.set_source(shape_in_tracks[0],shape_in_tracks[1],zindex)
 
@@ -338,7 +338,7 @@ class router:
         self.target_pin_zindex = zindex
         
         for shape in self.target_pin_shapes:
-            shape_in_tracks=self.convert_shape_to_tracks(shape)  
+            shape_in_tracks=self.convert_pin_to_tracks(shape)  
             debug.info(1,"Set target: " + str(src) + " " + str(shape_in_tracks) + " z=" + str(zindex))
             self.rg.set_target(shape_in_tracks[0],shape_in_tracks[1],zindex)
         
@@ -355,7 +355,7 @@ class router:
             # only consider the two layers that we are routing on
             if boundary.drawingLayer in [self.vert_layer_number,self.horiz_layer_number]:
                 zlayer = 0 if boundary.drawingLayer==self.horiz_layer_number else 1
-                [ll,ur]=self.convert_shape_to_tracks(shape)
+                [ll,ur]=self.convert_blockage_to_tracks(shape)
                 self.rg.add_blockage(ll,ur,zlayer)
                 
 
@@ -384,9 +384,26 @@ class router:
         pt=pt.scale(self.track_widths[0],self.track_widths[1],1)
         return pt
 
-    def convert_shape_to_tracks(self,shape,round_bigger=False):
+    def convert_blockage_to_tracks(self,shape,round_bigger=False):
         """ 
-        Convert a rectangular shape into track units.
+        Convert a rectangular blockage shape into track units.
+        """
+        [ll,ur] = shape
+        ll = snap_to_grid(ll)
+        ur = snap_to_grid(ur)
+
+        # to scale coordinates to tracks
+        #debug.info(1,"Converting [ {0} , {1} ]".format(ll,ur))
+        ll=ll.scale(self.track_factor)
+        ur=ur.scale(self.track_factor)
+        ll = ll.floor() if round_bigger else ll.round()
+        ur = ur.ceil() if round_bigger else ur.round()
+        #debug.info(1,"Converted [ {0} , {1} ]".format(ll,ur))
+        return [ll,ur]
+
+    def convert_pin_to_tracks(self,shape,round_bigger=False):
+        """ 
+        Convert a rectangular pin shape into track units.
         """
         [ll,ur] = shape
         ll = snap_to_grid(ll)
@@ -409,9 +426,10 @@ class router:
         """
         # space depends on which layer it is
         if track[2]==0:
-            space = self.horiz_layer_spacing
+            space = 0.5*self.horiz_layer_spacing
         else:
-            space = self.vert_layer_spacing
+            space = 0.5*self.vert_layer_spacing
+            
         # calculate lower left 
         x = track.x*self.track_width - 0.5*self.track_width + space
         y = track.y*self.track_width - 0.5*self.track_width + space

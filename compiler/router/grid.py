@@ -108,14 +108,14 @@ class grid:
         # display lower layer
         print '='*80
         print '='*80
-        self.printgrid(0,xmin,xmax,ymin,ymax,fieldwidth)
+        self.print_grid(0,xmin,xmax,ymin,ymax,fieldwidth)
         print '='*80
-        self.printgrid(1,xmin,xmax,ymin,ymax,fieldwidth)
+        self.print_grid(1,xmin,xmax,ymin,ymax,fieldwidth)
         print '='*80
         print '='*80
         raw_input("Press Enter to continue...")
 
-    def printgrid(self,layer,xmin,xmax,ymin,ymax,fieldwidth):
+    def print_grid(self,layer,xmin,xmax,ymin,ymax,fieldwidth):
         """
         Display a text representation of a layer of the routing grid.
         """

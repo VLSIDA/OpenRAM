@@ -40,25 +40,28 @@ class router:
         self.top_name = top_name
 
     def set_layers(self, layers):
-        """ Allows us to change the layers that we are routing on. """
+        """Allows us to change the layers that we are routing on. First layer
+        is always horizontal, middle is via, and last is always
+        vertical.
+        """
         self.layers = layers
         (horiz_layer, via_layer, vert_layer) = self.layers
 
         self.vert_layer_name = vert_layer
         self.vert_layer_width = tech.drc["minwidth_{0}".format(vert_layer)]
+        self.vert_layer_spacing = tech.drc[str(self.vert_layer_name)+"_to_"+str(self.vert_layer_name)] 
         self.vert_layer_number = tech.layer[vert_layer]
         
         self.horiz_layer_name = horiz_layer
         self.horiz_layer_width = tech.drc["minwidth_{0}".format(horiz_layer)]
+        self.horiz_layer_spacing = tech.drc[str(self.horiz_layer_name)+"_to_"+str(self.horiz_layer_name)] 
         self.horiz_layer_number = tech.layer[horiz_layer]
 
         # Contacted track spacing.
         via_connect = contact(self.layers, (1, 1))
-        max_via_size = max(via_connect.width,via_connect.height)
-        horiz_layer_spacing = tech.drc[str(self.horiz_layer_name)+"_to_"+str(self.horiz_layer_name)] 
-        vert_layer_spacing = tech.drc[str(self.vert_layer_name)+"_to_"+str(self.vert_layer_name)] 
-        self.horiz_track_width = max_via_size + horiz_layer_spacing
-        self.vert_track_width = max_via_size + vert_layer_spacing
+        self.max_via_size = max(via_connect.width,via_connect.height)
+        self.horiz_track_width = self.max_via_size + self.horiz_layer_spacing
+        self.vert_track_width = self.max_via_size + self.vert_layer_spacing
 
         # We'll keep horizontal and vertical tracks the same for simplicity.
         self.track_width = max(self.horiz_track_width,self.vert_track_width)
@@ -164,16 +167,34 @@ class router:
         
         return 
 
+    def add_grid_map(self,cell):
+        """
+        Write the routing grid as the boundary layer for debugging purposes.
+        """
+        grid_keys=self.rg.map.keys()
+        for g in grid_keys:
+            shape = self.convert_full_track_to_shape(g)
+            cell.add_rect(layer="boundary",
+                          offset=shape[0],
+                          width=shape[1].x-shape[0].x,
+                          height=shape[1].y-shape[0].y)
+
+    
     def add_route(self,cell):
         """ 
         Add the current wire route to the given design instance.
         """
+
+        # For debugging...
+        self.add_grid_map(cell)
+        
         # First, simplify the path for
         #debug.info(1,str(self.path))        
         contracted_path = self.contract_path(self.path)
         debug.info(1,str(contracted_path))
         
         # Make sure there's a pin enclosure on the source and dest
+        # This should be 1/2 DRC spacing from the edges of the grid 
         src_shape = self.convert_track_to_shape(contracted_path[0])
         cell.add_rect(layer=self.layers[2*contracted_path[0].z],
                       offset=src_shape[0],
@@ -383,11 +404,32 @@ class router:
 
     def convert_track_to_shape(self,track):
         """ 
-        Convert a grid point into a rectangle shape that occupies the centered
+        Convert a grid point into a rectangle shape that is centered
+        track in the track and leaves half a DRC space in each direction.
+        """
+        # space depends on which layer it is
+        if track[2]==0:
+            space = self.horiz_layer_spacing
+        else:
+            space = self.vert_layer_spacing
+        # calculate lower left 
+        x = track.x*self.track_width - 0.5*self.track_width + space
+        y = track.y*self.track_width - 0.5*self.track_width + space
+        ll = snap_to_grid(vector(x,y))
+            
+        # calculate upper right
+        x = track.x*self.track_width + 0.5*self.track_width - space
+        y = track.y*self.track_width + 0.5*self.track_width - space
+        ur = snap_to_grid(vector(x,y))
+
+        return [ll,ur]
+
+    def convert_full_track_to_shape(self,track):
+        """ 
+        Convert a grid point into a rectangle shape that occupies the entire centered
         track.
         """
         # to scale coordinates to tracks
-        # FIXME: should be the metal width no the track width?
         x = track.x*self.track_width - 0.5*self.track_width
         y = track.y*self.track_width - 0.5*self.track_width
         # offset lowest corner object to to (-track halo,-track halo)
@@ -395,6 +437,7 @@ class router:
         ur = snap_to_grid(ll + vector(self.track_width,self.track_width))
 
         return [ll,ur]
+    
 
 # FIXME: This should be replaced with vector.snap_to_grid at some point
 

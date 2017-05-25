@@ -112,29 +112,17 @@ class hierarchical_predecode2x4(hierarchical_predecode):
     def delay(self, slope, load = 0.0 ):
         #print "pre2x4 consist:"
         # A -> B
-        mod = self.find_sub_cir("A[1]", 
-                                "B[1]")
-        load_cir = self.find_load("A[1]", 
-                                      "B[1]")
-        a_t_b_delay = mod.delay(slope=slope,load = load_cir)
+        a_t_b_delay = self.inv.delay(slope=slope,load = self.nand.input_load())
 
         # out -> z
-        mod = self.find_sub_cir("B[1]", 
-                                "Z[1]")
-        load_cir = self.find_load("B[1]", 
-                                "Z[1]")
-        b_t_z_delay = mod.delay(slope=a_t_b_delay["slope"],load = load_cir)
-        result = self.sum_delay(a_t_b_delay,b_t_z_delay)
+        b_t_z_delay = self.nand.delay(slope=a_t_b_delay.slope,load = self.inv.input_load())
+        result = a_t_b_delay + b_t_z_delay
 
         # Z -> out
-        mod = self.find_sub_cir("Z[1]", 
-                                "out[1]")
-        a_t_out_delay = mod.delay(slope=b_t_z_delay["slope"],load = load)
-        result = self.sum_delay(result,a_t_out_delay)
+        a_t_out_delay = self.inv.delay(slope=b_t_z_delay.slope,load = load)
+        result = result + a_t_out_delay
         #print "end of pre2x4"
         return result
 
     def input_load(self):
-        mod = self.find_sub_cir("A[0]", 
-                                "B[0]")
-        return mod.input_load()
+        return self.inv.input_load()

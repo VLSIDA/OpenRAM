@@ -46,4 +46,9 @@ dont use dictionary in analytical model make it like vector class
 
 add wire delay model for bank connection
 
+#may 15
+-explain why nand_2 fail lef
+-add bank seg for delay
+-build better sense amp 
+
 

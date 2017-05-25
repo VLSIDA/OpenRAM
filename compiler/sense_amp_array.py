@@ -132,6 +132,6 @@ class sense_amp_array(design.design):
                       height=drc["minwidth_metal1"])
         self.SCLK_positions.append(sclk_offset)
 
-    def delay(self, bl_delay, load =0.0):
-        result = self.amp.delay(bl_delay=bl_delay, load =load)
+    def delay(self, slope, load =0.0):
+        result = self.amp.delay(slope=slope, load =load)
         return result

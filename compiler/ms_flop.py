@@ -34,5 +34,5 @@ class ms_flop(design.design):
 
         # mout -> out
         mout_t_out_delay = ref.delay(slope = slope, load = load)
-        result = self.sum_delay(din_t_mout_delay, mout_t_out_delay)
+        result = din_t_mout_delay + mout_t_out_delay
         return result

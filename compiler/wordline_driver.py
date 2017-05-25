@@ -214,16 +214,13 @@ class wordline_driver(design.design):
 
     def delay(self, slope, load=0):
         # decode_out -> net
-        mod = self.find_sub_cir("decode_out[0]", "net[0]")
-        decode_t_net = mod.delay(slope)
+        decode_t_net = self.NAND2.delay(slope = slope, load = self.inv.input_load())
 
         # net -> wl
-        mod = self.find_sub_cir("net[0]", "wl[0]")
-        net_t_wl = mod.delay(slope, load)
+        net_t_wl = self.inv.delay(slope = decode_t_net.slope, load = load)
 
-        result = self.sum_delay(decode_t_net, net_t_wl)
+        result = decode_t_net + net_t_wl
         return result
     
     def input_load(self):
-        mod = self.find_sub_cir("decode_out[0]", "net[0]")
-        return mod.input_load()
+        return self.NAND2.input_load()

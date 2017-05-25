@@ -1174,7 +1174,7 @@ class sram(design.design):
     def analytical_model(self,slope):
         #control_delay = self.control.delay(slope=slope)
         bank_delay = self.bank.delay(slope = slope) 
-        data ={'delay1': bank_delay["delay"], 'delay0': bank_delay["delay"], 
+        data ={'delay1': bank_delay.delay, 'delay0': bank_delay.delay, 
                'min_period1': 0, 
                'min_period0': 0, 
                'read_power': 0, 

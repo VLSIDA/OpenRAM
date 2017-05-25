@@ -93,20 +93,14 @@ class hierarchical_predecode3x8(hierarchical_predecode):
 
     def delay(self, slope, load = 0.0 ):
         # A -> z
-        mod = self.find_sub_cir("A[2]", 
-                                "Z[7]")
-        load_cir = self.find_load_cir("A[2]", 
-                                      "Z[7]")[0]
-        b_t_z_delay = mod.delay(slope=slope, load = load_cir.input_load())
+        b_t_z_delay = self.nand.delay(slope=slope, 
+                                      load = self.input_load())
 
         # Z -> out
-        mod = self.find_sub_cir("Z[7]", 
-                                "out[7]")
-        a_t_out_delay = mod.delay(slope=b_t_z_delay["slope"],load = load_cir.input_load())
-        result = self.sum_delay(b_t_z_delay,a_t_out_delay)
+        a_t_out_delay = self.inv.delay(slope=b_t_z_delay.slope,
+                                       load = load)
+        result = b_t_z_delay + a_t_out_delay
         return result
 
     def input_load(self):
-        mod = self.find_sub_cir("A[0]", 
-                                "B[0]")
-        return mod.input_load()
+        return self.nand.input_load()

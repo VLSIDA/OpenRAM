@@ -141,28 +141,47 @@ class bitcell_array(design.design):
             # increments to the next column width
             offset.x += self.cell.width
 
-    def delay(self, wire_delay, input_node = ["wl0","bl_0"], load=0):
+    def delay(self, slope, input_node = ["wl0","bl_0"], load=0):
+        from tech import drc
+        wl_wire = self.gen_wl_wire()
+        wl_wire.return_delay_over_wire(slope)
         # load is going to be ignored here
         wl_distance = int(input_node[0][-1])
         bl_distance = int(input_node[1][-1])
-        # wl to cell delay
-        wl_to_cell_delay = wire_delay["delay"][wl_distance] - wire_delay["delay"][0]
-        wl_to_cell_slope = wire_delay["slope"][wl_distance]
+
+
+        wl_to_cell_delay = wl_wire.return_delay_over_wire(slope)
+        #print "wl_to_cell_delay",wl_to_cell_delay 
         # hypothetical delay from cell to bl end without sense amp
-        cell_load = self.output_load(bl_distance)
-        bl_delay = self.cell.delay(wl_to_cell_slope, cell_load)
+        bl_wire = self.gen_bl_wire()
+        cell_load = bl_wire.return_input_cap()
+        cell_delay = self.cell.delay(wl_to_cell_delay.slope, cell_load)
+        #print "cell_delay",cell_delay
 
-        result= {"delay":bl_delay["delay"][-1]+wl_to_cell_delay, "slope":bl_delay["slope"][-1]}
-        return result
+        bl_wire_delay = bl_wire.return_delay_over_wire(cell_delay.slope)
+        #print "bl_wire_delay",bl_wire_delay
+        #return self.return_delay(cell_delay.delay+wl_to_cell_delay.delay+bl_wire_delay.delay,
+        #                         bl_wire_delay.slope)
+        return [wl_to_cell_delay, cell_delay, bl_wire_delay]
 
-    def input_load(self):
+    def gen_wl_wire(self):
         from tech import drc
-        setup = design.design.gernerate_wire(self, int(self.column_size), self.width, drc["minwidth_metal1"])
-        setup["wire_c"] = 2*0.3*self.column_size + setup["wire_c"] # 2 access tx  per cell
-        return setup
+        wl_wire = self.generate_rc_net(int(self.column_size), self.width, drc["minwidth_metal1"])
+        wl_wire.wire_c = 2*0.3 + wl_wire.wire_c # 2 access tx  per cell
+        return wl_wire
+
+    def gen_bl_wire(self):
+        from tech import drc
+        bl_pos = 0
+        bl_wire = self.generate_rc_net(int(self.row_size-bl_pos), self.height, drc["minwidth_metal1"])
+        bl_wire.wire_c = 0.3 + bl_wire.wire_c # 1 access tx per cell
+        return bl_wire
 
     def output_load(self, bl_pos=0):
-        from tech import drc
-        setup = design.design.gernerate_wire(self, int(self.row_size-bl_pos), self.height, drc["minwidth_metal1"])
-        setup["wire_c"] = 0.3*(self.row_size-bl_pos) + setup["wire_c"] # 1 access tx per cell
-        return setup
+        bl_wire = self.gen_bl_wire()
+        return bl_wire.return_input_cap()
+
+
+    def input_load(self):
+        wl_wire = self.gen_wl_wire()
+        return wl_wire.return_input_cap()

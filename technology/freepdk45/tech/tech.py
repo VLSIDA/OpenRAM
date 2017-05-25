@@ -288,3 +288,7 @@ spice["clk"] = "clk"
 # estimated feasible period in ns
 spice["feasible_period"] = 5
 
+# analytical delay parameter
+spice["wire_unit_r"] = 0.075 #ohm 
+spice["wire_unit_c"] = 0.64 #ff/um^2
+

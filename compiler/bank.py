@@ -228,6 +228,7 @@ class bank(design.design):
 
         self.wordline_driver = self.mod_wordline_driver(name="wordline_driver", 
                                                         rows=self.num_rows)
+        #self.wordline_driver.logic_effort_sizing(self.num_cols)
         self.add_mod(self.wordline_driver)
 
         self.inv = pinv(name="pinv",
@@ -1518,51 +1519,44 @@ class bank(design.design):
                                  mirror="R90")
 
     def delay(self, slope, path = ["ADDR[0]", "DATA[0]"]):
+        """
         max_address_size = self.row_addr_size-1 
         max_address = self.num_rows-1 # should able to cal delay over different path later 
         max_bit_add = self.num_cols-1
         # ADDRESS FLIP FLOP & Decoder Delay
         data_path =["ADDR["+str(max_address_size)+"]", 
-                        "A["+str(max_address_size)+"]",
-                        "decode_out["+str(max_address)+"]",
-                        "wl["+str(max_address)+"]",
-                        "bl["+str(max_bit_add)+"]"
+                    "A["+str(max_address_size)+"]",
+                    "decode_out["+str(max_address)+"]",
+                    "wl["+str(max_address)+"]",
+                    "bl["+str(max_bit_add)+"]"
                     ]
         result = self.cal_delay_over_path(data_path, slope)
 
-        # Things to do to make this sense amp and tri_gate can be calculated using data_path
-        # 1. change the path basing on col_addr_size
-        # 2. mux not build yet, add its delay function so
-        #    we can call data_path on it
-        # 3. how to make sense amp find its load (bl) like data_path used?
-        #    maybe we cant... 
-        # if 3 is true we cant add sense amp and tri gate signal to data path
+        wl_delay = result[-2]
+        """
+        msf_addr_delay = self.msf_address.delay(slope, 
+                                                self.decoder.input_load())
 
-        # just wl delay 
-        wl_delay = result[-2]["delay"]
+        decoder_delay = self.decoder.delay(msf_addr_delay.slope,
+                                           self.wordline_driver.input_load())
 
-        # sense amp colum 
-        # find bit cell array output cap as sense amp input
-        cell_array = self.find_sub_cir("wl["+str(max_address)+"]", 
-                                "bl["+str(max_bit_add)+"]")
-        bl_load = cell_array.output_load()
+        word_driver_delay = self.wordline_driver.delay(decoder_delay.slope,
+                                                       self.bitcell_array.input_load())
+        #print "word_driver_delay",word_driver_delay
 
-        bl_out_index = self.num_cols-self.words_per_row
-        data_out_index = self.num_cols/self.words_per_row-1
-        if self.col_addr_size == 0:
-            mod = self.find_sub_cir("bl[0]", 
-                                    "data_out[0]")
-        else:
-            mod = self.find_sub_cir("bl_out[0]", 
-                                    "data_out[0]")
-        bl_t_data_out_delay = mod.delay(result[-1],bl_load)
-        result.append(bl_t_data_out_delay) # append delay manually
-        really_bl_t_date = self.merge_delay_list(result[-2:])
+        wl_to_cell_delay, cell_delay, bl_wire_delay = self.bitcell_array.delay(word_driver_delay.slope)
+        bitcell_array_delay = wl_to_cell_delay + cell_delay + bl_wire_delay
+        #print "bitcell_array_delay",bitcell_array_delay
+        bl_t_data_out_delay = self.sens_amp_array.delay(bitcell_array_delay.slope,
+                                                        self.bitcell_array.output_load())
+        #print "bl_t_data_out_delay",bl_t_data_out_delay
 
-        # tri_gate
-        mod = self.find_sub_cir("data_out["+str(data_out_index)+"]", 
-                                "DATA["+str(data_out_index)+"]")
-        data_t_DATA_delay = mod.delay(bl_t_data_out_delay["slope"])
-        result.append(data_t_DATA_delay) # append delay manually
-        result = self.merge_delay_list(result)
+        data_t_DATA_delay = self.tri_gate_array.delay(bl_t_data_out_delay.slope)
+
+        result = msf_addr_delay + decoder_delay + word_driver_delay \
+                 + bitcell_array_delay + bl_t_data_out_delay + data_t_DATA_delay
+        print "self.num_rows",self.num_rows,"self.num_cols",self.num_cols
+        wl_delay = word_driver_delay + wl_to_cell_delay
+        bl_delay =  cell_delay + bl_wire_delay + bl_t_data_out_delay 
+        print "wl delay", wl_delay.delay,"bl delay", bl_delay.delay,"total delay",result.delay
         return result

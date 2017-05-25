@@ -408,9 +408,6 @@ class pinv(design.design):
     def delay(self, slope, load=0.0):
         r = 9250.0/(self.nmos_size/parameter["min_tx_size"])
         c_para = 0.7*(self.nmos_size/parameter["min_tx_size"])#ff
-        if not isinstance(load, dict):
-            result = self.cal_delay_with_rc(r = r, c =  c_para+load, slope =slope)
-        else:
-            driver = [r,c_para]
-            result= self.wire_delay(slope=slope, driver=driver, wire=load)
+
+        result = self.cal_delay_with_rc(r = r, c =  c_para+load, slope =slope)
         return result

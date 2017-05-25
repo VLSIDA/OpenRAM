@@ -15,7 +15,7 @@ OPTS = globals.get_opts()
 class lib:
     """ lib file generation."""
     
-    def __init__(self, libname, sram, spfile, use_model=False):
+    def __init__(self, libname, sram, spfile, use_model=OPTS.analytical_delay):
         self.name = sram.name
         self.num_words = sram.num_words
         self.word_size = sram.word_size

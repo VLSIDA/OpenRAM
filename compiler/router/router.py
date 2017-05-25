@@ -150,9 +150,9 @@ class router:
             # clear the blockage attribute
             self.find_blockages()
 
-        self.set_source(src)
+        self.add_source(src)
 
-        self.set_target(dest)
+        self.add_target(dest)
 
         # View the initial route pins and blockages for debugging
         #self.rg.view()
@@ -161,7 +161,7 @@ class router:
         (self.path,cost) = self.rg.route(cost_bound_scale)
         debug.info(1,"Found path: cost={0} ".format(cost))
         debug.info(2,str(self.path))
-        self.set_path(self.path)
+        self.add_path(self.path)
         # View the final route for debugging
         #self.rg.view()        
         
@@ -194,41 +194,35 @@ class router:
         debug.info(1,str(contracted_path))
         
         # Make sure there's a pin enclosure on the source and dest
-        # This should be 1/2 DRC spacing from the edges of the grid 
-        src_shape = self.convert_track_to_shape(contracted_path[0])
-        cell.add_rect(layer=self.layers[2*contracted_path[0].z],
-                      offset=src_shape[0],
-                      width=src_shape[1].x-src_shape[0].x,
-                      height=src_shape[1].y-src_shape[0].y)
-
-        dest_shape = self.convert_track_to_shape(contracted_path[-1])
-        cell.add_rect(layer=self.layers[2*contracted_path[-1].z],
-                      offset=dest_shape[0],
-                      width=dest_shape[1].x-dest_shape[0].x,
-                      height=dest_shape[1].y-dest_shape[0].y)
-
+        add_src_via = contracted_path[0].z!=self.source_pin_zindex
+        self.add_grid_pin(cell,contracted_path[0],add_src_via)
+        add_tgt_via = contracted_path[-1].z!=self.target_pin_zindex
+        self.add_grid_pin(cell,contracted_path[-1],add_tgt_via)
 
         # convert the path back to absolute units from tracks
         abs_path = map(self.convert_point_to_units,contracted_path)
         debug.info(1,str(abs_path))
         cell.add_route(self.layers,abs_path)
 
-        # Check if a via is needed at the start point
-        if (contracted_path[0].z!=self.source_pin_zindex):
-            # offset this by 1/2 the via size
-            c=contact(self.layers, (1, 1))
-            via_offset = vector(-0.5*c.width,-0.5*c.height)
-            cell.add_via(self.layers,abs_path[0]+via_offset)
+    
+    def add_grid_pin(self,cell,point,add_via=False):
+        """
+        Create a rectangle at the grid 3D point that is 1/2 DRC smaller
+        than the routing grid on all sides.
+        """
+        pin = self.convert_track_to_pin(point)
+        cell.add_rect(layer=self.layers[2*point.z],
+                      offset=pin[0],
+                      width=pin[1].x-pin[0].x,
+                      height=pin[1].y-pin[0].y)
 
-        # Check if a via is needed at the end point
-        if (contracted_path[-1].z!=self.target_pin_zindex):
+        if add_via:
             # offset this by 1/2 the via size
             c=contact(self.layers, (1, 1))
             via_offset = vector(-0.5*c.width,-0.5*c.height)
-            cell.add_via(self.layers,abs_path[-1]+via_offset)
+            cell.add_via(self.layers,vector(point[0],point[1])+via_offset)
 
         
-    
     def create_steiner_routes(self,pins):
         """
         Find a set of steiner points and then return the list of
@@ -306,41 +300,43 @@ class router:
         newpath.append(path[-1])
         return newpath
     
-    def set_path(self,path):
+    def add_path(self,path):
         """
         Mark the path in the routing grid.
         """
         debug.info(3,"Set path: " + str(path))        
-        self.rg.set_path(path)
+        self.rg.add_path(path)
 
-    def set_source(self,src):
+    def add_source(self,pin):
         """ 
         Mark the grids that are in the pin rectangle ranges to have the source property. 
+        pin can be a location or a label.
         """
-        (pin_layer,self.source_pin_shapes) = self.find_pin(src)
+        (pin_layer,self.source_pin_shapes) = self.find_pin(pin)
 
         zindex = 0 if pin_layer==self.horiz_layer_number else 1
         self.source_pin_zindex = zindex
 
         for shape in self.source_pin_shapes:
-            shape_in_tracks=self.convert_pin_to_tracks(shape)
-            debug.info(1,"Set source: " + str(src) + " " + str(shape_in_tracks) + " z=" + str(zindex))
-            self.rg.set_source(shape_in_tracks[0],shape_in_tracks[1],zindex)
+            pin_in_tracks=self.convert_pin_to_tracks(shape,zindex,pin)
+            debug.info(1,"Set source: " + str(pin) + " " + str(pin_in_tracks) + " z=" + str(zindex))
+            self.rg.add_source(pin_in_tracks)
 
 
-    def set_target(self,src):
+    def add_target(self,pin):
         """ 
         Mark the grids that are in the pin rectangle ranges to have the target property. 
+        pin can be a location or a label.
         """
-        (pin_layer,self.target_pin_shapes) = self.find_pin(src)
+        (pin_layer,self.target_pin_shapes) = self.find_pin(pin)
 
         zindex = 0 if pin_layer==self.horiz_layer_number else 1
         self.target_pin_zindex = zindex
         
         for shape in self.target_pin_shapes:
-            shape_in_tracks=self.convert_pin_to_tracks(shape)  
-            debug.info(1,"Set target: " + str(src) + " " + str(shape_in_tracks) + " z=" + str(zindex))
-            self.rg.set_target(shape_in_tracks[0],shape_in_tracks[1],zindex)
+            pin_in_tracks=self.convert_pin_to_tracks(shape,zindex,pin)  
+            debug.info(1,"Set target: " + str(pin) + " " + str(pin_in_tracks) + " z=" + str(zindex))
+            self.rg.add_target(pin_in_tracks)
         
     def write_obstacle(self, sref, mirr = 1, angle = math.radians(float(0)), xyShift = (0, 0)): 
         """
@@ -401,25 +397,69 @@ class router:
         #debug.info(1,"Converted [ {0} , {1} ]".format(ll,ur))
         return [ll,ur]
 
-    def convert_pin_to_tracks(self,shape,round_bigger=False):
+    def convert_pin_to_tracks(self,shape,zindex,pin):
         """ 
-        Convert a rectangular pin shape into track units.
+        Convert a rectangular pin shape into a list of track locations,layers.
+        If no on-grid pins are found, it searches for the nearest off-grid pin(s).
         """
         [ll,ur] = shape
         ll = snap_to_grid(ll)
         ur = snap_to_grid(ur)
 
-        # to scale coordinates to tracks
         #debug.info(1,"Converting [ {0} , {1} ]".format(ll,ur))
-        ll=ll.scale(self.track_factor)
-        ur=ur.scale(self.track_factor)
-        ll = ll.ceil()
-        ur = ur.floor()
+        
+        # scale the size bigger to include neaby tracks
+        ll=ll.scale(self.track_factor).floor()
+        ur=ur.scale(self.track_factor).ceil()
+
+        # width depends on which layer it is
+        if zindex==0:
+            width = self.horiz_layer_width
+        else:
+            width = self.vert_layer_width            
+
+        track_list = []
+        # include +- 1 track for neighors
+        for x in range(int(ll[0])-1,int(ur[0])+1):
+            for y in range(int(ll[1])-1,int(ur[1])+1):
+                #debug.info(1,"Converting [ {0} , {1} ]".format(x,y))
+                # get the rectangular pin at a track location
+                rect = self.convert_track_to_pin(vector3d(x,y,zindex))
+                #debug.info(1,"Rect {0}".format(rect))                                
+                # find the rectangular overlap shape (if any)
+                # if dimension of overlap is greater than min width in any dimension, add it
+                if self.compute_max_overlap(shape,rect)>=width:
+                    track_list.append(vector3d(x,y,zindex))
+
+        #debug.warning("Off-grid pin for {0}.".format(str(pin)))
         #debug.info(1,"Converted [ {0} , {1} ]".format(ll,ur))
-        return [ll,ur]
+        return track_list
 
+    def compute_overlap(self,r1,r2):
+        """ Calculate the rectangular overlap of two rectangles. """
+        (r1_ll,r1_ur) = r1
+        (r2_ll,r2_ur) = r2
 
-    def convert_track_to_shape(self,track):
+        #ov_ur = vector(min(r1_ur.x,r2_ur.x),min(r1_ur.y,r2_ur.y))
+        #ov_ll = vector(max(r1_ll.x,r2_ll.x),max(r1_ll.y,r2_ll.y))
+
+        dy = min(r1_ur.y,r2_ur.y)-max(r1_ll.y,r2_ll.y)
+        dx = min(r1_ur.x,r2_ur.x)-max(r1_ll.x,r2_ll.x)
+
+        if dx>0 and dy>0:
+            return [dx,dy]
+        else:
+            return [0,0]
+            
+    
+    def compute_max_overlap(self,r1,r2):
+        """ Compute the maximum dimension of rectangular overlap of two rectangles """
+        overlap=self.compute_overlap(r1,r2)
+        #debug.info(1,"Overlap [ {0} , {1} ] = {2}".format(r1,r2,overlap))
+        return max(overlap)
+        
+
+    def convert_track_to_pin(self,track):
         """ 
         Convert a grid point into a rectangle shape that is centered
         track in the track and leaves half a DRC space in each direction.

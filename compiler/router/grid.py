@@ -143,27 +143,23 @@ class grid:
                 self.map[n].blocked=True
                 
 
-    def set_source(self,ll,ur,z):
-        debug.info(1,"Adding source ll={0} ur={1} z={2}".format(str(ll),str(ur),z))
-        for x in range(int(ll[0]),int(ur[0])+1):
-            for y in range(int(ll[1]),int(ur[1])+1):
-                n = vector3d(x,y,z)
-                self.add_map(n)
-                self.map[n].source=True
-                # Can't have a blocked target otherwise it's infeasible
-                self.map[n].blocked=False
-                self.source.append(n)
+    def add_source(self,track_list):
+        debug.info(3,"Adding source list={0}".format(str(track_list)))
+        for n in track_list:
+            self.add_map(n)
+            self.map[n].source=True
+            # Can't have a blocked target otherwise it's infeasible
+            self.map[n].blocked=False
+            self.source.append(n)
 
-    def set_target(self,ll,ur,z):
-        debug.info(1,"Adding target ll={0} ur={1} z={2}".format(str(ll),str(ur),z))
-        for x in range(int(ll[0]),int(ur[0])+1):
-            for y in range(int(ll[1]),int(ur[1])+1):
-                n = vector3d(x,y,z)
-                self.add_map(n)
-                self.map[n].target=True
-                # Can't have a blocked target otherwise it's infeasible
-                self.map[n].blocked=False
-                self.target.append(n)                
+    def add_target(self,track_list):
+        debug.info(3,"Adding target list={0}".format(str(track_list)))
+        for n in track_list:
+            self.add_map(n)
+            self.map[n].target=True
+            # Can't have a blocked target otherwise it's infeasible
+            self.map[n].blocked=False
+            self.target.append(n)                
 
     def reset_cells(self):
         """
@@ -190,7 +186,7 @@ class grid:
                 p.blocked=True
         
             
-    def set_path(self,path):
+    def add_path(self,path):
         """ 
         Mark the path in the routing grid for visualization
         """

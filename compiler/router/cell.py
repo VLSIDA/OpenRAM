@@ -38,6 +38,6 @@ class cell:
 
         # We can display the cost of the frontier
         if self.min_cost > 0:
-            return str(self.min_cost)
+            return self.min_cost
         
         return "."

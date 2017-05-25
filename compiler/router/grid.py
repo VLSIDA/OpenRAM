@@ -128,7 +128,7 @@ class grid:
             for x in range(xmin,xmax+1):
                 n = vector3d(x,y,layer)
                 if n in self.map.keys():
-                    print self.map[n].get_type().center(fieldwidth),
+                    print str(self.map[n].get_type()).center(fieldwidth),
                 else:
                     print ".".center(fieldwidth),
             print ""

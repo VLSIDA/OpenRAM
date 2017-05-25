@@ -179,6 +179,13 @@ class router:
                           width=shape[1].x-shape[0].x,
                           height=shape[1].y-shape[0].y)
 
+            t=self.rg.map[g].get_type()
+            if (type(t)==str):
+                cell.add_label(text=t,
+                               layer="text",
+                               offset=vector((shape[1].x+shape[0].x)/2,
+                                             (shape[1].y+shape[0].y)/2))
+                           
     
     def add_route(self,cell):
         """ 
@@ -317,11 +324,14 @@ class router:
         zindex = 0 if pin_layer==self.horiz_layer_number else 1
         self.source_pin_zindex = zindex
 
+        found_pin = False
         for shape in self.source_pin_shapes:
             pin_in_tracks=self.convert_pin_to_tracks(shape,zindex,pin)
+            if (len(pin_in_tracks)>0): found_pin=True
             debug.info(1,"Set source: " + str(pin) + " " + str(pin_in_tracks) + " z=" + str(zindex))
             self.rg.add_source(pin_in_tracks)
-
+            
+        debug.check(found_pin,"Unable to find source pin on grid.")
 
     def add_target(self,pin):
         """ 
@@ -332,11 +342,15 @@ class router:
 
         zindex = 0 if pin_layer==self.horiz_layer_number else 1
         self.target_pin_zindex = zindex
-        
+
+        found_pin=False
         for shape in self.target_pin_shapes:
-            pin_in_tracks=self.convert_pin_to_tracks(shape,zindex,pin)  
+            pin_in_tracks=self.convert_pin_to_tracks(shape,zindex,pin)            
+            if (len(pin_in_tracks)>0): found_pin=True
             debug.info(1,"Set target: " + str(pin) + " " + str(pin_in_tracks) + " z=" + str(zindex))
             self.rg.add_target(pin_in_tracks)
+            
+        debug.check(found_pin,"Unable to find source pin on grid.")            
         
     def write_obstacle(self, sref, mirr = 1, angle = math.radians(float(0)), xyShift = (0, 0)): 
         """
@@ -428,8 +442,11 @@ class router:
                 #debug.info(1,"Rect {0}".format(rect))                                
                 # find the rectangular overlap shape (if any)
                 # if dimension of overlap is greater than min width in any dimension, add it
-                if self.compute_max_overlap(shape,rect)>=width:
+                max_overlap=max(self.compute_overlap(shape,rect))
+                if max_overlap >= width:
                     track_list.append(vector3d(x,y,zindex))
+                else:
+                    debug.info(1,"No overlap: {0} {1} max={2}".format(shape,rect,max_overlap))
 
         #debug.warning("Off-grid pin for {0}.".format(str(pin)))
         #debug.info(1,"Converted [ {0} , {1} ]".format(ll,ur))
@@ -451,13 +468,6 @@ class router:
         else:
             return [0,0]
             
-    
-    def compute_max_overlap(self,r1,r2):
-        """ Compute the maximum dimension of rectangular overlap of two rectangles """
-        overlap=self.compute_overlap(r1,r2)
-        #debug.info(1,"Overlap [ {0} , {1} ] = {2}".format(r1,r2,overlap))
-        return max(overlap)
-        
 
     def convert_track_to_pin(self,track):
         """ 

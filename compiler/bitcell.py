@@ -29,9 +29,5 @@ class bitcell(design.design):
         # the delay is only over half transsmission gate
         r = 9250.0*3
         c_para = 0.7#ff
-        if not isinstance(load, dict):
-            result = self.cal_delay_with_rc(r = r, c =  c_para+load, slope =slope)
-        else:
-            driver = [r,c_para]
-            result= self.wire_delay(slope=slope, driver=driver, wire=load)
+        result = self.cal_delay_with_rc(r = r, c =  c_para+load, slope =slope)
         return result

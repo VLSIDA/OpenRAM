@@ -126,7 +126,7 @@ class layout:
                        offset=offset)
 
 
-    def add_label(self, text, layer, offset=[0,0],zoom=0.05):
+    def add_label(self, text, layer, offset=[0,0],zoom=-1):
         """Adds a text label on the given layer,offset, and zoom level"""
         # negative layers indicate "unused" layers in a given technology
         layerNumber = techlayer[layer]

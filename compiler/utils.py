@@ -39,13 +39,13 @@ def auto_measure_libcell(pin_list, name, units, layer):
     reader.loadFromFile(cell_gds)
 
     cell = {}
-    measure_result = cell_vlsi.readLayoutBorder(layer)
+    measure_result = cell_vlsi.getLayoutBorder(layer)
     if measure_result == None:
         measure_result = cell_vlsi.measureSize(name)
     [cell["width"], cell["height"]] = measure_result
 
     for pin in pin_list:
-        cell[str(pin)] = gds_pin_center(cell_vlsi.readPinShape(str(pin)))
+        cell[str(pin)] = gds_pin_center(cell_vlsi.getPinShapeByLabel(str(pin)))
     return cell
 
 

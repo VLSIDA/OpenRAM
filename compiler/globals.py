@@ -166,11 +166,21 @@ def setup_paths():
     try:
         OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
     except:
-        debug.error("OPENRAM_HOME is not properly defined.",1)
-    sys.path.append("{0}".format(OPENRAM_HOME))
+        debug.error("$OPENRAM_HOME is not properly defined.",1)
+    debug.check(os.path.isdir(OPENRAM_HOME),"$OPENRAM_HOME does not exist: {0}".format(OPENRAM_HOME))
+    
+    debug.check(os.path.isdir(OPENRAM_HOME+"/gdsMill"),
+                "$OPENRAM_HOME/gdsMill does not exist: {0}".format(OPENRAM_HOME+"/gdsMill"))
     sys.path.append("{0}/gdsMill".format(OPENRAM_HOME)) 
+    debug.check(os.path.isdir(OPENRAM_HOME+"/tests"),
+                "$OPENRAM_HOME/tests does not exist: {0}".format(OPENRAM_HOME+"/tests"))
     sys.path.append("{0}/tests".format(OPENRAM_HOME))
+    debug.check(os.path.isdir(OPENRAM_HOME+"/characterizer"),
+                "$OPENRAM_HOME/characterizer does not exist: {0}".format(OPENRAM_HOME+"/characterizer"))
     sys.path.append("{0}/characterizer".format(OPENRAM_HOME))
+    debug.check(os.path.isdir(OPENRAM_HOME+"/router"),
+                "$OPENRAM_HOME/router does not exist: {0}".format(OPENRAM_HOME+"/router"))
+    sys.path.append("{0}/router".format(OPENRAM_HOME))
 
     if not OPTS.openram_temp.endswith('/'):
         OPTS.openram_temp += "/"
@@ -260,8 +270,9 @@ def import_tech():
     try:
         OPENRAM_TECH = os.path.abspath(os.environ.get("OPENRAM_TECH"))
     except:
-        debug.error("OPENRAM_TECH is not properly defined.",1)
-
+        debug.error("$OPENRAM_TECH is not properly defined.",1)
+    debug.check(os.path.isdir(OPENRAM_TECH),"$OPENRAM_TECH does not exist: {0}".format(OPENRAM_TECH))
+    
     OPTS.openram_tech = OPENRAM_TECH + "/" + OPTS.tech_name
     if not OPTS.openram_tech.endswith('/'):
         OPTS.openram_tech += "/"
@@ -272,6 +283,7 @@ def import_tech():
         # we assume that the setup scripts (and tech dirs) are located at the
         # same level as the compielr itself, probably not a good idea though.
         path = "{0}/setup_scripts".format(os.environ.get("OPENRAM_TECH"))
+        debug.check(os.path.isdir(path),"OPENRAM_TECH does not exist: {0}".format(path))    
         sys.path.append(os.path.abspath(path))
         __import__(filename)
     except ImportError:

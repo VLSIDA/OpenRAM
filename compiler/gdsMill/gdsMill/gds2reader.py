@@ -20,7 +20,7 @@ class Gds2reader:
             print (number>>(63-index))&0x1,
         print "\n"
         
-    def strip_non_ascii(self,string):
+    def stripNonASCII(self,string):
     	#''' Returns the string without non ASCII characters'''
         stripped = (c for c in string if 0 < ord(c) < 127)
         return "".join(stripped)
@@ -290,7 +290,7 @@ class Gds2reader:
                 if(self.debugToTerminal==1):
                     print "\t\tPLEX: "+str(plex)
             elif(idBits==('\x12','\x06')):  #Reference Name
-                sName = self.strip_non_ascii(record[2::])
+                sName = self.stripNonASCII(record[2::])
                 thisSref.sName=sName.rstrip()
                 if(self.debugToTerminal==1):
                     print "\t\tReference Name:"+sName
@@ -595,11 +595,11 @@ class Gds2reader:
             idBits = (record[0],record[1])
             if idBits==('\x07','\x00'): break; #we've reached the end of the structure
             elif(idBits==('\x06','\x06')):
-                structName = self.strip_non_ascii(record[2::]) #(record[2:1] + record[1::]).rstrip()
+                structName = self.stripNonASCII(record[2::]) #(record[2:1] + record[1::]).rstrip()
 #		print ''.[x for x in structName if ord(x) < 128]
 #	        stripped = (c for c in structName if 0 < ord(c) < 127)
 #	        structName = "".join(stripped)
-#                print self.strip_non_ascii(structName) ##FIXME: trimming by Tom g.  ##could be an issue here with string trimming!
+#                print self.stripNonASCII(structName) ##FIXME: trimming by Tom g.  ##could be an issue here with string trimming!
                 thisStructure.name = structName
                 if(self.debugToTerminal==1):
                     print "\tStructure Name: "+structName
@@ -694,11 +694,11 @@ class Gds2reader:
             idBits = (record[0],record[1])
             if idBits==('\x07','\x00'): break; #we've reached the end of the structure
             elif(idBits==('\x06','\x06')):
-                structName = self.strip_non_ascii(record[2::]) #(record[2:1] + record[1::]).rstrip()
+                structName = self.stripNonASCII(record[2::]) #(record[2:1] + record[1::]).rstrip()
 #		print ''.[x for x in structName if ord(x) < 128]
 #	        stripped = (c for c in structName if 0 < ord(c) < 127)
 #	        structName = "".join(stripped)
-#                print self.strip_non_ascii(structName) ##FIXME: trimming by Tom g.  ##could be an issue here with string trimming!
+#                print self.stripNonASCII(structName) ##FIXME: trimming by Tom g.  ##could be an issue here with string trimming!
                 thisStructure.name = structName
 		if(findStructName==thisStructure.name):
 			wantedStruct=1
@@ -775,11 +775,11 @@ class Gds2reader:
             idBits = (record[0],record[1])
             if idBits==('\x07','\x00'): break; #we've reached the end of the structure
             elif(idBits==('\x06','\x06')):
-                structName = self.strip_non_ascii(record[2::]) #(record[2:1] + record[1::]).rstrip()
+                structName = self.stripNonASCII(record[2::]) #(record[2:1] + record[1::]).rstrip()
 #		print ''.[x for x in structName if ord(x) < 128]
 #	        stripped = (c for c in structName if 0 < ord(c) < 127)
 #	        structName = "".join(stripped)
-#                print self.strip_non_ascii(structName) ##FIXME: trimming by Tom g.  ##could be an issue here with string trimming!
+#                print self.stripNonASCIIx(structName) ##FIXME: trimming by Tom g.  ##could be an issue here with string trimming!
                 thisStructure.name = structName
                 if(self.debugToTerminal==1):
                     print "\tStructure Name: "+structName

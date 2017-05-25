@@ -51,7 +51,9 @@ def parse_args():
                              help="Spice simulator name"),
         # TODO: Why is this -f?
         optparse.make_option("-f", "--trim_noncritical", dest="trim_noncritical",
-                             help="Trim noncritical memory cells during simulation")
+                             help="Trim noncritical memory cells during simulation"),
+        optparse.make_option("-a", "--analyticaldelay", dest="analytical_delay",
+                             help="Use analytical model to calculate delay or not")
     }
 # -h --help is implicit.
 

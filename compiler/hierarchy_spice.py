@@ -227,19 +227,24 @@ class wire_spice_model:
 
     def cal_wire_c(self, wire_length, wire_width):
         from tech import spice
-        wire_c = spice["wire_unit_c"] * wire_length * wire_width / self.lump_num
+        total_c = spice["wire_unit_c"] * wire_length * wire_width
+        wire_c = total_c / self.lump_num
         return wire_c
 
     def cal_wire_r(self, wire_length, wire_width):
         from tech import spice
-        wire_r = spice["wire_unit_r"] * wire_length / (wire_width * self.lump_num)
+        total_r = spice["wire_unit_r"] * wire_length / wire_width
+        wire_r = total_r / self.lump_num
         return wire_r
 
     def return_input_cap(self):
         return 0.5 * self.wire_c * self.lump_num
 
     def return_delay_over_wire(self, slope):
-        delay = self.wire_r * self.wire_c * (1+self.lump_num)*self.lump_num*0.5
+        # delay will be sum of arithmetic sequence start from
+        # rc to self.lump_num*rc with step of rc
+        sum_factor = (1+self.lump_num) * self.lump_num * 0.5
+        delay = 0.67 * self.wire_r * self.wire_c * sum_factor
         slope = delay * 2 + slope
         result= delay_data(delay, slope)
         return result

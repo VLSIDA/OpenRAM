@@ -294,4 +294,8 @@ spice["feasible_period"] = 5
 # analytical delay parameter
 spice["wire_unit_r"] = 0.075 #ohm 
 spice["wire_unit_c"] = 0.64 #ff/um^2
-
+spice["min_tx_r"] = 9250.0
+spice["min_tx_c_para"] = 0.7 #ff
+spice["min_tx_gate_c"] = 0.2
+spice["msflop_delay"] = 20.5171565446#ps
+spice["msflop_slope"] = 13.0801872972#ps

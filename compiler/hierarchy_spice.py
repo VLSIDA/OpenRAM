@@ -1,6 +1,7 @@
 import debug
 import re
 import os
+import math
 
 
 class spice:
@@ -162,8 +163,8 @@ class spice:
         Calculate the delay of a mosfet by 
         modeling it as a resistance driving a capacitance
         """
-        # 50% delay is only 0.7rc
-        delay = 0.7 * r * c #c is in ff and delay is in fs
+        swing_factor = abs(math.log(1-swing)) # time constant based on swing
+        delay = swing_factor * r * c #c is in ff and delay is in fs
         delay = delay * 0.001 #make the unit to ps
 
         # Output slope should be linear to input slope which is described 
@@ -243,7 +244,7 @@ class wire_spice_model:
     def return_delay_over_wire(self, slope, swing = 0.5):
         # delay will be sum of arithmetic sequence start from
         # rc to self.lump_num*rc with step of rc
-        import math
+
         swing_factor = abs(math.log(1-swing)) # time constant based on swing
         sum_factor = (1+self.lump_num) * self.lump_num * 0.5 # sum of the arithmetic sequence
         delay = sum_factor * swing_factor * self.wire_r * self.wire_c 

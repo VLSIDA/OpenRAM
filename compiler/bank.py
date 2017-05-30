@@ -1533,6 +1533,7 @@ class bank(design.design):
 
         bl_t_data_out_delay = self.sens_amp_array.delay(bitcell_array_delay.slope,
                                                         self.bitcell_array.output_load())
+        # output load of bitcell_array is set to be only small part of bl for sense amp.
 
         data_t_DATA_delay = self.tri_gate_array.delay(bl_t_data_out_delay.slope)
 

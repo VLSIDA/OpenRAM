@@ -23,10 +23,8 @@ class sense_amp(design.design):
 
     def delay(self, slope, load=0.0):
         from tech import spice
-        init_point = - 0.5 * slope
-        slope =  0
         r = spice["min_tx_r"]/(10)
         c_para = spice["min_tx_c_para"]#ff
         result = self.cal_delay_with_rc(r = r, c =  c_para+load, slope =slope)
-        return self.return_delay(init_point, result.slope)
+        return self.return_delay(result.delay , result.slope)
 

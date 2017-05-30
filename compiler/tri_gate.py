@@ -23,11 +23,11 @@ class tri_gate(design.design):
 
     def delay(self, slope, load=0.0):
         from tech import spice
-        r =  spice["min_tx_r"]
+        r = spice["min_tx_r"]
         c_para = spice["min_tx_c_para"]#ff
-        if isinstance(load, float):
-            result = self.cal_delay_with_rc(r = r, c =  c_para+load, slope =slope)
-        else:
-            driver = [r,c_para]
-            result= self.wire_delay(slope=slope, driver=driver, wire=load)
-        return result
+        return self.cal_delay_with_rc(r = r, c =  c_para+load, slope =slope)
+
+
+    def input_load(self):
+        return 9*spice["min_tx_gate_c"]
+

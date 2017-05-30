@@ -403,7 +403,7 @@ class pinv(design.design):
         self.Z_position = self.output_position
 
     def input_load(self):
-        return 3*(self.nmos_size/parameter["min_tx_size"])*spice["min_tx_gate_c"]
+        return ((self.nmos_size+self.pmos_size)/parameter["min_tx_size"])*spice["min_tx_gate_c"]
 
     def delay(self, slope, load=0.0):
         from tech import spice

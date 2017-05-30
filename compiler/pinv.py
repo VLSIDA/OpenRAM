@@ -1,7 +1,7 @@
 import contact
 import design
 import debug
-from tech import drc, parameter
+from tech import drc, parameter, spice
 from ptx import ptx
 from vector import vector
 from math import ceil
@@ -403,11 +403,10 @@ class pinv(design.design):
         self.Z_position = self.output_position
 
     def input_load(self):
-        return (self.nmos_size/parameter["min_tx_size"])*0.3
+        return 3*(self.nmos_size/parameter["min_tx_size"])*spice["min_tx_gate_c"]
 
     def delay(self, slope, load=0.0):
-        r = 9250.0/(self.nmos_size/parameter["min_tx_size"])
-        c_para = 0.7*(self.nmos_size/parameter["min_tx_size"])#ff
-
-        result = self.cal_delay_with_rc(r = r, c =  c_para+load, slope =slope)
-        return result
+        from tech import spice
+        r = spice["min_tx_r"]/(self.nmos_size/parameter["min_tx_size"])
+        c_para = spice["min_tx_c_para"]*(self.nmos_size/parameter["min_tx_size"])#ff
+        return self.cal_delay_with_rc(r = r, c =  c_para+load, slope =slope)

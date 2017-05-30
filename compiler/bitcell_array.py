@@ -1,7 +1,9 @@
 import debug
 import design
+from tech import drc, spice
 from vector import vector
 from globals import OPTS
+
 
 
 class bitcell_array(design.design):
@@ -160,21 +162,20 @@ class bitcell_array(design.design):
 
         bl_wire_delay = bl_wire.return_delay_over_wire(cell_delay.slope)
         #print "bl_wire_delay",bl_wire_delay
-        #return self.return_delay(cell_delay.delay+wl_to_cell_delay.delay+bl_wire_delay.delay,
-        #                         bl_wire_delay.slope)
-        return [wl_to_cell_delay, cell_delay, bl_wire_delay]
+        #return [wl_to_cell_delay, cell_delay, bl_wire_delay]
+        return self.return_delay(cell_delay.delay+wl_to_cell_delay.delay+bl_wire_delay.delay,
+                                 bl_wire_delay.slope)
+
 
     def gen_wl_wire(self):
-        from tech import drc
         wl_wire = self.generate_rc_net(int(self.column_size), self.width, drc["minwidth_metal1"])
-        wl_wire.wire_c = 2*0.3 + wl_wire.wire_c # 2 access tx  per cell
+        wl_wire.wire_c = 2*spice["min_tx_gate_c"] + wl_wire.wire_c # 2 access tx  per cell
         return wl_wire
 
     def gen_bl_wire(self):
-        from tech import drc
         bl_pos = 0
         bl_wire = self.generate_rc_net(int(self.row_size-bl_pos), self.height, drc["minwidth_metal1"])
-        bl_wire.wire_c = 0.3 + bl_wire.wire_c # 1 access tx per cell
+        bl_wire.wire_c =spice["min_tx_c_para"] + bl_wire.wire_c # 1 access tx per cell
         return bl_wire
 
     def output_load(self, bl_pos=0):

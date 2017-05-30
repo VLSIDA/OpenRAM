@@ -157,7 +157,7 @@ class spice:
         # return 0 to keep code running while building
         return delay_data(0.0, 0.0)
 
-    def cal_delay_with_rc(self, r, c ,slope):
+    def cal_delay_with_rc(self, r, c ,slope, swing = 0.5):
         """ 
         Calculate the delay of a mosfet by 
         modeling it as a resistance driving a capacitance
@@ -240,11 +240,13 @@ class wire_spice_model:
     def return_input_cap(self):
         return 0.5 * self.wire_c * self.lump_num
 
-    def return_delay_over_wire(self, slope):
+    def return_delay_over_wire(self, slope, swing = 0.5):
         # delay will be sum of arithmetic sequence start from
         # rc to self.lump_num*rc with step of rc
-        sum_factor = (1+self.lump_num) * self.lump_num * 0.5
-        delay = 0.67 * self.wire_r * self.wire_c * sum_factor
+        import math
+        swing_factor = abs(math.log(1-swing)) # time constant based on swing
+        sum_factor = (1+self.lump_num) * self.lump_num * 0.5 # sum of the arithmetic sequence
+        delay = sum_factor * swing_factor * self.wire_r * self.wire_c 
         slope = delay * 2 + slope
         result= delay_data(delay, slope)
         return result

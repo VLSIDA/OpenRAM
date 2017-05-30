@@ -1518,22 +1518,8 @@ class bank(design.design):
                                          y_offset], 
                                  mirror="R90")
 
-    def delay(self, slope, path = ["ADDR[0]", "DATA[0]"]):
-        """
-        max_address_size = self.row_addr_size-1 
-        max_address = self.num_rows-1 # should able to cal delay over different path later 
-        max_bit_add = self.num_cols-1
-        # ADDRESS FLIP FLOP & Decoder Delay
-        data_path =["ADDR["+str(max_address_size)+"]", 
-                    "A["+str(max_address_size)+"]",
-                    "decode_out["+str(max_address)+"]",
-                    "wl["+str(max_address)+"]",
-                    "bl["+str(max_bit_add)+"]"
-                    ]
-        result = self.cal_delay_over_path(data_path, slope)
-
-        wl_delay = result[-2]
-        """
+    def delay(self, slope):
+        """ return  analytical delay of the bank"""
         msf_addr_delay = self.msf_address.delay(slope, 
                                                 self.decoder.input_load())
 
@@ -1542,21 +1528,15 @@ class bank(design.design):
 
         word_driver_delay = self.wordline_driver.delay(decoder_delay.slope,
                                                        self.bitcell_array.input_load())
-        #print "word_driver_delay",word_driver_delay
 
-        wl_to_cell_delay, cell_delay, bl_wire_delay = self.bitcell_array.delay(word_driver_delay.slope)
-        bitcell_array_delay = wl_to_cell_delay + cell_delay + bl_wire_delay
-        #print "bitcell_array_delay",bitcell_array_delay
+        bitcell_array_delay = self.bitcell_array.delay(word_driver_delay.slope)
+
         bl_t_data_out_delay = self.sens_amp_array.delay(bitcell_array_delay.slope,
                                                         self.bitcell_array.output_load())
-        #print "bl_t_data_out_delay",bl_t_data_out_delay
 
         data_t_DATA_delay = self.tri_gate_array.delay(bl_t_data_out_delay.slope)
 
         result = msf_addr_delay + decoder_delay + word_driver_delay \
                  + bitcell_array_delay + bl_t_data_out_delay + data_t_DATA_delay
-        print "self.num_rows",self.num_rows,"self.num_cols",self.num_cols
-        wl_delay = word_driver_delay + wl_to_cell_delay
-        bl_delay =  cell_delay + bl_wire_delay + bl_t_data_out_delay 
-        print "wl delay", wl_delay.delay,"bl delay", bl_delay.delay,"total delay",result.delay
+        print "total delay",result.delay
         return result

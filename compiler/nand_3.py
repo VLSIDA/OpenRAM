@@ -4,6 +4,7 @@ import debug
 from tech import drc
 from ptx import ptx
 from vector import vector
+from tech import parameter, spice
 from globals import OPTS
 
 class nand_3(design.design):
@@ -527,13 +528,11 @@ class nand_3(design.design):
         self.gnd_position = self.gnd_position
 
     def input_load(self):
-        from tech import parameter
-        return (self.nmos_size/parameter["min_tx_size"])*0.4
+        return 5*(self.nmos_size/parameter["min_tx_size"])*spice["min_tx_gate_c"]
 
     def delay(self, slope, load=0.0):
-        from tech import parameter
-        r = 9250.0/(self.nmos_size/parameter["min_tx_size"])
-        c_para = 0.7*(self.nmos_size/parameter["min_tx_size"])#ff
+        r = spice["min_tx_r"]/(self.nmos_size/parameter["min_tx_size"])
+        c_para = spice["min_tx_c_para"]*(self.nmos_size/parameter["min_tx_size"])#ff
         if isinstance(load, float):
             result = self.cal_delay_with_rc(r = r, c =  c_para+load, slope =slope)
         else:

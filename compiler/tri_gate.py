@@ -22,8 +22,9 @@ class tri_gate(design.design):
         self.height = tri_gate.chars["height"]
 
     def delay(self, slope, load=0.0):
-        r = 9250.0
-        c_para = 0.7#ff
+        from tech import spice
+        r =  spice["min_tx_r"]
+        c_para = spice["min_tx_c_para"]#ff
         if isinstance(load, float):
             result = self.cal_delay_with_rc(r = r, c =  c_para+load, slope =slope)
         else:

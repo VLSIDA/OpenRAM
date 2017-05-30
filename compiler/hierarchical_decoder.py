@@ -601,3 +601,30 @@ class hierarchical_decoder(design.design):
                      offset=[xoffset + self.gap_between_rails,
                              yoffset - self.via_shift],
                      rotate=90)
+
+    def delay(self, slope, load = 0.0):
+        # A -> out
+        if self.determine_predecodes(self.num_inputs)[1]==0:
+            pre = self.pre2_4
+            nand = self.nand2
+        else:
+            pre = self.pre3_8
+            nand = self.nand3
+        a_t_out_delay = pre.delay(slope=slope,load = nand.input_load())
+
+        # out -> z
+        out_t_z_delay = nand.delay(slope= a_t_out_delay.slope,
+                                  load = self.inv.input_load())
+        result = a_t_out_delay + out_t_z_delay
+
+        # Z -> decode_out
+        z_t_decodeout_delay = self.inv.delay(slope = out_t_z_delay.slope , load = load)
+        result = result + z_t_decodeout_delay
+        return result
+
+    def input_load(self):
+        if self.determine_predecodes(self.num_inputs)[1]==0:
+            pre = self.pre2_4
+        else:
+            pre = self.pre3_8
+        return pre.input_load()

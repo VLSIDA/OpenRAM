@@ -134,3 +134,8 @@ class tri_gate_array(design.design):
                        layer="text",
                        offset=[self.width / 2.0,
                                self.height / 2.0])
+
+    def delay(self, slope, load=0.0):
+        result = self.tri.delay(slope = slope, 
+                                    load = load)
+        return result

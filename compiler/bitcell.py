@@ -21,3 +21,14 @@ class bitcell(design.design):
         self.width = bitcell.chars["width"]
         self.height = bitcell.chars["height"]
 
+    def delay(self, slope, load=0, swing = 0.5):
+        # delay of bit cell is not like a driver(from WL)
+        # so the slope used should be 0
+        # it should not be slope dependent?
+        # because the value is there
+        # the delay is only over half transsmission gate
+        from tech import spice
+        r = spice["min_tx_r"]*3
+        c_para = spice["min_tx_c_para"]#ff
+        result = self.cal_delay_with_rc(r = r, c =  c_para+load, slope = slope, swing = swing)
+        return result

@@ -228,6 +228,7 @@ class bank(design.design):
 
         self.wordline_driver = self.mod_wordline_driver(name="wordline_driver", 
                                                         rows=self.num_rows)
+        #self.wordline_driver.logic_effort_sizing(self.num_cols)
         self.add_mod(self.wordline_driver)
 
         self.inv = pinv(name="pinv",
@@ -1516,3 +1517,26 @@ class bank(design.design):
                                  offset=[x_offset + drc["minwidth_metal1"],  
                                          y_offset], 
                                  mirror="R90")
+
+    def delay(self, slope):
+        """ return  analytical delay of the bank"""
+        msf_addr_delay = self.msf_address.delay(slope, 
+                                                self.decoder.input_load())
+
+        decoder_delay = self.decoder.delay(msf_addr_delay.slope,
+                                           self.wordline_driver.input_load())
+
+        word_driver_delay = self.wordline_driver.delay(decoder_delay.slope,
+                                                       self.bitcell_array.input_load())
+
+        bitcell_array_delay = self.bitcell_array.delay(word_driver_delay.slope)
+
+        bl_t_data_out_delay = self.sens_amp_array.delay(bitcell_array_delay.slope,
+                                                        self.bitcell_array.output_load())
+        # output load of bitcell_array is set to be only small part of bl for sense amp.
+
+        data_t_DATA_delay = self.tri_gate_array.delay(bl_t_data_out_delay.slope)
+
+        result = msf_addr_delay + decoder_delay + word_driver_delay \
+                 + bitcell_array_delay + bl_t_data_out_delay + data_t_DATA_delay
+        return result

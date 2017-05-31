@@ -33,7 +33,7 @@ def parse_args():
     global OPTS
 
     option_list = {
-        optparse.make_option("-b", "--backannotated", dest="run_pex",
+        optparse.make_option("-b", "--backannotated", action="store_true", dest="run_pex",
                              help="back annotated simulation for characterizer"),
         optparse.make_option("-o", "--output", dest="out_name",
                              help="Base output file name.", metavar="FILE"),
@@ -50,10 +50,10 @@ def parse_args():
         optparse.make_option("-s", "--spiceversion", dest="spice_version",
                              help="Spice simulator name"),
         # TODO: Why is this -f?
-        optparse.make_option("-f", "--trim_noncritical", dest="trim_noncritical",
+        optparse.make_option("-f", "--trim_noncritical", action="store_true", dest="trim_noncritical",
                              help="Trim noncritical memory cells during simulation"),
-        optparse.make_option("-a", "--analyticaldelay", dest="analytical_delay",
-                             help="Use analytical model to calculate delay or not")
+        optparse.make_option("-a", "--analytical", action="store_true", dest="analytical_delay",
+                             help="Use analytical model to calculate delay")
     }
 # -h --help is implicit.
 

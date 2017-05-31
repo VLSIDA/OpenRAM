@@ -1539,5 +1539,4 @@ class bank(design.design):
 
         result = msf_addr_delay + decoder_delay + word_driver_delay \
                  + bitcell_array_delay + bl_t_data_out_delay + data_t_DATA_delay
-        print "total delay",result.delay
         return result

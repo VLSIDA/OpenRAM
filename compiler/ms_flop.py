@@ -23,3 +23,20 @@ class ms_flop(design.design):
         self.din_offset = ms_flop.chars["din"]
         self.dout_offset = ms_flop.chars["dout"]
         self.dout_bar_offset = ms_flop.chars["dout_bar"]
+
+    def delay(self, slope, load = 0.0):
+        #import pinv
+        # use inv to mimic the delay
+        # din -> mout
+        #ref =  pinv.pinv("reference_inv")
+        #mid_load = ref.input_load()
+        #din_t_mout_delay = ref.delay(slope = slope, load = mid_load)
+
+        # mout -> out
+        #mout_t_out_delay = ref.delay(slope = slope, load = load)
+        #result = din_t_mout_delay + mout_t_out_delay
+
+        # dont k how to calculate this now, use constant in tech file
+        from tech import spice
+        result = self.return_delay(spice["msflop_delay"], spice["msflop_slope"])
+        return result

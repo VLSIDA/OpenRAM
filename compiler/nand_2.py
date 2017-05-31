@@ -1,7 +1,7 @@
 import contact
 import design
 import debug
-from tech import drc
+from tech import drc, parameter, spice
 from ptx import ptx
 from vector import vector
 from globals import OPTS
@@ -438,3 +438,12 @@ class nand_2(design.design):
         self.Z_position = self.Z_position = self.output_position
         self.vdd_position = self.vdd_position
         self.gnd_position = self.gnd_position
+
+    def input_load(self):
+        from tech import spice
+        return ((self.nmos_size+self.pmos_size)/parameter["min_tx_size"])*spice["min_tx_gate_c"]
+
+    def delay(self, slope, load=0.0):
+        r = spice["min_tx_r"]/(self.nmos_size/parameter["min_tx_size"])
+        c_para = spice["min_tx_c_para"]*(self.nmos_size/parameter["min_tx_size"])#ff
+        return self.cal_delay_with_rc(r = r, c =  c_para+load, slope =slope)

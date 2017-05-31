@@ -15,7 +15,7 @@ OPTS = globals.get_opts()
 class lib:
     """ lib file generation."""
     
-    def __init__(self, libname, sram, spfile):
+    def __init__(self, libname, sram, spfile, use_model=OPTS.analytical_delay):
         self.name = sram.name
         self.num_words = sram.num_words
         self.word_size = sram.word_size
@@ -61,7 +61,11 @@ class lib:
         probe_address = "1" * self.addr_size
         probe_data = self.word_size - 1
 
-        data = self.d.analyze(probe_address, probe_data)
+        if use_model:
+            data = sram.analytical_model(slope=0.001)
+        else:
+            data = self.d.analyze(probe_address, probe_data)
+
         for i in data.keys():
             if i == "read_power" or i == "write_power":
                 continue

@@ -36,4 +36,4 @@ class options(optparse.Values):
     out_path = ""
     # Define the output file base name
     out_name = ""
-    analytical_delay = True
+    analytical_delay = False

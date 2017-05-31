@@ -40,4 +40,4 @@ class cell:
         if self.min_cost > 0:
             return self.min_cost
         
-        return "."
+        return None

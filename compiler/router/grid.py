@@ -54,84 +54,6 @@ class grid:
         # clear the queue 
         while (not self.q.empty()):
             self.q.get(False)
-
-    def view(self):
-        """
-        View the data as text array.
-        """
-        #os.system('clear')
-          
-        xmin=-10
-        xmax=10
-        ymin=-10
-        ymax=10
-        for v in self.map.keys():
-            xmin = min(xmin,v.x)
-            xmax = max(xmax,v.x)
-            ymin = min(ymin,v.y)
-            ymax = max(ymax,v.y)
-
-        xoffset=0
-        if xmin < 0:
-            xoffset=xmin
-        yoffset=0
-        if ymin < 0:
-            yoffset=ymin
-
-        v_map = {}
-        h_map = {}
-        
-        fieldwidth = 3
-        for h in self.map.keys():
-            fieldwidth = max(fieldwidth,len(self.map[h].get_type()))
-        for v in self.map.keys():
-            fieldwidth = max(fieldwidth,len(self.map[v].get_type()))
-            
-        # for x in range(width):
-        #     for y in range(height):
-        #         v_map[x,y]="."
-        #         h_map[x,y]="."
-                
-        #         h = vector3d(x+xoffset,y+yoffset,0)
-        #         v = vector3d(x+xoffset,y+yoffset,1)
-                
-        #         if (h in self.map.keys()):
-        #             h_map[x,y] = self.map[h].get_type()
-        #             fieldwidth = max(fieldwidth,len(h_map[x,y]))
-                    
-        #         if (v in self.map.keys()):               
-        #             v_map[x,y] = self.map[v].get_type()
-        #             fieldwidth = max(fieldwidth,len(v_map[x,y]))                    
-
-
-            
-        # display lower layer
-        print '='*80
-        print '='*80
-        self.print_grid(0,xmin,xmax,ymin,ymax,fieldwidth)
-        print '='*80
-        self.print_grid(1,xmin,xmax,ymin,ymax,fieldwidth)
-        print '='*80
-        print '='*80
-        raw_input("Press Enter to continue...")
-
-    def print_grid(self,layer,xmin,xmax,ymin,ymax,fieldwidth):
-        """
-        Display a text representation of a layer of the routing grid.
-        """
-        print "".center(fieldwidth),
-        for x in range(xmin,xmax+1):
-            print str(x).center(fieldwidth),
-        print ""
-        for y in reversed(range(ymin,ymax+1)):
-            print str(y).center(fieldwidth),
-            for x in range(xmin,xmax+1):
-                n = vector3d(x,y,layer)
-                if n in self.map.keys():
-                    print str(self.map[n].get_type()).center(fieldwidth),
-                else:
-                    print ".".center(fieldwidth),
-            print ""
         
         
     def add_blockage(self,ll,ur,z):
@@ -142,7 +64,6 @@ class grid:
                 self.add_map(n)
                 self.map[n].blocked=True
                 
-
     def add_source(self,track_list):
         debug.info(3,"Adding source list={0}".format(str(track_list)))
         for n in track_list:
@@ -175,6 +96,8 @@ class grid:
         for p in self.map.values():
             if (p.source or p.target):
                 p.blocked=True
+                p.source=False
+                p.target=False
 
     def convert_path_to_blockages(self):
         """
@@ -243,11 +166,9 @@ class grid:
                             debug.info(3,"Enqueuing: cost=" + str(current_cost) + "+" + str(target_cost) + " " + str(newpath))
                             # add the cost to get to this point if we haven't reached it yet
                             self.q.put((predicted_cost,newpath))
-            #self.view()
 
-        # View the unable to route result.
-        self.view()
-        debug.error("Unable to route path. Expand area?",-1)
+        debug.warning("Unable to route path. Expand area?")
+        return (None,None)
 
     def is_target(self,point):
         """

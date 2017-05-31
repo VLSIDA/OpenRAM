@@ -56,9 +56,11 @@ class pin_location_test(unittest.TestCase):
                 # these are user coordinates and layers
                 src_pin = [[0.52, 4.099],11]
                 tgt_pin = [[3.533, 1.087],11]
-                r.route(layer_stack,src=src_pin,dest=tgt_pin)
                 #r.route(layer_stack,src="A",dest="B")
-                r.add_route(self)
+                if r.route(layer_stack,src=src_pin,dest=tgt_pin):
+                    r.add_route(self)
+                else:
+                    debug.error("Unable to route")
 
         # This only works for freepdk45 since the coordinates are hard coded
         if OPTS.tech_name == "freepdk45":

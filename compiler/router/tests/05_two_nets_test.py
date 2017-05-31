@@ -54,14 +54,16 @@ class two_nets_test(unittest.TestCase):
                 self.gdsname = "{0}/{1}.gds".format(os.path.dirname(os.path.realpath(__file__)),gdsname)
                 r=router.router(self.gdsname)
                 layer_stack =("metal1","via1","metal2")
-                r.route(layer_stack,src="A",dest="B")
-                r.add_route(self)
+                if r.route(layer_stack,src="A",dest="B"):
+                    r.add_route(self)
+                else:
+                    self.assertTrue(False)
                 
-                r.route(layer_stack,src="C",dest="D")
-                r.add_route(self)
+                if r.route(layer_stack,src="C",dest="D"):
+                    r.add_route(self)
+                else:
+                    debug.error("Unable to route")
 
-
-        
         r = routing("test1", "05_two_nets_test_{0}".format(OPTS.tech_name))
         self.local_check(r)
         

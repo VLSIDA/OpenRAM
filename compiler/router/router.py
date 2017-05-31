@@ -154,24 +154,24 @@ class router:
 
         self.add_target(dest)
 
-        # View the initial route pins and blockages for debugging
-        #self.rg.view()
-        
         # returns the path in tracks
         (self.path,cost) = self.rg.route(cost_bound_scale)
-        debug.info(1,"Found path: cost={0} ".format(cost))
-        debug.info(2,str(self.path))
-        self.add_path(self.path)
-        # View the final route for debugging
-        #self.rg.view()        
-        
-        return 
+        if self.path!=None:
+            debug.info(1,"Found path: cost={0} ".format(cost))
+            debug.info(2,str(self.path))
+            self.add_path(self.path)
+            return True
 
-    def add_grid_map(self,cell):
+        return False
+
+    def add_router_info(self,cell):
         """
-        Write the routing grid as the boundary layer for debugging purposes.
+        Write the routing grid and router cost, blockage, pins on 
+        the boundary layer for debugging purposes. This can only be 
+        called once or the labels will overlap.
         """
         grid_keys=self.rg.map.keys()
+        partial_track=vector(0,self.track_width/6.0)
         for g in grid_keys:
             shape = self.convert_full_track_to_shape(g)
             cell.add_rect(layer="boundary",
@@ -180,11 +180,20 @@ class router:
                           height=shape[1].y-shape[0].y)
 
             t=self.rg.map[g].get_type()
-            if (type(t)==str):
-                cell.add_label(text=t,
-                               layer="text",
-                               offset=vector((shape[1].x+shape[0].x)/2,
-                                             (shape[1].y+shape[0].y)/2))
+            if t == None: continue
+
+            # midpoint offset
+            off=vector((shape[1].x+shape[0].x)/2,
+                       (shape[1].y+shape[0].y)/2)
+            if g[2]==1:
+                # Upper layer is upper right label
+                off+=partial_track
+            else:
+                # Lower layer is lower left label
+                off-=partial_track
+            cell.add_label(text=str(t),
+                           layer="text",
+                           offset=off)
                            
     
     def add_route(self,cell):
@@ -193,7 +202,7 @@ class router:
         """
 
         # For debugging...
-        self.add_grid_map(cell)
+        #self.add_router_info(cell)
         
         # First, simplify the path for
         #debug.info(1,str(self.path))        
@@ -330,7 +339,7 @@ class router:
             if (len(pin_in_tracks)>0): found_pin=True
             debug.info(1,"Set source: " + str(pin) + " " + str(pin_in_tracks) + " z=" + str(zindex))
             self.rg.add_source(pin_in_tracks)
-            
+
         debug.check(found_pin,"Unable to find source pin on grid.")
 
     def add_target(self,pin):
@@ -349,8 +358,10 @@ class router:
             if (len(pin_in_tracks)>0): found_pin=True
             debug.info(1,"Set target: " + str(pin) + " " + str(pin_in_tracks) + " z=" + str(zindex))
             self.rg.add_target(pin_in_tracks)
-            
+
         debug.check(found_pin,"Unable to find source pin on grid.")            
+
+
         
     def write_obstacle(self, sref, mirr = 1, angle = math.radians(float(0)), xyShift = (0, 0)): 
         """

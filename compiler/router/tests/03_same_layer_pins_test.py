@@ -52,9 +52,11 @@ class same_layer_pins_test(unittest.TestCase):
                 self.gdsname = "{0}/{1}.gds".format(os.path.dirname(os.path.realpath(__file__)),gdsname)
                 r=router.router(self.gdsname)
                 layer_stack =("metal1","via1","metal2")
-                r.route(layer_stack,src="A",dest="B")
-                r.add_route(self)
-        
+                if r.route(layer_stack,src="A",dest="B"):
+                    r.add_route(self)
+                else:
+                    self.assertTrue(False)
+
         r = routing("test1", "03_same_layer_pins_test_{0}".format(OPTS.tech_name))
         self.local_check(r)
         

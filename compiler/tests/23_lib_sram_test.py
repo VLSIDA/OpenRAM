@@ -34,10 +34,7 @@ class lib_test(unittest.TestCase):
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)
 
-        if OPTS.analytical_delay == True:
-            filename = s.name + "_analytical.lib"        
-        else:
-            filename = s.name + ".lib"     
+        filename = s.name + ".lib"     
         libname = OPTS.openram_temp + filename
         lib.lib(libname,s,tempspice)
         

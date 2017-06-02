@@ -111,6 +111,7 @@ def init_openram(config_file):
 
     set_calibre()
 
+
 def read_config(config_file):
     global OPTS
     
@@ -151,6 +152,12 @@ def set_calibre():
 def end_openram():
     """ Clean up openram for a proper exit """
     cleanup_paths()
+
+    # Reset the static duplicate name checker for unit tests.
+    # This is needed for running unit tests.
+    import design
+    design.design.name_map=[]
+    
     
 def cleanup_paths():
     # we should clean up this temp directory after execution...
@@ -253,7 +260,9 @@ def set_spice():
             debug.error("{0} not found. Unable to perform characterization.".format(OPTS.spice_version),1)
         else:
             debug.error("Neither hspice/ngspice not found. Unable to perform characterization.",1)
-                        
+
+    if OPTS.analytical_delay:
+        debug.warning("Using analytical delay models instead of characterization.")
 
         
 # imports correct technology directories for testing

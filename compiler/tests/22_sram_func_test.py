@@ -29,7 +29,7 @@ class sram_func_test(unittest.TestCase):
         s = sram.sram(word_size=OPTS.config.word_size,
                       num_words=OPTS.config.num_words,
                       num_banks=OPTS.config.num_banks,
-                      name="test_sram1")
+                      name="sram_func_test")
 
         OPTS.check_lvsdrc = True
 

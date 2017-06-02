@@ -26,19 +26,19 @@ class pinv_test(unittest.TestCase):
 
         debug.info(2, "Checking min size inverter")
         OPTS.check_lvsdrc = False
-        tx = pinv.pinv(name="a_inv_1", nmos_width=tech.drc["minwidth_tx"], beta=tech.parameter["pinv_beta"])
+        tx = pinv.pinv(nmos_width=tech.drc["minwidth_tx"], beta=tech.parameter["pinv_beta"])
         OPTS.check_lvsdrc = True
         self.local_check(tx)
 
         debug.info(2, "Checking 2x min size inverter")
         OPTS.check_lvsdrc = False
-        tx = pinv.pinv(name="a_inv_2", nmos_width=2 * tech.drc["minwidth_tx"], beta=tech.parameter["pinv_beta"])
+        tx = pinv.pinv(nmos_width=2 * tech.drc["minwidth_tx"], beta=tech.parameter["pinv_beta"])
         OPTS.check_lvsdrc = True
         self.local_check(tx)
 
         debug.info(2, "Checking 5x min size inverter")
         OPTS.check_lvsdrc = False
-        tx = pinv.pinv(name="a_inv_5", nmos_width=5 * tech.drc["minwidth_tx"], beta=tech.parameter["pinv_beta"])
+        tx = pinv.pinv(nmos_width=5 * tech.drc["minwidth_tx"], beta=tech.parameter["pinv_beta"])
         OPTS.check_lvsdrc = True
         self.local_check(tx)
 

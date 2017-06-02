@@ -231,26 +231,22 @@ class bank(design.design):
         #self.wordline_driver.logic_effort_sizing(self.num_cols)
         self.add_mod(self.wordline_driver)
 
-        self.inv = pinv(name="pinv",
-                        nmos_width=drc["minwidth_tx"], 
+        self.inv = pinv(nmos_width=drc["minwidth_tx"], 
                         beta=parameter["pinv_beta"], 
                         height=self.bitcell_height)
         self.add_mod(self.inv)
         
     # 4x Inverter
-        self.inv4x = pinv(name="pinv4x",
-                          nmos_width=4*drc["minwidth_tx"], 
+        self.inv4x = pinv(nmos_width=4*drc["minwidth_tx"], 
                           beta=parameter["pinv_beta"], 
                           height=self.bitcell_height)
         self.add_mod(self.inv4x)
 
-        self.NAND2 = nand_2(name="pnand2_x1", 
-                            nmos_width=2*drc["minwidth_tx"], 
+        self.NAND2 = nand_2(nmos_width=2*drc["minwidth_tx"], 
                             height=self.bitcell_height)
         self.add_mod(self.NAND2)
 
-        self.NOR2 = nor_2(name="pnor2_x1",
-                          nmos_width=drc["minwidth_tx"], 
+        self.NOR2 = nor_2(nmos_width=drc["minwidth_tx"], 
                           height=self.bitcell_height)
         self.add_mod(self.NOR2)
 

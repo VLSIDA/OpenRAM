@@ -96,7 +96,8 @@ def isdiff(file1,file2):
         f2 = open(file2,"r")
         s2 = f2.readlines()
         for line in difflib.unified_diff(s1, s2):
-            debug.error(line)   
+            debug.info(3,line)
+        debug.error("MISMATCH {0} {1}".format(file1,file2))            
     else:
         debug.info(2,"MATCH {0} {1}".format(file1,file2))
     return (check)

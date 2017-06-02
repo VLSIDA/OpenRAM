@@ -23,21 +23,10 @@ class sense_amp_test(unittest.TestCase):
 
         import sense_amp_array
 
-        debug.info(2, "Testing sense_amp_array for word_size=1, words_per_row=1")
-        OPTS.check_lvsdrc = False
-        a = sense_amp_array.sense_amp_array(word_size=1, words_per_row=1)
-        OPTS.check_lvsdrc = True
-        self.local_check(a)
 
         debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=2")
         OPTS.check_lvsdrc = False
         a = sense_amp_array.sense_amp_array(word_size=4, words_per_row=2)
-        OPTS.check_lvsdrc = True
-        self.local_check(a)
-
-        debug.info(2, "Testing sense_amp_array for word_size=3, words_per_row=1")
-        OPTS.check_lvsdrc = False
-        a = sense_amp_array.sense_amp_array(word_size=3, words_per_row=1)
         OPTS.check_lvsdrc = True
         self.local_check(a)
 

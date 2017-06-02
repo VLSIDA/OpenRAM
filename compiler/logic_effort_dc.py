@@ -53,8 +53,7 @@ class logic_effort_dc(design.design):
 
     def create_module(self):
         """add the inverters"""
-        self.inv = pinv(name="delay_chain_inv",
-                        nmos_width=drc["minwidth_tx"],
+        self.inv = pinv(nmos_width=drc["minwidth_tx"],
                         route_output=False)
         self.add_mod(self.inv)
 

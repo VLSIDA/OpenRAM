@@ -27,7 +27,7 @@ class nand_3_test(unittest.TestCase):
         import tech
 
         debug.info(2, "Checking 3-input nand gate")
-        tx = nand_3.nand_3(name="nand_3", nmos_width=3 * tech.drc["minwidth_tx"])
+        tx = nand_3.nand_3(nmos_width=3 * tech.drc["minwidth_tx"])
 
         OPTS.check_lvsdrc = True
         self.local_check(tx)

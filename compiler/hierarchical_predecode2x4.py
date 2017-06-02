@@ -19,8 +19,7 @@ class hierarchical_predecode2x4(hierarchical_predecode):
         self.route()
 
     def create_nand(self):
-        self.nand = nand_2(name="a_nand_2",
-                           nmos_width=self.nmos_width,
+        self.nand = nand_2(nmos_width=self.nmos_width,
                            height=self.bitcell_height)
 
     def set_rail_height(self):

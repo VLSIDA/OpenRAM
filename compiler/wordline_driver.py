@@ -8,6 +8,7 @@ from pinv import pinv
 from nand_2 import nand_2
 from vector import vector
 from globals import OPTS
+from contact import contact
 
 class wordline_driver(design.design):
     """
@@ -15,12 +16,16 @@ class wordline_driver(design.design):
     Generates the wordline-driver to drive the bitcell
     """
 
-    def __init__(self, name, rows):
+
+    def __init__(self, name, rows, load_size = 8):
         design.design.__init__(self, name)
+        c = reload(__import__(OPTS.config.bitcell))
+        self.mod_bitcell = getattr(c, OPTS.config.bitcell)
+        self.bitcell_chars = self.mod_bitcell.chars
 
         self.rows = rows
         self.add_pins()
-        self.design_layout()
+        self.design_layout(load_size)
         self.DRC_LVS()
 
     def add_pins(self):
@@ -34,20 +39,39 @@ class wordline_driver(design.design):
         self.add_pin("vdd")
         self.add_pin("gnd")
 
-    def design_layout(self):
-        self.add_layout()
+    def design_layout(self, load_size):
+        driver_size, nand_size = self.logic_effort_sizing(load_size)
+        self.add_layout(driver_size, nand_size)
         self.offsets_of_gates()
         self.create_layout()
 
-    def add_layout(self):
+    def add_layout(self, driver_size, nand_size):
         self.inv = pinv(nmos_width=drc["minwidth_tx"],
                         beta=parameter["pinv_beta"])
         self.add_mod(self.inv)
 
-        self.NAND2 = nand_2(nmos_width=2*drc["minwidth_tx"])
+        self.driver = pinv(nmos_width=driver_size,
+                           beta=parameter["pinv_beta"])
+        self.add_mod(self.driver)
+
+        self.NAND2 = nand_2(nmos_width=nand_size)
         self.add_mod(self.NAND2)
 
+    def logic_effort_sizing(self, load_size):
+        nand_effort = (4.0/3.0)
+        G = 1.0*nand_effort*1.0
+        H = load_size *(2.0/3.0)
+        F = G*H
+        f = F**(1.0/3.0)
+        y = load_size*1.0/f
+        x = y *nand_effort/f
 
+        #driver_strength = (int(y)+1)*drc["minwidth_tx"]
+        #NAND2_strength = (int(x)+1)*drc["minwidth_tx"]
+        # this was the old default size
+        driver_strength = 1*drc["minwidth_tx"] 
+        NAND2_strength = 2*drc["minwidth_tx"]
+        return driver_strength, NAND2_strength
 
 
     def offsets_of_gates(self):
@@ -138,7 +162,7 @@ class wordline_driver(design.design):
                                "vdd", "gnd"])
             # add inv2
             self.add_inst(name=name_inv2,
-                          mod=self.inv,
+                          mod=self.driver,
                           offset=inv2_offset,
                           mirror=inst_mirror)
             self.connect_inst(["net[{0}]".format(row),
@@ -209,6 +233,112 @@ class wordline_driver(design.design):
             self.WL_positions.append(wl_offset)
             self.vdd_positions.append(vdd_offset)
             self.gnd_positions.append(gnd_offset)
+
+    def add_extra_driver(self, word_line_seg, start, array_gap, array_to_driver):
+        for seg in range(1,word_line_seg):
+            seg_driver_width = self.driver.width
+            extra_driver_offset= start + array_gap.scale(seg,0)
+            self.add_extra_row_driver(extra_driver_offset, array_to_driver, seg)
+
+    def add_extra_row_driver(self, offset, array_to_driver, seg):
+        for row in range(self.rows):
+            if (row % 2):
+                y_offset = self.inv.height*(row + 1)
+                first_driver_offset=[self.x_offset2, y_offset]
+                inst_mirror = "MX"
+                cell_dir = vector(1,-1)
+            else:
+                y_offset = self.inv.height*row
+                first_driver_offset=[self.x_offset2, y_offset]
+                inst_mirror = "R0"
+                cell_dir = vector(1,1)
+            extra_driver_offset = offset + vector(0,y_offset)
+            self.rout_net_0(first_driver_offset, extra_driver_offset, cell_dir)
+            self.add_extra_a_driver(extra_driver_offset, inst_mirror, row, seg)
+            self.route_to_prev_WL(extra_driver_offset, array_to_driver, cell_dir)
+            self.route_to_next_WL(extra_driver_offset, array_to_driver, cell_dir)
+            self.extend_extra_vdd(first_driver_offset,extra_driver_offset,cell_dir)
+            self.extend_extra_gnd(first_driver_offset,extra_driver_offset,cell_dir)
+
+    def rout_net_0(self,first_driver_offset, extra_driver_offset, cell_dir):
+        m1m2_via = contact(layer_stack=("metal2", "via2", "metal3"))
+        start = first_driver_offset + self.driver.A_position.scale(cell_dir)
+        end = extra_driver_offset + self.driver.A_position.scale(cell_dir)
+        
+        self.add_path(layer=("metal3"),
+                      coordinates=[start,end+ vector(m1m2_via.width,0)],
+                      offset=start)
+        for offset in [start, end]:
+            self.add_via(layers=("metal1", "via1", "metal2"),
+                         offset=offset)
+            self.add_via(layers=("metal2", "via2", "metal3"),
+                         offset=offset)
+        
+
+    def add_extra_a_driver(self, offset, mirror, row ,seg):
+        #sec_offset =[95.045, 0]
+        self.add_inst(name="add_on_row_{0}_seg_{1}".format(row, seg),
+                      mod=self.driver,
+                      offset=offset,
+                      mirror=mirror)
+        self.connect_inst(["net[{0}]".format(row),
+                           "wl[{0}]".format(row),
+                           "vdd", "gnd"])
+
+    def route_to_next_WL(self, driver_offset, end, cell_dir):
+        start = driver_offset + self.driver.Z_position.scale(cell_dir) + vector(0,0.5*drc["minwidth_metal1"]).scale(cell_dir)
+        mid = start + vector(drc["metal1_to_metal1"],0)
+        end = vector(start.x + end, driver_offset.y + self.bitcell_chars["WL"][1]*cell_dir.y)
+        self.add_path(layer=("metal1"),
+                      coordinates=[start,mid,end],
+                      offset=start)
+
+    def route_to_prev_WL(self,driver_offset, array_to_driver, cell_dir):
+        #start = driver_offset + self.driver.Z_position.scale(-1,1) + vector(-0.5*drc["minwidth_metal1"], drc["minwidth_metal1"])
+        #end = vector(offset)
+        start =driver_offset + self.driver.Z_position.scale(cell_dir) + vector(0,0.5*drc["minwidth_metal1"]).scale(cell_dir)   
+        end = driver_offset - vector(array_to_driver,0) \
+              + vector(0, self.bitcell_chars["WL"][1]*cell_dir.y)
+        mid0 = start + vector(drc["metal1_to_metal1"],0)
+        mid1 = vector(start.x,end.y) + vector(drc["minwidth_metal1"],0.5*drc["minwidth_metal1"]).scale(cell_dir)   
+        mid2 = vector(mid1.x, end.y) + vector(drc["minwidth_metal2"],0).scale(cell_dir)   
+        mid3 = driver_offset.scale(1,0) - vector(drc["metal1_to_metal1"]+drc["minwidth_metal2"],0)\
+                + end.scale(0,1)
+
+        self.add_path(layer=("metal1"),
+                      coordinates=[start,mid0,mid1],
+                      offset=start)
+
+        m1m2_via = contact(layer_stack=("metal1", "via1", "metal2"))
+        via_offset = mid1 - vector( 0.5 *m1m2_via.width, m1m2_via.height*0.5) + vector(0, m1m2_via.height*0.5).scale(cell_dir)\
+                     - vector(0, 0.5*drc["minwidth_metal2"]).scale(cell_dir)
+        self.add_via(layers=("metal1", "via1", "metal2"),
+                     offset=via_offset)
+        self.add_path(layer=("metal2"),
+                      coordinates=[mid1,mid3],
+                      offset=mid1)
+
+        via_offset = mid3 - vector(m1m2_via.width * 0.5, m1m2_via.height*0.5) + vector(0, m1m2_via.height*0.5).scale(cell_dir)\
+                     - vector(0, 0.5*drc["minwidth_metal2"]).scale(cell_dir)
+        self.add_via(layers=("metal1", "via1", "metal2"),
+                     offset=via_offset )   
+        self.add_path(layer=("metal1"),
+                      coordinates=[mid3,end],
+                      offset=mid3) 
+
+    def extend_extra_vdd(self,first_driver_offset,extra_driver_offset, cell_dir):
+        start =first_driver_offset + self.driver.vdd_position.scale(cell_dir) + vector(0,0.5*drc["minwidth_metal1"]).scale(cell_dir)   
+        end = extra_driver_offset + self.driver.vdd_position.scale(cell_dir) + vector(0,0.5*drc["minwidth_metal1"]).scale(cell_dir)       
+        self.add_path(layer=("metal1"),
+                      coordinates=[start,end],
+                      offset=start)
+
+    def extend_extra_gnd(self,first_driver_offset,extra_driver_offset, cell_dir):
+        start =first_driver_offset + self.driver.gnd_position.scale(cell_dir) + vector(0,0.5*drc["minwidth_metal1"]).scale(cell_dir)       
+        end = extra_driver_offset + self.driver.gnd_position.scale(cell_dir) + vector(0,0.5*drc["minwidth_metal1"]).scale(cell_dir)      
+        self.add_path(layer=("metal1"),
+                      coordinates=[start,end],
+                      offset=start)
 
     def delay(self, slope, load=0):
         # decode_out -> net

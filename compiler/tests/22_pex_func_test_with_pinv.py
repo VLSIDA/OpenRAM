@@ -66,7 +66,7 @@ class sram_func_test(unittest.TestCase):
         import os
 
         if OPTS.spice_version == "hspice":
-            cmd = "hspice -mt 36 -i {0} > {1} ".format(
+            cmd = "hspice -mt 2 -i {0} > {1} ".format(
                 simulator_file, result_file)
         else:
             cmd = "ngspice -b  -i {0} > {1}  ".format(

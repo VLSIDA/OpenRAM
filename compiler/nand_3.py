@@ -19,10 +19,12 @@ class nand_3(design.design):
     c = reload(__import__(OPTS.config.bitcell))
     bitcell = getattr(c, OPTS.config.bitcell)
 
-
-    def __init__(self, name, nmos_width=1, height=bitcell.chars["height"]):
-        """Constructor : Creates a pcell for a simple 3_input nand"""
-
+    unique_id = 1
+    
+    def __init__(self, nmos_width=1, height=bitcell.chars["height"]):
+        """Constructor : Creates a cell for a simple 3 input nand"""
+        name = "nand3_{0}".format(nand_3.unique_id)
+        nand_3.unique_id += 1
         design.design.__init__(self, name)
         debug.info(2, "create nand_3 strcuture {0} with size of {1}".format(name, nmos_width))
 

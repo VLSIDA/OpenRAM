@@ -16,7 +16,12 @@ class pinv(design.design):
     c = reload(__import__(OPTS.config.bitcell))
     bitcell = getattr(c, OPTS.config.bitcell)
 
-    def __init__(self, name, nmos_width=1, beta=3, height=bitcell.chars["height"], route_output=True):
+    unique_id = 1
+    
+    def __init__(self, nmos_width=1, beta=3, height=bitcell.chars["height"], route_output=True):
+        """Constructor : Creates a cell for a simple inverter"""
+        name = "pinv{0}".format(pinv.unique_id)
+        pinv.unique_id += 1
         design.design.__init__(self, name)
         debug.info(2, "create pinv strcuture {0} with size of {1}".format(name, nmos_width))
 
@@ -48,9 +53,9 @@ class pinv(design.design):
 
         # These aren't for instantiating, but we use them to get the dimensions
         self.nwell_contact = contact.contact(layer_stack=("active", "contact", "metal1"),
-                                                     dimensions=(1, self.pmos.num_of_tacts))
+                                             dimensions=(1, self.pmos.num_of_tacts))
         self.pwell_contact = contact.contact(layer_stack=("active", "contact", "metal1"),
-                                                     dimensions=(1, self.nmos.num_of_tacts))
+                                             dimensions=(1, self.nmos.num_of_tacts))
 
         self.extend_wells()
         self.extend_active()

@@ -34,8 +34,7 @@ class hierarchical_predecode(design.design):
     def create_modules(self):
         layer_stack = ("metal1", "via1", "metal2")
         self.m1m2_via = contact(layer_stack=layer_stack) 
-        self.inv = pinv(name="a_inv_1",
-                        nmos_width=drc["minwidth_tx"],
+        self.inv = pinv(nmos_width=drc["minwidth_tx"],
                         beta=2,
                         height=self.bitcell_height)
         self.add_mod(self.inv)

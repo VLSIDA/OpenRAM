@@ -448,7 +448,7 @@ def run_sim():
     
     if OPTS.spice_version == "hspice":
         # TODO: Should make multithreading parameter a configuration option
-        cmd = "{0} -mt 8 -i {1} -o {2}timing".format(OPTS.spice_exe,
+        cmd = "{0} -mt 2 -i {1} -o {2}timing".format(OPTS.spice_exe,
                                                                      temp_stim,
                                                                      OPTS.openram_temp)
         valid_retcode=0

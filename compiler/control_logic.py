@@ -42,26 +42,21 @@ class control_logic(design.design):
         self.mod_ms_flop = getattr(c, OPTS.config.ms_flop)
         self.ms_flop = self.mod_ms_flop("ms_flop")
         self.add_mod(self.ms_flop)
-        self.inv = pinv(name="pinv",
-                        nmos_width=drc["minwidth_tx"],
+        self.inv = pinv(nmos_width=drc["minwidth_tx"],
                         beta=parameter["pinv_beta"])
 
         self.add_mod(self.inv)
-        self.nand2 = nand_2(name="nand2",
-                            nmos_width=2 * drc["minwidth_tx"])
+        self.nand2 = nand_2(nmos_width=2 * drc["minwidth_tx"])
         self.add_mod(self.nand2)
-        self.NAND3 = nand_3(name="NAND3",
-                            nmos_width=3 * drc["minwidth_tx"])
+        self.NAND3 = nand_3(nmos_width=3 * drc["minwidth_tx"])
         self.add_mod(self.NAND3)
 
         # Special gates: 4x Inverter
-        self.inv4 = pinv(name="pinv4",
-                         nmos_width=4 * drc["minwidth_tx"],
+        self.inv4 = pinv(nmos_width=4 * drc["minwidth_tx"],
                          beta=parameter["pinv_beta"])
         self.add_mod(self.inv4)
 
-        self.nor2 = nor_2(name="nor2",
-                          nmos_width=drc["minwidth_tx"])
+        self.nor2 = nor_2(nmos_width=drc["minwidth_tx"])
         self.add_mod(self.nor2)
 
         self.msf_control = ms_flop_array(name="msf_control",
@@ -70,8 +65,8 @@ class control_logic(design.design):
                                          word_size=3)
         self.add_mod(self.msf_control)
 
-        self.replica_bitline = replica_bitline("replica_bitline",
-                                               int(math.ceil(self.num_rows / 10.0)))
+        self.replica_bitline = replica_bitline(name="replica_bitline",
+                                               rows=int(math.ceil(self.num_rows / 10.0)))
         self.add_mod(self.replica_bitline)
 
     def add_pin_labels(self):

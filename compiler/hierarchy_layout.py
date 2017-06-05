@@ -17,7 +17,7 @@ class layout:
     layout/netlist and perform LVS/DRC.
     """
 
-    def __init__(self, name):
+    def __init__(self, name):            
         self.name = name
         self.width = None
         self.height = None
@@ -68,7 +68,7 @@ class layout:
             attr_val = getattr(self,attr_key)
 
             # skip the list of things as these will be offset separately
-            if (attr_key in ['objs','insts','mods','pins','conns']): continue
+            if (attr_key in ['objs','insts','mods','pins','conns','name_map']): continue
 
             # if is a list
             if isinstance(attr_val, list):

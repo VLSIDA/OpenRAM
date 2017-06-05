@@ -19,7 +19,7 @@ class hierarchical_decoder(design.design):
     """
 
     def __init__(self, nand2_nmos_width, nand3_nmos_width, rows):
-        design.design.__init__(self, "hierarchical_decoder")
+        design.design.__init__(self, "hierarchical_decoder_{0}rows".format(rows))
 
         c = reload(__import__(OPTS.config.bitcell))
         self.mod_bitcell = getattr(c, OPTS.config.bitcell)
@@ -59,26 +59,21 @@ class hierarchical_decoder(design.design):
         # used to shift contact when connecting to NAND3 C pin down
         self.contact_shift = (self.m1m2_via.first_layer_width - self.m1m2_via.contact_width) / 2
 
-        self.inv = pinv(name="pinverter",
-                        nmos_width=drc["minwidth_tx"],
+        self.inv = pinv(nmos_width=drc["minwidth_tx"],
                         beta=2,
                         height=self.bitcell_height)
         self.add_mod(self.inv)
-        self.nand2 = nand_2(name="pnand2",
-                            nmos_width=self.nand2_nmos_width,
+        self.nand2 = nand_2(nmos_width=self.nand2_nmos_width,
                             height=self.bitcell_height)
         self.add_mod(self.nand2)
-        self.nand3 = nand_3(name="pnand3",
-                            nmos_width=self.nand3_nmos_width,
+        self.nand3 = nand_3(nmos_width=self.nand3_nmos_width,
                             height=self.bitcell_height)
         self.add_mod(self.nand3)
 
         # CREATION OF PRE-DECODER
-        self.pre2_4 = pre2x4(self.nand2_nmos_width,
-                             "pre2x4")
+        self.pre2_4 = pre2x4(self.nand2_nmos_width, "pre2x4")
         self.add_mod(self.pre2_4)
-        self.pre3_8 = pre3x8(self.nand3_nmos_width,
-                             "pre3x8")
+        self.pre3_8 = pre3x8(self.nand3_nmos_width, "pre3x8")
         self.add_mod(self.pre3_8)
 
     def setup_layout_offsets(self):

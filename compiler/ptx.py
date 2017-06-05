@@ -21,7 +21,8 @@ class ptx(design.design):
         self.add_pins()
         self.create_layout()
         self.create_spice()
-        self.DRC()
+        # for run-time, we won't check every transitor DRC independently
+        #self.DRC()
 
     def add_pins(self):
         self.add_pin_list(["D", "G", "S", "B"])

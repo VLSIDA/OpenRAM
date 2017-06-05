@@ -13,11 +13,11 @@ class wire(path):
     The points are the center of the wire.
     The layer stack is the vertical, contact/via, and horizontal layers, respectively. 
     """
-    unique_wire_id = 1
+    unique_id = 1
 
     def __init__(self, layer_stack, position_list):
-        name = "wire_{0}".format(wire.unique_wire_id)
-        wire.unique_wire_id += 1
+        name = "wire_{0}".format(wire.unique_id)
+        wire.unique_id += 1
         design.design.__init__(self, name)
         debug.info(3, "create wire obj {0}".format(name))
 

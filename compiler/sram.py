@@ -26,6 +26,10 @@ class sram(design.design):
             mod_class = getattr(class_file , config_mod_name)
             setattr (self, "mod_"+mod_name, mod_class)
 
+        # reset the static duplicate name checker for unit tests
+        # in case we create more than one SRAM
+        import design
+        design.design.name_map=[]
 
         self.ms_flop_chars = self.mod_ms_flop.chars
         self.bitcell_chars = self.mod_bitcell.chars
@@ -157,7 +161,7 @@ class sram(design.design):
                          num_words=self.num_words_per_bank,
                          words_per_row=self.words_per_row,
                          num_banks=self.num_banks,
-                         name="test_bank1")
+                         name="bank")
         self.add_mod(self.bank)
 
         # Conditionally create the 

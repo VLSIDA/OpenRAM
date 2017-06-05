@@ -36,15 +36,24 @@ class grid:
 
         # priority queue for the maze routing
         self.q = Q.PriorityQueue()
+
+    def set_blocked(self,n):
+        self.add_map(n)
+        self.map[n].blocked=True
+
+    def set_source(self,n):
+        self.add_map(n)
+        self.map[n].source=True
+        self.source.append(n)
         
+    def set_target(self,n):
+        self.add_map(n)
+        self.map[n].target=True
+        self.target.append(n)
 
     def reinit(self):
         """ Reinitialize everything for a new route. """
         
-        self.convert_path_to_blockages()
-        
-        self.convert_pins_to_blockages()
-
         self.reset_cells()
         
         # clear source and target pins
@@ -54,33 +63,34 @@ class grid:
         # clear the queue 
         while (not self.q.empty()):
             self.q.get(False)
+
         
-        
-    def add_blockage(self,ll,ur,z):
+    def add_blockage_shape(self,ll,ur,z):
         debug.info(3,"Adding blockage ll={0} ur={1} z={2}".format(str(ll),str(ur),z))
         for x in range(int(ll[0]),int(ur[0])+1):
             for y in range(int(ll[1]),int(ur[1])+1):
                 n = vector3d(x,y,z)
                 self.add_map(n)
-                self.map[n].blocked=True
-                
+                self.set_blocked(n)
+
+    def add_blockage(self,block_list):
+        debug.info(3,"Adding blockage list={0}".format(str(block_list)))
+        for n in block_list:
+            self.set_blocked(n)
+
     def add_source(self,track_list):
         debug.info(3,"Adding source list={0}".format(str(track_list)))
         for n in track_list:
             self.add_map(n)
-            self.map[n].source=True
-            # Can't have a blocked target otherwise it's infeasible
-            self.map[n].blocked=False
-            self.source.append(n)
+            if not self.map[n].blocked:
+                self.set_source(n)
 
     def add_target(self,track_list):
         debug.info(3,"Adding target list={0}".format(str(track_list)))
         for n in track_list:
             self.add_map(n)
-            self.map[n].target=True
-            # Can't have a blocked target otherwise it's infeasible
-            self.map[n].blocked=False
-            self.target.append(n)                
+            if not self.map[n].blocked:
+                self.set_target(n)
 
     def reset_cells(self):
         """
@@ -89,25 +99,6 @@ class grid:
         for p in self.map.values():
             p.reset()
             
-    def convert_pins_to_blockages(self):
-        """
-        Convert all the pins to blockages and reset the pin sets.
-        """
-        for p in self.map.values():
-            if (p.source or p.target):
-                p.blocked=True
-                p.source=False
-                p.target=False
-
-    def convert_path_to_blockages(self):
-        """
-        Convert the routed path to blockages and reset the path.
-        """
-        for p in self.map.values():
-            if (p.path):
-                p.path=False
-                p.blocked=True
-        
             
     def add_path(self,path):
         """ 

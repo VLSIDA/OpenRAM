@@ -22,6 +22,10 @@ class cell:
         self.visited=False
         self.min_cost=-1
         self.min_path=None
+        self.blocked=False
+        self.source=False
+        self.target=False
+
         
     def get_type(self):
         if self.blocked:

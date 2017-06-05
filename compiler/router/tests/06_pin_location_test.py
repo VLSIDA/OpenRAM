@@ -36,35 +36,32 @@ class pin_location_test(unittest.TestCase):
                 design.hierarchy_layout.layout.__init__(self, name)
                 design.hierarchy_spice.spice.__init__(self, name)
             
-        class routing(design.design):
+        class routing(design.design,unittest.TestCase):
             """
             A generic GDS design that we can route on.
             """
-            def __init__(self, name, gdsname):
+            def __init__(self, name):
                 design.design.__init__(self, name)
                 debug.info(2, "Create {0} object".format(name))
 
-                cell = gdscell(gdsname)
-                self.add_inst(name=gdsname,
+                cell = gdscell(name)
+                self.add_inst(name=name,
                               mod=cell,
                               offset=[0,0])
                 self.connect_inst([])
                 
-                self.gdsname = "{0}/{1}.gds".format(os.path.dirname(os.path.realpath(__file__)),gdsname)
+                self.gdsname = "{0}/{1}.gds".format(os.path.dirname(os.path.realpath(__file__)),name)
                 r=router.router(self.gdsname)
                 layer_stack =("metal1","via1","metal2")
                 # these are user coordinates and layers
                 src_pin = [[0.52, 4.099],11]
                 tgt_pin = [[3.533, 1.087],11]
                 #r.route(layer_stack,src="A",dest="B")
-                if r.route(layer_stack,src=src_pin,dest=tgt_pin):
-                    r.add_route(self)
-                else:
-                    debug.error("Unable to route")
+                self.assertTrue(r.route(self,layer_stack,src=src_pin,dest=tgt_pin))
 
         # This only works for freepdk45 since the coordinates are hard coded
         if OPTS.tech_name == "freepdk45":
-            r = routing("test1", "06_pin_location_test_{0}".format(OPTS.tech_name))
+            r = routing("06_pin_location_test_{0}".format(OPTS.tech_name))
             self.local_check(r)
         else:
             debug.warning("This test does not support technology {0}".format(OPTS.tech_name))

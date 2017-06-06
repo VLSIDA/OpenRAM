@@ -70,7 +70,6 @@ class grid:
         for x in range(int(ll[0]),int(ur[0])+1):
             for y in range(int(ll[1]),int(ur[1])+1):
                 n = vector3d(x,y,z)
-                self.add_map(n)
                 self.set_blocked(n)
 
     def add_blockage(self,block_list):
@@ -81,14 +80,12 @@ class grid:
     def add_source(self,track_list):
         debug.info(3,"Adding source list={0}".format(str(track_list)))
         for n in track_list:
-            self.add_map(n)
             if not self.map[n].blocked:
                 self.set_source(n)
 
     def add_target(self,track_list):
         debug.info(3,"Adding target list={0}".format(str(track_list)))
         for n in track_list:
-            self.add_map(n)
             if not self.map[n].blocked:
                 self.set_target(n)
 

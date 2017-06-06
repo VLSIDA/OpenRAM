@@ -206,12 +206,12 @@ class router:
                                offset=shape[0],
                                width=shape[1].x-shape[0].x,
                                height=shape[1].y-shape[0].y)
-            # These rae the on grid pins
-            rect = self.convert_track_to_pin(g)
-            self.cell.add_rect(layer="boundary",
-                               offset=rect[0],
-                               width=rect[1].x-rect[0].x,
-                               height=rect[1].y-rect[0].y)
+            # These are the on grid pins
+            #rect = self.convert_track_to_pin(g)
+            #self.cell.add_rect(layer="boundary",
+            #                   offset=rect[0],
+            #                   width=rect[1].x-rect[0].x,
+            #                   height=rect[1].y-rect[0].y)
             
             t=self.rg.map[g].get_type()
 

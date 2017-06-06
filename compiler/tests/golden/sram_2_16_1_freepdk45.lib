@@ -124,10 +124,10 @@ cell (sram_2_16_1_freepdk45){
         internal_power(){
             when : "OEb & !clk"; 
             rise_power(INPUT_BY_TRANS_FOR_SIGNAL){
-                values("0.66109");
+                values("0.67729");
             }
             fall_power(INPUT_BY_TRANS_FOR_SIGNAL){
-                values("0.66109");
+                values("0.67729");
             }
         }
         timing(){ 
@@ -156,10 +156,10 @@ cell (sram_2_16_1_freepdk45){
         internal_power(){
             when : "!OEb & !clk"; 
             rise_power(INPUT_BY_TRANS_FOR_SIGNAL){
-                values("0.027754");
+                values("0.028881");
             }
             fall_power(INPUT_BY_TRANS_FOR_SIGNAL){
-                values("0.027754");
+                values("0.028881");
             }
         }
         timing(){ 
@@ -167,16 +167,16 @@ cell (sram_2_16_1_freepdk45){
             related_pin : "clk"; 
             timing_type : rising_edge; 
             cell_rise(CELL_UP_FOR_CLOCK) {
-                values("0.042"); 
+                values("0.019"); 
             }
             cell_fall(CELL_DN_FOR_CLOCK) {
-                values("0.241"); 
+                values("0.239"); 
             }
         rise_transition(TRAN) {
-                values("0.042"); 
+                values("0.019"); 
               }
         fall_transition(TRAN) {
-                values("0.241"); 
+                values("0.239"); 
             }
         }
     }
@@ -294,20 +294,20 @@ cell (sram_2_16_1_freepdk45){
             timing_type :"min_pulse_width"; 
             related_pin  : clk; 
             rise_constraint(CLK_TRAN) {
-                values("0.174"); 
+                values("0.175"); 
             }
             fall_constraint(CLK_TRAN) {
-                values("0.174"); 
+                values("0.175"); 
             }
          }
         timing(){ 
             timing_type :"minimum_period"; 
             related_pin  : clk; 
             rise_constraint(CLK_TRAN) {
-                values("0.348"); 
+                values("0.35"); 
             }
             fall_constraint(CLK_TRAN) {
-                values("0.348"); 
+                values("0.35"); 
             }
          }
     }

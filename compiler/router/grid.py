@@ -84,14 +84,12 @@ class grid:
     def add_source(self,track_list):
         debug.info(3,"Adding source list={0}".format(str(track_list)))
         for n in track_list:
-            self.add_map(n)
             if not self.is_blocked(n):
                 self.set_source(n)
 
     def add_target(self,track_list):
         debug.info(3,"Adding target list={0}".format(str(track_list)))
         for n in track_list:
-            self.add_map(n)
             if not self.is_blocked(n):
                 self.set_target(n)
 
@@ -182,33 +180,27 @@ class grid:
         neighbors = []
         
         east = point + vector3d(1,0,0)
-        self.add_map(east)
-        if not self.map[east].blocked and not east in path:                
+        if not self.is_blocked(east) and not east in path:                
             neighbors.append(east)
         
         west= point + vector3d(-1,0,0)
-        self.add_map(west)
-        if not self.map[west].blocked and not west in path:                
+        if not self.is_blocked(west) and not west in path:                
             neighbors.append(west)
 
         up = point + vector3d(0,0,1)
-        self.add_map(up)
-        if up.z<2 and not self.map[up].blocked and not up in path:
+        if up.z<2 and not self.is_blocked(up) and not up in path:
                 neighbors.append(up)
 
         north = point + vector3d(0,1,0)
-        self.add_map(north)
-        if not self.map[north].blocked and not north in path:                
+        if not self.is_blocked(north) and not north in path:                
             neighbors.append(north)
 
         south = point + vector3d(0,-1,0)
-        self.add_map(south)
-        if not self.map[south].blocked and not south in path:                
+        if not self.is_blocked(south) and not south in path:                
             neighbors.append(south)
                 
         down = point + vector3d(0,0,-1)
-        self.add_map(down)            
-        if down.z>=0 and not self.map[down].blocked and not down in path:
+        if down.z>=0 and not self.is_blocked(down) and not down in path:
             neighbors.append(down)
 
             

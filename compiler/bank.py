@@ -54,6 +54,7 @@ class bank(design.design):
 
     def add_pins(self):
         """ Adding pins for Bank module"""
+        
         for i in range(self.word_size):
             self.add_pin("DATA[{0}]".format(i))
         for i in range(self.addr_size):
@@ -117,7 +118,7 @@ class bank(design.design):
 
     def compute_sizes(self):
         """  Computes the required sizes to create the bank """
-        self.wl_driver_mults = 5 # minmum should be 1
+        self.wl_driver_mults = 1 # minmum should be 1
         self.wl_seg_num = max(1,self.wl_driver_mults-1) # at least one segment in wl
         # segment is still 1 when you have 2 drivers  
         # depend on how much segment wl has
@@ -355,7 +356,6 @@ class bank(design.design):
         self.sens_amp_array_position = self.module_offset 
         for seg in range(self.wl_seg_num):
             start_bit_index = (seg) * self.bitcell_array.column_size
-            start_out_index = (seg) * self.column_mux_array.columns
             start_data_index = (seg) * self.sens_amp_array.word_size
             seg_offset = self.bitcell_array_gap.scale(seg,0) 
             seg_offset = self.sens_amp_array_position + seg_offset
@@ -376,8 +376,8 @@ class bank(design.design):
                     temp.append("br[{0}]".format(start_bit_index+j*self.words_per_row))
             else:
                 for j in range(self.word_size):
-                    temp.append("bl_out[{0}]".format(start_out_index+j*self.words_per_row))
-                    temp.append("br_out[{0}]".format(start_out_index+j*self.words_per_row))
+                    temp.append("bl_out[{0}]".format(start_data_index+j*self.words_per_row))
+                    temp.append("br_out[{0}]".format(start_data_index+j*self.words_per_row))
 
             for i in range(self.word_size):
                 temp.append("data_out[{0}]".format(start_data_index+i))
@@ -392,7 +392,7 @@ class bank(design.design):
         for seg in range(self.wl_seg_num):
             start_bit_index = (seg) * self.bitcell_array.column_size
             in_index = (seg) * self.write_driver_array.word_size
-            start_out_index = (seg) * self.column_mux_array.columns
+            start_out_index =(seg) * self.sens_amp_array.word_size
             seg_offset = self.bitcell_array_gap.scale(seg,0) 
             seg_offset = seg_offset + self.write_driver_array_position
             self.add_inst(name="write_driver_array_{0}".format(seg), 
@@ -519,10 +519,6 @@ class bank(design.design):
         temp.append("vdd")
         temp.append("gnd")
         self.connect_inst(temp)
-
-
-
-
 
     def add_msf_address(self):
         """ Adding address Flip-flops """

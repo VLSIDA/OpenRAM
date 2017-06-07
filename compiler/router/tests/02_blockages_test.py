@@ -36,29 +36,26 @@ class blockages_test(unittest.TestCase):
                 design.hierarchy_layout.layout.__init__(self, name)
                 design.hierarchy_spice.spice.__init__(self, name)
             
-        class routing(design.design):
+        class routing(design.design,unittest.TestCase):
             """
             A generic GDS design that we can route on.
             """
-            def __init__(self, name, gdsname):
+            def __init__(self, name):
                 design.design.__init__(self, name)
                 debug.info(2, "Create {0} object".format(name))
 
-                cell = gdscell(gdsname)
-                self.add_inst(name=gdsname,
+                cell = gdscell(name)
+                self.add_inst(name=name,
                               mod=cell,
                               offset=[0,0])
                 self.connect_inst([])
                 
-                self.gdsname = "{0}/{1}.gds".format(os.path.dirname(os.path.realpath(__file__)),gdsname)
+                self.gdsname = "{0}/{1}.gds".format(os.path.dirname(os.path.realpath(__file__)),name)
                 r=router.router(self.gdsname)
                 layer_stack =("metal1","via1","metal2")
-                if r.route(layer_stack,src="A",dest="B"):
-                    r.add_route(self)
-                else:
-                    self.assertTrue(False)
+                self.assertTrue(r.route(self,layer_stack,src="A",dest="B"))
 
-        r = routing("test1", "02_blockages_test_{0}".format(OPTS.tech_name))
+        r = routing("02_blockages_test_{0}".format(OPTS.tech_name))
         self.local_check(r)
         
         # fails if there are any DRC errors on any cells

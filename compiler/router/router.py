@@ -28,12 +28,15 @@ class router:
         self.source_pin_zindex = None
         self.target_pin_shapes = []
         self.target_pin_zindex = None
+        # the list of all blockage shapes
+        self.blockages = []
+        # all thepaths we've routed so far (to supplement the blockages)
+        self.paths = []
 
         # The boundary will determine the limits to the size of the routing grid
         self.boundary = self.layout.measureBoundary(self.top_name)
         self.ll = vector(self.boundary[0])
         self.ur = vector(self.boundary[1])
-
 
     def set_top(self,top_name):
         """ If we want to route something besides the top-level cell."""
@@ -113,7 +116,7 @@ class router:
         if they are not actually a blockage.
         """
         for layer in self.layers:
-            self.write_obstacle(self.top_name)
+            self.get_blockages(self.top_name)
 
             
     def clear_pins(self):
@@ -123,19 +126,24 @@ class router:
         Convert the routed path to blockages.
         Keep the other blockages unchanged.
         """
+        self.source_pin = None
         self.source_pin_shapes = []
         self.source_pin_zindex = None
+        self.target_pin = None
         self.target_pin_shapes = []
         self.target_pin_zindex = None
+        # DO NOT clear the blockages as these don't change
         self.rg.reinit()
         
 
-    def route(self, layers, src, dest, cost_bound_scale=1):
+    def route(self, cell, layers, src, dest, cost_bound_scale=1):
         """ 
         Route a single source-destination net and return
         the simplified rectilinear path. Cost factor is how sub-optimal to explore for a feasible route. 
         This is used to speed up the routing when there is not much detouring needed.
         """
+        self.cell = cell
+
         # Clear the pins if we have previously routed
         if (hasattr(self,'rg')):
             self.clear_pins()
@@ -146,97 +154,137 @@ class router:
             # FIXME: This could be created only over the routing region,
             # but this is simplest for now.
             self.create_routing_grid()
-            # This will write all shapes as blockages, but setting pins will
-            # clear the blockage attribute
+            # This will get all shapes as blockages
             self.find_blockages()
 
-        self.add_source(src)
+        # Get the pin shapes
+        self.get_source(src)
+        self.get_target(dest)
+        
+        # Now add the blockages (all shapes except the src/tgt pins)
+        self.add_blockages()
+        # Add blockages from previous paths
+        self.add_path_blockages()        
 
-        self.add_target(dest)
+        # Now add the src/tgt if they are not blocked by other shapes
+        self.add_source()
+        self.add_target()
 
+            
         # returns the path in tracks
-        (self.path,cost) = self.rg.route(cost_bound_scale)
-        if self.path!=None:
+        (path,cost) = self.rg.route(cost_bound_scale)
+        if path:
             debug.info(1,"Found path: cost={0} ".format(cost))
-            debug.info(2,str(self.path))
-            self.add_path(self.path)
+            debug.info(2,str(path))
+            self.add_route(path)
             return True
+        else:
+            self.write_debug_gds()
 
         return False
 
-    def add_router_info(self,cell):
+    def write_debug_gds(self,):
+        """ 
+        Write out a GDS file with the routing grid and search information annotated on it.
+        """
+        self.add_router_info()
+        debug.error("Writing debug_route.gds from {0} to {1}".format(self.source_pin,self.target_pin))
+        self.cell.gds_write("debug_route.gds")
+
+    def add_router_info(self):
         """
         Write the routing grid and router cost, blockage, pins on 
         the boundary layer for debugging purposes. This can only be 
         called once or the labels will overlap.
         """
+        debug.info(0,"Adding router info for {0} to {1}".format(self.source_pin,self.target_pin))
         grid_keys=self.rg.map.keys()
         partial_track=vector(0,self.track_width/6.0)
         for g in grid_keys:
             shape = self.convert_full_track_to_shape(g)
-            cell.add_rect(layer="boundary",
-                          offset=shape[0],
-                          width=shape[1].x-shape[0].x,
-                          height=shape[1].y-shape[0].y)
-
+            self.cell.add_rect(layer="boundary",
+                               offset=shape[0],
+                               width=shape[1].x-shape[0].x,
+                               height=shape[1].y-shape[0].y)
+            # These are the on grid pins
+            #rect = self.convert_track_to_pin(g)
+            #self.cell.add_rect(layer="boundary",
+            #                   offset=rect[0],
+            #                   width=rect[1].x-rect[0].x,
+            #                   height=rect[1].y-rect[0].y)
+            
             t=self.rg.map[g].get_type()
-            if t == None: continue
 
             # midpoint offset
             off=vector((shape[1].x+shape[0].x)/2,
                        (shape[1].y+shape[0].y)/2)
             if g[2]==1:
                 # Upper layer is upper right label
-                off+=partial_track
+                type_off=off+partial_track
             else:
                 # Lower layer is lower left label
-                off-=partial_track
-            cell.add_label(text=str(t),
-                           layer="text",
-                           offset=off)
+                type_off=off-partial_track
+            if t!=None:
+                self.cell.add_label(text=str(t),
+                                    layer="text",
+                                    offset=type_off)
+            self.cell.add_label(text="{0},{1}".format(g[0],g[1]),
+                                layer="text",
+                                offset=shape[0])
                            
-    
-    def add_route(self,cell):
+    def add_route(self,path):
         """ 
         Add the current wire route to the given design instance.
         """
+        debug.info(3,"Set path: " + str(path))
 
-        # For debugging...
-        #self.add_router_info(cell)
+        # Keep track of path for future blockages
+        self.paths.append(path)
         
+        # This is marked for debug
+        self.rg.add_path(path)
+
+        # For debugging... if the path failed to route.
+        if False or path==None:
+            self.write_debug_gds()
+
+        if 'Xout_4_1' in [self.source_pin, self.target_pin]:
+            self.write_debug_gds()
+
+            
         # First, simplify the path for
         #debug.info(1,str(self.path))        
-        contracted_path = self.contract_path(self.path)
+        contracted_path = self.contract_path(path)
         debug.info(1,str(contracted_path))
         
         # Make sure there's a pin enclosure on the source and dest
         add_src_via = contracted_path[0].z!=self.source_pin_zindex
-        self.add_grid_pin(cell,contracted_path[0],add_src_via)
+        self.add_grid_pin(contracted_path[0],add_src_via)
         add_tgt_via = contracted_path[-1].z!=self.target_pin_zindex
-        self.add_grid_pin(cell,contracted_path[-1],add_tgt_via)
+        self.add_grid_pin(contracted_path[-1],add_tgt_via)
 
         # convert the path back to absolute units from tracks
         abs_path = map(self.convert_point_to_units,contracted_path)
         debug.info(1,str(abs_path))
-        cell.add_route(self.layers,abs_path)
+        self.cell.add_route(self.layers,abs_path)
 
     
-    def add_grid_pin(self,cell,point,add_via=False):
+    def add_grid_pin(self,point,add_via=False):
         """
         Create a rectangle at the grid 3D point that is 1/2 DRC smaller
         than the routing grid on all sides.
         """
         pin = self.convert_track_to_pin(point)
-        cell.add_rect(layer=self.layers[2*point.z],
-                      offset=pin[0],
-                      width=pin[1].x-pin[0].x,
-                      height=pin[1].y-pin[0].y)
+        self.cell.add_rect(layer=self.layers[2*point.z],
+                           offset=pin[0],
+                           width=pin[1].x-pin[0].x,
+                           height=pin[1].y-pin[0].y)
 
         if add_via:
             # offset this by 1/2 the via size
             c=contact(self.layers, (1, 1))
             via_offset = vector(-0.5*c.width,-0.5*c.height)
-            cell.add_via(self.layers,vector(point[0],point[1])+via_offset)
+            self.cell.add_via(self.layers,vector(point[0],point[1])+via_offset)
 
         
     def create_steiner_routes(self,pins):
@@ -316,56 +364,87 @@ class router:
         newpath.append(path[-1])
         return newpath
     
-    def add_path(self,path):
-        """
-        Mark the path in the routing grid.
-        """
-        debug.info(3,"Set path: " + str(path))        
-        self.rg.add_path(path)
 
-    def add_source(self,pin):
+    def add_path_blockages(self):
+        """
+        Go through all of the past paths and add them as blockages.
+        This is so we don't have to write/reload the GDS.
+        """
+        for path in self.paths:
+            for grid in path:
+                self.rg.set_blocked(grid)
+        
+
+    def get_source(self,pin):
+        """ 
+        Gets the source pin shapes only. Doesn't add to grid.
+        """
+        self.source_pin = pin        
+        (self.source_pin_layer,self.source_pin_shapes) = self.find_pin(pin)
+        zindex = 0 if self.source_pin_layer==self.horiz_layer_number else 1
+        self.source_pin_zindex = zindex
+
+    def add_source(self):
         """ 
         Mark the grids that are in the pin rectangle ranges to have the source property. 
         pin can be a location or a label.
         """
-        (pin_layer,self.source_pin_shapes) = self.find_pin(pin)
-
-        zindex = 0 if pin_layer==self.horiz_layer_number else 1
-        self.source_pin_zindex = zindex
 
         found_pin = False
         for shape in self.source_pin_shapes:
-            pin_in_tracks=self.convert_pin_to_tracks(shape,zindex,pin)
+            (pin_in_tracks,blockage_in_tracks)=self.convert_pin_to_tracks(shape,self.source_pin_zindex,self.source_pin)
             if (len(pin_in_tracks)>0): found_pin=True
-            debug.info(1,"Set source: " + str(pin) + " " + str(pin_in_tracks) + " z=" + str(zindex))
+            debug.info(1,"Set source: " + str(self.source_pin) + " " + str(pin_in_tracks) + " z=" + str(self.source_pin_zindex))
             self.rg.add_source(pin_in_tracks)
-
+            self.rg.add_blockage(blockage_in_tracks)
+            
+        if not found_pin:
+            self.write_debug_gds()
         debug.check(found_pin,"Unable to find source pin on grid.")
 
-    def add_target(self,pin):
+    def get_target(self,pin):
+        """ 
+        Gets the target pin shapes only. Doesn't add to grid.
+        """
+        self.target_pin = pin
+        (self.target_pin_layer,self.target_pin_shapes) = self.find_pin(pin)
+        zindex = 0 if self.target_pin_layer==self.horiz_layer_number else 1
+        self.target_pin_zindex = zindex
+        
+    def add_target(self):
         """ 
         Mark the grids that are in the pin rectangle ranges to have the target property. 
         pin can be a location or a label.
         """
-        (pin_layer,self.target_pin_shapes) = self.find_pin(pin)
-
-        zindex = 0 if pin_layer==self.horiz_layer_number else 1
-        self.target_pin_zindex = zindex
-
         found_pin=False
         for shape in self.target_pin_shapes:
-            pin_in_tracks=self.convert_pin_to_tracks(shape,zindex,pin)            
+            (pin_in_tracks,blockage_in_tracks)=self.convert_pin_to_tracks(shape,self.target_pin_zindex,self.target_pin)
             if (len(pin_in_tracks)>0): found_pin=True
-            debug.info(1,"Set target: " + str(pin) + " " + str(pin_in_tracks) + " z=" + str(zindex))
+            debug.info(1,"Set target: " + str(self.target_pin) + " " + str(pin_in_tracks) + " z=" + str(self.target_pin_zindex))
             self.rg.add_target(pin_in_tracks)
+            self.rg.add_blockage(blockage_in_tracks)            
 
-        debug.check(found_pin,"Unable to find source pin on grid.")            
+        if not found_pin:
+            self.write_debug_gds()
+        debug.check(found_pin,"Unable to find target pin on grid.")            
 
+    def add_blockages(self):
+        """ Add the blockages except the pin shapes """
+        for blockage in self.blockages:
+            (shape,zlayer) = blockage
+            # Skip source pin shapes
+            if zlayer==self.source_pin_zindex and shape in self.source_pin_shapes:
+                continue
+            # Skip target pin shapes
+            if zlayer==self.target_pin_zindex and shape in self.target_pin_shapes:
+                continue
+            [ll,ur]=self.convert_blockage_to_tracks(shape)
+            self.rg.add_blockage_shape(ll,ur,zlayer)
 
         
-    def write_obstacle(self, sref, mirr = 1, angle = math.radians(float(0)), xyShift = (0, 0)): 
+    def get_blockages(self, sref, mirr = 1, angle = math.radians(float(0)), xyShift = (0, 0)): 
         """
-        Recursive write boundaries as blockages to the routing grid.
+        Recursive find boundaries as blockages to the routing grid.
         Recurses for each Structure in GDS.
         """
         for boundary in self.layout.structures[sref].boundaries:
@@ -376,8 +455,7 @@ class router:
             # only consider the two layers that we are routing on
             if boundary.drawingLayer in [self.vert_layer_number,self.horiz_layer_number]:
                 zlayer = 0 if boundary.drawingLayer==self.horiz_layer_number else 1
-                [ll,ur]=self.convert_blockage_to_tracks(shape)
-                self.rg.add_blockage(ll,ur,zlayer)
+                self.blockages.append((shape,zlayer))
                 
 
         # recurse given the mirror, angle, etc.
@@ -395,7 +473,7 @@ class router:
             newY = (x)*math.sin(angle) + mirr*(y)*math.cos(angle) + xyShift[1] 
             sxyShift = (newX, newY)
             
-            self.write_obstacle(cur_sref.sName, sMirr, sAngle, sxyShift)
+            self.get_blockages(cur_sref.sName, sMirr, sAngle, sxyShift)
 
     def convert_point_to_units(self,p):
         """ 
@@ -426,6 +504,7 @@ class router:
         """ 
         Convert a rectangular pin shape into a list of track locations,layers.
         If no on-grid pins are found, it searches for the nearest off-grid pin(s).
+        If a pin has insufficent overlap, it returns the blockage list to avoid it.
         """
         [ll,ur] = shape
         ll = snap_to_grid(ll)
@@ -444,24 +523,33 @@ class router:
             width = self.vert_layer_width            
 
         track_list = []
-        # include +- 1 track for neighors
-        for x in range(int(ll[0])-1,int(ur[0])+1):
-            for y in range(int(ll[1])-1,int(ur[1])+1):
+        block_list = []
+        # include +- 1 so when a shape is less than one grid
+        for x in range(ll[0]-1,ur[0]+1):
+            for y in range(ll[1]-1,ur[1]+1):
                 #debug.info(1,"Converting [ {0} , {1} ]".format(x,y))
                 # get the rectangular pin at a track location
+                # if dimension of overlap is greater than min width in any dimension,
+                # it will be an on-grid pin
                 rect = self.convert_track_to_pin(vector3d(x,y,zindex))
-                #debug.info(1,"Rect {0}".format(rect))                                
-                # find the rectangular overlap shape (if any)
-                # if dimension of overlap is greater than min width in any dimension, add it
                 max_overlap=max(self.compute_overlap(shape,rect))
+
+                # however, if there is not enough overlap, then if there is any overlap at all,
+                # we need to block it to prevent routes coming in on that grid
+                full_rect = self.convert_full_track_to_shape(vector3d(x,y,zindex))
+                full_overlap=max(self.compute_overlap(shape,full_rect))
+                
+                #debug.info(1,"Check overlap: {0} {1} max={2}".format(shape,rect,max_overlap))
                 if max_overlap >= width:
                     track_list.append(vector3d(x,y,zindex))
+                elif full_overlap>0:
+                    block_list.append(vector3d(x,y,zindex))
                 else:
                     debug.info(1,"No overlap: {0} {1} max={2}".format(shape,rect,max_overlap))
 
         #debug.warning("Off-grid pin for {0}.".format(str(pin)))
         #debug.info(1,"Converted [ {0} , {1} ]".format(ll,ur))
-        return track_list
+        return (track_list,block_list)
 
     def compute_overlap(self,r1,r2):
         """ Calculate the rectangular overlap of two rectangles. """

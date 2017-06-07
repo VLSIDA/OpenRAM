@@ -26,6 +26,7 @@ class grid:
         # rather than 2 vias + preferred direction (cost 5)
         self.VIA_COST = 2
         self.NONPREFERRED_COST = 4
+        self.PREFERRED_COST = 1
         
         # list of the source/target grid coordinates
         self.source = []
@@ -109,14 +110,14 @@ class grid:
         for p in path:
             self.map[p].path=True
         
-    def route(self,cost_bound_factor):
+    def route(self,detour_scale):
         """
         This does the A* maze routing with preferred direction routing.
         """
 
         # We set a cost bound of the HPWL for run-time. This can be 
         # over-ridden if the route fails due to pruning a feasible solution.
-        cost_bound = cost_bound_factor*self.cost_to_target(self.source[0])*self.NONPREFERRED_COST
+        cost_bound = detour_scale*self.cost_to_target(self.source[0])*self.PREFERRED_COST
 
         # Make sure the queue is empty if we run another route
         while not self.q.empty():
@@ -159,7 +160,7 @@ class grid:
                             # add the cost to get to this point if we haven't reached it yet
                             self.q.put((predicted_cost,newpath))
 
-        debug.warning("Unable to route path. Expand area?")
+        debug.warning("Unable to route path. Expand the detour_scale to allow detours.")
         return (None,None)
 
     def is_target(self,point):
@@ -276,9 +277,9 @@ class grid:
             if p0.z != p1.z: # via
                 cost += self.VIA_COST
             elif p0.x != p1.x: # horizontal
-                cost += self.NONPREFERRED_COST if (p0.z == 1) else 1
+                cost += self.NONPREFERRED_COST if (p0.z == 1) else self.PREFERRED_COST
             elif p0.y != p1.y: # vertical
-                cost += self.NONPREFERRED_COST if (p0.z == 0) else 1
+                cost += self.NONPREFERRED_COST if (p0.z == 0) else self.PREFERRED_COST
             else:
                 debug.error("Non-changing direction!")
 

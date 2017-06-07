@@ -41,6 +41,10 @@ class grid:
         self.add_map(n)
         self.map[n].blocked=True
 
+    def is_blocked(self,n):
+        self.add_map(n)
+        return self.map[n].blocked
+
     def set_source(self,n):
         self.add_map(n)
         self.map[n].source=True
@@ -80,13 +84,15 @@ class grid:
     def add_source(self,track_list):
         debug.info(3,"Adding source list={0}".format(str(track_list)))
         for n in track_list:
-            if not self.map[n].blocked:
+            self.add_map(n)
+            if not self.is_blocked(n):
                 self.set_source(n)
 
     def add_target(self,track_list):
         debug.info(3,"Adding target list={0}".format(str(track_list)))
         for n in track_list:
-            if not self.map[n].blocked:
+            self.add_map(n)
+            if not self.is_blocked(n):
                 self.set_target(n)
 
     def reset_cells(self):

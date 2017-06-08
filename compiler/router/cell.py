@@ -1,5 +1,3 @@
-from PIL import ImageColor
-
 class cell:
     """
     A single cell that can be occupied in a given layer, blocked,

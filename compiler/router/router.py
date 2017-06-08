@@ -6,7 +6,7 @@ import debug
 import grid
 from vector import vector
 from vector3d import vector3d 
-
+from globals import OPTS
 
 class router:
     """A router class to read an obstruction map from a gds and plan a
@@ -136,7 +136,7 @@ class router:
         self.rg.reinit()
         
 
-    def route(self, cell, layers, src, dest, cost_bound_scale=1):
+    def route(self, cell, layers, src, dest, detour_scale=2):
         """ 
         Route a single source-destination net and return
         the simplified rectilinear path. Cost factor is how sub-optimal to explore for a feasible route. 
@@ -172,7 +172,7 @@ class router:
 
             
         # returns the path in tracks
-        (path,cost) = self.rg.route(cost_bound_scale)
+        (path,cost) = self.rg.route(detour_scale)
         if path:
             debug.info(1,"Found path: cost={0} ".format(cost))
             debug.info(2,str(path))
@@ -180,6 +180,9 @@ class router:
             return True
         else:
             self.write_debug_gds()
+            # clean up so we can try a reroute
+            self.clear_pins()
+            
 
         return False
 
@@ -187,6 +190,10 @@ class router:
         """ 
         Write out a GDS file with the routing grid and search information annotated on it.
         """
+        # Only add the debug info to the gds file if we have any debugging on.
+        # This is because we may reroute a wire with detours and don't want the debug information.
+        if OPTS.debug_level==0: return
+        
         self.add_router_info()
         debug.error("Writing debug_route.gds from {0} to {1}".format(self.source_pin,self.target_pin))
         self.cell.gds_write("debug_route.gds")

@@ -341,8 +341,14 @@ class wordline_driver(design.design):
 
     def delay(self, slope, load=0):
         # decode_out -> net
-        decode_t_net = self.NAND2.delay(slope = slope, load = self.wl_driver_mults*self.driver.input_load())
-
+        if self.wl_driver_mults == 1:
+            decode_t_net = self.NAND2.delay(slope = slope, load = self.driver.input_load())
+        else:
+            net_wire = self.generate_rc_net(self.wl_driver_mults, self.net_wire_length, drc["minwidth_metal1"])
+            net_wire.wire_c = self.driver.input_load() + net_wire.wire_c
+            decode_t_net = self.NAND2.delay(slope = slope, load = net_wire.return_input_cap())
+            wire_delay = net_wire.return_delay_over_wire(decode_t_net.slope)
+            decode_t_net = decode_t_net + wire_delay
         # net -> wl
         net_t_wl = self.driver.delay(slope = decode_t_net.slope, load = load)
 

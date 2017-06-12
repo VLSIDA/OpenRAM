@@ -116,17 +116,39 @@ class bank(design.design):
         self.add_column_line_decoder()
         self.add_bank_select_or2_gates()
 
+    def setup_sizing(self, load_size):
+        # fix me, this is a duplicate code in wordline driver
+        # find way to share it
+        nand_effort = (4.0/3.0)
+        G = 1.0*nand_effort*1.0
+        H = load_size *(2.0/3.0)
+        F = G*H
+        f = F**(1.0/3.0)
+        y = load_size*1.0/f
+        import math
+        y = math.log(y,2)
+        y = 2**int(y)
+        x = y *nand_effort/f
+        driver_strength = int(y+1)
+        NAND2_strength = int(x+1)
+        return driver_strength, NAND2_strength
+
     def compute_sizes(self):
         """  Computes the required sizes to create the bank """
-        self.wl_driver_mults = 1 # minmum should be 1
+        split = False
+        if split:
+            driver_mults, nand = self.setup_sizing(self.words_per_row*self.word_size)
+            self.wl_driver_mults = driver_mults # minmum should be 1
+        else:
+            self.wl_driver_mults = 1
         self.wl_seg_num = max(1,self.wl_driver_mults-1) # at least one segment in wl
         # segment is still 1 when you have 2 drivers  
         # depend on how much segment wl has
         # the word_size shrink
 
-        self.word_size = self.word_size/self.wl_seg_num
+        self.sub_word_size = self.word_size/self.wl_seg_num
 
-        self.num_cols = self.words_per_row*self.word_size
+        self.num_cols = self.words_per_row*self.sub_word_size
         self.num_rows = self.num_words / self.words_per_row
 
 
@@ -206,16 +228,16 @@ class bank(design.design):
         if(self.col_addr_size > 0):
             self.column_mux_array = self.mod_column_mux_array(rows=self.num_rows,
                                                               columns=self.num_cols, 
-                                                              word_size=self.word_size)
+                                                              word_size=self.sub_word_size)
             self.add_mod(self.column_mux_array)
 
 
-        self.sens_amp_array = self.mod_sense_amp_array(word_size=self.word_size, 
+        self.sens_amp_array = self.mod_sense_amp_array(word_size=self.sub_word_size, 
                                                        words_per_row=self.words_per_row)
         self.add_mod(self.sens_amp_array)
 
         self.write_driver_array = self.mod_write_driver_array(columns=self.num_cols,
-                                                              word_size=self.word_size)
+                                                              word_size=self.sub_word_size)
         self.add_mod(self.write_driver_array)
 
         self.decoder = self.mod_decoder(nand2_nmos_width=2*drc["minwidth_tx"],
@@ -232,17 +254,17 @@ class bank(design.design):
         self.msf_data_in = self.mod_ms_flop_array(name="msf_data_in", 
                                                   array_type="data_in", 
                                                   columns=self.num_cols, 
-                                                  word_size=self.word_size)
+                                                  word_size=self.sub_word_size)
         self.add_mod(self.msf_data_in)
         
         self.msf_data_out = self.mod_ms_flop_array(name="msf_data_out", 
                                                    array_type="data_out", 
                                                    columns=self.num_cols, 
-                                                   word_size=self.word_size)
+                                                   word_size=self.sub_word_size)
         self.add_mod(self.msf_data_out)
 
         self.tri_gate_array = self.mod_tri_gate_array(columns=self.num_cols, 
-                                                      word_size=self.word_size)
+                                                      word_size=self.sub_word_size)
         self.add_mod(self.tri_gate_array)
 
         self.wordline_driver = self.mod_wordline_driver(name="wordline_driver", 
@@ -346,7 +368,7 @@ class bank(design.design):
                     for i in range(self.num_cols):
                         temp.append("bl[{0}]".format(start_bit_index+i))
                         temp.append("br[{0}]".format(start_bit_index+i))
-                    for j in range(self.word_size):
+                    for j in range(self.sub_word_size):
                         temp.append("bl_out[{0}]".format(start_out_index+
                             j*self.words_per_row))
                         temp.append("br_out[{0}]".format(start_out_index+
@@ -362,7 +384,6 @@ class bank(design.design):
         self.sens_amp_array_position = self.module_offset 
         for seg in range(self.wl_seg_num):
             start_bit_index = (seg) * self.bitcell_array.column_size
-
             start_data_out_index = (seg) * self.sens_amp_array.word_size
             seg_offset = self.bitcell_array_gap.scale(seg,0) 
             seg_offset = self.sens_amp_array_position + seg_offset
@@ -378,16 +399,16 @@ class bank(design.design):
 
             temp = []
             if (self.words_per_row == 1):
-                for j in range(self.word_size):
-                    temp.append("bl[{0}]".format(j*self.words_per_row))
-                    temp.append("br[{0}]".format(j*self.words_per_row))
+                for j in range(self.sub_word_size):
+                    temp.append("bl[{0}]".format(start_bit_index + j*self.words_per_row))
+                    temp.append("br[{0}]".format(start_bit_index + j*self.words_per_row))
             else:
                 start_data_index = (seg) * self.column_mux_array.columns
                 for j in range(self.sens_amp_array.word_size):
                     temp.append("bl_out[{0}]".format(start_data_index+j*self.words_per_row))
                     temp.append("br_out[{0}]".format(start_data_index+j*self.words_per_row))
 
-            for i in range(self.word_size):
+            for i in range(self.sub_word_size):
                 temp.append("data_out[{0}]".format(start_data_out_index+i))
             temp = temp + ["s_en", "vdd", "gnd"]
             self.connect_inst(temp)
@@ -414,15 +435,15 @@ class bank(design.design):
                               height=drc["minwidth_metal1"])
 
             temp = []
-            for i in range(self.word_size):
+            for i in range(self.sub_word_size):
                 temp.append("data_in[{0}]".format(in_index+i))
             if (self.words_per_row == 1):
-                for j in range(self.word_size):
-                    temp.append("bl[{0}]".format(j*self.words_per_row))
-                    temp.append("br[{0}]".format(j*self.words_per_row))
+                for j in range(self.sub_word_size):
+                    temp.append("bl[{0}]".format(start_bit_index+j*self.words_per_row))
+                    temp.append("br[{0}]".format(start_bit_index+j*self.words_per_row))
             else:
                 start_out_index =(seg) * self.column_mux_array.columns
-                for j in range(self.word_size):
+                for j in range(self.sub_word_size):
                     temp.append("bl_out[{0}]".format(start_out_index+j*self.words_per_row))
                     temp.append("br_out[{0}]".format(start_out_index+j*self.words_per_row))
             temp = temp + ["w_en", "vdd", "gnd"]
@@ -443,9 +464,9 @@ class bank(design.design):
 
 
             temp = []
-            for i in range(self.word_size):
+            for i in range(self.sub_word_size):
                 temp.append("DATA[{0}]".format(in_index+i))
-            for i in range(self.word_size):
+            for i in range(self.sub_word_size):
                 temp.append("data_in[{0}]".format(in_index+i))
                 temp.append("data_in_bar[{0}]".format(in_index+i))
             temp = temp + ["clk_bar", "vdd", "gnd"]
@@ -466,9 +487,9 @@ class bank(design.design):
                           mirror="MX")
 
             temp = []
-            for i in range(self.word_size):
+            for i in range(self.sub_word_size):
                 temp.append("data_out[{0}]".format(start_data_index+i))
-            for i in range(self.word_size):
+            for i in range(self.sub_word_size):
                 temp.append("DATA[{0}]".format(in_index+i))
             temp = temp + ["tri_en", "tri_en_bar", "vdd", "gnd"]
             self.connect_inst(temp)
@@ -482,15 +503,13 @@ class bank(design.design):
         For convenient the space is created first so that placement of decoder and address FFs gets easier.
         The wires are actually routed after we placed the stuffs on both side"""
 
-
-        temp1 = vector(self.decoder.width + self.overall_central_bus_gap,
-                       self.decoder.predecoder_height).scale(-1, -1)
-        temp2 = vector(self.decoder.decode_out_positions[0][0]
-                        + self.wordline_driver.width
-                        + self.overall_central_bus_gap,
-                       self.decoder.predecoder_height).scale(-1, -1)
-        self.module_offset = max(temp1,temp2)
-
+        limt1 = self.decoder.width + self.overall_central_bus_gap
+                      
+        limt2 = self.decoder.decode_out_positions[0][0]\
+                        + self.wordline_driver.width\
+                        + self.overall_central_bus_gap
+        self.module_offset = vector(max(limt1,limt2), 
+                                    self.decoder.predecoder_height).scale(-1, -1)
 
         self.decoder_position = self.module_offset 
         self.add_inst(name="address_decoder", 
@@ -839,7 +858,7 @@ class bank(design.design):
 
     def route_between_sense_amp_and_tri_gate(self,array_offset):
         """ Routing of sense amp output to tri_gate input """
-        for i in range(self.word_size):
+        for i in range(self.sub_word_size):
             # Connection of data_out of sense amp to data_ in of msf_data_out
             tri_gate_in_position = (self.tri_gate_array.tri_in_positions[i].scale(1,-1) 
                                         + self.tri_gate_array_offset) + array_offset
@@ -866,7 +885,7 @@ class bank(design.design):
 
     def route_tri_gate_out(self,array_offset):
         """ Metal 3 routing of tri_gate output data """
-        for i in range(self.word_size):
+        for i in range(self.sub_word_size):
             tri_gate_out_position = (self.tri_gate_array.DATA_positions[i].scale(1,-1)
                                         + self.tri_gate_array_offset) + array_offset
             data_line_position = [tri_gate_out_position.x - 0.5 * drc["minwidth_metal3"], 

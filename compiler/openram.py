@@ -31,7 +31,7 @@ import debug
 
 # required positional args for using openram main exe
 if len(args) < 1:
-    print globals.USAGE
+    print(globals.USAGE)
     sys.exit(2)
 
 globals.print_banner()        
@@ -61,14 +61,14 @@ if (OPTS.output_name == ""):
 
 debug.info(1, "Output file is " + OPTS.output_name + ".(sp|gds|v|lib|lef)")
 
-print "Technology: %s" % (OPTS.tech_name)
-print "Word size: {0}\nWords: {1}\nBanks: {2}".format(word_size,num_words,num_banks)
+print("Technology: {0}".format(OPTS.tech_name))
+print("Word size: {0}\nWords: {1}\nBanks: {2}".format(word_size,num_words,num_banks))
 
 # only start importing modules after we have the config file
 import calibre
 import sram
 
-print "Start: ", datetime.datetime.now()
+print("Start: {0}".format(datetime.datetime.now()))
 
 # import SRAM test generation
 s = sram.sram(word_size=word_size,
@@ -79,16 +79,16 @@ s = sram.sram(word_size=word_size,
 # Measure design area
 # Not working?
 #cell_size = s.gds.measureSize(s.name)
-#print "Area:", cell_size[0] * cell_size[1]
+#print("Area:", cell_size[0] * cell_size[1])
 
 # Output the files for the resulting SRAM
 
 spname = OPTS.output_path + s.name + ".sp"
-print "SP: Writing to {0}".format(spname)
+print("SP: Writing to {0}".format(spname))
 s.sp_write(spname)
 
 gdsname = OPTS.output_path + s.name + ".gds"
-print "GDS: Writing to {0}".format(gdsname)
+print("GDS: Writing to {0}".format(gdsname))
 s.gds_write(gdsname)
 
 # Run Characterizer on the design
@@ -101,21 +101,21 @@ if OPTS.use_pex:
 # geenrate verilog
 import verilog
 vname = OPTS.output_path + s.name + ".v"
-print "Verilog: Writing to {0}".format(vname)
+print("Verilog: Writing to {0}".format(vname))
 verilog.verilog(vname,s)
 
 # generate LEF
 import lef
 lefname = OPTS.output_path + s.name + ".lef"
-print "LEF: Writing to {0}".format(lefname)
+print("LEF: Writing to {0}".format(lefname))
 lef.lef(gdsname,lefname,s)
 
 # generate lib
 import lib
 libname = OPTS.output_path + s.name + ".lib"
-print "LIB: Writing to {0}".format(libname)
+print("LIB: Writing to {0}".format(libname))
 lib.lib(libname,s,sram_file)
 
 globals.end_openram()
 
-print "End: ", datetime.datetime.now()
+print("End: {0}".format(datetime.datetime.now()))

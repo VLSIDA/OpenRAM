@@ -109,7 +109,6 @@ class hierarchical_predecode2x4(hierarchical_predecode):
         return self.rail_height
 
     def delay(self, slope, load = 0.0 ):
-        #print "pre2x4 consist:"
         # A -> B
         a_t_b_delay = self.inv.delay(slope=slope,load = self.nand.input_load())
 
@@ -120,7 +119,6 @@ class hierarchical_predecode2x4(hierarchical_predecode):
         # Z -> out
         a_t_out_delay = self.inv.delay(slope=b_t_z_delay.slope,load = load)
         result = result + a_t_out_delay
-        #print "end of pre2x4"
         return result
 
     def input_load(self):

@@ -87,18 +87,18 @@ def print_banner():
     if not OPTS.print_banner:
         return
 
-    print "|==============================================================================|"
+    print("|==============================================================================|")
     name = "OpenRAM Compiler v"+VERSION
-    print "|=========" + name.center(60) + "=========|"
-    print "|=========" + " ".center(60) + "=========|"
-    print "|=========" + "VLSI Design and Automation Lab".center(60) + "=========|"
-    print "|=========" + "University of California Santa Cruz CE Department".center(60) + "=========|"
-    print "|=========" + " ".center(60) + "=========|"
-    print "|=========" + "VLSI Computer Architecture Research Group".center(60) + "=========|"
-    print "|=========" + "Oklahoma State University ECE Department".center(60) + "=========|"
-    print "|=========" + " ".center(60) + "=========|"
-    print "|=========" + OPTS.openram_temp.center(60) + "=========|"
-    print "|==============================================================================|"
+    print("|=========" + name.center(60) + "=========|")
+    print("|=========" + " ".center(60) + "=========|")
+    print("|=========" + "VLSI Design and Automation Lab".center(60) + "=========|")
+    print("|=========" + "University of California Santa Cruz CE Department".center(60) + "=========|")
+    print("|=========" + " ".center(60) + "=========|")
+    print("|=========" + "VLSI Computer Architecture Research Group".center(60) + "=========|")
+    print("|=========" + "Oklahoma State University ECE Department".center(60) + "=========|")
+    print("|=========" + " ".center(60) + "=========|")
+    print("|=========" + OPTS.openram_temp.center(60) + "=========|")
+    print("|==============================================================================|")
 
 
 def init_openram(config_file):
@@ -214,18 +214,18 @@ def setup_paths():
 
     # make the directory if it doesn't exist
     try:
-        os.makedirs(OPTS.openram_temp, 0750)
+        os.makedirs(OPTS.openram_temp, 0o750)
     except OSError as e:
         if e.errno == 17:  # errno.EEXIST
-            os.chmod(OPTS.openram_temp, 0750)
+            os.chmod(OPTS.openram_temp, 0o750)
 
     # Don't delete the output dir, it may have other files!
     # make the directory if it doesn't exist
     try:
-        os.makedirs(OPTS.output_path, 0750)
+        os.makedirs(OPTS.output_path, 0o750)
     except OSError as e:
         if e.errno == 17:  # errno.EEXIST
-            os.chmod(OPTS.output_path, 0750)
+            os.chmod(OPTS.output_path, 0o750)
     
 
 

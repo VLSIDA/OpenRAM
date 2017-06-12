@@ -53,13 +53,13 @@ word_size = OPTS.config.word_size
 num_words = OPTS.config.num_words
 num_banks = OPTS.config.num_banks
 
-if (OPTS.out_name == ""):
-    OPTS.out_name = "sram_{0}_{1}_{2}_{3}".format(word_size,
+if (OPTS.output_name == ""):
+    OPTS.output_name = "sram_{0}_{1}_{2}_{3}".format(word_size,
                                                   num_words,
                                                   num_banks,
                                                   OPTS.tech_name)
 
-debug.info(1, "Output file is " + OPTS.out_name + ".(sp|gds|v|lib|lef)")
+debug.info(1, "Output file is " + OPTS.output_name + ".(sp|gds|v|lib|lef)")
 
 print "Technology: %s" % (OPTS.tech_name)
 print "Word size: {0}\nWords: {1}\nBanks: {2}".format(word_size,num_words,num_banks)
@@ -74,7 +74,7 @@ print "Start: ", datetime.datetime.now()
 s = sram.sram(word_size=word_size,
               num_words=num_words,
               num_banks=num_banks,
-              name=OPTS.out_name)
+              name=OPTS.output_name)
 
 # Measure design area
 # Not working?
@@ -83,36 +83,36 @@ s = sram.sram(word_size=word_size,
 
 # Output the files for the resulting SRAM
 
-spname = OPTS.out_path + s.name + ".sp"
+spname = OPTS.output_path + s.name + ".sp"
 print "SP: Writing to {0}".format(spname)
 s.sp_write(spname)
 
-gdsname = OPTS.out_path + s.name + ".gds"
+gdsname = OPTS.output_path + s.name + ".gds"
 print "GDS: Writing to {0}".format(gdsname)
 s.gds_write(gdsname)
 
 # Run Characterizer on the design
 sram_file = spname
 if OPTS.use_pex:
-    sram_file = OPTS.out_path + "temp_pex.sp"
+    sram_file = OPTS.output_path + "temp_pex.sp"
     calibre.run_pex(s.name, gdsname, spname, output=sram_file)
 
 
 # geenrate verilog
 import verilog
-vname = OPTS.out_path + s.name + ".v"
+vname = OPTS.output_path + s.name + ".v"
 print "Verilog: Writing to {0}".format(vname)
 verilog.verilog(vname,s)
 
 # generate LEF
 import lef
-lefname = OPTS.out_path + s.name + ".lef"
+lefname = OPTS.output_path + s.name + ".lef"
 print "LEF: Writing to {0}".format(lefname)
 lef.lef(gdsname,lefname,s)
 
 # generate lib
 import lib
-libname = OPTS.out_path + s.name + ".lib"
+libname = OPTS.output_path + s.name + ".lib"
 print "LIB: Writing to {0}".format(libname)
 lib.lib(libname,s,sram_file)
 

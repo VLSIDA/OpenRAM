@@ -33,7 +33,7 @@ class options(optparse.Values):
     # Trim noncritical memory cells for simulation speed-up
     trim_noncritical = False
     # Define the output file paths
-    out_path = ""
+    output_path = ""
     # Define the output file base name
-    out_name = ""
+    output_name = ""
     analytical_delay = False

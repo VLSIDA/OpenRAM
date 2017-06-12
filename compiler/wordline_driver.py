@@ -24,6 +24,7 @@ class wordline_driver(design.design):
         self.bitcell_chars = self.mod_bitcell.chars
 
         self.rows = rows
+        self.wl_driver_mults= 1
         self.add_pins()
         self.design_layout(load_size)
         self.DRC_LVS()
@@ -65,12 +66,9 @@ class wordline_driver(design.design):
         f = F**(1.0/3.0)
         y = load_size*1.0/f
         x = y *nand_effort/f
+        driver_strength = int(x+1)*drc["minwidth_tx"] 
+        NAND2_strength = int(y+1)*drc["minwidth_tx"]
 
-        #driver_strength = (int(y)+1)*drc["minwidth_tx"]
-        #NAND2_strength = (int(x)+1)*drc["minwidth_tx"]
-        # this was the old default size
-        driver_strength = 1*drc["minwidth_tx"] 
-        NAND2_strength = 2*drc["minwidth_tx"]
         return driver_strength, NAND2_strength
 
 
@@ -79,7 +77,7 @@ class wordline_driver(design.design):
         self.x_offset1 = self.x_offset0 + self.inv.width
         self.x_offset2 = self.x_offset1 + self.NAND2.width
 
-        self.width = self.x_offset2 + self.inv.width
+        self.width = self.x_offset2 + self.driver.width
         self.height = self.inv.height * self.rows
 
         # Defining offset postions
@@ -207,11 +205,11 @@ class wordline_driver(design.design):
 
 
             base_offset = vector(self.width, y_offset)
-            decode_out_offset = base_offset.scale(0,1)+self.NAND2.A_position.scale(cell_dir)
-            wl_offset = base_offset + self.inv.Z_position.scale(cell_dir)
-            vdd_offset = base_offset + self.inv.vdd_position.scale(cell_dir)
-            gnd_offset = base_offset + self.inv.gnd_position.scale(cell_dir)
 
+            decode_out_offset = base_offset.scale(0,1)+self.NAND2.A_position.scale(cell_dir)
+            wl_offset = base_offset + self.driver.Z_position.scale(cell_dir)
+            vdd_offset = base_offset + self.driver.vdd_position.scale(cell_dir)
+            gnd_offset = base_offset + self.driver.gnd_position.scale(cell_dir)
             self.add_label(text="decode_out[{0}]".format(row),
                            layer="metal2",
                            offset=decode_out_offset)
@@ -234,8 +232,9 @@ class wordline_driver(design.design):
             self.vdd_positions.append(vdd_offset)
             self.gnd_positions.append(gnd_offset)
 
-    def add_extra_driver(self, word_line_seg, start, array_gap, array_to_driver):
-        for seg in range(1,word_line_seg):
+    def add_extra_driver(self, driver_mults, start, array_gap, array_to_driver):
+        self.wl_driver_mults = driver_mults
+        for seg in range(1,driver_mults):
             seg_driver_width = self.driver.width
             extra_driver_offset= start + array_gap.scale(seg,0)
             self.add_extra_row_driver(extra_driver_offset, array_to_driver, seg)
@@ -342,10 +341,10 @@ class wordline_driver(design.design):
 
     def delay(self, slope, load=0):
         # decode_out -> net
-        decode_t_net = self.NAND2.delay(slope = slope, load = self.inv.input_load())
+        decode_t_net = self.NAND2.delay(slope = slope, load = self.wl_driver_mults*self.driver.input_load())
 
         # net -> wl
-        net_t_wl = self.inv.delay(slope = decode_t_net.slope, load = load)
+        net_t_wl = self.driver.delay(slope = decode_t_net.slope, load = load)
 
         result = decode_t_net + net_t_wl
         return result

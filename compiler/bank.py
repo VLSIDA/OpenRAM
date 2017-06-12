@@ -129,6 +129,11 @@ class bank(design.design):
         self.num_cols = self.words_per_row*self.word_size
         self.num_rows = self.num_words / self.words_per_row
 
+
+        # worddirver_size, nand_size = worddriver.auto_sizing(self.num_cols)
+        # num_seg = worddirver_size or num_seg = 2
+        # but we have to devide the bank into odd number (2,4,)
+
         self.row_addr_size = int(log(self.num_rows, 2))
         self.col_addr_size = int(log(self.words_per_row, 2))
         self.addr_size = self.col_addr_size + self.row_addr_size
@@ -241,7 +246,8 @@ class bank(design.design):
         self.add_mod(self.tri_gate_array)
 
         self.wordline_driver = self.mod_wordline_driver(name="wordline_driver", 
-                                                        rows=self.num_rows)
+                                                        rows=self.num_rows,
+                                                        load_size = self.num_cols)
         #self.wordline_driver.logic_effort_sizing(self.num_cols)
         self.add_mod(self.wordline_driver)
 
@@ -356,7 +362,8 @@ class bank(design.design):
         self.sens_amp_array_position = self.module_offset 
         for seg in range(self.wl_seg_num):
             start_bit_index = (seg) * self.bitcell_array.column_size
-            start_data_index = (seg) * self.sens_amp_array.word_size
+
+            start_data_out_index = (seg) * self.sens_amp_array.word_size
             seg_offset = self.bitcell_array_gap.scale(seg,0) 
             seg_offset = self.sens_amp_array_position + seg_offset
             self.add_inst(name="sense_amp_array{0}".format(seg),
@@ -372,15 +379,16 @@ class bank(design.design):
             temp = []
             if (self.words_per_row == 1):
                 for j in range(self.word_size):
-                    temp.append("bl[{0}]".format(start_bit_index+j*self.words_per_row))
-                    temp.append("br[{0}]".format(start_bit_index+j*self.words_per_row))
+                    temp.append("bl[{0}]".format(j*self.words_per_row))
+                    temp.append("br[{0}]".format(j*self.words_per_row))
             else:
-                for j in range(self.word_size):
+                start_data_index = (seg) * self.column_mux_array.columns
+                for j in range(self.sens_amp_array.word_size):
                     temp.append("bl_out[{0}]".format(start_data_index+j*self.words_per_row))
                     temp.append("br_out[{0}]".format(start_data_index+j*self.words_per_row))
 
             for i in range(self.word_size):
-                temp.append("data_out[{0}]".format(start_data_index+i))
+                temp.append("data_out[{0}]".format(start_data_out_index+i))
             temp = temp + ["s_en", "vdd", "gnd"]
             self.connect_inst(temp)
 
@@ -392,7 +400,7 @@ class bank(design.design):
         for seg in range(self.wl_seg_num):
             start_bit_index = (seg) * self.bitcell_array.column_size
             in_index = (seg) * self.write_driver_array.word_size
-            start_out_index =(seg) * self.sens_amp_array.word_size
+
             seg_offset = self.bitcell_array_gap.scale(seg,0) 
             seg_offset = seg_offset + self.write_driver_array_position
             self.add_inst(name="write_driver_array_{0}".format(seg), 
@@ -410,9 +418,10 @@ class bank(design.design):
                 temp.append("data_in[{0}]".format(in_index+i))
             if (self.words_per_row == 1):
                 for j in range(self.word_size):
-                    temp.append("bl[{0}]".format(start_bit_index+j*self.words_per_row))
-                    temp.append("br[{0}]".format(start_bit_index+j*self.words_per_row))
+                    temp.append("bl[{0}]".format(j*self.words_per_row))
+                    temp.append("br[{0}]".format(j*self.words_per_row))
             else:
+                start_out_index =(seg) * self.column_mux_array.columns
                 for j in range(self.word_size):
                     temp.append("bl_out[{0}]".format(start_out_index+j*self.words_per_row))
                     temp.append("br_out[{0}]".format(start_out_index+j*self.words_per_row))
@@ -473,8 +482,15 @@ class bank(design.design):
         For convenient the space is created first so that placement of decoder and address FFs gets easier.
         The wires are actually routed after we placed the stuffs on both side"""
 
-        self.module_offset = vector(self.decoder.width + self.overall_central_bus_gap,
-                                    self.decoder.predecoder_height).scale(-1, -1)
+
+        temp1 = vector(self.decoder.width + self.overall_central_bus_gap,
+                       self.decoder.predecoder_height).scale(-1, -1)
+        temp2 = vector(self.decoder.decode_out_positions[0][0]
+                        + self.wordline_driver.width
+                        + self.overall_central_bus_gap,
+                       self.decoder.predecoder_height).scale(-1, -1)
+        self.module_offset = max(temp1,temp2)
+
 
         self.decoder_position = self.module_offset 
         self.add_inst(name="address_decoder", 
@@ -1597,11 +1613,13 @@ class bank(design.design):
 
         decoder_delay = self.decoder.delay(msf_addr_delay.slope,
                                            self.wordline_driver.input_load())
-
+        # equvialand array size is total physical size divided by num of drivres
+        sim_array = self.mod_bitcell_array(name="sim_array", 
+                                              cols=self.num_cols*self.wl_seg_num/self.wl_driver_mults,
+                                              rows=self.num_rows)
         word_driver_delay = self.wordline_driver.delay(decoder_delay.slope,
-                                                       self.bitcell_array.input_load())
-
-        bitcell_array_delay = self.bitcell_array.delay(word_driver_delay.slope)
+                                                       sim_array.input_load())
+        bitcell_array_delay = sim_array.delay(word_driver_delay.slope)
 
         bl_t_data_out_delay = self.sens_amp_array.delay(bitcell_array_delay.slope,
                                                         self.bitcell_array.output_load())
@@ -1612,4 +1630,5 @@ class bank(design.design):
         result = msf_addr_delay + decoder_delay + word_driver_delay \
                  + bitcell_array_delay + bl_t_data_out_delay + data_t_DATA_delay
         return result
+
 

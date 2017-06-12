@@ -412,6 +412,6 @@ class pinv(design.design):
 
     def delay(self, slope, load=0.0):
         from tech import spice
-        r = spice["min_tx_r"]/(self.nmos_size/parameter["min_tx_size"])
-        c_para = spice["min_tx_c_para"]*(self.nmos_size/parameter["min_tx_size"])#ff
+        r = spice["min_tx_r"]/(self.nmos_width/parameter["min_tx_size"])
+        c_para = spice["min_tx_c_para"]*(self.nmos_width/parameter["min_tx_size"])#ff
         return self.cal_delay_with_rc(r = r, c =  c_para+load, slope =slope)

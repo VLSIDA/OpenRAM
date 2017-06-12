@@ -30,8 +30,7 @@ class nand_2(design.design):
             name, nmos_width))
 
         self.nmos_width = nmos_width
-
-        self.mults = int(self.nmos_width/(2.0*drc["minwidth_tx"])) 
+        self.mults = int(self.nmos_width/(2*drc["minwidth_tx"])) 
         self.height = height
 
         self.add_pins()

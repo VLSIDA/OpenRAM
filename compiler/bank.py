@@ -205,19 +205,16 @@ class bank(design.design):
         self.add_mod(self.decoder)
 
         self.msf_address = self.mod_ms_flop_array(name="msf_address", 
-                                                  array_type="address", 
                                                   columns=self.row_addr_size+self.col_addr_size, 
                                                   word_size=self.row_addr_size+self.col_addr_size)
         self.add_mod(self.msf_address)
         
         self.msf_data_in = self.mod_ms_flop_array(name="msf_data_in", 
-                                                  array_type="data_in", 
                                                   columns=self.num_cols, 
                                                   word_size=self.word_size)
         self.add_mod(self.msf_data_in)
         
         self.msf_data_out = self.mod_ms_flop_array(name="msf_data_out", 
-                                                   array_type="data_out", 
                                                    columns=self.num_cols, 
                                                    word_size=self.word_size)
         self.add_mod(self.msf_data_out)

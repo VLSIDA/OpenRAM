@@ -141,7 +141,6 @@ class sram(design.design):
     def create_multibank_modules(self):
         """ Add the multibank address flops and bank decoder """
         self.msf_msb_address = self.mod_ms_flop_array(name="msf_msb_address",
-                                                      array_type="address",
                                                       columns=self.num_banks/2,
                                                       word_size=self.num_banks/2)
         self.add_mod(self.msf_msb_address)

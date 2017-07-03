@@ -130,10 +130,6 @@ class tri_gate_array(design.design):
             self.tri_in_positions.append(pin_offset["in"])
             self.DATA_positions.append(pin_offset["out"])
 
-        self.add_label(text="tri gate",
-                       layer="text",
-                       offset=[self.width / 2.0,
-                               self.height / 2.0])
 
     def delay(self, slope, load=0.0):
         result = self.tri.delay(slope = slope, 

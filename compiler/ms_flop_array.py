@@ -12,8 +12,7 @@ class ms_flop_array(design.design):
     hierdecoder
     """
 
-    def __init__(self, name, array_type, columns, word_size):
-        self.array_type = array_type
+    def __init__(self, name, columns, word_size):
         self.columns = columns
         self.word_size = word_size
         design.design.__init__(self, name)
@@ -51,21 +50,12 @@ class ms_flop_array(design.design):
         self.din_positions = []
 
     def add_pins(self):
-        if (self.array_type == "data_in"):
-            pins = {"data_in": 1, "din": "DATA", "dout": "data_in", "dout_bar": "data_in_bar", "clk": "clk"}
-        elif (self.array_type == "data_out"):
-            pins = {"data_out": 1, "din": "data_out", "dout": "tri_in", "dout_bar": "tri_in_bar", "clk": "sclk"}
-        elif (self.array_type == "address"):
-            pins = {"address": 1, "din": "ADDR", "dout": "A", "dout_bar": "A_bar", "clk": "addr_clk"}
-        self.input_output_pins = pins 
-        assert(self.array_type in pins), "Invalid input for array_type"
-
         for i in range(self.word_size):
-            self.add_pin(self.input_output_pins["din"] + "[{0}]".format(i))
+            self.add_pin("din[{0}]".format(i))
         for i in range(self.word_size):
-            self.add_pin(self.input_output_pins["dout"] + "[{0}]".format(i))
-            self.add_pin(self.input_output_pins["dout_bar"] + "[{0}]".format(i))
-        self.add_pin(self.input_output_pins["clk"])
+            self.add_pin("dout[{0}]".format(i))
+            self.add_pin("dout_bar[{0}]".format(i))
+        self.add_pin("clk")
         self.add_pin("vdd")
         self.add_pin("gnd")
 
@@ -85,10 +75,10 @@ class ms_flop_array(design.design):
                           mod=self.ms_flop,
                           offset=[x_off, 0], 
                           mirror=mirror)
-            self.connect_inst([self.input_output_pins["din"] + "[{0}]".format(i),
-                               self.input_output_pins["dout"] + "[{0}]".format(i),
-                               self.input_output_pins["dout_bar"] + "[{0}]".format(i),
-                               self.input_output_pins["clk"],
+            self.connect_inst(["din[{0}]".format(i),
+                               "dout[{0}]".format(i),
+                               "dout_bar[{0}]".format(i),
+                               "clk",
                                "vdd", "gnd"])
             self.flop_positions.append(vector(x_off, 0))
 
@@ -100,13 +90,13 @@ class ms_flop_array(design.design):
                 self.add_label(text="gnd",
                                layer="metal2",
                                offset=base + self.ms_flop_chars["gnd"])
-                self.add_label(text=self.input_output_pins["din"] + i_str,
+                self.add_label(text="din" + i_str,
                                layer="metal2",
                                offset=base + self.ms_flop_chars["din"])
-                self.add_label(text=self.input_output_pins["dout"] + i_str,
+                self.add_label(text="dout" + i_str,
                                layer="metal2",
                                offset=base + self.ms_flop_chars["dout"])
-                self.add_label(text=self.input_output_pins["dout_bar"] + i_str,
+                self.add_label(text="dout_bar" + i_str,
                                layer="metal2",
                                offset=base + self.ms_flop_chars["dout_bar"])
 
@@ -124,13 +114,13 @@ class ms_flop_array(design.design):
                 self.add_label(text="gnd",
                                layer="metal2",
                                offset=gnd_offset)
-                self.add_label(text=self.input_output_pins["din"] + i_str,
+                self.add_label(text="din" + i_str,
                                layer="metal2",
                                offset=din_offset)
-                self.add_label(text=self.input_output_pins["dout"] + i_str,
+                self.add_label(text="dout" + i_str,
                                layer="metal2",
                                offset=dout_offset)
-                self.add_label(text=self.input_output_pins["dout_bar"] + i_str,
+                self.add_label(text="dout_bar" + i_str,
                                layer="metal2",
                                offset=dout_bar_offset)
 
@@ -144,7 +134,7 @@ class ms_flop_array(design.design):
                       offset=[0, self.ms_flop_chars["clk"][1]],
                       width=self.width,
                       height=-drc["minwidth_metal1"])
-        self.add_label(text=self.input_output_pins["clk"],
+        self.add_label(text="clk",
                        layer="metal1",
                        offset=self.ms_flop_chars["clk"])
         self.clk_positions.append(vector(self.ms_flop_chars["clk"]))
@@ -159,10 +149,6 @@ class ms_flop_array(design.design):
                        offset=vector(self.ms_flop_chars["vdd"]).scale(0, 1))
         self.vdd_positions.append(vector(self.ms_flop_chars["vdd"]).scale(0, 1))
 
-        self.add_label(text=self.array_type + "ms_flop",
-                       layer="text",
-                       offset=[self.width / 2.0,
-                               self.height / 2.0])
 
     def delay(self, slope, load=0.0):
         result = self.ms_flop.delay(slope = slope, 

@@ -34,6 +34,6 @@ def info(lev, str):
     if (OPTS.debug_level >= lev):
         frm = inspect.stack()[1]
         mod = inspect.getmodule(frm[0])
-        print("\n[{0}]: {1}".format(frm[0].f_code.co_name,str))
+        print("[{0}]: {1}".format(frm[0].f_code.co_name,str))
         # This sometimes gets a NoneType mod...
         # print "[" , mod.__name__ , "]: ", str

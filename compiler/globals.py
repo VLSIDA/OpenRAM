@@ -141,6 +141,17 @@ def read_config(config_file):
     if not OPTS.output_path.endswith('/'):
         OPTS.output_path += "/"
     debug.info(1, "Output saved in " + OPTS.output_path)
+
+    # Don't delete the output dir, it may have other files!
+    # make the directory if it doesn't exist
+    try:
+        os.makedirs(OPTS.output_path, 0o750)
+    except OSError as e:
+        if e.errno == 17:  # errno.EEXIST
+            os.chmod(OPTS.output_path, 0o750)
+    except:
+        debug.error("Unable to make output directory.",-1)
+    
         
 
 def set_calibre():
@@ -219,13 +230,7 @@ def setup_paths():
         if e.errno == 17:  # errno.EEXIST
             os.chmod(OPTS.openram_temp, 0o750)
 
-    # Don't delete the output dir, it may have other files!
-    # make the directory if it doesn't exist
-    try:
-        os.makedirs(OPTS.output_path, 0o750)
-    except OSError as e:
-        if e.errno == 17:  # errno.EEXIST
-            os.chmod(OPTS.output_path, 0o750)
+
     
 
 

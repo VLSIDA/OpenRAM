@@ -90,13 +90,13 @@ class hierarchical_predecode3x8(hierarchical_predecode):
                        - 0.5 * drc["minwidth_metal1"])
         return yoffset
 
-    def delay(self, slope, load = 0.0 ):
+    def delay(self, slew, load = 0.0 ):
         # A -> z
-        b_t_z_delay = self.nand.delay(slope=slope, 
+        b_t_z_delay = self.nand.delay(slew=slew, 
                                       load = self.input_load())
 
         # Z -> out
-        a_t_out_delay = self.inv.delay(slope=b_t_z_delay.slope,
+        a_t_out_delay = self.inv.delay(slew=b_t_z_delay.slew,
                                        load = load)
         result = b_t_z_delay + a_t_out_delay
         return result

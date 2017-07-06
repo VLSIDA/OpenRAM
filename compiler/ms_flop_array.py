@@ -150,7 +150,7 @@ class ms_flop_array(design.design):
         self.vdd_positions.append(vector(self.ms_flop_chars["vdd"]).scale(0, 1))
 
 
-    def delay(self, slope, load=0.0):
-        result = self.ms_flop.delay(slope = slope, 
+    def delay(self, slew, load=0.0):
+        result = self.ms_flop.delay(slew = slew, 
                                     load = load)
         return result

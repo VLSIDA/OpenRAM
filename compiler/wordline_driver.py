@@ -210,12 +210,12 @@ class wordline_driver(design.design):
             self.vdd_positions.append(vdd_offset)
             self.gnd_positions.append(gnd_offset)
 
-    def delay(self, slope, load=0):
+    def delay(self, slew, load=0):
         # decode_out -> net
-        decode_t_net = self.NAND2.delay(slope = slope, load = self.inv.input_load())
+        decode_t_net = self.NAND2.delay(slew, self.inv.input_load())
 
         # net -> wl
-        net_t_wl = self.inv.delay(slope = decode_t_net.slope, load = load)
+        net_t_wl = self.inv.delay(decode_t_net.slew, load)
 
         result = decode_t_net + net_t_wl
         return result

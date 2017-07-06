@@ -59,24 +59,24 @@ def isapproxdiff(f1, f2, error_tolerance=0.001):
         
             # 2. Remove the floats from the string
             for f in b1_floats:
-                b1=b1.replace(str(f),"")
+                b1=b1.replace(str(f),"",1)
             for f in b2_floats:
-                b2=b2.replace(str(f),"")
+                b2=b2.replace(str(f),"",1)
             #print "b1:",b1,
             #print "b2:",b2,
             
             # 3. Check if remaining string matches
             if b1 != b2:
-                debug.info(2,"Line: {0}\n!=\nLine: {1}".format(b1,b2))
+                debug.info(1,"Line: {0}\n!=\nLine: {1}".format(b1,b2))
                 return False
 
         # 4. Now compare that the floats match
             if len(b1_floats)!=len(b2_floats):
-                debug.info(2,"Len {0} != {1}".format(len(b1_floats),len(b2_floats)))
+                debug.info(1,"Len {0} != {1}".format(len(b1_floats),len(b2_floats)))
                 return False
             for (f1,f2) in zip(b1_floats,b2_floats):
                 if not relative_compare(float(f1),float(f2),error_tolerance):
-                    debug.info(2, "Float {0} != {1}".format(f1,f2))
+                    debug.info(1, "Float {0} != {1}".format(f1,f2))
                     return False
 
             if not b1:

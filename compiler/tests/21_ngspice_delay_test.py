@@ -32,12 +32,6 @@ class timing_sram_test(unittest.TestCase):
                       num_banks=OPTS.config.num_banks,
                       name="test_sram1")
 
-        # reset these options
-        OPTS.check_lvsdrc = True
-        OPTS.spice_version="hspice"
-        OPTS.force_spice = False
-        globals.set_spice()
-
         import delay
 
         tempspice = OPTS.openram_temp + "temp.sp"
@@ -48,22 +42,43 @@ class timing_sram_test(unittest.TestCase):
         debug.info(1, "Probe address {0} probe data {1}".format(probe_address, probe_data))
 
         d = delay.delay(s,tempspice)
-        data = d.analyze(probe_address, probe_data)
+        import tech
+        loads = [tech.spice["FF_in_cap"]*4]
+        slews = [tech.spice["rise_time"]*2]
+        data = d.analyze(probe_address, probe_data,slews,loads)
 
         if OPTS.tech_name == "freepdk45":
-            self.assertTrue(isclose(data['delay1'],0.013649)) # diff than hspice
-            self.assertTrue(isclose(data['delay0'],0.22893)) # diff than hspice
-            self.assertTrue(isclose(data['min_period1'],0.078582763671875)) # diff than hspice
-            self.assertTrue(isclose(data['min_period0'],0.25543212890625)) # diff than hspice
+            self.assertTrue(isclose(data['delay1'][0],0.0268)) # diff than hspice
+            self.assertTrue(isclose(data['delay0'][0],0.1127)) # diff than hspice
+            self.assertTrue(isclose(data['slew1'][0],0.0231)) # diff than hspice
+            self.assertTrue(isclose(data['slew0'][0],0.0276)) # diff than hspice
+            self.assertTrue(isclose(data['min_period'],0.071)) # diff than hspice
+            self.assertTrue(isclose(data['read0_power'],0.0227)) # diff than hspice
+            self.assertTrue(isclose(data['read1_power'],0.0223)) # diff than hspice
+            self.assertTrue(isclose(data['write0_power'],0.02001)) # diff than hspice
+            self.assertTrue(isclose(data['write1_power'],0.0193)) # diff than hspice
         elif OPTS.tech_name == "scn3me_subm":
-            self.assertTrue(isclose(data['delay1'],1.5342000000000002)) # diff than hspice
-            self.assertTrue(isclose(data['delay0'],2.2698)) # diff than hspice
-            self.assertTrue(isclose(data['min_period1'],1.534423828125)) # diff than hspice
-            self.assertTrue(isclose(data['min_period0'],2.99560546875)) # diff than hspice
+            self.assertTrue(isclose(data['delay1'][0],0.6228)) # diff than hspice
+            self.assertTrue(isclose(data['delay0'][0],1.4147)) # diff than hspice
+            self.assertTrue(isclose(data['slew1'][0],1.0567)) # diff than hspice
+            self.assertTrue(isclose(data['slew0'][0],1.3454)) # diff than hspice
+            self.assertTrue(isclose(data['min_period'],1.719)) # diff than hspice
+            self.assertTrue(isclose(data['read0_power'],4.7812)) # diff than hspice
+            self.assertTrue(isclose(data['read1_power'],5.5500)) # diff than hspice
+            self.assertTrue(isclose(data['write0_power'],3.9314)) # diff than hspice
+            self.assertTrue(isclose(data['write1_power'],3.4097)) # diff than hspice
         else:
             self.assertTrue(False) # other techs fail
 
+        # reset these options
+        OPTS.check_lvsdrc = True
+        OPTS.spice_version="hspice"
+        OPTS.force_spice = False
+        globals.set_spice()
+
         os.remove(tempspice)
+
+        globals.end_openram()
 
 # instantiate a copdsay of the class to actually run the test
 if __name__ == "__main__":

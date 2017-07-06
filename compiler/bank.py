@@ -214,11 +214,6 @@ class bank(design.design):
                                                   word_size=self.word_size)
         self.add_mod(self.msf_data_in)
         
-        self.msf_data_out = self.mod_ms_flop_array(name="msf_data_out", 
-                                                   columns=self.num_cols, 
-                                                   word_size=self.word_size)
-        self.add_mod(self.msf_data_out)
-
         self.tri_gate_array = self.mod_tri_gate_array(columns=self.num_cols, 
                                                       word_size=self.word_size)
         self.add_mod(self.tri_gate_array)
@@ -747,7 +742,7 @@ class bank(design.design):
         """ Routing of sense amp output to tri_gate input """
         for i in range(self.word_size):
             # Connection of data_out of sense amp to data_ in of msf_data_out
-            tri_gate_in_position = (self.tri_gate_array.tri_in_positions[i].scale(1,-1) 
+            tri_gate_in_position = (self.tri_gate_array.in_positions[i].scale(1,-1) 
                                         + self.tri_gate_array_offset)
             sa_data_out_position = (self.sens_amp_array_position
                                         + self.sens_amp_array.Data_out_positions[i])
@@ -773,7 +768,7 @@ class bank(design.design):
     def route_tri_gate_out(self):
         """ Metal 3 routing of tri_gate output data """
         for i in range(self.word_size):
-            tri_gate_out_position = (self.tri_gate_array.DATA_positions[i].scale(1,-1)
+            tri_gate_out_position = (self.tri_gate_array.out_positions[i].scale(1,-1)
                                         + self.tri_gate_array_offset)
             data_line_position = [tri_gate_out_position.x - 0.5 * drc["minwidth_metal3"], 
                                   self.min_point]
@@ -1511,24 +1506,21 @@ class bank(design.design):
                                          y_offset], 
                                  mirror="R90")
 
-    def delay(self, slope):
+    def delay(self, slew, load):
         """ return  analytical delay of the bank"""
-        msf_addr_delay = self.msf_address.delay(slope, 
-                                                self.decoder.input_load())
+        msf_addr_delay = self.msf_address.delay(slew, self.decoder.input_load())
 
-        decoder_delay = self.decoder.delay(msf_addr_delay.slope,
-                                           self.wordline_driver.input_load())
+        decoder_delay = self.decoder.delay(msf_addr_delay.slew, self.wordline_driver.input_load())
 
-        word_driver_delay = self.wordline_driver.delay(decoder_delay.slope,
-                                                       self.bitcell_array.input_load())
+        word_driver_delay = self.wordline_driver.delay(decoder_delay.slew, self.bitcell_array.input_load())
 
-        bitcell_array_delay = self.bitcell_array.delay(word_driver_delay.slope)
+        bitcell_array_delay = self.bitcell_array.delay(word_driver_delay.slew)
 
-        bl_t_data_out_delay = self.sens_amp_array.delay(bitcell_array_delay.slope,
+        bl_t_data_out_delay = self.sens_amp_array.delay(bitcell_array_delay.slew,
                                                         self.bitcell_array.output_load())
         # output load of bitcell_array is set to be only small part of bl for sense amp.
 
-        data_t_DATA_delay = self.tri_gate_array.delay(bl_t_data_out_delay.slope)
+        data_t_DATA_delay = self.tri_gate_array.delay(bl_t_data_out_delay.slew, load)
 
         result = msf_addr_delay + decoder_delay + word_driver_delay \
                  + bitcell_array_delay + bl_t_data_out_delay + data_t_DATA_delay

@@ -21,11 +21,11 @@ class tri_gate(design.design):
         self.width = tri_gate.chars["width"]
         self.height = tri_gate.chars["height"]
 
-    def delay(self, slope, load=0.0):
+    def delay(self, slew, load=0.0):
         from tech import spice
         r = spice["min_tx_r"]
-        c_para = spice["min_tx_c_para"]#ff
-        return self.cal_delay_with_rc(r = r, c =  c_para+load, slope =slope)
+        c_para = spice["min_tx_drain_c"]
+        return self.cal_delay_with_rc(r = r, c =  c_para+load, slew = slew)
 
 
     def input_load(self):

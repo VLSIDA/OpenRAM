@@ -10,11 +10,12 @@ import debug
 import subprocess
 import os
 import sys
+import numpy as np
 
 OPTS = globals.get_opts()
 
-vdd = tech.spice["supply_voltage"]
-gnd = tech.spice["gnd_voltage"]
+vdd_voltage = tech.spice["supply_voltage"]
+gnd_voltage = tech.spice["gnd_voltage"]
 vdd_name = tech.spice["vdd_name"]
 gnd_name = tech.spice["gnd_name"]
 pmos_name = tech.spice["pmos_name"]
@@ -26,14 +27,14 @@ def inst_sram(stim_file, abits, dbits, sram_name):
     """function to instatiate the sram subckt"""
     stim_file.write("Xsram ")
     for i in range(dbits):
-        stim_file.write("DATA[{0}] ".format(i))
+        stim_file.write("D[{0}] ".format(i))
     for i in range(abits):
-        stim_file.write("A[{0}]_buf ".format(i))
+        stim_file.write("A[{0}] ".format(i))
     for i in tech.spice["control_signals"]:
-        stim_file.write("{0}_buf ".format(i))
-    stim_file.write("{0}_buf_buf ".format(tech.spice["clk"]))
+        stim_file.write("{0} ".format(i))
+    stim_file.write("{0} ".format(tech.spice["clk"]))
     stim_file.write("{0} {1} ".format(vdd_name, gnd_name))
-    stim_file.write("{0}\n".format(sram_name))
+    stim_file.write("{0}\n\n".format(sram_name))
 
 
 def inst_model(stim_file, pins, model_name):
@@ -82,10 +83,10 @@ def create_buffer(stim_file, buffer_name, size=[1,3], beta=2.5):
                                                                                 nmos_name,
                                                                                 size[1] * tx_width,
                                                                                 tx_length))
-    stim_file.write(".ENDS test_{0}\n".format(buffer_name))
+    stim_file.write(".ENDS test_{0}\n\n".format(buffer_name))
 
 
-def add_buffer(stim_file, buffer_name, signal_list):
+def inst_buffer(stim_file, buffer_name, signal_list):
     """Adds buffers to each top level signal that is in signal_list (only for sim purposes)"""
     for signal in signal_list:
         stim_file.write("X{0}_buffer {0} {0}_buf {1} {2} test_{3}\n".format(signal,
@@ -94,7 +95,7 @@ def add_buffer(stim_file, buffer_name, signal_list):
                                                                             buffer_name))
 
 
-def add_inverter(stim_file, signal_list):
+def inst_inverter(stim_file, signal_list):
     """Adds inv for each signal that needs its inverted version (only for sim purposes)"""
     for signal in signal_list:
         stim_file.write("X{0}_inv {0} {0}_inv {1} {2} test_inv\n".format(signal,
@@ -102,24 +103,24 @@ def add_inverter(stim_file, signal_list):
                                                                          "test"+gnd_name))
 
 
-def add_accesstx(stim_file, dbits):
+def inst_accesstx(stim_file, dbits):
     """Adds transmission gate for inputs to data-bus (only for sim purposes)"""
     stim_file.write("* Tx Pin-list: Drain Gate Source Body\n")
     for i in range(dbits):
-        pmos_access_string="mp{0} DATA[{0}] WEb_trans_buf D[{0}]_buf {1} {2} w={3}u l={4}u\n"
+        pmos_access_string="mp{0} DATA[{0}] acc_en D[{0}] {1} {2} w={3}u l={4}u\n"
         stim_file.write(pmos_access_string.format(i,
                                                   "test"+vdd_name,
                                                   pmos_name,
                                                   2 * tx_width,
                                                   tx_length))
-        nmos_access_string="mn{0} DATA[{0}] WEb_trans_inv D[{0}]_buf {1} {2} w={3}u l={4}u\n"
+        nmos_access_string="mn{0} DATA[{0}] acc_en_inv D[{0}] {1} {2} w={3}u l={4}u\n"
         stim_file.write(nmos_access_string.format(i,
                                                   "test"+gnd_name,
                                                   nmos_name,
                                                   2 * tx_width,
                                                   tx_length))
 
-def gen_pulse(stim_file, sig_name, v1=gnd, v2=vdd, offset=0, period=1, t_rise=0, t_fall=0):
+def gen_pulse(stim_file, sig_name, v1=gnd_voltage, v2=vdd_voltage, offset=0, period=1, t_rise=0, t_fall=0):
     """Generates a periodic signal with 50% duty cycle and slew rates. Period is measured
     from 50% to 50%."""
     pulse_string="V{0} {0} 0 PULSE ({1} {2} {3}n {4}n {5}n {6}n {7}n)\n"
@@ -133,276 +134,95 @@ def gen_pulse(stim_file, sig_name, v1=gnd, v2=vdd, offset=0, period=1, t_rise=0,
                                         period))
 
 
+def gen_pwl(stim_file, sig_name, clk_times, data_values, period, slew, setup):
+    # the initial value is not a clock time
+    debug.check(len(clk_times)+1==len(data_values),"Clock and data value lengths don't match.")
+    # shift signal times earlier for setup time
+    times = np.array(clk_times) - setup*period
+    values = np.array(data_values) * vdd_voltage
+    half_slew = 0.5 * slew
+    stim_file.write("V{0} {0} 0 PWL (0n {1}v ".format(sig_name, values[0]))
+    for i in range(len(times)):
+        stim_file.write("{0}n {1}v {2}n {3}v ".format(times[i]-half_slew,
+                                                      values[i],
+                                                      times[i]+half_slew,
+                                                      values[i+1]))
+    stim_file.write(")\n")
 
-def gen_clk_pwl(stim_file, cycle_times, t_fall, t_rise):
-    """Generates a clk signal using pwl. The cycle times are the times of the
-    clock rising edge. It is assumed to start at time 0 with clock 0. Duty
-    cycle is assumed to be 50%. Rise/fall times are 0-100%."""
-    stim_file.write("V{0} {0} 0 PWL (0n 0v ".format(tech.spice["clk"]))
-    for i in range(len(cycle_times)-1):
-        period = cycle_times[i+1] - cycle_times[i]
-        t_current = cycle_times[i] - 0.5*t_rise # 50% point is at cycle time
-        t_current2 = t_current + t_rise
-        # rising edge
-        stim_file.write("{0}n {1}v {2}n {3}v ".format(t_current, gnd, t_current2, vdd))
-        t_current = t_current + 0.5*period - 0.5*t_fall # 50% point is at cycle time
-        t_current2 = t_current + t_fall
-        # falling edge
-        stim_file.write("{0}n {1}v {2}n {3}v ".format(t_current, vdd, t_current2, gnd))
-    # end time doesn't need a rising edge
-    stim_file.write("{0}n {1}v)\n".format(cycle_times[-1], gnd))
-
-
-def gen_data_pwl(stim_file, key_times, sig_name, data_value, feasible_period, target_period, t_rise, t_fall):
+def gen_data(stim_file, clk_times, sig_name, period, slew):
     """Generates the PWL data inputs for a simulation timing test."""
-    data_value_invert = gnd if data_value == vdd else vdd
-
-    t_current = 0.0
-    stim_file.write("V{0} {0} 0 PWL ({1}n {2}v ".format(sig_name, t_current, data_value_invert))
-    t_current = key_times[2] - 0.25 * target_period
-    t_current += (0.5 * target_period)  # uses falling edge for ZBT mode
-    slew_time = t_rise if data_value_invert == gnd else t_fall
-    t_current2 = t_current + slew_time
-    stim_file.write("{0}n {1}v {2}n {3}v ".format(t_current, data_value_invert, t_current2, data_value))
-    t_current = key_times[2] + 0.25 * target_period
-    t_current += (0.5 * target_period)  # uses falling edge for ZBT mode
-    slew_time = t_rise if data_value == gnd else t_fall
-    t_current2 = t_current + slew_time
-    stim_file.write("{0}n {1}v {2}n {3}v ".format(t_current, data_value, t_current2, data_value_invert))
-    t_current = key_times[5] + 0.25 * feasible_period
-    stim_file.write("{0}n {1}v)\n".format(t_current, data_value_invert))
+    # values for NOP, W1, W0, W1, R0, W1, W0, R1, NOP
+    # we are asserting the opposite value on the other side of the tx gate during
+    # the read to be "worst case". Otherwise, it can actually assist the read.
+    values = [0, 1, 0, 1, 1, 1, 0, 0, 0 ]
+    gen_pwl(stim_file, sig_name, clk_times, values, period, slew, 0.05)
 
 
-def gen_addr_pwl(stim_file, key_times, addr, feasible_period, target_period, t_rise, t_fall):
-    """Generates the PWL for address inputs for a simulation timing test"""
-    # reverse string
-    reversed_addr = addr[::-1]  
-    # inverts all bits in address using intermediate value of 2
-    invert_addr = reversed_addr.replace('1', '2').replace('0', '1').replace('2', '0')  
+def gen_addr(stim_file, clk_times, addr, period, slew):
+    """Generates the address inputs for a simulation timing test. 
+    One cycle is different to clear the bus
+    """
+    
+    zero_values = [0, 0, 0, 1, 0, 0, 1, 0, 0 ]
+    ones_values = [1, 1, 1, 0, 1, 1, 0, 1, 1 ]
+    
+    for i in range(len(addr)):
+        sig_name = "A[{0}]".format(i)
+        if addr[i]==1:
+            gen_pwl(stim_file, sig_name, clk_times, ones_values, period, slew, 0.05)
+        else:
+            gen_pwl(stim_file, sig_name, clk_times, zero_values, period, slew, 0.05)
 
-    for i in range(len(reversed_addr)):
-        v_val = gnd if reversed_addr[i] == '0' else vdd
-        v_val_invert = gnd if invert_addr[i] == '0' else vdd
-        t_current = 0.0
-        stim_file.write("V{0} {0} 0 PWL ({1}n {2}v ".format("A[{0}]".format(i), t_current, v_val))
-        t_current = key_times[3] - 0.25 * target_period
-        slew_time = t_rise if v_val == gnd else t_fall
-        t_current2 = t_current + slew_time
-        stim_file.write("{0}n {1}v {2}n {3}v ".format(t_current, v_val, t_current2, v_val_invert))
-        t_current = key_times[4] - 0.25 * target_period
-        slew_time = t_rise if v_val_invert == gnd else t_fall
-        t_current2 = t_current + slew_time
-        stim_file.write("{0}n {1}v {2}n {3}v ".format(t_current, v_val_invert, t_current2, v_val))
-        t_current = key_times[5] + 0.25 * feasible_period
-        stim_file.write("{0}n {1}v)\n".format(t_current, v_val))
-
-
-def gen_constant(stim_file, sig_name, v_ref, v_val):
+def gen_constant(stim_file, sig_name, v_val):
     """Generates a constant signal with reference voltage and the voltage value"""
-    stim_file.write("V{0} {0} {1} DC {2}\n".format(sig_name, v_ref, v_val))
+    stim_file.write("V{0} {0} 0 DC {1}\n".format(sig_name, v_val))
 
-def gen_csb_pwl(key_times, feasible_period, target_period, t_rise, t_fall):
-    """Returns two lists for x,y coordinates for the generation of CSb pwl"""
-    t_current = 0.0
-    x_list = [t_current]
-    y_list = [vdd]
+def gen_csb(stim_file, clk_times, period, slew):
+    """ Generates the PWL CSb signal"""
+    # values for NOP, W1, W0, W1, R0, W1, W0, R1, NOP
+    values = [1, 0, 0, 0, 0, 0, 0, 0, 1]
+    gen_pwl(stim_file, "CSb", clk_times, values, period, slew, 0.05)
 
-    for key_time in key_times[:2]:
-        t_current = key_time - 0.25 * feasible_period
-        x_list.append(t_current)
-        y_list.append(vdd)
-        x_list.append(t_current + t_fall)
-        y_list.append(gnd)
-
-        t_current = key_time + 0.25 * feasible_period
-        x_list.append(t_current)
-        y_list.append(gnd)
-        x_list.append(t_current + t_rise)
-        y_list.append(vdd)
-
-    for key_time in key_times[2:-1]:
-        t_current = key_time - 0.25 * target_period
-        x_list.append(t_current)
-        y_list.append(vdd)
-        x_list.append(t_current + t_fall)
-        y_list.append(gnd)
-
-        t_current = key_time + 0.25 * target_period
-        x_list.append(t_current)
-        y_list.append(gnd)
-        x_list.append(t_current + t_rise)
-        y_list.append(vdd)
-
-    return (x_list, y_list)
+def gen_web(stim_file, clk_times, period, slew):
+    """ Generates the PWL WEb signal"""
+    # values for NOP, W1, W0, W1, R0, W1, W0, R1, NOP
+    values = [1, 0, 0, 0, 1, 0, 0, 1, 1]
+    gen_pwl(stim_file, "WEb", clk_times, values, period, slew, 0.05)
+    
+    values = [1, 0, 0, 0, 1, 0, 0, 1, 1]
+    gen_pwl(stim_file, "acc_en", clk_times, values, period, slew, 0)
+    values = [0, 1, 1, 1, 0, 1, 1, 0, 0]
+    gen_pwl(stim_file, "acc_en_inv", clk_times, values, period, slew, 0)
+    
+def gen_oeb(stim_file, clk_times, period, slew):
+    """ Generates the PWL WEb signal"""
+    # values for NOP, W1, W0, W1, R0, W1, W0, R1, NOP
+    values = [1, 1, 1, 1, 0, 1, 1, 0, 1]
+    gen_pwl(stim_file, "OEb", clk_times, values, period, slew, 0.05)
 
 
-def gen_web_pwl(key_times, feasible_period, target_period, t_rise, t_fall):
-    """Returns two lists for x,y coordinates for the generation of WEb pwl"""
-
-    t_current = 0.0
-    x_list = [t_current]
-    y_list = [vdd]
-
-    t_current = key_times[0] - 0.25 * feasible_period
-    x_list.append(t_current)
-    y_list.append(vdd)
-    x_list.append(t_current + t_fall)
-    y_list.append(gnd)
-
-    t_current = key_times[0] + 0.25 * feasible_period
-    x_list.append(t_current)
-    y_list.append(gnd)
-    x_list.append(t_current + t_rise)
-    y_list.append(vdd)
-
-    t_current = key_times[2] - 0.25 * target_period
-    x_list.append(t_current)
-    y_list.append(vdd)
-    x_list.append(t_current + t_fall)
-    y_list.append(gnd)
-
-    t_current = key_times[2] + 0.25 * target_period
-    x_list.append(t_current)
-    y_list.append(gnd)
-    x_list.append(t_current + t_rise)
-    y_list.append(vdd)
-
-    t_current = key_times[3] - 0.25 * target_period
-    x_list.append(t_current)
-    y_list.append(vdd)
-    x_list.append(t_current + t_fall)
-    y_list.append(gnd)
-
-    t_current = key_times[3] + 0.25 * target_period
-    x_list.append(t_current)
-    y_list.append(gnd)
-    x_list.append(t_current + t_rise)
-    y_list.append(vdd)
-
-    return (x_list, y_list)
 
 
-def gen_oeb_pwl(key_times, feasible_period, target_period, t_rise, t_fall):
-    """Returns two lists for x,y coordinates for the generation of OEb pwl"""
-
-    t_current = 0.0
-    x_list = [t_current]
-    y_list = [vdd]
-
-    t_current = key_times[1] - 0.25 * feasible_period
-    x_list.append(t_current)
-    y_list.append(vdd)
-    x_list.append(t_current + t_fall)
-    y_list.append(gnd)
-
-    t_current = key_times[1] + 0.25 * feasible_period
-    x_list.append(t_current)
-    y_list.append(gnd)
-    x_list.append(t_current + t_rise)
-    y_list.append(vdd)
-
-    t_current = key_times[4] - 0.25 * target_period
-    x_list.append(t_current)
-    y_list.append(vdd)
-    x_list.append(t_current + t_fall)
-    y_list.append(gnd)
-
-    t_current = key_times[4] + 0.25 * target_period
-    x_list.append(t_current)
-    y_list.append(gnd)
-    x_list.append(t_current + t_rise)
-    y_list.append(vdd)
-
-    return (x_list, y_list)
-
-
-def gen_web_trans_pwl(key_times, feasible_period, target_period, t_rise, t_fall):
-    """Returns two lists for x,y coordinates for the generation of WEb_transmission_gate pwl"""
-
-    t_current = 0.0
-    x_list = [t_current]
-    y_list = [vdd]
-
-    t_current = key_times[0] + 0.5 * feasible_period
-    t_current -= 0.25 * feasible_period
-    x_list.append(t_current)
-    y_list.append(vdd)
-    x_list.append(t_current + t_fall)
-    y_list.append(gnd)
-
-    t_current += 0.5 * feasible_period
-    x_list.append(t_current)
-    y_list.append(gnd)
-    x_list.append(t_current + t_rise)
-    y_list.append(vdd)
-
-    t_current = key_times[2] + 0.5 * target_period
-    t_current -= 0.25 * target_period
-    x_list.append(t_current)
-    y_list.append(vdd)
-    x_list.append(t_current + t_fall)
-    y_list.append(gnd)
-
-    t_current += 0.5 * target_period
-    x_list.append(t_current)
-    y_list.append(gnd)
-    x_list.append(t_current + t_rise)
-    y_list.append(vdd)
-
-    t_current = key_times[3] + 0.5 * target_period
-    t_current -= 0.25 * target_period
-    x_list.append(t_current)
-    y_list.append(vdd)
-    x_list.append(t_current + t_fall)
-    y_list.append(gnd)
-
-    t_current += 0.5 * target_period
-    x_list.append(t_current)
-    y_list.append(gnd)
-    x_list.append(t_current + t_rise)
-    y_list.append(vdd)
-
-    return (x_list, y_list)
-
-
-def get_inverse_value(value):
-    if value > 0.5*vdd:
-        return gnd
-    elif value <= 0.5*vdd:
-        return vdd
+def get_inverse_voltage(value):
+    if value > 0.5*vdd_voltage:
+        return gnd_voltage
+    elif value <= 0.5*vdd_voltage:
+        return vdd_voltage
     else:
         debug.error("Invalid value to get an inverse of: {0}".format(value))
 
-
-def gen_pwl(stim_file, sig_name, x_list, y_list):
-    """Generates an arbitrary pwl for a signal where xlist is times in
-    ns and ylist is voltage. """
-
-    t_current = 0.0
-    stim_file.write("V{0} {0} 0 PWL (".format(sig_name))
-    for p in zip(x_list,y_list):
-        stim_file.write("{0}n {1}v ".format(p[0],p[1]))
-    stim_file.write(")\n")
-
-def gen_trap_pwl(stim_file, sig_name, x_list, y_list, t_rise, t_fall):
-    """Generates a trapezoidal pwl for a signal where xlist is times in ns and ylist is voltage. 
-    Transitions are assumed to ignore slew and the slew rates are generated automatically
-    using the provided 0-100% slew times and centering times at the 50% point.."""
-
-    stim_file.write("V{0} {0} 0 PWL (".format(sig_name))
-    for p in zip(x_list,y_list):
-        slew = t_rise if p[1]>0.5*vdd else t_fall
-        start = max(p[0]-0.5*slew,0)
-        end = p[0]+0.5*slew
-        stim_file.write("{0}n {1}v ".format(start, get_inverse_value(p[1])))
-        stim_file.write("{0}n {1}v ".format(end, p[1]))
-    stim_file.write(")\n")
-
-
+def get_inverse_value(value):
+    if value > 0.5:
+        return 0
+    elif value <= 0.5:
+        return 1
+    else:
+        debug.error("Invalid value to get an inverse of: {0}".format(value))
+        
 
 def gen_meas_delay(stim_file, meas_name, trig_name, targ_name, trig_val, targ_val, trig_dir, targ_dir, td):
     """Creates the .meas statement for the measurement of delay"""
-    measure_string=".meas tran {0} TRIG v({1}) VAL={2} RISE={3} TARG v({4}) VAL={5} TD={7}n {6}=1\n"
+    measure_string=".meas tran {0} TRIG v({1}) VAL={2} {3}=1 TD={7}n TARG v({4}) VAL={5} {6}=1 TD={7}n\n\n"
     stim_file.write(measure_string.format(meas_name,
                                           trig_name,
                                           trig_val,
@@ -411,7 +231,7 @@ def gen_meas_delay(stim_file, meas_name, trig_name, targ_name, trig_val, targ_va
                                           targ_val,
                                           targ_dir,
                                           td))
-
+    
 def gen_meas_power(stim_file, meas_name, t_initial, t_final):
     """Creates the .meas statement for the measurement of avg power"""
     # power mea cmd is different in different spice:
@@ -419,27 +239,38 @@ def gen_meas_power(stim_file, meas_name, t_initial, t_final):
         power_exp = "power"
     else:
         power_exp = "par('(-1*v(" + str(vdd_name) + ")*I(v" + str(vdd_name) + "))')"
-    stim_file.write(".meas tran {0} avg {1} from={2}n to={3}n\n".format(meas_name,
+    stim_file.write(".meas tran {0} avg {1} from={2}n to={3}n\n\n".format(meas_name,
                                                                         power_exp,
                                                                         t_initial,
                                                                         t_final))
+    stim_file.write("\n")
+    
+def write_control(stim_file, end_time):
+    # UIC is needed for ngspice to converge
+    stim_file.write(".TRAN 5p {0}n UIC\n".format(end_time))
+    stim_file.write(".OPTIONS POST=1 RUNLVL=4 PROBE\n")
+    # create plots for all signals
+    stim_file.write("* probe is used for hspice\n")    
+    stim_file.write("*.probe V(*)\n")
+    stim_file.write("* plot is used for ngspice interactive mode \n")    
+    stim_file.write("*.plot V(*)\n")
+    # end the stimulus file
+    stim_file.write(".end\n\n")
 
 
 def write_include(stim_file, models):
     """Writes include statements, inputs are lists of model files"""
     for item in list(models):
-        stim_file.write(".include \"{0}\"\n".format(item))
+        stim_file.write(".include \"{0}\"\n\n".format(item))
 
 
-def write_supply(stim_file, vdd_name, gnd_name, vdd_voltage, gnd_voltage):
+def write_supply(stim_file):
     """Writes supply voltage statements"""
     stim_file.write("V{0} {0} 0.0 {1}\n".format(vdd_name, vdd_voltage))
     stim_file.write("V{0} {0} 0.0 {1}\n".format(gnd_name, gnd_voltage))
     # This is for the test power supply
     stim_file.write("V{0} {0} 0.0 {1}\n".format("test"+vdd_name, vdd_voltage))
-    stim_file.write("V{0} {0} 0.0 {1}\n".format("test"+gnd_name, gnd_voltage))
-
-
+    stim_file.write("V{0} {0} 0.0 {1}\n\n".format("test"+gnd_name, gnd_voltage))
 
 
 def run_sim():

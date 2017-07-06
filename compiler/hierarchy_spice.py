@@ -148,7 +148,7 @@ class spice:
         del usedMODS
         spfile.close()
 
-    def delay(self, slope, load=0.0):
+    def delay(self, slew, load=0.0):
         """Inform users undefined delay module while building new modules"""
         debug.warning("Design Class {0} delay function needs to be defined"
                       .format(self.__class__.__name__))
@@ -158,7 +158,7 @@ class spice:
         # return 0 to keep code running while building
         return delay_data(0.0, 0.0)
 
-    def cal_delay_with_rc(self, r, c ,slope, swing = 0.5):
+    def cal_delay_with_rc(self, r, c ,slew, swing = 0.5):
         """ 
         Calculate the delay of a mosfet by 
         modeling it as a resistance driving a capacitance
@@ -167,19 +167,19 @@ class spice:
         delay = swing_factor * r * c #c is in ff and delay is in fs
         delay = delay * 0.001 #make the unit to ps
 
-        # Output slope should be linear to input slope which is described 
-        # as 0.005* slope.
+        # Output slew should be linear to input slew which is described 
+        # as 0.005* slew.
 
-        # The slope will be also influenced by the delay.
-        # If no input slope(or too small to make impact) 
-        # The mimum slope should be the time to charge RC. 
+        # The slew will be also influenced by the delay.
+        # If no input slew(or too small to make impact) 
+        # The mimum slew should be the time to charge RC. 
         # Delay * 2 is from 0 to 100%  swing. 0.6*2*delay is from 20%-80%.
-        slope = delay * 0.6 * 2 + 0.005 * slope
-        return delay_data(delay = delay, slope = slope)
+        slew = delay * 0.6 * 2 + 0.005 * slew
+        return delay_data(delay = delay, slew = slew)
 
 
-    def return_delay(self, delay, slope):
-        return delay_data(delay, slope)
+    def return_delay(self, delay, slew):
+        return delay_data(delay, slew)
 
     def generate_rc_net(self,lump_num, wire_length, wire_width):
         return wire_spice_model(lump_num, wire_length, wire_width)
@@ -188,17 +188,17 @@ class delay_data:
     """
     This is the delay class to represent the delay information
     Time is 50% of the signal to 50% of reference signal delay.
-    Slope is the 20% of the signal to 80% of signal
+    Slew is the 10% of the signal to 90% of signal
     """
-    def __init__(self, delay=0.0, slope=0.0):
+    def __init__(self, delay=0.0, slew=0.0):
         """ init function support two init method"""
         # will take single input as a coordinate
         self.delay = delay
-        self.slope = slope
+        self.slew = slew
 
     def __str__(self):
         """ override print function output """
-        return "Delay Data: Delay "+str(self.delay)+", Slope "+str(self.slope)+""
+        return "Delay Data: Delay "+str(self.delay)+", Slew "+str(self.slew)+""
 
     def __add__(self, other):
         """
@@ -206,7 +206,7 @@ class delay_data:
         """
         assert isinstance(other,delay_data)
         return delay_data(other.delay + self.delay,
-                          other.slope)
+                          other.slew)
 
     def __radd__(self, other):
         """
@@ -214,7 +214,7 @@ class delay_data:
         """
         assert isinstance(other,delay_data)
         return delay_data(other.delay + self.delay,
-                          self.slope)
+                          self.slew)
 
 
 class wire_spice_model:
@@ -241,14 +241,14 @@ class wire_spice_model:
     def return_input_cap(self):
         return 0.5 * self.wire_c * self.lump_num
 
-    def return_delay_over_wire(self, slope, swing = 0.5):
+    def return_delay_over_wire(self, slew, swing = 0.5):
         # delay will be sum of arithmetic sequence start from
         # rc to self.lump_num*rc with step of rc
 
         swing_factor = abs(math.log(1-swing)) # time constant based on swing
         sum_factor = (1+self.lump_num) * self.lump_num * 0.5 # sum of the arithmetic sequence
         delay = sum_factor * swing_factor * self.wire_r * self.wire_c 
-        slope = delay * 2 + slope
-        result= delay_data(delay, slope)
+        slew = delay * 2 + slew
+        result= delay_data(delay, slew)
         return result
 

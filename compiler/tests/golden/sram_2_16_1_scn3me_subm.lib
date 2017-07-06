@@ -308,20 +308,20 @@ cell (sram_2_16_1_scn3me_subm){
             timing_type :"min_pulse_width"; 
             related_pin  : clk; 
             rise_constraint(scalar) {
-                values("1.328"); 
+                values("0.469"); 
             }
             fall_constraint(scalar) {
-                values("1.328"); 
+                values("0.469"); 
             }
          }
         timing(){ 
             timing_type :"minimum_period"; 
             related_pin  : clk; 
             rise_constraint(scalar) {
-                values("2.656"); 
+                values("0.938"); 
             }
             fall_constraint(scalar) {
-                values("2.656"); 
+                values("0.938"); 
             }
          }
     }

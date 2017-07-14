@@ -178,11 +178,11 @@ spice["pmos"]="p"
 spice["fet_models"] = [os.environ.get("SPICE_MODEL_DIR")+"/on_c5n.sp"]
 
 #spice stimulus related variables
-spice["clock_period"] = 10.0
+spice["feasible_period"] = 5         # estimated feasible period in ns
 spice["supply_voltage"] = 5.0        #vdd in [Volts]
 spice["gnd_voltage"] = 0.0           #gnd in [Volts]
-spice["rise_time"] = 0.001           #rise time in [Nano-seconds]
-spice["fall_time"] = 0.001           #fall time in [Nano-seconds]
+spice["rise_time"] = 0.05            #rise time in [Nano-seconds]
+spice["fall_time"] = 0.05            #fall time in [Nano-seconds]
 spice["temp"] = 25                   #temperature in [Celsius]
 
 #parasitics of metal for bit/word lines
@@ -190,8 +190,8 @@ spice["bitline_res"] = 0.1           #bitline resistance in [Ohms/micro-meter]
 spice["bitline_cap"] = 0.2           #bitline capacitance in [Femto-farad/micro-meter]
 spice["wordline_res"] = 0.1          #wordline resistance in [Ohms/micro-meter]
 spice["wordline_cap"] = 0.2          #wordline capacitance in [Femto-farad/micro-meter]
-spice["FF_in_cap"] = 9.8242         #Input capacitance of ms_flop (Din) [Femto-farad]
-spice["tri_gate_out_cap"] = 1.4980         #Output capacitance of tri_gate (tri_out) [Femto-farad]
+spice["FF_in_cap"] = 9.8242          #Input capacitance of ms_flop (Din) [Femto-farad]
+spice["tri_gate_out_cap"] = 1.4980   #Output capacitance of tri_gate (tri_out) [Femto-farad]
 
 
 #sram signal names
@@ -206,16 +206,15 @@ spice["minwidth_tx"] = drc["minwidth_tx"]
 spice["channel"] = drc["minlength_channel"]
 spice["clk"] = "clk"
 
-# estimated feasible period in ns
-spice["feasible_period"] = 5
+# analytical delay parameters
+# FIXME: These need to be updated for SCMOS, they are copied from FreePDK45.
+spice["wire_unit_r"] = 0.075    # Unit wire resistance in ohms/square
+spice["wire_unit_c"] = 0.64     # Unit wire capacitance ff/um^2
+spice["min_tx_r"] = 9250.0      # Minimum transistor on resistance in ohms
+spice["min_tx_drain_c"] = 0.7   # Minimum transistor drain capacitance in ff
+spice["min_tx_gate_c"] = 0.1    # Minimum transistor gate capacitance in ff
+spice["msflop_setup"] = 9        # DFF setup time in ps
+spice["msflop_hold"] = 1         # DFF hold time in ps
+spice["msflop_delay"] = 20.5     # DFF Clk-to-q delay in ps
+spice["msflop_slew"] = 13.1      # DFF output slew in ps w/ no load
 
-# analytical delay parameter
-# these numbers are copied from freepdk
-# need to measure them in scn cmos
-spice["wire_unit_r"] = 0.075 #ohm 
-spice["wire_unit_c"] = 0.64 #ff/um^2
-spice["min_tx_r"] = 9250.0
-spice["min_tx_c_para"] = 0.7 #ff
-spice["min_tx_gate_c"] = 0.1
-spice["msflop_delay"] = 20.5171565446#ps
-spice["msflop_slope"] = 13.0801872972#ps

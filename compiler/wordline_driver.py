@@ -232,6 +232,7 @@ class wordline_driver(design.design):
             self.vdd_positions.append(vdd_offset)
             self.gnd_positions.append(gnd_offset)
 
+<<<<<<< HEAD
     def add_extra_driver(self, driver_mults, start, array_gap, array_to_driver):
         self.wl_driver_mults = driver_mults
         for seg in range(1,driver_mults):

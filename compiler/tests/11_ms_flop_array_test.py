@@ -27,7 +27,7 @@ class dff_array_test(unittest.TestCase):
         debug.info(1, "Testing sample for dff_array")
         OPTS.check_lvsdrc = False
         a = ms_flop_array.ms_flop_array(
-            name="test1", array_type="address", columns=64, word_size=32)
+            name="test1", columns=64, word_size=32)
         OPTS.check_lvsdrc = True
         self.local_check(a)
 

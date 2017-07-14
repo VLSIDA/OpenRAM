@@ -31,52 +31,18 @@ library (sram_2_16_1_scn3me_subm_lib){
     default_max_fanout   : 4.0 ;
     default_connection_class : universal ;
 
-    lu_table_template(CELL_UP_FOR_CLOCK){
+    lu_table_template(CELL_TABLE){
         variable_1 : input_net_transition;
         variable_2 : total_output_net_capacitance;
-        index_1 ("0.5");
-        index_2 ("0.5");
+        index_1("0.0125, 0.05, 0.4");
+        index_2("2.45605, 9.8242, 78.5936");
     }
 
-    lu_table_template(CELL_DN_FOR_CLOCK){
-        variable_1 : input_net_transition;
-        variable_2 : total_output_net_capacitance;
-        index_1 ("0.5");
-        index_2 ("0.5");
-    }
-
-    lu_table_template(CONSTRAINT_HIGH_POS){
+    lu_table_template(CONSTRAINT_TABLE){
         variable_1 : related_pin_transition;
         variable_2 : constrained_pin_transition;
-        index_1 ("0.5");
-        index_2 ("0.5");
-    }
-
-    lu_table_template(CONSTRAINT_LOW_POS){
-        variable_1 : related_pin_transition;
-        variable_2 : constrained_pin_transition;
-        index_1 ("0.5");
-        index_2 ("0.5");
-    }
-
-    lu_table_template(CLK_TRAN) {
-        variable_1 : constrained_pin_transition;
-        index_1 ("0.5");
-    }
-
-    lu_table_template(TRAN) {
-        variable_1 : total_output_net_capacitance;
-        index_1 ("0.5");
-    }
-
-    power_lut_template(INPUT_BY_TRANS_FOR_CLOCK){
-        variable_1 : input_transition_time;
-        index_1 ("0.5");
-    }
-
-    power_lut_template(INPUT_BY_TRANS_FOR_SIGNAL){
-        variable_1 : input_transition_time;
-        index_1 ("0.5");
+        index_1("0.0125, 0.05, 0.4");
+        index_2("0.0125, 0.05, 0.4");
     }
 
     default_operating_conditions : TT; 
@@ -113,71 +79,87 @@ cell (sram_2_16_1_scn3me_subm){
     bus(DATA){
         bus_type  : DATA; 
         direction  : inout; 
-        max_capacitance : 11.3222;  
-        pin(DATA[1:0]){
-        }
+        max_capacitance : 78.5936;  
         three_state : "!OEb & !clk"; 
         memory_write(){ 
             address : ADDR; 
             clocked_on  : clk; 
         }
+        memory_read(){ 
+            address : ADDR; 
+        }
+        pin(DATA[1:0]){
         internal_power(){
             when : "OEb & !clk"; 
-            rise_power(INPUT_BY_TRANS_FOR_SIGNAL){
-                values("0.0");
+            rise_power(scalar){
+                values("0");
             }
-            fall_power(INPUT_BY_TRANS_FOR_SIGNAL){
-                values("0.0");
+            fall_power(scalar){
+                values("0");
             }
         }
         timing(){ 
             timing_type : setup_rising; 
             related_pin  : "clk"; 
-            rise_constraint(CONSTRAINT_HIGH_POS) {
-                values("0.093"); 
+            rise_constraint(CONSTRAINT_TABLE) {
+            values("0.009, 0.009, 0.009",\
+                   "0.009, 0.009, 0.009",\
+                   "0.009, 0.009, 0.009");
             }
-            fall_constraint(CONSTRAINT_LOW_POS) {
-                values("-0.024"); 
+            fall_constraint(CONSTRAINT_TABLE) {
+            values("0.009, 0.009, 0.009",\
+                   "0.009, 0.009, 0.009",\
+                   "0.009, 0.009, 0.009");
             }
         }
         timing(){ 
             timing_type : hold_rising; 
             related_pin  : "clk"; 
-            rise_constraint(CONSTRAINT_HIGH_POS) {
-                values("0.046"); 
+            rise_constraint(CONSTRAINT_TABLE) {
+            values("0.001, 0.001, 0.001",\
+                   "0.001, 0.001, 0.001",\
+                   "0.001, 0.001, 0.001");
               }
-            fall_constraint(CONSTRAINT_LOW_POS) {
-                values("-0.083"); 
+            fall_constraint(CONSTRAINT_TABLE) {
+            values("0.001, 0.001, 0.001",\
+                   "0.001, 0.001, 0.001",\
+                   "0.001, 0.001, 0.001");
             }
-        }
-        memory_read(){ 
-            address : ADDR; 
         }
         internal_power(){
             when : "!OEb & !clk"; 
-            rise_power(INPUT_BY_TRANS_FOR_SIGNAL){
-                values("0.0");
+            rise_power(scalar){
+                values("0");
             }
-            fall_power(INPUT_BY_TRANS_FOR_SIGNAL){
-                values("0.0");
+            fall_power(scalar){
+                values("0");
             }
         }
         timing(){ 
             timing_sense : non_unate; 
             related_pin : "clk"; 
-            timing_type : rising_edge; 
-            cell_rise(CELL_UP_FOR_CLOCK) {
-                values("553.907"); 
+            timing_type : falling_edge; 
+            cell_rise(CELL_TABLE) {
+            values("0.57, 0.617, 1.058",\
+                   "0.57, 0.617, 1.058",\
+                   "0.57, 0.617, 1.058");
             }
-            cell_fall(CELL_DN_FOR_CLOCK) {
-                values("553.907"); 
+            cell_fall(CELL_TABLE) {
+            values("0.57, 0.617, 1.058",\
+                   "0.57, 0.617, 1.058",\
+                   "0.57, 0.617, 1.058");
             }
-        rise_transition(TRAN) {
-                values("553.907"); 
+        rise_transition(CELL_TABLE) {
+            values("0.024, 0.081, 0.61",\
+                   "0.024, 0.081, 0.61",\
+                   "0.024, 0.081, 0.61");
               }
-        fall_transition(TRAN) {
-                values("553.907"); 
+        fall_transition(CELL_TABLE) {
+            values("0.024, 0.081, 0.61",\
+                   "0.024, 0.081, 0.61",\
+                   "0.024, 0.081, 0.61");
             }
+        }
         }
     }
 
@@ -185,29 +167,37 @@ cell (sram_2_16_1_scn3me_subm){
         bus_type  : ADDR; 
         direction  : input; 
         capacitance : 9.8242;  
-        max_transition       : 0.5;
+        max_transition       : 0.4;
         fanout_load          : 1.000000;
         pin(ADDR[3:0]){
-        }
         timing(){ 
             timing_type : setup_rising; 
             related_pin  : "clk"; 
-            rise_constraint(CONSTRAINT_HIGH_POS) {
-                values("0.093"); 
+            rise_constraint(CONSTRAINT_TABLE) {
+            values("0.009, 0.009, 0.009",\
+                   "0.009, 0.009, 0.009",\
+                   "0.009, 0.009, 0.009");
             }
-            fall_constraint(CONSTRAINT_LOW_POS) {
-                values("-0.024"); 
+            fall_constraint(CONSTRAINT_TABLE) {
+            values("0.009, 0.009, 0.009",\
+                   "0.009, 0.009, 0.009",\
+                   "0.009, 0.009, 0.009");
             }
         }
         timing(){ 
             timing_type : hold_rising; 
             related_pin  : "clk"; 
-            rise_constraint(CONSTRAINT_HIGH_POS) {
-                values("0.046"); 
+            rise_constraint(CONSTRAINT_TABLE) {
+            values("0.001, 0.001, 0.001",\
+                   "0.001, 0.001, 0.001",\
+                   "0.001, 0.001, 0.001");
               }
-            fall_constraint(CONSTRAINT_LOW_POS) {
-                values("-0.083"); 
+            fall_constraint(CONSTRAINT_TABLE) {
+            values("0.001, 0.001, 0.001",\
+                   "0.001, 0.001, 0.001",\
+                   "0.001, 0.001, 0.001");
             }
+        }
         }
     }
 
@@ -217,21 +207,29 @@ cell (sram_2_16_1_scn3me_subm){
         timing(){ 
             timing_type : setup_rising; 
             related_pin  : "clk"; 
-            rise_constraint(CONSTRAINT_HIGH_POS) {
-                values("0.093"); 
+            rise_constraint(CONSTRAINT_TABLE) {
+            values("0.009, 0.009, 0.009",\
+                   "0.009, 0.009, 0.009",\
+                   "0.009, 0.009, 0.009");
             }
-            fall_constraint(CONSTRAINT_LOW_POS) {
-                values("-0.024"); 
+            fall_constraint(CONSTRAINT_TABLE) {
+            values("0.009, 0.009, 0.009",\
+                   "0.009, 0.009, 0.009",\
+                   "0.009, 0.009, 0.009");
             }
         }
         timing(){ 
             timing_type : hold_rising; 
             related_pin  : "clk"; 
-            rise_constraint(CONSTRAINT_HIGH_POS) {
-                values("0.046"); 
+            rise_constraint(CONSTRAINT_TABLE) {
+            values("0.001, 0.001, 0.001",\
+                   "0.001, 0.001, 0.001",\
+                   "0.001, 0.001, 0.001");
               }
-            fall_constraint(CONSTRAINT_LOW_POS) {
-                values("-0.083"); 
+            fall_constraint(CONSTRAINT_TABLE) {
+            values("0.001, 0.001, 0.001",\
+                   "0.001, 0.001, 0.001",\
+                   "0.001, 0.001, 0.001");
             }
         }
     }
@@ -242,21 +240,29 @@ cell (sram_2_16_1_scn3me_subm){
         timing(){ 
             timing_type : setup_rising; 
             related_pin  : "clk"; 
-            rise_constraint(CONSTRAINT_HIGH_POS) {
-                values("0.093"); 
+            rise_constraint(CONSTRAINT_TABLE) {
+            values("0.009, 0.009, 0.009",\
+                   "0.009, 0.009, 0.009",\
+                   "0.009, 0.009, 0.009");
             }
-            fall_constraint(CONSTRAINT_LOW_POS) {
-                values("-0.024"); 
+            fall_constraint(CONSTRAINT_TABLE) {
+            values("0.009, 0.009, 0.009",\
+                   "0.009, 0.009, 0.009",\
+                   "0.009, 0.009, 0.009");
             }
         }
         timing(){ 
             timing_type : hold_rising; 
             related_pin  : "clk"; 
-            rise_constraint(CONSTRAINT_HIGH_POS) {
-                values("0.046"); 
+            rise_constraint(CONSTRAINT_TABLE) {
+            values("0.001, 0.001, 0.001",\
+                   "0.001, 0.001, 0.001",\
+                   "0.001, 0.001, 0.001");
               }
-            fall_constraint(CONSTRAINT_LOW_POS) {
-                values("-0.083"); 
+            fall_constraint(CONSTRAINT_TABLE) {
+            values("0.001, 0.001, 0.001",\
+                   "0.001, 0.001, 0.001",\
+                   "0.001, 0.001, 0.001");
             }
         }
     }
@@ -267,21 +273,29 @@ cell (sram_2_16_1_scn3me_subm){
         timing(){ 
             timing_type : setup_rising; 
             related_pin  : "clk"; 
-            rise_constraint(CONSTRAINT_HIGH_POS) {
-                values("0.093"); 
+            rise_constraint(CONSTRAINT_TABLE) {
+            values("0.009, 0.009, 0.009",\
+                   "0.009, 0.009, 0.009",\
+                   "0.009, 0.009, 0.009");
             }
-            fall_constraint(CONSTRAINT_LOW_POS) {
-                values("-0.024"); 
+            fall_constraint(CONSTRAINT_TABLE) {
+            values("0.009, 0.009, 0.009",\
+                   "0.009, 0.009, 0.009",\
+                   "0.009, 0.009, 0.009");
             }
         }
         timing(){ 
             timing_type : hold_rising; 
             related_pin  : "clk"; 
-            rise_constraint(CONSTRAINT_HIGH_POS) {
-                values("0.046"); 
+            rise_constraint(CONSTRAINT_TABLE) {
+            values("0.001, 0.001, 0.001",\
+                   "0.001, 0.001, 0.001",\
+                   "0.001, 0.001, 0.001");
               }
-            fall_constraint(CONSTRAINT_LOW_POS) {
-                values("-0.083"); 
+            fall_constraint(CONSTRAINT_TABLE) {
+            values("0.001, 0.001, 0.001",\
+                   "0.001, 0.001, 0.001",\
+                   "0.001, 0.001, 0.001");
             }
         }
     }
@@ -293,20 +307,20 @@ cell (sram_2_16_1_scn3me_subm){
         timing(){ 
             timing_type :"min_pulse_width"; 
             related_pin  : clk; 
-            rise_constraint(CLK_TRAN) {
+            rise_constraint(scalar) {
                 values("0.0"); 
             }
-            fall_constraint(CLK_TRAN) {
+            fall_constraint(scalar) {
                 values("0.0"); 
             }
          }
         timing(){ 
             timing_type :"minimum_period"; 
             related_pin  : clk; 
-            rise_constraint(CLK_TRAN) {
+            rise_constraint(scalar) {
                 values("0.0"); 
             }
-            fall_constraint(CLK_TRAN) {
+            fall_constraint(scalar) {
                 values("0.0"); 
             }
          }

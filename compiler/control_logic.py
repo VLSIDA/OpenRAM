@@ -60,7 +60,6 @@ class control_logic(design.design):
         self.add_mod(self.nor2)
 
         self.msf_control = ms_flop_array(name="msf_control",
-                                         array_type="data_in",
                                          columns=3,
                                          word_size=3)
         self.add_mod(self.msf_control)

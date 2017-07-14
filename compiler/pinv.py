@@ -23,7 +23,7 @@ class pinv(design.design):
         name = "pinv{0}".format(pinv.unique_id)
         pinv.unique_id += 1
         design.design.__init__(self, name)
-        debug.info(2, "create pinv strcuture {0} with size of {1}".format(name, nmos_width))
+        debug.info(2, "create pinv structure {0} with size of {1}".format(name, nmos_width))
 
         self.nmos_width = nmos_width
         self.beta = beta
@@ -410,8 +410,8 @@ class pinv(design.design):
     def input_load(self):
         return ((self.nmos_size+self.pmos_size)/parameter["min_tx_size"])*spice["min_tx_gate_c"]
 
-    def delay(self, slope, load=0.0):
+    def delay(self, slew, load=0.0):
         from tech import spice
-        r = spice["min_tx_r"]/(self.nmos_width/parameter["min_tx_size"])
-        c_para = spice["min_tx_c_para"]*(self.nmos_width/parameter["min_tx_size"])#ff
-        return self.cal_delay_with_rc(r = r, c =  c_para+load, slope =slope)
+        r = spice["min_tx_r"]/(self.nmos_size/parameter["min_tx_size"])
+        c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff
+        return self.cal_delay_with_rc(r = r, c =  c_para+load, slew = slew)

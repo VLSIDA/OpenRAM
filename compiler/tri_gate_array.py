@@ -35,9 +35,9 @@ class tri_gate_array(design.design):
     def add_pins(self):
         """create the name of pins depend on the word size"""
         for i in range(self.word_size):
-            self.add_pin("tri_in[{0}]".format(i))
+            self.add_pin("IN[{0}]".format(i))
         for i in range(self.word_size):
-            self.add_pin("DATA[{0}]".format(i))
+            self.add_pin("OUT[{0}]".format(i))
         for pin in ["en", "en_bar", "vdd", "gnd"]:
             self.add_pin(pin)
 
@@ -49,8 +49,8 @@ class tri_gate_array(design.design):
         self.tri_gate_positions = []
         self.vdd_positions = []
         self.gnd_positions = []
-        self.tri_in_positions = []
-        self.DATA_positions = []
+        self.in_positions = []
+        self.out_positions = []
 
     def add_modules(self):
         """instantiation of a tri gate"""
@@ -75,8 +75,8 @@ class tri_gate_array(design.design):
                           mod=self.tri,
                           offset=[x_off, 0],
                           mirror = mirror)
-            self.connect_inst(["tri_in[{0}]".format(i),
-                               "DATA[{0}]".format(i),
+            self.connect_inst(["in[{0}]".format(i),
+                               "out[{0}]".format(i),
                                "en", "en_bar", "vdd", "gnd"])
 
     def add_metal_rails(self):
@@ -118,24 +118,18 @@ class tri_gate_array(design.design):
             self.add_label(text="gnd",
                            layer="metal2",
                            offset=pin_offset["gnd"])
-            self.add_label(text="tri_in[{0}]".format(i),
+            self.add_label(text="in[{0}]".format(i),
                            layer="metal2",
                            offset=pin_offset["in"])
-            self.add_label(text="DATA[{0}]".format(i),
+            self.add_label(text="out[{0}]".format(i),
                            layer="metal2",
                            offset=pin_offset["out"])
 
             self.vdd_positions.append(pin_offset["vdd"])
             self.gnd_positions.append(pin_offset["gnd"])
-            self.tri_in_positions.append(pin_offset["in"])
-            self.DATA_positions.append(pin_offset["out"])
+            self.in_positions.append(pin_offset["in"])
+            self.out_positions.append(pin_offset["out"])
 
-        self.add_label(text="tri gate",
-                       layer="text",
-                       offset=[self.width / 2.0,
-                               self.height / 2.0])
-
-    def delay(self, slope, load=0.0):
-        result = self.tri.delay(slope = slope, 
-                                    load = load)
+    def delay(self, slew, load=0.0):
+        result = self.tri.delay(slew = slew, load = load)
         return result

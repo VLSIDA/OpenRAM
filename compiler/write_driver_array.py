@@ -140,7 +140,3 @@ class write_driver_array(design.design):
         self.vdd_positions.append(base + vector(self.write_driver_chars["vdd"]).scale(0,1))
         self.gnd_positions.append(base + vector(self.write_driver_chars["gnd"]).scale(0,1))
 
-        self.add_label(text="WRITE DRIVER",
-                       layer="text",
-                       offset=[self.width / 2.0,
-                               self.height / 2.0])

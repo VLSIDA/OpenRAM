@@ -25,7 +25,7 @@ class nor_2(design.design):
         name = "nor2_{0}".format(nor_2.unique_id)
         nor_2.unique_id += 1
         design.design.__init__(self, name)
-        debug.info(2, "create nand_2 strcuture {0} with size of {1}".format(name, nmos_width))
+        debug.info(2, "create nor_2 structure {0} with size of {1}".format(name, nmos_width))
 
         self.nmos_width = nmos_width
         self.height = height

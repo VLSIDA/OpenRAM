@@ -46,7 +46,10 @@ class sram_func_test(unittest.TestCase):
         d.set_probe(probe_address,probe_data)
 
         # This will exit if it doesn't find a feasible period
-        feasible_period = d.find_feasible_period(2.0)
+        import tech
+        load = tech.spice["FF_in_cap"]*4
+        slew = tech.spice["rise_time"]*2
+        feasible_period = d.find_feasible_period(load,slew)
 
         os.remove(tempspice)
 

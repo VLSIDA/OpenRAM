@@ -14,11 +14,16 @@ import importlib
 # Current version of OpenRAM.
 VERSION = "1.0"
 
-
-USAGE = "usage: openram.py [options] <config file>\n"
+USAGE = "Usage: openram.py [options] <config file>\nUse -h for help.\n"
 
 # Anonymous object that will be the options
 OPTS = options.options()
+
+# check that we are not using version 3 and at least 2.7
+major_python_version = sys.version_info.major
+minor_python_version = sys.version_info.minor
+if not (major_python_version == 2 and minor_python_version >= 7):
+    debug.error("Python 2.7 is required.",-1)
 
 def is_exe(fpath):
     return os.path.exists(fpath) and os.access(fpath, os.X_OK)
@@ -34,11 +39,11 @@ def parse_args():
 
     option_list = {
         optparse.make_option("-b", "--backannotated", action="store_true", dest="run_pex",
-                             help="back annotated simulation for characterizer"),
-        optparse.make_option("-o", "--output", dest="out_name",
-                             help="Base output file name.", metavar="FILE"),
-        optparse.make_option("-p", "--outpath", dest="out_path",
-                             help="output file location."),
+                             help="Back annotate simulation"),
+        optparse.make_option("-o", "--output", dest="output_name",
+                             help="Base output file name(s) prefix", metavar="FILE"),
+        optparse.make_option("-p", "--outpath", dest="output_path",
+                             help="Output file(s) location"),
         optparse.make_option("-n", "--nocheck", action="store_false",
                              help="Disable inline LVS/DRC checks", dest="check_lvsdrc"),
         optparse.make_option("-q", "--quiet", action="store_false", dest="print_banner",
@@ -82,18 +87,18 @@ def print_banner():
     if not OPTS.print_banner:
         return
 
-    print "|==============================================================================|"
+    print("|==============================================================================|")
     name = "OpenRAM Compiler v"+VERSION
-    print "|=========" + name.center(60) + "=========|"
-    print "|=========" + " ".center(60) + "=========|"
-    print "|=========" + "VLSI Design and Automation Lab".center(60) + "=========|"
-    print "|=========" + "University of California Santa Cruz CE Department".center(60) + "=========|"
-    print "|=========" + " ".center(60) + "=========|"
-    print "|=========" + "VLSI Computer Architecture Research Group".center(60) + "=========|"
-    print "|=========" + "Oklahoma State University ECE Department".center(60) + "=========|"
-    print "|=========" + " ".center(60) + "=========|"
-    print "|=========" + OPTS.openram_temp.center(60) + "=========|"
-    print "|==============================================================================|"
+    print("|=========" + name.center(60) + "=========|")
+    print("|=========" + " ".center(60) + "=========|")
+    print("|=========" + "VLSI Design and Automation Lab".center(60) + "=========|")
+    print("|=========" + "University of California Santa Cruz CE Department".center(60) + "=========|")
+    print("|=========" + " ".center(60) + "=========|")
+    print("|=========" + "VLSI Computer Architecture Research Group".center(60) + "=========|")
+    print("|=========" + "Oklahoma State University ECE Department".center(60) + "=========|")
+    print("|=========" + " ".center(60) + "=========|")
+    print("|=========" + OPTS.openram_temp.center(60) + "=========|")
+    print("|==============================================================================|")
 
 
 def init_openram(config_file):
@@ -102,9 +107,9 @@ def init_openram(config_file):
     debug.info(1,"Initializing OpenRAM...")
 
     setup_paths()
-
-    read_config(config_file)
     
+    read_config(config_file)
+
     import_tech()
 
     set_spice()
@@ -125,6 +130,29 @@ def read_config(config_file):
     except:
         debug.error("Unable to read configuration file: {0}".format(OPTS.config_file+".py. Did you specify the technology?"),2)
 
+    # This path must be setup after the config file.
+    try:
+        # If path not set on command line, try config file.
+        if OPTS.output_path=="":
+            OPTS.output_path=OPTS.config.output_path
+    except:
+        # Default to current directory.
+        OPTS.output_path="."
+    if not OPTS.output_path.endswith('/'):
+        OPTS.output_path += "/"
+    debug.info(1, "Output saved in " + OPTS.output_path)
+
+    # Don't delete the output dir, it may have other files!
+    # make the directory if it doesn't exist
+    try:
+        os.makedirs(OPTS.output_path, 0o750)
+    except OSError as e:
+        if e.errno == 17:  # errno.EEXIST
+            os.chmod(OPTS.output_path, 0o750)
+    except:
+        debug.error("Unable to make output directory.",-1)
+    
+        
 
 def set_calibre():
     debug.info(2,"Finding calibre...")
@@ -197,24 +225,13 @@ def setup_paths():
 
     # make the directory if it doesn't exist
     try:
-        os.makedirs(OPTS.openram_temp, 0750)
+        os.makedirs(OPTS.openram_temp, 0o750)
     except OSError as e:
         if e.errno == 17:  # errno.EEXIST
-            os.chmod(OPTS.openram_temp, 0750)
+            os.chmod(OPTS.openram_temp, 0o750)
 
-    # Don't delete the output dir, it may have other files!
-    # make the directory if it doesn't exist
-    try:
-        os.makedirs(OPTS.out_path, 0750)
-    except OSError as e:
-        if e.errno == 17:  # errno.EEXIST
-            os.chmod(OPTS.out_path, 0750)
+
     
-    if OPTS.out_path=="":
-        OPTS.out_path="."
-    if not OPTS.out_path.endswith('/'):
-        OPTS.out_path += "/"
-    debug.info(1, "Output saved in " + OPTS.out_path)
 
 
 def set_spice():

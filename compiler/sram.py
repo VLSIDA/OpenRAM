@@ -11,7 +11,6 @@ import getpass
 from vector import vector
 from globals import OPTS
 
-
 class sram(design.design):
     """
     Dynamically generated SRAM by connecting banks to control logic. The
@@ -141,7 +140,6 @@ class sram(design.design):
     def create_multibank_modules(self):
         """ Add the multibank address flops and bank decoder """
         self.msf_msb_address = self.mod_ms_flop_array(name="msf_msb_address",
-                                                      array_type="address",
                                                       columns=self.num_banks/2,
                                                       word_size=self.num_banks/2)
         self.add_mod(self.msf_msb_address)
@@ -1175,12 +1173,28 @@ class sram(design.design):
         del usedMODS
         sp.close()
 
-    def analytical_model(self,slope):
-        #control_delay = self.control.delay(slope=slope)
-        bank_delay = self.bank.delay(slope = slope) 
-        data ={'delay1': bank_delay.delay, 'delay0': bank_delay.delay, 
-               'min_period1': 0, 
-               'min_period0': 0, 
-               'read_power': 0, 
-               'write_power': 0}      
+    def analytical_model(self,slews,loads):
+        LH_delay = []
+        HL_delay = []
+        LH_slew = []
+        HL_slew = []
+        for slew in slews:
+            for load in loads:
+                bank_delay = self.bank.delay(slew,load)
+                # Convert from ps to ns
+                LH_delay.append(bank_delay.delay/1e3)
+                HL_delay.append(bank_delay.delay/1e3)
+                LH_slew.append(bank_delay.slew/1e3)
+                HL_slew.append(bank_delay.slew/1e3)
+        
+        data = {"min_period": 0, 
+                "delay1": LH_delay,
+                "delay0": HL_delay,
+                "slew1": LH_slew,
+                "slew0": HL_slew,
+                "read0_power": 0,
+                "read1_power": 0,
+                "write0_power": 0,
+                "write1_power": 0
+                }
         return data

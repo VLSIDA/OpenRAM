@@ -4,6 +4,9 @@ num_banks = 1
 
 tech_name = "scn3me_subm"
 
+output_path = "/tmp/mysram"
+output_name = "sram_2_16_1_scn3me_subm"
+
 decoder = "hierarchical_decoder"
 ms_flop = "ms_flop"
 ms_flop_array = "ms_flop_array"

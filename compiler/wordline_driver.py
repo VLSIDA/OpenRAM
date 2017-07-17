@@ -232,7 +232,6 @@ class wordline_driver(design.design):
             self.vdd_positions.append(vdd_offset)
             self.gnd_positions.append(gnd_offset)
 
-<<<<<<< HEAD
     def add_extra_driver(self, driver_mults, start, array_gap, array_to_driver):
         self.wl_driver_mults = driver_mults
         for seg in range(1,driver_mults):
@@ -340,18 +339,18 @@ class wordline_driver(design.design):
                       coordinates=[start,end],
                       offset=start)
 
-    def delay(self, slope, load=0):
+    def delay(self, slew, load=0):
         # decode_out -> net
         if self.wl_driver_mults == 1:
-            decode_t_net = self.NAND2.delay(slope = slope, load = self.driver.input_load())
+            decode_t_net = self.NAND2.delay(slew = slew, load = self.driver.input_load())
         else:
             net_wire = self.generate_rc_net(self.wl_driver_mults, self.net_wire_length, drc["minwidth_metal1"])
             net_wire.wire_c = self.driver.input_load() + net_wire.wire_c
-            decode_t_net = self.NAND2.delay(slope = slope, load = net_wire.return_input_cap())
+            decode_t_net = self.NAND2.delay(slew = slew, load = net_wire.return_input_cap())
             wire_delay = net_wire.return_delay_over_wire(decode_t_net.slope)
             decode_t_net = decode_t_net + wire_delay
         # net -> wl
-        net_t_wl = self.driver.delay(slope = decode_t_net.slope, load = load)
+        net_t_wl = self.driver.delay(slew = decode_t_net.slew, load = load)
 
         result = decode_t_net + net_t_wl
         return result

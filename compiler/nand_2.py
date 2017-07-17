@@ -107,15 +107,15 @@ class nand_2(design.design):
         from tech import parameter
         return (self.nmos_width/parameter["min_tx_size"])*0.5
 
-    def delay(self, slope, load=0.0):
+    def delay(self, slew, load=0.0):
         from tech import parameter
         r = 9250.0/(self.nmos_width/parameter["min_tx_size"])
         c_para = 0.7*(self.nmos_width/parameter["min_tx_size"])#ff
         if isinstance(load, float):
-            result = self.cal_delay_with_rc(r = r, c =  c_para+load, slope =slope)
+            result = self.cal_delay_with_rc(r = r, c =  c_para+load, slew =slew)
         else:
             driver = [r,c_para]
-            result= self.wire_delay(slope=slope, driver=driver, wire=load)
+            result= self.wire_delay(slew=slew, driver=driver, wire=load)
         return result
 
 class nand_2_unit(design.design):

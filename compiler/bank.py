@@ -108,7 +108,7 @@ class bank(design.design):
         self.add_column_mux_array()
         self.add_sense_amp_array()
         self.add_write_driver_array()
-        self.add_msf_data_in()
+        self.add_msf_data_out()
         self.add_tri_gate_array()
         self.add_hierarchical_decoder()
         self.add_wordline_driver()
@@ -250,8 +250,7 @@ class bank(design.design):
                                                   word_size=self.row_addr_size+self.col_addr_size)
         self.add_mod(self.msf_address)
         
-        self.msf_data_out = self.mod_ms_flop_array(name="msf_data_out", 
-                                                   array_type="data_out", 
+        self.msf_data_out = self.mod_ms_flop_array(name="msf_data_out",
                                                    columns=self.num_cols, 
                                                    word_size=self.sub_word_size)
         self.add_mod(self.msf_data_out)
@@ -442,9 +441,9 @@ class bank(design.design):
             temp = temp + ["w_en", "vdd", "gnd"]
             self.connect_inst(temp)
 
-    def add_msf_data_in(self):
+    def add_msf_data_out(self):
         """ data_in flip_flop """
-        self.module_offset = vector(0, self.module_offset.y - self.msf_data_in.height)
+        self.module_offset = vector(0, self.module_offset.y - self.msf_data_out.height)
         self.ms_flop_data_in_offset = self.module_offset 
         for seg in range(self.wl_seg_num):
             in_index = (seg) * self.write_driver_array.word_size
@@ -452,7 +451,7 @@ class bank(design.design):
             seg_offset = self.bitcell_array_gap.scale(seg,0) 
             seg_offset = seg_offset + self.ms_flop_data_in_offset
             self.add_inst(name="data_in_flop_array{0}".format(seg), 
-                          mod=self.msf_data_in, 
+                          mod=self.msf_data_out, 
                           offset=seg_offset)
 
 
@@ -853,17 +852,10 @@ class bank(design.design):
         """ Routing of sense amp output to tri_gate input """
         for i in range(self.sub_word_size):
             # Connection of data_out of sense amp to data_ in of msf_data_out
-<<<<<<< HEAD
-            tri_gate_in_position = (self.tri_gate_array.tri_in_positions[i].scale(1,-1) 
+            tri_gate_in_position = (self.tri_gate_array.in_positions[i].scale(1,-1) 
                                         + self.tri_gate_array_offset) + array_offset
             sa_data_out_position = (self.sens_amp_array_position 
                                         + self.sens_amp_array.Data_out_positions[i]) + array_offset
-=======
-            tri_gate_in_position = (self.tri_gate_array.in_positions[i].scale(1,-1) 
-                                        + self.tri_gate_array_offset)
-            sa_data_out_position = (self.sens_amp_array_position
-                                        + self.sens_amp_array.Data_out_positions[i])
->>>>>>> 7ec20a72c8fb32b8368ed5cca46554efecf39d25
 
             startY = (self.tri_gate_array_offset.y - self.tri_gate_array.height
                           - 2 * drc["minwidth_metal3"] 
@@ -885,15 +877,9 @@ class bank(design.design):
 
     def route_tri_gate_out(self,array_offset):
         """ Metal 3 routing of tri_gate output data """
-<<<<<<< HEAD
         for i in range(self.sub_word_size):
-            tri_gate_out_position = (self.tri_gate_array.DATA_positions[i].scale(1,-1)
-                                        + self.tri_gate_array_offset) + array_offset
-=======
-        for i in range(self.word_size):
             tri_gate_out_position = (self.tri_gate_array.out_positions[i].scale(1,-1)
-                                        + self.tri_gate_array_offset)
->>>>>>> 7ec20a72c8fb32b8368ed5cca46554efecf39d25
+                                        + self.tri_gate_array_offset) + array_offset
             data_line_position = [tri_gate_out_position.x - 0.5 * drc["minwidth_metal3"], 
                                   self.min_point]
             # save data line position
@@ -1149,7 +1135,7 @@ class bank(design.design):
         right_side = []
         seg_distance = self.bitcell_array_gap.scale(max(0,self.wl_seg_num -1),0)
         right_side.append(self.ms_flop_data_in_offset
-                              + self.msf_data_in.clk_positions[0]
+                              + self.msf_data_out.clk_positions[0]
                               - vector(0, 0.5 * drc["minwidth_metal1"])+seg_distance)
         right_side.append(self.tri_gate_array_offset
                               + vector(1,-1).scale(self.tri_gate_chars["en_bar"])
@@ -1393,7 +1379,7 @@ class bank(design.design):
                           height=drc["minwidth_metal1"])
 
         # Connecting msf_data_in VDD
-        for offset in self.msf_data_in.vdd_positions:
+        for offset in self.msf_data_out.vdd_positions:
             self.add_rect(layer="metal1", 
                           offset=(self.ms_flop_data_in_offset + offset 
                                   -vector(0, 0.5 * drc["minwidth_metal1"])), 
@@ -1635,23 +1621,17 @@ class bank(design.design):
         """ return  analytical delay of the bank"""
         msf_addr_delay = self.msf_address.delay(slew, self.decoder.input_load())
 
-<<<<<<< HEAD
-        decoder_delay = self.decoder.delay(msf_addr_delay.slope,
+        decoder_delay = self.decoder.delay(msf_addr_delay.slew,
                                            self.wordline_driver.input_load())
         # equvialand array size is total physical size divided by num of drivres
-        sim_array = self.mod_bitcell_array(name="sim_array", 
-                                              cols=self.num_cols*self.wl_seg_num/self.wl_driver_mults,
-                                              rows=self.num_rows)
-        word_driver_delay = self.wordline_driver.delay(decoder_delay.slope,
-                                                       sim_array.input_load())
-        bitcell_array_delay = sim_array.delay(word_driver_delay.slope)
-=======
-        decoder_delay = self.decoder.delay(msf_addr_delay.slew, self.wordline_driver.input_load())
+        if not hasattr(self, 'sim_array'):
+            self.sim_array = self.mod_bitcell_array(name="sim_array", 
+                                                    cols=self.num_cols*self.wl_seg_num/self.wl_driver_mults,
+                                                    rows=self.num_rows)
+        word_driver_delay = self.wordline_driver.delay(decoder_delay.slew,
+                                                       self.sim_array.input_load())
+        bitcell_array_delay = self.sim_array.delay(word_driver_delay.slew)
 
-        word_driver_delay = self.wordline_driver.delay(decoder_delay.slew, self.bitcell_array.input_load())
-
-        bitcell_array_delay = self.bitcell_array.delay(word_driver_delay.slew)
->>>>>>> 7ec20a72c8fb32b8368ed5cca46554efecf39d25
 
         bl_t_data_out_delay = self.sens_amp_array.delay(bitcell_array_delay.slew,
                                                         self.bitcell_array.output_load())

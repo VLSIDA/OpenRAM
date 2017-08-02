@@ -160,8 +160,8 @@ class lef:
         self.lef.write("    SYMMETRY X Y R90 ;\n")
 
     def writeLefFooter(self):
-        self.lef.write("END    {0} \n".format(self.sr.name))
-        self.lef.write("END    LIBRARY \n")
+        self.lef.write("END {0}\n".format(self.sr.name))
+        self.lef.write("END LIBRARY\n")
         
     def powerPinName(self):
         return ["vdd"]

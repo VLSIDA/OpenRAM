@@ -1,12 +1,11 @@
 from tech import drc
 import debug
-import design
 from contact import contact
 from itertools import tee
 from vector import vector
 from vector3d import vector3d
 
-class route(design.design):
+class route():
     """ 
     Object route
     Add a route of minimium metal width between a set of points.
@@ -15,14 +14,13 @@ class route(design.design):
     The points are the center of the wire.
     This can have non-preferred direction routing.
     """
-    unique_route_id = 1
-
-    def __init__(self, layer_stack, path):
+    def __init__(self, obj, layer_stack, path):
         name = "route_{0}".format(route.unique_route_id)
         route.unique_route_id += 1
         design.design.__init__(self, name)
         debug.info(3, "create route obj {0}".format(name))
 
+        self.obj = obj
         self.layer_stack = layer_stack
         self.path = path
 
@@ -61,7 +59,7 @@ class route(design.design):
                 #via_offset = vector(p0.x+0.5*self.c.width,p0.y+0.5*self.c.height)
                 # offset if rotated
                 via_offset = vector(p0.x+0.5*self.c.height,p0.y-0.5*self.c.width)
-                self.add_via(self.layer_stack,via_offset,rotate=90)
+                self.obj.add_via(self.layer_stack,via_offset,rotate=90)
             elif p0.x != p1.x and p0.y != p1.y: # diagonal!
                 debug.error("Non-changing direction!")
             else:
@@ -101,10 +99,10 @@ class route(design.design):
             height = end.y - start.y
             width = layer_width
 
-        self.add_rect(layer=layer_name,
-                      offset=offset,
-                      width=width,
-                      height=height)
+        deisgn.add_rect(layer=layer_name,
+                        offset=offset,
+                        width=width,
+                        height=height)
         
     
     def draw_corner_wire(self, p0):
@@ -114,9 +112,9 @@ class route(design.design):
         layer_name = self.layer_stack[2*p0.z]
         layer_width = drc["minwidth_{0}".format(layer_name)]
         offset = vector(p0.x-0.5*layer_width,p0.y-0.5*layer_width)
-        self.add_rect(layer=layer_name,
-                      offset=offset,
-                      width=layer_width,
-                      height=layer_width)
+        self.obj.add_rect(layer=layer_name,
+                          offset=offset,
+                          width=layer_width,
+                          height=layer_width)
 
 

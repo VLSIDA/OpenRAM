@@ -903,8 +903,7 @@ class bank(design.design):
                                                          -self.central_line_y_offset)
 
                 self.add_wire(layers=("metal1", "via1", "metal2"),
-                              coordinates=[col_decoder_out_position,mid1,mid2],
-                              offset=col_decoder_out_position)
+                              coordinates=[col_decoder_out_position,mid1,mid2])
                 
         # if there are only two column select lines we just connect the dout_bar of the last FF 
         # to only select line and dout of that FF to the other select line
@@ -1100,18 +1099,19 @@ class bank(design.design):
                              clk_connection_position.y])
 
         # Clk connection from central Bus to wordline_driver
-        wl_clk_position = (self.wordline_driver_position 
-                               + self.wordline_driver.clk_positions[0])
+        wl_clk_position = self.wordline_driver_position \
+                          + self.wordline_driver.clk_positions[0] \
+                          + vector(0.5 * drc["minwidth_metal1"], 0)
+
         connection_width = (self.central_line_xoffset[5] - wl_clk_position.x
                                 + drc["minwidth_metal1"])
         y_off = self.max_point - 2.5 * drc["minwidth_metal1"]
-        start = wl_clk_position + vector(0.5 * drc["minwidth_metal1"], 0)
         mid1 = [wl_clk_position.x, y_off]
         mid2 = mid1 + vector(connection_width, 0)
         self.add_path(layer="metal1",
                       coordinates=[wl_clk_position, mid1, mid2], 
-                      width=drc["minwidth_metal1"],
-                      offset=start)
+                      width=drc["minwidth_metal1"])
+
         
         self.add_via(layers=("metal1", "via1", "metal2"),
                      offset=[self.central_line_xoffset[5], 
@@ -1319,14 +1319,15 @@ class bank(design.design):
                                    - 0.5 * drc["minwidth_metal1"])
             y_offset = ms_addres_gnd_y - 2.5*drc["minwidth_metal1"]
             vdd_connection = vector(self.left_vdd_x_offset, y_offset)
-            mid1 = vdd_connection - vector(0, 0.5 * drc["minwidth_metal1"])
+            mid1 = vdd_connection 
             mid2 = vector(self.msf_address_offset.x + offset.y,
-                          mid1.y)
-            mid3 = vector(mid2.x, ms_addres_gnd_y)
+                          mid1.y) + vector(0, 0.5 * drc["minwidth_metal1"])
+            mid3 = vector(mid2.x, ms_addres_gnd_y) + vector(0, 0.5 * drc["minwidth_metal1"])
+            # FIXME: This offset may be wrong during path updates
             self.add_path(layer="metal1",
                           coordinates=[mid1, mid2, mid3], 
-                          width=drc["minwidth_metal1"],
-                          offset = vdd_connection)
+                          width=drc["minwidth_metal1"])
+
 
         # Connecting bank_select_and2_array vdd
         if(self.num_banks > 1):

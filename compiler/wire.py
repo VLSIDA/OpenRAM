@@ -1,6 +1,5 @@
 from tech import drc
 import debug
-import design
 from contact import contact
 from path import path
 
@@ -15,12 +14,8 @@ class wire(path):
     """
     unique_id = 1
 
-    def __init__(self, layer_stack, position_list):
-        name = "wire_{0}".format(wire.unique_id)
-        wire.unique_id += 1
-        design.design.__init__(self, name)
-        debug.info(3, "create wire obj {0}".format(name))
-
+    def __init__(self, obj, layer_stack, position_list):
+        self.obj = obj
         self.layer_stack = layer_stack
         self.position_list = position_list
         self.pins = [] # used for matching parm lengths
@@ -54,108 +49,38 @@ class wire(path):
     # create a 1x1 contact
     def create_vias(self):
         """ Add a via and corner square at every corner of the path."""
-        pl = self.pairwise(self.position_list)
-        from itertools import izip
         self.c=contact(self.layer_stack, (1, 1))
         c_width = self.c.width
         c_height = self.c.height
-        orient = None  # orientation toggler
-        offset = [0, 0]
+        
+        from itertools import tee,islice
+        nwise = lambda g,n=2: zip(*(islice(g,i,None) for i,g in enumerate(tee(g,n))))
+        threewise=nwise(self.position_list,3)
 
-        for (v, w), index in izip(pl, range(len(pl))):
-            if index != 0:
-                if pl[index][1] == pl[index - 1][0]:
-                    if v[0] != w[0]:
-                        offset = [(offset[0] + (w[0] - v[0])),
-                                  offset[1]]
-                    else:
-                        offset = [offset[0], 
-                                  (offset[1] + w[1] - v[1])]
-                    orient = not orient
-                    continue
-            if v[0] != w[0]:
-                if (orient == None):
-                    orient = True
-                if not orient:
-                    orient = not orient
-                    if w[0] - v[0] < 0:
-                        temp_offset = [
-                            offset[0] + 0.5*c_height,
-                            offset[1] - 0.5*self.horiz_layer_width]
-                    else:
-                        temp_offset = [offset[0] + 0.5*c_height,
-                                       offset[1] - 0.5*self.horiz_layer_width]
-                    self.switch_pos_list.append(temp_offset)
-                    via_offset = self.switch_pos_list[-1]
-                    self.add_via(layers=self.layer_stack,
-                                 offset=via_offset,
-                                 rotate=90)
-                    corner_offset = [via_offset[0] \
-                                         - 0.5*(c_height + self.vert_layer_width),
-                                     via_offset[1] \
-                                         + 0.5*(c_width - self.horiz_layer_width)]
-                    self.draw_corner_wire(corner_offset)
-                offset = [(offset[0] + (w[0] - v[0])),
-                          offset[1]]
-            elif v[1] != w[1]:
-                if (orient == None):
-                    orient = False
-                if orient:
-                    orient = not orient
-                    if -w[1] - v[1] > 0:
-                        temp_offset = [offset[0] + 0.5*c_height,
-                                       offset[1] - 0.5*c_width]
-                    else:
-                        temp_offset = [offset[0] + 0.5*c_height,
-                                       offset[1] - 0.5*c_width]
-                    self.switch_pos_list.append(temp_offset)
-                    via_offset = self.switch_pos_list[-1]
-                    self.add_via(layers=self.layer_stack,
-                                 offset=self.switch_pos_list[-1],
-                                 rotate=90)
-                    corner_offset = [via_offset[0] \
-                                         - 0.5*(c_height + self.vert_layer_width),
-                                     via_offset[1] \
-                                         + 0.5*(c_width - self.horiz_layer_width)]
-                    self.draw_corner_wire(corner_offset)
-                offset = [offset[0],
-                          (offset[1] + w[1] - v[1])]
+        for (a, offset, c) in list(threewise):
+            # add a exceptions to prevent a via when we don't change directions
+            if a[0] == c[0]:
+                continue
+            if a[1] == c[1]:
+                continue
+            via_offset = [offset[0] + 0.5*c_height,
+                           offset[1] - 0.5*c_width]
+            self.obj.add_via(layers=self.layer_stack,
+                             offset=via_offset,
+                             rotate=90)
+            corner_offset = [offset[0] - 0.5*(c_height + self.vert_layer_width),
+                             offset[1] + 0.5*(c_width - self.horiz_layer_width)]
 
-    def draw_corner_wire(self, offset):
-        """ This function adds the corner squares since the center
-        line convention only draws to the center of the corner.
-        It must add squares on both layers."""
-        self.add_rect(layer=self.vert_layer_name,
-                      offset=offset,
-                      width=self.vert_layer_width,
-                      height=self.horiz_layer_width)
-        self.add_rect(layer=self.horiz_layer_name,
-                      offset=offset,
-                      width=self.vert_layer_width,
-                      height=self.horiz_layer_width)
 
     def create_rectangles(self):
         """ Create the actual rectangles on teh appropriate layers
         using the position list of the corners. """
-        offset = [0, 0]
-        # FIXME: This is not a good max/min value
-        xval = [1000000, -1000000]
-        yval = [1000000, -1000000]
         pl = self.position_list  # position list
         for index in range(len(pl) - 1):
-            temp_offset = offset
-            if temp_offset[0] < xval[0]:
-                xval[0] = temp_offset[0]
-            if temp_offset[0] > xval[1]:
-                xval[1] = temp_offset[0]
-            if temp_offset[1] < yval[0]:
-                yval[0] = temp_offset[1]
-            if temp_offset[1] > yval[1]:
-                yval[1] = temp_offset[1]
             if pl[index][0] != pl[index + 1][0]:
                 line_length = pl[index + 1][0] - pl[index][0]
-                temp_offset = [temp_offset[0],
-                               temp_offset[1] - 0.5*self.horiz_layer_width]
+                temp_offset = [pl[index][0],
+                               pl[index][1] - 0.5*self.horiz_layer_width]
                 if line_length < 0:
                     temp_offset = [temp_offset[0] + line_length,
                                    temp_offset[1]]
@@ -163,11 +88,10 @@ class wire(path):
                               length=abs(line_length),
                               offset=temp_offset,
                               orientation="horizontal")
-                offset = [offset[0] + line_length, offset[1]]
             elif pl[index][1] != pl[index + 1][1]:
                 line_length = pl[index + 1][1] - pl[index][1]
-                temp_offset = [temp_offset[0] - 0.5 * self.vert_layer_width,
-                               temp_offset[1]]
+                temp_offset = [pl[index][0] - 0.5 * self.vert_layer_width,
+                               pl[index][1]]
                 if line_length < 0:
                     temp_offset = [temp_offset[0],
                                    temp_offset[1] + line_length]
@@ -175,14 +99,6 @@ class wire(path):
                               length=abs(line_length),
                               offset=temp_offset,
                               orientation="vertical")
-                offset = [offset[0],
-                          offset[1] + line_length]
-        self.width = abs(xval[0] - xval[1])
-        self.height = abs(yval[0] - yval[1])
-        if self.via_layer_name != None:
-            self.height += self.c.width
-        else:
-            self.height += self.vert_layer_width
 
     def assert_node(self, A, B):
         """ Check if the node movements are not big enough for the

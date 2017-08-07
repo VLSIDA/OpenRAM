@@ -36,26 +36,30 @@ class timing_setup_test(unittest.TestCase):
         sh = setup_hold.setup_hold()
         data = sh.analyze(slews,slews)
 
-        OPTS.check_lvsdrc = True
-
-        one_setup_time = data['setup_times_LH'][0]
-        zero_setup_time = data['setup_times_HL'][0]
-        one_hold_time = data['hold_times_LH'][0]
-        zero_hold_time = data['hold_times_HL'][0]
-
         if OPTS.tech_name == "freepdk45":
-            self.assertTrue(isclose(one_setup_time,0.0146)) 
-            self.assertTrue(isclose(zero_setup_time,0.0085)) 
-            self.assertTrue(isclose(one_hold_time,0.00244)) 
-            self.assertTrue(isclose(zero_hold_time,-0.00366)) 
+            golden_data = {'setup_times_LH': [0.014648399999999999],
+                           'hold_times_LH': [0.0024414],
+                           'hold_times_HL': [-0.0036620999999999997],
+                           'setup_times_HL': [0.0085449]}
         elif OPTS.tech_name == "scn3me_subm":
-            self.assertTrue(isclose(one_setup_time,0.1001)) 
-            self.assertTrue(isclose(zero_setup_time,0.02075)) 
-            self.assertTrue(isclose(one_hold_time,0.02075)) 
-            self.assertTrue(isclose(zero_hold_time,-0.0830)) 
+            golden_data = {'setup_times_LH': [0.1000977],
+                           'hold_times_LH': [0.020751999999999996],
+                           'hold_times_HL': [-0.0830078],
+                           'setup_times_HL': [0.020751999999999996]}
         else:
             self.assertTrue(False) # other techs fail
 
+        # Check if no too many or too few results
+        self.assertTrue(len(data.keys())==len(golden_data.keys()))
+        # Check each result
+        for k in data.keys():
+            if type(data[k])==list:
+                for i in range(len(data[k])):
+                    self.assertTrue(isclose(data[k][i],golden_data[k][i]))
+            else:
+                self.assertTrue(isclose(data[k],golden_data[k]))
+
+        OPTS.check_lvsdrc = True
         globals.end_openram()
         
 # instantiate a copdsay of the class to actually run the test

@@ -553,7 +553,8 @@ class control_logic(design.design):
                       width=drc["minwidth_metal1"],
                       height=self.msf_control_vdd_position.y- self.inv1_vdd_position[1])
 
-        vdd_offset = vector(self.replica_bitline.height,3 * drc["minwidth_metal1"])
+        # FIXME: added fudge to get to work. will fix with new pin structure.
+        vdd_offset = vector(self.replica_bitline.height+drc["minwidth_metal1"],3 * drc["minwidth_metal1"])
 
         self.vdd1_position = vdd_offset + self.offset_replica_bitline 
         self.vdd2_position = vector(rail_2_x, self.output_port_gap)
@@ -583,8 +584,7 @@ class control_logic(design.design):
         # nand3 gnd to replica bitline gnd
         self.add_rect(layer="metal1",
                       offset=self.nand3_2_gnd_position,
-                      width=(self.offset_replica_bitline.x
-                                 - self.nand3_2_gnd_position.x),
+                      width=self.offset_replica_bitline.x - self.nand3_2_gnd_position.x + drc["minwidth_metal1"],
                       height=drc["minwidth_metal1"])
 
     def add_input_routing(self):

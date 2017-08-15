@@ -92,10 +92,10 @@ cell (sram_2_16_1_freepdk45){
         internal_power(){
             when : "OEb & !clk"; 
             rise_power(scalar){
-                values("0.020845");
+                values("0.020625");
             }
             fall_power(scalar){
-                values("0.021849");
+                values("0.021124");
             }
         }
         timing(){ 
@@ -129,10 +129,10 @@ cell (sram_2_16_1_freepdk45){
         internal_power(){
             when : "!OEb & !clk"; 
             rise_power(scalar){
-                values("0.023616");
+                values("0.023099");
             }
             fall_power(scalar){
-                values("0.023883");
+                values("0.023401");
             }
         }
         timing(){ 
@@ -308,20 +308,20 @@ cell (sram_2_16_1_freepdk45){
             timing_type :"min_pulse_width"; 
             related_pin  : clk; 
             rise_constraint(scalar) {
-                values("0.0405"); 
+                values("0.166"); 
             }
             fall_constraint(scalar) {
-                values("0.0405"); 
+                values("0.166"); 
             }
          }
         timing(){ 
             timing_type :"minimum_period"; 
             related_pin  : clk; 
             rise_constraint(scalar) {
-                values("0.081"); 
+                values("0.332"); 
             }
             fall_constraint(scalar) {
-                values("0.081"); 
+                values("0.332"); 
             }
          }
     }

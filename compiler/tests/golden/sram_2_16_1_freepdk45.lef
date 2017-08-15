@@ -4,100 +4,100 @@ MACRO sram_2_16_1_freepdk45
     FOREIGN  sram 0.0 0.0 ;
     SIZE 19.165 BY 41.725 ;
     SYMMETRY X Y R90 ;
-    PIN vdd 
-        DIRECTION INOUT ; 
-        USE POWER ; 
-        SHAPE ABUTMENT ; 
-        PORT             
-        Layer metal1 ; 
+    PIN vdd
+        DIRECTION INOUT ;
+        USE POWER ;
+        SHAPE ABUTMENT ;
+        PORT
+        LAYER metal1 ;
         RECT  0.0325 0.0 0.7325 41.725 ;
         RECT  12.7675 0.0 13.4675 41.725 ;
-        END             
-    END vdd 
-    PIN gnd 
-        DIRECTION INOUT ; 
-        USE GROUND ; 
-        SHAPE ABUTMENT ; 
-        PORT             
-        Layer metal2 ; 
+        END
+    END vdd
+    PIN gnd
+        DIRECTION INOUT ;
+        USE GROUND ;
+        SHAPE ABUTMENT ;
+        PORT
+        LAYER metal2 ;
         RECT  8.9225 0.0 9.6225 41.725 ;
-        END             
-    END gnd 
-    PIN DATA[0] 
-        DIRECTION INOUT ; 
-        PORT             
-        Layer metal3 ; 
+        END
+    END gnd
+    PIN DATA[0]
+        DIRECTION INOUT ;
+        PORT
+        LAYER metal3 ;
         RECT  11.48 0.0 11.55 3.22 ;
         RECT  11.48 0.0 11.55 0.135 ;
-        END             
-    END DATA[0] 
-    PIN DATA[1] 
-        DIRECTION INOUT ; 
-        PORT             
-        Layer metal3 ; 
+        END
+    END DATA[0]
+    PIN DATA[1]
+        DIRECTION INOUT ;
+        PORT
+        LAYER metal3 ;
         RECT  12.185 0.0 12.255 3.22 ;
         RECT  12.185 0.0 12.255 0.135 ;
-        END             
-    END DATA[1] 
-    PIN ADDR[0] 
-        DIRECTION INPUT ; 
-        PORT             
-        Layer metal3 ; 
+        END
+    END DATA[1]
+    PIN ADDR[0]
+        DIRECTION INPUT ;
+        PORT
+        LAYER metal3 ;
         RECT  0.0325 7.4525 1.015 7.5225 ;
-        END             
-    END ADDR[0] 
-    PIN ADDR[1] 
-        DIRECTION INPUT ; 
-        PORT             
-        Layer metal3 ; 
+        END
+    END ADDR[0]
+    PIN ADDR[1]
+        DIRECTION INPUT ;
+        PORT
+        LAYER metal3 ;
         RECT  0.0325 6.7475 1.015 6.8175 ;
-        END             
-    END ADDR[1] 
-    PIN ADDR[2] 
-        DIRECTION INPUT ; 
-        PORT             
-        Layer metal3 ; 
+        END
+    END ADDR[1]
+    PIN ADDR[2]
+        DIRECTION INPUT ;
+        PORT
+        LAYER metal3 ;
         RECT  0.0325 6.0425 1.015 6.1125 ;
-        END             
-    END ADDR[2] 
-    PIN ADDR[3] 
-        DIRECTION INPUT ; 
-        PORT             
-        Layer metal3 ; 
+        END
+    END ADDR[2]
+    PIN ADDR[3]
+        DIRECTION INPUT ;
+        PORT
+        LAYER metal3 ;
         RECT  0.0325 5.3375 1.015 5.4075 ;
-        END             
-    END ADDR[3] 
-    PIN CSb 
-        DIRECTION INPUT ; 
-        PORT             
-        Layer metal3 ; 
+        END
+    END ADDR[3]
+    PIN CSb
+        DIRECTION INPUT ;
+        PORT
+        LAYER metal3 ;
         RECT  -5.4125 8.275 -5.3425 8.415 ;
-        END             
-    END CSb 
-    PIN OEb 
-        DIRECTION INPUT ; 
-        PORT             
-        Layer metal3 ; 
+        END
+    END CSb
+    PIN OEb
+        DIRECTION INPUT ;
+        PORT
+        LAYER metal3 ;
         RECT  -4.0025 8.275 -3.9325 8.415 ;
-        END             
-    END OEb 
-    PIN WEb 
-        DIRECTION INPUT ; 
-        PORT             
-        Layer metal3 ; 
+        END
+    END OEb
+    PIN WEb
+        DIRECTION INPUT ;
+        PORT
+        LAYER metal3 ;
         RECT  -4.7075 8.275 -4.6375 8.415 ;
-        END             
-    END WEb 
-    PIN clk 
-        DIRECTION INPUT ; 
-        PORT             
-        Layer metal3 ; 
+        END
+    END WEb
+    PIN clk
+        DIRECTION INPUT ;
+        PORT
+        LAYER metal3 ;
         RECT  -2.0525 8.275 9.7625 8.345 ;
         RECT  -2.085 8.275 -2.015 8.41 ;
-        END             
-    END clk 
-    OBS 
-        Layer  metal1 ; 
+        END
+    END clk
+    OBS
+        LAYER  metal1 ;
         RECT  -0.545 26.2975 0.0325 26.3625 ;
         RECT  12.7675 0.0 13.4675 41.725 ;
         RECT  0.0325 0.0 0.7325 41.725 ;
@@ -7449,7 +7449,7 @@ MACRO sram_2_16_1_freepdk45
         RECT  -1.0825 16.8675 -0.9475 16.9325 ;
         RECT  -1.035 17.3375 -0.9 17.4025 ;
         RECT  0.0325 19.855 0.2375 19.99 ;
-        Layer  via1 ; 
+        LAYER  via1 ;
         RECT  11.835 19.68 11.9 19.745 ;
         RECT  11.835 19.68 11.9 19.745 ;
         RECT  11.835 19.68 11.9 19.745 ;
@@ -9252,7 +9252,7 @@ MACRO sram_2_16_1_freepdk45
         RECT  -1.0 17.3375 -0.935 17.4025 ;
         RECT  0.0325 19.89 0.0975 19.955 ;
         RECT  0.1725 19.89 0.2375 19.955 ;
-        Layer  metal2 ; 
+        LAYER  metal2 ;
         RECT  -0.35 19.855 0.0325 19.925 ;
         RECT  8.9225 0.0 9.6225 41.725 ;
         RECT  10.8125 0.0 10.8825 41.725 ;
@@ -11796,7 +11796,7 @@ MACRO sram_2_16_1_freepdk45
         RECT  0.0325 19.855 0.2375 19.99 ;
         RECT  8.9225 20.695 9.1275 20.83 ;
         RECT  -0.415 20.695 -0.28 20.765 ;
-        Layer  via2 ; 
+        LAYER  via2 ;
         RECT  11.475 18.79 11.545 18.86 ;
         RECT  12.18 18.79 12.25 18.86 ;
         RECT  11.48 9.87 11.55 9.94 ;
@@ -11845,7 +11845,7 @@ MACRO sram_2_16_1_freepdk45
         RECT  8.9225 20.73 8.9875 20.795 ;
         RECT  9.0625 20.73 9.1275 20.795 ;
         RECT  -0.38 20.6975 -0.315 20.7625 ;
-        Layer  metal3 ; 
+        LAYER  metal3 ;
         RECT  -2.0525 8.275 9.7625 8.345 ;
         RECT  -0.14 15.975 10.3925 16.045 ;
         RECT  -0.14 8.415 10.1825 8.485 ;
@@ -11921,6 +11921,6 @@ MACRO sram_2_16_1_freepdk45
         RECT  10.7475 17.335 10.8825 17.405 ;
         RECT  8.9225 20.695 9.1275 20.83 ;
         RECT  -0.415 20.695 -0.28 20.765 ;
-    END 
-END    sram_2_16_1_freepdk45 
-END    LIBRARY 
+    END
+END    sram_2_16_1_freepdk45
+END    LIBRARY

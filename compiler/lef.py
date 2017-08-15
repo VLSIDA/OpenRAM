@@ -47,7 +47,7 @@ class lef:
             
         self.lef.write("    OBS \n")
         for lay in self.layer:
-            self.lef.write("        Layer  {0} ; \n".format(lay))
+            self.lef.write("        LAYER  {0} ; \n".format(lay))
             self.writeObstruct(self.sr.name, lay, mirr = 1, angle = math.radians(float(0)), xyShift = (0, 0))
         self.lef.write("    END \n")
 
@@ -160,8 +160,8 @@ class lef:
         self.lef.write("    SYMMETRY X Y R90 ;\n")
 
     def writeLefFooter(self):
-        self.lef.write("END    {0} \n".format(self.sr.name))
-        self.lef.write("END    LIBRARY \n")
+        self.lef.write("END {0}\n".format(self.sr.name))
+        self.lef.write("END LIBRARY\n")
         
     def powerPinName(self):
         return ["vdd"]
@@ -210,7 +210,7 @@ class lef:
         pin_layer_coord = self.pinLayerCoord(self.sr.name, pinName)
         for pinLayer in pin_layer_coord:
             lay = [key for key, value in tech.layer.iteritems() if value == pinLayer][0]
-            self.lef.write("        Layer {0} ; \n".format(lay))
+            self.lef.write("        LAYER {0} ; \n".format(lay))
             for pinCoord in pin_layer_coord[pinLayer]:
                 self.writePinCoord(self.sr.name, pinName, pinLayer, pinCoord,
                                    mirr = 1,angle = math.radians(float(0)), xyShift = (0, 0))

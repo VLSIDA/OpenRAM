@@ -85,7 +85,7 @@ drc["minwidth_tx"]=0.09
 drc["minlength_channel"] = 0.05
 
 #well rules
-drc["pwell_enclose_nwell"] = 0.225
+drc["pwell_to_nwell"] = 0.225
 drc["minwidth_well"] = 0.2
 
 #poly rules

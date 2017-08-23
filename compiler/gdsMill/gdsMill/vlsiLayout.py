@@ -651,8 +651,9 @@ class VlsiLayout:
 
     def getLabelDBInfo(self,label_name):
         """
-        Return the coordinates in DB units and layer of a label
+        Return the coordinates in DB units and layer of all matching labels
         """
+        label_list = []
         label_layer = None
         label_coordinate = [None, None]
 
@@ -661,18 +662,24 @@ class VlsiLayout:
             if Text.textString == label_name or Text.textString == label_name+"\x00":
                 label_layer = Text.drawingLayer
                 label_coordinate = Text.coordinates[0]
+                if label_layer!=None:
+                    label_list.append((label_coordinate,label_layer))
 
-        debug.check(label_layer!=None,"Did not find label {0}.".format(label_name))
-        return (label_coordinate, label_layer)
+        debug.check(len(label_list)>0,"Did not find labels {0}.".format(label_name))
+        return label_list
 
 
     def getLabelInfo(self,label_name):
         """
         Return the coordinates in USER units and layer of a label
         """
-        (label_coordinate,label_layer)=self.getLabelDBInfo(label_name)
-        user_coordinates = [x*self.units[0] for x in label_coordinate]
-        return (user_coordinates,label_layer)
+        label_list=self.getLabelDBInfo(label_name)
+        new_list=[]
+        for label in label_list:
+            (label_coordinate,label_layer)=label
+            user_coordinates = [x*self.units[0] for x in label_coordinate]
+            new_list.append(user_coordinates,label_layer)
+        return new_list
     
     def getPinShapeByLocLayer(self, coordinate, layer):
         """
@@ -729,16 +736,25 @@ class VlsiLayout:
         Search for a pin label and return the largest enclosing rectangle
         on the same layer as the pin label.
         """
-        (label_coordinate,label_layer)=self.getLabelDBInfo(label_name)
-        return self.getPinShapeByDBLocLayer(label_coordinate, label_layer)
+        label_list=self.getLabelDBInfo(label_name)
+        shape_list=[]
+        for label in label_list:
+            (label_coordinate,label_layer)=label
+            shape_list.append(self.getPinShapeByDBLocLayer(label_coordinate, label_layer))
+        return shape_list
 
     def getAllPinShapesByLabel(self,label_name):
         """
         Search for a pin label and return ALL the enclosing rectangles on the same layer
         as the pin label.
         """
-        (label_coordinate,label_layer)=self.getLabelDBInfo(label_name)
-        return self.getAllPinShapesByDBLocLayer(label_coordinate, label_layer)
+        
+        label_list=self.getLabelDBInfo(label_name)
+        shape_list=[]
+        for label in label_list:
+            (label_coordinate,label_layer)=label
+            shape_list.append(self.getAllPinShapesByDBLocLayer(label_coordinate, label_layer))
+        return shape_list
     
     def getAllPinShapesInStructureList(self,coordinates,layer):
         """

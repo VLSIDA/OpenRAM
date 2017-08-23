@@ -18,20 +18,22 @@ class sram(design.design):
     """
 
     def __init__(self, word_size, num_words, num_banks, name):
-        mod_list = ["control_logic", "ms_flop_array", "ms_flop", "bitcell"]
-        for mod_name in mod_list:
-            config_mod_name = getattr(OPTS.config, mod_name)
-            class_file = reload(__import__(config_mod_name))
-            mod_class = getattr(class_file , config_mod_name)
-            setattr (self, "mod_"+mod_name, mod_class)
+
+        c = reload(__import__(OPTS.config.control_logic))
+        self.mod_control_logic = getattr(c, OPTS.config.control_logic)
+        
+        c = reload(__import__(OPTS.config.ms_flop_array))
+        self.mod_ms_flop_array = getattr(c, OPTS.config.ms_flop_array)
+        
+        c = reload(__import__(OPTS.config.bitcell))
+        self.mod_bitcell = getattr(c, OPTS.config.bitcell)
+        self.bitcell = self.mod_bitcell()
+        
 
         # reset the static duplicate name checker for unit tests
         # in case we create more than one SRAM
         import design
         design.design.name_map=[]
-
-        self.ms_flop_chars = self.mod_ms_flop.chars
-        self.bitcell_chars = self.mod_bitcell.chars
 
         self.word_size = word_size
         self.num_words = num_words
@@ -41,75 +43,69 @@ class sram(design.design):
                                                                              self.num_words))
 
         design.design.__init__(self, name)
-        self.ctrl_positions = {}
-
+        
+        self.control_size = 6
+        self.bank_to_bus_distance = 5*drc["minwidth_metal3"]
+        
         self.compute_sizes()
         self.add_pins()
-
         self.create_layout()
         self.DRC_LVS()
 
     def compute_sizes(self):
-        """  Computes the required sizes to create the memory """
-        self.check_num_banks(self.num_banks)
+        """  Computes the organization of the memory using bitcell size by trying to make it square."""
+        debug.check(self.num_banks in [1,2,4], "Valid number of banks are 1 , 2 and 4.")
 
         self.num_words_per_bank = self.num_words/self.num_banks
         self.num_bits_per_bank = self.word_size*self.num_words_per_bank
 
-        self.bank_area = self.bitcell_chars["width"]*\
-            self.bitcell_chars["height"]*self.num_bits_per_bank
+        # Compute the area of the bitcells and estimate a square bank (excluding auxiliary circuitry)
+        self.bank_area = self.bitcell.width*self.bitcell.height*self.num_bits_per_bank
         self.bank_side_length = math.sqrt(self.bank_area)
 
-        self.tentative_num_cols = int(self.bank_side_length/self.bitcell_chars["width"])
-        self.words_per_row = self.cal_words_per_row(self.tentative_num_cols,
-                                                            self.word_size)
-        self.tentative_num_rows = self.num_bits_per_bank \
-            /(self.words_per_row \
-                  *self.word_size)
-        self.words_per_row = self.amend_words_per_row(self.tentative_num_rows,
-                                                              self.words_per_row)
+        # Estimate the words per row given the height of the bitcell and the square side length
+        self.tentative_num_cols = int(self.bank_side_length/self.bitcell.width)
+        self.words_per_row = self.estimate_words_per_row(self.tentative_num_cols, self.word_size)
+
+        # Estimate the number of rows given the tentative words per row
+        self.tentative_num_rows = self.num_bits_per_bank / (self.words_per_row*self.word_size)
+        self.words_per_row = self.amend_words_per_row(self.tentative_num_rows, self.words_per_row)
         
+        # Fix the number of columns and rows
         self.num_cols = self.words_per_row*self.word_size
         self.num_rows = self.num_words_per_bank/self.words_per_row
-        
+
+        # Compute the address and bank sizes
         self.row_addr_size = int(log(self.num_rows, 2))
         self.col_addr_size = int(log(self.words_per_row, 2))
-        self.bank_addr_size = self.col_addr_size \
-            + self.row_addr_size
-        self.addr_size = self.bank_addr_size + \
-            int(math.log(self.num_banks, 2))
+        self.bank_addr_size = self.col_addr_size + self.row_addr_size
+        self.addr_size = self.bank_addr_size + int(math.log(self.num_banks, 2))
         
-        self.control_size = 6
 
-        self.bank_to_bus_distance = 5*drc["minwidth_metal3"]
+    def estimate_words_per_row(self,tentative_num_cols, word_size):
+        """This provides a heuristic rounded estimate for the number of words
+        per row."""
 
-    def check_num_banks(self,num_banks):
-        if(num_banks != 1 and num_banks != 2 and num_banks != 4):
-            debug.error("Valid number of banks are 1 , 2 and 4.")
-            sys.exit(-1)
-
-    def cal_words_per_row(self,tentative_num_cols, word_size):
-        if(tentative_num_cols < 1.5*word_size):
-            words_per_row = 1
-        elif(tentative_num_cols > 3*word_size):
-            words_per_row = 4
+        if tentative_num_cols < 1.5*word_size:
+            return 1
+        elif tentative_num_cols > 3*word_size:
+            return 4
         else:
-            words_per_row = 2
-        return words_per_row
+            return 2
 
     def amend_words_per_row(self,tentative_num_rows, words_per_row):
+        """This picks the number of words per row more accurately by limiting
+        it to a minimum and maximum.
+        """
+        # Recompute the words per row given a hard max
         if(tentative_num_rows > 512):
-            if(tentative_num_rows*words_per_row > 2048):
-                debug.error("Number of rows exceeds 512")
-                sys.exit(-1)
-            words_per_row = words_per_row*tentative_num_rows/512
-
+            debug.check(tentative_num_rows*words_per_row <= 2048, "Number of words exceeds 2048")
+            return words_per_row*tentative_num_rows/512
+        # Recompute the words per row given a hard min
         if(tentative_num_rows < 16):
-            if(tentative_num_rows*words_per_row < 16):
-                debug.error("minimum number of rows is 16, but given {0}".format(
-                    tentative_num_rows))
-                sys.exit(-1)
-            words_per_row = words_per_row*tentative_num_rows/16
+            debug.check(tentative_num_rows*words_per_row >= 16, "Minimum number of rows is 16, but given {0}".format(tentative_num_rows))
+            return words_per_row*tentative_num_rows/16
+            
         return words_per_row
 
     def add_pins(self):
@@ -124,12 +120,14 @@ class sram(design.design):
 
     def create_layout(self):
         """ Layout creation """
+        
         self.create_modules()
         self.add_modules()
         self.add_routing()
 
     def add_routing(self):
         """ Route all of the modules """
+        
         if (self.num_banks == 2 or self.num_banks == 4):
             self.route_2or4_banks()
         if (self.num_banks == 4):
@@ -139,6 +137,7 @@ class sram(design.design):
 
     def create_multibank_modules(self):
         """ Add the multibank address flops and bank decoder """
+        
         self.msf_msb_address = self.mod_ms_flop_array(name="msf_msb_address",
                                                       columns=self.num_banks/2,
                                                       word_size=self.num_banks/2)
@@ -259,8 +258,8 @@ class sram(design.design):
             temp.append("ADDR[{0}]".format(i))
         if(self.num_banks > 1):
             temp.append("bank_select[{0}]".format(self.bank_count))
-        temp = temp + ["s_en"   , "w_en", "tri_en_bar", "tri_en",
-                       "clk_bar", "clk" , "vdd"       , "gnd"   ]
+        temp.extend(["s_en", "w_en", "tri_en_bar", "tri_en",
+                     "clk_bar","clk" , "vdd", "gnd"])
         self.connect_inst(temp)
 
         # Saving control line properties
@@ -359,13 +358,13 @@ class sram(design.design):
         line_gap = 2*drc[m2m]
         return bits*(line_width + line_gap) - line_gap
 
-    def add_control_logic(self, position, mirror):
+    def add_control_logic(self, position, rotate):
         """ Add and place control logic """
         self.control_position = position
         self.add_inst(name="control",
                       mod=self.control,
                       offset=self.control_position,
-                      mirror=mirror)
+                      rotate=rotate)
         temp = ["CSb", "WEb",  "OEb", "s_en", "w_en", "tri_en",
                 "tri_en_bar", "clk_bar", "clk", "vdd", "gnd"]
         self.connect_inst(temp)
@@ -377,20 +376,20 @@ class sram(design.design):
         # FIXME: document
         loc = vector(- 2 * drc["minwidth_metal3"],
                      self.bank_positions[0].y + self.bank.decoder_position.y
-                         + 2 * drc["minwidth_metal3"])
-        self.add_control_logic(loc, "R90")
+                     + 2 * drc["minwidth_metal3"])
+        self.add_control_logic(loc, 90)
 
         self.width = self.bank.width + self.control.height + 2*drc["minwidth_metal3"]
         self.height = self.bank.height
         self.control.CSb_position.rotate_scale(-1,1)
         self.CSb_position = (self.control.CSb_position.rotate_scale(-1,1)
-                                +self.control_position)
+                             +self.control_position)
         self.OEb_position = (self.control.OEb_position.rotate_scale(-1,1)
-                                +self.control_position)
+                             +self.control_position)
         self.WEb_position = (self.control.WEb_position.rotate_scale(-1,1)
-                                +self.control_position)
+                             +self.control_position)
         self.clk_position = (self.control.clk_position.rotate_scale(-1,1)
-                                +self.control_position)
+                             +self.control_position)
         for i in range(0, self.word_size):
             self.add_label(text="DATA[{0}]".format(i),
                            layer="metal3",
@@ -404,25 +403,23 @@ class sram(design.design):
         self.bank_w = self.bank.width
 
         self.num_vertical_line = self.bank_addr_size + self.control_size \
-            + self.num_banks + self.num_banks/2
+                                 + self.num_banks + self.num_banks/2
         self.num_horizontal_line = self.word_size
 
-        self.vertical_bus_width = self.calculate_bus_width("metal2",
-                                                           self.num_vertical_line)
-        self.horizontal_bus_width = self.calculate_bus_width("metal3",
-                                                             self.num_horizontal_line)
+        self.vertical_bus_width = self.calculate_bus_width("metal2", self.num_vertical_line)
+        self.horizontal_bus_width = self.calculate_bus_width("metal3", self.num_horizontal_line)
 
         self.vertical_bus_height = (self.num_banks/2)*(self.bank_h + self.bank_to_bus_distance) \
-            + self.horizontal_bus_width
+                                   + self.horizontal_bus_width
         self.horizontal_bus_height = (2 * (self.bank_w + self.bank_to_bus_distance)
-                                          + self.vertical_bus_width)
+                                      + self.vertical_bus_width)
 
         self.vertical_bus_offset = vector(self.bank_w + self.bank_to_bus_distance,
                                           self.sram_power_rail_gap)
         self.horizontal_bus_offset = vector(0,
                                             self.bank_h + self.bank_to_bus_distance
-                                                + self.sram_power_rail_gap 
-                                                + self.horizontal_bus_width)
+                                            + self.sram_power_rail_gap 
+                                            + self.horizontal_bus_width)
                                       
         # Vertical bus
         self.vertical_line_positions = self.create_bus(layer="metal2",
@@ -444,7 +441,7 @@ class sram(design.design):
 
         self.width = 2*(self.bank_w + self.bank_to_bus_distance) + self.vertical_bus_width
         self.height = (self.num_banks/2)*(self.bank_h + self.bank_to_bus_distance) \
-            + self.horizontal_bus_width + self.sram_power_rail_gap
+                      + self.horizontal_bus_width + self.sram_power_rail_gap
 
         # Add Control logic for Bank = 2 and Bank =4
 
@@ -464,7 +461,7 @@ class sram(design.design):
         if (self.num_banks == 2):
             self.control_position = vector(0, control_bus_offset.y 
                                                   + self.ms_flop_chars["width"])
-            self.add_control_logic(self.control_position, "R0")
+            self.add_control_logic(self.control_position, 0)
 
             self.CSb_position = self.control_position + self.control.CSb_position
             self.OEb_position = self.control_position + self.control.OEb_position
@@ -494,8 +491,8 @@ class sram(design.design):
                 temp.append("msb{0}".format(i))
                 temp.append("msb{0}_bar".format(i))
         else:
-            temp = temp + ["bank_select[1]", "bank_select[0]"]
-        temp = temp + ["clk", "vdd", "gnd"]
+            temp.extend(["bank_select[1]", "bank_select[0]"])
+        temp.extend(["clk", "vdd", "gnd"])
         self.connect_inst(temp)
 
         self.add_banks_0and1()
@@ -575,7 +572,7 @@ class sram(design.design):
         
         self.control_position = vector(0, self.msb_decoder_position.y
                                               + self.msb_decoder.height)
-        self.add_control_logic(self.control_position, "R0")
+        self.add_control_logic(self.control_position, 0)
                                          
         self.CSb_position = self.control_position + self.control.CSb_position
         self.OEb_position = self.control_position + self.control.OEb_position
@@ -738,13 +735,13 @@ class sram(design.design):
                 self.add_via(layers=("metal2", "via2", "metal3"),
                               offset=[bank_side[i].x + drc["minwidth_metal2"],
                                       control_side[i].y],
-                              mirror="R90")
+                              rotate=90)
         elif (self.num_banks == 2 or self.num_banks == 4):
             for i in range(self.control_size):
                 self.add_via(layers=("metal1", "via1", "metal2"),
                              offset=[self.vertical_line_positions[i].x + drc["minwidth_metal2"],
                                      self.control_bus_line_positions[i].y],
-                             mirror="R90")
+                             rotate=90)
                 control_attr = self.bank_property[i]
                 control_side_line_position = (getattr(self.control,control_attr)
                                                     +self.control_position)
@@ -759,7 +756,7 @@ class sram(design.design):
                               offset=[control_side_line_position.x 
                                           + drc["minwidth_metal2"],
                                       self.control_bus_line_positions[i].y],
-                              mirror="R90")
+                              rotate=90)
             for i in range(self.num_banks/2):
                 # MSB line connections
                 msb_line = self.control_size + self.num_banks/2 - 1 - i
@@ -843,7 +840,7 @@ class sram(design.design):
                                   height=drc["minwidth_metal1"])
                     self.add_via(layers=("metal1", "via1", "metal2"),
                                  offset=end - vector(0, 0.5 * self.m1m2_via.width),
-                                 mirror="R90")
+                                 rotate=90)
                 for i in range(4):
                     bank_select_line = self.control_size + 2 + self.bank_addr_size + i
                     msb_decoder_out = (self.msb_decoder_position
@@ -943,7 +940,7 @@ class sram(design.design):
             self.add_via(layers=("metal1", "via1", "metal2"),
                          offset=[control_vdd1_position.x + drc["minwidth_metal2"],
                                  control_vdd_supply.y],
-                         mirror="R90")
+                         rotate=90)
 
         if (self.control.width > self.bank.width):
             last_bank = self.num_banks - 1
@@ -964,7 +961,7 @@ class sram(design.design):
                       offset=[control_vdd2_position.x 
                                   + drc["minwidth_metal2"],
                               control_vdd_supply.y],
-                      mirror="R90")
+                      rotate=90)
 
         self.add_layout_pin(text="vdd",
                             layer="metal2",
@@ -1078,12 +1075,12 @@ class sram(design.design):
                      offset=[self.sram_bank_left_gnd_positions[0].x
                                   + drc["minwidth_metal2"],
                              control_gnd_supply.y],
-                     mirror="R90")
+                     rotate=90)
         # Control gnd
         self.add_via(layers=("metal1", "via1", "metal2"),
                      offset=[control_gnd_position.x + drc["minwidth_metal2"],
                              control_gnd_supply.y],
-                     mirror="R90")
+                     rotate=90)
         self.add_layout_pin(text="gnd",
                             layer="metal2",
                             offset=[control_gnd_position.x,

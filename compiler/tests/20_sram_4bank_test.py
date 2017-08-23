@@ -27,9 +27,9 @@ class sram_4bank_test(unittest.TestCase):
 
         debug.info(1, "Testing sample 8bit, 128word SRAM, 4 banks")
         a = sram.sram(word_size=8, num_words=128, num_banks=4, name="test_sram1")
-        OPTS.check_lvsdrc = True
         self.local_check(a)
 
+        OPTS.check_lvsdrc = True
         globals.end_openram()
         
     def local_check(self, a):

@@ -15,7 +15,7 @@ A calibre DRC runset file contains, at the minimum, the following information:
 *drcLayoutPrimary: cell_6t
 *drcLayoutSystem: GDSII
 *drcResultsformat: ASCII
-*drcResultsFile: cell_6t.drc.db
+*drcResultsFile: cell_6t.drc.results
 *drcSummaryFile: cell_6t.drc.summary
 *cmnFDILayerMapFile: ./layer.map
 *cmnFDIUseLayerMap: 1
@@ -28,7 +28,7 @@ To open the results, you can do this:
 
 calibredrv cell_6t.gds
 Select Verification->Start RVE.
-Select the cell_6t.drc.db file.
+Select the cell_6t.drc.results file.
 Click on the errors and they will highlight in the design layout viewer.
 
 For LVS:
@@ -44,7 +44,7 @@ For LVS:
 *lvsPowerNames: vdd 
 *lvsGroundNames: vss
 *lvsIgnorePorts: 1
-*lvsERCDatabase: cell_6t.erc.db
+*lvsERCDatabase: cell_6t.erc.results
 *lvsERCSummaryFile: cell_6t.erc.summary
 *lvsReportFile: cell_6t.lvs.report
 *lvsMaskDBFile: cell_6t.maskdb
@@ -82,7 +82,7 @@ def run_drc(name, gds_name):
         'drcLayoutPrimary': name,
         'drcLayoutSystem': 'GDSII',
         'drcResultsformat': 'ASCII',
-        'drcResultsFile': OPTS.openram_temp + name + ".drc.db",
+        'drcResultsFile': OPTS.openram_temp + name + ".drc.results",
         'drcSummaryFile': OPTS.openram_temp + name + ".drc.summary",
         'cmnFDILayerMapFile': drc["layer_map"],
         'cmnFDIUseLayerMap': 1
@@ -153,7 +153,7 @@ def run_lvs(name, gds_name, sp_name):
         'lvsIncludeSVRFCmds': 1,
         'lvsSVRFCmds': '{VIRTUAL CONNECT NAME VDD? GND? ?}',
         'lvsIgnorePorts': 1,
-        'lvsERCDatabase': OPTS.openram_temp + name + ".erc.db",
+        'lvsERCDatabase': OPTS.openram_temp + name + ".erc.results",
         'lvsERCSummaryFile': OPTS.openram_temp + name + ".erc.summary",
         'lvsReportFile': OPTS.openram_temp + name + ".lvs.report",
         'lvsMaskDBFile': OPTS.openram_temp + name + ".maskdb",

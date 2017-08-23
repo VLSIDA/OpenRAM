@@ -8,9 +8,10 @@ import re
 class ptx(design.design):
     """
     This module generates gds and spice of a parametrically NMOS or PMOS sized transistor. 
-    Creates a simple MOS transistor
+    Creates a simple MOS transistor. poly_positions are the ll of the poly gate. active_contact_positions
+    is an array of the positions of the ll of active contacts (left to right)
     """
-    def __init__(self, width=1, mults=1, tx_type="nmos"):
+    def __init__(self, width=drc["minwidth_tx"], mults=1, tx_type="nmos"):
         name = "{0}_m{1}_w{2}".format(tx_type, mults, width)
         # remove periods for newer spice compatibility
         name=re.sub('\.','_',name)
@@ -243,8 +244,7 @@ class ptx(design.design):
 
         # left_most contact column
         contact_xoffset = 0
-        contact_yoffset = (self.active_height \
-                           - self.active_contact.height) / 2
+        contact_yoffset = (self.active_height - self.active_contact.height) / 2
         offset = vector(contact_xoffset, contact_yoffset)
         self.add_contact(layers=("active", "contact", "metal1"),
                          offset=offset,

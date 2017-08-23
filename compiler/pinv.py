@@ -18,7 +18,7 @@ class pinv(design.design):
 
     unique_id = 1
     
-    def __init__(self, nmos_width=1, beta=3, height=bitcell.chars["height"], route_output=True):
+    def __init__(self, nmos_width=drc["minwidth_tx"], beta=parameter["pinv_beta"], height=bitcell.height, route_output=True):
         """Constructor : Creates a cell for a simple inverter"""
         name = "pinv{0}".format(pinv.unique_id)
         pinv.unique_id += 1
@@ -64,7 +64,6 @@ class pinv(design.design):
         self.connect_rails()
         self.connect_tx()
         self.route_pins()
-        self.setup_layout_offsets()
 
     def determine_tx_mults(self):
         """Determines the number of fingers needed to achieve same size with a height constraint"""
@@ -75,7 +74,7 @@ class pinv(design.design):
         # this should be 2*poly extension beyond active?
         minwidth_box_poly = 2 * drc["minwidth_poly"] \
                             + drc["poly_to_poly"]
-        well_to_well = max(drc["pwell_enclose_nwell"],
+        well_to_well = max(drc["pwell_to_nwell"],
                            minwidth_poly_contact,
                            minwidth_box_poly)
 
@@ -126,17 +125,17 @@ class pinv(design.design):
 
         self.gnd_position = vector(0, - 0.5 * drc["minwidth_metal1"])  # for tiling purposes
         self.add_layout_pin(text="gnd",
-                      layer="metal1",
-                      offset=self.gnd_position,
-                      width=rail_width,
-                      height=rail_height)
+                            layer="metal1",
+                            offset=self.gnd_position,
+                            width=rail_width,
+                            height=rail_height)
 
         self.vdd_position = vector(0, self.height - 0.5 * drc["minwidth_metal1"])
         self.add_layout_pin(text="vdd",
-                      layer="metal1",
-                      offset=self.vdd_position,
-                      width=rail_width,
-                      height=rail_height)
+                            layer="metal1",
+                            offset=self.vdd_position,
+                            width=rail_width,
+                            height=rail_height)
 
     def add_ptx(self):
         """Adds pmos and nmos to the layout"""
@@ -294,10 +293,9 @@ class pinv(design.design):
                       width=self.poly_contact.first_layer_position.y + drc["minwidth_poly"],
                       height=self.poly_contact.first_layer_width)
 
-        input_length = self.pmos.poly_positions[0].x \
-                       - self.poly_contact.height
+        input_length = self.pmos.poly_positions[0].x - self.poly_contact.height
         # Determine the y-coordinate for the placement of the metal1 via
-        self.input_position = vector(0, .5*(self.height - drc["minwidth_metal1"] 
+        self.input_position = vector(0, 0.5*(self.height - drc["minwidth_metal1"] 
                                             + self.nmos.height - self.pmos.height))
         self.add_layout_pin(text="A",
                       layer="metal1",
@@ -313,16 +311,18 @@ class pinv(design.design):
                         self.input_position.y)
         output_length = self.width - offset.x
         if self.route_output == True:
-            self.output_position = offset + vector(output_length,0)
-            self.add_rect(layer="metal1",
-                          offset=offset,
-                          width=output_length,
-                          height=drc["minwidth_metal1"])
+            # This extends the output to the edge of the cell
+            self.add_layout_pin(text="Z",
+                                layer="metal1",
+                                offset=offset,
+                                width=output_length,
+                                height=drc["minwidth_metal1"])
         else:
-            self.output_position = offset
-        self.add_label(text="Z",
-                       layer="metal1",
-                       offset=offset)
+            # This leaves the output as an internal pin (min sized)
+            self.add_layout_pin(text="Z",
+                                layer="metal1",
+                                offset=offset)
+
 
     def add_well_contacts(self):
         """Adds n/p well taps to the layout"""
@@ -402,10 +402,6 @@ class pinv(design.design):
     def route_pins(self):
         self.route_input_gate()
         self.route_output_drain()
-
-    def setup_layout_offsets(self):
-        self.A_position = self.input_position
-        self.Z_position = self.output_position
 
     def input_load(self):
         return ((self.nmos_size+self.pmos_size)/parameter["min_tx_size"])*spice["min_tx_gate_c"]

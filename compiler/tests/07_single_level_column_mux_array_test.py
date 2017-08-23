@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 """
-Run a test on a delay chain
+Run a regresion test on a single transistor column_mux.
 """
 
 import unittest
@@ -13,24 +13,29 @@ import calibre
 
 OPTS = globals.get_opts()
 
-#@unittest.skip("SKIPPING 14_delay_chain_test")
 
-
-class logic_effort_dc_test(unittest.TestCase):
+class single_level_column_mux_test(unittest.TestCase):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
 
-        import logic_effort_dc
-
-        debug.info(2, "Testing delay_chain")
-        a = logic_effort_dc.logic_effort_dc(
-            "chain", stage_list=[4, 4, 4, 4, 4])
-        OPTS.check_lvsdrc = True
+        import single_level_column_mux_array
+        
+        debug.info(1, "Testing sample for 2-way column_mux_array")
+        a = single_level_column_mux_array.single_level_column_mux_array(columns=16, word_size=8)
         self.local_check(a)
 
+        debug.info(1, "Testing sample for 4-way column_mux_array")
+        a = single_level_column_mux_array.single_level_column_mux_array(columns=16, word_size=4)
+        self.local_check(a)
+
+        debug.info(1, "Testing sample for 8-way column_mux_array")
+        a = single_level_column_mux_array.single_level_column_mux_array(columns=32, word_size=4)
+        self.local_check(a)
+
+        OPTS.check_lvsdrc = True        
         globals.end_openram()
         
     def local_check(self, a):
@@ -46,7 +51,11 @@ class logic_effort_dc_test(unittest.TestCase):
         os.remove(tempspice)
         os.remove(tempgds)
 
-# instantiate a copy of the class to actually run the test
+        # reset the static duplicate name checker for unit tests
+        import design
+        design.design.name_map=[]
+
+# instantiate a copdsay of the class to actually run the test
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

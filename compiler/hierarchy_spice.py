@@ -45,8 +45,8 @@ class spice:
 
     def connect_inst(self, args, check=True):
         """Connects the pins of the last instance added
-        It is preferred to use the other function with the check to find if
-        there is a problem. The check otion can be set to false
+        It is preferred to use the function with the check to find if
+        there is a problem. The check option can be set to false
         where we dynamically generate groups of connections after a
         group of modules are generated."""
 

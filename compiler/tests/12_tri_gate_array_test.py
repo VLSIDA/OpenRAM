@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 """
-Run a regresion test on a single transistor column_mux.
+Run a regresion test on a tri_gate_array.
 """
 
 import unittest
@@ -14,20 +14,24 @@ import calibre
 OPTS = globals.get_opts()
 
 
-class single_level_column_mux_test(unittest.TestCase):
+class tri_gate_array_test(unittest.TestCase):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
 
-        import single_level_column_mux_array
+        import tri_gate_array
 
-        debug.info(1, "Testing sample for columnmux_array")
-        a = single_level_column_mux_array.single_level_column_mux_array(
-            rows=32, columns=32, word_size=16)
-        OPTS.check_lvsdrc = True
+        debug.info(1, "Testing tri_gate_array for columns=8, word_size=8")
+        a = tri_gate_array.tri_gate_array(columns=8, word_size=8)
         self.local_check(a)
+
+        debug.info(1, "Testing tri_gate_array for columns=16, word_size=8")
+        a = tri_gate_array.tri_gate_array(columns=16, word_size=8)
+        self.local_check(a)
+        
+        OPTS.check_lvsdrc = True
         globals.end_openram()
         
     def local_check(self, a):
@@ -43,8 +47,11 @@ class single_level_column_mux_test(unittest.TestCase):
         os.remove(tempspice)
         os.remove(tempgds)
 
-        OPTS.check_lvsdrc = True
+        # reset the static duplicate name checker for unit tests
+        import design
+        design.design.name_map=[]
 
+        
 # instantiate a copdsay of the class to actually run the test
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

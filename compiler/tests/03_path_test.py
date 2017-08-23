@@ -18,6 +18,7 @@ class path_test(unittest.TestCase):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        OPTS.check_lvsdrc = False
 
         import path
         import tech
@@ -32,11 +33,9 @@ class path_test(unittest.TestCase):
                          [4 * min_space, 3 * min_space ],
                          [0, 3 * min_space ],
                          [0, 6 * min_space ]]
-        OPTS.check_lvsdrc = False
         w = design.design("path_test0")
         path.path(w,layer_stack, position_list)
         self.local_check(w)
-        OPTS.check_lvsdrc = True
 
 
         min_space = 2 * tech.drc["minwidth_metal1"]
@@ -51,11 +50,9 @@ class path_test(unittest.TestCase):
                              [-1 * min_space, 4 * min_space],
                              [-1 * min_space, 0]]
         position_list  = [[x+min_space, y+min_space] for x,y in old_position_list]
-        OPTS.check_lvsdrc = False
         w = design.design("path_test1")
         path.path(w,layer_stack, position_list)
         self.local_check(w)
-        OPTS.check_lvsdrc = True
 
         min_space = 2 * tech.drc["minwidth_metal2"]
         layer_stack = ("metal2")
@@ -69,11 +66,9 @@ class path_test(unittest.TestCase):
                              [-1 * min_space, 4 * min_space],
                              [-1 * min_space, 0]]
         position_list  = [[x-min_space, y-min_space] for x,y in old_position_list]
-        OPTS.check_lvsdrc = False
         w = design.design("path_test2")
         path.path(w, layer_stack, position_list)
         self.local_check(w)
-        OPTS.check_lvsdrc = True
 
         min_space = 2 * tech.drc["minwidth_metal3"]
         layer_stack = ("metal3")
@@ -88,11 +83,8 @@ class path_test(unittest.TestCase):
                          [-1 * min_space, 0]]
         # run on the reverse list
         position_list.reverse()
-        OPTS.check_lvsdrc = False
         w = design.design("path_test3")
         path.path(w, layer_stack, position_list)
-        OPTS.check_lvsdrc = True
-
         self.local_check(w)
 
         # return it back to it's normal state

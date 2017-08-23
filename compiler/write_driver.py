@@ -11,13 +11,15 @@ class write_driver(design.design):
     the technology library.
     """
 
-    pins = ["din", "BL", "BR", "en", "gnd", "vdd"]
-    chars = utils.auto_measure_libcell(pins, "write_driver", GDS["unit"], layer["boundary"])
+    pin_names = ["din", "BL", "BR", "en", "gnd", "vdd"]
+    (width,height) = utils.get_libcell_size("write_driver", GDS["unit"], layer["boundary"])
+    pin_map = utils.get_libcell_pins(pin_names, "write_driver", GDS["unit"], layer["boundary"])
 
     def __init__(self, name):
         design.design.__init__(self, name)
         debug.info(2, "Create write_driver object")
 
-        self.width = write_driver.chars["width"]
-        self.height = write_driver.chars["height"]
+        self.width = write_driver.width
+        self.height = write_driver.height
+        self.pin_map = write_driver.pin_map
 

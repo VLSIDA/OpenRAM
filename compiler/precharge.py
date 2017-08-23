@@ -18,10 +18,11 @@ class precharge(design.design):
 
         c = reload(__import__(OPTS.config.bitcell))
         self.mod_bitcell = getattr(c, OPTS.config.bitcell)
-        self.bitcell_chars = self.mod_bitcell.chars
-
+        self.bitcell = self.mod_bitcell()
+        
         self.ptx_width = ptx_width
         self.beta = beta
+        self.width = self.bitcell.width
 
         self.add_pins()
         self.create_layout()
@@ -33,7 +34,6 @@ class precharge(design.design):
     def create_layout(self):
         self.create_ptx()
         self.create_contacts()
-        self.setup_layout_constants()
         self.add_ptx()
         self.connect_poly()
         self.add_pclk()
@@ -46,11 +46,9 @@ class precharge(design.design):
     def create_ptx(self):
         """Initializes the upper and lower pmos"""
         self.lower_pmos = ptx(width=self.ptx_width,
-                              mults=1, 
                               tx_type="pmos")
         self.add_mod(self.lower_pmos)
         self.upper_pmos = ptx(width=self.beta * self.ptx_width,
-                              mults=1,
                               tx_type="pmos")
         self.upper_pmos = self.upper_pmos
         self.add_mod(self.upper_pmos)
@@ -72,10 +70,6 @@ class precharge(design.design):
         self.lower_contact = contact(layer_stack=("metal1", "via1", "metal2"),
                                      dimensions=self.lower_dimensions)
 
-    def setup_layout_constants(self):
-        self.width = self.bitcell_chars["width"]
-        self.BL_position = vector(self.bitcell_chars["BL"][0], 0)
-        self.BR_position = vector(self.bitcell_chars["BR"][0], 0)
 
     def add_ptx(self):
         """Adds both the upper_pmos and lower_pmos to the module"""
@@ -144,10 +138,10 @@ class precharge(design.design):
         offset.y= offset.y + self.poly_contact.second_layer_position.x
         self.pclk_position = vector(0, offset.y)
         self.add_layout_pin(text="clk",
-                          layer="metal1",
-                          offset=self.pclk_position,
-                          width=self.width,
-                          height=drc["minwidth_metal1"])
+                            layer="metal1",
+                            offset=self.pclk_position,
+                            width=self.width,
+                            height=drc["minwidth_metal1"])
                      
     def add_nwell_contact(self):
         """Adds a nwell tap to connect to the vdd rail"""
@@ -182,11 +176,11 @@ class precharge(design.design):
     def add_vdd_rail(self):
         """Adds a vdd rail at the top of the cell"""
         # adds the rail across the width of the cell
-        self.vdd_position = vector(self.pclk_position.x,
-                                   self.height - drc["minwidth_metal1"])
+        vdd_position = vector(self.pclk_position.x,
+                              self.height - drc["minwidth_metal1"])
         self.add_layout_pin(text="vdd",
                             layer="metal1",
-                            offset=self.vdd_position,
+                            offset=vdd_position,
                             width=self.width,
                             height=drc["minwidth_metal1"])
 
@@ -206,16 +200,16 @@ class precharge(design.design):
     def add_bitlines(self):
         """Adds both bit-line and bit-line-bar to the module"""
         # adds the BL on metal 2
-        offset = self.BL_position - vector(0.5 * drc["minwidth_metal2"],0)
-        self.add_layout_pin(text="bl",
+        offset = vector(self.bitcell.get_pin("BL").cx(),0) - vector(0.5 * drc["minwidth_metal2"],0)
+        self.add_layout_pin(text="BL",
                             layer="metal2",
                             offset=offset,
                             width=drc['minwidth_metal2'],
                             height=self.height)
 
         # adds the BR on metal 2
-        offset = self.BR_position - vector(0.5 * drc["minwidth_metal2"],0)
-        self.add_layout_pin(text="br",
+        offset = vector(self.bitcell.get_pin("BR").cx(),0) - vector(0.5 * drc["minwidth_metal2"],0)
+        self.add_layout_pin(text="BR",
                             layer="metal2",
                             offset=offset,
                             width=drc['minwidth_metal2'],
@@ -277,8 +271,8 @@ class precharge(design.design):
         """Connects bit-lines to lower_pmos"""
         mos,mos_pos,contact = dest
         mos_active = (mos_pos + mos.active_contact_positions[0])
-        offset = vector(self.BL_position.x, mos_active.y)
-        xlength = (mos_active.x + correct_x - self.BL_position.x 
+        offset = vector(self.bitcell.get_pin("BL").cx() , mos_active.y)
+        xlength = (mos_active.x + correct_x - offset.x 
                        + 0.5 * drc["minwidth_metal2"])
         self.add_rect(layer="metal2",
                       offset=offset,
@@ -290,7 +284,7 @@ class precharge(design.design):
         mos,mos_pos,contact = dest
         offset = mos_pos + vector(correct_x,
                                   mos.active_contact_positions[0].y)
-        xlength = self.BR_position.x - offset.x - 0.5 * drc["minwidth_metal2"] 
+        xlength = self.bitcell.get_pin("BR").cx() - offset.x - 0.5 * drc["minwidth_metal2"] 
         self.add_rect(layer="metal2",
                       offset=offset,
                       width=xlength,

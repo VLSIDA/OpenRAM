@@ -18,6 +18,7 @@ class wire_test(unittest.TestCase):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        OPTS.check_lvsdrc = False
 
         import wire
         import tech
@@ -36,10 +37,8 @@ class wire_test(unittest.TestCase):
                              [-1 * min_space, 4 * min_space],
                              [-1 * min_space, 0]]
         position_list  = [[x-min_space, y-min_space] for x,y in old_position_list]        
-        OPTS.check_lvsdrc = False
         w = design.design("wire_test1")
         wire.wire(w, layer_stack, position_list)
-        OPTS.check_lvsdrc = True
         self.local_check(w)
 
         min_space = 2 * (tech.drc["minwidth_poly"] +
@@ -55,10 +54,8 @@ class wire_test(unittest.TestCase):
                              [-1 * min_space, 4 * min_space],
                              [-1 * min_space, 0]]
         position_list  = [[x+min_space, y+min_space] for x,y in old_position_list]
-        OPTS.check_lvsdrc = False
         w = design.design("wire_test2")        
         wire.wire(w, layer_stack, position_list)
-        OPTS.check_lvsdrc = True
         self.local_check(w)
 
         min_space = 2 * (tech.drc["minwidth_metal2"] +
@@ -73,10 +70,8 @@ class wire_test(unittest.TestCase):
                          [7 * min_space, 4 * min_space],
                          [-1 * min_space, 4 * min_space],
                          [-1 * min_space, 0]]
-        OPTS.check_lvsdrc = False
         w = design.design("wire_test3")
         wire.wire(w, layer_stack, position_list)
-        OPTS.check_lvsdrc = True
         self.local_check(w)
 
 
@@ -92,10 +87,8 @@ class wire_test(unittest.TestCase):
                          [7 * min_space, 4 * min_space],
                          [-1 * min_space, 4 * min_space],
                          [-1 * min_space, 0]]
-        OPTS.check_lvsdrc = False
         w = design.design("wire_test4")
         wire.wire(w, layer_stack, position_list)
-        OPTS.check_lvsdrc = True
         self.local_check(w)
 
         min_space = 2 * (tech.drc["minwidth_metal2"] +
@@ -111,10 +104,8 @@ class wire_test(unittest.TestCase):
                          [-1 * min_space, 4 * min_space],
                          [-1 * min_space, 0]]
         position_list.reverse()
-        OPTS.check_lvsdrc = False
         w = design.design("wire_test5")
         wire.wire(w, layer_stack, position_list)
-        OPTS.check_lvsdrc = True
         self.local_check(w)
 
         min_space = 2 * (tech.drc["minwidth_metal2"] +
@@ -130,10 +121,8 @@ class wire_test(unittest.TestCase):
                          [-1 * min_space, 4 * min_space],
                          [-1 * min_space, 0]]
         position_list.reverse()
-        OPTS.check_lvsdrc = False
         w = design.design("wire_test6")
         wire.wire(w, layer_stack, position_list)
-        OPTS.check_lvsdrc = True
         self.local_check(w)
 
         # return it back to it's normal state

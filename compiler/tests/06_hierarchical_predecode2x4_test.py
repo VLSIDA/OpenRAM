@@ -24,12 +24,11 @@ class hierarchical_predecode2x4_test(unittest.TestCase):
         import hierarchical_predecode2x4 as pre
         import tech
 
-        debug.info(1, "Testing sample for hierarchy_decoder")
-        a = pre.hierarchical_predecode2x4(nmos_width=2 * tech.drc["minwidth_tx"],
-                                          cellname="test_pre2x4")
-        OPTS.check_lvsdrc = True
+        debug.info(1, "Testing sample for hierarchy_predecode2x4")
+        a = pre.hierarchical_predecode2x4()
         self.local_check(a)
 
+        OPTS.check_lvsdrc = True
         globals.end_openram()
         
     def local_check(self, a):

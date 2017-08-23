@@ -20,15 +20,19 @@ class write_driver_test(unittest.TestCase):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        OPTS.check_lvsdrc = False
 
         import write_driver_array
 
-        debug.info(2, "Testing write_driver_array for columns=128, word_size=128")
-        OPTS.check_lvsdrc = False
-        a = write_driver_array.write_driver_array(columns=16, word_size=16)
-        OPTS.check_lvsdrc = True
+        debug.info(2, "Testing write_driver_array for columns=8, word_size=8")
+        a = write_driver_array.write_driver_array(columns=8, word_size=8)
         self.local_check(a)
 
+        debug.info(2, "Testing write_driver_array for columns=16, word_size=8")
+        a = write_driver_array.write_driver_array(columns=16, word_size=8)
+        self.local_check(a)
+        
+        OPTS.check_lvsdrc = True
         globals.end_openram()
 
     def local_check(self, a):
@@ -43,6 +47,11 @@ class write_driver_test(unittest.TestCase):
 
         os.remove(tempspice)
         os.remove(tempgds)
+
+        # reset the static duplicate name checker for unit tests
+        import design
+        design.design.name_map=[]
+
 
 # instantiate a copy of the class to actually run the test
 if __name__ == "__main__":

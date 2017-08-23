@@ -10,33 +10,19 @@ class ms_flop(design.design):
     Memory address flip-flop
     """
 
-    pins = ["din", "dout", "dout_bar", "clk", "vdd", "gnd"]
-    chars = utils.auto_measure_libcell(pins, "ms_flop", GDS["unit"], layer["boundary"])
-
-    def __init__(self, name):
+    pin_names = ["din", "dout", "dout_bar", "clk", "vdd", "gnd"]
+    (width,height) = utils.get_libcell_size("ms_flop", GDS["unit"], layer["boundary"])
+    pin_map = utils.get_libcell_pins(pin_names, "ms_flop", GDS["unit"], layer["boundary"])
+    
+    def __init__(self, name="ms_flop"):
         design.design.__init__(self, name)
 
-        self.width = ms_flop.chars["width"]
-        self.height = ms_flop.chars["height"]
-
-        self.clk_offset = ms_flop.chars["clk"]
-        self.din_offset = ms_flop.chars["din"]
-        self.dout_offset = ms_flop.chars["dout"]
-        self.dout_bar_offset = ms_flop.chars["dout_bar"]
-
+        self.width = ms_flop.width
+        self.height = ms_flop.height
+        self.pin_map = ms_flop.pin_map
+    
     def delay(self, slew, load = 0.0):
-        #import pinv
-        # use inv to mimic the delay
-        # din -> mout
-        #ref =  pinv.pinv("reference_inv")
-        #mid_load = ref.input_load()
-        #din_t_mout_delay = ref.delay(slew = slew, load = mid_load)
-
-        # mout -> out
-        #mout_t_out_delay = ref.delay(slew = slew, load = load)
-        #result = din_t_mout_delay + mout_t_out_delay
-
-        # dont k how to calculate this now, use constant in tech file
+        # dont know how to calculate this now, use constant in tech file
         from tech import spice
         result = self.return_delay(spice["msflop_delay"], spice["msflop_slew"])
         return result

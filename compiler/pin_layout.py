@@ -1,0 +1,137 @@
+from vector import vector
+from tech import layer
+
+class pin_layout:
+    """
+    A class to represent a rectangular design pin. It is limited to a
+    single shape.
+    """
+
+    def __init__(self, name, rect, layer_name_num):
+        self.name = name
+        # repack the rect as a vector, just in case
+        if type(rect[0])==vector:
+            self.rect = rect
+        else:
+            self.rect = [vector(rect[0]),vector(rect[1])]
+        # if it's a layer number look up the layer name. this assumes a unique layer number.
+        if type(layer_name_num)==int:
+            self.layer = layer.keys()[layer.values().index(layer_name_num)]
+        else:
+            self.layer=layer_name_num
+
+    def __str__(self):
+        """ override print function output """
+        return "({} layer={} ll={} ur={})".format(self.name,self.layer,self.rect[0],self.rect[1])
+
+    def __repr__(self):
+        """ override print function output """
+        return "({} layer={} ll={} ur={})".format(self.name,self.layer,self.rect[0],self.rect[1])
+
+    def height(self):
+        """ Return height. Abs is for pre-normalized value."""
+        return abs(self.rect[1].y-self.rect[0].y)
+    
+    def width(self):
+        """ Return width. Abs is for pre-normalized value."""
+        return abs(self.rect[1].x-self.rect[0].x)
+
+    def normalize(self):
+        """ Re-find the LL and UR points after a transform """
+        (first,second)=self.rect
+        ll = vector(min(first[0],second[0]),min(first[1],second[1]))
+        ur = vector(max(first[0],second[0]),max(first[1],second[1]))
+        self.rect=[ll,ur]
+        
+    def transform(self,offset,mirror,rotate):
+        """ Transform with offset, mirror and rotation to get the absolute pin location. 
+        We must then re-find the ll and ur. The master is the cell instance. """
+        (ll,ur) = self.rect
+        if mirror=="MX":
+            ll=ll.scale(1,-1)
+            ur=ur.scale(1,-1)
+        elif mirror=="MY":
+            ll=ll.scale(-1,1)
+            ur=ur.scale(-1,1)
+        elif mirror=="XY":
+            ll=ll.scale(-1,-1)
+            ur=ur.scale(-1,-1)
+            
+        if rotate==90:
+            ll=ll.rotate_scale(-1,1)
+            ur=ur.rotate_scale(-1,1)
+        elif rotate==180:
+            ll=ll.scale(-1,-1)
+            ur=ur.scale(-1,-1)
+        elif rotate==270:
+            ll=ll.rotate_scale(1,-1)
+            ur=ur.rotate_scale(1,-1)
+
+        self.rect=[offset+ll,offset+ur]
+        self.normalize()
+
+    def center(self):
+        return vector(0.5*(self.rect[0].x+self.rect[1].x),0.5*(self.rect[0].y+self.rect[1].y))
+
+    def cx(self):
+        """ Center x """
+        return 0.5*(self.rect[0].x+self.rect[1].x)
+
+    def cy(self):
+        """ Center y """
+        return 0.5*(self.rect[0].y+self.rect[1].y)
+    
+    # The four possible corners
+    def ll(self):
+        """ Lower left point """
+        return self.rect[0]
+
+    def ul(self):
+        """ Upper left point """
+        return vector(self.rect[0].x,self.rect[1].y)
+
+    def br(self):
+        """ Bottom right point """
+        return vector(self.rect[1].x,self.rect[0].y)
+
+    def ur(self):
+        """ Upper right point """
+        return self.rect[1]
+    
+    # The possible y edge values 
+    def uy(self):
+        """ Upper y value """
+        return self.rect[1].y
+
+    def by(self):
+        """ Bottom y value """
+        return self.rect[0].y
+
+    # The possible x edge values
+    
+    def lx(self):
+        """ Left x value """
+        return self.rect[0].x
+    
+    def rx(self):
+        """ Right x value """
+        return self.rect[1].x
+    
+    
+    # The edge centers
+    def rc(self):
+        """ Right center point """
+        return vector(self.rect[1].x,0.5*(self.rect[0].y+self.rect[1].y))
+
+    def lc(self):
+        """ Left center point """
+        return vector(self.rect[0].x,0.5*(self.rect[0].y+self.rect[1].y))
+    
+    def uc(self):
+        """ Upper center point """
+        return vector(0.5*(self.rect[0].x+self.rect[1].x),self.rect[1].y)
+
+    def bc(self):
+        """ Bottom center point """
+        return vector(0.5*(self.rect[0].x+self.rect[1].x),self.rect[0].y)
+

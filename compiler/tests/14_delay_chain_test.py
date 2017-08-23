@@ -10,27 +10,26 @@ sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 import debug
 import calibre
-import importlib
 
 OPTS = globals.get_opts()
 
 #@unittest.skip("SKIPPING 14_delay_chain_test")
 
 
-class replica_bitline_test(unittest.TestCase):
+class delay_chain_test(unittest.TestCase):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
 
-        import replica_bitline
+        import delay_chain
 
-        debug.info(2, "Testing RBL")
-        a = replica_bitline.replica_bitline("chain", 13)
-        OPTS.check_lvsdrc = True
+        debug.info(2, "Testing delay_chain")
+        a = delay_chain.delay_chain(fanout_list=[4, 4, 4, 4])
         self.local_check(a)
 
+        OPTS.check_lvsdrc = True
         globals.end_openram()
         
     def local_check(self, a):

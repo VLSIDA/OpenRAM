@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 """
-Run a regresion test on a tri_gate_array.
+Run a test on a delay chain
 """
 
 import unittest
@@ -10,24 +10,27 @@ sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 import debug
 import calibre
+import importlib
 
 OPTS = globals.get_opts()
 
+#@unittest.skip("SKIPPING 14_delay_chain_test")
 
-class tri_gate_array_test(unittest.TestCase):
+
+class replica_bitline_test(unittest.TestCase):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
 
-        import tri_gate_array
+        import replica_bitline
 
-        debug.info(1, "Testing sample for tri_gate_array")
-        a = tri_gate_array.tri_gate_array(columns=16, word_size=16)
-        OPTS.check_lvsdrc = True
+        debug.info(2, "Testing RBL")
+        a = replica_bitline.replica_bitline(13)
         self.local_check(a)
 
+        OPTS.check_lvsdrc = True
         globals.end_openram()
         
     def local_check(self, a):
@@ -43,7 +46,7 @@ class tri_gate_array_test(unittest.TestCase):
         os.remove(tempspice)
         os.remove(tempgds)
 
-# instantiate a copdsay of the class to actually run the test
+# instantiate a copy of the class to actually run the test
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

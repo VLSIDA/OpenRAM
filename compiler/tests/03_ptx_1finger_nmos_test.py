@@ -28,10 +28,9 @@ class ptx_test(unittest.TestCase):
         fet = ptx.ptx(width=tech.drc["minwidth_tx"],
                       mults=1,
                       tx_type="nmos")
-        # return it back to it's normal state
-        OPTS.check_lvsdrc = True
-
         self.local_check(fet)
+
+        OPTS.check_lvsdrc = True
         globals.end_openram()
 
 

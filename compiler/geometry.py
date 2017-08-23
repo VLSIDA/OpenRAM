@@ -32,13 +32,18 @@ class instance(geometry):
     def __init__(self, name, mod, offset, mirror, rotate):
         """Initializes an instance to represent a module"""
         geometry.__init__(self)
+        debug.check(mirror not in ["R90","R180","R270"], "Please use rotation and not mirroring during instantiation.")
+        
         self.name = name
         self.mod = mod
         self.gds = mod.gds
         self.rotate = rotate
         self.offset = vector(offset).snap_to_grid()
         self.mirror = mirror
-
+        
+        self.boundary = [vector(0,0),vector(mod.width,mod.height)]
+        self.transform(offset,mirror,rotate)
+        
         debug.info(3, "creating instance: " + self.name)
 
     def gds_write_file(self, newLayout):
@@ -53,6 +58,95 @@ class instance(geometry):
                               mirror=self.mirror,
                               rotate=self.rotate)
 
+    def normalize(self):
+        """ Re-find the LL and UR points after a transform """
+        (first,second)=self.boundary
+        ll = vector(min(first[0],second[0]),min(first[1],second[1]))
+        ur = vector(max(first[0],second[0]),max(first[1],second[1]))
+        self.boundary=[ll,ur]
+        
+    def transform(self,offset,mirror,rotate):
+        """ Transform with offset, mirror and rotation to get the absolute pin location. 
+        We must then re-find the ll and ur. The master is the cell instance. """
+        (ll,ur) = self.boundary
+        if mirror=="MX":
+            ll=ll.scale(1,-1)
+            ur=ur.scale(1,-1)
+        elif mirror=="MY":
+            ll=ll.scale(-1,1)
+            ur=ur.scale(-1,1)
+        elif mirror=="XY":
+            ll=ll.scale(-1,-1)
+            ur=ur.scale(-1,-1)
+            
+        if rotate==90:
+            ll=ll.rotate_scale(-1,1)
+            ur=ur.rotate_scale(-1,1)
+        elif rotate==180:
+            ll=ll.scale(-1,-1)
+            ur=ur.scale(-1,-1)
+        elif rotate==270:
+            ll=ll.rotate_scale(1,-1)
+            ur=ur.rotate_scale(1,-1)
+
+        self.boundary=[offset+ll,offset+ur]
+        self.normalize()
+        
+    def ll(self):
+        """ Return the lower left corner """
+        return self.boundary[0]
+    
+    def ur(self):
+        """ Return the upper right corner """
+        return self.boundary[1]
+    
+    def lr(self):
+        """ Return the lower right corner """
+        return vector(self.boundary[1].x, self.boundary[0].y)
+    
+    def ul(self):
+        """ Return the upper left corner """
+        return vector(self.boundary[0].x, self.boundary[1].y)
+
+
+    def uy(self):
+        """ Return the upper edge """
+        return self.boundary[1].y
+
+    def by(self):
+        """ Return the bottom edge """
+        return self.boundary[0].y
+
+    def lx(self):
+        """ Return the left edge """
+        return self.boundary[0].x
+
+    def rx(self):
+        """ Return the right edge """
+        return self.boundary[1].x
+    
+    def get_pin(self,name):
+        """ Return an absolute pin that is offset and transformed based on
+        this instance location. """
+        
+        import copy
+        pin = copy.deepcopy(self.mod.get_pin(name))
+        pin.transform(self.offset,self.mirror,self.rotate)
+        return pin
+
+    def get_pins(self,name):
+        """ Return an absolute pin that is offset and transformed based on
+        this instance location. """
+        
+        import copy
+        pin = copy.deepcopy(self.mod.get_pins(name))
+        
+        new_pins = []
+        for p in pin:
+            p.transform(self.offset,self.mirror,self.rotate)                
+            new_pins.append(p)
+        return new_pins
+        
     def __str__(self):
         """ override print function output """
         return "inst: " + self.name + " mod=" + self.mod.name

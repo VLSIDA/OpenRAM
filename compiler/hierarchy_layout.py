@@ -6,6 +6,7 @@ from tech import drc, GDS
 from tech import layer as techlayer
 import os
 from vector import vector
+from pin_layout import pin_layout
 
 class layout:
     """
@@ -21,9 +22,9 @@ class layout:
         self.name = name
         self.width = None
         self.height = None
-        self.insts = []  # Holds module/cell layout instances
-        self.objs = []  # Holds all other objects (labels, geometries, etc)
-
+        self.insts = []      # Holds module/cell layout instances
+        self.objs = []       # Holds all other objects (labels, geometries, etc)
+        self.pin_map = {}    # Holds name->(vector,layer) map for all pins
         self.visited = False # Flag for traversing the hierarchy 
 
         self.gds_read()
@@ -38,6 +39,21 @@ class layout:
         self.offset_attributes(coordinate)
         self.translate(coordinate)
 
+    def get_gate_offset(self, x_offset, height, inv_num):
+        """Gets the base offset and y orientation of stacked rows of gates
+        assuming a minwidth metal1 vdd/gnd rail. Input is which gate
+        in the stack from 0..n
+        """
+
+        if (inv_num % 2 == 0):
+            base_offset=vector(x_offset, inv_num * height)
+            y_dir = 1
+        else:
+            # we lose a rail after every 2 gates            
+            base_offset=vector(x_offset, (inv_num+1) * height - (inv_num%2)*drc["minwidth_metal1"])
+            y_dir = -1
+            
+        return (base_offset,y_dir)
 
 
     def find_lowest_coords(self):
@@ -99,24 +115,46 @@ class layout:
         for inst in self.insts:
             inst.offset = vector(inst.offset - coordinate)
 
-    # FIXME: Make name optional and pick a random one if not specified
     def add_inst(self, name, mod, offset=[0,0], mirror="R0",rotate=0):
         """Adds an instance of a mod to this module"""
         self.insts.append(geometry.instance(name, mod, offset, mirror, rotate))
-        message = []
-        for x in self.insts:
-            message.append(x.name)
-        debug.info(4, "adding instance" + ",".join(message))
+        debug.info(4, "adding instance" + ",".join(x.name for x in self.insts))
+        return self.insts[-1]
 
+    def get_inst(self, name):
+        """Retrieve an instance by name"""
+        for inst in self.insts:
+            if inst.name == name:
+                return inst
+        return None
+    
     def add_rect(self, layer, offset, width, height):
         """Adds a rectangle on a given layer,offset with width and height"""
         # negative layers indicate "unused" layers in a given technology
         layerNumber = techlayer[layer]
         if layerNumber >= 0:
             self.objs.append(geometry.rectangle(layerNumber, offset, width, height))
+            return self.objs[-1]
+        return None
+        
+                         
+    def get_pin(self, text):
+        """ Return the pin or list of pins """
+        debug.check(len(self.pin_map[text])==1,"Should use a pin iterator since more than one pin.")
+        # If we have one pin, return it and not the list.
+        # Otherwise, should use get_pins()
+        return self.pin_map[text][0]
 
-    def add_layout_pin(self, text, layer, offset, width, height):
+    def get_pins(self, text):
+        """ Return a pin list (instead of a single pin) """
+        return self.pin_map[text]
+    
+    def add_layout_pin(self, text, layer, offset, width=None, height=None):
         """Create a labeled pin"""
+        if width==None:
+            width=drc["minwidth_{0}".format(layer)]
+        if height==None:
+            height=drc["minwidth_{0}".format(layer)]
         self.add_rect(layer=layer,
                       offset=offset,
                       width=width,
@@ -124,7 +162,12 @@ class layout:
         self.add_label(text=text,
                        layer=layer,
                        offset=offset)
-
+        
+        try:
+            self.pin_map[text].append(pin_layout(text,vector(offset,offset+vector(width,height)),layer))
+        except KeyError:
+            self.pin_map[text] = [pin_layout(text,vector(offset,offset+vector(width,height)),layer)]
+                                      
 
     def add_label(self, text, layer, offset=[0,0],zoom=-1):
         """Adds a text label on the given layer,offset, and zoom level"""
@@ -132,6 +175,8 @@ class layout:
         layerNumber = techlayer[layer]
         if layerNumber >= 0:
             self.objs.append(geometry.label(text, layerNumber, offset, zoom))
+            return self.objs[-1]
+        return None
 
 
     def add_path(self, layer, coordinates, width=None):

@@ -20,16 +20,20 @@ class sense_amp_test(unittest.TestCase):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        OPTS.check_lvsdrc = False
 
         import sense_amp_array
 
 
         debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=2")
-        OPTS.check_lvsdrc = False
         a = sense_amp_array.sense_amp_array(word_size=4, words_per_row=2)
-        OPTS.check_lvsdrc = True
         self.local_check(a)
 
+        debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=4")
+        a = sense_amp_array.sense_amp_array(word_size=4, words_per_row=4)
+        self.local_check(a)
+        
+        OPTS.check_lvsdrc = True
         globals.end_openram()
         
     def local_check(self, a):
@@ -45,6 +49,11 @@ class sense_amp_test(unittest.TestCase):
         os.remove(tempspice)
         os.remove(tempgds)
 
+        # reset the static duplicate name checker for unit tests
+        import design
+        design.design.name_map=[]
+
+        
 # instantiate a copy of the class to actually run the test
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

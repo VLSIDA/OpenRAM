@@ -21,16 +21,19 @@ class dff_array_test(unittest.TestCase):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        OPTS.check_lvsdrc = False
 
         import ms_flop_array
 
-        debug.info(1, "Testing sample for dff_array")
-        OPTS.check_lvsdrc = False
-        a = ms_flop_array.ms_flop_array(
-            name="test1", columns=64, word_size=32)
-        OPTS.check_lvsdrc = True
+        debug.info(2, "Testing ms_flop_array for columns=8, word_size=8")
+        a = ms_flop_array.ms_flop_array(columns=8, word_size=8)
         self.local_check(a)
 
+        debug.info(2, "Testing ms_flop_array for columns=16, word_size=8")
+        a = ms_flop_array.ms_flop_array(columns=16, word_size=8)
+        self.local_check(a)
+        
+        OPTS.check_lvsdrc = True
         globals.end_openram()
 
     def local_check(self, a):
@@ -46,6 +49,11 @@ class dff_array_test(unittest.TestCase):
         os.remove(tempspice)
         os.remove(tempgds)
 
+        # reset the static duplicate name checker for unit tests
+        import design
+        design.design.name_map=[]
+
+        
 
 # instantiate a copdsay of the class to actually run the test
 if __name__ == "__main__":

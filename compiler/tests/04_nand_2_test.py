@@ -31,8 +31,9 @@ class nand_2_test(unittest.TestCase):
 
         debug.info(2, "Checking 2-input nand gate")
         tx = nand_2.nand_2(nmos_width=2 * tech.drc["minwidth_tx"])
-        OPTS.check_lvsdrc = True
         self.local_check(tx)
+
+        OPTS.check_lvsdrc = True
         globals.end_openram()
         
 

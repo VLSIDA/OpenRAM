@@ -26,9 +26,9 @@ class control_logic_test(unittest.TestCase):
 
         debug.info(1, "Testing sample for control_logic")
         a = control_logic.control_logic(num_rows=128)
-        OPTS.check_lvsdrc = True
         self.local_check(a)
 
+        OPTS.check_lvsdrc = True
         globals.end_openram()
         
     def local_check(self, a):

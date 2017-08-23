@@ -2,6 +2,7 @@ from tech import drc
 from tech import layer as techlayer
 import debug
 from vector import vector
+from utils import snap_to_grid
 
 class path():
     """
@@ -34,7 +35,7 @@ class path():
     def create_rectilinear_route(self):
         """ Add intermediate nodes if it isn't rectilinear. Also skip
         repeated nodes. Also, convert to vector if the aren't."""
-        pl = self.position_list
+        pl = [snap_to_grid(x) for x in self.position_list]
 
         self.position_list = []
         for index in range(len(pl) - 1):
@@ -74,7 +75,6 @@ class path():
         using the position list of the corners. """
         pl = self.position_list  # position list
         for index in range(len(pl) - 1):
-
             # if we have x motion
             if pl[index][0] != pl[index + 1][0]:
                 line_length = pl[index + 1][0] - pl[index][0]

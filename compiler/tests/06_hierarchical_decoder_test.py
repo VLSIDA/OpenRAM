@@ -23,13 +23,15 @@ class hierarchical_decoder_test(unittest.TestCase):
         import hierarchical_decoder
         import tech
 
-        debug.info(1, "Testing 4 row sample for hierarchical_decoder")
-        a = hierarchical_decoder.hierarchical_decoder(rows=4)
-        self.local_check(a)
+        # Doesn't require hierarchical decoder
+        # debug.info(1, "Testing 4 row sample for hierarchical_decoder")
+        # a = hierarchical_decoder.hierarchical_decoder(rows=4)
+        # self.local_check(a)
 
-        debug.info(1, "Testing 8 row sample for hierarchical_decoder")
-        a = hierarchical_decoder.hierarchical_decoder(rows=8)
-        self.local_check(a)
+        # Doesn't require hierarchical decoder
+        # debug.info(1, "Testing 8 row sample for hierarchical_decoder")
+        # a = hierarchical_decoder.hierarchical_decoder(rows=8)
+        # self.local_check(a)
 
         debug.info(1, "Testing 32 row sample for hierarchical_decoder")
         a = hierarchical_decoder.hierarchical_decoder(rows=32)

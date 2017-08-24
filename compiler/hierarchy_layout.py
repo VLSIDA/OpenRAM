@@ -150,7 +150,7 @@ class layout:
         return self.pin_map[text]
     
     def add_layout_pin(self, text, layer, offset, width=None, height=None):
-        """Create a labeled pin"""
+        """Create a labeled pin """
         if width==None:
             width=drc["minwidth_{0}".format(layer)]
         if height==None:
@@ -162,12 +162,38 @@ class layout:
         self.add_label(text=text,
                        layer=layer,
                        offset=offset)
-        
+
+        new_pin = pin_layout(text, [offset,offset+vector(width,height)], layer)
+
         try:
-            self.pin_map[text].append(pin_layout(text,vector(offset,offset+vector(width,height)),layer))
+            # Check if there's a duplicate!
+            # and if so, silently ignore it.
+            # Rounding errors may result in some duplicates.
+            pin_list = self.pin_map[text]
+            for pin in pin_list:
+                if pin == new_pin:
+                    return
+            self.pin_map[text].append(new_pin)
         except KeyError:
-            self.pin_map[text] = [pin_layout(text,vector(offset,offset+vector(width,height)),layer)]
-                                      
+            self.pin_map[text] = [new_pin]
+
+    def add_label_pin(self, text, layer, offset, width=None, height=None):
+        """Create a labeled pin WITHOUT the pin data structure. This is not an
+        actual pin but a named net so that we can add a correspondence point
+        in LVS.
+        """
+        if width==None:
+            width=drc["minwidth_{0}".format(layer)]
+        if height==None:
+            height=drc["minwidth_{0}".format(layer)]
+        self.add_rect(layer=layer,
+                      offset=offset,
+                      width=width,
+                      height=height)
+        self.add_label(text=text,
+                       layer=layer,
+                       offset=offset)
+            
 
     def add_label(self, text, layer, offset=[0,0],zoom=-1):
         """Adds a text label on the given layer,offset, and zoom level"""

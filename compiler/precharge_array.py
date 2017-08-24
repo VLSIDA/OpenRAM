@@ -58,20 +58,24 @@ class precharge_array(design.design):
 
     def add_insts(self):
         """Creates a precharge array by horizontally tiling the precharge cell"""
-        self.pc_cell_positions = []
         for i in range(self.columns):
             name = "pre_column_{0}".format(i)
             offset = vector(self.pc_cell.width * i, 0)
-            self.pc_cell_positions.append(offset)
-            self.add_inst(name=name,
+            inst=self.add_inst(name=name,
                           mod=self.pc_cell,
                           offset=offset)
+            bl_pin = inst.get_pin("BL")
             self.add_layout_pin(text="bl[{0}]".format(i),
                                 layer="metal2",
-                                offset=offset+ self.pc_cell.get_pin("BL").ll().scale(1,0))
+                                offset=bl_pin.ll(),
+                                width=drc["minwidth_metal2"],
+                                height=bl_pin.height())
+            br_pin = inst.get_pin("BR") 
             self.add_layout_pin(text="br[{0}]".format(i),
                                 layer="metal2",
-                                offset=offset+ self.pc_cell.get_pin("BR").ll().scale(1,0))
+                                offset=br_pin.ll(),
+                                width=drc["minwidth_metal2"],
+                                height=bl_pin.height())
             self.connect_inst(["bl[{0}]".format(i), "br[{0}]".format(i),
                                "clk", "vdd"])
 

@@ -56,10 +56,10 @@ class ms_flop_array(design.design):
             else:
                 base = vector((i+1)*self.ms.width,0)
                 mirror = "MY"
-            self.ms_inst[i]=self.add_inst(name=name,
-                                               mod=self.ms,
-                                               offset=base, 
-                                               mirror=mirror)
+            self.ms_inst[i/self.words_per_row]=self.add_inst(name=name,
+                                                             mod=self.ms,
+                                                             offset=base, 
+                                                             mirror=mirror)
             self.connect_inst(["din[{0}]".format(i/self.words_per_row),
                                "dout[{0}]".format(i/self.words_per_row),
                                "dout_bar[{0}]".format(i/self.words_per_row),
@@ -68,43 +68,40 @@ class ms_flop_array(design.design):
 
     def add_layout_pins(self):
         
-        for i in range(0,self.columns,self.words_per_row):
-            i_str = "[{0}]".format(i)
+        for i in range(self.word_size):
 
-            # Avoid duplicate rails by only doing even columns or last one
             for gnd_pin in self.ms_inst[i].get_pins("gnd"):
                 if gnd_pin.layer!="metal2":
                     continue
-                if i%2==0 or i+self.words_per_row>=self.columns:
-                    self.add_layout_pin(text="gnd",
-                                        layer="metal2",
-                                        offset=gnd_pin.ll(),
-                                        width=gnd_pin.width(),
-                                        height=gnd_pin.height())
+                self.add_layout_pin(text="gnd",
+                                    layer="metal2",
+                                    offset=gnd_pin.ll(),
+                                    width=gnd_pin.width(),
+                                    height=gnd_pin.height())
 
             din_pin = self.ms_inst[i].get_pin("din")
-            self.add_layout_pin(text="din"+i_str,
+            self.add_layout_pin(text="din[{}]".format(i),
                                 layer="metal2",
                                 offset=din_pin.ll(),
                                 width=din_pin.width(),
                                 height=din_pin.height())
 
             dout_pin = self.ms_inst[i].get_pin("dout")
-            self.add_layout_pin(text="dout"+i_str,
+            self.add_layout_pin(text="dout[{}]".format(i),
                                 layer="metal2",
                                 offset=dout_pin.ll(),
                                 width=dout_pin.width(),
                                 height=dout_pin.height())
 
             doutbar_pin = self.ms_inst[i].get_pin("dout_bar")
-            self.add_layout_pin(text="dout_bar"+i_str,
+            self.add_layout_pin(text="dout_bar[{}]".format(i),
                                 layer="metal2",
                                 offset=doutbar_pin.ll(),
                                 width=doutbar_pin.width(),
                                 height=doutbar_pin.height())
             
             
-        # Continous "clk" rail along with label.
+        # Continous clk rail along with label.
         self.add_layout_pin(text="clk",
                             layer="metal1",
                             offset=self.ms_inst[0].get_pin("clk").ll().scale(0,1),
@@ -112,7 +109,7 @@ class ms_flop_array(design.design):
                             height=drc["minwidth_metal1"])
 
         
-        # Continous "Vdd" rail along with label.
+        # Continous vdd rail along with label.
         for vdd_pin in self.ms_inst[i].get_pins("vdd"):
             if vdd_pin.layer!="metal1":
                 continue
@@ -122,6 +119,16 @@ class ms_flop_array(design.design):
                                 width=self.width,
                                 height=drc["minwidth_metal1"])
 
+        # Continous gnd rail along with label.
+        for gnd_pin in self.ms_inst[i].get_pins("gnd"):
+            if gnd_pin.layer!="metal1":
+                continue
+            self.add_layout_pin(text="gnd",
+                                layer="metal1",
+                                offset=gnd_pin.ll().scale(0,1),
+                                width=self.width,
+                                height=drc["minwidth_metal1"])
+            
 
     def delay(self, slew, load=0.0):
         result = self.ms.delay(slew = slew, 

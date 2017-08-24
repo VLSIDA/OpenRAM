@@ -28,11 +28,11 @@ class single_level_column_mux_array(design.design):
         for i in range(self.columns):
             self.add_pin("bl[{}]".format(i))
             self.add_pin("br[{}]".format(i))
+        for i in range(self.words_per_row):
+            self.add_pin("sel[{}]".format(i))
         for i in range(self.word_size):
             self.add_pin("bl_out[{}]".format(i))
             self.add_pin("br_out[{}]".format(i))
-        for i in range(self.words_per_row):
-            self.add_pin("sel[{}]".format(i))
         self.add_pin("gnd")
 
     def create_layout(self):

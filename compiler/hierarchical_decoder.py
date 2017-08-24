@@ -30,6 +30,8 @@ class hierarchical_decoder(design.design):
 
         self.rows = rows
         self.num_inputs = int(math.log(self.rows, 2))
+        (self.no_of_pre2x4,self.no_of_pre3x8)=self.determine_predecodes(self.num_inputs)
+        
         self.create_layout()
         self.DRC_LVS()
 
@@ -47,15 +49,6 @@ class hierarchical_decoder(design.design):
         #    self.offset_all_coordinates()
 
     def add_modules(self):
-        self.m1m2_via = contact(layer_stack=("metal1", "via1", "metal2"))
-        # Vertical metal rail gap definition
-        self.metal2_extend_contact = (self.m1m2_via.second_layer_height - self.m1m2_via.contact_width) / 2
-        self.metal2_spacing = self.metal2_extend_contact  + drc["metal2_to_metal2"]
-        self.metal2_pitch = self.metal2_spacing + drc["minwidth_metal2"]
-        self.via_shift = (self.m1m2_via.second_layer_width - self.m1m2_via.first_layer_width) / 2
-        # used to shift contact when connecting to NAND3 C pin down
-        self.contact_shift = (self.m1m2_via.first_layer_width - self.m1m2_via.contact_width) / 2
-
         self.inv = pinv()
         self.add_mod(self.inv)
         self.nand2 = nand_2()
@@ -89,12 +82,18 @@ class hierarchical_decoder(design.design):
         elif (num_inputs == 9):
             return(0,3)
         else:
-            debug.error("Invalid number of inputs for hierarchical decoder")
+            debug.error("Invalid number of inputs for hierarchical decoder",-1)
 
     def setup_layout_constants(self):
-        (p2x4,p3x8)=self.determine_predecodes(self.num_inputs)
-        self.no_of_pre2x4=p2x4
-        self.no_of_pre3x8=p3x8
+        self.m1m2_via = contact(layer_stack=("metal1", "via1", "metal2"))
+        # Vertical metal rail gap definition
+        self.metal2_extend_contact = (self.m1m2_via.second_layer_height - self.m1m2_via.contact_width) / 2
+        self.metal2_spacing = self.metal2_extend_contact  + drc["metal2_to_metal2"]
+        self.metal2_pitch = self.metal2_spacing + drc["minwidth_metal2"]
+        self.via_shift = (self.m1m2_via.second_layer_width - self.m1m2_via.first_layer_width) / 2
+        # used to shift contact when connecting to NAND3 C pin down
+        self.contact_shift = (self.m1m2_via.first_layer_width - self.m1m2_via.contact_width) / 2
+
 
         self.predec_groups = []  # This array is a 2D array.
 
@@ -139,7 +138,8 @@ class hierarchical_decoder(design.design):
         if self.num_inputs>=4:
             self.total_number_of_predecoder_outputs = 4*self.no_of_pre2x4 + 8*self.no_of_pre3x8
         else:
-            self.total_number_of_predecoder_outputs = 0
+            self.total_number_of_predecoder_outputs = 0            
+            debug.error("Not enough rows for a hierarchical decoder. Non-hierarchical not supported yet.",-1)
 
         # Calculates height and width of pre-decoder,
         if(self.no_of_pre3x8 > 0):

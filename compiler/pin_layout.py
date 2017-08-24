@@ -28,6 +28,13 @@ class pin_layout:
         """ override print function output """
         return "({} layer={} ll={} ur={})".format(self.name,self.layer,self.rect[0],self.rect[1])
 
+    def __eq__(self, other):
+        """ Check if these are the same pins for duplicate checks """
+        if isinstance(other, self.__class__):
+            return (self.layer==other.layer and self.rect == other.rect)
+        else:
+            return False    
+
     def height(self):
         """ Return height. Abs is for pre-normalized value."""
         return abs(self.rect[1].y-self.rect[0].y)

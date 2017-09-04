@@ -37,6 +37,16 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
         else:
             debug.error("Duplicate layout reference name {0} of class {1}. GDS2 requires names be unique.".format(name,self.__class__),-1)
         
+    def get_layout_pins(self,inst):
+        """ Return a map of pin locations of the instance offset """
+        # find the instance
+        for i in self.insts:
+            if i.name == inst.name:
+                break
+        else:
+            debug.error("Couldn't find instance {0}".format(inst_name),-1)
+        inst_map = inst.mod.pin_map
+        return inst_map
         
 
     def DRC_LVS(self):

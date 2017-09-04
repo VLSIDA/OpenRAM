@@ -3,6 +3,7 @@ import debug
 from tech import drc, info, spice
 from vector import vector
 from contact import contact
+import re
 
 class ptx(design.design):
     """
@@ -11,6 +12,8 @@ class ptx(design.design):
     """
     def __init__(self, width=1, mults=1, tx_type="nmos"):
         name = "{0}_m{1}_w{2}".format(tx_type, mults, width)
+        # remove periods for newer spice compatibility
+        name=re.sub('\.','_',name)
         design.design.__init__(self, name)
         debug.info(3, "create ptx structure {0}".format(name))
 

@@ -210,7 +210,7 @@ class delay():
         feasible_period = tech.spice["feasible_period"]
         time_out = 8
         while True:
-            debug.info(1, "Finding feasible period: {0}ns".format(feasible_period))
+            debug.info(1, "Trying feasible period: {0}ns".format(feasible_period))
             time_out -= 1
 
             if (time_out <= 0):
@@ -221,7 +221,7 @@ class delay():
                 feasible_period = 2 * feasible_period
                 continue
 
-            debug.info(1, "Found feasible_period: {0}ns feasible_delay1/0 {1}ns/{2}ns".format(feasible_period,feasible_delay1,feasible_delay0))
+            debug.info(1, "Found feasible_period: {0}ns feasible_delay1/0 {1}ns/{2}ns slew {3}ns/{4}ns".format(feasible_period,feasible_delay1,feasible_delay0,feasible_slew1,feasible_slew0))
             return (feasible_period, feasible_delay1, feasible_delay0)
 
 
@@ -240,12 +240,14 @@ class delay():
         # if it failed or the read was longer than a period
         if type(delay0)!=float or type(delay1)!=float or type(slew1)!=float or type(slew0)!=float:
             return (False,0,0,0,0)
+        delay0 *= 1e9
+        delay1 *= 1e9
+        slew0 *= 1e9
+        slew1 *= 1e9
+        if delay0>period or delay1>period or slew0>period or slew1>period:
+            return (False,0,0,0,0)
         else:
-            delay0 *= 1e9
-            delay1 *= 1e9
-            slew0 *= 1e9
-            slew1 *= 1e9
-            debug.info(2,"Simulation w/ period {0}, delay0={1}n delay1={2}ns".format(period,delay0,delay1))
+            debug.info(2,"Successful simulation: period {0} load {1} slew {2}, delay0={3}n delay1={4}ns slew0={5}n slew1={6}n".format(period,load,slew,delay0,delay1,slew0,slew1))
         #key=raw_input("press return to continue")
 
         # The delay is from the negative edge for our SRAM
@@ -291,23 +293,31 @@ class delay():
         stimuli.run_sim()
         delay0 = ch.convert_to_float(ch.parse_output("timing", "delay0"))
         delay1 = ch.convert_to_float(ch.parse_output("timing", "delay1"))
-        if type(delay0)==float:
-            delay0 *= 1e9
-        if type(delay1)==float:
-            delay1 *= 1e9
-        debug.info(2,"Period {0}, delay0={1}ns, delay1={2}ns".format(period,delay0, delay1))
+        slew0 = ch.convert_to_float(ch.parse_output("timing", "slew0"))
+        slew1 = ch.convert_to_float(ch.parse_output("timing", "slew1"))
         # if it failed or the read was longer than a period
-        if type(delay0)!=float or type(delay1)!=float:
+        if type(delay0)!=float or type(delay1)!=float or type(slew1)!=float or type(slew0)!=float:
+            debug.info(2,"Invalid measures: Period {0}, delay0={1}ns, delay1={2}ns slew0={3}ns slew1={4}ns".format(period, delay0, delay1, slew0, slew1))
+            return False
+        delay0 *= 1e9
+        delay1 *= 1e9
+        slew0 *= 1e9
+        slew1 *= 1e9
+        if delay0>period or delay1>period or slew0>period or slew1>period:
+            debug.info(2,"Too long delay/slew: Period {0}, delay0={1}ns, delay1={2}ns slew0={3}ns slew1={4}ns".format(period, delay0, delay1, slew0, slew1))
             return False
         else:
-            if ch.relative_compare(delay1*1e9,feasible_delay1,error_tolerance=0.05):
+            if not ch.relative_compare(delay1,feasible_delay1,error_tolerance=0.05):
+                debug.info(2,"Delay too big {0} vs {1}".format(delay1,feasible_delay1))
                 return False
-            elif ch.relative_compare(delay0*1e9,feasible_delay0,error_tolerance=0.05):
+            elif not ch.relative_compare(delay0,feasible_delay0,error_tolerance=0.05):
+                debug.info(2,"Delay too big {0} vs {1}".format(delay0,feasible_delay0))
                 return False
 
 
         #key=raw_input("press return to continue")
 
+        debug.info(2,"Successful period {0}, delay0={1}ns, delay1={2}ns slew0={3}ns slew1={4}ns".format(period, delay0, delay1, slew0, slew1))
         return True
     
     def set_probe(self,probe_address, probe_data):
@@ -325,7 +335,7 @@ class delay():
         
         self.set_probe(probe_address, probe_data)
 
-        (feasible_period, feasible_delay1, feasible_delay0) = self.find_feasible_period(loads[0], slews[0])
+        (feasible_period, feasible_delay1, feasible_delay0) = self.find_feasible_period(max(loads), max(slews))
         debug.check(feasible_delay1>0,"Negative delay may not be possible")
         debug.check(feasible_delay0>0,"Negative delay may not be possible")
 
@@ -350,7 +360,7 @@ class delay():
                 HL_slew.append(slew0)
                 
         # finds the minimum period without degrading the delays by X%
-        min_period = self.find_min_period(feasible_period, loads[0], slews[0], feasible_delay1, feasible_delay0)
+        min_period = self.find_min_period(feasible_period, max(loads), max(slews), feasible_delay1, feasible_delay0)
         debug.check(type(min_period)==float,"Couldn't find minimum period.")
         debug.info(1, "Min Period: {0}n with a delay of {1}".format(min_period, feasible_delay1))
 

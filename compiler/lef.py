@@ -45,11 +45,11 @@ class lef:
         for pin in input_pin_name:
            self.writePin(pin,4)
             
-        self.lef.write("    OBS \n")
+        self.lef.write("    OBS\n")
         for lay in self.layer:
-            self.lef.write("        Layer  {0} ; \n".format(lay))
+            self.lef.write("        LAYER  {0} ;\n".format(lay))
             self.writeObstruct(self.sr.name, lay, mirr = 1, angle = math.radians(float(0)), xyShift = (0, 0))
-        self.lef.write("    END \n")
+        self.lef.write("    END\n")
 
         self.writeLefFooter()
        
@@ -160,8 +160,8 @@ class lef:
         self.lef.write("    SYMMETRY X Y R90 ;\n")
 
     def writeLefFooter(self):
-        self.lef.write("END    {0} \n".format(self.sr.name))
-        self.lef.write("END    LIBRARY \n")
+        self.lef.write("END    {0}\n".format(self.sr.name))
+        self.lef.write("END    LIBRARY\n")
         
     def powerPinName(self):
         return ["vdd"]
@@ -187,35 +187,35 @@ class lef:
         return inout_pin_name
         
     def writePin(self, pinName, typ):
-        self.lef.write("    PIN {0} \n".format(pinName))
+        self.lef.write("    PIN {0}\n".format(pinName))
         if typ == 1:
-            self.lef.write("        DIRECTION INOUT ; \n")
-            self.lef.write("        USE POWER ; \n")
-            self.lef.write("        SHAPE ABUTMENT ; \n")
-            self.lef.write("        PORT             \n")
+            self.lef.write("        DIRECTION INOUT ;\n")
+            self.lef.write("        USE POWER ;\n")
+            self.lef.write("        SHAPE ABUTMENT ;\n")
+            self.lef.write("        PORT\n")
         elif typ == 2:
-            self.lef.write("        DIRECTION INOUT ; \n")
-            self.lef.write("        USE GROUND ; \n")
-            self.lef.write("        SHAPE ABUTMENT ; \n")
-            self.lef.write("        PORT             \n")
+            self.lef.write("        DIRECTION INOUT ;\n")
+            self.lef.write("        USE GROUND ;\n")
+            self.lef.write("        SHAPE ABUTMENT ;\n")
+            self.lef.write("        PORT\n")
         elif typ == 3:
-            self.lef.write("        DIRECTION INOUT ; \n")
-            self.lef.write("        PORT             \n")
+            self.lef.write("        DIRECTION INOUT ;\n")
+            self.lef.write("        PORT\n")
         elif typ == 4:
-            self.lef.write("        DIRECTION INPUT ; \n")
-            self.lef.write("        PORT             \n")
+            self.lef.write("        DIRECTION INPUT ;\n")
+            self.lef.write("        PORT\n")
         else:
             debug.error("Invalid pin type on pin {0}".format(pinName))
 
         pin_layer_coord = self.pinLayerCoord(self.sr.name, pinName)
         for pinLayer in pin_layer_coord:
             lay = [key for key, value in tech.layer.iteritems() if value == pinLayer][0]
-            self.lef.write("        Layer {0} ; \n".format(lay))
+            self.lef.write("        LAYER {0} ;\n".format(lay))
             for pinCoord in pin_layer_coord[pinLayer]:
                 self.writePinCoord(self.sr.name, pinName, pinLayer, pinCoord,
                                    mirr = 1,angle = math.radians(float(0)), xyShift = (0, 0))
-        self.lef.write("        END             \n")
-        self.lef.write("    END {0} \n".format(pinName))
+        self.lef.write("        END\n")
+        self.lef.write("    END {0}\n".format(pinName))
 
     def lowestLeftCorner(self, sr, mirr = 1, angle = math.radians(float(0)), xyShift = (0, 0), listMinX = [], listMinY = [], listMaxX = [], listMaxY =[]): 
         """Recursive find a lowest left conner on each Structure in GDS file"""

@@ -134,7 +134,7 @@ class layout:
             self.objs.append(geometry.label(text, layerNumber, offset, zoom))
 
 
-    def add_path(self, layer, coordinates, width=None, offset=None):
+    def add_path(self, layer, coordinates, width=None):
         """Connects a routing path on given layer,coordinates,width."""
         debug.info(3,"add path " + str(layer) + " " + str(coordinates))
         import path
@@ -144,31 +144,12 @@ class layout:
         #if layerNumber >= 0:
         #    self.objs.append(geometry.path(layerNumber, coordinates, width))
 
-        # add an instance of our path that breaks down into rectangles
-        if width==None:
-            self.layer_width = drc["minwidth_{0}".format(layer)]
-        else:
-            self.layer_width = width
-        # Wires/paths are created so that the first point is (0,0)
-        # therefore we offset the instantiation to the first point
-        # however, we can override this
-        if offset==None:
-            inst_offset = coordinates[0]
-        else:
-            inst_offset = offset
+        path.path(obj=self,
+                  layer=layer, 
+                  position_list=coordinates, 
+                  width=drc["minwidth_{}".format(layer)])
 
-        route = path.path(layer=layer, 
-                          position_list=coordinates, 
-                          width=self.layer_width)
-        self.add_mod(route)
-        self.add_inst(name=route.name,
-                      mod=route,
-                      offset=inst_offset)
-        # We don't model the logical connectivity of wires/paths
-        self.connect_inst([])
-        return route
-
-    def add_route(self, layers, coordinates):
+    def add_route(self, design, layers, coordinates):
         """Connects a routing path on given layer,coordinates,width. The
         layers are the (horizontal, via, vertical). add_wire assumes
         preferred direction routing whereas this includes layers in
@@ -177,37 +158,19 @@ class layout:
         import route
         debug.info(3,"add route " + str(layers) + " " + str(coordinates))
         # add an instance of our path that breaks down into rectangles and contacts
-        route = route.route(layer_stack=layers, 
-                            path=coordinates)
-        self.add_mod(route)
-        self.add_inst(name=route.name,
-                      mod=route)
-        # We don't model the logical connectivity of wires/paths
-        self.connect_inst([])
-        return route
+        route.route(obj=self,
+                    layer_stack=layers, 
+                    path=coordinates)
+
     
-    def add_wire(self, layers, coordinates, offset=None):
+    def add_wire(self, layers, coordinates):
         """Connects a routing path on given layer,coordinates,width.
         The layers are the (horizontal, via, vertical). """
         import wire
-        debug.info(3,"add wire " + str(layers) + " " + str(coordinates))
-        # Wires/paths are created so that the first point is (0,0)
-        # therefore we offset the instantiation to the first point
-        # however, we can override this
-        if offset==None:
-            inst_offset=coordinates[0]
-        else:
-            inst_offset=offset
         # add an instance of our path that breaks down into rectangles and contacts
-        route = wire.wire(layer_stack=layers, 
-                          position_list=coordinates)
-        self.add_mod(route)
-        self.add_inst(name=route.name,
-                      mod=route,
-                      offset=inst_offset)
-        # We don't model the logical connectivity of wires/paths
-        self.connect_inst([])
-        return route
+        wire.wire(obj=self,
+                  layer_stack=layers, 
+                  position_list=coordinates)
 
     def add_contact(self, layers, offset, size=[1,1], mirror="R0", rotate=0):
         """ This is just an alias for a via."""

@@ -101,8 +101,8 @@ class bank(design.design):
     def add_modules(self):
         """ Add modules. The order should be maintained."""
         self.array_to_driver = 5*drc["minwidth_metal1"]
-        self.bitcell_array_gap = vector(2 * self.array_to_driver+ self.bitcell_array.width+ self.wordline_driver.driver.width, 0)
-
+        #self.bitcell_array_gap = vector(2 * self.array_to_driver+ self.bitcell_array.width+ self.wordline_driver.driver.width, 0)
+        self.bitcell_array_gap = vector(2 * self.array_to_driver+ self.bitcell_array.width+ self.wordline_driver.get_1st_driver_width(), 0)
         self.add_bitcell_array()
         self.add_precharge_array()
         self.add_column_mux_array()
@@ -139,6 +139,7 @@ class bank(design.design):
         if split:
             driver_mults, nand = self.setup_sizing(self.words_per_row*self.word_size)
             self.wl_driver_mults = driver_mults # minmum should be 1
+            self.wl_driver_mults = 3 # minmum should be 1
         else:
             self.wl_driver_mults = 1
         self.wl_seg_num = max(1,self.wl_driver_mults-1) # at least one segment in wl
@@ -213,13 +214,74 @@ class bank(design.design):
         # Array for bank data positions
         self.data_positions = []
 
-    def create_modules(self):
-        """ Create all the modules using the class loader """
+    def create_old_array(self):
         self.bitcell_array = self.mod_bitcell_array(name="bitcell_array", 
                                               cols=self.num_cols,
                                               rows=self.num_rows)
         self.add_mod(self.bitcell_array)
 
+    def create_old_wordline_driver(self):
+        self.wordline_driver = self.mod_wordline_driver(name="wordline_driver", 
+                                                        rows=self.num_rows,
+                                                        load_size = self.num_cols)
+        #self.wordline_driver.logic_effort_sizing(self.num_cols)
+        self.add_mod(self.wordline_driver)
+
+    def create_modules(self):
+        """ Create all the modules using the class loader """
+        # 1.bitcell and write_driver init
+        # 2.bitcell_array and writer driver arrange lay out based on each other
+        # 3.rest arrange based on array_bit loc
+        self.array_driver_gap = 5 * drc["minwidth_metal1"]
+        #self.create_old_array()
+        #self.create_old_wordline_driver()
+        # 1. genrate bit cell
+        if self.wl_seg_num > 1:
+            self.bitcell_array = self.mod_bitcell_array(name="bitcell_array", 
+                                                  cols=self.num_cols*2,
+                                                  rows=self.num_rows,
+                                                  create_layout = False)
+
+            sub_array_size = []
+            for i in range(self.wl_seg_num):
+                sub_array_size.append(int(math.ceil(self.num_cols*2/self.wl_seg_num)))
+            self.bitcell_array.gen_sub_arrays(sub_array_size)
+        else:
+            self.bitcell_array = self.mod_bitcell_array(name="bitcell_array", 
+                                                  cols=self.num_cols*2,
+                                                  rows=self.num_rows)
+        self.add_mod(self.bitcell_array)
+        # 1. and genrate wordline driver
+        if self.wl_seg_num > 1:
+            self.wordline_driver = self.mod_wordline_driver(name="wordline_driver", 
+                                                            rows=self.num_rows,
+                                                            load_size = self.num_cols,
+                                                            create_layout = False)
+            driver_lst = []
+            for i in range(self.wl_seg_num+1):
+                driver_lst.append(1.0/(self.wl_seg_num+1))
+            self.wordline_driver.splite_drivers(driver_lst)
+        else:
+            self.wordline_driver = self.mod_wordline_driver(name="wordline_driver", 
+                                                            rows=self.num_rows,
+                                                            load_size = self.num_cols)
+        self.add_mod(self.wordline_driver)
+
+
+        # 2. and arrange wordline_driver when add them
+        # arrange bit cell array
+        if self.wl_seg_num > 1:
+            bitcell_array_gap = self.wordline_driver.get_gaps_width()
+            gap = 2 * self.array_driver_gap + bitcell_array_gap[0]
+            self.bitcell_array.arrange_array([gap,0])
+            # fix me: this should be removed once step 3 finished
+            # MIMIC OLD ARRAY
+            self.bitcell_array.column_size = self.bitcell_array.sub_array[0].column_size
+            self.bitcell_array.width = self.bitcell_array.sub_array[0].width
+            self.bitcell_array.gnd_positions = self.bitcell_array.sub_array[0].gnd_positions
+            # arrange wordline driver in add function once its location is settled 
+
+        # 3. arrange the rest modules based on bitcell aray 
         self.precharge_array = self.mod_precharge_array(name="precharge_array", 
                                                         columns=self.num_cols,
                                                         ptx_width=drc["minwidth_tx"])
@@ -259,18 +321,14 @@ class bank(design.design):
                                                       word_size=self.sub_word_size)
         self.add_mod(self.tri_gate_array)
 
-        self.wordline_driver = self.mod_wordline_driver(name="wordline_driver", 
-                                                        rows=self.num_rows,
-                                                        load_size = self.num_cols)
-        #self.wordline_driver.logic_effort_sizing(self.num_cols)
-        self.add_mod(self.wordline_driver)
+
 
         self.inv = pinv(nmos_width=drc["minwidth_tx"], 
                         beta=parameter["pinv_beta"], 
                         height=self.bitcell_height)
         self.add_mod(self.inv)
         
-    # 4x Inverter
+        # 4x Inverter
         self.inv4x = pinv(nmos_width=4*drc["minwidth_tx"], 
                           beta=parameter["pinv_beta"], 
                           height=self.bitcell_height)
@@ -295,7 +353,7 @@ class bank(design.design):
         self.via_shift = (self.m1m2_via.second_layer_width 
                               - self.m1m2_via.first_layer_width) / 2
 
-    def add_bitcell_array(self):
+    def add_old_bitcell_array(self):
         """ Adding Bitcell Array """
         self.module_offset = vector(0, 0)
         self.bitcell_array_offset = self.module_offset
@@ -314,7 +372,22 @@ class bank(design.design):
                 temp.append("wl[{0}]".format(j))
             temp = temp + [ "vdd", "gnd"]
             self.connect_inst(temp)
-       
+
+    def add_bitcell_array(self):
+        self.module_offset = vector(0, 0)
+        self.bitcell_array_offset = self.module_offset
+        self.add_inst(name="bitcell_array",
+                      mod=self.bitcell_array,
+                      offset=self.bitcell_array_offset)
+        temp = []
+        #fix me, we modify the cilumn size to fit here, should not be like that 
+        for i in range(self.bitcell_array.column_size*self.wl_seg_num):
+            temp.append("bl[{0}]".format(i))
+            temp.append("br[{0}]".format(i))
+        for j in range(self.bitcell_array.row_size):
+            temp.append("wl[{0}]".format(j))
+        temp = temp + [ "vdd", "gnd"]
+        self.connect_inst(temp)
 
     def add_precharge_array(self):
         """ Adding Pre-charge """
@@ -516,7 +589,7 @@ class bank(design.design):
         temp = temp + ["vdd", "gnd"]
         self.connect_inst(temp)
 
-    def add_wordline_driver(self):
+    def add_old_wordline_driver(self):
         """ Wordline Driver """
 
         x_off = self.decoder_position.x + self.decoder.row_decoder_width
@@ -532,6 +605,46 @@ class bank(design.design):
                       mod=self.wordline_driver, 
                       offset=self.wordline_driver_position)
 
+
+        temp = []
+        for i in range(self.num_rows):
+            temp.append("decode_out[{0}]".format(i))
+        for i in range(self.num_rows):
+            temp.append("wl[{0}]".format(i))
+
+        if(self.num_banks > 1):
+            temp.append("gated_clk")
+        else:
+            temp.append("clk")
+        temp.append("vdd")
+        temp.append("gnd")
+        self.connect_inst(temp)
+
+    def add_wordline_driver(self):
+        """ Wordline Driver """
+        x_off = self.decoder_position.x + self.decoder.row_decoder_width
+        self.module_offset = vector(x_off, 0)
+        self.wordline_driver_offset = self.module_offset
+        self.wordline_driver_position = self.module_offset
+
+        if self.wl_seg_num > 1:
+            wordline_driver_gap = self.bitcell_array.get_sub_array_width()
+            extra_gap = abs(self.bitcell_array_offset.x - x_off) \
+                        - self.wordline_driver.unit.x_offset2 \
+                        - self.wordline_driver.unit.driver[0].width\
+                        + self.array_driver_gap
+
+            for index in range(len(wordline_driver_gap)):
+                if index == 0:
+                    wordline_driver_gap[index] = wordline_driver_gap[index] + extra_gap
+                else:
+                    wordline_driver_gap[index] = wordline_driver_gap[index] + 2 * self.array_driver_gap 
+
+            self.wordline_driver.arrange_drivers(wordline_driver_gap)
+    
+        self.add_inst(name="wordline_driver", 
+                      mod=self.wordline_driver, 
+                      offset=self.wordline_driver_position)
 
         temp = []
         for i in range(self.num_rows):

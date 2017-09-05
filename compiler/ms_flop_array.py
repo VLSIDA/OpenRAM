@@ -12,7 +12,7 @@ class ms_flop_array(design.design):
     hierdecoder
     """
 
-    def __init__(self, name, columns, word_size):
+    def __init__(self, name, columns, word_size, row_locations = None):
         self.columns = columns
         self.word_size = word_size
         design.design.__init__(self, name)
@@ -22,13 +22,13 @@ class ms_flop_array(design.design):
         self.mod_ms_flop = getattr(c, OPTS.config.ms_flop)
         self.ms_flop_chars = self.mod_ms_flop.chars
 
-        self.create_layout()
+        self.create_layout(row_locations)
 
-    def create_layout(self):
+    def create_layout(self, row_locations):
         self.add_modules()
         self.setup_layout_constants()
         self.add_pins()
-        self.create_ms_flop_array()
+        self.create_ms_flop_array(row_locations)
         self.add_labels()
         self.DRC_LVS()
 
@@ -59,18 +59,28 @@ class ms_flop_array(design.design):
         self.add_pin("vdd")
         self.add_pin("gnd")
 
-    def create_ms_flop_array(self):
+    def create_ms_flop_array(self, row_locations):
         for i in range(self.word_size):
             name = "Xdff%d" % i
             if (i % 2 == 0):
-                x_off = i * self.ms_flop.width * self.words_per_row
+                if row_locations == None:
+                    x_off = i * self.ms_flop.width * self.words_per_row
+                else:
+                    x_off = row_locations[i * self.words_per_row][0]
                 mirror = "None"
             else:
                 if (self.words_per_row == 1):
                     x_off = (i + 1) * self.ms_flop.width
+                    if row_locations == None:
+                        x_off = (i + 1) * self.ms_flop.width
+                    else:
+                        x_off = row_locations[i+1][0] + self.ms_flop.width
                     mirror="MY"
                 else:
-                    x_off = i * self.ms_flop.width * self.words_per_row
+                    if row_locations == None:
+                        x_off = i * self.ms_flop.width * self.words_per_row
+                    else:
+                        x_off = row_locations[i * self.words_per_row][0] 
             self.add_inst(name=name,
                           mod=self.ms_flop,
                           offset=[x_off, 0], 

@@ -9,7 +9,7 @@ class tri_gate_array(design.design):
     Dynamically generated tri gate array of all bitlines.  words_per_row
     """
 
-    def __init__(self, columns, word_size):
+    def __init__(self, columns, word_size, row_locations=None):
         """Intial function of tri gate array """
         design.design.__init__(self, "tri_gate_array")
         debug.info(1, "Creating {0}".format(self.name))
@@ -20,17 +20,17 @@ class tri_gate_array(design.design):
 
         self.columns = columns
         self.word_size = word_size
-        self.create_layout()
+        self.create_layout(row_locations)
         self.DRC_LVS()
 
-    def create_layout(self):
+    def create_layout(self, row_locations):
         """generate layout """
         self.add_modules()
         self.setup_layout_constants()
         self.add_pins()
-        self.create_write_array()
+        self.create_write_array(row_locations)
         self.add_metal_rails()
-        self.add_labels()
+        self.add_labels(row_locations)
 
     def add_pins(self):
         """create the name of pins depend on the word size"""
@@ -57,20 +57,29 @@ class tri_gate_array(design.design):
         self.tri = self.mod_tri_gate("tri_gate")
         self.add_mod(self.tri)
 
-    def create_write_array(self):
+    def create_write_array(self, row_locations):
         """add tri gate to the array """
         for i in range(self.word_size):
             mirror = "R0"
             if (i % 2 == 0):
                 name = "Xtri_gate{0}".format(i)
-                x_off = i * self.tri.width * self.words_per_row
+                if row_locations == None:
+                    x_off = i * self.tri.width * self.words_per_row
+                else:
+                    x_off = row_locations[ i * self.words_per_row][0]
             else:
                 name = "Xtri_gate{0}".format(i)
                 if (self.words_per_row == 1):
-                    x_off = (i + 1) * self.tri.width * self.words_per_row
+                    if row_locations == None:
+                        x_off = (i + 1) * self.tri.width * self.words_per_row
+                    else:
+                        x_off = row_locations[(i + 1)* self.words_per_row][0]
                     mirror = "MY"
                 else:
-                    x_off = i * self.tri.width * self.words_per_row
+                    if row_locations == None:
+                        x_off = i * self.tri.width * self.words_per_row
+                    else:
+                        x_off = row_locations[i * self.words_per_row][0]
             self.add_inst(name=name,
                           mod=self.tri,
                           offset=[x_off, 0],
@@ -97,14 +106,20 @@ class tri_gate_array(design.design):
                       width=width,
                       height=drc['minwidth_metal1'])
 
-    def add_labels(self):
+    def add_labels(self, row_locations):
         """add label for pins"""
         for i in range(self.word_size):
             if (i % 2 == 0 or self.words_per_row > 1):
-                x_off = i * self.tri.width * self.words_per_row
+                if row_locations == None:
+                    x_off = i * self.tri.width * self.words_per_row
+                else:
+                    x_off = row_locations[i * self.words_per_row][0]
                 dir_vector = vector(1,1)
             else:
-                x_off = (i + 1) * self.tri.width * self.words_per_row
+                if row_locations == None:
+                    x_off = (i + 1) * self.tri.width * self.words_per_row
+                else:
+                    x_off = row_locations[(i+1) * self.words_per_row][0]
                 dir_vector = vector(-1,1)
 
             pin_offset={}

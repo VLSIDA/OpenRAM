@@ -11,7 +11,7 @@ class precharge_array(design.design):
     of bit line columns, height is the height of the bit-cell array.
     """
 
-    def __init__(self, name, columns, ptx_width, beta=2):
+    def __init__(self, name, columns, ptx_width, beta=2, row_locations = None):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(name))
 
@@ -20,7 +20,7 @@ class precharge_array(design.design):
         self.beta = beta
 
         self.add_pins()
-        self.create_layout()
+        self.create_layout(row_locations)
         self.DRC_LVS()
 
     def add_pins(self):
@@ -31,10 +31,10 @@ class precharge_array(design.design):
         self.add_pin("clk")
         self.add_pin("vdd")
 
-    def create_layout(self):
+    def create_layout(self, row_locations):
         self.create_pc_cell()
         self.setup_layout_constants()
-        self.add_pc()
+        self.add_pc(row_locations)
         self.add_rails()
         self.offset_all_coordinates()
 
@@ -74,13 +74,18 @@ class precharge_array(design.design):
                                  beta=self.beta)
         self.add_mod(self.pc_cell)
 
-    def add_pc(self):
+    def add_pc(self, row_locations):
         """Creates a precharge array by horizontally tiling the precharge cell"""
-        self.pc_cell_positions = []
+        if row_locations != None:
+            self.pc_cell_positions = row_locations
+        else:
+            self.pc_cell_positions = []
+            for i in range(self.columns):
+                self.pc_cell_positions.append(vector(self.pc_cell.width * i, 0))
+
         for i in range(self.columns):
             name = "pre_column_{0}".format(i)
-            offset = vector(self.pc_cell.width * i, 0)
-            self.pc_cell_positions.append(offset)
+            offset = self.pc_cell_positions[i]
             self.add_inst(name=name,
                           mod=self.pc_cell,
                           offset=offset)

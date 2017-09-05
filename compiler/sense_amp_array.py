@@ -10,7 +10,7 @@ class sense_amp_array(design.design):
     Dynamically generated sense amp array for all bitlines.
     """
 
-    def __init__(self, word_size, words_per_row):
+    def __init__(self, word_size, words_per_row, row_locations = None):
         design.design.__init__(self, "sense_amp_array")
         debug.info(1, "Creating {0}".format(self.name))
 
@@ -22,7 +22,7 @@ class sense_amp_array(design.design):
         self.words_per_row = words_per_row
 
         self.add_pins()
-        self.create_layout()
+        self.create_layout(row_locations)
         self.DRC_LVS()
 
     def add_pins(self):
@@ -44,10 +44,10 @@ class sense_amp_array(design.design):
         self.add_pin("vdd")
         self.add_pin("gnd")
 
-    def create_layout(self):
+    def create_layout(self, row_locations):
         self.create_sense_amp()
         self.setup_layout_constants()
-        self.add_sense_amp()
+        self.add_sense_amp(row_locations)
         self.connect_rails()
         self.offset_all_coordinates()
 
@@ -64,11 +64,14 @@ class sense_amp_array(design.design):
         self.amp = self.mod_sense_amp("sense_amp")
         self.add_mod(self.amp)
 
-    def add_sense_amp(self):
+    def add_sense_amp(self, row_locations):
         for i in range(self.word_size):
             name = "sa_d{0}".format(i)
             index = i * self.words_per_row
-            amp_position = vector(self.amp.width * index, 0)
+            if row_locations == None:
+                amp_position = vector(self.amp.width * index, 0)
+            else:
+                amp_position = row_locations[index]
             BL_offset = amp_position + vector(self.sense_amp_chars["BL"][0], 0) 
             BR_offset = amp_position + vector(self.sense_amp_chars["BR"][0], 0)
 

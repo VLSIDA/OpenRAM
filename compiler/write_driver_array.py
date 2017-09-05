@@ -11,7 +11,7 @@ class write_driver_array(design.design):
     Dynamically generated write driver array of all bitlines.
     """
 
-    def __init__(self, columns, word_size):
+    def __init__(self, columns, word_size, row_locations=None):
         design.design.__init__(self, "write_driver_array")
         debug.info(1, "Creating {0}".format(self.name))
 
@@ -24,7 +24,7 @@ class write_driver_array(design.design):
         self.words_per_row = columns / word_size
 
         self.add_pins()
-        self.create_layout()
+        self.create_layout(row_locations)
         self.DRC_LVS()
 
     def add_pins(self):
@@ -42,10 +42,10 @@ class write_driver_array(design.design):
         self.add_pin("vdd")
         self.add_pin("gnd")
 
-    def create_layout(self):
+    def create_layout(self,row_locations):
         self.add_write_driver_module()
         self.setup_layout_constants()
-        self.create_write_array()
+        self.create_write_array(row_locations)
         self.add_metal_rails()
         self.add_labels()
         self.offset_all_coordinates()
@@ -65,10 +65,13 @@ class write_driver_array(design.design):
         self.driver_positions = []
         self.Data_in_positions = []
 
-    def create_write_array(self):
+    def create_write_array(self, row_locations):
         for i in range(self.word_size):
             name = "Xwrite_driver%d" % i
-            x_off = (i* self.driver.width * self.words_per_row)
+            if row_locations == None:
+                x_off = (i* self.driver.width * self.words_per_row)
+            else:
+                x_off = row_locations[i*self.words_per_row][0]
             self.driver_positions.append(vector(x_off, 0))
             self.add_inst(name=name,
                           mod=self.driver,

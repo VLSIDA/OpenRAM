@@ -36,7 +36,7 @@ class precharge_array(design.design):
         for i in range(self.columns):
             self.add_pin("bl[{0}]".format(i))
             self.add_pin("br[{0}]".format(i))
-        self.add_pin("clk")
+        self.add_pin("en")
         self.add_pin("vdd")
 
     def create_layout(self):
@@ -48,7 +48,7 @@ class precharge_array(design.design):
                             width=self.width,
                             height=drc["minwidth_metal1"])
         
-        self.add_layout_pin(text="clk",
+        self.add_layout_pin(text="en",
                             layer="metal1",
                             offset=self.pc_cell.get_pin("clk").ll(),
                             width=self.width,
@@ -77,5 +77,5 @@ class precharge_array(design.design):
                                 width=drc["minwidth_metal2"],
                                 height=bl_pin.height())
             self.connect_inst(["bl[{0}]".format(i), "br[{0}]".format(i),
-                               "clk", "vdd"])
+                               "en", "vdd"])
 

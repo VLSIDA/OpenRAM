@@ -39,13 +39,15 @@ class bank(design.design):
         self.num_banks = num_banks
 
         self.compute_sizes()
-        self.add_pins()
+	self.add_pins()
         self.create_modules()
         self.add_modules()
-        
         self.setup_layout_constraints()
-
         self.route_layout()
+
+        # Can remove the following, but it helps for debug!
+        self.add_lvs_correspondence_points() 
+        
         self.DRC_LVS()
 
     def add_pins(self):
@@ -56,18 +58,15 @@ class bank(design.design):
             self.add_pin("ADDR[{0}]".format(i))
 
         # For more than one bank, we have a bank select and name
-        # the signals gated_*
+        # the signals gated_*.
         if(self.num_banks > 1):
             self.add_pin("bank_select")
-            prefix = "gated_"
-        else:
-            prefix = ""
-        self.add_pin(prefix+"s_en")
-        self.add_pin(prefix+"w_en")
-        self.add_pin(prefix+"tri_en_bar")
-        self.add_pin(prefix+"tri_en")
-        self.add_pin(prefix+"clk_bar")
-        self.add_pin(prefix+"clk")
+        self.add_pin("s_en")
+        self.add_pin("w_en")
+        self.add_pin("tri_en_bar")
+        self.add_pin("tri_en")
+        self.add_pin("clk_bar")
+        self.add_pin("clk")
         self.add_pin("vdd")
         self.add_pin("gnd")
 
@@ -83,10 +82,10 @@ class bank(design.design):
         self.route_msf_address()
         self.route_control_lines()
         self.add_control_pins()
+        if self.num_banks > 1:
+            self.route_bank_select()
         self.route_vdd_supply()
         self.route_gnd_supply()
-        # Can remove the following, but it helps for debug!
-        self.add_lvs_correspondence_points() 
 
         #self.offset_all_coordinates()
 
@@ -110,7 +109,6 @@ class bank(design.design):
         self.add_row_decoder()
         self.add_wordline_driver()
         self.add_msf_address()
-        
         if(self.num_banks > 1):
             self.add_bank_select()
 
@@ -134,7 +132,9 @@ class bank(design.design):
         # Number of control lines in the bus
         self.num_control_lines = 6
         # The order of the control signals on the control bus:
-        self.control_lines = ["clk", "tri_en_bar", "tri_en", "clk_bar", "w_en", "s_en"]
+        self.control_signals = ["clk", "tri_en_bar", "tri_en", "clk_bar", "w_en", "s_en"]
+        if self.num_banks>1:
+            self.control_signals = ["gated_"+str for str in self.control_signals]
         # The central bus is the column address (both polarities), row address
         if self.col_addr_size>0:
             self.num_addr_lines = 2**self.col_addr_size + self.row_addr_size
@@ -159,18 +159,6 @@ class bank(design.design):
         self.overall_central_bus_width = self.m2_pitch * (self.num_control_lines + self.num_addr_lines + 5) + self.gnd_rail_width
 
 
-        # Array for control lines
-        self.control_signals = ["s_en",
-                                "w_en",
-                                "clk_bar",
-                                "tri_en",
-                                "tri_en_bar",
-                                "clk"]
-        self.gated_control_signals = ["gated_s_en",
-                                      "gated_w_en",
-                                      "gated_clk_bar",
-                                      "gated_tri_en", "gated_tri_en_bar",
-                                      "gated_clk"]
 
 
 
@@ -344,6 +332,7 @@ class bank(design.design):
         temp = []
         for i in range(self.word_size):
             temp.append("DATA[{0}]".format(i))
+        for i in range(self.word_size):
             temp.append("data_in[{0}]".format(i))
             temp.append("data_in_bar[{0}]".format(i))
         temp.extend(["clk_bar", "vdd", "gnd"])
@@ -484,10 +473,9 @@ class bank(design.design):
         NOR+INV gates to gate the control signals in case of multiple
         banks are created in upper level SRAM module
         """
-        assert 0
-        xoffset_nor = - self.start_of_left_central_bus - self.nor2.width - self.inv4x.width
+        xoffset_nor = self.start_of_left_central_bus + self.nor2.width + self.inv4x.width
         xoffset_inv = xoffset_nor + self.nor2.width
-        self.bank_select_or_position = vector(xoffset_nor, self.min_point)
+        self.bank_select_or_position = vector(-xoffset_nor, self.min_point)
 
         # bank select inverter
         self.bank_select_inv_position = vector(self.bank_select_or_position.x
@@ -636,7 +624,6 @@ class bank(design.design):
     def create_central_bus(self):
         """ Create the address, supply, and control signal central bus lines. """
 
-            
         # Address lines in central line connection are 2*col_addr_size 
         # number of connections for the column mux (for both signal and _bar) and row_addr_size (no _bar) 
 
@@ -645,7 +632,7 @@ class bank(design.design):
         # Control lines (to the right of the GND rail)
         for i in range(self.num_control_lines):
             x_offset = self.start_of_right_central_bus + i * self.m2_pitch
-            self.central_line_xoffset[self.control_lines[i]]=x_offset
+            self.central_line_xoffset[self.control_signals[i]]=x_offset
             # Pins are added later if this is a single bank, so just add rectangle now
             self.add_rect(layer="metal2",  
                           offset=vector(x_offset, self.min_point), 
@@ -1032,12 +1019,16 @@ class bank(design.design):
         # Connection from the central bus to the main control block crosses
         # pre-decoder and this connection is in metal3
         connection = []
-        connection.append(("clk_bar", self.msf_data_in_inst.get_pin("clk").lc()))
-        connection.append(("tri_en_bar", self.tri_gate_array_inst.get_pin("en_bar").lc()))
-        connection.append(("tri_en", self.tri_gate_array_inst.get_pin("en").lc()))
-        connection.append(("clk_bar", self.precharge_array_inst.get_pin("clk").lc()))
-        connection.append(("w_en", self.write_driver_array_inst.get_pin("wen").lc()))
-        connection.append(("s_en", self.sense_amp_array_inst.get_pin("sclk").lc()))
+        if self.num_banks>1:
+            prefix="gated_"
+        else:
+            prefix=""
+        connection.append((prefix+"clk_bar", self.msf_data_in_inst.get_pin("clk").lc()))
+        connection.append((prefix+"tri_en_bar", self.tri_gate_array_inst.get_pin("en_bar").lc()))
+        connection.append((prefix+"tri_en", self.tri_gate_array_inst.get_pin("en").lc()))
+        connection.append((prefix+"clk_bar", self.precharge_array_inst.get_pin("en").lc()))
+        connection.append((prefix+"w_en", self.write_driver_array_inst.get_pin("en").lc()))
+        connection.append((prefix+"s_en", self.sense_amp_array_inst.get_pin("en").lc()))
   
         for (control_signal, pin_position) in connection:
             control_x_offset = self.central_line_xoffset[control_signal] + self.m2_width
@@ -1049,7 +1040,7 @@ class bank(design.design):
                          rotate=90)
 
         # clk to msf address
-        control_signal = "clk"
+        control_signal = prefix+"clk"
         pin_position = self.msf_address_inst.get_pin("clk").uc()
         mid_position = pin_position + vector(0,self.m1_pitch)
         control_x_offset = self.central_line_xoffset[control_signal]
@@ -1060,7 +1051,7 @@ class bank(design.design):
                      offset=control_via_position)
 
         # clk to wordline_driver
-        control_signal = "clk"
+        control_signal = prefix+"clk"
         pin_position = self.wordline_driver_inst.get_pin("en").uc()
         mid_position = pin_position + vector(0,self.m1_pitch)
         control_x_offset = self.central_line_xoffset[control_signal]
@@ -1072,9 +1063,10 @@ class bank(design.design):
         
 
 
-    def route_bank_select_or2_gates(self):
+    def route_bank_select(self):
         """ Route array of or gates to gate the control signals in case 
             of multiple banks are created in upper level SRAM module """
+        return
         bank_select_line_xoffset = (self.bank_select_or_position.x 
                                         - 3*drc["minwidth_metal2"])
         self.add_rect(layer="metal2", 
@@ -1231,6 +1223,7 @@ class bank(design.design):
         
         # Connect bank_select_or2_array gnd
         if(self.num_banks > 1):
+            return
             self.bank_select_inv_position
             self.add_rect(layer="metal1", 
                           offset=(self.bank_select_inv_position
@@ -1263,21 +1256,14 @@ class bank(design.design):
     def add_control_pins(self):
         """ Add the control signal input pins """
 
-        if self.num_banks==1:
-            # If we are a single bank, just add duplicate pin shapes
-            # on the existing the control bus
-            for ctrl in self.control_signals:
-                x_offset = self.central_line_xoffset[ctrl]
-                self.add_layout_pin(text=ctrl,
-                                    layer="metal2",  
-                                    offset=vector(x_offset, self.min_point), 
-                                    width=self.m2_width, 
-                                    height=self.height)
-        else:
-            # If we are gating the signals, they must be the inputs to the gating logic
-            # Then route the outputs to the control bus
-            self.route_bank_select_or2_gates()
-            pass
+        for ctrl in self.control_signals:
+            x_offset = self.central_line_xoffset[ctrl]
+            self.add_layout_pin(text=ctrl,
+                                layer="metal2",  
+                                offset=vector(x_offset, self.min_point), 
+                                width=self.m2_width, 
+                                height=self.height)
+
 
     def connect_rail_from_right(self,inst, pin, rail):
         """ Helper routine to connect an unrotated/mirrored oriented instance to the rails """

@@ -40,6 +40,7 @@ class ms_flop_array(design.design):
     def add_pins(self):
         for i in range(self.word_size):
             self.add_pin("din[{0}]".format(i))
+        for i in range(self.word_size):
             self.add_pin("dout[{0}]".format(i))
             self.add_pin("dout_bar[{0}]".format(i))
         self.add_pin("clk")

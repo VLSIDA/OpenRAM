@@ -37,7 +37,7 @@ class sense_amp_array(design.design):
             self.add_pin("bl[{0}]".format(i))
             self.add_pin("br[{0}]".format(i))
 
-        self.add_pin("sclk")
+        self.add_pin("en")
         self.add_pin("vdd")
         self.add_pin("gnd")
 
@@ -69,7 +69,7 @@ class sense_amp_array(design.design):
                           offset=amp_position)
             self.connect_inst(["bl[{0}]".format(i),"br[{0}]".format(i), 
                                "data[{0}]".format(i/self.words_per_row), 
-                               "sclk", "vdd", "gnd"])
+                               "en", "vdd", "gnd"])
 
             self.add_layout_pin(text="bl[{0}]".format(i),
                                 layer="metal2",
@@ -111,7 +111,7 @@ class sense_amp_array(design.design):
 
         # add sclk rail across entire array
         sclk_offset = self.amp.get_pin("SCLK").ll().scale(0,1)
-        self.add_layout_pin(text="sclk",
+        self.add_layout_pin(text="en",
                       layer="metal1",
                       offset=sclk_offset,
                       width=self.width,

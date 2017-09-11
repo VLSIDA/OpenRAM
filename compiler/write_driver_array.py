@@ -37,7 +37,7 @@ class write_driver_array(design.design):
         for i in range(self.word_size):            
             self.add_pin("bl_out[{0}]".format(i))
             self.add_pin("br_out[{0}]".format(i))
-        self.add_pin("wen")
+        self.add_pin("en")
         self.add_pin("vdd")
         self.add_pin("gnd")
 
@@ -50,21 +50,16 @@ class write_driver_array(design.design):
         self.driver_insts = {}
         for i in range(0,self.columns,self.words_per_row):
             name = "Xwrite_driver{}".format(i)
-            if (i % 2 == 0 or self.words_per_row>1):
-                base = vector(i * self.driver.width,0)
-                mirror = "R0"
-            else:
-                base = vector((i+1) * self.driver.width,0)
-                mirror = "MY"
+            base = vector(i * self.driver.width,0)
             
             self.driver_insts[i/self.words_per_row]=self.add_inst(name=name,
                                                                   mod=self.driver,
-                                                                  offset=base,
-                                                                  mirror=mirror)
+                                                                  offset=base)
+
             self.connect_inst(["data[{0}]".format(i/self.words_per_row),
                                "bl_out[{0}]".format(i/self.words_per_row),
                                "br_out[{0}]".format(i/self.words_per_row),
-                               "wen", "vdd", "gnd"])
+                               "en", "vdd", "gnd"])
 
 
     def add_layout_pins(self):
@@ -90,7 +85,7 @@ class write_driver_array(design.design):
                                 height=br_pin.height())
                            
 
-        self.add_layout_pin(text="wen",
+        self.add_layout_pin(text="en",
                             layer="metal1",
                             offset=self.driver_insts[0].get_pin("en").ll().scale(0,1),
                             width=self.width,

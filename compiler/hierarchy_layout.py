@@ -24,7 +24,7 @@ class layout:
         self.height = None
         self.insts = []      # Holds module/cell layout instances
         self.objs = []       # Holds all other objects (labels, geometries, etc)
-        self.pin_map = {}    # Holds name->(vector,layer) map for all pins
+        self.pin_map = {}    # Holds name->pin_layout map for all pins
         self.visited = False # Flag for traversing the hierarchy 
 
         self.gds_read()
@@ -35,9 +35,9 @@ class layout:
     def offset_all_coordinates(self):
         """ This function is called after everything is placed to
         shift the origin in the lowest left corner """
-        coordinate = self.find_lowest_coords()
-        self.offset_attributes(coordinate)
-        self.translate(coordinate)
+        offset = self.find_lowest_coords()
+        #self.offset_attributes(offset)
+        self.translate_all(offset)
 
     def get_gate_offset(self, x_offset, height, inv_num):
         """Gets the base offset and y orientation of stacked rows of gates
@@ -59,8 +59,7 @@ class layout:
     def find_lowest_coords(self):
         """Finds the lowest set of 2d cartesian coordinates within
         this layout"""
-        #***1,000,000 number is used to avoid empty sequences errors***
-        # FIXME Is this hard coded value ok??
+        # FIXME: don't depend on 1e9
         try:
             lowestx1 = min(rect.offset.x for rect in self.objs)
             lowesty1 = min(rect.offset.y for rect in self.objs)
@@ -73,47 +72,24 @@ class layout:
             [lowestx2, lowesty2] = [1000000.0, 1000000.0]
         return vector(min(lowestx1, lowestx2), min(lowesty1, lowesty2))
 
-    def offset_attributes(self, coordinate):
-        """Translates all stored 2d cartesian coordinates within the
-        attr dictionary"""
-        # FIXME: This is dangerous. I think we should not do this, but explicitly
-        # offset the necessary coordinates.
 
-        #for attr_key, attr_val in self.attr.items():
-        for attr_key in dir(self):
-            attr_val = getattr(self,attr_key)
-
-            # skip the list of things as these will be offset separately
-            if (attr_key in ['objs','insts','mods','pins','conns','name_map']): continue
-
-            # if is a list
-            if isinstance(attr_val, list):
-                
-                for i in range(len(attr_val)):
-                    # each unit in the list is a list coordinates
-                    if isinstance(attr_val[i], (list,vector)):
-                        attr_val[i] = vector(attr_val[i] - coordinate)
-                    # the list itself is a coordinate
-                    else:
-                        if len(attr_val)!=2: continue
-                        for val in attr_val:
-                            if not isinstance(val, (int, long, float)): continue
-                        setattr(self,attr_key, vector(attr_val - coordinate))
-                        break
-
-            # if is a vector coordinate
-            if isinstance(attr_val, vector):
-                setattr(self, attr_key, vector(attr_val - coordinate))
-
-
-
-    def translate(self, coordinate):
-        """Translates all 2d cartesian coordinates in a layout given
-        the (x,y) offset"""
+    def translate_all(self, offset):
+        """
+        Translates all objects, instances, and pins by the given (x,y) offset
+        """
         for obj in self.objs:
-            obj.offset = vector(obj.offset - coordinate)
+            obj.offset = vector(obj.offset - offset)
         for inst in self.insts:
-            inst.offset = vector(inst.offset - coordinate)
+            inst.offset = vector(inst.offset - offset)
+            # The instances have a precomputed boundary that we need to update.
+            if inst.__class__.__name__ == "instance":
+                inst.compute_boundary(offset.scale(-1,-1))
+        for pin_name in self.pin_map.keys():
+            # All the pins are absolute coordinates that need to be updated.
+            pin_list = self.pin_map[pin_name]
+            for pin in pin_list:
+                pin.rect = [pin.ll() - offset, pin.ur() - offset]
+            
 
     def add_inst(self, name, mod, offset=[0,0], mirror="R0",rotate=0):
         """Adds an instance of a mod to this module"""
@@ -149,6 +125,18 @@ class layout:
         """ Return a pin list (instead of a single pin) """
         return self.pin_map[text]
     
+    def copy_layout_pin(self, instance, pin_name, new_name=""):
+        """ 
+        Create a copied version of the layout pin at the current level.
+        You can optionally rename the pin to a new name. 
+        """
+        pins=instance.get_pins(pin_name)
+        for pin in pins:
+            if new_name=="":
+                new_name = pin.name
+            self.add_layout_pin(new_name, pin.layer, pin.ll(), pin.width(), pin.height())
+
+        
     def add_layout_pin(self, text, layer, offset, width=None, height=None):
         """Create a labeled pin """
         if width==None:

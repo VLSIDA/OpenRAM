@@ -193,7 +193,7 @@ class delay_chain(design.design):
 
         # Use the right most parts of the gnd rails and add a U connector
         # We still have the two gnd pins, but it is an either-or connect
-        gnd_pins = self.get_pin("gnd")
+        gnd_pins = self.get_pins("gnd")
         gnd_start = gnd_pins[0].rc()
         gnd_mid1 = gnd_start + vector(2*drc["metal1_to_metal1"],0)
         gnd_end = gnd_pins[1].rc()

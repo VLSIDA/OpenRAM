@@ -340,21 +340,21 @@ class nor_2(design.design):
                            - self.nmos1.height)
         self.A_loc = vector(xoffset, yoffset)
         # gate input
-        offset = self.A_loc - vector(0, 0.5 * self.poly_contact.width)
+        offset = self.A_loc - vector(0, self.poly_contact.width)
         self.add_contact(layers=("poly", "contact", "metal1"),
                          offset=offset,
                          rotate=90)
 
         # connect gate input to tx gate
         offset = self.A_loc - vector(self.poly_contact.first_layer_position.y,
-                                     0.5 * self.poly_contact.width)
+                                     self.poly_contact.width)
         self.add_rect(layer="poly",
                       offset=offset,
                       width=self.poly_contact.first_layer_position.y + drc["minwidth_poly"],
                       height=self.poly_contact.first_layer_width)
         # extend the metal to the boundary of the cell
         input_length = self.A_loc.x
-        offset = [0, self.A_loc.y - 0.5 * drc["minwidth_metal1"]]
+        offset = [0, self.A_loc.y - drc["minwidth_metal1"]]
         self.add_layout_pin(text="A",
                             layer="metal1",
                             offset=offset,

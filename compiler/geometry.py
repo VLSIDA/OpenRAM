@@ -41,8 +41,7 @@ class instance(geometry):
         self.offset = vector(offset).snap_to_grid()
         self.mirror = mirror
         
-        self.boundary = [vector(0,0),vector(mod.width,mod.height)]
-        self.transform(offset,mirror,rotate)
+        self.compute_boundary(offset,mirror,rotate)
         
         debug.info(3, "creating instance: " + self.name)
 
@@ -65,10 +64,10 @@ class instance(geometry):
         ur = vector(max(first[0],second[0]),max(first[1],second[1]))
         self.boundary=[ll,ur]
         
-    def transform(self,offset,mirror,rotate):
+    def compute_boundary(self,offset=vector(0,0),mirror="",rotate=0):
         """ Transform with offset, mirror and rotation to get the absolute pin location. 
         We must then re-find the ll and ur. The master is the cell instance. """
-        (ll,ur) = self.boundary
+        (ll,ur) = [vector(0,0),vector(self.mod.width,self.mod.height)]
         if mirror=="MX":
             ll=ll.scale(1,-1)
             ur=ur.scale(1,-1)

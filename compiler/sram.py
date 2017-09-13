@@ -43,7 +43,17 @@ class sram(design.design):
                                                                              self.num_words))
 
         design.design.__init__(self, name)
-        
+
+        # These aren't for instantiating, but we use them to get the dimensions
+        self.poly_contact = contact(layer_stack=("poly", "contact", "metal1"))
+        self.poly_contact_offset = vector(0.5*self.poly_contact.width,0.5*self.poly_contact.height)
+        self.m1m2_via = contact(layer_stack=("metal1", "via1", "metal2"))
+        self.m2m3_via = contact(layer_stack=("metal2", "via2", "metal3"))
+
+        # M1/M2 routing pitch is based on contacted pitch
+        self.m1_pitch = max(self.m1m2_via.width,self.m1m2_via.height) + max(drc["metal1_to_metal1"],drc["metal2_to_metal2"])
+        self.m2_pitch = max(self.m2m3_via.width,self.m2m3_via.height) + max(drc["metal2_to_metal2"],drc["metal3_to_metal3"])
+
         self.control_size = 6
         self.bank_to_bus_distance = 5*drc["minwidth_metal3"]
         
@@ -54,6 +64,7 @@ class sram(design.design):
 
     def compute_sizes(self):
         """  Computes the organization of the memory using bitcell size by trying to make it square."""
+
         debug.check(self.num_banks in [1,2,4], "Valid number of banks are 1 , 2 and 4.")
 
         self.num_words_per_bank = self.num_words/self.num_banks
@@ -109,33 +120,34 @@ class sram(design.design):
         return words_per_row
 
     def add_pins(self):
-        """ app pins """
+        """ Add pins for entire SRAM. """
+
         for i in range(self.word_size):
             self.add_pin("DATA[{0}]".format(i))
         for i in range(self.addr_size):
             self.add_pin("ADDR[{0}]".format(i))
-        for pin in ["CSb","WEb","OEb",
-                    "clk","vdd","gnd"]:
+        for pin in ["CSb","WEb","OEb","clk","vdd","gnd"]:
             self.add_pin(pin)
 
     def create_layout(self):
         """ Layout creation """
         
         self.create_modules()
-        self.add_modules()
-        self.add_routing()
 
-    def add_routing(self):
-        """ Route all of the modules """
-        
-        if (self.num_banks == 2 or self.num_banks == 4):
-            self.route_2or4_banks()
-        if (self.num_banks == 4):
-            self.route_4_banks()
-        self.route_bank_and_control()
-        self.route_supplies()
+        if self.num_banks == 1:
+            self.add_single_bank_modules()
+            self.add_single_bank_pins()
+            self.route_single_bank()
+        else:
+            self.add_multi_bank_modules()
+            self.route_top_banks()
+            if self.num_banks > 2:
+                self.route_bottom_banks()            
 
-    def create_multibank_modules(self):
+
+
+
+    def create_multi_bank_modules(self):
         """ Add the multibank address flops and bank decoder """
         
         self.msf_msb_address = self.mod_ms_flop_array(name="msf_msb_address",
@@ -165,63 +177,15 @@ class sram(design.design):
         if(self.num_banks > 1):
             self.create_multibank_modules()
 
-        # These aren't for instantiating, but we use them to get the dimensions
-        self.m1m2_via = contact(layer_stack=("metal1", "via1", "metal2"))
-        self.m2m3_via = contact(layer_stack=("metal2", "via2", "metal3"))
-
         self.bank_count = 0
 
-        self.sram_property = ["bank_clk_positions",
-                              "bank_clk_bar_positions",
-                              "bank_tri_en_positions",
-                              "bank_tri_en_bar_positions",
-                              "bank_w_en_positions",
-                              "bank_s_en_positions"]
-        self.bank_property = ["clk_position",
-                              "clk_bar_position",
-                              "tri_en_position",
-                              "tri_en_bar_position",
-                              "w_en_position",
-                              "s_en_position", ]
-
-        self.bank_positions = []
-
-        self.bank_clk_positions = []
-        self.bank_clk_bar_positions = []
-        self.bank_tri_en_positions = []
-        self.bank_tri_en_bar_positions = []
-        self.bank_w_en_positions = []
-        self.bank_s_en_positions = []
-
-        # SRAM bank address 3D array
-        # 2 keys will return a x,y position pair
-        # example key1 = bank_index , key2 = addr_line_index will return [x,y]
-        self.sram_bank_adress_positions = []
-
-        # SRAM data lines 3D array
-        # 2 keys will return a x,y position pair
-        # example key1 = bank_index , key2 = data_line_index will return [x,y]
-        self.sram_bank_data_positions = []
-
-        # 2D array for bank_select position of banks
-        self.sram_bank_select_positions = []
-
-        # Bank power rail positions
-        self.sram_bank_right_vdd_positions = []
-        self.sram_bank_left_vdd_positions = []
-        self.sram_bank_left_gnd_positions = []
-
-        self.power_rail_width = self.bank.power_rail_width
-        self.sram_power_rail_gap = 4*self.power_rail_width
-
-        self.vdd_position = vector(0, 2*self.power_rail_width)
-        self.gnd_position = vector(0, 0)
+        self.power_rail_width = self.bank.vdd_rail_width
+        self.sram_power_rail_gap = 4*self.bank.vdd_rail_width
 
 
 
     def add_bank(self, position, x_flip, y_flip):
-        """ add and place bank. All the pin position is also
-        translated and saved for later use"""
+        """ Place a bank at the given position with orientations """
 
         # x_flip ==  1 --> no flip in x_axis
         # x_flip == -1 --> flip in x_axis
@@ -230,26 +194,25 @@ class sram(design.design):
 
         # x_flip and y_flip are used for position translation
 
-        bank_rotation = 180 if (x_flip == -1 and y_flip == -1) else 0
-        bank_mirror = "R0"
+        if x_flip == -1 and y_flip == -1:
+            bank_rotation = 180
+        else:
+            bank_rotation = 0
 
-        if(x_flip == y_flip):
+        if x_flip == y_flip:
             bank_mirror = "R0"
-        elif(x_flip == -1):
+        elif x_flip == -1:
             bank_mirror = "MX"
-        elif(y_flip == -1):
+        elif y_flip == -1:
             bank_mirror = "MY"
-
-        yMetalShift = drc["minwidth_metal3"] if (x_flip == -1) else 0
-        xMetalShift = drc["minwidth_metal3"] if (y_flip == -1) else 0
-
-        position=vector(position)
-        self.add_inst(name="bank{0}".format(self.bank_count),
-                      mod=self.bank,
-                      offset=position,
-                      mirror=bank_mirror,
-                      rotate=bank_rotation)
-        self.bank_positions.append(position)
+        else:
+            bank_mirror = "R0"
+            
+        bank_inst=self.add_inst(name="bank{0}".format(self.bank_count),
+                                mod=self.bank,
+                                offset=position,
+                                mirror=bank_mirror,
+                                rotate=bank_rotation)
 
         temp = []
         for i in range(self.word_size):
@@ -257,64 +220,14 @@ class sram(design.design):
         for i in range(self.bank_addr_size):
             temp.append("ADDR[{0}]".format(i))
         if(self.num_banks > 1):
-            temp.append("bank_select[{0}]".format(self.bank_count))
+            temp.append("bank_sel[{0}]".format(self.bank_count))
         temp.extend(["s_en", "w_en", "tri_en_bar", "tri_en",
-                     "clk_bar","clk" , "vdd", "gnd"])
+                     "clk_bar","clk_buf" , "vdd", "gnd"])
         self.connect_inst(temp)
 
-        # Saving control line properties
-        for i in range(len(self.sram_property)):
-            sub_mod_offset = getattr(self.bank,self.bank_property[i])
-            new=(position + vector(y_flip,x_flip).scale(sub_mod_offset) 
-                     - vector(xMetalShift,yMetalShift))
-
-            pos_list=getattr(self,self.sram_property[i])
-            if pos_list is None:
-                pos_list=[]
-            pos_list.append(new)
-            setattr(self,self.sram_property[i],pos_list)
-
-        # Address input lines
-        bank_address_positions = []
-        for addr_position in self.bank.address_positions:
-            new=(position + vector(y_flip,x_flip).scale(addr_position) 
-                     - vector(xMetalShift,yMetalShift))
-            bank_address_positions.append(new)
-        self.sram_bank_adress_positions.append(bank_address_positions)
-
-        # Bank select
-        if (self.num_banks > 1):
-            new=(position + vector(y_flip,x_flip).scale(self.bank.bank_select_position) 
-                     - vector(xMetalShift,yMetalShift))
-            self.sram_bank_select_positions.append(new)
-
-        # Data input lines
-        bank_data_positions = []
-        for data_position in self.bank.data_positions:
-            new=(position + vector(y_flip,x_flip).scale(data_position) 
-                     - vector(xMetalShift,yMetalShift))
-            bank_data_positions.append(new)
-        self.sram_bank_data_positions.append(bank_data_positions)
-
-        # VDD rails
-
-        yPowerShift = self.power_rail_width if(x_flip == -1) else 0
-        xPowerShift = self.power_rail_width if(y_flip == -1) else 0
-
-        # Right vdd
-        new=(position + vector(y_flip,x_flip).scale(self.bank.right_vdd_position) 
-                 - vector(xPowerShift,yPowerShift))
-        self.sram_bank_right_vdd_positions.append(new)
-        # left vdd
-        new=(position + vector(y_flip,x_flip).scale(self.bank.left_vdd_position) 
-                 - vector(xPowerShift,yPowerShift))
-        self.sram_bank_left_vdd_positions.append(new)
-        # left gnd
-        new=(position + vector(y_flip,x_flip).scale(self.bank.left_gnd_position) 
-                 - vector(xPowerShift,yPowerShift))
-        self.sram_bank_left_gnd_positions.append(new)
-
         self.bank_count = self.bank_count + 1
+        
+        return bank_inst
 
     # FIXME: This should be in geometry.py or it's own class since it is
     # reusable
@@ -360,42 +273,54 @@ class sram(design.design):
 
     def add_control_logic(self, position, rotate):
         """ Add and place control logic """
-        self.control_position = position
-        self.add_inst(name="control",
-                      mod=self.control,
-                      offset=self.control_position,
-                      rotate=rotate)
-        temp = ["CSb", "WEb",  "OEb", "s_en", "w_en", "tri_en",
-                "tri_en_bar", "clk_bar", "clk", "vdd", "gnd"]
+        self.control_logic_inst=self.add_inst(name="control",
+                                              mod=self.control,
+                                              offset=position,
+                                              rotate=rotate)
+        temp = ["CSb", "WEb",  "OEb", "clk", "s_en", "w_en", "tri_en",
+                "tri_en_bar", "clk_bar", "clk_buf", "vdd", "gnd"]
         self.connect_inst(temp)
 
-    def add_singlebank_modules(self):
-        """ This adds the moduels for a single bank SRAM with control
-        logic. """
-        self.add_bank([0, 0], 1, 1)
-        # FIXME: document
-        loc = vector(- 2 * drc["minwidth_metal3"],
-                     self.bank_positions[0].y + self.bank.decoder_position.y
-                     + 2 * drc["minwidth_metal3"])
-        self.add_control_logic(loc, 90)
+    def add_single_bank_modules(self):
+        """ 
+        This adds the moduels for a single bank SRAM with control
+        logic. 
+        """
+        
+        # No orientation or offset
+        self.bank_inst = self.add_bank([0, 0], 1, 1)
+        
+        # Control logic is placed to the left of the blank even with the
+        # decoder bottom. A small gap is in the x-dimension.
+        control_gap = 2*drc["minwidth_metal3"]
+        pos = vector(-control_gap,
+                     self.bank.row_decoder_inst.by() + 2*drc["minwidth_metal3"])
+        self.add_control_logic(position=pos,
+                               rotate=90)
 
-        self.width = self.bank.width + self.control.height + 2*drc["minwidth_metal3"]
+        self.width = self.bank.width + self.control.height + control_gap
         self.height = self.bank.height
-        self.control.CSb_position.rotate_scale(-1,1)
-        self.CSb_position = (self.control.CSb_position.rotate_scale(-1,1)
-                             +self.control_position)
-        self.OEb_position = (self.control.OEb_position.rotate_scale(-1,1)
-                             +self.control_position)
-        self.WEb_position = (self.control.WEb_position.rotate_scale(-1,1)
-                             +self.control_position)
-        self.clk_position = (self.control.clk_position.rotate_scale(-1,1)
-                             +self.control_position)
-        for i in range(0, self.word_size):
-            self.add_label(text="DATA[{0}]".format(i),
-                           layer="metal3",
-                           offset=self.bank.data_positions[i])
 
-    def add_multibank_modules(self):
+    def add_single_bank_pins(self):
+        """
+        Add the top-level pins for a single bank SRAM with control.
+        """
+
+        for i in range(self.word_size):
+            self.copy_layout_pin(self.bank_inst, "DATA[{}]".format(i))
+
+        for i in range(self.addr_size):
+            self.copy_layout_pin(self.bank_inst, "ADDR[{}]".format(i))            
+
+        for (old,new) in zip(["csb","web","oeb","clk"],["CSb","WEb","OEb","clk"]):
+            self.copy_layout_pin(self.control_logic_inst, old, new)
+
+        self.copy_layout_pin(self.bank_inst, "vdd")
+        self.copy_layout_pin(self.bank_inst, "gnd")
+
+        
+
+    def add_multi_bank_modules(self):
         """ This creates either a 2 or 4 bank SRAM with control logic
         and bank selection logic."""
 
@@ -491,14 +416,13 @@ class sram(design.design):
                 temp.append("msb{0}".format(i))
                 temp.append("msb{0}_bar".format(i))
         else:
-            temp.extend(["bank_select[1]", "bank_select[0]"])
-        temp.extend(["clk", "vdd", "gnd"])
+            temp.extend(["bank_sel[1]", "bank_sel[0]"])
+        temp.extend(["clk_buf", "vdd", "gnd"])
         self.connect_inst(temp)
 
-        self.add_banks_0and1()
-
-        if (self.num_banks == 4):
-            self.add_banks_2and3()
+        self.add_top_banks()
+        if self.num_banks == 4:
+            self.add_bottom_banks()
 
         # Extension of Vertical Rail
         self.create_bus(layer="metal2", 
@@ -522,16 +446,7 @@ class sram(design.design):
                            offset=[self.vertical_line_positions[self.control_size + i].x,
                                    self.max_point])
 
-    def add_modules(self):
-        """ add all the modules """
-        if (self.num_banks == 1):
-            self.add_singlebank_modules()
-        elif (self.num_banks == 2 or self.num_banks == 4):
-            self.add_multibank_modules()
-
-        self.add_labels()
-
-    def add_banks_0and1(self):
+    def add_top_banks(self):
         # Placement of bank 0
         self.bank_position_0 = vector(self.bank_w,
                                       self.bank_h + self.sram_power_rail_gap)
@@ -542,7 +457,7 @@ class sram(design.design):
         self.bank_position_1 = vector(x_off, self.bank_position_0.y)
         self.add_bank(self.bank_position_1, -1, 1)
 
-    def add_banks_2and3(self):
+    def add_bottom_banks(self):
         # Placement of bank 2
         y_off = (self.bank_h + self.horizontal_bus_width 
                      +2 * self.bank_to_bus_distance 
@@ -564,10 +479,10 @@ class sram(design.design):
                       mod=self.msb_decoder,
                       offset=self.msb_decoder_position,
                       mirror="MY")
-        temp = ["msb0", "msb1", "bank_select[{0}]".format(0),
-                "bank_select[{0}]".format(1), "bank_select[{0}]".format(2),
-                "bank_select[{0}]".format(3),
-                "vdd", "gnd"]
+        temp = ["msb0", "msb1"]
+        for i in range(4):
+            temp.append("bank_sel[{}]".format(i))
+        temp.extend(["vdd", "gnd"])
         self.connect_inst(temp)
         
         self.control_position = vector(0, self.msb_decoder_position.y
@@ -582,23 +497,9 @@ class sram(design.design):
         # Max point
         self.max_point = self.msb_decoder_position.y + self.msb_decoder.height
 
-    def add_labels(self):
-        """ Add the top-level labels for control and address """
-        for label in ["CSb", "OEb", "WEb", "clk"]:
-            offset = getattr(self, label+"_position")
-            self.add_label(text=label,
-                           layer="metal3",
-                           offset=offset)
 
-        # add address label
-        for addr_pos_lst in self.sram_bank_adress_positions:
-            for address, address_positions in enumerate(addr_pos_lst):
-                self.add_label(text="ADDR[{0}]".format(address),
-                               layer="metal3",
-                               offset=address_positions)
-
-    def route_2or4_banks(self):
-        """ Routing between bank 2 or 4 bank modules """
+    def route_top_banks(self):
+        """ Routing of top two banks """
         addr_start_index = len(self.sram_property) + (self.num_banks / 2)
         bank_select_index = addr_start_index + self.bank.addr_size
 
@@ -652,7 +553,7 @@ class sram(design.design):
                          offset=contact_offset)
 
             # Data connection on the horizontal bus
-        if (self.num_banks == 4):
+        if self.num_banks == 4:
             data_connection_top = self.sram_bank_data_positions[2][0].y + self.m2m3_via.height 
         else:
             data_connection_top=self.horizontal_bus_offset.y
@@ -673,7 +574,7 @@ class sram(design.design):
                              offset=[self.sram_bank_data_positions[lower_bank_index][data_index].x,
                                      self.horizontal_line_positions[data_index].y])
 
-    def route_4_banks(self):
+    def route_bottom_banks(self):
         for i in range(2):
             lower_bank_index = i
             upper_bank_index = i + 2
@@ -695,48 +596,55 @@ class sram(design.design):
                           height=self.sram_bank_left_gnd_positions[upper_bank_index].y \
                               - self.sram_bank_left_gnd_positions[lower_bank_index].y)
 
+    def connect_rail_from_left_m2m3(self, src_pin, dest_pin):
+        """ Helper routine to connect an unrotated/mirrored oriented instance to the rails """
+        in_pos = src_pin.rc()
+        out_pos = vector(dest_pin.cx(), in_pos.y)
+        self.add_wire(("metal3","via2","metal2"),[in_pos, out_pos, out_pos - vector(0,self.m2_pitch)])
+        self.add_via(layers=("metal2","via2","metal3"),
+                     offset=src_pin.lr(),
+                     rotate=90)
+        
+    def connect_rail_from_left_m2m1(self, src_pin, dest_pin):
+        """ Helper routine to connect an unrotated/mirrored oriented instance to the rails """
+        in_pos = src_pin.rc()
+        out_pos = vector(dest_pin.cx(), in_pos.y)
+        self.add_wire(("metal2","via1","metal1"),[in_pos, out_pos, out_pos - vector(0,self.m2_pitch)])
+
+    def route_single_bank(self):
+        """ Route a single bank SRAM """
+        # left pin is on the control logic, right pin is on the bank
+        connections = [("clk_buf", "clk"),
+                       ("tri_en_bar", "tri_en_bar"),
+                       ("tri_en", "tri_en"),
+                       ("clk_bar", "clk_bar"),
+                       ("w_en", "w_en"),
+                       ("s_en", "s_en")]
+        for (src,dest) in connections:
+            src_pin = self.control_logic_inst.get_pin(src)
+            dest_pin = self.bank_inst.get_pin(dest)                
+            self.connect_rail_from_left_m2m3(src_pin, dest_pin)
+
+        src_pins = self.control_logic_inst.get_pins("vdd")
+        for src_pin in src_pins:
+            if src_pin.layer != "metal2":
+                continue
+            dest_pin = self.bank_inst.get_pins("vdd")[1]
+            self.connect_rail_from_left_m2m1(src_pin,dest_pin)
+            
+        src_pins = self.control_logic_inst.get_pins("gnd")
+        for src_pin in src_pins:            
+            if src_pin.layer != "metal2":
+                continue
+            dest_pin = self.bank_inst.get_pin("gnd")
+            self.connect_rail_from_left_m2m3(src_pin,dest_pin)
+        
     def route_bank_and_control(self):
         """ Routing between banks and control """
 
-        if (self.num_banks == 1):
-
-            # FIXME what is this? add comments
-            # 5 = clk
-            # 4 = tri_en_bar
-            # 3 = tri_en
-            # 2 = clk_bar
-            # 1 = w_en
-            # 0 = s_en
-
-            control_side = []
-            control_side.append(self.control.clk_position.rotate_scale(-1, 1)
-                                     + self.control_position)
-            control_side.append(self.control.clk_bar_position.rotate_scale(-1, 1)
-                                     + self.control_position)
-            control_side.append(self.control.tri_en_position.rotate_scale(-1, 1)
-                                     + self.control_position)
-            control_side.append(self.control.tri_en_bar_position.rotate_scale(-1, 1)
-                                     + self.control_position)
-            control_side.append(self.control.w_en_position.rotate_scale(-1, 1)
-                                     + self.control_position)
-            control_side.append(self.control.s_en_position.rotate_scale(-1, 1)
-                                     + self.control_position)
-
-            bank_side = []
-
-            for attr_name in (self.sram_property):
-                bank_side.append(getattr(self,attr_name)[0])
-
-            for i in range(len(control_side)):
-                self.add_rect(layer="metal3",
-                              offset=control_side[i],
-                              width=bank_side[i].x - control_side[i].x,
-                              height=drc["minwidth_metal3"])
-                self.add_via(layers=("metal2", "via2", "metal3"),
-                              offset=[bank_side[i].x + drc["minwidth_metal2"],
-                                      control_side[i].y],
-                              rotate=90)
-        elif (self.num_banks == 2 or self.num_banks == 4):
+        if self.num_banks == 1:
+            pass
+        elif self.num_banks == 2 or self.num_banks == 4:
             for i in range(self.control_size):
                 self.add_via(layers=("metal1", "via1", "metal2"),
                              offset=[self.vertical_line_positions[i].x + drc["minwidth_metal2"],
@@ -857,44 +765,8 @@ class sram(design.design):
                     self.add_via(layers=("metal1", "via1", "metal2"),
                                   offset=contact_pos)
 
-    def route_vdd_singlebank(self):
-        """ Route the vdd for 1 bank SRAMs """
-        
-        # left vdd rail of bank
-        self.vdd_offset = self.bank.left_vdd_position
-        self.add_label(text="vdd",
-                       layer="metal1",
-                       offset=self.vdd_offset)
 
-        # Add label for right vdd  rail bank
-        self.add_label(text="vdd",
-                       layer="metal1",
-                       offset=self.sram_bank_right_vdd_positions[0])
-
-        # control logic
-        self.control_vdd1_position = (self.control_position
-                                          + self.control.vdd1_position.rotate_scale(-1, 1))
-        self.control_vdd2_position = (self.control_position
-                                          + self.control.vdd2_position.rotate_scale(-1, 1))
-
-        self.add_rect(layer="metal1",
-                      offset=self.control_vdd1_position,
-                      width=self.vdd_offset.x
-                                - self.control_vdd1_position.x,
-                      height=drc["minwidth_metal1"])
-
-        self.add_rect(layer="metal2",
-                      offset=self.control_vdd2_position,
-                      width=self.vdd_offset.x
-                                - self.control_vdd2_position.x,
-                      height=drc["minwidth_metal2"])
-
-        self.add_via(layers=("metal1", "via1", "metal2"),
-                      offset=[self.vdd_offset.x,
-                              self.control_vdd2_position.y],
-                      size=(2, 1))
-
-    def route_vdd_multibank(self):
+    def route_vdd_multi_bank(self):
         """ Route the vdd for 2 and 4 bank SRAMs """
         # VDD routing between banks
         self.add_rect(layer="metal1",
@@ -1018,35 +890,8 @@ class sram(design.design):
                                self.vdd_position.y])
         
 
-    def route_gnd_singlebank(self):
-        """ Route the gnd for 1 bank SRAMs """
 
-        # left gnd rail of bank
-        self.gnd_offset = self.bank.left_gnd_position
-        self.add_label(text="gnd",
-                       layer="metal2",
-                       offset=self.gnd_offset)
-
-        self.control_gnd_position = (self.control_position
-                                        + self.control.gnd_position.rotate_scale(-1,1) 
-                                        + vector(drc["minwidth_metal2"],0))
-
-        self.add_rect(layer="metal3",
-                      offset=self.control_gnd_position,
-                      width=self.gnd_offset.x - self.control_gnd_position.x,
-                      height=drc["minwidth_metal3"])
-
-        self.add_via(layers=("metal2", "via2", "metal3"),
-                      offset=[self.gnd_offset.x,
-                              self.control_gnd_position.y],
-                      size=(2,1))
-        
-        self.add_via(layers=("metal2", "via2", "metal3"),
-                     offset=self.control_gnd_position,
-                     rotate=90)
-
-
-    def route_gnd_multibank(self):
+    def route_gnd_multi_bank(self):
         """ Route the gnd for 2 and 4 bank SRAMs """
         self.add_rect(layer="metal2",
                       offset=self.gnd_position,
@@ -1141,13 +986,12 @@ class sram(design.design):
 
     def route_supplies(self):
         """ vdd/gnd routing of all modules """
-
+        return
         if (self.num_banks == 1):
-            self.route_vdd_singlebank()
-            self.route_gnd_singlebank()
+            pass
         elif (self.num_banks == 2 or self.num_banks == 4):
-            self.route_vdd_multibank()
-            self.route_gnd_multibank()
+            self.route_vdd_multi_bank()
+            self.route_gnd_multi_bank()
         else:
             debug.error("Incorrect number of banks.")
 

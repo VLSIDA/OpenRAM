@@ -97,8 +97,8 @@ class pin_layout:
         """ Upper left point """
         return vector(self.rect[0].x,self.rect[1].y)
 
-    def br(self):
-        """ Bottom right point """
+    def lr(self):
+        """ Lower right point """
         return vector(self.rect[1].x,self.rect[0].y)
 
     def ur(self):

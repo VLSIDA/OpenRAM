@@ -219,7 +219,7 @@ class replica_bitline(design.design):
                             height=self.rbl.height+self.bitcell.height+2*self.inv.width+0.5*drc["minwidth_metal1"])
 
         # Connect the vdd pins of the bitcell load directly to vdd
-        vdd_pins = self.rbl_inst.get_pin("vdd")
+        vdd_pins = self.rbl_inst.get_pins("vdd")
         for pin in vdd_pins:
             offset = vector(vdd_start.x,pin.by()) 
             self.add_rect(layer="metal1",
@@ -286,9 +286,9 @@ class replica_bitline(design.design):
                      offset=offset)
 
         # Connect the bitcell gnd pin to the rail
-        gnd_pins = self.get_pin("gnd")
-        gnd_start = self.get_pin("gnd").uc()
-        rbl_gnd_pins = self.rbl_inst.get_pin("gnd")
+        gnd_pins = self.get_pins("gnd")
+        gnd_start = gnd_pins[0].uc()
+        rbl_gnd_pins = self.rbl_inst.get_pins("gnd")
         # Find the left most rail on M2
         gnd_pin = None
         for pin in rbl_gnd_pins:
@@ -302,7 +302,7 @@ class replica_bitline(design.design):
         
 
         # Add a second gnd pin to the second delay chain rail. No need for full length.
-        dc_gnd_offset = self.dc_inst.get_pin("gnd")[1].ll()
+        dc_gnd_offset = self.dc_inst.get_pins("gnd")[1].ll()
         self.add_layout_pin(text="gnd",
                             layer="metal1",
                             offset=dc_gnd_offset.scale(1,0),

@@ -25,10 +25,22 @@ class sram_1bank_test(unittest.TestCase):
 
         import sram
 
-        debug.info(1, "Testing sample 8bit, 64word SRAM, 1 bank")
-        a = sram.sram(word_size=8, num_words=128, num_banks=1, name="test_sram1")
+        debug.info(1, "Single bank, no column mux with control logic")
+        a = sram.sram(word_size=4, num_words=16, num_banks=1, name="test_sram1")
         self.local_check(a)
 
+        debug.info(1, "Single bank two way column mux with control logic")
+        a = sram.sram(word_size=4, num_words=32, num_banks=1, name="test_sram2")
+        self.local_check(a)
+
+        debug.info(1, "Single bank, four way column mux with control logic")
+        a = sram.sram(word_size=4, num_words=64, num_banks=1, name="test_sram3")
+        self.local_check(a)
+
+        # debug.info(1, "Single bank, eight way column mux with control logic")
+        # a = sram.sram(word_size=2, num_words=128, num_banks=1, name="test_sram4")
+        # self.local_check(a)
+        
         OPTS.check_lvsdrc = True
         globals.end_openram()
         

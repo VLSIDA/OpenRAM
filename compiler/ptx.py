@@ -50,10 +50,41 @@ class ptx(design.design):
         # self.connect_fingered_poly()
         self.offset_all_coordinates()
 
+    def offset_attributes(self, coordinate):
+        """Translates all stored 2d cartesian coordinates within the
+        attr dictionary"""
+        # FIXME: This is dangerous. I think we should not do this, but explicitly
+        # offset the necessary coordinates. It is only used in ptx for now!
+
+        for attr_key in dir(self):
+            attr_val = getattr(self,attr_key)
+
+            # skip the list of things as these will be offset separately
+            if (attr_key in ['objs','insts','mods','pins','conns','name_map']): continue
+
+            # if is a list
+            if isinstance(attr_val, list):
+                
+                for i in range(len(attr_val)):
+                    # each unit in the list is a list coordinates
+                    if isinstance(attr_val[i], (list,vector)):
+                        attr_val[i] = vector(attr_val[i] - coordinate)
+                    # the list itself is a coordinate
+                    else:
+                        if len(attr_val)!=2: continue
+                        for val in attr_val:
+                            if not isinstance(val, (int, long, float)): continue
+                        setattr(self,attr_key, vector(attr_val - coordinate))
+                        break
+
+            # if is a vector coordinate
+            if isinstance(attr_val, vector):
+                setattr(self, attr_key, vector(attr_val - coordinate))
+        
     def offset_all_coordinates(self):
-        coordinate = self.find_lowest_coords()
-        self.offset_attributes(coordinate)
-        self.translate(coordinate)
+        offset = self.find_lowest_coords()
+        self.offset_attributes(offset)
+        self.translate_all(offset)
 
         # We can do this in ptx because we have offset all modules it uses.
         # Is this really true considering the paths that connect the src/drain?

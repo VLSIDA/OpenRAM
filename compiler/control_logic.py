@@ -34,11 +34,10 @@ class control_logic(design.design):
 
     def create_modules(self):
         """ add all the required modules """
-        input_lst =["csb","web","oeb"]
-        output_lst = ["s_en", "w_en", "tri_en", "tri_en_bar", "clk_bar"]
-        clk =["clk"]
+        input_lst =["csb","web","oeb","clk"]
+        output_lst = ["s_en", "w_en", "tri_en", "tri_en_bar", "clk_bar", "clk_buf"]
         rails = ["vdd", "gnd"]
-        for pin in input_lst + output_lst + clk + rails:
+        for pin in input_lst + output_lst + rails:
             self.add_pin(pin)
 
         self.nand2 = nand_2()
@@ -153,9 +152,10 @@ class control_logic(design.design):
                                rotate=270)
         # don't change this order. This pins are meant for internal connection of msf array inside the control logic.
         # These pins are connecting the msf_array inside of control_logic.
-        temp = ["oeb", "oe_bar", "oe",
-                "csb", "cs_bar", "cs",
-                "web", "we_bar", "we",
+        temp = ["oeb", "csb", "web",
+                "oe_bar", "oe",
+                "cs_bar", "cs",
+                "we_bar", "we",
                 "clk_buf", "vdd", "gnd"]
         self.connect_inst(temp)
 
@@ -347,7 +347,7 @@ class control_logic(design.design):
         
         for i in range(self.num_rails_1):
             offset = vector(self.rail_1_start_x + (i+1) * self.m2_pitch,0)
-            if self.rail_1_names[i] in ["clk_bar", "vdd", "gnd"]:
+            if self.rail_1_names[i] in ["clk_buf", "clk_bar", "vdd", "gnd"]:
                 self.add_layout_pin(text=self.rail_1_names[i],
                                     layer="metal2",
                                     offset=offset,
@@ -367,8 +367,10 @@ class control_logic(design.design):
         self.connect_rail_from_left_m2m3(self.msf,"dout_bar[2]","we")
 
         # Connect the gnd and vdd of the control 
-        gnd_pins = self.msf.get_pin("gnd")
+        gnd_pins = self.msf.get_pins("gnd")
         for p in gnd_pins:
+            if p.layer != "metal2":
+                continue
             gnd_pin = p.rc()
             gnd_rail_position = vector(self.rail_1_x_offsets["gnd"], gnd_pin.y)
             self.add_wire(("metal1","via1","metal2"),[gnd_pin, gnd_rail_position, gnd_rail_position - vector(0,self.m2_pitch)])            
@@ -376,9 +378,12 @@ class control_logic(design.design):
                          offset=gnd_pin + self.m1m2_via_offset,
                          rotate=90)
 
-        vdd_pin = self.msf.get_pin("vdd").bc()
-        clk_vdd_position = vector(vdd_pin.x,self.clk_buf.get_pin("vdd").uy())
-        self.add_path("metal1",[vdd_pin,clk_vdd_position])
+        vdd_pins = self.msf.get_pins("vdd")
+        for p in vdd_pins:
+            if p.layer != "metal1":
+                continue
+            clk_vdd_position = vector(p.bc().x,self.clk_buf.get_pin("vdd").uy())
+            self.add_path("metal1",[p.bc(),clk_vdd_position])
         
         self.rail_2_start_x = max (self.row_1_width, self.row_2_width, self.row_3_width)
         for i in range(self.num_rails_2):
@@ -589,8 +594,8 @@ class control_logic(design.design):
         
 
         # Now connect the vdd and gnd rails between the replica bitline and the control logic
-        (rbl_row3_gnd,rbl_row1_gnd) = self.rbl.get_pin("gnd")
-        (rbl_row3_vdd,rbl_row1_vdd) = self.rbl.get_pin("vdd")        
+        (rbl_row3_gnd,rbl_row1_gnd) = self.rbl.get_pins("gnd")
+        (rbl_row3_vdd,rbl_row1_vdd) = self.rbl.get_pins("vdd")        
 
         self.add_path("metal1",[row1_gnd_end_offset,rbl_row1_gnd.lc()])
         self.add_path("metal1",[row1_vdd_end_offset,rbl_row1_vdd.lc()])

@@ -135,11 +135,11 @@ class bank(design.design):
 
     def compute_sizes(self):
         """  Computes the required sizes to create the bank """
-        split = False
+        split = True
         if split:
             driver_mults, nand = self.setup_sizing(self.words_per_row*self.word_size)
             self.wl_driver_mults = driver_mults # minmum should be 1
-            self.wl_driver_mults = 3 # minmum should be 1
+            self.wl_driver_mults = 5 # minmum should be 1
         else:
             self.wl_driver_mults = 1
         self.wl_seg_num = max(1,self.wl_driver_mults-1) # at least one segment in wl
@@ -231,6 +231,9 @@ class bank(design.design):
             sub_array_size = []
             for i in range(self.wl_seg_num):
                 sub_array_size.append(int(math.ceil(self.num_cols/self.wl_seg_num)))
+            # we need to find a way to caculate the best way to split array
+            # but we can manully modify the list here to test
+            #sub_array_size = [16,8,4,4]
             self.bitcell_array.gen_sub_arrays(sub_array_size)
         else:
             self.bitcell_array = self.mod_bitcell_array(name="bitcell_array", 
@@ -246,6 +249,9 @@ class bank(design.design):
             driver_lst = []
             for i in range(self.wl_seg_num+1):
                 driver_lst.append(1.0/(self.wl_seg_num+1))
+            # we need to find a way to caculate the best way to split drivers
+            # but we can manully modify the list here to test
+            #driver_lst = [0.6, 0.4, 0.2, 0.2]
             self.wordline_driver.splite_drivers(driver_lst)
         else:
             self.wordline_driver = self.mod_wordline_driver(name="wordline_driver", 
@@ -258,10 +264,11 @@ class bank(design.design):
         # arrange bit cell array
         if self.wl_seg_num > 1:
             bitcell_array_gap = self.wordline_driver.get_gaps_width()
-            gap = 2 * self.array_driver_gap + bitcell_array_gap[0]
-            self.bitcell_array.arrange_array([gap,0])
-
+            for index in range(len(bitcell_array_gap)):
+                 bitcell_array_gap[index] = bitcell_array_gap[index] + 2 * self.array_driver_gap 
+            self.bitcell_array.arrange_array(bitcell_array_gap, self.array_driver_gap)
         row_location = self.bitcell_array.get_row_positions()
+
         # 3. arrange the rest modules based on bitcell aray 
         if self.wl_seg_num > 1: 
             self.precharge_array = self.mod_precharge_array(name="precharge_array", 
@@ -521,20 +528,21 @@ class bank(design.design):
         self.module_offset = vector(x_off, 0)
         self.wordline_driver_offset = self.module_offset
         self.wordline_driver_position = self.module_offset
-
         if self.wl_seg_num > 1:
             wordline_driver_gap = self.bitcell_array.get_sub_array_width()
             extra_gap = abs(self.bitcell_array_offset.x - x_off) \
                         - self.wordline_driver.unit.x_offset2 \
-                        - self.wordline_driver.unit.driver[0].width\
-                        + self.array_driver_gap
+                        - self.wordline_driver.unit.driver[0].width
 
             for index in range(len(wordline_driver_gap)):
                 if index == 0:
-                    wordline_driver_gap[index] = wordline_driver_gap[index] + extra_gap
+                    wordline_driver_gap[index] = wordline_driver_gap[index] \
+                                                 + extra_gap\
+                                                 + self.array_driver_gap 
                 else:
-                    wordline_driver_gap[index] = wordline_driver_gap[index] + 2 * self.array_driver_gap 
-
+                    wordline_driver_gap[index] = wordline_driver_gap[index] \
+                                                 + 2 * self.array_driver_gap 
+        
             self.wordline_driver.arrange_drivers(wordline_driver_gap)
     
         self.add_inst(name="wordline_driver", 
@@ -759,7 +767,6 @@ class bank(design.design):
         limit1 = self.bitcell_array_offset.x + self.bitcell_array.width + gap_between_bitcell_array_and_vdd
         limit2 = self.wordline_driver_offset.x + self.wordline_driver.width + gap_between_bitcell_array_and_vdd
         self.right_vdd_x_offset = max(limit1,limit2)
-        self.add_rect(layer="metal5",offset = [self.right_vdd_x_offset,0],width =1, height=1)
         self.right_vdd_position = vector(self.right_vdd_x_offset, self.min_point)
         self.add_layout_pin(text="vdd",
                             layer="metal1", 

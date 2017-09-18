@@ -224,13 +224,13 @@ class bitcell_array(plain_bitcell_array):
         self.add_pin("gnd")
         
 
-    def arrange_array(self, gap):
-        assert len(self.sub_array)==len(gap)
+    def arrange_array(self, gap, routing_space):
+        # check the gap list is long enough
+        assert len(self.sub_array)-1<=len(gap)
         x_offset = 0
         start_column_index = 0
         self.row_positions = []
         for index in range(len(self.sub_array)):
-
             array_to_add =  self.sub_array[index]     
             self.add_mod(array_to_add)
             self.add_inst(name="sub_array"+str(index),
@@ -242,18 +242,16 @@ class bitcell_array(plain_bitcell_array):
                                 0)
                self.row_positions.append(row_pos)
 
-
-
             for i in range(len(array_to_add.BL_positions)):
                 offset = array_to_add.BL_positions[i] +vector(x_offset, 0)
                 self.BL_positions.append(offset)
-                self.add_label(text="BL".format(i+start_column_index),
+                self.add_label(text="BL{0}".format(i+start_column_index),
                                layer="metal2",
                                offset=offset)
 
                 offset = array_to_add.BR_positions[i] +vector(x_offset, 0)
                 self.BR_positions.append(offset)
-                self.add_label(text="BR".format(i+start_column_index),
+                self.add_label(text="BR{0}".format(i+start_column_index),
                                layer="metal2",
                                offset=offset)
             for gnd in array_to_add.gnd_positions:
@@ -268,21 +266,25 @@ class bitcell_array(plain_bitcell_array):
             temp = temp + [ "vdd", "gnd"]
             self.connect_inst(temp)
             start_column_index = array_to_add.column_size + start_column_index
-            x_offset = x_offset + array_to_add.width + gap[index]
+            if index != len(self.sub_array) - 1: 
+                x_offset = x_offset + array_to_add.width + gap[index]
         self.add_vdd_and_label(array_to_add, vector(x_offset,0))
         self.add_h_gnd_and_label(array_to_add, vector(x_offset,0))
-        self.add_wl_and_label(array_to_add, vector(x_offset,0))
+        self.add_wl_and_label(array_to_add, vector(x_offset,0), routing_space)
 
         self.width = x_offset + array_to_add.width
         self.height = array_to_add.height 
 
-    def add_wl_and_label(self, array_to_add, base):
+    def add_wl_and_label(self, array_to_add, base, routing_space):
         self.WL_path = []
         for wl in array_to_add.WL_positions:
             start = wl.scale(0,1)
             end = start + base
             self.WL_positions.append(start)
             self.WL_path.append([start, end])
+            self.add_path(layer="metal1", coordinates = [end, 
+                                                         end-vector(routing_space, 0)])
+
 
     def add_wl_connection(self):
         # not necessarily called, build for testing purpose

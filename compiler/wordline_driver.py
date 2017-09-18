@@ -54,11 +54,11 @@ class wordline_driver_unit(design.design):
         if len(gap_list)+1 < len(self.driver):
             debug.error(" {0} gaps and {1} drivers".format(len(gap_list),
                                                            len(self.driver)))
-        base_offset = vector(self.x_offset2, 0)
+        base_offset = vector(self.x_offset2 + self.driver[0].width, 0) 
         for index in range(1,len(self.driver)):
             driver = self.driver[index]
             self.add_mod(driver)
-            base_offset = base_offset + vector(gap_list[index-1],0) + vector(driver.width, 0)
+            base_offset = base_offset + vector(gap_list[index-1],0) 
             self.add_inst(name="Wordline_driver_inv[%d]" %index,
                           mod=driver,
                           offset=base_offset)
@@ -77,7 +77,9 @@ class wordline_driver_unit(design.design):
                           coordinates = [start, end])
             self.rout_net_0(vector(self.x_offset2, 0), base_offset, driver)
             self.route_to_prev_WL(base_offset, driver, gap_list[index-1])
-
+            # after add it change the reference offset to the right of current driver
+            base_offset = base_offset + vector(driver.width, 0)
+        self.width = base_offset[0] + driver.width
 
     def rout_net_0(self,first_driver_offset, extra_driver_offset, driver):
         m1m2_via = contact(layer_stack=("metal2", "via2", "metal3"))
@@ -449,12 +451,18 @@ class wordline_driver(design.design):
         return result
 
     def splite_drivers(self, share_lst):
+        # update the width because driver setup changes
         self.width = self.unit.width
         self.unit.splite_drivers(share_lst)
 
     def arrange_drivers(self, gap_lst):
         self.unit.arrange_drivers(gap_lst)
         self.create_layout()
+        # update the width because driver setup changes
+        self.width = self.unit.width
 
     def get_gaps_width(self):
-        return self.unit.get_sub_driver_width()
+        result =  self.unit.get_sub_driver_width()
+        # first driver is not between array
+        # the first bit cell array gap will depends on the 2nd driver in this module
+        return result[1:]

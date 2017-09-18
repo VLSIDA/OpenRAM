@@ -14,7 +14,7 @@ class single_level_column_mux_array(design.design):
     Array of column mux to read the bitlines through the 6T.
     """
 
-    def __init__(self, rows, columns, word_size):
+    def __init__(self, rows, columns, word_size, row_locations = None):
         design.design.__init__(self, "columnmux_array")
         debug.info(1, "Creating {0}".format(self.name))
         self.rows = rows
@@ -23,7 +23,7 @@ class single_level_column_mux_array(design.design):
         self.words_per_row = self.columns / self.word_size
         self.row_addr_size = self.decoder_inputs = int(math.log(self.rows, 2))
         self.add_pins()
-        self.create_layout()
+        self.create_layout(row_locations)
         self.offset_all_coordinates()
         self.DRC_LVS()
 
@@ -38,11 +38,11 @@ class single_level_column_mux_array(design.design):
             self.add_pin("sel[{0}]".format(i))
         self.add_pin("gnd")
 
-    def create_layout(self):
+    def create_layout(self, row_locations):
         self.add_modules()
         self.setup_layout_constants()
-        self.create_array()
-        self.add_routing()
+        self.create_array(row_locations)
+        self.add_routing(row_locations)
 
     def add_modules(self):
         self.mux = single_level_column_mux(name="single_level_column_mux",
@@ -70,10 +70,13 @@ class single_level_column_mux_array(design.design):
             # 1 for BL and another for BR
             self.height = self.height + (self.words_per_row + 1) * spacing
 
-    def create_array(self):
+    def create_array(self, row_locations):
         for i in range(self.columns):
             name = "XMUX{0}".format(i)
-            x_off = vector(i * self.mux.width, 0)
+            if row_locations == None:
+                x_off = vector(i * self.mux.width, 0)
+            else:
+                x_off = row_locations[i]
             self.add_inst(name=name,
                           mod=self.mux,
                           offset=x_off)
@@ -94,26 +97,29 @@ class single_level_column_mux_array(design.design):
                           height=drc['minwidth_metal2'])
 
             """ add labels for the column_mux array """
-            BL = self.mux.BL_position + vector(i * self.mux.width, 0)
+            BL = self.mux.BL_position + x_off
             self.BL_positions.append(BL)
             self.add_label(text="bl[{0}]".format(i),
                            layer="metal2",
                            offset=BL)
 
-            BR = self.mux.BR_position + vector(i * self.mux.width, 0)
+            BR = self.mux.BR_position + x_off
             self.BR_positions.append(BR)
             self.add_label(text="br[{0}]".format(i),
                            layer="metal2",
                            offset=BR)
 
-            gnd = self.mux.gnd_position + vector(i * self.mux.width, 0)
+            gnd = self.mux.gnd_position + x_off
             self.gnd_positions.append(gnd)
             self.add_label(text="gnd",
                            layer="metal2",
                            offset=gnd)
 
         for i in range(self.word_size):
-            base =vector(i * self.words_per_row * self.mux.width, 0)
+            if row_locations == None:
+                base =vector(i * self.words_per_row * self.mux.width, 0)
+            else:
+                base = row_locations[i * self.words_per_row]
             BL_out = base + self.mux.BL_out_position
             BR_out = base + self.mux.BR_out_position
             self.add_label(text="bl_out[{0}]".format(i * self.words_per_row),
@@ -172,31 +178,38 @@ class single_level_column_mux_array(design.design):
                                         "sel[{0}]".format(3), "gnd"],
                                   check=False)
 
-    def add_routing(self):
-        self.add_horizontal_input_rail()
-        self.add_vertical_poly_rail()
-        self.routing_BL_BR()
+    def add_routing(self,row_locations):
+        self.add_horizontal_input_rail(row_locations)
+        self.add_vertical_poly_rail(row_locations)
+        self.routing_BL_BR(row_locations)
 
-    def add_horizontal_input_rail(self):
+    def add_horizontal_input_rail(self, row_locations):
         """ HORIZONTAL ADDRESS INPUTS TO THE COLUMN MUX ARRAY """
         if (self.words_per_row > 1):
             for j in range(self.words_per_row):
                 offset = vector(0, -(j + 1) * self.m1m2_via.width
                                        - j * drc['metal1_to_metal1'])
+                if row_locations == None:
+                    width = self.mux.width * self.columns
+                else:
+                    width = row_locations[self.columns-1][0]+self.mux.width
                 self.add_rect(layer="metal1",
                               offset=offset,
-                              width=self.mux.width * self.columns,
+                              width=width,
                               height=self.m1m2_via.width)
                 self.addr_line_positions.append(offset)
 
-    def add_vertical_poly_rail(self):
+    def add_vertical_poly_rail(self,row_locations):
         """  VERTICAL POLY METAL EXTENSION AND POLY CONTACT """
         for j1 in range(self.columns):
             pattern = math.floor(j1 / self.words_per_row) * self.words_per_row 
             height = ((self.m1m2_via.width + drc['metal1_to_metal1'])
                            *(pattern - j1))
             nmos1_poly = self.mux.nmos1_position + self.mux.nmos1.poly_positions[0]
-            offset = nmos1_poly.scale(1, 0) + vector(j1 * self.mux.width, 0)
+            if row_locations == None:
+                offset = nmos1_poly.scale(1, 0) + vector(j1 * self.mux.width, 0)
+            else:
+                offset = nmos1_poly.scale(1, 0) + row_locations[j1]     
             self.add_rect(layer="poly",
                           offset=offset,
                           width=drc["minwidth_poly"],
@@ -210,11 +223,15 @@ class single_level_column_mux_array(design.design):
                              mirror="MX",
                              rotate=90)
 
-    def routing_BL_BR(self):
+    def routing_BL_BR(self, row_locations):
         """  OUTPUT BIT-LINE CONNECTIONS (BL_OUT, BR_OUT) """
         if (self.words_per_row > 1):
             for j in range(self.columns / self.words_per_row):
-                base = vector(self.mux.width * self.words_per_row * j,
+                if row_locations == None:
+                    correct = self.mux.width * self.words_per_row * j
+                else:
+                    correct = row_locations[self.words_per_row * j][0]                   
+                base = vector(correct,
                               self.m1m2_via.width + drc['metal1_to_metal1'])
                 width = self.m1m2_via.width + self.mux.width * (self.words_per_row - 1)
                 self.add_rect(layer="metal1",
@@ -245,7 +262,11 @@ class single_level_column_mux_array(design.design):
                 """ adding vertical metal rails to route BL_out and BR_out vertical rails """
                 contact_spacing = self.m1m2_via.width + drc['metal1_to_metal1']
                 height = self.words_per_row * contact_spacing + self.m1m2_via.width
-                offset = vector(self.mux.BL_position.x + self.mux.width * j, 0)
+                if row_locations == None:
+                    correct = self.mux.width * j
+                else:
+                    correct = row_locations[j][0]         
+                offset = vector(self.mux.BL_position.x + correct, 0)
                 self.add_rect(layer="metal2",
                               offset=offset,
                               width=drc['minwidth_metal2'], 
@@ -255,7 +276,7 @@ class single_level_column_mux_array(design.design):
                              offset=offset,
                              rotate=90)
 
-                offset = vector(self.mux.BR_position.x + self.mux.width * j, 0)
+                offset = vector(self.mux.BR_position.x + correct, 0)
                 height = height + contact_spacing
                 self.add_rect(layer="metal2",
                               offset=offset,

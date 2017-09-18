@@ -54,6 +54,7 @@ class bank(design.design):
 
     def add_pins(self):
         """ Adding pins for Bank module"""
+        
         for i in range(self.word_size):
             self.add_pin("DATA[{0}]".format(i))
         for i in range(self.addr_size):
@@ -80,6 +81,8 @@ class bank(design.design):
     def create_layout(self):
         """ Create routing amoung the modules """
         self.create_central_bus()
+        row_location = self.bitcell_array.get_row_positions()
+        array_offset = self.bitcell_array_gap
         self.route_pre_charge_to_bitcell_array()
         self.route_between_sense_amp_and_tri_gate()
         self.route_tri_gate_out()
@@ -97,12 +100,15 @@ class bank(design.design):
 
     def add_modules(self):
         """ Add modules. The order should be maintained."""
+        self.array_to_driver = 5*drc["minwidth_metal1"]
+        #self.bitcell_array_gap = vector(2 * self.array_to_driver+ self.bitcell_array.width+ self.wordline_driver.driver.width, 0)
+        self.bitcell_array_gap = vector(2 * self.array_to_driver+ self.bitcell_array.width+ self.wordline_driver.get_1st_driver_width(), 0)
         self.add_bitcell_array()
         self.add_precharge_array()
         self.add_column_mux_array()
         self.add_sense_amp_array()
         self.add_write_driver_array()
-        self.add_msf_data_in()
+        self.add_msf_data_out()
         self.add_tri_gate_array()
         self.add_hierarchical_decoder()
         self.add_wordline_driver()
@@ -110,15 +116,50 @@ class bank(design.design):
         self.add_column_line_decoder()
         self.add_bank_select_or2_gates()
 
+    def setup_sizing(self, load_size):
+        # fix me, this is a duplicate code in wordline driver
+        # find way to share it
+        nand_effort = (4.0/3.0)
+        G = 1.0*nand_effort*1.0
+        H = load_size *(2.0/3.0)
+        F = G*H
+        f = F**(1.0/3.0)
+        y = load_size*1.0/f
+        import math
+        y = math.log(y,2)
+        y = 2**int(y)
+        x = y *nand_effort/f
+        driver_strength = int(y+1)
+        NAND2_strength = int(x+1)
+        return driver_strength, NAND2_strength
+
     def compute_sizes(self):
         """  Computes the required sizes to create the bank """
+        split = True
+        if split:
+            driver_mults, nand = self.setup_sizing(self.words_per_row*self.word_size)
+            self.wl_driver_mults = driver_mults # minmum should be 1
+            self.wl_driver_mults = 5 # minmum should be 1
+        else:
+            self.wl_driver_mults = 1
+        self.wl_seg_num = max(1,self.wl_driver_mults-1) # at least one segment in wl
+        # segment is still 1 when you have 2 drivers  
+        # depend on how much segment wl has
+        # the word_size shrink
+
 
         self.num_cols = self.words_per_row*self.word_size
         self.num_rows = self.num_words / self.words_per_row
 
+
+        # worddirver_size, nand_size = worddriver.auto_sizing(self.num_cols)
+        # num_seg = worddirver_size or num_seg = 2
+        # but we have to devide the bank into odd number (2,4,)
+
         self.row_addr_size = int(log(self.num_rows, 2))
         self.col_addr_size = int(log(self.words_per_row, 2))
         self.addr_size = self.col_addr_size + self.row_addr_size
+    
 
         assert self.num_rows*self.num_cols, self.word_size*self.num_words
         assert self.addr_size, self.col_addr_size + self.row_addr_size
@@ -174,29 +215,90 @@ class bank(design.design):
 
     def create_modules(self):
         """ Create all the modules using the class loader """
-        self.bitcell_array = self.mod_bitcell_array(name="bitcell_array", 
-                                              cols=self.num_cols,
-                                              rows=self.num_rows)
-        self.add_mod(self.bitcell_array)
+        # 1.bitcell and write_driver init
+        # 2.bitcell_array and writer driver arrange lay out based on each other
+        # 3.rest arrange based on array_bit loc
+        self.array_driver_gap = 5 * drc["minwidth_metal1"]
+        #self.create_old_array()
+        #self.create_old_wordline_driver()
+        # 1. genrate bit cell
+        if self.wl_seg_num > 1:
+            self.bitcell_array = self.mod_bitcell_array(name="bitcell_array", 
+                                                  cols=self.num_cols,
+                                                  rows=self.num_rows,
+                                                  create_layout = False)
 
-        self.precharge_array = self.mod_precharge_array(name="precharge_array", 
-                                                        columns=self.num_cols,
-                                                        ptx_width=drc["minwidth_tx"])
+            sub_array_size = []
+            for i in range(self.wl_seg_num):
+                sub_array_size.append(int(math.ceil(self.num_cols/self.wl_seg_num)))
+            # we need to find a way to caculate the best way to split array
+            # but we can manully modify the list here to test
+            #sub_array_size = [16,8,4,4]
+            self.bitcell_array.gen_sub_arrays(sub_array_size)
+        else:
+            self.bitcell_array = self.mod_bitcell_array(name="bitcell_array", 
+                                                  cols=self.num_cols,
+                                                  rows=self.num_rows)
+        self.add_mod(self.bitcell_array)
+        # 1. and genrate wordline driver
+        if self.wl_seg_num > 1:
+            self.wordline_driver = self.mod_wordline_driver(name="wordline_driver", 
+                                                            rows=self.num_rows,
+                                                            load_size = self.num_cols,
+                                                            create_layout = False)
+            driver_lst = []
+            for i in range(self.wl_seg_num+1):
+                driver_lst.append(1.0/(self.wl_seg_num+1))
+            # we need to find a way to caculate the best way to split drivers
+            # but we can manully modify the list here to test
+            #driver_lst = [0.6, 0.4, 0.2, 0.2]
+            self.wordline_driver.splite_drivers(driver_lst)
+        else:
+            self.wordline_driver = self.mod_wordline_driver(name="wordline_driver", 
+                                                            rows=self.num_rows,
+                                                            load_size = self.num_cols)
+        self.add_mod(self.wordline_driver)
+
+
+        # 2. and arrange wordline_driver when add them
+        # arrange bit cell array
+        if self.wl_seg_num > 1:
+            bitcell_array_gap = self.wordline_driver.get_gaps_width()
+            for index in range(len(bitcell_array_gap)):
+                 bitcell_array_gap[index] = bitcell_array_gap[index] + 2 * self.array_driver_gap 
+            self.bitcell_array.arrange_array(bitcell_array_gap, self.array_driver_gap)
+        row_location = self.bitcell_array.get_row_positions()
+
+        # 3. arrange the rest modules based on bitcell aray 
+        if self.wl_seg_num > 1: 
+            self.precharge_array = self.mod_precharge_array(name="precharge_array", 
+                                                            columns=self.num_cols,
+                                                            ptx_width=drc["minwidth_tx"],
+                                                            row_locations = row_location)
+        else:
+            self.precharge_array = self.mod_precharge_array(name="precharge_array", 
+                                                            columns=self.num_cols,
+                                                            ptx_width=drc["minwidth_tx"],
+                                                            row_locations = row_location)
         self.add_mod(self.precharge_array)
 
         if(self.col_addr_size > 0):
             self.column_mux_array = self.mod_column_mux_array(rows=self.num_rows,
                                                               columns=self.num_cols, 
-                                                              word_size=self.word_size)
+                                                              word_size=self.word_size,
+                                                              row_locations = row_location)
             self.add_mod(self.column_mux_array)
 
 
         self.sens_amp_array = self.mod_sense_amp_array(word_size=self.word_size, 
-                                                       words_per_row=self.words_per_row)
+                                                       words_per_row=self.words_per_row,
+                                                       row_locations = row_location)
         self.add_mod(self.sens_amp_array)
 
+
         self.write_driver_array = self.mod_write_driver_array(columns=self.num_cols,
-                                                              word_size=self.word_size)
+                                                              word_size=self.word_size,
+                                                              row_locations = row_location)
         self.add_mod(self.write_driver_array)
 
         self.decoder = self.mod_decoder(nand2_nmos_width=2*drc["minwidth_tx"],
@@ -206,29 +308,29 @@ class bank(design.design):
 
         self.msf_address = self.mod_ms_flop_array(name="msf_address", 
                                                   columns=self.row_addr_size+self.col_addr_size, 
-                                                  word_size=self.row_addr_size+self.col_addr_size)
+                                                  word_size=self.row_addr_size+self.col_addr_size,
+                                                  )
         self.add_mod(self.msf_address)
         
-        self.msf_data_in = self.mod_ms_flop_array(name="msf_data_in", 
-                                                  columns=self.num_cols, 
-                                                  word_size=self.word_size)
-        self.add_mod(self.msf_data_in)
-        
+        self.msf_data_out = self.mod_ms_flop_array(name="msf_data_out",
+                                                   columns=self.num_cols, 
+                                                   word_size=self.word_size,
+                                                   row_locations = row_location)
+        self.add_mod(self.msf_data_out)
+
         self.tri_gate_array = self.mod_tri_gate_array(columns=self.num_cols, 
-                                                      word_size=self.word_size)
+                                                      word_size=self.word_size,
+                                                      row_locations = row_location)
         self.add_mod(self.tri_gate_array)
 
-        self.wordline_driver = self.mod_wordline_driver(name="wordline_driver", 
-                                                        rows=self.num_rows)
-        #self.wordline_driver.logic_effort_sizing(self.num_cols)
-        self.add_mod(self.wordline_driver)
+
 
         self.inv = pinv(nmos_width=drc["minwidth_tx"], 
                         beta=parameter["pinv_beta"], 
                         height=self.bitcell_height)
         self.add_mod(self.inv)
         
-    # 4x Inverter
+        # 4x Inverter
         self.inv4x = pinv(nmos_width=4*drc["minwidth_tx"], 
                           beta=parameter["pinv_beta"], 
                           height=self.bitcell_height)
@@ -254,65 +356,61 @@ class bank(design.design):
                               - self.m1m2_via.first_layer_width) / 2
 
     def add_bitcell_array(self):
-        """ Adding Bitcell Array """
-
         self.module_offset = vector(0, 0)
-        self.bitcell_array_position = self.module_offset
-        self.add_inst(name="bitcell_array", 
+        self.bitcell_array_offset = self.module_offset
+        self.add_inst(name="bitcell_array",
                       mod=self.bitcell_array,
-                      offset=self.module_offset)
+                      offset=self.bitcell_array_offset)
         temp = []
-        for i in range(self.num_cols):
+        for i in range(self.bitcell_array.column_size):
             temp.append("bl[{0}]".format(i))
             temp.append("br[{0}]".format(i))
-        for j in range(self.num_rows):
+        for j in range(self.bitcell_array.row_size):
             temp.append("wl[{0}]".format(j))
-        temp = temp + ["vdd", "gnd"]
+        temp = temp + [ "vdd", "gnd"]
         self.connect_inst(temp)
 
     def add_precharge_array(self):
         """ Adding Pre-charge """
-
         self.gap_between_precharge_and_bitcell = 5 * drc["minwidth_metal2"]
-
         y_off = self.bitcell_array.height + self.gap_between_precharge_and_bitcell
-        self.precharge_array_position = vector(0, y_off)
+        self.precharge_array_position = vector(0, y_off) 
+
         self.add_inst(name="precharge_array",
                       mod=self.precharge_array, 
-                      offset=self.precharge_array_position)
+                      offset=self.precharge_array_position )
         temp = []
         for i in range(self.num_cols):
             temp.append("bl[{0}]".format(i))
             temp.append("br[{0}]".format(i))
-        temp = temp + ["clk_bar", "vdd"]
+        temp = temp + ["clk_bar", "vdd"]   
         self.connect_inst(temp)
 
     def add_column_mux_array(self):
         """ Adding Column Mux when words_per_row > 1 . """
-
         if(self.col_addr_size != 0):
             self.module_offset = vector(0, -self.column_mux_array.height)
             self.column_mux_array_position = self.module_offset 
-            self.add_inst(name="column_mux_array",
-                          mod=self.column_mux_array,
-                          offset=self.column_mux_array_position)
-            temp = []
-            for i in range(self.num_cols):
-                temp.append("bl[{0}]".format(i))
-                temp.append("br[{0}]".format(i))
-            for j in range(self.word_size):
-                temp.append("bl_out[{0}]".format(
-                    j*self.words_per_row))
-                temp.append("br_out[{0}]".format(
-                    j*self.words_per_row))
-            for k in range(self.words_per_row):
-                temp.append("sel[{0}]".format(k))
-            temp.append("gnd")
-            self.connect_inst(temp)
+
+            if(self.col_addr_size != 0):
+                self.add_inst(name="column_mux_array",
+                              mod=self.column_mux_array,
+                              offset=self.column_mux_array_position)
+                temp = []
+                for i in range(self.num_cols):
+                    temp.append("bl[{0}]".format(i))
+                    temp.append("br[{0}]".format(i))
+                for j in range(self.word_size):
+                    temp.append("bl_out[{0}]".format(j*self.words_per_row))
+                    temp.append("br_out[{0}]".format(j*self.words_per_row))
+                for k in range(self.words_per_row):
+                    temp.append("sel[{0}]".format(k))
+                temp.append("gnd")
+                self.connect_inst(temp)
+
 
     def add_sense_amp_array(self):
         """ Adding Sense amp  """
-
         self.module_offset = vector(0, self.module_offset.y - self.sens_amp_array.height)
         self.sens_amp_array_position = self.module_offset 
         self.add_inst(name="sense_amp_array",
@@ -324,7 +422,7 @@ class bank(design.design):
                 temp.append("bl[{0}]".format(j*self.words_per_row))
                 temp.append("br[{0}]".format(j*self.words_per_row))
         else:
-            for j in range(self.word_size):
+            for j in range(self.sens_amp_array.word_size):
                 temp.append("bl_out[{0}]".format(j*self.words_per_row))
                 temp.append("br_out[{0}]".format(j*self.words_per_row))
 
@@ -333,11 +431,12 @@ class bank(design.design):
         temp = temp + ["s_en", "vdd", "gnd"]
         self.connect_inst(temp)
 
+
     def add_write_driver_array(self):
         """ Adding Write Driver  """
-
         self.module_offset = vector(0, self.module_offset.y - self.write_driver_array.height)
         self.write_driver_array_position = self.module_offset
+
         self.add_inst(name="write_driver_array", 
                       mod=self.write_driver_array, 
                       offset=self.write_driver_array_position)
@@ -356,16 +455,15 @@ class bank(design.design):
         temp = temp + ["w_en", "vdd", "gnd"]
         self.connect_inst(temp)
 
-    def add_msf_data_in(self):
+
+    def add_msf_data_out(self):
         """ data_in flip_flop """
-
-        self.module_offset = vector(0, self.module_offset.y - self.msf_data_in.height)
+        self.module_offset = vector(0, self.module_offset.y - self.msf_data_out.height)
         self.ms_flop_data_in_offset = self.module_offset 
+
         self.add_inst(name="data_in_flop_array", 
-                      mod=self.msf_data_in, 
-
+                      mod=self.msf_data_out, 
                       offset=self.ms_flop_data_in_offset)
-
         temp = []
         for i in range(self.word_size):
             temp.append("DATA[{0}]".format(i))
@@ -377,13 +475,14 @@ class bank(design.design):
 
     def add_tri_gate_array(self):
         """ data tri gate to drive the data bus """
-
         self.module_offset = vector(0, self.module_offset.y)
-        self.tri_gate_array_offset = self.module_offset 
+        self.tri_gate_array_offset = self.module_offset
+ 
         self.add_inst(name="trigate_data_array", 
                       mod=self.tri_gate_array, 
                       offset=self.tri_gate_array_offset, 
                       mirror="MX")
+
         temp = []
         for i in range(self.word_size):
             temp.append("data_out[{0}]".format(i))
@@ -391,6 +490,7 @@ class bank(design.design):
             temp.append("DATA[{0}]".format(i))
         temp = temp + ["tri_en", "tri_en_bar", "vdd", "gnd"]
         self.connect_inst(temp)
+
 
     def add_hierarchical_decoder(self):
         """  Hierarchical Decoder  """
@@ -401,8 +501,14 @@ class bank(design.design):
         For convenient the space is created first so that placement of decoder and address FFs gets easier.
         The wires are actually routed after we placed the stuffs on both side"""
 
-        self.module_offset = vector(self.decoder.width + self.overall_central_bus_gap,
+        limt1 = self.decoder.width + self.overall_central_bus_gap
+                      
+        limt2 = self.decoder.decode_out_positions[0][0]\
+                        + self.wordline_driver.width\
+                        + self.overall_central_bus_gap
+        self.module_offset = vector(max(limt1,limt2), 
                                     self.decoder.predecoder_height).scale(-1, -1)
+
         self.decoder_position = self.module_offset 
         self.add_inst(name="address_decoder", 
                       mod=self.decoder, 
@@ -418,10 +524,27 @@ class bank(design.design):
 
     def add_wordline_driver(self):
         """ Wordline Driver """
-
         x_off = self.decoder_position.x + self.decoder.row_decoder_width
         self.module_offset = vector(x_off, 0)
-        self.wordline_driver_position = self.module_offset 
+        self.wordline_driver_offset = self.module_offset
+        self.wordline_driver_position = self.module_offset
+        if self.wl_seg_num > 1:
+            wordline_driver_gap = self.bitcell_array.get_sub_array_width()
+            extra_gap = abs(self.bitcell_array_offset.x - x_off) \
+                        - self.wordline_driver.unit.x_offset2 \
+                        - self.wordline_driver.unit.driver[0].width
+
+            for index in range(len(wordline_driver_gap)):
+                if index == 0:
+                    wordline_driver_gap[index] = wordline_driver_gap[index] \
+                                                 + extra_gap\
+                                                 + self.array_driver_gap 
+                else:
+                    wordline_driver_gap[index] = wordline_driver_gap[index] \
+                                                 + 2 * self.array_driver_gap 
+        
+            self.wordline_driver.arrange_drivers(wordline_driver_gap)
+    
         self.add_inst(name="wordline_driver", 
                       mod=self.wordline_driver, 
                       offset=self.wordline_driver_position)
@@ -639,7 +762,11 @@ class bank(design.design):
 
         # VDD constraints
         gap_between_bitcell_array_and_vdd = 3 * drc["minwidth_metal1"]
-        self.right_vdd_x_offset = self.bitcell_array.width + gap_between_bitcell_array_and_vdd
+        self.right_vdd_x_offset = self.bitcell_array_gap.x * (self.wl_seg_num) \
+                                 + gap_between_bitcell_array_and_vdd
+        limit1 = self.bitcell_array_offset.x + self.bitcell_array.width + gap_between_bitcell_array_and_vdd
+        limit2 = self.wordline_driver_offset.x + self.wordline_driver.width + gap_between_bitcell_array_and_vdd
+        self.right_vdd_x_offset = max(limit1,limit2)
         self.right_vdd_position = vector(self.right_vdd_x_offset, self.min_point)
         self.add_layout_pin(text="vdd",
                             layer="metal1", 
@@ -744,9 +871,8 @@ class bank(design.design):
             # Connection of data_out of sense amp to data_ in of msf_data_out
             tri_gate_in_position = (self.tri_gate_array.in_positions[i].scale(1,-1) 
                                         + self.tri_gate_array_offset)
-            sa_data_out_position = (self.sens_amp_array_position
-                                        + self.sens_amp_array.Data_out_positions[i])
-
+            sa_data_out_position = (self.sens_amp_array_position 
+                                        + self.sens_amp_array.Data_out_positions[i]) 
             startY = (self.tri_gate_array_offset.y - self.tri_gate_array.height
                           - 2 * drc["minwidth_metal3"] 
                           + 0.5 * drc["minwidth_metal1"])
@@ -1021,21 +1147,23 @@ class bank(design.design):
         right_hand_mapping = [2, 4, 3, 2, 1, 0]
 
         right_side = []
+        seg_distance = self.bitcell_array_gap.scale(max(0,self.wl_seg_num -1),0)
+        seg_distance = self.bitcell_array.get_row_positions()[-1]
         right_side.append(self.ms_flop_data_in_offset
-                              + self.msf_data_in.clk_positions[0]
-                              - vector(0, 0.5 * drc["minwidth_metal1"]))
+                              + self.msf_data_out.clk_positions[0]
+                              - vector(0, 0.5 * drc["minwidth_metal1"])+seg_distance)
         right_side.append(self.tri_gate_array_offset
                               + vector(1,-1).scale(self.tri_gate_chars["en_bar"])
-                              - vector(0, 0.5 * drc["minwidth_metal1"]))
+                              - vector(0, 0.5 * drc["minwidth_metal1"])+seg_distance)
         right_side.append(self.tri_gate_array_offset
                               + vector(1,-1).scale(self.tri_gate_chars["en"])
-                              - vector(0, 0.5 * drc["minwidth_metal1"]))
+                              - vector(0, 0.5 * drc["minwidth_metal1"])+seg_distance)
         right_side.append(self.precharge_array_position
-                              + self.precharge_array.pclk_position)
+                              + self.precharge_array.pclk_position+seg_distance )
         right_side.append(self.write_driver_array_position
-                              + self.write_driver_array.wen_positions[0])
+                              + self.write_driver_array.wen_positions[0]+seg_distance)
         right_side.append(self.sens_amp_array_position 
-                              + self.sens_amp_array.SCLK_positions[0])
+                              + self.sens_amp_array.SCLK_positions[0]+seg_distance)
   
         """ Routing control signals through the central bus.
         Connection of control signal input to the central bus is in metal1
@@ -1267,7 +1395,7 @@ class bank(design.design):
                           height=drc["minwidth_metal1"])
 
         # Connecting msf_data_in VDD
-        for offset in self.msf_data_in.vdd_positions:
+        for offset in self.msf_data_out.vdd_positions:
             self.add_rect(layer="metal1", 
                           offset=(self.ms_flop_data_in_offset + offset 
                                   -vector(0, 0.5 * drc["minwidth_metal1"])), 
@@ -1354,9 +1482,7 @@ class bank(design.design):
                       offset=[self.left_gnd_x_offset, yoffset],  
                       width=self.bitcell_array.width - self.left_gnd_x_offset, 
                       height=drc["minwidth_metal1"])
-
         for offset in self.bitcell_array.gnd_positions:
-            #print self.bitcell_array.gnd_positions
             self.add_rect(layer="metal2", 
                           offset=[offset.x - 0.5*drc["minwidth_metal2"], 
                                   self.bitcell_array.height], 
@@ -1511,11 +1637,17 @@ class bank(design.design):
         """ return  analytical delay of the bank"""
         msf_addr_delay = self.msf_address.delay(slew, self.decoder.input_load())
 
-        decoder_delay = self.decoder.delay(msf_addr_delay.slew, self.wordline_driver.input_load())
+        decoder_delay = self.decoder.delay(msf_addr_delay.slew,
+                                           self.wordline_driver.input_load())
+        # equvialand array size is total physical size divided by num of drivres
+        if not hasattr(self, 'sim_array'):
+            self.sim_array = self.mod_bitcell_array(name="sim_array", 
+                                                    cols=self.num_cols*self.wl_seg_num/self.wl_driver_mults,
+                                                    rows=self.num_rows)
+        word_driver_delay = self.wordline_driver.delay(decoder_delay.slew,
+                                                       self.sim_array.input_load())
+        bitcell_array_delay = self.sim_array.delay(word_driver_delay.slew)
 
-        word_driver_delay = self.wordline_driver.delay(decoder_delay.slew, self.bitcell_array.input_load())
-
-        bitcell_array_delay = self.bitcell_array.delay(word_driver_delay.slew)
 
         bl_t_data_out_delay = self.sens_amp_array.delay(bitcell_array_delay.slew,
                                                         self.bitcell_array.output_load())
@@ -1526,3 +1658,5 @@ class bank(design.design):
         result = msf_addr_delay + decoder_delay + word_driver_delay \
                  + bitcell_array_delay + bl_t_data_out_delay + data_t_DATA_delay
         return result
+
+

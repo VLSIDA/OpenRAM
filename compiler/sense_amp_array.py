@@ -51,9 +51,9 @@ class sense_amp_array(design.design):
 
     def add_sense_amp(self):
             
-        bl_pin = self.amp.get_pin("BL")            
-        br_pin = self.amp.get_pin("BR")
-        dout_pin = self.amp.get_pin("Dout")
+        bl_pin = self.amp.get_pin("bl")            
+        br_pin = self.amp.get_pin("br")
+        dout_pin = self.amp.get_pin("dout")
         
         for i in range(0,self.row_size,self.words_per_row):
 
@@ -83,7 +83,7 @@ class sense_amp_array(design.design):
                                 height=br_pin.height())
                            
             self.add_layout_pin(text="data[{0}]".format(i/self.words_per_row),
-                                layer="metal2",
+                                layer="metal3",
                                 offset=dout_offset,
                                 width=dout_pin.width(),
                                 height=dout_pin.height())
@@ -110,7 +110,7 @@ class sense_amp_array(design.design):
                       height=drc["minwidth_metal1"])
 
         # add sclk rail across entire array
-        sclk_offset = self.amp.get_pin("SCLK").ll().scale(0,1)
+        sclk_offset = self.amp.get_pin("en").ll().scale(0,1)
         self.add_layout_pin(text="en",
                       layer="metal1",
                       offset=sclk_offset,

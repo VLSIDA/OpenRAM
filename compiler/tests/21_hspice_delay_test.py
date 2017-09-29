@@ -32,7 +32,7 @@ class timing_sram_test(unittest.TestCase):
         s = sram.sram(word_size=OPTS.config.word_size,
                       num_words=OPTS.config.num_words,
                       num_banks=OPTS.config.num_banks,
-                      name="test_sram1")
+                      name="sram1")
 
         OPTS.check_lvsdrc = True
 
@@ -52,25 +52,25 @@ class timing_sram_test(unittest.TestCase):
         data = d.analyze(probe_address, probe_data,slews,loads)
 
         if OPTS.tech_name == "freepdk45":
-            golden_data = {'read1_power': 0.017787999999999998,
-                           'read0_power': 0.017827,
-                           'write0_power': 0.016626,
-                           'delay1': [0.02616],
-                           'delay0': [0.10966999999999999],
-                           'min_period': 0.264,
-                           'write1_power': 0.015919000000000003,
-                           'slew0': [0.027029],
-                           'slew1': [0.021002999999999997]}
+            golden_data = {'read1_power': 0.025791799999999997,
+                           'read0_power': 0.0260092,
+                           'write0_power': 0.0241064,
+                           'delay1': [0.0475006],
+                           'delay0': [0.1380874],
+                           'min_period': 0.322,
+                           'write1_power': 0.024207199999999998,
+                           'slew0': [0.026617000000000002],
+                           'slew1': [0.0193804]}            
         elif OPTS.tech_name == "scn3me_subm":
-            golden_data = {'read1_power': 4.5206,
-                           'read0_power': 4.5492,
-                           'write0_power': 3.8564,
-                           'delay1': [0.5985562],
-                           'delay0': [1.3725000000000003],
-                           'min_period': 4.531,
-                           'write1_power': 3.7291,
-                           'slew0': [1.3013000000000001],
-                           'slew1': [1.0045]}
+            golden_data = {'read1_power': 3.1765,
+                           'read0_power': 3.1929,
+                           'write0_power': 2.874,
+                           'delay1': [0.8900045999999999],
+                           'delay0': [1.9975000000000003],
+                           'min_period': 5.781,
+                           'write1_power': 2.6611,
+                           'slew0': [1.2993000000000001],
+                           'slew1': [0.9903856]}
         else:
             self.assertTrue(False) # other techs fail
         # Check if no too many or too few results

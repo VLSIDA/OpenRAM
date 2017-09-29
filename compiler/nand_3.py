@@ -63,18 +63,16 @@ class nand_3(design.design):
 
     def create_ptx(self):
         """ Create ptx  but not yet placed"""
+        # If full contacts, this will interfere with the C input in SCMOS
         self.nmos = ptx(width=self.nmos_size,
-                         mults=self.tx_mults,
-                         tx_type="nmos")
-        self.add_mod(self.nmos)
-        self.add_mod(self.nmos)
+                        mults=self.tx_mults,
+                        tx_type="nmos",
+                        num_contacts=1)
         self.add_mod(self.nmos)
 
         self.pmos = ptx(width=self.pmos_size,
                          mults=self.tx_mults,
                          tx_type="pmos")
-        self.add_mod(self.pmos)
-        self.add_mod(self.pmos)
         self.add_mod(self.pmos)
 
     def setup_layout_constants(self):
@@ -183,7 +181,7 @@ class nand_3(design.design):
                        + self.pmos.active_width + drc["active_to_body_active"])
         yoffset = self.pmos_position1.y + self.pmos.active_contact_positions[0].y
         self.nwell_contact_position = vector(xoffset, yoffset)
-        self.nwell_contact=self.add_contact(layer_stack,self.nwell_contact_position,(1,self.pmos.num_of_tacts))
+        self.nwell_contact=self.add_contact(layer_stack,self.nwell_contact_position,(1,self.pmos.num_contacts))
 
         xoffset = self.nmos_position3.x + (self.nmos.active_position.x 
                                            + self.nmos.active_width 
@@ -192,7 +190,7 @@ class nand_3(design.design):
                                            - self.nmos.active_contact_positions[0].y 
                                            - self.nmos.active_contact.height)
         self.pwell_contact_position = vector(xoffset, yoffset)
-        self.pwell_contact=self.add_contact(layer_stack,self.pwell_contact_position,(1,self.nmos.num_of_tacts))
+        self.pwell_contact=self.add_contact(layer_stack,self.pwell_contact_position,(1,self.nmos.num_contacts))
 
     def connect_well_contacts(self):
         """ Connect well contacts to vdd and gnd rail """
@@ -314,7 +312,6 @@ class nand_3(design.design):
 
     def route_input_gate_A(self):
         """  routing for input A """
-
         offset = self.pmos_position1 + self.pmos.poly_positions[0] - vector(0,self.poly_contact.height)
         via_offset = offset + self.poly_contact.first_layer_position.scale(-1,0) - vector(self.poly_contact.first_layer_width,0) + vector(drc["minwidth_poly"],0)
 
@@ -330,7 +327,6 @@ class nand_3(design.design):
 
     def route_input_gate_B(self):
         """  routing for input B """
-
         offset = self.pmos_position2 + self.pmos.poly_positions[0] - vector(0,self.poly_contact.height+1*(self.m1m2_via.width+drc["metal1_to_metal1"]))
         via_offset = offset + self.poly_contact.first_layer_position.scale(-1,0) - vector(self.poly_contact.first_layer_width,0) + vector(drc["minwidth_poly"],0)
 
@@ -345,7 +341,7 @@ class nand_3(design.design):
     
 
     def route_input_gate_C(self):
-        """  routing for input C """
+        """  routing for input C """ 
         offset = self.pmos_position3 + self.pmos.poly_positions[0] - vector(0,self.poly_contact.height+2*(self.m1m2_via.width+drc["metal1_to_metal1"]))
         via_offset = offset + self.poly_contact.first_layer_position.scale(-1,0) - vector(self.poly_contact.first_layer_width,0) + vector(drc["minwidth_poly"],0)
 

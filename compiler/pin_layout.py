@@ -31,7 +31,7 @@ class pin_layout:
     def __eq__(self, other):
         """ Check if these are the same pins for duplicate checks """
         if isinstance(other, self.__class__):
-            return (self.layer==other.layer and self.rect == other.rect)
+            return (self.name==other.name and self.layer==other.layer and self.rect == other.rect)
         else:
             return False    
 

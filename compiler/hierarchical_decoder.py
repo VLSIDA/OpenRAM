@@ -91,9 +91,6 @@ class hierarchical_decoder(design.design):
         self.metal2_spacing = self.metal2_extend_contact  + drc["metal2_to_metal2"]
         self.metal2_pitch = self.metal2_spacing + drc["minwidth_metal2"]
         self.via_shift = (self.m1m2_via.second_layer_width - self.m1m2_via.first_layer_width) / 2
-        # used to shift contact when connecting to NAND3 C pin down
-        self.contact_shift = (self.m1m2_via.first_layer_width - self.m1m2_via.contact_width) / 2
-
 
         self.predec_groups = []  # This array is a 2D array.
 
@@ -483,19 +480,17 @@ class hierarchical_decoder(design.design):
                             yoffset_A = current_inv_height + a_pin.by()
                             yoffset_B = current_inv_height + b_pin.by()
                             yoffset_C = current_inv_height + c_pin.by()
-                            contact_C_yoffset = yoffset_C - self.contact_shift
                         else:
                             base = current_inv_height + self.inv.height - drc["minwidth_metal1"]
                             yoffset_A = base - a_pin.by()
                             yoffset_B = base - b_pin.by()
                             yoffset_C = base - c_pin.by()
-                            contact_C_yoffset = yoffset_C
 
                         row_index = row_index + 1
 
                         self.connect_rail(vector(self.rail_x_offsets[index_A], yoffset_A))
                         self.connect_rail(vector(self.rail_x_offsets[index_B], yoffset_B))
-                        self.connect_rail(vector(self.rail_x_offsets[index_C], yoffset_C)) # contact_C_y_offset
+                        self.connect_rail(vector(self.rail_x_offsets[index_C], yoffset_C))
 
     def route_vdd_gnd(self):
         """ Add a pin for each row of vdd/gnd which are must-connects next level up. """

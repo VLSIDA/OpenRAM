@@ -181,13 +181,13 @@ def gen_csb(stim_file, clk_times, period, slew):
     """ Generates the PWL CSb signal"""
     # values for NOP, W1, W0, W1, R0, W1, W0, R1, NOP
     values = [1, 0, 0, 0, 0, 0, 0, 0, 1]
-    gen_pwl(stim_file, "CSb", clk_times, values, period, slew, 0.05)
+    gen_pwl(stim_file, "csb", clk_times, values, period, slew, 0.05)
 
 def gen_web(stim_file, clk_times, period, slew):
     """ Generates the PWL WEb signal"""
     # values for NOP, W1, W0, W1, R0, W1, W0, R1, NOP
     values = [1, 0, 0, 0, 1, 0, 0, 1, 1]
-    gen_pwl(stim_file, "WEb", clk_times, values, period, slew, 0.05)
+    gen_pwl(stim_file, "web", clk_times, values, period, slew, 0.05)
     
     values = [1, 0, 0, 0, 1, 0, 0, 1, 1]
     gen_pwl(stim_file, "acc_en", clk_times, values, period, slew, 0)
@@ -198,7 +198,7 @@ def gen_oeb(stim_file, clk_times, period, slew):
     """ Generates the PWL WEb signal"""
     # values for NOP, W1, W0, W1, R0, W1, W0, R1, NOP
     values = [1, 1, 1, 1, 0, 1, 1, 0, 1]
-    gen_pwl(stim_file, "OEb", clk_times, values, period, slew, 0.05)
+    gen_pwl(stim_file, "oeb", clk_times, values, period, slew, 0.05)
 
 
 

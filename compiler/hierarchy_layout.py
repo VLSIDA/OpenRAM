@@ -104,8 +104,12 @@ class layout:
                 return inst
         return None
     
-    def add_rect(self, layer, offset, width, height):
+    def add_rect(self, layer, offset, width=0, height=0):
         """Adds a rectangle on a given layer,offset with width and height"""
+        if width==0:
+            width=drc["minwidth_{}".format(layer)]
+        if height==0:
+            height=drc["minwidth_{}".format(layer)]
         # negative layers indicate "unused" layers in a given technology
         layerNumber = techlayer[layer]
         if layerNumber >= 0:
@@ -116,10 +120,18 @@ class layout:
                          
     def get_pin(self, text):
         """ Return the pin or list of pins """
-        debug.check(len(self.pin_map[text])==1,"Should use a pin iterator since more than one pin.")
-        # If we have one pin, return it and not the list.
-        # Otherwise, should use get_pins()
-        return self.pin_map[text][0]
+        try:
+            if len(self.pin_map[text])>1:
+                debug.warning("Should use a pin iterator since more than one pin {}".format(text))
+            # If we have one pin, return it and not the list.
+            # Otherwise, should use get_pins()
+            return self.pin_map[text][0]
+        except Exception as e:
+            #print e
+            self.gds_write("missing_pin.gds")
+            debug.error("No pin found with name {0} on {1}. Saved as missing_pin.gds.".format(text,self.name),-1)
+            
+            
 
     def get_pins(self, text):
         """ Return a pin list (instead of a single pin) """
@@ -136,6 +148,30 @@ class layout:
                 new_name = pin.name
             self.add_layout_pin(new_name, pin.layer, pin.ll(), pin.width(), pin.height())
 
+    def add_center_layout_pin(self, text, layer, start, end):
+        """ Creates a path like pin with center-line convention """
+
+        debug.check(start.x==end.x or start.y==end.y,"Cannot have a non-manhatten layout pin.")
+        
+        minwidth_layer = drc["minwidth_{}".format(layer)]
+        
+        # one of these will be zero
+        width = max(start.x,end.x) - min(start.x,end.x)
+        height = max(start.y,end.y) - min(start.y,end.y)
+        ll_offset = vector(min(start.x,end.x),min(start.y,end.y))
+
+        # Shift it down 1/2 a width in the 0 dimension
+        if height==0:
+            ll_offset -= vector(0,0.5*minwidth_layer)
+        if width==0:
+            ll_offset -= vector(0.5*minwidth_layer,0)
+        # This makes sure it is long enough, but also it is not 0 width!
+        height = max(minwidth_layer,height)
+        width = max(minwidth_layer,width)
+        
+        
+        self.add_layout_pin(text, layer, ll_offset, width, height)
+        
         
     def add_layout_pin(self, text, layer, offset, width=None, height=None):
         """Create a labeled pin """
@@ -186,6 +222,7 @@ class layout:
     def add_label(self, text, layer, offset=[0,0],zoom=-1):
         """Adds a text label on the given layer,offset, and zoom level"""
         # negative layers indicate "unused" layers in a given technology
+        debug.info(5,"add label " + str(text) + " " + layer + " " + str(offset))
         layerNumber = techlayer[layer]
         if layerNumber >= 0:
             self.objs.append(geometry.label(text, layerNumber, offset, zoom))
@@ -195,7 +232,7 @@ class layout:
 
     def add_path(self, layer, coordinates, width=None):
         """Connects a routing path on given layer,coordinates,width."""
-        debug.info(3,"add path " + str(layer) + " " + str(coordinates))
+        debug.info(4,"add path " + str(layer) + " " + str(coordinates))
         import path
         # NOTE: (UNTESTED) add_path(...) is currently not used
         # negative layers indicate "unused" layers in a given technology
@@ -215,7 +252,7 @@ class layout:
         the coordinates.
         """
         import route
-        debug.info(3,"add route " + str(layers) + " " + str(coordinates))
+        debug.info(4,"add route " + str(layers) + " " + str(coordinates))
         # add an instance of our path that breaks down into rectangles and contacts
         route.route(obj=self,
                     layer_stack=layers, 
@@ -236,8 +273,17 @@ class layout:
         return self.add_via(layers=layers,
                             offset=offset,
                             size=size,
-                            mirror=mirror,rotate=rotate)
+                            mirror=mirror,
+                            rotate=rotate)
 
+    def add_center_contact(self, layers, offset, size=[1,1], mirror="R0", rotate=0):
+        """ This is just an alias for a via."""
+        return self.add_centered_via(layers=layers,
+                                     offset=offset,
+                                     size=size,
+                                     mirror=mirror,
+                                     rotate=rotate)
+    
     def add_via(self, layers, offset, size=[1,1], mirror="R0", rotate=0):
         """ Add a three layer via structure. """
         import contact
@@ -253,6 +299,39 @@ class layout:
         self.connect_inst([])
         return via
 
+    def add_center_via(self, layers, offset, size=[1,1], mirror="R0", rotate=0):
+        """ Add a three layer via structure by the center coordinate accounting for mirroring and rotation. """
+        import contact
+        via = contact.contact(layer_stack=layers,
+                              dimensions=size)
+
+        debug.check(mirror=="R0","Use rotate to rotate vias instead of mirror.")
+        
+        height = via.height
+        width = via.width
+
+        if rotate==0:
+            corrected_offset = offset + vector(-0.5*width,-0.5*height)
+        elif rotate==90:
+            corrected_offset = offset + vector(0.5*height,-0.5*width)
+        elif rotate==180:
+            corrected_offset = offset + vector(-0.5*width,0.5*height)
+        elif rotate==270:
+            corrected_offset = offset + vector(-0.5*height,0.5*width)
+        else:
+            debug.error("Invalid rotation argument.",-1)
+            
+
+        self.add_mod(via)
+        self.add_inst(name=via.name, 
+                      mod=via, 
+                      offset=corrected_offset,
+                      mirror=mirror,
+                      rotate=rotate)
+        # We don't model the logical connectivity of wires/paths
+        self.connect_inst([])
+        return via
+    
     def add_ptx(self, offset, mirror="R0", rotate=0, width=1, mults=1, tx_type="nmos"):
         """Adds a ptx module to the design."""
         import ptx
@@ -278,14 +357,14 @@ class layout:
             reader = gdsMill.Gds2reader(self.gds)
             reader.loadFromFile(self.gds_file)
         else:
-            debug.info(3, "creating structure %s" % self.name)
+            debug.info(4, "creating structure %s" % self.name)
             self.gds = gdsMill.VlsiLayout(name=self.name, units=GDS["unit"])
 
     def print_gds(self, gds_file=None):
         """Print the gds file (not the vlsi class) to the terminal """
         if gds_file == None:
             gds_file = self.gds_file
-        debug.info(3, "Printing %s" % gds_file)
+        debug.info(4, "Printing %s" % gds_file)
         arrayCellLayout = gdsMill.VlsiLayout(units=GDS["unit"])
         reader = gdsMill.Gds2reader(arrayCellLayout, debugToTerminal=1)
         reader.loadFromFile(gds_file)

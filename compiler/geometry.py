@@ -43,11 +43,11 @@ class instance(geometry):
         
         self.compute_boundary(offset,mirror,rotate)
         
-        debug.info(3, "creating instance: " + self.name)
+        debug.info(4, "creating instance: " + self.name)
 
     def gds_write_file(self, newLayout):
         """Recursively writes all the sub-modules in this instance"""
-        debug.info(3, "writing instance: " + self.name)
+        debug.info(4, "writing instance: " + self.name)
         # make sure to write out my module/structure 
         # (it will only be written the first time though)
         self.mod.gds_write_file(self.gds)
@@ -172,7 +172,7 @@ class path(geometry):
 
     def gds_write_file(self, newLayout):
         """Writes the path to GDS"""
-        debug.info(3, "writing path (" + str(self.layerNumber) +  "): " + self.coordinates)
+        debug.info(4, "writing path (" + str(self.layerNumber) +  "): " + self.coordinates)
         newLayout.addPath(layerNumber=self.layerNumber,
                           purposeNumber=0,
                           coordinates=self.coordinates,
@@ -205,11 +205,11 @@ class label(geometry):
 
         self.size = 0
 
-        debug.info(3,"creating label " + self.text + " " + str(self.layerNumber) + " " + str(self.offset))
+        debug.info(4,"creating label " + self.text + " " + str(self.layerNumber) + " " + str(self.offset))
 
     def gds_write_file(self, newLayout):
         """Writes the text label to GDS"""
-        debug.info(3, "writing label (" + str(self.layerNumber) + "): " + self.text)
+        debug.info(4, "writing label (" + str(self.layerNumber) + "): " + self.text)
         newLayout.addText(text=self.text,
                           layerNumber=self.layerNumber,
                           purposeNumber=0,
@@ -238,13 +238,13 @@ class rectangle(geometry):
         self.width = self.size.x
         self.height = self.size.y
 
-        debug.info(3, "creating rectangle (" + str(self.layerNumber) + "): " 
+        debug.info(4, "creating rectangle (" + str(self.layerNumber) + "): " 
                    + str(self.width) + "x" + str(self.height) + " @ " + str(self.offset))
 
 
     def gds_write_file(self, newLayout):
         """Writes the rectangular shape to GDS"""
-        debug.info(3, "writing rectangle (" + str(self.layerNumber) + "):" 
+        debug.info(4, "writing rectangle (" + str(self.layerNumber) + "):" 
                    + str(self.width) + "x" + str(self.height) + " @ " + str(self.offset))
         newLayout.addBox(layerNumber=self.layerNumber,
                          purposeNumber=0,

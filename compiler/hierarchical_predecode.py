@@ -116,12 +116,11 @@ class hierarchical_predecode(design.design):
             name = "Xpre_inv[{0}]".format(inv_num)
             if (inv_num % 2 == 0):
                 y_off = inv_num * (self.inv.height)
-                offset = vector(self.x_off_inv_1, y_off)
                 mirror = "R0"
             else:
                 y_off = (inv_num + 1) * (self.inv.height)
-                offset = vector(self.x_off_inv_1, y_off)
                 mirror="MX"
+            offset = vector(self.x_off_inv_1, y_off)
             self.add_inst(name=name,
                           mod=self.inv,
                           offset=offset,
@@ -133,62 +132,62 @@ class hierarchical_predecode(design.design):
     def add_output_inverters(self):
         """ Create inverters for the inverted output decode signals. """
         
-        self.decode_out_positions = []
+        self.inv_inst = []
         z_pin = self.inv.get_pin("Z")
         for inv_num in range(self.number_of_outputs):
-            name = "Xpre2x4_nand_inv[{}]".format(inv_num)
+            name = "Xpre_nand_inv[{}]".format(inv_num)
             if (inv_num % 2 == 0):
-                y_factor = inv_num
+                y_off = inv_num * self.inv.height
                 mirror = "R0"
-                y_dir = 1
             else:
-                y_factor =inv_num + 1
+                y_off =(inv_num + 1)*self.inv.height
                 mirror = "MX"
-                y_dir = -1
-            base = vector(self.x_off_inv_2, self.inv.height * y_factor)   
-            self.add_inst(name=name,
-                          mod=self.inv,
-                          offset=base,
-                          mirror=mirror)
+            offset = vector(self.x_off_inv_2, y_off)   
+            self.inv_inst.append(self.add_inst(name=name,
+                                               mod=self.inv,
+                                               offset=offset,
+                                               mirror=mirror))
             self.connect_inst(["Z[{}]".format(inv_num),
                                "out[{}]".format(inv_num),
                                "vdd", "gnd"])
             
-            z_pin = self.inv.get_pin("Z")
+            z_pin = self.inv_inst[-1].get_pin("Z")
             self.add_layout_pin(text="out[{}]".format(inv_num),
                                 layer="metal1",
-                                offset=base+z_pin.ll().scale(1,y_dir),
+                                offset=z_pin.ll(),
                                 width=z_pin.width(),
-                                height=z_pin.height()*y_dir)
+                                height=z_pin.height())
             
 
     def add_nand(self,connections):
         """ Create the NAND stage for the decodes """
-        z_pin = self.nand.get_pin("Z")
-        a_pin = self.inv.get_pin("A")
+        self.nand_inst = []        
         for nand_input in range(self.number_of_outputs):
             inout = str(self.number_of_inputs)+"x"+str(self.number_of_outputs)
             name = "Xpre{0}_nand[{1}]".format(inout,nand_input)
-            rect_height = z_pin.uy()-a_pin.by()
             if (nand_input % 2 == 0):
-                y_off = nand_input * (self.nand.height)
+                y_off = nand_input * self.inv.height
                 mirror = "R0"
-                rect_offset = vector(self.x_off_nand + self.nand.width,
-                                     y_off + z_pin.uy() - rect_height)
             else:
-                y_off = (nand_input + 1) * (self.nand.height)
+                y_off = (nand_input + 1) * self.inv.height
                 mirror = "MX"
-                rect_offset =vector(self.x_off_nand + self.nand.width,
-                                    y_off - z_pin.uy())
-            self.add_inst(name=name,
-                          mod=self.nand,
-                          offset=[self.x_off_nand, y_off],
-                          mirror=mirror)
-            self.add_rect(layer="metal1",
-                          offset=rect_offset,
-                          width=self.metal1_width,
-                          height=rect_height)
+            offset = vector(self.x_off_nand, y_off)
+            self.nand_inst.append(self.add_inst(name=name,
+                                                mod=self.nand,
+                                                offset=offset,
+                                                mirror=mirror))
             self.connect_inst(connections[nand_input])
+            z_pin = self.nand_inst[nand_input].get_pin("Z")
+            a_pin = self.inv_inst[nand_input].get_pin("A")
+
+            y_min = min(z_pin.by(),a_pin.by())
+            y_max = max(z_pin.uy(),a_pin.uy())
+            offset = vector(z_pin.rx(),y_min)
+            self.add_rect(layer="metal1",
+                          offset=offset,
+                          width=self.metal1_width,
+                          height=y_max-y_min)
+            
 
     def route(self):
         self.route_input_inverters()

@@ -72,7 +72,7 @@ class replica_bitline(design.design):
         self.rbl_offset = self.bitcell_offset
 
         
-        self.height = self.rbl_offset.y + self.rbl.height 
+        self.height = self.rbl_offset.y + self.rbl.height + self.m2_pitch
         self.width = self.rbl_offset.x + self.bitcell.width
 
 
@@ -256,7 +256,7 @@ class replica_bitline(design.design):
         self.add_rect(layer="metal2",
                       offset=gnd_start,
                       width=drc["minwidth_metal2"],
-                      height=self.rbl.height+self.bitcell.height+self.inv.width)
+                      height=self.rbl.height+self.bitcell.height+self.inv.width+self.m2_pitch)
         self.add_layout_pin(text="gnd",
                             layer="metal1",
                             offset=gnd_start.scale(1,0),
@@ -296,8 +296,8 @@ class replica_bitline(design.design):
                 gnd_pin = pin
         gnd_end = gnd_pin.uc()
         # Add a couple midpoints so that the wire will drop a via and then route horizontal on M1
-        gnd_mid1 = gnd_start + vector(0,2*drc["metal2_to_metal2"])
-        gnd_mid2 = gnd_end + vector(0,2*drc["metal2_to_metal2"])
+        gnd_mid1 = gnd_start + vector(0,self.m2_pitch)
+        gnd_mid2 = gnd_end + vector(0,self.m2_pitch)
         self.add_wire(("metal1","via1","metal2"), [gnd_start, gnd_mid1, gnd_mid2, gnd_end])
         
 

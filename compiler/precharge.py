@@ -55,8 +55,8 @@ class precharge(design.design):
         self.temp_pmos = ptx(width=self.beta * self.ptx_width,
                              mults=2,
                              tx_type="pmos")
-        self.temp_pmos.remove_source_connect()
-        self.temp_pmos.remove_drain_connect()
+        #self.temp_pmos.remove_source_connect()
+        #self.temp_pmos.remove_drain_connect()
 
     def create_contacts(self):
         """Initializes all required contacts/vias for this module"""

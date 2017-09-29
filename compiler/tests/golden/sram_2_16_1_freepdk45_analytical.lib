@@ -74,7 +74,7 @@ cell (sram_2_16_1_freepdk45){
     dont_use  : true;
     map_only   : true;
     dont_touch : true;
-    area : 799.659625;
+    area : 692.2795;
 
     bus(DATA){
         bus_type  : DATA; 
@@ -140,14 +140,14 @@ cell (sram_2_16_1_freepdk45){
             related_pin : "clk"; 
             timing_type : falling_edge; 
             cell_rise(CELL_TABLE) {
-            values("0.12, 0.121, 0.131",\
-                   "0.12, 0.121, 0.131",\
-                   "0.12, 0.121, 0.131");
+            values("0.122, 0.123, 0.132",\
+                   "0.122, 0.123, 0.132",\
+                   "0.122, 0.123, 0.132");
             }
             cell_fall(CELL_TABLE) {
-            values("0.12, 0.121, 0.131",\
-                   "0.12, 0.121, 0.131",\
-                   "0.12, 0.121, 0.131");
+            values("0.122, 0.123, 0.132",\
+                   "0.122, 0.123, 0.132",\
+                   "0.122, 0.123, 0.132");
             }
         rise_transition(CELL_TABLE) {
             values("0.006, 0.007, 0.018",\

@@ -73,7 +73,7 @@ class delay():
 
         self.sf.write("* SRAM output loads\n")
         for i in range(self.word_size):
-            self.sf.write("CD{0} D[{0}] 0 {1}f\n".format(i,load))
+            self.sf.write("CD{0} d[{0}] 0 {1}f\n".format(i,load))
         
         # add access transistors for data-bus
         self.sf.write("* Transmission Gates for data-bus and control signals\n")
@@ -85,12 +85,12 @@ class delay():
             if i == self.probe_data:
                 stimuli.gen_data(stim_file=self.sf,
                                  clk_times=self.cycle_times,
-                                 sig_name="DATA[{0}]".format(i),
+                                 sig_name="data[{0}]".format(i),
                                  period=period,
                                  slew=slew)
             else:
                 stimuli.gen_constant(stim_file=self.sf,
-                                     sig_name="D[{0}]".format(i),
+                                     sig_name="d[{0}]".format(i),
                                      v_val=self.gnd)
 
         stimuli.gen_addr(self.sf,
@@ -127,7 +127,7 @@ class delay():
         self.sf.write("* Measure statements for delay and power\n")
 
         trig_name = "clk"
-        targ_name = "{0}".format("D[{0}]".format(self.probe_data))
+        targ_name = "{0}".format("d[{0}]".format(self.probe_data))
         trig_val = targ_val = 0.5 * self.vdd
         # add measure statments for delay0
         # delay the target to measure after the negetive edge

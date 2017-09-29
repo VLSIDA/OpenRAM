@@ -47,7 +47,6 @@ class control_logic(design.design):
         self.nor2 = nor_2()
         self.add_mod(self.nor2)
 
-
         # Special gates: inverters for buffering
         self.inv = self.inv1 = pinv()
         self.add_mod(self.inv1)
@@ -81,20 +80,20 @@ class control_logic(design.design):
         self.m1m2_via = contact(layer_stack=("metal1", "via1", "metal2"))
         self.m2m3_via = contact(layer_stack=("metal2", "via2", "metal3"))
 
+        # For different layer width vias
+        self.m1m2_offset_fix = vector(0,0.5*(drc["minwidth_metal2"]-drc["minwidth_metal1"]))
+        
         # M1/M2 routing pitch is based on contacted pitch
         self.m1_pitch = max(self.m1m2_via.width,self.m1m2_via.height) + max(drc["metal1_to_metal1"],drc["metal2_to_metal2"])
         self.m2_pitch = max(self.m2m3_via.width,self.m2m3_via.height) + max(drc["metal2_to_metal2"],drc["metal3_to_metal3"])
 
-        # Have the cell gap leave enough room to route an M1 wire.
+        # Have the cell gap leave enough room to route an M2 wire.
         # Some cells may have pwell/nwell spacing problems too when the wells are different heights.
-        self.cell_gap = max(self.m1_pitch,drc["pwell_to_nwell"])
-        
-        # This corrects the offset pitch difference between M2 and M1
-        self.offset_fix = vector(0.5*(drc["minwidth_metal2"]-drc["minwidth_metal1"]),0)
+        self.cell_gap = max(self.m2_pitch,drc["pwell_to_nwell"])
 
-        # Amount to shift a via from center-line path routing to it's offset
-        self.m1m2_via_offset = vector(self.m1m2_via.height,-0.5*drc["minwidth_metal2"])
-        self.m2m3_via_offset = vector(self.m2m3_via.height,-0.5*drc["minwidth_metal3"])
+        # Amount to shift a 90 degree rotated via from center-line path routing to it's offset
+        self.m1m2_via_offset = vector(self.m1m2_via.first_layer_height,-0.5*drc["minwidth_metal2"])
+        self.m2m3_via_offset = vector(self.m2m3_via.first_layer_height,-0.5*drc["minwidth_metal3"])
         
         # First RAIL Parameters: gnd, oe, oebar, cs, we, clk_buf, clk_bar
         self.rail_1_start_x = 0
@@ -127,6 +126,8 @@ class control_logic(design.design):
         self.add_rbl(0)
         self.add_layout_pins()
 
+        self.add_lvs_correspondence_points()
+
         self.height = max(self.replica_bitline.width, 3 * self.inv1.height, self.msf_offset.y)
         self.width = self.replica_bitline_offset.x + self.replica_bitline.height
 
@@ -146,10 +147,10 @@ class control_logic(design.design):
     def add_control_flops(self):
         """ Add the control signal flops for OEb, WEb, CSb. """
         self.msf_offset = vector(0, self.inv.height+self.msf_control.width+2*self.m2_pitch)
-        self.msf=self.add_inst(name="msf_control",
-                               mod=self.msf_control,
-                               offset=self.msf_offset,
-                               rotate=270)
+        self.msf_inst=self.add_inst(name="msf_control",
+                                    mod=self.msf_control,
+                                    offset=self.msf_offset,
+                                    rotate=270)
         # don't change this order. This pins are meant for internal connection of msf array inside the control logic.
         # These pins are connecting the msf_array inside of control_logic.
         temp = ["oeb", "csb", "web",
@@ -177,20 +178,19 @@ class control_logic(design.design):
         pin_set = ["oeb","csb","web"]
         for (i,pin_name) in zip(range(3),pin_set):
             subpin_name="din[{}]".format(i)
-            pin=self.msf.get_pin(subpin_name)
-            #pin=self.msf_control.get_pin("din[{}]".format(i))
-            self.add_layout_pin(text=pin_name,
-                                layer="metal2",
-                                offset=pin.ll(),
-                                width=pin.width(),
-                                height=pin.height())
+            pins=self.msf_inst.get_pins(subpin_name)
+            for pin in pins:
+                if pin.layer=="metal3":
+                    self.add_layout_pin(text=pin_name,
+                                        layer="metal3",
+                                        offset=pin.ll(),
+                                        width=pin.width(),
+                                        height=pin.height())
 
         pin=self.clk_inv1.get_pin("A")
         self.add_layout_pin(text="clk",
                             layer="metal1",
-                            offset=pin.ll(),
-                            width=pin.width(),
-                            height=pin.height())
+                            offset=pin.ll())
 
         pin=self.clk_inv1.get_pin("gnd")
         self.add_layout_pin(text="gnd",
@@ -354,31 +354,33 @@ class control_logic(design.design):
                                     width=drc["minwidth_metal2"],
                                     height=control_rail_height)
             else:
-                self.add_rect(layer="metal2",
-                              offset=offset,
-                              width=drc["minwidth_metal2"],
-                              height=control_rail_height)
+                # just for LVS correspondence...
+                self.add_label_pin(text=self.rail_1_names[i],
+                                   layer="metal2",
+                                   offset=offset,
+                                   width=drc["minwidth_metal2"],
+                                   height=control_rail_height)
             self.rail_1_x_offsets[self.rail_1_names[i]]=offset.x + 0.5*drc["minwidth_metal2"] # center offset
 
         # pins are in order ["oeb","csb","web"] # 0 1 2
-        self.connect_rail_from_left_m2m3(self.msf,"dout_bar[0]","oe")
-        self.connect_rail_from_left_m2m3(self.msf,"dout[0]","oe_bar")
-        self.connect_rail_from_left_m2m3(self.msf,"dout_bar[1]","cs")
-        self.connect_rail_from_left_m2m3(self.msf,"dout_bar[2]","we")
+        self.connect_rail_from_left_m2m3(self.msf_inst,"dout_bar[0]","oe")
+        self.connect_rail_from_left_m2m3(self.msf_inst,"dout[0]","oe_bar")
+        self.connect_rail_from_left_m2m3(self.msf_inst,"dout_bar[1]","cs")
+        self.connect_rail_from_left_m2m3(self.msf_inst,"dout_bar[2]","we")
 
         # Connect the gnd and vdd of the control 
-        gnd_pins = self.msf.get_pins("gnd")
+        gnd_pins = self.msf_inst.get_pins("gnd")
         for p in gnd_pins:
             if p.layer != "metal2":
                 continue
             gnd_pin = p.rc()
             gnd_rail_position = vector(self.rail_1_x_offsets["gnd"], gnd_pin.y)
-            self.add_wire(("metal1","via1","metal2"),[gnd_pin, gnd_rail_position, gnd_rail_position - vector(0,self.m2_pitch)])            
-            self.add_via(layers=("metal1","via1","metal2"),
-                         offset=gnd_pin + self.m1m2_via_offset,
+            self.add_wire(("metal3","via2","metal2"),[gnd_pin, gnd_rail_position, gnd_rail_position - vector(0,self.m2_pitch)])            
+            self.add_via(layers=("metal2","via2","metal3"),
+                         offset=gnd_pin + self.m2m3_via_offset,
                          rotate=90)
 
-        vdd_pins = self.msf.get_pins("vdd")
+        vdd_pins = self.msf_inst.get_pins("vdd")
         for p in vdd_pins:
             if p.layer != "metal1":
                 continue
@@ -449,6 +451,7 @@ class control_logic(design.design):
         in_pin = inst.get_pin(pin).rc()
         rail_position = vector(self.rail_1_x_offsets[rail], in_pin.y)
         self.add_wire(("metal3","via2","metal2"),[in_pin, rail_position, rail_position - vector(0,self.m2_pitch)])
+        # This via is needed for clk_bar, but is extraneous for the output signals
         self.add_via(layers=("metal1","via1","metal2"),
                      offset=in_pin + self.m1m2_via_offset,
                      rotate=90)
@@ -501,29 +504,40 @@ class control_logic(design.design):
         self.connect_rail_from_left_m2m3(self.clk_bar,"Z","clk_bar")        
         
         # clk_buf to msf control flops
-        msf_clk_pin = self.msf.get_pin("clk").bc()
+        msf_clk_pin = self.msf_inst.get_pin("clk").bc()
         mid1 = msf_clk_pin - vector(0,self.m2_pitch)
         clk_buf_rail_position = vector(self.rail_1_x_offsets["clk_buf"], mid1.y)
         # route on M2 to allow vdd connection
         self.add_wire(("metal2","via1","metal1"),[msf_clk_pin, mid1, clk_buf_rail_position])        
 
-    def connect_pin_to_output_pin(self, inst, pin_name, out_name):
+    def connect_right_pin_to_output_pin(self, inst, pin_name, out_name):
         """ Create an output pin on the bottom side from the pin of a given instance. """
-        out_pin = inst.get_pin(pin_name).center()
+        out_pin = inst.get_pin(pin_name).ur()
         self.add_via(layers=("metal1","via1","metal2"),
-                     offset=out_pin + self.m1m2_via_offset,
+                     offset=out_pin + vector(self.m1m2_via.height,-self.m1m2_via.first_layer_width) - self.m1m2_offset_fix,
                      rotate=90)
         self.add_layout_pin(text=out_name,
                             layer="metal2",
                             offset=out_pin.scale(1,0),
                             height=out_pin.y)
-                            
+
+    def connect_left_pin_to_output_pin(self, inst, pin_name, out_name):
+        """ Create an output pin on the bottom side from the pin of a given instance. """
+        out_pin = inst.get_pin(pin_name).ul()
+        self.add_via(layers=("metal1","via1","metal2"),
+                     offset=out_pin + vector(self.m1m2_via.height,-self.m1m2_via.first_layer_width) - self.m1m2_offset_fix,
+                     rotate=90)
+        self.add_layout_pin(text=out_name,
+                            layer="metal2",
+                            offset=out_pin.scale(1,0),
+                            height=out_pin.y)
+        
     def add_output_routing(self):
         """ Output pin routing """
-        self.connect_pin_to_output_pin(self.tri_en, "Z", "tri_en")
-        self.connect_pin_to_output_pin(self.tri_en_bar, "Z", "tri_en_bar")
-        self.connect_pin_to_output_pin(self.w_en, "Z", "w_en")        
-        self.connect_pin_to_output_pin(self.s_en, "Z", "s_en")
+        self.connect_right_pin_to_output_pin(self.tri_en, "Z", "tri_en")
+        self.connect_right_pin_to_output_pin(self.tri_en_bar, "Z", "tri_en_bar")
+        self.connect_right_pin_to_output_pin(self.w_en, "Z", "w_en")        
+        self.connect_left_pin_to_output_pin(self.s_en, "Z", "s_en")
 
     def add_supply_routing(self):
 
@@ -614,3 +628,24 @@ class control_logic(design.design):
                       width=rows_end-rows_start,
                       height=well_width)
 
+
+    def add_lvs_correspondence_points(self):
+        """ This adds some points for easier debugging if LVS goes wrong. 
+        These should probably be turned off by default though, since extraction
+        will show these as ports in the extracted netlist.
+        """
+        pin=self.clk_inv1.get_pin("Z")
+        self.add_label_pin(text="clk1_bar",
+                           layer="metal1",
+                           offset=pin.ll(),
+                           height=pin.height(),
+                           width=pin.width())
+
+        pin=self.clk_inv2.get_pin("Z")
+        self.add_label_pin(text="clk2",
+                           layer="metal1",
+                           offset=pin.ll(),
+                           height=pin.height(),
+                           width=pin.width())
+
+        

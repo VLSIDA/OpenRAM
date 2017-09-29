@@ -53,9 +53,9 @@ class pinv(design.design):
 
         # These aren't for instantiating, but we use them to get the dimensions
         self.nwell_contact = contact.contact(layer_stack=("active", "contact", "metal1"),
-                                             dimensions=(1, self.pmos.num_of_tacts))
+                                             dimensions=(1, self.pmos.num_contacts))
         self.pwell_contact = contact.contact(layer_stack=("active", "contact", "metal1"),
-                                             dimensions=(1, self.nmos.num_of_tacts))
+                                             dimensions=(1, self.nmos.num_contacts))
 
         self.extend_wells()
         self.extend_active()
@@ -96,15 +96,15 @@ class pinv(design.design):
         """Intiializes a ptx object"""
         self.nmos = ptx(width=self.nmos_size,
                         mults=self.tx_mults,
-                        tx_type="nmos")
-        self.nmos.connect_fingered_poly()
-        self.nmos.connect_fingered_active()
+                        tx_type="nmos",
+                        connect_active=True,
+                        connect_poly=True)
         self.add_mod(self.nmos)
         self.pmos = ptx(width=self.pmos_size,
                         mults=self.tx_mults,
-                        tx_type="pmos")
-        self.pmos.connect_fingered_poly()
-        self.pmos.connect_fingered_active()
+                        tx_type="pmos",
+                        connect_active=True,
+                        connect_poly=True)
         self.add_mod(self.pmos)
 
     def setup_layout_constants(self):
@@ -333,14 +333,14 @@ class pinv(design.design):
                                          - self.nwell_contact.width,
                                      self.pmos.active_contact_positions[0].y)
         self.nwell_contact_position = self.pmos_position + well_contact_offset
-        self.nwell_contact=self.add_contact(layer_stack,self.nwell_contact_position,(1,self.pmos.num_of_tacts))
+        self.nwell_contact=self.add_contact(layer_stack,self.nwell_contact_position,(1,self.pmos.num_contacts))
 
         well_contact_offset = vector(self.nmos.active_position.x 
                                                + self.active_width 
                                                - self.pwell_contact.width,
                                      self.nmos.active_contact_positions[0].y)
         self.pwell_contact_position = self.nmos_position + well_contact_offset
-        self.pwell_contact=self.add_contact(layer_stack,self.pwell_contact_position,(1,self.nmos.num_of_tacts))
+        self.pwell_contact=self.add_contact(layer_stack,self.pwell_contact_position,(1,self.nmos.num_contacts))
 
     def connect_well_contacts(self):
         """Connects the well taps to its respective power rails"""

@@ -217,9 +217,12 @@ def run_lvs(name, gds_name, sp_name):
     test = re.compile("WARNING:")
     extwarnings = filter(test.search, results)
     for e in extwarnings:
-        debug.error(e.strip("\n"))
+        debug.warning(e.strip("\n"))
 
-    ext_errors = len(exterrors) + len(extwarnings)
+    # MRG - 9/26/17 - Change this to exclude warnings because of
+    # multiple labels on different pins in column mux.
+    ext_errors = len(exterrors)
+    ext_warnings = len(extwarnings) 
 
     # also check the output file
     f = open(outfile, "r")
@@ -234,7 +237,8 @@ def run_lvs(name, gds_name, sp_name):
 
     out_errors = len(stdouterrors)
 
-    return summary_errors + out_errors + ext_errors
+    total_errors = summary_errors + out_errors + ext_errors
+    return total_errors
 
 
 def run_pex(name, gds_name, sp_name, output=None):

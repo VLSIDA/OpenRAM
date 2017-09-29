@@ -17,7 +17,7 @@ class contact(design.design):
                                             dimensions[0],
                                             dimensions[1])
         design.design.__init__(self, name)
-        debug.info(3, "create contact object {0}".format(name))
+        debug.info(4, "create contact object {0}".format(name))
 
         self.layer_stack = layer_stack
         self.dimensions = dimensions

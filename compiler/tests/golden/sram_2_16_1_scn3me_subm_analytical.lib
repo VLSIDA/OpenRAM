@@ -74,7 +74,7 @@ cell (sram_2_16_1_scn3me_subm){
     dont_use  : true;
     map_only   : true;
     dont_touch : true;
-    area : 102102.39;
+    area : 89304.3;
 
     bus(DATA){
         bus_type  : DATA; 
@@ -140,14 +140,14 @@ cell (sram_2_16_1_scn3me_subm){
             related_pin : "clk"; 
             timing_type : falling_edge; 
             cell_rise(CELL_TABLE) {
-            values("0.57, 0.617, 1.058",\
-                   "0.57, 0.617, 1.058",\
-                   "0.57, 0.617, 1.058");
+            values("0.553, 0.6, 1.041",\
+                   "0.553, 0.6, 1.041",\
+                   "0.553, 0.6, 1.041");
             }
             cell_fall(CELL_TABLE) {
-            values("0.57, 0.617, 1.058",\
-                   "0.57, 0.617, 1.058",\
-                   "0.57, 0.617, 1.058");
+            values("0.553, 0.6, 1.041",\
+                   "0.553, 0.6, 1.041",\
+                   "0.553, 0.6, 1.041");
             }
         rise_transition(CELL_TABLE) {
             values("0.024, 0.081, 0.61",\

@@ -11,7 +11,7 @@ class sense_amp(design.design):
     Sense amplifier to read a pair of bit-lines.
     """
 
-    pin_names = ["BL", "BR", "Dout", "SCLK", "vdd", "gnd"]
+    pin_names = ["bl", "br", "dout", "en", "vdd", "gnd"]
     (width,height) = utils.get_libcell_size("sense_amp", GDS["unit"], layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "sense_amp", GDS["unit"], layer["boundary"])
 

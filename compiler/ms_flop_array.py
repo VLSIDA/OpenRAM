@@ -80,12 +80,13 @@ class ms_flop_array(design.design):
                                     width=gnd_pin.width(),
                                     height=gnd_pin.height())
 
-            din_pin = self.ms_inst[i].get_pin("din")
-            self.add_layout_pin(text="din[{}]".format(i),
-                                layer="metal2",
-                                offset=din_pin.ll(),
-                                width=din_pin.width(),
-                                height=din_pin.height())
+            din_pins = self.ms_inst[i].get_pins("din")
+            for din_pin in din_pins:
+                self.add_layout_pin(text="din[{}]".format(i),
+                                    layer=din_pin.layer,
+                                    offset=din_pin.ll(),
+                                    width=din_pin.width(),
+                                    height=din_pin.height())
 
             dout_pin = self.ms_inst[i].get_pin("dout")
             self.add_layout_pin(text="dout[{}]".format(i),

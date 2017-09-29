@@ -624,6 +624,8 @@ class sram(design.design):
 
 
     def add_lvs_correspondence_points(self):
+        if self.num_banks==1: return
+        
         for n in self.control_bus_names:
             self.add_label(text=n,
                            layer="metal2",  

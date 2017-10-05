@@ -92,10 +92,7 @@ class bank(design.design):
         self.add_control_pins()
         self.route_vdd_supply()
         self.route_gnd_supply()
-
-
-
-
+        
     def add_modules(self):
         """ Add modules. The order should not matter! """
         self.add_bitcell_array()
@@ -360,13 +357,13 @@ class bank(design.design):
     def add_row_decoder(self):
         """  Add the hierarchical row decoder  """
 
-
+        
         # The address and control bus will be in between decoder and the main memory array 
         # This bus will route address bits to the decoder input and column mux inputs. 
         # The wires are actually routed after we placed the stuff on both sides.
         # The predecoder is below the x-axis and the main decoder is above the x-axis
         # The address flop and decoder are aligned in the x coord.
-
+        
         decoder_x_offset = self.decoder.width + self.overall_central_bus_width
         addr_x_offset = self.msf_address.height
         offset = vector(max(decoder_x_offset, addr_x_offset),
@@ -432,11 +429,10 @@ class bank(design.design):
         temp.extend(["vdd", "gnd"])
         self.connect_inst(temp)
 
-
     def add_column_decoder(self):
         """ Create a 2:4 decoder to decode column select lines if the col_addr_size = 4 """
 
-
+        
         if self.col_addr_size == 1:
             return # This is done from the FF outputs directly
         if self.col_addr_size == 2:
@@ -590,8 +586,8 @@ class bank(design.design):
                                gated_name,
                                "vdd",
                                "gnd"])
-            
 
+            
             # Connect the logic output to inverter input
             pre = logic_inst.get_pin("Z").lc()
             out_position = logic_inst.get_pin("Z").rc() + vector(0.5*self.m1_width,0)

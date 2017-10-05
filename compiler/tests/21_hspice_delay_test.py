@@ -52,15 +52,15 @@ class timing_sram_test(unittest.TestCase):
         data = d.analyze(probe_address, probe_data,slews,loads)
 
         if OPTS.tech_name == "freepdk45":
-            golden_data = {'read1_power': 0.025791799999999997,
-                           'read0_power': 0.0260092,
-                           'write0_power': 0.0241064,
-                           'delay1': [0.0475006],
-                           'delay0': [0.1380874],
+            golden_data = {'read1_power': 0.025833000000000002,
+                           'read0_power': 0.026039,
+                           'write0_power': 0.024105,
+                           'delay1': [0.047506],
+                           'delay0': [0.13799999999999998],
                            'min_period': 0.322,
-                           'write1_power': 0.024207199999999998,
-                           'slew0': [0.026617000000000002],
-                           'slew1': [0.0193804]}            
+                           'write1_power': 0.024214,
+                           'slew0': [0.026966],
+                           'slew1': [0.019338]}
         elif OPTS.tech_name == "scn3me_subm":
             golden_data = {'read1_power': 3.1765,
                            'read0_power': 3.1929,

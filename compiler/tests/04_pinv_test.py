@@ -25,9 +25,9 @@ class pinv_test(unittest.TestCase):
         import pinv
         import tech
 
-        debug.info(2, "Checking min size inverter")
-        tx = pinv.pinv(nmos_width=tech.drc["minwidth_tx"], beta=tech.parameter["pinv_beta"])
-        self.local_check(tx)
+        # debug.info(2, "Checking min size inverter")
+        # tx = pinv.pinv(nmos_width=tech.drc["minwidth_tx"], beta=tech.parameter["pinv_beta"])
+        # self.local_check(tx)
 
         debug.info(2, "Checking 2x min size inverter")
         tx = pinv.pinv(nmos_width=2 * tech.drc["minwidth_tx"], beta=tech.parameter["pinv_beta"])

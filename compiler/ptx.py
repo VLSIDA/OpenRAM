@@ -238,17 +238,17 @@ class ptx(design.design):
         # following poly(s)
         for i in range(0, self.mults):
             if self.connect_poly:
-                self.add_layout_pin(text="G",
-                                    layer="poly",
-                                    offset=[poly_xoffset, poly_yoffset],
-                                    width=self.poly_width,
-                                    height=self.poly_height)
-            else:
                 # Add the rectangle in case we remove the pin when joining fingers
                 self.add_rect(layer="poly",
                               offset=[poly_xoffset, poly_yoffset],
                               width=self.poly_width,
                               height=self.poly_height)
+            else:
+                self.add_layout_pin(text="G",
+                                    layer="poly",
+                                    offset=[poly_xoffset, poly_yoffset],
+                                    width=self.poly_width,
+                                    height=self.poly_height)
             self.poly_positions.append(vector(poly_xoffset, poly_yoffset))
             poly_xoffset += self.mults_poly_to_poly + drc["minwidth_poly"]
 
@@ -325,17 +325,17 @@ class ptx(design.design):
                                  size=(1, self.num_contacts))
         # source are even
         if self.connect_active:
-            self.add_layout_pin(text="S",
-                                layer="metal1",
-                                offset=offset+contact.second_layer_position,
-                                width=contact.second_layer_width,
-                                height=contact.second_layer_height)
-        else:
             # Add this in case the pins get removed when fingers joined
             self.add_rect(layer="metal1",
                           offset=offset+contact.second_layer_position,
                           width=contact.second_layer_width,
                           height=contact.second_layer_height)
+        else:
+            self.add_layout_pin(text="S",
+                                layer="metal1",
+                                offset=offset+contact.second_layer_position,
+                                width=contact.second_layer_width,
+                                height=contact.second_layer_height)
         self.active_contact_positions.append(offset)
 
         # middle contact columns
@@ -350,18 +350,18 @@ class ptx(design.design):
                                      size=(1, self.num_contacts))
             # source are even, drain are odd
             if self.connect_active:
+                # Add this in case the pins get removed when fingers joined
+                self.add_rect(layer="metal1",
+                              offset=offset+contact.second_layer_position,
+                              width=contact.second_layer_width,
+                              height=contact.second_layer_height)
+            else:
                 name = "S" if i%2==1 else "D"
                 self.add_layout_pin(text=name,
                                     layer="metal1",
                                     offset=offset+contact.second_layer_position,
                                     width=contact.second_layer_width,
                                     height=contact.second_layer_height)
-            else:
-                # Add this in case the pins get removed when fingers joined
-                self.add_rect(layer="metal1",
-                              offset=offset+contact.second_layer_position,
-                              width=contact.second_layer_width,
-                              height=contact.second_layer_height)
 
             self.active_contact_positions.append(offset)
 
@@ -375,17 +375,17 @@ class ptx(design.design):
                                  size=(1, self.num_contacts))
         # source are even, drain are odd
         if self.connect_active:
+            self.add_rect(layer="metal1",
+                          offset=offset+contact.second_layer_position,
+                          width=contact.second_layer_width,
+                          height=contact.second_layer_height)
+        else:
             name = "D" if self.mults%2==1 else "S" 
             self.add_layout_pin(text=name,
                                 layer="metal1",
                                 offset=offset+contact.second_layer_position,
                                 width=contact.second_layer_width,
                                 height=contact.second_layer_height)
-        else:
-            self.add_rect(layer="metal1",
-                          offset=offset+contact.second_layer_position,
-                          width=contact.second_layer_width,
-                          height=contact.second_layer_height)
         # Add this in case the pins get removed when fingers joined
         self.active_contact_positions.append(offset)
 

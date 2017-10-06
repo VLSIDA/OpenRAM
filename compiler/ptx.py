@@ -3,6 +3,7 @@ import debug
 from tech import drc, info, spice
 from vector import vector
 from contact import contact
+import path
 import re
 
 class ptx(design.design):
@@ -146,10 +147,13 @@ class ptx(design.design):
                               - self.poly_positions[0].x
         poly_connect_position = self.poly_positions[0] - vector(0, self.poly_width)
         if len(self.poly_positions) > 1:
-            self.add_rect(layer="poly",
-                           offset=poly_connect_position,
-                           width=poly_connect_length,
-                           height=drc["minwidth_poly"])
+            self.remove_layout_pin("G") # only keep the main pin
+            self.add_layout_pin(text="G",
+                                layer="poly",
+                                offset=poly_connect_position,
+                                width=poly_connect_length,
+                                height=drc["minwidth_poly"])
+
             self.poly_connect_index = len(self.objs) - 1
 
         # change the name so it is unique and specifies drain/srouce (p) routed
@@ -204,11 +208,27 @@ class ptx(design.design):
         # allows one to connect the source and drains
         self.source_connect_index = None
         if self.source_positions:
+            self.remove_layout_pin("S") # remove the individual connections
+            self.source_positions = path.create_rectilinear_route(self.source_positions)
             self.add_path(("metal1"), self.source_positions)
+            # The source positions are odd since the second one is always redundant
+            # so we must use the THIRD one
+            self.add_center_layout_pin(text="S",
+                                       layer="metal1",
+                                       start=self.source_positions[2]-vector(0.5*drc["minwidth_metal1"],0),
+                                       end=self.source_positions[-2]+vector(0.5*drc["minwidth_metal1"],0))
             self.source_connect_index = len(self.insts) - 1
         self.drain_connect_index = None
         if self.drain_positions:
+            self.remove_layout_pin("D") # remove the individual connections
+            self.drain_positions = path.create_rectilinear_route(self.drain_positions)
             self.add_path(("metal1"), self.drain_positions)
+            # The source positions are odd since the second one is always redundant            
+            # so we must use the THIRD one
+            self.add_center_layout_pin(text="D",
+                                       layer="metal1",
+                                       start=self.drain_positions[2]-vector(0.5*drc["minwidth_metal1"],0),
+                                       end=self.drain_positions[-2]+vector(0.5*drc["minwidth_metal1"],0))
             self.drain_connect_index = len(self.insts) - 1
             
     def add_poly(self):
@@ -219,10 +239,11 @@ class ptx(design.design):
         self.poly_positions = []
         # following poly(s)
         for i in range(0, self.mults):
-            self.add_rect(layer="poly",
-                          offset=[poly_xoffset, poly_yoffset],
-                          width=self.poly_width,
-                          height=self.poly_height)
+            self.add_layout_pin(text="G",
+                                layer="poly",
+                                offset=[poly_xoffset, poly_yoffset],
+                                width=self.poly_width,
+                                height=self.poly_height)
             self.poly_positions.append(vector(poly_xoffset, poly_yoffset))
             poly_xoffset += self.mults_poly_to_poly + drc["minwidth_poly"]
 
@@ -294,9 +315,15 @@ class ptx(design.design):
         contact_xoffset = 0
         contact_yoffset = (self.active_height - self.active_contact.height) / 2
         offset = vector(contact_xoffset, contact_yoffset)
-        self.add_contact(layers=("active", "contact", "metal1"),
-                         offset=offset,
-                         size=(1, self.num_contacts))
+        contact=self.add_contact(layers=("active", "contact", "metal1"),
+                                 offset=offset,
+                                 size=(1, self.num_contacts))
+        # source are even
+        self.add_layout_pin(text="S",
+                            layer="metal1",
+                            offset=offset+contact.second_layer_position,
+                            width=contact.second_layer_width,
+                            height=contact.second_layer_height)
         self.active_contact_positions.append(offset)
 
         # middle contact columns
@@ -306,9 +333,16 @@ class ptx(design.design):
                               - (drc["minwidth_contact"] / 2) - \
                               self.active_contact.via_layer_position.x
             offset = vector(contact_xoffset, contact_yoffset)
-            self.add_contact(layers=("active", "contact", "metal1"),
-                             offset=offset,
-                             size=(1, self.num_contacts))
+            contact=self.add_contact(layers=("active", "contact", "metal1"),
+                                     offset=offset,
+                                     size=(1, self.num_contacts))
+            # source are even, drain are odd
+            name = "S" if i%2==1 else "D"
+            self.add_layout_pin(text=name,
+                                layer="metal1",
+                                offset=offset+contact.second_layer_position,
+                                width=contact.second_layer_width,
+                                height=contact.second_layer_height)
 
             self.active_contact_positions.append(offset)
 
@@ -317,9 +351,16 @@ class ptx(design.design):
                           + self.poly_width + drc["contact_to_poly"] - \
                           self.active_contact.via_layer_position.x
         offset = vector(contact_xoffset, contact_yoffset)
-        self.add_contact(layers=("active", "contact", "metal1"),
-                         offset=offset,
-                         size=(1, self.num_contacts))
+        contact=self.add_contact(layers=("active", "contact", "metal1"),
+                                 offset=offset,
+                                 size=(1, self.num_contacts))
+        # source are even, drain are odd
+        name = "D" if self.mults%2==1 else "S" 
+        self.add_layout_pin(text=name,
+                            layer="metal1",
+                            offset=offset+contact.second_layer_position,
+                            width=contact.second_layer_width,
+                            height=contact.second_layer_height)
         self.active_contact_positions.append(offset)
 
 

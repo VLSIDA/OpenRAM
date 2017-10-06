@@ -1,3 +1,5 @@
+import debug
+from tech import GDS
 from vector import vector
 from tech import layer
 
@@ -142,3 +144,21 @@ class pin_layout:
         """ Bottom center point """
         return vector(0.5*(self.rect[0].x+self.rect[1].x),self.rect[0].y)
 
+
+    def gds_write_file(self, newLayout):
+        """Writes the pin shape and label to GDS"""
+        debug.info(4, "writing pin (" + str(self.layer) + "):" 
+                   + str(self.width()) + "x" + str(self.height()) + " @ " + str(self.ll()))
+        newLayout.addBox(layerNumber=layer[self.layer],
+                         purposeNumber=0,
+                         offsetInMicrons=self.ll(),
+                         width=self.width(),
+                         height=self.height(),
+                         center=False)
+        newLayout.addText(text=self.name,
+                          layerNumber=layer[self.layer],
+                          purposeNumber=0,
+                          offsetInMicrons=self.ll(),
+                          magnification=GDS["zoom"],
+                          rotate=None)
+    

@@ -27,7 +27,9 @@ class ptx_test(unittest.TestCase):
         debug.info(2, "Checking three fingers PMOS")
         fet = ptx.ptx(width=tech.drc["minwidth_tx"],
                       mults=3,
-                      tx_type="pmos")
+                      tx_type="pmos",
+                      connect_active=True,
+                      connect_poly=True)
         self.local_check(fet)
 
         OPTS.check_lvsdrc = True

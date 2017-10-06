@@ -172,6 +172,9 @@ class layout:
         
         self.add_layout_pin(text, layer, ll_offset, width, height)
         
+    def remove_layout_pin(self, text):
+        """Delete a labeled pin (or all pins of the same name)"""
+        self.pin_map[text]=[]
         
     def add_layout_pin(self, text, layer, offset, width=None, height=None):
         """Create a labeled pin """
@@ -179,14 +182,7 @@ class layout:
             width=drc["minwidth_{0}".format(layer)]
         if height==None:
             height=drc["minwidth_{0}".format(layer)]
-        self.add_rect(layer=layer,
-                      offset=offset,
-                      width=width,
-                      height=height)
-        self.add_label(text=text,
-                       layer=layer,
-                       offset=offset)
-
+        
         new_pin = pin_layout(text, [offset,offset+vector(width,height)], layer)
 
         try:
@@ -384,6 +380,9 @@ class layout:
             i.gds_write_file(newLayout)
         for i in self.objs:
             i.gds_write_file(newLayout)
+        for pin_name in self.pin_map.keys():
+            for pin in self.pin_map[pin_name]:
+                pin.gds_write_file(newLayout)
         self.visited = True
 
     def gds_write(self, gds_name):

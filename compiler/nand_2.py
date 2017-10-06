@@ -36,6 +36,7 @@ class nand_2(design.design):
 
         self.add_pins()
         self.create_layout()
+        print self.pin_map
         self.DRC_LVS()
 
     def add_pins(self):

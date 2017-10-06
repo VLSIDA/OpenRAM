@@ -116,8 +116,19 @@ class layout:
             self.objs.append(geometry.rectangle(layerNumber, offset, width, height))
             return self.objs[-1]
         return None
-        
-                         
+
+    def add_center_rect(self, layer, start, end):
+        """ Add a min-width rectangle from centered on the start and end points"""
+        minwidth_layer = drc["minwidth_{}".format(layer)]        
+        if start.x!=end.x and start.y!=end.y:
+            debug.error("Nonrectilinear center rect!",-1)
+        elif start.x!=end.x:
+            offset = vector(0,0.5*minwidth_layer)
+        else:
+            offset = vector(0.5*minwidth_layer,0)
+        return self.add_rect(layer,start-offset,end.x-start.x,minwidth_layer)
+
+    
     def get_pin(self, text):
         """ Return the pin or list of pins """
         try:
@@ -170,7 +181,7 @@ class layout:
         width = max(minwidth_layer,width)
         
         
-        self.add_layout_pin(text, layer, ll_offset, width, height)
+        return self.add_layout_pin(text, layer, ll_offset, width, height)
         
     def remove_layout_pin(self, text):
         """Delete a labeled pin (or all pins of the same name)"""
@@ -192,10 +203,12 @@ class layout:
             pin_list = self.pin_map[text]
             for pin in pin_list:
                 if pin == new_pin:
-                    return
+                    return pin
             self.pin_map[text].append(new_pin)
         except KeyError:
             self.pin_map[text] = [new_pin]
+
+        return new_pin
 
     def add_label_pin(self, text, layer, offset, width=None, height=None):
         """Create a labeled pin WITHOUT the pin data structure. This is not an

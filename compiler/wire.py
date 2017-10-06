@@ -25,7 +25,7 @@ class wire(path):
 
     def create_layout(self):
         self.setup_layers()
-        self.create_rectilinear_route()
+        self.create_rectilinear()
         self.create_vias()
         self.create_rectangles()
         # wires and paths should not be offset to (0,0)

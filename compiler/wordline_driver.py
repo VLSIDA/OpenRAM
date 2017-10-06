@@ -59,11 +59,11 @@ class wordline_driver(design.design):
 
     def create_layout(self):
         # Wordline enable connection
-        self.add_layout_pin(text="en",
-                            layer="metal2",
-                            offset=[drc["minwidth_metal1"] + 2 * drc["metal1_to_metal1"],0],
-                            width=drc["minwidth_metal2"],
-                            height=self.height)
+        en_pin=self.add_layout_pin(text="en",
+                                   layer="metal2",
+                                   offset=[drc["minwidth_metal1"] + 2 * drc["metal1_to_metal1"],0],
+                                   width=drc["minwidth_metal2"],
+                                   height=self.height)
         
         self.add_layout_pin(text="gnd",
                             layer="metal1",
@@ -113,85 +113,82 @@ class wordline_driver(design.design):
             
             
             # add inv1 based on the info above
-            self.add_inst(name=name_inv1,
-                          mod=self.inv,
-                          offset=name_inv1_offset,
-                          mirror=inst_mirror )
+            inv1_inst=self.add_inst(name=name_inv1,
+                                    mod=self.inv,
+                                    offset=name_inv1_offset,
+                                    mirror=inst_mirror )
             self.connect_inst(["en", "en_bar[{0}]".format(row),
                                "vdd", "gnd"])
             # add nand 2
-            self.add_inst(name=name_nand,
-                          mod=self.nand2,
-                          offset=nand2_offset,
-                          mirror=inst_mirror)
+            nand_inst=self.add_inst(name=name_nand,
+                                    mod=self.nand2,
+                                    offset=nand2_offset,
+                                    mirror=inst_mirror)
             self.connect_inst(["in[{0}]".format(row),
                                "en_bar[{0}]".format(row),
                                "net[{0}]".format(row),
                                "vdd", "gnd"])
             # add inv2
-            self.add_inst(name=name_inv2,
-                          mod=self.inv,
-                          offset=inv2_offset,
-                          mirror=inst_mirror)
+            inv2_inst=self.add_inst(name=name_inv2,
+                                mod=self.inv,
+                                    offset=inv2_offset,
+                                    mirror=inst_mirror)
             self.connect_inst(["net[{0}]".format(row),
                                "wl[{0}]".format(row),
                                "vdd", "gnd"])
 
-            # clk connection
-            clk_offset= vector(drc["minwidth_metal1"] + 2 * drc["metal1_to_metal1"],
-                               y_offset + cell_dir.y * self.inv.get_pin("A").by())
-            self.add_rect(layer="metal1",
-                          offset=clk_offset,
-                          width=self.x_offset0 - 2*drc["metal1_to_metal1"],
-                          height=cell_dir.y *drc["minwidth_metal1"])
-            self.add_via(layers=("metal1", "via1", "metal2"),
-                         offset=clk_offset)
+            # en connection
+            a_pin = inv1_inst.get_pin("A")
+            a_pos = a_pin.lc()
+            clk_offset = vector(en_pin.bc().x,a_pos.y)
+            self.add_center_rect(layer="metal1",
+                                 start=clk_offset,
+                                 end=a_pos)
+            self.add_center_via(layers=("metal1", "via1", "metal2"),
+                                offset=clk_offset)
 
             # first inv to nand2 B
-            inv_to_nand2B_offset = [self.x_offset1 - drc["minwidth_metal1"],
-                                  y_offset + cell_dir.y * self.nand2.get_pin("B").by()]
-            self.add_rect(layer="metal1",
-                          offset=inv_to_nand2B_offset,
-                          width=drc["minwidth_metal1"],
-                          height=cell_dir.y*inv_nand2B_connection_height)
+            zl_pos = inv1_inst.get_pin("Z").lc()
+            zr_pos = inv1_inst.get_pin("Z").rc()
+            bl_pos = nand_inst.get_pin("B").lc()
+            br_pos = nand_inst.get_pin("B").rc()
+            self.add_path("metal1", [zl_pos, zr_pos, bl_pos, br_pos])
+
             # Nand2 out to 2nd inv
-            nand2_to_2ndinv_offset =[self.x_offset2,
-                                  y_offset + cell_dir.y * self.nand2.get_pin("Z").by()]
-            self.add_rect(layer="metal1",
-                          offset=nand2_to_2ndinv_offset,
-                          width=drc["minwidth_metal1"],
-                          height=cell_dir.y * drc["minwidth_metal1"])
+            zl_pos = nand_inst.get_pin("Z").lc()
+            zr_pos = nand_inst.get_pin("Z").rc()
+            bl_pos = inv2_inst.get_pin("A").lc()
+            br_pos = inv2_inst.get_pin("A").rc()
+            self.add_path("metal1", [zl_pos, zr_pos, bl_pos, br_pos])
 
             # connect the decoder input pin to nand2 A
-            input_offset=vector(0, y_offset + cell_dir.y*self.nand2.get_pin("A").by())
-            mid_via_offset = vector(clk_offset.x,input_offset.y) + vector(drc["minwidth_metal2"]+drc["metal2_to_metal2"],0) 
+            a_pin = nand_inst.get_pin("A")
+            a_pos = a_pin.lc()
+            input_offset = vector(0,a_pos.y)
+            mid_via_offset = vector(clk_offset.x,a_pos.y) + vector(drc["minwidth_metal2"]+drc["metal2_to_metal2"],0) 
             # must under the clk line in M1
-            self.add_layout_pin(text="in[{0}]".format(row),
-                                layer="metal1",
-                                offset=input_offset,
-                                width=mid_via_offset.x+drc["minwidth_metal1"],
-                                height=cell_dir.y*drc["minwidth_metal1"])
-            self.add_via(layers=("metal1", "via1", "metal2"),
-                          offset=mid_via_offset,
-                          mirror=inst_mirror)
+            self.add_center_layout_pin(text="in[{0}]".format(row),
+                                       layer="metal1",
+                                       start=input_offset,
+                                       end=mid_via_offset)
+            m1m2_via=self.add_center_via(layers=("metal1", "via1", "metal2"),
+                                         offset=mid_via_offset)
+
             # now connect to the nand2 A
-            self.add_rect(layer="metal2",
-                          offset=mid_via_offset,
-                          width=self.x_offset1-mid_via_offset.x,
-                          height=cell_dir.y*drc["minwidth_metal2"])
-            self.add_via(layers=("metal1", "via1", "metal2"),
-                          offset=[self.x_offset1,
-                                  y_offset + cell_dir.y * self.nand2.get_pin("A").by()],
-                          rotate=m1tm2_rotate,
-                          mirror=m1tm2_mirror)
+            self.add_center_rect(layer="metal2",
+                                 start=mid_via_offset,
+                                 end=a_pos)
+            self.add_center_via(layers=("metal1", "via1", "metal2"),
+                                offset=a_pos + vector(0.5*m1m2_via.height,0),
+                                rotate=90)
+
 
             # output each WL on the right
-            wl_offset = base_offset + self.inv.get_pin("Z").ll().scale(cell_dir)
-            self.add_layout_pin(text="wl[{0}]".format(row),
-                                layer="metal1",
-                                offset=wl_offset,
-                                width=drc["minwidth_metal1"]*cell_dir.y,
-                                height=drc["minwidth_metal1"]*cell_dir.y)
+            wl_offset = inv2_inst.get_pin("Z").rc()
+            self.add_center_layout_pin(text="wl[{0}]".format(row),
+                                       layer="metal1",
+                                       start=wl_offset,
+                                       end=wl_offset-vector(drc["minwidth_metal1"],0))
 
 
     def delay(self, slew, load=0):

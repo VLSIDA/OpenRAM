@@ -16,6 +16,8 @@ class pin_layout:
             self.rect = rect
         else:
             self.rect = [vector(rect[0]),vector(rect[1])]
+        # snap the rect to the grid
+        self.rect = [x.snap_to_grid() for x in self.rect]
         # if it's a layer number look up the layer name. this assumes a unique layer number.
         if type(layer_name_num)==int:
             self.layer = layer.keys()[layer.values().index(layer_name_num)]

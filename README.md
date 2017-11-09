@@ -19,23 +19,23 @@
   export OPENRAM_HOME="$HOME/OpenRAM/compiler"
   export OPENRAM_TECH="$HOME/OpenRAM/technology"
 ```
-For example, in csh/tcsh, add to your .cshrc/.tcshrc:
+  For example, in csh/tcsh, add to your .cshrc/.tcshrc:
 ```
   setenv OPENRAM_HOME "$HOME/OpenRAM/compiler"
   setenv OPENRAM_TECH "$HOME/OpenRAM/technology"
 ```
 - If you are using FreePDK, you should also have that set up and have the
-environment variable point to the PDK. 
-For example, in bash, add to your .bashrc:
+  environment variable point to the PDK. 
+  For example, in bash, add to your .bashrc:
 ```
   export FREEPDK45="/bsoe/software/design-kits/FreePDK45"
 ```
-For example, in csh/tcsh, add to your .tcshrc:
+  For example, in csh/tcsh, add to your .tcshrc:
 ```
   setenv FREEPDK45 "/bsoe/software/design-kits/FreePDK45"
 ```
-We do not distribute the PDK, but you may get it from:
-  https://www.eda.ncsu.edu/wiki/FreePDK45:Contents
+  We do not distribute the PDK, but you may get it from:
+    https://www.eda.ncsu.edu/wiki/FreePDK45:Contents
 
 
 # DIRECTORY STRUCTURE
@@ -84,17 +84,16 @@ report with status information.
 
 # CREATING CUSTOM TECHNOLOGIES
 
-- All setup scripts should be in the setup_scripts directory under the
-  $OPENRAM_TECH directory.  Please look at the following file for an
-  example of what is needed for OpenRAM:
+All setup scripts should be in the setup_scripts directory under the
+$OPENRAM_TECH directory.  Please look at the following file for an
+example of what is needed for OpenRAM:
 ```
   $OPENRAM_TECH/setup_scripts/setup_openram_freepdk45.py
 ```
-  Each setup script should be named as: setup_openram_{tech name}.py.
+Each setup script should be named as: setup_openram_{tech name}.py.
 
-- Each specific technology (e.g., freepdk45) should be a subdirectory
-  (e.g., $OPENRAM_TECH/freepdk45) and include certain folders and files:
-
+Each specific technology (e.g., freepdk45) should be a subdirectory
+(e.g., $OPENRAM_TECH/freepdk45) and include certain folders and files:
   1. gds_lib folder with all the .gds (premade) library cells. At a
      minimum this includes:
      * ms_flop.gds
@@ -146,54 +145,52 @@ Mac, but you can also use Calibre, Magic, etc.
 
 1. Calibre
 
-Start the Calibre DESIGNrev viewer in the temp directory and load your GDS file:
+   Start the Calibre DESIGNrev viewer in the temp directory and load your GDS file:
 ```
   calibredrv temp.gds
 ```
-Select Verification->Start RVE and select the results database file in
-the new form (e.g., test1.drc.db). This will start the RVE (results
-viewer). Scroll through the check pane and find the DRC check with an
-error.  Select it and it will open some numbers to the right.  Double
-click on any of the errors in the result browser. These will be
-labelled as numbers "1 2 3 4" for example will be 4 DRC errors.
+   Select Verification->Start RVE and select the results database file in
+   the new form (e.g., test1.drc.db). This will start the RVE (results
+   viewer). Scroll through the check pane and find the DRC check with an
+   error.  Select it and it will open some numbers to the right.  Double
+   click on any of the errors in the result browser. These will be
+   labelled as numbers "1 2 3 4" for example will be 4 DRC errors.
 
-In the viewer ">" opens the layout down a level.
+   In the viewer ">" opens the layout down a level.
 
 2. Glade
 
-You can view errors in Glade as well. I like this because it is on my laptop.
-You can get it from:
+   You can view errors in Glade as well. I like this because it is on my laptop.
+   You can get it from:  http://www.peardrop.co.uk/glade/
 
-  http://www.peardrop.co.uk/glade/
-
-To remote display over X windows, you need to disable OpenGL acceleration or use vnc
-or something. You can disable by adding this to your .bashrc in bash:
+   To remote display over X windows, you need to disable OpenGL acceleration or use vnc
+   or something. You can disable by adding this to your .bashrc in bash:
 ```
   export GLADE_USE_OPENGL=no
 ```
-or in .cshrc/.tcshrc in csh/tcsh:
+   or in .cshrc/.tcshrc in csh/tcsh:
 ```
   setenv GLADE_USE_OPENGAL no
 ```
-To use this with the FreePDK45 or SCMOS layer views you should use the
-tech files. Then create a .glade.py file in your user directory with
-these commands to load the technology layers:
+   To use this with the FreePDK45 or SCMOS layer views you should use the
+   tech files. Then create a .glade.py file in your user directory with
+   these commands to load the technology layers:
 ```
 ui().importCds("default",
 "/Users/mrg/techfiles/freepdk45/display.drf",
 "/Users/mrg/techfiles/freepdk45/FreePDK45.tf", 1000, 1,
 "/Users/mrg/techfiles/freepdk45/layers.map")
 ```
-Obviously, edit the paths to point to your directory. To switch
-between processes, you have to change the importCds command (or you
-can manually run the command each time you start glade).
+   Obviously, edit the paths to point to your directory. To switch
+   between processes, you have to change the importCds command (or you
+   can manually run the command each time you start glade).
 
-To load the errors, you simply do Verify->Import Caliber Errors select
-the .db file from calibre.
+   To load the errors, you simply do Verify->Import Caliber Errors select
+   the .db file from calibre.
 
-It is possible to use other viewers as well, such as:
-* LayoutEditor http://www.layouteditor.net/ 
-* Magic http://opencircuitdesign.com/magic/
+3. It is possible to use other viewers as well, such as:
+   * LayoutEditor http://www.layouteditor.net/ 
+   * Magic http://opencircuitdesign.com/magic/
 
 
 # CONTRIBUTING TO OPENRAM
@@ -215,14 +212,13 @@ How to get the code and add contributions to OpenRAM.
 4. Set up a new upstream that points to MY OpenRAM repository that you
    forked (only first time):
 ```
-  git remote add upstream https://github.com/mguthaus/OpenRAM.git
+   git remote add upstream https://github.com/mguthaus/OpenRAM.git
 ```
    You now have two remotes for this project:
    * origin which points to your GitHub fork of the project. You can read
      and write to this remote.
    * upstream which points to the main project's GitHub repository. You can
      only read from this remote.
-
    You can remove remotes with
 ```
   git remote remove upstream
@@ -282,7 +278,6 @@ How to get the code and add contributions to OpenRAM.
 ```
    Remember origin is your copy on github and useful-branch-name is the
    branch that you made to contain all your changes.
-
    The -u flag links this branch with the remote one, so that in the
    future, you can simply type git push origin.
 

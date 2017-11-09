@@ -406,7 +406,7 @@ class pinv(design.design):
     def input_load(self):
         return ((self.nmos_size+self.pmos_size)/parameter["min_tx_size"])*spice["min_tx_gate_c"]
 
-    def delay(self, slew, load=0.0):
+    def analytical_delay(self, slew, load=0.0):
         from tech import spice
         r = spice["min_tx_r"]/(self.nmos_size/parameter["min_tx_size"])
         c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff

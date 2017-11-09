@@ -109,6 +109,5 @@ class tri_gate_array(design.design):
                                     height=drc["minwidth_metal1"])
 
 
-    def delay(self, slew, load=0.0):
-        result = self.tri.delay(slew = slew, load = load)
-        return result
+    def analytical_delay(self, slew, load=0.0):
+        return self.tri.analytical_delay(slew = slew, load = load)

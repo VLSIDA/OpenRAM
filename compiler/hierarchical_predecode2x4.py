@@ -43,18 +43,17 @@ class hierarchical_predecode2x4(hierarchical_predecode):
         return combination 
 
 
-    def delay(self, slew, load = 0.0 ):
+    def analytical_delay(self, slew, load = 0.0 ):
         # in -> inbar
-        a_t_b_delay = self.inv.delay(slew=slew,load = self.nand.input_load())
+        a_t_b_delay = self.inv.analytical_delay(slew=slew, load=self.nand.input_load())
 
         # inbar -> z
-        b_t_z_delay = self.nand.delay(slew=a_t_b_delay.slew,load = self.inv.input_load())
-        result = a_t_b_delay + b_t_z_delay
+        b_t_z_delay = self.nand.analytical_delay(slew=a_t_b_delay.slew, load=self.inv.input_load())
 
         # Z -> out
-        a_t_out_delay = self.inv.delay(slew=b_t_z_delay.slew,load = load)
-        result = result + a_t_out_delay
-        return result
+        a_t_out_delay = self.inv.analytical_delay(slew=b_t_z_delay.slew, load=load)
+
+        return a_t_b_delay + b_t_z_delay + a_t_out_delay
 
     def input_load(self):
         return self.nand.input_load()

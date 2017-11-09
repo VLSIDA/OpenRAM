@@ -998,28 +998,6 @@ class sram(design.design):
         del usedMODS
         sp.close()
 
-    def analytical_model(self,slews,loads):
-        LH_delay = []
-        HL_delay = []
-        LH_slew = []
-        HL_slew = []
-        for slew in slews:
-            for load in loads:
-                bank_delay = self.bank.delay(slew,load)
-                # Convert from ps to ns
-                LH_delay.append(bank_delay.delay/1e3)
-                HL_delay.append(bank_delay.delay/1e3)
-                LH_slew.append(bank_delay.slew/1e3)
-                HL_slew.append(bank_delay.slew/1e3)
-        
-        data = {"min_period": 0, 
-                "delay1": LH_delay,
-                "delay0": HL_delay,
-                "slew1": LH_slew,
-                "slew0": HL_slew,
-                "read0_power": 0,
-                "read1_power": 0,
-                "write0_power": 0,
-                "write1_power": 0
-                }
-        return data
+    def analytical_delay(self,slew,load):
+        """ LH and HL are the same in analytical model. """
+        return self.bank.analytical_delay(slew,load)

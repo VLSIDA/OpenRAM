@@ -379,12 +379,11 @@ class lib:
             self.d
         except AttributeError:
             self.d = delay.delay(self.sram, self.spfile)
-            probe_address = "1" * self.addr_size
-            probe_data = self.word_size - 1
             if self.use_model:
-                self.d = True
-                self.delay = self.sram.analytical_model(self.slews,self.loads)
+                self.delay = self.d.analytical_model(self.sram,self.slews,self.loads)
             else:
+                probe_address = "1" * self.addr_size
+                probe_data = self.word_size - 1
                 self.delay = self.d.analyze(probe_address, probe_data, self.slews, self.loads)
 
     def compute_setup_hold(self):

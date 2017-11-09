@@ -9,7 +9,6 @@ class verilog:
         self.word_size = sram.word_size
         self.addr_size = sram.addr_size
     
-        debug.info(1,"Writing to {0}".format(verilog_name))
         self.vf = open(verilog_name, "w")
     
         self.create()

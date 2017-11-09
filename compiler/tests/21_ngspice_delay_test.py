@@ -22,6 +22,7 @@ class timing_sram_test(unittest.TestCase):
         OPTS.check_lvsdrc = False
         OPTS.spice_version="ngspice"
         OPTS.force_spice = True
+        OPTS.analytical_delay = False
         globals.set_spice()
         
         import sram
@@ -84,6 +85,7 @@ class timing_sram_test(unittest.TestCase):
         OPTS.check_lvsdrc = True
         OPTS.spice_version="hspice"
         OPTS.force_spice = False
+        OPTS.analytical_delay = True
         globals.set_spice()
 
         os.remove(tempspice)

@@ -19,10 +19,10 @@ OPTS = globals.get_opts()
 class sram_func_test(unittest.TestCase):
 
     def runTest(self):
+        OPTS.analytical_delay = False
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
-
         import sram
 
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
@@ -32,7 +32,6 @@ class sram_func_test(unittest.TestCase):
                       name="sram_func_test")
 
         OPTS.check_lvsdrc = True
-
         import delay
 
         tempspice = OPTS.openram_temp + "temp.sp"
@@ -52,7 +51,7 @@ class sram_func_test(unittest.TestCase):
         feasible_period = d.find_feasible_period(load,slew)
 
         os.remove(tempspice)
-
+        OPTS.analytical_delay = True
         globals.end_openram()
         
 # instantiate a copdsay of the class to actually run the test

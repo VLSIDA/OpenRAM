@@ -191,15 +191,14 @@ class wordline_driver(design.design):
                                        end=wl_offset-vector(drc["minwidth_metal1"],0))
 
 
-    def delay(self, slew, load=0):
+    def analytical_delay(self, slew, load=0):
         # decode -> net
-        decode_t_net = self.nand2.delay(slew, self.inv.input_load())
+        decode_t_net = self.nand2.analytical_delay(slew, self.inv.input_load())
 
         # net -> wl
-        net_t_wl = self.inv.delay(decode_t_net.slew, load)
+        net_t_wl = self.inv.analytical_delay(decode_t_net.slew, load)
 
-        result = decode_t_net + net_t_wl
-        return result
+        return decode_t_net + net_t_wl
     
     def input_load(self):
         return self.nand2.input_load()

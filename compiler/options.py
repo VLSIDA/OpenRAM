@@ -30,10 +30,11 @@ class options(optparse.Values):
     spice_exe = ""
     # Run with extracted parasitics
     use_pex = False
-    # Trim noncritical memory cells for simulation speed-up
-    trim_noncritical = False
+    # Remove noncritical memory cells for characterization speed-up
+    remove_noncritical = False
     # Define the output file paths
     output_path = ""
     # Define the output file base name
     output_name = ""
-    analytical_delay = False
+    # Use analytical delay models by default rather than (slow) characterization
+    analytical_delay = True

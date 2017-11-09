@@ -424,3 +424,31 @@ class delay():
         t_current += period
 
 
+    def analytical_model(self,sram, slews, loads):
+        """ Just return the analytical model results for the SRAM. 
+        """
+        LH_delay = []
+        HL_delay = []
+        LH_slew = []
+        HL_slew = []
+        for slew in slews:
+            for load in loads:
+                bank_delay = sram.analytical_delay(slew,load)
+                # Convert from ps to ns
+                LH_delay.append(bank_delay.delay/1e3)
+                HL_delay.append(bank_delay.delay/1e3)
+                LH_slew.append(bank_delay.slew/1e3)
+                HL_slew.append(bank_delay.slew/1e3)
+        
+        data = {"min_period": 0, 
+                "delay1": LH_delay,
+                "delay0": HL_delay,
+                "slew1": LH_slew,
+                "slew0": HL_slew,
+                "read0_power": 0,
+                "read1_power": 0,
+                "write0_power": 0,
+                "write1_power": 0
+                }
+        return data
+

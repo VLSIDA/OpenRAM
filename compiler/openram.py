@@ -59,10 +59,16 @@ if (OPTS.output_name == ""):
                                                   num_banks,
                                                   OPTS.tech_name)
 
-debug.info(1, "Output file is " + OPTS.output_name + ".(sp|gds|v|lib|lef)")
+debug.info(1, "Output files are " + OPTS.output_name + ".(sp|gds|v|lib|lef)")
 
 print("Technology: {0}".format(OPTS.tech_name))
 print("Word size: {0}\nWords: {1}\nBanks: {2}".format(word_size,num_words,num_banks))
+
+
+if OPTS.analytical_delay:
+    print("Using analytical delay models (no characterization)")
+else:
+    print("Performing simulation-based characterization (may be slow!)")
 
 # only start importing modules after we have the config file
 import calibre

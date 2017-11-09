@@ -54,11 +54,12 @@ def parse_args():
                              help="Technology name"),
         optparse.make_option("-s", "--spiceversion", dest="spice_version",
                              help="Spice simulator name"),
-        # TODO: Why is this -f?
-        optparse.make_option("-f", "--trim_noncritical", action="store_true", dest="trim_noncritical",
-                             help="Trim noncritical memory cells during simulation"),
+        optparse.make_option("-r", "--reduce_netlist", action="store_true", dest="remove_noncritical",
+                             help="Remove noncritical memory cells during characterization"),
         optparse.make_option("-a", "--analytical", action="store_true", dest="analytical_delay",
-                             help="Use analytical model to calculate delay")
+                             help="Use analytical models to calculate delays (default)"),
+        optparse.make_option("-c", "--characterize", action="store_false", dest="analytical_delay",
+                             help="Perform characterization to calculate delays (default is analytical models)")
     }
 # -h --help is implicit.
 
@@ -237,6 +238,12 @@ def setup_paths():
 def set_spice():
     debug.info(2,"Finding spice...")
     global OPTS
+
+    if OPTS.analytical_delay:
+        debug.info(1,"Using analytical delay models (no characterization)")
+        return
+    else:
+        debug.info(1,"Performing simulation-based characterization (may be slow!)")
 
     OPTS.spice_exe = ""
     

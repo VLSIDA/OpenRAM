@@ -27,7 +27,7 @@ class tri_gate(design.design):
         self.height = tri_gate.height
         self.pin_map = tri_gate.pin_map
 
-    def delay(self, slew, load=0.0):
+    def analytical_delay(self, slew, load=0.0):
         from tech import spice
         r = spice["min_tx_r"]
         c_para = spice["min_tx_drain_c"]

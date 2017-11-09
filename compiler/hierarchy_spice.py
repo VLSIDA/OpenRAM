@@ -148,7 +148,7 @@ class spice:
         del usedMODS
         spfile.close()
 
-    def delay(self, slew, load=0.0):
+    def analytical_delay(self, slew, load=0.0):
         """Inform users undefined delay module while building new modules"""
         debug.warning("Design Class {0} delay function needs to be defined"
                       .format(self.__class__.__name__))

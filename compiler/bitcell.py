@@ -23,7 +23,7 @@ class bitcell(design.design):
         self.height = bitcell.height
         self.pin_map = bitcell.pin_map
 
-    def delay(self, slew, load=0, swing = 0.5):
+    def analytical_delay(self, slew, load=0, swing = 0.5):
         # delay of bit cell is not like a driver(from WL)
         # so the slew used should be 0
         # it should not be slew dependent?

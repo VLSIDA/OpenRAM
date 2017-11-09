@@ -21,8 +21,9 @@ class ms_flop(design.design):
         self.height = ms_flop.height
         self.pin_map = ms_flop.pin_map
     
-    def delay(self, slew, load = 0.0):
+    def analytical_delay(self, slew, load = 0.0):
         # dont know how to calculate this now, use constant in tech file
         from tech import spice
         result = self.return_delay(spice["msflop_delay"], spice["msflop_slew"])
         return result
+

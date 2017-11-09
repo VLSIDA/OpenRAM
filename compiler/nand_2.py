@@ -419,7 +419,7 @@ class nand_2(design.design):
         from tech import spice
         return ((self.nmos_size+self.pmos_size)/parameter["min_tx_size"])*spice["min_tx_gate_c"]
 
-    def delay(self, slew, load=0.0):
+    def analytical_delay(self, slew, load=0.0):
         r = spice["min_tx_r"]/(self.nmos_size/parameter["min_tx_size"])
         c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff
         return self.cal_delay_with_rc(r = r, c =  c_para+load, slew = slew)

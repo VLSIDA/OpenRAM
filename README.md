@@ -1,40 +1,39 @@
 # BASIC SETUP
 
-- Please look at the OpenRAM ICCAD paper and presentation in the repository:
-  https://github.com/mguthaus/OpenRAM/blob/master/OpenRAM_ICCAD_2016_paper.pdf
-  https://github.com/mguthaus/OpenRAM/blob/master/OpenRAM_ICCAD_2016_presentation.pdf
+Please look at the OpenRAM ICCAD paper and presentation in the repository:
+https://github.com/mguthaus/OpenRAM/blob/master/OpenRAM_ICCAD_2016_paper.pdf
+https://github.com/mguthaus/OpenRAM/blob/master/OpenRAM_ICCAD_2016_presentation.pdf
 
-- The OpenRAM compiler has very few dependencies:
-  * ngspice-26 or later or HSpice I-2013.12-1 or later
-  * Python 2.7 and higher (currently excludes Python 3 and up)
-  * a setup script for each technology
-  * a technology directory for each technology with the base cells
+The OpenRAM compiler has very few dependencies:
+* ngspice-26 or later or HSpice I-2013.12-1 or later
+* Python 2.7 and higher (currently excludes Python 3 and up)
+* a setup script for each technology
+* a technology directory for each technology with the base cells
 
-- You must set two environment variables: OPENRAM_HOME should point to
-  the compiler source directory. OPENERAM_TECH should point to a root
-  technology directory that contains subdirs of all other technologies.
-  For example, in bash, add to your .bashrc:
-
+You must set two environment variables: OPENRAM_HOME should point to
+the compiler source directory. OPENERAM_TECH should point to a root
+technology directory that contains subdirs of all other technologies.
+For example, in bash, add to your .bashrc:
 ```
   export OPENRAM_HOME="$HOME/OpenRAM/compiler"
   export OPENRAM_TECH="$HOME/OpenRAM/technology"
 ```
-  For example, in csh/tcsh, add to your .cshrc/.tcshrc:
+For example, in csh/tcsh, add to your .cshrc/.tcshrc:
 ```
   setenv OPENRAM_HOME "$HOME/OpenRAM/compiler"
   setenv OPENRAM_TECH "$HOME/OpenRAM/technology"
 ```
-- If you are using FreePDK, you should also have that set up and have the
-  environment variable point to the PDK. 
-  For example, in bash, add to your .bashrc:
+If you are using FreePDK, you should also have that set up and have the
+environment variable point to the PDK. 
+For example, in bash, add to your .bashrc:
 ```
   export FREEPDK45="/bsoe/software/design-kits/FreePDK45"
 ```
-  For example, in csh/tcsh, add to your .tcshrc:
+For example, in csh/tcsh, add to your .tcshrc:
 ```
   setenv FREEPDK45 "/bsoe/software/design-kits/FreePDK45"
 ```
-  We do not distribute the PDK, but you may get it from:
+We do not distribute the PDK, but you may get it from:
     https://www.eda.ncsu.edu/wiki/FreePDK45:Contents
 
 

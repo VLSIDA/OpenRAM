@@ -12,13 +12,19 @@ def relative_compare(value1,value2,error_tolerance=0.001):
 
 def parse_output(filename, key):
     """Parses a hspice output.lis file for a key value"""
-    full_filename="{0}{1}.lis".format(OPTS.openram_temp, filename)
+    if OPTS.spice_version == "xa" :
+        full_filename="{0}xa.meas".format(OPTS.openram_temp)
+    else :
+        full_filename="{0}{1}.lis".format(OPTS.openram_temp, filename)
+
     try:
         f = open(full_filename, "r")
     except IOError:
         debug.error("Unable to open spice output file: {0}".format(full_filename),1)
     contents = f.read()
-    val = re.search(r"{0}\s*=\s*(-?\d+.?\d*\S*)\s+.*".format(key), contents)
+    # val = re.search(r"{0}\s*=\s*(-?\d+.?\d*\S*)\s+.*".format(key), contents)
+    val = re.search(r"{0}\s*=\s*(-?\d+.?\d*[e]?[-+]?[0-9]*\S*)\s+.*".format(key), contents)
+    
     if val != None:
         debug.info(3, "Key = " + key + " Val = " + val.group(1))
         return val.group(1)

@@ -277,7 +277,11 @@ def run_sim():
     """Run hspice in batch mode and output rawfile to parse."""
     temp_stim = "{0}stim.sp".format(OPTS.openram_temp)
     
-    if OPTS.spice_version == "hspice":
+    
+    if OPTS.spice_version == "xa":
+        cmd = "{0} {1} -o {2}xa -mt 20".format(OPTS.spice_exe,temp_stim,OPTS.openram_temp)
+        valid_retcode=0
+    elif OPTS.spice_version == "hspice":
         # TODO: Should make multithreading parameter a configuration option
         cmd = "{0} -mt 2 -i {1} -o {2}timing".format(OPTS.spice_exe,
                                                                      temp_stim,

@@ -20,8 +20,6 @@ class options(optparse.Values):
     check_lvsdrc = True
     # Variable to select the variant of spice (hspice or ngspice right now)
     spice_version = "hspice"
-    # Should we fall back if we can't find our preferred spice?
-    force_spice = False
     # Should we print out the banner at startup
     print_banner = True
     # The Calibre executable being used which is derived from the user PATH.

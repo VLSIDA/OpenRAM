@@ -234,6 +234,16 @@ def setup_paths():
 
     
 
+def find_spice(spice_exe):
+    # Check if the preferred spice option exists in the path
+    for path in os.environ["PATH"].split(os.pathsep):
+        spice_exe = os.path.join(path, OPTS.spice_version)
+        # if it is found, then break and use first version
+        if is_exe(spice_exe):
+            debug.info(1, "Using spice: " + spice_exe)
+            OPTS.spice_exe = spice_exe
+            return True
+    return False
 
 def set_spice():
     debug.info(2,"Finding spice...")
@@ -247,46 +257,25 @@ def set_spice():
 
     OPTS.spice_exe = ""
     
-    # Check if the preferred spice option exists in the path
-    for path in os.environ["PATH"].split(os.pathsep):
-        spice_exe = os.path.join(path, OPTS.spice_version)
-        # if it is found, then break and use first version
-        if is_exe(spice_exe):
-            debug.info(1, "Using spice: " + spice_exe)
-            OPTS.spice_exe = spice_exe
-            break
-        
-    if not OPTS.force_spice and OPTS.spice_exe == "":
-        # if we didn't find the preferred version, try the other version and warn
-        prev_version=OPTS.spice_version
-        if OPTS.spice_version == "hspice":
-            OPTS.spice_version = "ngspice"
-        else:
-            OPTS.spice_version = "hspice"
-        debug.warning("Unable to find {0} so trying {1}".format(prev_version,OPTS.spice_version))
+    spice_preferences = ["xa", "hspice", "ngspice", "ngspice.exe"]
 
-        for path in os.environ["PATH"].split(os.pathsep):
-            spice_exe = os.path.join(path, OPTS.spice_version)
-            # if it is found, then break and use first version
-            if is_exe(spice_exe):
-                found_spice = True
-                debug.info(1, "Using spice: " + spice_exe)
-                OPTS.spice_exe = spice_exe
+    if OPTS.spice_version != "":
+        if not find_spice(OPTS.spice_version):
+            debug.error("{0} not found. Unable to perform characterization.".format(OPTS.spice_version),1)
+    else:
+        for spice_exe in spice_preferences:
+            if find_spice(spice_exe):
                 break
+            else:
+                debug.warning("Unable to find spice {0}, trying another.".format(spice_exe))
 
     # set the input dir for spice files if using ngspice 
     if OPTS.spice_version == "ngspice":
         os.environ["NGSPICE_INPUT_DIR"] = "{0}".format(OPTS.openram_temp)
 
     if OPTS.spice_exe == "":
-        # otherwise, give warning and procede
-        if OPTS.force_spice:
-            debug.error("{0} not found. Unable to perform characterization.".format(OPTS.spice_version),1)
-        else:
-            debug.error("Neither hspice/ngspice not found. Unable to perform characterization.",1)
+        debug.error("No recognizable spice version found. Unable to perform characterization.",1)
 
-    if OPTS.analytical_delay:
-        debug.warning("Using analytical delay models instead of characterization.")
 
         
 # imports correct technology directories for testing

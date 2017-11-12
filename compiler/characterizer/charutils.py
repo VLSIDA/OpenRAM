@@ -13,8 +13,10 @@ def relative_compare(value1,value2,error_tolerance=0.001):
 def parse_output(filename, key):
     """Parses a hspice output.lis file for a key value"""
     if OPTS.spice_version == "xa" :
+        # customsim has a different output file name
         full_filename="{0}xa.meas".format(OPTS.openram_temp)
-    else :
+    else:
+        # ngspice/hspice using a .lis file
         full_filename="{0}{1}.lis".format(OPTS.openram_temp, filename)
 
     try:

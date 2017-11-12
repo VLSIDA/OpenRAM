@@ -23,7 +23,6 @@ class timing_sram_test(unittest.TestCase):
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
         OPTS.spice_version="hspice"
-        OPTS.force_spice = True
         OPTS.analytical_delay = False
         globals.set_spice()
         
@@ -88,7 +87,6 @@ class timing_sram_test(unittest.TestCase):
         # reset these options
         OPTS.check_lvsdrc = True
         OPTS.spice_version="hspice"
-        OPTS.force_spice = False
         OPTS.analytical_delay = True
         globals.set_spice()
 

@@ -23,7 +23,6 @@ class timing_setup_test(unittest.TestCase):
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
         OPTS.spice_version="ngspice"
-        OPTS.force_spice = True
         globals.set_spice()
         
         import sram
@@ -61,7 +60,6 @@ class timing_setup_test(unittest.TestCase):
         # reset these options
         OPTS.check_lvsdrc = True
         OPTS.spice_version="hspice"
-        OPTS.force_spice = False
         globals.set_spice()
         globals.end_openram()
 

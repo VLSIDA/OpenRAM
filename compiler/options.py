@@ -18,8 +18,8 @@ class options(optparse.Values):
     debug_level = 0
     # This determines whether  LVS and DRC is checked for each submodule.
     check_lvsdrc = True
-    # Variable to select the variant of spice (hspice or ngspice right now)
-    spice_version = "hspice"
+    # Variable to select the variant of spice
+    spice_version = ""
     # Should we print out the banner at startup
     print_banner = True
     # The Calibre executable being used which is derived from the user PATH.
@@ -29,7 +29,7 @@ class options(optparse.Values):
     # Run with extracted parasitics
     use_pex = False
     # Remove noncritical memory cells for characterization speed-up
-    remove_noncritical = False
+    trim_netlist = True
     # Define the output file paths
     output_path = ""
     # Define the output file base name

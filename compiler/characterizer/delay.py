@@ -22,7 +22,7 @@ class delay():
         self.word_size = sram.word_size
         self.addr_size = sram.addr_size
         self.sram_sp_file = spfile
-        
+
         self.vdd = tech.spice["supply_voltage"]
         self.gnd = tech.spice["gnd_voltage"]
 
@@ -325,6 +325,7 @@ class delay():
         functions in this characterizer besides analyze."""
         self.probe_address = probe_address
         self.probe_data = probe_data
+
 
     def analyze(self,probe_address, probe_data, slews, loads):
         """main function to calculate the min period for a low_to_high

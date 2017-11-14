@@ -34,7 +34,7 @@ class nor_2(design.design):
 
         self.add_pins()
         self.create_layout()
-        self.DRC_LVS()
+        #self.DRC_LVS()
 
     def add_pins(self):
         self.add_pin_list(["A", "B", "Z", "vdd", "gnd"])

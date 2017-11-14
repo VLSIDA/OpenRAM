@@ -17,7 +17,7 @@ class bitcell(design.design):
 
     def __init__(self):
         design.design.__init__(self, "cell_6t")
-        debug.info(2, "Create bitcell object")
+        debug.info(2, "Create bitcell")
 
         self.width = bitcell.width
         self.height = bitcell.height

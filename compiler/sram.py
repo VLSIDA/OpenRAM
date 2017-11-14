@@ -1,4 +1,3 @@
-import math
 import sys
 from tech import drc, spice
 import debug
@@ -11,6 +10,7 @@ import getpass
 from vector import vector
 from globals import OPTS
 
+    
 class sram(design.design):
     """
     Dynamically generated SRAM by connecting banks to control logic. The
@@ -88,7 +88,7 @@ class sram(design.design):
 
         # Compute the area of the bitcells and estimate a square bank (excluding auxiliary circuitry)
         self.bank_area = self.bitcell.width*self.bitcell.height*self.num_bits_per_bank
-        self.bank_side_length = math.sqrt(self.bank_area)
+        self.bank_side_length = sqrt(self.bank_area)
 
         # Estimate the words per row given the height of the bitcell and the square side length
         self.tentative_num_cols = int(self.bank_side_length/self.bitcell.width)
@@ -106,7 +106,7 @@ class sram(design.design):
         self.row_addr_size = int(log(self.num_rows, 2))
         self.col_addr_size = int(log(self.words_per_row, 2))
         self.bank_addr_size = self.col_addr_size + self.row_addr_size
-        self.addr_size = self.bank_addr_size + int(math.log(self.num_banks, 2))
+        self.addr_size = self.bank_addr_size + int(log(self.num_banks, 2))
         
 
     def estimate_words_per_row(self,tentative_num_cols, word_size):

@@ -10,6 +10,7 @@ import delay
 import charutils as ch
 import tech
 import numpy as np
+from trim_spice import trim_spice
 
 OPTS = globals.get_opts()
 
@@ -18,13 +19,25 @@ class lib:
     
     def __init__(self, libname, sram, spfile, use_model=OPTS.analytical_delay):
         self.sram = sram
-        self.spfile = spfile        
+        self.sp_file = spfile        
         self.use_model = use_model
         self.name = sram.name
         self.num_words = sram.num_words
         self.word_size = sram.word_size
         self.addr_size = sram.addr_size
 
+        # Set up to trim the netlist here if that is enabled
+        if OPTS.trim_netlist:
+            self.sim_sp_file = "{}reduced.sp".format(OPTS.openram_temp)
+            self.trimsp=trim_spice(self.sp_file, self.sim_sp_file)
+            self.trimsp.set_configuration(self.sram.num_banks,
+                                          self.sram.num_rows,
+                                          self.sram.num_cols,
+                                          self.sram.word_size)
+        else:
+            # Else, use the non-reduced netlist file for simulation
+            self.sim_sp_file = self.sp_file
+        
         # These are the parameters to determine the table sizes
         #self.load_scales = np.array([0.1, 0.25, 0.5, 1, 2, 4, 8])
         self.load_scales = np.array([0.25, 1, 8])
@@ -378,12 +391,15 @@ class lib:
         try:
             self.d
         except AttributeError:
-            self.d = delay.delay(self.sram, self.spfile)
+            self.d = delay.delay(self.sram, self.sim_sp_file)
             if self.use_model:
                 self.delay = self.d.analytical_model(self.sram,self.slews,self.loads)
             else:
                 probe_address = "1" * self.addr_size
                 probe_data = self.word_size - 1
+                # We must trim based on a specific address and data bit
+                if OPTS.trim_netlist:
+                    self.trimsp.trim(probe_address,probe_data)
                 self.delay = self.d.analyze(probe_address, probe_data, self.slews, self.loads)
 
     def compute_setup_hold(self):

@@ -54,8 +54,8 @@ def parse_args():
                              help="Technology name"),
         optparse.make_option("-s", "--spiceversion", dest="spice_version",
                              help="Spice simulator name"),
-        optparse.make_option("-r", "--reduce_netlist", action="store_true", dest="remove_noncritical",
-                             help="Remove noncritical memory cells during characterization"),
+        optparse.make_option("-r", "--remove_netlist_trimming", action="store_false", dest="trim_netlist",
+                             help="Disable removal of noncritical memory cells during characterization"),
         optparse.make_option("-a", "--analytical", action="store_true", dest="analytical_delay",
                              help="Use analytical models to calculate delays (default)"),
         optparse.make_option("-c", "--characterize", action="store_false", dest="analytical_delay",
@@ -163,7 +163,7 @@ def set_calibre():
     # everything.
     if not OPTS.check_lvsdrc:
         # over-ride the check LVS/DRC option
-        debug.info(0,"Over-riding LVS/DRC. Not performing inline LVS/DRC.")
+        debug.info(0,"Over-riding LVS/DRC. Not performing LVS/DRC.")
     else:
         # see if calibre is in the path (extend to other tools later)
         for path in os.environ["PATH"].split(os.pathsep):
@@ -175,7 +175,7 @@ def set_calibre():
                 break
         else:
             # otherwise, give warning and procede
-            debug.warning("Calibre not found. Not performing inline LVS/DRC.")
+            debug.warning("Calibre not found. Not performing LVS/DRC.")
             OPTS.check_lvsdrc = False
 
 def end_openram():
@@ -234,13 +234,12 @@ def setup_paths():
 
     
 
-def find_spice(spice_exe):
+def find_spice(check_exe):
     # Check if the preferred spice option exists in the path
     for path in os.environ["PATH"].split(os.pathsep):
-        spice_exe = os.path.join(path, OPTS.spice_version)
+        spice_exe = os.path.join(path, check_exe)
         # if it is found, then break and use first version
         if is_exe(spice_exe):
-            debug.info(1, "Using spice: " + spice_exe)
             OPTS.spice_exe = spice_exe
             return True
     return False
@@ -253,21 +252,18 @@ def set_spice():
         debug.info(1,"Using analytical delay models (no characterization)")
         return
     else:
-        debug.info(1,"Performing simulation-based characterization (may be slow!)")
-
-    OPTS.spice_exe = ""
-    
-    spice_preferences = ["xa", "hspice", "ngspice", "ngspice.exe"]
-
-    if OPTS.spice_version != "":
-        if not find_spice(OPTS.spice_version):
-            debug.error("{0} not found. Unable to perform characterization.".format(OPTS.spice_version),1)
-    else:
-        for spice_exe in spice_preferences:
-            if find_spice(spice_exe):
-                break
-            else:
-                debug.warning("Unable to find spice {0}, trying another.".format(spice_exe))
+        spice_preferences = ["xa", "hspice", "ngspice", "ngspice.exe"]
+        if OPTS.spice_version != "":
+            if not find_spice(OPTS.spice_version):
+                debug.error("{0} not found. Unable to perform characterization.".format(OPTS.spice_version),1)
+        else:
+            for spice_name in spice_preferences:
+                if find_spice(spice_name):
+                    OPTS.spice_version=spice_name
+                    debug.info(1, "Using spice: " + OPTS.spice_exe)
+                    break
+                else:
+                    debug.info(1, "Could not find {}, trying next spice simulator. ".format(spice_name))
 
     # set the input dir for spice files if using ngspice 
     if OPTS.spice_version == "ngspice":

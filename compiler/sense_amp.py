@@ -17,7 +17,7 @@ class sense_amp(design.design):
 
     def __init__(self, name):
         design.design.__init__(self, name)
-        debug.info(2, "Create Sense Amp object")
+        debug.info(2, "Create sense_amp")
 
         self.width = sense_amp.width
         self.height = sense_amp.height

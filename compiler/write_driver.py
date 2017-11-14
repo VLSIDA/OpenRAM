@@ -17,7 +17,7 @@ class write_driver(design.design):
 
     def __init__(self, name):
         design.design.__init__(self, name)
-        debug.info(2, "Create write_driver object")
+        debug.info(2, "Create write_driver")
 
         self.width = write_driver.width
         self.height = write_driver.height

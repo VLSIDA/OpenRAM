@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 """
-Check the .lib file for an SRAM
+Check the .lib file for an SRAM with pruning
 """
 
 import unittest
@@ -18,7 +18,6 @@ class lib_test(unittest.TestCase):
 
     def runTest(self):
         OPTS.analytical_delay = False
-        OPTS.trim_netlist = False
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
@@ -42,12 +41,11 @@ class lib_test(unittest.TestCase):
         
         # let's diff the result with a golden model
         golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),filename)
-        # Randomly decided 10% difference between spice simulators is ok.
-        self.assertEqual(isapproxdiff(libname,golden,0.10),True)
+        # From an experiment, a 15% difference between between pruned and not was found.
+        self.assertEqual(isapproxdiff(libname,golden,0.15),True)
 
         os.system("rm {0}".format(libname))
         OPTS.analytical_delay = True
-        OPTS.trim_netlist = True
         globals.end_openram()
         
 # instantiate a copdsay of the class to actually run the test

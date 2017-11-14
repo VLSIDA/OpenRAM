@@ -32,7 +32,7 @@ class pinv(design.design):
 
         self.add_pins()
         self.create_layout()
-        self.DRC_LVS()
+        #self.DRC_LVS()
 
     def add_pins(self):
         """Adds pins for spice netlist processing"""

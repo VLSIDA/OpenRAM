@@ -21,7 +21,7 @@ class tri_gate(design.design):
             name = "tri{0}".format(tri_gate.unique_id)
             tri_gate.unique_id += 1
         design.design.__init__(self, name)
-        debug.info(2, "Create tri_gate object")
+        debug.info(2, "Create tri_gate")
 
         self.width = tri_gate.width
         self.height = tri_gate.height

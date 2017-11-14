@@ -13,14 +13,18 @@ import tech
 from globals import OPTS
 
 
-if "calibre" in OPTS.drc_exe:
+if OPTS.drc_exe == None:
+    pass
+elif "calibre" in OPTS.drc_exe:
     from calibre import run_drc
 elif "magic" in OPTS.drc_exe:
     from magic import run_drc
 else:
     debug.warning("Did not find a supported DRC tool.")
 
-if "calibre" in OPTS.lvs_exe:
+if OPTS.lvs_exe == None:
+    pass
+elif "calibre" in OPTS.lvs_exe:
     from calibre import run_lvs
 elif "netgen" in OPTS.lvs_exe:
     from magic import run_lvs
@@ -28,7 +32,9 @@ else:
     debug.warning("Did not find a supported LVS tool.")
 
 
-if "calibre" in OPTS.pex_exe:
+if OPTS.pex_exe == None:
+    pass
+elif "calibre" in OPTS.pex_exe:
     from calibre import run_pex
 elif "magic" in OPTS.pex_exe:
     from magic import run_pex

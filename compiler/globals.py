@@ -168,7 +168,7 @@ def find_exe(check_exe):
         # if it is found, then break and use first version
         if is_exe(exe):
             return exe
-    return None
+    return ""
 
 def get_tool(tool_type, preferences):
     """
@@ -179,11 +179,11 @@ def get_tool(tool_type, preferences):
 
     if not OPTS.check_lvsdrc:
         debug.info(1,"LVS/DRC/PEX disabled.")
-        return
+        return None
     else:
         for name in preferences:
             exe_name = find_exe(name)
-            if exe_name!=None:
+            if exe_name!="":
                 debug.info(1, "Using {0}: {1}".format(tool_type,exe_name))
                 return(exe_name)
             else:
@@ -255,18 +255,10 @@ def set_spice():
     else:
         if OPTS.spice_version != "":
             OPTS.spice_exe=find_exe(OPTS.spice_version)
-            if OPTS.spice_exe==None:
+            if OPTS.spice_exe=="":
                 debug.error("{0} not found. Unable to perform characterization.".format(OPTS.spice_version),1)
         else:
-            spice_preferences = ["xa", "hspice", "ngspice", "ngspice.exe"]
-            for spice_name in spice_preferences:
-                OPTS.spice_exe = find_exe(spice_name)
-                if OPTS.spice_exe!=None:
-                    OPTS.spice_version=spice_name
-                    debug.info(1, "Using spice: " + OPTS.spice_exe)
-                    break
-                else:
-                    debug.info(1, "Could not find {}, trying next spice simulator. ".format(spice_name))
+            OPTS.spice_exe = get_tool("spice",["xa", "hspice", "ngspice", "ngspice.exe"])
 
     # set the input dir for spice files if using ngspice 
     if OPTS.spice_version == "ngspice":

@@ -123,7 +123,10 @@ class Gds2writer:
         ##  LibraryName
         if("libraryName" in self.layoutObject.info):
             idBits='\x02\x06'
-            libraryName = self.layoutObject.info["libraryName"]
+            if (len(self.layoutObject.info["libraryName"]) % 2 != 0):
+                libraryName = self.layoutObject.info["libraryName"] + "\0"
+            else:
+                libraryName = self.layoutObject.info["libraryName"] + "\0"
             self.writeRecord(idBits+libraryName)                
         ## reference libraries
         if("referenceLibraries" in self.layoutObject.info):
@@ -269,7 +272,10 @@ class Gds2writer:
             self.writeRecord(idBits+plex)
         if(thisSref.sName!=""):
             idBits='\x12\x06'
-            sName = thisSref.sName
+            if (len(thisSref.sName) % 2 != 0):
+                sName = thisSref.sName+"\0"
+            else:
+                sName = thisSref.sName
             self.writeRecord(idBits+sName)
         if(thisSref.transFlags!=""):
             idBits='\x1A\x01'
@@ -313,7 +319,10 @@ class Gds2writer:
             self.writeRecord(idBits+plex)
         if(thisAref.aName):
             idBits='\x12\x06'
-            aName = thisAref.aName
+            if (len(thisAref.aName) % 2 != 0):
+                aName = thisAref.aName+"\0"
+            else:
+                aName = thisAref.aName
             self.writeRecord(idBits+aName)
         if(thisAref.transFlags):
             idBits='\x1A\x01'

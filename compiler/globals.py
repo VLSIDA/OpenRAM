@@ -188,6 +188,8 @@ def get_tool(tool_type, preferences):
                 return(exe_name)
             else:
                 debug.info(1, "Could not find {0}, trying next {1} tool.".format(name,tool_type))
+        else:
+            return("")
         
 def end_openram():
     """ Clean up openram for a proper exit """

@@ -53,7 +53,8 @@ def run_drc(name, gds_name):
     """Run DRC check on a given top-level name which is
        implemented in gds_name."""
 
-    debug.error("DRC using magic not implemented.",-1)
+    debug.warning("DRC using magic not implemented.")
+    return 0
     OPTS = globals.get_opts()
 
     # the runset file contains all the options to run drc
@@ -124,7 +125,8 @@ def run_lvs(name, gds_name, sp_name):
     """Run LVS check on a given top-level name which is
        implemented in gds_name and sp_name. """
 
-    debug.error("LVS using magic+netgen not implemented.",-1)
+    debug.warning("LVS using magic+netgen not implemented.")
+    return 0
     
     OPTS = globals.get_opts()
     from tech import drc
@@ -237,7 +239,8 @@ def run_pex(name, gds_name, sp_name, output=None):
     """Run pex on a given top-level name which is
        implemented in gds_name and sp_name. """
 
-    debug.error("PEX using magic not implemented.",-1)
+    debug.warning("PEX using magic not implemented.")
+    return 0
 
     OPTS = globals.get_opts()
     from tech import drc

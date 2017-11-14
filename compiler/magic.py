@@ -1,60 +1,43 @@
 """
-This is a DRC/LVS interface for calibre. It implements completely
-independently two functions: run_drc and run_lvs, that perform these
-functions in batch mode and will return true/false if the result
-passes. All of the setup (the rules, temp dirs, etc.) should be
-contained in this file.  Replacing with another DRC/LVS tool involves
-rewriting this code to work properly. Porting to a new technology in
-Calibre means pointing the code to the proper DRC and LVS rule files.
+This is a DRC/LVS/PEX interface file for magic + netgen. 
 
-A calibre DRC runset file contains, at the minimum, the following information:
+1. magic can perform drc with the following:
+#!/bin/sh
+magic -dnull -noconsole << EOF
+tech load SCN3ME_SUBM.30
+** import gds file
+load $1.mag -force
+drc count
+drc why
+quit -noprompt
+EOF
 
-*drcRulesFile: /mada/software/techfiles/FreePDK45/ncsu_basekit/techfile/calibre/calibreDRC.rul
-*drcRunDir: .
-*drcLayoutPaths: ./cell_6t.gds
-*drcLayoutPrimary: cell_6t
-*drcLayoutSystem: GDSII
-*drcResultsformat: ASCII
-*drcResultsFile: cell_6t.drc.results
-*drcSummaryFile: cell_6t.drc.summary
-*cmnFDILayerMapFile: ./layer.map
-*cmnFDIUseLayerMap: 1
+2. magic can perform extraction with the following:
+#!/bin/sh
+rm -f $1.ext
+rm -f $1.spice
+magic -dnull -noconsole << EOF
+tech load SCN3ME_SUBM.30
+** import gds file
+load $1.mag -force
+extract
+ext2spice scale off
+ext2spice
+quit -noprompt
+EOF
 
-This can be executed in "batch" mode with the following command:
+3. netgen can perform LVS with:
+#!/bin/sh
+netgen -noconsole <<EOF
+readnet $1.spice
+readnet $1.sp
+ignore class c
+permute transistors
+compare hierarchical $1.spice {$1.sp $1}
+permute
+run converge
+EOF
 
-calibre -gui -drc example_drc_runset  -batch
-
-To open the results, you can do this:
-
-calibredrv cell_6t.gds
-Select Verification->Start RVE.
-Select the cell_6t.drc.results file.
-Click on the errors and they will highlight in the design layout viewer.
-
-For LVS:
-
-*lvsRulesFile: /mada/software/techfiles/FreePDK45/ncsu_basekit/techfile/calibre/calibreLVS.rul
-*lvsRunDir: .
-*lvsLayoutPaths: ./cell_6t.gds
-*lvsLayoutPrimary: cell_6t
-*lvsSourcePath: ./cell_6t.sp
-*lvsSourcePrimary: cell_6t
-*lvsSourceSystem: SPICE
-*lvsSpiceFile: extracted.sp
-*lvsPowerNames: vdd 
-*lvsGroundNames: vss
-*lvsIgnorePorts: 1
-*lvsERCDatabase: cell_6t.erc.results
-*lvsERCSummaryFile: cell_6t.erc.summary
-*lvsReportFile: cell_6t.lvs.report
-*lvsMaskDBFile: cell_6t.maskdb
-*cmnFDILayerMapFile: ./layer.map
-*cmnFDIUseLayerMap: 1
-
-To run and see results:
-
-calibre -gui -lvs example_lvs_runset -batch
-more cell_6t.lvs.report
 """
 
 
@@ -69,9 +52,11 @@ import subprocess
 def run_drc(name, gds_name):
     """Run DRC check on a given top-level name which is
        implemented in gds_name."""
+
+    debug.error("DRC using magic not implemented.",-1)
     OPTS = globals.get_opts()
 
-    # the runset file contains all the options to run calibre
+    # the runset file contains all the options to run drc
     from tech import drc
     drc_rules = drc["drc_rules"]
 
@@ -115,7 +100,7 @@ def run_drc(name, gds_name):
     try:
         f = open(drc_runset['drcSummaryFile'], "r")
     except:
-        debug.error("Unable to retrieve DRC results file. Is calibre set up?",1)
+        debug.error("Unable to retrieve DRC results file. Is magic set up?",1)
     results = f.readlines()
     f.close()
     # those lines should be the last 3
@@ -138,6 +123,9 @@ def run_drc(name, gds_name):
 def run_lvs(name, gds_name, sp_name):
     """Run LVS check on a given top-level name which is
        implemented in gds_name and sp_name. """
+
+    debug.error("LVS using magic+netgen not implemented.",-1)
+    
     OPTS = globals.get_opts()
     from tech import drc
     lvs_rules = drc["lvs_rules"]
@@ -248,6 +236,9 @@ def run_lvs(name, gds_name, sp_name):
 def run_pex(name, gds_name, sp_name, output=None):
     """Run pex on a given top-level name which is
        implemented in gds_name and sp_name. """
+
+    debug.error("PEX using magic not implemented.",-1)
+
     OPTS = globals.get_opts()
     from tech import drc
     if output == None:
@@ -309,39 +300,7 @@ def run_pex(name, gds_name, sp_name, output=None):
     out_errors = len(stdouterrors)
 
     assert(os.path.isfile(output))
-    correct_port(name, output, sp_name)
+    #correct_port(name, output, sp_name)
 
     return out_errors
 
-
-def correct_port(name, output_file_name, ref_file_name):
-    pex_file = open(output_file_name, "r")
-    contents = pex_file.read()
-    # locate the start of circuit definition line
-    match = re.search(".subckt " + str(name) + ".*", contents)
-    match_index_start = match.start()
-    pex_file.seek(match_index_start)
-    rest_text = pex_file.read()
-    # locate the end of circuit definition line
-    match = re.search("\* \n", rest_text)
-    match_index_end = match.start()
-    # store the unchanged part of pex file in memory
-    pex_file.seek(0)
-    part1 = pex_file.read(match_index_start)
-    pex_file.seek(match_index_start + match_index_end)
-    part2 = pex_file.read()
-    pex_file.close()
-
-    # obatin the correct definition line from the original spice file
-    sp_file = open(ref_file_name, "r")
-    contents = sp_file.read()
-    circuit_title = re.search(".SUBCKT " + str(name) + ".*\n", contents)
-    circuit_title = circuit_title.group()
-    sp_file.close()
-
-    # write the new pex file with info in the memory
-    output_file = open(output_file_name, "w")
-    output_file.write(part1)
-    output_file.write(circuit_title)
-    output_file.write(part2)
-    output_file.close()

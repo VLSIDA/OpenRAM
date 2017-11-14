@@ -115,8 +115,12 @@ def init_openram(config_file):
 
     set_spice()
 
-    set_calibre()
+    set_drc()
 
+    set_lvs()
+
+    set_pex()
+    
 
 def read_config(config_file):
     global OPTS
@@ -154,30 +158,69 @@ def read_config(config_file):
         debug.error("Unable to make output directory.",-1)
     
         
+def find_exe(check_exe):
+    """ Check if the binary exists in the path and return the full path. """
+    # Check if the preferred spice option exists in the path
+    for path in os.environ["PATH"].split(os.pathsep):
+        exe = os.path.join(path, check_exe)
+        # if it is found, then break and use first version
+        if is_exe(exe):
+            return exe
+    return None
 
-def set_calibre():
-    debug.info(2,"Finding calibre...")
+
+def set_drc():
+    debug.info(2,"Finding DRC tool...")
     global OPTS
 
-    # check if calibre is installed, if so, we should be running LVS/DRC on
-    # everything.
     if not OPTS.check_lvsdrc:
-        # over-ride the check LVS/DRC option
-        debug.info(0,"Over-riding LVS/DRC. Not performing LVS/DRC.")
+        debug.info(1,"LVS/DRC/PEX disabled.")
+        return
     else:
-        # see if calibre is in the path (extend to other tools later)
-        for path in os.environ["PATH"].split(os.pathsep):
-            OPTS.calibre_exe = os.path.join(path, "calibre")
-            # if it is found, do inline LVS/DRC
-            if is_exe(OPTS.calibre_exe):
-                OPTS.check_lvsdrc = True
-                debug.info(1, "Using calibre: " + OPTS.calibre_exe)
-                break
-        else:
-            # otherwise, give warning and procede
-            debug.warning("Calibre not found. Not performing LVS/DRC.")
-            OPTS.check_lvsdrc = False
+        import tech
+        if tech.drc_version != "":
+            OPTS.drc_exe=find_exe(tech.drc_version)
+            if OPTS.drc_exe==None:
+                debug.warning("{0} not found. Unable to perform DRC.".format(tech.drc_version))
+                OPTS.check_lvsdrc = False
+            else:
+                debug.info(1, "Using DRC: " + OPTS.drc_exe)
 
+
+def set_lvs():
+    debug.info(2,"Finding LVS tool...")
+    global OPTS
+
+    if not OPTS.check_lvsdrc:
+        debug.info(1,"LVS/DRC/PEX disabled.")
+        return
+    else:
+        import tech        
+        if tech.lvs_version != "":
+            OPTS.lvs_exe=find_exe(tech.lvs_version)
+            if OPTS.lvs_exe==None:
+                debug.warning("{0} not found. Unable to perform LVS.".format(tech.lvs_version))
+                OPTS.check_lvsdrc = False
+            else:
+                debug.info(1, "Using LVS: " + OPTS.lvs_exe)
+
+def set_pex():
+    debug.info(2,"Finding PEX tool...")
+    global OPTS
+
+    if not OPTS.check_lvsdrc:
+        debug.info(1,"LVS/DRC/PEX disabled.")
+        return
+    else:
+        import tech
+        if tech.pex_version != "":
+            OPTS.pex_exe=find_exe(tech.pex_version)
+            if OPTS.pex_exe==None:
+                debug.warning("{0} not found. Unable to perform PEX.".format(tech.pex_version))
+                OPTS.check_lvsdrc = False
+            else:
+                debug.info(1, "Using PEX: " + OPTS.pex_exe)
+                
 def end_openram():
     """ Clean up openram for a proper exit """
     cleanup_paths()
@@ -234,16 +277,6 @@ def setup_paths():
 
     
 
-def find_spice(check_exe):
-    # Check if the preferred spice option exists in the path
-    for path in os.environ["PATH"].split(os.pathsep):
-        spice_exe = os.path.join(path, check_exe)
-        # if it is found, then break and use first version
-        if is_exe(spice_exe):
-            OPTS.spice_exe = spice_exe
-            return True
-    return False
-
 def set_spice():
     debug.info(2,"Finding spice...")
     global OPTS
@@ -252,13 +285,15 @@ def set_spice():
         debug.info(1,"Using analytical delay models (no characterization)")
         return
     else:
-        spice_preferences = ["xa", "hspice", "ngspice", "ngspice.exe"]
         if OPTS.spice_version != "":
-            if not find_spice(OPTS.spice_version):
+            OPTS.spice_exe=find_exe(OPTS.spice_version)
+            if OPTS.spice_exe==None:
                 debug.error("{0} not found. Unable to perform characterization.".format(OPTS.spice_version),1)
         else:
+            spice_preferences = ["xa", "hspice", "ngspice", "ngspice.exe"]
             for spice_name in spice_preferences:
-                if find_spice(spice_name):
+                OPTS.spice_exe = find_exe(spice_name)
+                if OPTS.spice_exe!=None:
                     OPTS.spice_version=spice_name
                     debug.info(1, "Using spice: " + OPTS.spice_exe)
                     break

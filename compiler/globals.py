@@ -115,11 +115,13 @@ def init_openram(config_file):
 
     set_spice()
 
-    set_drc()
-
-    set_lvs()
-
-    set_pex()
+    global OPTS
+    OPTS.drc_exe = get_tool("DRC",["calibre","magic"])
+    OPTS.lvs_exe = get_tool("LVS",["calibre","netgen"])
+    OPTS.pex_exe = get_tool("PEX",["calibre","magic"])
+    #set_drc()
+    #set_lvs()
+    #set_pex()
     
 
 def read_config(config_file):
@@ -168,59 +170,25 @@ def find_exe(check_exe):
             return exe
     return None
 
-
-def set_drc():
-    debug.info(2,"Finding DRC tool...")
+def get_tool(tool_type, preferences):
+    """
+    Find which tool we have from a list of preferences and return the full path.
+    """
+    debug.info(2,"Finding {} tool...".format(tool_type))
     global OPTS
 
     if not OPTS.check_lvsdrc:
         debug.info(1,"LVS/DRC/PEX disabled.")
         return
     else:
-        import tech
-        if tech.drc_version != "":
-            OPTS.drc_exe=find_exe(tech.drc_version)
-            if OPTS.drc_exe==None:
-                debug.warning("{0} not found. Unable to perform DRC.".format(tech.drc_version))
-                OPTS.check_lvsdrc = False
+        for name in preferences:
+            exe_name = find_exe(name)
+            if exe_name!=None:
+                debug.info(1, "Using {0}: {1}".format(tool_type,exe_name))
+                return(exe_name)
             else:
-                debug.info(1, "Using DRC: " + OPTS.drc_exe)
-
-
-def set_lvs():
-    debug.info(2,"Finding LVS tool...")
-    global OPTS
-
-    if not OPTS.check_lvsdrc:
-        debug.info(1,"LVS/DRC/PEX disabled.")
-        return
-    else:
-        import tech        
-        if tech.lvs_version != "":
-            OPTS.lvs_exe=find_exe(tech.lvs_version)
-            if OPTS.lvs_exe==None:
-                debug.warning("{0} not found. Unable to perform LVS.".format(tech.lvs_version))
-                OPTS.check_lvsdrc = False
-            else:
-                debug.info(1, "Using LVS: " + OPTS.lvs_exe)
-
-def set_pex():
-    debug.info(2,"Finding PEX tool...")
-    global OPTS
-
-    if not OPTS.check_lvsdrc:
-        debug.info(1,"LVS/DRC/PEX disabled.")
-        return
-    else:
-        import tech
-        if tech.pex_version != "":
-            OPTS.pex_exe=find_exe(tech.pex_version)
-            if OPTS.pex_exe==None:
-                debug.warning("{0} not found. Unable to perform PEX.".format(tech.pex_version))
-                OPTS.check_lvsdrc = False
-            else:
-                debug.info(1, "Using PEX: " + OPTS.pex_exe)
-                
+                debug.info(1, "Could not find {0}, trying next {1} tool.".format(name,tool_type))
+        
 def end_openram():
     """ Clean up openram for a proper exit """
     cleanup_paths()

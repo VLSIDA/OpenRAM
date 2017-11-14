@@ -17,10 +17,6 @@ GDS["unit"]=(0.001,1e-6)
 # default label zoom
 GDS["zoom"] = 0.5
 
-drc_version = "magic"
-lvs_version = "netgen"
-pex_version = "magic"
-
 
 ###################################################
 ##GDS Layer Map

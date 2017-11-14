@@ -10,25 +10,27 @@ If not, OpenRAM will continue as if nothing happened!
 
 import debug
 import tech
+from globals import OPTS
 
-if tech.drc_version=="calibre":
+
+if "calibre" in OPTS.drc_exe:
     from calibre import run_drc
-elif tech.drc_version=="magic":
+elif "magic" in OPTS.drc_exe:
     from magic import run_drc
 else:
     debug.warning("Did not find a supported DRC tool.")
 
-if tech.lvs_version=="calibre":
+if "calibre" in OPTS.lvs_exe:
     from calibre import run_lvs
-elif tech.lvs_version=="netgen":
+elif "netgen" in OPTS.lvs_exe:
     from magic import run_lvs
 else:
     debug.warning("Did not find a supported LVS tool.")
 
 
-if tech.pex_version=="calibre":
+if "calibre" in OPTS.pex_exe:
     from calibre import run_pex
-elif tech.pex_version=="magic":
+elif "magic" in OPTS.pex_exe:
     from magic import run_pex
 else:
     debug.warning("Did not find a supported PEX tool.")

@@ -17,10 +17,6 @@ GDS["unit"] = (0.0005,1e-9)
 # default label zoom
 GDS["zoom"] = 0.05
 
-drc_version = "calibre"
-lvs_version = "calibre"
-pex_version = "calibre"
-
 ###################################################
 ##GDS Layer Map
 ###################################################

@@ -16,8 +16,6 @@ import re
 import importlib
 import globals
 
-global OPTS
-
 (OPTS, args) = globals.parse_args()
 
 def print_time(name, now_time, last_time=None):

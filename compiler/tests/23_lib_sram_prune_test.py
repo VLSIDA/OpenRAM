@@ -41,7 +41,7 @@ class lib_test(unittest.TestCase):
         
         # let's diff the result with a golden model
         golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),filename)
-	# 15% worked in freepdk, but scmos needed 20%
+        # 15% worked in freepdk, but scmos needed 20%
         self.assertEqual(isapproxdiff(libname,golden,0.20),True)
 
         os.system("rm {0}".format(libname))

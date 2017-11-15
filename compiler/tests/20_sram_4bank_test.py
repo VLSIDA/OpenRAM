@@ -9,7 +9,7 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 import debug
-import calibre
+import verify
 
 OPTS = globals.get_opts()
 
@@ -51,9 +51,9 @@ class sram_4bank_test(unittest.TestCase):
         a.sp_write(tempspice)
         a.gds_write(tempgds)
 
-        self.assertFalse(calibre.run_drc(a.name, tempgds))
-        self.assertFalse(calibre.run_lvs(a.name, tempgds, tempspice))
-        #self.assertFalse(calibre.run_pex(a.name, tempgds, tempspice, output=OPTS.openram_temp+"temp_pex.sp"))
+        self.assertFalse(verify.run_drc(a.name, tempgds))
+        self.assertFalse(verify.run_lvs(a.name, tempgds, tempspice))
+        #self.assertFalse(verify.run_pex(a.name, tempgds, tempspice, output=OPTS.openram_temp+"temp_pex.sp"))
 
         os.remove(tempspice)
         os.remove(tempgds)

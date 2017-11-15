@@ -9,7 +9,6 @@ If not, OpenRAM will continue as if nothing happened!
 """
 
 import debug
-import tech
 from globals import OPTS
 
 

@@ -6,7 +6,7 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 import debug
-import calibre
+import verify
 import re
 
 #@unittest.skip("SKIPPING 00_format check test")

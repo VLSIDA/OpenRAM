@@ -1,12 +1,21 @@
 """
 This is a DRC/LVS/PEX interface file for magic + netgen. 
 
+This assumes you have the SCMOS magic rules installed. Get these from:
+ftp://ftp.mosis.edu/pub/sondeen/magic/new/beta/current.tar.gz
+and install them in:
+cd /opt/local/lib/magic/sys
+tar zxvf current.tar.gz
+ln -s 2001a current
+
 1. magic can perform drc with the following:
 #!/bin/sh
 magic -dnull -noconsole << EOF
 tech load SCN3ME_SUBM.30
-** import gds file
-load $1.mag -force
+gds rescale false
+gds polygon subcell true
+gds warning default
+gds read $1
 drc count
 drc why
 quit -noprompt
@@ -18,8 +27,10 @@ rm -f $1.ext
 rm -f $1.spice
 magic -dnull -noconsole << EOF
 tech load SCN3ME_SUBM.30
-** import gds file
-load $1.mag -force
+gds rescale false
+gds polygon subcell true
+gds warning default
+gds read $1
 extract
 ext2spice scale off
 ext2spice

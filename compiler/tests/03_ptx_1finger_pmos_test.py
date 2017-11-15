@@ -7,7 +7,7 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 import debug
-import calibre
+import verify
 
 OPTS = globals.OPTS
 
@@ -144,7 +144,7 @@ class ptx_test(unittest.TestCase):
         fet.sp_write(tempspice)
         fet.gds_write(tempgds)
 
-        self.assertFalse(calibre.run_drc(fet.name, tempgds))
+        self.assertFalse(verify.run_drc(fet.name, tempgds))
 
         os.remove(tempspice)
         os.remove(tempgds)

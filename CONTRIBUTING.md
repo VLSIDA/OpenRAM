@@ -23,16 +23,19 @@ the tests on your contributions before they will be accepted.
 # Pull Request Process
 
 1. One time, create a GitHub account at http://github.com
+
 2. Create a fork of the OpenRAM project on the github web page:
    https://github.com/mguthaus/OpenRAM
    It is on the upper right and says "Fork": This will make your own
    OpenRAM repository on GitHub in your account.
+
 3. Clone your repository (or use an existing cloned copy if you've
    already done this once):
 ```
   git clone https://github.com/<youruser>/OpenRAM.git
   cd OpenRAM
 ```
+
 4. Set up a new upstream that points to MY OpenRAM repository that you
    forked (only first time):
 ```
@@ -49,6 +52,7 @@ the tests on your contributions before they will be accepted.
 ```
    if you previously added the one with the git@github that required
    authentication.
+
 5. Make your own branch. The number one rule is to put each piece of
    work on its own branch:
 ```
@@ -63,6 +67,7 @@ the tests on your contributions before they will be accepted.
   code (in your fork of the repository). You can check out the released
   code with "git checkout master" or go back to your ranch with
   "gitcheckout useful-branch-name".
+
 6. Edit your code and make commits like normal:
 ```
   git add <new files>
@@ -76,6 +81,7 @@ the tests on your contributions before they will be accepted.
   git commit -a -m "Useful comment"
 ```
    Run the unit tests entirely. Fix all bugs.
+
 7. After you are done (or while you are editing and you see changes in
    MY master branch) make sure you have the most recent from MY master
    and merge any changes. Pull the updated copy from MY master branch in
@@ -92,6 +98,7 @@ the tests on your contributions before they will be accepted.
  git push origin master
 ```
   if you are on your master branch. Otherwise, just git push.
+
 8. Push your branch to YOUR repository:
 ```
  git push -u origin useful-branch-name
@@ -100,13 +107,16 @@ the tests on your contributions before they will be accepted.
    branch that you made to contain all your changes.
    The -u flag links this branch with the remote one, so that in the
    future, you can simply type git push origin.
+
 9. When you are done, go to GitHub and you will see a button to notify
    me.  Press the button and it will notify me of your pushed branch.
    This will have you fill in a form for the contribution that gets sent
    to me.
+
 10. I will review the request and may have you fix stuff if the tests
     don't pass, you didn't merge all my changes in master from other
     contributions, or your style of code is bad.
+
 11. Go back to step 3 for your next contribution. Remember, you can
     push/pull work to your repository all the time and can pull from my
     master as well. Make sure to add large features so that You don't have

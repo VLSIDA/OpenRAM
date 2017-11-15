@@ -16,6 +16,8 @@ if OPTS.drc_exe == None:
     pass
 elif "calibre" in OPTS.drc_exe:
     from calibre import run_drc
+elif "assura" in OPTS.drc_exe:
+    from assura import run_drc
 elif "magic" in OPTS.drc_exe:
     from magic import run_drc
 else:
@@ -25,6 +27,8 @@ if OPTS.lvs_exe == None:
     pass
 elif "calibre" in OPTS.lvs_exe:
     from calibre import run_lvs
+elif "assura" in OPTS.lvs_exe:
+    from assura import run_lvs
 elif "netgen" in OPTS.lvs_exe:
     from magic import run_lvs
 else:

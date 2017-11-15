@@ -116,8 +116,8 @@ def init_openram(config_file):
     set_spice()
 
     global OPTS
-    OPTS.drc_exe = get_tool("DRC",["calibre","magic"])
-    OPTS.lvs_exe = get_tool("LVS",["calibre","netgen"])
+    OPTS.drc_exe = get_tool("DRC",["calibre","assura","magic"])
+    OPTS.lvs_exe = get_tool("LVS",["calibre","assura","netgen"])
     OPTS.pex_exe = get_tool("PEX",["calibre","magic"])
     #set_drc()
     #set_lvs()

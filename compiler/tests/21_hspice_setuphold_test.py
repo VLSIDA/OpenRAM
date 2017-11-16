@@ -23,8 +23,7 @@ class timing_setup_test(unittest.TestCase):
 
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
-        OPTS.spice_version="hspice"
-        globals.set_spice()
+        from characterizer import delay
 
         import sram
         import tech

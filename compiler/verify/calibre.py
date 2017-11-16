@@ -100,10 +100,9 @@ def run_drc(name, gds_name):
     errfile = "{0}{1}.drc.err".format(OPTS.openram_temp, name)
     outfile = "{0}{1}.drc.out".format(OPTS.openram_temp, name)
 
-    cmd = "{0} -gui -drc {1}drc_runset -batch 2> {2} 1> {3}".format(OPTS.drc_exe,
-                                                                    OPTS.openram_temp,
-                                                                    errfile,
-                                                                    outfile)
+    cmd = "calibre -gui -drc {0}drc_runset -batch 2> {1} 1> {2}".format(OPTS.openram_temp,
+                                                                        errfile,
+                                                                        outfile)
     debug.info(1, cmd)
     os.system(cmd)
     os.chdir(cwd)
@@ -177,10 +176,9 @@ def run_lvs(name, gds_name, sp_name):
     errfile = "{0}{1}.lvs.err".format(OPTS.openram_temp, name)
     outfile = "{0}{1}.lvs.out".format(OPTS.openram_temp, name)
 
-    cmd = "{0} -gui -lvs {1}lvs_runset -batch 2> {2} 1> {3}".format(OPTS.lvs_exe,
-                                                                    OPTS.openram_temp,
-                                                                    errfile,
-                                                                    outfile)
+    cmd = "calibre -gui -lvs {0}lvs_runset -batch 2> {1} 1> {2}".format(OPTS.openram_temp,
+                                                                        errfile,
+                                                                        outfile)
     debug.info(1, cmd)
     os.system(cmd)
     os.chdir(cwd)
@@ -287,10 +285,9 @@ def run_pex(name, gds_name, sp_name, output=None):
     errfile = "{0}{1}.pex.err".format(OPTS.openram_temp, name)
     outfile = "{0}{1}.pex.out".format(OPTS.openram_temp, name)
 
-    cmd = "{0} -gui -pex {1}pex_runset -batch 2> {2} 1> {3}".format(OPTS.pex_exe,
-                                                                    OPTS.openram_temp,
-                                                                    errfile,
-                                                                    outfile)
+    cmd = "calibre -gui -pex {0}pex_runset -batch 2> {1} 1> {2}".format(OPTS.openram_temp,
+                                                                        errfile,
+                                                                        outfile)
     debug.info(2, cmd)
     os.system(cmd)
     os.chdir(cwd)

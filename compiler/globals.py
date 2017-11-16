@@ -25,9 +25,6 @@ minor_python_version = sys.version_info.minor
 if not (major_python_version == 2 and minor_python_version >= 7):
     debug.error("Python 2.7 is required.",-1)
 
-def is_exe(fpath):
-    return os.path.exists(fpath) and os.access(fpath, os.X_OK)
-
 # parse the optional arguments
 # this only does the optional arguments
 
@@ -113,15 +110,23 @@ def init_openram(config_file):
 
     import_tech()
 
-    set_spice()
-
+def get_tool(tool_type, preferences):
+    """
+    Find which tool we have from a list of preferences and return the full path.
+    """
+    debug.info(2,"Finding {} tool...".format(tool_type))
     global OPTS
-    OPTS.drc_exe = get_tool("DRC",["calibre","assura","magic"])
-    OPTS.lvs_exe = get_tool("LVS",["calibre","assura","netgen"])
-    OPTS.pex_exe = get_tool("PEX",["calibre","magic"])
-    #set_drc()
-    #set_lvs()
-    #set_pex()
+
+    for name in preferences:
+        exe_name = find_exe(name)
+        if exe_name!="":
+            debug.info(1, "Using {0}: {1}".format(tool_type,exe_name))
+            return(name,exe_name)
+        else:
+            debug.info(1, "Could not find {0}, trying next {1} tool.".format(name,tool_type))
+    else:
+        return(None,"")
+
     
 
 def read_config(config_file):
@@ -160,36 +165,6 @@ def read_config(config_file):
         debug.error("Unable to make output directory.",-1)
     
         
-def find_exe(check_exe):
-    """ Check if the binary exists in the path and return the full path. """
-    # Check if the preferred spice option exists in the path
-    for path in os.environ["PATH"].split(os.pathsep):
-        exe = os.path.join(path, check_exe)
-        # if it is found, then break and use first version
-        if is_exe(exe):
-            return exe
-    return ""
-
-def get_tool(tool_type, preferences):
-    """
-    Find which tool we have from a list of preferences and return the full path.
-    """
-    debug.info(2,"Finding {} tool...".format(tool_type))
-    global OPTS
-
-    if not OPTS.check_lvsdrc:
-        debug.info(1,"LVS/DRC/PEX disabled.")
-        return None
-    else:
-        for name in preferences:
-            exe_name = find_exe(name)
-            if exe_name!="":
-                debug.info(1, "Using {0}: {1}".format(tool_type,exe_name))
-                return(exe_name)
-            else:
-                debug.info(1, "Could not find {0}, trying next {1} tool.".format(name,tool_type))
-        else:
-            return("")
         
 def end_openram():
     """ Clean up openram for a proper exit """
@@ -245,31 +220,18 @@ def setup_paths():
             os.chmod(OPTS.openram_temp, 0o750)
 
 
-    
+def is_exe(fpath):
+    return os.path.exists(fpath) and os.access(fpath, os.X_OK)
 
-def set_spice():
-    debug.info(2,"Finding spice...")
-    global OPTS
-
-    if OPTS.analytical_delay:
-        debug.info(1,"Using analytical delay models (no characterization)")
-        return
-    else:
-        if OPTS.spice_version != "":
-            OPTS.spice_exe=find_exe(OPTS.spice_version)
-            if OPTS.spice_exe=="":
-                debug.error("{0} not found. Unable to perform characterization.".format(OPTS.spice_version),1)
-        else:
-            OPTS.spice_exe = get_tool("spice",["xa", "hspice", "ngspice", "ngspice.exe"])
-
-    # set the input dir for spice files if using ngspice 
-    if OPTS.spice_version == "ngspice":
-        os.environ["NGSPICE_INPUT_DIR"] = "{0}".format(OPTS.openram_temp)
-
-    if OPTS.spice_exe == "":
-        debug.error("No recognizable spice version found. Unable to perform characterization.",1)
-
-
+def find_exe(check_exe):
+    """ Check if the binary exists in the path and return the full path. """
+    # Check if the preferred spice option exists in the path
+    for path in os.environ["PATH"].split(os.pathsep):
+        exe = os.path.join(path, check_exe)
+        # if it is found, then break and use first version
+        if is_exe(exe):
+            return exe
+    return ""
         
 # imports correct technology directories for testing
 def import_tech():

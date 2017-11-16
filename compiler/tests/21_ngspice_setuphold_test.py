@@ -23,13 +23,14 @@ class timing_setup_test(unittest.TestCase):
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
         OPTS.spice_version="ngspice"
-        globals.set_spice()
+        # This is a hack to reload the characterizer __init__ with the spice version
+        import characterizer
+        reload(characterizer)
+        from characterizer import setup_hold
         
         import sram
         import tech
         slews = [tech.spice["rise_time"]*2]
-        
-        import setup_hold
         
         sh = setup_hold.setup_hold()
         data = sh.analyze(slews,slews)
@@ -60,7 +61,9 @@ class timing_setup_test(unittest.TestCase):
         # reset these options
         OPTS.check_lvsdrc = True
         OPTS.spice_version="hspice"
-        globals.set_spice()
+
+        reload(characterizer)
+
         globals.end_openram()
 
 # instantiate a copdsay of the class to actually run the test

@@ -107,7 +107,7 @@ if OPTS.use_pex:
     verify.run_pex(s.name, gdsname, spname, output=sram_file)
 
 # Characterize the design
-import lib
+from characterizer import lib
 libname = OPTS.output_path + s.name + ".lib"
 print("LIB: Writing to {0}".format(libname))
 lib.lib(libname,s,sram_file)

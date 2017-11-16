@@ -24,8 +24,11 @@ class timing_sram_test(unittest.TestCase):
         OPTS.check_lvsdrc = False
         OPTS.spice_version="hspice"
         OPTS.analytical_delay = False
-        globals.set_spice()
-        
+        # This is a hack to reload the characterizer __init__ with the spice version
+        import characterizer
+        reload(characterizer)
+        from characterizer import delay
+
         import sram
 
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
@@ -35,8 +38,6 @@ class timing_sram_test(unittest.TestCase):
                       name="sram1")
 
         OPTS.check_lvsdrc = True
-
-        import delay
 
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)

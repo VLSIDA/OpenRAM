@@ -56,7 +56,7 @@ import os
 import re
 import time
 import debug
-import globals
+from globals import OPTS
 import subprocess
 
 
@@ -66,12 +66,10 @@ def run_drc(name, gds_name):
 
     debug.warning("DRC using magic not implemented.")
     return 0
-    OPTS = globals.get_opts()
 
     # the runset file contains all the options to run drc
     from tech import drc
     drc_rules = drc["drc_rules"]
-
     drc_runset = {
         'drcRulesFile': drc_rules,
         'drcRunDir': OPTS.openram_temp,
@@ -88,7 +86,7 @@ def run_drc(name, gds_name):
     # write the runset file
     f = open(OPTS.openram_temp + "drc_runset", "w")
     for k in sorted(drc_runset.iterkeys()):
-        f.write("*%s: %s\n" % (k, drc_runset[k]))
+        f.write("*{0}: {1}\n".format(k, drc_runset[k]))
     f.close()
 
     # run drc
@@ -123,11 +121,15 @@ def run_drc(name, gds_name):
 
     # always display this summary
     if errors > 0:
-        debug.error("%-25s\tGeometries: %d\tChecks: %d\tErrors: %d" %
-                    (name, geometries, rulechecks, errors))
+        debug.error("{0}\tGeometries: {1}\tChecks: {2}\tErrors: {3}".format(name, 
+                                                                            geometries,
+                                                                            rulechecks,
+                                                                            errors))
     else:
-        debug.info(1, "%-25s\tGeometries: %d\tChecks: %d\tErrors: %d" %
-                   (name, geometries, rulechecks, errors))
+        debug.info(1, "{0}\tGeometries: {1}\tChecks: {2}\tErrors: {3}".format(name, 
+                                                                              geometries,
+                                                                              rulechecks,
+                                                                              errors))
 
     return errors
 
@@ -139,7 +141,6 @@ def run_lvs(name, gds_name, sp_name):
     debug.warning("LVS using magic+netgen not implemented.")
     return 0
     
-    OPTS = globals.get_opts()
     from tech import drc
     lvs_rules = drc["lvs_rules"]
     lvs_runset = {
@@ -253,7 +254,6 @@ def run_pex(name, gds_name, sp_name, output=None):
     debug.warning("PEX using magic not implemented.")
     return 0
 
-    OPTS = globals.get_opts()
     from tech import drc
     if output == None:
         output = name + ".pex.netlist"

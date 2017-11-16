@@ -4,15 +4,13 @@ simulation.  There are various functions that can be be used to
 generate stimulus for other simulations as well.
 """
 
-import globals
 import tech
 import debug
 import subprocess
 import os
 import sys
 import numpy as np
-
-OPTS = globals.get_opts()
+from globals import OPTS
 
 vdd_voltage = tech.spice["supply_voltage"]
 gnd_voltage = tech.spice["gnd_voltage"]

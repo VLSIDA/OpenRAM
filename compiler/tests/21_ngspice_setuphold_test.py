@@ -8,10 +8,9 @@ from testutils import header,isclose
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
+from globals import OPTS
 import debug
 import verify
-
-OPTS = globals.get_opts()
 
 #@unittest.skip("SKIPPING 21_timing_sram_test")
 
@@ -20,9 +19,11 @@ class timing_setup_test(unittest.TestCase):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
         OPTS.spice_version="ngspice"
+        OPTS.analytical_delay = False
         # This is a hack to reload the characterizer __init__ with the spice version
         import characterizer
         reload(characterizer)
@@ -54,14 +55,14 @@ class timing_setup_test(unittest.TestCase):
         for k in data.keys():
             if type(data[k])==list:
                 for i in range(len(data[k])):
-                    self.assertTrue(isclose(data[k][i],golden_data[k][i]))
+                    self.assertTrue(isclose(data[k][i],golden_data[k][i],0.10))
             else:
-                self.assertTrue(isclose(data[k],golden_data[k]))
+                self.assertTrue(isclose(data[k],golden_data[k],0.10))
 
         # reset these options
         OPTS.check_lvsdrc = True
         OPTS.spice_version="hspice"
-
+        OPTS.analytical_delay = True
         reload(characterizer)
 
         globals.end_openram()

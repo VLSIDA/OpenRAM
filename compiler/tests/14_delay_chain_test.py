@@ -8,14 +8,11 @@ from testutils import header
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
+from globals import OPTS
 import debug
 import verify
 
-OPTS = globals.get_opts()
-
 #@unittest.skip("SKIPPING 14_delay_chain_test")
-
-
 class delay_chain_test(unittest.TestCase):
 
     def runTest(self):

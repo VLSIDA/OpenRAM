@@ -146,8 +146,7 @@ class ptx_test(unittest.TestCase):
 
         self.assertFalse(verify.run_drc(fet.name, tempgds))
 
-        os.remove(tempspice)
-        os.remove(tempgds)
+        globals.end_openram()
 
 # instantiate a copy of the class to actually run the test
 if __name__ == "__main__":

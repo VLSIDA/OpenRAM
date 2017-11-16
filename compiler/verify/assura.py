@@ -1,11 +1,11 @@
 """
-This is a DRC/LVS interface for Assura. It implements completely
-independently two functions: run_drc and run_lvs, that perform these
-functions in batch mode and will return true/false if the result
-passes. All of the setup (the rules, temp dirs, etc.) should be
-contained in this file.  Replacing with another DRC/LVS tool involves
-rewriting this code to work properly. Porting to a new technology in
-Assura means pointing the code to the proper DRC and LVS rule files.
+This is a DRC/LVS interface for Assura. It implements completely two
+functions: run_drc and run_lvs, that perform these functions in batch
+mode and will return true/false if the result passes. All of the setup
+(the rules, temp dirs, etc.) should be contained in this file.
+Replacing with another DRC/LVS tool involves rewriting this code to
+work properly. Porting to a new technology in Assura means pointing
+the code to the proper DRC and LVS rule files.
 
 LVS Notes:
 
@@ -23,19 +23,16 @@ import os
 import re
 import time
 import debug
-import globals
-
+from globals import OPTS
 
 def run_drc(name, gds_name):
     """Run DRC check on a given top-level name which is
        implemented in gds_name."""
-    OPTS = globals.get_opts()
 
     from tech import drc
-
     drc_rules = drc["drc_rules"]
     drc_runset = OPTS.openram_temp + name + ".rsf"
-    drc_log_file = "%s%s.log" % (OPTS.openram_temp, name)
+    drc_log_file = "{0}{1}.log".format(OPTS.openram_temp, name)
 
     # write the runset file
     # the runset file contains all the options to run Assura
@@ -51,10 +48,10 @@ def run_drc(name, gds_name):
     f.write(")\n")
     f.write("\n")
     f.write("avParameters(\n")
-    f.write("  ?inputLayout ( \"gds2\" \"%s\" )\n" % (gds_name))
-    f.write("  ?cellName \"%s\"\n" % (name))
-    f.write("  ?workingDirectory \"%s\"\n" % (OPTS.openram_temp))
-    f.write("  ?rulesFile \"%s\"\n" % (drc_rules))
+    f.write("  ?inputLayout ( \"gds2\" \"{}\" )\n".format(gds_name))
+    f.write("  ?cellName \"{}\"\n".format(name))
+    f.write("  ?workingDirectory \"{}\"\n".format(OPTS.openram_temp))
+    f.write("  ?rulesFile \"{}\"\n".format(drc_rules))
     f.write("  ?set ( \"GridCheck\" )\n")
     f.write("  ?avrpt t\n")
     f.write(")\n")
@@ -83,7 +80,7 @@ def run_drc(name, gds_name):
                debug.info(1, line)
 
     if errors > 0:
-        debug.error("Errors: %d" % (errors))
+        debug.error("Errors: {}".format(errors))
 
     return errors
 
@@ -91,13 +88,12 @@ def run_drc(name, gds_name):
 def run_lvs(name, gds_name, sp_name):
     """Run LVS check on a given top-level name which is
        implemented in gds_name and sp_name. """
-    OPTS = globals.get_opts()
-
     from tech import drc
-
     lvs_rules = drc["lvs_rules"]
     lvs_runset = OPTS.openram_temp + name + ".rsf"
+    # The LVS compare rules must be defined in the tech file for Assura.
     lvs_compare = drc["lvs_compare"]
+    # Define the must-connect names for disconnected LVS nets for Assura
     lvs_bindings = drc["lvs_bindings"]
     lvs_log_file = "{0}{1}.log".format(OPTS.openram_temp, name)
     # Needed when FET models are sub-circuits
@@ -168,3 +164,9 @@ def run_lvs(name, gds_name, sp_name):
            debug.info(1, line)
 
     return errors
+
+
+def run_pex(name, gds_name, sp_name, output=None):
+    """Run pex on a given top-level name which is
+       implemented in gds_name and sp_name. """
+    debug.error("PEX extraction not implemented with Assura.",-1)

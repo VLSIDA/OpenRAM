@@ -4,8 +4,7 @@ import globals
 import verify
 import debug
 import os
-
-OPTS = globals.get_opts()
+from globals import OPTS
 
 
 class design(hierarchy_spice.spice, hierarchy_layout.layout):

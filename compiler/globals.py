@@ -25,12 +25,8 @@ minor_python_version = sys.version_info.minor
 if not (major_python_version == 2 and minor_python_version >= 7):
     debug.error("Python 2.7 is required.",-1)
 
-# parse the optional arguments
-# this only does the optional arguments
-
-
 def parse_args():
-    """Parse the arguments and initialize openram"""
+    """ Parse the optional arguments for OpenRAM """
 
     global OPTS
 
@@ -57,8 +53,8 @@ def parse_args():
                              help="Use analytical models to calculate delays (default)"),
         optparse.make_option("-c", "--characterize", action="store_false", dest="analytical_delay",
                              help="Perform characterization to calculate delays (default is analytical models)")
+        # -h --help is implicit.
     }
-# -h --help is implicit.
 
     parser = optparse.OptionParser(option_list=option_list,
                                    description="Compile and/or characterize an SRAM.",
@@ -72,12 +68,7 @@ def parse_args():
     if OPTS.tech_name == "":
         OPTS.tech_name = "freepdk45"
     
-
     return (options, args)
-
-
-def get_opts():
-    return(OPTS)
 
 def print_banner():
     """ Conditionally print the banner to stdout """
@@ -112,14 +103,15 @@ def init_openram(config_file):
 
 def get_tool(tool_type, preferences):
     """
-    Find which tool we have from a list of preferences and return the full path.
+    Find which tool we have from a list of preferences and return the
+    one selected and its full path.
     """
     debug.info(2,"Finding {} tool...".format(tool_type))
     global OPTS
 
     for name in preferences:
         exe_name = find_exe(name)
-        if exe_name!="":
+        if exe_name != None:
             debug.info(1, "Using {0}: {1}".format(tool_type,exe_name))
             return(name,exe_name)
         else:
@@ -130,17 +122,29 @@ def get_tool(tool_type, preferences):
     
 
 def read_config(config_file):
-    global OPTS
-    
-    OPTS.config_file = config_file
-    OPTS.config_file = re.sub(r'\.py$', "", OPTS.config_file)
+    """ 
+    Read the configuration file that defines a few parameters. The
+    config file is just a Python file that defines some config
+    options. 
+    """
 
-    # dynamically import the configuration file of which modules to use
-    debug.info(1, "Configuration file is " + OPTS.config_file + ".py")
+    # Create a full path relative to current dir unless it is already an abs path
+    if not os.path.isabs(config_file):
+        config_file = os.getcwd() + "/" +  config_file
+    # Make it a python file if the base name was only given
+    config_file = re.sub(r'\.py$', "", config_file)
+    # Expand the user if it is used
+    config_file = os.path.expanduser(config_file)
+    # Add the path to the system path so we can import things in the other directory
+    dir_name = os.path.dirname(config_file)
+    file_name = os.path.basename(config_file)
+    sys.path.append(dir_name)
+    # Import the configuration file of which modules to use
+    debug.info(1, "Configuration file is " + config_file + ".py")
     try:
-        OPTS.config = importlib.import_module(OPTS.config_file)
+        OPTS.config = importlib.import_module(file_name) 
     except:
-        debug.error("Unable to read configuration file: {0}".format(OPTS.config_file+".py. Did you specify the technology?"),2)
+        debug.error("Unable to read configuration file: {0}".format(config_file),2)
 
     # This path must be setup after the config file.
     try:
@@ -177,7 +181,9 @@ def end_openram():
     
     
 def cleanup_paths():
-    # we should clean up this temp directory after execution...
+    """
+    We should clean up the temp directory after execution.
+    """
     if os.path.exists(OPTS.openram_temp):
         shutil.rmtree(OPTS.openram_temp, ignore_errors=True)
             
@@ -199,9 +205,6 @@ def setup_paths():
     debug.check(os.path.isdir(OPENRAM_HOME+"/tests"),
                 "$OPENRAM_HOME/tests does not exist: {0}".format(OPENRAM_HOME+"/tests"))
     sys.path.append("{0}/tests".format(OPENRAM_HOME))
-    debug.check(os.path.isdir(OPENRAM_HOME+"/characterizer"),
-                "$OPENRAM_HOME/characterizer does not exist: {0}".format(OPENRAM_HOME+"/characterizer"))
-    sys.path.append("{0}/characterizer".format(OPENRAM_HOME))
     debug.check(os.path.isdir(OPENRAM_HOME+"/router"),
                 "$OPENRAM_HOME/router does not exist: {0}".format(OPENRAM_HOME+"/router"))
     sys.path.append("{0}/router".format(OPENRAM_HOME))
@@ -221,17 +224,18 @@ def setup_paths():
 
 
 def is_exe(fpath):
+    """ Return true if the given is an executable file that exists. """
     return os.path.exists(fpath) and os.access(fpath, os.X_OK)
 
 def find_exe(check_exe):
-    """ Check if the binary exists in the path and return the full path. """
+    """ Check if the binary exists in any path dir and return the full path. """
     # Check if the preferred spice option exists in the path
     for path in os.environ["PATH"].split(os.pathsep):
         exe = os.path.join(path, check_exe)
         # if it is found, then break and use first version
         if is_exe(exe):
             return exe
-    return ""
+    return None
         
 # imports correct technology directories for testing
 def import_tech():

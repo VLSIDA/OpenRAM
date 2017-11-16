@@ -1,11 +1,10 @@
 import hierarchy_layout
 import hierarchy_spice
 import globals
-import calibre
+import verify
 import debug
 import os
-
-OPTS = globals.get_opts()
+from globals import OPTS
 
 
 class design(hierarchy_spice.spice, hierarchy_layout.layout):
@@ -56,8 +55,8 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
             tempgds = OPTS.openram_temp + "/temp.gds"
             self.sp_write(tempspice)
             self.gds_write(tempgds)
-            debug.check(calibre.run_drc(self.name, tempgds) == 0,"DRC failed for {0}".format(self.name))
-            debug.check(calibre.run_lvs(self.name, tempgds, tempspice) == 0,"LVS failed for {0}".format(self.name))
+            debug.check(verify.run_drc(self.name, tempgds) == 0,"DRC failed for {0}".format(self.name))
+            debug.check(verify.run_lvs(self.name, tempgds, tempspice) == 0,"LVS failed for {0}".format(self.name))
             os.remove(tempspice)
             os.remove(tempgds)
 
@@ -66,7 +65,7 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
         if OPTS.check_lvsdrc:
             tempgds = OPTS.openram_temp + "/temp.gds"
             self.gds_write(tempgds)
-            debug.check(calibre.run_drc(self.name, tempgds) == 0,"DRC failed for {0}".format(self.name))
+            debug.check(verify.run_drc(self.name, tempgds) == 0,"DRC failed for {0}".format(self.name))
             os.remove(tempgds)
 
     def LVS(self):
@@ -76,7 +75,7 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
             tempgds = OPTS.openram_temp + "/temp.gds"
             self.sp_write(tempspice)
             self.gds_write(tempgds)
-            debug.check(calibre.run_lvs(self.name, tempgds, tempspice) == 0,"LVS failed for {0}".format(self.name))
+            debug.check(verify.run_lvs(self.name, tempgds, tempspice) == 0,"LVS failed for {0}".format(self.name))
             os.remove(tempspice)
             os.remove(tempgds)
 

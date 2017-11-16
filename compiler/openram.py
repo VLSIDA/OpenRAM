@@ -10,19 +10,11 @@ a Liberty (.lib) file for timing analysis/optimization
 
 """
 
-__author__ = "Matthew Guthaus (mrg@ucsc.edu) and numerous others"
-__version__ = "$Revision: 0.9 $"
-__copyright__ = "Copyright (c) 2015 UCSC and OSU"
-__license__ = "This is not currently licensed for use outside of UCSC's VLSI-DA and OSU's VLSI group."
-
-
 import sys,os
 import datetime
 import re
 import importlib
 import globals
-
-global OPTS
 
 (OPTS, args) = globals.parse_args()
 
@@ -72,17 +64,18 @@ print("Output files are " + OPTS.output_name + ".(sp|gds|v|lib|lef)")
 print("Technology: {0}".format(OPTS.tech_name))
 print("Word size: {0}\nWords: {1}\nBanks: {2}".format(word_size,num_words,num_banks))
 
+if not OPTS.check_lvsdrc:
+    print("DRC/LVS/PEX checking is disabled.")
 
 if OPTS.analytical_delay:
     print("Using analytical delay models (no characterization)")
 else:
     print("Performing simulation-based characterization with {}".format(OPTS.spice_version))
-
-if OPTS.trim_netlist:
-    print("Trimming netlist to speed up characterization (sacrificing some accuracy).")
+    if OPTS.trim_netlist:
+        print("Trimming netlist to speed up characterization (sacrificing some accuracy).")
 
 # only start importing modules after we have the config file
-import calibre
+import verify
 import sram
 
 start_time = datetime.datetime.now()
@@ -111,10 +104,10 @@ last_time=print_time("Spice writing", datetime.datetime.now(), last_time)
 sram_file = spname
 if OPTS.use_pex:
     sram_file = OPTS.output_path + "temp_pex.sp"
-    calibre.run_pex(s.name, gdsname, spname, output=sram_file)
+    verify.run_pex(s.name, gdsname, spname, output=sram_file)
 
 # Characterize the design
-import lib
+from characterizer import lib
 libname = OPTS.output_path + s.name + ".lib"
 print("LIB: Writing to {0}".format(libname))
 lib.lib(libname,s,sram_file)

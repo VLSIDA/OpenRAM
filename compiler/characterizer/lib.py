@@ -1,7 +1,6 @@
 import os
 import sys
 import re
-import globals
 import debug
 import tech
 import math
@@ -11,8 +10,7 @@ import charutils as ch
 import tech
 import numpy as np
 from trim_spice import trim_spice
-
-OPTS = globals.get_opts()
+from globals import OPTS
 
 class lib:
     """ lib file generation."""

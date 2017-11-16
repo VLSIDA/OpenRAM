@@ -10,12 +10,11 @@ from testutils import header
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
+from globals import OPTS
 import debug
 import os
 import re
 import shutil
-
-OPTS = globals.get_opts()
 
 class openram_test(unittest.TestCase):
 
@@ -73,7 +72,7 @@ class openram_test(unittest.TestCase):
 
         globals.end_openram()        
 
-# instantiate a copdsay of the class to actually run the test
+# instantiate a copy of the class to actually run the test
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

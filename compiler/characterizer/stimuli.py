@@ -4,15 +4,13 @@ simulation.  There are various functions that can be be used to
 generate stimulus for other simulations as well.
 """
 
-import globals
 import tech
 import debug
 import subprocess
 import os
 import sys
 import numpy as np
-
-OPTS = globals.get_opts()
+from globals import OPTS
 
 vdd_voltage = tech.spice["supply_voltage"]
 gnd_voltage = tech.spice["gnd_voltage"]
@@ -278,21 +276,22 @@ def run_sim():
     temp_stim = "{0}stim.sp".format(OPTS.openram_temp)
     
     
+    from characterizer import spice_exe
     if OPTS.spice_version == "xa":
-        cmd = "{0} {1} -o {2}xa -mt 20".format(OPTS.spice_exe,
+        cmd = "{0} {1} -o {2}xa -mt 20".format(spice_exe,
                                                temp_stim,
                                                OPTS.openram_temp)
         valid_retcode=0
     elif OPTS.spice_version == "hspice":
         # TODO: Should make multithreading parameter a configuration option
-        cmd = "{0} -mt 2 -i {1} -o {2}timing".format(OPTS.spice_exe,
+        cmd = "{0} -mt 2 -i {1} -o {2}timing".format(spice_exe,
                                                      temp_stim,
                                                      OPTS.openram_temp)
         valid_retcode=0
     else:
-        cmd = "{0} -b -o {2}timing.lis {1}".format(OPTS.spice_exe,
-                                                        temp_stim,
-                                                        OPTS.openram_temp)
+        cmd = "{0} -b -o {2}timing.lis {1}".format(spice_exe,
+                                                   temp_stim,
+                                                   OPTS.openram_temp)
         # for some reason, ngspice-25 returns 1 when it only has acceptable warnings
         valid_retcode=1
 

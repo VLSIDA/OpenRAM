@@ -7,7 +7,7 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 import debug
-import calibre
+import verify
 
 OPTS = globals.OPTS
 
@@ -52,7 +52,7 @@ class contact_test(unittest.TestCase):
     def local_check(self, c):
         tempgds = OPTS.openram_temp + "temp.gds"
         c.gds_write(tempgds)
-        self.assertFalse(calibre.run_drc(c.name, tempgds))
+        self.assertFalse(verify.run_drc(c.name, tempgds))
         os.remove(tempgds)
 
 

@@ -62,14 +62,13 @@ import os
 import re
 import time
 import debug
-import globals
+from globals import OPTS
 import subprocess
 
 
 def run_drc(name, gds_name):
     """Run DRC check on a given top-level name which is
        implemented in gds_name."""
-    OPTS = globals.get_opts()
 
     # the runset file contains all the options to run calibre
     from tech import drc
@@ -91,17 +90,18 @@ def run_drc(name, gds_name):
     # write the runset file
     f = open(OPTS.openram_temp + "drc_runset", "w")
     for k in sorted(drc_runset.iterkeys()):
-        f.write("*%s: %s\n" % (k, drc_runset[k]))
+        f.write("*{0}: {1}\n".format(k, drc_runset[k]))
     f.close()
 
     # run drc
     cwd = os.getcwd()
     os.chdir(OPTS.openram_temp)
-    errfile = "%s%s.drc.err" % (OPTS.openram_temp, name)
-    outfile = "%s%s.drc.out" % (OPTS.openram_temp, name)
+    errfile = "{0}{1}.drc.err".format(OPTS.openram_temp, name)
+    outfile = "{0}{1}.drc.out".format(OPTS.openram_temp, name)
 
-    cmd = "{0} -gui -drc {1}drc_runset -batch 2> {2} 1> {3}".format(
-        OPTS.calibre_exe, OPTS.openram_temp, errfile, outfile)
+    cmd = "calibre -gui -drc {0}drc_runset -batch 2> {1} 1> {2}".format(OPTS.openram_temp,
+                                                                        errfile,
+                                                                        outfile)
     debug.info(1, cmd)
     os.system(cmd)
     os.chdir(cwd)
@@ -124,19 +124,21 @@ def run_drc(name, gds_name):
 
     # always display this summary
     if errors > 0:
-        debug.error("%-25s\tGeometries: %d\tChecks: %d\tErrors: %d" %
-                    (name, geometries, rulechecks, errors))
+        debug.error("{0}\tGeometries: {1}\tChecks: {2}\tErrors: {3}".format(name, 
+                                                                            geometries,
+                                                                            rulechecks,
+                                                                            errors))
     else:
-        debug.info(1, "%-25s\tGeometries: %d\tChecks: %d\tErrors: %d" %
-                   (name, geometries, rulechecks, errors))
-
+        debug.info(1, "{0}\tGeometries: {1}\tChecks: {2}\tErrors: {3}".format(name, 
+                                                                              geometries,
+                                                                              rulechecks,
+                                                                              errors))
     return errors
 
 
 def run_lvs(name, gds_name, sp_name):
     """Run LVS check on a given top-level name which is
        implemented in gds_name and sp_name. """
-    OPTS = globals.get_opts()
     from tech import drc
     lvs_rules = drc["lvs_rules"]
     lvs_runset = {
@@ -166,18 +168,19 @@ def run_lvs(name, gds_name, sp_name):
     # write the runset file
     f = open(OPTS.openram_temp + "lvs_runset", "w")
     for k in sorted(lvs_runset.iterkeys()):
-        f.write("*%s: %s\n" % (k, lvs_runset[k]))
+        f.write("*{0}: {1}\n".format(k, lvs_runset[k]))
     f.close()
 
     # run LVS
     cwd = os.getcwd()
     os.chdir(OPTS.openram_temp)
-    errfile = "%s%s.lvs.err" % (OPTS.openram_temp, name)
-    outfile = "%s%s.lvs.out" % (OPTS.openram_temp, name)
+    errfile = "{0}{1}.lvs.err".format(OPTS.openram_temp, name)
+    outfile = "{0}{1}.lvs.out".format(OPTS.openram_temp, name)
 
-    cmd = "calibre -gui -lvs %slvs_runset -batch 2> %s 1> %s" % (
-        OPTS.openram_temp, errfile, outfile)
-    debug.info(2, cmd)
+    cmd = "calibre -gui -lvs {0}lvs_runset -batch 2> {1} 1> {2}".format(OPTS.openram_temp,
+                                                                        errfile,
+                                                                        outfile)
+    debug.info(1, cmd)
     os.system(cmd)
     os.chdir(cwd)
 
@@ -244,7 +247,6 @@ def run_lvs(name, gds_name, sp_name):
 def run_pex(name, gds_name, sp_name, output=None):
     """Run pex on a given top-level name which is
        implemented in gds_name and sp_name. """
-    OPTS = globals.get_opts()
     from tech import drc
     if output == None:
         output = name + ".pex.netlist"
@@ -283,10 +285,9 @@ def run_pex(name, gds_name, sp_name, output=None):
     errfile = "{0}{1}.pex.err".format(OPTS.openram_temp, name)
     outfile = "{0}{1}.pex.out".format(OPTS.openram_temp, name)
 
-    cmd = "{0} -gui -pex {1}pex_runset -batch 2> {2} 1> {3}".format(OPTS.calibre_exe,
-                                                                    OPTS.openram_temp,
-                                                                    errfile,
-                                                                    outfile)
+    cmd = "calibre -gui -pex {0}pex_runset -batch 2> {1} 1> {2}".format(OPTS.openram_temp,
+                                                                        errfile,
+                                                                        outfile)
     debug.info(2, cmd)
     os.system(cmd)
     os.chdir(cwd)

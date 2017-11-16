@@ -1,14 +1,12 @@
 import sys
 import re
-import globals
 import debug
 import tech
 import math
 import stimuli
 import charutils as ch
 import utils
-
-OPTS = globals.get_opts()
+from globals import OPTS
 
 class delay():
     """

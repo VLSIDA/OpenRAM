@@ -7,7 +7,7 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 import debug
-import calibre
+import verify
 import re
 
 OPTS = globals.OPTS
@@ -33,7 +33,7 @@ class library_lvs_test(unittest.TestCase):
             if not os.path.isfile(sp_name):
                 lvs_errors += 1
                 debug.error("Missing SPICE file {}".format(gds_name))
-            lvs_errors += calibre.run_lvs(f, gds_name, sp_name)
+            lvs_errors += verify.run_lvs(f, gds_name, sp_name)
 
         # fail if the error count is not zero
         self.assertEqual(lvs_errors, 0)

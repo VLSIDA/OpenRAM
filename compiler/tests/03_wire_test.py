@@ -7,7 +7,7 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 import debug
-import calibre
+import verify
 
 OPTS = globals.OPTS
 
@@ -132,7 +132,7 @@ class wire_test(unittest.TestCase):
     def local_check(self, w):
         tempgds = OPTS.openram_temp + "temp.gds"
         w.gds_write(tempgds)
-        self.assertFalse(calibre.run_drc(w.name, tempgds))
+        self.assertFalse(verify.run_drc(w.name, tempgds))
         os.remove(tempgds)
 
 

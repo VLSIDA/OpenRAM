@@ -8,10 +8,9 @@ from testutils import header,isclose
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
+from globals import OPTS
 import debug
-import calibre
-
-OPTS = globals.get_opts()
+import verify
 
 #@unittest.skip("SKIPPING 21_timing_sram_test")
 
@@ -24,13 +23,14 @@ class timing_setup_test(unittest.TestCase):
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
         OPTS.spice_version="hspice"
-        globals.set_spice()
+        OPTS.analytical_delay = False
+        import characterizer
+        reload(characterizer)
+        from characterizer import setup_hold
 
         import sram
         import tech
         slews = [tech.spice["rise_time"]*2]
-        
-        import setup_hold
         
         sh = setup_hold.setup_hold()
         data = sh.analyze(slews,slews)
@@ -54,11 +54,13 @@ class timing_setup_test(unittest.TestCase):
         for k in data.keys():
             if type(data[k])==list:
                 for i in range(len(data[k])):
-                    self.assertTrue(isclose(data[k][i],golden_data[k][i]))
+                    self.assertTrue(isclose(data[k][i],golden_data[k][i],0.10))
             else:
-                self.assertTrue(isclose(data[k],golden_data[k]))
+                self.assertTrue(isclose(data[k],golden_data[k],0.10))
 
         OPTS.check_lvsdrc = True
+        OPTS.analytical_delay = True
+        reload(characterizer)
         globals.end_openram()
         
 # instantiate a copdsay of the class to actually run the test

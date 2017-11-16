@@ -8,10 +8,9 @@ from testutils import header
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
+from globals import OPTS
 import debug
-import calibre
-
-OPTS = globals.get_opts()
+import verify
 
 
 @unittest.skip("SKIPPING 22_sram_func_test")
@@ -47,9 +46,9 @@ class sram_func_test(unittest.TestCase):
         s.sp_write(tempspice)
         s.gds_write(tempgds)
 
-        self.assertFalse(calibre.run_drc(s.name, tempgds))
-        self.assertFalse(calibre.run_lvs(s.name, tempgds, tempspice))
-        self.assertFalse(calibre.run_pex(s.name, tempgds,
+        self.assertFalse(verify.run_drc(s.name, tempgds))
+        self.assertFalse(verify.run_lvs(s.name, tempgds, tempspice))
+        self.assertFalse(verify.run_pex(s.name, tempgds,
                                          tempspice, output=OPTS.openram_temp + "temp_pex.sp"))
 
         import sp_file

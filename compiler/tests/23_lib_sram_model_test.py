@@ -8,11 +8,9 @@ from testutils import header,isapproxdiff
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
+from globals import OPTS
 import debug
-import calibre
-
-OPTS = globals.get_opts()
-
+import verify
 
 class lib_test(unittest.TestCase):
 
@@ -22,7 +20,7 @@ class lib_test(unittest.TestCase):
         OPTS.check_lvsdrc = False
 
         import sram
-        import lib
+        from characterizer import lib
 
         debug.info(1, "Testing timing for sample 2 bit, 16 words SRAM with 1 bank")
         s = sram.sram(word_size=2,
@@ -42,8 +40,6 @@ class lib_test(unittest.TestCase):
         golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),filename)
         # Randomly decided 1% difference between spice simulators is ok.
         self.assertEqual(isapproxdiff(libname,golden,0.01),True)
-
-        os.system("rm {0}".format(libname))
 
         globals.end_openram()
 

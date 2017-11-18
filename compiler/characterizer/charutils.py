@@ -1,8 +1,6 @@
-import globals
 import re
 import debug
-
-OPTS = globals.get_opts()
+from globals import OPTS
 
         
 def relative_compare(value1,value2,error_tolerance=0.001):

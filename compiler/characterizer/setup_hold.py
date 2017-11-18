@@ -1,12 +1,10 @@
 import sys
-import globals
 import tech
 import stimuli
 import debug
 import charutils as ch
 import ms_flop
-
-OPTS = globals.get_opts()
+from globals import OPTS
 
 
 class setup_hold():

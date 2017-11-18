@@ -8,10 +8,10 @@ from testutils import header
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
+from globals import OPTS
 import debug
-import calibre
+import verify
 
-OPTS = globals.get_opts()
 
 #@unittest.skip("SKIPPING 08_precharge_test")
 
@@ -39,8 +39,8 @@ class precharge_test(unittest.TestCase):
         pc.sp_write(tempspice)
         pc.gds_write(tempgds)
 
-        self.assertFalse(calibre.run_drc(pc.name, tempgds))
-        self.assertFalse(calibre.run_lvs(pc.name, tempgds, tempspice))
+        self.assertFalse(verify.run_drc(pc.name, tempgds))
+        self.assertFalse(verify.run_lvs(pc.name, tempgds, tempspice))
 
         os.remove(tempspice)
         os.remove(tempgds)

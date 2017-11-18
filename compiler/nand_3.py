@@ -36,7 +36,7 @@ class nand_3(design.design):
 
         self.add_pins()
         self.create_layout()
-        self.DRC_LVS()
+        #self.DRC_LVS()
 
     def add_pins(self):
         """ add pics for this module """

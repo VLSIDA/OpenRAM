@@ -7,7 +7,7 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 import debug
-import calibre
+import verify
 import re
 
 OPTS = globals.OPTS
@@ -29,7 +29,7 @@ class library_drc_test(unittest.TestCase):
             if not os.path.isfile(gds_name):
                 drc_errors += 1
                 debug.error("Missing GDS file: {}".format(gds_name))
-            drc_errors += calibre.run_drc(name, gds_name)
+            drc_errors += verify.run_drc(name, gds_name)
 
         # fails if there are any DRC errors on any cells
         self.assertEqual(drc_errors, 0)

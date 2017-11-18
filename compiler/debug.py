@@ -30,7 +30,7 @@ def warning(str):
 
 
 def info(lev, str):
-    OPTS = globals.get_opts()
+    from globals import OPTS
     if (OPTS.debug_level >= lev):
         frm = inspect.stack()[1]
         mod = inspect.getmodule(frm[0])

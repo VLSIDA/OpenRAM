@@ -22,8 +22,10 @@ class options(optparse.Values):
     spice_version = ""
     # Should we print out the banner at startup
     print_banner = True
-    # The Calibre executable being used which is derived from the user PATH.
-    calibre_exe = ""
+    # The DRC/LVS/PEX executable being used which is derived from the user PATH.
+    drc_exe = ""
+    lvs_exe = ""
+    pex_exe = ""
     # The spice executable being used which is derived from the user PATH.
     spice_exe = ""
     # Run with extracted parasitics

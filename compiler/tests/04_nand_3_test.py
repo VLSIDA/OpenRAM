@@ -11,7 +11,7 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 import debug
-import calibre
+import verify
 
 OPTS = globals.OPTS
 
@@ -40,8 +40,8 @@ class nand_3_test(unittest.TestCase):
         tx.sp_write(tempspice)
         tx.gds_write(tempgds)
 
-        self.assertFalse(calibre.run_drc(tx.name, tempgds))
-        self.assertFalse(calibre.run_lvs(tx.name, tempgds, tempspice))
+        self.assertFalse(verify.run_drc(tx.name, tempgds))
+        self.assertFalse(verify.run_lvs(tx.name, tempgds, tempspice))
 
         os.remove(tempspice)
         os.remove(tempgds)

@@ -8,10 +8,9 @@ from testutils import header
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
+from globals import OPTS
 import debug
-import calibre
-
-OPTS = globals.get_opts()
+import verify
 
 #@unittest.skip("SKIPPING 21_timing_sram_test")
 
@@ -19,10 +18,16 @@ OPTS = globals.get_opts()
 class sram_func_test(unittest.TestCase):
 
     def runTest(self):
-        OPTS.analytical_delay = False
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
+        OPTS.spice_version="hspice"
+        OPTS.analytical_delay = False
+        import characterizer
+        reload(characterizer)
+        from characterizer import delay
+
         import sram
 
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
@@ -32,7 +37,6 @@ class sram_func_test(unittest.TestCase):
                       name="sram_func_test")
 
         OPTS.check_lvsdrc = True
-        import delay
 
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)
@@ -52,6 +56,7 @@ class sram_func_test(unittest.TestCase):
 
         os.remove(tempspice)
         OPTS.analytical_delay = True
+        reload(characterizer)
         globals.end_openram()
         
 # instantiate a copdsay of the class to actually run the test

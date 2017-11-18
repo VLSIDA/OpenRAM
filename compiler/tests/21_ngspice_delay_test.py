@@ -8,10 +8,9 @@ from testutils import header,isclose
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
+from globals import OPTS
 import debug
-import calibre
-
-OPTS = globals.get_opts()
+import verify
 
 #@unittest.skip("SKIPPING 21_ngspice_delay_test")
 class timing_sram_test(unittest.TestCase):
@@ -22,8 +21,11 @@ class timing_sram_test(unittest.TestCase):
         OPTS.check_lvsdrc = False
         OPTS.spice_version="ngspice"
         OPTS.analytical_delay = False
-        globals.set_spice()
-        
+        # This is a hack to reload the characterizer __init__ with the spice version
+        import characterizer
+        reload(characterizer)
+        from characterizer import delay
+
         import sram
 
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
@@ -31,8 +33,6 @@ class timing_sram_test(unittest.TestCase):
                       num_words=OPTS.config.num_words,
                       num_banks=OPTS.config.num_banks,
                       name="sram1")
-
-        import delay
 
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)
@@ -76,17 +76,15 @@ class timing_sram_test(unittest.TestCase):
         for k in data.keys():
             if type(data[k])==list:
                 for i in range(len(data[k])):
-                    self.assertTrue(isclose(data[k][i],golden_data[k][i]))
+                    self.assertTrue(isclose(data[k][i],golden_data[k][i],0.10))
             else:
-                self.assertTrue(isclose(data[k],golden_data[k]))
+                self.assertTrue(isclose(data[k],golden_data[k]),0.10)
 
         # reset these options
         OPTS.check_lvsdrc = True
         OPTS.spice_version="hspice"
         OPTS.analytical_delay = True
-        globals.set_spice()
-
-        os.remove(tempspice)
+        reload(characterizer)
 
         globals.end_openram()
 

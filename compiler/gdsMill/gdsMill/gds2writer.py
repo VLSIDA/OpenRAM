@@ -126,7 +126,7 @@ class Gds2writer:
             if (len(self.layoutObject.info["libraryName"]) % 2 != 0):
                 libraryName = self.layoutObject.info["libraryName"] + "\0"
             else:
-                libraryName = self.layoutObject.info["libraryName"] + "\0"
+                libraryName = self.layoutObject.info["libraryName"]
             self.writeRecord(idBits+libraryName)                
         ## reference libraries
         if("referenceLibraries" in self.layoutObject.info):

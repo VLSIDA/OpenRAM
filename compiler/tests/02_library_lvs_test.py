@@ -51,7 +51,7 @@ def setup_files():
 
     # make a list of all the gds and spice files
     tempnames = gds_files
-    tempnames.extend(sp_files)
+#    tempnames.extend(sp_files)
 
     # remove the .gds and .sp suffixes
     for i in range(len(tempnames)):

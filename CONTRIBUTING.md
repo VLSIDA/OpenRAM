@@ -65,8 +65,8 @@ the tests on your contributions before they will be accepted.
 ```
   "master" is the name of the branch that is the release version of the
   code (in your fork of the repository). You can check out the released
-  code with "git checkout master" or go back to your ranch with
-  "gitcheckout useful-branch-name".
+  code with "git checkout master" or go back to your branch with
+  "git checkout useful-branch-name".
 
 6. Edit your code and make commits like normal:
 ```

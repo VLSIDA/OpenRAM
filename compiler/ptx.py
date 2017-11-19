@@ -277,10 +277,12 @@ class ptx(design.design):
                           offset=offset,
                           width=self.well_width,
                           height=self.well_height)
-        xlength = self.active_width
-        ylength = self.active_height
+        xlength = self.active_width + 2 * drc["implant_enclosure_active"]
+        ylength = self.active_height + 2 * drc["implant_enclosure_channel"]
+        implant_position = [self.active_position[0] - drc["implant_enclosure_active"], 
+                            self.active_position[1] - drc["implant_enclosure_channel"]]
         self.add_rect(layer="nimplant",
-                      offset=self.active_position,
+                      offset=implant_position,
                       width=xlength,
                       height=ylength)
 
@@ -295,10 +297,12 @@ class ptx(design.design):
                           offset=offset,
                           width=self.well_width,
                           height=self.well_height)
-        xlength = self.active_width
-        ylength = self.active_height
+        xlength = self.active_width + 2 * drc["implant_enclosure_active"]
+        ylength = self.active_height + 2 * drc["implant_enclosure_channel"]
+        implant_position = [self.active_position[0] - drc["implant_enclosure_active"], 
+                            self.active_position[1] - drc["implant_enclosure_channel"]]
         self.add_rect(layer="pimplant",
-                      offset=self.active_position,
+                      offset=implant_position,
                       width=xlength,
                       height=ylength)
 

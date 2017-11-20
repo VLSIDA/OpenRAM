@@ -127,7 +127,6 @@ def read_config(config_file):
     config file is just a Python file that defines some config
     options. 
     """
-
     # Create a full path relative to current dir unless it is already an abs path
     if not os.path.isabs(config_file):
         config_file = os.getcwd() + "/" +  config_file
@@ -138,7 +137,8 @@ def read_config(config_file):
     # Add the path to the system path so we can import things in the other directory
     dir_name = os.path.dirname(config_file)
     file_name = os.path.basename(config_file)
-    sys.path.append(dir_name)
+    # Prepend the path to avoid if we are using the example config
+    sys.path.insert(0,dir_name)
     # Import the configuration file of which modules to use
     debug.info(1, "Configuration file is " + config_file + ".py")
     try:

@@ -166,7 +166,7 @@ def gen_addr(stim_file, clk_times, addr, period, slew):
     
     for i in range(len(addr)):
         sig_name = "A[{0}]".format(i)
-        if addr[i]==1:
+        if addr[i]=="1":
             gen_pwl(stim_file, sig_name, clk_times, ones_values, period, slew, 0.05)
         else:
             gen_pwl(stim_file, sig_name, clk_times, zero_values, period, slew, 0.05)

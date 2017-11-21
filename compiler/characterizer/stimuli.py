@@ -274,7 +274,8 @@ def write_supply(stim_file):
 def run_sim():
     """Run hspice in batch mode and output rawfile to parse."""
     temp_stim = "{0}stim.sp".format(OPTS.openram_temp)
-    
+    import datetime
+    start_time = datetime.datetime.now()
     
     from characterizer import spice_exe
     if OPTS.spice_version == "xa":
@@ -307,5 +308,9 @@ def run_sim():
     
     if (retcode > valid_retcode):
         debug.error("Spice simulation error: " + cmd, -1)
+    else:
+        end_time = datetime.datetime.now()
+        delta_time = round((end_time-start_time).total_seconds(),1)
+        debug.info(2,"*** Spice: {} seconds".format(delta_time))
 
     

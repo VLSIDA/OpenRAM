@@ -55,9 +55,9 @@ num_banks = OPTS.config.num_banks
 
 if (OPTS.output_name == ""):
     OPTS.output_name = "sram_{0}_{1}_{2}_{3}".format(word_size,
-                                                  num_words,
-                                                  num_banks,
-                                                  OPTS.tech_name)
+                                                     num_words,
+                                                     num_banks,
+                                                     OPTS.tech_name)
 
 print("Output files are " + OPTS.output_name + ".(sp|gds|v|lib|lef)")
 
@@ -70,7 +70,7 @@ if not OPTS.check_lvsdrc:
 if OPTS.analytical_delay:
     print("Using analytical delay models (no characterization)")
 else:
-    print("Performing simulation-based characterization with {}".format(OPTS.spice_version))
+    print("Performing simulation-based characterization with {}".format(OPTS.spice_name))
     if OPTS.trim_netlist:
         print("Trimming netlist to speed up characterization (sacrificing some accuracy).")
 

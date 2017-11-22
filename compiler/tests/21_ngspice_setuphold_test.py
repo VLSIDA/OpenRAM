@@ -22,7 +22,7 @@ class timing_setup_test(unittest.TestCase):
 
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
-        OPTS.spice_version="ngspice"
+        OPTS.spice_name="ngspice"
         OPTS.analytical_delay = False
         # This is a hack to reload the characterizer __init__ with the spice version
         import characterizer
@@ -61,7 +61,7 @@ class timing_setup_test(unittest.TestCase):
 
         # reset these options
         OPTS.check_lvsdrc = True
-        OPTS.spice_version="hspice"
+        OPTS.spice_name="hspice"
         OPTS.analytical_delay = True
         reload(characterizer)
 

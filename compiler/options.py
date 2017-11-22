@@ -19,7 +19,7 @@ class options(optparse.Values):
     # This determines whether  LVS and DRC is checked for each submodule.
     check_lvsdrc = True
     # Variable to select the variant of spice
-    spice_version = ""
+    spice_name = ""
     # Should we print out the banner at startup
     print_banner = True
     # The DRC/LVS/PEX executable being used which is derived from the user PATH.

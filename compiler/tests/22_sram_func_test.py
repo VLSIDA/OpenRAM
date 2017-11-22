@@ -22,7 +22,7 @@ class sram_func_test(unittest.TestCase):
 
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
-        OPTS.spice_version="hspice"
+        OPTS.spice_name="hspice"
         OPTS.analytical_delay = False
         import characterizer
         reload(characterizer)

@@ -64,7 +64,7 @@ class sram_func_test(unittest.TestCase):
 
         import os
 
-        if OPTS.spice_version == "hspice":
+        if OPTS.spice_name == "hspice":
             cmd = "hspice -mt 2 -i {0} > {1} ".format(
                 simulator_file, result_file)
         else:
@@ -145,7 +145,7 @@ class sram_func_test(unittest.TestCase):
             9.5 * tech.spice["clock_period"], 10 * tech.spice["clock_period"]))
         sim_file.write("\n")
 
-        if OPTS.spice_version == "hspice":
+        if OPTS.spice_name in ["hspice","xa"]:
             sim_file.write(".probe v(x*.*)\n")
             sim_file.write(".tran 0.1ns {0}ns\n".format(
                 10 * tech.spice["clock_period"]))

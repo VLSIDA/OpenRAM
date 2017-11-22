@@ -21,7 +21,7 @@ class timing_sram_test(unittest.TestCase):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
-        OPTS.spice_version="hspice"
+        OPTS.spice_name="hspice"
         OPTS.analytical_delay = False
         # This is a hack to reload the characterizer __init__ with the spice version
         import characterizer

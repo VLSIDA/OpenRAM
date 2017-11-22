@@ -233,7 +233,7 @@ def gen_meas_delay(stim_file, meas_name, trig_name, targ_name, trig_val, targ_va
 def gen_meas_power(stim_file, meas_name, t_initial, t_final):
     """Creates the .meas statement for the measurement of avg power"""
     # power mea cmd is different in different spice:
-    if OPTS.spice_version == "hspice":
+    if OPTS.spice_name == "hspice":
         power_exp = "power"
     else:
         power_exp = "par('(-1*v(" + str(vdd_name) + ")*I(v" + str(vdd_name) + "))')"
@@ -248,10 +248,16 @@ def write_control(stim_file, end_time):
     stim_file.write(".TRAN 5p {0}n UIC\n".format(end_time))
     stim_file.write(".OPTIONS POST=1 RUNLVL=4 PROBE\n")
     # create plots for all signals
-    stim_file.write("* probe is used for hspice\n")    
-    stim_file.write("*.probe V(*)\n")
-    stim_file.write("* plot is used for ngspice interactive mode \n")    
-    stim_file.write("*.plot V(*)\n")
+    stim_file.write("* probe is used for hspice/xa, while plot is used in ngspice\n")
+    if OPTS.debug_level>0:
+        if OPTS.spice_name in ["hspice","xa"]:
+            stim_file.write(".probe V(*)\n")
+        else:
+            stim_file.write(".plot V(*)\n")
+    else:
+        stim_file.write("*.probe V(*)\n")
+        stim_file.write("*.plot V(*)\n")
+
     # end the stimulus file
     stim_file.write(".end\n\n")
 
@@ -278,12 +284,17 @@ def run_sim():
     start_time = datetime.datetime.now()
     
     from characterizer import spice_exe
-    if OPTS.spice_version == "xa":
-        cmd = "{0} {1} -o {2}xa -mt 20".format(spice_exe,
+    if OPTS.spice_name == "xa":
+        # Output the xa configurations here. FIXME: Move this to write it once.
+        xa_cfg = open("{}xa.cfg".format(OPTS.openram_temp), "w")
+        xa_cfg.write("set_sim_level -level 7\n")
+        xa_cfg.write("set_powernet_level 7 -node vdd\n")
+        xa_cfg.close()
+        cmd = "{0} {1} -c {2}xa.cfg -o {2}xa -mt 20".format(spice_exe,
                                                temp_stim,
                                                OPTS.openram_temp)
         valid_retcode=0
-    elif OPTS.spice_version == "hspice":
+    elif OPTS.spice_name == "hspice":
         # TODO: Should make multithreading parameter a configuration option
         cmd = "{0} -mt 2 -i {1} -o {2}timing".format(spice_exe,
                                                      temp_stim,

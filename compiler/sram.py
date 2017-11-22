@@ -108,6 +108,7 @@ class sram(design.design):
         self.bank_addr_size = self.col_addr_size + self.row_addr_size
         self.addr_size = self.bank_addr_size + int(log(self.num_banks, 2))
         
+        debug.info(0,"Words per row: {}".format(self.words_per_row))
 
     def estimate_words_per_row(self,tentative_num_cols, word_size):
         """This provides a heuristic rounded estimate for the number of words

@@ -24,6 +24,7 @@ class delay():
         self.vdd = tech.spice["supply_voltage"]
         self.gnd = tech.spice["gnd_voltage"]
 
+        
     def check_arguments(self):
         """Checks if arguments given for write_stimulus() meets requirements"""
         try:
@@ -334,6 +335,17 @@ class delay():
         
         self.set_probe(probe_address, probe_data)
 
+        # This is for debugging a full simulation
+        # debug.info(0,"Debug simulation running...")
+        # target_period=50.0
+        # feasible_delay1=0.059083183
+        # feasible_delay0=0.17953789
+        # load=1.6728
+        # slew=0.04
+        # self.try_period(target_period, load, slew, feasible_delay1, feasible_delay0)
+        # sys.exit(1)
+
+        
         (feasible_period, feasible_delay1, feasible_delay0) = self.find_feasible_period(max(loads), max(slews))
         debug.check(feasible_delay1>0,"Negative delay may not be possible")
         debug.check(feasible_delay0>0,"Negative delay may not be possible")
@@ -361,7 +373,7 @@ class delay():
         # finds the minimum period without degrading the delays by X%
         min_period = self.find_min_period(feasible_period, max(loads), max(slews), feasible_delay1, feasible_delay0)
         debug.check(type(min_period)==float,"Couldn't find minimum period.")
-        debug.info(1, "Min Period: {0}n with a delay of {1}".format(min_period, feasible_delay1))
+        debug.info(1, "Min Period: {0}n with a delay of {1} / {2}".format(min_period, feasible_delay1, feasible_delay0))
 
 
         data = {"min_period": ch.round_time(min_period), 

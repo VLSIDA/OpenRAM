@@ -45,12 +45,10 @@ def parse_args():
                              help="Increase the verbosity level"),
         optparse.make_option("-t", "--tech", dest="tech_name",
                              help="Technology name"),
-        optparse.make_option("-s", "--spiceversion", dest="spice_version",
-                             help="Spice simulator name"),
+        optparse.make_option("-s", "--spice", dest="spice_name",
+                             help="Spice simulator executable name"),
         optparse.make_option("-r", "--remove_netlist_trimming", action="store_false", dest="trim_netlist",
                              help="Disable removal of noncritical memory cells during characterization"),
-        optparse.make_option("-a", "--analytical", action="store_true", dest="analytical_delay",
-                             help="Use analytical models to calculate delays (default)"),
         optparse.make_option("-c", "--characterize", action="store_false", dest="analytical_delay",
                              help="Perform characterization to calculate delays (default is analytical models)")
         # -h --help is implicit.
@@ -59,7 +57,7 @@ def parse_args():
     parser = optparse.OptionParser(option_list=option_list,
                                    description="Compile and/or characterize an SRAM.",
                                    usage=USAGE,
-                                   version="sramc v" + VERSION)
+                                   version="OpenRAM v" + VERSION)
 
     (options, args) = parser.parse_args(values=OPTS)
 

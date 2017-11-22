@@ -13,16 +13,16 @@ spice_exe = ""
 if OPTS.analytical_delay:
     debug.info(1,"Using analytical delay models (no characterization)")
 else:
-    if OPTS.spice_version != "":
-        spice_exe=find_exe(OPTS.spice_version)
+    if OPTS.spice_name != "":
+        spice_exe=find_exe(OPTS.spice_name)
         if spice_exe=="":
-            debug.error("{0} not found. Unable to perform characterization.".format(OPTS.spice_version),1)
+            debug.error("{0} not found. Unable to perform characterization.".format(OPTS.spice_name),1)
     else:
         (choice,spice_exe) = get_tool("spice",["xa", "hspice", "ngspice", "ngspice.exe"])
-        OPTS.spice_version = choice
+        OPTS.spice_name = choice
 
     # set the input dir for spice files if using ngspice 
-    if OPTS.spice_version == "ngspice":
+    if OPTS.spice_name == "ngspice":
         os.environ["NGSPICE_INPUT_DIR"] = "{0}".format(OPTS.openram_temp)
     
     if spice_exe == "":

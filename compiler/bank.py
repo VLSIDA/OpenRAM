@@ -470,7 +470,7 @@ class bank(design.design):
         """
 
         # 4x Inverter
-        self.inv4x = pinv(nmos_width=4*drc["minwidth_tx"])
+        self.inv4x = pinv(4)
         self.add_mod(self.inv4x)
 
         self.nor2 = nor_2()

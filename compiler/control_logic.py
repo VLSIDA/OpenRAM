@@ -50,13 +50,13 @@ class control_logic(design.design):
         # Special gates: inverters for buffering
         self.inv = self.inv1 = pinv()
         self.add_mod(self.inv1)
-        self.inv2 = pinv(nmos_width=2*drc["minwidth_tx"])
+        self.inv2 = pinv(2)
         self.add_mod(self.inv2)
-        self.inv4 = pinv(nmos_width=4*drc["minwidth_tx"])
+        self.inv4 = pinv(4)
         self.add_mod(self.inv4)
-        self.inv8 = pinv(nmos_width=8*drc["minwidth_tx"])
+        self.inv8 = pinv(8)
         self.add_mod(self.inv8)
-        self.inv16 = pinv(nmos_width=16*drc["minwidth_tx"])
+        self.inv16 = pinv(16)
         self.add_mod(self.inv16)
 
         c = reload(__import__(OPTS.config.ms_flop_array))

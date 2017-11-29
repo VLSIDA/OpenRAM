@@ -40,17 +40,19 @@ class ptx(design.design):
         self.connect_poly = connect_poly
         self.num_contacts = num_contacts
 
-        self.add_pins()
         self.create_spice()
         self.create_layout()
+
         # for run-time, we won't check every transitor DRC independently
         # but this may be uncommented for debug purposes
         #self.DRC()
 
     def add_pins(self):
+        """Adds pins for spice netlist"""
         self.add_pin_list(["D", "G", "S", "B"])
 
     def create_layout(self):
+        """Calls all functions related to the generation of the layout"""
         self.setup_layout_constants()
         self.add_active()
         self.add_well_implant()  
@@ -58,6 +60,8 @@ class ptx(design.design):
         self.add_active_contacts()
 
     def create_spice(self):
+        self.add_pins()
+        
         self.spice.append("\n.SUBCKT {0} {1}".format(self.name,
                                                      " ".join(self.pins)))
         self.spice.append("M{0} {1} {2} m={3} w={4}u l={5}u".format(self.tx_type,
@@ -75,7 +79,18 @@ class ptx(design.design):
 
         if self.num_contacts==None:
             self.num_contacts=self.calculate_num_contacts()
-        
+
+        # Determine layer types needed
+        if self.tx_type == "nmos":
+            self.implant_type = "n"
+            self.well_type = "p"
+        elif self.tx_type == "pmos":
+            self.implant_type = "p"
+            self.well_type = "n"
+        else:
+            self.error("Invalid transitor type.",-1)
+            
+            
         # This is not actually instantiated but used for calculations
         self.active_contact = contact(layer_stack=("active", "contact", "metal1"),
                                       dimensions=(1, self.num_contacts))
@@ -112,11 +127,19 @@ class ptx(design.design):
         self.poly_height = self.tx_width + 2*self.poly_extend_active
 
         # Well enclosure of active, ensure minwidth as well
-        self.well_width = max(self.active_width + 2*drc["well_enclosure_active"],
-                              drc["minwidth_well"])
-        self.well_height = max(self.tx_width + 2*drc["well_enclosure_active"],
-                               drc["minwidth_well"])
+        if info["has_{}well".format(self.well_type)]:
+            self.well_width = max(self.active_width + 2*drc["well_enclosure_active"],
+                                  drc["minwidth_well"])
+            self.well_height = max(self.tx_width + 2*drc["well_enclosure_active"],
+                                   drc["minwidth_well"])
 
+            self.height = self.well_height
+            self.width = self.well_width
+        else:
+            # If no well, use the boundary of the active and poly
+            self.height = self.poly_height
+            self.width = self.active_width
+        
         # The active offset is due to the well extension
         self.active_offset = vector([drc["well_enclosure_active"]]*2)
 
@@ -231,17 +254,8 @@ class ptx(design.design):
         """
         Add an (optional) well and implant for the type of transistor.
         """
-        if self.tx_type == "nmos":
-            implant_type = "n"
-            well_type = "p"
-        elif self.tx_type == "pmos":
-            implant_type = "p"
-            well_type = "n"
-        else:
-            self.error("Invalid transitor type.",-1)
-            
-        if info["has_{}well".format(well_type)]:
-            self.add_rect(layer="{}well".format(well_type),
+        if info["has_{}well".format(self.well_type)]:
+            self.add_rect(layer="{}well".format(self.well_type),
                           offset=(0,0),
                           width=self.well_width,
                           height=self.well_height)
@@ -249,7 +263,7 @@ class ptx(design.design):
                           offset=(0,0),
                           width=self.well_width,
                           height=self.well_height)
-        self.add_rect(layer="{}implant".format(implant_type),
+        self.add_rect(layer="{}implant".format(self.implant_type),
                       offset=self.active_offset,
                       width=self.active_width,
                       height=self.active_height)

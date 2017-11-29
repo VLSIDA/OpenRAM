@@ -20,7 +20,7 @@ class nor_2(design.design):
 
     unique_id = 1
     
-    def __init__(self, nmos_width=drc["minwidth_tx"], height=bitcell.height):
+    def __init__(self, size=1, height=bitcell.height):
         """Constructor : Creates a cell for a simple 2 input nor"""
         name = "nor2_{0}".format(nor_2.unique_id)
         nor_2.unique_id += 1
@@ -29,7 +29,7 @@ class nor_2(design.design):
 
         debug.check(nmos_width==drc["minwidth_tx"], "Need to rewrite nor2 for sizing.")
         
-        self.nmos_width = nmos_width
+        self.nmos_size = 
         self.height = height
 
         self.add_pins()

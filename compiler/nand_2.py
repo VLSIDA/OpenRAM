@@ -21,16 +21,16 @@ class nand_2(design.design):
 
     unique_id = 1
     
-    def __init__(self, nmos_width=2*drc["minwidth_tx"], height=bitcell.height):
+    def __init__(self, size=2, height=bitcell.height):
         """Constructor : Creates a cell for a simple 2 input nand"""
         name = "nand2_{0}".format(nand_2.unique_id)
         nand_2.unique_id += 1
         design.design.__init__(self, name)
         debug.info(2, "create nand_2 structure {0} with size of {1}".format(name, nmos_width))
 
-        self.nmos_size = nmos_width
+        self.nmos_size = 2*size
         # FIXME why is this?
-        self.pmos_size = nmos_width
+        self.pmos_size = size
         self.tx_mults = 1
         self.height = height
 

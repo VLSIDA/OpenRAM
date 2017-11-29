@@ -9,37 +9,47 @@ from globals import OPTS
 
 class pinv(design.design):
     """
-    This module generates gds of a parametrically sized inverter.
-    This model use ptx to generate a inverter within a cetrain height.
-    The inverter's cell_height should be the same as the 6t library cell.
+    This module generates gds of a parametrically sized inverter. The
+    size is specified as the nmos size (relative to minimum) and a
+    beta value for choosing the pmos size.  The inverter's cell_height
+    is usually the same as the 6t library cell.  The route_output will
+    route the output to the right side of the cell for easier access.
+
     """
     c = reload(__import__(OPTS.config.bitcell))
     bitcell = getattr(c, OPTS.config.bitcell)
 
     unique_id = 1
     
-    def __init__(self, nmos_width=drc["minwidth_tx"], beta=parameter["pinv_beta"], height=bitcell.height, route_output=True):
-        """Constructor : Creates a cell for a simple inverter"""
+    def __init__(self, size=1, beta=parameter["pinv_beta"], height=bitcell.height, route_output=True):
+        # We need to keep unique names because outputting to GDSII
+        # will use the last record with a given name. I.e., you will
+        # over-write a design in GDS if one has and the other doesn't
+        # have poly connected, for example.
         name = "pinv{0}".format(pinv.unique_id)
         pinv.unique_id += 1
         design.design.__init__(self, name)
-        debug.info(2, "create pinv structure {0} with size of {1}".format(name, nmos_width))
+        debug.info(2, "create pinv structure {0} with size of {1}".format(name, size))
 
-        self.nmos_width = nmos_width
+        self.nmos_size = size
+        self.pmos_size = beta*size
         self.beta = beta
         self.height = height
         self.route_output = route_output
 
         self.add_pins()
         self.create_layout()
+
+        # for run-time, we won't check every transitor DRC/LVS independently
+        # but this may be uncommented for debug purposes
         #self.DRC_LVS()
 
     def add_pins(self):
-        """Adds pins for spice netlist processing"""
+        """Adds pins for spice netlist"""
         self.add_pin_list(["A", "Z", "vdd", "gnd"])
 
     def create_layout(self):
-        """Calls all functions related to the generation of the layout(gds)"""
+        """Calls all functions related to the generation of the layout"""
 
         # These aren't for instantiating, but we use them to get the dimensions
         self.poly_contact = contact.contact(("poly", "contact", "metal1"))
@@ -66,45 +76,54 @@ class pinv(design.design):
         self.route_pins()
 
     def determine_tx_mults(self):
-        """Determines the number of fingers needed to achieve same size with a height constraint"""
-        # check minimum distance between well
-        minwidth_poly_contact = drc["minwidth_contact"] \
-                                + 2 * drc["poly_enclosure_contact"]
+        """
+        Determines the number of fingers needed to achieve the size within
+        the height constraint. This may fail if the user has a tight height.
+        """
+        # Do a quick sanity check and bail if unlikely feasible height
+        # Sanity check. can we make an inverter in the height with minimum tx sizes?
+        # Assume we need 3 metal 1 pitches (2 power rails, one between the tx for the drain)
+        # plus the tx height
+        nmos = ptx(tx_type="nmos")
+        pmos = ptx(width=self.beta*drc["minwidth_tx"], tx_type="pmos")
+        tx_height = nmos.height + pmos.height
+        # rotated m1 pitch
+        m1_pitch = self.poly_contact.width + drc["metal1_to_metal1"]
+        metal_height = 4 * m1_pitch # This could be computed more accurately
+        debug.check(self.height>tx_height + metal_height,"Cell height too small for our simple design rules.")
 
-        # this should be 2*poly extension beyond active?
-        minwidth_box_poly = 2 * drc["minwidth_poly"] \
-                            + drc["poly_to_poly"]
-        well_to_well = max(drc["pwell_to_nwell"],
-                           minwidth_poly_contact,
-                           minwidth_box_poly)
+        # Determine the height left to the transistors to determine the number of fingers
+        tx_height_available = self.height - metal_height
+        # Divide the height according to beta
+        nmos_height_available = 1.0/(self.beta+1) * tx_height_available
+        pmos_height_available = tx_height_available - nmos_height_available
+        
 
-        # determine both mos enclosure sizes
-        bot_mos_enclosure = 2 * (drc["well_enclosure_active"])
-        top_mos_enclosure = 2 * max(drc["well_enclosure_active"],
-                                    drc["metal1_to_metal1"] + 0.5 * drc["minwidth_metal1"])
+        # Determine the number of mults for each to fit width into available space
+        self.nmos_width = self.nmos_size*drc["minwidth_tx"]
+        self.pmos_width = self.pmos_size*drc["minwidth_tx"]
+        nmos_required_mults = max(int(ceil(self.nmos_width/nmos_height_available)),1)
+        pmos_required_mults = max(int(ceil(self.pmos_width/pmos_height_available)),1)
+        # The mults must be the same for easy connection of poly
+        self.tx_mults = max(nmos_required_mults, pmos_required_mults)
 
-        self.nmos_size = parameter["min_tx_size"]
-        self.pmos_size = parameter["min_tx_size"] * self.beta
-
-        # use multi finger if the cell is not big enough
-        if self.nmos_size <= self.nmos_width:
-            self.tx_mults = int(ceil(self.nmos_width / self.nmos_size))
-        else:
-            self.tx_mults = 1
-
+        # Recompute each mult width and check it isn't too small
+        # This could happen if the height is narrow and the size is small
+        # User should pick a bigger size to fix it...
+        self.nmos_width = self.nmos_width / self.tx_mults
+        debug.check(self.nmos_width>=drc["minwidth_tx"],"Cannot finger NMOS transistors to fit cell height.")
+        self.pmos_width = self.pmos_width / self.tx_mults
+        debug.check(self.pmos_width>=drc["minwidth_tx"],"Cannot finger PMOS transistors to fit cell height.")        
+        
     def create_ptx(self):
         """Intiializes a ptx object"""
-        self.nmos = ptx(width=self.nmos_size,
+        self.nmos = ptx(width=self.nmos_width,
                         mults=self.tx_mults,
-                        tx_type="nmos",
-                        connect_active=True,
-                        connect_poly=True)
+                        tx_type="nmos")
         self.add_mod(self.nmos)
-        self.pmos = ptx(width=self.pmos_size,
+        self.pmos = ptx(width=self.pmos_width,
                         mults=self.tx_mults,
-                        tx_type="pmos",
-                        connect_active=True,
-                        connect_poly=True)
+                        tx_type="pmos")
         self.add_mod(self.pmos)
 
     def setup_layout_constants(self):

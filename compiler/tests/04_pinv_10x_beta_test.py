@@ -25,30 +25,10 @@ class pinv_test(unittest.TestCase):
         import pinv
         import tech
 
-        debug.info(2, "Checking min size inverter")
-        tx = pinv.pinv(size=1, beta=tech.parameter["pinv_beta"])
+        debug.info(2, "Checking 10x beta=4 size inverter")
+        tx = pinv.pinv(size=10, beta=4)
         self.local_check(tx)
 
-        debug.info(2, "Checking 2x min size inverter")
-        tx = pinv.pinv(size=2, beta=tech.parameter["pinv_beta"])
-        self.local_check(tx)
-
-        debug.info(2, "Checking 5x min size inverter")
-        tx = pinv.pinv(size=5, beta=tech.parameter["pinv_beta"])
-        self.local_check(tx)
-
-        debug.info(2, "Checking min size inverter with new beta")
-        tx = pinv.pinv(size=1, beta=3)
-        self.local_check(tx)
-
-        debug.info(2, "Checking 2x size inverter with new beta")
-        tx = pinv.pinv(size=2, beta=3)
-        self.local_check(tx)        
-
-        debug.info(2, "Checking 5x size inverter with new beta")
-        tx = pinv.pinv(size=4, beta=3)
-        self.local_check(tx)        
-        
         OPTS.check_lvsdrc = True
         globals.end_openram()        
 

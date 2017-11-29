@@ -57,52 +57,6 @@ class ptx(design.design):
         self.add_poly()
         self.add_active_contacts()
 
-        # offset this BEFORE we add the active/poly connections
-        #self.offset_all_coordinates()
-        
-    def offset_attributes(self, coordinate):
-        """Translates all stored 2d cartesian coordinates within the
-        attr dictionary"""
-        # FIXME: This is dangerous. I think we should not do this, but explicitly
-        # offset the necessary coordinates. It is only used in ptx for now!
-
-        for attr_key in dir(self):
-            attr_val = getattr(self,attr_key)
-
-            # skip the list of things as these will be offset separately
-            if (attr_key in ['objs','insts','mods','pins','conns','name_map']): continue
-
-            # if is a list
-            if isinstance(attr_val, list):
-                
-                for i in range(len(attr_val)):
-                    # each unit in the list is a list coordinates
-                    if isinstance(attr_val[i], (list,vector)):
-                        attr_val[i] = vector(attr_val[i] - coordinate)
-                    # the list itself is a coordinate
-                    else:
-                        if len(attr_val)!=2: continue
-                        for val in attr_val:
-                            if not isinstance(val, (int, long, float)): continue
-                        setattr(self,attr_key, vector(attr_val - coordinate))
-                        break
-
-            # if is a vector coordinate
-            if isinstance(attr_val, vector):
-                setattr(self, attr_key, vector(attr_val - coordinate))
-        
-    # def offset_all_coordinates(self):
-    #     offset = self.find_lowest_coords()
-    #     self.offset_attributes(offset)
-    #     self.translate_all(offset)
-
-    #     # We can do this in ptx because we have offset all modules it uses.
-    #     # Is this really true considering the paths that connect the src/drain?
-    #     self.height = max(max(obj.offset.y + obj.height for obj in self.objs),
-    #                               max(inst.offset.y + inst.mod.height for inst in self.insts))
-    #     self.width = max(max(obj.offset.x + obj.width for obj in self.objs),
-    #                              max(inst.offset.x + inst.mod.width for inst in self.insts))
-
     def create_spice(self):
         self.spice.append("\n.SUBCKT {0} {1}".format(self.name,
                                                      " ".join(self.pins)))
@@ -201,55 +155,6 @@ class ptx(design.design):
                             height=drc["minwidth_poly"])
 
 
-            
-
-    def pairwise(self, iterable):
-        """
-        Create an iterable set of pairs from a set:
-        "s -> (s0,s1), (s1,s2), (s2, s3), ..."
-        """
-        from itertools import tee, izip
-        a, b = tee(iterable)
-        next(b, None)
-        return izip(a, b)
-
-
-    def determine_source_wire(self):
-        self.source_positions = []
-        source_contact_pos = self.active_contact_positions[0:][::2]  # even indexes
-        for a, b in self.pairwise(source_contact_pos):
-            correct=vector(0.5 * (self.active_contact.width - 
-                                  drc["minwidth_metal1"] + drc["minwidth_contact"]),
-                           0.5 * (self.active_contact.height - drc["minwidth_contact"]) 
-                               - drc["metal1_extend_contact"])
-            connected=vector(b.x + drc["minwidth_metal1"],
-                             a.y + self.active_contact.height + drc["metal1_to_metal1"])  
-            self.source_positions.append(a + correct)
-            self.source_positions.append(vector(a.x + correct.x, connected.y))
-            self.source_positions.append(vector(b.x + correct.x,
-                                                connected.y + 0.5 * drc["minwidth_metal2"]))
-            self.source_positions.append(b + correct)
-
-        return source_positions
-
-    def determine_drain_wire(self, contact_positions):
-        drain_positions = []
-        drain_contact_pos = contact_positions[1:][::2]  # odd indexes
-        for c, d in self.pairwise(drain_contact_pos):
-            correct = vector(0.5*(self.active_contact.width 
-                                  - drc["minwidth_metal1"] + drc["minwidth_contact"]),
-                             0.5*(self.active_contact.height - drc["minwidth_contact"])
-                               - drc["metal1_extend_contact"])
-            connected = vector(d.x + drc["minwidth_metal1"], c.y - drc["metal1_to_metal1"])
-            self.drain_positions.append(vector(c + correct))
-            self.drain_positions.append(vector(c.x + correct.x, connected.y))
-            self.drain_positions.append(vector(d.x + correct.x,
-                                               connected.y - 0.5 * drc["minwidth_metal1"]))
-            self.drain_positions.append(vector(d + correct))
-
-        return drain_positions
-
-            
     def connect_fingered_active(self, drain_positions, source_positions):
         """
         Connect each contact  up/down to a source or drain pin
@@ -366,17 +271,13 @@ class ptx(design.design):
         source_positions = [self.contact_offset]
         drain_positions = []
 
-        # For all but the last finger...
-        for i in range(self.mults-1):
+        for i in range(self.mults):
             if i%2:
                 # It's a source... so offset from previous drain.
                 source_positions.append(drain_positions[-1] + vector(self.contact_pitch,0))
             else:
                 # It's a drain... so offset from previous source.
                 drain_positions.append(source_positions[-1] + vector(self.contact_pitch,0))
-
-        # The last one will always be a drain
-        drain_positions.append(source_positions[-1] + vector(self.contact_pitch,0))            
 
         return [source_positions,drain_positions]
         
@@ -426,39 +327,3 @@ class ptx(design.design):
             self.connect_fingered_active(drain_positions, source_positions)
 
         
-
-    # def remove_drain_connect(self):
-    #     debug.info(3,"Removing drain on {}".format(self.name))
-    #     # FIXME: This is horrible exception handling!
-    #     try:
-    #         del self.insts[self.drain_connect_index]
-    #         del self.drain_connect_index
-    #         self.offset_all_coordinates()
-    #         # change the name so it is unique
-    #         self.name = self.name + "_rd"
-    #     except:
-    #         pass
-
-    # def remove_source_connect(self):
-    #     debug.info(3,"Removing source on {}".format(self.name))
-    #     # FIXME: This is horrible exception handling!
-    #     try:
-    #         del self.insts[self.source_connect_index]
-    #         del self.source_connect_index
-    #         if isinstance(self.drain_connect_index, int):
-    #             self.drain_connect_index -= 1
-    #         self.offset_all_coordinates()
-    #         # change the name so it is unique
-    #         self.name = self.name + "_rs"
-    #     except:
-    #         pass
-
-    # def remove_poly_connect(self):
-    #     # FIXME: This is horrible exception handling!
-    #     try:
-    #         del self.objs[self.poly_connect_index]
-    #         self.offset_all_coordinates()
-    #         # change the name so it is unique
-    #         self.name = self.name + "_rp"
-    #     except:
-    #         pass

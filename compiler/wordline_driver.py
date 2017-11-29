@@ -141,9 +141,9 @@ class wordline_driver(design.design):
             a_pin = inv1_inst.get_pin("A")
             a_pos = a_pin.lc()
             clk_offset = vector(en_pin.bc().x,a_pos.y)
-            self.add_center_rect(layer="metal1",
-                                 start=clk_offset,
-                                 end=a_pos)
+            self.add_center_segment(layer="metal1",
+                                    start=clk_offset,
+                                    end=a_pos)
             m1m2_via = self.add_center_via(layers=("metal1", "via1", "metal2"),
                                            offset=clk_offset)
 
@@ -167,17 +167,17 @@ class wordline_driver(design.design):
             input_offset = vector(0,a_pos.y)
             mid_via_offset = vector(clk_offset.x,a_pos.y) + vector(0.5*drc["minwidth_metal2"]+drc["metal2_to_metal2"]+0.5*m1m2_via.width,0) 
             # must under the clk line in M1
-            self.add_center_layout_pin(text="in[{0}]".format(row),
-                                       layer="metal1",
-                                       start=input_offset,
-                                       end=mid_via_offset)
+            self.add_center_layout_pin_segment(text="in[{0}]".format(row),
+                                               layer="metal1",
+                                               start=input_offset,
+                                               end=mid_via_offset)
             self.add_center_via(layers=("metal1", "via1", "metal2"),
                                 offset=mid_via_offset)
 
             # now connect to the nand2 A
-            self.add_center_rect(layer="metal2",
-                                 start=mid_via_offset,
-                                 end=a_pos)
+            self.add_center_segment(layer="metal2",
+                                    start=mid_via_offset,
+                                    end=a_pos)
             self.add_center_via(layers=("metal1", "via1", "metal2"),
                                 offset=a_pos + vector(0.5*m1m2_via.height,0),
                                 rotate=90)
@@ -185,10 +185,10 @@ class wordline_driver(design.design):
 
             # output each WL on the right
             wl_offset = inv2_inst.get_pin("Z").rc()
-            self.add_center_layout_pin(text="wl[{0}]".format(row),
-                                       layer="metal1",
-                                       start=wl_offset,
-                                       end=wl_offset-vector(drc["minwidth_metal1"],0))
+            self.add_center_layout_pin_segment(text="wl[{0}]".format(row),
+                                               layer="metal1",
+                                               start=wl_offset,
+                                               end=wl_offset-vector(drc["minwidth_metal1"],0))
 
 
     def analytical_delay(self, slew, load=0):

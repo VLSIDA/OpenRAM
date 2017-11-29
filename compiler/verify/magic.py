@@ -65,7 +65,7 @@ def run_drc(name, gds_name):
        implemented in gds_name."""
 
     debug.warning("DRC using magic not implemented.")
-    return 0
+    return 1
 
     # the runset file contains all the options to run drc
     from tech import drc
@@ -139,7 +139,7 @@ def run_lvs(name, gds_name, sp_name):
        implemented in gds_name and sp_name. """
 
     debug.warning("LVS using magic+netgen not implemented.")
-    return 0
+    return 1
     
     from tech import drc
     lvs_rules = drc["lvs_rules"]

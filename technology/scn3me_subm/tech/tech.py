@@ -95,7 +95,7 @@ drc["active_to_active"] = 0.9
 drc["well_enclosure_active"] = 1.8
 drc["well_extend_active"] = 1.8
 
-#Implant (None in IBM)
+#Implant 
 drc["implant_to_gate"] = 0                       
 drc["implant_to_channel"] = 0                    
 drc["implant_to_contact"] = 0

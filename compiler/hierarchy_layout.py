@@ -117,8 +117,23 @@ class layout:
             return self.objs[-1]
         return None
 
-    def add_center_rect(self, layer, start, end):
-        """ Add a min-width rectangle from centered on the start and end points"""
+    def add_center_rect(self, layer, offset, width=0, height=0):
+        """Adds a rectangle on a given layer at the center point with width and height"""
+        if width==0:
+            width=drc["minwidth_{}".format(layer)]
+        if height==0:
+            height=drc["minwidth_{}".format(layer)]
+        # negative layers indicate "unused" layers in a given technology
+        layerNumber = techlayer[layer]
+        corrected_offset = offset - vector(0.5*width,0.5*height)
+        if layerNumber >= 0:
+            self.objs.append(geometry.rectangle(layerNumber, corrected_offset, width, height))
+            return self.objs[-1]
+        return None
+
+
+    def add_center_segment(self, layer, start, end):
+        """ Add a min-width rectanglular segment using center line on the start to end point """
         minwidth_layer = drc["minwidth_{}".format(layer)]        
         if start.x!=end.x and start.y!=end.y:
             debug.error("Nonrectilinear center rect!",-1)
@@ -159,7 +174,7 @@ class layout:
                 new_name = pin.name
             self.add_layout_pin(new_name, pin.layer, pin.ll(), pin.width(), pin.height())
 
-    def add_center_layout_pin(self, text, layer, start, end):
+    def add_center_layout_pin_segment(self, text, layer, start, end):
         """ Creates a path like pin with center-line convention """
 
         debug.check(start.x==end.x or start.y==end.y,"Cannot have a non-manhatten layout pin.")
@@ -182,7 +197,19 @@ class layout:
         
         
         return self.add_layout_pin(text, layer, ll_offset, width, height)
-        
+
+    def add_center_layout_pin_rect(self, text, layer, offset, width=None, height=None):
+        """ Creates a path like pin with center-line convention """
+        if width==None:
+            width=drc["minwidth_{0}".format(layer)]
+        if height==None:
+            height=drc["minwidth_{0}".format(layer)]
+
+        ll_offset = offset - vector(0.5*width,0.5*height)
+
+        return self.add_layout_pin(text, layer, ll_offset, width, height)
+
+    
     def remove_layout_pin(self, text):
         """Delete a labeled pin (or all pins of the same name)"""
         self.pin_map[text]=[]
@@ -287,11 +314,11 @@ class layout:
 
     def add_center_contact(self, layers, offset, size=[1,1], mirror="R0", rotate=0):
         """ This is just an alias for a via."""
-        return self.add_centered_via(layers=layers,
-                                     offset=offset,
-                                     size=size,
-                                     mirror=mirror,
-                                     rotate=rotate)
+        return self.add_center_via(layers=layers,
+                                   offset=offset,
+                                   size=size,
+                                   mirror=mirror,
+                                   rotate=rotate)
     
     def add_via(self, layers, offset, size=[1,1], mirror="R0", rotate=0):
         """ Add a three layer via structure. """

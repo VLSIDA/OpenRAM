@@ -13,6 +13,7 @@ class options(optparse.Values):
     tech_name = ""
     # This is the temp directory where all intermediate results are stored.
     openram_temp = "/tmp/openram_{0}_{1}_temp/".format(getpass.getuser(),os.getpid())
+    openram_temp = "/Users/mrg/openram_temp/"
     # This is the verbosity level to control debug information. 0 is none, 1
     # is minimal, etc.
     debug_level = 0

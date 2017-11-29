@@ -512,10 +512,10 @@ class bank(design.design):
 
         bank_sel_line_pos = vector(xoffset_bank_sel + 0.5*self.m2_width, self.min_point)
         bank_sel_pin_pos=vector(self.left_vdd_x_offset, self.min_point)        
-        self.add_center_layout_pin(text="bank_sel",
-                                   layer="metal3",
-                                   start=bank_sel_pin_pos,
-                                   end=bank_sel_line_pos)
+        self.add_center_layout_pin_segment(text="bank_sel",
+                                           layer="metal3",
+                                           start=bank_sel_pin_pos,
+                                           end=bank_sel_line_pos)
         self.add_center_via(layers=("metal2","via2","metal3"),
                             offset=bank_sel_line_pos,
                             rotate=90)
@@ -629,10 +629,10 @@ class bank(design.design):
                                 offset=logic_pos,
                                 rotate=90)
 
-            self.add_center_layout_pin(text=input_name,
-                                       layer="metal3",
-                                       start=input_pos,
-                                       end=logic_pos)
+            self.add_center_layout_pin_segment(text=input_name,
+                                               layer="metal3",
+                                               start=input_pos,
+                                               end=logic_pos)
                                 
 
 

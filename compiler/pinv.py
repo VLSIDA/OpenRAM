@@ -371,17 +371,22 @@ class pinv(design.design):
         """ Connect the nmos and pmos to its respective power rails """
 
         nmos_source_pin = self.nmos_inst.get_pin("S")
-        self.add_rect(layer="metal1",
-                      offset=nmos_source_pin.ul(),
-                      height=nmos_source_pin.ul().y,
-                      width=nmos_source_pin.width())
+        gnd_pin = self.get_pin("gnd")
+        # Only if they don't overlap already
+        if gnd_pin.uy() < nmos_source_pin.by():
+            self.add_rect(layer="metal1",
+                          offset=nmos__pin.ll(),
+                          height=nmos_source_pin.by()-gnd_pin.uy(),
+                          width=nmos_source_pin.width())
 
         pmos_source_pin = self.pmos_inst.get_pin("S")
         vdd_pin = self.get_pin("vdd")
-        self.add_rect(layer="metal1",
-                      offset=pmos_source_pin.ll(),
-                      height=vdd_pin.ll().y-pmos_source_pin.ll().y,
-                      width=pmos_source_pin.width())
+        # Only if they don't overlap already
+        if vdd_pin.by() > pmos_source_pin.uy():
+            self.add_rect(layer="metal1",
+                          offset=pmos_source_pin.ll(),
+                          height=vdd_pin.by()-pmos_source_pin.by(),
+                          width=pmos_source_pin.width())
     
 
     def input_load(self):

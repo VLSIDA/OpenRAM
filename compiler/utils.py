@@ -7,20 +7,21 @@ from pin_layout import pin_layout
 
 OPTS = globals.OPTS
 
+def round_to_grid(number):
+    """
+    Rounds an arbitrary number to the grid.
+    """
+    grid = tech.drc["grid"]  
+    # this gets the nearest integer value
+    number_grid = int(round(round((number / grid), 2), 0))
+    number_off = number_grid * grid
+    return number_off
+
 def snap_to_grid(offset):
     """
     Changes the coodrinate to match the grid settings
     """
-    grid = tech.drc["grid"]  
-    x = offset[0]
-    y = offset[1]
-    # this gets the nearest integer value
-    xgrid = int(round(round((x / grid), 2), 0))
-    ygrid = int(round(round((y / grid), 2), 0))
-    xoff = xgrid * grid
-    yoff = ygrid * grid
-    out_offset = [xoff, yoff]
-    return out_offset
+    return [round_to_grid(offset[0]),round_to_grid(offset[1])]
 
 def pin_center(boundary):
     """

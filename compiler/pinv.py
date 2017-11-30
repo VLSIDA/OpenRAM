@@ -6,6 +6,7 @@ from ptx import ptx
 from vector import vector
 from math import ceil
 from globals import OPTS
+from utils import round_to_grid
 
 class pinv(design.design):
     """
@@ -111,10 +112,13 @@ class pinv(design.design):
         # Recompute each mult width and check it isn't too small
         # This could happen if the height is narrow and the size is small
         # User should pick a bigger size to fix it...
-        self.nmos_width = self.nmos_width / self.tx_mults
+        # We also need to round the width to the grid or we will end up with LVS property
+        # mismatch errors when fingers are not a grid length and get rounded in the offset geometry.
+        self.nmos_width = round_to_grid(self.nmos_width / self.tx_mults)
         debug.check(self.nmos_width>=drc["minwidth_tx"],"Cannot finger NMOS transistors to fit cell height.")
-        self.pmos_width = self.pmos_width / self.tx_mults
-        debug.check(self.pmos_width>=drc["minwidth_tx"],"Cannot finger PMOS transistors to fit cell height.")        
+        self.pmos_width = round_to_grid(self.pmos_width / self.tx_mults)
+        debug.check(self.pmos_width>=drc["minwidth_tx"],"Cannot finger PMOS transistors to fit cell height.")
+        
 
     def setup_layout_constants(self):
         """

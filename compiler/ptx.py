@@ -43,6 +43,8 @@ class ptx(design.design):
         self.create_spice()
         self.create_layout()
 
+        self.translate_all(self.active_offset)
+
         # for run-time, we won't check every transitor DRC independently
         # but this may be uncommented for debug purposes
         #self.DRC()
@@ -214,7 +216,8 @@ class ptx(design.design):
         Add the poly gates(s) and (optionally) connect them.
         """
         # poly is one contacted spacing from the end and down an extension
-        poly_offset = vector(self.active_offset.x + self.end_to_poly + 0.5*self.poly_width,0.5*self.poly_height)
+        poly_offset = self.active_offset + vector(self.poly_width,self.poly_height).scale(0.5,0.5) \
+                      + vector(self.end_to_poly, -self.poly_extend_active)
 
         # poly_positions are the bottom center of the poly gates
         poly_positions = []

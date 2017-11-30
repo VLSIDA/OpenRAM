@@ -81,26 +81,33 @@ class pinv(design.design):
         Determines the number of fingers needed to achieve the size within
         the height constraint. This may fail if the user has a tight height.
         """
+        self.m1_width = drc["minwidth_metal1"]
+        
         # Do a quick sanity check and bail if unlikely feasible height
         # Sanity check. can we make an inverter in the height with minimum tx sizes?
         # Assume we need 3 metal 1 pitches (2 power rails, one between the tx for the drain)
         # plus the tx height
         nmos = ptx(tx_type="nmos")
-        pmos = ptx(width=self.beta*drc["minwidth_tx"], tx_type="pmos")
-        tx_height = nmos.height + pmos.height
+        pmos = ptx(width=drc["minwidth_tx"], tx_type="pmos")
+        tx_height = nmos.poly_height + pmos.poly_height
         # rotated m1 pitch or poly to active spacing
         min_channel = max(self.poly_contact.width + drc["metal1_to_metal1"],
                           self.poly_contact.width + 2*drc["poly_to_active"])
-        print min_channel
-        debug.check(self.height>tx_height + min_channel,"Cell height too small for our simple design rules.")
+        # This is a poly-to-poly of a flipped cell
+        # plus the extension beyond active in the ptx plus the drain/source connection
+        self.top_bottom_cell_space = 0.5*drc["poly_to_poly"]+drc["poly_extend_active"] + 0.5*self.m1_width
+        total_height = tx_height + min_channel + 2*self.top_bottom_cell_space
+        debug.check(self.height> total_height,"Cell height {0} too small for simple min height {1}.".format(self.height,total_height))
 
         # Determine the height left to the transistors to determine the number of fingers
-        tx_height_available = self.height - min_channel
+        tx_height_available = self.height - min_channel - 2*self.top_bottom_cell_space
         # Divide the height in half. Could divide proportional to beta, but this makes
         # connecting wells of multiple cells easier.
-        nmos_height_available = 0.5 * tx_height_available
-        pmos_height_available = 0.5 * tx_height_available
-        
+        # Subtract the poly space under the rail of the tx
+        nmos_height_available = 0.5 * tx_height_available - 0.5*drc["poly_to_poly"]
+        pmos_height_available = 0.5 * tx_height_available - 0.5*drc["poly_to_poly"]
+
+        debug.info(2,"Height avail {0} PMOS height {1} NMOS height {2}".format(tx_height_available, nmos_height_available, pmos_height_available))
 
         # Determine the number of mults for each to fit width into available space
         self.nmos_width = self.nmos_size*drc["minwidth_tx"]
@@ -126,8 +133,6 @@ class pinv(design.design):
         Pre-compute some handy layout parameters.
         """
 
-        self.m1_width = drc["minwidth_metal1"]
-        
         # the well width is determined the multi-finger PMOS device width plus
         # the well contact width and half well enclosure on both sides
         self.well_width = self.pmos.active_width + self.pmos.active_contact.width \
@@ -174,19 +179,19 @@ class pinv(design.design):
         Add PMOS and NMOS to the layout at the upper-most and lowest position
         to provide maximum routing in channel
         """
-
+        
         # place PMOS so it is half a poly spacing down from the top
-        pmos_position = vector(0,self.height-self.pmos.height-0.5*drc["poly_to_poly"])
+        self.pmos_pos = self.pmos.active_offset.scale(1,0) + vector(0, self.height-self.pmos.active_height-self.top_bottom_cell_space)
         self.pmos_inst=self.add_inst(name="pinv_pmos",
                                      mod=self.pmos,
-                                     offset=pmos_position)
+                                     offset=self.pmos_pos)
         self.connect_inst(["Z", "A", "vdd", "vdd"])
 
         # place NMOS so that it is half a poly spacing up from the bottom
-        nmos_position = vector(0,self.nmos.height+0.5*drc["poly_to_poly"])
+        self.nmos_pos = self.nmos.active_offset.scale(1,0) + vector(0,self.nmos.active_height+self.top_bottom_cell_space)
         self.nmos_inst=self.add_inst(name="pinv_nmos",
                                      mod=self.nmos,
-                                     offset=nmos_position,
+                                     offset=self.nmos_pos,
                                      mirror="MX")
         self.connect_inst(["Z", "A", "gnd", "gnd"])
 
@@ -293,9 +298,9 @@ class pinv(design.design):
         nmos_drain_pin = self.nmos_inst.get_pin("D")
         pmos_drain_pin = self.pmos_inst.get_pin("D")
 
-        # Pick point in center of NMOS and connect down to PMOS
-        nmos_drain_pos = nmos_drain_pin.uc()
-        pmos_drain_pos = vector(nmos_drain_pin.uc().x,pmos_drain_pin.bc().y)
+        # Pick point at right most of NMOS and connect down to PMOS
+        nmos_drain_pos = nmos_drain_pin.ur() - vector(0.5*self.m1_width,0)
+        pmos_drain_pos = vector(nmos_drain_pos.x,pmos_drain_pin.bc().y)
         self.add_path("metal1",[nmos_drain_pos,pmos_drain_pos])
 
         # Remember the mid for the output
@@ -321,20 +326,18 @@ class pinv(design.design):
         
         layer_stack = ("active", "contact", "metal1")
         
-        # Lower left of the NMOS active
-        nmos_pos = self.nmos_inst.ll() + self.nmos.active_offset
         # To the right a spacing away from the nmos right active edge
-        nwell_contact_offset = self.nmos.active_width + drc["active_to_body_active"]
-        nwell_offset = nmos_pos + vector(nwell_contact_offset, 0)
+        nwell_contact_xoffset = self.nmos_pos.x + self.nmos.active_width + drc["active_to_body_active"]
+        nwell_contact_yoffset = self.nmos_pos.y - self.nmos.active_height
+        nwell_offset = vector(nwell_contact_xoffset, nwell_contact_yoffset)
         # Offset by half a contact in x and y
         nwell_offset += vector(0.5*self.nmos.active_contact.first_layer_width,
                                0.5*self.nmos.active_contact.first_layer_height)
         self.nwell_contact=self.add_contact_center(layers=layer_stack,
-                                                   offset=nwell_offset,
-                                                   size=(1,self.nmos.num_contacts))
+                                                   offset=nwell_offset)
         self.add_path("metal1",[nwell_offset,nwell_offset.scale(1,0)])
         # Now add the full active and implant for the PMOS
-        nwell_offset = nmos_pos + vector(self.nmos.active_width,0)
+        nwell_offset = self.nmos_pos + vector(self.nmos.active_width,-self.nmos.active_height) 
         nwell_contact_width = drc["active_to_body_active"] + self.nmos.active_contact.width
         self.add_rect(layer="active",
                       offset=nwell_offset,
@@ -347,20 +350,18 @@ class pinv(design.design):
 
 
         
-        # Lower left of the PMOS active
-        pmos_pos = self.pmos_inst.ll() + self.pmos.active_offset
-        pwell_contact_offset = self.pmos.active_width + drc["active_to_body_active"]
         # To the right a spacing away from the pmos right active edge
-        pwell_offset = pmos_pos + vector(pwell_contact_offset, 0)
+        pwell_contact_xoffset = self.pmos_pos.x + self.pmos.active_width + drc["active_to_body_active"]
+        pwell_contact_yoffset = self.pmos_pos.y + self.pmos.active_height - self.pmos.active_contact.height
+        pwell_offset = vector(pwell_contact_xoffset, pwell_contact_yoffset)
         # Offset by half a contact
         pwell_offset += vector(0.5*self.pmos.active_contact.first_layer_width,
                                0.5*self.pmos.active_contact.first_layer_height)
         self.pwell_contact=self.add_contact_center(layers=layer_stack,
-                                                   offset=pwell_offset,
-                                                   size=(1,self.pmos.num_contacts))
+                                                   offset=pwell_offset)
         self.add_path("metal1",[pwell_offset,vector(pwell_offset.x,self.height)])
         # Now add the full active and implant for the PMOS
-        pwell_offset = pmos_pos + vector(self.pmos.active_width,0)        
+        pwell_offset = self.pmos_pos + vector(self.pmos.active_width,0)        
         pwell_contact_width = drc["active_to_body_active"] + self.pmos.active_contact.width        
         self.add_rect(layer="active",
                       offset=pwell_offset,

@@ -35,7 +35,7 @@ class pinv(design.design):
         self.nmos_size = size
         self.pmos_size = beta*size
         self.beta = beta
-        self.height = height
+        self.height = height # Maybe minimize height if not defined in future?
         self.route_output = route_output
 
         self.add_pins()
@@ -88,13 +88,14 @@ class pinv(design.design):
         nmos = ptx(tx_type="nmos")
         pmos = ptx(width=self.beta*drc["minwidth_tx"], tx_type="pmos")
         tx_height = nmos.height + pmos.height
-        # rotated m1 pitch
-        m1_pitch = self.poly_contact.width + drc["metal1_to_metal1"]
-        metal_height = 4 * m1_pitch # This could be computed more accurately
-        debug.check(self.height>tx_height + metal_height,"Cell height too small for our simple design rules.")
+        # rotated m1 pitch or poly to active spacing
+        min_channel = max(self.poly_contact.width + drc["metal1_to_metal1"],
+                          self.poly_contact.width + 2*drc["poly_to_active"])
+        print min_channel
+        debug.check(self.height>tx_height + min_channel,"Cell height too small for our simple design rules.")
 
         # Determine the height left to the transistors to determine the number of fingers
-        tx_height_available = self.height - metal_height
+        tx_height_available = self.height - min_channel
         # Divide the height in half. Could divide proportional to beta, but this makes
         # connecting wells of multiple cells easier.
         nmos_height_available = 0.5 * tx_height_available
@@ -132,10 +133,12 @@ class pinv(design.design):
         self.well_width = self.pmos.active_width + self.pmos.active_contact.width \
                           + drc["active_to_body_active"] + 2*drc["well_enclosure_active"]
         self.width = self.well_width
-        # Height is an input parameter
-
+        # Height is an input parameter, so it is not recomputed. 
+        
         # This will help with the wells and the input/output placement
         self.middle_position = vector(0,0.5*self.height)
+        # This will balance the PMOS and NMOS size, roughly.
+        #self.middle_position = vector(0,1.0/(self.beta+1)*self.height)        
 
         
     def create_ptx(self):

@@ -148,7 +148,7 @@ class instance(geometry):
         
     def __str__(self):
         """ override print function output """
-        return "inst: " + self.name + " mod=" + self.mod.name
+        return "inst: " + self.name + " mod=" + self.mod.name 
 
     def __repr__(self):
         """ override print function output """

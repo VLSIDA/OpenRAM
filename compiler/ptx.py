@@ -47,9 +47,6 @@ class ptx(design.design):
         # but this may be uncommented for debug purposes
         #self.DRC()
 
-    def add_pins(self):
-        """Adds pins for spice netlist"""
-        self.add_pin_list(["D", "G", "S", "B"])
 
     def create_layout(self):
         """Calls all functions related to the generation of the layout"""
@@ -60,7 +57,7 @@ class ptx(design.design):
         self.add_active_contacts()
 
     def create_spice(self):
-        self.add_pins()
+        self.add_pin_list(["D", "G", "S", "B"])
         
         self.spice.append("\n.SUBCKT {0} {1}".format(self.name,
                                                      " ".join(self.pins)))
@@ -160,7 +157,7 @@ class ptx(design.design):
         and we will add a single horizontal connection.
         """
         # Nothing to do if there's one poly gate
-        if len(poly_positions) == 1:
+        if len(poly_positions)<2:
             return
 
         # The width of the poly is from the left-most to right-most poly gate
@@ -189,25 +186,25 @@ class ptx(design.design):
                             + drc["metal1_to_metal1"] + 0.5*drc["minwidth_metal1"])
         # This is the width of a contact to extend the ends of the pin
         end_offset = vector(self.active_contact.second_layer_width/2,0)
-        
-        if source_positions: # if not an empty set
+
+        if len(source_positions)>1: 
             self.remove_layout_pin("S") # remove the individual connections
             # Add each vertical segment
             for a in source_positions:
                 self.add_path(("metal1"), [a,a+pin_offset])
             # Add a single horizontal pin
-            self.add_center_layout_pin_segment(text="S",
+            self.add_layout_pin_center_segment(text="S",
                                                layer="metal1",
                                                start=source_positions[0]+pin_offset-end_offset,
                                                end=source_positions[-1]+pin_offset+end_offset)
 
-        if drain_positions: # if not an empty set
+        if len(drain_positions)>1: 
             self.remove_layout_pin("D") # remove the individual connections
             # Add each vertical segment
             for a in drain_positions:
                 self.add_path(("metal1"), [a,a-pin_offset])
             # Add a single horizontal pin
-            self.add_center_layout_pin_segment(text="D",
+            self.add_layout_pin_center_segment(text="D",
                                                layer="metal1",
                                                start=drain_positions[0]-pin_offset-end_offset,
                                                end=drain_positions[-1]-pin_offset+end_offset)
@@ -223,18 +220,16 @@ class ptx(design.design):
         poly_positions = []
         
         for i in range(0, self.mults):
-            if self.connect_poly:
-                # Add the rectangle in case we remove the pin when joining fingers
-                self.add_center_rect(layer="poly",
-                                     offset=poly_offset,
-                                     height=self.poly_height,
-                                     width=self.poly_width)
-            else:
-                self.add_center_layout_pin_rect(text="G",
-                                                layer="poly",
-                                                offset=poly_offset,
-                                                height=self.poly_height,
-                                                width=self.poly_width)
+            # Add this duplicate rectangle in case we remove the pin when joining fingers
+            self.add_center_rect(layer="poly",
+                                 offset=poly_offset,
+                                 height=self.poly_height,
+                                 width=self.poly_width)
+            self.add_layout_pin_center_rect(text="G",
+                                            layer="poly",
+                                            offset=poly_offset,
+                                            height=self.poly_height,
+                                            width=self.poly_width)
             poly_positions.append(poly_offset)
             poly_offset = poly_offset + vector(self.poly_pitch,0)
 
@@ -306,36 +301,22 @@ class ptx(design.design):
             contact=self.add_center_contact(layers=("active", "contact", "metal1"),
                                             offset=pos,
                                             size=(1, self.num_contacts))
-            if self.connect_active:
-                # Add this in case the pins get removed when fingers joined
-                self.add_center_rect(layer="metal1",
-                                     offset=pos,
-                                     width=contact.second_layer_width,
-                                     height=contact.second_layer_height)
-            else:
-                self.add_center_layout_pin_rect(text="S",
-                                                layer="metal1",
-                                                offset=pos,
-                                                width=contact.second_layer_width,
-                                                height=contact.second_layer_height)
+            self.add_layout_pin_center_rect(text="S",
+                                            layer="metal1",
+                                            offset=pos,
+                                            width=contact.second_layer_width,
+                                            height=contact.second_layer_height)
 
                 
         for pos in drain_positions:
             contact=self.add_center_contact(layers=("active", "contact", "metal1"),
                                             offset=pos,
                                             size=(1, self.num_contacts))
-            if self.connect_active:
-                # Add this in case the pins get removed when fingers joined
-                self.add_center_rect(layer="metal1",
-                                     offset=pos,
-                                     width=contact.second_layer_width,
-                                     height=contact.second_layer_height)
-            else:
-                self.add_center_layout_pin_rect(text="D",
-                                                layer="metal1",
-                                                offset=pos,
-                                                width=contact.second_layer_width,
-                                                height=contact.second_layer_height)
+            self.add_layout_pin_center_rect(text="D",
+                                            layer="metal1",
+                                            offset=pos,
+                                            width=contact.second_layer_width,
+                                            height=contact.second_layer_height)
                 
         if self.connect_active:
             self.connect_fingered_active(drain_positions, source_positions)

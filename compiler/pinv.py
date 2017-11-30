@@ -142,6 +142,7 @@ class pinv(design.design):
                         connect_poly=True,
                         connect_active=True)
         self.add_mod(self.nmos)
+        
         self.pmos = ptx(width=self.pmos_width,
                         mults=self.tx_mults,
                         tx_type="pmos",
@@ -151,12 +152,12 @@ class pinv(design.design):
         
     def add_supply_rails(self):
         """ Add vdd/gnd rails to the top and bottom. """
-        self.add_center_layout_pin_rect(text="gnd",
+        self.add_layout_pin_center_rect(text="gnd",
                                         layer="metal1",
                                         offset=vector(0.5*self.width,0),
                                         width=self.width)
 
-        self.add_center_layout_pin_rect(text="vdd",
+        self.add_layout_pin_center_rect(text="vdd",
                                         layer="metal1",
                                         offset=vector(0.5*self.width,self.height),
                                         width=self.width)
@@ -168,7 +169,6 @@ class pinv(design.design):
         """
 
         # place PMOS so it is half a poly spacing down from the top
-        # Source should overlap rail if it is fingered!
         pmos_position = vector(0,self.height-self.pmos.height-0.5*drc["poly_to_poly"])
         self.pmos_inst=self.add_inst(name="pinv_pmos",
                                      mod=self.pmos,
@@ -176,7 +176,6 @@ class pinv(design.design):
         self.connect_inst(["Z", "A", "vdd", "vdd"])
 
         # place NMOS so that it is half a poly spacing up from the bottom
-        # Source should overlap rail if it is fingered!
         nmos_position = vector(0,self.nmos.height+0.5*drc["poly_to_poly"])
         self.nmos_inst=self.add_inst(name="pinv_nmos",
                                      mod=self.nmos,
@@ -256,28 +255,28 @@ class pinv(design.design):
         nmos_gate_pin = self.nmos_inst.get_pin("G")
         pmos_gate_pin = self.pmos_inst.get_pin("G")
 
-        # Pick point in center of NMOS and connect down to PMOS
+        # Pick point on the left of NMOS and connect down to PMOS
         nmos_gate_pos = nmos_gate_pin.ll() + vector(0.5*drc["minwidth_poly"],0)
         pmos_gate_pos = vector(nmos_gate_pos.x,pmos_gate_pin.bc().y)
         self.add_path("poly",[nmos_gate_pos,pmos_gate_pos])
 
-        # The midpoint of the vertical poly gate
-        mid_gate_offset = vector(nmos_gate_pos.x,self.middle_position.y)
-        contact_offset = mid_gate_offset - vector(0.5*self.poly_contact.height,0)
+        # Add the via to the cell midpoint along the gate
+        left_gate_offset = vector(nmos_gate_pin.lx(),self.middle_position.y)
+        contact_offset = left_gate_offset - vector(0.5*self.poly_contact.height,0)
         self.add_center_contact(layers=("poly", "contact", "metal1"),
                                 offset=contact_offset,
                                 rotate=90)
-        self.add_center_layout_pin_segment(text="A",
+        self.add_layout_pin_center_segment(text="A",
                                            layer="metal1",
-                                           start=mid_gate_offset.scale(0,1),
-                                           end=mid_gate_offset)
+                                           start=left_gate_offset.scale(0,1),
+                                           end=left_gate_offset)
 
         # This is to ensure that the contact is connected to the gate
-        mid_point = contact_offset.scale(0.5,1)+mid_gate_offset.scale(0.5,0)
+        mid_point = contact_offset.scale(0.5,1)+left_gate_offset.scale(0.5,0)
         self.add_center_rect(layer="poly",
                              offset=mid_point,
                              height=self.poly_contact.first_layer_width,
-                             width=mid_gate_offset.x-contact_offset.x)
+                             width=left_gate_offset.x-contact_offset.x)
         
 
     def route_output_drain(self):
@@ -299,7 +298,7 @@ class pinv(design.design):
         if self.route_output == True:
             # This extends the output to the edge of the cell
             output_offset = mid_drain_offset.scale(0,1) + vector(self.width,0)
-            self.add_center_layout_pin_segment(text="Z",
+            self.add_layout_pin_center_segment(text="Z",
                                                layer="metal1",
                                                start=mid_drain_offset,
                                                end=output_offset)
@@ -375,8 +374,8 @@ class pinv(design.design):
         # Only if they don't overlap already
         if gnd_pin.uy() < nmos_source_pin.by():
             self.add_rect(layer="metal1",
-                          offset=nmos__pin.ll(),
-                          height=nmos_source_pin.by()-gnd_pin.uy(),
+                          offset=nmos_source_pin.ll(),
+                          height=-1*nmos_source_pin.by(),
                           width=nmos_source_pin.width())
 
         pmos_source_pin = self.pmos_inst.get_pin("S")

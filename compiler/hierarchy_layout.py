@@ -174,7 +174,7 @@ class layout:
                 new_name = pin.name
             self.add_layout_pin(new_name, pin.layer, pin.ll(), pin.width(), pin.height())
 
-    def add_center_layout_pin_segment(self, text, layer, start, end):
+    def add_layout_pin_center_segment(self, text, layer, start, end):
         """ Creates a path like pin with center-line convention """
 
         debug.check(start.x==end.x or start.y==end.y,"Cannot have a non-manhatten layout pin.")
@@ -198,7 +198,7 @@ class layout:
         
         return self.add_layout_pin(text, layer, ll_offset, width, height)
 
-    def add_center_layout_pin_rect(self, text, layer, offset, width=None, height=None):
+    def add_layout_pin_center_rect(self, text, layer, offset, width=None, height=None):
         """ Creates a path like pin with center-line convention """
         if width==None:
             width=drc["minwidth_{0}".format(layer)]

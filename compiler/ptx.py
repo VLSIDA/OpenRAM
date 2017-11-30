@@ -96,7 +96,7 @@ class ptx(design.design):
                                       dimensions=(1, self.num_contacts))
 
         # Standard DRC rules
-        self.active_width = drc["minwidth_active"]
+        self.min_active_width = drc["minwidth_active"]
         self.contact_width = drc["minwidth_contact"]
         self.poly_width = drc["minwidth_poly"]
         self.poly_to_active = drc["poly_to_active"]
@@ -111,7 +111,7 @@ class ptx(design.design):
         
         # The enclosure of an active contact. Not sure about second term.
         active_enclose_contact = max(drc["active_enclosure_contact"],
-                                     (self.active_width - self.contact_width)/2)
+                                     (self.min_active_width - self.contact_width)/2)
         # This is the distance from the edge of poly to the contacted end of active
         self.end_to_poly = active_enclose_contact + self.contact_width + drc["contact_to_poly"]
         

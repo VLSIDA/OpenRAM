@@ -221,7 +221,7 @@ class ptx(design.design):
         
         for i in range(0, self.mults):
             # Add this duplicate rectangle in case we remove the pin when joining fingers
-            self.add_center_rect(layer="poly",
+            self.add_rect_center(layer="poly",
                                  offset=poly_offset,
                                  height=self.poly_height,
                                  width=self.poly_width)
@@ -298,7 +298,7 @@ class ptx(design.design):
         [source_positions,drain_positions] = self.get_contact_positions()
 
         for pos in source_positions:
-            contact=self.add_center_contact(layers=("active", "contact", "metal1"),
+            contact=self.add_contact_center(layers=("active", "contact", "metal1"),
                                             offset=pos,
                                             size=(1, self.num_contacts))
             self.add_layout_pin_center_rect(text="S",
@@ -309,7 +309,7 @@ class ptx(design.design):
 
                 
         for pos in drain_positions:
-            contact=self.add_center_contact(layers=("active", "contact", "metal1"),
+            contact=self.add_contact_center(layers=("active", "contact", "metal1"),
                                             offset=pos,
                                             size=(1, self.num_contacts))
             self.add_layout_pin_center_rect(text="D",

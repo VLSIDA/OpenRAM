@@ -263,7 +263,7 @@ class pinv(design.design):
         # Add the via to the cell midpoint along the gate
         left_gate_offset = vector(nmos_gate_pin.lx(),self.middle_position.y)
         contact_offset = left_gate_offset - vector(0.5*self.poly_contact.height,0)
-        self.add_center_contact(layers=("poly", "contact", "metal1"),
+        self.add_contact_center(layers=("poly", "contact", "metal1"),
                                 offset=contact_offset,
                                 rotate=90)
         self.add_layout_pin_center_segment(text="A",
@@ -273,7 +273,7 @@ class pinv(design.design):
 
         # This is to ensure that the contact is connected to the gate
         mid_point = contact_offset.scale(0.5,1)+left_gate_offset.scale(0.5,0)
-        self.add_center_rect(layer="poly",
+        self.add_rect_center(layer="poly",
                              offset=mid_point,
                              height=self.poly_contact.first_layer_width,
                              width=left_gate_offset.x-contact_offset.x)
@@ -322,7 +322,7 @@ class pinv(design.design):
         # Offset by half a contact in x and y
         nwell_offset += vector(0.5*self.nmos.active_contact.first_layer_width,
                                0.5*self.nmos.active_contact.first_layer_height)
-        self.nwell_contact=self.add_center_contact(layers=layer_stack,
+        self.nwell_contact=self.add_contact_center(layers=layer_stack,
                                                    offset=nwell_offset,
                                                    size=(1,self.nmos.num_contacts))
         self.add_path("metal1",[nwell_offset,nwell_offset.scale(1,0)])
@@ -348,7 +348,7 @@ class pinv(design.design):
         # Offset by half a contact
         pwell_offset += vector(0.5*self.pmos.active_contact.first_layer_width,
                                0.5*self.pmos.active_contact.first_layer_height)
-        self.pwell_contact=self.add_center_contact(layers=layer_stack,
+        self.pwell_contact=self.add_contact_center(layers=layer_stack,
                                                    offset=pwell_offset,
                                                    size=(1,self.pmos.num_contacts))
         self.add_path("metal1",[pwell_offset,vector(pwell_offset.x,self.height)])

@@ -141,10 +141,10 @@ class wordline_driver(design.design):
             a_pin = inv1_inst.get_pin("A")
             a_pos = a_pin.lc()
             clk_offset = vector(en_pin.bc().x,a_pos.y)
-            self.add_center_segment(layer="metal1",
+            self.add_segment_center(layer="metal1",
                                     start=clk_offset,
                                     end=a_pos)
-            m1m2_via = self.add_center_via(layers=("metal1", "via1", "metal2"),
+            m1m2_via = self.add_via_center(layers=("metal1", "via1", "metal2"),
                                            offset=clk_offset)
 
             # first inv to nand2 B
@@ -171,14 +171,14 @@ class wordline_driver(design.design):
                                                layer="metal1",
                                                start=input_offset,
                                                end=mid_via_offset)
-            self.add_center_via(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=mid_via_offset)
 
             # now connect to the nand2 A
-            self.add_center_segment(layer="metal2",
+            self.add_segment_center(layer="metal2",
                                     start=mid_via_offset,
                                     end=a_pos)
-            self.add_center_via(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=a_pos + vector(0.5*m1m2_via.height,0),
                                 rotate=90)
 

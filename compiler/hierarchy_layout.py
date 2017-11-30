@@ -117,7 +117,7 @@ class layout:
             return self.objs[-1]
         return None
 
-    def add_center_rect(self, layer, offset, width=0, height=0):
+    def add_rect_center(self, layer, offset, width=0, height=0):
         """Adds a rectangle on a given layer at the center point with width and height"""
         if width==0:
             width=drc["minwidth_{}".format(layer)]
@@ -132,7 +132,7 @@ class layout:
         return None
 
 
-    def add_center_segment(self, layer, start, end):
+    def add_segment_center(self, layer, start, end):
         """ Add a min-width rectanglular segment using center line on the start to end point """
         minwidth_layer = drc["minwidth_{}".format(layer)]        
         if start.x!=end.x and start.y!=end.y:
@@ -312,9 +312,9 @@ class layout:
                             mirror=mirror,
                             rotate=rotate)
 
-    def add_center_contact(self, layers, offset, size=[1,1], mirror="R0", rotate=0):
+    def add_contact_center(self, layers, offset, size=[1,1], mirror="R0", rotate=0):
         """ This is just an alias for a via."""
-        return self.add_center_via(layers=layers,
+        return self.add_via_center(layers=layers,
                                    offset=offset,
                                    size=size,
                                    mirror=mirror,
@@ -335,7 +335,7 @@ class layout:
         self.connect_inst([])
         return via
 
-    def add_center_via(self, layers, offset, size=[1,1], mirror="R0", rotate=0):
+    def add_via_center(self, layers, offset, size=[1,1], mirror="R0", rotate=0):
         """ Add a three layer via structure by the center coordinate accounting for mirroring and rotation. """
         import contact
         via = contact.contact(layer_stack=layers,

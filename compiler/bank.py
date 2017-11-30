@@ -506,7 +506,7 @@ class bank(design.design):
                             height=self.decoder_min_point-self.min_point-self.m2_pitch)
         
         bank_sel_inv_in_pos = bank_sel_inv.get_pin("A").lc()
-        self.add_center_via(layers=("metal1","via1","metal2"),
+        self.add_via_center(layers=("metal1","via1","metal2"),
                             offset=bank_sel_inv_in_pos,
                             rotate=90)
 
@@ -516,7 +516,7 @@ class bank(design.design):
                                            layer="metal3",
                                            start=bank_sel_pin_pos,
                                            end=bank_sel_line_pos)
-        self.add_center_via(layers=("metal2","via2","metal3"),
+        self.add_via_center(layers=("metal2","via2","metal3"),
                             offset=bank_sel_line_pos,
                             rotate=90)
 
@@ -528,7 +528,7 @@ class bank(design.design):
                            width=self.m2_width, 
                            height=2*self.inv.height)
         bank_sel_out_pin = bank_sel_inv.get_pin("Z").rc()
-        self.add_center_via(layers=("metal1","via1","metal2"),
+        self.add_via_center(layers=("metal1","via1","metal2"),
                             offset=bank_sel_out_pin)
 
             
@@ -599,13 +599,13 @@ class bank(design.design):
             out_pos = inv_inst.get_pin("Z").rc() - vector(0.5*self.m1m2_via.height,0)
             bus_pos = vector(self.central_line_xoffset[gated_name] + 0.5*self.m2_width, out_pos.y)
             self.add_path("metal3",[out_pos, bus_pos])
-            self.add_center_via(layers=("metal2", "via2", "metal3"),
+            self.add_via_center(layers=("metal2", "via2", "metal3"),
                                 offset=bus_pos,
                                 rotate=90)
-            self.add_center_via(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=out_pos,
                                 rotate=90)
-            self.add_center_via(layers=("metal2", "via2", "metal3"),
+            self.add_via_center(layers=("metal2", "via2", "metal3"),
                                 offset=out_pos,
                                 rotate=90)
             
@@ -613,7 +613,7 @@ class bank(design.design):
             logic_pin = logic_inst.get_pin("B")
             input_pos = vector(xoffset_bank_signal,logic_pin.cy())
             self.add_path("metal2",[logic_pin.lc(), input_pos])
-            self.add_center_via(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=logic_pin.lc(),
                                 rotate=90)
 
@@ -621,11 +621,11 @@ class bank(design.design):
             # Connect the logic A input to the input pin
             logic_pos = logic_inst.get_pin("A").lc()
             input_pos = vector(self.left_vdd_x_offset,logic_pos.y)
-            self.add_center_via(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=logic_pos,
                                 rotate=90)
 
-            self.add_center_via(layers=("metal2", "via2", "metal3"),
+            self.add_via_center(layers=("metal2", "via2", "metal3"),
                                 offset=logic_pos,
                                 rotate=90)
 
@@ -860,13 +860,13 @@ class bank(design.design):
             gnd_rail_position = vector(self.gnd_x_offset, decoder_gnd_position.y)
             self.add_path("metal1", [decoder_gnd_position, via_position])            
             self.add_path("metal3", [via_position, gnd_rail_position])
-            self.add_center_via(layers=("metal1","via1","metal2"),
+            self.add_via_center(layers=("metal1","via1","metal2"),
                                 offset=via_position,
                                 rotate=90)
-            self.add_center_via(layers=("metal2","via2","metal3"),
+            self.add_via_center(layers=("metal2","via2","metal3"),
                                 offset=via_position,
                                 rotate=90)
-            self.add_center_via(layers=("metal2","via2","metal3"),
+            self.add_via_center(layers=("metal2","via2","metal3"),
                                 offset=gnd_rail_position,
                                 rotate=270)
                         
@@ -929,7 +929,7 @@ class bank(design.design):
             mux_addr_position = self.col_mux_array_inst.get_pin(name).lc()
             wire_position = vector(self.central_line_xoffset[name]+0.5*self.m2_width, mux_addr_position.y)
             self.add_path("metal1", [wire_position,mux_addr_position])
-            self.add_center_via(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=("metal1", "via1", "metal2"),
                                   offset=wire_position,
                                   rotate=90)
             
@@ -979,10 +979,10 @@ class bank(design.design):
                 mid_position = vector(in_position.x,dout_position.y)
                 self.add_path("metal3",[dout_position, mid_position, in_position])
 
-                self.add_center_via(layers=("metal2", "via2", "metal3"),
+                self.add_via_center(layers=("metal2", "via2", "metal3"),
                                     offset=dout_position,
                                     rotate=90)
-                self.add_center_via(layers=("metal2", "via2", "metal3"),
+                self.add_via_center(layers=("metal2", "via2", "metal3"),
                                     offset=in_position)
                 
 
@@ -1141,7 +1141,7 @@ class bank(design.design):
             control_position = vector(self.central_line_xoffset[control_signal] + 0.5*self.m2_width, pin_position.y)
             self.add_path("metal1", [control_position, pin_position])
             #via_offset = vector(control_x_offset, pin_position.y - 0.5*drc["minwidth_metal2"])
-            self.add_center_via(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=control_position,
                                 rotate=90)
 

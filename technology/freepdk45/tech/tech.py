@@ -67,7 +67,7 @@ layer["boundary"]= 239
 #technology parameter
 parameter={}
 parameter["min_tx_size"] = 0.09
-parameter["pinv_beta"] = 3
+parameter["beta"] = 3
 
 drclvs_home=os.environ.get("DRCLVS_HOME")
 drc={}

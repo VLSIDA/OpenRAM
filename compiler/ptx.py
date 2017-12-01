@@ -164,10 +164,14 @@ class ptx(design.design):
 
         # The width of the poly is from the left-most to right-most poly gate
         poly_width = poly_positions[-1].x - poly_positions[0].x + self.poly_width
-        # This can be limited by poly to active spacing or the poly extension
-        distance_below_active = self.poly_width + max(self.poly_to_active,0.5*self.poly_height)
-        poly_offset = poly_positions[0] - vector(0.5*self.poly_width, distance_below_active)
-
+        if self.tx_type == "pmos":
+            # This can be limited by poly to active spacing or the poly extension
+            distance_below_active = self.poly_width + max(self.poly_to_active,0.5*self.poly_height)
+            poly_offset = poly_positions[0] - vector(0.5*self.poly_width, distance_below_active)
+        else:
+            # This can be limited by poly to active spacing or the poly extension
+            distance_above_active = max(self.poly_to_active,0.5*self.poly_height)            
+            poly_offset = poly_positions[0] + vector(-0.5*self.poly_width, distance_above_active)
         # Remove the old pin and add the new one
         self.remove_layout_pin("G") # only keep the main pin
         self.add_layout_pin(text="G",
@@ -189,6 +193,15 @@ class ptx(design.design):
         # This is the width of a contact to extend the ends of the pin
         end_offset = vector(self.active_contact.second_layer_width/2,0)
 
+        # drains always go to the MIDDLE of the cell, so top of NMOS, bottom of PMOS
+        # so reverse the directions for NMOS
+        if self.tx_type == "pmos":
+            drain_dir = 1
+            source_dir = -1
+        else:
+            drain_dir = -1
+            source_dir = 1
+            
         if len(source_positions)>1: 
             self.remove_layout_pin("S") # remove the individual connections
             # Add each vertical segment
@@ -282,7 +295,6 @@ class ptx(design.design):
         # The first one will always be a source
         source_positions = [self.contact_offset]
         drain_positions = []
-
         for i in range(self.mults):
             if i%2:
                 # It's a source... so offset from previous drain.

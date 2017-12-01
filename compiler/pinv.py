@@ -22,7 +22,7 @@ class pinv(design.design):
 
     unique_id = 1
     
-    def __init__(self, size=1, beta=parameter["pinv_beta"], height=bitcell.height, route_output=True):
+    def __init__(self, size=1, beta=parameter["beta"], height=bitcell.height, route_output=True):
         # We need to keep unique names because outputting to GDSII
         # will use the last record with a given name. I.e., you will
         # over-write a design in GDS if one has and the other doesn't
@@ -46,11 +46,11 @@ class pinv(design.design):
         #self.DRC_LVS()
 
     def add_pins(self):
-        """Adds pins for spice netlist"""
+        """ Adds pins for spice netlist """
         self.add_pin_list(["A", "Z", "vdd", "gnd"])
 
     def create_layout(self):
-        """Calls all functions related to the generation of the layout"""
+        """ Calls all functions related to the generation of the layout """
 
         # These aren't for instantiating, but we use them to get the dimensions
         self.poly_contact = contact.contact(("poly", "contact", "metal1"))
@@ -61,15 +61,7 @@ class pinv(design.design):
         self.setup_layout_constants()
         self.add_supply_rails()
         self.add_ptx()
-
-        # These aren't for instantiating, but we use them to get the dimensions
-        # self.nwell_contact = contact.contact(layer_stack=("active", "contact", "metal1"),
-        #                                      dimensions=(1, self.pmos.num_contacts))
-        # self.pwell_contact = contact.contact(layer_stack=("active", "contact", "metal1"),
-        #                                      dimensions=(1, self.nmos.num_contacts))
-
         self.extend_wells()
-        #self.extend_active()
         self.add_well_contacts()
         self.connect_rails()
         self.route_input_gate()
@@ -142,8 +134,6 @@ class pinv(design.design):
         
         # This will help with the wells and the input/output placement
         self.middle_position = vector(0,0.5*self.height)
-        # This will balance the PMOS and NMOS size, roughly.
-        #self.middle_position = vector(0,1.0/(self.beta+1)*self.height)        
 
         
     def create_ptx(self):
@@ -181,18 +171,18 @@ class pinv(design.design):
         """
         
         # place PMOS so it is half a poly spacing down from the top
-        self.pmos_pos = self.pmos.active_offset.scale(1,0) + vector(0, self.height-self.pmos.active_height-self.top_bottom_cell_space)
+        self.pmos_pos = self.pmos.active_offset.scale(1,0) \
+                        + vector(0, self.height-self.pmos.active_height-self.top_bottom_cell_space)
         self.pmos_inst=self.add_inst(name="pinv_pmos",
                                      mod=self.pmos,
                                      offset=self.pmos_pos)
         self.connect_inst(["Z", "A", "vdd", "vdd"])
 
         # place NMOS so that it is half a poly spacing up from the bottom
-        self.nmos_pos = self.nmos.active_offset.scale(1,0) + vector(0,self.nmos.active_height+self.top_bottom_cell_space)
+        self.nmos_pos = self.nmos.active_offset.scale(1,0) + vector(0,self.top_bottom_cell_space)
         self.nmos_inst=self.add_inst(name="pinv_nmos",
                                      mod=self.nmos,
-                                     offset=self.nmos_pos,
-                                     mirror="MX")
+                                     offset=self.nmos_pos)
         self.connect_inst(["Z", "A", "gnd", "gnd"])
 
 
@@ -220,50 +210,9 @@ class pinv(design.design):
                       width=self.well_width,
                       height=self.middle_position.y)
 
-    # def extend_active(self):
-    #     """Extends the active area for n/p mos for the addition of the n/p well taps"""
-    #     # calculates the new active width that includes the well_taps
-    #     self.active_width = self.pmos.active_width \
-    #                       + drc["active_to_body_active"] \
-    #                       + self.pmos.active_contact.width
-
-    #     # Calculates the coordinates of the bottom left corner of active area
-    #     # of the pmos
-    #     offset = self.pmos_position + self.pmos.active_position
-    #     self.add_rect(layer="active",
-    #                   offset=offset,
-    #                   width=self.active_width,
-    #                   height=self.pmos.active_height)
-
-    #     # Determines where the active of the well portion starts to add the
-    #     # implant
-    #     offset = offset + vector(self.pmos.active_width,0)
-    #     implant_width = self.active_width - self.pmos.active_width
-    #     self.add_rect(layer="nimplant",
-    #                   offset=offset,
-    #                   width=implant_width,
-    #                   height=self.pmos.active_height)
-
-    #     # Calculates the coordinates of the bottom left corner of active area
-    #     # of the nmos
-    #     offset = self.nmos_position + self.nmos.active_position
-    #     self.add_rect(layer="active",
-    #                   offset=offset,
-    #                   width=self.active_width,
-    #                   height=self.nmos.active_height)
-
-    #     # Determines where the active of the well portion starts to add the
-    #     # implant
-    #     offset = offset + vector(self.pmos.active_width,0)
-    #     implant_width = self.active_width - self.nmos.active_width
-    #     self.add_rect(layer="pimplant",
-    #                   offset=offset,
-    #                   width=implant_width,
-    #                   height=self.nmos.active_height)
-
 
     def route_input_gate(self):
-        """Routes the input gate to the left side of the cell for access"""
+        """ Route the input gate to the left side of the cell for access """
         nmos_gate_pin = self.nmos_inst.get_pin("G")
         pmos_gate_pin = self.pmos_inst.get_pin("G")
 
@@ -322,13 +271,13 @@ class pinv(design.design):
 
 
     def add_well_contacts(self):
-        """ Add n/p well taps to the layout and connect to supplies"""
+        """ Add n/p well taps to the layout and connect to supplies """
         
         layer_stack = ("active", "contact", "metal1")
         
         # To the right a spacing away from the nmos right active edge
         nwell_contact_xoffset = self.nmos_pos.x + self.nmos.active_width + drc["active_to_body_active"]
-        nwell_contact_yoffset = self.nmos_pos.y - self.nmos.active_height
+        nwell_contact_yoffset = self.nmos_pos.y 
         nwell_offset = vector(nwell_contact_xoffset, nwell_contact_yoffset)
         # Offset by half a contact in x and y
         nwell_offset += vector(0.5*self.nmos.active_contact.first_layer_width,
@@ -337,7 +286,7 @@ class pinv(design.design):
                                                    offset=nwell_offset)
         self.add_path("metal1",[nwell_offset,nwell_offset.scale(1,0)])
         # Now add the full active and implant for the PMOS
-        nwell_offset = self.nmos_pos + vector(self.nmos.active_width,-self.nmos.active_height) 
+        nwell_offset = self.nmos_pos + vector(self.nmos.active_width,0) 
         nwell_contact_width = drc["active_to_body_active"] + self.nmos.active_contact.width
         self.add_rect(layer="active",
                       offset=nwell_offset,
@@ -400,7 +349,6 @@ class pinv(design.design):
         return ((self.nmos_size+self.pmos_size)/parameter["min_tx_size"])*spice["min_tx_gate_c"]
 
     def analytical_delay(self, slew, load=0.0):
-        from tech import spice
         r = spice["min_tx_r"]/(self.nmos_size/parameter["min_tx_size"])
         c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff
         return self.cal_delay_with_rc(r = r, c =  c_para+load, slew = slew)

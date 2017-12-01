@@ -25,8 +25,8 @@ class pinv_test(unittest.TestCase):
         import pinv
         import tech
 
-        debug.info(2, "Checking 1x beta=4 size inverter")
-        tx = pinv.pinv(size=1, beta=4)
+        debug.info(2, "Checking 1x beta=3 size inverter")
+        tx = pinv.pinv(size=1, beta=3)
         self.local_check(tx)
 
         OPTS.check_lvsdrc = True

@@ -696,6 +696,9 @@ class VlsiLayout:
         """
         pin_boundaries=self.getAllPinShapesInStructureList(coordinate, layer)
 
+        if len(pin_boundaries) == 0:
+            debug.warning("Did not find pin on layer {0} at coordinate {1}".format(layer, coordinate))
+            
         # sort the boundaries, return the max area pin boundary
         pin_boundaries.sort(cmpBoundaryAreas,reverse=True)
         pin_boundary=pin_boundaries[0]

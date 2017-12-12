@@ -1,5 +1,6 @@
 import design
 import debug
+import utils
 from tech import drc
 from vector import vector
 
@@ -53,15 +54,15 @@ class contact(design.design):
         # FIME break this up
         self.first_layer_horizontal_enclosure = max((drc["minwidth_{0}".format(self.first_layer_name)] - self.contact_array_width) / 2,
                                                     drc["{0}_enclosure_{1}".format(self.first_layer_name, self.via_layer_name)])
-        self.first_layer_vertical_enclosure = max((drc["minarea_{0}".format(self.first_layer_name)]
-                                                   / (self.contact_array_width + 2 * self.first_layer_horizontal_enclosure) - self.contact_array_height) / 2,
+        self.first_layer_vertical_enclosure = max(utils.ceil((drc["minarea_{0}".format(self.first_layer_name)]
+                                                              / (self.contact_array_width + 2 * self.first_layer_horizontal_enclosure) - self.contact_array_height) / 2),
                                                   (drc["minheight_{0}".format(self.first_layer_name)] - self.contact_array_height) / 2,
                                                   drc["{0}_extend_{1}".format(self.first_layer_name, self.via_layer_name)])
 
         self.second_layer_horizontal_enclosure = max((drc["minwidth_{0}".format(self.second_layer_name)] - self.contact_array_width) / 2,
                                                     drc["{0}_enclosure_{1}".format(self.second_layer_name, self.via_layer_name)])
-        self.second_layer_vertical_enclosure = max((drc["minarea_{0}".format(self.second_layer_name)]
-                                                   / (self.contact_array_width + 2 * self.second_layer_horizontal_enclosure) - self.contact_array_height) / 2,
+        self.second_layer_vertical_enclosure = max(utils.ceil((drc["minarea_{0}".format(self.second_layer_name)]
+                                                   / (self.contact_array_width + 2 * self.second_layer_horizontal_enclosure) - self.contact_array_height) / 2),
                                                   (drc["minheight_{0}".format(self.second_layer_name)] - self.contact_array_height) / 2,
                                                   drc["{0}_extend_{1}".format(self.second_layer_name, self.via_layer_name)])
         # offset for the via array

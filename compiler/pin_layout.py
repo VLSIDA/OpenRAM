@@ -39,6 +39,30 @@ class pin_layout:
         else:
             return False    
 
+    def overlaps(self, other):
+        """ Check if a shape overlaps with a rectangle  """
+        ll = self.rect[0]
+        ur = self.rect[1]
+        oll = other.rect[0]
+        our = other.rect[1]
+        # Start assuming no overlaps
+        x_overlaps = False
+        y_overlaps = False
+        # check if self is within other x range
+        if (ll.x >= oll.x and ll.x <= our.x) or (ur.x >= oll.x and ur.x <= our.x):
+            x_overlaps = True
+        # check if other is within self x range
+        if (oll.x >= ll.x and oll.x <= ur.x) or (our.x >= ll.x and our.x <= ur.x):
+            x_overlaps = True
+            
+        # check if self is within other y range
+        if (ll.y >= oll.y and ll.y <= our.y) or (ur.y >= oll.y and ur.y <= our.y):
+            y_overlaps = True
+        # check if other is within self y range
+        if (oll.y >= ll.y and oll.y <= ur.y) or (our.y >= ll.y and our.y <= ur.y):
+            y_overlaps = True
+
+        return x_overlaps and y_overlaps
     def height(self):
         """ Return height. Abs is for pre-normalized value."""
         return abs(self.rect[1].y-self.rect[0].y)

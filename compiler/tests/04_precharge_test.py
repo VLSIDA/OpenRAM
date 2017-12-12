@@ -25,7 +25,7 @@ class precharge_test(unittest.TestCase):
         import tech
 
         debug.info(2, "Checking precharge")
-        tx = precharge.precharge(name="precharge_driver", ptx_width=tech.drc["minwidth_tx"])
+        tx = precharge.precharge(name="precharge_driver", size=1)
         self.local_check(tx)
 
         OPTS.check_lvsdrc = True
@@ -48,5 +48,6 @@ class precharge_test(unittest.TestCase):
 # instantiate a copy of the class to actually run the test
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
+    del sys.argv[1:]
     header(__file__, OPTS.tech_name)
     unittest.main()

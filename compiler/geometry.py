@@ -124,15 +124,24 @@ class instance(geometry):
         """ Return the right edge """
         return self.boundary[1].x
     
-    def get_pin(self,name):
+    def get_pin(self,name,index=-1):
         """ Return an absolute pin that is offset and transformed based on
-        this instance location. """
-        
-        import copy
-        pin = copy.deepcopy(self.mod.get_pin(name))
-        pin.transform(self.offset,self.mirror,self.rotate)
-        return pin
+        this instance location. Index will return one of several pins."""
 
+        import copy
+        if index==-1:
+            pin = copy.deepcopy(self.mod.get_pin(name))
+            pin.transform(self.offset,self.mirror,self.rotate)
+            return pin
+        else:
+            pins = copy.deepcopy(self.mod.get_pin(name))
+            pin.transform(self.offset,self.mirror,self.rotate)
+            return pin[index]
+
+    def get_num_pins(self, name):
+        """ Return the number of pins of a given name """
+        return len(self.mod.get_pins(name))
+    
     def get_pins(self,name):
         """ Return an absolute pin that is offset and transformed based on
         this instance location. """

@@ -26,7 +26,7 @@ class precharge_test(unittest.TestCase):
         import tech
 
         debug.info(2, "Checking 3 column precharge")
-        pc = precharge_array.precharge_array(columns=3, ptx_width=tech.drc["minwidth_tx"], beta=2)
+        pc = precharge_array.precharge_array(columns=3)
         self.local_check(pc)
 
         OPTS.check_lvsdrc = True

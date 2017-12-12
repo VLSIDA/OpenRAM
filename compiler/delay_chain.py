@@ -74,8 +74,7 @@ class delay_chain(design.design):
             self.inv_list.append([stage_num+1, False])
 
     def add_inv_list(self):
-        """add the inverter and connect them based on the stage list """
-        a_pin = self.inv.get_pin("A")
+        """ Add the inverters and connect them based on the stage list """
         dummy_load_counter = 1
         self.inv_inst_list = []
         for i in range(self.num_inverters):
@@ -84,18 +83,11 @@ class delay_chain(design.design):
                 # add top level that is upside down
                 inv_offset = vector(i * self.inv.width, 2 * self.inv.height)
                 inv_mirror="MX"
-                via_offset = inv_offset + a_pin.ll().scale(1,-1)
-                m1m2_via_rotate=270
             else:
                 # add bottom level from right to left
                 inv_offset = vector((self.num_inverters - i) * self.inv.width, 0)
                 inv_mirror="MY"
-                via_offset = inv_offset + a_pin.ll().scale(-1,1)
-                m1m2_via_rotate=90
 
-            self.add_via(layers=("metal1", "via1", "metal2"),
-                         offset=via_offset,
-                         rotate=m1m2_via_rotate)
             cur_inv=self.add_inst(name="dinv{}".format(i),
                                   mod=self.inv,
                                   offset=inv_offset,
@@ -125,48 +117,45 @@ class delay_chain(design.design):
                     
             self.connect_inst(args=[input, output, "vdd", "gnd"])
 
-
-
+            if i != 0:
+                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                    offset=cur_inv.get_pin("A").center())
+    def add_route(self, pin1, pin2):
+        """ This guarantees that we route from the top to bottom row correctly. """
+        pin1_pos = pin1.center()
+        pin2_pos = pin2.center()
+        if pin1_pos.y == pin2_pos.y:
+            self.add_path("metal2", [pin1_pos, pin2_pos])
+        else:
+            mid_point = vector(pin2_pos.x, 0.5*(pin1_pos.y+pin2_pos.y))
+            # Written this way to guarantee it goes right first if we are switching rows
+            self.add_path("metal2", [pin1_pos, vector(pin1_pos.x,mid_point.y), mid_point, vector(mid_point.x,pin2_pos.y), pin2_pos])
+    
     def route_inv(self):
         """ Add metal routing for each of the fanout stages """
         start_inv = end_inv = 0
-        z_pin = self.inv.get_pin("Z")
-        a_pin = self.inv.get_pin("A")
         for fanout in self.fanout_list:
             # end inv number depends on the fan out number
             end_inv = start_inv + fanout
-            start_inv_offset = self.inv_inst_list[start_inv].offset
-            end_inv_offset = self.inv_inst_list[end_inv].offset
-            if start_inv < self.num_top_half:
-                start_o_offset =  start_inv_offset + z_pin.ll().scale(1,-1)
-                m1m2_via_rotate = 270
-                y_dir = -1
-            else:
-                start_o_offset = start_inv_offset + z_pin.ll().scale(-1,1)
-                m1m2_via_rotate = 90
-                y_dir = 1
-
-            M2_start = start_o_offset + vector(0,drc["minwidth_metal2"]).scale(1,y_dir*0.5)
+            start_inv_inst = self.inv_inst_list[start_inv]
             
-            self.add_via(layers=("metal1", "via1", "metal2"),
-                         offset=start_o_offset,
-                         rotate=m1m2_via_rotate)
+            self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                offset=start_inv_inst.get_pin("Z").center()),
 
-            if end_inv < self.num_top_half:
-                end_i_offset =  end_inv_offset + a_pin.ll().scale(1,-1)
-                M2_end = end_i_offset - vector(0, 0.5 * drc["minwidth_metal2"])
-            else:
-                end_i_offset =  end_inv_offset + a_pin.ll().scale(-1,1)
-                M2_end = end_i_offset + vector(0, 0.5 * drc["minwidth_metal2"])
-
-            # We need a wire if the routing spans multiple rows
-            if start_inv < self.num_top_half and end_inv >= self.num_top_half:
-                mid = vector(self.num_top_half * self.inv.width - 0.5 * drc["minwidth_metal2"],
-                             M2_start[1])
-                self.add_wire(("metal2", "via2", "metal3"),
-                              [M2_start, mid, M2_end])
-            else:
-                self.add_path(("metal2"), [M2_start, M2_end])
+            # route from output to first load
+            start_inv_pin = start_inv_inst.get_pin("Z")
+            load_inst = self.inv_inst_list[start_inv+1]
+            load_pin = load_inst.get_pin("A")
+            self.add_route(start_inv_pin, load_pin)
+            
+            next_inv = start_inv+2
+            while next_inv <= end_inv:
+                prev_load_inst = self.inv_inst_list[next_inv-1]
+                prev_load_pin = prev_load_inst.get_pin("A")
+                load_inst = self.inv_inst_list[next_inv]
+                load_pin = load_inst.get_pin("A")
+                self.add_route(prev_load_pin, load_pin)
+                next_inv += 1
             # set the start of next one after current end
             start_inv = end_inv
 
@@ -202,19 +191,19 @@ class delay_chain(design.design):
         self.add_path("metal1", [gnd_start, gnd_mid1, gnd_mid2, gnd_end])                
         
         # input is A pin of first inverter
-        a_pin = self.inv.get_pin("A")
-        first_offset = self.inv_inst_list[0].offset
+        a_pin = self.inv_inst_list[0].get_pin("A")
         self.add_layout_pin(text="in",
                             layer="metal1",
-                            offset=first_offset+a_pin.ll().scale(1,-1) - vector(0,drc["minwidth_metal1"]))
+                            offset=a_pin.ll(),
+                            width=a_pin.width(),
+                            height=a_pin.height())
 
-                                
 
         # output is Z pin of last inverter
-        z_pin = self.inv.get_pin("Z")
+        z_pin = self.inv_inst_list[-1].get_pin("Z")
         self.add_layout_pin(text="out",
                             layer="metal1",
                             offset=z_pin.ll().scale(0,1),
-                            width=self.inv.width-z_pin.lx())
+                            width=z_pin.lx())
 
             

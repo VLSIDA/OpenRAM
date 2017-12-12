@@ -49,7 +49,7 @@ class ptx(design.design):
         # but this may be uncommented for debug purposes
         #self.DRC()
 
-
+    
     def create_layout(self):
         """Calls all functions related to the generation of the layout"""
         self.setup_layout_constants()
@@ -194,35 +194,37 @@ class ptx(design.design):
         end_offset = vector(self.active_contact.second_layer_width/2,0)
 
         # drains always go to the MIDDLE of the cell, so top of NMOS, bottom of PMOS
-        # so reverse the directions for NMOS
+        # so reverse the directions for NMOS compared to PMOS.
         if self.tx_type == "pmos":
-            drain_dir = 1
-            source_dir = -1
-        else:
             drain_dir = -1
             source_dir = 1
+        else:
+            drain_dir = 1
+            source_dir = -1
             
         if len(source_positions)>1: 
+            source_offset = pin_offset.scale(source_dir,source_dir)
             self.remove_layout_pin("S") # remove the individual connections
             # Add each vertical segment
             for a in source_positions:
-                self.add_path(("metal1"), [a,a+pin_offset])
+                self.add_path(("metal1"), [a,a+pin_offset.scale(source_dir,source_dir)])
             # Add a single horizontal pin
             self.add_layout_pin_center_segment(text="S",
                                                layer="metal1",
-                                               start=source_positions[0]+pin_offset-end_offset,
-                                               end=source_positions[-1]+pin_offset+end_offset)
+                                               start=source_positions[0]+source_offset-end_offset,
+                                               end=source_positions[-1]+source_offset+end_offset)
 
-        if len(drain_positions)>1: 
+        if len(drain_positions)>1:
+            drain_offset = pin_offset.scale(drain_dir,drain_dir)
             self.remove_layout_pin("D") # remove the individual connections
             # Add each vertical segment
             for a in drain_positions:
-                self.add_path(("metal1"), [a,a-pin_offset])
+                self.add_path(("metal1"), [a,a+drain_offset])
             # Add a single horizontal pin
             self.add_layout_pin_center_segment(text="D",
                                                layer="metal1",
-                                               start=drain_positions[0]-pin_offset-end_offset,
-                                               end=drain_positions[-1]-pin_offset+end_offset)
+                                               start=drain_positions[0]+drain_offset-end_offset,
+                                               end=drain_positions[-1]+drain_offset+end_offset)
             
     def add_poly(self):
         """
@@ -234,7 +236,9 @@ class ptx(design.design):
 
         # poly_positions are the bottom center of the poly gates
         poly_positions = []
-        
+
+        # It is important that these are from left to right, so that the pins are in the right
+        # order for the accessors
         for i in range(0, self.mults):
             # Add this duplicate rectangle in case we remove the pin when joining fingers
             self.add_rect_center(layer="poly",
@@ -295,6 +299,8 @@ class ptx(design.design):
         # The first one will always be a source
         source_positions = [self.contact_offset]
         drain_positions = []
+        # It is important that these are from left to right, so that the pins are in the right
+        # order for the accessors.
         for i in range(self.mults):
             if i%2:
                 # It's a source... so offset from previous drain.

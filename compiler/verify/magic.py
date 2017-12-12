@@ -252,7 +252,7 @@ def run_pex(name, gds_name, sp_name, output=None):
        implemented in gds_name and sp_name. """
 
     debug.warning("PEX using magic not implemented.")
-    return 0
+    return 1
 
     from tech import drc
     if output == None:

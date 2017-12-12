@@ -26,8 +26,8 @@ class multi_bank_test(unittest.TestCase):
         self.local_check(a)
 
         debug.info(1, "Two way column mux")
-        #a = bank.bank(word_size=4, num_words=32, words_per_row=2, num_banks=2, name="bank2")
-        #self.local_check(a)
+        a = bank.bank(word_size=4, num_words=32, words_per_row=2, num_banks=2, name="bank2")
+        self.local_check(a)
 
         debug.info(1, "Four way column mux")
         a = bank.bank(word_size=4, num_words=64, words_per_row=4, num_banks=2, name="bank3")

@@ -3,7 +3,7 @@ from tech import drc, spice
 import debug
 import design
 from math import log,sqrt,ceil
-from contact import contact
+import contact
 from bank import bank
 import datetime
 import getpass
@@ -48,26 +48,17 @@ class sram(design.design):
 
         design.design.__init__(self, name)
 
-        # These aren't for instantiating, but we use them to get the dimensions
-        self.poly_contact = contact(layer_stack=("poly", "contact", "metal1"))
-        self.m1m2_via = contact(layer_stack=("metal1", "via1", "metal2"))
-        self.m2m3_via = contact(layer_stack=("metal2", "via2", "metal3"))
-
         # For different layer width vias
-        self.m2m3_offset_fix = vector(0,0.5*(drc["minwidth_metal3"]-drc["minwidth_metal2"]))
+        self.m2m3_offset_fix = vector(0,0.5*(self.m3_width-self.m2_width))
         
-        self.m1_width = drc["minwidth_metal1"]        
-        self.m2_width = drc["minwidth_metal2"]
-        self.m3_width = drc["minwidth_metal3"]        
-
         # M1/M2 routing pitch is based on contacted pitch of the biggest layer
-        self.m1_pitch = max(self.m1m2_via.width,self.m1m2_via.height) + max(drc["metal1_to_metal1"],drc["metal2_to_metal2"])
-        self.m2_pitch = max(self.m2m3_via.width,self.m2m3_via.height) + max(drc["metal2_to_metal2"],drc["metal3_to_metal3"])
-        self.m3_pitch = max(self.m2m3_via.width,self.m2m3_via.height) + max(drc["metal2_to_metal2"],drc["metal3_to_metal3"])
+        self.m1_pitch = max(contact.m1m2.width,contact.m1m2.height) + max(self.m1_space,self.m2_space)
+        self.m2_pitch = max(contact.m2m3.width,contact.m2m3.height) + max(self.m2_space,self.m3_space)
+        self.m3_pitch = max(contact.m2m3.width,contact.m2m3.height) + max(self.m2_space,self.m3_space)
         
 
         self.control_size = 6
-        self.bank_to_bus_distance = 5*drc["minwidth_metal3"]
+        self.bank_to_bus_distance = 5*self.m3_width
         
         self.compute_sizes()
         self.add_pins()
@@ -108,7 +99,7 @@ class sram(design.design):
         self.bank_addr_size = self.col_addr_size + self.row_addr_size
         self.addr_size = self.bank_addr_size + int(log(self.num_banks, 2))
         
-        debug.info(0,"Words per row: {}".format(self.words_per_row))
+        debug.info(1,"Words per row: {}".format(self.words_per_row))
 
     def estimate_words_per_row(self,tentative_num_cols, word_size):
         """This provides a heuristic rounded estimate for the number of words
@@ -763,7 +754,7 @@ class sram(design.design):
 
         self.power_rail_width = self.bank.vdd_rail_width
         # Leave some extra space for the pitch
-        self.power_rail_pitch = self.bank.vdd_rail_width + 2*drc["metal3_to_metal3"]
+        self.power_rail_pitch = self.bank.vdd_rail_width + 2*self.m3_space
 
 
 
@@ -860,6 +851,10 @@ class sram(design.design):
 
 
     def add_lvs_correspondence_points(self):
+        """ This adds some points for easier debugging if LVS goes wrong. 
+        These should probably be turned off by default though, since extraction
+        will show these as ports in the extracted netlist.
+        """
         if self.num_banks==1: return
         
         for n in self.control_bus_names:
@@ -882,9 +877,9 @@ class sram(design.design):
         
         # Control logic is placed to the left of the blank even with the
         # decoder bottom. A small gap is in the x-dimension.
-        control_gap = 2*drc["minwidth_metal3"]
+        control_gap = 2*self.m3_width
         pos = vector(-control_gap,
-                     self.bank.row_decoder_inst.by() + 2*drc["minwidth_metal3"])
+                     self.bank.row_decoder_inst.by() + 2*self.m3_width)
         self.add_control_logic(position=pos,
                                rotate=90)
 

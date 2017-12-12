@@ -48,5 +48,6 @@ class precharge_test(unittest.TestCase):
 # instantiate a copy of the class to actually run the test
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
+    del sys.argv[1:]
     header(__file__, OPTS.tech_name)
     unittest.main()

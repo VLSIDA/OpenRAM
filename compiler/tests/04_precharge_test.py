@@ -25,7 +25,7 @@ class precharge_test(unittest.TestCase):
         import tech
 
         debug.info(2, "Checking precharge")
-        tx = precharge.precharge(name="precharge_driver", ptx_width=tech.drc["minwidth_tx"])
+        tx = precharge.precharge(name="precharge_driver", size=1)
         self.local_check(tx)
 
         OPTS.check_lvsdrc = True

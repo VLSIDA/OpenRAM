@@ -1,8 +1,8 @@
 #!/usr/bin/env python2.7
 """
 Run regression tests on a parameterized nand 2.  This module doesn't
-generate multi_finger 2_input nand gate.  It generate only the minimum
-size 2_input nand gate that is nmos_width=2*tech.drc[minwidth_tx].
+generate a multi_finger 2-input nand gate.  It generates only a minimum
+size 2-input nand gate.
 """
 
 import unittest
@@ -16,7 +16,7 @@ import sys
 
 OPTS = globals.OPTS
 
-#@unittest.skip("SKIPPING 04_nand_2_test")
+#@unittest.skip("SKIPPING 04_pnand2_test")
 
 
 class pnand2_test(unittest.TestCase):

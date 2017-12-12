@@ -22,6 +22,8 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
         self.name = name
         hierarchy_layout.layout.__init__(self, name)
         hierarchy_spice.spice.__init__(self, name)
+
+        self.setup_drc_constants()
         
         # Check if the name already exists, if so, give an error
         # because each reference must be a unique name.
@@ -36,6 +38,18 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
         else:
             debug.error("Duplicate layout reference name {0} of class {1}. GDS2 requires names be unique.".format(name,self.__class__),-1)
         
+    def setup_drc_constants(self):
+        """ These are some DRC constants used in many places in the compiler."""
+        from tech import drc
+        self.poly_width = drc["minwidth_poly"]
+        self.poly_space = drc["poly_to_poly"]        
+        self.m1_width = drc["minwidth_metal1"]
+        self.m1_space = drc["metal1_to_metal1"]        
+        self.m2_width = drc["minwidth_metal2"]
+        self.m2_space = drc["metal2_to_metal2"]        
+        self.m3_width = drc["minwidth_metal3"]
+        self.m3_space = drc["metal3_to_metal3"]
+
     def get_layout_pins(self,inst):
         """ Return a map of pin locations of the instance offset """
         # find the instance

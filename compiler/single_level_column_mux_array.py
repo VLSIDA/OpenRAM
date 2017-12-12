@@ -1,7 +1,7 @@
 from math import log
 import design
 from single_level_column_mux import single_level_column_mux 
-from contact import contact
+import contact
 from tech import drc
 import debug
 import math
@@ -46,15 +46,12 @@ class single_level_column_mux_array(design.design):
                                            tx_size=8)
         self.add_mod(self.mux)
 
-        # This is not instantiated and used for calculations only.
-        self.m1m2_via = contact(layer_stack=("metal1", "via1", "metal2"))
-        self.poly_contact = contact(layer_stack=("poly", "contact", "metal1"))
 
     def setup_layout_constants(self):
         self.column_addr_size = num_of_inputs = int(self.words_per_row / 2)
         self.width = self.columns * self.mux.width
         
-        self.m1_pitch = self.m1m2_via.width + max(drc["metal1_to_metal1"],drc["metal2_to_metal2"])
+        self.m1_pitch = contact.m1m2.width + max(drc["metal1_to_metal1"],drc["metal2_to_metal2"])
         # To correct the offset between M1 and M2 via enclosures
         self.offset_fix = vector(0,0.5*(drc["minwidth_metal2"]-drc["minwidth_metal1"]))
         # one set of metal1 routes for select signals and a pair to interconnect the mux outputs bl/br
@@ -118,31 +115,26 @@ class single_level_column_mux_array(design.design):
                                 layer="metal1",
                                 offset=offset,
                                 width=self.mux.width * self.columns,
-                                height=self.m1m2_via.width)
+                                height=contact.m1m2.width)
 
     def add_vertical_poly_rail(self):
         """  Connect the poly to the address rails """
         
         # Offset to the first transistor gate in the pass gate
-        nmos_offset = (self.mux.nmos1_position + self.mux.nmos.poly_positions[0]).scale(1,0)
         for col in range(self.columns):
             # which select bit should this column connect to depends on the position in the word
             sel_index = col % self.words_per_row
             # Add the column x offset to find the right select bit
-            gate_offset = nmos_offset + vector(col * self.mux.width , 0)
+            gate_offset = self.mux_inst[col].get_pin("col_addr").bc()
             # height to connect the gate to the correct horizontal row
             sel_height = self.get_pin("sel[{}]".format(sel_index)).by()
             # use the y offset from the sel pin and the x offset from the gate
-            offset = vector(gate_offset.x,self.get_pin("sel[{}]".format(sel_index)).by())
-            self.add_rect(layer="poly",
-                          offset=offset,
-                          width=drc["minwidth_poly"],
-                          height=self.route_height - sel_height)
-
+            offset = vector(gate_offset.x,self.get_pin("sel[{}]".format(sel_index)).cy())
             # Add the poly contact with a shift to account for the rotation
-            self.add_contact(layers=("metal1", "contact", "poly"),
-                             offset=offset + vector(self.m1m2_via.height,0),
-                             rotate=90)
+            self.add_via_center(layers=("metal1", "contact", "poly"),
+                                offset=offset,
+                                rotate=90)
+            self.add_path("poly", [offset, gate_offset])
 
     def route_bitlines(self):
         """  Connect the output bit-lines to form the appropriate width mux """
@@ -157,7 +149,7 @@ class single_level_column_mux_array(design.design):
                 # Create the metal1 to connect the n-way mux output from the pass gate
                 # These will be located below the select lines. Yes, these are M2 width
                 # to ensure vias are enclosed and M1 min width rules.
-                width = self.m1m2_via.width + self.mux.width * (self.words_per_row - 1)
+                width = contact.m1m2.width + self.mux.width * (self.words_per_row - 1)
                 self.add_rect(layer="metal1",
                               offset=bl_out_offset,
                               width=width,
@@ -182,7 +174,7 @@ class single_level_column_mux_array(design.design):
 
                 # This via is on the right of the wire                
                 self.add_via(layers=("metal1", "via1", "metal2"),
-                             offset=bl_out_offset + vector(self.m1m2_via.height,0),
+                             offset=bl_out_offset + vector(contact.m1m2.height,0),
                              rotate=90)
                 # This via is on the left of the wire
                 self.add_via(layers=("metal1", "via1", "metal2"),
@@ -197,7 +189,7 @@ class single_level_column_mux_array(design.design):
                               height=self.route_height-bl_out_offset.y)
                 # This via is on the right of the wire
                 self.add_via(layers=("metal1", "via1", "metal2"),
-                             offset=bl_out_offset + vector(self.m1m2_via.height,0),
+                             offset=bl_out_offset + vector(contact.m1m2.height,0),
                              rotate=90)
                 self.add_rect(layer="metal2",
                               offset=br_out_offset,

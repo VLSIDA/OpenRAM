@@ -2,11 +2,11 @@ from math import log
 import design
 from tech import drc, parameter
 import debug
-from contact import contact
+import contact
 from pinv import pinv
-from nand_2 import nand_2
-from nand_3 import nand_3
-from nor_2 import nor_2
+from pnand2 import pnand2
+from pnand3 import pnand3
+from pnor2 import pnor2
 import math
 from vector import vector
 from globals import OPTS
@@ -40,15 +40,15 @@ class control_logic(design.design):
         for pin in input_lst + output_lst + rails:
             self.add_pin(pin)
 
-        self.nand2 = nand_2()
+        self.nand2 = pnand2()
         self.add_mod(self.nand2)
-        self.nand3 = nand_3()
+        self.nand3 = pnand3()
         self.add_mod(self.nand3)
-        self.nor2 = nor_2()
+        self.nor2 = pnor2()
         self.add_mod(self.nor2)
 
         # Special gates: inverters for buffering
-        self.inv = self.inv1 = pinv()
+        self.inv = self.inv1 = pinv(1)
         self.add_mod(self.inv1)
         self.inv2 = pinv(2)
         self.add_mod(self.inv2)
@@ -75,25 +75,21 @@ class control_logic(design.design):
     def setup_layout_offsets(self):
         """ Setup layout offsets, determine the size of the busses etc """
         # These aren't for instantiating, but we use them to get the dimensions
-        self.poly_contact = contact(layer_stack=("poly", "contact", "metal1"))
-        self.poly_contact_offset = vector(0.5*self.poly_contact.width,0.5*self.poly_contact.height)
-        self.m1m2_via = contact(layer_stack=("metal1", "via1", "metal2"))
-        self.m2m3_via = contact(layer_stack=("metal2", "via2", "metal3"))
+        self.poly_contact_offset = vector(0.5*contact.poly.width,0.5*contact.poly.height)
 
         # For different layer width vias
         self.m1m2_offset_fix = vector(0,0.5*(drc["minwidth_metal2"]-drc["minwidth_metal1"]))
-        
         # M1/M2 routing pitch is based on contacted pitch
-        self.m1_pitch = max(self.m1m2_via.width,self.m1m2_via.height) + max(drc["metal1_to_metal1"],drc["metal2_to_metal2"])
-        self.m2_pitch = max(self.m2m3_via.width,self.m2m3_via.height) + max(drc["metal2_to_metal2"],drc["metal3_to_metal3"])
+        self.m1_pitch = max(contact.m1m2.width,contact.m1m2.height) + max(drc["metal1_to_metal1"],drc["metal2_to_metal2"])
+        self.m2_pitch = max(contact.m2m3.width,contact.m2m3.height) + max(drc["metal2_to_metal2"],drc["metal3_to_metal3"])
 
         # Have the cell gap leave enough room to route an M2 wire.
         # Some cells may have pwell/nwell spacing problems too when the wells are different heights.
         self.cell_gap = max(self.m2_pitch,drc["pwell_to_nwell"])
 
         # Amount to shift a 90 degree rotated via from center-line path routing to it's offset
-        self.m1m2_via_offset = vector(self.m1m2_via.first_layer_height,-0.5*drc["minwidth_metal2"])
-        self.m2m3_via_offset = vector(self.m2m3_via.first_layer_height,-0.5*drc["minwidth_metal3"])
+        self.m1m2_via_offset = vector(contact.m1m2.first_layer_height,-0.5*drc["minwidth_metal2"])
+        self.m2m3_via_offset = vector(contact.m2m3.first_layer_height,-0.5*drc["minwidth_metal3"])
         
         # First RAIL Parameters: gnd, oe, oebar, cs, we, clk_buf, clk_bar
         self.rail_1_start_x = 0
@@ -101,13 +97,6 @@ class control_logic(design.design):
         self.rail_1_names = ["clk_buf", "gnd", "oe_bar", "cs", "we", "vdd",  "oe", "clk_bar"]
         self.overall_rail_1_gap = (self.num_rails_1 + 2) * self.m2_pitch
         self.rail_1_x_offsets = {}
-
-        # Second RAIL Parameters: vdd
-        self.rail_2_start_x = 0
-        self.num_rails_2 = 0
-        self.rail_2_names = ["vdd"]
-        self.overall_rail_2_gap = (self.num_rails_2 + 2) * self.m2_pitch
-        self.rail_2_x_offsets = {}
 
         # GAP between main control and replica bitline
         self.replica_bitline_gap = 2*self.m2_pitch
@@ -121,7 +110,6 @@ class control_logic(design.design):
         self.add_1st_row(0)
         self.add_2nd_row(self.inv1.height)
         self.add_3rd_row(2*self.inv1.height)
-
         self.add_control_routing()
         self.add_rbl(0)
         self.add_layout_pins()
@@ -162,8 +150,11 @@ class control_logic(design.design):
 
     def add_rbl(self,y_off):
         """ Add the replica bitline """
+
+        # Add to the right of the control rows and routing channel
+        rows_end_x = max (self.row_1_end_x, self.row_2_end_x, self.row_3_end_x)
         
-        self.replica_bitline_offset = vector(self.rail_2_end_x , y_off)
+        self.replica_bitline_offset = vector(rows_end_x , y_off)
         self.rbl=self.add_inst(name="replica_bitline",
                                mod=self.replica_bitline,
                                offset=self.replica_bitline_offset,
@@ -190,7 +181,9 @@ class control_logic(design.design):
         pin=self.clk_inv1.get_pin("A")
         self.add_layout_pin(text="clk",
                             layer="metal1",
-                            offset=pin.ll())
+                            offset=pin.ll(),
+                            width=pin.width(),
+                            height=pin.height())
 
         pin=self.clk_inv1.get_pin("gnd")
         self.add_layout_pin(text="gnd",
@@ -227,9 +220,18 @@ class control_logic(design.design):
                                 mod=self.inv16,
                                    offset=self.clk_buf_offset)
         self.connect_inst(["clk_bar", "clk_buf", "vdd", "gnd"])
+
+        # Connect between the inverters
+        self.add_path("metal1", [self.clk_inv1.get_pin("Z").center(),
+                                 self.clk_inv2.get_pin("A").center()])
+        self.add_path("metal1", [self.clk_inv2.get_pin("Z").center(),
+                                 self.clk_bar.get_pin("A").center()])
+        self.add_path("metal1", [self.clk_bar.get_pin("Z").center(),
+                                 self.clk_buf.get_pin("A").center()])        
         
         # This is the first rail offset
-        self.rail_1_start_x = max(self.msf_offset.x + self.msf_control.height,self.clk_buf_offset.x+self.inv16.width)
+        self.rail_1_start_x = max(self.msf_offset.x + self.msf_control.height,self.clk_buf_offset.x+self.inv16.width) + self.m2_pitch
+        
 
     def add_1st_row(self,y_off):
 
@@ -251,7 +253,7 @@ class control_logic(design.design):
         self.connect_inst(["rblk_bar", "rblk",  "vdd", "gnd"])
         #x_off += self.inv1.width
         
-        self.row_1_width = x_off
+        self.row_1_end_x = x_off
 
     def add_2nd_row(self, y_off):
         # start after first rails
@@ -298,7 +300,7 @@ class control_logic(design.design):
         #x_off += self.inv1.width
         
         
-        self.row_2_width = x_off
+        self.row_2_end_x = x_off
         
     def add_3rd_row(self, y_off):
         # start after first rails
@@ -312,7 +314,7 @@ class control_logic(design.design):
         self.w_en_bar=self.add_inst(name="nand3_w_en_bar",
                                     mod=self.nand3,
                                     offset=self.w_en_bar_offset)
-        self.connect_inst(["clk_bar", "we", "cs", "w_en_bar", "vdd", "gnd"])
+        self.connect_inst(["clk_bar", "cs", "we", "w_en_bar", "vdd", "gnd"])
         x_off += self.nand3.width
 
         # input: w_en_bar, output: pre_w_en
@@ -338,7 +340,7 @@ class control_logic(design.design):
         self.connect_inst(["pre_w_en_bar", "w_en",  "vdd", "gnd"])
         #x_off += self.inv1.width
 
-        self.row_3_width = x_off
+        self.row_3_end_x = x_off
 
     def add_control_routing(self):
         """ Route the vertical rails for internal control signals  """
@@ -375,9 +377,12 @@ class control_logic(design.design):
                 continue
             gnd_pin = p.rc()
             gnd_rail_position = vector(self.rail_1_x_offsets["gnd"], gnd_pin.y)
-            self.add_wire(("metal3","via2","metal2"),[gnd_pin, gnd_rail_position, gnd_rail_position - vector(0,self.m2_pitch)])            
-            self.add_via(layers=("metal2","via2","metal3"),
-                         offset=gnd_pin + self.m2m3_via_offset,
+            self.add_wire(("metal3","via2","metal2"),[gnd_pin, gnd_rail_position])      
+            self.add_via_center(layers=("metal2","via2","metal3"),
+                         offset=gnd_pin,
+                         rotate=90)
+            self.add_via_center(layers=("metal2","via2","metal3"),
+                         offset=gnd_rail_position,
                          rotate=90)
 
         vdd_pins = self.msf_inst.get_pins("vdd")
@@ -386,17 +391,10 @@ class control_logic(design.design):
                 continue
             clk_vdd_position = vector(p.bc().x,self.clk_buf.get_pin("vdd").uy())
             self.add_path("metal1",[p.bc(),clk_vdd_position])
-        
-        self.rail_2_start_x = max (self.row_1_width, self.row_2_width, self.row_3_width)
-        for i in range(self.num_rails_2):
-            offset = vector(self.rail_2_start_x + i * self.m1_pitch, 0)
-            self.add_rect(layer="metal1",
-                          offset=offset,
-                          width=drc["minwidth_metal1"],
-                          height=self.logic_height)
-            self.rail_2_x_offsets[self.rail_2_names[i]]=offset.x + 0.5*drc["minwidth_metal1"] # center offset
+
+                
+                
             
-        self.rail_2_end_x = self.rail_2_start_x + (self.num_rails_2+1) * self.m2_pitch
 
     def add_rblk_routing(self):
         """ Connect the logic for the rblk generation """
@@ -406,72 +404,82 @@ class control_logic(design.design):
 
         # Connect the NAND3 output to the inverter
         # The pins are assumed to extend all the way to the cell edge
-        rblk_bar_pin = self.rblk_bar.get_pin("Z").ur()
-        inv_in_pin = self.rblk.get_pin("A").ll()
+        rblk_bar_pin = self.rblk_bar.get_pin("Z").center()
+        inv_in_pin = self.rblk.get_pin("A").center()
         mid1 = vector(inv_in_pin.x,rblk_bar_pin.y)
         self.add_path("metal1",[rblk_bar_pin,mid1,inv_in_pin])
 
         # Connect the output to the RBL
-        rblk_pin = self.rblk.get_pin("Z").rc()
-        rbl_in_pin = self.rbl.get_pin("en").lc()
+        rblk_pin = self.rblk.get_pin("Z").center()
+        rbl_in_pin = self.rbl.get_pin("en").center()
         mid1 = vector(rblk_pin.x,rbl_in_pin.y)
         self.add_path("metal1",[rblk_pin,mid1,rbl_in_pin])        
                       
     def connect_rail_from_right(self,inst, pin, rail):
         """ Helper routine to connect an unrotated/mirrored oriented instance to the rails """
-        in_pin = inst.get_pin(pin).lc()
-        rail_position = vector(self.rail_1_x_offsets[rail], in_pin.y)
-        self.add_wire(("metal1","via1","metal2"),[in_pin, rail_position, rail_position - vector(0,self.m2_pitch)])
+        in_pos = inst.get_pin(pin).center()
+        rail_pos = vector(self.rail_1_x_offsets[rail], in_pos.y)
+        self.add_wire(("metal1","via1","metal2"),[in_pos, rail_pos])
+        self.add_via_center(layers=("metal1","via1","metal2"),
+                            offset=rail_pos,
+                            rotate=90)
 
     def connect_rail_from_right_m2m3(self,inst, pin, rail):
         """ Helper routine to connect an unrotated/mirrored oriented instance to the rails """
-        in_pin = inst.get_pin(pin).lc()
-        rail_position = vector(self.rail_1_x_offsets[rail], in_pin.y)
-        self.add_wire(("metal3","via2","metal2"),[in_pin, rail_position, rail_position - vector(0,self.m2_pitch)])
+        in_pos = inst.get_pin(pin).center() - vector(contact.m1m2.height,0)
+        rail_pos = vector(self.rail_1_x_offsets[rail], in_pos.y)
+        self.add_wire(("metal3","via2","metal2"),[in_pos, rail_pos])
         # Bring it up to M2 for M2/M3 routing
-        self.add_via(layers=("metal1","via1","metal2"),
-                     offset=in_pin + self.m1m2_via_offset,
+        self.add_via_center(layers=("metal1","via1","metal2"),
+                     offset=in_pos,
                      rotate=90)
-        self.add_via(layers=("metal2","via2","metal3"),
-                     offset=in_pin + self.m2m3_via_offset,
+        self.add_via_center(layers=("metal2","via2","metal3"),
+                     offset=in_pos,
                      rotate=90)
+        self.add_via_center(layers=("metal2","via2","metal3"),
+                            offset=rail_pos,
+                            rotate=90)
         
         
     def connect_rail_from_left(self,inst, pin, rail):
         """ Helper routine to connect an unrotated/mirrored oriented instance to the rails """
-        in_pin = inst.get_pin(pin).rc()
-        rail_position = vector(self.rail_1_x_offsets[rail], in_pin.y)
-        self.add_wire(("metal1","via1","metal2"),[in_pin, rail_position, rail_position - vector(0,self.m2_pitch)])
-        self.add_via(layers=("metal1","via1","metal2"),
-                     offset=in_pin + self.m1m2_via_offset,
+        in_pos = inst.get_pin(pin).rc()
+        rail_pos = vector(self.rail_1_x_offsets[rail], in_pos.y)
+        self.add_wire(("metal1","via1","metal2"),[in_pos, rail_pos])
+        self.add_via_center(layers=("metal1","via1","metal2"),
+                     offset=in_pos,
+                     rotate=90)
+        self.add_via_center(layers=("metal2","via2","metal3"),
+                     offset=rail_pos,
                      rotate=90)
 
     def connect_rail_from_left_m2m3(self,inst, pin, rail):
         """ Helper routine to connect an unrotated/mirrored oriented instance to the rails """
-        in_pin = inst.get_pin(pin).rc()
-        rail_position = vector(self.rail_1_x_offsets[rail], in_pin.y)
-        self.add_wire(("metal3","via2","metal2"),[in_pin, rail_position, rail_position - vector(0,self.m2_pitch)])
-        # This via is needed for clk_bar, but is extraneous for the output signals
-        self.add_via(layers=("metal1","via1","metal2"),
-                     offset=in_pin + self.m1m2_via_offset,
+        in_pos = inst.get_pin(pin).rc()
+        rail_pos = vector(self.rail_1_x_offsets[rail], in_pos.y)
+        self.add_wire(("metal3","via2","metal2"),[in_pos, rail_pos])
+        self.add_via_center(layers=("metal2","via2","metal3"),
+                     offset=in_pos,
                      rotate=90)
-        self.add_via(layers=("metal2","via2","metal3"),
-                     offset=in_pin + self.m2m3_via_offset,
+        self.add_via_center(layers=("metal2","via2","metal3"),
+                     offset=rail_pos,
                      rotate=90)
         
         
     def add_wen_routing(self):
         self.connect_rail_from_right(self.w_en_bar,"A","clk_bar")
-        self.connect_rail_from_right(self.w_en_bar,"B","we")
-        self.connect_rail_from_right(self.w_en_bar,"C","cs")
+        self.connect_rail_from_right(self.w_en_bar,"B","cs")
+        self.connect_rail_from_right(self.w_en_bar,"C","we")
 
         # Connect the NAND3 output to the inverter
         # The pins are assumed to extend all the way to the cell edge
-        w_en_bar_pin = self.w_en_bar.get_pin("Z").ur()
-        inv_in_pin = self.pre_w_en.get_pin("A").ll()
+        w_en_bar_pin = self.w_en_bar.get_pin("Z").center()
+        inv_in_pin = self.pre_w_en.get_pin("A").center()
         mid1 = vector(inv_in_pin.x,w_en_bar_pin.y)
         self.add_path("metal1",[w_en_bar_pin,mid1,inv_in_pin])
         
+        self.add_path("metal1",[self.pre_w_en.get_pin("Z").center(), self.pre_w_en_bar.get_pin("A").center()])
+        self.add_path("metal1",[self.pre_w_en_bar.get_pin("Z").center(), self.w_en.get_pin("A").center()])                      
 
     
     def add_trien_routing(self):
@@ -485,52 +493,64 @@ class control_logic(design.design):
         
 
     def add_sen_routing(self):
-        rbl_out_pin = self.rbl.get_pin("out").ul()
-        in_pin = self.pre_s_en_bar.get_pin("A").rc()
-        mid1 = vector(rbl_out_pin.x,in_pin.y)
-        self.add_path("metal1",[rbl_out_pin,mid1,in_pin])                
-        #s_en_pin = self.s_en.get_pin("Z").lc()
+        rbl_out_pos = self.rbl.get_pin("out").ul()
+        in_pos = self.pre_s_en_bar.get_pin("A").rc()
+        mid1 = vector(rbl_out_pos.x,in_pos.y)
+        self.add_path("metal1",[rbl_out_pos,mid1,in_pos])                
+        #s_en_pos = self.s_en.get_pin("Z").lc()
 
-    
+        self.add_path("metal1",[self.pre_s_en_bar.get_pin("Z").center(), self.s_en.get_pin("A").center()])
+        
     def add_clk_routing(self):
         """ Route the clk and clk_bar signal internally """
 
         # clk_buf
-        clk_buf_pin = self.clk_buf.get_pin("Z").rc()
-        clk_buf_rail_position = vector(self.rail_1_x_offsets["clk_buf"], clk_buf_pin.y)
-        self.add_wire(("metal1","via1","metal2"),[clk_buf_pin, clk_buf_rail_position, clk_buf_rail_position - vector(0,self.m2_pitch)])
+        clk_buf_pos = self.clk_buf.get_pin("Z").rc()
+        clk_buf_rail_position = vector(self.rail_1_x_offsets["clk_buf"], clk_buf_pos.y)
+        self.add_wire(("metal1","via1","metal2"),[clk_buf_pos, clk_buf_rail_position])
+        self.add_via_center(layers=("metal1","via1","metal2"),
+                            offset=clk_buf_rail_position,
+                            rotate=90)
                               
         # clk_bar
         self.connect_rail_from_left_m2m3(self.clk_bar,"Z","clk_bar")        
+        self.add_via_center(layers=("metal1","via1","metal2"),
+                            offset=self.clk_bar.get_pin("Z").rc(),
+                            rotate=90)
         
         # clk_buf to msf control flops
-        msf_clk_pin = self.msf_inst.get_pin("clk").bc()
-        mid1 = msf_clk_pin - vector(0,self.m2_pitch)
+        msf_clk_pos = self.msf_inst.get_pin("clk").bc()
+        mid1 = msf_clk_pos - vector(0,self.m2_pitch)
         clk_buf_rail_position = vector(self.rail_1_x_offsets["clk_buf"], mid1.y)
         # route on M2 to allow vdd connection
-        self.add_wire(("metal2","via1","metal1"),[msf_clk_pin, mid1, clk_buf_rail_position])        
+        self.add_wire(("metal2","via1","metal1"),[msf_clk_pos, mid1, clk_buf_rail_position])        
 
     def connect_right_pin_to_output_pin(self, inst, pin_name, out_name):
         """ Create an output pin on the bottom side from the pin of a given instance. """
-        out_pin = inst.get_pin(pin_name).ur()
-        self.add_via(layers=("metal1","via1","metal2"),
-                     offset=out_pin + vector(self.m1m2_via.height,-self.m1m2_via.first_layer_width) - self.m1m2_offset_fix,
-                     rotate=90)
-        self.add_layout_pin(text=out_name,
-                            layer="metal2",
-                            offset=out_pin.scale(1,0),
-                            height=out_pin.y)
+        out_pin = inst.get_pin(pin_name)
+        # shift it to the right side of the cell
+        right_pos=out_pin.center() + vector(inst.rx()-out_pin.cx(),0)
+        self.add_path("metal1",[out_pin.center(), right_pos])
+        self.add_via_center(layers=("metal1","via1","metal2"),
+                            offset=right_pos)
+        self.add_layout_pin_center_segment(text=out_name,
+                                           layer="metal2",
+                                           start=right_pos.scale(1,0),
+                                           end=right_pos)
 
     def connect_left_pin_to_output_pin(self, inst, pin_name, out_name):
         """ Create an output pin on the bottom side from the pin of a given instance. """
-        out_pin = inst.get_pin(pin_name).ul()
-        self.add_via(layers=("metal1","via1","metal2"),
-                     offset=out_pin + vector(self.m1m2_via.height,-self.m1m2_via.first_layer_width) - self.m1m2_offset_fix,
-                     rotate=90)
-        self.add_layout_pin(text=out_name,
-                            layer="metal2",
-                            offset=out_pin.scale(1,0),
-                            height=out_pin.y)
+        out_pin = inst.get_pin(pin_name)
+        # shift it to the right side of the cell
+        left_pos=out_pin.center() - vector(out_pin.cx()-inst.lx(),0)
+        self.add_path("metal1",[out_pin.center(), left_pos])
+        self.add_via_center(layers=("metal1","via1","metal2"),
+                            offset=left_pos)
+        self.add_layout_pin_center_segment(text=out_name,
+                                           layer="metal2",
+                                           start=left_pos.scale(1,0),
+                                           end=left_pos)
+
         
     def add_output_routing(self):
         """ Output pin routing """
@@ -542,7 +562,7 @@ class control_logic(design.design):
     def add_supply_routing(self):
 
         rows_start = self.rail_1_start_x + self.overall_rail_1_gap
-        rows_end = max(self.row_1_width,self.row_2_width,self.row_3_width)
+        rows_end = max(self.row_1_end_x,self.row_2_end_x,self.row_3_end_x)
         vdd_rail_position = vector(self.rail_1_x_offsets["vdd"], 0)
         well_width = drc["minwidth_well"]
         
@@ -615,7 +635,7 @@ class control_logic(design.design):
         self.add_path("metal1",[row1_vdd_end_offset,rbl_row1_vdd.lc()])
         self.add_path("metal1",[row3_gnd_end_offset,rbl_row3_gnd.lc()])
         # row 3 may have a jog due to unequal row heights, so force the full overlap at the end
-        self.add_path("metal1",[row3_vdd_end_offset - vector(self.m1_pitch,0),row3_vdd_end_offset,rbl_row3_vdd.lc()])
+        self.add_path("metal1",[row3_vdd_end_offset - vector(self.m1_pitch,0),row3_vdd_end_offset,rbl_row3_vdd.ul()])
         
 
         # also add a well - around the rail
@@ -648,4 +668,11 @@ class control_logic(design.design):
                            height=pin.height(),
                            width=pin.width())
 
+        pin=self.rbl.get_pin("out")
+        self.add_label_pin(text="out",
+                           layer="metal1",
+                           offset=pin.ll(),
+                           height=pin.height(),
+                           width=pin.width())
+        
         

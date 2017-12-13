@@ -4,7 +4,6 @@ from tech import drc
 from pinv import pinv
 import contact
 from bitcell_array import bitcell_array
-from nor_2 import nor_2
 from ptx import ptx
 from vector import vector
 from globals import OPTS

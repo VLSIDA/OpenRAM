@@ -92,10 +92,10 @@ cell (sram_2_16_1_scn3me_subm){
         internal_power(){
             when : "OEb & !clk"; 
             rise_power(scalar){
-                values("3.1588");
+                values("3.1581");
             }
             fall_power(scalar){
-                values("3.4922");
+                values("3.4945");
             }
         }
         timing(){ 
@@ -129,10 +129,10 @@ cell (sram_2_16_1_scn3me_subm){
         internal_power(){
             when : "!OEb & !clk"; 
             rise_power(scalar){
-                values("3.9389");
+                values("5.0577");
             }
             fall_power(scalar){
-                values("3.9642");
+                values("5.0831");
             }
         }
         timing(){ 
@@ -141,23 +141,23 @@ cell (sram_2_16_1_scn3me_subm){
             timing_type : falling_edge; 
             cell_rise(CELL_TABLE) {
             values("0.542, 0.626, 1.298",\
-                   "0.545, 0.628, 1.304",\
+                   "0.544, 0.627, 1.304",\
                    "0.594, 0.674, 1.35");
             }
             cell_fall(CELL_TABLE) {
-            values("1.532, 1.634, 2.6",\
-                   "1.536, 1.639, 2.607",\
-                   "1.587, 1.69, 2.657");
+            values("1.535, 1.637, 2.604",\
+                   "1.54, 1.641, 2.612",\
+                   "1.59, 1.693, 2.662");
             }
         rise_transition(CELL_TABLE) {
-            values("0.191, 0.337, 1.884",\
+            values("0.191, 0.337, 1.883",\
                    "0.193, 0.338, 1.885",\
                    "0.195, 0.341, 1.884");
               }
         fall_transition(CELL_TABLE) {
-            values("0.255, 0.448, 2.467",\
-                   "0.256, 0.447, 2.468",\
-                   "0.256, 0.447, 2.454");
+            values("0.252, 0.446, 2.468",\
+                   "0.253, 0.448, 2.448",\
+                   "0.253, 0.447, 2.454");
             }
         }
         }

@@ -46,7 +46,6 @@ class timing_sram_test(unittest.TestCase):
         loads = [tech.spice["FF_in_cap"]*4]
         slews = [tech.spice["rise_time"]*2]
         data = d.analyze(probe_address, probe_data,slews,loads)
-
         if OPTS.tech_name == "freepdk45":
             golden_data = {'read1_power': 0.02527215,
                            'read0_power': 0.02573022,
@@ -58,15 +57,15 @@ class timing_sram_test(unittest.TestCase):
                            'slew0': [0.0273352],
                            'slew1': [0.021216870000000002]}
         elif OPTS.tech_name == "scn3me_subm":
-            golden_data = {'read1_power': 3.244839,
-                           'read0_power': 3.088234,
-                           'write0_power': 2.6857420000000003,
-                           'delay1': [0.9200643],
-                           'delay0': [2.0509399999999998],
+            golden_data = {'read1_power': 4.250786000000001,
+                           'read0_power': 4.093461,
+                           'write0_power': 2.762675,
+                           'delay1': [0.920068],
+                           'delay0': [2.051821],
                            'min_period': 6.563,
-                           'write1_power': 2.378355,
-                           'slew0': [1.342019],
-                           'slew1': [1.040885]}
+                           'write1_power': 2.4545719999999998,
+                           'slew0': [1.342015],
+                           'slew1': [1.040868]}
         else:
             self.assertTrue(False) # other techs fail
 
@@ -78,7 +77,7 @@ class timing_sram_test(unittest.TestCase):
                 for i in range(len(data[k])):
                     self.assertTrue(isclose(data[k][i],golden_data[k][i],0.10))
             else:
-                self.assertTrue(isclose(data[k],golden_data[k]),0.10)
+                self.assertTrue(isclose(data[k],golden_data[k],0.10))
 
         # reset these options
         OPTS.check_lvsdrc = True

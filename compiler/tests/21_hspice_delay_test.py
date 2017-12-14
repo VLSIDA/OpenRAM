@@ -62,15 +62,15 @@ class timing_sram_test(unittest.TestCase):
                            'slew0': [0.026966],
                            'slew1': [0.019338]}
         elif OPTS.tech_name == "scn3me_subm":
-            golden_data = {'read1_power': 3.1765,
-                           'read0_power': 3.1929,
-                           'write0_power': 2.874,
-                           'delay1': [0.8900045999999999],
-                           'delay0': [1.9975000000000003],
+            golden_data = {'read1_power': 4.3678,
+                           'read0_power': 4.3914,
+                           'write0_power': 2.9394,
+                           'delay1': [0.8901521],
+                           'delay0': [2.001],
                            'min_period': 5.781,
-                           'write1_power': 2.6611,
-                           'slew0': [1.2993000000000001],
-                           'slew1': [0.9903856]}
+                           'write1_power': 2.7163,
+                           'slew0': [1.3044000000000002],
+                           'slew1': [0.9904079]}
         else:
             self.assertTrue(False) # other techs fail
         # Check if no too many or too few results

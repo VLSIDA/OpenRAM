@@ -1,11 +1,19 @@
 import os
 import gdsMill
 import tech 
+import math 
 import globals
 from vector import vector
 from pin_layout import pin_layout
 
 OPTS = globals.OPTS
+
+def ceil(decimal):
+    """
+    Performs a ceiling function on the decimal place specified by the DRC grid
+    """
+    grid = tech.drc["grid"]
+    return math.ceil(decimal * 1 / grid) / (1 / grid)
 
 def snap_to_grid(offset):
     """

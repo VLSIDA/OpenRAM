@@ -78,9 +78,9 @@ class timing_sram_test(unittest.TestCase):
         for k in data.keys():
             if type(data[k])==list:
                 for i in range(len(data[k])):
-                    self.assertTrue(isclose(data[k][i],golden_data[k][i],0.10))
+                    self.assertTrue(isclose(data[k][i],golden_data[k][i],0.15))
             else:
-                self.assertTrue(isclose(data[k],golden_data[k],0.10))
+                self.assertTrue(isclose(data[k],golden_data[k],0.15))
 
                 
         # reset these options

@@ -46,7 +46,7 @@ class lef:
         self.lef.write("SITE  MacroSite\n")
         self.indent += "   "
         self.lef.write("{0}CLASS Core ;\n".format(self.indent))
-        self.lef.write("{0}SIZE	{1} by {2} ;\n".format(self.indent,
+        self.lef.write("{0}SIZE {1} by {2} ;\n".format(self.indent,
                                                        self.lef_units*self.width,
                                                        self.lef_units*self.height))
         self.indent = self.indent[:-3]

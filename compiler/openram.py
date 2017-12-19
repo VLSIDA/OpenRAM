@@ -123,13 +123,13 @@ last_time=print_time("GDS", datetime.datetime.now(), last_time)
 lefname = OPTS.output_path + s.name + ".lef"
 print("LEF: Writing to {0}".format(lefname))
 s.lef_write(lefname)
-last_time=print_time("LEF writing", datetime.datetime.now(), last_time)
+last_time=print_time("LEF", datetime.datetime.now(), last_time)
 
 # Write a verilog model
 vname = OPTS.output_path + s.name + ".v"
 print("Verilog: Writing to {0}".format(vname))
 s.verilog_write(vname)
-last_time=print_time("Verilog writing", datetime.datetime.now(), last_time)
+last_time=print_time("Verilog", datetime.datetime.now(), last_time)
 
 globals.end_openram()
 print_time("End",datetime.datetime.now(), start_time)

@@ -3,7 +3,7 @@ This provides a set of useful generic types for the gdsMill interface.
 """
 import debug
 from vector import vector
-from tech import GDS
+import tech
 import math
 from globals import OPTS
 
@@ -154,17 +154,18 @@ class instance(geometry):
             angle += math.radians(180.0)
             
         if self.mod.is_library_cell:
-            # For lib cells, block the whole thing
-            b = self.mod.get_boundary()
-            newb = self.transform_coords(b, self.offset, mirr, angle)
-            return [newb]
+            # For lib cells, block the whole thing except on metal3
+            # since they shouldn't use metal3
+            if layer==tech.layer["metal1"] or layer==tech.layer["metal2"]:
+                return [self.transform_coords(self.mod.get_boundary(), self.offset, mirr, angle)]
+            else:
+                return []
         else:
 
             blockages = self.mod.get_blockages(layer)
             new_blockages = []
             for b in blockages:
-                newb = self.transform_coords(b,self.offset, mirr, angle)
-                new_blockages.append(newb)
+                new_blockages.append(self.transform_coords(b,self.offset, mirr, angle))
             return new_blockages
         
     def gds_write_file(self, new_layout):
@@ -269,7 +270,7 @@ class label(geometry):
         self.offset = vector(offset).snap_to_grid()
 
         if zoom<0:
-            self.zoom = GDS["zoom"]
+            self.zoom = tech.GDS["zoom"]
         else:
             self.zoom = zoom
 

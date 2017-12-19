@@ -15,15 +15,13 @@ class lef:
         # LEF db units per micron
         self.lef_units = 1000
         # These are the layers of the obstructions
-        self.layer = layers
+        self.lef_layers = layers
 
     def lef_write(self, lef_name):
         """Write the entire lef of the object to the file."""
         debug.info(3, "Writing to {0}".format(lef_name))
 
         self.indent = "" # To maintain the indent level easily
-        self.lef_units = 1000
-        self.lef_layer = ["metal1", "metal2", "metal3"]   
 
         self.lef  = open(lef_name,"w")
         self.lef_write_header()
@@ -100,7 +98,7 @@ class lef:
     def lef_write_obstructions(self):
         """ Write all the obstructions on each layer """
         self.lef.write("{0}OBS\n".format(self.indent))
-        for layer in self.lef_layer:
+        for layer in self.lef_layers:
             self.lef.write("{0}LAYER  {1} ;\n".format(self.indent,layer))
             self.indent += "   "
             blockages = self.get_blockages(layer,True)

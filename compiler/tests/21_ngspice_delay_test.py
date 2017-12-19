@@ -47,25 +47,25 @@ class timing_sram_test(unittest.TestCase):
         slews = [tech.spice["rise_time"]*2]
         data = d.analyze(probe_address, probe_data,slews,loads)
         if OPTS.tech_name == "freepdk45":
-            golden_data = {'read1_power': 0.02813208,
-                           'read0_power': 0.02856409,
-                           'write0_power': 0.02578581,
-                           'delay1': [0.050279449999999996],
-                           'delay0': [0.1417553],
+            golden_data = {'read1_power': 0.026660760000000002,
+                           'read0_power': 0.02711731,
+                           'write0_power': 0.02501428,
+                           'delay1': [0.04867702],
+                           'delay0': [0.1423633],
                            'min_period': 0.332,
-                           'write1_power': 0.02516402,
-                           'slew0': [0.02729188],
-                           'slew1': [0.02057544]}
+                           'write1_power': 0.024162890000000003,
+                           'slew0': [0.02733451],
+                           'slew1': [0.02121624]}
         elif OPTS.tech_name == "scn3me_subm":
-            golden_data = {'read1_power': 4.324345,
-                           'read0_power': 4.168978,
-                           'write0_power': 2.828746,
-                           'delay1': [0.8929376],
-                           'delay0': [2.01039],
+            golden_data = {'read1_power': 4.250786000000001,
+                           'read0_power': 4.093461,
+                           'write0_power': 2.762675,
+                           'delay1': [0.920068],
+                           'delay0': [2.051821],
                            'min_period': 6.563,
-                           'write1_power': 2.526374,
-                           'slew0': [1.342036],
-                           'slew1': [1.041426]}
+                           'write1_power': 2.4545719999999998,
+                           'slew0': [1.342015],
+                           'slew1': [1.040868]}
         else:
             self.assertTrue(False) # other techs fail
 
@@ -77,7 +77,7 @@ class timing_sram_test(unittest.TestCase):
                 for i in range(len(data[k])):
                     self.assertTrue(isclose(data[k][i],golden_data[k][i],0.15))
             else:
-                self.assertTrue(isclose(data[k],golden_data[k]),0.15)
+                self.assertTrue(isclose(data[k],golden_data[k],0.15))
 
         # reset these options
         OPTS.check_lvsdrc = True

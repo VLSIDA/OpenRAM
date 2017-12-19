@@ -181,8 +181,8 @@ class control_logic(design.design):
         pin=self.clk_inv1.get_pin("A")
         self.add_layout_pin(text="clk",
                             layer="metal1",
-                            offset=pin.ll(),
-                            width=pin.width(),
+                            offset=pin.ll().scale(0,1),
+                            width=pin.rx(),
                             height=pin.height())
 
         pin=self.clk_inv1.get_pin("gnd")

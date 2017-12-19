@@ -120,17 +120,15 @@ s.gds_write(gdsname)
 last_time=print_time("GDS", datetime.datetime.now(), last_time)
 
 # Create a LEF physical model
-import lef
 lefname = OPTS.output_path + s.name + ".lef"
 print("LEF: Writing to {0}".format(lefname))
-lef.lef(gdsname,lefname,s)
+s.lef_write(lefname)
 last_time=print_time("LEF writing", datetime.datetime.now(), last_time)
 
 # Write a verilog model
-import verilog
 vname = OPTS.output_path + s.name + ".v"
 print("Verilog: Writing to {0}".format(vname))
-verilog.verilog(vname,s)
+s.verilog_write(vname)
 last_time=print_time("Verilog writing", datetime.datetime.now(), last_time)
 
 globals.end_openram()

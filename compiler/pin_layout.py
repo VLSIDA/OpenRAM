@@ -23,6 +23,7 @@ class pin_layout:
             self.layer = layer.keys()[layer.values().index(layer_name_num)]
         else:
             self.layer=layer_name_num
+        self.layer_num = layer[self.layer]
 
     def __str__(self):
         """ override print function output """

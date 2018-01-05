@@ -45,8 +45,6 @@ class sense_amp_array(design.design):
 
         self.add_sense_amp()
         self.connect_rails()
-        #self.offset_all_coordinates()
-
         
 
     def add_sense_amp(self):

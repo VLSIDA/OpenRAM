@@ -125,7 +125,7 @@ class single_level_column_mux_array(design.design):
             # which select bit should this column connect to depends on the position in the word
             sel_index = col % self.words_per_row
             # Add the column x offset to find the right select bit
-            gate_offset = self.mux_inst[col].get_pin("col_addr").bc()
+            gate_offset = self.mux_inst[col].get_pin("sel").bc()
             # height to connect the gate to the correct horizontal row
             sel_height = self.get_pin("sel[{}]".format(sel_index)).by()
             # use the y offset from the sel pin and the x offset from the gate

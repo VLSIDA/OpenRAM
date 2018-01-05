@@ -74,7 +74,7 @@ cell (sram_2_16_1_scn3me_subm){
     dont_use  : true;
     map_only   : true;
     dont_touch : true;
-    area : 90431.64;
+    area : 2.7;
 
     bus(DATA){
         bus_type  : DATA; 
@@ -92,10 +92,10 @@ cell (sram_2_16_1_scn3me_subm){
         internal_power(){
             when : "OEb & !clk"; 
             rise_power(scalar){
-                values("3.1581");
+                values("3.2612");
             }
             fall_power(scalar){
-                values("3.4945");
+                values("3.5985");
             }
         }
         timing(){ 
@@ -129,10 +129,10 @@ cell (sram_2_16_1_scn3me_subm){
         internal_power(){
             when : "!OEb & !clk"; 
             rise_power(scalar){
-                values("5.0577");
+                values("5.1597");
             }
             fall_power(scalar){
-                values("5.0831");
+                values("5.1863");
             }
         }
         timing(){ 
@@ -140,24 +140,24 @@ cell (sram_2_16_1_scn3me_subm){
             related_pin : "clk"; 
             timing_type : falling_edge; 
             cell_rise(CELL_TABLE) {
-            values("0.542, 0.626, 1.298",\
-                   "0.544, 0.627, 1.304",\
-                   "0.594, 0.674, 1.35");
+            values("0.509, 0.592, 1.265",\
+                   "0.512, 0.595, 1.271",\
+                   "0.561, 0.642, 1.317");
             }
             cell_fall(CELL_TABLE) {
-            values("1.535, 1.637, 2.604",\
-                   "1.54, 1.641, 2.612",\
-                   "1.59, 1.693, 2.662");
+            values("1.449, 1.549, 2.511",\
+                   "1.453, 1.555, 2.518",\
+                   "1.505, 1.607, 2.568");
             }
         rise_transition(CELL_TABLE) {
-            values("0.191, 0.337, 1.883",\
-                   "0.193, 0.338, 1.885",\
-                   "0.195, 0.341, 1.884");
+            values("0.19, 0.335, 1.887",\
+                   "0.192, 0.336, 1.886",\
+                   "0.194, 0.339, 1.886");
               }
         fall_transition(CELL_TABLE) {
-            values("0.252, 0.446, 2.468",\
-                   "0.253, 0.448, 2.448",\
-                   "0.253, 0.447, 2.454");
+            values("0.282, 0.465, 2.464",\
+                   "0.283, 0.466, 2.463",\
+                   "0.283, 0.465, 2.455");
             }
         }
         }

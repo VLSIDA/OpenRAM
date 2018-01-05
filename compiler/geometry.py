@@ -3,7 +3,9 @@ This provides a set of useful generic types for the gdsMill interface.
 """
 import debug
 from vector import vector
-from tech import GDS
+import tech
+import math
+from globals import OPTS
 
 class geometry:
     """
@@ -23,40 +25,24 @@ class geometry:
         """ override print function output """
         debug.error("__repr__ must be overridden by all geometry types.",1)
 
+    # def translate_coords(self, coords, mirr, angle, xyShift):
+    #     """Calculate coordinates after flip, rotate, and shift"""
+    #     coordinate = []
+    #     for item in coords:
+    #         x = (item[0]*math.cos(angle)-item[1]*mirr*math.sin(angle)+xyShift[0])
+    #         y = (item[0]*math.sin(angle)+item[1]*mirr*math.cos(angle)+xyShift[1])
+    #         coordinate += [(x, y)]
+    #     return coordinate
 
-class instance(geometry):
-    """
-    An instance of an instance/module with a specified location and
-    rotation
-    """
-    def __init__(self, name, mod, offset, mirror, rotate):
-        """Initializes an instance to represent a module"""
-        geometry.__init__(self)
-        debug.check(mirror not in ["R90","R180","R270"], "Please use rotation and not mirroring during instantiation.")
-        
-        self.name = name
-        self.mod = mod
-        self.gds = mod.gds
-        self.rotate = rotate
-        self.offset = vector(offset).snap_to_grid()
-        self.mirror = mirror
-        
-        self.compute_boundary(offset,mirror,rotate)
-        
-        debug.info(4, "creating instance: " + self.name)
-
-    def gds_write_file(self, newLayout):
-        """Recursively writes all the sub-modules in this instance"""
-        debug.info(4, "writing instance: " + self.name)
-        # make sure to write out my module/structure 
-        # (it will only be written the first time though)
-        self.mod.gds_write_file(self.gds)
-        # now write an instance of my module/structure
-        newLayout.addInstance(self.gds,
-                              offsetInMicrons=self.offset,
-                              mirror=self.mirror,
-                              rotate=self.rotate)
-
+    def transform_coords(self, coords, offset, mirr, angle):
+        """Calculate coordinates after flip, rotate, and shift"""
+        coordinate = []
+        for item in coords:
+            x = item[0]*math.cos(angle) - item[1]*mirr*math.sin(angle) + offset[0]
+            y = item[0]*math.sin(angle) + item[1]*mirr*math.cos(angle) + offset[1]
+            coordinate += [[x, y]]
+        return coordinate
+    
     def normalize(self):
         """ Re-find the LL and UR points after a transform """
         (first,second)=self.boundary
@@ -67,7 +53,7 @@ class instance(geometry):
     def compute_boundary(self,offset=vector(0,0),mirror="",rotate=0):
         """ Transform with offset, mirror and rotation to get the absolute pin location. 
         We must then re-find the ll and ur. The master is the cell instance. """
-        (ll,ur) = [vector(0,0),vector(self.mod.width,self.mod.height)]
+        (ll,ur) = [vector(0,0),vector(self.width,self.height)]
         if mirror=="MX":
             ll=ll.scale(1,-1)
             ur=ur.scale(1,-1)
@@ -123,6 +109,78 @@ class instance(geometry):
     def rx(self):
         """ Return the right edge """
         return self.boundary[1].x
+
+        
+class instance(geometry):
+    """
+    An instance of an instance/module with a specified location and
+    rotation
+    """
+    def __init__(self, name, mod, offset, mirror, rotate):
+        """Initializes an instance to represent a module"""
+        geometry.__init__(self)
+        debug.check(mirror not in ["R90","R180","R270"], "Please use rotation and not mirroring during instantiation.")
+        
+        self.name = name
+        self.mod = mod
+        self.gds = mod.gds
+        self.rotate = rotate
+        self.offset = vector(offset).snap_to_grid()
+        self.mirror = mirror
+        self.width = mod.width
+        self.height = mod.height
+        self.compute_boundary(offset,mirror,rotate)
+        
+        debug.info(4, "creating instance: " + self.name)
+
+    def get_blockages(self, layer, top=False):
+        """ Retrieve rectangular blockages of all modules in this instance.
+        Apply the transform of the instance placement to give absolute blockages."""
+        angle = math.radians(float(self.rotate))
+        mirr = 1
+        if self.mirror=="R90":
+            angle += math.radians(90.0)
+        elif self.mirror=="R180":
+            angle += math.radians(180.0)
+        elif self.mirror=="R270":
+            angle += math.radians(270.0)
+        elif self.mirror=="MX":
+            mirr = -1
+        elif self.mirror=="MY":
+            mirr = -1
+            angle += math.radians(180.0)
+        elif self.mirror=="XY":
+            mirr = 1
+            angle += math.radians(180.0)
+            
+        if self.mod.is_library_cell:
+            # For lib cells, block the whole thing except on metal3
+            # since they shouldn't use metal3
+            if layer==tech.layer["metal1"] or layer==tech.layer["metal2"]:
+                return [self.transform_coords(self.mod.get_boundary(), self.offset, mirr, angle)]
+            else:
+                return []
+        else:
+
+            blockages = self.mod.get_blockages(layer)
+            new_blockages = []
+            for b in blockages:
+                new_blockages.append(self.transform_coords(b,self.offset, mirr, angle))
+            return new_blockages
+        
+    def gds_write_file(self, new_layout):
+        """Recursively writes all the sub-modules in this instance"""
+        debug.info(4, "writing instance: " + self.name)
+        # make sure to write out my module/structure 
+        # (it will only be written the first time though)
+        self.mod.gds_write_file(self.gds)
+        # now write an instance of my module/structure
+        new_layout.addInstance(self.gds,
+                              offsetInMicrons=self.offset,
+                              mirror=self.mirror,
+                              rotate=self.rotate)
+
+        
     
     def get_pin(self,name,index=-1):
         """ Return an absolute pin that is offset and transformed based on
@@ -187,6 +245,10 @@ class path(geometry):
                           coordinates=self.coordinates,
                           width=self.path_width)
 
+    def get_blockages(self, layer):
+        """ Fail since we don't support paths yet. """
+        assert(0)
+        
     def __str__(self):
         """ override print function output """
         return "path: layer=" + self.layerNumber + " w=" + self.width
@@ -206,11 +268,11 @@ class label(geometry):
         self.text = text
         self.layerNumber = layerNumber
         self.offset = vector(offset).snap_to_grid()
+
         if zoom<0:
-            self.zoom = GDS["zoom"]
+            self.zoom = tech.GDS["zoom"]
         else:
             self.zoom = zoom
-
 
         self.size = 0
 
@@ -226,6 +288,10 @@ class label(geometry):
                           magnification=self.zoom,
                           rotate=None)
 
+    def get_blockages(self, layer):
+        """ Returns an empty list since text cannot be blockages. """
+        return []
+    
     def __str__(self):
         """ override print function output """
         return "label: " + self.text + " layer=" + str(self.layerNumber)
@@ -246,10 +312,18 @@ class rectangle(geometry):
         self.size = vector(width, height).snap_to_grid()
         self.width = self.size.x
         self.height = self.size.y
+        self.compute_boundary(offset,"",0)
 
         debug.info(4, "creating rectangle (" + str(self.layerNumber) + "): " 
                    + str(self.width) + "x" + str(self.height) + " @ " + str(self.offset))
 
+        
+    def get_blockages(self, layer):
+        """ Returns a list of one rectangle if it is on this layer"""
+        if self.layerNumber == layer:
+            return [[self.offset, vector(self.offset.x+self.width,self.offset.y+self.height)]]
+        else:
+            return []
 
     def gds_write_file(self, newLayout):
         """Writes the rectangular shape to GDS"""

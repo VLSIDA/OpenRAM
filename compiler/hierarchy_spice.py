@@ -2,9 +2,9 @@ import debug
 import re
 import os
 import math
+import verilog
 
-
-class spice:
+class spice(verilog.verilog):
     """
     This provides a set of useful generic types for hierarchy
     management. If a module is a custom designed cell, it will read from
@@ -19,7 +19,7 @@ class spice:
 
         self.mods = []  # Holds subckts/mods for this module
         self.pins = []  # Holds the pins for this module
-
+        self.pin_type = {} # The type map of each pin: INPUT, OUTPUT, INOUT, POWER, GROUND
         # for each instance, this is the set of nets/nodes that map to the pins for this instance
         # THIS MUST MATCH THE ORDER OF THE PINS (restriction imposed by the
         # Spice format)
@@ -31,13 +31,35 @@ class spice:
 # Spice circuit
 ############################################################
 
-    def add_pin(self, name):
-        """Adds a pin to the pins list"""
+    def add_pin(self, name, pin_type="INOUT"):
+        """ Adds a pin to the pins list. Default type is INOUT signal. """
         self.pins.append(name)
+        self.pin_type[name]=pin_type
 
-    def add_pin_list(self, pin_list):
-        """Adds a pin_list to the pins list"""
-        self.pins = self.pins + pin_list
+    def add_pin_list(self, pin_list, pin_type_list="INOUT"):
+        """ Adds a pin_list to the pins list """
+        # The type list can be a single type for all pins
+        # or a list that is the same length as the pin list.
+        if type(pin_type_list)==str:
+            for pin in pin_list:
+                self.add_pin(pin,pin_type_list)
+        elif len(pin_type_list)==len(pin_list):
+            for (pin,ptype) in zip(pin_list, pin_type_list):
+                self.add_pin(pin,ptype)
+        else:
+            debug.error("Mismatch in type and pin list lengths.", -1)
+
+    def get_pin_type(self, name):
+        """ Returns the type of the signal pin. """
+        return self.pin_type[name]
+
+    def get_pin_dir(self, name):
+        """ Returns the direction of the pin. (Supply/ground are INOUT). """
+        if self.pin_type[name] in ["POWER","GROUND"]:
+            return "INOUT"
+        else:
+            return self.pin_type[name]
+        
 
     def add_mod(self, mod):
         """Adds a subckt/submodule to the subckt hierarchy"""

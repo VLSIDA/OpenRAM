@@ -3,25 +3,16 @@ import debug
 class verilog:
     """ Create a behavioral Verilog file for simulation."""
 
-    def __init__(self,verilog_name,sram):
-        self.sram_name = sram.name
-        self.num_words = sram.num_words
-        self.word_size = sram.word_size
-        self.addr_size = sram.addr_size
-    
+    def verilog_write(self,verilog_name):
+        """ Write a behavioral Verilog model. """
+        
         self.vf = open(verilog_name, "w")
-    
-        self.create()
 
-        self.vf.close()
-
-
-    def create(self):
         self.vf.write("// OpenRAM SRAM model\n")
         self.vf.write("// Words: {0}\n".format(self.num_words))
         self.vf.write("// Word size: {0}\n\n".format(self.word_size))
     
-        self.vf.write("module {0}(DATA,ADDR,CSb,WEb,OEb,clk);\n".format(self.sram_name))
+        self.vf.write("module {0}(DATA,ADDR,CSb,WEb,OEb,clk);\n".format(self.name))
         self.vf.write("\n")
         self.vf.write("  parameter DATA_WIDTH = {0} ;\n".format(self.word_size))
         self.vf.write("  parameter ADDR_WIDTH = {0} ;\n".format(self.addr_size))
@@ -65,47 +56,5 @@ class verilog:
         self.vf.write("endmodule\n")
 
 
-    
-# //SRAM Model
-# module sram(CSB,WRB,ABUS,DATABUS);
-#   input CSB;             // active low chip select
-#   input WRB;             // active low write control
-#   input [11:0] ABUS;     // 12-bit address bus
-#   inout [7:0] DATABUS;   // 8-bit data bus
-#                  //** internal signals
-#   reg  [7:0] DATABUS_driver;
-#   wire [7:0] DATABUS = DATABUS_driver;
-#   reg [7:0] ram[0:4095];            // memory cells
-#   integer i;
-
-#   initial     //initialize all RAM cells to 0 at startup
-#     begin
-#     DATABUS_driver = 8'bzzzzzzzz;
-#     for (i=0; i < 4095; i = i + 1)
-#        ram[i] = 0;
-#     end
-
-#   always @(CSB or WRB or ABUS)
-#     begin
-#       if (CSB == 1'b0)
-#         begin
-#         if (WRB == 1'b0) //Start: latch Data on rising edge of CSB or WRB
-#           begin
-#           DATABUS_driver <= #10 8'bzzzzzzzz;
-#           @(posedge CSB or posedge WRB);
-#           $display($time," Writing %m ABUS=%b DATA=%b",ABUS,DATABUS);
-#           ram[ABUS] = DATABUS;
-#           end
-#         if (WRB == 1'b1) //Reading from sram (data becomes valid after 10ns)
-#           begin
-#           #10 DATABUS_driver =  ram[ABUS];
-#           $display($time," Reading %m ABUS=%b DATA=%b",ABUS,DATABUS_driver);
-#           end
-#         end
-#       else //sram unselected, stop driving bus after 10ns
-#         begin
-#         DATABUS_driver <=  #10 8'bzzzzzzzz;
-#         end
-#     end
-# endmodule
+        self.vf.close()
 

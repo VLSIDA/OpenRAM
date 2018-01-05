@@ -36,14 +36,13 @@ class lib_test(unittest.TestCase):
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)
 
-        filename = s.name + ".lib"     
+        filename = s.name + "_pruned.lib"
         libname = OPTS.openram_temp + filename
         lib.lib(libname=libname,sram=s,spfile=tempspice,use_model=False)
         
         # let's diff the result with a golden model
         golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),filename)
-        # 15% worked in freepdk, but scmos needed 20%
-        self.assertEqual(isapproxdiff(libname,golden,0.20),True)
+        self.assertEqual(isapproxdiff(libname,golden,0.30),True)
 
         OPTS.analytical_delay = True
         reload(characterizer)

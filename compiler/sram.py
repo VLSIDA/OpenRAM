@@ -67,6 +67,11 @@ class sram(design.design):
         # Can remove the following, but it helps for debug!
         self.add_lvs_correspondence_points()
         
+        self.offset_all_coordinates()
+        sizes = self.find_highest_coords()
+        self.width = sizes[0]
+        self.height = sizes[1]
+        
         self.DRC_LVS()
 
     def compute_sizes(self):
@@ -131,15 +136,17 @@ class sram(design.design):
         """ Add pins for entire SRAM. """
 
         for i in range(self.word_size):
-            self.add_pin("DATA[{0}]".format(i))
+            self.add_pin("DATA[{0}]".format(i),"INOUT")
         for i in range(self.addr_size):
-            self.add_pin("ADDR[{0}]".format(i))
+            self.add_pin("ADDR[{0}]".format(i),"INPUT")
 
+        # These are used to create the physical pins too
         self.control_logic_inputs=["CSb", "WEb",  "OEb", "clk"]
         self.control_logic_outputs=["s_en", "w_en", "tri_en", "tri_en_bar", "clk_bar", "clk_buf"]
         
-        for pin in self.control_logic_inputs+["vdd","gnd"]:
-            self.add_pin(pin)
+        self.add_pin_list(self.control_logic_inputs,"INPUT")
+        self.add_pin("vdd","POWER")
+        self.add_pin("gnd","GROUND")
 
     def create_layout(self):
         """ Layout creation """
@@ -221,7 +228,6 @@ class sram(design.design):
             self.add_path("metal3",[pin_pos,rail_pos])
             self.add_via_center(("metal2","via2","metal3"),rail_pos)
 
-        # connect the horizontal control bus to the vertical bus
         
             
     def route_four_banks(self):

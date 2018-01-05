@@ -32,6 +32,8 @@ class options(optparse.Values):
     use_pex = False
     # Remove noncritical memory cells for characterization speed-up
     trim_netlist = True
+    # Use detailed LEF blockages
+    detailed_blockages = True
     # Define the output file paths
     output_path = ""
     # Define the output file base name

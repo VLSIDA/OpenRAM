@@ -42,7 +42,7 @@ class lib_test(unittest.TestCase):
         
         # let's diff the result with a golden model
         golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),filename)
-        self.assertEqual(isapproxdiff(libname,golden,0.25),True)
+        self.assertEqual(isapproxdiff(libname,golden,0.15),True)
 
         OPTS.analytical_delay = True
         OPTS.trim_netlist = True

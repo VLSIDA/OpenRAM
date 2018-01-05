@@ -35,8 +35,8 @@ class write_driver_array(design.design):
         for i in range(self.word_size):
             self.add_pin("data[{0}]".format(i))
         for i in range(self.word_size):            
-            self.add_pin("bl_out[{0}]".format(i))
-            self.add_pin("br_out[{0}]".format(i))
+            self.add_pin("bl[{0}]".format(i))
+            self.add_pin("br[{0}]".format(i))
         self.add_pin("en")
         self.add_pin("vdd")
         self.add_pin("gnd")
@@ -44,7 +44,6 @@ class write_driver_array(design.design):
     def create_layout(self):
         self.create_write_array()
         self.add_layout_pins()
-        #self.offset_all_coordinates()
 
     def create_write_array(self):
         self.driver_insts = {}
@@ -57,8 +56,8 @@ class write_driver_array(design.design):
                                                                   offset=base)
 
             self.connect_inst(["data[{0}]".format(i/self.words_per_row),
-                               "bl_out[{0}]".format(i/self.words_per_row),
-                               "br_out[{0}]".format(i/self.words_per_row),
+                               "bl[{0}]".format(i/self.words_per_row),
+                               "br[{0}]".format(i/self.words_per_row),
                                "en", "vdd", "gnd"])
 
 

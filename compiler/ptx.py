@@ -264,6 +264,14 @@ class ptx(design.design):
                       offset=self.active_offset,
                       width=self.active_width,
                       height=self.active_height)
+        # If the implant must enclose the active, shift offset
+        # and increase width/height
+        enclose_width = drc["implant_enclose_active"]
+        enclose_offset = [enclose_width]*2
+        self.add_rect(layer="{}implant".format(self.implant_type),
+                      offset=self.active_offset - enclose_offset,
+                      width=self.active_width + 2*enclose_width,
+                      height=self.active_height + 2*enclose_width)
 
     def add_well_implant(self):
         """
@@ -278,10 +286,6 @@ class ptx(design.design):
                           offset=(0,0),
                           width=self.well_width,
                           height=self.well_height)
-        self.add_rect(layer="{}implant".format(self.implant_type),
-                      offset=self.active_offset,
-                      width=self.active_width,
-                      height=self.active_height)
 
 
     def calculate_num_contacts(self):

@@ -80,168 +80,149 @@ drc["lvs_rules"]=drclvs_home+"/calibreLVS.rul"
 drc["xrc_rules"]=drclvs_home+"/calibrexRC.rul"
 drc["layer_map"]=os.environ.get("OPENRAM_TECH")+"/freepdk45/layers.map"
 
-# minwidth_tx withcontact
+# minwidth_tx with contact (no dog bone transistors)
 drc["minwidth_tx"]=0.09
 drc["minlength_channel"] = 0.05
 
-#well rules
+# WELL.1 Minimum spacing of nwell/pwell at different potential
 drc["pwell_to_nwell"] = 0.225
+# WELL.4 Minimum width of nwell/pwell
 drc["minwidth_well"] = 0.2
 
-#poly rules
+# POLY.1 Minimum width of poly
 drc["minwidth_poly"] = 0.05
-drc["minheight_poly"] = 0.0
+# POLY.2 Minimum spacing of poly AND active
 drc["poly_to_poly"] = 0.14
+# POLY.3 Minimum poly extension beyond active
 drc["poly_extend_active"] = 0.055
+# POLY.4 Minimum enclosure of active around gate
 drc["active_enclosure_gate"] = 0.07
+# POLY.5 Minimum spacing of field poly to active
 drc["poly_to_active"] = 0.05
+# POLY.6 Minimum Minimum spacing of field poly
 drc["poly_to_field_poly"] = 0.075
+# Not a rule
 drc["minarea_poly"] = 0.0
 
-#active
-drc["active_extend_gate"] = 0
+# ACTIVE.2 Minimum spacing of active
 drc["active_to_body_active"] = 0.08
+# ACTIVE.1 Minimum width of active
 drc["minwidth_active"] = 0.09
-drc["minheight_active"] = 0.09
-drc["minarea_active"] = 0
+# Not a rule
+drc["active_to_active"] = 0
+# ACTIVE.3 Minimum enclosure/spacing of nwell/pwell to active
 drc["well_enclosure_active"] = 0.055
+# Reserved for asymmetric enclosures
 drc["well_extend_active"] = 0.055
+# Not a rule
+drc["minarea_active"] = 0
 
-
-#Implant
-drc["implant_to_gate"] = 0.07
+# IMPLANT.1 Minimum spacing of nimplant/ pimplant to channel
 drc["implant_to_channel"] = 0.07
+# Not a rule
+drc["implant_enclose_active"] = 0
+# Not a rule
+drc["implant_enclose_contact"] = 0
+# IMPLANT.2 Minimum spacing of nimplant/ pimplant to contact
 drc["implant_to_contact"] = 0.025
+# IMPLANT.3 Minimum width/ spacing of nimplant/ pimplant
 drc["implant_to_implant"] = 0.045
+# IMPLANT.4 Minimum width/ spacing of nimplant/ pimplant
 drc["minwidth_implant"] = 0.045
 
-#Contact
+# CONTACT.1 Minimum width of contact
 drc["minwidth_contact"] = 0.065
+# CONTACT.2 Minimum spacing of contact
 drc["contact_to_contact"] = 0.075
+# CONTACT.4 Minimum enclosure of active around contact
 drc["active_enclosure_contact"] = 0.005
+# Reserved for asymmetric enclosures
 drc["active_extend_contact"] = 0.005
+# CONTACT.5 Minimum enclosure of poly around contact
 drc["poly_enclosure_contact"] = 0.005
+# Reserved for asymmetric enclosures
 drc["poly_extend_contact"] = 0.005
-drc["contact_to_poly"] = 0.0375 #changed from 0.035
+# CONTACT.6 Minimum spacing of contact and gate
+drc["contact_to_gate"] = 0.0375 #changed from 0.035
+# CONTACT.7 Minimum spacing of contact and poly
+drc["contact_to_poly"] = 0.090
 
-#Metal1
+# METAL1.1 Minimum width of metal1
 drc["minwidth_metal1"] = 0.065
-drc["minheight_metal1"] = 0.0
+# METAL1.2 Minimum spacing of metal1
 drc["metal1_to_metal1"] = 0.065
+# METAL1.3 Minimum enclosure around contact on two opposite sides
 drc["metal1_enclosure_contact"] = 0
+# Reserved for asymmetric enclosures
 drc["metal1_extend_contact"] = 0.035
+# METAL1.4 inimum enclosure around via1 on two opposite sides
 drc["metal1_extend_via1"] = 0.035
+# Reserved for asymmetric enclosures
 drc["metal1_enclosure_via1"] = 0
+# Not a rule
 drc["minarea_metal1"] = 0
 
-#via1
+# VIA1.1 Minimum width of via1
 drc["minwidth_via1"] = 0.065
+# VIA1.2 Minimum spacing of via1
 drc["via1_to_via1"] = 0.075
 
-#Metal2
+# METALINT.1 Minimum width of intermediate metal
 drc["minwidth_metal2"] = 0.07
-drc["minheight_metal2"] = 0.0
+# METALINT.2 Minimum spacing of intermediate metal
 drc["metal2_to_metal2"] = 0.07
+# METALINT.3 Minimum enclosure around via1 on two opposite sides
 drc["metal2_extend_via1"] = 0.035
+# Reserved for asymmetric enclosures
 drc["metal2_enclosure_via1"] = 0
+# METALINT.4 Minimum enclosure around via[2-3] on two opposite sides
 drc["metal2_extend_via2"] = 0.035
+# Reserved for asymmetric enclosures
 drc["metal2_enclosure_via2"] = 0
+# Not a rule
 drc["minarea_metal2"] = 0
 
-#Via2
+# VIA2-3.1 Minimum width of Via[2-3]
 drc["minwidth_via2"] = 0.065
+# VIA2-3.2 Minimum spacing of Via[2-3]
 drc["via2_to_via2"] = 0.075
 
-#Metal3
+# METALINT.1 Minimum width of intermediate metal
 drc["minwidth_metal3"] = 0.07
-drc["minheight_metal3"] = 0.0
+# METALINT.2 Minimum spacing of intermediate metal
 drc["metal3_to_metal3"] = 0.07
+# METALINT.3 Minimum enclosure around via1 on two opposite sides
 drc["metal3_extend_via2"] = 0.035
-drc["metal3_enclosure_via2"] = 0 
+# Reserved for asymmetric enclosures
+drc["metal3_enclosure_via2"] = 0
+# METALINT.4 Minimum enclosure around via[2-3] on two opposite sides
 drc["metal3_extend_via3"]=0.035
-drc["metal3_enclosure_via3"] = 0 
+# Reserved for asymmetric enclosures
+drc["metal3_enclosure_via3"] = 0
+# Not a rule
 drc["minarea_metal3"] = 0
 
-#Via3
+# VIA2-3.1 Minimum width of Via[2-3]
 drc["minwidth_via3"] = 0.065
+# VIA2-3.2 Minimum spacing of Via[2-3]
 drc["via3_to_via3"] = 0.07
 
-#Metal4
+# METALSMG.1 Minimum width of semi-global metal
 drc["minwidth_metal4"] = 0.14
-drc["minheight_metal4"] = 0.0
-drc["metal4_enclosure_via3"] = 0 
-drc["metal4_extend_via3"] = 0.07
+# METALSMG.2 Minimum spacing of semi-global metal
 drc["metal4_to_metal4"] = 0.14
+# METALSMG.3 Minimum enclosure around via[3-6] on two opposite sides
+drc["metal4_extend_via3"] = 0.07
+# Reserved for asymmetric enclosure
+drc["metal4_enclosure_via3"] = 0
+# METALSMG.3 Minimum enclosure around via[3-6] on two opposite sides
+drc["metal4_enclosure_via4"] = 0
+# Reserved for asymmetric enclosure
 drc["metal4_extend_via4"] = 0.07
-drc["metal4_enclosure_via4"] = 0.07
-drc["minarea_metal4"] = 0
 
-#Via4
-drc["minwidth_via4"] = 0.14
-drc["via4_to_via4"] = 0.14
+# Metal 5-10 are ommitted
 
-#Metal5
-drc["minwidth_metal5"] = 0.14
-drc["minheight_metal5"] = 0.0
-drc["metal5_to_metal5"] = 0.14
-drc["metal5_extend_via4"] = 0.07
-drc["metal5_enclosure_via4"] = 0.07
-drc["minarea_metal5"] = 0
 
-#Via 5
-drc["minwidth_via5"] = 0.14
-drc["via5_to_via5"] = 0.14
-
-#Metal6
-drc["minwidth_metal6"] = 0.14
-drc["minheight_metal6"] = 0.0
-drc["metal6_to_metal6"] = 0.14
-drc["metal6_extend_via5"] = 0
-drc["metal6_enclosure_via5"] = 0
-
-#Via 6
-drc["minwidth_via6"] = 0.14
-drc["via6_to_via6"] = 0.14
-
-#Metal7
-drc["minwidth_metal7"] = 0.14
-drc["minheight_metal7"] = 0.0
-drc["metal7_to_metal7"] = 0.14
-drc["metal7_extend_via6"] = 0
-drc["metal7_enclosure_via6"] = 0
-
-#Via7
-drc["minwidth_via7"] = 0.14
-drc["via7_to_via7"] = 0.14
-
-#Metal8
-drc["minwidth_metal8"] = 0.14
-drc["minheight_metal8"] = 0.0
-drc["metal8_to_metal8"] = 0.14
-drc["metal8_extend_via7"] = 0
-drc["metal8_enclosure_via7"] = 0
-
-#Via8
-drc["minwidth_via8"] = 0.14
-drc["via8_to_via8"] = 0.14
-
-#Metal9
-drc["minwidth_metal9"] = 0.14
-drc["minheight_metal9"] = 0.0
-drc["metal9_to_metal9"] = 0.14
-drc["metal9_extend_via8"] = 0
-drc["metal9_enclosure_via8"] = 0
-
-#Via 9
-drc["minwidth_via9"] = 0.14
-drc["via9_to_via9"] = 0.14
-
-#Metal 10
-drc["minwidth_metal10"] = 0.14
-drc["minheight_metal10"] = 0.0
-drc["metal10_to_metal10"] = 0.14
-drc["metal10_extend_via9"] = 0
-drc["metal10_enclosure_via9"] = 0
 
 ###################################################
 ##END DRC/LVS Rules

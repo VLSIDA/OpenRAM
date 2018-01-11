@@ -50,9 +50,9 @@ class pnand2(pgate.pgate):
         self.setup_layout_constants()
         self.add_supply_rails()
         self.add_ptx()
-        self.add_well_contacts()
         self.connect_rails()
         self.extend_wells(self.well_pos)
+        self.add_well_contacts()
         self.route_inputs()
         self.route_output()
 
@@ -151,10 +151,10 @@ class pnand2(pgate.pgate):
         self.output_pos = vector(0,0.5*(pmos1_pos.y+nmos1_pos.y+self.nmos.active_height))
 
     def add_well_contacts(self):
-        """ Add n/p well taps to the layout and connect to supplies """
+        """ Add n/p well taps to the layout and connect to supplies AFTER the wells are created """
 
-        self.add_nwell_contact(self.nmos, self.nmos2_pos)
-        self.add_pwell_contact(self.pmos, self.pmos2_pos)
+        self.add_nwell_contact(self.pmos, self.pmos2_pos)
+        self.add_pwell_contact(self.nmos, self.nmos2_pos)
 
         
     def connect_rails(self):

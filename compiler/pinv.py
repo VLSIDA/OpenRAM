@@ -220,9 +220,9 @@ class pinv(pgate.pgate):
     def add_well_contacts(self):
         """ Add n/p well taps to the layout and connect to supplies """
 
-        self.add_nwell_contact(self.nmos, self.nmos_pos)
+        self.add_nwell_contact(self.pmos, self.pmos_pos)
 
-        self.add_pwell_contact(self.pmos, self.pmos_pos)
+        self.add_pwell_contact(self.nmos, self.nmos_pos)
 
     def connect_rails(self):
         """ Connect the nmos and pmos to its respective power rails """

@@ -65,7 +65,10 @@ def parse_args():
     # This may be overridden when we read a config file though...
     if OPTS.tech_name == "":
         OPTS.tech_name = "freepdk45"
-    
+    # Alias SCMOS to AMI 0.5um
+    if OPTS.tech_name == "scmos":
+        OPTS.tech_name = "scn3me_subm"
+        
     return (options, args)
 
 def print_banner():

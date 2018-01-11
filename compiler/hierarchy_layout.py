@@ -308,27 +308,33 @@ class layout(lef.lef):
                   layer_stack=layers, 
                   position_list=coordinates)
 
-    def add_contact(self, layers, offset, size=[1,1], mirror="R0", rotate=0):
+    def add_contact(self, layers, offset, size=[1,1], mirror="R0", rotate=0, implant_type=None, well_type=None):
         """ This is just an alias for a via."""
         return self.add_via(layers=layers,
                             offset=offset,
                             size=size,
                             mirror=mirror,
-                            rotate=rotate)
+                            rotate=rotate,
+                            implant_type=implant_type,
+                            well_type=well_type)
 
-    def add_contact_center(self, layers, offset, size=[1,1], mirror="R0", rotate=0):
+    def add_contact_center(self, layers, offset, size=[1,1], mirror="R0", rotate=0, implant_type=None, well_type=None):
         """ This is just an alias for a via."""
         return self.add_via_center(layers=layers,
                                    offset=offset,
                                    size=size,
                                    mirror=mirror,
-                                   rotate=rotate)
+                                   rotate=rotate,
+                                   implant_type=implant_type,
+                                   well_type=well_type)      
     
-    def add_via(self, layers, offset, size=[1,1], mirror="R0", rotate=0):
+    def add_via(self, layers, offset, size=[1,1], mirror="R0", rotate=0, implant_type=None, well_type=None):
         """ Add a three layer via structure. """
         import contact
         via = contact.contact(layer_stack=layers,
-                              dimensions=size)
+                              dimensions=size,
+                              implant_type=implant_type,
+                              well_type=well_type)
         self.add_mod(via)
         self.add_inst(name=via.name, 
                       mod=via, 
@@ -339,11 +345,13 @@ class layout(lef.lef):
         self.connect_inst([])
         return via
 
-    def add_via_center(self, layers, offset, size=[1,1], mirror="R0", rotate=0):
+    def add_via_center(self, layers, offset, size=[1,1], mirror="R0", rotate=0, implant_type=None, well_type=None):
         """ Add a three layer via structure by the center coordinate accounting for mirroring and rotation. """
         import contact
         via = contact.contact(layer_stack=layers,
-                              dimensions=size)
+                              dimensions=size,
+                              implant_type=implant_type,
+                              well_type=well_type)
 
         debug.check(mirror=="R0","Use rotate to rotate vias instead of mirror.")
         

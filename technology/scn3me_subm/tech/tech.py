@@ -26,14 +26,13 @@ GDS["zoom"] = 0.5
 layer={} 
 layer["vtg"]            = -1 
 layer["vth"]            = -1 
-layer["contact"]        = 25 
+layer["contact"]        = 47 
 layer["pwell"]          = 41 
 layer["nwell"]          = 42 
 layer["active"]         = 43 
 layer["pimplant"]       = 44
 layer["nimplant"]       = 45
 layer["poly"]           = 46 
-layer["poly_contact"]   = 47
 layer["active_contact"] = 48
 layer["metal1"]         = 49 
 layer["via1"]           = 50 
@@ -106,9 +105,9 @@ drc["minarea_active"] = 0.0
 # 4.1 Minimum select spacing to channel of transistor to ensure adequate source/drain width 
 drc["implant_to_channel"] = 0.9
 # 4.2 Minimum select overlap of active
-drc["implant_enclose_active"] = 0.6
+drc["implant_enclosure_active"] = 0.6
 # 4.3 Minimum select overlap of contact  
-drc["implant_enclose_contact"] = 0.3
+drc["implant_enclosure_contact"] = 0.3
 # Not a rule
 drc["implant_to_contact"] = 0
 # Not a rule

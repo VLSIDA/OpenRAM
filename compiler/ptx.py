@@ -266,7 +266,7 @@ class ptx(design.design):
                       height=self.active_height)
         # If the implant must enclose the active, shift offset
         # and increase width/height
-        enclose_width = drc["implant_enclose_active"]
+        enclose_width = drc["implant_enclosure_active"]
         enclose_offset = [enclose_width]*2
         self.add_rect(layer="{}implant".format(self.implant_type),
                       offset=self.active_offset - enclose_offset,
@@ -325,7 +325,9 @@ class ptx(design.design):
         for pos in source_positions:
             contact=self.add_contact_center(layers=("active", "contact", "metal1"),
                                             offset=pos,
-                                            size=(1, self.num_contacts))
+                                            size=(1, self.num_contacts),
+                                            implant_type=self.implant_type,
+                                            well_type=self.well_type)
             self.add_layout_pin_center_rect(text="S",
                                             layer="metal1",
                                             offset=pos,
@@ -336,7 +338,9 @@ class ptx(design.design):
         for pos in drain_positions:
             contact=self.add_contact_center(layers=("active", "contact", "metal1"),
                                             offset=pos,
-                                            size=(1, self.num_contacts))
+                                            size=(1, self.num_contacts),
+                                            implant_type=self.implant_type,
+                                            well_type=self.well_type)
             self.add_layout_pin_center_rect(text="D",
                                             layer="metal1",
                                             offset=pos,

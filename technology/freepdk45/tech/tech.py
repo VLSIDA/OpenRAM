@@ -34,6 +34,7 @@ layer["vth"]     = 7
 layer["thkox"]   = 8
 layer["poly"]    = 9
 layer["contact"] = 10
+layer["active_contact"] = 10
 layer["metal1"]  = 11
 layer["via1"]    = 12
 layer["metal2"]  = 13
@@ -120,9 +121,9 @@ drc["minarea_active"] = 0
 # IMPLANT.1 Minimum spacing of nimplant/ pimplant to channel
 drc["implant_to_channel"] = 0.07
 # Not a rule
-drc["implant_enclose_active"] = 0
+drc["implant_enclosure_active"] = 0
 # Not a rule
-drc["implant_enclose_contact"] = 0
+drc["implant_enclosure_contact"] = 0
 # IMPLANT.2 Minimum spacing of nimplant/ pimplant to contact
 drc["implant_to_contact"] = 0.025
 # IMPLANT.3 Minimum width/ spacing of nimplant/ pimplant

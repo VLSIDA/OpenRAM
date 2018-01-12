@@ -24,25 +24,27 @@ else:
     OPTS.lvs_exe = get_tool("LVS",["calibre","assura","netgen"])
     OPTS.pex_exe = get_tool("PEX",["calibre","magic"])
 
-
+if OPTS.tech_name == "freepdk45":
+    debug.check(OPTS.drc_exe[0]!="magic","Magic does not support FreePDK45 for DRC.")
+    
 if OPTS.drc_exe == None:
     pass
-elif "calibre" in OPTS.drc_exe:
+elif "calibre"==OPTS.drc_exe[0]:
     from calibre import run_drc
-elif "assura" in OPTS.drc_exe:
+elif "assura"==OPTS.drc_exe[0]:
     from assura import run_drc
-elif "magic" in OPTS.drc_exe:
+elif "magic"==OPTS.drc_exe[0]:
     from magic import run_drc
 else:
     debug.warning("Did not find a supported DRC tool.")
 
 if OPTS.lvs_exe == None:
     pass
-elif "calibre" in OPTS.lvs_exe:
+elif "calibre"==OPTS.lvs_exe[0]:
     from calibre import run_lvs
-elif "assura" in OPTS.lvs_exe:
+elif "assura"==OPTS.lvs_exe[0]:
     from assura import run_lvs
-elif "netgen" in OPTS.lvs_exe:
+elif "netgen"==OPTS.lvs_exe[0]:
     from magic import run_lvs
 else:
     debug.warning("Did not find a supported LVS tool.")
@@ -50,9 +52,9 @@ else:
 
 if OPTS.pex_exe == None:
     pass
-elif "calibre" in OPTS.pex_exe:
+elif "calibre"==OPTS.pex_exe[0]:
     from calibre import run_pex
-elif "magic" in OPTS.pex_exe:
+elif "magic"==OPTS.pex_exe[0]:
     from magic import run_pex
 else:
     debug.warning("Did not find a supported PEX tool.")

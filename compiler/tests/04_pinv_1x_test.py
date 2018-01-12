@@ -1,26 +1,23 @@
 #!/usr/bin/env python2.7
 """
-Run regresion tests on a parameterized inverter
+Run regression tests on a parameterized inverter
 """
-
 import unittest
 from testutils import header
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
+from globals import OPTS
 import debug
-import verify
-
-OPTS = globals.OPTS
-
-#@unittest.skip("SKIPPING 04_pinv_test")
-
 
 class pinv_test(unittest.TestCase):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        global verify
+        import verify
         OPTS.check_lvsdrc = False
+        
 
         import pinv
         import tech

@@ -12,7 +12,6 @@ import os
 import debug
 from globals import OPTS,find_exe,get_tool
 
-
 debug.info(2,"Initializing verify...")
 
 if not OPTS.check_lvsdrc:

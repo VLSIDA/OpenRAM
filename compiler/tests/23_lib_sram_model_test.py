@@ -10,13 +10,11 @@ sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
-import verify
 
 class lib_test(unittest.TestCase):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
 
         import sram

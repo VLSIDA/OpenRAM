@@ -10,14 +10,14 @@ sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
-import verify
-
 
 @unittest.skip("SKIPPING 22_sram_func_test")
 class sram_func_test(unittest.TestCase):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        global verify
+        import verify
 
         self.func_test(bank_num=1)
         self.func_test(bank_num=2)

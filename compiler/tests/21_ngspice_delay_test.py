@@ -10,14 +10,11 @@ sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
-import verify
 
-#@unittest.skip("SKIPPING 21_ngspice_delay_test")
 class timing_sram_test(unittest.TestCase):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
         OPTS.spice_name="ngspice"
         OPTS.analytical_delay = False

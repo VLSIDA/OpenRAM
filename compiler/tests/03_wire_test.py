@@ -6,18 +6,15 @@ from testutils import header
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
+from globals import OPTS
 import debug
-import verify
-
-OPTS = globals.OPTS
-
-#@unittest.skip("SKIPPING 03_wire_test")
-
 
 class wire_test(unittest.TestCase):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        global verify
+        import verify
         OPTS.check_lvsdrc = False
 
         import wire

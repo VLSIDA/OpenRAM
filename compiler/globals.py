@@ -102,6 +102,7 @@ def init_openram(config_file):
 
     import_tech()
 
+
 def get_tool(tool_type, preferences):
     """
     Find which tool we have from a list of preferences and return the

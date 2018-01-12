@@ -7,14 +7,11 @@ check that these files are right.
 
 import unittest
 from testutils import header
-import sys,os
+import sys,os,re,shutil
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
-import os
-import re
-import shutil
 
 class openram_test(unittest.TestCase):
 

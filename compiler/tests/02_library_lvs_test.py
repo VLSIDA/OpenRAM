@@ -3,23 +3,17 @@
 
 import unittest
 from testutils import header
-import sys,os
+import sys,os,re
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
+from globals import OPTS
 import debug
-import verify
-import re
-
-OPTS = globals.OPTS
-
-#@unittest.skip("SKIPPING 02_lvs_test")
-
 
 class library_lvs_test(unittest.TestCase):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-
+        import verify
         (gds_dir, sp_dir, allnames) = setup_files()
         lvs_errors = 0
         debug.info(1, "Performing LVS on: " + ", ".join(allnames))

@@ -64,45 +64,46 @@ def run_drc(name, gds_name):
     """Run DRC check on a given top-level name which is
        implemented in gds_name."""
 
-    debug.warning("DRC using magic not implemented.")
-    return 1
 
     # the runset file contains all the options to run drc
     from tech import drc
     drc_rules = drc["drc_rules"]
-    drc_runset = {
-        'drcRulesFile': drc_rules,
-        'drcRunDir': OPTS.openram_temp,
-        'drcLayoutPaths': gds_name,
-        'drcLayoutPrimary': name,
-        'drcLayoutSystem': 'GDSII',
-        'drcResultsformat': 'ASCII',
-        'drcResultsFile': OPTS.openram_temp + name + ".drc.results",
-        'drcSummaryFile': OPTS.openram_temp + name + ".drc.summary",
-        'cmnFDILayerMapFile': drc["layer_map"],
-        'cmnFDIUseLayerMap': 1
-    }
 
-    # write the runset file
-    f = open(OPTS.openram_temp + "drc_runset", "w")
-    for k in sorted(drc_runset.iterkeys()):
-        f.write("*{0}: {1}\n".format(k, drc_runset[k]))
+    top_cell_name = re.sub(r'\.gds$', "", gds_name)
+    run_file = OPTS.openram_temp + "run_drc.sh"
+    f = open(run_file, "w")
+    f.write("#!/bin/sh\n")
+    f.write("{} -dnull -noconsole << EOF\n".format(OPTS.drc_exe))
+    f.write("tech load SCN3ME_SUBM.30\n")
+    f.write("gds rescale false\n")
+    f.write("gds polygon subcell true\n")
+    f.write("gds warning default\n")
+    f.write("gds read {}\n".format(gds_name))
+    f.write("load {}\n".format(top_cell_name))
+    f.write("drc count\n")
+    f.write("drc why\n")
+    f.write("quit -noprompt\n")
+    f.write("EOF\n")
+        
     f.close()
-
+    os.system("chmod u+x {}".format(run_file))
+    
     # run drc
     cwd = os.getcwd()
     os.chdir(OPTS.openram_temp)
     errfile = "{0}{1}.drc.err".format(OPTS.openram_temp, name)
     outfile = "{0}{1}.drc.out".format(OPTS.openram_temp, name)
 
-    cmd = "{0} -gui -drc {1}drc_runset -batch 2> {2} 1> {3}".format(OPTS.drc_exe,
-                                                                    OPTS.openram_temp,
-                                                                    errfile,
-                                                                    outfile)
+    cmd = "{0}run_drc.sh 2> {1} 1> {2}".format(OPTS.openram_temp,
+                                               errfile,
+                                               outfile)
     debug.info(1, cmd)
     os.system(cmd)
     os.chdir(cwd)
 
+    debug.warning("DRC using magic not implemented.")
+    return 1
+            
     # check the result for these lines in the summary:
     # TOTAL Original Layer Geometries: 106 (157)
     # TOTAL DRC RuleChecks Executed:   156

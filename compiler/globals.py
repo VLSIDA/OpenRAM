@@ -109,7 +109,6 @@ def get_tool(tool_type, preferences):
     one selected and its full path.
     """
     debug.info(2,"Finding {} tool...".format(tool_type))
-    global OPTS
 
     for name in preferences:
         exe_name = find_exe(name)
@@ -129,6 +128,8 @@ def read_config(config_file):
     config file is just a Python file that defines some config
     options. 
     """
+    global OPTS
+    
     # Create a full path relative to current dir unless it is already an abs path
     if not os.path.isabs(config_file):
         config_file = os.getcwd() + "/" +  config_file

@@ -60,28 +60,28 @@ from globals import OPTS
 import subprocess
 
 
-def run_drc(name, gds_name):
-    """Run DRC check on a given top-level name which is
-       implemented in gds_name."""
-
+def run_drc(cell_name, gds_name):
+    """Run DRC check on a cell which is implemented in gds_name."""
+    global OPTS
 
     # the runset file contains all the options to run drc
     from tech import drc
     drc_rules = drc["drc_rules"]
 
-    top_cell_name = re.sub(r'\.gds$', "", gds_name)
     run_file = OPTS.openram_temp + "run_drc.sh"
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
-    f.write("{} -dnull -noconsole << EOF\n".format(OPTS.drc_exe))
+    f.write("{} -dnull -noconsole << EOF\n".format(OPTS.drc_exe[1]))
     f.write("tech load SCN3ME_SUBM.30\n")
     f.write("gds rescale false\n")
     f.write("gds polygon subcell true\n")
     f.write("gds warning default\n")
     f.write("gds read {}\n".format(gds_name))
-    f.write("load {}\n".format(top_cell_name))
+    f.write("load {}\n".format(cell_name))
+    f.write("drc check\n")
+    f.write("drc catchup\n")
+    f.write("drc count total\n")
     f.write("drc count\n")
-    f.write("drc why\n")
     f.write("quit -noprompt\n")
     f.write("EOF\n")
         
@@ -91,8 +91,8 @@ def run_drc(name, gds_name):
     # run drc
     cwd = os.getcwd()
     os.chdir(OPTS.openram_temp)
-    errfile = "{0}{1}.drc.err".format(OPTS.openram_temp, name)
-    outfile = "{0}{1}.drc.out".format(OPTS.openram_temp, name)
+    errfile = "{0}{1}.drc.err".format(OPTS.openram_temp, cell_name)
+    outfile = "{0}{1}.drc.out".format(OPTS.openram_temp, cell_name)
 
     cmd = "{0}run_drc.sh 2> {1} 1> {2}".format(OPTS.openram_temp,
                                                errfile,
@@ -101,36 +101,32 @@ def run_drc(name, gds_name):
     os.system(cmd)
     os.chdir(cwd)
 
-    debug.warning("DRC using magic not implemented.")
-    return 1
-            
-    # check the result for these lines in the summary:
-    # TOTAL Original Layer Geometries: 106 (157)
-    # TOTAL DRC RuleChecks Executed:   156
-    # TOTAL DRC Results Generated:     0 (0)
+    # Check the result for these lines in the summary:
+    # Total DRC errors found: 0
+    # The count is shown in this format:
+    # Cell replica_cell_6t has 3 error tiles.
+    # Cell tri_gate_array has 8 error tiles.
+    # etc.
     try:
-        f = open(drc_runset['drcSummaryFile'], "r")
+        f = open(outfile, "r")
     except:
         debug.error("Unable to retrieve DRC results file. Is magic set up?",1)
     results = f.readlines()
     f.close()
     # those lines should be the last 3
-    results = results[-3:]
-    geometries = int(re.split("\W+", results[0])[5])
-    rulechecks = int(re.split("\W+", results[1])[4])
-    errors = int(re.split("\W+", results[2])[5])
+    for line in results:
+        if "Total DRC errors found:" in line:
+            errors = int(re.split(":\W+", line)[1])
+            break
 
     # always display this summary
     if errors > 0:
-        debug.error("{0}\tGeometries: {1}\tChecks: {2}\tErrors: {3}".format(name, 
-                                                                            geometries,
-                                                                            rulechecks,
-                                                                            errors))
+        for line in results:
+            if "error tiles" in line:
+                print line.rstrip("\n")
+        debug.error("{0}\tErrors: {1}".format(cell_name, errors))
     else:
-        debug.info(1, "{0}\tGeometries: {1}\tChecks: {2}\tErrors: {3}".format(name, 
-                                                                              geometries,
-                                                                              rulechecks,
-                                                                              errors))
+        debug.info(1, "{0}\tErrors: {1}".format(cell_name, errors))
 
     return errors
 

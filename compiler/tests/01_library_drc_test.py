@@ -13,6 +13,7 @@ class library_drc_test(unittest.TestCase):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        global verify
         import verify
 
         (gds_dir, gds_files) = setup_files()

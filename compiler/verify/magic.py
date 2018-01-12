@@ -123,7 +123,7 @@ def run_drc(cell_name, gds_name):
     if errors > 0:
         for line in results:
             if "error tiles" in line:
-                print line.rstrip("\n")
+                debug.info(0,line.rstrip("\n"))
         debug.error("{0}\tErrors: {1}".format(cell_name, errors))
     else:
         debug.info(1, "{0}\tErrors: {1}".format(cell_name, errors))

@@ -1,0 +1,47 @@
+\BOOKMARK [1][-]{section.1}{License}{}% 1
+\BOOKMARK [1][-]{section.2}{Introduction}{}% 2
+\BOOKMARK [2][-]{subsection.2.1}{Requirements}{section.2}% 3
+\BOOKMARK [2][-]{subsection.2.2}{Environment Variables}{section.2}% 4
+\BOOKMARK [2][-]{subsection.2.3}{Design Flow}{section.2}% 5
+\BOOKMARK [2][-]{subsection.2.4}{Usage}{section.2}% 6
+\BOOKMARK [1][-]{section.3}{Overview of the SRAM Structure}{}% 7
+\BOOKMARK [2][-]{subsection.3.1}{Inputs/Outputs}{section.3}% 8
+\BOOKMARK [2][-]{subsection.3.2}{Top-Level SRAM Module}{section.3}% 9
+\BOOKMARK [1][-]{section.4}{Modules}{}% 10
+\BOOKMARK [2][-]{subsection.4.1}{The Bitcell and Bitcell Array}{section.4}% 11
+\BOOKMARK [2][-]{subsection.4.2}{Precharge Circuitry}{section.4}% 12
+\BOOKMARK [2][-]{subsection.4.3}{Address Decoders}{section.4}% 13
+\BOOKMARK [2][-]{subsection.4.4}{Wordline Driver}{section.4}% 14
+\BOOKMARK [2][-]{subsection.4.5}{Column Mux}{section.4}% 15
+\BOOKMARK [2][-]{subsection.4.6}{Sense Amplifier}{section.4}% 16
+\BOOKMARK [2][-]{subsection.4.7}{Write Driver}{section.4}% 17
+\BOOKMARK [2][-]{subsection.4.8}{Flip-Flop Array}{section.4}% 18
+\BOOKMARK [2][-]{subsection.4.9}{Control Logic}{section.4}% 19
+\BOOKMARK [1][-]{section.5}{Bank and SRAM}{}% 20
+\BOOKMARK [1][-]{section.6}{Software Implementation}{}% 21
+\BOOKMARK [2][-]{subsection.6.1}{Design Hierarchy}{section.6}% 22
+\BOOKMARK [2][-]{subsection.6.2}{Creating a New Design Module}{section.6}% 23
+\BOOKMARK [2][-]{subsection.6.3}{GDSII Files and GdsMill\)}{section.6}% 24
+\BOOKMARK [2][-]{subsection.6.4}{Technology Directory}{section.6}% 25
+\BOOKMARK [2][-]{subsection.6.5}{DRC/LVS Interface}{section.6}% 26
+\BOOKMARK [1][-]{section.7}{Custom Layout Design Functions in Software}{}% 27
+\BOOKMARK [2][-]{subsection.7.1}{Parameterized Transistor}{section.7}% 28
+\BOOKMARK [2][-]{subsection.7.2}{Parameterized Inverter}{section.7}% 29
+\BOOKMARK [2][-]{subsection.7.3}{Parameterized NAND2}{section.7}% 30
+\BOOKMARK [2][-]{subsection.7.4}{Parameterized NAND3}{section.7}% 31
+\BOOKMARK [2][-]{subsection.7.5}{Parameterized NOR2}{section.7}% 32
+\BOOKMARK [2][-]{subsection.7.6}{Path and Wire}{section.7}% 33
+\BOOKMARK [1][-]{section.8}{Porting to a new Technologies}{}% 34
+\BOOKMARK [2][-]{subsection.8.1}{The GDS and Spice Libraries}{section.8}% 35
+\BOOKMARK [2][-]{subsection.8.2}{Technology Directory}{section.8}% 36
+\BOOKMARK [1][-]{section.9}{Timing and Control Logic}{}% 37
+\BOOKMARK [2][-]{subsection.9.1}{Signals}{section.9}% 38
+\BOOKMARK [2][-]{subsection.9.2}{Timing Considerations}{section.9}% 39
+\BOOKMARK [2][-]{subsection.9.3}{SRAM Operation}{section.9}% 40
+\BOOKMARK [2][-]{subsection.9.4}{Zero Bus Turnaround \(ZBT\)}{section.9}% 41
+\BOOKMARK [2][-]{subsection.9.5}{Control Logic}{section.9}% 42
+\BOOKMARK [2][-]{subsection.9.6}{Replica Bitline Delay}{section.9}% 43
+\BOOKMARK [2][-]{subsection.9.7}{Timing and Power Characterizer}{section.9}% 44
+\BOOKMARK [1][-]{section.10}{Unit Tests}{}% 45
+\BOOKMARK [2][-]{subsection.10.1}{Usage}{section.10}% 46
+\BOOKMARK [1][-]{section.11}{Debug Framework}{}% 47

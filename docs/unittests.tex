@@ -1,0 +1,100 @@
+\section{Unit Tests}
+\label{sec:unittests}
+
+OpenRAM comes with a unit testing framework based on the Python
+unittest framework. Since OpenRAM is technology independent, these
+unit tests can be run in any technology to verify that the technology
+is properly ported. By default, FreePDK45 is supported.
+
+The unit tests consist of the following tests that test each module/sub-block of OpenRAM:
+\begin{itemize}
+\item \verb|00_code_format_check__test.py| - Checks the format of the codes. returns error if finds $TAB$ in codes. 
+\item \verb|01_library_drc_test.py| - DRC of library cells in technology \verb|gds_lib|
+\item \verb|02_library_lvs_test.py| - LVS of library cells in technology \verb|gds_lib| and \verb|sp_lib| %(names must correspond with different extensions)
+\item \verb|03_contact_test.py| - Test contacts/vias of different layers
+\item \verb|03_path_test.py| - Test different types of paths based off of the wire module
+\item \verb|03_ptx_test.py| - Test various sizes/fingers of PMOS and NMOS parameterized transistors
+\item \verb|03_wire_test.py| - Test different types of wires with different layers
+\item \verb|04_pinv_test.py|	- Test various sizes of parameterized inverter
+\item \verb|04_nand_2_test.py|	- Test various sizes of parameterized nand2
+\item \verb|04_nand_3_test.py|	- Test various sizes of parameterized nand3
+\item \verb|04_nor_2_test.py|	- Test various sizes of parameterized nor2
+\item \verb|04_wordline_driver_test.py|	- Test a wordline\_driver array.
+\item \verb|05_array_test.py| - Test a small bit-cell array
+\item \verb|06_nand_decoder_test.py|	- Test a dynamic NAND address decoder
+\item \verb|06_hierarchical_decoder_test.py|	- Test a dynamic hierarchical address decoder
+\item \verb|07_tree_column_mux_test.py| - Test a small tree column mux.
+\item \verb|07_single_level_column_mux_test.py| - Test a small single level column mux.
+\item \verb|08_precharge_test.py| - Test a dynamically generated precharge array
+\item \verb|09_sense_amp_test.py| - Test a sense amplifier array
+\item \verb|10_write_driver_test.py| - Test a write driver array
+\item \verb|11_ms_flop_array_test.py| - Test a MS\_FF array 
+\item \verb|13_control_logic_test.py| - Test the control logic module
+\item \verb|14_delay_chain_test.py| - Test a delay chain array
+\item \verb|15_tri_gate_array_test.py| - Test a tri-gate array
+\item \verb|16_replica_bitline_test.py| - Test a replica bitline
+\item \verb|19_bank_test.py| - Test a bank
+\item \verb|20_sram_test.py| - Test a complete small SRAM
+\item \verb|21_timing_sram_test.py| - Test timing of  SRAM
+\item \verb|22_sram_func_test.py| - Test functionality of SRAM
+\end {itemize}
+
+Each unit test instantiates a small component and performs DRC/LVS. Automatic DRC/LVS inside OpenRAM is disabled so that Python unittest assertions can be used to track failures, errors, and successful tests as follows:
+\begin{verbatim}
+        self.assertFalse(calibre.run_drc(a.cell_name,tempgds))
+        self.assertFalse(calibre.run_lvs(a.cell_name,tempgds,tempspice))
+\end{verbatim}
+Each of these assertions will trigger a test failure. If there are
+problems with interpreting modified code due to syntax errors, the
+unit test framework will not capture this and it will result in an
+Error. 
+
+\subsection{Usage}
+
+A regression script is provided to check all of the unit tests by running:
+\begin{verbatim}
+python tests/regress.py
+\end{verbatim}
+from the compiler directory located at: "OpenRAM/trunk/compiler/". Each individual test can be run by running:
+\begin{verbatim}
+python tests/{unit-test file}
+e.g. python tests/05_array_test.py
+\end{verbatim}
+from the compiler directory located at: "openram/trunk/compiler/". As an example, the unit tests all
+complete and provide the following output except for the final
+\verb|20_sram_test| which has 2 DRC violations:
+\begin{verbatim}
+[trunk/compiler]$ python tests/regress.py
+runTest (01_library_drc_test.library_drc_test) ... ok
+runTest (02_library_lvs_test.library_lvs_test) ... ok
+runTest (03_contact_test.contact_test) ... ok
+runTest (03_path_test.path_test) ... ok
+runTest (03_ptx_test.ptx_test) ... ok
+runTest (03_wire_test.wire_test) ... ok
+runTest (04_pinv_test.pinv_test) ... ok
+runTest (04_nand_2_test.nand_2_test) ... ok
+runTest (04_nand_3_test.nand_3_test) ... ok
+runTest (04_nor_2_test.nor_2_test) ... ok
+runTest (04_wordline_driver_test.wordline_driver_test) ... ok
+runTest (05_array_test.array_test) ... ok
+runTest (06_hierdecoder_test.hierdecoder_test) ... ok
+runTest (07_single_level_column_mux_test.single_level_column_mux_test) ... ok
+runTest (08_precharge_test.precharge_test) ... ok
+runTest (09_sense_amp_test.sense_amp_test) ... ok
+runTest (10_write_driver_test.write_driver_test) ... ok
+runTest (11_ms_flop_array_test.ms_flop_test) ... ok
+runTest (13_control_logic_test.control_logic_test) ... ok
+runTest (14_delay_chain_test.delay_chain_test) ... ok
+runTest (15_tri_gate_array_test.tri_gate_array_test) ... ok
+runTest (19_bank_test.bank_test) ... ok
+runTest (20_sram_test.sram_test) ... ok  
+\end{verbatim}
+
+If there are any DRC/LVS violations during the test, all the summary,output,and error files
+will be generated in the technology directory's "openram\_temp" folder. One would view those
+files to determine the cause of the DRC/LVS violations.
+
+More information on the Python unittest framework is available at\\
+\begin{center}
+\url{http://docs.python.org/2/library/unittest.html}.
+\end{center}

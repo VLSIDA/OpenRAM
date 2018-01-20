@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="765"
+   height="990"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.0 r9654"
+   sodipodi:docname="xsram_block.svg">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.6010101"
+     inkscape:cx="506.22072"
+     inkscape:cy="495"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     inkscape:window-width="1440"
+     inkscape:window-height="813"
+     inkscape:window-x="4"
+     inkscape:window-y="22"
+     inkscape:window-maximized="0"
+     inkscape:snap-global="true"
+     inkscape:snap-grids="false"
+     showguides="true"
+     inkscape:guide-bbox="true">
+    <inkscape:grid
+       type="xygrid"
+       id="grid2999"
+       empspacing="5"
+       visible="true"
+       enabled="true"
+       snapvisiblegridlinesonly="true" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-62.362183)">
+    <rect
+       style="fill:#cccccc;fill-rule:evenodd;stroke:#cccccc;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       id="rect3001"
+       width="284.521"
+       height="51.57983"
+       x="99.831932"
+       y="213.77394" />
+    <rect
+       style="fill:#cccccc;fill-rule:evenodd;stroke:#000000;stroke-width:0.87821972px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       id="rect3003"
+       width="277.86554"
+       height="273.34061"
+       x="101.4958"
+       y="275.33698" />
+    <rect
+       style="fill:#b3b3b3;fill-rule:evenodd;stroke:#b3b3b3;stroke-width:0.91462636px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       id="rect3005"
+       width="261.50534"
+       height="58.716049"
+       x="107.27876"
+       y="875.5116" />
+    <rect
+       style="fill:#b3b3b3;fill-rule:evenodd;stroke:#b3b3b3;stroke-width:0.91708475px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       id="rect3005-6"
+       width="270.49432"
+       height="57.070377"
+       x="399.90186"
+       y="874.6615" />
+    <text
+       xml:space="preserve"
+       style="font-size:36.76748657px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Times New Roman;-inkscape-font-specification:'Times New Roman,'"
+       x="342.79984"
+       y="121.62278"
+       id="text3036"
+       sodipodi:linespacing="125%"
+       transform="scale(1.0581087,0.94508251)"><tspan
+         sodipodi:role="line"
+         x="347.39578"
+         y="121.62278"
+         id="tspan3040">Block Diagram of XSRAM </tspan><tspan
+         sodipodi:role="line"
+         x="342.79984"
+         y="167.58214"
+         id="tspan3044">Topmost Instance Datapath</tspan></text>
+    <rect
+       style="fill:#b3b3b3;fill-rule:evenodd;stroke:#000000;stroke-width:0.90747511px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       id="rect3046"
+       width="276.20169"
+       height="57.548901"
+       x="106.48739"
+       y="694.13104" />
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="123.12605"
+       y="191.34454"
+       id="text3054"
+       sodipodi:linespacing="125%"
+       transform="translate(0,62.362183)"><tspan
+         sodipodi:role="line"
+         id="tspan3056"
+         x="123.12605"
+         y="191.34454" /></text>
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="129.78151"
+       y="245.38739"
+       id="text3058"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3060"
+         x="129.78151"
+         y="245.38739">XSRAM.XPRECHARGE</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="158.06723"
+       y="342.75629"
+       id="text3064"
+       sodipodi:linespacing="125%"
+       transform="translate(0,62.362183)"><tspan
+         sodipodi:role="line"
+         id="tspan3066"
+         x="158.06723"
+         y="342.75629">XSRAM.XARRAY</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="144.7563"
+       y="731.23608"
+       id="text3068"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3070"
+         x="144.7563"
+         y="731.23608">XSRAM.XCOLMUX</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="129.78151"
+       y="910.93353"
+       id="text3072"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3074"
+         x="129.78151"
+         y="910.93353">XSRAM.XSENSE_AMP</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="397.66388"
+       y="853.56305"
+       id="text3076"
+       sodipodi:linespacing="125%"
+       transform="translate(0,62.362183)"><tspan
+         sodipodi:role="line"
+         id="tspan3078"
+         x="397.66388"
+         y="853.56305" /></text>
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="412.63867"
+       y="910.93353"
+       id="text3080"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3082"
+         x="412.63867"
+         y="910.93353">XSRAM.XWRITE_DRIVER</tspan></text>
+  </g>
+</svg>

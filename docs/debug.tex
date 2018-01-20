@@ -1,0 +1,49 @@
+\section{Debug Framework}
+\label{sec:debug}
+
+All output in OpenRAM should use the shared debug framework. This is
+still under development but is in a usable state. It is going to be
+replaced with the Python Logging framework which is quite simple.
+
+All of the debug framework is contained in debug.py and is based
+around the concept of a ``debug level'' which is a single global
+variable in this file. This level is, by default, 0 which will output
+normal minimal output. The general guidelines for debug output are:
+\begin{itemize}
+\item 0 Normal output
+\item 1 Verbose output
+\item 2 Detailed output
+\item 3+ Excessively detailed output
+\end{itemize}
+
+The debug level can be adjusted on the command line when arguments are parsed using the ``-v'' flag. Adding more ``-v'' flags will increase the debug level as in the following examples:
+\begin{verbatim}
+python tests/01_library_drc_test.py -vv
+python openram.py 4 16 -v -v
+\end{verbatim}
+which each put the program in debug level 2 (detailed output).
+
+Since every module may output a lot of information in the higher debug
+levels, the output format is standardized to allow easy searching via
+grep or other command-line tools. The standard output formatting is
+used through three interface functions: 
+\begin{itemize}
+\item debug.info(int, msg)
+\item debug.warning(msg)
+\item debug.error(msg)
+\end{itemize}
+The msg string in each case can be any string format including data or
+other useful debug information. The string should also contain
+information to make it human understandable. {\bf It should not just be
+  a number!} The warning and error messages are independent of debug
+levels while the info message will only print the message if the
+current debug level is above the parameter value.
+
+The output format of the debug info messages are:
+\begin{verbatim}
+[ module ]:  msg
+\end{verbatim}
+where module is the calling module name and msg is the string
+provided. This enables a grep command to get the relevant lines.  The
+warning and error messages include the file name and line number of
+the warning/error.

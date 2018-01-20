@@ -1,0 +1,10 @@
+digraph G {
+  module [shape=record, label="module\n(e.g., bit-cell array)"];
+  design [shape=record, label="design\nDRC_LVS()"];
+  hierarchy_layout [shape=record, label="layout\n"];
+  hierarchy_spice [shape=record, label="spice\n"];
+
+  module -> design
+  design -> hierarchy_layout;
+  design -> hierarchy_spice;
+}

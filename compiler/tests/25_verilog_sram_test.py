@@ -22,8 +22,8 @@ class verilog_test(unittest.TestCase):
 
         debug.info(1, "Testing Verilog for sample 2 bit, 16 words SRAM with 1 bank")
         s = sram.sram(word_size=2,
-                      num_words=OPTS.config.num_words,
-                      num_banks=OPTS.config.num_banks,
+                      num_words=OPTS.num_words,
+                      num_banks=OPTS.num_banks,
                       name="sram_2_16_1_{0}".format(OPTS.tech_name))
 
         OPTS.check_lvsdrc = True

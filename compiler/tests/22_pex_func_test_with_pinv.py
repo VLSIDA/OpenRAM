@@ -33,9 +33,9 @@ class sram_func_test(unittest.TestCase):
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
         OPTS.check_lvsdrc = False
         OPTS.use_pex = True
-        s = sram.sram(word_size=OPTS.config.word_size,
-                      num_words=OPTS.config.num_words,
-                      num_banks=OPTS.config.num_banks,
+        s = sram.sram(word_size=OPTS.word_size,
+                      num_words=OPTS.num_words,
+                      num_banks=OPTS.num_banks,
                       name="test_sram1")
         OPTS.check_lvsdrc = True
         OPTS.use_pex = False

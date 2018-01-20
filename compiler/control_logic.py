@@ -59,15 +59,15 @@ class control_logic(design.design):
         self.inv16 = pinv(16)
         self.add_mod(self.inv16)
 
-        c = reload(__import__(OPTS.config.ms_flop_array))
-        ms_flop_array = getattr(c, OPTS.config.ms_flop_array)
+        c = reload(__import__(OPTS.ms_flop_array))
+        ms_flop_array = getattr(c, OPTS.ms_flop_array)
         self.msf_control = ms_flop_array(name="msf_control",
                                          columns=3,
                                          word_size=3)
         self.add_mod(self.msf_control)
 
-        c = reload(__import__(OPTS.config.replica_bitline))
-        replica_bitline = getattr(c, OPTS.config.replica_bitline)
+        c = reload(__import__(OPTS.replica_bitline))
+        replica_bitline = getattr(c, OPTS.replica_bitline)
         self.replica_bitline = replica_bitline(rows=int(math.ceil(self.num_rows / 10.0)))
         self.add_mod(self.replica_bitline)
 

@@ -14,8 +14,8 @@ class sense_amp_array(design.design):
         design.design.__init__(self, "sense_amp_array")
         debug.info(1, "Creating {0}".format(self.name))
 
-        c = reload(__import__(OPTS.config.sense_amp))
-        self.mod_sense_amp = getattr(c, OPTS.config.sense_amp)
+        c = reload(__import__(OPTS.sense_amp))
+        self.mod_sense_amp = getattr(c, OPTS.sense_amp)
         self.amp = self.mod_sense_amp("sense_amp")
         self.add_mod(self.amp)
 

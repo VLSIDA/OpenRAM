@@ -12,8 +12,8 @@ class pnand2(pgate.pgate):
     This model use ptx to generate a 2-input nand within a cetrain height.
     """
 
-    c = reload(__import__(OPTS.config.bitcell))
-    bitcell = getattr(c, OPTS.config.bitcell)
+    c = reload(__import__(OPTS.bitcell))
+    bitcell = getattr(c, OPTS.bitcell)
 
     unique_id = 1
     

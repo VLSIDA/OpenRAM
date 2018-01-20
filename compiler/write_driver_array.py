@@ -15,8 +15,8 @@ class write_driver_array(design.design):
         design.design.__init__(self, "write_driver_array")
         debug.info(1, "Creating {0}".format(self.name))
 
-        c = reload(__import__(OPTS.config.write_driver))
-        self.mod_write_driver = getattr(c, OPTS.config.write_driver)
+        c = reload(__import__(OPTS.write_driver))
+        self.mod_write_driver = getattr(c, OPTS.write_driver)
         self.driver = self.mod_write_driver("write_driver")
         self.add_mod(self.driver)
 

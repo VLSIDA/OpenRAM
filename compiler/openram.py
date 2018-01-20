@@ -39,19 +39,19 @@ globals.print_banner()
 globals.init_openram(args[0])
 
 # Check if all arguments are integers for bits, size, banks
-if type(OPTS.config.word_size)!=int:
-    debug.error("{0} is not an integer in config file.".format(OPTS.config.word_size))
-if type(OPTS.config.num_words)!=int:
-    debug.error("{0} is not an integer in config file.".format(OPTS.config.sram_size))
-if type(OPTS.config.num_banks)!=int:
-    debug.error("{0} is not an integer in config file.".format(OPTS.config.num_banks))
+if type(OPTS.word_size)!=int:
+    debug.error("{0} is not an integer in config file.".format(OPTS.word_size))
+if type(OPTS.num_words)!=int:
+    debug.error("{0} is not an integer in config file.".format(OPTS.sram_size))
+if type(OPTS.num_banks)!=int:
+    debug.error("{0} is not an integer in config file.".format(OPTS.num_banks))
 
-if not OPTS.config.tech_name:
+if not OPTS.tech_name:
     debug.error("Tech name must be specified in config file.")
 
-word_size = OPTS.config.word_size
-num_words = OPTS.config.num_words
-num_banks = OPTS.config.num_banks
+word_size = OPTS.word_size
+num_words = OPTS.num_words
+num_banks = OPTS.num_banks
 
 if (OPTS.output_name == ""):
     OPTS.output_name = "sram_{0}_{1}_{2}_{3}".format(word_size,

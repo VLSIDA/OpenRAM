@@ -19,18 +19,18 @@ class sram(design.design):
 
     def __init__(self, word_size, num_words, num_banks, name):
 
-        c = reload(__import__(OPTS.config.control_logic))
-        self.mod_control_logic = getattr(c, OPTS.config.control_logic)
+        c = reload(__import__(OPTS.control_logic))
+        self.mod_control_logic = getattr(c, OPTS.control_logic)
         
-        c = reload(__import__(OPTS.config.ms_flop_array))
-        self.mod_ms_flop_array = getattr(c, OPTS.config.ms_flop_array)
+        c = reload(__import__(OPTS.ms_flop_array))
+        self.mod_ms_flop_array = getattr(c, OPTS.ms_flop_array)
         
-        c = reload(__import__(OPTS.config.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.config.bitcell)
+        c = reload(__import__(OPTS.bitcell))
+        self.mod_bitcell = getattr(c, OPTS.bitcell)
         self.bitcell = self.mod_bitcell()
 
-        c = reload(__import__(OPTS.config.ms_flop))
-        self.mod_ms_flop = getattr(c, OPTS.config.ms_flop)
+        c = reload(__import__(OPTS.ms_flop))
+        self.mod_ms_flop = getattr(c, OPTS.ms_flop)
         self.ms_flop = self.mod_ms_flop()
         
 

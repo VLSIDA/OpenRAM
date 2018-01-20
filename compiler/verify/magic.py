@@ -168,9 +168,9 @@ def run_drc(cell_name, gds_name, extract=False):
         for line in results:
             if "error tiles" in line:
                 debug.info(0,line.rstrip("\n"))
-        debug.error("{0}\tErrors: {1}".format(cell_name, errors))
+        debug.error("DRC Errors {0}\t{1}".format(cell_name, errors))
     else:
-        debug.info(1, "{0}\tErrors: {1}".format(cell_name, errors))
+        debug.info(1, "DRC Errors {0}\t{1}".format(cell_name, errors))
 
     return errors
 

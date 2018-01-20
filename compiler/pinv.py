@@ -17,8 +17,8 @@ class pinv(pgate.pgate):
     from center of rail to rail..  The route_output will route the
     output to the right side of the cell for easier access.
     """
-    c = reload(__import__(OPTS.config.bitcell))
-    bitcell = getattr(c, OPTS.config.bitcell)
+    c = reload(__import__(OPTS.bitcell))
+    bitcell = getattr(c, OPTS.bitcell)
 
     unique_id = 1
     

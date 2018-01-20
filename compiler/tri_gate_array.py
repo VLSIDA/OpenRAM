@@ -14,8 +14,8 @@ class tri_gate_array(design.design):
         design.design.__init__(self, "tri_gate_array")
         debug.info(1, "Creating {0}".format(self.name))
 
-        c = reload(__import__(OPTS.config.tri_gate))
-        self.mod_tri_gate = getattr(c, OPTS.config.tri_gate)
+        c = reload(__import__(OPTS.tri_gate))
+        self.mod_tri_gate = getattr(c, OPTS.tri_gate)
         self.tri = self.mod_tri_gate("tri_gate")
         self.add_mod(self.tri)
 

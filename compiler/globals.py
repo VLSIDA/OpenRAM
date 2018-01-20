@@ -145,18 +145,14 @@ def read_config(config_file):
     # Import the configuration file of which modules to use
     debug.info(1, "Configuration file is " + config_file + ".py")
     try:
-        OPTS.config = importlib.import_module(file_name) 
+        config = importlib.import_module(file_name) 
     except:
         debug.error("Unable to read configuration file: {0}".format(config_file),2)
 
-    # This path must be setup after the config file.
-    try:
-        # If path not set on command line, try config file.
-        if OPTS.output_path=="":
-            OPTS.output_path=OPTS.config.output_path
-    except:
-        # Default to current directory.
-        OPTS.output_path="."
+    # The config file will over-ride all command line args
+    for k,v in config.__dict__.items():
+        OPTS.__dict__[k]=v
+
     if not OPTS.output_path.endswith('/'):
         OPTS.output_path += "/"
     debug.info(1, "Output saved in " + OPTS.output_path)
@@ -247,7 +243,7 @@ def import_tech():
     debug.info(2,"Importing technology: " + OPTS.tech_name)
 
     # Set the tech to the config file we read in instead of the command line value.
-    OPTS.tech_name = OPTS.config.tech_name
+    OPTS.tech_name = OPTS.tech_name
     
     
         # environment variable should point to the technology dir

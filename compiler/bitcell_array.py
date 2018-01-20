@@ -21,8 +21,8 @@ class bitcell_array(design.design):
         self.column_size = cols
         self.row_size = rows
 
-        c = reload(__import__(OPTS.config.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.config.bitcell)
+        c = reload(__import__(OPTS.bitcell))
+        self.mod_bitcell = getattr(c, OPTS.bitcell)
         self.cell = self.mod_bitcell()
         self.add_mod(self.cell)
 

@@ -23,7 +23,7 @@ class bank(design.design):
                     "bitcell_array",   "sense_amp_array",    "precharge_array",
                     "column_mux_array", "write_driver_array", "tri_gate_array"]
         for mod_name in mod_list:
-            config_mod_name = getattr(OPTS.config, mod_name)
+            config_mod_name = getattr(OPTS, mod_name)
             class_file = reload(__import__(config_mod_name))
             mod_class = getattr(class_file , config_mod_name)
             setattr (self, "mod_"+mod_name, mod_class)

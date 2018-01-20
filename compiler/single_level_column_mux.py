@@ -16,8 +16,8 @@ class single_level_column_mux(design.design):
         design.design.__init__(self, name)
         debug.info(2, "create single columnmux cell: {0}".format(name))
 
-        c = reload(__import__(OPTS.config.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.config.bitcell)
+        c = reload(__import__(OPTS.bitcell))
+        self.mod_bitcell = getattr(c, OPTS.bitcell)
         self.bitcell = self.mod_bitcell()
         
         self.ptx_width = tx_size * drc["minwidth_tx"]

@@ -18,14 +18,14 @@ class replica_bitline(design.design):
     def __init__(self, rows, name="replica_bitline"):
         design.design.__init__(self, name)
 
-        g = reload(__import__(OPTS.config.delay_chain))
-        self.mod_delay_chain = getattr(g, OPTS.config.delay_chain)
+        g = reload(__import__(OPTS.delay_chain))
+        self.mod_delay_chain = getattr(g, OPTS.delay_chain)
 
-        g = reload(__import__(OPTS.config.replica_bitcell))
-        self.mod_replica_bitcell = getattr(g, OPTS.config.replica_bitcell)
+        g = reload(__import__(OPTS.replica_bitcell))
+        self.mod_replica_bitcell = getattr(g, OPTS.replica_bitcell)
 
-        c = reload(__import__(OPTS.config.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.config.bitcell)
+        c = reload(__import__(OPTS.bitcell))
+        self.mod_bitcell = getattr(c, OPTS.bitcell)
 
         for pin in ["en", "out", "vdd", "gnd"]:
             self.add_pin(pin)

@@ -218,14 +218,18 @@ also includes parameters for the output path, base output file name,
 and technology of an SRAM.
 
 The configuration file can be used to over-ride any option in the
-options.py file.  Many of these are controlled by the command-line,
-but the configuration file takes priority and allows repeatable
-generation of memories.
+options.py file.  Many of these can also be controlled by the command-line
+which over-ride the configuration file.
 
-Lastly, the configuration file can over-ride any 
-of the different circuit implementations for each module. For example, you
-can replace the default address decoder or bitcell with a new one by
-specifying a new python module that implements a new one.
+The one exception is the technology name. The technology name of a
+config file will over-ride a command-line option. The unit tests use
+the command line to read a configuration file, so it is a chicken and
+egg situation.
+
+Lastly, the configuration file can over-ride any of the different
+circuit implementations for each module. For example, you can replace
+the default address decoder or bitcell with a new one by specifying a
+new python module that implements a new one.
 
 An entire example configuration file looks like:
 \begin{verbatim}

@@ -60,7 +60,6 @@ def parse_args():
                                    version="OpenRAM v" + VERSION)
 
     (options, args) = parser.parse_args(values=OPTS)
-
     # If we don't specify a tech, assume freepdk45.
     # This may be overridden when we read a config file though...
     if OPTS.tech_name == "":
@@ -149,10 +148,13 @@ def read_config(config_file):
     except:
         debug.error("Unable to read configuration file: {0}".format(config_file),2)
 
-    # The config file will over-ride all command line args
     for k,v in config.__dict__.items():
-        OPTS.__dict__[k]=v
-
+        # The command line will over-ride the config file
+        # except in the case of the tech name! This is because the tech name
+        # is sometimes used to specify the config file itself (e.g. unit tests)
+        if not k in OPTS.__dict__ or k=="tech_name":
+            OPTS.__dict__[k]=v
+    
     if not OPTS.output_path.endswith('/'):
         OPTS.output_path += "/"
     debug.info(1, "Output saved in " + OPTS.output_path)

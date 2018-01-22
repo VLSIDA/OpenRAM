@@ -79,10 +79,6 @@ s = sram.sram(word_size=word_size,
               num_banks=num_banks,
               name=OPTS.output_name)
 last_time=print_time("SRAM creation", datetime.datetime.now(), last_time)
-# Measure design area
-# Not working?
-#cell_size = s.gds.measureSize(s.name)
-#print("Area:", cell_size[0] * cell_size[1])
 
 # Output the files for the resulting SRAM
 

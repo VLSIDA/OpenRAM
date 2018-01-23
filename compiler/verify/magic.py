@@ -74,6 +74,7 @@ def write_magic_script(cell_name, gds_name, extract=False):
     f.write("gds warning default\n")
     f.write("gds read {}\n".format(gds_name))
     f.write("load {}\n".format(cell_name))
+    f.write("save {}\n".format(cell_name))    
     f.write("drc check\n")
     f.write("drc catchup\n")
     f.write("drc count total\n")
@@ -115,8 +116,12 @@ def write_netgen_script(cell_name, sp_name):
     #Do the individual commands rather than the built in script
     #f.write("lvs {0}.spice {{{1} {0}}}\n".format(cell_name, sp_name))
     f.write("log file lvs.results\n")
-    f.write("log start\n")    
+    f.write("property {{{0}{1}.spice nfet}} remove as ad ps pd\n".format(OPTS.openram_temp,
+                                                                         cell_name))
+    f.write("property {{{0}{1}.spice pfet}} remove as ad ps pd\n".format(OPTS.openram_temp,
+                                                                         cell_name))
     f.write("permute default\n")
+    f.write("log start\n")    
     f.write("compare hierarchical {0}{1}.spice {{{2} {1}}}\n".format(OPTS.openram_temp,
                                                                      cell_name,
                                                                      sp_name))
@@ -208,10 +213,11 @@ def run_lvs(cell_name, gds_name, sp_name):
     test = re.compile("Property errors were found.")
     propertyerrors = filter(test.search, results)
 
-    #total_errors = len(propertyerrors) + len(incorrect)
-    total_errors = len(incorrect)
-    if len(propertyerrors)>0:
-        debug.warning("Property errors found, but not checking them.")
+    total_errors = len(propertyerrors) + len(incorrect)
+    # If we want to ignore property errors
+    #total_errors = len(incorrect)
+    #if len(propertyerrors)>0:
+    #    debug.warning("Property errors found, but not checking them.")
 
     # Netlists match uniquely.
     test = re.compile("Netlists match uniquely.")

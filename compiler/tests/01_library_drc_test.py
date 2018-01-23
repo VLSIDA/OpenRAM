@@ -26,7 +26,7 @@ class library_drc_test(unittest.TestCase):
                 drc_errors += 1
                 debug.error("Missing GDS file: {}".format(gds_name))
             drc_errors += verify.run_drc(name, gds_name)
-
+            self.assertEqual(drc_errors, 0)
         # fails if there are any DRC errors on any cells
         self.assertEqual(drc_errors, 0)
         globals.end_openram()

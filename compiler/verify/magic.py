@@ -116,10 +116,10 @@ def write_netgen_script(cell_name, sp_name):
     #f.write("lvs {0}.spice {{{1} {0}}}\n".format(cell_name, sp_name))
     f.write("log file lvs.results\n")
     f.write("log start\n")    
+    f.write("permute default\n")
     f.write("compare hierarchical {0}{1}.spice {{{2} {1}}}\n".format(OPTS.openram_temp,
                                                                      cell_name,
                                                                      sp_name))
-    f.write("permute\n")
     f.write("run converge\n")
     f.write("log end\n")    
     f.write("quit\n")

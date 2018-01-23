@@ -28,7 +28,7 @@ class library_lvs_test(unittest.TestCase):
                 lvs_errors += 1
                 debug.error("Missing SPICE file {}".format(gds_name))
             lvs_errors += verify.run_lvs(f, gds_name, sp_name)
-
+            self.assertEqual(lvs_errors, 0)
         # fail if the error count is not zero
         self.assertEqual(lvs_errors, 0)
         globals.end_openram()

@@ -16,6 +16,8 @@ gds rescale false
 gds polygon subcell true
 gds warning default
 gds read $1
+load $1
+save $1
 drc count
 drc why
 quit -noprompt
@@ -43,9 +45,10 @@ netgen -noconsole <<EOF
 readnet $1.spice
 readnet $1.sp
 ignore class c
-permute transistors
+equate class {$1.spice nfet} {$2.sp n}
+equate class {$1.spice pfet} {$2.sp p}
+permute default
 compare hierarchical $1.spice {$1.sp $1}
-permute
 run converge
 EOF
 

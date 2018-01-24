@@ -1,6 +1,6 @@
 magic
 tech scmos
-timestamp 1516666759
+timestamp 1516828237
 << nwell >>
 rect -2 45 38 73
 << pwell >>
@@ -103,9 +103,9 @@ rect 14 4 20 5
 rect 0 0 34 73
 << labels >>
 rlabel metal2 32 0 32 0 8 gnd
-rlabel metal2 15 0 15 0 2 Out
-rlabel metal2 15 73 15 73 5 In
 rlabel metal1 0 65 0 65 4 vdd
 rlabel metal1 0 12 0 12 3 en
 rlabel metal1 0 4 0 4 2 en_bar
+rlabel metal2 15 70 18 73 5 in
+rlabel metal2 15 0 18 2 1 out
 << end >>

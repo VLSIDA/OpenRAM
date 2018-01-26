@@ -23,7 +23,9 @@ class timing_setup_test(unittest.TestCase):
         import characterizer
         reload(characterizer)
         from characterizer import setup_hold
-        self.assertTrue(OPTS.spice_exe)
+        if not OPTS.spice_exe:
+            self.error("Could not find {} simulator.".format(OPTS.spice_name))
+            self.assertTrue(OPTS.spice_exe)
         
         import sram
         import tech

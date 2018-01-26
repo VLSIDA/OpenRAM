@@ -149,8 +149,8 @@ class wordline_driver(design.design):
             self.add_segment_center(layer="metal1",
                                     start=clk_offset,
                                     end=a_pos)
-            m1m2_via = self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                           offset=clk_offset)
+            self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                offset=clk_offset)
 
             # first inv to nand2 A
             zb_pos = inv1_inst.get_pin("Z").bc()

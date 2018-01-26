@@ -27,8 +27,13 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
         
         # Check if the name already exists, if so, give an error
         # because each reference must be a unique name.
-        ok_list = ['ms_flop.ms_flop', 'bitcell.bitcell', 'contact.contact',
-                   'ptx.ptx', 'sram.sram',
+        # These modules ensure unique names or have no changes if they
+        # aren't unique
+        ok_list = ['ms_flop.ms_flop',
+                   'bitcell.bitcell',
+                   'contact.contact',
+                   'ptx.ptx',
+                   'sram.sram',
                    'hierarchical_predecode2x4.hierarchical_predecode2x4',
                    'hierarchical_predecode3x8.hierarchical_predecode3x8']
         if name not in design.name_map:
@@ -41,6 +46,7 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
     def setup_drc_constants(self):
         """ These are some DRC constants used in many places in the compiler."""
         from tech import drc
+        self.well_width = drc["minwidth_well"]
         self.poly_width = drc["minwidth_poly"]
         self.poly_space = drc["poly_to_poly"]        
         self.m1_width = drc["minwidth_metal1"]
@@ -49,7 +55,16 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
         self.m2_space = drc["metal2_to_metal2"]        
         self.m3_width = drc["minwidth_metal3"]
         self.m3_space = drc["metal3_to_metal3"]
-
+        self.active_width = drc["minwidth_active"]
+        self.contact_width = drc["minwidth_contact"]
+        
+        self.poly_to_active = drc["poly_to_active"]
+        self.poly_extend_active = drc["poly_extend_active"]
+        self.contact_to_gate = drc["contact_to_gate"]
+        self.well_enclose_active = drc["well_enclosure_active"]
+        self.implant_enclose_active = drc["implant_enclosure_active"]
+        self.implant_space = drc["implant_to_implant"]   
+        
     def get_layout_pins(self,inst):
         """ Return a map of pin locations of the instance offset """
         # find the instance

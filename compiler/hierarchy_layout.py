@@ -336,14 +336,14 @@ class layout(lef.lef):
                               implant_type=implant_type,
                               well_type=well_type)
         self.add_mod(via)
-        self.add_inst(name=via.name, 
-                      mod=via, 
-                      offset=offset,
-                      mirror=mirror,
-                      rotate=rotate)
+        inst=self.add_inst(name=via.name, 
+                           mod=via, 
+                           offset=offset,
+                           mirror=mirror,
+                           rotate=rotate)
         # We don't model the logical connectivity of wires/paths
         self.connect_inst([])
-        return via
+        return inst
 
     def add_via_center(self, layers, offset, size=[1,1], mirror="R0", rotate=0, implant_type=None, well_type=None):
         """ Add a three layer via structure by the center coordinate accounting for mirroring and rotation. """
@@ -371,14 +371,14 @@ class layout(lef.lef):
             
 
         self.add_mod(via)
-        self.add_inst(name=via.name, 
-                      mod=via, 
-                      offset=corrected_offset,
-                      mirror=mirror,
-                      rotate=rotate)
+        inst=self.add_inst(name=via.name, 
+                           mod=via, 
+                           offset=corrected_offset,
+                           mirror=mirror,
+                           rotate=rotate)
         # We don't model the logical connectivity of wires/paths
         self.connect_inst([])
-        return via
+        return inst
     
     def add_ptx(self, offset, mirror="R0", rotate=0, width=1, mults=1, tx_type="nmos"):
         """Adds a ptx module to the design."""
@@ -387,12 +387,12 @@ class layout(lef.lef):
                       mults=mults,
                       tx_type=tx_type)
         self.add_mod(mos)
-        self.add_inst(name=mos.name, 
-                      mod=mos, 
-                      offset=offset,
-                      mirror=mirror,
-                      rotate=rotate)
-        return mos
+        inst=self.add_inst(name=mos.name, 
+                           mod=mos, 
+                           offset=offset,
+                           mirror=mirror,
+                           rotate=rotate)
+        return inst
 
 
 

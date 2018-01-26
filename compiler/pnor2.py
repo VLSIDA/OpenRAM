@@ -52,8 +52,8 @@ class pnor2(pgate.pgate):
         self.add_supply_rails()
         self.add_ptx()
         self.connect_rails()
-        self.extend_wells(self.well_pos)
         self.add_well_contacts()
+        self.extend_wells(self.well_pos)
         self.route_inputs()
         self.route_output()
 
@@ -97,9 +97,6 @@ class pnor2(pgate.pgate):
 
         self.width = self.well_width
         # Height is an input parameter, so it is not recomputed.
-
-        # This will help with the wells 
-        self.well_pos = vector(0,0.4*self.height)
 
         # This is the extra space needed to ensure DRC rules to the active contacts
         extra_contact_space = max(-self.nmos.get_pin("D").by(),0)
@@ -154,6 +151,9 @@ class pnor2(pgate.pgate):
         # Output position will be in between the PMOS and NMOS        
         self.output_pos = vector(0,0.5*(pmos1_pos.y+nmos1_pos.y+self.nmos.active_height))
 
+        # This will help with the wells 
+        self.well_pos = vector(0,self.nmos1_inst.uy())
+        
     def add_well_contacts(self):
         """ Add n/p well taps to the layout and connect to supplies """
 

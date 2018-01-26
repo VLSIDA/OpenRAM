@@ -12,12 +12,13 @@ ln -s 2001a current
 #!/bin/sh
 magic -dnull -noconsole << EOF
 tech load SCN3ME_SUBM.30
-gds rescale false
+scalegrid 1 2
+gds rescale no
 gds polygon subcell true
 gds warning default
 gds read $1
 load $1
-save $1
+writeall force
 drc count
 drc why
 quit -noprompt
@@ -29,7 +30,8 @@ rm -f $1.ext
 rm -f $1.spice
 magic -dnull -noconsole << EOF
 tech load SCN3ME_SUBM.30
-gds rescale false
+scalegrid 1 2
+gds rescale no
 gds polygon subcell true
 gds warning default
 gds read $1
@@ -72,12 +74,13 @@ def write_magic_script(cell_name, gds_name, extract=False):
     f.write("#!/bin/sh\n")
     f.write("{} -dnull -noconsole << EOF\n".format(OPTS.drc_exe[1]))
     f.write("tech load SCN3ME_SUBM.30\n")
-    f.write("gds rescale false\n")
+    f.write("scalegrid 1 2\n")
+    f.write("gds rescale no\n")
     f.write("gds polygon subcell true\n")
     f.write("gds warning default\n")
     f.write("gds read {}\n".format(gds_name))
     f.write("load {}\n".format(cell_name))
-    f.write("save {}\n".format(cell_name))    
+    f.write("writeall force\n")    
     f.write("drc check\n")
     f.write("drc catchup\n")
     f.write("drc count total\n")
@@ -123,6 +126,12 @@ def write_netgen_script(cell_name, sp_name):
                                                                          cell_name))
     f.write("property {{{0}{1}.spice pfet}} remove as ad ps pd\n".format(OPTS.openram_temp,
                                                                          cell_name))
+    # Allow some flexibility in W size because magic will snap to a lambda grid
+    # This can also cause disconnects unfortunately!
+    # f.write("property {{{0}{1}.spice nfet}} tolerance {{w 0.1}}\n".format(OPTS.openram_temp,
+    #                                                                     cell_name))
+    # f.write("property {{{0}{1}.spice pfet}} tolerance {{w 0.1}}\n".format(OPTS.openram_temp,
+    #                                                                     cell_name))
     f.write("permute default\n")
     f.write("log start\n")    
     f.write("compare hierarchical {0}{1}.spice {{{2} {1}}}\n".format(OPTS.openram_temp,

@@ -57,8 +57,8 @@ class pinv(pgate.pgate):
         self.setup_layout_constants()
         self.add_supply_rails()
         self.add_ptx()
-        self.extend_wells(self.well_pos)
         self.add_well_contacts()
+        self.extend_wells(self.well_pos)
         self.connect_rails()
         self.route_input_gate(self.pmos_inst, self.nmos_inst, self.output_pos.y, "A", rotate=0)
         self.route_outputs()
@@ -128,9 +128,6 @@ class pinv(pgate.pgate):
         self.width = self.well_width
         # Height is an input parameter, so it is not recomputed. 
         
-        # This will help with the wells 
-        self.well_pos = vector(0,0.4*self.height)
-        
 
         
     def create_ptx(self):
@@ -183,9 +180,14 @@ class pinv(pgate.pgate):
         self.connect_inst(["Z", "A", "gnd", "gnd"])
 
 
-        # Output position will be in between the PMOS and NMOS        
-        self.output_pos = vector(0,0.5*(self.pmos_pos.y+self.nmos_pos.y+self.nmos.active_height))
+        # Output position will be in between the PMOS and NMOS drains
+        pmos_drain_pos = self.pmos_inst.get_pin("D").ll()
+        nmos_drain_pos = self.nmos_inst.get_pin("D").ul()
+        self.output_pos = vector(0,0.5*(pmos_drain_pos.y+nmos_drain_pos.y))
 
+        # This will help with the wells 
+        self.well_pos = vector(0,self.nmos_inst.uy())
+        
 
 
     def route_outputs(self):
@@ -196,8 +198,8 @@ class pinv(pgate.pgate):
         pmos_drain_pin = self.pmos_inst.get_pin("D")
 
         # Pick point at right most of NMOS and connect down to PMOS
-        nmos_drain_pos = nmos_drain_pin.ur() - vector(0.5*self.m1_width,0)
-        pmos_drain_pos = vector(nmos_drain_pos.x,pmos_drain_pin.bc().y)
+        nmos_drain_pos = nmos_drain_pin.lr() - vector(0.5*self.m1_width,0)
+        pmos_drain_pos = vector(nmos_drain_pos.x, pmos_drain_pin.bc().y)
         self.add_path("metal1",[nmos_drain_pos,pmos_drain_pos])
 
         # Remember the mid for the output

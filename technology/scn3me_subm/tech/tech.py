@@ -58,7 +58,7 @@ parameter["beta"] = 2
 drclvs_home=os.environ.get("DRCLVS_HOME")
 
 drc={}
-#grid size
+#grid size is 1/2 a lambda
 drc["grid"]=0.15
 #DRC/LVS test set_up
 drc["drc_rules"]=drclvs_home+"/calibreDRC_scn3me_subm.rul"

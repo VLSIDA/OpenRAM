@@ -51,8 +51,8 @@ class pnand3(pgate.pgate):
         self.add_supply_rails()
         self.add_ptx()
         self.connect_rails()
-        self.extend_wells(self.well_pos)
         self.add_well_contacts()
+        self.extend_wells(self.well_pos)
         self.route_inputs()
         self.route_output()
 
@@ -88,7 +88,6 @@ class pnand3(pgate.pgate):
 
         # This will help with the wells and the input/output placement
         self.output_pos = vector(0,0.5*self.height)
-        self.well_pos = vector(0,0.4*self.height)
 
         # This is a poly-to-poly of a flipped cell
         # This is extra liberal for pnand3 because we know there are big transistor sizes
@@ -153,6 +152,8 @@ class pnand3(pgate.pgate):
                                       offset=self.nmos3_pos)
         self.connect_inst(["net2", "C", "gnd", "gnd"])
         
+        # This should be placed at the top of the NMOS well
+        self.well_pos = vector(0,self.nmos1_inst.uy())
         
     def add_well_contacts(self):
         """ Add n/p well taps to the layout and connect to supplies """

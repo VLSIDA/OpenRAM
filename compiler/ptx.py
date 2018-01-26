@@ -94,25 +94,19 @@ class ptx(design.design):
         self.active_contact = contact(layer_stack=("active", "contact", "metal1"),
                                       dimensions=(1, self.num_contacts))
 
-        # Standard DRC rules
-        self.min_active_width = drc["minwidth_active"]
-        self.contact_width = drc["minwidth_contact"]
-        self.poly_width = drc["minwidth_poly"]
-        self.poly_to_active = drc["poly_to_active"]
-        self.poly_extend_active = drc["poly_extend_active"]
         
         # The contacted poly pitch (or uncontacted in an odd technology)
-        self.poly_pitch = max(2*drc["contact_to_gate"] + self.contact_width + self.poly_width,
-                              drc["poly_to_poly"])
+        self.poly_pitch = max(2*self.contact_to_gate + self.contact_width + self.poly_width,
+                              self.poly_space)
 
         # The contacted poly pitch (or uncontacted in an odd technology)
-        self.contact_pitch = 2*drc["contact_to_gate"] + self.contact_width + self.poly_width
+        self.contact_pitch = 2*self.contact_to_gate + self.contact_width + self.poly_width
         
         # The enclosure of an active contact. Not sure about second term.
         active_enclose_contact = max(drc["active_enclosure_contact"],
-                                     (self.min_active_width - self.contact_width)/2)
+                                     (self.active_width - self.contact_width)/2)
         # This is the distance from the edge of poly to the contacted end of active
-        self.end_to_poly = active_enclose_contact + self.contact_width + drc["contact_to_gate"]
+        self.end_to_poly = active_enclose_contact + self.contact_width + self.contact_to_gate
         
 
         # Active width is determined by enclosure on both ends and contacted pitch,
@@ -125,22 +119,25 @@ class ptx(design.design):
         # Poly height must include poly extension over active
         self.poly_height = self.tx_width + 2*self.poly_extend_active
 
+        # The active offset is due to the well extension
+        self.active_offset = vector([self.well_enclose_active]*2)
+
         # Well enclosure of active, ensure minwidth as well
         if info["has_{}well".format(self.well_type)]:
-            self.well_width = max(self.active_width + 2*drc["well_enclosure_active"],
-                                  drc["minwidth_well"])
-            self.well_height = max(self.tx_width + 2*drc["well_enclosure_active"],
-                                   drc["minwidth_well"])
-
-            self.height = self.well_height
-            self.width = self.well_width
+            self.cell_well_width = max(self.active_width + 2*self.well_enclose_active,
+                                  self.well_width)
+            self.cell_well_height = max(self.tx_width + 2*self.well_enclose_active,
+                                   self.well_width)
+            # We are going to shift the 0,0, so include that in the width and height
+            self.height = self.cell_well_height - self.active_offset.y
+            self.width = self.cell_well_width - self.active_offset.x
         else:
             # If no well, use the boundary of the active and poly
             self.height = self.poly_height
             self.width = self.active_width
         
         # The active offset is due to the well extension
-        self.active_offset = vector([drc["well_enclosure_active"]]*2)
+        self.active_offset = vector([self.well_enclose_active]*2)
 
         # This is the center of the first active contact offset (centered vertically)
         self.contact_offset = self.active_offset + vector(active_enclose_contact + 0.5*self.contact_width,
@@ -189,9 +186,9 @@ class ptx(design.design):
         # This is the distance that we must route up or down from the center
         # of the contacts to avoid DRC violations to the other contacts
         pin_offset = vector(0, 0.5*self.active_contact.second_layer_height \
-                            + drc["metal1_to_metal1"] + 0.5*drc["minwidth_metal1"])
-        # This is the width of a contact to extend the ends of the pin
-        end_offset = vector(self.active_contact.second_layer_width/2,0)
+                            + self.m1_space + 0.5*self.m1_width)
+        # This is the width of a m1 extend the ends of the pin
+        end_offset = vector(self.m1_width/2,0)
 
         # drains always go to the MIDDLE of the cell, so top of NMOS, bottom of PMOS
         # so reverse the directions for NMOS compared to PMOS.
@@ -280,12 +277,12 @@ class ptx(design.design):
         if info["has_{}well".format(self.well_type)]:
             self.add_rect(layer="{}well".format(self.well_type),
                           offset=(0,0),
-                          width=self.well_width,
-                          height=self.well_height)
+                          width=self.cell_well_width,
+                          height=self.cell_well_height)
             self.add_rect(layer="vtg",
                           offset=(0,0),
-                          width=self.well_width,
-                          height=self.well_height)
+                          width=self.cell_well_width,
+                          height=self.cell_well_height)
 
 
     def calculate_num_contacts(self):
@@ -331,8 +328,8 @@ class ptx(design.design):
             self.add_layout_pin_center_rect(text="S",
                                             layer="metal1",
                                             offset=pos,
-                                            width=contact.second_layer_width,
-                                            height=contact.second_layer_height)
+                                            width=contact.mod.second_layer_width,
+                                            height=contact.mod.second_layer_height)
 
                 
         for pos in drain_positions:
@@ -344,8 +341,8 @@ class ptx(design.design):
             self.add_layout_pin_center_rect(text="D",
                                             layer="metal1",
                                             offset=pos,
-                                            width=contact.second_layer_width,
-                                            height=contact.second_layer_height)
+                                            width=contact.mod.second_layer_width,
+                                            height=contact.mod.second_layer_height)
                 
         if self.connect_active:
             self.connect_fingered_active(drain_positions, source_positions)

@@ -115,8 +115,8 @@ class bitcell_array(design.design):
             gnd_pins = self.cell_inst[0,col].get_pins("gnd")
             for gnd_pin in gnd_pins:
                 # avoid duplicates by only doing even rows
-                # also skip if it is not the full height (a through rail)
-                if gnd_pin.layer=="metal2" and col%2 == 0 and gnd_pin.height()>=self.cell.height:
+                # also skip if it isn't the pin that spans the entire cell down to the bottom
+                if gnd_pin.layer=="metal2" and col%2 == 0 and gnd_pin.by()==lower_y:
                     self.add_layout_pin(text="gnd", 
                                         layer="metal2",
                                         offset=gnd_pin.ll(),

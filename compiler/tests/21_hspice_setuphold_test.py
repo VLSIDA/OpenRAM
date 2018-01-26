@@ -18,6 +18,9 @@ class timing_setup_test(unittest.TestCase):
         OPTS.check_lvsdrc = False
         OPTS.spice_name="hspice"
         OPTS.analytical_delay = False
+        self.assertTrue(OPTS.spice_exe)
+
+        # This is a hack to reload the characterizer __init__ with the spice version
         import characterizer
         reload(characterizer)
         from characterizer import setup_hold

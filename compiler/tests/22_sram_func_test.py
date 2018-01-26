@@ -16,7 +16,6 @@ class sram_func_test(unittest.TestCase):
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         OPTS.check_lvsdrc = False
-        OPTS.spice_name="hspice"
         OPTS.analytical_delay = False
         import characterizer
         reload(characterizer)

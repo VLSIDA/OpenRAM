@@ -283,25 +283,24 @@ def run_sim():
     import datetime
     start_time = datetime.datetime.now()
     
-    from characterizer import spice_exe
     if OPTS.spice_name == "xa":
         # Output the xa configurations here. FIXME: Move this to write it once.
         xa_cfg = open("{}xa.cfg".format(OPTS.openram_temp), "w")
         xa_cfg.write("set_sim_level -level 7\n")
         xa_cfg.write("set_powernet_level 7 -node vdd\n")
         xa_cfg.close()
-        cmd = "{0} {1} -c {2}xa.cfg -o {2}xa -mt 20".format(spice_exe,
+        cmd = "{0} {1} -c {2}xa.cfg -o {2}xa -mt 20".format(OPTS.spice_exe,
                                                temp_stim,
                                                OPTS.openram_temp)
         valid_retcode=0
     elif OPTS.spice_name == "hspice":
         # TODO: Should make multithreading parameter a configuration option
-        cmd = "{0} -mt 2 -i {1} -o {2}timing".format(spice_exe,
+        cmd = "{0} -mt 2 -i {1} -o {2}timing".format(OPTS.spice_exe,
                                                      temp_stim,
                                                      OPTS.openram_temp)
         valid_retcode=0
     else:
-        cmd = "{0} -b -o {2}timing.lis {1}".format(spice_exe,
+        cmd = "{0} -b -o {2}timing.lis {1}".format(OPTS.spice_exe,
                                                    temp_stim,
                                                    OPTS.openram_temp)
         # for some reason, ngspice-25 returns 1 when it only has acceptable warnings

@@ -1,0 +1,6 @@
+BSIM4: Berkeley Short Channel IGFET Model-4
+Developed by Xuemei (Jane) Xi, Jin He, Mohan Dunga, Prof. Ali Niknejad and Prof. Chenming Hu in 2003.
+
+++++++++++ BSIM4v4 PARAMETER CHECKING BELOW ++++++++++
+Warning: This model supports BSIM4.2.1, 4.3.0 and 4.4.0; you specified a wrong version number.
+Model = nmos_vtg

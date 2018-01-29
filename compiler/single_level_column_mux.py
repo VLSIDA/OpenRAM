@@ -152,7 +152,6 @@ class single_level_column_mux(design.design):
         
     def add_wells(self):
         """ Add a well and implant over the whole cell. Also, add the pwell contact (if it exists) """
-
         
         # find right most gnd rail
         gnd_pins = self.bitcell.get_pins("gnd")
@@ -167,26 +166,8 @@ class single_level_column_mux(design.design):
                             offset=m1m2_offset)
         active_offset = right_gnd.bc() + vector(0,0.5*self.nmos.poly_height)
         self.add_via_center(layers=("active", "contact", "metal1"),
-                            offset=active_offset)
+                            offset=active_offset,
+                            implant_type="p",
+                            well_type="p")
 
-        # implant must surround the active area
-        active_correct = vector(contact.well.width,contact.well.height).scale(0.5,0.5)
-        offset_implant = active_offset - vector([drc["implant_to_contact"]]*2) - active_correct
-        implant_width = 2*drc["implant_to_contact"] + contact.well.width
-        implant_height = 2*drc["implant_to_contact"] + contact.well.height        
-        self.add_rect(layer="pimplant",
-                      offset=offset_implant,
-                      width=implant_width,
-                      height=implant_height)
-
-        # Add a well around the whole cell
-        if info["has_pwell"]:
-            self.add_rect(layer="pwell",
-                          offset=vector(0,0),
-                          width=self.width + contact.well.width + drc["well_enclosure_active"],
-                          height=self.height)
-        self.add_rect(layer="vtg",
-                      offset=vector(0,0),
-                      width=self.width + contact.well.width,
-                      height=self.height)
 

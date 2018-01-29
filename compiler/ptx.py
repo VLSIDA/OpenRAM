@@ -61,15 +61,14 @@ class ptx(design.design):
     def create_spice(self):
         self.add_pin_list(["D", "G", "S", "B"])
         
-        self.spice.append("\n.SUBCKT {0} {1}".format(self.name,
-                                                     " ".join(self.pins)))
-        self.spice.append("M{0} {1} {2} m={3} w={4}u l={5}u".format(self.tx_type,
-                                                                    " ".join(self.pins),
-                                                                    spice[self.tx_type],
-                                                                    self.mults,
-                                                                    self.tx_width,
-                                                                    drc["minwidth_poly"]))
-        self.spice.append(".ENDS {0}".format(self.name))
+        # self.spice.append("\n.SUBCKT {0} {1}".format(self.name,
+        #                                              " ".join(self.pins)))
+        self.spice_device="M{{0}} {{1}} {0} m={1} w={2}u l={3}u".format(spice[self.tx_type],
+                                                                        self.mults,
+                                                                        self.tx_width,
+                                                                        drc["minwidth_poly"])
+        self.spice.append("\n* ptx " + self.spice_device)
+        # self.spice.append(".ENDS {0}".format(self.name))
 
     def setup_layout_constants(self):
         """

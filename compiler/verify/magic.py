@@ -74,8 +74,8 @@ def write_magic_script(cell_name, gds_name, extract=False):
     f.write("#!/bin/sh\n")
     f.write("{} -dnull -noconsole << EOF\n".format(OPTS.drc_exe[1]))
     f.write("tech load SCN3ME_SUBM.30\n")
-    f.write("scalegrid 1 2\n")
-    f.write("gds rescale no\n")
+    #gf.write("scalegrid 1 8\n")
+    #f.write("gds rescale no\n")
     f.write("gds polygon subcell true\n")
     f.write("gds warning default\n")
     f.write("gds read {}\n".format(gds_name))
@@ -87,6 +87,7 @@ def write_magic_script(cell_name, gds_name, extract=False):
     f.write("drc count\n")
     if extract:
         f.write("extract\n")
+        f.write("ext2spice hierarchy on\n")        
         f.write("ext2spice scale off\n")
         # Can choose hspice, ngspice, or spice3,
         # but they all seem compatible enough.
@@ -107,38 +108,21 @@ def write_netgen_script(cell_name, sp_name):
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
     f.write("{} -noconsole << EOF\n".format(OPTS.lvs_exe[1]))
-    f.write("readnet {0}{1}.spice\n".format(OPTS.openram_temp,
-                                        cell_name))
+    f.write("readnet {}.spice\n".format(cell_name))
     f.write("readnet {}\n".format(sp_name))
     f.write("ignore class c\n")
-    # default is on
-    #f.write("permute transistors\n")
-    f.write("equate class {{{0}{1}.spice nfet}} {{{2} n}}\n".format(OPTS.openram_temp,
-                                                                    cell_name,
-                                                                    sp_name))
-    f.write("equate class {{{0}{1}.spice pfet}} {{{2} p}}\n".format(OPTS.openram_temp,
-                                                                    cell_name,
-                                                                    sp_name))
-    #Do the individual commands rather than the built in script
-    #f.write("lvs {0}.spice {{{1} {0}}}\n".format(cell_name, sp_name))
-    f.write("log file lvs.results\n")
-    f.write("property {{{0}{1}.spice nfet}} remove as ad ps pd\n".format(OPTS.openram_temp,
-                                                                         cell_name))
-    f.write("property {{{0}{1}.spice pfet}} remove as ad ps pd\n".format(OPTS.openram_temp,
-                                                                         cell_name))
+    f.write("permute transistors\n")
+    f.write("equate class {{{0}.spice nfet}} {{{1} n}}\n".format(cell_name, sp_name))
+    f.write("equate class {{{0}.spice pfet}} {{{1} p}}\n".format(cell_name, sp_name))
+    f.write("property {{{0}.spice nfet}} remove as ad ps pd\n".format(cell_name))
+    f.write("property {{{0}.spice pfet}} remove as ad ps pd\n".format(cell_name))
     # Allow some flexibility in W size because magic will snap to a lambda grid
     # This can also cause disconnects unfortunately!
     # f.write("property {{{0}{1}.spice nfet}} tolerance {{w 0.1}}\n".format(OPTS.openram_temp,
     #                                                                     cell_name))
     # f.write("property {{{0}{1}.spice pfet}} tolerance {{w 0.1}}\n".format(OPTS.openram_temp,
     #                                                                     cell_name))
-    f.write("permute default\n")
-    f.write("log start\n")    
-    f.write("compare hierarchical {0}{1}.spice {{{2} {1}}}\n".format(OPTS.openram_temp,
-                                                                     cell_name,
-                                                                     sp_name))
-    f.write("run converge\n")
-    f.write("log end\n")    
+    f.write("lvs {0}.spice {{{1} {0}}} setup.tcl lvs.results\n".format(cell_name, sp_name))
     f.write("quit\n")
     f.write("EOF\n")
     f.close()
@@ -184,7 +168,7 @@ def run_drc(cell_name, gds_name, extract=False):
     if errors > 0:
         for line in results:
             if "error tiles" in line:
-                debug.info(0,line.rstrip("\n"))
+                debug.info(1,line.rstrip("\n"))
         debug.error("DRC Errors {0}\t{1}".format(cell_name, errors))
     else:
         debug.info(1, "DRC Errors {0}\t{1}".format(cell_name, errors))
@@ -237,7 +221,10 @@ def run_lvs(cell_name, gds_name, sp_name):
     # Fail if they don't match. Something went wrong!
     if correct == 0:
         total_errors += 1
-        
+
+    # Require pins to match?
+    # Cell pin lists for pnand2_1.spice and pnand2_1 altered to match.
+
     if total_errors>0:
         # check the result for these lines in the summary:
         f = open("{}lvs.results".format(OPTS.openram_temp), "r")
@@ -245,7 +232,8 @@ def run_lvs(cell_name, gds_name, sp_name):
         f.close()
         # Just print out the whole file, it is short.
         for e in results:
-            debug.error(e.strip("\n"))
+            debug.info(1,e.strip("\n"))
+        debug.error("LVS mismatch (results in {}lvs.results)".format(OPTS.openram_temp)) 
 
     return total_errors
 

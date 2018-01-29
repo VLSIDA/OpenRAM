@@ -136,13 +136,13 @@ class pnand2(pgate.pgate):
         self.nmos1_inst=self.add_inst(name="pnand2_nmos1",
                                       mod=self.nmos,
                                       offset=nmos1_pos)
-        self.connect_inst(["Z", "A", "net1", "gnd"])
+        self.connect_inst(["Z", "B", "net1", "gnd"])
 
         self.nmos2_pos = nmos1_pos + self.overlap_offset
         self.nmos2_inst=self.add_inst(name="pnand2_nmos2",
                                       mod=self.nmos,
                                       offset=self.nmos2_pos)
-        self.connect_inst(["net1", "B", "gnd", "gnd"])
+        self.connect_inst(["net1", "A", "gnd", "gnd"])
 
         # Output position will be in between the PMOS and NMOS        
         self.output_pos = vector(0,0.5*(pmos1_pos.y+nmos1_pos.y+self.nmos.active_height))

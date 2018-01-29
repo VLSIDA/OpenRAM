@@ -24,7 +24,9 @@ class pnand3(pgate.pgate):
         pgate.pgate.__init__(self, name)
         debug.info(2, "create pnand3 structure {0} with size of {1}".format(name, size))
 
-        self.nmos_size = 3*size
+        # We have trouble pitch matching a 3x sizes to the bitcell...
+        # If we relax this, we could size this better.
+        self.nmos_size = 2*size
         self.pmos_size = parameter["beta"]*size
         self.nmos_width = self.nmos_size*drc["minwidth_tx"]
         self.pmos_width = self.pmos_size*drc["minwidth_tx"]
@@ -89,11 +91,12 @@ class pnand3(pgate.pgate):
         # This will help with the wells and the input/output placement
         self.output_pos = vector(0,0.5*self.height)
 
+        # This is the extra space needed to ensure DRC rules to the active contacts
+        nmos = ptx(tx_type="nmos")
+        extra_contact_space = max(-nmos.get_pin("D").by(),0)
         # This is a poly-to-poly of a flipped cell
-        # This is extra liberal for pnand3 because we know there are big transistor sizes
-        # and so contacts won't interfere with the rails. Therefore, ignore metal spacing.
-        # We need to do this to fit the 3 inputs in with M2M3 via accessibility.
-        self.top_bottom_space = max(drc["poly_extend_active"], self.poly_space)
+        self.top_bottom_space = max(0.5*self.m1_width + self.m1_space + extra_contact_space, 
+                                    drc["poly_extend_active"], self.poly_space)
         
     def add_supply_rails(self):
         """ Add vdd/gnd rails to the top and bottom. """
@@ -137,7 +140,7 @@ class pnand3(pgate.pgate):
         self.nmos1_inst=self.add_inst(name="pnand3_nmos1",
                                       mod=self.nmos,
                                       offset=nmos1_pos)
-        self.connect_inst(["Z", "A", "net1", "gnd"])
+        self.connect_inst(["Z", "C", "net1", "gnd"])
 
         nmos2_pos = nmos1_pos + self.overlap_offset
         self.nmos2_inst=self.add_inst(name="pnand3_nmos2",
@@ -150,7 +153,7 @@ class pnand3(pgate.pgate):
         self.nmos3_inst=self.add_inst(name="pnand3_nmos3",
                                       mod=self.nmos,
                                       offset=self.nmos3_pos)
-        self.connect_inst(["net2", "C", "gnd", "gnd"])
+        self.connect_inst(["net2", "A", "gnd", "gnd"])
         
         # This should be placed at the top of the NMOS well
         self.well_pos = vector(0,self.nmos1_inst.uy())

@@ -250,9 +250,9 @@ class hierarchical_predecode(design.design):
             index_lst= nand_input_line_combination[k]
 
             if self.number_of_inputs == 2:
-                gate_lst = ["A","B"]
+                gate_lst = ["B","A"]
             else:
-                gate_lst = ["A","B","C"]                
+                gate_lst = ["C","B","A"]
 
             # this will connect pins A,B or A,B,C
             for rail_pin,gate_pin in zip(index_lst,gate_lst):

@@ -129,8 +129,8 @@ class wordline_driver(design.design):
                                     mod=self.nand2,
                                     offset=nand2_offset,
                                     mirror=inst_mirror)
-            self.connect_inst(["in[{0}]".format(row),
-                               "en_bar[{0}]".format(row),
+            self.connect_inst(["en_bar[{0}]".format(row),
+                               "in[{0}]".format(row),
                                "net[{0}]".format(row),
                                "vdd", "gnd"])
             # add inv2

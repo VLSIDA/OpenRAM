@@ -43,10 +43,6 @@ class hierarchical_decoder(design.design):
         self.create_row_decoder()
         self.create_vertical_rail()
         self.route_vdd_gnd()
-        # We only need to call the offset_all_coordinate function when there
-        # are vertical metal rails.
-        #if (self.num_inputs >= 4):
-        #    self.offset_all_coordinates()
 
     def add_modules(self):
         self.inv = pinv()

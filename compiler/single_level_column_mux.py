@@ -90,7 +90,7 @@ class single_level_column_mux(design.design):
         """ Connect the poly gate of the two pass transistors """
         
         height=self.nmos2.get_pin("G").uy() - self.nmos1.get_pin("G").by()
-        self.add_layout_pin(text="col_addr",
+        self.add_layout_pin(text="sel",
                             layer="poly",
                             offset=self.nmos1.get_pin("G").ll(),
                             height=height)

@@ -10,9 +10,7 @@ debug.info(2,"Initializing characterizer...")
 
 spice_exe = ""
 
-if OPTS.analytical_delay:
-    debug.info(1,"Using analytical delay models (no characterization)")
-else:
+if not OPTS.analytical_delay:
     if OPTS.spice_name != "":
         spice_exe=find_exe(OPTS.spice_name)
         if spice_exe=="":

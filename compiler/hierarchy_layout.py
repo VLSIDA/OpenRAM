@@ -7,8 +7,9 @@ from tech import layer as techlayer
 import os
 from vector import vector
 from pin_layout import pin_layout
+import lef
 
-class layout:
+class layout(lef.lef):
     """
     Class consisting of a set of objs and instances for a module
     This provides a set of useful generic types for hierarchy
@@ -18,7 +19,8 @@ class layout:
     layout/netlist and perform LVS/DRC.
     """
 
-    def __init__(self, name):            
+    def __init__(self, name):
+        lef.lef.__init__(self, ["metal1", "metal2", "metal3"])
         self.name = name
         self.width = None
         self.height = None
@@ -26,7 +28,7 @@ class layout:
         self.objs = []       # Holds all other objects (labels, geometries, etc)
         self.pin_map = {}    # Holds name->pin_layout map for all pins
         self.visited = False # Flag for traversing the hierarchy 
-
+        self.is_library_cell = False # Flag for library cells 
         self.gds_read()
 
     ############################################################
@@ -36,7 +38,6 @@ class layout:
         """ This function is called after everything is placed to
         shift the origin in the lowest left corner """
         offset = self.find_lowest_coords()
-        #self.offset_attributes(offset)
         self.translate_all(offset)
 
     def get_gate_offset(self, x_offset, height, inv_num):
@@ -59,18 +60,21 @@ class layout:
     def find_lowest_coords(self):
         """Finds the lowest set of 2d cartesian coordinates within
         this layout"""
-        # FIXME: don't depend on 1e9
-        try:
-            lowestx1 = min(rect.offset.x for rect in self.objs)
-            lowesty1 = min(rect.offset.y for rect in self.objs)
-        except:
-            [lowestx1, lowesty1] = [1000000.0, 1000000.0]
-        try:
-            lowestx2 = min(inst.offset.x for inst in self.insts)
-            lowesty2 = min(inst.offset.y for inst in self.insts)
-        except:
-            [lowestx2, lowesty2] = [1000000.0, 1000000.0]
+        
+        lowestx1 = min(obj.lx() for obj in self.objs if obj.name!="label")
+        lowesty1 = min(obj.by() for obj in self.objs if obj.name!="label")
+        lowestx2 = min(inst.lx() for inst in self.insts)
+        lowesty2 = min(inst.by() for inst in self.insts)
         return vector(min(lowestx1, lowestx2), min(lowesty1, lowesty2))
+
+    def find_highest_coords(self):
+        """Finds the highest set of 2d cartesian coordinates within
+        this layout"""
+        highestx1 = min(obj.rx() for obj in self.objs if obj.name!="label")
+        highesty1 = min(obj.uy() for obj in self.objs if obj.name!="label")
+        highestx2 = min(inst.rx() for inst in self.insts)
+        highesty2 = min(inst.uy() for inst in self.insts)
+        return vector(min(highestx1, highestx2), min(highesty1, highesty2))
 
 
     def translate_all(self, offset):
@@ -111,9 +115,9 @@ class layout:
         if height==0:
             height=drc["minwidth_{}".format(layer)]
         # negative layers indicate "unused" layers in a given technology
-        layerNumber = techlayer[layer]
-        if layerNumber >= 0:
-            self.objs.append(geometry.rectangle(layerNumber, offset, width, height))
+        layer_num = techlayer[layer]
+        if layer_num >= 0:
+            self.objs.append(geometry.rectangle(layer_num, offset, width, height))
             return self.objs[-1]
         return None
 
@@ -124,10 +128,10 @@ class layout:
         if height==0:
             height=drc["minwidth_{}".format(layer)]
         # negative layers indicate "unused" layers in a given technology
-        layerNumber = techlayer[layer]
+        layer_num = techlayer[layer]
         corrected_offset = offset - vector(0.5*width,0.5*height)
-        if layerNumber >= 0:
-            self.objs.append(geometry.rectangle(layerNumber, corrected_offset, width, height))
+        if layer_num >= 0:
+            self.objs.append(geometry.rectangle(layer_num, corrected_offset, width, height))
             return self.objs[-1]
         return None
 
@@ -259,9 +263,9 @@ class layout:
         """Adds a text label on the given layer,offset, and zoom level"""
         # negative layers indicate "unused" layers in a given technology
         debug.info(5,"add label " + str(text) + " " + layer + " " + str(offset))
-        layerNumber = techlayer[layer]
-        if layerNumber >= 0:
-            self.objs.append(geometry.label(text, layerNumber, offset, zoom))
+        layer_num = techlayer[layer]
+        if layer_num >= 0:
+            self.objs.append(geometry.label(text, layer_num, offset, zoom))
             return self.objs[-1]
         return None
 
@@ -272,9 +276,9 @@ class layout:
         import path
         # NOTE: (UNTESTED) add_path(...) is currently not used
         # negative layers indicate "unused" layers in a given technology
-        #layerNumber = techlayer[layer]
-        #if layerNumber >= 0:
-        #    self.objs.append(geometry.path(layerNumber, coordinates, width))
+        #layer_num = techlayer[layer]
+        #if layer_num >= 0:
+        #    self.objs.append(geometry.path(layer_num, coordinates, width))
 
         path.path(obj=self,
                   layer=layer, 
@@ -390,6 +394,7 @@ class layout:
         # open the gds file if it exists or else create a blank layout
         if os.path.isfile(self.gds_file):
             debug.info(3, "opening %s" % self.gds_file)
+            self.is_library_cell=True
             self.gds = gdsMill.VlsiLayout(units=GDS["unit"])
             reader = gdsMill.Gds2reader(self.gds)
             reader.loadFromFile(self.gds_file)
@@ -440,6 +445,49 @@ class layout:
         # self.gds.prepareForWrite()
         writer.writeToFile(gds_name)
 
+    def get_boundary(self):
+        """ Return the lower-left and upper-right coordinates of boundary """
+        # This assumes nothing spans outside of the width and height!
+        return [vector(0,0), vector(self.width, self.height)]
+        #return [self.find_lowest_coords(), self.find_highest_coords()]
+
+    def get_blockages(self, layer, top_level=False):
+        """ 
+        Write all of the obstacles in the current (and children) modules to the lef file 
+        Do not write the pins since they aren't obstructions.
+        """
+        if type(layer)==str:
+            layer_num = techlayer[layer]
+        else:
+            layer_num = layer
+            
+        blockages = []
+        for i in self.objs:
+            blockages += i.get_blockages(layer_num)
+        for i in self.insts:
+            blockages += i.get_blockages(layer_num)
+        # Must add pin blockages to non-top cells
+        if not top_level:
+            blockages += self.get_pin_blockages(layer_num)
+        return blockages
+
+    def get_pin_blockages(self, layer_num):
+        """ Return the pin shapes as blockages for non-top-level blocks. """
+        # FIXME: We don't have a body contact in ptx, so just ignore it for now
+        import copy
+        pin_names = copy.deepcopy(self.pins)
+        if self.name.startswith("pmos") or self.name.startswith("nmos"):
+            pin_names.remove("B")
+            
+        blockages = []
+        for pin_name in pin_names:
+            pin_list = self.get_pins(pin_name)
+            for pin in pin_list:
+                if pin.layer_num==layer_num:
+                    blockages += [pin.rect]
+
+        return blockages
+
     def pdf_write(self, pdf_name):
         # NOTE: Currently does not work (Needs further research)
         #self.pdf_name = self.name + ".pdf"
@@ -465,20 +513,22 @@ class layout:
         debug.info(0, 
                    "|==============================================================================|")
         debug.info(0, 
-                   "|=========      LIST OF OBJECTS (Rects) FOR: " + self.attr["name"])
+                   "|=========      LIST OF OBJECTS (Rects) FOR: " + self.name)
         debug.info(0, 
                    "|==============================================================================|")
         for obj in self.objs:
-            debug.info(0, "layer={0} : offset={1} : size={2}".format(
-                obj.layerNumber, obj.offset, obj.size))
+            debug.info(0, "layer={0} : offset={1} : size={2}".format(obj.layerNumber,
+                                                                     obj.offset,
+                                                                     obj.size))
 
         debug.info(0, 
                    "|==============================================================================|")
         debug.info(0, 
-                   "|=========      LIST OF INSTANCES FOR: " +
-                   self.attr["name"])
+                   "|=========      LIST OF INSTANCES FOR: " + self.name)
         debug.info(0, 
                    "|==============================================================================|")
         for inst in self.insts:
-            debug.info(0, "name={0} : mod={1} : offset={2}".format(
-                inst.name, inst.mod.name, inst.offset))
+            debug.info(0, "name={0} : mod={1} : offset={2}".format(inst.name,
+                                                                   inst.mod.name,
+                                                                   inst.offset))
+

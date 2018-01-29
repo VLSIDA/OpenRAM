@@ -64,16 +64,6 @@ print("Output files are " + OPTS.output_name + ".(sp|gds|v|lib|lef)")
 print("Technology: {0}".format(OPTS.tech_name))
 print("Word size: {0}\nWords: {1}\nBanks: {2}".format(word_size,num_words,num_banks))
 
-if not OPTS.check_lvsdrc:
-    print("DRC/LVS/PEX checking is disabled.")
-
-if OPTS.analytical_delay:
-    print("Using analytical delay models (no characterization)")
-else:
-    print("Performing simulation-based characterization with {}".format(OPTS.spice_name))
-    if OPTS.trim_netlist:
-        print("Trimming netlist to speed up characterization (sacrificing some accuracy).")
-
 # only start importing modules after we have the config file
 import verify
 import sram
@@ -81,7 +71,8 @@ import sram
 start_time = datetime.datetime.now()
 last_time = start_time
 print_time("Start",datetime.datetime.now())
-
+if not OPTS.check_lvsdrc:
+    print("DRC/LVS/PEX checking is disabled.")
 # import SRAM test generation
 s = sram.sram(word_size=word_size,
               num_words=num_words,
@@ -110,6 +101,13 @@ if OPTS.use_pex:
 from characterizer import lib
 libname = OPTS.output_path + s.name + ".lib"
 print("LIB: Writing to {0}".format(libname))
+if OPTS.analytical_delay:
+    print("Using analytical delay models (no characterization)")
+else:
+    if OPTS.spice_name!="":
+        print("Performing simulation-based characterization with {}".format(OPTS.spice_name))
+    if OPTS.trim_netlist:
+        print("Trimming netlist to speed up characterization.")
 lib.lib(libname,s,sram_file)
 last_time=print_time("Characterization", datetime.datetime.now(), last_time)
 
@@ -120,18 +118,16 @@ s.gds_write(gdsname)
 last_time=print_time("GDS", datetime.datetime.now(), last_time)
 
 # Create a LEF physical model
-import lef
 lefname = OPTS.output_path + s.name + ".lef"
 print("LEF: Writing to {0}".format(lefname))
-lef.lef(gdsname,lefname,s)
-last_time=print_time("LEF writing", datetime.datetime.now(), last_time)
+s.lef_write(lefname)
+last_time=print_time("LEF", datetime.datetime.now(), last_time)
 
 # Write a verilog model
-import verilog
 vname = OPTS.output_path + s.name + ".v"
 print("Verilog: Writing to {0}".format(vname))
-verilog.verilog(vname,s)
-last_time=print_time("Verilog writing", datetime.datetime.now(), last_time)
+s.verilog_write(vname)
+last_time=print_time("Verilog", datetime.datetime.now(), last_time)
 
 globals.end_openram()
 print_time("End",datetime.datetime.now(), start_time)

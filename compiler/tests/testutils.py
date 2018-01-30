@@ -31,7 +31,9 @@ class openram_test(unittest.TestCase):
 
         files = glob.glob(OPTS.openram_temp + '*')
         for f in files:
-            os.remove(f)        
+            # Only remove the files
+            if os.path.isfile(f):
+                os.remove(f)        
 
         # reset the static duplicate name checker for unit tests
         import design

@@ -12,13 +12,13 @@ ln -s 2001a current
 #!/bin/sh
 magic -dnull -noconsole << EOF
 tech load SCN3ME_SUBM.30
-scalegrid 1 2
+#scalegrid 1 2
 gds rescale no
 gds polygon subcell true
 gds warning default
 gds read $1
 load $1
-writeall force
+writeall force $1
 drc count
 drc why
 quit -noprompt
@@ -30,7 +30,7 @@ rm -f $1.ext
 rm -f $1.spice
 magic -dnull -noconsole << EOF
 tech load SCN3ME_SUBM.30
-scalegrid 1 2
+#scalegrid 1 2
 gds rescale no
 gds polygon subcell true
 gds warning default
@@ -80,7 +80,7 @@ def write_magic_script(cell_name, gds_name, extract=False):
     f.write("gds warning default\n")
     f.write("gds read {}\n".format(gds_name))
     f.write("load {}\n".format(cell_name))
-    f.write("writeall force\n")    
+    f.write("writeall force {}\n".format(cell_name))    
     f.write("drc check\n")
     f.write("drc catchup\n")
     f.write("drc count total\n")

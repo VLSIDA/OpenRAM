@@ -6,14 +6,14 @@ check that these files are right.
 """
 
 import unittest
-from testutils import header
+from testutils import header,openram_test
 import sys,os,re,shutil
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
 
-class openram_test(unittest.TestCase):
+class openram_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))

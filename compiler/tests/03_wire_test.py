@@ -2,14 +2,14 @@
 "Run a regresion test on a basic wire"
 
 import unittest
-from testutils import header
+from testutils import header,openram_test
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
 
-class wire_test(unittest.TestCase):
+class wire_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
@@ -36,7 +36,7 @@ class wire_test(unittest.TestCase):
         position_list  = [[x-min_space, y-min_space] for x,y in old_position_list]        
         w = design.design("wire_test1")
         wire.wire(w, layer_stack, position_list)
-        self.local_check(w)
+        self.local_drc_check(w)
 
         min_space = 2 * (tech.drc["minwidth_poly"] +
                          tech.drc["minwidth_metal1"])
@@ -53,7 +53,7 @@ class wire_test(unittest.TestCase):
         position_list  = [[x+min_space, y+min_space] for x,y in old_position_list]
         w = design.design("wire_test2")        
         wire.wire(w, layer_stack, position_list)
-        self.local_check(w)
+        self.local_drc_check(w)
 
         min_space = 2 * (tech.drc["minwidth_metal2"] +
                          tech.drc["minwidth_metal1"])
@@ -69,7 +69,7 @@ class wire_test(unittest.TestCase):
                          [-1 * min_space, 0]]
         w = design.design("wire_test3")
         wire.wire(w, layer_stack, position_list)
-        self.local_check(w)
+        self.local_drc_check(w)
 
 
         min_space = 2 * (tech.drc["minwidth_metal2"] +
@@ -86,7 +86,7 @@ class wire_test(unittest.TestCase):
                          [-1 * min_space, 0]]
         w = design.design("wire_test4")
         wire.wire(w, layer_stack, position_list)
-        self.local_check(w)
+        self.local_drc_check(w)
 
         min_space = 2 * (tech.drc["minwidth_metal2"] +
                          tech.drc["minwidth_metal3"])
@@ -103,7 +103,7 @@ class wire_test(unittest.TestCase):
         position_list.reverse()
         w = design.design("wire_test5")
         wire.wire(w, layer_stack, position_list)
-        self.local_check(w)
+        self.local_drc_check(w)
 
         min_space = 2 * (tech.drc["minwidth_metal2"] +
                          tech.drc["minwidth_metal3"])
@@ -120,18 +120,12 @@ class wire_test(unittest.TestCase):
         position_list.reverse()
         w = design.design("wire_test6")
         wire.wire(w, layer_stack, position_list)
-        self.local_check(w)
+        self.local_drc_check(w)
 
         # return it back to it's normal state
         OPTS.check_lvsdrc = True
         globals.end_openram()
         
-    def local_check(self, w):
-        tempgds = OPTS.openram_temp + "temp.gds"
-        w.gds_write(tempgds)
-        self.assertFalse(verify.run_drc(w.name, tempgds))
-        os.remove(tempgds)
-
 
 # instantiate a copy of the class to actually run the test
 if __name__ == "__main__":

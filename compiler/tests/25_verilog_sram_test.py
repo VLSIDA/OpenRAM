@@ -4,14 +4,14 @@ Check the  .v file for an SRAM
 """
 
 import unittest
-from testutils import header,isdiff
+from testutils import header,openram_test,isdiff
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
 
-class verilog_test(unittest.TestCase):
+class verilog_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))

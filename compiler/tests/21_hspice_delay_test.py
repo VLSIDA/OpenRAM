@@ -4,14 +4,14 @@ Run a regresion test on various srams
 """
 
 import unittest
-from testutils import header,isclose
+from testutils import header,openram_test,isclose
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
 
-class timing_sram_test(unittest.TestCase):
+class timing_sram_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))

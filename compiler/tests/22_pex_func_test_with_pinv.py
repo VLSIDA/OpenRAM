@@ -4,7 +4,7 @@ Run a regression test on an extracted SRAM to ensure functionality.
 """
 
 import unittest
-from testutils import header
+from testutils import header,openram_test
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
@@ -12,7 +12,7 @@ from globals import OPTS
 import debug
 
 @unittest.skip("SKIPPING 22_sram_func_test")
-class sram_func_test(unittest.TestCase):
+class sram_func_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))

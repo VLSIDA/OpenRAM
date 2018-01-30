@@ -1,3 +1,41 @@
+import unittest
+import sys,os,glob
+sys.path.append(os.path.join(sys.path[0],".."))
+import globals
+from globals import OPTS
+
+class openram_test(unittest.TestCase):
+    """ Base unit test that we have some shared classes in. """
+    
+    def local_drc_check(self, w):
+        tempgds = OPTS.openram_temp + "temp.gds"
+        w.gds_write(tempgds)
+        import verify
+        self.assertFalse(verify.run_drc(w.name, tempgds))
+
+        files = glob.glob(OPTS.openram_temp + '*')
+        for f in files:
+            os.remove(f)        
+    
+    def local_check(self, a):
+        
+        tempspice = OPTS.openram_temp + "temp.sp"
+        tempgds = OPTS.openram_temp + "temp.gds"
+
+        a.sp_write(tempspice)
+        a.gds_write(tempgds)
+
+        import verify
+        self.assertFalse(verify.run_drc(a.name, tempgds))
+        self.assertFalse(verify.run_lvs(a.name, tempgds, tempspice))
+
+        files = glob.glob(OPTS.openram_temp + '*')
+        for f in files:
+            os.remove(f)        
+
+        # reset the static duplicate name checker for unit tests
+        import design
+        design.design.name_map=[]
 
 def isclose(value1,value2,error_tolerance=1e-2):
     """ This is used to compare relative values. """

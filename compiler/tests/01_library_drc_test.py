@@ -2,14 +2,14 @@
 "Run a regresion test the library cells for DRC"
 
 import unittest
-from testutils import header
+from testutils import header,openram_test
 import sys,os,re
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
 
-class library_drc_test(unittest.TestCase):
+class library_drc_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))

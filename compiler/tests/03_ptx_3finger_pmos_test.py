@@ -26,7 +26,7 @@ class ptx_test(openram_test):
                       tx_type="pmos",
                       connect_active=True,
                       connect_poly=True)
-        self.local_check(fet)
+        self.local_drc_check(fet)
 
         OPTS.check_lvsdrc = True
         globals.end_openram()

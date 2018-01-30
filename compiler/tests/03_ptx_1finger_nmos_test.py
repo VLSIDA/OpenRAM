@@ -24,7 +24,7 @@ class ptx_test(openram_test):
         fet = ptx.ptx(width=tech.drc["minwidth_tx"],
                       mults=1,
                       tx_type="nmos")
-        self.local_check(fet)
+        self.local_drc_check(fet)
 
         OPTS.check_lvsdrc = True
         globals.end_openram()

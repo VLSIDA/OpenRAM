@@ -4,7 +4,7 @@ Run a regresion test on various srams
 """
 
 import unittest
-from testutils import header,openram_test,isclose
+from testutils import header,openram_test
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
@@ -53,9 +53,9 @@ class timing_setup_test(openram_test):
         for k in data.keys():
             if type(data[k])==list:
                 for i in range(len(data[k])):
-                    self.assertTrue(isclose(data[k][i],golden_data[k][i],0.15))
+                    self.isclose(data[k][i],golden_data[k][i],0.15)
             else:
-                self.assertTrue(isclose(data[k],golden_data[k],0.15))
+                self.isclose(data[k],golden_data[k],0.15)
 
         # reset these options
         OPTS.check_lvsdrc = True

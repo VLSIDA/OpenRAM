@@ -4,7 +4,7 @@ Check the  .v file for an SRAM
 """
 
 import unittest
-from testutils import header,openram_test,isdiff
+from testutils import header,openram_test
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
@@ -35,7 +35,7 @@ class verilog_test(openram_test):
 
         # let's diff the result with a golden model
         golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),vfile)
-        self.assertEqual(isdiff(vname,golden),True)
+        self.isdiff(vname,golden)
 
         os.system("rm {0}".format(vname))
 

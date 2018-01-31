@@ -4,7 +4,7 @@ Check the LEF file for an SRMA
 """
 
 import unittest
-from testutils import header,openram_test,isdiff
+from testutils import header,openram_test
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
@@ -37,7 +37,7 @@ class lef_test(openram_test):
 
         # let's diff the result with a golden model
         golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),leffile)
-        self.assertEqual(isdiff(lefname,golden),True)
+        self.isdiff(lefname,golden)
 
         os.system("rm {0}".format(gdsname))
         os.system("rm {0}".format(lefname))

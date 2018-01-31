@@ -40,6 +40,7 @@ class single_level_column_mux_array(design.design):
         self.setup_layout_constants()
         self.create_array()
         self.add_routing()
+        self.add_enclosure(self.mux_inst, "pwell")
 
     def add_modules(self):
         self.mux = single_level_column_mux(name="single_level_column_mux",
@@ -60,6 +61,7 @@ class single_level_column_mux_array(design.design):
         # mux height plus routing signal height plus well spacing at the top
         self.height = self.mux.height + self.route_height + drc["pwell_to_nwell"]
 
+        
     def create_array(self):
         self.mux_inst = []
 

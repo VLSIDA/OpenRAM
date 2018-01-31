@@ -496,6 +496,26 @@ class layout(lef.lef):
 
         return blockages
 
+    def add_enclosure(self, insts, layer="nwell"):
+        """ Add a layer that surrounds the given instances. Useful
+        for creating wells, for example. Doesn't check for minimum widths or
+        spacings."""
+
+        xmin=insts[0].lx()
+        ymin=insts[0].by()
+        xmax=insts[0].rx()
+        ymax=insts[0].uy()
+        for inst in insts:
+            xmin = min(xmin, inst.lx())
+            ymin = min(ymin, inst.by())
+            xmax = max(xmax, inst.rx())
+            ymax = max(ymax, inst.uy())
+
+        self.add_rect(layer=layer,
+                      offset=vector(xmin,ymin),
+                      width=xmax-xmin,
+                      height=ymax-ymin)
+
     def pdf_write(self, pdf_name):
         # NOTE: Currently does not work (Needs further research)
         #self.pdf_name = self.name + ".pdf"

@@ -4,7 +4,7 @@ Check the .lib file for an SRAM
 """
 
 import unittest
-from testutils import header,openram_test,isapproxdiff
+from testutils import header,openram_test
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
@@ -40,7 +40,7 @@ class lib_test(openram_test):
         
         # let's diff the result with a golden model
         golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),filename)
-        self.assertEqual(isapproxdiff(libname,golden,0.15),True)
+        self.isapproxdiff(libname,golden,0.15)
 
         OPTS.analytical_delay = True
         OPTS.trim_netlist = True

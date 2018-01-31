@@ -16,8 +16,8 @@ class lib_test(openram_test):
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         OPTS.check_lvsdrc = False
-        OPTS.spice_name="hspice"
         OPTS.analytical_delay = False
+        OPTS.trim_netlist = True
         import characterizer
         reload(characterizer)
         from characterizer import lib

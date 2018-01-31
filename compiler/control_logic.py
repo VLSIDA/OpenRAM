@@ -275,7 +275,7 @@ class control_logic(design.design):
                                       mod=self.nand2,
                                       offset=self.tri_en_bar_offset,
                                       mirror="MX")
-        self.connect_inst(["oe", "clk_bar",  "tri_en_bar", "vdd", "gnd"])
+        self.connect_inst(["clk_bar", "oe",  "tri_en_bar", "vdd", "gnd"])
         x_off += self.nand2.width 
 
         x_off += self.inv1.width + self.cell_gap

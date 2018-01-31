@@ -18,7 +18,7 @@ gds polygon subcell true
 gds warning default
 gds read $1
 load $1
-writeall force $1
+writeall force
 drc count
 drc why
 quit -noprompt
@@ -80,7 +80,7 @@ def write_magic_script(cell_name, gds_name, extract=False):
     f.write("gds warning default\n")
     f.write("gds read {}\n".format(gds_name))
     f.write("load {}\n".format(cell_name))
-    f.write("writeall force {}\n".format(cell_name))    
+    f.write("writeall force\n")
     f.write("drc check\n")
     f.write("drc catchup\n")
     f.write("drc count total\n")
@@ -103,6 +103,11 @@ def write_netgen_script(cell_name, sp_name):
     """ Write a netgen script to perform LVS. """
 
     global OPTS
+    # This is a hack to prevent netgen from re-initializing the LVS
+    # commands. It will be unnecessary after Tim adds the nosetup option.
+    setup_file = OPTS.openram_temp + "setup.tcl"
+    f = open(setup_file, "w")
+    f.close()
 
     run_file = OPTS.openram_temp + "run_lvs.sh"
     f = open(run_file, "w")

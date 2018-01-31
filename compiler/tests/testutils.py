@@ -26,16 +26,32 @@ class openram_test(unittest.TestCase):
         a.gds_write(tempgds)
 
         import verify
-        self.assertFalse(verify.run_drc(a.name, tempgds))
-        self.assertFalse(verify.run_lvs(a.name, tempgds, tempspice))
+        try:
+            self.assertFalse(verify.run_drc(a.name, tempgds)==0)
+        except:
+            self.reset()
+            raise Exception('DRC failed: {}'.format(a.name))
+            
+        try:
+            self.assertFalse(verify.run_lvs(a.name, tempgds, tempspice)==0)
+        except:
+            self.reset()
+            raise Exception('LVS failed: {}'.format(a.name))
 
+        self.cleanup()            
+
+    def cleanup(self):
+        """ Reset the duplicate checker and cleanup files. """
+        self.reset()
+        
         files = glob.glob(OPTS.openram_temp + '*')
         for f in files:
             # Only remove the files
             if os.path.isfile(f):
                 os.remove(f)        
 
-        # reset the static duplicate name checker for unit tests
+    def reset(self):
+        """ Reset the static duplicate name checker for unit tests """
         import design
         design.design.name_map=[]
 

@@ -62,10 +62,9 @@ class openram_test(unittest.TestCase):
         relative_diff = abs(value1 - value2) / max(value1,value2)
         check = relative_diff <= error_tolerance
         if not check:
-            debug.info(1,"NOT CLOSE {0} {1} relative diff={2}".format(value1,value2,relative_diff))
+            self.fail("NOT CLOSE {0} {1} relative diff={2}".format(value1,value2,relative_diff))
         else:
             debug.info(2,"CLOSE {0} {1} relative diff={2}".format(value1,value2,relative_diff))
-        return (check)
 
     def relative_compare(self, value1,value2,error_tolerance):
         """ This is used to compare relative values. """
@@ -124,16 +123,16 @@ class openram_test(unittest.TestCase):
             
                 # 3. Check if remaining string matches
                 if b1 != b2:
-                    self.fail("Line: {0}\n!=\nLine: {1}".format(b1,b2))
+                    self.fail("MISMATCH Line: {0}\n!=\nLine: {1}".format(b1,b2))
 
                 # 4. Now compare that the floats match
                 if len(b1_floats)!=len(b2_floats):
-                    self.fail("Len {0} != {1}".format(len(b1_floats),len(b2_floats)))
+                    self.fail("MISMATCH Length {0} != {1}".format(len(b1_floats),len(b2_floats)))
                 for (f1,f2) in zip(b1_floats,b2_floats):
                     if not relative_compare(float(f1),float(f2),error_tolerance):
-                        self.fail("Float {0} != {1}".format(f1,f2))
+                        self.fail("MISMATCH Float {0} != {1}".format(f1,f2))
 
-                if not b1:
+                if not b1 and not b2:
                     return
 
 

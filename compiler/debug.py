@@ -16,7 +16,7 @@ def check(check,str):
         print("ERROR: file {0}: line {1}: {2}".format(os.path.basename(filename),line_number,str))
         assert 0
 
-def error(str,return_value):
+def error(str,return_value=0):
     (frame, filename, line_number, function_name, lines,
      index) = inspect.getouterframes(inspect.currentframe())[1]
     print("ERROR: file {0}: line {1}: {2}".format(os.path.basename(filename),line_number,str))

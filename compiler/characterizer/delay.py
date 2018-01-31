@@ -364,7 +364,7 @@ class delay():
         for slew in slews:
             for load in loads:
                 (success, delay1, slew1, delay0, slew0) = self.run_simulation(feasible_period, load, slew)
-                debug.check(success,"Couldn't run a simulation properly.\n")
+                debug.check(success,"Couldn't run a simulation. slew={0} load={1}\n".format(slew,load))
                 LH_delay.append(delay1)
                 HL_delay.append(delay0)
                 LH_slew.append(slew1)

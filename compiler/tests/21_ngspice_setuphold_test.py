@@ -24,8 +24,7 @@ class timing_setup_test(openram_test):
         reload(characterizer)
         from characterizer import setup_hold
         if not OPTS.spice_exe:
-            self.error("Could not find {} simulator.".format(OPTS.spice_name))
-            self.assertTrue(OPTS.spice_exe)
+            debug.error("Could not find {} simulator.".format(OPTS.spice_name),-1)
         
         import sram
         import tech

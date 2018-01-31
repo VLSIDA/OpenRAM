@@ -129,7 +129,7 @@ class openram_test(unittest.TestCase):
                 if len(b1_floats)!=len(b2_floats):
                     self.fail("MISMATCH Length {0} != {1}".format(len(b1_floats),len(b2_floats)))
                 for (f1,f2) in zip(b1_floats,b2_floats):
-                    if not relative_compare(float(f1),float(f2),error_tolerance):
+                    if not self.relative_compare(float(f1),float(f2),error_tolerance):
                         self.fail("MISMATCH Float {0} != {1}".format(f1,f2))
 
                 if not b1 and not b2:

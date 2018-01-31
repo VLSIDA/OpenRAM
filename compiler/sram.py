@@ -1003,3 +1003,7 @@ class sram(design.design):
     def analytical_delay(self,slew,load):
         """ LH and HL are the same in analytical model. """
         return self.bank.analytical_delay(slew,load)
+    
+    def analytical_power(self,slew,load):
+        """ Just a test function for the power."""
+        return 1

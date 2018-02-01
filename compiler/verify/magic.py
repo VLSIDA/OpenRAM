@@ -193,6 +193,7 @@ def run_lvs(cell_name, gds_name, sp_name):
     os.chdir(OPTS.openram_temp)
     errfile = "{0}{1}.lvs.err".format(OPTS.openram_temp, cell_name)
     outfile = "{0}{1}.lvs.out".format(OPTS.openram_temp, cell_name)
+    resultsfile = "{0}lvs.results".format(OPTS.openram_temp, cell_name)    
 
     cmd = "{0}run_lvs.sh lvs 2> {1} 1> {2}".format(OPTS.openram_temp,
                                                    errfile,
@@ -202,7 +203,7 @@ def run_lvs(cell_name, gds_name, sp_name):
     os.chdir(cwd)
 
     # check the result for these lines in the summary:
-    f = open(outfile, "r")
+    f = open(resultsfile, "r")
     results = f.readlines()
     f.close()
 
@@ -213,8 +214,12 @@ def run_lvs(cell_name, gds_name, sp_name):
     # There were property errors.
     test = re.compile("Property errors were found.")
     propertyerrors = filter(test.search, results)
+    # Require pins to match?
+    # Cell pin lists for pnand2_1.spice and pnand2_1 altered to match.
+    test = re.compile(".*altered to match.")
+    pinerrors = filter(test.search, results)
 
-    total_errors = len(propertyerrors) + len(incorrect)
+    total_errors = len(propertyerrors) + len(incorrect) + len(pinerrors)
     # If we want to ignore property errors
     #total_errors = len(incorrect)
     #if len(propertyerrors)>0:
@@ -227,14 +232,7 @@ def run_lvs(cell_name, gds_name, sp_name):
     if correct == 0:
         total_errors += 1
 
-    # Require pins to match?
-    # Cell pin lists for pnand2_1.spice and pnand2_1 altered to match.
-
     if total_errors>0:
-        # check the result for these lines in the summary:
-        f = open("{}lvs.results".format(OPTS.openram_temp), "r")
-        results = f.readlines()
-        f.close()
         # Just print out the whole file, it is short.
         for e in results:
             debug.info(1,e.strip("\n"))

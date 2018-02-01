@@ -39,7 +39,8 @@ class openram_test(unittest.TestCase):
             self.reset()
             self.fail("LVS mismatch: {}".format(a.name))
 
-        self.cleanup()            
+        if OPTS.purge_temp:
+            self.cleanup()
 
     def cleanup(self):
         """ Reset the duplicate checker and cleanup files. """

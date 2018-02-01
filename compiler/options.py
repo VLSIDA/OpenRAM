@@ -42,6 +42,9 @@ class options(optparse.Values):
     output_name = "sram"
     # Use analytical delay models by default rather than (slow) characterization
     analytical_delay = True
+    # Purge the temp directory after a successful run (doesn't purge on errors, anyhow)
+    purge_temp = True
+    
 
     # These are the default modules that can be over-riden
     decoder = "hierarchical_decoder"

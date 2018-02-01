@@ -50,7 +50,9 @@ def parse_args():
         optparse.make_option("-r", "--remove_netlist_trimming", action="store_false", dest="trim_netlist",
                              help="Disable removal of noncritical memory cells during characterization"),
         optparse.make_option("-c", "--characterize", action="store_false", dest="analytical_delay",
-                             help="Perform characterization to calculate delays (default is analytical models)")
+                             help="Perform characterization to calculate delays (default is analytical models)"),
+        optparse.make_option("-d", "--dontpurge", action="store_false", dest="purge_temp",
+                             help="Don't purge the contents of the temp directory after a successful run")
         # -h --help is implicit.
     }
 
@@ -185,6 +187,9 @@ def cleanup_paths():
     """
     We should clean up the temp directory after execution.
     """
+    if not OPTS.purge_temp:
+        debug.info(0,"Preserving temp directory: {}".format(OPTS.openram_temp))
+        return
     if os.path.exists(OPTS.openram_temp):
         shutil.rmtree(OPTS.openram_temp, ignore_errors=True)
             

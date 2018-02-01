@@ -282,6 +282,7 @@ def run_sim():
     temp_stim = "{0}stim.sp".format(OPTS.openram_temp)
     import datetime
     start_time = datetime.datetime.now()
+    debug.check(OPTS.spice_exe!="","No spice simulator has been found.")
     
     if OPTS.spice_name == "xa":
         # Output the xa configurations here. FIXME: Move this to write it once.

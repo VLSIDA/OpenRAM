@@ -16,11 +16,16 @@ class lib_test(openram_test):
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         OPTS.check_lvsdrc = False
+        OPTS.spice_name="" # Unset to use any simulator
         OPTS.analytical_delay = False
         OPTS.trim_netlist = False
+
+        # This is a hack to reload the characterizer __init__ with the spice version
         import characterizer
         reload(characterizer)
         from characterizer import lib
+        if not OPTS.spice_exe:
+            debug.error("Could not find {} simulator.".format(OPTS.spice_name),-1)
 
         import sram
 

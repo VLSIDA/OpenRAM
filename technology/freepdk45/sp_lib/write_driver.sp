@@ -1,5 +1,5 @@
 
-.SUBCKT write_driver din bl br wen vdd gnd
+.SUBCKT write_driver din bl br en vdd gnd
 *inverters for enable and data input
 minP bl_bar din vdd vdd pmos_vtg w=360.000000n l=50.000000n
 minN bl_bar din gnd gnd nmos_vtg w=180.000000n l=50.000000n

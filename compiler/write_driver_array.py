@@ -69,14 +69,14 @@ class write_driver_array(design.design):
                                 offset=din_pin.ll(),
                                 width=din_pin.width(),
                                 height=din_pin.height())
-            bl_pin = self.driver_insts[i].get_pin("BL")            
+            bl_pin = self.driver_insts[i].get_pin("bl")            
             self.add_layout_pin(text="bl[{0}]".format(i),
                                 layer="metal2",
                                 offset=bl_pin.ll(),
                                 width=bl_pin.width(),
                                 height=bl_pin.height())
                            
-            br_pin = self.driver_insts[i].get_pin("BR")
+            br_pin = self.driver_insts[i].get_pin("br")
             self.add_layout_pin(text="br[{0}]".format(i),
                                 layer="metal2",
                                 offset=br_pin.ll(),

@@ -1,5 +1,5 @@
 *********************** Write_Driver ******************************
-.SUBCKT write_driver din bl br wen vdd gnd
+.SUBCKT write_driver din bl br en vdd gnd
 
 **** Inverter to conver Data_in to data_in_bar ******
 M_1 net_3 din gnd gnd n W='1.2*1u' L=0.6u

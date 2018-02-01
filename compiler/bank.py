@@ -234,8 +234,8 @@ class bank(design.design):
         """ Adding Precharge """
 
         # The wells must be far enough apart
-        # We use two well spacings because the bitcells tend to have a shared rail in the height
-        y_offset = self.bitcell_array.height + 2*drc["pwell_to_nwell"]
+        # The enclosure is for the well and the spacig is to the bitcell wells
+        y_offset = self.bitcell_array.height + 2*drc["pwell_to_nwell"] + drc["well_enclosure_active"]
         self.precharge_array_inst=self.add_inst(name="precharge_array",
                                                 mod=self.precharge_array, 
                                                 offset=vector(0,y_offset))

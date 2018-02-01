@@ -11,7 +11,7 @@ class write_driver(design.design):
     the technology library.
     """
 
-    pin_names = ["din", "BL", "BR", "en", "gnd", "vdd"]
+    pin_names = ["din", "bl", "br", "en", "gnd", "vdd"]
     (width,height) = utils.get_libcell_size("write_driver", GDS["unit"], layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "write_driver", GDS["unit"], layer["boundary"])
 

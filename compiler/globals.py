@@ -177,10 +177,6 @@ def end_openram():
     """ Clean up openram for a proper exit """
     cleanup_paths()
 
-    # Reset the static duplicate name checker for unit tests.
-    # This is needed for running unit tests.
-    import design
-    design.design.name_map=[]
     
     
 def cleanup_paths():

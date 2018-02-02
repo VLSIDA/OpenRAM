@@ -12,9 +12,10 @@ class single_level_column_mux(design.design):
     Creates a single columnmux cell.
     """
 
-    def __init__(self, name, tx_size):
+    def __init__(self, tx_size):
+        name="single_level_column_mux_{}".format(tx_size)
         design.design.__init__(self, name)
-        debug.info(2, "create single columnmux cell: {0}".format(name))
+        debug.info(2, "create single column mux cell: {0}".format(name))
 
         c = reload(__import__(OPTS.bitcell))
         self.mod_bitcell = getattr(c, OPTS.bitcell)

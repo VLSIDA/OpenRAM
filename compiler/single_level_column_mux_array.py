@@ -43,8 +43,8 @@ class single_level_column_mux_array(design.design):
         self.add_enclosure(self.mux_inst, "pwell")
 
     def add_modules(self):
-        self.mux = single_level_column_mux(name="single_level_column_mux",
-                                           tx_size=8)
+        # FIXME: Why is this 8x?
+        self.mux = single_level_column_mux(tx_size=8)
         self.add_mod(self.mux)
 
 
@@ -58,6 +58,7 @@ class single_level_column_mux_array(design.design):
         # one set of metal1 routes for select signals and a pair to interconnect the mux outputs bl/br
         # one extra route pitch is to space from the sense amp
         self.route_height = (self.words_per_row + 3)*self.m1_pitch
+        
         # mux height plus routing signal height plus well spacing at the top
         self.height = self.mux.height + self.route_height + drc["pwell_to_nwell"]
 

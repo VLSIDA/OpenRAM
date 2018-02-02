@@ -326,6 +326,7 @@ class control_logic(design.design):
         x_off += self.inv1.width
         
         # BUFFER INVERTERS FOR W_EN
+        # FIXME: Can we remove these two invs and size the previous one?
         self.pre_w_en_bar_offset = vector(x_off, y_off)
         self.pre_w_en_bar=self.add_inst(name="inv_pre_w_en_bar",
                                         mod=self.inv1,

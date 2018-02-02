@@ -242,11 +242,15 @@ class replica_bitline(design.design):
         # Add a rail in M1 from bottom to two along delay chain
         gnd_start = self.rbl_inv_inst.get_pin("gnd").ll() - self.offset_fix
         
+        self.add_rect(layer="metal2",
+                      offset=gnd_start,
+                      width=self.m2_width,
+                      height=self.rbl_inst.uy()+2*self.m2_pitch - gnd_start.y)
         self.add_layout_pin(text="gnd",
-                            layer="metal2",
+                            layer="metal1",
                             offset=gnd_start.scale(1,0),
-                            width=self.m2_width,
-                            height=self.rbl_inst.uy()+2*self.m2_pitch)
+                            width=self.m1_width,
+                            height=gnd_start.y)
                       
         # Connect the WL pins directly to gnd
         for row in range(self.rows):
@@ -273,8 +277,6 @@ class replica_bitline(design.design):
         # Connect the bitcell gnd pins to the rail
         gnd_pins = self.get_pins("gnd")
         gnd_start = gnd_pins[0].ul()
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
-                            offset=gnd_pins[0].uc())
         rbl_gnd_pins = self.rbl_inst.get_pins("gnd")
         # Add L shapes to each vertical gnd rail
         for pin in rbl_gnd_pins:

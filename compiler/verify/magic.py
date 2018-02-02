@@ -44,8 +44,8 @@ EOF
 3. netgen can perform LVS with:
 #!/bin/sh
 netgen -noconsole <<EOF
-readnet $1.spice
-readnet $1.sp
+readnet spice $1.spice
+readnet spice $1.sp
 ignore class c
 equate class {$1.spice nfet} {$2.sp n}
 equate class {$1.spice pfet} {$2.sp p}
@@ -113,8 +113,8 @@ def write_netgen_script(cell_name, sp_name):
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
     f.write("{} -noconsole << EOF\n".format(OPTS.lvs_exe[1]))
-    f.write("readnet {}.spice\n".format(cell_name))
-    f.write("readnet {}\n".format(sp_name))
+    f.write("readnet spice {}.spice\n".format(cell_name))
+    f.write("readnet spice {}\n".format(sp_name))
     f.write("ignore class c\n")
     f.write("permute transistors\n")
     f.write("equate class {{{0}.spice nfet}} {{{1} n}}\n".format(cell_name, sp_name))

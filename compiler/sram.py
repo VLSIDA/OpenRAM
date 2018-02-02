@@ -650,7 +650,7 @@ class sram(design.design):
         # Connect the output bar to select 0
         msb_out_pin = self.msb_address_inst.get_pin("dout_bar[0]")
         msb_out_pos = msb_out_pin.rc()
-        out_extend_right_pos = msb_out_pos + vector(self.m2_pitch,0)
+        out_extend_right_pos = msb_out_pos + vector(2*self.m2_pitch,0)
         out_extend_up_pos = out_extend_right_pos + vector(0,self.m2_width)
         rail_pos = vector(self.vert_control_bus_positions["bank_sel[0]"].x,out_extend_up_pos.y)
         self.add_path("metal2",[msb_out_pos,out_extend_right_pos,out_extend_up_pos])
@@ -660,7 +660,7 @@ class sram(design.design):
         # Connect the output to select 1
         msb_out_pin = self.msb_address_inst.get_pin("dout[0]")
         msb_out_pos = msb_out_pin.rc()
-        out_extend_right_pos = msb_out_pos + vector(self.m2_pitch,0)
+        out_extend_right_pos = msb_out_pos + vector(2*self.m2_pitch,0)
         out_extend_down_pos = out_extend_right_pos - vector(0,2*self.m1_pitch)
         rail_pos = vector(self.vert_control_bus_positions["bank_sel[1]"].x,out_extend_down_pos.y)
         self.add_path("metal2",[msb_out_pos,out_extend_right_pos,out_extend_down_pos])

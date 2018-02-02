@@ -28,9 +28,9 @@ class single_level_column_mux(design.design):
     def create_layout(self):
 
         self.add_ptx()
-
+        self.pin_height = 2*self.m2_width
         self.width = self.bitcell.width
-        self.height = self.nmos2.uy()
+        self.height = self.nmos2.uy() + self.pin_height
         self.connect_poly()
         self.add_gnd_rail()
         self.add_bitline_pins()
@@ -43,26 +43,25 @@ class single_level_column_mux(design.design):
         bl_pos = vector(self.bitcell.get_pin("BL").lx(), 0)
         br_pos = vector(self.bitcell.get_pin("BR").lx(), 0)
 
-        pin_height = 2*self.m2_width
         # bl and br
         self.add_layout_pin(text="bl",
                             layer="metal2",
-                            offset=bl_pos + vector(0,self.height - pin_height),
-                            height=pin_height)
+                            offset=bl_pos + vector(0,self.height - self.pin_height),
+                            height=self.pin_height)
         self.add_layout_pin(text="br",
                             layer="metal2",
-                            offset=br_pos + vector(0,self.height - pin_height),
-                            height=pin_height)
+                            offset=br_pos + vector(0,self.height - self.pin_height),
+                            height=self.pin_height)
         
         # bl_out and br_out
         self.add_layout_pin(text="bl_out",
                             layer="metal2",
                             offset=bl_pos,
-                            height=pin_height)
+                            height=self.pin_height)
         self.add_layout_pin(text="br_out",
                             layer="metal2",
                             offset=br_pos,
-                            height=pin_height)
+                            height=self.pin_height)
 
 
     def add_ptx(self):

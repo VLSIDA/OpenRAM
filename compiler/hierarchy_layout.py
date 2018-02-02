@@ -60,21 +60,44 @@ class layout(lef.lef):
     def find_lowest_coords(self):
         """Finds the lowest set of 2d cartesian coordinates within
         this layout"""
-        
-        lowestx1 = min(obj.lx() for obj in self.objs if obj.name!="label")
-        lowesty1 = min(obj.by() for obj in self.objs if obj.name!="label")
-        lowestx2 = min(inst.lx() for inst in self.insts)
-        lowesty2 = min(inst.by() for inst in self.insts)
-        return vector(min(lowestx1, lowestx2), min(lowesty1, lowesty2))
+
+        if len(self.objs)>0:
+            lowestx1 = min(obj.lx() for obj in self.objs if obj.name!="label")
+            lowesty1 = min(obj.by() for obj in self.objs if obj.name!="label")
+        else:
+            lowestx1=lowesty1=None
+        if len(self.insts)>0:
+            lowestx2 = min(inst.lx() for inst in self.insts)
+            lowesty2 = min(inst.by() for inst in self.insts)
+        else:
+            lowestx2=lowesty2=None
+        if lowestx1==None:
+            return vector(lowestx2,lowesty2)
+        elif lowestx2==None:
+            return vector(lowestx1,lowesty1)            
+        else:
+            return vector(min(lowestx1, lowestx2), min(lowesty1, lowesty2))
 
     def find_highest_coords(self):
         """Finds the highest set of 2d cartesian coordinates within
         this layout"""
-        highestx1 = min(obj.rx() for obj in self.objs if obj.name!="label")
-        highesty1 = min(obj.uy() for obj in self.objs if obj.name!="label")
-        highestx2 = min(inst.rx() for inst in self.insts)
-        highesty2 = min(inst.uy() for inst in self.insts)
-        return vector(min(highestx1, highestx2), min(highesty1, highesty2))
+
+        if len(self.objs)>0:
+            highestx1 = max(obj.rx() for obj in self.objs if obj.name!="label")
+            highesty1 = max(obj.uy() for obj in self.objs if obj.name!="label")
+        else:
+            highestx1=highesty1=None        
+        if len(self.insts)>0:            
+            highestx2 = max(inst.rx() for inst in self.insts)
+            highesty2 = max(inst.uy() for inst in self.insts)
+        else:
+            highestx2=highesty2=None
+        if highestx1==None:
+            return vector(highestx2,highesty2)
+        elif highestx2==None:
+            return vector(highestx1,highesty1)            
+        else:
+            return vector(max(highestx1, highestx2), max(highesty1, highesty2))
 
 
     def translate_all(self, offset):

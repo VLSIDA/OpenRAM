@@ -99,8 +99,8 @@ class bank(design.design):
         self.add_precharge_array()
         
         if self.col_addr_size > 0:
+            self.column_mux_height = self.column_mux_array.height + 0.5*self.m2_width
             self.add_column_mux_array()
-            self.column_mux_height = self.column_mux_array.height
         else:
             self.column_mux_height = 0
         if self.col_addr_size > 1: # size 1 is from addr FF
@@ -249,7 +249,7 @@ class bank(design.design):
     def add_column_mux_array(self):
         """ Adding Column Mux when words_per_row > 1 . """
 
-        y_offset = self.column_mux_array.height
+        y_offset = self.column_mux_height
         self.col_mux_array_inst=self.add_inst(name="column_mux_array",
                                               mod=self.column_mux_array,
                                               offset=vector(0,y_offset).scale(-1,-1))

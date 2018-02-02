@@ -99,6 +99,8 @@ class bank(design.design):
         self.add_precharge_array()
         
         if self.col_addr_size > 0:
+            # The m2 width is because the 6T cell may have vias on the boundary edge for
+            # overlapping when making the array
             self.column_mux_height = self.column_mux_array.height + 0.5*self.m2_width
             self.add_column_mux_array()
         else:
@@ -434,7 +436,8 @@ class bank(design.design):
             
 
         # Place the col decoder just to the left of the control bus
-        x_off = self.m2_pitch + self.overall_central_bus_width + self.col_decoder.width
+        gap = max(drc["pwell_to_nwell"], 2*self.m2_pitch)
+        x_off = gap + self.overall_central_bus_width + self.col_decoder.width 
         # Place the col decoder below the the address flops which are below the row decoder (lave some space for wells)
         vertical_gap = max(drc["pwell_to_nwell"], 2*self.m2_pitch) 
         y_off = self.decoder.predecoder_height + self.msf_address.width + self.col_decoder.height + 2*vertical_gap

@@ -86,7 +86,7 @@ def write_magic_script(cell_name, gds_name, extract=False):
     f.write("drc count total\n")
     f.write("drc count\n")
     if extract:
-        f.write("extract\n")
+        f.write("extract all\n")
         f.write("ext2spice hierarchy on\n")        
         f.write("ext2spice scale off\n")
         # Can choose hspice, ngspice, or spice3,

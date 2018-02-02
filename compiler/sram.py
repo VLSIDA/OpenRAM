@@ -1006,4 +1006,4 @@ class sram(design.design):
     
     def analytical_power(self,slew,load):
         """ Just a test function for the power."""
-        return 1
+        return self.bank.analytical_power(slew,load)

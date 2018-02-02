@@ -34,3 +34,8 @@ class bitcell(design.design):
         c_para = spice["min_tx_drain_c"]
         result = self.cal_delay_with_rc(r = r, c =  c_para+load, slew = slew, swing = swing)
         return result
+        
+    def analytical_power(self, slew, load=0, swing = 0.5):
+        #Power of the bitcell. Mostly known for leakage, but dynamic can also be factored in.
+        #Just skeleton code for now which returns a magic number.
+        return 5

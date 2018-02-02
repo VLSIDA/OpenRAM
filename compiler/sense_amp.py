@@ -30,3 +30,7 @@ class sense_amp(design.design):
         result = self.cal_delay_with_rc(r = r, c =  c_para+load, slew = slew)
         return self.return_delay(result.delay, result.slew)
 
+    def analytical_power(self, slew, load=0.0):
+        #This is just skeleton code which returns a magic number. The sense amp consumes static
+        #power during its operation and some dynamic power due to the switching.
+        return 2

@@ -206,5 +206,14 @@ class wordline_driver(design.design):
 
         return decode_t_net + net_t_wl
     
+    def analytical_power(self, slew, load=0):
+        # decode -> net
+        decode_p_net = self.nand2.analytical_power(slew, self.inv.input_load())
+
+        # net -> wl
+        net_p_wl = self.inv.analytical_power(slew, load)
+
+        return decode_p_net + net_p_wl
+        
     def input_load(self):
         return self.nand2.input_load()

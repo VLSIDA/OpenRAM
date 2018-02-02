@@ -26,4 +26,7 @@ class ms_flop(design.design):
         from tech import spice
         result = self.return_delay(spice["msflop_delay"], spice["msflop_slew"])
         return result
+        
+    def analytical_power(self, slew, load = 0.0):
+        return 4
 

@@ -32,6 +32,10 @@ class hierarchical_decoder_test(openram_test):
         # a = hierarchical_decoder.hierarchical_decoder(rows=8)
         # self.local_check(a)
 
+        debug.info(1, "Testing 16 row sample for hierarchical_decoder")
+        a = hierarchical_decoder.hierarchical_decoder(rows=16)
+        self.local_check(a)
+
         debug.info(1, "Testing 32 row sample for hierarchical_decoder")
         a = hierarchical_decoder.hierarchical_decoder(rows=32)
         self.local_check(a)

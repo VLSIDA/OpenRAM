@@ -119,6 +119,9 @@ def write_netgen_script(cell_name, sp_name):
     f.write("permute transistors\n")
     f.write("equate class {{{0}.spice nfet}} {{{1} n}}\n".format(cell_name, sp_name))
     f.write("equate class {{{0}.spice pfet}} {{{1} p}}\n".format(cell_name, sp_name))
+    # This circuit has symmetries and needs to be flattened to resolve them or the banks won't pass
+    # Is there a more elegant way to add this when needed?
+    f.write("flatten class {{{0}.spice precharge_array}}\n".format(cell_name))
     f.write("property {{{0}.spice nfet}} remove as ad ps pd\n".format(cell_name))
     f.write("property {{{0}.spice pfet}} remove as ad ps pd\n".format(cell_name))
     # Allow some flexibility in W size because magic will snap to a lambda grid
@@ -142,7 +145,7 @@ def run_drc(cell_name, gds_name, extract=False):
     cwd = os.getcwd()
     os.chdir(OPTS.openram_temp)
     errfile = "{0}{1}.drc.err".format(OPTS.openram_temp, cell_name)
-    outfile = "{0}{1}.drc.out".format(OPTS.openram_temp, cell_name)
+    outfile = "{0}{1}.drc.summary".format(OPTS.openram_temp, cell_name)
 
     cmd = "{0}run_drc.sh 2> {1} 1> {2}".format(OPTS.openram_temp,
                                                errfile,

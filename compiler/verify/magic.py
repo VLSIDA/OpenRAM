@@ -127,7 +127,7 @@ def write_netgen_script(cell_name, sp_name):
     #                                                                     cell_name))
     # f.write("property {{{0}{1}.spice pfet}} tolerance {{w 0.1}}\n".format(OPTS.openram_temp,
     #                                                                     cell_name))
-    f.write("lvs {0}.spice {{{1} {0}}} setup.tcl lvs.results\n".format(cell_name, sp_name))
+    f.write("lvs {0}.spice {{{1} {0}}} setup.tcl {0}.lvs.report\n".format(cell_name, sp_name))
     f.write("quit\n")
     f.write("EOF\n")
     f.close()
@@ -193,7 +193,7 @@ def run_lvs(cell_name, gds_name, sp_name):
     os.chdir(OPTS.openram_temp)
     errfile = "{0}{1}.lvs.err".format(OPTS.openram_temp, cell_name)
     outfile = "{0}{1}.lvs.out".format(OPTS.openram_temp, cell_name)
-    resultsfile = "{0}lvs.results".format(OPTS.openram_temp, cell_name)    
+    resultsfile = "{0}{1}.lvs.report".format(OPTS.openram_temp, cell_name)    
 
     cmd = "{0}run_lvs.sh lvs 2> {1} 1> {2}".format(OPTS.openram_temp,
                                                    errfile,
@@ -216,10 +216,12 @@ def run_lvs(cell_name, gds_name, sp_name):
     propertyerrors = filter(test.search, results)
     # Require pins to match?
     # Cell pin lists for pnand2_1.spice and pnand2_1 altered to match.
-    test = re.compile(".*altered to match.")
-    pinerrors = filter(test.search, results)
-
-    total_errors = len(propertyerrors) + len(incorrect) + len(pinerrors)
+    # test = re.compile(".*altered to match.")
+    # pinerrors = filter(test.search, results)
+    # if len(pinerrors)>0:
+    #     debug.warning("Pins altered to match in {}.".format(cell_name))
+    
+    total_errors = len(propertyerrors) + len(incorrect)
     # If we want to ignore property errors
     #total_errors = len(incorrect)
     #if len(propertyerrors)>0:
@@ -236,7 +238,7 @@ def run_lvs(cell_name, gds_name, sp_name):
         # Just print out the whole file, it is short.
         for e in results:
             debug.info(1,e.strip("\n"))
-        debug.error("LVS mismatch (results in {}lvs.results)".format(OPTS.openram_temp)) 
+        debug.error("LVS mismatch (results in {})".format(resultsfile)) 
 
     return total_errors
 

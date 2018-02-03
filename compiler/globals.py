@@ -12,7 +12,7 @@ import re
 import importlib
 
 # Current version of OpenRAM.
-VERSION = "1.01"
+VERSION = "Beta"
 
 USAGE = "Usage: openram.py [options] <config file>\nUse -h for help.\n"
 

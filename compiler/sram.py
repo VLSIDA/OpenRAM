@@ -989,7 +989,13 @@ class sram(design.design):
         ############################################################
         sp = open(sp_name, 'w')
 
+        sp.write("**************************************************\n")
         sp.write("* OpenRAM generated memory.\n")
+        sp.write("* Words: {}\n".format(self.num_words))
+        sp.write("* Data bits: {}\n".format(self.word_size))
+        sp.write("* Banks: {}\n".format(self.num_banks))
+        sp.write("* Column mux: {}:1\n".format(self.words_per_row))
+        sp.write("**************************************************\n")        
         # This causes unit test mismatch
         # sp.write("* Created: {0}\n".format(datetime.datetime.now()))
         # sp.write("* User: {0}\n".format(getpass.getuser()))

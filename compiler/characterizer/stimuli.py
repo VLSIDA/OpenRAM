@@ -290,7 +290,7 @@ def run_sim():
         xa_cfg.write("set_sim_level -level 7\n")
         xa_cfg.write("set_powernet_level 7 -node vdd\n")
         xa_cfg.close()
-        cmd = "{0} {1} -c {2}xa.cfg -o {2}xa -mt 20".format(OPTS.spice_exe,
+        cmd = "{0} {1} -c {2}xa.cfg -o {2}xa -mt 2".format(OPTS.spice_exe,
                                                temp_stim,
                                                OPTS.openram_temp)
         valid_retcode=0

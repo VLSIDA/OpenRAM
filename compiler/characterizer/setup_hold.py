@@ -145,7 +145,8 @@ class setup_hold():
                                targ_val=targ_val,
                                trig_dir="RISE",
                                targ_dir=dout_rise_or_fall,
-                               td=1.9*self.period)
+                               trig_td=1.9*self.period,
+                               targ_td=1.9*self.period)
 
         targ_name = "data"
         # Start triggers right after initialize value is returned to normal
@@ -158,7 +159,8 @@ class setup_hold():
                                targ_val=targ_val,
                                trig_dir="RISE",
                                targ_dir=din_rise_or_fall,
-                               td=1.2*self.period)
+                               trig_td=1.2*self.period,
+                               targ_td=1.2*self.period)
         
 
 

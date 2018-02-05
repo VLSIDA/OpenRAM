@@ -48,7 +48,10 @@ class trim_spice():
 
         # Split up the address and convert to an int
         wl_address = int(address[self.col_addr_size:],2)
-        col_address = int(address[0:self.col_addr_size],2)
+        if self.col_addr_size>1:
+            col_address = int(address[0:self.col_addr_size],2)
+        else:
+            col_address = 0
         # 1. Keep cells in the bitcell array based on WL and BL
         wl_name = "wl[{}]".format(wl_address)
         bl_name = "bl[{}]".format(self.words_per_row*data_bit + col_address)

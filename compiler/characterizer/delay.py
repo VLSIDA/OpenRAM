@@ -40,9 +40,9 @@ class delay():
 
 
     def write_stimulus(self, period, load, slew):
-        """Creates a stimulus file for simulations to probe a certain bitcell, given an address and data-position of the data-word 
-        (probe-address form: '111010000' LSB=0, MSB=1)
-        (probe_data form: number corresponding to the bit position of data-bus, begins with position 0) 
+        """ Creates a stimulus file for simulations to probe a bitcell at a given clock period.
+        Address and bit were previously set with set_probe().
+        Input slew (in ns) and output capacitive load (in fF) are required for charaterization.
         """
         self.check_arguments()
 
@@ -52,7 +52,7 @@ class delay():
         # creates and opens stimulus file for writing
         temp_stim = "{0}/stim.sp".format(OPTS.openram_temp)
         self.sf = open(temp_stim, "w")
-        self.sf.write("* Stimulus for period of {0}n load={1} slew={2}\n\n".format(period,load,slew))
+        self.sf.write("* Stimulus for period of {0}n load={1}fF slew={2}ns\n\n".format(period,load,slew))
 
         # include files in stimulus file
         model_list = tech.spice["fet_models"] + [self.sram_sp_file]
@@ -141,7 +141,8 @@ class delay():
                                targ_val=targ_val,
                                trig_dir="FALL",
                                targ_dir="FALL",
-                               td=self.cycle_times[self.read0_cycle]+0.5*period)
+                               trig_td=self.cycle_times[self.read0_cycle],
+                               targ_td=self.cycle_times[self.read0_cycle]+0.5*period)
 
         stimuli.gen_meas_delay(stim_file=self.sf,
                                meas_name="DELAY1",
@@ -151,27 +152,30 @@ class delay():
                                targ_val=targ_val,
                                trig_dir="FALL",
                                targ_dir="RISE",
-                               td=self.cycle_times[self.read1_cycle]+0.5*period)
+                               trig_td=self.cycle_times[self.read1_cycle],
+                               targ_td=self.cycle_times[self.read1_cycle]+0.5*period)
 
         stimuli.gen_meas_delay(stim_file=self.sf,
                                meas_name="SLEW0",
                                trig_name=targ_name,
                                targ_name=targ_name,
-                               trig_val=0.9*self.vdd,
-                               targ_val=0.1*self.vdd,
+                               trig_val=0.8*self.vdd,
+                               targ_val=0.2*self.vdd,
                                trig_dir="FALL",
                                targ_dir="FALL",
-                               td=self.cycle_times[self.read0_cycle]+0.5*period)
+                               trig_td=self.cycle_times[self.read0_cycle],
+                               targ_td=self.cycle_times[self.read0_cycle]+0.5*period)
 
         stimuli.gen_meas_delay(stim_file=self.sf,
                                meas_name="SLEW1",
                                trig_name=targ_name,
                                targ_name=targ_name,
-                               trig_val=0.1*self.vdd,
-                               targ_val=0.9*self.vdd,
+                               trig_val=0.2*self.vdd,
+                               targ_val=0.8*self.vdd,
                                trig_dir="RISE",
                                targ_dir="RISE",
-                               td=self.cycle_times[self.read1_cycle]+0.5*period)
+                               trig_td=self.cycle_times[self.read1_cycle],
+                               targ_td=self.cycle_times[self.read1_cycle]+0.5*period)
         
         # add measure statements for power
         t_initial = self.cycle_times[self.write0_cycle]

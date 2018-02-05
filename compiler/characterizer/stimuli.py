@@ -275,7 +275,7 @@ def write_include(stim_file, models):
         if os.path.isfile(item):
             stim_file.write(".include \"{0}\"\n\n".format(item))
         else:
-            debug.error("Could not find spice model: {0}".format(item))
+            debug.error("Could not find spice model: {0}\nSet SPICE_MODEL_DIR to over-ride path.\n".format(item))
 
 
 def write_supply(stim_file):

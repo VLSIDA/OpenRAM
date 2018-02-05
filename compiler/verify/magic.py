@@ -184,9 +184,10 @@ def run_drc(cell_name, gds_name, extract=False):
     return errors
 
 
-def run_lvs(cell_name, gds_name, sp_name):
+def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     """Run LVS check on a given top-level name which is
-       implemented in gds_name and sp_name. """
+    implemented in gds_name and sp_name. Final verification will
+    ensure that there are no remaining virtual conections. """
 
     run_drc(cell_name, gds_name, extract=True)
     write_netgen_script(cell_name, sp_name)

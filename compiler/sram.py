@@ -72,7 +72,7 @@ class sram(design.design):
         self.width = sizes[0]
         self.height = sizes[1]
         
-        self.DRC_LVS()
+        self.DRC_LVS(final_verification=True)
 
     def compute_sizes(self):
         """  Computes the organization of the memory using bitcell size by trying to make it square."""

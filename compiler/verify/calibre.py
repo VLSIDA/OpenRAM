@@ -137,9 +137,11 @@ def run_drc(cell_name, gds_name):
     return errors
 
 
-def run_lvs(cell_name, gds_name, sp_name):
+def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     """Run LVS check on a given top-level name which is
-       implemented in gds_name and sp_name. """
+    implemented in gds_name and sp_name. Final verification will
+    ensure that there are no remaining virtual conections. """
+
     from tech import drc
     lvs_rules = drc["lvs_rules"]
     lvs_runset = {
@@ -154,7 +156,6 @@ def run_lvs(cell_name, gds_name, sp_name):
         'lvsPowerNames': 'vdd',
         'lvsGroundNames': 'gnd',
         'lvsIncludeSVRFCmds': 1,
-        'lvsSVRFCmds': '{VIRTUAL CONNECT NAME VDD? GND? ?}',
         'lvsIgnorePorts': 1,
         'lvsERCDatabase': OPTS.openram_temp + cell_name + ".erc.results",
         'lvsERCSummaryFile': OPTS.openram_temp + cell_name + ".erc.summary",
@@ -162,9 +163,17 @@ def run_lvs(cell_name, gds_name, sp_name):
         'lvsMaskDBFile': OPTS.openram_temp + cell_name + ".maskdb",
         'cmnFDILayerMapFile': drc["layer_map"],
         'cmnFDIUseLayerMap': 1,
-        'cmnVConnectNames': 'vdd, gnd',
+        'lvsRecognizeGates': 'NONE'
         #'cmnVConnectNamesState' : 'ALL', #connects all nets with the same name
     }
+
+    # This should be removed for final verification
+    if not final_verification:
+        lvs_runset['cmnVConnectReport']=1
+        lvs_runset['cmnVConnectNamesState']='SOME'
+        lvs_runset['cmnVConnectNames']='vdd gnd'
+
+
 
     # write the runset file
     f = open(OPTS.openram_temp + "lvs_runset", "w")

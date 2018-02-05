@@ -77,7 +77,7 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
         return inst_map
         
 
-    def DRC_LVS(self):
+    def DRC_LVS(self, final_verification=False):
         """Checks both DRC and LVS for a module"""
         if OPTS.check_lvsdrc:
             tempspice = OPTS.openram_temp + "/temp.sp"
@@ -85,7 +85,7 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
             self.sp_write(tempspice)
             self.gds_write(tempgds)
             debug.check(verify.run_drc(self.name, tempgds) == 0,"DRC failed for {0}".format(self.name))
-            debug.check(verify.run_lvs(self.name, tempgds, tempspice) == 0,"LVS failed for {0}".format(self.name))
+            debug.check(verify.run_lvs(self.name, tempgds, tempspice, final_verification) == 0,"LVS failed for {0}".format(self.name))
             os.remove(tempspice)
             os.remove(tempgds)
 
@@ -97,14 +97,14 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
             debug.check(verify.run_drc(self.name, tempgds) == 0,"DRC failed for {0}".format(self.name))
             os.remove(tempgds)
 
-    def LVS(self):
+    def LVS(self, final_verification=False):
         """Checks LVS for a module"""
         if OPTS.check_lvsdrc:
             tempspice = OPTS.openram_temp + "/temp.sp"
             tempgds = OPTS.openram_temp + "/temp.gds"
             self.sp_write(tempspice)
             self.gds_write(tempgds)
-            debug.check(verify.run_lvs(self.name, tempgds, tempspice) == 0,"LVS failed for {0}".format(self.name))
+            debug.check(verify.run_lvs(self.name, tempgds, tempspice, final_verification) == 0,"LVS failed for {0}".format(self.name))
             os.remove(tempspice)
             os.remove(tempgds)
 

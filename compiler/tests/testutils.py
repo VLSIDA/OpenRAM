@@ -18,7 +18,7 @@ class openram_test(unittest.TestCase):
         for f in files:
             os.remove(f)        
     
-    def local_check(self, a):
+    def local_check(self, a, final_verification=False):
 
         tempspice = OPTS.openram_temp + "temp.sp"
         tempgds = OPTS.openram_temp + "temp.gds"
@@ -35,7 +35,7 @@ class openram_test(unittest.TestCase):
 
             
         try:
-            self.assertTrue(verify.run_lvs(a.name, tempgds, tempspice)==0)
+            self.assertTrue(verify.run_lvs(a.name, tempgds, tempspice, final_verification)==0)
         except:
             self.reset()
             self.fail("LVS mismatch: {}".format(a.name))

@@ -116,8 +116,8 @@ class delay():
                           
         self.write_measures(period)
 
-        # run until the last cycle time
-        stimuli.write_control(self.sf,self.cycle_times[-1])
+        # run until the end of the cycle time
+        stimuli.write_control(self.sf,self.cycle_times[-1] + period)
 
         self.sf.close()
 
@@ -409,41 +409,41 @@ class delay():
         self.cycle_times = []
         # cycle0: W data 1 address 1111 to initialize cell to a value
         self.cycle_times.append(t_current)
-        self.cycle_comments.append("Cycle0 {}ns: W data 1 address 111 to initialize cell".format(t_current))
+        self.cycle_comments.append("Cycle0 {}ns: W data 1 address 11..11 to initialize cell".format(t_current))
         t_current += period
 
         # cycle1: W data 0 address 1111 (to ensure a write of value works)
         self.cycle_times.append(t_current)
         self.write0_cycle=1
-        self.cycle_comments.append("Cycle1 {}ns: W data 0 address 111 (to ensure a write of value works)".format(t_current))
+        self.cycle_comments.append("Cycle1 {}ns: W data 0 address 11..11 (to ensure a write of value works)".format(t_current))
         t_current += period
         
         # cycle2: W data 1 address 0000 (to clear the data bus cap)
         self.cycle_times.append(t_current)
-        self.cycle_comments.append("Cycle2 {}ns: W data 1 address 0000 (to clear bus caps)".format(t_current))
+        self.cycle_comments.append("Cycle2 {}ns: W data 1 address 00..00 (to clear bus caps)".format(t_current))
         t_current += period
 
         # cycle3: R data 0 address 1111 to check W0 works
         self.cycle_times.append(t_current)
         self.read0_cycle=3
-        self.cycle_comments.append("Cycle3 {}ns: R data 0 address 1111 to check W0 worked".format(t_current))
+        self.cycle_comments.append("Cycle3 {}ns: R data 0 address 11..11 to check W0 worked".format(t_current))
         t_current += period
 
         # cycle4: W data 1 address 1111 (to ensure a write of value works)
         self.cycle_times.append(t_current)
         self.write1_cycle=4
-        self.cycle_comments.append("Cycle4 {}ns: W data 1 address 1111 (to ensure a write of value worked)".format(t_current))
+        self.cycle_comments.append("Cycle4 {}ns: W data 1 address 11..11 (to ensure a write of value worked)".format(t_current))
         t_current += period
 
         # cycle5: W data 0 address 0000 (to clear the data bus cap)
         self.cycle_times.append(t_current)
-        self.cycle_comments.append("Cycle5 {}ns: W data 0 address 0000 (to clear bus caps)".format(t_current))
+        self.cycle_comments.append("Cycle5 {}ns: W data 0 address 00..00 (to clear bus caps)".format(t_current))
         t_current += period
         
         # cycle6: R data 1 address 1111 to check W1 works
         self.cycle_times.append(t_current)
         self.read1_cycle=6
-        self.cycle_comments.append("Cycle6 {}ns: R data 1 address 1111 to check W1 worked".format(t_current))
+        self.cycle_comments.append("Cycle6 {}ns: R data 1 address 11..11 to check W1 worked".format(t_current))
         t_current += period
 
         # cycle7: wait a clock period to end the simulation
@@ -451,8 +451,6 @@ class delay():
         self.cycle_comments.append("Cycle7 {}ns: Idle period to end simulation".format(t_current))
         t_current += period
 
-        
-        
 
     def analytical_model(self,sram, slews, loads):
         """ Just return the analytical model results for the SRAM. 

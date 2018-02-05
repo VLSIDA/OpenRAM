@@ -77,8 +77,6 @@ class control_logic(design.design):
         # These aren't for instantiating, but we use them to get the dimensions
         self.poly_contact_offset = vector(0.5*contact.poly.width,0.5*contact.poly.height)
 
-        # For different layer width vias
-        self.m1m2_offset_fix = vector(0,0.5*(drc["minwidth_metal2"]-drc["minwidth_metal1"]))
         # M1/M2 routing pitch is based on contacted pitch
         self.m1_pitch = max(contact.m1m2.width,contact.m1m2.height) + max(drc["metal1_to_metal1"],drc["metal2_to_metal2"])
         self.m2_pitch = max(contact.m2m3.width,contact.m2m3.height) + max(drc["metal2_to_metal2"],drc["metal3_to_metal3"])
@@ -87,10 +85,6 @@ class control_logic(design.design):
         # Some cells may have pwell/nwell spacing problems too when the wells are different heights.
         self.cell_gap = max(self.m2_pitch,drc["pwell_to_nwell"])
 
-        # Amount to shift a 90 degree rotated via from center-line path routing to it's offset
-        self.m1m2_via_offset = vector(contact.m1m2.first_layer_height,-0.5*drc["minwidth_metal2"])
-        self.m2m3_via_offset = vector(contact.m2m3.first_layer_height,-0.5*drc["minwidth_metal3"])
-        
         # First RAIL Parameters: gnd, oe, oebar, cs, we, clk_buf, clk_bar
         self.rail_1_start_x = 0
         self.num_rails_1 = 8
@@ -513,11 +507,25 @@ class control_logic(design.design):
                             offset=clk_buf_rail_position,
                             rotate=90)
                               
-        # clk_bar
-        self.connect_rail_from_left_m2m3(self.clk_bar,"Z","clk_bar")        
+        # clk_bar, routes over the clock buffer vdd rail
+        clk_pin = self.clk_bar.get_pin("Z")
+        vdd_pin = self.clk_bar.get_pin("vdd")
+        # move the output pin up to metal2
         self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=self.clk_bar.get_pin("Z").rc(),
+                            offset=clk_pin.rc(),
                             rotate=90)
+        # route to a position over the supply rail
+        in_pos = vector(clk_pin.rx(), vdd_pin.cy())
+        self.add_path("metal2",[clk_pin.rc(), in_pos])
+        # connect that position to the control bus
+        rail_pos = vector(self.rail_1_x_offsets["clk_bar"], in_pos.y)
+        self.add_wire(("metal3","via2","metal2"),[in_pos, rail_pos])
+        self.add_via_center(layers=("metal2","via2","metal3"),
+                     offset=in_pos,
+                     rotate=90)
+        self.add_via_center(layers=("metal2","via2","metal3"),
+                     offset=rail_pos,
+                     rotate=90)
         
         # clk_buf to msf control flops
         msf_clk_pos = self.msf_inst.get_pin("clk").bc()

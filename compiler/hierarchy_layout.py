@@ -166,9 +166,11 @@ class layout(lef.lef):
             debug.error("Nonrectilinear center rect!",-1)
         elif start.x!=end.x:
             offset = vector(0,0.5*minwidth_layer)
+            return self.add_rect(layer,start-offset,end.x-start.x,minwidth_layer)
         else:
             offset = vector(0.5*minwidth_layer,0)
-        return self.add_rect(layer,start-offset,end.x-start.x,minwidth_layer)
+            return self.add_rect(layer,start-offset,minwidth_layer,end.y-start.y)
+
 
     
     def get_pin(self, text):

@@ -1,8 +1,9 @@
-import unittest
+import unittest,warnings
 import sys,os,glob
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+import debug
 
 class openram_test(unittest.TestCase):
     """ Base unit test that we have some shared classes in. """
@@ -18,7 +19,7 @@ class openram_test(unittest.TestCase):
             os.remove(f)        
     
     def local_check(self, a):
-        
+
         tempspice = OPTS.openram_temp + "temp.sp"
         tempgds = OPTS.openram_temp + "temp.gds"
 

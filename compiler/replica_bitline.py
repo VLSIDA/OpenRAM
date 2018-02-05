@@ -240,39 +240,37 @@ class replica_bitline(design.design):
         """ Route all signals connected to gnd """
         
         # Add a rail in M1 from bottom to two along delay chain
-        gnd_start = self.rbl_inv_inst.get_pin("gnd").ll() - self.offset_fix
-        
-        self.add_rect(layer="metal2",
-                      offset=gnd_start,
-                      width=self.m2_width,
-                      height=self.rbl_inst.uy()+2*self.m2_pitch - gnd_start.y)
-        self.add_layout_pin(text="gnd",
-                            layer="metal1",
-                            offset=gnd_start.scale(1,0),
-                            width=self.m1_width,
-                            height=gnd_start.y)
+        gnd_start = self.rbl_inv_inst.get_pin("gnd").bc() 
+        gnd_end = vector(gnd_start.x, self.rbl_inst.uy()+2*self.m2_pitch)
+        self.add_segment_center(layer="metal2",
+                                start=gnd_start,
+                                end=gnd_end)
+        self.add_layout_pin_center_segment(text="gnd",
+                                           layer="metal1",
+                                           start=gnd_start.scale(1,0),
+                                           end=gnd_start)
                       
         # Connect the WL pins directly to gnd
+        gnd_pin = self.get_pin("gnd").rc()
         for row in range(self.rows):
             wl = "wl[{}]".format(row)
             pin = self.rbl_inst.get_pin(wl)
-            offset = vector(gnd_start.x,pin.by())
-            self.add_rect(layer="metal1",
-                          offset=offset,
-                          width=self.rbl_offset.x-gnd_start.x,
-                          height=self.m1_width)
-            self.add_via(layers=("metal1", "via1", "metal2"),
-                         offset=offset)
+            start = vector(gnd_pin.x,pin.cy())
+            self.add_segment_center(layer="metal1",
+                                    start=start,
+                                    end=pin.lc())
+            self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                offset=start)
 
         # Add via for the delay chain
-        offset = self.delay_chain_offset - vector(0.5*self.m1_width,0) - self.offset_fix
-        self.add_via(layers=("metal1", "via1", "metal2"),
-                     offset=offset)
+        offset = self.dc_inst.get_pins("gnd")[0].bc() + vector(0.5*contact.m1m2.width,0.5*contact.m1m2.height)
+        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                            offset=offset)
 
         # Add via for the inverter
-        offset = self.rbl_inv_offset - vector(0.5*self.m1_width,contact.m1m2.height) - self.offset_fix
-        self.add_via(layers=("metal1", "via1", "metal2"),
-                     offset=offset)
+        offset = self.rbl_inv_inst.get_pin("gnd").bc() - vector(0,0.5*contact.m1m2.height)
+        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                            offset=offset)
 
         # Connect the bitcell gnd pins to the rail
         gnd_pins = self.get_pins("gnd")

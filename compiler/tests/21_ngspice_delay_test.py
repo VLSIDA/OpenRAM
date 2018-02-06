@@ -47,25 +47,25 @@ class timing_sram_test(openram_test):
         slews = [tech.spice["rise_time"]*2]
         data = d.analyze(probe_address, probe_data,slews,loads)
         if OPTS.tech_name == "freepdk45":
-            golden_data = {'read1_power': 0.026660760000000002,
-                           'read0_power': 0.02711731,
-                           'write0_power': 0.02501428,
-                           'delay1': [0.04867702],
-                           'delay0': [0.1423633],
-                           'min_period': 0.332,
-                           'write1_power': 0.024162890000000003,
-                           'slew0': [0.02733451],
-                           'slew1': [0.02121624]}
+            golden_data = {'read1_power': 0.03228762,
+                           'read0_power': 0.03281849,
+                           'write0_power': 0.02902607,
+                           'delay1': [0.059081419999999996],
+                           'delay0': [0.1716648],
+                           'min_period': 0.391,
+                           'write1_power': 0.02879424,
+                           'slew0': [0.02851539],
+                           'slew1': [0.02319674]}
         elif OPTS.tech_name == "scn3me_subm":
-            golden_data = {'read1_power': 4.250786000000001,
-                           'read0_power': 4.093461,
-                           'write0_power': 2.762675,
-                           'delay1': [0.920068],
-                           'delay0': [2.051821],
+            golden_data = {'read1_power': 5.063901,
+                           'read0_power': 4.926464999999999,
+                           'write0_power': 3.480712,
+                           'delay1': [1.044746],
+                           'delay0': [2.23024],
                            'min_period': 6.563,
-                           'write1_power': 2.4545719999999998,
-                           'slew0': [1.342015],
-                           'slew1': [1.040868]}
+                           'write1_power': 3.1949449999999997,
+                           'slew0': [1.3469],
+                           'slew1': [1.035352]}
         else:
             self.assertTrue(False) # other techs fail
 

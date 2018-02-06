@@ -123,15 +123,20 @@ passes, the files are deleted. If it fails, you will see these files:
 * _calibreDRC.rul_ is the DRC rule file.
 * dc_runset is the command file for caliber.
 * temp.gds is the layout
-* test1.drc.err is the std err output of the command
-* test1.drc.out is the standard output of the command
-* test1.drc.db is the DRC results file
+* (.mag files if using SCMOS)
+* temp.sp is the netlist
+* test1.drc.err is the std err output of the DRC command
+* test1.drc.out is the standard output of the DRC command
+* test1.drc.results is the DRC results file
+* test1.lvs.err is the std err output of the LVS command
+* test1.lvs.out is the standard output of the LVS command
+* test1.lvs.results is the DRC results file
 
 If DRC/LVS fails, the first thing is to check if it ran in the .out and
 .err file. This shows the standard output and error output from
 running DRC/LVS. If there is a setup problem it will be shown here.
 
-If DRC/LVS runs, but doesn't pass, you then should look at the .db
+If DRC/LVS runs, but doesn't pass, you then should look at the .results
 file. If the DRC fails, it will typically show you the command that was used
 to run caliber. It is something like this:
 ```
@@ -139,8 +144,9 @@ to run caliber. It is something like this:
   /tmp/openram_mrg_28781_temp/test1.drc.err 1>
   /tmp/openram_mrg_28781_temp/test1.drc.out
 ```
-To debug, you will need a layout viewer. I prefer to use glade on my
-Mac, but you can also use Calibre, Magic, etc. 
+Or, if you are using Magic+Netgen, there will be a shell script run_drc.sh 
+and run_lvs.sh. To debug, you will need a layout viewer. I prefer to use glade 
+on my Mac, but you can also use Calibre, Magic, etc. 
 
 1. Calibre
 
@@ -187,9 +193,16 @@ ui().importCds("default",
    To load the errors, you simply do Verify->Import Caliber Errors select
    the .db file from calibre.
 
-3. It is possible to use other viewers as well, such as:
+3. Magic
+
+   Magic is only supported in SCMOS. You will need to install the MOSIS SCMOS rules
+   as well from: http://opencircuitdesign.com/magic/
+
+   When running DRC or extraction, OpenRAM will load the GDS file, save
+   the .mag files, and export an extracted netlist.
+
+4. It is possible to use other viewers as well, such as:
    * LayoutEditor http://www.layouteditor.net/ 
-   * Magic http://opencircuitdesign.com/magic/
 
 
 # Example to output/input .gds layout files from/to Cadence

@@ -11,9 +11,6 @@ import sys
 import re
 import importlib
 
-# Current version of OpenRAM.
-VERSION = "Beta"
-
 USAGE = "Usage: openram.py [options] <config file>\nUse -h for help.\n"
 
 # Anonymous object that will be the options
@@ -59,7 +56,7 @@ def parse_args():
     parser = optparse.OptionParser(option_list=option_list,
                                    description="Compile and/or characterize an SRAM.",
                                    usage=USAGE,
-                                   version="OpenRAM v" + VERSION)
+                                   version="OpenRAM")
 
     (options, args) = parser.parse_args(values=OPTS)
     # If we don't specify a tech, assume freepdk45.
@@ -79,7 +76,7 @@ def print_banner():
         return
 
     print("|==============================================================================|")
-    name = "OpenRAM Compiler v"+VERSION
+    name = "OpenRAM Compiler"
     print("|=========" + name.center(60) + "=========|")
     print("|=========" + " ".center(60) + "=========|")
     print("|=========" + "VLSI Design and Automation Lab".center(60) + "=========|")

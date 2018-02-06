@@ -120,8 +120,6 @@ This is where simulations and DRC/LVS get run so there is no network
 traffic. The directory name is unique for each person and run of
 OpenRAM to not clobber any files and allow simultaneous runs. If it
 passes, the files are deleted. If it fails, you will see these files:
-* _calibreDRC.rul_ is the DRC rule file.
-* dc_runset is the command file for caliber.
 * temp.gds is the layout
 * (.mag files if using SCMOS)
 * temp.sp is the netlist
@@ -132,20 +130,23 @@ passes, the files are deleted. If it fails, you will see these files:
 * test1.lvs.out is the standard output of the LVS command
 * test1.lvs.results is the DRC results file
 
+Depending on your DRC/LVS tools, there will also be:
+* _calibreDRC.rul_ is the DRC rule file (Calibre)
+* dc_runset is the command file (Calibre)
+* extracted.sp (Calibre)
+* run_lvs.sh is a Netgen script for LVS (Netgen)
+* run_drc.sh is a Magic script for DRC (Magic)
+* <topcell>.spice (Magic)
+
 If DRC/LVS fails, the first thing is to check if it ran in the .out and
 .err file. This shows the standard output and error output from
 running DRC/LVS. If there is a setup problem it will be shown here.
 
 If DRC/LVS runs, but doesn't pass, you then should look at the .results
 file. If the DRC fails, it will typically show you the command that was used
-to run caliber. It is something like this:
-```
-  calibre -gui -drc /tmp/openram_mrg_28781_temp/drc_runset -batch 2>
-  /tmp/openram_mrg_28781_temp/test1.drc.err 1>
-  /tmp/openram_mrg_28781_temp/test1.drc.out
-```
-Or, if you are using Magic+Netgen, there will be a shell script run_drc.sh 
-and run_lvs.sh. To debug, you will need a layout viewer. I prefer to use glade 
+to run Calibre or Magic+Netgen. 
+
+To debug, you will need a layout viewer. I prefer to use Glade 
 on my Mac, but you can also use Calibre, Magic, etc. 
 
 1. Calibre
@@ -190,16 +191,16 @@ ui().importCds("default",
    between processes, you have to change the importCds command (or you
    can manually run the command each time you start glade).
 
-   To load the errors, you simply do Verify->Import Caliber Errors select
-   the .db file from calibre.
+   To load the errors, you simply do Verify->Import Calibre Errors select
+   the .results file from Calibre.
 
 3. Magic
 
    Magic is only supported in SCMOS. You will need to install the MOSIS SCMOS rules
-   as well from: http://opencircuitdesign.com/magic/
+   and Magic from: http://opencircuitdesign.com/
 
    When running DRC or extraction, OpenRAM will load the GDS file, save
-   the .mag files, and export an extracted netlist.
+   the .ext/.mag files, and export an extracted netlist (.spice).
 
 4. It is possible to use other viewers as well, such as:
    * LayoutEditor http://www.layouteditor.net/ 

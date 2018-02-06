@@ -124,6 +124,8 @@ def write_netgen_script(cell_name, sp_name):
     f.write("flatten class {{{0}.spice precharge_array}}\n".format(cell_name))
     f.write("property {{{0}.spice nfet}} remove as ad ps pd\n".format(cell_name))
     f.write("property {{{0}.spice pfet}} remove as ad ps pd\n".format(cell_name))
+    f.write("property {{{0} n}} remove as ad ps pd\n".format(sp_name))
+    f.write("property {{{0} p}} remove as ad ps pd\n".format(sp_name))
     # Allow some flexibility in W size because magic will snap to a lambda grid
     # This can also cause disconnects unfortunately!
     # f.write("property {{{0}{1}.spice nfet}} tolerance {{w 0.1}}\n".format(OPTS.openram_temp,

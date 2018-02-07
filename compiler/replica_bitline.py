@@ -81,7 +81,7 @@ class replica_bitline(design.design):
         self.rbl = bitcell_array(name="bitline_load", cols=1, rows=self.rows)
         self.add_mod(self.rbl)
         
-        self.delay_chain = self.mod_delay_chain([1, 1, 1])
+        self.delay_chain = self.mod_delay_chain([4, 4, 4])
         self.add_mod(self.delay_chain)
 
         self.inv = pinv()

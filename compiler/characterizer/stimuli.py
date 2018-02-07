@@ -134,70 +134,24 @@ def gen_pulse(stim_file, sig_name, v1=gnd_voltage, v2=vdd_voltage, offset=0, per
 
 def gen_pwl(stim_file, sig_name, clk_times, data_values, period, slew, setup):
     # the initial value is not a clock time
-    debug.check(len(clk_times)+1==len(data_values),"Clock and data value lengths don't match.")
+    debug.check(len(clk_times)==len(data_values),"Clock and data value lengths don't match.")
+    
     # shift signal times earlier for setup time
     times = np.array(clk_times) - setup*period
     values = np.array(data_values) * vdd_voltage
     half_slew = 0.5 * slew
     stim_file.write("V{0} {0} 0 PWL (0n {1}v ".format(sig_name, values[0]))
-    for i in range(len(times)):
+    for i in range(1,len(times)-1):
         stim_file.write("{0}n {1}v {2}n {3}v ".format(times[i]-half_slew,
-                                                      values[i],
+                                                      values[i-1],
                                                       times[i]+half_slew,
-                                                      values[i+1]))
+                                                      values[i]))
     stim_file.write(")\n")
 
-def gen_data(stim_file, clk_times, sig_name, period, slew):
-    """Generates the PWL data inputs for a simulation timing test."""
-    # values for NOP, W1, W0, W1, R0, W1, W0, R1, NOP
-    # we are asserting the opposite value on the other side of the tx gate during
-    # the read to be "worst case". Otherwise, it can actually assist the read.
-    values = [0, 1, 0, 1, 1, 1, 0, 0, 0 ]
-    gen_pwl(stim_file, sig_name, clk_times, values, period, slew, 0.05)
-
-
-def gen_addr(stim_file, clk_times, addr, period, slew):
-    """Generates the address inputs for a simulation timing test. 
-    One cycle is different to clear the bus
-    """
-    
-    zero_values = [0, 0, 0, 1, 0, 0, 1, 0, 0 ]
-    ones_values = [1, 1, 1, 0, 1, 1, 0, 1, 1 ]
-    
-    for i in range(len(addr)):
-        sig_name = "A[{0}]".format(i)
-        if addr[i]=="1":
-            gen_pwl(stim_file, sig_name, clk_times, ones_values, period, slew, 0.05)
-        else:
-            gen_pwl(stim_file, sig_name, clk_times, zero_values, period, slew, 0.05)
 
 def gen_constant(stim_file, sig_name, v_val):
     """Generates a constant signal with reference voltage and the voltage value"""
     stim_file.write("V{0} {0} 0 DC {1}\n".format(sig_name, v_val))
-
-def gen_csb(stim_file, clk_times, period, slew):
-    """ Generates the PWL CSb signal"""
-    # values for NOP, W1, W0, W1, R0, W1, W0, R1, NOP
-    values = [1, 0, 0, 0, 0, 0, 0, 0, 1]
-    gen_pwl(stim_file, "csb", clk_times, values, period, slew, 0.05)
-
-def gen_web(stim_file, clk_times, period, slew):
-    """ Generates the PWL WEb signal"""
-    # values for NOP, W1, W0, W1, R0, W1, W0, R1, NOP
-    values = [1, 0, 0, 0, 1, 0, 0, 1, 1]
-    gen_pwl(stim_file, "web", clk_times, values, period, slew, 0.05)
-    
-    values = [1, 0, 0, 0, 1, 0, 0, 1, 1]
-    gen_pwl(stim_file, "acc_en", clk_times, values, period, slew, 0)
-    values = [0, 1, 1, 1, 0, 1, 1, 0, 0]
-    gen_pwl(stim_file, "acc_en_inv", clk_times, values, period, slew, 0)
-    
-def gen_oeb(stim_file, clk_times, period, slew):
-    """ Generates the PWL WEb signal"""
-    # values for NOP, W1, W0, W1, R0, W1, W0, R1, NOP
-    values = [1, 1, 1, 1, 0, 1, 1, 0, 1]
-    gen_pwl(stim_file, "oeb", clk_times, values, period, slew, 0.05)
-
 
 
 

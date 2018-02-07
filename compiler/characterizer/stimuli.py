@@ -208,12 +208,12 @@ def write_control(stim_file, end_time):
     """ Write the control cards to run and end the simulation """
     # UIC is needed for ngspice to converge
     stim_file.write(".TRAN 5p {0}n UIC\n".format(end_time))
-    if OPTS.spice_name == "ngspice":
-        # ngspice sometimes has convergence problems if not using gear method
-        # which is more accurate, but slower than the default trapezoid method
-        stim_file.write(".OPTIONS POST=1 RUNLVL=4 PROBE method=gear\n")
-    else:
-        stim_file.write(".OPTIONS POST=1 RUNLVL=4 PROBE\n")
+    # if OPTS.spice_name == "ngspice":
+    #     # ngspice sometimes has convergence problems if not using gear method
+    #     # which is more accurate, but slower than the default trapezoid method
+    #     stim_file.write(".OPTIONS POST=1 RUNLVL=4 PROBE method=gear\n")
+    # else:
+    stim_file.write(".OPTIONS POST=1 RUNLVL=4 PROBE\n")
 
     # create plots for all signals
     stim_file.write("* probe is used for hspice/xa, while plot is used in ngspice\n")

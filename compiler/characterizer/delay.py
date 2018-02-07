@@ -52,7 +52,7 @@ class delay():
         # creates and opens stimulus file for writing
         temp_stim = "{0}/stim.sp".format(OPTS.openram_temp)
         self.sf = open(temp_stim, "w")
-        self.sf.write("\n* Stimulus for period of {0}n load={1}fF slew={2}ns\n\n".format(period,load,slew))
+        self.sf.write("* Stimulus for period of {0}n load={1}fF slew={2}ns\n\n".format(period,load,slew))
 
         # include files in stimulus file
         model_list = tech.spice["fet_models"] + [self.sram_sp_file]

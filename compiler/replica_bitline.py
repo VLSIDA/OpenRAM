@@ -239,12 +239,22 @@ class replica_bitline(design.design):
     def route_gnd(self):
         """ Route all signals connected to gnd """
         
-        # Add a rail in M1 from bottom to two along delay chain
-        gnd_start = self.rbl_inv_inst.get_pin("gnd").bc() 
+        gnd_start = self.rbl_inv_inst.get_pin("gnd").bc()
         gnd_end = vector(gnd_start.x, self.rbl_inst.uy()+2*self.m2_pitch)
+        
+        # Add a rail in M1 from bottom of delay chain to two above the RBL
+        # This prevents DRC errors with vias for the WL
+        dc_top = self.dc_inst.ur()
+        self.add_segment_center(layer="metal1",
+                                start=vector(gnd_start.x, dc_top.y),
+                                end=gnd_end)
+
+        # Add a rail in M2 from RBL inverter to two above the RBL
         self.add_segment_center(layer="metal2",
                                 start=gnd_start,
                                 end=gnd_end)
+        
+        # Add pin from bottom to RBL inverter
         self.add_layout_pin_center_segment(text="gnd",
                                            layer="metal1",
                                            start=gnd_start.scale(1,0),

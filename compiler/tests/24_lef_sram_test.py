@@ -4,16 +4,14 @@ Check the LEF file for an SRMA
 """
 
 import unittest
-from testutils import header,isdiff
+from testutils import header,openram_test
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
-import verify
 
-
-class lef_test(unittest.TestCase):
+class lef_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
@@ -24,8 +22,8 @@ class lef_test(unittest.TestCase):
 
         debug.info(1, "Testing LEF for sample 2 bit, 16 words SRAM with 1 bank")
         s = sram.sram(word_size=2,
-                      num_words=OPTS.config.num_words,
-                      num_banks=OPTS.config.num_banks,
+                      num_words=OPTS.num_words,
+                      num_banks=OPTS.num_banks,
                       name="sram_2_16_1_{0}".format(OPTS.tech_name))
 
         OPTS.check_lvsdrc = True
@@ -39,7 +37,7 @@ class lef_test(unittest.TestCase):
 
         # let's diff the result with a golden model
         golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),leffile)
-        self.assertEqual(isdiff(lefname,golden),True)
+        self.isdiff(lefname,golden)
 
         os.system("rm {0}".format(gdsname))
         os.system("rm {0}".format(lefname))

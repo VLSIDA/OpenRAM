@@ -40,9 +40,9 @@ class delay():
 
 
     def write_stimulus(self, period, load, slew):
-        """Creates a stimulus file for simulations to probe a certain bitcell, given an address and data-position of the data-word 
-        (probe-address form: '111010000' LSB=0, MSB=1)
-        (probe_data form: number corresponding to the bit position of data-bus, begins with position 0) 
+        """ Creates a stimulus file for simulations to probe a bitcell at a given clock period.
+        Address and bit were previously set with set_probe().
+        Input slew (in ns) and output capacitive load (in fF) are required for charaterization.
         """
         self.check_arguments()
 
@@ -52,7 +52,7 @@ class delay():
         # creates and opens stimulus file for writing
         temp_stim = "{0}/stim.sp".format(OPTS.openram_temp)
         self.sf = open(temp_stim, "w")
-        self.sf.write("* Stimulus for period of {0}n load={1} slew={2}\n\n".format(period,load,slew))
+        self.sf.write("* Stimulus for period of {0}n load={1}fF slew={2}ns\n\n".format(period,load,slew))
 
         # include files in stimulus file
         model_list = tech.spice["fet_models"] + [self.sram_sp_file]
@@ -116,8 +116,8 @@ class delay():
                           
         self.write_measures(period)
 
-        # run until the last cycle time
-        stimuli.write_control(self.sf,self.cycle_times[-1])
+        # run until the end of the cycle time
+        stimuli.write_control(self.sf,self.cycle_times[-1] + period)
 
         self.sf.close()
 
@@ -125,11 +125,14 @@ class delay():
         # meas statement for delay and power measurements
         self.sf.write("* Measure statements for delay and power\n")
 
+        for comment in self.cycle_comments:
+            self.sf.write("* {}\n".format(comment))
+
         trig_name = "clk"
         targ_name = "{0}".format("d[{0}]".format(self.probe_data))
         trig_val = targ_val = 0.5 * self.vdd
         # add measure statments for delay0
-        # delay the target to measure after the negetive edge
+        # delay the target to measure after the negative edge
         stimuli.gen_meas_delay(stim_file=self.sf,
                                meas_name="DELAY0",
                                trig_name=trig_name,
@@ -138,7 +141,8 @@ class delay():
                                targ_val=targ_val,
                                trig_dir="FALL",
                                targ_dir="FALL",
-                               td=self.cycle_times[self.read0_cycle]+0.5*period)
+                               trig_td=self.cycle_times[self.read0_cycle],
+                               targ_td=self.cycle_times[self.read0_cycle]+0.5*period)
 
         stimuli.gen_meas_delay(stim_file=self.sf,
                                meas_name="DELAY1",
@@ -148,7 +152,8 @@ class delay():
                                targ_val=targ_val,
                                trig_dir="FALL",
                                targ_dir="RISE",
-                               td=self.cycle_times[self.read1_cycle]+0.5*period)
+                               trig_td=self.cycle_times[self.read1_cycle],
+                               targ_td=self.cycle_times[self.read1_cycle]+0.5*period)
 
         stimuli.gen_meas_delay(stim_file=self.sf,
                                meas_name="SLEW0",
@@ -158,7 +163,8 @@ class delay():
                                targ_val=0.1*self.vdd,
                                trig_dir="FALL",
                                targ_dir="FALL",
-                               td=self.cycle_times[self.read0_cycle]+0.5*period)
+                               trig_td=self.cycle_times[self.read0_cycle],
+                               targ_td=self.cycle_times[self.read0_cycle]+0.5*period)
 
         stimuli.gen_meas_delay(stim_file=self.sf,
                                meas_name="SLEW1",
@@ -168,7 +174,8 @@ class delay():
                                targ_val=0.9*self.vdd,
                                trig_dir="RISE",
                                targ_dir="RISE",
-                               td=self.cycle_times[self.read1_cycle]+0.5*period)
+                               trig_td=self.cycle_times[self.read1_cycle],
+                               targ_td=self.cycle_times[self.read1_cycle]+0.5*period)
         
         # add measure statements for power
         t_initial = self.cycle_times[self.write0_cycle]
@@ -238,12 +245,14 @@ class delay():
         
         # if it failed or the read was longer than a period
         if type(delay0)!=float or type(delay1)!=float or type(slew1)!=float or type(slew0)!=float:
+            debug.info(2,"Failed simulation: period {0} load {1} slew {2}, delay0={3}n delay1={4}ns slew0={5}n slew1={6}n".format(period,load,slew,delay0,delay1,slew0,slew1))
             return (False,0,0,0,0)
         delay0 *= 1e9
         delay1 *= 1e9
         slew0 *= 1e9
         slew1 *= 1e9
         if delay0>period or delay1>period or slew0>period or slew1>period:
+            debug.info(2,"UNsuccessful simulation: period {0} load {1} slew {2}, delay0={3}n delay1={4}ns slew0={5}n slew1={6}n".format(period,load,slew,delay0,delay1,slew0,slew1))
             return (False,0,0,0,0)
         else:
             debug.info(2,"Successful simulation: period {0} load {1} slew {2}, delay0={3}n delay1={4}ns slew0={5}n slew1={6}n".format(period,load,slew,delay0,delay1,slew0,slew1))
@@ -364,7 +373,7 @@ class delay():
         for slew in slews:
             for load in loads:
                 (success, delay1, slew1, delay0, slew0) = self.run_simulation(feasible_period, load, slew)
-                debug.check(success,"Couldn't run a simulation properly.\n")
+                debug.check(success,"Couldn't run a simulation. slew={0} load={1}\n".format(slew,load))
                 LH_delay.append(delay1)
                 HL_delay.append(delay0)
                 LH_slew.append(slew1)
@@ -394,44 +403,52 @@ class delay():
         of the cycles to do a timing evaluation. The last time is the end of the simulation
         and does not need a rising edge."""
 
+        self.cycle_comments = []
         # idle cycle, no operation
         t_current = period 
         self.cycle_times = []
-        
         # cycle0: W data 1 address 1111 to initialize cell to a value
         self.cycle_times.append(t_current)
+        self.cycle_comments.append("Cycle0 {}ns: W data 1 address 11..11 to initialize cell".format(t_current))
         t_current += period
 
         # cycle1: W data 0 address 1111 (to ensure a write of value works)
         self.cycle_times.append(t_current)
         self.write0_cycle=1
+        self.cycle_comments.append("Cycle1 {}ns: W data 0 address 11..11 (to ensure a write of value works)".format(t_current))
         t_current += period
         
         # cycle2: W data 1 address 0000 (to clear the data bus cap)
         self.cycle_times.append(t_current)
+        self.cycle_comments.append("Cycle2 {}ns: W data 1 address 00..00 (to clear bus caps)".format(t_current))
         t_current += period
 
         # cycle3: R data 0 address 1111 to check W0 works
         self.cycle_times.append(t_current)
         self.read0_cycle=3
+        self.cycle_comments.append("Cycle3 {}ns: R data 0 address 11..11 to check W0 worked".format(t_current))
         t_current += period
 
         # cycle4: W data 1 address 1111 (to ensure a write of value works)
         self.cycle_times.append(t_current)
         self.write1_cycle=4
+        self.cycle_comments.append("Cycle4 {}ns: W data 1 address 11..11 (to ensure a write of value worked)".format(t_current))
         t_current += period
 
         # cycle5: W data 0 address 0000 (to clear the data bus cap)
         self.cycle_times.append(t_current)
+        self.cycle_comments.append("Cycle5 {}ns: W data 0 address 00..00 (to clear bus caps)".format(t_current))
         t_current += period
         
         # cycle6: R data 1 address 1111 to check W1 works
         self.cycle_times.append(t_current)
         self.read1_cycle=6
+        self.cycle_comments.append("Cycle6 {}ns: R data 1 address 11..11 to check W1 worked".format(t_current))
         t_current += period
 
         # cycle7: wait a clock period to end the simulation
         self.cycle_times.append(t_current)
+        self.cycle_comments.append("Cycle7 {}ns: Idle period to end simulation".format(t_current))
         t_current += period
 
 

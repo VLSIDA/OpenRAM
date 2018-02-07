@@ -12,10 +12,13 @@ ln -s 2001a current
 #!/bin/sh
 magic -dnull -noconsole << EOF
 tech load SCN3ME_SUBM.30
-gds rescale false
+#scalegrid 1 2
+gds rescale no
 gds polygon subcell true
 gds warning default
 gds read $1
+load $1
+writeall force
 drc count
 drc why
 quit -noprompt
@@ -27,7 +30,8 @@ rm -f $1.ext
 rm -f $1.spice
 magic -dnull -noconsole << EOF
 tech load SCN3ME_SUBM.30
-gds rescale false
+#scalegrid 1 2
+gds rescale no
 gds polygon subcell true
 gds warning default
 gds read $1
@@ -40,12 +44,13 @@ EOF
 3. netgen can perform LVS with:
 #!/bin/sh
 netgen -noconsole <<EOF
-readnet $1.spice
-readnet $1.sp
+readnet spice $1.spice
+readnet spice $1.sp
 ignore class c
-permute transistors
+equate class {$1.spice nfet} {$2.sp n}
+equate class {$1.spice pfet} {$2.sp p}
+permute default
 compare hierarchical $1.spice {$1.sp $1}
-permute
 run converge
 EOF
 
@@ -59,191 +64,188 @@ import debug
 from globals import OPTS
 import subprocess
 
+def write_magic_script(cell_name, gds_name, extract=False):
+    """ Write a magic script to perform DRC and optionally extraction. """
 
-def run_drc(name, gds_name):
-    """Run DRC check on a given top-level name which is
-       implemented in gds_name."""
+    global OPTS
 
-    debug.warning("DRC using magic not implemented.")
-    return 1
+    run_file = OPTS.openram_temp + "run_drc.sh"
+    f = open(run_file, "w")
+    f.write("#!/bin/sh\n")
+    f.write("{} -dnull -noconsole << EOF\n".format(OPTS.drc_exe[1]))
+    f.write("tech load SCN3ME_SUBM.30\n")
+    #gf.write("scalegrid 1 8\n")
+    #f.write("gds rescale no\n")
+    f.write("gds polygon subcell true\n")
+    f.write("gds warning default\n")
+    f.write("gds read {}\n".format(gds_name))
+    f.write("load {}\n".format(cell_name))
+    f.write("writeall force\n")
+    f.write("drc check\n")
+    f.write("drc catchup\n")
+    f.write("drc count total\n")
+    f.write("drc count\n")
+    if extract:
+        f.write("extract all\n")
+        f.write("ext2spice hierarchy on\n")        
+        f.write("ext2spice scale off\n")
+        # Can choose hspice, ngspice, or spice3,
+        # but they all seem compatible enough.
+        #f.write("ext2spice format ngspice\n")
+        f.write("ext2spice\n")
+    f.write("quit -noprompt\n")
+    f.write("EOF\n")
+        
+    f.close()
+    os.system("chmod u+x {}".format(run_file))
 
-    # the runset file contains all the options to run drc
-    from tech import drc
-    drc_rules = drc["drc_rules"]
-    drc_runset = {
-        'drcRulesFile': drc_rules,
-        'drcRunDir': OPTS.openram_temp,
-        'drcLayoutPaths': gds_name,
-        'drcLayoutPrimary': name,
-        'drcLayoutSystem': 'GDSII',
-        'drcResultsformat': 'ASCII',
-        'drcResultsFile': OPTS.openram_temp + name + ".drc.results",
-        'drcSummaryFile': OPTS.openram_temp + name + ".drc.summary",
-        'cmnFDILayerMapFile': drc["layer_map"],
-        'cmnFDIUseLayerMap': 1
-    }
+def write_netgen_script(cell_name, sp_name):
+    """ Write a netgen script to perform LVS. """
 
-    # write the runset file
-    f = open(OPTS.openram_temp + "drc_runset", "w")
-    for k in sorted(drc_runset.iterkeys()):
-        f.write("*{0}: {1}\n".format(k, drc_runset[k]))
+    global OPTS
+    # This is a hack to prevent netgen from re-initializing the LVS
+    # commands. It will be unnecessary after Tim adds the nosetup option.
+    setup_file = OPTS.openram_temp + "setup.tcl"
+    f = open(setup_file, "w")
     f.close()
 
+    run_file = OPTS.openram_temp + "run_lvs.sh"
+    f = open(run_file, "w")
+    f.write("#!/bin/sh\n")
+    f.write("{} -noconsole << EOF\n".format(OPTS.lvs_exe[1]))
+    f.write("readnet spice {}.spice\n".format(cell_name))
+    f.write("readnet spice {}\n".format(sp_name))
+    f.write("ignore class c\n")
+    f.write("permute transistors\n")
+    f.write("equate class {{{0}.spice nfet}} {{{1} n}}\n".format(cell_name, sp_name))
+    f.write("equate class {{{0}.spice pfet}} {{{1} p}}\n".format(cell_name, sp_name))
+    # This circuit has symmetries and needs to be flattened to resolve them or the banks won't pass
+    # Is there a more elegant way to add this when needed?
+    f.write("flatten class {{{0}.spice precharge_array}}\n".format(cell_name))
+    f.write("property {{{0}.spice nfet}} remove as ad ps pd\n".format(cell_name))
+    f.write("property {{{0}.spice pfet}} remove as ad ps pd\n".format(cell_name))
+    f.write("property {{{0} n}} remove as ad ps pd\n".format(sp_name))
+    f.write("property {{{0} p}} remove as ad ps pd\n".format(sp_name))
+    # Allow some flexibility in W size because magic will snap to a lambda grid
+    # This can also cause disconnects unfortunately!
+    # f.write("property {{{0}{1}.spice nfet}} tolerance {{w 0.1}}\n".format(OPTS.openram_temp,
+    #                                                                     cell_name))
+    # f.write("property {{{0}{1}.spice pfet}} tolerance {{w 0.1}}\n".format(OPTS.openram_temp,
+    #                                                                     cell_name))
+    f.write("lvs {0}.spice {{{1} {0}}} setup.tcl {0}.lvs.report\n".format(cell_name, sp_name))
+    f.write("quit\n")
+    f.write("EOF\n")
+    f.close()
+    os.system("chmod u+x {}".format(run_file))
+    
+def run_drc(cell_name, gds_name, extract=False):
+    """Run DRC check on a cell which is implemented in gds_name."""
+
+    write_magic_script(cell_name, gds_name, extract)
+    
     # run drc
     cwd = os.getcwd()
     os.chdir(OPTS.openram_temp)
-    errfile = "{0}{1}.drc.err".format(OPTS.openram_temp, name)
-    outfile = "{0}{1}.drc.out".format(OPTS.openram_temp, name)
+    errfile = "{0}{1}.drc.err".format(OPTS.openram_temp, cell_name)
+    outfile = "{0}{1}.drc.summary".format(OPTS.openram_temp, cell_name)
 
-    cmd = "{0} -gui -drc {1}drc_runset -batch 2> {2} 1> {3}".format(OPTS.drc_exe,
-                                                                    OPTS.openram_temp,
-                                                                    errfile,
-                                                                    outfile)
+    cmd = "{0}run_drc.sh 2> {1} 1> {2}".format(OPTS.openram_temp,
+                                               errfile,
+                                               outfile)
     debug.info(1, cmd)
     os.system(cmd)
     os.chdir(cwd)
 
-    # check the result for these lines in the summary:
-    # TOTAL Original Layer Geometries: 106 (157)
-    # TOTAL DRC RuleChecks Executed:   156
-    # TOTAL DRC Results Generated:     0 (0)
+    # Check the result for these lines in the summary:
+    # Total DRC errors found: 0
+    # The count is shown in this format:
+    # Cell replica_cell_6t has 3 error tiles.
+    # Cell tri_gate_array has 8 error tiles.
+    # etc.
     try:
-        f = open(drc_runset['drcSummaryFile'], "r")
+        f = open(outfile, "r")
     except:
         debug.error("Unable to retrieve DRC results file. Is magic set up?",1)
     results = f.readlines()
     f.close()
     # those lines should be the last 3
-    results = results[-3:]
-    geometries = int(re.split("\W+", results[0])[5])
-    rulechecks = int(re.split("\W+", results[1])[4])
-    errors = int(re.split("\W+", results[2])[5])
+    for line in results:
+        if "Total DRC errors found:" in line:
+            errors = int(re.split(":\W+", line)[1])
+            break
 
     # always display this summary
     if errors > 0:
-        debug.error("{0}\tGeometries: {1}\tChecks: {2}\tErrors: {3}".format(name, 
-                                                                            geometries,
-                                                                            rulechecks,
-                                                                            errors))
+        for line in results:
+            if "error tiles" in line:
+                debug.info(1,line.rstrip("\n"))
+        debug.error("DRC Errors {0}\t{1}".format(cell_name, errors))
     else:
-        debug.info(1, "{0}\tGeometries: {1}\tChecks: {2}\tErrors: {3}".format(name, 
-                                                                              geometries,
-                                                                              rulechecks,
-                                                                              errors))
+        debug.info(1, "DRC Errors {0}\t{1}".format(cell_name, errors))
 
     return errors
 
 
-def run_lvs(name, gds_name, sp_name):
+def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     """Run LVS check on a given top-level name which is
-       implemented in gds_name and sp_name. """
+    implemented in gds_name and sp_name. Final verification will
+    ensure that there are no remaining virtual conections. """
 
-    debug.warning("LVS using magic+netgen not implemented.")
-    return 1
+    run_drc(cell_name, gds_name, extract=True)
+    write_netgen_script(cell_name, sp_name)
     
-    from tech import drc
-    lvs_rules = drc["lvs_rules"]
-    lvs_runset = {
-        'lvsRulesFile': lvs_rules,
-        'lvsRunDir': OPTS.openram_temp,
-        'lvsLayoutPaths': gds_name,
-        'lvsLayoutPrimary': name,
-        'lvsSourcePath': sp_name,
-        'lvsSourcePrimary': name,
-        'lvsSourceSystem': 'SPICE',
-        'lvsSpiceFile': OPTS.openram_temp + "extracted.sp",
-        'lvsPowerNames': 'vdd',
-        'lvsGroundNames': 'gnd',
-        'lvsIncludeSVRFCmds': 1,
-        'lvsSVRFCmds': '{VIRTUAL CONNECT NAME VDD? GND? ?}',
-        'lvsIgnorePorts': 1,
-        'lvsERCDatabase': OPTS.openram_temp + name + ".erc.results",
-        'lvsERCSummaryFile': OPTS.openram_temp + name + ".erc.summary",
-        'lvsReportFile': OPTS.openram_temp + name + ".lvs.report",
-        'lvsMaskDBFile': OPTS.openram_temp + name + ".maskdb",
-        'cmnFDILayerMapFile': drc["layer_map"],
-        'cmnFDIUseLayerMap': 1,
-        'cmnVConnectNames': 'vdd, gnd',
-        #'cmnVConnectNamesState' : 'ALL', #connects all nets with the same name
-    }
-
-    # write the runset file
-    f = open(OPTS.openram_temp + "lvs_runset", "w")
-    for k in sorted(lvs_runset.iterkeys()):
-        f.write("*%s: %s\n" % (k, lvs_runset[k]))
-    f.close()
-
     # run LVS
     cwd = os.getcwd()
     os.chdir(OPTS.openram_temp)
-    errfile = "{0}{1}.lvs.err".format(OPTS.openram_temp, name)
-    outfile = "{0}{1}.lvs.out".format(OPTS.openram_temp, name)
+    errfile = "{0}{1}.lvs.err".format(OPTS.openram_temp, cell_name)
+    outfile = "{0}{1}.lvs.out".format(OPTS.openram_temp, cell_name)
+    resultsfile = "{0}{1}.lvs.report".format(OPTS.openram_temp, cell_name)    
 
-    cmd = "{0} -gui -lvs {1}lvs_runset -batch 2> {2} 1> {3}".format(OPTS.lvs_exe,
-                                                                    OPTS.openram_temp,
-                                                                    errfile,
-                                                                    outfile)
+    cmd = "{0}run_lvs.sh lvs 2> {1} 1> {2}".format(OPTS.openram_temp,
+                                                   errfile,
+                                                   outfile)
     debug.info(1, cmd)
     os.system(cmd)
     os.chdir(cwd)
 
     # check the result for these lines in the summary:
-    f = open(lvs_runset['lvsReportFile'], "r")
+    f = open(resultsfile, "r")
     results = f.readlines()
     f.close()
 
-    # NOT COMPARED
-    # CORRECT
-    # INCORRECT
-    test = re.compile("#     CORRECT     #")
-    correct = filter(test.search, results)
-    test = re.compile("NOT COMPARED")
-    notcompared = filter(test.search, results)
-    test = re.compile("#     INCORRECT     #")
+
+    # Netlists do not match.
+    test = re.compile("Netlists do not match.")
     incorrect = filter(test.search, results)
+    # There were property errors.
+    test = re.compile("Property errors were found.")
+    propertyerrors = filter(test.search, results)
+    # Require pins to match?
+    # Cell pin lists for pnand2_1.spice and pnand2_1 altered to match.
+    # test = re.compile(".*altered to match.")
+    # pinerrors = filter(test.search, results)
+    # if len(pinerrors)>0:
+    #     debug.warning("Pins altered to match in {}.".format(cell_name))
+    
+    total_errors = len(propertyerrors) + len(incorrect)
+    # If we want to ignore property errors
+    #total_errors = len(incorrect)
+    #if len(propertyerrors)>0:
+    #    debug.warning("Property errors found, but not checking them.")
 
-    # Errors begin with "Error:"
-    test = re.compile("\s+Error:")
-    errors = filter(test.search, results)
-    for e in errors:
-        debug.error(e.strip("\n"))
+    # Netlists match uniquely.
+    test = re.compile("Netlists match uniquely.")
+    correct = filter(test.search, results)
+    # Fail if they don't match. Something went wrong!
+    if correct == 0:
+        total_errors += 1
 
-    summary_errors = len(notcompared) + len(incorrect) + len(errors)
+    if total_errors>0:
+        # Just print out the whole file, it is short.
+        for e in results:
+            debug.info(1,e.strip("\n"))
+        debug.error("LVS mismatch (results in {})".format(resultsfile)) 
 
-    # also check the extraction summary file
-    f = open(lvs_runset['lvsReportFile'] + ".ext", "r")
-    results = f.readlines()
-    f.close()
-
-    test = re.compile("ERROR:")
-    exterrors = filter(test.search, results)
-    for e in exterrors:
-        debug.error(e.strip("\n"))
-
-    test = re.compile("WARNING:")
-    extwarnings = filter(test.search, results)
-    for e in extwarnings:
-        debug.warning(e.strip("\n"))
-
-    # MRG - 9/26/17 - Change this to exclude warnings because of
-    # multiple labels on different pins in column mux.
-    ext_errors = len(exterrors)
-    ext_warnings = len(extwarnings) 
-
-    # also check the output file
-    f = open(outfile, "r")
-    results = f.readlines()
-    f.close()
-
-    # Errors begin with "ERROR:"
-    test = re.compile("ERROR:")
-    stdouterrors = filter(test.search, results)
-    for e in stdouterrors:
-        debug.error(e.strip("\n"))
-
-    out_errors = len(stdouterrors)
-
-    total_errors = summary_errors + out_errors + ext_errors
     return total_errors
 
 

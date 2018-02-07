@@ -6,25 +6,22 @@ check that these files are right.
 """
 
 import unittest
-from testutils import header
-import sys,os
+from testutils import header,openram_test
+import sys,os,re,shutil
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
-import os
-import re
-import shutil
 
-class openram_test(unittest.TestCase):
+class openram_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-
+        
         debug.info(1, "Testing top-level openram.py with 2-bit, 16 word SRAM.")
         out_file = "testsram"
           # make a temp directory for output
-        out_path = OPTS.openram_temp + out_file
+        out_path = "/tmp/testsram"
 
         # make sure we start without the files existing
         if os.path.exists(out_path):
@@ -70,7 +67,10 @@ class openram_test(unittest.TestCase):
             shutil.rmtree(out_path, ignore_errors=True)
         self.assertEqual(os.path.exists(out_path),False)
 
-        globals.end_openram()        
+        # The default was on, so disable it.
+        OPTS.check_lvsdrc=False
+        globals.end_openram()
+        OPTS.check_lvsdrc=True        
 
 # instantiate a copy of the class to actually run the test
 if __name__ == "__main__":

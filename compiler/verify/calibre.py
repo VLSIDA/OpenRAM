@@ -66,7 +66,7 @@ from globals import OPTS
 import subprocess
 
 
-def run_drc(name, gds_name):
+def run_drc(cell_name, gds_name):
     """Run DRC check on a given top-level name which is
        implemented in gds_name."""
 
@@ -78,11 +78,11 @@ def run_drc(name, gds_name):
         'drcRulesFile': drc_rules,
         'drcRunDir': OPTS.openram_temp,
         'drcLayoutPaths': gds_name,
-        'drcLayoutPrimary': name,
+        'drcLayoutPrimary': cell_name,
         'drcLayoutSystem': 'GDSII',
         'drcResultsformat': 'ASCII',
-        'drcResultsFile': OPTS.openram_temp + name + ".drc.results",
-        'drcSummaryFile': OPTS.openram_temp + name + ".drc.summary",
+        'drcResultsFile': OPTS.openram_temp + cell_name + ".drc.results",
+        'drcSummaryFile': OPTS.openram_temp + cell_name + ".drc.summary",
         'cmnFDILayerMapFile': drc["layer_map"],
         'cmnFDIUseLayerMap': 1
     }
@@ -96,12 +96,13 @@ def run_drc(name, gds_name):
     # run drc
     cwd = os.getcwd()
     os.chdir(OPTS.openram_temp)
-    errfile = "{0}{1}.drc.err".format(OPTS.openram_temp, name)
-    outfile = "{0}{1}.drc.out".format(OPTS.openram_temp, name)
+    errfile = "{0}{1}.drc.err".format(OPTS.openram_temp, cell_name)
+    outfile = "{0}{1}.drc.out".format(OPTS.openram_temp, cell_name)
 
-    cmd = "calibre -gui -drc {0}drc_runset -batch 2> {1} 1> {2}".format(OPTS.openram_temp,
-                                                                        errfile,
-                                                                        outfile)
+    cmd = "{0} -gui -drc {1}drc_runset -batch 2> {2} 1> {3}".format(OPTS.drc_exe[1],
+                                                                    OPTS.openram_temp,
+                                                                    errfile,
+                                                                    outfile)
     debug.info(1, cmd)
     os.system(cmd)
     os.chdir(cwd)
@@ -124,46 +125,55 @@ def run_drc(name, gds_name):
 
     # always display this summary
     if errors > 0:
-        debug.error("{0}\tGeometries: {1}\tChecks: {2}\tErrors: {3}".format(name, 
+        debug.error("{0}\tGeometries: {1}\tChecks: {2}\tErrors: {3}".format(cell_name, 
                                                                             geometries,
                                                                             rulechecks,
                                                                             errors))
     else:
-        debug.info(1, "{0}\tGeometries: {1}\tChecks: {2}\tErrors: {3}".format(name, 
+        debug.info(1, "{0}\tGeometries: {1}\tChecks: {2}\tErrors: {3}".format(cell_name, 
                                                                               geometries,
                                                                               rulechecks,
                                                                               errors))
     return errors
 
 
-def run_lvs(name, gds_name, sp_name):
+def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     """Run LVS check on a given top-level name which is
-       implemented in gds_name and sp_name. """
+    implemented in gds_name and sp_name. Final verification will
+    ensure that there are no remaining virtual conections. """
+
     from tech import drc
     lvs_rules = drc["lvs_rules"]
     lvs_runset = {
         'lvsRulesFile': lvs_rules,
         'lvsRunDir': OPTS.openram_temp,
         'lvsLayoutPaths': gds_name,
-        'lvsLayoutPrimary': name,
+        'lvsLayoutPrimary': cell_name,
         'lvsSourcePath': sp_name,
-        'lvsSourcePrimary': name,
+        'lvsSourcePrimary': cell_name,
         'lvsSourceSystem': 'SPICE',
         'lvsSpiceFile': OPTS.openram_temp + "extracted.sp",
         'lvsPowerNames': 'vdd',
         'lvsGroundNames': 'gnd',
         'lvsIncludeSVRFCmds': 1,
-        'lvsSVRFCmds': '{VIRTUAL CONNECT NAME VDD? GND? ?}',
         'lvsIgnorePorts': 1,
-        'lvsERCDatabase': OPTS.openram_temp + name + ".erc.results",
-        'lvsERCSummaryFile': OPTS.openram_temp + name + ".erc.summary",
-        'lvsReportFile': OPTS.openram_temp + name + ".lvs.report",
-        'lvsMaskDBFile': OPTS.openram_temp + name + ".maskdb",
+        'lvsERCDatabase': OPTS.openram_temp + cell_name + ".erc.results",
+        'lvsERCSummaryFile': OPTS.openram_temp + cell_name + ".erc.summary",
+        'lvsReportFile': OPTS.openram_temp + cell_name + ".lvs.report",
+        'lvsMaskDBFile': OPTS.openram_temp + cell_name + ".maskdb",
         'cmnFDILayerMapFile': drc["layer_map"],
         'cmnFDIUseLayerMap': 1,
-        'cmnVConnectNames': 'vdd, gnd',
+        'lvsRecognizeGates': 'NONE'
         #'cmnVConnectNamesState' : 'ALL', #connects all nets with the same name
     }
+
+    # This should be removed for final verification
+    if not final_verification:
+        lvs_runset['cmnVConnectReport']=1
+        lvs_runset['cmnVConnectNamesState']='SOME'
+        lvs_runset['cmnVConnectNames']='vdd gnd'
+
+
 
     # write the runset file
     f = open(OPTS.openram_temp + "lvs_runset", "w")
@@ -174,12 +184,13 @@ def run_lvs(name, gds_name, sp_name):
     # run LVS
     cwd = os.getcwd()
     os.chdir(OPTS.openram_temp)
-    errfile = "{0}{1}.lvs.err".format(OPTS.openram_temp, name)
-    outfile = "{0}{1}.lvs.out".format(OPTS.openram_temp, name)
+    errfile = "{0}{1}.lvs.err".format(OPTS.openram_temp, cell_name)
+    outfile = "{0}{1}.lvs.out".format(OPTS.openram_temp, cell_name)
 
-    cmd = "calibre -gui -lvs {0}lvs_runset -batch 2> {1} 1> {2}".format(OPTS.openram_temp,
-                                                                        errfile,
-                                                                        outfile)
+    cmd = "{0} -gui -lvs {1}lvs_runset -batch 2> {2} 1> {3}".format(OPTS.lvs_exe[1],
+                                                                    OPTS.openram_temp,
+                                                                    errfile,
+                                                                    outfile)
     debug.info(1, cmd)
     os.system(cmd)
     os.chdir(cwd)
@@ -244,7 +255,7 @@ def run_lvs(name, gds_name, sp_name):
     return total_errors
 
 
-def run_pex(name, gds_name, sp_name, output=None):
+def run_pex(cell_name, gds_name, sp_name, output=None):
     """Run pex on a given top-level name which is
        implemented in gds_name and sp_name. """
     from tech import drc
@@ -253,24 +264,24 @@ def run_pex(name, gds_name, sp_name, output=None):
 
     # check if lvs report has been done
     # if not run drc and lvs
-    if not os.path.isfile(name + ".lvs.report"):
-        run_drc(name, gds_name)
-        run_lvs(name, gds_name, sp_name)
+    if not os.path.isfile(cell_name + ".lvs.report"):
+        run_drc(cell_name, gds_name)
+        run_lvs(cell_name, gds_name, sp_name)
 
     pex_rules = drc["xrc_rules"]
     pex_runset = {
         'pexRulesFile': pex_rules,
         'pexRunDir': OPTS.openram_temp,
         'pexLayoutPaths': gds_name,
-        'pexLayoutPrimary': name,
+        'pexLayoutPrimary': cell_name,
         #'pexSourcePath' : OPTS.openram_temp+"extracted.sp",
         'pexSourcePath': sp_name,
-        'pexSourcePrimary': name,
-        'pexReportFile': name + ".lvs.report",
+        'pexSourcePrimary': cell_name,
+        'pexReportFile': cell_name + ".lvs.report",
         'pexPexNetlistFile': output,
-        'pexPexReportFile': name + ".pex.report",
-        'pexMaskDBFile': name + ".maskdb",
-        'cmnFDIDEFLayoutPath': name + ".def",
+        'pexPexReportFile': cell_name + ".pex.report",
+        'pexMaskDBFile': cell_name + ".maskdb",
+        'cmnFDIDEFLayoutPath': cell_name + ".def",
     }
 
     # write the runset file
@@ -282,12 +293,13 @@ def run_pex(name, gds_name, sp_name, output=None):
     # run pex
     cwd = os.getcwd()
     os.chdir(OPTS.openram_temp)
-    errfile = "{0}{1}.pex.err".format(OPTS.openram_temp, name)
-    outfile = "{0}{1}.pex.out".format(OPTS.openram_temp, name)
+    errfile = "{0}{1}.pex.err".format(OPTS.openram_temp, cell_name)
+    outfile = "{0}{1}.pex.out".format(OPTS.openram_temp, cell_name)
 
-    cmd = "calibre -gui -pex {0}pex_runset -batch 2> {1} 1> {2}".format(OPTS.openram_temp,
-                                                                        errfile,
-                                                                        outfile)
+    cmd = "{0} -gui -pex {1}pex_runset -batch 2> {2} 1> {3}".format(OPTS.pex_exe[1],
+                                                                    OPTS.openram_temp,
+                                                                    errfile,
+                                                                    outfile)
     debug.info(2, cmd)
     os.system(cmd)
     os.chdir(cwd)
@@ -306,7 +318,7 @@ def run_pex(name, gds_name, sp_name, output=None):
     out_errors = len(stdouterrors)
 
     assert(os.path.isfile(output))
-    correct_port(name, output, sp_name)
+    correct_port(cell_name, output, sp_name)
 
     return out_errors
 
@@ -329,7 +341,7 @@ def correct_port(name, output_file_name, ref_file_name):
     part2 = pex_file.read()
     pex_file.close()
 
-    # obatin the correct definition line from the original spice file
+    # obtain the correct definition line from the original spice file
     sp_file = open(ref_file_name, "r")
     contents = sp_file.read()
     circuit_title = re.search(".SUBCKT " + str(name) + ".*\n", contents)

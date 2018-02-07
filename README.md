@@ -7,8 +7,13 @@ https://github.com/mguthaus/OpenRAM/blob/master/OpenRAM_ICCAD_2016_presentation.
 The OpenRAM compiler has very few dependencies:
 * ngspice-26 (or later) or HSpice I-2013.12-1 (or later) or CustomSim 2017 (or later)
 * Python 2.7 and higher (currently excludes Python 3 and up)
+* Python numpy
 * a setup script for each technology
 * a technology directory for each technology with the base cells
+
+If you want to perform DRC and LVS, you will need either:
+* Calibre (for FreePDK45 or SCMOS)
+* Magic + Netgen (for SCMOS only)
 
 You must set two environment variables: OPENRAM_HOME should point to
 the compiler source directory. OPENERAM_TECH should point to a root
@@ -36,6 +41,12 @@ For example, in csh/tcsh, add to your .tcshrc:
 We do not distribute the PDK, but you may get it from:
     https://www.eda.ncsu.edu/wiki/FreePDK45:Contents
 
+If you are using SCMOS, you should install Magic and netgen from:
+	http://opencircuitdesign.com/magic/
+	http://opencircuitdesign.com/netgen/
+In addition, you will need to install the MOSIS SCMOS rules for scn3me_subm 
+that are part of QFlow:
+	http://opencircuitdesign.com/qflow/
 
 # DIRECTORY STRUCTURE
 

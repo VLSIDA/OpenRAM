@@ -60,21 +60,44 @@ class layout(lef.lef):
     def find_lowest_coords(self):
         """Finds the lowest set of 2d cartesian coordinates within
         this layout"""
-        
-        lowestx1 = min(obj.lx() for obj in self.objs if obj.name!="label")
-        lowesty1 = min(obj.by() for obj in self.objs if obj.name!="label")
-        lowestx2 = min(inst.lx() for inst in self.insts)
-        lowesty2 = min(inst.by() for inst in self.insts)
-        return vector(min(lowestx1, lowestx2), min(lowesty1, lowesty2))
+
+        if len(self.objs)>0:
+            lowestx1 = min(obj.lx() for obj in self.objs if obj.name!="label")
+            lowesty1 = min(obj.by() for obj in self.objs if obj.name!="label")
+        else:
+            lowestx1=lowesty1=None
+        if len(self.insts)>0:
+            lowestx2 = min(inst.lx() for inst in self.insts)
+            lowesty2 = min(inst.by() for inst in self.insts)
+        else:
+            lowestx2=lowesty2=None
+        if lowestx1==None:
+            return vector(lowestx2,lowesty2)
+        elif lowestx2==None:
+            return vector(lowestx1,lowesty1)            
+        else:
+            return vector(min(lowestx1, lowestx2), min(lowesty1, lowesty2))
 
     def find_highest_coords(self):
         """Finds the highest set of 2d cartesian coordinates within
         this layout"""
-        highestx1 = min(obj.rx() for obj in self.objs if obj.name!="label")
-        highesty1 = min(obj.uy() for obj in self.objs if obj.name!="label")
-        highestx2 = min(inst.rx() for inst in self.insts)
-        highesty2 = min(inst.uy() for inst in self.insts)
-        return vector(min(highestx1, highestx2), min(highesty1, highesty2))
+
+        if len(self.objs)>0:
+            highestx1 = max(obj.rx() for obj in self.objs if obj.name!="label")
+            highesty1 = max(obj.uy() for obj in self.objs if obj.name!="label")
+        else:
+            highestx1=highesty1=None        
+        if len(self.insts)>0:            
+            highestx2 = max(inst.rx() for inst in self.insts)
+            highesty2 = max(inst.uy() for inst in self.insts)
+        else:
+            highestx2=highesty2=None
+        if highestx1==None:
+            return vector(highestx2,highesty2)
+        elif highestx2==None:
+            return vector(highestx1,highesty1)            
+        else:
+            return vector(max(highestx1, highestx2), max(highesty1, highesty2))
 
 
     def translate_all(self, offset):
@@ -143,9 +166,11 @@ class layout(lef.lef):
             debug.error("Nonrectilinear center rect!",-1)
         elif start.x!=end.x:
             offset = vector(0,0.5*minwidth_layer)
+            return self.add_rect(layer,start-offset,end.x-start.x,minwidth_layer)
         else:
             offset = vector(0.5*minwidth_layer,0)
-        return self.add_rect(layer,start-offset,end.x-start.x,minwidth_layer)
+            return self.add_rect(layer,start-offset,minwidth_layer,end.y-start.y)
+
 
     
     def get_pin(self, text):
@@ -308,42 +333,50 @@ class layout(lef.lef):
                   layer_stack=layers, 
                   position_list=coordinates)
 
-    def add_contact(self, layers, offset, size=[1,1], mirror="R0", rotate=0):
+    def add_contact(self, layers, offset, size=[1,1], mirror="R0", rotate=0, implant_type=None, well_type=None):
         """ This is just an alias for a via."""
         return self.add_via(layers=layers,
                             offset=offset,
                             size=size,
                             mirror=mirror,
-                            rotate=rotate)
+                            rotate=rotate,
+                            implant_type=implant_type,
+                            well_type=well_type)
 
-    def add_contact_center(self, layers, offset, size=[1,1], mirror="R0", rotate=0):
+    def add_contact_center(self, layers, offset, size=[1,1], mirror="R0", rotate=0, implant_type=None, well_type=None):
         """ This is just an alias for a via."""
         return self.add_via_center(layers=layers,
                                    offset=offset,
                                    size=size,
                                    mirror=mirror,
-                                   rotate=rotate)
+                                   rotate=rotate,
+                                   implant_type=implant_type,
+                                   well_type=well_type)      
     
-    def add_via(self, layers, offset, size=[1,1], mirror="R0", rotate=0):
+    def add_via(self, layers, offset, size=[1,1], mirror="R0", rotate=0, implant_type=None, well_type=None):
         """ Add a three layer via structure. """
         import contact
         via = contact.contact(layer_stack=layers,
-                              dimensions=size)
+                              dimensions=size,
+                              implant_type=implant_type,
+                              well_type=well_type)
         self.add_mod(via)
-        self.add_inst(name=via.name, 
-                      mod=via, 
-                      offset=offset,
-                      mirror=mirror,
-                      rotate=rotate)
+        inst=self.add_inst(name=via.name, 
+                           mod=via, 
+                           offset=offset,
+                           mirror=mirror,
+                           rotate=rotate)
         # We don't model the logical connectivity of wires/paths
         self.connect_inst([])
-        return via
+        return inst
 
-    def add_via_center(self, layers, offset, size=[1,1], mirror="R0", rotate=0):
+    def add_via_center(self, layers, offset, size=[1,1], mirror="R0", rotate=0, implant_type=None, well_type=None):
         """ Add a three layer via structure by the center coordinate accounting for mirroring and rotation. """
         import contact
         via = contact.contact(layer_stack=layers,
-                              dimensions=size)
+                              dimensions=size,
+                              implant_type=implant_type,
+                              well_type=well_type)
 
         debug.check(mirror=="R0","Use rotate to rotate vias instead of mirror.")
         
@@ -363,14 +396,14 @@ class layout(lef.lef):
             
 
         self.add_mod(via)
-        self.add_inst(name=via.name, 
-                      mod=via, 
-                      offset=corrected_offset,
-                      mirror=mirror,
-                      rotate=rotate)
+        inst=self.add_inst(name=via.name, 
+                           mod=via, 
+                           offset=corrected_offset,
+                           mirror=mirror,
+                           rotate=rotate)
         # We don't model the logical connectivity of wires/paths
         self.connect_inst([])
-        return via
+        return inst
     
     def add_ptx(self, offset, mirror="R0", rotate=0, width=1, mults=1, tx_type="nmos"):
         """Adds a ptx module to the design."""
@@ -379,12 +412,12 @@ class layout(lef.lef):
                       mults=mults,
                       tx_type=tx_type)
         self.add_mod(mos)
-        self.add_inst(name=mos.name, 
-                      mod=mos, 
-                      offset=offset,
-                      mirror=mirror,
-                      rotate=rotate)
-        return mos
+        inst=self.add_inst(name=mos.name, 
+                           mod=mos, 
+                           offset=offset,
+                           mirror=mirror,
+                           rotate=rotate)
+        return inst
 
 
 
@@ -487,6 +520,26 @@ class layout(lef.lef):
                     blockages += [pin.rect]
 
         return blockages
+
+    def add_enclosure(self, insts, layer="nwell"):
+        """ Add a layer that surrounds the given instances. Useful
+        for creating wells, for example. Doesn't check for minimum widths or
+        spacings."""
+
+        xmin=insts[0].lx()
+        ymin=insts[0].by()
+        xmax=insts[0].rx()
+        ymax=insts[0].uy()
+        for inst in insts:
+            xmin = min(xmin, inst.lx())
+            ymin = min(ymin, inst.by())
+            xmax = max(xmax, inst.rx())
+            ymax = max(ymax, inst.uy())
+
+        self.add_rect(layer=layer,
+                      offset=vector(xmin,ymin),
+                      width=xmax-xmin,
+                      height=ymax-ymin)
 
     def pdf_write(self, pdf_name):
         # NOTE: Currently does not work (Needs further research)

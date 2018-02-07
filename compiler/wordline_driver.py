@@ -129,8 +129,8 @@ class wordline_driver(design.design):
                                     mod=self.nand2,
                                     offset=nand2_offset,
                                     mirror=inst_mirror)
-            self.connect_inst(["in[{0}]".format(row),
-                               "en_bar[{0}]".format(row),
+            self.connect_inst(["en_bar[{0}]".format(row),
+                               "in[{0}]".format(row),
                                "net[{0}]".format(row),
                                "vdd", "gnd"])
             # add inv2
@@ -149,8 +149,8 @@ class wordline_driver(design.design):
             self.add_segment_center(layer="metal1",
                                     start=clk_offset,
                                     end=a_pos)
-            m1m2_via = self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                           offset=clk_offset)
+            self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                offset=clk_offset)
 
             # first inv to nand2 A
             zb_pos = inv1_inst.get_pin("Z").bc()

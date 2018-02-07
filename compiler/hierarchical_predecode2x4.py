@@ -27,10 +27,10 @@ class hierarchical_predecode2x4(hierarchical_predecode):
         self.create_rails()
         self.add_input_inverters()
         self.add_output_inverters()
-        connections =[["in[0]",    "in[1]",    "Z[3]", "vdd", "gnd"],
-                      ["inbar[0]", "in[1]",    "Z[2]", "vdd", "gnd"],
+        connections =[["inbar[0]", "inbar[1]", "Z[0]", "vdd", "gnd"],
                       ["in[0]",    "inbar[1]", "Z[1]", "vdd", "gnd"],
-                      ["inbar[0]", "inbar[1]", "Z[0]", "vdd", "gnd"]]
+                      ["inbar[0]", "in[1]",    "Z[2]", "vdd", "gnd"],
+                      ["in[0]",    "in[1]",    "Z[3]", "vdd", "gnd"]]
         self.add_nand(connections)
         self.route()
 

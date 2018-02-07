@@ -4,36 +4,34 @@ Run a regresion test on various srams
 """
 
 import unittest
-from testutils import header,isclose
+from testutils import header,openram_test
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
-import verify
 
-#@unittest.skip("SKIPPING 21_timing_sram_test")
-
-
-class timing_sram_test(unittest.TestCase):
+class timing_sram_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
         OPTS.spice_name="hspice"
         OPTS.analytical_delay = False
+        
         # This is a hack to reload the characterizer __init__ with the spice version
         import characterizer
         reload(characterizer)
         from characterizer import delay
+        if not OPTS.spice_exe:
+            debug.error("Could not find {} simulator.".format(OPTS.spice_name),-1)
 
         import sram
 
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
-        s = sram.sram(word_size=OPTS.config.word_size,
-                      num_words=OPTS.config.num_words,
-                      num_banks=OPTS.config.num_banks,
+        s = sram.sram(word_size=OPTS.word_size,
+                      num_words=OPTS.num_words,
+                      num_banks=OPTS.num_banks,
                       name="sram1")
 
         OPTS.check_lvsdrc = True
@@ -51,25 +49,25 @@ class timing_sram_test(unittest.TestCase):
         slews = [tech.spice["rise_time"]*2]
         data = d.analyze(probe_address, probe_data,slews,loads)
         if OPTS.tech_name == "freepdk45":
-            golden_data = {'read1_power': 0.0296933,
-                           'read0_power': 0.029897899999999998,
-                           'write0_power': 0.0258029,
-                           'delay1': [0.049100700000000004],
-                           'delay0': [0.13766139999999996],
-                           'min_period': 0.322,
-                           'write1_power': 0.0260398,
-                           'slew0': [0.0265264],
-                           'slew1': [0.0195507]}
+            golden_data = {'read1_power': 0.0339194,
+                           'read0_power': 0.0340617,
+                           'write0_power': 0.0287779,
+                           'delay1': [0.0575725],
+                           'delay0': [0.16744839999999997],
+                           'min_period': 0.391,
+                           'write1_power': 0.0299736,
+                           'slew0': [0.026416],
+                           'slew1': [0.020441199999999996]}
         elif OPTS.tech_name == "scn3me_subm":
-            golden_data = {'read1_power': 4.3678,
-                           'read0_power': 4.3914,
-                           'write0_power': 2.9394,
-                           'delay1': [0.8901521],
-                           'delay0': [2.001],
-                           'min_period': 5.781,
-                           'write1_power': 2.7163,
-                           'slew0': [1.3044000000000002],
-                           'slew1': [0.9904079]}
+            golden_data = {'read1_power': 5.557800000000001,
+                           'read0_power': 5.5712,
+                           'write0_power': 3.8325,
+                           'delay1': [1.0323],
+                           'delay0': [2.2134],
+                           'min_period': 6.25,
+                           'write1_power': 3.6903,
+                           'slew0': [1.3009000000000002],
+                           'slew1': [0.983561]}
         else:
             self.assertTrue(False) # other techs fail
         # Check if no too many or too few results
@@ -78,9 +76,9 @@ class timing_sram_test(unittest.TestCase):
         for k in data.keys():
             if type(data[k])==list:
                 for i in range(len(data[k])):
-                    self.assertTrue(isclose(data[k][i],golden_data[k][i],0.15))
+                    self.isclose(data[k][i],golden_data[k][i],0.15)
             else:
-                self.assertTrue(isclose(data[k],golden_data[k],0.15))
+                self.isclose(data[k],golden_data[k],0.15)
 
                 
         # reset these options

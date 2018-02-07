@@ -19,10 +19,14 @@ os.environ["MGC_TMPDIR"] = "/tmp"
 
 ###########################
 # OpenRAM Paths
-OPENRAM_TECH=os.path.abspath(os.environ.get("OPENRAM_TECH"))
-DRCLVS_HOME=OPENRAM_TECH+"/scn3me_subm/tech"
+
+try:
+    DRCLVS_HOME = os.path.abspath(os.environ.get("DRCLVS_HOME"))
+except:
+    OPENRAM_TECH=os.path.abspath(os.environ.get("OPENRAM_TECH"))
+    DRCLVS_HOME=OPENRAM_TECH+"/scn3me_subm/tech"
 os.environ["DRCLVS_HOME"] = DRCLVS_HOME
-# You can override the spice model diretory in the environment
+
 try:
     SPICE_MODEL_DIR = os.path.abspath(os.environ.get("SPICE_MODEL_DIR"))
 except:

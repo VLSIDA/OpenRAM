@@ -16,8 +16,8 @@ class precharge(pgate.pgate):
         pgate.pgate.__init__(self, name)
         debug.info(2, "create single precharge cell: {0}".format(name))
 
-        c = reload(__import__(OPTS.config.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.config.bitcell)
+        c = reload(__import__(OPTS.bitcell))
+        self.mod_bitcell = getattr(c, OPTS.bitcell)
         self.bitcell = self.mod_bitcell()
         
         self.beta = parameter["beta"]
@@ -128,15 +128,12 @@ class precharge(pgate.pgate):
         """Adds a nwell tap to connect to the vdd rail"""
         # adds the contact from active to metal1
         well_contact_pos = self.upper_pmos1_inst.get_pin("D").center().scale(1,0) \
-                           + vector(0, self.upper_pmos1_pos.y + self.pmos.height + drc["well_extend_active"])
+                           + vector(0, self.upper_pmos1_inst.uy() + contact.well.height/2 + drc["well_extend_active"])
         self.add_contact_center(layers=("active", "contact", "metal1"),
-                                offset=well_contact_pos)
+                                offset=well_contact_pos,
+                                implant_type="n",
+                                well_type="n")
 
-        # adds the implant to turn the contact into a nwell tap
-        self.add_rect_center(layer="nimplant",
-                             offset=well_contact_pos,
-                             width=contact.well.first_layer_width,
-                             height=contact.well.first_layer_height)
 
         self.height = well_contact_pos.y + contact.well.height
 
@@ -175,19 +172,19 @@ class precharge(pgate.pgate):
     def add_bitline_contacts(self):
         """Adds contacts/via from metal1 to metal2 for bit-lines"""
 
-        for stack in [("active","contact","metal1"),("metal1", "via1", "metal2")]:
-            pos = self.lower_pmos_inst.get_pin("S").center()
-            self.add_contact_center(layers=stack,
-                                    offset=pos)
-            pos = self.lower_pmos_inst.get_pin("D").center()
-            self.add_contact_center(layers=stack,
-                                    offset=pos)
-            pos = self.upper_pmos1_inst.get_pin("S").center()
-            self.add_contact_center(layers=stack,
-                                    offset=pos)
-            pos = self.upper_pmos2_inst.get_pin("D").center()
-            self.add_contact_center(layers=stack,
-                                    offset=pos)
+        stack=("metal1", "via1", "metal2")
+        pos = self.lower_pmos_inst.get_pin("S").center()
+        self.add_contact_center(layers=stack,
+                                offset=pos)
+        pos = self.lower_pmos_inst.get_pin("D").center()
+        self.add_contact_center(layers=stack,
+                                offset=pos)
+        pos = self.upper_pmos1_inst.get_pin("S").center()
+        self.add_contact_center(layers=stack,
+                                offset=pos)
+        pos = self.upper_pmos2_inst.get_pin("D").center()
+        self.add_contact_center(layers=stack,
+                                offset=pos)
 
     def connect_pmos(self, pmos_pin, bit_pin):
         """ Connect pmos pin to bitline pin """

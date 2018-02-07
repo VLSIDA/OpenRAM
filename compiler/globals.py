@@ -11,9 +11,6 @@ import sys
 import re
 import importlib
 
-# Current version of OpenRAM.
-VERSION = "1.01"
-
 USAGE = "Usage: openram.py [options] <config file>\nUse -h for help.\n"
 
 # Anonymous object that will be the options
@@ -50,22 +47,26 @@ def parse_args():
         optparse.make_option("-r", "--remove_netlist_trimming", action="store_false", dest="trim_netlist",
                              help="Disable removal of noncritical memory cells during characterization"),
         optparse.make_option("-c", "--characterize", action="store_false", dest="analytical_delay",
-                             help="Perform characterization to calculate delays (default is analytical models)")
+                             help="Perform characterization to calculate delays (default is analytical models)"),
+        optparse.make_option("-d", "--dontpurge", action="store_false", dest="purge_temp",
+                             help="Don't purge the contents of the temp directory after a successful run")
         # -h --help is implicit.
     }
 
     parser = optparse.OptionParser(option_list=option_list,
                                    description="Compile and/or characterize an SRAM.",
                                    usage=USAGE,
-                                   version="OpenRAM v" + VERSION)
+                                   version="OpenRAM")
 
     (options, args) = parser.parse_args(values=OPTS)
-
     # If we don't specify a tech, assume freepdk45.
     # This may be overridden when we read a config file though...
     if OPTS.tech_name == "":
         OPTS.tech_name = "freepdk45"
-    
+    # Alias SCMOS to AMI 0.5um
+    if OPTS.tech_name == "scmos":
+        OPTS.tech_name = "scn3me_subm"
+        
     return (options, args)
 
 def print_banner():
@@ -75,7 +76,7 @@ def print_banner():
         return
 
     print("|==============================================================================|")
-    name = "OpenRAM Compiler v"+VERSION
+    name = "OpenRAM Compiler"
     print("|=========" + name.center(60) + "=========|")
     print("|=========" + " ".center(60) + "=========|")
     print("|=========" + "VLSI Design and Automation Lab".center(60) + "=========|")
@@ -99,13 +100,13 @@ def init_openram(config_file):
 
     import_tech()
 
+
 def get_tool(tool_type, preferences):
     """
     Find which tool we have from a list of preferences and return the
     one selected and its full path.
     """
     debug.info(2,"Finding {} tool...".format(tool_type))
-    global OPTS
 
     for name in preferences:
         exe_name = find_exe(name)
@@ -125,6 +126,8 @@ def read_config(config_file):
     config file is just a Python file that defines some config
     options. 
     """
+    global OPTS
+    
     # Create a full path relative to current dir unless it is already an abs path
     if not os.path.isabs(config_file):
         config_file = os.getcwd() + "/" +  config_file
@@ -140,18 +143,17 @@ def read_config(config_file):
     # Import the configuration file of which modules to use
     debug.info(1, "Configuration file is " + config_file + ".py")
     try:
-        OPTS.config = importlib.import_module(file_name) 
+        config = importlib.import_module(file_name) 
     except:
         debug.error("Unable to read configuration file: {0}".format(config_file),2)
 
-    # This path must be setup after the config file.
-    try:
-        # If path not set on command line, try config file.
-        if OPTS.output_path=="":
-            OPTS.output_path=OPTS.config.output_path
-    except:
-        # Default to current directory.
-        OPTS.output_path="."
+    for k,v in config.__dict__.items():
+        # The command line will over-ride the config file
+        # except in the case of the tech name! This is because the tech name
+        # is sometimes used to specify the config file itself (e.g. unit tests)
+        if not k in OPTS.__dict__ or k=="tech_name":
+            OPTS.__dict__[k]=v
+    
     if not OPTS.output_path.endswith('/'):
         OPTS.output_path += "/"
     debug.info(1, "Output saved in " + OPTS.output_path)
@@ -172,16 +174,15 @@ def end_openram():
     """ Clean up openram for a proper exit """
     cleanup_paths()
 
-    # Reset the static duplicate name checker for unit tests.
-    # This is needed for running unit tests.
-    import design
-    design.design.name_map=[]
     
     
 def cleanup_paths():
     """
     We should clean up the temp directory after execution.
     """
+    if not OPTS.purge_temp:
+        debug.info(0,"Preserving temp directory: {}".format(OPTS.openram_temp))
+        return
     if os.path.exists(OPTS.openram_temp):
         shutil.rmtree(OPTS.openram_temp, ignore_errors=True)
             
@@ -242,7 +243,7 @@ def import_tech():
     debug.info(2,"Importing technology: " + OPTS.tech_name)
 
     # Set the tech to the config file we read in instead of the command line value.
-    OPTS.tech_name = OPTS.config.tech_name
+    OPTS.tech_name = OPTS.tech_name
     
     
         # environment variable should point to the technology dir

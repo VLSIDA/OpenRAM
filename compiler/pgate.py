@@ -47,7 +47,7 @@ class pgate(design.design):
         debug.check(nmos_gate_pin.ll().x==pmos_gate_pin.ll().x, "Connecting unaligned gates not supported.")
         
         # Pick point on the left of NMOS and connect down to PMOS
-        nmos_gate_pos = nmos_gate_pin.ll() + vector(0.5*drc["minwidth_poly"],0)
+        nmos_gate_pos = nmos_gate_pin.ll() + vector(0.5*self.poly_width,0)
         pmos_gate_pos = vector(nmos_gate_pos.x,pmos_gate_pin.bc().y)
         self.add_path("poly",[nmos_gate_pos,pmos_gate_pos])
 
@@ -97,93 +97,117 @@ class pgate(design.design):
     def extend_wells(self, middle_position):
         """ Extend the n/p wells to cover whole cell """
 
-        nwell_height = self.height - middle_position.y
+        # Add a rail width to extend the well to the top of the rail
+        max_y_offset = self.height + 0.5*self.m1_width
+        self.nwell_position = middle_position
+        nwell_height = max_y_offset - middle_position.y
         if info["has_nwell"]:
             self.add_rect(layer="nwell",
                           offset=middle_position,
                           width=self.well_width,
                           height=nwell_height)
         self.add_rect(layer="vtg",
-                      offset=middle_position,
+                      offset=self.nwell_position,
                       width=self.well_width,
                       height=nwell_height)
 
+        pwell_position = vector(0,-0.5*self.m1_width)
+        pwell_height = middle_position.y-pwell_position.y
         if info["has_pwell"]:
             self.add_rect(layer="pwell",
-                          offset=vector(0,0),
+                          offset=pwell_position,
                           width=self.well_width,
-                          height=middle_position.y)
+                          height=pwell_height)
         self.add_rect(layer="vtg",
-                      offset=vector(0,0),
+                      offset=pwell_position,
                       width=self.well_width,
-                      height=middle_position.y)
+                      height=pwell_height)
 
-    def add_nwell_contact(self, nmos, nmos_pos):
-        """ Add an nwell contact next to the given nmos device. """
+    def add_nwell_contact(self, pmos, pmos_pos):
+        """ Add an nwell contact next to the given pmos device. """
         
         layer_stack = ("active", "contact", "metal1")
-        
-        # To the right a spacing away from the nmos right active edge
-        nwell_contact_xoffset = nmos_pos.x + nmos.active_width + drc["active_to_body_active"]
-        nwell_contact_yoffset = nmos_pos.y 
-        nwell_offset = vector(nwell_contact_xoffset, nwell_contact_yoffset)
-        # Offset by half a contact in x and y
-        nwell_offset += vector(0.5*nmos.active_contact.first_layer_width,
-                               0.5*nmos.active_contact.first_layer_height)
-        self.nwell_contact=self.add_contact_center(layers=layer_stack,
-                                                   offset=nwell_offset)
-        self.add_rect_center(layer="metal1",
-                             offset=nwell_offset.scale(1,0.5),
-                             width=self.nwell_contact.second_layer_width,
-                             height=nwell_offset.y)
-        # Now add the full active and implant for the NMOS
-        nwell_offset = nmos_pos + vector(nmos.active_width,0) 
-        nwell_contact_width = drc["active_to_body_active"] + nmos.active_contact.width
-        self.add_rect(layer="active",
-                      offset=nwell_offset,
-                      width=nwell_contact_width,
-                      height=nmos.active_height)
-        
-        implant_offset = nwell_offset + vector(drc["implant_to_implant"],0)
-        implant_width = nwell_contact_width - drc["implant_to_implant"]
-        self.add_rect(layer="pimplant",
-                      offset=implant_offset,
-                      width=implant_width,
-                      height=nmos.active_height)
-
-
-    def add_pwell_contact(self, pmos, pmos_pos):
-        """ Add an pwell contact next to the given pmos device. """
-
-        layer_stack = ("active", "contact", "metal1")
-
         
         # To the right a spacing away from the pmos right active edge
-        pwell_contact_xoffset = pmos_pos.x + pmos.active_width + drc["active_to_body_active"]
-        pwell_contact_yoffset = pmos_pos.y + pmos.active_height - pmos.active_contact.height
-        pwell_offset = vector(pwell_contact_xoffset, pwell_contact_yoffset)
-        # Offset by half a contact
-        pwell_offset += vector(0.5*pmos.active_contact.first_layer_width,
+        contact_xoffset = pmos_pos.x + pmos.active_width + drc["active_to_body_active"]
+        # Must be at least an well enclosure of active down from the top of the well
+        # OR align the active with the top of PMOS active.
+        max_y_offset = self.height + 0.5*self.m1_width
+        contact_yoffset = min(pmos_pos.y + pmos.active_height - pmos.active_contact.first_layer_height,
+                              max_y_offset - pmos.active_contact.first_layer_height/2 - self.well_enclose_active)
+        contact_offset = vector(contact_xoffset, contact_yoffset)
+        # Offset by half a contact in x and y
+        contact_offset += vector(0.5*pmos.active_contact.first_layer_width,
                                0.5*pmos.active_contact.first_layer_height)
-        self.pwell_contact=self.add_contact_center(layers=layer_stack,
-                                                   offset=pwell_offset)
+        self.nwell_contact=self.add_contact_center(layers=layer_stack,
+                                                   offset=contact_offset,
+                                                   implant_type="n",
+                                                   well_type="n")
         self.add_rect_center(layer="metal1",
-                             offset=pwell_offset + vector(0,0.5*(self.height-pwell_offset.y)),
-                             width=self.pwell_contact.second_layer_width,
-                             height=self.height - pwell_offset.y)
+                             offset=contact_offset + vector(0,0.5*(self.height-contact_offset.y)),
+                             width=self.nwell_contact.mod.second_layer_width,
+                             height=self.height - contact_offset.y)
+        
         # Now add the full active and implant for the PMOS
-        pwell_offset = pmos_pos + vector(pmos.active_width,0)        
-        pwell_contact_width = drc["active_to_body_active"] + pmos.active_contact.width        
-        self.add_rect(layer="active",
-                      offset=pwell_offset,
-                      width=pwell_contact_width,
-                      height=pmos.active_height)
+        #active_offset = pmos_pos + vector(pmos.active_width,0)
+        # This might be needed if the spacing between the actives is not satisifed
+        # self.add_rect(layer="active",
+        #               offset=active_offset,
+        #               width=pmos.active_contact.width,
+        #               height=pmos.active_height)
 
+        # we need to ensure implants don't overlap and are spaced far enough apart
+        # implant_spacing = self.implant_space+self.implant_enclose_active
+        # implant_offset = active_offset + vector(implant_spacing,0) - vector(0,self.implant_enclose_active)
+        # implant_width = pmos.active_contact.width + 2*self.implant_enclose_active
+        # implant_height = pmos.active_height + 2*self.implant_enclose_active
+        # self.add_rect(layer="nimplant",
+        #               offset=implant_offset,
+        #               width=implant_width,
+        #               height=implant_height)
 
-        implant_offset = pwell_offset + vector(drc["implant_to_implant"],0)
-        implant_width = pwell_contact_width - drc["implant_to_implant"]
-        self.add_rect(layer="nimplant",
-                      offset=implant_offset,
-                      width=implant_width,
-                      height=pmos.active_height)
+        # Return the top of the well
+
+    def add_pwell_contact(self, nmos, nmos_pos):
+        """ Add an pwell contact next to the given nmos device. """
+
+        layer_stack = ("active", "contact", "metal1")
+
+        pwell_position = vector(0,-0.5*self.m1_width)
+        
+        # To the right a spacing away from the nmos right active edge
+        contact_xoffset = nmos_pos.x + nmos.active_width + drc["active_to_body_active"]
+        # Must be at least an well enclosure of active up from the bottom of the well
+        contact_yoffset = max(nmos_pos.y,
+                              self.well_enclose_active - nmos.active_contact.first_layer_height/2)
+        contact_offset = vector(contact_xoffset, contact_yoffset)
+
+        # Offset by half a contact
+        contact_offset += vector(0.5*nmos.active_contact.first_layer_width,
+                               0.5*nmos.active_contact.first_layer_height)
+        self.pwell_contact=self.add_contact_center(layers=layer_stack,
+                                                   offset=contact_offset,
+                                                   implant_type="p",
+                                                   well_type="p")
+        self.add_rect_center(layer="metal1",
+                             offset=contact_offset.scale(1,0.5),
+                             width=self.pwell_contact.mod.second_layer_width,
+                             height=contact_offset.y)
+        
+        # Now add the full active and implant for the NMOS
+        # active_offset = nmos_pos + vector(nmos.active_width,0)        
+        # This might be needed if the spacing between the actives is not satisifed
+        # self.add_rect(layer="active",
+        #               offset=active_offset,
+        #               width=nmos.active_contact.width,
+        #               height=nmos.active_height)
+
+        # implant_spacing = self.implant_space+self.implant_enclose_active
+        # implant_offset = active_offset + vector(implant_spacing,0) - vector(0,self.implant_enclose_active)
+        # implant_width = nmos.active_contact.width + 2*self.implant_enclose_active
+        # implant_height = nmos.active_height + 2*self.implant_enclose_active
+        # self.add_rect(layer="pimplant",
+        #               offset=implant_offset,
+        #               width=implant_width,
+        #               height=implant_height)
         

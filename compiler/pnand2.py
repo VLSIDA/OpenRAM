@@ -12,8 +12,8 @@ class pnand2(pgate.pgate):
     This model use ptx to generate a 2-input nand within a cetrain height.
     """
 
-    c = reload(__import__(OPTS.config.bitcell))
-    bitcell = getattr(c, OPTS.config.bitcell)
+    c = reload(__import__(OPTS.bitcell))
+    bitcell = getattr(c, OPTS.bitcell)
 
     unique_id = 1
     
@@ -50,8 +50,8 @@ class pnand2(pgate.pgate):
         self.setup_layout_constants()
         self.add_supply_rails()
         self.add_ptx()
-        self.add_well_contacts()
         self.connect_rails()
+        self.add_well_contacts()
         self.extend_wells(self.well_pos)
         self.route_inputs()
         self.route_output()
@@ -93,9 +93,6 @@ class pnand2(pgate.pgate):
 
         self.width = self.well_width
         # Height is an input parameter, so it is not recomputed.
-
-        # This will help with the wells 
-        self.well_pos = vector(0,0.4*self.height)
 
         # This is the extra space needed to ensure DRC rules to the active contacts
         extra_contact_space = max(-self.nmos.get_pin("D").by(),0)
@@ -139,22 +136,25 @@ class pnand2(pgate.pgate):
         self.nmos1_inst=self.add_inst(name="pnand2_nmos1",
                                       mod=self.nmos,
                                       offset=nmos1_pos)
-        self.connect_inst(["Z", "A", "net1", "gnd"])
+        self.connect_inst(["Z", "B", "net1", "gnd"])
 
         self.nmos2_pos = nmos1_pos + self.overlap_offset
         self.nmos2_inst=self.add_inst(name="pnand2_nmos2",
                                       mod=self.nmos,
                                       offset=self.nmos2_pos)
-        self.connect_inst(["net1", "B", "gnd", "gnd"])
+        self.connect_inst(["net1", "A", "gnd", "gnd"])
 
         # Output position will be in between the PMOS and NMOS        
         self.output_pos = vector(0,0.5*(pmos1_pos.y+nmos1_pos.y+self.nmos.active_height))
 
+        # This will help with the wells 
+        self.well_pos = vector(0,self.nmos1_inst.uy())
+        
     def add_well_contacts(self):
-        """ Add n/p well taps to the layout and connect to supplies """
+        """ Add n/p well taps to the layout and connect to supplies AFTER the wells are created """
 
-        self.add_nwell_contact(self.nmos, self.nmos2_pos)
-        self.add_pwell_contact(self.pmos, self.pmos2_pos)
+        self.add_nwell_contact(self.pmos, self.pmos2_pos)
+        self.add_pwell_contact(self.nmos, self.nmos2_pos)
 
         
     def connect_rails(self):

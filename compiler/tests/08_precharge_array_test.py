@@ -4,22 +4,19 @@ Run a regresion test on a precharge array
 """
 
 import unittest
-from testutils import header
+from testutils import header,openram_test
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
-import verify
 
-
-#@unittest.skip("SKIPPING 08_precharge_test")
-
-
-class precharge_test(unittest.TestCase):
+class precharge_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        global verify
+        import verify
         OPTS.check_lvsdrc = False
 
         import precharge_array
@@ -32,19 +29,6 @@ class precharge_test(unittest.TestCase):
         OPTS.check_lvsdrc = True
         globals.end_openram()
         
-    def local_check(self, pc):
-        tempspice = OPTS.openram_temp + "temp.sp"
-        tempgds = OPTS.openram_temp + "temp.gds"
-
-        pc.sp_write(tempspice)
-        pc.gds_write(tempgds)
-
-        self.assertFalse(verify.run_drc(pc.name, tempgds))
-        self.assertFalse(verify.run_lvs(pc.name, tempgds, tempspice))
-
-        os.remove(tempspice)
-        os.remove(tempgds)
-
 
 # instantiate a copy of the class to actually run the test
 if __name__ == "__main__":

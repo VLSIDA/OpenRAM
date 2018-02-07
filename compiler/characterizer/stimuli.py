@@ -218,17 +218,18 @@ def get_inverse_value(value):
         debug.error("Invalid value to get an inverse of: {0}".format(value))
         
 
-def gen_meas_delay(stim_file, meas_name, trig_name, targ_name, trig_val, targ_val, trig_dir, targ_dir, td):
+def gen_meas_delay(stim_file, meas_name, trig_name, targ_name, trig_val, targ_val, trig_dir, targ_dir, trig_td, targ_td):
     """Creates the .meas statement for the measurement of delay"""
-    measure_string=".meas tran {0} TRIG v({1}) VAL={2} {3}=1 TD={7}n TARG v({4}) VAL={5} {6}=1 TD={7}n\n\n"
+    measure_string=".meas tran {0} TRIG v({1}) VAL={2} {3}=1 TD={4}n TARG v({5}) VAL={6} {7}=1 TD={8}n\n\n"
     stim_file.write(measure_string.format(meas_name,
                                           trig_name,
                                           trig_val,
                                           trig_dir,
+                                          trig_td,
                                           targ_name,
                                           targ_val,
                                           targ_dir,
-                                          td))
+                                          targ_td))
     
 def gen_meas_power(stim_file, meas_name, t_initial, t_final):
     """Creates the .meas statement for the measurement of avg power"""
@@ -246,7 +247,13 @@ def gen_meas_power(stim_file, meas_name, t_initial, t_final):
 def write_control(stim_file, end_time):
     # UIC is needed for ngspice to converge
     stim_file.write(".TRAN 5p {0}n UIC\n".format(end_time))
-    stim_file.write(".OPTIONS POST=1 RUNLVL=4 PROBE\n")
+    if OPTS.spice_name == "ngspice":
+        # ngspice sometimes has convergence problems if not using gear method
+        # which is more accurate, but slower than the default trapezoid method
+        stim_file.write(".OPTIONS POST=1 RUNLVL=4 PROBE method=gear\n")
+    else:
+        stim_file.write(".OPTIONS POST=1 RUNLVL=4 PROBE\n")
+
     # create plots for all signals
     stim_file.write("* probe is used for hspice/xa, while plot is used in ngspice\n")
     if OPTS.debug_level>0:
@@ -265,7 +272,10 @@ def write_control(stim_file, end_time):
 def write_include(stim_file, models):
     """Writes include statements, inputs are lists of model files"""
     for item in list(models):
-        stim_file.write(".include \"{0}\"\n\n".format(item))
+        if os.path.isfile(item):
+            stim_file.write(".include \"{0}\"\n\n".format(item))
+        else:
+            debug.error("Could not find spice model: {0}\nSet SPICE_MODEL_DIR to over-ride path.\n".format(item))
 
 
 def write_supply(stim_file):
@@ -282,26 +292,26 @@ def run_sim():
     temp_stim = "{0}stim.sp".format(OPTS.openram_temp)
     import datetime
     start_time = datetime.datetime.now()
+    debug.check(OPTS.spice_exe!="","No spice simulator has been found.")
     
-    from characterizer import spice_exe
     if OPTS.spice_name == "xa":
         # Output the xa configurations here. FIXME: Move this to write it once.
         xa_cfg = open("{}xa.cfg".format(OPTS.openram_temp), "w")
         xa_cfg.write("set_sim_level -level 7\n")
         xa_cfg.write("set_powernet_level 7 -node vdd\n")
         xa_cfg.close()
-        cmd = "{0} {1} -c {2}xa.cfg -o {2}xa -mt 20".format(spice_exe,
+        cmd = "{0} {1} -c {2}xa.cfg -o {2}xa -mt 2".format(OPTS.spice_exe,
                                                temp_stim,
                                                OPTS.openram_temp)
         valid_retcode=0
     elif OPTS.spice_name == "hspice":
         # TODO: Should make multithreading parameter a configuration option
-        cmd = "{0} -mt 2 -i {1} -o {2}timing".format(spice_exe,
+        cmd = "{0} -mt 2 -i {1} -o {2}timing".format(OPTS.spice_exe,
                                                      temp_stim,
                                                      OPTS.openram_temp)
         valid_retcode=0
     else:
-        cmd = "{0} -b -o {2}timing.lis {1}".format(spice_exe,
+        cmd = "{0} -b -o {2}timing.lis {1}".format(OPTS.spice_exe,
                                                    temp_stim,
                                                    OPTS.openram_temp)
         # for some reason, ngspice-25 returns 1 when it only has acceptable warnings

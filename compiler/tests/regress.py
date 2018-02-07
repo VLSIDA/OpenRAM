@@ -9,7 +9,7 @@ import globals
 (OPTS, args) = globals.parse_args()
 del sys.argv[1:]
 
-from testutils import header
+from testutils import header,openram_test
 header(__file__, OPTS.tech_name)
 
 # get a list of all files in the tests directory

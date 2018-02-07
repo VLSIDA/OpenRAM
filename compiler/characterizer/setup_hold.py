@@ -37,7 +37,7 @@ class setup_hold():
         self.write_header(correct_value)
 
         # instantiate the master-slave d-flip-flop
-        self.sf.write("* Instantiation of the Master-Slave D-flip-flop\n")
+        self.sf.write("\n* Instantiation of the Master-Slave D-flip-flop\n")
         stimuli.inst_model(stim_file=self.sf,
                            pins=self.pins,
                            model_name=self.model_name)
@@ -58,7 +58,7 @@ class setup_hold():
 
     def write_header(self, correct_value):
         """ Write the header file with all the models and the power supplies. """
-        self.sf.write("* Stimulus for setup/hold: data {0} period {1}n\n".format(correct_value, self.period))
+        self.sf.write("\n* Stimulus for setup/hold: data {0} period {1}n\n".format(correct_value, self.period))
 
         # include files in stimulus file
         self.model_list = tech.spice["fet_models"] + [self.model_location]
@@ -66,7 +66,7 @@ class setup_hold():
                               models=self.model_list)
 
         # add vdd/gnd statements
-        self.sf.write("* Global Power Supplies\n")
+        self.sf.write("\n* Global Power Supplies\n")
         stimuli.write_supply(self.sf)
 
 
@@ -76,7 +76,7 @@ class setup_hold():
         characterization.
 
         """
-        self.sf.write("* Generation of the data and clk signals\n")
+        self.sf.write("\n* Generation of the data and clk signals\n")
         incorrect_value = stimuli.get_inverse_value(correct_value)
         if mode=="HOLD":
             init_value = incorrect_value
@@ -89,7 +89,7 @@ class setup_hold():
 
         stimuli.gen_pwl(stim_file=self.sf,
                         sig_name="data",
-                        clk_times=[self.period, target_time],
+                        clk_times=[0, self.period, target_time],
                         data_values=[init_value, start_value, end_value],
                         period=target_time,
                         slew=self.constrained_input_slew,
@@ -105,7 +105,7 @@ class setup_hold():
                         # without using .IC on an internal node.
                         # Return input to value after one period.
                         # The second pulse is the characterization one at 2*period
-                        clk_times=[0.1*self.period,self.period,2*self.period],
+                        clk_times=[0, 0.1*self.period,self.period,2*self.period],
                         data_values=[0, 1, 0, 1],
                         period=2*self.period,
                         slew=self.constrained_input_slew,
@@ -132,7 +132,7 @@ class setup_hold():
                 din_rise_or_fall = "RISE"
 
 
-        self.sf.write("* Measure statements for pass/fail verification\n")
+        self.sf.write("\n* Measure statements for pass/fail verification\n")
         trig_name = "clk"
         targ_name = "dout"
         trig_val = targ_val = 0.5 * self.vdd

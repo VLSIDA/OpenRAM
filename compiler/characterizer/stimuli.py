@@ -140,7 +140,8 @@ def gen_pwl(stim_file, sig_name, clk_times, data_values, period, slew, setup):
     """ 
     Generate a PWL stimulus given a signal name and data values at each period.
     Automatically creates slews and ensures each data occurs a setup before the clock
-    edge. 
+    edge. The first clk_time should be 0 and is the initial time that corresponds
+    to the initial value.
     """
     # the initial value is not a clock time
     debug.check(len(clk_times)==len(data_values),"Clock and data value lengths don't match.")
@@ -151,7 +152,7 @@ def gen_pwl(stim_file, sig_name, clk_times, data_values, period, slew, setup):
     half_slew = 0.5 * slew
     stim_file.write("* (time, data): {}\n".format(zip(clk_times, data_values)))
     stim_file.write("V{0} {0} 0 PWL (0n {1}v ".format(sig_name, values[0]))
-    for i in range(1,len(times)-1):
+    for i in range(1,len(times)):
         stim_file.write("{0}n {1}v {2}n {3}v ".format(times[i]-half_slew,
                                                       values[i-1],
                                                       times[i]+half_slew,

@@ -48,26 +48,27 @@ class timing_sram_test(openram_test):
         loads = [tech.spice["FF_in_cap"]*4]
         slews = [tech.spice["rise_time"]*2]
         data = d.analyze(probe_address, probe_data,slews,loads)
+        #print data
         if OPTS.tech_name == "freepdk45":
-            golden_data = {'read1_power': 0.0339194,
-                           'read0_power': 0.0340617,
-                           'write0_power': 0.0287779,
-                           'delay1': [0.0575725],
-                           'delay0': [0.16744839999999997],
-                           'min_period': 0.391,
-                           'write1_power': 0.0299736,
-                           'slew0': [0.026416],
-                           'slew1': [0.020441199999999996]}
+            golden_data = {'read1_power': 0.0345742,
+                           'read0_power': 0.03526189999999999,
+                           'write0_power': 0.0270014,
+                           'delay1': [0.0573107],
+                           'delay0': [0.07055809999999998],
+                           'min_period': 0.234,
+                           'write1_power': 0.0376625,
+                           'slew0': [0.0284344],
+                           'slew1': [0.0189185]}
         elif OPTS.tech_name == "scn3me_subm":
-            golden_data = {'read1_power': 5.557800000000001,
-                           'read0_power': 5.5712,
-                           'write0_power': 3.8325,
-                           'delay1': [1.0323],
-                           'delay0': [2.2134],
-                           'min_period': 6.25,
-                           'write1_power': 3.6903,
-                           'slew0': [1.3009000000000002],
-                           'slew1': [0.983561]}
+            golden_data = {'read1_power': 11.2474,
+                           'read0_power': 11.3148,
+                           'write0_power': 6.9064, 
+                           'delay1': [1.0298], 
+                           'delay0': [1.4102], 
+                           'min_period': 4.063, 
+                           'write1_power': 11.6964, 
+                           'slew0': [1.3118], 
+                           'slew1': [0.9816656]}
         else:
             self.assertTrue(False) # other techs fail
         # Check if no too many or too few results

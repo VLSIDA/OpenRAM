@@ -75,7 +75,8 @@ class sram(design.design):
         
         self.DRC_LVS(final_verification=True)
 
-        print_time("SRAM creation", datetime.datetime.now(), start_time)
+        if not OPTS.is_unit_test:
+            print_time("SRAM creation", datetime.datetime.now(), start_time)
 
 
     def compute_sizes(self):

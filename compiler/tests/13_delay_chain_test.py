@@ -4,20 +4,19 @@ Run a test on a delay chain
 """
 
 import unittest
-from testutils import header
+from testutils import header,openram_test
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
-import verify
 
-#@unittest.skip("SKIPPING 14_delay_chain_test")
-class delay_chain_test(unittest.TestCase):
+class delay_chain_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        # we will manually run lvs/drc
+        global verify
+        import verify
         OPTS.check_lvsdrc = False
 
         import delay_chain
@@ -29,19 +28,6 @@ class delay_chain_test(unittest.TestCase):
         OPTS.check_lvsdrc = True
         globals.end_openram()
         
-    def local_check(self, a):
-        tempspice = OPTS.openram_temp + "temp.sp"
-        tempgds = OPTS.openram_temp + "temp.gds"
-
-        a.sp_write(tempspice)
-        a.gds_write(tempgds)
-
-        self.assertFalse(verify.run_drc(a.name, tempgds))
-        self.assertFalse(verify.run_lvs(a.name, tempgds, tempspice))
-
-        os.remove(tempspice)
-        os.remove(tempgds)
-
 # instantiate a copy of the class to actually run the test
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

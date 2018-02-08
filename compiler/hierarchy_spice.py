@@ -126,6 +126,8 @@ class spice(verilog.verilog):
                 return
             if self.pins == []:
                 return
+
+            
             # write out the first spice line (the subcircuit)
             sp.write("\n.SUBCKT {0} {1}\n".format(self.name,
                                                   " ".join(self.pins)))
@@ -146,9 +148,15 @@ class spice(verilog.verilog):
                 # these are wires and paths
                 if self.conns[i] == []:
                     continue
-                sp.write("X{0} {1} {2}\n".format(self.insts[i].name,
-                                                 " ".join(self.conns[i]),
-                                                 self.insts[i].mod.name))
+                if hasattr(self.insts[i].mod,"spice_device"):
+                    sp.write(self.insts[i].mod.spice_device.format(self.insts[i].name,
+                                                                   " ".join(self.conns[i])))
+                    sp.write("\n")
+
+                else:
+                    sp.write("X{0} {1} {2}\n".format(self.insts[i].name,
+                                                     " ".join(self.conns[i]),
+                                                     self.insts[i].mod.name))
 
             sp.write(".ENDS {0}\n".format(self.name))
 
@@ -158,6 +166,7 @@ class spice(verilog.verilog):
             #if os.path.isfile(self.sp_file):
             #    sp.write("\n* {0}\n".format(self.sp_file))
             sp.write("\n".join(self.spice))
+            
             sp.write("\n")
 
     def sp_write(self, spname):

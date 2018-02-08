@@ -40,26 +40,30 @@ class single_level_column_mux_array(design.design):
         self.setup_layout_constants()
         self.create_array()
         self.add_routing()
+        # Find the highest shapes to determine height before adding well
+        highest = self.find_highest_coords()
+        self.height = highest.y 
+        self.add_layout_pins()
+        self.add_enclosure(self.mux_inst, "pwell")
+
+        
 
     def add_modules(self):
-        self.mux = single_level_column_mux(name="single_level_column_mux",
-                                           tx_size=8)
+        # FIXME: Why is this 8x?
+        self.mux = single_level_column_mux(tx_size=8)
         self.add_mod(self.mux)
 
 
     def setup_layout_constants(self):
         self.column_addr_size = num_of_inputs = int(self.words_per_row / 2)
         self.width = self.columns * self.mux.width
-        
         self.m1_pitch = contact.m1m2.width + max(drc["metal1_to_metal1"],drc["metal2_to_metal2"])
-        # To correct the offset between M1 and M2 via enclosures
-        self.offset_fix = vector(0,0.5*(drc["minwidth_metal2"]-drc["minwidth_metal1"]))
         # one set of metal1 routes for select signals and a pair to interconnect the mux outputs bl/br
         # one extra route pitch is to space from the sense amp
         self.route_height = (self.words_per_row + 3)*self.m1_pitch
-        # mux height plus routing signal height plus well spacing at the top
-        self.height = self.mux.height + self.route_height + drc["pwell_to_nwell"]
+        
 
+        
     def create_array(self):
         self.mux_inst = []
 
@@ -70,28 +74,6 @@ class single_level_column_mux_array(design.design):
             self.mux_inst.append(self.add_inst(name=name,
                                                mod=self.mux,
                                                offset=x_off))
-
-            offset = self.mux_inst[-1].get_pin("bl").ll()
-            self.add_layout_pin(text="bl[{}]".format(col_num),
-                                layer="metal2",
-                                offset=offset,
-                                height=self.height-offset.y)
-
-            offset = self.mux_inst[-1].get_pin("br").ll()
-            self.add_layout_pin(text="br[{}]".format(col_num),
-                                layer="metal2",
-                                offset=offset,
-                                height=self.height-offset.y)
-
-            gnd_pins = self.mux_inst[-1].get_pins("gnd")
-            for gnd_pin in gnd_pins:
-                # only do even colums to avoid duplicates
-                offset = gnd_pin.ll()
-                if col_num % 2 == 0: 
-                    self.add_layout_pin(text="gnd",
-                                        layer="metal2",
-                                        offset=offset.scale(1,0),
-                                        height=self.height)
             
             self.connect_inst(["bl[{}]".format(col_num),
                                "br[{}]".format(col_num),
@@ -100,7 +82,34 @@ class single_level_column_mux_array(design.design):
                                "sel[{}]".format(col_num % self.words_per_row),
                                "gnd"])
 
-                
+
+    def add_layout_pins(self):
+        """ Add the pins after we determine the height. """
+        # For every column, add a pass gate
+        for col_num in range(self.columns):
+            mux_inst = self.mux_inst[col_num]
+            offset = mux_inst.get_pin("bl").ll()
+            self.add_layout_pin(text="bl[{}]".format(col_num),
+                                layer="metal2",
+                                offset=offset,
+                                height=self.height-offset.y)
+
+            offset = mux_inst.get_pin("br").ll()
+            self.add_layout_pin(text="br[{}]".format(col_num),
+                                layer="metal2",
+                                offset=offset,
+                                height=self.height-offset.y)
+
+            gnd_pins = mux_inst.get_pins("gnd")
+            for gnd_pin in gnd_pins:
+                # only do even colums to avoid duplicates
+                offset = gnd_pin.ll()
+                if col_num % 2 == 0: 
+                    self.add_layout_pin(text="gnd",
+                                        layer="metal2",
+                                        offset=offset.scale(1,0),
+                                        height=self.height)
+        
 
     def add_routing(self):
         self.add_horizontal_input_rail()

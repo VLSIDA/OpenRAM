@@ -19,18 +19,18 @@ class sram(design.design):
 
     def __init__(self, word_size, num_words, num_banks, name):
 
-        c = reload(__import__(OPTS.config.control_logic))
-        self.mod_control_logic = getattr(c, OPTS.config.control_logic)
+        c = reload(__import__(OPTS.control_logic))
+        self.mod_control_logic = getattr(c, OPTS.control_logic)
         
-        c = reload(__import__(OPTS.config.ms_flop_array))
-        self.mod_ms_flop_array = getattr(c, OPTS.config.ms_flop_array)
+        c = reload(__import__(OPTS.ms_flop_array))
+        self.mod_ms_flop_array = getattr(c, OPTS.ms_flop_array)
         
-        c = reload(__import__(OPTS.config.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.config.bitcell)
+        c = reload(__import__(OPTS.bitcell))
+        self.mod_bitcell = getattr(c, OPTS.bitcell)
         self.bitcell = self.mod_bitcell()
 
-        c = reload(__import__(OPTS.config.ms_flop))
-        self.mod_ms_flop = getattr(c, OPTS.config.ms_flop)
+        c = reload(__import__(OPTS.ms_flop))
+        self.mod_ms_flop = getattr(c, OPTS.ms_flop)
         self.ms_flop = self.mod_ms_flop()
         
 
@@ -72,7 +72,7 @@ class sram(design.design):
         self.width = sizes[0]
         self.height = sizes[1]
         
-        self.DRC_LVS()
+        self.DRC_LVS(final_verification=True)
 
     def compute_sizes(self):
         """  Computes the organization of the memory using bitcell size by trying to make it square."""
@@ -650,7 +650,7 @@ class sram(design.design):
         # Connect the output bar to select 0
         msb_out_pin = self.msb_address_inst.get_pin("dout_bar[0]")
         msb_out_pos = msb_out_pin.rc()
-        out_extend_right_pos = msb_out_pos + vector(self.m2_pitch,0)
+        out_extend_right_pos = msb_out_pos + vector(2*self.m2_pitch,0)
         out_extend_up_pos = out_extend_right_pos + vector(0,self.m2_width)
         rail_pos = vector(self.vert_control_bus_positions["bank_sel[0]"].x,out_extend_up_pos.y)
         self.add_path("metal2",[msb_out_pos,out_extend_right_pos,out_extend_up_pos])
@@ -660,7 +660,7 @@ class sram(design.design):
         # Connect the output to select 1
         msb_out_pin = self.msb_address_inst.get_pin("dout[0]")
         msb_out_pos = msb_out_pin.rc()
-        out_extend_right_pos = msb_out_pos + vector(self.m2_pitch,0)
+        out_extend_right_pos = msb_out_pos + vector(2*self.m2_pitch,0)
         out_extend_down_pos = out_extend_right_pos - vector(0,2*self.m1_pitch)
         rail_pos = vector(self.vert_control_bus_positions["bank_sel[1]"].x,out_extend_down_pos.y)
         self.add_path("metal2",[msb_out_pos,out_extend_right_pos,out_extend_down_pos])
@@ -989,7 +989,13 @@ class sram(design.design):
         ############################################################
         sp = open(sp_name, 'w')
 
+        sp.write("**************************************************\n")
         sp.write("* OpenRAM generated memory.\n")
+        sp.write("* Words: {}\n".format(self.num_words))
+        sp.write("* Data bits: {}\n".format(self.word_size))
+        sp.write("* Banks: {}\n".format(self.num_banks))
+        sp.write("* Column mux: {}:1\n".format(self.words_per_row))
+        sp.write("**************************************************\n")        
         # This causes unit test mismatch
         # sp.write("* Created: {0}\n".format(datetime.datetime.now()))
         # sp.write("* User: {0}\n".format(getpass.getuser()))

@@ -12,48 +12,49 @@ import os
 import debug
 from globals import OPTS,find_exe,get_tool
 
-
 debug.info(2,"Initializing verify...")
 
 if not OPTS.check_lvsdrc:
     debug.info(1,"LVS/DRC/PEX disabled.")
-    drc_exe = None
-    lvs_exe = None
-    pex_exe = None
+    OPTS.drc_exe = None
+    OPTS.lvs_exe = None
+    OPTS.pex_exe = None
 else:
-    drc_exe = get_tool("DRC",["calibre","assura","magic"])
-    lvs_exe = get_tool("LVS",["calibre","assura","netgen"])
-    pex_exe = get_tool("PEX",["calibre","magic"])
+    OPTS.drc_exe = get_tool("DRC",["calibre","assura","magic"])
+    OPTS.lvs_exe = get_tool("LVS",["calibre","assura","netgen"])
+    OPTS.pex_exe = get_tool("PEX",["calibre","magic"])
 
-
-if drc_exe == None:
+if OPTS.check_lvsdrc and OPTS.tech_name == "freepdk45":
+    debug.check(OPTS.drc_exe[0]!="magic","Magic does not support FreePDK45 for DRC.")
+    
+if OPTS.drc_exe == None:
     pass
-elif "calibre" in drc_exe:
+elif "calibre"==OPTS.drc_exe[0]:
     from calibre import run_drc
-elif "assura" in drc_exe:
+elif "assura"==OPTS.drc_exe[0]:
     from assura import run_drc
-elif "magic" in drc_exe:
+elif "magic"==OPTS.drc_exe[0]:
     from magic import run_drc
 else:
     debug.warning("Did not find a supported DRC tool.")
 
-if lvs_exe == None:
+if OPTS.lvs_exe == None:
     pass
-elif "calibre" in lvs_exe:
+elif "calibre"==OPTS.lvs_exe[0]:
     from calibre import run_lvs
-elif "assura" in lvs_exe:
+elif "assura"==OPTS.lvs_exe[0]:
     from assura import run_lvs
-elif "netgen" in lvs_exe:
+elif "netgen"==OPTS.lvs_exe[0]:
     from magic import run_lvs
 else:
     debug.warning("Did not find a supported LVS tool.")
 
 
-if pex_exe == None:
+if OPTS.pex_exe == None:
     pass
-elif "calibre" in pex_exe:
+elif "calibre"==OPTS.pex_exe[0]:
     from calibre import run_pex
-elif "magic" in pex_exe:
+elif "magic"==OPTS.pex_exe[0]:
     from magic import run_pex
 else:
     debug.warning("Did not find a supported PEX tool.")

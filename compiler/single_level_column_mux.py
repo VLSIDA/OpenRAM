@@ -12,12 +12,13 @@ class single_level_column_mux(design.design):
     Creates a single columnmux cell.
     """
 
-    def __init__(self, name, tx_size):
+    def __init__(self, tx_size):
+        name="single_level_column_mux_{}".format(tx_size)
         design.design.__init__(self, name)
-        debug.info(2, "create single columnmux cell: {0}".format(name))
+        debug.info(2, "create single column mux cell: {0}".format(name))
 
-        c = reload(__import__(OPTS.config.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.config.bitcell)
+        c = reload(__import__(OPTS.bitcell))
+        self.mod_bitcell = getattr(c, OPTS.bitcell)
         self.bitcell = self.mod_bitcell()
         
         self.ptx_width = tx_size * drc["minwidth_tx"]
@@ -27,9 +28,9 @@ class single_level_column_mux(design.design):
     def create_layout(self):
 
         self.add_ptx()
-
+        self.pin_height = 2*self.m2_width
         self.width = self.bitcell.width
-        self.height = self.nmos2.uy()
+        self.height = self.nmos2.uy() + self.pin_height
         self.connect_poly()
         self.add_gnd_rail()
         self.add_bitline_pins()
@@ -42,26 +43,25 @@ class single_level_column_mux(design.design):
         bl_pos = vector(self.bitcell.get_pin("BL").lx(), 0)
         br_pos = vector(self.bitcell.get_pin("BR").lx(), 0)
 
-        pin_height = 2*self.m2_width
         # bl and br
         self.add_layout_pin(text="bl",
                             layer="metal2",
-                            offset=bl_pos + vector(0,self.height - pin_height),
-                            height=pin_height)
+                            offset=bl_pos + vector(0,self.height - self.pin_height),
+                            height=self.pin_height)
         self.add_layout_pin(text="br",
                             layer="metal2",
-                            offset=br_pos + vector(0,self.height - pin_height),
-                            height=pin_height)
+                            offset=br_pos + vector(0,self.height - self.pin_height),
+                            height=self.pin_height)
         
         # bl_out and br_out
         self.add_layout_pin(text="bl_out",
                             layer="metal2",
                             offset=bl_pos,
-                            height=pin_height)
+                            height=self.pin_height)
         self.add_layout_pin(text="br_out",
                             layer="metal2",
                             offset=br_pos,
-                            height=pin_height)
+                            height=self.pin_height)
 
 
     def add_ptx(self):
@@ -152,7 +152,6 @@ class single_level_column_mux(design.design):
         
     def add_wells(self):
         """ Add a well and implant over the whole cell. Also, add the pwell contact (if it exists) """
-
         
         # find right most gnd rail
         gnd_pins = self.bitcell.get_pins("gnd")
@@ -167,26 +166,8 @@ class single_level_column_mux(design.design):
                             offset=m1m2_offset)
         active_offset = right_gnd.bc() + vector(0,0.5*self.nmos.poly_height)
         self.add_via_center(layers=("active", "contact", "metal1"),
-                            offset=active_offset)
+                            offset=active_offset,
+                            implant_type="p",
+                            well_type="p")
 
-        # implant must surround the active area
-        active_correct = vector(contact.well.width,contact.well.height).scale(0.5,0.5)
-        offset_implant = active_offset - vector([drc["implant_to_contact"]]*2) - active_correct
-        implant_width = 2*drc["implant_to_contact"] + contact.well.width
-        implant_height = 2*drc["implant_to_contact"] + contact.well.height        
-        self.add_rect(layer="pimplant",
-                      offset=offset_implant,
-                      width=implant_width,
-                      height=implant_height)
-
-        # Add a well around the whole cell
-        if info["has_pwell"]:
-            self.add_rect(layer="pwell",
-                          offset=vector(0,0),
-                          width=self.width + contact.well.width + drc["well_enclosure_active"],
-                          height=self.height)
-        self.add_rect(layer="vtg",
-                      offset=vector(0,0),
-                      width=self.width + contact.well.width,
-                      height=self.height)
 

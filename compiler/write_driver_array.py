@@ -15,8 +15,8 @@ class write_driver_array(design.design):
         design.design.__init__(self, "write_driver_array")
         debug.info(1, "Creating {0}".format(self.name))
 
-        c = reload(__import__(OPTS.config.write_driver))
-        self.mod_write_driver = getattr(c, OPTS.config.write_driver)
+        c = reload(__import__(OPTS.write_driver))
+        self.mod_write_driver = getattr(c, OPTS.write_driver)
         self.driver = self.mod_write_driver("write_driver")
         self.add_mod(self.driver)
 
@@ -69,14 +69,14 @@ class write_driver_array(design.design):
                                 offset=din_pin.ll(),
                                 width=din_pin.width(),
                                 height=din_pin.height())
-            bl_pin = self.driver_insts[i].get_pin("BL")            
+            bl_pin = self.driver_insts[i].get_pin("bl")            
             self.add_layout_pin(text="bl[{0}]".format(i),
                                 layer="metal2",
                                 offset=bl_pin.ll(),
                                 width=bl_pin.width(),
                                 height=bl_pin.height())
                            
-            br_pin = self.driver_insts[i].get_pin("BR")
+            br_pin = self.driver_insts[i].get_pin("br")
             self.add_layout_pin(text="br[{0}]".format(i),
                                 layer="metal2",
                                 offset=br_pin.ll(),

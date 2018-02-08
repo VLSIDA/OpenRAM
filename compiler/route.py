@@ -7,7 +7,7 @@ from vector3d import vector3d
 
 class route():
     """ 
-    Object route
+    Object route (used by the router module)
     Add a route of minimium metal width between a set of points.
     The wire must be completely rectilinear and the 
     z-dimension of the points refers to the layers (plus via)

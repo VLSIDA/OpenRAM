@@ -23,7 +23,7 @@ class bank(design.design):
                     "bitcell_array",   "sense_amp_array",    "precharge_array",
                     "column_mux_array", "write_driver_array", "tri_gate_array"]
         for mod_name in mod_list:
-            config_mod_name = getattr(OPTS.config, mod_name)
+            config_mod_name = getattr(OPTS, mod_name)
             class_file = reload(__import__(config_mod_name))
             mod_class = getattr(class_file , config_mod_name)
             setattr (self, "mod_"+mod_name, mod_class)
@@ -99,8 +99,10 @@ class bank(design.design):
         self.add_precharge_array()
         
         if self.col_addr_size > 0:
+            # The m2 width is because the 6T cell may have vias on the boundary edge for
+            # overlapping when making the array
+            self.column_mux_height = self.column_mux_array.height + 0.5*self.m2_width
             self.add_column_mux_array()
-            self.column_mux_height = self.column_mux_array.height
         else:
             self.column_mux_height = 0
         if self.col_addr_size > 1: # size 1 is from addr FF
@@ -234,8 +236,8 @@ class bank(design.design):
         """ Adding Precharge """
 
         # The wells must be far enough apart
-        # We use two well spacings because the bitcells tend to have a shared rail in the height
-        y_offset = self.bitcell_array.height + 2*drc["pwell_to_nwell"]
+        # The enclosure is for the well and the spacig is to the bitcell wells
+        y_offset = self.bitcell_array.height + 2*drc["pwell_to_nwell"] + drc["well_enclosure_active"]
         self.precharge_array_inst=self.add_inst(name="precharge_array",
                                                 mod=self.precharge_array, 
                                                 offset=vector(0,y_offset))
@@ -249,7 +251,7 @@ class bank(design.design):
     def add_column_mux_array(self):
         """ Adding Column Mux when words_per_row > 1 . """
 
-        y_offset = self.column_mux_array.height
+        y_offset = self.column_mux_height
         self.col_mux_array_inst=self.add_inst(name="column_mux_array",
                                               mod=self.column_mux_array,
                                               offset=vector(0,y_offset).scale(-1,-1))
@@ -434,7 +436,8 @@ class bank(design.design):
             
 
         # Place the col decoder just to the left of the control bus
-        x_off = self.m2_pitch + self.overall_central_bus_width + self.col_decoder.width
+        gap = max(drc["pwell_to_nwell"], 2*self.m2_pitch)
+        x_off = gap + self.overall_central_bus_width + self.col_decoder.width 
         # Place the col decoder below the the address flops which are below the row decoder (lave some space for wells)
         vertical_gap = max(drc["pwell_to_nwell"], 2*self.m2_pitch) 
         y_off = self.decoder.predecoder_height + self.msf_address.width + self.col_decoder.height + 2*vertical_gap

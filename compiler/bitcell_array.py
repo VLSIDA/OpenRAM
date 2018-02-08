@@ -21,12 +21,13 @@ class bitcell_array(design.design):
         self.column_size = cols
         self.row_size = rows
 
-        c = reload(__import__(OPTS.config.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.config.bitcell)
+        c = reload(__import__(OPTS.bitcell))
+        self.mod_bitcell = getattr(c, OPTS.bitcell)
         self.cell = self.mod_bitcell()
         self.add_mod(self.cell)
 
-        self.height = self.row_size*self.cell.height 
+        # We increase it by a well enclosure so the precharges don't overlap our wells
+        self.height = self.row_size*self.cell.height + drc["well_enclosure_active"]
         self.width = self.column_size*self.cell.width 
         
         self.add_pins()
@@ -115,8 +116,8 @@ class bitcell_array(design.design):
             gnd_pins = self.cell_inst[0,col].get_pins("gnd")
             for gnd_pin in gnd_pins:
                 # avoid duplicates by only doing even rows
-                # also skip if it is not the full height (a through rail)
-                if gnd_pin.layer=="metal2" and col%2 == 0 and gnd_pin.height()>=self.cell.height:
+                # also skip if it isn't the pin that spans the entire cell down to the bottom
+                if gnd_pin.layer=="metal2" and gnd_pin.by()==lower_y:
                     self.add_layout_pin(text="gnd", 
                                         layer="metal2",
                                         offset=gnd_pin.ll(),

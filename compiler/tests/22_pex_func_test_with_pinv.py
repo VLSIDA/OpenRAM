@@ -4,20 +4,20 @@ Run a regression test on an extracted SRAM to ensure functionality.
 """
 
 import unittest
-from testutils import header
+from testutils import header,openram_test
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
-import verify
-
 
 @unittest.skip("SKIPPING 22_sram_func_test")
-class sram_func_test(unittest.TestCase):
+class sram_func_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        global verify
+        import verify
 
         self.func_test(bank_num=1)
         self.func_test(bank_num=2)
@@ -33,9 +33,9 @@ class sram_func_test(unittest.TestCase):
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
         OPTS.check_lvsdrc = False
         OPTS.use_pex = True
-        s = sram.sram(word_size=OPTS.config.word_size,
-                      num_words=OPTS.config.num_words,
-                      num_banks=OPTS.config.num_banks,
+        s = sram.sram(word_size=OPTS.word_size,
+                      num_words=OPTS.num_words,
+                      num_banks=OPTS.num_banks,
                       name="test_sram1")
         OPTS.check_lvsdrc = True
         OPTS.use_pex = False

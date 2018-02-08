@@ -2,22 +2,19 @@
 "Run a regresion test on a basic path"
 
 import unittest
-from testutils import header
+from testutils import header,openram_test
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
+from globals import OPTS
 import debug
-import verify
 
-OPTS = globals.OPTS
-
-#@unittest.skip("SKIPPING 03_path_test")
-
-
-class path_test(unittest.TestCase):
+class path_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        global verify
+        import verify
         OPTS.check_lvsdrc = False
 
         import path
@@ -35,7 +32,7 @@ class path_test(unittest.TestCase):
                          [0, 6 * min_space ]]
         w = design.design("path_test0")
         path.path(w,layer_stack, position_list)
-        self.local_check(w)
+        self.local_drc_check(w)
 
 
         min_space = 2 * tech.drc["minwidth_metal1"]
@@ -52,7 +49,7 @@ class path_test(unittest.TestCase):
         position_list  = [[x+min_space, y+min_space] for x,y in old_position_list]
         w = design.design("path_test1")
         path.path(w,layer_stack, position_list)
-        self.local_check(w)
+        self.local_drc_check(w)
 
         min_space = 2 * tech.drc["minwidth_metal2"]
         layer_stack = ("metal2")
@@ -68,7 +65,7 @@ class path_test(unittest.TestCase):
         position_list  = [[x-min_space, y-min_space] for x,y in old_position_list]
         w = design.design("path_test2")
         path.path(w, layer_stack, position_list)
-        self.local_check(w)
+        self.local_drc_check(w)
 
         min_space = 2 * tech.drc["minwidth_metal3"]
         layer_stack = ("metal3")
@@ -85,17 +82,12 @@ class path_test(unittest.TestCase):
         position_list.reverse()
         w = design.design("path_test3")
         path.path(w, layer_stack, position_list)
-        self.local_check(w)
+        self.local_drc_check(w)
 
         # return it back to it's normal state
         OPTS.check_lvsdrc = True
         globals.end_openram()
         
-    def local_check(self, w):
-        tempgds = OPTS.openram_temp + "temp.gds"
-        w.gds_write(tempgds)
-        self.assertFalse(verify.run_drc(w.name, tempgds))
-        os.remove(tempgds)
 
 
 # instantiate a copy of the class to actually run the test

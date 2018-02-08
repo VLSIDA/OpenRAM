@@ -4,36 +4,34 @@ Run a regresion test on various srams
 """
 
 import unittest
-from testutils import header
+from testutils import header,openram_test
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
-import verify
 
-#@unittest.skip("SKIPPING 21_timing_sram_test")
-
-
-class sram_func_test(unittest.TestCase):
+class sram_func_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-
-        # we will manually run lvs/drc
         OPTS.check_lvsdrc = False
-        OPTS.spice_name="hspice"
+        OPTS.spice_name="" # Unset to use any simulator
         OPTS.analytical_delay = False
+
+        # This is a hack to reload the characterizer __init__ with the spice version
         import characterizer
         reload(characterizer)
         from characterizer import delay
+        if not OPTS.spice_exe:
+            debug.error("Could not find {} simulator.".format(OPTS.spice_name),-1)
 
         import sram
 
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
-        s = sram.sram(word_size=OPTS.config.word_size,
-                      num_words=OPTS.config.num_words,
-                      num_banks=OPTS.config.num_banks,
+        s = sram.sram(word_size=OPTS.word_size,
+                      num_words=OPTS.num_words,
+                      num_banks=OPTS.num_banks,
                       name="sram_func_test")
 
         OPTS.check_lvsdrc = True

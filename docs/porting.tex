@@ -1,0 +1,47 @@
+\section{Porting to a new Technologies}
+\label{sec:porting}
+
+The folllowing sub-directories and files should be added to your new technology directory:
+\begin{itemize}
+\item \verb|/sp_lib| - spice netlists for library cells
+\item \verb|/gds_lib| - GDSII files for the library cell
+\item \verb|layers.map| - layer/purpose pair map from the technology
+\item \verb|/tech| - contains tech parameters, layers, and portation functions.
+\end{itemize}
+
+\subsection{The GDS and Spice Libraries}
+
+The GDS and Spice libraries , \verb|\gds_lib| and \verb|\sp_lib|, should contain the GDSII layouts and spice netlists for each of the library cells in your SRAM design.  For the FreePDK45 technology, library cells for the 6T Cell, Sense Amp, Write Driver, Flip-Flops, and Control Logic are provided.  To reiterate: all layouts must be exported in the GDSII file format.  The following commands can be used to stream GDSII files into or out of Cadence Virtuoso:
+\begin{verbatim}
+To stream out of Cadence:
+
+  strmout -layerMap ../sram_lib/layers.map 
+    -library sram -topCell $i -view layout 
+      -strmFile ../sram_lib/$i.gds
+
+To stream a layout back into Cadence:
+
+  strmin -layerMap ../sram_lib/layers.map 
+    -attachTechFileOfLib NCSU_TechLib_FreePDK45 
+       -library sram_4_32 -strmFile sram_4_32.gds
+\end{verbatim}
+When you import a gds file, make sure to attach the correct tech lib or you will get incorrect layers in the resulting library.
+
+
+
+\subsection{Technology Directory}
+\label{sec:tech}
+
+Inside of the \verb|/tech| directory should be the Python classes for \verb|tech.py|,
+\verb|ptx_port.py|, and any other portation functions.  The \verb|tech.py| file is very important and should contain the following:
+\begin{itemize}
+\item Layer Number/Name - GDSII files only contain layer numbers and it can be difficult to keep track of which layer corresponds to what number.  In OpenRAM code, layers are referred to by name and \verb|tech.py| maps the layer names that we use to the layer numbers in the \verb|layer.map|  This will associate the layer name used in OpenRAM program with the number used in the layer.map, thus the code in complier won’t need to be changed for each technology.
+\item Tech Parameters - important rules from the DRC rule deck(such as layer spacing and minimum sizes) should be included here.  Please refer to the rules that are included in \verb|tech.py| to get a better idea as to what is important.
+\item Cell Sizes and Pin Offsets - The \verb|cell_size()| and \verb|pin_finder()| functions should be used to populate this class with the various cell sizes and pin locations in your library cells.  These functions are relatively slow because they must traverse the every shape in the entire hierarchy of a design.  Due to this fact, these function are not invoked each time the compiler is run, it should be run one time or if any changes have been made to library cells. This sizes and pin locations gathered are needed to generate the dynamic cells and perform routing at the various levels of the hierarchy.  It is suggested that boundary boxes on a specific layer should be added to define the cell size.
+\end{itemize}
+
+
+
+
+
+

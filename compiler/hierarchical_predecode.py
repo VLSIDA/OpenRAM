@@ -19,8 +19,8 @@ class hierarchical_predecode(design.design):
         self.number_of_outputs = int(math.pow(2, self.number_of_inputs))
         design.design.__init__(self, name="pre{0}x{1}".format(self.number_of_inputs,self.number_of_outputs))
 
-        c = reload(__import__(OPTS.config.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.config.bitcell)
+        c = reload(__import__(OPTS.bitcell))
+        self.mod_bitcell = getattr(c, OPTS.bitcell)
         self.bitcell_height = self.mod_bitcell.height
 
     
@@ -252,7 +252,7 @@ class hierarchical_predecode(design.design):
             if self.number_of_inputs == 2:
                 gate_lst = ["A","B"]
             else:
-                gate_lst = ["A","B","C"]                
+                gate_lst = ["A","B","C"]
 
             # this will connect pins A,B or A,B,C
             for rail_pin,gate_pin in zip(index_lst,gate_lst):

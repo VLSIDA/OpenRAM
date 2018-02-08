@@ -45,27 +45,38 @@ class trim_spice():
 
         # Always start fresh if we do multiple reductions
         self.sp_buffer = self.spice
-        
-        # Find the row and column indices for the removals
-        # Convert address froms tring to int
-        address = int(address,2)
-        array_row = address >> self.col_addr_size
-        # Which word in the array (0 if only one word)
-        if self.col_addr_size>0:
-            lower_mask = int(self.col_addr_size-1)
-            lower_address = address & lower_mask
-        else:
-            lower_address=0
-        # Which bit in the array
-        array_bit = lower_address*self.word_size + data_bit
 
+        # Split up the address and convert to an int
+        wl_address = int(address[self.col_addr_size:],2)
+        if self.col_addr_size>1:
+            col_address = int(address[0:self.col_addr_size],2)
+        else:
+            col_address = 0
         # 1. Keep cells in the bitcell array based on WL and BL
-        wl_name = "wl[{}]".format(array_row)
-        bl_name = "bl[{}]".format(array_bit)
+        wl_name = "wl[{}]".format(wl_address)
+        bl_name = "bl[{}]".format(self.words_per_row*data_bit + col_address)
+
+        # Prepend info about the trimming
+        addr_msg = "Keeping {} address".format(address)
+        self.sp_buffer.insert(0, "* "+addr_msg)
+        debug.info(1,addr_msg)
+        data_msg = "Keeping {} data bit".format(data_bit)
+        self.sp_buffer.insert(0, "* "+data_msg)
+        debug.info(1,data_msg)
+        bl_msg = "Keeping {} (trimming other BLs)".format(bl_name)
+        wl_msg = "Keeping {} (trimming other WLs)".format(wl_name)
+        self.sp_buffer.insert(0, "* "+bl_msg)
+        debug.info(1,bl_msg)
+        self.sp_buffer.insert(0, "* "+wl_msg)
+        debug.info(1,wl_msg)
+        self.sp_buffer.insert(0, "* It should NOT be used for LVS!!")
+        self.sp_buffer.insert(0, "* WARNING: This is a TRIMMED NETLIST.")
+        
         self.remove_insts("bitcell_array",[wl_name,bl_name])
 
         # 2. Keep sense amps basd on BL
-        self.remove_insts("sense_amp_array",[bl_name])
+        # FIXME: The bit lines are not indexed the same in sense_amp_array
+        #self.remove_insts("sense_amp_array",[bl_name])
 
         # 3. Keep column muxes basd on BL
         self.remove_insts("column_mux_array",[bl_name])

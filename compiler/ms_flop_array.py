@@ -20,8 +20,8 @@ class ms_flop_array(design.design):
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(self.name))
 
-        c = reload(__import__(OPTS.config.ms_flop))
-        self.mod_ms_flop = getattr(c, OPTS.config.ms_flop)
+        c = reload(__import__(OPTS.ms_flop))
+        self.mod_ms_flop = getattr(c, OPTS.ms_flop)
         self.ms = self.mod_ms_flop("ms_flop")
         self.add_mod(self.ms)
 

@@ -17,7 +17,7 @@ class precharge_array(design.design):
 
         self.columns = columns
 
-        self.pc_cell = precharge(name="precharge_cell", size=size)
+        self.pc_cell = precharge(name="precharge", size=size)
         self.add_mod(self.pc_cell)
 
         self.width = self.columns * self.pc_cell.width

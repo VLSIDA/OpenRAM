@@ -12,8 +12,6 @@ class wire(path):
     The points are the center of the wire.
     The layer stack is the vertical, contact/via, and horizontal layers, respectively. 
     """
-    unique_id = 1
-
     def __init__(self, obj, layer_stack, position_list):
         self.obj = obj
         self.layer_stack = layer_stack

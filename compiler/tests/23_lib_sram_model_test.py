@@ -32,7 +32,7 @@ class lib_test(openram_test):
 
         filename = s.name + "_analytical.lib"
         libname = OPTS.openram_temp + filename
-        lib.lib(libname=libname,sram=s,spfile=tempspice,use_model=True)
+        lib.lib(libname=libname,sram=s,sp_file=tempspice,use_model=True)
 
         # let's diff the result with a golden model
         golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),filename)

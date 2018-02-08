@@ -25,24 +25,24 @@ class pbitcell_test(unittest.TestCase):
         import pbitcell
         import tech
 
-        debug.info(2, "Test for pbitcell with 2 write ports and 2 read ports")
-        tx = pbitcell.pbitcell(num_write=2,num_read=2)
+        debug.info(2, "Test for pbitcell with 0 write ports and 2 read ports")
+        tx = pbitcell.pbitcell(num_write=0,num_read=2)
         self.local_check(tx)
 
         OPTS.check_lvsdrc = True
         globals.end_openram()        
 
     def local_check(self, tx):
-        #tempspice = OPTS.openram_temp + "temp.sp"
+        tempspice = OPTS.openram_temp + "temp.sp"
         tempgds = OPTS.openram_temp + "temp.gds"
 
-        #tx.sp_write(tempspice)
+        tx.sp_write(tempspice)
         tx.gds_write(tempgds)
 
         self.assertFalse(verify.run_drc(tx.name, tempgds))
-        #self.assertFalse(verify.run_lvs(tx.name, tempgds, tempspice))
+        self.assertFalse(verify.run_lvs(tx.name, tempgds, tempspice))
 
-        #os.remove(tempspice)
+        os.remove(tempspice)
         os.remove(tempgds)
 
         # reset the static duplicate name checker for unit tests

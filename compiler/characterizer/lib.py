@@ -12,9 +12,9 @@ from globals import OPTS
 class lib:
     """ lib file generation."""
     
-    def __init__(self, libname, sram, spfile, use_model=OPTS.analytical_delay):
+    def __init__(self, libname, sram, sp_file, use_model=OPTS.analytical_delay):
         self.sram = sram
-        self.sp_file = spfile        
+        self.sp_file = sp_file        
         self.use_model = use_model
         self.name = sram.name
         self.num_words = sram.num_words

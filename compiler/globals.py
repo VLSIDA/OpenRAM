@@ -281,12 +281,12 @@ def import_tech():
         sys.exit(1)
 
 def print_time(name, now_time, last_time=None):
+    """ Print a statement about the time delta. """
     if last_time:
         time = round((now_time-last_time).total_seconds(),1)
     else:
         time = now_time
     print("** {0}: {1} seconds".format(name,time))
-    return now_time
 
 
 def report_status():

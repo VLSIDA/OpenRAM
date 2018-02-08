@@ -32,18 +32,16 @@ import sram
 
 # Keep track of running stats
 start_time = datetime.datetime.now()
-last_time = start_time
-print_time("Start",last_time)
+print_time("Start",start_time)
 
 # import SRAM test generation
 s = sram.sram(word_size=OPTS.word_size,
               num_words=OPTS.num_words,
               num_banks=OPTS.num_banks,
               name=OPTS.output_name)
-last_time=print_time("SRAM creation", datetime.datetime.now(), last_time)
 
 # Output the files for the resulting SRAM
-s.save_output(last_time)
+s.save_output()
 
 # Delete temp files etc.
 end_openram()

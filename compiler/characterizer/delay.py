@@ -233,12 +233,11 @@ class delay():
                 feasible_period = 2 * feasible_period
                 continue
 
-            debug.info(1, "Found feasible_period: {0}ns " +
-                       "feasible_delay1/0 {1}ns/{2}ns slew {3}ns/{4}ns".format(feasible_period,
-                                                                               feasible_delay1,
-                                                                               feasible_delay0,
-                                                                               feasible_slew1,
-                                                                               feasible_slew0))
+            debug.info(1, "Found feasible_period: {0}ns feasible_delay1/0 {1}ns/{2}ns slew {3}ns/{4}ns".format(feasible_period,
+                                                                                                               feasible_delay1,
+                                                                                                               feasible_delay0,
+                                                                                                               feasible_slew1,
+                                                                                                               feasible_slew0))
             return (feasible_period, feasible_delay1, feasible_delay0)
 
 
@@ -258,14 +257,13 @@ class delay():
         
         # if it failed or the read was longer than a period
         if type(delay0)!=float or type(delay1)!=float or type(slew1)!=float or type(slew0)!=float:
-            debug.info(2,"Failed simulation: period {0} load {1} slew {2}, " +
-                       "delay0={3}n delay1={4}ns slew0={5}n slew1={6}n".format(period,
-                                                                               load,
-                                                                               slew,
-                                                                               delay0,
-                                                                               delay1,
-                                                                               slew0,
-                                                                               slew1))
+            debug.info(2,"Failed simulation: period {0} load {1} slew {2}, delay0={3}n delay1={4}ns slew0={5}n slew1={6}n".format(period,
+                                                                                                                                  load,
+                                                                                                                                  slew,
+                                                                                                                                  delay0,
+                                                                                                                                  delay1,
+                                                                                                                                  slew0,
+                                                                                                                                  slew1))
             return (False,0,0,0,0)
         # Scale delays to ns (they previously could have not been floats)
         delay0 *= 1e9
@@ -273,24 +271,22 @@ class delay():
         slew0 *= 1e9
         slew1 *= 1e9
         if delay0>period or delay1>period or slew0>period or slew1>period:
-            debug.info(2,"UNsuccessful simulation: period {0} load {1} slew {2}, " +
-                       "delay0={3}n delay1={4}ns slew0={5}n slew1={6}n".format(period,
-                                                                               load,
-                                                                               slew,
-                                                                               delay0,
-                                                                               delay1,
-                                                                               slew0,
-                                                                               slew1))
+            debug.info(2,"UNsuccessful simulation: period {0} load {1} slew {2}, delay0={3}n delay1={4}ns slew0={5}n slew1={6}n".format(period,
+                                                                                                                                        load,
+                                                                                                                                        slew,
+                                                                                                                                        delay0,
+                                                                                                                                        delay1,
+                                                                                                                                        slew0,
+                                                                                                                                        slew1))
             return (False,0,0,0,0)
         else:
-            debug.info(2,"Successful simulation: period {0} load {1} slew {2}, " +
-                       "delay0={3}n delay1={4}ns slew0={5}n slew1={6}n".format(period,
-                                                                               load,
-                                                                               slew,
-                                                                               delay0,
-                                                                               delay1,
-                                                                               slew0,
-                                                                               slew1))
+            debug.info(2,"Successful simulation: period {0} load {1} slew {2}, delay0={3}n delay1={4}ns slew0={5}n slew1={6}n".format(period,
+                                                                                                                                      load,
+                                                                                                                                      slew,
+                                                                                                                                      delay0,
+                                                                                                                                      delay1,
+                                                                                                                                      slew0,
+                                                                                                                                      slew1))
         # For debug, you sometimes want to inspect each simulation.
         #key=raw_input("press return to continue")
 
@@ -345,16 +341,22 @@ class delay():
         slew1 = ch.convert_to_float(ch.parse_output("timing", "slew1"))
         # if it failed or the read was longer than a period
         if type(delay0)!=float or type(delay1)!=float or type(slew1)!=float or type(slew0)!=float:
-            debug.info(2,"Invalid measures: Period {0}, " +
-                       "delay0={1}ns, delay1={2}ns slew0={3}ns slew1={4}ns".format(period, delay0, delay1, slew0, slew1))
+            debug.info(2,"Invalid measures: Period {0}, delay0={1}ns, delay1={2}ns slew0={3}ns slew1={4}ns".format(period,
+                                                                                                                   delay0,
+                                                                                                                   delay1,
+                                                                                                                   slew0,
+                                                                                                                   slew1))
             return False
         delay0 *= 1e9
         delay1 *= 1e9
         slew0 *= 1e9
         slew1 *= 1e9
         if delay0>period or delay1>period or slew0>period or slew1>period:
-            debug.info(2,"Too long delay/slew: Period {0}, " +
-                       "delay0={1}ns, delay1={2}ns slew0={3}ns slew1={4}ns".format(period, delay0, delay1, slew0, slew1))
+            debug.info(2,"Too long delay/slew: Period {0}, delay0={1}ns, delay1={2}ns slew0={3}ns slew1={4}ns".format(period,
+                                                                                                                      delay0,
+                                                                                                                      delay1,
+                                                                                                                      slew0,
+                                                                                                                      slew1))
             return False
         else:
             if not ch.relative_compare(delay1,feasible_delay1,error_tolerance=0.05):
@@ -367,8 +369,11 @@ class delay():
 
         #key=raw_input("press return to continue")
 
-        debug.info(2,"Successful period {0}, " +
-                   "delay0={1}ns, delay1={2}ns slew0={3}ns slew1={4}ns".format(period, delay0, delay1, slew0, slew1))
+        debug.info(2,"Successful period {0}, delay0={1}ns, delay1={2}ns slew0={3}ns slew1={4}ns".format(period,
+                                                                                                        delay0,
+                                                                                                        delay1,
+                                                                                                        slew0,
+                                                                                                        slew1))
         return True
     
     def set_probe(self,probe_address, probe_data):

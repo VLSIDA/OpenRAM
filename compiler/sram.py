@@ -8,7 +8,7 @@ from bank import bank
 import datetime
 import getpass
 from vector import vector
-from globals import OPTS
+from globals import OPTS, print_time
 
     
 class sram(design.design):
@@ -1009,3 +1009,50 @@ class sram(design.design):
     def analytical_delay(self,slew,load):
         """ LH and HL are the same in analytical model. """
         return self.bank.analytical_delay(slew,load)
+
+
+    def save_output(self, last_time):
+        """ Save all the output files while reporting time to do it as well. """
+        
+        spname = OPTS.output_path + self.name + ".sp"
+        print("SP: Writing to {0}".format(spname))
+        self.sp_write(spname)
+        last_time=print_time("Spice writing", datetime.datetime.now(), last_time)
+    
+        # Output the extracted design
+        sram_file = spname
+        if OPTS.use_pex:
+            sram_file = OPTS.output_path + "temp_pex.sp"
+            verify.run_pex(self.name, gdsname, spname, output=sram_file)
+        
+        # Characterize the design
+        from characterizer import lib
+        libname = OPTS.output_path + self.name + ".lib"
+        print("LIB: Writing to {0}".format(libname))
+        if OPTS.analytical_delay:
+            print("Using analytical delay models (no characterization)")
+        else:
+            if OPTS.spice_name!="":
+                print("Performing simulation-based characterization with {}".format(OPTS.spice_name))
+            if OPTS.trim_netlist:
+                print("Trimming netlist to speed up characterization.")
+        lib.lib(libname,self,sram_file)
+        last_time=print_time("Characterization", datetime.datetime.now(), last_time)
+
+        # Write the layout
+        gdsname = OPTS.output_path + self.name + ".gds"
+        print("GDS: Writing to {0}".format(gdsname))
+        self.gds_write(gdsname)
+        last_time=print_time("GDS", datetime.datetime.now(), last_time)
+
+        # Create a LEF physical model
+        lefname = OPTS.output_path + self.name + ".lef"
+        print("LEF: Writing to {0}".format(lefname))
+        self.lef_write(lefname)
+        last_time=print_time("LEF", datetime.datetime.now(), last_time)
+
+        # Write a verilog model
+        vname = OPTS.output_path + self.name + ".v"
+        print("Verilog: Writing to {0}".format(vname))
+        self.verilog_write(vname)
+        last_time=print_time("Verilog", datetime.datetime.now(), last_time)

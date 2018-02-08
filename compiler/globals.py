@@ -16,13 +16,7 @@ USAGE = "Usage: openram.py [options] <config file>\nUse -h for help.\n"
 # Anonymous object that will be the options
 OPTS = options.options()
 
-# check that we are not using version 3 and at least 2.7
-major_python_version = sys.version_info.major
-minor_python_version = sys.version_info.minor
-if not (major_python_version == 2 and minor_python_version >= 7):
-    debug.error("Python 2.7 is required.",-1)
-
-def parse_args():
+def parse_args(is_unit_test=True):
     """ Parse the optional arguments for OpenRAM """
 
     global OPTS
@@ -36,8 +30,6 @@ def parse_args():
                              help="Output file(s) location"),
         optparse.make_option("-n", "--nocheck", action="store_false",
                              help="Disable inline LVS/DRC checks", dest="check_lvsdrc"),
-        optparse.make_option("-q", "--quiet", action="store_false", dest="print_banner",
-                             help="Don\'t display banner"),
         optparse.make_option("-v", "--verbose", action="count", dest="debug_level",
                              help="Increase the verbosity level"),
         optparse.make_option("-t", "--tech", dest="tech_name",
@@ -66,13 +58,19 @@ def parse_args():
     # Alias SCMOS to AMI 0.5um
     if OPTS.tech_name == "scmos":
         OPTS.tech_name = "scn3me_subm"
-        
+
+    # Check that we have a single configuration file as argument.
+    OPTS.is_unit_test=is_unit_test
+    if not OPTS.is_unit_test and len(args) < 1:
+        print(USAGE)
+        sys.exit(2)
+
     return (options, args)
 
 def print_banner():
     """ Conditionally print the banner to stdout """
     global OPTS
-    if not OPTS.print_banner:
+    if OPTS.is_unit_test:
         return
 
     print("|==============================================================================|")
@@ -89,8 +87,17 @@ def print_banner():
     print("|==============================================================================|")
 
 
+def check_versions():
+    """ check that we are not using version 3 and at least 2.7 """
+    major_python_version = sys.version_info.major
+    minor_python_version = sys.version_info.minor
+    if not (major_python_version == 2 and minor_python_version >= 7):
+        debug.error("Python 2.7 is required.",-1)
+
+    
 def init_openram(config_file):
     """Initialize the technology, paths, simulators, etc."""
+    check_versions()
 
     debug.info(1,"Initializing OpenRAM...")
 
@@ -99,6 +106,8 @@ def init_openram(config_file):
     read_config(config_file)
 
     import_tech()
+
+    report_status()
 
 
 def get_tool(tool_type, preferences):
@@ -173,6 +182,7 @@ def read_config(config_file):
 def end_openram():
     """ Clean up openram for a proper exit """
     cleanup_paths()
+    
 
     
     
@@ -270,3 +280,39 @@ def import_tech():
         debug.error("Nonexistent technology_setup_file: {0}.py".format(filename))
         sys.exit(1)
 
+def print_time(name, now_time, last_time=None):
+    if last_time:
+        time = round((now_time-last_time).total_seconds(),1)
+    else:
+        time = now_time
+    print("** {0}: {1} seconds".format(name,time))
+    return now_time
+
+
+def report_status():
+    """ Check for valid arguments and report the info about the SRAM being generated """
+    # Check if all arguments are integers for bits, size, banks
+    if type(OPTS.word_size)!=int:
+        debug.error("{0} is not an integer in config file.".format(OPTS.word_size))
+    if type(OPTS.num_words)!=int:
+        debug.error("{0} is not an integer in config file.".format(OPTS.sram_size))
+    if type(OPTS.num_banks)!=int:
+        debug.error("{0} is not an integer in config file.".format(OPTS.num_banks))
+
+    if not OPTS.tech_name:
+        debug.error("Tech name must be specified in config file.")
+
+    if (OPTS.output_name == ""):
+        OPTS.output_name = "sram_{0}_{1}_{2}_{3}".format(OPTS.word_size,
+                                                         OPTS.num_words,
+                                                         OPTS.num_banks,
+                                                         OPTS.OPTS.tech_name)
+    if not OPTS.is_unit_test:
+        print("Output files are " + OPTS.output_name + ".(sp|gds|v|lib|lef)")
+        print("Technology: {0}".format(OPTS.tech_name))
+        print("Word size: {0}\nWords: {1}\nBanks: {2}".format(OPTS.word_size,
+                                                              OPTS.num_words,
+                                                              OPTS.num_banks))
+        if not OPTS.check_lvsdrc:
+            print("DRC/LVS/PEX checking is disabled.")
+    

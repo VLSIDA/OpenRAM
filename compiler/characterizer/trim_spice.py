@@ -75,7 +75,8 @@ class trim_spice():
         self.remove_insts("bitcell_array",[wl_name,bl_name])
 
         # 2. Keep sense amps basd on BL
-        self.remove_insts("sense_amp_array",[bl_name])
+        # FIXME: The bit lines are not indexed the same in sense_amp_array
+        #self.remove_insts("sense_amp_array",[bl_name])
 
         # 3. Keep column muxes basd on BL
         self.remove_insts("column_mux_array",[bl_name])

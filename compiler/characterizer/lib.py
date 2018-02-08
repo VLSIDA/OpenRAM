@@ -1,8 +1,5 @@
-import os
-import sys
-import re
+import os,sys,re,shutil
 import debug
-import tech
 import math
 import setup_hold
 import delay
@@ -34,7 +31,9 @@ class lib:
                                           self.sram.word_size)
         else:
             # Else, use the non-reduced netlist file for simulation
-            self.sim_sp_file = self.sp_file
+            self.sim_sp_file = "{}sram.sp".format(OPTS.openram_temp)
+            # Make a copy in temp for debugging
+            shutil.copy(self.sp_file, self.sim_sp_file)
         
         # These are the parameters to determine the table sizes
         #self.load_scales = np.array([0.1, 0.25, 0.5, 1, 2, 4, 8])

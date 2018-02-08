@@ -20,8 +20,8 @@ class openram_test(openram_test):
         
         debug.info(1, "Testing top-level openram.py with 2-bit, 16 word SRAM.")
         out_file = "testsram"
-          # make a temp directory for output
-        out_path = "/tmp/testsram"
+        # make a temp directory for output
+        out_path = "/tmp/testsram_{0}".format(OPTS.tech_name)
 
         # make sure we start without the files existing
         if os.path.exists(out_path):

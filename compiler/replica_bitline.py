@@ -10,12 +10,12 @@ from globals import OPTS
 
 class replica_bitline(design.design):
     """
-    Generate a module that simulate the delay of control logic 
-    and bit line charging.
-    Used for memory timing control
+    Generate a module that simulates the delay of control logic 
+    and bit line charging. Stages is the depth of the FO4 delay
+    line and rows is the height of the replica bit loads.
     """
 
-    def __init__(self, rows, name="replica_bitline"):
+    def __init__(self, FO4_stages, bitcell_loads, name="replica_bitline"):
         design.design.__init__(self, name)
 
         g = reload(__import__(OPTS.delay_chain))
@@ -29,7 +29,8 @@ class replica_bitline(design.design):
 
         for pin in ["en", "out", "vdd", "gnd"]:
             self.add_pin(pin)
-        self.rows = rows
+        self.bitcell_loads = bitcell_loads
+        self.FO4_stages = FO4_stages
 
         self.create_modules()
         self.calculate_module_offsets()
@@ -78,10 +79,11 @@ class replica_bitline(design.design):
         self.add_mod(self.bitcell)
 
         # This is the replica bitline load column that is the height of our array
-        self.rbl = bitcell_array(name="bitline_load", cols=1, rows=self.rows)
+        self.rbl = bitcell_array(name="bitline_load", cols=1, rows=self.bitcell_loads)
         self.add_mod(self.rbl)
-        
-        self.delay_chain = self.mod_delay_chain([1, 1, 1])
+
+        # FIXME: The FO and depth of this should be tuned
+        self.delay_chain = self.mod_delay_chain([4]*self.FO4_stages)
         self.add_mod(self.delay_chain)
 
         self.inv = pinv()
@@ -123,7 +125,7 @@ class replica_bitline(design.design):
         self.rbl_inst=self.add_inst(name="load",
                                     mod=self.rbl,
                                     offset=self.rbl_offset)
-        self.connect_inst(["bl[0]", "br[0]"] + ["gnd"]*self.rows + ["vdd", "gnd"])
+        self.connect_inst(["bl[0]", "br[0]"] + ["gnd"]*self.bitcell_loads + ["vdd", "gnd"])
         
 
 
@@ -239,12 +241,22 @@ class replica_bitline(design.design):
     def route_gnd(self):
         """ Route all signals connected to gnd """
         
-        # Add a rail in M1 from bottom to two along delay chain
-        gnd_start = self.rbl_inv_inst.get_pin("gnd").bc() 
+        gnd_start = self.rbl_inv_inst.get_pin("gnd").bc()
         gnd_end = vector(gnd_start.x, self.rbl_inst.uy()+2*self.m2_pitch)
+        
+        # Add a rail in M1 from bottom of delay chain to two above the RBL
+        # This prevents DRC errors with vias for the WL
+        dc_top = self.dc_inst.ur()
+        self.add_segment_center(layer="metal1",
+                                start=vector(gnd_start.x, dc_top.y),
+                                end=gnd_end)
+
+        # Add a rail in M2 from RBL inverter to two above the RBL
         self.add_segment_center(layer="metal2",
                                 start=gnd_start,
                                 end=gnd_end)
+        
+        # Add pin from bottom to RBL inverter
         self.add_layout_pin_center_segment(text="gnd",
                                            layer="metal1",
                                            start=gnd_start.scale(1,0),
@@ -252,7 +264,7 @@ class replica_bitline(design.design):
                       
         # Connect the WL pins directly to gnd
         gnd_pin = self.get_pin("gnd").rc()
-        for row in range(self.rows):
+        for row in range(self.bitcell_loads):
             wl = "wl[{}]".format(row)
             pin = self.rbl_inst.get_pin(wl)
             start = vector(gnd_pin.x,pin.cy())

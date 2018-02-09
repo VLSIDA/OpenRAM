@@ -16,15 +16,25 @@ import re
 import importlib
 from globals import *
 
-(OPTS, args) = parse_args(is_unit_test=False)
+(OPTS, args) = parse_args()
+
+# Check that we are left with a single configuration file as argument.
+if len(args) != 1:
+    print(USAGE)
+    sys.exit(2)
+
 
 # These depend on arguments, so don't load them until now.
 import debug
 
+
+init_openram(config_file=args[0], is_unit_test=False)
+
 # Only print banner here so it's not in unit tests
 print_banner()
 
-init_openram(args[0])
+# Output info about this run
+report_status()
 
 # Start importing design modules after we have the config file
 import verify

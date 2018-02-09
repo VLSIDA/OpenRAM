@@ -167,6 +167,13 @@ def read_config(config_file):
         OPTS.output_path += "/"
     debug.info(1, "Output saved in " + OPTS.output_path)
 
+    # If config didn't set output name, make a reasonable default.
+    if (OPTS.output_name == ""):
+        OPTS.output_name = "sram_{0}_{1}_{2}_{3}".format(OPTS.word_size,
+                                                         OPTS.num_words,
+                                                         OPTS.num_banks,
+                                                         OPTS.OPTS.tech_name)
+
     # Don't delete the output dir, it may have other files!
     # make the directory if it doesn't exist
     try:
@@ -302,11 +309,6 @@ def report_status():
     if not OPTS.tech_name:
         debug.error("Tech name must be specified in config file.")
 
-    if (OPTS.output_name == ""):
-        OPTS.output_name = "sram_{0}_{1}_{2}_{3}".format(OPTS.word_size,
-                                                         OPTS.num_words,
-                                                         OPTS.num_banks,
-                                                         OPTS.OPTS.tech_name)
     if not OPTS.is_unit_test:
         print("Output files are " + OPTS.output_name + ".(sp|gds|v|lib|lef)")
         print("Technology: {0}".format(OPTS.tech_name))

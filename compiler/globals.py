@@ -16,7 +16,7 @@ USAGE = "Usage: openram.py [options] <config file>\nUse -h for help.\n"
 # Anonymous object that will be the options
 OPTS = options.options()
 
-def parse_args(is_unit_test=True):
+def parse_args():
     """ Parse the optional arguments for OpenRAM """
 
     global OPTS
@@ -59,12 +59,6 @@ def parse_args(is_unit_test=True):
     if OPTS.tech_name == "scmos":
         OPTS.tech_name = "scn3me_subm"
 
-    # Check that we have a single configuration file as argument.
-    OPTS.is_unit_test=is_unit_test
-    if not OPTS.is_unit_test and len(args) < 1:
-        print(USAGE)
-        sys.exit(2)
-
     return (options, args)
 
 def print_banner():
@@ -83,19 +77,28 @@ def print_banner():
     print("|=========" + "VLSI Computer Architecture Research Group".center(60) + "=========|")
     print("|=========" + "Oklahoma State University ECE Department".center(60) + "=========|")
     print("|=========" + " ".center(60) + "=========|")
-    print("|=========" + OPTS.openram_temp.center(60) + "=========|")
+    user_info = "Usage help: openram-user-group@ucsc.edu"
+    print("|=========" + user_info.center(60) + "=========|")
+    dev_info = "Development help: openram-dev-group@ucsc.edu"
+    print("|=========" + dev_info.center(60) + "=========|")
+    temp_info = "Temp dir: {}".format(OPTS.openram_temp)
+    print("|=========" + temp_info.center(60) + "=========|")
     print("|==============================================================================|")
 
 
 def check_versions():
-    """ check that we are not using version 3 and at least 2.7 """
+    """ Run some checks of required software versions. """
+
+    # check that we are not using version 3 and at least 2.7
     major_python_version = sys.version_info.major
     minor_python_version = sys.version_info.minor
     if not (major_python_version == 2 and minor_python_version >= 7):
         debug.error("Python 2.7 is required.",-1)
 
-    
-def init_openram(config_file):
+    # FIXME: Check versions of other tools here??
+    # or, this could be done in each module (e.g. verify, characterizer, etc.)
+
+def init_openram(config_file, is_unit_test=True):
     """Initialize the technology, paths, simulators, etc."""
     check_versions()
 
@@ -103,11 +106,10 @@ def init_openram(config_file):
 
     setup_paths()
     
-    read_config(config_file)
+    read_config(config_file, is_unit_test)
 
     import_tech()
 
-    report_status()
 
 
 def get_tool(tool_type, preferences):
@@ -129,7 +131,7 @@ def get_tool(tool_type, preferences):
 
     
 
-def read_config(config_file):
+def read_config(config_file, is_unit_test=True):
     """ 
     Read the configuration file that defines a few parameters. The
     config file is just a Python file that defines some config
@@ -166,6 +168,8 @@ def read_config(config_file):
     if not OPTS.output_path.endswith('/'):
         OPTS.output_path += "/"
     debug.info(1, "Output saved in " + OPTS.output_path)
+
+    OPTS.is_unit_test=is_unit_test
 
     # If config didn't set output name, make a reasonable default.
     if (OPTS.output_name == ""):
@@ -309,12 +313,11 @@ def report_status():
     if not OPTS.tech_name:
         debug.error("Tech name must be specified in config file.")
 
-    if not OPTS.is_unit_test:
-        print("Output files are " + OPTS.output_name + ".(sp|gds|v|lib|lef)")
-        print("Technology: {0}".format(OPTS.tech_name))
-        print("Word size: {0}\nWords: {1}\nBanks: {2}".format(OPTS.word_size,
-                                                              OPTS.num_words,
-                                                              OPTS.num_banks))
-        if not OPTS.check_lvsdrc:
-            print("DRC/LVS/PEX checking is disabled.")
+    print("Output files are " + OPTS.output_name + ".(sp|gds|v|lib|lef)")
+    print("Technology: {0}".format(OPTS.tech_name))
+    print("Word size: {0}\nWords: {1}\nBanks: {2}".format(OPTS.word_size,
+                                                          OPTS.num_words,
+                                                          OPTS.num_banks))
+    if not OPTS.check_lvsdrc:
+        print("DRC/LVS/PEX checking is disabled.")
     

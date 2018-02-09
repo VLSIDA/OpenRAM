@@ -83,7 +83,8 @@ class wire(path):
                 self.add_line(layer_name=self.horiz_layer_name,
                               length=abs(line_length),
                               offset=temp_offset,
-                              orientation="horizontal")
+                              orientation="horizontal",
+                              layer_width=self.horiz_layer_width)
             elif pl[index][1] != pl[index + 1][1]:
                 line_length = pl[index + 1][1] - pl[index][1]
                 temp_offset = [pl[index][0] - 0.5 * self.vert_layer_width,
@@ -94,7 +95,8 @@ class wire(path):
                 self.add_line(layer_name=self.vert_layer_name,
                               length=abs(line_length),
                               offset=temp_offset,
-                              orientation="vertical")
+                              orientation="vertical",
+                              layer_width=self.vert_layer_width)
 
     def assert_node(self, A, B):
         """ Check if the node movements are not big enough for the

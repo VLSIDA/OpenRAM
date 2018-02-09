@@ -92,7 +92,8 @@ class path():
                 self.add_line(layer_name=self.layer_name,
                               length=abs(line_length),
                               offset=offset,
-                              orientation="horizontal")
+                              orientation="horizontal",
+                              layer_width=self.layer_width)
             # if we have y motion
             elif pl[index][1] != pl[index + 1][1]:
                 line_length = pl[index + 1][1] - pl[index][1]
@@ -104,15 +105,15 @@ class path():
                 self.add_line(layer_name=self.layer_name,
                               length=abs(line_length),
                               offset=offset,
-                              orientation="vertical")
+                              orientation="vertical",
+                              layer_width=self.layer_width)
 
-    def add_line(self, layer_name, length, offset, orientation):
+    def add_line(self, layer_name, length, offset, orientation, layer_width):
         """
         straight line object with layer_minwidth 
         (orientation: "vertical" or "horizontal") default is vertical
         """
 
-        layer_width = drc["minwidth_{0}".format(layer_name)]
         width = layer_width
         height = length 
 

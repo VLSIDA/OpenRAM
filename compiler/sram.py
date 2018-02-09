@@ -1040,8 +1040,7 @@ class sram(design.design):
         # Characterize the design
         start_time = datetime.datetime.now()        
         from characterizer import lib
-        libname = OPTS.output_path + self.name + ".lib"
-        print("LIB: Writing to {0}".format(libname))
+        print("LIB: Characterizing... ")
         if OPTS.analytical_delay:
             print("Using analytical delay models (no characterization)")
         else:
@@ -1049,7 +1048,7 @@ class sram(design.design):
                 print("Performing simulation-based characterization with {}".format(OPTS.spice_name))
             if OPTS.trim_netlist:
                 print("Trimming netlist to speed up characterization.")
-        lib.lib(libname=libname,sram=self,sp_file=sp_file)
+        lib.lib(out_dir=OPTS.output_path, sram=self, sp_file=sp_file)
         print_time("Characterization", datetime.datetime.now(), start_time)
 
         # Write the layout

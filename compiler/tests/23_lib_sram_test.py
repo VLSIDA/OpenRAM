@@ -5,7 +5,7 @@ Check the .lib file for an SRAM
 
 import unittest
 from testutils import header,openram_test
-import sys,os
+import sys,os,re
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
@@ -39,13 +39,18 @@ class lib_test(openram_test):
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)
 
-        filename = s.name + ".lib"     
-        libname = OPTS.openram_temp + filename
-        lib.lib(libname=libname,sram=s,sp_file=tempspice,use_model=False)
-        
-        # let's diff the result with a golden model
-        golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),filename)
-        self.isapproxdiff(libname,golden,0.15)
+        lib.lib(out_dir=OPTS.openram_temp, sram=s, sp_file=tempspice, use_model=False)
+
+        # get all of the .lib files generated
+        files = os.listdir(OPTS.openram_temp)
+        nametest = re.compile("\.lib$", re.IGNORECASE)
+        lib_files = filter(nametest.search, files)
+
+        # and compare them with the golden model
+        for filename in lib_files:
+            libname = "{0}/{1}".format(OPTS.openram_temp,filename)
+            golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),filename)
+            self.isapproxdiff(libname,golden,0.15)
 
         OPTS.analytical_delay = True
         OPTS.trim_netlist = True

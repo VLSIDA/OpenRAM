@@ -14,16 +14,21 @@ class delay():
     data bit.
     """
 
-    def __init__(self,sram,spfile):
+    def __init__(self,sram,spfile, corner):
         self.name = sram.name
         self.num_words = sram.num_words
         self.word_size = sram.word_size
         self.addr_size = sram.addr_size
         self.sram_sp_file = spfile
 
-        self.vdd = tech.spice["supply_voltage"]
-        self.gnd = tech.spice["gnd_voltage"]
-
+        self.set_corner(corner)
+        
+    def set_corner(self,corner):
+        """ Set the corner values """
+        self.corner = corner
+        (self.process, self.vdd_voltage, self.temperature) = corner
+        self.gnd_voltage = 0
+        
         
     def check_arguments(self):
         """Checks if arguments given for write_stimulus() meets requirements"""
@@ -53,22 +58,20 @@ class delay():
         temp_stim = "{0}/stim.sp".format(OPTS.openram_temp)
         self.sf = open(temp_stim, "w")
         self.sf.write("* Stimulus for period of {0}n load={1}fF slew={2}ns\n\n".format(period,load,slew))
-
+        self.stim = stimuli.stimuli(self.sf, self.corner)
         # include files in stimulus file
-        model_list = tech.spice["fet_models"] + [self.sram_sp_file]
-        stimuli.write_include(stim_file=self.sf, models=model_list)
+        self.stim.write_include(self.sram_sp_file)
 
         # add vdd/gnd statements
 
         self.sf.write("\n* Global Power Supplies\n")
-        stimuli.write_supply(self.sf)
+        self.stim.write_supply()
 
         # instantiate the sram
         self.sf.write("\n* Instantiation of the SRAM\n")
-        stimuli.inst_sram(stim_file=self.sf,
-                          abits=self.addr_size, 
-                          dbits=self.word_size, 
-                          sram_name=self.name)
+        self.stim.inst_sram(abits=self.addr_size, 
+                            dbits=self.word_size, 
+                            sram_name=self.name)
 
         self.sf.write("\n* SRAM output loads\n")
         for i in range(self.word_size):
@@ -76,7 +79,7 @@ class delay():
         
         # add access transistors for data-bus
         self.sf.write("\n* Transmission Gates for data-bus and control signals\n")
-        stimuli.inst_accesstx(stim_file=self.sf, dbits=self.word_size)
+        self.stim.inst_accesstx(dbits=self.word_size)
 
         # generate data and addr signals
         self.sf.write("\n* Generation of data and address signals\n")
@@ -87,14 +90,13 @@ class delay():
                               period=period,
                               slew=slew)
             else:
-                stimuli.gen_constant(stim_file=self.sf,
-                                     sig_name="d[{0}]".format(i),
-                                     v_val=self.gnd)
+                self.stim.gen_constant(sig_name="d[{0}]".format(i),
+                                       v_val=self.gnd_voltage)
 
         self.gen_addr(clk_times=self.cycle_times,
-                         addr=self.probe_address,
-                         period=period,
-                         slew=slew)
+                      addr=self.probe_address,
+                      period=period,
+                      slew=slew)
 
         # generate control signals
         self.sf.write("\n* Generation of control signals\n")
@@ -103,19 +105,18 @@ class delay():
         self.gen_oeb(self.cycle_times, period, slew)
 
         self.sf.write("\n* Generation of global clock signal\n")
-        stimuli.gen_pulse(stim_file=self.sf,
-                          sig_name="CLK",
-                          v1=self.gnd,
-                          v2=self.vdd,
-                          offset=period,
-                          period=period,
-                          t_rise=slew,
-                          t_fall=slew)
+        self.stim.gen_pulse(sig_name="CLK",
+                            v1=self.gnd_voltage,
+                            v2=self.vdd_voltage,
+                            offset=period,
+                            period=period,
+                            t_rise=slew,
+                            t_fall=slew)
                           
         self.write_measures(period)
 
         # run until the end of the cycle time
-        stimuli.write_control(self.sf,self.cycle_times[-1] + period)
+        self.stim.write_control(self.cycle_times[-1] + period)
 
         self.sf.close()
 
@@ -134,81 +135,73 @@ class delay():
         # Trigger on the clk of the appropriate cycle
         trig_name = "clk"
         targ_name = "{0}".format("d[{0}]".format(self.probe_data))
-        trig_val = targ_val = 0.5 * self.vdd
+        trig_val = targ_val = 0.5 * self.vdd_voltage
 
         # Delay the target to measure after the negative edge
-        stimuli.gen_meas_delay(stim_file=self.sf,
-                               meas_name="DELAY0",
-                               trig_name=trig_name,
-                               targ_name=targ_name,
-                               trig_val=trig_val,
-                               targ_val=targ_val,
-                               trig_dir="FALL",
-                               targ_dir="FALL",
-                               trig_td=self.cycle_times[self.read0_cycle],
-                               targ_td=self.cycle_times[self.read0_cycle]+0.5*period)
+        self.stim.gen_meas_delay(meas_name="DELAY0",
+                                 trig_name=trig_name,
+                                 targ_name=targ_name,
+                                 trig_val=trig_val,
+                                 targ_val=targ_val,
+                                 trig_dir="FALL",
+                                 targ_dir="FALL",
+                                 trig_td=self.cycle_times[self.read0_cycle],
+                                 targ_td=self.cycle_times[self.read0_cycle]+0.5*period)
 
-        stimuli.gen_meas_delay(stim_file=self.sf,
-                               meas_name="DELAY1",
-                               trig_name=trig_name,
-                               targ_name=targ_name,
-                               trig_val=trig_val,
-                               targ_val=targ_val,
-                               trig_dir="FALL",
-                               targ_dir="RISE",
-                               trig_td=self.cycle_times[self.read1_cycle],
-                               targ_td=self.cycle_times[self.read1_cycle]+0.5*period)
+        self.stim.gen_meas_delay(meas_name="DELAY1",
+                                 trig_name=trig_name,
+                                 targ_name=targ_name,
+                                 trig_val=trig_val,
+                                 targ_val=targ_val,
+                                 trig_dir="FALL",
+                                 targ_dir="RISE",
+                                 trig_td=self.cycle_times[self.read1_cycle],
+                                 targ_td=self.cycle_times[self.read1_cycle]+0.5*period)
 
-        stimuli.gen_meas_delay(stim_file=self.sf,
-                               meas_name="SLEW0",
-                               trig_name=targ_name,
-                               targ_name=targ_name,
-                               trig_val=0.9*self.vdd,
-                               targ_val=0.1*self.vdd,
-                               trig_dir="FALL",
-                               targ_dir="FALL",
-                               trig_td=self.cycle_times[self.read0_cycle],
-                               targ_td=self.cycle_times[self.read0_cycle]+0.5*period)
+        self.stim.gen_meas_delay(meas_name="SLEW0",
+                                 trig_name=targ_name,
+                                 targ_name=targ_name,
+                                 trig_val=0.9*self.vdd_voltage,
+                                 targ_val=0.1*self.vdd_voltage,
+                                 trig_dir="FALL",
+                                 targ_dir="FALL",
+                                 trig_td=self.cycle_times[self.read0_cycle],
+                                 targ_td=self.cycle_times[self.read0_cycle]+0.5*period)
 
-        stimuli.gen_meas_delay(stim_file=self.sf,
-                               meas_name="SLEW1",
-                               trig_name=targ_name,
-                               targ_name=targ_name,
-                               trig_val=0.1*self.vdd,
-                               targ_val=0.9*self.vdd,
-                               trig_dir="RISE",
-                               targ_dir="RISE",
-                               trig_td=self.cycle_times[self.read1_cycle],
-                               targ_td=self.cycle_times[self.read1_cycle]+0.5*period)
+        self.stim.gen_meas_delay(meas_name="SLEW1",
+                                 trig_name=targ_name,
+                                 targ_name=targ_name,
+                                 trig_val=0.1*self.vdd_voltage,
+                                 targ_val=0.9*self.vdd_voltage,
+                                 trig_dir="RISE",
+                                 targ_dir="RISE",
+                                 trig_td=self.cycle_times[self.read1_cycle],
+                                 targ_td=self.cycle_times[self.read1_cycle]+0.5*period)
         
         # add measure statements for power
         t_initial = self.cycle_times[self.write0_cycle]
         t_final = self.cycle_times[self.write0_cycle+1]
-        stimuli.gen_meas_power(stim_file=self.sf,
-                               meas_name="WRITE0_POWER",
-                               t_initial=t_initial,
-                               t_final=t_final)
+        self.stim.gen_meas_power(meas_name="WRITE0_POWER",
+                                 t_initial=t_initial,
+                                 t_final=t_final)
 
         t_initial = self.cycle_times[self.write1_cycle]
         t_final = self.cycle_times[self.write1_cycle+1]
-        stimuli.gen_meas_power(stim_file=self.sf,
-                               meas_name="WRITE1_POWER",
-                               t_initial=t_initial,
-                               t_final=t_final)
+        self.stim.gen_meas_power(meas_name="WRITE1_POWER",
+                                 t_initial=t_initial,
+                                 t_final=t_final)
         
         t_initial = self.cycle_times[self.read0_cycle]
         t_final = self.cycle_times[self.read0_cycle+1]
-        stimuli.gen_meas_power(stim_file=self.sf,
-                               meas_name="READ0_POWER",
-                               t_initial=t_initial,
-                               t_final=t_final)
+        self.stim.gen_meas_power(meas_name="READ0_POWER",
+                                 t_initial=t_initial,
+                                 t_final=t_final)
 
         t_initial = self.cycle_times[self.read1_cycle]
         t_final = self.cycle_times[self.read1_cycle+1]
-        stimuli.gen_meas_power(stim_file=self.sf,
-                               meas_name="READ1_POWER",
-                               t_initial=t_initial,
-                               t_final=t_final)
+        self.stim.gen_meas_power(meas_name="READ1_POWER",
+                                 t_initial=t_initial,
+                                 t_final=t_final)
         
     def find_feasible_period(self, load, slew):
         """
@@ -249,7 +242,7 @@ class delay():
 
         # Checking from not data_value to data_value
         self.write_stimulus(period, load, slew)
-        stimuli.run_sim()
+        self.stim.run_sim()
         delay0 = ch.convert_to_float(ch.parse_output("timing", "delay0"))
         delay1 = ch.convert_to_float(ch.parse_output("timing", "delay1"))        
         slew0 = ch.convert_to_float(ch.parse_output("timing", "slew0"))
@@ -334,7 +327,7 @@ class delay():
 
         # Checking from not data_value to data_value
         self.write_stimulus(period,load,slew)
-        stimuli.run_sim()
+        self.stim.run_sim()
         delay0 = ch.convert_to_float(ch.parse_output("timing", "delay0"))
         delay1 = ch.convert_to_float(ch.parse_output("timing", "delay1"))
         slew0 = ch.convert_to_float(ch.parse_output("timing", "slew0"))
@@ -575,7 +568,7 @@ class delay():
         # we are asserting the opposite value on the other side of the tx gate during
         # the read to be "worst case". Otherwise, it can actually assist the read.
         values = [0, 1, 0, 1, 1, 1, 1, 0, 0, 0 ]
-        stimuli.gen_pwl(self.sf, sig_name, clk_times, values, period, slew, 0.05)
+        self.stim.gen_pwl(sig_name, clk_times, values, period, slew, 0.05)
 
     def gen_addr(self, clk_times, addr, period, slew):
         """ 
@@ -589,9 +582,9 @@ class delay():
         for i in range(len(addr)):
             sig_name = "A[{0}]".format(i)
             if addr[i]=="1":
-                stimuli.gen_pwl(self.sf, sig_name, clk_times, ones_values, period, slew, 0.05)
+                self.stim.gen_pwl(sig_name, clk_times, ones_values, period, slew, 0.05)
             else:
-                stimuli.gen_pwl(self.sf, sig_name, clk_times, zero_values, period, slew, 0.05)
+                self.stim.gen_pwl(sig_name, clk_times, zero_values, period, slew, 0.05)
 
 
     def gen_csb(self, clk_times, period, slew):
@@ -599,24 +592,24 @@ class delay():
         # values for NOP, W1, W0, W1, R0, NOP, W1, W0, R1, NOP
         # Keep CSb asserted in NOP for measuring >1 period
         values = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        stimuli.gen_pwl(self.sf, "csb", clk_times, values, period, slew, 0.05)
+        self.stim.gen_pwl("csb", clk_times, values, period, slew, 0.05)
 
     def gen_web(self, clk_times, period, slew):
         """ Generates the PWL WEb signal """
         # values for NOP, W1, W0, W1, R0, NOP, W1, W0, R1, NOP
         # Keep WEb deasserted in NOP for measuring >1 period
         values = [1, 0, 0, 0, 1, 1, 0, 0, 1, 1]
-        stimuli.gen_pwl(self.sf, "web", clk_times, values, period, slew, 0.05)
+        self.stim.gen_pwl("web", clk_times, values, period, slew, 0.05)
 
         # Keep acc_en deasserted in NOP for measuring >1 period
         values = [1, 0, 0, 0, 1, 1, 0, 0, 1, 1]
-        stimuli.gen_pwl(self.sf, "acc_en", clk_times, values, period, slew, 0)
+        self.stim.gen_pwl("acc_en", clk_times, values, period, slew, 0)
         values = [0, 1, 1, 1, 0, 0, 1, 1, 0, 0]
-        stimuli.gen_pwl(self.sf, "acc_en_inv", clk_times, values, period, slew, 0)
+        self.stim.gen_pwl("acc_en_inv", clk_times, values, period, slew, 0)
         
     def gen_oeb(self, clk_times, period, slew):
         """ Generates the PWL WEb signal """
         # values for NOP, W1, W0, W1, R0, W1, W0, R1, NOP
         # Keep OEb asserted in NOP for measuring >1 period
         values = [1, 1, 1, 1, 0, 0, 1, 1, 0, 0]
-        stimuli.gen_pwl(self.sf, "oeb", clk_times, values, period, slew, 0.05)
+        self.stim.gen_pwl("oeb", clk_times, values, period, slew, 0.05)

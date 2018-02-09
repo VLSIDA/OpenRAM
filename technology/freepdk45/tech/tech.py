@@ -237,26 +237,16 @@ drc["metal4_extend_via4"] = 0.07
 spice = {}
 spice["nmos"] = "nmos_vtg"
 spice["pmos"] = "pmos_vtg"
+# This is a map of corners to model files
 SPICE_MODEL_DIR=os.environ.get("SPICE_MODEL_DIR")
-spice["fet_models"] = [SPICE_MODEL_DIR+"/NMOS_VTG.inc",
-                       SPICE_MODEL_DIR+"/PMOS_VTG.inc"]
+spice["fet_models"] = { "TT" : [SPICE_MODEL_DIR+"/NMOS_VTG.inc",SPICE_MODEL_DIR+"/PMOS_VTG.inc"]}
 
 #spice stimulus related variables
 spice["feasible_period"] = 5 # estimated feasible period in ns
-spice["supply_voltage"] = 1.0        #vdd in [Volts]
-spice["gnd_voltage"] = 0.0           #gnd in [Volts]
-spice["rise_time"] = 0.005           #rise time in [Nano-seconds]
-spice["fall_time"] = 0.005           #fall time in [Nano-seconds]
-spice["temp"] = 25                   #temperature in [Celsius]
-
-#parasitics of metal for bit/word lines
-spice["bitline_res"] = 0.1           #bitline resistance in [Ohms/micro-meter]
-spice["bitline_cap"] = 0.2           #bitline capacitance in [Femto-farad/micro-meter]
-spice["wordline_res"] = 0.1          #wordline resistance in [Ohms/micro-meter]
-spice["wordline_cap"] = 0.2          #wordline capacitance in [Femto-farad/micro-meter]
-spice["FF_in_cap"] = 0.2091          #Input capacitance of ms_flop (Din) [Femto-farad]
-spice["tri_gate_out_cap"] = 0.41256  #Output capacitance of tri_gate (tri_out) [Femto-farad]
-
+spice["supply_voltage"] = 1.0        # ideal vdd in [Volts]
+spice["rise_time"] = 0.005           # rise time in [Nano-seconds]
+spice["fall_time"] = 0.005           # fall time in [Nano-seconds]
+spice["nom_corner"] = ("TT", 1.0, 25) # Nominal process corner
 
 #sram signal names
 spice["vdd_name"] = "vdd"
@@ -264,8 +254,6 @@ spice["gnd_name"] = "gnd"
 spice["control_signals"] = ["CSb", "WEb", "OEb"]
 spice["data_name"] = "DATA"
 spice["addr_name"] = "ADDR"
-spice["pmos_name"] = spice["pmos"]
-spice["nmos_name"] = spice["nmos"]
 spice["minwidth_tx"] = drc["minwidth_tx"]
 spice["channel"] = drc["minlength_channel"]
 spice["clk"] = "clk"
@@ -280,6 +268,7 @@ spice["msflop_setup"] = 9        # DFF setup time in ps
 spice["msflop_hold"] = 1         # DFF hold time in ps
 spice["msflop_delay"] = 20.5     # DFF Clk-to-q delay in ps
 spice["msflop_slew"] = 13.1      # DFF output slew in ps w/ no load
+spice["msflop_in_cap"] = 0.2091  # Input capacitance of ms_flop (Din) [Femto-farad]
 
 
 ###################################################

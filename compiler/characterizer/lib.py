@@ -12,15 +12,23 @@ from globals import OPTS
 class lib:
     """ lib file generation."""
     
-    def __init__(self, libname, sram, sp_file, use_model=OPTS.analytical_delay):
+    def __init__(self, out_dir, sram, sp_file, use_model=OPTS.analytical_delay):
+        self.out_dir = out_dir
         self.sram = sram
         self.sp_file = sp_file        
         self.use_model = use_model
-        self.name = sram.name
-        self.num_words = sram.num_words
-        self.word_size = sram.word_size
-        self.addr_size = sram.addr_size
 
+        self.prepare_netlist()
+        
+        self.prepare_tables()
+        
+        self.create_corners()
+        
+        self.characterize_corners()
+        
+    def prepare_netlist(self):
+        """ Determine whether to use regular or trimmed netlist. """
+        
         # Set up to trim the netlist here if that is enabled
         if OPTS.trim_netlist:
             self.sim_sp_file = "{}reduced.sp".format(OPTS.openram_temp)
@@ -34,12 +42,14 @@ class lib:
             self.sim_sp_file = "{}sram.sp".format(OPTS.openram_temp)
             # Make a copy in temp for debugging
             shutil.copy(self.sp_file, self.sim_sp_file)
-        
+
+    def prepare_tables(self):
+        """ Determine the load/slews if they aren't specified in the config file. """
         # These are the parameters to determine the table sizes
         #self.load_scales = np.array([0.1, 0.25, 0.5, 1, 2, 4, 8])
         self.load_scales = np.array([0.25, 1, 8])
         #self.load_scales = np.array([0.25, 1])
-        self.load = tech.spice["FF_in_cap"]
+        self.load = tech.spice["msflop_in_cap"]
         self.loads = self.load_scales*self.load
         debug.info(1,"Loads: {0}".format(self.loads))
         
@@ -49,9 +59,43 @@ class lib:
         self.slew = tech.spice["rise_time"]        
         self.slews = self.slew_scales*self.slew
         debug.info(1,"Slews: {0}".format(self.slews))
-                   
-        debug.info(1,"Writing to {0}".format(libname))
-        self.lib = open(libname, "w")
+
+        
+    def create_corners(self):
+        """ Create corners for characterization. """
+        # Get the corners from the options file
+        self.temperatures = OPTS.temperatures
+        self.supply_voltages = OPTS.supply_voltages
+        self.process_corners = OPTS.process_corners
+
+        # Enumerate all possible corners
+        self.corners = []
+        self.lib_files = []
+        for proc in self.process_corners:
+            for temp in self.temperatures:
+                for volt in self.supply_voltages:
+                    self.corner_name = "{0}_{1}_{2}_{3}".format(self.sram.name,
+                                                                proc,
+                                                                volt,
+                                                                temp)
+                    self.corner_name = self.corner_name.replace(".","") # Remove decimals
+                    lib_name = self.out_dir+"{}.lib".format(self.corner_name)
+                    
+                    # A corner is a tuple of PVT
+                    self.corners.append((proc, volt, temp))
+                    self.lib_files.append(lib_name)
+        
+    def characterize_corners(self):
+        """ Characterize the list of corners. """
+        for (self.corner,lib_name) in zip(self.corners,self.lib_files):
+            debug.info(1,"Corner: " + str(self.corner))
+            (self.process, self.voltage, self.temperature) = self.corner
+            self.lib = open(lib_name, "w")
+            debug.info(1,"Writing to {0}".format(lib_name))
+            self.characterize()
+
+    def characterize(self):
+        """ Characterize the current corner. """
 
         self.write_header()
         
@@ -67,7 +111,7 @@ class lib:
 
     def write_header(self):
         """ Write the header information """
-        self.lib.write("library ({0}_lib)".format(self.name))
+        self.lib.write("library ({0}_lib)".format(self.corner_name))
         self.lib.write("{\n")
         self.lib.write("    delay_model : \"table_lookup\";\n")
         
@@ -79,12 +123,12 @@ class lib:
         
         self.write_bus()
 
-        self.lib.write("cell ({0})".format(self.name))
+        self.lib.write("cell ({0})".format(self.sram.name))
         self.lib.write("{\n")
         self.lib.write("    memory(){ \n")
         self.lib.write("    type : ram;\n")
-        self.lib.write("    address_width : {0};\n".format(self.addr_size))
-        self.lib.write("    word_width : {0};\n".format(self.word_size))
+        self.lib.write("    address_width : {0};\n".format(self.sram.addr_size))
+        self.lib.write("    word_width : {0};\n".format(self.sram.word_size))
         self.lib.write("    }\n")
         self.lib.write("    interface_timing : true;\n")
         self.lib.write("    dont_use  : true;\n")
@@ -103,9 +147,9 @@ class lib:
         self.lib.write("    capacitive_load_unit(1 ,fF) ;\n")
         self.lib.write("    leakage_power_unit : \"1mW\" ;\n")
         self.lib.write("    pulling_resistance_unit :\"1kohm\" ;\n")
-        self.lib.write("    operating_conditions(TT){\n")
-        self.lib.write("    voltage : {0} ;\n".format(tech.spice["supply_voltage"]))
-        self.lib.write("    temperature : 25.000 ;\n")
+        self.lib.write("    operating_conditions({}){{\n".format(self.process))
+        self.lib.write("    voltage : {} ;\n".format(self.voltage))
+        self.lib.write("    temperature : {};\n".format(self.temperature))
         self.lib.write("    }\n\n")
 
     def write_defaults(self):
@@ -206,17 +250,17 @@ class lib:
         self.lib.write("    type (DATA){\n")
         self.lib.write("    base_type : array;\n")
         self.lib.write("    data_type : bit;\n")
-        self.lib.write("    bit_width : {0};\n".format(self.word_size))
+        self.lib.write("    bit_width : {0};\n".format(self.sram.word_size))
         self.lib.write("    bit_from : 0;\n")
-        self.lib.write("    bit_to : {0};\n".format(self.word_size - 1))
+        self.lib.write("    bit_to : {0};\n".format(self.sram.word_size - 1))
         self.lib.write("    }\n\n")
 
         self.lib.write("    type (ADDR){\n")
         self.lib.write("    base_type : array;\n")
         self.lib.write("    data_type : bit;\n")
-        self.lib.write("    bit_width : {0};\n".format(self.addr_size))
+        self.lib.write("    bit_width : {0};\n".format(self.sram.addr_size))
         self.lib.write("    bit_from : 0;\n")
-        self.lib.write("    bit_to : {0};\n".format(self.addr_size - 1))
+        self.lib.write("    bit_to : {0};\n".format(self.sram.addr_size - 1))
         self.lib.write("    }\n\n")
 
 
@@ -260,7 +304,7 @@ class lib:
         self.lib.write("    bus(DATA){\n")
         self.lib.write("        bus_type  : DATA; \n")
         self.lib.write("        direction  : inout; \n")
-        self.lib.write("        max_capacitance : {0};  \n".format(8*tech.spice["FF_in_cap"]))
+        self.lib.write("        max_capacitance : {0};  \n".format(8*tech.spice["msflop_in_cap"]))
         self.lib.write("        three_state : \"!OEb & !clk\"; \n")
         self.lib.write("        memory_write(){ \n")
         self.lib.write("            address : ADDR; \n")
@@ -269,7 +313,7 @@ class lib:
         self.lib.write("        memory_read(){ \n")
         self.lib.write("            address : ADDR; \n")
         self.lib.write("        }\n")
-        self.lib.write("        pin(DATA[{0}:0])".format(self.word_size - 1))
+        self.lib.write("        pin(DATA[{0}:0])".format(self.sram.word_size - 1))
         self.lib.write("{\n")
 
         self.lib.write("        internal_power(){\n")
@@ -324,10 +368,10 @@ class lib:
         self.lib.write("    bus(ADDR){\n")
         self.lib.write("        bus_type  : ADDR; \n")
         self.lib.write("        direction  : input; \n")
-        self.lib.write("        capacitance : {0};  \n".format(tech.spice["FF_in_cap"]))
+        self.lib.write("        capacitance : {0};  \n".format(tech.spice["msflop_in_cap"]))
         self.lib.write("        max_transition       : {0};\n".format(self.slews[-1]))
         self.lib.write("        fanout_load          : 1.000000;\n")
-        self.lib.write("        pin(ADDR[{0}:0])".format(self.addr_size - 1))
+        self.lib.write("        pin(ADDR[{0}:0])".format(self.sram.addr_size - 1))
         self.lib.write("{\n")
         
         self.write_FF_setuphold()
@@ -343,7 +387,7 @@ class lib:
             self.lib.write("    pin({0})".format(i))
             self.lib.write("{\n")
             self.lib.write("        direction  : input; \n")
-            self.lib.write("        capacitance : {0};  \n".format(tech.spice["FF_in_cap"]))
+            self.lib.write("        capacitance : {0};  \n".format(tech.spice["msflop_in_cap"]))
             self.write_FF_setuphold()
             self.lib.write("    }\n\n")
 
@@ -356,7 +400,7 @@ class lib:
         self.lib.write("    pin(clk){\n")
         self.lib.write("        clock             : true;\n")
         self.lib.write("        direction  : input; \n")
-        self.lib.write("        capacitance : {0};  \n".format(tech.spice["FF_in_cap"]))
+        self.lib.write("        capacitance : {0};  \n".format(tech.spice["msflop_in_cap"]))
         min_pulse_width = ch.round_time(self.delay["min_period"])/2.0
         min_period = ch.round_time(self.delay["min_period"])
         self.lib.write("        timing(){ \n")
@@ -388,12 +432,12 @@ class lib:
         try:
             self.d
         except AttributeError:
-            self.d = delay.delay(self.sram, self.sim_sp_file)
+            self.d = delay.delay(self.sram, self.sim_sp_file, self.corner)
             if self.use_model:
                 self.delay = self.d.analytical_model(self.sram,self.slews,self.loads)
             else:
-                probe_address = "1" * self.addr_size
-                probe_data = self.word_size - 1
+                probe_address = "1" * self.sram.addr_size
+                probe_data = self.sram.word_size - 1
                 # We must trim based on a specific address and data bit
                 if OPTS.trim_netlist:
                     self.trimsp.trim(probe_address,probe_data)
@@ -405,7 +449,7 @@ class lib:
         try:
             self.sh
         except AttributeError:
-            self.sh = setup_hold.setup_hold()
+            self.sh = setup_hold.setup_hold(self.corner)
             if self.use_model:
                 self.times = self.sh.analytical_model(self.slews,self.loads)
             else:

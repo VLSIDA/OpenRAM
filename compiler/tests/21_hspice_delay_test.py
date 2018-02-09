@@ -27,7 +27,7 @@ class timing_sram_test(openram_test):
             debug.error("Could not find {} simulator.".format(OPTS.spice_name),-1)
 
         import sram
-
+        import tech
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
         s = sram.sram(word_size=OPTS.word_size,
                       num_words=OPTS.num_words,
@@ -43,9 +43,9 @@ class timing_sram_test(openram_test):
         probe_data = s.word_size - 1
         debug.info(1, "Probe address {0} probe data {1}".format(probe_address, probe_data))
 
-        d = delay.delay(s,tempspice)
+        d = delay.delay(s,tempspice,tech.spice["nom_delay"])
         import tech
-        loads = [tech.spice["FF_in_cap"]*4]
+        loads = [tech.spice["msflop_in_cap"]*4]
         slews = [tech.spice["rise_time"]*2]
         data = d.analyze(probe_address, probe_data,slews,loads)
         #print data

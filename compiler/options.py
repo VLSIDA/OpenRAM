@@ -44,6 +44,13 @@ class options(optparse.Values):
     analytical_delay = True
     # Purge the temp directory after a successful run (doesn't purge on errors, anyhow)
     purge_temp = True
+
+    # These are the configuration parameters
+    rw_ports = 1
+    r_ports = 0
+    supply_voltages = [3]
+    temperatures = [25]
+    process_corners = ["TT"]
     
 
     # These are the default modules that can be over-riden

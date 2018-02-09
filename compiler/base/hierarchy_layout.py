@@ -308,7 +308,7 @@ class layout(lef.lef):
         path.path(obj=self,
                   layer=layer, 
                   position_list=coordinates, 
-                  width=drc["minwidth_{}".format(layer)])
+                  width=width)
 
     def add_route(self, design, layers, coordinates):
         """Connects a routing path on given layer,coordinates,width. The

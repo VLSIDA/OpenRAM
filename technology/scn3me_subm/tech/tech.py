@@ -76,7 +76,7 @@ drc["pwell_to_nwell"] = 0
 drc["minwidth_well"] = 3.6                                                                      
 # 3.1 Minimum width 
 drc["minwidth_poly"] = 0.6
-# 3.2/3.2.a Minimum spacing over field/active
+# 3.2 Minimum spacing over active
 drc["poly_to_poly"] = 0.9
 # 3.3 Minimum gate extension of active 
 drc["poly_extend_active"] = 0.6
@@ -84,6 +84,8 @@ drc["poly_extend_active"] = 0.6
 drc["poly_to_polycontact"] = 1.2
 # ??
 drc["active_enclosure_gate"] = 0.0
+# 3.2.a Minimum spacing over field poly
+drc["poly_to_field_poly"] = 0.9
 # 3.5 Minimum field poly to active 
 drc["poly_to_active"] = 0.3
 # Not a rule

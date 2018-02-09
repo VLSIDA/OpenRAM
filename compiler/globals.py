@@ -218,16 +218,13 @@ def setup_paths():
     except:
         debug.error("$OPENRAM_HOME is not properly defined.",1)
     debug.check(os.path.isdir(OPENRAM_HOME),"$OPENRAM_HOME does not exist: {0}".format(OPENRAM_HOME))
-    
-    debug.check(os.path.isdir(OPENRAM_HOME+"/gdsMill"),
-                "$OPENRAM_HOME/gdsMill does not exist: {0}".format(OPENRAM_HOME+"/gdsMill"))
-    sys.path.append("{0}/gdsMill".format(OPENRAM_HOME)) 
-    debug.check(os.path.isdir(OPENRAM_HOME+"/tests"),
-                "$OPENRAM_HOME/tests does not exist: {0}".format(OPENRAM_HOME+"/tests"))
-    sys.path.append("{0}/tests".format(OPENRAM_HOME))
-    debug.check(os.path.isdir(OPENRAM_HOME+"/router"),
-                "$OPENRAM_HOME/router does not exist: {0}".format(OPENRAM_HOME+"/router"))
-    sys.path.append("{0}/router".format(OPENRAM_HOME))
+
+    # Add all of the submodules to the python path
+    for subdir in ["gdsMill", "tests", "router", "modules", "layout", "pgates"]:
+        full_path = "{0}/{1}".format(OPENRAM_HOME,subdir)
+        debug.check(os.path.isdir(full_path),
+                    "$OPENRAM_HOME/{0} does not exist: {1}".format(subdir,full_path))
+        sys.path.append("{0}".format(full_path)) 
 
     if not OPTS.openram_temp.endswith('/'):
         OPTS.openram_temp += "/"

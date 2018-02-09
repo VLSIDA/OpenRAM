@@ -177,7 +177,7 @@ def read_config(config_file, is_unit_test=True):
                                                          OPTS.num_words,
                                                          OPTS.num_banks,
                                                          OPTS.OPTS.tech_name)
-
+        
     # Don't delete the output dir, it may have other files!
     # make the directory if it doesn't exist
     try:
@@ -263,9 +263,8 @@ def import_tech():
 
     # Set the tech to the config file we read in instead of the command line value.
     OPTS.tech_name = OPTS.tech_name
-    
-    
-        # environment variable should point to the technology dir
+        
+    # environment variable should point to the technology dir
     try:
         OPENRAM_TECH = os.path.abspath(os.environ.get("OPENRAM_TECH"))
     except:
@@ -288,6 +287,16 @@ def import_tech():
     except ImportError:
         debug.error("Nonexistent technology_setup_file: {0}.py".format(filename))
         sys.exit(1)
+
+    import tech
+    # Set some default options now based on the technology...
+    if (OPTS.process_corners == ""):
+        OPTS.process_corners = [tech.spice["nom_corner"][0]]
+    if (OPTS.supply_voltages == ""):
+        OPTS.supply_voltages = [tech.spice["nom_corner"][1]]
+    if (OPTS.temperatures == ""):
+        OPTS.temperatures = [tech.spice["nom_corner"][2]]
+
 
 def print_time(name, now_time, last_time=None):
     """ Print a statement about the time delta. """

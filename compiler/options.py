@@ -48,9 +48,10 @@ class options(optparse.Values):
     # These are the configuration parameters
     rw_ports = 1
     r_ports = 0
-    supply_voltages = [3]
-    temperatures = [25]
-    process_corners = ["TT"]
+    # These will get initialized by the the file
+    supply_voltages = ""
+    temperatures = ""
+    process_corners = ""
     
 
     # These are the default modules that can be over-riden

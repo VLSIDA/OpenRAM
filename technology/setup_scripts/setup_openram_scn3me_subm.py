@@ -27,10 +27,10 @@ except:
     DRCLVS_HOME=OPENRAM_TECH+"/scn3me_subm/tech"
 os.environ["DRCLVS_HOME"] = DRCLVS_HOME
 
-try:
-    SPICE_MODEL_DIR = os.path.abspath(os.environ.get("SPICE_MODEL_DIR"))
-except:
-    os.environ["SPICE_MODEL_DIR"] = "/mada/software/techfiles/scn3me_subm"
+# try:
+#     SPICE_MODEL_DIR = os.path.abspath(os.environ.get("SPICE_MODEL_DIR"))
+# except:
+os.environ["SPICE_MODEL_DIR"] = OPENRAM_TECH+"/models"
 
 ##########################
 # Paths required for OPENRAM to function

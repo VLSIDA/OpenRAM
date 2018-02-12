@@ -43,7 +43,8 @@ class sram_func_test(openram_test):
         probe_data = s.word_size - 1
         debug.info(1, "Probe address {0} probe data {1}".format(probe_address, probe_data))
 
-        d = delay.delay(s,tempspice,tech.spice["nom_corner"])
+        corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
+        d = delay.delay(s,tempspice,corner)
         d.set_probe(probe_address,probe_data)
 
         # This will exit if it doesn't find a feasible period

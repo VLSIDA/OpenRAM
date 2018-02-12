@@ -26,8 +26,7 @@ class stimuli():
 
         self.sf = stim_file
         
-        (self.process, self.vdd_voltage, self.temperature) = corner
-        self.gnd_voltage = 0
+        (self.process, self.voltage, self.temperature) = corner
         self.device_models = tech.spice["fet_models"][self.process]
 
     
@@ -158,7 +157,7 @@ class stimuli():
     
         # shift signal times earlier for setup time
         times = np.array(clk_times) - setup*period
-        values = np.array(data_values) * self.vdd_voltage
+        values = np.array(data_values) * self.voltage
         half_slew = 0.5 * slew
         self.sf.write("* (time, data): {}\n".format(zip(clk_times, data_values)))
         self.sf.write("V{0} {0} 0 PWL (0n {1}v ".format(sig_name, values[0]))
@@ -174,10 +173,10 @@ class stimuli():
         self.sf.write("V{0} {0} 0 DC {1}\n".format(sig_name, v_val))
 
     def get_inverse_voltage(self, value):
-        if value > 0.5*self.vdd_voltage:
-            return self.gnd_voltage
-        elif value <= 0.5*self.vdd_voltage:
-            return self.vdd_voltage
+        if value > 0.5*self.voltage:
+            return 0
+        elif value <= 0.5*self.voltage:
+            return self.voltage
         else:
             debug.error("Invalid value to get an inverse of: {0}".format(value))
 
@@ -256,11 +255,11 @@ class stimuli():
 
     def write_supply(self):
         """ Writes supply voltage statements """
-        self.sf.write("V{0} {0} 0.0 {1}\n".format(self.vdd_name, self.vdd_voltage))
-        self.sf.write("V{0} {0} 0.0 {1}\n".format(self.gnd_name, self.gnd_voltage))
+        self.sf.write("V{0} {0} 0.0 {1}\n".format(self.vdd_name, self.voltage))
+        self.sf.write("V{0} {0} 0.0 {1}\n".format(self.gnd_name, 0))
         # This is for the test power supply
-        self.sf.write("V{0} {0} 0.0 {1}\n".format("test"+self.vdd_name, self.vdd_voltage))
-        self.sf.write("V{0} {0} 0.0 {1}\n".format("test"+self.gnd_name, self.gnd_voltage))
+        self.sf.write("V{0} {0} 0.0 {1}\n".format("test"+self.vdd_name, self.voltage))
+        self.sf.write("V{0} {0} 0.0 {1}\n".format("test"+self.gnd_name, 0))
 
 
     def run_sim(self):

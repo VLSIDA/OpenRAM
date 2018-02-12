@@ -199,16 +199,24 @@ spice["nmos"]="n"
 spice["pmos"]="p"
 # This is a map of corners to model files
 SPICE_MODEL_DIR=os.environ.get("SPICE_MODEL_DIR")
-spice["fet_models"] = { "TT" : [SPICE_MODEL_DIR+"/on_c5n.sp"] }
+# FIXME: Uncomment when we have the new spice models
+spice["fet_models"] = { "TT" : [SPICE_MODEL_DIR+"/nom/pmos.sp",SPICE_MODEL_DIR+"/nom/nmos.sp"] }
+# spice["fet_models"] = { "TT" : [SPICE_MODEL_DIR+"/nom/pmos.sp",SPICE_MODEL_DIR+"/nom/nmos.sp"],
+#                         "FF" : [SPICE_MODEL_DIR+"/ff/pmos.sp",SPICE_MODEL_DIR+"/ff/nmos.sp"],
+#                         "FS" : [SPICE_MODEL_DIR+"/ff/pmos.sp",SPICE_MODEL_DIR+"/ss/nmos.sp"],
+#                         "SF" : [SPICE_MODEL_DIR+"/ss/pmos.sp",SPICE_MODEL_DIR+"/ff/nmos.sp"],                        
+#                         "SS" : [SPICE_MODEL_DIR+"/ss/pmos.sp",SPICE_MODEL_DIR+"/ss/nmos.sp"] }
+                        
 
 #spice stimulus related variables
 spice["feasible_period"] = 5         # estimated feasible period in ns
-spice["supply_voltage"] = 5.0        # ideal vdd in [Volts]
+spice["supply_voltages"] = [4.5, 5.0, 5.5]  # Supply voltage corners in [Volts]
 spice["rise_time"] = 0.05            # rise time in [Nano-seconds]
 spice["fall_time"] = 0.05            # fall time in [Nano-seconds]
-spice["nom_corner"] = ("TT", 5.0, 25) # Nominal process corner
+spice["temperatures"] = [0, 25, 100]  # Temperature corners (celcius)
 
 #sram signal names
+#FIXME: We don't use these everywhere...
 spice["vdd_name"] = "vdd"
 spice["gnd_name"] = "gnd"
 spice["control_signals"] = ["CSb", "WEb", "OEb"]

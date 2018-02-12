@@ -291,11 +291,11 @@ def import_tech():
     import tech
     # Set some default options now based on the technology...
     if (OPTS.process_corners == ""):
-        OPTS.process_corners = [tech.spice["nom_corner"][0]]
+        OPTS.process_corners = tech.spice["fet_models"].keys()
     if (OPTS.supply_voltages == ""):
-        OPTS.supply_voltages = [tech.spice["nom_corner"][1]]
+        OPTS.supply_voltages = tech.spice["supply_voltages"]
     if (OPTS.temperatures == ""):
-        OPTS.temperatures = [tech.spice["nom_corner"][2]]
+        OPTS.temperatures = tech.spice["temperatures"]
 
 
 def print_time(name, now_time, last_time=None):

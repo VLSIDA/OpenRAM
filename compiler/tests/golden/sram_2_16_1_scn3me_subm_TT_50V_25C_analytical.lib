@@ -1,4 +1,4 @@
-library (sram_2_16_1_scn3me_subm_lib){
+library (sram_2_16_1_scn3me_subm_TT_50V_25C_lib){
     delay_model : "table_lookup";
     time_unit : "1ns" ;
     voltage_unit : "1v" ;
@@ -9,7 +9,7 @@ library (sram_2_16_1_scn3me_subm_lib){
     pulling_resistance_unit :"1kohm" ;
     operating_conditions(TT){
     voltage : 5.0 ;
-    temperature : 25.000 ;
+    temperature : 25;
     }
 
     input_threshold_pct_fall       :  50.0 ;

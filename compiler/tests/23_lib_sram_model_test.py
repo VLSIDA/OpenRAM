@@ -22,8 +22,8 @@ class lib_test(openram_test):
 
         debug.info(1, "Testing timing for sample 2 bit, 16 words SRAM with 1 bank")
         s = sram.sram(word_size=2,
-                      num_words=OPTS.num_words,
-                      num_banks=OPTS.num_banks,
+                      num_words=16,
+                      num_banks=1,
                       name="sram_2_16_1_{0}".format(OPTS.tech_name))
         OPTS.check_lvsdrc = True
 

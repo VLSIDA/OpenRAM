@@ -74,10 +74,10 @@ class lib:
         for proc in self.process_corners:
             for temp in self.temperatures:
                 for volt in self.supply_voltages:
-                    self.corner_name = "{0}_{1}_{2}_{3}".format(self.sram.name,
-                                                                proc,
-                                                                volt,
-                                                                temp)
+                    self.corner_name = "{0}_{1}_{2}V_{3}C".format(self.sram.name,
+                                                                  proc,
+                                                                  volt,
+                                                                  temp)
                     self.corner_name = self.corner_name.replace(".","") # Remove decimals
                     lib_name = self.out_dir+"{}.lib".format(self.corner_name)
                     

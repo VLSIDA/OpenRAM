@@ -34,9 +34,12 @@ to aid with placement.
 \subsection{The Bitcell and Bitcell Array}
 \label{sec:bitcellarray}
 
-The 6T cell is the most commonly used memory cell in SRAM devices.  It
-is named a 6T cell because it consist of 6 transistors: 2 access
-transistors and 2 cross coupled inverters as shown in
+OpenRAM can work with any cell as the bitcell. This could be a foundry
+created one or a user design rule cell for experiments.  In addition,
+it could be a common 6T cell or it could be replaced with an 8T, 10T
+or other cell, depending on needs.
+
+By default, OpenRAM uses a standard 6T cell as shown in 
 Figure~\ref{fig:6t_cell}.  The cross coupled inverters hold a single
 data bit that can either be driven into, or read from the cell by the
 bitlines.  The access transistors are used to isolate the cell from
@@ -45,70 +48,52 @@ accessed.
 
 \begin{figure}[h!]
 \centering
-\includegraphics[scale=.9]{./figs/cell_6t_schem.pdf}
-\caption{Schematic of 6T cell.}
+\includegraphics[scale=.9]{figs/cell_6t_schem.pdf}
+\caption{Standard 6T cell.}
 \label{fig:6t_cell}
 \end{figure}
 
-% memory cell operation
-The 6T cell can be accessed to perform the two main operation
-associated with memory: reading and writing.  When a read is to be
-performed, both bitlines are precharged to VDD.  This precharging is
-done during the first half of the read cycle and is handled by the
-precharge circuitry.  In the second half of the read cycle the
-wordline is asserted, which enable the access transistors.  If a 1 is
-stored in the cell then BLB is discharged to Gnd and BL is pulled up
-to Vdd.  Conversely, if the value stored is a 0, then BL is discharged
-to Gnd and BLB is pulled up to Vdd.  While performing a write
-operation, both bitlines are also precharged to Vdd during the first
-half of the write cycle.  Again, the world line is asserted, and the
-access transistors are enabled.  The value that is to be written into
-the cell is applied to BL, and its complement is applied to BLB.  The
-drivers that are applying the signals to the bitlines must be
-appropriately sized so that the previous value in the cell can be
-overwritten.
-
 % tiling memory cells
 The 6T cells are tiled together in both the horizontal and vertical
-directions to make up the memory array.  The size of the memory array
-is directly related to the numbers of words, and the size of those
-words, that will need to be stored in the RAM.  For example, an 8kb
-memory with a word size of 8 bits could be implemented as 8 columns
-and 1024 rows.  
+directions to make up the memory array.  
 
 % keeping it square
-It is common practice to keep the aspect ratio of memory array as
-square as possible\footnote{Future versions will consider optimizing
-  delay and/or power as well.}.  This helps to make sure that the
-bitlines do not become too long, which can increase the bitline
-capacitance, slow down the operation and lead to more leakage.  To
-make the design ``more square'', multiple words can share rows by
-interleaving the bits of each word.  If the previous 8kb memory was
-rearranged to allow 2 words per row, then the array would have 16
-columns and 512 rows.  
+It is common practice to keep the aspect ratio of a memory array
+roughly ``square'' to ensure that the bitlines and wordlines do not
+become too long. If the bitlines are too long, this can increase the
+bitline capacitance, slow down the operation and lead to bitline
+leakage problems.  To make an array ``more square'', multiple words
+can share rows by interleaving the bits of each word. The column mux
+in Section~\ref{sec:column_mux} is responsbile for selecting a subset
+of bitcells in a row to extract a word during read and write
+operations.
 
 % memory cell is a library cell
-In OpenRAM, we provide a library cell for the 6T cell so that users
-can easily swap in different memory cell designs.  The memory cell is
-the most important cell in the RAM and should be customized to
-minimize area and optimize performance.  The memory cell is the most
-replicated cell in the RAM; minimizing its size can have a drastic
-effext on the overall size of the RAM.  Also, the transitors in the cell
-must be carefully sized to allow for correct read and write operation
-as well as protection against corruption.
+In OpenRAM, we provide a library cell for the 6T cell that can be
+swapped with a fab memory cell, if available. The transitors in the
+cell are sized appropriately considering read and write noise margins.
 
 % bitcell and bitcell_array classes
-The \verb|bitcell| class in \verb|bitcell.py| instantiates a single
-memory cell and is usually a pre-made library cell. The
-\verb|bitcell_array| class in \verb|bitcell_array.py| dynamically
-implements the memory cell array by instantiating a single memory cell
-according to the number of rows and columns.  During the tiling
-process, the cells are abutted so that all bitlines and word lines are
-connected in the vertical and horizontal directions respectively.  In
-order to share supply rails, cells are flipped in alternating rows. To
-avoid any extra routing, the power/ground rails, bitlines, and
-wordlines should span the entire width/height of the cell so thay they
-are automatically connected when the cells are abutted.
+The bitcell class in \verb|modules/bitcell.py| is a single
+memory cell and is usually a pre-made library cell.
+
+% bitcell_array
+The bitcell\_array class in \verb|modules/bitcell_array.py| dynamically
+implements the memory cell array by instantiating a the bitcell class
+in rows and columns.
+
+% abutment connections
+During the tiling process, bitcells are abutted so that all bitlines
+and word lines are connected in the vertical and horizontal directions
+respectively. This is done by using the boundary layer to define the
+height and width of the cell. If this is not specified, OpenRAM will
+use the bounding box of all shapes as the boundary. The boundary layer
+should be offset at (0,0) in the lower left coordinate.
+
+% flipping
+In order to share supply rails, bitcells are flipped in alternating
+rows. 
+
 
 
 \subsection{Precharge Circuitry}
@@ -271,7 +256,7 @@ takes the transistor size and cell height as inputs (so that it can abutt the
 
 
 \subsection{Column Mux}
-
+\label{sec:column_mux}
 The column mux takes the column address bits from the address bus
 selects the appropriate bitlines for the word that is to be read from
 or written to.  It takes n-bits from the address bus and can select
@@ -282,88 +267,88 @@ sense ampflifier and the write driver.
 OpenRAM provides several options for column mux, but the default
 is a single-level column mux which is sized for optimal speed.
 
-\subsubsection{Tree\_Decoding Column Mux}
-\label{sec:tree_decoding_column_mux}
+%% \subsubsection{Tree\_Decoding Column Mux}
+%% \label{sec:tree_decoding_column_mux}
 
-The schematic for a 4-1 tree
-multiplexer is shown in Figure~\ref{fig:colmux}.
+%% The schematic for a 4-1 tree
+%% multiplexer is shown in Figure~\ref{fig:colmux}.
 
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=.9]{./figs/tree_column_mux_schem.pdf}
-\caption{Schematic of 4-1 tree column mux that passes both of the bitlines.}
-\label{fig:colmux}
-\end{figure}
+%% \begin{figure}[h!]
+%% \centering
+%% \includegraphics[scale=.9]{./figs/tree_column_mux_schem.pdf}
+%% \caption{Schematic of 4-1 tree column mux that passes both of the bitlines.}
+%% \label{fig:colmux}
+%% \end{figure}
 
-\fixme{Shading/opacity is different on different platforms. Make this a box in the image. It doesn't work on OSX.}
+%% \fixme{Shading/opacity is different on different platforms. Make this a box in the image. It doesn't work on OSX.}
 
-This tree mux selects pairs of bitlines (both BL and BL\_B) as inputs
-and outputs.  This 4-1 tree mux illustrates the process of choosing
-the correct bitlines if there are 4 words per row in the memory array.
-Each bitline pair represents a single bit from each word.  A binary
-reduction pattern, shown in Table~\ref{table:colmux}, is used to
-select the appropriate bitlines.  As the number of words per row in
-the memory array increases, the depth of the column mux grows.  The
-depth of the column mux is equal to the number of bits in the column
-address bus.  The 4-1 tree mux has a depth of 2.  In level 1, the
-least significant bit from the column address bus selects either the
-first and second words or the third and fourth words.  In level 2, the
-most signifant column address bit selects one of the words passed down
-from the previous level.  Relative to other column mux designs, the
-tree mus uses significantly less devices.  But, this type of design
-can provide poor performance if a large decoder with many levels are
-needed.  The delay of of a tree mux quadratically increases with each
-level.  Due to this fact, other types of column
-decoders should be considered for larger arrays.
+%% This tree mux selects pairs of bitlines (both BL and BL\_B) as inputs
+%% and outputs.  This 4-1 tree mux illustrates the process of choosing
+%% the correct bitlines if there are 4 words per row in the memory array.
+%% Each bitline pair represents a single bit from each word.  A binary
+%% reduction pattern, shown in Table~\ref{table:colmux}, is used to
+%% select the appropriate bitlines.  As the number of words per row in
+%% the memory array increases, the depth of the column mux grows.  The
+%% depth of the column mux is equal to the number of bits in the column
+%% address bus.  The 4-1 tree mux has a depth of 2.  In level 1, the
+%% least significant bit from the column address bus selects either the
+%% first and second words or the third and fourth words.  In level 2, the
+%% most signifant column address bit selects one of the words passed down
+%% from the previous level.  Relative to other column mux designs, the
+%% tree mus uses significantly less devices.  But, this type of design
+%% can provide poor performance if a large decoder with many levels are
+%% needed.  The delay of of a tree mux quadratically increases with each
+%% level.  Due to this fact, other types of column
+%% decoders should be considered for larger arrays.
 
-\begin{table}[h!] 
-  \begin{center}
-    \begin{tabular}{| c | c | c | c |}
-    \hline
-    Selected BL & Inp1 & Inp2 & Binary\\ \hline
-    BL0 & SEL0\_bar & SEL1\_bar & 00\\ \hline
-    BL1 & SEL0 & SEL1\_bar & 01\\ \hline
-    BL2 & SEL0\_bar & SEL1 & 10\\ \hline
-    BL3 & SEL0 & SEL1 & 11\\
-    \hline
-    \end{tabular}
-  \end{center}
-  \caption{Binary reduction pattern for 4-1 tree column mux.}
-  \label{table:colmux}
-\end{table} 
+%% \begin{table}[h!] 
+%%   \begin{center}
+%%     \begin{tabular}{| c | c | c | c |}
+%%     \hline
+%%     Selected BL & Inp1 & Inp2 & Binary\\ \hline
+%%     BL0 & SEL0\_bar & SEL1\_bar & 00\\ \hline
+%%     BL1 & SEL0 & SEL1\_bar & 01\\ \hline
+%%     BL2 & SEL0\_bar & SEL1 & 10\\ \hline
+%%     BL3 & SEL0 & SEL1 & 11\\
+%%     \hline
+%%     \end{tabular}
+%%   \end{center}
+%%   \caption{Binary reduction pattern for 4-1 tree column mux.}
+%%   \label{table:colmux}
+%% \end{table} 
 
-In OpenRAM, the tree column mux is a dynamically generated design.  The
-\verb|tree_mux_array| is made up of two dynamically generated cells: \verb|muxa|
-and \verb|mux_abar|.  The only diffference between these cells is that input
-select signal is either hooked up to the \textbf{SEL} or
-\textbf{SEL\_bar} signals (see highlighted boxes in
-Figure~\ref{fig:colmux}).  These cells are initialized the the
-\verb|column_muxa| and \verb|column_muxabar| classes in \verb|columm_mux.py|.  Instances
-of \verb|ptx| PMOS transistors are added to the design and the necessary
-routing is performed using the \verb|add_rect()| function. A horizontal rail
-is added in metal2 for both the SEL and Sel\_bar signals.  Underneath
-those input rails, horizontal straps are added.  These straps are used
-to connect the BL and BL\_B outputs from \verb|muxa| to the BL and BL\_B
-outputs of \verb|mux_abar|.  Vertical conenctors in metal3 are added at the
-bottom of the cell so that connections can be made down to the sense
-amp.  Vertical connectors are also added in metal1 so that the cells
-can connect down to other mux cells when the depth of the tree mux is
-more than one level.
+%% In OpenRAM, the tree column mux is a dynamically generated design.  The
+%% \verb|tree_mux_array| is made up of two dynamically generated cells: \verb|muxa|
+%% and \verb|mux_abar|.  The only diffference between these cells is that input
+%% select signal is either hooked up to the \textbf{SEL} or
+%% \textbf{SEL\_bar} signals (see highlighted boxes in
+%% Figure~\ref{fig:colmux}).  These cells are initialized the the
+%% \verb|column_muxa| and \verb|column_muxabar| classes in \verb|columm_mux.py|.  Instances
+%% of \verb|ptx| PMOS transistors are added to the design and the necessary
+%% routing is performed using the \verb|add_rect()| function. A horizontal rail
+%% is added in metal2 for both the SEL and Sel\_bar signals.  Underneath
+%% those input rails, horizontal straps are added.  These straps are used
+%% to connect the BL and BL\_B outputs from \verb|muxa| to the BL and BL\_B
+%% outputs of \verb|mux_abar|.  Vertical conenctors in metal3 are added at the
+%% bottom of the cell so that connections can be made down to the sense
+%% amp.  Vertical connectors are also added in metal1 so that the cells
+%% can connect down to other mux cells when the depth of the tree mux is
+%% more than one level.
 
-The \verb|tree_mux_array| class is used to generate the tree mux.
-Instances of both the \verb|muxa| and \verb|mux_abar| cells are instantiated and
-are tiled row by row.  The offset of the cell in a row is determined
-by the depth of that row in the tree mux.  The pattern used to
-determine the offset of the mux cells is
-$muxa.width*(i)*(2*row\_depth)$ where is the column number.  As the
-depth increases, the mux cells become further apart.  A separate
-``for'' loop is invoked if the $depth>1$, which extends the
-power/ground and select rails across the entire width of the array.
-Similarly, if the $depth>1$, spice net names are created for the
-intermediate connection made at the various levels.  This is necessary
-to ensure that a correct spice netlist is generated and that the
-input/output pins of the column mux match the pins in the modules that
-it is connected to.
+%% The \verb|tree_mux_array| class is used to generate the tree mux.
+%% Instances of both the \verb|muxa| and \verb|mux_abar| cells are instantiated and
+%% are tiled row by row.  The offset of the cell in a row is determined
+%% by the depth of that row in the tree mux.  The pattern used to
+%% determine the offset of the mux cells is
+%% $muxa.width*(i)*(2*row\_depth)$ where is the column number.  As the
+%% depth increases, the mux cells become further apart.  A separate
+%% ``for'' loop is invoked if the $depth>1$, which extends the
+%% power/ground and select rails across the entire width of the array.
+%% Similarly, if the $depth>1$, spice net names are created for the
+%% intermediate connection made at the various levels.  This is necessary
+%% to ensure that a correct spice netlist is generated and that the
+%% input/output pins of the column mux match the pins in the modules that
+%% it is connected to.
 
 
 \subsubsection{Single\_Level Column Mux}

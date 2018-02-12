@@ -102,27 +102,28 @@ rows.
 The precharge circuit is depicted in Figure~\ref{fig:precharge} and is
 implemented by three PMOS transistors. The input signal to the cell,
 clk, enables all three transistors during the first half of a read or
-write cycle (i.e. while the clock signal is low).  M1 and M2 charge BL
-and BLB to Vdd and M3 helps to equalize the voltages seen on BL and
-BLB.
+write cycle (i.e. while the clock signal is low).  M1 and M2 charge bl
+and br to vdd while M3 equalizes the voltages seen between the bitlines.
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=5cm]{./figs/precharge_schem.pdf}
-\caption{Schematic of a single precharge cell. \fixme{Change PCLK to CLK.}}
+\caption{Schematic of a precharge circuit.}
 \label{fig:precharge}
 \end{figure}
 
 In OpenRAM, the precharge citcuitry is dynamically generated using the
-parameterized transistor class (\verb|ptx|). The \verb|precharge|
-class in \verb|precharge.py| dynamically generates a single precharge cell.
+parameterized transistor class ptx which is further discussed in
+Section~\ref{sec:ptx}. The offsets of the bitlines and the width of
+the precharge cell are equal to the bitcell so that the bitlines are
+correctly connected by abutment. The precharge class in
+\verb|modules/precharge.py| dynamically generates a single precharge
+cell.
 
-The offsets of the bitlines and the width of the precharge cell are
-equal to the 6T cell so that the bitlines are correctly connected down
-to the 6T cell.  The \verb|precharge_array| class is then used to
-generate a precharge array, which is a single row of \textbf{n}
-precharge cells, where \textbf{n} equals the number of columns in the
-bitcell array.
+\verb|modules/precharge_array.py| creates a row of precharge cells at
+the top of a bitcell array.
+
+
 
 
 \subsection{Address Decoders}

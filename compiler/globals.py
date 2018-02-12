@@ -173,10 +173,11 @@ def read_config(config_file, is_unit_test=True):
 
     # If config didn't set output name, make a reasonable default.
     if (OPTS.output_name == ""):
-        OPTS.output_name = "sram_{0}_{1}_{2}_{3}".format(OPTS.word_size,
-                                                         OPTS.num_words,
-                                                         OPTS.num_banks,
-                                                         OPTS.OPTS.tech_name)
+        OPTS.output_name = "sram_{0}rw_{1}b_{2}w_{3}bank_{4}".format(OPTS.rw_ports,
+                                                                     OPTS.word_size,
+                                                                     OPTS.num_words,
+                                                                     OPTS.num_banks,
+                                                                     OPTS.tech_name)
         
     # Don't delete the output dir, it may have other files!
     # make the directory if it doesn't exist

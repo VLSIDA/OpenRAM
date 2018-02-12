@@ -35,7 +35,7 @@ class precharge(pgate.pgate):
         self.create_ptx()
         self.add_ptx()
         self.connect_poly()
-        self.add_enk()
+        self.add_en()
         self.add_nwell_and_contact()
         self.add_vdd_rail()
         self.add_bitlines()

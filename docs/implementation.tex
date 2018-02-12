@@ -315,18 +315,32 @@ OpenRAM, the default technology is FreePDK45, which has it own
 technolony directory in the trunk.  The technology-specific directory
 should consist of the following:
 \begin{itemize}
+\item Technology Setup FIle - In \verb|/techdir/setup_scripts|, there
+  should be a Python file that sets up the PDK and defines anything
+  necessary for a given technology. This file should be named
+  \verb|setup_openram_<techname>.py| where techname is the name used
+  to identify it in configuration scripts.
 \item Technology-Specific Parameters - These parameters should include
   layer numbers and any design rules that may be needed for generating
   dynamic designs (DRC rules). The parameters should be added in
-  \verb|/techdir/tech/tech.py| and layer map in the \verb|/techdir|.
+  \verb|techname/tech/tech.py| and optinally in a \verb|techname/layer.map| for
+  DRC/LVS streaming. 
 \item Library Cells - The library cells and corresponding spice
-  netlists should be added to the \verb|/gds_lib| and \verb|/sp_lib|
-  directories.
-\item Portation Functions - Some of the dynamically generated cells
-  may need helper functions to deal with technology-specific
-  requirements.  Additional, tech-specific, functions should be added
-  to the \verb|/techdir|.
+  netlists should be added to the \verb|techname/gds_lib| and
+  \verb|techname/sp_lib| directories.
+\item Spice Models - If models are not supplied in the PDK, they can be
+  placed in the technology directory as done in SCMOS.
 \end{itemize}
+
+The height and width of library cells is determined by the bounding
+box of all geometries. Sometimes this is not desired, for example,
+when a rail must be shared. In this case, the boundary layer in the
+technology file is used to define the height and width of the cell.
+
+Pins are recognized in library cells by the largest rectangle that
+encloses the pin label text. Multiple pins with the same name are
+supported.  Pins with the same name such as gnd are assumed to be
+``must connect'' which requires that they later be connected.
 
 For more information regarding the technology directory and how to set
 one up for a new technology, refer to Section~\ref{sec:porting}
@@ -342,30 +356,32 @@ the command line. The \verb|DRC_LVS()| function saves a GDSII file and a Spice
 file into a temporary directory and then calls two functions to
 perform DRC and LVS that are tool-dependent.
 
-A reference implementation for the DRC and LVS functions are provided
-for Cadence Calibre since this is the most common DRC/LVS tool. Each
-of these functions generates a batch-mode ``runset'' file which
-contains the options to correctly run DRC and LVS. The functions then
-parse the batch mode output for any potential errors and returns the
-number of errors encountered.
+Wrapper implementation for DRC and LVS functions are provided for the
+open-source tools Magic+Netgen and the commercial tool, Cadence
+Calibre.  Each of these functions generates a batch-mode script or runset
+file which contains the options to correctly run DRC and LVS. The
+functions then parse the batch mode output for any potential errors
+and returns the number of errors encountered.
 
 The function \verb|run_drc()| requires a cell name and a GDSII
 file. The cell name corresponds to the top level cell in the GDSII
-file. It also uses the layer map file for the technology to correctly
-import the GDSII file into the Cadence database to perform DRC. The
-function returns the number of DRC violations. 
+file. For Calibre, it also uses the layer map file for the technology
+to correctly import the GDSII file into the Cadence database to
+perform DRC. The function returns the number of DRC violations.
 
 The function \verb|run_lvs()| requires a cell name, a GDSII file, and
-a Spice file. Calibre will extract an extracted Spice netlist from the
-GDSII file and will then compare this netlist with the OpenRAM Spice
-netlist. The function returns the number of uncompared and unmatched
-devices/nets in the design.
+a Spice file. Magic or Calibre will extract an extracted Spice netlist
+from the GDSII file and will then compare this netlist with the
+OpenRAM Spice netlist. The function returns the number of errors
+encountered if there is an LVS mismatch.
+
 
 For both DRC and LVS, the summary file and other report files are left
 in the OpenRAM temporary directory after DRC/LVS is run. These report
 files can be examined to further understand why errors were
-encountered. In addition, by increasing the debug level, the command
-line to re-create the DRC/LVS check can be obtained and run manually.
+encountered. In addition, by increasing the debug level with one or
+more ``-v'' command-line parametres, the command to re-create the
+DRC/LVS check can be obtained and run manually.
 
 
 

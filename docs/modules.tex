@@ -10,17 +10,25 @@ of the possible circuits that can be adapted into a SRAM architecture;
 refer to Section~\ref{sec:implementation} for more information on
 adding different module designs to the compiler.
 
-Each module has a corresponding python class in the \verb|compiler|
-directory.  These classes are used to generate both the GDSII layout
-and spice netlists. Each module can consist of library cells as
-discussed in Section~\ref{sec:techdir}, paramterized cells in
-Section~\ref{sec:parameterized} or other modules.  A discussion of the
-design hierarchy and how to implement a module is provided in
-Section~\ref{sec:design}.
+Data structures for schematic and layout are provided in the
+\verb|base| directory. These implement a generic design object and
+have many auxiliary functions for routing, pin access, placement,
+DRC/LVS, etc.  These are discussed further in
+Section~\ref{sec:implementation}.
+
+Each module has a corresponding Python class in the
+\verb|compiler/modules| directory.  These classes are used to generate
+both the GDSII layout and spice netlists. A module can consist of
+hard library cells (Section~\ref{sec:techdir}), paramterized
+cells (Section~\ref{sec:parameterized}) or other modules.
 
 When combining modules at any level of hierarchy, DRC rules for
 minimum spacing of metals, wells, etc. must be followed and DRC and
-LVS are run by default after each hierarchical module's creation.
+LVS are run by default after each hierarchical module's creation. A
+module is responsible for creating its own pins to enable routing
+at the next level up in the hierarchy. A module must also define its
+height and width assuming a (0,0) offset for the lower-left coordinate
+to aid with placement.
 
 
 \subsection{The Bitcell and Bitcell Array}

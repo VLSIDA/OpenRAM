@@ -39,7 +39,7 @@ class options(optparse.Values):
     # Define the output file paths
     output_path = "."
     # Define the output file base name
-    output_name = "sram"
+    output_name = ""
     # Use analytical delay models by default rather than (slow) characterization
     analytical_delay = True
     # Purge the temp directory after a successful run (doesn't purge on errors, anyhow)

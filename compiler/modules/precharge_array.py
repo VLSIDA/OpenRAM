@@ -46,7 +46,7 @@ class precharge_array(design.design):
         
         self.add_layout_pin(text="en",
                             layer="metal1",
-                            offset=self.pc_cell.get_pin("clk").ll(),
+                            offset=self.pc_cell.get_pin("en").ll(),
                             width=self.width,
                             height=drc["minwidth_metal1"])
         

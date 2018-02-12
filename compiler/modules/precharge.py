@@ -29,13 +29,13 @@ class precharge(pgate.pgate):
         self.DRC_LVS()
 
     def add_pins(self):
-        self.add_pin_list(["bl", "br", "clk", "vdd"])
+        self.add_pin_list(["bl", "br", "en", "vdd"])
 
     def create_layout(self):
         self.create_ptx()
         self.add_ptx()
         self.connect_poly()
-        self.add_pclk()
+        self.add_enk()
         self.add_nwell_and_contact()
         self.add_vdd_rail()
         self.add_bitlines()
@@ -74,7 +74,7 @@ class precharge(pgate.pgate):
         self.lower_pmos_inst=self.add_inst(name="lower_pmos",
                                            mod=self.pmos,
                                            offset=self.lower_pmos_position)
-        self.connect_inst(["bl", "clk", "BR", "vdd"])
+        self.connect_inst(["bl", "en", "BR", "vdd"])
 
         # adds the upper pmos(s) to layout
         ydiff = self.pmos.height + 2*self.m1_space + contact.poly.width
@@ -82,13 +82,13 @@ class precharge(pgate.pgate):
         self.upper_pmos1_inst=self.add_inst(name="upper_pmos1",
                                             mod=self.pmos,
                                             offset=self.upper_pmos1_pos)
-        self.connect_inst(["bl", "clk", "vdd", "vdd"])
+        self.connect_inst(["bl", "en", "vdd", "vdd"])
 
         upper_pmos2_pos = self.upper_pmos1_pos + self.overlap_offset
         self.upper_pmos2_inst=self.add_inst(name="upper_pmos2",
                                             mod=self.pmos,
                                             offset=upper_pmos2_pos)
-        self.connect_inst(["br", "clk", "vdd", "vdd"])
+        self.connect_inst(["br", "en", "vdd", "vdd"])
 
     def connect_poly(self):
         """Connects the upper and lower pmos together"""
@@ -109,16 +109,16 @@ class precharge(pgate.pgate):
                       width=xlength,
                       height=self.poly_width)
 
-    def add_pclk(self):
-        """Adds the pclk input rail, pclk contact/vias, and connects to the pmos"""
-        # adds the pclk contact to connect the gates to the pclk rail on metal1
+    def add_en(self):
+        """Adds the en input rail, en contact/vias, and connects to the pmos"""
+        # adds the en contact to connect the gates to the en rail on metal1
         offset = self.lower_pmos_inst.get_pin("G").ul() + vector(0,0.5*self.poly_space)
         self.add_contact_center(layers=("poly", "contact", "metal1"),
                                 offset=offset,
                                 rotate=90)
 
-        # adds the pclk rail on metal1
-        self.add_layout_pin_center_segment(text="clk",
+        # adds the en rail on metal1
+        self.add_layout_pin_center_segment(text="en",
                                            layer="metal1",
                                            start=offset.scale(0,1),
                                            end=offset.scale(0,1)+vector(self.width,0))

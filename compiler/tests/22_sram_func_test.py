@@ -49,7 +49,7 @@ class sram_func_test(openram_test):
 
         # This will exit if it doesn't find a feasible period
         import tech
-        load = tech.spice["FF_in_cap"]*4
+        load = tech.spice["msflop_in_cap"]*4
         slew = tech.spice["rise_time"]*2
         feasible_period = d.find_feasible_period(load,slew)
 

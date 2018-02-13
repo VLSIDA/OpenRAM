@@ -92,10 +92,10 @@ cell (sram_2_16_1_freepdk45){
         internal_power(){
             when : "OEb & !clk"; 
             rise_power(scalar){
-                values("0.04024341");
+                values("0.042347092");
             }
             fall_power(scalar){
-                values("0.029869287");
+                values("0.029908723");
             }
         }
         timing(){ 
@@ -129,10 +129,10 @@ cell (sram_2_16_1_freepdk45){
         internal_power(){
             when : "!OEb & !clk"; 
             rise_power(scalar){
-                values("0.050563718");
+                values("0.054779642");
             }
             fall_power(scalar){
-                values("0.055867096");
+                values("0.060081573");
             }
         }
         timing(){ 
@@ -145,9 +145,9 @@ cell (sram_2_16_1_freepdk45){
                    "0.061, 0.062, 0.069");
             }
             cell_fall(CELL_TABLE) {
-            values("0.442, 0.443, 0.452",\
-                   "0.442, 0.443, 0.453",\
-                   "0.448, 0.449, 0.458");
+            values("0.522, 0.523, 0.533",\
+                   "0.523, 0.524, 0.533",\
+                   "0.528, 0.529, 0.539");
             }
         rise_transition(CELL_TABLE) {
             values("0.013, 0.015, 0.026",\
@@ -308,20 +308,20 @@ cell (sram_2_16_1_freepdk45){
             timing_type :"min_pulse_width"; 
             related_pin  : clk; 
             rise_constraint(scalar) {
-                values("0.449"); 
+                values("0.5275"); 
             }
             fall_constraint(scalar) {
-                values("0.449"); 
+                values("0.5275"); 
             }
          }
         timing(){ 
             timing_type :"minimum_period"; 
             related_pin  : clk; 
             rise_constraint(scalar) {
-                values("0.898"); 
+                values("1.055"); 
             }
             fall_constraint(scalar) {
-                values("0.898"); 
+                values("1.055"); 
             }
          }
     }

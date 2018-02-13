@@ -8,7 +8,8 @@ from globals import OPTS
 
 class delay_chain(design.design):
     """
-    Generate a logic effort based delay chain.
+    Generate a delay chain with the given number of stages and fanout.
+    This automatically adds an extra inverter with no load on the input.
     Input is a list contains the electrical effort of each stage.
     """
 

@@ -69,7 +69,7 @@ class control_logic(design.design):
         c = reload(__import__(OPTS.replica_bitline))
         replica_bitline = getattr(c, OPTS.replica_bitline)
         # FIXME: These should be tuned according to the size!
-        FO4_stages = 4
+        FO4_stages = 8
         bitcell_loads = int(math.ceil(self.num_rows / 10.0))
         self.replica_bitline = replica_bitline(FO4_stages, bitcell_loads)
         self.add_mod(self.replica_bitline)

@@ -34,17 +34,17 @@ class timing_setup_test(openram_test):
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         sh = setup_hold.setup_hold(corner)
         data = sh.analyze(slews,slews)
-
+        #print data
         if OPTS.tech_name == "freepdk45":
             golden_data = {'setup_times_LH': [0.014648399999999999],
                            'hold_times_LH': [0.0024414],
                            'hold_times_HL': [-0.0036620999999999997],
                            'setup_times_HL': [0.0085449]}
         elif OPTS.tech_name == "scn3me_subm":
-            golden_data = {'setup_times_LH': [0.1000977],
-                           'hold_times_LH': [0.020751999999999996],
-                           'hold_times_HL': [-0.0830078],
-                           'setup_times_HL': [0.020751999999999996]}
+            golden_data = {'setup_times_LH': [0.08178709999999999],
+                           'hold_times_LH': [0.0024414],
+                           'hold_times_HL': [-0.0646973],
+                           'setup_times_HL': [0.0390625]}
         else:
             self.assertTrue(False) # other techs fail
 

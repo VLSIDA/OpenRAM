@@ -127,79 +127,58 @@ the top of a bitcell array.
 
 
 \subsection{Address Decoders}
-\label{sec:addressdecoder}
+\label{sec:address_decoder}
 
-The address decoder takes the row address bits from the address bus as
-inputs, and asserts the appropriate wordline in the row that data is
-to be read or written.  A n-bit address input controls $2^n$ word
-lines. 
+The address decoder deodes the binary-encoded row address bits from the
+address bus as inputs, and asserts a one-hot wordline in the row that
+data is to be read or written. OpenRAM provides a hierarchical address
+decoder as the default, but will soon have other options.
 
-OpenRAM provides a hierarchical address decoder as the default, but
-will soon have other options.
+The address decoders are created using parameterized gates (pnand2,
+pnand3, pinv) and transistors (ptx). This means that the decoders do
+not rely on any hard library cells.
 
 \subsubsection{Hierarchical Decoder}
 \label{sec:hierdecoder}
 
-Hierarchical decoder is a type of decoder which the constrcution takes place hierarchically. 
-The simple 2:4 decoder is shown in the Figure~\ref{fig:2 to 4 decoder}. The operation of
-this decoder can be explained as follows: soon after the address signals A0 and A1 are put on the address lines, 
-depending on the signal combination, one of the wordlines will rise after a brief amount of time. For example if the
-address input is A0A1=00 then the output is W0W1W2W3=1000. The 2:4 address decoder uses inverters and two 
-input nand gates for its constrcution while the gates are sized to have equal rise and fall time.
-As the decoder size increases the size of the nand gates required for decoding also increases.
-Table~\ref{table:2-4 hierarchical_decoder} gives the detailed input and output siganls
-for the 2:4 hierarchical decoder. 
+
+A simple 2:4 decoder is shown in Figure~\ref{fig:2:4decoder}. This
+decoder computes all of the possible decode values using a single
+level of nand gates along with the inverted and non-inverted inputs.
+As the decoder size increases the size of the nand gates required for
+decoding would increase proportional to the bits to be decoded.  This
+would not be practical for large decoders.
 
 
 \begin{figure}[h!]
 \centering
 \includegraphics[scale=.6]{./figs/2t4decoder.pdf}
 \caption{Schematic of 2-4 simple decoder.}
-\label{fig:2 to 4 decoder}
+\label{fig:2:4decoder}
 \end{figure}
 
- \begin{table}[h!] 
-   \begin{center}
-     \begin{tabular}{| c | c |}
-     \hline
-     A[1:0] & Selected WL\\ \hline
-     00 & 0\\ \hline
-     01 & 1\\ \hline
-     10 & 2\\ \hline
-     11 & 3\\ \hline
-
-     \end{tabular}
-   \end{center}
-   \caption{Truth table for 2:4 hierarchical decoder.}
-   \label{table:2-4 hierarchical_decoder}
- \end{table}
-
-
-An $n$-bit decoder requires {$2^n$} logic gates, each with $n$ inputs. For example, with $n$ = 6, 
-64 $NAND6$ gates are needed to drive 64 inverters to implement the decoder.
-It is clear that gates with more than 3 inputs create large series resistances and long delays. 
-Rather than using $n$-input gates, it is preferable to use a cascade of gates. 
-Typically two stages are used: a predecode stage and a final decode stage. 
-The predecode stage generates intermediate signals that are used 
-by multiple gates in the final decode stage.
-
-
+A hierarchical decoder uses two-levels of decoding hierarchy to
+perform an address decode. The first stage computes predecoded values
+while the second stage computes the final decoded values.
+Figure~\ref{fig:4 to 16 decoder} shows a 4:16 heirarchical
+decoder. The decoder uses two 2:4 decoders for
+predecoding and 2-input nand gates and inverters for final decoding to
+form the 4:16 decoder.
 
 \begin{figure}[h!]
 \centering
 \includegraphics[scale=.6]{./figs/4t16decoder.pdf}
-\caption{Schematic of 4 to 16 hierarchical decoder.}
+\caption{Schematic of 4:16 hierarchical decoder.}
 \label{fig:4 to 16 decoder}
 \end{figure}
 
-Figure~\ref{fig:4 to 16 decoder} shows the 4 to 16 heirarchical decoder. The structure of the decoder consists of two 2:4 decoders for predecoding and 2-input nand gates and inverters for final decoding to form the 4:16 decoder.
-In the predecoder, a total of 8 intermediate signals are generated from the address bits and their complements.
-The concept of using predecoing and final decoding stage for construction of address decoder is very procutive since small
-decoders like 2:4 decoder is used for predecoding. The operation of 4:16 heirarchical decoder can explained with an example. If the address is A0A1A2A3=0000 the output of the predecoder1 and predeocder2 will be
-WL0WL1WL2WL3=1000 and WL0WL1WL2WL3=1000, respectively. According to the connections in figure~\ref{fig:4 to 16 decoder} the wordline 0 of predecoder1 and predecoder2 are conneted 
-to the first 2-input nand gate in the decode stage representing the wordline 0 of the final decoding stage. Hence depengin on the combination
-of the input signal one of the wordline will rise. In this case since the address input is A0A1A2A3=0000 the wordline 0 should go high. Table~\ref{table:4-16 hierarchical_decoder} gives the detailed input and output siganls
-for the 4:16 hierarchical decoder.
+The predecoder generates a total of 8 intermediate signals from the
+address bits and their complements. These intermediate signals are in
+two groups of 4 from each decoder. The enumeration of all 4 x 4
+predecoded values are used by the final decode to produce the 16
+decoded results.  As an example, Table~\ref{table:4-16 hierarchical_decoder}
+gives the detailed input and output siganls for the 4:16 hierarchical
+decoder.
 
 
  \begin{table}[h!] 
@@ -230,43 +209,72 @@ for the 4:16 hierarchical decoder.
  \end{table}
 
 
-As the size of the address line increases higher level decoder can be created using the lower level decoders. For example for a 8:256 decoder, two instances of 4:16 followed by 256 2-input nand gates and inverters 
-can form the decoder. In order to construct the 8:256 decoder, first 4:16 decoder should be constructed through using 2:4 deccoders. Hence the name is hierarchical decoder.
+As the address size increases, additional sizes of pre- and final
+decoders can be used.  In OpenRAM, there are implementations for
+\verb|modules/hierarchical\_predecode2x4.py| and
+\verb|modules/hierarchical\_predecode3x8.py| to produce 2:4 and 3:8
+predecodes, respectively. These same decoders are used to generate the
+column mux select bits as well.
+
+For the final decode, we can use either pnand2 or pnand3 gates. This
+allows a maximum size of three 3:8 predocers along with a final pnand3 decode
+stage, or, 512 word lines. To extend beyond this, a pnand4 or
+a 4:16 predecoder would be needed.
 
 
 \subsection{Wordline Driver}
 \label{sec:wldriver}
 
-Word line drivers are inserted, in between the word line
-output of the address decoder and the word line input of the bitcell-array.  The word
-line drivers ensure that as the size of the memory array increases,
-and the word line length and capacitance increases, the word line
-signal is able to turn on the access transistors in the 6T cell. Also, as the bank select signal
-in multi-bank structures is $ANDED$ with the word line output of decoder, 
-bitcells turn on only when bank is selected. 
-Figure~\ref{fig:wordline_driver} shows the diagram of word line driver and its input/output pins.
-In OpenRAM, word line drivers are created by using the \verb|pinv| and \verb|nand2| classes which
-takes the transistor size and cell height as inputs (so that it can abutt the
-6T cell). Word line driver is added as seperate module in \verb|compiler|.
+The word line driver buffers the address decoder to drive the wordline and
+gates the signal until the decode has stabilized. Without waiting, an
+incorrectly asserted wordline could erase memory contents.
+The word line driver is sized according to the bitcell array width so
+that wordlines in larger memory arrays can be appropriately driven.
+
+% gating for first half decode, second half read/write
+The first half of the clock cycle is used for address decoding in
+OpenRAM.  Therefore, the wordline driver is enabled in the second half
+of the clock cycle in OpenRAM.  The buffered clock signal drives each
+wordline driver row and is logically ANDed with the decoder output.
+
+% bank clock gating for wordline driver
+In multi-bank structures the clock buffer is also anded with the bank
+select signal to prevent the read/writing of an entire bank.
+
 \begin{figure}[h!]
 \centering
-\includegraphics[scale=.8]{./figs/wordline_driver.pdf}
+\includegraphics[scale=.6]{./figs/wordline_driver.pdf}
 \caption{Diagram of word line driver.}
 \label{fig:wordline_driver}
 \end{figure}
 
+Figure~\ref{fig:wordline_driver} illustrates the wordline driver and
+its inputs/outputs. This is implemented in the
+\verb|modules/wordline_driver.py| module and matches the number of
+rows in the bitcell array of a bank.
+
+OpenRAM creates the wordline drivers using the parameterized pinv and
+pnand2 classes. This enables the wordline driver to be matched to the
+bitcell height and to sized to drive the wordline load.
+
+
 
 \subsection{Column Mux}
 \label{sec:column_mux}
-The column mux takes the column address bits from the address bus
-selects the appropriate bitlines for the word that is to be read from
-or written to.  It takes n-bits from the address bus and can select
-$2^n$ bitlines. The column mux is used for both the read and write
-operations; it connects the bitline of the memory array to both the
-sense ampflifier and the write driver.
+The column mux is an optional module in an SRAM bank. Without a column
+mux, the bank is assumed to have a single word in each row. A column
+mux enables more more than one word to be stored in each row and
+read/written individually.  The column mux is used for both the read
+and write operations by connecting the bitlines of a bank to
+both the sense amplifier and the write driver.
 
-OpenRAM provides several options for column mux, but the default
-is a single-level column mux which is sized for optimal speed.
+In OpenRAM, the column mux uses the {\bf high address bits} to select
+the appropriate word in each row.  If n-bits are used, there are $2^n$
+words in each row. OpenRAM currently allows 2, 4, or 8 words per row,
+but the 8 words are not fully debugged (as of 2/12/18).
+
+%% OpenRAM provides several options for column mux, but the default
+%% is a single-level column mux which is sized for optimal speed.
 
 %% \subsubsection{Tree\_Decoding Column Mux}
 %% \label{sec:tree_decoding_column_mux}
@@ -352,30 +360,37 @@ is a single-level column mux which is sized for optimal speed.
 %% it is connected to.
 
 
-\subsubsection{Single\_Level Column Mux}
+\subsubsection{Single-Level Column Mux}
 \label{sec:single_level_column_mux}
 
-The optimal design for column mux uses a single NMOS device, driven by the input address or decoded input addresses.
-Figure~\ref{fig:2t1_single_level_column_mux} shows the schematic of a 2:1 single-level column mux. In this column mux one bit 
-of address and its complementry drive the pass transistors. Selected transistors will  
-connect their corresponding bitlines ( 1 set of column out of 2 set of columns) to sense-amp and write-driver circuitry for read or write operation. 
-Figure~\ref{fig:4t1_single_level_column_mux} shows the schematic of a 4:1 single-level column mux. In this column mux, 2 input 
-address are decoded using a 2:4 decoder ( 2:4 decoder is explain in section~\ref{sec:hierdecoder}). 2:4 decoder provides a one-hot set of outputs, so only one set of columns 
-will be selected and connected to sense-amp and write-driver
-( in figure~\ref{fig:4t1_single_level_column_mux} one set of column out of four sets of column is selected).
+OpenRAM includes a single-level pass-gate mux implemtation for the
+column mux.  A single level of NMOS devices is driven by either the
+input address (and it's complement) or decoded input addresses using a
+2:4 predecoder (Section~\ref{sec:hierdecoder}).
 
-In OpenRAM, the \verb|single-level_mux_array| is a dynamically generated design and 
-it is made up of dynamically generated cell (\verb|single-level_mux|).
-\verb|single-level_mux| uses the parameterized transistor class \verb|ptx| to generate two NMOS transistors 
-which will connect the BL and BLB of selected columns to sense-amp and write-driver. Horizontal rails are added for $sel$ signals. Vertical   
-straps connect the BL and BLB of bitcell\_array to BL and BLB of single-level column mux and also BL-out and BLB-out of single-level 
-column mux to BL and BLB of sense-amp and write-driver.
+Figure~\ref{fig:2t1_single_level_column_mux} shows the schematic of a
+2:1 single-level column mux. In this column mux, the {\bf MSB of the
+  address bus} and it's complement drive the pass transistors.
+
+Figure~\ref{fig:4t1_single_level_column_mux} shows the schematic of a
+4:1 single-level column mux. The select bits are decoded from the {\bf
+  2 MSB of the address bus} using a 2:4 decoder.  The 2:4 decoder
+provides one-hot select signals to select one column.
+
+In OpenRAM, one mux, single\_level\_mux, is dynamically generated in
+\verb|modules/single_level_column_mux.py| and multiple of these muxes
+are tiled together in \verb|modules/single_level_column_mux_array.py|.
+
+single\_level\_mux uses the parameterized ptx (Section~\ref{sec:ptx}
+to generate 2 or 4 NMOS transistors for each the bl and br
+bitlines. Horizontal rails are added for the $sel$ signals.  The
+bitlines are automatically pitch-matched to the bitcell array.
 
 
 \begin{figure}[h!]
 \centering
-\includegraphics[scale=.7]{./figs/2t1_single_level_column_mux.pdf}
-\caption{Schematic of a 2:1 single level column mux.}
+\includegraphics[scale=.5]{./figs/2t1_single_level_column_mux.pdf}
+\caption{Schematic of a 2:1 single level column mux. \fixme{Signals names are wrong.}}
 \label{fig:2t1_single_level_column_mux}
 \end{figure}
 
@@ -383,8 +398,8 @@ column mux to BL and BLB of sense-amp and write-driver.
 
 \begin{figure}[h!]
 \centering
-\includegraphics[scale=.6]{./figs/4t1_single_level_column_mux.pdf}
-\caption{Schematic of a 4:1 single level column mux.}
+\includegraphics[scale=.5]{./figs/4t1_single_level_column_mux.pdf}
+\caption{Schematic of a 4:1 single level column mux. \fixme{Signals names are wrong.}}
 \label{fig:4t1_single_level_column_mux}
 \end{figure}
 

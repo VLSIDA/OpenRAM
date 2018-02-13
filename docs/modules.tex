@@ -407,13 +407,10 @@ bitlines are automatically pitch-matched to the bitcell array.
 \subsection{Sense Amplifier}
 \label{sec:senseamp}
 The sense amplifier is used to sense the difference between the
-bitline and bitline bar while a read operation is performed.  The
-sense amp is necessary to recover the signals from the bitlines
-because they do not experience full voltage swing.  As the size of the
-memory array grows, the load of the bitlines increases and the voltage
-swing is limited by the small memory cell driving this large load.  A
-differential sense amplifier is used to``sense'' the small voltage
-difference between the bitlines.
+bitline and bitline bar while a read operation is performed.
+The sense amplifier also includes two PMOS transistors for bitline
+isolation to speed-up read operations. The schematic for the sense amp is shown in
+Figure~\ref{fig:sense_amp}.
 
 \begin{figure}[h!]
 \centering
@@ -422,33 +419,47 @@ difference between the bitlines.
 \label{fig:sense_amp}
 \end{figure}
 
-The schematic for the sense amp is shown in
-Figure~\ref{fig:sense_amp}.  The sense amplifier is enable by the SCLK
-signal, which initiates the read operation.  Before the sense
-amplifier is enable, the bitlines are precharged to Vdd by the
-precharge unit.  When the sense amp is enabled, one of the bitlines
-experiences a voltage drop based on the value stored in the memory
-cell.  If a zero is stored, the bitline voltage drops.  If a one is
-stored, the bitline bar voltage drops.  The output signal is then
+During address decoding (while the wordline is not asserted), the sense
+amplifier is disabled and the bitlines are precharged to vdd by the
+precharge unit. The two PMOS transistors also connect the bitlines to the sense amplifier.
+
+The en signal comes from the control logic (Section~\ref{sec:control})
+including the timing and replica bitline (Section~\ref{sec:RBL}). It
+is only enabled after sufficient swing is seen on the bitlines so that
+the value can be accurately sensed.
+
+The sense amplifier is enabled by the en signal, which initiates the
+read operation, and also isolates the sense amplifier from the
+bitlines.  This allows the sense amplifier to drive a smaller
+capacitance rather than the whole bitline.  At this time, the footer
+transistor is also enabled which allows the sense amplifier to use
+feedback to sense the bitline differential voltage.
+
+When the sense amp is enabled, one of the bitlines experiences a
+voltage drop based on the value stored in the memory cell.  If a zero
+is stored, the bitline voltage drops.  If a one is stored, the bitline
+bar voltage drops.  The output signal is then
 taken to a true logic level and latched for output to the data bus.
 
 In OpenRAM, the sense amplifier is a libray cell.  The associated
-layout and spice netlist can be found in the \verb|gds_lib| and \verb|sp_lib| in
-the FreePDK45 directory.  The \verb|sense_amp| class in \verb|sense_amp.py|
-instantiates a single instance of the sense amp library cell.  The
-\verb|sense_amp_array| class handles the tiling of the sense amps cells.
-One sense amp cell is needed per data bit and the sense amp cells need
-to be appropriately spaced so that they can hook up to the column mux
-bitline pairs.  The spacing is determined based on the number of words
-per row in the memory array.  Instances are added and then Vdd, Gnd
-and SCLK rails that span the entire width of the array are drawn using
-the add\_rect() function.
+layout and spice netlist can be found in the \verb|gds_lib| and
+\verb|sp_lib| in the technology directory. The sense\_amp class in
+\verb|modules/sense_amp.py| is a single instance of the sense amp
+library cell.
 
-We chose to leave the sense amp as a libray cell so that custom
+
+The sense\_amp\_array class in \verb|modules/sense_amp_array.py|
+handles the tiling of the sense amps cells.  One sense amp cell is
+needed per data bit and the sense amp cells need to be appropriately
+spaced so that they can hook up to the column mux bitline pairs.  The
+spacing is determined based on the number of words per row in the
+memory array.  
+
+The sense amp is a library cell so that custom
 amplifier designs could be swapped into the memory as needed.  The two
 major things that need to be considered while designing the sense
 amplifier cell are the size of the cell and the bitline/input pitches.
-Optimally, the cell should be no larger than the 6T cell so that it
+Optimally, the cell should be no wider than the 6T cell so that it
 abuts to the column mux and no extra routing or space is needed.
 Also, the bitline inputs of the sense amp need to line up with the
 outputs of the write driver.  In the current version of OpenRAM, the
@@ -460,6 +471,7 @@ connect the write driver to the column mux without any extra routing.
 
 \subsection{Write Driver}
 \label{sec:writedriver}
+
 The write driver is used to drive the input signal into the memory
 cell during a write operation.  It can be seen in
 Figure~\ref{fig:write_driver} that the write driver consists of two

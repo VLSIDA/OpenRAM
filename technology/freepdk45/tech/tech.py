@@ -274,6 +274,11 @@ spice["msflop_hold"] = 1         # DFF hold time in ps
 spice["msflop_delay"] = 20.5     # DFF Clk-to-q delay in ps
 spice["msflop_slew"] = 13.1      # DFF output slew in ps w/ no load
 spice["msflop_in_cap"] = 0.2091  # Input capacitance of ms_flop (Din) [Femto-farad]
+spice["dff_setup"] = 9        # DFF setup time in ps
+spice["dff_hold"] = 1         # DFF hold time in ps
+spice["dff_delay"] = 20.5     # DFF Clk-to-q delay in ps
+spice["dff_slew"] = 13.1      # DFF output slew in ps w/ no load
+spice["dff_in_cap"] = 0.2091  # Input capacitance of ms_flop (Din) [Femto-farad]
 
 
 ###################################################

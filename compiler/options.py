@@ -39,9 +39,20 @@ class options(optparse.Values):
     # Define the output file paths
     output_path = "."
     # Define the output file base name
-    output_name = "sram"
+    output_name = ""
     # Use analytical delay models by default rather than (slow) characterization
     analytical_delay = True
+    # Purge the temp directory after a successful run (doesn't purge on errors, anyhow)
+    purge_temp = True
+
+    # These are the configuration parameters
+    rw_ports = 1
+    r_ports = 0
+    # These will get initialized by the the file
+    supply_voltages = ""
+    temperatures = ""
+    process_corners = ""
+    
 
     # These are the default modules that can be over-riden
     decoder = "hierarchical_decoder"

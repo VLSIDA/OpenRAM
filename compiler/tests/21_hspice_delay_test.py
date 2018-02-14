@@ -27,7 +27,7 @@ class timing_sram_test(openram_test):
             debug.error("Could not find {} simulator.".format(OPTS.spice_name),-1)
 
         import sram
-
+        import tech
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
         s = sram.sram(word_size=OPTS.word_size,
                       num_words=OPTS.num_words,
@@ -43,31 +43,33 @@ class timing_sram_test(openram_test):
         probe_data = s.word_size - 1
         debug.info(1, "Probe address {0} probe data {1}".format(probe_address, probe_data))
 
-        d = delay.delay(s,tempspice)
+        corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
+        d = delay.delay(s,tempspice,corner)
         import tech
-        loads = [tech.spice["FF_in_cap"]*4]
+        loads = [tech.spice["msflop_in_cap"]*4]
         slews = [tech.spice["rise_time"]*2]
         data = d.analyze(probe_address, probe_data,slews,loads)
+        #print data
         if OPTS.tech_name == "freepdk45":
-            golden_data = {'read1_power': 0.0296933,
-                           'read0_power': 0.029897899999999998,
-                           'write0_power': 0.0258029,
-                           'delay1': [0.049100700000000004],
-                           'delay0': [0.13766139999999996],
-                           'min_period': 0.322,
-                           'write1_power': 0.0260398,
-                           'slew0': [0.0265264],
-                           'slew1': [0.0195507]}
+            golden_data = {'read1_power': 0.0356004,
+                           'read0_power': 0.0364339,
+                           'write0_power': 0.0262249,
+                           'delay1': [0.0572987],
+                           'delay0': [0.0705677],
+                           'min_period': 0.41,
+                           'write1_power': 0.038824700000000004,
+                           'slew0': [0.028478],
+                           'slew1': [0.0190058]}
         elif OPTS.tech_name == "scn3me_subm":
-            golden_data = {'read1_power': 4.443,
-                           'read0_power': 4.4712,
-                           'write0_power': 3.0032,
-                           'delay1': [0.8596608],
-                           'delay0': [1.9534000000000002],
-                           'min_period': 5.625,
-                           'write1_power': 2.8086,
-                           'slew0': [1.2982],
-                           'slew1': [0.9909933]}
+            golden_data = {'read1_power': 10.3442,
+                           'read0_power': 10.5159,
+                           'write0_power': 6.9292,
+                           'delay1': [0.6536728],
+                           'delay0': [0.9019465999999999],
+                           'min_period': 4.531,
+                           'write1_power': 11.3108,
+                           'slew0': [0.8320245],
+                           'slew1': [0.5897582]}
         else:
             self.assertTrue(False) # other techs fail
         # Check if no too many or too few results

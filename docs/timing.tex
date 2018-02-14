@@ -10,7 +10,7 @@ Top-Level Signals:
 \setlength{\itemsep}{0pt}
 \item ADDR - address bus.
 \item DATA - bi-directional data bus.
-\item CLK - the global clock.
+\item clk - the global clock.
 \item OEb - active low output enable.
 \item CSb - active low chip select.
 \item WEb - active low write enable.
@@ -34,7 +34,7 @@ The main timing considerations for an SRAM are:
 \item Setup Time - time an input needs to be stable before the positive/negative clock edge.
 \item Hold Time - time an input needs to stay valid after the positive/negative clock edge.  
 \item Minimun Cycle Time - time inbetween subsequent memory operations.
-\item Memory Read Time - time from positive clock edge until valid data appears on the data bus.
+\item Memory Read Time - time from negative clock edge until valid data appears on the data bus.
 \item Memory Write Time - time from negative clock edge until data has been driven into a memory cell.
 \end{itemize}
 
@@ -66,9 +66,9 @@ Read Operation:
    \end{enumerate}
  \item On the falling edge of the clock (CLK):
    \begin{enumerate}
-        \item Word line has been asserted, the value stored in the memory cells pulls down one of the bitlines (BL if a 0 is stored, BL\_bar if a 1 is stored).
+        \item Word line is driven onto the bitlines, the value stored in the memory cells pulls down one of the bitlines (bl if a 0 is stored, br if a 1 is stored).
 	\item s\_en enables the sense amplifier which senses the voltage difference of the bit lines, produces the output and keeps the value in its latch circuitry.
-	\item Tri-gate enables and put the output data on data bus. Data remains valid on the data bus for a complete clock cycle.
+	\item Tri-gate drives (tri\_en and tri\_en\_bar) the output data on data bus. Data remains valid on the data bus for a complete clock cycle.
    \end{enumerate}
 \end{enumerate}
 

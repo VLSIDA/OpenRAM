@@ -8,7 +8,7 @@ from bank import bank
 import datetime
 import getpass
 from vector import vector
-from globals import OPTS
+from globals import OPTS, print_time
 
     
 class sram(design.design):
@@ -45,6 +45,7 @@ class sram(design.design):
 
         debug.info(2, "create sram of size {0} with {1} num of words".format(self.word_size, 
                                                                              self.num_words))
+        start_time = datetime.datetime.now()
 
         design.design.__init__(self, name)
 
@@ -72,7 +73,11 @@ class sram(design.design):
         self.width = sizes[0]
         self.height = sizes[1]
         
-        self.DRC_LVS()
+        self.DRC_LVS(final_verification=True)
+
+        if not OPTS.is_unit_test:
+            print_time("SRAM creation", datetime.datetime.now(), start_time)
+
 
     def compute_sizes(self):
         """  Computes the organization of the memory using bitcell size by trying to make it square."""
@@ -650,7 +655,7 @@ class sram(design.design):
         # Connect the output bar to select 0
         msb_out_pin = self.msb_address_inst.get_pin("dout_bar[0]")
         msb_out_pos = msb_out_pin.rc()
-        out_extend_right_pos = msb_out_pos + vector(self.m2_pitch,0)
+        out_extend_right_pos = msb_out_pos + vector(2*self.m2_pitch,0)
         out_extend_up_pos = out_extend_right_pos + vector(0,self.m2_width)
         rail_pos = vector(self.vert_control_bus_positions["bank_sel[0]"].x,out_extend_up_pos.y)
         self.add_path("metal2",[msb_out_pos,out_extend_right_pos,out_extend_up_pos])
@@ -660,7 +665,7 @@ class sram(design.design):
         # Connect the output to select 1
         msb_out_pin = self.msb_address_inst.get_pin("dout[0]")
         msb_out_pos = msb_out_pin.rc()
-        out_extend_right_pos = msb_out_pos + vector(self.m2_pitch,0)
+        out_extend_right_pos = msb_out_pos + vector(2*self.m2_pitch,0)
         out_extend_down_pos = out_extend_right_pos - vector(0,2*self.m1_pitch)
         rail_pos = vector(self.vert_control_bus_positions["bank_sel[1]"].x,out_extend_down_pos.y)
         self.add_path("metal2",[msb_out_pos,out_extend_right_pos,out_extend_down_pos])
@@ -989,7 +994,13 @@ class sram(design.design):
         ############################################################
         sp = open(sp_name, 'w')
 
+        sp.write("**************************************************\n")
         sp.write("* OpenRAM generated memory.\n")
+        sp.write("* Words: {}\n".format(self.num_words))
+        sp.write("* Data bits: {}\n".format(self.word_size))
+        sp.write("* Banks: {}\n".format(self.num_banks))
+        sp.write("* Column mux: {}:1\n".format(self.words_per_row))
+        sp.write("**************************************************\n")        
         # This causes unit test mismatch
         # sp.write("* Created: {0}\n".format(datetime.datetime.now()))
         # sp.write("* User: {0}\n".format(getpass.getuser()))
@@ -1007,3 +1018,59 @@ class sram(design.design):
     def analytical_power(self,slew,load):
         """ Just a test function for the power."""
         return self.bank.analytical_power(slew,load)
+
+    def save_output(self):
+        """ Save all the output files while reporting time to do it as well. """
+
+        # Save the spice file
+        start_time = datetime.datetime.now()
+        spname = OPTS.output_path + self.name + ".sp"
+        print("SP: Writing to {0}".format(spname))
+        self.sp_write(spname)
+        print_time("Spice writing", datetime.datetime.now(), start_time)
+
+        # Save the extracted spice file
+        if OPTS.use_pex:
+            start_time = datetime.datetime.now()
+            # Output the extracted design if requested
+            sp_file = OPTS.output_path + "temp_pex.sp"
+            verify.run_pex(self.name, gdsname, spname, output=sp_file)
+            print_time("Extraction", datetime.datetime.now(), start_time)
+        else:
+            # Use generated spice file for characterization
+            sp_file = spname
+        
+        # Characterize the design
+        start_time = datetime.datetime.now()        
+        from characterizer import lib
+        print("LIB: Characterizing... ")
+        if OPTS.analytical_delay:
+            print("Using analytical delay models (no characterization)")
+        else:
+            if OPTS.spice_name!="":
+                print("Performing simulation-based characterization with {}".format(OPTS.spice_name))
+            if OPTS.trim_netlist:
+                print("Trimming netlist to speed up characterization.")
+        lib.lib(out_dir=OPTS.output_path, sram=self, sp_file=sp_file)
+        print_time("Characterization", datetime.datetime.now(), start_time)
+
+        # Write the layout
+        start_time = datetime.datetime.now()
+        gdsname = OPTS.output_path + self.name + ".gds"
+        print("GDS: Writing to {0}".format(gdsname))
+        self.gds_write(gdsname)
+        print_time("GDS", datetime.datetime.now(), start_time)
+
+        # Create a LEF physical model
+        start_time = datetime.datetime.now()
+        lefname = OPTS.output_path + self.name + ".lef"
+        print("LEF: Writing to {0}".format(lefname))
+        self.lef_write(lefname)
+        print_time("LEF", datetime.datetime.now(), start_time)
+
+        # Write a verilog model
+        start_time = datetime.datetime.now()
+        vname = OPTS.output_path + self.name + ".v"
+        print("Verilog: Writing to {0}".format(vname))
+        self.verilog_write(vname)
+        print_time("Verilog", datetime.datetime.now(), start_time)

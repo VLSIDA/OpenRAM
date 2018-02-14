@@ -13,18 +13,23 @@ class setup_hold():
     (Bisection Methodology)
     """
 
-    def __init__(self):
+    def __init__(self, corner):
         # This must match the spice model order
         self.pins = ["data", "dout", "dout_bar", "clk", "vdd", "gnd"]
         self.model_name = "ms_flop"
         self.model_location = OPTS.openram_tech + "sp_lib/ms_flop.sp"
         self.period = tech.spice["feasible_period"]
-        self.vdd = tech.spice["supply_voltage"]
-        self.gnd = tech.spice["gnd_voltage"]
 
         debug.info(2,"Feasible period from technology file: {0} ".format(self.period))
 
+        self.set_corner(corner)
+
                 
+    def set_corner(self,corner):
+        """ Set the corner values """
+        self.corner = corner
+        (self.process, self.vdd_voltage, self.temperature) = corner
+        self.gnd_voltage = 0
 
 
     def write_stimulus(self, mode, target_time, correct_value):
@@ -33,14 +38,14 @@ class setup_hold():
         # creates and opens the stimulus file for writing
         temp_stim = OPTS.openram_temp + "stim.sp"
         self.sf = open(temp_stim, "w")
+        self.stim = stimuli.stimuli(self.sf, self.corner)
 
         self.write_header(correct_value)
 
         # instantiate the master-slave d-flip-flop
-        self.sf.write("* Instantiation of the Master-Slave D-flip-flop\n")
-        stimuli.inst_model(stim_file=self.sf,
-                           pins=self.pins,
-                           model_name=self.model_name)
+        self.sf.write("\n* Instantiation of the Master-Slave D-flip-flop\n")
+        self.stim.inst_model(pins=self.pins,
+                             model_name=self.model_name)
 
         self.write_data(mode=mode,
                         target_time=target_time,
@@ -52,22 +57,20 @@ class setup_hold():
                             correct_value=correct_value)
                          
 
-        stimuli.write_control(self.sf,4*self.period)
+        self.stim.write_control(4*self.period)
 
         self.sf.close()
 
     def write_header(self, correct_value):
         """ Write the header file with all the models and the power supplies. """
-        self.sf.write("* Stimulus for setup/hold: data {0} period {1}n\n".format(correct_value, self.period))
+        self.sf.write("\n* Stimulus for setup/hold: data {0} period {1}n\n".format(correct_value, self.period))
 
         # include files in stimulus file
-        self.model_list = tech.spice["fet_models"] + [self.model_location]
-        stimuli.write_include(stim_file=self.sf,
-                              models=self.model_list)
+        self.stim.write_include(self.model_location)
 
         # add vdd/gnd statements
-        self.sf.write("* Global Power Supplies\n")
-        stimuli.write_supply(self.sf)
+        self.sf.write("\n* Global Power Supplies\n")
+        self.stim.write_supply()
 
 
     def write_data(self, mode, target_time, correct_value):
@@ -76,8 +79,8 @@ class setup_hold():
         characterization.
 
         """
-        self.sf.write("* Generation of the data and clk signals\n")
-        incorrect_value = stimuli.get_inverse_value(correct_value)
+        self.sf.write("\n* Generation of the data and clk signals\n")
+        incorrect_value = self.stim.get_inverse_value(correct_value)
         if mode=="HOLD":
             init_value = incorrect_value
             start_value = correct_value
@@ -87,29 +90,27 @@ class setup_hold():
             start_value = incorrect_value
             end_value = correct_value
 
-        stimuli.gen_pwl(stim_file=self.sf,
-                        sig_name="data",
-                        clk_times=[self.period, target_time],
-                        data_values=[init_value, start_value, end_value],
-                        period=target_time,
-                        slew=self.constrained_input_slew,
-                        setup=0)        
+        self.stim.gen_pwl(sig_name="data",
+                          clk_times=[0, self.period, target_time],
+                          data_values=[init_value, start_value, end_value],
+                          period=target_time,
+                          slew=self.constrained_input_slew,
+                          setup=0)        
 
     def write_clock(self):
         """ Create the clock signal for setup/hold analysis. First period initializes the FF
         while the second is used for characterization."""
         
-        stimuli.gen_pwl(stim_file=self.sf,
-                        sig_name="clk",
-                        # initial clk edge is right after the 0 time to initialize a flop 
-                        # without using .IC on an internal node.
-                        # Return input to value after one period.
-                        # The second pulse is the characterization one at 2*period
-                        clk_times=[0.1*self.period,self.period,2*self.period],
-                        data_values=[0, 1, 0, 1],
-                        period=2*self.period,
-                        slew=self.constrained_input_slew,
-                        setup=0)        
+        self.stim.gen_pwl(sig_name="clk",
+                          # initial clk edge is right after the 0 time to initialize a flop 
+                          # without using .IC on an internal node.
+                          # Return input to value after one period.
+                          # The second pulse is the characterization one at 2*period
+                          clk_times=[0, 0.1*self.period,self.period,2*self.period],
+                          data_values=[0, 1, 0, 1],
+                          period=2*self.period,
+                          slew=self.constrained_input_slew,
+                          setup=0)        
 
 
 
@@ -132,33 +133,33 @@ class setup_hold():
                 din_rise_or_fall = "RISE"
 
 
-        self.sf.write("* Measure statements for pass/fail verification\n")
+        self.sf.write("\n* Measure statements for pass/fail verification\n")
         trig_name = "clk"
         targ_name = "dout"
-        trig_val = targ_val = 0.5 * self.vdd
+        trig_val = targ_val = 0.5 * self.vdd_voltage
         # Start triggers right before the clock edge at 2*period
-        stimuli.gen_meas_delay(stim_file=self.sf,
-                               meas_name="clk2q_delay",
-                               trig_name=trig_name,
-                               targ_name=targ_name,
-                               trig_val=trig_val,
-                               targ_val=targ_val,
-                               trig_dir="RISE",
-                               targ_dir=dout_rise_or_fall,
-                               td=1.9*self.period)
-
+        self.stim.gen_meas_delay(meas_name="clk2q_delay",
+                                 trig_name=trig_name,
+                                 targ_name=targ_name,
+                                 trig_val=trig_val,
+                                 targ_val=targ_val,
+                                 trig_dir="RISE",
+                                 targ_dir=dout_rise_or_fall,
+                                 trig_td=1.9*self.period,
+                                 targ_td=1.9*self.period)
+        
         targ_name = "data"
         # Start triggers right after initialize value is returned to normal
         # at one period
-        stimuli.gen_meas_delay(stim_file=self.sf,
-                               meas_name="setup_hold_time",
-                               trig_name=trig_name,
-                               targ_name=targ_name,
-                               trig_val=trig_val,
-                               targ_val=targ_val,
-                               trig_dir="RISE",
-                               targ_dir=din_rise_or_fall,
-                               td=1.2*self.period)
+        self.stim.gen_meas_delay(meas_name="setup_hold_time",
+                                 trig_name=trig_name,
+                                 targ_name=targ_name,
+                                 trig_val=trig_val,
+                                 targ_val=targ_val,
+                                 trig_dir="RISE",
+                                 targ_dir=din_rise_or_fall,
+                                 trig_td=1.2*self.period,
+                                 targ_td=1.2*self.period)
         
 
 
@@ -184,7 +185,7 @@ class setup_hold():
         self.write_stimulus(mode=mode, 
                             target_time=feasible_bound, 
                             correct_value=correct_value)
-        stimuli.run_sim()
+        self.stim.run_sim()
         ideal_clk_to_q = ch.convert_to_float(ch.parse_output("timing", "clk2q_delay"))
         setuphold_time = ch.convert_to_float(ch.parse_output("timing", "setup_hold_time"))
         debug.info(2,"*** {0} CHECK: {1} Ideal Clk-to-Q: {2} Setup/Hold: {3}".format(mode, correct_value,ideal_clk_to_q,setuphold_time))
@@ -217,7 +218,7 @@ class setup_hold():
                                                                                                 feasible_bound))
 
 
-            stimuli.run_sim()
+            self.stim.run_sim()
             clk_to_q = ch.convert_to_float(ch.parse_output("timing", "clk2q_delay"))
             setuphold_time = ch.convert_to_float(ch.parse_output("timing", "setup_hold_time"))
             if type(clk_to_q)==float and (clk_to_q<1.1*ideal_clk_to_q) and type(setuphold_time)==float:

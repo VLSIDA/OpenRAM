@@ -20,8 +20,8 @@ class openram_test(openram_test):
         
         debug.info(1, "Testing top-level openram.py with 2-bit, 16 word SRAM.")
         out_file = "testsram"
-          # make a temp directory for output
-        out_path = "/tmp/testsram"
+        # make a temp directory for output
+        out_path = "/tmp/testsram_{0}".format(OPTS.tech_name)
 
         # make sure we start without the files existing
         if os.path.exists(out_path):
@@ -52,10 +52,15 @@ class openram_test(openram_test):
         os.system(cmd)
         
         # assert an error until we actually check a resul
-        for extension in ["gds", "v", "lef", "lib", "sp"]:
+        for extension in ["gds", "v", "lef", "sp"]:
             filename = "{0}/{1}.{2}".format(out_path,out_file,extension)
             debug.info(1,"Checking for file: " + filename)
             self.assertEqual(os.path.exists(filename),True)
+
+        # Make sure there is any .lib file
+        import glob
+        files = glob.glob('{0}/*.lib'.format(out_path))
+        self.assertTrue(len(files)>0)
 
         # grep any errors from the output
         output = open("{0}/output.log".format(out_path),"r").read()

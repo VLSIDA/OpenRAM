@@ -44,8 +44,8 @@ EOF
 3. netgen can perform LVS with:
 #!/bin/sh
 netgen -noconsole <<EOF
-readnet $1.spice
-readnet $1.sp
+readnet spice $1.spice
+readnet spice $1.sp
 ignore class c
 equate class {$1.spice nfet} {$2.sp n}
 equate class {$1.spice pfet} {$2.sp p}
@@ -86,7 +86,7 @@ def write_magic_script(cell_name, gds_name, extract=False):
     f.write("drc count total\n")
     f.write("drc count\n")
     if extract:
-        f.write("extract\n")
+        f.write("extract all\n")
         f.write("ext2spice hierarchy on\n")        
         f.write("ext2spice scale off\n")
         # Can choose hspice, ngspice, or spice3,
@@ -113,21 +113,26 @@ def write_netgen_script(cell_name, sp_name):
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
     f.write("{} -noconsole << EOF\n".format(OPTS.lvs_exe[1]))
-    f.write("readnet {}.spice\n".format(cell_name))
-    f.write("readnet {}\n".format(sp_name))
+    f.write("readnet spice {}.spice\n".format(cell_name))
+    f.write("readnet spice {}\n".format(sp_name))
     f.write("ignore class c\n")
     f.write("permute transistors\n")
     f.write("equate class {{{0}.spice nfet}} {{{1} n}}\n".format(cell_name, sp_name))
     f.write("equate class {{{0}.spice pfet}} {{{1} p}}\n".format(cell_name, sp_name))
+    # This circuit has symmetries and needs to be flattened to resolve them or the banks won't pass
+    # Is there a more elegant way to add this when needed?
+    f.write("flatten class {{{0}.spice precharge_array}}\n".format(cell_name))
     f.write("property {{{0}.spice nfet}} remove as ad ps pd\n".format(cell_name))
     f.write("property {{{0}.spice pfet}} remove as ad ps pd\n".format(cell_name))
+    f.write("property {{{0} n}} remove as ad ps pd\n".format(sp_name))
+    f.write("property {{{0} p}} remove as ad ps pd\n".format(sp_name))
     # Allow some flexibility in W size because magic will snap to a lambda grid
     # This can also cause disconnects unfortunately!
     # f.write("property {{{0}{1}.spice nfet}} tolerance {{w 0.1}}\n".format(OPTS.openram_temp,
     #                                                                     cell_name))
     # f.write("property {{{0}{1}.spice pfet}} tolerance {{w 0.1}}\n".format(OPTS.openram_temp,
     #                                                                     cell_name))
-    f.write("lvs {0}.spice {{{1} {0}}} setup.tcl lvs.results\n".format(cell_name, sp_name))
+    f.write("lvs {0}.spice {{{1} {0}}} setup.tcl {0}.lvs.report\n".format(cell_name, sp_name))
     f.write("quit\n")
     f.write("EOF\n")
     f.close()
@@ -142,7 +147,7 @@ def run_drc(cell_name, gds_name, extract=False):
     cwd = os.getcwd()
     os.chdir(OPTS.openram_temp)
     errfile = "{0}{1}.drc.err".format(OPTS.openram_temp, cell_name)
-    outfile = "{0}{1}.drc.out".format(OPTS.openram_temp, cell_name)
+    outfile = "{0}{1}.drc.summary".format(OPTS.openram_temp, cell_name)
 
     cmd = "{0}run_drc.sh 2> {1} 1> {2}".format(OPTS.openram_temp,
                                                errfile,
@@ -181,9 +186,10 @@ def run_drc(cell_name, gds_name, extract=False):
     return errors
 
 
-def run_lvs(cell_name, gds_name, sp_name):
+def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     """Run LVS check on a given top-level name which is
-       implemented in gds_name and sp_name. """
+    implemented in gds_name and sp_name. Final verification will
+    ensure that there are no remaining virtual conections. """
 
     run_drc(cell_name, gds_name, extract=True)
     write_netgen_script(cell_name, sp_name)
@@ -193,7 +199,7 @@ def run_lvs(cell_name, gds_name, sp_name):
     os.chdir(OPTS.openram_temp)
     errfile = "{0}{1}.lvs.err".format(OPTS.openram_temp, cell_name)
     outfile = "{0}{1}.lvs.out".format(OPTS.openram_temp, cell_name)
-    resultsfile = "{0}lvs.results".format(OPTS.openram_temp, cell_name)    
+    resultsfile = "{0}{1}.lvs.report".format(OPTS.openram_temp, cell_name)    
 
     cmd = "{0}run_lvs.sh lvs 2> {1} 1> {2}".format(OPTS.openram_temp,
                                                    errfile,
@@ -216,10 +222,12 @@ def run_lvs(cell_name, gds_name, sp_name):
     propertyerrors = filter(test.search, results)
     # Require pins to match?
     # Cell pin lists for pnand2_1.spice and pnand2_1 altered to match.
-    test = re.compile(".*altered to match.")
-    pinerrors = filter(test.search, results)
-
-    total_errors = len(propertyerrors) + len(incorrect) + len(pinerrors)
+    # test = re.compile(".*altered to match.")
+    # pinerrors = filter(test.search, results)
+    # if len(pinerrors)>0:
+    #     debug.warning("Pins altered to match in {}.".format(cell_name))
+    
+    total_errors = len(propertyerrors) + len(incorrect)
     # If we want to ignore property errors
     #total_errors = len(incorrect)
     #if len(propertyerrors)>0:
@@ -236,7 +244,7 @@ def run_lvs(cell_name, gds_name, sp_name):
         # Just print out the whole file, it is short.
         for e in results:
             debug.info(1,e.strip("\n"))
-        debug.error("LVS mismatch (results in {}lvs.results)".format(OPTS.openram_temp)) 
+        debug.error("LVS mismatch (results in {})".format(resultsfile)) 
 
     return total_errors
 

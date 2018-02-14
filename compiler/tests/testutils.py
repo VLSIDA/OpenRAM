@@ -1,8 +1,9 @@
-import unittest
+import unittest,warnings
 import sys,os,glob
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+import debug
 
 class openram_test(unittest.TestCase):
     """ Base unit test that we have some shared classes in. """
@@ -17,8 +18,8 @@ class openram_test(unittest.TestCase):
         for f in files:
             os.remove(f)        
     
-    def local_check(self, a):
-        
+    def local_check(self, a, final_verification=False):
+
         tempspice = OPTS.openram_temp + "temp.sp"
         tempgds = OPTS.openram_temp + "temp.gds"
 
@@ -34,17 +35,17 @@ class openram_test(unittest.TestCase):
 
             
         try:
-            self.assertTrue(verify.run_lvs(a.name, tempgds, tempspice)==0)
+            self.assertTrue(verify.run_lvs(a.name, tempgds, tempspice, final_verification)==0)
         except:
             self.reset()
             self.fail("LVS mismatch: {}".format(a.name))
 
-        self.cleanup()            
+        self.reset()
+        if OPTS.purge_temp:
+            self.cleanup()
 
     def cleanup(self):
         """ Reset the duplicate checker and cleanup files. """
-        self.reset()
-        
         files = glob.glob(OPTS.openram_temp + '*')
         for f in files:
             # Only remove the files

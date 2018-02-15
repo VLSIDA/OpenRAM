@@ -16,7 +16,7 @@ class dff_array(design.design):
         self.columns = columns
 
         if name=="":
-            name = "dff_array_c{0}_w{1}".format(columns,word_size)
+            name = "dff_array_{0}x{1}".format(rows, columns)
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(self.name))
 
@@ -49,90 +49,71 @@ class dff_array(design.design):
         self.add_pin("gnd")
 
     def create_dff_array(self):
-        self.ms_inst={}
-        for row in range(self.rows):  
-            for col in range(self.columns):
-                name = "Xdff_r{0}_c{1}".format(row,col)
-            if (row % 2 == 0):
-                base = vector(i*self.ms.width,0)
-                mirror = "R0"
-            else:
-                base = vector((i+1)*self.ms.width,0)
-                mirror = "MY"
-            self.ms_inst[row,col]=self.add_inst(name=name,
-                                                mod=self.ms,
-                                                offset=base, 
-                                                mirror=mirror)
-            self.connect_inst(["din[{0}][{1}]".format(row,col),
-                               "dout[{0}][{1}]".format(row,col),
-                               "clk",
-                               "vdd",
-                               "gnd"])
+        self.dff_insts={}
+        for y in range(self.rows):  
+            for x in range(self.columns):
+                name = "Xdff_r{0}_c{1}".format(y,x)
+                if (y % 2 == 0):
+                    base = vector(x*self.ms.width,y*self.ms.height)
+                    mirror = "R0"
+                else:
+                    base = vector(x*self.ms.width,(y+1)*self.ms.height)
+                    mirror = "MX"
+                self.dff_insts[x,y]=self.add_inst(name=name,
+                                                  mod=self.ms,
+                                                  offset=base, 
+                                                  mirror=mirror)
+                self.connect_inst(["din[{0}][{1}]".format(x,y),
+                                   "dout[{0}][{1}]".format(x,y),
+                                   "clk",
+                                   "vdd",
+                                   "gnd"])
 
     def add_layout_pins(self):
         
-        for i in range(self.word_size):
+        for y in range(self.rows):
+            # Continous vdd rail along with label.
+            vdd_pin=self.dff_insts[0,y].get_pin("vdd")
+            self.add_layout_pin(text="vdd",
+                                layer="metal1",
+                                offset=vdd_pin.ll(),
+                                width=self.width,
+                                height=drc["minwidth_metal1"])
 
-            for gnd_pin in self.ms_inst[i].get_pins("gnd"):
-                if gnd_pin.layer!="metal2":
-                    continue
-                self.add_layout_pin(text="gnd",
-                                    layer="metal2",
-                                    offset=gnd_pin.ll(),
-                                    width=gnd_pin.width(),
-                                    height=gnd_pin.height())
+            # Continous gnd rail along with label.
+            gnd_pin=self.dff_insts[0,y].get_pin("gnd")
+            self.add_layout_pin(text="gnd",
+                                layer="metal1",
+                                offset=gnd_pin.ll(),
+                                width=self.width,
+                                height=drc["minwidth_metal1"])
+            
 
-            din_pins = self.ms_inst[i].get_pins("din")
-            for din_pin in din_pins:
-                self.add_layout_pin(text="din[{}]".format(i),
+        for y in range(self.rows):            
+            for x in range(self.columns):            
+                din_pin = self.dff_insts[x,y].get_pin("d")
+                self.add_layout_pin(text="din[{0}][{1}]".format(x,y),
                                     layer=din_pin.layer,
                                     offset=din_pin.ll(),
                                     width=din_pin.width(),
                                     height=din_pin.height())
 
-            dout_pin = self.ms_inst[i].get_pin("dout")
-            self.add_layout_pin(text="dout[{}]".format(i),
-                                layer="metal2",
-                                offset=dout_pin.ll(),
-                                width=dout_pin.width(),
-                                height=dout_pin.height())
+                dout_pin = self.dff_insts[x,y].get_pin("q")
+                self.add_layout_pin(text="dout[{0}][{1}]".format(x,y),
+                                    layer="metal1",
+                                    offset=dout_pin.ll(),
+                                    width=dout_pin.width(),
+                                    height=dout_pin.height())
 
-            doutbar_pin = self.ms_inst[i].get_pin("dout_bar")
-            self.add_layout_pin(text="dout_bar[{}]".format(i),
-                                layer="metal2",
-                                offset=doutbar_pin.ll(),
-                                width=doutbar_pin.width(),
-                                height=doutbar_pin.height())
             
-            
-        # Continous clk rail along with label.
-        self.add_layout_pin(text="clk",
-                            layer="metal1",
-                            offset=self.ms_inst[0].get_pin("clk").ll().scale(0,1),
-                            width=self.width,
-                            height=drc["minwidth_metal1"])
+        # # Continous clk rail along with label.
+        # self.add_layout_pin(text="clk",
+        #                     layer="metal1",
+        #                     offset=self.dff_insts[0].get_pin("clk").ll().scale(0,1),
+        #                     width=self.width,
+        #                     height=drc["minwidth_metal1"])
 
         
-        # Continous vdd rail along with label.
-        for vdd_pin in self.ms_inst[i].get_pins("vdd"):
-            if vdd_pin.layer!="metal1":
-                continue
-            self.add_layout_pin(text="vdd",
-                                layer="metal1",
-                                offset=vdd_pin.ll().scale(0,1),
-                                width=self.width,
-                                height=drc["minwidth_metal1"])
-
-        # Continous gnd rail along with label.
-        for gnd_pin in self.ms_inst[i].get_pins("gnd"):
-            if gnd_pin.layer!="metal1":
-                continue
-            self.add_layout_pin(text="gnd",
-                                layer="metal1",
-                                offset=gnd_pin.ll().scale(0,1),
-                                width=self.width,
-                                height=drc["minwidth_metal1"])
-            
 
     def analytical_delay(self, slew, load=0.0):
         return self.ms.analytical_delay(slew=slew, load=load)

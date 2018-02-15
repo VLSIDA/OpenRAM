@@ -21,14 +21,10 @@ class dff_array_test(openram_test):
 
         import dff_array
 
-        debug.info(2, "Testing dff_array for columns=8, word_size=8")
-        a = dff_array.dff_array(columns=8, word_size=8)
+        debug.info(2, "Testing dff_array for columns=3, word_size=3")
+        a = dff_array.dff_array(rows=3, columns=3)
         self.local_check(a)
 
-        debug.info(2, "Testing dff_array for columns=16, word_size=8")
-        a = dff_array.dff_array(columns=16, word_size=8)
-        self.local_check(a)
-        
         OPTS.check_lvsdrc = True
         globals.end_openram()
 

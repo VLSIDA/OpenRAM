@@ -21,8 +21,16 @@ class dff_array_test(openram_test):
 
         import dff_array
 
-        debug.info(2, "Testing dff_array for columns=3, word_size=3")
+        debug.info(2, "Testing dff_array for 3x3")
         a = dff_array.dff_array(rows=3, columns=3)
+        self.local_check(a)
+
+        debug.info(2, "Testing dff_array for 1x3")
+        a = dff_array.dff_array(rows=1, columns=3)
+        self.local_check(a)
+
+        debug.info(2, "Testing dff_array for 3x1")
+        a = dff_array.dff_array(rows=3, columns=1)
         self.local_check(a)
 
         OPTS.check_lvsdrc = True

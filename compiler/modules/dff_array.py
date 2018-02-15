@@ -78,7 +78,7 @@ class dff_array(design.design):
                                 layer="metal1",
                                 offset=vdd_pin.ll(),
                                 width=self.width,
-                                height=drc["minwidth_metal1"])
+                                height=self.m1_width)
 
             # Continous gnd rail along with label.
             gnd_pin=self.dff_insts[0,y].get_pin("gnd")
@@ -86,12 +86,13 @@ class dff_array(design.design):
                                 layer="metal1",
                                 offset=gnd_pin.ll(),
                                 width=self.width,
-                                height=drc["minwidth_metal1"])
+                                height=self.m1_width)
             
 
         for y in range(self.rows):            
             for x in range(self.columns):            
                 din_pin = self.dff_insts[x,y].get_pin("d")
+                debug.check(din_pin.layer=="metal2","DFF d pin not on metal2")
                 self.add_layout_pin(text="din[{0}][{1}]".format(x,y),
                                     layer=din_pin.layer,
                                     offset=din_pin.ll(),
@@ -99,20 +100,41 @@ class dff_array(design.design):
                                     height=din_pin.height())
 
                 dout_pin = self.dff_insts[x,y].get_pin("q")
+                debug.check(dout_pin.layer=="metal2","DFF q pin not on metal2")
                 self.add_layout_pin(text="dout[{0}][{1}]".format(x,y),
-                                    layer="metal1",
+                                    layer=dout_pin.layer,
                                     offset=dout_pin.ll(),
                                     width=dout_pin.width(),
                                     height=dout_pin.height())
 
-            
-        # # Continous clk rail along with label.
-        # self.add_layout_pin(text="clk",
-        #                     layer="metal1",
-        #                     offset=self.dff_insts[0].get_pin("clk").ll().scale(0,1),
-        #                     width=self.width,
-        #                     height=drc["minwidth_metal1"])
 
+        # Create vertical spines to a single horizontal rail
+        clk_pin = self.dff_insts[0,0].get_pin("clk")
+        debug.check(clk_pin.layer=="metal2","DFF clk pin not on metal2")
+        if self.columns==1:
+            self.add_layout_pin(text="clk",
+                                layer="metal2",
+                                offset=clk_pin.ll().scale(1,0),
+                                width=self.m2_width,
+                                height=self.height)
+        else:
+            self.add_layout_pin(text="clk",
+                                layer="metal3",
+                                offset=clk_pin.ll().scale(0,1),
+                                width=self.width,
+                                height=self.m3_width)
+            for x in range(self.columns):
+                clk_pin = self.dff_insts[x,0].get_pin("clk")
+                # Make a vertical strip for each column
+                self.add_layout_pin(text="clk",
+                                    layer="metal2",
+                                    offset=clk_pin.ll().scale(1,0),
+                                    width=self.m2_width,
+                                    height=self.height)
+                # Drop a via to the M3 pin
+                self.add_via_center(layers=("metal2","via2","metal3"),
+                                    offset=clk_pin.center())
+                
         
 
     def analytical_delay(self, slew, load=0.0):

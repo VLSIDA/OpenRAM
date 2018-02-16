@@ -74,7 +74,7 @@ cell (sram_2_16_1_scn3me_subm){
     dont_use  : true;
     map_only   : true;
     dont_touch : true;
-    area : 122426.46;
+    area : 134589.78;
 
     bus(DATA){
         bus_type  : DATA; 
@@ -92,10 +92,10 @@ cell (sram_2_16_1_scn3me_subm){
         internal_power(){
             when : "OEb & !clk"; 
             rise_power(scalar){
-                values("11.756062");
+                values("11.763876");
             }
             fall_power(scalar){
-                values("7.1840422");
+                values("8.1710129");
             }
         }
         timing(){ 
@@ -129,10 +129,10 @@ cell (sram_2_16_1_scn3me_subm){
         internal_power(){
             when : "!OEb & !clk"; 
             rise_power(scalar){
-                values("10.730552");
+                values("12.162858");
             }
             fall_power(scalar){
-                values("10.584523");
+                values("10.926647");
             }
         }
         timing(){ 
@@ -140,24 +140,24 @@ cell (sram_2_16_1_scn3me_subm){
             related_pin : "clk"; 
             timing_type : falling_edge; 
             cell_rise(CELL_TABLE) {
-            values("0.458, 0.503, 0.87",\
-                   "0.461, 0.505, 0.873",\
-                   "0.5, 0.544, 0.911");
+            values("0.473, 0.519, 0.888",\
+                   "0.476, 0.522, 0.891",\
+                   "0.516, 0.56, 0.928");
             }
             cell_fall(CELL_TABLE) {
-            values("0.573, 0.649, 1.249",\
-                   "0.576, 0.651, 1.252",\
-                   "0.616, 0.69, 1.289");
+            values("0.582, 0.655, 1.256",\
+                   "0.585, 0.658, 1.259",\
+                   "0.625, 0.697, 1.295");
             }
         rise_transition(CELL_TABLE) {
-            values("0.153, 0.232, 1.084",\
-                   "0.153, 0.233, 1.084",\
-                   "0.156, 0.236, 1.084");
+            values("0.154, 0.233, 1.086",\
+                   "0.155, 0.234, 1.086",\
+                   "0.158, 0.237, 1.086");
               }
         fall_transition(CELL_TABLE) {
-            values("0.277, 0.355, 1.499",\
-                   "0.277, 0.357, 1.499",\
-                   "0.278, 0.362, 1.499");
+            values("0.278, 0.359, 1.499",\
+                   "0.278, 0.361, 1.499",\
+                   "0.28, 0.367, 1.5");
             }
         }
         }
@@ -308,20 +308,20 @@ cell (sram_2_16_1_scn3me_subm){
             timing_type :"min_pulse_width"; 
             related_pin  : clk; 
             rise_constraint(scalar) {
-                values("2.344"); 
+                values("1.875"); 
             }
             fall_constraint(scalar) {
-                values("2.344"); 
+                values("1.875"); 
             }
          }
         timing(){ 
             timing_type :"minimum_period"; 
             related_pin  : clk; 
             rise_constraint(scalar) {
-                values("4.688"); 
+                values("3.75"); 
             }
             fall_constraint(scalar) {
-                values("4.688"); 
+                values("3.75"); 
             }
          }
     }

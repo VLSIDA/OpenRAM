@@ -772,29 +772,36 @@ class VlsiLayout:
         return boundaries
 
 
-    def getPinInStructure(self,coordinates,layer,Structure):
+    def getPinInStructure(self,coordinates,layer,structure):
         """ 
         Go through all the shapes in a structure and return the list of shapes
         that the label coordinates are inside.
         """
-        StructureName=Structure[0]
-        StructureOrigin=[Structure[1][0],Structure[1][1]]
-        StructureuVector=[Structure[2][0],Structure[2][1],Structure[2][2]]
-        StructurevVector=[Structure[3][0],Structure[3][1],Structure[3][2]]
+
+        # check if this is a rectangle
+        structureName=structure[0]
+        structureOrigin=[structure[1][0],structure[1][1]]
+        structureuVector=[structure[2][0],structure[2][1],structure[2][2]]
+        structurevVector=[structure[3][0],structure[3][1],structure[3][2]]
 
         boundaries = []
         
-        for boundary in self.structures[str(StructureName)].boundaries:
+        for boundary in self.structures[str(structureName)].boundaries:
+            # Pin enclosures only work on rectangular pins so ignore any non rectangle
+            # This may report not finding pins, but the user should fix this by adding a rectangle.
+            if len(boundary.coordinates)!=5:
+                continue
             if layer==boundary.drawingLayer:
                 left_bottom=boundary.coordinates[0]
                 right_top=boundary.coordinates[2]
-                MetalBoundary=[left_bottom[0],left_bottom[1],right_top[0],right_top[1]]
-                MetalBoundary=self.transformRectangle(MetalBoundary,StructureuVector,StructurevVector)
-                MetalBoundary=[MetalBoundary[0]+StructureOrigin[0],MetalBoundary[1]+StructureOrigin[1],
-                MetalBoundary[2]+StructureOrigin[0],MetalBoundary[3]+StructureOrigin[1]]
+                # Rectangle is [leftx, bottomy, rightx, topy].
+                boundaryRect=[left_bottom[0],left_bottom[1],right_top[0],right_top[1]]
+                boundaryRect=self.transformRectangle(boundaryRect,structureuVector,structurevVector)
+                boundaryRect=[boundaryRect[0]+structureOrigin[0],boundaryRect[1]+structureOrigin[1],
+                              boundaryRect[2]+structureOrigin[0],boundaryRect[3]+structureOrigin[1]]
 
-                if self.labelInRectangle(coordinates,MetalBoundary):
-                    boundaries.append(MetalBoundary)
+                if self.labelInRectangle(coordinates,boundaryRect):
+                    boundaries.append(boundaryRect)
                     
         return boundaries
 
@@ -829,7 +836,7 @@ class VlsiLayout:
 
     def labelInRectangle(self,coordinate,rectangle):
         """
-        Checks if a coordinate is within a given rectangle.
+        Checks if a coordinate is within a given rectangle. Rectangle is [leftx, bottomy, rightx, topy].
         """
         coordinate_In_Rectangle_x_range=(coordinate[0]>=int(rectangle[0]))&(coordinate[0]<=int(rectangle[2]))
         coordinate_In_Rectangle_y_range=(coordinate[1]>=int(rectangle[1]))&(coordinate[1]<=int(rectangle[3]))

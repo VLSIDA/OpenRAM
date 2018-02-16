@@ -22,15 +22,16 @@ class replica_bitline_test(openram_test):
         import replica_bitline
 
         stages=4
+        fanout=4
         rows=13
         debug.info(2, "Testing RBL with {0} FO4 stages, {1} rows".format(stages,rows))
-        a = replica_bitline.replica_bitline(stages,rows)
+        a = replica_bitline.replica_bitline(stages,fanout,rows)
         self.local_check(a)
 
         stages=8
         rows=100
         debug.info(2, "Testing RBL with {0} FO4 stages, {1} rows".format(stages,rows))
-        a = replica_bitline.replica_bitline(stages,rows)
+        a = replica_bitline.replica_bitline(stages,fanout,rows)
         self.local_check(a)
         
         OPTS.check_lvsdrc = True

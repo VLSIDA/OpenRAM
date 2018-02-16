@@ -10,7 +10,7 @@ class dff(design.design):
     Memory address flip-flop
     """
 
-    pin_names = ["d", "clk", "q", "vdd", "gnd"]
+    pin_names = ["d", "q", "clk", "vdd", "gnd"]
     (width,height) = utils.get_libcell_size("dff", GDS["unit"], layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "dff", GDS["unit"], layer["boundary"])
     

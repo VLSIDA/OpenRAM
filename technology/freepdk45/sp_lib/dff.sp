@@ -3,7 +3,7 @@
 * Program "Calibre xRC"
 * Version "v2007.2_34.24"
 * 
-.subckt dff d clk q vdd gnd
+.subckt dff d q clk vdd gnd
 * 
 MM21 q a_66_6# gnd gnd NMOS_VTG L=5e-08 W=5e-07
 MM19 a_76_6# a_2_6# a_66_6# gnd NMOS_VTG L=5e-08 W=2.5e-07

@@ -51,25 +51,25 @@ class timing_sram_test(openram_test):
         data = d.analyze(probe_address, probe_data,slews,loads)
         #print data
         if OPTS.tech_name == "freepdk45":
-            golden_data = {'read1_power': 0.032946500000000004,
-                           'read0_power': 0.0337812,
-                           'write0_power': 0.026179099999999997,
-                           'delay1': [0.0573055],
-                           'delay0': [0.070554],
+            golden_data = {'read1_power': [0.032946500000000004],
+                           'read0_power': [0.0337812],
+                           'write0_power': [0.026179099999999997],
+                           'delay_lh': [0.0573055],
+                           'delay_hl': [0.070554],
                            'min_period': 0.205,
-                           'write1_power': 0.0361529,
-                           'slew0': [0.0285185],
-                           'slew1': [0.0190073]}
+                           'write1_power': [0.0361529],
+                           'slew_hl': [0.0285185],
+                           'slew_lh': [0.0190073]}
         elif OPTS.tech_name == "scn3me_subm":
-            golden_data = {'read1_power': 9.589,
-                           'read0_power': 9.7622,
-                           'write0_power': 6.928400000000001,
-                           'delay1': [0.6538954],
-                           'delay0': [0.9019090999999999],
+            golden_data = {'read1_power': [9.589],
+                           'read0_power': [9.7622],
+                           'write0_power': [6.928400000000001],
+                           'delay_lh': [0.6538954],
+                           'delay_hl': [0.9019090999999999],
                            'min_period': 2.344,
-                           'write1_power': 10.2578,
-                           'slew0': [0.8321625],
-                           'slew1': [0.5896232]}
+                           'write1_power': [10.2578],
+                           'slew_hl': [0.8321625],
+                           'slew_lh': [0.5896232]}
         else:
             self.assertTrue(False) # other techs fail
         # Check if no too many or too few results

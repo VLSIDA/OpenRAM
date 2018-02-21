@@ -280,7 +280,7 @@ class delay():
         # add measure statements for power
         t_initial = period
         t_final = 2*period
-        self.stim.gen_meas_power(meas_name="LEAKAGE_POWER",
+        self.stim.gen_meas_power(meas_name="leakage_power",
                                  t_initial=t_initial,
                                  t_final=t_final)
         
@@ -563,24 +563,27 @@ class delay():
         for m in ["delay_lh", "delay_hl", "slew_lh", "slew_hl", "read0_power",
                   "read1_power", "write0_power", "write1_power", "leakage_power"]:
             char_data[m]=[]
-        full_array_leakage = []
-        trim_array_leakage = []        
+        full_array_leakage = {}
+        trim_array_leakage = {}        
         for load in loads:
             # 2a) Find the leakage power of the trimmmed and  UNtrimmed arrays.
             (full_leak, trim_leak)=self.run_power_simulation(feasible_period, load)
-            full_array_leakage.append(full_leak)
-            trim_array_leakage.append(trim_leak)
-            for slew in slews:
+            full_array_leakage[load]=full_leak
+            trim_array_leakage[load]=trim_leak
+            char_data["leakage_power"].append(full_array_leakage[load])
+
+        for slew in slews:
+            for load in loads:
                 # 2c) Find the delay, dynamic power, and leakage power of the trimmed array.
                 (success, delay_results) = self.run_delay_simulation(feasible_period, load, slew)
                 debug.check(success,"Couldn't run a simulation. slew={0} load={1}\n".format(slew,load))
                 for k,v in delay_results.items():
                     if "power" in k:
                         # Subtract partial array leakage and add full array leakage for the power measures
-                        char_data[k].append(v - trim_array_leakage[-1] + full_array_leakage[-1])
-                        char_data["leakage_power"].append(full_array_leakage[-1])
+                        char_data[k].append(v - trim_array_leakage[load] + full_array_leakage[load])
                     else:
                         char_data[k].append(v)
+
 
 
         # 3) Finds the minimum period without degrading the delays by X%

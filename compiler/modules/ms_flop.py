@@ -28,5 +28,7 @@ class ms_flop(design.design):
         return result
         
     def analytical_power(self, slew, load = 0.0):
-        return 4
+        #Value taken from tech file.
+        from tech import spice
+        return spice["msflop_power"]
 

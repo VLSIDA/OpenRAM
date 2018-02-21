@@ -688,3 +688,8 @@ class control_logic(design.design):
                            width=pin.width())
         
         
+    def analytical_power(self, slew, load):
+        #This has yet to be fully determined. 
+        msf_power = self.msf_control.analytical_power(slew, load)
+        #currently, only return flop array power
+        return msf_power

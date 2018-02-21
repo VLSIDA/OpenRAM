@@ -37,5 +37,8 @@ class bitcell(design.design):
         
     def analytical_power(self, slew, load=0, swing = 0.5):
         #Power of the bitcell. Mostly known for leakage, but dynamic can also be factored in.
-        #Just skeleton code for now which returns a magic number.
-        return 5
+        #Only consider leakage power for now. Value defined in tech file rather than calculated.
+        from tech import spice
+        leakage = spice["bitcell_leakage"]
+        total_power = leakage
+        return total_power

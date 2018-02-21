@@ -120,3 +120,8 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
         for i in self.insts:
             text+=str(i)+",\n"
         return text
+     
+    def analytical_power(self, slew, load):
+        #This function is here return 0 power for every module that does not have a power function defined
+        #This is a hack and should be made better (also may be a little dangerous)
+        return 0

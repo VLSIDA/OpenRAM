@@ -1017,7 +1017,32 @@ class sram(design.design):
     
     def analytical_power(self,slew,load):
         """ Just a test function for the power."""
-        return self.bank.analytical_power(slew,load)
+
+        power_sum = 0;
+        print "Module Powers"
+        for mod in self.mods:
+            #print mod.name," Power: ", mod.analytical_power(slew, load)
+            power_sum += mod.analytical_power(slew, load)
+        
+        print "Instances:"
+        for inst in self.insts:
+            print inst.name," Instance"
+            
+        print "Modules from Instances:"
+        for inst in self.insts:
+            print inst.mod.name," Module"
+            
+        
+        print "Instances from Modules of Instances:"
+        for inst in self.insts:
+            print inst.mod.name," Module"
+            for mod_inst in inst.mod.insts:
+                print mod_inst.name," Instance"
+
+        #There is only one instance of the bank module in the mod list so this is too account for the other banks
+        bank_power = self.bank.analytical_power(slew,load)
+        
+        return bank_power
 
     def save_output(self):
         """ Save all the output files while reporting time to do it as well. """

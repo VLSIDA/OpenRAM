@@ -1232,6 +1232,7 @@ class bank(design.design):
     def analytical_power(self, slew, load):
         """ return  analytical power of the bank. Basic skeleton code"""
         msf_addr_power = self.msf_address.analytical_power(slew, self.decoder.input_load())
+        msf_data_in_power = self.msf_data_in.analytical_power(slew, self.decoder.input_load())
         
         decoder_power = self.decoder.analytical_power(slew, load)
         
@@ -1244,6 +1245,6 @@ class bank(design.design):
         
         data_t_DATA_power = self.tri_gate_array.analytical_power(slew, load)
         
-        total_power = msf_addr_power + decoder_power + word_driver_power \
+        total_power = msf_addr_power + msf_data_in_power + decoder_power + word_driver_power \
                       + bitcell_array_power + bl_t_data_out_power + data_t_DATA_power
         return total_power

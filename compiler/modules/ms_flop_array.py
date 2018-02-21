@@ -136,4 +136,4 @@ class ms_flop_array(design.design):
         return self.ms.analytical_delay(slew=slew, load=load)
         
     def analytical_power(self, slew, load):
-        return self.ms.analytical_power(slew=slew, load=load)
+        return self.columns * self.ms.analytical_power(slew=slew, load=load)

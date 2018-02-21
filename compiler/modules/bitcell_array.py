@@ -196,8 +196,8 @@ class bitcell_array(design.design):
         #Calculate the bitcell power which can include leakage as well as bitline dynamic
         cell_power = self.cell.analytical_power(slew, cell_load, swing = bl_swing)
 
-        #we do not consider the delay over the wire for now
-        return cell_power
+        #calculate power for entire array based off a single cell
+        return cell_power * self.column_size * self.row_size
 
     def gen_wl_wire(self):
         wl_wire = self.generate_rc_net(int(self.column_size), self.width, drc["minwidth_metal1"])

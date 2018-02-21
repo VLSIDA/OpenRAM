@@ -1,8 +1,6 @@
 CUR_DIR = $(shell pwd)
 TEST_DIR = ${CUR_DIR}/tests
 
-MAKEFLAGS += -j 2
-
 CONFIG_DIR = configs
 OUT_DIRS = sp lib lef gds  verilog
 $(shell   mkdir -p $(OUT_DIRS))
@@ -14,7 +12,7 @@ all : $(SPICES)
 # Characterize and perform DRC/LVS
 OPTS = -c
 # Do not characterize or perform DRC/LVS
-#OPTS = -n
+OPTS += -n
 %.sp : %.py
 	$(eval bname=$(basename $(notdir $<)))
 	openram.py $(OPTS) $< 2>&1 > $(bname).log

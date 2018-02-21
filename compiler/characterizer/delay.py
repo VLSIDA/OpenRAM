@@ -303,14 +303,14 @@ class delay():
                 debug.error("Timed out, could not find a feasible period.",2)
 
             (success, results)=self.run_delay_simulation(feasible_period,load,slew)
+            if not success:
+                feasible_period = 2 * feasible_period
+                continue
+            
             feasible_delay1 = results["delay1"]
             feasible_slew1 = results["slew1"]
             feasible_delay0 = results["delay0"]
             feasible_slew0 = results["slew0"]
-            if not success:
-                feasible_period = 2 * feasible_period
-                continue
-
             debug.info(1, "Found feasible_period: {0}ns feasible_delay1/0 {1}ns/{2}ns slew {3}ns/{4}ns".format(feasible_period,
                                                                                                                feasible_delay1,
                                                                                                                feasible_delay0,

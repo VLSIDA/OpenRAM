@@ -27,7 +27,7 @@ def parse_output(filename, key):
     
     if val != None:
         debug.info(4, "Key = " + key + " Val = " + val.group(1))
-        return val.group(1)
+        return convert_to_float(val.group(1))
     else:
         return "Failed"
     

@@ -1,25 +1,39 @@
-import sys
-import re
+import sys,re,shutil
 import debug
 import tech
 import math
 import stimuli
+from trim_spice import trim_spice
 import charutils as ch
 import utils
 from globals import OPTS
 
 class delay():
-    """
-    Functions to measure the delay of an SRAM at a given address and
+    """Functions to measure the delay and power of an SRAM at a given address and
     data bit.
+
+    In general, this will perform the following actions:
+    1) Trim the netlist to remove unnecessary logic.
+    2) Find a feasible clock period using max load/slew on the trimmed netlist.
+    3) Characterize all loads/slews and consider fail when delay is greater than 5% of feasible delay using trimmed netlist.
+    4) Measure the leakage during the last cycle of the trimmed netlist when there is no operation.
+    5) Measure the leakage of the whole netlist (untrimmed) in each corner.
+    6) Subtract the trimmed leakage and add the untrimmed leakage to the power.
+
+    Netlist trimming can be removed by setting OPTS.trim_netlist to
+    False, but this is VERY slow.
+
     """
 
-    def __init__(self,sram,spfile, corner):
+    def __init__(self, sram, spfile, corner):
+        self.sram = sram
         self.name = sram.name
-        self.num_words = sram.num_words
-        self.word_size = sram.word_size
-        self.addr_size = sram.addr_size
-        self.sram_sp_file = spfile
+        self.word_size = self.sram.word_size
+        self.addr_size = self.sram.addr_size
+        self.num_cols = self.sram.num_cols
+        self.num_rows = self.sram.num_rows
+        self.num_banks = self.sram.num_banks
+        self.sp_file = spfile
 
         self.set_corner(corner)
         
@@ -27,7 +41,6 @@ class delay():
         """ Set the corner values """
         self.corner = corner
         (self.process, self.vdd_voltage, self.temperature) = corner
-        self.gnd_voltage = 0
         
         
     def check_arguments(self):
@@ -43,27 +56,10 @@ class delay():
         if not isinstance(self.probe_data, int) or self.probe_data>self.word_size or self.probe_data<0:
             debug.error("Given probe_data is not an integer to specify a data bit",1)
 
-
-    def write_stimulus(self, period, load, slew):
-        """ Creates a stimulus file for simulations to probe a bitcell at a given clock period.
-        Address and bit were previously set with set_probe().
-        Input slew (in ns) and output capacitive load (in fF) are required for charaterization.
-        """
-        self.check_arguments()
-
-        # obtains list of time-points for each rising clk edge
-        self.obtain_cycle_times(period)
-
-        # creates and opens stimulus file for writing
-        temp_stim = "{0}/stim.sp".format(OPTS.openram_temp)
-        self.sf = open(temp_stim, "w")
-        self.sf.write("* Stimulus for period of {0}n load={1}fF slew={2}ns\n\n".format(period,load,slew))
-        self.stim = stimuli.stimuli(self.sf, self.corner)
-        # include files in stimulus file
-        self.stim.write_include(self.sram_sp_file)
+    def write_generic_stimulus(self, load):
+        """ Create the instance, supplies, loads, and access transistors. """
 
         # add vdd/gnd statements
-
         self.sf.write("\n* Global Power Supplies\n")
         self.stim.write_supply()
 
@@ -80,7 +76,28 @@ class delay():
         # add access transistors for data-bus
         self.sf.write("\n* Transmission Gates for data-bus and control signals\n")
         self.stim.inst_accesstx(dbits=self.word_size)
+        
 
+    def write_delay_stimulus(self, period, load, slew):
+        """ Creates a stimulus file for simulations to probe a bitcell at a given clock period.
+        Address and bit were previously set with set_probe().
+        Input slew (in ns) and output capacitive load (in fF) are required for charaterization.
+        """
+        self.check_arguments()
+
+        # obtains list of time-points for each rising clk edge
+        self.obtain_cycle_times(period)
+
+        # creates and opens stimulus file for writing
+        temp_stim = "{0}/stim.sp".format(OPTS.openram_temp)
+        self.sf = open(temp_stim, "w")
+        self.sf.write("* Delay stimulus for period of {0}n load={1}fF slew={2}ns\n\n".format(period,load,slew))
+        self.stim = stimuli.stimuli(self.sf, self.corner)
+        # include files in stimulus file
+        self.stim.write_include(self.trim_sp_file)
+
+        self.write_generic_stimulus(load)
+        
         # generate data and addr signals
         self.sf.write("\n* Generation of data and address signals\n")
         for i in range(self.word_size):
@@ -91,7 +108,7 @@ class delay():
                               slew=slew)
             else:
                 self.stim.gen_constant(sig_name="d[{0}]".format(i),
-                                       v_val=self.gnd_voltage)
+                                       v_val=0)
 
         self.gen_addr(clk_times=self.cycle_times,
                       addr=self.probe_address,
@@ -106,21 +123,70 @@ class delay():
 
         self.sf.write("\n* Generation of global clock signal\n")
         self.stim.gen_pulse(sig_name="CLK",
-                            v1=self.gnd_voltage,
+                            v1=0,
                             v2=self.vdd_voltage,
                             offset=period,
                             period=period,
                             t_rise=slew,
                             t_fall=slew)
                           
-        self.write_measures(period)
+        self.write_delay_measures(period)
 
         # run until the end of the cycle time
         self.stim.write_control(self.cycle_times[-1] + period)
 
         self.sf.close()
 
-    def write_measures(self,period):
+
+    def write_power_stimulus(self, period, load, trim):
+        """ Creates a stimulus file to measure leakage power only. 
+        This works on the *untrimmed netlist*.
+        """
+        self.check_arguments()
+
+        # obtains list of time-points for each rising clk edge
+        self.obtain_cycle_times(period)
+
+        # creates and opens stimulus file for writing
+        temp_stim = "{0}/stim.sp".format(OPTS.openram_temp)
+        self.sf = open(temp_stim, "w")
+        self.sf.write("* Power stimulus for period of {0}n\n\n".format(period))
+        self.stim = stimuli.stimuli(self.sf, self.corner)
+        
+        # include UNTRIMMED files in stimulus file
+        if trim:
+            self.stim.write_include(self.trim_sp_file)
+        else:
+            self.stim.write_include(self.sim_sp_file)
+            
+        self.write_generic_stimulus(load)
+        
+        # generate data and addr signals
+        self.sf.write("\n* Generation of data and address signals\n")
+        for i in range(self.word_size):
+            self.stim.gen_constant(sig_name="d[{0}]".format(i),
+                                   v_val=0)
+        for i in range(self.addr_size):
+            self.stim.gen_constant(sig_name="A[{0}]".format(i),
+                                   v_val=0)
+
+        # generate control signals
+        self.sf.write("\n* Generation of control signals\n")
+        self.stim.gen_constant(sig_name="CSb", v_val=self.vdd_voltage)
+        self.stim.gen_constant(sig_name="WEb", v_val=self.vdd_voltage)
+        self.stim.gen_constant(sig_name="OEb", v_val=self.vdd_voltage)        
+
+        self.sf.write("\n* Generation of global clock signal\n")
+        self.stim.gen_constant(sig_name="CLK", v_val=0)  
+                          
+        self.write_power_measures(period)
+
+        # run until the end of the cycle time
+        self.stim.write_control(2*period)
+
+        self.sf.close()
+        
+    def write_delay_measures(self,period):
         """
         Write the measure statements to quantify the delay and power results.
         """
@@ -202,6 +268,21 @@ class delay():
         self.stim.gen_meas_power(meas_name="READ1_POWER",
                                  t_initial=t_initial,
                                  t_final=t_final)
+
+        
+    def write_power_measures(self,period):
+        """
+        Write the measure statements to quantify the leakage power only. 
+        """
+
+        self.sf.write("\n* Measure statements for idle leakage power\n")
+
+        # add measure statements for power
+        t_initial = period
+        t_final = 2*period
+        self.stim.gen_meas_power(meas_name="LEAKAGE_POWER",
+                                 t_initial=t_initial,
+                                 t_final=t_final)
         
     def find_feasible_period(self, load, slew):
         """
@@ -221,7 +302,11 @@ class delay():
             if (time_out <= 0):
                 debug.error("Timed out, could not find a feasible period.",2)
 
-            (success, feasible_delay1, feasible_slew1, feasible_delay0, feasible_slew0)=self.run_simulation(feasible_period,load,slew)
+            (success, results)=self.run_delay_simulation(feasible_period,load,slew)
+            feasible_delay1 = results["delay1"]
+            feasible_slew1 = results["slew1"]
+            feasible_delay0 = results["delay0"]
+            feasible_slew0 = results["slew0"]
             if not success:
                 feasible_period = 2 * feasible_period
                 continue
@@ -234,20 +319,72 @@ class delay():
             return (feasible_period, feasible_delay1, feasible_delay0)
 
 
-    def run_simulation(self, period, load, slew):
-        """ 
-        This tries to simulate a period and checks if the result
-        works. If so, it returns True and the delays and slews.
+    def run_delay_simulation(self, period, load, slew):
+        """
+        This tries to simulate a period and checks if the result works. If
+        so, it returns True and the delays, slews, and powers.  It
+        works on the trimmed netlist by default, so powers do not
+        include leakage of all cells.
         """
 
         # Checking from not data_value to data_value
-        self.write_stimulus(period, load, slew)
+        self.write_delay_stimulus(period, load, slew)
         self.stim.run_sim()
-        delay0 = ch.convert_to_float(ch.parse_output("timing", "delay0"))
-        delay1 = ch.convert_to_float(ch.parse_output("timing", "delay1"))        
-        slew0 = ch.convert_to_float(ch.parse_output("timing", "slew0"))
-        slew1 = ch.convert_to_float(ch.parse_output("timing", "slew1"))        
+        delay0 = ch.parse_output("timing", "delay0")
+        delay1 = ch.parse_output("timing", "delay1")
+        slew0 = ch.parse_output("timing", "slew0")
+        slew1 = ch.parse_output("timing", "slew1")
+        delays = (delay0, delay1, slew0, slew1)
+
+        read0_power=ch.parse_output("timing", "read0_power")
+        write0_power=ch.parse_output("timing", "write0_power")
+        read1_power=ch.parse_output("timing", "read1_power")
+        write1_power=ch.parse_output("timing", "write1_power")
+
+        if not self.check_valid_delays(period, load, slew, delays):
+            return (False,{})
+            
+        # For debug, you sometimes want to inspect each simulation.
+        #key=raw_input("press return to continue")
+
+        # Scale results to ns and mw, respectively
+        result = { "delay0" : delay0*1e9,
+                   "delay1" : delay1*1e9,
+                   "slew0" : slew0*1e9,
+                   "slew1" : slew1*1e9,
+                   "read0_power" : read0_power*1e3,
+                   "read1_power" : read1_power*1e3,
+                   "write0_power" : write0_power*1e3,
+                   "write1_power" : write1_power*1e3}
+            
+        # The delay is from the negative edge for our SRAM
+        return (True,result)
+
+
+    def run_power_simulation(self, period, load):
+        """ 
+        This simulates a disabled SRAM to get the leakage power when it is off.
         
+        """
+
+        self.write_power_stimulus(period, load, trim=False)
+        self.stim.run_sim()
+        leakage_power=ch.parse_output("timing", "leakage_power")
+        debug.check(leakage_power!="Failed","Could not measure leakage power.")
+
+
+        self.write_power_stimulus(period, load, trim=True)
+        self.stim.run_sim()
+        trim_leakage_power=ch.parse_output("timing", "leakage_power")
+        debug.check(trim_leakage_power!="Failed","Could not measure leakage power.")
+
+        # For debug, you sometimes want to inspect each simulation.
+        #key=raw_input("press return to continue")
+        return (leakage_power*1e3, trim_leakage_power*1e3)
+    
+    def check_valid_delays(self, period, load, slew, (delay0, delay1, slew0, slew1)):
+        """ Check if the measurements are defined and if they are valid. """
+
         # if it failed or the read was longer than a period
         if type(delay0)!=float or type(delay1)!=float or type(slew1)!=float or type(slew0)!=float:
             debug.info(2,"Failed simulation: period {0} load {1} slew {2}, delay0={3}n delay1={4}ns slew0={5}n slew1={6}n".format(period,
@@ -257,7 +394,7 @@ class delay():
                                                                                                                                   delay1,
                                                                                                                                   slew0,
                                                                                                                                   slew1))
-            return (False,0,0,0,0)
+            return False
         # Scale delays to ns (they previously could have not been floats)
         delay0 *= 1e9
         delay1 *= 1e9
@@ -271,7 +408,7 @@ class delay():
                                                                                                                                         delay1,
                                                                                                                                         slew0,
                                                                                                                                         slew1))
-            return (False,0,0,0,0)
+            return False
         else:
             debug.info(2,"Successful simulation: period {0} load {1} slew {2}, delay0={3}n delay1={4}ns slew0={5}n slew1={6}n".format(period,
                                                                                                                                       load,
@@ -280,13 +417,9 @@ class delay():
                                                                                                                                       delay1,
                                                                                                                                       slew0,
                                                                                                                                       slew1))
-        # For debug, you sometimes want to inspect each simulation.
-        #key=raw_input("press return to continue")
 
-        # The delay is from the negative edge for our SRAM
-        return (True,delay1,slew1,delay0,slew0)
-
-
+        return True
+        
 
     def find_min_period(self,feasible_period, load, slew, feasible_delay1, feasible_delay0):
         """
@@ -326,12 +459,12 @@ class delay():
         """
 
         # Checking from not data_value to data_value
-        self.write_stimulus(period,load,slew)
+        self.write_delay_stimulus(period,load,slew)
         self.stim.run_sim()
-        delay0 = ch.convert_to_float(ch.parse_output("timing", "delay0"))
-        delay1 = ch.convert_to_float(ch.parse_output("timing", "delay1"))
-        slew0 = ch.convert_to_float(ch.parse_output("timing", "slew0"))
-        slew1 = ch.convert_to_float(ch.parse_output("timing", "slew1"))
+        delay0 = ch.parse_output("timing", "delay0")
+        delay1 = ch.parse_output("timing", "delay1")
+        slew0 = ch.parse_output("timing", "slew0")
+        slew1 = ch.parse_output("timing", "slew1")
         # if it failed or the read was longer than a period
         if type(delay0)!=float or type(delay1)!=float or type(slew1)!=float or type(slew0)!=float:
             debug.info(2,"Invalid measures: Period {0}, delay0={1}ns, delay1={2}ns slew0={3}ns slew1={4}ns".format(period,
@@ -375,12 +508,35 @@ class delay():
         self.probe_address = probe_address
         self.probe_data = probe_data
 
+        self.prepare_netlist()
+        
+
+    def prepare_netlist(self):
+        """ Prepare a trimmed netlist and regular netlist. """
+        
+        # Set up to trim the netlist here if that is enabled
+        if OPTS.trim_netlist:
+            self.trim_sp_file = "{}reduced.sp".format(OPTS.openram_temp)
+            self.trimsp=trim_spice(self.sp_file, self.trim_sp_file)
+            self.trimsp.set_configuration(self.num_banks,
+                                          self.num_rows,
+                                          self.num_cols,
+                                          self.word_size)
+            self.trimsp.trim(self.probe_address,self.probe_data)
+        else:
+            # The non-reduced netlist file when it is disabled
+            self.trim_sp_file = "{}sram.sp".format(OPTS.openram_temp)
+            
+        # The non-reduced netlist file for power simulation 
+        self.sim_sp_file = "{}sram.sp".format(OPTS.openram_temp)
+        # Make a copy in temp for debugging
+        shutil.copy(self.sp_file, self.sim_sp_file)
+
+
 
     def analyze(self,probe_address, probe_data, slews, loads):
-        """main function to calculate the min period for a low_to_high
-        transistion and a high_to_low transistion returns a dictionary
-        that contains all both the min period and associated delays
-        Dictionary Keys: min_period1, delay1, min_period0, delay0
+        """
+        Main function to characterize an SRAM for a table. Computes both delay and power characterization.
         """
         
         self.set_probe(probe_address, probe_data)
@@ -395,49 +551,53 @@ class delay():
         # self.try_period(target_period, load, slew, feasible_delay1, feasible_delay0)
         # sys.exit(1)
 
-        
+
+        # 1) Find a feasible period and it's corresponding delays using the trimmed array.
         (feasible_period, feasible_delay1, feasible_delay0) = self.find_feasible_period(max(loads), max(slews))
         debug.check(feasible_delay1>0,"Negative delay may not be possible")
         debug.check(feasible_delay0>0,"Negative delay may not be possible")
 
-        # The power variables are just scalars. These use the final feasible period simulation
-        # which should have worked.
-        read0_power=ch.convert_to_float(ch.parse_output("timing", "read0_power"))
-        write0_power=ch.convert_to_float(ch.parse_output("timing", "write0_power"))
-        read1_power=ch.convert_to_float(ch.parse_output("timing", "read1_power"))
-        write1_power=ch.convert_to_float(ch.parse_output("timing", "write1_power"))
-        
-        LH_delay = []
-        HL_delay = []
-        LH_slew = []
-        HL_slew = []
-        for slew in slews:
-            for load in loads:
-                (success, delay1, slew1, delay0, slew0) = self.run_simulation(feasible_period, load, slew)
+        # 2) Measure the delay, slew and power for all slew/load pairs.
+        # Make a list for each type of measurement to append results to
+        char_data = {}
+        for m in ["delay1", "delay0", "slew1", "slew0", "read0_power",
+                  "read1_power", "write0_power", "write1_power", "leakage_power"]:
+            char_data[m]=[]
+        full_array_leakage = []
+        trim_array_leakage = []        
+        for load in loads:
+            # 2a) Find the leakage power of the trimmmed and  UNtrimmed arrays.
+            (full_leak, trim_leak)=self.run_power_simulation(feasible_period, load)
+            full_array_leakage.append(full_leak)
+            trim_array_leakage.append(trim_leak)
+            print full_leak,trim_leak
+            for slew in slews:
+                # 2c) Find the delay, dynamic power, and leakage power of the trimmed array.
+                (success, delay_results) = self.run_delay_simulation(feasible_period, load, slew)
                 debug.check(success,"Couldn't run a simulation. slew={0} load={1}\n".format(slew,load))
-                LH_delay.append(delay1)
-                HL_delay.append(delay0)
-                LH_slew.append(slew1)
-                HL_slew.append(slew0)
-                
-        # finds the minimum period without degrading the delays by X%
+                print delay_results
+                for k,v in delay_results.items():
+                    print k,v
+                    if "power" in k:
+                        # Subtract partial array leakage and add full array leakage for the power measures
+                        char_data[k].append(v - trim_array_leakage[-1] + full_array_leakage[-1])
+                        char_data["leakage_power"].append(full_array_leakage[-1])
+                    else:
+                        char_data[k].append(v)
+
+
+        # 3) Finds the minimum period without degrading the delays by X%
         min_period = self.find_min_period(feasible_period, max(loads), max(slews), feasible_delay1, feasible_delay0)
         debug.check(type(min_period)==float,"Couldn't find minimum period.")
         debug.info(1, "Min Period: {0}n with a delay of {1} / {2}".format(min_period, feasible_delay1, feasible_delay0))
 
+        # 4) Pack up the final measurements
+        char_data["min_period"] = ch.round_time(min_period)
+        
+        return char_data
 
-        data = {"min_period": ch.round_time(min_period), 
-                "delay1": LH_delay,
-                "delay0": HL_delay,
-                "slew1": LH_slew,
-                "slew0": HL_slew,
-                "read0_power": read0_power*1e3,
-                "read1_power": read1_power*1e3,
-                "write0_power": write0_power*1e3,
-                "write1_power": write1_power*1e3
-                }
-        return data
 
+    
 
     def obtain_cycle_times(self, period):
         """Returns a list of key time-points [ns] of the waveform (each rising edge)
@@ -496,6 +656,7 @@ class delay():
                                                                 t_current,
                                                                 msg))
         self.cycle_times.append(t_current)
+        self.idle_cycle=len(self.cycle_times)-1        
         t_current += period
 
         # One period
@@ -534,7 +695,7 @@ class delay():
 
 
 
-    def analytical_model(self,sram, slews, loads):
+    def analytical_delay(self,sram, slews, loads):
         """ Just return the analytical model results for the SRAM. 
         """
         LH_delay = []

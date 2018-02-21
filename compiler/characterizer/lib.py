@@ -1,4 +1,4 @@
-import os,sys,re,shutil
+import os,sys,re
 import debug
 import math
 import setup_hold
@@ -6,7 +6,6 @@ import delay
 import charutils as ch
 import tech
 import numpy as np
-from trim_spice import trim_spice
 from globals import OPTS
 
 class lib:
@@ -18,30 +17,12 @@ class lib:
         self.sp_file = sp_file        
         self.use_model = use_model
 
-        self.prepare_netlist()
-        
         self.prepare_tables()
         
         self.create_corners()
         
         self.characterize_corners()
         
-    def prepare_netlist(self):
-        """ Determine whether to use regular or trimmed netlist. """
-        
-        # Set up to trim the netlist here if that is enabled
-        if OPTS.trim_netlist:
-            self.sim_sp_file = "{}reduced.sp".format(OPTS.openram_temp)
-            self.trimsp=trim_spice(self.sp_file, self.sim_sp_file)
-            self.trimsp.set_configuration(self.sram.num_banks,
-                                          self.sram.num_rows,
-                                          self.sram.num_cols,
-                                          self.sram.word_size)
-        else:
-            # Else, use the non-reduced netlist file for simulation
-            self.sim_sp_file = "{}sram.sp".format(OPTS.openram_temp)
-            # Make a copy in temp for debugging
-            shutil.copy(self.sp_file, self.sim_sp_file)
 
     def prepare_tables(self):
         """ Determine the load/slews if they aren't specified in the config file. """
@@ -319,10 +300,10 @@ class lib:
         self.lib.write("        internal_power(){\n")
         self.lib.write("            when : \"OEb & !clk\"; \n")
         self.lib.write("            rise_power(scalar){\n")
-        self.lib.write("                values(\"{0}\");\n".format(self.delay["write1_power"]))
+        self.lib.write("                values(\"{0}\");\n".format(np.mean(self.char_results["write1_power"])))
         self.lib.write("            }\n")
         self.lib.write("            fall_power(scalar){\n")
-        self.lib.write("                values(\"{0}\");\n".format(self.delay["write0_power"]))
+        self.lib.write("                values(\"{0}\");\n".format(np.mean(self.char_results["write0_power"])))
         self.lib.write("            }\n")
         self.lib.write("        }\n")
 
@@ -331,10 +312,10 @@ class lib:
         self.lib.write("        internal_power(){\n")
         self.lib.write("            when : \"!OEb & !clk\"; \n")
         self.lib.write("            rise_power(scalar){\n")
-        self.lib.write("                values(\"{0}\");\n".format(self.delay["read1_power"]))
+        self.lib.write("                values(\"{0}\");\n".format(np.mean(self.char_results["read1_power"])))
         self.lib.write("            }\n")
         self.lib.write("            fall_power(scalar){\n")
-        self.lib.write("                values(\"{0}\");\n".format(self.delay["read0_power"]))
+        self.lib.write("                values(\"{0}\");\n".format(np.mean(self.char_results["read0_power"])))
         self.lib.write("            }\n")
         self.lib.write("        }\n")
         self.lib.write("        timing(){ \n")
@@ -342,19 +323,19 @@ class lib:
         self.lib.write("            related_pin : \"clk\"; \n")
         self.lib.write("            timing_type : falling_edge; \n")
         self.lib.write("            cell_rise(CELL_TABLE) {\n")
-        rounded_values = map(ch.round_time,self.delay["delay1"])
+        rounded_values = map(ch.round_time,self.char_results["delay1"])
         self.write_values(rounded_values,len(self.loads),"            ")
         self.lib.write("            }\n")
         self.lib.write("            cell_fall(CELL_TABLE) {\n")
-        rounded_values = map(ch.round_time,self.delay["delay0"])
+        rounded_values = map(ch.round_time,self.char_results["delay0"])
         self.write_values(rounded_values,len(self.loads),"            ")
         self.lib.write("            }\n")
         self.lib.write("        rise_transition(CELL_TABLE) {\n")
-        rounded_values = map(ch.round_time,self.delay["slew1"])
+        rounded_values = map(ch.round_time,self.char_results["slew1"])
         self.write_values(rounded_values,len(self.loads),"            ")
         self.lib.write("              }\n")
         self.lib.write("        fall_transition(CELL_TABLE) {\n")
-        rounded_values = map(ch.round_time,self.delay["slew0"])
+        rounded_values = map(ch.round_time,self.char_results["slew0"])
         self.write_values(rounded_values,len(self.loads),"            ")
         self.lib.write("            }\n")
         self.lib.write("        }\n")
@@ -401,8 +382,8 @@ class lib:
         self.lib.write("        clock             : true;\n")
         self.lib.write("        direction  : input; \n")
         self.lib.write("        capacitance : {0};  \n".format(tech.spice["msflop_in_cap"]))
-        min_pulse_width = ch.round_time(self.delay["min_period"])/2.0
-        min_period = ch.round_time(self.delay["min_period"])
+        min_pulse_width = ch.round_time(self.char_results["min_period"])/2.0
+        min_period = ch.round_time(self.char_results["min_period"])
         self.lib.write("        timing(){ \n")
         self.lib.write("            timing_type :\"min_pulse_width\"; \n")
         self.lib.write("            related_pin  : clk; \n")
@@ -432,16 +413,14 @@ class lib:
         try:
             self.d
         except AttributeError:
-            self.d = delay.delay(self.sram, self.sim_sp_file, self.corner)
+            self.d = delay.delay(self.sram, self.sp_file, self.corner)
             if self.use_model:
-                self.delay = self.d.analytical_model(self.sram,self.slews,self.loads)
+                self.char_results = self.d.analytical_delay(self.sram,self.slews,self.loads)
             else:
                 probe_address = "1" * self.sram.addr_size
                 probe_data = self.sram.word_size - 1
-                # We must trim based on a specific address and data bit
-                if OPTS.trim_netlist:
-                    self.trimsp.trim(probe_address,probe_data)
-                self.delay = self.d.analyze(probe_address, probe_data, self.slews, self.loads)
+                self.char_results = self.d.analyze(probe_address, probe_data, self.slews, self.loads)
+
 
     def compute_setup_hold(self):
         """ Do the analysis if we haven't characterized a FF yet """
@@ -451,7 +430,7 @@ class lib:
         except AttributeError:
             self.sh = setup_hold.setup_hold(self.corner)
             if self.use_model:
-                self.times = self.sh.analytical_model(self.slews,self.loads)
+                self.times = self.sh.analytical_setuphold(self.slews,self.loads)
             else:
                 self.times = self.sh.analyze(self.slews,self.slews)
                 

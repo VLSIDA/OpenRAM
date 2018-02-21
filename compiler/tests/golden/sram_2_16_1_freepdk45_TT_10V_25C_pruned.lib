@@ -92,10 +92,10 @@ cell (sram_2_16_1_freepdk45){
         internal_power(){
             when : "OEb & !clk"; 
             rise_power(scalar){
-                values("0.036463566");
+                values("0.03655734659");
             }
             fall_power(scalar){
-                values("0.026623993");
+                values("0.0267123544789");
             }
         }
         timing(){ 
@@ -129,10 +129,10 @@ cell (sram_2_16_1_freepdk45){
         internal_power(){
             when : "!OEb & !clk"; 
             rise_power(scalar){
-                values("0.033688925");
+                values("0.0336039323678");
             }
             fall_power(scalar){
-                values("0.038865319");
+                values("0.03895461259");
             }
         }
         timing(){ 
@@ -140,24 +140,24 @@ cell (sram_2_16_1_freepdk45){
             related_pin : "clk"; 
             timing_type : falling_edge; 
             cell_rise(CELL_TABLE) {
-            values("0.054, 0.055, 0.061",\
-                   "0.055, 0.055, 0.062",\
-                   "0.06, 0.061, 0.067");
+            values("0.054, 0.055, 0.06",\
+                   "0.055, 0.055, 0.061",\
+                   "0.061, 0.062, 0.067");
             }
             cell_fall(CELL_TABLE) {
-            values("0.425, 0.426, 0.436",\
-                   "0.426, 0.427, 0.436",\
-                   "0.432, 0.433, 0.442");
+            values("0.425, 0.426, 0.432",\
+                   "0.426, 0.427, 0.433",\
+                   "0.436, 0.436, 0.442");
             }
         rise_transition(CELL_TABLE) {
-            values("0.013, 0.014, 0.026",\
-                   "0.013, 0.014, 0.026",\
-                   "0.013, 0.015, 0.026");
+            values("0.013, 0.013, 0.013",\
+                   "0.014, 0.014, 0.015",\
+                   "0.026, 0.026, 0.026");
               }
         fall_transition(CELL_TABLE) {
-            values("0.027, 0.029, 0.043",\
-                   "0.027, 0.029, 0.043",\
-                   "0.027, 0.029, 0.043");
+            values("0.027, 0.027, 0.027",\
+                   "0.029, 0.029, 0.029",\
+                   "0.043, 0.043, 0.043");
             }
         }
         }

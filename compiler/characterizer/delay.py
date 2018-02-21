@@ -570,14 +570,11 @@ class delay():
             (full_leak, trim_leak)=self.run_power_simulation(feasible_period, load)
             full_array_leakage.append(full_leak)
             trim_array_leakage.append(trim_leak)
-            print full_leak,trim_leak
             for slew in slews:
                 # 2c) Find the delay, dynamic power, and leakage power of the trimmed array.
                 (success, delay_results) = self.run_delay_simulation(feasible_period, load, slew)
                 debug.check(success,"Couldn't run a simulation. slew={0} load={1}\n".format(slew,load))
-                print delay_results
                 for k,v in delay_results.items():
-                    print k,v
                     if "power" in k:
                         # Subtract partial array leakage and add full array leakage for the power measures
                         char_data[k].append(v - trim_array_leakage[-1] + full_array_leakage[-1])

@@ -92,10 +92,10 @@ cell (sram_2_16_1_scn3me_subm){
         internal_power(){
             when : "OEb & !clk"; 
             rise_power(scalar){
-                values("10.4925");
+                values("10.4314073837");
             }
             fall_power(scalar){
-                values("7.1836643");
+                values("7.13119680587");
             }
         }
         timing(){ 
@@ -129,10 +129,10 @@ cell (sram_2_16_1_scn3me_subm){
         internal_power(){
             when : "!OEb & !clk"; 
             rise_power(scalar){
-                values("10.203608");
+                values("9.93581495032");
             }
             fall_power(scalar){
-                values("10.057386");
+                values("10.0783428725");
             }
         }
         timing(){ 
@@ -140,24 +140,24 @@ cell (sram_2_16_1_scn3me_subm){
             related_pin : "clk"; 
             timing_type : falling_edge; 
             cell_rise(CELL_TABLE) {
-            values("0.458, 0.503, 0.87",\
-                   "0.461, 0.505, 0.873",\
-                   "0.5, 0.544, 0.911");
+            values("0.458, 0.461, 0.5",\
+                   "0.503, 0.505, 0.544",\
+                   "0.87, 0.873, 0.911");
             }
             cell_fall(CELL_TABLE) {
-            values("0.573, 0.645, 1.246",\
-                   "0.576, 0.648, 1.249",\
-                   "0.616, 0.687, 1.286");
+            values("0.573, 0.576, 0.616",\
+                   "0.645, 0.648, 0.687",\
+                   "1.246, 1.249, 1.286");
             }
         rise_transition(CELL_TABLE) {
-            values("0.153, 0.232, 1.084",\
-                   "0.153, 0.233, 1.084",\
-                   "0.156, 0.236, 1.084");
+            values("0.153, 0.153, 0.156",\
+                   "0.232, 0.233, 0.236",\
+                   "1.084, 1.084, 1.084");
               }
         fall_transition(CELL_TABLE) {
-            values("0.277, 0.36, 1.499",\
-                   "0.277, 0.362, 1.499",\
-                   "0.278, 0.37, 1.5");
+            values("0.277, 0.277, 0.278",\
+                   "0.36, 0.362, 0.37",\
+                   "1.499, 1.499, 1.5");
             }
         }
         }

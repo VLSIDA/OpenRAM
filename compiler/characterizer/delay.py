@@ -35,6 +35,11 @@ class delay():
         self.num_banks = self.sram.num_banks
         self.sp_file = spfile
 
+        # These are the member variables for a simulation
+        self.period = 0
+        self.load = 0
+        self.slew = 0
+        
         self.set_corner(corner)
         
     def set_corner(self,corner):
@@ -56,7 +61,7 @@ class delay():
         if not isinstance(self.probe_data, int) or self.probe_data>self.word_size or self.probe_data<0:
             debug.error("Given probe_data is not an integer to specify a data bit",1)
 
-    def write_generic_stimulus(self, load):
+    def write_generic_stimulus(self):
         """ Create the instance, supplies, loads, and access transistors. """
 
         # add vdd/gnd statements
@@ -71,14 +76,14 @@ class delay():
 
         self.sf.write("\n* SRAM output loads\n")
         for i in range(self.word_size):
-            self.sf.write("CD{0} d[{0}] 0 {1}f\n".format(i,load))
+            self.sf.write("CD{0} d[{0}] 0 {1}f\n".format(i,self.load))
         
         # add access transistors for data-bus
         self.sf.write("\n* Transmission Gates for data-bus and control signals\n")
         self.stim.inst_accesstx(dbits=self.word_size)
         
 
-    def write_delay_stimulus(self, period, load, slew):
+    def write_delay_stimulus(self):
         """ Creates a stimulus file for simulations to probe a bitcell at a given clock period.
         Address and bit were previously set with set_probe().
         Input slew (in ns) and output capacitive load (in fF) are required for charaterization.
@@ -86,71 +91,72 @@ class delay():
         self.check_arguments()
 
         # obtains list of time-points for each rising clk edge
-        self.obtain_cycle_times(period)
+        self.obtain_cycle_times()
 
         # creates and opens stimulus file for writing
         temp_stim = "{0}/stim.sp".format(OPTS.openram_temp)
         self.sf = open(temp_stim, "w")
-        self.sf.write("* Delay stimulus for period of {0}n load={1}fF slew={2}ns\n\n".format(period,load,slew))
+        self.sf.write("* Delay stimulus for period of {0}n load={1}fF slew={2}ns\n\n".format(self.period,
+                                                                                             self.load,
+                                                                                             self.slew))
         self.stim = stimuli.stimuli(self.sf, self.corner)
         # include files in stimulus file
         self.stim.write_include(self.trim_sp_file)
 
-        self.write_generic_stimulus(load)
+        self.write_generic_stimulus()
         
         # generate data and addr signals
         self.sf.write("\n* Generation of data and address signals\n")
         for i in range(self.word_size):
             if i == self.probe_data:
                 self.gen_data(clk_times=self.cycle_times,
-                              sig_name="data[{0}]".format(i),
-                              period=period,
-                              slew=slew)
+                              sig_name="data[{0}]".format(i))
+
+
             else:
                 self.stim.gen_constant(sig_name="d[{0}]".format(i),
                                        v_val=0)
 
         self.gen_addr(clk_times=self.cycle_times,
-                      addr=self.probe_address,
-                      period=period,
-                      slew=slew)
+                      addr=self.probe_address)
+
 
         # generate control signals
         self.sf.write("\n* Generation of control signals\n")
-        self.gen_csb(self.cycle_times, period, slew)
-        self.gen_web(self.cycle_times, period, slew)
-        self.gen_oeb(self.cycle_times, period, slew)
+        self.gen_csb(self.cycle_times)
+        self.gen_web(self.cycle_times)
+        self.gen_oeb(self.cycle_times)
 
         self.sf.write("\n* Generation of global clock signal\n")
         self.stim.gen_pulse(sig_name="CLK",
                             v1=0,
                             v2=self.vdd_voltage,
-                            offset=period,
-                            period=period,
-                            t_rise=slew,
-                            t_fall=slew)
+                            offset=self.period,
+                            period=self.period,
+                            t_rise=self.slew,
+                            t_fall=self.slew)
                           
-        self.write_delay_measures(period)
+        self.write_delay_measures()
 
         # run until the end of the cycle time
-        self.stim.write_control(self.cycle_times[-1] + period)
+        self.stim.write_control(self.cycle_times[-1] + self.period)
 
         self.sf.close()
 
 
-    def write_power_stimulus(self, period, load, trim):
+    def write_power_stimulus(self, trim):
         """ Creates a stimulus file to measure leakage power only. 
         This works on the *untrimmed netlist*.
         """
         self.check_arguments()
 
         # obtains list of time-points for each rising clk edge
-        self.obtain_cycle_times(period)
+        self.obtain_cycle_times()
 
         # creates and opens stimulus file for writing
         temp_stim = "{0}/stim.sp".format(OPTS.openram_temp)
         self.sf = open(temp_stim, "w")
-        self.sf.write("* Power stimulus for period of {0}n\n\n".format(period))
+        self.sf.write("* Power stimulus for period of {0}n\n\n".format(self.period))
         self.stim = stimuli.stimuli(self.sf, self.corner)
         
         # include UNTRIMMED files in stimulus file
@@ -159,7 +165,7 @@ class delay():
         else:
             self.stim.write_include(self.sim_sp_file)
             
-        self.write_generic_stimulus(load)
+        self.write_generic_stimulus()
         
         # generate data and addr signals
         self.sf.write("\n* Generation of data and address signals\n")
@@ -179,14 +185,14 @@ class delay():
         self.sf.write("\n* Generation of global clock signal\n")
         self.stim.gen_constant(sig_name="CLK", v_val=0)  
                           
-        self.write_power_measures(period)
+        self.write_power_measures()
 
         # run until the end of the cycle time
-        self.stim.write_control(2*period)
+        self.stim.write_control(2*self.period)
 
         self.sf.close()
         
-    def write_delay_measures(self,period):
+    def write_delay_measures(self):
         """
         Write the measure statements to quantify the delay and power results.
         """
@@ -212,7 +218,7 @@ class delay():
                                  trig_dir="FALL",
                                  targ_dir="FALL",
                                  trig_td=self.cycle_times[self.read0_cycle],
-                                 targ_td=self.cycle_times[self.read0_cycle]+0.5*period)
+                                 targ_td=self.cycle_times[self.read0_cycle]+0.5*self.period)
 
         self.stim.gen_meas_delay(meas_name="DELAY_LH",
                                  trig_name=trig_name,
@@ -222,7 +228,7 @@ class delay():
                                  trig_dir="FALL",
                                  targ_dir="RISE",
                                  trig_td=self.cycle_times[self.read1_cycle],
-                                 targ_td=self.cycle_times[self.read1_cycle]+0.5*period)
+                                 targ_td=self.cycle_times[self.read1_cycle]+0.5*self.period)
 
         self.stim.gen_meas_delay(meas_name="SLEW_HL",
                                  trig_name=targ_name,
@@ -232,7 +238,7 @@ class delay():
                                  trig_dir="FALL",
                                  targ_dir="FALL",
                                  trig_td=self.cycle_times[self.read0_cycle],
-                                 targ_td=self.cycle_times[self.read0_cycle]+0.5*period)
+                                 targ_td=self.cycle_times[self.read0_cycle]+0.5*self.period)
 
         self.stim.gen_meas_delay(meas_name="SLEW_LH",
                                  trig_name=targ_name,
@@ -242,7 +248,7 @@ class delay():
                                  trig_dir="RISE",
                                  targ_dir="RISE",
                                  trig_td=self.cycle_times[self.read1_cycle],
-                                 targ_td=self.cycle_times[self.read1_cycle]+0.5*period)
+                                 targ_td=self.cycle_times[self.read1_cycle]+0.5*self.period)
         
         # add measure statements for power
         t_initial = self.cycle_times[self.write0_cycle]
@@ -270,7 +276,7 @@ class delay():
                                  t_final=t_final)
 
         
-    def write_power_measures(self,period):
+    def write_power_measures(self):
         """
         Write the measure statements to quantify the leakage power only. 
         """
@@ -278,13 +284,13 @@ class delay():
         self.sf.write("\n* Measure statements for idle leakage power\n")
 
         # add measure statements for power
-        t_initial = period
-        t_final = 2*period
+        t_initial = self.period
+        t_final = 2*self.period
         self.stim.gen_meas_power(meas_name="leakage_power",
                                  t_initial=t_initial,
                                  t_final=t_final)
         
-    def find_feasible_period(self, load, slew):
+    def find_feasible_period(self):
         """
         Uses an initial period and finds a feasible period before we
         run the binary search algorithm to find min period. We check if
@@ -301,25 +307,26 @@ class delay():
 
             if (time_out <= 0):
                 debug.error("Timed out, could not find a feasible period.",2)
-
-            (success, results)=self.run_delay_simulation(feasible_period,load,slew)
+            self.period = feasible_period
+            (success, results)=self.run_delay_simulation()
+            if not success:
+                feasible_period = 2 * feasible_period
+                continue
             feasible_delay_lh = results["delay_lh"]
             feasible_slew_lh = results["slew_lh"]
             feasible_delay_hl = results["delay_hl"]
             feasible_slew_hl = results["slew_hl"]
-            if not success:
-                feasible_period = 2 * feasible_period
-                continue
 
             debug.info(1, "Found feasible_period: {0}ns feasible_delay_lh/0 {1}ns/{2}ns slew {3}ns/{4}ns".format(feasible_period,
-                                                                                                               feasible_delay_lh,
-                                                                                                               feasible_delay_hl,
-                                                                                                               feasible_slew_lh,
-                                                                                                               feasible_slew_hl))
-            return (feasible_period, feasible_delay_lh, feasible_delay_hl)
+                                                                                                                 feasible_delay_lh,
+                                                                                                                 feasible_delay_hl,
+                                                                                                                 feasible_slew_lh,
+                                                                                                                 feasible_slew_hl))
+            self.period = feasible_period
+            return (feasible_delay_lh, feasible_delay_hl)
 
 
-    def run_delay_simulation(self, period, load, slew):
+    def run_delay_simulation(self):
         """
         This tries to simulate a period and checks if the result works. If
         so, it returns True and the delays, slews, and powers.  It
@@ -328,7 +335,7 @@ class delay():
         """
 
         # Checking from not data_value to data_value
-        self.write_delay_stimulus(period, load, slew)
+        self.write_delay_stimulus()
         self.stim.run_sim()
         delay_hl = ch.parse_output("timing", "delay_hl")
         delay_lh = ch.parse_output("timing", "delay_lh")
@@ -341,7 +348,7 @@ class delay():
         read1_power=ch.parse_output("timing", "read1_power")
         write1_power=ch.parse_output("timing", "write1_power")
 
-        if not self.check_valid_delays(period, load, slew, delays):
+        if not self.check_valid_delays(delays):
             return (False,{})
             
         # For debug, you sometimes want to inspect each simulation.
@@ -361,19 +368,19 @@ class delay():
         return (True,result)
 
 
-    def run_power_simulation(self, period, load):
+    def run_power_simulation(self):
         """ 
         This simulates a disabled SRAM to get the leakage power when it is off.
         
         """
 
-        self.write_power_stimulus(period, load, trim=False)
+        self.write_power_stimulus(trim=False)
         self.stim.run_sim()
         leakage_power=ch.parse_output("timing", "leakage_power")
         debug.check(leakage_power!="Failed","Could not measure leakage power.")
 
 
-        self.write_power_stimulus(period, load, trim=True)
+        self.write_power_stimulus(trim=True)
         self.stim.run_sim()
         trim_leakage_power=ch.parse_output("timing", "leakage_power")
         debug.check(trim_leakage_power!="Failed","Could not measure leakage power.")
@@ -382,52 +389,52 @@ class delay():
         #key=raw_input("press return to continue")
         return (leakage_power*1e3, trim_leakage_power*1e3)
     
-    def check_valid_delays(self, period, load, slew, (delay_hl, delay_lh, slew_hl, slew_lh)):
+    def check_valid_delays(self, (delay_hl, delay_lh, slew_hl, slew_lh)):
         """ Check if the measurements are defined and if they are valid. """
 
         # if it failed or the read was longer than a period
         if type(delay_hl)!=float or type(delay_lh)!=float or type(slew_lh)!=float or type(slew_hl)!=float:
-            debug.info(2,"Failed simulation: period {0} load {1} slew {2}, delay_hl={3}n delay_lh={4}ns slew_hl={5}n slew_lh={6}n".format(period,
-                                                                                                                                  load,
-                                                                                                                                  slew,
-                                                                                                                                  delay_hl,
-                                                                                                                                  delay_lh,
-                                                                                                                                  slew_hl,
-                                                                                                                                  slew_lh))
+            debug.info(2,"Failed simulation: period {0} load {1} slew {2}, delay_hl={3}n delay_lh={4}ns slew_hl={5}n slew_lh={6}n".format(self.period,
+                                                                                                                                          self.load,
+                                                                                                                                          self.slew,
+                                                                                                                                          delay_hl,
+                                                                                                                                          delay_lh,
+                                                                                                                                          slew_hl,
+                                                                                                                                          slew_lh))
             return False
         # Scale delays to ns (they previously could have not been floats)
         delay_hl *= 1e9
         delay_lh *= 1e9
         slew_hl *= 1e9
         slew_lh *= 1e9
-        if delay_hl>period or delay_lh>period or slew_hl>period or slew_lh>period:
-            debug.info(2,"UNsuccessful simulation: period {0} load {1} slew {2}, delay_hl={3}n delay_lh={4}ns slew_hl={5}n slew_lh={6}n".format(period,
-                                                                                                                                        load,
-                                                                                                                                        slew,
-                                                                                                                                        delay_hl,
-                                                                                                                                        delay_lh,
-                                                                                                                                        slew_hl,
-                                                                                                                                        slew_lh))
+        if delay_hl>self.period or delay_lh>self.period or slew_hl>self.period or slew_lh>self.period:
+            debug.info(2,"UNsuccessful simulation: period {0} load {1} slew {2}, delay_hl={3}n delay_lh={4}ns slew_hl={5}n slew_lh={6}n".format(self.period,
+                                                                                                                                                self.load,
+                                                                                                                                                self.slew,
+                                                                                                                                                delay_hl,
+                                                                                                                                                delay_lh,
+                                                                                                                                                slew_hl,
+                                                                                                                                                slew_lh))
             return False
         else:
-            debug.info(2,"Successful simulation: period {0} load {1} slew {2}, delay_hl={3}n delay_lh={4}ns slew_hl={5}n slew_lh={6}n".format(period,
-                                                                                                                                      load,
-                                                                                                                                      slew,
-                                                                                                                                      delay_hl,
-                                                                                                                                      delay_lh,
-                                                                                                                                      slew_hl,
-                                                                                                                                      slew_lh))
+            debug.info(2,"Successful simulation: period {0} load {1} slew {2}, delay_hl={3}n delay_lh={4}ns slew_hl={5}n slew_lh={6}n".format(self.period,
+                                                                                                                                              self.load,
+                                                                                                                                              self.slew,
+                                                                                                                                              delay_hl,
+                                                                                                                                              delay_lh,
+                                                                                                                                              slew_hl,
+                                                                                                                                              slew_lh))
 
         return True
         
 
-    def find_min_period(self,feasible_period, load, slew, feasible_delay_lh, feasible_delay_hl):
+    def find_min_period(self, feasible_delay_lh, feasible_delay_hl):
         """
         Searches for the smallest period with output delays being within 5% of 
         long period. 
         """
 
-        previous_period = ub_period = feasible_period
+        previous_period = ub_period = self.period
         lb_period = 0.0
 
         # Binary search algorithm to find the min period (max frequency) of design
@@ -438,11 +445,12 @@ class delay():
                 debug.error("Timed out, could not converge on minimum period.",2)
 
             target_period = 0.5 * (ub_period + lb_period)
+            self.period = target_period
             debug.info(1, "MinPeriod Search: {0}ns (ub: {1} lb: {2})".format(target_period,
                                                                              ub_period,
                                                                              lb_period))
 
-            if self.try_period(target_period, load, slew, feasible_delay_lh, feasible_delay_hl):
+            if self.try_period(feasible_delay_lh, feasible_delay_hl):
                 ub_period = target_period
             else:
                 lb_period = target_period
@@ -452,14 +460,14 @@ class delay():
                 return ub_period
 
 
-    def try_period(self, period, load, slew, feasible_delay_lh, feasible_delay_hl):
+    def try_period(self, feasible_delay_lh, feasible_delay_hl):
         """ 
         This tries to simulate a period and checks if the result
         works. If it does and the delay is within 5% still, it returns True.
         """
 
         # Checking from not data_value to data_value
-        self.write_delay_stimulus(period,load,slew)
+        self.write_delay_stimulus()
         self.stim.run_sim()
         delay_hl = ch.parse_output("timing", "delay_hl")
         delay_lh = ch.parse_output("timing", "delay_lh")
@@ -467,22 +475,22 @@ class delay():
         slew_lh = ch.parse_output("timing", "slew_lh")
         # if it failed or the read was longer than a period
         if type(delay_hl)!=float or type(delay_lh)!=float or type(slew_lh)!=float or type(slew_hl)!=float:
-            debug.info(2,"Invalid measures: Period {0}, delay_hl={1}ns, delay_lh={2}ns slew_hl={3}ns slew_lh={4}ns".format(period,
-                                                                                                                   delay_hl,
-                                                                                                                   delay_lh,
-                                                                                                                   slew_hl,
-                                                                                                                   slew_lh))
+            debug.info(2,"Invalid measures: Period {0}, delay_hl={1}ns, delay_lh={2}ns slew_hl={3}ns slew_lh={4}ns".format(self.period,
+                                                                                                                           delay_hl,
+                                                                                                                           delay_lh,
+                                                                                                                           slew_hl,
+                                                                                                                           slew_lh))
             return False
         delay_hl *= 1e9
         delay_lh *= 1e9
         slew_hl *= 1e9
         slew_lh *= 1e9
-        if delay_hl>period or delay_lh>period or slew_hl>period or slew_lh>period:
-            debug.info(2,"Too long delay/slew: Period {0}, delay_hl={1}ns, delay_lh={2}ns slew_hl={3}ns slew_lh={4}ns".format(period,
-                                                                                                                      delay_hl,
-                                                                                                                      delay_lh,
-                                                                                                                      slew_hl,
-                                                                                                                      slew_lh))
+        if delay_hl>self.period or delay_lh>self.period or slew_hl>self.period or slew_lh>self.period:
+            debug.info(2,"Too long delay/slew: Period {0}, delay_hl={1}ns, delay_lh={2}ns slew_hl={3}ns slew_lh={4}ns".format(self.period,
+                                                                                                                              delay_hl,
+                                                                                                                              delay_lh,
+                                                                                                                              slew_hl,
+                                                                                                                              slew_lh))
             return False
         else:
             if not ch.relative_compare(delay_lh,feasible_delay_lh,error_tolerance=0.05):
@@ -495,11 +503,11 @@ class delay():
 
         #key=raw_input("press return to continue")
 
-        debug.info(2,"Successful period {0}, delay_hl={1}ns, delay_lh={2}ns slew_hl={3}ns slew_lh={4}ns".format(period,
-                                                                                                        delay_hl,
-                                                                                                        delay_lh,
-                                                                                                        slew_hl,
-                                                                                                        slew_lh))
+        debug.info(2,"Successful period {0}, delay_hl={1}ns, delay_lh={2}ns slew_hl={3}ns slew_lh={4}ns".format(self.period,
+                                                                                                                delay_hl,
+                                                                                                                delay_lh,
+                                                                                                                slew_hl,
+                                                                                                                slew_lh))
         return True
     
     def set_probe(self,probe_address, probe_data):
@@ -548,15 +556,17 @@ class delay():
         # feasible_delay_hl=0.17953789
         # load=1.6728
         # slew=0.04
-        # self.try_period(target_period, load, slew, feasible_delay_lh, feasible_delay_hl)
+        # self.try_period(target_period, feasible_delay_lh, feasible_delay_hl)
         # sys.exit(1)
 
 
         # 1) Find a feasible period and it's corresponding delays using the trimmed array.
-        (feasible_period, feasible_delay_lh, feasible_delay_hl) = self.find_feasible_period(max(loads), max(slews))
+        self.load=max(loads)
+        self.slew=max(slews)
+        (feasible_delay_lh, feasible_delay_hl) = self.find_feasible_period()
         debug.check(feasible_delay_lh>0,"Negative delay may not be possible")
         debug.check(feasible_delay_hl>0,"Negative delay may not be possible")
-
+        
         # 2) Measure the delay, slew and power for all slew/load pairs.
         # Make a list for each type of measurement to append results to
         char_data = {}
@@ -565,29 +575,31 @@ class delay():
             char_data[m]=[]
         full_array_leakage = {}
         trim_array_leakage = {}        
-        for load in loads:
+        for self.load in loads:
             # 2a) Find the leakage power of the trimmmed and  UNtrimmed arrays.
-            (full_leak, trim_leak)=self.run_power_simulation(feasible_period, load)
-            full_array_leakage[load]=full_leak
-            trim_array_leakage[load]=trim_leak
-            char_data["leakage_power"].append(full_array_leakage[load])
+            (full_leak, trim_leak)=self.run_power_simulation()
+            full_array_leakage[self.load]=full_leak
+            trim_array_leakage[self.load]=trim_leak
+            char_data["leakage_power"].append(full_array_leakage[self.load])
 
-        for slew in slews:
-            for load in loads:
+        for self.slew in slews:
+            for self.load in loads:
                 # 2c) Find the delay, dynamic power, and leakage power of the trimmed array.
-                (success, delay_results) = self.run_delay_simulation(feasible_period, load, slew)
-                debug.check(success,"Couldn't run a simulation. slew={0} load={1}\n".format(slew,load))
+                (success, delay_results) = self.run_delay_simulation()
+                debug.check(success,"Couldn't run a simulation. slew={0} load={1}\n".format(self.slew,self.load))
                 for k,v in delay_results.items():
                     if "power" in k:
                         # Subtract partial array leakage and add full array leakage for the power measures
-                        char_data[k].append(v - trim_array_leakage[load] + full_array_leakage[load])
+                        char_data[k].append(v - trim_array_leakage[self.load] + full_array_leakage[self.load])
                     else:
                         char_data[k].append(v)
 
 
 
         # 3) Finds the minimum period without degrading the delays by X%
-        min_period = self.find_min_period(feasible_period, max(loads), max(slews), feasible_delay_lh, feasible_delay_hl)
+        self.load=max(loads)
+        self.slew=max(slews)
+        min_period = self.find_min_period(feasible_delay_lh, feasible_delay_hl)
         debug.check(type(min_period)==float,"Couldn't find minimum period.")
         debug.info(1, "Min Period: {0}n with a delay of {1} / {2}".format(min_period, feasible_delay_lh, feasible_delay_hl))
 
@@ -599,7 +611,7 @@ class delay():
 
     
 
-    def obtain_cycle_times(self, period):
+    def obtain_cycle_times(self):
         """Returns a list of key time-points [ns] of the waveform (each rising edge)
         of the cycles to do a timing evaluation. The last time is the end of the simulation
         and does not need a rising edge."""
@@ -611,87 +623,87 @@ class delay():
         # idle cycle, no operation
         msg = "Idle cycle (no clock)"
         self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(0,
-                                                                t_current,
-                                                                msg))
+                                                                  t_current,
+                                                                  msg))
         self.cycle_times.append(t_current)
-        t_current += period
+        t_current += self.period
 
         # One period
         msg = "W data 1 address 11..11 to initialize cell"
         self.cycle_times.append(t_current)
         self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(len(self.cycle_times)-1,
-                                                                t_current,
-                                                                msg))
-        t_current += period
+                                                                  t_current,
+                                                                  msg))
+        t_current += self.period
 
         # One period
         msg = "W data 0 address 11..11 (to ensure a write of value works)"
         self.cycle_times.append(t_current)
         self.write0_cycle=len(self.cycle_times)-1
         self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(len(self.cycle_times)-1,
-                                                                t_current,
-                                                                msg))
-        t_current += period
+                                                                  t_current,
+                                                                  msg))
+        t_current += self.period
         
         # One period
         msg = "W data 1 address 00..00 (to clear bus caps)"
         self.cycle_times.append(t_current)
         self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(len(self.cycle_times)-1,
-                                                                t_current,
-                                                                msg))
-        t_current += period
+                                                                  t_current,
+                                                                  msg))
+        t_current += self.period
 
         # One period
         msg = "R data 0 address 11..11 to check W0 worked"
         self.cycle_times.append(t_current)
         self.read0_cycle=len(self.cycle_times)-1
         self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(len(self.cycle_times)-1,
-                                                                t_current,
-                                                                msg))
-        t_current += period
+                                                                  t_current,
+                                                                  msg))
+        t_current += self.period
 
         # One period
         msg = "Idle cycle"
         self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(len(self.cycle_times)-1,
-                                                                t_current,
-                                                                msg))
+                                                                  t_current,
+                                                                  msg))
         self.cycle_times.append(t_current)
         self.idle_cycle=len(self.cycle_times)-1        
-        t_current += period
+        t_current += self.period
 
         # One period
         msg = "W data 1 address 11..11 (to ensure a write of value worked)"
         self.cycle_times.append(t_current)
         self.write1_cycle=len(self.cycle_times)-1
         self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(len(self.cycle_times)-1,
-                                                                t_current,
-                                                                msg))
-        t_current += period
+                                                                  t_current,
+                                                                  msg))
+        t_current += self.period
 
         # One period
         msg = "W data 0 address 00..00 (to clear bus caps)"
         self.cycle_times.append(t_current)
         self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(len(self.cycle_times)-1,
-                                                                t_current,
-                                                                msg))
-        t_current += period
+                                                                  t_current,
+                                                                  msg))
+        t_current += self.period
         
         # One period
         msg = "R data 1 address 11..11 to check W1 worked"
         self.cycle_times.append(t_current)
         self.read1_cycle=len(self.cycle_times)-1
         self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(len(self.cycle_times)-1,
-                                                                t_current,
-                                                                msg))
-        t_current += period
+                                                                  t_current,
+                                                                  msg))
+        t_current += self.period
 
         # One period
         msg = "Idle cycle"
         self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(len(self.cycle_times)-1,
-                                                                t_current,
-                                                                msg))
+                                                                  t_current,
+                                                                  msg))
         self.cycle_times.append(t_current)
-        t_current += period
+        t_current += self.period
 
 
 
@@ -702,9 +714,9 @@ class delay():
         delay_hl = []
         slew_lh = []
         slew_hl = []
-        for slew in slews:
-            for load in loads:
-                bank_delay = sram.analytical_delay(slew,load)
+        for self.slew in slews:
+            for self.load in loads:
+                bank_delay = sram.analytical_delay(self.slew,self.load)
                 # Convert from ps to ns
                 delay_lh.append(bank_delay.delay/1e3)
                 delay_hl.append(bank_delay.delay/1e3)
@@ -723,15 +735,15 @@ class delay():
                 }
         return data
 
-    def gen_data(self, clk_times, sig_name, period, slew):
+    def gen_data(self, clk_times, sig_name):
         """ Generates the PWL data inputs for a simulation timing test. """
         # values for NOP, W1, W0, W1, R0, NOP, W1, W0, R1, NOP
         # we are asserting the opposite value on the other side of the tx gate during
         # the read to be "worst case". Otherwise, it can actually assist the read.
         values = [0, 1, 0, 1, 1, 1, 1, 0, 0, 0 ]
-        self.stim.gen_pwl(sig_name, clk_times, values, period, slew, 0.05)
+        self.stim.gen_pwl(sig_name, clk_times, values, self.period, self.slew, 0.05)
 
-    def gen_addr(self, clk_times, addr, period, slew):
+    def gen_addr(self, clk_times, addr):
         """ 
         Generates the address inputs for a simulation timing test. 
         This alternates between all 1's and all 0's for the address.
@@ -743,34 +755,34 @@ class delay():
         for i in range(len(addr)):
             sig_name = "A[{0}]".format(i)
             if addr[i]=="1":
-                self.stim.gen_pwl(sig_name, clk_times, ones_values, period, slew, 0.05)
+                self.stim.gen_pwl(sig_name, clk_times, ones_values, self.period, self.slew, 0.05)
             else:
-                self.stim.gen_pwl(sig_name, clk_times, zero_values, period, slew, 0.05)
+                self.stim.gen_pwl(sig_name, clk_times, zero_values, self.period, self.slew, 0.05)
 
 
-    def gen_csb(self, clk_times, period, slew):
+    def gen_csb(self, clk_times):
         """ Generates the PWL CSb signal """
         # values for NOP, W1, W0, W1, R0, NOP, W1, W0, R1, NOP
         # Keep CSb asserted in NOP for measuring >1 period
         values = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        self.stim.gen_pwl("csb", clk_times, values, period, slew, 0.05)
+        self.stim.gen_pwl("csb", clk_times, values, self.period, self.slew, 0.05)
 
-    def gen_web(self, clk_times, period, slew):
+    def gen_web(self, clk_times):
         """ Generates the PWL WEb signal """
         # values for NOP, W1, W0, W1, R0, NOP, W1, W0, R1, NOP
         # Keep WEb deasserted in NOP for measuring >1 period
         values = [1, 0, 0, 0, 1, 1, 0, 0, 1, 1]
-        self.stim.gen_pwl("web", clk_times, values, period, slew, 0.05)
+        self.stim.gen_pwl("web", clk_times, values, self.period, self.slew, 0.05)
 
         # Keep acc_en deasserted in NOP for measuring >1 period
         values = [1, 0, 0, 0, 1, 1, 0, 0, 1, 1]
-        self.stim.gen_pwl("acc_en", clk_times, values, period, slew, 0)
+        self.stim.gen_pwl("acc_en", clk_times, values, self.period, self.slew, 0)
         values = [0, 1, 1, 1, 0, 0, 1, 1, 0, 0]
-        self.stim.gen_pwl("acc_en_inv", clk_times, values, period, slew, 0)
+        self.stim.gen_pwl("acc_en_inv", clk_times, values, self.period, self.slew, 0)
         
-    def gen_oeb(self, clk_times, period, slew):
+    def gen_oeb(self, clk_times):
         """ Generates the PWL WEb signal """
         # values for NOP, W1, W0, W1, R0, W1, W0, R1, NOP
         # Keep OEb asserted in NOP for measuring >1 period
         values = [1, 1, 1, 1, 0, 0, 1, 1, 0, 0]
-        self.stim.gen_pwl("oeb", clk_times, values, period, slew, 0.05)
+        self.stim.gen_pwl("oeb", clk_times, values, self.period, self.slew, 0.05)

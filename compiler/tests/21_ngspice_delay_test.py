@@ -47,7 +47,7 @@ class timing_sram_test(openram_test):
         loads = [tech.spice["msflop_in_cap"]*4]
         slews = [tech.spice["rise_time"]*2]
         data = d.analyze(probe_address, probe_data,slews,loads)
-        print data
+        #print data
         if OPTS.tech_name == "freepdk45":
             golden_data = {'leakage_power': [0.0007348262],
                            'delay_lh': [0.05799613],

@@ -1229,22 +1229,22 @@ class bank(design.design):
                  + bitcell_array_delay + bl_t_data_out_delay + data_t_DATA_delay
         return result
         
-    def analytical_power(self, slew, load):
-        """ return  analytical power of the bank. Basic skeleton code"""
-        msf_addr_power = self.msf_address.analytical_power(slew, self.decoder.input_load())
-        msf_data_in_power = self.msf_data_in.analytical_power(slew, self.decoder.input_load())
+    # def analytical_power(self, slew, load):
+        # """ return  analytical power of the bank. Basic skeleton code"""
+        # msf_addr_power = self.msf_address.analytical_power(slew, self.decoder.input_load())
+        # msf_data_in_power = self.msf_data_in.analytical_power(slew, self.decoder.input_load())
         
-        decoder_power = self.decoder.analytical_power(slew, load)
+        # decoder_power = self.decoder.analytical_power(slew, load)
         
-        word_driver_power = self.wordline_driver.analytical_power(slew, self.bitcell_array.input_load())
+        # word_driver_power = self.wordline_driver.analytical_power(slew, self.bitcell_array.input_load())
         
-        bitcell_array_power = self.bitcell_array.analytical_power(slew)
+        # bitcell_array_power = self.bitcell_array.analytical_power(slew)
         
-        bl_t_data_out_power = self.sense_amp_array.analytical_power(slew,
-                                                                    self.bitcell_array.output_load())
+        # bl_t_data_out_power = self.sense_amp_array.analytical_power(slew,
+                                                                    # self.bitcell_array.output_load())
         
-        data_t_DATA_power = self.tri_gate_array.analytical_power(slew, load)
+        # data_t_DATA_power = self.tri_gate_array.analytical_power(slew, load)
         
-        total_power = msf_addr_power + msf_data_in_power + decoder_power + word_driver_power \
-                      + bitcell_array_power + bl_t_data_out_power + data_t_DATA_power
-        return total_power
+        # total_power = msf_addr_power + msf_data_in_power + decoder_power + word_driver_power \
+                      # + bitcell_array_power + bl_t_data_out_power + data_t_DATA_power
+        # return total_power

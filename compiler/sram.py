@@ -1015,34 +1015,29 @@ class sram(design.design):
         """ LH and HL are the same in analytical model. """
         return self.bank.analytical_delay(slew,load)
     
-    def analytical_power(self,slew,load):
+    def analytical_power(self, vdd, temp, load):
         """ Just a test function for the power."""
 
         power_sum = 0;
         print "Module Powers"
-        for mod in self.mods:
-            #print mod.name," Power: ", mod.analytical_power(slew, load)
-            power_sum += mod.analytical_power(slew, load)
+        # for mod in self.mods:
+            # print mod.name," Power: ", mod.analytical_power(slew, load)
+            # power_sum += mod.analytical_power(slew, load)
         
-        print "Instances:"
-        for inst in self.insts:
-            print inst.name," Instance"
-            
-        print "Modules from Instances:"
-        for inst in self.insts:
-            print inst.mod.name," Module"
+        # print "Instances:"
+        # for inst in self.insts:
+            # print inst.name," Instance"
             
         
-        print "Instances from Modules of Instances:"
-        for inst in self.insts:
-            print inst.mod.name," Module"
-            for mod_inst in inst.mod.insts:
-                print mod_inst.name," Instance"
-
-        #There is only one instance of the bank module in the mod list so this is too account for the other banks
-        bank_power = self.bank.analytical_power(slew,load)
+        # print "Instances from Modules of Instances:"
+        # for inst in self.insts:
+            # print inst.mod.name," Module"
+            # for mod_inst in inst.mod.insts:
+                # print mod_inst.name," Instance"
         
-        return bank_power
+        
+        power_sum = self.control_logic.analytical_power(vdd, temp, load)
+        return power_sum
 
     def save_output(self):
         """ Save all the output files while reporting time to do it as well. """

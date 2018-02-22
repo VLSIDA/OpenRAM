@@ -122,6 +122,9 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
         return text
      
     def analytical_power(self, slew, load):
-        #This function is here return 0 power for every module that does not have a power function defined
-        #This is a hack and should be made better (also may be a little dangerous)
-        return 0
+        """ Get total power of a module  """
+        #print "Getting power for ",self.name," module"
+        total_module_power = 0 
+        for inst in self.insts:
+            total_module_power += inst.mod.analytical_power(slew, load)
+        return total_module_power

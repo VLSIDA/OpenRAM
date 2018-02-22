@@ -242,6 +242,18 @@ class pinv(pgate.pgate):
         c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff
         return self.cal_delay_with_rc(r = r, c =  c_para+load, slew = slew)
         
-    def analytical_power(self, slew, load=0.0):
+    def analytical_power(self, vdd, temp, load):
         #Adding a magic number until I can properly define this.
-        return 3
+        c_eff = self.calculate_effective_capacitance(load)
+        f = spice["default_event_rate"]
+        power_dyn = c_eff*vdd*vdd*f
+        power_leak = spice["inv_leakage"]
+        
+        total_power = self.return_power(power_dyn, power_leak)
+        return total_power
+        
+    def calculate_effective_capacitance(self, load):
+        c_load = load
+        c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff
+        transistion_prob = spice["inv_transisition_prob"]
+        return transistion_prob*(c_load + c_para) 

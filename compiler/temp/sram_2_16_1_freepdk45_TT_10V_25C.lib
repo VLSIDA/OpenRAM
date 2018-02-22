@@ -92,10 +92,10 @@ cell (sram_2_16_1_freepdk45){
         internal_power(){
             when : "OEb & !clk"; 
             rise_power(scalar){
-                values("292");
+                values("0");
             }
             fall_power(scalar){
-                values("292");
+                values("0");
             }
         }
         timing(){ 
@@ -129,10 +129,10 @@ cell (sram_2_16_1_freepdk45){
         internal_power(){
             when : "!OEb & !clk"; 
             rise_power(scalar){
-                values("292");
+                values("0");
             }
             fall_power(scalar){
-                values("292");
+                values("0");
             }
         }
         timing(){ 

@@ -550,7 +550,9 @@ class delay():
                 LH_slew.append(bank_delay.slew/1e3)
                 HL_slew.append(bank_delay.slew/1e3)
         
-        power = sram.analytical_power(slew, load)
+        voltage = 1
+        temperature = 20
+        power = sram.analytical_power(voltage, temperature, load)
         
         data = {"min_period": 0, 
                 "delay1": LH_delay,

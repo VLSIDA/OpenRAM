@@ -1,6 +1,8 @@
 SUBDIRS := $(wildcard */.)
 SUBDIRSCLEAN=$(addsuffix clean,$(SUBDIRS))
 
+MAKEFLAGS += -j 2
+
 all: $(SUBDIRS)
 
 $(SUBDIRS):

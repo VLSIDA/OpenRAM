@@ -215,7 +215,7 @@ class spice(verilog.verilog):
     def generate_rc_net(self,lump_num, wire_length, wire_width):
         return wire_spice_model(lump_num, wire_length, wire_width)
         
-    def return_power(self, dynamic, leakage):
+    def return_power(self, dynamic=0.0, leakage=0.0):
         return power_data(dynamic, leakage)
 
 class delay_data:

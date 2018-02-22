@@ -214,6 +214,6 @@ class pnand2(pgate.pgate):
         c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff
         return self.cal_delay_with_rc(r = r, c =  c_para+load, slew = slew)
         
-    def analytical_power(self, slew, load=0.0):
+    def analytical_power(self, vdd, temp, load):
         #Adding a magic number until I can properly define this.
-        return 1
+        return self.return_power()

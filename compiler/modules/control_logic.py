@@ -97,7 +97,7 @@ class control_logic(design.design):
 
         # GAP between main control and replica bitline
         self.replica_bitline_gap = 2*self.m2_pitch
-
+        
 
 
     def add_modules(self):
@@ -691,7 +691,10 @@ class control_logic(design.design):
     def analytical_power(self, vdd, temp, load):
         #This has yet to be fully determined. 
         print "Instances:"
+        total_power = self.return_power() #empty power object
         for inst in self.insts:
             print inst.name," Instance"
+            total_power += inst.mod.analytical_power(vdd, temp, load)
+            
         #currently, only return flop array power
-        return 0
+        return total_power

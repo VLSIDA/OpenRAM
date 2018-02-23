@@ -59,7 +59,7 @@ class lib:
                                                                   proc,
                                                                   volt,
                                                                   temp)
-                    self.corner_name = self.corner_name.replace(".","") # Remove decimals
+                    self.corner_name = self.corner_name.replace(".","p") # Remove decimals
                     lib_name = self.out_dir+"{}.lib".format(self.corner_name)
                     
                     # A corner is a tuple of PVT

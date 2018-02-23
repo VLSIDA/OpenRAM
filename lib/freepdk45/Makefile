@@ -15,6 +15,8 @@ all : $(SPICES)
 OPTS = -c
 # Do not characterize or perform DRC/LVS
 OPTS += -n
+# Verbosity
+OPTS += -v
 %.sp : %.py
 	$(eval bname=$(basename $(notdir $<)))
 	openram.py $(OPTS) $< 2>&1 > $(bname).log

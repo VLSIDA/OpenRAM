@@ -14,7 +14,7 @@ all : $(SPICES)
 # Characterize and perform DRC/LVS
 OPTS = -c 
 # Do not characterize or perform DRC/LVS
-OPTS += -n
+#OPTS += -n
 # Verbosity
 OPTS += -v
 %.sp : %.py

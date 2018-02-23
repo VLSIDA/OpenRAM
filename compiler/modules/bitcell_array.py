@@ -178,7 +178,7 @@ class bitcell_array(design.design):
         return self.return_delay(cell_delay.delay+wl_to_cell_delay.delay,
                                  wl_to_cell_delay.slew)
                         
-    def analytical_power(self, slew, load=0):
+    def analytical_power(self, vdd, temp, load):
         #This will be pretty bare bones as the power needs to be determined from the dynamic power
         #of the word line, leakage power from the cell, and dynamic power of the bitlines as a few
         #sources for power. These features are tbd.
@@ -194,10 +194,12 @@ class bitcell_array(design.design):
                                                    # hence just use the whole c
         bl_swing = 0.1
         #Calculate the bitcell power which can include leakage as well as bitline dynamic
-        cell_power = self.cell.analytical_power(slew, cell_load, swing = bl_swing)
-
+        cell_power = self.cell.analytical_power(vdd, temp, load)
+        
+        #Leakage power grows with entire array. Dynamic currently not accounted for.
+        total_power = self.return_power(cell_power.dynamic, cell_power.leakage * self.column_size * self.row_size)
         #calculate power for entire array based off a single cell
-        return cell_power * self.column_size * self.row_size
+        return total_power
 
     def gen_wl_wire(self):
         wl_wire = self.generate_rc_net(int(self.column_size), self.width, drc["minwidth_metal1"])

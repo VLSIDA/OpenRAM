@@ -33,9 +33,10 @@ class tri_gate(design.design):
         c_para = spice["min_tx_drain_c"]
         return self.cal_delay_with_rc(r = r, c =  c_para+load, slew = slew)
         
-    def analytical_power(self, slew, load=0.0):
-        #Skeleton code for the power of a trigate. Returns magic number for now.
-        return 2
+    def analytical_power(self, vdd, temp, load):
+        #Not sure how to determine this yet. Tri-gates return zero power for now
+        total_power = self.return_power()
+        return total_power
 
 
     def input_load(self):

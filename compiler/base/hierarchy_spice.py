@@ -270,7 +270,7 @@ class power_data:
         Override - function (left), for power_data: a+b != b+a
         """
         assert isinstance(other,power_data)
-        return delay_data(other.dynamic + self.dynamic,
+        return power_data(other.dynamic + self.dynamic,
                           other.leakage + self.leakage)
 
     def __radd__(self, other):
@@ -278,7 +278,7 @@ class power_data:
         Override - function (left), for power_data: a+b != b+a
         """
         assert isinstance(other,power_data)
-        return delay_data(other.dynamic + self.dynamic,
+        return power_data(other.dynamic + self.dynamic,
                           other.leakage + self.leakage)
 
 

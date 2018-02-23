@@ -110,7 +110,7 @@ class lib:
         self.write_defaults()
         self.write_LUT_templates()
 
-        self.lib.write("    default_operating_conditions : TT; \n")
+        self.lib.write("    default_operating_conditions : OC; \n")
         
         self.write_bus()
 

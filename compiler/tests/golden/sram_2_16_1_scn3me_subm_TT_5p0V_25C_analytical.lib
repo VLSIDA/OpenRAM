@@ -1,4 +1,4 @@
-library (sram_2_16_1_scn3me_subm_TT_50V_25C_lib){
+library (sram_2_16_1_scn3me_subm_TT_5p0V_25C_lib){
     delay_model : "table_lookup";
     time_unit : "1ns" ;
     voltage_unit : "1v" ;
@@ -7,7 +7,8 @@ library (sram_2_16_1_scn3me_subm_TT_50V_25C_lib){
     capacitive_load_unit(1 ,fF) ;
     leakage_power_unit : "1mW" ;
     pulling_resistance_unit :"1kohm" ;
-    operating_conditions(TT){
+    operating_conditions(OC){
+    process : 1.0 ;
     voltage : 5.0 ;
     temperature : 25;
     }
@@ -21,6 +22,9 @@ library (sram_2_16_1_scn3me_subm_TT_50V_25C_lib){
     slew_lower_threshold_pct_rise  :  10.0 ;
     slew_upper_threshold_pct_rise  :  90.0 ;
 
+    nom_voltage : 5.0;
+    nom_temperature : 25;
+    nom_process : 1.0;
     default_cell_leakage_power    : 0.0 ;
     default_leakage_power_density : 0.0 ;
     default_input_pin_cap    : 1.0 ;
@@ -45,7 +49,7 @@ library (sram_2_16_1_scn3me_subm_TT_50V_25C_lib){
         index_2("0.0125, 0.05, 0.4");
     }
 
-    default_operating_conditions : TT; 
+    default_operating_conditions : OC; 
 
 
     type (DATA){
@@ -74,12 +78,18 @@ cell (sram_2_16_1_scn3me_subm){
     dont_use  : true;
     map_only   : true;
     dont_touch : true;
-    area : 122426.46;
+    area : 134589.78;
 
+    leakage_power () {
+      when : "CSb";
+      value : 0;
+    }
+    cell_leakage_power : 0;
     bus(DATA){
         bus_type  : DATA; 
         direction  : inout; 
         max_capacitance : 78.5936;  
+        min_capacitance : 2.45605;  
         three_state : "!OEb & !clk"; 
         memory_write(){ 
             address : ADDR; 
@@ -89,15 +99,6 @@ cell (sram_2_16_1_scn3me_subm){
             address : ADDR; 
         }
         pin(DATA[1:0]){
-        internal_power(){
-            when : "OEb & !clk"; 
-            rise_power(scalar){
-                values("0");
-            }
-            fall_power(scalar){
-                values("0");
-            }
-        }
         timing(){ 
             timing_type : setup_rising; 
             related_pin  : "clk"; 
@@ -126,15 +127,6 @@ cell (sram_2_16_1_scn3me_subm){
                    "0.001, 0.001, 0.001");
             }
         }
-        internal_power(){
-            when : "!OEb & !clk"; 
-            rise_power(scalar){
-                values("0");
-            }
-            fall_power(scalar){
-                values("0");
-            }
-        }
         timing(){ 
             timing_sense : non_unate; 
             related_pin : "clk"; 
@@ -149,12 +141,12 @@ cell (sram_2_16_1_scn3me_subm){
                    "0.556, 0.603, 1.044",\
                    "0.556, 0.603, 1.044");
             }
-        rise_transition(CELL_TABLE) {
+            rise_transition(CELL_TABLE) {
             values("0.024, 0.081, 0.61",\
                    "0.024, 0.081, 0.61",\
                    "0.024, 0.081, 0.61");
-              }
-        fall_transition(CELL_TABLE) {
+            }
+            fall_transition(CELL_TABLE) {
             values("0.024, 0.081, 0.61",\
                    "0.024, 0.081, 0.61",\
                    "0.024, 0.081, 0.61");
@@ -168,7 +160,6 @@ cell (sram_2_16_1_scn3me_subm){
         direction  : input; 
         capacitance : 9.8242;  
         max_transition       : 0.4;
-        fanout_load          : 1.000000;
         pin(ADDR[3:0]){
         timing(){ 
             timing_type : setup_rising; 
@@ -304,6 +295,33 @@ cell (sram_2_16_1_scn3me_subm){
         clock             : true;
         direction  : input; 
         capacitance : 9.8242;  
+        internal_power(){
+            when : "!CSb & clk & !WEb"; 
+            rise_power(scalar){
+                values("0.0");
+            }
+            fall_power(scalar){
+                values("0.0");
+            }
+        }
+        internal_power(){
+            when : "!CSb & !clk & WEb"; 
+            rise_power(scalar){
+                values("0.0");
+            }
+            fall_power(scalar){
+                values("0.0");
+            }
+        }
+        internal_power(){
+            when : "CSb"; 
+            rise_power(scalar){
+                values("0");
+            }
+            fall_power(scalar){
+                values("0");
+            }
+        }
         timing(){ 
             timing_type :"min_pulse_width"; 
             related_pin  : clk; 

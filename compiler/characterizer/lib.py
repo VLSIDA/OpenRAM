@@ -130,7 +130,7 @@ class lib:
         # Leakage is included in dynamic when macro is enabled
         self.lib.write("    leakage_power () {\n")
         self.lib.write("      when : \"CSb\";\n")
-        self.lib.write("      value : {};\n".format(np.mean(self.char_results["leakage_power"])))
+        self.lib.write("      value : {};\n".format(self.char_results["leakage_power"]))
         self.lib.write("    }\n")
         self.lib.write("    cell_leakage_power : {};\n".format(0))
         

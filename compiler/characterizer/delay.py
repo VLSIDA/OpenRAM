@@ -573,14 +573,10 @@ class delay():
         for m in ["delay_lh", "delay_hl", "slew_lh", "slew_hl", "read0_power",
                   "read1_power", "write0_power", "write1_power", "leakage_power"]:
             char_data[m]=[]
-        full_array_leakage = {}
-        trim_array_leakage = {}        
-        for self.load in loads:
-            # 2a) Find the leakage power of the trimmmed and  UNtrimmed arrays.
-            (full_leak, trim_leak)=self.run_power_simulation()
-            full_array_leakage[self.load]=full_leak
-            trim_array_leakage[self.load]=trim_leak
-            char_data["leakage_power"].append(full_array_leakage[self.load])
+
+        # 2a) Find the leakage power of the trimmmed and  UNtrimmed arrays.
+        (full_array_leakage, trim_array_leakage)=self.run_power_simulation()
+        char_data["leakage_power"]=full_array_leakage
 
         for self.slew in slews:
             for self.load in loads:
@@ -590,7 +586,7 @@ class delay():
                 for k,v in delay_results.items():
                     if "power" in k:
                         # Subtract partial array leakage and add full array leakage for the power measures
-                        char_data[k].append(v - trim_array_leakage[self.load] + full_array_leakage[self.load])
+                        char_data[k].append(v - trim_array_leakage + full_array_leakage)
                     else:
                         char_data[k].append(v)
 
@@ -722,7 +718,7 @@ class delay():
                 delay_hl.append(bank_delay.delay/1e3)
                 slew_lh.append(bank_delay.slew/1e3)
                 slew_hl.append(bank_delay.slew/1e3)
-        
+
         data = {"min_period": 0, 
                 "delay_lh": delay_lh,
                 "delay_hl": delay_hl,
@@ -731,7 +727,8 @@ class delay():
                 "read0_power": 0,
                 "read1_power": 0,
                 "write0_power": 0,
-                "write1_power": 0
+                "write1_power": 0,
+                "leakage_power": 0
                 }
         return data
 

@@ -211,9 +211,11 @@ spice["fet_models"] = { "TT" : [SPICE_MODEL_DIR+"/nom/pmos.sp",SPICE_MODEL_DIR+"
 #spice stimulus related variables
 spice["feasible_period"] = 5         # estimated feasible period in ns
 spice["supply_voltages"] = [4.5, 5.0, 5.5]  # Supply voltage corners in [Volts]
+spice["nom_supply_voltage"] = 5.0    # Nominal supply voltage in [Volts]
 spice["rise_time"] = 0.05            # rise time in [Nano-seconds]
 spice["fall_time"] = 0.05            # fall time in [Nano-seconds]
 spice["temperatures"] = [0, 25, 100]  # Temperature corners (celcius)
+spice["nom_temperature"] = 25        # Nominal temperature (celcius)
 
 #sram signal names
 #FIXME: We don't use these everywhere...

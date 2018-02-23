@@ -30,7 +30,7 @@ class lib:
         #self.load_scales = np.array([0.1, 0.25, 0.5, 1, 2, 4, 8])
         self.load_scales = np.array([0.25, 1, 8])
         #self.load_scales = np.array([0.25, 1])
-        self.load = tech.spice["msflop_in_cap"]
+        self.load = tech.spice["dff_in_cap"]
         self.loads = self.load_scales*self.load
         debug.info(1,"Loads: {0}".format(self.loads))
         
@@ -74,9 +74,14 @@ class lib:
             self.lib = open(lib_name, "w")
             debug.info(1,"Writing to {0}".format(lib_name))
             self.characterize()
+            self.lib.close()
 
     def characterize(self):
         """ Characterize the current corner. """
+
+        self.compute_delay()
+
+        self.compute_setup_hold()
 
         self.write_header()
         
@@ -87,8 +92,13 @@ class lib:
         self.write_control_pins()
         
         self.write_clk()
+
+        self.write_footer()
+
         
-        self.lib.close()
+    def write_footer(self):
+        """ Write the footer """
+        self.lib.write("}\n")
 
     def write_header(self):
         """ Write the header information """
@@ -108,14 +118,21 @@ class lib:
         self.lib.write("{\n")
         self.lib.write("    memory(){ \n")
         self.lib.write("    type : ram;\n")
-        self.lib.write("    address_width : {0};\n".format(self.sram.addr_size))
-        self.lib.write("    word_width : {0};\n".format(self.sram.word_size))
+        self.lib.write("    address_width : {};\n".format(self.sram.addr_size))
+        self.lib.write("    word_width : {};\n".format(self.sram.word_size))
         self.lib.write("    }\n")
         self.lib.write("    interface_timing : true;\n")
         self.lib.write("    dont_use  : true;\n")
         self.lib.write("    map_only   : true;\n")
         self.lib.write("    dont_touch : true;\n")
-        self.lib.write("    area : {0};\n\n".format(self.sram.width * self.sram.height))
+        self.lib.write("    area : {};\n\n".format(self.sram.width * self.sram.height))
+
+        # Leakage is included in dynamic when macro is enabled
+        self.lib.write("    leakage_power () {\n")
+        self.lib.write("      when : \"CSb\";\n")
+        self.lib.write("      value : {};\n".format(np.mean(self.char_results["leakage_power"])))
+        self.lib.write("    }\n")
+        self.lib.write("    cell_leakage_power : {};\n".format(0))
         
     
     def write_units(self):
@@ -128,7 +145,8 @@ class lib:
         self.lib.write("    capacitive_load_unit(1 ,fF) ;\n")
         self.lib.write("    leakage_power_unit : \"1mW\" ;\n")
         self.lib.write("    pulling_resistance_unit :\"1kohm\" ;\n")
-        self.lib.write("    operating_conditions({}){{\n".format(self.process))
+        self.lib.write("    operating_conditions(OC){\n")
+        self.lib.write("    process : {} ;\n".format(1.0)) # How to use TT, FF, SS?
         self.lib.write("    voltage : {} ;\n".format(self.voltage))
         self.lib.write("    temperature : {};\n".format(self.temperature))
         self.lib.write("    }\n\n")
@@ -144,6 +162,10 @@ class lib:
         self.lib.write("    slew_upper_threshold_pct_fall  :  90.0 ;\n")
         self.lib.write("    slew_lower_threshold_pct_rise  :  10.0 ;\n")
         self.lib.write("    slew_upper_threshold_pct_rise  :  90.0 ;\n\n")
+
+        self.lib.write("    nom_voltage : {};\n".format(tech.spice["nom_supply_voltage"]))
+        self.lib.write("    nom_temperature : {};\n".format(tech.spice["nom_temperature"]))
+        self.lib.write("    nom_process : {};\n".format(1.0))
 
         self.lib.write("    default_cell_leakage_power    : 0.0 ;\n")
         self.lib.write("    default_leakage_power_density : 0.0 ;\n")
@@ -248,8 +270,6 @@ class lib:
     def write_FF_setuphold(self):
         """ Adds Setup and Hold timing results"""
 
-        self.compute_setup_hold()
-
         self.lib.write("        timing(){ \n")
         self.lib.write("            timing_type : setup_rising; \n")
         self.lib.write("            related_pin  : \"clk\"; \n")
@@ -280,12 +300,12 @@ class lib:
     def write_data_bus(self):
         """ Adds data bus timing results."""
 
-        self.compute_delay()
-        
         self.lib.write("    bus(DATA){\n")
         self.lib.write("        bus_type  : DATA; \n")
         self.lib.write("        direction  : inout; \n")
-        self.lib.write("        max_capacitance : {0};  \n".format(8*tech.spice["msflop_in_cap"]))
+        # This is conservative, but limit to range that we characterized.
+        self.lib.write("        max_capacitance : {0};  \n".format(max(self.loads)))
+        self.lib.write("        min_capacitance : {0};  \n".format(min(self.loads)))        
         self.lib.write("        three_state : \"!OEb & !clk\"; \n")
         self.lib.write("        memory_write(){ \n")
         self.lib.write("            address : ADDR; \n")
@@ -294,49 +314,29 @@ class lib:
         self.lib.write("        memory_read(){ \n")
         self.lib.write("            address : ADDR; \n")
         self.lib.write("        }\n")
-        self.lib.write("        pin(DATA[{0}:0])".format(self.sram.word_size - 1))
-        self.lib.write("{\n")
 
-        self.lib.write("        internal_power(){\n")
-        self.lib.write("            when : \"OEb & !clk\"; \n")
-        self.lib.write("            rise_power(scalar){\n")
-        self.lib.write("                values(\"{0}\");\n".format(np.mean(self.char_results["write1_power"])))
-        self.lib.write("            }\n")
-        self.lib.write("            fall_power(scalar){\n")
-        self.lib.write("                values(\"{0}\");\n".format(np.mean(self.char_results["write0_power"])))
-        self.lib.write("            }\n")
-        self.lib.write("        }\n")
 
+        self.lib.write("        pin(DATA[{0}:0]){{\n".format(self.sram.word_size - 1))
         self.write_FF_setuphold()
-       
-        self.lib.write("        internal_power(){\n")
-        self.lib.write("            when : \"!OEb & !clk\"; \n")
-        self.lib.write("            rise_power(scalar){\n")
-        self.lib.write("                values(\"{0}\");\n".format(np.mean(self.char_results["read1_power"])))
-        self.lib.write("            }\n")
-        self.lib.write("            fall_power(scalar){\n")
-        self.lib.write("                values(\"{0}\");\n".format(np.mean(self.char_results["read0_power"])))
-        self.lib.write("            }\n")
-        self.lib.write("        }\n")
         self.lib.write("        timing(){ \n")
         self.lib.write("            timing_sense : non_unate; \n")
         self.lib.write("            related_pin : \"clk\"; \n")
         self.lib.write("            timing_type : falling_edge; \n")
         self.lib.write("            cell_rise(CELL_TABLE) {\n")
         self.write_values(self.char_results["delay_lh"],len(self.loads),"            ")
-        self.lib.write("            }\n")
+        self.lib.write("            }\n") # rise delay
         self.lib.write("            cell_fall(CELL_TABLE) {\n")
         self.write_values(self.char_results["delay_hl"],len(self.loads),"            ")
-        self.lib.write("            }\n")
-        self.lib.write("        rise_transition(CELL_TABLE) {\n")
+        self.lib.write("            }\n") # fall delay
+        self.lib.write("            rise_transition(CELL_TABLE) {\n")
         self.write_values(self.char_results["slew_lh"],len(self.loads),"            ")
-        self.lib.write("              }\n")
-        self.lib.write("        fall_transition(CELL_TABLE) {\n")
+        self.lib.write("            }\n") # rise trans
+        self.lib.write("            fall_transition(CELL_TABLE) {\n")
         self.write_values(self.char_results["slew_hl"],len(self.loads),"            ")
-        self.lib.write("            }\n")
-        self.lib.write("        }\n")
-        self.lib.write("        }\n")        
-        self.lib.write("    }\n\n")
+        self.lib.write("            }\n") # fall trans
+        self.lib.write("        }\n") # timing
+        self.lib.write("        }\n") # pin        
+        self.lib.write("    }\n\n") # bus
 
 
     def write_addr_bus(self):
@@ -345,9 +345,8 @@ class lib:
         self.lib.write("    bus(ADDR){\n")
         self.lib.write("        bus_type  : ADDR; \n")
         self.lib.write("        direction  : input; \n")
-        self.lib.write("        capacitance : {0};  \n".format(tech.spice["msflop_in_cap"]))
+        self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]))
         self.lib.write("        max_transition       : {0};\n".format(self.slews[-1]))
-        self.lib.write("        fanout_load          : 1.000000;\n")
         self.lib.write("        pin(ADDR[{0}:0])".format(self.sram.addr_size - 1))
         self.lib.write("{\n")
         
@@ -364,7 +363,7 @@ class lib:
             self.lib.write("    pin({0})".format(i))
             self.lib.write("{\n")
             self.lib.write("        direction  : input; \n")
-            self.lib.write("        capacitance : {0};  \n".format(tech.spice["msflop_in_cap"]))
+            self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]))
             self.write_FF_setuphold()
             self.lib.write("    }\n\n")
 
@@ -372,12 +371,48 @@ class lib:
     def write_clk(self):
         """ Adds clk pin timing results."""
 
-        self.compute_delay()
-        
         self.lib.write("    pin(clk){\n")
         self.lib.write("        clock             : true;\n")
         self.lib.write("        direction  : input; \n")
-        self.lib.write("        capacitance : {0};  \n".format(tech.spice["msflop_in_cap"]))
+        # This should actually be a min inverter cap, but ok...
+        self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]))
+
+        # Find the average power of 1 and 0 bits for writes and reads over all loads/slews
+        # Could make it a table, but this is fine for now.
+        avg_write_power = np.mean(self.char_results["write1_power"] + self.char_results["write0_power"])
+        avg_read_power = np.mean(self.char_results["read1_power"] + self.char_results["read0_power"])        
+
+        # Equally divide read/write power between first and second half of clock period
+        self.lib.write("        internal_power(){\n")
+        self.lib.write("            when : \"!CSb & clk & !WEb\"; \n")
+        self.lib.write("            rise_power(scalar){\n")
+        self.lib.write("                values(\"{0}\");\n".format(avg_write_power/2.0))
+        self.lib.write("            }\n")
+        self.lib.write("            fall_power(scalar){\n")
+        self.lib.write("                values(\"{0}\");\n".format(avg_write_power/2.0))
+        self.lib.write("            }\n")
+        self.lib.write("        }\n")
+
+        self.lib.write("        internal_power(){\n")
+        self.lib.write("            when : \"!CSb & !clk & WEb\"; \n")
+        self.lib.write("            rise_power(scalar){\n")
+        self.lib.write("                values(\"{0}\");\n".format(avg_read_power/2.0))
+        self.lib.write("            }\n")
+        self.lib.write("            fall_power(scalar){\n")
+        self.lib.write("                values(\"{0}\");\n".format(avg_read_power/2.0))
+        self.lib.write("            }\n")
+        self.lib.write("        }\n")
+        # Have 0 internal power when disabled, this will be represented as leakage power.
+        self.lib.write("        internal_power(){\n")
+        self.lib.write("            when : \"CSb\"; \n")
+        self.lib.write("            rise_power(scalar){\n")
+        self.lib.write("                values(\"0\");\n")
+        self.lib.write("            }\n")
+        self.lib.write("            fall_power(scalar){\n")
+        self.lib.write("                values(\"0\");\n")
+        self.lib.write("            }\n")
+        self.lib.write("        }\n")
+
         min_pulse_width = ch.round_time(self.char_results["min_period"])/2.0
         min_period = ch.round_time(self.char_results["min_period"])
         self.lib.write("        timing(){ \n")
@@ -402,7 +437,6 @@ class lib:
         self.lib.write("         }\n")
         self.lib.write("    }\n")
         self.lib.write("    }\n")
-        self.lib.write("}\n")
 
     def compute_delay(self):
         """ Do the analysis if we haven't characterized the SRAM yet """

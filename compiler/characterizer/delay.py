@@ -299,7 +299,7 @@ class delay():
         starting point. 
         """
 
-        feasible_period = tech.spice["feasible_period"]
+        feasible_period = float(tech.spice["feasible_period"])
         time_out = 8
         while True:
             debug.info(1, "Trying feasible period: {0}ns".format(feasible_period))
@@ -317,11 +317,11 @@ class delay():
             feasible_delay_hl = results["delay_hl"]
             feasible_slew_hl = results["slew_hl"]
 
-            debug.info(1, "Found feasible_period: {0}ns feasible_delay_lh/0 {1}ns/{2}ns slew {3}ns/{4}ns".format(feasible_period,
-                                                                                                                 feasible_delay_lh,
-                                                                                                                 feasible_delay_hl,
-                                                                                                                 feasible_slew_lh,
-                                                                                                                 feasible_slew_hl))
+            debug.info(1, "Found feasible_period: {0}ns feasible_delay {1}ns/{2}ns slew {3}ns/{4}ns".format(feasible_period,
+                                                                                                            feasible_delay_lh,
+                                                                                                            feasible_delay_hl,
+                                                                                                            feasible_slew_lh,
+                                                                                                            feasible_slew_hl))
             self.period = feasible_period
             return (feasible_delay_lh, feasible_delay_hl)
 

@@ -1,0 +1,86 @@
+[globals/init_openram]: Initializing OpenRAM...
+[globals/setup_paths]: Temporary files saved in /tmp/openram_mrg_15146_temp/
+[globals/read_config]: Configuration file is /soe/mrg/OpenRAM/lib/scn3me_subm/configs/sram_1rw_64b_1024w_2bank_scn3me_subm.py
+[globals/read_config]: Output saved in ./
+[globals/import_tech]: Technology path is /soe/mrg/OpenRAM/technology/scn3me_subm/
+|==============================================================================|
+|=========                      OpenRAM Compiler                      =========|
+|=========                                                            =========|
+|=========               VLSI Design and Automation Lab               =========|
+|=========     University of California Santa Cruz CE Department      =========|
+|=========                                                            =========|
+|=========         VLSI Computer Architecture Research Group          =========|
+|=========          Oklahoma State University ECE Department          =========|
+|=========                                                            =========|
+|=========          Usage help: openram-user-group@ucsc.edu           =========|
+|=========        Development help: openram-dev-group@ucsc.edu        =========|
+|=========           Temp dir: /tmp/openram_mrg_15146_temp/           =========|
+|==============================================================================|
+Output files are sram_1rw_64b_1024w_2bank_scn3me_subm.(sp|gds|v|lib|lef)
+Technology: scn3me_subm
+Word size: 64
+Words: 1024
+Banks: 2
+[globals/get_tool]: Using DRC: /bsoe/software/mentor/calibre/aoi_cal_2017.3_29.23/bin/calibre
+[globals/get_tool]: Using LVS: /bsoe/software/mentor/calibre/aoi_cal_2017.3_29.23/bin/calibre
+[globals/get_tool]: Using PEX: /bsoe/software/mentor/calibre/aoi_cal_2017.3_29.23/bin/calibre
+** Start: 2018-02-23 18:57:00.595079 seconds
+[sram/compute_sizes]: Words per row: 4
+[control_logic/__init__]: Creating control_logic
+[ms_flop_array/__init__]: Creating msf_control
+[verify.calibre/run_drc]: msf_control	Geometries: 676	Checks: 31	Errors: 0
+[bitcell_array/__init__]: Creating bitline_load 26 x 1
+[verify.calibre/run_drc]: bitline_load	Geometries: 1577	Checks: 31	Errors: 0
+[verify.calibre/run_drc]: delay_chain	Geometries: 529	Checks: 31	Errors: 0
+[verify.calibre/run_drc]: replica_bitline	Geometries: 2451	Checks: 31	Errors: 0
+[verify.calibre/run_drc]: control_logic	Geometries: 4238	Checks: 31	Errors: 0
+[bitcell_array/__init__]: Creating bitcell_array 128 x 256
+[verify.calibre/run_drc]: bitcell_array	Geometries: 1934273	Checks: 31	Errors: 0
+[precharge_array/__init__]: Creating precharge_array
+[verify.calibre/run_drc]: precharge	Geometries: 54	Checks: 31	Errors: 0
+[verify.calibre/run_drc]: precharge_array	Geometries: 28162	Checks: 31	Errors: 0
+[single_level_column_mux_array/__init__]: Creating columnmux_array
+[verify.calibre/run_drc]: columnmux_array	Geometries: 18564	Checks: 31	Errors: 0
+[sense_amp_array/__init__]: Creating sense_amp_array
+[verify.calibre/run_drc]: sense_amp_array	Geometries: 5059	Checks: 31	Errors: 0
+[write_driver_array/__init__]: Creating write_driver_array
+[verify.calibre/run_drc]: write_driver_array	Geometries: 8131	Checks: 31	Errors: 0
+[verify.calibre/run_drc]: pre2x4	Geometries: 603	Checks: 31	Errors: 0
+[verify.calibre/run_drc]: pre3x8	Geometries: 1396	Checks: 31	Errors: 0
+[verify.calibre/run_drc]: hierarchical_decoder_128rows	Geometries: 38587	Checks: 31	Errors: 0
+[ms_flop_array/__init__]: Creating msf_address
+[verify.calibre/run_drc]: msf_address	Geometries: 2023	Checks: 31	Errors: 0
+[ms_flop_array/__init__]: Creating msf_data_in
+[verify.calibre/run_drc]: msf_data_in	Geometries: 14402	Checks: 31	Errors: 0
+[tri_gate_array/__init__]: Creating tri_gate_array
+[verify.calibre/run_drc]: tri_gate_array	Geometries: 3652	Checks: 31	Errors: 0
+[verify.calibre/run_drc]: wordline_driver	Geometries: 21506	Checks: 31	Errors: 0
+[verify.calibre/run_drc]: bank	Geometries: 2101688	Checks: 31	Errors: 0
+[ms_flop_array/__init__]: Creating msb_address
+[verify.calibre/run_drc]: msb_address	Geometries: 227	Checks: 31	Errors: 0
+[verify.calibre/run_drc]: sram_1rw_64b_1024w_2bank_scn3me_subm	Geometries: 4231584	Checks: 31	Errors: 0
+** SRAM creation: 396.0 seconds
+SP: Writing to ./sram_1rw_64b_1024w_2bank_scn3me_subm.sp
+** Spice writing: 0.2 seconds
+[globals/get_tool]: Using spice: /bsoe/software/synopsys/xa/bin/xa
+LIB: Characterizing... 
+Performing simulation-based characterization with xa
+Trimming netlist to speed up characterization.
+[characterizer.lib/prepare_tables]: Loads: [  2.45605   9.8242   78.5936 ]
+[characterizer.lib/prepare_tables]: Slews: [ 0.0125  0.05    0.4   ]
+[characterizer.lib/characterize_corners]: Corner: ('TT', 5.0, 25)
+[characterizer.lib/characterize_corners]: Writing to ./sram_1rw_64b_1024w_2bank_scn3me_subm_TT_5p0V_25C.lib
+[characterizer.trim_spice/__init__]: Trimming non-critical cells to speed-up characterization: /tmp/openram_mrg_15146_temp/reduced.sp.
+[characterizer.trim_spice/trim]: Keeping 1111111111 address
+[characterizer.trim_spice/trim]: Keeping 63 data bit
+[characterizer.trim_spice/trim]: Keeping bl[255] (trimming other BLs)
+[characterizer.trim_spice/trim]: Keeping wl[255] (trimming other WLs)
+[characterizer.delay/find_feasible_period]: Trying feasible period: 5.0ns
+[characterizer.delay/find_feasible_period]: Trying feasible period: 10.0ns
+[characterizer.delay/find_feasible_period]: Trying feasible period: 20.0ns
+[characterizer.delay/find_feasible_period]: Trying feasible period: 40.0ns
+[characterizer.delay/find_feasible_period]: Trying feasible period: 80.0ns
+[characterizer.delay/find_feasible_period]: Trying feasible period: 160.0ns
+[characterizer.delay/find_feasible_period]: Trying feasible period: 320.0ns
+[characterizer.delay/find_feasible_period]: Trying feasible period: 640.0ns
+ERROR: file delay.py: line 309: Timed out, could not find a feasible period.

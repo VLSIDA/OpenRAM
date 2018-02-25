@@ -1,0 +1,137 @@
+[globals/init_openram]: Initializing OpenRAM...
+[globals/setup_paths]: Temporary files saved in /tmp/openram_mrg_18997_temp/
+[globals/read_config]: Configuration file is /soe/mrg/OpenRAM/lib/freepdk45/configs/sram_1rw_32b_256w_1bank_freepdk45.py
+[globals/read_config]: Output saved in ./
+[globals/import_tech]: Technology path is /soe/mrg/OpenRAM/technology/freepdk45/
+|==============================================================================|
+|=========                      OpenRAM Compiler                      =========|
+|=========                                                            =========|
+|=========               VLSI Design and Automation Lab               =========|
+|=========     University of California Santa Cruz CE Department      =========|
+|=========                                                            =========|
+|=========         VLSI Computer Architecture Research Group          =========|
+|=========          Oklahoma State University ECE Department          =========|
+|=========                                                            =========|
+|=========          Usage help: openram-user-group@ucsc.edu           =========|
+|=========        Development help: openram-dev-group@ucsc.edu        =========|
+|=========           Temp dir: /tmp/openram_mrg_18997_temp/           =========|
+|==============================================================================|
+Output files are sram_1rw_32b_256w_1bank_freepdk45.(sp|gds|v|lib|lef)
+Technology: freepdk45
+Word size: 32
+Words: 256
+Banks: 1
+[globals/get_tool]: Using DRC: /bsoe/software/mentor/calibre/aoi_cal_2017.3_29.23/bin/calibre
+[globals/get_tool]: Using LVS: /bsoe/software/mentor/calibre/aoi_cal_2017.3_29.23/bin/calibre
+[globals/get_tool]: Using PEX: /bsoe/software/mentor/calibre/aoi_cal_2017.3_29.23/bin/calibre
+** Start: 2018-02-23 17:53:13.665862 seconds
+[sram/compute_sizes]: Words per row: 4
+[control_logic/__init__]: Creating control_logic
+[ms_flop_array/__init__]: Creating msf_control
+[verify.calibre/run_drc]: msf_control	Geometries: 1768	Checks: 167	Errors: 0
+[bitcell_array/__init__]: Creating bitline_load 13 x 1
+[verify.calibre/run_drc]: bitline_load	Geometries: 3983	Checks: 167	Errors: 0
+[verify.calibre/run_drc]: delay_chain	Geometries: 906	Checks: 167	Errors: 0
+[verify.calibre/run_drc]: replica_bitline	Geometries: 5321	Checks: 167	Errors: 0
+[verify.calibre/run_drc]: control_logic	Geometries: 8875	Checks: 167	Errors: 0
+[bitcell_array/__init__]: Creating bitcell_array 64 x 128
+[verify.calibre/run_drc]: bitcell_array	Geometries: 2490882	Checks: 167	Errors: 0
+[precharge_array/__init__]: Creating precharge_array
+[verify.calibre/run_drc]: precharge	Geometries: 86	Checks: 167	Errors: 0
+[verify.calibre/run_drc]: precharge_array	Geometries: 22274	Checks: 167	Errors: 0
+[single_level_column_mux_array/__init__]: Creating columnmux_array
+[verify.calibre/run_drc]: columnmux_array	Geometries: 12101	Checks: 167	Errors: 0
+[sense_amp_array/__init__]: Creating sense_amp_array
+[verify.calibre/run_drc]: sense_amp_array	Geometries: 7939	Checks: 167	Errors: 0
+[write_driver_array/__init__]: Creating write_driver_array
+[verify.calibre/run_drc]: write_driver_array	Geometries: 10371	Checks: 167	Errors: 0
+[verify.calibre/run_drc]: pre2x4	Geometries: 969	Checks: 167	Errors: 0
+[verify.calibre/run_drc]: pre3x8	Geometries: 2251	Checks: 167	Errors: 0
+[verify.calibre/run_drc]: hierarchical_decoder_64rows	Geometries: 34473	Checks: 167	Errors: 0
+[ms_flop_array/__init__]: Creating msf_address
+[verify.calibre/run_drc]: msf_address	Geometries: 4703	Checks: 167	Errors: 0
+[ms_flop_array/__init__]: Creating msf_data_in
+[verify.calibre/run_drc]: msf_data_in	Geometries: 18822	Checks: 167	Errors: 0
+[tri_gate_array/__init__]: Creating tri_gate_array
+[verify.calibre/run_drc]: tri_gate_array	Geometries: 5700	Checks: 167	Errors: 0
+[verify.calibre/run_drc]: wordline_driver	Geometries: 17538	Checks: 167	Errors: 0
+[verify.calibre/run_drc]: bank	Geometries: 2641339	Checks: 167	Errors: 0
+[verify.calibre/run_drc]: sram_1rw_32b_256w_1bank_freepdk45	Geometries: 2653124	Checks: 167	Errors: 0
+** SRAM creation: 160.0 seconds
+SP: Writing to ./sram_1rw_32b_256w_1bank_freepdk45.sp
+** Spice writing: 0.1 seconds
+[globals/get_tool]: Using spice: /bsoe/software/synopsys/xa/bin/xa
+LIB: Characterizing... 
+Performing simulation-based characterization with xa
+Trimming netlist to speed up characterization.
+[characterizer.lib/prepare_tables]: Loads: [ 0.052275  0.2091    1.6728  ]
+[characterizer.lib/prepare_tables]: Slews: [ 0.00125  0.005    0.04   ]
+[characterizer.lib/characterize_corners]: Corner: ('TT', 1.0, 25)
+[characterizer.lib/characterize_corners]: Writing to ./sram_1rw_32b_256w_1bank_freepdk45_TT_1p0V_25C.lib
+[characterizer.trim_spice/__init__]: Trimming non-critical cells to speed-up characterization: /tmp/openram_mrg_18997_temp/reduced.sp.
+[characterizer.trim_spice/trim]: Keeping 11111111 address
+[characterizer.trim_spice/trim]: Keeping 31 data bit
+[characterizer.trim_spice/trim]: Keeping bl[127] (trimming other BLs)
+[characterizer.trim_spice/trim]: Keeping wl[63] (trimming other WLs)
+[characterizer.delay/find_feasible_period]: Trying feasible period: 5.0ns
+[characterizer.delay/find_feasible_period]: Found feasible_period: 5.0ns feasible_delay 1.1300259ns/0.13801474ns slew 0.031264005ns/0.046135884ns
+[characterizer.delay/find_min_period]: MinPeriod Search: 2.5ns (ub: 5.0 lb: 0.0)
+[characterizer.delay/find_min_period]: MinPeriod Search: 1.25ns (ub: 2.5 lb: 0.0)
+[characterizer.delay/find_min_period]: MinPeriod Search: 1.875ns (ub: 2.5 lb: 1.25)
+[characterizer.delay/find_min_period]: MinPeriod Search: 2.1875ns (ub: 2.5 lb: 1.875)
+[characterizer.delay/find_min_period]: MinPeriod Search: 2.03125ns (ub: 2.1875 lb: 1.875)
+[characterizer.delay/find_min_period]: MinPeriod Search: 2.109375ns (ub: 2.1875 lb: 2.03125)
+[characterizer.delay/analyze]: Min Period: 2.109375n with a delay of 1.1300259 / 0.13801474
+[characterizer.setup_hold/analyze]: Clock slew: 0.00125 Data slew: 0.00125
+[characterizer.setup_hold/analyze]:   Setup Time for low_to_high transistion: 0.0085449219
+[characterizer.setup_hold/analyze]:   Setup Time for high_to_low transistion: 0.0085449219
+[characterizer.setup_hold/analyze]:   Hold Time for low_to_high transistion: 0.0024414063
+[characterizer.setup_hold/analyze]:   Hold Time for high_to_low transistion: -0.0036621094
+[characterizer.setup_hold/analyze]: Clock slew: 0.00125 Data slew: 0.005
+[characterizer.setup_hold/analyze]:   Setup Time for low_to_high transistion: 0.014648437
+[characterizer.setup_hold/analyze]:   Setup Time for high_to_low transistion: 0.0085449219
+[characterizer.setup_hold/analyze]:   Hold Time for low_to_high transistion: 0.0024414062
+[characterizer.setup_hold/analyze]:   Hold Time for high_to_low transistion: -0.0036621094
+[characterizer.setup_hold/analyze]: Clock slew: 0.00125 Data slew: 0.04
+[characterizer.setup_hold/analyze]:   Setup Time for low_to_high transistion: 0.020751953
+[characterizer.setup_hold/analyze]:   Setup Time for high_to_low transistion: 0.014648437
+[characterizer.setup_hold/analyze]:   Hold Time for low_to_high transistion: -0.0036621094
+[characterizer.setup_hold/analyze]:   Hold Time for high_to_low transistion: -0.015869141
+[characterizer.setup_hold/analyze]: Clock slew: 0.005 Data slew: 0.00125
+[characterizer.setup_hold/analyze]:   Setup Time for low_to_high transistion: 0.0085449219
+[characterizer.setup_hold/analyze]:   Setup Time for high_to_low transistion: 0.0085449219
+[characterizer.setup_hold/analyze]:   Hold Time for low_to_high transistion: 0.0024414063
+[characterizer.setup_hold/analyze]:   Hold Time for high_to_low transistion: -0.0036621094
+[characterizer.setup_hold/analyze]: Clock slew: 0.005 Data slew: 0.005
+[characterizer.setup_hold/analyze]:   Setup Time for low_to_high transistion: 0.014648437
+[characterizer.setup_hold/analyze]:   Setup Time for high_to_low transistion: 0.0085449219
+[characterizer.setup_hold/analyze]:   Hold Time for low_to_high transistion: 0.0024414062
+[characterizer.setup_hold/analyze]:   Hold Time for high_to_low transistion: -0.0036621094
+[characterizer.setup_hold/analyze]: Clock slew: 0.005 Data slew: 0.04
+[characterizer.setup_hold/analyze]:   Setup Time for low_to_high transistion: 0.020751953
+[characterizer.setup_hold/analyze]:   Setup Time for high_to_low transistion: 0.014648437
+[characterizer.setup_hold/analyze]:   Hold Time for low_to_high transistion: -0.0036621094
+[characterizer.setup_hold/analyze]:   Hold Time for high_to_low transistion: -0.015869141
+[characterizer.setup_hold/analyze]: Clock slew: 0.04 Data slew: 0.00125
+[characterizer.setup_hold/analyze]:   Setup Time for low_to_high transistion: 0.0085449219
+[characterizer.setup_hold/analyze]:   Setup Time for high_to_low transistion: 0.0085449219
+[characterizer.setup_hold/analyze]:   Hold Time for low_to_high transistion: 0.0024414063
+[characterizer.setup_hold/analyze]:   Hold Time for high_to_low transistion: -0.0036621094
+[characterizer.setup_hold/analyze]: Clock slew: 0.04 Data slew: 0.005
+[characterizer.setup_hold/analyze]:   Setup Time for low_to_high transistion: 0.014648437
+[characterizer.setup_hold/analyze]:   Setup Time for high_to_low transistion: 0.0085449219
+[characterizer.setup_hold/analyze]:   Hold Time for low_to_high transistion: 0.0024414062
+[characterizer.setup_hold/analyze]:   Hold Time for high_to_low transistion: -0.0036621094
+[characterizer.setup_hold/analyze]: Clock slew: 0.04 Data slew: 0.04
+[characterizer.setup_hold/analyze]:   Setup Time for low_to_high transistion: 0.020751953
+[characterizer.setup_hold/analyze]:   Setup Time for high_to_low transistion: 0.014648437
+[characterizer.setup_hold/analyze]:   Hold Time for low_to_high transistion: -0.0036621094
+[characterizer.setup_hold/analyze]:   Hold Time for high_to_low transistion: -0.015869141
+** Characterization: 4457.6 seconds
+GDS: Writing to ./sram_1rw_32b_256w_1bank_freepdk45.gds
+** GDS: 1.4 seconds
+LEF: Writing to ./sram_1rw_32b_256w_1bank_freepdk45.lef
+** LEF: 3.6 seconds
+Verilog: Writing to ./sram_1rw_32b_256w_1bank_freepdk45.v
+** Verilog: 0.0 seconds
+** End: 4623.9 seconds

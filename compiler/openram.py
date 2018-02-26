@@ -40,6 +40,8 @@ report_status()
 import verify
 import sram
 
+print("Output files are " + OPTS.output_name + ".(sp|gds|v|lib|lef)")
+
 # Keep track of running stats
 start_time = datetime.datetime.now()
 print_time("Start",start_time)

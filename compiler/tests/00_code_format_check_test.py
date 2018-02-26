@@ -35,6 +35,8 @@ class code_format_test(openram_test):
                 continue
             if re.search("openram.py$", code):
                 continue
+            if re.search("gen_stimulus.py$", code):
+                continue
             errors += check_print_output(code)
 
         # fails if there are any tabs in any files

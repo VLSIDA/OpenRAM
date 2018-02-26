@@ -37,16 +37,18 @@ class delay():
 
         # These are the member variables for a simulation
         self.period = 0
-        self.load = 0
-        self.slew = 0
-        
+        self.set_load_slew(0,0)
         self.set_corner(corner)
-        
+
     def set_corner(self,corner):
         """ Set the corner values """
         self.corner = corner
         (self.process, self.vdd_voltage, self.temperature) = corner
         
+    def set_load_slew(self,load,slew):
+        """ Set the load and slew """
+        self.load = load
+        self.slew = slew
         
     def check_arguments(self):
         """Checks if arguments given for write_stimulus() meets requirements"""
@@ -578,8 +580,9 @@ class delay():
         (full_array_leakage, trim_array_leakage)=self.run_power_simulation()
         char_data["leakage_power"]=full_array_leakage
 
-        for self.slew in slews:
-            for self.load in loads:
+        for slew in slews:
+            for load in loads:
+                self.set_load_slew(load,slew)
                 # 2c) Find the delay, dynamic power, and leakage power of the trimmed array.
                 (success, delay_results) = self.run_delay_simulation()
                 debug.check(success,"Couldn't run a simulation. slew={0} load={1}\n".format(self.slew,self.load))
@@ -593,8 +596,7 @@ class delay():
 
 
         # 3) Finds the minimum period without degrading the delays by X%
-        self.load=max(loads)
-        self.slew=max(slews)
+        self.set_load_slew(max(loads),max(slews))
         min_period = self.find_min_period(feasible_delay_lh, feasible_delay_hl)
         debug.check(type(min_period)==float,"Couldn't find minimum period.")
         debug.info(1, "Min Period: {0}n with a delay of {1} / {2}".format(min_period, feasible_delay_lh, feasible_delay_hl))
@@ -710,8 +712,9 @@ class delay():
         delay_hl = []
         slew_lh = []
         slew_hl = []
-        for self.slew in slews:
-            for self.load in loads:
+        for slew in slews:
+            for load in loads:
+                self.set_load_slew(load,slew)
                 bank_delay = sram.analytical_delay(self.slew,self.load)
                 # Convert from ps to ns
                 delay_lh.append(bank_delay.delay/1e3)

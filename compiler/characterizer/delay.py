@@ -661,7 +661,7 @@ class delay():
         t_current += self.period
 
         # One period
-        msg = "Idle cycle"
+        msg = "Idle cycle (Read addr 00..00)"
         self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(len(self.cycle_times)-1,
                                                                   t_current,
                                                                   msg))
@@ -696,7 +696,7 @@ class delay():
         t_current += self.period
 
         # One period
-        msg = "Idle cycle"
+        msg = "Idle cycle (Read addr 11..11)"
         self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(len(self.cycle_times)-1,
                                                                   t_current,
                                                                   msg))

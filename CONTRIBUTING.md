@@ -96,15 +96,14 @@ the tests on your contributions before they will be accepted.
  git pull upstream dev
 ```
 
-9. Merge the changes from dev into your branch
+9. Frequently rebase your branch to keep track of current changes in dev. 
 ```
- git merge dev
+ git fetch upstream
+ git rebase origin/dev
 ```
-10. After you are done, rebase your branch to minimize the number of commits if you
-had a lot. I prefer a single commit that you contribute. After this, 
-push your branch to YOUR repository:
+
+10. After a final rebase and your code is working, push your branch to YOUR repository:
 ```
- git rebase dev
  git push -u origin useful-branch-name
 ```
    Remember origin is your copy on github and useful-branch-name is the

@@ -1,10 +1,5 @@
 *master-slave flip-flop with both output and inverted ouput
 
-.subckt ms_flop din dout dout_bar clk vdd gnd 
-xmaster din mout mout_bar clk clk_bar vdd gnd dlatch
-xslave mout_bar dout_bar dout clk_bar clk_nn vdd gnd dlatch
-.ends flop
-
 .subckt dlatch din dout dout_bar clk clk_bar vdd gnd
 *clk inverter
 mPff1 clk_bar clk vdd vdd p W=1.8u L=0.6u m=1
@@ -26,4 +21,9 @@ mNf4 dout dout_bar gnd gnd n W=0.9u L=0.6u m=1
 mtmP2 int1 clk_bar dout vdd p W=1.8u L=0.6u m=1
 mtmN2 int1 clk dout gnd n W=0.9u L=0.6u m=1
 .ends dlatch
+
+.subckt ms_flop din dout dout_bar clk vdd gnd 
+xmaster din mout mout_bar clk clk_bar vdd gnd dlatch
+xslave mout_bar dout_bar dout clk_bar clk_nn vdd gnd dlatch
+.ends flop
 

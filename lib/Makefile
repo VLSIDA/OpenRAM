@@ -4,7 +4,7 @@ SUBDIRSCLEAN=$(addsuffix clean,$(SUBDIRS))
 all: $(SUBDIRS)
 
 $(SUBDIRS):
-	$(MAKE) -C $@
+	$(MAKE) -k -C $@
 
 clean: 
 	for dir in $(SUBDIRS); do \

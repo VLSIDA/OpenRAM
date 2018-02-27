@@ -167,6 +167,8 @@ def read_config(config_file, is_unit_test=True):
     
     if not OPTS.output_path.endswith('/'):
         OPTS.output_path += "/"
+    if not OPTS.output_path.startswith('/'):
+        OPTS.output_path = os.getcwd() + "/" + OPTS.output_path
     debug.info(1, "Output saved in " + OPTS.output_path)
 
     OPTS.is_unit_test=is_unit_test
@@ -321,7 +323,6 @@ def report_status():
     if not OPTS.tech_name:
         debug.error("Tech name must be specified in config file.")
 
-    print("Output files are " + OPTS.output_name + ".(sp|gds|v|lib|lef)")
     print("Technology: {0}".format(OPTS.tech_name))
     print("Word size: {0}\nWords: {1}\nBanks: {2}".format(OPTS.word_size,
                                                           OPTS.num_words,

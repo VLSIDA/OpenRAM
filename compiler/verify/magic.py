@@ -152,7 +152,7 @@ def run_drc(cell_name, gds_name, extract=False):
     cmd = "{0}run_drc.sh 2> {1} 1> {2}".format(OPTS.openram_temp,
                                                errfile,
                                                outfile)
-    debug.info(1, cmd)
+    debug.info(2, cmd)
     os.system(cmd)
     os.chdir(cwd)
 
@@ -204,7 +204,7 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     cmd = "{0}run_lvs.sh lvs 2> {1} 1> {2}".format(OPTS.openram_temp,
                                                    errfile,
                                                    outfile)
-    debug.info(1, cmd)
+    debug.info(2, cmd)
     os.system(cmd)
     os.chdir(cwd)
 

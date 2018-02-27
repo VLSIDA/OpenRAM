@@ -58,6 +58,8 @@ class options(optparse.Values):
     decoder = "hierarchical_decoder"
     ms_flop = "ms_flop"
     ms_flop_array = "ms_flop_array"
+    dff = "dff"
+    dff_array = "dff_array"
     control_logic = "control_logic"
     bitcell_array = "bitcell_array"
     sense_amp = "sense_amp"

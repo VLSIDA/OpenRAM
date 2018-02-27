@@ -20,6 +20,9 @@ class delay_chain(design.design):
         # and there should be functions to get 
         # area efficient inverter stage list 
 
+        for f in fanout_list:
+            debug.check(f>0,"Must have non-zero fanouts for each stage.")
+
         # number of inverters including any fanout loads.
         self.fanout_list = fanout_list
         self.num_inverters = 1 + sum(fanout_list)

@@ -286,6 +286,7 @@ class stimuli():
                                                          OPTS.openram_temp)
             valid_retcode=0
         else:
+            # ngspice 27+ supports threading with "set num_threads=4" in the stimulus file or a .spiceinit 
             cmd = "{0} -b -o {2}timing.lis {1}".format(OPTS.spice_exe,
                                                        temp_stim,
                                                        OPTS.openram_temp)

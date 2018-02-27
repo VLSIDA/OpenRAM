@@ -248,9 +248,12 @@ spice["fet_models"] = { "TT" : [SPICE_MODEL_DIR+"/models_nom/PMOS_VTG.inc",SPICE
 #spice stimulus related variables
 spice["feasible_period"] = 5         # estimated feasible period in ns
 spice["supply_voltages"] = [0.9, 1.0, 1.1] # Supply voltage corners in [Volts]
+spice["nom_supply_voltage"] = 1.0    # Nominal supply voltage in [Volts]
 spice["rise_time"] = 0.005           # rise time in [Nano-seconds]
 spice["fall_time"] = 0.005           # fall time in [Nano-seconds]
-spice["temperatures"] = [0, 25, 100]  # Temperature corners (celcius)
+spice["temperatures"] = [0, 25, 100] # Temperature corners (celcius)
+spice["nom_temperature"] = 25        # Nominal temperature (celcius)
+
 
 #sram signal names
 #FIXME: We don't use these everywhere...
@@ -274,6 +277,11 @@ spice["msflop_hold"] = 1         # DFF hold time in ps
 spice["msflop_delay"] = 20.5     # DFF Clk-to-q delay in ps
 spice["msflop_slew"] = 13.1      # DFF output slew in ps w/ no load
 spice["msflop_in_cap"] = 0.2091  # Input capacitance of ms_flop (Din) [Femto-farad]
+spice["dff_setup"] = 9        # DFF setup time in ps
+spice["dff_hold"] = 1         # DFF hold time in ps
+spice["dff_delay"] = 20.5     # DFF Clk-to-q delay in ps
+spice["dff_slew"] = 13.1      # DFF output slew in ps w/ no load
+spice["dff_in_cap"] = 0.2091  # Input capacitance of ms_flop (Din) [Femto-farad]
 
 # analytical power parameters, many values are temporary
 spice["bitcell_leakage"] = 1     # Leakage power of a single bitcell in nW

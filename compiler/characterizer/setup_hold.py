@@ -299,7 +299,7 @@ class setup_hold():
                  }
         return times
 
-    def analytical_model(self,related_slews, constrained_slews):
+    def analytical_setuphold(self,related_slews, constrained_slews):
         """ Just return the fixed setup/hold times from the technology.
         """
         LH_setup = []

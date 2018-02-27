@@ -11,11 +11,11 @@ from globals import OPTS
 class replica_bitline(design.design):
     """
     Generate a module that simulates the delay of control logic 
-    and bit line charging. Stages is the depth of the FO4 delay
+    and bit line charging. Stages is the depth of the delay
     line and rows is the height of the replica bit loads.
     """
 
-    def __init__(self, FO4_stages, bitcell_loads, name="replica_bitline"):
+    def __init__(self, delay_stages, delay_fanout, bitcell_loads, name="replica_bitline"):
         design.design.__init__(self, name)
 
         g = reload(__import__(OPTS.delay_chain))
@@ -30,7 +30,8 @@ class replica_bitline(design.design):
         for pin in ["en", "out", "vdd", "gnd"]:
             self.add_pin(pin)
         self.bitcell_loads = bitcell_loads
-        self.FO4_stages = FO4_stages
+        self.delay_stages = delay_stages
+        self.delay_fanout = delay_fanout
 
         self.create_modules()
         self.calculate_module_offsets()
@@ -83,7 +84,7 @@ class replica_bitline(design.design):
         self.add_mod(self.rbl)
 
         # FIXME: The FO and depth of this should be tuned
-        self.delay_chain = self.mod_delay_chain([4]*self.FO4_stages)
+        self.delay_chain = self.mod_delay_chain([self.delay_fanout]*self.delay_stages)
         self.add_mod(self.delay_chain)
 
         self.inv = pinv()

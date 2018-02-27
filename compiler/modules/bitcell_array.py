@@ -178,27 +178,27 @@ class bitcell_array(design.design):
         return self.return_delay(cell_delay.delay+wl_to_cell_delay.delay,
                                  wl_to_cell_delay.slew)
                         
-    def analytical_power(self, vdd, temp, load):
+    def analytical_power(self, proc, vdd, temp, load):
         #This will be pretty bare bones as the power needs to be determined from the dynamic power
         #of the word line, leakage power from the cell, and dynamic power of the bitlines as a few
         #sources for power. These features are tbd.
         from tech import drc
         
         #calculate wl dynamic power, functions not implemented.
-        #wl_wire = self.gen_wl_wire()
-        #wl_to_cell_power = wl_wire.return_power_over_wire(slew)
         
-        # hypothetical delay from cell to bl end without sense amp
+        # Dynamic Power from Bitline
         bl_wire = self.gen_bl_wire()
-        cell_load = 2 * bl_wire.return_input_cap() # we ingore the wire r
-                                                   # hence just use the whole c
-        bl_swing = 0.1
+        cell_load = 2 * bl_wire.return_input_cap() 
+        bl_swing = 0.1 #This should probably be defined in the tech file
+        freq = spice["default_event_rate"]
+        bitline_dynamic = bl_swing*cell_load*vdd*vdd*freq #not sure if calculation is correct
+        
         #Calculate the bitcell power which can include leakage as well as bitline dynamic
-        cell_power = self.cell.analytical_power(vdd, temp, load)
+        cell_power = self.cell.analytical_power(proc, vdd, temp, load)
         
         #Leakage power grows with entire array. Dynamic currently not accounted for.
-        total_power = self.return_power(cell_power.dynamic, cell_power.leakage * self.column_size * self.row_size)
-        #calculate power for entire array based off a single cell
+        total_power = self.return_power(cell_power.dynamic + bitline_dynamic * self.column_size,
+                                        cell_power.leakage * self.column_size * self.row_size)
         return total_power
 
     def gen_wl_wire(self):

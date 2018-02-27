@@ -344,15 +344,3 @@ class replica_bitline(design.design):
                            height=pin.height(),
                            width=pin.width())
 
-
-    # def analytical_power(self, vdd, temp, load):
-        # #This has yet to be fully determined. 
-        # print self.name," Instances:"
-        # total_power = self.return_power()
-        # for inst in self.insts:
-            # print inst.name," Instance"
-            # total_power += inst.mod.analytical_power(vdd, temp, load)
-        
-        # print self.name," Instances End" 
-        # #currently, only return flop array power
-        # return total_power

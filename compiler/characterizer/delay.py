@@ -550,19 +550,24 @@ class delay():
                 LH_slew.append(bank_delay.slew/1e3)
                 HL_slew.append(bank_delay.slew/1e3)
         
-        voltage = 1
-        temperature = 20
-        power = sram.analytical_power(voltage, temperature, load)
-        
+
+        power = sram.analytical_power(self.process, self.vdd_voltage, self.temperature, load) 
+        #convert from nW to mW
+        power.dynamic /= 1e6 
+        power.leakage /= 1e6
+        debug.info(1,"Dynamic Power: {0} mW".format(power.dynamic))        
+        debug.info(1,"Leakage Power: {0} mW".format(power.leakage)) 
+        #print "Dynamic: ",power.dynamic," nW"
+        #print "Leakage: ",power.leakage," nW"
         data = {"min_period": 0, 
                 "delay1": LH_delay,
                 "delay0": HL_delay,
                 "slew1": LH_slew,
                 "slew0": HL_slew,
-                "read0_power": power,
-                "read1_power": power,
-                "write0_power": power,
-                "write1_power": power
+                "read0_power": power.dynamic,
+                "read1_power": power.leakage,
+                "write0_power": power.dynamic,
+                "write1_power": power.leakage
                 }
         return data
 

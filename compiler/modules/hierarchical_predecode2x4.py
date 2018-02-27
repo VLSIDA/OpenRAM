@@ -55,17 +55,6 @@ class hierarchical_predecode2x4(hierarchical_predecode):
 
         return a_t_b_delay + b_t_z_delay + a_t_out_delay
 
-    # def analytical_power(self, slew, load = 0.0 ):
-        # # in -> inbar
-        # a_t_b_power = self.inv.analytical_power(slew=slew, load=self.nand.input_load())
-
-        # # inbar -> z
-        # b_t_z_power = self.nand.analytical_power(slew, load=self.inv.input_load())
-
-        # # Z -> out
-        # a_t_out_power = self.inv.analytical_power(slew, load=load)
-
-        # return a_t_b_power + b_t_z_power + a_t_out_power
         
     def input_load(self):
         return self.nand.input_load()

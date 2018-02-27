@@ -30,7 +30,7 @@ class sense_amp(design.design):
         result = self.cal_delay_with_rc(r = r, c =  c_para+load, slew = slew)
         return self.return_delay(result.delay, result.slew)
 
-    def analytical_power(self, vdd, temp, load):
+    def analytical_power(self, proc, vdd, temp, load):
         #Not sure how to determine this yet. Sense amps return zero power for now
         total_power = self.return_power()
         return total_power

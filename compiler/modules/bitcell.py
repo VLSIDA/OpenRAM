@@ -35,7 +35,7 @@ class bitcell(design.design):
         result = self.cal_delay_with_rc(r = r, c =  c_para+load, slew = slew, swing = swing)
         return result
         
-    def analytical_power(self, vdd, temp, load):
+    def analytical_power(self, proc, vdd, temp, load):
         #Power of the bitcell. Mostly known for leakage, but dynamic can also be factored in.
         #Only consider leakage power for now. Value defined in tech file rather than calculated.
         from tech import spice

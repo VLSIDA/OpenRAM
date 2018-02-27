@@ -275,13 +275,21 @@ spice["msflop_delay"] = 20.5     # DFF Clk-to-q delay in ps
 spice["msflop_slew"] = 13.1      # DFF output slew in ps w/ no load
 spice["msflop_in_cap"] = 0.2091  # Input capacitance of ms_flop (Din) [Femto-farad]
 
-# analytical power parameters
-spice["bitcell_leakage"] = 1     # Leakage power of a single bitcell in nano-Watts
-spice["inv_leakage"] = 1         # Leakage power of inverter, temporary until a way to calculate is determined, in nW
-spice["msflop_power"] = 1        # Total power of a single flop in nano-Watts
+# analytical power parameters, many values are temporary
+spice["bitcell_leakage"] = 1     # Leakage power of a single bitcell in nW
+spice["inv_leakage"] = 1         # Leakage power of inverter in nW
+spice["nand2_leakage"] = 1       # Leakage power of 2-input nand in nW
+spice["nand3_leakage"] = 1       # Leakage power of 3-input nand in nW
+spice["nor2_leakage"] = 1        # Leakage power of 2-input nor in nW
+spice["msflop_leakage"] = 1      # Leakage power of flop in nW
+spice["flop_para_cap"] = 2       # Parasitic Output capacitance in fF
 
-spice["default_event_rate"] = 200 # Default event activity of every gate. Temporary value. In Mega-Hz
-spice["inv_transisition_prob"] = .5 # Transition probability of inverter. Will be dynamically calculated later.
+spice["default_event_rate"] = 100           # Default event activity of every gate. MHz
+spice["flop_transisition_prob"] = .5        # Transition probability of inverter.
+spice["inv_transisition_prob"] = .5         # Transition probability of inverter.
+spice["nand2_transisition_prob"] = .1875    # Transition probability of 2-input nand.
+spice["nand3_transisition_prob"] = .1094    # Transition probability of 3-input nand.
+spice["nor2_transisition_prob"] = .1875     # Transition probability of 2-input nor.
 
 ###################################################
 ##END Spice Simulation Parameters

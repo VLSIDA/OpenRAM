@@ -494,21 +494,6 @@ class hierarchical_decoder(design.design):
         result = result + z_t_decodeout_delay
         return result
 
-    # def analytical_power(self, slew, load = 0.0):
-        # # A -> out
-        # if self.determine_predecodes(self.num_inputs)[1]==0:
-            # pre = self.pre2_4
-            # nand = self.nand2
-        # else:
-            # pre = self.pre3_8
-            # nand = self.nand3
-        # a_t_out_power = pre.analytical_power(slew=slew,load = nand.input_load())
-        
-        # out_t_z_power = nand.analytical_power(slew,
-                                  # load = self.inv.input_load())
-                                  
-        # z_t_decodeout_power = self.inv.analytical_power(slew, load = load)
-        # return a_t_out_power + out_t_z_power + z_t_decodeout_power
         
     def input_load(self):
         if self.determine_predecodes(self.num_inputs)[1]==0:

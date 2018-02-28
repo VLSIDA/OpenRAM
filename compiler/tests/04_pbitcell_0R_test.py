@@ -27,8 +27,8 @@ class pbitcell_test(openram_test):
         import pbitcell
         import tech
 
-        debug.info(2, "Bitcell with 2 write ports and 2 read ports")
-        tx = pbitcell.pbitcell(num_write=2,num_read=2)
+        debug.info(2, "Bitcell with 2 write ports and 0 read ports")
+        tx = pbitcell.pbitcell(num_write=2,num_read=0)
         self.local_check(tx)
 
         OPTS.check_lvsdrc = True

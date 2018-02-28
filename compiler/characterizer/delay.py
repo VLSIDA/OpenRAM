@@ -716,6 +716,7 @@ class delay():
             for load in loads:
                 self.set_load_slew(load,slew)
                 bank_delay = sram.analytical_delay(self.slew,self.load)
+                # Convert from ps to ns
                 delay_lh.append(bank_delay.delay/1e3)
                 delay_hl.append(bank_delay.delay/1e3)
                 slew_lh.append(bank_delay.slew/1e3)

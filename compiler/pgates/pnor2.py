@@ -227,8 +227,8 @@ class pnor2(pgate.pgate):
     def analytical_power(self, proc, vdd, temp, load):
         #Returns dynamic and leakage power. Results in nW
         c_eff = self.calculate_effective_capacitance(load)
-        f = spice["default_event_rate"]
-        power_dyn = c_eff*vdd*vdd*f
+        freq = spice["default_event_rate"]
+        power_dyn = c_eff*vdd*vdd*freq
         power_leak = spice["nor2_leakage"]
         
         total_power = self.return_power(power_dyn, power_leak)

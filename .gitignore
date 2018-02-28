@@ -1,4 +1,7 @@
 .DS_Store
 *~
 *.pyc
-*.log
+*.aux
+*.out
+*.toc
+*.synctex.gz

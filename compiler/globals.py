@@ -16,12 +16,6 @@ USAGE = "Usage: openram.py [options] <config file>\nUse -h for help.\n"
 # Anonymous object that will be the options
 OPTS = options.options()
 
-# check that we are not using version 3 and at least 2.7
-major_python_version = sys.version_info.major
-minor_python_version = sys.version_info.minor
-if not (major_python_version == 2 and minor_python_version >= 7):
-    debug.error("Python 2.7 is required.",-1)
-
 def parse_args():
     """ Parse the optional arguments for OpenRAM """
 
@@ -36,8 +30,6 @@ def parse_args():
                              help="Output file(s) location"),
         optparse.make_option("-n", "--nocheck", action="store_false",
                              help="Disable inline LVS/DRC checks", dest="check_lvsdrc"),
-        optparse.make_option("-q", "--quiet", action="store_false", dest="print_banner",
-                             help="Don\'t display banner"),
         optparse.make_option("-v", "--verbose", action="count", dest="debug_level",
                              help="Increase the verbosity level"),
         optparse.make_option("-t", "--tech", dest="tech_name",
@@ -66,13 +58,13 @@ def parse_args():
     # Alias SCMOS to AMI 0.5um
     if OPTS.tech_name == "scmos":
         OPTS.tech_name = "scn3me_subm"
-        
+
     return (options, args)
 
 def print_banner():
     """ Conditionally print the banner to stdout """
     global OPTS
-    if not OPTS.print_banner:
+    if OPTS.is_unit_test:
         return
 
     print("|==============================================================================|")
@@ -85,20 +77,39 @@ def print_banner():
     print("|=========" + "VLSI Computer Architecture Research Group".center(60) + "=========|")
     print("|=========" + "Oklahoma State University ECE Department".center(60) + "=========|")
     print("|=========" + " ".center(60) + "=========|")
-    print("|=========" + OPTS.openram_temp.center(60) + "=========|")
+    user_info = "Usage help: openram-user-group@ucsc.edu"
+    print("|=========" + user_info.center(60) + "=========|")
+    dev_info = "Development help: openram-dev-group@ucsc.edu"
+    print("|=========" + dev_info.center(60) + "=========|")
+    temp_info = "Temp dir: {}".format(OPTS.openram_temp)
+    print("|=========" + temp_info.center(60) + "=========|")
     print("|==============================================================================|")
 
 
-def init_openram(config_file):
+def check_versions():
+    """ Run some checks of required software versions. """
+
+    # check that we are not using version 3 and at least 2.7
+    major_python_version = sys.version_info.major
+    minor_python_version = sys.version_info.minor
+    if not (major_python_version == 2 and minor_python_version >= 7):
+        debug.error("Python 2.7 is required.",-1)
+
+    # FIXME: Check versions of other tools here??
+    # or, this could be done in each module (e.g. verify, characterizer, etc.)
+
+def init_openram(config_file, is_unit_test=True):
     """Initialize the technology, paths, simulators, etc."""
+    check_versions()
 
     debug.info(1,"Initializing OpenRAM...")
 
     setup_paths()
     
-    read_config(config_file)
+    read_config(config_file, is_unit_test)
 
     import_tech()
+
 
 
 def get_tool(tool_type, preferences):
@@ -120,7 +131,7 @@ def get_tool(tool_type, preferences):
 
     
 
-def read_config(config_file):
+def read_config(config_file, is_unit_test=True):
     """ 
     Read the configuration file that defines a few parameters. The
     config file is just a Python file that defines some config
@@ -156,8 +167,20 @@ def read_config(config_file):
     
     if not OPTS.output_path.endswith('/'):
         OPTS.output_path += "/"
+    if not OPTS.output_path.startswith('/'):
+        OPTS.output_path = os.getcwd() + "/" + OPTS.output_path
     debug.info(1, "Output saved in " + OPTS.output_path)
 
+    OPTS.is_unit_test=is_unit_test
+
+    # If config didn't set output name, make a reasonable default.
+    if (OPTS.output_name == ""):
+        OPTS.output_name = "sram_{0}rw_{1}b_{2}w_{3}bank_{4}".format(OPTS.rw_ports,
+                                                                     OPTS.word_size,
+                                                                     OPTS.num_words,
+                                                                     OPTS.num_banks,
+                                                                     OPTS.tech_name)
+        
     # Don't delete the output dir, it may have other files!
     # make the directory if it doesn't exist
     try:
@@ -173,6 +196,7 @@ def read_config(config_file):
 def end_openram():
     """ Clean up openram for a proper exit """
     cleanup_paths()
+    
 
     
     
@@ -197,16 +221,14 @@ def setup_paths():
     except:
         debug.error("$OPENRAM_HOME is not properly defined.",1)
     debug.check(os.path.isdir(OPENRAM_HOME),"$OPENRAM_HOME does not exist: {0}".format(OPENRAM_HOME))
-    
-    debug.check(os.path.isdir(OPENRAM_HOME+"/gdsMill"),
-                "$OPENRAM_HOME/gdsMill does not exist: {0}".format(OPENRAM_HOME+"/gdsMill"))
-    sys.path.append("{0}/gdsMill".format(OPENRAM_HOME)) 
-    debug.check(os.path.isdir(OPENRAM_HOME+"/tests"),
-                "$OPENRAM_HOME/tests does not exist: {0}".format(OPENRAM_HOME+"/tests"))
-    sys.path.append("{0}/tests".format(OPENRAM_HOME))
-    debug.check(os.path.isdir(OPENRAM_HOME+"/router"),
-                "$OPENRAM_HOME/router does not exist: {0}".format(OPENRAM_HOME+"/router"))
-    sys.path.append("{0}/router".format(OPENRAM_HOME))
+
+    # Add all of the subdirs to the python path
+    # These subdirs are modules and don't need to be added: characterizer, verify
+    for subdir in ["gdsMill", "tests", "router", "modules", "base", "pgates"]:
+        full_path = "{0}/{1}".format(OPENRAM_HOME,subdir)
+        debug.check(os.path.isdir(full_path),
+                    "$OPENRAM_HOME/{0} does not exist: {1}".format(subdir,full_path))
+        sys.path.append("{0}".format(full_path)) 
 
     if not OPTS.openram_temp.endswith('/'):
         OPTS.openram_temp += "/"
@@ -244,9 +266,8 @@ def import_tech():
 
     # Set the tech to the config file we read in instead of the command line value.
     OPTS.tech_name = OPTS.tech_name
-    
-    
-        # environment variable should point to the technology dir
+        
+    # environment variable should point to the technology dir
     try:
         OPENRAM_TECH = os.path.abspath(os.environ.get("OPENRAM_TECH"))
     except:
@@ -270,3 +291,42 @@ def import_tech():
         debug.error("Nonexistent technology_setup_file: {0}.py".format(filename))
         sys.exit(1)
 
+    import tech
+    # Set some default options now based on the technology...
+    if (OPTS.process_corners == ""):
+        OPTS.process_corners = tech.spice["fet_models"].keys()
+    if (OPTS.supply_voltages == ""):
+        OPTS.supply_voltages = tech.spice["supply_voltages"]
+    if (OPTS.temperatures == ""):
+        OPTS.temperatures = tech.spice["temperatures"]
+
+
+def print_time(name, now_time, last_time=None):
+    """ Print a statement about the time delta. """
+    if last_time:
+        time = round((now_time-last_time).total_seconds(),1)
+    else:
+        time = now_time
+    print("** {0}: {1} seconds".format(name,time))
+
+
+def report_status():
+    """ Check for valid arguments and report the info about the SRAM being generated """
+    # Check if all arguments are integers for bits, size, banks
+    if type(OPTS.word_size)!=int:
+        debug.error("{0} is not an integer in config file.".format(OPTS.word_size))
+    if type(OPTS.num_words)!=int:
+        debug.error("{0} is not an integer in config file.".format(OPTS.sram_size))
+    if type(OPTS.num_banks)!=int:
+        debug.error("{0} is not an integer in config file.".format(OPTS.num_banks))
+
+    if not OPTS.tech_name:
+        debug.error("Tech name must be specified in config file.")
+
+    print("Technology: {0}".format(OPTS.tech_name))
+    print("Word size: {0}\nWords: {1}\nBanks: {2}".format(OPTS.word_size,
+                                                          OPTS.num_words,
+                                                          OPTS.num_banks))
+    if not OPTS.check_lvsdrc:
+        print("DRC/LVS/PEX checking is disabled.")
+    

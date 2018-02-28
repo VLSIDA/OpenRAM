@@ -5,7 +5,7 @@ Check the .lib file for an SRAM
 
 import unittest
 from testutils import header,openram_test
-import sys,os
+import sys,os,re
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
@@ -22,22 +22,28 @@ class lib_test(openram_test):
 
         debug.info(1, "Testing timing for sample 2 bit, 16 words SRAM with 1 bank")
         s = sram.sram(word_size=2,
-                      num_words=OPTS.num_words,
-                      num_banks=OPTS.num_banks,
+                      num_words=16,
+                      num_banks=1,
                       name="sram_2_16_1_{0}".format(OPTS.tech_name))
         OPTS.check_lvsdrc = True
 
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)
 
-        filename = s.name + "_analytical.lib"
-        libname = OPTS.openram_temp + filename
-        lib.lib(libname=libname,sram=s,spfile=tempspice,use_model=True)
+        lib.lib(out_dir=OPTS.openram_temp, sram=s, sp_file=tempspice, use_model=True)
 
-        # let's diff the result with a golden model
-        golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),filename)
-        self.isapproxdiff(libname,golden,0.15)
+        # get all of the .lib files generated
+        files = os.listdir(OPTS.openram_temp)
+        nametest = re.compile("\.lib$", re.IGNORECASE)
+        lib_files = filter(nametest.search, files)
 
+        # and compare them with the golden model
+        for filename in lib_files:
+            newname = filename.replace(".lib","_analytical.lib")
+            libname = "{0}/{1}".format(OPTS.openram_temp,filename)
+            golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),newname)
+            self.isapproxdiff(libname,golden,0.15)
+            
         globals.end_openram()
 
 # instantiate a copdsay of the class to actually run the test

@@ -29,9 +29,9 @@ class sram_func_test(openram_test):
         import sram
 
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
-        s = sram.sram(word_size=OPTS.word_size,
-                      num_words=OPTS.num_words,
-                      num_banks=OPTS.num_banks,
+        s = sram.sram(word_size=1,
+                      num_words=16,
+                      num_banks=1,
                       name="sram_func_test")
 
         OPTS.check_lvsdrc = True
@@ -43,14 +43,15 @@ class sram_func_test(openram_test):
         probe_data = s.word_size - 1
         debug.info(1, "Probe address {0} probe data {1}".format(probe_address, probe_data))
 
-        d = delay.delay(s,tempspice)
+        corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
+        d = delay.delay(s,tempspice,corner)
         d.set_probe(probe_address,probe_data)
 
         # This will exit if it doesn't find a feasible period
         import tech
-        load = tech.spice["FF_in_cap"]*4
-        slew = tech.spice["rise_time"]*2
-        feasible_period = d.find_feasible_period(load,slew)
+        d.load = tech.spice["msflop_in_cap"]*4
+        d.slew = tech.spice["rise_time"]*2
+        feasible_period = d.find_feasible_period()
 
         os.remove(tempspice)
         OPTS.analytical_delay = True

@@ -13,8 +13,8 @@
    height="1052.3622047"
    id="svg4759"
    version="1.1"
-   inkscape:version="0.48.3.1 r9886"
-   sodipodi:docname="write_driver.svg">
+   inkscape:version="0.92.2 5c3e80d, 2017-08-06"
+   sodipodi:docname="write_driver_schem.svg">
   <defs
      id="defs4761" />
   <sodipodi:namedview
@@ -25,15 +25,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1"
-     inkscape:cx="199"
+     inkscape:cx="57.5"
      inkscape:cy="520"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
-     inkscape:window-width="1855"
-     inkscape:window-height="1056"
-     inkscape:window-x="65"
-     inkscape:window-y="24"
+     inkscape:window-width="3440"
+     inkscape:window-height="1392"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
      inkscape:window-maximized="1">
     <inkscape:grid
        type="xygrid"
@@ -47,7 +47,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -113,16 +113,16 @@
            inkscape:connector-curvature="0" />
       </g>
       <text
-         sodipodi:linespacing="125%"
          id="text4691"
          y="142.36218"
          x="330"
-         style="font-size:16px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+         style="font-style:normal;font-weight:normal;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
          xml:space="preserve"><tspan
            y="142.36218"
            x="330"
            id="tspan4693"
-           sodipodi:role="line">VDD</tspan></text>
+           sodipodi:role="line"
+           style="font-size:16px;line-height:1.25;font-family:sans-serif">vdd</tspan></text>
     </g>
     <g
        id="g3689-3"
@@ -505,15 +505,15 @@
        inkscape:connector-curvature="0" />
     <text
        xml:space="preserve"
-       style="font-size:16px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       style="font-style:normal;font-weight:normal;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
        x="71"
        y="536.36218"
-       id="text6069"
-       sodipodi:linespacing="125%"><tspan
+       id="text6069"><tspan
          sodipodi:role="line"
          id="tspan6071"
          x="71"
-         y="536.36218">EN</tspan></text>
+         y="536.36218"
+         style="font-size:16px;line-height:1.25;font-family:sans-serif">en</tspan></text>
     <g
        id="g5665-2-0"
        transform="matrix(0,1,-1,0,493.34811,272.36343)">
@@ -583,15 +583,15 @@
        inkscape:connector-curvature="0" />
     <text
        xml:space="preserve"
-       style="font-size:16px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       style="font-style:normal;font-weight:normal;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
        x="47"
        y="356.36218"
-       id="text6205"
-       sodipodi:linespacing="125%"><tspan
+       id="text6205"><tspan
          sodipodi:role="line"
          id="tspan6207"
          x="47"
-         y="356.36218">DATA</tspan></text>
+         y="356.36218"
+         style="font-size:16px;line-height:1.25;font-family:sans-serif">DATA</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
        d="m 561,471.36218 80,0 -10,-10 10,10 -10,10"
@@ -619,25 +619,25 @@
        inkscape:connector-curvature="0" />
     <text
        xml:space="preserve"
-       style="font-size:16px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       style="font-style:normal;font-weight:normal;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
        x="365"
        y="476.36218"
-       id="text6219"
-       sodipodi:linespacing="125%"><tspan
+       id="text6219"><tspan
          sodipodi:role="line"
          id="tspan6221"
          x="365"
-         y="476.36218">BL</tspan></text>
+         y="476.36218"
+         style="font-size:16px;line-height:1.25;font-family:sans-serif">bl</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:16px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       style="font-style:normal;font-weight:normal;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
        x="645"
        y="477.36218"
-       id="text6223"
-       sodipodi:linespacing="125%"><tspan
+       id="text6223"><tspan
          sodipodi:role="line"
          id="tspan6225"
          x="645"
-         y="477.36218">BL_bar</tspan></text>
+         y="477.36218"
+         style="font-size:16px;line-height:1.25;font-family:sans-serif">br</tspan></text>
   </g>
 </svg>

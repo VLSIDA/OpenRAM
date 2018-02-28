@@ -49,9 +49,11 @@ The inputs to the SRAM are:
 \item CSb - Active-low Chip Select
 \item WEb - Active-low Write Enable
 \item OEb - Active-low Output Enable
-\item ADDR\# - corresponds to the Address Bus input, labeled 0 to N-address bits.
-\item DATA\# - corresponds to the bi-directional Data bus.
+\item ADDR[\#] - Address Bus input (LSB is 0)
+\item DATA[\#] - Bi-directional Data bus (LBS is 0)
 \end{itemize}
+If multiple ports are used, the ADDR and DATA buses are appended with
+integers to extend them.
 
 The outputs to the SRAM are: 
 \begin{itemize}
@@ -59,33 +61,30 @@ The outputs to the SRAM are:
 \item DATA\# - correspond to the bi-directional Data bus.
 \end{itemize}
 
+The supply voltages to the SRAM are:
+\begin{itemize}
+\item vdd - Supply voltage
+\item gnd - Ground supply voltage
+\end{itemize}
 
 \subsection{Top-Level SRAM Module}
 \label{sec:sram}
 
-The \verb|sram| class in \verb|sram.py| is the top-level SRAM module.
-This class handles the overall organization of the memory and the
-input/output signals.  Based on the user inputs, the various bus and
-array sizes are calculated and passed to the \verb|bank| module.
-All other sub-modules access the value of sizes from \verb|bank|. 
-The overall organization is depicted in
-Figure~\ref{fig:sram_architecture}, discussion of the design data
-structure is discussed in Section~\ref{sec:design} and the modules
-contained in the top-level SRAM are detailed in
-Section~\ref{sec:modules}.
-
-When the user has specified the desired size (word size, total
-number of words and number of banks) of the memory that is to be generated, 
-the following parameters must be calculated. There are several constraints 
-to be considered in this calculations:
-
-(i) \verb|sram| can generate 1 bank, 2 banks or 4 banks.
-
-(ii) The area of each bank should be as square as possible which is dependent on the area of a 6T cell.
-
-(iii) There are several options for multiplexing (column-mux): 2-way, 4-way, 8-way  and none.
+The sram class in \verb|sram.py| is the top-level SRAM module.  This
+class handles the overall organization of the memory, instantiates the
+contorl logic, instantiates a number of banks, and creates decoded
+enable signals for multiple banks. All of the top level routing is
+performed in the sram class.
 
 
-All of the top level routing is performed in the \verb|sram| class.
+The sram class instantiates identical copies of the bank module from
+\verb|bank.py|.  All other sub-modules access the value of sizes from
+bank.  The bank module includes an address decoder, (optional) column
+address decoder, (optional) column mux, sense amplifiers, precharge
+circuitry, write drivers, etc.  A single bank organization is depicted
+in Figure~\ref{fig:sram_architecture}.
 
-\fixme{More soon...}
+Discussion of the design data structure is discussed in
+Section~\ref{sec:design} and the modules contained in the top-level
+SRAM are detailed in Section~\ref{sec:modules}.
+

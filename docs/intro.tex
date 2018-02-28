@@ -20,12 +20,9 @@ The specific features of OpenRAM are:
 
 \item \textbf{Memory Array Generation} 
 
-  Currently, OpenRAM supports simple 1 read/write port synchronous
-  memories, but it will be extended to multi-port memories, register
-  files, and asynchronous memories in the future. The generation
-  includes features such as automatic word-line driver sizing,
-  efficient decoder sizing, multiple-word column support, and
-  self-timing with replica bitlines.
+  Currently, OpenRAM includes features such as automatic word-line
+  driver sizing, efficient decoder sizing, multiple-word column
+  support, and self-timing with replica bitlines.
 
 \item \textbf{Portability and Extensibility} 
 
@@ -41,11 +38,11 @@ The specific features of OpenRAM are:
   to distribute the technology information of others commercial
   technologies soon.
 
-  OpenRAM makes calls to commercial circuit simulators and DRC/LVS
-  tools in an abstracted way for circuit simulation and
-  verification. This enables adaptation to other design
-  methodologies. However, it also supports a completely open-source
-  platform for older technologies.
+  OpenRAM makes calls to both open-source or commercial circuit
+  simulators and DRC/LVS tools in an abstracted way for circuit
+  simulation and verification. This enables adaptation to other design
+  methodologies. It supports a completely open-source
+  platform for older SCMOS technologies.
 
 \item \textbf{Timing and Power Characterization}
 
@@ -74,7 +71,9 @@ The specific features of OpenRAM are:
 
 \subsection{Requirements}
 
-Development is done on Ubuntu or MacOS systems with Python 2.7.
+Development is done on Ubuntu or MacOS systems with Python 2.7. It
+requires a few common Python libraries such as numpy, scipy (soon, for
+optimization) along with standard Python libraries (os, sys, etc.).
 
 
 \subsubsection{Timing Verification Tools}
@@ -92,7 +91,7 @@ OpenRAM can use the following circuit simulators and possibly others
 if they support the Spice3 file format:
 \begin{itemize}
   \item HSpice I-2013.12-1 or later
-  \item ngSpice 26 \url{http://ngspice.sourceforge.net/}
+  \item ngspice 26 \url{http://ngspice.sourceforge.net/}
   \item CustomSim (xa) M-2017.03-SP5 or later
 \end{itemize}
 
@@ -119,14 +118,15 @@ LVS can be done with:
 
 \subsubsection{Technology Files}
 
-To work with FreePDK45, you must install the FreePDK baseline kit from:
+To work with FreePDK45, you must install the FreePDK baseline kit from:\\
 \url{https://www.eda.ncsu.edu/wiki/FreePDK45:Contents}
 
 We have included an example Calibre DRC deck for MOSIS SCMOS design
-rules, but DRC with Magic relies on its own design rules:
-\url{https://www.mosis.com/files/scmos/scmos.pdf} We require the
-format 32 or later to enable stacked vias which is included with
-Qflow:
+rules, but DRC with Magic relies on the MOSIS scalable design
+rules:\\
+\url{https://www.mosis.com/files/scmos/scmos.pdf}.\\
+We require the format 32 or later to enable stacked vias which is
+included with Qflow:
 \begin{verbatim}
 git clone http://opencircuitdesign.com/qflow
 cp tech/osu050/SCN3ME_SUBM.30.tech <your magic tech lib>
@@ -137,15 +137,19 @@ DRCLVS\_HOME environment variable.
 
 \subsubsection{Spice Models}
 
-FreePDK45 comes with a spice device model. Once this is installed, it
-is used.
+FreePDK45 comes with a spice device model. Once this is installed and
+the PDK\_DIR environment variable for FreePDK45 is set, these spice
+models are used.
 
 SCMOS, however, does not come with a device spice model. This must be
 obtained from MOSIS or another vendor. We use the ON Semiconductor
-0.5um device models.
+0.5um device models, but are unable to distribute them. We have included our
+own generic spice models for simulation of SCMOS, but we recommend that
+you replace these with more accurate foundry models.
 
 You can over-ride the location of the spice models with the
-SPICE\_MODEL\_DIR environment variable.
+SPICE\_MODEL\_DIR environment variable to ensure that they do not
+``creep'' into the OpenRAM git repository.
 
 
 
@@ -156,7 +160,7 @@ to make it relocatable in a variety of user scenarios. Specifically,
 the user may want technology directories that are separate from
 OpenRAM. Or, the user may want to have several versions of
 OpenRAM. This is done with the folowing required environment
-variables: specifically:
+variables:
 \begin{itemize}
 \item OPENRAM\_HOME defines the location of the compiler source directory.
 \item OPENRAM\_TECH defines the location of the OpenRAM technology
@@ -165,12 +169,12 @@ variables: specifically:
 
 Other environmental variables and additional required paths for
 specific technologies are dynamically added during runtime by sourcing
-a technology setup script. These are located in the
+a technology setup script. These are mostly PDK-specific. These are located in the
 "\$OPENRAM\_TECH/setup\_scripts" directory. Example scripts for SCMOS and
-FreePDK45 are included with the distribution. These setup any things
-needed by the PDK.
+FreePDK45 are included with the distribution. 
 
-\subsection{Design Flow}
+
+%\subsection{Design Flow}
 
 %% % high-level org
 
@@ -209,13 +213,14 @@ needed by the PDK.
 
 \subsection{Usage}
 
-The OpenRAM compiler rquires a single argument of a configuration
+The OpenRAM compiler requires a single argument of a configuration
 file. The configuration file specifies, at a minimum, the memory size
 parameters in terms of the number of words, word size (in bits), and
 number of banks. By default, OpenRAM will chose the number of columns
-to make the memory reasonably square. Commonly, the configuration file
-also includes parameters for the output path, base output file name,
-and technology of an SRAM.
+to make the memory reasonably square. Other common configuration
+parameters are the output path and base filename, characterization
+corners (including the supply voltage), number of ports, technology
+node, etc.
 
 The configuration file can be used to over-ride any option in the
 options.py file.  Many of these can also be controlled by the command-line

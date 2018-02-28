@@ -25,13 +25,13 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1"
-     inkscape:cx="161.5"
+     inkscape:cx="20"
      inkscape:cy="520"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
-     inkscape:window-width="1280"
-     inkscape:window-height="752"
+     inkscape:window-width="3440"
+     inkscape:window-height="1392"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1">
@@ -185,7 +185,7 @@
          id="tspan4519"
          x="184"
          y="577.36218"
-         style="font-size:16px;line-height:1.25;font-family:sans-serif">BL</tspan></text>
+         style="font-size:16px;line-height:1.25;font-family:sans-serif">bl</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
@@ -196,7 +196,7 @@
          id="tspan4523"
          x="336"
          y="577.36218"
-         style="font-size:16px;line-height:1.25;font-family:sans-serif">BL_bar</tspan></text>
+         style="font-size:16px;line-height:1.25;font-family:sans-serif">br</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
@@ -207,7 +207,7 @@
          id="tspan4527"
          x="287"
          y="217.36218"
-         style="font-size:16px;line-height:1.25;font-family:sans-serif">VDD</tspan></text>
+         style="font-size:16px;line-height:1.25;font-family:sans-serif">vdd</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
        d="m 237,346.36218 77,0"
@@ -263,7 +263,7 @@
          id="tspan4793"
          x="271"
          y="334.36218"
-         style="font-size:16px;line-height:1.25;font-family:sans-serif">CLK</tspan></text>
+         style="font-size:16px;line-height:1.25;font-family:sans-serif">en</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"

@@ -31,6 +31,7 @@ class sense_amp(design.design):
         return self.return_delay(result.delay, result.slew)
 
     def analytical_power(self, proc, vdd, temp, load):
-        #Not sure how to determine this yet. Sense amps return zero power for now
+        """Returns dynamic and leakage power. Results in nW"""
+        #Power in this module currently not defined. Returns 0 nW (leakage and dynamic).
         total_power = self.return_power()
         return total_power

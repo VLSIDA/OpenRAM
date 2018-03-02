@@ -235,7 +235,7 @@ class pnand3(pgate.pgate):
         return self.cal_delay_with_rc(r = r, c =  c_para+load, slew = slew)
         
     def analytical_power(self, proc, vdd, temp, load):
-        #Returns dynamic and leakage power. Results in nW
+        """Returns dynamic and leakage power. Results in nW"""
         c_eff = self.calculate_effective_capacitance(load)
         freq = spice["default_event_rate"]
         power_dyn = c_eff*vdd*vdd*freq
@@ -245,6 +245,7 @@ class pnand3(pgate.pgate):
         return total_power
         
     def calculate_effective_capacitance(self, load):
+        """Computes effective capacitance. Results in fF"""
         c_load = load
         c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff
         transistion_prob = spice["nand3_transisition_prob"]

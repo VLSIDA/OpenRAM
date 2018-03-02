@@ -34,10 +34,10 @@ class tri_gate(design.design):
         return self.cal_delay_with_rc(r = r, c =  c_para+load, slew = slew)
         
     def analytical_power(self, proc, vdd, temp, load):
-        #Not sure how to determine this yet. Tri-gates return zero power for now
-        total_power = self.return_power()
+        """Returns dynamic and leakage power. Results in nW"""
+        #Power in this module currently not defined. Returns 0 nW (leakage and dynamic).
+        total_power = self.return_power() 
         return total_power
-
 
     def input_load(self):
         return 9*spice["min_tx_gate_c"]

@@ -36,8 +36,7 @@ class bitcell(design.design):
         return result
         
     def analytical_power(self, proc, vdd, temp, load):
-        #Power of the bitcell. Mostly known for leakage, but dynamic can also be factored in.
-        #Only consider leakage power for now. Value defined in tech file rather than calculated.
+        """Bitcell power in nW. Only characterizes leakage."""
         from tech import spice
         leakage = spice["bitcell_leakage"]
         dynamic = 0 #temporary

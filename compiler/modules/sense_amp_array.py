@@ -117,3 +117,4 @@ class sense_amp_array(design.design):
 
     def analytical_delay(self, slew, load=0.0):
         return self.amp.analytical_delay(slew=slew, load=load)
+        

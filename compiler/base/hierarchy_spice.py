@@ -214,6 +214,9 @@ class spice(verilog.verilog):
 
     def generate_rc_net(self,lump_num, wire_length, wire_width):
         return wire_spice_model(lump_num, wire_length, wire_width)
+        
+    def return_power(self, dynamic=0.0, leakage=0.0):
+        return power_data(dynamic, leakage)
 
 class delay_data:
     """
@@ -246,6 +249,37 @@ class delay_data:
         assert isinstance(other,delay_data)
         return delay_data(other.delay + self.delay,
                           self.slew)
+                          
+class power_data:
+    """
+    This is the power class to represent the power information
+    Dynamic and leakage power are stored as a single object with this class.
+    """
+    def __init__(self, dynamic=0.0, leakage=0.0):
+        """ init function support two init method"""
+        # will take single input as a coordinate
+        self.dynamic = dynamic
+        self.leakage = leakage
+
+    def __str__(self):
+        """ override print function output """
+        return "Power Data: Dynamic "+str(self.dynamic)+", Leakage "+str(self.leakage)+" in nW"
+
+    def __add__(self, other):
+        """
+        Override - function (left), for power_data: a+b != b+a
+        """
+        assert isinstance(other,power_data)
+        return power_data(other.dynamic + self.dynamic,
+                          other.leakage + self.leakage)
+
+    def __radd__(self, other):
+        """
+        Override - function (left), for power_data: a+b != b+a
+        """
+        assert isinstance(other,power_data)
+        return power_data(other.dynamic + self.dynamic,
+                          other.leakage + self.leakage)
 
 
 class wire_spice_model:

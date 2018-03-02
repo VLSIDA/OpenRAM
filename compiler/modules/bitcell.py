@@ -34,3 +34,11 @@ class bitcell(design.design):
         c_para = spice["min_tx_drain_c"]
         result = self.cal_delay_with_rc(r = r, c =  c_para+load, slew = slew, swing = swing)
         return result
+        
+    def analytical_power(self, proc, vdd, temp, load):
+        """Bitcell power in nW. Only characterizes leakage."""
+        from tech import spice
+        leakage = spice["bitcell_leakage"]
+        dynamic = 0 #temporary
+        total_power = self.return_power(dynamic, leakage)
+        return total_power

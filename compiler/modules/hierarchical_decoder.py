@@ -494,6 +494,7 @@ class hierarchical_decoder(design.design):
         result = result + z_t_decodeout_delay
         return result
 
+        
     def input_load(self):
         if self.determine_predecodes(self.num_inputs)[1]==0:
             pre = self.pre2_4

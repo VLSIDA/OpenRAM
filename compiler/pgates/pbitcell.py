@@ -225,14 +225,14 @@ class pbitcell(pgate.pgate):
         self.gnd = self.add_layout_pin(text="gnd",
                                        layer="metal1",
                                        offset=self.gnd_position,
-                                       width=self.cell_width,
+                                       width=self.width,
                                        height=contact.well.second_layer_width)
         
         self.vdd_position = vector(self.leftmost_xpos, self.inverter_pmos_left.get_pin("S").uc().y + drc["minwidth_metal1"])
         self.vdd = self.add_layout_pin(text="vdd",
                                        layer="metal1",
                                        offset=self.vdd_position,
-                                       width=self.cell_width,
+                                       width=self.width,
                                        height=drc["minwidth_metal1"])
                 
         """ Connect inverters to rails """
@@ -305,7 +305,7 @@ class pbitcell(pgate.pgate):
             self.add_layout_pin(text="wrow{}".format(k),
                                 layer="metal1",
                                 offset=self.wrow_positions[k],
-                                width=self.cell_width,
+                                width=self.width,
                                 height=contact.m1m2.width)
                        
             """ Source/WBL/WBL_bar connections """            
@@ -326,14 +326,14 @@ class pbitcell(pgate.pgate):
                                 layer="metal2",
                                 offset=self.wbl_positions[k],
                                 width=drc["minwidth_metal2"],
-                                height=self.cell_height)
+                                height=self.height)
 
             self.wbl_bar_positions[k] = vector(self.write_nmos_right[k].get_pin("S").center().x - 0.5*drc["minwidth_metal2"], self.botmost_ypos)
             self.add_layout_pin(text="wbl_bar{}".format(k),
                                 layer="metal2",
                                 offset=self.wbl_bar_positions[k],
                                 width=drc["minwidth_metal2"],
-                                height=self.cell_height)
+                                height=self.height)
                         
             """ Gate/WROW connections """
             # add poly-to-meltal2 contacts to connect gate of write transistors to WROW (contact next to gate)
@@ -488,7 +488,7 @@ class pbitcell(pgate.pgate):
             self.add_layout_pin(text="rrow{}".format(k),
                                 layer="metal1",
                                 offset=self.rrow_positions[k],
-                                width=self.cell_width,
+                                width=self.width,
                                 height=contact.m1m2.width)
                        
             """ Drain of read transistor / RBL & RBL_bar connection """
@@ -509,14 +509,14 @@ class pbitcell(pgate.pgate):
                                 layer="metal2",
                                 offset=self.rbl_positions[k],
                                 width=drc["minwidth_metal2"],
-                                height=self.cell_height)
+                                height=self.height)
 
             self.rbl_bar_positions[k] = vector(self.read_nmos_right[k].get_pin("D").center().x - 0.5*drc["minwidth_metal2"], self.botmost_ypos)
             self.add_layout_pin(text="rbl_bar{}".format(k),
                                 layer="metal2",
                                 offset=self.rbl_bar_positions[k],
                                 width=drc["minwidth_metal2"],
-                                height=self.cell_height)
+                                height=self.height)
                        
             """ Gate of read transistor / RROW connection """
             # add poly-to-meltal2 contacts to connect gate of read transistors to RROW (contact next to gate)
@@ -615,7 +615,7 @@ class pbitcell(pgate.pgate):
         well_height = -self.botmost_ypos + self.inverter_nmos.cell_well_height - drc["well_enclosure_active"]
         self.add_rect(layer="pwell",
                       offset=offset,
-                      width=self.cell_width,
+                      width=self.width,
                       height=well_height)
                       
         """ extend pwell over write transistors to the height of the write transistor well """

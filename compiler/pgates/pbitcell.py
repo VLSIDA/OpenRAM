@@ -24,7 +24,7 @@ class pbitcell(pgate.pgate):
         self.create_layout()
         self.DRC_LVS()
     
-	
+    
     def add_pins(self):
         for k in range(0,self.num_write):
             self.add_pin("wrow{}".format(k))
@@ -40,8 +40,9 @@ class pbitcell(pgate.pgate):
         self.add_pin("vdd")
         self.add_pin("gnd")
 
-		
+        
     def create_layout(self):
+        self.create_ptx()
         self.add_globals()
         self.add_storage()
         self.add_rails()
@@ -52,8 +53,7 @@ class pbitcell(pgate.pgate):
         self.offset_all_coordinates()
         #self.add_fail()
     
-	
-    def add_globals(self):
+    def create_ptx(self):
         """ Calculate transistor sizes """
         # if there are no read ports then write transistors are being used as read/write ports, like in a 6T cell
         if(self.num_read == 0):
@@ -88,7 +88,9 @@ class pbitcell(pgate.pgate):
         self.read_nmos = ptx(width=read_nmos_width,
                              tx_type="nmos")
         self.add_mod(self.read_nmos)
-        
+    
+    
+    def add_globals(self):        
         """ Define pbitcell global variables """
         # calculate metal contact extensions over transistor active
         self.inverter_pmos_contact_extension = 0.5*(self.inverter_pmos.active_contact.height - self.inverter_pmos.active_height)
@@ -109,7 +111,6 @@ class pbitcell(pgate.pgate):
         self.write_to_write_spacing = max(spacing_option1, spacing_option2)
         self.write_to_read_spacing = drc["poly_to_field_poly"] + 2*contact.poly.width + 2*drc["minwidth_metal2"] + 2*self.write_nmos_contact_extension
         self.read_to_read_spacing = drc["minwidth_metal1"] + 2*contact.poly.width + 2*drc["minwidth_poly"]
-        
         
         # calculations for transistor tiling (includes transistor and spacing)
         self.inverter_tile_width = self.inverter_nmos.active_width + 0.5*self.inverter_to_inverter_spacing
@@ -150,8 +151,8 @@ class pbitcell(pgate.pgate):
                             + self.inverter_pmos_contact_extension + 2*drc["minwidth_metal1"]
         
         # calculations for the cell dimensions
-        self.cell_width = -2*self.leftmost_xpos
-        self.cell_height = self.topmost_ypos - self.botmost_ypos        
+        self.width = -2*self.leftmost_xpos
+        self.height = self.topmost_ypos - self.botmost_ypos        
 
         
     def add_storage(self):
@@ -212,7 +213,7 @@ class pbitcell(pgate.pgate):
         
         gate_offset_left = vector(self.inverter_nmos_left.get_pin("G").rc().x, contact_offset_right.y)
         self.add_path("poly", [contact_offset_right, gate_offset_left])
-		
+        
        
     def add_rails(self):
         """

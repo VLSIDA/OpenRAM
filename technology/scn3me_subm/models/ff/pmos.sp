@@ -5,5 +5,5 @@
 *       models from MOSIS or SCN3ME
 *********************************************
 
-.MODEL p PMOS (LEVEL=49 VTHO=-0.322431 KP=366.0244-6
+.MODEL p PMOS (LEVEL=49 VTHO=-0.322431
 + NSUB=6E16 U0=212 K1=0.0821 TOX=13.9n VERSION=3.3.0)

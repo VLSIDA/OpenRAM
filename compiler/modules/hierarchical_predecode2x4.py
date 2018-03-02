@@ -55,5 +55,6 @@ class hierarchical_predecode2x4(hierarchical_predecode):
 
         return a_t_b_delay + b_t_z_delay + a_t_out_delay
 
+        
     def input_load(self):
         return self.nand.input_load()

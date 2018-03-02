@@ -1015,7 +1015,6 @@ class sram(design.design):
         """ LH and HL are the same in analytical model. """
         return self.bank.analytical_delay(slew,load)
 
-
     def save_output(self):
         """ Save all the output files while reporting time to do it as well. """
 

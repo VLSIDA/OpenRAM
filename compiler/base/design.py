@@ -120,3 +120,10 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
         for i in self.insts:
             text+=str(i)+",\n"
         return text
+     
+    def analytical_power(self, proc, vdd, temp, load):
+        """ Get total power of a module  """
+        total_module_power = self.return_power()
+        for inst in self.insts:
+            total_module_power += inst.mod.analytical_power(proc, vdd, temp, load)
+        return total_module_power

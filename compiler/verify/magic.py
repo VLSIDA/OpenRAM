@@ -113,19 +113,8 @@ def write_netgen_script(cell_name, sp_name):
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
     f.write("{} -noconsole << EOF\n".format(OPTS.lvs_exe[1]))
-    f.write("readnet spice {}.spice\n".format(cell_name))
-    f.write("readnet spice {}\n".format(sp_name))
-    f.write("ignore class c\n")
-    f.write("permute transistors\n")
-    f.write("equate class {{{0}.spice nfet}} {{{1} n}}\n".format(cell_name, sp_name))
-    f.write("equate class {{{0}.spice pfet}} {{{1} p}}\n".format(cell_name, sp_name))
-    # This circuit has symmetries and needs to be flattened to resolve them or the banks won't pass
-    # Is there a more elegant way to add this when needed?
-    f.write("flatten class {{{0}.spice precharge_array}}\n".format(cell_name))
-    f.write("property {{{0}.spice nfet}} remove as ad ps pd\n".format(cell_name))
-    f.write("property {{{0}.spice pfet}} remove as ad ps pd\n".format(cell_name))
-    f.write("property {{{0} n}} remove as ad ps pd\n".format(sp_name))
-    f.write("property {{{0} p}} remove as ad ps pd\n".format(sp_name))
+    f.write("readnet spice {0}.spice\n".format(cell_name))
+    f.write("readnet spice {0}\n".format(sp_name))
     # Allow some flexibility in W size because magic will snap to a lambda grid
     # This can also cause disconnects unfortunately!
     # f.write("property {{{0}{1}.spice nfet}} tolerance {{w 0.1}}\n".format(OPTS.openram_temp,
@@ -137,6 +126,24 @@ def write_netgen_script(cell_name, sp_name):
     f.write("EOF\n")
     f.close()
     os.system("chmod u+x {}".format(run_file))
+
+    setup_file = OPTS.openram_temp + "setup.tcl"
+    f = open(setup_file, "w")
+    f.write("ignore class c\n")
+    f.write("equate class {{nfet {0}.spice}} {{n {1}}}\n".format(cell_name, sp_name))
+    f.write("equate class {{pfet {0}.spice}} {{p {1}}}\n".format(cell_name, sp_name))
+    # This circuit has symmetries and needs to be flattened to resolve them or the banks won't pass
+    # Is there a more elegant way to add this when needed?
+    f.write("flatten class {{{0}.spice precharge_array}}\n".format(cell_name))
+    f.write("property {{nfet {0}.spice}} remove as ad ps pd\n".format(cell_name))
+    f.write("property {{pfet {0}.spice}} remove as ad ps pd\n".format(cell_name))
+    f.write("property {{n {0}}} remove as ad ps pd\n".format(sp_name))
+    f.write("property {{p {0}}} remove as ad ps pd\n".format(sp_name))
+    f.write("permute transistors\n")
+    f.write("permute pins n source drain\n")
+    f.write("permute pins p source drain\n")
+    f.close()
+    
     
 def run_drc(cell_name, gds_name, extract=False):
     """Run DRC check on a cell which is implemented in gds_name."""

@@ -75,4 +75,5 @@ class options(optparse.Values):
     replica_bitcell = "replica_bitcell"
     bitcell = "bitcell"
     delay_chain = "delay_chain"
+    bank_select = "bank_select"
 

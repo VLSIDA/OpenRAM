@@ -68,7 +68,7 @@ class sram(design.design):
         # Can remove the following, but it helps for debug!
         self.add_lvs_correspondence_points()
         
-        #self.offset_all_coordinates()
+        self.offset_all_coordinates()
         sizes = self.find_highest_coords()
         self.width = sizes[0]
         self.height = sizes[1]

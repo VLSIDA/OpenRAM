@@ -91,7 +91,7 @@ class dff_array(design.design):
 
         for y in range(self.rows):            
             for x in range(self.columns):            
-                din_pin = self.dff_insts[x,y].get_pin("d")
+                din_pin = self.dff_insts[x,y].get_pin("D")
                 debug.check(din_pin.layer=="metal2","DFF d pin not on metal2")
                 self.add_layout_pin(text="din[{0}][{1}]".format(x,y),
                                     layer=din_pin.layer,
@@ -99,7 +99,7 @@ class dff_array(design.design):
                                     width=din_pin.width(),
                                     height=din_pin.height())
 
-                dout_pin = self.dff_insts[x,y].get_pin("q")
+                dout_pin = self.dff_insts[x,y].get_pin("Q")
                 debug.check(dout_pin.layer=="metal2","DFF q pin not on metal2")
                 self.add_layout_pin(text="dout[{0}][{1}]".format(x,y),
                                     layer=dout_pin.layer,

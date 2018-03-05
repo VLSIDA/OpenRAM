@@ -31,6 +31,8 @@ class bank_select(design.design):
         for i in range(self.num_control_lines):
             gated_name = self.control_signals[i]
             self.add_pin(gated_name)
+        self.add_pin("vdd")  
+        self.add_pin("gnd")  
 
         self.create_modules()
         self.calculate_module_offsets()
@@ -61,26 +63,26 @@ class bank_select(design.design):
         self.m1_pitch = contact.m1m2.height + max(self.m1_space,self.m2_space)
         self.m2_pitch = contact.m2m3.height + max(self.m2_space,self.m3_space)
 
-        # left of gnd rail is the "bus start"
         self.xoffset_nand =  self.inv4x.width + 2*self.m2_pitch + drc["pwell_to_nwell"]
         self.xoffset_nor =  self.inv4x.width + 2*self.m2_pitch + drc["pwell_to_nwell"]
         self.xoffset_inv = max(self.xoffset_nand + self.nand2.width, self.xoffset_nor + self.nor2.width) 
         self.xoffset_bank_sel_inv = 0 
         self.xoffset_inputs = 0
 
-        # Above the bottom rails (plus a pitch to allow vias)
-        self.yoffset_minpoint = self.m1_pitch
         self.yoffset_maxpoint = self.num_control_lines * self.inv.height
+        # Include the M1 pitches for the supply rails and spacing
+        self.height = self.yoffset_maxpoint + 2*self.m1_pitch
+        self.width = self.xoffset_inv + self.inv4x.width
         
     def add_modules(self):
         
         # bank select inverter
-        self.bank_select_inv_position = vector(self.xoffset_bank_sel_inv, 
-                                               self.yoffset_minpoint)
+        self.bank_select_inv_position = vector(self.xoffset_bank_sel_inv, 0)
+
         # bank select inverter (must be made unique if more than one OR)
         self.bank_sel_inv=self.add_inst(name="bank_sel_inv", 
                                         mod=self.inv, 
-                                        offset=[self.xoffset_bank_sel_inv, self.yoffset_minpoint])
+                                        offset=[self.xoffset_bank_sel_inv, 0])
         self.connect_inst(["bank_sel", "bank_sel_bar", "vdd", "gnd"])
 
         self.logic_inst = []
@@ -92,7 +94,7 @@ class bank_select(design.design):
             name_nor = "nor_{}".format(input_name)
             name_inv = "inv_{}".format(input_name)
 
-            y_offset = self.yoffset_minpoint + self.inv.height * i
+            y_offset = self.inv.height * i
             if i%2:
                 y_offset += self.inv.height
                 mirror = "MX"
@@ -143,14 +145,14 @@ class bank_select(design.design):
         # bank_sel is vertical wire
         bank_sel_inv_pin = self.bank_sel_inv.get_pin("A")
         xoffset_bank_sel = bank_sel_inv_pin.lx()
-        bank_sel_line_pos = vector(xoffset_bank_sel, self.yoffset_minpoint)
+        bank_sel_line_pos = vector(xoffset_bank_sel, 0)
         bank_sel_line_end = vector(xoffset_bank_sel, self.yoffset_maxpoint)
         self.add_path("metal2", [bank_sel_line_pos, bank_sel_line_end])
         self.add_via_center(layers=("metal1","via1","metal2"),
                             offset=bank_sel_inv_pin.lc())
 
         # Route the pin to the left edge as well
-        bank_sel_pin_pos=vector(0, self.yoffset_minpoint)
+        bank_sel_pin_pos=vector(0, 0)
         bank_sel_pin_end=vector(bank_sel_line_pos.x, bank_sel_pin_pos.y)
         self.add_layout_pin_center_segment(text="bank_sel",
                                            layer="metal3",
@@ -165,7 +167,7 @@ class bank_select(design.design):
         xoffset_bank_sel_bar = bank_sel_bar_pin.rx()
         self.add_label_pin(text="bank_sel_bar",
                            layer="metal2",  
-                           offset=vector(xoffset_bank_sel_bar, self.yoffset_minpoint), 
+                           offset=vector(xoffset_bank_sel_bar, 0), 
                            height=2*self.inv.height)
         self.add_via_center(layers=("metal1","via1","metal2"),
                             offset=bank_sel_bar_pin.rc())

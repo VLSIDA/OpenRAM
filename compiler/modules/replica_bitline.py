@@ -70,7 +70,8 @@ class replica_bitline(design.design):
         self.rbl_offset = self.bitcell_offset
 
         
-        self.height = self.rbl_offset.y + self.rbl.height + self.m2_pitch
+        self.height = max(self.rbl_offset.y + self.rbl.height + self.m2_pitch,
+                          self.delay_chain_offset.y + self.delay_chain.width + self.m2_pitch)
         self.width = self.rbl_offset.x + self.bitcell.width
 
 

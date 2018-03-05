@@ -685,7 +685,7 @@ class sram(design.design):
         """ Create rails at bottom. Connect veritcal rails to top and bottom. """
         
         self.add_layout_pin(text="gnd",
-                            layer="metal3",
+                            layer="metal1",
                             offset=vector(0,0),
                             height=self.power_rail_width,
                             width=self.width)
@@ -703,10 +703,22 @@ class sram(design.design):
             for vdd_pin in vdd_pins:
                 vdd_pos = vdd_pin.ul()
                 # Route to bottom
-                self.add_rect(layer="metal1",
+                self.add_rect(layer="metal2",
                               offset=vector(vdd_pos.x,self.power_rail_pitch),
                               height=self.horz_control_bus_positions["vdd"].y-self.power_rail_pitch, 
                               width=vdd_pin.width())
+                # Add vias at top
+                rail_pos = vector(vdd_pin.ur().x,self.horz_control_bus_positions["vdd"].y)
+                self.add_via(layers=("metal1","via1","metal2"),
+                             offset=rail_pos - vector(0,0.5*self.m1_width),
+                             rotate=90,
+                             size=[1,3])
+                # Add vias at bottom
+                rail_pos = vector(vdd_pin.lr().x,self.power_rail_pitch)
+                self.add_via(layers=("metal1","via1","metal2"),
+                             offset=rail_pos,
+                             rotate=90,
+                             size=[2,3])
 
             gnd_pins = self.bank_inst[i].get_pins("gnd")
             for gnd_pin in gnd_pins:

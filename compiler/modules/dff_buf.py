@@ -13,7 +13,7 @@ class dff_buf(design.design):
     and qbar. This is to enable driving large fanout loads.
     """
 
-    def __init__(self, inv1_size, inv2_size, name=""):
+    def __init__(self, inv1_size=2, inv2_size=4, name=""):
 
         if name=="":
             name = "dff_buf_{0}_{1}".format(inv1_size, inv2_size)
@@ -122,18 +122,18 @@ class dff_buf(design.design):
                             height=din_pin.height())
 
         dout_pin = self.inv2_inst.get_pin("Z")
-        self.add_layout_pin(text="Q",
-                            layer=dout_pin.layer,
-                            offset=dout_pin.ll(),
-                            width=dout_pin.width(),
-                            height=dout_pin.height())
+        self.add_layout_pin_center_rect(text="Q",
+                                        layer="metal2",
+                                        offset=dout_pin.center())
+        self.add_via_center(layers=("metal1","via1","metal2"),
+                            offset=dout_pin.center())
 
-        dout_pin = self.inv1_inst.get_pin("Z")
-        self.add_layout_pin(text="Qb",
-                            layer=dout_pin.layer,
-                            offset=dout_pin.ll(),
-                            width=dout_pin.width(),
-                            height=dout_pin.height())
+        dout_pin = self.inv2_inst.get_pin("A")
+        self.add_layout_pin_center_rect(text="Qb",
+                                        layer="metal2",
+                                        offset=dout_pin.center())
+        self.add_via_center(layers=("metal1","via1","metal2"),
+                            offset=dout_pin.center())
         
         
 

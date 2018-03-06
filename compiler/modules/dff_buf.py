@@ -86,8 +86,7 @@ class dff_buf(design.design):
         z1_pin = self.inv1_inst.get_pin("Z")
         a2_pin = self.inv2_inst.get_pin("A")
         mid_point = vector(z1_pin.cx(), a2_pin.cy())        
-        self.add_wire(("metal1","via1","metal2"),
-                      [z1_pin.center(), mid_point, a2_pin.center()])
+        self.add_path("metal1", [z1_pin.center(), mid_point, a2_pin.center()])
         
     def add_layout_pins(self):
 

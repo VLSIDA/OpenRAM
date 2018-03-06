@@ -62,9 +62,9 @@ class dff_array(design.design):
                                                   mod=self.dff,
                                                   offset=base, 
                                                   mirror=mirror)
-                self.connect_inst(["din[{0}][{1}]".format(x,y),
-                                   "dout[{0}][{1}]".format(x,y),
-                                   "dout_bar[{0}][{1}]".format(x,y),                                   
+                self.connect_inst([self.get_din_name(y,x),
+                                   self.get_dout_name(y,x),
+                                   self.get_dout_bar_name(y,x),  
                                    "clk",
                                    "vdd",
                                    "gnd"])
@@ -159,7 +159,7 @@ class dff_array(design.design):
         else:
             self.add_layout_pin(text="clk",
                                 layer="metal3",
-                                offset=clk_pin.ll().scale(0,1),
+                                offset=vector(0,0),
                                 width=self.width,
                                 height=self.m3_width)
             for x in range(self.columns):
@@ -172,7 +172,7 @@ class dff_array(design.design):
                                     height=self.height)
                 # Drop a via to the M3 pin
                 self.add_via_center(layers=("metal2","via2","metal3"),
-                                    offset=clk_pin.center())
+                                    offset=clk_pin.center().scale(1,0))
                 
         
 

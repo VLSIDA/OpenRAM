@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 """
-Run regresion tests on a parameterized bitcell
+Run a regresion test on a basic array
 """
 
 import unittest
@@ -11,12 +11,9 @@ import globals
 from globals import OPTS
 import debug
 
-OPTS = globals.OPTS
+#@unittest.skip("SKIPPING 05_array_test")
 
-#@unittest.skip("SKIPPING 04_pbitcell_test")
-
-
-class pbitcell_test(openram_test):
+class array_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
@@ -24,16 +21,15 @@ class pbitcell_test(openram_test):
         import verify
         OPTS.check_lvsdrc = False
 
-        import pbitcell
-        import tech
+        import bitcell_array
 
-        debug.info(2, "Bitcell with 2 write ports and 0 read ports")
-        tx = pbitcell.pbitcell(num_write=2,num_read=0)
-        self.local_check(tx)
+        OPTS.bitcell = "pbitcell"
+        debug.info(2, "Testing 4x4 array for multiport bitcell")
+        a = bitcell_array.bitcell_array(name="pbitcell_array", cols=4, rows=4)
+        self.local_check(a)
 
         OPTS.check_lvsdrc = True
         globals.end_openram()
-
 
 # instantiate a copy of the class to actually run the test
 if __name__ == "__main__":

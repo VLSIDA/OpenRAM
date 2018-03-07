@@ -26,17 +26,19 @@ class pbitcell(pgate.pgate):
     
     
     def add_pins(self):
-        for k in range(0,self.num_write):
-            self.add_pin("wrow{}".format(k))
-        for k in range(0,self.num_write):
+        
+        for k in range(self.num_write):
             self.add_pin("wbl{}".format(k))
             self.add_pin("wbl_bar{}".format(k))
-        if(self.num_read > 0):
-            for k in range(0,self.num_read):
-                self.add_pin("rrow{}".format(k))
-            for k in range(0,self.num_read):
-                self.add_pin("rbl{}".format(k))
-                self.add_pin("rbl_bar{}".format(k))
+        for k in range(self.num_read):
+            self.add_pin("rbl{}".format(k))
+            self.add_pin("rbl_bar{}".format(k))
+            
+        for k in range(self.num_write):
+            self.add_pin("wrow{}".format(k))
+        for k in range(self.num_read):
+            self.add_pin("rrow{}".format(k))
+            
         self.add_pin("vdd")
         self.add_pin("gnd")
 
@@ -51,6 +53,8 @@ class pbitcell(pgate.pgate):
             self.add_read_ports()
         self.extend_well()
         self.offset_all_coordinates()
+        #offset = vector(0, -0.5*drc["minwidth_metal2"])
+        #self.translate_all(offset)
         #self.add_fail()
     
     def create_ptx(self):
@@ -152,7 +156,7 @@ class pbitcell(pgate.pgate):
         
         # calculations for the cell dimensions
         self.width = -2*self.leftmost_xpos
-        self.height = self.topmost_ypos - self.botmost_ypos        
+        self.height = self.topmost_ypos - self.botmost_ypos + 0.5*drc["minwidth_metal2"] - 0.5*drc["minwidth_metal1"]
 
         
     def add_storage(self):
@@ -610,9 +614,10 @@ class pbitcell(pgate.pgate):
         the well connections must be done piecewise to avoid pwell and nwell overlap.
         """
     
+        cell_well_tiling_offset = 0.5*drc["minwidth_metal2"]
         """ extend pwell to encompass entire nmos region of the cell up to the height of the inverter nmos well """
-        offset = vector(self.leftmost_xpos, self.botmost_ypos)
-        well_height = -self.botmost_ypos + self.inverter_nmos.cell_well_height - drc["well_enclosure_active"]
+        offset = vector(self.leftmost_xpos, self.botmost_ypos - cell_well_tiling_offset)
+        well_height = -self.botmost_ypos + self.inverter_nmos.cell_well_height - drc["well_enclosure_active"] + cell_well_tiling_offset
         self.add_rect(layer="pwell",
                       offset=offset,
                       width=self.width,

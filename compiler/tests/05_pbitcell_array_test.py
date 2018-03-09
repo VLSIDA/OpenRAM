@@ -11,9 +11,9 @@ import globals
 from globals import OPTS
 import debug
 
-#@unittest.skip("SKIPPING 05_array_test")
+#@unittest.skip("SKIPPING 05_array_multiport_test")
 
-class array_test(openram_test):
+class array_multiport_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))

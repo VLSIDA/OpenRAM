@@ -88,18 +88,26 @@ class bitcell_array(design.design):
                     dir_key = ""
                 
                 if(OPTS.bitcell == "pbitcell"):
+                    bitcell_nets = []
+                    for k in range(self.num_write):
+                        bitcell_nets.append("wbl{0}[{1}]".format(k,col))
+                        bitcell_nets.append("wbl_bar{0}[{1}]".format(k,col))
+                    for k in range(self.num_read):
+                        bitcell_nets.append("rbl{0}[{1}]".format(k,col))
+                        bitcell_nets.append("rbl_bar{0}[{1}]".format(k,col))
+                    for k in range(self.num_write):
+                        bitcell_nets.append("wrow{0}[{1}]".format(k,row))
+                    for k in range(self.num_read):
+                        bitcell_nets.append("rrow{0}[{1}]".format(k,row))
+                    bitcell_nets.append("vdd")
+                    bitcell_nets.append("gnd")
+                    
                     self.cell_inst[row,col]=self.add_inst(name=name,
                                                           mod=self.cell,
                                                           offset=[xoffset, tempy],
                                                           mirror=dir_key)
-                    self.connect_inst(["wbl0[{0}]".format(col),
-                                       "wbl_bar0[{0}]".format(col),
-                                       "rbl0[{0}]".format(col),
-                                       "rbl_bar0[{0}]".format(col),
-                                       "wrow0[{0}]".format(row),
-                                       "rrow0[{0}]".format(row),
-                                       "vdd",
-                                       "gnd"])
+                    self.connect_inst(bitcell_nets)
+                    
                 else:
                     self.cell_inst[row,col]=self.add_inst(name=name,
                                                           mod=self.cell,

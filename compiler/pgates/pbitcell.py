@@ -101,20 +101,20 @@ class pbitcell(pgate.pgate):
         self.write_nmos_contact_extension = 0.5*(self.write_nmos.active_contact.height - self.write_nmos.active_height)    
         
         # calculation for transistor spacing (exact solutions)
-        #self.inverter_to_inverter_spacing = 3*parameter["min_tx_size"]
-        #self.inverter_to_write_spacing = need to calculate
-        #self.write_to_write_spacing = drc["minwidth_metal2"] + self.write_nmos_contact_extension + contact.poly.width + drc["poly_to_field_poly"] + drc["poly_extend_active"]
-        #self.write_to_read_spacing = drc["minwidth_poly"] + drc["poly_to_field_poly"] + drc["minwidth_metal2"] + 2*contact.poly.width + self.write_nmos_contact_extension
-        #self.read_to_read_spacing = 2*drc["minwidth_poly"] + drc["minwidth_metal1"] + 2*contact.poly.width
+        self.inverter_to_inverter_spacing = contact.poly.height + drc["minwidth_metal1"]
+        self.inverter_to_write_spacing = drc["pwell_to_nwell"] + 2*drc["well_enclosure_active"]
+        self.write_to_write_spacing = drc["minwidth_metal2"] + self.write_nmos_contact_extension + contact.poly.width + drc["poly_to_field_poly"] + drc["poly_extend_active"]
+        self.write_to_read_spacing = drc["minwidth_poly"] + drc["poly_to_field_poly"] + drc["minwidth_metal2"] + 2*contact.poly.width + self.write_nmos_contact_extension
+        self.read_to_read_spacing = 2*drc["minwidth_poly"] + drc["minwidth_metal1"] + 2*contact.poly.width
         
         # calculation for transistor spacing (symmetric solutions)
-        self.inverter_to_inverter_spacing = 3*parameter["min_tx_size"]
+        #self.inverter_to_inverter_spacing = 3*parameter["min_tx_size"]
         #self.inverter_to_write_spacing = need to calculate
-        spacing_option1 = contact.poly.width + 2*drc["poly_to_field_poly"] + 2*drc["poly_extend_active"]
-        spacing_option2 = contact.poly.width + 2*drc["minwidth_metal2"] + 2*self.write_nmos_contact_extension
-        self.write_to_write_spacing = max(spacing_option1, spacing_option2)
-        self.write_to_read_spacing = drc["poly_to_field_poly"] + 2*contact.poly.width + 2*drc["minwidth_metal2"] + 2*self.write_nmos_contact_extension
-        self.read_to_read_spacing = drc["minwidth_metal1"] + 2*contact.poly.width + 2*drc["minwidth_poly"]
+        #spacing_option1 = contact.poly.width + 2*drc["poly_to_field_poly"] + 2*drc["poly_extend_active"]
+        #spacing_option2 = contact.poly.width + 2*drc["minwidth_metal2"] + 2*self.write_nmos_contact_extension
+        #self.write_to_write_spacing = max(spacing_option1, spacing_option2)
+        #self.write_to_read_spacing = drc["poly_to_field_poly"] + 2*contact.poly.width + 2*drc["minwidth_metal2"] + 2*self.write_nmos_contact_extension
+        #self.read_to_read_spacing = drc["minwidth_metal1"] + 2*contact.poly.width + 2*drc["minwidth_poly"]
         
         # calculations for transistor tiling (includes transistor and spacing)
         self.inverter_tile_width = self.inverter_nmos.active_width + 0.5*self.inverter_to_inverter_spacing
@@ -122,6 +122,7 @@ class pbitcell(pgate.pgate):
         self.read_tile_width = self.read_to_read_spacing + self.read_nmos.active_height
         
         # calculation for row line tiling
+        self.rail_tile_height = drc["active_to_body_active"] + 0.5*(drc["minwidth_tx"] - drc["minwidth_metal1"]) + drc["minwidth_metal1"]
         self.rowline_tile_height = drc["minwidth_metal1"] + contact.m1m2.width
         
         # calculations related to inverter connections
@@ -138,7 +139,7 @@ class pbitcell(pgate.pgate):
             
         # leftmost position = storage width + write ports width + read ports width + read transistor gate connections + metal spacing necessary for tiling the bitcell
         self.leftmost_xpos = -self.inverter_tile_width \
-                             - self.num_write*self.write_tile_width \
+                             - self.inverter_to_write_spacing - self.write_nmos.active_height - (self.num_write-1)*self.write_tile_width \
                              - read_port_flag*(self.write_to_read_spacing + self.read_nmos.active_height + (self.num_read-1)*self.read_tile_width) \
                              - drc["minwidth_poly"] - contact.m1m2.height \
                              - 0.5*drc["minwidth_metal2"]
@@ -146,13 +147,13 @@ class pbitcell(pgate.pgate):
         self.rightmost_xpos = -self.leftmost_xpos
         
         # bottommost position = gnd height + wrow height + rrow height
-        self.botmost_ypos = -self.rowline_tile_height \
+        self.botmost_ypos = -self.rail_tile_height \
                             - self.num_write*self.rowline_tile_height \
                             - read_port_flag*(self.num_read*self.rowline_tile_height)
                             
         # topmost position = height of the inverter + height of vdd
         self.topmost_ypos = self.inverter_nmos.active_height + self.inverter_gap + self.inverter_pmos.active_height \
-                            + self.inverter_pmos_contact_extension + 2*drc["minwidth_metal1"]
+                            + self.rail_tile_height
         
         # calculations for the cell dimensions
         self.width = -2*self.leftmost_xpos
@@ -225,14 +226,17 @@ class pbitcell(pgate.pgate):
         """
         
         """ Add rails for vdd and gnd """
-        self.gnd_position = vector(self.leftmost_xpos, -self.rowline_tile_height)
+        self.gnd_position = vector(self.leftmost_xpos, -self.rail_tile_height)
         self.gnd = self.add_layout_pin(text="gnd",
                                        layer="metal1",
                                        offset=self.gnd_position,
                                        width=self.width,
                                        height=contact.well.second_layer_width)
         
-        self.vdd_position = vector(self.leftmost_xpos, self.inverter_pmos_left.get_pin("S").uc().y + drc["minwidth_metal1"])
+        vdd_ypos = self.inverter_nmos.active_height + self.inverter_gap + self.inverter_pmos.active_height \
+                   + drc["active_to_body_active"] + 0.5*(drc["minwidth_tx"] - drc["minwidth_metal1"])
+        #vdd_ypos = self.inverter_pmos_left.get_pin("S").uc().y + drc["minwidth_metal1"]
+        self.vdd_position = vector(self.leftmost_xpos, vdd_ypos)
         self.vdd = self.add_layout_pin(text="vdd",
                                        layer="metal1",
                                        offset=self.vdd_position,
@@ -280,11 +284,11 @@ class pbitcell(pgate.pgate):
             """ Add transistors """
             # calculate write transistor offsets 
             left_write_transistor_xpos = -self.inverter_tile_width \
-                                         - (k+1)*self.write_tile_width \
+                                         - self.inverter_to_write_spacing - self.write_nmos.active_height - k*self.write_tile_width \
                                          + write_rotation_correct
             
             right_write_transistor_xpos = self.inverter_tile_width \
-                                          + self.write_to_write_spacing + k*self.write_tile_width \
+                                          + self.inverter_to_write_spacing + k*self.write_tile_width \
                                           + write_rotation_correct
             
             # add write transistors
@@ -446,12 +450,12 @@ class pbitcell(pgate.pgate):
             """ Add transistors """
             # calculate transistor offsets
             left_read_transistor_xpos = -self.inverter_tile_width \
-                                        - self.num_write*self.write_tile_width \
+                                        - self.inverter_to_write_spacing - self.write_nmos.active_height - (self.num_write-1)*self.write_tile_width \
                                         - self.write_to_read_spacing - self.read_nmos.active_height - k*self.read_tile_width \
                                         + read_rotation_correct
                        
             right_read_transistor_xpos = self.inverter_tile_width \
-                                         + self.num_write*self.write_tile_width \
+                                         + self.inverter_to_write_spacing + self.write_nmos.active_height + (self.num_write-1)*self.write_tile_width \
                                          + self.write_to_read_spacing + k*self.read_tile_width \
                                          + read_rotation_correct          
             
@@ -708,20 +712,17 @@ class pbitcell(pgate.pgate):
         
     
     def add_fail(self):
-        # for failing drc when I want to observe the gds layout
-        frail_width = self.well_width = 2*drc["minwidth_metal1"]
-        frail_height = self.rail_height = drc["minwidth_metal1"]
-        
-        fail_position = vector(-25*drc["minwidth_tx"], - 1.5 * drc["minwidth_metal1"] - 0.5 * frail_height)  # for tiling purposes
-        self.add_layout_pin(text="gnd",
+        # for failing drc when I want to observe the gds layout       
+        fail_position = vector(-4*drc["minwidth_metal1"], 0)  # for tiling purposes
+        self.add_layout_pin(text="fail1",
                             layer="metal1",
                             offset=fail_position,
-                            width=frail_width,
-                            height=frail_height)
+                            width=drc["minwidth_metal1"],
+                            height=drc["minwidth_metal1"])
 
-        fail_position2 = vector(-25*drc["minwidth_tx"], - 0.5 * drc["minwidth_metal1"]) 
-        self.add_layout_pin(text="gnd2",
+        fail_position2 = vector(-4*drc["minwidth_metal1"], -1.5*drc["minwidth_metal1"]) 
+        self.add_layout_pin(text="fail2",
                             layer="metal1",
                             offset=fail_position2,
-                            width=frail_width,
-                            height=frail_height)
+                            width=drc["minwidth_metal1"],
+                            height=drc["minwidth_metal1"])

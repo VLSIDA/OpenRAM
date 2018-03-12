@@ -31,7 +31,7 @@ class hierarchical_decoder(design.design):
         self.rows = rows
         self.num_inputs = int(math.log(self.rows, 2))
         (self.no_of_pre2x4,self.no_of_pre3x8)=self.determine_predecodes(self.num_inputs)
-        
+
         self.create_layout()
         self.DRC_LVS()
 
@@ -51,10 +51,15 @@ class hierarchical_decoder(design.design):
         self.add_mod(self.nand2)
         self.nand3 = pnand3()
         self.add_mod(self.nand3)
+        
+        self.add_decoders()
 
-        # CREATION OF PRE-DECODER
+    def add_decoders(self):
+        """ Create the decoders based on the number of pre-decodes """
+        # FIXME: Only add these if needed?
         self.pre2_4 = pre2x4()
         self.add_mod(self.pre2_4)
+        
         self.pre3_8 = pre3x8()
         self.add_mod(self.pre3_8)
 

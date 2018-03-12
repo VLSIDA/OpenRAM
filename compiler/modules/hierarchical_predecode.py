@@ -21,8 +21,6 @@ class hierarchical_predecode(design.design):
 
         c = reload(__import__(OPTS.bitcell))
         self.mod_bitcell = getattr(c, OPTS.bitcell)
-        self.bitcell_height = self.mod_bitcell.height
-
     
     def add_pins(self):
         for k in range(self.number_of_inputs):

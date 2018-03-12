@@ -22,8 +22,8 @@ class sram(design.design):
         c = reload(__import__(OPTS.control_logic))
         self.mod_control_logic = getattr(c, OPTS.control_logic)
         
-        c = reload(__import__(OPTS.ms_flop_array))
-        self.mod_ms_flop_array = getattr(c, OPTS.ms_flop_array)
+        c = reload(__import__(OPTS.dff_array))
+        self.mod_dff_array = getattr(c, OPTS.dff_array)
         
         c = reload(__import__(OPTS.bitcell))
         self.mod_bitcell = getattr(c, OPTS.bitcell)
@@ -146,10 +146,10 @@ class sram(design.design):
             self.add_pin("ADDR[{0}]".format(i),"INPUT")
 
         # These are used to create the physical pins too
-        self.control_logic_inputs=["CSb", "WEb",  "OEb", "clk"]
+        self.control_logic_inputs=["CSb", "WEb",  "OEb"]
         self.control_logic_outputs=["s_en", "w_en", "tri_en", "tri_en_bar", "clk_bar", "clk_buf"]
         
-        self.add_pin_list(self.control_logic_inputs,"INPUT")
+        self.add_pin_list(self.control_logic_inputs + ["clk"],"INPUT")
         self.add_pin("vdd","POWER")
         self.add_pin("gnd","GROUND")
 
@@ -210,7 +210,7 @@ class sram(design.design):
         """ Route the shared signals for two and four bank configurations. """
 
         # create the input control pins
-        for n in self.control_logic_inputs:
+        for n in self.control_logic_inputs + ["clk"]:
             self.copy_layout_pin(self.control_logic_inst, n.lower(), n)
             
         # connect the control logic to the control bus
@@ -374,7 +374,7 @@ class sram(design.design):
                                                           length=self.vertical_bus_height,
                                                           vertical=True)
 
-        self.addr_bus_names=["ADDR[{}]".format(i) for i in range(self.addr_size)]
+        self.addr_bus_names=["A[{}]".format(i) for i in range(self.addr_size)]
         self.vert_control_bus_positions.update(self.create_bus(layer="metal2",
                                                                pitch=self.m2_pitch,
                                                                offset=self.addr_bus_offset,
@@ -797,6 +797,11 @@ class sram(design.design):
         self.control_logic = self.mod_control_logic(num_rows=self.num_rows)
         self.add_mod(self.control_logic)
 
+        # Create the address and control flops
+        dff_size = self.addr_size + len(self.control_logic_inputs)
+        self.addr_ctrl_dff = self.mod_dff_array(rows=dff_size, columns=1)
+        self.add_mod(self.addr_ctrl_dff)
+        
         # Create the bank module (up to four are instantiated)
         self.bank = bank(word_size=self.word_size,
                          num_words=self.num_words_per_bank,
@@ -805,14 +810,13 @@ class sram(design.design):
                          name="bank")
         self.add_mod(self.bank)
 
-        # Conditionally create the 
+        # Create bank decoder
         if(self.num_banks > 1):
             self.create_multi_bank_modules()
 
         self.bank_count = 0
 
         self.supply_rail_width = self.bank.supply_rail_width
-        # Leave some extra space for the pitch
         self.supply_rail_pitch = self.bank.supply_rail_pitch
 
 
@@ -900,13 +904,32 @@ class sram(design.design):
         return line_positions
 
 
+    def add_control_addr_dff(self, position, rotate=0):
+        """ Add and place address and control flops """
+        self.addr_ctrl_dff_inst = self.add_inst(name="address",
+                                           mod=self.addr_ctrl_dff,
+                                           offset=position,
+                                           rotate=rotate)
+        # inputs, outputs/output/bar
+        inputs = []
+        outputs = []
+        for i in range(self.addr_size):
+            inputs.append("ADDR[{}]".format(i))
+            outputs.append("A[{}]".format(i))
+
+        for i in self.control_logic_inputs:
+            inputs.append(i)
+            outputs.append(i+"_s")
+            
+        self.connect_inst(inputs + outputs + ["clk", "vdd", "gnd"])
+    
     def add_control_logic(self, position, rotate):
         """ Add and place control logic """
         self.control_logic_inst=self.add_inst(name="control",
                                               mod=self.control_logic,
                                               offset=position,
                                               rotate=rotate)
-        self.connect_inst(self.control_logic_inputs + self.control_logic_outputs + ["vdd", "gnd"])
+        self.connect_inst(self.control_logic_inputs + ["clk"] + self.control_logic_outputs + ["vdd", "gnd"])
 
 
     def add_lvs_correspondence_points(self):
@@ -938,11 +961,14 @@ class sram(design.design):
         # are not recomputed using instance placement. So, place the control logic such that it aligns
         # with the top of the SRAM.
         control_gap = 2*self.m3_width
-        pos = vector(-control_gap,
-                     self.bank.height-self.control_logic.width)
-        self.add_control_logic(position=pos,
-                               rotate=90)
+        control_pos = vector(-control_gap,
+                             self.bank.height-self.control_logic.width)
+        self.add_control_logic(position=control_pos, rotate=90)
 
+        addr_pos = vector(self.control_logic_inst.lx(),
+                          2*self.supply_rail_pitch)
+        self.add_control_addr_dff(addr_pos)
+        
         self.width = self.bank.width + self.control_logic.height + control_gap
         self.height = self.bank.height
 
@@ -955,7 +981,7 @@ class sram(design.design):
             self.copy_layout_pin(self.bank_inst, "DATA[{}]".format(i))
 
         for i in range(self.addr_size):
-            self.copy_layout_pin(self.bank_inst, "ADDR[{}]".format(i))            
+            self.copy_layout_pin(self.bank_inst, "A[{}]".format(i))            
 
         for (old,new) in zip(["csb","web","oeb","clk"],["CSb","WEb","OEb","clk"]):
             self.copy_layout_pin(self.control_logic_inst, old, new)

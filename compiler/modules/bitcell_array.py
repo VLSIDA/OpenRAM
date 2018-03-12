@@ -33,6 +33,9 @@ class bitcell_array(design.design):
         self.add_pins()
         self.create_layout()
         self.add_layout_pins()
+        
+        self.offset_all_coordinates()
+        
         self.DRC_LVS()
 
     def add_pins(self):

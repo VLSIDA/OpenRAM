@@ -544,6 +544,109 @@ class layout(lef.lef):
                       width=xmax-xmin,
                       height=ymax-ymin)
 
+    def add_power_ring(self, bbox):
+        """
+        Create vdd and gnd power rings around an area of the bounding box argument. Must
+        have a supply_rail_width and supply_rail_pitch defined as a member variable. 
+        Defines local variables of the left/right/top/bottom vdd/gnd center offsets
+        for use in other modules..
+        """
+
+        [ll, ur] = bbox
+
+        supply_rail_spacing = self.supply_rail_pitch - self.supply_rail_width
+        height = (ur.y-ll.y) + 3 * self.supply_rail_pitch - supply_rail_spacing
+        width = (ur.x-ll.x) + 3 * self.supply_rail_pitch - supply_rail_spacing
+
+        
+        # LEFT vertical rails
+        offset = ll + vector(-2*self.supply_rail_pitch, -2*self.supply_rail_pitch)
+        left_gnd_pin=self.add_layout_pin(text="gnd",
+                                         layer="metal2", 
+                                         offset=offset, 
+                                         width=self.supply_rail_width,
+                                         height=height)
+
+
+        offset = ll + vector(-1*self.supply_rail_pitch, -1*self.supply_rail_pitch)
+        left_vdd_pin=self.add_layout_pin(text="vdd",
+                                         layer="metal2", 
+                                         offset=offset, 
+                                         width=self.supply_rail_width,
+                                         height=height)
+
+        # RIGHT vertical rails        
+        offset = vector(ur.x,ll.y) + vector(0,-2*self.supply_rail_pitch)
+        right_gnd_pin = self.add_layout_pin(text="gnd",
+                                            layer="metal2", 
+                                            offset=offset,
+                                            width=self.supply_rail_width,
+                                            height=height)
+
+        offset = vector(ur.x,ll.y) + vector(self.supply_rail_pitch,-1*self.supply_rail_pitch)
+        right_vdd_pin=self.add_layout_pin(text="vdd",
+                                          layer="metal2", 
+                                          offset=offset, 
+                                          width=self.supply_rail_width,
+                                          height=height)
+
+        # BOTTOM horizontal rails
+        offset = ll + vector(-2*self.supply_rail_pitch, -2*self.supply_rail_pitch)
+        bottom_gnd_pin=self.add_layout_pin(text="gnd",
+                                           layer="metal1", 
+                                           offset=offset, 
+                                           width=width,
+                                           height=self.supply_rail_width)
+
+        offset = ll + vector(-1*self.supply_rail_pitch, -1*self.supply_rail_pitch)
+        bottom_vdd_pin=self.add_layout_pin(text="vdd",
+                                           layer="metal1", 
+                                           offset=offset, 
+                                           width=width,
+                                           height=self.supply_rail_width)
+        
+        # TOP horizontal rails        
+        offset = vector(ll.x, ur.y) + vector(-2*self.supply_rail_pitch,0)
+        top_gnd_pin=self.add_layout_pin(text="gnd",
+                                        layer="metal1", 
+                                        offset=offset, 
+                                        width=width,
+                                        height=self.supply_rail_width)
+
+        offset = vector(ll.x, ur.y) + vector(-1*self.supply_rail_pitch, self.supply_rail_pitch)
+        top_vdd_pin=self.add_layout_pin(text="vdd",
+                                        layer="metal1", 
+                                        offset=offset, 
+                                        width=width,
+                                        height=self.supply_rail_width)
+
+        # Remember these for connecting things in the design
+        self.left_gnd_x_center = left_gnd_pin.cx()
+        self.left_vdd_x_center = left_vdd_pin.cx()
+        self.right_gnd_x_center = right_gnd_pin.cx()
+        self.right_vdd_x_center = right_vdd_pin.cx()
+
+        self.bottom_gnd_y_center = bottom_gnd_pin.cy()
+        self.bottom_vdd_y_center = bottom_vdd_pin.cy()
+        self.top_gnd_y_center = top_gnd_pin.cy()
+        self.top_vdd_y_center = top_vdd_pin.cy()
+
+        via_points = [vector(self.left_gnd_x_center, self.bottom_gnd_y_center),
+                      vector(self.left_gnd_x_center, self.top_gnd_y_center),
+                      vector(self.right_gnd_x_center, self.bottom_gnd_y_center),
+                      vector(self.right_gnd_x_center, self.top_gnd_y_center),
+                      vector(self.left_vdd_x_center, self.bottom_vdd_y_center),
+                      vector(self.left_vdd_x_center, self.top_vdd_y_center),
+                      vector(self.right_vdd_x_center, self.bottom_vdd_y_center),
+                      vector(self.right_vdd_x_center, self.top_vdd_y_center)]
+                      
+        for pt in via_points:
+            self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                offset=pt,
+                                size = (3,3))
+
+
+        
     def pdf_write(self, pdf_name):
         # NOTE: Currently does not work (Needs further research)
         #self.pdf_name = self.name + ".pdf"

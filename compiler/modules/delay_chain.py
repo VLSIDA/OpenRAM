@@ -34,7 +34,7 @@ class delay_chain(design.design):
 
         self.add_pins()
         self.create_module()
-        self.route_inv()
+        self.route_inverters()
         self.add_layout_pins()
         self.DRC_LVS()
 
@@ -48,82 +48,69 @@ class delay_chain(design.design):
     def create_module(self):
         """ Add the inverter logical module """
 
-        self.create_inv_list()
-
         self.inv = pinv(route_output=False)
         self.add_mod(self.inv)
 
         # half chain length is the width of the layout 
         # invs are stacked into 2 levels so input/output are close
         # extra metal is for the gnd connection U
-        self.width = self.num_top_half * self.inv.width + 2*drc["metal1_to_metal1"] + 0.5*drc["minwidth_metal1"]
-        self.height = 2 * self.inv.height
+        self.height = len(self.fanout_list)*self.inv.height
+        self.width = (max(self.fanout_list)+1) * self.inv.width
 
-        self.add_inv_list()
+        self.add_inverters()
         
-    def create_inv_list(self):
-        """ 
-        Generate a list of inverters. Each inverter has a stage
-        number and a flag indicating if it is a dummy load. This is 
-        the order that they will get placed too.
-        """
-        # First stage is always 0 and is not a dummy load
-        self.inv_list=[[0,False]]
-        for stage_num,fanout_size in zip(range(len(self.fanout_list)),self.fanout_list):
-            for i in range(fanout_size-1):
-                # Add the dummy loads
-                self.inv_list.append([stage_num+1, True])
-                
-            # Add the gate to drive the next stage
-            self.inv_list.append([stage_num+1, False])
 
-    def add_inv_list(self):
+    def add_inverters(self):
         """ Add the inverters and connect them based on the stage list """
-        dummy_load_counter = 1
-        self.inv_inst_list = []
-        for i in range(self.num_inverters):
-            # First place the gates
-            if i < self.num_top_half:
-                # add top level that is upside down
-                inv_offset = vector(i * self.inv.width, 2 * self.inv.height)
-                inv_mirror="MX"
+        self.driver_inst_list = []
+        self.rightest_load_inst = {}
+        self.load_inst_map = {}
+        for stage_num,fanout_size in zip(range(len(self.fanout_list)),self.fanout_list):
+            if stage_num % 2:
+                inv_mirror = "MX"
+                inv_offset = vector(0, (stage_num+1)* self.inv.height)
             else:
-                # add bottom level from right to left
-                inv_offset = vector((self.num_inverters - i) * self.inv.width, 0)
-                inv_mirror="MY"
-
-            cur_inv=self.add_inst(name="dinv{}".format(i),
+                inv_mirror = "R0"
+                inv_offset = vector(0, stage_num * self.inv.height)                
+                
+            # Add the inverter
+            cur_driver=self.add_inst(name="dinv{}".format(stage_num),
                                   mod=self.inv,
                                   offset=inv_offset,
                                   mirror=inv_mirror)
             # keep track of the inverter instances so we can use them to get the pins
-            self.inv_inst_list.append(cur_inv)
+            self.driver_inst_list.append(cur_driver)
 
-            # Second connect them logically
-            cur_stage = self.inv_list[i][0]
-            next_stage = self.inv_list[i][0]+1
-            if i == 0:
-                input = "in"
+
+            # Hook up the driver
+            if stage_num+1==len(self.fanout_list):
+                stageout_name = "out"
             else:
-                input = "s{}".format(cur_stage)
-            if i == self.num_inverters-1:
-                output = "out"
-            else:                
-                output = "s{}".format(next_stage)
-
-            # if the gate is a dummy load don't connect the output
-            # else reset the counter
-            if self.inv_list[i][1]: 
-                output = output+"n{0}".format(dummy_load_counter)
-                dummy_load_counter += 1
+                stageout_name = "dout_{}".format(stage_num+1)
+            if stage_num == 0:
+                stagein_name = "in"
             else:
-                dummy_load_counter = 1
-                    
-            self.connect_inst(args=[input, output, "vdd", "gnd"])
-
-            if i != 0:
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                    offset=cur_inv.get_pin("A").center())
+                stagein_name = "dout_{}".format(stage_num)  
+            self.connect_inst([stagein_name, stageout_name, "vdd", "gnd"])
+            
+            # Now add the dummy loads to the right
+            self.load_inst_map[cur_driver]=[]
+            for i in range(fanout_size):
+                inv_offset += vector(self.inv.width,0)
+                cur_load=self.add_inst(name="dload_{0}_{1}".format(stage_num,i),
+                                      mod=self.inv,
+                                      offset=inv_offset,
+                                      mirror=inv_mirror)
+                # Fanout stage is always driven by driver and output is disconnected
+                disconnect_name = "n_{0}_{1}".format(stage_num,i)  
+                self.connect_inst([stageout_name, disconnect_name, "vdd", "gnd"])
+            
+                # Keep track of all the loads to connect their inputs as a load
+                self.load_inst_map[cur_driver].append(cur_load)
+            else:
+                # Keep track of the last one so we can add the the wire later
+                self.rightest_load_inst[cur_driver]=cur_load
+                
     def add_route(self, pin1, pin2):
         """ This guarantees that we route from the top to bottom row correctly. """
         pin1_pos = pin1.center()
@@ -135,79 +122,88 @@ class delay_chain(design.design):
             # Written this way to guarantee it goes right first if we are switching rows
             self.add_path("metal2", [pin1_pos, vector(pin1_pos.x,mid_point.y), mid_point, vector(mid_point.x,pin2_pos.y), pin2_pos])
     
-    def route_inv(self):
+    def route_inverters(self):
         """ Add metal routing for each of the fanout stages """
-        start_inv = end_inv = 0
-        for fanout in self.fanout_list:
-            # end inv number depends on the fan out number
-            end_inv = start_inv + fanout
-            start_inv_inst = self.inv_inst_list[start_inv]
-            
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=start_inv_inst.get_pin("Z").center()),
 
-            # route from output to first load
-            start_inv_pin = start_inv_inst.get_pin("Z")
-            load_inst = self.inv_inst_list[start_inv+1]
-            load_pin = load_inst.get_pin("A")
-            self.add_route(start_inv_pin, load_pin)
-            
-            next_inv = start_inv+2
-            while next_inv <= end_inv:
-                prev_load_inst = self.inv_inst_list[next_inv-1]
-                prev_load_pin = prev_load_inst.get_pin("A")
-                load_inst = self.inv_inst_list[next_inv]
-                load_pin = load_inst.get_pin("A")
-                self.add_route(prev_load_pin, load_pin)
-                next_inv += 1
-            # set the start of next one after current end
-            start_inv = end_inv
+        for i in range(len(self.driver_inst_list)):
+            inv = self.driver_inst_list[i]
+            for load in self.load_inst_map[inv]:
+                # Drop a via on each A pin
+                a_pin = load.get_pin("A")      
+                self.add_via_center(layers=("metal1","via1","metal2"),
+                                    offset=a_pin.center(),
+                                    rotate=90)
+                self.add_via_center(layers=("metal2","via2","metal3"),
+                                    offset=a_pin.center(),
+                                    rotate=90)
 
+            # Route an M3 horizontal wire to the furthest
+            z_pin = inv.get_pin("Z")
+            a_pin = inv.get_pin("A")
+            a_max = self.rightest_load_inst[inv].get_pin("A")
+            self.add_via_center(layers=("metal1","via1","metal2"),
+                                offset=a_pin.center(),
+                                rotate=90)
+            self.add_via_center(layers=("metal1","via1","metal2"),
+                                offset=z_pin.center(),
+                                rotate=90)
+            self.add_via_center(layers=("metal2","via2","metal3"),
+                                offset=z_pin.center(),
+                                rotate=90)
+            self.add_path("metal3",[z_pin.center(), a_max.center()])
+
+            
+            # Route Z to the A of the next stage
+            if i+1 < len(self.driver_inst_list):
+                z_pin = inv.get_pin("Z")
+                next_inv = self.driver_inst_list[i+1]
+                next_a_pin = next_inv.get_pin("A")
+                y_mid = (z_pin.cy() + next_a_pin.cy())/2
+                mid1_point = vector(z_pin.cx(), y_mid)
+                mid2_point = vector(next_a_pin.cx(), y_mid)
+                self.add_path("metal2",[z_pin.center(), mid1_point, mid2_point, next_a_pin.center()])  
+            
+                
     def add_layout_pins(self):
         """ Add vdd and gnd rails and the input/output. Connect the gnd rails internally on
         the top end with no input/output to obstruct. """
-        vdd_pin = self.inv.get_pin("vdd")
-        gnd_pin = self.inv.get_pin("gnd")
-        for i in range(3):
-            (offset,y_dir)=self.get_gate_offset(0, self.inv.height, i)
-            rail_width = self.num_top_half * self.inv.width
-            if i % 2:
-                self.add_layout_pin(text="vdd",
-                                    layer="metal1",
-                                    offset=offset + vdd_pin.ll().scale(1,y_dir),
-                                    width=rail_width,
-                                    height=drc["minwidth_metal1"])
-            else:
-                self.add_layout_pin(text="gnd",
-                                    layer="metal1",
-                                    offset=offset + gnd_pin.ll().scale(1,y_dir),
-                                    width=rail_width,
-                                    height=drc["minwidth_metal1"])
 
-        # Use the right most parts of the gnd rails and add a U connector
-        # We still have the two gnd pins, but it is an either-or connect
-        gnd_pins = self.get_pins("gnd")
-        gnd_start = gnd_pins[0].rc()
-        gnd_mid1 = gnd_start + vector(2*drc["metal1_to_metal1"],0)
-        gnd_end = gnd_pins[1].rc()
-        gnd_mid2 = gnd_end + vector(2*drc["metal1_to_metal1"],0)
-        #self.add_wire(("metal1","via1","metal2"), [gnd_start, gnd_mid1, gnd_mid2, gnd_end])
-        self.add_path("metal1", [gnd_start, gnd_mid1, gnd_mid2, gnd_end])                
-        
+        for driver in self.driver_inst_list:
+            vdd_pin = driver.get_pin("vdd")
+            self.add_layout_pin(text="vdd",
+                                layer="metal1",
+                                offset=vdd_pin.ll(),
+                                width=self.width,
+                                height=vdd_pin.height())
+            gnd_pin = driver.get_pin("gnd")
+            self.add_layout_pin(text="gnd",
+                                layer="metal1",
+                                offset=gnd_pin.ll(),
+                                width=self.width,
+                                height=gnd_pin.height())
+
         # input is A pin of first inverter
-        a_pin = self.inv_inst_list[0].get_pin("A")
+        a_pin = self.driver_inst_list[0].get_pin("A")
+        self.add_via_center(layers=("metal1","via1","metal2"),
+                            offset=a_pin.center(),
+                            rotate=90)
         self.add_layout_pin(text="in",
-                            layer="metal1",
-                            offset=a_pin.ll(),
+                            layer="metal2",
+                            offset=a_pin.ll().scale(1,0),
                             width=a_pin.width(),
-                            height=a_pin.height())
+                            height=a_pin.cy())
+        
 
-
-        # output is Z pin of last inverter
-        z_pin = self.inv_inst_list[-1].get_pin("Z")
+        # output is A pin of last load inverter
+        last_driver_inst = self.driver_inst_list[-1]
+        a_pin = self.rightest_load_inst[last_driver_inst].get_pin("A")
+        self.add_via_center(layers=("metal1","via1","metal2"),
+                            offset=a_pin.center(),
+                            rotate=90)
+        mid_point = vector(a_pin.cx()+3*self.m2_width,a_pin.cy())
+        self.add_path("metal2",[a_pin.center(), mid_point, mid_point.scale(1,0)])
         self.add_layout_pin(text="out",
-                            layer="metal1",
-                            offset=z_pin.ll().scale(0,1),
-                            width=z_pin.lx())
+                            layer="metal2",
+                            offset=mid_point.scale(1,0))
 
             

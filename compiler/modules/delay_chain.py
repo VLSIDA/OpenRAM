@@ -131,25 +131,20 @@ class delay_chain(design.design):
                 # Drop a via on each A pin
                 a_pin = load.get_pin("A")      
                 self.add_via_center(layers=("metal1","via1","metal2"),
-                                    offset=a_pin.center(),
-                                    rotate=90)
+                                    offset=a_pin.center())
                 self.add_via_center(layers=("metal2","via2","metal3"),
-                                    offset=a_pin.center(),
-                                    rotate=90)
+                                    offset=a_pin.center())
 
             # Route an M3 horizontal wire to the furthest
             z_pin = inv.get_pin("Z")
             a_pin = inv.get_pin("A")
             a_max = self.rightest_load_inst[inv].get_pin("A")
             self.add_via_center(layers=("metal1","via1","metal2"),
-                                offset=a_pin.center(),
-                                rotate=90)
+                                offset=a_pin.center())
             self.add_via_center(layers=("metal1","via1","metal2"),
-                                offset=z_pin.center(),
-                                rotate=90)
+                                offset=z_pin.center())
             self.add_via_center(layers=("metal2","via2","metal3"),
-                                offset=z_pin.center(),
-                                rotate=90)
+                                offset=z_pin.center())
             self.add_path("metal3",[z_pin.center(), a_max.center()])
 
             
@@ -185,12 +180,10 @@ class delay_chain(design.design):
         # input is A pin of first inverter
         a_pin = self.driver_inst_list[0].get_pin("A")
         self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=a_pin.center(),
-                            rotate=90)
+                            offset=a_pin.center())
         self.add_layout_pin(text="in",
                             layer="metal2",
                             offset=a_pin.ll().scale(1,0),
-                            width=a_pin.width(),
                             height=a_pin.cy())
         
 
@@ -198,12 +191,12 @@ class delay_chain(design.design):
         last_driver_inst = self.driver_inst_list[-1]
         a_pin = self.rightest_load_inst[last_driver_inst].get_pin("A")
         self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=a_pin.center(),
-                            rotate=90)
+                            offset=a_pin.center())
         mid_point = vector(a_pin.cx()+3*self.m2_width,a_pin.cy())
         self.add_path("metal2",[a_pin.center(), mid_point, mid_point.scale(1,0)])
-        self.add_layout_pin(text="out",
-                            layer="metal2",
-                            offset=mid_point.scale(1,0))
+        self.add_layout_pin_center_segment(text="out",
+                                           layer="metal2",
+                                           start=mid_point,
+                                           end=mid_point.scale(1,0))
 
             

@@ -74,17 +74,19 @@ class bank(design.design):
     def add_pins(self):
         """ Adding pins for Bank module"""
         for i in range(self.word_size):
-            self.add_pin("DATA[{0}]".format(i))
+            self.add_pin("DATA[{0}]".format(i),"INOUT")
         for i in range(self.addr_size):
-            self.add_pin("A[{0}]".format(i))
+            self.add_pin("A[{0}]".format(i),"INPUT")
 
         # For more than one bank, we have a bank select and name
         # the signals gated_*.
         if self.num_banks > 1:
-            self.add_pin("bank_sel")
+            self.add_pin("bank_sel","INPUT")
         for pin in ["s_en","w_en","tri_en_bar","tri_en",
-                    "clk_bar","clk_buf","vdd","gnd"]:
-            self.add_pin(pin)
+                    "clk_buf_bar","clk_buf"]:
+            self.add_pin(pin,"INPUT")
+        self.add_pin("vdd","POWER")
+        self.add_pin("gnd","GROUND")
 
     def route_layout(self):
         """ Create routing amoung the modules """
@@ -151,7 +153,7 @@ class bank(design.design):
         # Number of control lines in the bus
         self.num_control_lines = 6
         # The order of the control signals on the control bus:
-        self.input_control_signals = ["clk_buf", "tri_en_bar", "tri_en", "clk_bar", "w_en", "s_en"]
+        self.input_control_signals = ["clk_buf", "tri_en_bar", "tri_en", "clk_buf_bar", "w_en", "s_en"]
         # These will be outputs of the gaters if this is multibank, if not, normal signals.
         if self.num_banks > 1:
             self.control_signals = ["gated_"+str for str in self.input_control_signals]
@@ -259,7 +261,7 @@ class bank(design.design):
         for i in range(self.num_cols):
             temp.append("bl[{0}]".format(i))
             temp.append("br[{0}]".format(i))
-        temp.extend([self.prefix+"clk_bar", "vdd"])
+        temp.extend([self.prefix+"clk_buf_bar", "vdd"])
         self.connect_inst(temp)
 
     def add_column_mux_array(self):
@@ -337,7 +339,7 @@ class bank(design.design):
         for i in range(self.word_size):
             temp.append("data_in[{0}]".format(i))
             temp.append("data_in_bar[{0}]".format(i))
-        temp.extend([self.prefix+"clk_bar", "vdd", "gnd"])
+        temp.extend([self.prefix+"clk_buf_bar", "vdd", "gnd"])
         self.connect_inst(temp)
 
     def add_tri_gate_array(self):
@@ -534,8 +536,8 @@ class bank(design.design):
         # Add a vdd and gnd power rail above the array
         self.max_point += self.supply_rail_pitch + self.supply_rail_width
 
-        self.height = self.max_point - self.min_point
-        self.width = self.right_vdd_x_offset - self.left_gnd_x_offset + self.supply_rail_width
+        self.height = ur.y - ll.y + 4*self.supply_rail_pitch
+        self.width = ur.x - ll.x + 4*self.supply_rail_pitch
         
         
         
@@ -894,10 +896,10 @@ class bank(design.design):
         # Connection from the central bus to the main control block crosses
         # pre-decoder and this connection is in metal3
         connection = []
-        connection.append((self.prefix+"clk_bar", self.msf_data_in_inst.get_pin("clk").lc()))
+        connection.append((self.prefix+"clk_buf_bar", self.msf_data_in_inst.get_pin("clk").lc()))
         connection.append((self.prefix+"tri_en_bar", self.tri_gate_array_inst.get_pin("en_bar").lc()))
         connection.append((self.prefix+"tri_en", self.tri_gate_array_inst.get_pin("en").lc()))
-        connection.append((self.prefix+"clk_bar", self.precharge_array_inst.get_pin("en").lc()))
+        connection.append((self.prefix+"clk_buf_bar", self.precharge_array_inst.get_pin("en").lc()))
         connection.append((self.prefix+"w_en", self.write_driver_array_inst.get_pin("en").lc()))
         connection.append((self.prefix+"s_en", self.sense_amp_array_inst.get_pin("en").lc()))
   

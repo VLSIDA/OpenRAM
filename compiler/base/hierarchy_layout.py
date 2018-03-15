@@ -282,7 +282,7 @@ class layout(lef.lef):
                       height=height)
         self.add_label(text=text,
                        layer=layer,
-                       offset=offset)
+                       offset=offset+vector(0.5*width,0.5*height))
             
 
     def add_label(self, text, layer, offset=[0,0],zoom=-1):

@@ -16,7 +16,6 @@ class sram(design.design):
     Dynamically generated SRAM by connecting banks to control logic. The
     number of banks should be 1 , 2 or 4
     """
-
     def __init__(self, word_size, num_words, num_banks, name):
 
         c = reload(__import__(OPTS.control_logic))
@@ -62,6 +61,7 @@ class sram(design.design):
         self.bank_to_bus_distance = 5*self.m3_width
         
         self.compute_sizes()
+        self.create_modules()
         self.add_pins()
         self.create_layout()
         
@@ -146,8 +146,8 @@ class sram(design.design):
             self.add_pin("ADDR[{0}]".format(i),"INPUT")
 
         # These are used to create the physical pins too
-        self.control_logic_inputs=["CSb", "WEb",  "OEb"]
-        self.control_logic_outputs=["s_en", "w_en", "tri_en", "tri_en_bar", "clk_bar", "clk_buf"]
+        self.control_logic_inputs=self.control_logic.get_inputs()
+        self.control_logic_outputs=self.control_logic.get_outputs()
         
         self.add_pin_list(self.control_logic_inputs + ["clk"],"INPUT")
         self.add_pin("vdd","POWER")
@@ -156,8 +156,6 @@ class sram(design.design):
     def create_layout(self):
         """ Layout creation """
         
-        self.create_modules()
-
         if self.num_banks == 1:
             self.add_single_bank_modules()
             self.add_single_bank_pins()
@@ -366,7 +364,7 @@ class sram(design.design):
         """ Add the horizontal and vertical busses """
         # Vertical bus
         # The order of the control signals on the control bus:
-        self.control_bus_names = ["clk_buf", "tri_en_bar", "tri_en", "clk_bar", "w_en", "s_en"]
+        self.control_bus_names = ["clk_buf", "tri_en_bar", "tri_en", "clk_buf_bar", "w_en", "s_en"]
         self.vert_control_bus_positions = self.create_bus(layer="metal2",
                                                           pitch=self.m2_pitch,
                                                           offset=self.vertical_bus_offset,
@@ -430,7 +428,7 @@ class sram(design.design):
     def add_two_bank_logic(self):
         """ Add the control and MSB logic """
 
-        self.add_control_logic(position=self.control_logic_position, rotate=0)
+        self.add_control_logic(position=self.control_logic_position)
 
         self.msb_address_inst = self.add_inst(name="msb_address",
                                               mod=self.msb_address,
@@ -443,7 +441,7 @@ class sram(design.design):
         """ Add the control and MSB decode/bank select logic for four banks """
 
 
-        self.add_control_logic(position=self.control_logic_position, rotate=0)
+        self.add_control_logic(position=self.control_logic_position)
 
         self.msb_address_inst = self.add_inst(name="msb_address",
                                               mod=self.msb_address,
@@ -797,8 +795,8 @@ class sram(design.design):
         self.control_logic = self.mod_control_logic(num_rows=self.num_rows)
         self.add_mod(self.control_logic)
 
-        # Create the address and control flops
-        dff_size = self.addr_size + len(self.control_logic_inputs)
+        # Create the address and control flops (but not the clk)
+        dff_size = self.addr_size + len(self.control_logic.get_inputs())-1
         self.addr_ctrl_dff = self.mod_dff_array(rows=dff_size, columns=1)
         self.add_mod(self.addr_ctrl_dff)
         
@@ -859,7 +857,7 @@ class sram(design.design):
         if(self.num_banks > 1):
             temp.append("bank_sel[{0}]".format(bank_num))
         temp.extend(["s_en", "w_en", "tri_en_bar", "tri_en",
-                     "clk_bar","clk_buf" , "vdd", "gnd"])
+                     "clk_buf_bar","clk_buf" , "vdd", "gnd"])
         self.connect_inst(temp)
 
         return bank_inst
@@ -904,12 +902,11 @@ class sram(design.design):
         return line_positions
 
 
-    def add_control_addr_dff(self, position, rotate=0):
+    def add_control_addr_dff(self, position):
         """ Add and place address and control flops """
         self.addr_ctrl_dff_inst = self.add_inst(name="address",
-                                           mod=self.addr_ctrl_dff,
-                                           offset=position,
-                                           rotate=rotate)
+                                                mod=self.addr_ctrl_dff,
+                                                offset=position)
         # inputs, outputs/output/bar
         inputs = []
         outputs = []
@@ -918,18 +915,19 @@ class sram(design.design):
             outputs.append("A[{}]".format(i))
 
         for i in self.control_logic_inputs:
+            if i == "clk":
+                continue
             inputs.append(i)
             outputs.append(i+"_s")
-            
+
         self.connect_inst(inputs + outputs + ["clk", "vdd", "gnd"])
     
-    def add_control_logic(self, position, rotate):
+    def add_control_logic(self, position):
         """ Add and place control logic """
         self.control_logic_inst=self.add_inst(name="control",
                                               mod=self.control_logic,
-                                              offset=position,
-                                              rotate=rotate)
-        self.connect_inst(self.control_logic_inputs + ["clk"] + self.control_logic_outputs + ["vdd", "gnd"])
+                                              offset=position)
+        self.connect_inst(self.control_logic_inputs + self.control_logic_outputs + ["vdd", "gnd"])
 
 
     def add_lvs_correspondence_points(self):
@@ -961,12 +959,13 @@ class sram(design.design):
         # are not recomputed using instance placement. So, place the control logic such that it aligns
         # with the top of the SRAM.
         control_gap = 2*self.m3_width
-        control_pos = vector(-control_gap,
-                             self.bank.height-self.control_logic.width)
-        self.add_control_logic(position=control_pos, rotate=90)
+        control_pos = vector(-self.control_logic.width-control_gap,
+                             self.bank.height-self.control_logic.height-3*self.supply_rail_width)
+        self.add_control_logic(position=control_pos)
 
-        addr_pos = vector(self.control_logic_inst.lx(),
-                          2*self.supply_rail_pitch)
+        # Leave room for the control routes to the left of the flops
+        addr_pos = vector(self.control_logic_inst.lx() + 4*self.m2_pitch,
+                          3*self.supply_rail_pitch)
         self.add_control_addr_dff(addr_pos)
         
         self.width = self.bank.width + self.control_logic.height + control_gap
@@ -981,11 +980,13 @@ class sram(design.design):
             self.copy_layout_pin(self.bank_inst, "DATA[{}]".format(i))
 
         for i in range(self.addr_size):
-            self.copy_layout_pin(self.bank_inst, "A[{}]".format(i))            
+            self.copy_layout_pin(self.addr_ctrl_dff_inst, "din[{}]".format(i),"ADDR[{}]".format(i))
 
-        for (old,new) in zip(["csb","web","oeb","clk"],["CSb","WEb","OEb","clk"]):
-            self.copy_layout_pin(self.control_logic_inst, old, new)
+        ctrl_flops = ["din[{}]".format(i) for i in range(self.addr_size,self.addr_size+3)]
+        for (old,new) in zip(ctrl_flops,["CSb","WEb","OEb"]):
+            self.copy_layout_pin(self.addr_ctrl_dff_inst, old, new)
 
+        self.copy_layout_pin(self.control_logic_inst, "clk")
         self.copy_layout_pin(self.bank_inst, "vdd")
         self.copy_layout_pin(self.bank_inst, "gnd")
 
@@ -1046,35 +1047,78 @@ class sram(design.design):
             dest_pin = self.bank_inst.get_pin(n)                
             self.connect_rail_from_left_m2m3(src_pin, dest_pin)
 
-
-        # Find the left-most metal2 rails
-        leftmost_vdd_rail = None
-        for vdd_pin in self.bank_inst.get_pins("vdd"):
-            if vdd_pin.layer != "metal2":
-                continue
-            if leftmost_vdd_rail == None or vdd_pin.lx() < leftmost_vdd_rail.lx():
-                leftmost_vdd_rail = vdd_pin
-        leftmost_gnd_rail = None
-        for gnd_pin in self.bank_inst.get_pins("gnd"):
-            if gnd_pin.layer != "metal2":
-                continue
-            if leftmost_gnd_rail == None or gnd_pin.lx() < leftmost_gnd_rail.lx():
-                leftmost_gnd_rail = gnd_pin
-
+        # Expand the ring around the bank
+        bbox_lr = vector(self.control_logic_inst.lx(), self.bank_inst.by() + 2*self.supply_rail_pitch)
+        bbox_ur = self.bank_inst.ur() - vector(2*self.supply_rail_pitch, 2*self.supply_rail_pitch)
+        self.add_power_ring([bbox_lr, bbox_ur])  
+        self.route_single_bank_vdd()
+        self.route_single_bank_gnd()
                 
-        src_pins = self.control_logic_inst.get_pins("vdd")
-        for src_pin in src_pins:
-            if src_pin.layer != "metal2":
-                continue
-            self.connect_rail_from_left_m2m3(src_pin,leftmost_vdd_rail)
-            
-        src_pins = self.control_logic_inst.get_pins("gnd")
-        for src_pin in src_pins:            
-            if src_pin.layer != "metal2":
-                continue
-            self.add_path("metal2", [src_pin.rc(), vector(leftmost_gnd_rail.cx(), src_pin.cy())])
-        
+        for i in range(self.addr_size):
+            flop_name = "dout[{}]".format(i)
+            bank_name = "A[{}]".format(i)
+            flop_pin = self.addr_ctrl_dff_inst.get_pin(flop_name)
+            bank_pin = self.bank_inst.get_pin(bank_name)
+            flop_pos = flop_pin.center()
+            bank_pos = bank_pin.lc()
+            mid_x_pos = 0.5*(flop_pos.x + bank_pos.x)
+            mid_pos = vector(mid_x_pos - i*self.m2_pitch, flop_pos.y)
+            self.add_wire(("metal1","via1","metal2"),[flop_pos, mid_pos, bank_pos])
+            # There should be M1 in the flop already, but just in case
+            self.add_via_center(layers=("metal1","via1","metal2"),
+                                offset=flop_pos,
+                                rotate=90)
 
+
+        for i in range(3):
+            flop_name = "dout[{}]".format(self.addr_size+i)
+            ctrl_name = ["csb","web","oeb"][i]
+            flop_pin = self.addr_ctrl_dff_inst.get_pin(flop_name)
+            ctrl_pin = self.control_logic_inst.get_pin(ctrl_name)
+            flop_pos = flop_pin.center()
+            ctrl_pos = ctrl_pin.bc()
+            mid_pos = vector(ctrl_pos.x, flop_pos.y)
+            self.add_wire(("metal3","via2","metal2"),[flop_pos, mid_pos, ctrl_pos])
+            self.add_via_center(layers=("metal2","via2","metal3"),
+                                offset=flop_pos,
+                                rotate=90)
+            
+    def route_single_bank_vdd(self):
+        """ Route vdd for the control and dff array """
+
+        # Route the vdd rails to the LEFT
+        modules = [ self.control_logic_inst, self.addr_ctrl_dff_inst]
+        for inst in modules:
+            for vdd_pin in inst.get_pins("vdd"):
+                if vdd_pin.layer != "metal1":
+                    continue
+                vdd_pos = vdd_pin.rc()
+                left_rail_pos = vector(self.left_vdd_x_center, vdd_pos.y)
+                self.add_path("metal1", [left_rail_pos, vdd_pos])
+                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                    offset=left_rail_pos,
+                                    size = (1,3),
+                                    rotate=90)
+
+            
+    def route_single_bank_gnd(self):
+        """ Route gnd for the control and dff array """
+
+        # Route the gnd rails to the LEFT
+        modules = [ self.control_logic_inst, self.addr_ctrl_dff_inst]
+        for inst in modules:
+            for gnd_pin in inst.get_pins("gnd"):
+                if gnd_pin.layer != "metal1":
+                    continue
+                gnd_pos = gnd_pin.rc()
+                left_rail_pos = vector(self.left_gnd_x_center, gnd_pos.y)
+                self.add_path("metal1", [left_rail_pos, gnd_pos])
+                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                    offset=left_rail_pos,
+                                    size = (1,3),
+                                    rotate=90)
+
+            
 
     def sp_write(self, sp_name):
         # Write the entire spice of the object to the file

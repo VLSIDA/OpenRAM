@@ -146,18 +146,21 @@ class pbitcell(pgate.pgate):
                              
         self.rightmost_xpos = -self.leftmost_xpos
         
-        # bottommost position = gnd height + wrow height + rrow height
+        # bottommost position = gnd height + wrow height + rrow height + space needed between tiled bitcells
+        array_tiling_offset = 0.5*drc["minwidth_metal2"]
         self.botmost_ypos = -self.rail_tile_height \
                             - self.num_write*self.rowline_tile_height \
-                            - read_port_flag*(self.num_read*self.rowline_tile_height)
+                            - read_port_flag*(self.num_read*self.rowline_tile_height) \
+                            - array_tiling_offset
                             
         # topmost position = height of the inverter + height of vdd
         self.topmost_ypos = self.inverter_nmos.active_height + self.inverter_gap + self.inverter_pmos.active_height \
                             + self.rail_tile_height
         
         # calculations for the cell dimensions
+        array_vdd_overlap = 0.5*drc["minwidth_metal1"]
         self.width = -2*self.leftmost_xpos
-        self.height = self.topmost_ypos - self.botmost_ypos + 0.5*drc["minwidth_metal2"] - 0.5*drc["minwidth_metal1"]
+        self.height = self.topmost_ypos - self.botmost_ypos - array_vdd_overlap
 
         
     def add_storage(self):
@@ -618,10 +621,9 @@ class pbitcell(pgate.pgate):
         the well connections must be done piecewise to avoid pwell and nwell overlap.
         """
     
-        cell_well_tiling_offset = 0.5*drc["minwidth_metal2"]
         """ extend pwell to encompass entire nmos region of the cell up to the height of the inverter nmos well """
-        offset = vector(self.leftmost_xpos, self.botmost_ypos - cell_well_tiling_offset)
-        well_height = -self.botmost_ypos + self.inverter_nmos.cell_well_height - drc["well_enclosure_active"] + cell_well_tiling_offset
+        offset = vector(self.leftmost_xpos, self.botmost_ypos)
+        well_height = -self.botmost_ypos + self.inverter_nmos.cell_well_height - drc["well_enclosure_active"]
         self.add_rect(layer="pwell",
                       offset=offset,
                       width=self.width,
@@ -709,6 +711,49 @@ class pbitcell(pgate.pgate):
                              offset=offset,
                              width=drc["minwidth_tx"],
                              height=drc["minwidth_tx"])    
+        
+    
+    def list_bitcell_pins(self, col, row):
+        # Creates a list of connections in the bitcell, indexed by column and row, for instance use in bitcell_array
+        bitcell_pins = []
+        for k in range(self.num_write):
+            bitcell_pins.append("wbl{0}[{1}]".format(k,col))
+            bitcell_pins.append("wbl_bar{0}[{1}]".format(k,col))
+        for k in range(self.num_read):
+            bitcell_pins.append("rbl{0}[{1}]".format(k,col))
+            bitcell_pins.append("rbl_bar{0}[{1}]".format(k,col))
+        for k in range(self.num_write):
+            bitcell_pins.append("wrow{0}[{1}]".format(k,row))
+        for k in range(self.num_read):
+            bitcell_pins.append("rrow{0}[{1}]".format(k,row))
+        bitcell_pins.append("vdd")
+        bitcell_pins.append("gnd")
+        
+        return bitcell_pins
+        
+    
+    def list_row_pins(self):
+        # Creates a list of row pins
+        row_pins = []
+        for k in range(self.num_write):
+            row_pins.append("wrow{0}".format(k))
+        for k in range(self.num_read):
+            row_pins.append("rrow{0}".format(k))
+            
+        return row_pins
+    
+    
+    def list_column_pins(self):
+        # Creates a list of column pins
+        column_pins = []
+        for k in range(self.num_write):
+            column_pins.append("wbl{0}".format(k))
+            column_pins.append("wbl_bar{0}".format(k))
+        for k in range(self.num_read):
+            column_pins.append("rbl{0}".format(k))
+            column_pins.append("rbl_bar{0}".format(k))
+            
+        return column_pins
         
     
     def add_fail(self):

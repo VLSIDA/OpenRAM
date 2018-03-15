@@ -34,3 +34,26 @@ class bitcell(design.design):
         c_para = spice["min_tx_drain_c"]
         result = self.cal_delay_with_rc(r = r, c =  c_para+load, slew = slew, swing = swing)
         return result
+    
+    def list_bitcell_pins(self, col, row):
+        # Creates a list of connections in the bitcell, indexed by column and row, for instance use in bitcell_array
+        bitcell_pins = ["bl[{0}]".format(col),
+                        "br[{0}]".format(col),
+                        "wl[{0}]".format(row),
+                        "vdd",
+                        "gnd"]
+        return bitcell_pins
+        
+    
+    def list_row_pins(self):
+        # Creates a list of row pins
+        row_pins = ["WL"]    
+        return row_pins
+    
+    
+    def list_column_pins(self):
+        # Creates a list of column pins
+        column_pins = ["BL", "BR"]
+        return column_pins
+        
+    

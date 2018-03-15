@@ -30,47 +30,25 @@ class bitcell_array(design.design):
         self.height = self.row_size*self.cell.height + drc["well_enclosure_active"]
         self.width = self.column_size*self.cell.width 
         
-        if(OPTS.bitcell == "pbitcell"):
-            self.add_multiport_pins()
-        else:
-            self.add_pins()
-        
+        self.add_pins()
         self.create_layout()
-        
-        if(OPTS.bitcell == "pbitcell"):
-            self.add_multiport_layout_pins()
-        else:
-            self.add_layout_pins()
+        self.add_layout_pins()
         
         self.DRC_LVS()
-
+		
+        
     def add_pins(self):
+        row_list = self.cell.list_row_pins()
+        column_list = self.cell.list_column_pins()
         for col in range(self.column_size):
-            self.add_pin("bl[{0}]".format(col))
-            self.add_pin("br[{0}]".format(col))
+            for cell_column in column_list:
+                self.add_pin(cell_column+"[{0}]".format(col))
         for row in range(self.row_size):
-            self.add_pin("wl[{0}]".format(row))
+            for cell_row in row_list:
+                    self.add_pin(cell_row+"[{0}]".format(row))
         self.add_pin("vdd")
         self.add_pin("gnd")
         
-    def add_multiport_pins(self):
-        self.num_write = self.cell.num_write
-        self.num_read = self.cell.num_read
-        
-        for col in range(self.column_size):
-            for k in range(self.num_write):
-                self.add_pin("wbl{0}[{1}]".format(k,col))
-                self.add_pin("wbl_bar{0}[{1}]".format(k,col))
-            for k in range(self.num_read):
-                self.add_pin("rbl{0}[{1}]".format(k,col))
-                self.add_pin("rbl_bar{0}[{1}]".format(k,col))
-        for row in range(self.row_size):
-            for k in range(self.num_write):
-                self.add_pin("wrow{0}[{1}]".format(k,row))
-            for k in range(self.num_read):
-                self.add_pin("rrow{0}[{1}]".format(k,row))
-        self.add_pin("vdd")
-        self.add_pin("gnd")
 
     def create_layout(self):
         xoffset = 0.0
@@ -86,43 +64,17 @@ class bitcell_array(design.design):
                 else:
                     tempy = yoffset
                     dir_key = ""
-                
-                if(OPTS.bitcell == "pbitcell"):
-                    bitcell_nets = []
-                    for k in range(self.num_write):
-                        bitcell_nets.append("wbl{0}[{1}]".format(k,col))
-                        bitcell_nets.append("wbl_bar{0}[{1}]".format(k,col))
-                    for k in range(self.num_read):
-                        bitcell_nets.append("rbl{0}[{1}]".format(k,col))
-                        bitcell_nets.append("rbl_bar{0}[{1}]".format(k,col))
-                    for k in range(self.num_write):
-                        bitcell_nets.append("wrow{0}[{1}]".format(k,row))
-                    for k in range(self.num_read):
-                        bitcell_nets.append("rrow{0}[{1}]".format(k,row))
-                    bitcell_nets.append("vdd")
-                    bitcell_nets.append("gnd")
-                    
-                    self.cell_inst[row,col]=self.add_inst(name=name,
-                                                          mod=self.cell,
-                                                          offset=[xoffset, tempy],
-                                                          mirror=dir_key)
-                    self.connect_inst(bitcell_nets)
-                    
-                else:
-                    self.cell_inst[row,col]=self.add_inst(name=name,
-                                                          mod=self.cell,
-                                                          offset=[xoffset, tempy],
-                                                          mirror=dir_key)
-                    self.connect_inst(["bl[{0}]".format(col),
-                                       "br[{0}]".format(col),
-                                       "wl[{0}]".format(row),
-                                       "vdd",
-                                       "gnd"])
+                                    
+                self.cell_inst[row,col]=self.add_inst(name=name,
+                                                      mod=self.cell,
+                                                      offset=[xoffset, tempy],
+                                                      mirror=dir_key)
+                self.connect_inst(self.cell.list_bitcell_pins(col, row))
                                        
                 yoffset += self.cell.height
             xoffset += self.cell.width
 
-
+            
     def add_layout_pins(self):
         
         # Our cells have multiple gnd pins for now.
@@ -147,21 +99,19 @@ class bitcell_array(design.design):
         # overlapping cells
         full_width = self.width - 2*lower_x
         
+        row_list = self.cell.list_row_pins()
+        column_list = self.cell.list_column_pins()
+        
         offset = vector(0.0, 0.0)
         for col in range(self.column_size):
-            # get the pin of the lower row cell and make it the full width
-            bl_pin = self.cell_inst[0,col].get_pin("BL")
-            br_pin = self.cell_inst[0,col].get_pin("BR")
-            self.add_layout_pin(text="bl[{0}]".format(col),
-                                layer="metal2",
-                                offset=bl_pin.ll(),
-                                width=bl_pin.width(),
-                                height=full_height)
-            self.add_layout_pin(text="br[{0}]".format(col),
-                                layer="metal2",
-                                offset=br_pin.ll(),
-                                width=br_pin.width(),
-                                height=full_height)
+            # get the pins of the lower row cell and make it the full width
+            for cell_column in column_list:
+                bl_pin = self.cell_inst[0,col].get_pin(cell_column)
+                self.add_layout_pin(text=cell_column+"[{0}]".format(col),
+                                    layer="metal2",
+                                    offset=bl_pin.ll(),
+                                    width=bl_pin.width(),
+                                    height=full_height)
 
             # gnd offset is 0 in our cell, but it be non-zero
             gnd_pins = self.cell_inst[0,col].get_pins("gnd")
@@ -180,112 +130,17 @@ class bitcell_array(design.design):
 
         offset.x = 0.0
         for row in range(self.row_size):
-            wl_pin = self.cell_inst[row,0].get_pin("WL")
             vdd_pins = self.cell_inst[row,0].get_pins("vdd")
             gnd_pins = self.cell_inst[row,0].get_pins("gnd")
-
-            for gnd_pin in gnd_pins:
-                if gnd_pin.layer=="metal1":
-                    self.add_layout_pin(text="gnd", 
-                                        layer="metal1",
-                                        offset=gnd_pin.ll(),
-                                        width=full_width,
-                                        height=drc["minwidth_metal1"])
-                
-            # add vdd label and offset
-            # only add to even rows to avoid duplicates
-            for vdd_pin in vdd_pins:
-                if row % 2 == 0 and vdd_pin.layer=="metal1":
-                    self.add_layout_pin(text="vdd",
-                                        layer="metal1",
-                                        offset=vdd_pin.ll(),
-                                        width=full_width,
-                                        height=drc["minwidth_metal1"])
-                
-            # add wl label and offset
-            self.add_layout_pin(text="wl[{0}]".format(row),
-                                layer="metal1",
-                                offset=wl_pin.ll(),
-                                width=full_width,
-                                height=wl_pin.height())
-
-            # increments to the next row height
-            offset.y += self.cell.height
-
             
-    def add_multiport_layout_pins(self):
-        
-        # Our cells have multiple gnd pins for now.
-        # FIXME: fix for multiple vdd too
-        vdd_pin = self.cell.get_pin("vdd")
-
-        # shift it up by the overlap amount (gnd_pin) too
-        # must find the lower gnd pin to determine this overlap
-        lower_y = self.cell.height
-        gnd_pins = self.cell.get_pins("gnd")
-        for gnd_pin in gnd_pins:
-            if gnd_pin.layer=="metal2" and gnd_pin.by()<lower_y:
-                lower_y=gnd_pin.by()
-
-        # lower_y is negative, so subtract off double this amount for each pair of
-        # overlapping cells
-        full_height = self.height - 2*lower_y
-        
-        vdd_pin = self.cell.get_pin("vdd")
-        lower_x = vdd_pin.lx()
-        # lower_x is negative, so subtract off double this amount for each pair of
-        # overlapping cells
-        full_width = self.width - 2*lower_x
-        
-        offset = vector(0.0, 0.0)
-        for col in range(self.column_size):
-            # get the pin of the lower row cell and make it the full width
-            for k in range(self.num_write):
-                wbl_pin = self.cell_inst[0,col].get_pin("wbl{0}".format(k))
-                self.add_layout_pin(text="wbl{0}[{1}]".format(k,col),
-                                    layer="metal2",
-                                    offset=wbl_pin.ll(),
-                                    width=wbl_pin.width(),
-                                    height=full_height)
-                wbl_bar_pin = self.cell_inst[0,col].get_pin("wbl_bar{0}".format(k))
-                self.add_layout_pin(text="wbl_bar{0}[{1}]".format(k,col),
-                                    layer="metal2",
-                                    offset=wbl_bar_pin.ll(),
-                                    width=wbl_bar_pin.width(),
-                                    height=full_height)
-            for k in range(self.num_read):
-                rbl_pin = self.cell_inst[0,col].get_pin("rbl{0}".format(k))
-                self.add_layout_pin(text="rbl{0}[{1}]".format(k,col),
-                                    layer="metal2",
-                                    offset=rbl_pin.ll(),
-                                    width=rbl_pin.width(),
-                                    height=full_height)
-                rbl_bar_pin = self.cell_inst[0,col].get_pin("rbl_bar{0}".format(k))
-                self.add_layout_pin(text="rbl_bar{0}[{1}]".format(k,col),
-                                    layer="metal2",
-                                    offset=rbl_bar_pin.ll(),
-                                    width=rbl_bar_pin.width(),
-                                    height=full_height)
-
-            # gnd offset is 0 in our cell, but it be non-zero
-            gnd_pins = self.cell_inst[0,col].get_pins("gnd")
-            for gnd_pin in gnd_pins:
-                # avoid duplicates by only doing even rows
-                # also skip if it isn't the pin that spans the entire cell down to the bottom
-                if gnd_pin.layer=="metal2" and gnd_pin.by()==lower_y:
-                    self.add_layout_pin(text="gnd", 
-                                        layer="metal2",
-                                        offset=gnd_pin.ll(),
-                                        width=gnd_pin.width(),
-                                        height=full_height)
-                    
-            # increments to the next column width
-            offset.x += self.cell.width
-
-        offset.x = 0.0
-        for row in range(self.row_size):
-            vdd_pins = self.cell_inst[row,0].get_pins("vdd")
-            gnd_pins = self.cell_inst[row,0].get_pins("gnd")
+            # add wl label and offset
+            for cell_row in row_list:
+                wl_pin = self.cell_inst[row,0].get_pin(cell_row)
+                self.add_layout_pin(text=cell_row+"[{0}]".format(row),
+                                    layer="metal1",
+                                    offset=wl_pin.ll(),
+                                    width=full_width,
+                                    height=wl_pin.height())
 
             for gnd_pin in gnd_pins:
                 if gnd_pin.layer=="metal1":
@@ -304,23 +159,6 @@ class bitcell_array(design.design):
                                         offset=vdd_pin.ll(),
                                         width=full_width,
                                         height=drc["minwidth_metal1"])
-                
-            # add wl label and offset
-            for k in range(self.num_write):
-                wrow_pin = self.cell_inst[row,0].get_pin("wrow{0}".format(k))
-                self.add_layout_pin(text="wrow{0}[{1}]".format(k,row),
-                                    layer="metal1",
-                                    offset=wrow_pin.ll(),
-                                    width=full_width,
-                                    height=wrow_pin.height())
-                                    
-            for k in range(self.num_read):
-                rrow_pin = self.cell_inst[row,0].get_pin("rrow{0}".format(k))
-                self.add_layout_pin(text="rrow{0}[{1}]".format(k,row),
-                                    layer="metal1",
-                                    offset=rrow_pin.ll(),
-                                    width=full_width,
-                                    height=rrow_pin.height())
 
             # increments to the next row height
             offset.y += self.cell.height

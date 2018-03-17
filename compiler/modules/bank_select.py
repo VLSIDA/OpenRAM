@@ -21,18 +21,14 @@ class bank_select(design.design):
         # Number of control lines in the bus
         self.num_control_lines = 6
         # The order of the control signals on the control bus:
-        self.input_control_signals = ["clk_buf", "tri_en_bar", "tri_en", "clk_bar", "w_en", "s_en"]
+        self.input_control_signals = ["clk_buf", "tri_en_bar", "tri_en", "clk_buf_bar", "w_en", "s_en"]
         # These will be outputs of the gaters if this is multibank
         self.control_signals = ["gated_"+str for str in self.input_control_signals]
-            
-        for i in range(self.num_control_lines):
-            input_name = self.input_control_signals[i]
-            self.add_pin(input_name)
-        for i in range(self.num_control_lines):
-            gated_name = self.control_signals[i]
-            self.add_pin(gated_name)
-        self.add_pin("vdd")  
-        self.add_pin("gnd")  
+
+        self.add_pin_list(self.input_control_signals, "INPUT")
+        self.add_pin_list(self.control_signals, "OUTPUT")
+        self.add_pin("vdd","POWER")  
+        self.add_pin("gnd","GROUND")  
 
         self.create_modules()
         self.calculate_module_offsets()

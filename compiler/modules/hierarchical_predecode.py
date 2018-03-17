@@ -49,9 +49,8 @@ class hierarchical_predecode(design.design):
             debug.error("Invalid number of predecode inputs.",-1)
             
     def setup_constraints(self):
-        # we are going to use horizontal vias, so use the via height
         # use a conservative douple spacing just to get rid of annoying via DRCs
-        self.m2_pitch = contact.m1m2.height + 2*self.m2_space
+        self.m2_pitch = max(contact.m2m3.width,contact.m2m3.height) + max(self.m2_space,self.m3_space)
         
         # The rail offsets are indexed by the label
         self.rails = {}
@@ -203,11 +202,12 @@ class hierarchical_predecode(design.design):
             mid2_pos = vector(0.5*(zr_pos.x+al_pos.x), al_pos.y)
             self.add_path("metal1", [zr_pos, mid1_pos, mid2_pos, al_pos])
 
-            z_pos = self.inv_inst[num].get_pin("Z").rc()
-            self.add_layout_pin_center_segment(text="out[{}]".format(num),
-                                               layer="metal1",
-                                               start=z_pos,
-                                               end=z_pos + vector(self.inv.width - self.inv.get_pin("Z").rx(),0))
+            z_pin = self.inv_inst[num].get_pin("Z")
+            self.add_layout_pin(text="out[{}]".format(num),
+                                layer="metal1",
+                                offset=z_pin.ll(),
+                                height=z_pin.height(),
+                                width=z_pin.width())
 
     
     def route_input_inverters(self):

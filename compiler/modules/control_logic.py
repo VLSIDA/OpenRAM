@@ -82,7 +82,7 @@ class control_logic(design.design):
         # Some cells may have pwell/nwell spacing problems too when the wells are different heights.
         #self.cell_gap = max(self.m2_pitch,drc["pwell_to_nwell"])
 
-        self.input_list =["web","csb","oeb"]
+        self.input_list =["csb","web","oeb"]
         self.input_width = len(self.input_list)*self.m2_pitch        
         self.input_bar_list = ["clk_buf_bar", "we", "cs", "oe"]
         self.input_bar_width = len(self.input_bar_list)*self.m2_pitch
@@ -602,7 +602,7 @@ class control_logic(design.design):
         rows_end = self.width
         well_width = drc["minwidth_well"]
         
-        for i in range(7):
+        for i in range(8):
             if i%2:
                 name = "vdd"
                 well_type = "nwell"
@@ -648,6 +648,24 @@ class control_logic(design.design):
                                                start=left,
                                                end=right)
 
+        for vdd_pin in self.rbl_inst.get_pins("vdd"):
+            if vdd_pin.layer != "metal2":
+                continue
+            self.add_layout_pin(text="vdd",
+                                layer="metal2",
+                                offset=vdd_pin.ll(),
+                                height=vdd_pin.height(),
+                                width=vdd_pin.width())
+
+        for gnd_pin in self.rbl_inst.get_pins("gnd"):
+            if gnd_pin.layer != "metal2":
+                continue
+            self.add_layout_pin(text="gnd",
+                                layer="metal2",
+                                offset=gnd_pin.ll(),
+                                height=gnd_pin.height(),
+                                width=gnd_pin.width())
+            
 
     def add_lvs_correspondence_points(self):
         """ This adds some points for easier debugging if LVS goes wrong. 

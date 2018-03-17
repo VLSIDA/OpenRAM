@@ -135,6 +135,7 @@ def write_netgen_script(cell_name, sp_name):
     # This circuit has symmetries and needs to be flattened to resolve them or the banks won't pass
     # Is there a more elegant way to add this when needed?
     f.write("flatten class {{{0}.spice precharge_array}}\n".format(cell_name))
+    f.write("flatten class {{{0}.spice dff_array}}\n".format(cell_name))    
     f.write("property {{nfet {0}.spice}} remove as ad ps pd\n".format(cell_name))
     f.write("property {{pfet {0}.spice}} remove as ad ps pd\n".format(cell_name))
     f.write("property {{n {0}}} remove as ad ps pd\n".format(sp_name))

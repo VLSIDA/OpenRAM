@@ -178,7 +178,7 @@ class layout(lef.lef):
         """ Return the pin or list of pins """
         try:
             if len(self.pin_map[text])>1:
-                debug.warning("Should use a pin iterator since more than one pin {}".format(text))
+                debug.error("Should use a pin iterator since more than one pin {}".format(text),-1)
             # If we have one pin, return it and not the list.
             # Otherwise, should use get_pins()
             return self.pin_map[text][0]

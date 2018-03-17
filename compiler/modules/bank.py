@@ -96,7 +96,6 @@ class bank(design.design):
         self.route_tri_gate_out()
         self.route_wordline_driver()
         self.route_row_decoder()
-        self.route_address()
         self.route_column_address_lines()
         self.route_control_lines()
         self.add_control_pins()
@@ -173,11 +172,6 @@ class bank(design.design):
 
         # The width of this bus is needed to place other modules (e.g. decoder)
         self.central_bus_width = self.m2_pitch * (self.num_control_lines + self.num_addr_lines + 1) 
-
-        # The width of the bus below the decoder to route to the central bus 
-        self.addr_bus_height = self.m1_pitch * (self.addr_size + 1)
-        
-
 
 
 
@@ -411,7 +405,7 @@ class bank(design.design):
         """
         # Place the col decoder aligned left to row decoder
         x_off = -(self.central_bus_width + self.row_decoder.width)
-        y_off = -(self.row_decoder.predecoder_height + self.col_decoder.height + self.addr_bus_height)
+        y_off = -(self.row_decoder.predecoder_height + self.col_decoder.height + 2*drc["well_to_well"])
         self.col_decoder_inst=self.add_inst(name="col_address_decoder", 
                                             mod=self.col_decoder, 
                                             offset=vector(x_off,y_off))
@@ -460,10 +454,8 @@ class bank(design.design):
                                               offset=self.bank_select_pos)
 
         temp = []
-        for i in range(self.num_control_lines):
-            temp.append(self.input_control_signals[i])
-        for i in range(self.num_control_lines):
-            temp.append(self.control_signals[i])
+        temp.extend(self.input_control_signals)
+        temp.extend(self.control_signals)
         temp.extend(["vdd", "gnd"])
         self.connect_inst(temp)
 
@@ -475,7 +467,7 @@ class bank(design.design):
                                                layer="metal3",
                                                start=vector(self.left_gnd_x_offset,in_pos.y),
                                                end=in_pos)
-            
+
         for gated_name in self.control_signals:
             # Connect the inverter output to the central bus
             out_pos = self.bank_select_inst.get_pin(gated_name).rc()
@@ -505,9 +497,7 @@ class bank(design.design):
         if self.col_addr_size > 0:
             col_decoder_min_point = self.col_decoder_inst.by()
         else:
-            col_decoder_min_point = row_decoder_min_point - self.addr_bus_height
-        
-        self.addr_min_point = row_decoder_min_point - self.addr_bus_height
+            col_decoder_min_point = row_decoder_min_point
         
         if self.num_banks>1:
             # The control gating logic is below the decoder
@@ -575,11 +565,11 @@ class bank(design.design):
             # Make the xoffset map the center of the rail            
             self.bus_xoffset[name]=x_offset + 0.5*self.m2_width
             # Add a label pin for LVS correspondence and visual help inspecting the rail.
-            self.add_label_pin(text=name,
+            self.add_layout_pin(text=name,
                                layer="metal2",  
-                               offset=vector(x_offset, self.addr_min_point), 
+                               offset=vector(x_offset, self.min_point), 
                                width=self.m2_width, 
-                               height=-self.addr_min_point)
+                               height=-self.min_point)
 
         # Column mux lines if there is column mux 
         # goes from bottom of bitcell array down to the bottom of the column decoder/addresses
@@ -775,11 +765,11 @@ class bank(design.design):
 
             # The Address LSB
             decode_in_pin = self.col_decoder_inst.get_pin("A")
-            pin_pos = vector(self.left_gnd_x_offset, decode_in_pin.cy())
+            pin_pos = vector(decode_in_pin.cx(), self.min_point)
             self.add_layout_pin_center_segment(text="A[0]",
-                                               layer="metal1", 
+                                               layer="metal2", 
                                                start=pin_pos,
-                                               end=decode_in_pin.lc())
+                                               end=decode_in_pin.bc())
             
         elif self.col_addr_size > 1:
             # Route the col decoder outputs to the col select bus
@@ -794,14 +784,14 @@ class bank(design.design):
 
             # Route from the col decoder up to the address bus
             for i in range(self.col_addr_size):
-                name = "A[{}]".format(i)
-                decode_in_pin = self.col_decoder_inst.get_pin("in[{}]".format(i))
-                addr_pin = self.get_pin(name)
-                addr_pos = vector(decode_in_pin.cx(), addr_pin.by() + 0.5*self.m1_width)
-                self.add_path("metal2", [addr_pos, decode_in_pin.uc()])
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                    offset=addr_pos,
-                                    rotate=90) 
+                decoder_name = "in[{}]".format(i)
+                addr_name = "A[{}]".format(i)
+                decode_in_pin = self.col_decoder_inst.get_pin(decoder_name)
+                pin_pos = vector(decode_in_pin.cx(), self.min_point)
+                self.add_layout_pin_center_segment(text=addr_name,
+                                                   layer="metal2", 
+                                                   start=pin_pos,
+                                                   end=decode_in_pin.bc())
                 
                 
         # route the gnd rails, add contact to rail as well
@@ -823,26 +813,6 @@ class bank(design.design):
                                 rotate=90)
                                 
             
-    def route_address(self):
-        """ Routing the row address lines from the address ms-flop array to the row-decoder  """
-
-
-        for i in range(self.addr_size):
-            name = "A[{}]".format(i)
-            address_y_offset = self.addr_min_point + (i+1)*self.m1_pitch
-            pin_pos = vector(self.left_gnd_x_offset, address_y_offset)
-            if name in self.bus_xoffset:
-                rail_pos = vector(self.bus_xoffset[name],pin_pos.y)
-            else:
-                # Route to right of col decoder if it's not part of central bus
-                rail_pos = vector(self.col_decoder_inst.rx(),pin_pos.y)            
-            self.add_layout_pin_center_segment(text=name,
-                                               layer="metal1", 
-                                               start=pin_pos,
-                                               end=rail_pos)
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=rail_pos,
-                                rotate=90)
 
 
     def add_lvs_correspondence_points(self):

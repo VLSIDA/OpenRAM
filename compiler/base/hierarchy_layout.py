@@ -639,6 +639,7 @@ class layout(lef.lef):
             if c.second_layer_width < self.supply_rail_width and c.second_layer_height < self.supply_rail_width:
                 self.supply_vias += 1
             else:
+                self.supply_vias -= 1
                 break
         
         via_points = [vector(self.left_gnd_x_center, self.bottom_gnd_y_center),

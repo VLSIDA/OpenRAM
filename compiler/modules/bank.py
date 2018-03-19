@@ -147,7 +147,8 @@ class bank(design.design):
 
         # Width for the vdd/gnd rails
         self.supply_rail_width = 4*self.m2_width
-        self.supply_rail_pitch = self.supply_rail_width + 2*self.m2_space
+        # FIXME: This spacing should be width dependent...
+        self.supply_rail_pitch = self.supply_rail_width + 4*self.m2_space
         
         # Number of control lines in the bus
         self.num_control_lines = 6
@@ -169,7 +170,8 @@ class bank(design.design):
         self.m2_pitch = contact.m2m3.height + max(self.m2_space,self.m3_space)
 
         # The width of this bus is needed to place other modules (e.g. decoder)
-        self.central_bus_width = self.m2_pitch * self.num_control_lines 
+        # A width on each side too
+        self.central_bus_width = self.m2_pitch * self.num_control_lines + 2*self.m2_width
 
 
 
@@ -533,7 +535,7 @@ class bank(design.design):
         # and control lines.
         # The bank is at (0,0), so this is to the left of the y-axis.
         # 2 pitches on the right for vias/jogs to access the inputs 
-        control_bus_x_offset = -self.m2_pitch * self.num_control_lines
+        control_bus_x_offset = -self.m2_pitch * self.num_control_lines - self.m2_width
         
         # Track the bus offsets for other modules to access
         self.bus_xoffset = {}

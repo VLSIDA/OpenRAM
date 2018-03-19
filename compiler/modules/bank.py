@@ -147,7 +147,7 @@ class bank(design.design):
 
         # Width for the vdd/gnd rails
         self.supply_rail_width = 4*self.m2_width
-        self.supply_rail_pitch = self.supply_rail_width + 1.5*self.m2_space
+        self.supply_rail_pitch = self.supply_rail_width + 2*self.m2_space
         
         # Number of control lines in the bus
         self.num_control_lines = 6
@@ -367,7 +367,7 @@ class bank(design.design):
 
         temp = []
         for i in range(self.row_addr_size):
-            temp.append("A[{0}]".format(i))
+            temp.append("A[{0}]".format(i+self.col_addr_size))
         for j in range(self.num_rows):
             temp.append("dec_out[{0}]".format(j))
         temp.extend(["vdd", "gnd"])
@@ -406,7 +406,7 @@ class bank(design.design):
 
         temp = []
         for i in range(self.col_addr_size):
-            temp.append("A[{0}]".format(i + self.row_addr_size))
+            temp.append("A[{0}]".format(i))
         for j in range(self.num_col_addr_lines):
             temp.append("sel[{0}]".format(j))
         temp.extend(["vdd", "gnd"])
@@ -637,7 +637,7 @@ class bank(design.design):
             self.add_path("metal1", [left_rail_position, gnd_position])   
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=left_rail_position,
-                                size = (1,3),
+                                size = (1,self.supply_vias),
                                 rotate=90)
                         
         # route the vdd rails
@@ -650,7 +650,7 @@ class bank(design.design):
             self.add_path("metal1", [left_rail_position, right_rail_position])
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=left_rail_position,
-                                size = (1,3),
+                                size = (1,self.supply_vias),
                                 rotate=90)
 
     
@@ -726,7 +726,7 @@ class bank(design.design):
             self.add_path("metal1", [left_rail_pos, gnd_pin.rc()])
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=left_rail_pos,
-                                size = (1,3),
+                                size = (1,self.supply_vias),
                                 rotate=90)
 
         # route the vdd rails
@@ -735,7 +735,7 @@ class bank(design.design):
             self.add_path("metal1", [left_rail_pos, vdd_pin.rc()])
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=left_rail_pos,
-                                size = (1,3),
+                                size = (1,self.supply_vias),
                                 rotate=90)
                                 
             
@@ -835,7 +835,7 @@ class bank(design.design):
                 via_position = vector(self.right_vdd_x_center, vdd_pin.cy())
                 self.add_via_center(layers=("metal1", "via1", "metal2"),
                                     offset=via_position,
-                                    size = (1,3),
+                                    size = (1,self.supply_vias),
                                     rotate=90)
                         
         # Route the vdd rails to the LEFT
@@ -846,11 +846,11 @@ class bank(design.design):
             self.add_path("metal1", [left_rail_pos, right_rail_pos])
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=left_rail_pos,
-                                size = (1,3),
+                                size = (1,self.supply_vias),
                                 rotate=90)
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=right_rail_pos,
-                                size = (1,3),
+                                size = (1,self.supply_vias),
                                 rotate=90)
 
         if self.num_banks>1:
@@ -860,7 +860,7 @@ class bank(design.design):
                 self.add_path("metal1", [left_rail_pos, vdd_pos])
                 self.add_via_center(layers=("metal1", "via1", "metal2"),
                                     offset=left_rail_pos,
-                                    size = (1,3),
+                                    size = (1,self.supply_vias),
                                     rotate=90)
             
 
@@ -880,7 +880,7 @@ class bank(design.design):
                 via_position = vector(self.right_gnd_x_center, gnd_pin.cy())
                 self.add_via_center(layers=("metal1", "via1", "metal2"),
                                     offset=via_position,
-                                    size = (1,3),
+                                    size = (1,self.supply_vias),
                                     rotate=90)
 
         # Route the gnd rails to the LEFT
@@ -894,7 +894,7 @@ class bank(design.design):
                 self.add_path("metal1", [left_rail_pos, gnd_pos])
                 self.add_via_center(layers=("metal1", "via1", "metal2"),
                                     offset=left_rail_pos,
-                                    size = (1,3),
+                                    size = (1,self.supply_vias),
                                     rotate=90)
 
     def add_control_pins(self):

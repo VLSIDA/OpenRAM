@@ -558,7 +558,6 @@ class layout(lef.lef):
         height = (ur.y-ll.y) + 3 * self.supply_rail_pitch - supply_rail_spacing
         width = (ur.x-ll.x) + 3 * self.supply_rail_pitch - supply_rail_spacing
 
-        
         # LEFT vertical rails
         offset = ll + vector(-2*self.supply_rail_pitch, -2*self.supply_rail_pitch)
         left_gnd_pin=self.add_layout_pin(text="gnd",
@@ -631,6 +630,17 @@ class layout(lef.lef):
         self.top_gnd_y_center = top_gnd_pin.cy()
         self.top_vdd_y_center = top_vdd_pin.cy()
 
+
+        # Find the number of vias for this pitch
+        self.supply_vias = 1
+        import contact
+        while True:
+            c=contact.contact(("metal1","via1","metal2"), (self.supply_vias, self.supply_vias))
+            if c.second_layer_width < self.supply_rail_width and c.second_layer_height < self.supply_rail_width:
+                self.supply_vias += 1
+            else:
+                break
+        
         via_points = [vector(self.left_gnd_x_center, self.bottom_gnd_y_center),
                       vector(self.left_gnd_x_center, self.top_gnd_y_center),
                       vector(self.right_gnd_x_center, self.bottom_gnd_y_center),
@@ -643,7 +653,7 @@ class layout(lef.lef):
         for pt in via_points:
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=pt,
-                                size = (3,3))
+                                size = (self.supply_vias, self.supply_vias))
 
 
         

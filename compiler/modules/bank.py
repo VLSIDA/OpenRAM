@@ -161,17 +161,15 @@ class bank(design.design):
         # The central bus is the column address (one hot) and row address (binary)
         if self.col_addr_size>0:
             self.num_col_addr_lines = 2**self.col_addr_size
-            self.num_addr_lines = self.num_col_addr_lines + self.row_addr_size
         else:
             self.num_col_addr_lines = 0            
-            self.num_addr_lines = self.row_addr_size        
 
         # M1/M2 routing pitch is based on contacted pitch
         self.m1_pitch = contact.m1m2.height + max(self.m1_space,self.m2_space)
         self.m2_pitch = contact.m2m3.height + max(self.m2_space,self.m3_space)
 
         # The width of this bus is needed to place other modules (e.g. decoder)
-        self.central_bus_width = self.m2_pitch * (self.num_control_lines + self.num_addr_lines + 1) 
+        self.central_bus_width = self.m2_pitch * self.num_control_lines 
 
 
 
@@ -362,12 +360,10 @@ class bank(design.design):
         # The predecoder is below the x-axis and the main decoder is above the x-axis
         # The address flop and decoder are aligned in the x coord.
         
-        decoder_x_offset = self.row_decoder.width + self.central_bus_width
-        offset = vector(decoder_x_offset,
-                        self.row_decoder.predecoder_height)
+        x_offset = -(self.row_decoder.width + self.central_bus_width + self.wordline_driver.width)
         self.row_decoder_inst=self.add_inst(name="row_decoder", 
                                             mod=self.row_decoder, 
-                                            offset=offset.scale(-1,-1))
+                                            offset=vector(x_offset,0))
 
         temp = []
         for i in range(self.row_addr_size):
@@ -381,12 +377,10 @@ class bank(design.design):
         """ Wordline Driver """
 
         # The wordline driver is placed to the right of the main decoder width.
-        # This means that it slightly overlaps with the hierarchical decoder,
-        # but it shares power rails. This may differ for other decoders later...
-        x_offset = self.row_decoder.width + self.central_bus_width - self.row_decoder.row_decoder_width
+        x_offset = -(self.central_bus_width + self.wordline_driver.width) + self.m2_pitch
         self.wordline_driver_inst=self.add_inst(name="wordline_driver", 
                                                 mod=self.wordline_driver, 
-                                                offset=vector(x_offset,0).scale(-1,-1))
+                                                offset=vector(x_offset,0))
 
         temp = []
         for i in range(self.num_rows):
@@ -404,8 +398,8 @@ class bank(design.design):
         Create a 2:4 or 3:8 column address decoder.
         """
         # Place the col decoder aligned left to row decoder
-        x_off = -(self.central_bus_width + self.row_decoder.width)
-        y_off = -(self.row_decoder.predecoder_height + self.col_decoder.height + 2*drc["well_to_well"])
+        x_off = -(self.row_decoder.width + self.central_bus_width + self.wordline_driver.width)
+        y_off = -(self.col_decoder.height + 2*drc["well_to_well"])
         self.col_decoder_inst=self.add_inst(name="col_address_decoder", 
                                             mod=self.col_decoder, 
                                             offset=vector(x_off,y_off))
@@ -445,10 +439,10 @@ class bank(design.design):
         if not self.num_banks > 1:
             return
         
-        xoffset = -(self.central_bus_width + self.bank_select.width)
+        x_off = -(self.row_decoder.width + self.central_bus_width + self.wordline_driver.width)
         # extra space to allow vias
-        yoffset = self.min_point + 2*self.supply_rail_pitch + self.m1_space
-        self.bank_select_pos = vector(xoffset,yoffset)
+        y_off = self.min_point + 2*self.supply_rail_pitch + self.m1_space
+        self.bank_select_pos = vector(x_off,y_off)
         self.bank_select_inst = self.add_inst(name="bank_select",
                                               mod=self.bank_select,
                                               offset=self.bank_select_pos)
@@ -536,12 +530,11 @@ class bank(design.design):
         """ Create the address, supply, and control signal central bus lines. """
 
         # Overall central bus width. It includes all the column mux lines,
-        # control lines, and address flop to decoder lines.
+        # and control lines.
         # The bank is at (0,0), so this is to the left of the y-axis.
         # 2 pitches on the right for vias/jogs to access the inputs 
-        control_bus_x_offset = -self.m2_pitch * (self.num_control_lines)
-        address_bus_x_offset = control_bus_x_offset - self.m2_pitch*(self.num_addr_lines)
-
+        control_bus_x_offset = -self.m2_pitch * self.num_control_lines
+        
         # Track the bus offsets for other modules to access
         self.bus_xoffset = {}
 
@@ -556,35 +549,6 @@ class bank(design.design):
                           width=self.m2_width, 
                           height=self.height)
 
-        # Row address lines (to left of col address lines)
-        # goes from bottom of bitcell array down to the bottom of the column decoder/addresses
-        for i in range(self.row_addr_size):
-            addr_idx = i + self.col_addr_size
-            x_offset = address_bus_x_offset + i*self.m2_pitch 
-            name = "A[{}]".format(addr_idx)
-            # Make the xoffset map the center of the rail            
-            self.bus_xoffset[name]=x_offset + 0.5*self.m2_width
-            # Add a label pin for LVS correspondence and visual help inspecting the rail.
-            self.add_layout_pin(text=name,
-                               layer="metal2",  
-                               offset=vector(x_offset, self.min_point), 
-                               width=self.m2_width, 
-                               height=-self.min_point)
-
-        # Column mux lines if there is column mux 
-        # goes from bottom of bitcell array down to the bottom of the column decoder/addresses
-        if self.col_addr_size>0:
-            for i in range(self.num_col_addr_lines):
-                x_offset = address_bus_x_offset + (i+self.row_addr_size)*self.m2_pitch
-                name = "sel[{}]".format(i) # One hot select signals
-                # Make the xoffset map the center of the rail
-                self.bus_xoffset[name]=x_offset + 0.5*self.m2_width
-                # Add a label pin for LVS correspondence                
-                self.add_label_pin(text=name,
-                                   layer="metal2",  
-                                   offset=vector(x_offset, self.col_decoder_inst.by()),
-                                   width=self.m2_width, 
-                                   height=-self.col_decoder_inst.by())
 
 
     def route_precharge_to_bitcell_array(self):
@@ -654,33 +618,14 @@ class bank(design.design):
     def route_row_decoder(self):
         """ Routes the row decoder inputs and supplies """
 
-        for i in range(self.row_addr_size):
-            addr_idx = i + self.col_addr_size
-            # before this index, we are using 2x4 decoders
-            switchover_index = 2*self.row_decoder.no_of_pre2x4
-            # so decide what modulus to perform the height spacing
-            if i < switchover_index:
-                position_heights = i % 2
-            else:
-                position_heights = (i-switchover_index) % 3
-                
-            # Connect the address rails to the decoder
-            # Note that the decoder inputs are long vertical rails so spread out the connections vertically.
-            decoder_in_position = self.row_decoder_inst.get_pin("A[{}]".format(i)).lr() \
-                                  + vector(0,position_heights*self.bitcell.height+self.m2_pitch)
-            rail_position = vector(self.bus_xoffset["A[{}]".format(addr_idx)],
-                                   decoder_in_position.y)
-            self.add_path("metal1",[decoder_in_position,rail_position])
-
-            decoder_in_via = decoder_in_position - vector(0,0.5*self.m2_width)
-            self.add_via(layers=("metal1", "via1", "metal2"),
-                         offset=decoder_in_via,
-                         rotate=90)
+        # # Create inputs for the row address lines
+        # for i in range(self.row_addr_size):
+        #     addr_idx = i + self.col_addr_size
+        #     decoder_name = "A[{}]".format(i)
+        #     addr_name = "A[{}]".format(addr_idx)
+        #     self.copy_layout_pin(self.row_decoder_inst, decoder_name, addr_name)
             
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                         offset=rail_position,
-                         rotate=90)
-
+            
         # Route the power and ground, but only BELOW the y=0 since the
         # others are connected with the wordline driver.
         # These must be on M3 to not interfere with column mux address pins.
@@ -730,70 +675,51 @@ class bank(design.design):
 
         
 
-        
-
     def route_column_address_lines(self):
         """ Connecting the select lines of column mux to the address bus """
         if not self.col_addr_size>0:
             return
 
-        # Connect the select lines to the column mux
-        # These must be in metal3 so that they don't overlap any gnd lines from decoders
-        for i in range(self.num_col_addr_lines):
-            name = "sel[{}]".format(i)
-            mux_addr_pos = self.col_mux_array_inst.get_pin(name).lc()
-            wire_pos = vector(self.bus_xoffset[name], mux_addr_pos.y)
-            self.add_path("metal1", [wire_pos,mux_addr_pos])
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                  offset=wire_pos,
-                                  rotate=90)
+        
 
         if self.col_addr_size == 1:
             
-            decode_out_pos = self.col_decoder_inst.get_pin("Zb").rc()
-            selx_pos = vector(self.bus_xoffset["sel[0]"],decode_out_pos.y)
-            self.add_path("metal1",[decode_out_pos, selx_pos])
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=selx_pos,
-                                rotate=90) 
-            decode_out_pos = self.col_decoder_inst.get_pin("Z").rc()
-            selx_pos = vector(self.bus_xoffset["sel[1]"],decode_out_pos.y)
-            self.add_path("metal1",[decode_out_pos, selx_pos])
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=selx_pos,
-                                rotate=90) 
-
+            # Connect to sel[0] and sel[1]
+            decode_names = ["Zb", "Z"]
+            
             # The Address LSB
-            decode_in_pin = self.col_decoder_inst.get_pin("A")
-            pin_pos = vector(decode_in_pin.cx(), self.min_point)
-            self.add_layout_pin_center_segment(text="A[0]",
-                                               layer="metal2", 
-                                               start=pin_pos,
-                                               end=decode_in_pin.bc())
+            self.copy_layout_pin(self.col_decoder_inst, "A", "A[0]") 
             
         elif self.col_addr_size > 1:
-            # Route the col decoder outputs to the col select bus
+            decode_names = []
             for i in range(self.num_col_addr_lines):
-                name = "sel[{}]".format(i)                
-                decode_out_pos = self.col_decoder_inst.get_pin("out[{}]".format(i)).rc()
-                selx_pos = vector(self.bus_xoffset[name],decode_out_pos.y)
-                self.add_path("metal1",[decode_out_pos, selx_pos])
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                    offset=selx_pos,
-                                    rotate=90) 
+                decode_names.append("out[{}]".format(i))
 
-            # Route from the col decoder up to the address bus
             for i in range(self.col_addr_size):
                 decoder_name = "in[{}]".format(i)
                 addr_name = "A[{}]".format(i)
-                decode_in_pin = self.col_decoder_inst.get_pin(decoder_name)
-                pin_pos = vector(decode_in_pin.cx(), self.min_point)
-                self.add_layout_pin_center_segment(text=addr_name,
-                                                   layer="metal2", 
-                                                   start=pin_pos,
-                                                   end=decode_in_pin.bc())
+                self.copy_layout_pin(self.col_decoder_inst, decoder_name, addr_name)
                 
-                
+
+        # This will do a quick "river route" on two layers.
+        # When above the top select line it will offset "inward" again to prevent conflicts.
+        # This could be done on a single layer, but we follow preferred direction rules for later routing.
+        top_y_offset = self.col_mux_array_inst.get_pin("sel[{}]".format(self.num_col_addr_lines-1)).cy()
+        for (decode_name,i) in zip(decode_names,range(self.num_col_addr_lines)):
+            mux_name = "sel[{}]".format(i)
+            mux_addr_pos = self.col_mux_array_inst.get_pin(mux_name).lc()
+            
+            decode_out_pos = self.col_decoder_inst.get_pin(decode_name).center()
+
+            # To get to the edge of the decoder and one track out
+            delta_offset = self.col_decoder_inst.rx() - decode_out_pos.x + self.m2_pitch
+            if decode_out_pos.y > top_y_offset:
+                mid1_pos = vector(decode_out_pos.x + delta_offset + i*self.m2_pitch,decode_out_pos.y)
+            else:
+                mid1_pos = vector(decode_out_pos.x + delta_offset + (self.num_col_addr_lines-i)*self.m2_pitch,decode_out_pos.y)
+            mid2_pos = vector(mid1_pos.x,mux_addr_pos.y)
+            self.add_wire(("metal1","via1","metal2"),[decode_out_pos, mid1_pos, mid2_pos, mux_addr_pos])
+            
         # route the gnd rails, add contact to rail as well
         for gnd_pin in self.col_decoder_inst.get_pins("gnd"):
             left_rail_pos = vector(self.left_gnd_x_center, gnd_pin.cy())

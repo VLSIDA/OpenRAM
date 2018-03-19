@@ -91,6 +91,8 @@ class spice(verilog.verilog):
         group of modules are generated."""
 
         if (check and (len(self.insts[-1].mod.pins) != len(args))):
+            debug.error("Connections: {}".format(self.insts[-1].mod.pins))
+            debug.error("Connections: {}".format(args))
             debug.error("Number of net connections ({0}) does not match last instance ({1})".format(len(self.insts[-1].mod.pins),
                                                                                                     len(args)), 1)
         self.conns.append(args)

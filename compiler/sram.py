@@ -20,9 +20,15 @@ class sram(design.design):
 
         c = reload(__import__(OPTS.control_logic))
         self.mod_control_logic = getattr(c, OPTS.control_logic)
-        
-        c = reload(__import__(OPTS.dff_array))
-        self.mod_dff_array = getattr(c, OPTS.dff_array)
+
+        if num_banks>1:
+            # Use a buffered array for big arrays
+            # Also ensures we have Qbar when FF doesn't
+            c = reload(__import__(OPTS.dff_buf_array))
+            self.mod_dff_array = getattr(c, OPTS.dff_buf_array)
+        else:
+            c = reload(__import__(OPTS.dff_array))
+            self.mod_dff_array = getattr(c, OPTS.dff_array)
         
         c = reload(__import__(OPTS.bitcell))
         self.mod_bitcell = getattr(c, OPTS.bitcell)
@@ -200,6 +206,32 @@ class sram(design.design):
         self.width = self.bank_inst[1].ur().x
         self.height = self.control_logic_inst.uy()
         
+
+    def add_single_bank_modules(self):
+        """ 
+        This adds the moduels for a single bank SRAM with control
+        logic. 
+        """
+        
+        # No orientation or offset
+        self.bank_inst = self.add_bank(0, [0, 0], 1, 1)
+
+        # 3/5/18 MRG: Cannot reference positions inside submodules because boundaries
+        # are not recomputed using instance placement. So, place the control logic such that it aligns
+        # with the top of the SRAM.
+        control_gap = 2*self.m3_width
+        control_pos = vector(-self.control_logic.width-control_gap,
+                             self.bank.height-self.control_logic.height-3*self.supply_rail_width)
+        self.add_control_logic(position=control_pos)
+
+        # Leave room for the control routes to the left of the flops
+        addr_pos = vector(self.control_logic_inst.lx() + 4*self.m2_pitch,
+                          3*self.supply_rail_pitch)
+        self.add_control_addr_dff(addr_pos)
+        
+        self.width = self.bank.width + self.control_logic.height + control_gap
+        self.height = self.bank.height
+
         
     def route_shared_banks(self):
         """ Route the shared signals for two and four bank configurations. """
@@ -777,9 +809,10 @@ class sram(design.design):
         
     def create_multi_bank_modules(self):
         """ Create the multibank address flops and bank decoder """
-        self.msb_address = self.mod_ms_flop_array(name="msb_address",
-                                                  columns=self.num_banks/2,
-                                                  word_size=self.num_banks/2)
+        
+        self.msb_address = self.mod_dff_array(name="msb_address",
+                                              rows=1,
+                                              columns=self.num_banks/2)
         self.add_mod(self.msb_address)
 
         if self.num_banks>2:
@@ -794,9 +827,9 @@ class sram(design.design):
         self.add_mod(self.control_logic)
 
         # Create the address and control flops (but not the clk)
-        dff_size = self.addr_size + len(self.control_logic.get_inputs())-1
-        self.addr_ctrl_dff = self.mod_dff_array(name="dff_array", rows=dff_size, columns=1)
-        self.add_mod(self.addr_ctrl_dff)
+        dff_size = self.addr_size
+        self.addr_dff = self.mod_dff_array(name="dff_array", rows=dff_size, columns=1)
+        self.add_mod(self.addr_dff)
         
         # Create the bank module (up to four are instantiated)
         self.bank = bank(word_size=self.word_size,
@@ -902,21 +935,15 @@ class sram(design.design):
 
     def add_control_addr_dff(self, position):
         """ Add and place address and control flops """
-        self.addr_ctrl_dff_inst = self.add_inst(name="address",
-                                                mod=self.addr_ctrl_dff,
-                                                offset=position)
+        self.addr_dff_inst = self.add_inst(name="address",
+                                           mod=self.addr_dff,
+                                           offset=position)
         # inputs, outputs/output/bar
         inputs = []
         outputs = []
         for i in range(self.addr_size):
             inputs.append("ADDR[{}]".format(i))
             outputs.append("A[{}]".format(i))
-
-        for i in self.control_logic_inputs:
-            if i == "clk":
-                continue
-            inputs.append(i)
-            outputs.append(i+"_s")
 
         self.connect_inst(inputs + outputs + ["clk", "vdd", "gnd"])
     
@@ -951,31 +978,6 @@ class sram(design.design):
                            layer="metal2",  
                            offset=self.vert_control_bus_positions[n])
 
-    def add_single_bank_modules(self):
-        """ 
-        This adds the moduels for a single bank SRAM with control
-        logic. 
-        """
-        
-        # No orientation or offset
-        self.bank_inst = self.add_bank(0, [0, 0], 1, 1)
-
-        # 3/5/18 MRG: Cannot reference positions inside submodules because boundaries
-        # are not recomputed using instance placement. So, place the control logic such that it aligns
-        # with the top of the SRAM.
-        control_gap = 2*self.m3_width
-        control_pos = vector(-self.control_logic.width-control_gap,
-                             self.bank.height-self.control_logic.height-3*self.supply_rail_width)
-        self.add_control_logic(position=control_pos)
-
-        # Leave room for the control routes to the left of the flops
-        addr_pos = vector(self.control_logic_inst.lx() + 4*self.m2_pitch,
-                          3*self.supply_rail_pitch)
-        self.add_control_addr_dff(addr_pos)
-        
-        self.width = self.bank.width + self.control_logic.height + control_gap
-        self.height = self.bank.height
-
     def add_single_bank_pins(self):
         """
         Add the top-level pins for a single bank SRAM with control.
@@ -985,13 +987,9 @@ class sram(design.design):
             self.copy_layout_pin(self.bank_inst, "DATA[{}]".format(i))
 
         for i in range(self.addr_size):
-            self.copy_layout_pin(self.addr_ctrl_dff_inst, "din[{}]".format(i),"ADDR[{}]".format(i))
+            self.copy_layout_pin(self.addr_dff_inst, "din[{}]".format(i),"ADDR[{}]".format(i))
 
-        ctrl_flops = ["din[{}]".format(i) for i in range(self.addr_size,self.addr_size+3)]
-        for (old,new) in zip(ctrl_flops,["CSb","WEb","OEb"]):
-            self.copy_layout_pin(self.addr_ctrl_dff_inst, old, new)
-
-        self.copy_layout_pin(self.addr_ctrl_dff_inst, "clk")
+        self.copy_layout_pin(self.addr_dff_inst, "clk")
         
         # Power ring contains the power pins
 
@@ -1068,7 +1066,7 @@ class sram(design.design):
         for i in range(self.addr_size):
             flop_name = "dout[{}]".format(i)
             bank_name = "A[{}]".format(i)
-            flop_pin = self.addr_ctrl_dff_inst.get_pin(flop_name)
+            flop_pin = self.addr_dff_inst.get_pin(flop_name)
             bank_pin = self.bank_inst.get_pin(bank_name)
             flop_pos = flop_pin.center()
             bank_pos = vector(bank_pin.cx(),flop_pos.y)
@@ -1080,24 +1078,14 @@ class sram(design.design):
                                 offset=bank_pos,
                                 rotate=90)
 
-        # Connect the output of the flops to the control pins
-        for i in range(3):
-            flop_name = "dout[{}]".format(self.addr_size+i)
-            ctrl_name = ["csb","web","oeb"][i]
-            flop_pin = self.addr_ctrl_dff_inst.get_pin(flop_name)
-            ctrl_pin = self.control_logic_inst.get_pin(ctrl_name)
-            flop_pos = flop_pin.center()
-            ctrl_pos = ctrl_pin.bc()
-            mid_pos = vector(ctrl_pos.x, flop_pos.y)
-            self.add_wire(("metal3","via2","metal2"),[flop_pos, mid_pos, ctrl_pos])
-            self.add_via_center(layers=("metal2","via2","metal3"),
-                                offset=flop_pos,
-                                rotate=90)
+        # Connect the control pins as inputs
+        for n in self.control_logic_inputs + ["clk"]:
+            self.copy_layout_pin(self.control_logic_inst, n.lower(), n)
 
         # Connect the clock between the flops and control module
         # FIXME: Buffered clock should drive the flops, but then
         # it would change the setup time...
-        flop_pin = self.addr_ctrl_dff_inst.get_pin("clk")
+        flop_pin = self.addr_dff_inst.get_pin("clk")
         ctrl_pin = self.control_logic_inst.get_pin("clk")
         flop_pos = flop_pin.uc()
         ctrl_pos = ctrl_pin.bc()
@@ -1111,7 +1099,7 @@ class sram(design.design):
         """ Route vdd for the control and dff array """
 
         # Route the vdd rails to the LEFT
-        modules = [ self.control_logic_inst, self.addr_ctrl_dff_inst]
+        modules = [ self.control_logic_inst, self.addr_dff_inst]
         for inst in modules:
             for vdd_pin in inst.get_pins("vdd"):
                 if vdd_pin.layer != "metal1":
@@ -1140,7 +1128,7 @@ class sram(design.design):
         """ Route gnd for the control and dff array """
 
         # Route the gnd rails to the LEFT
-        modules = [ self.control_logic_inst, self.addr_ctrl_dff_inst]
+        modules = [ self.control_logic_inst, self.addr_dff_inst]
         for inst in modules:
             for gnd_pin in inst.get_pins("gnd"):
                 if gnd_pin.layer != "metal1":

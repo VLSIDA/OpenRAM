@@ -28,7 +28,7 @@ class pinvbuf(design.design):
         self.inv2 = pinv(size=inv2_size)
         self.add_mod(self.inv2)
 
-        self.width = self.inv1.width + self.inv2.width
+        self.width = 2*self.inv1.width + self.inv2.width
         self.height = 2*self.inv1.height
 
         self.create_layout()

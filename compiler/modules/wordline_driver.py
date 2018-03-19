@@ -22,6 +22,7 @@ class wordline_driver(design.design):
         self.rows = rows
         self.add_pins()
         self.design_layout()
+        self.offset_all_coordinates()
         self.DRC_LVS()
 
     def add_pins(self):

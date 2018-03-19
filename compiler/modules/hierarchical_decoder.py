@@ -154,12 +154,11 @@ class hierarchical_decoder(design.design):
         else:
             nand_width = self.nand3.width 
         self.routing_width = self.metal2_pitch*self.total_number_of_predecoder_outputs
-        self.row_decoder_width = nand_width  + self.routing_width + self.inv.width
         self.row_decoder_height = self.inv.height * self.rows
 
         # Calculates height and width of hierarchical decoder 
         self.height = self.row_decoder_height
-        self.width = self.predecoder_width + self.row_decoder_width
+        self.width = self.predecoder_width + self.routing_width + nand_width + self.inv.width
 
     def create_pre_decoder(self):
         """ Creates pre-decoder and places labels input address [A] """
@@ -479,7 +478,7 @@ class hierarchical_decoder(design.design):
 
     def connect_rail_m3(self, rail_index, pin):
         """ Connect the routing rail to the given metal1 pin  """
-        mid_point = vector(pin.cx(), pin.cy()-self.inv.height/2)
+        mid_point = vector(pin.cx(), pin.cy()+self.inv.height/2)
         rail_pos = vector(self.rail_x_offsets[rail_index],mid_point.y)
         self.add_via_center(layers=("metal1", "via1", "metal2"),
                             offset=pin.center(),

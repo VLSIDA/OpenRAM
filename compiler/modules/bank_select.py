@@ -26,6 +26,7 @@ class bank_select(design.design):
         self.control_signals = ["gated_"+str for str in self.input_control_signals]
 
         self.add_pin_list(self.input_control_signals, "INPUT")
+        self.add_pin("bank_sel")
         self.add_pin_list(self.control_signals, "OUTPUT")
         self.add_pin("vdd","POWER")  
         self.add_pin("gnd","GROUND")  

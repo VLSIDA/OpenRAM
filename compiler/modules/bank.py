@@ -56,8 +56,6 @@ class bank(design.design):
         self.add_modules()
         self.setup_layout_constraints()
 
-        self.add_power_ring(self.core_bbox)
-
         # FIXME: Move this to the add modules function
         self.add_bank_select()
         
@@ -451,6 +449,7 @@ class bank(design.design):
 
         temp = []
         temp.extend(self.input_control_signals)
+        temp.append("bank_sel")
         temp.extend(self.control_signals)
         temp.extend(["vdd", "gnd"])
         self.connect_inst(temp)
@@ -488,39 +487,41 @@ class bank(design.design):
         #the column decoder (if there is one) or the tristate output
         #driver.
         # Leave room for the output below the tri gate.
-        tri_gate_min_point = self.tri_gate_array_inst.by() - 3*self.m2_pitch
-        row_decoder_min_point = self.row_decoder_inst.by()
+        tri_gate_min_y_offset = self.tri_gate_array_inst.by() - 3*self.m2_pitch
+        row_decoder_min_y_offset = self.row_decoder_inst.by()
         if self.col_addr_size > 0:
-            col_decoder_min_point = self.col_decoder_inst.by()
+            col_decoder_min_y_offset = self.col_decoder_inst.by()
         else:
-            col_decoder_min_point = row_decoder_min_point
+            col_decoder_min_y_offset = row_decoder_min_y_offset
         
         if self.num_banks>1:
             # The control gating logic is below the decoder
             # Min of the control gating logic and tri gate.
-            self.min_point = min(col_decoder_min_point - self.bank_select.height, tri_gate_min_point)
+            self.min_y_offset = min(col_decoder_min_y_offset - self.bank_select.height, tri_gate_min_y_offset)
         else:
             # Just the min of the decoder logic logic and tri gate.            
-            self.min_point = min(col_decoder_min_point, tri_gate_min_point)
+            self.min_y_offset = min(col_decoder_min_y_offset, tri_gate_min_y_offset)
 
         # The max point is always the top of the precharge bitlines
         # Add a vdd and gnd power rail above the array
-        self.max_point = self.precharge_array_inst.uy() + 3*self.m1_width
+        self.max_y_offset = self.precharge_array_inst.uy() + 3*self.m1_width
+        self.max_x_offset = self.bitcell_array_inst.ur().x + 3*self.m1_width
+        self.min_x_offset = self.row_decoder_inst.lx() 
+        
         # Create the core bbox for the power rings
-        ur = vector(self.bitcell_array_inst.ur().x + 3*self.m1_width, self.max_point)
-        ll = vector(self.row_decoder_inst.lx(), self.min_point)
+        ur = vector(self.max_x_offset, self.max_y_offset)
+        ll = vector(self.min_x_offset, self.min_y_offset)
         self.core_bbox = [ll, ur]
-
+        self.add_power_ring(self.core_bbox)
+        
         # Compute the vertical rail positions for later use
-        self.right_gnd_x_offset = ur.x 
+        self.right_gnd_x_offset = self.right_gnd_x_center - 0.5*self.supply_rail_pitch
         self.right_vdd_x_offset = self.right_gnd_x_offset + self.supply_rail_pitch
-        self.left_vdd_x_offset =  ll.x - self.supply_rail_pitch 
+        self.left_vdd_x_offset =  self.left_gnd_x_center - 0.5*self.supply_rail_pitch
         self.left_gnd_x_offset = self.left_vdd_x_offset - self.supply_rail_pitch
-
-        # Add a vdd and gnd power rail below the array
-        self.min_point -= 2*self.supply_rail_pitch
-        # Add a vdd and gnd power rail above the array
-        self.max_point += self.supply_rail_pitch + self.supply_rail_width
+        
+        # Have the pins go below the vdd and gnd power rail at the bottom
+        self.min_y_offset -= 2*self.supply_rail_pitch
 
         self.height = ur.y - ll.y + 4*self.supply_rail_pitch
         self.width = ur.x - ll.x + 4*self.supply_rail_pitch
@@ -547,9 +548,9 @@ class bank(design.design):
             self.bus_xoffset[self.control_signals[i]]=x_offset + 0.5*self.m2_width
             # Pins are added later if this is a single bank, so just add rectangle now
             self.add_rect(layer="metal2",  
-                          offset=vector(x_offset, self.min_point), 
+                          offset=vector(x_offset, self.min_y_offset), 
                           width=self.m2_width, 
-                          height=self.height)
+                          height=self.max_y_offset-self.min_y_offset)
 
 
 
@@ -606,12 +607,12 @@ class bank(design.design):
         """ Metal 3 routing of tri_gate output data """
         for i in range(self.word_size):
             tri_gate_out_position = self.tri_gate_array_inst.get_pin("out[{}]".format(i)).ul()
-            data_line_position = vector(tri_gate_out_position.x, self.min_point)
+            data_line_position = vector(tri_gate_out_position.x, self.min_y_offset)
             self.add_via(("metal2", "via2", "metal3"), data_line_position)
             self.add_rect(layer="metal3", 
                           offset=data_line_position, 
                           width=drc["minwidth_metal3"], 
-                          height=tri_gate_out_position.y - self.min_point)
+                          height=tri_gate_out_position.y - self.min_y_offset)
             self.add_layout_pin(text="DATA[{}]".format(i),
                                 layer="metal2", 
                                 offset=data_line_position,
@@ -620,12 +621,12 @@ class bank(design.design):
     def route_row_decoder(self):
         """ Routes the row decoder inputs and supplies """
 
-        # # Create inputs for the row address lines
-        # for i in range(self.row_addr_size):
-        #     addr_idx = i + self.col_addr_size
-        #     decoder_name = "A[{}]".format(i)
-        #     addr_name = "A[{}]".format(addr_idx)
-        #     self.copy_layout_pin(self.row_decoder_inst, decoder_name, addr_name)
+        # Create inputs for the row address lines
+        for i in range(self.row_addr_size):
+            addr_idx = i + self.col_addr_size
+            decoder_name = "A[{}]".format(i)
+            addr_name = "A[{}]".format(addr_idx)
+            self.copy_layout_pin(self.row_decoder_inst, decoder_name, addr_name)
             
             
         # Route the power and ground, but only BELOW the y=0 since the
@@ -909,15 +910,15 @@ class bank(design.design):
                 # it's not an input pin if we have multiple banks
                 self.add_label_pin(text=ctrl,
                                     layer="metal2",  
-                                    offset=vector(x_offset, self.min_point), 
+                                    offset=vector(x_offset, self.min_y_offset), 
                                     width=self.m2_width, 
-                                    height=self.height)
+                                    height=self.max_y_offset-self.min_y_offset)
             else:
                 self.add_layout_pin(text=ctrl,
                                     layer="metal2",  
-                                    offset=vector(x_offset, self.min_point), 
+                                    offset=vector(x_offset, self.min_y_offset), 
                                     width=self.m2_width, 
-                                    height=self.height)
+                                    height=self.max_y_offset-self.min_y_offset)
 
 
     def connect_rail_from_right(self,inst, pin, rail):

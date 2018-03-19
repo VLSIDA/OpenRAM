@@ -219,18 +219,17 @@ class sram(design.design):
         # 3/5/18 MRG: Cannot reference positions inside submodules because boundaries
         # are not recomputed using instance placement. So, place the control logic such that it aligns
         # with the top of the SRAM.
-        control_gap = 2*self.m3_width
-        control_pos = vector(-self.control_logic.width-control_gap,
-                             self.bank.height-self.control_logic.height-3*self.supply_rail_width)
+        control_pos = vector(-self.control_logic.width - self.m3_pitch,
+                             self.bank.height - self.control_logic.height - 3*self.supply_rail_width)
         self.add_control_logic(position=control_pos)
 
         # Leave room for the control routes to the left of the flops
         addr_pos = vector(self.control_logic_inst.lx() + 4*self.m2_pitch,
                           3*self.supply_rail_pitch)
-        self.add_control_addr_dff(addr_pos)
+        self.add_addr_dff(addr_pos)
         
-        self.width = self.bank.width + self.control_logic.height + control_gap
-        self.height = self.bank.height
+        self.width = self.bank.width + self.control_logic.width + 2*self.supply_rail_pitch
+        self.height = self.bank.height + 2*self.supply_rail_pitch
 
         
     def route_shared_banks(self):
@@ -933,7 +932,7 @@ class sram(design.design):
         return line_positions
 
 
-    def add_control_addr_dff(self, position):
+    def add_addr_dff(self, position):
         """ Add and place address and control flops """
         self.addr_dff_inst = self.add_inst(name="address",
                                            mod=self.addr_dff,
@@ -945,7 +944,7 @@ class sram(design.design):
             inputs.append("ADDR[{}]".format(i))
             outputs.append("A[{}]".format(i))
 
-        self.connect_inst(inputs + outputs + ["clk", "vdd", "gnd"])
+        self.connect_inst(inputs + outputs + ["clk_buf", "vdd", "gnd"])
     
     def add_control_logic(self, position):
         """ Add and place control logic """
@@ -989,9 +988,6 @@ class sram(design.design):
         for i in range(self.addr_size):
             self.copy_layout_pin(self.addr_dff_inst, "din[{}]".format(i),"ADDR[{}]".format(i))
 
-        self.copy_layout_pin(self.addr_dff_inst, "clk")
-        
-        # Power ring contains the power pins
 
     def add_two_banks(self):
         # Placement of bank 0 (left)
@@ -1083,10 +1079,8 @@ class sram(design.design):
             self.copy_layout_pin(self.control_logic_inst, n.lower(), n)
 
         # Connect the clock between the flops and control module
-        # FIXME: Buffered clock should drive the flops, but then
-        # it would change the setup time...
         flop_pin = self.addr_dff_inst.get_pin("clk")
-        ctrl_pin = self.control_logic_inst.get_pin("clk")
+        ctrl_pin = self.control_logic_inst.get_pin("clk_buf")
         flop_pos = flop_pin.uc()
         ctrl_pos = ctrl_pin.bc()
         mid_ypos = 0.5*(ctrl_pos.y+flop_pos.y)
@@ -1109,7 +1103,7 @@ class sram(design.design):
                 self.add_path("metal1", [left_rail_pos, vdd_pos])
                 self.add_via_center(layers=("metal1", "via1", "metal2"),
                                     offset=left_rail_pos,
-                                    size = (1,3),
+                                    size = (1,self.supply_vias),
                                     rotate=90)
 
         # Route the vdd rails to the TOP
@@ -1121,7 +1115,7 @@ class sram(design.design):
             self.add_path("metal2", [top_rail_pos, vdd_pos])
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=top_rail_pos,
-                                size = (1,3))
+                                size = (1,self.supply_vias))
                 
             
     def route_single_bank_gnd(self):
@@ -1138,7 +1132,7 @@ class sram(design.design):
                 self.add_path("metal1", [left_rail_pos, gnd_pos])
                 self.add_via_center(layers=("metal1", "via1", "metal2"),
                                     offset=left_rail_pos,
-                                    size = (1,3),
+                                    size = (1,self.supply_vias),
                                     rotate=90)
 
         # Route the vdd rails to the TOP
@@ -1150,7 +1144,7 @@ class sram(design.design):
             self.add_path("metal2", [top_rail_pos, gnd_pos])
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=top_rail_pos,
-                                size = (1,3))
+                                size = (1,self.supply_vias))
             
 
     def sp_write(self, sp_name):

@@ -5,6 +5,8 @@ import design
 from math import log,sqrt,ceil
 import contact
 from bank import bank
+from dff_buf_array import dff_buf_array
+from dff_array import dff_array
 import datetime
 import getpass
 from vector import vector
@@ -21,15 +23,6 @@ class sram(design.design):
         c = reload(__import__(OPTS.control_logic))
         self.mod_control_logic = getattr(c, OPTS.control_logic)
 
-        if num_banks>1:
-            # Use a buffered array for big arrays
-            # Also ensures we have Qbar when FF doesn't
-            c = reload(__import__(OPTS.dff_buf_array))
-            self.mod_dff_array = getattr(c, OPTS.dff_buf_array)
-        else:
-            c = reload(__import__(OPTS.dff_array))
-            self.mod_dff_array = getattr(c, OPTS.dff_array)
-        
         c = reload(__import__(OPTS.bitcell))
         self.mod_bitcell = getattr(c, OPTS.bitcell)
         self.bitcell = self.mod_bitcell()
@@ -809,9 +802,9 @@ class sram(design.design):
     def create_multi_bank_modules(self):
         """ Create the multibank address flops and bank decoder """
         
-        self.msb_address = self.mod_dff_array(name="msb_address",
-                                              rows=1,
-                                              columns=self.num_banks/2)
+        self.msb_address = dff_buf_array(name="msb_address",
+                                         rows=1,
+                                         columns=self.num_banks/2)
         self.add_mod(self.msb_address)
 
         if self.num_banks>2:
@@ -827,7 +820,7 @@ class sram(design.design):
 
         # Create the address and control flops (but not the clk)
         dff_size = self.addr_size
-        self.addr_dff = self.mod_dff_array(name="dff_array", rows=dff_size, columns=1)
+        self.addr_dff = self.dff_array(name="dff_array", rows=dff_size, columns=1)
         self.add_mod(self.addr_dff)
         
         # Create the bank module (up to four are instantiated)

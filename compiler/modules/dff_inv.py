@@ -65,13 +65,17 @@ class dff_inv(design.design):
         # Route dff q to inv1 a
         q_pin = self.dff_inst.get_pin("Q")
         a1_pin = self.inv1_inst.get_pin("A")
-        mid_point = vector(a1_pin.cx(), q_pin.cy())
-        self.add_wire(("metal3","via2","metal2"),
-                      [q_pin.center(), mid_point, a1_pin.center()])
-        self.add_via_center(("metal2","via2","metal3"),
-                            q_pin.center())
-        self.add_via_center(("metal1","via1","metal2"),
-                            a1_pin.center())
+        mid_x_offset = 0.5*(a1_pin.cx() + q_pin.cx())
+        mid1 = vector(mid_x_offset, q_pin.cy())
+        mid2 = vector(mid_x_offset, a1_pin.cy())
+        self.add_path("metal3",
+                      [q_pin.center(), mid1, mid2, a1_pin.center()])
+        self.add_via_center(layers=("metal2","via2","metal3"),
+                            offset=q_pin.center())
+        self.add_via_center(layers=("metal2","via2","metal3"),
+                            offset=a1_pin.center())
+        self.add_via_center(layers=("metal1","via1","metal2"),
+                            offset=a1_pin.center())
 
         
     def add_layout_pins(self):
@@ -107,12 +111,12 @@ class dff_inv(design.design):
                             height=din_pin.height())
 
         dout_pin = self.dff_inst.get_pin("Q")
-        self.add_layout_pin_center_rect(text="Q",
+        self.add_layout_pin_rect_center(text="Q",
                                         layer=dout_pin.layer,
                                         offset=dout_pin.center())
 
         dout_pin = self.inv1_inst.get_pin("Z")
-        self.add_layout_pin_center_rect(text="Qb",
+        self.add_layout_pin_rect_center(text="Qb",
                                         layer="metal2",
                                         offset=dout_pin.center())
         self.add_via_center(layers=("metal1","via1","metal2"),

@@ -106,12 +106,12 @@ class pnor2(pgate.pgate):
         
     def add_supply_rails(self):
         """ Add vdd/gnd rails to the top and bottom. """
-        self.add_layout_pin_center_rect(text="gnd",
+        self.add_layout_pin_rect_center(text="gnd",
                                         layer="metal1",
                                         offset=vector(0.5*self.width,0),
                                         width=self.width)
 
-        self.add_layout_pin_center_rect(text="vdd",
+        self.add_layout_pin_rect_center(text="vdd",
                                         layer="metal1",
                                         offset=vector(0.5*self.width,self.height),
                                         width=self.width)
@@ -208,7 +208,7 @@ class pnor2(pgate.pgate):
         self.add_contact_center(layers=("metal1", "via1", "metal2"),
                                 offset=mid3_offset,
                                 rotate=90)
-        self.add_layout_pin_center_rect(text="Z",
+        self.add_layout_pin_rect_center(text="Z",
                                         layer="metal1",
                                         offset=mid3_offset,
                                         width=contact.m1m2.first_layer_height,

@@ -133,8 +133,8 @@ class replica_bitline(design.design):
 
     def route(self):
         """ Connect all the signals together """
-        self.route_gnd()
         self.route_vdd()
+        self.route_gnd()
         self.route_access_tx()
 
 
@@ -210,28 +210,25 @@ class replica_bitline(design.design):
         # Route the vdd lines from left to right
 
         # Add via for the delay chain
-        left_vdd_start = self.dc_inst.ll().scale(1,0)
+        left_vdd_start = self.dc_inst.ll().scale(1,0) - vector(self.m2_pitch,0)
         left_vdd_end = vector(left_vdd_start.x, self.rbl_inst.uy())
-        self.left_vdd_pin=self.add_layout_pin_center_segment(text="vdd",
-                                                             layer="metal2",
-                                                             start=left_vdd_start,
-                                                             end=left_vdd_end)
+        self.left_vdd_pin=self.add_segment_center(layer="metal2",
+                                                   start=left_vdd_start,
+                                                   end=left_vdd_end)
 
         # Vdd line to the left of the replica bitline
         center_vdd_start = self.rbc_inst.ll() - vector(3*self.m2_pitch,0)
         center_vdd_end = vector(center_vdd_start.x, self.rbl_inst.uy())
-        self.center_vdd_pin=self.add_layout_pin_center_segment(text="vdd",
-                                                               layer="metal2",
-                                                               start=center_vdd_start,
-                                                               end=center_vdd_end)
+        self.center_vdd_pin=self.add_segment_center(layer="metal2",
+                                                    start=center_vdd_start,
+                                                    end=center_vdd_end)
 
         # Vdd line to the right of the replica bitline
         right_vdd_start = self.rbc_inst.lr() + vector(2*self.m2_pitch,0)
         right_vdd_end = vector(right_vdd_start.x, self.rbl_inst.uy())
-        self.right_vdd_pin=self.add_layout_pin_center_segment(text="vdd",
-                                                              layer="metal2",
-                                                              start=right_vdd_start,
-                                                              end=right_vdd_end)
+        self.right_vdd_pin=self.add_segment_center(layer="metal2",
+                                                   start=right_vdd_start,
+                                                   end=right_vdd_end)
                       
 
         
@@ -243,9 +240,10 @@ class replica_bitline(design.design):
                 continue
             start = vector(self.center_vdd_pin.cx(),pin.cy())
             end = vector(self.right_vdd_pin.cx(),pin.cy())
-            self.add_segment_center(layer="metal1",
-                                    start=start,
-                                    end=end)
+            self.add_layout_pin_segment_center(text="vdd",
+                                               layer="metal1",
+                                               start=start,
+                                               end=end)
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=start,
                                 rotate=90)
@@ -265,9 +263,10 @@ class replica_bitline(design.design):
             # with the RBL pins
             #end = vector(center_vdd_pin.cx(),pin.cy())
             end = pin.rc()
-            self.add_segment_center(layer="metal1",
-                                    start=start,
-                                    end=end)
+            self.add_layout_pin_segment_center(text="vdd",
+                                               layer="metal1",
+                                               start=start,
+                                               end=end)
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=start,
                                 rotate=90)
@@ -303,14 +302,24 @@ class replica_bitline(design.design):
         # Create the RBL rails too
         rbl_pins = self.rbl_inst.get_pins("vdd")
         for pin in rbl_pins:
-            if pin.layer != "metal2":
+            if pin.layer != "metal1":
                 continue
-            start = vector(pin.cx(),self.right_vdd_pin.by())
-            end = vector(pin.cx(),self.right_vdd_pin.uy())
-            self.add_layout_pin_center_segment(text="vdd",
-                                               layer="metal2",
+            # If above the delay line, route the full width
+            left = vector(self.left_vdd_pin.cx(),pin.cy())                
+            center = vector(self.center_vdd_pin.cx(),pin.cy())          
+            if pin.cy() > self.dc_inst.uy() + self.m1_pitch:
+                start = left
+                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                    offset=left,
+                                    rotate=90)
+            else:
+                start = center
+            end = vector(self.right_vdd_pin.cx()+0.5*self.m1_width,pin.cy())
+            self.add_layout_pin_segment_center(text="vdd",
+                                               layer="metal1",
                                                start=start,
                                                end=end)
+
         
 
         
@@ -322,28 +331,25 @@ class replica_bitline(design.design):
         # Route the gnd lines from left to right
 
         # Add via for the delay chain
-        left_gnd_start = self.dc_inst.ll().scale(1,0) - vector(self.m2_pitch,0)
+        left_gnd_start = self.dc_inst.ll().scale(1,0) - vector(2*self.m2_pitch,0)
         left_gnd_end = vector(left_gnd_start.x, self.rbl_inst.uy()+self.m2_pitch)
-        self.left_gnd_pin=self.add_layout_pin_center_segment(text="gnd",
-                                                             layer="metal2",
-                                                             start=left_gnd_start,
-                                                             end=left_gnd_end)
+        self.left_gnd_pin=self.add_segment_center(layer="metal2",
+                                                  start=left_gnd_start,
+                                                  end=left_gnd_end)
 
         # Gnd line to the left of the replica bitline
         center_gnd_start = self.rbc_inst.ll().scale(1,0) - vector(2*self.m2_pitch,0)
         center_gnd_end = vector(center_gnd_start.x, self.rbl_inst.uy()+self.m2_pitch)
-        self.center_gnd_pin=self.add_layout_pin_center_segment(text="gnd",
-                                                               layer="metal2",
-                                                               start=center_gnd_start,
-                                                               end=center_gnd_end)
+        self.center_gnd_pin=self.add_segment_center(layer="metal2",
+                                                    start=center_gnd_start,
+                                                    end=center_gnd_end)
 
         # Gnd line to the right of the replica bitline
         right_gnd_start = self.rbc_inst.lr().scale(1,0) + vector(self.m2_pitch,0)
         right_gnd_end = vector(right_gnd_start.x, self.rbl_inst.uy()+self.m2_pitch)
-        self.right_gnd_pin=self.add_layout_pin_center_segment(text="gnd",
-                                                              layer="metal2",
-                                                              start=right_gnd_start,
-                                                              end=right_gnd_end)
+        self.right_gnd_pin=self.add_segment_center(layer="metal2",
+                                                   start=right_gnd_start,
+                                                   end=right_gnd_end)
                       
 
         
@@ -353,13 +359,24 @@ class replica_bitline(design.design):
             pin = self.rbl_inst.get_pin(wl)
             if pin.layer != "metal1":
                 continue
-            start = vector(self.center_gnd_pin.cx(),pin.cy())
-            end = vector(self.right_gnd_pin.cx(),pin.cy())
-            self.add_segment_center(layer="metal1",
-                                    start=start,
-                                    end=end)
+            # If above the delay line, route the full width
+            left = vector(self.left_gnd_pin.cx(),pin.cy())                
+            center = vector(self.center_gnd_pin.cx(),pin.cy())                
+            if pin.cy() > self.dc_inst.uy() + self.m1_pitch:
+                start = left
+            else:
+                start = center
+            end = vector(self.right_gnd_pin.cx(),pin.cy())                
+            self.add_layout_pin_segment_center(text="gnd",
+                                               layer="metal1",
+                                               start=start,
+                                               end=end)
+            if start == left:
+                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                    offset=left,
+                                    rotate=90)
             self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=start,
+                                offset=center,
                                 rotate=90)
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=end,
@@ -371,13 +388,23 @@ class replica_bitline(design.design):
         for pin in rbl_gnd_pins:
             if pin.layer != "metal1":
                 continue
-            start = vector(self.center_gnd_pin.cx(),pin.cy())
+            # If above the delay line, route the full width
+            left = vector(self.left_gnd_pin.cx(),pin.cy())                
+            center = vector(self.center_gnd_pin.cx(),pin.cy())                
+            if pin.cy() > self.dc_inst.uy() + self.m1_pitch:
+                start = left
+            else:
+                start = center
             end = vector(self.right_gnd_pin.cx(),pin.cy())
             self.add_segment_center(layer="metal1",
                                     start=start,
                                     end=end)
+            if start == left:
+                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                    offset=left,
+                                    rotate=90)
             self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=start,
+                                offset=center,
                                 rotate=90)
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=end,
@@ -430,7 +457,7 @@ class replica_bitline(design.design):
                 continue
             start = vector(pin.cx(),self.right_gnd_pin.by())
             end = vector(pin.cx(),self.right_gnd_pin.uy())
-            self.add_layout_pin_center_segment(text="gnd",
+            self.add_layout_pin_segment_center(text="gnd",
                                                layer="metal2",
                                                start=start,
                                                end=end)
@@ -440,13 +467,13 @@ class replica_bitline(design.design):
     def add_layout_pins(self):
         """ Route the input and output signal """
         en_offset = self.dc_inst.get_pin("in").bc()
-        self.add_layout_pin_center_segment(text="en",
+        self.add_layout_pin_segment_center(text="en",
                                            layer="metal2",
                                            start=en_offset,
                                            end=en_offset.scale(1,0))
 
         out_offset = self.rbl_inv_inst.get_pin("Z").center()
-        self.add_layout_pin_center_segment(text="out",
+        self.add_layout_pin_segment_center(text="out",
                                            layer="metal2",
                                            start=out_offset,
                                            end=out_offset.scale(1,0))

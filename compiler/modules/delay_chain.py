@@ -194,7 +194,7 @@ class delay_chain(design.design):
                             offset=a_pin.center())
         mid_point = vector(a_pin.cx()+3*self.m2_width,a_pin.cy())
         self.add_path("metal2",[a_pin.center(), mid_point, mid_point.scale(1,0)])
-        self.add_layout_pin_center_segment(text="out",
+        self.add_layout_pin_segment_center(text="out",
                                            layer="metal2",
                                            start=mid_point,
                                            end=mid_point.scale(1,0))

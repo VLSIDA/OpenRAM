@@ -151,7 +151,7 @@ class bank_select(design.design):
         # Route the pin to the left edge as well
         bank_sel_pin_pos=vector(0, 0)
         bank_sel_pin_end=vector(bank_sel_line_pos.x, bank_sel_pin_pos.y)
-        self.add_layout_pin_center_segment(text="bank_sel",
+        self.add_layout_pin_segment_center(text="bank_sel",
                                            layer="metal3",
                                            start=bank_sel_pin_pos,
                                            end=bank_sel_pin_end)
@@ -208,7 +208,7 @@ class bank_select(design.design):
             self.add_via_center(layers=("metal2", "via2", "metal3"),
                                 offset=logic_pos,
                                 rotate=90)
-            self.add_layout_pin_center_segment(text=input_name,
+            self.add_layout_pin_segment_center(text=input_name,
                                                layer="metal3",
                                                start=input_pos,
                                                end=logic_pos)
@@ -224,14 +224,14 @@ class bank_select(design.design):
             # Add vdd/gnd supply rails
             gnd_pin = inv_inst.get_pin("gnd")
             left_gnd_pos = vector(0, gnd_pin.cy())
-            self.add_layout_pin_center_segment(text="gnd",
+            self.add_layout_pin_segment_center(text="gnd",
                                                layer="metal1",
                                                start=left_gnd_pos,
                                                end=gnd_pin.rc())
             
             vdd_pin = inv_inst.get_pin("vdd")
             left_vdd_pos = vector(0, vdd_pin.cy())
-            self.add_layout_pin_center_segment(text="vdd",
+            self.add_layout_pin_segment_center(text="vdd",
                                                layer="metal1",
                                                start=left_vdd_pos,
                                                end=vdd_pin.rc())

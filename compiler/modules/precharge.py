@@ -118,7 +118,7 @@ class precharge(pgate.pgate):
                                 rotate=90)
 
         # adds the en rail on metal1
-        self.add_layout_pin_center_segment(text="en",
+        self.add_layout_pin_segment_center(text="en",
                                            layer="metal1",
                                            start=offset.scale(0,1),
                                            end=offset.scale(0,1)+vector(self.width,0))

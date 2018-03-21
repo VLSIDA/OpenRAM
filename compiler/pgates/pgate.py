@@ -76,11 +76,11 @@ class pgate(design.design):
         self.add_contact_center(layers=("poly", "contact", "metal1"),
                                 offset=contact_offset,
                                 rotate=rotate)
-        # self.add_layout_pin_center_segment(text=name,
+        # self.add_layout_pin_segment_center(text=name,
         #                                    layer="metal1",
         #                                    start=left_gate_offset.scale(0,1),
         #                                    end=left_gate_offset)
-        self.add_layout_pin_center_rect(text=name,
+        self.add_layout_pin_rect_center(text=name,
                                         layer="metal1",
                                         offset=contact_offset,
                                         width=contact_m1_width,

@@ -176,7 +176,7 @@ class wordline_driver(design.design):
             input_offset = vector(0,b_pos.y + up_or_down) 
             mid_via_offset = vector(clk_offset.x,input_offset.y) + vector(0.5*self.m2_width+self.m2_space+0.5*contact.m1m2.width,0) 
             # must under the clk line in M1
-            self.add_layout_pin_center_segment(text="in[{0}]".format(row),
+            self.add_layout_pin_segment_center(text="in[{0}]".format(row),
                                                layer="metal1",
                                                start=input_offset,
                                                end=mid_via_offset)
@@ -192,7 +192,7 @@ class wordline_driver(design.design):
 
             # output each WL on the right
             wl_offset = inv2_inst.get_pin("Z").rc()
-            self.add_layout_pin_center_segment(text="wl[{0}]".format(row),
+            self.add_layout_pin_segment_center(text="wl[{0}]".format(row),
                                                layer="metal1",
                                                start=wl_offset,
                                                end=wl_offset-vector(self.m1_width,0))

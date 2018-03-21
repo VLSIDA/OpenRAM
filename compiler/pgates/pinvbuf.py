@@ -130,14 +130,14 @@ class pinvbuf(design.design):
                             height=vdd_pin.height())
             
         z_pin = self.inv4_inst.get_pin("Z")
-        self.add_layout_pin_center_rect(text="Z",
+        self.add_layout_pin_rect_center(text="Z",
                                         layer="metal2",
                                         offset=z_pin.center())
         self.add_via_center(layers=("metal1","via1","metal2"),
                             offset=z_pin.center())
 
         zb_pin = self.inv3_inst.get_pin("Z")
-        self.add_layout_pin_center_rect(text="Zb",
+        self.add_layout_pin_rect_center(text="Zb",
                                         layer="metal2",
                                         offset=zb_pin.center())
         self.add_via_center(layers=("metal1","via1","metal2"),
@@ -145,7 +145,7 @@ class pinvbuf(design.design):
         
 
         a_pin = self.inv1_inst.get_pin("A")
-        self.add_layout_pin_center_rect(text="A",
+        self.add_layout_pin_rect_center(text="A",
                                         layer="metal2",
                                         offset=a_pin.center())
         self.add_via_center(layers=("metal1","via1","metal2"),

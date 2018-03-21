@@ -458,7 +458,7 @@ class bank(design.design):
         """ Route the bank select logic. """
         for input_name in self.input_control_signals+["bank_sel"]:
             in_pos = self.bank_select_inst.get_pin(input_name).lc()
-            self.add_layout_pin_center_segment(text=input_name,
+            self.add_layout_pin_segment_center(text=input_name,
                                                layer="metal3",
                                                start=vector(self.left_gnd_x_offset,in_pos.y),
                                                end=in_pos)

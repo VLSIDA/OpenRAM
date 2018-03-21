@@ -350,7 +350,10 @@ class control_logic(design.design):
         self.add_via_center(layers=("metal1","via1","metal2"),
                             offset=rail_pos,
                             rotate=90)
-        
+
+        self.copy_layout_pin(self.ctrl_dff_inst, "din[0]", "csb")
+        self.copy_layout_pin(self.ctrl_dff_inst, "din[1]", "web")
+        self.copy_layout_pin(self.ctrl_dff_inst, "din[2]", "oeb")
         
         
     def add_dffs(self):
@@ -568,6 +571,7 @@ class control_logic(design.design):
         
     def connect_output(self, inst, pin_name, out_name):
         """ Create an output pin on the right side from the pin of a given instance. """
+        
         out_pin = inst.get_pin(pin_name)
         right_pos=out_pin.center() + vector(self.width-out_pin.cx(),0)
         self.add_layout_pin_segment_center(text=out_name,
@@ -582,7 +586,7 @@ class control_logic(design.design):
 
         rows_start = 0
         rows_end = self.width
-        well_width = drc["minwidth_well"]
+        #well_width = drc["minwidth_well"]
         
         for i in range(8):
             if i%2:
@@ -598,7 +602,7 @@ class control_logic(design.design):
                                                layer="metal1",
                                                start=vector(rows_start,yoffset),
                                                end=vector(rows_end,yoffset))
-        
+
             # # also add a well +- around the rail
             # well_offset = vector(rows_start,yoffset-0.5*well_width)
             # self.add_rect(layer=well_type,

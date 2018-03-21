@@ -27,8 +27,8 @@ class bitcell_array(design.design):
         self.add_mod(self.cell)
 
         # We increase it by a well enclosure so the precharges don't overlap our wells
-        self.height = self.row_size*self.cell.height + drc["well_enclosure_active"]
-        self.width = self.column_size*self.cell.width 
+        self.height = self.row_size*self.cell.height + drc["well_enclosure_active"] + self.m1_width
+        self.width = self.column_size*self.cell.width + self.m1_width
         
         self.add_pins()
         self.create_layout()
@@ -76,28 +76,7 @@ class bitcell_array(design.design):
 
 
     def add_layout_pins(self):
-        
-        # Our cells have multiple gnd pins for now.
-        # FIXME: fix for multiple vdd too
-        vdd_pin = self.cell.get_pin("vdd")
-
-        # shift it up by the overlap amount (gnd_pin) too
-        # must find the lower gnd pin to determine this overlap
-        lower_y = self.cell.height
-        gnd_pins = self.cell.get_pins("gnd")
-        for gnd_pin in gnd_pins:
-            if gnd_pin.layer=="metal2" and gnd_pin.by()<lower_y:
-                lower_y=gnd_pin.by()
-
-        # lower_y is negative, so subtract off double this amount for each pair of
-        # overlapping cells
-        full_height = self.height - 2*lower_y
-        
-        vdd_pin = self.cell.get_pin("vdd")
-        lower_x = vdd_pin.lx()
-        # lower_x is negative, so subtract off double this amount for each pair of
-        # overlapping cells
-        full_width = self.width - 2*lower_x
+        """ Add the layout pins """
         
         offset = vector(0.0, 0.0)
         for col in range(self.column_size):
@@ -108,24 +87,12 @@ class bitcell_array(design.design):
                                 layer="metal2",
                                 offset=bl_pin.ll(),
                                 width=bl_pin.width(),
-                                height=full_height)
+                                height=self.height)
             self.add_layout_pin(text="br[{0}]".format(col),
                                 layer="metal2",
                                 offset=br_pin.ll(),
                                 width=br_pin.width(),
-                                height=full_height)
-
-            # gnd offset is 0 in our cell, but it be non-zero
-            gnd_pins = self.cell_inst[0,col].get_pins("gnd")
-            for gnd_pin in gnd_pins:
-                # avoid duplicates by only doing even rows
-                # also skip if it isn't the pin that spans the entire cell down to the bottom
-                if gnd_pin.layer=="metal2" and gnd_pin.by()==lower_y:
-                    self.add_layout_pin(text="gnd", 
-                                        layer="metal2",
-                                        offset=gnd_pin.ll(),
-                                        width=gnd_pin.width(),
-                                        height=full_height)
+                                height=self.height)
                     
             # increments to the next column width
             offset.x += self.cell.width
@@ -133,36 +100,49 @@ class bitcell_array(design.design):
         offset.x = 0.0
         for row in range(self.row_size):
             wl_pin = self.cell_inst[row,0].get_pin("WL")
-            vdd_pins = self.cell_inst[row,0].get_pins("vdd")
-            gnd_pins = self.cell_inst[row,0].get_pins("gnd")
-
-            for gnd_pin in gnd_pins:
-                if gnd_pin.layer=="metal1":
-                    self.add_layout_pin(text="gnd", 
-                                        layer="metal1",
-                                        offset=gnd_pin.ll(),
-                                        width=full_width,
-                                        height=drc["minwidth_metal1"])
-                
-            # add vdd label and offset
-            # only add to even rows to avoid duplicates
-            for vdd_pin in vdd_pins:
-                if row % 2 == 0 and vdd_pin.layer=="metal1":
-                    self.add_layout_pin(text="vdd",
-                                        layer="metal1",
-                                        offset=vdd_pin.ll(),
-                                        width=full_width,
-                                        height=drc["minwidth_metal1"])
-                
-            # add wl label and offset
             self.add_layout_pin(text="wl[{0}]".format(row),
                                 layer="metal1",
                                 offset=wl_pin.ll(),
-                                width=full_width,
+                                width=self.width,
                                 height=wl_pin.height())
 
             # increments to the next row height
             offset.y += self.cell.height
+
+        # For every second row and column, add a via for vdd
+        for row in range(self.row_size):
+            for col in range(self.column_size):
+                inst = self.cell_inst[row,col]
+                for vdd_pin in inst.get_pins("vdd"):
+                    # Drop to M1 if needed
+                    if vdd_pin.layer == "metal1":
+                        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                            offset=vdd_pin.center(),
+                                            rotate=90)
+                    # Always drop to M2
+                    self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                        offset=vdd_pin.center())
+                    self.add_layout_pin_rect_center(text="vdd",
+                                                    layer="metal3",
+                                                    offset=vdd_pin.center())
+                                            
+                
+        # For every second row and column (+1), add a via for gnd
+        for row in range(self.row_size):
+            for col in range(self.column_size):
+                inst = self.cell_inst[row,col]
+                for gnd_pin in inst.get_pins("gnd"):
+                    # Drop to M1 if needed
+                    if gnd_pin.layer == "metal1":
+                        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                            offset=gnd_pin.center(),
+                                            rotate=90)
+                    # Always drop to M2
+                    self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                        offset=gnd_pin.center())
+                    self.add_layout_pin_rect_center(text="gnd",
+                                                    layer="metal3",
+                                                    offset=gnd_pin.center())
 
     def analytical_delay(self, slew, load=0):
         from tech import drc

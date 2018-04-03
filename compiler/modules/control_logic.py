@@ -98,7 +98,7 @@ class control_logic(design.design):
 
         # GAP between main control and replica bitline
         self.replica_bitline_gap = 2*self.m2_pitch
-
+        
 
 
     def add_modules(self):

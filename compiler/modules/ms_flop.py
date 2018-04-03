@@ -26,4 +26,25 @@ class ms_flop(design.design):
         from tech import spice
         result = self.return_delay(spice["msflop_delay"], spice["msflop_slew"])
         return result
+        
+    def analytical_power(self, proc, vdd, temp, load):
+        """Returns dynamic and leakage power. Results in nW"""
+        from tech import spice
+        c_eff = self.calculate_effective_capacitance(load)
+        f = spice["default_event_rate"]
+        power_dyn = c_eff*vdd*vdd*f
+        power_leak = spice["msflop_leakage"]
+        
+        total_power = self.return_power(power_dyn, power_leak)
+        return total_power
+        
+    def calculate_effective_capacitance(self, load):
+        """Computes effective capacitance. Results in fF"""
+        from tech import spice, parameter
+        c_load = load
+        c_para = spice["flop_para_cap"]#ff
+        transistion_prob = spice["flop_transisition_prob"]
+        return transistion_prob*(c_load + c_para) 
 
+        
+        

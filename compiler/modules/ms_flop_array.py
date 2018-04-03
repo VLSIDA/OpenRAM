@@ -134,3 +134,4 @@ class ms_flop_array(design.design):
 
     def analytical_delay(self, slew, load=0.0):
         return self.ms.analytical_delay(slew=slew, load=load)
+        

@@ -121,7 +121,8 @@ class layout(lef.lef):
     def add_inst(self, name, mod, offset=[0,0], mirror="R0",rotate=0):
         """Adds an instance of a mod to this module"""
         self.insts.append(geometry.instance(name, mod, offset, mirror, rotate))
-        debug.info(4, "adding instance" + ",".join(x.name for x in self.insts))
+        debug.info(3, "adding instance {}".format(self.insts[-1]))
+        debug.info(4, "instance list: " + ",".join(x.name for x in self.insts))
         return self.insts[-1]
 
     def get_inst(self, name):
@@ -453,6 +454,7 @@ class layout(lef.lef):
 
     def gds_write_file(self, newLayout):
         """Recursive GDS write function"""
+        # Visited means that we already prepared self.gds for this subtree
         if self.visited:
             return
         for i in self.insts:
@@ -468,10 +470,11 @@ class layout(lef.lef):
         """Write the entire gds of the object to the file."""
         debug.info(3, "Writing to {0}".format(gds_name))
 
-        #self.gds = gdsMill.VlsiLayout(name=self.name,units=GDS["unit"])
         writer = gdsMill.Gds2writer(self.gds)
-        # clear the visited flag for the traversal
-        self.clear_visited()
+        # MRG: 3/2/18 We don't want to clear the visited flag since
+        # this would result in duplicates of all instances being placed in self.gds
+        # which may have been previously processed!
+        #self.clear_visited()
         # recursively create all the remaining objects
         self.gds_write_file(self.gds)
         # populates the xyTree data structure for gds

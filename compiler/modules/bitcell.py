@@ -34,7 +34,8 @@ class bitcell(design.design):
         c_para = spice["min_tx_drain_c"]
         result = self.cal_delay_with_rc(r = r, c =  c_para+load, slew = slew, swing = swing)
         return result
-    
+   
+ 
     def list_bitcell_pins(self, col, row):
         # Creates a list of connections in the bitcell, indexed by column and row, for instance use in bitcell_array
         bitcell_pins = ["bl[{0}]".format(col),
@@ -57,3 +58,11 @@ class bitcell(design.design):
         return column_pins
         
     
+    def analytical_power(self, proc, vdd, temp, load):
+        """Bitcell power in nW. Only characterizes leakage."""
+        from tech import spice
+        leakage = spice["bitcell_leakage"]
+        dynamic = 0 #temporary
+        total_power = self.return_power(dynamic, leakage)
+        return total_power
+

@@ -82,7 +82,7 @@ cell (sram_2_16_1_scn3me_subm){
 
     leakage_power () {
       when : "CSb";
-      value : 0;
+      value : 0.000173;
     }
     cell_leakage_power : 0;
     bus(DATA){
@@ -298,19 +298,19 @@ cell (sram_2_16_1_scn3me_subm){
         internal_power(){
             when : "!CSb & clk & !WEb"; 
             rise_power(scalar){
-                values("0.0");
+                values("10.9314668117");
             }
             fall_power(scalar){
-                values("0.0");
+                values("10.9314668117");
             }
         }
         internal_power(){
             when : "!CSb & !clk & WEb"; 
             rise_power(scalar){
-                values("0.0");
+                values("10.9314668117");
             }
             fall_power(scalar){
-                values("0.0");
+                values("10.9314668117");
             }
         }
         internal_power(){

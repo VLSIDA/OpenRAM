@@ -223,3 +223,21 @@ class pnor2(pgate.pgate):
         r = spice["min_tx_r"]/(self.nmos_size/parameter["min_tx_size"])
         c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff
         return self.cal_delay_with_rc(r = r, c =  c_para+load, slew = slew)
+        
+    def analytical_power(self, proc, vdd, temp, load):
+        """Returns dynamic and leakage power. Results in nW"""
+        c_eff = self.calculate_effective_capacitance(load)
+        freq = spice["default_event_rate"]
+        power_dyn = c_eff*vdd*vdd*freq
+        power_leak = spice["nor2_leakage"]
+        
+        total_power = self.return_power(power_dyn, power_leak)
+        return total_power
+        
+    def calculate_effective_capacitance(self, load):
+        """Computes effective capacitance. Results in fF"""
+        c_load = load
+        c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff
+        transistion_prob = spice["nor2_transisition_prob"]
+        return transistion_prob*(c_load + c_para) 
+        

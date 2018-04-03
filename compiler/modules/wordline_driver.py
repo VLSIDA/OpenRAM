@@ -205,6 +205,7 @@ class wordline_driver(design.design):
         net_t_wl = self.inv.analytical_delay(decode_t_net.slew, load)
 
         return decode_t_net + net_t_wl
-    
+
+        
     def input_load(self):
         return self.nand2.input_load()

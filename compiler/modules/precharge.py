@@ -57,13 +57,25 @@ class precharge(pgate.pgate):
         """Adds a vdd rail at the top of the cell"""
         # adds the rail across the width of the cell
         vdd_position = vector(0, self.height - self.m1_width)
-        self.add_layout_pin(text="vdd",
-                            layer="metal1",
-                            offset=vdd_position,
-                            width=self.width,
-                            height=self.m1_width)
+        self.add_rect(layer="metal1",
+                      offset=vdd_position,
+                      width=self.width,
+                      height=self.m1_width)
 
-        self.connect_pin_to_rail(self.upper_pmos2_inst,"S","vdd")
+        pmos_pin = self.upper_pmos2_inst.get_pin("S")
+        # center of vdd rail
+        vdd_pos = vector(pmos_pin.cx(), vdd_position.y + 0.5*self.m1_width)
+        self.add_path("metal1", [pmos_pin.uc(), vdd_pos])
+
+        # Always drop to M1
+        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                            offset=vdd_pos)
+        self.add_via_center(layers=("metal2", "via2", "metal3"),
+                            offset=vdd_pos)
+        self.add_layout_pin_rect_center(text="vdd",
+                                        layer="metal3",
+                                        offset=vdd_pos)
+        
         
     def add_ptx(self):
         """Adds both the upper_pmos and lower_pmos to the module"""

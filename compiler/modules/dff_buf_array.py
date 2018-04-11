@@ -100,23 +100,34 @@ class dff_buf_array(design.design):
         return dout_bar_name
     
     def add_layout_pins(self):
-        
-        for y in range(self.rows):
-            # Continous vdd rail along with label.
-            vdd_pin=self.dff_insts[0,y].get_pin("vdd")
-            self.add_layout_pin(text="vdd",
-                                layer="metal1",
-                                offset=vdd_pin.ll(),
-                                width=self.width,
-                                height=self.m1_width)
 
-            # Continous gnd rail along with label.
-            gnd_pin=self.dff_insts[0,y].get_pin("gnd")
-            self.add_layout_pin(text="gnd",
-                                layer="metal1",
-                                offset=gnd_pin.ll(),
-                                width=self.width,
-                                height=self.m1_width)
+        xoffsets = []
+        for x in range(self.columns):
+            xoffsets.append(self.dff_insts[x,0].get_pin("gnd").lx())
+            
+        for y in range(self.rows):
+
+            # Route both supplies
+            for n in ["vdd", "gnd"]:
+                supply_pin = self.dff_insts[0,y].get_pin(n)
+                supply_offset = supply_pin.ll()
+                self.add_rect(layer="metal1",
+                              offset=supply_offset,
+                              width=self.width)
+
+                # Add pins in two locations
+                for xoffset in xoffsets:
+                    pin_pos = vector(xoffset, supply_pin.cy())
+                    self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                        offset=pin_pos,
+                                        rotate=90)
+                    self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                        offset=pin_pos,
+                                        rotate=90)
+                    self.add_layout_pin_rect_center(text=n,
+                                                    layer="metal3",
+                                                    offset=pin_pos)
+            
             
 
         for y in range(self.rows):            
@@ -159,7 +170,7 @@ class dff_buf_array(design.design):
         else:
             self.add_layout_pin(text="clk",
                                 layer="metal3",
-                                offset=vector(0,0),
+                                offset=vector(0,2*self.m2_width),
                                 width=self.width,
                                 height=self.m3_width)
             for x in range(self.columns):
@@ -172,7 +183,7 @@ class dff_buf_array(design.design):
                                     height=self.height)
                 # Drop a via to the M3 pin
                 self.add_via_center(layers=("metal2","via2","metal3"),
-                                    offset=clk_pin.center().scale(1,0))
+                                    offset=clk_pin.center().scale(1,0) + vector(0,2*self.m2_width))
                 
         
 

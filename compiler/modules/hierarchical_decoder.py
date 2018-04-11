@@ -472,7 +472,11 @@ class hierarchical_decoder(design.design):
                     self.add_layout_pin_rect_center(text=n,
                                                     layer="metal3",
                                                     offset=pin_pos)
-            
+
+        # Copy the pins from the predecoders
+        for pre in self.pre2x4_inst + self.pre3x8_inst:
+            self.copy_layout_pin(pre, "vdd")
+            self.copy_layout_pin(pre, "gnd")
         
 
     def connect_rail(self, rail_index, pin):

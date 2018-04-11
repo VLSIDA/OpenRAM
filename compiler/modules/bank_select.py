@@ -220,6 +220,32 @@ class bank_select(design.design):
                                 offset=out_pin.ll(),
                                 width=inv_inst.rx() - out_pin.lx(),
                                 height=out_pin.height())
+
+
+        # Find the x offsets for where the vias/pins should be placed
+        a_xoffset = self.logic_inst[0].lx()
+        b_xoffset = self.inv_inst[0].lx()
+        for num in range(self.num_control_lines):
+            # Route both supplies
+            for n in ["vdd", "gnd"]:
+                supply_pin = self.inv_inst[num].get_pin(n)
+                supply_offset = supply_pin.ll().scale(0,1)
+                self.add_rect(layer="metal1",
+                              offset=supply_offset,
+                              width=self.width)
+
+                # Add pins in two locations
+                for xoffset in [a_xoffset, b_xoffset]:
+                    pin_pos = vector(xoffset, supply_pin.cy())
+                    self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                        offset=pin_pos,
+                                        rotate=90)
+                    self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                        offset=pin_pos,
+                                        rotate=90)
+                    self.add_layout_pin_rect_center(text=n,
+                                                    layer="metal3",
+                                                    offset=pin_pos)
             
             # Add vdd/gnd supply rails
             gnd_pin = inv_inst.get_pin("gnd")

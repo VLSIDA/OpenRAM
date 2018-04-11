@@ -1,6 +1,6 @@
 magic
 tech scmos
-timestamp 1517448475
+timestamp 1523061656
 << nwell >>
 rect -3 101 37 138
 rect -3 0 37 51
@@ -174,8 +174,7 @@ rect 30 142 33 181
 rect 20 138 33 142
 rect 20 132 24 138
 rect 12 122 16 125
-rect 0 118 8 122
-rect 16 118 36 122
+rect 16 118 17 122
 rect 13 114 17 118
 rect 5 104 9 107
 rect 21 104 25 107
@@ -192,12 +191,10 @@ rect 11 45 15 48
 rect 27 45 31 60
 rect 3 35 7 38
 rect 19 35 23 38
-rect 0 31 3 35
 rect 7 31 8 35
-rect 12 31 36 35
+rect 12 31 23 35
 rect 0 24 7 28
 rect 11 24 36 28
-rect 0 17 32 21
 << m2contact >>
 rect 5 191 9 195
 rect 20 189 24 193
@@ -206,31 +203,27 @@ rect 8 118 12 122
 rect 30 82 34 86
 rect 19 64 23 68
 rect 8 31 12 35
-rect 32 17 36 21
 rect 12 10 16 14
 << metal2 >>
 rect 10 195 14 202
 rect 9 191 14 195
 rect 20 193 24 202
 rect 20 177 24 189
-rect 32 161 36 196
 rect 15 157 36 161
 rect 8 35 12 118
 rect 32 86 36 157
 rect 34 82 36 86
 rect 32 72 36 82
 rect 19 68 36 72
-rect 32 21 36 68
 rect 16 10 20 14
 rect 15 0 19 10
-rect 32 0 36 17
 << m3p >>
 rect 0 0 34 202
 << labels >>
-rlabel metal1 0 31 0 31 1 vdd
-rlabel metal1 0 17 0 17 7 gnd
 rlabel metal2 15 1 15 1 1 din
 rlabel metal1 2 25 2 25 3 en
 rlabel metal2 12 200 12 200 5 bl
 rlabel metal2 22 200 22 200 5 br
+rlabel metal2 10 94 10 94 1 vdd
+rlabel metal2 35 141 35 141 7 gnd
 << end >>

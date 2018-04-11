@@ -273,9 +273,6 @@ class hierarchical_predecode(design.design):
         for num in range(0,self.number_of_outputs):
             # this will result in duplicate polygons for rails, but who cares
             
-            # use the inverter offset even though it will be the nand's too
-            (gate_offset, y_dir) = self.get_gate_offset(0, self.inv.height, num)
-
             # Route both supplies
             for n in ["vdd", "gnd"]:
                 nand_pin = self.nand_inst[num].get_pin(n)

@@ -50,6 +50,7 @@ class hierarchical_predecode(design.design):
             
     def setup_constraints(self):
         # use a conservative douple spacing just to get rid of annoying via DRCs
+        self.m1_pitch = max(contact.m1m2.width,contact.m1m2.height) + max(self.m1_space, self.m2_space)
         self.m2_pitch = max(contact.m2m3.width,contact.m2m3.height) + max(self.m2_space,self.m3_space)
         
         # The rail offsets are indexed by the label
@@ -89,14 +90,14 @@ class hierarchical_predecode(design.design):
             if label.startswith("in"):
                 self.add_layout_pin(text=label,
                                     layer="metal2",
-                                    offset=vector(self.rails[label] - 0.5*self.m2_width, 0), 
+                                    offset=vector(self.rails[label] - 0.5*self.m1_width, self.m1_width), 
                                     width=self.m2_width,
-                                    height=self.height - 2*self.m2_space)
+                                    height=self.height - 4*self.m1_width)
             else:
                 self.add_rect(layer="metal2",
-                              offset=vector(self.rails[label] - 0.5*self.m2_width, 0), 
+                              offset=vector(self.rails[label] - 0.5*self.m1_width, 2*self.m1_width), 
                               width=self.m2_width,
-                              height=self.height - 2*self.m2_space)
+                              height=self.height - 4*self.m1_width)
 
     def add_input_inverters(self):
         """ Create the input inverters to invert input signals for the decode stage. """

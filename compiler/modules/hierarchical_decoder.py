@@ -454,15 +454,15 @@ class hierarchical_decoder(design.design):
             
             # Route both supplies
             for n in ["vdd", "gnd"]:
-                inv_pin = self.inv_inst[num].get_pin(n)
-                supply_offset = inv_pin.ll().scale(0,1)
+                supply_pin = self.inv_inst[num].get_pin(n)
+                supply_offset = supply_pin.ll().scale(0,1)
                 self.add_rect(layer="metal1",
                               offset=supply_offset,
                               width=self.width)
 
                 # Add pins in two locations
                 for xoffset in [a_xoffset, b_xoffset]:
-                    pin_pos = vector(xoffset, inv_pin.cy())
+                    pin_pos = vector(xoffset, supply_pin.cy())
                     self.add_via_center(layers=("metal1", "via1", "metal2"),
                                         offset=pin_pos,
                                         rotate=90)

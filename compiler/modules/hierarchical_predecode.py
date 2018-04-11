@@ -267,8 +267,7 @@ class hierarchical_predecode(design.design):
         """ Add a pin for each row of vdd/gnd which are must-connects next level up. """
 
         # Find the x offsets for where the vias/pins should be placed
-        in_xoffset = self.in_inst[0].lx()
-        nand_xoffset = self.nand_inst[0].lx()
+        in_xoffset = self.in_inst[0].rx()
         out_xoffset = self.inv_inst[0].lx()
         for num in range(0,self.number_of_outputs):
             # this will result in duplicate polygons for rails, but who cares
@@ -285,12 +284,14 @@ class hierarchical_predecode(design.design):
                               width=self.inv_inst[num].rx())
 
                 # Add pins in two locations
-                for xoffset in [in_xoffset, nand_xoffset, out_xoffset]:
+                for xoffset in [in_xoffset, out_xoffset]:
                     pin_pos = vector(xoffset, nand_pin.cy())
                     self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                        offset=pin_pos)
+                                        offset=pin_pos,
+                                        rotate=90)
                     self.add_via_center(layers=("metal2", "via2", "metal3"),
-                                        offset=pin_pos)
+                                        offset=pin_pos,
+                                        rotate=90)
                     self.add_layout_pin_rect_center(text=n,
                                                     layer="metal3",
                                                     offset=pin_pos)

@@ -37,11 +37,13 @@ class wordline_driver(design.design):
         self.add_pin("gnd")
 
     def design_layout(self):
-        self.add_layout()
-        self.offsets_of_gates()
-        self.create_layout()
+        self.create_modules()
+        self.add_modules()
+        self.route_layout()
+        self.route_vdd_gnd()
+        
 
-    def add_layout(self):
+    def create_modules(self):
         self.inv = pinv()
         self.add_mod(self.inv)
 
@@ -51,18 +53,95 @@ class wordline_driver(design.design):
         self.nand2 = pnand2()
         self.add_mod(self.nand2)
 
+    def route_vdd_gnd(self):
+        """ Add a pin for each row of vdd/gnd which are must-connects next level up. """
+
+        # Find the x offsets for where the vias/pins should be placed
+        a_xoffset = self.inv1_inst[0].rx()
+        b_xoffset = self.inv2_inst[0].lx()
+        for num in range(self.rows):
+            # this will result in duplicate polygons for rails, but who cares
+            
+            # use the inverter offset even though it will be the nand's too
+            (gate_offset, y_dir) = self.get_gate_offset(0, self.inv.height, num)
+
+            # Route both supplies
+            for n in ["vdd", "gnd"]:
+                supply_pin = self.inv2_inst[num].get_pin(n)
+
+                # Add pins in two locations
+                for xoffset in [a_xoffset, b_xoffset]:
+                    pin_pos = vector(xoffset, supply_pin.cy())
+                    self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                        offset=pin_pos,
+                                        rotate=90)
+                    self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                        offset=pin_pos,
+                                        rotate=90)
+                    self.add_layout_pin_rect_center(text=n,
+                                                    layer="metal3",
+                                                    offset=pin_pos)
+            
 
 
-
-    def offsets_of_gates(self):
-        self.x_offset0 = 2*self.m1_width + 5*self.m1_space
-        self.x_offset1 = self.x_offset0 + self.inv.width
-        self.x_offset2 = self.x_offset1 + self.nand2.width
-
-        self.width = self.x_offset2 + self.inv.width
+    def add_modules(self):
+        inv1_xoffset = 2*self.m1_width + 5*self.m1_space
+        nand2_xoffset = inv1_xoffset + self.inv.width
+        inv2_xoffset = nand2_xoffset + self.nand2.width
+        
+        self.width = inv2_xoffset + self.inv.width
         self.height = self.inv.height * self.rows
 
-    def create_layout(self):
+        
+        self.inv1_inst = []
+        self.nand_inst = []            
+        self.inv2_inst = []            
+        for row in range(self.rows):
+            name_inv1 = "wl_driver_inv_en{}".format(row)
+            name_nand = "wl_driver_nand{}".format(row)
+            name_inv2 = "wl_driver_inv{}".format(row)
+
+            if (row % 2):
+                y_offset = self.inv.height*(row + 1)
+                inst_mirror = "MX"
+            else:
+                y_offset = self.inv.height*row
+                inst_mirror = "R0"
+
+            inv1_offset = [inv1_xoffset, y_offset]
+            nand2_offset=[nand2_xoffset, y_offset]
+            inv2_offset=[inv2_xoffset, y_offset]
+            
+            # add inv1 based on the info above
+            self.inv1_inst.append(self.add_inst(name=name_inv1,
+                                               mod=self.inv_no_output,
+                                               offset=inv1_offset,
+                                               mirror=inst_mirror))
+            self.connect_inst(["en",
+                               "en_bar[{0}]".format(row),
+                               "vdd", "gnd"])
+            # add nand 2
+            self.nand_inst.append(self.add_inst(name=name_nand,
+                                                mod=self.nand2,
+                                                offset=nand2_offset,
+                                                mirror=inst_mirror))
+            self.connect_inst(["en_bar[{0}]".format(row),
+                               "in[{0}]".format(row),
+                               "net[{0}]".format(row),
+                               "vdd", "gnd"])
+            # add inv2
+            self.inv2_inst.append(self.add_inst(name=name_inv2,
+                                                mod=self.inv,
+                                                offset=inv2_offset,
+                                                mirror=inst_mirror))
+            self.connect_inst(["net[{0}]".format(row),
+                               "wl[{0}]".format(row),
+                               "vdd", "gnd"])
+
+
+    def route_layout(self):
+        """ Route all of the signals """
+
         # Wordline enable connection
         en_pin=self.add_layout_pin(text="en",
                                    layer="metal2",
@@ -70,79 +149,12 @@ class wordline_driver(design.design):
                                    width=self.m2_width,
                                    height=self.height)
         
-        self.add_layout_pin(text="gnd",
-                            layer="metal1",
-                            offset=[0, -0.5*self.m1_width],
-                            width=self.x_offset0,
-                            height=self.m1_width)
         
         for row in range(self.rows):
-            name_inv1 = "wl_driver_inv_en{}".format(row)
-            name_nand = "wl_driver_nand{}".format(row)
-            name_inv2 = "wl_driver_inv{}".format(row)
-
-            inv_nand2B_connection_height = (abs(self.inv.get_pin("Z").ll().y 
-                                                - self.nand2.get_pin("B").ll().y)
-                                            + self.m1_width)
-
-            if (row % 2):
-                y_offset = self.inv.height*(row + 1)
-                inst_mirror = "MX"
-                cell_dir = vector(0,-1)
-                m1tm2_rotate=270
-                m1tm2_mirror="R0"
-            else:
-                y_offset = self.inv.height*row
-                inst_mirror = "R0"
-                cell_dir = vector(0,1)
-                m1tm2_rotate=90
-                m1tm2_mirror="MX"
-
-            name_inv1_offset = [self.x_offset0, y_offset]
-            nand2_offset=[self.x_offset1, y_offset]
-            inv2_offset=[self.x_offset2, y_offset]
-            base_offset = vector(self.width, y_offset)
-
-            # Extend vdd and gnd of wordline_driver
-            yoffset = (row + 1) * self.inv.height - 0.5 * self.m1_width
-            if (row % 2):
-                pin_name = "gnd"
-            else:
-                pin_name = "vdd"
-                
-            self.add_layout_pin(text=pin_name,
-                                layer="metal1",
-                                offset=[0, yoffset],
-                                width=self.x_offset0,
-                                height=self.m1_width)
+            inv1_inst = self.inv1_inst[row]
+            nand_inst = self.nand_inst[row]
+            inv2_inst = self.inv2_inst[row]
             
-            
-            # add inv1 based on the info above
-            inv1_inst=self.add_inst(name=name_inv1,
-                                    mod=self.inv_no_output,
-                                    offset=name_inv1_offset,
-                                    mirror=inst_mirror )
-            self.connect_inst(["en",
-                               "en_bar[{0}]".format(row),
-                               "vdd", "gnd"])
-            # add nand 2
-            nand_inst=self.add_inst(name=name_nand,
-                                    mod=self.nand2,
-                                    offset=nand2_offset,
-                                    mirror=inst_mirror)
-            self.connect_inst(["en_bar[{0}]".format(row),
-                               "in[{0}]".format(row),
-                               "net[{0}]".format(row),
-                               "vdd", "gnd"])
-            # add inv2
-            inv2_inst=self.add_inst(name=name_inv2,
-                                mod=self.inv,
-                                    offset=inv2_offset,
-                                    mirror=inst_mirror)
-            self.connect_inst(["net[{0}]".format(row),
-                               "wl[{0}]".format(row),
-                               "vdd", "gnd"])
-
             # en connection
             a_pin = inv1_inst.get_pin("A")
             a_pos = a_pin.lc()

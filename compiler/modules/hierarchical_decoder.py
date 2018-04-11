@@ -445,26 +445,34 @@ class hierarchical_decoder(design.design):
     def route_vdd_gnd(self):
         """ Add a pin for each row of vdd/gnd which are must-connects next level up. """
 
+        # Find the x offsets for where the vias/pins should be placed
+        a_xoffset = self.inv_inst[0].lx()
+        b_xoffset = self.inv_inst[0].rx()
+        
         for num in range(0,self.rows):
             # this will result in duplicate polygons for rails, but who cares
             
-            # use the inverter offset even though it will be the nand's too
-            (gate_offset, y_dir) = self.get_gate_offset(-self.predecoder_width, self.inv.height, num)
-            # route vdd
-            vdd_offset = gate_offset + self.inv.get_pin("vdd").ll().scale(1,y_dir) 
-            self.add_layout_pin(text="vdd",
-                                layer="metal1",
-                                offset=vdd_offset,
-                                width=self.width,
-                                height=drc["minwidth_metal1"])
+            # Route both supplies
+            for n in ["vdd", "gnd"]:
+                inv_pin = self.inv_inst[num].get_pin(n)
+                supply_offset = inv_pin.ll().scale(0,1)
+                self.add_rect(layer="metal1",
+                              offset=supply_offset,
+                              width=self.width)
 
-            # route gnd
-            gnd_offset = gate_offset+self.inv.get_pin("gnd").ll().scale(1,y_dir)
-            self.add_layout_pin(text="gnd",
-                                layer="metal1",
-                                offset=gnd_offset,
-                                width=self.width,
-                                height=drc["minwidth_metal1"])
+                # Add pins in two locations
+                for xoffset in [a_xoffset, b_xoffset]:
+                    pin_pos = vector(xoffset, inv_pin.cy())
+                    self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                        offset=pin_pos,
+                                        rotate=90)
+                    self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                        offset=pin_pos,
+                                        rotate=90)
+                    self.add_layout_pin_rect_center(text=n,
+                                                    layer="metal3",
+                                                    offset=pin_pos)
+            
         
 
     def connect_rail(self, rail_index, pin):

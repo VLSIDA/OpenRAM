@@ -100,8 +100,9 @@ class bank(design.design):
         if self.num_banks > 1:
             self.route_bank_select()            
         
-        self.route_vdd_supply()
-        self.route_gnd_supply()
+        self.route_vdd_gnd()
+        #self.route_vdd_supply()
+        #self.route_gnd_supply()
         
     def add_modules(self):
         """ Add modules. The order should not matter! """
@@ -454,6 +455,34 @@ class bank(design.design):
         temp.extend(["vdd", "gnd"])
         self.connect_inst(temp)
 
+    def route_vdd_gnd(self):
+        """ Propagate all vdd/gnd pins up to this level for all modules """
+
+        # These are the instances that every bank has
+        top_instances = [self.bitcell_array_inst,
+                         self.precharge_array_inst,
+                         self.sense_amp_array_inst,
+                         self.write_driver_array_inst,
+                         self.msf_data_in_inst,
+                         self.tri_gate_array_inst,
+                         self.row_decoder_inst,
+                         self.wordline_driver_inst]
+        # Add these if we use the part...
+        if self.col_addr_size > 0:
+            top_instances.append(self.col_decoder_inst)
+            top_instances.append(self.col_mux_array_inst)
+            
+        if self.num_banks > 1:
+            top_instances.append(self.bank_select_inst)
+
+        
+        for inst in top_instances:
+            # These copy all pins if more thanone
+            self.copy_layout_pin(inst, "vdd")
+            # Precharge has no gnd
+            if inst != self.precharge_array_inst:
+                self.copy_layout_pin(inst, "gnd")
+        
     def route_bank_select(self):
         """ Route the bank select logic. """
         for input_name in self.input_control_signals+["bank_sel"]:
@@ -629,32 +658,7 @@ class bank(design.design):
             self.copy_layout_pin(self.row_decoder_inst, decoder_name, addr_name)
             
             
-        # Route the power and ground, but only BELOW the y=0 since the
-        # others are connected with the wordline driver.
-        # These must be on M3 to not interfere with column mux address pins.
-        for gnd_pin in self.row_decoder_inst.get_pins("gnd"):
-            if gnd_pin.uy()>0:
-                continue
-            gnd_position = gnd_pin.rc()
-            left_rail_position = vector(self.left_gnd_x_center, gnd_position.y)
-            self.add_path("metal1", [left_rail_position, gnd_position])   
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=left_rail_position,
-                                size = (1,self.supply_vias),
-                                rotate=90)
                         
-        # route the vdd rails
-        for vdd_pin in self.row_decoder_inst.get_pins("vdd"):
-            if vdd_pin.uy()>0:
-                continue
-            vdd_y_pos = vdd_pin.cy()
-            left_rail_position = vector(self.left_vdd_x_center, vdd_y_pos)
-            right_rail_position = vector(self.row_decoder_inst.ur().x, vdd_y_pos)
-            self.add_path("metal1", [left_rail_position, right_rail_position])
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=left_rail_position,
-                                size = (1,self.supply_vias),
-                                rotate=90)
 
     
     def route_wordline_driver(self):
@@ -723,24 +727,7 @@ class bank(design.design):
             mid2_pos = vector(mid1_pos.x,mux_addr_pos.y)
             self.add_wire(("metal1","via1","metal2"),[decode_out_pos, mid1_pos, mid2_pos, mux_addr_pos])
             
-        # route the gnd rails, add contact to rail as well
-        for gnd_pin in self.col_decoder_inst.get_pins("gnd"):
-            left_rail_pos = vector(self.left_gnd_x_center, gnd_pin.cy())
-            self.add_path("metal1", [left_rail_pos, gnd_pin.rc()])
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=left_rail_pos,
-                                size = (1,self.supply_vias),
-                                rotate=90)
 
-        # route the vdd rails
-        for vdd_pin in self.col_decoder_inst.get_pins("vdd"):
-            left_rail_pos = vector(self.left_vdd_x_center, vdd_pin.cy())
-            self.add_path("metal1", [left_rail_pos, vdd_pin.rc()])
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=left_rail_pos,
-                                size = (1,self.supply_vias),
-                                rotate=90)
-                                
             
 
 

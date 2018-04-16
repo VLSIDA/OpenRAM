@@ -72,7 +72,9 @@ class bank(design.design):
     def add_pins(self):
         """ Adding pins for Bank module"""
         for i in range(self.word_size):
-            self.add_pin("DATA[{0}]".format(i),"INOUT")
+            self.add_pin("DOUT[{0}]".format(i),"OUT")
+        for i in range(self.word_size):
+            self.add_pin("DIN[{0}]".format(i),"IN")
         for i in range(self.addr_size):
             self.add_pin("A[{0}]".format(i),"INPUT")
 
@@ -121,7 +123,6 @@ class bank(design.design):
             self.column_mux_height = 0
         self.add_sense_amp_array()
         self.add_write_driver_array()
-        self.add_msf_data_in()
         self.add_tri_gate_array()
 
         # To the left of the bitcell array
@@ -203,11 +204,6 @@ class bank(design.design):
 
         self.row_decoder = self.mod_decoder(rows=self.num_rows)
         self.add_mod(self.row_decoder)
-        
-        self.msf_data_in = self.mod_ms_flop_array(name="msf_data_in", 
-                                                  columns=self.num_cols, 
-                                                  word_size=self.word_size)
-        self.add_mod(self.msf_data_in)
         
         self.tri_gate_array = self.mod_tri_gate_array(columns=self.num_cols, 
                                                       word_size=self.word_size)
@@ -306,7 +302,7 @@ class bank(design.design):
 
         temp = []
         for i in range(self.word_size):
-            temp.append("data_in[{0}]".format(i))
+            temp.append("DIN[{0}]".format(i))
         for i in range(self.word_size):            
             if (self.words_per_row == 1):            
                 temp.append("bl[{0}]".format(i))
@@ -317,37 +313,19 @@ class bank(design.design):
         temp.extend([self.prefix+"w_en", "vdd", "gnd"])
         self.connect_inst(temp)
 
-    def add_msf_data_in(self):
-        """ data_in flip_flop """
-
-        y_offset= self.sense_amp_array.height + self.column_mux_height \
-                  + self.write_driver_array.height + self.msf_data_in.height
-        self.msf_data_in_inst=self.add_inst(name="data_in_flop_array", 
-                                            mod=self.msf_data_in, 
-                                            offset=vector(0,y_offset).scale(-1,-1))
-
-        temp = []
-        for i in range(self.word_size):
-            temp.append("DATA[{0}]".format(i))
-        for i in range(self.word_size):
-            temp.append("data_in[{0}]".format(i))
-            temp.append("data_in_bar[{0}]".format(i))
-        temp.extend([self.prefix+"clk_buf_bar", "vdd", "gnd"])
-        self.connect_inst(temp)
-
     def add_tri_gate_array(self):
         """ data tri gate to drive the data bus """
         y_offset = self.sense_amp_array.height+self.column_mux_height \
-                   + self.write_driver_array.height + self.msf_data_in.height 
+                   + self.write_driver_array.height + self.tri_gate_array.height
         self.tri_gate_array_inst=self.add_inst(name="tri_gate_array", 
                                               mod=self.tri_gate_array, 
-                                               offset=vector(0,y_offset).scale(-1,-1),
-                                               mirror="MX")
+                                               offset=vector(0,y_offset).scale(-1,-1))
+                  
         temp = []
         for i in range(self.word_size):
             temp.append("data_out[{0}]".format(i))
         for i in range(self.word_size):
-            temp.append("DATA[{0}]".format(i))
+            temp.append("DOUT[{0}]".format(i))
         temp.extend([self.prefix+"tri_en", self.prefix+"tri_en_bar", "vdd", "gnd"])
         self.connect_inst(temp)
 
@@ -463,7 +441,6 @@ class bank(design.design):
                          self.precharge_array_inst,
                          self.sense_amp_array_inst,
                          self.write_driver_array_inst,
-                         self.msf_data_in_inst,
                          self.tri_gate_array_inst,
                          self.row_decoder_inst,
                          self.wordline_driver_inst]
@@ -599,53 +576,48 @@ class bank(design.design):
         """ Routing of sense amp output to tri_gate input """
 
         for i in range(self.word_size):
-
-            
-            # Connection of data_out of sense amp to data_ in of msf_data_out
-            tri_gate_in = self.tri_gate_array_inst.get_pin("in[{}]".format(i)).bc()
+            # Connection of data_out of sense amp to data_in 
+            tri_gate_in = self.tri_gate_array_inst.get_pin("in[{}]".format(i)).uc()
             sa_data_out = self.sense_amp_array_inst.get_pin("data[{}]".format(i)).bc()
             
-            # if we need a bend or not
-            if tri_gate_in.x-sa_data_out.x>self.m2_pitch:
-                # We'll connect to the bottom of the SA pin
-                bendX = sa_data_out.x
-            else:
-                # We'll connect to the left of the SA pin
-                sa_data_out = self.sense_amp_array_inst.get_pin("data[{}]".format(i)).lc()
-                bendX = tri_gate_in.x - 3*self.m3_width
+            self.add_path("metal2",[sa_data_out,tri_gate_in])
+            # # if we need a bend or not
+            # if tri_gate_in.x-sa_data_out.x>self.m2_pitch:
+            #     # We'll connect to the bottom of the SA pin
+            #     bendX = sa_data_out.x
+            # else:
+            #     # We'll connect to the left of the SA pin
+            #     sa_data_out = self.sense_amp_array_inst.get_pin("data[{}]".format(i)).lc()
+            #     bendX = tri_gate_in.x - 3*self.m3_width
 
-            bendY = tri_gate_in.y - 2*self.m2_width
+            # bendY = tri_gate_in.y - 2*self.m2_width
 
-            # Connection point of M2 and M3 paths, below the tri gate and
-            # to the left of the tri gate input
-            bend = vector(bendX, bendY)
+            # # Connection point of M2 and M3 paths, below the tri gate and
+            # # to the left of the tri gate input
+            # bend = vector(bendX, bendY)
 
-            # Connect an M2 path to the gate
-            mid3 = [tri_gate_in.x, bendY] # guarantee down then left
-            self.add_path("metal2", [bend, mid3, tri_gate_in])
+            # # Connect an M2 path to the gate
+            # mid3 = [tri_gate_in.x, bendY] # guarantee down then left
+            # self.add_path("metal2", [bend, mid3, tri_gate_in])
 
-            # connect up then right to sense amp
-            mid1 = vector(bendX,sa_data_out.y)
-            self.add_path("metal3", [bend, mid1, sa_data_out])
+            # # connect up then right to sense amp
+            # mid1 = vector(bendX,sa_data_out.y)
+            # self.add_path("metal3", [bend, mid1, sa_data_out])
 
 
-            offset = bend - vector([0.5*drc["minwidth_metal3"]] * 2)
-            self.add_via(("metal2", "via2", "metal3"),offset)
+            # offset = bend - vector([0.5*drc["minwidth_metal3"]] * 2)
+            # self.add_via(("metal2", "via2", "metal3"),offset)
 
     def route_tri_gate_out(self):
         """ Metal 3 routing of tri_gate output data """
         for i in range(self.word_size):
-            tri_gate_out_position = self.tri_gate_array_inst.get_pin("out[{}]".format(i)).ul()
-            data_line_position = vector(tri_gate_out_position.x, self.min_y_offset)
-            self.add_via(("metal2", "via2", "metal3"), data_line_position)
-            self.add_rect(layer="metal3", 
-                          offset=data_line_position, 
-                          width=drc["minwidth_metal3"], 
-                          height=tri_gate_out_position.y - self.min_y_offset)
-            self.add_layout_pin(text="DATA[{}]".format(i),
-                                layer="metal2", 
-                                offset=data_line_position,
-                                height=2*self.m2_width)
+            data_pin = self.tri_gate_array_inst.get_pin("out[{}]".format(i))
+            self.add_layout_pin_rect_center(text="DATA[{}]".format(i),
+                                            layer="metal2", 
+                                            offset=data_pin.center(),
+                                            height=data_pin.height(),
+                                            width=data_pin.width()),
+
 
     def route_row_decoder(self):
         """ Routes the row decoder inputs and supplies """
@@ -757,14 +729,6 @@ class bank(design.design):
                            layer="metal2",  
                            offset=br_pin.ll())
 
-        # Add the data input names to the data flop output
-        for i in range(self.word_size):
-            dout_name = "dout[{}]".format(i)
-            dout_pin = self.msf_data_in_inst.get_pin(dout_name)
-            self.add_label(text="data_in[{}]".format(i),
-                           layer="metal2",  
-                           offset=dout_pin.ll())
-
         # Add the data output names to the sense amp output     
         for i in range(self.word_size):
             data_name = "data[{}]".format(i)
@@ -782,7 +746,6 @@ class bank(design.design):
         # Connection from the central bus to the main control block crosses
         # pre-decoder and this connection is in metal3
         connection = []
-        connection.append((self.prefix+"clk_buf_bar", self.msf_data_in_inst.get_pin("clk").lc()))
         connection.append((self.prefix+"tri_en_bar", self.tri_gate_array_inst.get_pin("en_bar").lc()))
         connection.append((self.prefix+"tri_en", self.tri_gate_array_inst.get_pin("en").lc()))
         connection.append((self.prefix+"clk_buf_bar", self.precharge_array_inst.get_pin("en").lc()))
@@ -814,7 +777,7 @@ class bank(design.design):
 
         # Route the vdd rails to the RIGHT
         modules = [self.precharge_array_inst, self.sense_amp_array_inst,
-                   self.write_driver_array_inst, self.msf_data_in_inst,
+                   self.write_driver_array_inst, 
                    self.tri_gate_array_inst]
         for inst in modules:
             for vdd_pin in inst.get_pins("vdd"):
@@ -858,7 +821,7 @@ class bank(design.design):
         """ Route gnd rails"""
         # Route the gnd rails to the RIGHT
         # precharge is connected by abutment
-        modules = [ self.tri_gate_array_inst, self.sense_amp_array_inst, self.msf_data_in_inst, self.write_driver_array_inst]
+        modules = [ self.tri_gate_array_inst, self.sense_amp_array_inst, self.write_driver_array_inst]
         for inst in modules:
             for gnd_pin in inst.get_pins("gnd"):
                 if gnd_pin.layer != "metal1":

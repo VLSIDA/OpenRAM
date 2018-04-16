@@ -73,7 +73,7 @@ class control_logic(design.design):
         c = reload(__import__(OPTS.replica_bitline))
         replica_bitline = getattr(c, OPTS.replica_bitline)
         # FIXME: These should be tuned according to the size!
-        delay_stages = 4 # This should be even so that the delay line is inverting!
+        delay_stages = 3 # Should be odd due to bug Kevin found
         delay_fanout = 3
         bitcell_loads = int(math.ceil(self.num_rows / 5.0))
         self.replica_bitline = replica_bitline(delay_stages, delay_fanout, bitcell_loads)

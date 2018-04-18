@@ -1,6 +1,6 @@
 magic
 tech scmos
-timestamp 1523056564
+timestamp 1524065550
 << nwell >>
 rect 0 0 40 102
 << pwell >>
@@ -119,26 +119,18 @@ rect 32 129 36 133
 rect 27 62 31 66
 rect 10 44 13 48
 rect 20 44 22 48
-rect 3 8 7 11
-rect 3 0 7 4
+rect 3 0 7 11
 rect 10 0 14 44
 rect 20 0 24 44
-<< m3contact >>
-rect 3 4 7 8
-<< metal3 >>
-rect 2 8 8 9
-rect 2 4 3 8
-rect 7 4 8 8
-rect 2 3 8 4
 << m3p >>
 rect 0 0 34 163
 << labels >>
 flabel metal1 0 149 0 149 4 FreeSans 26 0 0 0 en
-flabel metal2 10 0 10 0 4 FreeSans 26 0 0 0 bl
-flabel metal2 20 0 20 0 4 FreeSans 26 0 0 0 br
-flabel metal3 3 3 3 3 4 FreeSans 26 0 0 0 dout
 rlabel metal2 34 131 34 131 1 gnd
 rlabel metal2 29 64 29 64 1 vdd
+rlabel metal2 12 161 12 161 5 bl
+rlabel metal2 22 161 22 161 5 br
+rlabel metal2 5 3 5 3 1 dout
 << properties >>
 string path 270.000 468.000 270.000 486.000 288.000 486.000 288.000 468.000 270.000 468.000 
 << end >>

@@ -92,9 +92,11 @@ class bank(design.design):
         """ Create routing amoung the modules """
         self.route_central_bus()
         self.route_precharge_to_bitcell_array()
+        self.route_sense_amp_to_bitcell_array()        
         self.route_sense_amp_to_trigate()
         self.route_tri_gate_out()
         self.route_wordline_driver()
+        self.route_write_driver()        
         self.route_row_decoder()
         self.route_column_address_lines()
         self.route_control_lines()
@@ -235,14 +237,16 @@ class bank(design.design):
         temp.extend(["vdd", "gnd"])
         self.connect_inst(temp)
 
-            
+        # A space for wells or jogging m2
+        self.m2_gap = max(2*drc["pwell_to_nwell"] + drc["well_enclosure_active"],
+                          2*self.m2_pitch)
 
     def add_precharge_array(self):
         """ Adding Precharge """
 
         # The wells must be far enough apart
         # The enclosure is for the well and the spacing is to the bitcell wells
-        y_offset = self.bitcell_array.height + 2*drc["pwell_to_nwell"] + drc["well_enclosure_active"]
+        y_offset = self.bitcell_array.height + self.m2_gap
         self.precharge_array_inst=self.add_inst(name="precharge_array",
                                                 mod=self.precharge_array, 
                                                 offset=vector(0,y_offset))
@@ -275,13 +279,13 @@ class bank(design.design):
     def add_sense_amp_array(self):
         """ Adding Sense amp  """
 
-        y_offset = self.column_mux_height + self.sense_amp_array.height
+        y_offset = self.column_mux_height + self.sense_amp_array.height + self.m2_gap
         self.sense_amp_array_inst=self.add_inst(name="sense_amp_array",
                                                 mod=self.sense_amp_array,
                                                 offset=vector(0,y_offset).scale(-1,-1))
         temp = []
         for i in range(self.word_size):
-            temp.append("data_out[{0}]".format(i))
+            temp.append("sa_out[{0}]".format(i))
             if self.words_per_row == 1:
                 temp.append("bl[{0}]".format(i))
                 temp.append("br[{0}]".format(i))
@@ -295,7 +299,7 @@ class bank(design.design):
     def add_write_driver_array(self):
         """ Adding Write Driver  """
 
-        y_offset = self.sense_amp_array.height + self.column_mux_height + self.write_driver_array.height
+        y_offset = self.sense_amp_array.height + self.column_mux_height + + self.m2_gap + self.write_driver_array.height 
         self.write_driver_array_inst=self.add_inst(name="write_driver_array", 
                                                    mod=self.write_driver_array, 
                                                    offset=vector(0,y_offset).scale(-1,-1))
@@ -316,14 +320,14 @@ class bank(design.design):
     def add_tri_gate_array(self):
         """ data tri gate to drive the data bus """
         y_offset = self.sense_amp_array.height+self.column_mux_height \
-                   + self.write_driver_array.height + self.tri_gate_array.height
+                   + self.write_driver_array.height + self.m2_gap + self.tri_gate_array.height
         self.tri_gate_array_inst=self.add_inst(name="tri_gate_array", 
                                               mod=self.tri_gate_array, 
                                                offset=vector(0,y_offset).scale(-1,-1))
                   
         temp = []
         for i in range(self.word_size):
-            temp.append("data_out[{0}]".format(i))
+            temp.append("sa_out[{0}]".format(i))
         for i in range(self.word_size):
             temp.append("DOUT[{0}]".format(i))
         temp.extend([self.prefix+"tri_en", self.prefix+"tri_en_bar", "vdd", "gnd"])
@@ -454,8 +458,10 @@ class bank(design.design):
 
         
         for inst in top_instances:
-            # These copy all pins if more thanone
-            self.copy_layout_pin(inst, "vdd")
+            print inst.name
+            # Column mux has no vdd
+            if self.col_addr_size>0 and inst != self.col_mux_array_inst:
+                self.copy_layout_pin(inst, "vdd")
             # Precharge has no gnd
             if inst != self.precharge_array_inst:
                 self.copy_layout_pin(inst, "gnd")
@@ -569,15 +575,34 @@ class bank(design.design):
             bitcell_bl = self.bitcell_array_inst.get_pin("bl[{}]".format(i)).uc()
             bitcell_br = self.bitcell_array_inst.get_pin("br[{}]".format(i)).uc()
 
-            self.add_path("metal2",[precharge_bl,bitcell_bl])
-            self.add_path("metal2",[precharge_br,bitcell_br])
+            yoffset = 0.5*(precharge_bl.y+bitcell_bl.y)
+            self.add_path("metal2",[precharge_bl, vector(precharge_bl.x,yoffset),
+                                    vector(bitcell_bl.x,yoffset), bitcell_bl])
+            self.add_path("metal2",[precharge_br, vector(precharge_br.x,yoffset),
+                                    vector(bitcell_br.x,yoffset), bitcell_br])
 
+
+    def route_sense_amp_to_bitcell_array(self):
+        """ Routing of BL and BR between pre-charge and bitcell array """
+
+        for i in range(self.word_size):
+            sense_amp_bl = self.sense_amp_array_inst.get_pin("bl[{}]".format(i)).uc()
+            sense_amp_br = self.sense_amp_array_inst.get_pin("br[{}]".format(i)).uc()
+            bitcell_bl = self.bitcell_array_inst.get_pin("bl[{}]".format(i)).bc()
+            bitcell_br = self.bitcell_array_inst.get_pin("br[{}]".format(i)).bc()
+
+            yoffset = 0.5*(sense_amp_bl.y+bitcell_bl.y)
+            self.add_path("metal2",[sense_amp_bl, vector(sense_amp_bl.x,yoffset),
+                                    vector(bitcell_bl.x,yoffset), bitcell_bl])
+            self.add_path("metal2",[sense_amp_br, vector(sense_amp_br.x,yoffset),
+                                    vector(bitcell_br.x,yoffset), bitcell_br])
+            
     def route_sense_amp_to_trigate(self):
         """ Routing of sense amp output to tri_gate input """
 
         for i in range(self.word_size):
             # Connection of data_out of sense amp to data_in 
-            tri_gate_in = self.tri_gate_array_inst.get_pin("in[{}]".format(i)).uc()
+            tri_gate_in = self.tri_gate_array_inst.get_pin("in[{}]".format(i)).lc()
             sa_data_out = self.sense_amp_array_inst.get_pin("data[{}]".format(i)).bc()
             
             self.add_path("metal2",[sa_data_out,tri_gate_in])
@@ -612,7 +637,7 @@ class bank(design.design):
         """ Metal 3 routing of tri_gate output data """
         for i in range(self.word_size):
             data_pin = self.tri_gate_array_inst.get_pin("out[{}]".format(i))
-            self.add_layout_pin_rect_center(text="DATA[{}]".format(i),
+            self.add_layout_pin_rect_center(text="DOUT[{}]".format(i),
                                             layer="metal2", 
                                             offset=data_pin.center(),
                                             height=data_pin.height(),
@@ -630,6 +655,13 @@ class bank(design.design):
             self.copy_layout_pin(self.row_decoder_inst, decoder_name, addr_name)
             
             
+    def route_write_driver(self):
+        """ Connecting write driver   """
+        
+        for i in range(self.word_size):
+            data_name = "data[{}]".format(i)            
+            din_name = "DIN[{}]".format(i)
+            self.copy_layout_pin(self.write_driver_array_inst, data_name, din_name)
                         
 
     
@@ -733,7 +765,7 @@ class bank(design.design):
         for i in range(self.word_size):
             data_name = "data[{}]".format(i)
             data_pin = self.sense_amp_array_inst.get_pin(data_name)
-            self.add_label(text="data_out[{}]".format(i),
+            self.add_label(text="sa_out[{}]".format(i),
                            layer="metal3",  
                            offset=data_pin.ll())
             

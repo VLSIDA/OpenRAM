@@ -85,19 +85,19 @@ class sense_amp_array(design.design):
                                             offset=vdd_pos)
             
 
-            self.add_layout_pin(text="bl[{0}]".format(i),
+            self.add_layout_pin(text="bl[{0}]".format(i/self.words_per_row),
                                 layer="metal2",
                                 offset=bl_offset,
                                 width=bl_pin.width(),
                                 height=bl_pin.height())
-            self.add_layout_pin(text="br[{0}]".format(i),
+            self.add_layout_pin(text="br[{0}]".format(i/self.words_per_row),
                                 layer="metal2",
                                 offset=br_offset,
                                 width=br_pin.width(),
                                 height=br_pin.height())
                            
             self.add_layout_pin(text="data[{0}]".format(i/self.words_per_row),
-                                layer="metal3",
+                                layer="metal2",
                                 offset=dout_offset,
                                 width=dout_pin.width(),
                                 height=dout_pin.height())

@@ -793,7 +793,7 @@ class bank(design.design):
             data_name = "data[{}]".format(i)
             data_pin = self.sense_amp_array_inst.get_pin(data_name)
             self.add_label(text="sa_out[{}]".format(i),
-                           layer="metal3",  
+                           layer="metal2",  
                            offset=data_pin.center())
 
         # Add labels on the decoder

@@ -519,24 +519,13 @@ class bank(design.design):
         self.max_x_offset = self.bitcell_array_inst.ur().x + 3*self.m1_width
         self.min_x_offset = self.row_decoder_inst.lx() 
         
-        # Create the core bbox for the power rings
+        # # Create the core bbox for the power rings
         ur = vector(self.max_x_offset, self.max_y_offset)
         ll = vector(self.min_x_offset, self.min_y_offset)
         self.core_bbox = [ll, ur]
-        self.add_power_ring(self.core_bbox)
         
-        # Compute the vertical rail positions for later use
-        self.right_gnd_x_offset = self.right_gnd_x_center - 0.5*self.supply_rail_pitch
-        self.right_vdd_x_offset = self.right_gnd_x_offset + self.supply_rail_pitch
-        self.left_vdd_x_offset =  self.left_gnd_x_center - 0.5*self.supply_rail_pitch
-        self.left_gnd_x_offset = self.left_vdd_x_offset - self.supply_rail_pitch
-        
-        # Have the pins go below the vdd and gnd power rail at the bottom
-        self.min_y_offset -= 2*self.supply_rail_pitch
-
-        self.height = ur.y - ll.y + 4*self.supply_rail_pitch
-        self.width = ur.x - ll.x + 4*self.supply_rail_pitch
-        
+        self.height = ur.y - ll.y
+        self.width = ur.x - ll.x
         
         
 
@@ -839,85 +828,6 @@ class bank(design.design):
                             offset=control_via_pos,
                             rotate=90)
         
-
-    def route_vdd_supply(self):
-        """ Route vdd for the precharge, sense amp, write_driver, data FF, tristate """
-
-        # Route the vdd rails to the RIGHT
-        modules = [self.precharge_array_inst, self.sense_amp_array_inst,
-                   self.write_driver_array_inst, 
-                   self.tri_gate_array_inst]
-        for inst in modules:
-            for vdd_pin in inst.get_pins("vdd"):
-                self.add_rect(layer="metal1", 
-                              offset=vdd_pin.ll(), 
-                              width=self.right_vdd_x_center, 
-                              height=vdd_pin.height())
-                via_position = vector(self.right_vdd_x_center, vdd_pin.cy())
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                    offset=via_position,
-                                    size = (1,self.supply_vias),
-                                    rotate=90)
-                        
-        # Route the vdd rails to the LEFT
-        for vdd_pin in self.wordline_driver_inst.get_pins("vdd"):
-            vdd_pos = vdd_pin.rc()
-            left_rail_pos = vector(self.left_vdd_x_center, vdd_pos.y)
-            right_rail_pos = vector(self.right_vdd_x_center, vdd_pos.y)
-            self.add_path("metal1", [left_rail_pos, right_rail_pos])
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=left_rail_pos,
-                                size = (1,self.supply_vias),
-                                rotate=90)
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=right_rail_pos,
-                                size = (1,self.supply_vias),
-                                rotate=90)
-
-        if self.num_banks>1:
-            for vdd_pin in self.bank_select_inst.get_pins("vdd"):
-                vdd_pos = vdd_pin.rc()
-                left_rail_pos = vector(self.left_vdd_x_center, vdd_pos.y)
-                self.add_path("metal1", [left_rail_pos, vdd_pos])
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                    offset=left_rail_pos,
-                                    size = (1,self.supply_vias),
-                                    rotate=90)
-            
-
-    def route_gnd_supply(self):
-        """ Route gnd rails"""
-        # Route the gnd rails to the RIGHT
-        # precharge is connected by abutment
-        modules = [ self.tri_gate_array_inst, self.sense_amp_array_inst, self.write_driver_array_inst]
-        for inst in modules:
-            for gnd_pin in inst.get_pins("gnd"):
-                if gnd_pin.layer != "metal1":
-                    continue
-                # route to the right hand side of the big rail to reduce via overlaps
-                pin_pos = gnd_pin.lc()
-                gnd_offset = vector(self.right_gnd_x_offset + self.supply_rail_width, pin_pos.y)
-                self.add_path("metal1", [pin_pos, gnd_offset])
-                via_position = vector(self.right_gnd_x_center, gnd_pin.cy())
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                    offset=via_position,
-                                    size = (1,self.supply_vias),
-                                    rotate=90)
-
-        # Route the gnd rails to the LEFT
-        modules = [self.wordline_driver_inst]
-        if self.num_banks>1:
-            modules.append(self.bank_select_inst)
-        for inst in modules:
-            for gnd_pin in inst.get_pins("gnd"):
-                gnd_pos = gnd_pin.rc()
-                left_rail_pos = vector(self.left_gnd_x_center, gnd_pos.y)
-                self.add_path("metal1", [left_rail_pos, gnd_pos])
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                    offset=left_rail_pos,
-                                    size = (1,self.supply_vias),
-                                    rotate=90)
-
     def add_control_pins(self):
         """ Add the control signal input pins """
 

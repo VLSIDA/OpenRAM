@@ -92,7 +92,8 @@ class bank(design.design):
         """ Create routing amoung the modules """
         self.route_central_bus()
         self.route_precharge_to_bitcell_array()
-        self.route_sense_amp_to_bitcell_array()        
+        self.route_col_mux_to_bitcell_array()
+        self.route_sense_amp_to_col_mux_or_bitcell_array()
         self.route_sense_amp_to_trigate()
         self.route_tri_gate_out()
         self.route_wordline_driver()
@@ -169,6 +170,9 @@ class bank(design.design):
         # A width on each side too
         self.central_bus_width = self.m2_pitch * self.num_control_lines + 2*self.m2_width
 
+        # A space for wells or jogging m2
+        self.m2_gap = max(2*drc["pwell_to_nwell"] + drc["well_enclosure_active"],
+                          2*self.m2_pitch)
 
 
 
@@ -231,9 +235,6 @@ class bank(design.design):
         temp.extend(["vdd", "gnd"])
         self.connect_inst(temp)
 
-        # A space for wells or jogging m2
-        self.m2_gap = max(2*drc["pwell_to_nwell"] + drc["well_enclosure_active"],
-                          2*self.m2_pitch)
 
     def add_precharge_array(self):
         """ Adding Precharge """
@@ -254,14 +255,12 @@ class bank(design.design):
     def add_column_mux_array(self):
         """ Adding Column Mux when words_per_row > 1 . """
         if self.col_addr_size > 0:
-            # The m2 width is because the 6T cell may have vias on the boundary edge for
-            # overlapping when making the array
-            self.column_mux_height = self.column_mux_array.height + 0.5*self.m2_width
+            self.column_mux_height = self.column_mux_array.height + self.m2_gap
         else:
             self.column_mux_height = 0
             return
 
-        y_offset = self.column_mux_height
+        y_offset = self.column_mux_height 
         self.col_mux_array_inst=self.add_inst(name="column_mux_array",
                                               mod=self.column_mux_array,
                                               offset=vector(0,y_offset).scale(-1,-1))
@@ -425,7 +424,7 @@ class bank(design.design):
         
         x_off = -(self.row_decoder.width + self.central_bus_width + self.wordline_driver.width)
         # extra space to allow vias
-        y_off = self.min_point + 2*self.supply_rail_pitch + self.m1_space
+        y_off = self.min_y_offset + 2*self.supply_rail_pitch + self.m1_space
         self.bank_select_pos = vector(x_off,y_off)
         self.bank_select_inst = self.add_inst(name="bank_select",
                                               mod=self.bank_select,
@@ -459,9 +458,8 @@ class bank(design.design):
 
         
         for inst in top_instances:
-            print inst.name
             # Column mux has no vdd
-            if self.col_addr_size>0 and inst != self.col_mux_array_inst:
+            if self.col_addr_size==0 or (self.col_addr_size>0 and inst != self.col_mux_array_inst):
                 self.copy_layout_pin(inst, "vdd")
             # Precharge has no gnd
             if inst != self.precharge_array_inst:
@@ -583,20 +581,47 @@ class bank(design.design):
                                     vector(bitcell_br.x,yoffset), bitcell_br])
 
 
-    def route_sense_amp_to_bitcell_array(self):
-        """ Routing of BL and BR between pre-charge and bitcell array """
+    def route_col_mux_to_bitcell_array(self):
+        """ Routing of BL and BR between col mux and bitcell array """
+
+        # Only do this if we have a column mux!
+        if self.col_addr_size==0:
+            return
+        
+        for i in range(self.num_cols):
+            col_mux_bl = self.col_mux_array_inst.get_pin("bl[{}]".format(i)).uc()
+            col_mux_br = self.col_mux_array_inst.get_pin("br[{}]".format(i)).uc()
+            bitcell_bl = self.bitcell_array_inst.get_pin("bl[{}]".format(i)).bc()
+            bitcell_br = self.bitcell_array_inst.get_pin("br[{}]".format(i)).bc()
+
+            yoffset = 0.5*(col_mux_bl.y+bitcell_bl.y)
+            self.add_path("metal2",[col_mux_bl, vector(col_mux_bl.x,yoffset),
+                                    vector(bitcell_bl.x,yoffset), bitcell_bl])
+            self.add_path("metal2",[col_mux_br, vector(col_mux_br.x,yoffset),
+                                    vector(bitcell_br.x,yoffset), bitcell_br])
+        
+    def route_sense_amp_to_col_mux_or_bitcell_array(self):
+        """ Routing of BL and BR between sense_amp and column mux or bitcell array """
 
         for i in range(self.word_size):
             sense_amp_bl = self.sense_amp_array_inst.get_pin("bl[{}]".format(i)).uc()
             sense_amp_br = self.sense_amp_array_inst.get_pin("br[{}]".format(i)).uc()
-            bitcell_bl = self.bitcell_array_inst.get_pin("bl[{}]".format(i)).bc()
-            bitcell_br = self.bitcell_array_inst.get_pin("br[{}]".format(i)).bc()
 
-            yoffset = 0.5*(sense_amp_bl.y+bitcell_bl.y)
+            if self.col_addr_size>0:
+                # Sense amp is connected to the col mux
+                connect_bl = self.col_mux_array_inst.get_pin("bl_out[{}]".format(i)).bc()
+                connect_br = self.col_mux_array_inst.get_pin("br_out[{}]".format(i)).bc()
+            else:
+                # Sense amp is directly connected to the bitcell array
+                connect_bl = self.bitcell_array_inst.get_pin("bl[{}]".format(i)).bc()
+                connect_br = self.bitcell_array_inst.get_pin("br[{}]".format(i)).bc()
+            
+                
+            yoffset = 0.5*(sense_amp_bl.y+connect_bl.y)
             self.add_path("metal2",[sense_amp_bl, vector(sense_amp_bl.x,yoffset),
-                                    vector(bitcell_bl.x,yoffset), bitcell_bl])
+                                    vector(connect_bl.x,yoffset), connect_bl])
             self.add_path("metal2",[sense_amp_br, vector(sense_amp_br.x,yoffset),
-                                    vector(bitcell_br.x,yoffset), bitcell_br])
+                                    vector(connect_br.x,yoffset), connect_br])
             
     def route_sense_amp_to_trigate(self):
         """ Routing of sense amp output to tri_gate input """
@@ -730,7 +755,8 @@ class bank(design.design):
             else:
                 mid1_pos = vector(decode_out_pos.x + delta_offset + (self.num_col_addr_lines-i)*self.m2_pitch,decode_out_pos.y)
             mid2_pos = vector(mid1_pos.x,mux_addr_pos.y)
-            self.add_wire(("metal1","via1","metal2"),[decode_out_pos, mid1_pos, mid2_pos, mux_addr_pos])
+            #self.add_wire(("metal1","via1","metal2"),[decode_out_pos, mid1_pos, mid2_pos, mux_addr_pos])
+            self.add_path("metal1",[decode_out_pos, mid1_pos, mid2_pos, mux_addr_pos])
             
 
             
@@ -747,7 +773,7 @@ class bank(design.design):
             wl_pin = self.bitcell_array_inst.get_pin(wl_name)
             self.add_label(text=wl_name,
                            layer="metal1",  
-                           offset=wl_pin.ll())
+                           offset=wl_pin.center())
         
         # Add the bitline names
         for i in range(self.num_cols):
@@ -757,10 +783,10 @@ class bank(design.design):
             br_pin = self.bitcell_array_inst.get_pin(br_name)
             self.add_label(text=bl_name,
                            layer="metal2",  
-                           offset=bl_pin.ll())
+                           offset=bl_pin.center())
             self.add_label(text=br_name,
                            layer="metal2",  
-                           offset=br_pin.ll())
+                           offset=br_pin.center())
 
         # Add the data output names to the sense amp output     
         for i in range(self.word_size):
@@ -768,7 +794,16 @@ class bank(design.design):
             data_pin = self.sense_amp_array_inst.get_pin(data_name)
             self.add_label(text="sa_out[{}]".format(i),
                            layer="metal3",  
-                           offset=data_pin.ll())
+                           offset=data_pin.center())
+
+        # Add labels on the decoder
+        for i in range(self.word_size):
+            data_name = "dec_out[{}]".format(i)
+            pin_name = "in[{}]".format(i)            
+            data_pin = self.wordline_driver_inst.get_pin(pin_name)
+            self.add_label(text=data_name,
+                           layer="metal1",  
+                           offset=data_pin.center())
             
             
     def route_control_lines(self):

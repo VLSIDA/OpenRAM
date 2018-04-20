@@ -116,13 +116,7 @@ class bank(design.design):
         self.add_precharge_array()
         
         # Below the bitcell array
-        if self.col_addr_size > 0:
-            # The m2 width is because the 6T cell may have vias on the boundary edge for
-            # overlapping when making the array
-            self.column_mux_height = self.column_mux_array.height + 0.5*self.m2_width
-            self.add_column_mux_array()
-        else:
-            self.column_mux_height = 0
+        self.add_column_mux_array()
         self.add_sense_amp_array()
         self.add_write_driver_array()
         self.add_tri_gate_array()
@@ -259,6 +253,13 @@ class bank(design.design):
 
     def add_column_mux_array(self):
         """ Adding Column Mux when words_per_row > 1 . """
+        if self.col_addr_size > 0:
+            # The m2 width is because the 6T cell may have vias on the boundary edge for
+            # overlapping when making the array
+            self.column_mux_height = self.column_mux_array.height + 0.5*self.m2_width
+        else:
+            self.column_mux_height = 0
+            return
 
         y_offset = self.column_mux_height
         self.col_mux_array_inst=self.add_inst(name="column_mux_array",

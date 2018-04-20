@@ -51,10 +51,10 @@ def parse_args():
                                    version="OpenRAM")
 
     (options, args) = parser.parse_args(values=OPTS)
-    # If we don't specify a tech, assume freepdk45.
+    # If we don't specify a tech, assume scmos.
     # This may be overridden when we read a config file though...
     if OPTS.tech_name == "":
-        OPTS.tech_name = "freepdk45"
+        OPTS.tech_name = "scmos"
     # Alias SCMOS to AMI 0.5um
     if OPTS.tech_name == "scmos":
         OPTS.tech_name = "scn3me_subm"

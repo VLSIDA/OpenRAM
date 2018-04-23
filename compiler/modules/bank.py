@@ -619,11 +619,9 @@ class bank(design.design):
             sa_data_out = self.sense_amp_array_inst.get_pin("data[{}]".format(i)).bc()
 
             self.add_via_center(layers=("metal2", "via2", "metal3"),
-                                offset=tri_gate_in,
-                                rotate=90)
+                                offset=tri_gate_in)
             self.add_via_center(layers=("metal2", "via2", "metal3"),
-                                offset=sa_data_out,
-                                rotate=90)
+                                offset=sa_data_out)
             self.add_path("metal3",[sa_data_out,tri_gate_in])
 
     def route_tri_gate_out(self):

@@ -421,8 +421,11 @@ class bank(design.design):
             return
         
         x_off = -(self.row_decoder.width + self.central_bus_width + self.wordline_driver.width)
-        # extra space to allow vias
-        y_off = self.min_y_offset + 2*self.supply_rail_pitch + self.m1_space
+        if self.col_addr_size > 0:
+            y_off = min(self.col_decoder_inst.by(), self.col_mux_array_inst.by())
+        else:
+            y_off = self.row_decoder_inst.by()
+        y_off -= (self.bank_select.height + drc["well_to_well"])
         self.bank_select_pos = vector(x_off,y_off)
         self.bank_select_inst = self.add_inst(name="bank_select",
                                               mod=self.bank_select,
@@ -466,11 +469,7 @@ class bank(design.design):
     def route_bank_select(self):
         """ Route the bank select logic. """
         for input_name in self.input_control_signals+["bank_sel"]:
-            in_pos = self.bank_select_inst.get_pin(input_name).lc()
-            self.add_layout_pin_segment_center(text=input_name,
-                                               layer="metal3",
-                                               start=vector(self.left_gnd_x_offset,in_pos.y),
-                                               end=in_pos)
+            self.copy_layout_pin(self.bank_select_inst, input_name)
 
         for gated_name in self.control_signals:
             # Connect the inverter output to the central bus

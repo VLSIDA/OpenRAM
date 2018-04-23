@@ -65,7 +65,8 @@ class sense_amp_array(design.design):
             inst = self.add_inst(name=name,
                           mod=self.amp,
                           offset=amp_position)
-            self.connect_inst(["bl[{0}]".format(i/self.words_per_row),"br[{0}]".format(i/self.words_per_row), 
+            self.connect_inst(["bl[{0}]".format(i),
+                               "br[{0}]".format(i), 
                                "data[{0}]".format(i/self.words_per_row), 
                                "en", "vdd", "gnd"])
 

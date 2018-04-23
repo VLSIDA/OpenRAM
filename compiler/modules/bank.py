@@ -106,8 +106,6 @@ class bank(design.design):
             self.route_bank_select()            
         
         self.route_vdd_gnd()
-        #self.route_vdd_supply()
-        #self.route_gnd_supply()
         
     def add_modules(self):
         """ Add modules. The order should not matter! """
@@ -619,34 +617,14 @@ class bank(design.design):
             # Connection of data_out of sense amp to data_in 
             tri_gate_in = self.tri_gate_array_inst.get_pin("in[{}]".format(i)).lc()
             sa_data_out = self.sense_amp_array_inst.get_pin("data[{}]".format(i)).bc()
-            
-            self.add_path("metal2",[sa_data_out,tri_gate_in])
-            # # if we need a bend or not
-            # if tri_gate_in.x-sa_data_out.x>self.m2_pitch:
-            #     # We'll connect to the bottom of the SA pin
-            #     bendX = sa_data_out.x
-            # else:
-            #     # We'll connect to the left of the SA pin
-            #     sa_data_out = self.sense_amp_array_inst.get_pin("data[{}]".format(i)).lc()
-            #     bendX = tri_gate_in.x - 3*self.m3_width
 
-            # bendY = tri_gate_in.y - 2*self.m2_width
-
-            # # Connection point of M2 and M3 paths, below the tri gate and
-            # # to the left of the tri gate input
-            # bend = vector(bendX, bendY)
-
-            # # Connect an M2 path to the gate
-            # mid3 = [tri_gate_in.x, bendY] # guarantee down then left
-            # self.add_path("metal2", [bend, mid3, tri_gate_in])
-
-            # # connect up then right to sense amp
-            # mid1 = vector(bendX,sa_data_out.y)
-            # self.add_path("metal3", [bend, mid1, sa_data_out])
-
-
-            # offset = bend - vector([0.5*drc["minwidth_metal3"]] * 2)
-            # self.add_via(("metal2", "via2", "metal3"),offset)
+            self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                offset=tri_gate_in,
+                                rotate=90)
+            self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                offset=sa_data_out,
+                                rotate=90)
+            self.add_path("metal3",[sa_data_out,tri_gate_in])
 
     def route_tri_gate_out(self):
         """ Metal 3 routing of tri_gate output data """

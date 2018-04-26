@@ -12,7 +12,7 @@ class pbitcell(pgate.pgate):
     This module implements a parametrically sized multi-port bitcell
     """
 
-    def __init__(self, num_write=1, num_read=1):
+    def __init__(self, num_write=1, num_read=4):
         name = "pbitcell_{0}W_{1}R".format(num_write, num_read)
         pgate.pgate.__init__(self, name)
         debug.info(2, "create a multi-port bitcell with {0} write ports and {1} read ports".format(num_write, num_read))  
@@ -35,9 +35,9 @@ class pbitcell(pgate.pgate):
             self.add_pin("rbl_bar{}".format(k))
             
         for k in range(self.num_write):
-            self.add_pin("wrow{}".format(k))
+            self.add_pin("wwl{}".format(k))
         for k in range(self.num_read):
-            self.add_pin("rrow{}".format(k))
+            self.add_pin("rwl{}".format(k))
             
         self.add_pin("vdd")
         self.add_pin("gnd")
@@ -61,7 +61,7 @@ class pbitcell(pgate.pgate):
         """ Calculate transistor sizes """
         # if there are no read ports then write transistors are being used as read/write ports, like in a 6T cell
         if(self.num_read == 0):
-            inverter_nmos_width = 3*parameter["min_tx_size"]
+            inverter_nmos_width = self.num_write*3*parameter["min_tx_size"]
             inverter_pmos_width = parameter["min_tx_size"]
             write_nmos_width = 1.5*parameter["min_tx_size"]
             read_nmos_width = parameter["min_tx_size"] # read transistor not necessary but included as to not generate errors in the code when referenced
@@ -146,7 +146,7 @@ class pbitcell(pgate.pgate):
                              
         self.rightmost_xpos = -self.leftmost_xpos
         
-        # bottommost position = gnd height + wrow height + rrow height + space needed between tiled bitcells
+        # bottommost position = gnd height + wwl height + rwl height + space needed between tiled bitcells
         array_tiling_offset = 0.5*drc["minwidth_metal2"]
         self.botmost_ypos = -self.rail_tile_height \
                             - self.num_write*self.rowline_tile_height \
@@ -265,7 +265,7 @@ class pbitcell(pgate.pgate):
     def add_write_ports(self):
         """
         Adds write ports to the bit cell. A single transistor acts as the write port.
-        A write is enabled by setting a Write-Rowline (WROW) high, subsequently turning on the transistor.
+        A write is enabled by setting a Write-Rowline (WWL) high, subsequently turning on the transistor.
         The transistor is connected between a Write-Bitline (WBL) and the storage component of the cell (Q). 
         Driving WBL high or low sets the value of the cell.
         This is a differential design, so each write port has a mirrored port that connects WBL_bar to Q_bar.
@@ -278,7 +278,7 @@ class pbitcell(pgate.pgate):
         # define write transistor variables as empty arrays based on the number of write ports
         self.write_nmos_left = [None] * self.num_write 
         self.write_nmos_right = [None] * self.num_write
-        self.wrow_positions = [None] * self.num_write
+        self.wwl_positions = [None] * self.num_write
         self.wbl_positions = [None] * self.num_write
         self.wbl_bar_positions = [None] * self.num_write       
         
@@ -299,23 +299,23 @@ class pbitcell(pgate.pgate):
                                                     mod=self.write_nmos,
                                                     offset=[left_write_transistor_xpos,0],
                                                     rotate=90)
-            self.connect_inst(["Q", "wrow{}".format(k), "wbl{}".format(k), "gnd"])
+            self.connect_inst(["Q", "wwl{}".format(k), "wbl{}".format(k), "gnd"])
             
             self.write_nmos_right[k] = self.add_inst(name="write_nmos_right{}".format(k),
                                                      mod=self.write_nmos,
                                                      offset=[right_write_transistor_xpos,0],
                                                      rotate=90)
-            self.connect_inst(["Q_bar", "wrow{}".format(k), "wbl_bar{}".format(k), "gnd"])
+            self.connect_inst(["Q_bar", "wwl{}".format(k), "wbl_bar{}".format(k), "gnd"])
                         
-            """ Add WROW lines """
-            # calculate WROW position
-            wrow_ypos = self.gnd_position.y - (k+1)*self.rowline_tile_height 
-            self.wrow_positions[k] = vector(self.leftmost_xpos, wrow_ypos)
+            """ Add WWL lines """
+            # calculate WWL position
+            wwl_ypos = self.gnd_position.y - (k+1)*self.rowline_tile_height 
+            self.wwl_positions[k] = vector(self.leftmost_xpos, wwl_ypos)
             
-            # add pin for WROW
-            self.add_layout_pin(text="wrow{}".format(k),
+            # add pin for WWL
+            self.add_layout_pin(text="wwl{}".format(k),
                                 layer="metal1",
-                                offset=self.wrow_positions[k],
+                                offset=self.wwl_positions[k],
                                 width=self.width,
                                 height=contact.m1m2.width)
                        
@@ -346,8 +346,8 @@ class pbitcell(pgate.pgate):
                                 width=drc["minwidth_metal2"],
                                 height=self.height)
                         
-            """ Gate/WROW connections """
-            # add poly-to-meltal2 contacts to connect gate of write transistors to WROW (contact next to gate)
+            """ Gate/WWL connections """
+            # add poly-to-meltal2 contacts to connect gate of write transistors to WWL (contact next to gate)
             # contact must be placed a metal width below the source pin to avoid drc from routing to the source pins
             contact_xpos = self.write_nmos_left[k].get_pin("S").lc().x - drc["minwidth_metal2"] - 0.5*contact.m1m2.width
             contact_ypos = self.write_nmos_left[k].get_pin("D").bc().y - drc["minwidth_metal1"] - 0.5*contact.m1m2.height
@@ -374,20 +374,20 @@ class pbitcell(pgate.pgate):
             midR = vector(right_gate_contact.x, self.write_nmos_right[k].get_pin("G").rc().y) 
             self.add_path("poly", [self.write_nmos_right[k].get_pin("G").rc(), midR, right_gate_contact], width=contact.poly.width)
             
-            # add metal1-to-metal2 contacts to WROW lines
-            left_wrow_contact = vector(left_gate_contact.x, self.wrow_positions[k].y + 0.5*contact.m1m2.width)
+            # add metal1-to-metal2 contacts to WWL lines
+            left_wwl_contact = vector(left_gate_contact.x, self.wwl_positions[k].y + 0.5*contact.m1m2.width)
             self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                            offset=left_wrow_contact,
+                                            offset=left_wwl_contact,
                                             rotate=90)
                              
-            right_wrow_contact = vector(right_gate_contact.x, self.wrow_positions[k].y + 0.5*contact.m1m2.width)
+            right_wwl_contact = vector(right_gate_contact.x, self.wwl_positions[k].y + 0.5*contact.m1m2.width)
             self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                            offset=right_wrow_contact,
+                                            offset=right_wwl_contact,
                                             rotate=90)
             
-            # connect write transistor gate contacts to WROW contacts (metal2 path)
-            self.add_path("metal2", [left_gate_contact, left_wrow_contact])
-            self.add_path("metal2", [right_gate_contact, right_wrow_contact])
+            # connect write transistor gate contacts to WWL contacts (metal2 path)
+            self.add_path("metal2", [left_gate_contact, left_wwl_contact])
+            self.add_path("metal2", [right_gate_contact, right_wwl_contact])
                        
             """ Drain/Storage connections """
             # this path only needs to be drawn once on the last iteration of the loop
@@ -424,9 +424,9 @@ class pbitcell(pgate.pgate):
         """
         Adds read ports to the bit cell. Two transistors function as a read port.
         The two transistors in the port are denoted as the "read transistor" and the "read-access transistor".
-        The read transistor is connected to RROW (gate), RBL (drain), and the read-access transistor (source).
+        The read transistor is connected to RWL (gate), RBL (drain), and the read-access transistor (source).
         The read-access transistor is connected to Q_bar (gate), gnd (source), and the read transistor (drain).
-        A read is enabled by setting a Read-Rowline (RROW) high, subsequently turning on the read transistor.
+        A read is enabled by setting a Read-Rowline (RWL) high, subsequently turning on the read transistor.
         The Read-Bitline (RBL) is precharged to high, and when the value of Q_bar is high, the read-access transistor
         is turned on, creating a connection between RBL and gnd. RBL subsequently discharges allowing for a differential read
         using sense amps. This is a differential design, so each read port has a mirrored port that connects RBL_bar to Q.
@@ -444,7 +444,7 @@ class pbitcell(pgate.pgate):
         self.read_nmos_right = [None] * self.num_read
         self.read_access_nmos_left = [None] * self.num_read 
         self.read_access_nmos_right = [None] * self.num_read
-        self.rrow_positions = [None] * self.num_read
+        self.rwl_positions = [None] * self.num_read
         self.rbl_positions = [None] * self.num_read
         self.rbl_bar_positions = [None] * self.num_read
         
@@ -463,42 +463,42 @@ class pbitcell(pgate.pgate):
                                          + read_rotation_correct          
             
             # add read-access transistors
-            self.read_access_nmos_left[k] = self.add_inst(name="read_access_nmos_left",
+            self.read_access_nmos_left[k] = self.add_inst(name="read_access_nmos_left{}".format(k),
                                                           mod=self.read_nmos,
                                                           offset=[left_read_transistor_xpos,0],
                                                           rotate=90)
             self.connect_inst(["RA_to_R_left{}".format(k), " Q_bar", "gnd", "gnd"])
             
-            self.read_access_nmos_right[k] = self.add_inst(name="read_access_nmos_right",
+            self.read_access_nmos_right[k] = self.add_inst(name="read_access_nmos_right{}".format(k),
                                                            mod=self.read_nmos,
                                                            offset=[right_read_transistor_xpos,0],
                                                            rotate=90)
             self.connect_inst(["RA_to_R_right{}".format(k), "Q", "gnd", "gnd"])
             
             # add read transistors
-            self.read_nmos_left[k] = self.add_inst(name="read_nmos_left",
+            self.read_nmos_left[k] = self.add_inst(name="read_nmos_left{}".format(k),
                                                    mod=self.read_nmos,
                                                    offset=[left_read_transistor_xpos,overlap_offset.x],
                                                    rotate=90)
-            self.connect_inst(["rbl{}".format(k), "rrow{}".format(k), "RA_to_R_left{}".format(k), "gnd"])
+            self.connect_inst(["rbl{}".format(k), "rwl{}".format(k), "RA_to_R_left{}".format(k), "gnd"])
             
-            self.read_nmos_right[k] = self.add_inst(name="read_nmos_right",
+            self.read_nmos_right[k] = self.add_inst(name="read_nmos_right{}".format(k),
                                                     mod=self.read_nmos,
                                                     offset=[right_read_transistor_xpos,overlap_offset.x],
                                                     rotate=90)
-            self.connect_inst(["rbl_bar{}".format(k), "rrow{}".format(k), "RA_to_R_right{}".format(k), "gnd"])
+            self.connect_inst(["rbl_bar{}".format(k), "rwl{}".format(k), "RA_to_R_right{}".format(k), "gnd"])
                         
-            """ Add RROW lines """
-            # calculate RROW position
-            rrow_ypos = self.gnd_position.y \
+            """ Add RWL lines """
+            # calculate RWL position
+            rwl_ypos = self.gnd_position.y \
                         - self.num_write*self.rowline_tile_height \
                         - (k+1)*self.rowline_tile_height            
-            self.rrow_positions[k] = vector(self.leftmost_xpos, rrow_ypos)
+            self.rwl_positions[k] = vector(self.leftmost_xpos, rwl_ypos)
             
-            # add pin for RROW
-            self.add_layout_pin(text="rrow{}".format(k),
+            # add pin for RWL
+            self.add_layout_pin(text="rwl{}".format(k),
                                 layer="metal1",
-                                offset=self.rrow_positions[k],
+                                offset=self.rwl_positions[k],
                                 width=self.width,
                                 height=contact.m1m2.width)
                        
@@ -529,8 +529,8 @@ class pbitcell(pgate.pgate):
                                 width=drc["minwidth_metal2"],
                                 height=self.height)
                        
-            """ Gate of read transistor / RROW connection """
-            # add poly-to-meltal2 contacts to connect gate of read transistors to RROW (contact next to gate)
+            """ Gate of read transistor / RWL connection """
+            # add poly-to-meltal2 contacts to connect gate of read transistors to RWL (contact next to gate)
             contact_xpos = left_read_transistor_xpos - self.read_nmos.active_height - drc["minwidth_poly"] - 0.5*contact.poly.width
             contact_ypos = self.read_nmos_left[k].get_pin("G").lc().y
             left_gate_contact = vector(contact_xpos, contact_ypos)
@@ -553,20 +553,20 @@ class pbitcell(pgate.pgate):
             self.add_path("poly", [self.read_nmos_left[k].get_pin("G").lc(), left_gate_contact])         
             self.add_path("poly", [self.read_nmos_right[k].get_pin("G").rc(), right_gate_contact])
             
-            # add metal1-to-metal2 contacts to RROW lines
-            left_rrow_contact = vector(left_gate_contact.x, self.rrow_positions[k].y + 0.5*contact.m1m2.width)
+            # add metal1-to-metal2 contacts to RWL lines
+            left_rwl_contact = vector(left_gate_contact.x, self.rwl_positions[k].y + 0.5*contact.m1m2.width)
             self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                    offset=left_rrow_contact,
+                                    offset=left_rwl_contact,
                                     rotate=90)
                                                             
-            right_rrow_contact = vector(right_gate_contact.x, self.rrow_positions[k].y + 0.5*contact.m1m2.width)
+            right_rwl_contact = vector(right_gate_contact.x, self.rwl_positions[k].y + 0.5*contact.m1m2.width)
             self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                    offset=right_rrow_contact,
+                                    offset=right_rwl_contact,
                                     rotate=90)
             
-            # connect read transistor gate contacts to RROW contacts (metal2 path)
-            self.add_path("metal2", [left_gate_contact, left_rrow_contact])
-            self.add_path("metal2", [right_gate_contact, right_rrow_contact])
+            # connect read transistor gate contacts to RWL contacts (metal2 path)
+            self.add_path("metal2", [left_gate_contact, left_rwl_contact])
+            self.add_path("metal2", [right_gate_contact, right_rwl_contact])
             
             """ Source of read-access transistor / GND connection """
             # connect source of read-access transistor to GND (metal1 path)
@@ -723,9 +723,9 @@ class pbitcell(pgate.pgate):
             bitcell_pins.append("rbl{0}[{1}]".format(k,col))
             bitcell_pins.append("rbl_bar{0}[{1}]".format(k,col))
         for k in range(self.num_write):
-            bitcell_pins.append("wrow{0}[{1}]".format(k,row))
+            bitcell_pins.append("wwl{0}[{1}]".format(k,row))
         for k in range(self.num_read):
-            bitcell_pins.append("rrow{0}[{1}]".format(k,row))
+            bitcell_pins.append("rwl{0}[{1}]".format(k,row))
         bitcell_pins.append("vdd")
         bitcell_pins.append("gnd")
         
@@ -736,9 +736,9 @@ class pbitcell(pgate.pgate):
         # Creates a list of row pins
         row_pins = []
         for k in range(self.num_write):
-            row_pins.append("wrow{0}".format(k))
+            row_pins.append("wwl{0}".format(k))
         for k in range(self.num_read):
-            row_pins.append("rrow{0}".format(k))
+            row_pins.append("rwl{0}".format(k))
             
         return row_pins
     

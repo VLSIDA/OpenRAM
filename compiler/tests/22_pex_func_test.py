@@ -18,9 +18,9 @@ class sram_func_test(openram_test):
         global verify
         import verify
 
-	#Initialize options
+        #Initialize options
         OPTS.check_lvsdrc = False
-	OPTS.use_pex = False
+        OPTS.use_pex = False
         OPTS.spice_name="" # Unset to use any simulator
         OPTS.analytical_delay = False
 
@@ -33,27 +33,27 @@ class sram_func_test(openram_test):
 
         import sram
 
-	#create sram test bank
+        #create sram test bank
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
         s = sram.sram(word_size=2,
                       num_words=16,
                       num_banks=1,
                       name="pex_sram_test")
 
-	#super important
+        #important
         OPTS.check_lvsdrc = True
-	OPTS.use_pex = True
+        OPTS.use_pex = True
 
-	# trimming the netlist doesn't make much time difference
-	# OPTS.trim_netlist = False
+        # trimming the netlist doesn't make much time difference
+        # OPTS.trim_netlist = False
 
-	#Write a temporary spice file for analysis
+        #Write a temporary spice file for analysis
         tempspice = OPTS.openram_temp + "temp.sp"
-	tempgds = OPTS.openram_temp + "temp.gds"
+        tempgds = OPTS.openram_temp + "temp.gds"
         s.sp_write(tempspice)
-	s.gds_write(tempgds)
+        s.gds_write(tempgds)
 
-	#Run and debug pex test. This goes to verify folder and run_pex function
+        #Run and debug pex test. This goes to verify folder and run_pex function
         self.assertFalse(verify.run_pex(s.name, tempgds, tempspice, output=None))
 
         #os.remove(tempspice)

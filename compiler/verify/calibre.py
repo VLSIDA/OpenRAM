@@ -260,7 +260,7 @@ def run_pex(cell_name, gds_name, sp_name, output=None):
        implemented in gds_name and sp_name. """
     from tech import drc
     if output == None:
-        output = name + ".pex.netlist"
+        output = cell_name + ".pex.netlist"
 
     # check if lvs report has been done
     # if not run drc and lvs
@@ -317,8 +317,8 @@ def run_pex(cell_name, gds_name, sp_name, output=None):
 
     out_errors = len(stdouterrors)
 
-    assert(os.path.isfile(output))
-    correct_port(cell_name, output, sp_name)
+    #assert(os.path.isfile(output))
+    #correct_port(cell_name, output, sp_name)
 
     return out_errors
 

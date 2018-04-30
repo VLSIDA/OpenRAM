@@ -1,0 +1,72 @@
+// Generated on Monday Apr 23 11:55 2018
+//
+// Comments:
+//
+// xRC rule file for scn3me subm
+//
+// Technology name: scn3me subm
+// Precision: 1000
+// DBU Size: 1e-09
+// DB Magnification: 1
+// Capacitance Units: ff
+// Background Dielectric: 1
+//
+
+include $OPENRAM_TECH/scn3me_subm/tech/calibreLVS_scn3me_subm.rul
+
+// Following line(s) should be in your rulesfile
+ UNIT LENGTH 1e-6
+ UNIT CAPACITANCE ff
+// Above line(s) should be in your rulesfile
+
+
+#ifndef XCALIBRATE_EXCLUDE_PROFILE_field
+//
+//  model: 2  target: intrinsic  profile: field  layers: field_base,poly
+//
+CAPACITANCE INTRINSIC PLATE poly MASK
+[
+    PROPERTY C
+    C = 0.085 * area()
+]
+//
+//  model: 2  target: intrinsic  profile: field  layers: field_base,metal1
+//
+CAPACITANCE INTRINSIC PLATE metal1 MASK
+[
+    PROPERTY C
+    C = 0.026 * area()
+]
+//
+//  model: 2  target: intrinsic  profile: field  layers: field_base,metal2
+//
+CAPACITANCE INTRINSIC PLATE metal2 MASK
+[
+    PROPERTY C
+    C = 0.011 * area()
+]
+//
+//  model: 2  target: intrinsic  profile: field  layers: field_base,metal3
+//
+CAPACITANCE INTRINSIC PLATE metal3 MASK
+[
+    PROPERTY C
+    C = 0.007 * area()
+]
+
+
+
+#endif // XCALIBRATE_EXCLUDE_PROFILE_field
+//
+// Completed on Fri Aug 31 02:50:02 2007 by xCalibrate v2006.1_19.19 Tue Mar  7 12:29:27 PST 2006
+//
+CAPACITANCE ORDER poly metal1 metal2 metal3
+
+PEX RESISTANCE LUMPED YES
+RESISTANCE SHEET  poly [22.9 0]
+RESISTANCE SHEET metal1 [0.09 0]
+RESISTANCE SHEET metal2 [0.09 0]
+RESISTANCE SHEET metal3 [0.05 0]
+RESISTANCE CONNECTION metal1 poly[15.6 0]
+RESISTANCE CONNECTION metal1 metal2 [0.88 0]
+RESISTANCE CONNECTION metal2 metal3 [0.88 0]

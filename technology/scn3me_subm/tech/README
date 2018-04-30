@@ -1,0 +1,4 @@
+Techfiles .DRC, .LVS, and .XRC included in this folder for ease of access.
+XRC is not an official and accurate representation of the parasitic extraction (PeX), it is just used for the purposes of test 22. 
+This ensures that the technology is able to undergo parasitic extraction. 
+For SCN3ME SUBM, this extraction file is proprietary.

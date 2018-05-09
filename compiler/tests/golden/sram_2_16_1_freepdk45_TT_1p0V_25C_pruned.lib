@@ -82,7 +82,7 @@ cell (sram_2_16_1_freepdk45){
 
     leakage_power () {
       when : "CSb";
-      value : 0.00088149731;
+      value : 0.0008128352;
     }
     cell_leakage_power : 0;
     bus(DATA){
@@ -103,9 +103,9 @@ cell (sram_2_16_1_freepdk45){
             timing_type : setup_rising; 
             related_pin  : "clk"; 
             rise_constraint(CONSTRAINT_TABLE) {
-            values("0.009, 0.015, 0.021",\
-                   "0.009, 0.015, 0.021",\
-                   "0.009, 0.015, 0.021");
+            values("0.009, 0.015, 0.027",\
+                   "0.009, 0.015, 0.027",\
+                   "0.009, 0.015, 0.027");
             }
             fall_constraint(CONSTRAINT_TABLE) {
             values("0.009, 0.009, 0.015",\
@@ -133,23 +133,23 @@ cell (sram_2_16_1_freepdk45){
             timing_type : falling_edge; 
             cell_rise(CELL_TABLE) {
             values("0.054, 0.055, 0.061",\
-                   "0.055, 0.055, 0.062",\
-                   "0.06, 0.061, 0.067");
+                   "0.055, 0.056, 0.062",\
+                   "0.06, 0.061, 0.068");
             }
             cell_fall(CELL_TABLE) {
-            values("0.425, 0.426, 0.436",\
-                   "0.426, 0.427, 0.436",\
-                   "0.432, 0.433, 0.442");
+            values("0.066, 0.067, 0.075",\
+                   "0.067, 0.068, 0.076",\
+                   "0.072, 0.073, 0.082");
             }
             rise_transition(CELL_TABLE) {
             values("0.013, 0.014, 0.026",\
-                   "0.013, 0.014, 0.026",\
+                   "0.013, 0.015, 0.026",\
                    "0.013, 0.015, 0.026");
             }
             fall_transition(CELL_TABLE) {
-            values("0.027, 0.029, 0.043",\
-                   "0.027, 0.029, 0.043",\
-                   "0.027, 0.029, 0.043");
+            values("0.023, 0.024, 0.037",\
+                   "0.023, 0.024, 0.037",\
+                   "0.024, 0.024, 0.037");
             }
         }
         }
@@ -165,9 +165,9 @@ cell (sram_2_16_1_freepdk45){
             timing_type : setup_rising; 
             related_pin  : "clk"; 
             rise_constraint(CONSTRAINT_TABLE) {
-            values("0.009, 0.015, 0.021",\
-                   "0.009, 0.015, 0.021",\
-                   "0.009, 0.015, 0.021");
+            values("0.009, 0.015, 0.027",\
+                   "0.009, 0.015, 0.027",\
+                   "0.009, 0.015, 0.027");
             }
             fall_constraint(CONSTRAINT_TABLE) {
             values("0.009, 0.009, 0.015",\
@@ -199,9 +199,9 @@ cell (sram_2_16_1_freepdk45){
             timing_type : setup_rising; 
             related_pin  : "clk"; 
             rise_constraint(CONSTRAINT_TABLE) {
-            values("0.009, 0.015, 0.021",\
-                   "0.009, 0.015, 0.021",\
-                   "0.009, 0.015, 0.021");
+            values("0.009, 0.015, 0.027",\
+                   "0.009, 0.015, 0.027",\
+                   "0.009, 0.015, 0.027");
             }
             fall_constraint(CONSTRAINT_TABLE) {
             values("0.009, 0.009, 0.015",\
@@ -232,9 +232,9 @@ cell (sram_2_16_1_freepdk45){
             timing_type : setup_rising; 
             related_pin  : "clk"; 
             rise_constraint(CONSTRAINT_TABLE) {
-            values("0.009, 0.015, 0.021",\
-                   "0.009, 0.015, 0.021",\
-                   "0.009, 0.015, 0.021");
+            values("0.009, 0.015, 0.027",\
+                   "0.009, 0.015, 0.027",\
+                   "0.009, 0.015, 0.027");
             }
             fall_constraint(CONSTRAINT_TABLE) {
             values("0.009, 0.009, 0.015",\
@@ -265,9 +265,9 @@ cell (sram_2_16_1_freepdk45){
             timing_type : setup_rising; 
             related_pin  : "clk"; 
             rise_constraint(CONSTRAINT_TABLE) {
-            values("0.009, 0.015, 0.021",\
-                   "0.009, 0.015, 0.021",\
-                   "0.009, 0.015, 0.021");
+            values("0.009, 0.015, 0.027",\
+                   "0.009, 0.015, 0.027",\
+                   "0.009, 0.015, 0.027");
             }
             fall_constraint(CONSTRAINT_TABLE) {
             values("0.009, 0.009, 0.015",\
@@ -298,19 +298,19 @@ cell (sram_2_16_1_freepdk45){
         internal_power(){
             when : "!CSb & clk & !WEb"; 
             rise_power(scalar){
-                values("0.0158174252672");
+                values("0.0159801855389");
             }
             fall_power(scalar){
-                values("0.0158174252672");
+                values("0.0159801855389");
             }
         }
         internal_power(){
             when : "!CSb & !clk & WEb"; 
             rise_power(scalar){
-                values("0.0181396362394");
+                values("0.0171325605389");
             }
             fall_power(scalar){
-                values("0.0181396362394");
+                values("0.0171325605389");
             }
         }
         internal_power(){
@@ -326,20 +326,20 @@ cell (sram_2_16_1_freepdk45){
             timing_type :"min_pulse_width"; 
             related_pin  : clk; 
             rise_constraint(scalar) {
-                values("0.4295"); 
+                values("0.1125"); 
             }
             fall_constraint(scalar) {
-                values("0.4295"); 
+                values("0.1125"); 
             }
          }
         timing(){ 
             timing_type :"minimum_period"; 
             related_pin  : clk; 
             rise_constraint(scalar) {
-                values("0.859"); 
+                values("0.225"); 
             }
             fall_constraint(scalar) {
-                values("0.859"); 
+                values("0.225"); 
             }
          }
     }

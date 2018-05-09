@@ -51,7 +51,7 @@ class lib_test(openram_test):
             newname = filename.replace(".lib","_pruned.lib")
             libname = "{0}/{1}".format(OPTS.openram_temp,filename)
             golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),newname)
-            self.isapproxdiff(libname,golden,0.15)
+            self.isapproxdiff(libname,golden,0.40)
 
         OPTS.analytical_delay = True
         reload(characterizer)

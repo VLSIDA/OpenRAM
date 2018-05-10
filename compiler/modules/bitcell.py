@@ -48,15 +48,44 @@ class bitcell(design.design):
     
     def list_row_pins(self):
         # Creates a list of row pins
-        row_pins = ["WL"]    
+        row_pins = ["wl"]    
+        return row_pins
+    
+    def list_read_row_pins(self):
+        # Creates a list of row pins
+        row_pins = ["wl"]    
+        return row_pins
+        
+    def list_write_row_pins(self):
+        # Creates a list of row pins
+        row_pins = ["wl"]    
         return row_pins
     
     
     def list_column_pins(self):
         # Creates a list of column pins
-        column_pins = ["BL", "BR"]
+        column_pins = ["bl", "br"]
         return column_pins
         
+    def list_read_column_pins(self):
+        # Creates a list of column pins
+        column_pins = ["bl"]
+        return column_pins
+    
+    def list_read_bar_column_pins(self):
+        # Creates a list of column pins
+        column_pins = ["br"]
+        return column_pins
+        
+    def list_write_column_pins(self):
+        # Creates a list of column pins
+        column_pins = ["bl"]
+        return column_pins
+    
+    def list_write_bar_column_pins(self):
+        # Creates a list of column pins
+        column_pins = ["br"]
+        return column_pins
     
     def analytical_power(self, proc, vdd, temp, load):
         """Bitcell power in nW. Only characterizes leakage."""

@@ -24,12 +24,16 @@ class array_multiport_test(openram_test):
         import bitcell_array
 
         OPTS.bitcell = "pbitcell"
+        OPTS.rw_ports = 2
+        OPTS.r_ports = 2
+        OPTS.w_ports = 2
+        
         debug.info(2, "Testing 4x4 array for multiport bitcell")
         a = bitcell_array.bitcell_array(name="pbitcell_array", cols=4, rows=4)
         self.local_check(a)
 
         OPTS.check_lvsdrc = True
-        globals.end_openram()
+        #globals.end_openram()
 
 # instantiate a copy of the class to actually run the test
 if __name__ == "__main__":

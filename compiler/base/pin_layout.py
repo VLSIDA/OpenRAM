@@ -182,10 +182,12 @@ class pin_layout:
                          width=self.width(),
                          height=self.height(),
                          center=False)
+        # Add the tet in the middle of the pin.
+        # This fixes some pin label offsetting when GDS gets imported into Magic.
         newLayout.addText(text=self.name,
                           layerNumber=layer[self.layer],
                           purposeNumber=0,
-                          offsetInMicrons=self.ll(),
+                          offsetInMicrons=self.center(),
                           magnification=GDS["zoom"],
                           rotate=None)
     

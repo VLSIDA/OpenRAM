@@ -11,7 +11,7 @@ import globals
 from globals import OPTS
 import debug
 
-class single_bank_test(openram_test):
+class bank_select_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
@@ -19,23 +19,10 @@ class single_bank_test(openram_test):
         import verify
         OPTS.check_lvsdrc = False
 
-        import bank
+        import bank_select
 
         debug.info(1, "No column mux")
-        a = bank.bank(word_size=4, num_words=16, words_per_row=1, num_banks=1, name="bank1")
-        self.local_check(a)
-
-        debug.info(1, "Two way column mux")
-        a = bank.bank(word_size=4, num_words=32, words_per_row=2, num_banks=1, name="bank2")
-        self.local_check(a)
-
-        debug.info(1, "Four way column mux")
-        a = bank.bank(word_size=4, num_words=64, words_per_row=4, num_banks=1, name="bank3")
-        self.local_check(a)
-
-        # Eight way has a short circuit of one column mux select to gnd rail
-        debug.info(1, "Eight way column mux")
-        a = bank.bank(word_size=2, num_words=128, words_per_row=8, num_banks=1, name="bank4")
+        a = bank_select.bank_select()
         self.local_check(a)
         
         OPTS.check_lvsdrc = True

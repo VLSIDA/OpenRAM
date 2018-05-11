@@ -100,16 +100,9 @@ class single_level_column_mux_array(design.design):
                                 offset=offset,
                                 height=self.height-offset.y)
 
-            gnd_pins = mux_inst.get_pins("gnd")
-            for gnd_pin in gnd_pins:
-                # only do even colums to avoid duplicates
-                offset = gnd_pin.ll()
-                if col_num % 2 == 0: 
-                    self.add_layout_pin(text="gnd",
-                                        layer="metal2",
-                                        offset=offset.scale(1,0),
-                                        height=self.height)
-        
+        for inst in self.mux_inst:
+            self.copy_layout_pin(inst, "gnd")
+
 
     def add_routing(self):
         self.add_horizontal_input_rail()
@@ -119,7 +112,7 @@ class single_level_column_mux_array(design.design):
     def add_horizontal_input_rail(self):
         """ Create address input rails on M1 below the mux transistors  """
         for j in range(self.words_per_row):
-            offset = vector(0, self.route_height - (j+1)*self.m1_pitch)
+            offset = vector(0, self.route_height + (j-self.words_per_row)*self.m1_pitch)
             self.add_layout_pin(text="sel[{}]".format(j),
                                 layer="metal1",
                                 offset=offset,

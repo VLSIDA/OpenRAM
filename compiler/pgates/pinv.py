@@ -148,12 +148,12 @@ class pinv(pgate.pgate):
         
     def add_supply_rails(self):
         """ Add vdd/gnd rails to the top and bottom. """
-        self.add_layout_pin_center_rect(text="gnd",
+        self.add_layout_pin_rect_center(text="gnd",
                                         layer="metal1",
                                         offset=vector(0.5*self.width,0),
                                         width=self.width)
 
-        self.add_layout_pin_center_rect(text="vdd",
+        self.add_layout_pin_rect_center(text="vdd",
                                         layer="metal1",
                                         offset=vector(0.5*self.width,self.height),
                                         width=self.width)
@@ -208,13 +208,13 @@ class pinv(pgate.pgate):
         if self.route_output == True:
             # This extends the output to the edge of the cell
             output_offset = mid_drain_offset.scale(0,1) + vector(self.width,0)
-            self.add_layout_pin_center_segment(text="Z",
+            self.add_layout_pin_segment_center(text="Z",
                                                layer="metal1",
                                                start=mid_drain_offset,
                                                end=output_offset)
         else:
             # This leaves the output as an internal pin (min sized)
-            self.add_layout_pin_center_rect(text="Z",
+            self.add_layout_pin_rect_center(text="Z",
                                             layer="metal1",
                                             offset=mid_drain_offset + vector(0.5*self.m1_width,0))
 

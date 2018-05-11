@@ -110,6 +110,14 @@ class geometry:
         """ Return the right edge """
         return self.boundary[1].x
 
+    def cx(self):
+        """ Return the center x """
+        return 0.5*(self.boundary[0].x + self.boundary[1].x)
+    
+    def cy(self):
+        """ Return the center y """
+        return 0.5*(self.boundary[0].y + self.boundary[1].y)
+    
         
 class instance(geometry):
     """

@@ -82,7 +82,19 @@ class write_driver_array(design.design):
                                 offset=br_pin.ll(),
                                 width=br_pin.width(),
                                 height=br_pin.height())
-                           
+
+            for n in ["vdd", "gnd"]:
+                pin_list = self.driver_insts[i].get_pins(n)
+                for pin in pin_list:
+                    pin_pos = pin.center()
+                    # Add the M2->M3 stack 
+                    self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                        offset=pin_pos)
+                    self.add_layout_pin_rect_center(text=n,
+                                                    layer="metal3",
+                                                    offset=pin_pos)
+
+
 
         self.add_layout_pin(text="en",
                             layer="metal1",
@@ -90,16 +102,5 @@ class write_driver_array(design.design):
                             width=self.width,
                             height=drc['minwidth_metal1'])
                        
-        self.add_layout_pin(text="vdd",
-                            layer="metal1",
-                            offset=self.driver_insts[0].get_pin("vdd").ll().scale(0,1),
-                            width=self.width,
-                            height=drc['minwidth_metal1'])
-                       
-        self.add_layout_pin(text="gnd",
-                            layer="metal1",
-                            offset=self.driver_insts[0].get_pin("gnd").ll().scale(0,1),
-                            width=self.width,
-                            height=drc['minwidth_metal1'])
                        
 

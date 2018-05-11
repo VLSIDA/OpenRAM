@@ -13,8 +13,8 @@ class options(optparse.Values):
     # This is the name of the technology.
     tech_name = ""
     # This is the temp directory where all intermediate results are stored.
-    openram_temp = "/tmp/openram_{0}_{1}_temp/".format(getpass.getuser(),os.getpid())
-    #openram_temp = "/Users/{}/openram_temp/".format(getpass.getuser())
+    #openram_temp = "/tmp/openram_{0}_{1}_temp/".format(getpass.getuser(),os.getpid())
+    openram_temp = "{0}/openram_temp/".format(os.getenv("HOME"))
     # This is the verbosity level to control debug information. 0 is none, 1
     # is minimal, etc.
     debug_level = 0
@@ -59,7 +59,6 @@ class options(optparse.Values):
     ms_flop = "ms_flop"
     ms_flop_array = "ms_flop_array"
     dff = "dff"
-    dff_array = "dff_array"
     control_logic = "control_logic"
     bitcell_array = "bitcell_array"
     sense_amp = "sense_amp"
@@ -75,4 +74,5 @@ class options(optparse.Values):
     replica_bitcell = "replica_bitcell"
     bitcell = "bitcell"
     delay_chain = "delay_chain"
+    bank_select = "bank_select"
 

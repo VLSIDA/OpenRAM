@@ -33,10 +33,9 @@ class multi_bank_test(openram_test):
         a = bank.bank(word_size=4, num_words=64, words_per_row=4, num_banks=2, name="bank3")
         self.local_check(a)
 
-        # Eight way has a short circuit of one column mux select to gnd rail
-        # debug.info(1, "Eight way column mux")
-        # a = bank.bank(word_size=2, num_words=128, words_per_row=8, num_banks=2, name="bank4")
-        # self.local_check(a)
+        debug.info(1, "Eight way column mux")
+        a = bank.bank(word_size=2, num_words=128, words_per_row=8, num_banks=2, name="bank4")
+        self.local_check(a)
         
         OPTS.check_lvsdrc = True
         globals.end_openram()

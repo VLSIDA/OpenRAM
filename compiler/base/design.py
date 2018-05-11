@@ -30,6 +30,8 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
         # These modules ensure unique names or have no changes if they
         # aren't unique
         ok_list = ['ms_flop.ms_flop',
+                   'dff.dff',
+                   'dff_buf.dff_buf',
                    'bitcell.bitcell',
                    'contact.contact',
                    'ptx.ptx',

@@ -62,51 +62,49 @@ class sense_amp_array(design.design):
             br_offset = amp_position + br_pin.ll().scale(1,0)
             dout_offset = amp_position + dout_pin.ll()
             
-            self.add_inst(name=name,
+            inst = self.add_inst(name=name,
                           mod=self.amp,
                           offset=amp_position)
-            self.connect_inst(["bl[{0}]".format(i),"br[{0}]".format(i), 
+            self.connect_inst(["bl[{0}]".format(i),
+                               "br[{0}]".format(i), 
                                "data[{0}]".format(i/self.words_per_row), 
                                "en", "vdd", "gnd"])
 
-            self.add_layout_pin(text="bl[{0}]".format(i),
+            
+            gnd_pos = inst.get_pin("gnd").center()
+            self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                offset=gnd_pos)
+            self.add_layout_pin_rect_center(text="gnd",
+                                            layer="metal3",
+                                            offset=gnd_pos)
+
+            vdd_pos = inst.get_pin("vdd").center()
+            self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                offset=vdd_pos)
+            self.add_layout_pin_rect_center(text="vdd",
+                                            layer="metal3",
+                                            offset=vdd_pos)
+            
+
+            self.add_layout_pin(text="bl[{0}]".format(i/self.words_per_row),
                                 layer="metal2",
                                 offset=bl_offset,
                                 width=bl_pin.width(),
                                 height=bl_pin.height())
-            self.add_layout_pin(text="br[{0}]".format(i),
+            self.add_layout_pin(text="br[{0}]".format(i/self.words_per_row),
                                 layer="metal2",
                                 offset=br_offset,
                                 width=br_pin.width(),
                                 height=br_pin.height())
                            
             self.add_layout_pin(text="data[{0}]".format(i/self.words_per_row),
-                                layer="metal3",
+                                layer="metal2",
                                 offset=dout_offset,
                                 width=dout_pin.width(),
                                 height=dout_pin.height())
                            
 
-
-
     def connect_rails(self):
-        # add vdd rail across entire array
-        vdd_offset = self.amp.get_pin("vdd").ll().scale(0,1)
-        self.add_layout_pin(text="vdd",
-                      layer="metal1",
-                      offset=vdd_offset,
-                      width=self.width,
-                      height=drc["minwidth_metal1"])
-
-        # NOTE:the gnd rails are vertical so it is not connected horizontally
-        # add gnd rail across entire array
-        gnd_offset = self.amp.get_pin("gnd").ll().scale(0,1)
-        self.add_layout_pin(text="gnd",
-                      layer="metal1",
-                      offset=gnd_offset,
-                      width=self.width,
-                      height=drc["minwidth_metal1"])
-
         # add sclk rail across entire array
         sclk_offset = self.amp.get_pin("en").ll().scale(0,1)
         self.add_layout_pin(text="en",

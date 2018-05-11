@@ -24,9 +24,6 @@ class replica_bitline(design.design):
         g = reload(__import__(OPTS.replica_bitcell))
         self.mod_replica_bitcell = getattr(g, OPTS.replica_bitcell)
 
-        c = reload(__import__(OPTS.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.bitcell)
-
         for pin in ["en", "out", "vdd", "gnd"]:
             self.add_pin(pin)
         self.bitcell_loads = bitcell_loads
@@ -136,6 +133,21 @@ class replica_bitline(design.design):
         self.route_vdd()
         self.route_gnd()
         self.route_access_tx()
+
+    def route_vdd_gnd(self):
+        """ Route all the vdd and gnd pins to the top level """
+            def route_vdd_gnd(self):
+        """ Propagate all vdd/gnd pins up to this level for all modules """
+
+        # These are the instances that every bank has
+        top_instances = [self.rbl_inst,
+                         self.rbl_inv_inst,
+                         self.rbc_inst,
+                         self.dc_inst]
+        
+        for inst in top_instances:
+            self.copy_layout_pin(inst, "vdd")
+            self.copy_layout_pin(inst, "gnd")
 
 
     def route_access_tx(self):

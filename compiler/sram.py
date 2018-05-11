@@ -517,8 +517,6 @@ class sram(design.design):
             self.add_via_center(("metal2","via2","metal3"),rail_pos)
 
 
-        self.route_bank_supply_rails(left_banks=[0], bottom_banks=[0,1])
-        
         
     def route_double_msb_address(self):
         """ Route two MSB address bits and the bank decoder for 4-bank SRAM """
@@ -738,66 +736,33 @@ class sram(design.design):
         
 
 
-    def route_bank_supply_rails(self, left_banks, bottom_banks):
-        """ Create rails at bottom. Connect veritcal rails to top and bottom. """
+    def route_vdd_gnd(self):
+        """ Propagate all vdd/gnd pins up to this level for all modules """
 
-        for i in left_banks:
-            vdd_pins = self.bank_inst[i].get_pins("vdd")
-            for vdd_pin in vdd_pins:
-                if vdd_pin.layer != "metal1":
-                    continue
-                self.add_layout_pin(text="vdd",
-                                    layer=vdd_pin.layer,
-                                    offset=vdd_pin.ll(),
-                                    height=vdd_pin.height(),
-                                    width=self.width)
+        # These are the instances that every bank has
+        top_instances = [self.bitcell_array_inst,
+                         self.precharge_array_inst,
+                         self.sense_amp_array_inst,
+                         self.write_driver_array_inst,
+                         self.tri_gate_array_inst,
+                         self.row_decoder_inst,
+                         self.wordline_driver_inst]
+        # Add these if we use the part...
+        if self.col_addr_size > 0:
+            top_instances.append(self.col_decoder_inst)
+            top_instances.append(self.col_mux_array_inst)
+            
+        if self.num_banks > 1:
+            top_instances.append(self.bank_select_inst)
 
-            gnd_pins = self.bank_inst[i].get_pins("gnd")
-            for gnd_pin in gnd_pins:
-                if gnd_pin.layer != "metal1":
-                    continue
-                self.add_layout_pin(text="gnd",
-                                    layer=gnd_pin.layer,
-                                    offset=gnd_pin.ll(),
-                                    height=gnd_pin.height(),
-                                    width=self.width)
-                
-
-
-        # route bank vertical rails to bottom
-        for i in bottom_banks:
-            vdd_pins = self.bank_inst[i].get_pins("vdd")
-            for vdd_pin in vdd_pins:
-                if vdd_pin.layer != "metal2":
-                    continue
-                # Route from bottom to top
-                self.add_rect(layer=vdd_pin.layer,
-                              offset=vdd_pin.ll(),
-                              height=self.horz_control_bus_positions["vdd"].y, 
-                              width=vdd_pin.width())
-                # Add vias at top
-                rail_pos = vector(vdd_pin.cx(),self.horz_control_bus_positions["vdd"].y)
-                self.add_via_center(layers=("metal1","via1","metal2"),
-                             offset=rail_pos,
-                             rotate=90,
-                             size=[1,3])
-
-            gnd_pins = self.bank_inst[i].get_pins("gnd")
-            for gnd_pin in gnd_pins:
-                if gnd_pin.layer != "metal2":
-                    continue
-                # Route from bottom to top
-                self.add_rect(layer=gnd_pin.layer,
-                              offset=gnd_pin.ll(),
-                              height=self.horz_control_bus_positions["gnd"].y, 
-                              width=gnd_pin.width())
-                # Add vias at top
-                rail_pos = vector(gnd_pin.cx(),self.horz_control_bus_positions["gnd"].y)
-                self.add_via_center(layers=("metal1","via1","metal2"),
-                             offset=rail_pos,
-                             rotate=90,
-                             size=[1,3])
-                
+        
+        for inst in top_instances:
+            # Column mux has no vdd
+            if self.col_addr_size==0 or (self.col_addr_size>0 and inst != self.col_mux_array_inst):
+                self.copy_layout_pin(inst, "vdd")
+            # Precharge has no gnd
+            if inst != self.precharge_array_inst:
+                self.copy_layout_pin(inst, "gnd")
         
         
     def create_multi_bank_modules(self):
@@ -875,7 +840,9 @@ class sram(design.design):
 
         temp = []
         for i in range(self.word_size):
-            temp.append("DATA[{0}]".format(i))
+            temp.append("DOUT[{0}]".format(i))
+        for i in range(self.word_size):
+            temp.append("DIN[{0}]".format(i))
         for i in range(self.bank_addr_size):
             temp.append("A[{0}]".format(i))
         if(self.num_banks > 1):
@@ -977,8 +944,8 @@ class sram(design.design):
         """
 
         for i in range(self.word_size):
-            self.copy_layout_pin(self.bank_inst, "DATA[{}]".format(i))
-
+            self.copy_layout_pin(self.bank_inst, "DOUT[{}]".format(i))
+            
         for i in range(self.addr_size):
             self.copy_layout_pin(self.addr_dff_inst, "din[{}]".format(i),"ADDR[{}]".format(i))
 
@@ -1045,13 +1012,6 @@ class sram(design.design):
                                 rotate=90)
             
 
-        # Expand the ring around the bank to include flops and control logic
-        bbox_lr = vector(self.control_logic_inst.lx(), self.bank_inst.by() + 2*self.supply_rail_pitch)
-        bbox_ur = self.bank_inst.ur() - vector(2*self.supply_rail_pitch, 2*self.supply_rail_pitch)
-        self.add_power_ring([bbox_lr, bbox_ur])  
-        self.route_single_bank_vdd()
-        self.route_single_bank_gnd()
-
         # Connect the output of the flops to the bank pins
         for i in range(self.addr_size):
             flop_name = "dout[{}]".format(i)
@@ -1083,43 +1043,6 @@ class sram(design.design):
         self.add_wire(("metal1","via1","metal2"),[flop_pin.uc(), mid1_pos, mid2_pos, ctrl_pin.bc()])  
 
         
-    def route_single_bank_vdd(self):
-        """ Route vdd for the control and dff array """
-
-        # Route the vdd rails to the LEFT
-        modules = [ self.control_logic_inst, self.addr_dff_inst]
-        for inst in modules:
-            for vdd_pin in inst.get_pins("vdd"):
-                if vdd_pin.layer != "metal1":
-                    continue
-                vdd_pos = vdd_pin.rc()
-                left_rail_pos = vector(self.left_vdd_x_center, vdd_pos.y)
-                self.add_path("metal1", [left_rail_pos, vdd_pos])
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                    offset=left_rail_pos,
-                                    size = (1,self.supply_vias),
-                                    rotate=90)
-
-                
-            
-    def route_single_bank_gnd(self):
-        """ Route gnd for the control and dff array """
-
-        # Route the gnd rails to the LEFT
-        modules = [ self.control_logic_inst, self.addr_dff_inst]
-        for inst in modules:
-            for gnd_pin in inst.get_pins("gnd"):
-                if gnd_pin.layer != "metal1":
-                    continue
-                gnd_pos = gnd_pin.rc()
-                left_rail_pos = vector(self.left_gnd_x_center, gnd_pos.y)
-                self.add_path("metal1", [left_rail_pos, gnd_pos])
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                    offset=left_rail_pos,
-                                    size = (1,self.supply_vias),
-                                    rotate=90)
-
-            
 
     def sp_write(self, sp_name):
         # Write the entire spice of the object to the file

@@ -208,7 +208,16 @@ def cleanup_paths():
         debug.info(0,"Preserving temp directory: {}".format(OPTS.openram_temp))
         return
     if os.path.exists(OPTS.openram_temp):
-        shutil.rmtree(OPTS.openram_temp, ignore_errors=True)
+        # This annoyingly means you have to re-cd into the directory each debug iteration
+        #shutil.rmtree(OPTS.openram_temp, ignore_errors=True)
+        contents = [os.path.join(OPTS.openram_temp, i) for i in os.listdir(OPTS.openram_temp)]
+        for i in contents:
+            if os.path.isfile(i) or os.path.islink(i):
+                os.remove(i)
+            else:
+                shutil.rmtree(i)
+
+        
             
 def setup_paths():
     """ Set up the non-tech related paths. """

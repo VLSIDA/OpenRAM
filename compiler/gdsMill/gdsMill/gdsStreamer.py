@@ -122,11 +122,11 @@ class GdsStreamer:
         #stream the gds out from cadence
         worker = os.popen("pipo strmout "+self.workingDirectory+"/partStreamOut.tmpl")
         #dump the outputs to the screen line by line
-        print "Streaming Out From Cadence......"
+        print("Streaming Out From Cadence......")
         while 1:
             line = worker.readline()
             if not line: break  #this means sim is finished so jump out
-            #else: print line   #for debug only
+            #else: print(line)   #for debug only
         worker.close()
         #now remove the template file
         os.remove(self.workingDirectory+"/partStreamOut.tmpl")
@@ -142,11 +142,11 @@ class GdsStreamer:
         #stream the gds out from cadence
         worker = os.popen("pipo strmin "+self.workingDirectory+"/partStreamIn.tmpl")
         #dump the outputs to the screen line by line
-        print "Streaming In To Cadence......"
+        print("Streaming In To Cadence......")
         while 1:
             line = worker.readline()
             if not line: break  #this means sim is finished so jump out
-            #else: print line   #for debug only
+            #else: print(line)   #for debug only
         worker.close()
         #now remove the template file
         os.remove(self.workingDirectory+"/partStreamIn.tmpl")

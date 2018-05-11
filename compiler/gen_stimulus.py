@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 """
 This script will generate a stimulus file for a given period, load, and slew input
 for the given dimension SRAM. It is useful for debugging after an SRAM has been

@@ -1,5 +1,5 @@
-#!/usr/bin/env python2.7
-"Run a regresion test for DRC on basic contacts of different array sizes"
+#!/usr/bin/env python3
+"Run a regression test for DRC on basic contacts of different array sizes"
 
 import unittest
 from testutils import header,openram_test

@@ -1,10 +1,10 @@
-#!/usr/bin/env python2.7
-"Run a regresion test the library cells for DRC"
+#!/usr/bin/env python3
+"Run a regression test the library cells for DRC"
 
 import unittest
 from testutils import header,openram_test
 import sys,os,re
-sys.path.append(os.path.join(sys.path[0],".."))
+#sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug

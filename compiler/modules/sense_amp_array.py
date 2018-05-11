@@ -14,6 +14,7 @@ class sense_amp_array(design.design):
         design.design.__init__(self, "sense_amp_array")
         debug.info(1, "Creating {0}".format(self.name))
 
+        from importlib import reload
         c = reload(__import__(OPTS.sense_amp))
         self.mod_sense_amp = getattr(c, OPTS.sense_amp)
         self.amp = self.mod_sense_amp("sense_amp")
@@ -33,7 +34,8 @@ class sense_amp_array(design.design):
     def add_pins(self):
 
         for i in range(0,self.row_size,self.words_per_row):
-            self.add_pin("data[{0}]".format(i/self.words_per_row))
+            index = int(i/self.words_per_row)
+            self.add_pin("data[{0}]".format(index))
             self.add_pin("bl[{0}]".format(i))
             self.add_pin("br[{0}]".format(i))
 
@@ -62,12 +64,14 @@ class sense_amp_array(design.design):
             br_offset = amp_position + br_pin.ll().scale(1,0)
             dout_offset = amp_position + dout_pin.ll()
             
+            index = int(i/self.words_per_row)
+            
             inst = self.add_inst(name=name,
                           mod=self.amp,
                           offset=amp_position)
             self.connect_inst(["bl[{0}]".format(i),
                                "br[{0}]".format(i), 
-                               "data[{0}]".format(i/self.words_per_row), 
+                               "data[{0}]".format(index), 
                                "en", "vdd", "gnd"])
 
             
@@ -85,19 +89,18 @@ class sense_amp_array(design.design):
                                             layer="metal3",
                                             offset=vdd_pos)
             
-
-            self.add_layout_pin(text="bl[{0}]".format(i/self.words_per_row),
+            self.add_layout_pin(text="bl[{0}]".format(i),
                                 layer="metal2",
                                 offset=bl_offset,
                                 width=bl_pin.width(),
                                 height=bl_pin.height())
-            self.add_layout_pin(text="br[{0}]".format(i/self.words_per_row),
+            self.add_layout_pin(text="br[{0}]".format(i),
                                 layer="metal2",
                                 offset=br_offset,
                                 width=br_pin.width(),
                                 height=br_pin.height())
                            
-            self.add_layout_pin(text="data[{0}]".format(i/self.words_per_row),
+            self.add_layout_pin(text="data[{0}]".format(index),
                                 layer="metal2",
                                 offset=dout_offset,
                                 width=dout_pin.width(),

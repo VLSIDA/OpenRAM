@@ -26,6 +26,7 @@ class bank(design.design):
                     "bitcell_array",   "sense_amp_array",    "precharge_array",
                     "column_mux_array", "write_driver_array", "tri_gate_array",
                     "bank_select"]
+        from importlib import reload
         for mod_name in mod_list:
             config_mod_name = getattr(OPTS, mod_name)
             class_file = reload(__import__(config_mod_name))
@@ -130,8 +131,8 @@ class bank(design.design):
     def compute_sizes(self):
         """  Computes the required sizes to create the bank """
 
-        self.num_cols = self.words_per_row*self.word_size
-        self.num_rows = self.num_words / self.words_per_row
+        self.num_cols = int(self.words_per_row*self.word_size)
+        self.num_rows = int(self.num_words / self.words_per_row)
 
         self.row_addr_size = int(log(self.num_rows, 2))
         self.col_addr_size = int(log(self.words_per_row, 2))
@@ -320,7 +321,7 @@ class bank(design.design):
         y_offset = self.sense_amp_array.height+self.column_mux_height \
                    + self.write_driver_array.height + self.m2_gap + self.tri_gate_array.height
         self.tri_gate_array_inst=self.add_inst(name="tri_gate_array", 
-                                              mod=self.tri_gate_array, 
+                                               mod=self.tri_gate_array, 
                                                offset=vector(0,y_offset).scale(-1,-1))
                   
         temp = []
@@ -852,9 +853,7 @@ class bank(design.design):
         
     def analytical_delay(self, slew, load):
         """ return  analytical delay of the bank"""
-        msf_addr_delay = self.msf_address.analytical_delay(slew, self.row_decoder.input_load())
-
-        decoder_delay = self.row_decoder.analytical_delay(msf_addr_delay.slew, self.wordline_driver.input_load())
+        decoder_delay = self.row_decoder.analytical_delay(slew, self.wordline_driver.input_load())
 
         word_driver_delay = self.wordline_driver.analytical_delay(decoder_delay.slew, self.bitcell_array.input_load())
 
@@ -866,7 +865,6 @@ class bank(design.design):
 
         data_t_DATA_delay = self.tri_gate_array.analytical_delay(bl_t_data_out_delay.slew, load)
 
-        result = msf_addr_delay + decoder_delay + word_driver_delay \
-                 + bitcell_array_delay + bl_t_data_out_delay + data_t_DATA_delay
+        result = decoder_delay + word_driver_delay + bitcell_array_delay + bl_t_data_out_delay + data_t_DATA_delay
         return result
         

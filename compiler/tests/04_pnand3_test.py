@@ -1,6 +1,6 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 """
-Run regresion tests on a parameterized pnand3.
+Run regression tests on a parameterized pnand3.
 This module doesn't generate a multi-finger 3-input nand gate.
 It generates only a minimum size 3-input nand gate.
 """

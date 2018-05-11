@@ -17,6 +17,7 @@ class single_level_column_mux(design.design):
         design.design.__init__(self, name)
         debug.info(2, "create single column mux cell: {0}".format(name))
 
+        from importlib import reload
         c = reload(__import__(OPTS.bitcell))
         self.mod_bitcell = getattr(c, OPTS.bitcell)
         self.bitcell = self.mod_bitcell()

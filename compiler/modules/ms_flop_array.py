@@ -20,6 +20,7 @@ class ms_flop_array(design.design):
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(self.name))
 
+        from importlib import reload
         c = reload(__import__(OPTS.ms_flop))
         self.mod_ms_flop = getattr(c, OPTS.ms_flop)
         self.ms = self.mod_ms_flop("ms_flop")
@@ -27,7 +28,7 @@ class ms_flop_array(design.design):
 
         self.width = self.columns * self.ms.width
         self.height = self.ms.height
-        self.words_per_row = self.columns / self.word_size
+        self.words_per_row = int(self.columns / self.word_size)
 
         self.create_layout()
 
@@ -57,13 +58,16 @@ class ms_flop_array(design.design):
             else:
                 base = vector((i+1)*self.ms.width,0)
                 mirror = "MY"
-            self.ms_inst[i/self.words_per_row]=self.add_inst(name=name,
+
+            index = int(i/self.words_per_row)
+                
+            self.ms_inst[index]=self.add_inst(name=name,
                                                              mod=self.ms,
                                                              offset=base, 
                                                              mirror=mirror)
-            self.connect_inst(["din[{0}]".format(i/self.words_per_row),
-                               "dout[{0}]".format(i/self.words_per_row),
-                               "dout_bar[{0}]".format(i/self.words_per_row),
+            self.connect_inst(["din[{0}]".format(index),
+                               "dout[{0}]".format(index),
+                               "dout_bar[{0}]".format(index),
                                "clk",
                                "vdd", "gnd"])
 

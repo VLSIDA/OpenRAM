@@ -11,6 +11,7 @@ class pinvbuf(design.design):
     This is a simple inverter/buffer used for driving loads. It is
     used in the column decoder for 1:2 decoding and as the clock buffer.
     """
+    from importlib import reload
     c = reload(__import__(OPTS.bitcell))
     bitcell = getattr(c, OPTS.bitcell)
 

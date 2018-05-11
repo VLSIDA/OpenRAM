@@ -1,5 +1,5 @@
-#!/usr/bin/env python2.7
-"Run a regresion test the library cells for LVS"
+#!/usr/bin/env python3
+"Run a regression test the library cells for LVS"
 
 import unittest
 from testutils import header,openram_test
@@ -38,7 +38,7 @@ def setup_files():
     sp_dir = OPTS.openram_tech + "/sp_lib"
     files = os.listdir(gds_dir)
     nametest = re.compile("\.gds$", re.IGNORECASE)
-    gds_files = filter(nametest.search, files)
+    gds_files = list(filter(nametest.search, files))
     files = os.listdir(sp_dir)
     nametest = re.compile("\.sp$", re.IGNORECASE)
     sp_files = filter(nametest.search, files)

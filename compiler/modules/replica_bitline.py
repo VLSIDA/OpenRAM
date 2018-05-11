@@ -18,6 +18,7 @@ class replica_bitline(design.design):
     def __init__(self, delay_stages, delay_fanout, bitcell_loads, name="replica_bitline"):
         design.design.__init__(self, name)
 
+        from importlib import reload
         g = reload(__import__(OPTS.delay_chain))
         self.mod_delay_chain = getattr(g, OPTS.delay_chain)
 
@@ -132,11 +133,10 @@ class replica_bitline(design.design):
         """ Connect all the signals together """
         self.route_vdd()
         self.route_gnd()
+        self.route_vdd_gnd()
         self.route_access_tx()
 
     def route_vdd_gnd(self):
-        """ Route all the vdd and gnd pins to the top level """
-            def route_vdd_gnd(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """
 
         # These are the instances that every bank has

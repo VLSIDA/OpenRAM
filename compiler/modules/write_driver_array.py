@@ -15,6 +15,7 @@ class write_driver_array(design.design):
         design.design.__init__(self, "write_driver_array")
         debug.info(1, "Creating {0}".format(self.name))
 
+        from importlib import reload
         c = reload(__import__(OPTS.write_driver))
         self.mod_write_driver = getattr(c, OPTS.write_driver)
         self.driver = self.mod_write_driver("write_driver")
@@ -22,7 +23,7 @@ class write_driver_array(design.design):
 
         self.columns = columns
         self.word_size = word_size
-        self.words_per_row = columns / word_size
+        self.words_per_row = int(columns / word_size)
 
         self.width = self.columns * self.driver.width
         self.height = self.height = self.driver.height
@@ -51,13 +52,14 @@ class write_driver_array(design.design):
             name = "Xwrite_driver{}".format(i)
             base = vector(i * self.driver.width,0)
             
-            self.driver_insts[i/self.words_per_row]=self.add_inst(name=name,
-                                                                  mod=self.driver,
-                                                                  offset=base)
+            index = int(i/self.words_per_row)
+            self.driver_insts[index]=self.add_inst(name=name,
+                                                   mod=self.driver,
+                                                   offset=base)
 
-            self.connect_inst(["data[{0}]".format(i/self.words_per_row),
-                               "bl[{0}]".format(i/self.words_per_row),
-                               "br[{0}]".format(i/self.words_per_row),
+            self.connect_inst(["data[{0}]".format(index),
+                               "bl[{0}]".format(index),
+                               "br[{0}]".format(index),
                                "en", "vdd", "gnd"])
 
 

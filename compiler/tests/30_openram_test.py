@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 """
 This tests the top-level executable. It checks that it generates the
 appropriate files: .lef, .lib, .sp, .gds, .v. It DOES NOT, however,
@@ -29,10 +29,10 @@ class openram_test(openram_test):
         self.assertEqual(os.path.exists(out_path),False)
 
         try:
-            os.makedirs(out_path, 0750)
+            os.makedirs(out_path, 0o0750)
         except OSError as e:
             if e.errno == 17:  # errno.EEXIST
-                os.chmod(out_path, 0750)
+                os.chmod(out_path, 0o0750)
 
         # specify the same verbosity for the system call
         verbosity = ""
@@ -42,7 +42,7 @@ class openram_test(openram_test):
             
         OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
 
-        cmd = "python2.7 {0}/openram.py -n -o {1} -p {2} {3} config_20_{4}.py 2>&1 > {5}/output.log".format(OPENRAM_HOME,
+        cmd = "python3 {0}/openram.py -n -o {1} -p {2} {3} config_20_{4}.py 2>&1 > {5}/output.log".format(OPENRAM_HOME,
                                                                                                             out_file,
                                                                                                             out_path,
                                                                                                             verbosity,

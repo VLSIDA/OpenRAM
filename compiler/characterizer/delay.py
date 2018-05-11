@@ -2,9 +2,9 @@ import sys,re,shutil
 import debug
 import tech
 import math
-import stimuli
-from trim_spice import trim_spice
-import charutils as ch
+from .stimuli import *
+from .trim_spice import *
+from .charutils import *
 import utils
 from globals import OPTS
 
@@ -101,7 +101,7 @@ class delay():
         self.sf.write("* Delay stimulus for period of {0}n load={1}fF slew={2}ns\n\n".format(self.period,
                                                                                              self.load,
                                                                                              self.slew))
-        self.stim = stimuli.stimuli(self.sf, self.corner)
+        self.stim = stimuli(self.sf, self.corner)
         # include files in stimulus file
         self.stim.write_include(self.trim_sp_file)
 
@@ -339,16 +339,16 @@ class delay():
         # Checking from not data_value to data_value
         self.write_delay_stimulus()
         self.stim.run_sim()
-        delay_hl = ch.parse_output("timing", "delay_hl")
-        delay_lh = ch.parse_output("timing", "delay_lh")
-        slew_hl = ch.parse_output("timing", "slew_hl")
-        slew_lh = ch.parse_output("timing", "slew_lh")
+        delay_hl = parse_output("timing", "delay_hl")
+        delay_lh = parse_output("timing", "delay_lh")
+        slew_hl = parse_output("timing", "slew_hl")
+        slew_lh = parse_output("timing", "slew_lh")
         delays = (delay_hl, delay_lh, slew_hl, slew_lh)
 
-        read0_power=ch.parse_output("timing", "read0_power")
-        write0_power=ch.parse_output("timing", "write0_power")
-        read1_power=ch.parse_output("timing", "read1_power")
-        write1_power=ch.parse_output("timing", "write1_power")
+        read0_power=parse_output("timing", "read0_power")
+        write0_power=parse_output("timing", "write0_power")
+        read1_power=parse_output("timing", "read1_power")
+        write1_power=parse_output("timing", "write1_power")
 
         if not self.check_valid_delays(delays):
             return (False,{})
@@ -378,22 +378,24 @@ class delay():
 
         self.write_power_stimulus(trim=False)
         self.stim.run_sim()
-        leakage_power=ch.parse_output("timing", "leakage_power")
+        leakage_power=parse_output("timing", "leakage_power")
         debug.check(leakage_power!="Failed","Could not measure leakage power.")
 
 
         self.write_power_stimulus(trim=True)
         self.stim.run_sim()
-        trim_leakage_power=ch.parse_output("timing", "leakage_power")
+        trim_leakage_power=parse_output("timing", "leakage_power")
         debug.check(trim_leakage_power!="Failed","Could not measure leakage power.")
 
         # For debug, you sometimes want to inspect each simulation.
         #key=raw_input("press return to continue")
         return (leakage_power*1e3, trim_leakage_power*1e3)
     
-    def check_valid_delays(self, (delay_hl, delay_lh, slew_hl, slew_lh)):
+    def check_valid_delays(self, delay_tuple):
         """ Check if the measurements are defined and if they are valid. """
 
+        (delay_hl, delay_lh, slew_hl, slew_lh) = delay_tuple
+        
         # if it failed or the read was longer than a period
         if type(delay_hl)!=float or type(delay_lh)!=float or type(slew_lh)!=float or type(slew_hl)!=float:
             debug.info(2,"Failed simulation: period {0} load {1} slew {2}, delay_hl={3}n delay_lh={4}ns slew_hl={5}n slew_lh={6}n".format(self.period,
@@ -457,7 +459,7 @@ class delay():
             else:
                 lb_period = target_period
 
-            if ch.relative_compare(ub_period, lb_period, error_tolerance=0.05):
+            if relative_compare(ub_period, lb_period, error_tolerance=0.05):
                 # ub_period is always feasible
                 return ub_period
 
@@ -471,10 +473,10 @@ class delay():
         # Checking from not data_value to data_value
         self.write_delay_stimulus()
         self.stim.run_sim()
-        delay_hl = ch.parse_output("timing", "delay_hl")
-        delay_lh = ch.parse_output("timing", "delay_lh")
-        slew_hl = ch.parse_output("timing", "slew_hl")
-        slew_lh = ch.parse_output("timing", "slew_lh")
+        delay_hl = parse_output("timing", "delay_hl")
+        delay_lh = parse_output("timing", "delay_lh")
+        slew_hl = parse_output("timing", "slew_hl")
+        slew_lh = parse_output("timing", "slew_lh")
         # if it failed or the read was longer than a period
         if type(delay_hl)!=float or type(delay_lh)!=float or type(slew_lh)!=float or type(slew_hl)!=float:
             debug.info(2,"Invalid measures: Period {0}, delay_hl={1}ns, delay_lh={2}ns slew_hl={3}ns slew_lh={4}ns".format(self.period,
@@ -495,10 +497,10 @@ class delay():
                                                                                                                               slew_lh))
             return False
         else:
-            if not ch.relative_compare(delay_lh,feasible_delay_lh,error_tolerance=0.05):
+            if not relative_compare(delay_lh,feasible_delay_lh,error_tolerance=0.05):
                 debug.info(2,"Delay too big {0} vs {1}".format(delay_lh,feasible_delay_lh))
                 return False
-            elif not ch.relative_compare(delay_hl,feasible_delay_hl,error_tolerance=0.05):
+            elif not relative_compare(delay_hl,feasible_delay_hl,error_tolerance=0.05):
                 debug.info(2,"Delay too big {0} vs {1}".format(delay_hl,feasible_delay_hl))
                 return False
 
@@ -602,7 +604,7 @@ class delay():
         debug.info(1, "Min Period: {0}n with a delay of {1} / {2}".format(min_period, feasible_delay_lh, feasible_delay_hl))
 
         # 4) Pack up the final measurements
-        char_data["min_period"] = ch.round_time(min_period)
+        char_data["min_period"] = round_time(min_period)
         
         return char_data
 

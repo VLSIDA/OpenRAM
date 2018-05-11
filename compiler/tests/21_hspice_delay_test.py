@@ -1,6 +1,6 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 """
-Run a regresion test on various srams
+Run a regression test on various srams
 """
 
 import unittest
@@ -20,6 +20,7 @@ class timing_sram_test(openram_test):
         OPTS.analytical_delay = False
         
         # This is a hack to reload the characterizer __init__ with the spice version
+        from importlib import reload
         import characterizer
         reload(characterizer)
         from characterizer import delay
@@ -66,7 +67,7 @@ class timing_sram_test(openram_test):
                            'delay_lh': [0.6538954],
                            'read0_power': [9.7622],
                            'read1_power': [9.589],
-                           'write1_power': [10.2578],
+                           'write1_power': [10.8],
                            'write0_power': [6.928400000000001],
                            'slew_hl': [0.8321625],
                            'min_period': 2.344,

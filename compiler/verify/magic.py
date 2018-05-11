@@ -178,7 +178,7 @@ def run_drc(cell_name, gds_name, extract=False):
     # those lines should be the last 3
     for line in results:
         if "Total DRC errors found:" in line:
-            errors = int(re.split(":\W+", line)[1])
+            errors = int(re.split(": ", line)[1])
             break
 
     # always display this summary
@@ -232,13 +232,13 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
 
     # There were property errors in any module.
     test = re.compile("Property errors were found.")
-    propertyerrors = filter(test.search, results)
+    propertyerrors = list(filter(test.search, results))
     total_errors += len(propertyerrors)
     
     # Require pins to match?
     # Cell pin lists for pnand2_1.spice and pnand2_1 altered to match.
     # test = re.compile(".*altered to match.")
-    # pinerrors = filter(test.search, results)
+    # pinerrors = list(filter(test.search, results))
     # if len(pinerrors)>0:
     #     debug.warning("Pins altered to match in {}.".format(cell_name))
     
@@ -247,12 +247,12 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
 
     # Netlists do not match.
     test = re.compile("Netlists do not match.")
-    incorrect = filter(test.search, final_results)
+    incorrect = list(filter(test.search, final_results))
     total_errors += len(incorrect)
     
     # Netlists match uniquely.
-    test = re.compile("Netlists match uniquely.")
-    correct = filter(test.search, final_results)
+    test = re.compile("match uniquely.")
+    correct = list(filter(test.search, final_results))
     # Fail if they don't match. Something went wrong!
     if len(correct) == 0:
         total_errors += 1
@@ -326,7 +326,7 @@ def run_pex(name, gds_name, sp_name, output=None):
 
     # Errors begin with "ERROR:"
     test = re.compile("ERROR:")
-    stdouterrors = filter(test.search, results)
+    stdouterrors = list(filter(test.search, results))
     for e in stdouterrors:
         debug.error(e.strip("\n"))
 

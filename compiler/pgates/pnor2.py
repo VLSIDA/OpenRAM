@@ -12,6 +12,7 @@ class pnor2(pgate.pgate):
     This model use ptx to generate a 2-input nor within a cetrain height.
     """
 
+    from importlib import reload
     c = reload(__import__(OPTS.bitcell))
     bitcell = getattr(c, OPTS.bitcell)
 

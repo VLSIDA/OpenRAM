@@ -37,8 +37,4 @@ os.environ["SPICE_MODEL_DIR"] = PDK_DIR+"/ncsu_basekit/models/hspice/tran_models
 ##########################
 #Paths required for OPENRAM to function
 
-sys.path.append("{0}/{1}".format(LOCAL,TECHNOLOGY))
-
-
-
-
+sys.path.append("{0}/{1}/tech".format(LOCAL,TECHNOLOGY))

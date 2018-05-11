@@ -1,6 +1,6 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 """
-Run regresion tests on a parameterized inverter
+Run regression tests on a parameterized inverter
 """
 
 import unittest

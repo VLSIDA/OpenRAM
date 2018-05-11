@@ -1,5 +1,5 @@
-#!/usr/bin/env python2.7
-"Run a regresion test on a basic parameterized transistors"
+#!/usr/bin/env python3
+"Run a regression test on a basic parameterized transistors"
 
 import unittest
 from testutils import header,openram_test

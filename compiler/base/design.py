@@ -29,18 +29,18 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
         # because each reference must be a unique name.
         # These modules ensure unique names or have no changes if they
         # aren't unique
-        ok_list = ['ms_flop.ms_flop',
-                   'dff.dff',
-                   'dff_buf.dff_buf',
-                   'bitcell.bitcell',
-                   'contact.contact',
-                   'ptx.ptx',
-                   'sram.sram',
-                   'hierarchical_predecode2x4.hierarchical_predecode2x4',
-                   'hierarchical_predecode3x8.hierarchical_predecode3x8']
+        ok_list = ['ms_flop',
+                   'dff',
+                   'dff_buf',
+                   'bitcell',
+                   'contact',
+                   'ptx',
+                   'sram',
+                   'hierarchical_predecode2x4',
+                   'hierarchical_predecode3x8']
         if name not in design.name_map:
             design.name_map.append(name)
-        elif str(self.__class__) in ok_list:
+        elif self.__class__.__name__ in ok_list:
             pass
         else:
             debug.error("Duplicate layout reference name {0} of class {1}. GDS2 requires names be unique.".format(name,self.__class__),-1)

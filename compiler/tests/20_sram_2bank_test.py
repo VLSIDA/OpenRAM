@@ -1,6 +1,6 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 """
-Run a regresion test on a 2 bank SRAM
+Run a regression test on a 2 bank SRAM
 """
 
 import unittest
@@ -11,6 +11,7 @@ import globals
 from globals import OPTS
 import debug
 
+@unittest.skip("Multibank is not working yet.")
 class sram_2bank_test(openram_test):
 
     def runTest(self):

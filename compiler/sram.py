@@ -20,6 +20,7 @@ class sram(design.design):
     """
     def __init__(self, word_size, num_words, num_banks, name):
 
+        from importlib import reload
         c = reload(__import__(OPTS.control_logic))
         self.mod_control_logic = getattr(c, OPTS.control_logic)
 
@@ -96,8 +97,8 @@ class sram(design.design):
         self.words_per_row = self.amend_words_per_row(self.tentative_num_rows, self.words_per_row)
         
         # Fix the number of columns and rows
-        self.num_cols = self.words_per_row*self.word_size
-        self.num_rows = self.num_words_per_bank/self.words_per_row
+        self.num_cols = int(self.words_per_row*self.word_size)
+        self.num_rows = int(self.num_words_per_bank/self.words_per_row)
 
         # Compute the address and bank sizes
         self.row_addr_size = int(log(self.num_rows, 2))
@@ -125,11 +126,11 @@ class sram(design.design):
         # Recompute the words per row given a hard max
         if(tentative_num_rows > 512):
             debug.check(tentative_num_rows*words_per_row <= 2048, "Number of words exceeds 2048")
-            return words_per_row*tentative_num_rows/512
+            return int(words_per_row*tentative_num_rows/512)
         # Recompute the words per row given a hard min
         if(tentative_num_rows < 16):
             debug.check(tentative_num_rows*words_per_row >= 16, "Minimum number of rows is 16, but given {0}".format(tentative_num_rows))
-            return words_per_row*tentative_num_rows/16
+            return int(words_per_row*tentative_num_rows/16)
             
         return words_per_row
 
@@ -1092,9 +1093,9 @@ class sram(design.design):
         else:
             # Use generated spice file for characterization
             sp_file = spname
-        
+        print(sys.path)
         # Characterize the design
-        start_time = datetime.datetime.now()        
+        start_time = datetime.datetime.now()
         from characterizer import lib
         print("LIB: Characterizing... ")
         if OPTS.analytical_delay:
@@ -1104,7 +1105,7 @@ class sram(design.design):
                 print("Performing simulation-based characterization with {}".format(OPTS.spice_name))
             if OPTS.trim_netlist:
                 print("Trimming netlist to speed up characterization.")
-        lib.lib(out_dir=OPTS.output_path, sram=self, sp_file=sp_file)
+        lib(out_dir=OPTS.output_path, sram=self, sp_file=sp_file)
         print_time("Characterization", datetime.datetime.now(), start_time)
 
         # Write the layout

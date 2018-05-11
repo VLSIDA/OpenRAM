@@ -1,9 +1,9 @@
 import os
 import debug
 from globals import OPTS,find_exe,get_tool
-import lib
-import delay
-import setup_hold
+from .lib import *
+from .delay import *
+from .setup_hold import *
 
 
 debug.info(2,"Initializing characterizer...")

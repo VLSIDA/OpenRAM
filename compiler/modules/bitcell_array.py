@@ -33,8 +33,10 @@ class bitcell_array(design.design):
         self.add_pins()
         self.create_layout()
         self.add_layout_pins()
-        
-        self.offset_all_coordinates()
+
+        # We don't offset this because we need to align
+        # the replica bitcell in the control logic
+        #self.offset_all_coordinates()
         
         self.DRC_LVS()
 

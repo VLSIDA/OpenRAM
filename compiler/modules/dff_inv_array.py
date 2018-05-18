@@ -4,14 +4,15 @@ from tech import drc
 from math import log
 from vector import vector
 from globals import OPTS
+import dff_inv
 
-class dff_array(design.design):
+class dff_inv_array(design.design):
     """
     This is a simple row (or multiple rows) of flops.
     Unlike the data flops, these are never spaced out.
     """
 
-    def __init__(self, rows, columns, inv1_size=2, inv2_size=4, name=""):
+    def __init__(self, rows, columns, inv_size=2, name=""):
         self.rows = rows
         self.columns = columns
 
@@ -20,9 +21,7 @@ class dff_array(design.design):
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(self.name))
 
-        c = reload(__import__(OPTS.dff))
-        self.mod_dff = getattr(c, OPTS.dff)
-        self.dff = self.mod_dff("dff")
+        self.dff = dff_inv.dff_inv(inv_size)
         self.add_mod(self.dff)
 
         self.width = self.columns * self.dff.width
@@ -43,6 +42,7 @@ class dff_array(design.design):
         for y in range(self.rows):  
             for x in range(self.columns):
                 self.add_pin(self.get_dout_name(y,x))
+                self.add_pin(self.get_dout_bar_name(y,x))
         self.add_pin("clk")
         self.add_pin("vdd")
         self.add_pin("gnd")
@@ -64,6 +64,7 @@ class dff_array(design.design):
                                                   mirror=mirror)
                 self.connect_inst([self.get_din_name(y,x),
                                    self.get_dout_name(y,x),
+                                   self.get_dout_bar_name(y,x),  
                                    "clk",
                                    "vdd",
                                    "gnd"])
@@ -88,6 +89,15 @@ class dff_array(design.design):
 
         return dout_name
     
+    def get_dout_bar_name(self, row, col):
+        if self.columns == 1:
+            dout_bar_name = "dout_bar[{0}]".format(row)
+        elif self.rows == 1:
+            dout_bar_name = "dout_bar[{0}]".format(col)
+        else:
+            dout_bar_name = "dout_bar[{0}][{1}]".format(row,col)
+
+        return dout_bar_name
     
     def add_layout_pins(self):
         
@@ -127,6 +137,14 @@ class dff_array(design.design):
                                     width=dout_pin.width(),
                                     height=dout_pin.height())
 
+
+                dout_bar_pin = self.dff_insts[x,y].get_pin("Qb")
+                debug.check(dout_bar_pin.layer=="metal2","DFF Qb pin not on metal2")
+                self.add_layout_pin(text=self.get_dout_bar_name(y,x),
+                                    layer=dout_bar_pin.layer,
+                                    offset=dout_bar_pin.ll(),
+                                    width=dout_bar_pin.width(),
+                                    height=dout_bar_pin.height())
 
                 
         # Create vertical spines to a single horizontal rail

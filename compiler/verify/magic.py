@@ -215,18 +215,26 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     os.system(cmd)
     os.chdir(cwd)
 
+    total_errors = 0
+    
     # check the result for these lines in the summary:
     f = open(resultsfile, "r")
     results = f.readlines()
     f.close()
+    # Look for the results after the final "Subcircuit summary:"
+    # which will be the top-level netlist.
+    final_results = []
+    for line in reversed(results):
+        if "Subcircuit summary:" in line:
+            break
+        else:
+            final_results.insert(0,line)
 
-
-    # Netlists do not match.
-    test = re.compile("Netlists do not match.")
-    incorrect = filter(test.search, results)
-    # There were property errors.
+    # There were property errors in any module.
     test = re.compile("Property errors were found.")
     propertyerrors = filter(test.search, results)
+    total_errors += len(propertyerrors)
+    
     # Require pins to match?
     # Cell pin lists for pnand2_1.spice and pnand2_1 altered to match.
     # test = re.compile(".*altered to match.")
@@ -234,17 +242,19 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     # if len(pinerrors)>0:
     #     debug.warning("Pins altered to match in {}.".format(cell_name))
     
-    total_errors = len(propertyerrors) + len(incorrect)
-    # If we want to ignore property errors
-    #total_errors = len(incorrect)
     #if len(propertyerrors)>0:
     #    debug.warning("Property errors found, but not checking them.")
 
+    # Netlists do not match.
+    test = re.compile("Netlists do not match.")
+    incorrect = filter(test.search, final_results)
+    total_errors += len(incorrect)
+    
     # Netlists match uniquely.
     test = re.compile("Netlists match uniquely.")
-    correct = filter(test.search, results)
+    correct = filter(test.search, final_results)
     # Fail if they don't match. Something went wrong!
-    if correct == 0:
+    if len(correct) == 0:
         total_errors += 1
 
     if total_errors>0:

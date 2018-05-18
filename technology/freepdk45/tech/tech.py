@@ -85,8 +85,10 @@ drc["layer_map"]=os.environ.get("OPENRAM_TECH")+"/freepdk45/layers.map"
 drc["minwidth_tx"]=0.09
 drc["minlength_channel"] = 0.05
 
-# WELL.1 Minimum spacing of nwell/pwell at different potential
+# WELL.2 Minimum spacing of nwell/pwell at different potential
 drc["pwell_to_nwell"] = 0.225
+# WELL.3 Minimum spacing of nwell/pwell at the same potential
+drc["well_to_well"] = 0.135
 # WELL.4 Minimum width of nwell/pwell
 drc["minwidth_well"] = 0.2
 

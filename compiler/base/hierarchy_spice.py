@@ -60,6 +60,24 @@ class spice(verilog.verilog):
         else:
             return self.pin_type[name]
         
+    def get_inputs(self):
+        """ These use pin types to determine pin lists. These
+        may be over-ridden by submodules that didn't use pin directions yet."""
+        input_list = []
+        for pin in self.pins:
+            if self.pin_type[pin]=="INPUT":
+                input_list.append(pin)
+        return input_list
+
+    def get_outputs(self):
+        """ These use pin types to determine pin lists. These
+        may be over-ridden by submodules that didn't use pin directions yet."""
+        output_list = []
+        for pin in self.pins:
+            if self.pin_type[pin]=="OUTPUT":
+                output_list.append(pin)
+        return output_list
+
 
     def add_mod(self, mod):
         """Adds a subckt/submodule to the subckt hierarchy"""
@@ -73,6 +91,8 @@ class spice(verilog.verilog):
         group of modules are generated."""
 
         if (check and (len(self.insts[-1].mod.pins) != len(args))):
+            debug.error("Connections: {}".format(self.insts[-1].mod.pins))
+            debug.error("Connections: {}".format(args))
             debug.error("Number of net connections ({0}) does not match last instance ({1})".format(len(self.insts[-1].mod.pins),
                                                                                                     len(args)), 1)
         self.conns.append(args)

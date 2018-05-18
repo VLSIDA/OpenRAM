@@ -70,10 +70,13 @@ drc["layer_map"]=os.environ.get("OPENRAM_TECH")+"/scn3me_subm/layers.map"
 drc["minwidth_tx"] = 1.2
 drc["minlength_channel"] = 0.6
 
+# 1.3 Minimum spacing between wells of same type (if both are drawn) 
+drc["well_to_well"] = 1.8
 # 1.4 Minimum spacing between wells of different type (if both are drawn) 
 drc["pwell_to_nwell"] = 0
 # 1.1 Minimum width 
-drc["minwidth_well"] = 3.6                                                                      
+drc["minwidth_well"] = 3.6
+
 # 3.1 Minimum width 
 drc["minwidth_poly"] = 0.6
 # 3.2 Minimum spacing over active

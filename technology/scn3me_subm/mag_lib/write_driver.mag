@@ -1,6 +1,6 @@
 magic
 tech scmos
-timestamp 1517448475
+timestamp 1524499497
 << nwell >>
 rect -3 101 37 138
 rect -3 0 37 51
@@ -159,13 +159,15 @@ rect 23 96 27 100
 rect 3 71 7 75
 rect 23 75 27 79
 rect 7 24 11 28
-rect 16 10 20 14
+rect 15 10 19 14
 << metal1 >>
-rect 5 189 8 191
+rect 5 192 10 196
+rect 5 189 8 192
 rect 32 181 33 185
 rect 13 169 16 177
 rect 13 165 15 169
 rect 4 148 8 163
+rect 12 157 15 161
 rect 12 156 16 157
 rect 12 148 16 152
 rect 4 132 8 144
@@ -174,8 +176,6 @@ rect 30 142 33 181
 rect 20 138 33 142
 rect 20 132 24 138
 rect 12 122 16 125
-rect 0 118 8 122
-rect 16 118 36 122
 rect 13 114 17 118
 rect 5 104 9 107
 rect 21 104 25 107
@@ -183,7 +183,7 @@ rect 5 101 25 104
 rect 5 89 9 101
 rect 21 100 25 101
 rect 21 96 23 100
-rect 25 82 26 86
+rect 25 82 26 90
 rect 4 64 7 71
 rect 27 64 31 79
 rect 3 51 7 57
@@ -192,45 +192,33 @@ rect 11 45 15 48
 rect 27 45 31 60
 rect 3 35 7 38
 rect 19 35 23 38
-rect 0 31 3 35
-rect 7 31 8 35
-rect 12 31 36 35
+rect 7 31 19 35
 rect 0 24 7 28
 rect 11 24 36 28
-rect 0 17 32 21
 << m2contact >>
-rect 5 191 9 195
+rect 10 192 14 196
 rect 20 189 24 193
-rect 11 157 15 161
-rect 8 118 12 122
-rect 30 82 34 86
+rect 23 153 27 157
+rect 16 118 20 122
+rect 26 86 30 90
 rect 19 64 23 68
-rect 8 31 12 35
-rect 32 17 36 21
-rect 12 10 16 14
+rect 19 31 23 35
+rect 15 6 19 10
 << metal2 >>
-rect 10 195 14 202
-rect 9 191 14 195
+rect 10 196 14 202
 rect 20 193 24 202
 rect 20 177 24 189
-rect 32 161 36 196
-rect 15 157 36 161
-rect 8 35 12 118
-rect 32 86 36 157
-rect 34 82 36 86
-rect 32 72 36 82
-rect 19 68 36 72
-rect 32 21 36 68
-rect 16 10 20 14
-rect 15 0 19 10
-rect 32 0 36 17
+rect 15 0 19 6
 << m3p >>
 rect 0 0 34 202
 << labels >>
-rlabel metal1 0 31 0 31 1 vdd
-rlabel metal1 0 17 0 17 7 gnd
 rlabel metal2 15 1 15 1 1 din
 rlabel metal1 2 25 2 25 3 en
 rlabel metal2 12 200 12 200 5 bl
 rlabel metal2 22 200 22 200 5 br
+rlabel m2contact 21 66 21 66 1 gnd
+rlabel m2contact 28 88 28 88 1 gnd
+rlabel m2contact 21 33 21 33 1 vdd
+rlabel m2contact 18 120 18 120 1 vdd
+rlabel m2contact 25 155 25 155 1 gnd
 << end >>

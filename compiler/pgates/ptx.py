@@ -210,7 +210,7 @@ class ptx(design.design):
             for a in source_positions:
                 self.add_path(("metal1"), [a,a+pin_offset.scale(source_dir,source_dir)])
             # Add a single horizontal pin
-            self.add_layout_pin_center_segment(text="S",
+            self.add_layout_pin_segment_center(text="S",
                                                layer="metal1",
                                                start=source_positions[0]+source_offset-end_offset,
                                                end=source_positions[-1]+source_offset+end_offset)
@@ -222,7 +222,7 @@ class ptx(design.design):
             for a in drain_positions:
                 self.add_path(("metal1"), [a,a+drain_offset])
             # Add a single horizontal pin
-            self.add_layout_pin_center_segment(text="D",
+            self.add_layout_pin_segment_center(text="D",
                                                layer="metal1",
                                                start=drain_positions[0]+drain_offset-end_offset,
                                                end=drain_positions[-1]+drain_offset+end_offset)
@@ -246,7 +246,7 @@ class ptx(design.design):
                                  offset=poly_offset,
                                  height=self.poly_height,
                                  width=self.poly_width)
-            self.add_layout_pin_center_rect(text="G",
+            self.add_layout_pin_rect_center(text="G",
                                             layer="poly",
                                             offset=poly_offset,
                                             height=self.poly_height,
@@ -329,7 +329,7 @@ class ptx(design.design):
                                             size=(1, self.num_contacts),
                                             implant_type=self.implant_type,
                                             well_type=self.well_type)
-            self.add_layout_pin_center_rect(text="S",
+            self.add_layout_pin_rect_center(text="S",
                                             layer="metal1",
                                             offset=pos,
                                             width=contact.mod.second_layer_width,
@@ -342,7 +342,7 @@ class ptx(design.design):
                                             size=(1, self.num_contacts),
                                             implant_type=self.implant_type,
                                             well_type=self.well_type)
-            self.add_layout_pin_center_rect(text="D",
+            self.add_layout_pin_rect_center(text="D",
                                             layer="metal1",
                                             offset=pos,
                                             width=contact.mod.second_layer_width,

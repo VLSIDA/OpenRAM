@@ -71,14 +71,16 @@ class ms_flop_array(design.design):
         
         for i in range(self.word_size):
 
-            for gnd_pin in self.ms_inst[i].get_pins("gnd"):
-                if gnd_pin.layer!="metal2":
-                    continue
-                self.add_layout_pin(text="gnd",
-                                    layer="metal2",
-                                    offset=gnd_pin.ll(),
-                                    width=gnd_pin.width(),
-                                    height=gnd_pin.height())
+            # Route both supplies
+            for n in ["vdd", "gnd"]:
+                for supply_pin in self.ms_inst[i].get_pins(n):
+                    pin_pos = supply_pin.center()
+                    self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                        offset=pin_pos)
+                    self.add_layout_pin_rect_center(text=n,
+                                                    layer="metal3",
+                                                    offset=pin_pos)
+                
 
             din_pins = self.ms_inst[i].get_pins("din")
             for din_pin in din_pins:
@@ -110,26 +112,9 @@ class ms_flop_array(design.design):
                             width=self.width,
                             height=drc["minwidth_metal1"])
 
-        
-        # Continous vdd rail along with label.
-        for vdd_pin in self.ms_inst[i].get_pins("vdd"):
-            if vdd_pin.layer!="metal1":
-                continue
-            self.add_layout_pin(text="vdd",
-                                layer="metal1",
-                                offset=vdd_pin.ll().scale(0,1),
-                                width=self.width,
-                                height=drc["minwidth_metal1"])
 
-        # Continous gnd rail along with label.
-        for gnd_pin in self.ms_inst[i].get_pins("gnd"):
-            if gnd_pin.layer!="metal1":
-                continue
-            self.add_layout_pin(text="gnd",
-                                layer="metal1",
-                                offset=gnd_pin.ll().scale(0,1),
-                                width=self.width,
-                                height=drc["minwidth_metal1"])
+
+        
             
 
     def analytical_delay(self, slew, load=0.0):

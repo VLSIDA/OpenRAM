@@ -37,28 +37,34 @@ class precharge_array(design.design):
 
     def create_layout(self):
         self.add_insts()
-
-        self.add_layout_pin(text="vdd",
-                            layer="metal1",
-                            offset=self.pc_cell.get_pin("vdd").ll(),
-                            width=self.width,
-                            height=drc["minwidth_metal1"])
+        self.add_layout_pins()
         
+
+    def add_layout_pins(self):
+
         self.add_layout_pin(text="en",
                             layer="metal1",
                             offset=self.pc_cell.get_pin("en").ll(),
                             width=self.width,
                             height=drc["minwidth_metal1"])
+
+        for inst in self.local_insts:
+            self.copy_layout_pin(inst, "vdd")
+            
         
 
     def add_insts(self):
         """Creates a precharge array by horizontally tiling the precharge cell"""
+        self.local_insts = []
         for i in range(self.columns):
             name = "pre_column_{0}".format(i)
             offset = vector(self.pc_cell.width * i, 0)
-            inst=self.add_inst(name=name,
-                          mod=self.pc_cell,
-                          offset=offset)
+            inst = self.add_inst(name=name,
+                                 mod=self.pc_cell,
+                                 offset=offset)
+            self.local_insts.append(inst)
+            
+            self.connect_inst(["bl[{0}]".format(i), "br[{0}]".format(i), "en", "vdd"])
             bl_pin = inst.get_pin("bl")
             self.add_layout_pin(text="bl[{0}]".format(i),
                                 layer="metal2",
@@ -71,6 +77,4 @@ class precharge_array(design.design):
                                 offset=br_pin.ll(),
                                 width=drc["minwidth_metal2"],
                                 height=bl_pin.height())
-            self.connect_inst(["bl[{0}]".format(i), "br[{0}]".format(i),
-                               "en", "vdd"])
 

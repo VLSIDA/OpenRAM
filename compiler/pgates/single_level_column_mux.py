@@ -32,7 +32,6 @@ class single_level_column_mux(design.design):
         self.width = self.bitcell.width
         self.height = self.nmos2.uy() + self.pin_height
         self.connect_poly()
-        self.add_gnd_rail()
         self.add_bitline_pins()
         self.connect_bitlines()
         self.add_wells()
@@ -137,37 +136,28 @@ class single_level_column_mux(design.design):
         self.add_path("metal2",[br_pin.bc(), mid1, mid2, nmos1_d_pin.uc()])        
         
 
-    def add_gnd_rail(self):
-        """ Add the gnd rails through the cell to connect to the bitcell array """
-        
-        gnd_pins = self.bitcell.get_pins("gnd")
-        for gnd_pin in gnd_pins:
-            # only use vertical gnd pins that span the whole cell
-            if gnd_pin.layer == "metal2" and gnd_pin.height >= self.bitcell.height:
-                gnd_position = vector(gnd_pin.lx(), 0)
-                self.add_layout_pin(text="gnd",
-                                    layer="metal2",
-                                    offset=gnd_position,
-                                    height=self.height)
-        
     def add_wells(self):
-        """ Add a well and implant over the whole cell. Also, add the pwell contact (if it exists) """
-        
-        # find right most gnd rail
-        gnd_pins = self.bitcell.get_pins("gnd")
-        right_gnd = None
-        for gnd_pin in gnd_pins:
-            if right_gnd == None or gnd_pin.lx()>right_gnd.lx():
-                right_gnd = gnd_pin
-                
-        # Add to the right (first) gnd rail
-        m1m2_offset = right_gnd.bc() + vector(0,0.5*self.nmos.poly_height)
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
-                            offset=m1m2_offset)
-        active_offset = right_gnd.bc() + vector(0,0.5*self.nmos.poly_height)
+        """ 
+        Add a well and implant over the whole cell. Also, add the
+        pwell contact (if it exists) 
+        """
+
+        # Add it to the right, aligned in between the two tx
+        active_pos = self.nmos2.lr().scale(0,0.5) + self.nmos1.ur().scale(1,0.5)
         self.add_via_center(layers=("active", "contact", "metal1"),
-                            offset=active_offset,
+                            offset=active_pos,
                             implant_type="p",
                             well_type="p")
+
+
+        # Add the M1->M2->M3 stack 
+        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                            offset=active_pos)
+        self.add_via_center(layers=("metal2", "via2", "metal3"),
+                            offset=active_pos)
+        self.add_layout_pin_rect_center(text="gnd",
+                                        layer="metal3",
+                                        offset=active_pos)
+        
 
 

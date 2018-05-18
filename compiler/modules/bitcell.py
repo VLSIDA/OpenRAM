@@ -48,43 +48,43 @@ class bitcell(design.design):
     
     def list_row_pins(self):
         # Creates a list of row pins
-        row_pins = ["wl"]    
+        row_pins = ["WL"]    
         return row_pins
     
     def list_read_row_pins(self):
         # Creates a list of row pins
-        row_pins = ["wl"]    
+        row_pins = ["WL"]    
         return row_pins
         
     def list_write_row_pins(self):
         # Creates a list of row pins
-        row_pins = ["wl"]    
+        row_pins = ["WL"]    
         return row_pins
     
     
     def list_column_pins(self):
         # Creates a list of column pins
-        column_pins = ["bl", "br"]
+        column_pins = ["BL", "BR"]
         return column_pins
         
     def list_read_column_pins(self):
         # Creates a list of column pins
-        column_pins = ["bl"]
+        column_pins = ["BL"]
         return column_pins
     
     def list_read_bar_column_pins(self):
         # Creates a list of column pins
-        column_pins = ["br"]
+        column_pins = ["BR"]
         return column_pins
         
     def list_write_column_pins(self):
         # Creates a list of column pins
-        column_pins = ["bl"]
+        column_pins = ["BL"]
         return column_pins
     
     def list_write_bar_column_pins(self):
         # Creates a list of column pins
-        column_pins = ["br"]
+        column_pins = ["BR"]
         return column_pins
     
     def analytical_power(self, proc, vdd, temp, load):

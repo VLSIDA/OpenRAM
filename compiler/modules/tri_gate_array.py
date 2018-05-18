@@ -77,6 +77,16 @@ class tri_gate_array(design.design):
                                 height=out_pin.height())
 
 
+            # Route both supplies
+            for n in ["vdd", "gnd"]:
+                for supply_pin in self.tri_inst[i].get_pins(n):
+                    pin_pos = supply_pin.center()
+                    self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                        offset=pin_pos)
+                    self.add_layout_pin_rect_center(text=n,
+                                                    layer="metal3",
+                                                    offset=pin_pos)
+            
 
         width = self.tri.width * self.columns - (self.words_per_row - 1) * self.tri.width
         en_pin = self.tri_inst[0].get_pin("en")
@@ -93,20 +103,6 @@ class tri_gate_array(design.design):
                             width=width,
                             height=drc["minwidth_metal1"])
         
-        vdd_pin = self.tri_inst[0].get_pin("vdd")
-        self.add_layout_pin(text="vdd",
-                            layer="metal1",
-                            offset=vdd_pin.ll().scale(0, 1),
-                            width=width,
-                            height=drc["minwidth_metal1"])
-            
-        for gnd_pin in self.tri_inst[0].get_pins("gnd"):
-            if gnd_pin.layer=="metal1":
-                self.add_layout_pin(text="gnd",
-                                    layer="metal1",
-                                    offset=gnd_pin.ll().scale(0, 1),
-                                    width=width,
-                                    height=drc["minwidth_metal1"])
 
 
     def analytical_delay(self, slew, load=0.0):

@@ -11,7 +11,7 @@ class bitcell(design.design):
     library.
     """
 
-    pin_names = ["BL", "BR", "WL", "vdd", "gnd"]
+    pin_names = ["bl", "br", "wl", "vdd", "gnd"]
     (width,height) = utils.get_libcell_size("cell_6t", GDS["unit"], layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "cell_6t", GDS["unit"], layer["boundary"])
 
@@ -37,7 +37,7 @@ class bitcell(design.design):
    
  
     def list_bitcell_pins(self, col, row):
-        # Creates a list of connections in the bitcell, indexed by column and row, for instance use in bitcell_array
+        """ Creates a list of connections in the bitcell, indexed by column and row, for instance use in bitcell_array """
         bitcell_pins = ["bl[{0}]".format(col),
                         "br[{0}]".format(col),
                         "wl[{0}]".format(row),
@@ -47,44 +47,44 @@ class bitcell(design.design):
         
     
     def list_row_pins(self):
-        # Creates a list of row pins
-        row_pins = ["WL"]    
+        """ Creates a list of all row pins (except for gnd and vdd) """
+        row_pins = ["wl"]    
         return row_pins
     
     def list_read_row_pins(self):
-        # Creates a list of row pins
-        row_pins = ["WL"]    
+        """ Creates a list of row pins associated with read ports """
+        row_pins = ["wl"]    
         return row_pins
         
     def list_write_row_pins(self):
-        # Creates a list of row pins
-        row_pins = ["WL"]    
+        """ Creates a list of row pins associated with write ports """
+        row_pins = ["wl"]    
         return row_pins
     
     
     def list_column_pins(self):
-        # Creates a list of column pins
-        column_pins = ["BL", "BR"]
+        """ Creates a list of all column pins (except for gnd and vdd) """
+        column_pins = ["bl", "br"]
         return column_pins
         
     def list_read_column_pins(self):
-        # Creates a list of column pins
-        column_pins = ["BL"]
+        """ Creates a list of column pins associated with read ports """
+        column_pins = ["bl"]
         return column_pins
     
     def list_read_bar_column_pins(self):
-        # Creates a list of column pins
-        column_pins = ["BR"]
+        """ Creates a list of column pins associated with read_bar ports """
+        column_pins = ["br"]
         return column_pins
         
     def list_write_column_pins(self):
-        # Creates a list of column pins
-        column_pins = ["BL"]
+        """ Creates a list of column pins associated with write ports """
+        column_pins = ["bl"]
         return column_pins
     
     def list_write_bar_column_pins(self):
-        # Creates a list of column pins
-        column_pins = ["BR"]
+        """ Creates a list of column pins asscociated with write_bar ports"""
+        column_pins = ["br"]
         return column_pins
     
     def analytical_power(self, proc, vdd, temp, load):

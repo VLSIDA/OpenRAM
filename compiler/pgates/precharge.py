@@ -81,12 +81,12 @@ class precharge(pgate.pgate):
         """Adds both the upper_pmos and lower_pmos to the module"""
         # adds the lower pmos to layout
         #base = vector(self.width - 2*self.pmos.width + self.overlap_offset.x, 0)
-        self.lower_pmos_position = vector(self.bitcell.get_pin("BL").lx(),
+        self.lower_pmos_position = vector(self.bitcell.get_pin("bl").lx(),
                                           self.pmos.active_offset.y)
         self.lower_pmos_inst=self.add_inst(name="lower_pmos",
                                            mod=self.pmos,
                                            offset=self.lower_pmos_position)
-        self.connect_inst(["bl", "en", "BR", "vdd"])
+        self.connect_inst(["bl", "en", "br", "vdd"])
 
         # adds the upper pmos(s) to layout
         ydiff = self.pmos.height + 2*self.m1_space + contact.poly.width
@@ -158,7 +158,7 @@ class precharge(pgate.pgate):
     def add_bitlines(self):
         """Adds both bit-line and bit-line-bar to the module"""
         # adds the BL on metal 2
-        offset = vector(self.bitcell.get_pin("BL").cx(),0) - vector(0.5 * self.m2_width,0)
+        offset = vector(self.bitcell.get_pin("bl").cx(),0) - vector(0.5 * self.m2_width,0)
         self.add_layout_pin(text="bl",
                             layer="metal2",
                             offset=offset,
@@ -166,7 +166,7 @@ class precharge(pgate.pgate):
                             height=self.height)
 
         # adds the BR on metal 2
-        offset = vector(self.bitcell.get_pin("BR").cx(),0) - vector(0.5 * self.m2_width,0)
+        offset = vector(self.bitcell.get_pin("br").cx(),0) - vector(0.5 * self.m2_width,0)
         self.add_layout_pin(text="br",
                             layer="metal2",
                             offset=offset,

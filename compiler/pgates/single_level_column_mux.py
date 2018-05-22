@@ -39,8 +39,8 @@ class single_level_column_mux(design.design):
     def add_bitline_pins(self):
         """ Add the top and bottom pins to this cell """
 
-        bl_pos = vector(self.bitcell.get_pin("BL").lx(), 0)
-        br_pos = vector(self.bitcell.get_pin("BR").lx(), 0)
+        bl_pos = vector(self.bitcell.get_pin("bl").lx(), 0)
+        br_pos = vector(self.bitcell.get_pin("br").lx(), 0)
 
         # bl and br
         self.add_layout_pin(text="bl",

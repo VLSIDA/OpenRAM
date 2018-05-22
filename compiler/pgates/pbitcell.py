@@ -72,6 +72,7 @@ class pbitcell(pgate.pgate):
         self.extend_well()
         self.offset_all_coordinates()
     
+    
     def create_ptx(self):
         """ Calculate transistor sizes """
         # if there are any read/write ports, then the inverter nmos is sized based the number of them
@@ -934,7 +935,7 @@ class pbitcell(pgate.pgate):
     
     
     def list_bitcell_pins(self, col, row):
-        # Creates a list of connections in the bitcell, indexed by column and row, for instance use in bitcell_array
+        """ Creates a list of connections in the bitcell, indexed by column and row, for instance use in bitcell_array """
         bitcell_pins = []
         for k in range(self.num_readwrite):
             bitcell_pins.append("rwbl{0}[{1}]".format(k,col))
@@ -958,7 +959,7 @@ class pbitcell(pgate.pgate):
         
     
     def list_row_pins(self):
-        # Creates a list of row pins
+        """ Creates a list of all row pins (except for gnd and vdd) """
         row_pins = []
         for k in range(self.num_readwrite):
             row_pins.append("rwwl{0}".format(k))
@@ -970,7 +971,7 @@ class pbitcell(pgate.pgate):
         return row_pins
     
     def list_read_row_pins(self):
-        # Creates a list of row pins
+        """ Creates a list of row pins associated with read ports """
         row_pins = []
         for k in range(self.num_readwrite):
             row_pins.append("rwwl{0}".format(k))
@@ -980,7 +981,7 @@ class pbitcell(pgate.pgate):
         return row_pins
     
     def list_write_row_pins(self):
-        # Creates a list of row pins
+        """ Creates a list of row pins associated with write ports """
         row_pins = []
         for k in range(self.num_readwrite):
             row_pins.append("rwwl{0}".format(k))
@@ -991,7 +992,7 @@ class pbitcell(pgate.pgate):
     
     
     def list_column_pins(self):
-        # Creates a list of column pins
+        """ Creates a list of all column pins """
         column_pins = []
         for k in range(self.num_readwrite):
             column_pins.append("rwbl{0}".format(k))
@@ -1006,7 +1007,7 @@ class pbitcell(pgate.pgate):
         return column_pins
         
     def list_read_column_pins(self):
-        # Creates a list of column pins
+        """ Creates a list of column pins associated with read ports """
         column_pins = []
         for k in range(self.num_readwrite):
             column_pins.append("rwbl{0}".format(k))
@@ -1016,7 +1017,7 @@ class pbitcell(pgate.pgate):
         return column_pins
         
     def list_read_bar_column_pins(self):
-        # Creates a list of column pins
+        """ Creates a list of column pins associated with read_bar ports """
         column_pins = []
         for k in range(self.num_readwrite):
             column_pins.append("rwbl_bar{0}".format(k))
@@ -1026,7 +1027,7 @@ class pbitcell(pgate.pgate):
         return column_pins
         
     def list_write_column_pins(self):
-        # Creates a list of column pins
+        """ Creates a list of column pins associated with write ports """
         column_pins = []
         for k in range(self.num_readwrite):
             column_pins.append("rwbl{0}".format(k))
@@ -1036,7 +1037,7 @@ class pbitcell(pgate.pgate):
         return column_pins
     
     def list_write_bar_column_pins(self):
-        # Creates a list of column pins
+        """ Creates a list of column pins asscociated with write_bar ports"""
         column_pins = []
         for k in range(self.num_readwrite):
             column_pins.append("rwbl_bar{0}".format(k))

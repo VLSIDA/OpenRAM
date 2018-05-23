@@ -1,9 +1,9 @@
 import os,sys,re
 import debug
 import math
-import setup_hold
-import delay
-import charutils as ch
+from .setup_hold import *
+from .delay import *
+from .charutils import *
 import tech
 import numpy as np
 from globals import OPTS
@@ -186,9 +186,9 @@ class lib:
         """ Helper function to create quoted, line wrapped array with each row of given length """
         # check that the length is a multiple or give an error!
         debug.check(len(values)%length == 0,"Values are not a multiple of the length. Cannot make a full array.")
-        rounded_values = map(ch.round_time,values)
+        rounded_values = list(map(round_time,values))
         split_values = [rounded_values[i:i+length] for i in range(0, len(rounded_values), length)]
-        formatted_rows = map(self.create_list,split_values)
+        formatted_rows = list(map(self.create_list,split_values))
         formatted_array = ",\\\n".join(formatted_rows)
         return formatted_array
     
@@ -274,11 +274,11 @@ class lib:
         self.lib.write("            timing_type : setup_rising; \n")
         self.lib.write("            related_pin  : \"clk\"; \n")
         self.lib.write("            rise_constraint(CONSTRAINT_TABLE) {\n")
-        rounded_values = map(ch.round_time,self.times["setup_times_LH"])
+        rounded_values = list(map(round_time,self.times["setup_times_LH"]))
         self.write_values(rounded_values,len(self.slews),"            ")
         self.lib.write("            }\n")
         self.lib.write("            fall_constraint(CONSTRAINT_TABLE) {\n")
-        rounded_values = map(ch.round_time,self.times["setup_times_HL"])
+        rounded_values = list(map(round_time,self.times["setup_times_HL"]))
         self.write_values(rounded_values,len(self.slews),"            ")
         self.lib.write("            }\n")
         self.lib.write("        }\n")
@@ -286,11 +286,11 @@ class lib:
         self.lib.write("            timing_type : hold_rising; \n")
         self.lib.write("            related_pin  : \"clk\"; \n")
         self.lib.write("            rise_constraint(CONSTRAINT_TABLE) {\n")
-        rounded_values = map(ch.round_time,self.times["hold_times_LH"])
+        rounded_values = list(map(round_time,self.times["hold_times_LH"]))
         self.write_values(rounded_values,len(self.slews),"            ")
         self.lib.write("              }\n")
         self.lib.write("            fall_constraint(CONSTRAINT_TABLE) {\n")
-        rounded_values = map(ch.round_time,self.times["hold_times_HL"])
+        rounded_values = list(map(round_time,self.times["hold_times_HL"]))
         self.write_values(rounded_values,len(self.slews),"            ")
         self.lib.write("            }\n")
         self.lib.write("        }\n")
@@ -413,8 +413,8 @@ class lib:
         self.lib.write("            }\n")
         self.lib.write("        }\n")
 
-        min_pulse_width = ch.round_time(self.char_results["min_period"])/2.0
-        min_period = ch.round_time(self.char_results["min_period"])
+        min_pulse_width = round_time(self.char_results["min_period"])/2.0
+        min_period = round_time(self.char_results["min_period"])
         self.lib.write("        timing(){ \n")
         self.lib.write("            timing_type :\"min_pulse_width\"; \n")
         self.lib.write("            related_pin  : clk; \n")
@@ -443,7 +443,7 @@ class lib:
         try:
             self.d
         except AttributeError:
-            self.d = delay.delay(self.sram, self.sp_file, self.corner)
+            self.d = delay(self.sram, self.sp_file, self.corner)
             if self.use_model:
                 self.char_results = self.d.analytical_delay(self.sram,self.slews,self.loads)
             else:
@@ -458,7 +458,7 @@ class lib:
         try:
             self.sh
         except AttributeError:
-            self.sh = setup_hold.setup_hold(self.corner)
+            self.sh = setup_hold(self.corner)
             if self.use_model:
                 self.times = self.sh.analytical_setuphold(self.slews,self.loads)
             else:

@@ -19,6 +19,7 @@ class hierarchical_predecode(design.design):
         self.number_of_outputs = int(math.pow(2, self.number_of_inputs))
         design.design.__init__(self, name="pre{0}x{1}".format(self.number_of_inputs,self.number_of_outputs))
 
+        from importlib import reload
         c = reload(__import__(OPTS.bitcell))
         self.mod_bitcell = getattr(c, OPTS.bitcell)
     

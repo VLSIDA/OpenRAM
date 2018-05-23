@@ -20,6 +20,7 @@ class dff_buf(design.design):
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(self.name))
 
+        from importlib import reload
         c = reload(__import__(OPTS.dff))
         self.mod_dff = getattr(c, OPTS.dff)
         self.dff = self.mod_dff("dff")

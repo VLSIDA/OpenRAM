@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 
 import unittest
 from testutils import header,openram_test
@@ -58,11 +58,12 @@ def check_file_format_tab(file_name):
     f = open(file_name, "r+b")
     key_positions = []
     for num, line in enumerate(f, 1):
-        if '\t' in line:
+        if b'\t' in line:
             key_positions.append(num)
     if len(key_positions) > 0:
         debug.info(0, '\nFound ' + str(len(key_positions)) + ' tabs in ' +
                    str(file_name) + ' (line ' + str(key_positions[0]) + ')')
+    f.close()
     return len(key_positions)
 
 

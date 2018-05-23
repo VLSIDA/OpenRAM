@@ -4,7 +4,6 @@ from tech import drc, info, spice
 from vector import vector
 from contact import contact
 import path
-import re
 
 class ptx(design.design):
     """
@@ -28,7 +27,7 @@ class ptx(design.design):
         if num_contacts:
             name += "_c{}".format(num_contacts)
         # replace periods with underscore for newer spice compatibility
-        name=re.sub('\.','_',name)
+        name=name.replace('.','_')
 
         design.design.__init__(self, name)
         debug.info(3, "create ptx2 structure {0}".format(name))

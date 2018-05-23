@@ -1,8 +1,8 @@
 import sys
 import tech
-import stimuli
+from .stimuli import *
 import debug
-import charutils as ch
+from .charutils import *
 import ms_flop
 from globals import OPTS
 
@@ -38,7 +38,7 @@ class setup_hold():
         # creates and opens the stimulus file for writing
         temp_stim = OPTS.openram_temp + "stim.sp"
         self.sf = open(temp_stim, "w")
-        self.stim = stimuli.stimuli(self.sf, self.corner)
+        self.stim = stimuli(self.sf, self.corner)
 
         self.write_header(correct_value)
 
@@ -186,8 +186,8 @@ class setup_hold():
                             target_time=feasible_bound, 
                             correct_value=correct_value)
         self.stim.run_sim()
-        ideal_clk_to_q = ch.convert_to_float(ch.parse_output("timing", "clk2q_delay"))
-        setuphold_time = ch.convert_to_float(ch.parse_output("timing", "setup_hold_time"))
+        ideal_clk_to_q = convert_to_float(parse_output("timing", "clk2q_delay"))
+        setuphold_time = convert_to_float(parse_output("timing", "setup_hold_time"))
         debug.info(2,"*** {0} CHECK: {1} Ideal Clk-to-Q: {2} Setup/Hold: {3}".format(mode, correct_value,ideal_clk_to_q,setuphold_time))
 
         if type(ideal_clk_to_q)!=float or type(setuphold_time)!=float:
@@ -219,8 +219,8 @@ class setup_hold():
 
 
             self.stim.run_sim()
-            clk_to_q = ch.convert_to_float(ch.parse_output("timing", "clk2q_delay"))
-            setuphold_time = ch.convert_to_float(ch.parse_output("timing", "setup_hold_time"))
+            clk_to_q = convert_to_float(parse_output("timing", "clk2q_delay"))
+            setuphold_time = convert_to_float(parse_output("timing", "setup_hold_time"))
             if type(clk_to_q)==float and (clk_to_q<1.1*ideal_clk_to_q) and type(setuphold_time)==float:
                 if mode == "SETUP": # SETUP is clk-din, not din-clk
                     setuphold_time *= -1e9
@@ -235,7 +235,7 @@ class setup_hold():
                 infeasible_bound = target_time
 
             #raw_input("Press Enter to continue...")
-            if ch.relative_compare(feasible_bound, infeasible_bound, error_tolerance=0.001):
+            if relative_compare(feasible_bound, infeasible_bound, error_tolerance=0.001):
                 debug.info(3,"CONVERGE {0} vs {1}".format(feasible_bound,infeasible_bound))
                 break
             

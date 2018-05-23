@@ -1,7 +1,6 @@
 import unittest,warnings
 import sys,os,glob
 sys.path.append(os.path.join(sys.path[0],".."))
-import globals
 from globals import OPTS
 import debug
 
@@ -27,20 +26,22 @@ class openram_test(unittest.TestCase):
         a.gds_write(tempgds)
 
         import verify
+        result=verify.run_drc(a.name, tempgds)
+        self.reset()
         try:
-            self.assertTrue(verify.run_drc(a.name, tempgds)==0)
+            self.assertTrue(result==0)
         except:
-            self.reset()
             self.fail("DRC failed: {}".format(a.name))
 
             
+        result=verify.run_lvs(a.name, tempgds, tempspice, final_verification)
+        self.reset()
         try:
-            self.assertTrue(verify.run_lvs(a.name, tempgds, tempspice, final_verification)==0)
+            self.assertTrue(result==0)
         except:
             self.reset()
             self.fail("LVS mismatch: {}".format(a.name))
 
-        self.reset()
         if OPTS.purge_temp:
             self.cleanup()
 
@@ -159,12 +160,12 @@ class openram_test(unittest.TestCase):
 
 def header(filename, technology):
     tst = "Running Test for:"
-    print "\n"
-    print " ______________________________________________________________________________ "
-    print "|==============================================================================|"
-    print "|=========" + tst.center(60) + "=========|"
-    print "|=========" + technology.center(60) + "=========|"
-    print "|=========" + filename.center(60) + "=========|"
+    print("\n")
+    print(" ______________________________________________________________________________ ")
+    print("|==============================================================================|")
+    print("|=========" + tst.center(60) + "=========|")
+    print("|=========" + technology.center(60) + "=========|")
+    print("|=========" + filename.center(60) + "=========|")
     from  globals import OPTS
-    print "|=========" + OPTS.openram_temp.center(60) + "=========|"
-    print "|==============================================================================|"
+    print("|=========" + OPTS.openram_temp.center(60) + "=========|")
+    print("|==============================================================================|")

@@ -1,6 +1,6 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 """
-Run a regresion test on a 1 bank SRAM
+Run a regression test on a 1 bank SRAM
 """
 
 import unittest

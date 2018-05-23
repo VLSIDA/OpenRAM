@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 
 import re
 import unittest
@@ -17,7 +17,7 @@ files = os.listdir(sys.path[0])
 
 # assume any file that ends in "test.py" in it is a regression test
 nametest = re.compile("test\.py$", re.IGNORECASE)
-tests = filter(nametest.search, files)
+tests = list(filter(nametest.search, files))
 tests.sort()
 
 # import all of the modules

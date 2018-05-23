@@ -1,6 +1,6 @@
 import pyx
 import math
-import mpmath
+from numpy import matrix
 from gdsPrimitives import *
 import random
 
@@ -39,12 +39,12 @@ class pdfLayout:
         """
         xyCoordinates = []
         #setup a translation matrix
-        tMatrix = mpmath.matrix([[1.0,0.0,origin[0]],[0.0,1.0,origin[1]],[0.0,0.0,1.0]])
+        tMatrix = matrix([[1.0,0.0,origin[0]],[0.0,1.0,origin[1]],[0.0,0.0,1.0]])
         #and a rotation matrix
-        rMatrix = mpmath.matrix([[uVector[0],vVector[0],0.0],[uVector[1],vVector[1],0.0],[0.0,0.0,1.0]])
+        rMatrix = matrix([[uVector[0],vVector[0],0.0],[uVector[1],vVector[1],0.0],[0.0,0.0,1.0]])
         for coordinate in uvCoordinates:
             #grab the point in UV space
-            uvPoint = mpmath.matrix([coordinate[0],coordinate[1],1.0])
+            uvPoint = matrix([coordinate[0],coordinate[1],1.0])
             #now rotate and translate it back to XY space
             xyPoint = rMatrix * uvPoint
             xyPoint = tMatrix * xyPoint

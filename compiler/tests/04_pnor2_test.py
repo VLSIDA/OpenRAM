@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 """
 Run regression tests on a parameterized nor 2.  This module doesn't
 generate a multi_finger 2-input nor gate.  It generates only a minimum

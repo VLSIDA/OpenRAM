@@ -17,6 +17,7 @@ class pinv(pgate.pgate):
     from center of rail to rail..  The route_output will route the
     output to the right side of the cell for easier access.
     """
+    from importlib import reload
     c = reload(__import__(OPTS.bitcell))
     bitcell = getattr(c, OPTS.bitcell)
 

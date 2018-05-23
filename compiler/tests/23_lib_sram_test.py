@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 """
 Check the .lib file for an SRAM
 """
@@ -21,6 +21,7 @@ class lib_test(openram_test):
         OPTS.trim_netlist = False
 
         # This is a hack to reload the characterizer __init__ with the spice version
+        from importlib import reload
         import characterizer
         reload(characterizer)
         from characterizer import lib

@@ -28,6 +28,7 @@ class delay_chain(design.design):
         self.num_inverters = 1 + sum(fanout_list)
         self.num_top_half = round(self.num_inverters / 2.0)
         
+        from importlib import reload
         c = reload(__import__(OPTS.bitcell))
         self.mod_bitcell = getattr(c, OPTS.bitcell)
         self.bitcell = self.mod_bitcell()

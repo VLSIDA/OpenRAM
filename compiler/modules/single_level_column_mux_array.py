@@ -19,7 +19,7 @@ class single_level_column_mux_array(design.design):
         debug.info(1, "Creating {0}".format(self.name))
         self.columns = columns
         self.word_size = word_size
-        self.words_per_row = self.columns / self.word_size
+        self.words_per_row = int(self.columns / self.word_size)
         self.add_pins()
         self.create_layout()
         self.DRC_LVS()

@@ -1,8 +1,7 @@
-# -*- coding: ISO-8859-1 -*-
 #
 #
-# Copyright (C) 2002-2005 Jörg Lehmann <joergl@users.sourceforge.net>
-# Copyright (C) 2002-2006 André Wobst <wobsta@users.sourceforge.net>
+# Copyright (C) 2002-2005 Jorg Lehmann <joergl@users.sourceforge.net>
+# Copyright (C) 2002-2006 Andre Wobst <wobsta@users.sourceforge.net>
 #
 # This file is part of PyX (http://pyx.sourceforge.net/).
 #
@@ -28,8 +27,8 @@ interface. Complex tasks like 2d and 3d plots in publication-ready quality are
 built out of these primitives.
 """
 
-import version
-__version__ = version.version
+from .version import version
+__version__ = version
 
 __all__ = ["attr", "box", "bitmap", "canvas", "color", "connector", "deco", "deformer", "document",
            "epsfile", "graph", "mesh", "path", "pattern", "style", "trafo", "text", "unit"]

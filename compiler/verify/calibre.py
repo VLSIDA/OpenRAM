@@ -204,15 +204,15 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     # CORRECT
     # INCORRECT
     test = re.compile("#     CORRECT     #")
-    correct = filter(test.search, results)
+    correct = list(filter(test.search, results))
     test = re.compile("NOT COMPARED")
-    notcompared = filter(test.search, results)
+    notcompared = list(filter(test.search, results))
     test = re.compile("#     INCORRECT     #")
-    incorrect = filter(test.search, results)
+    incorrect = list(filter(test.search, results))
 
     # Errors begin with "Error:"
     test = re.compile("\s+Error:")
-    errors = filter(test.search, results)
+    errors = list(filter(test.search, results))
     for e in errors:
         debug.error(e.strip("\n"))
 
@@ -224,12 +224,12 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     f.close()
 
     test = re.compile("ERROR:")
-    exterrors = filter(test.search, results)
+    exterrors = list(filter(test.search, results))
     for e in exterrors:
         debug.error(e.strip("\n"))
 
     test = re.compile("WARNING:")
-    extwarnings = filter(test.search, results)
+    extwarnings = list(filter(test.search, results))
     for e in extwarnings:
         debug.warning(e.strip("\n"))
 
@@ -245,7 +245,7 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
 
     # Errors begin with "ERROR:"
     test = re.compile("ERROR:")
-    stdouterrors = filter(test.search, results)
+    stdouterrors = list(filter(test.search, results))
     for e in stdouterrors:
         debug.error(e.strip("\n"))
 
@@ -311,7 +311,7 @@ def run_pex(cell_name, gds_name, sp_name, output=None):
 
     # Errors begin with "ERROR:"
     test = re.compile("ERROR:")
-    stdouterrors = filter(test.search, results)
+    stdouterrors = list(filter(test.search, results))
     for e in stdouterrors:
         debug.error(e.strip("\n"))
 

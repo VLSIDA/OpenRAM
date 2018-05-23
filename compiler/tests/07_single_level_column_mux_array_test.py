@@ -1,6 +1,6 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 """
-Run a regresion test on a single transistor column_mux.
+Run a regression test on a single transistor column_mux.
 """
 
 from testutils import header,openram_test,unittest

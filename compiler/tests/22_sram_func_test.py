@@ -1,6 +1,6 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 """
-Run a regresion test on various srams
+Run a regression test on various srams
 """
 
 import unittest
@@ -20,6 +20,7 @@ class sram_func_test(openram_test):
         OPTS.analytical_delay = False
 
         # This is a hack to reload the characterizer __init__ with the spice version
+        from importlib import reload
         import characterizer
         reload(characterizer)
         from characterizer import delay

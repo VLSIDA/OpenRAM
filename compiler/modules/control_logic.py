@@ -70,6 +70,7 @@ class control_logic(design.design):
         self.inv8 = pinv(size=16, height=dff_height)
         self.add_mod(self.inv8)
 
+        from importlib import reload
         c = reload(__import__(OPTS.replica_bitline))
         replica_bitline = getattr(c, OPTS.replica_bitline)
         # FIXME: These should be tuned according to the size!

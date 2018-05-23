@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import struct
-from gdsPrimitives import *
+from .gdsPrimitives import *
 
 class Gds2reader:
     """Class to read in a file in GDSII format and populate a layout class with it"""
@@ -17,13 +17,12 @@ class Gds2reader:
     
     def print64AsBinary(self,number):
         for index in range(0,64):
-            print (number>>(63-index))&0x1,
-        print "\n"
+            print((number>>(63-index))&0x1,eol='')
+        print("\n")
         
-    def stripNonASCII(self,string):
-    	#''' Returns the string without non ASCII characters'''
-        stripped = (c for c in string if 0 < ord(c) < 127)
-        return "".join(stripped)
+    def stripNonASCII(self,bytestring):
+        string = bytestring.decode('utf-8')
+        return string
 
     def ieeeDoubleFromIbmData(self,ibmData):
        #the GDS double is in IBM 370 format like this:
@@ -48,9 +47,9 @@ class Gds2reader:
            exponent-=1
            #check for underflow error  -- should handle these properly!
            if(exponent<=0):
-               print "Underflow Error"
+               print("Underflow Error")
            elif(exponent == 2047):
-               print "Overflow Error"
+               print("Overflow Error")
            #re assemble
            newFloat=(sign<<63)|(exponent<<52)|((mantissa>>12)&0xfffffffffffff)
            asciiDouble = struct.pack('>q',newFloat)
@@ -64,22 +63,23 @@ class Gds2reader:
         sign = data >> 63
         exponent = ((data >> 52) & 0x7ff)-1023
 	# BINWU: Cleanup
-        print exponent+1023
+        #print(exponent+1023)
         mantissa = data << 12 #chop off sign and exponent
 	# BINWU: Cleanup
         #self.print64AsBinary((sign<<63)|((exponent+1023)<<52)|(mantissa>>12))
         asciiDouble = struct.pack('>q',(sign<<63)|(exponent+1023<<52)|(mantissa>>12))
         newFloat = struct.unpack('>d',asciiDouble)[0]
-        print "Check:"+str(newFloat)
+        print("Check:"+str(newFloat))
     
     def readNextRecord(self):
-	global offset
+        global offset
         recordLengthAscii = self.fileHandle.read(2) #first 2 bytes tell us the length of the record
+        if len(recordLengthAscii)==0:
+            return 
         recordLength = struct.unpack(">h",recordLengthAscii)  #gives us a tuple with a short int inside
-        offlist = list(recordLength)  #change tuple to a list
-	offset += float(offlist[0])   #count offset
-	#print float(offlist[0])
-	#print offset  #print out the record numbers for de-bugging
+        offset_int = int(recordLength[0])  # extract length
+        offset += offset_int  # count offset
+	#print(offset)  #print out the record numbers for de-bugging
         record = self.fileHandle.read(recordLength[0]-2) #read the rest of it (first 2 bytes were already read)
         return record
 
@@ -87,95 +87,90 @@ class Gds2reader:
         self.layoutObject.info.clear()
         ##  Header
         record = self.readNextRecord()
-        idBits = (record[0],record[1])
-        if(idBits==('\x00','\x02') and len(record)==4):
-            gdsVersion = struct.unpack(">h",record[2]+record[3])[0]
+        idBits = record[0:2]
+        if(idBits==b'\x00\x02' and len(record)==4):
+            gdsVersion = struct.unpack(">h",record[2:4])[0]
             self.layoutObject.info["gdsVersion"]=gdsVersion
             if(self.debugToTerminal==1):
-                print "GDS II Version "+str(gdsVersion)
+                print("GDS II Version "+str(gdsVersion))
         else:
-            if(self.debugToTerminal==1):
-                print "Invalid GDSII Header"
+            print("Invalid GDSII Header")
             return -1
         
         #read records until we hit the UNITS section... this is the last part of the header
         while 1:
             record = self.readNextRecord()
-            idBits = (record[0],record[1])
+            idBits = record[0:2]
             ## Modified Date
-            if(idBits==('\x01','\x02') and len(record)==26):
-                modYear = struct.unpack(">h",record[2]+record[3])[0]                
-                modMonth = struct.unpack(">h",record[4]+record[5])[0]
-                modDay = struct.unpack(">h",record[6]+record[7])[0]
-                modHour = struct.unpack(">h",record[8]+record[9])[0]
-                modMinute = struct.unpack(">h",record[10]+record[11])[0]
-                modSecond = struct.unpack(">h",record[12]+record[13])[0]
-                lastAccessYear = struct.unpack(">h",record[14]+record[15])[0]                
-                lastAccessMonth = struct.unpack(">h",record[16]+record[17])[0]
-                lastAccessDay = struct.unpack(">h",record[18]+record[19])[0]
-                lastAccessHour = struct.unpack(">h",record[20]+record[21])[0]
-                lastAccessMinute = struct.unpack(">h",record[22]+record[23])[0]
-                lastAccessSecond = struct.unpack(">h",record[24]+record[25])[0]
+            if idBits==b'\x01\x02' and len(record)==26:
+                modYear = struct.unpack(">h",record[2:4])[0]                
+                modMonth = struct.unpack(">h",record[4:6])[0]
+                modDay = struct.unpack(">h",record[6:8])[0]
+                modHour = struct.unpack(">h",record[8:10])[0]
+                modMinute = struct.unpack(">h",record[10:12])[0]
+                modSecond = struct.unpack(">h",record[12:14])[0]
+                lastAccessYear = struct.unpack(">h",record[14:16])[0]                
+                lastAccessMonth = struct.unpack(">h",record[16:18])[0]
+                lastAccessDay = struct.unpack(">h",record[18:20])[0]
+                lastAccessHour = struct.unpack(">h",record[20:22])[0]
+                lastAccessMinute = struct.unpack(">h",record[22:24])[0]
+                lastAccessSecond = struct.unpack(">h",record[24:26])[0]
                 self.layoutObject.info["dates"]=(modYear,modMonth,modDay,modHour,modMinute,modSecond,\
                                                  lastAccessYear,lastAccessMonth,lastAccessDay,lastAccessHour,lastAccessMinute,lastAccessSecond)
                 if(self.debugToTerminal==1):
-                    print "Date Modified:"+str(modYear)+","+str(modMonth)+","+str(modDay)+","+str(modHour)+","+str(modMinute)+","+str(modSecond)
-                    print "Date Last Accessed:"+str(lastAccessYear)+","+str(lastAccessMonth)+","+str(lastAccessDay)+\
-                            ","+str(lastAccessHour)+","+str(lastAccessMinute)+","+str(lastAccessSecond)
+                    print("Date Modified:"+str(modYear)+","+str(modMonth)+","+str(modDay)+","+str(modHour)+","+str(modMinute)+","+str(modSecond))
+                    print("Date Last Accessed:"+str(lastAccessYear)+","+str(lastAccessMonth)+","+str(lastAccessDay)+\
+                            ","+str(lastAccessHour)+","+str(lastAccessMinute)+","+str(lastAccessSecond))
             ##  LibraryName
-            elif(idBits==('\x02','\x06')):
-                libraryName = record[2::]
+            elif(idBits==b'\x02\x06'):
+                libraryName = record[2::].decode("utf-8")
                 self.layoutObject.info["libraryName"]=libraryName
                 if(self.debugToTerminal==1):
-                    print "Library: "+libraryName
+                    print("Library: "+libraryName)
             ## reference libraries
-            elif(idBits==('\x1F','\x06')):
+            elif(idBits==b'\x1F\x06'):
                 referenceLibraryA = record[2:46]
                 referenceLibraryB = record[47:91]
                 self.layoutObject.info["referenceLibraries"]=(referenceLibraryA,referenceLibraryB)
                 if(self.debugToTerminal==1):
-                    print "Reference Libraries:"+referenceLibraryA+","+referenceLibraryB
-            elif(idBits==('\x20','\x06')):
+                    print( "Reference Libraries:"+referenceLibraryA+","+referenceLibraryB)
+            elif(idBits==b'\x20\x06'):
                 fontA = record[2:45]
                 fontB = record[46:89]
                 fontC = record[90:133]
                 fontD = record[134:177]
                 self.layoutObject.info["fonts"]=(fontA,fontB,fontC,fontD)
                 if(self.debugToTerminal==1):
-                    print "Fonts:"+fontA+","+fontB+","+fontC+","+fontD
-            elif(idBits==('\x23','\x06')):
+                    print("Fonts:"+fontA+","+fontB+","+fontC+","+fontD)
+            elif(idBits==b'\x23\x06'):
                 attributeTable = record[2:45]
                 self.layoutObject.info["attributeTable"]=attributeTable
                 if(self.debugToTerminal==1):
-                    print "Attributes:"+attributeTable
-            elif(idBits==('\x22','\x02')):
+                    print("Attributes:"+attributeTable)
+            elif(idBits==b'\x22\x02'):
                 generations = struct.unpack(">h",record[2]+record[3])
                 self.layoutObject.info["generations"]=generations
                 if(self.debugToTerminal==1):
-                    print "Generations:"+generations                
-            elif(idBits==('\x36','\x02')):
+                    print("Generations:"+generations                )
+            elif(idBits==b'\x36\x02'):
                 fileFormat = struct.unpack(">h",record[2]+record[3])
                 self.layoutObject.info["fileFormat"]=fileFormat
                 if(self.debugToTerminal==1):
-                    print "File Format:"+fileFormat
-            elif(idBits==('\x37','\x06')):
+                    print("File Format:"+fileFormat)
+            elif(idBits==b'\x37\x06'):
                 mask = record[2::]
                 self.layoutObject.info["mask"] = mask
                 if(self.debugToTerminal==1):
-                    print "Mask: "+mask
-            elif(idBits==('\x03','\x05')):  #this is also wrong b/c python doesn't natively have an 8 byte float
-                userUnits=self.ieeeDoubleFromIbmData(record[2]+record[3]+record[4]+record[5]+record[6]+record[7]+record[8]+record[9])
+                    print("Mask: "+mask)
+            elif(idBits==b'\x03\x05'):  #this is also wrong b/c python doesn't natively have an 8 byte float
+                userUnits=self.ieeeDoubleFromIbmData(record[2:10])
                 dbUnits=self.ieeeDoubleFromIbmData
                 self.layoutObject.info["units"] = (userUnits,dbUnits)
-	
-                #print "userUnits %s"%((record[2]+record[3]+record[4]+record[5]+record[6]+record[7]+record[8]+record[9])).encode("hex")
-		#print "dbUnits   %s"%(record[10]+record[11]+record[12]+record[13]+record[14]+record[15]+record[16]+record[17]).encode("hex")
-
                 if(self.debugToTerminal==1):
-                    print "Units: 1 user unit="+str(userUnits)+" database units, 1 database unit="+str(dbUnits)+" meters."
+                    print("Units: 1 user unit="+str(userUnits)+" database units, 1 database unit="+str(dbUnits)+" meters.")
                 break;
         if(self.debugToTerminal==1):    
-            print "End of GDSII Header Found"
+            print("End of GDSII Header Found")
         return 1
     
     def readBoundary(self):
@@ -183,44 +178,44 @@ class Gds2reader:
         thisBoundary=GdsBoundary()
         while 1:
             record = self.readNextRecord()
-            idBits = (record[0],record[1])
-            if(idBits==('\x26','\x01')):  #ELFLAGS
-                elementFlags = struct.unpack(">h",record[2]+record[3])[0]
+            idBits = record[0:2]
+            if(idBits==b'\x26\x01'):  #ELFLAGS
+                elementFlags = struct.unpack(">h",record[2:4])[0]
                 thisBoundary.elementFlags=elementFlags
                 if(self.debugToTerminal==1):
-                    print "\t\tElement Flags: "+str(elementFlags)
-            elif(idBits==('\x2F','\x03')):  #PLEX
-                plex = struct.unpack(">i",record[2]+record[3]+record[4]+record[5])[0]
+                    print("\t\tElement Flags: "+str(elementFlags))
+            elif(idBits==b'\x2F\x03'):  #PLEX
+                plex = struct.unpack(">i",record[2:6])[0]
                 thisBoundary.plex=plex
                 if(self.debugToTerminal==1):
-                    print "\t\tPLEX: "+str(plex)
-            elif(idBits==('\x0D','\x02')):  #Layer
-                drawingLayer = struct.unpack(">h",record[2]+record[3])[0]
+                    print("\t\tPLEX: "+str(plex))
+            elif(idBits==b'\x0D\x02'):  #Layer
+                drawingLayer = struct.unpack(">h",record[2:4])[0]
                 thisBoundary.drawingLayer=drawingLayer
                 if drawingLayer not in self.layoutObject.layerNumbersInUse:
                     self.layoutObject.layerNumbersInUse += [drawingLayer]
                 if(self.debugToTerminal==1):
-                    print "\t\tDrawing Layer: "+str(drawingLayer)
-            elif(idBits==('\x16','\x02')):  #Purpose
-                purposeLayer = struct.unpack(">h",record[2]+record[3])[0]
+                    print("\t\tDrawing Layer: "+str(drawingLayer))
+            elif(idBits==b'\x16\x02'):  #Purpose
+                purposeLayer = struct.unpack(">h",record[2:4])[0]
                 thisBoundary.purposeLayer=purposeLayer                
                 if(self.debugToTerminal==1):
-                    print "\t\tPurpose Layer: "+str(purposeLayer)
-            elif(idBits==('\x0E','\x02')):  #DataType
-                dataType = struct.unpack(">h",record[2]+record[3])[0]
+                    print("\t\tPurpose Layer: "+str(purposeLayer))
+            elif(idBits==b'\x0E\x02'):  #DataType
+                dataType = struct.unpack(">h",record[2:4])[0]
                 thisBoundary.dataType=dataType
                 if(self.debugToTerminal==1):
-                    print "\t\t\tData Type: "+str(dataType)
-            elif(idBits==('\x10','\x03')):  #XY Data Points
+                    print("\t\t\tData Type: "+str(dataType))
+            elif(idBits==b'\x10\x03'):  #XY Data Points
                 numDataPoints = len(record)-2  #packed as XY coordinates 4 bytes each
                 thisBoundary.coordinates=[]
                 for index in range(2,numDataPoints+2,8):  #incorporate the 2 byte offset
-                    x=struct.unpack(">i",record[index]+record[index+1]+record[index+2]+record[index+3])[0]
-                    y=struct.unpack(">i",record[index+4]+record[index+5]+record[index+6]+record[index+7])[0]
+                    x=struct.unpack(">i",record[index:index+4])[0]
+                    y=struct.unpack(">i",record[index+4:index+8])[0]
                     thisBoundary.coordinates+=[(x,y)]
                     if(self.debugToTerminal==1):
-                        print "\t\t\tXY Point: "+str(x)+","+str(y)
-            elif(idBits==('\x11','\x00')):  #End Of Element
+                        print("\t\t\tXY Point: "+str(x)+","+str(y))
+            elif(idBits==b'\x11\x00'):  #End Of Element
                 break;
         return thisBoundary
     
@@ -228,49 +223,49 @@ class Gds2reader:
         thisPath=GdsPath()
         while 1:
             record = self.readNextRecord()
-            idBits = (record[0],record[1])
-            if(idBits==('\x26','\x01')):  #ELFLAGS
-                elementFlags = struct.unpack(">h",record[2]+record[3])[0]
+            idBits = record[0:2]
+            if(idBits==b'\x26\x01'):  #ELFLAGS
+                elementFlags = struct.unpack(">h",record[2:4])[0]
                 thisPath.elementFlags=elementFlags
                 if(self.debugToTerminal==1):
-                    print "\t\tElement Flags: "+str(elementFlags)
-            elif(idBits==('\x2F','\x03')):  #PLEX
-                plex = struct.unpack(">i",record[2]+record[3]+record[4]+record[5])[0]
+                    print("\t\tElement Flags: "+str(elementFlags))
+            elif(idBits==b'\x2F\x03'):  #PLEX
+                plex = struct.unpack(">i",record[2:6])[0]
                 thisPath.plex=plex
                 if(self.debugToTerminal==1):
-                    print "\t\tPLEX: "+str(plex)
-            elif(idBits==('\x0D','\x02')):  #Layer
-                drawingLayer = struct.unpack(">h",record[2]+record[3])[0]
+                    print("\t\tPLEX: "+str(plex))
+            elif(idBits==b'\x0D\x02'):  #Layer
+                drawingLayer = struct.unpack(">h",record[2:4])[0]
                 thisPath.drawingLayer=drawingLayer
                 if drawingLayer not in self.layoutObject.layerNumbersInUse:
                     self.layoutObject.layerNumbersInUse += [drawingLayer]
                 if(self.debugToTerminal==1):
-                    print "\t\t\tDrawing Layer: "+str(drawingLayer)
-            elif(idBits==('\x16','\x02')):  #Purpose
-                purposeLayer = struct.unpack(">h",record[2]+record[3])[0]
+                    print("\t\t\tDrawing Layer: "+str(drawingLayer))
+            elif(idBits==b'\x16\x02'):  #Purpose
+                purposeLayer = struct.unpack(">h",record[2:4])[0]
                 thisPath.purposeLayer=purposeLayer                
                 if(self.debugToTerminal==1):
-                    print "\t\tPurpose Layer: "+str(purposeLayer)
-            elif(idBits==('\x21','\x02')):  #Path type
-                pathType = struct.unpack(">h",record[2]+record[3])[0]
+                    print("\t\tPurpose Layer: "+str(purposeLayer))
+            elif(idBits==b'\x21\x02'):  #Path type
+                pathType = struct.unpack(">h",record[2:4])[0]
                 thisPath.pathType=pathType
                 if(self.debugToTerminal==1):
-                    print "\t\t\tPath Type: "+str(pathType)
-            elif(idBits==('\x0F','\x03')):  #Path width
-                pathWidth = struct.unpack(">i",record[2]+record[3]+record[4]+record[5])[0]
+                    print("\t\t\tPath Type: "+str(pathType))
+            elif(idBits==b'\x0F\x03'):  #Path width
+                pathWidth = struct.unpack(">i",record[2:6])[0]
                 thisPath.pathWidth=pathWidth
                 if(self.debugToTerminal==1):
-                    print "\t\t\tPath Width: "+str(pathWidth)
-            elif(idBits==('\x10','\x03')):  #XY Data Points
-                numDataPoints = len(record)-2  #packed as XY coordinates 4 bytes each
+                    print("\t\t\tPath Width: "+str(pathWidth))
+            elif(idBits==b'\x10\x03'):  #XY Data Points
+                numDataPoints = len(record)-2  #packed nas XY coordinates 4 bytes each
                 thisPath.coordinates=[]
                 for index in range(2,numDataPoints+2,8):  #incorporate the 2 byte offset
-                    x=struct.unpack(">i",record[index]+record[index+1]+record[index+2]+record[index+3])[0]
-                    y=struct.unpack(">i",record[index+4]+record[index+5]+record[index+6]+record[index+7])[0]
+                    x=struct.unpack(">i",record[index:index+4])[0]
+                    y=struct.unpack(">i",record[index+4:index+8])[0]
                     thisPath.coordinates+=[(x,y)]
                     if(self.debugToTerminal==1):
-                        print "\t\t\tXY Point: "+str(x)+","+str(y)
-            elif(idBits==('\x11','\x00')):  #End Of Element
+                        print("\t\t\tXY Point: "+str(x)+","+str(y))
+            elif(idBits==b'\x11\x00'):  #End Of Element
                 break;
         return thisPath
     
@@ -278,50 +273,50 @@ class Gds2reader:
         thisSref=GdsSref()
         while 1:
             record = self.readNextRecord()
-            idBits = (record[0],record[1])
-            if(idBits==('\x26','\x01')):  #ELFLAGS
-                elementFlags = struct.unpack(">h",record[2]+record[3])[0]
+            idBits = record[0:2]
+            if(idBits==b'\x26\x01'):  #ELFLAGS
+                elementFlags = struct.unpack(">h",record[2:4])[0]
                 thisSref.elementFlags=elementFlags
                 if(self.debugToTerminal==1):
-                    print "\t\tElement Flags: "+str(elementFlags)
-            elif(idBits==('\x2F','\x03')):  #PLEX
-                plex = struct.unpack(">i",record[2]+record[3]+record[4]+record[5])[0]
+                    print("\t\tElement Flags: "+str(elementFlags))
+            elif(idBits==b'\x2F\x03'):  #PLEX
+                plex = struct.unpack(">i",record[2:6])[0]
                 thisSref.plex=plex
                 if(self.debugToTerminal==1):
-                    print "\t\tPLEX: "+str(plex)
-            elif(idBits==('\x12','\x06')):  #Reference Name
+                    print("\t\tPLEX: "+str(plex))
+            elif(idBits==b'\x12\x06'):  #Reference Name
                 sName = self.stripNonASCII(record[2::])
                 thisSref.sName=sName.rstrip()
                 if(self.debugToTerminal==1):
-                    print "\t\tReference Name:"+sName
-            elif(idBits==('\x1A','\x01')):  #Transformation
-                transFlags = struct.unpack(">H",record[2]+record[3])[0]
+                    print("\t\tReference Name:"+sName)
+            elif(idBits==b'\x1A\x01'):  #Transformation
+                transFlags = struct.unpack(">H",record[2:4])[0]
                 mirrorFlag = bool(transFlags&0x8000)   ##these flags are a bit sketchy
                 rotateFlag = bool(transFlags&0x0002)
                 magnifyFlag = bool(transFlags&0x0004)
                 thisSref.transFlags=(mirrorFlag,rotateFlag,magnifyFlag)
                 if(self.debugToTerminal==1):
-                    print "\t\t\tMirror X:"+str(mirrorFlag)
-                    print "\t\t\tRotate:"+str(rotateFlag)
-                    print "\t\t\tMagnify:"+str(magnifyFlag)
-            elif(idBits==('\x1B','\x05')):  #Magnify
-                magFactor=self.ieeeDoubleFromIbmData(record[2]+record[3]+record[4]+record[5]+record[6]+record[7]+record[8]+record[9])
+                    print("\t\t\tMirror X:"+str(mirrorFlag))
+                    print( "\t\t\tRotate:"+str(rotateFlag))
+                    print("\t\t\tMagnify:"+str(magnifyFlag))
+            elif(idBits==b'\x1B\x05'):  #Magnify
+                magFactor=self.ieeeDoubleFromIbmData(record[2:10])
                 thisSref.magFactor=magFactor
                 if(self.debugToTerminal==1):
-                    print "\t\t\tMagnification:"+str(magFactor)
-            elif(idBits==('\x1C','\x05')):  #Rotate Angle
-                rotateAngle=self.ieeeDoubleFromIbmData(record[2]+record[3]+record[4]+record[5]+record[6]+record[7]+record[8]+record[9])
+                    print("\t\t\tMagnification:"+str(magFactor))
+            elif(idBits==b'\x1C\x05'):  #Rotate Angle
+                rotateAngle=self.ieeeDoubleFromIbmData(record[2:10])
                 thisSref.rotateAngle=rotateAngle                
                 if(self.debugToTerminal==1):
-                    print "\t\t\tRotate Angle (CCW):"+str(rotateAngle)
-            elif(idBits==('\x10','\x03')):  #XY Data Points
+                    print("\t\t\tRotate Angle (CCW):"+str(rotateAngle))
+            elif(idBits==b'\x10\x03'):  #XY Data Points
                 index=2
-                x=struct.unpack(">i",record[index]+record[index+1]+record[index+2]+record[index+3])[0]
-                y=struct.unpack(">i",record[index+4]+record[index+5]+record[index+6]+record[index+7])[0]
+                x=struct.unpack(">i",record[index:index+4])[0]
+                y=struct.unpack(">i",record[index+4:index+8])[0]
                 thisSref.coordinates=(x,y)
                 if(self.debugToTerminal==1):
-                    print "\t\t\tXY Point: "+str(x)+","+str(y)
-            elif(idBits==('\x11','\x00')):  #End Of Element
+                    print("\t\t\tXY Point: "+str(x)+","+str(y))
+            elif(idBits==b'\x11\x00'):  #End Of Element
                 break;
         return thisSref
     
@@ -329,54 +324,54 @@ class Gds2reader:
         thisAref = GdsAref()
         while 1:
             record = self.readNextRecord()
-            idBits = (record[0],record[1])
-            if(idBits==('\x26','\x01')):  #ELFLAGS
-                elementFlags = struct.unpack(">h",record[2]+record[3])[0]
+            idBits = record[0:2]
+            if(idBits==b'\x26\x01'):  #ELFLAGS
+                elementFlags = struct.unpack(">h",record[2:4])[0]
                 thisAref.elementFlags=elementFlags
                 if(self.debugToTerminal==1):
-                    print "\t\tElement Flags: "+str(elementFlags)
-            elif(idBits==('\x2F','\x03')):  #PLEX
-                plex = struct.unpack(">i",record[2]+record[3]+record[4]+record[5])[0]
+                    print("\t\tElement Flags: "+str(elementFlags))
+            elif(idBits==b'\x2F\x03'):  #PLEX
+                plex = struct.unpack(">i",record[2:6])[0]
                 thisAref.plex=plex
                 if(self.debugToTerminal==1):
-                    print "\t\tPLEX: "+str(plex)
-            elif(idBits==('\x12','\x06')):  #Reference Name
+                    print("\t\tPLEX: "+str(plex))
+            elif(idBits==b'\x12\x06'):  #Reference Name
                 aName = record[2::]
                 thisAref.aName=aName
                 if(self.debugToTerminal==1):
-                    print "\t\tReference Name:"+aName
-            elif(idBits==('\x1A','\x01')):  #Transformation
-                transFlags = struct.unpack(">H",record[2]+record[3])[0]
+                    print("\t\tReference Name:"+aName)
+            elif(idBits==b'\x1A\x01'):  #Transformation
+                transFlags = struct.unpack(">H",record[2:4])[0]
                 mirrorFlag = bool(transFlags&0x8000)   ##these flags are a bit sketchy
                 rotateFlag = bool(transFlags&0x0002)
                 magnifyFlag = bool(transFlags&0x0004)
                 thisAref.transFlags=(mirrorFlag,rotateFlag,magnifyFlag)
                 if(self.debugToTerminal==1):
-                    print "\t\t\tMirror X:"+str(mirrorFlag)
-                    print "\t\t\tRotate:"+str(rotateFlag)
-                    print "\t\t\tMagnify:"+str(magnifyFlag)
-            elif(idBits==('\x1B','\x05')):  #Magnify
-                magFactor=self.ieeeDoubleFromIbmData(record[2]+record[3]+record[4]+record[5]+record[6]+record[7]+record[8]+record[9])
+                    print("\t\t\tMirror X:"+str(mirrorFlag))
+                    print("\t\t\tRotate:"+str(rotateFlag))
+                    print("\t\t\tMagnify:"+str(magnifyFlag))
+            elif(idBits==b'\x1B\x05'):  #Magnify
+                magFactor=self.ieeeDoubleFromIbmData(record[2:10])
                 thisAref.magFactor=magFactor
                 if(self.debugToTerminal==1):
-                    print "\t\t\tMagnification:"+str(magFactor)
-            elif(idBits==('\x1C','\x05')):  #Rotate Angle
-                rotateAngle=self.ieeeDoubleFromIbmData(record[2]+record[3]+record[4]+record[5]+record[6]+record[7]+record[8]+record[9])
+                    print("\t\t\tMagnification:"+str(magFactor))
+            elif(idBits==b'\x1C\x05'):  #Rotate Angle
+                rotateAngle=self.ieeeDoubleFromIbmData(record[2:10])
                 thisAref.rotateAngle=rotateAngle                
                 if(self.debugToTerminal==1):
-                    print "\t\t\tRotate Angle (CCW):"+str(rotateAngle)
-            elif(idBits==('\x10','\x03')):  #XY Data Points
+                    print("\t\t\tRotate Angle (CCW):"+str(rotateAngle))
+            elif(idBits==b'\x10\x03'):  #XY Data Points
                 index=2
-                topLeftX=struct.unpack(">i",record[index]+record[index+1]+record[index+2]+record[index+3])[0]
-                topLeftY=struct.unpack(">i",record[index+4]+record[index+5]+record[index+6]+record[index+7])[0]
-                rightMostX=struct.unpack(">i",record[index+8]+record[index+9]+record[index+10]+record[index+11])[0]
-                bottomMostY=struct.unpack(">i",record[index+12]+record[index+13]+record[index+14]+record[index+15])[0]
+                topLeftX=struct.unpack(">i",record[index:index+4])[0]
+                topLeftY=struct.unpack(">i",record[index+4:index+8])[0]
+                rightMostX=struct.unpack(">i",record[index+8:index+12])[0]
+                bottomMostY=struct.unpack(">i",record[index+12:index+16])[0]
                 thisAref.coordinates=[(topLeftX,topLeftY),(rightMostX,topLeftY),(topLeftX,bottomMostY)]
                 if(self.debugToTerminal==1):
-                    print "\t\t\tTop Left Point: "+str(topLeftX)+","+str(topLeftY)
-                    print "\t\t\t\tArray Width: "+str(rightMostX-topLeftX)
-                    print "\t\t\t\tArray Height: "+str(topLeftY-bottomMostY)
-            elif(idBits==('\x11','\x00')):  #End Of Element
+                    print("\t\t\tTop Left Point: "+str(topLeftX)+","+str(topLeftY))
+                    print("\t\t\t\tArray Width: "+str(rightMostX-topLeftX))
+                    print("\t\t\t\tArray Height: "+str(topLeftY-bottomMostY))
+            elif(idBits==b'\x11\x00'):  #End Of Element
                 break;
         return thisAref
     
@@ -385,98 +380,98 @@ class Gds2reader:
         thisText=GdsText()
         while 1:
             record = self.readNextRecord()
-            idBits = (record[0],record[1])
-            if(idBits==('\x26','\x01')):  #ELFLAGS
-                elementFlags = struct.unpack(">h",record[2]+record[3])[0]
+            idBits = record[0:2]
+            if(idBits==b'\x26\x01'):  #ELFLAGS
+                elementFlags = struct.unpack(">h",record[2:4])[0]
                 thisText.elementFlags=elementFlags
                 if(self.debugToTerminal==1):
-                    print "\t\tElement Flags: "+str(elementFlags)
-            elif(idBits==('\x2F','\x03')):  #PLEX
-                plex = struct.unpack(">i",record[2]+record[3]+record[4]+record[5])[0]
+                    print("\t\tElement Flags: "+str(elementFlags))
+            elif(idBits==b'\x2F\x03'):  #PLEX
+                plex = struct.unpack(">i",record[2:6])[0]
                 thisText.plex=plex
                 if(self.debugToTerminal==1):
-                    print "\t\tPLEX: "+str(plex)
-            elif(idBits==('\x0D','\x02')):  #Layer
-                drawingLayer = struct.unpack(">h",record[2]+record[3])[0]
+                    print("\t\tPLEX: "+str(plex))
+            elif(idBits==b'\x0D\x02'):  #Layer
+                drawingLayer = struct.unpack(">h",record[2:4])[0]
                 thisText.drawingLayer=drawingLayer
                 if drawingLayer not in self.layoutObject.layerNumbersInUse:
                     self.layoutObject.layerNumbersInUse += [drawingLayer]
                 if(self.debugToTerminal==1):
-                    print "\t\tDrawing Layer: "+str(drawingLayer)
-            elif(idBits==('\x16','\x02')):  #Purpose
-                purposeLayer = struct.unpack(">h",record[2]+record[3])[0]
+                    print("\t\tDrawing Layer: "+str(drawingLayer))
+            elif(idBits==b'\x16\x02'):  #Purpose
+                purposeLayer = struct.unpack(">h",record[2:4])[0]
                 thisText.purposeLayer=purposeLayer                
                 if(self.debugToTerminal==1):
-                    print "\t\tPurpose Layer: "+str(purposeLayer)
-            elif(idBits==('\x1A','\x01')):  #Transformation
-                transFlags = struct.unpack(">H",record[2]+record[3])[0]
+                    print("\t\tPurpose Layer: "+str(purposeLayer))
+            elif(idBits==b'\x1A\x01'):  #Transformation
+                transFlags = struct.unpack(">H",record[2:4])[0]
                 mirrorFlag = bool(transFlags&0x8000)   ##these flags are a bit sketchy
                 rotateFlag = bool(transFlags&0x0002)
                 magnifyFlag = bool(transFlags&0x0004)
                 thisText.transFlags=(mirrorFlag,rotateFlag,magnifyFlag)
                 if(self.debugToTerminal==1):
-                    print "\t\t\tMirror X:"+str(mirrorFlag)
-                    print "\t\t\tRotate:"+str(rotateFlag)
-                    print "\t\t\tMagnify:"+str(magnifyFlag)
-            elif(idBits==('\x1B','\x05')):  #Magnify
-                magFactor=self.ieeeDoubleFromIbmData(record[2]+record[3]+record[4]+record[5]+record[6]+record[7]+record[8]+record[9])
+                    print("\t\t\tMirror X:"+str(mirrorFlag))
+                    print("\t\t\tRotate:"+str(rotateFlag))
+                    print("\t\t\tMagnify:"+str(magnifyFlag))
+            elif(idBits==b'\x1B\x05'):  #Magnify
+                magFactor=self.ieeeDoubleFromIbmData(record[2:10])
                 thisText.magFactor=magFactor
                 if(self.debugToTerminal==1):
-                    print "\t\t\tMagnification:"+str(magFactor)
-            elif(idBits==('\x1C','\x05')):  #Rotate Angle
-                rotateAngle=self.ieeeDoubleFromIbmData(record[2]+record[3]+record[4]+record[5]+record[6]+record[7]+record[8]+record[9])
+                    print("\t\t\tMagnification:"+str(magFactor))
+            elif(idBits==b'\x1C\x05'):  #Rotate Angle
+                rotateAngle=self.ieeeDoubleFromIbmData(record[2:10])
                 thisText.rotateAngle=rotateAngle
                 if(self.debugToTerminal==1):
-                    print "\t\t\tRotate Angle (CCW):"+str(rotateAngle)
-            elif(idBits==('\x21','\x02')):  #Path type
-                pathType = struct.unpack(">h",record[2]+record[3])[0]
+                    print("\t\t\tRotate Angle (CCW):"+str(rotateAngle))
+            elif(idBits==b'\x21\x02'):  #Path type
+                pathType = struct.unpack(">h",record[2:4])[0]
                 thisText.pathType=pathType
                 if(self.debugToTerminal==1):
-                    print "\t\t\tPath Type: "+str(pathType)
-            elif(idBits==('\x0F','\x03')):  #Path width
-                pathWidth = struct.unpack(">i",record[2]+record[3]+record[4]+record[5])[0]
+                    print("\t\t\tPath Type: "+str(pathType))
+            elif(idBits==b'\x0F\x03'):  #Path width
+                pathWidth = struct.unpack(">i",record[2:6])[0]
                 thisText.pathWidth=pathWidth
                 if(self.debugToTerminal==1):
-                    print "\t\t\tPath Width: "+str(pathWidth)
-            elif(idBits==('\x1A','\x01')):  #Text Presentation
-                presentationFlags = struct.unpack(">H",record[2]+record[3])[0]
+                    print("\t\t\tPath Width: "+str(pathWidth))
+            elif(idBits==b'\x1A\x01'):  #Text Presentation
+                presentationFlags = struct.unpack(">H",record[2:4])[0]
                 font = (presentationFlags&0x0030)>>4   ##these flags are a bit sketchy
                 verticalFlags = (presentationFlags&0x000C)
                 horizontalFlags = (presentationFlags&0x0003)
                 thisText.presentationFlags=(font,verticalFlags,horizontalFlags)
                 if(self.debugToTerminal==1):
-                    print "\t\t\tFont:"+str(font)
+                    print("\t\t\tFont:"+str(font))
                 if(verticalFlags==0):
                     if(self.debugToTerminal==1):
-                        print "\t\t\tVertical: Top"
+                        print("\t\t\tVertical: Top")
                 elif(verticalFlags==1):
                     if(self.debugToTerminal==1):
-                        print "\t\t\tVertical: Middle"
+                        print("\t\t\tVertical: Middle")
                 elif(verticalFlags==2):
                     if(self.debugToTerminal==1):
-                        print "\t\t\tVertical: Bottom"
+                        print("\t\t\tVertical: Bottom")
                 if(horizontalFlags==0):
                     if(self.debugToTerminal==1):
-                        print "\t\t\tHorizontal: Left"
+                        print("\t\t\tHorizontal: Left")
                 elif(horizontalFlags==1):
                     if(self.debugToTerminal==1):
-                        print "\t\t\tHorizontal: Center"
+                        print("\t\t\tHorizontal: Center")
                 elif(horizontalFlags==2):
                     if(self.debugToTerminal==1):
-                        print "\t\t\tHorizontal: Right"                
-            elif(idBits==('\x10','\x03')):  #XY Data Points
+                        print("\t\t\tHorizontal: Right")
+            elif(idBits==b'\x10\x03'):  #XY Data Points
                 index=2
-                x=struct.unpack(">i",record[index]+record[index+1]+record[index+2]+record[index+3])[0]
-                y=struct.unpack(">i",record[index+4]+record[index+5]+record[index+6]+record[index+7])[0]
+                x=struct.unpack(">i",record[index:index+4])[0]
+                y=struct.unpack(">i",record[index+4:index+8])[0]
                 thisText.coordinates=[(x,y)]
                 if(self.debugToTerminal==1):
-                    print "\t\t\tXY Point: "+str(x)+","+str(y)
-            elif(idBits==('\x19','\x06')):  #Text String - also the last record in this element
-                textString = record[2::]
+                    print("\t\t\tXY Point: "+str(x)+","+str(y))
+            elif(idBits==b'\x19\x06'):  #Text String - also the last record in this element
+                textString = record[2::].decode('utf-8')
                 thisText.textString=textString
                 if(self.debugToTerminal==1):
-                    print "\t\t\tText String: "+textString
-            elif(idBits==('\x11','\x00')):  #End Of Element
+                    print("\t\t\tText String: "+textString)
+            elif(idBits==b'\x11\x00'):  #End Of Element
                 break;
         return thisText
     
@@ -485,39 +480,39 @@ class Gds2reader:
         thisNode = GdsNode()
         while 1:
             record = self.readNextRecord()
-            idBits = (record[0],record[1])
-            if(idBits==('\x26','\x01')):  #ELFLAGS
-                elementFlags = struct.unpack(">h",record[2]+record[3])[0]
+            idBits = record[0:2]
+            if(idBits==b'\x26\x01'):  #ELFLAGS
+                elementFlags = struct.unpack(">h",record[2:4])[0]
                 thisNode.elementFlags=elementFlags
                 if(self.debugToTerminal==1):
-                    print "\t\tElement Flags: "+str(elementFlags)
-            elif(idBits==('\x2F','\x03')):  #PLEX
-                plex = struct.unpack(">i",record[2]+record[3]+record[4]+record[5])[0]
+                    print("\t\tElement Flags: "+str(elementFlags))
+            elif(idBits==b'\x2F\x03'):  #PLEX
+                plex = struct.unpack(">i",record[2:6])[0]
                 thisNode.plex=plex
                 if(self.debugToTerminal==1):
-                    print "\t\tPLEX: "+str(plex)
-            elif(idBits==('\x0D','\x02')):  #Layer
-                drawingLayer = struct.unpack(">h",record[2]+record[3])[0]
+                    print("\t\tPLEX: "+str(plex))
+            elif(idBits==b'\x0D\x02'):  #Layer
+                drawingLayer = struct.unpack(">h",record[2:4])[0]
                 thisNode.drawingLayer=drawingLayer
                 if drawingLayer not in self.layoutObject.layerNumbersInUse:
                     self.layoutObject.layerNumbersInUse += [drawingLayer]
                 if(self.debugToTerminal==1):
-                    print "\t\tDrawing Layer: "+str(drawingLayer)
-            elif(idBits==('\x2A','\x02')):  #Node Type
-                nodeType = struct.unpack(">h",record[2]+record[3])[0]
+                    print("\t\tDrawing Layer: "+str(drawingLayer))
+            elif(idBits==b'\x2A\x02'):  #Node Type
+                nodeType = struct.unpack(">h",record[2:4])[0]
                 thisNode.nodeType=nodeType
                 if(self.debugToTerminal==1):
-                    print "\t\tNode Type: "+str(nodeType)
-            elif(idBits==('\x10','\x03')):  #XY Data Points
+                    print("\t\tNode Type: "+str(nodeType))
+            elif(idBits==b'\x10\x03'):  #XY Data Points
                 numDataPoints = len(record)-2  #packed as XY coordinates 4 bytes each
                 thisNode.coordinates=[]
                 for index in range(2,numDataPoints+2,8):  #incorporate the 2 byte offset
-                    x=struct.unpack(">i",record[index]+record[index+1]+record[index+2]+record[index+3])[0]
-                    y=struct.unpack(">i",record[index+4]+record[index+5]+record[index+6]+record[index+7])[0]
+                    x=struct.unpack(">i",record[index:index+4])[0]
+                    y=struct.unpack(">i",record[index+4:index+8])[0]
                     thisNode.coordinates+=[(x,y)]
                     if(self.debugToTerminal==1):
-                        print "\t\t\tXY Point: "+str(x)+","+str(y)
-            elif(idBits==('\x11','\x00')):  #End Of Element
+                        print("\t\t\tXY Point: "+str(x)+","+str(y))
+            elif(idBits==b'\x11\x00'):  #End Of Element
                 break;
         return thisNode
     
@@ -526,64 +521,64 @@ class Gds2reader:
         thisBox = GdsBox()
         while 1:
             record = self.readNextRecord()
-            idBits = (record[0],record[1])
-            if(idBits==('\x26','\x01')):  #ELFLAGS
-                elementFlags = struct.unpack(">h",record[2]+record[3])
+            idBits = record[0:2]
+            if(idBits==b'\x26\x01'):  #ELFLAGS
+                elementFlags = struct.unpack(">h",record[2:4])
                 thisBox.elementFlags=elementFlags
                 if(self.debugToTerminal==1):
-                    print "\t\tElement Flags: "+str(elementFlags)
-            elif(idBits==('\x2F','\x03')):  #PLEX
-                plex = struct.unpack(">i",record[2]+record[3]+record[4]+record[5])[0]
+                    print("\t\tElement Flags: "+str(elementFlags))
+            elif(idBits==b'\x2F\x03'):  #PLEX
+                plex = struct.unpack(">i",record[2:6])[0]
                 thisBox.plex=plex
                 if(self.debugToTerminal==1):
-                    print "\t\tPLEX: "+str(plex)
-            elif(idBits==('\x0D','\x02')):  #Layer
-                drawingLayer = struct.unpack(">h",record[2]+record[3])[0]
+                    print("\t\tPLEX: "+str(plex))
+            elif(idBits==b'\x0D\x02'):  #Layer
+                drawingLayer = struct.unpack(">h",record[2:4])[0]
                 thisBox.drawingLayer=drawingLayer
                 if drawingLayer not in self.layoutObject.layerNumbersInUse:
                     self.layoutObject.layerNumbersInUse += [drawingLayer]
                 if(self.debugToTerminal==1):
-                    print "\t\tDrawing Layer: "+str(drawingLayer)
-            elif(idBits==('\x16','\x02')):  #Purpose
-                purposeLayer = struct.unpack(">h",record[2]+record[3])[0]
+                    print("\t\tDrawing Layer: "+str(drawingLayer))
+            elif(idBits==b'\x16\x02'):  #Purpose
+                purposeLayer = struct.unpack(">h",record[2:4])[0]
                 thisBox.purposeLayer=purposeLayer                
                 if(self.debugToTerminal==1):
-                    print "\t\tPurpose Layer: "+str(purposeLayer)
-            elif(idBits==('\x2D','\x00')):  #Box
-                boxValue = struct.unpack(">h",record[2]+record[3])[0]
+                    print("\t\tPurpose Layer: "+str(purposeLayer))
+            elif(idBits==b'\x2D\x00'):  #Box
+                boxValue = struct.unpack(">h",record[2:4])[0]
                 thisBox.boxValue=boxValue
                 if(self.debugToTerminal==1):
-                    print "\t\tBox Value: "+str(boxValue)
-            elif(idBits==('\x10','\x03')):  #XY Data Points that form a closed box
+                    print("\t\tBox Value: "+str(boxValue))
+            elif(idBits==b'\x10\x03'):  #XY Data Points that form a closed box
                 numDataPoints = len(record)-2  #packed as XY coordinates 4 bytes each
                 thisBox.coordinates=[]
                 for index in range(2,numDataPoints+2,8):  #incorporate the 2 byte offset
-                    x=struct.unpack(">i",record[index]+record[index+1]+record[index+2]+record[index+3])[0]
-                    y=struct.unpack(">i",record[index+4]+record[index+5]+record[index+6]+record[index+7])[0]
+                    x=struct.unpack(">i",record[index:index+4])[0]
+                    y=struct.unpack(">i",record[index+4:index+8])[0]
                     thisBox.coordinates+=[(x,y)]
                     if(self.debugToTerminal==1):
-                        print "\t\t\tXY Point: "+str(x)+","+str(y)
-            elif(idBits==('\x11','\x00')):  #End Of Element
+                        print("\t\t\tXY Point: "+str(x)+","+str(y))
+            elif(idBits==b'\x11\x00'):  #End Of Element
                 break;
         return thisBox
     
     def readNextStructure(self):
         thisStructure = GdsStructure()        
         record = self.readNextRecord()
-        idBits = (record[0],record[1])
-        if(idBits==('\x05','\x02') and len(record)==26):
-            createYear = struct.unpack(">h",record[2]+record[3])[0]            
-            createMonth = struct.unpack(">h",record[4]+record[5])[0]
-            createDay = struct.unpack(">h",record[6]+record[7])[0]
-            createHour = struct.unpack(">h",record[8]+record[9])[0]
-            createMinute = struct.unpack(">h",record[10]+record[11])[0]
-            createSecond = struct.unpack(">h",record[12]+record[13])[0]
-            modYear = struct.unpack(">h",record[14]+record[15])[0]
-            modMonth = struct.unpack(">h",record[16]+record[17])[0]
-            modDay = struct.unpack(">h",record[18]+record[19])[0]
-            modHour = struct.unpack(">h",record[20]+record[21])[0]
-            modMinute = struct.unpack(">h",record[22]+record[23])[0]
-            modSecond = struct.unpack(">h",record[24]+record[25])[0]
+        idBits = record[0:2]
+        if(idBits==b'\x05\x02' and len(record)==26):
+            createYear = struct.unpack(">h",record[2:4])[0]            
+            createMonth = struct.unpack(">h",record[4:6])[0]
+            createDay = struct.unpack(">h",record[6:8])[0]
+            createHour = struct.unpack(">h",record[8:10])[0]
+            createMinute = struct.unpack(">h",record[10:12])[0]
+            createSecond = struct.unpack(">h",record[12:14])[0]
+            modYear = struct.unpack(">h",record[14:16])[0]
+            modMonth = struct.unpack(">h",record[16:18])[0]
+            modDay = struct.unpack(">h",record[18:20])[0]
+            modHour = struct.unpack(">h",record[20:22])[0]
+            modMinute = struct.unpack(">h",record[22:24])[0]
+            modSecond = struct.unpack(">h",record[24:26])[0]
             thisStructure.createDate=(createYear,createMonth,createDay,createHour,createMinute,createSecond)
             thisStructure.modDate=(modYear,modMonth,modDay,modHour,modMinute,modSecond)
         else:
@@ -592,33 +587,29 @@ class Gds2reader:
             return record
         while 1:
             record = self.readNextRecord()
-            idBits = (record[0],record[1])
-            if idBits==('\x07','\x00'): break; #we've reached the end of the structure
-            elif(idBits==('\x06','\x06')):
-                structName = self.stripNonASCII(record[2::]) #(record[2:1] + record[1::]).rstrip()
-#		print ''.[x for x in structName if ord(x) < 128]
-#	        stripped = (c for c in structName if 0 < ord(c) < 127)
-#	        structName = "".join(stripped)
-#                print self.stripNonASCII(structName) ##FIXME: trimming by Tom g.  ##could be an issue here with string trimming!
+            idBits = record[0:2]
+            if idBits==b'\x07\x00': break; #we've reached the end of the structure
+            elif(idBits==b'\x06\x06'):
+                structName = self.stripNonASCII(record[2::]) 
                 thisStructure.name = structName
                 if(self.debugToTerminal==1):
-                    print "\tStructure Name: "+structName
-            elif(idBits==('\x08','\x00')):
+                    print("\tStructure Name: "+structName)
+            elif(idBits==b'\x08\x00'):
                 thisStructure.boundaries+=[self.readBoundary()]
-            elif(idBits==('\x09','\x00')):
+            elif(idBits==b'\x09\x00'):
                 thisStructure.paths+=[self.readPath()]
-            elif(idBits==('\x0A','\x00')):
+            elif(idBits==b'\x0A\x00'):
                 thisStructure.srefs+=[self.readSref()]
-            elif(idBits==('\x0B','\x00')):
+            elif(idBits==b'\x0B\x00'):
                 thisStructure.arefs+=[self.readAref()]
-            elif(idBits==('\x0C','\x00')):
+            elif(idBits==b'\x0C\x00'):
                 thisStructure.texts+=[self.readText()]
-            elif(idBits==('\x15','\x00')):
+            elif(idBits==b'\x15\x00'):
                 thisStructure.nodes+=[self.readNode()]
-            elif(idBits==('\x2E','\x02')):
+            elif(idBits==b'\x2E\x02'):
                 thisStructure.boxes+=[self.readBox()]
         if(self.debugToTerminal==1):        
-            print "\tEnd of Structure."
+            print("\tEnd of Structure.")
         self.layoutObject.structures[structName]=thisStructure #add this structure to the layout object
         return 1
     
@@ -630,14 +621,14 @@ class Gds2reader:
             #now we have fallen out of the while, which means we are out of structures
             #so test for end of library
             if(len(record)>1):
-                idBits = (record[0],record[1])
-                if idBits==('\x04','\x00'): #we've reached the end of the library
+                idBits = record[0:2]
+                if idBits==b'\x04\x00': #we've reached the end of the library
                     if(self.debugToTerminal==1):
-                        print "End of GDS Library."
+                        print("End of GDS Library.")
             else:
-                print "There was an error reading the structure list."
+                print("There was an error reading the structure list.")
         else:
-            print "There was an error parsing the GDS header.  Aborting..."
+            print("There was an error parsing the GDS header.  Aborting...")
             
     def loadFromFile(self, fileName):
         self.fileHandle = open(fileName,"rb")
@@ -648,9 +639,9 @@ class Gds2reader:
 ##############################################
 
     def findStruct(self,fileName,findStructName):
-	#print"find struct"
+	#print("find struct")
         self.fileHandle = open(fileName,"rb")
-	self.debugToTerminal=0
+        self.debugToTerminal=0
         if(self.readHeader()):  #did the header read ok?
             record = self.findStruct_readNextStruct(findStructName)
             while(record == 1):
@@ -658,17 +649,17 @@ class Gds2reader:
             #now we have fallen out of the while, which means we are out of structures
             #so test for end of library
         else:
-            print "There was an error parsing the GDS header.  Aborting..."
-	self.fileHandle.close()
-	#print "End the search of",findStructName
+            print("There was an error parsing the GDS header.  Aborting...")
+        self.fileHandle.close()
+	#print("End the search of",findStructName)
         #self.layoutObject.initialize()
-	return record
+        return record
 
     def findStruct_readNextStruct(self,findStructName):
-	self.debugToTerminal=0
+        self.debugToTerminal=0
         thisStructure = GdsStructure()        
         record = self.readNextRecord()
-        idBits = (record[0],record[1])
+        idBits = record[0:2]
         if(idBits==('\x05','\x02') and len(record)==26):
             createYear = struct.unpack(">h",record[2]+record[3])[0]            
             createMonth = struct.unpack(">h",record[4]+record[5])[0]
@@ -688,22 +679,22 @@ class Gds2reader:
             #means we have hit the last structure, so return the record
             #to whoever called us to do something with it
             return record
-	wantedStruct=0
+        wantedStruct=0
         while 1:
             record = self.readNextRecord()
-            idBits = (record[0],record[1])
+            idBits = record[0:2]
             if idBits==('\x07','\x00'): break; #we've reached the end of the structure
             elif(idBits==('\x06','\x06')):
                 structName = self.stripNonASCII(record[2::]) #(record[2:1] + record[1::]).rstrip()
-#		print ''.[x for x in structName if ord(x) < 128]
+#		print(''.[x for x in structName if ord(x) < 128])
 #	        stripped = (c for c in structName if 0 < ord(c) < 127)
 #	        structName = "".join(stripped)
-#                print self.stripNonASCII(structName) ##FIXME: trimming by Tom g.  ##could be an issue here with string trimming!
+#                print(self.stripNonASCII(structName)) ##FIXME: trimming by Tom g.  ##could be an issue here with string trimming!
                 thisStructure.name = structName
-		if(findStructName==thisStructure.name):
-			wantedStruct=1
+                if(findStructName==thisStructure.name):
+                    wantedStruct=1
                 if(self.debugToTerminal==1):
-                    print "\tStructure Name: "+structName
+                    print("\tStructure Name: "+structName)
             elif(idBits==('\x08','\x00')):
                 thisStructure.boundaries+=[self.readBoundary()]
             elif(idBits==('\x09','\x00')):
@@ -719,18 +710,18 @@ class Gds2reader:
             elif(idBits==('\x2E','\x02')):
                 thisStructure.boxes+=[self.readBox()]
         if(self.debugToTerminal==1):        
-            print "\tEnd of Structure."
+            print("\tEnd of Structure.")
         self.layoutObject.structures[structName]=thisStructure #add this structure to the layout object
-	if(wantedStruct == 0):
-		return 1
-	else:
-		#print "\tDone with collectting bound. Return"
-		return [0,thisStructure.boundaries]
+        if(wantedStruct == 0):
+            return 1
+        else:
+	    #print("\tDone with collectting bound. Return")
+            return [0,thisStructure.boundaries]
 
     def findLabel(self,fileName,findLabelName):
-	#print"find Label"
+	#print("find Label")
         self.fileHandle = open(fileName,"rb")
-	self.debugToTerminal=0
+        self.debugToTerminal=0
         if(self.readHeader()):  #did the header read ok?
             record = self.findLabel_readNextStruct(findLabelName)
             while(record == 1):
@@ -738,17 +729,17 @@ class Gds2reader:
             #now we have fallen out of the while, which means we are out of structures
             #so test for end of library
         else:
-            print "There was an error parsing the GDS header.  Aborting..."
-	self.fileHandle.close()
-	#print "End the search of",findStructName
+            print("There was an error parsing the GDS header.  Aborting...")
+        self.fileHandle.close()
+	#print("End the search of",findStructName)
         #self.layoutObject.initialize()
-	return record
+        return record
 
     def findLabel_readNextStruct(self,findLabelName):
-	self.debugToTerminal=0
+        self.debugToTerminal=0
         thisStructure = GdsStructure()        
         record = self.readNextRecord()
-        idBits = (record[0],record[1])
+        idBits = record[0:2]
         if(idBits==('\x05','\x02') and len(record)==26):
             createYear = struct.unpack(">h",record[2]+record[3])[0]            
             createMonth = struct.unpack(">h",record[4]+record[5])[0]
@@ -768,21 +759,21 @@ class Gds2reader:
             #means we have hit the last structure, so return the record
             #to whoever called us to do something with it
             return record
-	wantedLabel=0
-	wantedtexts=[GdsText()]
+        wantedLabel=0
+        wantedtexts=[GdsText()]
         while 1:
             record = self.readNextRecord()
-            idBits = (record[0],record[1])
+            idBits = record[0:2]
             if idBits==('\x07','\x00'): break; #we've reached the end of the structure
             elif(idBits==('\x06','\x06')):
                 structName = self.stripNonASCII(record[2::]) #(record[2:1] + record[1::]).rstrip()
-#		print ''.[x for x in structName if ord(x) < 128]
+#		print(''.[x for x in structName if ord(x) < 128])
 #	        stripped = (c for c in structName if 0 < ord(c) < 127)
 #	        structName = "".join(stripped)
-#                print self.stripNonASCIIx(structName) ##FIXME: trimming by Tom g.  ##could be an issue here with string trimming!
+#                print(self.stripNonASCIIx(structName)) ##FIXME: trimming by Tom g.  ##could be an issue here with string trimming!
                 thisStructure.name = structName
                 if(self.debugToTerminal==1):
-                    print "\tStructure Name: "+structName
+                    print("\tStructure Name: "+structName)
             elif(idBits==('\x08','\x00')):
                 thisStructure.boundaries+=[self.readBoundary()]
             elif(idBits==('\x09','\x00')):
@@ -792,29 +783,24 @@ class Gds2reader:
             elif(idBits==('\x0B','\x00')):
                 thisStructure.arefs+=[self.readAref()]
             elif(idBits==('\x0C','\x00')):
-		label=self.readText()
+                label=self.readText()
 		#Be careful: label.textString contains one space string in it. Delete that one before use it
-		if( findLabelName == label.textString[0:(len(label.textString)-1)] ):
-			wantedLabel=1
-			# BINWU: Cleanup
-			#print"Find the Label",findLabelName
-			wantedtexts+=[label]
+                if( findLabelName == label.textString[0:(len(label.textString)-1)] ):
+                    wantedLabel=1
+                    wantedtexts+=[label]
                 thisStructure.texts+=[label]
-		if(self.debugToTerminal == 1):
-			print label.textString[0:(len(label.textString)-1)],findLabelName,( findLabelName == label.textString[0:(len(label.textString)-1)] )
-			# BINWU: Cleanup
-			#print thisStructure.name				
-			#print thisStructure.texts		
+                if(self.debugToTerminal == 1):
+                    print(label.textString[0:(len(label.textString)-1)],findLabelName,( findLabelName == label.textString[0:(len(label.textString)-1)] ))
             elif(idBits==('\x15','\x00')):
                 thisStructure.nodes+=[self.readNode()]
             elif(idBits==('\x2E','\x02')):
                 thisStructure.boxes+=[self.readBox()]
         if(self.debugToTerminal==1):        
-            print "\tEnd of Structure."
+            print("\tEnd of Structure.")
         self.layoutObject.structures[structName]=thisStructure #add this structure to the layout object
-	if(wantedLabel == 0):
-		return 1
-	else:
-		#print "\tDone with collectting bound. Return"
-		return [0,wantedtexts]
+        if(wantedLabel == 0):
+            return 1
+        else:
+            #print("\tDone with collectting bound. Return")
+            return [0,wantedtexts]
 

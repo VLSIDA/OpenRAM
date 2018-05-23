@@ -1,6 +1,6 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 """
-Run a regresion test on a dff_array.
+Run a regression test on a dff_array.
 """
 
 import unittest

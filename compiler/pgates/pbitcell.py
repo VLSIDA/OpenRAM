@@ -455,7 +455,7 @@ class pbitcell(pgate.pgate):
             if(self.readwrite_nmos_contact_extension > self.gate_contact_thres):
                 contact_xpos = self.readwrite_nmos_left[k].get_pin("S").lc().x - drc["minwidth_metal2"] - 0.5*contact.m1m2.width
             else:
-                contact_xpos = left_readwrite_transistor_xpos - self.readwrite_nmos.active_height - drc["poly_to_active"] - 0.5*contact.m1m2.width
+                contact_xpos = left_readwrite_transistor_xpos - self.readwrite_nmos.active_height - drc["poly_to_active"] - 0.5*contact.poly.width
             contact_ypos = self.readwrite_nmos_left[k].get_pin("D").bc().y - drc["minwidth_metal1"] - 0.5*contact.m1m2.height
             left_gate_contact =  vector(contact_xpos, contact_ypos)
             
@@ -467,7 +467,7 @@ class pbitcell(pgate.pgate):
             if(self.readwrite_nmos_contact_extension > self.gate_contact_thres):
                 contact_xpos = self.readwrite_nmos_right[k].get_pin("S").rc().x + drc["minwidth_metal2"] + 0.5*contact.m1m2.width
             else:
-                contact_xpos = right_readwrite_transistor_xpos + drc["poly_to_active"] + 0.5*contact.m1m2.width
+                contact_xpos = right_readwrite_transistor_xpos + drc["poly_to_active"] + 0.5*contact.poly.width
             contact_ypos = self.readwrite_nmos_right[k].get_pin("D").bc().y - drc["minwidth_metal1"] - 0.5*contact.m1m2.height
             right_gate_contact = vector(contact_xpos, contact_ypos)
             
@@ -631,7 +631,7 @@ class pbitcell(pgate.pgate):
             if(self.write_nmos_contact_extension > self.gate_contact_thres):
                 contact_xpos = self.write_nmos_left[k].get_pin("S").lc().x - drc["minwidth_metal2"] - 0.5*contact.m1m2.width
             else:
-                contact_xpos = left_write_transistor_xpos - self.write_nmos.active_height - drc["poly_to_active"] - 0.5*contact.m1m2.width
+                contact_xpos = left_write_transistor_xpos - self.write_nmos.active_height - drc["poly_to_active"] - 0.5*contact.poly.width
             contact_ypos = self.write_nmos_left[k].get_pin("D").bc().y - drc["minwidth_metal1"] - 0.5*contact.m1m2.height
             left_gate_contact =  vector(contact_xpos, contact_ypos)
             
@@ -643,7 +643,7 @@ class pbitcell(pgate.pgate):
             if(self.write_nmos_contact_extension > self.gate_contact_thres):
                 contact_xpos = self.write_nmos_right[k].get_pin("S").rc().x + drc["minwidth_metal2"] + 0.5*contact.m1m2.width
             else:
-                contact_xpos = right_write_transistor_xpos + drc["poly_to_active"] + 0.5*contact.m1m2.width
+                contact_xpos = right_write_transistor_xpos + drc["poly_to_active"] + 0.5*contact.poly.width
             contact_ypos = self.write_nmos_right[k].get_pin("D").bc().y - drc["minwidth_metal1"] - 0.5*contact.m1m2.height
             right_gate_contact = vector(contact_xpos, contact_ypos)
             
@@ -826,7 +826,7 @@ class pbitcell(pgate.pgate):
             if(self.read_nmos_contact_extension > self.gate_contact_thres):
                 contact_xpos = self.read_nmos_left[k].get_pin("S").lc().x - drc["minwidth_metal2"] - 0.5*contact.m1m2.width
             else:
-                contact_xpos = left_read_transistor_xpos - self.read_nmos.active_height - drc["poly_to_active"] - 0.5*contact.m1m2.width
+                contact_xpos = left_read_transistor_xpos - self.read_nmos.active_height - drc["poly_to_active"] - 0.5*contact.poly.width
             contact_ypos = self.read_nmos_left[k].get_pin("G").lc().y
             left_gate_contact = vector(contact_xpos, contact_ypos)
             
@@ -838,7 +838,7 @@ class pbitcell(pgate.pgate):
             if(self.read_nmos_contact_extension > self.gate_contact_thres):
                 contact_xpos = self.read_nmos_right[k].get_pin("S").rc().x + drc["minwidth_metal2"] + 0.5*contact.m1m2.width
             else:
-                contact_xpos = right_read_transistor_xpos + drc["poly_to_active"] + 0.5*contact.m1m2.width
+                contact_xpos = right_read_transistor_xpos + drc["poly_to_active"] + 0.5*contact.poly.width
             contact_ypos = self.read_nmos_right[k].get_pin("G").rc().y
             right_gate_contact = vector(contact_xpos, contact_ypos)
             
@@ -852,12 +852,12 @@ class pbitcell(pgate.pgate):
             self.add_path("poly", [self.read_nmos_right[k].get_pin("G").rc(), right_gate_contact])
             
             # add metal1-to-metal2 contacts to RWL lines
-            left_rwl_contact = vector(left_gate_contact.x, self.rwl_positions[k].y + 0.5*contact.m1m2.width)
+            left_rwl_contact = vector(left_gate_contact.x, self.rwl_positions[k].y + 0.5*contact.poly.width)
             self.add_contact_center(layers=("metal1", "via1", "metal2"),
                                     offset=left_rwl_contact,
                                     rotate=90)
                                                             
-            right_rwl_contact = vector(right_gate_contact.x, self.rwl_positions[k].y + 0.5*contact.m1m2.width)
+            right_rwl_contact = vector(right_gate_contact.x, self.rwl_positions[k].y + 0.5*contact.poly.width)
             self.add_contact_center(layers=("metal1", "via1", "metal2"),
                                     offset=right_rwl_contact,
                                     rotate=90)
@@ -879,7 +879,7 @@ class pbitcell(pgate.pgate):
             if(self.read_nmos_contact_extension > self.gate_contact_thres):
                 contact_xpos = self.read_nmos_left[k].get_pin("S").rc().x + drc["minwidth_metal2"] + 0.5*contact.m1m2.width
             else:
-                contact_xpos = left_read_transistor_xpos + drc["poly_to_active"] + 0.5*contact.m1m2.width
+                contact_xpos = left_read_transistor_xpos + drc["poly_to_active"] + 0.5*contact.poly.width
             contact_ypos = self.read_access_nmos_left[k].get_pin("G").rc().y
             left_gate_contact = vector(contact_xpos, contact_ypos)
             
@@ -889,7 +889,7 @@ class pbitcell(pgate.pgate):
             if(self.read_nmos_contact_extension > self.gate_contact_thres):
                 contact_xpos = self.read_nmos_right[k].get_pin("S").lc().x - drc["minwidth_metal2"] - 0.5*contact.m1m2.width
             else:
-                contact_xpos = right_read_transistor_xpos - self.read_nmos.active_height - drc["poly_to_active"] - 0.5*contact.m1m2.width
+                contact_xpos = right_read_transistor_xpos - self.read_nmos.active_height - drc["poly_to_active"] - 0.5*contact.poly.width
             contact_ypos = self.read_access_nmos_right[k].get_pin("G").lc().y
             right_gate_contact = vector(contact_xpos, contact_ypos)
             

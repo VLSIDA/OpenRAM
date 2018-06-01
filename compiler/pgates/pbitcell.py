@@ -36,7 +36,9 @@ class pbitcell(pgate.pgate):
     
     
     def add_pins(self):
-        
+        """
+        Adding pins for pbitcell module
+        """
         for k in range(self.num_readwrite):
             self.add_pin("rwbl{}".format(k))
             self.add_pin("rwbl_bar{}".format(k))
@@ -60,7 +62,8 @@ class pbitcell(pgate.pgate):
         
     def create_layout(self):
         self.create_ptx()
-        self.add_globals()
+        self.calculate_spacing()
+        self.calculate_postions()
         self.add_storage()
         self.add_rails()
         if(self.num_readwrite > 0):
@@ -74,7 +77,11 @@ class pbitcell(pgate.pgate):
     
     
     def create_ptx(self):
-        """ Calculate transistor sizes """
+        """ 
+        Calculate transistor sizes and create ptx for read/write, write, and read ports
+        """
+        
+        """ calculate transistor sizes """
         # if there are any read/write ports, then the inverter nmos is sized based the number of them
         if(self.num_readwrite > 0):
             inverter_nmos_width = self.num_readwrite*3*parameter["min_tx_size"]
@@ -117,61 +124,112 @@ class pbitcell(pgate.pgate):
         self.add_mod(self.read_nmos)
     
     
-    def add_globals(self):        
-        """ Define pbitcell global variables """
-        # calculate metal contact extensions over transistor active
-        self.inverter_pmos_contact_extension = 0.5*(self.inverter_pmos.active_contact.height - self.inverter_pmos.active_height)
-        self.write_nmos_contact_extension = 0.5*(self.write_nmos.active_contact.height - self.write_nmos.active_height)    
+    def calculate_spacing(self):        
+        """ 
+        Calculate transistor spacings 
+        """
         
-        # calculation for transistor spacing (exact solutions)
+        """ calculate metal contact extensions over transistor active """
+        self.inverter_pmos_contact_extension = 0.5*(self.inverter_pmos.active_contact.height - self.inverter_pmos.active_height)
+        self.readwrite_nmos_contact_extension = 0.5*(self.readwrite_nmos.active_contact.height - self.readwrite_nmos.active_height)
+        self.write_nmos_contact_extension = 0.5*(self.write_nmos.active_contact.height - self.write_nmos.active_height)
+        self.read_nmos_contact_extension = 0.5*(self.read_nmos.active_contact.height - self.read_nmos.active_height)
+        
+        # calculate the distance threshold for different gate contact spacings
+        self.gate_contact_thres = drc["poly_to_active"] - drc["minwidth_metal2"]
+        
+        """ calculations for horizontal transistor to tansistor spacing """
+        # inverter spacings
         self.inverter_to_inverter_spacing = contact.poly.height + drc["minwidth_metal1"]
         self.inverter_to_write_spacing = drc["pwell_to_nwell"] + 2*drc["well_enclosure_active"]
-        self.write_to_write_spacing = drc["minwidth_metal2"] + self.write_nmos_contact_extension + contact.poly.width + drc["poly_to_field_poly"] + drc["poly_extend_active"]
-        self.write_to_read_spacing = drc["minwidth_poly"] + drc["poly_to_field_poly"] + drc["minwidth_metal2"] + 2*contact.poly.width + self.write_nmos_contact_extension
-        self.read_to_read_spacing = 2*drc["minwidth_poly"] + drc["minwidth_metal1"] + 2*contact.poly.width
         
-        # calculation for transistor spacing (symmetric solutions)
-        #self.inverter_to_inverter_spacing = 3*parameter["min_tx_size"]
-        #self.inverter_to_write_spacing = need to calculate
-        #spacing_option1 = contact.poly.width + 2*drc["poly_to_field_poly"] + 2*drc["poly_extend_active"]
-        #spacing_option2 = contact.poly.width + 2*drc["minwidth_metal2"] + 2*self.write_nmos_contact_extension
-        #self.write_to_write_spacing = max(spacing_option1, spacing_option2)
-        #self.write_to_read_spacing = drc["poly_to_field_poly"] + 2*contact.poly.width + 2*drc["minwidth_metal2"] + 2*self.write_nmos_contact_extension
-        #self.read_to_read_spacing = drc["minwidth_metal1"] + 2*contact.poly.width + 2*drc["minwidth_poly"]
+        # readwrite to readwrite transistor spacing (also acts as readwrite to write transistor spacing)
+        if(self.readwrite_nmos_contact_extension > self.gate_contact_thres):
+            self.readwrite_to_readwrite_spacing = drc["minwidth_metal2"] + self.readwrite_nmos_contact_extension + contact.poly.width + drc["poly_to_field_poly"] + drc["poly_extend_active"]
+        else:
+            self.readwrite_to_readwrite_spacing = drc["poly_to_active"] + contact.poly.width + drc["poly_to_field_poly"] + drc["poly_extend_active"]
         
-        # calculations for transistor tiling (includes transistor and spacing)
+        # write to write transistor spacing
+        if(self.write_nmos_contact_extension > self.gate_contact_thres):
+            self.write_to_write_spacing = drc["minwidth_metal2"] + self.write_nmos_contact_extension + contact.poly.width + drc["poly_to_field_poly"] + drc["poly_extend_active"]
+        else:
+            self.write_to_write_spacing = drc["poly_to_active"] + contact.poly.width + drc["poly_to_field_poly"] + drc["poly_extend_active"]
+        
+        # read to read transistor spacing
+        if(self.read_nmos_contact_extension > self.gate_contact_thres):
+            self.read_to_read_spacing = 2*(drc["minwidth_metal2"] + self.read_nmos_contact_extension) + drc["minwidth_metal1"] + 2*contact.poly.width
+        else:
+            self.read_to_read_spacing = 2*drc["poly_to_active"] + drc["minwidth_metal1"] + 2*contact.poly.width
+        
+        # write to read transistor spacing (also acts as readwrite to read transistor spacing)
+        # calculation is dependent on whether the read transistor is adjacent to a write transistor or a readwrite transistor
+        if(self.num_write > 0):
+            if(self.write_nmos_contact_extension > self.gate_contact_thres):
+                write_portion = drc["minwidth_metal2"] + self.write_nmos_contact_extension
+            else:
+                write_portion = drc["poly_to_active"]
+        else:
+            if(self.readwrite_nmos_contact_extension > self.gate_contact_thres):
+                write_portion = drc["minwidth_metal2"] + self.readwrite_nmos_contact_extension
+            else:
+                write_portion = drc["poly_to_active"]
+        
+        if(self.read_nmos_contact_extension > self.gate_contact_thres):
+            read_portion = drc["minwidth_metal2"] + self.read_nmos_contact_extension
+        else:
+            read_portion = drc["poly_to_active"]
+            
+        self.write_to_read_spacing = write_portion + read_portion + 2*contact.poly.width + drc["poly_to_field_poly"]
+        
+        """ calculations for transistor tiling (transistor + spacing) """
         self.inverter_tile_width = self.inverter_nmos.active_width + 0.5*self.inverter_to_inverter_spacing
-        self.readwrite_tile_width = self.write_to_write_spacing + self.readwrite_nmos.active_height
+        self.readwrite_tile_width = self.readwrite_to_readwrite_spacing + self.readwrite_nmos.active_height
         self.write_tile_width = self.write_to_write_spacing + self.write_nmos.active_height
         self.read_tile_width = self.read_to_read_spacing + self.read_nmos.active_height
         
-        # calculation for row line tiling
+        """ calculation for row line tiling """
         self.rail_tile_height = drc["active_to_body_active"] + 0.5*(drc["minwidth_tx"] - drc["minwidth_metal1"]) + drc["minwidth_metal1"]
         self.rowline_tile_height = drc["minwidth_metal1"] + contact.m1m2.width
         
-        # calculations related to inverter connections
+        """ calculations related to inverter connections """
         self.inverter_gap = drc["poly_to_active"] + drc["poly_to_field_poly"] + 2*contact.poly.width + drc["minwidth_metal1"] + self.inverter_pmos_contact_extension
         self.cross_couple_lower_ypos = self.inverter_nmos.active_height + drc["poly_to_active"] + 0.5*contact.poly.width
         self.cross_couple_upper_ypos = self.inverter_nmos.active_height + drc["poly_to_active"] + drc["poly_to_field_poly"] + 1.5*contact.poly.width
         
-        """ Calculations for the edges of the cell """
-        # create a flags for excluding readwrite, write, or read port calculations if they are not included in the bitcell
+    
+    def calculate_postions(self):
+        """ 
+        Calculate positions that describe the edges of the cell 
+        """
+        # create flags for excluding readwrite, write, or read port calculations if they are not included in the bitcell
         if(self.num_readwrite > 0):
-            self.readwrite_port_flag = 1
+            self.readwrite_port_flag = True
         else:
-            self.readwrite_port_flag = 0
+            self.readwrite_port_flag = False
         
         if(self.num_write > 0):
-            self.write_port_flag = 1
+            self.write_port_flag = True
         else:
-            self.write_port_flag = 0
+            self.write_port_flag = False
             
         if(self.num_read > 0):
-            self.read_port_flag = 1
+            self.read_port_flag = True
         else:
-            self.read_port_flag = 0
+            self.read_port_flag = False
             
-        # leftmost position = storage width + write ports width + read ports width + read transistor gate connections + metal spacing necessary for tiling the bitcell
+        # determine the distance of the leftmost/rightmost transistor gate connection
+        if (self.num_read > 0):
+            if(self.read_nmos_contact_extension > self.gate_contact_thres):
+                end_connection = drc["minwidth_metal2"] + self.read_nmos_contact_extension + contact.m1m2.height
+            else:
+                end_connection = drc["poly_to_active"] + contact.m1m2.height
+        else:
+            if(self.readwrite_nmos_contact_extension > self.gate_contact_thres):
+                end_connection = drc["minwidth_metal2"] + self.readwrite_nmos_contact_extension + contact.m1m2.height
+            else:
+                end_connection = drc["poly_to_active"] + contact.m1m2.height
+            
+        # leftmost position = storage width + read/write ports width + write ports width + read ports width + end transistor gate connections + metal spacing necessary for tiling the bitcell
         self.leftmost_xpos = -self.inverter_tile_width \
                              - self.inverter_to_write_spacing \
                              - self.readwrite_port_flag*(self.readwrite_nmos.active_height + (self.num_readwrite-1)*self.readwrite_tile_width) \
@@ -179,12 +237,12 @@ class pbitcell(pgate.pgate):
                              - self.write_port_flag*(self.write_nmos.active_height + (self.num_write-1)*self.write_tile_width) \
                              - self.read_port_flag*self.write_to_read_spacing \
                              - self.read_port_flag*(self.read_nmos.active_height + (self.num_read-1)*self.read_tile_width) \
-                             - drc["minwidth_poly"] - contact.m1m2.height \
+                             - end_connection \
                              - 0.5*drc["minwidth_metal2"]
                              
         self.rightmost_xpos = -self.leftmost_xpos
         
-        # bottommost position = gnd height + wwl height + rwl height + space needed between tiled bitcells
+        # bottommost position = gnd height + rwwl height + wwl height + rwl height + space needed between tiled bitcells
         array_tiling_offset = 0.5*drc["minwidth_metal2"]
         self.botmost_ypos = -self.rail_tile_height \
                             - self.num_readwrite*self.rowline_tile_height \
@@ -254,14 +312,18 @@ class pbitcell(pgate.pgate):
                                         offset=contact_offset_right,
                                         rotate=90)
                                            
-        # connect contacts to gate poly (cross couple)
+        # connect contacts to gate poly (cross couple connections)
         gate_offset_right = vector(self.inverter_nmos_right.get_pin("G").lc().x, contact_offset_left.y)
         self.add_path("poly", [contact_offset_left, gate_offset_right])
         
         gate_offset_left = vector(self.inverter_nmos_left.get_pin("G").rc().x, contact_offset_right.y)
         self.add_path("poly", [contact_offset_right, gate_offset_left])
         
-       
+        # update furthest left and right transistor edges (this will propagate to further transistor offset calculations)
+        self.left_building_edge = -self.inverter_tile_width
+        self.right_building_edge = self.inverter_tile_width
+    
+    
     def add_rails(self):
         """
         Add gnd and vdd rails and connects them to the inverters
@@ -277,7 +339,6 @@ class pbitcell(pgate.pgate):
         
         vdd_ypos = self.inverter_nmos.active_height + self.inverter_gap + self.inverter_pmos.active_height \
                    + drc["active_to_body_active"] + 0.5*(drc["minwidth_tx"] - drc["minwidth_metal1"])
-        #vdd_ypos = self.inverter_pmos_left.get_pin("S").uc().y + drc["minwidth_metal1"]
         self.vdd_position = vector(self.leftmost_xpos, vdd_ypos)
         self.vdd = self.add_layout_pin(text="vdd",
                                        layer="metal1",
@@ -303,15 +364,16 @@ class pbitcell(pgate.pgate):
 
     def add_readwrite_ports(self):
         """
-        Adds write ports to the bit cell. A single transistor acts as the write port.
-        A write is enabled by setting a Write-Rowline (WWL) high, subsequently turning on the transistor.
-        The transistor is connected between a Write-Bitline (WBL) and the storage component of the cell (Q). 
-        Driving WBL high or low sets the value of the cell.
-        This is a differential design, so each write port has a mirrored port that connects WBL_bar to Q_bar.
+        Adds read/write ports to the bit cell. A differential pair of transistor can both read and write, like in a 6T cell.
+        A read or write is enabled by setting a Read-Write-Wordline (RWWL) high, subsequently turning on the transistor.
+        The transistor is connected between a Read-Write-Bitline (RWBL) and the storage component of the cell (Q). 
+        In a write operation, driving RWBL high or low sets the value of the cell.
+        In a read operation, RWBL is precharged, then is either remains high or is discharged depending on the value of the cell.
+        This is a differential design, so each write port has a mirrored port that connects RWBL_bar to Q_bar.
         """
     
         """ Define variables relevant to write transistors """
-        # define offset correction due to rotation of the ptx cell
+        # define offset correction due to rotation of the ptx module
         readwrite_rotation_correct = self.readwrite_nmos.active_height
         
         # define write transistor variables as empty arrays based on the number of write ports
@@ -319,23 +381,23 @@ class pbitcell(pgate.pgate):
         self.readwrite_nmos_right = [None] * self.num_readwrite
         self.rwwl_positions = [None] * self.num_readwrite
         self.rwbl_positions = [None] * self.num_readwrite
-        self.rwbl_bar_positions = [None] * self.num_readwrite       
+        self.rwbl_bar_positions = [None] * self.num_readwrite    
         
         # iterate over the number of read/write ports
         for k in range(0,self.num_readwrite):
             """ Add transistors """
-            # calculate write transistor offsets 
-            left_readwrite_transistor_xpos = -self.inverter_tile_width \
+            # calculate read/write transistor offsets 
+            left_readwrite_transistor_xpos = self.left_building_edge \
                                              - self.inverter_to_write_spacing \
                                              - self.readwrite_nmos.active_height - k*self.readwrite_tile_width \
                                              + readwrite_rotation_correct
             
-            right_readwrite_transistor_xpos = self.inverter_tile_width \
+            right_readwrite_transistor_xpos = self.right_building_edge \
                                               + self.inverter_to_write_spacing \
                                               + k*self.readwrite_tile_width \
                                               + readwrite_rotation_correct
             
-            # add write transistors
+            # add read/write transistors
             self.readwrite_nmos_left[k] = self.add_inst(name="readwrite_nmos_left{}".format(k),
                                                         mod=self.readwrite_nmos,
                                                         offset=[left_readwrite_transistor_xpos,0],
@@ -348,7 +410,7 @@ class pbitcell(pgate.pgate):
                                                          rotate=90)
             self.connect_inst(["Q_bar", "rwwl{}".format(k), "rwbl_bar{}".format(k), "gnd"])
                         
-            """ Add WWL lines """
+            """ Add RWWL lines """
             # calculate RWWL position
             rwwl_ypos = self.gnd_position.y - (k+1)*self.rowline_tile_height 
             self.rwwl_positions[k] = vector(self.leftmost_xpos, rwwl_ypos)
@@ -360,8 +422,8 @@ class pbitcell(pgate.pgate):
                                 width=self.width,
                                 height=contact.m1m2.width)
                        
-            """ Source/WBL/WBL_bar connections """            
-            # add metal1-to-metal2 contacts on top of write transistor source pins for connection to WBL and WBL_bar
+            """ Source/RWBL/RWBL_bar connections """            
+            # add metal1-to-metal2 contacts on top of read/write transistor source pins for connection to WBL and WBL_bar
             offset_left = self.readwrite_nmos_left[k].get_pin("S").center()
             self.add_contact_center(layers=("metal1", "via1", "metal2"),
                                     offset=offset_left,
@@ -387,10 +449,13 @@ class pbitcell(pgate.pgate):
                                 width=drc["minwidth_metal2"],
                                 height=self.height)
                         
-            """ Gate/WWL connections """
-            # add poly-to-meltal2 contacts to connect gate of write transistors to WWL (contact next to gate)
-            # contact must be placed a metal width below the source pin to avoid drc from routing to the source pins
-            contact_xpos = self.readwrite_nmos_left[k].get_pin("S").lc().x - drc["minwidth_metal2"] - 0.5*contact.m1m2.width
+            """ Gate/RWWL connections """
+            # add poly-to-meltal2 contacts to connect gate of read/write transistors to RWWL (contact next to gate)
+            # contact must be placed a metal1 width below the source pin to avoid drc from source pin routings
+            if(self.readwrite_nmos_contact_extension > self.gate_contact_thres):
+                contact_xpos = self.readwrite_nmos_left[k].get_pin("S").lc().x - drc["minwidth_metal2"] - 0.5*contact.m1m2.width
+            else:
+                contact_xpos = left_readwrite_transistor_xpos - self.readwrite_nmos.active_height - drc["poly_to_active"] - 0.5*contact.m1m2.width
             contact_ypos = self.readwrite_nmos_left[k].get_pin("D").bc().y - drc["minwidth_metal1"] - 0.5*contact.m1m2.height
             left_gate_contact =  vector(contact_xpos, contact_ypos)
             
@@ -399,7 +464,10 @@ class pbitcell(pgate.pgate):
             self.add_contact_center(layers=("metal1", "via1", "metal2"),
                                     offset=left_gate_contact)            
             
-            contact_xpos = self.readwrite_nmos_right[k].get_pin("S").rc().x + drc["minwidth_metal2"] + 0.5*contact.m1m2.width
+            if(self.readwrite_nmos_contact_extension > self.gate_contact_thres):
+                contact_xpos = self.readwrite_nmos_right[k].get_pin("S").rc().x + drc["minwidth_metal2"] + 0.5*contact.m1m2.width
+            else:
+                contact_xpos = right_readwrite_transistor_xpos + drc["poly_to_active"] + 0.5*contact.m1m2.width
             contact_ypos = self.readwrite_nmos_right[k].get_pin("D").bc().y - drc["minwidth_metal1"] - 0.5*contact.m1m2.height
             right_gate_contact = vector(contact_xpos, contact_ypos)
             
@@ -433,7 +501,7 @@ class pbitcell(pgate.pgate):
             """ Drain/Storage connections """
             # this path only needs to be drawn once on the last iteration of the loop
             if(k == self.num_readwrite-1):
-                # add contacts to connect gate of inverters to drain of write transistors
+                # add contacts to connect gate of inverters to drain of read/write transistors
                 left_storage_contact =  vector(self.inverter_nmos_left.get_pin("G").lc().x - drc["poly_to_field_poly"] - 0.5*contact.poly.width, self.cross_couple_lower_ypos)
                 self.add_contact_center(layers=("poly", "contact", "metal1"),
                                                 offset=left_storage_contact,
@@ -451,7 +519,7 @@ class pbitcell(pgate.pgate):
                 inverter_gate_offset_right = vector(self.inverter_nmos_right.get_pin("G").rc().x, self.cross_couple_lower_ypos)
                 self.add_path("poly", [right_storage_contact, inverter_gate_offset_right])
                 
-                # connect contacts to drains of write transistors (metal1 path)
+                # connect contacts to drains of read/write transistors (metal1 path)
                 midL0 = vector(left_storage_contact.x - 0.5*contact.poly.height - 1.5*drc["minwidth_metal1"], left_storage_contact.y)
                 midL1 = vector(left_storage_contact.x - 0.5*contact.poly.height - 1.5*drc["minwidth_metal1"], self.readwrite_nmos_left[k].get_pin("D").lc().y)
                 self.add_path("metal1", [left_storage_contact, midL0, midL1, self.readwrite_nmos_left[k].get_pin("D").lc()])
@@ -459,19 +527,25 @@ class pbitcell(pgate.pgate):
                 midR0 = vector(right_storage_contact.x + 0.5*contact.poly.height + 1.5*drc["minwidth_metal1"], right_storage_contact.y)
                 midR1 = vector(right_storage_contact.x + 0.5*contact.poly.height + 1.5*drc["minwidth_metal1"], self.readwrite_nmos_right[k].get_pin("D").rc().y)
                 self.add_path("metal1", [right_storage_contact, midR0, midR1, self.readwrite_nmos_right[k].get_pin("D").rc()])
+            # end if
+        # end for
+        
+        """ update furthest left and right transistor edges """
+        self.left_building_edge = left_readwrite_transistor_xpos - self.readwrite_nmos.active_height
+        self.right_building_edge = right_readwrite_transistor_xpos
     
     
     def add_write_ports(self):
         """
-        Adds write ports to the bit cell. A single transistor acts as the write port.
+        Adds write ports to the bit cell. A differential pair of transistors can write only.
         A write is enabled by setting a Write-Rowline (WWL) high, subsequently turning on the transistor.
         The transistor is connected between a Write-Bitline (WBL) and the storage component of the cell (Q). 
-        Driving WBL high or low sets the value of the cell.
+        In a write operation, driving WBL high or low sets the value of the cell.
         This is a differential design, so each write port has a mirrored port that connects WBL_bar to Q_bar.
         """
     
         """ Define variables relevant to write transistors """
-        # define offset correction due to rotation of the ptx cell
+        # define offset correction due to rotation of the ptx module
         write_rotation_correct = self.write_nmos.active_height
         
         # define write transistor variables as empty arrays based on the number of write ports
@@ -485,17 +559,15 @@ class pbitcell(pgate.pgate):
         for k in range(0,self.num_write):
             """ Add transistors """
             # calculate write transistor offsets 
-            left_write_transistor_xpos = -self.inverter_tile_width \
-                                         - self.inverter_to_write_spacing \
-                                         - self.readwrite_port_flag*(self.readwrite_nmos.active_height + (self.num_readwrite-1)*self.readwrite_tile_width) \
-                                         - self.readwrite_port_flag*self.write_to_write_spacing \
+            left_write_transistor_xpos = self.left_building_edge \
+                                         - (not self.readwrite_port_flag)*self.inverter_to_write_spacing \
+                                         - (self.readwrite_port_flag)*self.readwrite_to_readwrite_spacing \
                                          - self.write_nmos.active_height - k*self.write_tile_width \
                                          + write_rotation_correct
             
-            right_write_transistor_xpos = self.inverter_tile_width \
-                                          + self.inverter_to_write_spacing \
-                                          + self.readwrite_port_flag*(self.readwrite_nmos.active_height + (self.num_readwrite-1)*self.readwrite_tile_width) \
-                                          + self.readwrite_port_flag*self.write_to_write_spacing \
+            right_write_transistor_xpos = self.right_building_edge \
+                                          + (not self.readwrite_port_flag)*self.inverter_to_write_spacing \
+                                          + (self.readwrite_port_flag)*self.readwrite_to_readwrite_spacing \
                                           + k*self.write_tile_width \
                                           + write_rotation_correct
             
@@ -555,8 +627,11 @@ class pbitcell(pgate.pgate):
                         
             """ Gate/WWL connections """
             # add poly-to-meltal2 contacts to connect gate of write transistors to WWL (contact next to gate)
-            # contact must be placed a metal width below the source pin to avoid drc from routing to the source pins
-            contact_xpos = self.write_nmos_left[k].get_pin("S").lc().x - drc["minwidth_metal2"] - 0.5*contact.m1m2.width
+            # contact must be placed a metal width below the source pin to avoid drc from source pin routings
+            if(self.write_nmos_contact_extension > self.gate_contact_thres):
+                contact_xpos = self.write_nmos_left[k].get_pin("S").lc().x - drc["minwidth_metal2"] - 0.5*contact.m1m2.width
+            else:
+                contact_xpos = left_write_transistor_xpos - self.write_nmos.active_height - drc["poly_to_active"] - 0.5*contact.m1m2.width
             contact_ypos = self.write_nmos_left[k].get_pin("D").bc().y - drc["minwidth_metal1"] - 0.5*contact.m1m2.height
             left_gate_contact =  vector(contact_xpos, contact_ypos)
             
@@ -565,7 +640,10 @@ class pbitcell(pgate.pgate):
             self.add_contact_center(layers=("metal1", "via1", "metal2"),
                                     offset=left_gate_contact)            
             
-            contact_xpos = self.write_nmos_right[k].get_pin("S").rc().x + drc["minwidth_metal2"] + 0.5*contact.m1m2.width
+            if(self.write_nmos_contact_extension > self.gate_contact_thres):
+                contact_xpos = self.write_nmos_right[k].get_pin("S").rc().x + drc["minwidth_metal2"] + 0.5*contact.m1m2.width
+            else:
+                contact_xpos = right_write_transistor_xpos + drc["poly_to_active"] + 0.5*contact.m1m2.width
             contact_ypos = self.write_nmos_right[k].get_pin("D").bc().y - drc["minwidth_metal1"] - 0.5*contact.m1m2.height
             right_gate_contact = vector(contact_xpos, contact_ypos)
             
@@ -625,12 +703,18 @@ class pbitcell(pgate.pgate):
                 midR0 = vector(right_storage_contact.x + 0.5*contact.poly.height + 1.5*drc["minwidth_metal1"], right_storage_contact.y)
                 midR1 = vector(right_storage_contact.x + 0.5*contact.poly.height + 1.5*drc["minwidth_metal1"], self.write_nmos_right[k].get_pin("D").rc().y)
                 self.add_path("metal1", [right_storage_contact, midR0, midR1, self.write_nmos_right[k].get_pin("D").rc()])
+            # end if
+        # end for
+        
+        """ update furthest left and right transistor edges """
+        self.left_building_edge = left_write_transistor_xpos - self.write_nmos.active_height
+        self.right_building_edge = right_write_transistor_xpos
 
                 
     def add_read_ports(self):
         """
-        Adds read ports to the bit cell. Two transistors function as a read port.
-        The two transistors in the port are denoted as the "read transistor" and the "read-access transistor".
+        Adds read ports to the bit cell. A differential pair of ports can read only. 
+        Two transistors function as a read port, denoted as the "read transistor" and the "read-access transistor".
         The read transistor is connected to RWL (gate), RBL (drain), and the read-access transistor (source).
         The read-access transistor is connected to Q_bar (gate), gnd (source), and the read transistor (drain).
         A read is enabled by setting a Read-Rowline (RWL) high, subsequently turning on the read transistor.
@@ -640,7 +724,7 @@ class pbitcell(pgate.pgate):
         """
         
         """ Define variables relevant to read transistors """ 
-        # define offset correction due to rotation of the ptx cell
+        # define offset correction due to rotation of the ptx module
         read_rotation_correct = self.read_nmos.active_height
         
         # calculate offset to overlap the drain of the read-access transistor with the source of the read transistor
@@ -659,20 +743,12 @@ class pbitcell(pgate.pgate):
         for k in range(0,self.num_read):
             """ Add transistors """
             # calculate transistor offsets
-            left_read_transistor_xpos = -self.inverter_tile_width \
-                                        - self.inverter_to_write_spacing \
-                                        - self.readwrite_port_flag*(self.readwrite_nmos.active_height + (self.num_readwrite-1)*self.readwrite_tile_width) \
-                                        - self.write_port_flag*self.readwrite_port_flag*self.write_to_write_spacing \
-                                        - self.write_port_flag*(self.write_nmos.active_height + (self.num_write-1)*self.write_tile_width) \
+            left_read_transistor_xpos = self.left_building_edge \
                                         - self.write_to_read_spacing \
                                         - self.read_nmos.active_height - k*self.read_tile_width \
                                         + read_rotation_correct
                        
-            right_read_transistor_xpos = self.inverter_tile_width \
-                                         + self.inverter_to_write_spacing \
-                                         + self.readwrite_port_flag*(self.readwrite_nmos.active_height + (self.num_readwrite-1)*self.readwrite_tile_width) \
-                                         + self.write_port_flag*self.readwrite_port_flag*self.write_to_write_spacing \
-                                         + self.write_port_flag*(self.write_nmos.active_height + (self.num_write-1)*self.write_tile_width) \
+            right_read_transistor_xpos = self.right_building_edge \
                                          + self.write_to_read_spacing \
                                          + k*self.read_tile_width \
                                          + read_rotation_correct          
@@ -747,7 +823,10 @@ class pbitcell(pgate.pgate):
                        
             """ Gate of read transistor / RWL connection """
             # add poly-to-meltal2 contacts to connect gate of read transistors to RWL (contact next to gate)
-            contact_xpos = left_read_transistor_xpos - self.read_nmos.active_height - drc["minwidth_poly"] - 0.5*contact.poly.width
+            if(self.read_nmos_contact_extension > self.gate_contact_thres):
+                contact_xpos = self.read_nmos_left[k].get_pin("S").lc().x - drc["minwidth_metal2"] - 0.5*contact.m1m2.width
+            else:
+                contact_xpos = left_read_transistor_xpos - self.read_nmos.active_height - drc["poly_to_active"] - 0.5*contact.m1m2.width
             contact_ypos = self.read_nmos_left[k].get_pin("G").lc().y
             left_gate_contact = vector(contact_xpos, contact_ypos)
             
@@ -756,7 +835,10 @@ class pbitcell(pgate.pgate):
             self.add_contact_center(layers=("metal1", "via1", "metal2"),
                                     offset=left_gate_contact)
             
-            contact_xpos = right_read_transistor_xpos + drc["minwidth_poly"] + 0.5*contact.poly.width
+            if(self.read_nmos_contact_extension > self.gate_contact_thres):
+                contact_xpos = self.read_nmos_right[k].get_pin("S").rc().x + drc["minwidth_metal2"] + 0.5*contact.m1m2.width
+            else:
+                contact_xpos = right_read_transistor_xpos + drc["poly_to_active"] + 0.5*contact.m1m2.width
             contact_ypos = self.read_nmos_right[k].get_pin("G").rc().y
             right_gate_contact = vector(contact_xpos, contact_ypos)
             
@@ -794,14 +876,20 @@ class pbitcell(pgate.pgate):
             
             """ Gate of read-access transistor / storage connection """
             # add poly-to-metal1 contacts to connect gate of read-access transistors to output of inverters (contact next to gate)
-            contact_xpos = left_read_transistor_xpos + drc["minwidth_poly"] + 0.5*contact.poly.width
+            if(self.read_nmos_contact_extension > self.gate_contact_thres):
+                contact_xpos = self.read_nmos_left[k].get_pin("S").rc().x + drc["minwidth_metal2"] + 0.5*contact.m1m2.width
+            else:
+                contact_xpos = left_read_transistor_xpos + drc["poly_to_active"] + 0.5*contact.m1m2.width
             contact_ypos = self.read_access_nmos_left[k].get_pin("G").rc().y
             left_gate_contact = vector(contact_xpos, contact_ypos)
             
             self.add_contact_center(layers=("poly", "contact", "metal1"),
                                     offset=left_gate_contact)
             
-            contact_xpos = right_read_transistor_xpos - self.read_nmos.active_height - drc["minwidth_poly"] - 0.5*contact.poly.width
+            if(self.read_nmos_contact_extension > self.gate_contact_thres):
+                contact_xpos = self.read_nmos_right[k].get_pin("S").lc().x - drc["minwidth_metal2"] - 0.5*contact.m1m2.width
+            else:
+                contact_xpos = right_read_transistor_xpos - self.read_nmos.active_height - drc["poly_to_active"] - 0.5*contact.m1m2.width
             contact_ypos = self.read_access_nmos_right[k].get_pin("G").lc().y
             right_gate_contact = vector(contact_xpos, contact_ypos)
             
@@ -820,25 +908,26 @@ class pbitcell(pgate.pgate):
             # connect contact to output of inverters (metal1 path)
             # mid0: metal1 path must route over the read transistors (above drain of read transistor)
             # mid1: continue metal1 path horizontally until at first read access gate contact
-            # mid2: route down to be level with inverter output
+            # mid2: route up or down to be level with inverter output
             # endpoint at drain/source of inverter
             midL0 = vector(left_gate_contact.x, self.read_nmos_left[k].get_pin("D").uc().y + 1.5*drc["minwidth_metal1"])
             midL1 = vector(left_gate_contact0.x, self.read_nmos_left[0].get_pin("D").uc().y + 1.5*drc["minwidth_metal1"])
-            midL2 = vector(self.inverter_nmos_left.get_pin("S").lc().x - 1.5*drc["minwidth_metal1"], self.cross_couple_upper_ypos)
+            midL2 = vector(left_gate_contact0.x, self.cross_couple_upper_ypos)
             left_inverter_offset = vector(self.inverter_nmos_left.get_pin("D").center().x, self.cross_couple_upper_ypos)
             self.add_path("metal1", [left_gate_contact, midL0, midL1, midL2, left_inverter_offset])
             
             midR0 = vector(right_gate_contact.x, self.read_nmos_right[k].get_pin("D").uc().y + 1.5*drc["minwidth_metal1"])
             midR1 = vector(right_gate_contact0.x, self.read_nmos_right[k].get_pin("D").uc().y + 1.5*drc["minwidth_metal1"])
-            midR2 = vector(self.inverter_nmos_right.get_pin("D").rc().x + 1.5*drc["minwidth_metal1"], self.cross_couple_upper_ypos)
+            midR2 = vector(right_gate_contact0.x, self.cross_couple_upper_ypos)
             right_inverter_offset = vector(self.inverter_nmos_right.get_pin("S").center().x, self.cross_couple_upper_ypos)
-            self.add_path("metal1", [right_gate_contact, midR0, midR1, midR2, right_inverter_offset]) 
+            self.add_path("metal1", [right_gate_contact, midR0, midR1, midR2, right_inverter_offset])
+        # end for
             
 
     def extend_well(self):
         """
-        Connects wells between ptx cells to avoid drc spacing issues.
-        Since the pwell of the read ports rise higher than the pmos of the inverters,
+        Connects wells between ptx modules to avoid drc spacing issues.
+        Since the pwell of the read ports rise higher than the nwell of the inverters,
         the well connections must be done piecewise to avoid pwell and nwell overlap.
         """
     
@@ -848,17 +937,22 @@ class pbitcell(pgate.pgate):
         self.add_rect(layer="pwell",
                       offset=offset,
                       width=self.width,
-                      height=well_height)
-                      
-        """ extend pwell over write transistors to the height of the write transistor well """
-        # calculate the edge of the write transistor well closest to the center
-        left_write_well_xpos = -(self.inverter_tile_width + self.write_to_write_spacing - drc["well_enclosure_active"])
-        right_write_well_xpos =  self.inverter_tile_width + self.write_to_write_spacing - drc["well_enclosure_active"]    
+                      height=well_height)        
         
+        """ extend pwell over read/write and write transistors to the height of the write transistor well (read/write and write transistors are the same height) """
+        if(self.num_write > 0):
+            # calculate the edge of the write transistor well closest to the center
+            left_write_well_xpos = self.write_nmos_left[0].offset.x + drc["well_enclosure_active"]
+            right_write_well_xpos =  self.write_nmos_right[0].offset.x - self.write_nmos.active_height - drc["well_enclosure_active"]
+        else:
+            # calculate the edge of the read/write transistor well closest to the center
+            left_write_well_xpos = self.readwrite_nmos_left[0].offset.x + drc["well_enclosure_active"]
+            right_write_well_xpos =  self.readwrite_nmos_right[0].offset.x - self.readwrite_nmos.active_height - drc["well_enclosure_active"]    
+            
         # calculate a width that will halt at the edge of the write transistors
         write_well_width = -(self.leftmost_xpos - left_write_well_xpos)                    
         write_well_height = self.write_nmos.cell_well_width - drc["well_enclosure_active"]
-        
+            
         offset = vector(left_write_well_xpos - write_well_width, 0)
         self.add_rect(layer="pwell",
                       offset=offset,
@@ -874,8 +968,8 @@ class pbitcell(pgate.pgate):
         """ extend pwell over the read transistors to the height of the bitcell """
         if(self.num_read > 0):
             # calculate the edge of the read transistor well clostest to the center
-            left_read_well_xpos = -(self.inverter_tile_width + self.num_write*self.write_tile_width + self.write_to_read_spacing - drc["well_enclosure_active"])
-            right_read_well_xpos =  self.inverter_tile_width + self.num_write*self.write_tile_width + self.write_to_read_spacing - drc["well_enclosure_active"] 
+            left_read_well_xpos = self.read_nmos_left[0].offset.x + drc["well_enclosure_active"]
+            right_read_well_xpos =  self.read_nmos_right[0].offset.x - self.read_nmos.active_height - drc["well_enclosure_active"] 
         
             # calculate a width that will halt at the edge of the read transistors
             read_well_width = -(self.leftmost_xpos - left_read_well_xpos)               

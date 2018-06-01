@@ -21,7 +21,7 @@ class bitcell_array(design.design):
         self.column_size = cols
         self.row_size = rows
 
-        #from importlib import reload
+        from importlib import reload
         c = reload(__import__(OPTS.bitcell))
         self.mod_bitcell = getattr(c, OPTS.bitcell)
         self.cell = self.mod_bitcell()

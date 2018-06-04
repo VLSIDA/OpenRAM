@@ -42,6 +42,10 @@ class pbitcell_test(openram_test):
         debug.info(2, "Bitcell with 0 read ports")
         tx = pbitcell.pbitcell(num_readwrite=1,num_write=1,num_read=0)
         self.local_check(tx)
+        
+        debug.info(2, "Bitcell with 0 read ports and 0 write ports")
+        tx = pbitcell.pbitcell(num_readwrite=1,num_write=0,num_read=0)
+        self.local_check(tx)
 
         OPTS.check_lvsdrc = True
         globals.end_openram()

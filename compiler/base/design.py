@@ -40,10 +40,12 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
                    'hierarchical_predecode3x8']
         if name not in design.name_map:
             design.name_map.append(name)
-        elif self.__class__.__name__ in ok_list:
-            pass
         else:
-            debug.error("Duplicate layout reference name {0} of class {1}. GDS2 requires names be unique.".format(name,self.__class__),-1)
+            for ok_names in ok_list:
+                if ok_names in self.__class__.__name__:
+                    break
+            else:
+                debug.error("Duplicate layout reference name {0} of class {1}. GDS2 requires names be unique.".format(name,self.__class__),-1)
         
     def setup_drc_constants(self):
         """ These are some DRC constants used in many places in the compiler."""

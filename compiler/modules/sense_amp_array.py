@@ -54,10 +54,11 @@ class sense_amp_array(design.design):
         br_pin = self.amp.get_pin("br")
         dout_pin = self.amp.get_pin("dout")
         
+        amp_spacing = self.amp.width * self.words_per_row
         for i in range(0,self.word_size):
 
             name = "sa_d{0}".format(i)
-            amp_position = vector(self.amp.width * i, 0)
+            amp_position = vector(amp_spacing * i, 0)
             
             bl_offset = amp_position + bl_pin.ll().scale(1,0)
             br_offset = amp_position + br_pin.ll().scale(1,0)

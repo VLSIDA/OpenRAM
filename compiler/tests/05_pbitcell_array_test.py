@@ -43,6 +43,7 @@ class array_multiport_test(openram_test):
 
         OPTS.check_lvsdrc = True
         globals.end_openram()
+        OPTS.bitcell = "bitcell"
 
 # instantiate a copy of the class to actually run the test
 if __name__ == "__main__":

@@ -17,6 +17,7 @@ class trim_spice():
         # Load the file into a buffer for performance
         sp = open(self.sp_file, "r")
         self.spice = sp.readlines()
+        sp.close()
         for i in range(len(self.spice)):
             self.spice[i] = self.spice[i].rstrip(" \n")
         
@@ -97,6 +98,7 @@ class trim_spice():
         # Finally, write out the buffer as the new reduced file
         sp = open(self.reduced_spfile, "w")
         sp.write("\n".join(self.sp_buffer))
+        sp.close()
 
         
     def remove_insts(self, subckt_name, keep_inst_list):

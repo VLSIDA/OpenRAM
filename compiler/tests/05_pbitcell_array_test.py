@@ -1,6 +1,6 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 """
-Run a regresion test on a basic array
+Run a regression test on a basic array
 """
 
 import unittest
@@ -41,6 +41,7 @@ class array_multiport_test(openram_test):
         self.local_check(a)
         
 
+        OPTS.bitcell = "bitcell"
         OPTS.check_lvsdrc = True
         globals.end_openram()
 

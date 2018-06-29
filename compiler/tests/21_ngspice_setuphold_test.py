@@ -32,7 +32,7 @@ class timing_setup_test(openram_test):
         slews = [tech.spice["rise_time"]*2]
         
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
-        sh = setup_hold.setup_hold(corner)
+        sh = setup_hold(corner)
         data = sh.analyze(slews,slews)
         #print data
         if OPTS.tech_name == "freepdk45":

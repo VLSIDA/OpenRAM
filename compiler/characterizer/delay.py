@@ -339,16 +339,16 @@ class delay():
         # Checking from not data_value to data_value
         self.write_delay_stimulus()
         self.stim.run_sim()
-        delay_hl = parse_output("timing", "delay_hl")
-        delay_lh = parse_output("timing", "delay_lh")
-        slew_hl = parse_output("timing", "slew_hl")
-        slew_lh = parse_output("timing", "slew_lh")
+        delay_hl = parse_spice_list("timing", "delay_hl")
+        delay_lh = parse_spice_list("timing", "delay_lh")
+        slew_hl = parse_spice_list("timing", "slew_hl")
+        slew_lh = parse_spice_list("timing", "slew_lh")
         delays = (delay_hl, delay_lh, slew_hl, slew_lh)
 
-        read0_power=parse_output("timing", "read0_power")
-        write0_power=parse_output("timing", "write0_power")
-        read1_power=parse_output("timing", "read1_power")
-        write1_power=parse_output("timing", "write1_power")
+        read0_power=parse_spice_list("timing", "read0_power")
+        write0_power=parse_spice_list("timing", "write0_power")
+        read1_power=parse_spice_list("timing", "read1_power")
+        write1_power=parse_spice_list("timing", "write1_power")
 
         if not self.check_valid_delays(delays):
             return (False,{})
@@ -378,13 +378,13 @@ class delay():
 
         self.write_power_stimulus(trim=False)
         self.stim.run_sim()
-        leakage_power=parse_output("timing", "leakage_power")
+        leakage_power=parse_spice_list("timing", "leakage_power")
         debug.check(leakage_power!="Failed","Could not measure leakage power.")
 
 
         self.write_power_stimulus(trim=True)
         self.stim.run_sim()
-        trim_leakage_power=parse_output("timing", "leakage_power")
+        trim_leakage_power=parse_spice_list("timing", "leakage_power")
         debug.check(trim_leakage_power!="Failed","Could not measure leakage power.")
 
         # For debug, you sometimes want to inspect each simulation.
@@ -473,10 +473,10 @@ class delay():
         # Checking from not data_value to data_value
         self.write_delay_stimulus()
         self.stim.run_sim()
-        delay_hl = parse_output("timing", "delay_hl")
-        delay_lh = parse_output("timing", "delay_lh")
-        slew_hl = parse_output("timing", "slew_hl")
-        slew_lh = parse_output("timing", "slew_lh")
+        delay_hl = parse_spice_list("timing", "delay_hl")
+        delay_lh = parse_spice_list("timing", "delay_lh")
+        slew_hl = parse_spice_list("timing", "slew_hl")
+        slew_lh = parse_spice_list("timing", "slew_lh")
         # if it failed or the read was longer than a period
         if type(delay_hl)!=float or type(delay_lh)!=float or type(slew_lh)!=float or type(slew_hl)!=float:
             debug.info(2,"Invalid measures: Period {0}, delay_hl={1}ns, delay_lh={2}ns slew_hl={3}ns slew_lh={4}ns".format(self.period,

@@ -8,7 +8,7 @@ def relative_compare(value1,value2,error_tolerance=0.001):
     return (abs(value1 - value2) / max(value1,value2) <= error_tolerance)
 
 
-def parse_output(filename, key):
+def parse_spice_list(filename, key):
     """Parses a hspice output.lis file for a key value"""
     if OPTS.spice_name == "xa" :
         # customsim has a different output file name
@@ -22,6 +22,7 @@ def parse_output(filename, key):
     except IOError:
         debug.error("Unable to open spice output file: {0}".format(full_filename),1)
     contents = f.read()
+    f.close()
     # val = re.search(r"{0}\s*=\s*(-?\d+.?\d*\S*)\s+.*".format(key), contents)
     val = re.search(r"{0}\s*=\s*(-?\d+.?\d*[e]?[-+]?[0-9]*\S*)\s+.*".format(key), contents)
     

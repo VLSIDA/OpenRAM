@@ -89,11 +89,13 @@ def print_banner():
 def check_versions():
     """ Run some checks of required software versions. """
 
-    # Now require python >=3.6
+    # Now require python >=3.5
     major_python_version = sys.version_info.major
     minor_python_version = sys.version_info.minor
-    if not (major_python_version == 3 and minor_python_version >= 6):
-        debug.error("Python 3.6 or greater is required.",-1)
+    major_required = 3
+    minor_required = 5
+    if not (major_python_version == major_required and minor_python_version >= minor_required):
+        debug.error("Python {0}.{1} or greater is required.".format(major_required,minor_required),-1)
 
     # FIXME: Check versions of other tools here??
     # or, this could be done in each module (e.g. verify, characterizer, etc.)

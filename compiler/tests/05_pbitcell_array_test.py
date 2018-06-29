@@ -41,6 +41,7 @@ class array_multiport_test(openram_test):
         self.local_check(a)
         
 
+        OPTS.bitcell = "bitcell"
         OPTS.check_lvsdrc = True
         globals.end_openram()
 

@@ -69,6 +69,7 @@ class pbitcell_test(openram_test):
 
         OPTS.check_lvsdrc = True
         globals.end_openram()
+        OPTS.bitcell = "bitcell"
 
 
 # instantiate a copy of the class to actually run the test

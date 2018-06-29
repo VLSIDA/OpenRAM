@@ -15,11 +15,8 @@ class pbitcell(pgate.pgate):
     width = None
     height = None
     
-    unique_id = 1
-    
     def __init__(self, num_readwrite=OPTS.rw_ports, num_write=OPTS.w_ports, num_read=OPTS.r_ports):
-        name = "pbitcell_{0}RW_{1}W_{2}R_{3}".format(num_readwrite, num_write, num_read, pbitcell.unique_id)
-        pbitcell.unique_id += 1
+        name = "pbitcell_{0}RW_{1}W_{2}R".format(num_readwrite, num_write, num_read)
         pgate.pgate.__init__(self, name)
         debug.info(2, "create a multi-port bitcell with {0} write ports and {1} read ports".format(num_write, num_read))  
         

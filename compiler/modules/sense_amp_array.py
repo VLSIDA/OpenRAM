@@ -33,9 +33,8 @@ class sense_amp_array(design.design):
 
     def add_pins(self):
 
-        for i in range(0,self.row_size,self.words_per_row):
-            index = int(i/self.words_per_row)
-            self.add_pin("data[{0}]".format(index))
+        for i in range(0,self.word_size):
+            self.add_pin("data[{0}]".format(i))
             self.add_pin("bl[{0}]".format(i))
             self.add_pin("br[{0}]".format(i))
 
@@ -55,7 +54,7 @@ class sense_amp_array(design.design):
         br_pin = self.amp.get_pin("br")
         dout_pin = self.amp.get_pin("dout")
         
-        for i in range(0,self.row_size,self.words_per_row):
+        for i in range(0,self.word_size):
 
             name = "sa_d{0}".format(i)
             amp_position = vector(self.amp.width * i, 0)
@@ -64,14 +63,12 @@ class sense_amp_array(design.design):
             br_offset = amp_position + br_pin.ll().scale(1,0)
             dout_offset = amp_position + dout_pin.ll()
             
-            index = int(i/self.words_per_row)
-            
             inst = self.add_inst(name=name,
                           mod=self.amp,
                           offset=amp_position)
             self.connect_inst(["bl[{0}]".format(i),
                                "br[{0}]".format(i), 
-                               "data[{0}]".format(index), 
+                               "data[{0}]".format(i), 
                                "en", "vdd", "gnd"])
 
             
@@ -100,7 +97,7 @@ class sense_amp_array(design.design):
                                 width=br_pin.width(),
                                 height=br_pin.height())
                            
-            self.add_layout_pin(text="data[{0}]".format(index),
+            self.add_layout_pin(text="data[{0}]".format(i),
                                 layer="metal2",
                                 offset=dout_offset,
                                 width=dout_pin.width(),

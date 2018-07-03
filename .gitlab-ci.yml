@@ -1,0 +1,3 @@
+freepdk45:
+  script: "python3 tests/regress.py -t freepdk45"
+

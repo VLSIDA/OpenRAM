@@ -1,0 +1,6 @@
+freepdk45:
+  script: "regress_freepdk45.sh"
+
+scn3me_subm:
+  script: "regress_scn3me_subm.sh"
+

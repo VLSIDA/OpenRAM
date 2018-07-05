@@ -1,0 +1,6 @@
+freepdk45:
+  script: "/home/gitlab-runner/regress_freepdk45.sh"
+
+scn3me_subm:
+  script: "/home/gitlab-runner/regress_scn3me_subm.sh"
+

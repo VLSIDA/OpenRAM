@@ -241,4 +241,3 @@ ui().importCds("default",
    When you import a gds file, make sure to attach the correct tech lib
    or you will get incorrect layers in the resulting library.
 
-TEST

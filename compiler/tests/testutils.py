@@ -91,25 +91,25 @@ class openram_test(unittest.TestCase):
         import re
         import debug
 
+        numeric_const_pattern = r"""
+        [-+]? # optional sign
+        (?:
+        (?: \d* \. \d+ ) # .1 .12 .123 etc 9.1 etc 98.1 etc
+        |
+        (?: \d+ \.? ) # 1. 12. 123. etc 1 12 123 etc
+        )
+        # followed by optional exponent part if desired
+        (?: [Ee] [+-]? \d+ ) ?
+        """
+        rx = re.compile(numeric_const_pattern, re.VERBOSE)
         with open(f1, 'rb') as fp1, open(f2, 'rb') as fp2:
             while True:
-                b1 = fp1.readline()
-                b2 = fp2.readline()
+                b1 = fp1.readline().decode('utf-8')
+                b2 = fp2.readline().decode('utf-8')
                 #print "b1:",b1,
                 #print "b2:",b2,
 
                 # 1. Find all of the floats using a regex
-                numeric_const_pattern = r"""
-                [-+]? # optional sign
-                (?:
-                (?: \d* \. \d+ ) # .1 .12 .123 etc 9.1 etc 98.1 etc
-                |
-                (?: \d+ \.? ) # 1. 12. 123. etc 1 12 123 etc
-                )
-                # followed by optional exponent part if desired
-                (?: [Ee] [+-]? \d+ ) ?
-                """
-                rx = re.compile(numeric_const_pattern, re.VERBOSE)
                 b1_floats=rx.findall(b1)
                 b2_floats=rx.findall(b2)
                 debug.info(3,"b1_floats: "+str(b1_floats))
@@ -117,9 +117,9 @@ class openram_test(unittest.TestCase):
         
                 # 2. Remove the floats from the string
                 for f in b1_floats:
-                    b1=b1.replace(str(f),"",1)
+                    b1=b1.replace(f,"",1)
                 for f in b2_floats:
-                    b2=b2.replace(str(f),"",1)
+                    b2=b2.replace(f,"",1)
                 #print "b1:",b1,
                 #print "b2:",b2,
             

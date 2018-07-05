@@ -48,6 +48,7 @@ class options(optparse.Values):
     # These are the configuration parameters
     rw_ports = 1
     r_ports = 0
+    w_ports = 0
     # These will get initialized by the the file
     supply_voltages = ""
     temperatures = ""

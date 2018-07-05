@@ -42,11 +42,14 @@ class bitcell_array(design.design):
         self.DRC_LVS()
 
     def add_pins(self):
+        row_list = self.cell.list_row_pins()
+        column_list = self.cell.list_column_pins()
         for col in range(self.column_size):
-            self.add_pin("bl[{0}]".format(col))
-            self.add_pin("br[{0}]".format(col))
+            for cell_column in column_list:
+                self.add_pin(cell_column+"[{0}]".format(col))
         for row in range(self.row_size):
-            self.add_pin("wl[{0}]".format(row))
+            for cell_row in row_list:
+                    self.add_pin(cell_row+"[{0}]".format(row))
         self.add_pin("vdd")
         self.add_pin("gnd")
 
@@ -69,11 +72,8 @@ class bitcell_array(design.design):
                                                       mod=self.cell,
                                                       offset=[xoffset, tempy],
                                                       mirror=dir_key)
-                self.connect_inst(["bl[{0}]".format(col),
-                                   "br[{0}]".format(col),
-                                   "wl[{0}]".format(row),
-                                   "vdd",
-                                   "gnd"])
+                self.connect_inst(self.cell.list_bitcell_pins(col, row))
+                
                 yoffset += self.cell.height
             xoffset += self.cell.width
 
@@ -81,33 +81,31 @@ class bitcell_array(design.design):
     def add_layout_pins(self):
         """ Add the layout pins """
         
+        row_list = self.cell.list_row_pins()
+        column_list = self.cell.list_column_pins()
+        
         offset = vector(0.0, 0.0)
         for col in range(self.column_size):
-            # get the pin of the lower row cell and make it the full width
-            bl_pin = self.cell_inst[0,col].get_pin("BL")
-            br_pin = self.cell_inst[0,col].get_pin("BR")
-            self.add_layout_pin(text="bl[{0}]".format(col),
-                                layer="metal2",
-                                offset=bl_pin.ll(),
-                                width=bl_pin.width(),
-                                height=self.height)
-            self.add_layout_pin(text="br[{0}]".format(col),
-                                layer="metal2",
-                                offset=br_pin.ll(),
-                                width=br_pin.width(),
-                                height=self.height)
+            for cell_column in column_list:
+                bl_pin = self.cell_inst[0,col].get_pin(cell_column)
+                self.add_layout_pin(text=cell_column+"[{0}]".format(col),
+                                    layer="metal2",
+                                    offset=bl_pin.ll(),
+                                    width=bl_pin.width(),
+                                    height=self.height)
                     
             # increments to the next column width
             offset.x += self.cell.width
 
         offset.x = 0.0
         for row in range(self.row_size):
-            wl_pin = self.cell_inst[row,0].get_pin("WL")
-            self.add_layout_pin(text="wl[{0}]".format(row),
-                                layer="metal1",
-                                offset=wl_pin.ll(),
-                                width=self.width,
-                                height=wl_pin.height())
+            for cell_row in row_list:
+                wl_pin = self.cell_inst[row,0].get_pin(cell_row)
+                self.add_layout_pin(text=cell_row+"[{0}]".format(row),
+                                    layer="metal1",
+                                    offset=wl_pin.ll(),
+                                    width=self.width,
+                                    height=wl_pin.height())
 
             # increments to the next row height
             offset.y += self.cell.height

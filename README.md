@@ -6,7 +6,7 @@ https://github.com/mguthaus/OpenRAM/blob/master/OpenRAM_ICCAD_2016_presentation.
 
 The OpenRAM compiler has very few dependencies:
 * ngspice-26 (or later) or HSpice I-2013.12-1 (or later) or CustomSim 2017 (or later)
-* Python 2.7 and higher (currently excludes Python 3 and up)
+* Python 3.5 and higher
 * Python numpy
 * a setup script for each technology
 * a technology directory for each technology with the base cells
@@ -28,6 +28,10 @@ For example, in csh/tcsh, add to your .cshrc/.tcshrc:
   setenv OPENRAM_HOME "$HOME/OpenRAM/compiler"
   setenv OPENRAM_TECH "$HOME/OpenRAM/technology"
 ```
+
+We include the tech files necessary for FreePDK and SCMOS. The SCMOS
+spice models, however, are generic and should be replaced with foundry 
+models.
 If you are using FreePDK, you should also have that set up and have the
 environment variable point to the PDK. 
 For example, in bash, add to your .bashrc:
@@ -44,13 +48,16 @@ We do not distribute the PDK, but you may get it from:
 If you are using SCMOS, you should install Magic and netgen from:
 	http://opencircuitdesign.com/magic/
 	http://opencircuitdesign.com/netgen/
-In addition, you will need to install the MOSIS SCMOS rules for scn3me_subm 
-that are part of QFlow:
+We have included the SCN3ME design rules from QFlow:
 	http://opencircuitdesign.com/qflow/
 
 # DIRECTORY STRUCTURE
 
 * compiler - openram compiler itself (pointed to by OPENRAM_HOME)
+  * compiler/base - base data structure modules
+  * compiler/pgates - parameterized cells (e.g. logic gates)
+  * compiler/modules - high-level modules (e.g. decoders, etc.)
+  * compiler/verify - DRC and LVS verification wrappers  
   * compiler/characterizer - timing characterization code
   * compiler/gdsMill - GDSII reader/writer
   * compiler/router - detailed router
@@ -59,6 +66,8 @@ that are part of QFlow:
   * technology/freepdk45 - example configuration library for freepdk45 technology node
   * technology/scn3me_subm - example configuration library SCMOS technology node
   * technology/setup_scripts - setup scripts to customize your PDKs and OpenRAM technologies
+* docs - LaTeX manual (likely outdated)
+* lib - IP library of pregenerated memories
 
 
 # UNIT TESTS

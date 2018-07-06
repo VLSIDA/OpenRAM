@@ -89,7 +89,7 @@ def run_drc(cell_name, gds_name):
 
     # write the runset file
     f = open(OPTS.openram_temp + "drc_runset", "w")
-    for k in sorted(drc_runset.iterkeys()):
+    for k in sorted(iter(drc_runset.keys())):
         f.write("*{0}: {1}\n".format(k, drc_runset[k]))
     f.close()
 
@@ -177,7 +177,7 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
 
     # write the runset file
     f = open(OPTS.openram_temp + "lvs_runset", "w")
-    for k in sorted(lvs_runset.iterkeys()):
+    for k in sorted(iter(lvs_runset.keys())):
         f.write("*{0}: {1}\n".format(k, lvs_runset[k]))
     f.close()
 
@@ -286,7 +286,7 @@ def run_pex(cell_name, gds_name, sp_name, output=None):
 
     # write the runset file
     f = open(OPTS.openram_temp + "pex_runset", "w")
-    for k in sorted(pex_runset.iterkeys()):
+    for k in sorted(iter(pex_runset.keys())):
         f.write("*{0}: {1}\n".format(k, pex_runset[k]))
     f.close()
 

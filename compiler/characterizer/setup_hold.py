@@ -186,8 +186,8 @@ class setup_hold():
                             target_time=feasible_bound, 
                             correct_value=correct_value)
         self.stim.run_sim()
-        ideal_clk_to_q = convert_to_float(parse_output("timing", "clk2q_delay"))
-        setuphold_time = convert_to_float(parse_output("timing", "setup_hold_time"))
+        ideal_clk_to_q = convert_to_float(parse_spice_list("timing", "clk2q_delay"))
+        setuphold_time = convert_to_float(parse_spice_list("timing", "setup_hold_time"))
         debug.info(2,"*** {0} CHECK: {1} Ideal Clk-to-Q: {2} Setup/Hold: {3}".format(mode, correct_value,ideal_clk_to_q,setuphold_time))
 
         if type(ideal_clk_to_q)!=float or type(setuphold_time)!=float:
@@ -219,8 +219,8 @@ class setup_hold():
 
 
             self.stim.run_sim()
-            clk_to_q = convert_to_float(parse_output("timing", "clk2q_delay"))
-            setuphold_time = convert_to_float(parse_output("timing", "setup_hold_time"))
+            clk_to_q = convert_to_float(parse_spice_list("timing", "clk2q_delay"))
+            setuphold_time = convert_to_float(parse_spice_list("timing", "setup_hold_time"))
             if type(clk_to_q)==float and (clk_to_q<1.1*ideal_clk_to_q) and type(setuphold_time)==float:
                 if mode == "SETUP": # SETUP is clk-din, not din-clk
                     setuphold_time *= -1e9

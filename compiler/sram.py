@@ -48,12 +48,6 @@ class sram(design.design):
 
         design.design.__init__(self, name)
 
-        # M1/M2 routing pitch is based on contacted pitch of the biggest layer
-        self.m1_pitch = max(contact.m1m2.width,contact.m1m2.height) + max(self.m1_space,self.m2_space)
-        self.m2_pitch = max(contact.m2m3.width,contact.m2m3.height) + max(self.m2_space,self.m3_space)
-        self.m3_pitch = max(contact.m2m3.width,contact.m2m3.height) + max(self.m2_space,self.m3_space)
-        
-
         self.control_size = 6
         self.bank_to_bus_distance = 5*self.m3_width
         

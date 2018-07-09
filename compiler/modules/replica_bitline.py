@@ -53,11 +53,6 @@ class replica_bitline(design.design):
         # These aren't for instantiating, but we use them to get the dimensions
         self.poly_contact_offset = vector(0.5*contact.poly.width,0.5*contact.poly.height)
 
-        # M1/M2 routing pitch is based on contacted pitch
-        self.m1_pitch = max(contact.m1m2.width,contact.m1m2.height) + max(self.m1_space,self.m2_space)
-        self.m2_pitch = max(contact.m2m3.width,contact.m2m3.height) + max(self.m2_space,self.m3_space)
-
-        
         # Quadrant 1: Replica bitline and such are not rotated, but they must be placed far enough
         # away from the delay chain/inverter with space for three M2 tracks
         self.bitcell_offset = vector(0,self.replica_bitcell.height)

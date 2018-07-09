@@ -1,11 +1,11 @@
-import design
+import hierarchy_design
 import debug
 import utils
 from tech import drc
 from vector import vector
 
 
-class contact(design.design):
+class contact(hierarchy_design.hierarchy_design):
     """
     Object for a contact shape with its conductor enclosures.
     Creates a contact array minimum active or poly enclosure and metal1 enclosure.
@@ -31,7 +31,7 @@ class contact(design.design):
                                                        dimensions[0],
                                                        dimensions[1])
                                        
-        design.design.__init__(self, name)
+        hierarchy_design.hierarchy_design.__init__(self, name)
         debug.info(4, "create contact object {0}".format(name))
 
         self.layer_stack = layer_stack
@@ -167,4 +167,5 @@ active = contact(layer_stack=("active", "contact", "poly"))
 poly = contact(layer_stack=("poly", "contact", "metal1"))
 m1m2 = contact(layer_stack=("metal1", "via1", "metal2"))
 m2m3 = contact(layer_stack=("metal2", "via2", "metal3"))
+#m3m4 = contact(layer_stack=("metal3", "via3", "metal4"))
 

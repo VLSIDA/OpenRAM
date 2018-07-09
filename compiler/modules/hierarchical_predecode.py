@@ -50,10 +50,6 @@ class hierarchical_predecode(design.design):
             debug.error("Invalid number of predecode inputs.",-1)
             
     def setup_constraints(self):
-        # use a conservative douple spacing just to get rid of annoying via DRCs
-        self.m1_pitch = max(contact.m1m2.width,contact.m1m2.height) + max(self.m1_space, self.m2_space)
-        self.m2_pitch = max(contact.m2m3.width,contact.m2m3.height) + max(self.m2_space,self.m3_space)
-        
         # The rail offsets are indexed by the label
         self.rails = {}
 

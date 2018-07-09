@@ -56,10 +56,6 @@ class bank_select(design.design):
 
     def calculate_module_offsets(self):
         
-        # M1/M2 routing pitch is based on contacted pitch
-        self.m1_pitch = contact.m1m2.height + max(self.m1_space,self.m2_space)
-        self.m2_pitch = contact.m2m3.height + max(self.m2_space,self.m3_space)
-
         self.xoffset_nand =  self.inv4x.width + 2*self.m2_pitch + drc["pwell_to_nwell"]
         self.xoffset_nor =  self.inv4x.width + 2*self.m2_pitch + drc["pwell_to_nwell"]
         self.xoffset_inv = max(self.xoffset_nand + self.nand2.width, self.xoffset_nor + self.nor2.width) 

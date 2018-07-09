@@ -7,7 +7,7 @@ import os
 from globals import OPTS
 
 
-class design(hierarchy_spice.spice, hierarchy_layout.layout):
+class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
     """
     Design Class for all modules to inherit the base features.
     Class consisting of a set of modules and instances of these modules
@@ -23,7 +23,6 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
         hierarchy_layout.layout.__init__(self, name)
         hierarchy_spice.spice.__init__(self, name)
 
-        self.setup_drc_constants()
         
         # Check if the name already exists, if so, give an error
         # because each reference must be a unique name.
@@ -38,8 +37,8 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
                    'sram',
                    'hierarchical_predecode2x4',
                    'hierarchical_predecode3x8']
-        if name not in design.name_map:
-            design.name_map.append(name)
+        if name not in hierarchy_design.name_map:
+            hierarchy_design.name_map.append(name)
         else:
             for ok_names in ok_list:
                 if ok_names in self.__class__.__name__:
@@ -47,27 +46,6 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
             else:
                 debug.error("Duplicate layout reference name {0} of class {1}. GDS2 requires names be unique.".format(name,self.__class__),-1)
         
-    def setup_drc_constants(self):
-        """ These are some DRC constants used in many places in the compiler."""
-        from tech import drc
-        self.well_width = drc["minwidth_well"]
-        self.poly_width = drc["minwidth_poly"]
-        self.poly_space = drc["poly_to_poly"]        
-        self.m1_width = drc["minwidth_metal1"]
-        self.m1_space = drc["metal1_to_metal1"]        
-        self.m2_width = drc["minwidth_metal2"]
-        self.m2_space = drc["metal2_to_metal2"]        
-        self.m3_width = drc["minwidth_metal3"]
-        self.m3_space = drc["metal3_to_metal3"]
-        self.active_width = drc["minwidth_active"]
-        self.contact_width = drc["minwidth_contact"]
-        
-        self.poly_to_active = drc["poly_to_active"]
-        self.poly_extend_active = drc["poly_extend_active"]
-        self.contact_to_gate = drc["contact_to_gate"]
-        self.well_enclose_active = drc["well_enclosure_active"]
-        self.implant_enclose_active = drc["implant_enclosure_active"]
-        self.implant_space = drc["implant_to_implant"]   
         
     def get_layout_pins(self,inst):
         """ Return a map of pin locations of the instance offset """
@@ -125,9 +103,3 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
             text+=str(i)+",\n"
         return text
      
-    def analytical_power(self, proc, vdd, temp, load):
-        """ Get total power of a module  """
-        total_module_power = self.return_power()
-        for inst in self.insts:
-            total_module_power += inst.mod.analytical_power(proc, vdd, temp, load)
-        return total_module_power

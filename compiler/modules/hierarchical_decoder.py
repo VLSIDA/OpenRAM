@@ -90,9 +90,6 @@ class hierarchical_decoder(design.design):
             debug.error("Invalid number of inputs for hierarchical decoder",-1)
 
     def setup_layout_constants(self):
-        self.m1_pitch = contact.m1m2.height + max(self.m1_space,self.m2_space)
-        self.m2_pitch = contact.m2m3.height + max(self.m2_space,self.m3_space)
-
         self.predec_groups = []  # This array is a 2D array.
 
         # Distributing vertical rails to different groups. One group belongs to one pre-decoder.

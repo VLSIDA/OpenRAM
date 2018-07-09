@@ -57,7 +57,6 @@ class single_level_column_mux_array(design.design):
     def setup_layout_constants(self):
         self.column_addr_size = num_of_inputs = int(self.words_per_row / 2)
         self.width = self.columns * self.mux.width
-        self.m1_pitch = contact.m1m2.width + max(drc["metal1_to_metal1"],drc["metal2_to_metal2"])
         # one set of metal1 routes for select signals and a pair to interconnect the mux outputs bl/br
         # one extra route pitch is to space from the sense amp
         self.route_height = (self.words_per_row + 3)*self.m1_pitch

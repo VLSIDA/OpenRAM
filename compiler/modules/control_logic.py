@@ -86,10 +86,6 @@ class control_logic(design.design):
         # These aren't for instantiating, but we use them to get the dimensions
         #self.poly_contact_offset = vector(0.5*contact.poly.width,0.5*contact.poly.height)
 
-        # M1/M2 routing pitch is based on contacted pitch
-        self.m1_pitch = max(contact.m1m2.width,contact.m1m2.height) + max(drc["metal1_to_metal1"],drc["metal2_to_metal2"])
-        self.m2_pitch = max(contact.m2m3.width,contact.m2m3.height) + max(drc["metal2_to_metal2"],drc["metal3_to_metal3"])
-
         # Have the cell gap leave enough room to route an M2 wire.
         # Some cells may have pwell/nwell spacing problems too when the wells are different heights.
         #self.cell_gap = max(self.m2_pitch,drc["pwell_to_nwell"])

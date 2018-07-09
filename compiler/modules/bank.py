@@ -161,10 +161,6 @@ class bank(design.design):
         else:
             self.num_col_addr_lines = 0            
 
-        # M1/M2 routing pitch is based on contacted pitch
-        self.m1_pitch = contact.m1m2.height + max(self.m1_space,self.m2_space)
-        self.m2_pitch = contact.m2m3.height + max(self.m2_space,self.m3_space)
-
         # The width of this bus is needed to place other modules (e.g. decoder)
         # A width on each side too
         self.central_bus_width = self.m2_pitch * self.num_control_lines + 2*self.m2_width

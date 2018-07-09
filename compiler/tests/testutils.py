@@ -55,8 +55,8 @@ class openram_test(unittest.TestCase):
 
     def reset(self):
         """ Reset the static duplicate name checker for unit tests """
-        import design
-        design.design.name_map=[]
+        import hierarchy_design
+        hierarchy_design.hierarchy_design.name_map=[]
 
     def isclose(self, value1,value2,error_tolerance=1e-2):
         """ This is used to compare relative values. """

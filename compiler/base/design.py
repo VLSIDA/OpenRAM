@@ -1,0 +1,55 @@
+import hierarchy_design
+import contact
+import globals
+import verify
+import debug
+import os
+from globals import OPTS
+
+
+class design(hierarchy_design.hierarchy_design):
+    """
+    This is the same as the hierarchy_design class except it contains
+    some DRC constants and analytical models for other modules to reuse.
+
+    """
+
+    def __init__(self, name):
+        hierarchy_design.hierarchy_design.__init__(self,name)
+        
+        self.setup_drc_constants()
+
+        self.m1_pitch = max(contact.m1m2.width,contact.m1m2.height) + max(self.m1_space, self.m2_space)
+        self.m2_pitch = max(contact.m2m3.width,contact.m2m3.height) + max(self.m2_space, self.m3_space)
+        # SCMOS doesn't have m4...
+        #self.m3_pitch = max(contact.m3m4.width,contact.m3m4.height) + max(self.m3_space, self.m4_space)
+        self.m3_pitch = self.m2_pitch
+
+    def setup_drc_constants(self):
+        """ These are some DRC constants used in many places in the compiler."""
+        from tech import drc
+        self.well_width = drc["minwidth_well"]
+        self.poly_width = drc["minwidth_poly"]
+        self.poly_space = drc["poly_to_poly"]        
+        self.m1_width = drc["minwidth_metal1"]
+        self.m1_space = drc["metal1_to_metal1"]        
+        self.m2_width = drc["minwidth_metal2"]
+        self.m2_space = drc["metal2_to_metal2"]        
+        self.m3_width = drc["minwidth_metal3"]
+        self.m3_space = drc["metal3_to_metal3"]
+        self.active_width = drc["minwidth_active"]
+        self.contact_width = drc["minwidth_contact"]
+
+        self.poly_to_active = drc["poly_to_active"]
+        self.poly_extend_active = drc["poly_extend_active"]
+        self.contact_to_gate = drc["contact_to_gate"]
+        self.well_enclose_active = drc["well_enclosure_active"]
+        self.implant_enclose_active = drc["implant_enclosure_active"]
+        self.implant_space = drc["implant_to_implant"]   
+
+    def analytical_power(self, proc, vdd, temp, load):
+        """ Get total power of a module  """
+        total_module_power = self.return_power()
+        for inst in self.insts:
+            total_module_power += inst.mod.analytical_power(proc, vdd, temp, load)
+        return total_module_power

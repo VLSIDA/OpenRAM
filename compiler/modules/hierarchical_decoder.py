@@ -122,7 +122,7 @@ class hierarchical_decoder(design.design):
         # input bus width plus a spacing track
         input_width = (self.num_inputs+1) * self.m2_pitch
         # inputs should be as high as the decoders
-        input_height = self.no_of_pre2x4*self.pre2_4.height + self.no_of_pre2x4*self.pre3_8.height
+        input_height = self.no_of_pre2x4*self.pre2_4.height + self.no_of_pre3x8*self.pre3_8.height
 
         # Find the left-most predecoder
         min_x = 0
@@ -137,6 +137,7 @@ class hierarchical_decoder(design.design):
             self.add_layout_pin(text="A[{0}]".format(i),
                                 layer="metal2", 
                                 offset=vector(x_offset,0),
+                                width=self.m2_width,
                                 height=input_height)
 
         self.connect_input_to_predecodes()

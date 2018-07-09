@@ -12,6 +12,7 @@ sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
+import getpass
 
 class openram_test(openram_test):
 

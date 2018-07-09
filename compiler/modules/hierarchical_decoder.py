@@ -60,7 +60,6 @@ class hierarchical_decoder(design.design):
 
     def add_decoders(self):
         """ Create the decoders based on the number of pre-decodes """
-        # FIXME: Only add these if needed?
         self.pre2_4 = pre2x4()
         self.add_mod(self.pre2_4)
         
@@ -68,8 +67,8 @@ class hierarchical_decoder(design.design):
         self.add_mod(self.pre3_8)
 
     def determine_predecodes(self,num_inputs):
-        """Determines the number of 2:4 pre-decoder and 3:8 pre-decoder
-        needed based on the number of inputs"""
+        """ Determines the number of 2:4 pre-decoder and 3:8 pre-decoder
+        needed based on the number of inputs """
         if (num_inputs == 2):
             return (1,0)
         elif (num_inputs == 3):
@@ -90,11 +89,7 @@ class hierarchical_decoder(design.design):
             debug.error("Invalid number of inputs for hierarchical decoder",-1)
 
     def setup_layout_constants(self):
-        # Vertical metal rail gap definition
-        self.metal2_extend_contact = (contact.m1m2.second_layer_height - contact.m1m2.contact_width) / 2
-        self.metal2_spacing = self.metal2_extend_contact  + self.m2_space
-        self.metal2_pitch = self.metal2_spacing + self.m2_width
-        self.via_shift = (contact.m1m2.second_layer_width - contact.m1m2.first_layer_width) / 2
+        self.m2_pitch = contact.m2m3.height + max(self.m2_space,self.m3_space)
 
         self.predec_groups = []  # This array is a 2D array.
 
@@ -143,10 +138,11 @@ class hierarchical_decoder(design.design):
             debug.error("Not enough rows for a hierarchical decoder. Non-hierarchical not supported yet.",-1)
 
         # Calculates height and width of pre-decoder,
-        if(self.no_of_pre3x8 > 0):
+        if self.no_of_pre3x8 > 0:
             self.predecoder_width = self.pre3_8.width 
         else:
             self.predecoder_width = self.pre2_4.width
+            
         self.predecoder_height = self.pre2_4.height*self.no_of_pre2x4 + self.pre3_8.height*self.no_of_pre3x8
 
         # Calculates height and width of row-decoder 
@@ -154,7 +150,7 @@ class hierarchical_decoder(design.design):
             nand_width = self.nand2.width
         else:
             nand_width = self.nand3.width 
-        self.routing_width = self.metal2_pitch*self.total_number_of_predecoder_outputs
+        self.routing_width = self.m2_pitch*self.total_number_of_predecoder_outputs
         self.row_decoder_height = self.inv.height * self.rows
 
         # Calculates height and width of hierarchical decoder 
@@ -171,7 +167,7 @@ class hierarchical_decoder(design.design):
             self.add_pre3x8(i)
 
     def add_pre2x4(self,num):
-        """ Add a 2x4 predecoder """
+        """ Add a 2x4 predecoder to the left of the origin """
         
         if (self.num_inputs == 2):
             base = vector(-self.pre2_4.width,0)
@@ -195,7 +191,6 @@ class hierarchical_decoder(design.design):
 
         self.add_pre2x4_pins(num)
 
-                            
 
     def add_pre2x4_pins(self,num):
         """ Add the input pins to the 2x4 predecoder """
@@ -213,7 +208,7 @@ class hierarchical_decoder(design.design):
 
         
     def add_pre3x8(self,num):
-        """ Add 3x8 numbered predecoder """
+        """ Add 3x8 predecoder to the left of the origin and above any 2x4 decoders """
         if (self.num_inputs == 3):
             offset = vector(-self.pre_3_8.width,0)
             mirror ="R0"
@@ -388,7 +383,7 @@ class hierarchical_decoder(design.design):
             for i in range(self.total_number_of_predecoder_outputs):
                 # The offsets go into the negative x direction
                 # assuming the predecodes are placed at (self.routing_width,0)
-                x_offset = self.metal2_pitch * i
+                x_offset = self.m2_pitch * i
                 self.rail_x_offsets.append(x_offset+0.5*self.m2_width)
                 self.add_rect(layer="metal2",
                               offset=vector(x_offset,0),

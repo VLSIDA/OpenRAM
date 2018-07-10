@@ -135,7 +135,7 @@ class sram(design.design):
         """ Add pins for entire SRAM. """
 
         for i in range(self.word_size):
-            self.add_pin("DATA[{0}]".format(i),"INOUT")
+            self.add_pin("DIN[{0}]".format(i),"INPUT")
         for i in range(self.addr_size):
             self.add_pin("ADDR[{0}]".format(i),"INPUT")
 
@@ -144,6 +144,10 @@ class sram(design.design):
         self.control_logic_outputs=self.control_logic.get_outputs()
         
         self.add_pin_list(self.control_logic_inputs,"INPUT")
+
+        for i in range(self.word_size):
+            self.add_pin("DOUT[{0}]".format(i),"OUTPUT")
+        
         self.add_pin("vdd","POWER")
         self.add_pin("gnd","GROUND")
 
@@ -151,9 +155,7 @@ class sram(design.design):
         """ Layout creation """
         
         if self.num_banks == 1:
-            self.add_single_bank_modules()
-            self.add_single_bank_pins()
-            self.route_single_bank()
+            sram_1bank.sram_1bank.__init__()
         elif self.num_banks == 2:
             self.add_two_bank_modules()
             self.route_two_banks()
@@ -393,7 +395,7 @@ class sram(design.design):
                                                                    pitch=self.m2_pitch,
                                                                    offset=self.vertical_bus_offset,
                                                                    names=self.control_bus_names,
-                                                                   length=self.vertical_bus_height))
+                                                                   length=self.vertical_bus_height)
 
         self.addr_bus_names=["A[{}]".format(i) for i in range(self.addr_size)]
         self.vert_control_bus_positions.update(self.create_vertical_pin_bus(layer="metal2",

@@ -524,6 +524,62 @@ class layout(lef.lef):
 
         return blockages
 
+    def create_horizontal_pin_bus(self, layer, pitch, offset, names, length):
+        """ Create a horizontal bus of pins. """
+        self.create_bus(layer,pitch,offset,names,length,vertical=False,make_pins=True)
+
+    def create_vertical_pin_bus(self, layer, pitch, offset, names, length):
+        """ Create a horizontal bus of pins. """
+        self.create_bus(layer,pitch,offset,names,length,vertical=True,make_pins=True)
+
+    def create_vertical_bus(self, layer, pitch, offset, names, length):
+        """ Create a horizontal bus. """
+        self.create_bus(layer,pitch,offset,names,length,vertical=True,make_pins=False)
+
+    def create_horiontal_bus(self, layer, pitch, offset, names, length):
+        """ Create a horizontal bus. """
+        self.create_bus(layer,pitch,offset,names,length,vertical=False,make_pins=False)
+
+
+    def create_bus(self, layer, pitch, offset, names, length, vertical, make_pins):
+        """ 
+        Create a horizontal or vertical bus. It can be either just rectangles, or actual
+        layout pins. It returns an map of line center line positions indexed by name.  
+        """
+
+        # half minwidth so we can return the center line offsets
+        half_minwidth = 0.5*drc["minwidth_{}".format(layer)]
+        
+        line_positions = {}
+        if vertical:
+            for i in range(len(names)):
+                line_offset = offset + vector(i*pitch,0)
+                if make_pins:
+                    self.add_layout_pin(text=names[i],
+                                        layer=layer,
+                                        offset=line_offset,
+                                        height=length)
+                else:
+                    self.add_rect(layer=layer,
+                                  offset=line_offset,
+                                  height=length)
+                line_positions[names[i]]=line_offset+vector(half_minwidth,0)
+        else:
+            for i in range(len(names)):
+                line_offset = offset + vector(0,i*pitch + half_minwidth)
+                if make_pins:
+                    self.add_layout_pin(text=names[i],
+                                        layer=layer,
+                                        offset=line_offset,
+                                        width=length)
+                else:
+                    self.add_rect(layer=layer,
+                                  offset=line_offset,
+                                  width=length)
+                line_positions[names[i]]=line_offset+vector(0,half_minwidth)
+
+        return line_positions
+    
     def add_enclosure(self, insts, layer="nwell"):
         """ Add a layer that surrounds the given instances. Useful
         for creating wells, for example. Doesn't check for minimum widths or

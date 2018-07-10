@@ -103,8 +103,10 @@ class sram(design.design):
         debug.info(1,"Words per row: {}".format(self.words_per_row))
 
     def estimate_words_per_row(self,tentative_num_cols, word_size):
-        """This provides a heuristic rounded estimate for the number of words
-        per row."""
+        """
+        This provides a heuristic rounded estimate for the number of words
+        per row.
+        """
 
         if tentative_num_cols < 1.5*word_size:
             return 1
@@ -114,7 +116,8 @@ class sram(design.design):
             return 2
 
     def amend_words_per_row(self,tentative_num_rows, words_per_row):
-        """This picks the number of words per row more accurately by limiting
+        """
+        This picks the number of words per row more accurately by limiting
         it to a minimum and maximum.
         """
         # Recompute the words per row given a hard max
@@ -319,7 +322,8 @@ class sram(design.design):
         self.supply_bus_width = self.data_bus_width
 
         # Sanity check to ensure we can fit the control logic above a single bank (0.9 is a hack really)
-        debug.check(self.bank.width + self.vertical_bus_width > 0.9*self.control_logic.width, "Bank is too small compared to control logic.")
+        debug.check(self.bank.width + self.vertical_bus_width > 0.9*self.control_logic.width,
+                    "Bank is too small compared to control logic.")
         
         
     def compute_four_bank_offsets(self):
@@ -336,7 +340,8 @@ class sram(design.design):
 
         self.vertical_bus_offset = vector(self.bank.width + self.bank_to_bus_distance, 0)
         self.data_bus_offset = vector(0, self.bank.height + self.bank_to_bus_distance)
-        self.supply_bus_offset = vector(0, self.data_bus_offset.y + self.data_bus_height + self.bank.height + 2*self.bank_to_bus_distance)        
+        self.supply_bus_offset = vector(0, self.data_bus_offset.y + self.data_bus_height \
+                                        + self.bank.height + 2*self.bank_to_bus_distance)        
         self.control_bus_offset = vector(0, self.supply_bus_offset.y + self.supply_bus_height)
         self.bank_sel_bus_offset = self.vertical_bus_offset + vector(self.m2_pitch*self.control_size,0)
         self.addr_bus_offset = self.bank_sel_bus_offset.scale(1,0) + vector(self.m2_pitch*self.num_banks,0)
@@ -347,7 +352,8 @@ class sram(design.design):
         # Bank select flops get put to the right of control logic above bank1 and the buses
         # Leave a pitch to get the vdd rails up to M2
         self.msb_address_position = vector(self.bank_inst[1].lx() + 3*self.supply_rail_pitch,
-                                           self.supply_bus_offset.y + self.supply_bus_height + 2*self.m1_pitch + self.msb_address.width)
+                                           self.supply_bus_offset.y + self.supply_bus_height \
+                                           + 2*self.m1_pitch + self.msb_address.width)
 
         # Decoder goes above the MSB address flops, and is flipped in Y
         # separate the two by a bank to bus distance for nwell rules, just in case
@@ -375,73 +381,65 @@ class sram(design.design):
         # Bank select flops get put to the right of control logic above bank1 and the buses
         # Leave a pitch to get the vdd rails up to M2
         self.msb_address_position = vector(self.bank_inst[1].lx() + 3*self.supply_rail_pitch,
-                                           self.supply_bus_offset.y+self.supply_bus_height + 2*self.m1_pitch + self.msb_address.width)
+                                           self.supply_bus_offset.y + self.supply_bus_height \
+                                           + 2*self.m1_pitch + self.msb_address.width)
         
     def add_busses(self):
         """ Add the horizontal and vertical busses """
         # Vertical bus
         # The order of the control signals on the control bus:
         self.control_bus_names = ["clk_buf", "tri_en_bar", "tri_en", "clk_buf_bar", "w_en", "s_en"]
-        self.vert_control_bus_positions = self.create_bus(layer="metal2",
-                                                          pitch=self.m2_pitch,
-                                                          offset=self.vertical_bus_offset,
-                                                          names=self.control_bus_names,
-                                                          length=self.vertical_bus_height,
-                                                          vertical=True)
+        self.vert_control_bus_positions = self.create_vertical_bus(layer="metal2",
+                                                                   pitch=self.m2_pitch,
+                                                                   offset=self.vertical_bus_offset,
+                                                                   names=self.control_bus_names,
+                                                                   length=self.vertical_bus_height))
 
         self.addr_bus_names=["A[{}]".format(i) for i in range(self.addr_size)]
-        self.vert_control_bus_positions.update(self.create_bus(layer="metal2",
-                                                               pitch=self.m2_pitch,
-                                                               offset=self.addr_bus_offset,
-                                                               names=self.addr_bus_names,
-                                                               length=self.addr_bus_height,
-                                                               vertical=True,
-                                                               make_pins=True))
+        self.vert_control_bus_positions.update(self.create_vertical_pin_bus(layer="metal2",
+                                                                            pitch=self.m2_pitch,
+                                                                            offset=self.addr_bus_offset,
+                                                                            names=self.addr_bus_names,
+                                                                            length=self.addr_bus_height))
 
         
         self.bank_sel_bus_names = ["bank_sel[{}]".format(i) for i in range(self.num_banks)]
-        self.vert_control_bus_positions.update(self.create_bus(layer="metal2",
-                                                               pitch=self.m2_pitch,
-                                                               offset=self.bank_sel_bus_offset,
-                                                               names=self.bank_sel_bus_names,
-                                                               length=self.vertical_bus_height,
-                                                               vertical=True,
-                                                               make_pins=True))
+        self.vert_control_bus_positions.update(self.create_vertical_pin_bus(layer="metal2",
+                                                                            pitch=self.m2_pitch,
+                                                                            offset=self.bank_sel_bus_offset,
+                                                                            names=self.bank_sel_bus_names,
+                                                                            length=self.vertical_bus_height))
         
 
         # Horizontal data bus
         self.data_bus_names = ["DATA[{}]".format(i) for i in range(self.word_size)]
-        self.data_bus_positions = self.create_bus(layer="metal3",
-                                                  pitch=self.m3_pitch,
-                                                  offset=self.data_bus_offset,
-                                                  names=self.data_bus_names,
-                                                  length=self.data_bus_width,
-                                                  vertical=False,
-                                                  make_pins=True)
+        self.data_bus_positions = self.create_horizontal_pin_bus(layer="metal3",
+                                                                 pitch=self.m3_pitch,
+                                                                 offset=self.data_bus_offset,
+                                                                 names=self.data_bus_names,
+                                                                 length=self.data_bus_width)
 
         # Horizontal control logic bus
         # vdd/gnd in bus go along whole SRAM
         # FIXME: Fatten these wires?
-        self.horz_control_bus_positions = self.create_bus(layer="metal1",
-                                                          pitch=self.m1_pitch,
-                                                          offset=self.supply_bus_offset,
-                                                          names=["vdd"],
-                                                          length=self.supply_bus_width,
-                                                          vertical=False)
+        self.horz_control_bus_positions = self.create_horizontal_bus(layer="metal1",
+                                                                     pitch=self.m1_pitch,
+                                                                     offset=self.supply_bus_offset,
+                                                                     names=["vdd"],
+                                                                     length=self.supply_bus_width)
         # The gnd rail must not be the entire width since we protrude the right-most vdd rail up for
         # the decoder in 4-bank SRAMs
-        self.horz_control_bus_positions.update(self.create_bus(layer="metal1",
-                                                               pitch=self.m1_pitch,
-                                                               offset=self.supply_bus_offset+vector(0,self.m1_pitch),
-                                                               names=["gnd"],
-                                                               length=self.supply_bus_width,
-                                                               vertical=False))
-        self.horz_control_bus_positions.update(self.create_bus(layer="metal1",
-                                                               pitch=self.m1_pitch,
-                                                               offset=self.control_bus_offset,
-                                                               names=self.control_bus_names,
-                                                               length=self.control_bus_width,
-                                                               vertical=False))
+        self.horz_control_bus_positions.update(self.create_horizontal_bus(layer="metal1",
+                                                                          pitch=self.m1_pitch,
+                                                                          offset=self.supply_bus_offset+vector(0,self.m1_pitch),
+                                                                          names=["gnd"],
+                                                                          length=self.supply_bus_width))
+        self.horz_control_bus_positions.update(self.create_horizontal_bus(layer="metal1",
+                                                                          pitch=self.m1_pitch,
+                                                                          offset=self.control_bus_offset,
+                                                                          names=self.control_bus_names,
+                                                                          length=self.control_bus_width))
+
         
     def add_two_bank_logic(self):
         """ Add the control and MSB logic """
@@ -848,44 +846,6 @@ class sram(design.design):
 
         return bank_inst
 
-    # FIXME: This should be in geometry.py or it's own class since it is
-    # reusable
-    def create_bus(self, layer, pitch, offset, names, length, vertical=False, make_pins=False):
-        """ Create a horizontal or vertical bus. It can be either just rectangles, or actual
-        layout pins. It returns an map of line center line positions indexed by name.  """
-
-        # half minwidth so we can return the center line offsets
-        half_minwidth = 0.5*drc["minwidth_{}".format(layer)]
-        
-        line_positions = {}
-        if vertical:
-            for i in range(len(names)):
-                line_offset = offset + vector(i*pitch,0)
-                if make_pins:
-                    self.add_layout_pin(text=names[i],
-                                        layer=layer,
-                                        offset=line_offset,
-                                        height=length)
-                else:
-                    self.add_rect(layer=layer,
-                                  offset=line_offset,
-                                  height=length)
-                line_positions[names[i]]=line_offset+vector(half_minwidth,0)
-        else:
-            for i in range(len(names)):
-                line_offset = offset + vector(0,i*pitch + half_minwidth)
-                if make_pins:
-                    self.add_layout_pin(text=names[i],
-                                        layer=layer,
-                                        offset=line_offset,
-                                        width=length)
-                else:
-                    self.add_rect(layer=layer,
-                                  offset=line_offset,
-                                  width=length)
-                line_positions[names[i]]=line_offset+vector(0,half_minwidth)
-
-        return line_positions
 
 
     def add_addr_dff(self, position):

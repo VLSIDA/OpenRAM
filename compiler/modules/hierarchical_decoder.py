@@ -125,16 +125,15 @@ class hierarchical_decoder(design.design):
             min_x = min(min_x, -self.pre2_4.width)
         if self.no_of_pre3x8 > 0:
             min_x = min(min_x, -self.pre3_8.width)
-        
-        for i in range(self.num_inputs):
-            x_offset = min_x - self.input_routing_width + i*self.m2_pitch 
-            pin_offset = vector(x_offset,0)
-            self.add_layout_pin(text="A[{0}]".format(i),
-                                layer="metal2", 
-                                offset=vector(x_offset,0),
-                                width=self.m2_width,
-                                height=input_height)
+        input_offset=vector(min_x - self.input_routing_width,0)
 
+        input_bus_names = ["A[{0}]".format(i) for i in range(self.num_inputs)]
+        self.create_vertical_pin_bus(layer="metal2",
+                                     pitch=self.m2_pitch,
+                                     offset=input_offset,
+                                     names=input_bus_names,
+                                     length=input_height)
+        
         self.connect_input_to_predecodes()
 
 

@@ -15,7 +15,6 @@ class timing_setup_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        OPTS.check_lvsdrc = False
         OPTS.spice_name="hspice"
         OPTS.analytical_delay = False
 
@@ -59,8 +58,6 @@ class timing_setup_test(openram_test):
             else:
                 self.isclose(data[k],golden_data[k],0.15)
 
-        OPTS.check_lvsdrc = True
-        OPTS.analytical_delay = True
         reload(characterizer)
         globals.end_openram()
         

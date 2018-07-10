@@ -16,7 +16,6 @@ class single_level_column_mux_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         global verify
         import verify
-        OPTS.check_lvsdrc = False
 
         import single_level_column_mux_array
         
@@ -32,7 +31,6 @@ class single_level_column_mux_test(openram_test):
         a = single_level_column_mux_array.single_level_column_mux_array(columns=32, word_size=4)
         self.local_check(a)
 
-        OPTS.check_lvsdrc = True        
         globals.end_openram()
         
 

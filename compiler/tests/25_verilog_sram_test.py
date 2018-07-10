@@ -15,8 +15,6 @@ class verilog_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        # we will manually run lvs/drc
-        OPTS.check_lvsdrc = False
 
         import sram
 
@@ -25,8 +23,6 @@ class verilog_test(openram_test):
                       num_words=OPTS.num_words,
                       num_banks=OPTS.num_banks,
                       name="sram_2_16_1_{0}".format(OPTS.tech_name))
-
-        OPTS.check_lvsdrc = True
 
         vfile = s.name + ".v"
         vname = OPTS.openram_temp + vfile

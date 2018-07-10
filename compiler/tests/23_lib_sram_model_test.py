@@ -15,7 +15,6 @@ class lib_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        OPTS.check_lvsdrc = False
 
         import sram
         from characterizer import lib
@@ -25,8 +24,7 @@ class lib_test(openram_test):
                       num_words=16,
                       num_banks=1,
                       name="sram_2_16_1_{0}".format(OPTS.tech_name))
-        OPTS.check_lvsdrc = True
-
+        
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)
 

@@ -15,8 +15,6 @@ class lib_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        OPTS.check_lvsdrc = False
-        OPTS.spice_name="" # Unset to use any simulator
         OPTS.analytical_delay = False
         OPTS.trim_netlist = True
 
@@ -35,7 +33,6 @@ class lib_test(openram_test):
                       num_words=16,
                       num_banks=1,
                       name="sram_2_16_1_{0}".format(OPTS.tech_name))
-        OPTS.check_lvsdrc = True
 
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)
@@ -54,7 +51,6 @@ class lib_test(openram_test):
             golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),newname)
             self.isapproxdiff(libname,golden,0.40)
 
-        OPTS.analytical_delay = True
         reload(characterizer)
         globals.end_openram()
         

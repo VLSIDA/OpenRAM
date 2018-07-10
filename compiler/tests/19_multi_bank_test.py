@@ -17,7 +17,6 @@ class multi_bank_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         global verify
         import verify
-        OPTS.check_lvsdrc = False
 
         import bank
 
@@ -37,7 +36,6 @@ class multi_bank_test(openram_test):
         a = bank.bank(word_size=2, num_words=128, words_per_row=8, num_banks=2, name="bank4_multi")
         self.local_check(a)
         
-        OPTS.check_lvsdrc = True
         globals.end_openram()
         
 # instantiate a copy of the class to actually run the test

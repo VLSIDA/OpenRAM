@@ -15,7 +15,8 @@ class library_drc_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         global verify
         import verify
-
+        OPTS.check_lvsdrc=True
+        
         (gds_dir, gds_files) = setup_files()
         drc_errors = 0
         debug.info(1, "\nPerforming DRC on: " + ", ".join(gds_files))

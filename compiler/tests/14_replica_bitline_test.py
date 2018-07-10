@@ -17,7 +17,6 @@ class replica_bitline_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         global verify
         import verify
-        OPTS.check_lvsdrc = False
 
         import replica_bitline
 
@@ -34,7 +33,6 @@ class replica_bitline_test(openram_test):
         a = replica_bitline.replica_bitline(stages,fanout,rows)
         self.local_check(a)
         
-        OPTS.check_lvsdrc = True
         globals.end_openram()
         
 # instantiate a copy of the class to actually run the test

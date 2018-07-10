@@ -17,7 +17,6 @@ class control_logic_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         global verify
         import verify
-        OPTS.check_lvsdrc = False
 
         import control_logic
         import tech
@@ -26,7 +25,6 @@ class control_logic_test(openram_test):
         a = control_logic.control_logic(num_rows=128)
         self.local_check(a)
 
-        OPTS.check_lvsdrc = True
         globals.end_openram()
         
 # instantiate a copdsay of the class to actually run the test

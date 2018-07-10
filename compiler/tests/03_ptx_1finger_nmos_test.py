@@ -15,7 +15,6 @@ class ptx_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         global verify
         import verify
-        OPTS.check_lvsdrc = False
 
         import ptx
         import tech
@@ -26,7 +25,6 @@ class ptx_test(openram_test):
                       tx_type="nmos")
         self.local_drc_check(fet)
 
-        OPTS.check_lvsdrc = True
         globals.end_openram()
 
 

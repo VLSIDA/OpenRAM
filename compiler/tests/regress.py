@@ -27,5 +27,6 @@ modules = map(__import__, moduleNames)
 suite = unittest.TestSuite()
 load = unittest.defaultTestLoader.loadTestsFromModule
 suite.addTests(map(load, modules))
+
 ret = not unittest.TextTestRunner(verbosity=2).run(suite).wasSuccessful()
 sys.exit(ret)

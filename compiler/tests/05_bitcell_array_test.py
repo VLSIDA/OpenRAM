@@ -19,7 +19,6 @@ class array_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         global verify
         import verify
-        OPTS.check_lvsdrc = False
 
         import bitcell_array
 
@@ -27,7 +26,6 @@ class array_test(openram_test):
         a = bitcell_array.bitcell_array(name="bitcell_array", cols=4, rows=4)
         self.local_check(a)
 
-        OPTS.check_lvsdrc = True
         globals.end_openram()
 
 # instantiate a copy of the class to actually run the test

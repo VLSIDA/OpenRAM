@@ -17,7 +17,6 @@ class write_driver_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         global verify
         import verify
-        OPTS.check_lvsdrc = False
 
         import write_driver_array
 
@@ -29,7 +28,6 @@ class write_driver_test(openram_test):
         a = write_driver_array.write_driver_array(columns=16, word_size=8)
         self.local_check(a)
         
-        OPTS.check_lvsdrc = True
         globals.end_openram()
 
 # instantiate a copy of the class to actually run the test

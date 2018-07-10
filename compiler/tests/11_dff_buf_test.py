@@ -17,7 +17,6 @@ class dff_buf_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         global verify
         import verify
-        OPTS.check_lvsdrc = False
 
         import dff_buf
 
@@ -25,7 +24,6 @@ class dff_buf_test(openram_test):
         a = dff_buf.dff_buf(4, 8)
         self.local_check(a)
 
-        OPTS.check_lvsdrc = True
         globals.end_openram()
 
 # instantiate a copdsay of the class to actually run the test

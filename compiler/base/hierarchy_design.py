@@ -61,7 +61,9 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
 
     def DRC_LVS(self, final_verification=False):
         """Checks both DRC and LVS for a module"""
-        if OPTS.check_lvsdrc:
+        # Unit tests will check themselves.
+        # Do not run if disabled in options.
+        if not OPTS.is_unit_test and OPTS.check_lvsdrc:
             tempspice = OPTS.openram_temp + "/temp.sp"
             tempgds = OPTS.openram_temp + "/temp.gds"
             self.sp_write(tempspice)
@@ -73,7 +75,9 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
 
     def DRC(self):
         """Checks DRC for a module"""
-        if OPTS.check_lvsdrc:
+        # Unit tests will check themselves.
+        # Do not run if disabled in options.
+        if not OPTS.is_unit_test and OPTS.check_lvsdrc:
             tempgds = OPTS.openram_temp + "/temp.gds"
             self.gds_write(tempgds)
             debug.check(verify.run_drc(self.name, tempgds) == 0,"DRC failed for {0}".format(self.name))
@@ -81,7 +85,9 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
 
     def LVS(self, final_verification=False):
         """Checks LVS for a module"""
-        if OPTS.check_lvsdrc:
+        # Unit tests will check themselves.
+        # Do not run if disabled in options.
+        if not OPTS.is_unit_test and OPTS.check_lvsdrc:
             tempspice = OPTS.openram_temp + "/temp.sp"
             tempgds = OPTS.openram_temp + "/temp.gds"
             self.sp_write(tempspice)

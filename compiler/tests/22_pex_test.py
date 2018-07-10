@@ -31,14 +31,12 @@ class sram_func_test(openram_test):
         import tech
 
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
-        OPTS.check_lvsdrc = False
+        global OPTS
         OPTS.use_pex = True
         s = sram.sram(word_size=OPTS.word_size,
                       num_words=OPTS.num_words,
                       num_banks=OPTS.num_banks,
                       name="test_sram1")
-        OPTS.check_lvsdrc = True
-        OPTS.use_pex = False
 
         tempspice = OPTS.openram_temp + "temp.sp"
         tempgds = OPTS.openram_temp + "temp.gds"
@@ -90,7 +88,7 @@ class sram_func_test(openram_test):
         self.assertTrue(round(value1) > 0.5 * tech.spice["supply_voltage"])
         self.assertTrue(round(value2) < 0.5 * tech.spice["supply_voltage"])
 
-        OPTS.check_lvsdrc = True
+
 
     def convert_voltage_unit(self, string):
         newstring = ""

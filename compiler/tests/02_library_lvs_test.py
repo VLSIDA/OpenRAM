@@ -14,6 +14,7 @@ class library_lvs_test(openram_test):
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         import verify
+        OPTS.check_lvsdrc=True
         (gds_dir, sp_dir, allnames) = setup_files()
         lvs_errors = 0
         debug.info(1, "Performing LVS on: " + ", ".join(allnames))
@@ -28,7 +29,7 @@ class library_lvs_test(openram_test):
                 lvs_errors += 1
                 debug.error("Missing SPICE file {}".format(gds_name))
             lvs_errors += verify.run_lvs(f, gds_name, sp_name)
-            self.assertEqual(lvs_errors, 0)
+
         # fail if the error count is not zero
         self.assertEqual(lvs_errors, 0)
         globals.end_openram()

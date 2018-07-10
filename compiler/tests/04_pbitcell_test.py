@@ -22,7 +22,6 @@ class pbitcell_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         global verify
         import verify
-        OPTS.check_lvsdrc = False
 
         import pbitcell
         import tech
@@ -67,9 +66,8 @@ class pbitcell_test(openram_test):
         tx = pbitcell.pbitcell(num_readwrite=2,num_write=0,num_read=0)
         self.local_check(tx)
 
-        OPTS.check_lvsdrc = True
         globals.end_openram()
-        OPTS.bitcell = "bitcell"
+
 
 
 # instantiate a copy of the class to actually run the test

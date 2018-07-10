@@ -16,8 +16,6 @@ class sram_func_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        OPTS.check_lvsdrc = False
-        OPTS.spice_name="" # Unset to use any simulator
         OPTS.analytical_delay = False
 
         # This is a hack to reload the characterizer __init__ with the spice version
@@ -35,8 +33,6 @@ class sram_func_test(openram_test):
                       num_words=16,
                       num_banks=1,
                       name="sram_func_test")
-
-        OPTS.check_lvsdrc = True
 
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)
@@ -56,7 +52,7 @@ class sram_func_test(openram_test):
         feasible_period = d.find_feasible_period()
 
         os.remove(tempspice)
-        OPTS.analytical_delay = True
+
         reload(characterizer)
         globals.end_openram()
         

@@ -17,7 +17,6 @@ class tri_gate_array_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         global verify
         import verify
-        OPTS.check_lvsdrc = False
 
         import tri_gate_array
 
@@ -29,7 +28,6 @@ class tri_gate_array_test(openram_test):
         a = tri_gate_array.tri_gate_array(columns=16, word_size=8)
         self.local_check(a)
         
-        OPTS.check_lvsdrc = True
         globals.end_openram()
         
 # instantiate a copdsay of the class to actually run the test

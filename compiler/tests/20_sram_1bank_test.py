@@ -17,7 +17,6 @@ class sram_1bank_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         global verify
         import verify
-        OPTS.check_lvsdrc = False
 
         import sram
 
@@ -37,7 +36,6 @@ class sram_1bank_test(openram_test):
         # a = sram.sram(word_size=2, num_words=128, num_banks=1, name="sram4")
         # self.local_check(a, final_verification=True)
         
-        OPTS.check_lvsdrc = True
         globals.end_openram()
         
 # instantiate a copy of the class to actually run the test

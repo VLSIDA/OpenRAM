@@ -17,7 +17,6 @@ class precharge_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         global verify
         import verify
-        OPTS.check_lvsdrc = False
 
         import precharge
         import tech
@@ -26,7 +25,6 @@ class precharge_test(openram_test):
         tx = precharge.precharge(name="precharge_driver", size=1)
         self.local_check(tx)
 
-        OPTS.check_lvsdrc = True
         globals.end_openram()
         
 # instantiate a copy of the class to actually run the test

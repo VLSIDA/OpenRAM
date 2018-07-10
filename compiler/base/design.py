@@ -1,4 +1,4 @@
-import hierarchy_design
+from hierarchy_design import hierarchy_design
 import contact
 import globals
 import verify
@@ -7,7 +7,7 @@ import os
 from globals import OPTS
 
 
-class design(hierarchy_design.hierarchy_design):
+class design(hierarchy_design):
     """
     This is the same as the hierarchy_design class except it contains
     some DRC constants and analytical models for other modules to reuse.
@@ -15,7 +15,7 @@ class design(hierarchy_design.hierarchy_design):
     """
 
     def __init__(self, name):
-        hierarchy_design.hierarchy_design.__init__(self,name)
+        hierarchy_design.__init__(self,name)
         
         self.setup_drc_constants()
 

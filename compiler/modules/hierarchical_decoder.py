@@ -116,8 +116,6 @@ class hierarchical_decoder(design.design):
 
     def create_input_rail(self):
         """ Create input rails for the predecoders """
-        # input bus width plus a spacing track
-        input_width = (self.num_inputs+1) * self.m2_pitch
         # inputs should be as high as the decoders
         input_height = self.no_of_pre2x4*self.pre2_4.height + self.no_of_pre3x8*self.pre3_8.height
 
@@ -129,7 +127,7 @@ class hierarchical_decoder(design.design):
             min_x = min(min_x, -self.pre3_8.width)
         
         for i in range(self.num_inputs):
-            x_offset = min_x - input_width + i*self.m2_pitch 
+            x_offset = min_x - self.input_routing_width + i*self.m2_pitch 
             pin_offset = vector(x_offset,0)
             self.add_layout_pin(text="A[{0}]".format(i),
                                 layer="metal2", 
@@ -220,12 +218,14 @@ class hierarchical_decoder(design.design):
             nand_width = self.nand2.width
         else:
             nand_width = self.nand3.width 
-        self.routing_width = self.m2_pitch*self.total_number_of_predecoder_outputs
+        self.internal_routing_width = self.m2_pitch*self.total_number_of_predecoder_outputs
         self.row_decoder_height = self.inv.height * self.rows
 
+        self.input_routing_width = (self.num_inputs+1) * self.m2_pitch        
         # Calculates height and width of hierarchical decoder 
         self.height = self.row_decoder_height
-        self.width = self.predecoder_width + self.routing_width + nand_width + self.inv.width
+        self.width = self.input_routing_width + self.predecoder_width \
+            + self.internal_routing_width + nand_width + self.inv.width
 
     def create_pre_decoder(self):
         """ Creates pre-decoder and places labels input address [A] """
@@ -347,7 +347,7 @@ class hierarchical_decoder(design.design):
 
             self.nand_inst.append(self.add_inst(name=name,
                                                 mod=nand_mod,
-                                                offset=[self.routing_width, y_off],
+                                                offset=[self.internal_routing_width, y_off],
                                                 mirror=mirror))
 
             
@@ -359,9 +359,9 @@ class hierarchical_decoder(design.design):
         z_pin = self.inv.get_pin("Z")
         
         if (self.num_inputs == 4 or self.num_inputs == 5):
-            x_off = self.routing_width + self.nand2.width
+            x_off = self.internal_routing_width + self.nand2.width
         else:
-            x_off = self.routing_width + self.nand3.width
+            x_off = self.internal_routing_width + self.nand3.width
 
         self.inv_inst = []
         for row in range(self.rows):
@@ -421,7 +421,7 @@ class hierarchical_decoder(design.design):
             self.rail_x_offsets = []
             for i in range(self.total_number_of_predecoder_outputs):
                 # The offsets go into the negative x direction
-                # assuming the predecodes are placed at (self.routing_width,0)
+                # assuming the predecodes are placed at (self.internal_routing_width,0)
                 x_offset = self.m2_pitch * i
                 self.rail_x_offsets.append(x_offset+0.5*self.m2_width)
                 self.add_rect(layer="metal2",

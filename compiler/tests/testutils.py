@@ -28,18 +28,13 @@ class openram_test(unittest.TestCase):
         import verify
         result=verify.run_drc(a.name, tempgds)
         self.reset()
-        try:
-            self.assertTrue(result==0)
-        except:
+        if result != 0:
             self.fail("DRC failed: {}".format(a.name))
 
             
         result=verify.run_lvs(a.name, tempgds, tempspice, final_verification)
         self.reset()
-        try:
-            self.assertTrue(result==0)
-        except:
-            self.reset()
+        if result != 0:
             self.fail("LVS mismatch: {}".format(a.name))
 
         if OPTS.purge_temp:

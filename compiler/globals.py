@@ -105,6 +105,7 @@ def check_versions():
 def init_openram(config_file, is_unit_test=True):
     """Initialize the technology, paths, simulators, etc."""
 
+    
     check_versions()
 
     debug.info(1,"Initializing OpenRAM...")
@@ -118,6 +119,26 @@ def init_openram(config_file, is_unit_test=True):
     # Reset the static duplicate name checker for unit tests.
     import hierarchy_design
     hierarchy_design.hierarchy_design.name_map=[]
+    
+    global OPTS
+    global CHECKPOINT_OPTS
+
+    # This is a hack. If we are running a unit test and have checkpointed
+    # the options, load them rather than reading the config file.
+    # This way, the configuration is reloaded at the start of every unit test.
+    # If a unit test fails, we don't have to worry about restoring the old config values
+    # that may have been tested.
+    if is_unit_test and CHECKPOINT_OPTS:
+        OPTS.__dict__ = CHECKPOINT_OPTS.__dict__.copy() 
+        return
+    
+    # Import these to find the executables for checkpointing
+    import characterizer
+    import verify
+    # Make a checkpoint of the options so we can restore
+    # after each unit test
+    if not CHECKPOINT_OPTS:
+        CHECKPOINT_OPTS = copy.copy(OPTS)
     
 
 
@@ -147,16 +168,6 @@ def read_config(config_file, is_unit_test=True):
     reads will just restore the previous copy (ask mrg)
     """
     global OPTS
-    global CHECKPOINT_OPTS
-
-    # This is a hack. If we are running a unit test and have checkpointed
-    # the options, load them rather than reading the config file.
-    # This way, the configuration is reloaded at the start of every unit test.
-    # If a unit test fails, we don't have to worry about restoring the old config values
-    # that may have been tested.
-    if is_unit_test and CHECKPOINT_OPTS:
-        OPTS.__dict__ = CHECKPOINT_OPTS.__dict__.copy() 
-        return
         
     # Create a full path relative to current dir unless it is already an abs path
     if not os.path.isabs(config_file):
@@ -211,10 +222,6 @@ def read_config(config_file, is_unit_test=True):
     except:
         debug.error("Unable to make output directory.",-1)
 
-    # Make a checkpoint of the options so we can restore
-    # after each unit test
-    if not CHECKPOINT_OPTS:
-        CHECKPOINT_OPTS = copy.copy(OPTS)
         
 def end_openram():
     """ Clean up openram for a proper exit """

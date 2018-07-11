@@ -163,6 +163,11 @@ class openram_test(unittest.TestCase):
 
 
 def header(filename, technology):
+    # Skip the header for gitlab regression
+    import getpass
+    if getpass.getuser() == "gitlab-runner":
+        return
+    
     tst = "Running Test for:"
     print("\n")
     print(" ______________________________________________________________________________ ")

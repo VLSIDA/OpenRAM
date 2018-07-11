@@ -18,7 +18,7 @@ class library_drc_test(openram_test):
         (gds_dir, gds_files) = setup_files()
         drc_errors = 0
         debug.info(1, "\nPerforming DRC on: " + ", ".join(gds_files))
-        for f in list(gds_files):
+        for f in gds_files:
             name = re.sub('\.gds$', '', f)
             gds_name = "{0}/{1}".format(gds_dir, f)
             if not os.path.isfile(gds_name):

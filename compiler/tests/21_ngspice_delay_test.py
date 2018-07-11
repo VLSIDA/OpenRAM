@@ -83,7 +83,6 @@ class timing_sram_test(openram_test):
             else:
                 self.isclose(data[k],golden_data[k],0.15)
 
-        reload(characterizer)
         globals.end_openram()
 
 # instantiate a copdsay of the class to actually run the test

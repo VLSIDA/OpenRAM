@@ -73,10 +73,7 @@ class openram_test(openram_test):
             shutil.rmtree(out_path, ignore_errors=True)
         self.assertEqual(os.path.exists(out_path),False)
 
-        # The default was on, so disable it.
-        OPTS.check_lvsdrc=False
         globals.end_openram()
-        OPTS.check_lvsdrc=True        
 
 # instantiate a copy of the class to actually run the test
 if __name__ == "__main__":

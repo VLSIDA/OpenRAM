@@ -16,6 +16,17 @@ class sram_func_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+
+        OPTS.use_pex = True
+
+        # This is a hack to reload the characterizer __init__ with the spice version
+        from importlib import reload
+        import characterizer
+        reload(characterizer)
+        from characterizer import setup_hold
+        if not OPTS.spice_exe:
+            debug.error("Could not find {} simulator.".format(OPTS.spice_name),-1)
+
         global verify
         import verify
 
@@ -31,8 +42,6 @@ class sram_func_test(openram_test):
         import tech
 
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
-        global OPTS
-        OPTS.use_pex = True
         s = sram.sram(word_size=OPTS.word_size,
                       num_words=OPTS.num_words,
                       num_banks=OPTS.num_banks,

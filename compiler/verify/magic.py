@@ -64,6 +64,11 @@ import debug
 from globals import OPTS
 import subprocess
 
+# Keep track of statistics
+num_drc_runs = 0
+num_lvs_runs = 0
+num_pex_runs = 0
+
 def write_magic_script(cell_name, gds_name, extract=False):
     """ Write a magic script to perform DRC and optionally extraction. """
 
@@ -148,6 +153,9 @@ def write_netgen_script(cell_name, sp_name):
 def run_drc(cell_name, gds_name, extract=False):
     """Run DRC check on a cell which is implemented in gds_name."""
 
+    global num_drc_runs
+    num_drc_runs += 1
+
     write_magic_script(cell_name, gds_name, extract)
     
     # run drc
@@ -198,6 +206,9 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     implemented in gds_name and sp_name. Final verification will
     ensure that there are no remaining virtual conections. """
 
+    global num_lvs_runs
+    num_lvs_runs += 1
+    
     run_drc(cell_name, gds_name, extract=True)
     write_netgen_script(cell_name, sp_name)
     
@@ -270,6 +281,9 @@ def run_pex(name, gds_name, sp_name, output=None):
     """Run pex on a given top-level name which is
        implemented in gds_name and sp_name. """
 
+    global num_pex_runs
+    num_pex_runs += 1
+    
     debug.warning("PEX using magic not implemented.")
     return 1
 
@@ -337,3 +351,9 @@ def run_pex(name, gds_name, sp_name, output=None):
 
     return out_errors
 
+def print_drc_stats():
+    debug.info(1,"DRC runs: {0}".format(num_drc_runs))
+def print_lvs_stats():
+    debug.info(1,"LVS runs: {0}".format(num_lvs_runs))
+def print_pex_stats():
+    debug.info(1,"PEX runs: {0}".format(num_pex_runs))

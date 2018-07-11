@@ -13,10 +13,8 @@ class library_drc_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        global verify
         import verify
-        OPTS.check_lvsdrc=True
-        
+
         (gds_dir, gds_files) = setup_files()
         drc_errors = 0
         debug.info(1, "\nPerforming DRC on: " + ", ".join(gds_files))
@@ -32,11 +30,12 @@ class library_drc_test(openram_test):
         self.assertEqual(drc_errors, 0)
         globals.end_openram()
 
+
 def setup_files():
     gds_dir = OPTS.openram_tech + "/gds_lib"
     files = os.listdir(gds_dir)
     nametest = re.compile("\.gds$", re.IGNORECASE)
-    gds_files = filter(nametest.search, files)
+    gds_files = list(filter(nametest.search, files))
     return (gds_dir, gds_files)
 
 
@@ -46,3 +45,4 @@ if __name__ == "__main__":
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
     unittest.main()
+

@@ -105,6 +105,7 @@ def check_versions():
 def init_openram(config_file, is_unit_test=True):
     """Initialize the technology, paths, simulators, etc."""
 
+    
     check_versions()
 
     debug.info(1,"Initializing OpenRAM...")
@@ -118,6 +119,26 @@ def init_openram(config_file, is_unit_test=True):
     # Reset the static duplicate name checker for unit tests.
     import hierarchy_design
     hierarchy_design.hierarchy_design.name_map=[]
+    
+    global OPTS
+    global CHECKPOINT_OPTS
+
+    # This is a hack. If we are running a unit test and have checkpointed
+    # the options, load them rather than reading the config file.
+    # This way, the configuration is reloaded at the start of every unit test.
+    # If a unit test fails, we don't have to worry about restoring the old config values
+    # that may have been tested.
+    if is_unit_test and CHECKPOINT_OPTS:
+        OPTS.__dict__ = CHECKPOINT_OPTS.__dict__.copy() 
+        return
+    
+    # Import these to find the executables for checkpointing
+    import characterizer
+    import verify
+    # Make a checkpoint of the options so we can restore
+    # after each unit test
+    if not CHECKPOINT_OPTS:
+        CHECKPOINT_OPTS = copy.copy(OPTS)
     
 
 
@@ -147,16 +168,6 @@ def read_config(config_file, is_unit_test=True):
     reads will just restore the previous copy (ask mrg)
     """
     global OPTS
-    global CHECKPOINT_OPTS
-
-    # This is a hack. If we are running a unit test and have checkpointed
-    # the options, load them rather than reading the config file.
-    # This way, the configuration is reloaded at the start of every unit test.
-    # If a unit test fails, we don't have to worry about restoring the old config values
-    # that may have been tested.
-    if is_unit_test and CHECKPOINT_OPTS:
-        OPTS = copy.deepcopy(CHECKPOINT_OPTS)
-        return
         
     # Create a full path relative to current dir unless it is already an abs path
     if not os.path.isabs(config_file):
@@ -211,14 +222,15 @@ def read_config(config_file, is_unit_test=True):
     except:
         debug.error("Unable to make output directory.",-1)
 
-    # Make a checkpoint of the options so we can restore
-    # after each unit test
-    CHECKPOINT_OPTS = copy.deepcopy(OPTS)
-        
         
 def end_openram():
     """ Clean up openram for a proper exit """
     cleanup_paths()
+
+    import verify
+    verify.print_drc_stats()
+    verify.print_lvs_stats()
+    verify.print_pex_stats()        
     
 
     
@@ -227,6 +239,7 @@ def cleanup_paths():
     """
     We should clean up the temp directory after execution.
     """
+    global OPTS
     if not OPTS.purge_temp:
         debug.info(0,"Preserving temp directory: {}".format(OPTS.openram_temp))
         return
@@ -341,6 +354,8 @@ def print_time(name, now_time, last_time=None):
 
 def report_status():
     """ Check for valid arguments and report the info about the SRAM being generated """
+    global OPTS
+    
     # Check if all arguments are integers for bits, size, banks
     if type(OPTS.word_size)!=int:
         debug.error("{0} is not an integer in config file.".format(OPTS.word_size))

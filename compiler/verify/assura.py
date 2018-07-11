@@ -25,10 +25,18 @@ import time
 import debug
 from globals import OPTS
 
+# Keep track of statistics
+num_drc_runs = 0
+num_lvs_runs = 0
+num_pex_runs = 0
+
 def run_drc(name, gds_name):
     """Run DRC check on a given top-level name which is
        implemented in gds_name."""
 
+    global num_drc_runs
+    num_drc_runs += 1
+    
     from tech import drc
     drc_rules = drc["drc_rules"]
     drc_runset = OPTS.openram_temp + name + ".rsf"
@@ -88,6 +96,10 @@ def run_drc(name, gds_name):
 def run_lvs(name, gds_name, sp_name):
     """Run LVS check on a given top-level name which is
        implemented in gds_name and sp_name. """
+
+    global num_lvs_runs
+    num_lvs_runs += 1
+    
     from tech import drc
     lvs_rules = drc["lvs_rules"]
     lvs_runset = OPTS.openram_temp + name + ".rsf"
@@ -170,3 +182,13 @@ def run_pex(name, gds_name, sp_name, output=None):
     """Run pex on a given top-level name which is
        implemented in gds_name and sp_name. """
     debug.error("PEX extraction not implemented with Assura.",-1)
+
+    global num_pex_runs
+    num_pex_runs += 1
+    
+def print_drc_stats():
+    debug.info(1,"DRC runs: {0}".format(num_drc_runs))
+def print_lvs_stats():
+    debug.info(1,"LVS runs: {0}".format(num_lvs_runs))
+def print_pex_stats():
+    debug.info(1,"PEX runs: {0}".format(num_pex_runs))

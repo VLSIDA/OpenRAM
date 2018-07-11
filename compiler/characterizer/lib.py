@@ -440,9 +440,7 @@ class lib:
 
     def compute_delay(self):
         """ Do the analysis if we haven't characterized the SRAM yet """
-        try:
-            self.d
-        except AttributeError:
+        if not hasattr(self,"d"):
             self.d = delay(self.sram, self.sp_file, self.corner)
             if self.use_model:
                 self.char_results = self.d.analytical_delay(self.sram,self.slews,self.loads)
@@ -455,9 +453,7 @@ class lib:
     def compute_setup_hold(self):
         """ Do the analysis if we haven't characterized a FF yet """
         # Do the analysis if we haven't characterized a FF yet
-        try:
-            self.sh
-        except AttributeError:
+        if not hasattr(self,"sh"):
             self.sh = setup_hold(self.corner)
             if self.use_model:
                 self.times = self.sh.analytical_setuphold(self.slews,self.loads)

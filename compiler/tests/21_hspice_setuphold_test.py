@@ -26,7 +26,6 @@ class timing_setup_test(openram_test):
         if not OPTS.spice_exe:
             debug.error("Could not find {} simulator.".format(OPTS.spice_name),-1)
             
-
         import sram
         import tech
         slews = [tech.spice["rise_time"]*2]
@@ -58,7 +57,6 @@ class timing_setup_test(openram_test):
             else:
                 self.isclose(data[k],golden_data[k],0.15)
 
-        reload(characterizer)
         globals.end_openram()
         
 # instantiate a copdsay of the class to actually run the test

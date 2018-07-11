@@ -17,6 +17,7 @@ class timing_sram_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         OPTS.spice_name="hspice"
         OPTS.analytical_delay = False
+
         
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
@@ -83,7 +84,6 @@ class timing_sram_test(openram_test):
             else:
                 self.isclose(data[k],golden_data[k],0.15)
 
-        reload(characterizer)
         globals.end_openram()
         
 # instantiate a copdsay of the class to actually run the test

@@ -155,7 +155,7 @@ def read_config(config_file, is_unit_test=True):
     # If a unit test fails, we don't have to worry about restoring the old config values
     # that may have been tested.
     if is_unit_test and CHECKPOINT_OPTS:
-        OPTS = copy.deepcopy(CHECKPOINT_OPTS)
+        OPTS.__dict__ = CHECKPOINT_OPTS.__dict__.copy() 
         return
         
     # Create a full path relative to current dir unless it is already an abs path
@@ -213,12 +213,17 @@ def read_config(config_file, is_unit_test=True):
 
     # Make a checkpoint of the options so we can restore
     # after each unit test
-    CHECKPOINT_OPTS = copy.deepcopy(OPTS)
-        
+    if not CHECKPOINT_OPTS:
+        CHECKPOINT_OPTS = copy.copy(OPTS)
         
 def end_openram():
     """ Clean up openram for a proper exit """
     cleanup_paths()
+
+    import verify
+    verify.print_drc_stats()
+    verify.print_lvs_stats()
+    verify.print_pex_stats()        
     
 
     
@@ -227,6 +232,7 @@ def cleanup_paths():
     """
     We should clean up the temp directory after execution.
     """
+    global OPTS
     if not OPTS.purge_temp:
         debug.info(0,"Preserving temp directory: {}".format(OPTS.openram_temp))
         return
@@ -341,6 +347,8 @@ def print_time(name, now_time, last_time=None):
 
 def report_status():
     """ Check for valid arguments and report the info about the SRAM being generated """
+    global OPTS
+    
     # Check if all arguments are integers for bits, size, banks
     if type(OPTS.word_size)!=int:
         debug.error("{0} is not an integer in config file.".format(OPTS.word_size))

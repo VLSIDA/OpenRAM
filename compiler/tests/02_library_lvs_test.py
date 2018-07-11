@@ -14,7 +14,7 @@ class library_lvs_test(openram_test):
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         import verify
-        OPTS.check_lvsdrc=True
+
         (gds_dir, sp_dir, allnames) = setup_files()
         lvs_errors = 0
         debug.info(1, "Performing LVS on: " + ", ".join(allnames))

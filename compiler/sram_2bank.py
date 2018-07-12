@@ -1,24 +1,27 @@
 import sys
 from tech import drc, spice
 import debug
-import design
 from math import log,sqrt,ceil
-import contact
-from bank import bank
-from dff_buf_array import dff_buf_array
-from dff_array import dff_array
 import datetime
 import getpass
 from vector import vector
 from globals import OPTS, print_time
 
-class sram_2bank(design.design):
+from sram_base import sram_base
+from bank import bank
+from dff_buf_array import dff_buf_array
+from dff_array import dff_array
+
+class sram_2bank(sram_base):
     """
     Procedures specific to a two bank SRAM.
     """
-    def __init__(self, name):
-        design.__init__(self, name)
+    def __init__(self, word_size, num_words, name):
+        sram_base.__init__(self, word_size, num_words, 2, name)
 
+    def whoami(self):
+        print("2bank")
+        
     def compute_bank_offsets(self):
         """ Compute the overall offsets for a two bank SRAM """
 

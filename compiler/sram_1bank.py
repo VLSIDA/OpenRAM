@@ -7,19 +7,22 @@ import getpass
 from vector import vector
 from globals import OPTS, print_time
 
-from design import design
+from sram_base import sram_base
 from bank import bank
 from dff_buf_array import dff_buf_array
 from dff_array import dff_array
 
 
-class sram_1bank(design):
+class sram_1bank(sram_base):
     """
-    Procedures specific to a two bank SRAM.
+    Procedures specific to a one bank SRAM.
     """
-    def __init__(self, name):
-        design.__init__(self, name)
+    def __init__(self, word_size, num_words, name):
+        sram_base.__init__(self, word_size, num_words, 1, name)
 
+    def whoami(self):
+        print("1bank")
+        
     def add_modules(self):
         """ 
         This adds the moduels for a single bank SRAM with control

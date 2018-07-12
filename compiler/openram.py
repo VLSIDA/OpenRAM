@@ -40,7 +40,9 @@ report_status()
 import verify
 import sram
 
-print("Output files are " + OPTS.output_name + ".(sp|gds|v|lib|lef)")
+output_files = ["{0}.{1}".format(OPTS.output_name,x) for x in ["sp","gds","v","lib","lef"]]
+print("Output files are: ")
+print(*output_files,sep="\n")
 
 # Keep track of running stats
 start_time = datetime.datetime.now()
@@ -53,7 +55,7 @@ s = sram.sram(word_size=OPTS.word_size,
               name=OPTS.output_name)
 
 # Output the files for the resulting SRAM
-s.save_output()
+s.save()
 
 # Delete temp files etc.
 end_openram()

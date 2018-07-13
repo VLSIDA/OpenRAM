@@ -49,9 +49,7 @@ class pbitcell_array_test(openram_test):
         a = bitcell_array.bitcell_array(name="pbitcell_array", cols=4, rows=4)
         self.local_check(a)
 
-        OPTS.check_lvsdrc = True
         globals.end_openram()
-        OPTS.bitcell = "bitcell"
 
 # instantiate a copy of the class to actually run the test
 if __name__ == "__main__":

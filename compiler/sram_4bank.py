@@ -19,9 +19,6 @@ class sram_4bank(sram_base):
     def __init__(self, word_size, num_words, name):
         sram_base.__init__(self, word_size, num_words, 4, name)
 
-    def whoami(self):
-        print("4bank")
-        
     def compute_bank_offsets(self):
         """ Compute the overall offsets for a four bank SRAM """
 

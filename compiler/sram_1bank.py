@@ -20,9 +20,6 @@ class sram_1bank(sram_base):
     def __init__(self, word_size, num_words, name):
         sram_base.__init__(self, word_size, num_words, 1, name)
 
-    def whoami(self):
-        print("1bank")
-        
     def add_modules(self):
         """ 
         This adds the moduels for a single bank SRAM with control
@@ -44,11 +41,16 @@ class sram_1bank(sram_base):
                           control_pos.y + self.control_logic.height + self.m1_pitch)
         self.add_addr_dff(addr_pos)
 
+        # Leave room for the control routes to the left of the flops
+        data_pos = vector(self.control_logic_inst.lx() + 4*self.m2_pitch,
+                          control_pos.y + self.control_logic.height + self.m1_pitch)
+        self.add_addr_dff(addr_pos)
+        
         # two supply rails are already included in the bank, so just 2 here.
         self.width = self.bank.width + self.control_logic.width + 2*self.supply_rail_pitch
         self.height = self.bank.height 
 
-    def add_pins(self):
+    def add_layout_pins(self):
         """
         Add the top-level pins for a single bank SRAM with control.
         """
@@ -58,10 +60,15 @@ class sram_1bank(sram_base):
             
         for i in range(self.addr_size):
             self.copy_layout_pin(self.addr_dff_inst, "din[{}]".format(i),"ADDR[{}]".format(i))
-        
+
+        for i in range(self.word_size):
+            self.copy_layout_pin(self.addr_dff_inst, "din[{}]".format(i),"ADDR[{}]".format(i))
+            
     def route(self):
         """ Route a single bank SRAM """
 
+        self.add_layout_pins()
+        
         # Route the outputs from the control logic module
         for n in self.control_logic_outputs:
             src_pin = self.control_logic_inst.get_pin(n)

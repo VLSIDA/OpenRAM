@@ -9,12 +9,14 @@ import optparse
 import options
 import sys
 import re
+import copy
 import importlib
 
 USAGE = "Usage: openram.py [options] <config file>\nUse -h for help.\n"
 
 # Anonymous object that will be the options
 OPTS = options.options()
+CHECKPOINT_OPTS=None
 
 def parse_args():
     """ Parse the optional arguments for OpenRAM """
@@ -102,6 +104,8 @@ def check_versions():
 
 def init_openram(config_file, is_unit_test=True):
     """Initialize the technology, paths, simulators, etc."""
+
+    
     check_versions()
 
     debug.info(1,"Initializing OpenRAM...")
@@ -112,6 +116,30 @@ def init_openram(config_file, is_unit_test=True):
 
     import_tech()
 
+    # Reset the static duplicate name checker for unit tests.
+    import hierarchy_design
+    hierarchy_design.hierarchy_design.name_map=[]
+    
+    global OPTS
+    global CHECKPOINT_OPTS
+
+    # This is a hack. If we are running a unit test and have checkpointed
+    # the options, load them rather than reading the config file.
+    # This way, the configuration is reloaded at the start of every unit test.
+    # If a unit test fails, we don't have to worry about restoring the old config values
+    # that may have been tested.
+    if is_unit_test and CHECKPOINT_OPTS:
+        OPTS.__dict__ = CHECKPOINT_OPTS.__dict__.copy() 
+        return
+    
+    # Import these to find the executables for checkpointing
+    import characterizer
+    import verify
+    # Make a checkpoint of the options so we can restore
+    # after each unit test
+    if not CHECKPOINT_OPTS:
+        CHECKPOINT_OPTS = copy.copy(OPTS)
+    
 
 
 def get_tool(tool_type, preferences):
@@ -132,15 +160,15 @@ def get_tool(tool_type, preferences):
         return(None,"")
 
     
-
 def read_config(config_file, is_unit_test=True):
     """ 
     Read the configuration file that defines a few parameters. The
     config file is just a Python file that defines some config
-    options. 
+    options. This will only actually get read the first time. Subsequent
+    reads will just restore the previous copy (ask mrg)
     """
     global OPTS
-    
+        
     # Create a full path relative to current dir unless it is already an abs path
     if not os.path.isabs(config_file):
         config_file = os.getcwd() + "/" +  config_file
@@ -164,6 +192,7 @@ def read_config(config_file, is_unit_test=True):
         # The command line will over-ride the config file
         # except in the case of the tech name! This is because the tech name
         # is sometimes used to specify the config file itself (e.g. unit tests)
+        # Note that if we re-read a config file, nothing will get read again!
         if not k in OPTS.__dict__ or k=="tech_name":
             OPTS.__dict__[k]=v
     
@@ -192,12 +221,16 @@ def read_config(config_file, is_unit_test=True):
             os.chmod(OPTS.output_path, 0o750)
     except:
         debug.error("Unable to make output directory.",-1)
-    
-        
+
         
 def end_openram():
     """ Clean up openram for a proper exit """
     cleanup_paths()
+
+    import verify
+    verify.print_drc_stats()
+    verify.print_lvs_stats()
+    verify.print_pex_stats()        
     
 
     
@@ -206,6 +239,7 @@ def cleanup_paths():
     """
     We should clean up the temp directory after execution.
     """
+    global OPTS
     if not OPTS.purge_temp:
         debug.info(0,"Preserving temp directory: {}".format(OPTS.openram_temp))
         return
@@ -275,9 +309,6 @@ def import_tech():
 
     debug.info(2,"Importing technology: " + OPTS.tech_name)
 
-    # Set the tech to the config file we read in instead of the command line value.
-    OPTS.tech_name = OPTS.tech_name
-        
     # environment variable should point to the technology dir
     try:
         OPENRAM_TECH = os.path.abspath(os.environ.get("OPENRAM_TECH"))
@@ -323,6 +354,8 @@ def print_time(name, now_time, last_time=None):
 
 def report_status():
     """ Check for valid arguments and report the info about the SRAM being generated """
+    global OPTS
+    
     # Check if all arguments are integers for bits, size, banks
     if type(OPTS.word_size)!=int:
         debug.error("{0} is not an integer in config file.".format(OPTS.word_size))

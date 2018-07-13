@@ -19,7 +19,6 @@ class wordline_driver_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         global verify
         import verify
-        OPTS.check_lvsdrc = False
 
         import wordline_driver
         import tech
@@ -28,7 +27,6 @@ class wordline_driver_test(openram_test):
         tx = wordline_driver.wordline_driver(rows=8)
         self.local_check(tx)
 
-        OPTS.check_lvsdrc = True
         globals.end_openram()
         
 # instantiate a copy of the class to actually run the test

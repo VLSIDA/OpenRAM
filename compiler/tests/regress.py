@@ -27,5 +27,13 @@ modules = map(__import__, moduleNames)
 suite = unittest.TestSuite()
 load = unittest.defaultTestLoader.loadTestsFromModule
 suite.addTests(map(load, modules))
-ret = not unittest.TextTestRunner(verbosity=2).run(suite).wasSuccessful()
-sys.exit(ret)
+
+test_runner = unittest.TextTestRunner(verbosity=2,stream=sys.stderr)
+test_result = test_runner.run(suite)
+
+import verify
+verify.print_drc_stats()
+verify.print_lvs_stats()
+verify.print_pex_stats()        
+
+sys.exit(not test_result.wasSuccessful())

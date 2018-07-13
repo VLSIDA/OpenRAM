@@ -15,7 +15,6 @@ class timing_sram_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        OPTS.check_lvsdrc = False
         OPTS.spice_name="ngspice"
         OPTS.analytical_delay = False
 
@@ -83,12 +82,6 @@ class timing_sram_test(openram_test):
                     self.isclose(data[k][i],golden_data[k][i],0.15)
             else:
                 self.isclose(data[k],golden_data[k],0.15)
-
-        # reset these options
-        OPTS.check_lvsdrc = True
-        OPTS.spice_name="hspice"
-        OPTS.analytical_delay = True
-        reload(characterizer)
 
         globals.end_openram()
 

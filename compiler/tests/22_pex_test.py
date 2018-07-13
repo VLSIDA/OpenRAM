@@ -11,11 +11,22 @@ import globals
 from globals import OPTS
 import debug
 
-@unittest.skip("SKIPPING 22_sram_func_test")
+@unittest.skip("SKIPPING 22_sram_pex_test")
 class sram_func_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+
+        OPTS.use_pex = True
+
+        # This is a hack to reload the characterizer __init__ with the spice version
+        from importlib import reload
+        import characterizer
+        reload(characterizer)
+        from characterizer import setup_hold
+        if not OPTS.spice_exe:
+            debug.error("Could not find {} simulator.".format(OPTS.spice_name),-1)
+
         global verify
         import verify
 
@@ -31,14 +42,10 @@ class sram_func_test(openram_test):
         import tech
 
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
-        OPTS.check_lvsdrc = False
-        OPTS.use_pex = True
         s = sram.sram(word_size=OPTS.word_size,
                       num_words=OPTS.num_words,
                       num_banks=OPTS.num_banks,
                       name="test_sram1")
-        OPTS.check_lvsdrc = True
-        OPTS.use_pex = False
 
         tempspice = OPTS.openram_temp + "temp.sp"
         tempgds = OPTS.openram_temp + "temp.gds"
@@ -90,7 +97,7 @@ class sram_func_test(openram_test):
         self.assertTrue(round(value1) > 0.5 * tech.spice["supply_voltage"])
         self.assertTrue(round(value2) < 0.5 * tech.spice["supply_voltage"])
 
-        OPTS.check_lvsdrc = True
+
 
     def convert_voltage_unit(self, string):
         newstring = ""

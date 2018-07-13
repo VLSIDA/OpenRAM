@@ -15,8 +15,7 @@ class path_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         global verify
         import verify
-        OPTS.check_lvsdrc = False
-
+        
         import path
         import tech
         import design
@@ -84,8 +83,6 @@ class path_test(openram_test):
         path.path(w, layer_stack, position_list)
         self.local_drc_check(w)
 
-        # return it back to it's normal state
-        OPTS.check_lvsdrc = True
         globals.end_openram()
         
 

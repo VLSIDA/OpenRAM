@@ -1,5 +1,5 @@
 import unittest,warnings
-import sys,os,glob
+import sys,os,glob,copy
 sys.path.append(os.path.join(sys.path[0],".."))
 from globals import OPTS
 import debug
@@ -8,17 +8,23 @@ class openram_test(unittest.TestCase):
     """ Base unit test that we have some shared classes in. """
     
     def local_drc_check(self, w):
+
+        self.reset()
+
         tempgds = OPTS.openram_temp + "temp.gds"
         w.gds_write(tempgds)
         import verify
-        self.assertFalse(verify.run_drc(w.name, tempgds))
 
-        files = glob.glob(OPTS.openram_temp + '*')
-        for f in files:
-            os.remove(f)        
+        result=verify.run_drc(w.name, tempgds)
+        if result != 0:
+            self.fail("DRC failed: {}".format(a.name))
+
+        self.cleanup()
     
     def local_check(self, a, final_verification=False):
 
+        self.reset()
+        
         tempspice = OPTS.openram_temp + "temp.sp"
         tempgds = OPTS.openram_temp + "temp.gds"
 
@@ -27,19 +33,12 @@ class openram_test(unittest.TestCase):
 
         import verify
         result=verify.run_drc(a.name, tempgds)
-        self.reset()
-        try:
-            self.assertTrue(result==0)
-        except:
+        if result != 0:
             self.fail("DRC failed: {}".format(a.name))
 
             
         result=verify.run_lvs(a.name, tempgds, tempspice, final_verification)
-        self.reset()
-        try:
-            self.assertTrue(result==0)
-        except:
-            self.reset()
+        if result != 0:
             self.fail("LVS mismatch: {}".format(a.name))
 
         if OPTS.purge_temp:
@@ -54,9 +53,14 @@ class openram_test(unittest.TestCase):
                 os.remove(f)        
 
     def reset(self):
-        """ Reset the static duplicate name checker for unit tests """
-        import design
-        design.design.name_map=[]
+        """ 
+        Reset everything after each test.
+        """
+        # Reset the static duplicate name checker for unit tests.
+        import hierarchy_design
+        hierarchy_design.hierarchy_design.name_map=[]
+        
+
 
     def isclose(self, value1,value2,error_tolerance=1e-2):
         """ This is used to compare relative values. """

@@ -17,7 +17,6 @@ class pinv_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         global verify
         import verify
-        OPTS.check_lvsdrc = False
 
         import pinv
         import tech
@@ -26,7 +25,6 @@ class pinv_test(openram_test):
         tx = pinv.pinv(size=2)
         self.local_check(tx)
 
-        OPTS.check_lvsdrc = True
         globals.end_openram()        
 
 

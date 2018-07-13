@@ -15,7 +15,6 @@ class wire_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         global verify
         import verify
-        OPTS.check_lvsdrc = False
 
         import wire
         import tech
@@ -122,8 +121,6 @@ class wire_test(openram_test):
         wire.wire(w, layer_stack, position_list)
         self.local_drc_check(w)
 
-        # return it back to it's normal state
-        OPTS.check_lvsdrc = True
         globals.end_openram()
         
 

@@ -23,6 +23,8 @@ class sram():
                                                                              num_words))
         start_time = datetime.datetime.now()
 
+        self.name = name
+        
         if num_banks == 1:
             from sram_1bank import sram_1bank
             self.s=sram_1bank(word_size, num_words, name)
@@ -53,8 +55,6 @@ class sram():
         if not OPTS.is_unit_test:
             print_time("SRAM creation", datetime.datetime.now(), start_time)
 
-    def get_name(self):
-        return self.s.name
     
     def sp_write(self,name):
         self.s.sp_write(name)

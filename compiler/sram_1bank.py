@@ -37,14 +37,18 @@ class sram_1bank(sram_base):
         self.add_control_logic(position=control_pos)
 
         # Leave room for the control routes to the left of the flops
-        addr_pos = vector(self.control_logic_inst.lx() + 4*self.m2_pitch,
+        row_addr_pos = vector(self.control_logic_inst.lx() + 4*self.m2_pitch,
                           control_pos.y + self.control_logic.height + self.m1_pitch)
-        self.add_addr_dff(addr_pos)
+        self.add_row_addr_dff(row_addr_pos)
 
-        # Leave room for the control routes to the left of the flops
-        data_pos = vector(self.control_logic_inst.lx() + 4*self.m2_pitch,
-                          control_pos.y + self.control_logic.height + self.m1_pitch)
-        self.add_addr_dff(addr_pos)
+        # Add the column address below the bank under the control
+        if self.col_addr_dff:
+            col_addr_pos = vector(-self.col_addr_dff.width, -1.5*self.col_addr_dff.height)
+            self.add_col_addr_dff(col_addr_pos)
+        
+        # Add the data flops below the bank 
+        data_pos = vector(-self.bank_inst.mod.bank_center.x, -1.5*self.data_dff.height)
+        self.add_data_dff(data_pos)
         
         # two supply rails are already included in the bank, so just 2 here.
         self.width = self.bank.width + self.control_logic.width + 2*self.supply_rail_pitch
@@ -54,15 +58,22 @@ class sram_1bank(sram_base):
         """
         Add the top-level pins for a single bank SRAM with control.
         """
+        # Connect the control pins as inputs
+        for n in self.control_logic_inputs + ["clk"]:
+            self.copy_layout_pin(self.control_logic_inst, n)
 
         for i in range(self.word_size):
             self.copy_layout_pin(self.bank_inst, "DOUT[{}]".format(i))
-            
-        for i in range(self.addr_size):
-            self.copy_layout_pin(self.addr_dff_inst, "din[{}]".format(i),"ADDR[{}]".format(i))
+
+        # Lower address bits
+        for i in range(self.col_addr_size):
+            self.copy_layout_pin(self.col_addr_dff_inst, "din[{}]".format(i),"ADDR[{}]".format(i))
+        # Upper address bits
+        for i in range(self.row_addr_size):
+            self.copy_layout_pin(self.row_addr_dff_inst, "din[{}]".format(i),"ADDR[{}]".format(i+self.col_addr_size))
 
         for i in range(self.word_size):
-            self.copy_layout_pin(self.addr_dff_inst, "din[{}]".format(i),"ADDR[{}]".format(i))
+            self.copy_layout_pin(self.data_dff_inst, "din[{}]".format(i),"DIN[{}]".format(i))
             
     def route(self):
         """ Route a single bank SRAM """
@@ -79,14 +90,28 @@ class sram_1bank(sram_base):
                                 rotate=90)
             
 
-        # Connect the output of the flops to the bank pins
-        for i in range(self.addr_size):
+        # Connect the output of the row flops to the bank pins
+        for i in range(self.row_addr_size):
             flop_name = "dout[{}]".format(i)
-            bank_name = "A[{}]".format(i)
-            flop_pin = self.addr_dff_inst.get_pin(flop_name)
+            bank_name = "A[{}]".format(i+self.col_addr_size)
+            flop_pin = self.row_addr_dff_inst.get_pin(flop_name)
             bank_pin = self.bank_inst.get_pin(bank_name)
             flop_pos = flop_pin.center()
-            bank_pos = vector(bank_pin.cx(),flop_pos.y)
+            bank_pos = bank_pin.center()
+            mid_pos = vector(bank_pos.x,flop_pos.y)
+            self.add_wire(("metal3","via2","metal2"),[flop_pos, mid_pos,bank_pos])
+            self.add_via_center(layers=("metal2","via2","metal3"),
+                                offset=flop_pos,
+                                rotate=90)
+
+        # Connect the output of the row flops to the bank pins
+        for i in range(self.col_addr_size):
+            flop_name = "dout[{}]".format(i)
+            bank_name = "A[{}]".format(i)
+            flop_pin = self.col_addr_dff_inst.get_pin(flop_name)
+            bank_pin = self.bank_inst.get_pin(bank_name)
+            flop_pos = flop_pin.center()
+            bank_pos = bank_pin.center()
             self.add_path("metal3",[flop_pos, bank_pos])
             self.add_via_center(layers=("metal2","via2","metal3"),
                                 offset=flop_pos,
@@ -95,17 +120,28 @@ class sram_1bank(sram_base):
                                 offset=bank_pos,
                                 rotate=90)
 
-        # Connect the control pins as inputs
-        for n in self.control_logic_inputs + ["clk"]:
-            self.copy_layout_pin(self.control_logic_inst, n)
+        # Connect the output of the row flops to the bank pins
+        for i in range(self.word_size):
+            flop_name = "dout[{}]".format(i)
+            bank_name = "BANK_DIN[{}]".format(i)
+            flop_pin = self.data_dff_inst.get_pin(flop_name)
+            bank_pin = self.bank_inst.get_pin(bank_name)
+            flop_pos = flop_pin.center()
+            bank_pos = bank_pin.center()
+            mid_pos = vector(bank_pos.x,flop_pos.y)
+            self.add_wire(("metal3","via2","metal2"),[flop_pos, mid_pos,bank_pos])
+            self.add_via_center(layers=("metal2","via2","metal3"),
+                                offset=flop_pos,
+                                rotate=90)
+            
 
-        # Connect the clock between the flops and control module
-        flop_pin = self.addr_dff_inst.get_pin("clk")
-        ctrl_pin = self.control_logic_inst.get_pin("clk_buf")
-        flop_pos = flop_pin.uc()
-        ctrl_pos = ctrl_pin.bc()
-        mid_ypos = 0.5*(ctrl_pos.y+flop_pos.y)
-        mid1_pos = vector(flop_pos.x, mid_ypos)
-        mid2_pos = vector(ctrl_pos.x, mid_ypos)                
-        self.add_wire(("metal1","via1","metal2"),[flop_pin.uc(), mid1_pos, mid2_pos, ctrl_pin.bc()])  
+        # # Connect the clock between the flops and control module
+        # flop_pin = self.addr_dff_inst.get_pin("clk")
+        # ctrl_pin = self.control_logic_inst.get_pin("clk_buf")
+        # flop_pos = flop_pin.uc()
+        # ctrl_pos = ctrl_pin.bc()
+        # mid_ypos = 0.5*(ctrl_pos.y+flop_pos.y)
+        # mid1_pos = vector(flop_pos.x, mid_ypos)
+        # mid2_pos = vector(ctrl_pos.x, mid_ypos)                
+        # self.add_wire(("metal1","via1","metal2"),[flop_pin.uc(), mid1_pos, mid2_pos, ctrl_pin.bc()])  
 

@@ -39,6 +39,7 @@ class layout(lef.lef):
         shift the origin in the lowest left corner """
         offset = self.find_lowest_coords()
         self.translate_all(offset)
+        return offset
 
     def get_gate_offset(self, x_offset, height, inv_num):
         """Gets the base offset and y orientation of stacked rows of gates

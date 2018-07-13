@@ -36,10 +36,17 @@ class array_multiport_test(openram_test):
         OPTS.r_ports = 0
         OPTS.w_ports = 2
         
-        debug.info(2, "Testing 4x4 array for multiport bitcell, with read/write ports at the edge of the bit cell")
+        debug.info(2, "Testing 4x4 array for multiport bitcell, with write ports at the edge of the bit cell")
         a = bitcell_array.bitcell_array(name="pbitcell_array", cols=4, rows=4)
         self.local_check(a)
         
+        OPTS.rw_ports = 2
+        OPTS.r_ports = 0
+        OPTS.w_ports = 0
+        
+        debug.info(2, "Testing 4x4 array for multiport bitcell, with read/write ports at the edge of the bit cell")
+        a = bitcell_array.bitcell_array(name="pbitcell_array", cols=4, rows=4)
+        self.local_check(a)
 
         OPTS.bitcell = "bitcell"
         OPTS.check_lvsdrc = True

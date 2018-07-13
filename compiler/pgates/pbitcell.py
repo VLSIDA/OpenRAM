@@ -9,14 +9,18 @@ from globals import OPTS
 
 class pbitcell(pgate.pgate):
     """
-    This module implements a parametrically sized multi-port bitcell
+    This module implements a parametrically sized multi-port bitcell,
+    with a variable number of read/write, write, and read ports
     """
 
     width = None
     height = None
     
+    unique_id = 1
+    
     def __init__(self, num_readwrite=OPTS.rw_ports, num_write=OPTS.w_ports, num_read=OPTS.r_ports):
-        name = "pbitcell_{0}RW_{1}W_{2}R".format(num_readwrite, num_write, num_read)
+        name = "pbitcell_{0}RW_{1}W_{2}R_{3}".format(num_readwrite, num_write, num_read, pbitcell.unique_id)
+        pbitcell.unique_id += 1
         pgate.pgate.__init__(self, name)
         debug.info(2, "create a multi-port bitcell with {0} write ports and {1} read ports".format(num_write, num_read))  
         
@@ -517,13 +521,15 @@ class pbitcell(pgate.pgate):
                 self.add_path("poly", [right_storage_contact, inverter_gate_offset_right])
                 
                 # connect contacts to drains of read/write transistors (metal1 path)
-                midL0 = vector(left_storage_contact.x - 0.5*contact.poly.height - 1.5*drc["minwidth_metal1"], left_storage_contact.y)
-                midL1 = vector(left_storage_contact.x - 0.5*contact.poly.height - 1.5*drc["minwidth_metal1"], self.readwrite_nmos_left[k].get_pin("D").lc().y)
-                self.add_path("metal1", [left_storage_contact, midL0, midL1, self.readwrite_nmos_left[k].get_pin("D").lc()])
+                midL0 = vector(self.inverter_nmos_left.get_pin("S").lc().x - 1.5*drc["minwidth_metal1"], left_storage_contact.y)
+                midL1 = vector(self.inverter_nmos_left.get_pin("S").lc().x - 1.5*drc["minwidth_metal1"], self.readwrite_nmos_left[k].get_pin("D").lc().y)
+                self.add_path("metal1", [left_storage_contact, midL0], width=contact.poly.second_layer_width) # width needed to avoid drc error
+                self.add_path("metal1", [midL0+vector(0,0.5*contact.poly.second_layer_width), midL1, self.readwrite_nmos_left[k].get_pin("D").lc()])
                 
-                midR0 = vector(right_storage_contact.x + 0.5*contact.poly.height + 1.5*drc["minwidth_metal1"], right_storage_contact.y)
-                midR1 = vector(right_storage_contact.x + 0.5*contact.poly.height + 1.5*drc["minwidth_metal1"], self.readwrite_nmos_right[k].get_pin("D").rc().y)
-                self.add_path("metal1", [right_storage_contact, midR0, midR1, self.readwrite_nmos_right[k].get_pin("D").rc()])
+                midR0 = vector(self.inverter_nmos_right.get_pin("D").rc().x + 1.5*drc["minwidth_metal1"], right_storage_contact.y)
+                midR1 = vector(self.inverter_nmos_right.get_pin("D").rc().x + 1.5*drc["minwidth_metal1"], self.readwrite_nmos_right[k].get_pin("D").rc().y)
+                self.add_path("metal1", [right_storage_contact, midR0], width=contact.poly.second_layer_width)
+                self.add_path("metal1", [midR0+vector(0,0.5*contact.poly.second_layer_width), midR1, self.readwrite_nmos_right[k].get_pin("D").rc()])
             # end if
         # end for
         
@@ -693,13 +699,15 @@ class pbitcell(pgate.pgate):
                 self.add_path("poly", [right_storage_contact, inverter_gate_offset_right])
                 
                 # connect contacts to drains of write transistors (metal1 path)
-                midL0 = vector(left_storage_contact.x - 0.5*contact.poly.height - 1.5*drc["minwidth_metal1"], left_storage_contact.y)
-                midL1 = vector(left_storage_contact.x - 0.5*contact.poly.height - 1.5*drc["minwidth_metal1"], self.write_nmos_left[k].get_pin("D").lc().y)
-                self.add_path("metal1", [left_storage_contact, midL0, midL1, self.write_nmos_left[k].get_pin("D").lc()])
+                midL0 = vector(self.inverter_nmos_left.get_pin("S").lc().x - 1.5*drc["minwidth_metal1"], left_storage_contact.y)
+                midL1 = vector(self.inverter_nmos_left.get_pin("S").lc().x - 1.5*drc["minwidth_metal1"], self.write_nmos_left[k].get_pin("D").lc().y)
+                self.add_path("metal1", [left_storage_contact, midL0], width=contact.poly.second_layer_width) # width needed to avoid drc error
+                self.add_path("metal1", [midL0+vector(0,0.5*contact.poly.second_layer_width), midL1, self.write_nmos_left[k].get_pin("D").lc()])
                 
-                midR0 = vector(right_storage_contact.x + 0.5*contact.poly.height + 1.5*drc["minwidth_metal1"], right_storage_contact.y)
-                midR1 = vector(right_storage_contact.x + 0.5*contact.poly.height + 1.5*drc["minwidth_metal1"], self.write_nmos_right[k].get_pin("D").rc().y)
-                self.add_path("metal1", [right_storage_contact, midR0, midR1, self.write_nmos_right[k].get_pin("D").rc()])
+                midR0 = vector(self.inverter_nmos_right.get_pin("D").rc().x + 1.5*drc["minwidth_metal1"], right_storage_contact.y)
+                midR1 = vector(self.inverter_nmos_right.get_pin("D").rc().x + 1.5*drc["minwidth_metal1"], self.write_nmos_right[k].get_pin("D").rc().y)
+                self.add_path("metal1", [right_storage_contact, midR0], width=contact.poly.second_layer_width)
+                self.add_path("metal1", [midR0+vector(0,0.5*contact.poly.second_layer_width), midR1, self.write_nmos_right[k].get_pin("D").rc()])
             # end if
         # end for
         

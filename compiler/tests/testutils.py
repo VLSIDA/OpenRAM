@@ -17,7 +17,7 @@ class openram_test(unittest.TestCase):
 
         result=verify.run_drc(w.name, tempgds)
         if result != 0:
-            self.fail("DRC failed: {}".format(a.name))
+            self.fail("DRC failed: {}".format(w.name))
 
         self.cleanup()
     
@@ -32,14 +32,14 @@ class openram_test(unittest.TestCase):
         a.gds_write(tempgds)
 
         import verify
-        result=verify.run_drc(a.name, tempgds)
+        result=verify.run_drc(a.get_name(), tempgds)
         if result != 0:
-            self.fail("DRC failed: {}".format(a.name))
+            self.fail("DRC failed: {}".format(a.get_name()))
 
             
-        result=verify.run_lvs(a.name, tempgds, tempspice, final_verification)
+        result=verify.run_lvs(a.get_name(), tempgds, tempspice, final_verification)
         if result != 0:
-            self.fail("LVS mismatch: {}".format(a.name))
+            self.fail("LVS mismatch: {}".format(a.get_name()))
 
         if OPTS.purge_temp:
             self.cleanup()

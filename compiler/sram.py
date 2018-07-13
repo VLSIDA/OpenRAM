@@ -53,15 +53,21 @@ class sram():
         if not OPTS.is_unit_test:
             print_time("SRAM creation", datetime.datetime.now(), start_time)
 
-        self.save()
+    def get_name(self):
+        return self.s.name
+    
+    def sp_write(self,name):
+        self.s.sp_write(name)
 
+    def gds_write(self,name):
+        self.s.gds_write(name)
+
+        
     def save(self):
         """ Save all the output files while reporting time to do it as well. """
 
         # Save the spice file
         start_time = datetime.datetime.now()
-        print(type(sram))
-        print(type(self))
         spname = OPTS.output_path + self.s.name + ".sp"
         print("SP: Writing to {0}".format(spname))
         self.s.sp_write(spname)
@@ -77,7 +83,7 @@ class sram():
         else:
             # Use generated spice file for characterization
             sp_file = spname
-        print(sys.path)
+
         # Characterize the design
         start_time = datetime.datetime.now()
         from characterizer import lib

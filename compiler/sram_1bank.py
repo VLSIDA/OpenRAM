@@ -29,15 +29,12 @@ class sram_1bank(sram_base):
         # No orientation or offset
         self.bank_inst = self.add_bank(0, [0, 0], 1, 1)
 
-        # 3/5/18 MRG: Cannot reference positions inside submodules because boundaries
-        # are not recomputed using instance placement. So, place the control logic such that it aligns
-        # with the top of the SRAM.
         control_pos = vector(-self.control_logic.width - self.m3_pitch,
-                             3*self.supply_rail_width)
+                             self.bank.bank_center.y - self.control_logic.control_logic_center.y)
         self.add_control_logic(position=control_pos)
 
         # Leave room for the control routes to the left of the flops
-        row_addr_pos = vector(self.control_logic_inst.lx() + 4*self.m2_pitch,
+        row_addr_pos = vector(self.control_logic_inst.rx() - self.row_addr_dff.width,
                           control_pos.y + self.control_logic.height + self.m1_pitch)
         self.add_row_addr_dff(row_addr_pos)
 
@@ -46,8 +43,10 @@ class sram_1bank(sram_base):
             col_addr_pos = vector(-self.col_addr_dff.width, -1.5*self.col_addr_dff.height)
             self.add_col_addr_dff(col_addr_pos)
         
-        # Add the data flops below the bank 
-        data_pos = vector(-self.bank_inst.mod.bank_center.x, -1.5*self.data_dff.height)
+        # Add the data flops below the bank
+        # This relies on the center point of the bank:
+        # decoder in upper left, bank in upper right, sensing in lower right
+        data_pos = vector(self.bank.bank_center.x, -1.5*self.data_dff.height)
         self.add_data_dff(data_pos)
         
         # two supply rails are already included in the bank, so just 2 here.

@@ -415,8 +415,8 @@ class sram_base(design):
     def connect_rail_from_left_m2m3(self, src_pin, dest_pin):
         """ Helper routine to connect an unrotated/mirrored oriented instance to the rails """
         in_pos = src_pin.rc()
-        out_pos = vector(dest_pin.cx(), in_pos.y)
-        self.add_wire(("metal3","via2","metal2"),[in_pos, out_pos, out_pos - vector(0,self.m2_pitch)])
+        out_pos = dest_pin.center()
+        self.add_wire(("metal3","via2","metal2"),[in_pos, vector(out_pos.x,in_pos.y),out_pos])
         self.add_via_center(layers=("metal2","via2","metal3"),
                             offset=src_pin.rc(),
                             rotate=90)

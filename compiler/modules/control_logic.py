@@ -143,14 +143,11 @@ class control_logic(design.design):
 
         # This offset is used for placement of the control logic in
         # the SRAM level.
-        self.control_logic_center = vector(self.ctrl_dff_array.width, self.replica_bitline_offset.y)
+        self.control_logic_center = vector(self.ctrl_dff_inst.rx(), self.rbl_inst.by())
         
         self.height = self.rbl_inst.uy()
-        # Find max of logic rows
-        max_row = max(self.row_ends)
         # Max of modules or logic rows
-        self.width = max(self.clkbuf.rx(), self.rbl_inst.rx(), max_row)
-        
+        self.width = max(self.rbl_inst.rx(), max(self.row_ends))
 
 
     def add_routing(self):

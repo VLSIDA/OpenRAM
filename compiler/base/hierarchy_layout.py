@@ -527,19 +527,19 @@ class layout(lef.lef):
 
     def create_horizontal_pin_bus(self, layer, pitch, offset, names, length):
         """ Create a horizontal bus of pins. """
-        self.create_bus(layer,pitch,offset,names,length,vertical=False,make_pins=True)
+        return self.create_bus(layer,pitch,offset,names,length,vertical=False,make_pins=True)
 
     def create_vertical_pin_bus(self, layer, pitch, offset, names, length):
         """ Create a horizontal bus of pins. """
-        self.create_bus(layer,pitch,offset,names,length,vertical=True,make_pins=True)
+        return self.create_bus(layer,pitch,offset,names,length,vertical=True,make_pins=True)
 
     def create_vertical_bus(self, layer, pitch, offset, names, length):
         """ Create a horizontal bus. """
-        self.create_bus(layer,pitch,offset,names,length,vertical=True,make_pins=False)
+        return self.create_bus(layer,pitch,offset,names,length,vertical=True,make_pins=False)
 
     def create_horiontal_bus(self, layer, pitch, offset, names, length):
         """ Create a horizontal bus. """
-        self.create_bus(layer,pitch,offset,names,length,vertical=False,make_pins=False)
+        return self.create_bus(layer,pitch,offset,names,length,vertical=False,make_pins=False)
 
 
     def create_bus(self, layer, pitch, offset, names, length, vertical, make_pins):

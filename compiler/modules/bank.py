@@ -67,7 +67,7 @@ class bank(design.design):
         self.add_lvs_correspondence_points() 
 
         # Remember the bank center for further placement
-        self.bank_center=self.offset_all_coordinates()
+        self.bank_center=self.offset_all_coordinates().scale(-1,-1)
         
         self.DRC_LVS()
 
@@ -535,21 +535,13 @@ class bank(design.design):
         # and control lines.
         # The bank is at (0,0), so this is to the left of the y-axis.
         # 2 pitches on the right for vias/jogs to access the inputs 
-        control_bus_x_offset = -self.m2_pitch * self.num_control_lines - self.m2_width
-        
-        # Track the bus offsets for other modules to access
-        self.bus_xoffset = {}
-
-        # Control lines 
-        for i in range(self.num_control_lines):
-            x_offset = control_bus_x_offset + i*self.m2_pitch 
-            # Make the xoffset map the center of the rail
-            self.bus_xoffset[self.control_signals[i]]=x_offset + 0.5*self.m2_width
-            # Pins are added later if this is a single bank, so just add rectangle now
-            self.add_rect(layer="metal2",  
-                          offset=vector(x_offset, self.min_y_offset), 
-                          width=self.m2_width, 
-                          height=self.max_y_offset-self.min_y_offset)
+        control_bus_offset = vector(-self.m2_pitch * self.num_control_lines - self.m2_width, 0)
+        control_bus_length = self.max_y_offset - self.min_y_offset
+        self.bus_xoffset = self.create_vertical_bus(layer="metal2",
+                                                    pitch=self.m2_pitch,
+                                                    offset=control_bus_offset,
+                                                    names=self.control_signals,
+                                                    length=control_bus_length)
 
 
 
@@ -797,7 +789,7 @@ class bank(design.design):
         connection.append((self.prefix+"s_en", self.sense_amp_array_inst.get_pin("en").lc()))
   
         for (control_signal, pin_pos) in connection:
-            control_pos = vector(self.bus_xoffset[control_signal], pin_pos.y)
+            control_pos = vector(self.bus_xoffset[control_signal].x ,pin_pos.y)
             self.add_path("metal1", [control_pos, pin_pos])
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=control_pos,
@@ -807,7 +799,7 @@ class bank(design.design):
         control_signal = self.prefix+"clk_buf"
         pin_pos = self.wordline_driver_inst.get_pin("en").uc()
         mid_pos = pin_pos + vector(0,self.m1_pitch)
-        control_x_offset = self.bus_xoffset[control_signal]
+        control_x_offset = self.bus_xoffset[control_signal].x
         control_pos = vector(control_x_offset + self.m1_width, mid_pos.y)
         self.add_wire(("metal1","via1","metal2"),[pin_pos, mid_pos, control_pos])
         control_via_pos = vector(control_x_offset, mid_pos.y)
@@ -820,7 +812,7 @@ class bank(design.design):
 
         for ctrl in self.control_signals:
             # xoffsets are the center of the rail
-            x_offset = self.bus_xoffset[ctrl] - 0.5*self.m2_width
+            x_offset = self.bus_xoffset[ctrl].x - 0.5*self.m2_width
             if self.num_banks > 1:
                 # it's not an input pin if we have multiple banks
                 self.add_label_pin(text=ctrl,

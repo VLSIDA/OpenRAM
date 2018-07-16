@@ -97,7 +97,9 @@ class control_logic(design.design):
         self.internal_list = ["clk_buf", "clk_buf_bar", "we", "cs", "oe"]
         self.internal_width = len(self.internal_list)*self.m2_pitch
         # Ooutputs to the bank
-        self.output_list = ["s_en", "w_en", "tri_en", "tri_en_bar", "clk_buf_bar", "clk_buf"]
+        self.output_list = ["s_en", "w_en", "clk_buf_bar", "clk_buf"]
+        # # with tri/tri_en
+        # self.output_list = ["s_en", "w_en", "tri_en", "tri_en_bar", "clk_buf_bar", "clk_buf"]        
         self.supply_list = ["vdd", "gnd"]
         self.rail_width = len(self.input_list)*len(self.output_list)*self.m2_pitch
         self.rail_x_offsets = {}
@@ -107,7 +109,9 @@ class control_logic(design.design):
     
     def add_rails(self):
         """ Add the input signal inverted tracks """
-        height = 6*self.inv1.height - self.m2_pitch
+        height = 4*self.inv1.height - self.m2_pitch
+        # with tri/tri_en
+        #height = 6*self.inv1.height - self.m2_pitch        
         for i in range(len(self.internal_list)):
             name = self.internal_list[i]
             offset = vector(i*self.m2_pitch + self.ctrl_dff_array.width, 0)
@@ -122,22 +126,28 @@ class control_logic(design.design):
             
     def add_modules(self):
         """ Place all the modules """
+        # Keep track of the right end of the rows for max width
+        self.row_ends = []
+        
         self.add_dffs()
-        self.add_clk_buffer(row=0)
+        self.add_clk_row(row=0)
         self.add_we_row(row=2)
-        self.add_trien_row(row=3)
-        self.add_trien_bar_row(row=4)
-        self.add_rblk_row(row=5)
-        self.add_sen_row(row=6)
-        self.add_rbl(row=7)
+        # self.add_trien_row(row=3)
+        # self.add_trien_bar_row(row=4)
+        self.add_rblk_row(row=3)
+        self.add_sen_row(row=4)
+        self.add_rbl(row=5)
         
 
         self.add_lvs_correspondence_points()
 
+        # This offset is used for placement of the control logic in
+        # the SRAM level.
+        self.control_logic_center = vector(self.ctrl_dff_array.width, self.replica_bitline_offset.y)
+        
         self.height = self.rbl_inst.uy()
         # Find max of logic rows
-        max_row = max(self.row_rblk_end_x, self.row_trien_end_x, self.row_trien_bar_end_x,
-                      self.row_sen_end_x, self.row_we_end_x, self.row_we_end_x)
+        max_row = max(self.row_ends)
         # Max of modules or logic rows
         self.width = max(self.clkbuf.rx(), self.rbl_inst.rx(), max_row)
         
@@ -146,8 +156,8 @@ class control_logic(design.design):
     def add_routing(self):
         """ Routing between modules """
         self.route_dffs()
-        self.route_trien()
-        self.route_trien_bar()
+        #self.route_trien()
+        #self.route_trien_bar()
         self.route_rblk()
         self.route_wen()
         self.route_sen()
@@ -158,7 +168,7 @@ class control_logic(design.design):
     def add_rbl(self,row):
         """ Add the replica bitline """
         y_off = row * self.inv1.height + 2*self.m1_pitch
-        
+
         # Add the RBL above the rows
         # Add to the right of the control rows and routing channel
         self.replica_bitline_offset = vector(0, y_off)
@@ -168,7 +178,7 @@ class control_logic(design.design):
         self.connect_inst(["rblk", "pre_s_en", "vdd", "gnd"])
         
         
-    def add_clk_buffer(self,row):
+    def add_clk_row(self,row):
         """ Add the multistage clock buffer below the control flops """
         x_off = self.ctrl_dff_array.width + self.internal_width
         y_off = row*self.inv1.height
@@ -184,7 +194,10 @@ class control_logic(design.design):
                                     offset=clkbuf_offset)
 
         self.connect_inst(["clk","clk_buf_bar","clk_buf","vdd","gnd"])
-        
+
+        # This clock buffer is two rows high
+        self.row_ends.append(x_off)
+        self.row_ends.append(x_off)                
         
 
     def add_rblk_row(self,row):
@@ -215,7 +228,7 @@ class control_logic(design.design):
         self.connect_inst(["rblk_bar", "rblk",  "vdd", "gnd"])
         x_off += self.inv1.width
         
-        self.row_rblk_end_x = x_off
+        self.row_ends.append(x_off)
 
     def add_sen_row(self,row):
         """ The sense enable buffer gets placed to the far right of the 
@@ -245,7 +258,7 @@ class control_logic(design.design):
                                         mirror=mirror)
         self.connect_inst(["pre_s_en", "pre_s_en_bar",  "vdd", "gnd"])
 
-        self.row_sen_end_x = self.replica_bitline.width
+        self.row_ends.append(x_off)
 
     def add_trien_row(self, row):
         x_off = self.ctrl_dff_array.width + self.internal_width
@@ -288,7 +301,7 @@ class control_logic(design.design):
         
         
         
-        self.row_trien_end_x = x_off
+        self.row_ends.append(x_off)
 
 
     def add_trien_bar_row(self, row):
@@ -331,7 +344,7 @@ class control_logic(design.design):
         
         
         
-        self.row_trien_bar_end_x = x_off
+        self.row_ends.append(x_off)
 
     def route_dffs(self):
         """ Route the input inverters """
@@ -408,7 +421,7 @@ class control_logic(design.design):
         self.connect_inst(["pre_w_en_bar", "w_en",  "vdd", "gnd"])
         x_off += self.inv8.width
 
-        self.row_we_end_x = x_off
+        self.row_ends.append(x_off)
 
 
     def route_rblk(self):
@@ -436,7 +449,6 @@ class control_logic(design.design):
                             offset=rblk_pos,
                             rotate=90)
 
-        
                       
     def connect_rail_from_right(self,inst, pin, rail):
         """ Helper routine to connect an unrotated/mirrored oriented instance to the rails """
@@ -581,35 +593,31 @@ class control_logic(design.design):
     def route_supply(self):
         """ Route the vdd and gnd for the rows of logic. """
 
+            
         rows_start = 0
         rows_end = self.width
         #well_width = drc["minwidth_well"]
-        
-        for i in range(8):
+
+        # Route all of the rows that were created
+        for i in range(len(self.row_ends) + 1):
             if i%2:
                 name = "vdd"
-                well_type = "nwell"
             else:
                 name = "gnd"
-                well_type = "pwell"
 
             yoffset = i*self.inv1.height
 
-            self.add_layout_pin_segment_center(text=name,
-                                               layer="metal1",
-                                               start=vector(rows_start,yoffset),
-                                               end=vector(rows_end,yoffset))
+            row_start = vector(rows_start,yoffset)
+            row_end = vector(rows_end,yoffset)
+            self.add_segment_center(layer="metal1",
+                                    start=row_start,
+                                    end=row_end)
+            
+            self.add_power_pin(name, row_start)
+            self.add_power_pin(name, row_end)
 
-            # # also add a well +- around the rail
-            # well_offset = vector(rows_start,yoffset-0.5*well_width)
-            # self.add_rect(layer=well_type,
-            #               offset=well_offset,
-            #               width=rows_end-rows_start,
-            #               height=well_width)
-            # self.add_rect(layer="vtg",
-            #               offset=well_offset,
-            #               width=rows_end-rows_start,
-            #               height=well_width)
+            
+
 
 
         self.copy_layout_pin(self.rbl_inst,"gnd")

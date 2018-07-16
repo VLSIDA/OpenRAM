@@ -57,15 +57,18 @@ class replica_bitline(design.design):
         # away from the delay chain/inverter with space for three M2 tracks
         self.bitcell_offset = vector(0,self.replica_bitcell.height)
         self.rbl_offset = self.bitcell_offset 
+
+        # Gap between the delay chain and RBL
+        gap_width = 2*self.m2_pitch
         
         # Quadrant 4: with some space below it and tracks on the right for vdd/gnd
-        self.delay_chain_offset = vector(-self.delay_chain.width-4*self.m2_pitch,self.replica_bitcell.height)
+        self.delay_chain_offset = vector(-self.delay_chain.width-gap_width,self.replica_bitcell.height)
         
         # Will be flipped vertically below the delay chain
         self.rbl_inv_offset = self.delay_chain_offset + vector(0.5*self.delay_chain.width, 0)
 
         # Placed next to the replica bitcell
-        self.access_tx_offset = vector(-4*self.m2_pitch-self.access_tx.width-self.inv.width, 0.5*self.inv.height)
+        self.access_tx_offset = vector(-gap_width-self.access_tx.width-self.inv.width, 0.5*self.inv.height)
 
 
 

@@ -164,19 +164,17 @@ class delay_chain(design.design):
         """ Add vdd and gnd rails and the input/output. Connect the gnd rails internally on
         the top end with no input/output to obstruct. """
 
-        for driver in self.driver_inst_list:
-            vdd_pin = driver.get_pin("vdd")
-            self.add_layout_pin(text="vdd",
-                                layer="metal1",
-                                offset=vdd_pin.ll(),
-                                width=self.width,
-                                height=vdd_pin.height())
-            gnd_pin = driver.get_pin("gnd")
-            self.add_layout_pin(text="gnd",
-                                layer="metal1",
-                                offset=gnd_pin.ll(),
-                                width=self.width,
-                                height=gnd_pin.height())
+        for pin_name in ["vdd", "gnd"]:
+            for driver in self.driver_inst_list:
+                pin = driver.get_pin(pin_name)
+                start = pin.lc()
+                end = start + vector(self.width,0)
+                self.add_power_pin(pin_name, start)
+                self.add_power_pin(pin_name, end)
+                self.add_rect(layer="metal1",
+                              offset=pin.ll(),
+                              width=self.width,
+                              height=pin.height())
 
         # input is A pin of first inverter
         a_pin = self.driver_inst_list[0].get_pin("A")

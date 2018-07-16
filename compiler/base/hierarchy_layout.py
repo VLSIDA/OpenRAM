@@ -601,6 +601,19 @@ class layout(lef.lef):
                       width=xmax-xmin,
                       height=ymax-ymin)
 
+    def add_power_pin(self, name, loc):
+        """ 
+        Add a single power pin from M3 own to M1
+        """
+        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                            offset=loc,
+                            rotate=90)
+        self.add_via_center(layers=("metal2", "via2", "metal3"),
+                            offset=loc)
+        self.add_layout_pin_rect_center(text=name,
+                                        layer="metal3",
+                                        offset=loc)
+        
     def add_power_ring(self, bbox):
         """
         Create vdd and gnd power rings around an area of the bounding box argument. Must

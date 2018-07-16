@@ -42,8 +42,8 @@ class replica_bitline(design.design):
 
         #self.add_lvs_correspondence_points()
 
-        self.width = self.right_gnd_pin.rx() - self.left_gnd_pin.lx()
-        self.height = self.left_gnd_pin.uy() - self.left_gnd_pin.by()
+        self.width = self.rbl_inst.rx() - self.dc_inst.lx()
+        self.height = max(self.rbl_inst.uy(), self.dc_inst.uy())
 
         self.DRC_LVS()
 
@@ -126,24 +126,53 @@ class replica_bitline(design.design):
 
     def route(self):
         """ Connect all the signals together """
-        self.route_vdd()
-        self.route_gnd()
-        self.route_vdd_gnd()
+        self.route_supplies()
+        self.route_wl()
         self.route_access_tx()
 
-    def route_vdd_gnd(self):
+    def route_wl(self):
+        """ Connect the RBL word lines to gnd """
+        # Connect the WL and gnd pins directly to the center and right gnd rails
+        for row in range(self.bitcell_loads):
+            wl = "wl[{}]".format(row)
+            pin = self.rbl_inst.get_pin(wl)
+            if pin.layer != "metal1":
+                continue
+            self.add_power_pin("gnd", pin.center())
+                               
+        
+    def route_supplies(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """
 
         # These are the instances that every bank has
         top_instances = [self.rbl_inst,
-                         self.rbl_inv_inst,
-                         self.rbc_inst,
-                         self.dc_inst]
-        
+                         self.dc_inst]        
         for inst in top_instances:
             self.copy_layout_pin(inst, "vdd")
             self.copy_layout_pin(inst, "gnd")
 
+
+        # Route the inverter supply pin from M1
+        # Only vdd is needed because gnd shares a rail with the delay chain
+        pin = self.rbl_inv_inst.get_pin("vdd")
+        self.add_power_pin("vdd", pin.lc())
+            
+        # Replica bitcell and the inverter need to be routed up to M3
+        for pin_name in ["vdd", "gnd"]:
+            for pin in self.rbc_inst.get_pins(pin_name):
+                # Drop to M1 if needed
+                if pin.layer == "metal1":
+                    self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                        offset=pin.center(),
+                                        rotate=90)
+                # Always drop to M2
+                self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                    offset=pin.center())
+                self.add_layout_pin_rect_center(text=pin_name,
+                                                layer="metal3",
+                                                offset=pin.center())
+
+            
 
     def route_access_tx(self):
         # GATE ROUTE
@@ -183,7 +212,7 @@ class replica_bitline(design.design):
         # DRAIN ROUTE
         # Route the drain to the vdd rail
         drain_offset = self.tx_inst.get_pin("D").center()
-        self.add_path("metal1", [drain_offset, drain_offset.scale(1,0)])
+        self.add_power_pin("vdd", drain_offset)
         
         # SOURCE ROUTE
         # Route the drain to the RBL inverter input 
@@ -194,13 +223,11 @@ class replica_bitline(design.design):
         # Route the connection of the source route to the RBL bitline (left)
         # Via will go halfway down from the bitcell
         bl_offset = self.rbc_inst.get_pin("BL").bc()
-        self.add_path("metal3",[source_offset, bl_offset])   
+        # Route down a pitch so we can use M2 routing
+        bl_down_offset = bl_offset - vector(0, self.m2_pitch)
+        self.add_path("metal2",[source_offset, bl_down_offset, bl_offset])   
         self.add_via_center(layers=("metal1", "via1", "metal2"),
                             offset=source_offset)
-        self.add_via_center(layers=("metal2", "via2", "metal3"),
-                            offset=source_offset)
-        self.add_via_center(layers=("metal2", "via2", "metal3"),
-                            offset=bl_offset)
 
         # BODY ROUTE
         # Connect it to the inverter well
@@ -213,30 +240,10 @@ class replica_bitline(design.design):
         
     def route_vdd(self):
         """ Route all signals connected to vdd """
+
+        self.copy_layout_pin(self.dc_inst,"vdd")
+        self.copy_layout_pin(self.rbc_inst,"vdd")        
         
-        # Route the vdd lines from left to right
-
-        # Add via for the delay chain
-        left_vdd_start = self.dc_inst.ll().scale(1,0) - vector(self.m2_pitch,0)
-        left_vdd_end = vector(left_vdd_start.x, self.rbl_inst.uy())
-        self.left_vdd_pin=self.add_segment_center(layer="metal2",
-                                                   start=left_vdd_start,
-                                                   end=left_vdd_end)
-
-        # Vdd line to the left of the replica bitline
-        center_vdd_start = self.rbc_inst.ll() - vector(3*self.m2_pitch,0)
-        center_vdd_end = vector(center_vdd_start.x, self.rbl_inst.uy())
-        self.center_vdd_pin=self.add_segment_center(layer="metal2",
-                                                    start=center_vdd_start,
-                                                    end=center_vdd_end)
-
-        # Vdd line to the right of the replica bitline
-        right_vdd_start = self.rbc_inst.lr() + vector(2*self.m2_pitch,0)
-        right_vdd_end = vector(right_vdd_start.x, self.rbl_inst.uy())
-        self.right_vdd_pin=self.add_segment_center(layer="metal2",
-                                                   start=right_vdd_start,
-                                                   end=right_vdd_end)
-                      
 
         
         # Connect the WL and vdd pins directly to the center and right vdd rails
@@ -259,24 +266,6 @@ class replica_bitline(design.design):
                                 rotate=90)
 
 
-
-        # Connect the vdd pins of the delay chain to the left rails
-        dc_vdd_pins = self.dc_inst.get_pins("vdd")
-        for pin in dc_vdd_pins:
-            if pin.layer != "metal1":
-                continue
-            start = vector(self.left_vdd_pin.cx(),pin.cy())
-            # Note, we don't connect to center because of via conflicts
-            # with the RBL pins
-            #end = vector(center_vdd_pin.cx(),pin.cy())
-            end = pin.rc()
-            self.add_layout_pin_segment_center(text="vdd",
-                                               layer="metal1",
-                                               start=start,
-                                               end=end)
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=start,
-                                rotate=90)
 
         
         # Add via for the inverter

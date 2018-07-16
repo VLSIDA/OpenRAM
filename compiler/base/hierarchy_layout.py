@@ -111,7 +111,7 @@ class layout(lef.lef):
             inst.offset = vector(inst.offset - offset)
             # The instances have a precomputed boundary that we need to update.
             if inst.__class__.__name__ == "instance":
-                inst.compute_boundary(offset.scale(-1,-1))
+                inst.compute_boundary(inst.offset)
         for pin_name in self.pin_map.keys():
             # All the pins are absolute coordinates that need to be updated.
             pin_list = self.pin_map[pin_name]

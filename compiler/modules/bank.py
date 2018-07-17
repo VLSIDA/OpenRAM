@@ -25,7 +25,7 @@ class bank(design.design):
         mod_list = ["tri_gate", "bitcell", "decoder", "ms_flop_array", "wordline_driver",
                     "bitcell_array",   "sense_amp_array",    "precharge_array",
                     "column_mux_array", "write_driver_array", "tri_gate_array",
-                    "bank_select"]
+                    "dff", "bank_select"]
         from importlib import reload
         for mod_name in mod_list:
             config_mod_name = getattr(OPTS, mod_name)
@@ -379,8 +379,8 @@ class bank(design.design):
         """ 
         Create a 2:4 or 3:8 column address decoder.
         """
-        # Place the col decoder aligned left to row decoder
-        x_off = -(self.row_decoder.width + self.central_bus_width + self.wordline_driver.width)
+        # Place the col decoder right aligned with row decoder
+        x_off = -(self.central_bus_width + self.wordline_driver.width)
         y_off = -(self.col_decoder.height + 2*drc["well_to_well"])
         self.col_decoder_inst=self.add_inst(name="col_address_decoder", 
                                             mod=self.col_decoder, 
@@ -402,7 +402,7 @@ class bank(design.design):
         if self.col_addr_size == 0:
             return
         elif self.col_addr_size == 1:
-            self.col_decoder = pinvbuf()
+            self.col_decoder = pinvbuf(height=self.mod_dff.height)
             self.add_mod(self.col_decoder)
         elif self.col_addr_size == 2:
             self.col_decoder = self.row_decoder.pre2_4
@@ -536,7 +536,7 @@ class bank(design.design):
         # The bank is at (0,0), so this is to the left of the y-axis.
         # 2 pitches on the right for vias/jogs to access the inputs 
         control_bus_offset = vector(-self.m2_pitch * self.num_control_lines - self.m2_width, 0)
-        control_bus_length = self.max_y_offset - self.min_y_offset
+        control_bus_length = self.bitcell_array_inst.uy()
         self.bus_xoffset = self.create_vertical_bus(layer="metal2",
                                                     pitch=self.m2_pitch,
                                                     offset=control_bus_offset,
@@ -622,7 +622,7 @@ class bank(design.design):
         for i in range(self.word_size):
             data_pin = self.sense_amp_array_inst.get_pin("data[{}]".format(i))
             self.add_layout_pin_rect_center(text="DOUT[{}]".format(i),
-                                            layer="metal2", 
+                                            layer=data_pin.layer, 
                                             offset=data_pin.center(),
                                             height=data_pin.height(),
                                             width=data_pin.width()),
@@ -632,7 +632,7 @@ class bank(design.design):
         for i in range(self.word_size):
             data_pin = self.tri_gate_array_inst.get_pin("out[{}]".format(i))
             self.add_layout_pin_rect_center(text="DOUT[{}]".format(i),
-                                            layer="metal2", 
+                                            layer=data_pin.layer, 
                                             offset=data_pin.center(),
                                             height=data_pin.height(),
                                             width=data_pin.width()),

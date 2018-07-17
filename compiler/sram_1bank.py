@@ -38,15 +38,22 @@ class sram_1bank(sram_base):
                           control_pos.y + self.control_logic.height + self.m1_pitch)
         self.add_row_addr_dff(row_addr_pos)
 
+        data_gap = -self.m2_pitch*(self.word_size+1)
+        
         # Add the column address below the bank under the control
+        # Keep it aligned with the data flops
         if self.col_addr_dff:
-            col_addr_pos = vector(-self.col_addr_dff.width, -1.5*self.col_addr_dff.height)
+            col_addr_pos = vector(self.bank.bank_center.x - self.col_addr_dff.width - self.bank.central_bus_width,
+                                  data_gap - self.col_addr_dff.height)
             self.add_col_addr_dff(col_addr_pos)
         
         # Add the data flops below the bank
         # This relies on the center point of the bank:
-        # decoder in upper left, bank in upper right, sensing in lower right
-        data_pos = vector(self.bank.bank_center.x, -1.5*self.data_dff.height)
+        # decoder in upper left, bank in upper right, sensing in lower right.
+        # These flops go below the sensing and leave a gap to channel route to the
+        # sense amps.
+        data_pos = vector(self.bank.bank_center.x,
+                          data_gap - self.data_dff.height)
         self.add_data_dff(data_pos)
         
         # two supply rails are already included in the bank, so just 2 here.
@@ -78,8 +85,48 @@ class sram_1bank(sram_base):
         """ Route a single bank SRAM """
 
         self.add_layout_pins()
+
+        self.route_vdd_gnd()
+
+        self.route_clk()
         
-        # Route the outputs from the control logic module
+        self.route_control_logic()
+        
+        self.route_row_addr_dff()
+
+        if self.col_addr_dff:
+            self.route_col_addr_dff()
+        
+        self.route_data_dff()
+
+    def route_clk(self):
+        """ Route the clock network """
+        debug.warning("Clock is top-level must connect.")
+        # For now, just have four clock pins for the address (x2), data, and control
+        if self.col_addr_dff:
+            self.copy_layout_pin(self.col_addr_dff_inst, "clk")
+        self.copy_layout_pin(self.row_addr_dff_inst, "clk")
+        self.copy_layout_pin(self.data_dff_inst, "clk")
+        self.copy_layout_pin(self.control_logic_inst, "clk")
+        
+    def route_vdd_gnd(self):
+        """ Propagate all vdd/gnd pins up to this level for all modules """
+
+        # These are the instances that every bank has
+        top_instances = [self.bank_inst,
+                         self.row_addr_dff_inst,
+                         self.data_dff_inst,
+                         self.control_logic_inst]
+        if self.col_addr_dff:
+            top_instances.append(self.col_addr_dff_inst)
+
+                         
+        for inst in top_instances:
+            self.copy_layout_pin(inst, "vdd")
+            self.copy_layout_pin(inst, "gnd")
+        
+    def route_control_logic(self):
+        """ Route the outputs from the control logic module """
         for n in self.control_logic_outputs:
             src_pin = self.control_logic_inst.get_pin(n)
             dest_pin = self.bank_inst.get_pin(n)                
@@ -89,7 +136,8 @@ class sram_1bank(sram_base):
                                 rotate=90)
             
 
-        # Connect the output of the row flops to the bank pins
+    def route_row_addr_dff(self):
+        """ Connect the output of the row flops to the bank pins """
         for i in range(self.row_addr_size):
             flop_name = "dout[{}]".format(i)
             bank_name = "A[{}]".format(i+self.col_addr_size)
@@ -103,44 +151,44 @@ class sram_1bank(sram_base):
                                 offset=flop_pos,
                                 rotate=90)
 
-        # Connect the output of the row flops to the bank pins
-        for i in range(self.col_addr_size):
-            flop_name = "dout[{}]".format(i)
-            bank_name = "A[{}]".format(i)
-            flop_pin = self.col_addr_dff_inst.get_pin(flop_name)
-            bank_pin = self.bank_inst.get_pin(bank_name)
-            flop_pos = flop_pin.center()
-            bank_pos = bank_pin.center()
-            self.add_path("metal3",[flop_pos, bank_pos])
-            self.add_via_center(layers=("metal2","via2","metal3"),
-                                offset=flop_pos,
-                                rotate=90)
-            self.add_via_center(layers=("metal2","via2","metal3"),
-                                offset=bank_pos,
-                                rotate=90)
+    def route_col_addr_dff(self):
+        """ Connect the output of the row flops to the bank pins """
 
-        # Connect the output of the row flops to the bank pins
-        for i in range(self.word_size):
-            flop_name = "dout[{}]".format(i)
-            bank_name = "BANK_DIN[{}]".format(i)
-            flop_pin = self.data_dff_inst.get_pin(flop_name)
-            bank_pin = self.bank_inst.get_pin(bank_name)
-            flop_pos = flop_pin.center()
-            bank_pos = bank_pin.center()
-            mid_pos = vector(bank_pos.x,flop_pos.y)
-            self.add_wire(("metal3","via2","metal2"),[flop_pos, mid_pos,bank_pos])
-            self.add_via_center(layers=("metal2","via2","metal3"),
-                                offset=flop_pos,
-                                rotate=90)
+        bus_names = ["A[{}]".format(x) for x in range(self.word_size)]        
+        col_addr_bus_offsets = self.create_horizontal_bus(layer="metal1",
+                                                          pitch=self.m1_pitch,
+                                                          offset=self.col_addr_dff_inst.ul() + vector(0, self.m1_pitch),
+                                                          names=bus_names,
+                                                          length=self.col_addr_dff_inst.width)
+
+        dff_names = ["dout[{}]".format(x) for x in range(self.col_addr_size)]
+        data_dff_map = zip(dff_names, bus_names)
+        self.connect_horizontal_bus(data_dff_map, self.col_addr_dff_inst, col_addr_bus_offsets)
+        
+        bank_names = ["A[{}]".format(x) for x in range(self.col_addr_size)]
+        data_bank_map = zip(bank_names, bus_names)
+        self.connect_horizontal_bus(data_bank_map, self.bank_inst, col_addr_bus_offsets)
+        
+
+    def route_data_dff(self):
+        """ Connect the output of the data flops to the write driver """
+        # Create a horizontal bus
+        bus_names = ["data[{}]".format(x) for x in range(self.word_size)]        
+        data_bus_offsets = self.create_horizontal_bus(layer="metal1",
+                                                      pitch=self.m1_pitch,
+                                                      offset=self.data_dff_inst.ul() + vector(0, self.m1_pitch),
+                                                      names=bus_names,
+                                                      length=self.data_dff_inst.width)
+
+
+        dff_names = ["dout[{}]".format(x) for x in range(self.word_size)]
+        data_dff_map = zip(dff_names, bus_names)
+        self.connect_horizontal_bus(data_dff_map, self.data_dff_inst, data_bus_offsets)
+        
+        bank_names = ["BANK_DIN[{}]".format(x) for x in range(self.word_size)]
+        data_bank_map = zip(bank_names, bus_names)
+        self.connect_horizontal_bus(data_bank_map, self.bank_inst, data_bus_offsets)
+
+                
             
-
-        # # Connect the clock between the flops and control module
-        # flop_pin = self.addr_dff_inst.get_pin("clk")
-        # ctrl_pin = self.control_logic_inst.get_pin("clk_buf")
-        # flop_pos = flop_pin.uc()
-        # ctrl_pos = ctrl_pin.bc()
-        # mid_ypos = 0.5*(ctrl_pos.y+flop_pos.y)
-        # mid1_pos = vector(flop_pos.x, mid_ypos)
-        # mid2_pos = vector(ctrl_pos.x, mid_ypos)                
-        # self.add_wire(("metal1","via1","metal2"),[flop_pin.uc(), mid1_pos, mid2_pos, ctrl_pin.bc()])  
 

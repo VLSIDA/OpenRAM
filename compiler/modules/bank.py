@@ -380,7 +380,7 @@ class bank(design.design):
         Create a 2:4 or 3:8 column address decoder.
         """
         # Place the col decoder right aligned with row decoder
-        x_off = -(self.central_bus_width + self.wordline_driver.width)
+        x_off = -(self.central_bus_width + self.wordline_driver.width + self.col_decoder.width)
         y_off = -(self.col_decoder.height + 2*drc["well_to_well"])
         self.col_decoder_inst=self.add_inst(name="col_address_decoder", 
                                             mod=self.col_decoder, 

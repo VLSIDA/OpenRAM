@@ -154,7 +154,7 @@ class sram_1bank(sram_base):
     def route_col_addr_dff(self):
         """ Connect the output of the row flops to the bank pins """
 
-        bus_names = ["A[{}]".format(x) for x in range(self.word_size)]        
+        bus_names = ["A[{}]".format(x) for x in range(self.col_addr_size)]        
         col_addr_bus_offsets = self.create_horizontal_bus(layer="metal1",
                                                           pitch=self.m1_pitch,
                                                           offset=self.col_addr_dff_inst.ul() + vector(0, self.m1_pitch),

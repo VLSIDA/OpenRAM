@@ -34,7 +34,7 @@ class sram_2bank_test(openram_test):
         self.local_check(a, final_verification=True)
 
         debug.info(1, "Two bank, eight way column mux with control logic")
-        a = sram(word_size=2, num_words=256 num_banks=2, name="sram4")
+        a = sram(word_size=2, num_words=256, num_banks=2, name="sram4")
         self.local_check(a, final_verification=True)
 
         globals.end_openram()

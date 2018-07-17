@@ -68,7 +68,7 @@ class hierarchical_predecode(design.design):
     def create_rails(self):
         """ Create all of the rails for the inputs and vdd/gnd/inputs_bar/inputs """
         input_names = ["in[{}]".format(x) for x in range(self.number_of_inputs)]
-        offset = vector(0.5*self.m2_width,self.m1_width)
+        offset = vector(0.5*self.m2_width,2*self.m1_width)
         self.input_rails = self.create_vertical_pin_bus(layer="metal2",
                                                         pitch=self.m2_pitch,
                                                         offset=offset,
@@ -78,7 +78,7 @@ class hierarchical_predecode(design.design):
         invert_names = ["Abar[{}]".format(x) for x in range(self.number_of_inputs)]
         non_invert_names = ["A[{}]".format(x) for x in range(self.number_of_inputs)]
         decode_names = invert_names + non_invert_names
-        offset = vector(self.x_off_inv_1 + self.inv.width + self.m2_pitch, self.m1_width)
+        offset = vector(self.x_off_inv_1 + self.inv.width + self.m2_pitch, 2*self.m1_width)
         self.decode_rails = self.create_vertical_bus(layer="metal2",
                                                      pitch=self.m2_pitch,
                                                      offset=offset,

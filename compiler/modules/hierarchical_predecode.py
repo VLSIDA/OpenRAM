@@ -50,52 +50,42 @@ class hierarchical_predecode(design.design):
             debug.error("Invalid number of predecode inputs.",-1)
             
     def setup_constraints(self):
-        # The rail offsets are indexed by the label
-        self.rails = {}
 
-        # Non inverted input rails
-        for rail_index in range(self.number_of_inputs):
-            xoffset = rail_index * self.m2_pitch + 0.5*self.m2_width
-            self.rails["in[{}]".format(rail_index)]=xoffset
+        self.height = self.number_of_outputs * self.nand.height
+
         # x offset for input inverters
         self.x_off_inv_1 = self.number_of_inputs*self.m2_pitch 
-        
-        # Creating the right hand side metal2 rails for output connections
-        for rail_index in range(2 * self.number_of_inputs):
-            xoffset = self.x_off_inv_1 + self.inv.width + ((rail_index+1) * self.m2_pitch) + 0.5*self.m2_width
-            if rail_index < self.number_of_inputs:
-                self.rails["Abar[{}]".format(rail_index)]=xoffset
-            else:
-                self.rails["A[{}]".format(rail_index-self.number_of_inputs)]=xoffset
 
         # x offset to NAND decoder includes the left rails, mid rails and inverters, plus an extra m2 pitch
-        self.x_off_nand = self.x_off_inv_1 + self.inv.width + (1 + 2*self.number_of_inputs) * self.m2_pitch
+        self.x_off_nand = self.x_off_inv_1 + self.inv.width + (2*self.number_of_inputs + 1) * self.m2_pitch
 
-                       
         # x offset to output inverters
         self.x_off_inv_2 = self.x_off_nand + self.nand.width
 
         # Height width are computed 
         self.width = self.x_off_inv_2 + self.inv.width
-        self.height = self.number_of_outputs * self.nand.height
 
     def create_rails(self):
         """ Create all of the rails for the inputs and vdd/gnd/inputs_bar/inputs """
-        for label in self.rails.keys():
-            # these are not primary inputs, so they shouldn't have a
-            # label or LVS complains about different names on one net
-            if label.startswith("in"):
-                self.add_layout_pin(text=label,
-                                    layer="metal2",
-                                    offset=vector(self.rails[label] - 0.5*self.m1_width, self.m1_width), 
-                                    width=self.m2_width,
-                                    height=self.height - 4*self.m1_width)
-            else:
-                self.add_rect(layer="metal2",
-                              offset=vector(self.rails[label] - 0.5*self.m1_width, 2*self.m1_width), 
-                              width=self.m2_width,
-                              height=self.height - 4*self.m1_width)
+        input_names = ["in[{}]".format(x) for x in range(self.number_of_inputs)]
+        offset = vector(0.5*self.m2_width,self.m1_width)
+        self.input_rails = self.create_vertical_pin_bus(layer="metal2",
+                                                        pitch=self.m2_pitch,
+                                                        offset=offset,
+                                                        names=input_names,
+                                                        length=self.height - 2*self.m1_width)
 
+        invert_names = ["Abar[{}]".format(x) for x in range(self.number_of_inputs)]
+        non_invert_names = ["A[{}]".format(x) for x in range(self.number_of_inputs)]
+        decode_names = invert_names + non_invert_names
+        offset = vector(self.x_off_inv_1 + self.inv.width + self.m2_pitch, self.m1_width)
+        self.decode_rails = self.create_vertical_bus(layer="metal2",
+                                                     pitch=self.m2_pitch,
+                                                     offset=offset,
+                                                     names=decode_names,
+                                                     length=self.height - 2*self.m1_width)
+
+        
     def add_input_inverters(self):
         """ Create the input inverters to invert input signals for the decode stage. """
 
@@ -176,14 +166,14 @@ class hierarchical_predecode(design.design):
             y_offset = (num+self.number_of_inputs) * self.inv.height + contact.m1m2.width + self.m1_space
             in_pin = "in[{}]".format(num)            
             a_pin = "A[{}]".format(num)
-            in_pos = vector(self.rails[in_pin],y_offset)
-            a_pos = vector(self.rails[a_pin],y_offset)            
+            in_pos = vector(self.input_rails[in_pin].x,y_offset)
+            a_pos = vector(self.decode_rails[a_pin].x,y_offset)            
             self.add_path("metal1",[in_pos, a_pos])
             self.add_via_center(layers = ("metal1", "via1", "metal2"),
-                                offset=[self.rails[in_pin], y_offset],
+                                offset=[self.input_rails[in_pin].x, y_offset],
                                 rotate=90)
             self.add_via_center(layers = ("metal1", "via1", "metal2"),
-                                offset=[self.rails[a_pin], y_offset],
+                                offset=[self.decode_rails[a_pin].x, y_offset],
                                 rotate=90)
 
     def route_output_inverters(self):
@@ -222,7 +212,7 @@ class hierarchical_predecode(design.design):
             y_offset = (inv_num+1) * self.inv.height - 3*self.m1_space
             inv_out_pos = self.in_inst[inv_num].get_pin("Z").rc()
             right_pos = inv_out_pos + vector(self.inv.width - self.inv.get_pin("Z").lx(),0)
-            rail_pos = vector(self.rails[out_pin],y_offset)
+            rail_pos = vector(self.decode_rails[out_pin].x,y_offset)
             self.add_path("metal1", [inv_out_pos, right_pos, vector(right_pos.x, y_offset), rail_pos])
             self.add_via_center(layers = ("metal1", "via1", "metal2"),
                                 offset=rail_pos,
@@ -231,7 +221,7 @@ class hierarchical_predecode(design.design):
             
             #route input
             inv_in_pos = self.in_inst[inv_num].get_pin("A").lc()
-            in_pos = vector(self.rails[in_pin],inv_in_pos.y)
+            in_pos = vector(self.input_rails[in_pin].x,inv_in_pos.y)
             self.add_path("metal1", [in_pos, inv_in_pos])
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=in_pos,
@@ -253,7 +243,7 @@ class hierarchical_predecode(design.design):
             # this will connect pins A,B or A,B,C
             for rail_pin,gate_pin in zip(index_lst,gate_lst):
                 pin_pos = self.nand_inst[k].get_pin(gate_pin).lc()
-                rail_pos = vector(self.rails[rail_pin], pin_pos.y)
+                rail_pos = vector(self.decode_rails[rail_pin].x, pin_pos.y)
                 self.add_path("metal1", [rail_pos, pin_pos])
                 self.add_via_center(layers=("metal1", "via1", "metal2"),
                                     offset=rail_pos,

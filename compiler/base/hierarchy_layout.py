@@ -537,7 +537,7 @@ class layout(lef.lef):
         """ Create a horizontal bus. """
         return self.create_bus(layer,pitch,offset,names,length,vertical=True,make_pins=False)
 
-    def create_horiontal_bus(self, layer, pitch, offset, names, length):
+    def create_horizontal_bus(self, layer, pitch, offset, names, length):
         """ Create a horizontal bus. """
         return self.create_bus(layer,pitch,offset,names,length,vertical=False,make_pins=False)
 
@@ -546,6 +546,8 @@ class layout(lef.lef):
         """ 
         Create a horizontal or vertical bus. It can be either just rectangles, or actual
         layout pins. It returns an map of line center line positions indexed by name.  
+        The other coordinate is a 0 since the bus provides a range. 
+        TODO: combine with channel router.
         """
 
         # half minwidth so we can return the center line offsets
@@ -564,7 +566,8 @@ class layout(lef.lef):
                     self.add_rect(layer=layer,
                                   offset=line_offset,
                                   height=length)
-                line_positions[names[i]]=line_offset+vector(half_minwidth,0)
+                # Make this the center of the rail                    
+                line_positions[names[i]]=line_offset+vector(half_minwidth,0.5*length)
         else:
             for i in range(len(names)):
                 line_offset = offset + vector(0,i*pitch + half_minwidth)
@@ -577,10 +580,60 @@ class layout(lef.lef):
                     self.add_rect(layer=layer,
                                   offset=line_offset,
                                   width=length)
-                line_positions[names[i]]=line_offset+vector(0,half_minwidth)
+                # Make this the center of the rail
+                line_positions[names[i]]=line_offset+vector(0.5*length,half_minwidth)
 
         return line_positions
-    
+
+    def connect_horizontal_bus(self, mapping, inst, bus_offsets,
+                               layer_stack=("metal1","via1","metal2")):
+        """ Horizontal version of connect_bus. """
+        self.connect_bus(mapping, inst, bus_offsets, layer_stack, True)
+
+    def connect_vertical_bus(self, mapping, inst, bus_offsets,
+                               layer_stack=("metal1","via1","metal2")):
+        """ Vertical version of connect_bus. """
+        self.connect_bus(mapping, inst, bus_offsets, layer_stack, False)
+        
+    def connect_bus(self, mapping, inst, bus_offsets, layer_stack, horizontal):
+        """ 
+        Connect a mapping of pin -> name for a bus. This could be
+        replaced with a channel router in the future. 
+        """
+        (horizontal_layer, via_layer, vertical_layer)=layer_stack
+        if horizontal:
+            route_layer = vertical_layer
+        else:
+            route_layer = horizontal_layer
+        
+        for (pin_name, bus_name) in mapping:
+            pin = inst.get_pin(pin_name)
+            pin_pos = pin.center()
+            bus_pos = bus_offsets[bus_name]
+
+            if horizontal:
+                # up/down then left/right
+                mid_pos = vector(pin_pos.x, bus_pos.y)
+            else:
+                # left/right then up/down
+                mid_pos = vector(bus_pos.x, pin_pos.y)
+                
+            self.add_wire(layer_stack,[bus_pos, mid_pos, pin_pos])
+
+            # Connect to the pin on the instances with a via if it is
+            # not on the right layer
+            if pin.layer != route_layer:
+                self.add_via_center(layers=layer_stack,
+                                    offset=pin_pos,
+                                    rotate=90)
+
+            # We only need a via if they happened to align perfectly
+            # so the add_wire didn't add a via
+            if (horizontal and bus_pos.y == pin_pos.y) or (not horizontal and bus_pos.x == pin_pos.x):
+                self.add_via_center(layers=layer_stack,
+                                    offset=bus_pos,
+                                    rotate=90)
+            
     def add_enclosure(self, insts, layer="nwell"):
         """ Add a layer that surrounds the given instances. Useful
         for creating wells, for example. Doesn't check for minimum widths or

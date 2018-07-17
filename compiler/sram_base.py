@@ -322,7 +322,7 @@ class sram_base(design):
         for i in range(self.word_size):
             temp.append("DOUT[{0}]".format(i))
         for i in range(self.word_size):
-            temp.append("DIN[{0}]".format(i))
+            temp.append("BANK_DIN[{0}]".format(i))
         for i in range(self.bank_addr_size):
             temp.append("A[{0}]".format(i))
         if(self.num_banks > 1):
@@ -346,7 +346,8 @@ class sram_base(design):
             inputs.append("ADDR[{}]".format(i+self.col_addr_size))
             outputs.append("A[{}]".format(i+self.col_addr_size))
 
-        self.connect_inst(inputs + outputs + ["clk_buf", "vdd", "gnd"])
+        # FIXME clk->clk_buf
+        self.connect_inst(inputs + outputs + ["clk", "vdd", "gnd"])
 
         
     def add_col_addr_dff(self, position):
@@ -361,7 +362,8 @@ class sram_base(design):
             inputs.append("ADDR[{}]".format(i))
             outputs.append("A[{}]".format(i))
 
-        self.connect_inst(inputs + outputs + ["clk_buf", "vdd", "gnd"])
+        # FIXME clk->clk_buf
+        self.connect_inst(inputs + outputs + ["clk", "vdd", "gnd"])
 
     def add_data_dff(self, position):
         """ Add and place all data flops """
@@ -375,7 +377,8 @@ class sram_base(design):
             inputs.append("DIN[{}]".format(i))
             outputs.append("BANK_DIN[{}]".format(i))
 
-        self.connect_inst(inputs + outputs + ["clk_buf_bar", "vdd", "gnd"])
+        # FIXME clk->clk_buf_bar
+        self.connect_inst(inputs + outputs + ["clk", "vdd", "gnd"])
         
     def add_control_logic(self, position):
         """ Add and place control logic """
@@ -392,6 +395,7 @@ class sram_base(design):
         self.connect_inst(inputs + self.control_logic_outputs + ["vdd", "gnd"])
 
 
+        
     def add_lvs_correspondence_points(self):
         """ This adds some points for easier debugging if LVS goes wrong. 
         These should probably be turned off by default though, since extraction

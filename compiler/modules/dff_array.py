@@ -92,21 +92,14 @@ class dff_array(design.design):
     
     def add_layout_pins(self):
         for row in range(self.rows):
-            # Continous vdd rail along with label.
-            vdd_pin=self.dff_insts[row,0].get_pin("vdd")
-            self.add_layout_pin(text="vdd",
-                                layer="metal1",
-                                offset=vdd_pin.ll(),
-                                width=self.width,
-                                height=self.m1_width)
+            for col in range(self.columns):                        
+                # Continous vdd rail along with label.
+                vdd_pin=self.dff_insts[row,col].get_pin("vdd")
+                self.add_power_pin("vdd", vdd_pin.lc())
 
-            # Continous gnd rail along with label.
-            gnd_pin=self.dff_insts[row,0].get_pin("gnd")
-            self.add_layout_pin(text="gnd",
-                                layer="metal1",
-                                offset=gnd_pin.ll(),
-                                width=self.width,
-                                height=self.m1_width)
+                # Continous gnd rail along with label.
+                gnd_pin=self.dff_insts[row,col].get_pin("gnd")
+                self.add_power_pin("gnd", gnd_pin.lc())
             
 
         for row in range(self.rows):            
@@ -141,7 +134,7 @@ class dff_array(design.design):
         else:
             self.add_layout_pin(text="clk",
                                 layer="metal3",
-                                offset=vector(0,0),
+                                offset=vector(0,self.m3_pitch),
                                 width=self.width,
                                 height=self.m3_width)
             for col in range(self.columns):

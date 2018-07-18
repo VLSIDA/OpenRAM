@@ -69,7 +69,8 @@ class sram_1bank(sram_base):
             self.copy_layout_pin(self.control_logic_inst, n)
 
         for i in range(self.word_size):
-            self.copy_layout_pin(self.bank_inst, "DOUT[{}]".format(i))
+            dout_name = "dout[{}]".format(i)
+            self.copy_layout_pin(self.bank_inst, dout_name, dout_name.upper())
 
         # Lower address bits
         for i in range(self.col_addr_size):
@@ -79,7 +80,8 @@ class sram_1bank(sram_base):
             self.copy_layout_pin(self.row_addr_dff_inst, "din[{}]".format(i),"ADDR[{}]".format(i+self.col_addr_size))
 
         for i in range(self.word_size):
-            self.copy_layout_pin(self.data_dff_inst, "din[{}]".format(i),"DIN[{}]".format(i))
+            din_name = "din[{}]".format(i)
+            self.copy_layout_pin(self.data_dff_inst, din_name, din_name.upper())
             
     def route(self):
         """ Route a single bank SRAM """
@@ -140,7 +142,7 @@ class sram_1bank(sram_base):
         """ Connect the output of the row flops to the bank pins """
         for i in range(self.row_addr_size):
             flop_name = "dout[{}]".format(i)
-            bank_name = "A[{}]".format(i+self.col_addr_size)
+            bank_name = "addr[{}]".format(i+self.col_addr_size)
             flop_pin = self.row_addr_dff_inst.get_pin(flop_name)
             bank_pin = self.bank_inst.get_pin(bank_name)
             flop_pos = flop_pin.center()
@@ -154,7 +156,7 @@ class sram_1bank(sram_base):
     def route_col_addr_dff(self):
         """ Connect the output of the row flops to the bank pins """
 
-        bus_names = ["A[{}]".format(x) for x in range(self.col_addr_size)]        
+        bus_names = ["addr[{}]".format(x) for x in range(self.col_addr_size)]        
         col_addr_bus_offsets = self.create_horizontal_bus(layer="metal1",
                                                           pitch=self.m1_pitch,
                                                           offset=self.col_addr_dff_inst.ul() + vector(0, self.m1_pitch),
@@ -165,7 +167,7 @@ class sram_1bank(sram_base):
         data_dff_map = zip(dff_names, bus_names)
         self.connect_horizontal_bus(data_dff_map, self.col_addr_dff_inst, col_addr_bus_offsets)
         
-        bank_names = ["A[{}]".format(x) for x in range(self.col_addr_size)]
+        bank_names = ["addr[{}]".format(x) for x in range(self.col_addr_size)]
         data_bank_map = zip(bank_names, bus_names)
         self.connect_horizontal_bus(data_bank_map, self.bank_inst, col_addr_bus_offsets)
         
@@ -185,7 +187,7 @@ class sram_1bank(sram_base):
         data_dff_map = zip(dff_names, bus_names)
         self.connect_horizontal_bus(data_dff_map, self.data_dff_inst, data_bus_offsets)
         
-        bank_names = ["BANK_DIN[{}]".format(x) for x in range(self.word_size)]
+        bank_names = ["bank_din[{}]".format(x) for x in range(self.word_size)]
         data_bank_map = zip(bank_names, bus_names)
         self.connect_horizontal_bus(data_bank_map, self.bank_inst, data_bus_offsets)
 
@@ -200,6 +202,7 @@ class sram_1bank(sram_base):
         """
         
         for n in self.control_logic_outputs:
+            pin = self.control_logic_inst.get_pin(n)
             self.add_label(text=n,
-                           layer="metal3",  
-                           offset=self.control_logic_inst.get_pin(n).center())
+                           layer=pin.layer,
+                           offset=pin.center())

@@ -74,11 +74,11 @@ class bank(design.design):
     def add_pins(self):
         """ Adding pins for Bank module"""
         for i in range(self.word_size):
-            self.add_pin("DOUT[{0}]".format(i),"OUT")
+            self.add_pin("dout[{0}]".format(i),"OUT")
         for i in range(self.word_size):
-            self.add_pin("BANK_DIN[{0}]".format(i),"IN")
+            self.add_pin("bank_din[{0}]".format(i),"IN")
         for i in range(self.addr_size):
-            self.add_pin("A[{0}]".format(i),"INPUT")
+            self.add_pin("addr[{0}]".format(i),"INPUT")
 
         # For more than one bank, we have a bank select and name
         # the signals gated_*.
@@ -283,7 +283,7 @@ class bank(design.design):
                                                 offset=vector(0,y_offset).scale(-1,-1))
         temp = []
         for i in range(self.word_size):
-            temp.append("sa_out[{0}]".format(i))
+            temp.append("dout[{0}]".format(i))
             if self.words_per_row == 1:
                 temp.append("bl[{0}]".format(i))
                 temp.append("br[{0}]".format(i))
@@ -305,7 +305,7 @@ class bank(design.design):
 
         temp = []
         for i in range(self.word_size):
-            temp.append("BANK_DIN[{0}]".format(i))
+            temp.append("bank_din[{0}]".format(i))
         for i in range(self.word_size):            
             if (self.words_per_row == 1):            
                 temp.append("bl[{0}]".format(i))
@@ -328,7 +328,7 @@ class bank(design.design):
         for i in range(self.word_size):
             temp.append("sa_out[{0}]".format(i))
         for i in range(self.word_size):
-            temp.append("DOUT[{0}]".format(i))
+            temp.append("dout[{0}]".format(i))
         temp.extend([self.prefix+"tri_en", self.prefix+"tri_en_bar", "vdd", "gnd"])
         self.connect_inst(temp)
 
@@ -349,7 +349,7 @@ class bank(design.design):
 
         temp = []
         for i in range(self.row_addr_size):
-            temp.append("A[{0}]".format(i+self.col_addr_size))
+            temp.append("addr[{0}]".format(i+self.col_addr_size))
         for j in range(self.num_rows):
             temp.append("dec_out[{0}]".format(j))
         temp.extend(["vdd", "gnd"])
@@ -388,7 +388,7 @@ class bank(design.design):
 
         temp = []
         for i in range(self.col_addr_size):
-            temp.append("A[{0}]".format(i))
+            temp.append("addr[{0}]".format(i))
         for j in range(self.num_col_addr_lines):
             temp.append("sel[{0}]".format(j))
         temp.extend(["vdd", "gnd"])
@@ -621,7 +621,7 @@ class bank(design.design):
         """ Add pins for the sense amp output """
         for i in range(self.word_size):
             data_pin = self.sense_amp_array_inst.get_pin("data[{}]".format(i))
-            self.add_layout_pin_rect_center(text="DOUT[{}]".format(i),
+            self.add_layout_pin_rect_center(text="dout[{}]".format(i),
                                             layer=data_pin.layer, 
                                             offset=data_pin.center(),
                                             height=data_pin.height(),
@@ -631,7 +631,7 @@ class bank(design.design):
         """ Metal 3 routing of tri_gate output data """
         for i in range(self.word_size):
             data_pin = self.tri_gate_array_inst.get_pin("out[{}]".format(i))
-            self.add_layout_pin_rect_center(text="DOUT[{}]".format(i),
+            self.add_layout_pin_rect_center(text="dout[{}]".format(i),
                                             layer=data_pin.layer, 
                                             offset=data_pin.center(),
                                             height=data_pin.height(),
@@ -644,8 +644,8 @@ class bank(design.design):
         # Create inputs for the row address lines
         for i in range(self.row_addr_size):
             addr_idx = i + self.col_addr_size
-            decoder_name = "A[{}]".format(i)
-            addr_name = "A[{}]".format(addr_idx)
+            decoder_name = "addr[{}]".format(i)
+            addr_name = "addr[{}]".format(addr_idx)
             self.copy_layout_pin(self.row_decoder_inst, decoder_name, addr_name)
             
             
@@ -654,7 +654,7 @@ class bank(design.design):
         
         for i in range(self.word_size):
             data_name = "data[{}]".format(i)            
-            din_name = "BANK_DIN[{}]".format(i)
+            din_name = "bank_din[{}]".format(i)
             self.copy_layout_pin(self.write_driver_array_inst, data_name, din_name)
                         
 
@@ -693,7 +693,7 @@ class bank(design.design):
             decode_names = ["Zb", "Z"]
             
             # The Address LSB
-            self.copy_layout_pin(self.col_decoder_inst, "A", "A[0]") 
+            self.copy_layout_pin(self.col_decoder_inst, "A", "addr[0]") 
             
         elif self.col_addr_size > 1:
             decode_names = []
@@ -702,7 +702,7 @@ class bank(design.design):
 
             for i in range(self.col_addr_size):
                 decoder_name = "in[{}]".format(i)
-                addr_name = "A[{}]".format(i)
+                addr_name = "addr[{}]".format(i)
                 self.copy_layout_pin(self.col_decoder_inst, decoder_name, addr_name)
                 
 

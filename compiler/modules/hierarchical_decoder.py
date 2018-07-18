@@ -127,7 +127,7 @@ class hierarchical_decoder(design.design):
             min_x = min(min_x, -self.pre3_8.width)
         input_offset=vector(min_x - self.input_routing_width,0)
 
-        input_bus_names = ["A[{0}]".format(i) for i in range(self.num_inputs)]
+        input_bus_names = ["addr[{0}]".format(i) for i in range(self.num_inputs)]
         self.input_rails = self.create_vertical_pin_bus(layer="metal2",
                                                         pitch=self.m2_pitch,
                                                         offset=input_offset,
@@ -143,7 +143,7 @@ class hierarchical_decoder(design.design):
             for i in range(2):
                 index = pre_num * 2 + i
 
-                input_pos = self.input_rails["A[{}]".format(index)]
+                input_pos = self.input_rails["addr[{}]".format(index)]
 
                 in_name = "in[{}]".format(i)
                 decoder_pin = self.pre2x4_inst[pre_num].get_pin(in_name)
@@ -160,7 +160,7 @@ class hierarchical_decoder(design.design):
             for i in range(3):
                 index = pre_num * 3 + i + self.no_of_pre2x4 * 2
                 
-                input_pos = self.input_rails["A[{}]".format(index)]
+                input_pos = self.input_rails["addr[{}]".format(index)]
 
                 in_name = "in[{}]".format(i)
                 decoder_pin = self.pre3x8_inst[pre_num].get_pin(in_name)
@@ -189,7 +189,7 @@ class hierarchical_decoder(design.design):
         """ Add the module pins """
         
         for i in range(self.num_inputs):
-            self.add_pin("A[{0}]".format(i))
+            self.add_pin("addr[{0}]".format(i))
 
         for j in range(self.rows):
             self.add_pin("decode[{0}]".format(j))
@@ -250,7 +250,7 @@ class hierarchical_decoder(design.design):
 
         pins = []
         for input_index in range(2):
-            pins.append("A[{0}]".format(input_index + index_off1))
+            pins.append("addr[{0}]".format(input_index + index_off1))
         for output_index in range(4):
             pins.append("out[{0}]".format(output_index + index_off2))
         pins.extend(["vdd", "gnd"])
@@ -277,7 +277,7 @@ class hierarchical_decoder(design.design):
 
         pins = []
         for input_index in range(3):
-            pins.append("A[{0}]".format(input_index + in_index_offset))
+            pins.append("addr[{0}]".format(input_index + in_index_offset))
         for output_index in range(8):
             pins.append("out[{0}]".format(output_index + out_index_offset))
         pins.extend(["vdd", "gnd"])

@@ -28,7 +28,7 @@ class lib_test(openram_test):
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)
 
-        lib(out_dir=OPTS.openram_temp, sram=s, sp_file=tempspice, use_model=True)
+        lib(out_dir=OPTS.openram_temp, sram=s.s, sp_file=tempspice, use_model=True)
 
         # get all of the .lib files generated
         files = os.listdir(OPTS.openram_temp)

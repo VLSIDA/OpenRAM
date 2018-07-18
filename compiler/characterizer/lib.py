@@ -13,7 +13,7 @@ class lib:
     
     def __init__(self, out_dir, sram, sp_file, use_model=OPTS.analytical_delay):
         self.out_dir = out_dir
-        self.sram = sram.s
+        self.sram = sram
         self.sp_file = sp_file        
         self.use_model = use_model
 

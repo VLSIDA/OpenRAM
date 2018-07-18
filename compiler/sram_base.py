@@ -382,17 +382,10 @@ class sram_base(design):
         
     def add_control_logic(self, position):
         """ Add and place control logic """
-        inputs = []
-        for i in self.control_logic_inputs:
-            if i != "clk":
-                inputs.append(i+"_s")
-            else:
-                inputs.append(i)
-        
         self.control_logic_inst=self.add_inst(name="control",
                                               mod=self.control_logic,
                                               offset=position)
-        self.connect_inst(inputs + self.control_logic_outputs + ["vdd", "gnd"])
+        self.connect_inst(self.control_logic_inputs + self.control_logic_outputs + ["vdd", "gnd"])
 
 
         

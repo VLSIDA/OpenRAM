@@ -118,6 +118,7 @@ class sram_base(design):
         """ Layout creation """    
         self.add_modules()
         self.route()
+        self.add_lvs_correspondence_points()
 
     def compute_bus_sizes(self):
         """ Compute the independent bus widths shared between two and four bank SRAMs """
@@ -389,21 +390,6 @@ class sram_base(design):
 
 
         
-    def add_lvs_correspondence_points(self):
-        """ This adds some points for easier debugging if LVS goes wrong. 
-        These should probably be turned off by default though, since extraction
-        will show these as ports in the extracted netlist.
-        """
-        if self.num_banks==1: return
-        
-        for n in self.control_bus_names:
-            self.add_label(text=n,
-                           layer="metal2",  
-                           offset=self.vert_control_bus_positions[n])
-        for n in self.bank_sel_bus_names:
-            self.add_label(text=n,
-                           layer="metal2",  
-                           offset=self.vert_control_bus_positions[n])
 
 
 

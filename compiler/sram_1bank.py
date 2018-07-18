@@ -192,3 +192,14 @@ class sram_1bank(sram_base):
                 
             
 
+    def add_lvs_correspondence_points(self):
+        """ 
+        This adds some points for easier debugging if LVS goes wrong. 
+        These should probably be turned off by default though, since extraction
+        will show these as ports in the extracted netlist.
+        """
+        
+        for n in self.control_logic_outputs:
+            self.add_label(text=n,
+                           layer="metal3",  
+                           offset=self.control_logic_inst.get_pin(n).center())

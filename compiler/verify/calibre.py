@@ -173,6 +173,8 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
         'lvsMaskDBFile': OPTS.openram_temp + cell_name + ".maskdb",
         'cmnFDILayerMapFile': drc["layer_map"],
         'cmnFDIUseLayerMap': 1,
+        'cmnTranscriptFile': './lvs.log',
+        'cmnTranscriptEchoToFile': 1,
         'lvsRecognizeGates': 'NONE',
         # FIXME: Remove when vdd/gnd connected
         'cmnVConnectNamesState' : 'ALL', #connects all nets with the same namee
@@ -185,7 +187,6 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
         lvs_runset['cmnVConnectReport']=1
         lvs_runset['cmnVConnectNamesState']='SOME'
         lvs_runset['cmnVConnectNames']='vdd gnd'
-
 
 
     # write the runset file

@@ -272,7 +272,9 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
         # Just print out the whole file, it is short.
         for e in results:
             debug.info(1,e.strip("\n"))
-        debug.error("LVS mismatch (results in {})".format(resultsfile)) 
+        debug.error("{0}\tLVS mismatch (results in {1})".format(cell_name,resultsfile)) 
+    else:
+        debug.info(1, "{0}\tLVS matches".format(cell_name))
 
     return total_errors
 

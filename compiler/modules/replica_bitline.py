@@ -142,7 +142,7 @@ class replica_bitline(design.design):
             pin = self.rbl_inst.get_pin(wl)
             if pin.layer != "metal1":
                 continue
-            self.add_power_pin("gnd", pin.center())
+            self.add_power_pin("gnd", pin.rc())
                                
         
     def route_supplies(self):
@@ -161,20 +161,10 @@ class replica_bitline(design.design):
         pin = self.rbl_inv_inst.get_pin("vdd")
         self.add_power_pin("vdd", pin.lc())
             
-        # Replica bitcell and the inverter need to be routed up to M3
+        # Replica bitcell needs to be routed up to M3
         for pin_name in ["vdd", "gnd"]:
             for pin in self.rbc_inst.get_pins(pin_name):
-                # Drop to M1 if needed
-                if pin.layer == "metal1":
-                    self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                        offset=pin.center(),
-                                        rotate=90)
-                # Always drop to M2
-                self.add_via_center(layers=("metal2", "via2", "metal3"),
-                                    offset=pin.center())
-                self.add_layout_pin_rect_center(text=pin_name,
-                                                layer="metal3",
-                                                offset=pin.center())
+                self.add_power_pin(pin_name, pin.center())
 
             
 

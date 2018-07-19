@@ -35,6 +35,7 @@ class delay_chain(design.design):
 
         self.add_pins()
         self.create_module()
+        self.add_inverters()
         self.route_inverters()
         self.add_layout_pins()
         self.DRC_LVS()
@@ -58,8 +59,6 @@ class delay_chain(design.design):
         self.height = len(self.fanout_list)*self.inv.height
         self.width = (max(self.fanout_list)+1) * self.inv.width
 
-        self.add_inverters()
-        
 
     def add_inverters(self):
         """ Add the inverters and connect them based on the stage list """
@@ -164,17 +163,23 @@ class delay_chain(design.design):
         """ Add vdd and gnd rails and the input/output. Connect the gnd rails internally on
         the top end with no input/output to obstruct. """
 
+        # Add power and ground to all the cells except:
+        # the fanout driver, the right-most load
+        # The routing to connect the loads is over the first and last cells
         for pin_name in ["vdd", "gnd"]:
-            for driver in self.driver_inst_list:
-                pin = driver.get_pin(pin_name)
-                start = pin.lc()
-                end = start + vector(self.width,0)
-                self.add_power_pin(pin_name, start)
-                self.add_power_pin(pin_name, end)
-                self.add_rect(layer="metal1",
-                              offset=pin.ll(),
-                              width=self.width,
-                              height=pin.height())
+            # We have an even number of drivers and must only do every other
+            # supply rail
+            for i in range(len(self.driver_inst_list),2):
+                inv = self.driver_inst_list[i]
+                for load in self.load_inst_map[inv]:
+                    if load in self.rightest_load_inst:
+                        continue
+                    pin = load.get_pin(pin_name)
+                    self.add_power_pin(pin_name, pin.center())
+                # self.add_rect(layer="metal1",
+                #               offset=pin.ll(),
+                #               width=self.width,
+                #               height=pin.height())
 
         # input is A pin of first inverter
         a_pin = self.driver_inst_list[0].get_pin("A")

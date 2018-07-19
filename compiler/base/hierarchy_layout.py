@@ -662,7 +662,8 @@ class layout(lef.lef):
                             offset=loc,
                             rotate=90)
         self.add_via_center(layers=("metal2", "via2", "metal3"),
-                            offset=loc)
+                            offset=loc,
+                            rotate=90)
         self.add_layout_pin_rect_center(text=name,
                                         layer="metal3",
                                         offset=loc)

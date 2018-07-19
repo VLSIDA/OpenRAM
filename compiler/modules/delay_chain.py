@@ -9,24 +9,20 @@ from globals import OPTS
 class delay_chain(design.design):
     """
     Generate a delay chain with the given number of stages and fanout.
-    This automatically adds an extra inverter with no load on the input.
-    Input is a list contains the electrical effort of each stage.
+    Input is a list contains the electrical effort (fanout) of each stage.
+    Usually, this will be constant, but it could have varied fanout.
     """
 
     def __init__(self, fanout_list, name="delay_chain"):
         """init function"""
         design.design.__init__(self, name)
-        # FIXME: input should be logic effort value 
-        # and there should be functions to get 
-        # area efficient inverter stage list 
 
+        # Two fanouts are needed so that we can route the vdd/gnd connections
         for f in fanout_list:
-            debug.check(f>0,"Must have non-zero fanouts for each stage.")
+            debug.check(f>=2,"Must have >=2 fanouts for each stage.")
 
         # number of inverters including any fanout loads.
         self.fanout_list = fanout_list
-        self.num_inverters = 1 + sum(fanout_list)
-        self.num_top_half = round(self.num_inverters / 2.0)
         
         from importlib import reload
         c = reload(__import__(OPTS.bitcell))
@@ -53,10 +49,9 @@ class delay_chain(design.design):
         self.inv = pinv(route_output=False)
         self.add_mod(self.inv)
 
-        # half chain length is the width of the layout 
-        # invs are stacked into 2 levels so input/output are close
-        # extra metal is for the gnd connection U
+        # Each stage is a a row
         self.height = len(self.fanout_list)*self.inv.height
+        # The width is determined by the largest fanout plus the driver
         self.width = (max(self.fanout_list)+1) * self.inv.width
 
 

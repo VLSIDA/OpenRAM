@@ -65,7 +65,8 @@ class replica_bitline(design.design):
         self.delay_chain_offset = vector(-self.delay_chain.width-gap_width,self.replica_bitcell.height)
         
         # Will be flipped vertically below the delay chain
-        self.rbl_inv_offset = self.delay_chain_offset + vector(0.5*self.delay_chain.width, 0)
+        # Align it with the inverters in the delay chain to simplify supply connections
+        self.rbl_inv_offset = self.delay_chain_offset + vector(2*self.inv.width, 0)
 
         # Placed next to the replica bitcell
         self.access_tx_offset = vector(-gap_width-self.access_tx.width-self.inv.width, 0.5*self.inv.height)

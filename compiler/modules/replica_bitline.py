@@ -42,7 +42,8 @@ class replica_bitline(design.design):
 
         #self.add_lvs_correspondence_points()
 
-        self.width = self.rbl_inst.rx() - self.dc_inst.lx()
+        # Plus a pitch for the WL contacts on the RBL
+        self.width = self.rbl_inst.rx() - self.dc_inst.lx() + self.m1_pitch
         self.height = max(self.rbl_inst.uy(), self.dc_inst.uy())
 
         self.DRC_LVS()
@@ -140,9 +141,15 @@ class replica_bitline(design.design):
         for row in range(self.bitcell_loads):
             wl = "wl[{}]".format(row)
             pin = self.rbl_inst.get_pin(wl)
+
+            # Route the connection to the right so that it doesn't interfere
+            # with the cells
+            pin_right = pin.rc()
+            pin_extension = pin_right + vector(self.m1_pitch,0)
             if pin.layer != "metal1":
                 continue
-            self.add_power_pin("gnd", pin.rc())
+            self.add_path("metal1", [pin_right, pin_extension])
+            self.add_power_pin("gnd", pin_extension)
                                
         
     def route_supplies(self):

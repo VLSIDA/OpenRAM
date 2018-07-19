@@ -62,6 +62,9 @@ class sram():
     def gds_write(self,name):
         self.s.gds_write(name)
 
+    def verilog_write(self,name):
+        self.s.verilog_write(name)
+
         
     def save(self):
         """ Save all the output files while reporting time to do it as well. """

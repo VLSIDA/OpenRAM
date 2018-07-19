@@ -166,20 +166,26 @@ class delay_chain(design.design):
         # Add power and ground to all the cells except:
         # the fanout driver, the right-most load
         # The routing to connect the loads is over the first and last cells
-        for pin_name in ["vdd", "gnd"]:
-            # We have an even number of drivers and must only do every other
-            # supply rail
-            for i in range(len(self.driver_inst_list),2):
-                inv = self.driver_inst_list[i]
-                for load in self.load_inst_map[inv]:
-                    if load in self.rightest_load_inst:
-                        continue
+        # We have an even number of drivers and must only do every other
+        # supply rail
+        for i in range(0,len(self.driver_inst_list),2):
+            inv = self.driver_inst_list[i]
+            for load in self.load_inst_map[inv]:
+                if load==self.rightest_load_inst[inv]:
+                    continue
+                for pin_name in ["vdd", "gnd"]:
                     pin = load.get_pin(pin_name)
-                    self.add_power_pin(pin_name, pin.center())
-                # self.add_rect(layer="metal1",
-                #               offset=pin.ll(),
-                #               width=self.width,
-                #               height=pin.height())
+                    self.add_power_pin(pin_name, pin.rc())
+        else:
+            # We have an even number of rows, so need to get the last gnd rail
+            inv = self.driver_inst_list[-1]
+            for load in self.load_inst_map[inv]:
+                if load==self.rightest_load_inst[inv]:
+                    continue
+                pin_name = "gnd"
+                pin = load.get_pin(pin_name)
+                self.add_power_pin(pin_name, pin.rc())
+
 
         # input is A pin of first inverter
         a_pin = self.driver_inst_list[0].get_pin("A")

@@ -95,7 +95,8 @@ class control_logic(design.design):
         self.dff_output_list =["cs_bar", "cs", "we_bar", "we", "oe_bar", "oe"]        
         # list of output control signals (for making a vertical bus)
         self.internal_bus_list = ["clk_buf", "clk_buf_bar", "we", "cs", "oe"]
-        self.internal_bus_width = len(self.internal_bus_list)*self.m2_pitch + self.m2_space
+        # leave space for the bus plus one extra space
+        self.internal_bus_width = (len(self.internal_bus_list)+1)*self.m2_pitch 
         # Ooutputs to the bank
         self.output_list = ["s_en", "w_en", "clk_buf_bar", "clk_buf"]
         # # with tri/tri_en
@@ -113,17 +114,20 @@ class control_logic(design.design):
             
     def add_modules(self):
         """ Place all the modules """
-        # Keep track of the right end of the rows for max width
-        self.row_ends = []
-        # Keep track of the right-most instances in each row
+        # Keep track of all right-most instances to determine row boundary
+        # and add the vdd/gnd pins
         self.row_end_inst = []
-        
+
+
+        # Add the control flops on the left of the bus
         self.add_dffs()
-        self.add_clk_row(row=0)
+
+        # Add the logic on the right of the bus
+        self.add_clk_row(row=0) # clk is a double-high cell
         self.add_we_row(row=2)
         # self.add_trien_row(row=3)
         # self.add_trien_bar_row(row=4)
-        self.add_rblk_row(row=3)
+        self.add_rbl_in_row(row=3)
         self.add_sen_row(row=4)
         self.add_rbl(row=5)
         
@@ -144,7 +148,7 @@ class control_logic(design.design):
         self.route_dffs()
         #self.route_trien()
         #self.route_trien_bar()
-        self.route_rblk()
+        self.route_rbl_in()
         self.route_wen()
         self.route_sen()
         self.route_clk()
@@ -161,7 +165,7 @@ class control_logic(design.design):
         self.rbl_inst=self.add_inst(name="replica_bitline",
                                     mod=self.replica_bitline,
                                     offset=self.replica_bitline_offset)
-        self.connect_inst(["rblk", "pre_s_en", "vdd", "gnd"])
+        self.connect_inst(["rbl_in", "pre_s_en", "vdd", "gnd"])
         
         
     def add_clk_row(self,row):
@@ -179,35 +183,45 @@ class control_logic(design.design):
         self.row_end_inst.append(self.clkbuf_inst)
         
 
-    def add_rblk_row(self,row):
+    def add_rbl_in_row(self,row):
         x_off = self.ctrl_dff_array.width + self.internal_bus_width 
         (y_off,mirror)=self.get_offset(row)
 
 
-        # input: OE, clk_buf_bar,CS output: rblk_bar
-        self.rblk_bar_offset = vector(x_off, y_off)
-        self.rblk_bar_inst=self.add_inst(name="nand3_rblk_bar",
+        # input: OE, clk_buf_bar,CS output: rbl_in_bar
+        self.rbl_in_bar_offset = vector(x_off, y_off)
+        self.rbl_in_bar_inst=self.add_inst(name="nand3_rbl_in_bar",
                                          mod=self.nand3,
-                                         offset=self.rblk_bar_offset,
+                                         offset=self.rbl_in_bar_offset,
                                          mirror=mirror)
-        self.connect_inst(["clk_buf_bar", "oe", "cs", "rblk_bar", "vdd", "gnd"])
+        self.connect_inst(["clk_buf_bar", "oe", "cs", "rbl_in_bar", "vdd", "gnd"])
         x_off += self.nand3.width
 
-        # input: rblk_bar, output: rblk
-        self.rblk_offset = vector(x_off, y_off)
-        self.rblk_inst=self.add_inst(name="inv_rblk",
-                                     mod=self.inv1,
-                                     offset=self.rblk_offset,
-                                     mirror=mirror)
-        self.connect_inst(["rblk_bar", "rblk",  "vdd", "gnd"])
+        # input: rbl_in_bar, output: rbl_in
+        self.rbl_in_offset = vector(x_off, y_off)
+        self.rbl_in_inst=self.add_inst(name="inv_rbl_in",
+                                       mod=self.inv1,
+                                       offset=self.rbl_in_offset,
+                                       mirror=mirror)
+        self.connect_inst(["rbl_in_bar", "rbl_in",  "vdd", "gnd"])
         
-        self.row_end_inst.append(self.rblk_inst)
+        self.row_end_inst.append(self.rbl_in_inst)
         
     def add_sen_row(self,row):
         """ The sense enable buffer gets placed to the far right of the 
         row. """
         x_off = self.ctrl_dff_array.width + self.internal_bus_width 
         (y_off,mirror)=self.get_offset(row)
+
+        # input: pre_s_en, output: pre_s_en_bar
+        self.pre_s_en_bar_offset = vector(x_off, y_off)
+        self.pre_s_en_bar_inst=self.add_inst(name="inv_pre_s_en_bar",
+                                             mod=self.inv2,
+                                             offset=self.pre_s_en_bar_offset,
+                                             mirror=mirror)
+        self.connect_inst(["pre_s_en", "pre_s_en_bar",  "vdd", "gnd"])
+
+        x_off += self.inv2.width
         
         # BUFFER INVERTERS FOR S_EN
         # input: input: pre_s_en_bar, output: s_en
@@ -217,15 +231,8 @@ class control_logic(design.design):
                                      offset=self.s_en_offset,
                                      mirror=mirror)
         self.connect_inst(["pre_s_en_bar", "s_en",  "vdd", "gnd"])
-        x_off -= self.inv2.width
-        # input: pre_s_en, output: pre_s_en_bar
-        self.pre_s_en_bar_offset = vector(x_off, y_off)
-        self.pre_s_en_bar_inst=self.add_inst(name="inv_pre_s_en_bar",
-                                             mod=self.inv2,
-                                             offset=self.pre_s_en_bar_offset,
-                                             mirror=mirror)
-        self.connect_inst(["pre_s_en", "pre_s_en_bar",  "vdd", "gnd"])
         
+
         self.row_end_inst.append(self.s_en_inst)
         
     def add_trien_row(self, row):
@@ -374,32 +381,31 @@ class control_logic(design.design):
         self.connect_inst(["pre_w_en_bar", "w_en",  "vdd", "gnd"])
         x_off += self.inv8.width
 
-        self.row_ends.append(x_off)
         self.row_end_inst.append(self.w_en_inst)
 
 
-    def route_rblk(self):
-        """ Connect the logic for the rblk generation """
-        rblk_map = zip(["A", "B", "C"], ["clk_buf_bar", "oe", "cs"])
-        self.connect_vertical_bus(rblk_map, self.rblk_bar_inst, self.rail_offsets)  
+    def route_rbl_in(self):
+        """ Connect the logic for the rbl_in generation """
+        rbl_in_map = zip(["A", "B", "C"], ["clk_buf_bar", "oe", "cs"])
+        self.connect_vertical_bus(rbl_in_map, self.rbl_in_bar_inst, self.rail_offsets)  
         
         # Connect the NAND3 output to the inverter
         # The pins are assumed to extend all the way to the cell edge
-        rblk_bar_pos = self.rblk_bar_inst.get_pin("Z").center()
-        inv_in_pos = self.rblk_inst.get_pin("A").center()
-        mid1 = vector(inv_in_pos.x,rblk_bar_pos.y)
-        self.add_path("metal1",[rblk_bar_pos,mid1,inv_in_pos])
+        rbl_in_bar_pos = self.rbl_in_bar_inst.get_pin("Z").center()
+        inv_in_pos = self.rbl_in_inst.get_pin("A").center()
+        mid1 = vector(inv_in_pos.x,rbl_in_bar_pos.y)
+        self.add_path("metal1",[rbl_in_bar_pos,mid1,inv_in_pos])
 
         # Connect the output to the RBL
-        rblk_pos = self.rblk_inst.get_pin("Z").center()
+        rbl_out_pos = self.rbl_in_inst.get_pin("Z").center()
         rbl_in_pos = self.rbl_inst.get_pin("en").center()
-        mid1 = vector(rbl_in_pos.x,rblk_pos.y)
-        self.add_wire(("metal3","via2","metal2"),[rblk_pos,mid1,rbl_in_pos])
+        mid1 = vector(rbl_in_pos.x,rbl_out_pos.y)
+        self.add_wire(("metal3","via2","metal2"),[rbl_out_pos,mid1,rbl_in_pos])
         self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=rblk_pos,
+                            offset=rbl_out_pos,
                             rotate=90)
         self.add_via_center(layers=("metal2","via2","metal3"),
-                            offset=rblk_pos,
+                            offset=rbl_out_pos,
                             rotate=90)
 
                       
@@ -548,17 +554,23 @@ class control_logic(design.design):
     def route_supply(self):
         """ Add vdd and gnd to the instance cells """
 
-
+        max_row_x_loc = max([inst.rx() for inst in self.row_end_inst])        
         for inst in self.row_end_inst:
             pins = inst.get_pins("vdd")
             for pin in pins:
                 if pin.layer == "metal1":
-                    self.add_power_pin("vdd", pin.lc())
+                    row_loc = pin.rc()
+                    pin_loc = vector(max_row_x_loc, pin.rc().y)
+                    self.add_power_pin("vdd", pin_loc)
+                    self.add_path("metal1", [row_loc, pin_loc])
 
             pins = inst.get_pins("gnd")
             for pin in pins:
                 if pin.layer == "metal1":
-                    self.add_power_pin("gnd", pin.lc())
+                    row_loc = pin.rc()
+                    pin_loc = vector(max_row_x_loc, pin.rc().y)
+                    self.add_power_pin("gnd", pin_loc)
+                    self.add_path("metal1", [row_loc, pin_loc])
             
 
         self.copy_layout_pin(self.rbl_inst,"gnd")

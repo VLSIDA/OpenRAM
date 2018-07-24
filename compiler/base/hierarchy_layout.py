@@ -624,8 +624,10 @@ class layout(lef.lef):
             # not on the right layer
             if pin.layer != route_layer:
                 self.add_via_center(layers=layer_stack,
-                                    offset=pin_pos,
-                                    rotate=90)
+                                    offset=pin_pos)
+            # FIXME: output pins tend to not be rotate, but supply pins are. Make consistent?
+            
+
 
             # We only need a via if they happened to align perfectly
             # so the add_wire didn't add a via

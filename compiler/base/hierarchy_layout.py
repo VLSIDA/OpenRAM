@@ -717,6 +717,17 @@ class layout(lef.lef):
         try to minimize the number of tracks -- instead, it picks an order to avoid the vertical
         conflicts between pins.
         """
+
+        def remove_pin_from_graph(pin, g):
+            # Remove the pin from the keys
+            g.pop(pin,None)
+            # Remove the pin from all conflicts
+            # This is O(n^2), so maybe optimize it.
+            for other_pin,conflicts in g.items():
+                if pin in conflicts:
+                    conflicts.remove(pin)
+                    vcg[other_pin]=conflicts
+
         if not pitch and vertical:
             pitch = self.m2_pitch
         elif not pitch and not vertical:
@@ -736,13 +747,17 @@ class layout(lef.lef):
             vcg[bot_name] = []
         
         # Find the vertical pin conflicts
-        for (top_name, bot_name) in route_map:
-            top_pin = all_pins[top_name]
-            bot_pin = all_pins[bot_name]
-            if abs(top_pin.center().x-bot_pin.center().x) < pitch:
-                # The edges only go from top to bottom
-                # since we will order tracks bottom up
-                vcg[top_name].append(bot_name)
+        # FIXME: O(n^2) but who cares for now
+        for top_name,top_pin in top_pins.items():
+            for bot_name,bot_pin in bottom_pins.items():
+                if not vertical and abs(top_pin.center().x-bot_pin.center().x) < pitch:
+                    # The edges only go from top to bottom
+                    # since we will order tracks bottom up
+                    vcg[top_name].append(bot_name)
+                elif vertical and abs(top_pin.center().y-bot_pin.center().y) < pitch:
+                    # The edges only go from top to bottom
+                    # since we will order tracks bottom up
+                    vcg[top_name].append(bot_name)
 
         # This is the starting offset of the first trunk
         if vertical:
@@ -754,18 +769,12 @@ class layout(lef.lef):
 
         # list of routes to do
         while vcg:
+            #print(vcg)
             # get a route from conflict graph with empty fanout set
             route_pin=None
             for route_pin,conflicts in vcg.items():
                 if len(conflicts)==0:
-                    # Remove the pin from the keys
-                    vcg.pop(route_pin,None)
-                    # Remove the pin from all conflicts
-                    # This is O(n^2), so maybe optimize it.
-                    for pin,conflicts in vcg.items():
-                        if pin in conflicts:
-                            conflicts.remove(route_pin)
-                            vcg[pin]=conflicts
+                    remove_pin_from_graph(route_pin,vcg)
                     break
             #print("Routing:",route_pin)    
 
@@ -776,8 +785,8 @@ class layout(lef.lef):
             #print("Routing:",pin_connections)
             
             # Remove the other pins from the conflict graph too
-            for pin in pin_connections:
-                vcg.pop(pin,None)
+            for other_pin in pin_connections:
+                remove_pin_from_graph(other_pin, vcg)
                 
             # Create a list of the pins rather than a list of the names
             pin_list = [all_pins[pin_name] for pin_name in pin_connections]

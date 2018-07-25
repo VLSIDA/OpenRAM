@@ -76,7 +76,7 @@ class bank(design.design):
         for i in range(self.word_size):
             self.add_pin("dout[{0}]".format(i),"OUT")
         for i in range(self.word_size):
-            self.add_pin("bank_din[{0}]".format(i),"IN")
+            self.add_pin("din[{0}]".format(i),"IN")
         for i in range(self.addr_size):
             self.add_pin("addr[{0}]".format(i),"INPUT")
 
@@ -305,7 +305,7 @@ class bank(design.design):
 
         temp = []
         for i in range(self.word_size):
-            temp.append("bank_din[{0}]".format(i))
+            temp.append("din[{0}]".format(i))
         for i in range(self.word_size):            
             if (self.words_per_row == 1):            
                 temp.append("bl[{0}]".format(i))
@@ -654,7 +654,7 @@ class bank(design.design):
         
         for i in range(self.word_size):
             data_name = "data[{}]".format(i)            
-            din_name = "bank_din[{}]".format(i)
+            din_name = "din[{}]".format(i)
             self.copy_layout_pin(self.write_driver_array_inst, data_name, din_name)
                         
 

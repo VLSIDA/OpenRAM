@@ -204,7 +204,7 @@ class delay():
 
         # Trigger on the clk of the appropriate cycle
         trig_name = "clk"
-        targ_name = "{0}".format("DIN[{0}]".format(self.probe_data))
+        targ_name = "{0}".format("DOUT[{0}]".format(self.probe_data))
         trig_val = targ_val = 0.5 * self.vdd_voltage
 
         # Delay the target to measure after the negative edge
@@ -334,6 +334,7 @@ class delay():
 
         # Checking from not data_value to data_value
         self.write_delay_stimulus()
+
         self.stim.run_sim()
         delay_hl = parse_spice_list("timing", "delay_hl")
         delay_lh = parse_spice_list("timing", "delay_lh")

@@ -38,7 +38,8 @@ class sram_1bank(sram_base):
                           control_pos.y + self.control_logic.height + self.m1_pitch)
         self.add_row_addr_dff(row_addr_pos)
 
-        data_gap = -self.m1_pitch*(self.word_size+1)
+        # This is M2 pitch even though it is on M1 to help stem via spacings on the trunk
+        data_gap = -self.m2_pitch*(self.word_size+1)
         
         # Add the column address below the bank under the control
         # Keep it aligned with the data flops
@@ -178,7 +179,7 @@ class sram_1bank(sram_base):
         offset = self.data_dff_inst.ul() + vector(0, self.m1_pitch)
 
         dff_names = ["dout[{}]".format(x) for x in range(self.word_size)]
-        bank_names = ["bank_din[{}]".format(x) for x in range(self.word_size)]
+        bank_names = ["din[{}]".format(x) for x in range(self.word_size)]
 
         route_map = list(zip(bank_names, dff_names))
         dff_pins = {key: self.data_dff_inst.get_pin(key) for key in dff_names }

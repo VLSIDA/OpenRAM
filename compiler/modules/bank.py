@@ -475,7 +475,7 @@ class bank(design.design):
         for gated_name in self.control_signals:
             # Connect the inverter output to the central bus
             out_pos = self.bank_select_inst.get_pin(gated_name).rc()
-            bus_pos = vector(self.bus_xoffset[gated_name], out_pos.y)
+            bus_pos = vector(self.bus_xoffset[gated_name].x, out_pos.y)
             self.add_path("metal3",[out_pos, bus_pos])
             self.add_via_center(layers=("metal2", "via2", "metal3"),
                                 offset=bus_pos,

@@ -38,7 +38,7 @@ class sram_1bank(sram_base):
                           control_pos.y + self.control_logic.height + self.m1_pitch)
         self.add_row_addr_dff(row_addr_pos)
 
-        data_gap = -self.m2_pitch*(self.word_size+1)
+        data_gap = -self.m1_pitch*(self.word_size+1)
         
         # Add the column address below the bank under the control
         # Keep it aligned with the data flops
@@ -174,23 +174,14 @@ class sram_1bank(sram_base):
 
     def route_data_dff(self):
         """ Connect the output of the data flops to the write driver """
-        # Create a horizontal bus
-        bus_names = ["data[{}]".format(x) for x in range(self.word_size)]        
-        data_bus_offsets = self.create_horizontal_bus(layer="metal1",
-                                                      pitch=self.m1_pitch,
-                                                      offset=self.data_dff_inst.ul() + vector(0, self.m1_pitch),
-                                                      names=bus_names,
-                                                      length=self.data_dff_inst.width)
-
+        # This is where the channel will start (y-dimension at least)
+        offset = self.data_dff_inst.ul() + vector(0, self.m1_pitch)
 
         dff_names = ["dout[{}]".format(x) for x in range(self.word_size)]
-        data_dff_map = zip(dff_names, bus_names)
-        self.connect_horizontal_bus(data_dff_map, self.data_dff_inst, data_bus_offsets)
-        
         bank_names = ["bank_din[{}]".format(x) for x in range(self.word_size)]
-        data_bank_map = zip(bank_names, bus_names)
-        self.connect_horizontal_bus(data_bank_map, self.bank_inst, data_bus_offsets)
 
+        route_map = list(zip(bank_names, dff_names))
+        self.create_horizontal_channel_route(route_map, self.data_dff_inst, self.bank_inst, offset)
                 
             
 

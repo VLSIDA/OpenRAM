@@ -767,7 +767,7 @@ class layout(lef.lef):
 
         # list of routes to do
         while vcg:
-            print(vcg)
+            #print(vcg)
             # get a route from conflict graph with empty fanout set
             route_pin=None
             for route_pin,conflicts in vcg.items():
@@ -779,7 +779,7 @@ class layout(lef.lef):
             for pin_connections in route_map:
                 if route_pin in pin_connections:
                     break
-            print("Routing:",route_pin,pin_connections)
+            #print("Routing:",route_pin,pin_connections)
             
             # Remove the other pins from the conflict graph too
             for other_pin in pin_connections:

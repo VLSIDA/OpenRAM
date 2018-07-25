@@ -728,10 +728,8 @@ class layout(lef.lef):
                     conflicts.remove(pin)
                     vcg[other_pin]=conflicts
 
-        if not pitch and vertical:
+        if not pitch:
             pitch = self.m2_pitch
-        elif not pitch and not vertical:
-            pitch = self.m1_pitch
 
         # merge the two dictionaries to easily access all pins
         all_pins = {**top_pins, **bottom_pins}
@@ -769,20 +767,19 @@ class layout(lef.lef):
 
         # list of routes to do
         while vcg:
-            #print(vcg)
+            print(vcg)
             # get a route from conflict graph with empty fanout set
             route_pin=None
             for route_pin,conflicts in vcg.items():
                 if len(conflicts)==0:
                     remove_pin_from_graph(route_pin,vcg)
                     break
-            #print("Routing:",route_pin)    
 
             # Get the connected pins from the routing map
             for pin_connections in route_map:
                 if route_pin in pin_connections:
                     break
-            #print("Routing:",pin_connections)
+            print("Routing:",route_pin,pin_connections)
             
             # Remove the other pins from the conflict graph too
             for other_pin in pin_connections:

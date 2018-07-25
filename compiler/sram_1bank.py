@@ -181,7 +181,9 @@ class sram_1bank(sram_base):
         bank_names = ["bank_din[{}]".format(x) for x in range(self.word_size)]
 
         route_map = list(zip(bank_names, dff_names))
-        self.create_horizontal_channel_route(route_map, self.data_dff_inst, self.bank_inst, offset)
+        dff_pins = {key: self.data_dff_inst.get_pin(key) for key in dff_names }
+        bank_pins = {key: self.bank_inst.get_pin(key) for key in bank_names }   
+        self.create_horizontal_channel_route(route_map, dff_pins, bank_pins, offset)
                 
             
 

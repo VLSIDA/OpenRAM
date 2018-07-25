@@ -708,7 +708,7 @@ class layout(lef.lef):
                 self.add_wire(layer_stack, [pin.center(), mid, trunk_mid])
         
     
-    def create_channel_route(self, route_map, bottom_inst, top_inst, offset, 
+    def create_channel_route(self, route_map, top_pins, bottom_pins, offset, 
                                         layer_stack=("metal1", "via1", "metal2"), pitch=None,
                                         vertical=False):
         """
@@ -722,20 +722,18 @@ class layout(lef.lef):
         elif not pitch and not vertical:
             pitch = self.m1_pitch
 
+        # merge the two dictionaries to easily access all pins
+        all_pins = {**top_pins, **bottom_pins}
 
         # FIXME: Must extend this to a horizontal conflict graph too if we want to minimize the
         # number of tracks!
+        #hcg = {}
+        
         # Initialize the vertical conflict graph (vcg) and make a list of all pins
         vcg = {}
-        all_pins = {}
         for (top_name, bot_name) in route_map:
             vcg[top_name] = []
             vcg[bot_name] = []
-            top_pin = top_inst.get_pin(top_name)
-            bot_pin = bottom_inst.get_pin(bot_name)
-            all_pins[top_name]=top_pin
-            all_pins[bot_name]=bot_pin
-
         
         # Find the vertical pin conflicts
         for (top_name, bot_name) in route_map:
@@ -802,13 +800,13 @@ class layout(lef.lef):
         self.create_channel_route(route_map, left_inst, right_inst, offset,
                                   layer_stack, pitch, vertical=True)
 
-    def create_horizontal_channel_route(self, route_map, top_inst, bottom_inst, offset, 
+    def create_horizontal_channel_route(self, route_map, top_pins, bottom_pins, offset, 
                                       layer_stack=("metal1", "via1", "metal2"),
                                       pitch=None):
         """
         Wrapper to create a horizontal channel route
         """
-        self.create_channel_route(route_map, top_inst, bottom_inst, offset,
+        self.create_channel_route(route_map, top_pins, bottom_pins, offset,
                                   layer_stack, pitch, vertical=False)
         
     def add_enclosure(self, insts, layer="nwell"):

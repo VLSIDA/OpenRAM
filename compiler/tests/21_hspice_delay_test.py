@@ -62,33 +62,22 @@ class timing_sram_test(openram_test):
                            'delay_hl': [0.070554],
                            'slew_lh': [0.0190073]}
         elif OPTS.tech_name == "scn3me_subm":
-            golden_data = {'leakage_power': 0.0004004581,
-                           'delay_lh': [0.6538954],
-                           'read0_power': [9.7622],
-                           'read1_power': [9.589],
-                           'write1_power': [10.8],
-                           'write0_power': [6.928400000000001],
-                           'slew_hl': [0.8321625],
-                           'min_period': 2.344,
-                           'delay_hl': [0.9019090999999999],
-                           'slew_lh': [0.5896232]}
+            golden_data = {'delay_hl': [6.473300000000001],
+                            'delay_lh': [1.0442000000000002],
+                            'leakage_power': 0.025569099999999997,
+                            'min_period': 9.375,
+                            'read0_power': [8.0248],
+                            'read1_power': [7.5243],
+                            'slew_hl': [6.266000000000001],
+                            'slew_lh': [0.7857840999999999],
+                            'write0_power': [7.7587],
+                            'write1_power': [8.0425]}
         else:
             self.assertTrue(False) # other techs fail
         # Check if no too many or too few results
         self.assertTrue(len(data.keys())==len(golden_data.keys()))
 
-        # Check each result
-        data_matches = True
-        for k in data.keys():
-            if type(data[k])==list:
-                for i in range(len(data[k])):
-                    if not self.isclose(k,data[k][i],golden_data[k][i],0.15):
-                        data_matches = False
-            else:
-                self.isclose(k,data[k],golden_data[k],0.15)
-        if not data_matches:
-            debug.info(0,str(data))
-        self.assertTrue(data_matches)
+        self.assertTrue(self.check_golden_data(data,golden_data,0.25))
         
         globals.end_openram()
         

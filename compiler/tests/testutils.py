@@ -59,7 +59,29 @@ class openram_test(unittest.TestCase):
         # Reset the static duplicate name checker for unit tests.
         import hierarchy_design
         hierarchy_design.hierarchy_design.name_map=[]
-        
+
+    def check_golden_data(self, data, golden_data, error_tolerance=1e-2):
+        """
+        This function goes through two dictionaries, key by key and compares
+        each item. It uses relative comparisons for the items and returns false
+        if there is a mismatch.
+        """
+
+        # Check each result
+        data_matches = True
+        for k in data.keys():
+            if type(data[k])==list:
+                for i in range(len(data[k])):
+                    if not self.isclose(k,data[k][i],golden_data[k][i],error_tolerance):
+                        data_matches = False
+            else:
+                self.isclose(k,data[k],golden_data[k],error_tolerance)
+        if not data_matches:
+            import pprint
+            data_string=pprint.pformat(data)
+            debug.info(0,"Consider replacing data in unit test with:\n"+data_string)
+        return data_matches
+            
 
 
     def isclose(self,key,value,actual_value,error_tolerance=1e-2):

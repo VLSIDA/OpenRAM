@@ -300,28 +300,34 @@ class lib:
     def write_data_bus(self):
         """ Adds data bus timing results."""
 
-        self.lib.write("    bus(DATA){\n")
+        self.lib.write("    bus(DIN){\n")
         self.lib.write("        bus_type  : DATA; \n")
-        self.lib.write("        direction  : inout; \n")
+        self.lib.write("        direction  : in; \n")
         # This is conservative, but limit to range that we characterized.
         self.lib.write("        max_capacitance : {0};  \n".format(max(self.loads)))
         self.lib.write("        min_capacitance : {0};  \n".format(min(self.loads)))        
-        self.lib.write("        three_state : \"!OEb & !clk\"; \n")
         self.lib.write("        memory_write(){ \n")
         self.lib.write("            address : ADDR; \n")
         self.lib.write("            clocked_on  : clk; \n")
         self.lib.write("        }\n")
+
+        self.lib.write("    bus(DOUT){\n")
+        self.lib.write("        bus_type  : DATA; \n")
+        self.lib.write("        direction  : out; \n")
+        # This is conservative, but limit to range that we characterized.
+        self.lib.write("        max_capacitance : {0};  \n".format(max(self.loads)))
+        self.lib.write("        min_capacitance : {0};  \n".format(min(self.loads)))        
         self.lib.write("        memory_read(){ \n")
         self.lib.write("            address : ADDR; \n")
         self.lib.write("        }\n")
+        
 
-
-        self.lib.write("        pin(DATA[{0}:0]){{\n".format(self.sram.word_size - 1))
+        self.lib.write("        pin(DOUT[{0}:0]){{\n".format(self.sram.word_size - 1))
         self.write_FF_setuphold()
         self.lib.write("        timing(){ \n")
         self.lib.write("            timing_sense : non_unate; \n")
         self.lib.write("            related_pin : \"clk\"; \n")
-        self.lib.write("            timing_type : falling_edge; \n")
+        self.lib.write("            timing_type : rising_edge; \n")
         self.lib.write("            cell_rise(CELL_TABLE) {\n")
         self.write_values(self.char_results["delay_lh"],len(self.loads),"            ")
         self.lib.write("            }\n") # rise delay
@@ -374,7 +380,7 @@ class lib:
         self.lib.write("    pin(clk){\n")
         self.lib.write("        clock             : true;\n")
         self.lib.write("        direction  : input; \n")
-        # This should actually be a min inverter cap, but ok...
+        # FIXME: This depends on the clock buffer size in the control logic
         self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]))
 
         # Find the average power of 1 and 0 bits for writes and reads over all loads/slews

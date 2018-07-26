@@ -155,7 +155,7 @@ class delay():
         temp_stim = "{0}/stim.sp".format(OPTS.openram_temp)
         self.sf = open(temp_stim, "w")
         self.sf.write("* Power stimulus for period of {0}n\n\n".format(self.period))
-        self.stim = stimuli.stimuli(self.sf, self.corner)
+        self.stim = stimuli(self.sf, self.corner)
         
         # include UNTRIMMED files in stimulus file
         if trim:
@@ -213,20 +213,20 @@ class delay():
                                  targ_name=targ_name,
                                  trig_val=trig_val,
                                  targ_val=targ_val,
-                                 trig_dir="FALL",
+                                 trig_dir="RISE",
                                  targ_dir="FALL",
                                  trig_td=self.cycle_times[self.read0_cycle],
-                                 targ_td=self.cycle_times[self.read0_cycle]+0.5*self.period)
+                                 targ_td=self.cycle_times[self.read0_cycle])
 
         self.stim.gen_meas_delay(meas_name="DELAY_LH",
                                  trig_name=trig_name,
                                  targ_name=targ_name,
                                  trig_val=trig_val,
                                  targ_val=targ_val,
-                                 trig_dir="FALL",
+                                 trig_dir="RISE",
                                  targ_dir="RISE",
                                  trig_td=self.cycle_times[self.read1_cycle],
-                                 targ_td=self.cycle_times[self.read1_cycle]+0.5*self.period)
+                                 targ_td=self.cycle_times[self.read1_cycle])
 
         self.stim.gen_meas_delay(meas_name="SLEW_HL",
                                  trig_name=targ_name,
@@ -236,7 +236,7 @@ class delay():
                                  trig_dir="FALL",
                                  targ_dir="FALL",
                                  trig_td=self.cycle_times[self.read0_cycle],
-                                 targ_td=self.cycle_times[self.read0_cycle]+0.5*self.period)
+                                 targ_td=self.cycle_times[self.read0_cycle])
 
         self.stim.gen_meas_delay(meas_name="SLEW_LH",
                                  trig_name=targ_name,
@@ -246,7 +246,7 @@ class delay():
                                  trig_dir="RISE",
                                  targ_dir="RISE",
                                  trig_td=self.cycle_times[self.read1_cycle],
-                                 targ_td=self.cycle_times[self.read1_cycle]+0.5*self.period)
+                                 targ_td=self.cycle_times[self.read1_cycle])
         
         # add measure statements for power
         t_initial = self.cycle_times[self.write0_cycle]

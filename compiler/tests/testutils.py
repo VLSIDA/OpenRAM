@@ -62,21 +62,23 @@ class openram_test(unittest.TestCase):
         
 
 
-    def isclose(self, value1,value2,error_tolerance=1e-2):
+    def isclose(self,key,value,actual_value,error_tolerance=1e-2):
         """ This is used to compare relative values. """
         import debug
-        relative_diff = abs(value1 - value2) / max(value1,value2)
+        relative_diff = abs(value - actual_value) / max(value,actual_value)
         check = relative_diff <= error_tolerance
         if not check:
-            self.fail("NOT CLOSE {0} {1} relative diff={2}".format(value1,value2,relative_diff))
+            debug.warning("NOT CLOSE\t{0: <10}\t{1:.3f}\t{2:.3f}\tdiff={3:.1f}%".format(key,value,actual_value,relative_diff*100))
+            return False
         else:
-            debug.info(2,"CLOSE {0} {1} relative diff={2}".format(value1,value2,relative_diff))
-
-    def relative_compare(self, value1,value2,error_tolerance):
-        """ This is used to compare relative values. """
-        if (value1==value2): # if we don't need a relative comparison!
+            debug.info(2,"CLOSE\t{0: <10}\t{1:.3f}\t{2:.3f}\tdiff={3:.1f}%".format(key,value,actual_value,relative_diff*100))
             return True
-        return (abs(value1 - value2) / max(value1,value2) <= error_tolerance)
+
+    def relative_compare(self, value,actual_value,error_tolerance):
+        """ This is used to compare relative values. """
+        if (value==actual_value): # if we don't need a relative comparison!
+            return True
+        return (abs(value - actual_value) / max(value,actual_value) <= error_tolerance)
 
     def isapproxdiff(self, f1, f2, error_tolerance=0.001):
         """Compare two files.

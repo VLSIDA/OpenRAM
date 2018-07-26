@@ -47,7 +47,7 @@ class timing_sram_test(openram_test):
         loads = [tech.spice["msflop_in_cap"]*4]
         slews = [tech.spice["rise_time"]*2]
         data = d.analyze(probe_address, probe_data, slews, loads)
-        #print data
+
         if OPTS.tech_name == "freepdk45":
             golden_data = {'leakage_power': 0.0007348262,
                            'delay_lh': [0.05799613],
@@ -75,13 +75,19 @@ class timing_sram_test(openram_test):
 
         # Check if no too many or too few results
         self.assertTrue(len(data.keys())==len(golden_data.keys()))
+        
         # Check each result
+        data_matches = True
         for k in data.keys():
             if type(data[k])==list:
                 for i in range(len(data[k])):
-                    self.isclose(data[k][i],golden_data[k][i],0.15)
+                    if not self.isclose(k,data[k][i],golden_data[k][i],0.15):
+                        data_matches = False
             else:
-                self.isclose(data[k],golden_data[k],0.15)
+                self.isclose(k,data[k],golden_data[k],0.15)
+        if not data_matches:
+            debug.info(0,str(data))
+        self.assertTrue(data_matches)
 
         globals.end_openram()
 

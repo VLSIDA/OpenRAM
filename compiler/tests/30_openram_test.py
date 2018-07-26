@@ -64,9 +64,12 @@ class openram_test(openram_test):
         self.assertTrue(len(files)>0)
 
         # grep any errors from the output
-        output = open("{0}/output.log".format(out_path),"r").read()
+        output_log = open("{0}/output.log".format(out_path),"r")
+        output = output_log.read()
+        output_log.close()
         self.assertEqual(len(re.findall('ERROR',output)),0)
         self.assertEqual(len(re.findall('WARNING',output)),0)
+
 
         # now clean up the directory
         if os.path.exists(out_path):

@@ -34,12 +34,14 @@ class stimuli():
         """ Function to instatiate an SRAM subckt. """
         self.sf.write("Xsram ")
         for i in range(dbits):
-            self.sf.write("D[{0}] ".format(i))
+            self.sf.write("DIN[{0}] ".format(i))
         for i in range(abits):
             self.sf.write("A[{0}] ".format(i))
         for i in tech.spice["control_signals"]:
             self.sf.write("{0} ".format(i))
         self.sf.write("{0} ".format(tech.spice["clk"]))
+        for i in range(dbits):
+            self.sf.write("DOUT[{0}] ".format(i))
         self.sf.write("{0} {1} ".format(self.vdd_name, self.gnd_name))
         self.sf.write("{0}\n".format(sram_name))
 
@@ -110,23 +112,6 @@ class stimuli():
                                                                            "test"+self.vdd_name,
                                                                            "test"+self.gnd_name))
 
-        
-    def inst_accesstx(self, dbits):
-        """ Adds transmission gate for inputs to data-bus (only for sim purposes) """
-        self.sf.write("* Tx Pin-list: Drain Gate Source Body\n")
-        for i in range(dbits):
-            pmos_access_string="mp{0} DATA[{0}] acc_en D[{0}] {1} {2} w={3}u l={4}u\n"
-            self.sf.write(pmos_access_string.format(i,
-                                                    "test"+self.vdd_name,
-                                                    self.pmos_name,
-                                                    2 * self.tx_width,
-                                                    self.tx_length))
-            nmos_access_string="mn{0} DATA[{0}] acc_en_inv D[{0}] {1} {2} w={3}u l={4}u\n"
-            self.sf.write(nmos_access_string.format(i,
-                                                    "test"+self.gnd_name,
-                                                    self.nmos_name,
-                                                    2 * self.tx_width,
-                                                    self.tx_length))
 
     def gen_pulse(self, sig_name, v1, v2, offset, period, t_rise, t_fall):
         """ 

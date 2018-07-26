@@ -17,7 +17,7 @@ class openram_test(unittest.TestCase):
 
         result=verify.run_drc(w.name, tempgds)
         if result != 0:
-            self.fail("DRC failed: {}".format(a.name))
+            self.fail("DRC failed: {}".format(w.name))
 
         self.cleanup()
     
@@ -163,6 +163,11 @@ class openram_test(unittest.TestCase):
 
 
 def header(filename, technology):
+    # Skip the header for gitlab regression
+    import getpass
+    if getpass.getuser() == "gitlab-runner":
+        return
+    
     tst = "Running Test for:"
     print("\n")
     print(" ______________________________________________________________________________ ")

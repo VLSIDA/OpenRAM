@@ -173,8 +173,13 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
         'lvsMaskDBFile': OPTS.openram_temp + cell_name + ".maskdb",
         'cmnFDILayerMapFile': drc["layer_map"],
         'cmnFDIUseLayerMap': 1,
-        'lvsRecognizeGates': 'NONE'
-        #'cmnVConnectNamesState' : 'ALL', #connects all nets with the same name
+        'cmnTranscriptFile': './lvs.log',
+        'cmnTranscriptEchoToFile': 1,
+        'lvsRecognizeGates': 'NONE',
+        # FIXME: Remove when vdd/gnd connected
+        'cmnVConnectNamesState' : 'ALL', #connects all nets with the same namee
+        # FIXME: Remove when vdd/gnd connected        
+        'lvsAbortOnSupplyError' : 0
     }
 
     # This should be removed for final verification
@@ -182,7 +187,6 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
         lvs_runset['cmnVConnectReport']=1
         lvs_runset['cmnVConnectNamesState']='SOME'
         lvs_runset['cmnVConnectNames']='vdd gnd'
-
 
 
     # write the runset file
@@ -260,8 +264,19 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
         debug.error(e.strip("\n"))
 
     out_errors = len(stdouterrors)
-
     total_errors = summary_errors + out_errors + ext_errors
+
+    if total_errors > 0:
+        debug.error("{0}\tSummary: {1}\tOutput: {2}\tExtraction: {3}".format(cell_name, 
+                                                                            summary_errors,
+                                                                            out_errors,
+                                                                            ext_errors))
+    else:
+        debug.info(1, "{0}\tSummary: {1}\tOutput: {2}\tExtraction: {3}".format(cell_name, 
+                                                                              summary_errors,
+                                                                              out_errors,
+                                                                              ext_errors))
+        
     return total_errors
 
 

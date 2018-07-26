@@ -227,10 +227,11 @@ def end_openram():
     """ Clean up openram for a proper exit """
     cleanup_paths()
 
-    import verify
-    verify.print_drc_stats()
-    verify.print_lvs_stats()
-    verify.print_pex_stats()        
+    if OPTS.check_lvsdrc:
+        import verify
+        verify.print_drc_stats()
+        verify.print_lvs_stats()
+        verify.print_pex_stats()        
     
 
     

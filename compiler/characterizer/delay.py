@@ -78,11 +78,7 @@ class delay():
 
         self.sf.write("\n* SRAM output loads\n")
         for i in range(self.word_size):
-            self.sf.write("CD{0} d[{0}] 0 {1}f\n".format(i,self.load))
-        
-        # add access transistors for data-bus
-        self.sf.write("\n* Transmission Gates for data-bus and control signals\n")
-        self.stim.inst_accesstx(dbits=self.word_size)
+            self.sf.write("CD{0} DOUT[{0}] 0 {1}f\n".format(i,self.load))
         
 
     def write_delay_stimulus(self):
@@ -112,11 +108,11 @@ class delay():
         for i in range(self.word_size):
             if i == self.probe_data:
                 self.gen_data(clk_times=self.cycle_times,
-                              sig_name="data[{0}]".format(i))
+                              sig_name="DIN[{0}]".format(i))
 
 
             else:
-                self.stim.gen_constant(sig_name="d[{0}]".format(i),
+                self.stim.gen_constant(sig_name="DIN[{0}]".format(i),
                                        v_val=0)
 
         self.gen_addr(clk_times=self.cycle_times,
@@ -172,7 +168,7 @@ class delay():
         # generate data and addr signals
         self.sf.write("\n* Generation of data and address signals\n")
         for i in range(self.word_size):
-            self.stim.gen_constant(sig_name="d[{0}]".format(i),
+            self.stim.gen_constant(sig_name="DIN[{0}]".format(i),
                                    v_val=0)
         for i in range(self.addr_size):
             self.stim.gen_constant(sig_name="A[{0}]".format(i),
@@ -208,7 +204,7 @@ class delay():
 
         # Trigger on the clk of the appropriate cycle
         trig_name = "clk"
-        targ_name = "{0}".format("d[{0}]".format(self.probe_data))
+        targ_name = "{0}".format("DOUT[{0}]".format(self.probe_data))
         trig_val = targ_val = 0.5 * self.vdd_voltage
 
         # Delay the target to measure after the negative edge
@@ -338,6 +334,7 @@ class delay():
 
         # Checking from not data_value to data_value
         self.write_delay_stimulus()
+
         self.stim.run_sim()
         delay_hl = parse_spice_list("timing", "delay_hl")
         delay_lh = parse_spice_list("timing", "delay_lh")
@@ -783,12 +780,6 @@ class delay():
         values = [1, 0, 0, 0, 1, 1, 0, 0, 1, 1]
         self.stim.gen_pwl("web", clk_times, values, self.period, self.slew, 0.05)
 
-        # Keep acc_en deasserted in NOP for measuring >1 period
-        values = [1, 0, 0, 0, 1, 1, 0, 0, 1, 1]
-        self.stim.gen_pwl("acc_en", clk_times, values, self.period, self.slew, 0)
-        values = [0, 1, 1, 1, 0, 0, 1, 1, 0, 0]
-        self.stim.gen_pwl("acc_en_inv", clk_times, values, self.period, self.slew, 0)
-        
     def gen_oeb(self, clk_times):
         """ Generates the PWL WEb signal """
         # values for NOP, W1, W0, W1, R0, W1, W0, R1, NOP

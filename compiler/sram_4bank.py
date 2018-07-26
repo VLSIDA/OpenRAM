@@ -1,24 +1,24 @@
 import sys
 from tech import drc, spice
 import debug
-import design
 from math import log,sqrt,ceil
-import contact
-from bank import bank
-from dff_buf_array import dff_buf_array
-from dff_array import dff_array
 import datetime
 import getpass
 from vector import vector
 from globals import OPTS, print_time
 
-class sram_4bank(design.design):
+from sram_base import sram_base
+from bank import bank
+from dff_buf_array import dff_buf_array
+from dff_array import dff_array
+
+class sram_4bank(sram_base):
     """
     Procedures specific to a four bank SRAM.
     """
-    def __init__(self, name):
-        design.__init__(self, name)
-    
+    def __init__(self, word_size, num_words, name):
+        sram_base.__init__(self, word_size, num_words, 4, name)
+
     def compute_bank_offsets(self):
         """ Compute the overall offsets for a four bank SRAM """
 
@@ -312,3 +312,20 @@ class sram_4bank(design.design):
         self.route_bank_supply_rails(left_banks=[0,2], bottom_banks=[2,3])
 
 
+    def add_lvs_correspondence_points(self):
+        """ 
+        This adds some points for easier debugging if LVS goes wrong. 
+        These should probably be turned off by default though, since extraction
+        will show these as ports in the extracted netlist.
+        """
+        
+        if self.num_banks==1: return
+        
+        for n in self.control_bus_names:
+            self.add_label(text=n,
+                           layer="metal2",  
+                           offset=self.vert_control_bus_positions[n])
+        for n in self.bank_sel_bus_names:
+            self.add_label(text=n,
+                           layer="metal2",  
+                           offset=self.vert_control_bus_positions[n])

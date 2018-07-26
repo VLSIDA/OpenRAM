@@ -25,7 +25,7 @@ class bank(design.design):
         mod_list = ["tri_gate", "bitcell", "decoder", "ms_flop_array", "wordline_driver",
                     "bitcell_array",   "sense_amp_array",    "precharge_array",
                     "column_mux_array", "write_driver_array", "tri_gate_array",
-                    "bank_select"]
+                    "dff", "bank_select"]
         from importlib import reload
         for mod_name in mod_list:
             config_mod_name = getattr(OPTS, mod_name)
@@ -66,18 +66,19 @@ class bank(design.design):
         # Can remove the following, but it helps for debug!
         self.add_lvs_correspondence_points() 
 
-        self.offset_all_coordinates()
+        # Remember the bank center for further placement
+        self.bank_center=self.offset_all_coordinates().scale(-1,-1)
         
         self.DRC_LVS()
 
     def add_pins(self):
         """ Adding pins for Bank module"""
         for i in range(self.word_size):
-            self.add_pin("DOUT[{0}]".format(i),"OUT")
+            self.add_pin("dout[{0}]".format(i),"OUT")
         for i in range(self.word_size):
-            self.add_pin("DIN[{0}]".format(i),"IN")
+            self.add_pin("din[{0}]".format(i),"IN")
         for i in range(self.addr_size):
-            self.add_pin("A[{0}]".format(i),"INPUT")
+            self.add_pin("addr[{0}]".format(i),"INPUT")
 
         # For more than one bank, we have a bank select and name
         # the signals gated_*.
@@ -95,8 +96,9 @@ class bank(design.design):
         self.route_precharge_to_bitcell_array()
         self.route_col_mux_to_bitcell_array()
         self.route_sense_amp_to_col_mux_or_bitcell_array()
-        self.route_sense_amp_to_trigate()
-        self.route_tri_gate_out()
+        #self.route_sense_amp_to_trigate()
+        #self.route_tri_gate_out()
+        self.route_sense_amp_out()
         self.route_wordline_driver()
         self.route_write_driver()        
         self.route_row_decoder()
@@ -119,7 +121,8 @@ class bank(design.design):
         self.add_column_mux_array()
         self.add_sense_amp_array()
         self.add_write_driver_array()
-        self.add_tri_gate_array()
+        # Not needed for single bank
+        #self.add_tri_gate_array()
 
         # To the left of the bitcell array
         self.add_row_decoder()
@@ -280,7 +283,7 @@ class bank(design.design):
                                                 offset=vector(0,y_offset).scale(-1,-1))
         temp = []
         for i in range(self.word_size):
-            temp.append("sa_out[{0}]".format(i))
+            temp.append("dout[{0}]".format(i))
             if self.words_per_row == 1:
                 temp.append("bl[{0}]".format(i))
                 temp.append("br[{0}]".format(i))
@@ -294,14 +297,15 @@ class bank(design.design):
     def add_write_driver_array(self):
         """ Adding Write Driver  """
 
-        y_offset = self.sense_amp_array.height + self.column_mux_height + + self.m2_gap + self.write_driver_array.height 
+        y_offset = self.sense_amp_array.height + self.column_mux_height \
+            + self.m2_gap + self.write_driver_array.height 
         self.write_driver_array_inst=self.add_inst(name="write_driver_array", 
                                                    mod=self.write_driver_array, 
                                                    offset=vector(0,y_offset).scale(-1,-1))
 
         temp = []
         for i in range(self.word_size):
-            temp.append("DIN[{0}]".format(i))
+            temp.append("din[{0}]".format(i))
         for i in range(self.word_size):            
             if (self.words_per_row == 1):            
                 temp.append("bl[{0}]".format(i))
@@ -315,7 +319,7 @@ class bank(design.design):
     def add_tri_gate_array(self):
         """ data tri gate to drive the data bus """
         y_offset = self.sense_amp_array.height+self.column_mux_height \
-                   + self.write_driver_array.height + self.m2_gap + self.tri_gate_array.height
+            + self.m2_gap + self.tri_gate_array.height
         self.tri_gate_array_inst=self.add_inst(name="tri_gate_array", 
                                                mod=self.tri_gate_array, 
                                                offset=vector(0,y_offset).scale(-1,-1))
@@ -324,7 +328,7 @@ class bank(design.design):
         for i in range(self.word_size):
             temp.append("sa_out[{0}]".format(i))
         for i in range(self.word_size):
-            temp.append("DOUT[{0}]".format(i))
+            temp.append("dout[{0}]".format(i))
         temp.extend([self.prefix+"tri_en", self.prefix+"tri_en_bar", "vdd", "gnd"])
         self.connect_inst(temp)
 
@@ -345,7 +349,7 @@ class bank(design.design):
 
         temp = []
         for i in range(self.row_addr_size):
-            temp.append("A[{0}]".format(i+self.col_addr_size))
+            temp.append("addr[{0}]".format(i+self.col_addr_size))
         for j in range(self.num_rows):
             temp.append("dec_out[{0}]".format(j))
         temp.extend(["vdd", "gnd"])
@@ -375,8 +379,8 @@ class bank(design.design):
         """ 
         Create a 2:4 or 3:8 column address decoder.
         """
-        # Place the col decoder aligned left to row decoder
-        x_off = -(self.row_decoder.width + self.central_bus_width + self.wordline_driver.width)
+        # Place the col decoder right aligned with row decoder
+        x_off = -(self.central_bus_width + self.wordline_driver.width + self.col_decoder.width)
         y_off = -(self.col_decoder.height + 2*drc["well_to_well"])
         self.col_decoder_inst=self.add_inst(name="col_address_decoder", 
                                             mod=self.col_decoder, 
@@ -384,7 +388,7 @@ class bank(design.design):
 
         temp = []
         for i in range(self.col_addr_size):
-            temp.append("A[{0}]".format(i))
+            temp.append("addr[{0}]".format(i))
         for j in range(self.num_col_addr_lines):
             temp.append("sel[{0}]".format(j))
         temp.extend(["vdd", "gnd"])
@@ -398,7 +402,7 @@ class bank(design.design):
         if self.col_addr_size == 0:
             return
         elif self.col_addr_size == 1:
-            self.col_decoder = pinvbuf()
+            self.col_decoder = pinvbuf(height=self.mod_dff.height)
             self.add_mod(self.col_decoder)
         elif self.col_addr_size == 2:
             self.col_decoder = self.row_decoder.pre2_4
@@ -443,7 +447,7 @@ class bank(design.design):
                          self.precharge_array_inst,
                          self.sense_amp_array_inst,
                          self.write_driver_array_inst,
-                         self.tri_gate_array_inst,
+#                         self.tri_gate_array_inst,
                          self.row_decoder_inst,
                          self.wordline_driver_inst]
         # Add these if we use the part...
@@ -471,7 +475,7 @@ class bank(design.design):
         for gated_name in self.control_signals:
             # Connect the inverter output to the central bus
             out_pos = self.bank_select_inst.get_pin(gated_name).rc()
-            bus_pos = vector(self.bus_xoffset[gated_name], out_pos.y)
+            bus_pos = vector(self.bus_xoffset[gated_name].x, out_pos.y)
             self.add_path("metal3",[out_pos, bus_pos])
             self.add_via_center(layers=("metal2", "via2", "metal3"),
                                 offset=bus_pos,
@@ -492,7 +496,8 @@ class bank(design.design):
         #the column decoder (if there is one) or the tristate output
         #driver.
         # Leave room for the output below the tri gate.
-        tri_gate_min_y_offset = self.tri_gate_array_inst.by() - 3*self.m2_pitch
+        #tri_gate_min_y_offset = self.tri_gate_array_inst.by() - 3*self.m2_pitch
+        write_driver_min_y_offset = self.write_driver_array_inst.by() - 3*self.m2_pitch        
         row_decoder_min_y_offset = self.row_decoder_inst.by()
         if self.col_addr_size > 0:
             col_decoder_min_y_offset = self.col_decoder_inst.by()
@@ -502,10 +507,10 @@ class bank(design.design):
         if self.num_banks>1:
             # The control gating logic is below the decoder
             # Min of the control gating logic and tri gate.
-            self.min_y_offset = min(col_decoder_min_y_offset - self.bank_select.height, tri_gate_min_y_offset)
+            self.min_y_offset = min(col_decoder_min_y_offset - self.bank_select.height, write_driver_min_y_offset)
         else:
             # Just the min of the decoder logic logic and tri gate.            
-            self.min_y_offset = min(col_decoder_min_y_offset, tri_gate_min_y_offset)
+            self.min_y_offset = min(col_decoder_min_y_offset, write_driver_min_y_offset)
 
         # The max point is always the top of the precharge bitlines
         # Add a vdd and gnd power rail above the array
@@ -530,21 +535,13 @@ class bank(design.design):
         # and control lines.
         # The bank is at (0,0), so this is to the left of the y-axis.
         # 2 pitches on the right for vias/jogs to access the inputs 
-        control_bus_x_offset = -self.m2_pitch * self.num_control_lines - self.m2_width
-        
-        # Track the bus offsets for other modules to access
-        self.bus_xoffset = {}
-
-        # Control lines 
-        for i in range(self.num_control_lines):
-            x_offset = control_bus_x_offset + i*self.m2_pitch 
-            # Make the xoffset map the center of the rail
-            self.bus_xoffset[self.control_signals[i]]=x_offset + 0.5*self.m2_width
-            # Pins are added later if this is a single bank, so just add rectangle now
-            self.add_rect(layer="metal2",  
-                          offset=vector(x_offset, self.min_y_offset), 
-                          width=self.m2_width, 
-                          height=self.max_y_offset-self.min_y_offset)
+        control_bus_offset = vector(-self.m2_pitch * self.num_control_lines - self.m2_width, 0)
+        control_bus_length = self.bitcell_array_inst.uy()
+        self.bus_xoffset = self.create_vertical_bus(layer="metal2",
+                                                    pitch=self.m2_pitch,
+                                                    offset=control_bus_offset,
+                                                    names=self.control_signals,
+                                                    length=control_bus_length)
 
 
 
@@ -620,12 +617,22 @@ class bank(design.design):
                                 offset=sa_data_out)
             self.add_path("metal3",[sa_data_out,tri_gate_in])
 
+    def route_sense_amp_out(self):
+        """ Add pins for the sense amp output """
+        for i in range(self.word_size):
+            data_pin = self.sense_amp_array_inst.get_pin("data[{}]".format(i))
+            self.add_layout_pin_rect_center(text="dout[{}]".format(i),
+                                            layer=data_pin.layer, 
+                                            offset=data_pin.center(),
+                                            height=data_pin.height(),
+                                            width=data_pin.width()),
+        
     def route_tri_gate_out(self):
         """ Metal 3 routing of tri_gate output data """
         for i in range(self.word_size):
             data_pin = self.tri_gate_array_inst.get_pin("out[{}]".format(i))
-            self.add_layout_pin_rect_center(text="DOUT[{}]".format(i),
-                                            layer="metal2", 
+            self.add_layout_pin_rect_center(text="dout[{}]".format(i),
+                                            layer=data_pin.layer, 
                                             offset=data_pin.center(),
                                             height=data_pin.height(),
                                             width=data_pin.width()),
@@ -637,8 +644,8 @@ class bank(design.design):
         # Create inputs for the row address lines
         for i in range(self.row_addr_size):
             addr_idx = i + self.col_addr_size
-            decoder_name = "A[{}]".format(i)
-            addr_name = "A[{}]".format(addr_idx)
+            decoder_name = "addr[{}]".format(i)
+            addr_name = "addr[{}]".format(addr_idx)
             self.copy_layout_pin(self.row_decoder_inst, decoder_name, addr_name)
             
             
@@ -647,7 +654,7 @@ class bank(design.design):
         
         for i in range(self.word_size):
             data_name = "data[{}]".format(i)            
-            din_name = "DIN[{}]".format(i)
+            din_name = "din[{}]".format(i)
             self.copy_layout_pin(self.write_driver_array_inst, data_name, din_name)
                         
 
@@ -686,7 +693,7 @@ class bank(design.design):
             decode_names = ["Zb", "Z"]
             
             # The Address LSB
-            self.copy_layout_pin(self.col_decoder_inst, "A", "A[0]") 
+            self.copy_layout_pin(self.col_decoder_inst, "A", "addr[0]") 
             
         elif self.col_addr_size > 1:
             decode_names = []
@@ -695,7 +702,7 @@ class bank(design.design):
 
             for i in range(self.col_addr_size):
                 decoder_name = "in[{}]".format(i)
-                addr_name = "A[{}]".format(i)
+                addr_name = "addr[{}]".format(i)
                 self.copy_layout_pin(self.col_decoder_inst, decoder_name, addr_name)
                 
 
@@ -749,13 +756,13 @@ class bank(design.design):
                            layer="metal2",  
                            offset=br_pin.center())
 
-        # Add the data output names to the sense amp output     
-        for i in range(self.word_size):
-            data_name = "data[{}]".format(i)
-            data_pin = self.sense_amp_array_inst.get_pin(data_name)
-            self.add_label(text="sa_out[{}]".format(i),
-                           layer="metal2",  
-                           offset=data_pin.center())
+        # # Add the data output names to the sense amp output     
+        # for i in range(self.word_size):
+        #     data_name = "data[{}]".format(i)
+        #     data_pin = self.sense_amp_array_inst.get_pin(data_name)
+        #     self.add_label(text="sa_out[{}]".format(i),
+        #                    layer="metal2",  
+        #                    offset=data_pin.center())
 
         # Add labels on the decoder
         for i in range(self.word_size):
@@ -775,14 +782,14 @@ class bank(design.design):
         # Connection from the central bus to the main control block crosses
         # pre-decoder and this connection is in metal3
         connection = []
-        connection.append((self.prefix+"tri_en_bar", self.tri_gate_array_inst.get_pin("en_bar").lc()))
-        connection.append((self.prefix+"tri_en", self.tri_gate_array_inst.get_pin("en").lc()))
+        #connection.append((self.prefix+"tri_en_bar", self.tri_gate_array_inst.get_pin("en_bar").lc()))
+        #connection.append((self.prefix+"tri_en", self.tri_gate_array_inst.get_pin("en").lc()))
         connection.append((self.prefix+"clk_buf_bar", self.precharge_array_inst.get_pin("en").lc()))
         connection.append((self.prefix+"w_en", self.write_driver_array_inst.get_pin("en").lc()))
         connection.append((self.prefix+"s_en", self.sense_amp_array_inst.get_pin("en").lc()))
   
         for (control_signal, pin_pos) in connection:
-            control_pos = vector(self.bus_xoffset[control_signal], pin_pos.y)
+            control_pos = vector(self.bus_xoffset[control_signal].x ,pin_pos.y)
             self.add_path("metal1", [control_pos, pin_pos])
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=control_pos,
@@ -792,7 +799,7 @@ class bank(design.design):
         control_signal = self.prefix+"clk_buf"
         pin_pos = self.wordline_driver_inst.get_pin("en").uc()
         mid_pos = pin_pos + vector(0,self.m1_pitch)
-        control_x_offset = self.bus_xoffset[control_signal]
+        control_x_offset = self.bus_xoffset[control_signal].x
         control_pos = vector(control_x_offset + self.m1_width, mid_pos.y)
         self.add_wire(("metal1","via1","metal2"),[pin_pos, mid_pos, control_pos])
         control_via_pos = vector(control_x_offset, mid_pos.y)
@@ -805,7 +812,7 @@ class bank(design.design):
 
         for ctrl in self.control_signals:
             # xoffsets are the center of the rail
-            x_offset = self.bus_xoffset[ctrl] - 0.5*self.m2_width
+            x_offset = self.bus_xoffset[ctrl].x - 0.5*self.m2_width
             if self.num_banks > 1:
                 # it's not an input pin if we have multiple banks
                 self.add_label_pin(text=ctrl,

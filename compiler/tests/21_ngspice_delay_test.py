@@ -37,16 +37,16 @@ class timing_sram_test(openram_test):
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)
 
-        probe_address = "1" * s.addr_size
-        probe_data = s.word_size - 1
+        probe_address = "1" * s.s.addr_size
+        probe_data = s.s.word_size - 1
         debug.info(1, "Probe address {0} probe data {1}".format(probe_address, probe_data))
 
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
-        d = delay(s,tempspice,corner)
+        d = delay(s.s, tempspice, corner)
         import tech
         loads = [tech.spice["msflop_in_cap"]*4]
         slews = [tech.spice["rise_time"]*2]
-        data = d.analyze(probe_address, probe_data,slews,loads)
+        data = d.analyze(probe_address, probe_data, slews, loads)
         #print data
         if OPTS.tech_name == "freepdk45":
             golden_data = {'leakage_power': 0.0007348262,

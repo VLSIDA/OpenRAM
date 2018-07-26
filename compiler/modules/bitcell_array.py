@@ -80,10 +80,8 @@ class bitcell_array(design.design):
 
     def add_layout_pins(self):
         """ Add the layout pins """
-        
-        row_list = self.cell.list_row_pins()
+                
         column_list = self.cell.list_column_pins()
-        
         offset = vector(0.0, 0.0)
         for col in range(self.column_size):
             for cell_column in column_list:
@@ -97,6 +95,7 @@ class bitcell_array(design.design):
             # increments to the next column width
             offset.x += self.cell.width
 
+        row_list = self.cell.list_row_pins()
         offset.x = 0.0
         for row in range(self.row_size):
             for cell_row in row_list:

@@ -39,6 +39,7 @@ class layout(lef.lef):
         shift the origin in the lowest left corner """
         offset = self.find_lowest_coords()
         self.translate_all(offset)
+        return offset
 
     def get_gate_offset(self, x_offset, height, inv_num):
         """Gets the base offset and y orientation of stacked rows of gates
@@ -110,7 +111,7 @@ class layout(lef.lef):
             inst.offset = vector(inst.offset - offset)
             # The instances have a precomputed boundary that we need to update.
             if inst.__class__.__name__ == "instance":
-                inst.compute_boundary(offset.scale(-1,-1))
+                inst.compute_boundary(inst.offset)
         for pin_name in self.pin_map.keys():
             # All the pins are absolute coordinates that need to be updated.
             pin_list = self.pin_map[pin_name]
@@ -526,25 +527,27 @@ class layout(lef.lef):
 
     def create_horizontal_pin_bus(self, layer, pitch, offset, names, length):
         """ Create a horizontal bus of pins. """
-        self.create_bus(layer,pitch,offset,names,length,vertical=False,make_pins=True)
+        return self.create_bus(layer,pitch,offset,names,length,vertical=False,make_pins=True)
 
     def create_vertical_pin_bus(self, layer, pitch, offset, names, length):
         """ Create a horizontal bus of pins. """
-        self.create_bus(layer,pitch,offset,names,length,vertical=True,make_pins=True)
+        return self.create_bus(layer,pitch,offset,names,length,vertical=True,make_pins=True)
 
     def create_vertical_bus(self, layer, pitch, offset, names, length):
         """ Create a horizontal bus. """
-        self.create_bus(layer,pitch,offset,names,length,vertical=True,make_pins=False)
+        return self.create_bus(layer,pitch,offset,names,length,vertical=True,make_pins=False)
 
-    def create_horiontal_bus(self, layer, pitch, offset, names, length):
+    def create_horizontal_bus(self, layer, pitch, offset, names, length):
         """ Create a horizontal bus. """
-        self.create_bus(layer,pitch,offset,names,length,vertical=False,make_pins=False)
+        return self.create_bus(layer,pitch,offset,names,length,vertical=False,make_pins=False)
 
 
     def create_bus(self, layer, pitch, offset, names, length, vertical, make_pins):
         """ 
         Create a horizontal or vertical bus. It can be either just rectangles, or actual
         layout pins. It returns an map of line center line positions indexed by name.  
+        The other coordinate is a 0 since the bus provides a range. 
+        TODO: combine with channel router.
         """
 
         # half minwidth so we can return the center line offsets
@@ -563,7 +566,8 @@ class layout(lef.lef):
                     self.add_rect(layer=layer,
                                   offset=line_offset,
                                   height=length)
-                line_positions[names[i]]=line_offset+vector(half_minwidth,0)
+                # Make this the center of the rail                    
+                line_positions[names[i]]=line_offset+vector(half_minwidth,0.5*length)
         else:
             for i in range(len(names)):
                 line_offset = offset + vector(0,i*pitch + half_minwidth)
@@ -576,10 +580,241 @@ class layout(lef.lef):
                     self.add_rect(layer=layer,
                                   offset=line_offset,
                                   width=length)
-                line_positions[names[i]]=line_offset+vector(0,half_minwidth)
+                # Make this the center of the rail
+                line_positions[names[i]]=line_offset+vector(0.5*length,half_minwidth)
 
         return line_positions
+
+    def connect_horizontal_bus(self, mapping, inst, bus_offsets,
+                               layer_stack=("metal1","via1","metal2")):
+        """ Horizontal version of connect_bus. """
+        self.connect_bus(mapping, inst, bus_offsets, layer_stack, True)
+
+    def connect_vertical_bus(self, mapping, inst, bus_offsets,
+                               layer_stack=("metal1","via1","metal2")):
+        """ Vertical version of connect_bus. """
+        self.connect_bus(mapping, inst, bus_offsets, layer_stack, False)
+        
+    def connect_bus(self, mapping, inst, bus_offsets, layer_stack, horizontal):
+        """ 
+        Connect a mapping of pin -> name for a bus. This could be
+        replaced with a channel router in the future. 
+        """
+        (horizontal_layer, via_layer, vertical_layer)=layer_stack
+        if horizontal:
+            route_layer = vertical_layer
+        else:
+            route_layer = horizontal_layer
+        
+        for (pin_name, bus_name) in mapping:
+            pin = inst.get_pin(pin_name)
+            pin_pos = pin.center()
+            bus_pos = bus_offsets[bus_name]
+
+            if horizontal:
+                # up/down then left/right
+                mid_pos = vector(pin_pos.x, bus_pos.y)
+            else:
+                # left/right then up/down
+                mid_pos = vector(bus_pos.x, pin_pos.y)
+                
+            self.add_wire(layer_stack,[bus_pos, mid_pos, pin_pos])
+
+            # Connect to the pin on the instances with a via if it is
+            # not on the right layer
+            if pin.layer != route_layer:
+                self.add_via_center(layers=layer_stack,
+                                    offset=pin_pos)
+            # FIXME: output pins tend to not be rotate, but supply pins are. Make consistent?
+            
+
+
+            # We only need a via if they happened to align perfectly
+            # so the add_wire didn't add a via
+            if (horizontal and bus_pos.y == pin_pos.y) or (not horizontal and bus_pos.x == pin_pos.x):
+                self.add_via_center(layers=layer_stack,
+                                    offset=bus_pos,
+                                    rotate=90)
+
+    def add_horizontal_trunk_route(self, pins, trunk_offset,
+                                   layer_stack=("metal1", "via1", "metal2"),
+                                   pitch=None):
+        """
+        Create a trunk route for all pins with the the trunk located at the given y offset. 
+        """
+        if not pitch:
+            pitch = self.m1_pitch
+        
+        max_x = max([pin.center().x for pin in pins])
+        min_x = min([pin.center().x for pin in pins])
+        
+        half_minwidth = 0.5*drc["minwidth_{}".format(layer_stack[0])]
+
+        # if we are less than a pitch, just create a non-preferred layer jog
+        if max_x-min_x < pitch:
+            # Add the horizontal trunk on the vertical layer!
+            self.add_path(layer_stack[2],[vector(min_x-half_minwidth,trunk_offset.y), vector(max_x+half_minwidth,trunk_offset.y)])
+
+            # Route each pin to the trunk
+            for pin in pins:
+                # No bend needed here
+                mid = vector(pin.center().x, trunk_offset.y)
+                self.add_path(layer_stack[2], [pin.center(), mid])
+        else:
+            # Add the horizontal trunk
+            self.add_path(layer_stack[0],[vector(min_x,trunk_offset.y), vector(max_x,trunk_offset.y)])
+            trunk_mid = vector(0.5*(max_x+min_x),trunk_offset.y)
+
+            # Route each pin to the trunk
+            for pin in pins:
+                # Bend to the center of the trunk so it adds a via automatically
+                mid = vector(pin.center().x, trunk_offset.y)
+                self.add_wire(layer_stack, [pin.center(), mid, trunk_mid])
+
+    def add_vertical_trunk_route(self, pins, trunk_offset,
+                                 layer_stack=("metal1", "via1", "metal2"),
+                                 pitch=None):
+        """
+        Create a trunk route for all pins with the the trunk located at the given x offset. 
+        """
+        if not pitch:
+            pitch = self.m2_pitch
+            
+        max_y = max([pin.center().y for pin in pins])
+        min_y = min([pin.center().y for pin in pins])
+
+        # Add the vertical trunk
+        half_minwidth = 0.5*drc["minwidth_{}".format(layer_stack[2])]
+
+        # if we are less than a pitch, just create a non-preferred layer jog
+        if max_y-min_y < pitch:
+            # Add the horizontal trunk on the vertical layer!
+            self.add_path(layer_stack[0],[vector(trunk_offset.x,min_y-half_minwidth), vector(trunk_offset.x,max_y+half_minwidth)])
+
+            # Route each pin to the trunk
+            for pin in pins:
+                # No bend needed here
+                mid = vector(trunk_offset.x, pin.center().y)
+                self.add_path(layer_stack[0], [pin.center(), mid])
+        else:
+            # Add the vertical trunk
+            self.add_path(layer_stack[2],[vector(trunk_offset.x,min_y), vector(trunk_offset.x,max_y)])
+            trunk_mid = vector(trunk_offset.x,0.5*(max_y+min_y),)
+
+            # Route each pin to the trunk
+            for pin in pins:
+                # Bend to the center of the trunk so it adds a via automatically
+                mid = vector(trunk_offset.x, pin.center().y)
+                self.add_wire(layer_stack, [pin.center(), mid, trunk_mid])
+        
     
+    def create_channel_route(self, route_map, top_pins, bottom_pins, offset, 
+                                        layer_stack=("metal1", "via1", "metal2"), pitch=None,
+                                        vertical=False):
+        """
+        This is a simple channel route for one-to-one connections that
+        will jog the top route whenever there is a conflict. It does NOT
+        try to minimize the number of tracks -- instead, it picks an order to avoid the vertical
+        conflicts between pins.
+        """
+
+        def remove_pin_from_graph(pin, g):
+            # Remove the pin from the keys
+            g.pop(pin,None)
+            # Remove the pin from all conflicts
+            # This is O(n^2), so maybe optimize it.
+            for other_pin,conflicts in g.items():
+                if pin in conflicts:
+                    conflicts.remove(pin)
+                    vcg[other_pin]=conflicts
+
+        if not pitch:
+            pitch = self.m2_pitch
+
+        # merge the two dictionaries to easily access all pins
+        all_pins = {**top_pins, **bottom_pins}
+
+        # FIXME: Must extend this to a horizontal conflict graph too if we want to minimize the
+        # number of tracks!
+        #hcg = {}
+        
+        # Initialize the vertical conflict graph (vcg) and make a list of all pins
+        vcg = {}
+        for (top_name, bot_name) in route_map:
+            vcg[top_name] = []
+            vcg[bot_name] = []
+        
+        # Find the vertical pin conflicts
+        # FIXME: O(n^2) but who cares for now
+        for top_name,top_pin in top_pins.items():
+            for bot_name,bot_pin in bottom_pins.items():
+                if not vertical and abs(top_pin.center().x-bot_pin.center().x) < pitch:
+                    # The edges only go from top to bottom
+                    # since we will order tracks bottom up
+                    vcg[top_name].append(bot_name)
+                elif vertical and abs(top_pin.center().y-bot_pin.center().y) < pitch:
+                    # The edges only go from top to bottom
+                    # since we will order tracks bottom up
+                    vcg[top_name].append(bot_name)
+
+        # This is the starting offset of the first trunk
+        if vertical:
+            half_minwidth = 0.5*drc["minwidth_{}".format(layer_stack[2])]        
+            offset = offset + vector(half_minwidth,0)
+        else:
+            half_minwidth = 0.5*drc["minwidth_{}".format(layer_stack[0])]        
+            offset = offset + vector(0,half_minwidth)
+
+        # list of routes to do
+        while vcg:
+            #print(vcg)
+            # get a route from conflict graph with empty fanout set
+            route_pin=None
+            for route_pin,conflicts in vcg.items():
+                if len(conflicts)==0:
+                    remove_pin_from_graph(route_pin,vcg)
+                    break
+
+            # Get the connected pins from the routing map
+            for pin_connections in route_map:
+                if route_pin in pin_connections:
+                    break
+            #print("Routing:",route_pin,pin_connections)
+            
+            # Remove the other pins from the conflict graph too
+            for other_pin in pin_connections:
+                remove_pin_from_graph(other_pin, vcg)
+                
+            # Create a list of the pins rather than a list of the names
+            pin_list = [all_pins[pin_name] for pin_name in pin_connections]
+
+            # Add the trunk route and move up to next track
+            if vertical:
+                self.add_vertical_trunk_route(pin_list, offset, layer_stack, pitch)
+                offset += vector(pitch,0)
+            else:
+                self.add_horizontal_trunk_route(pin_list, offset, layer_stack, pitch)
+                offset += vector(0,pitch)
+
+
+    def create_vertical_channel_route(self, route_map, left_inst, right_inst, offset, 
+                                      layer_stack=("metal1", "via1", "metal2"),
+                                      pitch=None):
+        """
+        Wrapper to create a vertical channel route
+        """
+        self.create_channel_route(route_map, left_inst, right_inst, offset,
+                                  layer_stack, pitch, vertical=True)
+
+    def create_horizontal_channel_route(self, route_map, top_pins, bottom_pins, offset, 
+                                      layer_stack=("metal1", "via1", "metal2"),
+                                      pitch=None):
+        """
+        Wrapper to create a horizontal channel route
+        """
+        self.create_channel_route(route_map, top_pins, bottom_pins, offset,
+                                  layer_stack, pitch, vertical=False)
+        
     def add_enclosure(self, insts, layer="nwell"):
         """ Add a layer that surrounds the given instances. Useful
         for creating wells, for example. Doesn't check for minimum widths or
@@ -600,6 +835,20 @@ class layout(lef.lef):
                       width=xmax-xmin,
                       height=ymax-ymin)
 
+    def add_power_pin(self, name, loc, rotate=True):
+        """ 
+        Add a single power pin from M3 own to M1
+        """
+        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                            offset=loc,
+                            rotate=90 if rotate else 0)
+        self.add_via_center(layers=("metal2", "via2", "metal3"),
+                            offset=loc,
+                            rotate=90 if rotate else 0)
+        self.add_layout_pin_rect_center(text=name,
+                                        layer="metal3",
+                                        offset=loc)
+        
     def add_power_ring(self, bbox):
         """
         Create vdd and gnd power rings around an area of the bounding box argument. Must

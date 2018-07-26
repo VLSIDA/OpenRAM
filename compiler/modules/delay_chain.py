@@ -9,24 +9,20 @@ from globals import OPTS
 class delay_chain(design.design):
     """
     Generate a delay chain with the given number of stages and fanout.
-    This automatically adds an extra inverter with no load on the input.
-    Input is a list contains the electrical effort of each stage.
+    Input is a list contains the electrical effort (fanout) of each stage.
+    Usually, this will be constant, but it could have varied fanout.
     """
 
     def __init__(self, fanout_list, name="delay_chain"):
         """init function"""
         design.design.__init__(self, name)
-        # FIXME: input should be logic effort value 
-        # and there should be functions to get 
-        # area efficient inverter stage list 
 
+        # Two fanouts are needed so that we can route the vdd/gnd connections
         for f in fanout_list:
-            debug.check(f>0,"Must have non-zero fanouts for each stage.")
+            debug.check(f>=2,"Must have >=2 fanouts for each stage.")
 
         # number of inverters including any fanout loads.
         self.fanout_list = fanout_list
-        self.num_inverters = 1 + sum(fanout_list)
-        self.num_top_half = round(self.num_inverters / 2.0)
         
         from importlib import reload
         c = reload(__import__(OPTS.bitcell))
@@ -35,6 +31,7 @@ class delay_chain(design.design):
 
         self.add_pins()
         self.create_module()
+        self.add_inverters()
         self.route_inverters()
         self.add_layout_pins()
         self.DRC_LVS()
@@ -52,14 +49,11 @@ class delay_chain(design.design):
         self.inv = pinv(route_output=False)
         self.add_mod(self.inv)
 
-        # half chain length is the width of the layout 
-        # invs are stacked into 2 levels so input/output are close
-        # extra metal is for the gnd connection U
+        # Each stage is a a row
         self.height = len(self.fanout_list)*self.inv.height
+        # The width is determined by the largest fanout plus the driver
         self.width = (max(self.fanout_list)+1) * self.inv.width
 
-        self.add_inverters()
-        
 
     def add_inverters(self):
         """ Add the inverters and connect them based on the stage list """
@@ -164,19 +158,29 @@ class delay_chain(design.design):
         """ Add vdd and gnd rails and the input/output. Connect the gnd rails internally on
         the top end with no input/output to obstruct. """
 
-        for driver in self.driver_inst_list:
-            vdd_pin = driver.get_pin("vdd")
-            self.add_layout_pin(text="vdd",
-                                layer="metal1",
-                                offset=vdd_pin.ll(),
-                                width=self.width,
-                                height=vdd_pin.height())
-            gnd_pin = driver.get_pin("gnd")
-            self.add_layout_pin(text="gnd",
-                                layer="metal1",
-                                offset=gnd_pin.ll(),
-                                width=self.width,
-                                height=gnd_pin.height())
+        # Add power and ground to all the cells except:
+        # the fanout driver, the right-most load
+        # The routing to connect the loads is over the first and last cells
+        # We have an even number of drivers and must only do every other
+        # supply rail
+        for i in range(0,len(self.driver_inst_list),2):
+            inv = self.driver_inst_list[i]
+            for load in self.load_inst_map[inv]:
+                if load==self.rightest_load_inst[inv]:
+                    continue
+                for pin_name in ["vdd", "gnd"]:
+                    pin = load.get_pin(pin_name)
+                    self.add_power_pin(pin_name, pin.rc())
+        else:
+            # We have an even number of rows, so need to get the last gnd rail
+            inv = self.driver_inst_list[-1]
+            for load in self.load_inst_map[inv]:
+                if load==self.rightest_load_inst[inv]:
+                    continue
+                pin_name = "gnd"
+                pin = load.get_pin(pin_name)
+                self.add_power_pin(pin_name, pin.rc())
+
 
         # input is A pin of first inverter
         a_pin = self.driver_inst_list[0].get_pin("A")

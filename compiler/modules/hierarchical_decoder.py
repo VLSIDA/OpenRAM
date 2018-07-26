@@ -127,12 +127,12 @@ class hierarchical_decoder(design.design):
             min_x = min(min_x, -self.pre3_8.width)
         input_offset=vector(min_x - self.input_routing_width,0)
 
-        input_bus_names = ["A[{0}]".format(i) for i in range(self.num_inputs)]
-        self.create_vertical_pin_bus(layer="metal2",
-                                     pitch=self.m2_pitch,
-                                     offset=input_offset,
-                                     names=input_bus_names,
-                                     length=input_height)
+        input_bus_names = ["addr[{0}]".format(i) for i in range(self.num_inputs)]
+        self.input_rails = self.create_vertical_pin_bus(layer="metal2",
+                                                        pitch=self.m2_pitch,
+                                                        offset=input_offset,
+                                                        names=input_bus_names,
+                                                        length=input_height)
         
         self.connect_input_to_predecodes()
 
@@ -143,14 +143,15 @@ class hierarchical_decoder(design.design):
             for i in range(2):
                 index = pre_num * 2 + i
 
-                input_pin = self.get_pin("A[{}]".format(index))
+                input_pos = self.input_rails["addr[{}]".format(index)]
 
                 in_name = "in[{}]".format(i)
                 decoder_pin = self.pre2x4_inst[pre_num].get_pin(in_name)
 
-                # Offset each decoder pin up so they don't conflit
-                decoder_offset = decoder_pin.center() + vector(0,i*self.m2_pitch)
-                input_offset = input_pin.center().scale(1,0) + decoder_offset.scale(0,1)
+                # To prevent conflicts, we will offset each input connect so
+                # that it aligns with the vdd/gnd rails
+                decoder_offset = decoder_pin.bc() + vector(0,(i+1)*self.inv.height)
+                input_offset = input_pos.scale(1,0) + decoder_offset.scale(0,1)
                 
                 self.connect_input_rail(decoder_offset, input_offset) 
 
@@ -159,14 +160,15 @@ class hierarchical_decoder(design.design):
             for i in range(3):
                 index = pre_num * 3 + i + self.no_of_pre2x4 * 2
                 
-                input_pin = self.get_pin("A[{}]".format(index))
+                input_pos = self.input_rails["addr[{}]".format(index)]
 
                 in_name = "in[{}]".format(i)
                 decoder_pin = self.pre3x8_inst[pre_num].get_pin(in_name)
 
-                # Offset each decoder pin up so they don't conflit
-                decoder_offset = decoder_pin.center() + vector(0,i*self.m2_pitch)
-                input_offset = input_pin.center().scale(1,0) + decoder_offset.scale(0,1)
+                # To prevent conflicts, we will offset each input connect so
+                # that it aligns with the vdd/gnd rails
+                decoder_offset = decoder_pin.bc() + vector(0,(i+1)*self.inv.height)
+                input_offset = input_pos.scale(1,0) + decoder_offset.scale(0,1)
                 
                 self.connect_input_rail(decoder_offset, input_offset) 
     
@@ -187,7 +189,7 @@ class hierarchical_decoder(design.design):
         """ Add the module pins """
         
         for i in range(self.num_inputs):
-            self.add_pin("A[{0}]".format(i))
+            self.add_pin("addr[{0}]".format(i))
 
         for j in range(self.rows):
             self.add_pin("decode[{0}]".format(j))
@@ -248,7 +250,7 @@ class hierarchical_decoder(design.design):
 
         pins = []
         for input_index in range(2):
-            pins.append("A[{0}]".format(input_index + index_off1))
+            pins.append("addr[{0}]".format(input_index + index_off1))
         for output_index in range(4):
             pins.append("out[{0}]".format(output_index + index_off2))
         pins.extend(["vdd", "gnd"])
@@ -275,7 +277,7 @@ class hierarchical_decoder(design.design):
 
         pins = []
         for input_index in range(3):
-            pins.append("A[{0}]".format(input_index + in_index_offset))
+            pins.append("addr[{0}]".format(input_index + in_index_offset))
         for output_index in range(8):
             pins.append("out[{0}]".format(output_index + out_index_offset))
         pins.extend(["vdd", "gnd"])
@@ -415,18 +417,14 @@ class hierarchical_decoder(design.design):
 
         # This is not needed for inputs <4 since they have no pre/decode stages.
         if (self.num_inputs >= 4):
-            # Array for saving the X offsets of the vertical rails. These rail
-            # offsets are accessed with indices.
-            self.rail_x_offsets = []
-            for i in range(self.total_number_of_predecoder_outputs):
-                # The offsets go into the negative x direction
-                # assuming the predecodes are placed at (self.internal_routing_width,0)
-                x_offset = self.m2_pitch * i
-                self.rail_x_offsets.append(x_offset+0.5*self.m2_width)
-                self.add_rect(layer="metal2",
-                              offset=vector(x_offset,0),
-                              width=drc["minwidth_metal2"],
-                              height=self.height)
+            input_offset = vector(0.5*self.m2_width,0)
+            input_bus_names = ["predecode[{0}]".format(i) for i in range(self.total_number_of_predecoder_outputs)]
+            self.predecode_rails = self.create_vertical_pin_bus(layer="metal2",
+                                                                pitch=self.m2_pitch,
+                                                                offset=input_offset,
+                                                                names=input_bus_names,
+                                                                length=self.height)
+            
 
             self.connect_rails_to_predecodes()
             self.connect_rails_to_decoder()
@@ -434,20 +432,22 @@ class hierarchical_decoder(design.design):
     def connect_rails_to_predecodes(self):
         """ Iterates through all of the predecodes and connects to the rails including the offsets """
 
+        # FIXME: convert to connect_bus
         for pre_num in range(self.no_of_pre2x4):
             for i in range(4):
-                index = pre_num * 4 + i
+                predecode_name = "predecode[{}]".format(pre_num * 4 + i)
                 out_name = "out[{}]".format(i)
                 pin = self.pre2x4_inst[pre_num].get_pin(out_name)
-                self.connect_predecode_rail_m3(index, pin) 
+                self.connect_predecode_rail_m3(predecode_name, pin) 
 
             
+        # FIXME: convert to connect_bus
         for pre_num in range(self.no_of_pre3x8):
             for i in range(8):
-                index = pre_num * 8 + i + self.no_of_pre2x4 * 4
+                predecode_name = "predecode[{}]".format(pre_num * 8 + i + self.no_of_pre2x4 * 4)
                 out_name = "out[{}]".format(i)
                 pin = self.pre3x8_inst[pre_num].get_pin(out_name)
-                self.connect_predecode_rail_m3(index, pin) 
+                self.connect_predecode_rail_m3(predecode_name, pin) 
             
                 
 
@@ -463,17 +463,24 @@ class hierarchical_decoder(design.design):
         if (self.num_inputs == 4 or self.num_inputs == 5):
             for index_A in self.predec_groups[0]:
                 for index_B in self.predec_groups[1]:
-                    self.connect_predecode_rail(index_A, self.nand_inst[row_index].get_pin("A"))
-                    self.connect_predecode_rail(index_B, self.nand_inst[row_index].get_pin("B"))
+                    # FIXME: convert to connect_bus?
+                    predecode_name = "predecode[{}]".format(index_A)
+                    self.connect_predecode_rail(predecode_name, self.nand_inst[row_index].get_pin("A"))
+                    predecode_name = "predecode[{}]".format(index_B)                    
+                    self.connect_predecode_rail(predecode_name, self.nand_inst[row_index].get_pin("B"))
                     row_index = row_index + 1
 
         elif (self.num_inputs > 5):
             for index_A in self.predec_groups[0]:
                 for index_B in self.predec_groups[1]:
                     for index_C in self.predec_groups[2]:
-                        self.connect_predecode_rail(index_A, self.nand_inst[row_index].get_pin("A"))
-                        self.connect_predecode_rail(index_B, self.nand_inst[row_index].get_pin("B"))
-                        self.connect_predecode_rail(index_C, self.nand_inst[row_index].get_pin("C"))
+                        # FIXME: convert to connect_bus?
+                        predecode_name = "predecode[{}]".format(index_A) 
+                        self.connect_predecode_rail(predecode_name, self.nand_inst[row_index].get_pin("A"))
+                        predecode_name = "predecode[{}]".format(index_B) 
+                        self.connect_predecode_rail(predecode_name, self.nand_inst[row_index].get_pin("B"))
+                        predecode_name = "predecode[{}]".format(index_C) 
+                        self.connect_predecode_rail(predecode_name, self.nand_inst[row_index].get_pin("C"))
                         row_index = row_index + 1
 
     def route_vdd_gnd(self):
@@ -509,19 +516,21 @@ class hierarchical_decoder(design.design):
             self.copy_layout_pin(pre, "gnd")
         
 
-    def connect_predecode_rail(self, rail_index, pin):
+    def connect_predecode_rail(self, rail_name, pin):
         """ Connect the routing rail to the given metal1 pin  """
-        rail_pos = vector(self.rail_x_offsets[rail_index],pin.lc().y)
+        rail_pos = vector(self.predecode_rails[rail_name].x,pin.lc().y)
         self.add_path("metal1", [rail_pos, pin.lc()])
         self.add_via_center(layers=("metal1", "via1", "metal2"),
                             offset=rail_pos,
                             rotate=90)
 
 
-    def connect_predecode_rail_m3(self, rail_index, pin):
+    def connect_predecode_rail_m3(self, rail_name, pin):
         """ Connect the routing rail to the given metal1 pin  """
+        # This routes the pin up to the rail, basically, to avoid conflicts.
+        # It would be fixed with a channel router.
         mid_point = vector(pin.cx(), pin.cy()+self.inv.height/2)
-        rail_pos = vector(self.rail_x_offsets[rail_index],mid_point.y)
+        rail_pos = vector(self.predecode_rails[rail_name].x,mid_point.y)
         self.add_via_center(layers=("metal1", "via1", "metal2"),
                             offset=pin.center(),
                             rotate=90)

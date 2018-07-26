@@ -61,7 +61,9 @@ class control_logic(design.design):
         self.add_mod(self.nand3)
 
         # Special gates: inverters for buffering
-        self.clkbuf = pinvbuf(4,16,height=dff_height)
+        # Size the clock for the number of rows (fanout)
+        clock_driver_size = max(1,int(self.num_rows/4))
+        self.clkbuf = pinvbuf(clock_driver_size,height=dff_height)
         self.add_mod(self.clkbuf)
         self.inv = self.inv1 = pinv(size=1, height=dff_height)
         self.add_mod(self.inv1)
@@ -345,14 +347,14 @@ class control_logic(design.design):
         x_off = self.ctrl_dff_inst.width + self.internal_bus_width
         (y_off,mirror)=self.get_offset(row)
             
-        # input: WE, clk_buf_bar, CS output: w_en_bar
+        # input: WE, CS output: w_en_bar
         w_en_bar_offset = vector(x_off, y_off)
-        self.w_en_bar_inst=self.add_inst(name="nand3_w_en_bar",
-                                         mod=self.nand3,
+        self.w_en_bar_inst=self.add_inst(name="nand2_w_en_bar",
+                                         mod=self.nand2,
                                          offset=w_en_bar_offset,
                                          mirror=mirror)
-        self.connect_inst(["clk_buf_bar", "cs", "we", "w_en_bar", "vdd", "gnd"])
-        x_off += self.nand3.width
+        self.connect_inst(["cs", "we", "w_en_bar", "vdd", "gnd"])
+        x_off += self.nand2.width
 
         # input: w_en_bar, output: pre_w_en
         pre_w_en_offset = vector(x_off, y_off)
@@ -458,7 +460,7 @@ class control_logic(design.design):
         
         
     def route_wen(self):
-        wen_map = zip(["A", "B", "C"], ["clk_buf_bar", "cs", "we"])
+        wen_map = zip(["A", "B"], ["cs", "we"])
         self.connect_vertical_bus(wen_map, self.w_en_bar_inst, self.rail_offsets)  
 
         # Connect the NAND3 output to the inverter

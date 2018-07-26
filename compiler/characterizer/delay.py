@@ -661,11 +661,11 @@ class delay():
 
         # One period
         msg = "Idle cycle (Read addr 00..00)"
+        self.cycle_times.append(t_current)
+        self.idle_cycle=len(self.cycle_times)-1        
         self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(len(self.cycle_times)-1,
                                                                   t_current,
                                                                   msg))
-        self.cycle_times.append(t_current)
-        self.idle_cycle=len(self.cycle_times)-1        
         t_current += self.period
 
         # One period

@@ -15,20 +15,31 @@ class pinvbuf(design.design):
     c = reload(__import__(OPTS.bitcell))
     bitcell = getattr(c, OPTS.bitcell)
 
-    def __init__(self, inv1_size=2, inv2_size=4, height=bitcell.height, name=""):
+    def __init__(self, driver_size=4, height=bitcell.height, name=""):
+
+        stage_effort = 4
+        # FIXME: Change the number of stages to support high drives.
+        
+        # stage effort of 4 or less
+        # The pinvbuf has a FO of 2 for the first stage, so the second stage
+        # should be sized "half" to prevent loading of the first stage
+        predriver_size = max(int(driver_size/(stage_effort/2)),1)
 
         if name=="":
-            name = "pinvbuf_{0}_{1}".format(inv1_size, inv2_size)
+            name = "pinvbuf_{0}_{1}".format(predriver_size, driver_size)
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(self.name))
 
-        self.inv = pinv(size=1, height=height)
+        
+        # Shield the cap, but have at least a stage effort of 4
+        input_size = max(1,int(predriver_size/stage_effort))
+        self.inv = pinv(size=input_size, height=height)
         self.add_mod(self.inv)
         
-        self.inv1 = pinv(size=inv1_size, height=height)
+        self.inv1 = pinv(size=predriver_size, height=height)
         self.add_mod(self.inv1)
 
-        self.inv2 = pinv(size=inv2_size, height=height)
+        self.inv2 = pinv(size=driver_size, height=height)
         self.add_mod(self.inv2)
 
         self.width = 2*self.inv1.width + self.inv2.width

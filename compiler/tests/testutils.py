@@ -79,7 +79,7 @@ class openram_test(unittest.TestCase):
         if not data_matches:
             import pprint
             data_string=pprint.pformat(data)
-            debug.info(0,"Consider replacing data in unit test with:\n"+data_string)
+            debug.info(0,"Data exceeded {:.1f}% tolerance:\n".format(error_tolerance*100)+data_string)
         return data_matches
             
 

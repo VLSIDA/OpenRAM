@@ -349,12 +349,12 @@ class control_logic(design.design):
             
         # input: WE, CS output: w_en_bar
         w_en_bar_offset = vector(x_off, y_off)
-        self.w_en_bar_inst=self.add_inst(name="nand2_w_en_bar",
-                                         mod=self.nand2,
+        self.w_en_bar_inst=self.add_inst(name="nand3_w_en_bar",
+                                         mod=self.nand3,
                                          offset=w_en_bar_offset,
                                          mirror=mirror)
-        self.connect_inst(["cs", "we", "w_en_bar", "vdd", "gnd"])
-        x_off += self.nand2.width
+        self.connect_inst(["clk_buf_bar", "cs", "we", "w_en_bar", "vdd", "gnd"])
+        x_off += self.nand3.width
 
         # input: w_en_bar, output: pre_w_en
         pre_w_en_offset = vector(x_off, y_off)
@@ -460,7 +460,7 @@ class control_logic(design.design):
         
         
     def route_wen(self):
-        wen_map = zip(["A", "B"], ["cs", "we"])
+        wen_map = zip(["A", "B", "C"], ["clk_buf_bar", "cs", "we"])
         self.connect_vertical_bus(wen_map, self.w_en_bar_inst, self.rail_offsets)  
 
         # Connect the NAND3 output to the inverter

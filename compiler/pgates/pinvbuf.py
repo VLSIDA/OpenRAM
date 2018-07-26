@@ -15,6 +15,8 @@ class pinvbuf(design.design):
     c = reload(__import__(OPTS.bitcell))
     bitcell = getattr(c, OPTS.bitcell)
 
+    unique_id = 1
+
     def __init__(self, driver_size=4, height=bitcell.height, name=""):
 
         stage_effort = 4
@@ -26,7 +28,9 @@ class pinvbuf(design.design):
         predriver_size = max(int(driver_size/(stage_effort/2)),1)
 
         if name=="":
-            name = "pinvbuf_{0}_{1}".format(predriver_size, driver_size)
+            name = "pinvbuf_{0}_{1}_{2}".format(predriver_size, driver_size, pinvbuf.unique_id)
+            pinvbuf.unique_id += 1
+
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(self.name))
 

@@ -2,28 +2,28 @@
 .SUBCKT write_driver din bl br en vdd gnd
 
 **** Inverter to conver Data_in to data_in_bar ******
-M_1 net_3 din gnd gnd n W='1.2*1u' L=0.6u
-M_2 net_3 din vdd vdd p W='2.1*1u' L=0.6u
+M_1 din_bar din gnd gnd n W='1.2*1u' L=0.6u
+M_2 din_bar din vdd vdd p W='2.1*1u' L=0.6u
 
 **** 2input nand gate follwed by inverter to drive BL ******
-M_3 net_2 en net_7 gnd n W='2.1*1u' L=0.6u 
+M_3 din_bar_gated en net_7 gnd n W='2.1*1u' L=0.6u 
 M_4 net_7 din gnd gnd n W='2.1*1u' L=0.6u 
-M_5 net_2 en vdd vdd p W='2.1*1u' L=0.6u 
-M_6 net_2 din vdd vdd p W='2.1*1u' L=0.6u 
+M_5 din_bar_gated en vdd vdd p W='2.1*1u' L=0.6u 
+M_6 din_bar_gated din vdd vdd p W='2.1*1u' L=0.6u 
 
  
-M_7 net_1 net_2 vdd vdd p W='2.1*1u' L=0.6u 
-M_8 net_1 net_2 gnd gnd n W='1.2*1u' L=0.6u 
+M_7 net_1 din_bar_gated vdd vdd p W='2.1*1u' L=0.6u 
+M_8 net_1 din_bar_gated gnd gnd n W='1.2*1u' L=0.6u 
 
 **** 2input nand gate follwed by inverter to drive BR******
  
-M_9 net_4 en vdd vdd p W='2.1*1u' L=0.6u
-M_10 net_4 en net_8 gnd n W='2.1*1u' L=0.6u  
-M_11 net_8 net_3 gnd gnd n W='2.1*1u' L=0.6u
-M_12 net_4 net_3 vdd vdd p W='2.1*1u' L=0.6u 
+M_9 din_gated en vdd vdd p W='2.1*1u' L=0.6u
+M_10 din_gated en net_8 gnd n W='2.1*1u' L=0.6u  
+M_11 net_8 din_bar gnd gnd n W='2.1*1u' L=0.6u
+M_12 din_gated din_bar vdd vdd p W='2.1*1u' L=0.6u 
 
-M_13 net_6 net_4 vdd vdd p W='2.1*1u' L=0.6u 
-M_14 net_6 net_4 gnd gnd n W='1.2*1u' L=0.6u
+M_13 net_6 din_gated vdd vdd p W='2.1*1u' L=0.6u 
+M_14 net_6 din_gated gnd gnd n W='1.2*1u' L=0.6u
 
 ************************************************
 

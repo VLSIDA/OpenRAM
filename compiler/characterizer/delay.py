@@ -105,25 +105,13 @@ class delay():
         
         # generate data and addr signals
         self.sf.write("\n* Generation of data and address signals\n")
-        for i in range(self.word_size):
-            if i == self.probe_data:
-                self.gen_data(clk_times=self.cycle_times,
-                              sig_name="DIN[{0}]".format(i))
-
-
-            else:
-                self.stim.gen_constant(sig_name="DIN[{0}]".format(i),
-                                       v_val=0)
-
-        self.gen_addr(clk_times=self.cycle_times,
-                      addr=self.probe_address)
+        self.gen_data()
+        self.gen_addr()
 
 
         # generate control signals
         self.sf.write("\n* Generation of control signals\n")
-        self.gen_csb(self.cycle_times)
-        self.gen_web(self.cycle_times)
-        self.gen_oeb(self.cycle_times)
+        self.gen_control()
 
         self.sf.write("\n* Generation of global clock signal\n")
         self.stim.gen_pulse(sig_name="CLK",
@@ -606,101 +594,156 @@ class delay():
         return char_data
 
 
-    
+    def add_noop(self, comment, address, data):
+        """ Add the control values for a read cycle. """
+        self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(0,
+                                                                  self.t_current,
+                                                                  comment))
+        self.cycle_times.append(self.t_current)
+        self.t_current += self.period
+        self.web_values.append(1)
+        self.oeb_values.append(1)
+        self.csb_values.append(1)
 
+        self.add_data(data)
+        self.add_address(address)
+
+    def add_data(self, data):
+        """ Add the array of data values """
+        debug.check(len(data)==self.word_size, "Invalid data word size.")
+        index = 0
+        for c in data:
+            if c=="0":
+                self.data_values[index].append(0)
+            elif c=="1":
+                self.data_values[index].append(1)
+            else:
+                debug.error("Non-binary data string",1)
+            index += 1
+
+    def add_address(self, address):
+        """ Add the array of address values """
+        debug.check(len(address)==self.addr_size, "Invalid address size.")
+        index = 0
+        for c in address:
+            if c=="0":
+                self.addr_values[index].append(0)
+            elif c=="1":
+                self.addr_values[index].append(1)
+            else:
+                debug.error("Non-binary address string",1)
+            index += 1
+        
+                 
+    def add_read(self, comment, address, data):
+        """ Add the control values for a read cycle. """
+        self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(0,
+                                                                  self.t_current,
+                                                                  comment))
+        self.cycle_times.append(self.t_current)
+        self.t_current += self.period
+        
+        self.web_values.append(1)
+        self.oeb_values.append(0)
+        self.csb_values.append(0)
+
+        self.add_data(data)
+        self.add_address(address)
+        
+        
+
+    def add_write(self, comment, address, data):
+        """ Add the control values for a read cycle. """
+        self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(0,
+                                                                  self.t_current,
+                                                                  comment))
+        self.cycle_times.append(self.t_current)
+        self.t_current += self.period
+        
+        self.web_values.append(0)
+        self.oeb_values.append(1)
+        self.csb_values.append(0)
+
+        self.add_data(data)
+        self.add_address(address)
+        
     def obtain_cycle_times(self):
         """Returns a list of key time-points [ns] of the waveform (each rising edge)
         of the cycles to do a timing evaluation. The last time is the end of the simulation
         and does not need a rising edge."""
 
+        self.t_current = 0
+        
         self.cycle_comments = []
         self.cycle_times = []
-        t_current = 0
 
+        self.web_values = []
+        self.oeb_values = []
+        self.csb_values = []
+
+        self.data_values=[]
+        for i in range(self.word_size):
+            self.data_values.append([])
+        self.addr_values=[]
+        for i in range(self.addr_size):
+            self.addr_values.append([])
+
+        inverse_address = ""
+        for c in self.probe_address:
+            if c=="0":
+                inverse_address += "1"
+            elif c=="1":
+                inverse_address += "0"
+            else:
+                debug.error("Non-binary address string",1)
+
+        data_ones = "1"*self.word_size
+        data_zeros = "0"*self.word_size
+        
         # idle cycle, no operation
         msg = "Idle cycle (no clock)"
-        self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(0,
-                                                                  t_current,
-                                                                  msg))
-        self.cycle_times.append(t_current)
-        t_current += self.period
+        self.add_noop(msg, inverse_address, data_zeros)
 
         # One period
         msg = "W data 1 address 11..11 to initialize cell"
-        self.cycle_times.append(t_current)
-        self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(len(self.cycle_times)-1,
-                                                                  t_current,
-                                                                  msg))
-        t_current += self.period
+        self.add_write(msg,self.probe_address,data_ones) 
 
         # One period
         msg = "W data 0 address 11..11 (to ensure a write of value works)"
-        self.cycle_times.append(t_current)
+        self.add_write(msg,self.probe_address,data_zeros)
         self.write0_cycle=len(self.cycle_times)-1
-        self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(len(self.cycle_times)-1,
-                                                                  t_current,
-                                                                  msg))
-        t_current += self.period
         
         # One period
         msg = "W data 1 address 00..00 (to clear bus caps)"
-        self.cycle_times.append(t_current)
-        self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(len(self.cycle_times)-1,
-                                                                  t_current,
-                                                                  msg))
-        t_current += self.period
+        self.add_write(msg,inverse_address,data_ones)        
 
         # One period
         msg = "R data 0 address 11..11 to check W0 worked"
-        self.cycle_times.append(t_current)
+        self.add_read(msg,self.probe_address,data_zeros) 
         self.read0_cycle=len(self.cycle_times)-1
-        self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(len(self.cycle_times)-1,
-                                                                  t_current,
-                                                                  msg))
-        t_current += self.period
 
         # One period
         msg = "Idle cycle (Read addr 00..00)"
-        self.cycle_times.append(t_current)
+        self.add_noop(msg,inverse_address,data_zeros)
         self.idle_cycle=len(self.cycle_times)-1        
-        self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(len(self.cycle_times)-1,
-                                                                  t_current,
-                                                                  msg))
-        t_current += self.period
 
         # One period
         msg = "W data 1 address 11..11 (to ensure a write of value worked)"
-        self.cycle_times.append(t_current)
+        self.add_write(msg,self.probe_address,data_ones)
         self.write1_cycle=len(self.cycle_times)-1
-        self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(len(self.cycle_times)-1,
-                                                                  t_current,
-                                                                  msg))
-        t_current += self.period
 
         # One period
         msg = "W data 0 address 00..00 (to clear bus caps)"
-        self.cycle_times.append(t_current)
-        self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(len(self.cycle_times)-1,
-                                                                  t_current,
-                                                                  msg))
-        t_current += self.period
+        self.add_write(msg,inverse_address,data_zeros)
         
         # One period
         msg = "R data 1 address 11..11 to check W1 worked"
-        self.cycle_times.append(t_current)
+        self.add_read(msg,self.probe_address,data_zeros)
         self.read1_cycle=len(self.cycle_times)-1
-        self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(len(self.cycle_times)-1,
-                                                                  t_current,
-                                                                  msg))
-        t_current += self.period
 
         # One period
         msg = "Idle cycle (Read addr 11..11)"
-        self.cycle_comments.append("Cycle{0}\t{1}ns:\t{2}".format(len(self.cycle_times)-1,
-                                                                  t_current,
-                                                                  msg))
-        self.cycle_times.append(t_current)
-        t_current += self.period
+        self.add_noop(msg,self.probe_address,data_zeros)
 
 
 
@@ -741,48 +784,24 @@ class delay():
                 }
         return data
 
-    def gen_data(self, clk_times, sig_name):
+    def gen_data(self):
         """ Generates the PWL data inputs for a simulation timing test. """
-        # values for NOP, W1, W0, W1, R0, NOP, W1, W0, R1, NOP
-        # we are asserting the opposite value on the other side of the tx gate during
-        # the read to be "worst case". Otherwise, it can actually assist the read.
-        values = [0, 1, 0, 1, 1, 1, 1, 0, 0, 0 ]
-        self.stim.gen_pwl(sig_name, clk_times, values, self.period, self.slew, 0.05)
+        for i in range(self.word_size):
+            sig_name="DIN[{0}]".format(i)
+            self.stim.gen_pwl(sig_name, self.cycle_times, self.data_values[i], self.period, self.slew, 0.05)
 
-    def gen_addr(self, clk_times, addr):
+    def gen_addr(self):
         """ 
         Generates the address inputs for a simulation timing test. 
         This alternates between all 1's and all 0's for the address.
         """
-
-        zero_values = [0, 0, 0, 1, 0, 0, 0, 1, 0, 0 ]
-        ones_values = [1, 1, 1, 0, 1, 0, 1, 0, 1, 1 ]
-
-        for i in range(len(addr)):
+        for i in range(self.addr_size):
             sig_name = "A[{0}]".format(i)
-            if addr[i]=="1":
-                self.stim.gen_pwl(sig_name, clk_times, ones_values, self.period, self.slew, 0.05)
-            else:
-                self.stim.gen_pwl(sig_name, clk_times, zero_values, self.period, self.slew, 0.05)
+            self.stim.gen_pwl(sig_name, self.cycle_times, self.addr_values[i], self.period, self.slew, 0.05)
 
 
-    def gen_csb(self, clk_times):
-        """ Generates the PWL CSb signal """
-        # values for NOP, W1, W0, W1, R0, NOP, W1, W0, R1, NOP
-        # Keep CSb asserted in NOP for measuring >1 period
-        values = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        self.stim.gen_pwl("csb", clk_times, values, self.period, self.slew, 0.05)
-
-    def gen_web(self, clk_times):
-        """ Generates the PWL WEb signal """
-        # values for NOP, W1, W0, W1, R0, NOP, W1, W0, R1, NOP
-        # Keep WEb deasserted in NOP for measuring >1 period
-        values = [1, 0, 0, 0, 1, 1, 0, 0, 1, 1]
-        self.stim.gen_pwl("web", clk_times, values, self.period, self.slew, 0.05)
-
-    def gen_oeb(self, clk_times):
-        """ Generates the PWL WEb signal """
-        # values for NOP, W1, W0, W1, R0, W1, W0, R1, NOP
-        # Keep OEb asserted in NOP for measuring >1 period
-        values = [1, 1, 1, 1, 0, 0, 1, 1, 0, 0]
-        self.stim.gen_pwl("oeb", clk_times, values, self.period, self.slew, 0.05)
+    def gen_control(self):
+        """ Generates the control signals """
+        self.stim.gen_pwl("csb", self.cycle_times, self.csb_values, self.period, self.slew, 0.05)
+        self.stim.gen_pwl("web", self.cycle_times, self.web_values, self.period, self.slew, 0.05)
+        self.stim.gen_pwl("oeb", self.cycle_times, self.oeb_values, self.period, self.slew, 0.05)

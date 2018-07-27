@@ -96,7 +96,9 @@ class pinv(pgate.pgate):
         nmos_height_available = 0.5 * tx_height_available - 0.5*drc["poly_to_poly"]
         pmos_height_available = 0.5 * tx_height_available - 0.5*drc["poly_to_poly"]
 
-        debug.info(2,"Height avail {0} PMOS height {1} NMOS height {2}".format(tx_height_available, nmos_height_available, pmos_height_available))
+        debug.info(2,"Height avail {0:.4f} PMOS {1:.4f} NMOS {2:.4f}".format(tx_height_available,
+                                                                             nmos_height_available,
+                                                                             pmos_height_available))
 
         # Determine the number of mults for each to fit width into available space
         self.nmos_width = self.nmos_size*drc["minwidth_tx"]

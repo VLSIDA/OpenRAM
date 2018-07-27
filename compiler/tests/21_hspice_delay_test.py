@@ -51,16 +51,16 @@ class timing_sram_test(openram_test):
         data = d.analyze(probe_address, probe_data, slews, loads)
 
         if OPTS.tech_name == "freepdk45":
-            golden_data = {'leakage_power': 0.0006964536000000001,
-                           'delay_lh': [0.0573055],
-                           'read0_power': [0.0337812],
-                           'read1_power': [0.032946500000000004],
-                           'write1_power': [0.0361529],
-                           'write0_power': [0.026179099999999997],
-                           'slew_hl': [0.0285185],
-                           'min_period': 0.205,
-                           'delay_hl': [0.070554],
-                           'slew_lh': [0.0190073]}
+            golden_data = {'delay_hl': [2.5614],
+                            'delay_lh': [0.22929839999999999],
+                            'leakage_power': 0.0020326,
+                            'min_period': 4.844,
+                            'read0_power': [0.0497676],
+                            'read1_power': [0.0463576],
+                            'slew_hl': [0.1119293],
+                            'slew_lh': [0.0237043],
+                            'write0_power': [0.0494321],
+                            'write1_power': [0.0457268]}
         elif OPTS.tech_name == "scn3me_subm":
             golden_data = {'delay_hl': [6.473300000000001],
                             'delay_lh': [1.0442000000000002],

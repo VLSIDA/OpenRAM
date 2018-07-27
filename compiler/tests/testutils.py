@@ -79,7 +79,7 @@ class openram_test(unittest.TestCase):
         if not data_matches:
             import pprint
             data_string=pprint.pformat(data)
-            debug.error("Data exceeded {:.1f}% tolerance:\n".format(error_tolerance*100)+data_string)
+            debug.error("Results exceeded {:.1f}% tolerance compared to golden results:\n".format(error_tolerance*100)+data_string)
         return data_matches
             
 

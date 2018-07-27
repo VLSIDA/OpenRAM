@@ -78,27 +78,31 @@ cell (sram_2_16_1_scn3me_subm){
     dont_use  : true;
     map_only   : true;
     dont_touch : true;
-    area : 134589.78;
+    area : 142800.38999999998;
 
     leakage_power () {
       when : "CSb";
-      value : 0.000173;
+      value : 0.000168;
     }
     cell_leakage_power : 0;
-    bus(DATA){
+    bus(DIN){
         bus_type  : DATA; 
-        direction  : inout; 
+        direction  : in; 
         max_capacitance : 78.5936;  
         min_capacitance : 2.45605;  
-        three_state : "!OEb & !clk"; 
         memory_write(){ 
             address : ADDR; 
             clocked_on  : clk; 
         }
+    bus(DOUT){
+        bus_type  : DATA; 
+        direction  : out; 
+        max_capacitance : 78.5936;  
+        min_capacitance : 2.45605;  
         memory_read(){ 
             address : ADDR; 
         }
-        pin(DATA[1:0]){
+        pin(DOUT[1:0]){
         timing(){ 
             timing_type : setup_rising; 
             related_pin  : "clk"; 
@@ -130,16 +134,16 @@ cell (sram_2_16_1_scn3me_subm){
         timing(){ 
             timing_sense : non_unate; 
             related_pin : "clk"; 
-            timing_type : falling_edge; 
+            timing_type : rising_edge; 
             cell_rise(CELL_TABLE) {
-            values("0.556, 0.603, 1.044",\
-                   "0.556, 0.603, 1.044",\
-                   "0.556, 0.603, 1.044");
+            values("0.54, 0.587, 1.028",\
+                   "0.54, 0.587, 1.028",\
+                   "0.54, 0.587, 1.028");
             }
             cell_fall(CELL_TABLE) {
-            values("0.556, 0.603, 1.044",\
-                   "0.556, 0.603, 1.044",\
-                   "0.556, 0.603, 1.044");
+            values("0.54, 0.587, 1.028",\
+                   "0.54, 0.587, 1.028",\
+                   "0.54, 0.587, 1.028");
             }
             rise_transition(CELL_TABLE) {
             values("0.024, 0.081, 0.61",\
@@ -298,19 +302,19 @@ cell (sram_2_16_1_scn3me_subm){
         internal_power(){
             when : "!CSb & clk & !WEb"; 
             rise_power(scalar){
-                values("10.9314668117");
+                values("10.559086132533329");
             }
             fall_power(scalar){
-                values("10.9314668117");
+                values("10.559086132533329");
             }
         }
         internal_power(){
             when : "!CSb & !clk & WEb"; 
             rise_power(scalar){
-                values("10.9314668117");
+                values("10.559086132533329");
             }
             fall_power(scalar){
-                values("10.9314668117");
+                values("10.559086132533329");
             }
         }
         internal_power(){
@@ -336,10 +340,10 @@ cell (sram_2_16_1_scn3me_subm){
             timing_type :"minimum_period"; 
             related_pin  : clk; 
             rise_constraint(scalar) {
-                values("0.0"); 
+                values("0"); 
             }
             fall_constraint(scalar) {
-                values("0.0"); 
+                values("0"); 
             }
          }
     }

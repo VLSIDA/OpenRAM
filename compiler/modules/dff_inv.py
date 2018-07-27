@@ -12,7 +12,7 @@ class dff_inv(design.design):
     do not have Qbar, so this will create it.
     """
 
-    def __init__(self, inv_size=1, name=""):
+    def __init__(self, inv_size=2, name=""):
 
         if name=="":
             name = "dff_inv_{0}".format(inv_size)
@@ -25,6 +25,8 @@ class dff_inv(design.design):
         self.dff = self.mod_dff("dff")
         self.add_mod(self.dff)
 
+        debug.check(inv_size>=2, "Inverter must be greater than two for rail spacing DRC rules.")
+        
         self.inv1 = pinv(size=inv_size,height=self.dff.height)
         self.add_mod(self.inv1)
 

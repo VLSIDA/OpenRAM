@@ -144,7 +144,7 @@ class stimuli():
         times = np.array(clk_times) - setup*period
         values = np.array(data_values) * self.voltage
         half_slew = 0.5 * slew
-        self.sf.write("* (time, data): {}\n".format(zip(clk_times, data_values)))
+        self.sf.write("* (time, data): {}\n".format(list(zip(clk_times, data_values))))
         self.sf.write("V{0} {0} 0 PWL (0n {1}v ".format(sig_name, values[0]))
         for i in range(1,len(times)):
             self.sf.write("{0}n {1}v {2}n {3}v ".format(times[i]-half_slew,

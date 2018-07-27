@@ -17,6 +17,7 @@ class timing_sram_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         OPTS.spice_name="ngspice"
         OPTS.analytical_delay = False
+        OPTS.trim_netlist = False
 
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
@@ -39,7 +40,7 @@ class timing_sram_test(openram_test):
 
         probe_address = "1" * s.s.addr_size
         probe_data = s.s.word_size - 1
-        debug.info(1, "Probe address {0} probe data {1}".format(probe_address, probe_data))
+        debug.info(1, "Probe address {0} probe data bit {1}".format(probe_address, probe_data))
 
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         d = delay(s.s, tempspice, corner)

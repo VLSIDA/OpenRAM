@@ -41,7 +41,7 @@ class timing_sram_test(openram_test):
 
         probe_address = "1" * s.s.addr_size
         probe_data = s.s.word_size - 1
-        debug.info(1, "Probe address {0} probe data {1}".format(probe_address, probe_data))
+        debug.info(1, "Probe address {0} probe data bit {1}".format(probe_address, probe_data))
 
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         d = delay(s.s, tempspice, corner)

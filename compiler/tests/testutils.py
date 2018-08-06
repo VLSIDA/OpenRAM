@@ -59,33 +59,78 @@ class openram_test(unittest.TestCase):
         # Reset the static duplicate name checker for unit tests.
         import hierarchy_design
         hierarchy_design.hierarchy_design.name_map=[]
-        
+
+    def check_golden_data(self, data, golden_data, error_tolerance=1e-2):
+        """
+        This function goes through two dictionaries, key by key and compares
+        each item. It uses relative comparisons for the items and returns false
+        if there is a mismatch.
+        """
+
+        # Check each result
+        data_matches = True
+        for k in data.keys():
+            if type(data[k])==list:
+                for i in range(len(data[k])):
+                    if not self.isclose(k,data[k][i],golden_data[k][i],error_tolerance):
+                        data_matches = False
+            else:
+                self.isclose(k,data[k],golden_data[k],error_tolerance)
+        if not data_matches:
+            import pprint
+            data_string=pprint.pformat(data)
+            debug.error("Results exceeded {:.1f}% tolerance compared to golden results:\n".format(error_tolerance*100)+data_string)
+        return data_matches
+            
 
 
-    def isclose(self, value1,value2,error_tolerance=1e-2):
+    def isclose(self,key,value,actual_value,error_tolerance=1e-2):
         """ This is used to compare relative values. """
         import debug
-        relative_diff = abs(value1 - value2) / max(value1,value2)
+        relative_diff = self.relative_diff(value,actual_value)
         check = relative_diff <= error_tolerance
-        if not check:
-            self.fail("NOT CLOSE {0} {1} relative diff={2}".format(value1,value2,relative_diff))
-        else:
-            debug.info(2,"CLOSE {0} {1} relative diff={2}".format(value1,value2,relative_diff))
-
-    def relative_compare(self, value1,value2,error_tolerance):
-        """ This is used to compare relative values. """
-        if (value1==value2): # if we don't need a relative comparison!
+        if check:
+            debug.info(2,"CLOSE\t{0: <10}\t{1:.3f}\t{2:.3f}\tdiff={3:.1f}%".format(key,value,actual_value,relative_diff*100))
             return True
-        return (abs(value1 - value2) / max(value1,value2) <= error_tolerance)
+        else:
+            debug.error("NOT CLOSE\t{0: <10}\t{1:.3f}\t{2:.3f}\tdiff={3:.1f}%".format(key,value,actual_value,relative_diff*100))
+            return False
 
-    def isapproxdiff(self, f1, f2, error_tolerance=0.001):
+    def relative_diff(self, value1, value2):
+        """ Compute the relative difference of two values and normalize to the largest. 
+        If largest value is 0, just return the difference."""
+
+        # Edge case to avoid divide by zero
+        if value1==0 and value2==0:
+            return 0.0
+
+        # Don't need relative, exact compare
+        if value1==value2:
+            return 0.0
+
+        # Get normalization value
+        norm_value = abs(max(value1, value2))
+        # Edge case where greater is a zero
+        if norm_value == 0:
+            min_value = abs(min(value1, value2))
+            
+        return abs(value1 - value2) / norm_value
+
+
+    def relative_compare(self, value,actual_value,error_tolerance):
+        """ This is used to compare relative values. """
+        if (value==actual_value): # if we don't need a relative comparison!
+            return True
+        return (abs(value - actual_value) / max(value,actual_value) <= error_tolerance)
+
+    def isapproxdiff(self, filename1, filename2, error_tolerance=0.001):
         """Compare two files.
 
         Arguments:
         
-        f1 -- First file name
+        filename1 -- First file name
         
-        f2 -- Second file name
+        filename2 -- Second file name
 
         Return value:
         
@@ -106,61 +151,93 @@ class openram_test(unittest.TestCase):
         (?: [Ee] [+-]? \d+ ) ?
         """
         rx = re.compile(numeric_const_pattern, re.VERBOSE)
-        with open(f1, 'rb') as fp1, open(f2, 'rb') as fp2:
-            while True:
-                b1 = fp1.readline().decode('utf-8')
-                b2 = fp2.readline().decode('utf-8')
-                #print "b1:",b1,
-                #print "b2:",b2,
+        fp1 = open(filename1, 'rb')
+        fp2 = open(filename2, 'rb')
+        mismatches=0
+        line_num=0
+        while True:
+            line_num+=1
+            line1 = fp1.readline().decode('utf-8')
+            line2 = fp2.readline().decode('utf-8')
+            #print("line1:",line1)
+            #print("line2:",line2)
 
-                # 1. Find all of the floats using a regex
-                b1_floats=rx.findall(b1)
-                b2_floats=rx.findall(b2)
-                debug.info(3,"b1_floats: "+str(b1_floats))
-                debug.info(3,"b2_floats: "+str(b2_floats))
-        
-                # 2. Remove the floats from the string
-                for f in b1_floats:
-                    b1=b1.replace(f,"",1)
-                for f in b2_floats:
-                    b2=b2.replace(f,"",1)
-                #print "b1:",b1,
-                #print "b2:",b2,
+            # 1. Find all of the floats using a regex
+            line1_floats=rx.findall(line1)
+            line2_floats=rx.findall(line2)
+            debug.info(3,"line1_floats: "+str(line1_floats))
+            debug.info(3,"line2_floats: "+str(line2_floats))
+
             
-                # 3. Check if remaining string matches
-                if b1 != b2:
-                    self.fail("MISMATCH Line: {0}\n!=\nLine: {1}".format(b1,b2))
+            # 2. Remove the floats from the string
+            for f in line1_floats:
+                line1=line1.replace(f,"",1)
+            for f in line2_floats:
+                line2=line2.replace(f,"",1)
+            #print("line1:",line1)
+            #print("line2:",line2)
 
-                # 4. Now compare that the floats match
-                if len(b1_floats)!=len(b2_floats):
-                    self.fail("MISMATCH Length {0} != {1}".format(len(b1_floats),len(b2_floats)))
-                for (f1,f2) in zip(b1_floats,b2_floats):
-                    if not self.relative_compare(float(f1),float(f2),error_tolerance):
-                        self.fail("MISMATCH Float {0} != {1}".format(f1,f2))
+            # 3. Convert to floats rather than strings
+            line1_floats = [float(x) for x in line1_floats]
+            line2_floats = [float(x) for x in line1_floats]
+            
+            # 4. Check if remaining string matches
+            if line1 != line2:
+                if mismatches==0:
+                    debug.error("Mismatching files:\nfile1={0}\nfile2={1}".format(filename1,filename2))
+                mismatches += 1
+                debug.error("MISMATCH Line ({0}):\n{1}\n!=\n{2}".format(line_num,line1.rstrip('\n'),line2.rstrip('\n')))
 
-                if not b1 and not b2:
-                    return
+            # 5. Now compare that the floats match
+            elif len(line1_floats)!=len(line2_floats):
+                if mismatches==0:
+                    debug.error("Mismatching files:\nfile1={0}\nfile2={1}".format(filename1,filename2))
+                mismatches += 1
+                debug.error("MISMATCH Line ({0}) Length {1} != {2}".format(line_num,len(line1_floats),len(line2_floats)))
+            else:
+                for (float1,float2) in zip(line1_floats,line2_floats):
+                    relative_diff = self.relative_diff(float1,float2)
+                    check = relative_diff <= error_tolerance
+                    if not check:
+                        if mismatches==0:
+                            debug.error("Mismatching files:\nfile1={0}\nfile2={1}".format(filename1,filename2))
+                        mismatches += 1
+                        debug.error("MISMATCH Line ({0}) Float {1} != {2} diff: {3:.1f}%".format(line_num,float1,float2,relative_diff*100))
+
+            # Only show the first 10 mismatch lines
+            if not line1 and not line2 or mismatches>10:
+                fp1.close()
+                fp2.close()
+                return mismatches==0
+
+        # Never reached
+        return False
 
 
-
-    def isdiff(self,file1,file2):
+    def isdiff(self,filename1,filename2):
         """ This is used to compare two files and display the diff if they are different.. """
         import debug
         import filecmp
         import difflib
-        check = filecmp.cmp(file1,file2)
+        check = filecmp.cmp(filename1,filename2)
         if not check:
-            debug.info(2,"MISMATCH {0} {1}".format(file1,file2))
-            f1 = open(file1,"r")
-            s1 = f1.readlines()
-            f2 = open(file2,"r")
+            debug.error("MISMATCH file1={0} file2={1}".format(filename1,filename2))
+            f1 = open(filename1,"r")
+            s1 = f1.readlines().decode('utf-8')
+            f1.close()
+            f2 = open(filename2,"r").decode('utf-8')
             s2 = f2.readlines()
+            f2.close()
+            mismatches=0
             for line in difflib.unified_diff(s1, s2):
-                debug.info(3,line)
-            self.fail("MISMATCH {0} {1}".format(file1,file2))
+                mismatches += 1
+                self.error("DIFF LINES:",line)
+                if mismatches>10:
+                    return False
+            return False
         else:
-            debug.info(2,"MATCH {0} {1}".format(file1,file2))
-
+            debug.info(2,"MATCH {0} {1}".format(filename1,filename2))
+        return True
 
 def header(filename, technology):
     # Skip the header for gitlab regression

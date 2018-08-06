@@ -55,7 +55,7 @@ class trim_spice():
             col_address = 0
         # 1. Keep cells in the bitcell array based on WL and BL
         wl_name = "wl[{}]".format(wl_address)
-        bl_name = "bl[{}]".format(self.words_per_row*data_bit + col_address)
+        bl_name = "bl[{}]".format(int(self.words_per_row*data_bit + col_address))
 
         # Prepend info about the trimming
         addr_msg = "Keeping {} address".format(address)

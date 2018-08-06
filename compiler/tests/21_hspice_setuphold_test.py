@@ -49,13 +49,8 @@ class timing_setup_test(openram_test):
 
         # Check if no too many or too few results
         self.assertTrue(len(data.keys())==len(golden_data.keys()))
-        # Check each result
-        for k in data.keys():
-            if type(data[k])==list:
-                for i in range(len(data[k])):
-                    self.isclose(data[k][i],golden_data[k][i],0.15)
-            else:
-                self.isclose(data[k],golden_data[k],0.15)
+
+        self.assertTrue(self.check_golden_data(data,golden_data,0.25))
 
         globals.end_openram()
         

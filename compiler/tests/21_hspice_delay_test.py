@@ -41,7 +41,7 @@ class timing_sram_test(openram_test):
 
         probe_address = "1" * s.s.addr_size
         probe_data = s.s.word_size - 1
-        debug.info(1, "Probe address {0} probe data {1}".format(probe_address, probe_data))
+        debug.info(1, "Probe address {0} probe data bit {1}".format(probe_address, probe_data))
 
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         d = delay(s.s, tempspice, corner)
@@ -49,41 +49,36 @@ class timing_sram_test(openram_test):
         loads = [tech.spice["msflop_in_cap"]*4]
         slews = [tech.spice["rise_time"]*2]
         data = d.analyze(probe_address, probe_data, slews, loads)
-        #print data
+
         if OPTS.tech_name == "freepdk45":
-            golden_data = {'leakage_power': 0.0006964536000000001,
-                           'delay_lh': [0.0573055],
-                           'read0_power': [0.0337812],
-                           'read1_power': [0.032946500000000004],
-                           'write1_power': [0.0361529],
-                           'write0_power': [0.026179099999999997],
-                           'slew_hl': [0.0285185],
-                           'min_period': 0.205,
-                           'delay_hl': [0.070554],
-                           'slew_lh': [0.0190073]}
+            golden_data = {'delay_hl': [2.5614],
+                            'delay_lh': [0.22929839999999999],
+                            'leakage_power': 0.0020326,
+                            'min_period': 4.844,
+                            'read0_power': [0.0497676],
+                            'read1_power': [0.0463576],
+                            'slew_hl': [0.1119293],
+                            'slew_lh': [0.0237043],
+                            'write0_power': [0.0494321],
+                            'write1_power': [0.0457268]}
         elif OPTS.tech_name == "scn3me_subm":
-            golden_data = {'leakage_power': 0.0004004581,
-                           'delay_lh': [0.6538954],
-                           'read0_power': [9.7622],
-                           'read1_power': [9.589],
-                           'write1_power': [10.8],
-                           'write0_power': [6.928400000000001],
-                           'slew_hl': [0.8321625],
-                           'min_period': 2.344,
-                           'delay_hl': [0.9019090999999999],
-                           'slew_lh': [0.5896232]}
+            golden_data = {'delay_hl': [6.0052],
+                            'delay_lh': [2.2886],
+                            'leakage_power': 0.025629199999999998,
+                            'min_period': 9.375,
+                            'read0_power': [8.8721],
+                            'read1_power': [8.3179],
+                            'slew_hl': [1.0746],
+                            'slew_lh': [0.413426],
+                            'write0_power': [8.6601],
+                            'write1_power': [8.0397]}
         else:
             self.assertTrue(False) # other techs fail
         # Check if no too many or too few results
         self.assertTrue(len(data.keys())==len(golden_data.keys()))
-        # Check each result
-        for k in data.keys():
-            if type(data[k])==list:
-                for i in range(len(data[k])):
-                    self.isclose(data[k][i],golden_data[k][i],0.15)
-            else:
-                self.isclose(data[k],golden_data[k],0.15)
 
+        self.assertTrue(self.check_golden_data(data,golden_data,0.25))
+        
         globals.end_openram()
         
 # instantiate a copdsay of the class to actually run the test

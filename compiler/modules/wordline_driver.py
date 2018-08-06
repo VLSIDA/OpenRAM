@@ -127,14 +127,14 @@ class wordline_driver(design.design):
                                                 mirror=inst_mirror))
             self.connect_inst(["en_bar[{0}]".format(row),
                                "in[{0}]".format(row),
-                               "net[{0}]".format(row),
+                               "wl_bar[{0}]".format(row),
                                "vdd", "gnd"])
             # add inv2
             self.inv2_inst.append(self.add_inst(name=name_inv2,
                                                 mod=self.inv,
                                                 offset=inv2_offset,
                                                 mirror=inst_mirror))
-            self.connect_inst(["net[{0}]".format(row),
+            self.connect_inst(["wl_bar[{0}]".format(row),
                                "wl[{0}]".format(row),
                                "vdd", "gnd"])
 

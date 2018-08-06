@@ -709,8 +709,8 @@ class layout(lef.lef):
         
     
     def create_channel_route(self, route_map, top_pins, bottom_pins, offset, 
-                                        layer_stack=("metal1", "via1", "metal2"), pitch=None,
-                                        vertical=False):
+                             layer_stack=("metal1", "via1", "metal2"), pitch=None,
+                             vertical=False):
         """
         This is a simple channel route for one-to-one connections that
         will jog the top route whenever there is a conflict. It does NOT
@@ -749,13 +749,11 @@ class layout(lef.lef):
         for top_name,top_pin in top_pins.items():
             for bot_name,bot_pin in bottom_pins.items():
                 if not vertical and abs(top_pin.center().x-bot_pin.center().x) < pitch:
-                    # The edges only go from top to bottom
-                    # since we will order tracks bottom up
                     vcg[top_name].append(bot_name)
+                    vcg[bot_name].append(top_name)                    
                 elif vertical and abs(top_pin.center().y-bot_pin.center().y) < pitch:
-                    # The edges only go from top to bottom
-                    # since we will order tracks bottom up
                     vcg[top_name].append(bot_name)
+                    vcg[bot_name].append(top_name)
 
         # This is the starting offset of the first trunk
         if vertical:

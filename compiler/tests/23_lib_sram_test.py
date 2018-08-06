@@ -48,7 +48,7 @@ class lib_test(openram_test):
         for filename in lib_files:
             libname = "{0}/{1}".format(OPTS.openram_temp,filename)
             golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),filename)
-            self.isapproxdiff(libname,golden,0.40)
+            self.assertTrue(self.isapproxdiff(libname,golden,0.40))
 
         reload(characterizer)
         globals.end_openram()

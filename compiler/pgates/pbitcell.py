@@ -1090,8 +1090,8 @@ class pbitcell(pgate.pgate):
         return row_pins
     
     
-    def list_column_pins(self):
-        """ Creates a list of all column pins """
+    def list_all_column_pins(self):
+        """ Creates a list of all bitline pins """
         column_pins = []
         for k in range(self.num_readwrite):
             column_pins.append("rwbl{0}".format(k))
@@ -1101,6 +1101,30 @@ class pbitcell(pgate.pgate):
             column_pins.append("wbl_bar{0}".format(k))
         for k in range(self.num_read):
             column_pins.append("rbl{0}".format(k))
+            column_pins.append("rbl_bar{0}".format(k))
+            
+        return column_pins
+        
+    def list_column_pins(self):
+        """ Creates a list of all bitline bar pins """
+        column_pins = []
+        for k in range(self.num_readwrite):
+            column_pins.append("rwbl{0}".format(k))
+        for k in range(self.num_write):
+            column_pins.append("wbl{0}".format(k))
+        for k in range(self.num_read):
+            column_pins.append("rbl{0}".format(k))
+            
+        return column_pins
+        
+    def list_column_bar_pins(self):
+        """ Creates a list of all bitline bar pins """
+        column_pins = []
+        for k in range(self.num_readwrite):
+            column_pins.append("rwbl_bar{0}".format(k))
+        for k in range(self.num_write):
+            column_pins.append("wbl_bar{0}".format(k))
+        for k in range(self.num_read):
             column_pins.append("rbl_bar{0}".format(k))
             
         return column_pins

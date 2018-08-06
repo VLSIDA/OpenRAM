@@ -62,9 +62,19 @@ class bitcell(design.design):
         return row_pins
     
     
-    def list_column_pins(self):
+    def list_all_column_pins(self):
         """ Creates a list of all column pins (except for gnd and vdd) """
         column_pins = ["bl", "br"]
+        return column_pins
+    
+    def list_column_pins(self):
+        """ Creates a list of all column pins (except for gnd and vdd) """
+        column_pins = ["bl"]
+        return column_pins
+        
+    def list_column_bar_pins(self):
+        """ Creates a list of all column pins (except for gnd and vdd) """
+        column_pins = ["br"]
         return column_pins
         
     def list_read_column_pins(self):

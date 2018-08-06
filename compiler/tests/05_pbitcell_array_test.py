@@ -29,21 +29,19 @@ class pbitcell_array_test(openram_test):
         a = bitcell_array.bitcell_array(name="pbitcell_array", cols=4, rows=4)
         self.local_check(a)
             
-        debug.info(2, "Testing 4x4 array for multiport bitcell, with read/write ports at the edge of the bit cell")
+        debug.info(2, "Testing 4x4 array for multiport bitcell, with write ports at the edge of the bit cell")
         OPTS.bitcell = "pbitcell"
         OPTS.rw_ports = 2
         OPTS.r_ports = 0
         OPTS.w_ports = 2
-        
-        debug.info(2, "Testing 4x4 array for multiport bitcell, with write ports at the edge of the bit cell")
         a = bitcell_array.bitcell_array(name="pbitcell_array", cols=4, rows=4)
         self.local_check(a)
         
+        debug.info(2, "Testing 4x4 array for multiport bitcell, with read/write ports at the edge of the bit cell")
+        OPTS.bitcell = "pbitcell"
         OPTS.rw_ports = 2
         OPTS.r_ports = 0
         OPTS.w_ports = 0
-        
-        debug.info(2, "Testing 4x4 array for multiport bitcell, with read/write ports at the edge of the bit cell")
         a = bitcell_array.bitcell_array(name="pbitcell_array", cols=4, rows=4)
         self.local_check(a)
 

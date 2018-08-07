@@ -15,10 +15,12 @@ class code_format_test(openram_test):
         source_codes = setup_files(source_code_dir)
         errors = 0
 
+        # Check for tabs or carriage returns
         for code in source_codes:
             if re.search("gdsMill", code):
                 continue
             errors += check_file_format_tab(code)
+            errors += check_file_format_carriage(code)            
 
         for code in source_codes:
             if re.search("gdsMill", code):
@@ -39,6 +41,7 @@ class code_format_test(openram_test):
                 continue
             errors += check_print_output(code)
 
+
         # fails if there are any tabs in any files
         self.assertEqual(errors, 0)
 
@@ -54,15 +57,43 @@ def setup_files(path):
 
 
 def check_file_format_tab(file_name):
-    """Check if any files contain tabs and return the number of tabs."""
+    """
+    Check if any files contain tabs and return the number of tabs.
+    """
     f = open(file_name, "r+b")
     key_positions = []
     for num, line in enumerate(f, 1):
         if b'\t' in line:
             key_positions.append(num)
     if len(key_positions) > 0:
+        if len(key_positions)>10:
+            line_numbers = key_positions[:10] + [" ..."]
+        else:
+            line_numbers = key_positoins
         debug.info(0, '\nFound ' + str(len(key_positions)) + ' tabs in ' +
-                   str(file_name) + ' (line ' + str(key_positions[0]) + ')')
+                   str(file_name) + ' (lines ' + ",".join(str(x) for x in line_positions) + ')')
+    f.close()
+    return len(key_positions)
+
+
+def check_file_format_carriage(file_name):
+    """
+    Check if file contains carriage returns at the end of lines 
+    and return the number of carriage return lines.
+    """
+
+    f = open(file_name, 'r+b')
+    key_positions = []
+    for num, line in enumerate(f.readlines()):
+        if b'\r\n' in line:
+            key_positions.append(num)
+    if len(key_positions) > 0:
+        if len(key_positions)>10:
+            line_numbers = key_positions[:10] + [" ..."]
+        else:
+            line_numbers = key_positoins
+        debug.info(0, '\nFound ' + str(len(key_positions)) + ' carriage returns in ' +
+                   str(file_name) + ' (lines ' + ",".join(str(x) for x in line_numbers) + ')')
     f.close()
     return len(key_positions)
 

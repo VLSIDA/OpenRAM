@@ -161,7 +161,7 @@ class bank_select(design.design):
         self.add_label_pin(text="bank_sel_bar",
                            layer="metal2",  
                            offset=vector(xoffset_bank_sel_bar, 0), 
-                           height=2*self.inv.height)
+                           height=self.inv.height)
         self.add_via_center(layers=("metal1","via1","metal2"),
                             offset=bank_sel_bar_pin.rc())
             

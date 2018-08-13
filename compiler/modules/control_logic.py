@@ -52,7 +52,7 @@ class control_logic(design.design):
         dff = dff_inv() 
         dff_height = dff.height
         
-        self.ctrl_dff_array = dff_inv_array(rows=3,columns=1)
+        self.ctrl_dff_array = dff_inv_array(rows=2,columns=1)
         self.add_mod(self.ctrl_dff_array)
         
         self.nand2 = pnand2(height=dff_height)
@@ -93,10 +93,10 @@ class control_logic(design.design):
         #self.cell_gap = max(self.m2_pitch,drc["pwell_to_nwell"])
 
         # List of input control signals
-        self.input_list =["csb","web","oeb"]
-        self.dff_output_list =["cs_bar", "cs", "we_bar", "we", "oe_bar", "oe"]        
+        self.input_list =["csb","web"]
+        self.dff_output_list =["cs_bar", "cs", "we_bar", "we"]        
         # list of output control signals (for making a vertical bus)
-        self.internal_bus_list = ["clk_buf", "clk_buf_bar", "we", "cs", "oe"]
+        self.internal_bus_list = ["clk_buf", "clk_buf_bar", "we", "cs"]
         # leave space for the bus plus one extra space
         self.internal_bus_width = (len(self.internal_bus_list)+1)*self.m2_pitch 
         # Ooutputs to the bank
@@ -190,14 +190,14 @@ class control_logic(design.design):
         (y_off,mirror)=self.get_offset(row)
 
 
-        # input: OE, clk_buf_bar,CS output: rbl_in_bar
+        # input: clk_buf_bar,CS output: rbl_in_bar
         self.rbl_in_bar_offset = vector(x_off, y_off)
         self.rbl_in_bar_inst=self.add_inst(name="nand3_rbl_in_bar",
-                                         mod=self.nand3,
+                                         mod=self.nand2,
                                          offset=self.rbl_in_bar_offset,
                                          mirror=mirror)
-        self.connect_inst(["clk_buf_bar", "oe", "cs", "rbl_in_bar", "vdd", "gnd"])
-        x_off += self.nand3.width
+        self.connect_inst(["clk_buf_bar", "cs", "rbl_in_bar", "vdd", "gnd"])
+        x_off += self.nand2.width
 
         # input: rbl_in_bar, output: rbl_in
         self.rbl_in_offset = vector(x_off, y_off)
@@ -306,7 +306,7 @@ class control_logic(design.design):
     def route_dffs(self):
         """ Route the input inverters """
 
-        dff_out_map = zip(["dout_bar[{}]".format(i) for i in range(3)], ["cs", "we", "oe"])
+        dff_out_map = zip(["dout_bar[{}]".format(i) for i in range(3)], ["cs", "we"])
         self.connect_vertical_bus(dff_out_map, self.ctrl_dff_inst, self.rail_offsets)
         
         # Connect the clock rail to the other clock rail
@@ -320,7 +320,6 @@ class control_logic(design.design):
 
         self.copy_layout_pin(self.ctrl_dff_inst, "din[0]", "csb")
         self.copy_layout_pin(self.ctrl_dff_inst, "din[1]", "web")
-        self.copy_layout_pin(self.ctrl_dff_inst, "din[2]", "oeb")
         
         
     def add_dffs(self):
@@ -388,7 +387,7 @@ class control_logic(design.design):
 
     def route_rbl_in(self):
         """ Connect the logic for the rbl_in generation """
-        rbl_in_map = zip(["A", "B", "C"], ["clk_buf_bar", "oe", "cs"])
+        rbl_in_map = zip(["A", "B"], ["clk_buf_bar", "cs"])
         self.connect_vertical_bus(rbl_in_map, self.rbl_in_bar_inst, self.rail_offsets)  
         
         # Connect the NAND3 output to the inverter

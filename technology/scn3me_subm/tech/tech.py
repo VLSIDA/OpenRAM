@@ -224,7 +224,7 @@ spice["nom_temperature"] = 25        # Nominal temperature (celcius)
 #FIXME: We don't use these everywhere...
 spice["vdd_name"] = "vdd"
 spice["gnd_name"] = "gnd"
-spice["control_signals"] = ["CSb", "WEb", "OEb"]
+spice["control_signals"] = ["CSB", "WEB"]
 spice["data_name"] = "DATA"
 spice["addr_name"] = "ADDR"
 spice["minwidth_tx"] = drc["minwidth_tx"]

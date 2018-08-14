@@ -99,7 +99,7 @@ class control_logic(design.design):
         self.internal_bus_list = ["clk_buf", "clk_buf_bar", "we", "cs"]
         # leave space for the bus plus one extra space
         self.internal_bus_width = (len(self.internal_bus_list)+1)*self.m2_pitch 
-        # Ooutputs to the bank
+        # Outputs to the bank
         self.output_list = ["s_en", "w_en", "clk_buf_bar", "clk_buf"]
         self.supply_list = ["vdd", "gnd"]
 
@@ -137,10 +137,11 @@ class control_logic(design.design):
         # This offset is used for placement of the control logic in
         # the SRAM level.
         self.control_logic_center = vector(self.ctrl_dff_inst.rx(), self.rbl_inst.by())
-        
-        self.height = self.rbl_inst.uy()
+
+        # Extra pitch on top and right
+        self.height = self.rbl_inst.uy() + self.m3_pitch
         # Max of modules or logic rows
-        self.width = max(self.rbl_inst.rx(), max([inst.rx() for inst in self.row_end_inst]))
+        self.width = max(self.rbl_inst.rx(), max([inst.rx() for inst in self.row_end_inst])) + self.m2_pitch
 
 
     def add_routing(self):

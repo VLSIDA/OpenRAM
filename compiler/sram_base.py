@@ -362,8 +362,7 @@ class sram_base(design):
             inputs.append("ADDR[{}]".format(i))
             outputs.append("A[{}]".format(i))
 
-        # FIXME clk->clk_buf
-        self.connect_inst(inputs + outputs + ["clk", "vdd", "gnd"])
+        self.connect_inst(inputs + outputs + ["clk_buf", "vdd", "gnd"])
 
     def add_data_dff(self, position):
         """ Add and place all data flops """
@@ -377,8 +376,7 @@ class sram_base(design):
             inputs.append("DIN[{}]".format(i))
             outputs.append("BANK_DIN[{}]".format(i))
 
-        # FIXME clk->clk_buf_bar
-        self.connect_inst(inputs + outputs + ["clk", "vdd", "gnd"])
+        self.connect_inst(inputs + outputs + ["clk_buf", "vdd", "gnd"])
         
     def add_control_logic(self, position):
         """ Add and place control logic """

@@ -29,26 +29,29 @@ class sram_1bank(sram_base):
         # No orientation or offset
         self.bank_inst = self.add_bank(0, [0, 0], 1, 1)
 
+        # The control logic is placed such that the center (between the delay/RBL and
+        # the actual control logic is aligned with the center of the bank (between
+        # the sense amps/column mux and cell array)
         control_pos = vector(-self.control_logic.width - self.m3_pitch,
                              self.bank.bank_center.y - self.control_logic.control_logic_center.y)
         self.add_control_logic(position=control_pos)
 
-        # Leave room for the control routes to the left of the flops
+        # The row address bits are placed above the control logic aligned on the right.
         row_addr_pos = vector(self.control_logic_inst.rx() - self.row_addr_dff.width,
-                          control_pos.y + self.control_logic.height + self.m1_pitch)
+                              self.control_logic_inst.uy())
         self.add_row_addr_dff(row_addr_pos)
 
         # This is M2 pitch even though it is on M1 to help stem via spacings on the trunk
         data_gap = -self.m2_pitch*(self.word_size+1)
         
         # Add the column address below the bank under the control
-        # Keep it aligned with the data flops
+        # The column address flops are aligned with the data flops
         if self.col_addr_dff:
             col_addr_pos = vector(self.bank.bank_center.x - self.col_addr_dff.width - self.bank.central_bus_width,
                                   data_gap - self.col_addr_dff.height)
             self.add_col_addr_dff(col_addr_pos)
         
-        # Add the data flops below the bank
+        # Add the data flops below the bank to the right of the center of bank:
         # This relies on the center point of the bank:
         # decoder in upper left, bank in upper right, sensing in lower right.
         # These flops go below the sensing and leave a gap to channel route to the
@@ -104,13 +107,34 @@ class sram_1bank(sram_base):
 
     def route_clk(self):
         """ Route the clock network """
-        debug.warning("Clock is top-level must connect.")
-        # For now, just have four clock pins for the address (x2), data, and control
-        if self.col_addr_dff:
-            self.copy_layout_pin(self.col_addr_dff_inst, "clk")
-        self.copy_layout_pin(self.row_addr_dff_inst, "clk")
-        self.copy_layout_pin(self.data_dff_inst, "clk")
+
+        # This is the actual input to the SRAM
         self.copy_layout_pin(self.control_logic_inst, "clk")
+
+        debug.warning("Clock is top-level must connect.")
+
+        # Connect all of these clock pins to the clock in the central bus
+        # This is something like a "spine" clock distribution. The two spines
+        # are clk_buf and clk_buf_bar
+        bank_clk_buf_pin = self.bank_inst.get_pin("clk_buf")
+        bank_clk_buf_pos = bank_clk_buf_pin.center()
+        bank_clk_buf_bar_pin = self.bank_inst.get_pin("clk_buf_bar")
+        bank_clk_buf_bar_pos = bank_clk_buf_bar_pin.center()
+
+        if self.col_addr_dff:
+            dff_clk_pin = self.col_addr_dff_inst.get_pin("clk")
+            dff_clk_pos = dff_clk_pin.center()
+            mid_pos = vector(bank_clk_buf_pos.x, dff_clk_pos.y)
+            self.add_wire(("metal3","via2","metal2"),[dff_clk_pos, mid_pos, bank_clk_buf_pos])
+
+        self.copy_layout_pin(self.row_addr_dff_inst, "clk")
+        #self.copy_layout_pin(self.data_dff_inst, "clk")
+        
+        data_dff_clk_pin = self.data_dff_inst.get_pin("clk")
+        data_dff_clk_pos = data_dff_clk_pin.center()
+        mid_pos = vector(bank_clk_buf_pos.x, data_dff_clk_pos.y)
+        self.add_wire(("metal3","via2","metal2"),[data_dff_clk_pos, mid_pos, bank_clk_buf_pos])
+        
         
     def route_vdd_gnd(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """

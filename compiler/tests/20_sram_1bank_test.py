@@ -35,7 +35,7 @@ class sram_1bank_test(openram_test):
         debug.info(1, "Single bank, eight way column mux with control logic")
         a = sram(word_size=2, num_words=128, num_banks=1, name="sram4")
         self.local_check(a, final_verification=True)
-        
+
         globals.end_openram()
         
 # instantiate a copy of the class to actually run the test

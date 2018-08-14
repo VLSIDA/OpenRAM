@@ -101,7 +101,6 @@ class bank(design.design):
         self.route_row_decoder()
         self.route_column_address_lines()
         self.route_control_lines()
-        self.add_control_pins()
         if self.num_banks > 1:
             self.route_bank_select()            
         
@@ -505,13 +504,15 @@ class bank(design.design):
         # and control lines.
         # The bank is at (0,0), so this is to the left of the y-axis.
         # 2 pitches on the right for vias/jogs to access the inputs 
-        control_bus_offset = vector(-self.m2_pitch * self.num_control_lines - self.m2_width, 0)
-        control_bus_length = self.bitcell_array_inst.uy()
-        self.bus_xoffset = self.create_vertical_bus(layer="metal2",
-                                                    pitch=self.m2_pitch,
-                                                    offset=control_bus_offset,
-                                                    names=self.control_signals,
-                                                    length=control_bus_length)
+        control_bus_offset = vector(-self.m2_pitch * self.num_control_lines - self.m2_width, self.min_y_offset)
+        control_bus_length = self.max_y_offset - self.min_y_offset
+        self.bus_xoffset = self.create_bus(layer="metal2",
+                                           pitch=self.m2_pitch,
+                                           offset=control_bus_offset,
+                                           names=self.control_signals,
+                                           length=control_bus_length,
+                                           vertical=True,
+                                           make_pins=(self.num_banks==1))
 
 
 
@@ -750,52 +751,7 @@ class bank(design.design):
                             offset=control_via_pos,
                             rotate=90)
         
-    def add_control_pins(self):
-        """ Add the control signal input pins """
 
-        for ctrl in self.control_signals:
-            # xoffsets are the center of the rail
-            x_offset = self.bus_xoffset[ctrl].x - 0.5*self.m2_width
-            if self.num_banks > 1:
-                # it's not an input pin if we have multiple banks
-                self.add_label_pin(text=ctrl,
-                                    layer="metal2",  
-                                    offset=vector(x_offset, self.min_y_offset), 
-                                    width=self.m2_width, 
-                                    height=self.max_y_offset-self.min_y_offset)
-            else:
-                self.add_layout_pin(text=ctrl,
-                                    layer="metal2",  
-                                    offset=vector(x_offset, self.min_y_offset), 
-                                    width=self.m2_width, 
-                                    height=self.max_y_offset-self.min_y_offset)
-
-
-    def connect_rail_from_right(self,inst, pin, rail):
-        """ Helper routine to connect an unrotated/mirrored oriented instance to the rails """
-        in_pin = inst.get_pin(pin).lc()
-        rail_pos = vector(self.rail_1_x_offsets[rail], in_pin.y)
-        self.add_wire(("metal3","via2","metal2"),[in_pin, rail_pos, rail_pos - vector(0,self.m2_pitch)])
-        # Bring it up to M2 for M2/M3 routing
-        self.add_via(layers=("metal1","via1","metal2"),
-                     offset=in_pin + contact.m1m2.offset,
-                     rotate=90)
-        self.add_via(layers=("metal2","via2","metal3"),
-                     offset=in_pin + self.m2m3_via_offset,
-                     rotate=90)
-        
-        
-    def connect_rail_from_left(self,inst, pin, rail):
-        """ Helper routine to connect an unrotated/mirrored oriented instance to the rails """
-        in_pin = inst.get_pin(pin).rc()
-        rail_pos = vector(self.rail_1_x_offsets[rail], in_pin.y)
-        self.add_wire(("metal3","via2","metal2"),[in_pin, rail_pos, rail_pos - vector(0,self.m2_pitch)])
-        self.add_via(layers=("metal1","via1","metal2"),
-                     offset=in_pin + contact.m1m2.offset,
-                     rotate=90)
-        self.add_via(layers=("metal2","via2","metal3"),
-                     offset=in_pin + self.m2m3_via_offset,
-                     rotate=90)
         
     def analytical_delay(self, slew, load):
         """ return  analytical delay of the bank"""

@@ -346,8 +346,7 @@ class sram_base(design):
             inputs.append("ADDR[{}]".format(i+self.col_addr_size))
             outputs.append("A[{}]".format(i+self.col_addr_size))
 
-        # FIXME clk->clk_buf
-        self.connect_inst(inputs + outputs + ["clk", "vdd", "gnd"])
+        self.connect_inst(inputs + outputs + ["clk_buf", "vdd", "gnd"])
 
         
     def add_col_addr_dff(self, position):

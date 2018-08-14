@@ -29,10 +29,12 @@ class sram_1bank(sram_base):
         # No orientation or offset
         self.bank_inst = self.add_bank(0, [0, 0], 1, 1)
 
-        # The control logic is placed such that the center (between the delay/RBL and
-        # the actual control logic is aligned with the center of the bank (between
+        # The control logic is placed such that the vertical center (between the delay/RBL and
+        # the actual control logic is aligned with the vertical center of the bank (between
         # the sense amps/column mux and cell array)
-        control_pos = vector(-self.control_logic.width - self.m3_pitch,
+        # The x-coordinate is placed to allow a single clock wire (plus an extra pitch)
+        # up to the row address DFFs.
+        control_pos = vector(-self.control_logic.width - 2*self.m2_pitch,
                              self.bank.bank_center.y - self.control_logic.control_logic_center.y)
         self.add_control_logic(position=control_pos)
 
@@ -111,11 +113,10 @@ class sram_1bank(sram_base):
         # This is the actual input to the SRAM
         self.copy_layout_pin(self.control_logic_inst, "clk")
 
-        debug.warning("Clock is top-level must connect.")
-
         # Connect all of these clock pins to the clock in the central bus
         # This is something like a "spine" clock distribution. The two spines
         # are clk_buf and clk_buf_bar
+        
         bank_clk_buf_pin = self.bank_inst.get_pin("clk_buf")
         bank_clk_buf_pos = bank_clk_buf_pin.center()
         bank_clk_buf_bar_pin = self.bank_inst.get_pin("clk_buf_bar")
@@ -126,14 +127,25 @@ class sram_1bank(sram_base):
             dff_clk_pos = dff_clk_pin.center()
             mid_pos = vector(bank_clk_buf_pos.x, dff_clk_pos.y)
             self.add_wire(("metal3","via2","metal2"),[dff_clk_pos, mid_pos, bank_clk_buf_pos])
-
-        self.copy_layout_pin(self.row_addr_dff_inst, "clk")
-        #self.copy_layout_pin(self.data_dff_inst, "clk")
         
         data_dff_clk_pin = self.data_dff_inst.get_pin("clk")
         data_dff_clk_pos = data_dff_clk_pin.center()
         mid_pos = vector(bank_clk_buf_pos.x, data_dff_clk_pos.y)
         self.add_wire(("metal3","via2","metal2"),[data_dff_clk_pos, mid_pos, bank_clk_buf_pos])
+
+        # This uses a metal2 track to the right of the control/row addr DFF
+        # to route vertically.
+        control_clk_buf_pin = self.control_logic_inst.get_pin("clk_buf")
+        control_clk_buf_pos = control_clk_buf_pin.rc()
+        row_addr_clk_pin = self.row_addr_dff_inst.get_pin("clk")
+        row_addr_clk_pos = row_addr_clk_pin.rc()
+        mid1_pos = vector(self.row_addr_dff_inst.rx() + self.m2_pitch,
+                          row_addr_clk_pos.y)
+        mid2_pos = vector(mid1_pos.x,
+                          control_clk_buf_pos.y)
+        # Note, the via to the control logic is taken care of when we route
+        # the control logic to the bank
+        self.add_wire(("metal3","via2","metal2"),[row_addr_clk_pos, mid1_pos, mid2_pos, control_clk_buf_pos])
         
         
     def route_vdd_gnd(self):

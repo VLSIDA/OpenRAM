@@ -42,6 +42,10 @@ class bank(design.design):
         self.num_words = num_words
         self.words_per_row = words_per_row
         self.num_banks = num_banks
+        
+        self.total_write = OPTS.rw_ports + OPTS.w_ports
+        self.total_read = OPTS.rw_ports + OPTS.r_ports
+        self.total_ports = OPTS.rw_ports + OPTS.w_ports + OPTS.r_ports
 
         # The local control signals are gated when we have bank select logic,
         # so this prefix will be added to all of the input signals to create
@@ -64,7 +68,7 @@ class bank(design.design):
         
 
         # Can remove the following, but it helps for debug!
-        self.add_lvs_correspondence_points() 
+        #self.add_lvs_correspondence_points() 
 
         # Remember the bank center for further placement
         self.bank_center=self.offset_all_coordinates().scale(-1,-1)
@@ -73,18 +77,25 @@ class bank(design.design):
 
     def add_pins(self):
         """ Adding pins for Bank module"""
-        for i in range(self.word_size):
-            self.add_pin("dout[{0}]".format(i),"OUT")
-        for i in range(self.word_size):
-            self.add_pin("din[{0}]".format(i),"IN")
-        for i in range(self.addr_size):
-            self.add_pin("addr[{0}]".format(i),"INPUT")
+        for k in range(self.total_read):
+            for i in range(self.word_size):
+                self.add_pin("dout{0}[{1}]".format(k,i),"OUT")
+        for k in range(self.total_write):
+            for i in range(self.word_size):
+                self.add_pin("din{0}[{1}]".format(k,i),"IN")
+        for k in range(self.total_ports):
+            for i in range(self.addr_size):
+                self.add_pin("addr{0}[{1}]".format(k,i),"INPUT")
 
         # For more than one bank, we have a bank select and name
         # the signals gated_*.
         if self.num_banks > 1:
             self.add_pin("bank_sel","INPUT")
-        for pin in ["s_en","w_en","tri_en_bar","tri_en",
+        for k in range(self.total_read):
+            self.add_pin("s_en{0}".format(k), "INPUT")
+        for k in range(self.total_write):
+            self.add_pin("w_en{0}".format(k), "INPUT")
+        for pin in ["tri_en_bar","tri_en",
                     "clk_buf_bar","clk_buf"]:
             self.add_pin(pin,"INPUT")
         self.add_pin("vdd","POWER")
@@ -152,7 +163,7 @@ class bank(design.design):
         # Number of control lines in the bus
         self.num_control_lines = 6
         # The order of the control signals on the control bus:
-        self.input_control_signals = ["clk_buf", "tri_en_bar", "tri_en", "clk_buf_bar", "w_en", "s_en"]
+        self.input_control_signals = ["clk_buf", "tri_en_bar", "tri_en", "clk_buf_bar", "w_en0", "s_en0"]
         # These will be outputs of the gaters if this is multibank, if not, normal signals.
         if self.num_banks > 1:
             self.control_signals = ["gated_"+str for str in self.input_control_signals]
@@ -173,7 +184,6 @@ class bank(design.design):
                           2*self.m2_pitch)
 
 
-
     def create_modules(self):
         """ Create all the modules using the class loader """
         self.tri = self.mod_tri_gate()
@@ -182,9 +192,23 @@ class bank(design.design):
         self.bitcell_array = self.mod_bitcell_array(cols=self.num_cols,
                                                     rows=self.num_rows)
         self.add_mod(self.bitcell_array)
+        
+        # create arrays of bitline and bitline_bar names for read, write, or all ports
+        self.read_bl_list = self.bitcell.list_read_column_pins()
+        self.read_br_list = self.bitcell.list_read_bar_column_pins()
+        
+        self.write_bl_list = self.bitcell.list_write_column_pins()
+        self.write_br_list = self.bitcell.list_write_bar_column_pins()
+        
+        self.total_bl_list = self.bitcell.list_column_pins()
+        self.total_br_list = self.bitcell.list_column_bar_pins()
+        
+        self.total_wl_list = self.bitcell.list_row_pins()
 
-        self.precharge_array = self.mod_precharge_array(columns=self.num_cols)
-        self.add_mod(self.precharge_array)
+        self.precharge_array = [None] * self.total_read
+        for k in range(self.total_read):
+            self.precharge_array[k] = self.mod_precharge_array(columns=self.num_cols, BL=self.read_bl_list[k], BR=self.read_br_list[k])
+            self.add_mod(self.precharge_array[k])
 
         if self.col_addr_size > 0:
             self.column_mux_array = self.mod_column_mux_array(columns=self.num_cols, 
@@ -224,97 +248,115 @@ class bank(design.design):
         self.bitcell_array_inst=self.add_inst(name="bitcell_array", 
                                               mod=self.bitcell_array,
                                               offset=vector(0,0))
+
         temp = []
-        for i in range(self.num_cols):
-            temp.append("bl[{0}]".format(i))
-            temp.append("br[{0}]".format(i))
-        for j in range(self.num_rows):
-            temp.append("wl[{0}]".format(j))
-        temp.extend(["vdd", "gnd"])
+        bl_list = self.bitcell.list_all_column_pins()
+        wl_list = self.bitcell.list_row_pins()
+        for col in range(self.num_cols):
+            for bitline in bl_list:
+                temp.append(bitline+"[{0}]".format(col))
+        for row in range(self.num_rows):
+            for wordline in wl_list:
+                    temp.append(wordline+"[{0}]".format(row))
+        temp.append("vdd")
+        temp.append("gnd")
         self.connect_inst(temp)
 
 
     def add_precharge_array(self):
         """ Adding Precharge """
 
-        # The wells must be far enough apart
-        # The enclosure is for the well and the spacing is to the bitcell wells
-        y_offset = self.bitcell_array.height + self.m2_gap
-        self.precharge_array_inst=self.add_inst(name="precharge_array",
-                                                mod=self.precharge_array, 
-                                                offset=vector(0,y_offset))
-        temp = []
-        for i in range(self.num_cols):
-            temp.append("bl[{0}]".format(i))
-            temp.append("br[{0}]".format(i))
-        temp.extend([self.prefix+"clk_buf_bar", "vdd"])
-        self.connect_inst(temp)
+        self.precharge_array_inst = [None] * self.total_read
+        
+        for k in range(self.total_read):
+            # The wells must be far enough apart
+            # The enclosure is for the well and the spacing is to the bitcell wells
+            y_offset = self.bitcell_array.height + self.m2_gap
+            self.precharge_array_inst[k]=self.add_inst(name="precharge_array{}".format(k),
+                                                       mod=self.precharge_array[k], 
+                                                       offset=vector(0,y_offset))
+            temp = []
+            for i in range(self.num_cols):
+                temp.append(self.read_bl_list[k]+"[{0}]".format(i))
+                temp.append(self.read_br_list[k]+"[{0}]".format(i))
+            temp.extend([self.prefix+"clk_buf_bar", "vdd"])
+            self.connect_inst(temp)
 
     def add_column_mux_array(self):
         """ Adding Column Mux when words_per_row > 1 . """
+
         if self.col_addr_size > 0:
             self.column_mux_height = self.column_mux_array.height + self.m2_gap
         else:
             self.column_mux_height = 0
             return
 
-        y_offset = self.column_mux_height 
-        self.col_mux_array_inst=self.add_inst(name="column_mux_array",
-                                              mod=self.column_mux_array,
-                                              offset=vector(0,y_offset).scale(-1,-1))
-        temp = []
-        for i in range(self.num_cols):
-            temp.append("bl[{0}]".format(i))
-            temp.append("br[{0}]".format(i))
-        for k in range(self.words_per_row):
-                temp.append("sel[{0}]".format(k))
-        for j in range(self.word_size):
-            temp.append("bl_out[{0}]".format(j))
-            temp.append("br_out[{0}]".format(j))
-        temp.append("gnd")
-        self.connect_inst(temp)
+        self.col_mux_array_inst = [None] * self.total_ports
+        
+        for k in range(self.total_ports):
+            y_offset = self.column_mux_height 
+            self.col_mux_array_inst[k]=self.add_inst(name="column_mux_array{}".format(k),
+                                                     mod=self.column_mux_array,
+                                                     offset=vector(0,y_offset).scale(-1,-1))
+            temp = []
+            for i in range(self.num_cols):
+                temp.append(self.total_bl_list[k]+"[{0}]".format(i))
+                temp.append(self.total_br_list[k]+"[{0}]".format(i))
+            for h in range(self.words_per_row):
+                    temp.append("sel{0}[{1}]".format(k,h))
+            for j in range(self.word_size):
+                temp.append(self.total_bl_list[k]+"_out[{0}]".format(j))
+                temp.append(self.total_br_list[k]+"_out[{0}]".format(j))
+            temp.append("gnd")
+            self.connect_inst(temp)
 
     def add_sense_amp_array(self):
         """ Adding Sense amp  """
 
-        y_offset = self.column_mux_height + self.sense_amp_array.height + self.m2_gap
-        self.sense_amp_array_inst=self.add_inst(name="sense_amp_array",
-                                                mod=self.sense_amp_array,
-                                                offset=vector(0,y_offset).scale(-1,-1))
-        temp = []
-        for i in range(self.word_size):
-            temp.append("dout[{0}]".format(i))
-            if self.words_per_row == 1:
-                temp.append("bl[{0}]".format(i))
-                temp.append("br[{0}]".format(i))
-            else:
-                temp.append("bl_out[{0}]".format(i))
-                temp.append("br_out[{0}]".format(i))
-                
-        temp.extend([self.prefix+"s_en", "vdd", "gnd"])
-        self.connect_inst(temp)
+        self.sense_amp_array_inst = [None] * self.total_read
+        
+        for k in range(self.total_read):
+            y_offset = self.column_mux_height + self.sense_amp_array.height + self.m2_gap
+            self.sense_amp_array_inst[k]=self.add_inst(name="sense_amp_array{}".format(k),
+                                                       mod=self.sense_amp_array,
+                                                       offset=vector(0,y_offset).scale(-1,-1))
+            temp = []
+            for i in range(self.word_size):
+                temp.append("dout{0}[{1}]".format(k,i))
+                if self.words_per_row == 1:
+                    temp.append(self.read_bl_list[k]+"[{0}]".format(i))
+                    temp.append(self.read_br_list[k]+"[{0}]".format(i))
+                else:
+                    temp.append(self.read_bl_list[k]+"_out[{0}]".format(i))
+                    temp.append(self.read_br_list[k]+"_out[{0}]".format(i))
+                    
+            temp.extend([self.prefix+"s_en{0}".format(k), "vdd", "gnd"])
+            self.connect_inst(temp)
 
     def add_write_driver_array(self):
         """ Adding Write Driver  """
 
-        y_offset = self.sense_amp_array.height + self.column_mux_height \
-            + self.m2_gap + self.write_driver_array.height 
-        self.write_driver_array_inst=self.add_inst(name="write_driver_array", 
-                                                   mod=self.write_driver_array, 
-                                                   offset=vector(0,y_offset).scale(-1,-1))
+        self.write_driver_array_inst = [None] * self.total_write
+        
+        for k in range(self.total_write):
+            y_offset = self.sense_amp_array.height + self.column_mux_height \
+                + self.m2_gap + self.write_driver_array.height 
+            self.write_driver_array_inst[k]=self.add_inst(name="write_driver_array{}".format(k), 
+                                                          mod=self.write_driver_array, 
+                                                          offset=vector(0,y_offset).scale(-1,-1))
 
-        temp = []
-        for i in range(self.word_size):
-            temp.append("din[{0}]".format(i))
-        for i in range(self.word_size):            
-            if (self.words_per_row == 1):            
-                temp.append("bl[{0}]".format(i))
-                temp.append("br[{0}]".format(i))
-            else:
-                temp.append("bl_out[{0}]".format(i))
-                temp.append("br_out[{0}]".format(i))
-        temp.extend([self.prefix+"w_en", "vdd", "gnd"])
-        self.connect_inst(temp)
+            temp = []
+            for i in range(self.word_size):
+                temp.append("din{0}[{1}]".format(k,i))
+            for i in range(self.word_size):            
+                if (self.words_per_row == 1):            
+                    temp.append(self.write_bl_list[k]+"[{0}]".format(i))
+                    temp.append(self.write_br_list[k]+"[{0}]".format(i))
+                else:
+                    temp.append(self.write_bl_list[k]+"_out[{0}]".format(i))
+                    temp.append(self.write_br_list[k]+"_out[{0}]".format(i))
+            temp.extend([self.prefix+"w_en{0}".format(k), "vdd", "gnd"])
+            self.connect_inst(temp)
 
     def add_tri_gate_array(self):
         """ data tri gate to drive the data bus """
@@ -328,71 +370,80 @@ class bank(design.design):
         for i in range(self.word_size):
             temp.append("sa_out[{0}]".format(i))
         for i in range(self.word_size):
-            temp.append("dout[{0}]".format(i))
+            temp.append("dout0[{0}]".format(i))
         temp.extend([self.prefix+"tri_en", self.prefix+"tri_en_bar", "vdd", "gnd"])
         self.connect_inst(temp)
 
     def add_row_decoder(self):
         """  Add the hierarchical row decoder  """
 
-        
         # The address and control bus will be in between decoder and the main memory array 
         # This bus will route address bits to the decoder input and column mux inputs. 
         # The wires are actually routed after we placed the stuff on both sides.
         # The predecoder is below the x-axis and the main decoder is above the x-axis
         # The address flop and decoder are aligned in the x coord.
         
-        x_offset = -(self.row_decoder.width + self.central_bus_width + self.wordline_driver.width)
-        self.row_decoder_inst=self.add_inst(name="row_decoder", 
-                                            mod=self.row_decoder, 
-                                            offset=vector(x_offset,0))
+        self.row_decoder_inst = [None] * self.total_ports
+        
+        for k in range(self.total_ports):
+            x_offset = -(self.row_decoder.width + self.central_bus_width + self.wordline_driver.width)
+            self.row_decoder_inst[k]=self.add_inst(name="row_decoder{}".format(k), 
+                                                   mod=self.row_decoder, 
+                                                   offset=vector(x_offset,0))
 
-        temp = []
-        for i in range(self.row_addr_size):
-            temp.append("addr[{0}]".format(i+self.col_addr_size))
-        for j in range(self.num_rows):
-            temp.append("dec_out[{0}]".format(j))
-        temp.extend(["vdd", "gnd"])
-        self.connect_inst(temp)
+            temp = []
+            for i in range(self.row_addr_size):
+                temp.append("addr{0}[{1}]".format(k,i+self.col_addr_size))
+            for j in range(self.num_rows):
+                temp.append("dec_out{0}[{1}]".format(k,j))
+            temp.extend(["vdd", "gnd"])
+            self.connect_inst(temp)
 
     def add_wordline_driver(self):
         """ Wordline Driver """
 
-        # The wordline driver is placed to the right of the main decoder width.
-        x_offset = -(self.central_bus_width + self.wordline_driver.width) + self.m2_pitch
-        self.wordline_driver_inst=self.add_inst(name="wordline_driver", 
-                                                mod=self.wordline_driver, 
-                                                offset=vector(x_offset,0))
+        self.wordline_driver_inst = [None] * self.total_ports
+        
+        for k in range(self.total_ports):
+            # The wordline driver is placed to the right of the main decoder width.
+            x_offset = -(self.central_bus_width + self.wordline_driver.width) + self.m2_pitch
+            self.wordline_driver_inst[k]=self.add_inst(name="wordline_driver{}".format(k), 
+                                                       mod=self.wordline_driver, 
+                                                       offset=vector(x_offset,0))
 
-        temp = []
-        for i in range(self.num_rows):
-            temp.append("dec_out[{0}]".format(i))
-        for i in range(self.num_rows):
-            temp.append("wl[{0}]".format(i))
-        temp.append(self.prefix+"clk_buf")
-        temp.append("vdd")
-        temp.append("gnd")
-        self.connect_inst(temp)
+            temp = []
+            for i in range(self.num_rows):
+                temp.append("dec_out{0}[{1}]".format(k,i))
+            for i in range(self.num_rows):
+                temp.append(self.total_wl_list[k]+"[{0}]".format(i))
+            temp.append(self.prefix+"clk_buf")
+            temp.append("vdd")
+            temp.append("gnd")
+            self.connect_inst(temp)
 
         
     def add_column_decoder_module(self):
         """ 
         Create a 2:4 or 3:8 column address decoder.
         """
-        # Place the col decoder right aligned with row decoder
-        x_off = -(self.central_bus_width + self.wordline_driver.width + self.col_decoder.width)
-        y_off = -(self.col_decoder.height + 2*drc["well_to_well"])
-        self.col_decoder_inst=self.add_inst(name="col_address_decoder", 
-                                            mod=self.col_decoder, 
-                                            offset=vector(x_off,y_off))
+        
+        self.col_decoder_inst = [None] * self.total_ports
+        
+        for k in range(self.total_ports):
+            # Place the col decoder right aligned with row decoder
+            x_off = -(self.central_bus_width + self.wordline_driver.width + self.col_decoder.width)
+            y_off = -(self.col_decoder.height + 2*drc["well_to_well"])
+            self.col_decoder_inst[k]=self.add_inst(name="col_address_decoder{}".format(k), 
+                                                   mod=self.col_decoder, 
+                                                   offset=vector(x_off,y_off))
 
-        temp = []
-        for i in range(self.col_addr_size):
-            temp.append("addr[{0}]".format(i))
-        for j in range(self.num_col_addr_lines):
-            temp.append("sel[{0}]".format(j))
-        temp.extend(["vdd", "gnd"])
-        self.connect_inst(temp)
+            temp = []
+            for i in range(self.col_addr_size):
+                temp.append("addr{0}[{1}]".format(k,i))
+            for j in range(self.num_col_addr_lines):
+                temp.append("sel{0}[{1}]".format(k,j))
+            temp.extend(["vdd", "gnd"])
+            self.connect_inst(temp)
         
     def add_column_decoder(self):
         """ 
@@ -423,9 +474,9 @@ class bank(design.design):
         
         x_off = -(self.row_decoder.width + self.central_bus_width + self.wordline_driver.width)
         if self.col_addr_size > 0:
-            y_off = min(self.col_decoder_inst.by(), self.col_mux_array_inst.by())
+            y_off = min(self.col_decoder_inst[0].by(), self.col_mux_array_inst[0].by())
         else:
-            y_off = self.row_decoder_inst.by()
+            y_off = self.row_decoder_inst[0].by()
         y_off -= (self.bank_select.height + drc["well_to_well"])
         self.bank_select_pos = vector(x_off,y_off)
         self.bank_select_inst = self.add_inst(name="bank_select",
@@ -444,16 +495,16 @@ class bank(design.design):
 
         # These are the instances that every bank has
         top_instances = [self.bitcell_array_inst,
-                         self.precharge_array_inst,
-                         self.sense_amp_array_inst,
-                         self.write_driver_array_inst,
+                         self.precharge_array_inst[0],
+                         self.sense_amp_array_inst[0],
+                         self.write_driver_array_inst[0],
 #                         self.tri_gate_array_inst,
-                         self.row_decoder_inst,
-                         self.wordline_driver_inst]
+                         self.row_decoder_inst[0],
+                         self.wordline_driver_inst[0]]
         # Add these if we use the part...
         if self.col_addr_size > 0:
-            top_instances.append(self.col_decoder_inst)
-            top_instances.append(self.col_mux_array_inst)
+            top_instances.append(self.col_decoder_inst[0])
+            top_instances.append(self.col_mux_array_inst[0])
             
         if self.num_banks > 1:
             top_instances.append(self.bank_select_inst)
@@ -461,10 +512,10 @@ class bank(design.design):
         
         for inst in top_instances:
             # Column mux has no vdd
-            if self.col_addr_size==0 or (self.col_addr_size>0 and inst != self.col_mux_array_inst):
+            if self.col_addr_size==0 or (self.col_addr_size>0 and inst != self.col_mux_array_inst[0]):
                 self.copy_layout_pin(inst, "vdd")
             # Precharge has no gnd
-            if inst != self.precharge_array_inst:
+            if inst != self.precharge_array_inst[0]:
                 self.copy_layout_pin(inst, "gnd")
         
     def route_bank_select(self):
@@ -497,10 +548,10 @@ class bank(design.design):
         #driver.
         # Leave room for the output below the tri gate.
         #tri_gate_min_y_offset = self.tri_gate_array_inst.by() - 3*self.m2_pitch
-        write_driver_min_y_offset = self.write_driver_array_inst.by() - 3*self.m2_pitch        
-        row_decoder_min_y_offset = self.row_decoder_inst.by()
+        write_driver_min_y_offset = self.write_driver_array_inst[0].by() - 3*self.m2_pitch        
+        row_decoder_min_y_offset = self.row_decoder_inst[0].by()
         if self.col_addr_size > 0:
-            col_decoder_min_y_offset = self.col_decoder_inst.by()
+            col_decoder_min_y_offset = self.col_decoder_inst[0].by()
         else:
             col_decoder_min_y_offset = row_decoder_min_y_offset
         
@@ -514,9 +565,9 @@ class bank(design.design):
 
         # The max point is always the top of the precharge bitlines
         # Add a vdd and gnd power rail above the array
-        self.max_y_offset = self.precharge_array_inst.uy() + 3*self.m1_width
+        self.max_y_offset = self.precharge_array_inst[0].uy() + 3*self.m1_width
         self.max_x_offset = self.bitcell_array_inst.ur().x + 3*self.m1_width
-        self.min_x_offset = self.row_decoder_inst.lx() 
+        self.min_x_offset = self.row_decoder_inst[0].lx() 
         
         # # Create the core bbox for the power rings
         ur = vector(self.max_x_offset, self.max_y_offset)
@@ -547,18 +598,19 @@ class bank(design.design):
 
     def route_precharge_to_bitcell_array(self):
         """ Routing of BL and BR between pre-charge and bitcell array """
+        
+        for k in range(self.total_read):
+            for i in range(self.num_cols):
+                precharge_bl = self.precharge_array_inst[k].get_pin(self.read_bl_list[k]+"[{}]".format(i)).bc()
+                precharge_br = self.precharge_array_inst[k].get_pin(self.read_br_list[k]+"[{}]".format(i)).bc()
+                bitcell_bl = self.bitcell_array_inst.get_pin(self.read_bl_list[k]+"[{}]".format(i)).uc()
+                bitcell_br = self.bitcell_array_inst.get_pin(self.read_br_list[k]+"[{}]".format(i)).uc()
 
-        for i in range(self.num_cols):
-            precharge_bl = self.precharge_array_inst.get_pin("bl[{}]".format(i)).bc()
-            precharge_br = self.precharge_array_inst.get_pin("br[{}]".format(i)).bc()
-            bitcell_bl = self.bitcell_array_inst.get_pin("bl[{}]".format(i)).uc()
-            bitcell_br = self.bitcell_array_inst.get_pin("br[{}]".format(i)).uc()
-
-            yoffset = 0.5*(precharge_bl.y+bitcell_bl.y)
-            self.add_path("metal2",[precharge_bl, vector(precharge_bl.x,yoffset),
-                                    vector(bitcell_bl.x,yoffset), bitcell_bl])
-            self.add_path("metal2",[precharge_br, vector(precharge_br.x,yoffset),
-                                    vector(bitcell_br.x,yoffset), bitcell_br])
+                yoffset = 0.5*(precharge_bl.y+bitcell_bl.y)
+                self.add_path("metal2",[precharge_bl, vector(precharge_bl.x,yoffset),
+                                        vector(bitcell_bl.x,yoffset), bitcell_bl])
+                self.add_path("metal2",[precharge_br, vector(precharge_br.x,yoffset),
+                                        vector(bitcell_br.x,yoffset), bitcell_br])
 
 
     def route_col_mux_to_bitcell_array(self):
@@ -568,40 +620,42 @@ class bank(design.design):
         if self.col_addr_size==0:
             return
         
-        for i in range(self.num_cols):
-            col_mux_bl = self.col_mux_array_inst.get_pin("bl[{}]".format(i)).uc()
-            col_mux_br = self.col_mux_array_inst.get_pin("br[{}]".format(i)).uc()
-            bitcell_bl = self.bitcell_array_inst.get_pin("bl[{}]".format(i)).bc()
-            bitcell_br = self.bitcell_array_inst.get_pin("br[{}]".format(i)).bc()
+        for k in range(self.total_ports):
+            for i in range(self.num_cols):
+                col_mux_bl = self.col_mux_array_inst[k].get_pin("bl[{}]".format(i)).uc()
+                col_mux_br = self.col_mux_array_inst[k].get_pin("br[{}]".format(i)).uc()
+                bitcell_bl = self.bitcell_array_inst.get_pin(self.total_bl_list[k]+"[{}]".format(i)).bc()
+                bitcell_br = self.bitcell_array_inst.get_pin(self.total_br_list[k]+"[{}]".format(i)).bc()
 
-            yoffset = 0.5*(col_mux_bl.y+bitcell_bl.y)
-            self.add_path("metal2",[col_mux_bl, vector(col_mux_bl.x,yoffset),
-                                    vector(bitcell_bl.x,yoffset), bitcell_bl])
-            self.add_path("metal2",[col_mux_br, vector(col_mux_br.x,yoffset),
-                                    vector(bitcell_br.x,yoffset), bitcell_br])
+                yoffset = 0.5*(col_mux_bl.y+bitcell_bl.y)
+                self.add_path("metal2",[col_mux_bl, vector(col_mux_bl.x,yoffset),
+                                        vector(bitcell_bl.x,yoffset), bitcell_bl])
+                self.add_path("metal2",[col_mux_br, vector(col_mux_br.x,yoffset),
+                                        vector(bitcell_br.x,yoffset), bitcell_br])
         
     def route_sense_amp_to_col_mux_or_bitcell_array(self):
         """ Routing of BL and BR between sense_amp and column mux or bitcell array """
 
-        for i in range(self.word_size):
-            sense_amp_bl = self.sense_amp_array_inst.get_pin("bl[{}]".format(i)).uc()
-            sense_amp_br = self.sense_amp_array_inst.get_pin("br[{}]".format(i)).uc()
+        for k in range(self.total_read):
+            for i in range(self.word_size):
+                sense_amp_bl = self.sense_amp_array_inst[k].get_pin("bl[{}]".format(i)).uc()
+                sense_amp_br = self.sense_amp_array_inst[k].get_pin("br[{}]".format(i)).uc()
 
-            if self.col_addr_size>0:
-                # Sense amp is connected to the col mux
-                connect_bl = self.col_mux_array_inst.get_pin("bl_out[{}]".format(i)).bc()
-                connect_br = self.col_mux_array_inst.get_pin("br_out[{}]".format(i)).bc()
-            else:
-                # Sense amp is directly connected to the bitcell array
-                connect_bl = self.bitcell_array_inst.get_pin("bl[{}]".format(i)).bc()
-                connect_br = self.bitcell_array_inst.get_pin("br[{}]".format(i)).bc()
-            
+                if self.col_addr_size>0:
+                    # Sense amp is connected to the col mux
+                    connect_bl = self.col_mux_array_inst[k].get_pin("bl_out[{}]".format(i)).bc()
+                    connect_br = self.col_mux_array_inst[k].get_pin("br_out[{}]".format(i)).bc()
+                else:
+                    # Sense amp is directly connected to the bitcell array
+                    connect_bl = self.bitcell_array_inst.get_pin(self.read_bl_list[k]+"[{}]".format(i)).bc()
+                    connect_br = self.bitcell_array_inst.get_pin(self.read_br_list[k]+"[{}]".format(i)).bc()
                 
-            yoffset = 0.5*(sense_amp_bl.y+connect_bl.y)
-            self.add_path("metal2",[sense_amp_bl, vector(sense_amp_bl.x,yoffset),
-                                    vector(connect_bl.x,yoffset), connect_bl])
-            self.add_path("metal2",[sense_amp_br, vector(sense_amp_br.x,yoffset),
-                                    vector(connect_br.x,yoffset), connect_br])
+                    
+                yoffset = 0.5*(sense_amp_bl.y+connect_bl.y)
+                self.add_path("metal2",[sense_amp_bl, vector(sense_amp_bl.x,yoffset),
+                                        vector(connect_bl.x,yoffset), connect_bl])
+                self.add_path("metal2",[sense_amp_br, vector(sense_amp_br.x,yoffset),
+                                        vector(connect_br.x,yoffset), connect_br])
             
     def route_sense_amp_to_trigate(self):
         """ Routing of sense amp output to tri_gate input """
@@ -609,7 +663,7 @@ class bank(design.design):
         for i in range(self.word_size):
             # Connection of data_out of sense amp to data_in 
             tri_gate_in = self.tri_gate_array_inst.get_pin("in[{}]".format(i)).lc()
-            sa_data_out = self.sense_amp_array_inst.get_pin("data[{}]".format(i)).bc()
+            sa_data_out = self.sense_amp_array_inst[0].get_pin("data[{}]".format(i)).bc()
 
             self.add_via_center(layers=("metal2", "via2", "metal3"),
                                 offset=tri_gate_in)
@@ -620,8 +674,8 @@ class bank(design.design):
     def route_sense_amp_out(self):
         """ Add pins for the sense amp output """
         for i in range(self.word_size):
-            data_pin = self.sense_amp_array_inst.get_pin("data[{}]".format(i))
-            self.add_layout_pin_rect_center(text="dout[{}]".format(i),
+            data_pin = self.sense_amp_array_inst[0].get_pin("data[{}]".format(i))
+            self.add_layout_pin_rect_center(text="dout0[{}]".format(i),
                                             layer=data_pin.layer, 
                                             offset=data_pin.center(),
                                             height=data_pin.height(),
@@ -631,7 +685,7 @@ class bank(design.design):
         """ Metal 3 routing of tri_gate output data """
         for i in range(self.word_size):
             data_pin = self.tri_gate_array_inst.get_pin("out[{}]".format(i))
-            self.add_layout_pin_rect_center(text="dout[{}]".format(i),
+            self.add_layout_pin_rect_center(text="dout0[{}]".format(i),
                                             layer=data_pin.layer, 
                                             offset=data_pin.center(),
                                             height=data_pin.height(),
@@ -645,8 +699,8 @@ class bank(design.design):
         for i in range(self.row_addr_size):
             addr_idx = i + self.col_addr_size
             decoder_name = "addr[{}]".format(i)
-            addr_name = "addr[{}]".format(addr_idx)
-            self.copy_layout_pin(self.row_decoder_inst, decoder_name, addr_name)
+            addr_name = "addr0[{}]".format(addr_idx)
+            self.copy_layout_pin(self.row_decoder_inst[0], decoder_name, addr_name)
             
             
     def route_write_driver(self):
@@ -654,29 +708,30 @@ class bank(design.design):
         
         for i in range(self.word_size):
             data_name = "data[{}]".format(i)            
-            din_name = "din[{}]".format(i)
-            self.copy_layout_pin(self.write_driver_array_inst, data_name, din_name)
+            din_name = "din0[{}]".format(i)
+            self.copy_layout_pin(self.write_driver_array_inst[0], data_name, din_name)
                         
 
     
     def route_wordline_driver(self):
         """ Connecting Wordline driver output to Bitcell WL connection  """
-        
-        # we don't care about bends after connecting to the input pin, so let the path code decide.
-        for i in range(self.num_rows):
-            # The pre/post is to access the pin from "outside" the cell to avoid DRCs
-            decoder_out_pos = self.row_decoder_inst.get_pin("decode[{}]".format(i)).rc()
-            driver_in_pos = self.wordline_driver_inst.get_pin("in[{}]".format(i)).lc()
-            mid1 = decoder_out_pos.scale(0.5,1)+driver_in_pos.scale(0.5,0)
-            mid2 = decoder_out_pos.scale(0.5,0)+driver_in_pos.scale(0.5,1)
-            self.add_path("metal1", [decoder_out_pos, mid1, mid2, driver_in_pos])
 
-            # The mid guarantees we exit the input cell to the right.
-            driver_wl_pos = self.wordline_driver_inst.get_pin("wl[{}]".format(i)).rc()
-            bitcell_wl_pos = self.bitcell_array_inst.get_pin("wl[{}]".format(i)).lc()
-            mid1 = driver_wl_pos.scale(0.5,1)+bitcell_wl_pos.scale(0.5,0)
-            mid2 = driver_wl_pos.scale(0.5,0)+bitcell_wl_pos.scale(0.5,1)
-            self.add_path("metal1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
+        for k in range(self.total_read):
+            # we don't care about bends after connecting to the input pin, so let the path code decide.
+            for i in range(self.num_rows):
+                # The pre/post is to access the pin from "outside" the cell to avoid DRCs
+                decoder_out_pos = self.row_decoder_inst[k].get_pin("decode[{}]".format(i)).rc()
+                driver_in_pos = self.wordline_driver_inst[k].get_pin("in[{}]".format(i)).lc()
+                mid1 = decoder_out_pos.scale(0.5,1)+driver_in_pos.scale(0.5,0)
+                mid2 = decoder_out_pos.scale(0.5,0)+driver_in_pos.scale(0.5,1)
+                self.add_path("metal1", [decoder_out_pos, mid1, mid2, driver_in_pos])
+
+                # The mid guarantees we exit the input cell to the right.
+                driver_wl_pos = self.wordline_driver_inst[k].get_pin("wl[{}]".format(i)).rc()
+                bitcell_wl_pos = self.bitcell_array_inst.get_pin(self.total_wl_list[k]+"[{}]".format(i)).lc()
+                mid1 = driver_wl_pos.scale(0.5,1)+bitcell_wl_pos.scale(0.5,0)
+                mid2 = driver_wl_pos.scale(0.5,0)+bitcell_wl_pos.scale(0.5,1)
+                self.add_path("metal1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
 
         
 
@@ -693,7 +748,7 @@ class bank(design.design):
             decode_names = ["Zb", "Z"]
             
             # The Address LSB
-            self.copy_layout_pin(self.col_decoder_inst, "A", "addr[0]") 
+            self.copy_layout_pin(self.col_decoder_inst[0], "A", "addr0[0]") 
             
         elif self.col_addr_size > 1:
             decode_names = []
@@ -702,22 +757,22 @@ class bank(design.design):
 
             for i in range(self.col_addr_size):
                 decoder_name = "in[{}]".format(i)
-                addr_name = "addr[{}]".format(i)
-                self.copy_layout_pin(self.col_decoder_inst, decoder_name, addr_name)
+                addr_name = "addr0[{}]".format(i)
+                self.copy_layout_pin(self.col_decoder_inst[0], decoder_name, addr_name)
                 
 
         # This will do a quick "river route" on two layers.
         # When above the top select line it will offset "inward" again to prevent conflicts.
         # This could be done on a single layer, but we follow preferred direction rules for later routing.
-        top_y_offset = self.col_mux_array_inst.get_pin("sel[{}]".format(self.num_col_addr_lines-1)).cy()
+        top_y_offset = self.col_mux_array_inst[0].get_pin("sel[{}]".format(self.num_col_addr_lines-1)).cy()
         for (decode_name,i) in zip(decode_names,range(self.num_col_addr_lines)):
             mux_name = "sel[{}]".format(i)
-            mux_addr_pos = self.col_mux_array_inst.get_pin(mux_name).lc()
+            mux_addr_pos = self.col_mux_array_inst[0].get_pin(mux_name).lc()
             
-            decode_out_pos = self.col_decoder_inst.get_pin(decode_name).center()
+            decode_out_pos = self.col_decoder_inst[0].get_pin(decode_name).center()
 
             # To get to the edge of the decoder and one track out
-            delta_offset = self.col_decoder_inst.rx() - decode_out_pos.x + self.m2_pitch
+            delta_offset = self.col_decoder_inst[0].rx() - decode_out_pos.x + self.m2_pitch
             if decode_out_pos.y > top_y_offset:
                 mid1_pos = vector(decode_out_pos.x + delta_offset + i*self.m2_pitch,decode_out_pos.y)
             else:
@@ -768,7 +823,7 @@ class bank(design.design):
         for i in range(self.word_size):
             data_name = "dec_out[{}]".format(i)
             pin_name = "in[{}]".format(i)            
-            data_pin = self.wordline_driver_inst.get_pin(pin_name)
+            data_pin = self.wordline_driver_inst[0].get_pin(pin_name)
             self.add_label(text=data_name,
                            layer="metal1",  
                            offset=data_pin.center())
@@ -784,9 +839,9 @@ class bank(design.design):
         connection = []
         #connection.append((self.prefix+"tri_en_bar", self.tri_gate_array_inst.get_pin("en_bar").lc()))
         #connection.append((self.prefix+"tri_en", self.tri_gate_array_inst.get_pin("en").lc()))
-        connection.append((self.prefix+"clk_buf_bar", self.precharge_array_inst.get_pin("en").lc()))
-        connection.append((self.prefix+"w_en", self.write_driver_array_inst.get_pin("en").lc()))
-        connection.append((self.prefix+"s_en", self.sense_amp_array_inst.get_pin("en").lc()))
+        connection.append((self.prefix+"clk_buf_bar", self.precharge_array_inst[0].get_pin("en").lc()))
+        connection.append((self.prefix+"w_en0", self.write_driver_array_inst[0].get_pin("en").lc()))
+        connection.append((self.prefix+"s_en0", self.sense_amp_array_inst[0].get_pin("en").lc()))
   
         for (control_signal, pin_pos) in connection:
             control_pos = vector(self.bus_xoffset[control_signal].x ,pin_pos.y)
@@ -797,7 +852,7 @@ class bank(design.design):
 
         # clk to wordline_driver
         control_signal = self.prefix+"clk_buf"
-        pin_pos = self.wordline_driver_inst.get_pin("en").uc()
+        pin_pos = self.wordline_driver_inst[0].get_pin("en").uc()
         mid_pos = pin_pos + vector(0,self.m1_pitch)
         control_x_offset = self.bus_xoffset[control_signal].x
         control_pos = vector(control_x_offset + self.m1_width, mid_pos.y)

@@ -40,7 +40,7 @@ class precharge_test(openram_test):
         pc = precharge_array.precharge_array(columns=3, BL="rbl0", BR="rbl_bar0")
         self.local_check(pc)
 
-        #globals.end_openram()
+        globals.end_openram()
         
 
 # instantiate a copy of the class to actually run the test

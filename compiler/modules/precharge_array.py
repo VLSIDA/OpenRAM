@@ -11,13 +11,15 @@ class precharge_array(design.design):
     of bit line columns, height is the height of the bit-cell array.
     """
 
-    def __init__(self, columns, size=1):
+    def __init__(self, columns, size=1, BL="bl", BR="br"):
         design.design.__init__(self, "precharge_array")
         debug.info(1, "Creating {0}".format(self.name))
 
         self.columns = columns
+        self.BL = BL
+        self.BR = BR
 
-        self.pc_cell = precharge(name="precharge", size=size)
+        self.pc_cell = precharge(name="precharge", size=size, BL=self.BL, BR=self.BR)
         self.add_mod(self.pc_cell)
 
         self.width = self.columns * self.pc_cell.width
@@ -30,8 +32,8 @@ class precharge_array(design.design):
     def add_pins(self):
         """Adds pins for spice file"""
         for i in range(self.columns):
-            self.add_pin("bl[{0}]".format(i))
-            self.add_pin("br[{0}]".format(i))
+            self.add_pin(self.BL+"[{0}]".format(i))
+            self.add_pin(self.BR+"[{0}]".format(i))
         self.add_pin("en")
         self.add_pin("vdd")
 
@@ -64,15 +66,15 @@ class precharge_array(design.design):
                                  offset=offset)
             self.local_insts.append(inst)
             
-            self.connect_inst(["bl[{0}]".format(i), "br[{0}]".format(i), "en", "vdd"])
-            bl_pin = inst.get_pin("bl")
-            self.add_layout_pin(text="bl[{0}]".format(i),
+            self.connect_inst([self.BL+"[{0}]".format(i), self.BR+"[{0}]".format(i), "en", "vdd"])
+            bl_pin = inst.get_pin(self.BL)
+            self.add_layout_pin(text=self.BL+"[{0}]".format(i),
                                 layer="metal2",
                                 offset=bl_pin.ll(),
                                 width=drc["minwidth_metal2"],
                                 height=bl_pin.height())
-            br_pin = inst.get_pin("br") 
-            self.add_layout_pin(text="br[{0}]".format(i),
+            br_pin = inst.get_pin(self.BR) 
+            self.add_layout_pin(text=self.BR+"[{0}]".format(i),
                                 layer="metal2",
                                 offset=br_pin.ll(),
                                 width=drc["minwidth_metal2"],

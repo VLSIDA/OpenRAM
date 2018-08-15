@@ -39,7 +39,7 @@ class precharge_test(openram_test):
         tx = precharge.precharge(name="precharge_driver", size=1, BL="rbl0", BR="rbl_bar0")
         self.local_check(tx)
 
-        #globals.end_openram()
+        globals.end_openram()
         
 # instantiate a copy of the class to actually run the test
 if __name__ == "__main__":

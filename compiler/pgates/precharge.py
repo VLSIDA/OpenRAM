@@ -12,7 +12,11 @@ class precharge(pgate.pgate):
     This module implements the precharge bitline cell used in the design.
     """
 
+    unique_id = 1
+    
     def __init__(self, name, size=1, BL="bl", BR="br"):
+        name = name+"_{}".format(precharge.unique_id)
+        precharge.unique_id += 1
         pgate.pgate.__init__(self, name)
         debug.info(2, "create single precharge cell: {0}".format(name))
 

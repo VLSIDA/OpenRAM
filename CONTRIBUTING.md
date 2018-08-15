@@ -20,6 +20,13 @@ other OpenRAM features. Please see the README.md file on how to run
 the unit tests. Unit tests should work in all technologies. We will run
 the tests on your contributions before they will be accepted.
 
+# Internally Development
+
+For internal development, follow all of the following steps EXCEPT
+do not fork your own copy. Instead, create a branch in our private repository
+and consult with me when you want to merge it into the dev branch.
+All unit tests should pass first.
+
 # Pull Request Process
 
 1. One time, create a GitHub account at http://github.com

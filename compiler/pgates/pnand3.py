@@ -14,7 +14,8 @@ class pnand3(pgate.pgate):
 
     from importlib import reload
     c = reload(__import__(OPTS.bitcell))
-    bitcell = getattr(c, OPTS.bitcell)
+    mod_bitcell = getattr(c, OPTS.bitcell)
+    bitcell = mod_bitcell()
 
     unique_id = 1
     

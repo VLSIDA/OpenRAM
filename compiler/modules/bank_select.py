@@ -19,9 +19,9 @@ class bank_select(design.design):
         design.design.__init__(self, name)
 
         # Number of control lines in the bus
-        self.num_control_lines = 6
+        self.num_control_lines = 4
         # The order of the control signals on the control bus:
-        self.input_control_signals = ["clk_buf", "tri_en_bar", "tri_en", "clk_buf_bar", "w_en", "s_en"]
+        self.input_control_signals = ["clk_buf", "clk_buf_bar", "w_en", "s_en"]
         # These will be outputs of the gaters if this is multibank
         self.control_signals = ["gated_"+str for str in self.input_control_signals]
 
@@ -96,7 +96,7 @@ class bank_select(design.design):
             
             # These require OR (nor2+inv) gates since they are active low.
             # (writes occur on clk low)
-            if input_name in ("clk_buf", "tri_en_bar"):
+            if input_name in ("clk_buf"):
                 
                 self.logic_inst.append(self.add_inst(name=name_nor, 
                                          mod=self.nor2, 
@@ -161,7 +161,7 @@ class bank_select(design.design):
         self.add_label_pin(text="bank_sel_bar",
                            layer="metal2",  
                            offset=vector(xoffset_bank_sel_bar, 0), 
-                           height=2*self.inv.height)
+                           height=self.inv.height)
         self.add_via_center(layers=("metal1","via1","metal2"),
                             offset=bank_sel_bar_pin.rc())
             
@@ -173,7 +173,7 @@ class bank_select(design.design):
             
             input_name = self.input_control_signals[i]
             gated_name = self.control_signals[i]            
-            if input_name in ("clk_buf", "tri_en_bar"):
+            if input_name in ("clk_buf"):
                 xoffset_bank_signal = xoffset_bank_sel_bar
             else:
                 xoffset_bank_signal = xoffset_bank_sel

@@ -150,7 +150,7 @@ class sram_base(design):
         """ Add the horizontal and vertical busses """
         # Vertical bus
         # The order of the control signals on the control bus:
-        self.control_bus_names = ["clk_buf", "clk_buf_bar", "w_en", "s_en"]
+        self.control_bus_names = ["clk_buf", "clk_buf_bar", "w_en0", "s_en0"]
         self.vert_control_bus_positions = self.create_vertical_bus(layer="metal2",
                                                                    pitch=self.m2_pitch,
                                                                    offset=self.vertical_bus_offset,
@@ -328,7 +328,7 @@ class sram_base(design):
             temp.append("A[{0}]".format(i))
         if(self.num_banks > 1):
             temp.append("bank_sel[{0}]".format(bank_num))
-        temp.extend(["s_en", "w_en", "clk_buf_bar","clk_buf" , "vdd", "gnd"])
+        temp.extend(["s_en0", "w_en0", "clk_buf_bar","clk_buf" , "vdd", "gnd"])
         self.connect_inst(temp)
 
         return bank_inst

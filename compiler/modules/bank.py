@@ -133,7 +133,6 @@ class bank(design.design):
         self.add_row_decoder()
         self.add_wordline_driver()
         self.add_column_decoder()
-
         
 
     def compute_sizes(self):
@@ -201,7 +200,7 @@ class bank(design.design):
 
         self.precharge_array = [None] * self.total_read
         for k in range(self.total_read):
-            self.precharge_array[k] = self.mod_precharge_array(columns=self.num_cols, BL=self.read_bl_list[k], BR=self.read_br_list[k])
+            self.precharge_array[k] = self.mod_precharge_array(columns=self.num_cols, bitcell_bl=self.read_bl_list[k], bitcell_br=self.read_br_list[k])
             self.add_mod(self.precharge_array[k])
 
         if self.col_addr_size > 0:
@@ -521,7 +520,7 @@ class bank(design.design):
         #the column decoder (if there is one).
         write_driver_min_y_offset = self.write_driver_array_inst[0].by() - 3*self.m2_pitch        
         row_decoder_min_y_offset = self.row_decoder_inst[0].by()
-		
+        
         if self.col_addr_size > 0:
             col_decoder_min_y_offset = self.col_decoder_inst[0].by()
         else:
@@ -575,8 +574,8 @@ class bank(design.design):
         
         for k in range(self.total_read):
             for i in range(self.num_cols):
-                precharge_bl = self.precharge_array_inst[k].get_pin(self.read_bl_list[k]+"[{}]".format(i)).bc()
-                precharge_br = self.precharge_array_inst[k].get_pin(self.read_br_list[k]+"[{}]".format(i)).bc()
+                precharge_bl = self.precharge_array_inst[k].get_pin("bl[{}]".format(i)).bc()
+                precharge_br = self.precharge_array_inst[k].get_pin("br[{}]".format(i)).bc()
                 bitcell_bl = self.bitcell_array_inst.get_pin(self.read_bl_list[k]+"[{}]".format(i)).uc()
                 bitcell_br = self.bitcell_array_inst.get_pin(self.read_br_list[k]+"[{}]".format(i)).uc()
 
@@ -631,7 +630,7 @@ class bank(design.design):
                 self.add_path("metal2",[sense_amp_br, vector(sense_amp_br.x,yoffset),
                                         vector(connect_br.x,yoffset), connect_br])
             
-			
+            
     def route_sense_amp_out(self):
         """ Add pins for the sense amp output """
         for i in range(self.word_size):

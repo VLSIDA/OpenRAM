@@ -14,7 +14,7 @@ class precharge(pgate.pgate):
 
     unique_id = 1
     
-    def __init__(self, name, size=1, BL="bl", BR="br"):
+    def __init__(self, name, size=1, bitcell_bl="bl", bitcell_br="br"):
         name = name+"_{}".format(precharge.unique_id)
         precharge.unique_id += 1
         pgate.pgate.__init__(self, name)
@@ -28,15 +28,15 @@ class precharge(pgate.pgate):
         self.beta = parameter["beta"]
         self.ptx_width = self.beta*parameter["min_tx_size"]
         self.width = self.bitcell.width
-        self.BL = BL
-        self.BR = BR
+        self.bitcell_bl = bitcell_bl
+        self.bitcell_br = bitcell_br
 
         self.add_pins()
         self.create_layout()
         self.DRC_LVS()
 
     def add_pins(self):
-        self.add_pin_list([self.BL, self.BR, "en", "vdd"])
+        self.add_pin_list(["bl", "br", "en", "vdd"])
 
     def create_layout(self):
         self.create_ptx()
@@ -88,12 +88,12 @@ class precharge(pgate.pgate):
         """Adds both the upper_pmos and lower_pmos to the module"""
         # adds the lower pmos to layout
         #base = vector(self.width - 2*self.pmos.width + self.overlap_offset.x, 0)
-        self.lower_pmos_position = vector(self.bitcell.get_pin(self.BL).lx(),
+        self.lower_pmos_position = vector(self.bitcell.get_pin(self.bitcell_bl).lx(),
                                           self.pmos.active_offset.y)
         self.lower_pmos_inst=self.add_inst(name="lower_pmos",
                                            mod=self.pmos,
                                            offset=self.lower_pmos_position)
-        self.connect_inst([self.BL, "en", self.BR, "vdd"])
+        self.connect_inst(["bl", "en", "br", "vdd"])
 
         # adds the upper pmos(s) to layout
         ydiff = self.pmos.height + 2*self.m1_space + contact.poly.width
@@ -101,13 +101,13 @@ class precharge(pgate.pgate):
         self.upper_pmos1_inst=self.add_inst(name="upper_pmos1",
                                             mod=self.pmos,
                                             offset=self.upper_pmos1_pos)
-        self.connect_inst([self.BL, "en", "vdd", "vdd"])
+        self.connect_inst(["bl", "en", "vdd", "vdd"])
 
         upper_pmos2_pos = self.upper_pmos1_pos + self.overlap_offset
         self.upper_pmos2_inst=self.add_inst(name="upper_pmos2",
                                             mod=self.pmos,
                                             offset=upper_pmos2_pos)
-        self.connect_inst([self.BR, "en", "vdd", "vdd"])
+        self.connect_inst(["br", "en", "vdd", "vdd"])
 
     def connect_poly(self):
         """Connects the upper and lower pmos together"""
@@ -165,16 +165,16 @@ class precharge(pgate.pgate):
     def add_bitlines(self):
         """Adds both bit-line and bit-line-bar to the module"""
         # adds the BL on metal 2
-        offset = vector(self.bitcell.get_pin(self.BL).cx(),0) - vector(0.5 * self.m2_width,0)
-        self.add_layout_pin(text=self.BL,
+        offset = vector(self.bitcell.get_pin(self.bitcell_bl).cx(),0) - vector(0.5 * self.m2_width,0)
+        self.add_layout_pin(text="bl",
                             layer="metal2",
                             offset=offset,
                             width=drc['minwidth_metal2'],
                             height=self.height)
 
         # adds the BR on metal 2
-        offset = vector(self.bitcell.get_pin(self.BR).cx(),0) - vector(0.5 * self.m2_width,0)
-        self.add_layout_pin(text=self.BR,
+        offset = vector(self.bitcell.get_pin(self.bitcell_br).cx(),0) - vector(0.5 * self.m2_width,0)
+        self.add_layout_pin(text="br",
                             layer="metal2",
                             offset=offset,
                             width=drc['minwidth_metal2'],
@@ -182,10 +182,10 @@ class precharge(pgate.pgate):
 
     def connect_to_bitlines(self):
         self.add_bitline_contacts()
-        self.connect_pmos(self.lower_pmos_inst.get_pin("S"),self.get_pin(self.BL))
-        self.connect_pmos(self.lower_pmos_inst.get_pin("D"),self.get_pin(self.BR))        
-        self.connect_pmos(self.upper_pmos1_inst.get_pin("S"),self.get_pin(self.BL))        
-        self.connect_pmos(self.upper_pmos2_inst.get_pin("D"),self.get_pin(self.BR))
+        self.connect_pmos(self.lower_pmos_inst.get_pin("S"),self.get_pin("bl"))
+        self.connect_pmos(self.lower_pmos_inst.get_pin("D"),self.get_pin("br"))        
+        self.connect_pmos(self.upper_pmos1_inst.get_pin("S"),self.get_pin("bl"))        
+        self.connect_pmos(self.upper_pmos2_inst.get_pin("D"),self.get_pin("br"))
         
 
     def add_bitline_contacts(self):

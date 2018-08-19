@@ -718,7 +718,7 @@ class layout(lef.lef):
         conflicts between pins.
         """
 
-        def remove_pin_from_graph(pin, g):
+        def remove_net_from_graph(pin, g):
             # Remove the pin from the keys
             g.pop(pin,None)
             # Remove the pin from all conflicts
@@ -726,7 +726,8 @@ class layout(lef.lef):
             for other_pin,conflicts in g.items():
                 if pin in conflicts:
                     conflicts.remove(pin)
-                    vcg[other_pin]=conflicts
+                    g[other_pin]=conflicts
+            return g
 
         if not pitch:
             pitch = self.m2_pitch
@@ -740,20 +741,24 @@ class layout(lef.lef):
         
         # Initialize the vertical conflict graph (vcg) and make a list of all pins
         vcg = {}
-        for (top_name, bot_name) in route_map:
-            vcg[top_name] = []
-            vcg[bot_name] = []
         
         # Find the vertical pin conflicts
         # FIXME: O(n^2) but who cares for now
         for top_name,top_pin in top_pins.items():
+            vcg[top_name]=[]    
             for bot_name,bot_pin in bottom_pins.items():
-                if not vertical and abs(top_pin.center().x-bot_pin.center().x) < pitch:
-                    vcg[top_name].append(bot_name)
-                    vcg[bot_name].append(top_name)                    
-                elif vertical and abs(top_pin.center().y-bot_pin.center().y) < pitch:
-                    vcg[top_name].append(bot_name)
-                    vcg[bot_name].append(top_name)
+                # Remember, vertical is the boolean of the routes in the channel
+                # so check the intervals of the pins in the other dimension
+                x_overlap = abs(top_pin.center().x-bot_pin.center().x)<pitch
+                y_overlap = abs(top_pin.center().y-bot_pin.center().y)<pitch
+                             
+                if (vertical and y_overlap) or (not vertical and x_overlap):
+                    try:
+                        vcg[bot_name].append(top_name)
+                    except:
+                        vcg[bot_name] = [top_name]
+                    
+        #FIXME: What if we have a cycle? 
 
         # This is the starting offset of the first trunk
         if vertical:
@@ -770,7 +775,7 @@ class layout(lef.lef):
             route_pin=None
             for route_pin,conflicts in vcg.items():
                 if len(conflicts)==0:
-                    remove_pin_from_graph(route_pin,vcg)
+                    vcg=remove_net_from_graph(route_pin,vcg)
                     break
 
             # Get the connected pins from the routing map
@@ -781,7 +786,7 @@ class layout(lef.lef):
             
             # Remove the other pins from the conflict graph too
             for other_pin in pin_connections:
-                remove_pin_from_graph(other_pin, vcg)
+                vcg=remove_net_from_graph(other_pin, vcg)
                 
             # Create a list of the pins rather than a list of the names
             pin_list = [all_pins[pin_name] for pin_name in pin_connections]

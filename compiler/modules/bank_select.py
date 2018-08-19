@@ -21,7 +21,7 @@ class bank_select(design.design):
         # Number of control lines in the bus
         self.num_control_lines = 4
         # The order of the control signals on the control bus:
-        self.input_control_signals = ["clk_buf", "clk_buf_bar", "w_en", "s_en"]
+        self.input_control_signals = ["clk_buf", "clk_buf_bar", "w_en0", "s_en0"]
         # These will be outputs of the gaters if this is multibank
         self.control_signals = ["gated_"+str for str in self.input_control_signals]
 

@@ -639,7 +639,7 @@ class bank(design.design):
                                             layer=data_pin.layer, 
                                             offset=data_pin.center(),
                                             height=data_pin.height(),
-                                            width=data_pin.width()),
+                                            width=data_pin.width())
         
 
     def route_row_decoder(self):

@@ -15,9 +15,6 @@ class write_driver_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        global verify
-        import verify
-
         import write_driver_array
 
         debug.info(2, "Testing write_driver_array for columns=8, word_size=8")

@@ -15,9 +15,6 @@ class sram_1bank_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        global verify
-        import verify
-
         from sram import sram
 
         debug.info(1, "Single bank, no column mux with control logic")

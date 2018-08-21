@@ -8,7 +8,6 @@ sys.path.append(os.path.join(sys.path[0],"../.."))
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 import debug
-import calibre
 
 OPTS = globals.OPTS
 
@@ -19,6 +18,8 @@ class no_blockages_test(unittest.TestCase):
 
     def runTest(self):
         globals.init_openram("config_{0}".format(OPTS.tech_name))
+        global verify
+        import verify
 
         import design
         import router

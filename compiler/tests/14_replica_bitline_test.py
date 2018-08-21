@@ -15,9 +15,6 @@ class replica_bitline_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        global verify
-        import verify
-
         import replica_bitline
 
         stages=4

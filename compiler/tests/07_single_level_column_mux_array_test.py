@@ -14,9 +14,6 @@ class single_level_column_mux_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        global verify
-        import verify
-
         import single_level_column_mux_array
         
         debug.info(1, "Testing sample for 2-way column_mux_array")

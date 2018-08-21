@@ -15,9 +15,6 @@ class bank_select_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        global verify
-        import verify
-
         import bank_select
 
         debug.info(1, "No column mux")

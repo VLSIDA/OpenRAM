@@ -286,6 +286,7 @@ class delay():
         """
 
         feasible_period = float(tech.spice["feasible_period"])
+        #feasible_period = float(2.5)#What happens if feasible starting point is wrong?
         time_out = 8
         while True:
             debug.info(1, "Trying feasible period: {0}ns".format(feasible_period))
@@ -436,6 +437,7 @@ class delay():
                 ub_period = target_period
             else:
                 lb_period = target_period
+                #debug.error("Lower bound "+str(target_period)+" caused a failed simulation.Exiting...",2)
 
             if relative_compare(ub_period, lb_period, error_tolerance=0.05):
                 # ub_period is always feasible

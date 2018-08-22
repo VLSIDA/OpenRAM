@@ -10,3 +10,10 @@ temperatures = [25]
 output_path = "temp"
 output_name = "sram_2_16_1_freepdk45"
 
+#Below are some additions to test additional ports on sram
+#bitcell = "pbitcell"
+
+# These are the configuration parameters
+#rw_ports = 2
+#r_ports = 1
+#w_ports = 1

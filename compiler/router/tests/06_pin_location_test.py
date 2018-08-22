@@ -20,7 +20,7 @@ class pin_location_test(openram_test):
         globals.init_openram("config_{0}".format(OPTS.tech_name))
         from gds_cell import gds_cell
         from design import design
-        from router import router
+        from signal_router import signal_router as router
 
         class routing(design, openram_test):
             """

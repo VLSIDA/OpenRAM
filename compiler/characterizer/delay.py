@@ -166,7 +166,6 @@ class delay():
         self.sf.write("\n* Generation of control signals\n")
         self.stim.gen_constant(sig_name="CSb", v_val=self.vdd_voltage)
         self.stim.gen_constant(sig_name="WEb", v_val=self.vdd_voltage)
-        self.stim.gen_constant(sig_name="OEb", v_val=self.vdd_voltage)        
 
         self.sf.write("\n* Generation of global clock signal\n")
         self.stim.gen_constant(sig_name="CLK", v_val=0)  
@@ -623,7 +622,6 @@ class delay():
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
         self.web_values.append(1)
-        self.oeb_values.append(1)
         self.csb_values.append(1)
 
         self.add_data(data)
@@ -639,7 +637,6 @@ class delay():
         self.t_current += self.period
         
         self.web_values.append(1)
-        self.oeb_values.append(0)
         self.csb_values.append(0)
 
         self.add_data(data)
@@ -656,7 +653,6 @@ class delay():
         self.t_current += self.period
         
         self.web_values.append(0)
-        self.oeb_values.append(1)
         self.csb_values.append(0)
 
         self.add_data(data)
@@ -676,7 +672,6 @@ class delay():
 
         # Control logic signals each cycle
         self.web_values = []
-        self.oeb_values = []
         self.csb_values = []
 
         # Address and data values for each address/data bit
@@ -800,4 +795,3 @@ class delay():
         """ Generates the control signals """
         self.stim.gen_pwl("csb", self.cycle_times, self.csb_values, self.period, self.slew, 0.05)
         self.stim.gen_pwl("web", self.cycle_times, self.web_values, self.period, self.slew, 0.05)
-        self.stim.gen_pwl("oeb", self.cycle_times, self.oeb_values, self.period, self.slew, 0.05)

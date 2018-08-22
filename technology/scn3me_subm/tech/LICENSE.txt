@@ -1,0 +1,10 @@
+The file SCN3ME_SUBM.30.tech is from qflow 1.2 and has the following
+license information:
+---------------------------------------------------------------
+Tim Edwards
+Open Circuit Design
+v1.0 April 2013
+v1.1 May   2015
+v1.2 April 2017
+---------------------------------------------------------------
+GPL Copyright (c) 2017

@@ -42,9 +42,9 @@ class replica_bitline(design.design):
 
         #self.add_lvs_correspondence_points()
 
-        # Plus a pitch for the WL contacts on the RBL
-        self.width = self.rbl_inst.rx() - self.dc_inst.lx() + self.m1_pitch
-        self.height = max(self.rbl_inst.uy(), self.dc_inst.uy())
+        # Extra pitch on top and right
+        self.width = self.rbl_inst.rx() - self.dc_inst.lx() + self.m2_pitch
+        self.height = max(self.rbl_inst.uy(), self.dc_inst.uy()) + self.m3_pitch
 
         self.DRC_LVS()
 

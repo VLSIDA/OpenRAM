@@ -11,17 +11,16 @@ import debug
 
 OPTS = globals.OPTS
 
-class two_nets_test(openram_test):
+class no_blockages_test(openram_test):
     """
-    Route two nets in the same GDS file. The routes will interact,
-    so they must block eachother.
+    Simplest two pin route test with no blockages.
     """
 
     def runTest(self):
         globals.init_openram("config_{0}".format(OPTS.tech_name))
         from gds_cell import gds_cell
         from design import design
-        from signal_router import signal_router as router
+        from supply_router import supply_router as router
 
         class routing(design, openram_test):
             """
@@ -39,16 +38,14 @@ class two_nets_test(openram_test):
                 self.connect_inst([])
                 
                 r=router(gds_file)
-                layer_stack =("metal1","via1","metal2")
-                self.assertTrue(r.route(self,layer_stack,src="A",dest="B"))
-                self.assertTrue(r.route(self,layer_stack,src="C",dest="D"))
+                layer_stack =("metal3","via1","metal2")
+                self.assertTrue(r.route(self,layer_stack))
 
-        r = routing("05_two_nets_test_{0}".format(OPTS.tech_name))
+        r=routing("10_supply_grid_test_{0}".format(OPTS.tech_name))
         self.local_drc_check(r)
         
         # fails if there are any DRC errors on any cells
         globals.end_openram()
-
 
 # instantiate a copy of the class to actually run the test
 if __name__ == "__main__":

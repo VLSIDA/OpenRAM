@@ -583,6 +583,7 @@ class VlsiLayout:
         print("Done\n\n")
 
     def getLayoutBorder(self,borderlayer):
+        cellSizeMicron=None
         for boundary in self.structures[self.rootStructureName].boundaries:
             if boundary.drawingLayer==borderlayer:
                 if self.debug:
@@ -722,7 +723,8 @@ class VlsiLayout:
     def getAllPinShapesByDBLocLayer(self, coordinate, layer):
         """
         Return ALL the enclosing rectangles on the same layer
-        at the given coordinate. Coordinates should be in DB units.
+        at the given coordinate. Input coordinates should be in DB units.
+        Returns user unit shapes.
         """
         pin_boundaries=self.getAllPinShapesInStructureList(coordinate, layer)
 
@@ -732,8 +734,7 @@ class VlsiLayout:
             new_boundaries.append([pin_boundary[0]*self.units[0],pin_boundary[1]*self.units[0],
                                    pin_boundary[2]*self.units[0],pin_boundary[3]*self.units[0]])
 
-        # Make a name if we don't have the pin name
-        return ["p"+str(coordinate)+"_"+str(layer), layer, new_boundaries]
+        return new_boundaries
     
     def getPinShapeByLabel(self,label_name):
         """
@@ -758,7 +759,7 @@ class VlsiLayout:
         shape_list=[]
         for label in label_list:
             (label_coordinate,label_layer)=label
-            shape_list.append(self.getAllPinShapesByDBLocLayer(label_coordinate, label_layer))
+            shape_list.extend(self.getAllPinShapesByDBLocLayer(label_coordinate, label_layer))
         return shape_list
     
     def getAllPinShapesInStructureList(self,coordinates,layer):

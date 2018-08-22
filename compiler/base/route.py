@@ -1,11 +1,12 @@
 from tech import drc
 import debug
+from design import design
 from contact import contact
 from itertools import tee
 from vector import vector
 from vector3d import vector3d
 
-class route():
+class route(design):
     """ 
     Object route (used by the router module)
     Add a route of minimium metal width between a set of points.
@@ -14,10 +15,13 @@ class route():
     The points are the center of the wire.
     This can have non-preferred direction routing.
     """
+
+    unique_route_id = 0
+
     def __init__(self, obj, layer_stack, path):
         name = "route_{0}".format(route.unique_route_id)
         route.unique_route_id += 1
-        design.design.__init__(self, name)
+        design.__init__(self, name)
         debug.info(3, "create route obj {0}".format(name))
 
         self.obj = obj
@@ -52,7 +56,7 @@ class route():
             next(b, None)
             return zip(a, b)
         
-        plist = pairwise(self.path)
+        plist = list(pairwise(self.path))
         for p0,p1 in plist:
             if p0.z != p1.z: # via
                 # offset if not rotated
@@ -67,6 +71,13 @@ class route():
                 self.draw_corner_wire(p1)
                 # draw the point to point wire
                 self.draw_wire(p0,p1)
+
+
+        # Draw the layers on the ends of the wires to ensure full width
+        # connections
+        self.draw_corner_wire(plist[0][0])
+        self.draw_corner_wire(plist[-1][1])
+
                 
         
 
@@ -99,10 +110,10 @@ class route():
             height = end.y - start.y
             width = layer_width
 
-        deisgn.add_rect(layer=layer_name,
-                        offset=offset,
-                        width=width,
-                        height=height)
+        self.obj.add_rect(layer=layer_name,
+                          offset=vector(offset.x,offset.y),
+                          width=width,
+                          height=height)
         
     
     def draw_corner_wire(self, p0):

@@ -1,6 +1,6 @@
 import unittest,warnings
 import sys,os,glob,copy
-sys.path.append(os.path.join(sys.path[0],".."))
+sys.path.append(os.path.join(sys.path[0],"../.."))
 from globals import OPTS
 import debug
 
@@ -19,7 +19,8 @@ class openram_test(unittest.TestCase):
         if result != 0:
             self.fail("DRC failed: {}".format(w.name))
 
-        self.cleanup()
+        if OPTS.purge_temp:
+            self.cleanup()
     
     def local_check(self, a, final_verification=False):
 

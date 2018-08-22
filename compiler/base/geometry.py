@@ -55,9 +55,12 @@ class geometry:
         self.compute_boundary(self.offset,self.mirror,self.rotate)
         
     def compute_boundary(self,offset=vector(0,0),mirror="",rotate=0):
-        """ Transform with offset, mirror and rotation to get the absolute pin location. 
-        We must then re-find the ll and ur. The master is the cell instance. """
+        """ 
+        Transform with offset, mirror and rotation to get the absolute pin location. 
+        We must then re-find the ll and ur. The master is the cell instance. 
+        """
         (ll,ur) = [vector(0,0),vector(self.width,self.height)]
+
         if mirror=="MX":
             ll=ll.scale(1,-1)
             ur=ur.scale(1,-1)

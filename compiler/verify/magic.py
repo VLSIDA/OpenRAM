@@ -42,6 +42,10 @@ def write_magic_script(cell_name, gds_name, extract=False):
     f.write("gds warning default\n")
     f.write("gds read {}\n".format(gds_name))
     f.write("load {}\n".format(cell_name))
+    # Flatten the cell to get rid of DRCs spanning multiple layers
+    # (e.g. with routes)
+    f.write("flatten {}_new\n".format(cell_name))
+    f.write("load {}_new\n".format(cell_name))
     f.write("writeall force\n")
     f.write("drc check\n")
     f.write("drc catchup\n")

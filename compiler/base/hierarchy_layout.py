@@ -312,7 +312,7 @@ class layout(lef.lef):
                   position_list=coordinates, 
                   width=width)
 
-    def add_route(self, design, layers, coordinates):
+    def add_route(self, layers, coordinates):
         """Connects a routing path on given layer,coordinates,width. The
         layers are the (horizontal, via, vertical). add_wire assumes
         preferred direction routing whereas this includes layers in

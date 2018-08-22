@@ -6,11 +6,7 @@ from vector3d import vector3d
 from cell import cell
 import os
 
-try:
-    import Queue as Q  # ver. < 3.0
-except ImportError:
-    import queue as Q
-        
+from heapq import heappush,heappop
     
 class grid:
     """A two layer routing map. Each cell can be blocked in the vertical
@@ -36,7 +32,7 @@ class grid:
         self.map={}
 
         # priority queue for the maze routing
-        self.q = Q.PriorityQueue()
+        self.q = []
 
     def set_blocked(self,n):
         self.add_map(n)
@@ -66,30 +62,34 @@ class grid:
         self.target=[]
         
         # clear the queue 
-        while (not self.q.empty()):
-            self.q.get(False)
-
+        while len(self.q)>0:
+            heappop(self.q)
+        self.counter = 0
         
     def add_blockage_shape(self,ll,ur,z):
         debug.info(3,"Adding blockage ll={0} ur={1} z={2}".format(str(ll),str(ur),z))
+
+        block_list = []
         for x in range(int(ll[0]),int(ur[0])+1):
             for y in range(int(ll[1]),int(ur[1])+1):
-                n = vector3d(x,y,z)
-                self.set_blocked(n)
+                block_list.append(vector3d(x,y,z))
+
+        self.add_blockage(block_list)
 
     def add_blockage(self,block_list):
-        debug.info(3,"Adding blockage list={0}".format(str(block_list)))
+        debug.info(2,"Adding blockage list={0}".format(str(block_list)))
         for n in block_list:
             self.set_blocked(n)
 
     def add_source(self,track_list):
-        debug.info(3,"Adding source list={0}".format(str(track_list)))
+        debug.info(2,"Adding source list={0}".format(str(track_list)))
         for n in track_list:
             if not self.is_blocked(n):
+                debug.info(3,"Adding source ={0}".format(str(n)))
                 self.set_source(n)
 
     def add_target(self,track_list):
-        debug.info(3,"Adding target list={0}".format(str(track_list)))
+        debug.info(2,"Adding target list={0}".format(str(track_list)))
         for n in track_list:
             if not self.is_blocked(n):
                 self.set_target(n)
@@ -120,8 +120,8 @@ class grid:
         cost_bound = detour_scale*self.cost_to_target(self.source[0])*self.PREFERRED_COST
 
         # Make sure the queue is empty if we run another route
-        while not self.q.empty():
-            self.q.get()
+        while len(self.q)>0:
+            heappop(self.q)
 
         # Put the source items into the queue
         self.init_queue()
@@ -129,10 +129,10 @@ class grid:
         cheapest_cost = None
         
         # Keep expanding and adding to the priority queue until we are done
-        while not self.q.empty():
+        while len(self.q)>0:
             # should we keep the path in the queue as well or just the final node?
-            (cost,path) = self.q.get()
-            debug.info(2,"Queue size: size=" + str(self.q.qsize()) + " " + str(cost))            
+            (cost,count,path) = heappop(self.q)
+            debug.info(2,"Queue size: size=" + str(len(self.q)) + " " + str(cost))
             debug.info(3,"Expanding: cost=" + str(cost) + " " + str(path))
             
             # expand the last element
@@ -158,7 +158,8 @@ class grid:
                             self.map[n].min_cost = predicted_cost
                             debug.info(3,"Enqueuing: cost=" + str(current_cost) + "+" + str(target_cost) + " " + str(newpath))
                             # add the cost to get to this point if we haven't reached it yet
-                            self.q.put((predicted_cost,newpath))
+                            heappush(self.q,(predicted_cost,self.counter,newpath))
+                            self.counter += 1
 
         debug.warning("Unable to route path. Expand the detour_scale to allow detours.")
         return (None,None)
@@ -227,11 +228,16 @@ class grid:
         # uniquify the source (and target while we are at it)
         self.source = list(set(self.source))
         self.target = list(set(self.target))
-        
+
+        # Counter is used to not require data comparison in Python 3.x
+        # Items will be returned in order they are added during cost ties
+        self.counter = 0
         for s in self.source:
             cost = self.cost_to_target(s)
-            debug.info(4,"Init: cost=" + str(cost) + " " + str([s]))
-            self.q.put((cost,[s]))
+            debug.info(1,"Init: cost=" + str(cost) + " " + str([s]))
+            heappush(self.q,(cost,self.counter,[s]))
+            self.counter+=1
+
 
     def hpwl(self, src, dest):
         """ 

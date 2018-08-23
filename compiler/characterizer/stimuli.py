@@ -33,15 +33,24 @@ class stimuli():
     def inst_sram(self, abits, dbits, sram_name):
         """ Function to instatiate an SRAM subckt. """
         self.sf.write("Xsram ")
-        for i in range(dbits):
-            self.sf.write("DIN[{0}] ".format(i))
+        
+        for readwrite_input in range(OPTS.rw_ports):
+            for i in range(dbits):
+                self.sf.write("DIN_RWP{0}[{1}] ".format(readwrite_input, i))
+        for write_input in range(OPTS.w_ports):
+            for i in range(dbits):
+                self.sf.write("DIN_WP{0}[{1}] ".format(write_input, i))
         for i in range(abits):
             self.sf.write("A[{0}] ".format(i))
         for i in tech.spice["control_signals"]:
             self.sf.write("{0} ".format(i))
         self.sf.write("{0} ".format(tech.spice["clk"]))
-        for i in range(dbits):
-            self.sf.write("DOUT[{0}] ".format(i))
+        for readwrite_output in range(OPTS.rw_ports):
+            for i in range(dbits):
+                self.sf.write("DOUT_RWP{0}[{1}] ".format(readwrite_output, i))
+        for read_output in range(OPTS.r_ports):
+            for i in range(dbits):
+                self.sf.write("DOUT_RP{0}[{1}] ".format(read_output, i))
         self.sf.write("{0} {1} ".format(self.vdd_name, self.gnd_name))
         self.sf.write("{0}\n".format(sram_name))
 

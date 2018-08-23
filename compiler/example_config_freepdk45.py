@@ -14,6 +14,6 @@ output_name = "sram_2_16_1_freepdk45"
 #bitcell = "pbitcell"
 
 # These are the configuration parameters
-#rw_ports = 2
-#r_ports = 1
-#w_ports = 1
+rw_ports = 2
+r_ports = 2
+w_ports = 2

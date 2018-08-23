@@ -77,8 +77,12 @@ class delay():
                             sram_name=self.name)
 
         self.sf.write("\n* SRAM output loads\n")
-        for i in range(self.word_size):
-            self.sf.write("CD{0} DOUT[{0}] 0 {1}f\n".format(i,self.load))
+        for readwrite_output in range(OPTS.rw_ports):
+            for i in range(self.word_size):
+                self.sf.write("CD_RWP{0}{1} DOUT_RWP{0}[{1}] 0 {2}f\n".format(readwrite_output,i,self.load))
+        for read_port in range(OPTS.r_ports):
+            for i in range(self.word_size):
+                self.sf.write("CD_RP{0}{1} DOUT_RP{0}[{1}] 0 {2}f\n".format(read_port,i,self.load))
         
 
     def write_delay_stimulus(self):
@@ -155,9 +159,14 @@ class delay():
         
         # generate data and addr signals
         self.sf.write("\n* Generation of data and address signals\n")
-        for i in range(self.word_size):
-            self.stim.gen_constant(sig_name="DIN[{0}]".format(i),
-                                   v_val=0)
+        for readwrite_input in range(OPTS.rw_ports):
+            for i in range(self.word_size):
+                self.stim.gen_constant(sig_name="DIN_RWP{0}[{1}] ".format(readwrite_input, i),
+                                    v_val=0)
+        for write_port in range(OPTS.w_ports):
+            for i in range(self.word_size):
+                self.stim.gen_constant(sig_name="DIN_WP{0}[{1}] ".format(write_port, i),
+                                    v_val=0)
         for i in range(self.addr_size):
             self.stim.gen_constant(sig_name="A[{0}]".format(i),
                                    v_val=0)
@@ -191,7 +200,9 @@ class delay():
 
         # Trigger on the clk of the appropriate cycle
         trig_name = "clk"
-        targ_name = "{0}".format("DOUT[{0}]".format(self.probe_data))
+        targ_port = 0
+        #Target name should be an input to the function or a member variable. That way, the ports can be singled out for testing
+        targ_name = "{0}".format("DOUT_RWP{0}[{1}]".format(targ_port,self.probe_data))
         trig_val = targ_val = 0.5 * self.vdd_voltage
 
         # Delay the target to measure after the negative edge
@@ -777,9 +788,14 @@ class delay():
 
     def gen_data(self):
         """ Generates the PWL data inputs for a simulation timing test. """
-        for i in range(self.word_size):
-            sig_name="DIN[{0}]".format(i)
-            self.stim.gen_pwl(sig_name, self.cycle_times, self.data_values[i], self.period, self.slew, 0.05)
+        for readwrite_input in range(OPTS.rw_ports):
+            for i in range(self.word_size):
+                sig_name="DIN_RWP{0}[{1}] ".format(readwrite_input, i)
+                self.stim.gen_pwl(sig_name, self.cycle_times, self.data_values[i], self.period, self.slew, 0.05)
+        for write_port in range(OPTS.w_ports):
+            for i in range(self.word_size):
+                sig_name="DIN_WP{0}[{1}] ".format(write_port, i)
+                self.stim.gen_pwl(sig_name, self.cycle_times, self.data_values[i], self.period, self.slew, 0.05)
 
     def gen_addr(self):
         """ 

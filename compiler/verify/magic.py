@@ -46,6 +46,8 @@ def write_magic_script(cell_name, gds_name, extract=False):
     # (e.g. with routes)
     f.write("flatten {}_new\n".format(cell_name))
     f.write("load {}_new\n".format(cell_name))
+    f.write("cellname rename {0}_new {0}\n".format(cell_name))
+    f.write("load {}\n".format(cell_name))
     f.write("writeall force\n")
     f.write("drc check\n")
     f.write("drc catchup\n")

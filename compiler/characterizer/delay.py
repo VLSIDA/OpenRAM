@@ -170,6 +170,18 @@ class delay():
         for i in range(self.addr_size):
             self.stim.gen_constant(sig_name="A[{0}]".format(i),
                                    v_val=0)
+        for readwrite_addr in range(OPTS.rw_ports):
+            for i in range(self.addr_size):
+                self.stim.gen_constant(sig_name="A_RWP{0}[{1}]".format(readwrite_addr,i),
+                                   v_val=0)
+        for write_addr in range(OPTS.w_ports):
+            for i in range(self.addr_size):
+                self.stim.gen_constant(sig_name="A_WP{0}[{1}]".format(write_addr,i),
+                                   v_val=0)
+        for read_addr in range(OPTS.r_ports):
+            for i in range(self.addr_size):
+                self.stim.gen_constant(sig_name="A_RP{0}[{1}]".format(read_addr,i),
+                                   v_val=0)
 
         # generate control signals
         self.sf.write("\n* Generation of control signals\n")
@@ -802,9 +814,18 @@ class delay():
         Generates the address inputs for a simulation timing test. 
         This alternates between all 1's and all 0's for the address.
         """
-        for i in range(self.addr_size):
-            sig_name = "A[{0}]".format(i)
-            self.stim.gen_pwl(sig_name, self.cycle_times, self.addr_values[i], self.period, self.slew, 0.05)
+        for readwrite_addr in range(OPTS.rw_ports):
+            for i in range(self.addr_size):
+                sig_name = "A_RWP{0}[{1}]".format(readwrite_addr,i)
+                self.stim.gen_pwl(sig_name, self.cycle_times, self.addr_values[i], self.period, self.slew, 0.05)
+        for write_addr in range(OPTS.w_ports):
+            for i in range(self.addr_size):
+                sig_name = "A_WP{0}[{1}]".format(write_addr,i)
+                self.stim.gen_pwl(sig_name, self.cycle_times, self.addr_values[i], self.period, self.slew, 0.05)
+        for read_addr in range(OPTS.r_ports):
+            for i in range(self.addr_size):
+                sig_name = "A_RP{0}[{1}]".format(read_addr,i)
+                self.stim.gen_pwl(sig_name, self.cycle_times, self.addr_values[i], self.period, self.slew, 0.05)
 
 
     def gen_control(self):

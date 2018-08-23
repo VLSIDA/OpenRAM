@@ -40,8 +40,18 @@ class stimuli():
         for write_input in range(OPTS.w_ports):
             for i in range(dbits):
                 self.sf.write("DIN_WP{0}[{1}] ".format(write_input, i))
-        for i in range(abits):
-            self.sf.write("A[{0}] ".format(i))
+        
+        for readwrite_addr in range(OPTS.rw_ports):
+            for i in range(abits):
+                self.sf.write("A_RWP{0}[{1}] ".format(readwrite_addr,i))
+        for write_addr in range(OPTS.w_ports):
+            for i in range(abits):
+                self.sf.write("A_WP{0}[{1}] ".format(write_addr,i))
+        for read_addr in range(OPTS.r_ports):
+            for i in range(abits):
+                self.sf.write("A_RP{0}[{1}] ".format(read_addr,i))     
+
+            
         for i in tech.spice["control_signals"]:
             self.sf.write("{0} ".format(i))
         self.sf.write("{0} ".format(tech.spice["clk"]))

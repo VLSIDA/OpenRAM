@@ -830,5 +830,13 @@ class delay():
 
     def gen_control(self):
         """ Generates the control signals """
-        self.stim.gen_pwl("csb", self.cycle_times, self.csb_values, self.period, self.slew, 0.05)
-        self.stim.gen_pwl("web", self.cycle_times, self.web_values, self.period, self.slew, 0.05)
+        #Multiport changes to control signals. This will most likely be changed at some point when control signals are better determined.
+        for readwrite_port in range(OPTS.rw_ports):
+            self.stim.gen_pwl("csb{0}".format(readwrite_port), self.cycle_times, self.csb_values, self.period, self.slew, 0.05)
+            self.stim.gen_pwl("web{0}".format(readwrite_port), self.cycle_times, self.web_values, self.period, self.slew, 0.05)
+        for read_port in range(OPTS.r_ports):
+            self.stim.gen_pwl("RPENB{0}".format(read_port), self.cycle_times, self.csb_values, self.period, self.slew, 0.05)
+        for write_port in range(OPTS.w_ports):
+            self.stim.gen_pwl("WPENB{0}".format(write_port), self.cycle_times, self.csb_values, self.period, self.slew, 0.05)
+            
+        

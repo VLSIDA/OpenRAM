@@ -51,9 +51,18 @@ class stimuli():
             for i in range(abits):
                 self.sf.write("A_RP{0}[{1}] ".format(read_addr,i))     
 
+        #These control signals assume 6t sram i.e. a single readwrite port. If multiple readwrite ports are used then add more
+        #control signals. Not sure if this is correct, consider a temporary change until control signals for multiport are finalizd.
+        for readwrite_port in range(OPTS.rw_ports):
+            for i in tech.spice["control_signals"]:
+                self.sf.write("{0}{1} ".format(i,readwrite_port))
             
-        for i in tech.spice["control_signals"]:
-            self.sf.write("{0} ".format(i))
+        #Write control signals related to multiport. I do not know these entirely, so consider the signals temporary for now.
+        for read_port in range(OPTS.r_ports):
+            self.sf.write("RPENB{0} ".format(read_port))
+        for write_port in range(OPTS.w_ports):
+            self.sf.write("WPENB{0} ".format(write_port))
+            
         self.sf.write("{0} ".format(tech.spice["clk"]))
         for readwrite_output in range(OPTS.rw_ports):
             for i in range(dbits):

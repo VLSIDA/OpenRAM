@@ -187,16 +187,17 @@ class bank(design.design):
         self.add_mod(self.bitcell_array)
         
         # create arrays of bitline and bitline_bar names for read, write, or all ports
-        self.read_bl_list = self.bitcell.list_read_column_pins()
-        self.read_br_list = self.bitcell.list_read_bar_column_pins()
+        self.read_bl_list = self.bitcell.list_read_bl_names()
+        self.read_br_list = self.bitcell.list_read_br_names()
         
-        self.write_bl_list = self.bitcell.list_write_column_pins()
-        self.write_br_list = self.bitcell.list_write_bar_column_pins()
+        self.write_bl_list = self.bitcell.list_write_bl_names()
+        self.write_br_list = self.bitcell.list_write_br_names()
         
-        self.total_bl_list = self.bitcell.list_column_pins()
-        self.total_br_list = self.bitcell.list_column_bar_pins()
+        self.total_bl_list = self.bitcell.list_all_bl_names()
+        self.total_br_list = self.bitcell.list_all_br_names()
         
-        self.total_wl_list = self.bitcell.list_row_pins()
+        self.total_wl_list = self.bitcell.list_all_wl_names()
+        self.total_bitline_list = self.bitcell.list_all_bitline_names()
 
         self.precharge_array = [None] * self.total_read
         for k in range(self.total_read):
@@ -239,13 +240,11 @@ class bank(design.design):
                                               offset=vector(0,0))
 
         temp = []
-        bl_list = self.bitcell.list_all_column_pins()
-        wl_list = self.bitcell.list_row_pins()
         for col in range(self.num_cols):
-            for bitline in bl_list:
+            for bitline in self.total_bitline_list:
                 temp.append(bitline+"[{0}]".format(col))
         for row in range(self.num_rows):
-            for wordline in wl_list:
+            for wordline in self.total_wl_list:
                     temp.append(wordline+"[{0}]".format(row))
         temp.append("vdd")
         temp.append("gnd")

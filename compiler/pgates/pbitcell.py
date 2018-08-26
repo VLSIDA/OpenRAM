@@ -1055,10 +1055,9 @@ class pbitcell(pgate.pgate):
         bitcell_pins.append("gnd")
         
         return bitcell_pins
-        
     
-    def list_row_pins(self):
-        """ Creates a list of all row pins (except for gnd and vdd) """
+    def list_all_wl_names(self):
+        """ Creates a list of all wordline pin names """
         row_pins = []
         for k in range(self.num_readwrite):
             row_pins.append("rwwl{0}".format(k))
@@ -1069,8 +1068,8 @@ class pbitcell(pgate.pgate):
             
         return row_pins
     
-    def list_read_row_pins(self):
-        """ Creates a list of row pins associated with read ports """
+    def list_read_wl_names(self):
+        """ Creates a list of wordline pin names associated with read ports """
         row_pins = []
         for k in range(self.num_readwrite):
             row_pins.append("rwwl{0}".format(k))
@@ -1079,8 +1078,8 @@ class pbitcell(pgate.pgate):
             
         return row_pins
     
-    def list_write_row_pins(self):
-        """ Creates a list of row pins associated with write ports """
+    def list_write_wl_names(self):
+        """ Creates a list of wordline pin names associated with write ports """
         row_pins = []
         for k in range(self.num_readwrite):
             row_pins.append("rwwl{0}".format(k))
@@ -1090,8 +1089,8 @@ class pbitcell(pgate.pgate):
         return row_pins
     
     
-    def list_all_column_pins(self):
-        """ Creates a list of all bitline pins """
+    def list_all_bitline_names(self):
+        """ Creates a list of all bitline pin names (both bl and br) """
         column_pins = []
         for k in range(self.num_readwrite):
             column_pins.append("rwbl{0}".format(k))
@@ -1105,8 +1104,8 @@ class pbitcell(pgate.pgate):
             
         return column_pins
         
-    def list_column_pins(self):
-        """ Creates a list of all bitline bar pins """
+    def list_all_bl_names(self):
+        """ Creates a list of all bl pins names """
         column_pins = []
         for k in range(self.num_readwrite):
             column_pins.append("rwbl{0}".format(k))
@@ -1117,8 +1116,8 @@ class pbitcell(pgate.pgate):
             
         return column_pins
         
-    def list_column_bar_pins(self):
-        """ Creates a list of all bitline bar pins """
+    def list_all_br_names(self):
+        """ Creates a list of all br pins names """
         column_pins = []
         for k in range(self.num_readwrite):
             column_pins.append("rwbl_bar{0}".format(k))
@@ -1129,8 +1128,8 @@ class pbitcell(pgate.pgate):
             
         return column_pins
         
-    def list_read_column_pins(self):
-        """ Creates a list of column pins associated with read ports """
+    def list_read_bl_names(self):
+        """ Creates a list of bl pin names associated with read ports """
         column_pins = []
         for k in range(self.num_readwrite):
             column_pins.append("rwbl{0}".format(k))
@@ -1139,8 +1138,8 @@ class pbitcell(pgate.pgate):
             
         return column_pins
         
-    def list_read_bar_column_pins(self):
-        """ Creates a list of column pins associated with read_bar ports """
+    def list_read_br_names(self):
+        """ Creates a list of br pin names associated with read ports """
         column_pins = []
         for k in range(self.num_readwrite):
             column_pins.append("rwbl_bar{0}".format(k))
@@ -1149,8 +1148,8 @@ class pbitcell(pgate.pgate):
             
         return column_pins
         
-    def list_write_column_pins(self):
-        """ Creates a list of column pins associated with write ports """
+    def list_write_bl_names(self):
+        """ Creates a list of bl pin names associated with write ports """
         column_pins = []
         for k in range(self.num_readwrite):
             column_pins.append("rwbl{0}".format(k))
@@ -1159,8 +1158,8 @@ class pbitcell(pgate.pgate):
             
         return column_pins
     
-    def list_write_bar_column_pins(self):
-        """ Creates a list of column pins asscociated with write_bar ports"""
+    def list_write_br_names(self):
+        """ Creates a list of br pin names asscociated with write ports"""
         column_pins = []
         for k in range(self.num_readwrite):
             column_pins.append("rwbl_bar{0}".format(k))

@@ -42,8 +42,8 @@ class bitcell_array(design.design):
         self.DRC_LVS()
 
     def add_pins(self):
-        row_list = self.cell.list_row_pins()
-        column_list = self.cell.list_all_column_pins()
+        row_list = self.cell.list_all_wl_names()
+        column_list = self.cell.list_all_bitline_names()
         for col in range(self.column_size):
             for cell_column in column_list:
                 self.add_pin(cell_column+"[{0}]".format(col))
@@ -81,8 +81,8 @@ class bitcell_array(design.design):
     def add_layout_pins(self):
         """ Add the layout pins """
         
-        row_list = self.cell.list_row_pins()
-        column_list = self.cell.list_all_column_pins()
+        row_list = self.cell.list_all_wl_names()
+        column_list = self.cell.list_all_bitline_names()
         
         offset = vector(0.0, 0.0)
         for col in range(self.column_size):

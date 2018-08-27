@@ -28,9 +28,8 @@ class pbitcell(pgate.pgate):
         self.num_write = num_write
         self.num_read = num_read
 
-        self.add_pins()
+        self.create_netlist()
         self.create_layout()
-        self.DRC_LVS()
         
         pbitcell.width = self.width
         pbitcell.height = self.height
@@ -61,6 +60,9 @@ class pbitcell(pgate.pgate):
         self.add_pin("gnd")
 
         
+    def create_netlist(self):
+        self.add_pins()
+        
     def create_layout(self):
         self.create_ptx()
         self.calculate_spacing()
@@ -75,6 +77,7 @@ class pbitcell(pgate.pgate):
             self.add_read_ports()
         self.extend_well()
         self.offset_all_coordinates()
+        self.DRC_LVS()
     
     
     def create_ptx(self):

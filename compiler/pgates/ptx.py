@@ -39,7 +39,7 @@ class ptx(design.design):
         self.connect_poly = connect_poly
         self.num_contacts = num_contacts
 
-        self.create_spice()
+        self.create_netlist()
         self.create_layout()
 
         self.translate_all(self.active_offset)
@@ -57,7 +57,7 @@ class ptx(design.design):
         self.add_poly()
         self.add_active_contacts()
 
-    def create_spice(self):
+    def create_netlist(self):
         self.add_pin_list(["D", "G", "S", "B"])
         
         # self.spice.append("\n.SUBCKT {0} {1}".format(self.name,

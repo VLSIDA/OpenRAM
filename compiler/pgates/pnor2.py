@@ -36,7 +36,7 @@ class pnor2(pgate.pgate):
         debug.check(size==1,"Size 1 pnor2 is only supported now.")
         self.tx_mults = 1
 
-        self.add_pins()
+        self.create_netlist()
         self.create_layout()
         #self.DRC_LVS()
 
@@ -45,6 +45,9 @@ class pnor2(pgate.pgate):
         """ Adds pins for spice netlist """
         self.add_pin_list(["A", "B", "Z", "vdd", "gnd"])
 
+    def create_netlist(self):
+        self.add_pins()
+        
     def create_layout(self):
         """ Calls all functions related to the generation of the layout """
 

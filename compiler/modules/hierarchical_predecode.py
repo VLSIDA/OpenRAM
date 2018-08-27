@@ -37,17 +37,17 @@ class hierarchical_predecode(design.design):
         self.inv = pinv()
         self.add_mod(self.inv)
         
-        self.create_nand(self.number_of_inputs)
+        self.add_nand(self.number_of_inputs)
         self.add_mod(self.nand)
 
-    def create_nand(self,inputs):
+    def add_nand(self,inputs):
         """ Create the NAND for the predecode input stage """
         if inputs==2:
             self.nand = pnand2()
         elif inputs==3:
             self.nand = pnand3()
         else:
-            debug.error("Invalid number of predecode inputs.",-1)
+            debug.error("Invalid number of predecode inputs: {}".format(inputs),-1)
             
     def setup_constraints(self):
 

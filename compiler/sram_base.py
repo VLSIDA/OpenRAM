@@ -32,6 +32,8 @@ class sram_base(design):
         self.num_words = num_words
         self.num_banks = num_banks
 
+        self.bank_insts = []
+
     def compute_sizes(self):
         """  Computes the organization of the memory using bitcell size by trying to make it square."""
 
@@ -114,12 +116,17 @@ class sram_base(design):
         self.add_pin("gnd","GROUND")
 
 
+    def create_netlist(self):
+        """ Netlist creation """    
+        self.add_modules()
+        self.add_pins()
+
     def create_layout(self):
         """ Layout creation """    
-        self.add_modules()
+        self.place_modules()
         self.route()
         self.add_lvs_correspondence_points()
-
+        
     def compute_bus_sizes(self):
         """ Compute the independent bus widths shared between two and four bank SRAMs """
         
@@ -235,7 +242,7 @@ class sram_base(design):
                 self.copy_layout_pin(inst, "gnd")
         
         
-    def create_multi_bank_modules(self):
+    def add_multi_bank_modules(self):
         """ Create the multibank address flops and bank decoder """
         from dff_buf_array import dff_buf_array
         self.msb_address = dff_buf_array(name="msb_address",
@@ -247,7 +254,7 @@ class sram_base(design):
             self.msb_decoder = self.bank.decoder.pre2_4
             self.add_mod(self.msb_decoder)
 
-    def create_modules(self):
+    def add_modules(self):
         """ Create all the modules that will be used """
 
         from control_logic import control_logic
@@ -280,7 +287,7 @@ class sram_base(design):
 
         # Create bank decoder
         if(self.num_banks > 1):
-            self.create_multi_bank_modules()
+            self.add_multi_bank_modules()
 
         self.bank_count = 0
 
@@ -289,7 +296,28 @@ class sram_base(design):
 
 
 
-    def add_bank(self, bank_num, position, x_flip, y_flip):
+    def create_bank(self):
+        """ Create a bank  """
+        bank_num = len(self.bank_insts)
+        self.bank_insts.append(self.add_inst(name="bank{0}".format(bank_num),
+                                             mod=self.bank))
+
+        temp = []
+        for i in range(self.word_size):
+            temp.append("DOUT[{0}]".format(i))
+        for i in range(self.word_size):
+            temp.append("BANK_DIN[{0}]".format(i))
+        for i in range(self.bank_addr_size):
+            temp.append("A[{0}]".format(i))
+        if(self.num_banks > 1):
+            temp.append("bank_sel[{0}]".format(bank_num))
+        temp.extend(["s_en0", "w_en0", "clk_buf_bar","clk_buf" , "vdd", "gnd"])
+        self.connect_inst(temp)
+
+        return self.bank_insts[-1]
+
+
+    def place_bank(self, bank_inst, position, x_flip, y_flip):
         """ Place a bank at the given position with orientations """
 
         # x_flip ==  1 --> no flip in x_axis
@@ -313,32 +341,19 @@ class sram_base(design):
         else:
             bank_mirror = "R0"
             
-        bank_inst=self.add_inst(name="bank{0}".format(bank_num),
-                                mod=self.bank,
-                                offset=position,
-                                mirror=bank_mirror,
-                                rotate=bank_rotation)
-
-        temp = []
-        for i in range(self.word_size):
-            temp.append("DOUT[{0}]".format(i))
-        for i in range(self.word_size):
-            temp.append("BANK_DIN[{0}]".format(i))
-        for i in range(self.bank_addr_size):
-            temp.append("A[{0}]".format(i))
-        if(self.num_banks > 1):
-            temp.append("bank_sel[{0}]".format(bank_num))
-        temp.extend(["s_en0", "w_en0", "clk_buf_bar","clk_buf" , "vdd", "gnd"])
-        self.connect_inst(temp)
+        self.place_inst(name=bank_inst.name,
+                        offset=position,
+                        mirror=bank_mirror,
+                        rotate=bank_rotation)
 
         return bank_inst
 
-
-    def add_row_addr_dff(self, position):
-        """ Add and place all address flops for the main decoder """
-        self.row_addr_dff_inst = self.add_inst(name="row_address",
-                                               mod=self.row_addr_dff,
-                                               offset=position)
+    
+    def create_row_addr_dff(self):
+        """ Add all address flops for the main decoder """
+        inst = self.add_inst(name="row_address",
+                             mod=self.row_addr_dff)
+                
         # inputs, outputs/output/bar
         inputs = []
         outputs = []
@@ -347,13 +362,13 @@ class sram_base(design):
             outputs.append("A[{}]".format(i+self.col_addr_size))
 
         self.connect_inst(inputs + outputs + ["clk_buf", "vdd", "gnd"])
-
+        return inst
         
-    def add_col_addr_dff(self, position):
+    def create_col_addr_dff(self):
         """ Add and place all address flops for the column decoder """
-        self.col_addr_dff_inst = self.add_inst(name="row_address",
-                                               mod=self.col_addr_dff,
-                                               offset=position)
+        inst = self.add_inst(name="col_address",
+                             mod=self.col_addr_dff)
+              
         # inputs, outputs/output/bar
         inputs = []
         outputs = []
@@ -362,12 +377,13 @@ class sram_base(design):
             outputs.append("A[{}]".format(i))
 
         self.connect_inst(inputs + outputs + ["clk_buf", "vdd", "gnd"])
-
-    def add_data_dff(self, position):
+        return inst
+    
+    def create_data_dff(self):
         """ Add and place all data flops """
-        self.data_dff_inst = self.add_inst(name="data_dff",
-                                           mod=self.data_dff,
-                                           offset=position)
+        inst = self.add_inst(name="data_dff",
+                             mod=self.data_dff)
+              
         # inputs, outputs/output/bar
         inputs = []
         outputs = []
@@ -376,15 +392,16 @@ class sram_base(design):
             outputs.append("BANK_DIN[{}]".format(i))
 
         self.connect_inst(inputs + outputs + ["clk_buf", "vdd", "gnd"])
+        return inst
         
-    def add_control_logic(self, position):
+    def create_control_logic(self):
         """ Add and place control logic """
-        self.control_logic_inst=self.add_inst(name="control",
-                                              mod=self.control_logic,
-                                              offset=position)
+        inst = self.add_inst(name="control",
+                             mod=self.control_logic)
+              
         self.connect_inst(self.control_logic_inputs + self.control_logic_outputs + ["vdd", "gnd"])
-
-
+        return inst
+        
         
 
 

@@ -54,7 +54,9 @@ class hierarchical_decoder(design.design):
         self.route_input_rails()
         self.route_predecode_rails()
         self.route_vdd_gnd()
-        
+        self.offset_all_coordinates()
+        self.DRC_LVS()
+                
     def add_modules(self):
         self.inv = pinv()
         self.add_mod(self.inv)

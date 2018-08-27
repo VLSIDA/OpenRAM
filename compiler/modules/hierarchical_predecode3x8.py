@@ -28,7 +28,7 @@ class hierarchical_predecode3x8(hierarchical_predecode):
                      ["in[0]",    "inbar[1]", "in[2]",    "Z[5]", "vdd", "gnd"],
                      ["inbar[0]", "in[1]",    "in[2]",    "Z[6]", "vdd", "gnd"],
                      ["in[0]",    "in[1]",    "in[2]",    "Z[7]", "vdd", "gnd"]]
-        self.create_nand(connections)
+        self.create_nand_array(connections)
 
     def create_layout(self):
         """ 
@@ -41,7 +41,7 @@ class hierarchical_predecode3x8(hierarchical_predecode):
         self.route_rails()
         self.place_input_inverters()
         self.place_output_inverters()
-        self.place_nand()
+        self.place_nand_array()
         self.route()
         self.DRC_LVS()
         

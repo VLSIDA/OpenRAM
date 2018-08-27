@@ -31,13 +31,15 @@ class precharge(pgate.pgate):
         self.bitcell_bl = bitcell_bl
         self.bitcell_br = bitcell_br
 
-        self.add_pins()
+        self.create_netlist()
         self.create_layout()
-        self.DRC_LVS()
 
     def add_pins(self):
         self.add_pin_list(["bl", "br", "en", "vdd"])
 
+    def create_netlist(self):
+        self.add_pins()
+        
     def create_layout(self):
         self.create_ptx()
         self.add_ptx()
@@ -47,6 +49,7 @@ class precharge(pgate.pgate):
         self.add_vdd_rail()
         self.add_bitlines()
         self.connect_to_bitlines()
+        self.DRC_LVS()
 
     def create_ptx(self):
         """Initializes the upper and lower pmos"""

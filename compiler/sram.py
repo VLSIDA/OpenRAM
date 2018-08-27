@@ -37,9 +37,7 @@ class sram():
         else:
             debug.error("Invalid number of banks.",-1)
 
-        self.s.compute_sizes()
-        self.s.create_modules()
-        self.s.add_pins()
+        self.s.create_netlist()
         self.s.create_layout()
         
         # Can remove the following, but it helps for debug!

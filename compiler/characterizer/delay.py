@@ -651,7 +651,7 @@ class delay():
     
     def add_noop_all_ports(self, comment, address, data):
         """ Add the control values for a noop to all ports. """
-        self.cycle_comments.append("Cycle {0:2d}\t{1:5.2f}ns:\t{2}".format(len(self.cycle_times),
+        self.cycle_comments.append("Cycle {0:2d}\tPort All\t{1:5.2f}ns:\t{2}".format(len(self.cycle_times),
                                                                            self.t_current,
                                                                            comment))
         self.cycle_times.append(self.t_current)
@@ -663,9 +663,10 @@ class delay():
                  
     def add_read(self, comment, address, data, port):
         """ Add the control values for a read cycle. """
-        self.cycle_comments.append("Cycle {0:2d}\t{1:5.2f}ns:\t{2}".format(len(self.cycle_comments),
+        self.cycle_comments.append("Cycle {0:2d}\tPort {3}\t{1:5.2f}ns:\t{2}".format(len(self.cycle_comments),
                                                                            self.t_current,
-                                                                           comment))
+                                                                           comment,
+                                                                           port))
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
         
@@ -682,9 +683,10 @@ class delay():
 
     def add_write(self, comment, address, data, port):
         """ Add the control values for a write cycle. """
-        self.cycle_comments.append("Cycle {0:2d}\t{1:5.2f}ns:\t{2}".format(len(self.cycle_comments),
+        self.cycle_comments.append("Cycle {0:2d}\tPort {3}\t{1:5.2f}ns:\t{2}".format(len(self.cycle_comments),
                                                                            self.t_current,
-                                                                           comment))
+                                                                           comment,
+                                                                           port))
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
         

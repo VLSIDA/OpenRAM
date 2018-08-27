@@ -55,7 +55,7 @@ class stimuli():
         #control signals. Not sure if this is correct, consider a temporary change until control signals for multiport are finalizd.
         for readwrite_port in range(OPTS.rw_ports):
             for i in tech.spice["control_signals"]:
-                self.sf.write("{0}{1} ".format(i,readwrite_port))
+                self.sf.write("{0}_RWP{1} ".format(i,readwrite_port))
             
         #Write control signals related to multiport. I do not know these entirely, so consider the signals temporary for now.
         for read_port in range(OPTS.r_ports):

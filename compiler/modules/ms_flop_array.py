@@ -30,14 +30,18 @@ class ms_flop_array(design.design):
         self.height = self.ms.height
         self.words_per_row = int(self.columns / self.word_size)
 
+        self.create_netlist()
         self.create_layout()
 
-    def create_layout(self):
+    def create_netlist(self):
         self.add_pins()
         self.create_ms_flop_array()
+
+    def create_layout(self):
+        self.place_ms_flop_array()
         self.add_layout_pins()
         self.DRC_LVS()
-
+        
     def add_pins(self):
         for i in range(self.word_size):
             self.add_pin("din[{0}]".format(i))
@@ -52,25 +56,28 @@ class ms_flop_array(design.design):
         self.ms_inst={}
         for i in range(0,self.columns,self.words_per_row):
             name = "Xdff{0}".format(i)
-            if (i % 2 == 0 or self.words_per_row>1):
-                base = vector(i*self.ms.width,0)
-                mirror = "R0"
-            else:
-                base = vector((i+1)*self.ms.width,0)
-                mirror = "MY"
-
             index = int(i/self.words_per_row)
-                
             self.ms_inst[index]=self.add_inst(name=name,
-                                                             mod=self.ms,
-                                                             offset=base, 
-                                                             mirror=mirror)
+                                              mod=self.ms)
             self.connect_inst(["din[{0}]".format(index),
                                "dout[{0}]".format(index),
                                "dout_bar[{0}]".format(index),
                                "clk",
                                "vdd", "gnd"])
 
+    def place_ms_flop_array(self):
+        for i in range(0,self.columns,self.words_per_row):
+            name = "Xdff{0}".format(i)
+            if (i % 2 == 0 or self.words_per_row>1):
+                base = vector(i*self.ms.width,0)
+                mirror = "R0"
+            else:
+                base = vector((i+1)*self.ms.width,0)
+                mirror = "MY"
+            self.place_inst(name=name,
+                            offset=base, 
+                            mirror=mirror)
+            
     def add_layout_pins(self):
         
         for i in range(self.word_size):

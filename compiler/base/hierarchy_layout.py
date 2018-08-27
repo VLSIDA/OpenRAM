@@ -127,6 +127,7 @@ class layout(lef.lef):
         inst.mirror = mirror
         inst.rotate = rotate
         inst.update_boundary()
+        return inst
 
     def add_inst(self, name, mod, offset=[0,0], mirror="R0",rotate=0):
         """Adds an instance of a mod to this module"""

@@ -28,9 +28,8 @@ class write_driver_array(design.design):
         self.width = self.columns * self.driver.width
         self.height = self.height = self.driver.height
         
-        self.add_pins()
+        self.create_netlist()
         self.create_layout()
-        self.DRC_LVS()
 
     def add_pins(self):
         for i in range(self.word_size):
@@ -42,20 +41,22 @@ class write_driver_array(design.design):
         self.add_pin("vdd")
         self.add_pin("gnd")
 
-    def create_layout(self):
+    def create_netlist(self):
+        self.add_pins()
         self.create_write_array()
+        
+    def create_layout(self):
+        self.place_write_array()
         self.add_layout_pins()
+        self.DRC_LVS()
 
     def create_write_array(self):
         self.driver_insts = {}
         for i in range(0,self.columns,self.words_per_row):
             name = "Xwrite_driver{}".format(i)
-            base = vector(i * self.driver.width,0)
-            
             index = int(i/self.words_per_row)
             self.driver_insts[index]=self.add_inst(name=name,
-                                                   mod=self.driver,
-                                                   offset=base)
+                                                   mod=self.driver)
 
             self.connect_inst(["data[{0}]".format(index),
                                "bl[{0}]".format(index),
@@ -63,6 +64,15 @@ class write_driver_array(design.design):
                                "en", "vdd", "gnd"])
 
 
+    def place_write_array(self):
+        for i in range(0,self.columns,self.words_per_row):
+            name = "Xwrite_driver{}".format(i)
+            base = vector(i * self.driver.width,0)
+            
+            self.place_inst(name=name,
+                          offset=base)
+
+            
     def add_layout_pins(self):
         for i in range(self.word_size):
             din_pin = self.driver_insts[i].get_pin("din")

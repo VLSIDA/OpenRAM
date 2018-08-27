@@ -99,19 +99,20 @@ class sram():
         lib(out_dir=OPTS.output_path, sram=self.s, sp_file=sp_file)
         print_time("Characterization", datetime.datetime.now(), start_time)
 
-        # Write the layout
-        start_time = datetime.datetime.now()
-        gdsname = OPTS.output_path + self.s.name + ".gds"
-        print("GDS: Writing to {0}".format(gdsname))
-        self.s.gds_write(gdsname)
-        print_time("GDS", datetime.datetime.now(), start_time)
+        if not OPTS.netlist_only:
+            # Write the layout
+            start_time = datetime.datetime.now()
+            gdsname = OPTS.output_path + self.s.name + ".gds"
+            print("GDS: Writing to {0}".format(gdsname))
+            self.s.gds_write(gdsname)
+            print_time("GDS", datetime.datetime.now(), start_time)
 
-        # Create a LEF physical model
-        start_time = datetime.datetime.now()
-        lefname = OPTS.output_path + self.s.name + ".lef"
-        print("LEF: Writing to {0}".format(lefname))
-        self.s.lef_write(lefname)
-        print_time("LEF", datetime.datetime.now(), start_time)
+            # Create a LEF physical model
+            start_time = datetime.datetime.now()
+            lefname = OPTS.output_path + self.s.name + ".lef"
+            print("LEF: Writing to {0}".format(lefname))
+            self.s.lef_write(lefname)
+            print_time("LEF", datetime.datetime.now(), start_time)
 
         # Write a verilog model
         start_time = datetime.datetime.now()

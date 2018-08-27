@@ -204,6 +204,11 @@ def read_config(config_file, is_unit_test=True):
 
     OPTS.is_unit_test=is_unit_test
 
+    # If we are only generating a netlist, we can't do DRC/LVS
+    if OPTS.netlist_only:
+        OPTS.check_lvsdrc=False
+    
+
     # If config didn't set output name, make a reasonable default.
     if (OPTS.output_name == ""):
         OPTS.output_name = "sram_{0}rw_{1}b_{2}w_{3}bank_{4}".format(OPTS.rw_ports,
@@ -372,6 +377,9 @@ def report_status():
     print("Word size: {0}\nWords: {1}\nBanks: {2}".format(OPTS.word_size,
                                                           OPTS.num_words,
                                                           OPTS.num_banks))
+    if OPTS.netlist_only:
+        print("Netlist only mode (no physical design is being done).")
+    
     if not OPTS.check_lvsdrc:
         print("DRC/LVS/PEX checking is disabled.")
     

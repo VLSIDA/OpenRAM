@@ -40,7 +40,10 @@ report_status()
 import verify
 import sram
 
-output_files = ["{0}.{1}".format(OPTS.output_name,x) for x in ["sp","gds","v","lib","lef"]]
+output_extensions = ["sp","v","lib"]
+if not OPTS.netlist_only:
+    output_extensions.extend(["gds","lef"])
+output_files = ["{0}.{1}".format(OPTS.output_name,x) for x in output_extensions]
 print("Output files are: ")
 print(*output_files,sep="\n")
 

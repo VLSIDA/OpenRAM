@@ -49,6 +49,10 @@ class geometry:
         ll = vector(min(first[0],second[0]),min(first[1],second[1]))
         ur = vector(max(first[0],second[0]),max(first[1],second[1]))
         self.boundary=[ll,ur]
+
+    def update_boundary(self):
+        """ Update the boundary with a new placement. """
+        self.compute_boundary(self.offset,self.mirror,self.rotate)
         
     def compute_boundary(self,offset=vector(0,0),mirror="",rotate=0):
         """ Transform with offset, mirror and rotation to get the absolute pin location. 
@@ -124,7 +128,7 @@ class instance(geometry):
     An instance of an instance/module with a specified location and
     rotation
     """
-    def __init__(self, name, mod, offset, mirror, rotate):
+    def __init__(self, name, mod, offset=[0,0], mirror="R0", rotate=0):
         """Initializes an instance to represent a module"""
         geometry.__init__(self)
         debug.check(mirror not in ["R90","R180","R270"], "Please use rotation and not mirroring during instantiation.")

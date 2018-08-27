@@ -117,15 +117,30 @@ class sram_base(design):
 
 
     def create_netlist(self):
-        """ Netlist creation """    
+        """ Netlist creation """
+
+        # Must create the control logic before pins to get the pins
         self.add_modules()
         self.add_pins()
-
+        
+        # This is for the lib file if we don't create layout
+        self.width=0
+        self.height=0
+        
     def create_layout(self):
         """ Layout creation """    
         self.place_modules()
         self.route()
         self.add_lvs_correspondence_points()
+        
+        self.offset_all_coordinates()
+        
+        highest_coord = self.find_highest_coords()
+        self.width = highest_coord[0]
+        self.height = highest_coord[1]
+        
+        self.DRC_LVS(final_verification=True)
+
         
     def compute_bus_sizes(self):
         """ Compute the independent bus widths shared between two and four bank SRAMs """
@@ -296,9 +311,8 @@ class sram_base(design):
 
 
 
-    def create_bank(self):
+    def create_bank(self,bank_num):
         """ Create a bank  """
-        bank_num = len(self.bank_insts)
         self.bank_insts.append(self.add_inst(name="bank{0}".format(bank_num),
                                              mod=self.bank))
 

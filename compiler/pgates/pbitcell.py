@@ -29,8 +29,10 @@ class pbitcell(pgate.pgate):
         self.num_read = num_read
 
         self.create_netlist()
-        self.create_layout()
-        
+        if not OPTS.netlist_only:
+            self.create_layout()
+
+        # FIXME: Why is this static set here?
         pbitcell.width = self.width
         pbitcell.height = self.height
     

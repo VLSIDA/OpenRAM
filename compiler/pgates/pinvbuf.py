@@ -36,7 +36,8 @@ class pinvbuf(design.design):
         debug.info(1, "Creating {}".format(self.name))
 
         self.create_netlist()
-        self.create_layout()
+        if not OPTS.netlist_only:
+            self.create_layout()
 
 
     def create_netlist(self):

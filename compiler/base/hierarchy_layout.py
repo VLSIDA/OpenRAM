@@ -5,6 +5,7 @@ import debug
 from tech import drc, GDS
 from tech import layer as techlayer
 import os
+from globals import OPTS
 from vector import vector
 from pin_layout import pin_layout
 import lef
@@ -436,6 +437,10 @@ class layout(lef.lef):
     def gds_read(self):
         """Reads a GDSII file in the library and checks if it exists
            Otherwise, start a new layout for dynamic generation."""
+        if OPTS.netlist_only:
+            self.gds = None
+            return
+        
         # open the gds file if it exists or else create a blank layout
         if os.path.isfile(self.gds_file):
             debug.info(3, "opening %s" % self.gds_file)

@@ -32,25 +32,25 @@ class bitcell_array(design.design):
         self.width = self.column_size*self.cell.width + self.m1_width
         
         self.create_netlist()
-        
-        self.create_layout()
+        if not OPTS.netlist_only:
+            self.create_layout()
 
         # We don't offset this because we need to align
         # the replica bitcell in the control logic
         #self.offset_all_coordinates()
         
-
-    def add_pins(self):
-        row_list = self.cell.list_all_wl_names()
-        column_list = self.cell.list_all_bitline_names()
+        
+    def create_netlist(self):
+        """ Create and connect the netlist """
+        self.add_pins()
+        
+        self.cell_inst = {}
         for col in range(self.column_size):
-            for cell_column in column_list:
-                self.add_pin(cell_column+"[{0}]".format(col))
-        for row in range(self.row_size):
-            for cell_row in row_list:
-                    self.add_pin(cell_row+"[{0}]".format(row))
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+            for row in range(self.row_size):
+                name = "bit_r{0}_c{1}".format(row, col)
+                self.cell_inst[row,col]=self.add_inst(name=name,
+                                                      mod=self.cell)
+                self.connect_inst(self.cell.list_bitcell_pins(col, row))
 
     def create_layout(self):
         xoffset = 0.0
@@ -75,18 +75,18 @@ class bitcell_array(design.design):
         self.add_layout_pins()
 
         self.DRC_LVS()
-        
-    def create_netlist(self):
-        """ Create and connect the netlist """
-        self.add_pins()
-        
-        self.cell_inst = {}
+
+    def add_pins(self):
+        row_list = self.cell.list_all_wl_names()
+        column_list = self.cell.list_all_bitline_names()
         for col in range(self.column_size):
-            for row in range(self.row_size):
-                name = "bit_r{0}_c{1}".format(row, col)
-                self.cell_inst[row,col]=self.add_inst(name=name,
-                                                      mod=self.cell)
-                self.connect_inst(self.cell.list_bitcell_pins(col, row))
+            for cell_column in column_list:
+                self.add_pin(cell_column+"[{0}]".format(col))
+        for row in range(self.row_size):
+            for cell_row in row_list:
+                    self.add_pin(cell_row+"[{0}]".format(row))
+        self.add_pin("vdd")
+        self.add_pin("gnd")
 
             
     def add_layout_pins(self):

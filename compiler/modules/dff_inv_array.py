@@ -20,20 +20,28 @@ class dff_inv_array(design.design):
             name = "dff_inv_array_{0}x{1}".format(rows, columns)
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(self.name))
+        self.inv_size = inv_size
+        
+        self.create_netlist()
+        if not OPTS.netlist_only:
+            self.create_layout()
 
-        self.dff = dff_inv.dff_inv(inv_size)
-        self.add_mod(self.dff)
-
+    def create_netlist(self):
+        self.add_pins()
+        self.add_dff()
+        self.create_dff_array()
+        
+    def create_layout(self):
         self.width = self.columns * self.dff.width
         self.height = self.rows * self.dff.height
 
-        self.create_layout()
-
-    def create_layout(self):
-        self.add_pins()
-        self.create_dff_array()
+        self.place_dff_array()
         self.add_layout_pins()
         self.DRC_LVS()
+
+    def add_dff(self):
+        self.dff = dff_inv.dff_inv(self.inv_size)
+        self.add_mod(self.dff)
 
     def add_pins(self):
         for row in range(self.rows):  
@@ -52,16 +60,8 @@ class dff_inv_array(design.design):
         for row in range(self.rows):  
             for col in range(self.columns):
                 name = "Xdff_r{0}_c{1}".format(row,col)
-                if (row % 2 == 0):
-                    base = vector(col*self.dff.width,row*self.dff.height)
-                    mirror = "R0"
-                else:
-                    base = vector(col*self.dff.width,(row+1)*self.dff.height)
-                    mirror = "MX"
                 self.dff_insts[row,col]=self.add_inst(name=name,
-                                                      mod=self.dff,
-                                                      offset=base, 
-                                                      mirror=mirror)
+                                                      mod=self.dff)
                 self.connect_inst([self.get_din_name(row,col),
                                    self.get_dout_name(row,col),
                                    self.get_dout_bar_name(row,col),  
@@ -69,6 +69,20 @@ class dff_inv_array(design.design):
                                    "vdd",
                                    "gnd"])
 
+    def place_dff_array(self):
+        for row in range(self.rows):  
+            for col in range(self.columns):
+                name = "Xdff_r{0}_c{1}".format(row,col)
+                if (row % 2 == 0):
+                    base = vector(col*self.dff.width,row*self.dff.height)
+                    mirror = "R0"
+                else:
+                    base = vector(col*self.dff.width,(row+1)*self.dff.height)
+                    mirror = "MX"
+                self.place_inst(name=name,
+                                offset=base, 
+                                mirror=mirror)
+                
     def get_din_name(self, row, col):
         if self.columns == 1:
             din_name = "din[{0}]".format(row)

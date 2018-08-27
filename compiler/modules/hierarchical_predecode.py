@@ -49,7 +49,7 @@ class hierarchical_predecode(design.design):
         else:
             debug.error("Invalid number of predecode inputs: {}".format(inputs),-1)
             
-    def setup_constraints(self):
+    def setup_layout_constraints(self):
 
         self.height = self.number_of_outputs * self.nand.height
 

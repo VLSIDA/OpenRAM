@@ -22,18 +22,16 @@ class sram_1bank(sram_base):
 
     def create_netlist(self):
         self.compute_sizes()
-        self.add_modules()
-        # Must run this after add modules to get control pin names
-        self.add_pins()
+        sram_base.create_netlist(self)
         self.create_modules()
-        
+
     def create_modules(self):
         """ 
         This adds the modules for a single bank SRAM with control
         logic. 
         """
         
-        self.bank_inst = self.create_bank()
+        self.bank_inst=self.create_bank(0)
 
         self.control_logic_inst = self.create_control_logic()
 
@@ -43,7 +41,7 @@ class sram_1bank(sram_base):
             self.col_addr_dff_inst = self.create_col_addr_dff()
         
         self.data_dff_inst = self.create_data_dff()
-
+        
     def place_modules(self):
         """ 
         This places the modules for a single bank SRAM with control
@@ -91,8 +89,8 @@ class sram_1bank(sram_base):
                         offset=data_pos)
         
         # two supply rails are already included in the bank, so just 2 here.
-        self.width = self.bank.width + self.control_logic.width + 2*self.supply_rail_pitch
-        self.height = self.bank.height 
+        # self.width = self.bank.width + self.control_logic.width + 2*self.supply_rail_pitch
+        # self.height = self.bank.height 
         
     def add_layout_pins(self):
         """

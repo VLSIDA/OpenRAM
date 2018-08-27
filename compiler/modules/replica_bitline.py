@@ -24,16 +24,24 @@ class replica_bitline(design.design):
 
         g = reload(__import__(OPTS.replica_bitcell))
         self.mod_replica_bitcell = getattr(g, OPTS.replica_bitcell)
-
-        for pin in ["en", "out", "vdd", "gnd"]:
-            self.add_pin(pin)
+        
         self.bitcell_loads = bitcell_loads
         self.delay_stages = delay_stages
         self.delay_fanout = delay_fanout
 
-        self.create_modules()
-        self.calculate_module_offsets()
+        self.create_netlist()
+        if not OPTS.netlist_only:
+            self.create_layout()
+            
+    def create_netlist(self):
+        for pin in ["en", "out", "vdd", "gnd"]:
+            self.add_pin(pin)
         self.add_modules()
+        self.create_modules()
+
+    def create_layout(self):
+        self.calculate_module_offsets()
+        self.place_modules()
         self.route()
 
         self.offset_all_coordinates()
@@ -47,6 +55,7 @@ class replica_bitline(design.design):
         self.height = max(self.rbl_inst.uy(), self.dc_inst.uy()) + self.m3_pitch
 
         self.DRC_LVS()
+
 
     def calculate_module_offsets(self):
         """ Calculate all the module offsets """
@@ -74,8 +83,8 @@ class replica_bitline(design.design):
 
 
 
-    def create_modules(self):
-        """ Create modules for later instantiation """
+    def add_modules(self):
+        """ Add the modules for later usage """
         self.bitcell = self.replica_bitcell = self.mod_replica_bitcell()
         self.add_mod(self.bitcell)
 
@@ -93,37 +102,52 @@ class replica_bitline(design.design):
         self.access_tx = ptx(tx_type="pmos")
         self.add_mod(self.access_tx)
 
-    def add_modules(self):
-        """ Add all of the module instances in the logical netlist """
+    def create_modules(self):
+        """ Create all of the module instances in the logical netlist """
+        
         # This is the threshold detect inverter on the output of the RBL
         self.rbl_inv_inst=self.add_inst(name="rbl_inv",
-                                        mod=self.inv,
-                                        offset=self.rbl_inv_offset,
-                                        rotate=180)
+                                        mod=self.inv)
         self.connect_inst(["bl[0]", "out", "vdd", "gnd"])
 
         self.tx_inst=self.add_inst(name="rbl_access_tx",
-                                   mod=self.access_tx,
-                                   offset=self.access_tx_offset)
+                                   mod=self.access_tx)
         # D, G, S, B
         self.connect_inst(["vdd", "delayed_en", "bl[0]", "vdd"])
         # add the well and poly contact
 
         self.dc_inst=self.add_inst(name="delay_chain",
-                                   mod=self.delay_chain,
-                                   offset=self.delay_chain_offset)
+                                   mod=self.delay_chain)
         self.connect_inst(["en", "delayed_en", "vdd", "gnd"])
 
         self.rbc_inst=self.add_inst(name="bitcell",
-                                    mod=self.replica_bitcell,
-                                    offset=self.bitcell_offset,
-                                    mirror="MX")
+                                    mod=self.replica_bitcell)
         self.connect_inst(["bl[0]", "br[0]", "delayed_en", "vdd", "gnd"])
 
         self.rbl_inst=self.add_inst(name="load",
-                                    mod=self.rbl,
-                                    offset=self.rbl_offset)
+                                    mod=self.rbl)
         self.connect_inst(["bl[0]", "br[0]"] + ["gnd"]*self.bitcell_loads + ["vdd", "gnd"])
+        
+    def place_modules(self):
+        """ Add all of the module instances in the logical netlist """
+        
+        # This is the threshold detect inverter on the output of the RBL
+        self.place_inst(name="rbl_inv",
+                        offset=self.rbl_inv_offset,
+                        rotate=180)
+
+        self.place_inst(name="rbl_access_tx",
+                        offset=self.access_tx_offset)
+
+        self.place_inst(name="delay_chain",
+                        offset=self.delay_chain_offset)
+
+        self.place_inst(name="bitcell",
+                        offset=self.bitcell_offset,
+                        mirror="MX")
+
+        self.place_inst(name="load",
+                        offset=self.rbl_offset)
         
         
 

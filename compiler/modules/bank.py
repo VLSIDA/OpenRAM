@@ -56,7 +56,8 @@ class bank(design.design):
             self.prefix=""
 
         self.create_netlist()
-        self.create_layout()
+        if not OPTS.netlist_only:
+            self.create_layout()
 
 
     def create_netlist(self):
@@ -580,23 +581,25 @@ class bank(design.design):
         
     def route_bank_select(self):
         """ Route the bank select logic. """
-        for input_name in self.input_control_signals+["bank_sel"]:
-            self.copy_layout_pin(self.bank_select_inst, input_name)
+        
+        for k in range(self.total_ports):
+            for input_name in self.input_control_signals+["bank_sel"]:
+                self.copy_layout_pin(self.bank_select_inst[k], input_name)
 
-        for gated_name in self.control_signals:
-            # Connect the inverter output to the central bus
-            out_pos = self.bank_select_inst[0].get_pin(gated_name).rc()
-            bus_pos = vector(self.bus_xoffset[gated_name].x, out_pos.y)
-            self.add_path("metal3",[out_pos, bus_pos])
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
-                                offset=bus_pos,
-                                rotate=90)
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=out_pos,
-                                rotate=90)
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
-                                offset=out_pos,
-                                rotate=90)
+            for gated_name in self.control_signals:
+                # Connect the inverter output to the central bus
+                out_pos = self.bank_select_inst[k].get_pin(gated_name).rc()
+                bus_pos = vector(self.bus_xoffset[gated_name].x, out_pos.y)
+                self.add_path("metal3",[out_pos, bus_pos])
+                self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                    offset=bus_pos,
+                                    rotate=90)
+                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                    offset=out_pos,
+                                    rotate=90)
+                self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                    offset=out_pos,
+                                    rotate=90)
         
     
     def setup_routing_constraints(self):

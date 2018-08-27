@@ -57,6 +57,9 @@ class geometry:
     def compute_boundary(self,offset=vector(0,0),mirror="",rotate=0):
         """ Transform with offset, mirror and rotation to get the absolute pin location. 
         We must then re-find the ll and ur. The master is the cell instance. """
+        if OPTS.netlist_only:
+            return
+        
         (ll,ur) = [vector(0,0),vector(self.width,self.height)]
         if mirror=="MX":
             ll=ll.scale(1,-1)

@@ -3,6 +3,7 @@ import debug
 import design
 from vector import vector
 from hierarchical_predecode import hierarchical_predecode
+from globals import OPTS
 
 class hierarchical_predecode3x8(hierarchical_predecode):
     """
@@ -11,13 +12,13 @@ class hierarchical_predecode3x8(hierarchical_predecode):
     def __init__(self):
         hierarchical_predecode.__init__(self, 3)
 
-        self.add_pins()
-        self.create_modules()
-        self.setup_constraints()
         self.create_netlist()
-        self.create_layout()
+        if not OPTS.netlist_only:        
+            self.create_layout()
 
     def create_netlist(self):
+        self.add_pins()
+        self.create_modules()
         self.create_input_inverters()
         self.create_output_inverters()
         connections=[["inbar[0]", "inbar[1]", "inbar[2]", "Z[0]", "vdd", "gnd"],
@@ -38,6 +39,7 @@ class hierarchical_predecode3x8(hierarchical_predecode):
         3) a set of M2 rails for the vdd, gnd, inverted inputs, inputs
         4) a set of NAND gates for inversion
         """
+        self.setup_layout_constraints()
         self.route_rails()
         self.place_input_inverters()
         self.place_output_inverters()

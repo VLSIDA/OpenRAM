@@ -38,18 +38,9 @@ class sram():
             debug.error("Invalid number of banks.",-1)
 
         self.s.create_netlist()
-        self.s.create_layout()
+        if not OPTS.netlist_only:
+            self.s.create_layout()
         
-        # Can remove the following, but it helps for debug!
-        self.s.add_lvs_correspondence_points()
-        
-        self.s.offset_all_coordinates()
-        highest_coord = self.s.find_highest_coords()
-        self.s.width = highest_coord[0]
-        self.s.height = highest_coord[1]
-        
-        self.s.DRC_LVS(final_verification=True)
-
         if not OPTS.is_unit_test:
             print_time("SRAM creation", datetime.datetime.now(), start_time)
 

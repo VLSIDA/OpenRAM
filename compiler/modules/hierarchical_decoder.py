@@ -37,7 +37,8 @@ class hierarchical_decoder(design.design):
         (self.no_of_pre2x4,self.no_of_pre3x8)=self.determine_predecodes(self.num_inputs)
 
         self.create_netlist()
-        self.create_layout()
+        if not OPTS.netlist_only:
+            self.create_layout()
 
 
     def create_netlist(self):

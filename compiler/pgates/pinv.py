@@ -41,40 +41,49 @@ class pinv(pgate.pgate):
 
         
         self.create_netlist()
-        self.create_layout()
+        if not OPTS.netlist_only:
+            self.create_layout()
 
         # for run-time, we won't check every transitor DRC/LVS independently
         # but this may be uncommented for debug purposes
         #self.DRC_LVS()
 
-    def add_pins(self):
-        """ Adds pins for spice netlist """
-        self.add_pin_list(["A", "Z", "vdd", "gnd"])
-
     def create_netlist(self):
         """ Calls all functions related to the generation of the netlist """
         self.add_pins()
+        self.determine_tx_mults()
+        self.add_ptx()
+        self.create_ptx()        
         
     def create_layout(self):
         """ Calls all functions related to the generation of the layout """
-
-        self.determine_tx_mults()
-        self.create_ptx()
         self.setup_layout_constants()
-        self.add_supply_rails()
-        self.add_ptx()
+        self.route_supply_rails()
+        self.place_ptx()
         self.add_well_contacts()
         self.extend_wells(self.well_pos)
         self.connect_rails()
         self.route_input_gate(self.pmos_inst, self.nmos_inst, self.output_pos.y, "A", rotate=0)
         self.route_outputs()
         
+    def add_pins(self):
+        """ Adds pins for spice netlist """
+        self.add_pin_list(["A", "Z", "vdd", "gnd"])
+
 
     def determine_tx_mults(self):
         """
         Determines the number of fingers needed to achieve the size within
         the height constraint. This may fail if the user has a tight height.
         """
+
+        # This may make the result differ when the layout is created...
+        if OPTS.netlist_only:
+            self.tx_mults = 1
+            self.nmos_width = self.nmos_size*drc["minwidth_tx"]
+            self.pmos_width = self.pmos_size*drc["minwidth_tx"]
+            return
+        
         # Do a quick sanity check and bail if unlikely feasible height
         # Sanity check. can we make an inverter in the height with minimum tx sizes?
         # Assume we need 3 metal 1 pitches (2 power rails, one between the tx for the drain)
@@ -138,7 +147,7 @@ class pinv(pgate.pgate):
         
 
         
-    def create_ptx(self):
+    def add_ptx(self):
         """ Create the PMOS and NMOS transistors. """
         self.nmos = ptx(width=self.nmos_width,
                         mults=self.tx_mults,
@@ -154,7 +163,7 @@ class pinv(pgate.pgate):
                         connect_active=True)
         self.add_mod(self.pmos)
         
-    def add_supply_rails(self):
+    def route_supply_rails(self):
         """ Add vdd/gnd rails to the top and bottom. """
         self.add_layout_pin_rect_center(text="gnd",
                                         layer="metal1",
@@ -166,26 +175,36 @@ class pinv(pgate.pgate):
                                         offset=vector(0.5*self.width,self.height),
                                         width=self.width)
 
-    def add_ptx(self):
+    def create_ptx(self):
         """ 
-        Add PMOS and NMOS to the layout at the upper-most and lowest position
+        Create the PMOS and NMOS netlist.
+        """
+        
+        self.pmos_inst=self.add_inst(name="pinv_pmos",
+                                     mod=self.pmos)
+        self.connect_inst(["Z", "A", "vdd", "vdd"])
+
+        self.nmos_inst=self.add_inst(name="pinv_nmos",
+                                     mod=self.nmos)
+        self.connect_inst(["Z", "A", "gnd", "gnd"])
+
+
+    def place_ptx(self):
+        """ 
+        Place PMOS and NMOS to the layout at the upper-most and lowest position
         to provide maximum routing in channel
         """
         
         # place PMOS so it is half a poly spacing down from the top
         self.pmos_pos = self.pmos.active_offset.scale(1,0) \
                         + vector(0, self.height-self.pmos.active_height-self.top_bottom_space)
-        self.pmos_inst=self.add_inst(name="pinv_pmos",
-                                     mod=self.pmos,
-                                     offset=self.pmos_pos)
-        self.connect_inst(["Z", "A", "vdd", "vdd"])
+        self.place_inst(name="pinv_pmos",
+                        offset=self.pmos_pos)
 
         # place NMOS so that it is half a poly spacing up from the bottom
         self.nmos_pos = self.nmos.active_offset.scale(1,0) + vector(0,self.top_bottom_space)
-        self.nmos_inst=self.add_inst(name="pinv_nmos",
-                                     mod=self.nmos,
-                                     offset=self.nmos_pos)
-        self.connect_inst(["Z", "A", "gnd", "gnd"])
+        self.place_inst(name="pinv_nmos",
+                        offset=self.nmos_pos)
 
 
         # Output position will be in between the PMOS and NMOS drains

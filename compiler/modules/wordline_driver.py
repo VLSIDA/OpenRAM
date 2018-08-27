@@ -21,10 +21,21 @@ class wordline_driver(design.design):
 
         self.rows = rows
         self.create_netlist()
-        self.create_layout()
+        if not OPTS.netlist_only:
+            self.create_layout()
+
+    def create_netlist(self):
+        self.add_pins()
+        self.add_modules()
+        self.create_drivers()
+        
+    def create_layout(self):
+        self.place_drivers()
+        self.route_layout()
+        self.route_vdd_gnd()
         self.offset_all_coordinates()
         self.DRC_LVS()
-
+        
     def add_pins(self):
         # inputs to wordline_driver.
         for i in range(self.rows):
@@ -36,16 +47,6 @@ class wordline_driver(design.design):
         self.add_pin("vdd")
         self.add_pin("gnd")
 
-    def create_netlist(self):
-        self.add_pins()
-        self.add_modules()
-        self.create_drivers()
-        
-    def create_layout(self):
-        self.place_drivers()
-        self.route_layout()
-        self.route_vdd_gnd()
-        
 
     def add_modules(self):
         self.inv = pinv()

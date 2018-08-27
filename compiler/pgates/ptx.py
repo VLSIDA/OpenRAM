@@ -3,6 +3,7 @@ import debug
 from tech import drc, info, spice
 from vector import vector
 from contact import contact
+from globals import OPTS
 import path
 
 class ptx(design.design):
@@ -40,13 +41,9 @@ class ptx(design.design):
         self.num_contacts = num_contacts
 
         self.create_netlist()
-        self.create_layout()
+        if not OPTS.netlist_only:
+            self.create_layout()
 
-        self.translate_all(self.active_offset)
-
-        # for run-time, we won't check every transitor DRC independently
-        # but this may be uncommented for debug purposes
-        #self.DRC()
 
     
     def create_layout(self):
@@ -56,6 +53,11 @@ class ptx(design.design):
         self.add_well_implant()  
         self.add_poly()
         self.add_active_contacts()
+        self.translate_all(self.active_offset)
+
+        # for run-time, we won't check every transitor DRC independently
+        # but this may be uncommented for debug purposes
+        #self.DRC()
 
     def create_netlist(self):
         self.add_pin_list(["D", "G", "S", "B"])

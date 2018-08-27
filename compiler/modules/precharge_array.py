@@ -3,7 +3,7 @@ import debug
 from tech import drc
 from vector import vector
 from precharge import precharge
-
+from globals import OPTS
 
 class precharge_array(design.design):
     """
@@ -24,11 +24,9 @@ class precharge_array(design.design):
         self.pc_cell = precharge(name="precharge", size=size, bitcell_bl=bitcell_bl, bitcell_br=bitcell_br)
         self.add_mod(self.pc_cell)
 
-        self.width = self.columns * self.pc_cell.width
-        self.height = self.pc_cell.height
-
         self.create_netlist()
-        self.create_layout()
+        if not OPTS.netlist_only:
+            self.create_layout()
 
     def add_pins(self):
         """Adds pins for spice file"""
@@ -43,6 +41,9 @@ class precharge_array(design.design):
         self.create_insts()
         
     def create_layout(self):
+        self.width = self.columns * self.pc_cell.width
+        self.height = self.pc_cell.height
+
         self.place_insts()
         self.add_layout_pins()
         self.DRC_LVS()

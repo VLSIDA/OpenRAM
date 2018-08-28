@@ -720,7 +720,65 @@ class delay():
         for readwrite_port in self.readwrite_ports+self.read_ports+self.write_ports:
             if readwrite_port != port:
                 self.add_noop(address, data, readwrite_port)
+    
+    def gen_test_cycles_one_port(self, read_port, write_port):
+        """Intended but not implemented: Returns a list of key time-points [ns] of the waveform (each rising edge)
+        of the cycles to do a timing evaluation of a single port. Current: Values overwritten for multiple calls"""
+        # Create the inverse address for a scratch address
+        inverse_address = ""
+        for c in self.probe_address:
+            if c=="0":
+                inverse_address += "1"
+            elif c=="1":
+                inverse_address += "0"
+            else:
+                debug.error("Non-binary address string",1)
+
+        # For now, ignore data patterns and write ones or zeros
+        data_ones = "1"*self.word_size
+        data_zeros = "0"*self.word_size
         
+        if self.t_current == 0:
+            self.add_noop_all_ports("Idle cycle (no positive clock edge)",
+                      inverse_address, data_zeros)
+        
+        self.add_write("W data 1 address 0..00",
+                       inverse_address,data_ones,write_port) 
+
+        self.add_write("W data 0 address 11..11 to write value",
+                       self.probe_address,data_zeros,write_port)
+        self.write0_cycle=len(self.cycle_times)-1 # Remember for power measure
+        
+        # This also ensures we will have a H->L transition on the next read
+        self.add_read("R data 1 address 00..00 to set DOUT caps",
+                      inverse_address,data_zeros,read_port) 
+
+        self.add_read("R data 0 address 11..11 to check W0 worked",
+                      self.probe_address,data_zeros,read_port) 
+        self.read0_cycle=len(self.cycle_times)-1 # Remember for power measure
+        
+        self.add_noop_all_ports("Idle cycle (if read takes >1 cycle)",
+                      inverse_address,data_zeros)
+        self.idle_cycle=len(self.cycle_times)-1 # Remember for power measure
+
+        self.add_write("W data 1 address 11..11 to write value",
+                       self.probe_address,data_ones,write_port)
+        self.write1_cycle=len(self.cycle_times)-1 # Remember for power measure
+
+        self.add_write("W data 0 address 00..00 to clear DIN caps",
+                       inverse_address,data_zeros,write_port)
+
+        # This also ensures we will have a L->H transition on the next read
+        self.add_read("R data 0 address 00..00 to clear DOUT caps",
+                      inverse_address,data_zeros,read_port)
+        
+        self.add_read("R data 1 address 11..11 to check W1 worked",
+                      self.probe_address,data_zeros,read_port)
+        self.read1_cycle=len(self.cycle_times)-1 # Remember for power measure
+
+        self.add_noop_all_ports("Idle cycle (if read takes >1 cycle))",
+                      self.probe_address,data_zeros)
+    
     def create_test_cycles(self):
         """Returns a list of key time-points [ns] of the waveform (each rising edge)
         of the cycles to do a timing evaluation. The last time is the end of the simulation
@@ -737,6 +795,7 @@ class delay():
         self.web_values = {readwrite_port:[] for readwrite_port in self.readwrite_ports}
         self.csb_values = {readwrite_port:[] for readwrite_port in self.readwrite_ports}
         
+        #Most, values changes to dict, kind of bad for performance. Maybe change to lists
         # Read port control signals
         self.rpenb_values = {read_port:[] for read_port in self.read_ports}
         
@@ -751,82 +810,27 @@ class delay():
         #for i in range(self.addr_size):
         #    self.addr_values.append([])
 
-        # Create the inverse address for a scratch address
-        inverse_address = ""
-        for c in self.probe_address:
-            if c=="0":
-                inverse_address += "1"
-            elif c=="1":
-                inverse_address += "0"
-            else:
-                debug.error("Non-binary address string",1)
-
-        # For now, ignore data patterns and write ones or zeros
-        data_ones = "1"*self.word_size
-        data_zeros = "0"*self.word_size
-        
-        self.add_noop_all_ports("Idle cycle (no positive clock edge)",
-                      inverse_address, data_zeros)
-        
         #Temporary logic. Loop through all ports with characterize logic.
+        cur_write_port = None
         for readwrite_port in self.readwrite_ports:
-            self.add_write("W data 1 address 0..00",
-                           inverse_address,data_ones,readwrite_port) 
-
-            self.add_write("W data 0 address 11..11 to write value",
-                           self.probe_address,data_zeros,readwrite_port)
-            self.write0_cycle=len(self.cycle_times)-1 # Remember for power measure
-            
-            # This also ensures we will have a H->L transition on the next read
-            self.add_read("R data 1 address 00..00 to set DOUT caps",
-                          inverse_address,data_zeros,readwrite_port) 
-
-            self.add_read("R data 0 address 11..11 to check W0 worked",
-                          self.probe_address,data_zeros,readwrite_port) 
-            self.read0_cycle=len(self.cycle_times)-1 # Remember for power measure
-            
-            self.add_noop_all_ports("Idle cycle (if read takes >1 cycle)",
-                          inverse_address,data_zeros)
-            self.idle_cycle=len(self.cycle_times)-1 # Remember for power measure
-
-            self.add_write("W data 1 address 11..11 to write value",
-                           self.probe_address,data_ones,readwrite_port)
-            self.write1_cycle=len(self.cycle_times)-1 # Remember for power measure
-
-            self.add_write("W data 0 address 00..00 to clear DIN caps",
-                           inverse_address,data_zeros,readwrite_port)
-
-            # This also ensures we will have a L->H transition on the next read
-            self.add_read("R data 0 address 00..00 to clear DOUT caps",
-                          inverse_address,data_zeros,readwrite_port)
-            
-            self.add_read("R data 1 address 11..11 to check W1 worked",
-                          self.probe_address,data_zeros,readwrite_port)
-            self.read1_cycle=len(self.cycle_times)-1 # Remember for power measure
-
-            self.add_noop_all_ports("Idle cycle (if read takes >1 cycle))",
-                          self.probe_address,data_zeros)
-                          
-        #This is added only for testing purposes. Should be removed later. Testing that read port variables are working and are written to stim file.
-        for read_port in self.read_ports:
-            # This also ensures we will have a L->H transition on the next read
-            self.add_read("R data 0 address 00..00 to clear DOUT caps",
-                          inverse_address,data_zeros,read_port)
-            
-            self.add_read("R data 1 address 11..11 to check W1 worked",
-                          self.probe_address,data_zeros,read_port)
-            self.read1_cycle=len(self.cycle_times)-1 # Remember for power measure
-
-            self.add_noop_all_ports("Idle cycle (if read takes >1 cycle))",
-                          self.probe_address,data_zeros)
-                          
-        #This is added only for testing purposes. Should be removed later. Testing that write port variables are working and are written to stim file.
-        for write_port in self.write_ports:
-            self.add_write("W data 1 address 0..00",
-                           inverse_address,data_ones,write_port) 
-
-            self.add_write("W data 0 address 11..11 to write value",
-                           self.probe_address,data_zeros,write_port)
+            self.gen_test_cycles_one_port(readwrite_port, readwrite_port)
+            cur_write_port = readwrite_port
+        cur_read_port = cur_write_port             
+        
+        #This is added only for testing purposes. Should be change later. Characterizing the remaining ports.
+        write_pos = 0
+        read_pos = 0
+        while True:
+            if write_pos >= len(self.write_ports) and read_pos >= len(self.read_ports):
+                break
+            if write_pos < len(self.write_ports):
+                cur_write_port = self.write_ports[write_pos]
+                write_pos+=1
+            if read_pos < len(self.read_ports):
+                cur_read_port = self.read_ports[read_pos]
+                read_pos+=1
+                
+            self.gen_test_cycles_one_port(cur_read_port, cur_write_port)
 
     def analytical_delay(self,sram, slews, loads):
         """ Just return the analytical model results for the SRAM. 

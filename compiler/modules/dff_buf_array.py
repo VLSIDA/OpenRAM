@@ -29,7 +29,7 @@ class dff_buf_array(design.design):
 
     def create_netlist(self):
         self.add_pins()
-        self.add_dff()
+        self.add_modules()
         self.create_dff_array()
 
     def create_layout(self):
@@ -51,7 +51,7 @@ class dff_buf_array(design.design):
         self.add_pin("vdd")
         self.add_pin("gnd")
 
-    def add_dff(self):
+    def add_modules(self):
         self.dff = dff_buf.dff_buf(self.inv1_size, self.inv2_size)
         self.add_mod(self.dff)
 

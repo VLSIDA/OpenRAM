@@ -6,7 +6,7 @@ from tech import drc
 import debug
 import math
 from vector import vector
-
+from globals import OPTS
 
 class single_level_column_mux_array(design.design):
     """
@@ -20,23 +20,14 @@ class single_level_column_mux_array(design.design):
         self.columns = columns
         self.word_size = word_size
         self.words_per_row = int(self.columns / self.word_size)
+        
         self.create_netlist()
-        self.create_layout()
-
-    def add_pins(self):
-        for i in range(self.columns):
-            self.add_pin("bl[{}]".format(i))
-            self.add_pin("br[{}]".format(i))
-        for i in range(self.words_per_row):
-            self.add_pin("sel[{}]".format(i))
-        for i in range(self.word_size):
-            self.add_pin("bl_out[{}]".format(i))
-            self.add_pin("br_out[{}]".format(i))
-        self.add_pin("gnd")
+        if not OPTS.netlist_only:
+            self.create_layout()
 
     def create_netlist(self):
-        self.add_pins()
         self.add_modules()
+        self.add_pins()
         self.create_array()
         
     def create_layout(self):
@@ -51,6 +42,17 @@ class single_level_column_mux_array(design.design):
 
         self.DRC_LVS()
         
+    def add_pins(self):
+        for i in range(self.columns):
+            self.add_pin("bl[{}]".format(i))
+            self.add_pin("br[{}]".format(i))
+        for i in range(self.words_per_row):
+            self.add_pin("sel[{}]".format(i))
+        for i in range(self.word_size):
+            self.add_pin("bl_out[{}]".format(i))
+            self.add_pin("br_out[{}]".format(i))
+        self.add_pin("gnd")
+
 
     def add_modules(self):
         # FIXME: Why is this 8x?

@@ -63,12 +63,10 @@ class dff_inv(design.design):
         self.add_mod(self.inv1)
 
     def create_modules(self):
-        # Add the DFF
         self.dff_inst=self.add_inst(name="dff_inv_dff",
                                     mod=self.dff)
         self.connect_inst(["D", "Q", "clk", "vdd", "gnd"])
 
-        # Add INV1 to the right
         self.inv1_inst=self.add_inst(name="dff_inv_inv1",
                                      mod=self.inv1)
         self.connect_inst(["Q", "Qb",  "vdd", "gnd"])

@@ -14,44 +14,46 @@ class sense_amp_array(design.design):
         design.design.__init__(self, "sense_amp_array")
         debug.info(1, "Creating {0}".format(self.name))
 
+        self.word_size = word_size
+        self.words_per_row = words_per_row
+        self.row_size = self.word_size * self.words_per_row
+
+        self.create_netlist()
+        if not OPTS.netlist_only:
+            self.create_layout()
+
+
+    def create_netlist(self):
+        self.add_modules()
+        self.add_pins()
+        self.create_sense_amp_array()
+
+    def create_layout(self):
+        self.height = self.amp.height
+        self.width = self.amp.width * self.word_size * self.words_per_row
+
+        self.place_sense_amp_array()
+        self.add_layout_pins()
+        self.route_rails()
+        self.DRC_LVS()
+
+    def add_pins(self):
+        for i in range(0,self.word_size):
+            self.add_pin("data[{0}]".format(i))
+            self.add_pin("bl[{0}]".format(i))
+            self.add_pin("br[{0}]".format(i))
+        self.add_pin("en")
+        self.add_pin("vdd")
+        self.add_pin("gnd")
+        
+    def add_modules(self):
         from importlib import reload
         c = reload(__import__(OPTS.sense_amp))
         self.mod_sense_amp = getattr(c, OPTS.sense_amp)
         self.amp = self.mod_sense_amp("sense_amp")
         self.add_mod(self.amp)
 
-        self.word_size = word_size
-        self.words_per_row = words_per_row
-        self.row_size = self.word_size * self.words_per_row
-
-        self.height = self.amp.height
-        self.width = self.amp.width * self.word_size * self.words_per_row
-
-        self.create_netlist()
-        self.create_layout()
-        self.DRC_LVS()
-
-    def add_pins(self):
-
-        for i in range(0,self.word_size):
-            self.add_pin("data[{0}]".format(i))
-            self.add_pin("bl[{0}]".format(i))
-            self.add_pin("br[{0}]".format(i))
-
-        self.add_pin("en")
-        self.add_pin("vdd")
-        self.add_pin("gnd")
-
-    def create_netlist(self):
-        self.add_pins()
-        self.create_sense_amp_array()
         
-    def create_layout(self):
-        self.place_sense_amp_array()
-        self.add_layout_pins()
-        self.route_rails()
-        
-
     def create_sense_amp_array(self):
         self.local_insts = []
         for i in range(0,self.word_size):

@@ -8,5 +8,5 @@ supply_voltages = [1.0]
 temperatures = [25]
 
 output_path = "temp"
-output_name = "sram_2_16_1_freepdk45"
+output_name = "sram_{0}_{1}_{2}_{3}".format(word_size,num_words,num_banks,tech_name)
 

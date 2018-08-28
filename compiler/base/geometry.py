@@ -199,7 +199,7 @@ class instance(geometry):
         """ This updates the placement of an instance. """
         debug.info(3, "placing instance {}".format(self.name))
         # Update the placement of an already added instance
-        self.offset = offset
+        self.offset = vector(offset)
         self.mirror = mirror
         self.rotate = rotate
         self.update_boundary()

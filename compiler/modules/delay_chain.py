@@ -30,8 +30,8 @@ class delay_chain(design.design):
                 
 
     def create_netlist(self):
-        self.add_pins()
         self.add_modules()
+        self.add_pins()
         self.create_inverters()
         
     def create_layout(self):

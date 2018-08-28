@@ -207,7 +207,6 @@ def read_config(config_file, is_unit_test=True):
     # If we are only generating a netlist, we can't do DRC/LVS
     if OPTS.netlist_only:
         OPTS.check_lvsdrc=False
-    
 
     # If config didn't set output name, make a reasonable default.
     if (OPTS.output_name == ""):

@@ -20,13 +20,14 @@ class wordline_driver(design.design):
         design.design.__init__(self, "wordline_driver")
 
         self.rows = rows
+        
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
 
     def create_netlist(self):
-        self.add_pins()
         self.add_modules()
+        self.add_pins()
         self.create_drivers()
         
     def create_layout(self):

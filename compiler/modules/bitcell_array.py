@@ -21,16 +21,6 @@ class bitcell_array(design.design):
         self.column_size = cols
         self.row_size = rows
 
-        from importlib import reload
-        c = reload(__import__(OPTS.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.bitcell)
-        self.cell = self.mod_bitcell()
-        self.add_mod(self.cell)
-
-        # We increase it by a well enclosure so the precharges don't overlap our wells
-        self.height = self.row_size*self.cell.height + drc["well_enclosure_active"] + self.m1_width
-        self.width = self.column_size*self.cell.width + self.m1_width
-        
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -42,17 +32,16 @@ class bitcell_array(design.design):
         
     def create_netlist(self):
         """ Create and connect the netlist """
+        self.add_modules()
         self.add_pins()
-        
-        self.cell_inst = {}
-        for col in range(self.column_size):
-            for row in range(self.row_size):
-                name = "bit_r{0}_c{1}".format(row, col)
-                self.cell_inst[row,col]=self.add_inst(name=name,
-                                                      mod=self.cell)
-                self.connect_inst(self.cell.list_bitcell_pins(col, row))
+        self.create_modules()
 
     def create_layout(self):
+
+        # We increase it by a well enclosure so the precharges don't overlap our wells
+        self.height = self.row_size*self.cell.height + drc["well_enclosure_active"] + self.m1_width
+        self.width = self.column_size*self.cell.width + self.m1_width
+        
         xoffset = 0.0
         for col in range(self.column_size):
             yoffset = 0.0
@@ -87,7 +76,25 @@ class bitcell_array(design.design):
         self.add_pin("vdd")
         self.add_pin("gnd")
 
-            
+    def add_modules(self):
+        """ Add the modules used in this design """
+
+        from importlib import reload
+        c = reload(__import__(OPTS.bitcell))
+        self.mod_bitcell = getattr(c, OPTS.bitcell)
+        self.cell = self.mod_bitcell()
+        self.add_mod(self.cell)
+
+    def create_modules(self):
+        """ Create the module instances used in this design """
+        self.cell_inst = {}
+        for col in range(self.column_size):
+            for row in range(self.row_size):
+                name = "bit_r{0}_c{1}".format(row, col)
+                self.cell_inst[row,col]=self.add_inst(name=name,
+                                                      mod=self.cell)
+                self.connect_inst(self.cell.list_bitcell_pins(col, row))
+        
     def add_layout_pins(self):
         """ Add the layout pins """
         

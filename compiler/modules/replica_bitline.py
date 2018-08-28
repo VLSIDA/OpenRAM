@@ -18,13 +18,6 @@ class replica_bitline(design.design):
     def __init__(self, delay_stages, delay_fanout, bitcell_loads, name="replica_bitline"):
         design.design.__init__(self, name)
 
-        from importlib import reload
-        g = reload(__import__(OPTS.delay_chain))
-        self.mod_delay_chain = getattr(g, OPTS.delay_chain)
-
-        g = reload(__import__(OPTS.replica_bitcell))
-        self.mod_replica_bitcell = getattr(g, OPTS.replica_bitcell)
-        
         self.bitcell_loads = bitcell_loads
         self.delay_stages = delay_stages
         self.delay_fanout = delay_fanout
@@ -34,19 +27,17 @@ class replica_bitline(design.design):
             self.create_layout()
             
     def create_netlist(self):
-        for pin in ["en", "out", "vdd", "gnd"]:
-            self.add_pin(pin)
         self.add_modules()
+        self.add_pins()
         self.create_modules()
 
     def create_layout(self):
         self.calculate_module_offsets()
         self.place_modules()
         self.route()
+        self.add_layout_pins()
 
         self.offset_all_coordinates()
-        
-        self.add_layout_pins()
 
         #self.add_lvs_correspondence_points()
 
@@ -56,6 +47,9 @@ class replica_bitline(design.design):
 
         self.DRC_LVS()
 
+    def add_pins(self):
+        for pin in ["en", "out", "vdd", "gnd"]:
+            self.add_pin(pin)
 
     def calculate_module_offsets(self):
         """ Calculate all the module offsets """
@@ -85,6 +79,14 @@ class replica_bitline(design.design):
 
     def add_modules(self):
         """ Add the modules for later usage """
+
+        from importlib import reload
+        g = reload(__import__(OPTS.delay_chain))
+        self.mod_delay_chain = getattr(g, OPTS.delay_chain)
+
+        g = reload(__import__(OPTS.replica_bitcell))
+        self.mod_replica_bitcell = getattr(g, OPTS.replica_bitcell)
+        
         self.bitcell = self.replica_bitcell = self.mod_replica_bitcell()
         self.add_mod(self.bitcell)
 
@@ -267,8 +269,6 @@ class replica_bitline(design.design):
         self.copy_layout_pin(self.dc_inst,"vdd")
         self.copy_layout_pin(self.rbc_inst,"vdd")        
         
-
-        
         # Connect the WL and vdd pins directly to the center and right vdd rails
         # Connect RBL vdd pins to center and right rails
         rbl_vdd_pins = self.rbl_inst.get_pins("vdd")
@@ -288,9 +288,6 @@ class replica_bitline(design.design):
                                 offset=end,
                                 rotate=90)
 
-
-
-        
         # Add via for the inverter
         pin = self.rbl_inv_inst.get_pin("vdd")
         start = vector(self.left_vdd_pin.cx(),pin.cy())

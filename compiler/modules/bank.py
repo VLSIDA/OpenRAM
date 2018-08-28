@@ -22,17 +22,6 @@ class bank(design.design):
 
     def __init__(self, word_size, num_words, words_per_row, num_banks=1, name=""):
 
-        mod_list = ["bitcell", "decoder", "ms_flop_array", "wordline_driver",
-                    "bitcell_array",   "sense_amp_array",    "precharge_array",
-                    "column_mux_array", "write_driver_array", 
-                    "dff", "bank_select"]
-        from importlib import reload
-        for mod_name in mod_list:
-            config_mod_name = getattr(OPTS, mod_name)
-            class_file = reload(__import__(config_mod_name))
-            mod_class = getattr(class_file , config_mod_name)
-            setattr (self, "mod_"+mod_name, mod_class)
-
         if name == "":
             name = "bank_{0}_{1}".format(word_size, num_words)
         design.design.__init__(self, name)
@@ -206,6 +195,19 @@ class bank(design.design):
 
     def add_modules(self):
         """ Create all the modules using the class loader """
+        
+        mod_list = ["bitcell", "decoder", "ms_flop_array", "wordline_driver",
+                    "bitcell_array",   "sense_amp_array",    "precharge_array",
+                    "column_mux_array", "write_driver_array", 
+                    "dff", "bank_select"]
+        from importlib import reload
+        for mod_name in mod_list:
+            config_mod_name = getattr(OPTS, mod_name)
+            class_file = reload(__import__(config_mod_name))
+            mod_class = getattr(class_file , config_mod_name)
+            setattr (self, "mod_"+mod_name, mod_class)
+
+        
         self.bitcell = self.mod_bitcell()
         
         self.bitcell_array = self.mod_bitcell_array(cols=self.num_cols,

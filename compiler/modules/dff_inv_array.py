@@ -28,7 +28,7 @@ class dff_inv_array(design.design):
 
     def create_netlist(self):
         self.add_pins()
-        self.add_dff()
+        self.add_modules()
         self.create_dff_array()
         
     def create_layout(self):
@@ -39,7 +39,7 @@ class dff_inv_array(design.design):
         self.add_layout_pins()
         self.DRC_LVS()
 
-    def add_dff(self):
+    def add_modules(self):
         self.dff = dff_inv.dff_inv(self.inv_size)
         self.add_mod(self.dff)
 

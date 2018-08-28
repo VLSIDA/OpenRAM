@@ -39,7 +39,8 @@ class pinv(pgate.pgate):
         self.height = height # Maybe minimize height if not defined in future?
         self.route_output = False
 
-        self.add_pins()
+        
+        self.create_netlist()
         self.create_layout()
 
         # for run-time, we won't check every transitor DRC/LVS independently
@@ -50,6 +51,10 @@ class pinv(pgate.pgate):
         """ Adds pins for spice netlist """
         self.add_pin_list(["A", "Z", "vdd", "gnd"])
 
+    def create_netlist(self):
+        """ Calls all functions related to the generation of the netlist """
+        self.add_pins()
+        
     def create_layout(self):
         """ Calls all functions related to the generation of the layout """
 

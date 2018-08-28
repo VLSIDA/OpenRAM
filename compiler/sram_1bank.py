@@ -20,14 +20,38 @@ class sram_1bank(sram_base):
     def __init__(self, word_size, num_words, name):
         sram_base.__init__(self, word_size, num_words, 1, name)
 
-    def add_modules(self):
+    def create_netlist(self):
+        self.compute_sizes()
+        self.add_modules()
+        # Must run this after add modules to get control pin names
+        self.add_pins()
+        self.create_modules()
+        
+    def create_modules(self):
         """ 
-        This adds the moduels for a single bank SRAM with control
+        This adds the modules for a single bank SRAM with control
+        logic. 
+        """
+        
+        self.bank_inst = self.create_bank()
+
+        self.control_logic_inst = self.create_control_logic()
+
+        self.row_addr_dff_inst = self.create_row_addr_dff()
+
+        if self.col_addr_dff:
+            self.col_addr_dff_inst = self.create_col_addr_dff()
+        
+        self.data_dff_inst = self.create_data_dff()
+
+    def place_modules(self):
+        """ 
+        This places the modules for a single bank SRAM with control
         logic. 
         """
         
         # No orientation or offset
-        self.bank_inst = self.add_bank(0, [0, 0], 1, 1)
+        self.place_bank(self.bank_inst, [0, 0], 1, 1)
 
         # The control logic is placed such that the vertical center (between the delay/RBL and
         # the actual control logic is aligned with the vertical center of the bank (between
@@ -36,12 +60,14 @@ class sram_1bank(sram_base):
         # up to the row address DFFs.
         control_pos = vector(-self.control_logic.width - 2*self.m2_pitch,
                              self.bank.bank_center.y - self.control_logic.control_logic_center.y)
-        self.add_control_logic(position=control_pos)
+        self.place_inst(name=self.control_logic_inst.name,
+                        offset=control_pos)
 
         # The row address bits are placed above the control logic aligned on the right.
         row_addr_pos = vector(self.control_logic_inst.rx() - self.row_addr_dff.width,
                               self.control_logic_inst.uy())
-        self.add_row_addr_dff(row_addr_pos)
+        self.place_inst(name=self.row_addr_dff_inst.name,
+                        offset=row_addr_pos)
 
         # This is M2 pitch even though it is on M1 to help stem via spacings on the trunk
         data_gap = -self.m2_pitch*(self.word_size+1)
@@ -51,7 +77,8 @@ class sram_1bank(sram_base):
         if self.col_addr_dff:
             col_addr_pos = vector(self.bank.bank_center.x - self.col_addr_dff.width - self.bank.central_bus_width,
                                   data_gap - self.col_addr_dff.height)
-            self.add_col_addr_dff(col_addr_pos)
+            self.place_inst(name=self.col_addr_dff_inst.name,
+                            offset=col_addr_pos)
         
         # Add the data flops below the bank to the right of the center of bank:
         # This relies on the center point of the bank:
@@ -60,12 +87,13 @@ class sram_1bank(sram_base):
         # sense amps.
         data_pos = vector(self.bank.bank_center.x,
                           data_gap - self.data_dff.height)
-        self.add_data_dff(data_pos)
+        self.place_inst(self.data_dff.name,
+                        offset=data_pos)
         
         # two supply rails are already included in the bank, so just 2 here.
         self.width = self.bank.width + self.control_logic.width + 2*self.supply_rail_pitch
         self.height = self.bank.height 
-
+        
     def add_layout_pins(self):
         """
         Add the top-level pins for a single bank SRAM with control.
@@ -75,8 +103,8 @@ class sram_1bank(sram_base):
             self.copy_layout_pin(self.control_logic_inst, n)
 
         for i in range(self.word_size):
-            dout_name = "dout[{}]".format(i)
-            self.copy_layout_pin(self.bank_inst, dout_name, dout_name.upper())
+            dout_name = "dout0[{}]".format(i)
+            self.copy_layout_pin(self.bank_inst, dout_name, "DOUT[{}]".format(i))
 
         # Lower address bits
         for i in range(self.col_addr_size):
@@ -179,7 +207,7 @@ class sram_1bank(sram_base):
         """ Connect the output of the row flops to the bank pins """
         for i in range(self.row_addr_size):
             flop_name = "dout[{}]".format(i)
-            bank_name = "addr[{}]".format(i+self.col_addr_size)
+            bank_name = "addr0[{}]".format(i+self.col_addr_size)
             flop_pin = self.row_addr_dff_inst.get_pin(flop_name)
             bank_pin = self.bank_inst.get_pin(bank_name)
             flop_pos = flop_pin.center()
@@ -204,7 +232,7 @@ class sram_1bank(sram_base):
         data_dff_map = zip(dff_names, bus_names)
         self.connect_horizontal_bus(data_dff_map, self.col_addr_dff_inst, col_addr_bus_offsets)
         
-        bank_names = ["addr[{}]".format(x) for x in range(self.col_addr_size)]
+        bank_names = ["addr0[{}]".format(x) for x in range(self.col_addr_size)]
         data_bank_map = zip(bank_names, bus_names)
         self.connect_horizontal_bus(data_bank_map, self.bank_inst, col_addr_bus_offsets)
         
@@ -215,7 +243,7 @@ class sram_1bank(sram_base):
         offset = self.data_dff_inst.ul() + vector(0, self.m1_pitch)
 
         dff_names = ["dout[{}]".format(x) for x in range(self.word_size)]
-        bank_names = ["din[{}]".format(x) for x in range(self.word_size)]
+        bank_names = ["din0[{}]".format(x) for x in range(self.word_size)]
 
         route_map = list(zip(bank_names, dff_names))
         dff_pins = {key: self.data_dff_inst.get_pin(key) for key in dff_names }

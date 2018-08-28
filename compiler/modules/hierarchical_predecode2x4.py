@@ -14,8 +14,17 @@ class hierarchical_predecode2x4(hierarchical_predecode):
         self.add_pins()
         self.create_modules()
         self.setup_constraints()
+        self.create_netlist()
         self.create_layout()
-        self.DRC_LVS()        
+
+    def create_netlist(self):
+        self.create_input_inverters()
+        self.create_output_inverters()
+        connections =[["inbar[0]", "inbar[1]", "Z[0]", "vdd", "gnd"],
+                      ["in[0]",    "inbar[1]", "Z[1]", "vdd", "gnd"],
+                      ["inbar[0]", "in[1]",    "Z[2]", "vdd", "gnd"],
+                      ["in[0]",    "in[1]",    "Z[3]", "vdd", "gnd"]]
+        self.create_nand_array(connections)
 
     def create_layout(self):
         """ The general organization is from left to right:
@@ -24,15 +33,12 @@ class hierarchical_predecode2x4(hierarchical_predecode):
         3) a set of M2 rails for the vdd, gnd, inverted inputs, inputs
         4) a set of NAND gates for inversion
         """
-        self.create_rails()
-        self.add_input_inverters()
-        self.add_output_inverters()
-        connections =[["inbar[0]", "inbar[1]", "Z[0]", "vdd", "gnd"],
-                      ["in[0]",    "inbar[1]", "Z[1]", "vdd", "gnd"],
-                      ["inbar[0]", "in[1]",    "Z[2]", "vdd", "gnd"],
-                      ["in[0]",    "in[1]",    "Z[3]", "vdd", "gnd"]]
-        self.add_nand(connections)
+        self.route_rails()
+        self.place_input_inverters()
+        self.place_output_inverters()
+        self.place_nand_array()
         self.route()
+        self.DRC_LVS()        
 
     def get_nand_input_line_combination(self):
         """ These are the decoder connections of the NAND gates to the A,B pins """

@@ -27,14 +27,17 @@ class tri_gate_array(design.design):
         self.width = (self.columns / self.words_per_row) * self.tri.width
         self.height = self.tri.height
         
+        self.create_netlist()
         self.create_layout()
-        self.DRC_LVS()
 
-    def create_layout(self):
-        """generate layout """
+    def create_netlist(self):
         self.add_pins()
         self.create_array()
+        
+    def create_layout(self):
+        self.place_array()
         self.add_layout_pins()
+        self.DRC_LVS()
 
     def add_pins(self):
         """create the name of pins depend on the word size"""
@@ -50,15 +53,21 @@ class tri_gate_array(design.design):
         self.tri_inst = {}
         for i in range(0,self.columns,self.words_per_row):
             name = "Xtri_gate{0}".format(i)
-            base = vector(i*self.tri.width, 0)
             self.tri_inst[i]=self.add_inst(name=name,
-                                           mod=self.tri,
-                                           offset=base)
+                                           mod=self.tri)
             index = int(i/self.words_per_row)
             self.connect_inst(["in[{0}]".format(index),
                                "out[{0}]".format(index),
                                "en", "en_bar", "vdd", "gnd"])
 
+    def place_array(self):
+        """ Place the tri gate to the array """
+        for i in range(0,self.columns,self.words_per_row):
+            name = "Xtri_gate{0}".format(i)
+            base = vector(i*self.tri.width, 0)
+            self.place_inst(name=name,
+                            offset=base)
+            
 
     def add_layout_pins(self):
         

@@ -23,12 +23,15 @@ class single_level_column_mux(design.design):
         self.bitcell = self.mod_bitcell()
         
         self.ptx_width = tx_size * drc["minwidth_tx"]
-        self.add_pin_list(["bl", "br", "bl_out", "br_out", "sel", "gnd"])
+        
+        self.create_netlist()
         self.create_layout()
 
-    def create_layout(self):
-
+    def create_netlist(self):
+        self.add_pin_list(["bl", "br", "bl_out", "br_out", "sel", "gnd"])
         self.add_ptx()
+        
+    def create_layout(self):
         self.pin_height = 2*self.m2_width
         self.width = self.bitcell.width
         self.height = self.nmos_upper.uy() + self.pin_height

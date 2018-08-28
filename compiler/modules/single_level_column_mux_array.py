@@ -20,9 +20,8 @@ class single_level_column_mux_array(design.design):
         self.columns = columns
         self.word_size = word_size
         self.words_per_row = int(self.columns / self.word_size)
-        self.add_pins()
+        self.create_netlist()
         self.create_layout()
-        self.DRC_LVS()
 
     def add_pins(self):
         for i in range(self.columns):
@@ -35,10 +34,14 @@ class single_level_column_mux_array(design.design):
             self.add_pin("br_out[{}]".format(i))
         self.add_pin("gnd")
 
-    def create_layout(self):
+    def create_netlist(self):
+        self.add_pins()
         self.add_modules()
-        self.setup_layout_constants()
         self.create_array()
+        
+    def create_layout(self):
+        self.setup_layout_constants()
+        self.place_array()
         self.add_routing()
         # Find the highest shapes to determine height before adding well
         highest = self.find_highest_coords()
@@ -46,6 +49,7 @@ class single_level_column_mux_array(design.design):
         self.add_layout_pins()
         self.add_enclosure(self.mux_inst, "pwell")
 
+        self.DRC_LVS()
         
 
     def add_modules(self):
@@ -65,14 +69,11 @@ class single_level_column_mux_array(design.design):
         
     def create_array(self):
         self.mux_inst = []
-
         # For every column, add a pass gate
         for col_num in range(self.columns):
             name = "XMUX{0}".format(col_num)
-            x_off = vector(col_num * self.mux.width, self.route_height)
             self.mux_inst.append(self.add_inst(name=name,
-                                               mod=self.mux,
-                                               offset=x_off))
+                                               mod=self.mux))
             
             self.connect_inst(["bl[{}]".format(col_num),
                                "br[{}]".format(col_num),
@@ -81,6 +82,14 @@ class single_level_column_mux_array(design.design):
                                "sel[{}]".format(col_num % self.words_per_row),
                                "gnd"])
 
+    def place_array(self):
+        # For every column, add a pass gate
+        for col_num in range(self.columns):
+            name = "XMUX{0}".format(col_num)
+            x_off = vector(col_num * self.mux.width, self.route_height)
+            self.place_inst(name=name,
+                            offset=x_off)
+            
 
     def add_layout_pins(self):
         """ Add the pins after we determine the height. """

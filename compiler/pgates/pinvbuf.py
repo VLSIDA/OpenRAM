@@ -19,47 +19,43 @@ class pinvbuf(design.design):
 
     def __init__(self, driver_size=4, height=bitcell.height, name=""):
 
-        stage_effort = 4
+        self.stage_effort = 4
+        self.row_height = height
         # FIXME: Change the number of stages to support high drives.
         
         # stage effort of 4 or less
         # The pinvbuf has a FO of 2 for the first stage, so the second stage
         # should be sized "half" to prevent loading of the first stage
-        predriver_size = max(int(driver_size/(stage_effort/2)),1)
-
+        self.driver_size = driver_size
+        self.predriver_size = max(int(self.driver_size/(self.stage_effort/2)),1)
         if name=="":
-            name = "pinvbuf_{0}_{1}_{2}".format(predriver_size, driver_size, pinvbuf.unique_id)
+            name = "pinvbuf_{0}_{1}_{2}".format(self.predriver_size, self.driver_size, pinvbuf.unique_id)
             pinvbuf.unique_id += 1
 
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(self.name))
 
-        
-        # Shield the cap, but have at least a stage effort of 4
-        input_size = max(1,int(predriver_size/stage_effort))
-        self.inv = pinv(size=input_size, height=height)
-        self.add_mod(self.inv)
-        
-        self.inv1 = pinv(size=predriver_size, height=height)
-        self.add_mod(self.inv1)
+        self.create_netlist()
+        self.create_layout()
 
-        self.inv2 = pinv(size=driver_size, height=height)
-        self.add_mod(self.inv2)
+
+    def create_netlist(self):
+        self.add_pins()
+        self.add_modules()
+        self.create_insts()
+
+    def create_layout(self):
 
         self.width = 2*self.inv1.width + self.inv2.width
         self.height = 2*self.inv1.height
-
-        self.create_layout()
-
+        
+        self.place_insts()
+        self.route_wires()
+        self.add_layout_pins()
+        
         self.offset_all_coordinates()
         
         self.DRC_LVS()
-
-    def create_layout(self):
-        self.add_pins()
-        self.add_insts()
-        self.add_wires()
-        self.add_layout_pins()
         
     def add_pins(self):
         self.add_pin("A")
@@ -68,35 +64,58 @@ class pinvbuf(design.design):
         self.add_pin("vdd")
         self.add_pin("gnd")
 
-    def add_insts(self):
-        # Add INV1 to the right (capacitance shield)
+    def add_modules(self):
+                
+        # Shield the cap, but have at least a stage effort of 4
+        input_size = max(1,int(self.predriver_size/self.stage_effort))
+        self.inv = pinv(size=input_size, height=self.row_height)
+        self.add_mod(self.inv)
+        
+        self.inv1 = pinv(size=self.predriver_size, height=self.row_height)
+        self.add_mod(self.inv1)
+
+        self.inv2 = pinv(size=self.driver_size, height=self.row_height)
+        self.add_mod(self.inv2)
+
+    def create_insts(self):
+        # Create INV1 (capacitance shield)
         self.inv1_inst=self.add_inst(name="buf_inv1",
-                                     mod=self.inv,
-                                     offset=vector(0,0))
+                                     mod=self.inv)
         self.connect_inst(["A", "zb_int",  "vdd", "gnd"])
         
 
-        # Add INV2 to the right
         self.inv2_inst=self.add_inst(name="buf_inv2",
-                                     mod=self.inv1,
-                                     offset=vector(self.inv1_inst.rx(),0))
+                                     mod=self.inv1)
         self.connect_inst(["zb_int", "z_int",  "vdd", "gnd"])
         
-        # Add INV3 to the right
         self.inv3_inst=self.add_inst(name="buf_inv3",
-                                     mod=self.inv2,
-                                     offset=vector(self.inv2_inst.rx(),0))
+                                     mod=self.inv2)
         self.connect_inst(["z_int", "Zb",  "vdd", "gnd"])
 
-        # Add INV4 to the bottom
         self.inv4_inst=self.add_inst(name="buf_inv4",
-                                     mod=self.inv2,
-                                     offset=vector(self.inv2_inst.rx(),2*self.inv2.height),
-                                     mirror = "MX")
+                                     mod=self.inv2)
         self.connect_inst(["zb_int", "Z",  "vdd", "gnd"])
+
+    def place_insts(self):
+        # Add INV1 to the right (capacitance shield)
+        self.place_inst(name="buf_inv1",
+                        offset=vector(0,0))
+
+        # Add INV2 to the right
+        self.place_inst(name="buf_inv2",
+                        offset=vector(self.inv1_inst.rx(),0))
+        
+        # Add INV3 to the right
+        self.place_inst(name="buf_inv3",
+                        offset=vector(self.inv2_inst.rx(),0))
+
+        # Add INV4 to the bottom
+        self.place_inst(name="buf_inv4",
+                        offset=vector(self.inv2_inst.rx(),2*self.inv2.height),
+                        mirror = "MX")
         
         
-    def add_wires(self):
+    def route_wires(self):
         # inv1 Z to inv2 A
         z1_pin = self.inv1_inst.get_pin("Z")
         a2_pin = self.inv2_inst.get_pin("A")

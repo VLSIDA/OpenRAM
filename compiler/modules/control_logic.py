@@ -100,7 +100,7 @@ class control_logic(design.design):
         # leave space for the bus plus one extra space
         self.internal_bus_width = (len(self.internal_bus_list)+1)*self.m2_pitch 
         # Outputs to the bank
-        self.output_list = ["s_en", "w_en", "clk_buf_bar", "clk_buf"]
+        self.output_list = ["s_en0", "w_en0", "clk_buf_bar", "clk_buf"]
         self.supply_list = ["vdd", "gnd"]
 
     
@@ -231,7 +231,7 @@ class control_logic(design.design):
                                      mod=self.inv8,
                                      offset=self.s_en_offset,
                                      mirror=mirror)
-        self.connect_inst(["pre_s_en_bar", "s_en",  "vdd", "gnd"])
+        self.connect_inst(["pre_s_en_bar", "s_en0",  "vdd", "gnd"])
         
 
         self.row_end_inst.append(self.s_en_inst)
@@ -313,7 +313,7 @@ class control_logic(design.design):
                                      mod=self.inv8,
                                      offset=w_en_offset,
                                      mirror=mirror)
-        self.connect_inst(["pre_w_en_bar", "w_en",  "vdd", "gnd"])
+        self.connect_inst(["pre_w_en_bar", "w_en0",  "vdd", "gnd"])
         x_off += self.inv8.width
 
         self.row_end_inst.append(self.w_en_inst)
@@ -406,7 +406,7 @@ class control_logic(design.design):
         self.add_path("metal1",[self.pre_w_en_inst.get_pin("Z").center(), self.pre_w_en_bar_inst.get_pin("A").center()])
         self.add_path("metal1",[self.pre_w_en_bar_inst.get_pin("Z").center(), self.w_en_inst.get_pin("A").center()])                      
 
-        self.connect_output(self.w_en_inst, "Z", "w_en")
+        self.connect_output(self.w_en_inst, "Z", "w_en0")
         
     def route_sen(self):
         rbl_out_pos = self.rbl_inst.get_pin("out").bc()
@@ -417,7 +417,7 @@ class control_logic(design.design):
 
         self.add_path("metal1",[self.pre_s_en_bar_inst.get_pin("Z").center(), self.s_en_inst.get_pin("A").center()])
 
-        self.connect_output(self.s_en_inst, "Z", "s_en")
+        self.connect_output(self.s_en_inst, "Z", "s_en0")
         
     def route_clk(self):
         """ Route the clk and clk_buf_bar signal internally """

@@ -18,6 +18,8 @@ class options(optparse.Values):
     # This is the verbosity level to control debug information. 0 is none, 1
     # is minimal, etc.
     debug_level = 0
+    # When enabled, layout is not generated (and no DRC or LVS are performed)
+    netlist_only = False
     # This determines whether  LVS and DRC is checked for each submodule.
     check_lvsdrc = True
     # Variable to select the variant of spice

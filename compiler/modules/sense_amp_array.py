@@ -27,7 +27,7 @@ class sense_amp_array(design.design):
         self.height = self.amp.height
         self.width = self.amp.width * self.word_size * self.words_per_row
 
-        self.add_pins()
+        self.create_netlist()
         self.create_layout()
         self.DRC_LVS()
 
@@ -42,36 +42,42 @@ class sense_amp_array(design.design):
         self.add_pin("vdd")
         self.add_pin("gnd")
 
+    def create_netlist(self):
+        self.add_pins()
+        self.create_sense_amp_array()
+        
     def create_layout(self):
-
-        self.add_sense_amp()
-        self.connect_rails()
+        self.place_sense_amp_array()
+        self.add_layout_pins()
+        self.route_rails()
         
 
-    def add_sense_amp(self):
-            
-        bl_pin = self.amp.get_pin("bl")            
-        br_pin = self.amp.get_pin("br")
-        dout_pin = self.amp.get_pin("dout")
-        
-        amp_spacing = self.amp.width * self.words_per_row
+    def create_sense_amp_array(self):
+        self.local_insts = []
         for i in range(0,self.word_size):
 
             name = "sa_d{0}".format(i)
-            amp_position = vector(amp_spacing * i, 0)
-            
-            bl_offset = amp_position + bl_pin.ll().scale(1,0)
-            br_offset = amp_position + br_pin.ll().scale(1,0)
-            dout_offset = amp_position + dout_pin.ll()
-            
-            inst = self.add_inst(name=name,
-                          mod=self.amp,
-                          offset=amp_position)
+            self.local_insts.append(self.add_inst(name=name,
+                                                  mod=self.amp))
             self.connect_inst(["bl[{0}]".format(i),
                                "br[{0}]".format(i), 
                                "data[{0}]".format(i), 
                                "en", "vdd", "gnd"])
 
+    def place_sense_amp_array(self):
+            
+        amp_spacing = self.amp.width * self.words_per_row
+        for i in range(0,self.word_size):
+
+            name = "sa_d{0}".format(i)
+            amp_position = vector(amp_spacing * i, 0)
+            self.place_inst(name=name,
+                            offset=amp_position)
+
+        
+    def add_layout_pins(self):
+        for i in range(len(self.local_insts)):
+            inst = self.local_insts[i]
             
             gnd_pos = inst.get_pin("gnd").center()
             self.add_via_center(layers=("metal2", "via2", "metal3"),
@@ -79,33 +85,36 @@ class sense_amp_array(design.design):
             self.add_layout_pin_rect_center(text="gnd",
                                             layer="metal3",
                                             offset=gnd_pos)
-
             vdd_pos = inst.get_pin("vdd").center()
             self.add_via_center(layers=("metal2", "via2", "metal3"),
                                 offset=vdd_pos)
             self.add_layout_pin_rect_center(text="vdd",
                                             layer="metal3",
                                             offset=vdd_pos)
+
+            bl_pin = inst.get_pin("bl")            
+            br_pin = inst.get_pin("br")
+            dout_pin = inst.get_pin("dout")
             
             self.add_layout_pin(text="bl[{0}]".format(i),
                                 layer="metal2",
-                                offset=bl_offset,
+                                offset=bl_pin.ll(),
                                 width=bl_pin.width(),
                                 height=bl_pin.height())
             self.add_layout_pin(text="br[{0}]".format(i),
                                 layer="metal2",
-                                offset=br_offset,
+                                offset=br_pin.ll(),
                                 width=br_pin.width(),
                                 height=br_pin.height())
                            
             self.add_layout_pin(text="data[{0}]".format(i),
                                 layer="metal2",
-                                offset=dout_offset,
+                                offset=dout_pin.ll(),
                                 width=dout_pin.width(),
                                 height=dout_pin.height())
                            
-
-    def connect_rails(self):
+            
+    def route_rails(self):
         # add sclk rail across entire array
         sclk_offset = self.amp.get_pin("en").ll().scale(0,1)
         self.add_layout_pin(text="en",

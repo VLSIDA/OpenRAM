@@ -14,7 +14,8 @@ class pnand3(pgate.pgate):
 
     from importlib import reload
     c = reload(__import__(OPTS.bitcell))
-    bitcell = getattr(c, OPTS.bitcell)
+    mod_bitcell = getattr(c, OPTS.bitcell)
+    bitcell = mod_bitcell()
 
     unique_id = 1
     
@@ -37,7 +38,7 @@ class pnand3(pgate.pgate):
         debug.check(size==1,"Size 1 pnand3 is only supported now.")
         self.tx_mults = 1
 
-        self.add_pins()
+        self.create_netlist()
         self.create_layout()
         #self.DRC_LVS()
 
@@ -46,6 +47,9 @@ class pnand3(pgate.pgate):
         """ Adds pins for spice netlist """
         self.add_pin_list(["A", "B", "C", "Z", "vdd", "gnd"])
 
+    def create_netlist(self):
+        self.add_pins()
+        
     def create_layout(self):
         """ Calls all functions related to the generation of the layout """
 

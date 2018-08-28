@@ -91,19 +91,26 @@ class spice(verilog.verilog):
         group of modules are generated."""
 
         if (check and (len(self.insts[-1].mod.pins) != len(args))):
-            debug.error("Connections: {}".format(self.insts[-1].mod.pins))
-            debug.error("Connections: {}".format(args))
+            import pprint
+            modpins_string=pprint.pformat(self.insts[-1].mod.pins)
+            argpins_string=pprint.pformat(args)
+            debug.error("Connections: {}".format(modpins_string))
+            debug.error("Connections: {}".format(argpins_string))
             debug.error("Number of net connections ({0}) does not match last instance ({1})".format(len(self.insts[-1].mod.pins),
                                                                                                     len(args)), 1)
         self.conns.append(args)
 
         if check and (len(self.insts)!=len(self.conns)):
+            import pprint
+            insts_string=pprint.pformat(self.insts)
+            conns_string=pprint.pformat(self.conns)
+            
             debug.error("{0} : Not all instance pins ({1}) are connected ({2}).".format(self.name,
                                                                                         len(self.insts),
                                                                                         len(self.conns)))
-            debug.error("Instances: \n"+str(self.insts))
+            debug.error("Instances: \n"+str(insts_string))
             debug.error("-----")
-            debug.error("Connections: \n"+str(self.conns),1)
+            debug.error("Connections: \n"+str(conns_string),1)
 
 
 

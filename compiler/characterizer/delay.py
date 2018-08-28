@@ -647,12 +647,16 @@ class delay():
         if port in self.web_values and port in self.csb_values:
             self.web_values[port].append(1)
             self.csb_values[port].append(1)
+            self.add_data(data, port)
         elif port in self.rpenb_values:
             self.rpenb_values[port].append(1)
+        elif port in self.wpenb_values:
+            self.add_data(data, port)
+            self.wpenb_values[port].append(1)
         else:
             debug.error("Port selected with no control signals",1)
             
-        self.add_data(data, port)
+        
         self.add_address(address, port)
     
     def add_noop_all_ports(self, comment, address, data):
@@ -663,7 +667,7 @@ class delay():
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
         
-        for port in self.readwrite_ports+self.read_ports:
+        for port in self.readwrite_ports+self.read_ports+self.write_ports:
             self.add_noop(address, data, port)
         
                  
@@ -679,16 +683,16 @@ class delay():
         if port in self.web_values and port in self.csb_values:
             self.web_values[port].append(1)
             self.csb_values[port].append(0)
+            self.add_data(data, port)
         elif port in self.rpenb_values:
             self.rpenb_values[port].append(0)
         else:
             debug.error("Port selected with no control signals",1)
         
-        self.add_data(data, port)
         self.add_address(address, port)
         
         #Add noops to all other ports.
-        for unselected_port in self.readwrite_ports+self.read_ports:
+        for unselected_port in self.readwrite_ports+self.read_ports+self.write_ports:
             if unselected_port != port:
                 self.add_noop(address, data, unselected_port)
 
@@ -701,15 +705,19 @@ class delay():
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
         
-        
-        self.web_values[port].append(0)
-        self.csb_values[port].append(0)
-
+        if port in self.web_values and port in self.csb_values:
+            self.web_values[port].append(0)
+            self.csb_values[port].append(0)
+        elif port in self.wpenb_values:
+            self.wpenb_values[port].append(0)
+        else:
+            debug.error("Port selected with no control signals",1)
+            
         self.add_data(data,port)
         self.add_address(address,port)
         
         #Add noops to all other ports.
-        for readwrite_port in self.readwrite_ports+self.read_ports:
+        for readwrite_port in self.readwrite_ports+self.read_ports+self.write_ports:
             if readwrite_port != port:
                 self.add_noop(address, data, readwrite_port)
         
@@ -722,7 +730,7 @@ class delay():
         self.t_current = 0
 
         # Cycle times (positive edge) with comment
-        self.cycle_comments = []
+        self.cycle_comments = [] 
         self.cycle_times = []
 
         # Readwrite port Control logic signals each cycle
@@ -732,11 +740,14 @@ class delay():
         # Read port control signals
         self.rpenb_values = {read_port:[] for read_port in self.read_ports}
         
+        # Write port control signals
+        self.wpenb_values = {write_port:[] for write_port in self.write_ports}
+        
         # Address and data values for each address/data bit. A dict of 2d lists of size #ports x bits x cycles.
-        self.data_values={port:[[] for i in range(self.word_size)] for port in self.readwrite_ports + self.read_ports}
+        self.data_values={port:[[] for i in range(self.word_size)] for port in self.readwrite_ports + self.write_ports}
         #for i in range(self.word_size):
         #    self.data_values.append([])
-        self.addr_values={port:[[] for i in range(self.addr_size)] for port in self.readwrite_ports + self.read_ports}
+        self.addr_values={port:[[] for i in range(self.addr_size)] for port in self.readwrite_ports + self.read_ports + self.write_ports}
         #for i in range(self.addr_size):
         #    self.addr_values.append([])
 
@@ -808,6 +819,14 @@ class delay():
 
             self.add_noop_all_ports("Idle cycle (if read takes >1 cycle))",
                           self.probe_address,data_zeros)
+                          
+        #This is added only for testing purposes. Should be removed later. Testing that write port variables are working and are written to stim file.
+        for write_port in self.write_ports:
+            self.add_write("W data 1 address 0..00",
+                           inverse_address,data_ones,write_port) 
+
+            self.add_write("W data 0 address 11..11 to write value",
+                           self.probe_address,data_zeros,write_port)
 
     def analytical_delay(self,sram, slews, loads):
         """ Just return the analytical model results for the SRAM. 
@@ -852,10 +871,10 @@ class delay():
             for i in range(self.word_size):
                 sig_name="DIN_{0}[{1}] ".format(readwrite_input, i)
                 self.stim.gen_pwl(sig_name, self.cycle_times, self.data_values[readwrite_input][i], self.period, self.slew, 0.05)
-        # for write_port in range(OPTS.w_ports):
-            # for i in range(self.word_size):
-                # sig_name="DIN_WP{0}[{1}] ".format(write_port, i)
-                # self.stim.gen_pwl(sig_name, self.cycle_times, self.data_values[i], self.period, self.slew, 0.05)
+        for write_port in self.write_ports:
+            for i in range(self.word_size):
+                sig_name="DIN_{0}[{1}] ".format(write_port, i)
+                self.stim.gen_pwl(sig_name, self.cycle_times, self.data_values[write_port][i], self.period, self.slew, 0.05)
 
     def gen_addr(self):
         """ 
@@ -866,10 +885,10 @@ class delay():
             for i in range(self.addr_size):
                 sig_name = "A_{0}[{1}]".format(readwrite_addr,i)
                 self.stim.gen_pwl(sig_name, self.cycle_times, self.addr_values[readwrite_addr][i], self.period, self.slew, 0.05)
-        # for write_addr in range(OPTS.w_ports):
-            # for i in range(self.addr_size):
-                # sig_name = "A_WP{0}[{1}]".format(write_addr,i)
-                # self.stim.gen_pwl(sig_name, self.cycle_times, self.addr_values[i], self.period, self.slew, 0.05)
+        for write_addr in self.write_ports:
+            for i in range(self.addr_size):
+                sig_name = "A_{0}[{1}]".format(write_addr,i)
+                self.stim.gen_pwl(sig_name, self.cycle_times, self.addr_values[write_addr][i], self.period, self.slew, 0.05)
         for read_addr in self.read_ports:
             for i in range(self.addr_size):
                 sig_name = "A_{0}[{1}]".format(read_addr,i)
@@ -884,8 +903,8 @@ class delay():
             self.stim.gen_pwl("WEB_{0}".format(readwrite_port), self.cycle_times, self.web_values[readwrite_port], self.period, self.slew, 0.05)
         for read_port in self.read_ports:
            self.stim.gen_pwl("ENB_{0}".format(read_port), self.cycle_times, self.rpenb_values[read_port], self.period, self.slew, 0.05)
-        # for write_port in range(OPTS.w_ports):
-           # self.stim.gen_pwl("WPENB{0}".format(write_port), self.cycle_times, self.csb_values, self.period, self.slew, 0.05)
+        for write_port in self.write_ports:
+           self.stim.gen_pwl("ENB_{0}".format(write_port), self.cycle_times, self.wpenb_values[write_port], self.period, self.slew, 0.05)
             
         
     def gen_port_names(self):

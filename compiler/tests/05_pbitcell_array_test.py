@@ -11,7 +11,7 @@ import globals
 from globals import OPTS
 import debug
 
-#@unittest.skip("SKIPPING 05_pbitcell_array_test")
+@unittest.skip("SKIPPING 05_pbitcell_array_test")
 class pbitcell_array_test(openram_test):
 
     def runTest(self):

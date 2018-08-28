@@ -11,8 +11,8 @@ import globals
 from globals import OPTS
 import debug
 
-@unittest.skip("Multiported Bank not working yet")
-class single_bank_test(openram_test):
+@unittest.skip("SKIPPING 19_psingle_bank_test")
+class psingle_bank_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))

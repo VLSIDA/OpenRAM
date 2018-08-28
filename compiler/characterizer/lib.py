@@ -452,7 +452,7 @@ class lib:
                 self.char_results = self.d.analytical_delay(self.sram,self.slews,self.loads)
             else:
                 #Temporary Workaround to here to set # of ports. Crashes if set in config file.
-                #OPTS.rw_ports = 2
+                #OPTS.rw_ports = 0
                 #OPTS.r_ports = 1
                 #OPTS.w_ports = 1
 

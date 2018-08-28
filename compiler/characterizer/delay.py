@@ -62,6 +62,14 @@ class delay():
 
         if not isinstance(self.probe_data, int) or self.probe_data>self.word_size or self.probe_data<0:
             debug.error("Given probe_data is not an integer to specify a data bit",1)
+        
+        #Adding port options here which the characterizer cannot handle. Some may be added later like ROM
+        if OPTS.rw_ports == 0 and OPTS.w_ports == 0 and OPTS.r_ports == 0:
+            debug.error("Given port options cannot be characterized.",1)
+        if OPTS.rw_ports == 0 and OPTS.r_ports == 0:
+           debug.error("Characterizer does not currently support SRAMs without read ports.",1)
+        if OPTS.rw_ports == 0 and OPTS.w_ports == 0:
+           debug.error("Characterizer does not currently support SRAMs without write ports.",1)
 
     def write_generic_stimulus(self):
         """ Create the instance, supplies, loads, and access transistors. """
@@ -725,6 +733,7 @@ class delay():
     def gen_test_cycles_one_port(self, read_port, write_port):
         """Intended but not implemented: Returns a list of key time-points [ns] of the waveform (each rising edge)
         of the cycles to do a timing evaluation of a single port. Current: Values overwritten for multiple calls"""
+
         # Create the inverse address for a scratch address
         inverse_address = ""
         for c in self.probe_address:
@@ -830,7 +839,9 @@ class delay():
             if read_pos < len(self.read_ports):
                 cur_read_port = self.read_ports[read_pos]
                 read_pos+=1
-                
+            
+            #Add test cycle of read/write port pair. One port could have been used already, but the other has not.
+            #Above logic does not guarantee ports exists, but check_arguments should prevent that situation.
             self.gen_test_cycles_one_port(cur_read_port, cur_write_port)
 
     def analytical_delay(self,sram, slews, loads):

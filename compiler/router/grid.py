@@ -36,6 +36,9 @@ class grid:
     def add_blockage_shape(self,ll,ur,z):
         debug.info(3,"Adding blockage ll={0} ur={1} z={2}".format(str(ll),str(ur),z))
 
+        if ll[0]<42 and ll[0]>38 and ll[1]<3 and ll[1]>0:
+            debug.info(0,"Adding blockage ll={0} ur={1} z={2}".format(str(ll),str(ur),z))        
+
         block_list = []
         for x in range(int(ll[0]),int(ur[0])+1):
             for y in range(int(ll[1]),int(ur[1])+1):

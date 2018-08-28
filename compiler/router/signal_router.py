@@ -26,7 +26,7 @@ class signal_router(router):
 
     def create_routing_grid(self):
         """ 
-        Create a routing grid that spans given area. Wires cannot exist outside region. 
+        Create a sprase routing grid with A* expansion functions.
         """
         # We will add a halo around the boundary
         # of this many tracks
@@ -44,6 +44,8 @@ class signal_router(router):
         This is used to speed up the routing when there is not much detouring needed.
         """
         self.cell = cell
+        self.source_pin_name = src
+        self.target_pin_name = dest
 
         # Clear the pins if we have previously routed
         if (hasattr(self,'rg')):
@@ -73,7 +75,7 @@ class signal_router(router):
 
             
         # returns the path in tracks
-        (path,cost) = self.rg.astar_route(detour_scale)
+        (path,cost) = self.rg.route(detour_scale)
         if path:
             debug.info(1,"Found path: cost={0} ".format(cost))
             debug.info(2,str(path))
@@ -157,60 +159,4 @@ class signal_router(router):
         
 
 
-
-
-    def write_debug_gds(self):
-        """ 
-        Write out a GDS file with the routing grid and search information annotated on it.
-        """
-        # Only add the debug info to the gds file if we have any debugging on.
-        # This is because we may reroute a wire with detours and don't want the debug information.
-        if OPTS.debug_level==0: return
-        
-        self.add_router_info()
-        pin_names = list(self.pins.keys())
-        debug.error("Writing debug_route.gds from {0} to {1}".format(self.source_pin_name,self.target_pin_name))
-        self.cell.gds_write("debug_route.gds")
-
-    def add_router_info(self):
-        """
-        Write the routing grid and router cost, blockage, pins on 
-        the boundary layer for debugging purposes. This can only be 
-        called once or the labels will overlap.
-        """
-        debug.info(0,"Adding router info for {0} to {1}".format(self.source_pin_name,self.target_pin_name))
-        grid_keys=self.rg.map.keys()
-        partial_track=vector(0,self.track_width/6.0)
-        for g in grid_keys:
-            shape = self.convert_full_track_to_shape(g)
-            self.cell.add_rect(layer="boundary",
-                               offset=shape[0],
-                               width=shape[1].x-shape[0].x,
-                               height=shape[1].y-shape[0].y)
-            # These are the on grid pins
-            #rect = self.convert_track_to_pin(g)
-            #self.cell.add_rect(layer="boundary",
-            #                   offset=rect[0],
-            #                   width=rect[1].x-rect[0].x,
-            #                   height=rect[1].y-rect[0].y)
-            
-            t=self.rg.map[g].get_type()
-
-            # midpoint offset
-            off=vector((shape[1].x+shape[0].x)/2,
-                       (shape[1].y+shape[0].y)/2)
-            if g[2]==1:
-                # Upper layer is upper right label
-                type_off=off+partial_track
-            else:
-                # Lower layer is lower left label
-                type_off=off-partial_track
-            if t!=None:
-                self.cell.add_label(text=str(t),
-                                    layer="text",
-                                    offset=type_off)
-            self.cell.add_label(text="{0},{1}".format(g[0],g[1]),
-                                layer="text",
-                                offset=shape[0],
-                                zoom=0.05)
 

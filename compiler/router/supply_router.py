@@ -66,24 +66,22 @@ class supply_router(router):
         # Add blockages from previous routes
         self.add_path_blockages()        
 
-        # Now add the src/tgt if they are not blocked by other shapes
-        self.add_pin(vdd_name,True)
-        #self.add_pin()
-
+        # source pin will be a specific layout pin
+        # target pin will be the rails only
             
         # returns the path in tracks
-        (path,cost) = self.rg.route(detour_scale)
-        if path:
-            debug.info(1,"Found path: cost={0} ".format(cost))
-            debug.info(2,str(path))
-            self.add_route(path)
-            return True
-        else:
-            self.write_debug_gds()
-            # clean up so we can try a reroute
-            self.clear_pins()
+        # (path,cost) = self.rg.route(detour_scale)
+        # if path:
+        #     debug.info(1,"Found path: cost={0} ".format(cost))
+        #     debug.info(2,str(path))
+        #     self.add_route(path)
+        #     return True
+        # else:
+        #     self.write_debug_gds()
+        #     # clean up so we can try a reroute
+        #     self.clear_pins()
             
-
+        self.write_debug_gds()
         return False
 
                            
@@ -114,6 +112,17 @@ class supply_router(router):
         self.cell.add_route(self.layers,abs_path)
 
     
+    def create_routing_grid(self):
+        """ 
+        Create a sprase routing grid with A* expansion functions.
+        """
+        # We will add a halo around the boundary
+        # of this many tracks
+        size = self.ur - self.ll
+        debug.info(1,"Size: {0} x {1}".format(size.x,size.y))
+
+        import supply_grid
+        self.rg = supply_grid.supply_grid()
 
 
     ##########################
@@ -135,6 +144,3 @@ class supply_router(router):
         """ Create alternating vdd/gnd lines horizontally """
         pass
     
-    def route(self):
-        #self.create_grid()
-        pass

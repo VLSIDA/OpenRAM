@@ -152,7 +152,7 @@ class VlsiLayout:
         self.rootStructureName = structureNames[0]
 
     def traverseTheHierarchy(self, startingStructureName=None, delegateFunction = None, 
-                             transformPath = [], rotateAngle = 0, transFlags = (0,0,0), coordinates = (0,0)):
+                             transformPath = [], rotateAngle = 0, transFlags = [0,0,0], coordinates = (0,0)):
         #since this is a recursive function, must deal with the default
         #parameters explicitly        
         if startingStructureName == None:
@@ -160,11 +160,11 @@ class VlsiLayout:
 
         #set up the rotation matrix        
         if(rotateAngle == None or rotateAngle == ""):
-            rotateAngle = 0
+            angle = 0
         else:
-            rotateAngle = math.radians(float(rotateAngle))
-        mRotate = matrix([[math.cos(rotateAngle),-math.sin(rotateAngle),0.0],
-                          [math.sin(rotateAngle),math.cos(rotateAngle),0.0],
+            angle = math.radians(float(rotateAngle))
+        mRotate = matrix([[math.cos(angle),-math.sin(angle),0.0],
+                          [math.sin(angle),math.cos(angle),0.0],
                           [0.0,0.0,1.0]])
         #set up the translation matrix
         translateX = float(coordinates[0])
@@ -190,15 +190,12 @@ class VlsiLayout:
             #if not, return back to the caller (caller can be this function)            
             for sref in self.structures[startingStructureName].srefs:
                 #here, we are going to modify the sref coordinates based on the parent objects rotation                
-#                if (sref.sName.count("via") == 0): 
                 self.traverseTheHierarchy(startingStructureName = sref.sName,                                    
                                           delegateFunction = delegateFunction,
                                           transformPath = transformPath,
                                           rotateAngle = sref.rotateAngle,
                                           transFlags = sref.transFlags,
                                           coordinates = sref.coordinates)
-#            else:
-#                print("WARNING: via encountered, ignoring:", sref.sName)
             #MUST HANDLE AREFs HERE AS WELL
         #when we return, drop the last transform from the transformPath
         del transformPath[-1]
@@ -225,8 +222,8 @@ class VlsiLayout:
                 uVector = transform[0] * uVector  #rotate
                 vVector = transform[0] * vVector  #rotate
                 origin = transform[1] * origin  #scale
-                uVector = transform[1] * uVector  #rotate
-                vVector = transform[1] * vVector  #rotate
+                uVector = transform[1] * uVector  #scale
+                vVector = transform[1] * vVector  #scale
                 origin = transform[2] * origin  #translate
                 #we don't need to do a translation on the basis vectors            
             self.xyTree+=[(startingStructureName,origin,uVector,vVector)]  #populate the xyTree with each
@@ -307,17 +304,8 @@ class VlsiLayout:
             for layerNumber in layoutToAdd.layerNumbersInUse:
                 if layerNumber not in self.layerNumbersInUse:
                     self.layerNumbersInUse += [layerNumber]
-            #Also, check if the user units / microns is the same as this Layout
-            #if (layoutToAdd.units != self.units):
-            #print("WARNING:  VlsiLayout: Units from design to be added do not match target Layout")
 
     #   if debug: print("DEBUG: vlsilayout: Using %d layers")
-
-        # If we can't find the structure, error
-        #if StructureFound == False:
-            #print("ERROR:  vlsiLayout.addInstance: [%s] Name not found in local structures, "%(nameOfLayout))
-            #return #FIXME: remove!
-            #exit(1)
 
 
         #add a reference to the new layout structure in this layout's root
@@ -326,24 +314,27 @@ class VlsiLayout:
         layoutToAddSref.coordinates = offsetInLayoutUnits
 
         if mirror or rotate:
-        ########flags = (mirror around x-axis, absolute rotation, absolute magnification) 
-            layoutToAddSref.transFlags = (False,False,False)
-        #Below angles are angular angles(relative), not absolute
+            # transFlags = (mirror around x-axis, magnification, rotation)
+            # If magnification or rotation is true, it is the flags are then
+            # followed by an amount in the record
             if mirror=="R90":
                 rotate = 90.0
             if mirror=="R180":
                 rotate = 180.0
             if mirror=="R270":
                 rotate = 270.0
+                
+            layoutToAddSref.transFlags = [0,0,0]
             if rotate:
+                layoutToAddSref.transFlags = [0,0,1]
                 layoutToAddSref.rotateAngle = rotate
             if mirror == "x" or mirror == "MX":
-                layoutToAddSref.transFlags = (True,False,False)
+                layoutToAddSref.transFlags = [1,0,0]
             if mirror == "y" or mirror == "MY": #NOTE: "MY" option will override specified rotate angle
-                layoutToAddSref.transFlags = (True,False,False)
+                layoutToAddSref.transFlags = [1,0,1]
                 layoutToAddSref.rotateAngle = 180.0
             if mirror == "xy" or mirror == "XY": #NOTE: "XY" option will override specified rotate angle
-                layoutToAddSref.transFlags = (False,False,False)
+                layoutToAddSref.transFlags = [0,0,1]
                 layoutToAddSref.rotateAngle = 180.0
 
         #add the sref to the root structure
@@ -410,14 +401,14 @@ class VlsiLayout:
         textToAdd.purposeLayer = purposeNumber
         textToAdd.dataType = 0
         textToAdd.coordinates = [offsetInLayoutUnits]
+        textToAdd.transFlags = [0,0,0]  
         if(len(text)%2 == 1):
-            #pad with a zero
             text = text + '\x00'
         textToAdd.textString = text
-        textToAdd.transFlags = (False,False,True)
+        textToAdd.transFlags[1] = 1
         textToAdd.magFactor = magnification
         if rotate:
-            textToAdd.transFlags = (False,True,True)
+            textToAdd.transFlags[2] = 1 
             textToAdd.rotateAngle = rotate
         #add the sref to the root structure
         self.structures[self.rootStructureName].texts+=[textToAdd]
@@ -620,10 +611,6 @@ class VlsiLayout:
         StructureOrigin=[Structure[1][0],Structure[1][1]]
         StructureuVector=[Structure[2][0],Structure[2][1],Structure[2][2]]
         StructurevVector=[Structure[3][0],Structure[3][1],Structure[3][2]]
-        #debug.info(debug_level,"Checking Structure: "+str(StructureName))
-        #debug.info(debug_level,"-Structure Structure Origin:"+str(StructureOrigin))
-        #debug.info(debug_level,"-Structure direction: uVector["+str(StructureuVector)+"]")
-        #debug.info(debug_level,"-Structure direction: vVector["+str(StructurevVector)+"]")
         
         for boundary in self.structures[str(StructureName)].boundaries:
             left_bottom=boundary.coordinates[0]
@@ -808,6 +795,63 @@ class VlsiLayout:
                     
         return boundaries
 
+
+    def getAllShapesInStructureList(self,layer):
+        """
+        Return all pin shapes on a given layer.
+        """
+        boundaries = []
+        for TreeUnit in self.xyTree:
+            #print(TreeUnit[0])
+            boundaries += self.getShapesInStructure(layer,TreeUnit)
+
+        # Remove duplicates without defining a hash
+        # (could be sped up by creating hash and using list(set())
+        new_boundaries = []
+        for boundary in boundaries:
+            if boundary not in new_boundaries:
+                new_boundaries.append(boundary)
+                
+        # Convert to user units
+        boundaries = []
+        for boundary in new_boundaries:
+            boundaries.append([boundary[0]*self.units[0],boundary[1]*self.units[0],
+                               boundary[2]*self.units[0],boundary[3]*self.units[0]])
+                
+        return boundaries
+
+
+    def getShapesInStructure(self,layer,structure):
+        """ 
+        Go through all the shapes in a structure and return the list of shapes.
+        """
+
+        # check if this is a rectangle
+        structureName=structure[0]
+        structureOrigin=[structure[1][0],structure[1][1]]
+        structureuVector=[structure[2][0],structure[2][1],structure[2][2]]
+        structurevVector=[structure[3][0],structure[3][1],structure[3][2]]
+
+        boundaries = []
+        
+        for boundary in self.structures[str(structureName)].boundaries:
+            # Pin enclosures only work on rectangular pins so ignore any non rectangle
+            # This may report not finding pins, but the user should fix this by adding a rectangle.
+            if len(boundary.coordinates)!=5:
+                continue
+            if layer==boundary.drawingLayer:
+                left_bottom=boundary.coordinates[0]
+                right_top=boundary.coordinates[2]
+                # Rectangle is [leftx, bottomy, rightx, topy].
+                boundaryRect=[left_bottom[0],left_bottom[1],right_top[0],right_top[1]]
+                boundaryRect=self.transformRectangle(boundaryRect,structureuVector,structurevVector)
+                boundaryRect=[boundaryRect[0]+structureOrigin[0].item(),boundaryRect[1]+structureOrigin[1].item(),
+                              boundaryRect[2]+structureOrigin[0].item(),boundaryRect[3]+structureOrigin[1].item()]
+                
+                boundaries.append(boundaryRect)
+                    
+        return boundaries
+    
     def transformRectangle(self,originalRectangle,uVector,vVector):
         """
         Transforms the four coordinates of a rectangle in space
@@ -849,6 +893,7 @@ class VlsiLayout:
         else:
             return False
 
+    
 def boundaryArea(A):
     """
     Returns boundary area for sorting.

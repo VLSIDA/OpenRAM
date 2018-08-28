@@ -27,8 +27,7 @@ class router:
         self.top_name = self.layout.rootStructureName
 
         self.pins = {}
-        # the list of all blockage shapes
-        self.blockages = []
+        self.blockages=[]
         # all the paths we've routed so far (to supplement the blockages)
         self.paths = []
 
@@ -101,9 +100,9 @@ class router:
         This doesn't consider whether the obstacles will be pins or not. They get reset later
         if they are not actually a blockage.
         """
-        for layer in self.layers:
-            self.get_blockages(self.top_name)
-
+        #for layer in [self.vert_layer_number,self.horiz_layer_number]:
+        #    self.get_blockages(layer)
+        self.get_blockages(self.horiz_layer_number)
             
     def clear_pins(self):
         """
@@ -207,38 +206,50 @@ class router:
                 self.rg.add_blockage_shape(ll,ur,zlayer)
 
         
-    def get_blockages(self, sref, mirr = 1, angle = math.radians(float(0)), xyShift = (0, 0)): 
+    def get_blockages(self, layer_num): 
         """
         Recursive find boundaries as blockages to the routing grid.
-        Recurses for each Structure in GDS.
         """
-        for boundary in self.layout.structures[sref].boundaries:
-            coord_trans = self.translate_coordinates(boundary.coordinates, mirr, angle, xyShift)
-            shape_coords = self.min_max_coord(coord_trans)
-            shape = self.convert_shape_to_units(shape_coords)
 
-            # only consider the two layers that we are routing on
-            if boundary.drawingLayer in [self.vert_layer_number,self.horiz_layer_number]:
-                # store the blockages as pin layouts so they are easy to compare etc.
-                self.blockages.append(pin_layout("blockage",shape,boundary.drawingLayer))
+        shapes = self.layout.getAllShapesInStructureList(layer_num)
+                    
+        for boundary in shapes:
+            rect = [vector(boundary[0],boundary[1]),vector(boundary[2],boundary[3])]
+            new_pin = pin_layout("blockage",rect,layer_num)
+            self.blockages.append(new_pin)
+        
+        
+        # for boundary in self.layout.structures[sref].boundaries:
+        #     coord_trans = self.translate_coordinates(boundary.coordinates, mirr, angle, xyShift)
+        #     shape_coords = self.min_max_coord(coord_trans)
+        #     shape = self.convert_shape_to_units(shape_coords)
+
+        #     # only consider the two layers that we are routing on
+        #     if boundary.drawingLayer in [self.vert_layer_number,self.horiz_layer_number]:
+        #         # store the blockages as pin layouts so they are easy to compare etc.
+        #         new_pin = pin_layout("blockage",shape,boundary.drawingLayer)
+        #         # avoid repeated blockage pins
+        #         if new_pin not in self.blockages:
+        #             self.blockages.append(new_pin)
                 
 
-        # recurse given the mirror, angle, etc.
-        for cur_sref in self.layout.structures[sref].srefs:
-            sMirr = 1
-            if cur_sref.transFlags[0] == True:
-                sMirr = -1
-            sAngle = math.radians(float(0))
-            if cur_sref.rotateAngle:
-                sAngle = math.radians(float(cur_sref.rotateAngle))
-            sAngle += angle
-            x = cur_sref.coordinates[0]
-            y = cur_sref.coordinates[1]
-            newX = (x)*math.cos(angle) - mirr*(y)*math.sin(angle) + xyShift[0] 
-            newY = (x)*math.sin(angle) + mirr*(y)*math.cos(angle) + xyShift[1] 
-            sxyShift = (newX, newY)
+        # # recurse given the mirror, angle, etc.
+        # for cur_sref in self.layout.structures[sref].srefs:
+        #     sMirr = 1
+        #     if cur_sref.transFlags[0] == True:
+        #         sMirr = -1
+        #     sAngle = math.radians(float(0))
+        #     if cur_sref.rotateAngle:
+        #         sAngle = math.radians(float(cur_sref.rotateAngle))
+        #     sAngle += angle
+        #     x = cur_sref.coordinates[0]
+        #     y = cur_sref.coordinates[1]
+        #     newX = (x)*math.cos(angle) - mirr*(y)*math.sin(angle) + xyShift[0] 
+        #     newY = (x)*math.sin(angle) + mirr*(y)*math.cos(angle) + xyShift[1] 
+        #     sxyShift = (newX, newY)
             
-            self.get_blockages(cur_sref.sName, sMirr, sAngle, sxyShift)
+        #     self.get_blockages(cur_sref.sName, sMirr, sAngle, sxyShift)
+
 
     def convert_point_to_units(self,p):
         """ 
@@ -248,21 +259,25 @@ class router:
         pt=pt.scale(self.track_widths[0],self.track_widths[1],1)
         return pt
 
-    def convert_blockage_to_tracks(self,shape,round_bigger=False):
+    def convert_blockage_to_tracks(self,shape):
         """ 
         Convert a rectangular blockage shape into track units.
         """
-        [ll,ur] = shape
-        ll = snap_to_grid(ll)
-        ur = snap_to_grid(ur)
+        (ll,ur) = shape
+        # ll = snap_to_grid(ll)
+        # ur = snap_to_grid(ur)
 
         # to scale coordinates to tracks
-        #debug.info(1,"Converting [ {0} , {1} ]".format(ll,ur))
+        debug.info(3,"Converting [ {0} , {1} ]".format(ll,ur))
+        old_ll = ll
+        old_ur = ur
         ll=ll.scale(self.track_factor)
         ur=ur.scale(self.track_factor)
-        ll = ll.floor() if round_bigger else ll.round()
-        ur = ur.ceil() if round_bigger else ur.round()
-        #debug.info(1,"Converted [ {0} , {1} ]".format(ll,ur))
+        ll = ll.floor()
+        ur = ur.ceil()
+        if ll[0]<45 and ll[0]>35 and ll[1]<10 and ll[1]>0:
+            debug.info(0,"Converting [ {0} , {1} ]".format(old_ll,old_ur))
+            debug.info(0,"Converted [ {0} , {1} ]".format(ll,ur))
         return [ll,ur]
 
     def convert_pin_to_tracks(self, pin):
@@ -271,9 +286,9 @@ class router:
         If no on-grid pins are found, it searches for the nearest off-grid pin(s).
         If a pin has insufficent overlap, it returns the blockage list to avoid it.
         """
-        [ll,ur] = pin.rect
-        ll = snap_to_grid(ll)
-        ur = snap_to_grid(ur)
+        (ll,ur) = pin.rect
+        #ll = snap_to_grid(ll)
+        #ur = snap_to_grid(ur)
 
         #debug.info(1,"Converting [ {0} , {1} ]".format(ll,ur))
         
@@ -401,6 +416,68 @@ class router:
             self.write_debug_gds()
         debug.check(found_pin,"Unable to find pin on grid.")
 
+    def write_debug_gds(self):
+        """ 
+        Write out a GDS file with the routing grid and search information annotated on it.
+        """
+        # Only add the debug info to the gds file if we have any debugging on.
+        # This is because we may reroute a wire with detours and don't want the debug information.
+        if OPTS.debug_level==0: return
+        
+        self.add_router_info()
+        debug.error("Writing debug_route.gds")
+        self.cell.gds_write("debug_route.gds")
+
+    def add_router_info(self):
+        """
+        Write the routing grid and router cost, blockage, pins on 
+        the boundary layer for debugging purposes. This can only be 
+        called once or the labels will overlap.
+        """
+        debug.info(0,"Adding router info")
+        grid_keys=self.rg.map.keys()
+        partial_track=vector(0,self.track_width/6.0)
+        for g in grid_keys:
+            continue # for now...
+            shape = self.convert_full_track_to_shape(g)
+            self.cell.add_rect(layer="boundary",
+                               offset=shape[0],
+                               width=shape[1].x-shape[0].x,
+                               height=shape[1].y-shape[0].y)
+            # These are the on grid pins
+            #rect = self.convert_track_to_pin(g)
+            #self.cell.add_rect(layer="boundary",
+            #                   offset=rect[0],
+            #                   width=rect[1].x-rect[0].x,
+            #                   height=rect[1].y-rect[0].y)
+            
+            t=self.rg.map[g].get_type()
+
+            # midpoint offset
+            off=vector((shape[1].x+shape[0].x)/2,
+                       (shape[1].y+shape[0].y)/2)
+            if g[2]==1:
+                # Upper layer is upper right label
+                type_off=off+partial_track
+            else:
+                # Lower layer is lower left label
+                type_off=off-partial_track
+            if t!=None:
+                self.cell.add_label(text=str(t),
+                                    layer="text",
+                                    offset=type_off)
+            self.cell.add_label(text="{0},{1}".format(g[0],g[1]),
+                                layer="text",
+                                offset=shape[0],
+                                zoom=0.05)
+
+        for blockage in self.blockages:
+            self.cell.add_rect(layer="boundary",
+                               offset=blockage.ll(),
+                               width=blockage.width(),
+                               height=blockage.height())
+
+        
 # FIXME: This should be replaced with vector.snap_to_grid at some point
 
 def snap_to_grid(offset):

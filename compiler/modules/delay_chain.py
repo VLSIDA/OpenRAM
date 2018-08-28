@@ -170,7 +170,7 @@ class delay_chain(design.design):
                     continue
                 for pin_name in ["vdd", "gnd"]:
                     pin = load.get_pin(pin_name)
-                    self.add_power_pin(pin_name, pin.rc())
+                    self.add_power_pin(pin_name, pin.rc(),rotate=0)
         else:
             # We have an even number of rows, so need to get the last gnd rail
             inv = self.driver_inst_list[-1]
@@ -179,7 +179,7 @@ class delay_chain(design.design):
                     continue
                 pin_name = "gnd"
                 pin = load.get_pin(pin_name)
-                self.add_power_pin(pin_name, pin.rc())
+                self.add_power_pin(pin_name, pin.rc(),rotate=0)
 
 
         # input is A pin of first inverter

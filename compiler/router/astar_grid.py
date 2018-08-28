@@ -89,7 +89,7 @@ class astar_grid(grid.grid):
             self.counter+=1
 
             
-    def astar_route(self,detour_scale):
+    def route(self,detour_scale):
         """
         This does the A* maze routing with preferred direction routing.
         """

@@ -171,7 +171,7 @@ class replica_bitline(design.design):
         # Replica bitcell needs to be routed up to M3
         pin=self.rbc_inst.get_pin("vdd")
         # Don't rotate this via to vit in FreePDK45
-        self.add_power_pin("vdd", pin.center(), False)
+        self.add_power_pin("vdd", pin.center(), rotate=0)
         
         for pin in self.rbc_inst.get_pins("gnd"):
             self.add_power_pin("gnd", pin.center())

@@ -20,7 +20,7 @@ class single_bank_test(openram_test):
         debug.info(1, "No column mux")
         a = bank(word_size=4, num_words=16, words_per_row=1, num_banks=1, name="bank1_single")
         self.local_check(a)
-
+        
         debug.info(1, "Two way column mux")
         a = bank(word_size=4, num_words=32, words_per_row=2, num_banks=1, name="bank2_single")
         self.local_check(a)

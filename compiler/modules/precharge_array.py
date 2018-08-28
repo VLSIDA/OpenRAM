@@ -92,7 +92,5 @@ class precharge_array(design.design):
     def place_insts(self):
         """ Places precharge array by horizontally tiling the precharge cell"""
         for i in range(self.columns):
-            name = "pre_column_{0}".format(i)
             offset = vector(self.pc_cell.width * i, 0)
-            inst = self.place_inst(name=name,
-                                   offset=offset)                                   
+            self.local_insts[i].place(offset)                                   

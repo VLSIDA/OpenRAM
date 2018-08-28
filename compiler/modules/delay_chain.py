@@ -110,16 +110,16 @@ class delay_chain(design.design):
                 inv_offset = vector(0, stage_num * self.inv.height)                
                 
             # Add the inverter
-            self.place_inst(name="dinv{}".format(stage_num),
-                            offset=inv_offset,
-                            mirror=inv_mirror)
-
+            cur_driver=self.driver_inst_list[stage_num]
+            cur_driver.place(offset=inv_offset,
+                             mirror=inv_mirror)
+            
             # Now add the dummy loads to the right
+            load_list = self.load_inst_map[cur_driver]
             for i in range(fanout_size):
                 inv_offset += vector(self.inv.width,0)
-                self.place_inst(name="dload_{0}_{1}".format(stage_num,i),
-                                offset=inv_offset,
-                                mirror=inv_mirror)
+                load_list[i].place(offset=inv_offset,
+                                   mirror=inv_mirror)
             
                 
     def add_route(self, pin1, pin2):

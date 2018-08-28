@@ -131,17 +131,14 @@ class bank_select(design.design):
         self.bank_select_inv_position = vector(self.xoffset_bank_sel_inv, 0)
 
         # bank select inverter (must be made unique if more than one OR)
-        self.bank_sel_inv=self.add_inst(name="bank_sel_inv", 
-                                        mod=self.inv, 
-                                        offset=[self.xoffset_bank_sel_inv, 0])
-        self.connect_inst(["bank_sel", "bank_sel_bar", "vdd", "gnd"])
+        self.bank_sel_inv.place(vector(self.xoffset_bank_sel_inv, 0))
 
         for i in range(self.num_control_lines):
+
+            logic_inst = self.logic_inst[i]
+            inv_inst = self.inv_inst[i]
+            
             input_name = self.input_control_signals[i]
-            gated_name = self.control_signals[i]
-            name_nand = "nand_{}".format(input_name)
-            name_nor = "nor_{}".format(input_name)
-            name_inv = "inv_{}".format(input_name)
 
             y_offset = self.inv.height * i
             if i%2:
@@ -154,20 +151,17 @@ class bank_select(design.design):
             # (writes occur on clk low)
             if input_name in ("clk_buf"):
                 
-                self.place_inst(name=name_nor, 
-                                offset=[self.xoffset_nor, y_offset],
-                                mirror=mirror)
+                logic_inst.place(offset=[self.xoffset_nor, y_offset],
+                                 mirror=mirror)
                 
             # the rest are AND (nand2+inv) gates
             else:
-                self.place_inst(name=name_nand, 
-                                offset=[self.xoffset_nand, y_offset],
-                                mirror=mirror)
+                logic_inst.place(offset=[self.xoffset_nand, y_offset],
+                                 mirror=mirror)
 
             # They all get inverters on the output
-            self.place_inst(name=name_inv, 
-                            offset=[self.xoffset_inv, y_offset],
-                            mirror=mirror)
+            inv_inst.place(offset=[self.xoffset_inv, y_offset],
+                           mirror=mirror)
             
 
     def route_modules(self):

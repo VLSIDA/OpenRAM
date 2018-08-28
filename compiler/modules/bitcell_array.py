@@ -66,9 +66,8 @@ class bitcell_array(design.design):
                     tempy = yoffset
                     dir_key = ""
 
-                self.place_inst(name=name,
-                                offset=[xoffset, tempy],
-                                mirror=dir_key)
+                self.cell_inst[row,col].place(offset=[xoffset, tempy],
+                                              mirror=dir_key)
                 yoffset += self.cell.height
             xoffset += self.cell.width
 

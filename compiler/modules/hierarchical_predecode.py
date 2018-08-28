@@ -88,7 +88,6 @@ class hierarchical_predecode(design.design):
         
     def create_input_inverters(self):
         """ Create the input inverters to invert input signals for the decode stage. """
-
         self.in_inst = []
         for inv_num in range(self.number_of_inputs):
             name = "Xpre_inv[{0}]".format(inv_num)
@@ -100,9 +99,7 @@ class hierarchical_predecode(design.design):
 
     def place_input_inverters(self):
         """ Place the input inverters to invert input signals for the decode stage. """
-
         for inv_num in range(self.number_of_inputs):
-            name = "Xpre_inv[{0}]".format(inv_num)
             if (inv_num % 2 == 0):
                 y_off = inv_num * (self.inv.height)
                 mirror = "R0"
@@ -110,13 +107,11 @@ class hierarchical_predecode(design.design):
                 y_off = (inv_num + 1) * (self.inv.height)
                 mirror="MX"
             offset = vector(self.x_off_inv_1, y_off)
-            self.place_inst(name=name,
-                            offset=offset,
-                            mirror=mirror)
+            self.in_inst[inv_num].place(offset=offset,
+                                        mirror=mirror)
             
     def create_output_inverters(self):
         """ Create inverters for the inverted output decode signals. """
-        
         self.inv_inst = []
         for inv_num in range(self.number_of_outputs):
             name = "Xpre_nand_inv[{}]".format(inv_num)
@@ -129,9 +124,7 @@ class hierarchical_predecode(design.design):
 
     def place_output_inverters(self):
         """ Place inverters for the inverted output decode signals. """
-        
         for inv_num in range(self.number_of_outputs):
-            name = "Xpre_nand_inv[{}]".format(inv_num)
             if (inv_num % 2 == 0):
                 y_off = inv_num * self.inv.height
                 mirror = "R0"
@@ -139,9 +132,8 @@ class hierarchical_predecode(design.design):
                 y_off =(inv_num + 1)*self.inv.height
                 mirror = "MX"
             offset = vector(self.x_off_inv_2, y_off)   
-            self.place_inst(name=name,
-                            offset=offset,
-                            mirror=mirror)
+            self.inv_inst[inv_num].place(offset=offset,
+                                         mirror=mirror)
 
     def create_nand_array(self,connections):
         """ Create the NAND stage for the decodes """
@@ -158,7 +150,6 @@ class hierarchical_predecode(design.design):
         """ Place the NAND stage for the decodes """
         for nand_input in range(self.number_of_outputs):
             inout = str(self.number_of_inputs)+"x"+str(self.number_of_outputs)
-            name = "Xpre{0}_nand[{1}]".format(inout,nand_input)
             if (nand_input % 2 == 0):
                 y_off = nand_input * self.inv.height
                 mirror = "R0"
@@ -166,9 +157,8 @@ class hierarchical_predecode(design.design):
                 y_off = (nand_input + 1) * self.inv.height
                 mirror = "MX"
             offset = vector(self.x_off_nand, y_off)
-            self.place_inst(name=name,
-                            offset=offset,
-                            mirror=mirror)
+            self.nand_inst[nand_input].place(offset=offset,
+                                             mirror=mirror)
             
 
     def route(self):

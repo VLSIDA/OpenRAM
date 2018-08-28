@@ -66,11 +66,9 @@ class write_driver_array(design.design):
 
     def place_write_array(self):
         for i in range(0,self.columns,self.words_per_row):
-            name = "Xwrite_driver{}".format(i)
+            index = int(i/self.words_per_row)            
             base = vector(i * self.driver.width,0)
-            
-            self.place_inst(name=name,
-                          offset=base)
+            self.driver_insts[index].place(base)
 
             
     def add_layout_pins(self):

@@ -149,21 +149,17 @@ class pnand2(pgate.pgate):
 
         pmos1_pos = vector(self.pmos.active_offset.x,
                            self.height - self.pmos.active_height - self.top_bottom_space)
-        self.place_inst(name="pnand2_pmos1",
-                        offset=pmos1_pos)
+        self.pmos1_inst.place(pmos1_pos)
 
         self.pmos2_pos = pmos1_pos + self.overlap_offset
-        self.place_inst(name="pnand2_pmos2",
-                      offset=self.pmos2_pos)
+        self.pmos2_inst.place(self.pmos2_pos)
 
         
         nmos1_pos = vector(self.pmos.active_offset.x, self.top_bottom_space)
-        self.place_inst(name="pnand2_nmos1",
-                        offset=nmos1_pos)
+        self.nmos1_inst.place(nmos1_pos)
 
         self.nmos2_pos = nmos1_pos + self.overlap_offset
-        self.place_inst(name="pnand2_nmos2",
-                        offset=self.nmos2_pos)
+        self.nmos2_inst.place(self.nmos2_pos)
 
         # Output position will be in between the PMOS and NMOS        
         self.output_pos = vector(0,0.5*(pmos1_pos.y+nmos1_pos.y+self.nmos.active_height))

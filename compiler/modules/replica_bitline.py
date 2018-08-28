@@ -132,22 +132,17 @@ class replica_bitline(design.design):
         """ Add all of the module instances in the logical netlist """
         
         # This is the threshold detect inverter on the output of the RBL
-        self.place_inst(name="rbl_inv",
-                        offset=self.rbl_inv_offset,
-                        rotate=180)
+        self.rbl_inv_inst.place(offset=self.rbl_inv_offset,
+                                rotate=180)
 
-        self.place_inst(name="rbl_access_tx",
-                        offset=self.access_tx_offset)
+        self.tx_inst.place(self.access_tx_offset)
 
-        self.place_inst(name="delay_chain",
-                        offset=self.delay_chain_offset)
+        self.dc_inst.place(self.delay_chain_offset)
 
-        self.place_inst(name="bitcell",
-                        offset=self.bitcell_offset,
-                        mirror="MX")
+        self.rbc_inst.place(offset=self.bitcell_offset,
+                            mirror="MX")
 
-        self.place_inst(name="load",
-                        offset=self.rbl_offset)
+        self.rbl_inst.place(self.rbl_offset)
         
         
 

@@ -114,18 +114,15 @@ class precharge(pgate.pgate):
         #base = vector(self.width - 2*self.pmos.width + self.overlap_offset.x, 0)
         self.lower_pmos_position = vector(self.bitcell.get_pin(self.bitcell_bl).lx(),
                                           self.pmos.active_offset.y)
-        self.place_inst(name="lower_pmos",
-                        offset=self.lower_pmos_position)
+        self.lower_pmos_inst.place(self.lower_pmos_position)
 
         # adds the upper pmos(s) to layout
         ydiff = self.pmos.height + 2*self.m1_space + contact.poly.width
         self.upper_pmos1_pos = self.lower_pmos_position + vector(0, ydiff)
-        self.place_inst(name="upper_pmos1",
-                        offset=self.upper_pmos1_pos)
+        self.upper_pmos1_inst.place(self.upper_pmos1_pos)
 
         upper_pmos2_pos = self.upper_pmos1_pos + self.overlap_offset
-        self.place_inst(name="upper_pmos2",
-                        offset=upper_pmos2_pos)
+        self.upper_pmos2_inst.place(upper_pmos2_pos)
         
     def connect_poly(self):
         """Connects the upper and lower pmos together"""

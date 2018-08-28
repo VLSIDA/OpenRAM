@@ -183,8 +183,7 @@ class control_logic(design.design):
         # Add the RBL above the rows
         # Add to the right of the control rows and routing channel
         self.replica_bitline_offset = vector(0, y_off)
-        self.place_inst(name="replica_bitline",
-                        offset=self.replica_bitline_offset)
+        self.rbl_inst.place(self.replica_bitline_offset)
         
         
     def create_clk_row(self):
@@ -198,8 +197,7 @@ class control_logic(design.design):
         x_off = self.ctrl_dff_array.width + self.internal_bus_width
         (y_off,mirror)=self.get_offset(row)
         clkbuf_offset = vector(x_off,y_off)
-        self.place_inst(name="clkbuf",
-                        offset=clkbuf_offset)
+        self.clkbuf_inst.place(clkbuf_offset)
         self.row_end_inst.append(self.clkbuf_inst)
         
 
@@ -220,15 +218,13 @@ class control_logic(design.design):
 
 
         self.rbl_in_bar_offset = vector(x_off, y_off)
-        self.place_inst(name="nand3_rbl_in_bar",
-                        offset=self.rbl_in_bar_offset,
-                        mirror=mirror)
+        self.rbl_in_bar_inst.place(offset=self.rbl_in_bar_offset,
+                                   mirror=mirror)
         x_off += self.nand2.width
 
         self.rbl_in_offset = vector(x_off, y_off)
-        self.place_inst(name="inv_rbl_in",
-                      offset=self.rbl_in_offset,
-                      mirror=mirror)
+        self.rbl_in_inst.place(offset=self.rbl_in_offset,
+                               mirror=mirror)
         self.row_end_inst.append(self.rbl_in_inst)
         
     def create_sen_row(self):
@@ -253,15 +249,13 @@ class control_logic(design.design):
         (y_off,mirror)=self.get_offset(row)
 
         self.pre_s_en_bar_offset = vector(x_off, y_off)
-        self.place_inst(name="inv_pre_s_en_bar",
-                        offset=self.pre_s_en_bar_offset,
-                        mirror=mirror)
+        self.pre_s_en_bar_inst.place(offset=self.pre_s_en_bar_offset,
+                                     mirror=mirror)
         x_off += self.inv2.width
         
         self.s_en_offset = vector(x_off, y_off)
-        self.place_inst(name="inv_s_en",
-                        offset=self.s_en_offset,
-                        mirror=mirror)
+        self.s_en_inst.place(offset=self.s_en_offset,
+                             mirror=mirror)
         self.row_end_inst.append(self.s_en_inst)
         
         
@@ -292,8 +286,7 @@ class control_logic(design.design):
 
     def place_dffs(self):
         """ Place the input DFFs (with inverters) """
-        self.place_inst(name="ctrl_dffs",
-                        offset=vector(0,0))
+        self.ctrl_dff_inst.place(vector(0,0))
         
 
     def get_offset(self,row):
@@ -333,27 +326,23 @@ class control_logic(design.design):
         (y_off,mirror)=self.get_offset(row)
             
         w_en_bar_offset = vector(x_off, y_off)
-        self.place_inst(name="nand3_w_en_bar",
-                        offset=w_en_bar_offset,
-                        mirror=mirror)
+        self.w_en_bar_inst.place(offset=w_en_bar_offset,
+                                 mirror=mirror)
         x_off += self.nand3.width
 
         pre_w_en_offset = vector(x_off, y_off)
-        self.place_inst(name="inv_pre_w_en",
-                        offset=pre_w_en_offset,
-                        mirror=mirror)
+        self.pre_w_en_inst.place(offset=pre_w_en_offset,
+                                 mirror=mirror)
         x_off += self.inv1.width
         
         pre_w_en_bar_offset = vector(x_off, y_off)
-        self.place_inst(name="inv_pre_w_en_bar",
-                        offset=pre_w_en_bar_offset,
-                        mirror=mirror)
+        self.pre_w_en_bar_inst.place(offset=pre_w_en_bar_offset,
+                                     mirror=mirror)
         x_off += self.inv2.width
 
         w_en_offset = vector(x_off,  y_off)
-        self.place_inst(name="inv_w_en2",
-                        offset=w_en_offset,
-                        mirror=mirror)
+        self.w_en_inst.place(offset=w_en_offset,
+                             mirror=mirror)
         x_off += self.inv8.width
 
         self.row_end_inst.append(self.w_en_inst)

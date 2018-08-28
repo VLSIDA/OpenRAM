@@ -75,9 +75,8 @@ class dff_array(design.design):
                 else:
                     base = vector(col*self.dff.width,(row+1)*self.dff.height)
                     mirror = "MX"
-                self.place_inst(name=name,
-                                offset=base, 
-                                mirror=mirror)
+                self.dff_insts[row,col].place(offset=base, 
+                                              mirror=mirror)
                 
     def get_din_name(self, row, col):
         if self.columns == 1:

@@ -75,12 +75,10 @@ class dff_inv(design.design):
 
     def place_modules(self):
         # Place the DFF
-        self.place_inst(name="dff_inv_dff",
-                        offset=vector(0,0))
+        self.dff_inst.place(vector(0,0))
 
         # Place the INV1 to the right
-        self.place_inst(name="dff_inv_inv1",
-                        offset=vector(self.dff_inst.rx(),0))
+        self.inv1_inst.place(vector(self.dff_inst.rx(),0))
         
         
     def add_wires(self):

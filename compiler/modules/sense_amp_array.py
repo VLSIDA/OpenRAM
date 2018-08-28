@@ -68,11 +68,8 @@ class sense_amp_array(design.design):
             
         amp_spacing = self.amp.width * self.words_per_row
         for i in range(0,self.word_size):
-
-            name = "sa_d{0}".format(i)
             amp_position = vector(amp_spacing * i, 0)
-            self.place_inst(name=name,
-                            offset=amp_position)
+            self.local_insts[i].place(amp_position)
 
         
     def add_layout_pins(self):

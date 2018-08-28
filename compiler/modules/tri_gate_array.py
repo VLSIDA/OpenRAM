@@ -63,10 +63,8 @@ class tri_gate_array(design.design):
     def place_array(self):
         """ Place the tri gate to the array """
         for i in range(0,self.columns,self.words_per_row):
-            name = "Xtri_gate{0}".format(i)
             base = vector(i*self.tri.width, 0)
-            self.place_inst(name=name,
-                            offset=base)
+            self.tri_inst[i].place(base)
             
 
     def add_layout_pins(self):

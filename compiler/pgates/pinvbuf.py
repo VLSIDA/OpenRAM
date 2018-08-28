@@ -50,7 +50,7 @@ class pinvbuf(design.design):
         self.width = 2*self.inv1.width + self.inv2.width
         self.height = 2*self.inv1.height
         
-        self.place_insts()
+        self.place_modules()
         self.route_wires()
         self.add_layout_pins()
         
@@ -97,23 +97,19 @@ class pinvbuf(design.design):
                                      mod=self.inv2)
         self.connect_inst(["zb_int", "Z",  "vdd", "gnd"])
 
-    def place_insts(self):
+    def place_modules(self):
         # Add INV1 to the right (capacitance shield)
-        self.place_inst(name="buf_inv1",
-                        offset=vector(0,0))
+        self.inv1_inst.place(vector(0,0))
 
         # Add INV2 to the right
-        self.place_inst(name="buf_inv2",
-                        offset=vector(self.inv1_inst.rx(),0))
+        self.inv2_inst.place(vector(self.inv1_inst.rx(),0))
         
         # Add INV3 to the right
-        self.place_inst(name="buf_inv3",
-                        offset=vector(self.inv2_inst.rx(),0))
+        self.inv3_inst.place(vector(self.inv2_inst.rx(),0))
 
         # Add INV4 to the bottom
-        self.place_inst(name="buf_inv4",
-                        offset=vector(self.inv2_inst.rx(),2*self.inv2.height),
-                        mirror = "MX")
+        self.inv4_inst.place(offset=vector(self.inv2_inst.rx(),2*self.inv2.height),
+                             mirror = "MX")
         
         
     def route_wires(self):

@@ -355,8 +355,7 @@ class sram_base(design):
         else:
             bank_mirror = "R0"
             
-        self.place_inst(name=bank_inst.name,
-                        offset=position,
+        bank_inst.place(offset=position,
                         mirror=bank_mirror,
                         rotate=bank_rotation)
 

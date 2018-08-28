@@ -67,16 +67,15 @@ class ms_flop_array(design.design):
 
     def place_ms_flop_array(self):
         for i in range(0,self.columns,self.words_per_row):
-            name = "Xdff{0}".format(i)
+            index = int(i/self.words_per_row)
             if (i % 2 == 0 or self.words_per_row>1):
                 base = vector(i*self.ms.width,0)
                 mirror = "R0"
             else:
                 base = vector((i+1)*self.ms.width,0)
                 mirror = "MY"
-            self.place_inst(name=name,
-                            offset=base, 
-                            mirror=mirror)
+            self.ms_inst[index].place(offset=base, 
+                                      mirror=mirror)
             
     def add_layout_pins(self):
         

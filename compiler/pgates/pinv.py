@@ -198,13 +198,11 @@ class pinv(pgate.pgate):
         # place PMOS so it is half a poly spacing down from the top
         self.pmos_pos = self.pmos.active_offset.scale(1,0) \
                         + vector(0, self.height-self.pmos.active_height-self.top_bottom_space)
-        self.place_inst(name="pinv_pmos",
-                        offset=self.pmos_pos)
+        self.pmos_inst.place(self.pmos_pos)
 
         # place NMOS so that it is half a poly spacing up from the bottom
         self.nmos_pos = self.nmos.active_offset.scale(1,0) + vector(0,self.top_bottom_space)
-        self.place_inst(name="pinv_nmos",
-                        offset=self.nmos_pos)
+        self.nmos_inst.place(self.nmos_pos)
 
 
         # Output position will be in between the PMOS and NMOS drains

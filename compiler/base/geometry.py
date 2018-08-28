@@ -195,6 +195,14 @@ class instance(geometry):
                               mirror=self.mirror,
                               rotate=self.rotate)
 
+    def place(self, offset, mirror="R0", rotate=0):
+        """ This updates the placement of an instance. """
+        debug.info(3, "placing instance {}".format(self.name))
+        # Update the placement of an already added instance
+        self.offset = offset
+        self.mirror = mirror
+        self.rotate = rotate
+        self.update_boundary()
         
     
     def get_pin(self,name,index=-1):

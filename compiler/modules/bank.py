@@ -278,8 +278,7 @@ class bank(design.design):
 
     def place_bitcell_array(self):
         """ Placing Bitcell Array """
-        self.place_inst(name="bitcell_array", 
-                        offset=vector(0,0))
+        self.bitcell_array_inst.place(vector(0,0))
 
         
     def create_precharge_array(self):
@@ -304,8 +303,7 @@ class bank(design.design):
             # The wells must be far enough apart
             # The enclosure is for the well and the spacing is to the bitcell wells
             y_offset = self.bitcell_array.height + self.m2_gap
-            self.place_inst(name=self.precharge_array_inst[k].name,
-                            offset=vector(0,y_offset))
+            self.precharge_array_inst[k].place(vector(0,y_offset))
             
     def create_column_mux_array(self):
         """ Creating Column Mux when words_per_row > 1 . """
@@ -339,8 +337,7 @@ class bank(design.design):
 
         for k in range(self.total_ports):
             y_offset = self.column_mux_height 
-            self.place_inst(name=self.col_mux_array_inst[k].name,
-                            offset=vector(0,y_offset).scale(-1,-1))
+            self.col_mux_array_inst[k].place(vector(0,y_offset).scale(-1,-1))
             
     def create_sense_amp_array(self):
         """ Creating Sense amp  """
@@ -369,8 +366,7 @@ class bank(design.design):
         # FIXME: place for multiport
         for k in range(self.total_read):
             y_offset = self.column_mux_height + self.sense_amp_array.height + self.m2_gap
-            self.place_inst(name=self.sense_amp_array_inst[k].name,
-                            offset=vector(0,y_offset).scale(-1,-1))
+            self.sense_amp_array_inst[k].place(vector(0,y_offset).scale(-1,-1))
             
     def create_write_driver_array(self):
         """ Creating Write Driver  """
@@ -400,8 +396,7 @@ class bank(design.design):
         for k in range(self.total_write):
             y_offset = self.sense_amp_array.height + self.column_mux_height \
                 + self.m2_gap + self.write_driver_array.height 
-            self.place_inst(name=self.write_driver_array_inst[k].name, 
-                            offset=vector(0,y_offset).scale(-1,-1))
+            self.write_driver_array_inst[k].place(vector(0,y_offset).scale(-1,-1))
 
             
 
@@ -433,8 +428,7 @@ class bank(design.design):
         # FIXME: place for multiport
         for k in range(self.total_ports):
             x_offset = -(self.row_decoder.width + self.central_bus_width + self.wordline_driver.width)
-            self.place_inst(name=self.row_decoder_inst[k].name, 
-                            offset=vector(x_offset,0))
+            self.row_decoder_inst[k].place(vector(x_offset,0))
 
             
     def create_wordline_driver(self):
@@ -462,8 +456,7 @@ class bank(design.design):
         for k in range(self.total_ports):
             # The wordline driver is placed to the right of the main decoder width.
             x_offset = -(self.central_bus_width + self.wordline_driver.width) + self.m2_pitch
-            self.place_inst(name=self.wordline_driver_inst[k].name, 
-                            offset=vector(x_offset,0))
+            self.wordline_driver_inst[k].place(vector(x_offset,0))
 
         
     def create_column_decoder(self):
@@ -509,8 +502,7 @@ class bank(design.design):
             # Place the col decoder right aligned with row decoder
             x_off = -(self.central_bus_width + self.wordline_driver.width + self.col_decoder.width)
             y_off = -(self.col_decoder.height + 2*drc["well_to_well"])
-            self.place_inst(name=self.col_decoder_inst[k].name, 
-                            offset=vector(x_off,y_off))
+            self.col_decoder_inst[k].place(vector(x_off,y_off))
 
             
     def create_bank_select(self):
@@ -546,8 +538,7 @@ class bank(design.design):
                 y_off = self.row_decoder_inst[0].by()
             y_off -= (self.bank_select.height + drc["well_to_well"])
             self.bank_select_pos = vector(x_off,y_off)
-            self.place_inst(name=self.bank_select_inst[k].name,
-                            offset=self.bank_select_pos)
+            self.bank_select_inst[k].place(self.bank_select_pos)
 
         
     def route_vdd_gnd(self):

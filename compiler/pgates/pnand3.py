@@ -154,29 +154,23 @@ class pnand3(pgate.pgate):
 
         pmos1_pos = vector(self.pmos.active_offset.x,
                            self.height - self.pmos.active_height - self.top_bottom_space)
-        self.pmos1_inst=self.place_inst(name="pnand3_pmos1",
-                                        offset=pmos1_pos)
+        self.pmos1_inst.place(pmos1_pos)
 
         pmos2_pos = pmos1_pos + self.overlap_offset
-        self.pmos2_inst = self.place_inst(name="pnand3_pmos2",
-                                          offset=pmos2_pos)
+        self.pmos2_inst.place(pmos2_pos)
 
         self.pmos3_pos = pmos2_pos + self.overlap_offset
-        self.pmos3_inst = self.place_inst(name="pnand3_pmos3",
-                                          offset=self.pmos3_pos)
+        self.pmos3_inst.place(self.pmos3_pos)
         
         
         nmos1_pos = vector(self.pmos.active_offset.x, self.top_bottom_space)
-        self.nmos1_inst=self.place_inst(name="pnand3_nmos1",
-                                        offset=nmos1_pos)
+        self.nmos1_inst.place(nmos1_pos)
 
         nmos2_pos = nmos1_pos + self.overlap_offset
-        self.nmos2_inst=self.place_inst(name="pnand3_nmos2",
-                                        offset=nmos2_pos)
+        self.nmos2_inst.place(nmos2_pos)
         
         self.nmos3_pos = nmos2_pos + self.overlap_offset
-        self.nmos3_inst=self.place_inst(name="pnand3_nmos3",
-                                        offset=self.nmos3_pos)
+        self.nmos3_inst.place(self.nmos3_pos)
         
         # This should be placed at the top of the NMOS well
         self.well_pos = vector(0,self.nmos1_inst.uy())

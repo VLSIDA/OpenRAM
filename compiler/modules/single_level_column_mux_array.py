@@ -87,8 +87,7 @@ class single_level_column_mux_array(design.design):
         for col_num in range(self.columns):
             name = "XMUX{0}".format(col_num)
             x_off = vector(col_num * self.mux.width, self.route_height)
-            self.place_inst(name=name,
-                            offset=x_off)
+            self.mux_inst[col_num].place(x_off)
             
 
     def add_layout_pins(self):

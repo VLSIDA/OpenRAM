@@ -129,10 +129,6 @@ class wordline_driver(design.design):
 
         
         for row in range(self.rows):
-            name_inv1 = "wl_driver_inv_en{}".format(row)
-            name_nand = "wl_driver_nand{}".format(row)
-            name_inv2 = "wl_driver_inv{}".format(row)
-
             if (row % 2):
                 y_offset = self.inv.height*(row + 1)
                 inst_mirror = "MX"
@@ -145,17 +141,14 @@ class wordline_driver(design.design):
             inv2_offset=[inv2_xoffset, y_offset]
             
             # add inv1 based on the info above
-            self.place_inst(name=name_inv1,
-                            offset=inv1_offset,
-                            mirror=inst_mirror)
+            self.inv1_inst[row].place(offset=inv1_offset,
+                                      mirror=inst_mirror)
             # add nand 2
-            self.place_inst(name=name_nand,
-                            offset=nand2_offset,
-                            mirror=inst_mirror)
+            self.nand_inst[row].place(offset=nand2_offset,
+                                      mirror=inst_mirror)
             # add inv2
-            self.place_inst(name=name_inv2,
-                            offset=inv2_offset,
-                            mirror=inst_mirror)
+            self.inv2_inst[row].place(offset=inv2_offset,
+                                      mirror=inst_mirror)
 
 
     def route_layout(self):

@@ -1,59 +1,15 @@
 """
 This is a DRC/LVS/PEX interface file for magic + netgen. 
 
-This assumes you have the SCMOS magic rules installed. Get these from:
-ftp://ftp.mosis.edu/pub/sondeen/magic/new/beta/current.tar.gz
-and install them in:
-cd /opt/local/lib/magic/sys
-tar zxvf current.tar.gz
-ln -s 2001a current
+We include the tech file for SCN3ME_SUBM in the tech directory,
+that is included in OpenRAM during DRC. 
+You can use this interactively by appending the magic system path in 
+your .magicrc file
+path sys /Users/mrg/openram/technology/scn3me_subm/tech
 
-1. magic can perform drc with the following:
-#!/bin/sh
-magic -dnull -noconsole << EOF
-tech load SCN3ME_SUBM.30
-#scalegrid 1 2
-gds rescale no
-gds polygon subcell true
-gds warning default
-gds read $1
-load $1
-writeall force
-drc count
-drc why
-quit -noprompt
-EOF
-
-2. magic can perform extraction with the following:
-#!/bin/sh
-rm -f $1.ext
-rm -f $1.spice
-magic -dnull -noconsole << EOF
-tech load SCN3ME_SUBM.30
-#scalegrid 1 2
-gds rescale no
-gds polygon subcell true
-gds warning default
-gds read $1
-extract
-ext2spice scale off
-ext2spice
-quit -noprompt
-EOF
-
-3. netgen can perform LVS with:
-#!/bin/sh
-netgen -noconsole <<EOF
-readnet spice $1.spice
-readnet spice $1.sp
-ignore class c
-equate class {$1.spice nfet} {$2.sp n}
-equate class {$1.spice pfet} {$2.sp p}
-permute default
-compare hierarchical $1.spice {$1.sp $1}
-run converge
-EOF
-
+We require the version 30 Magic rules which allow via stacking.
+We obtained this file from Qflow ( http://opencircuitdesign.com/qflow/index.html )
+and include its appropriate license.
 """
 
 
@@ -300,6 +256,25 @@ def run_pex(name, gds_name, sp_name, output=None):
         run_drc(name, gds_name)
         run_lvs(name, gds_name, sp_name)
 
+        """
+        2. magic can perform extraction with the following:
+        #!/bin/sh
+        rm -f $1.ext
+        rm -f $1.spice
+        magic -dnull -noconsole << EOF
+        tech load SCN3ME_SUBM.30
+        #scalegrid 1 2
+        gds rescale no
+        gds polygon subcell true
+        gds warning default
+        gds read $1
+        extract
+        ext2spice scale off
+        ext2spice
+        quit -noprompt
+        EOF
+        """
+        
     pex_rules = drc["xrc_rules"]
     pex_runset = {
         'pexRulesFile': pex_rules,

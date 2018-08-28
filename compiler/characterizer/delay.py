@@ -74,6 +74,7 @@ class delay():
         self.sf.write("\n* Instantiation of the SRAM\n")
         self.stim.inst_sram(abits=self.addr_size, 
                             dbits=self.word_size, 
+                            port_names=(self.readwrite_ports,self.read_ports,self.write_ports),
                             sram_name=self.name)
 
         self.sf.write("\n* SRAM output loads\n")

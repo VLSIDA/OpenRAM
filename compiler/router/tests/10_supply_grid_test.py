@@ -38,7 +38,7 @@ class no_blockages_test(openram_test):
                 self.connect_inst([])
                 
                 r=router(gds_file)
-                layer_stack =("metal3","via1","metal2")
+                layer_stack =("metal3","via2","metal2")
                 self.assertTrue(r.route(self,layer_stack))
 
         r=routing("10_supply_grid_test_{0}".format(OPTS.tech_name))

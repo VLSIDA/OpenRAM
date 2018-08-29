@@ -37,7 +37,8 @@ class hierarchical_decoder(design.design):
         (self.no_of_pre2x4,self.no_of_pre3x8)=self.determine_predecodes(self.num_inputs)
 
         self.create_netlist()
-        self.create_layout()
+        if not OPTS.netlist_only:
+            self.create_layout()
 
 
     def create_netlist(self):
@@ -302,8 +303,7 @@ class hierarchical_decoder(design.design):
         else:
             base= vector(-self.pre2_4.width, num * self.pre2_4.height)
 
-        self.place_inst(name="pre[{0}]".format(num),
-                        offset=base)
+        self.pre2x4_inst[num].place(base)
 
         
     def place_pre3x8(self,num):
@@ -315,8 +315,7 @@ class hierarchical_decoder(design.design):
             height = self.no_of_pre2x4*self.pre2_4.height + num*self.pre3_8.height
             offset = vector(-self.pre3_8.width, height)
 
-        self.place_inst(name="pre3x8[{0}]".format(num), 
-                        offset=offset)
+        self.pre3x8_inst[num].place(offset)
 
 
     def create_row_decoder(self):
@@ -396,7 +395,6 @@ class hierarchical_decoder(design.design):
             x_off = self.internal_routing_width + self.nand3.width
 
         for row in range(self.rows):
-            name = self.INV_FORMAT.format(row)
             if (row % 2 == 0):
                 inv_row_height = self.inv.height * row
                 mirror = "R0"
@@ -407,9 +405,8 @@ class hierarchical_decoder(design.design):
                 y_dir = -1
             y_off = inv_row_height
             offset = vector(x_off,y_off)
-            self.place_inst(name=name,
-                            offset=offset,
-                            mirror=mirror)
+            self.inv_inst[row].place(offset=offset,
+                                     mirror=mirror)
 
     def place_row_decoder(self):
         """ 
@@ -448,9 +445,8 @@ class hierarchical_decoder(design.design):
                 y_dir = -1
                 mirror = "MX"
 
-            self.place_inst(name=name,
-                            offset=[self.internal_routing_width, y_off],
-                            mirror=mirror)
+            self.nand_inst[row].place(offset=[self.internal_routing_width, y_off],
+                                      mirror=mirror)
 
             
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 """
 Run regresion tests on a parameterized bitcell
 """
@@ -13,9 +13,7 @@ import debug
 
 OPTS = globals.OPTS
 
-#@unittest.skip("SKIPPING 04_pbitcell_test")
-
-
+@unittest.skip("SKIPPING 04_pbitcell_test")
 class pbitcell_test(openram_test):
 
     def runTest(self):

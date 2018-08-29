@@ -57,6 +57,9 @@ class geometry:
     def compute_boundary(self,offset=vector(0,0),mirror="",rotate=0):
         """ Transform with offset, mirror and rotation to get the absolute pin location. 
         We must then re-find the ll and ur. The master is the cell instance. """
+        if OPTS.netlist_only:
+            return
+        
         (ll,ur) = [vector(0,0),vector(self.width,self.height)]
         if mirror=="MX":
             ll=ll.scale(1,-1)
@@ -192,6 +195,14 @@ class instance(geometry):
                               mirror=self.mirror,
                               rotate=self.rotate)
 
+    def place(self, offset, mirror="R0", rotate=0):
+        """ This updates the placement of an instance. """
+        debug.info(3, "placing instance {}".format(self.name))
+        # Update the placement of an already added instance
+        self.offset = vector(offset)
+        self.mirror = mirror
+        self.rotate = rotate
+        self.update_boundary()
         
     
     def get_pin(self,name,index=-1):

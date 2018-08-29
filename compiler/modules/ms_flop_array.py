@@ -20,27 +20,31 @@ class ms_flop_array(design.design):
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(self.name))
 
+        self.words_per_row = int(self.columns / self.word_size)
+
+        self.create_netlist()
+        if not OPTS.netlist_only:
+            self.create_layout()
+
+    def create_netlist(self):
+        self.add_modules()
+        self.add_pins()
+        self.create_ms_flop_array()
+
+    def create_layout(self):
+        self.width = self.columns * self.ms.width
+        self.height = self.ms.height
+
+        self.place_ms_flop_array()
+        self.add_layout_pins()
+        self.DRC_LVS()
+
+    def add_modules(self):
         from importlib import reload
         c = reload(__import__(OPTS.ms_flop))
         self.mod_ms_flop = getattr(c, OPTS.ms_flop)
         self.ms = self.mod_ms_flop("ms_flop")
         self.add_mod(self.ms)
-
-        self.width = self.columns * self.ms.width
-        self.height = self.ms.height
-        self.words_per_row = int(self.columns / self.word_size)
-
-        self.create_netlist()
-        self.create_layout()
-
-    def create_netlist(self):
-        self.add_pins()
-        self.create_ms_flop_array()
-
-    def create_layout(self):
-        self.place_ms_flop_array()
-        self.add_layout_pins()
-        self.DRC_LVS()
         
     def add_pins(self):
         for i in range(self.word_size):
@@ -67,16 +71,15 @@ class ms_flop_array(design.design):
 
     def place_ms_flop_array(self):
         for i in range(0,self.columns,self.words_per_row):
-            name = "Xdff{0}".format(i)
+            index = int(i/self.words_per_row)
             if (i % 2 == 0 or self.words_per_row>1):
                 base = vector(i*self.ms.width,0)
                 mirror = "R0"
             else:
                 base = vector((i+1)*self.ms.width,0)
                 mirror = "MY"
-            self.place_inst(name=name,
-                            offset=base, 
-                            mirror=mirror)
+            self.ms_inst[index].place(offset=base, 
+                                      mirror=mirror)
             
     def add_layout_pins(self):
         

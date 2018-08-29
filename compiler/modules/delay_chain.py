@@ -24,14 +24,23 @@ class delay_chain(design.design):
         # number of inverters including any fanout loads.
         self.fanout_list = fanout_list
         
-        from importlib import reload
-        c = reload(__import__(OPTS.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.bitcell)
-        self.bitcell = self.mod_bitcell()
+        self.create_netlist()
+        if not OPTS.netlist_only:
+            self.create_layout()
+                
 
+    def create_netlist(self):
+        self.add_modules()
         self.add_pins()
-        self.create_module()
-        self.add_inverters()
+        self.create_inverters()
+        
+    def create_layout(self):
+        # Each stage is a a row
+        self.height = len(self.fanout_list)*self.inv.height
+        # The width is determined by the largest fanout plus the driver
+        self.width = (max(self.fanout_list)+1) * self.inv.width
+
+        self.place_inverters()
         self.route_inverters()
         self.add_layout_pins()
         self.DRC_LVS()
@@ -43,39 +52,26 @@ class delay_chain(design.design):
         self.add_pin("vdd")
         self.add_pin("gnd")
 
-    def create_module(self):
-        """ Add the inverter logical module """
+    def add_modules(self):
+        from importlib import reload
+        c = reload(__import__(OPTS.bitcell))
+        self.mod_bitcell = getattr(c, OPTS.bitcell)
+        self.bitcell = self.mod_bitcell()
 
         self.inv = pinv(route_output=False)
         self.add_mod(self.inv)
 
-        # Each stage is a a row
-        self.height = len(self.fanout_list)*self.inv.height
-        # The width is determined by the largest fanout plus the driver
-        self.width = (max(self.fanout_list)+1) * self.inv.width
-
-
-    def add_inverters(self):
-        """ Add the inverters and connect them based on the stage list """
+    def create_inverters(self):
+        """ Create the inverters and connect them based on the stage list """
         self.driver_inst_list = []
         self.rightest_load_inst = {}
         self.load_inst_map = {}
         for stage_num,fanout_size in zip(range(len(self.fanout_list)),self.fanout_list):
-            if stage_num % 2:
-                inv_mirror = "MX"
-                inv_offset = vector(0, (stage_num+1)* self.inv.height)
-            else:
-                inv_mirror = "R0"
-                inv_offset = vector(0, stage_num * self.inv.height)                
-                
             # Add the inverter
             cur_driver=self.add_inst(name="dinv{}".format(stage_num),
-                                  mod=self.inv,
-                                  offset=inv_offset,
-                                  mirror=inv_mirror)
+                                     mod=self.inv)
             # keep track of the inverter instances so we can use them to get the pins
             self.driver_inst_list.append(cur_driver)
-
 
             # Hook up the driver
             if stage_num+1==len(self.fanout_list):
@@ -91,11 +87,8 @@ class delay_chain(design.design):
             # Now add the dummy loads to the right
             self.load_inst_map[cur_driver]=[]
             for i in range(fanout_size):
-                inv_offset += vector(self.inv.width,0)
                 cur_load=self.add_inst(name="dload_{0}_{1}".format(stage_num,i),
-                                      mod=self.inv,
-                                      offset=inv_offset,
-                                      mirror=inv_mirror)
+                                      mod=self.inv)
                 # Fanout stage is always driven by driver and output is disconnected
                 disconnect_name = "n_{0}_{1}".format(stage_num,i)  
                 self.connect_inst([stageout_name, disconnect_name, "vdd", "gnd"])
@@ -105,6 +98,29 @@ class delay_chain(design.design):
             else:
                 # Keep track of the last one so we can add the the wire later
                 self.rightest_load_inst[cur_driver]=cur_load
+
+    def place_inverters(self):
+        """ Place the inverters and connect them based on the stage list """
+        for stage_num,fanout_size in zip(range(len(self.fanout_list)),self.fanout_list):
+            if stage_num % 2:
+                inv_mirror = "MX"
+                inv_offset = vector(0, (stage_num+1)* self.inv.height)
+            else:
+                inv_mirror = "R0"
+                inv_offset = vector(0, stage_num * self.inv.height)                
+                
+            # Add the inverter
+            cur_driver=self.driver_inst_list[stage_num]
+            cur_driver.place(offset=inv_offset,
+                             mirror=inv_mirror)
+            
+            # Now add the dummy loads to the right
+            load_list = self.load_inst_map[cur_driver]
+            for i in range(fanout_size):
+                inv_offset += vector(self.inv.width,0)
+                load_list[i].place(offset=inv_offset,
+                                   mirror=inv_mirror)
+            
                 
     def add_route(self, pin1, pin2):
         """ This guarantees that we route from the top to bottom row correctly. """

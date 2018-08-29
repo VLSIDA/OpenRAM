@@ -15,21 +15,27 @@ class write_driver_array(design.design):
         design.design.__init__(self, "write_driver_array")
         debug.info(1, "Creating {0}".format(self.name))
 
-        from importlib import reload
-        c = reload(__import__(OPTS.write_driver))
-        self.mod_write_driver = getattr(c, OPTS.write_driver)
-        self.driver = self.mod_write_driver("write_driver")
-        self.add_mod(self.driver)
-
         self.columns = columns
         self.word_size = word_size
         self.words_per_row = int(columns / word_size)
 
-        self.width = self.columns * self.driver.width
-        self.height = self.height = self.driver.height
-        
         self.create_netlist()
-        self.create_layout()
+        if not OPTS.netlist_only:
+            self.create_layout()
+
+
+    def create_netlist(self):
+        self.add_modules()
+        self.add_pins()
+        self.create_write_array()
+        
+    def create_layout(self):
+        self.width = self.columns * self.driver.width
+        self.height = self.driver.height
+        
+        self.place_write_array()
+        self.add_layout_pins()
+        self.DRC_LVS()
 
     def add_pins(self):
         for i in range(self.word_size):
@@ -41,14 +47,12 @@ class write_driver_array(design.design):
         self.add_pin("vdd")
         self.add_pin("gnd")
 
-    def create_netlist(self):
-        self.add_pins()
-        self.create_write_array()
-        
-    def create_layout(self):
-        self.place_write_array()
-        self.add_layout_pins()
-        self.DRC_LVS()
+    def add_modules(self):
+        from importlib import reload
+        c = reload(__import__(OPTS.write_driver))
+        self.mod_write_driver = getattr(c, OPTS.write_driver)
+        self.driver = self.mod_write_driver("write_driver")
+        self.add_mod(self.driver)
 
     def create_write_array(self):
         self.driver_insts = {}
@@ -66,11 +70,9 @@ class write_driver_array(design.design):
 
     def place_write_array(self):
         for i in range(0,self.columns,self.words_per_row):
-            name = "Xwrite_driver{}".format(i)
+            index = int(i/self.words_per_row)            
             base = vector(i * self.driver.width,0)
-            
-            self.place_inst(name=name,
-                          offset=base)
+            self.driver_insts[index].place(base)
 
             
     def add_layout_pins(self):

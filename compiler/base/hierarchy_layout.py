@@ -5,6 +5,7 @@ import debug
 from tech import drc, GDS
 from tech import layer as techlayer
 import os
+from globals import OPTS
 from vector import vector
 from pin_layout import pin_layout
 import lef
@@ -118,17 +119,6 @@ class layout(lef.lef):
             for pin in pin_list:
                 pin.rect = [pin.ll() - offset, pin.ur() - offset]
             
-    def place_inst(self, name, offset, mirror="R0", rotate=0):
-        """ This updates the placement of an instance. """
-        inst = self.get_inst(name)
-        debug.info(3, "placing instance {}".format(inst))
-        # Update the placement of an already added instance
-        inst.offset = offset
-        inst.mirror = mirror
-        inst.rotate = rotate
-        inst.update_boundary()
-        return inst
-
     def add_inst(self, name, mod, offset=[0,0], mirror="R0",rotate=0):
         """Adds an instance of a mod to this module"""
         self.insts.append(geometry.instance(name, mod, offset, mirror, rotate))
@@ -436,6 +426,10 @@ class layout(lef.lef):
     def gds_read(self):
         """Reads a GDSII file in the library and checks if it exists
            Otherwise, start a new layout for dynamic generation."""
+        if OPTS.netlist_only:
+            self.gds = None
+            return
+        
         # open the gds file if it exists or else create a blank layout
         if os.path.isfile(self.gds_file):
             debug.info(3, "opening %s" % self.gds_file)

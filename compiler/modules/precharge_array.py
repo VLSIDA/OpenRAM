@@ -3,7 +3,7 @@ import debug
 from tech import drc
 from vector import vector
 from precharge import precharge
-
+from globals import OPTS
 
 class precharge_array(design.design):
     """
@@ -20,15 +20,13 @@ class precharge_array(design.design):
         debug.info(1, "Creating {0}".format(self.name))
 
         self.columns = columns
-
-        self.pc_cell = precharge(name="precharge", size=size, bitcell_bl=bitcell_bl, bitcell_br=bitcell_br)
-        self.add_mod(self.pc_cell)
-
-        self.width = self.columns * self.pc_cell.width
-        self.height = self.pc_cell.height
+        self.size = size
+        self.bitcell_bl = bitcell_bl
+        self.bitcell_br = bitcell_br
 
         self.create_netlist()
-        self.create_layout()
+        if not OPTS.netlist_only:
+            self.create_layout()
 
     def add_pins(self):
         """Adds pins for spice file"""
@@ -39,15 +37,26 @@ class precharge_array(design.design):
         self.add_pin("vdd")
 
     def create_netlist(self):
+        self.add_modules()
         self.add_pins()
         self.create_insts()
         
     def create_layout(self):
+        self.width = self.columns * self.pc_cell.width
+        self.height = self.pc_cell.height
+
         self.place_insts()
         self.add_layout_pins()
         self.DRC_LVS()
-        
 
+    def add_modules(self):
+        self.pc_cell = precharge(name="precharge",
+                                 size=self.size,
+                                 bitcell_bl=self.bitcell_bl,
+                                 bitcell_br=self.bitcell_br)
+        self.add_mod(self.pc_cell)
+
+        
     def add_layout_pins(self):
 
         self.add_layout_pin(text="en",
@@ -91,7 +100,5 @@ class precharge_array(design.design):
     def place_insts(self):
         """ Places precharge array by horizontally tiling the precharge cell"""
         for i in range(self.columns):
-            name = "pre_column_{0}".format(i)
             offset = vector(self.pc_cell.width * i, 0)
-            inst = self.place_inst(name=name,
-                                   offset=offset)                                   
+            self.local_insts[i].place(offset)                                   

@@ -7,7 +7,6 @@ process_corners = ["TT"]
 supply_voltages = [ 5.0 ]
 temperatures = [ 25 ]
 
-
 output_path = "temp"
-output_name = "sram_2_16_1_scn3me_subm"
+output_name = "sram_{0}_{1}_{2}_{3}".format(word_size,num_words,num_banks,tech_name)
 

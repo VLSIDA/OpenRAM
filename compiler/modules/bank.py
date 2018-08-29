@@ -22,17 +22,6 @@ class bank(design.design):
 
     def __init__(self, word_size, num_words, words_per_row, num_banks=1, name=""):
 
-        mod_list = ["bitcell", "decoder", "ms_flop_array", "wordline_driver",
-                    "bitcell_array",   "sense_amp_array",    "precharge_array",
-                    "column_mux_array", "write_driver_array", 
-                    "dff", "bank_select"]
-        from importlib import reload
-        for mod_name in mod_list:
-            config_mod_name = getattr(OPTS, mod_name)
-            class_file = reload(__import__(config_mod_name))
-            mod_class = getattr(class_file , config_mod_name)
-            setattr (self, "mod_"+mod_name, mod_class)
-
         if name == "":
             name = "bank_{0}_{1}".format(word_size, num_words)
         design.design.__init__(self, name)
@@ -56,7 +45,8 @@ class bank(design.design):
             self.prefix=""
 
         self.create_netlist()
-        self.create_layout()
+        if not OPTS.netlist_only:
+            self.create_layout()
 
 
     def create_netlist(self):
@@ -205,6 +195,19 @@ class bank(design.design):
 
     def add_modules(self):
         """ Create all the modules using the class loader """
+        
+        mod_list = ["bitcell", "decoder", "ms_flop_array", "wordline_driver",
+                    "bitcell_array",   "sense_amp_array",    "precharge_array",
+                    "column_mux_array", "write_driver_array", 
+                    "dff", "bank_select"]
+        from importlib import reload
+        for mod_name in mod_list:
+            config_mod_name = getattr(OPTS, mod_name)
+            class_file = reload(__import__(config_mod_name))
+            mod_class = getattr(class_file , config_mod_name)
+            setattr (self, "mod_"+mod_name, mod_class)
+
+        
         self.bitcell = self.mod_bitcell()
         
         self.bitcell_array = self.mod_bitcell_array(cols=self.num_cols,
@@ -277,8 +280,7 @@ class bank(design.design):
 
     def place_bitcell_array(self):
         """ Placing Bitcell Array """
-        self.place_inst(name="bitcell_array", 
-                        offset=vector(0,0))
+        self.bitcell_array_inst.place(vector(0,0))
 
         
     def create_precharge_array(self):
@@ -303,8 +305,7 @@ class bank(design.design):
             # The wells must be far enough apart
             # The enclosure is for the well and the spacing is to the bitcell wells
             y_offset = self.bitcell_array.height + self.m2_gap
-            self.place_inst(name=self.precharge_array_inst[k].name,
-                            offset=vector(0,y_offset))
+            self.precharge_array_inst[k].place(vector(0,y_offset))
             
     def create_column_mux_array(self):
         """ Creating Column Mux when words_per_row > 1 . """
@@ -338,8 +339,7 @@ class bank(design.design):
 
         for k in range(self.total_ports):
             y_offset = self.column_mux_height 
-            self.place_inst(name=self.col_mux_array_inst[k].name,
-                            offset=vector(0,y_offset).scale(-1,-1))
+            self.col_mux_array_inst[k].place(vector(0,y_offset).scale(-1,-1))
             
     def create_sense_amp_array(self):
         """ Creating Sense amp  """
@@ -368,8 +368,7 @@ class bank(design.design):
         # FIXME: place for multiport
         for k in range(self.total_read):
             y_offset = self.column_mux_height + self.sense_amp_array.height + self.m2_gap
-            self.place_inst(name=self.sense_amp_array_inst[k].name,
-                            offset=vector(0,y_offset).scale(-1,-1))
+            self.sense_amp_array_inst[k].place(vector(0,y_offset).scale(-1,-1))
             
     def create_write_driver_array(self):
         """ Creating Write Driver  """
@@ -399,8 +398,7 @@ class bank(design.design):
         for k in range(self.total_write):
             y_offset = self.sense_amp_array.height + self.column_mux_height \
                 + self.m2_gap + self.write_driver_array.height 
-            self.place_inst(name=self.write_driver_array_inst[k].name, 
-                            offset=vector(0,y_offset).scale(-1,-1))
+            self.write_driver_array_inst[k].place(vector(0,y_offset).scale(-1,-1))
 
             
 
@@ -432,8 +430,7 @@ class bank(design.design):
         # FIXME: place for multiport
         for k in range(self.total_ports):
             x_offset = -(self.row_decoder.width + self.central_bus_width + self.wordline_driver.width)
-            self.place_inst(name=self.row_decoder_inst[k].name, 
-                            offset=vector(x_offset,0))
+            self.row_decoder_inst[k].place(vector(x_offset,0))
 
             
     def create_wordline_driver(self):
@@ -461,8 +458,7 @@ class bank(design.design):
         for k in range(self.total_ports):
             # The wordline driver is placed to the right of the main decoder width.
             x_offset = -(self.central_bus_width + self.wordline_driver.width) + self.m2_pitch
-            self.place_inst(name=self.wordline_driver_inst[k].name, 
-                            offset=vector(x_offset,0))
+            self.wordline_driver_inst[k].place(vector(x_offset,0))
 
         
     def create_column_decoder(self):
@@ -508,8 +504,7 @@ class bank(design.design):
             # Place the col decoder right aligned with row decoder
             x_off = -(self.central_bus_width + self.wordline_driver.width + self.col_decoder.width)
             y_off = -(self.col_decoder.height + 2*drc["well_to_well"])
-            self.place_inst(name=self.col_decoder_inst[k].name, 
-                            offset=vector(x_off,y_off))
+            self.col_decoder_inst[k].place(vector(x_off,y_off))
 
             
     def create_bank_select(self):
@@ -545,8 +540,7 @@ class bank(design.design):
                 y_off = self.row_decoder_inst[0].by()
             y_off -= (self.bank_select.height + drc["well_to_well"])
             self.bank_select_pos = vector(x_off,y_off)
-            self.place_inst(name=self.bank_select_inst[k].name,
-                            offset=self.bank_select_pos)
+            self.bank_select_inst[k].place(self.bank_select_pos)
 
         
     def route_vdd_gnd(self):
@@ -580,23 +574,25 @@ class bank(design.design):
         
     def route_bank_select(self):
         """ Route the bank select logic. """
-        for input_name in self.input_control_signals+["bank_sel"]:
-            self.copy_layout_pin(self.bank_select_inst, input_name)
+        
+        for k in range(self.total_ports):
+            for input_name in self.input_control_signals+["bank_sel"]:
+                self.copy_layout_pin(self.bank_select_inst[k], input_name)
 
-        for gated_name in self.control_signals:
-            # Connect the inverter output to the central bus
-            out_pos = self.bank_select_inst[0].get_pin(gated_name).rc()
-            bus_pos = vector(self.bus_xoffset[gated_name].x, out_pos.y)
-            self.add_path("metal3",[out_pos, bus_pos])
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
-                                offset=bus_pos,
-                                rotate=90)
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=out_pos,
-                                rotate=90)
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
-                                offset=out_pos,
-                                rotate=90)
+            for gated_name in self.control_signals:
+                # Connect the inverter output to the central bus
+                out_pos = self.bank_select_inst[k].get_pin(gated_name).rc()
+                bus_pos = vector(self.bus_xoffset[gated_name].x, out_pos.y)
+                self.add_path("metal3",[out_pos, bus_pos])
+                self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                    offset=bus_pos,
+                                    rotate=90)
+                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                    offset=out_pos,
+                                    rotate=90)
+                self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                    offset=out_pos,
+                                    rotate=90)
         
     
     def setup_routing_constraints(self):

@@ -20,27 +20,30 @@ class dff_array(design.design):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0} rows={1} cols={2}".format(self.name, self.rows, self.columns))
 
+        self.create_netlist()
+        if not OPTS.netlist_only:
+            self.create_layout()
+
+    def create_netlist(self):
+        self.add_modules()
+        self.add_pins()
+        self.create_dff_array()
+        
+    def create_layout(self):
+        self.width = self.columns * self.dff.width
+        self.height = self.rows * self.dff.height
+        
+        self.place_dff_array()
+        self.add_layout_pins()
+        self.DRC_LVS()
+
+    def add_modules(self):
         from importlib import reload
         c = reload(__import__(OPTS.dff))
         self.mod_dff = getattr(c, OPTS.dff)
         self.dff = self.mod_dff("dff")
         self.add_mod(self.dff)
-
-        self.width = self.columns * self.dff.width
-        self.height = self.rows * self.dff.height
-
-        self.create_netlist()
-        self.create_layout()
-
-    def create_netlist(self):
-        self.add_pins()
-        self.create_dff_array()
         
-    def create_layout(self):
-        self.place_dff_array()
-        self.add_layout_pins()
-        self.DRC_LVS()
-
     def add_pins(self):
         for row in range(self.rows):  
             for col in range(self.columns):
@@ -75,9 +78,8 @@ class dff_array(design.design):
                 else:
                     base = vector(col*self.dff.width,(row+1)*self.dff.height)
                     mirror = "MX"
-                self.place_inst(name=name,
-                                offset=base, 
-                                mirror=mirror)
+                self.dff_insts[row,col].place(offset=base, 
+                                              mirror=mirror)
                 
     def get_din_name(self, row, col):
         if self.columns == 1:

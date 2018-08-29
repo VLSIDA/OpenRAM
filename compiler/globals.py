@@ -142,22 +142,31 @@ def init_openram(config_file, is_unit_test=True):
     
 
 
-def get_tool(tool_type, preferences):
+def get_tool(tool_type, preferences, default_name=None):
     """
     Find which tool we have from a list of preferences and return the
-    one selected and its full path.
+    one selected and its full path. If default is specified,
+    find that one only and error otherwise.
     """
     debug.info(2,"Finding {} tool...".format(tool_type))
 
-    for name in preferences:
-        exe_name = find_exe(name)
-        if exe_name != None:
-            debug.info(1, "Using {0}: {1}".format(tool_type,exe_name))
-            return(name,exe_name)
+    if default_name:
+        exe_name=find_exe(default_name)
+        if exe_name == None:
+            debug.error("{0} not found. Cannot find {1} tool.".format(default_name,tool_type),2)
         else:
-            debug.info(1, "Could not find {0}, trying next {1} tool.".format(name,tool_type))
+            debug.info(1, "Using {0}: {1}".format(tool_type,exe_name))
+            return(default_name,exe_name)
     else:
-        return(None,"")
+        for name in preferences:
+            exe_name = find_exe(name)
+            if exe_name != None:
+                debug.info(1, "Using {0}: {1}".format(tool_type,exe_name))
+                return(name,exe_name)
+            else:
+                debug.info(1, "Could not find {0}, trying next {1} tool.".format(name,tool_type))
+        else:
+            return(None,"")
 
     
 def read_config(config_file, is_unit_test=True):
@@ -207,7 +216,6 @@ def read_config(config_file, is_unit_test=True):
     # If we are only generating a netlist, we can't do DRC/LVS
     if OPTS.netlist_only:
         OPTS.check_lvsdrc=False
-    
 
     # If config didn't set output name, make a reasonable default.
     if (OPTS.output_name == ""):

@@ -39,8 +39,8 @@ class pnand3(pgate.pgate):
         self.tx_mults = 1
 
         self.create_netlist()
-        self.create_layout()
-        #self.DRC_LVS()
+        if not OPTS.netlist_only:
+            self.create_layout()
 
         
     def add_pins(self):
@@ -49,21 +49,22 @@ class pnand3(pgate.pgate):
 
     def create_netlist(self):
         self.add_pins()
+        self.add_ptx()
+        self.create_ptx()
         
     def create_layout(self):
         """ Calls all functions related to the generation of the layout """
 
-        self.create_ptx()
         self.setup_layout_constants()
-        self.add_supply_rails()
-        self.add_ptx()
+        self.route_supply_rails()
+        self.place_ptx()
         self.connect_rails()
         self.add_well_contacts()
         self.extend_wells(self.well_pos)
         self.route_inputs()
         self.route_output()
 
-    def create_ptx(self):
+    def add_ptx(self):
         """ Create the PMOS and NMOS transistors. """
         self.nmos = ptx(width=self.nmos_width,
                         mults=self.tx_mults,
@@ -103,7 +104,7 @@ class pnand3(pgate.pgate):
         self.top_bottom_space = max(0.5*self.m1_width + self.m1_space + extra_contact_space, 
                                     drc["poly_extend_active"], self.poly_space)
         
-    def add_supply_rails(self):
+    def route_supply_rails(self):
         """ Add vdd/gnd rails to the top and bottom. """
         self.add_layout_pin_rect_center(text="gnd",
                                         layer="metal1",
@@ -115,50 +116,61 @@ class pnand3(pgate.pgate):
                                         offset=vector(0.5*self.width,self.height),
                                         width=self.width)
 
-    def add_ptx(self):
+    def create_ptx(self):
         """ 
-        Add PMOS and NMOS to the layout at the upper-most and lowest position
+        Create the PMOS and NMOS in the netlist.
+        """
+
+        self.pmos1_inst=self.add_inst(name="pnand3_pmos1",
+                                      mod=self.pmos)
+        self.connect_inst(["vdd", "A", "Z", "vdd"])
+
+        self.pmos2_inst = self.add_inst(name="pnand3_pmos2",
+                                        mod=self.pmos)
+        self.connect_inst(["Z", "B", "vdd", "vdd"])
+
+        self.pmos3_inst = self.add_inst(name="pnand3_pmos3",
+                                        mod=self.pmos)
+        self.connect_inst(["Z", "C", "vdd", "vdd"])
+        
+        self.nmos1_inst=self.add_inst(name="pnand3_nmos1",
+                                      mod=self.nmos)
+        self.connect_inst(["Z", "C", "net1", "gnd"])
+
+        self.nmos2_inst=self.add_inst(name="pnand3_nmos2",
+                                      mod=self.nmos)
+        self.connect_inst(["net1", "B", "net2", "gnd"])
+        
+        self.nmos3_inst=self.add_inst(name="pnand3_nmos3",
+                                      mod=self.nmos)
+        self.connect_inst(["net2", "A", "gnd", "gnd"])
+        
+
+    def place_ptx(self):
+        """ 
+        Place the PMOS and NMOS in the layout at the upper-most and lowest position
         to provide maximum routing in channel
         """
 
         pmos1_pos = vector(self.pmos.active_offset.x,
                            self.height - self.pmos.active_height - self.top_bottom_space)
-        self.pmos1_inst=self.add_inst(name="pnand3_pmos1",
-                                      mod=self.pmos,
-                                      offset=pmos1_pos)
-        self.connect_inst(["vdd", "A", "Z", "vdd"])
+        self.pmos1_inst.place(pmos1_pos)
 
         pmos2_pos = pmos1_pos + self.overlap_offset
-        self.pmos2_inst = self.add_inst(name="pnand3_pmos2",
-                                        mod=self.pmos,
-                                        offset=pmos2_pos)
-        self.connect_inst(["Z", "B", "vdd", "vdd"])
+        self.pmos2_inst.place(pmos2_pos)
 
         self.pmos3_pos = pmos2_pos + self.overlap_offset
-        self.pmos3_inst = self.add_inst(name="pnand3_pmos3",
-                                        mod=self.pmos,
-                                        offset=self.pmos3_pos)
-        self.connect_inst(["Z", "C", "vdd", "vdd"])
+        self.pmos3_inst.place(self.pmos3_pos)
         
         
         nmos1_pos = vector(self.pmos.active_offset.x, self.top_bottom_space)
-        self.nmos1_inst=self.add_inst(name="pnand3_nmos1",
-                                      mod=self.nmos,
-                                      offset=nmos1_pos)
-        self.connect_inst(["Z", "C", "net1", "gnd"])
+        self.nmos1_inst.place(nmos1_pos)
 
         nmos2_pos = nmos1_pos + self.overlap_offset
-        self.nmos2_inst=self.add_inst(name="pnand3_nmos2",
-                                      mod=self.nmos,
-                                      offset=nmos2_pos)
-        self.connect_inst(["net1", "B", "net2", "gnd"])
+        self.nmos2_inst.place(nmos2_pos)
         
-
         self.nmos3_pos = nmos2_pos + self.overlap_offset
-        self.nmos3_inst=self.add_inst(name="pnand3_nmos3",
-                                      mod=self.nmos,
-                                      offset=self.nmos3_pos)
-        self.connect_inst(["net2", "A", "gnd", "gnd"])
+        self.nmos3_inst.place(self.nmos3_pos)
         
         # This should be placed at the top of the NMOS well
         self.well_pos = vector(0,self.nmos1_inst.uy())

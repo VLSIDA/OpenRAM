@@ -24,14 +24,18 @@ class options(optparse.Values):
     check_lvsdrc = True
     # Variable to select the variant of spice
     spice_name = ""
-    # Should we print out the banner at startup
-    print_banner = True
+    # The spice executable being used which is derived from the user PATH.
+    spice_exe = ""
+    # Variable to select the variant of drc, lvs, pex
+    drc_name = ""
+    lvs_name = ""
+    pex_name = ""
     # The DRC/LVS/PEX executable being used which is derived from the user PATH.
     drc_exe = None
     lvs_exe = None
     pex_exe = None
-    # The spice executable being used which is derived from the user PATH.
-    spice_exe = ""
+    # Should we print out the banner at startup
+    print_banner = True
     # Run with extracted parasitics
     use_pex = False
     # Remove noncritical memory cells for characterization speed-up

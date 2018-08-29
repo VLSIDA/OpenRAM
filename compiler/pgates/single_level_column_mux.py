@@ -17,21 +17,19 @@ class single_level_column_mux(design.design):
         design.design.__init__(self, name)
         debug.info(2, "create single column mux cell: {0}".format(name))
 
-        from importlib import reload
-        c = reload(__import__(OPTS.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.bitcell)
-        self.bitcell = self.mod_bitcell()
-        
-        self.ptx_width = tx_size * drc["minwidth_tx"]
+        self.tx_size = tx_size
         
         self.create_netlist()
-        self.create_layout()
+        if not OPTS.netlist_only:
+            self.create_layout()
 
     def create_netlist(self):
-        self.add_pin_list(["bl", "br", "bl_out", "br_out", "sel", "gnd"])
+        self.add_modules()
+        self.add_pins()
         self.add_ptx()
         
     def create_layout(self):
+        
         self.pin_height = 2*self.m2_width
         self.width = self.bitcell.width
         self.height = self.nmos_upper.uy() + self.pin_height
@@ -39,7 +37,23 @@ class single_level_column_mux(design.design):
         self.add_bitline_pins()
         self.connect_bitlines()
         self.add_wells()
+
+    def add_modules(self):
+        from importlib import reload
+        c = reload(__import__(OPTS.bitcell))
+        self.mod_bitcell = getattr(c, OPTS.bitcell)
+        self.bitcell = self.mod_bitcell()
+
+        # Adds nmos_lower,nmos_upper to the module
+        self.ptx_width = self.tx_size * drc["minwidth_tx"]
+        self.nmos = ptx(width=self.ptx_width)
+        self.add_mod(self.nmos)
+
         
+        
+    def add_pins(self):
+        self.add_pin_list(["bl", "br", "bl_out", "br_out", "sel", "gnd"])
+
     def add_bitline_pins(self):
         """ Add the top and bottom pins to this cell """
 
@@ -70,10 +84,6 @@ class single_level_column_mux(design.design):
     def add_ptx(self):
         """ Create the two pass gate NMOS transistors to switch the bitlines"""
         
-        # Adds nmos_lower,nmos_upper to the module
-        self.nmos = ptx(width=self.ptx_width)
-        self.add_mod(self.nmos)
-
         # Space it in the center
         nmos_lower_position = self.nmos.active_offset.scale(0,1) + vector(0.5*self.bitcell.width-0.5*self.nmos.active_width,0)
         self.nmos_lower=self.add_inst(name="mux_tx1",

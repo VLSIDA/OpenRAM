@@ -18,9 +18,29 @@ class bank_select(design.design):
     def __init__(self, name="bank_select"):
         design.design.__init__(self, name)
 
+        self.create_netlist()
+        if not OPTS.netlist_only:
+            self.create_layout()
+
+    def create_netlist(self):
+        self.add_pins()
+        self.add_modules()
+        self.create_modules()
+        
+    def create_layout(self):
+        self.calculate_module_offsets()
+        self.place_modules()
+        self.route_modules()
+
+        self.DRC_LVS()
+
+
+    def add_pins(self):
+        
         # Number of control lines in the bus
         self.num_control_lines = 4
         # The order of the control signals on the control bus:
+        # FIXME: Update for multiport (these names are not right)
         self.input_control_signals = ["clk_buf", "clk_buf_bar", "w_en0", "s_en0"]
         # These will be outputs of the gaters if this is multibank
         self.control_signals = ["gated_"+str for str in self.input_control_signals]
@@ -31,14 +51,7 @@ class bank_select(design.design):
         self.add_pin("vdd","POWER")  
         self.add_pin("gnd","GROUND")  
 
-        self.create_modules()
-        self.calculate_module_offsets()
-        self.add_modules()
-        self.route_modules()
-
-        self.DRC_LVS()
-
-    def create_modules(self):
+    def add_modules(self):
         """ Create modules for later instantiation """
         # 1x Inverter
         self.inv = pinv()
@@ -67,15 +80,10 @@ class bank_select(design.design):
         self.height = self.yoffset_maxpoint + 2*self.m1_pitch
         self.width = self.xoffset_inv + self.inv4x.width
         
-    def add_modules(self):
+    def create_modules(self):
         
-        # bank select inverter
-        self.bank_select_inv_position = vector(self.xoffset_bank_sel_inv, 0)
-
-        # bank select inverter (must be made unique if more than one OR)
         self.bank_sel_inv=self.add_inst(name="bank_sel_inv", 
-                                        mod=self.inv, 
-                                        offset=[self.xoffset_bank_sel_inv, 0])
+                                        mod=self.inv)
         self.connect_inst(["bank_sel", "bank_sel_bar", "vdd", "gnd"])
 
         self.logic_inst = []
@@ -86,6 +94,51 @@ class bank_select(design.design):
             name_nand = "nand_{}".format(input_name)
             name_nor = "nor_{}".format(input_name)
             name_inv = "inv_{}".format(input_name)
+
+            # These require OR (nor2+inv) gates since they are active low.
+            # (writes occur on clk low)
+            if input_name in ("clk_buf"):
+                
+                self.logic_inst.append(self.add_inst(name=name_nor, 
+                                         mod=self.nor2))
+                self.connect_inst([input_name,
+                                   "bank_sel_bar",
+                                   gated_name+"_temp_bar",
+                                   "vdd",
+                                   "gnd"])
+                
+            # the rest are AND (nand2+inv) gates
+            else:
+                self.logic_inst.append(self.add_inst(name=name_nand, 
+                                                     mod=self.nand2))
+                self.connect_inst([input_name,
+                                   "bank_sel",
+                                   gated_name+"_temp_bar",
+                                   "vdd",
+                                   "gnd"])
+
+            # They all get inverters on the output
+            self.inv_inst.append(self.add_inst(name=name_inv, 
+                                               mod=self.inv4x))
+            self.connect_inst([gated_name+"_temp_bar",
+                               gated_name,
+                               "vdd",
+                               "gnd"])
+
+    def place_modules(self):
+        
+        # bank select inverter
+        self.bank_select_inv_position = vector(self.xoffset_bank_sel_inv, 0)
+
+        # bank select inverter (must be made unique if more than one OR)
+        self.bank_sel_inv.place(vector(self.xoffset_bank_sel_inv, 0))
+
+        for i in range(self.num_control_lines):
+
+            logic_inst = self.logic_inst[i]
+            inv_inst = self.inv_inst[i]
+            
+            input_name = self.input_control_signals[i]
 
             y_offset = self.inv.height * i
             if i%2:
@@ -98,40 +151,18 @@ class bank_select(design.design):
             # (writes occur on clk low)
             if input_name in ("clk_buf"):
                 
-                self.logic_inst.append(self.add_inst(name=name_nor, 
-                                         mod=self.nor2, 
-                                         offset=[self.xoffset_nor, y_offset],
-                                         mirror=mirror))
-                self.connect_inst([input_name,
-                                   "bank_sel_bar",
-                                   gated_name+"_temp_bar",
-                                   "vdd",
-                                   "gnd"])
-
+                logic_inst.place(offset=[self.xoffset_nor, y_offset],
+                                 mirror=mirror)
                 
             # the rest are AND (nand2+inv) gates
             else:
-                self.logic_inst.append(self.add_inst(name=name_nand, 
-                                                     mod=self.nand2, 
-                                                     offset=[self.xoffset_nand, y_offset],
-                                                     mirror=mirror))
-                bank_sel_signal = "bank_sel"
-                self.connect_inst([input_name,
-                                   "bank_sel",
-                                   gated_name+"_temp_bar",
-                                   "vdd",
-                                   "gnd"])
+                logic_inst.place(offset=[self.xoffset_nand, y_offset],
+                                 mirror=mirror)
 
             # They all get inverters on the output
-            self.inv_inst.append(self.add_inst(name=name_inv, 
-                                               mod=self.inv4x, 
-                                               offset=[self.xoffset_inv, y_offset],
-                                               mirror=mirror))
-            self.connect_inst([gated_name+"_temp_bar",
-                               gated_name,
-                               "vdd",
-                               "gnd"])
-
+            inv_inst.place(offset=[self.xoffset_inv, y_offset],
+                           mirror=mirror)
+            
 
     def route_modules(self):
         

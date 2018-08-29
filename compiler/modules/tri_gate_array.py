@@ -14,31 +14,34 @@ class tri_gate_array(design.design):
         design.design.__init__(self, "tri_gate_array")
         debug.info(1, "Creating {0}".format(self.name))
 
+        self.columns = columns
+        self.word_size = word_size
+        self.words_per_row = int(self.columns / self.word_size)
+        
+        self.create_netlist()
+        if not OPTS.netlist_only:
+            self.create_layout()
+
+    def create_netlist(self):
+        self.add_modules()
+        self.add_pins()
+        self.create_array()
+        
+    def create_layout(self):
+        self.width = (self.columns / self.words_per_row) * self.tri.width
+        self.height = self.tri.height
+
+        self.place_array()
+        self.add_layout_pins()
+        self.DRC_LVS()
+
+    def add_modules(self):
         from importlib import reload
         c = reload(__import__(OPTS.tri_gate))
         self.mod_tri_gate = getattr(c, OPTS.tri_gate)
         self.tri = self.mod_tri_gate("tri_gate")
         self.add_mod(self.tri)
-
-        self.columns = columns
-        self.word_size = word_size
-
-        self.words_per_row = int(self.columns / self.word_size)
-        self.width = (self.columns / self.words_per_row) * self.tri.width
-        self.height = self.tri.height
         
-        self.create_netlist()
-        self.create_layout()
-
-    def create_netlist(self):
-        self.add_pins()
-        self.create_array()
-        
-    def create_layout(self):
-        self.place_array()
-        self.add_layout_pins()
-        self.DRC_LVS()
-
     def add_pins(self):
         """create the name of pins depend on the word size"""
         for i in range(self.word_size):
@@ -63,10 +66,8 @@ class tri_gate_array(design.design):
     def place_array(self):
         """ Place the tri gate to the array """
         for i in range(0,self.columns,self.words_per_row):
-            name = "Xtri_gate{0}".format(i)
             base = vector(i*self.tri.width, 0)
-            self.place_inst(name=name,
-                            offset=base)
+            self.tri_inst[i].place(base)
             
 
     def add_layout_pins(self):

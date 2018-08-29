@@ -83,7 +83,7 @@ drc["minwidth_poly"] = 0.6
 drc["poly_to_poly"] = 0.9
 # 3.3 Minimum gate extension of active 
 drc["poly_extend_active"] = 0.6
-# ??
+# 5.5.b Minimum spacing between poly contact and other poly (alternative rules)
 drc["poly_to_polycontact"] = 1.2
 # ??
 drc["active_enclosure_gate"] = 0.0

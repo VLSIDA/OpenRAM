@@ -106,6 +106,8 @@ drc["poly_to_active"] = 0.05
 drc["poly_to_field_poly"] = 0.075
 # Not a rule
 drc["minarea_poly"] = 0.0
+# Not a rule
+drc["poly_to_contactpoly"] = 0.075
 
 # ACTIVE.2 Minimum spacing of active
 drc["active_to_body_active"] = 0.08

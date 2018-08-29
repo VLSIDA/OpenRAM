@@ -328,15 +328,17 @@ class VlsiLayout:
                 
             layoutToAddSref.transFlags = [0,0,0]
             if rotate:
-                layoutToAddSref.transFlags = [0,1,0]
+                #layoutToAddSref.transFlags = [0,1,0]
                 layoutToAddSref.rotateAngle = rotate
             if mirror == "x" or mirror == "MX":
                 layoutToAddSref.transFlags = [1,0,0]
             if mirror == "y" or mirror == "MY": #NOTE: "MY" option will override specified rotate angle
-                layoutToAddSref.transFlags = [1,1,0]
+                #layoutToAddSref.transFlags = [1,1,0]
+                layoutToAddSref.transFlags = [1,0,0]
                 layoutToAddSref.rotateAngle = 180.0
             if mirror == "xy" or mirror == "XY": #NOTE: "XY" option will override specified rotate angle
                 layoutToAddSref.transFlags = [0,1,0]
+                layoutToAddSref.transFlags = [0,0,0]
                 layoutToAddSref.rotateAngle = 180.0
 
         #add the sref to the root structure

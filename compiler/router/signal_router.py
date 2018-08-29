@@ -14,11 +14,11 @@ class signal_router(router):
     route on a given layer. This is limited to two layer routes.
     """
 
-    def __init__(self, gds_name):
+    def __init__(self, gds_name=None, module=None):
         """Use the gds file for the blockages with the top module topName and
         layers for the layers to route on
         """
-        router.__init__(self, gds_name)
+        router.__init__(self, gds_name, module)
 
         # all the paths we've routed so far (to supplement the blockages)
         self.paths = []
@@ -43,6 +43,7 @@ class signal_router(router):
         the simplified rectilinear path. Cost factor is how sub-optimal to explore for a feasible route. 
         This is used to speed up the routing when there is not much detouring needed.
         """
+        debug.info(1,"Running signal router from {0} to {1}...".format(src,dest))
         self.cell = cell
         self.source_pin_name = src
         self.target_pin_name = dest

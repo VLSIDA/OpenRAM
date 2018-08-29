@@ -4,7 +4,6 @@
 import unittest
 from testutils import header,openram_test
 import sys,os
-sys.path.append(os.path.join(sys.path[0],"../.."))
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 import debug
@@ -30,14 +29,17 @@ class no_blockages_test(openram_test):
                 design.__init__(self, "top")
 
                 # Instantiate a GDS cell with the design
-                gds_file = "{0}/{1}.gds".format(os.path.dirname(os.path.realpath(__file__)),name)
-                cell = gds_cell(name, gds_file)
+                globals.setup_paths()
+                from control_logic import control_logic
+                cell = control_logic(16)
+                #gds_file = "{0}/{1}.gds".format(os.path.dirname(os.path.realpath(__file__)),"control_logic")
+                #cell = gds_cell(name, gds_file)
                 self.add_inst(name=name,
                               mod=cell,
                               offset=[0,0])
-                self.connect_inst([])
+                self.connect_inst(["csb","web","clk","s_en","w_en","clk_buf_bar","clk_buf","vdd","gnd"])
                 
-                r=router(gds_file)
+                r=router(module=cell)
                 layer_stack =("metal3","via2","metal2")
                 self.assertTrue(r.route(self,layer_stack))
 

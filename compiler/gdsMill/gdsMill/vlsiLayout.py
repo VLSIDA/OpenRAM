@@ -70,7 +70,7 @@ class VlsiLayout:
         for coordinate in coordinatesToRotate:
             newX = coordinate[0]*math.cos(angle) - coordinate[1]*math.sin(angle)
             newY = coordinate[0]*math.sin(angle) + coordinate[1]*math.cos(angle)
-            coordinatesRotate += [(newX,newY)]       
+            coordinatesRotate.extend((newX,newY))
         return coordinatesRotate
     
     def rename(self,newName):
@@ -141,7 +141,7 @@ class VlsiLayout:
         contained by any other structure. this is the root."""
         structureNames=[]
         for name in self.structures:
-            structureNames+=[name]
+            structureNames.append(name)
             
         for name in self.structures:
             if(len(self.structures[name].srefs)>0): #does this structure reference any others?
@@ -162,7 +162,8 @@ class VlsiLayout:
         if(rotateAngle == None or rotateAngle == ""):
             angle = 0
         else:
-            angle = math.radians(float(rotateAngle))
+            # MRG: Added negative to make CCW rotate 8/29/18
+            angle = math.radians(-1.0*float(rotateAngle))
         mRotate = matrix([[math.cos(angle),-math.sin(angle),0.0],
                           [math.sin(angle),math.cos(angle),0.0],
                           [0.0,0.0,1.0]])
@@ -180,7 +181,7 @@ class VlsiLayout:
         
         #we need to keep track of all transforms in the hierarchy
         #when we add an element to the xy tree, we apply all transforms from the bottom up
-        transformPath += [(mRotate,mScale,mTranslate)]
+        transformPath.append((mRotate,mScale,mTranslate))
         if delegateFunction != None:
             delegateFunction(startingStructureName, transformPath)
         #starting with a particular structure, we will recursively traverse the tree
@@ -226,8 +227,10 @@ class VlsiLayout:
                 vVector = transform[1] * vVector  #scale
                 origin = transform[2] * origin  #translate
                 #we don't need to do a translation on the basis vectors            
-            self.xyTree+=[(startingStructureName,origin,uVector,vVector)]  #populate the xyTree with each
-                                                                            #structureName and coordinate space
+                #uVector = transform[2] * uVector  #translate
+                #vVector = transform[2] * vVector  #translate
+            #populate the xyTree with each structureName and coordinate space                
+            self.xyTree.append((startingStructureName,origin,uVector,vVector))
         self.traverseTheHierarchy(delegateFunction = addToXyTree)
         
     def microns(self,userUnits):
@@ -303,7 +306,7 @@ class VlsiLayout:
             #also combine the "layers in use" list
             for layerNumber in layoutToAdd.layerNumbersInUse:
                 if layerNumber not in self.layerNumbersInUse:
-                    self.layerNumbersInUse += [layerNumber]
+                    self.layerNumbersInUse.append(layerNumber)
 
     #   if debug: print("DEBUG: vlsilayout: Using %d layers")
 
@@ -314,7 +317,9 @@ class VlsiLayout:
         layoutToAddSref.coordinates = offsetInLayoutUnits
 
         if mirror or rotate:
-            # transFlags = (mirror around x-axis, magnification, rotation)
+            # This is NOT the same as the order in the GDS spec!
+            # It gets written out in gds2writer in the right order though.
+            # transFlags = (mirror around x-axis, rotation, magnification)
             # If magnification or rotation is true, it is the flags are then
             # followed by an amount in the record
             if mirror=="R90":
@@ -326,19 +331,20 @@ class VlsiLayout:
                 
             layoutToAddSref.transFlags = [0,0,0]
             if rotate:
-                layoutToAddSref.transFlags = [0,0,1]
+                layoutToAddSref.transFlags = [0,1,0]
                 layoutToAddSref.rotateAngle = rotate
             if mirror == "x" or mirror == "MX":
                 layoutToAddSref.transFlags = [1,0,0]
             if mirror == "y" or mirror == "MY": #NOTE: "MY" option will override specified rotate angle
-                layoutToAddSref.transFlags = [1,0,1]
+                layoutToAddSref.transFlags = [1,1,0]
+                #layoutToAddSref.transFlags = [1,0,0]
                 layoutToAddSref.rotateAngle = 180.0
             if mirror == "xy" or mirror == "XY": #NOTE: "XY" option will override specified rotate angle
-                layoutToAddSref.transFlags = [0,0,1]
+                layoutToAddSref.transFlags = [0,1,0]
                 layoutToAddSref.rotateAngle = 180.0
 
         #add the sref to the root structure
-        self.structures[self.rootStructureName].srefs+=[layoutToAddSref]        
+        self.structures[self.rootStructureName].srefs.append(layoutToAddSref)
         
     def addBox(self,layerNumber=0, purposeNumber=None, offsetInMicrons=(0,0), width=1.0, height=1.0,center=False):
         """
@@ -356,11 +362,7 @@ class VlsiLayout:
                          (offsetInLayoutUnits[0],offsetInLayoutUnits[1]+heightInLayoutUnits),
                          offsetInLayoutUnits]
         else:
-            
-            #is there where gdsmill is halving the coordinates???
-            #if you printGDS of temp.gds, the header says 1 user unit = .0005 database units.  By default user units = .001. 
-            #something to do with the ieeedouble in gdswriter.py???? 
-            startPoint = (offsetInLayoutUnits[0]-widthInLayoutUnits/2, offsetInLayoutUnits[1]-heightInLayoutUnits/2) #width/2 height/2
+            startPoint = (offsetInLayoutUnits[0]-widthInLayoutUnits/2.0, offsetInLayoutUnits[1]-heightInLayoutUnits/2.0) 
             coordinates=[startPoint,
                          (startPoint[0]+widthInLayoutUnits,startPoint[1]),
                          (startPoint[0]+widthInLayoutUnits,startPoint[1]+heightInLayoutUnits),
@@ -373,7 +375,7 @@ class VlsiLayout:
         boundaryToAdd.coordinates = coordinates
         boundaryToAdd.purposeLayer = purposeNumber
         #add the sref to the root structure
-        self.structures[self.rootStructureName].boundaries+=[boundaryToAdd]
+        self.structures[self.rootStructureName].boundaries.append(boundaryToAdd)
     
     def addPath(self, layerNumber=0, purposeNumber = None, coordinates=[(0,0)], width=1.0):
         """
@@ -385,14 +387,14 @@ class VlsiLayout:
         for coordinate in coordinates:
             cX = self.userUnits(coordinate[0])
             cY = self.userUnits(coordinate[1])
-            layoutUnitCoordinates += [(cX,cY)]
+            layoutUnitCoordinates.append((cX,cY))
         pathToAdd = GdsPath()
         pathToAdd.drawingLayer=layerNumber
         pathToAdd.purposeLayer = purposeNumber
         pathToAdd.pathWidth=widthInLayoutUnits
         pathToAdd.coordinates=layoutUnitCoordinates
         #add the sref to the root structure
-        self.structures[self.rootStructureName].paths+=[pathToAdd]
+        self.structures[self.rootStructureName].paths.append(pathToAdd)
         
     def addText(self, text, layerNumber=0, purposeNumber = None, offsetInMicrons=(0,0), magnification=0.1, rotate = None):
         offsetInLayoutUnits = (self.userUnits(offsetInMicrons[0]),self.userUnits(offsetInMicrons[1]))
@@ -411,7 +413,7 @@ class VlsiLayout:
             textToAdd.transFlags[2] = 1 
             textToAdd.rotateAngle = rotate
         #add the sref to the root structure
-        self.structures[self.rootStructureName].texts+=[textToAdd]
+        self.structures[self.rootStructureName].texts.append(textToAdd)
             
     def isBounded(self,testPoint,startPoint,endPoint):
         #these arguments are touples of (x,y) coordinates
@@ -523,7 +525,7 @@ class VlsiLayout:
                     #remap coordinates
                     shiftedBoundaryCoordinates = []
                     for shapeCoordinate in boundary.rotatedCoordinates(rotateAngle):
-                        shiftedBoundaryCoordinates+=[(shapeCoordinate[0]+coordinates[0],shapeCoordinate[1]+coordinates[1])]
+                        shiftedBoundaryCoordinates.append((shapeCoordinate[0]+coordinates[0],shapeCoordinate[1]+coordinates[1]))
                     joint = self.doShapesIntersect(self.tempCoordinates, shiftedBoundaryCoordinates)
                     if joint:
                         self.tempPassFail = False                    
@@ -536,7 +538,7 @@ class VlsiLayout:
                     #remap coordinates
                     shiftedBoundaryCoordinates = []
                     for shapeCoordinate in path.equivalentBoundaryCoordinates(rotateAngle):
-                        shiftedBoundaryCoordinates+=[(shapeCoordinate[0]+coordinates[0],shapeCoordinate[1]+coordinates[1])]
+                        shiftedBoundaryCoordinates.append((shapeCoordinate[0]+coordinates[0],shapeCoordinate[1]+coordinates[1]))
                     joint = self.doShapesIntersect(self.tempCoordinates, shiftedBoundaryCoordinates)
                     if joint:
                         self.tempPassFail = False                    
@@ -559,7 +561,7 @@ class VlsiLayout:
                 self.traverseTheHierarchy(delegateFunction = isThisBlockOk)
                 #if its bad, this global tempPassFail will be false
                 #if true, we can add the block
-                passFailRecord+=[self.tempPassFail]
+                passFailRecord.append(self.tempPassFail)
             print("Percent Complete:"+str(percentDone))
 
                 
@@ -570,7 +572,7 @@ class VlsiLayout:
                 blockY = (yIndex*effectiveBlock)+offsetInMicrons[1]
                 if passFailRecord[passFailIndex]:
                     self.addBox(layerToFill, (blockX,blockY), width=blockSize, height=blockSize)
-                passFailIndex+=1
+                passFailIndex += 1
         print("Done\n\n")
 
     def getLayoutBorder(self,borderlayer):
@@ -606,19 +608,15 @@ class VlsiLayout:
         return [[self.units[0]*cellBoundary[0],self.units[0]*cellBoundary[1]],
                 [self.units[0]*cellBoundary[2],self.units[0]*cellBoundary[3]]]
     
-    def measureSizeInStructure(self,Structure,cellBoundary):
-        StructureName=Structure[0]
-        StructureOrigin=[Structure[1][0],Structure[1][1]]
-        StructureuVector=[Structure[2][0],Structure[2][1],Structure[2][2]]
-        StructurevVector=[Structure[3][0],Structure[3][1],Structure[3][2]]
-        
-        for boundary in self.structures[str(StructureName)].boundaries:
+    def measureSizeInStructure(self,structure,cellBoundary):
+        (structureName,structureOrigin,structureuVector,structurevVector)=structure
+        for boundary in self.structures[str(structureName)].boundaries:
             left_bottom=boundary.coordinates[0]
             right_top=boundary.coordinates[2]
             thisBoundary=[left_bottom[0],left_bottom[1],right_top[0],right_top[1]]
-            thisBoundary=self.transformRectangle(thisBoundary,StructureuVector,StructurevVector)
-            thisBoundary=[thisBoundary[0]+StructureOrigin[0],thisBoundary[1]+StructureOrigin[1],
-            thisBoundary[2]+StructureOrigin[0],thisBoundary[3]+StructureOrigin[1]]
+            thisBoundary=self.transformRectangle(thisBoundary,structureuVector,structurevVector)
+            thisBoundary=[thisBoundary[0]+structureOrigin[0],thisBoundary[1]+structureOrigin[1],
+            thisBoundary[2]+structureOrigin[0],thisBoundary[3]+structureOrigin[1]]
             cellBoundary=self.updateBoundary(thisBoundary,cellBoundary)
         return cellBoundary
         
@@ -755,9 +753,8 @@ class VlsiLayout:
         Return all pin shapes.
         """
         boundaries = []
-
         for TreeUnit in self.xyTree:
-            boundaries += self.getPinInStructure(coordinates,layer,TreeUnit)
+            boundaries.extend(self.getPinInStructure(coordinates,layer,TreeUnit))
 
         return boundaries
 
@@ -768,14 +765,8 @@ class VlsiLayout:
         that the label coordinates are inside.
         """
 
-        # check if this is a rectangle
-        structureName=structure[0]
-        structureOrigin=[structure[1][0],structure[1][1]]
-        structureuVector=[structure[2][0],structure[2][1],structure[2][2]]
-        structurevVector=[structure[3][0],structure[3][1],structure[3][2]]
-
+        (structureName,structureOrigin,structureuVector,structurevVector)=structure
         boundaries = []
-        
         for boundary in self.structures[str(structureName)].boundaries:
             # Pin enclosures only work on rectangular pins so ignore any non rectangle
             # This may report not finding pins, but the user should fix this by adding a rectangle.
@@ -789,7 +780,7 @@ class VlsiLayout:
                 boundaryRect=self.transformRectangle(boundaryRect,structureuVector,structurevVector)
                 boundaryRect=[boundaryRect[0]+structureOrigin[0].item(),boundaryRect[1]+structureOrigin[1].item(),
                               boundaryRect[2]+structureOrigin[0].item(),boundaryRect[3]+structureOrigin[1].item()]
-                
+
                 if self.labelInRectangle(coordinates,boundaryRect):
                     boundaries.append(boundaryRect)
                     
@@ -803,7 +794,7 @@ class VlsiLayout:
         boundaries = []
         for TreeUnit in self.xyTree:
             #print(TreeUnit[0])
-            boundaries += self.getShapesInStructure(layer,TreeUnit)
+            boundaries.extend(self.getShapesInStructure(layer,TreeUnit))
 
         # Remove duplicates without defining a hash
         # (could be sped up by creating hash and using list(set())
@@ -826,14 +817,8 @@ class VlsiLayout:
         Go through all the shapes in a structure and return the list of shapes.
         """
 
-        # check if this is a rectangle
-        structureName=structure[0]
-        structureOrigin=[structure[1][0],structure[1][1]]
-        structureuVector=[structure[2][0],structure[2][1],structure[2][2]]
-        structurevVector=[structure[3][0],structure[3][1],structure[3][2]]
-
+        (structureName,structureOrigin,structureuVector,structurevVector)=structure
         boundaries = []
-        
         for boundary in self.structures[str(structureName)].boundaries:
             # Pin enclosures only work on rectangular pins so ignore any non rectangle
             # This may report not finding pins, but the user should fix this by adding a rectangle.

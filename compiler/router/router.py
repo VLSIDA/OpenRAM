@@ -15,12 +15,21 @@ class router:
     It populates blockages on a grid class.
     """
 
-    def __init__(self, gds_name):
-        """Use the gds file for the blockages with the top module topName and
+    def __init__(self, gds_name=None, module=None):
+        """Use the gds file or the cell for the blockages with the top module topName and
         layers for the layers to route on
         """
-        # Load the gds file and read in all the shapes
         self.gds_name = gds_name
+        self.module = module
+        debug.check(not (gds_name and module), "Specify only a GDS file or module")
+
+        # If we specified a module instead, write it out to read the gds
+        # This isn't efficient, but easy for now
+        if module:
+            gds_name = OPTS.openram_temp+"temp.gds"
+            module.gds_write(gds_name)
+        
+        # Load the gds file and read in all the shapes
         self.layout = gdsMill.VlsiLayout(units=tech.GDS["unit"])
         self.reader = gdsMill.Gds2reader(self.layout)
         self.reader.loadFromFile(gds_name)
@@ -212,12 +221,14 @@ class router:
         """
 
         shapes = self.layout.getAllShapesInStructureList(layer_num)
-                    
+
         for boundary in shapes:
-            rect = [vector(boundary[0],boundary[1]),vector(boundary[2],boundary[3])]
-            new_pin = pin_layout("blockage",rect,layer_num)
+            ll = vector(boundary[0],boundary[1])
+            ur = vector(boundary[2],boundary[3])
+            rect = [ll,ur]
+            new_pin = pin_layout("blockage{}".format(len(self.blockages)),rect,layer_num)
             self.blockages.append(new_pin)
-        
+            
         
         # for boundary in self.layout.structures[sref].boundaries:
         #     coord_trans = self.translate_coordinates(boundary.coordinates, mirr, angle, xyShift)
@@ -470,7 +481,6 @@ class router:
                                 layer="text",
                                 offset=shape[0],
                                 zoom=0.05)
-
         for blockage in self.blockages:
             self.cell.add_rect(layer="boundary",
                                offset=blockage.ll(),

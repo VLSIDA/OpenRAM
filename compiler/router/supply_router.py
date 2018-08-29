@@ -16,12 +16,11 @@ class supply_router(router):
     routes a grid to connect the supply on the two layers.
     """
 
-    def __init__(self, gds_name):
+    def __init__(self, gds_name=None, module=None):
         """Use the gds file for the blockages with the top module topName and
         layers for the layers to route on
         """
-
-        router.__init__(self, gds_name)
+        router.__init__(self, gds_name, module)
         
         self.pins = {}
 
@@ -40,6 +39,7 @@ class supply_router(router):
         Route a single source-destination net and return
         the simplified rectilinear path. 
         """
+        debug.info(1,"Running supply router on {0} and {1}...".format(vdd_name, gnd_name))
         self.cell = cell
         self.pins[vdd_name] = []
         self.pins[gnd_name] = []

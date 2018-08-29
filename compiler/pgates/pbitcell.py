@@ -35,8 +35,6 @@ class pbitcell(pgate.pgate):
         # FIXME: Why is this static set here?
         pbitcell.width = self.width
         pbitcell.height = self.height
-    
-    
         
     def create_netlist(self):
         self.add_pins()
@@ -89,7 +87,6 @@ class pbitcell(pgate.pgate):
             
         self.add_pin("vdd")
         self.add_pin("gnd")
-
     
     def add_modules(self):
         # if there are any read/write ports, then the inverter nmos is sized based the number of them
@@ -132,7 +129,6 @@ class pbitcell(pgate.pgate):
         self.read_nmos = ptx(width=read_nmos_width,
                              tx_type="nmos")
         self.add_mod(self.read_nmos)
-    
     
     def calculate_spacing(self):        
         """ Calculate transistor spacings """
@@ -267,6 +263,31 @@ class pbitcell(pgate.pgate):
         self.width = -2*self.leftmost_xpos
         self.height = self.topmost_ypos - self.botmost_ypos - array_vdd_overlap
 
+
+    def create_storage(self):
+        """
+        Creates the crossed coupled inverters that act as storage for the bitcell.
+        The stored value of the cell is denoted as "Q", and the inverted value as "Q_bar".
+        """
+        
+        # create active for nmos
+        self.inverter_nmos_left = self.add_inst(name="inverter_nmos_left",
+                                                mod=self.inverter_nmos)
+        self.connect_inst(["Q_bar", "Q", "gnd", "gnd"])
+        
+        self.inverter_nmos_right = self.add_inst(name="inverter_nmos_right",
+                                                 mod=self.inverter_nmos)
+        self.connect_inst(["gnd", "Q_bar", "Q", "gnd"])
+        
+        # create active for pmos
+        self.inverter_pmos_left = self.add_inst(name="inverter_pmos_left",
+                                                mod=self.inverter_pmos)
+        self.connect_inst(["Q_bar", "Q", "vdd", "vdd"])
+        
+        self.inverter_pmos_right = self.add_inst(name="inverter_pmos_right",
+                                                 mod=self.inverter_pmos)
+        self.connect_inst(["vdd", "Q_bar", "Q", "vdd"])
+        
         
     def place_storage(self):
         """
@@ -318,31 +339,6 @@ class pbitcell(pgate.pgate):
         # update furthest left and right transistor edges (this will propagate to further transistor offset calculations)
         self.left_building_edge = -self.inverter_tile_width
         self.right_building_edge = self.inverter_tile_width
-    
-
-    def create_storage(self):
-        """
-        Creates the crossed coupled inverters that act as storage for the bitcell.
-        The stored value of the cell is denoted as "Q", and the inverted value as "Q_bar".
-        """
-        
-        # create active for nmos
-        self.inverter_nmos_left = self.add_inst(name="inverter_nmos_left",
-                                                mod=self.inverter_nmos)
-        self.connect_inst(["Q_bar", "Q", "gnd", "gnd"])
-        
-        self.inverter_nmos_right = self.add_inst(name="inverter_nmos_right",
-                                                 mod=self.inverter_nmos)
-        self.connect_inst(["gnd", "Q_bar", "Q", "gnd"])
-        
-        # create active for pmos
-        self.inverter_pmos_left = self.add_inst(name="inverter_pmos_left",
-                                                mod=self.inverter_pmos)
-        self.connect_inst(["Q_bar", "Q", "vdd", "vdd"])
-        
-        self.inverter_pmos_right = self.add_inst(name="inverter_pmos_right",
-                                                 mod=self.inverter_pmos)
-        self.connect_inst(["vdd", "Q_bar", "Q", "vdd"])
         
         
     def route_rails(self):
@@ -816,15 +812,6 @@ class pbitcell(pgate.pgate):
         # calculate offset to overlap the drain of the read-access transistor with the source of the read transistor
         overlap_offset = self.read_nmos.get_pin("D").ll() - self.read_nmos.get_pin("S").ll()
         
-        # define read transistor variables as empty arrays based on the number of read ports
-        self.read_nmos_left = [None] * self.num_read 
-        self.read_nmos_right = [None] * self.num_read
-        self.read_access_nmos_left = [None] * self.num_read 
-        self.read_access_nmos_right = [None] * self.num_read
-        self.rwl_positions = [None] * self.num_read
-        self.rbl_positions = [None] * self.num_read
-        self.rbl_bar_positions = [None] * self.num_read
-        
         # iterate over the number of read ports
         for k in range(0,self.num_read):
             # Add transistors 
@@ -840,30 +827,18 @@ class pbitcell(pgate.pgate):
                                          + read_rotation_correct          
             
             # add read-access transistors
-            self.read_access_nmos_left[k] = self.add_inst(name="read_access_nmos_left{}".format(k),
-                                                          mod=self.read_nmos,
-                                                          offset=[left_read_transistor_xpos,0],
-                                                          rotate=90)
-            self.connect_inst(["RA_to_R_left{}".format(k), " Q_bar", "gnd", "gnd"])
+            self.read_access_nmos_left[k].place(offset=[left_read_transistor_xpos,0],
+                                                rotate=90)
             
-            self.read_access_nmos_right[k] = self.add_inst(name="read_access_nmos_right{}".format(k),
-                                                           mod=self.read_nmos,
-                                                           offset=[right_read_transistor_xpos,0],
-                                                           rotate=90)
-            self.connect_inst(["RA_to_R_right{}".format(k), "Q", "gnd", "gnd"])
+            self.read_access_nmos_right[k].place(offset=[right_read_transistor_xpos,0],
+                                                 rotate=90)
             
             # add read transistors
-            self.read_nmos_left[k] = self.add_inst(name="read_nmos_left{}".format(k),
-                                                   mod=self.read_nmos,
-                                                   offset=[left_read_transistor_xpos,overlap_offset.x],
-                                                   rotate=90)
-            self.connect_inst(["rbl{}".format(k), "rwl{}".format(k), "RA_to_R_left{}".format(k), "gnd"])
+            self.read_nmos_left[k].place(offset=[left_read_transistor_xpos,overlap_offset.x],
+                                         rotate=90)
             
-            self.read_nmos_right[k] = self.add_inst(name="read_nmos_right{}".format(k),
-                                                    mod=self.read_nmos,
-                                                    offset=[right_read_transistor_xpos,overlap_offset.x],
-                                                    rotate=90)
-            self.connect_inst(["rbl_bar{}".format(k), "rwl{}".format(k), "RA_to_R_right{}".format(k), "gnd"])
+            self.read_nmos_right[k].place(offset=[right_read_transistor_xpos,overlap_offset.x],
+                                          rotate=90)
                         
             # Add RWL lines 
             # calculate RWL position

@@ -226,8 +226,8 @@ class delay():
                                  targ_val=targ_val,
                                  trig_dir="RISE",
                                  targ_dir="FALL",
-                                 trig_td=self.cycle_times[self.read0_cycle],
-                                 targ_td=self.cycle_times[self.read0_cycle])
+                                 trig_td=self.cycle_times[self.measure_cycles["read0_{0}".format(port)]],
+                                 targ_td=self.cycle_times[self.measure_cycles["read0_{0}".format(port)]])
 
         self.stim.gen_meas_delay(meas_name="DELAY_LH_{0}".format(port),
                                  trig_name=trig_name,
@@ -236,8 +236,8 @@ class delay():
                                  targ_val=targ_val,
                                  trig_dir="RISE",
                                  targ_dir="RISE",
-                                 trig_td=self.cycle_times[self.read1_cycle],
-                                 targ_td=self.cycle_times[self.read1_cycle])
+                                 trig_td=self.cycle_times[self.measure_cycles["read1_{0}".format(port)]],
+                                 targ_td=self.cycle_times[self.measure_cycles["read1_{0}".format(port)]])
 
         self.stim.gen_meas_delay(meas_name="SLEW_HL_{0}".format(port),
                                  trig_name=targ_name,
@@ -246,8 +246,8 @@ class delay():
                                  targ_val=0.1*self.vdd_voltage,
                                  trig_dir="FALL",
                                  targ_dir="FALL",
-                                 trig_td=self.cycle_times[self.read0_cycle],
-                                 targ_td=self.cycle_times[self.read0_cycle])
+                                 trig_td=self.cycle_times[self.measure_cycles["read0_{0}".format(port)]],
+                                 targ_td=self.cycle_times[self.measure_cycles["read0_{0}".format(port)]])
 
         self.stim.gen_meas_delay(meas_name="SLEW_LH_{0}".format(port),
                                  trig_name=targ_name,
@@ -256,18 +256,18 @@ class delay():
                                  targ_val=0.9*self.vdd_voltage,
                                  trig_dir="RISE",
                                  targ_dir="RISE",
-                                 trig_td=self.cycle_times[self.read1_cycle],
-                                 targ_td=self.cycle_times[self.read1_cycle])
+                                 trig_td=self.cycle_times[self.measure_cycles["read1_{0}".format(port)]],
+                                 targ_td=self.cycle_times[self.measure_cycles["read1_{0}".format(port)]])
         
         # add measure statements for power
-        t_initial = self.cycle_times[self.read0_cycle]
-        t_final = self.cycle_times[self.read0_cycle+1]
+        t_initial = self.cycle_times[self.measure_cycles["read0_{0}".format(port)]]
+        t_final = self.cycle_times[self.measure_cycles["read0_{0}".format(port)]+1]
         self.stim.gen_meas_power(meas_name="READ0_POWER_{0}".format(port),
                                  t_initial=t_initial,
                                  t_final=t_final)
 
-        t_initial = self.cycle_times[self.read1_cycle]
-        t_final = self.cycle_times[self.read1_cycle+1]
+        t_initial = self.cycle_times[self.measure_cycles["read1_{0}".format(port)]]
+        t_final = self.cycle_times[self.measure_cycles["read1_{0}".format(port)]+1]
         self.stim.gen_meas_power(meas_name="READ1_POWER_{0}".format(port),
                                  t_initial=t_initial,
                                  t_final=t_final)
@@ -277,14 +277,14 @@ class delay():
         Write the measure statements to quantify the power results for a write port.
         """
         # add measure statements for power
-        t_initial = self.cycle_times[self.write0_cycle]
-        t_final = self.cycle_times[self.write0_cycle+1]
+        t_initial = self.cycle_times[self.measure_cycles["write0_{0}".format(port)]]
+        t_final = self.cycle_times[self.measure_cycles["write0_{0}".format(port)]+1]
         self.stim.gen_meas_power(meas_name="WRITE0_POWER_{0}".format(port),
                                  t_initial=t_initial,
                                  t_final=t_final)
 
-        t_initial = self.cycle_times[self.write1_cycle]
-        t_final = self.cycle_times[self.write1_cycle+1]
+        t_initial = self.cycle_times[self.measure_cycles["write1_{0}".format(port)]]
+        t_final = self.cycle_times[self.measure_cycles["write1_{0}".format(port)]+1]
         self.stim.gen_meas_power(meas_name="WRITE1_POWER_{0}".format(port),
                                  t_initial=t_initial,
                                  t_final=t_final)
@@ -790,23 +790,27 @@ class delay():
 
         self.add_write("W data 0 address 11..11 to write value",
                        self.probe_address,data_zeros,write_port)
-        self.write0_cycle=len(self.cycle_times)-1 # Remember for power measure
+        self.measure_cycles["write0_{0}".format(write_port)] = len(self.cycle_times)-1
+        #self.write0_cycle=len(self.cycle_times)-1 # Remember for power measure
         
         # This also ensures we will have a H->L transition on the next read
         self.add_read("R data 1 address 00..00 to set DOUT caps",
                       inverse_address,data_zeros,read_port) 
 
         self.add_read("R data 0 address 11..11 to check W0 worked",
-                      self.probe_address,data_zeros,read_port) 
-        self.read0_cycle=len(self.cycle_times)-1 # Remember for power measure
+                      self.probe_address,data_zeros,read_port)
+        self.measure_cycles["read0_{0}".format(read_port)] = len(self.cycle_times)-1              
+        #self.read0_cycle=len(self.cycle_times)-1 # Remember for power measure
         
         self.add_noop_all_ports("Idle cycle (if read takes >1 cycle)",
                       inverse_address,data_zeros)
-        self.idle_cycle=len(self.cycle_times)-1 # Remember for power measure
+        #Does not seem like is is used anywhere commenting out for now.
+        #self.idle_cycle=len(self.cycle_times)-1 # Remember for power measure
 
         self.add_write("W data 1 address 11..11 to write value",
                        self.probe_address,data_ones,write_port)
-        self.write1_cycle=len(self.cycle_times)-1 # Remember for power measure
+        self.measure_cycles["write1_{0}".format(write_port)] = len(self.cycle_times)-1
+        #self.write1_cycle=len(self.cycle_times)-1 # Remember for power measure
 
         self.add_write("W data 0 address 00..00 to clear DIN caps",
                        inverse_address,data_zeros,write_port)
@@ -817,8 +821,9 @@ class delay():
         
         self.add_read("R data 1 address 11..11 to check W1 worked",
                       self.probe_address,data_zeros,read_port)
-        self.read1_cycle=len(self.cycle_times)-1 # Remember for power measure
-
+        self.measure_cycles["read1_{0}".format(read_port)] = len(self.cycle_times)-1                
+        #self.read1_cycle=len(self.cycle_times)-1 # Remember for power measure
+        
         self.add_noop_all_ports("Idle cycle (if read takes >1 cycle))",
                       self.probe_address,data_zeros)
     
@@ -833,6 +838,7 @@ class delay():
         # Cycle times (positive edge) with comment
         self.cycle_comments = [] 
         self.cycle_times = []
+        self.measure_cycles = {}
 
         # Readwrite port Control logic signals each cycle
         self.web_values = {readwrite_port:[] for readwrite_port in self.readwrite_ports}
@@ -853,7 +859,7 @@ class delay():
         #for i in range(self.addr_size):
         #    self.addr_values.append([])
 
-        #Temporary logic. Loop through all ports with characterize logic.
+        #Temporary logic. Loop through all readwrite ports with characterize logic.
         cur_write_port = None
         for readwrite_port in self.readwrite_ports:
             self.gen_test_cycles_one_port(readwrite_port, readwrite_port)
@@ -864,8 +870,11 @@ class delay():
         write_pos = 0
         read_pos = 0
         while True:
+            #Exit when all ports have been characterized
             if write_pos >= len(self.write_ports) and read_pos >= len(self.read_ports):
                 break
+                
+            #Select new write and/or read ports for the next cycle
             if write_pos < len(self.write_ports):
                 cur_write_port = self.write_ports[write_pos]
                 write_pos+=1

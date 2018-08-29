@@ -15,9 +15,6 @@ class dff_buf_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        global verify
-        import verify
-
         import dff_buf
 
         debug.info(2, "Testing dff_buf 4x 8x")

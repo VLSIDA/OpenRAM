@@ -15,9 +15,6 @@ class dff_array_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        global verify
-        import verify
-
         import ms_flop_array
 
         debug.info(2, "Testing ms_flop_array for columns=8, word_size=8")

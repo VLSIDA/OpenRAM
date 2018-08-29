@@ -27,9 +27,6 @@ class sram_func_test(openram_test):
         if not OPTS.spice_exe:
             debug.error("Could not find {} simulator.".format(OPTS.spice_name),-1)
 
-        global verify
-        import verify
-
         self.func_test(bank_num=1)
         self.func_test(bank_num=2)
         self.func_test(bank_num=4)

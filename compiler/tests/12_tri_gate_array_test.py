@@ -15,9 +15,6 @@ class tri_gate_array_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        global verify
-        import verify
-
         import tri_gate_array
 
         debug.info(1, "Testing tri_gate_array for columns=8, word_size=8")

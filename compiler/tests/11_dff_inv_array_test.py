@@ -15,9 +15,6 @@ class dff_inv_array_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        global verify
-        import verify
-
         import dff_inv_array
 
         debug.info(2, "Testing dff_inv_array for 3x3")

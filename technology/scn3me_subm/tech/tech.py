@@ -87,10 +87,10 @@ drc["poly_extend_active"] = 0.6
 drc["poly_to_polycontact"] = 1.2
 # ??
 drc["active_enclosure_gate"] = 0.0
-# 3.2.a Minimum spacing over field poly
-drc["poly_to_field_poly"] = 0.9
 # 3.5 Minimum field poly to active 
 drc["poly_to_active"] = 0.3
+# 3.2.a Minimum spacing over field poly
+drc["poly_to_field_poly"] = 0.9
 # Not a rule
 drc["minarea_poly"] = 0.0
 

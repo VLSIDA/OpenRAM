@@ -242,7 +242,7 @@ class pbitcell(pgate.pgate):
                              - self.read_port_flag*self.write_to_read_spacing \
                              - self.read_port_flag*(self.read_nmos.active_height + (self.num_read-1)*self.read_tile_width) \
                              - end_connection \
-                             - 0.5*drc["minwidth_metal2"]
+                             - 0.5*drc["poly_to_polycontact"]
                              
         self.rightmost_xpos = -self.leftmost_xpos
         
@@ -259,7 +259,7 @@ class pbitcell(pgate.pgate):
                             + self.rail_tile_height
         
         # calculations for the cell dimensions
-        array_vdd_overlap = 0.5*drc["minwidth_metal1"]
+        array_vdd_overlap = 0.5*contact.well.width
         self.width = -2*self.leftmost_xpos
         self.height = self.topmost_ypos - self.botmost_ypos - array_vdd_overlap
 

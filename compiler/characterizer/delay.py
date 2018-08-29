@@ -207,9 +207,9 @@ class delay():
 
         self.sf.close()
         
-    def write_delay_measures_one_port(self, port):
+    def write_delay_measures_read_port(self, port):
         """
-        Write the measure statements to quantify the delay and power results for one port.
+        Write the measure statements to quantify the delay and power results for a read port.
         """
 
         # Trigger on the clk of the appropriate cycle
@@ -260,18 +260,6 @@ class delay():
                                  targ_td=self.cycle_times[self.read1_cycle])
         
         # add measure statements for power
-        t_initial = self.cycle_times[self.write0_cycle]
-        t_final = self.cycle_times[self.write0_cycle+1]
-        self.stim.gen_meas_power(meas_name="WRITE0_POWER_{0}".format(port),
-                                 t_initial=t_initial,
-                                 t_final=t_final)
-
-        t_initial = self.cycle_times[self.write1_cycle]
-        t_final = self.cycle_times[self.write1_cycle+1]
-        self.stim.gen_meas_power(meas_name="WRITE1_POWER_{0}".format(port),
-                                 t_initial=t_initial,
-                                 t_final=t_final)
-        
         t_initial = self.cycle_times[self.read0_cycle]
         t_final = self.cycle_times[self.read0_cycle+1]
         self.stim.gen_meas_power(meas_name="READ0_POWER_{0}".format(port),
@@ -281,6 +269,23 @@ class delay():
         t_initial = self.cycle_times[self.read1_cycle]
         t_final = self.cycle_times[self.read1_cycle+1]
         self.stim.gen_meas_power(meas_name="READ1_POWER_{0}".format(port),
+                                 t_initial=t_initial,
+                                 t_final=t_final)
+        
+    def write_delay_measures_write_port(self, port):
+        """
+        Write the measure statements to quantify the power results for a write port.
+        """
+        # add measure statements for power
+        t_initial = self.cycle_times[self.write0_cycle]
+        t_final = self.cycle_times[self.write0_cycle+1]
+        self.stim.gen_meas_power(meas_name="WRITE0_POWER_{0}".format(port),
+                                 t_initial=t_initial,
+                                 t_final=t_final)
+
+        t_initial = self.cycle_times[self.write1_cycle]
+        t_final = self.cycle_times[self.write1_cycle+1]
+        self.stim.gen_meas_power(meas_name="WRITE1_POWER_{0}".format(port),
                                  t_initial=t_initial,
                                  t_final=t_final)
 
@@ -296,11 +301,12 @@ class delay():
             self.sf.write("* {}\n".format(comment))
             
         for readwrite_port in self.readwrite_ports:
-            self.write_delay_measures_one_port(readwrite_port)
-        # for read_port in self.read_ports:
-           # self.write_delay_measures_one_port(read_ports)
-        # for write_port in self.write_ports:
-           # self.write_delay_measures_one_port(write_ports)
+            self.write_delay_measures_read_port(readwrite_port)
+            self.write_delay_measures_write_port(readwrite_port)
+        for read_port in self.read_ports:
+           self.write_delay_measures_read_port(read_port)
+        for write_port in self.write_ports:
+           self.write_delay_measures_write_port(write_port)
         
                                  
     def write_power_measures(self):

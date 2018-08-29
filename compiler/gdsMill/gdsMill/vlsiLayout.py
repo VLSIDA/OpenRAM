@@ -308,9 +308,6 @@ class VlsiLayout:
                 if layerNumber not in self.layerNumbersInUse:
                     self.layerNumbersInUse.append(layerNumber)
 
-    #   if debug: print("DEBUG: vlsilayout: Using %d layers")
-
-
         #add a reference to the new layout structure in this layout's root
         layoutToAddSref = GdsSref()
         layoutToAddSref.sName = StructureName
@@ -337,7 +334,6 @@ class VlsiLayout:
                 layoutToAddSref.transFlags = [1,0,0]
             if mirror == "y" or mirror == "MY": #NOTE: "MY" option will override specified rotate angle
                 layoutToAddSref.transFlags = [1,1,0]
-                #layoutToAddSref.transFlags = [1,0,0]
                 layoutToAddSref.rotateAngle = 180.0
             if mirror == "xy" or mirror == "XY": #NOTE: "XY" option will override specified rotate angle
                 layoutToAddSref.transFlags = [0,1,0]

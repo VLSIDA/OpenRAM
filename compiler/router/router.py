@@ -221,14 +221,12 @@ class router:
         """
 
         shapes = self.layout.getAllShapesInStructureList(layer_num)
-
         for boundary in shapes:
             ll = vector(boundary[0],boundary[1])
             ur = vector(boundary[2],boundary[3])
             rect = [ll,ur]
             new_pin = pin_layout("blockage{}".format(len(self.blockages)),rect,layer_num)
             self.blockages.append(new_pin)
-            
         
         # for boundary in self.layout.structures[sref].boundaries:
         #     coord_trans = self.translate_coordinates(boundary.coordinates, mirr, angle, xyShift)
@@ -481,6 +479,7 @@ class router:
                                 layer="text",
                                 offset=shape[0],
                                 zoom=0.05)
+
         for blockage in self.blockages:
             self.cell.add_rect(layer="boundary",
                                offset=blockage.ll(),

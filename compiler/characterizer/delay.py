@@ -207,27 +207,19 @@ class delay():
 
         self.sf.close()
         
-    def write_delay_measures(self):
+    def write_delay_measures_one_port(self, port):
         """
-        Write the measure statements to quantify the delay and power results.
+        Write the measure statements to quantify the delay and power results for one port.
         """
-
-        self.sf.write("\n* Measure statements for delay and power\n")
-
-        # Output some comments to aid where cycles start and
-        # what is happening
-        for comment in self.cycle_comments:
-            self.sf.write("* {}\n".format(comment))
 
         # Trigger on the clk of the appropriate cycle
         trig_name = "clk"
-        targ_port = 0
         #Target name should be an input to the function or a member variable. That way, the ports can be singled out for testing
-        targ_name = "{0}".format("DOUT_RWP{0}[{1}]".format(targ_port,self.probe_data))
+        targ_name = "{0}".format("DOUT_{0}[{1}]".format(port,self.probe_data))
         trig_val = targ_val = 0.5 * self.vdd_voltage
 
         # Delay the target to measure after the negative edge
-        self.stim.gen_meas_delay(meas_name="DELAY_HL",
+        self.stim.gen_meas_delay(meas_name="DELAY_HL_{0}".format(port),
                                  trig_name=trig_name,
                                  targ_name=targ_name,
                                  trig_val=trig_val,
@@ -237,7 +229,7 @@ class delay():
                                  trig_td=self.cycle_times[self.read0_cycle],
                                  targ_td=self.cycle_times[self.read0_cycle])
 
-        self.stim.gen_meas_delay(meas_name="DELAY_LH",
+        self.stim.gen_meas_delay(meas_name="DELAY_LH_{0}".format(port),
                                  trig_name=trig_name,
                                  targ_name=targ_name,
                                  trig_val=trig_val,
@@ -247,7 +239,7 @@ class delay():
                                  trig_td=self.cycle_times[self.read1_cycle],
                                  targ_td=self.cycle_times[self.read1_cycle])
 
-        self.stim.gen_meas_delay(meas_name="SLEW_HL",
+        self.stim.gen_meas_delay(meas_name="SLEW_HL_{0}".format(port),
                                  trig_name=targ_name,
                                  targ_name=targ_name,
                                  trig_val=0.9*self.vdd_voltage,
@@ -257,7 +249,7 @@ class delay():
                                  trig_td=self.cycle_times[self.read0_cycle],
                                  targ_td=self.cycle_times[self.read0_cycle])
 
-        self.stim.gen_meas_delay(meas_name="SLEW_LH",
+        self.stim.gen_meas_delay(meas_name="SLEW_LH_{0}".format(port),
                                  trig_name=targ_name,
                                  targ_name=targ_name,
                                  trig_val=0.1*self.vdd_voltage,
@@ -270,29 +262,47 @@ class delay():
         # add measure statements for power
         t_initial = self.cycle_times[self.write0_cycle]
         t_final = self.cycle_times[self.write0_cycle+1]
-        self.stim.gen_meas_power(meas_name="WRITE0_POWER",
+        self.stim.gen_meas_power(meas_name="WRITE0_POWER_{0}".format(port),
                                  t_initial=t_initial,
                                  t_final=t_final)
 
         t_initial = self.cycle_times[self.write1_cycle]
         t_final = self.cycle_times[self.write1_cycle+1]
-        self.stim.gen_meas_power(meas_name="WRITE1_POWER",
+        self.stim.gen_meas_power(meas_name="WRITE1_POWER_{0}".format(port),
                                  t_initial=t_initial,
                                  t_final=t_final)
         
         t_initial = self.cycle_times[self.read0_cycle]
         t_final = self.cycle_times[self.read0_cycle+1]
-        self.stim.gen_meas_power(meas_name="READ0_POWER",
+        self.stim.gen_meas_power(meas_name="READ0_POWER_{0}".format(port),
                                  t_initial=t_initial,
                                  t_final=t_final)
 
         t_initial = self.cycle_times[self.read1_cycle]
         t_final = self.cycle_times[self.read1_cycle+1]
-        self.stim.gen_meas_power(meas_name="READ1_POWER",
+        self.stim.gen_meas_power(meas_name="READ1_POWER_{0}".format(port),
                                  t_initial=t_initial,
                                  t_final=t_final)
 
+    def write_delay_measures(self):
+        """
+        Write the measure statements to quantify the delay and power results for all ports.
+        """
+        self.sf.write("\n* Measure statements for delay and power\n")
+
+        # Output some comments to aid where cycles start and
+        # what is happening
+        for comment in self.cycle_comments:
+            self.sf.write("* {}\n".format(comment))
+            
+        for readwrite_port in self.readwrite_ports:
+            self.write_delay_measures_one_port(readwrite_port)
+        # for read_port in self.read_ports:
+           # self.write_delay_measures_one_port(read_ports)
+        # for write_port in self.write_ports:
+           # self.write_delay_measures_one_port(write_ports)
         
+                                 
     def write_power_measures(self):
         """
         Write the measure statements to quantify the leakage power only. 
@@ -351,37 +361,49 @@ class delay():
         works on the trimmed netlist by default, so powers do not
         include leakage of all cells.
         """
-
+        result = {}
         # Checking from not data_value to data_value
         self.write_delay_stimulus()
 
         self.stim.run_sim()
-        delay_hl = parse_spice_list("timing", "delay_hl")
-        delay_lh = parse_spice_list("timing", "delay_lh")
-        slew_hl = parse_spice_list("timing", "slew_hl")
-        slew_lh = parse_spice_list("timing", "slew_lh")
-        delays = (delay_hl, delay_lh, slew_hl, slew_lh)
+        
+        #Only readwrite ports for now. Other to be added later.
+        for readwrite_port in self.readwrite_ports:
+            readwrite_port = readwrite_port.lower()
+            delay_hl = parse_spice_list("timing", "delay_hl_{0}".format(readwrite_port))
+            delay_lh = parse_spice_list("timing", "delay_lh_{0}".format(readwrite_port))
+            slew_hl = parse_spice_list("timing", "slew_hl_{0}".format(readwrite_port))
+            slew_lh = parse_spice_list("timing", "slew_lh_{0}".format(readwrite_port))
+            delays = (delay_hl, delay_lh, slew_hl, slew_lh)
 
-        read0_power=parse_spice_list("timing", "read0_power")
-        write0_power=parse_spice_list("timing", "write0_power")
-        read1_power=parse_spice_list("timing", "read1_power")
-        write1_power=parse_spice_list("timing", "write1_power")
+            read0_power=parse_spice_list("timing", "read0_power_{0}".format(readwrite_port))
+            write0_power=parse_spice_list("timing", "write0_power_{0}".format(readwrite_port))
+            read1_power=parse_spice_list("timing", "read1_power_{0}".format(readwrite_port))
+            write1_power=parse_spice_list("timing", "write1_power_{0}".format(readwrite_port))
 
-        if not self.check_valid_delays(delays):
-            return (False,{})
+            if not self.check_valid_delays(delays):
+                return (False,{})
             
-        # For debug, you sometimes want to inspect each simulation.
-        #key=raw_input("press return to continue")
-
-        # Scale results to ns and mw, respectively
-        result = { "delay_hl" : delay_hl*1e9,
+            #This is to be changed later. Most of the characterization relies that these names are preserved or nothing will work.
+            #Therefore, changing these names would require changing names in most of delay.py functions and lib.py.
+            result.update({ "delay_hl" : delay_hl*1e9,
                    "delay_lh" : delay_lh*1e9,
                    "slew_hl" : slew_hl*1e9,
                    "slew_lh" : slew_lh*1e9,
                    "read0_power" : read0_power*1e3,
                    "read1_power" : read1_power*1e3,
                    "write0_power" : write0_power*1e3,
-                   "write1_power" : write1_power*1e3}
+                   "write1_power" : write1_power*1e3})
+            
+        # for read_port in self.read_ports:
+           # self.write_delay_measures_one_port(read_ports)
+        # for write_port in self.write_ports:
+           # self.write_delay_measures_one_port(write_ports)   
+        # For debug, you sometimes want to inspect each simulation.
+        #key=raw_input("press return to continue")
+
+        # Scale results to ns and mw, respectively
+        
             
         # The delay is from the negative edge for our SRAM
         return (True,result)
@@ -484,45 +506,50 @@ class delay():
         # Checking from not data_value to data_value
         self.write_delay_stimulus()
         self.stim.run_sim()
-        delay_hl = parse_spice_list("timing", "delay_hl")
-        delay_lh = parse_spice_list("timing", "delay_lh")
-        slew_hl = parse_spice_list("timing", "slew_hl")
-        slew_lh = parse_spice_list("timing", "slew_lh")
-        # if it failed or the read was longer than a period
-        if type(delay_hl)!=float or type(delay_lh)!=float or type(slew_lh)!=float or type(slew_hl)!=float:
-            debug.info(2,"Invalid measures: Period {0}, delay_hl={1}ns, delay_lh={2}ns slew_hl={3}ns slew_lh={4}ns".format(self.period,
-                                                                                                                           delay_hl,
-                                                                                                                           delay_lh,
-                                                                                                                           slew_hl,
-                                                                                                                           slew_lh))
-            return False
-        delay_hl *= 1e9
-        delay_lh *= 1e9
-        slew_hl *= 1e9
-        slew_lh *= 1e9
-        if delay_hl>self.period or delay_lh>self.period or slew_hl>self.period or slew_lh>self.period:
-            debug.info(2,"Too long delay/slew: Period {0}, delay_hl={1}ns, delay_lh={2}ns slew_hl={3}ns slew_lh={4}ns".format(self.period,
-                                                                                                                              delay_hl,
-                                                                                                                              delay_lh,
-                                                                                                                              slew_hl,
-                                                                                                                              slew_lh))
-            return False
-        else:
-            if not relative_compare(delay_lh,feasible_delay_lh,error_tolerance=0.05):
-                debug.info(2,"Delay too big {0} vs {1}".format(delay_lh,feasible_delay_lh))
+        #Only readwrite ports for now. Other to be added later.
+        for readwrite_port in self.readwrite_ports:
+            readwrite_port = readwrite_port.lower()
+            delay_hl = parse_spice_list("timing", "delay_hl_{0}".format(readwrite_port))
+            delay_lh = parse_spice_list("timing", "delay_lh_{0}".format(readwrite_port))
+            slew_hl = parse_spice_list("timing", "slew_hl_{0}".format(readwrite_port))
+            slew_lh = parse_spice_list("timing", "slew_lh_{0}".format(readwrite_port))
+
+            # if it failed or the read was longer than a period
+            if type(delay_hl)!=float or type(delay_lh)!=float or type(slew_lh)!=float or type(slew_hl)!=float:
+                debug.info(2,"Invalid measures: Period {0}, delay_hl={1}ns, delay_lh={2}ns slew_hl={3}ns slew_lh={4}ns".format(self.period,
+                                                                                                                               delay_hl,
+                                                                                                                               delay_lh,
+                                                                                                                               slew_hl,
+                                                                                                                               slew_lh))
                 return False
-            elif not relative_compare(delay_hl,feasible_delay_hl,error_tolerance=0.05):
-                debug.info(2,"Delay too big {0} vs {1}".format(delay_hl,feasible_delay_hl))
+            delay_hl *= 1e9
+            delay_lh *= 1e9
+            slew_hl *= 1e9
+            slew_lh *= 1e9
+            if delay_hl>self.period or delay_lh>self.period or slew_hl>self.period or slew_lh>self.period:
+                debug.info(2,"Too long delay/slew: Period {0}, delay_hl={1}ns, delay_lh={2}ns slew_hl={3}ns slew_lh={4}ns".format(self.period,
+                                                                                                                                  delay_hl,
+                                                                                                                                  delay_lh,
+                                                                                                                                  slew_hl,
+                                                                                                                                  slew_lh))
                 return False
+            else:
+                if not relative_compare(delay_lh,feasible_delay_lh,error_tolerance=0.05):
+                    debug.info(2,"Delay too big {0} vs {1}".format(delay_lh,feasible_delay_lh))
+                    return False
+                elif not relative_compare(delay_hl,feasible_delay_hl,error_tolerance=0.05):
+                    debug.info(2,"Delay too big {0} vs {1}".format(delay_hl,feasible_delay_hl))
+                    return False
 
 
-        #key=raw_input("press return to continue")
+            #key=raw_input("press return to continue")
 
-        debug.info(2,"Successful period {0}, delay_hl={1}ns, delay_lh={2}ns slew_hl={3}ns slew_lh={4}ns".format(self.period,
-                                                                                                                delay_hl,
-                                                                                                                delay_lh,
-                                                                                                                slew_hl,
-                                                                                                                slew_lh))
+            debug.info(2,"Successful period {0}, Port {5}, delay_hl={1}ns, delay_lh={2}ns slew_hl={3}ns slew_lh={4}ns".format(self.period,
+                                                                                                                    delay_hl,
+                                                                                                                    delay_lh,
+                                                                                                                    slew_hl,
+                                                                                                                    slew_lh,
+                                                                                                                    readwrite_port))
         return True
     
     def set_probe(self,probe_address, probe_data):

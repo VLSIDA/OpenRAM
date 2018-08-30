@@ -163,7 +163,7 @@ class VlsiLayout:
             angle = 0
         else:
             # MRG: Added negative to make CCW rotate 8/29/18
-            angle = math.radians(-1.0*float(rotateAngle))
+            angle = math.radians(float(rotateAngle))
         mRotate = matrix([[math.cos(angle),-math.sin(angle),0.0],
                           [math.sin(angle),math.cos(angle),0.0],
                           [0.0,0.0,1.0]])
@@ -314,6 +314,8 @@ class VlsiLayout:
         layoutToAddSref.coordinates = offsetInLayoutUnits
 
         if mirror or rotate:
+                
+            layoutToAddSref.transFlags = [0,0,0]
             # This is NOT the same as the order in the GDS spec!
             # It gets written out in gds2writer in the right order though.
             # transFlags = (mirror around x-axis, rotation, magnification)
@@ -325,8 +327,6 @@ class VlsiLayout:
                 rotate = 180.0
             if mirror=="R270":
                 rotate = 270.0
-                
-            layoutToAddSref.transFlags = [0,0,0]
             if rotate:
                 #layoutToAddSref.transFlags = [0,1,0]
                 layoutToAddSref.rotateAngle = rotate
@@ -337,7 +337,7 @@ class VlsiLayout:
                 layoutToAddSref.transFlags = [1,0,0]
                 layoutToAddSref.rotateAngle = 180.0
             if mirror == "xy" or mirror == "XY": #NOTE: "XY" option will override specified rotate angle
-                layoutToAddSref.transFlags = [0,1,0]
+                #layoutToAddSref.transFlags = [0,1,0]
                 layoutToAddSref.transFlags = [0,0,0]
                 layoutToAddSref.rotateAngle = 180.0
 
@@ -405,10 +405,10 @@ class VlsiLayout:
         if(len(text)%2 == 1):
             text = text + '\x00'
         textToAdd.textString = text
-        textToAdd.transFlags[1] = 1
+        textToAdd.transFlags = [0,0,1]
         textToAdd.magFactor = magnification
         if rotate:
-            textToAdd.transFlags[2] = 1 
+            textToAdd.transFlags = [0,1,1]
             textToAdd.rotateAngle = rotate
         #add the sref to the root structure
         self.structures[self.rootStructureName].texts.append(textToAdd)

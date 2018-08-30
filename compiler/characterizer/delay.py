@@ -379,17 +379,23 @@ class delay():
                 return (feasible_delay_lh, feasible_delay_hl)
 
     def parse_values(self, values_names, mult = 1.0):
-        """Parses values in the timing output file. Optional multiplier."""
+        """Parse multiple values in the timing output file. Optional multiplier."""
         values = []
+        all_values_floats = True
         for vname in values_names:
-            value = parse_spice_list("timing", vname.lower()) #ngspice converts all character to lower(), not tested on other sims
-            #Return an empty dict if any value is not a float
-            if type(value)!=float: #This check overrides the float check in check valid delays. I need to have a similar check here instead.
-                return {}
+            #ngspice converts all measure characters to lowercase, not tested on other sims
+            value = parse_spice_list("timing", vname.lower()) 
+            #Check if any of the values fail to parse
+            if type(value)!=float: 
+                all_values_floats = False
             values.append(value)
-        #Convert to nano before returning
-        return {values_names[i]:values[i]*mult for i in range(len(values))}
-
+            
+        #Apply Multiplier only if all values are floats. Let other check functions handle this error.
+        if all_values_floats:
+            return {values_names[i]:values[i]*mult for i in range(len(values))}
+        else:
+            {values_names[i]:values[i] for i in range(len(values))}
+            
     def run_delay_simulation(self):
         """
         This tries to simulate a period and checks if the result works. If
@@ -409,14 +415,20 @@ class delay():
             delay_names = ["delay_hl_{0}".format(port), "delay_lh_{0}".format(port),
                            "slew_hl_{0}".format(port), "slew_lh_{0}".format(port)]
             delays = self.parse_values(delay_names, 1e9) # scale delays to ns
-            if len(delays) > 0 and not self.check_valid_delays((delays[delay_names[0]],delays[delay_names[1]],delays[delay_names[2]],delays[delay_names[3]])):
+            if not self.check_valid_delays((delays[delay_names[0]],delays[delay_names[1]],delays[delay_names[2]],delays[delay_names[3]])):
                 return (False,{})
             result.update(delays)
             
             power_names = ["read0_power_{0}".format(port), "write0_power_{0}".format(port),
                            "read1_power_{0}".format(port), "write1_power_{0}".format(port)]
             powers = self.parse_values(power_names, 1e3) # scale power to mw
-            debug.check(len(powers) > 0,"Found valid delays but measured powers invalid.")
+            #Check that power parsing worked.
+            for key, value in powers.items():
+                if type(value)!=float:
+                    read_power_str = "{3}={0} {4}={1}".format(powers[power_names[0]], powers[power_names[2]], power_names[0], power_names[2])
+                    write_power_str = "{3}={0} {4}={1}".format(powers[power_names[1]], powers[power_names[3]], power_names[1], power_names[3])
+                    debug.error("Failed to Parse Power Values:\n\t\t{0}\n\t\t{1}".format(read_power_str,
+                                                                                                 write_power_str),1)
             result.update(powers)
     
         # for read_port in self.read_ports:
@@ -702,7 +714,7 @@ class delay():
                 debug.error("Non-binary address string",1)
             index += 1
     
-    def add_noop(self, address, data, port):
+    def add_noop_one_port(self, address, data, port):
         """ Add the control values for a noop to a single port. """
         #This is to be used as a helper function for the other add functions. Cycle and comments are omitted.         
         if port in self.web_values and port in self.csb_values:
@@ -729,7 +741,7 @@ class delay():
         self.t_current += self.period
         
         for port in self.readwrite_ports+self.read_ports+self.write_ports:
-            self.add_noop(address, data, port)
+            self.add_noop_one_port(address, data, port)
         
                  
     def add_read(self, comment, address, data, port):
@@ -752,10 +764,12 @@ class delay():
         
         self.add_address(address, port)
         
+        #This value is hard coded here. May want to make it a member variable or input to give control over this value
+        noop_data = "0"*self.word_size
         #Add noops to all other ports.
         for unselected_port in self.readwrite_ports+self.read_ports+self.write_ports:
             if unselected_port != port:
-                self.add_noop(address, data, unselected_port)
+                self.add_noop_one_port(address, noop_data, unselected_port)
 
     def add_write(self, comment, address, data, port):
         """ Add the control values for a write cycle. """
@@ -780,7 +794,7 @@ class delay():
         #Add noops to all other ports.
         for readwrite_port in self.readwrite_ports+self.read_ports+self.write_ports:
             if readwrite_port != port:
-                self.add_noop(address, data, readwrite_port)
+                self.add_noop_one_port(address, data, readwrite_port)
     
     def gen_test_cycles_one_port(self, read_port, write_port):
         """Intended but not implemented: Returns a list of key time-points [ns] of the waveform (each rising edge)

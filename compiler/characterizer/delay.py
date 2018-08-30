@@ -64,11 +64,11 @@ class delay():
             debug.error("Given probe_data is not an integer to specify a data bit",1)
         
         #Adding port options here which the characterizer cannot handle. Some may be added later like ROM
-        if OPTS.rw_ports == 0 and OPTS.w_ports == 0 and OPTS.r_ports == 0:
-            debug.error("Given port options cannot be characterized.",1)
-        if OPTS.rw_ports == 0 and OPTS.r_ports == 0:
+        if len(self.targ_readwrite_ports) == 0 and len(self.targ_write_ports) == 0 and len(self.targ_read_ports) == 0:
+            debug.error("No ports selected for characterization.",1)
+        if len(self.targ_readwrite_ports) == 0 and len(self.targ_read_ports) == 0:
            debug.error("Characterizer does not currently support SRAMs without read ports.",1)
-        if OPTS.rw_ports == 0 and OPTS.w_ports == 0:
+        if len(self.targ_readwrite_ports) == 0 and len(self.targ_write_ports) == 0:
            debug.error("Characterizer does not currently support SRAMs without write ports.",1)
 
     def write_generic_stimulus(self):
@@ -334,36 +334,55 @@ class delay():
 
         feasible_period = float(tech.spice["feasible_period"])
         #feasible_period = float(2.5)#What happens if feasible starting point is wrong?
-        time_out = 8
+        time_out = 9
         while True:
-            debug.info(1, "Trying feasible period: {0}ns".format(feasible_period))
             time_out -= 1
-            
             if (time_out <= 0):
                 debug.error("Timed out, could not find a feasible period.",2)
-            self.period = feasible_period
-            (success, results)=self.run_delay_simulation()
-            if not success:
-                feasible_period = 2 * feasible_period
-                continue
-            feasible_delay_lh = results["delay_lh"]
-            feasible_slew_lh = results["slew_lh"]
-            feasible_delay_hl = results["delay_hl"]
-            feasible_slew_hl = results["slew_hl"]
+            
+            #Clear any write target ports
+            self.targ_write_ports = []
+            success = False
+            
+            for port in self.readwrite_ports+self.read_ports:
+                debug.info(1, "Trying feasible period: {0}ns on Port {1}".format(feasible_period, port))
+                
+                self.period = feasible_period
+                #Test one port at a time. Using this weird logic to avoid two for loops. Will likely change later.
+                if port in self.readwrite_ports:
+                    self.targ_readwrite_ports = [port]
+                else:
+                    self.targ_read_ports = [port]
+                (success, results)=self.run_delay_simulation()
+                #Clear these target ports after every simulation
+                self.targ_readwrite_ports = []
+                self.targ_read_ports = []
+                
+                if not success:
+                    feasible_period = 2 * feasible_period
+                    break
+                feasible_delay_lh = results["delay_lh_{0}".format(port)]
+                feasible_slew_lh = results["slew_lh_{0}".format(port)]
+                feasible_delay_hl = results["delay_hl_{0}".format(port)]
+                feasible_slew_hl = results["slew_hl_{0}".format(port)]
 
-            delay_str = "feasible_delay {0:.4f}ns/{1:.4f}ns".format(feasible_delay_lh, feasible_delay_hl)
-            slew_str = "slew {0:.4f}ns/{1:.4f}ns".format(feasible_slew_lh, feasible_slew_hl)
-            debug.info(1, "Found feasible_period: {0}ns {1} {2} ".format(feasible_period,
-                                                                         delay_str,
-                                                                         slew_str))
-            self.period = feasible_period
-            return (feasible_delay_lh, feasible_delay_hl)
+                delay_str = "feasible_delay {0:.4f}ns/{1:.4f}ns".format(feasible_delay_lh, feasible_delay_hl)
+                slew_str = "slew {0:.4f}ns/{1:.4f}ns".format(feasible_slew_lh, feasible_slew_hl)
+                debug.info(1, "feasible_period passed for Port {3}: {0}ns {1} {2} ".format(feasible_period,
+                                                                             delay_str,
+                                                                             slew_str,
+                                                                             port))
+                
+            if success:
+                debug.info(1, "Found feasible_period: {0}ns".format(feasible_period))
+                self.period = feasible_period
+                return (feasible_delay_lh, feasible_delay_hl)
 
     def parse_values(self, values_names, mult = 1.0):
         """Parses values in the timing output file. Optional multiplier."""
         values = []
         for vname in values_names:
-            value = parse_spice_list("timing", vname)
+            value = parse_spice_list("timing", vname.lower()) #ngspice converts all character to lower(), not tested on other sims
             #Return an empty dict if any value is not a float
             if type(value)!=float: #This check overrides the float check in check valid delays. I need to have a similar check here instead.
                 return {}
@@ -384,47 +403,28 @@ class delay():
 
         self.stim.run_sim()
         
-        
         #Only readwrite ports for now. Other to be added later.
         for port in self.targ_readwrite_ports:
-            port = port.lower()
+            #port = port.lower()
             delay_names = ["delay_hl_{0}".format(port), "delay_lh_{0}".format(port),
                            "slew_hl_{0}".format(port), "slew_lh_{0}".format(port)]
-            delays = self.parse_values(delay_names, 1e9)
+            delays = self.parse_values(delay_names, 1e9) # scale delays to ns
             if len(delays) > 0 and not self.check_valid_delays((delays[delay_names[0]],delays[delay_names[1]],delays[delay_names[2]],delays[delay_names[3]])):
                 return (False,{})
             result.update(delays)
             
             power_names = ["read0_power_{0}".format(port), "write0_power_{0}".format(port),
                            "read1_power_{0}".format(port), "write1_power_{0}".format(port)]
-            powers = self.parse_values(delay_names, 1e3)
+            powers = self.parse_values(delay_names, 1e3) # scale power to mw
             debug.check(len(powers) > 0,"Found valid delays but measured powers invalid.")
             result.update(powers)
-            # read0_power=parse_spice_list("timing", "read0_power_{0}".format(readwrite_port))
-            # write0_power=parse_spice_list("timing", "write0_power_{0}".format(readwrite_port))
-            # read1_power=parse_spice_list("timing", "read1_power_{0}".format(readwrite_port))
-            # write1_power=parse_spice_list("timing", "write1_power_{0}".format(readwrite_port))
-
-            
-            #This is to be changed later. Most of the characterization relies that these names are preserved or nothing will work.
-            #Therefore, changing these names would require changing names in most of delay.py functions and lib.py.
-            # result.update({ "delay_hl" : delay_hl*1e9,
-                   # "delay_lh" : delay_lh*1e9,
-                   # "slew_hl" : slew_hl*1e9,
-                   # "slew_lh" : slew_lh*1e9,
-                   # "read0_power" : read0_power*1e3,
-                   # "read1_power" : read1_power*1e3,
-                   # "write0_power" : write0_power*1e3,
-                   # "write1_power" : write1_power*1e3})
-            
+    
         # for read_port in self.read_ports:
            # self.write_delay_measures_one_port(read_ports)
         # for write_port in self.write_ports:
            # self.write_delay_measures_one_port(write_ports)   
         # For debug, you sometimes want to inspect each simulation.
         #key=raw_input("press return to continue")
-
-        # Scale results to ns and mw, respectively
         
             
         # The delay is from the negative edge for our SRAM
@@ -520,7 +520,8 @@ class delay():
         This tries to simulate a period and checks if the result
         works. If it does and the delay is within 5% still, it returns True.
         """
-
+        #For debug purpose
+        self.targ_readwrite_ports = self.readwrite_ports
         # Checking from not data_value to data_value
         self.write_delay_stimulus()
         self.stim.run_sim()
@@ -838,7 +839,17 @@ class delay():
         
         self.add_noop_all_ports("Idle cycle (if read takes >1 cycle))",
                       self.probe_address,data_zeros)
-    
+                      
+    def get_availabe_port(self,get_read_port):
+        """Returns the first accessible read or write port"""
+        if len(self.readwrite_ports) > 0:
+            return self.readwrite_ports[0]      
+        if get_read_port and len(self.read_ports) > 0:
+            return self.read_ports[0]
+        elif not get_read_port and len(self.write_ports) > 0:
+            return self.write_ports[0]
+        return None
+        
     def create_test_cycles(self):
         """Returns a list of key time-points [ns] of the waveform (each rising edge)
         of the cycles to do a timing evaluation. The last time is the end of the simulation
@@ -872,11 +883,13 @@ class delay():
         #    self.addr_values.append([])
 
         #Temporary logic. Loop through all target readwrite ports with characterize logic.
-        cur_write_port = None
         for readwrite_port in self.targ_readwrite_ports:
             self.gen_test_cycles_one_port(readwrite_port, readwrite_port)
             cur_write_port = readwrite_port
-        cur_read_port = cur_write_port             
+        
+        #Get any available read/write port in case only a single write or read ports is being characterized.
+        cur_read_port = self.get_availabe_port(get_read_port=True)   
+        cur_write_port = self.get_availabe_port(get_read_port=False)          
         
         #Characterizing the remaining target ports. Not the final design.
         write_pos = 0

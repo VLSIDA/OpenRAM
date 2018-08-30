@@ -415,7 +415,7 @@ class delay():
             
             power_names = ["read0_power_{0}".format(port), "write0_power_{0}".format(port),
                            "read1_power_{0}".format(port), "write1_power_{0}".format(port)]
-            powers = self.parse_values(delay_names, 1e3) # scale power to mw
+            powers = self.parse_values(power_names, 1e3) # scale power to mw
             debug.check(len(powers) > 0,"Found valid delays but measured powers invalid.")
             result.update(powers)
     
@@ -642,15 +642,21 @@ class delay():
         char_data["min_period"] = round_time(min_period)
 
         # Make a list for each type of measurement to append results to
-        for m in ["delay_lh", "delay_hl", "slew_lh", "slew_hl", "read0_power",
-                  "read1_power", "write0_power", "write1_power", "leakage_power"]:
-            char_data[m]=[]
+        for port in self.readwrite_ports+self.read_ports+self.write_ports:
+            for m in ["delay_lh", "delay_hl", "slew_lh", "slew_hl", "read0_power",
+                    "read1_power", "write0_power", "write1_power", "leakage_power"]:
+                char_data["{0}_{1}".format(m,port)]=[]
 
         # 3) Find the leakage power of the trimmmed and  UNtrimmed arrays.
         (full_array_leakage, trim_array_leakage)=self.run_power_simulation()
         char_data["leakage_power"]=full_array_leakage
 
         # 4) At the minimum period, measure the delay, slew and power for all slew/load pairs.
+        
+        #Set the target simulation ports to all available ports. This make sims slower but failed sims exit anyways.
+        self.targ_readwrite_ports = self.readwrite_ports
+        self.targ_read_ports = self.read_ports
+        self.targ_write_ports = self.write_ports
         for slew in slews:
             for load in loads:
                 self.set_load_slew(load,slew)

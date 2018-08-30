@@ -859,27 +859,27 @@ class delay():
         #for i in range(self.addr_size):
         #    self.addr_values.append([])
 
-        #Temporary logic. Loop through all readwrite ports with characterize logic.
+        #Temporary logic. Loop through all target readwrite ports with characterize logic.
         cur_write_port = None
-        for readwrite_port in self.readwrite_ports:
+        for readwrite_port in self.targ_readwrite_ports:
             self.gen_test_cycles_one_port(readwrite_port, readwrite_port)
             cur_write_port = readwrite_port
         cur_read_port = cur_write_port             
         
-        #This is added only for testing purposes. Should be change later. Characterizing the remaining ports.
+        #Characterizing the remaining target ports. Not the final design.
         write_pos = 0
         read_pos = 0
         while True:
             #Exit when all ports have been characterized
-            if write_pos >= len(self.write_ports) and read_pos >= len(self.read_ports):
+            if write_pos >= len(self.targ_write_ports) and read_pos >= len(self.targ_read_ports):
                 break
                 
-            #Select new write and/or read ports for the next cycle
-            if write_pos < len(self.write_ports):
-                cur_write_port = self.write_ports[write_pos]
+            #Select new write and/or read ports for the next cycle. Use previous port if none remaining.
+            if write_pos < len(self.targ_write_ports):
+                cur_write_port = self.targ_write_ports[write_pos]
                 write_pos+=1
-            if read_pos < len(self.read_ports):
-                cur_read_port = self.read_ports[read_pos]
+            if read_pos < len(self.targ_read_ports):
+                cur_read_port = self.targ_read_ports[read_pos]
                 read_pos+=1
             
             #Add test cycle of read/write port pair. One port could have been used already, but the other has not.
@@ -966,13 +966,19 @@ class delay():
             
         
     def gen_port_names(self):
-        """Generates the port names to be used in characterization"""
+        """Generates the port names to be used in characterization and sets default simulation target ports"""
         self.readwrite_ports = []
         self.write_ports = []
         self.read_ports = []
+        #Generate the port names
         for readwrite_port in range(OPTS.rw_ports):
             self.readwrite_ports.append("RWP{0}".format(readwrite_port))
         for write_port in range(OPTS.w_ports):
             self.write_ports.append("WP{0}".format(write_port))
         for read_port in range(OPTS.r_ports):
             self.read_ports.append("RP{0}".format(read_port))
+        
+        #Set the default target ports for simulation. Default is all the ports.
+        self.targ_readwrite_ports = self.readwrite_ports
+        self.targ_read_ports = self.read_ports
+        self.targ_write_ports = self.write_ports

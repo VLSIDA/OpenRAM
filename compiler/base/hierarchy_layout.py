@@ -251,7 +251,7 @@ class layout(lef.lef):
             width=drc["minwidth_{0}".format(layer)]
         if height==None:
             height=drc["minwidth_{0}".format(layer)]
-        
+
         new_pin = pin_layout(text, [offset,offset+vector(width,height)], layer)
 
         try:
@@ -312,7 +312,7 @@ class layout(lef.lef):
                   position_list=coordinates, 
                   width=width)
 
-    def add_route(self, design, layers, coordinates):
+    def add_route(self, layers, coordinates):
         """Connects a routing path on given layer,coordinates,width. The
         layers are the (horizontal, via, vertical). add_wire assumes
         preferred direction routing whereas this includes layers in
@@ -390,13 +390,14 @@ class layout(lef.lef):
         elif rotate==90:
             corrected_offset = offset + vector(0.5*height,-0.5*width)
         elif rotate==180:
-            corrected_offset = offset + vector(-0.5*width,0.5*height)
+            corrected_offset = offset + vector(0.5*width,0.5*height)
         elif rotate==270:
             corrected_offset = offset + vector(-0.5*height,0.5*width)
         else:
             debug.error("Invalid rotation argument.",-1)
             
 
+        #print(rotate,offset,"->",corrected_offset)
         self.add_mod(via)
         inst=self.add_inst(name=via.name, 
                            mod=via, 
@@ -842,19 +843,21 @@ class layout(lef.lef):
                       width=xmax-xmin,
                       height=ymax-ymin)
 
-    def add_power_pin(self, name, loc, rotate=True):
+    def add_power_pin(self, name, loc, rotate=90):
         """ 
-        Add a single power pin from M3 own to M1
+        Add a single power pin from M3 down to M1 at the given center location
         """
         self.add_via_center(layers=("metal1", "via1", "metal2"),
                             offset=loc,
-                            rotate=90 if rotate else 0)
-        self.add_via_center(layers=("metal2", "via2", "metal3"),
-                            offset=loc,
-                            rotate=90 if rotate else 0)
+                            rotate=rotate)
+        via=self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                offset=loc,
+                                rotate=rotate)
         self.add_layout_pin_rect_center(text=name,
                                         layer="metal3",
-                                        offset=loc)
+                                        offset=loc,
+                                        width=via.width,
+                                        height=via.height)
         
     def add_power_ring(self, bbox):
         """

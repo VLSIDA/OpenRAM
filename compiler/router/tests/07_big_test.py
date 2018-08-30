@@ -1,58 +1,44 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 "Run a regresion test the library cells for DRC"
 
 import unittest
-from testutils import header
+from testutils import header,openram_test
 import sys,os
 sys.path.append(os.path.join(sys.path[0],"../.."))
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 import debug
-import calibre
 
 OPTS = globals.OPTS
 
-class big_test(unittest.TestCase):
+class big_test(openram_test):
     """
     Simplest two pin route test with no blockages using the pin locations instead of labels.
     """
 
     def runTest(self):
         globals.init_openram("config_{0}".format(OPTS.tech_name))
+        from gds_cell import gds_cell
+        from design import design
+        from signal_router import signal_router as router
 
-        import design
-        import router
-
-        class gdscell(design.design):
+        class routing(design, openram_test):
             """
             A generic GDS design that we can route on.
             """
             def __init__(self, name):
-                #design.design.__init__(self, name)
-                debug.info(2, "Create {0} object".format(name))
-                self.name = name
-                self.gds_file = "{0}/{1}.gds".format(os.path.dirname(os.path.realpath(__file__)),name)
-                self.sp_file = "{0}/{1}.sp".format(os.path.dirname(os.path.realpath(__file__)),name)
-                design.hierarchy_layout.layout.__init__(self, name)
-                design.hierarchy_spice.spice.__init__(self, name)
-            
-        class routing(design.design,unittest.TestCase):
-            """
-            A generic GDS design that we can route on.
-            """
-            def __init__(self, name):
-                design.design.__init__(self, name)
-                debug.info(2, "Create {0} object".format(name))
+                design.__init__(self, "top")
 
-                cell = gdscell(name)
+                # Instantiate a GDS cell with the design
+                gds_file = "{0}/{1}.gds".format(os.path.dirname(os.path.realpath(__file__)),name)
+                cell = gds_cell(name, gds_file)
                 self.add_inst(name=name,
                               mod=cell,
                               offset=[0,0])
                 self.connect_inst([])
                 
-                self.gdsname = "{0}/{1}.gds".format(os.path.dirname(os.path.realpath(__file__)),name)
-                r=router.router(self.gdsname)
-                layer_stack =("metal3","via2","metal2")
+                r=router(gds_file)
+                layer_stack =("metal1","via1","metal2")
                 connections=[('out_0_2', 'a_0_0'),
                              ('out_0_3', 'b_0_0'),
                              ('out_0_0', 'a_0_1'),
@@ -80,21 +66,12 @@ class big_test(unittest.TestCase):
         # This test only runs on scn3me_subm tech
         if OPTS.tech_name=="scn3me_subm":
             r = routing("07_big_test_{0}".format(OPTS.tech_name))
-            self.local_check(r)
+            self.local_drc_check(r)
         else:
             debug.warning("This test does not support technology {0}".format(OPTS.tech_name))
                 
         # fails if there are any DRC errors on any cells
         globals.end_openram()
-
-
-    def local_check(self, r):
-        tempgds = OPTS.openram_temp + "temp.gds"
-        r.gds_write(tempgds)
-        self.assertFalse(calibre.run_drc(r.name, tempgds))
-        os.remove(tempgds)
-
-
                              
 
 

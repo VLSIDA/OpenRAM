@@ -59,8 +59,8 @@ class geometry:
         We must then re-find the ll and ur. The master is the cell instance. """
         if OPTS.netlist_only:
             return
-        
         (ll,ur) = [vector(0,0),vector(self.width,self.height)]
+
         if mirror=="MX":
             ll=ll.scale(1,-1)
             ur=ur.scale(1,-1)

@@ -15,26 +15,23 @@ class sram_1bank_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        global verify
-        import verify
-
         from sram import sram
 
         debug.info(1, "Single bank, no column mux with control logic")
         a = sram(word_size=4, num_words=16, num_banks=1, name="sram1")
         self.local_check(a, final_verification=True)
 
-        debug.info(1, "Single bank two way column mux with control logic")
-        a = sram(word_size=4, num_words=32, num_banks=1, name="sram2")
-        self.local_check(a, final_verification=True)
+        # debug.info(1, "Single bank two way column mux with control logic")
+        # a = sram(word_size=4, num_words=32, num_banks=1, name="sram2")
+        # self.local_check(a, final_verification=True)
 
-        debug.info(1, "Single bank, four way column mux with control logic")
-        a = sram(word_size=4, num_words=64, num_banks=1, name="sram3")
-        self.local_check(a, final_verification=True)
+        # debug.info(1, "Single bank, four way column mux with control logic")
+        # a = sram(word_size=4, num_words=64, num_banks=1, name="sram3")
+        # self.local_check(a, final_verification=True)
 
-        debug.info(1, "Single bank, eight way column mux with control logic")
-        a = sram(word_size=2, num_words=128, num_banks=1, name="sram4")
-        self.local_check(a, final_verification=True)
+        # debug.info(1, "Single bank, eight way column mux with control logic")
+        # a = sram(word_size=2, num_words=128, num_banks=1, name="sram4")
+        # self.local_check(a, final_verification=True)
 
         globals.end_openram()
         

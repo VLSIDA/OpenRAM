@@ -338,7 +338,7 @@ class delay():
         while True:
             debug.info(1, "Trying feasible period: {0}ns".format(feasible_period))
             time_out -= 1
-
+            
             if (time_out <= 0):
                 debug.error("Timed out, could not find a feasible period.",2)
             self.period = feasible_period
@@ -359,6 +359,17 @@ class delay():
             self.period = feasible_period
             return (feasible_delay_lh, feasible_delay_hl)
 
+    def parse_values(self, values_names, mult = 1.0):
+        """Parses values in the timing output file. Optional multiplier."""
+        values = []
+        for vname in values_names:
+            value = parse_spice_list("timing", vname)
+            #Return an empty dict if any value is not a float
+            if type(value)!=float: #This check overrides the float check in check valid delays. I need to have a similar check here instead.
+                return {}
+            values.append(value)
+        #Convert to nano before returning
+        return {values_names[i]:values[i]*mult for i in range(len(values))}
 
     def run_delay_simulation(self):
         """
@@ -373,33 +384,38 @@ class delay():
 
         self.stim.run_sim()
         
+        
         #Only readwrite ports for now. Other to be added later.
-        for readwrite_port in self.readwrite_ports:
-            readwrite_port = readwrite_port.lower()
-            delay_hl = parse_spice_list("timing", "delay_hl_{0}".format(readwrite_port))
-            delay_lh = parse_spice_list("timing", "delay_lh_{0}".format(readwrite_port))
-            slew_hl = parse_spice_list("timing", "slew_hl_{0}".format(readwrite_port))
-            slew_lh = parse_spice_list("timing", "slew_lh_{0}".format(readwrite_port))
-            delays = (delay_hl, delay_lh, slew_hl, slew_lh)
-
-            read0_power=parse_spice_list("timing", "read0_power_{0}".format(readwrite_port))
-            write0_power=parse_spice_list("timing", "write0_power_{0}".format(readwrite_port))
-            read1_power=parse_spice_list("timing", "read1_power_{0}".format(readwrite_port))
-            write1_power=parse_spice_list("timing", "write1_power_{0}".format(readwrite_port))
-
-            if not self.check_valid_delays(delays):
+        for port in self.targ_readwrite_ports:
+            port = port.lower()
+            delay_names = ["delay_hl_{0}".format(port), "delay_lh_{0}".format(port),
+                           "slew_hl_{0}".format(port), "slew_lh_{0}".format(port)]
+            delays = self.parse_values(delay_names, 1e9)
+            if len(delays) > 0 and not self.check_valid_delays((delays[delay_names[0]],delays[delay_names[1]],delays[delay_names[2]],delays[delay_names[3]])):
                 return (False,{})
+            result.update(delays)
+            
+            power_names = ["read0_power_{0}".format(port), "write0_power_{0}".format(port),
+                           "read1_power_{0}".format(port), "write1_power_{0}".format(port)]
+            powers = self.parse_values(delay_names, 1e3)
+            debug.check(len(powers) > 0,"Found valid delays but measured powers invalid.")
+            result.update(powers)
+            # read0_power=parse_spice_list("timing", "read0_power_{0}".format(readwrite_port))
+            # write0_power=parse_spice_list("timing", "write0_power_{0}".format(readwrite_port))
+            # read1_power=parse_spice_list("timing", "read1_power_{0}".format(readwrite_port))
+            # write1_power=parse_spice_list("timing", "write1_power_{0}".format(readwrite_port))
+
             
             #This is to be changed later. Most of the characterization relies that these names are preserved or nothing will work.
             #Therefore, changing these names would require changing names in most of delay.py functions and lib.py.
-            result.update({ "delay_hl" : delay_hl*1e9,
-                   "delay_lh" : delay_lh*1e9,
-                   "slew_hl" : slew_hl*1e9,
-                   "slew_lh" : slew_lh*1e9,
-                   "read0_power" : read0_power*1e3,
-                   "read1_power" : read1_power*1e3,
-                   "write0_power" : write0_power*1e3,
-                   "write1_power" : write1_power*1e3})
+            # result.update({ "delay_hl" : delay_hl*1e9,
+                   # "delay_lh" : delay_lh*1e9,
+                   # "slew_hl" : slew_hl*1e9,
+                   # "slew_lh" : slew_lh*1e9,
+                   # "read0_power" : read0_power*1e3,
+                   # "read1_power" : read1_power*1e3,
+                   # "write0_power" : write0_power*1e3,
+                   # "write1_power" : write1_power*1e3})
             
         # for read_port in self.read_ports:
            # self.write_delay_measures_one_port(read_ports)
@@ -450,11 +466,7 @@ class delay():
                                                                                          delays_str,
                                                                                          slews_str))
             return False
-        # Scale delays to ns (they previously could have not been floats)
-        delay_hl *= 1e9
-        delay_lh *= 1e9
-        slew_hl *= 1e9
-        slew_lh *= 1e9
+            
         delays_str = "delay_hl={0} delay_lh={1}".format(delay_hl, delay_lh)
         slews_str = "slew_hl={0} slew_lh={1}".format(slew_hl,slew_lh)
         if delay_hl>self.period or delay_lh>self.period or slew_hl>self.period or slew_lh>self.period:

@@ -92,14 +92,6 @@ To specify a particular technology use "-t <techname>" such as
 "-t scn3me_subm". The default for a unit test is freepdk45 whereas
 the default for openram.py is specified in the configuration file.
 
-A regression daemon script that can be used with cron is included in
-a separate repository at https://github.com/mguthaus/openram-daemons
-```
-   regress_daemon.py
-   regress_daemon.sh
-```
-This updates a git repository, checks out code, and sends an email
-report with status information.
 
 # CREATING CUSTOM TECHNOLOGIES
 

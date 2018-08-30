@@ -1,0 +1,2 @@
+path sys +$::env(OPENRAM_TECH)/scn3me_subm/tech
+tech load SCN3ME_SUBM.30

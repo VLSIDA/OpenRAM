@@ -764,7 +764,7 @@ class delay():
         
         self.add_address(address, port)
         
-        #This value is hard coded here. May want to make it a member variable or input to give control over this value
+        #This value is hard coded here. Possibly change to member variable or set in add_noop_one_port
         noop_data = "0"*self.word_size
         #Add noops to all other ports.
         for unselected_port in self.readwrite_ports+self.read_ports+self.write_ports:
@@ -791,10 +791,12 @@ class delay():
         self.add_data(data,port)
         self.add_address(address,port)
         
+        #This value is hard coded here. Possibly change to member variable or set in add_noop_one_port
+        noop_data = "0"*self.word_size
         #Add noops to all other ports.
         for readwrite_port in self.readwrite_ports+self.read_ports+self.write_ports:
             if readwrite_port != port:
-                self.add_noop_one_port(address, data, readwrite_port)
+                self.add_noop_one_port(address, noop_data, readwrite_port)
     
     def gen_test_cycles_one_port(self, read_port, write_port):
         """Intended but not implemented: Returns a list of key time-points [ns] of the waveform (each rising edge)

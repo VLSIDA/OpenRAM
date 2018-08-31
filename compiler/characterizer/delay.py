@@ -512,6 +512,7 @@ class delay():
         target_period = 0.5 * (ub_period + lb_period)
         
         #Find the minimum period for all ports. Start at one port and perform binary search then use that delay as a starting position.
+        #For testing purposes, only checks readwrite ports.
         for port in self.readwrite_ports:
             # Binary search algorithm to find the min period (max frequency) of design
             time_out = 25

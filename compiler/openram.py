@@ -38,7 +38,8 @@ report_status()
 
 # Start importing design modules after we have the config file
 import verify
-import sram
+from sram import sram
+from sram_config import sram_config
 
 output_extensions = ["sp","v","lib"]
 if not OPTS.netlist_only:
@@ -51,11 +52,14 @@ print(*output_files,sep="\n")
 start_time = datetime.datetime.now()
 print_time("Start",start_time)
 
+c = sram_config(word_size=OPTS.word_size,
+                num_words=OPTS.num_words,
+                num_rw_ports=OPTS.num_rw_ports,
+                num_w_ports=OPTS.num_w_ports,
+                num_r_ports=OPTS.num_r_ports)
+
 # import SRAM test generation
-s = sram.sram(word_size=OPTS.word_size,
-              num_words=OPTS.num_words,
-              num_banks=OPTS.num_banks,
-              name=OPTS.output_name)
+s = sram(c, OPTS.output_name)
 
 # Output the files for the resulting SRAM
 s.save()

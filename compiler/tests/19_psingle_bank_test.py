@@ -21,64 +21,92 @@ class psingle_bank_test(openram_test):
 
         from bank import bank
         OPTS.bitcell = "pbitcell"
-        
-        # testing all port configurations (with no column mux) to verify layout between bitcell array and peripheral circuitry
-        OPTS.rw_ports = 2
-        OPTS.w_ports = 2
-        OPTS.r_ports = 2
+        from sram_config import sram_config
 
+        # testing all port configurations (with no column mux) to verify layout between bitcell array and peripheral circuitry
+        OPTS.num_rw_ports = 1
+        OPTS.num_w_ports = 1
+        OPTS.num_r_ports = 1
+        c = sram_config(word_size=4,
+                        num_words=16)
+        
+        c.words_per_row=1
         debug.info(1, "No column mux")
-        a = bank(word_size=4, num_words=16, words_per_row=1, num_banks=1, name="bank1_2rw_2w_2r_single")
+        name = "bank1_{0}rw_{1}w_{2}r_single".format(c.num_rw_ports, c.num_w_ports, c.num_r_ports)
+        a = bank(c, name=name)
         self.local_check(a)
         """
-        OPTS.rw_ports = 0
-        OPTS.w_ports = 2
-        OPTS.r_ports = 2
+        OPTS.num_rw_ports = c.num_rw_ports = 2
+        OPTS.num_w_ports = c.num_w_ports = 2
+        OPTS.num_r_ports = c.num_r_ports = 2
 
         debug.info(1, "No column mux")
-        a = bank(word_size=4, num_words=16, words_per_row=1, num_banks=1, name="bank1_0rw_2w_2r_single")
+        name = "bank1_{0}rw_{1}w_{2}r_single".format(c.num_rw_ports, c.num_w_ports, c.num_r_ports)
+        a = bank(c, name=name)
+        self.local_check(a)
+
+        OPTS.num_rw_ports = c.num_rw_ports = 0
+        OPTS.num_w_ports = c.num_w_ports = 2
+        OPTS.num_r_ports = c.num_r_ports = 2
+
+        debug.info(1, "No column mux")
+        name = "bank1_{0}rw_{1}w_{2}r_single".format(c.num_rw_ports, c.num_w_ports, c.num_r_ports)
+        a = bank(c, name=name)
         self.local_check(a)
         
-        OPTS.rw_ports = 2
-        OPTS.w_ports = 0
-        OPTS.r_ports = 2
+        OPTS.num_rw_ports = c.num_rw_ports = 2
+        OPTS.num_w_ports = c.num_w_ports = 0
+        OPTS.num_r_ports = c.num_r_ports = 2
 
         debug.info(1, "No column mux")
-        a = bank(word_size=4, num_words=16, words_per_row=1, num_banks=1, name="bank1_2rw_0w_2r_single")
+        name = "bank1_{0}rw_{1}w_{2}r_single".format(c.num_rw_ports, c.num_w_ports, c.num_r_ports)
+        a = bank(c, name=name)
         self.local_check(a)
         
-        OPTS.rw_ports = 2
-        OPTS.w_ports = 2
-        OPTS.r_ports = 0
+        OPTS.num_rw_ports = c.num_rw_ports = 2
+        OPTS.num_w_ports = c.num_w_ports = 2
+        OPTS.num_r_ports = c.num_r_ports = 0
 
         debug.info(1, "No column mux")
-        a = bank(word_size=4, num_words=16, words_per_row=1, num_banks=1, name="bank1_2rw_2w_0r_single")
+        name = "bank1_{0}rw_{1}w_{2}r_single".format(c.num_rw_ports, c.num_w_ports, c.num_r_ports)
+        a = bank(c, name=name)
         self.local_check(a)
         
-        OPTS.rw_ports = 2
-        OPTS.w_ports = 0
-        OPTS.r_ports = 0
+        OPTS.num_rw_ports = c.num_rw_ports = 2
+        OPTS.num_w_ports = c.num_w_ports = 0
+        OPTS.num_r_ports = c.num_r_ports = 0
 
         debug.info(1, "No column mux")
-        a = bank(word_size=4, num_words=16, words_per_row=1, num_banks=1, name="bank1_2rw_0w_0r_single")
+        name = "bank1_{0}rw_{1}w_{2}r_single".format(c.num_rw_ports, c.num_w_ports, c.num_r_ports)
+        a = bank(c, name=name)
         self.local_check(a)
         
         # testing with various column muxes
-        OPTS.rw_ports = 2
-        OPTS.w_ports = 2
-        OPTS.r_ports = 2
+        OPTS.num_rw_ports = c.num_rw_ports = 2
+        OPTS.num_w_ports = c.num_w_ports = 2
+        OPTS.num_r_ports = c.num_r_ports = 2
         
+        c.num_words=32
+        c.words_per_row=2
         debug.info(1, "Two way column mux")
-        a = bank(word_size=4, num_words=32, words_per_row=2, num_banks=1, name="bank2_single")
+        name = "bank2_{0}rw_{1}w_{2}r_single".format(c.num_rw_ports, c.num_w_ports, c.num_r_ports)
+        a = bank(c, name=name)
         self.local_check(a)
 
+        c.num_words=64
+        c.words_per_row=4
         debug.info(1, "Four way column mux")
-        a = bank(word_size=4, num_words=64, words_per_row=4, num_banks=1, name="bank3_single")
+        name = "bank3_{0}rw_{1}w_{2}r_single".format(c.num_rw_ports, c.num_w_ports, c.num_r_ports)
+        a = bank(c, name=name)
         self.local_check(a)
 
         # Eight way has a short circuit of one column mux select to gnd rail
+        c.word_size=2
+        c.num_words=128
+        c.words_per_row=8
         debug.info(1, "Eight way column mux")
-        a = bank(word_size=2, num_words=128, words_per_row=8, num_banks=1, name="bank4_single")
+        name = "bank4_{0}rw_{1}w_{2}r_single".format(c.num_rw_ports, c.num_w_ports, c.num_r_ports)
+        a = bank(c, name=name)
         self.local_check(a)
         """
         

@@ -3,7 +3,7 @@ import datetime
 import getpass
 import debug
 from globals import OPTS, print_time
-
+from sram_config import sram_config
     
 class sram():
     """
@@ -12,31 +12,31 @@ class sram():
     results.
     We can later add visualizer and other high-level functions as needed.
     """
-    def __init__(self, word_size, num_words, num_banks, name):
+    def __init__(self, sram_config, name="sram"):
 
+        sram_config.set_local_config(self)
+        
         # reset the static duplicate name checker for unit tests
         # in case we create more than one SRAM
         from design import design
         design.name_map=[]
 
-        debug.info(2, "create sram of size {0} with {1} num of words".format(word_size, 
-                                                                             num_words))
+        debug.info(2, "create sram of size {0} with {1} num of words {2} banks".format(self.word_size, 
+                                                                                       self.num_words,
+                                                                                       self.num_banks))
         start_time = datetime.datetime.now()
 
         self.name = name
-        
-        if num_banks == 1:
-            from sram_1bank import sram_1bank
-            self.s=sram_1bank(word_size, num_words, name)
-        elif num_banks == 2:
-            from sram_2bank import sram_2bank
-            self.s=sram_2bank(word_size, num_words, name)            
-        elif num_banks == 4:
-            from sram_4bank import sram_4bank
-            self.s=sram_4bank(word_size, num_words, name)                        
+        if self.num_banks == 1:
+            from sram_1bank import sram_1bank as sram
+        elif self.num_banks == 2:
+            from sram_2bank import sram_2bank as sram
+        elif self.num_banks == 4:
+            from sram_4bank import sram_4bank as sram
         else:
             debug.error("Invalid number of banks.",-1)
-
+            
+        self.s = sram(sram_config, name)                        
         self.s.create_netlist()
         if not OPTS.netlist_only:
             self.s.create_layout()

@@ -16,6 +16,7 @@ and include its appropriate license.
 import os
 import re
 import time
+import shutil
 import debug
 from globals import OPTS
 import subprocess
@@ -34,10 +35,6 @@ def write_magic_script(cell_name, gds_name, extract=False):
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
     f.write("{} -dnull -noconsole << EOF\n".format(OPTS.drc_exe[1]))
-    f.write("path sys +{}tech\n".format(OPTS.openram_tech))
-    f.write("tech load SCN3ME_SUBM.30\n")
-    #gf.write("scalegrid 1 8\n")
-    #f.write("gds rescale no\n")
     f.write("gds polygon subcell true\n")
     f.write("gds warning default\n")
     f.write("gds read {}\n".format(gds_name))
@@ -118,6 +115,10 @@ def run_drc(cell_name, gds_name, extract=False):
 
     global num_drc_runs
     num_drc_runs += 1
+
+    # Copy .magicrc file into temp dir
+    shutil.copy(OPTS.openram_tech + "/mag_lib/.magicrc",
+                OPTS.openram_temp)
 
     write_magic_script(cell_name, gds_name, extract)
     

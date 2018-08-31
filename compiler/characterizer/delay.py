@@ -331,7 +331,8 @@ class delay():
         double the period until we find a valid period to use as a
         starting point. 
         """
-
+        feasible_delays_lh = {}
+        feasible_delays_hl = {}
         feasible_period = float(tech.spice["feasible_period"])
         #feasible_period = float(2.5)#What happens if feasible starting point is wrong?
         time_out = 9
@@ -364,8 +365,8 @@ class delay():
                     feasible_period = 2 * feasible_period
                     break
                 feasible_delay_lh = results["delay_lh_{0}".format(port)]
-                feasible_slew_lh = results["slew_lh_{0}".format(port)]
                 feasible_delay_hl = results["delay_hl_{0}".format(port)]
+                feasible_slew_lh = results["slew_lh_{0}".format(port)]
                 feasible_slew_hl = results["slew_hl_{0}".format(port)]
 
                 delay_str = "feasible_delay {0:.4f}ns/{1:.4f}ns".format(feasible_delay_lh, feasible_delay_hl)
@@ -374,11 +375,14 @@ class delay():
                                                                              delay_str,
                                                                              slew_str,
                                                                              port))
+                #Add feasible delays of each port to dict
+                feasible_delays_lh[port] = feasible_delay_lh
+                feasible_delays_hl[port] = feasible_delay_hl
                 
             if success:
                 debug.info(1, "Found feasible_period: {0}ns".format(feasible_period))
                 self.period = feasible_period
-                return (feasible_delay_lh, feasible_delay_hl)
+                return (feasible_delays_lh, feasible_delays_hl)
 
     def parse_values(self, values_names, mult = 1.0):
         """Parse multiple values in the timing output file. Optional multiplier."""
@@ -497,7 +501,7 @@ class delay():
         return True
         
 
-    def find_min_period(self, feasible_delay_lh, feasible_delay_hl):
+    def find_min_period(self, feasible_delays_lh, feasible_delays_hl):
         """
         Searches for the smallest period with output delays being within 5% of 
         long period. 
@@ -505,76 +509,64 @@ class delay():
 
         previous_period = ub_period = self.period
         lb_period = 0.0
+        target_period = 0.5 * (ub_period + lb_period)
+        
+        #Find the minimum period for all ports. Start at one port and perform binary search then use that delay as a starting position.
+        for port in self.readwrite_ports:
+            # Binary search algorithm to find the min period (max frequency) of design
+            time_out = 25
+            while True:
+                time_out -= 1
+                if (time_out <= 0):
+                    debug.error("Timed out, could not converge on minimum period.",2)
 
-        # Binary search algorithm to find the min period (max frequency) of design
-        time_out = 25
-        while True:
-            time_out -= 1
-            if (time_out <= 0):
-                debug.error("Timed out, could not converge on minimum period.",2)
+                self.period = target_period
+                debug.info(1, "MinPeriod Search: Port {3} {0}ns (ub: {1} lb: {2})".format(target_period,
+                                                                                 ub_period,
+                                                                                 lb_period,
+                                                                                 port))
 
-            target_period = 0.5 * (ub_period + lb_period)
-            self.period = target_period
-            debug.info(1, "MinPeriod Search: {0}ns (ub: {1} lb: {2})".format(target_period,
-                                                                             ub_period,
-                                                                             lb_period))
+                if self.try_period(feasible_delays_lh, feasible_delays_hl):
+                    ub_period = target_period
+                else:
+                    lb_period = target_period
 
-            if self.try_period(feasible_delay_lh, feasible_delay_hl):
-                ub_period = target_period
-            else:
-                lb_period = target_period
-                #debug.error("Lower bound "+str(target_period)+" caused a failed simulation.Exiting...",2)
-
-            if relative_compare(ub_period, lb_period, error_tolerance=0.05):
-                # ub_period is always feasible
-                return ub_period
-
-
-    def try_period(self, feasible_delay_lh, feasible_delay_hl):
+                if relative_compare(ub_period, lb_period, error_tolerance=0.05):
+                    # ub_period is always feasible. When done with a port, set the target period of the next port as the lower bound
+                    # and reset the upperbound
+                    target_period = lb_period = ub_period
+                    ub_period = previous_period
+                    break
+                
+                #Update target
+                target_period = 0.5 * (ub_period + lb_period)
+                
+        return target_period
+    def try_period(self, feasible_delays_lh, feasible_delays_hl):
         """ 
         This tries to simulate a period and checks if the result
         works. If it does and the delay is within 5% still, it returns True.
         """
         #For debug purpose
         self.targ_readwrite_ports = self.readwrite_ports
-        # Checking from not data_value to data_value
-        self.write_delay_stimulus()
-        self.stim.run_sim()
-        #Only readwrite ports for now. Other to be added later.
-        for readwrite_port in self.readwrite_ports:
-            readwrite_port = readwrite_port.lower()
-            delay_hl = parse_spice_list("timing", "delay_hl_{0}".format(readwrite_port))
-            delay_lh = parse_spice_list("timing", "delay_lh_{0}".format(readwrite_port))
-            slew_hl = parse_spice_list("timing", "slew_hl_{0}".format(readwrite_port))
-            slew_lh = parse_spice_list("timing", "slew_lh_{0}".format(readwrite_port))
+        # Run Delay simulation but Power results not used.
+        (success, results) = self.run_delay_simulation()
+        if not success:
+            return False
+        
+        #Check the values of target readwrite and read ports. Write ports do not produce delays in this current version
+        for port in self.targ_readwrite_ports+self.targ_read_ports:
+            delay_hl = results["delay_hl_{0}".format(port)]
+            delay_lh = results["delay_lh_{0}".format(port)]
+            slew_hl = results["slew_hl_{0}".format(port)]
+            slew_lh = results["slew_lh_{0}".format(port)]
 
-            # if it failed or the read was longer than a period
-            if type(delay_hl)!=float or type(delay_lh)!=float or type(slew_lh)!=float or type(slew_hl)!=float:
-                debug.info(2,"Invalid measures: Period {0}, delay_hl={1}ns, delay_lh={2}ns slew_hl={3}ns slew_lh={4}ns".format(self.period,
-                                                                                                                               delay_hl,
-                                                                                                                               delay_lh,
-                                                                                                                               slew_hl,
-                                                                                                                               slew_lh))
+            if not relative_compare(delay_lh,feasible_delays_lh[port],error_tolerance=0.05):
+                debug.info(2,"Delay too big {0} vs {1}".format(delay_lh,feasible_delays_lh[port]))
                 return False
-            delay_hl *= 1e9
-            delay_lh *= 1e9
-            slew_hl *= 1e9
-            slew_lh *= 1e9
-            if delay_hl>self.period or delay_lh>self.period or slew_hl>self.period or slew_lh>self.period:
-                debug.info(2,"Too long delay/slew: Period {0}, delay_hl={1}ns, delay_lh={2}ns slew_hl={3}ns slew_lh={4}ns".format(self.period,
-                                                                                                                                  delay_hl,
-                                                                                                                                  delay_lh,
-                                                                                                                                  slew_hl,
-                                                                                                                                  slew_lh))
+            elif not relative_compare(delay_hl,feasible_delays_hl[port],error_tolerance=0.05):
+                debug.info(2,"Delay too big {0} vs {1}".format(delay_hl,feasible_delays_hl[port]))
                 return False
-            else:
-                if not relative_compare(delay_lh,feasible_delay_lh,error_tolerance=0.05):
-                    debug.info(2,"Delay too big {0} vs {1}".format(delay_lh,feasible_delay_lh))
-                    return False
-                elif not relative_compare(delay_hl,feasible_delay_hl,error_tolerance=0.05):
-                    debug.info(2,"Delay too big {0} vs {1}".format(delay_hl,feasible_delay_hl))
-                    return False
-
 
             #key=raw_input("press return to continue")
 
@@ -583,7 +575,7 @@ class delay():
                                                                                                                     delay_lh,
                                                                                                                     slew_hl,
                                                                                                                     slew_lh,
-                                                                                                                    readwrite_port))
+                                                                                                                    port))
         return True
     
     def set_probe(self,probe_address, probe_data):
@@ -645,15 +637,20 @@ class delay():
         # 1) Find a feasible period and it's corresponding delays using the trimmed array.
         self.load=max(loads)
         self.slew=max(slews)
-        (feasible_delay_lh, feasible_delay_hl) = self.find_feasible_period()
-        debug.check(feasible_delay_lh>0,"Negative delay may not be possible")
-        debug.check(feasible_delay_hl>0,"Negative delay may not be possible")
+        (feasible_delays_lh, feasible_delays_hl) = self.find_feasible_period()
+        #Check all the delays
+        for k,v in feasible_delays_lh.items():
+            debug.check(v>0,"Negative delay may not be possible")
+        for k,v in feasible_delays_hl.items():
+            debug.check(v>0,"Negative delay may not be possible")
+
         
         # 2) Finds the minimum period without degrading the delays by X%
         self.set_load_slew(max(loads),max(slews))
-        min_period = self.find_min_period(feasible_delay_lh, feasible_delay_hl)
+        min_period = self.find_min_period(feasible_delays_lh, feasible_delays_hl)
         debug.check(type(min_period)==float,"Couldn't find minimum period.")
-        debug.info(1, "Min Period: {0}n with a delay of {1} / {2}".format(min_period, feasible_delay_lh, feasible_delay_hl))
+        debug.info(1, "Min Period Found: {0}ns".format(min_period))
+        #debug.info(1, "Min Period: {0}n with a delay of {1} / {2}".format(min_period, feasible_delay_lh, feasible_delay_hl))
         char_data["min_period"] = round_time(min_period)
 
         # Make a list for each type of measurement to append results to

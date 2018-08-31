@@ -27,14 +27,14 @@ class timing_sram_test(openram_test):
         if not OPTS.spice_exe:
             debug.error("Could not find {} simulator.".format(OPTS.spice_name),-1)
 
-        import sram
-        import tech
-        debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
-        s = sram.sram(word_size=OPTS.word_size,
-                      num_words=OPTS.num_words,
-                      num_banks=OPTS.num_banks,
-                      name="sram1")
+        from sram import sram
+        from sram_config import sram_config
+        c = sram_config(word_size=1,
+                        num_words=16,
+                        num_banks=1)
 
+        debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
+        s = sram(c, name="sram1")
 
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)

@@ -66,9 +66,9 @@ class delay():
         #Adding port options here which the characterizer cannot handle. Some may be added later like ROM
         if len(self.targ_readwrite_ports) == 0 and len(self.targ_write_ports) == 0 and len(self.targ_read_ports) == 0:
             debug.error("No ports selected for characterization.",1)
-        if len(self.targ_readwrite_ports) == 0 and len(self.targ_read_ports) == 0:
+        if len(self.readwrite_ports) == 0 and len(self.read_ports) == 0:
            debug.error("Characterizer does not currently support SRAMs without read ports.",1)
-        if len(self.targ_readwrite_ports) == 0 and len(self.targ_write_ports) == 0:
+        if len(self.readwrite_ports) == 0 and len(self.write_ports) == 0:
            debug.error("Characterizer does not currently support SRAMs without write ports.",1)
 
     def write_generic_stimulus(self):
@@ -291,7 +291,7 @@ class delay():
 
     def write_delay_measures(self):
         """
-        Write the measure statements to quantify the delay and power results for all ports.
+        Write the measure statements to quantify the delay and power results for all targeted ports.
         """
         self.sf.write("\n* Measure statements for delay and power\n")
 
@@ -300,12 +300,12 @@ class delay():
         for comment in self.cycle_comments:
             self.sf.write("* {}\n".format(comment))
             
-        for readwrite_port in self.readwrite_ports:
+        for readwrite_port in self.targ_readwrite_ports:
             self.write_delay_measures_read_port(readwrite_port)
             self.write_delay_measures_write_port(readwrite_port)
-        for read_port in self.read_ports:
+        for read_port in self.targ_read_ports:
            self.write_delay_measures_read_port(read_port)
-        for write_port in self.write_ports:
+        for write_port in self.targ_write_ports:
            self.write_delay_measures_write_port(write_port)
         
                                  
@@ -344,6 +344,8 @@ class delay():
             self.targ_write_ports = []
             success = False
             
+            #Loops through all the ports checks if the feasible period works. Everything restarts it if does not.
+            #Write ports do not produce delays which is why they are not included here.
             for port in self.readwrite_ports+self.read_ports:
                 debug.info(1, "Trying feasible period: {0}ns on Port {1}".format(feasible_period, port))
                 
@@ -368,7 +370,7 @@ class delay():
 
                 delay_str = "feasible_delay {0:.4f}ns/{1:.4f}ns".format(feasible_delay_lh, feasible_delay_hl)
                 slew_str = "slew {0:.4f}ns/{1:.4f}ns".format(feasible_slew_lh, feasible_slew_hl)
-                debug.info(1, "feasible_period passed for Port {3}: {0}ns {1} {2} ".format(feasible_period,
+                debug.info(2, "feasible_period passed for Port {3}: {0}ns {1} {2} ".format(feasible_period,
                                                                              delay_str,
                                                                              slew_str,
                                                                              port))
@@ -394,7 +396,7 @@ class delay():
         if all_values_floats:
             return {values_names[i]:values[i]*mult for i in range(len(values))}
         else:
-            {values_names[i]:values[i] for i in range(len(values))}
+            return {values_names[i]:values[i] for i in range(len(values))}
             
     def run_delay_simulation(self):
         """
@@ -409,36 +411,37 @@ class delay():
 
         self.stim.run_sim()
         
-        #Only readwrite ports for now. Other to be added later.
-        for port in self.targ_readwrite_ports:
-            #port = port.lower()
-            delay_names = ["delay_hl_{0}".format(port), "delay_lh_{0}".format(port),
-                           "slew_hl_{0}".format(port), "slew_lh_{0}".format(port)]
-            delays = self.parse_values(delay_names, 1e9) # scale delays to ns
-            if not self.check_valid_delays((delays[delay_names[0]],delays[delay_names[1]],delays[delay_names[2]],delays[delay_names[3]])):
-                return (False,{})
-            result.update(delays)
+        #Loop through all targeted ports and collect delays and powers. Logic kept to a single for loop to reduce code but logic is inefficient. Should be changed.
+        #Separating into 3 for loops would be efficient but look ugly.
+        for port in self.targ_readwrite_ports+self.targ_read_ports+self.targ_write_ports:
+            #Currently, write ports do not produce delays. Only the read ports.
+            if port not in self.targ_write_ports:
+                delay_names = ["delay_hl_{0}".format(port), "delay_lh_{0}".format(port),
+                               "slew_hl_{0}".format(port), "slew_lh_{0}".format(port)]
+                delays = self.parse_values(delay_names, 1e9) # scale delays to ns
+                if not self.check_valid_delays((delays[delay_names[0]],delays[delay_names[1]],delays[delay_names[2]],delays[delay_names[3]])):
+                    return (False,{})
+                result.update(delays)
             
-            power_names = ["read0_power_{0}".format(port), "write0_power_{0}".format(port),
-                           "read1_power_{0}".format(port), "write1_power_{0}".format(port)]
+            #Determine port type, inefficient logic.
+            power_names = []
+            if port in self.targ_readwrite_ports:
+                power_names = ["read0_power_{0}".format(port), "write0_power_{0}".format(port),
+                               "read1_power_{0}".format(port), "write1_power_{0}".format(port)]
+            elif port in self.targ_read_ports:
+                power_names = ["read0_power_{0}".format(port), "read1_power_{0}".format(port)]
+            else: #Write port
+                power_names = ["write0_power_{0}".format(port), "write1_power_{0}".format(port)]
+                
             powers = self.parse_values(power_names, 1e3) # scale power to mw
             #Check that power parsing worked.
             for key, value in powers.items():
                 if type(value)!=float:
                     read_power_str = "{3}={0} {4}={1}".format(powers[power_names[0]], powers[power_names[2]], power_names[0], power_names[2])
                     write_power_str = "{3}={0} {4}={1}".format(powers[power_names[1]], powers[power_names[3]], power_names[1], power_names[3])
-                    debug.error("Failed to Parse Power Values:\n\t\t{0}\n\t\t{1}".format(read_power_str,
-                                                                                                 write_power_str),1)
+                    debug.error("Failed to Parse Power Values:\n\t\t{0}".format(powers),1) #Printing the entire dict looks bad.
             result.update(powers)
-    
-        # for read_port in self.read_ports:
-           # self.write_delay_measures_one_port(read_ports)
-        # for write_port in self.write_ports:
-           # self.write_delay_measures_one_port(write_ports)   
-        # For debug, you sometimes want to inspect each simulation.
-        #key=raw_input("press return to continue")
-        
-            
+      
         # The delay is from the negative edge for our SRAM
         return (True,result)
 

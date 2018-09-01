@@ -64,11 +64,11 @@ class delay():
             debug.error("Given probe_data is not an integer to specify a data bit",1)
         
         #Adding port options here which the characterizer cannot handle. Some may be added later like ROM
-        if len(self.targ_readwrite_ports) == 0 and len(self.targ_write_ports) == 0 and len(self.targ_read_ports) == 0:
+        if len(self.targ_write_ports) == 0 and len(self.targ_read_ports) == 0:
             debug.error("No ports selected for characterization.",1)
-        if len(self.readwrite_ports) == 0 and len(self.read_ports) == 0:
+        if len(self.read_ports) == 0:
            debug.error("Characterizer does not currently support SRAMs without read ports.",1)
-        if len(self.readwrite_ports) == 0 and len(self.write_ports) == 0:
+        if len(self.write_ports) == 0:
            debug.error("Characterizer does not currently support SRAMs without write ports.",1)
 
     def write_generic_stimulus(self):
@@ -82,16 +82,13 @@ class delay():
         self.sf.write("\n* Instantiation of the SRAM\n")
         self.stim.inst_sram(abits=self.addr_size, 
                             dbits=self.word_size, 
-                            port_names=(self.readwrite_ports,self.read_ports,self.write_ports),
+                            port_info=(self.total_port_num,self.readwrite_port_num,self.read_ports,self.write_ports),
                             sram_name=self.name)
 
         self.sf.write("\n* SRAM output loads\n")
-        for readwrite_output in range(OPTS.rw_ports):
+        for port in self.read_ports:
             for i in range(self.word_size):
-                self.sf.write("CD_RWP{0}{1} DOUT_RWP{0}[{1}] 0 {2}f\n".format(readwrite_output,i,self.load))
-        for read_port in range(OPTS.r_ports):
-            for i in range(self.word_size):
-                self.sf.write("CD_RP{0}{1} DOUT_RP{0}[{1}] 0 {2}f\n".format(read_port,i,self.load))
+                self.sf.write("CD{0}{1} DOUT{0}[{1}] 0 {2}f\n".format(port,i,self.load))
         
 
     def write_delay_stimulus(self):
@@ -215,11 +212,11 @@ class delay():
         # Trigger on the clk of the appropriate cycle
         trig_name = "clk"
         #Target name should be an input to the function or a member variable. That way, the ports can be singled out for testing
-        targ_name = "{0}".format("DOUT_{0}[{1}]".format(port,self.probe_data))
+        targ_name = "{0}".format("DOUT{0}[{1}]".format(port,self.probe_data))
         trig_val = targ_val = 0.5 * self.vdd_voltage
 
         # Delay the target to measure after the negative edge
-        self.stim.gen_meas_delay(meas_name="DELAY_HL_{0}".format(port),
+        self.stim.gen_meas_delay(meas_name="DELAY_HL{0}".format(port),
                                  trig_name=trig_name,
                                  targ_name=targ_name,
                                  trig_val=trig_val,
@@ -229,7 +226,7 @@ class delay():
                                  trig_td=self.cycle_times[self.measure_cycles["read0_{0}".format(port)]],
                                  targ_td=self.cycle_times[self.measure_cycles["read0_{0}".format(port)]])
 
-        self.stim.gen_meas_delay(meas_name="DELAY_LH_{0}".format(port),
+        self.stim.gen_meas_delay(meas_name="DELAY_LH{0}".format(port),
                                  trig_name=trig_name,
                                  targ_name=targ_name,
                                  trig_val=trig_val,
@@ -239,7 +236,7 @@ class delay():
                                  trig_td=self.cycle_times[self.measure_cycles["read1_{0}".format(port)]],
                                  targ_td=self.cycle_times[self.measure_cycles["read1_{0}".format(port)]])
 
-        self.stim.gen_meas_delay(meas_name="SLEW_HL_{0}".format(port),
+        self.stim.gen_meas_delay(meas_name="SLEW_HL{0}".format(port),
                                  trig_name=targ_name,
                                  targ_name=targ_name,
                                  trig_val=0.9*self.vdd_voltage,
@@ -249,7 +246,7 @@ class delay():
                                  trig_td=self.cycle_times[self.measure_cycles["read0_{0}".format(port)]],
                                  targ_td=self.cycle_times[self.measure_cycles["read0_{0}".format(port)]])
 
-        self.stim.gen_meas_delay(meas_name="SLEW_LH_{0}".format(port),
+        self.stim.gen_meas_delay(meas_name="SLEW_LH{0}".format(port),
                                  trig_name=targ_name,
                                  targ_name=targ_name,
                                  trig_val=0.1*self.vdd_voltage,
@@ -262,13 +259,13 @@ class delay():
         # add measure statements for power
         t_initial = self.cycle_times[self.measure_cycles["read0_{0}".format(port)]]
         t_final = self.cycle_times[self.measure_cycles["read0_{0}".format(port)]+1]
-        self.stim.gen_meas_power(meas_name="READ0_POWER_{0}".format(port),
+        self.stim.gen_meas_power(meas_name="READ0_POWER{0}".format(port),
                                  t_initial=t_initial,
                                  t_final=t_final)
 
         t_initial = self.cycle_times[self.measure_cycles["read1_{0}".format(port)]]
         t_final = self.cycle_times[self.measure_cycles["read1_{0}".format(port)]+1]
-        self.stim.gen_meas_power(meas_name="READ1_POWER_{0}".format(port),
+        self.stim.gen_meas_power(meas_name="READ1_POWER{0}".format(port),
                                  t_initial=t_initial,
                                  t_final=t_final)
         
@@ -279,13 +276,13 @@ class delay():
         # add measure statements for power
         t_initial = self.cycle_times[self.measure_cycles["write0_{0}".format(port)]]
         t_final = self.cycle_times[self.measure_cycles["write0_{0}".format(port)]+1]
-        self.stim.gen_meas_power(meas_name="WRITE0_POWER_{0}".format(port),
+        self.stim.gen_meas_power(meas_name="WRITE0_POWER{0}".format(port),
                                  t_initial=t_initial,
                                  t_final=t_final)
 
         t_initial = self.cycle_times[self.measure_cycles["write1_{0}".format(port)]]
         t_final = self.cycle_times[self.measure_cycles["write1_{0}".format(port)]+1]
-        self.stim.gen_meas_power(meas_name="WRITE1_POWER_{0}".format(port),
+        self.stim.gen_meas_power(meas_name="WRITE1_POWER{0}".format(port),
                                  t_initial=t_initial,
                                  t_final=t_final)
 
@@ -300,9 +297,6 @@ class delay():
         for comment in self.cycle_comments:
             self.sf.write("* {}\n".format(comment))
             
-        for readwrite_port in self.targ_readwrite_ports:
-            self.write_delay_measures_read_port(readwrite_port)
-            self.write_delay_measures_write_port(readwrite_port)
         for read_port in self.targ_read_ports:
            self.write_delay_measures_read_port(read_port)
         for write_port in self.targ_write_ports:
@@ -347,27 +341,23 @@ class delay():
             
             #Loops through all the ports checks if the feasible period works. Everything restarts it if does not.
             #Write ports do not produce delays which is why they are not included here.
-            for port in self.readwrite_ports+self.read_ports:
+            for port in self.read_ports:
                 debug.info(1, "Trying feasible period: {0}ns on Port {1}".format(feasible_period, port))
                 
                 self.period = feasible_period
                 #Test one port at a time. Using this weird logic to avoid two for loops. Will likely change later.
-                if port in self.readwrite_ports:
-                    self.targ_readwrite_ports = [port]
-                else:
-                    self.targ_read_ports = [port]
+                self.targ_read_ports = [port]
                 (success, results)=self.run_delay_simulation()
                 #Clear these target ports after every simulation
-                self.targ_readwrite_ports = []
                 self.targ_read_ports = []
                 
                 if not success:
                     feasible_period = 2 * feasible_period
                     break
-                feasible_delay_lh = results["delay_lh_{0}".format(port)]
-                feasible_delay_hl = results["delay_hl_{0}".format(port)]
-                feasible_slew_lh = results["slew_lh_{0}".format(port)]
-                feasible_slew_hl = results["slew_hl_{0}".format(port)]
+                feasible_delay_lh = results["delay_lh{0}".format(port)]
+                feasible_delay_hl = results["delay_hl{0}".format(port)]
+                feasible_slew_lh = results["slew_lh{0}".format(port)]
+                feasible_slew_hl = results["slew_hl{0}".format(port)]
 
                 delay_str = "feasible_delay {0:.4f}ns/{1:.4f}ns".format(feasible_delay_lh, feasible_delay_hl)
                 slew_str = "slew {0:.4f}ns/{1:.4f}ns".format(feasible_slew_lh, feasible_slew_hl)
@@ -415,37 +405,33 @@ class delay():
 
         self.stim.run_sim()
         
-        #Loop through all targeted ports and collect delays and powers. Logic kept to a single for loop to reduce code but logic is inefficient. Should be changed.
-        #Separating into 3 for loops would be efficient but look ugly.
-        for port in self.targ_readwrite_ports+self.targ_read_ports+self.targ_write_ports:
-            #Currently, write ports do not produce delays. Only the read ports.
-            if port not in self.targ_write_ports:
-                delay_names = ["delay_hl_{0}".format(port), "delay_lh_{0}".format(port),
-                               "slew_hl_{0}".format(port), "slew_lh_{0}".format(port)]
-                delays = self.parse_values(delay_names, 1e9) # scale delays to ns
-                if not self.check_valid_delays((delays[delay_names[0]],delays[delay_names[1]],delays[delay_names[2]],delays[delay_names[3]])):
-                    return (False,{})
-                result.update(delays)
+        #Loop through all targeted ports and collect delays and powers. 
+        #Too much duplicate code here. Try reducing
+        for port in self.targ_read_ports:
+            delay_names = ["delay_hl{0}".format(port), "delay_lh{0}".format(port),
+                           "slew_hl{0}".format(port), "slew_lh{0}".format(port)]
+            delays = self.parse_values(delay_names, 1e9) # scale delays to ns
+            if not self.check_valid_delays((delays[delay_names[0]],delays[delay_names[1]],delays[delay_names[2]],delays[delay_names[3]])):
+                return (False,{})
+            result.update(delays)
             
-            #Determine port type, inefficient logic.
-            power_names = []
-            if port in self.targ_readwrite_ports:
-                power_names = ["read0_power_{0}".format(port), "write0_power_{0}".format(port),
-                               "read1_power_{0}".format(port), "write1_power_{0}".format(port)]
-            elif port in self.targ_read_ports:
-                power_names = ["read0_power_{0}".format(port), "read1_power_{0}".format(port)]
-            else: #Write port
-                power_names = ["write0_power_{0}".format(port), "write1_power_{0}".format(port)]
-                
+            power_names = ["read0_power{0}".format(port), "read1_power{0}".format(port)]
             powers = self.parse_values(power_names, 1e3) # scale power to mw
             #Check that power parsing worked.
-            for key, value in powers.items():
-                if type(value)!=float:
-                    read_power_str = "{3}={0} {4}={1}".format(powers[power_names[0]], powers[power_names[2]], power_names[0], power_names[2])
-                    write_power_str = "{3}={0} {4}={1}".format(powers[power_names[1]], powers[power_names[3]], power_names[1], power_names[3])
+            for name, power in powers.items():
+                if type(power)!=float:
                     debug.error("Failed to Parse Power Values:\n\t\t{0}".format(powers),1) #Printing the entire dict looks bad.
             result.update(powers)
-      
+        
+        for port in self.targ_write_ports:
+            power_names = ["write0_power{0}".format(port), "write1_power{0}".format(port)]
+            powers = self.parse_values(power_names, 1e3) # scale power to mw
+            #Check that power parsing worked.
+            for name, power in powers.items():
+                if type(power)!=float:
+                    debug.error("Failed to Parse Power Values:\n\t\t{0}".format(powers),1) #Printing the entire dict looks bad.
+            result.update(powers)
+            
         # The delay is from the negative edge for our SRAM
         return (True,result)
 
@@ -512,17 +498,18 @@ class delay():
         target_period = 0.5 * (ub_period + lb_period)
         
         #Find the minimum period for all ports. Start at one port and perform binary search then use that delay as a starting position.
-        #For testing purposes, only checks readwrite ports.
-        for port in self.readwrite_ports:
+        #For testing purposes, only checks read ports.
+        for port in self.read_ports:
             # Binary search algorithm to find the min period (max frequency) of design
             time_out = 25
+            self.targ_read_ports = [port]
             while True:
                 time_out -= 1
                 if (time_out <= 0):
                     debug.error("Timed out, could not converge on minimum period.",2)
 
                 self.period = target_period
-                debug.info(1, "MinPeriod Search: Port {3} {0}ns (ub: {1} lb: {2})".format(target_period,
+                debug.info(1, "MinPeriod Search Port {3}: {0}ns (ub: {1} lb: {2})".format(target_period,
                                                                                  ub_period,
                                                                                  lb_period,
                                                                                  port))
@@ -548,19 +535,17 @@ class delay():
         This tries to simulate a period and checks if the result
         works. If it does and the delay is within 5% still, it returns True.
         """
-        #For debug purpose
-        self.targ_readwrite_ports = self.readwrite_ports
         # Run Delay simulation but Power results not used.
         (success, results) = self.run_delay_simulation()
         if not success:
             return False
         
         #Check the values of target readwrite and read ports. Write ports do not produce delays in this current version
-        for port in self.targ_readwrite_ports+self.targ_read_ports:
-            delay_hl = results["delay_hl_{0}".format(port)]
-            delay_lh = results["delay_lh_{0}".format(port)]
-            slew_hl = results["slew_hl_{0}".format(port)]
-            slew_lh = results["slew_lh_{0}".format(port)]
+        for port in self.targ_read_ports:
+            delay_hl = results["delay_hl{0}".format(port)]
+            delay_lh = results["delay_lh{0}".format(port)]
+            slew_hl = results["slew_hl{0}".format(port)]
+            slew_lh = results["slew_lh{0}".format(port)]
 
             if not relative_compare(delay_lh,feasible_delays_lh[port],error_tolerance=0.05):
                 debug.info(2,"Delay too big {0} vs {1}".format(delay_lh,feasible_delays_lh[port]))
@@ -655,10 +640,10 @@ class delay():
         char_data["min_period"] = round_time(min_period)
 
         # Make a list for each type of measurement to append results to
-        for port in self.readwrite_ports+self.read_ports+self.write_ports:
+        for port in range(self.total_port_num):
             for m in ["delay_lh", "delay_hl", "slew_lh", "slew_hl", "read0_power",
                     "read1_power", "write0_power", "write1_power", "leakage_power"]:
-                char_data["{0}_{1}".format(m,port)]=[]
+                char_data["{0}{1}".format(m,port)]=[]
 
         # 3) Find the leakage power of the trimmmed and  UNtrimmed arrays.
         (full_array_leakage, trim_array_leakage)=self.run_power_simulation()
@@ -667,7 +652,6 @@ class delay():
         # 4) At the minimum period, measure the delay, slew and power for all slew/load pairs.
         
         #Set the target simulation ports to all available ports. This make sims slower but failed sims exit anyways.
-        self.targ_readwrite_ports = self.readwrite_ports
         self.targ_read_ports = self.read_ports
         self.targ_write_ports = self.write_ports
         for slew in slews:
@@ -692,6 +676,7 @@ class delay():
     def add_data(self, data, port):
         """ Add the array of data values """
         debug.check(len(data)==self.word_size, "Invalid data word size.")
+        debug.check(port < len(self.data_values), "Port number cannot index data values.")
         index = 0
         for c in data:
             if c=="0":
@@ -717,20 +702,14 @@ class delay():
     
     def add_noop_one_port(self, address, data, port):
         """ Add the control values for a noop to a single port. """
-        #This is to be used as a helper function for the other add functions. Cycle and comments are omitted.         
-        if port in self.web_values and port in self.csb_values:
+        #This is to be used as a helper function for the other add functions. Cycle and comments are omitted.    
+        self.csb_values[port].append(1)
+        #If port is in both lists, add rw control signal. Condition indicates its a RW port.
+        if port < len(self.web_values):
             self.web_values[port].append(1)
-            self.csb_values[port].append(1)
-            self.add_data(data, port)
-        elif port in self.rpenb_values:
-            self.rpenb_values[port].append(1)
-        elif port in self.wpenb_values:
-            self.add_data(data, port)
-            self.wpenb_values[port].append(1)
-        else:
-            debug.error("Port selected with no control signals",1)
-            
         
+        if port in self.write_ports:
+            self.add_data(data,port)
         self.add_address(address, port)
     
     def add_noop_all_ports(self, comment, address, data):
@@ -740,64 +719,60 @@ class delay():
                                                                            comment))
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
-        
-        for port in self.readwrite_ports+self.read_ports+self.write_ports:
+         
+        for port in range(self.total_port_num):
             self.add_noop_one_port(address, data, port)
         
                  
     def add_read(self, comment, address, data, port):
         """ Add the control values for a read cycle. """
+        debug.check(port in self.read_ports, "Cannot add read cycle to a write port.")
         self.cycle_comments.append("Cycle {0:2d}\tPort {3}\t{1:5.2f}ns:\t{2}".format(len(self.cycle_comments),
                                                                            self.t_current,
                                                                            comment,
                                                                            port))
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
-
-        if port in self.web_values and port in self.csb_values:
+        self.csb_values[port].append(0)
+        #If port is in both lists, add rw control signal. Condition indicates its a RW port.
+        if port < len(self.web_values):
             self.web_values[port].append(1)
-            self.csb_values[port].append(0)
-            self.add_data(data, port)
-        elif port in self.rpenb_values:
-            self.rpenb_values[port].append(0)
-        else:
-            debug.error("Port selected with no control signals",1)
         
+        #If the port is also a readwrite then add data.
+        if port in self.write_ports:
+            self.add_data(data,port)
         self.add_address(address, port)
         
         #This value is hard coded here. Possibly change to member variable or set in add_noop_one_port
         noop_data = "0"*self.word_size
         #Add noops to all other ports.
-        for unselected_port in self.readwrite_ports+self.read_ports+self.write_ports:
+        for unselected_port in range(self.total_port_num):
             if unselected_port != port:
                 self.add_noop_one_port(address, noop_data, unselected_port)
 
     def add_write(self, comment, address, data, port):
         """ Add the control values for a write cycle. """
+        debug.check(port in self.write_ports, "Cannot add read cycle to a read port.")
         self.cycle_comments.append("Cycle {0:2d}\tPort {3}\t{1:5.2f}ns:\t{2}".format(len(self.cycle_comments),
                                                                            self.t_current,
                                                                            comment,
                                                                            port))
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
-        
-        if port in self.web_values and port in self.csb_values:
+        self.csb_values[port].append(0)
+        #If port is in both lists, add rw control signal. Condition indicates its a RW port.
+        if port < len(self.web_values):
             self.web_values[port].append(0)
-            self.csb_values[port].append(0)
-        elif port in self.wpenb_values:
-            self.wpenb_values[port].append(0)
-        else:
-            debug.error("Port selected with no control signals",1)
-            
+   
         self.add_data(data,port)
         self.add_address(address,port)
         
         #This value is hard coded here. Possibly change to member variable or set in add_noop_one_port
         noop_data = "0"*self.word_size
         #Add noops to all other ports.
-        for readwrite_port in self.readwrite_ports+self.read_ports+self.write_ports:
-            if readwrite_port != port:
-                self.add_noop_one_port(address, noop_data, readwrite_port)
+        for unselected_port in range(self.total_port_num):
+            if unselected_port != port:
+                self.add_noop_one_port(address, noop_data, unselected_port)
     
     def gen_test_cycles_one_port(self, read_port, write_port):
         """Intended but not implemented: Returns a list of key time-points [ns] of the waveform (each rising edge)
@@ -863,10 +838,8 @@ class delay():
         self.add_noop_all_ports("Idle cycle (if read takes >1 cycle))",
                       self.probe_address,data_zeros)
                       
-    def get_availabe_port(self,get_read_port):
-        """Returns the first accessible read or write port"""
-        if len(self.readwrite_ports) > 0:
-            return self.readwrite_ports[0]      
+    def get_available_port(self,get_read_port):
+        """Returns the first accessible read or write port. """   
         if get_read_port and len(self.read_ports) > 0:
             return self.read_ports[0]
         elif not get_read_port and len(self.write_ports) > 0:
@@ -886,33 +859,23 @@ class delay():
         self.cycle_times = []
         self.measure_cycles = {}
 
-        # Readwrite port Control logic signals each cycle
-        self.web_values = {readwrite_port:[] for readwrite_port in self.readwrite_ports}
-        self.csb_values = {readwrite_port:[] for readwrite_port in self.readwrite_ports}
+        # Control signals for ports. These are not the final signals and will likely be changed later.
+        #write enable bar for readwrite ports to control read or write
+        self.web_values = [[] for i in range(self.readwrite_port_num)]
+        #csb represents a basic "enable" signal that all ports have.
+        self.csb_values = [[] for i in range(self.total_port_num)]
         
-        #Most, values changes to dict, kind of bad for performance. Maybe change to lists
-        # Read port control signals
-        self.rpenb_values = {read_port:[] for read_port in self.read_ports}
-        
-        # Write port control signals
-        self.wpenb_values = {write_port:[] for write_port in self.write_ports}
-        
-        # Address and data values for each address/data bit. A dict of 2d lists of size #ports x bits x cycles.
-        self.data_values={port:[[] for i in range(self.word_size)] for port in self.readwrite_ports + self.write_ports}
-        #for i in range(self.word_size):
-        #    self.data_values.append([])
-        self.addr_values={port:[[] for i in range(self.addr_size)] for port in self.readwrite_ports + self.read_ports + self.write_ports}
-        #for i in range(self.addr_size):
-        #    self.addr_values.append([])
-
-        #Temporary logic. Loop through all target readwrite ports with characterize logic.
-        for readwrite_port in self.targ_readwrite_ports:
-            self.gen_test_cycles_one_port(readwrite_port, readwrite_port)
-            cur_write_port = readwrite_port
+        # Address and data values for each address/data bit. A dict of 3d lists of size #ports x bits x cycles.
+        self.data_values=[[[] for i in range(self.addr_size)]]*len(self.read_ports) 
+        self.addr_values=[[[] for i in range(self.addr_size)]]*self.total_port_num 
         
         #Get any available read/write port in case only a single write or read ports is being characterized.
-        cur_read_port = self.get_availabe_port(get_read_port=True)   
-        cur_write_port = self.get_availabe_port(get_read_port=False)          
+        cur_read_port = self.get_available_port(get_read_port=True)   
+        cur_write_port = self.get_available_port(get_read_port=False)          
+        
+        #These checks should be superceded by check_arguments which should have been called earlier, so this is a double check.
+        debug.check(cur_read_port != None, "Characterizer requires at least 1 read port")
+        debug.check(cur_write_port != None, "Characterizer requires at least 1 write port")
         
         #Characterizing the remaining target ports. Not the final design.
         write_pos = 0
@@ -931,7 +894,6 @@ class delay():
                 read_pos+=1
             
             #Add test cycle of read/write port pair. One port could have been used already, but the other has not.
-            #Above logic does not guarantee ports exists, but check_arguments should prevent that situation.
             self.gen_test_cycles_one_port(cur_read_port, cur_write_port)
 
     def analytical_delay(self,sram, slews, loads):
@@ -973,60 +935,50 @@ class delay():
 
     def gen_data(self):
         """ Generates the PWL data inputs for a simulation timing test. """
-        for readwrite_input in self.readwrite_ports:
+        for read_port in self.read_ports:
             for i in range(self.word_size):
-                sig_name="DIN_{0}[{1}] ".format(readwrite_input, i)
-                self.stim.gen_pwl(sig_name, self.cycle_times, self.data_values[readwrite_input][i], self.period, self.slew, 0.05)
-        for write_port in self.write_ports:
-            for i in range(self.word_size):
-                sig_name="DIN_{0}[{1}] ".format(write_port, i)
-                self.stim.gen_pwl(sig_name, self.cycle_times, self.data_values[write_port][i], self.period, self.slew, 0.05)
+                sig_name="DIN{0}[{1}] ".format(read_port, i)
+                self.stim.gen_pwl(sig_name, self.cycle_times, self.data_values[read_port][i], self.period, self.slew, 0.05)
 
     def gen_addr(self):
         """ 
         Generates the address inputs for a simulation timing test. 
         This alternates between all 1's and all 0's for the address.
         """
-        for readwrite_addr in self.readwrite_ports:
+        for port in range(self.total_port_num):
             for i in range(self.addr_size):
-                sig_name = "A_{0}[{1}]".format(readwrite_addr,i)
-                self.stim.gen_pwl(sig_name, self.cycle_times, self.addr_values[readwrite_addr][i], self.period, self.slew, 0.05)
-        for write_addr in self.write_ports:
-            for i in range(self.addr_size):
-                sig_name = "A_{0}[{1}]".format(write_addr,i)
-                self.stim.gen_pwl(sig_name, self.cycle_times, self.addr_values[write_addr][i], self.period, self.slew, 0.05)
-        for read_addr in self.read_ports:
-            for i in range(self.addr_size):
-                sig_name = "A_{0}[{1}]".format(read_addr,i)
-                self.stim.gen_pwl(sig_name, self.cycle_times, self.addr_values[read_addr][i], self.period, self.slew, 0.05)
-
+                sig_name = "A{0}[{1}]".format(port,i)
+                self.stim.gen_pwl(sig_name, self.cycle_times, self.addr_values[port][i], self.period, self.slew, 0.05)
 
     def gen_control(self):
         """ Generates the control signals """
-        #Multiport changes to control signals. This will most likely be changed at some point when control signals are better determined.
-        for readwrite_port in self.readwrite_ports:
-            self.stim.gen_pwl("CSB_{0}".format(readwrite_port), self.cycle_times, self.csb_values[readwrite_port], self.period, self.slew, 0.05)
-            self.stim.gen_pwl("WEB_{0}".format(readwrite_port), self.cycle_times, self.web_values[readwrite_port], self.period, self.slew, 0.05)
-        for read_port in self.read_ports:
-           self.stim.gen_pwl("ENB_{0}".format(read_port), self.cycle_times, self.rpenb_values[read_port], self.period, self.slew, 0.05)
-        for write_port in self.write_ports:
-           self.stim.gen_pwl("ENB_{0}".format(write_port), self.cycle_times, self.wpenb_values[write_port], self.period, self.slew, 0.05)
-            
+        for port in range(self.total_port_num):
+            self.stim.gen_pwl("CSB{0}".format(port), self.cycle_times, self.csb_values[port], self.period, self.slew, 0.05)
         
+        for readwrite_port in range(self.readwrite_port_num):
+            self.stim.gen_pwl("WEB{0}".format(readwrite_port), self.cycle_times, self.web_values[readwrite_port], self.period, self.slew, 0.05)
+            
+
     def gen_port_names(self):
         """Generates the port names to be used in characterization and sets default simulation target ports"""
-        self.readwrite_ports = []
         self.write_ports = []
         self.read_ports = []
-        #Generate the port names
-        for readwrite_port in range(OPTS.rw_ports):
-            self.readwrite_ports.append("RWP{0}".format(readwrite_port))
-        for write_port in range(OPTS.w_ports):
-            self.write_ports.append("WP{0}".format(write_port))
-        for read_port in range(OPTS.r_ports):
-            self.read_ports.append("RP{0}".format(read_port))
+        self.total_port_num = OPTS.rw_ports + OPTS.w_ports + OPTS.r_ports
+        
+        #save a member variable to avoid accessing global. readwrite ports have different control signals.
+        self.readwrite_port_num = OPTS.rw_ports
+        
+        #Generate the port names. readwrite ports are required to be added first for this to work.
+        for readwrite_port_num in range(OPTS.rw_ports):
+            self.read_ports.append(readwrite_port_num)
+            self.write_ports.append(readwrite_port_num)
+        #This placement is intentional. It makes indexing input data easier. See self.data_values
+        for read_port_num in range(OPTS.rw_ports, OPTS.r_ports):
+            self.read_ports.append(read_port_num)
+        for write_port_num in range(OPTS.rw_ports+OPTS.r_ports, OPTS.w_ports):
+            self.write_ports.append(write_port_num)
+        
         
         #Set the default target ports for simulation. Default is all the ports.
-        self.targ_readwrite_ports = self.readwrite_ports
         self.targ_read_ports = self.read_ports
         self.targ_write_ports = self.write_ports

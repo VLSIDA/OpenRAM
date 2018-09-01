@@ -30,51 +30,33 @@ class stimuli():
         self.device_models = tech.spice["fet_models"][self.process]
 
     
-    def inst_sram(self, abits, dbits, port_names, sram_name):
+    def inst_sram(self, abits, dbits, port_info, sram_name):
         """ Function to instatiate an SRAM subckt. """
         self.sf.write("Xsram ")
         
         #Un-tuple the port names. This was done to avoid passing them all as arguments. Could be improved still.
-        readwrite_ports = port_names[0]
-        read_ports = port_names[1]
-        write_ports = port_names[2]
-        for readwrite_input in readwrite_ports:
-            for i in range(dbits):
-                self.sf.write("DIN_{0}[{1}] ".format(readwrite_input, i))
+        #This should be generated from the pin list of the sram... change when multiport pins done.
+        (total_port_num,readwrite_num,read_ports,write_ports) = port_info
+
         for write_input in write_ports:
             for i in range(dbits):
-                self.sf.write("DIN_{0}[{1}] ".format(write_input, i))
+                self.sf.write("DIN{0}[{1}] ".format(write_input, i))
         
-        for readwrite_addr in readwrite_ports:
+        for port in range(total_port_num):
             for i in range(abits):
-                self.sf.write("A_{0}[{1}] ".format(readwrite_addr,i))
-        for write_addr in write_ports:
-            for i in range(abits):
-                self.sf.write("A_{0}[{1}] ".format(write_addr,i))
-        for read_addr in read_ports:
-            for i in range(abits):
-                self.sf.write("A_{0}[{1}] ".format(read_addr,i))     
+                self.sf.write("A{0}[{1}] ".format(port,i))    
 
         #These control signals assume 6t sram i.e. a single readwrite port. If multiple readwrite ports are used then add more
         #control signals. Not sure if this is correct, consider a temporary change until control signals for multiport are finalized.
-        for readwrite_port in readwrite_ports:
-            for i in tech.spice["control_signals"]:
-                self.sf.write("{0}_{1} ".format(i,readwrite_port))
-            
-        #Write control signals related to multiport. I do not know these entirely, so consider the signals temporary for now.
-        #The names should probably be defined in the tech file, but that has not happened for multiport yet.
-        for read_port in read_ports:
-            self.sf.write("ENB_{0} ".format(read_port))
-        for write_port in write_ports:
-            self.sf.write("ENB_{0} ".format(write_port))
+        for port in range(total_port_num):
+            self.sf.write("CSB{0} ".format(port))
+        for readwrite_port in range(readwrite_num):
+            self.sf.write("WEB{0} ".format(readwrite_port))
             
         self.sf.write("{0} ".format(tech.spice["clk"]))
-        for readwrite_output in readwrite_ports:
-            for i in range(dbits):
-                self.sf.write("DOUT_{0}[{1}] ".format(readwrite_output, i))
         for read_output in read_ports:
             for i in range(dbits):
-                self.sf.write("DOUT_{0}[{1}] ".format(read_output, i))
+                self.sf.write("DOUT{0}[{1}] ".format(read_output, i))
         self.sf.write("{0} {1} ".format(self.vdd_name, self.gnd_name))
         self.sf.write("{0}\n".format(sram_name))
 

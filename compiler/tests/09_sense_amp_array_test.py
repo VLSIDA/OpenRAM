@@ -17,7 +17,21 @@ class sense_amp_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         import sense_amp_array
 
+        # check sense amp array in single port
+        debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=2")
+        a = sense_amp_array.sense_amp_array(word_size=4, words_per_row=2)
+        self.local_check(a)
 
+        debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=4")
+        a = sense_amp_array.sense_amp_array(word_size=4, words_per_row=4)
+        self.local_check(a)
+        
+        # check sense amp array in multi-port
+        OPTS.bitcell = "pbitcell"
+        OPTS.rw_ports = 1
+        OPTS.w_ports = 1
+        OPTS.r_ports = 1
+        
         debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=2")
         a = sense_amp_array.sense_amp_array(word_size=4, words_per_row=2)
         self.local_check(a)

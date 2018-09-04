@@ -276,6 +276,11 @@ cifoutput
 style  lambda=0.30(p)
  scalefactor  30 15
 
+ # This is a custom section to add bounding boxes in OpenRAM
+ layer BB bb
+ labels bb
+ calma 63 0
+  
  layer CWN nwell,rnw
  bloat-or pdiff,rpd,pdc/a,pfet * 180
  bloat-or nsd,nsc/a * 90
@@ -1506,7 +1511,12 @@ cifinput
 style  lambda=0.30(p)
  scalefactor  30
 
- layer nwell CWN
+ # This is a custom section to add bounding boxes in OpenRAM
+ layer bb BB
+ labels BB
+ calma 63 0
+
+layer nwell CWN
  and-not CWNR
  and-not CTA
  labels CWN

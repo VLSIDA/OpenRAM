@@ -845,7 +845,6 @@ class layout(lef.lef):
         """ 
         Add a single power pin from M3 down to M1 at the given center location
         """
-        debug.info(0,"Adding power pin {0} at {1} rotate={2}".format(name, loc, rotate))
         self.add_via_center(layers=("metal1", "via1", "metal2"),
                             offset=loc,
                             rotate=rotate)

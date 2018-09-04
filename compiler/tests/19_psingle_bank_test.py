@@ -22,14 +22,29 @@ class psingle_bank_test(openram_test):
         from bank import bank
         OPTS.bitcell = "pbitcell"
         
+        # testing layout of bank using pbitcell with 1 RW port (a 6T-cell equivalent)
+        OPTS.rw_ports = 1
+        OPTS.w_ports = 0
+        OPTS.r_ports = 0
+        
+        debug.info(1, "No column mux")
+        a = bank(word_size=4, num_words=16, words_per_row=1, num_banks=1, name="bank1_1rw_0w_0r_single")
+        self.local_check(a)
+        
+        """
         # testing all port configurations (with no column mux) to verify layout between bitcell array and peripheral circuitry
         OPTS.rw_ports = 2
         OPTS.w_ports = 2
         OPTS.r_ports = 2
-
+        
+        # multiport can't generate layout yet on the bank level
+        OPTS.netlist_only = True
+        
         debug.info(1, "No column mux")
         a = bank(word_size=4, num_words=16, words_per_row=1, num_banks=1, name="bank1_2rw_2w_2r_single")
         self.local_check(a)
+        """
+        
         """
         OPTS.rw_ports = 0
         OPTS.w_ports = 2

@@ -19,6 +19,10 @@ class sram_base(design):
         self.sram_config = sram_config
         sram_config.set_local_config(self)
 
+        self.total_write = OPTS.num_rw_ports + OPTS.num_w_ports
+        self.total_read = OPTS.num_rw_ports + OPTS.num_r_ports
+        self.total_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
+
         self.bank_insts = []
 
 

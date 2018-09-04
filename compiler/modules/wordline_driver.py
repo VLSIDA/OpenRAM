@@ -50,6 +50,13 @@ class wordline_driver(design.design):
 
 
     def add_modules(self):
+        # This is just used for measurements,
+        # so don't add the module
+        from importlib import reload
+        c = reload(__import__(OPTS.bitcell))
+        self.mod_bitcell = getattr(c, OPTS.bitcell)
+        self.bitcell = self.mod_bitcell()
+
         self.inv = pinv()
         self.add_mod(self.inv)
 
@@ -59,11 +66,6 @@ class wordline_driver(design.design):
         self.nand2 = pnand2()
         self.add_mod(self.nand2)
         
-        from importlib import reload
-        c = reload(__import__(OPTS.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.bitcell)
-        self.bitcell = self.mod_bitcell()
-        self.add_mod(self.bitcell)
 
     def route_vdd_gnd(self):
         """ Add a pin for each row of vdd/gnd which are must-connects next level up. """

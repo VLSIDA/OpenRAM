@@ -57,10 +57,11 @@ class sense_amp_array(design.design):
         self.amp = self.mod_sense_amp("sense_amp")
         self.add_mod(self.amp)
 
+        # This is just used for measurements,
+        # so don't add the module
         c = reload(__import__(OPTS.bitcell))
         self.mod_bitcell = getattr(c, OPTS.bitcell)
         self.bitcell = self.mod_bitcell()
-        self.add_mod(self.bitcell)
         
     def create_sense_amp_array(self):
         self.local_insts = []

@@ -53,11 +53,6 @@ class delay_chain(design.design):
         self.add_pin("gnd")
 
     def add_modules(self):
-        from importlib import reload
-        c = reload(__import__(OPTS.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.bitcell)
-        self.bitcell = self.mod_bitcell()
-
         self.inv = pinv(route_output=False)
         self.add_mod(self.inv)
 

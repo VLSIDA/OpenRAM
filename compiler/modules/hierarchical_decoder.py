@@ -24,7 +24,8 @@ class hierarchical_decoder(design.design):
         from importlib import reload
         c = reload(__import__(OPTS.bitcell))
         self.mod_bitcell = getattr(c, OPTS.bitcell)
-        self.bitcell_height = self.mod_bitcell.height
+        b = self.mod_bitcell()
+        self.bitcell_height = b.height
 
         self.NAND_FORMAT = "DEC_NAND[{0}]"
         self.INV_FORMAT = "DEC_INV_[{0}]"

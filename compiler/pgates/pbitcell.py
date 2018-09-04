@@ -1,5 +1,4 @@
 import contact
-import pgate
 import design
 import debug
 from tech import drc, parameter, spice
@@ -7,14 +6,11 @@ from vector import vector
 from ptx import ptx
 from globals import OPTS
 
-class pbitcell(pgate.pgate):
+class pbitcell(design.design):
     """
     This module implements a parametrically sized multi-port bitcell,
     with a variable number of read/write, write, and read ports
     """
-
-    width = None
-    height = None
     
     def __init__(self):
         
@@ -23,18 +19,17 @@ class pbitcell(pgate.pgate):
         self.num_r_ports = OPTS.num_r_ports
         
         name = "pbitcell_{0}RW_{1}W_{2}R".format(self.num_rw_ports, self.num_w_ports, self.num_r_ports)
-        pgate.pgate.__init__(self, name)
+        # This is not a pgate because pgates depend on the bitcell height!
+        design.design.__init__(self, name)
         debug.info(2, "create a multi-port bitcell with {0} rw ports, {1} w ports and {2} r ports".format(self.num_rw_ports,
                                                                                                           self.num_w_ports,
                                                                                                           self.num_r_ports))  
 
         self.create_netlist()
-        if not OPTS.netlist_only:
-            self.create_layout()
+        # We must always create the bitcell layout because
+        # some transistor sizes in the other netlists depend on it
+        self.create_layout()
 
-        # FIXME: Why is this static set here?
-        pbitcell.width = self.width
-        pbitcell.height = self.height
         
     def create_netlist(self):
         self.add_pins()

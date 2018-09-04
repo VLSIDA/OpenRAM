@@ -16,8 +16,8 @@ class sram_4bank(sram_base):
     """
     Procedures specific to a four bank SRAM.
     """
-    def __init__(self, word_size, num_words, name):
-        sram_base.__init__(self, word_size, num_words, 4, name)
+    def __init__(self, sram_config, name):
+        sram_base.__init__(self, sram_config, name)
 
     def compute_bank_offsets(self):
         """ Compute the overall offsets for a four bank SRAM """

@@ -27,9 +27,9 @@ class wordline_driver_test(openram_test):
 
         # check wordline driver array in multi-port
         OPTS.bitcell = "pbitcell"
-        OPTS.rw_ports = 1
-        OPTS.w_ports = 0
-        OPTS.r_ports = 0
+        OPTS.num_rw_ports = 1
+        OPTS.num_w_ports = 0
+        OPTS.num_r_ports = 0
         
         debug.info(2, "Checking driver (multi-port case)")
         tx = wordline_driver.wordline_driver(rows=8)

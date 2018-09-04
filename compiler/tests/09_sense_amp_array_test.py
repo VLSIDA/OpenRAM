@@ -28,9 +28,9 @@ class sense_amp_test(openram_test):
         
         # check sense amp array in multi-port
         OPTS.bitcell = "pbitcell"
-        OPTS.rw_ports = 1
-        OPTS.w_ports = 0
-        OPTS.r_ports = 0
+        OPTS.num_rw_ports = 1
+        OPTS.num_w_ports = 0
+        OPTS.num_r_ports = 0
         
         debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=2 (multi-port case)")
         a = sense_amp_array.sense_amp_array(word_size=4, words_per_row=2)

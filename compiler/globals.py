@@ -204,26 +204,30 @@ def read_config(config_file, is_unit_test=True):
         # Note that if we re-read a config file, nothing will get read again!
         if not k in OPTS.__dict__ or k=="tech_name":
             OPTS.__dict__[k]=v
-    
+
+    # Massage the output path to be an absolute one
     if not OPTS.output_path.endswith('/'):
         OPTS.output_path += "/"
     if not OPTS.output_path.startswith('/'):
         OPTS.output_path = os.getcwd() + "/" + OPTS.output_path
     debug.info(1, "Output saved in " + OPTS.output_path)
 
+    # Remember if we are running unit tests to reduce output
     OPTS.is_unit_test=is_unit_test
 
     # If we are only generating a netlist, we can't do DRC/LVS
     if OPTS.netlist_only:
         OPTS.check_lvsdrc=False
-
+        
     # If config didn't set output name, make a reasonable default.
     if (OPTS.output_name == ""):
-        OPTS.output_name = "sram_{0}rw_{1}b_{2}w_{3}bank_{4}".format(OPTS.rw_ports,
-                                                                     OPTS.word_size,
-                                                                     OPTS.num_words,
-                                                                     OPTS.num_banks,
-                                                                     OPTS.tech_name)
+        OPTS.output_name = "sram_{0}b_{1}w_{2}bank_{3}rw_{4}w_{5}r_{6}".format(OPTS.word_size,
+                                                                               OPTS.num_words,
+                                                                               OPTS.num_banks,
+                                                                               OPTS.num_rw_ports,
+                                                                               OPTS.num_w_ports,
+                                                                               OPTS.num_r_ports,
+                                                                               OPTS.tech_name)
         
     # Don't delete the output dir, it may have other files!
     # make the directory if it doesn't exist

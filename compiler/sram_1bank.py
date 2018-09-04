@@ -99,18 +99,18 @@ class sram_1bank(sram_base):
 
         for i in range(self.word_size):
             dout_name = "dout0[{}]".format(i)
-            self.copy_layout_pin(self.bank_inst, dout_name, "DOUT[{}]".format(i))
+            self.copy_layout_pin(self.bank_inst, dout_name, "DOUT0[{}]".format(i))
 
         # Lower address bits
         for i in range(self.col_addr_size):
-            self.copy_layout_pin(self.col_addr_dff_inst, "din[{}]".format(i),"ADDR[{}]".format(i))
+            self.copy_layout_pin(self.col_addr_dff_inst, "din[{}]".format(i),"ADDR0[{}]".format(i))
         # Upper address bits
         for i in range(self.row_addr_size):
-            self.copy_layout_pin(self.row_addr_dff_inst, "din[{}]".format(i),"ADDR[{}]".format(i+self.col_addr_size))
+            self.copy_layout_pin(self.row_addr_dff_inst, "din[{}]".format(i),"ADDR0[{}]".format(i+self.col_addr_size))
 
         for i in range(self.word_size):
             din_name = "din[{}]".format(i)
-            self.copy_layout_pin(self.data_dff_inst, din_name, din_name.upper())
+            self.copy_layout_pin(self.data_dff_inst, din_name, "DIN0[{}]".format(i))
             
     def route(self):
         """ Route a single bank SRAM """

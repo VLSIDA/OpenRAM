@@ -81,7 +81,8 @@ class bank(design.design):
         # For more than one bank, we have a bank select and name
         # the signals gated_*.
         if self.num_banks > 1:
-            self.add_pin("bank_sel","INPUT")
+            for port in range(self.total_ports):
+                self.add_pin("bank_sel{}".format(port),"INPUT")
         for port in range(self.total_read):
             self.add_pin("s_en{0}".format(port), "INPUT")
         for port in range(self.total_write):
@@ -513,12 +514,12 @@ class bank(design.design):
 
         self.bank_select_inst = []
         for port in range(self.total_ports):
-            self.bank_select_inst.append(self.add_inst(name="bank_select",
+            self.bank_select_inst.append(self.add_inst(name="bank_select{}".format(port),
                                                        mod=self.bank_select))
             
             temp = []
             temp.extend(self.input_control_signals)
-            temp.append("bank_sel")
+            temp.append("bank_sel{}".format(port))
             temp.extend(self.control_signals)
             temp.extend(["vdd", "gnd"])
             self.connect_inst(temp)

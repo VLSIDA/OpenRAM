@@ -24,11 +24,14 @@ class sram_base(design):
 
     def add_pins(self):
         """ Add pins for entire SRAM. """
-
-        for i in range(self.word_size):
-            self.add_pin("DIN[{0}]".format(i),"INPUT")
-        for i in range(self.addr_size):
-            self.add_pin("ADDR[{0}]".format(i),"INPUT")
+    
+        for port in range(self.total_write):
+            for bit in range(self.word_size):
+                self.add_pin("DIN{0}[{1}]".format(port,bit),"INPUT")
+                
+        for port in range(self.total_ports):
+            for bit in range(self.addr_size):
+                self.add_pin("ADDR{0}[{1}]".format(port,bit),"INPUT")
 
         # These are used to create the physical pins too
         self.control_logic_inputs=self.control_logic.get_inputs()
@@ -36,8 +39,9 @@ class sram_base(design):
         
         self.add_pin_list(self.control_logic_inputs,"INPUT")
 
-        for i in range(self.word_size):
-            self.add_pin("DOUT[{0}]".format(i),"OUTPUT")
+        for port in range(self.total_read):
+            for bit in range(self.word_size):
+                self.add_pin("DOUT{0}[{1}]".format(port,bit),"OUTPUT")
         
         self.add_pin("vdd","POWER")
         self.add_pin("gnd","GROUND")
@@ -217,16 +221,16 @@ class sram_base(design):
 
         # Create the address and control flops (but not the clk)
         from dff_array import dff_array
-        self.row_addr_dff = dff_array(name="row_addr_dff", rows=self.row_addr_size, columns=1)
+        self.row_addr_dff = dff_array(name="row_addr_dff", rows=self.row_addr_size*self.total_ports, columns=1)
         self.add_mod(self.row_addr_dff)
 
         if self.col_addr_size > 0:
-            self.col_addr_dff = dff_array(name="col_addr_dff", rows=1, columns=self.col_addr_size)
+            self.col_addr_dff = dff_array(name="col_addr_dff", rows=1, columns=self.col_addr_size*self.total_ports)
             self.add_mod(self.col_addr_dff)
         else:
             self.col_addr_dff = None
 
-        self.data_dff = dff_array(name="data_dff", rows=1, columns=self.word_size)
+        self.data_dff = dff_array(name="data_dff", rows=1, columns=self.word_size*self.total_ports)
         self.add_mod(self.data_dff)
         
         # Create the bank module (up to four are instantiated)
@@ -247,20 +251,28 @@ class sram_base(design):
 
 
     def create_bank(self,bank_num):
-        """ Create a bank  """
+        """ Create a bank  """      
         self.bank_insts.append(self.add_inst(name="bank{0}".format(bank_num),
                                              mod=self.bank))
 
         temp = []
-        for i in range(self.word_size):
-            temp.append("DOUT[{0}]".format(i))
-        for i in range(self.word_size):
-            temp.append("BANK_DIN[{0}]".format(i))
-        for i in range(self.bank_addr_size):
-            temp.append("A[{0}]".format(i))
+        for port in range(self.total_read):
+            for bit in range(self.word_size):
+                temp.append("DOUT{0}[{1}]".format(port,bit))
+        for port in range(self.total_write):
+            for bit in range(self.word_size):
+                temp.append("BANK_DIN{0}[{1}]".format(port,bit))
+        for port in range(self.total_ports):
+            for bit in range(self.bank_addr_size):
+                temp.append("A{0}[{1}]".format(port,bit))
         if(self.num_banks > 1):
-            temp.append("bank_sel[{0}]".format(bank_num))
-        temp.extend(["s_en0", "w_en0", "clk_buf_bar","clk_buf" , "vdd", "gnd"])
+            for port in range(self.total_ports):
+                temp.append("bank_sel{0}[{1}]".format(port,bank_num))
+        for port in range(self.total_read):
+            temp.append("s_en{0}".format(port))
+        for port in range(self.total_write):
+            temp.append("w_en{0}".format(port))
+        temp.extend(["clk_buf_bar","clk_buf" , "vdd", "gnd"])
         self.connect_inst(temp)
 
         return self.bank_insts[-1]
@@ -305,9 +317,10 @@ class sram_base(design):
         # inputs, outputs/output/bar
         inputs = []
         outputs = []
-        for i in range(self.row_addr_size):
-            inputs.append("ADDR[{}]".format(i+self.col_addr_size))
-            outputs.append("A[{}]".format(i+self.col_addr_size))
+        for k in range(self.total_ports):
+            for i in range(self.row_addr_size):
+                inputs.append("ADDR{}[{}]".format(k,i+self.col_addr_size))
+                outputs.append("A{}[{}]".format(k,i+self.col_addr_size))
 
         self.connect_inst(inputs + outputs + ["clk_buf", "vdd", "gnd"])
         return inst
@@ -320,9 +333,10 @@ class sram_base(design):
         # inputs, outputs/output/bar
         inputs = []
         outputs = []
-        for i in range(self.col_addr_size):
-            inputs.append("ADDR[{}]".format(i))
-            outputs.append("A[{}]".format(i))
+        for k in range(self.total_ports):
+            for i in range(self.col_addr_size):
+                inputs.append("ADDR{}[{}]".format(k,i))
+                outputs.append("A{}[{}]".format(k,i))
 
         self.connect_inst(inputs + outputs + ["clk_buf", "vdd", "gnd"])
         return inst
@@ -335,9 +349,10 @@ class sram_base(design):
         # inputs, outputs/output/bar
         inputs = []
         outputs = []
-        for i in range(self.word_size):
-            inputs.append("DIN[{}]".format(i))
-            outputs.append("BANK_DIN[{}]".format(i))
+        for k in range(self.total_write):
+            for i in range(self.word_size):
+                inputs.append("DIN{}[{}]".format(k,i))
+                outputs.append("BANK_DIN{}[{}]".format(k,i))
 
         self.connect_inst(inputs + outputs + ["clk_buf", "vdd", "gnd"])
         return inst

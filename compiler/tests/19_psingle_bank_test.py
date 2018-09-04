@@ -20,21 +20,32 @@ class psingle_bank_test(openram_test):
         import verify
 
         from bank import bank
-        OPTS.bitcell = "pbitcell"
         from sram_config import sram_config
-
-        # testing all port configurations (with no column mux) to verify layout between bitcell array and peripheral circuitry
+        OPTS.bitcell = "pbitcell"
+        
+        # testing layout of bank using pbitcell with 1 RW port (a 6T-cell equivalent)
         OPTS.num_rw_ports = 1
-        OPTS.num_w_ports = 1
-        OPTS.num_r_ports = 1
+        OPTS.num_w_ports = 0
+        OPTS.num_r_ports = 0
         c = sram_config(word_size=4,
                         num_words=16)
         c.words_per_row=1
         debug.info(1, "No column mux")
+        a = bank(c, name="bank1_1rw_0w_0r_single")
+        self.local_check(a)
+        """
+        # multiport can't generate layout yet on the bank level
+        OPTS.netlist_only = True
+        
+        OPTS.num_rw_ports = 1
+        OPTS.num_w_ports = 1
+        OPTS.num_r_ports = 1
+        
+        debug.info(1, "No column mux")
         name = "bank1_{0}rw_{1}w_{2}r_single".format(c.num_rw_ports, c.num_w_ports, c.num_r_ports)
         a = bank(c, name=name)
         self.local_check(a)
-        """
+        
         OPTS.num_rw_ports = c.num_rw_ports = 2
         OPTS.num_w_ports = c.num_w_ports = 2
         OPTS.num_r_ports = c.num_r_ports = 2

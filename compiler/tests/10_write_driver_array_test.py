@@ -17,11 +17,26 @@ class write_driver_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         import write_driver_array
 
+        # check write driver array in single port
         debug.info(2, "Testing write_driver_array for columns=8, word_size=8")
         a = write_driver_array.write_driver_array(columns=8, word_size=8)
         self.local_check(a)
 
         debug.info(2, "Testing write_driver_array for columns=16, word_size=8")
+        a = write_driver_array.write_driver_array(columns=16, word_size=8)
+        self.local_check(a)
+        
+        # check write driver array in multi-port
+        OPTS.bitcell = "pbitcell"
+        OPTS.num_rw_ports = 1
+        OPTS.num_w_ports = 0
+        OPTS.num_r_ports = 0
+        
+        debug.info(2, "Testing write_driver_array for columns=8, word_size=8 (multi-port case)")
+        a = write_driver_array.write_driver_array(columns=8, word_size=8)
+        self.local_check(a)
+
+        debug.info(2, "Testing write_driver_array for columns=16, word_size=8 (multi-port case)")
         a = write_driver_array.write_driver_array(columns=16, word_size=8)
         self.local_check(a)
         

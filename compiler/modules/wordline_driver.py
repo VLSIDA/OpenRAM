@@ -58,6 +58,12 @@ class wordline_driver(design.design):
         
         self.nand2 = pnand2()
         self.add_mod(self.nand2)
+        
+        from importlib import reload
+        c = reload(__import__(OPTS.bitcell))
+        self.mod_bitcell = getattr(c, OPTS.bitcell)
+        self.bitcell = self.mod_bitcell()
+        self.add_mod(self.bitcell)
 
     def route_vdd_gnd(self):
         """ Add a pin for each row of vdd/gnd which are must-connects next level up. """
@@ -125,16 +131,20 @@ class wordline_driver(design.design):
         nand2_xoffset = inv1_xoffset + self.inv.width
         inv2_xoffset = nand2_xoffset + self.nand2.width
         
-        self.width = inv2_xoffset + self.inv.width
-        self.height = self.inv.height * self.rows
-
+        self.width = inv2_xoffset + self.inv.height
+        if self.bitcell.height > self.inv.height:
+            self.height = self.bitcell.height * self.rows
+            driver_height = self.bitcell.height
+        else:
+            self.height = self.inv.height * self.rows
+            driver_height = self.inv.height
         
         for row in range(self.rows):
             if (row % 2):
-                y_offset = self.inv.height*(row + 1)
+                y_offset = driver_height*(row + 1)
                 inst_mirror = "MX"
             else:
-                y_offset = self.inv.height*row
+                y_offset = driver_height*row
                 inst_mirror = "R0"
 
             inv1_offset = [inv1_xoffset, y_offset]

@@ -30,7 +30,11 @@ class sense_amp_array(design.design):
 
     def create_layout(self):
         self.height = self.amp.height
-        self.width = self.amp.width * self.word_size * self.words_per_row
+        
+        if self.bitcell.width > self.amp.width:
+            self.width = self.bitcell.width * self.word_size * self.words_per_row
+        else:
+            self.width = self.amp.width * self.word_size * self.words_per_row
 
         self.place_sense_amp_array()
         self.add_layout_pins()
@@ -53,6 +57,10 @@ class sense_amp_array(design.design):
         self.amp = self.mod_sense_amp("sense_amp")
         self.add_mod(self.amp)
 
+        c = reload(__import__(OPTS.bitcell))
+        self.mod_bitcell = getattr(c, OPTS.bitcell)
+        self.bitcell = self.mod_bitcell()
+        self.add_mod(self.bitcell)
         
     def create_sense_amp_array(self):
         self.local_insts = []
@@ -68,7 +76,10 @@ class sense_amp_array(design.design):
 
     def place_sense_amp_array(self):
             
-        amp_spacing = self.amp.width * self.words_per_row
+        if self.bitcell.width > self.amp.width:
+            amp_spacing = self.bitcell.width * self.words_per_row
+        else:
+            amp_spacing = self.amp.width * self.words_per_row
         for i in range(0,self.word_size):
             amp_position = vector(amp_spacing * i, 0)
             self.local_insts[i].place(amp_position)

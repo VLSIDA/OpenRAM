@@ -52,14 +52,13 @@ print(*output_files,sep="\n")
 start_time = datetime.datetime.now()
 print_time("Start",start_time)
 
+# Configure the SRAM organization
 c = sram_config(word_size=OPTS.word_size,
-                num_words=OPTS.num_words,
-                num_rw_ports=OPTS.num_rw_ports,
-                num_w_ports=OPTS.num_w_ports,
-                num_r_ports=OPTS.num_r_ports)
+                num_words=OPTS.num_words)
 
 # import SRAM test generation
-s = sram(c, OPTS.output_name)
+s = sram(sram_config=c,
+         name=OPTS.output_name)
 
 # Output the files for the resulting SRAM
 s.save()

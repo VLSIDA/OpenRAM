@@ -116,6 +116,11 @@ def init_openram(config_file, is_unit_test=True):
 
     import_tech()
 
+    init_paths()
+
+    # This depends on the tech, so do it after tech is loaded
+    init_config()
+
     # Reset the static duplicate name checker for unit tests.
     import hierarchy_design
     hierarchy_design.hierarchy_design.name_map=[]
@@ -229,15 +234,6 @@ def read_config(config_file, is_unit_test=True):
                                                                                OPTS.num_r_ports,
                                                                                OPTS.tech_name)
         
-    # Don't delete the output dir, it may have other files!
-    # make the directory if it doesn't exist
-    try:
-        os.makedirs(OPTS.output_path, 0o750)
-    except OSError as e:
-        if e.errno == 17:  # errno.EEXIST
-            os.chmod(OPTS.output_path, 0o750)
-    except:
-        debug.error("Unable to make output directory.",-1)
 
         
 def end_openram():
@@ -299,12 +295,6 @@ def setup_paths():
 
     cleanup_paths()
 
-    # make the directory if it doesn't exist
-    try:
-        os.makedirs(OPTS.openram_temp, 0o750)
-    except OSError as e:
-        if e.errno == 17:  # errno.EEXIST
-            os.chmod(OPTS.openram_temp, 0o750)
 
 
 def is_exe(fpath):
@@ -320,7 +310,37 @@ def find_exe(check_exe):
         if is_exe(exe):
             return exe
     return None
-        
+
+def init_paths():
+    """ Create the temp and output directory if it doesn't exist """
+
+    # make the directory if it doesn't exist
+    try:
+        os.makedirs(OPTS.openram_temp, 0o750)
+    except OSError as e:
+        if e.errno == 17:  # errno.EEXIST
+            os.chmod(OPTS.openram_temp, 0o750)
+    
+    # Don't delete the output dir, it may have other files!
+    # make the directory if it doesn't exist
+    try:
+        os.makedirs(OPTS.output_path, 0o750)
+    except OSError as e:
+        if e.errno == 17:  # errno.EEXIST
+            os.chmod(OPTS.output_path, 0o750)
+    except:
+        debug.error("Unable to make output directory.",-1)
+            
+def init_config():
+    """ Initialize the SRAM configurations. """
+    # Create the SRAM configuration
+    from sram_config import sram_config
+    OPTS.sram_config = sram_config(OPTS.word_size,
+                                   OPTS.num_words,
+                                   OPTS.num_banks)
+
+                                   
+    
 # imports correct technology directories for testing
 def import_tech():
     global OPTS

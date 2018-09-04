@@ -1,36 +1,96 @@
+import debug
+from math import log,sqrt,ceil
+from importlib import reload
 from globals import OPTS
 
 class sram_config:
     """ This is a structure that is used to hold the SRAM configuration options. """
     
-    def __init__(self, word_size, num_words, num_banks=1, num_rw_ports=OPTS.num_rw_ports, num_w_ports=OPTS.num_w_ports, num_r_ports=OPTS.num_r_ports):
+    def __init__(self, word_size, num_words, num_banks=1):
         self.word_size = word_size
         self.num_words = num_words
         self.num_banks = num_banks
-        self.num_rw_ports = num_rw_ports
-        self.num_w_ports = num_w_ports
-        self.num_r_ports = num_r_ports
 
         # This will get over-written when we determine the organization
-        self.num_banks = 1
         self.words_per_row = None
-        
-        self.total_write = num_rw_ports + num_w_ports
-        self.total_read = num_rw_ports + num_r_ports
-        self.total_ports = num_rw_ports + num_w_ports + num_r_ports
 
+        # Move the module names to this?
+        
 
     def set_local_config(self, module):
-        module.word_size = self.word_size
-        module.num_words = self.num_words
-        module.num_banks = self.num_banks
-        module.num_rw_ports = self.num_rw_ports
-        module.num_w_ports = self.num_w_ports
-        module.num_r_ports = self.num_r_ports
+        """ Copy all of the member variables to the given module for convenience """
         
-        module.words_per_row = self.words_per_row
-        
-        module.total_write = self.total_write
-        module.total_read = self.total_read
-        module.total_ports = self.total_ports
+        members = [attr for attr in dir(self) if not callable(getattr(self, attr)) and not attr.startswith("__")]
 
+        # Copy all the variables to the local module
+        for member in members:
+            setattr(module,member,getattr(self,member))
+
+    def compute_sizes(self):
+        """  Computes the organization of the memory using bitcell size by trying to make it square."""
+
+        c = reload(__import__(OPTS.bitcell))
+        self.mod_bitcell = getattr(c, OPTS.bitcell)
+        # pass a copy of myself for the port numbers
+        self.bitcell = self.mod_bitcell()
+        
+        
+        debug.check(self.num_banks in [1,2,4], "Valid number of banks are 1 , 2 and 4.")
+
+        self.num_words_per_bank = self.num_words/self.num_banks
+        self.num_bits_per_bank = self.word_size*self.num_words_per_bank
+        
+        # If this was hard coded, don't dynamically compute it!
+        if not self.words_per_row:
+            # Compute the area of the bitcells and estimate a square bank (excluding auxiliary circuitry)
+            self.bank_area = self.bitcell.width*self.bitcell.height*self.num_bits_per_bank
+            self.bank_side_length = sqrt(self.bank_area)
+
+            # Estimate the words per row given the height of the bitcell and the square side length
+            self.tentative_num_cols = int(self.bank_side_length/self.bitcell.width)
+            self.words_per_row = self.estimate_words_per_row(self.tentative_num_cols, self.word_size)
+
+            # Estimate the number of rows given the tentative words per row
+            self.tentative_num_rows = self.num_bits_per_bank / (self.words_per_row*self.word_size)
+            self.words_per_row = self.amend_words_per_row(self.tentative_num_rows, self.words_per_row)
+        
+        # Fix the number of columns and rows
+        self.num_cols = int(self.words_per_row*self.word_size)
+        self.num_rows = int(self.num_words_per_bank/self.words_per_row)
+
+        # Compute the address and bank sizes
+        self.row_addr_size = int(log(self.num_rows, 2))
+        self.col_addr_size = int(log(self.words_per_row, 2))
+        self.bank_addr_size = self.col_addr_size + self.row_addr_size
+        self.addr_size = self.bank_addr_size + int(log(self.num_banks, 2))
+
+        debug.info(1,"Words per row: {}".format(self.words_per_row))
+
+    def estimate_words_per_row(self,tentative_num_cols, word_size):
+        """
+        This provides a heuristic rounded estimate for the number of words
+        per row.
+        """
+
+        if tentative_num_cols < 1.5*word_size:
+            return 1
+        elif tentative_num_cols > 3*word_size:
+            return 4
+        else:
+            return 2
+
+    def amend_words_per_row(self,tentative_num_rows, words_per_row):
+        """
+        This picks the number of words per row more accurately by limiting
+        it to a minimum and maximum.
+        """
+        # Recompute the words per row given a hard max
+        if(not OPTS.is_unit_test and tentative_num_rows > 512):
+            debug.check(tentative_num_rows*words_per_row <= 2048, "Number of words exceeds 2048")
+            return int(words_per_row*tentative_num_rows/512)
+        # Recompute the words per row given a hard min
+        if(not OPTS.is_unit_test and tentative_num_rows < 16):
+            debug.check(tentative_num_rows*words_per_row >= 16, "Minimum number of rows is 16, but given {0}".format(tentative_num_rows))
+            return int(words_per_row*tentative_num_rows/16)
+            
+        return words_per_row

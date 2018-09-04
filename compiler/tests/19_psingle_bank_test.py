@@ -29,7 +29,6 @@ class psingle_bank_test(openram_test):
         OPTS.num_r_ports = 1
         c = sram_config(word_size=4,
                         num_words=16)
-        
         c.words_per_row=1
         debug.info(1, "No column mux")
         name = "bank1_{0}rw_{1}w_{2}r_single".format(c.num_rw_ports, c.num_w_ports, c.num_r_ports)

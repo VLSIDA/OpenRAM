@@ -22,27 +22,28 @@ class sram_2bank_test(openram_test):
                         num_words=32,
                         num_banks=2)
 
+        c.words_per_row=1
         debug.info(1, "Two bank, no column mux with control logic")
-        a = sram(c, name="sram1")
+        a = sram(c, "sram1")
         self.local_check(a, final_verification=True)
 
         c.num_words=64
         c.words_per_row=2
         debug.info(1, "Two bank two way column mux with control logic")
-        a = sram(c, name="sram2")
+        a = sram(c, "sram2")
         self.local_check(a, final_verification=True)
 
         c.num_words=128
         c.words_per_row=4
         debug.info(1, "Two bank, four way column mux with control logic")
-        a = sram(c, name="sram3")
+        a = sram(c, "sram3")
         self.local_check(a, final_verification=True)
 
         c.word_size=2
         c.num_words=256
         c.words_per_row=8
         debug.info(1, "Two bank, eight way column mux with control logic")
-        a = sram(c, name="sram4")
+        a = sram(c, "sram4")
         self.local_check(a, final_verification=True)
 
         globals.end_openram()

@@ -16,18 +16,18 @@ class pbitcell(pgate.pgate):
     width = None
     height = None
     
-    def __init__(self, num_rw_ports=OPTS.num_rw_ports, num_w_ports=OPTS.num_w_ports, num_r_ports=OPTS.num_r_ports):
+    def __init__(self):
         
-        name = "pbitcell_{0}RW_{1}W_{2}R".format(num_rw_ports, num_w_ports, num_r_ports)
+        self.num_rw_ports = OPTS.num_rw_ports
+        self.num_w_ports = OPTS.num_w_ports
+        self.num_r_ports = OPTS.num_r_ports
+        
+        name = "pbitcell_{0}RW_{1}W_{2}R".format(self.num_rw_ports, self.num_w_ports, self.num_r_ports)
         pgate.pgate.__init__(self, name)
-        debug.info(2, "create a multi-port bitcell with {0} rw ports, {1} w ports and {2} r ports".format(num_rw_ports,
-                                                                                                          num_w_ports,
-                                                                                                          num_r_ports))  
+        debug.info(2, "create a multi-port bitcell with {0} rw ports, {1} w ports and {2} r ports".format(self.num_rw_ports,
+                                                                                                          self.num_w_ports,
+                                                                                                          self.num_r_ports))  
 
-        self.num_rw_ports = num_rw_ports
-        self.num_w_ports = num_w_ports
-        self.num_r_ports = num_r_ports
-        
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()

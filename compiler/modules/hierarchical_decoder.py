@@ -130,7 +130,7 @@ class hierarchical_decoder(design.design):
             self.total_number_of_predecoder_outputs = 4*self.no_of_pre2x4 + 8*self.no_of_pre3x8
         else:
             self.total_number_of_predecoder_outputs = 0            
-            debug.error("Not enough rows for a hierarchical decoder. Non-hierarchical not supported yet.",-1)
+            debug.error("Not enough rows ({}) for a hierarchical decoder. Non-hierarchical not supported yet.".format(self.num_inputs),-1)
 
         # Calculates height and width of pre-decoder,
         if self.no_of_pre3x8 > 0:

@@ -18,12 +18,11 @@ class sram_1bank(sram_base):
     """
     Procedures specific to a one bank SRAM.
     """
-    def __init__(self, sram_config, name):
-        sram_base.__init__(self, sram_config, name)
+    def __init__(self, name, sram_config):
+        sram_base.__init__(self, name, sram_config)
         
 
     def create_netlist(self):
-        self.compute_sizes()
         sram_base.create_netlist(self)
         self.create_modules()
 

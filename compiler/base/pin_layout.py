@@ -36,16 +36,14 @@ class pin_layout:
     def __eq__(self, other):
         """ Check if these are the same pins for duplicate checks """
         if isinstance(other, self.__class__):
-            return (self.name==other.name and self.layer==other.layer and self.rect == other.rect)
+            return (self.layer==other.layer and self.rect == other.rect)
         else:
             return False    
 
     def overlaps(self, other):
         """ Check if a shape overlaps with a rectangle  """
-        ll = self.rect[0]
-        ur = self.rect[1]
-        oll = other.rect[0]
-        our = other.rect[1]
+        (ll,ur) = self.rect
+        (oll,our) = other.rect
         # Start assuming no overlaps
         x_overlaps = False
         y_overlaps = False

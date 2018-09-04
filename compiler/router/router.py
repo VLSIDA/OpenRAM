@@ -49,6 +49,12 @@ class router:
         """ If we want to route something besides the top-level cell."""
         self.top_name = top_name
 
+    def get_zindex(self,layer_num):
+        if layer_num==self.horiz_layer_number:
+            return 0
+        else:
+            return 1
+
     def set_layers(self, layers):
         """Allows us to change the layers that we are routing on. First layer
         is always horizontal, middle is via, and last is always
@@ -203,15 +209,20 @@ class router:
 
     def add_blockages(self):
         """ Add the blockages except the pin shapes """
+        # Skip pin shapes
+        all_pins = [x[0] for x in list(self.pins.values())]
+        
         for blockage in self.blockages:
-            # Skip pin shapes
-            all_pins = [x[0] for x in list(self.pins.values())]
             for pin in all_pins:
-                if blockage.overlaps(pin):
+                # If the blockage overlaps the pin and is on the same layer,
+                # it must be connected, so skip it.
+                if blockage==pin:
+                    debug.info(1,"Skipping blockage for pin {}".format(str(pin)))
                     break
             else:
+                debug.info(2,"Adding blockage {}".format(str(blockage)))
                 [ll,ur]=self.convert_blockage_to_tracks(blockage.rect)
-                zlayer = 0 if blockage.layer_num==self.horiz_layer_number else 1
+                zlayer = self.get_zindex(blockage.layer_num)
                 self.rg.add_blockage_shape(ll,ur,zlayer)
 
         
@@ -227,37 +238,6 @@ class router:
             rect = [ll,ur]
             new_pin = pin_layout("blockage{}".format(len(self.blockages)),rect,layer_num)
             self.blockages.append(new_pin)
-        
-        # for boundary in self.layout.structures[sref].boundaries:
-        #     coord_trans = self.translate_coordinates(boundary.coordinates, mirr, angle, xyShift)
-        #     shape_coords = self.min_max_coord(coord_trans)
-        #     shape = self.convert_shape_to_units(shape_coords)
-
-        #     # only consider the two layers that we are routing on
-        #     if boundary.drawingLayer in [self.vert_layer_number,self.horiz_layer_number]:
-        #         # store the blockages as pin layouts so they are easy to compare etc.
-        #         new_pin = pin_layout("blockage",shape,boundary.drawingLayer)
-        #         # avoid repeated blockage pins
-        #         if new_pin not in self.blockages:
-        #             self.blockages.append(new_pin)
-                
-
-        # # recurse given the mirror, angle, etc.
-        # for cur_sref in self.layout.structures[sref].srefs:
-        #     sMirr = 1
-        #     if cur_sref.transFlags[0] == True:
-        #         sMirr = -1
-        #     sAngle = math.radians(float(0))
-        #     if cur_sref.rotateAngle:
-        #         sAngle = math.radians(float(cur_sref.rotateAngle))
-        #     sAngle += angle
-        #     x = cur_sref.coordinates[0]
-        #     y = cur_sref.coordinates[1]
-        #     newX = (x)*math.cos(angle) - mirr*(y)*math.sin(angle) + xyShift[0] 
-        #     newY = (x)*math.sin(angle) + mirr*(y)*math.cos(angle) + xyShift[1] 
-        #     sxyShift = (newX, newY)
-            
-        #     self.get_blockages(cur_sref.sName, sMirr, sAngle, sxyShift)
 
 
     def convert_point_to_units(self,p):
@@ -282,9 +262,11 @@ class router:
         old_ur = ur
         ll=ll.scale(self.track_factor)
         ur=ur.scale(self.track_factor)
+        if ll[0]<45 and ll[0]>35 and ll[1]<46 and ll[1]>39:
+            print(ll,ur)
         ll = ll.floor()
         ur = ur.ceil()
-        if ll[0]<45 and ll[0]>35 and ll[1]<10 and ll[1]>0:
+        if ll[0]<45 and ll[0]>35 and ll[1]<46 and ll[1]>39:
             debug.info(0,"Converting [ {0} , {1} ]".format(old_ll,old_ur))
             debug.info(0,"Converted [ {0} , {1} ]".format(ll,ur))
         return [ll,ur]
@@ -296,9 +278,6 @@ class router:
         If a pin has insufficent overlap, it returns the blockage list to avoid it.
         """
         (ll,ur) = pin.rect
-        #ll = snap_to_grid(ll)
-        #ur = snap_to_grid(ur)
-
         #debug.info(1,"Converting [ {0} , {1} ]".format(ll,ur))
         
         # scale the size bigger to include neaby tracks
@@ -306,37 +285,40 @@ class router:
         ur=ur.scale(self.track_factor).ceil()
 
         # width depends on which layer it is
-        zindex = 0 if pin.layer_num==self.horiz_layer_number else 1
-        if zindex==0:
-            width = self.horiz_layer_width
-        else:
+        zindex=self.get_zindex(pin.layer_num)
+        if zindex:
             width = self.vert_layer_width            
+        else:
+            width = self.horiz_layer_width
 
         track_list = []
         block_list = []
-        # include +- 1 so when a shape is less than one grid
-        for x in range(ll[0]-1,ur[0]+1):
-            for y in range(ll[1]-1,ur[1]+1):
+
+        track_area = self.track_width*self.track_width
+        for x in range(ll[0],ur[0]):
+            for y in range(ll[1],ur[1]):
                 #debug.info(1,"Converting [ {0} , {1} ]".format(x,y))
-                # get the rectangular pin at a track location
-                # if dimension of overlap is greater than min width in any dimension,
-                # it will be an on-grid pin
-                rect = self.convert_track_to_pin(vector3d(x,y,zindex))
-                max_overlap=max(self.compute_overlap(pin.rect,rect))
 
                 # however, if there is not enough overlap, then if there is any overlap at all,
                 # we need to block it to prevent routes coming in on that grid
-                full_rect = self.convert_full_track_to_shape(vector3d(x,y,zindex))
-                full_overlap=max(self.compute_overlap(pin.rect,full_rect))
-                
+                full_rect = self.convert_track_to_shape(vector3d(x,y,zindex))
+                overlap_rect=self.compute_overlap(pin.rect,full_rect)
+                overlap_area = overlap_rect[0]*overlap_rect[1]
                 #debug.info(1,"Check overlap: {0} {1} max={2}".format(shape,rect,max_overlap))
-                if max_overlap >= width:
+                
+                # Assume if more than half the area, it is occupied
+                overlap_ratio = overlap_area/track_area
+                if overlap_ratio > 0.5:
                     track_list.append(vector3d(x,y,zindex))
-                elif full_overlap>0:
+                # otherwise, the pin may not be accessible, so block it
+                elif overlap_ratio > 0:
                     block_list.append(vector3d(x,y,zindex))
                 else:
                     debug.info(4,"No overlap: {0} {1} max={2}".format(pin.rect,rect,max_overlap))
-
+                print("H:",x,y)
+                if x>38 and x<42 and y>42 and y<45:
+                    print(pin)
+                    print(full_rect, overlap_rect, overlap_ratio)
         #debug.warning("Off-grid pin for {0}.".format(str(pin)))
         #debug.info(1,"Converted [ {0} , {1} ]".format(ll,ur))
         return (track_list,block_list)
@@ -381,7 +363,7 @@ class router:
 
         return [ll,ur]
 
-    def convert_full_track_to_shape(self,track):
+    def convert_track_to_shape(self,track):
         """ 
         Convert a grid point into a rectangle shape that occupies the entire centered
         track.
@@ -447,9 +429,8 @@ class router:
         grid_keys=self.rg.map.keys()
         partial_track=vector(0,self.track_width/6.0)
         for g in grid_keys:
-            continue # for now...
-            shape = self.convert_full_track_to_shape(g)
-            self.cell.add_rect(layer="boundary",
+            shape = self.convert_track_to_shape(g)
+            self.cell.add_rect(layer="text",
                                offset=shape[0],
                                width=shape[1].x-shape[0].x,
                                height=shape[1].y-shape[0].y)
@@ -481,7 +462,7 @@ class router:
                                 zoom=0.05)
 
         for blockage in self.blockages:
-            self.cell.add_rect(layer="boundary",
+            self.cell.add_rect(layer="blockage",
                                offset=blockage.ll(),
                                width=blockage.width(),
                                height=blockage.height())

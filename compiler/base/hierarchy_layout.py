@@ -379,12 +379,10 @@ class layout(lef.lef):
                               dimensions=size,
                               implant_type=implant_type,
                               well_type=well_type)
-
-        debug.check(mirror=="R0","Use rotate to rotate vias instead of mirror.")
-        
         height = via.height
         width = via.width
-
+        debug.check(mirror=="R0","Use rotate to rotate vias instead of mirror.")
+        
         if rotate==0:
             corrected_offset = offset + vector(-0.5*width,-0.5*height)
         elif rotate==90:
@@ -847,6 +845,7 @@ class layout(lef.lef):
         """ 
         Add a single power pin from M3 down to M1 at the given center location
         """
+        debug.info(0,"Adding power pin {0} at {1} rotate={2}".format(name, loc, rotate))
         self.add_via_center(layers=("metal1", "via1", "metal2"),
                             offset=loc,
                             rotate=rotate)

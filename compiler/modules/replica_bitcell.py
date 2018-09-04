@@ -10,7 +10,7 @@ class replica_bitcell(design.design):
     is a hand-made cell, so the layout and netlist should be available in
     the technology library. """
 
-    pin_names = ["BL", "BR", "WL", "vdd", "gnd"]
+    pin_names = ["bl", "br", "wl", "vdd", "gnd"]
     (width,height) = utils.get_libcell_size("replica_cell_6t", GDS["unit"], layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "replica_cell_6t", GDS["unit"], layer["boundary"])
 

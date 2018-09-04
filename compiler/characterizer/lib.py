@@ -26,16 +26,23 @@ class lib:
         
     def gen_port_names(self):
         """Generates the port names to be written to the lib file"""
-        self.readwrite_ports = []
+        #This is basically a copy and paste of whats in delay.py as well. Something more efficient should be done here.
         self.write_ports = []
         self.read_ports = []
-        #Generate the port names
-        for readwrite_port in range(OPTS.rw_ports):
-            self.readwrite_ports.append("RWP{0}".format(readwrite_port))
-        for write_port in range(OPTS.w_ports):
-            self.write_ports.append("WP{0}".format(write_port))
-        for read_port in range(OPTS.r_ports):
-            self.read_ports.append("RP{0}".format(read_port))
+        self.total_port_num = OPTS.rw_ports + OPTS.w_ports + OPTS.r_ports
+        
+        #save a member variable to avoid accessing global. readwrite ports have different control signals.
+        self.readwrite_port_num = OPTS.rw_ports
+        
+        #Generate the port names. readwrite ports are required to be added first for this to work.
+        for readwrite_port_num in range(OPTS.rw_ports):
+            self.read_ports.append(readwrite_port_num)
+            self.write_ports.append(readwrite_port_num)
+        #This placement is intentional. It makes indexing input data easier. See self.data_values
+        for read_port_num in range(OPTS.rw_ports, OPTS.r_ports):
+            self.read_ports.append(read_port_num)
+        for write_port_num in range(OPTS.rw_ports+OPTS.r_ports, OPTS.w_ports):
+            self.write_ports.append(write_port_num)
         
     def prepare_tables(self):
         """ Determine the load/slews if they aren't specified in the config file. """
@@ -99,14 +106,13 @@ class lib:
         self.write_header()
         
         #Loop over all readwrite ports. This is debugging. Will change later.
-        for port in self.readwrite_ports:
+        for port in range(self.total_port_num):
             #set the read and write port as inputs.
-            self.write_data_bus(port,port)
+            self.write_data_bus(port)
             self.write_addr_bus(port)
             self.write_control_pins(port) #need to split this into sram and port control signals
             
-            #This definitely not in the final design
-            self.write_clk(port)
+        self.write_clk_timing_power()
 
         self.write_footer()
 
@@ -310,21 +316,8 @@ class lib:
         self.lib.write("            }\n")
         self.lib.write("        }\n")
 
-
-
-    def write_data_bus(self, write_port, read_port):
+    def write_data_bus_output(self, read_port):
         """ Adds data bus timing results."""
-
-        self.lib.write("    bus(DIN{0}){{\n".format(write_port))
-        self.lib.write("        bus_type  : DATA; \n")
-        self.lib.write("        direction  : in; \n")
-        # This is conservative, but limit to range that we characterized.
-        self.lib.write("        max_capacitance : {0};  \n".format(max(self.loads)))
-        self.lib.write("        min_capacitance : {0};  \n".format(min(self.loads)))        
-        self.lib.write("        memory_write(){ \n")
-        self.lib.write("            address : ADDR; \n")
-        self.lib.write("            clocked_on  : clk; \n")
-        self.lib.write("        }\n")
 
         self.lib.write("    bus(DOUT{0}){{\n".format(read_port))
         self.lib.write("        bus_type  : DATA; \n")
@@ -344,21 +337,41 @@ class lib:
         self.lib.write("            related_pin : \"clk\"; \n")
         self.lib.write("            timing_type : rising_edge; \n")
         self.lib.write("            cell_rise(CELL_TABLE) {\n")
-        self.write_values(self.char_results["delay_lh_{0}".format(read_port)],len(self.loads),"            ")
+        self.write_values(self.char_results["delay_lh{0}".format(read_port)],len(self.loads),"            ")
         self.lib.write("            }\n") # rise delay
         self.lib.write("            cell_fall(CELL_TABLE) {\n")
-        self.write_values(self.char_results["delay_hl_{0}".format(read_port)],len(self.loads),"            ")
+        self.write_values(self.char_results["delay_hl{0}".format(read_port)],len(self.loads),"            ")
         self.lib.write("            }\n") # fall delay
         self.lib.write("            rise_transition(CELL_TABLE) {\n")
-        self.write_values(self.char_results["slew_lh_{0}".format(read_port)],len(self.loads),"            ")
+        self.write_values(self.char_results["slew_lh{0}".format(read_port)],len(self.loads),"            ")
         self.lib.write("            }\n") # rise trans
         self.lib.write("            fall_transition(CELL_TABLE) {\n")
-        self.write_values(self.char_results["slew_hl_{0}".format(read_port)],len(self.loads),"            ")
+        self.write_values(self.char_results["slew_hl{0}".format(read_port)],len(self.loads),"            ")
         self.lib.write("            }\n") # fall trans
         self.lib.write("        }\n") # timing
         self.lib.write("        }\n") # pin        
         self.lib.write("    }\n\n") # bus
 
+    def write_data_bus_input(self, write_port):
+        """ Adds data bus timing results."""
+
+        self.lib.write("    bus(DIN{0}){{\n".format(write_port))
+        self.lib.write("        bus_type  : DATA; \n")
+        self.lib.write("        direction  : in; \n")
+        # This is conservative, but limit to range that we characterized.
+        self.lib.write("        max_capacitance : {0};  \n".format(max(self.loads)))
+        self.lib.write("        min_capacitance : {0};  \n".format(min(self.loads)))        
+        self.lib.write("        memory_write(){ \n")
+        self.lib.write("            address : ADDR; \n")
+        self.lib.write("            clocked_on  : clk; \n")
+        self.lib.write("        }\n")
+
+    def write_data_bus(self, port):
+        """ Adds data bus timing results."""
+        if port in self.write_ports:
+            self.write_data_bus_input(port)
+        if port in self.read_ports:
+            self.write_data_bus_output(port)
 
     def write_addr_bus(self, port):
         """ Adds addr bus timing results."""
@@ -378,8 +391,11 @@ class lib:
 
     def write_control_pins(self, port):
         """ Adds control pins timing results."""
-
-        ctrl_pin_names = ["CSb", "OEb", "WEb"]
+        #The control pins are still to be determined. This is a placeholder for what could be.
+        ctrl_pin_names = ["CSb"]
+        if port in self.write_ports and port in self.read_ports:
+            ctrl_pin_names.append("WEb")
+            
         for i in ctrl_pin_names:
             self.lib.write("    pin({0}{1})".format(i,port))
             self.lib.write("{\n")
@@ -389,7 +405,7 @@ class lib:
             self.lib.write("    }\n\n")
 
     #Port is a temporary input here. I do need a way to dynamically write the control signal here though.
-    def write_clk(self, port):
+    def write_clk_timing_power(self, port):
         """ Adds clk pin timing results."""
 
         self.lib.write("    pin(clk){\n")

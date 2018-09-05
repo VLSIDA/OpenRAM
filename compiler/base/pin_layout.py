@@ -1,5 +1,5 @@
 import debug
-from tech import GDS
+from tech import GDS, drc
 from vector import vector
 from tech import layer
 
@@ -40,6 +40,21 @@ class pin_layout:
         else:
             return False    
 
+    def inflate(self, spacing=None):
+        """ 
+        Inflate the rectangle by the spacing (or other rule) 
+        and return the new rectangle. 
+        """
+        if not spacing:
+            spacing = drc["{0}_to_{0}".format(self.layer)]
+            
+        (ll,ur) = self.rect
+        spacing = vector(spacing, spacing)
+        newll = ll - spacing
+        newur = ur + spacing
+        
+        return (newll, newur)
+        
     def overlaps(self, other):
         """ Check if a shape overlaps with a rectangle  """
         (ll,ur) = self.rect

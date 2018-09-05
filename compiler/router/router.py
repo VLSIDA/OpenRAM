@@ -90,19 +90,19 @@ class router:
 
 
 
-    def find_pin(self,pin):
+    def find_pin(self,pin_name):
         """ 
         Finds the pin shapes and converts to tracks. 
         Pin can either be a label or a location,layer pair: [[x,y],layer].
         """
 
-        label_list=self.layout.getPinShapeByLabel(str(pin))
+        shape_list=self.layout.getPinShapeByLabel(str(pin_name))
         pin_list = []
-        for label in label_list:
-            (name,layer,boundary)=label
+        for shape in shape_list:
+            (name,layer,boundary)=shape
             rect = [vector(boundary[0],boundary[1]),vector(boundary[2],boundary[3])]
-            # this is a list because other cells/designs may have must-connect pins
-            pin_list.append(pin_layout(pin, rect, layer))
+            pin = pin_layout(pin_name, rect, layer)
+            pin_list.append(pin)
 
         debug.check(len(pin_list)>0,"Did not find any pin shapes for {0}.".format(str(pin)))
 
@@ -208,22 +208,30 @@ class router:
         
 
     def add_blockages(self):
-        """ Add the blockages except the pin shapes """
-        # Skip pin shapes
-        all_pins = [x[0] for x in list(self.pins.values())]
-        
+        """ Add the blockages except the pin shapes. Also remove the pin shapes from the blockages list. """
+        # Join all the pin shapes into one big list
+        all_pins = [item for sublist in list(self.pins.values()) for item in sublist]
+
+        # Do an n^2 check to see if any shapes are the same, otherwise add them
+        # FIXME: Make faster, but number of pins won't be *that* large
+        real_blockages = []
         for blockage in self.blockages:
             for pin in all_pins:
                 # If the blockage overlaps the pin and is on the same layer,
                 # it must be connected, so skip it.
                 if blockage==pin:
-                    debug.info(1,"Skipping blockage for pin {}".format(str(pin)))
+                    debug.info(1,"Removing blockage for pin {}".format(str(pin)))
                     break
             else:
                 debug.info(2,"Adding blockage {}".format(str(blockage)))
-                [ll,ur]=self.convert_blockage_to_tracks(blockage.rect)
+                # Inflate the blockage by spacing rule
+                [ll,ur]=self.convert_blockage_to_tracks(blockage.inflate())
                 zlayer = self.get_zindex(blockage.layer_num)
                 self.rg.add_blockage_shape(ll,ur,zlayer)
+                real_blockages.append(blockage)
+
+        # Remember the filtered blockages
+        self.blockages = real_blockages
 
         
     def get_blockages(self, layer_num): 
@@ -262,15 +270,15 @@ class router:
         old_ur = ur
         ll=ll.scale(self.track_factor)
         ur=ur.scale(self.track_factor)
-        if ll[0]<45 and ll[0]>35 and ll[1]<5 and ll[1]>-5:
-            print(ll,ur)
-        ll = ll.floor()
-        ur = ur.ceil()
-        if ll[0]<45 and ll[0]>35 and ll[1]<5 and ll[1]>-5:
-            debug.info(0,"Converting [ {0} , {1} ]".format(old_ll,old_ur))
-            debug.info(0,"Converted [ {0} , {1} ]".format(ll,ur))
-            pin=self.convert_track_to_shape(ll)            
-            debug.info(0,"Pin {}".format(pin))
+        # We can round since we are using inflated shapes
+        # and the track points are at the center
+        ll = ll.round()
+        ur = ur.round()
+        # if ll[0]<45 and ll[0]>35 and ll[1]<5 and ll[1]>-5:
+        #     debug.info(0,"Converting [ {0} , {1} ]".format(old_ll,old_ur))
+        #     debug.info(0,"Converted [ {0} , {1} ]".format(ll,ur))
+        #     pin=self.convert_track_to_shape(ll)            
+        #     debug.info(0,"Pin {}".format(pin))
         return [ll,ur]
 
     def convert_pin_to_tracks(self, pin):
@@ -464,10 +472,12 @@ class router:
                                 zoom=0.05)
 
         for blockage in self.blockages:
+            # Display the inflated blockage
+            (ll,ur) = blockage.inflate()
             self.cell.add_rect(layer="blockage",
-                               offset=blockage.ll(),
-                               width=blockage.width(),
-                               height=blockage.height())
+                               offset=ll,
+                               width=ur.x-ll.x,
+                               height=ur.y-ll.y)
 
         
 # FIXME: This should be replaced with vector.snap_to_grid at some point

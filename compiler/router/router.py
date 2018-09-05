@@ -262,13 +262,15 @@ class router:
         old_ur = ur
         ll=ll.scale(self.track_factor)
         ur=ur.scale(self.track_factor)
-        if ll[0]<45 and ll[0]>35 and ll[1]<46 and ll[1]>39:
+        if ll[0]<45 and ll[0]>35 and ll[1]<5 and ll[1]>-5:
             print(ll,ur)
         ll = ll.floor()
         ur = ur.ceil()
-        if ll[0]<45 and ll[0]>35 and ll[1]<46 and ll[1]>39:
+        if ll[0]<45 and ll[0]>35 and ll[1]<5 and ll[1]>-5:
             debug.info(0,"Converting [ {0} , {1} ]".format(old_ll,old_ur))
             debug.info(0,"Converted [ {0} , {1} ]".format(ll,ur))
+            pin=self.convert_track_to_shape(ll)            
+            debug.info(0,"Pin {}".format(pin))
         return [ll,ur]
 
     def convert_pin_to_tracks(self, pin):

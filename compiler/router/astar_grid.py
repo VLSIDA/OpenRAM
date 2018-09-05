@@ -34,15 +34,15 @@ class astar_grid(grid.grid):
     def add_source(self,track_list):
         debug.info(2,"Adding source list={0}".format(str(track_list)))
         for n in track_list:
-            if not self.is_blocked(n):
-                debug.info(3,"Adding source ={0}".format(str(n)))
-                self.set_source(n)
+            debug.info(3,"Adding source ={0}".format(str(n)))
+            self.set_source(n)
+
 
     def add_target(self,track_list):
         debug.info(2,"Adding target list={0}".format(str(track_list)))
         for n in track_list:
-            if not self.is_blocked(n):
-                self.set_target(n)
+            debug.info(3,"Adding target ={0}".format(str(n)))                                
+            self.set_target(n)
 
     def is_target(self,point):
         """
@@ -73,18 +73,14 @@ class astar_grid(grid.grid):
         We will use an A* search, so this cost must be pessimistic.
         Cost so far will be the length of the path.
         """
-        debug.info(4,"Initializing queue.")
-
-        # uniquify the source (and target while we are at it)
-        self.source = list(set(self.source))
-        self.target = list(set(self.target))
+        debug.info(1,"Initializing queue.")
 
         # Counter is used to not require data comparison in Python 3.x
         # Items will be returned in order they are added during cost ties
         self.counter = 0
         for s in self.source:
             cost = self.cost_to_target(s)
-            debug.info(1,"Init: cost=" + str(cost) + " " + str([s]))
+            debug.info(2,"Init: cost=" + str(cost) + " " + str([s]))
             heappush(self.q,(cost,self.counter,[s]))
             self.counter+=1
 

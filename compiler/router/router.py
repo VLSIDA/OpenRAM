@@ -96,12 +96,13 @@ class router:
         Pin can either be a label or a location,layer pair: [[x,y],layer].
         """
 
-        shape_list=self.layout.getPinShapeByLabel(str(pin_name))
+        shape_list=self.layout.getAllPinShapesByLabel(str(pin_name))
         pin_list = []
         for shape in shape_list:
             (name,layer,boundary)=shape
             rect = [vector(boundary[0],boundary[1]),vector(boundary[2],boundary[3])]
             pin = pin_layout(pin_name, rect, layer)
+            debug.info(2,"Found pin {}".format(str(pin)))
             pin_list.append(pin)
 
         debug.check(len(pin_list)>0,"Did not find any pin shapes for {0}.".format(str(pin)))
@@ -219,7 +220,7 @@ class router:
             for pin in all_pins:
                 # If the blockage overlaps the pin and is on the same layer,
                 # it must be connected, so skip it.
-                if blockage==pin:
+                if blockage.overlaps(pin):
                     debug.info(1,"Removing blockage for pin {}".format(str(pin)))
                     break
             else:
@@ -288,7 +289,7 @@ class router:
         If a pin has insufficent overlap, it returns the blockage list to avoid it.
         """
         (ll,ur) = pin.rect
-        #debug.info(1,"Converting [ {0} , {1} ]".format(ll,ur))
+        debug.info(1,"Converting [ {0} , {1} ]".format(ll,ur))
         
         # scale the size bigger to include neaby tracks
         ll=ll.scale(self.track_factor).floor()
@@ -304,31 +305,31 @@ class router:
         track_list = []
         block_list = []
 
-        track_area = self.track_width*self.track_width
         for x in range(ll[0],ur[0]):
             for y in range(ll[1],ur[1]):
-                #debug.info(1,"Converting [ {0} , {1} ]".format(x,y))
+                debug.info(1,"Converting [ {0} , {1} ]".format(x,y))
 
                 # however, if there is not enough overlap, then if there is any overlap at all,
                 # we need to block it to prevent routes coming in on that grid
                 full_rect = self.convert_track_to_shape(vector3d(x,y,zindex))
+                track_area = (full_rect[1].x-full_rect[0].x)*(full_rect[1].y-full_rect[0].y)
                 overlap_rect=self.compute_overlap(pin.rect,full_rect)
                 overlap_area = overlap_rect[0]*overlap_rect[1]
-                #debug.info(1,"Check overlap: {0} {1} max={2}".format(shape,rect,max_overlap))
+                debug.info(1,"Check overlap: {0} {1} max={2}".format(pin.rect,overlap_rect,overlap_area))
                 
                 # Assume if more than half the area, it is occupied
                 overlap_ratio = overlap_area/track_area
-                if overlap_ratio > 0.5:
+                if overlap_ratio > 0.25:
                     track_list.append(vector3d(x,y,zindex))
                 # otherwise, the pin may not be accessible, so block it
                 elif overlap_ratio > 0:
                     block_list.append(vector3d(x,y,zindex))
                 else:
-                    debug.info(4,"No overlap: {0} {1} max={2}".format(pin.rect,rect,max_overlap))
-                print("H:",x,y)
-                if x>38 and x<42 and y>42 and y<45:
-                    print(pin)
-                    print(full_rect, overlap_rect, overlap_ratio)
+                    debug.info(4,"No overlap: {0} {1} max={2}".format(pin.rect,overlap_rect,overlap_area))
+                # print("H:",x,y)
+                # if x>38 and x<42 and y>42 and y<45:
+                #     print(pin)
+                #     print(full_rect, overlap_rect, overlap_ratio)
         #debug.warning("Off-grid pin for {0}.".format(str(pin)))
         #debug.info(1,"Converted [ {0} , {1} ]".format(ll,ur))
         return (track_list,block_list)
@@ -478,6 +479,74 @@ class router:
                                offset=ll,
                                width=ur.x-ll.x,
                                height=ur.y-ll.y)
+
+
+    def add_route(self,path):
+        """ 
+        Add the current wire route to the given design instance.
+        """
+        debug.info(3,"Set path: " + str(path))
+
+        # Keep track of path for future blockages
+        self.paths.append(path)
+        
+        # This is marked for debug
+        self.rg.add_path(path)
+
+        # For debugging... if the path failed to route.
+        if False or path==None:
+            self.write_debug_gds()
+
+            
+        # First, simplify the path for
+        #debug.info(1,str(self.path))        
+        contracted_path = self.contract_path(path)
+        debug.info(1,str(contracted_path))
+
+        # convert the path back to absolute units from tracks
+        abs_path = map(self.convert_point_to_units,contracted_path)
+        debug.info(1,str(abs_path))
+        self.cell.add_route(self.layers,abs_path)
+
+
+    def get_inertia(self,p0,p1):
+        """ 
+        Sets the direction based on the previous direction we came from. 
+        """
+        # direction (index) of movement
+        if p0.x!=p1.x:
+            return 0
+        elif p0.y!=p1.y:
+            return 1
+        else:
+            # z direction
+            return 2
+
+    def contract_path(self,path):
+        """ 
+        Remove intermediate points in a rectilinear path. 
+        """
+        newpath = [path[0]]
+        for i in range(1,len(path)-1):
+            prev_inertia=self.get_inertia(path[i-1],path[i])
+            next_inertia=self.get_inertia(path[i],path[i+1])
+            # if we switch directions, add the point, otherwise don't
+            if prev_inertia!=next_inertia:
+                newpath.append(path[i])
+
+        # always add the last path
+        newpath.append(path[-1])
+        return newpath
+    
+
+    def add_path_blockages(self):
+        """
+        Go through all of the past paths and add them as blockages.
+        This is so we don't have to write/reload the GDS.
+        """
+        for path in self.paths:
+            self.rg.block_path(path)
+            
 
         
 # FIXME: This should be replaced with vector.snap_to_grid at some point

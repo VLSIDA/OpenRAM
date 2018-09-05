@@ -713,9 +713,9 @@ class VlsiLayout:
         # Convert to user units
         new_boundaries = []
         for pin_boundary in pin_boundaries:
-            new_boundaries.append([pin_boundary[0]*self.units[0],pin_boundary[1]*self.units[0],
-                                   pin_boundary[2]*self.units[0],pin_boundary[3]*self.units[0]])
-
+            new_pin_boundary = [pin_boundary[0]*self.units[0],pin_boundary[1]*self.units[0],
+                                pin_boundary[2]*self.units[0],pin_boundary[3]*self.units[0]]
+            new_boundaries.append(["p"+str(coordinate)+"_"+str(layer), layer, new_pin_boundary])
         return new_boundaries
     
     def getPinShapeByLabel(self,label_name):

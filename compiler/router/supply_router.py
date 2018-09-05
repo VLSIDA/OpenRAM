@@ -34,10 +34,10 @@ class supply_router(router):
         self.rg.reinit()
         
 
+    
     def route(self, cell, layers, vdd_name="vdd", gnd_name="gnd"):
         """ 
-        Route a single source-destination net and return
-        the simplified rectilinear path. 
+        Add power supply rails and connect all pins to these rails.
         """
         debug.info(1,"Running supply router on {0} and {1}...".format(vdd_name, gnd_name))
         self.cell = cell
@@ -61,11 +61,13 @@ class supply_router(router):
         self.get_pin(vdd_name)
         self.get_pin(gnd_name)
         
-        # Now add the blockages (all shapes except the src/tgt pins)
+        # Now add the blockages (all shapes except the pins)
         self.add_blockages()
-        # Add blockages from previous routes
-        self.add_path_blockages()        
 
+        #self.route_supply_rails()
+
+        #self.route_supply_pins()
+        
         # source pin will be a specific layout pin
         # target pin will be the rails only
             
@@ -84,7 +86,38 @@ class supply_router(router):
         self.write_debug_gds()
         return False
 
-                           
+    def route_supply_rails(self):
+        """
+        Add supply rails for vdd and gnd alternating in both layers.
+        Connect cross-over points with vias.
+        """
+        # vdd will be the even grids
+        
+        # gnd will be the odd grids
+
+
+        pass
+    
+    def route_supply_pins(self, pin):
+        """
+        This will route all the supply pins to supply rails one at a time.
+        After each one, it adds the cells to the blockage list.
+        """
+        for pin_name in self.pins.keys():
+            for pin in self.pins[pin_name]:
+                route_supply_pin(pin)
+                
+
+
+    def route_supply_pin(self, pin):
+        """
+        This will take a single pin and route it to the appropriate supply rail.
+        Do not allow other pins to be destinations so that everything is connected 
+        to the rails.
+        """
+        pass
+    
+        
     def add_route(self,path):
         """ 
         Add the current wire route to the given design instance.
@@ -125,22 +158,4 @@ class supply_router(router):
         self.rg = supply_grid.supply_grid()
 
 
-    ##########################
-    # Gridded supply route functions
-    ##########################
-    def create_grid(self, ll, ur):
-        """ Create alternating vdd/gnd lines horizontally """
-        
-        self.create_horizontal_grid()
-        self.create_vertical_grid()
-
-
-    def create_horizontal_grid(self):
-        """ Create alternating vdd/gnd lines horizontally """
-        
-        pass
-
-    def create_vertical_grid(self):
-        """ Create alternating vdd/gnd lines horizontally """
-        pass
     

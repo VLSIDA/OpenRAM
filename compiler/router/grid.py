@@ -63,6 +63,15 @@ class grid:
         for p in path:
             self.map[p].path=True
 
+    def block_path(self,path):
+        """ 
+        Mark the path in the routing grid as blocked. 
+        Also unsets the path flag.
+        """
+        for p in path:
+            self.map[p].path=False
+            self.map[p].blocked=True
+            
     def cost(self,path):
         """ 
         The cost of the path is the length plus a penalty for the number

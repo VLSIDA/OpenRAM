@@ -328,16 +328,16 @@ class VlsiLayout:
             if mirror=="R270":
                 rotate = 270.0
             if rotate:
-                layoutToAddSref.transFlags[2] = 1
+                #layoutToAddSref.transFlags[2] = 1
                 layoutToAddSref.rotateAngle = rotate
             if mirror == "x" or mirror == "MX":
                 layoutToAddSref.transFlags[0] = 1
             if mirror == "y" or mirror == "MY": #NOTE: "MY" option will override specified rotate angle
                 layoutToAddSref.transFlags[0] = 1
-                layoutToAddSref.transFlags[2] = 1
+                #layoutToAddSref.transFlags[2] = 1
                 layoutToAddSref.rotateAngle = 180.0
             if mirror == "xy" or mirror == "XY": #NOTE: "XY" option will override specified rotate angle
-                layoutToAddSref.transFlags[2] = 1
+                #layoutToAddSref.transFlags[2] = 1
                 layoutToAddSref.rotateAngle = 180.0
 
         #add the sref to the root structure
@@ -404,10 +404,10 @@ class VlsiLayout:
         if(len(text)%2 == 1):
             text = text + '\x00'
         textToAdd.textString = text
-        textToAdd.transFlags[1] = 1
+        #textToAdd.transFlags[1] = 1
         textToAdd.magFactor = magnification
         if rotate:
-            textToAdd.transFlags[2] = 1
+            #textToAdd.transFlags[2] = 1
             textToAdd.rotateAngle = rotate
         #add the sref to the root structure
         self.structures[self.rootStructureName].texts.append(textToAdd)

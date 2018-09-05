@@ -34,14 +34,14 @@ class geometry:
     #         coordinate += [(x, y)]
     #     return coordinate
 
-    # def transform_coords(self, coords, offset, mirr, angle):
-    #     """Calculate coordinates after flip, rotate, and shift"""
-    #     coordinate = []
-    #     for item in coords:
-    #         x = item[0]*math.cos(angle) - item[1]*mirr*math.sin(angle) + offset[0]
-    #         y = item[0]*math.sin(angle) + item[1]*mirr*math.cos(angle) + offset[1]
-    #         coordinate += [[x, y]]
-    #     return coordinate
+    def transform_coords(self, coords, offset, mirr, angle):
+        """Calculate coordinates after flip, rotate, and shift"""
+        coordinate = []
+        for item in coords:
+            x = item[0]*math.cos(angle) - item[1]*mirr*math.sin(angle) + offset[0]
+            y = item[0]*math.sin(angle) + item[1]*mirr*math.cos(angle) + offset[1]
+            coordinate += [[x, y]]
+        return coordinate
     
     def normalize(self):
         """ Re-find the LL and UR points after a transform """
@@ -148,40 +148,40 @@ class instance(geometry):
         
         debug.info(4, "creating instance: " + self.name)
 
-    # def get_blockages(self, layer, top=False):
-    #     """ Retrieve rectangular blockages of all modules in this instance.
-    #     Apply the transform of the instance placement to give absolute blockages."""
-    #     angle = math.radians(float(self.rotate))
-    #     mirr = 1
-    #     if self.mirror=="R90":
-    #         angle += math.radians(90.0)
-    #     elif self.mirror=="R180":
-    #         angle += math.radians(180.0)
-    #     elif self.mirror=="R270":
-    #         angle += math.radians(270.0)
-    #     elif self.mirror=="MX":
-    #         mirr = -1
-    #     elif self.mirror=="MY":
-    #         mirr = -1
-    #         angle += math.radians(180.0)
-    #     elif self.mirror=="XY":
-    #         mirr = 1
-    #         angle += math.radians(180.0)
+    def get_blockages(self, layer, top=False):
+        """ Retrieve rectangular blockages of all modules in this instance.
+        Apply the transform of the instance placement to give absolute blockages."""
+        angle = math.radians(float(self.rotate))
+        mirr = 1
+        if self.mirror=="R90":
+            angle += math.radians(90.0)
+        elif self.mirror=="R180":
+            angle += math.radians(180.0)
+        elif self.mirror=="R270":
+            angle += math.radians(270.0)
+        elif self.mirror=="MX":
+            mirr = -1
+        elif self.mirror=="MY":
+            mirr = -1
+            angle += math.radians(180.0)
+        elif self.mirror=="XY":
+            mirr = 1
+            angle += math.radians(180.0)
             
-    #     if self.mod.is_library_cell:
-    #         # For lib cells, block the whole thing except on metal3
-    #         # since they shouldn't use metal3
-    #         if layer==tech.layer["metal1"] or layer==tech.layer["metal2"]:
-    #             return [self.transform_coords(self.mod.get_boundary(), self.offset, mirr, angle)]
-    #         else:
-    #             return []
-    #     else:
+        if self.mod.is_library_cell:
+            # For lib cells, block the whole thing except on metal3
+            # since they shouldn't use metal3
+            if layer==tech.layer["metal1"] or layer==tech.layer["metal2"]:
+                return [self.transform_coords(self.mod.get_boundary(), self.offset, mirr, angle)]
+            else:
+                return []
+        else:
 
-    #         blockages = self.mod.get_blockages(layer)
-    #         new_blockages = []
-    #         for b in blockages:
-    #             new_blockages.append(self.transform_coords(b,self.offset, mirr, angle))
-    #         return new_blockages
+            blockages = self.mod.get_blockages(layer)
+            new_blockages = []
+            for b in blockages:
+                new_blockages.append(self.transform_coords(b,self.offset, mirr, angle))
+            return new_blockages
         
     def gds_write_file(self, new_layout):
         """Recursively writes all the sub-modules in this instance"""

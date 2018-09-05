@@ -280,18 +280,20 @@ class Gds2writer:
         if(thisSref.transFlags!=""):
             idBits=b'\x1A\x01'
             mirrorFlag = int(thisSref.transFlags[0])<<15
-            # FIXME: For some reason, Calibre doesn't like when this flag is set
-            # but it will still pay attention to the rotate value!
-            #rotateFlag = int(thisSref.transFlags[2])<<1
+            # The rotate and magnify flags specify "absolute" rotate and magnify.
+            # It is unclear what that is (ignore all further rotates/mags in the
+            # hierarchy? But anyway, calibre doesn't support it.
             rotateFlag=0
-            magnifyFlag = int(thisSref.transFlags[1])<<2
+            magnifyFlag = 0
+            #rotateFlag = int(thisSref.transFlags[2])<<1
+            #magnifyFlag = int(thisSref.transFlags[1])<<2
             transFlags = struct.pack(">H",mirrorFlag|rotateFlag|magnifyFlag)
             self.writeRecord(idBits+transFlags)
-        if(thisSref.transFlags[1]):
+        if(thisSref.magFactor!=""):
             idBits=b'\x1B\x05'
             magFactor=self.ibmDataFromIeeeDouble(thisSref.magFactor)
             self.writeRecord(idBits+magFactor)
-        if(thisSref.transFlags[2]):
+        if(thisSref.rotateAngle!=""):
             idBits=b'\x1C\x05'            
             rotateAngle=self.ibmDataFromIeeeDouble(thisSref.rotateAngle)
             self.writeRecord(idBits+rotateAngle)
@@ -330,15 +332,20 @@ class Gds2writer:
         if(thisAref.transFlags):
             idBits=b'\x1A\x01'
             mirrorFlag = int(thisAref.transFlags[0])<<15
-            rotateFlag = int(thisAref.transFlags[2])<<1
-            magnifyFlag = int(thisAref.transFlags[1])<<2
+            # The rotate and magnify flags specify "absolute" rotate and magnify.
+            # It is unclear what that is (ignore all further rotates/mags in the
+            # hierarchy? But anyway, calibre doesn't support it.
+            rotateFlag=0
+            magnifyFlag = 0
+            #rotateFlag = int(thisAref.transFlags[2])<<1
+            #magnifyFlag = int(thisAref.transFlags[1])<<2
             transFlags = struct.pack(">H",mirrorFlag|rotateFlag|magnifyFlag)
             self.writeRecord(idBits+transFlags)
-        if(thisAref.transFlags[1]):
+        if(thisAref.magFactor!=""):
             idBits=b'\x1B\x05'
             magFactor=self.ibmDataFromIeeeDouble(thisAref.magFactor)
             self.writeRecord(idBits+magFactor)
-        if(thisAref.transFlags[2]):
+        if(thisAref.rotateAngle!=""):
             idBits=b'\x1C\x05'            
             rotateAngle=self.ibmDataFromIeeeDouble(thisAref.rotateAngle)
             self.writeRecord(idBits+rotateAngle)
@@ -377,15 +384,20 @@ class Gds2writer:
         if(thisText.transFlags != ""):
             idBits=b'\x1A\x01'
             mirrorFlag = int(thisText.transFlags[0])<<15
-            rotateFlag = int(thisText.transFlags[2])<<1
-            magnifyFlag = int(thisText.transFlags[1])<<2
+            # The rotate and magnify flags specify "absolute" rotate and magnify.
+            # It is unclear what that is (ignore all further rotates/mags in the
+            # hierarchy? But anyway, calibre doesn't support it.
+            rotateFlag=0
+            magnifyFlag = 0
+            #rotateFlag = int(thisText.transFlags[2])<<1
+            #magnifyFlag = int(thisText.transFlags[1])<<2
             transFlags = struct.pack(">H",mirrorFlag|rotateFlag|magnifyFlag)
             self.writeRecord(idBits+transFlags)
-        if(thisText.transFlags[1]):
+        if(thisText.magFactor!=""):
             idBits=b'\x1B\x05'
             magFactor=self.ibmDataFromIeeeDouble(thisText.magFactor)
             self.writeRecord(idBits+magFactor)
-        if(thisText.transFlags[2]):
+        if(thisText.rotateAngle!=""):
             idBits=b'\x1C\x05'            
             rotateAngle=self.ibmDataFromIeeeDouble(thisText.rotateAngle)
             self.writeRecord(idBits+rotateAngle)

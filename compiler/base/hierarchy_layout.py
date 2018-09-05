@@ -847,10 +847,10 @@ class layout(lef.lef):
         """
         self.add_via_center(layers=("metal1", "via1", "metal2"),
                             offset=loc,
-                            rotate=rotate)
+                            rotate=float(rotate))
         via=self.add_via_center(layers=("metal2", "via2", "metal3"),
                                 offset=loc,
-                                rotate=rotate)
+                                rotate=float(rotate))
         self.add_layout_pin_rect_center(text=name,
                                         layer="metal3",
                                         offset=loc,

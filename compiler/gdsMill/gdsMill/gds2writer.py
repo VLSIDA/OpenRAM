@@ -280,8 +280,11 @@ class Gds2writer:
         if(thisSref.transFlags!=""):
             idBits=b'\x1A\x01'
             mirrorFlag = int(thisSref.transFlags[0])<<15
-            rotateFlag = int(thisSref.transFlags[2])<<1
-            magnifyFlag = int(thisSref.transFlags[1])<<3
+            # FIXME: For some reason, Calibre doesn't like when this flag is set
+            # but it will still pay attention to the rotate value!
+            #rotateFlag = int(thisSref.transFlags[2])<<1
+            rotateFlag=0
+            magnifyFlag = int(thisSref.transFlags[1])<<2
             transFlags = struct.pack(">H",mirrorFlag|rotateFlag|magnifyFlag)
             self.writeRecord(idBits+transFlags)
         if(thisSref.transFlags[1]):
@@ -328,7 +331,7 @@ class Gds2writer:
             idBits=b'\x1A\x01'
             mirrorFlag = int(thisAref.transFlags[0])<<15
             rotateFlag = int(thisAref.transFlags[2])<<1
-            magnifyFlag = int(thisAref.transFlags[1])<<3
+            magnifyFlag = int(thisAref.transFlags[1])<<2
             transFlags = struct.pack(">H",mirrorFlag|rotateFlag|magnifyFlag)
             self.writeRecord(idBits+transFlags)
         if(thisAref.transFlags[1]):
@@ -375,7 +378,7 @@ class Gds2writer:
             idBits=b'\x1A\x01'
             mirrorFlag = int(thisText.transFlags[0])<<15
             rotateFlag = int(thisText.transFlags[2])<<1
-            magnifyFlag = int(thisText.transFlags[1])<<3
+            magnifyFlag = int(thisText.transFlags[1])<<2
             transFlags = struct.pack(">H",mirrorFlag|rotateFlag|magnifyFlag)
             self.writeRecord(idBits+transFlags)
         if(thisText.transFlags[1]):

@@ -20,72 +20,72 @@ class pbitcell_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         from pbitcell import pbitcell
         import tech
-        OPTS.sram_config.num_rw_ports=1
-        OPTS.sram_config.num_w_ports=1
-        OPTS.sram_config.num_r_ports=1
+        OPTS.num_rw_ports=1
+        OPTS.num_w_ports=1
+        OPTS.num_r_ports=1
         debug.info(2, "Bitcell with 1 of each port: read/write, write, and read")
         tx = pbitcell()
         self.local_check(tx)
         
-        OPTS.sram_config.num_rw_ports=0
-        OPTS.sram_config.num_w_ports=1
-        OPTS.sram_config.num_r_ports=1
+        OPTS.num_rw_ports=0
+        OPTS.num_w_ports=1
+        OPTS.num_r_ports=1
         debug.info(2, "Bitcell with 0 read/write ports")
         tx = pbitcell()
         self.local_check(tx)
         
-        OPTS.sram_config.num_rw_ports=1
-        OPTS.sram_config.num_w_ports=0
-        OPTS.sram_config.num_r_ports=1
+        OPTS.num_rw_ports=1
+        OPTS.num_w_ports=0
+        OPTS.num_r_ports=1
         debug.info(2, "Bitcell with 0 write ports")
         tx = pbitcell()
         self.local_check(tx)
         
-        OPTS.sram_config.num_rw_ports=1
-        OPTS.sram_config.num_w_ports=1
-        OPTS.sram_config.num_r_ports=0
+        OPTS.num_rw_ports=1
+        OPTS.num_w_ports=1
+        OPTS.num_r_ports=0
         debug.info(2, "Bitcell with 0 read ports")
         tx = pbitcell()
         self.local_check(tx)
         
-        OPTS.sram_config.num_rw_ports=1
-        OPTS.sram_config.num_w_ports=0
-        OPTS.sram_config.num_r_ports=0
+        OPTS.num_rw_ports=1
+        OPTS.num_w_ports=0
+        OPTS.num_r_ports=0
         debug.info(2, "Bitcell with 0 read ports and 0 write ports")
         tx = pbitcell()
         self.local_check(tx)
 
-        OPTS.sram_config.num_rw_ports=2
-        OPTS.sram_config.num_w_ports=2
-        OPTS.sram_config.num_r_ports=2
+        OPTS.num_rw_ports=2
+        OPTS.num_w_ports=2
+        OPTS.num_r_ports=2
         debug.info(2, "Bitcell with 2 of each port: read/write, write, and read")
         tx = pbitcell()
         self.local_check(tx)
         
-        OPTS.sram_config.num_rw_ports=0
-        OPTS.sram_config.num_w_ports=2
-        OPTS.sram_config.num_r_ports=2
+        OPTS.num_rw_ports=0
+        OPTS.num_w_ports=2
+        OPTS.num_r_ports=2
         debug.info(2, "Bitcell with 0 read/write ports")
         tx = pbitcell()
         self.local_check(tx)
         
-        OPTS.sram_config.num_rw_ports=2
-        OPTS.sram_config.num_w_ports=0
-        OPTS.sram_config.num_r_ports=2
+        OPTS.num_rw_ports=2
+        OPTS.num_w_ports=0
+        OPTS.num_r_ports=2
         debug.info(2, "Bitcell with 0 write ports")
         tx = pbitcell()
         self.local_check(tx)
         
-        OPTS.sram_config.num_rw_ports=2
-        OPTS.sram_config.num_w_ports=2
-        OPTS.sram_config.num_r_ports=0
+        OPTS.num_rw_ports=2
+        OPTS.num_w_ports=2
+        OPTS.num_r_ports=0
         debug.info(2, "Bitcell with 0 read ports")
         tx = pbitcell()
         self.local_check(tx)
         
-        OPTS.sram_config.num_rw_ports=2
-        OPTS.sram_config.num_w_ports=0
-        OPTS.sram_config.num_r_ports=0
+        OPTS.num_rw_ports=2
+        OPTS.num_w_ports=0
+        OPTS.num_r_ports=0
         debug.info(2, "Bitcell with 0 read ports and 0 write ports")
         tx = pbitcell()
         self.local_check(tx)

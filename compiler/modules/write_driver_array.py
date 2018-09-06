@@ -30,7 +30,12 @@ class write_driver_array(design.design):
         self.create_write_array()
         
     def create_layout(self):
-        self.width = self.columns * self.driver.width
+    
+        if self.bitcell.width > self.driver.width:
+            self.width = self.columns * self.bitcell.width
+        else:
+            self.width = self.columns * self.driver.width
+        
         self.height = self.driver.height
         
         self.place_write_array()
@@ -54,6 +59,12 @@ class write_driver_array(design.design):
         self.driver = self.mod_write_driver("write_driver")
         self.add_mod(self.driver)
 
+        # This is just used for measurements,
+        # so don't add the module
+        c = reload(__import__(OPTS.bitcell))
+        self.mod_bitcell = getattr(c, OPTS.bitcell)
+        self.bitcell = self.mod_bitcell()
+
     def create_write_array(self):
         self.driver_insts = {}
         for i in range(0,self.columns,self.words_per_row):
@@ -69,9 +80,14 @@ class write_driver_array(design.design):
 
 
     def place_write_array(self):
+        if self.bitcell.width > self.driver.width:
+            driver_spacing = self.bitcell.width
+        else:
+            driver_spacing = self.driver.width
+    
         for i in range(0,self.columns,self.words_per_row):
             index = int(i/self.words_per_row)            
-            base = vector(i * self.driver.width,0)
+            base = vector(i * driver_spacing,0)
             self.driver_insts[index].place(base)
 
             

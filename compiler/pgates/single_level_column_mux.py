@@ -39,6 +39,8 @@ class single_level_column_mux(design.design):
         self.add_wells()
 
     def add_modules(self):
+        # This is just used for measurements,
+        # so don't add the module
         from importlib import reload
         c = reload(__import__(OPTS.bitcell))
         self.mod_bitcell = getattr(c, OPTS.bitcell)

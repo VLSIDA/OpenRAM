@@ -64,10 +64,11 @@ class VlsiLayout:
         #helper method to rotate a list of coordinates
         angle=math.radians(float(0))
         if(rotateAngle):
-            angle = math.radians(float(repr(rotateAngle)))        
+            angle = math.radians(float(rotateAngle))
 
         coordinatesRotate = []    #this will hold the rotated values        
         for coordinate in coordinatesToRotate:
+            # This is the CCW rotation matrix
             newX = coordinate[0]*math.cos(angle) - coordinate[1]*math.sin(angle)
             newY = coordinate[0]*math.sin(angle) + coordinate[1]*math.cos(angle)
             coordinatesRotate.extend((newX,newY))
@@ -274,8 +275,9 @@ class VlsiLayout:
         Method to insert one layout into another at a particular offset.
         """
         offsetInLayoutUnits = (self.userUnits(offsetInMicrons[0]),self.userUnits(offsetInMicrons[1]))
-        if self.debug==1: 
-            debug.info(0,"DEBUG:  GdsMill vlsiLayout: addInstance: type %s, nameOfLayout "%type(layoutToAdd),nameOfLayout)
+        if self.debug: 
+            debug.info(0,"DEBUG:  GdsMill vlsiLayout: addInstance: type {0}, nameOfLayout {1}".format(type(layoutToAdd),nameOfLayout))
+            debug.info(0,"DEBUG: name={0} offset={1} mirror={2} rotate={3}".format(layoutToAdd.rootStructureName,offsetInMicrons, mirror, rotate))
 
 
 
@@ -295,7 +297,7 @@ class VlsiLayout:
 
 
 
-        # If layoutToAdd is a unique object (not this), then copy heirarchy, 
+        # If layoutToAdd is a unique object (not this), then copy hierarchy, 
         #  otherwise, if it is a text name of an internal structure, use it.
 
         if layoutToAdd != self:
@@ -316,9 +318,7 @@ class VlsiLayout:
         if mirror or rotate:
                 
             layoutToAddSref.transFlags = [0,0,0]
-            # This is NOT the same as the order in the GDS spec!
-            # It gets written out in gds2writer in the right order though.
-            # transFlags = (mirror around x-axis, rotation, magnification)
+            # transFlags = (mirror around x-axis, magnification, rotation)
             # If magnification or rotation is true, it is the flags are then
             # followed by an amount in the record
             if mirror=="R90":
@@ -328,17 +328,16 @@ class VlsiLayout:
             if mirror=="R270":
                 rotate = 270.0
             if rotate:
-                #layoutToAddSref.transFlags = [0,1,0]
+                #layoutToAddSref.transFlags[2] = 1
                 layoutToAddSref.rotateAngle = rotate
             if mirror == "x" or mirror == "MX":
-                layoutToAddSref.transFlags = [1,0,0]
+                layoutToAddSref.transFlags[0] = 1
             if mirror == "y" or mirror == "MY": #NOTE: "MY" option will override specified rotate angle
-                #layoutToAddSref.transFlags = [1,1,0]
-                layoutToAddSref.transFlags = [1,0,0]
+                layoutToAddSref.transFlags[0] = 1
+                #layoutToAddSref.transFlags[2] = 1
                 layoutToAddSref.rotateAngle = 180.0
             if mirror == "xy" or mirror == "XY": #NOTE: "XY" option will override specified rotate angle
-                #layoutToAddSref.transFlags = [0,1,0]
-                layoutToAddSref.transFlags = [0,0,0]
+                #layoutToAddSref.transFlags[2] = 1
                 layoutToAddSref.rotateAngle = 180.0
 
         #add the sref to the root structure
@@ -405,10 +404,10 @@ class VlsiLayout:
         if(len(text)%2 == 1):
             text = text + '\x00'
         textToAdd.textString = text
-        textToAdd.transFlags = [0,0,1]
+        #textToAdd.transFlags[1] = 1
         textToAdd.magFactor = magnification
         if rotate:
-            textToAdd.transFlags = [0,1,1]
+            #textToAdd.transFlags[2] = 1
             textToAdd.rotateAngle = rotate
         #add the sref to the root structure
         self.structures[self.rootStructureName].texts.append(textToAdd)
@@ -816,10 +815,10 @@ class VlsiLayout:
         """
 
         (structureName,structureOrigin,structureuVector,structurevVector)=structure
+        #print(structureName,"u",structureuVector.transpose(),"v",structurevVector.transpose(),"o",structureOrigin.transpose())
         boundaries = []
         for boundary in self.structures[str(structureName)].boundaries:
-            # Pin enclosures only work on rectangular pins so ignore any non rectangle
-            # This may report not finding pins, but the user should fix this by adding a rectangle.
+            # FIXME: Right now, this only supports rectangular shapes!
             if len(boundary.coordinates)!=5:
                 continue
             if layer==boundary.drawingLayer:
@@ -827,10 +826,11 @@ class VlsiLayout:
                 right_top=boundary.coordinates[2]
                 # Rectangle is [leftx, bottomy, rightx, topy].
                 boundaryRect=[left_bottom[0],left_bottom[1],right_top[0],right_top[1]]
+                # perform the rotation
                 boundaryRect=self.transformRectangle(boundaryRect,structureuVector,structurevVector)
+                # add the offset
                 boundaryRect=[boundaryRect[0]+structureOrigin[0].item(),boundaryRect[1]+structureOrigin[1].item(),
                               boundaryRect[2]+structureOrigin[0].item(),boundaryRect[3]+structureOrigin[1].item()]
-                
                 boundaries.append(boundaryRect)
                     
         return boundaries
@@ -858,8 +858,12 @@ class VlsiLayout:
         """
         Rotate a coordinate in space.
         """
-        x=coordinate[0]*uVector[0].item()+coordinate[1]*uVector[1].item()
-        y=coordinate[1]*vVector[1].item()+coordinate[0]*vVector[0].item()
+        # MRG: 9/3/18 Incorrect matrixi multiplication! 
+        # This is fixed to be:
+        # |u[0] v[0]| |x| |x'|
+        # |u[1] v[1]|x|y|=|y'|
+        x=coordinate[0]*uVector[0].item()+coordinate[1]*vVector[0].item()
+        y=coordinate[0]*uVector[1].item()+coordinate[1]*vVector[1].item()
         transformCoordinate=[x,y]
 
         return transformCoordinate

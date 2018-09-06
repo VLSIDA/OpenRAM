@@ -2,7 +2,7 @@ import sys
 import datetime
 import getpass
 import debug
-from math import log,sqrt,ceil
+from importlib import reload
 from vector import vector
 from globals import OPTS, print_time
 
@@ -13,95 +13,29 @@ class sram_base(design):
     Dynamically generated SRAM by connecting banks to control logic. The
     number of banks should be 1 , 2 or 4
     """
-    def __init__(self, word_size, num_words, num_banks, name):
+    def __init__(self, name, sram_config):
         design.__init__(self, name)
         
-        from importlib import reload
-        c = reload(__import__(OPTS.control_logic))
-        self.mod_control_logic = getattr(c, OPTS.control_logic)
+        self.sram_config = sram_config
+        sram_config.set_local_config(self)
 
-        c = reload(__import__(OPTS.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.bitcell)
-        self.bitcell = self.mod_bitcell()
-
-        c = reload(__import__(OPTS.ms_flop))
-        self.mod_ms_flop = getattr(c, OPTS.ms_flop)
-        self.ms_flop = self.mod_ms_flop()
-        
-        self.word_size = word_size
-        self.num_words = num_words
-        self.num_banks = num_banks
+        self.total_write = OPTS.num_rw_ports + OPTS.num_w_ports
+        self.total_read = OPTS.num_rw_ports + OPTS.num_r_ports
+        self.total_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
 
         self.bank_insts = []
 
-    def compute_sizes(self):
-        """  Computes the organization of the memory using bitcell size by trying to make it square."""
-
-        debug.check(self.num_banks in [1,2,4], "Valid number of banks are 1 , 2 and 4.")
-
-        self.num_words_per_bank = self.num_words/self.num_banks
-        self.num_bits_per_bank = self.word_size*self.num_words_per_bank
-
-        # Compute the area of the bitcells and estimate a square bank (excluding auxiliary circuitry)
-        self.bank_area = self.bitcell.width*self.bitcell.height*self.num_bits_per_bank
-        self.bank_side_length = sqrt(self.bank_area)
-
-        # Estimate the words per row given the height of the bitcell and the square side length
-        self.tentative_num_cols = int(self.bank_side_length/self.bitcell.width)
-        self.words_per_row = self.estimate_words_per_row(self.tentative_num_cols, self.word_size)
-
-        # Estimate the number of rows given the tentative words per row
-        self.tentative_num_rows = self.num_bits_per_bank / (self.words_per_row*self.word_size)
-        self.words_per_row = self.amend_words_per_row(self.tentative_num_rows, self.words_per_row)
-        
-        # Fix the number of columns and rows
-        self.num_cols = int(self.words_per_row*self.word_size)
-        self.num_rows = int(self.num_words_per_bank/self.words_per_row)
-
-        # Compute the address and bank sizes
-        self.row_addr_size = int(log(self.num_rows, 2))
-        self.col_addr_size = int(log(self.words_per_row, 2))
-        self.bank_addr_size = self.col_addr_size + self.row_addr_size
-        self.addr_size = self.bank_addr_size + int(log(self.num_banks, 2))
-        
-        debug.info(1,"Words per row: {}".format(self.words_per_row))
-
-    def estimate_words_per_row(self,tentative_num_cols, word_size):
-        """
-        This provides a heuristic rounded estimate for the number of words
-        per row.
-        """
-
-        if tentative_num_cols < 1.5*word_size:
-            return 1
-        elif tentative_num_cols > 3*word_size:
-            return 4
-        else:
-            return 2
-
-    def amend_words_per_row(self,tentative_num_rows, words_per_row):
-        """
-        This picks the number of words per row more accurately by limiting
-        it to a minimum and maximum.
-        """
-        # Recompute the words per row given a hard max
-        if(tentative_num_rows > 512):
-            debug.check(tentative_num_rows*words_per_row <= 2048, "Number of words exceeds 2048")
-            return int(words_per_row*tentative_num_rows/512)
-        # Recompute the words per row given a hard min
-        if(tentative_num_rows < 16):
-            debug.check(tentative_num_rows*words_per_row >= 16, "Minimum number of rows is 16, but given {0}".format(tentative_num_rows))
-            return int(words_per_row*tentative_num_rows/16)
-            
-        return words_per_row
 
     def add_pins(self):
         """ Add pins for entire SRAM. """
-
-        for i in range(self.word_size):
-            self.add_pin("DIN[{0}]".format(i),"INPUT")
-        for i in range(self.addr_size):
-            self.add_pin("ADDR[{0}]".format(i),"INPUT")
+    
+        for port in range(self.total_write):
+            for bit in range(self.word_size):
+                self.add_pin("DIN{0}[{1}]".format(port,bit),"INPUT")
+                
+        for port in range(self.total_ports):
+            for bit in range(self.addr_size):
+                self.add_pin("ADDR{0}[{1}]".format(port,bit),"INPUT")
 
         # These are used to create the physical pins too
         self.control_logic_inputs=self.control_logic.get_inputs()
@@ -109,8 +43,9 @@ class sram_base(design):
         
         self.add_pin_list(self.control_logic_inputs,"INPUT")
 
-        for i in range(self.word_size):
-            self.add_pin("DOUT[{0}]".format(i),"OUTPUT")
+        for port in range(self.total_read):
+            for bit in range(self.word_size):
+                self.add_pin("DOUT{0}[{1}]".format(port,bit),"OUTPUT")
         
         self.add_pin("vdd","POWER")
         self.add_pin("gnd","GROUND")
@@ -271,7 +206,18 @@ class sram_base(design):
 
     def add_modules(self):
         """ Create all the modules that will be used """
+        c = reload(__import__(OPTS.bitcell))
+        self.mod_bitcell = getattr(c, OPTS.bitcell)
+        self.bitcell = self.mod_bitcell()
+        
+        c = reload(__import__(OPTS.control_logic))
+        self.mod_control_logic = getattr(c, OPTS.control_logic)
 
+        c = reload(__import__(OPTS.ms_flop))
+        self.mod_ms_flop = getattr(c, OPTS.ms_flop)
+        self.ms_flop = self.mod_ms_flop()
+
+        
         from control_logic import control_logic
         # Create the control logic module
         self.control_logic = self.mod_control_logic(num_rows=self.num_rows)
@@ -279,24 +225,21 @@ class sram_base(design):
 
         # Create the address and control flops (but not the clk)
         from dff_array import dff_array
-        self.row_addr_dff = dff_array(name="row_addr_dff", rows=self.row_addr_size, columns=1)
+        self.row_addr_dff = dff_array(name="row_addr_dff", rows=self.row_addr_size*self.total_ports, columns=1)
         self.add_mod(self.row_addr_dff)
 
         if self.col_addr_size > 0:
-            self.col_addr_dff = dff_array(name="col_addr_dff", rows=1, columns=self.col_addr_size)
+            self.col_addr_dff = dff_array(name="col_addr_dff", rows=1, columns=self.col_addr_size*self.total_ports)
             self.add_mod(self.col_addr_dff)
         else:
             self.col_addr_dff = None
 
-        self.data_dff = dff_array(name="data_dff", rows=1, columns=self.word_size)
+        self.data_dff = dff_array(name="data_dff", rows=1, columns=self.word_size*self.total_ports)
         self.add_mod(self.data_dff)
         
         # Create the bank module (up to four are instantiated)
         from bank import bank
-        self.bank = bank(word_size=self.word_size,
-                         num_words=self.num_words_per_bank,
-                         words_per_row=self.words_per_row,
-                         num_banks=self.num_banks,
+        self.bank = bank(self.sram_config,
                          name="bank")
         self.add_mod(self.bank)
 
@@ -312,20 +255,28 @@ class sram_base(design):
 
 
     def create_bank(self,bank_num):
-        """ Create a bank  """
+        """ Create a bank  """      
         self.bank_insts.append(self.add_inst(name="bank{0}".format(bank_num),
                                              mod=self.bank))
 
         temp = []
-        for i in range(self.word_size):
-            temp.append("DOUT[{0}]".format(i))
-        for i in range(self.word_size):
-            temp.append("BANK_DIN[{0}]".format(i))
-        for i in range(self.bank_addr_size):
-            temp.append("A[{0}]".format(i))
+        for port in range(self.total_read):
+            for bit in range(self.word_size):
+                temp.append("DOUT{0}[{1}]".format(port,bit))
+        for port in range(self.total_write):
+            for bit in range(self.word_size):
+                temp.append("BANK_DIN{0}[{1}]".format(port,bit))
+        for port in range(self.total_ports):
+            for bit in range(self.bank_addr_size):
+                temp.append("A{0}[{1}]".format(port,bit))
         if(self.num_banks > 1):
-            temp.append("bank_sel[{0}]".format(bank_num))
-        temp.extend(["s_en0", "w_en0", "clk_buf_bar","clk_buf" , "vdd", "gnd"])
+            for port in range(self.total_ports):
+                temp.append("bank_sel{0}[{1}]".format(port,bank_num))
+        for port in range(self.total_read):
+            temp.append("s_en{0}".format(port))
+        for port in range(self.total_write):
+            temp.append("w_en{0}".format(port))
+        temp.extend(["clk_buf_bar","clk_buf" , "vdd", "gnd"])
         self.connect_inst(temp)
 
         return self.bank_insts[-1]
@@ -370,9 +321,10 @@ class sram_base(design):
         # inputs, outputs/output/bar
         inputs = []
         outputs = []
-        for i in range(self.row_addr_size):
-            inputs.append("ADDR[{}]".format(i+self.col_addr_size))
-            outputs.append("A[{}]".format(i+self.col_addr_size))
+        for k in range(self.total_ports):
+            for i in range(self.row_addr_size):
+                inputs.append("ADDR{}[{}]".format(k,i+self.col_addr_size))
+                outputs.append("A{}[{}]".format(k,i+self.col_addr_size))
 
         self.connect_inst(inputs + outputs + ["clk_buf", "vdd", "gnd"])
         return inst
@@ -385,9 +337,10 @@ class sram_base(design):
         # inputs, outputs/output/bar
         inputs = []
         outputs = []
-        for i in range(self.col_addr_size):
-            inputs.append("ADDR[{}]".format(i))
-            outputs.append("A[{}]".format(i))
+        for k in range(self.total_ports):
+            for i in range(self.col_addr_size):
+                inputs.append("ADDR{}[{}]".format(k,i))
+                outputs.append("A{}[{}]".format(k,i))
 
         self.connect_inst(inputs + outputs + ["clk_buf", "vdd", "gnd"])
         return inst
@@ -400,9 +353,10 @@ class sram_base(design):
         # inputs, outputs/output/bar
         inputs = []
         outputs = []
-        for i in range(self.word_size):
-            inputs.append("DIN[{}]".format(i))
-            outputs.append("BANK_DIN[{}]".format(i))
+        for k in range(self.total_write):
+            for i in range(self.word_size):
+                inputs.append("DIN{}[{}]".format(k,i))
+                outputs.append("BANK_DIN{}[{}]".format(k,i))
 
         self.connect_inst(inputs + outputs + ["clk_buf", "vdd", "gnd"])
         return inst

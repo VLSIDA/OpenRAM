@@ -56,6 +56,7 @@ layer["via9"]    = 28
 layer["metal10"] = 29
 layer["text"]    = 239
 layer["boundary"]= 239
+layer["blockage"]= 239
 
 ###################################################
 ##END GDS Layer Map
@@ -98,6 +99,8 @@ drc["minwidth_poly"] = 0.05
 drc["poly_to_poly"] = 0.14
 # POLY.3 Minimum poly extension beyond active
 drc["poly_extend_active"] = 0.055
+# Not a rule
+drc["poly_to_polycontact"] = 0.075
 # POLY.4 Minimum enclosure of active around gate
 drc["active_enclosure_gate"] = 0.07
 # POLY.5 Minimum spacing of field poly to active

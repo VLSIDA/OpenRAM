@@ -228,7 +228,7 @@ class replica_bitline(design.design):
 
         # 3. Route the contact of previous route to the bitcell WL
         # route bend of previous net to bitcell WL
-        wl_offset = self.rbc_inst.get_pin("WL").lc()
+        wl_offset = self.rbc_inst.get_pin("wl").lc()
         xmid_point= 0.5*(wl_offset.x+contact_offset.x)
         wl_mid1 = vector(xmid_point,contact_offset.y)
         wl_mid2 = vector(xmid_point,wl_offset.y)
@@ -247,7 +247,7 @@ class replica_bitline(design.design):
 
         # Route the connection of the source route to the RBL bitline (left)
         # Via will go halfway down from the bitcell
-        bl_offset = self.rbc_inst.get_pin("BL").bc()
+        bl_offset = self.rbc_inst.get_pin("bl").bc()
         # Route down a pitch so we can use M2 routing
         bl_down_offset = bl_offset - vector(0, self.m2_pitch)
         self.add_path("metal2",[source_offset, bl_down_offset, bl_offset])   

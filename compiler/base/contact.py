@@ -15,6 +15,7 @@ class contact(hierarchy_design.hierarchy_design):
     necessary to import layouts into Magic which requires the select to be in the same GDS
     hierarchy as the contact.
     """
+
     def __init__(self, layer_stack, dimensions=[1,1], implant_type=None, well_type=None):
         if implant_type or well_type:
             name = "{0}_{1}_{2}_{3}x{4}_{5}{6}".format(layer_stack[0],
@@ -24,13 +25,14 @@ class contact(hierarchy_design.hierarchy_design):
                                                        dimensions[1],
                                                        implant_type,
                                                        well_type)
+                                                       
         else:
             name = "{0}_{1}_{2}_{3}x{4}".format(layer_stack[0],
-                                                       layer_stack[1],
-                                                       layer_stack[2],
-                                                       dimensions[0],
-                                                       dimensions[1])
-                                       
+                                                layer_stack[1],
+                                                layer_stack[2],
+                                                dimensions[0],
+                                                dimensions[1])
+
         hierarchy_design.hierarchy_design.__init__(self, name)
         debug.info(4, "create contact object {0}".format(name))
 

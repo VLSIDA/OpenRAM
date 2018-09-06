@@ -13,52 +13,81 @@ import debug
 
 OPTS = globals.OPTS
 
-@unittest.skip("SKIPPING 04_pbitcell_test")
+#@unittest.skip("SKIPPING 04_pbitcell_test")
 class pbitcell_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        import pbitcell
+        from pbitcell import pbitcell
         import tech
-
+        OPTS.num_rw_ports=1
+        OPTS.num_w_ports=1
+        OPTS.num_r_ports=1
         debug.info(2, "Bitcell with 1 of each port: read/write, write, and read")
-        tx = pbitcell.pbitcell(num_readwrite=1,num_write=1,num_read=1)
+        tx = pbitcell()
         self.local_check(tx)
         
+        OPTS.num_rw_ports=0
+        OPTS.num_w_ports=1
+        OPTS.num_r_ports=1
         debug.info(2, "Bitcell with 0 read/write ports")
-        tx = pbitcell.pbitcell(num_readwrite=0,num_write=1,num_read=1)
+        tx = pbitcell()
         self.local_check(tx)
         
+        OPTS.num_rw_ports=1
+        OPTS.num_w_ports=0
+        OPTS.num_r_ports=1
         debug.info(2, "Bitcell with 0 write ports")
-        tx = pbitcell.pbitcell(num_readwrite=1,num_write=0,num_read=1)
+        tx = pbitcell()
         self.local_check(tx)
         
+        OPTS.num_rw_ports=1
+        OPTS.num_w_ports=1
+        OPTS.num_r_ports=0
         debug.info(2, "Bitcell with 0 read ports")
-        tx = pbitcell.pbitcell(num_readwrite=1,num_write=1,num_read=0)
+        tx = pbitcell()
         self.local_check(tx)
         
+        OPTS.num_rw_ports=1
+        OPTS.num_w_ports=0
+        OPTS.num_r_ports=0
         debug.info(2, "Bitcell with 0 read ports and 0 write ports")
-        tx = pbitcell.pbitcell(num_readwrite=1,num_write=0,num_read=0)
+        tx = pbitcell()
         self.local_check(tx)
 
+        OPTS.num_rw_ports=2
+        OPTS.num_w_ports=2
+        OPTS.num_r_ports=2
         debug.info(2, "Bitcell with 2 of each port: read/write, write, and read")
-        tx = pbitcell.pbitcell(num_readwrite=2,num_write=2,num_read=2)
+        tx = pbitcell()
         self.local_check(tx)
         
+        OPTS.num_rw_ports=0
+        OPTS.num_w_ports=2
+        OPTS.num_r_ports=2
         debug.info(2, "Bitcell with 0 read/write ports")
-        tx = pbitcell.pbitcell(num_readwrite=0,num_write=2,num_read=2)
+        tx = pbitcell()
         self.local_check(tx)
         
+        OPTS.num_rw_ports=2
+        OPTS.num_w_ports=0
+        OPTS.num_r_ports=2
         debug.info(2, "Bitcell with 0 write ports")
-        tx = pbitcell.pbitcell(num_readwrite=2,num_write=0,num_read=2)
+        tx = pbitcell()
         self.local_check(tx)
         
+        OPTS.num_rw_ports=2
+        OPTS.num_w_ports=2
+        OPTS.num_r_ports=0
         debug.info(2, "Bitcell with 0 read ports")
-        tx = pbitcell.pbitcell(num_readwrite=2,num_write=2,num_read=0)
+        tx = pbitcell()
         self.local_check(tx)
         
+        OPTS.num_rw_ports=2
+        OPTS.num_w_ports=0
+        OPTS.num_r_ports=0
         debug.info(2, "Bitcell with 0 read ports and 0 write ports")
-        tx = pbitcell.pbitcell(num_readwrite=2,num_write=0,num_read=0)
+        tx = pbitcell()
         self.local_check(tx)
 
         globals.end_openram()

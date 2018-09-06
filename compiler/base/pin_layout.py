@@ -1,5 +1,5 @@
 import debug
-from tech import GDS
+from tech import GDS, drc
 from vector import vector
 from tech import layer
 
@@ -36,16 +36,29 @@ class pin_layout:
     def __eq__(self, other):
         """ Check if these are the same pins for duplicate checks """
         if isinstance(other, self.__class__):
-            return (self.name==other.name and self.layer==other.layer and self.rect == other.rect)
+            return (self.layer==other.layer and self.rect == other.rect)
         else:
             return False    
 
+    def inflate(self, spacing=None):
+        """ 
+        Inflate the rectangle by the spacing (or other rule) 
+        and return the new rectangle. 
+        """
+        if not spacing:
+            spacing = drc["{0}_to_{0}".format(self.layer)]
+            
+        (ll,ur) = self.rect
+        spacing = vector(spacing, spacing)
+        newll = ll - spacing
+        newur = ur + spacing
+        
+        return (newll, newur)
+        
     def overlaps(self, other):
         """ Check if a shape overlaps with a rectangle  """
-        ll = self.rect[0]
-        ur = self.rect[1]
-        oll = other.rect[0]
-        our = other.rect[1]
+        (ll,ur) = self.rect
+        (oll,our) = other.rect
         # Start assuming no overlaps
         x_overlaps = False
         y_overlaps = False

@@ -625,7 +625,7 @@ drDefinePacket(
  ( display      deviceAnt            stipple0   solid      yellow     yellow     solid     )
  ( display      winBottomShadow      solid      solid      winColor1  winColor1  solid     )
  ( display      PselectNet           dots4      solid      brown      brown      outlineStipple)
- ( display      comment              stipple0   lineStyle0 winBack    winBack    solid     )
+ ( display      comment              stipple0   lineStyle0 winBack    winBack    outline     )
  ( display      Poly1                dots       lineStyle0 red        red        outlineStipple)
  ( display      Unrouted             stipple0   lineStyle1 winColor5  winColor5  solid     )
  ( display      stretch              stipple0   solid      yellow     yellow     solid     )

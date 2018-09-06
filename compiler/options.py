@@ -52,14 +52,20 @@ class options(optparse.Values):
     purge_temp = True
 
     # These are the configuration parameters
-    rw_ports = 1
-    r_ports = 0
-    w_ports = 0
+    num_rw_ports = 1
+    num_r_ports = 0
+    num_w_ports = 0
+    
     # These will get initialized by the the file
     supply_voltages = ""
     temperatures = ""
     process_corners = ""
-    
+
+    # These are the main configuration parameters that should be over-ridden
+    # in a configuration file.
+    #num_words = 0
+    #num_banks = 1
+    #word_size = 0
 
     # These are the default modules that can be over-riden
     decoder = "hierarchical_decoder"

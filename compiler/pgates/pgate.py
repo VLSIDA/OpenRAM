@@ -11,9 +11,18 @@ class pgate(design.design):
     This is a module that implements some shared functions for parameterized gates.
     """
 
-    def __init__(self, name):
+    def __init__(self, name, height=None):
         """ Creates a generic cell """
         design.design.__init__(self, name)
+
+        if height:
+            self.height = height
+        elif not height:
+            from importlib import reload
+            c = reload(__import__(OPTS.bitcell))
+            bitcell = getattr(c, OPTS.bitcell)
+            b = bitcell()
+            self.height = b.height
 
 
     def connect_pin_to_rail(self,inst,pin,supply):

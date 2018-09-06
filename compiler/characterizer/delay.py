@@ -165,26 +165,26 @@ class delay():
         
         # generate data and addr signals
         self.sf.write("\n* Generation of data and address signals\n")
-        for readwrite_input in range(OPTS.rw_ports):
+        for readwrite_input in range(OPTS.num_rw_ports):
             for i in range(self.word_size):
                 self.stim.gen_constant(sig_name="DIN_RWP{0}[{1}] ".format(readwrite_input, i),
                                     v_val=0)
-        for write_port in range(OPTS.w_ports):
+        for write_port in range(OPTS.num_w_ports):
             for i in range(self.word_size):
                 self.stim.gen_constant(sig_name="DIN_WP{0}[{1}] ".format(write_port, i),
                                     v_val=0)
         for i in range(self.addr_size):
             self.stim.gen_constant(sig_name="A[{0}]".format(i),
                                    v_val=0)
-        for readwrite_addr in range(OPTS.rw_ports):
+        for readwrite_addr in range(OPTS.num_rw_ports):
             for i in range(self.addr_size):
                 self.stim.gen_constant(sig_name="A_RWP{0}[{1}]".format(readwrite_addr,i),
                                    v_val=0)
-        for write_addr in range(OPTS.w_ports):
+        for write_addr in range(OPTS.num_w_ports):
             for i in range(self.addr_size):
                 self.stim.gen_constant(sig_name="A_WP{0}[{1}]".format(write_addr,i),
                                    v_val=0)
-        for read_addr in range(OPTS.r_ports):
+        for read_addr in range(OPTS.num_r_ports):
             for i in range(self.addr_size):
                 self.stim.gen_constant(sig_name="A_RP{0}[{1}]".format(read_addr,i),
                                    v_val=0)
@@ -622,19 +622,19 @@ class delay():
         # sys.exit(1)
 
         #For debugging, skips characterization and returns dummy values.
-        for port in range(self.total_port_num):
-            for m in ["delay_lh", "delay_hl", "slew_lh", "slew_hl", "read0_power",
-                    "read1_power", "write0_power", "write1_power", "leakage_power"]:
-                char_data["{0}{1}".format(m,port)]=[]
-        i = 1.0
-        for slew in slews:
-            for load in loads:
-                for k,v in char_data.items():        
-                    char_data[k].append(i)
-                    i+=1.0
-        char_data["min_period"] = i
-        char_data["leakage_power"] = i+1.0
-        return char_data
+        # for port in range(self.total_port_num):
+            # for m in ["delay_lh", "delay_hl", "slew_lh", "slew_hl", "read0_power",
+                    # "read1_power", "write0_power", "write1_power", "leakage_power"]:
+                # char_data["{0}{1}".format(m,port)]=[]
+        # i = 1.0
+        # for slew in slews:
+            # for load in loads:
+                # for k,v in char_data.items():        
+                    # char_data[k].append(i)
+                    # i+=1.0
+        # char_data["min_period"] = i
+        # char_data["leakage_power"] = i+1.0
+        # return char_data
         
         # 1) Find a feasible period and it's corresponding delays using the trimmed array.
         (feasible_delays_lh, feasible_delays_hl) = self.find_feasible_period()
@@ -910,8 +910,11 @@ class delay():
             self.gen_test_cycles_one_port(cur_read_port, cur_write_port)
 
     def analytical_delay(self,sram, slews, loads):
-        """ Just return the analytical model results for the SRAM. 
+        """ Return the analytical model results for the SRAM. 
         """
+        debug.check(OPTS.num_rw_ports < 2 and OPTS.num_w_ports < 1 and OPTS.num_r_ports < 1 ,
+                    "Analytical characterization does not currently support multiport.")
+        
         delay_lh = []
         delay_hl = []
         slew_lh = []
@@ -934,14 +937,14 @@ class delay():
         debug.info(1,"Leakage Power: {0} mW".format(power.leakage)) 
         
         data = {"min_period": 0, 
-                "delay_lh": delay_lh,
-                "delay_hl": delay_hl,
-                "slew_lh": slew_lh,
-                "slew_hl": slew_hl,
-                "read0_power": power.dynamic,
-                "read1_power": power.dynamic,
-                "write0_power": power.dynamic,
-                "write1_power": power.dynamic,
+                "delay_lh0": delay_lh,
+                "delay_hl0": delay_hl,
+                "slew_lh0": slew_lh,
+                "slew_hl0": slew_hl,
+                "read0_power0": power.dynamic,
+                "read1_power0": power.dynamic,
+                "write0_power0": power.dynamic,
+                "write1_power0": power.dynamic,
                 "leakage_power": power.leakage
                 }
         return data
@@ -976,19 +979,19 @@ class delay():
         """Generates the port names to be used in characterization and sets default simulation target ports"""
         self.write_ports = []
         self.read_ports = []
-        self.total_port_num = OPTS.rw_ports + OPTS.w_ports + OPTS.r_ports
+        self.total_port_num = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
         
         #save a member variable to avoid accessing global. readwrite ports have different control signals.
-        self.readwrite_port_num = OPTS.rw_ports
+        self.readwrite_port_num = OPTS.num_rw_ports
         
         #Generate the port names. readwrite ports are required to be added first for this to work.
-        for readwrite_port_num in range(OPTS.rw_ports):
+        for readwrite_port_num in range(OPTS.num_rw_ports):
             self.read_ports.append(readwrite_port_num)
             self.write_ports.append(readwrite_port_num)
         #This placement is intentional. It makes indexing input data easier. See self.data_values
-        for read_port_num in range(OPTS.rw_ports, OPTS.r_ports):
+        for read_port_num in range(OPTS.num_rw_ports, OPTS.num_r_ports):
             self.read_ports.append(read_port_num)
-        for write_port_num in range(OPTS.rw_ports+OPTS.r_ports, OPTS.w_ports):
+        for write_port_num in range(OPTS.num_rw_ports+OPTS.num_r_ports, OPTS.num_w_ports):
             self.write_ports.append(write_port_num)
         
         

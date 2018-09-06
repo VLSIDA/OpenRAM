@@ -29,19 +29,19 @@ class lib:
         #This is basically a copy and paste of whats in delay.py as well. Something more efficient should be done here.
         self.write_ports = []
         self.read_ports = []
-        self.total_port_num = OPTS.rw_ports + OPTS.w_ports + OPTS.r_ports
+        self.total_port_num = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
         
         #save a member variable to avoid accessing global. readwrite ports have different control signals.
-        self.readwrite_port_num = OPTS.rw_ports
+        self.readwrite_port_num = OPTS.num_rw_ports
         
         #Generate the port names. readwrite ports are required to be added first for this to work.
-        for readwrite_port_num in range(OPTS.rw_ports):
+        for readwrite_port_num in range(OPTS.num_rw_ports):
             self.read_ports.append(readwrite_port_num)
             self.write_ports.append(readwrite_port_num)
         #This placement is intentional. It makes indexing input data easier. See self.data_values
-        for read_port_num in range(OPTS.rw_ports, OPTS.r_ports):
+        for read_port_num in range(OPTS.num_rw_ports, OPTS.num_r_ports):
             self.read_ports.append(read_port_num)
-        for write_port_num in range(OPTS.rw_ports+OPTS.r_ports, OPTS.w_ports):
+        for write_port_num in range(OPTS.num_rw_ports+OPTS.num_r_ports, OPTS.num_w_ports):
             self.write_ports.append(write_port_num)
         
     def prepare_tables(self):
@@ -488,9 +488,9 @@ class lib:
                 self.char_results = self.d.analytical_delay(self.sram,self.slews,self.loads)
             else:
                 #Temporary Workaround to here to set # of ports. Crashes if set in config file.
-                #OPTS.rw_ports = 0
-                #OPTS.r_ports = 1
-                #OPTS.w_ports = 1
+                #OPTS.num_rw_ports = 0
+                #OPTS.num_r_ports = 1
+                #OPTS.num_w_ports = 1
 
                 probe_address = "1" * self.sram.addr_size
                 probe_data = self.sram.word_size - 1

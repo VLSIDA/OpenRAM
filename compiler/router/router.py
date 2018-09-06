@@ -43,7 +43,6 @@ class router:
         
         # all the paths we've routed so far (to supplement the blockages)
         self.paths = []
-        self.wave_paths = []        
 
         # The boundary will determine the limits to the size of the routing grid
         self.boundary = self.layout.measureBoundary(self.top_name)
@@ -562,15 +561,15 @@ class router:
         
         # convert the path back to absolute units from tracks
         abs_path = [self.convert_wave_to_units(i) for i in path]
-        debug.info(1,str(abs_path))
-        if self.is_wave(path):
-            ur = abs_path[-1][-1]
-            ll = abs_path[0][0]
-            self.cell.add_layout_pin(name,
-                                     layer=self.get_layer(ll.z),
-                                     offset=vector(ll.x,ll.y),
-                                     width=ur.x-ll.x,
-                                     height=ur.y-ll.y)
+        #debug.info(1,str(abs_path))
+        ur = abs_path[-1][-1]
+        ll = abs_path[0][0]
+        pin = self.cell.add_layout_pin(name,
+                                       layer=self.get_layer(ll.z),
+                                       offset=vector(ll.x,ll.y),
+                                       width=ur.x-ll.x,
+                                       height=ur.y-ll.y)
+        return pin
             
 
     def get_inertia(self,p0,p1):

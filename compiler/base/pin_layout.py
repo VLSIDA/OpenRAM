@@ -54,11 +54,24 @@ class pin_layout:
         newur = ur + spacing
         
         return (newll, newur)
-        
+
+    def intersection(self, other):
+        """ Check if a shape overlaps with a rectangle  """
+        (ll,ur) = self.rect
+        (oll,our) = other.rect
+
+        min_x = max(ll.x, oll.x)
+        max_x = min(ll.x, oll.x)
+        min_y = max(ll.y, oll.y)
+        max_y = min(ll.y, oll.y)
+
+        return [vector(min_x,min_y),vector(max_x,max_y)]
+    
     def overlaps(self, other):
         """ Check if a shape overlaps with a rectangle  """
         (ll,ur) = self.rect
         (oll,our) = other.rect
+        
         # Start assuming no overlaps
         x_overlaps = False
         y_overlaps = False
@@ -77,6 +90,7 @@ class pin_layout:
             y_overlaps = True
 
         return x_overlaps and y_overlaps
+    
     def height(self):
         """ Return height. Abs is for pre-normalized value."""
         return abs(self.rect[1].y-self.rect[0].y)

@@ -22,6 +22,7 @@ class supply_router(router):
         layers for the layers to route on
         """
         router.__init__(self, gds_name, module)
+
         
     def create_routing_grid(self):
         """ 
@@ -89,25 +90,100 @@ class supply_router(router):
         Add supply rails for vdd and gnd alternating in both layers.
         Connect cross-over points with vias.
         """
-        # vdd will be the odd grids
-        vdd_rails = self.route_supply_rail(name="vdd",offset=0,width=2)
-        
-        # gnd will be the even grids (0 + width)
-        gnd_rails = self.route_supply_rail(name="gnd",offset=0,width=2)
+        # width in grid units
+        width = 2
 
-        pass
+        # List of all the rails
+        self.rails = []
+        self.wave_paths = []        
+            
+        # vdd will be the even grids every 2 widths
+        for offset in range(0, self.rg.ur.y, 2*width):
+            loc = vector3d(0,offset,0)
+            # While we can keep expanding east
+            while loc and loc.x < self.rg.ur.x:
+                loc = self.route_horizontal_supply_rail("vdd",loc,width)
+        
+        # gnd will be the odd grids every 2 widths
+        for offset in range(width, self.rg.ur.y, 2*width):
+            loc = vector3d(0,offset,0)
+            # While we can keep expanding east
+            while loc and loc.x < self.rg.ur.x:
+                loc = self.route_horizontal_supply_rail("gnd",loc,width)
+
+        # vdd will be the even grids every 2 widths
+        for offset in range(0, self.rg.ur.x, 2*width):
+            loc = vector3d(offset,0,0)
+            # While we can keep expanding up
+            while loc and loc.y < self.rg.ur.y:
+                loc = self.route_vertical_supply_rail("vdd",loc,width)
+        
+        # gnd will be the odd grids every 2 widths
+        for offset in range(width, self.rg.ur.x, 2*width):
+            loc = vector3d(offset,0,0)
+            # While we can keep expanding up
+            while loc and loc.y < self.rg.ur.y:
+                loc = self.route_vertical_supply_rail("gnd",loc,width)
+                
+
     
-    def route_supply_rail(self, name, offset=0, width=1):
+    def route_horizontal_supply_rail(self, name, loc, width):
         """
         Add supply rails alternating layers.
+        Return the final wavefront for seeding the next wave.
         """
-        wave = self.rg.start_wave(loc=vector3d(0,offset,0), width=width)
-        wave_path = self.rg.probe_wave(wave)
-        self.add_wave(name, wave_path)
-        
-        
-        
-            
+        # Sweep to find an initial wave
+        start_wave = self.rg.find_horizontal_start_wave(loc, width)
+        if not start_wave:
+            return None
+
+        # Expand the wave to the right
+        wave_path = self.rg.probe_east_wave(start_wave)
+        if not wave_path:
+            return None
+
+        # Filter single unit paths
+        # FIXME: Should we filter bigger sizes?
+        if len(wave_path)>1:
+            new_pin = self.add_wave(name, wave_path)
+            self.rails.append(new_pin)
+            self.wave_paths.append(wave_path)
+
+        # seed the next start wave location
+        wave_end = wave_path[-1]
+        next_seed = wave_end[0]+vector3d(1,0,0)
+        return next_seed
+
+    def route_vertical_supply_rail(self, name, loc, width):
+        """
+        Add supply rails alternating layers.
+        Return the final wavefront for seeding the next wave.
+        """
+        # Sweep to find an initial wave
+        start_wave = self.rg.find_vertical_start_wave(loc, width)
+        if not start_wave:
+            return None
+
+        # Expand the wave to the right
+        wave_path = self.rg.probe_up_wave(start_wave)
+        if not wave_path:
+            return None
+
+        # Filter single unit paths
+        # FIXME: Should we filter bigger sizes?
+        if len(wave_path)>1:
+            new_pin = self.add_wave(name, wave_path)
+            self.rails.append(new_pin)
+            self.wave_paths.append(wave_path)            
+
+        # seed the next start wave location
+        wave_end = wave_path[-1]
+        next_seed = wave_end[0]+vector3d(0,1,0)
+        return next_seed
+    
+
+                    
+                
         
     def route_supply_pins(self, pin):
         """
@@ -129,31 +205,31 @@ class supply_router(router):
         pass
     
         
-    def add_route(self,path):
-        """ 
-        Add the current wire route to the given design instance.
-        """
-        debug.info(3,"Set path: " + str(path))
+    # def add_route(self,path):
+    #     """ 
+    #     Add the current wire route to the given design instance.
+    #     """
+    #     debug.info(3,"Set path: " + str(path))
 
-        # Keep track of path for future blockages
-        self.paths.append(path)
+    #     # Keep track of path for future blockages
+    #     self.paths.append(path)
         
-        # This is marked for debug
-        self.rg.add_path(path)
+    #     # This is marked for debug
+    #     self.rg.add_path(path)
 
-        # For debugging... if the path failed to route.
-        if False or path==None:
-            self.write_debug_gds()
+    #     # For debugging... if the path failed to route.
+    #     if False or path==None:
+    #         self.write_debug_gds()
 
-        # First, simplify the path for
-        #debug.info(1,str(self.path))        
-        contracted_path = self.contract_path(path)
-        debug.info(1,str(contracted_path))
+    #     # First, simplify the path for
+    #     #debug.info(1,str(self.path))        
+    #     contracted_path = self.contract_path(path)
+    #     debug.info(1,str(contracted_path))
 
-        # convert the path back to absolute units from tracks
-        abs_path = map(self.convert_point_to_units,contracted_path)
-        debug.info(1,str(abs_path))
-        self.cell.add_route(self.layers,abs_path)
+    #     # convert the path back to absolute units from tracks
+    #     abs_path = map(self.convert_point_to_units,contracted_path)
+    #     debug.info(1,str(abs_path))
+    #     self.cell.add_route(self.layers,abs_path)
 
     
 

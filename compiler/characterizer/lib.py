@@ -148,9 +148,14 @@ class lib:
         self.lib.write("    dont_touch : true;\n")
         self.lib.write("    area : {};\n\n".format(self.sram.width * self.sram.height))
 
+        #Build string of all control signals. This is subject to change once control signals finalized.
+        control_str = 'CSb0' #assume at least 1 port
+        for i in range(1, self.total_port_num):
+            control_str += ' & CSb{0}'.format(i)
+            
         # Leakage is included in dynamic when macro is enabled
         self.lib.write("    leakage_power () {\n")
-        self.lib.write("      when : \"CSb\";\n")
+        self.lib.write("      when : \"{0}\";\n".format(control_str))
         self.lib.write("      value : {};\n".format(self.char_results["leakage_power"]))
         self.lib.write("    }\n")
         self.lib.write("    cell_leakage_power : {};\n".format(0))
@@ -326,7 +331,7 @@ class lib:
         self.lib.write("        max_capacitance : {0};  \n".format(max(self.loads)))
         self.lib.write("        min_capacitance : {0};  \n".format(min(self.loads)))        
         self.lib.write("        memory_read(){ \n")
-        self.lib.write("            address : ADDR; \n")
+        self.lib.write("            address : ADDR{0}; \n".format(read_port))
         self.lib.write("        }\n")
         
 
@@ -359,10 +364,9 @@ class lib:
         self.lib.write("        bus_type  : DATA; \n")
         self.lib.write("        direction  : input; \n")
         # This is conservative, but limit to range that we characterized.
-        self.lib.write("        max_capacitance : {0};  \n".format(max(self.loads)))
-        self.lib.write("        min_capacitance : {0};  \n".format(min(self.loads)))        
+        self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]))
         self.lib.write("        memory_write(){ \n")
-        self.lib.write("            address : ADDR; \n")
+        self.lib.write("            address : ADDR{0}; \n".format(write_port))
         self.lib.write("            clocked_on  : clk; \n")
         self.lib.write("        }\n")
         self.lib.write("    }\n")
@@ -393,12 +397,12 @@ class lib:
     def write_control_pins(self, port):
         """ Adds control pins timing results."""
         #The control pins are still to be determined. This is a placeholder for what could be.
-        ctrl_pin_names = ["CSb"]
+        ctrl_pin_names = ["CSb{0}".format(port)]
         if port in self.write_ports and port in self.read_ports:
-            ctrl_pin_names.append("WEb")
+            ctrl_pin_names.append("WEb{0}".format(port))
             
         for i in ctrl_pin_names:
-            self.lib.write("    pin({0}{1})".format(i,port))
+            self.lib.write("    pin({0})".format(i))
             self.lib.write("{\n")
             self.lib.write("        direction  : input; \n")
             self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]))
@@ -422,7 +426,7 @@ class lib:
 
         # Equally divide read/write power between first and second half of clock period
         self.lib.write("        internal_power(){\n")
-        self.lib.write("            when : \"!CSb & clk & !WEb\"; \n")
+        self.lib.write("            when : \"!CSb{0} & clk & !WEb{0}\"; \n".format(port))
         self.lib.write("            rise_power(scalar){\n")
         self.lib.write("                values(\"{0}\");\n".format(avg_write_power/2.0))
         self.lib.write("            }\n")
@@ -432,7 +436,7 @@ class lib:
         self.lib.write("        }\n")
 
         self.lib.write("        internal_power(){\n")
-        self.lib.write("            when : \"!CSb & !clk & WEb\"; \n")
+        self.lib.write("            when : \"!CSb{0} & !clk & WEb{0}\"; \n".format(port))
         self.lib.write("            rise_power(scalar){\n")
         self.lib.write("                values(\"{0}\");\n".format(avg_read_power/2.0))
         self.lib.write("            }\n")
@@ -442,7 +446,7 @@ class lib:
         self.lib.write("        }\n")
         # Have 0 internal power when disabled, this will be represented as leakage power.
         self.lib.write("        internal_power(){\n")
-        self.lib.write("            when : \"CSb\"; \n")
+        self.lib.write("            when : \"CSb{0}\"; \n".format(port))
         self.lib.write("            rise_power(scalar){\n")
         self.lib.write("                values(\"0\");\n")
         self.lib.write("            }\n")

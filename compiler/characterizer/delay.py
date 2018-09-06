@@ -609,6 +609,8 @@ class delay():
         #already existing functions with similar names... 
         self.gen_port_names()
         
+        self.load=max(loads)
+        self.slew=max(slews)
         # This is for debugging a full simulation
         # debug.info(0,"Debug simulation running...")
         # target_period=50.0
@@ -619,10 +621,22 @@ class delay():
         # self.try_period(target_period, feasible_delay_lh, feasible_delay_hl)
         # sys.exit(1)
 
-
+        #For debugging, skips characterization and returns dummy values.
+        for port in range(self.total_port_num):
+            for m in ["delay_lh", "delay_hl", "slew_lh", "slew_hl", "read0_power",
+                    "read1_power", "write0_power", "write1_power", "leakage_power"]:
+                char_data["{0}{1}".format(m,port)]=[]
+        i = 1.0
+        for slew in slews:
+            for load in loads:
+                for k,v in char_data.items():        
+                    char_data[k].append(i)
+                    i+=1.0
+        char_data["min_period"] = i
+        char_data["leakage_power"] = i+1.0
+        return char_data
+        
         # 1) Find a feasible period and it's corresponding delays using the trimmed array.
-        self.load=max(loads)
-        self.slew=max(slews)
         (feasible_delays_lh, feasible_delays_hl) = self.find_feasible_period()
         #Check all the delays
         for k,v in feasible_delays_lh.items():
@@ -667,8 +681,7 @@ class delay():
                     else:
                         char_data[k].append(v)
 
-
-
+        
         return char_data
 
 

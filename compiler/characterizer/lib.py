@@ -112,7 +112,7 @@ class lib:
             self.write_addr_bus(port)
             self.write_control_pins(port) #need to split this into sram and port control signals
             
-        self.write_clk_timing_power()
+            self.write_clk_timing_power(port)
 
         self.write_footer()
 
@@ -321,7 +321,7 @@ class lib:
 
         self.lib.write("    bus(DOUT{0}){{\n".format(read_port))
         self.lib.write("        bus_type  : DATA; \n")
-        self.lib.write("        direction  : out; \n")
+        self.lib.write("        direction  : output; \n")
         # This is conservative, but limit to range that we characterized.
         self.lib.write("        max_capacitance : {0};  \n".format(max(self.loads)))
         self.lib.write("        min_capacitance : {0};  \n".format(min(self.loads)))        
@@ -357,7 +357,7 @@ class lib:
 
         self.lib.write("    bus(DIN{0}){{\n".format(write_port))
         self.lib.write("        bus_type  : DATA; \n")
-        self.lib.write("        direction  : in; \n")
+        self.lib.write("        direction  : input; \n")
         # This is conservative, but limit to range that we characterized.
         self.lib.write("        max_capacitance : {0};  \n".format(max(self.loads)))
         self.lib.write("        min_capacitance : {0};  \n".format(min(self.loads)))        
@@ -365,6 +365,7 @@ class lib:
         self.lib.write("            address : ADDR; \n")
         self.lib.write("            clocked_on  : clk; \n")
         self.lib.write("        }\n")
+        self.lib.write("    }\n")
 
     def write_data_bus(self, port):
         """ Adds data bus timing results."""
@@ -416,8 +417,8 @@ class lib:
 
         # Find the average power of 1 and 0 bits for writes and reads over all loads/slews
         # Could make it a table, but this is fine for now.
-        avg_write_power = np.mean(self.char_results["write1_power_{0}".format(port)] + self.char_results["write0_power_{0}".format(port)])
-        avg_read_power = np.mean(self.char_results["read1_power_{0}".format(port)] + self.char_results["read0_power_{0}".format(port)])        
+        avg_write_power = np.mean(self.char_results["write1_power{0}".format(port)] + self.char_results["write0_power{0}".format(port)])
+        avg_read_power = np.mean(self.char_results["read1_power{0}".format(port)] + self.char_results["read0_power{0}".format(port)])        
 
         # Equally divide read/write power between first and second half of clock period
         self.lib.write("        internal_power(){\n")

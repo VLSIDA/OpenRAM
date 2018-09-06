@@ -10,20 +10,17 @@ from globals import OPTS
 from router import router
 
 class signal_router(router):
-    """A router class to read an obstruction map from a gds and plan a
+    """
+    A router class to read an obstruction map from a gds and plan a
     route on a given layer. This is limited to two layer routes.
     """
 
     def __init__(self, gds_name=None, module=None):
-        """Use the gds file for the blockages with the top module topName and
+        """
+        Use the gds file for the blockages with the top module topName and
         layers for the layers to route on
         """
         router.__init__(self, gds_name, module)
-
-        self.pins = {}
-
-        # all the paths we've routed so far (to supplement the blockages)
-        self.paths = []
 
 
     def create_routing_grid(self):
@@ -35,8 +32,8 @@ class signal_router(router):
         size = self.ur - self.ll
         debug.info(1,"Size: {0} x {1}".format(size.x,size.y))
 
-        import astar_grid
-        self.rg = astar_grid.astar_grid()
+        import signal_grid
+        self.rg = signal_grid.signal_grid(self.ll, self.ur, self.track_width)
         
 
     def route(self, cell, layers, src, dest, detour_scale=5):

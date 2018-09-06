@@ -35,16 +35,31 @@ class router:
         self.reader.loadFromFile(gds_name)
         self.top_name = self.layout.rootStructureName
 
+        # A map of pin names to pin structures
         self.pins = {}
+
+        # A list of pin blockages (represented by the pin structures too)
         self.blockages=[]
+        
         # all the paths we've routed so far (to supplement the blockages)
         self.paths = []
+        self.wave_paths = []        
 
         # The boundary will determine the limits to the size of the routing grid
         self.boundary = self.layout.measureBoundary(self.top_name)
-        self.ll = vector(self.boundary[0])
-        self.ur = vector(self.boundary[1])
+        # These must be un-indexed to get rid of the matrix type
+        self.ll = vector(self.boundary[0][0], self.boundary[0][1])
+        self.ur = vector(self.boundary[1][0], self.boundary[1][1])
 
+            
+    def clear_pins(self):
+        """
+        Convert the routed path to blockages.
+        Keep the other blockages unchanged.
+        """
+        self.pins = {}
+        self.rg.reinit()
+        
     def set_top(self,top_name):
         """ If we want to route something besides the top-level cell."""
         self.top_name = top_name
@@ -55,6 +70,20 @@ class router:
         else:
             return 1
 
+    def get_layer(self, zindex):
+        if zindex==1:
+            return self.vert_layer_name
+        elif zindex==0:
+            return self.horiz_layer_name
+        else:
+            debug.error(-1,"Invalid zindex {}".format(zindex))
+        
+    def is_wave(self,path):
+        """
+        Determines if this is a wave (True) or a normal route (False)
+        """
+        return isinstance(path[0],list)
+    
     def set_layers(self, layers):
         """Allows us to change the layers that we are routing on. First layer
         is always horizontal, middle is via, and last is always
@@ -254,8 +283,15 @@ class router:
         Convert a path set of tracks to center line path.
         """
         pt = vector3d(p)
-        pt=pt.scale(self.track_widths[0],self.track_widths[1],1)
+        pt = pt.scale(self.track_widths[0],self.track_widths[1],1)
         return pt
+
+    def convert_wave_to_units(self,wave):
+        """ 
+        Convert a wave to a set of center points 
+        """
+        return [self.convert_point_to_units(i) for i in wave]
+    
 
     def convert_blockage_to_tracks(self,shape):
         """ 
@@ -305,8 +341,8 @@ class router:
         track_list = []
         block_list = []
 
-        for x in range(ll[0],ur[0]):
-            for y in range(ll[1],ur[1]):
+        for x in range(int(ll[0]),int(ur[0])):
+            for y in range(int(ll[1]),int(ur[1])):
                 debug.info(1,"Converting [ {0} , {1} ]".format(x,y))
 
                 # however, if there is not enough overlap, then if there is any overlap at all,
@@ -481,9 +517,9 @@ class router:
                                height=ur.y-ll.y)
 
 
-    def add_route(self,path):
+    def prepare_path(self,path):
         """ 
-        Add the current wire route to the given design instance.
+        Prepare a path or wave for routing 
         """
         debug.info(3,"Set path: " + str(path))
 
@@ -497,17 +533,45 @@ class router:
         if False or path==None:
             self.write_debug_gds()
 
-            
         # First, simplify the path for
         #debug.info(1,str(self.path))        
         contracted_path = self.contract_path(path)
         debug.info(1,str(contracted_path))
+        
+        return contracted_path
+        
+        
+    def add_route(self,path):
+        """ 
+        Add the current wire route to the given design instance.
+        """
 
+        path=self.prepare_path(path)
+        
         # convert the path back to absolute units from tracks
-        abs_path = map(self.convert_point_to_units,contracted_path)
+        abs_path = list(map(self.convert_point_to_units,path))
         debug.info(1,str(abs_path))
         self.cell.add_route(self.layers,abs_path)
 
+
+    def add_wave(self, name, path):
+        """ 
+        Add the current wave to the given design instance.
+        """
+        path=self.prepare_path(path)
+        
+        # convert the path back to absolute units from tracks
+        abs_path = [self.convert_wave_to_units(i) for i in path]
+        debug.info(1,str(abs_path))
+        if self.is_wave(path):
+            ur = abs_path[-1][-1]
+            ll = abs_path[0][0]
+            self.cell.add_layout_pin(name,
+                                     layer=self.get_layer(ll.z),
+                                     offset=vector(ll.x,ll.y),
+                                     width=ur.x-ll.x,
+                                     height=ur.y-ll.y)
+            
 
     def get_inertia(self,p0,p1):
         """ 
@@ -524,8 +588,13 @@ class router:
 
     def contract_path(self,path):
         """ 
-        Remove intermediate points in a rectilinear path. 
+        Remove intermediate points in a rectilinear path or a wave.
         """
+        # Waves are always linear, so just return the first and last.
+        if self.is_wave(path):
+            return [path[0],path[-1]]
+
+        # Make a list only of points that change inertia of the path
         newpath = [path[0]]
         for i in range(1,len(path)-1):
             prev_inertia=self.get_inertia(path[i-1],path[i])

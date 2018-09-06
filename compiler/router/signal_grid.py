@@ -4,52 +4,18 @@ from vector3d import vector3d
 import grid
 from heapq import heappush,heappop
 
-class astar_grid(grid.grid):
+class signal_grid(grid.grid):
     """
     Expand the two layer grid to include A* search functions for a source and target.
     """
 
-    def __init__(self):
+    def __init__(self, ll, ur, track_factor):
         """ Create a routing map of width x height cells and 2 in the z-axis. """
-        grid.grid.__init__(self)
+        grid.grid.__init__(self, ll, ur, track_factor)
         
-        # list of the source/target grid coordinates
-        self.source = []
-        self.target = []
-
         # priority queue for the maze routing
         self.q = []
 
-    def set_source(self,n):
-        self.add_map(n)
-        self.map[n].source=True
-        self.source.append(n)
-        
-    def set_target(self,n):
-        self.add_map(n)
-        self.map[n].target=True
-        self.target.append(n)
-
-        
-    def add_source(self,track_list):
-        debug.info(2,"Adding source list={0}".format(str(track_list)))
-        for n in track_list:
-            debug.info(3,"Adding source ={0}".format(str(n)))
-            self.set_source(n)
-
-
-    def add_target(self,track_list):
-        debug.info(2,"Adding target list={0}".format(str(track_list)))
-        for n in track_list:
-            debug.info(3,"Adding target ={0}".format(str(n)))                                
-            self.set_target(n)
-
-    def is_target(self,point):
-        """
-        Point is in the target set, so we are done.
-        """
-        return point in self.target
-            
     def reinit(self):
         """ Reinitialize everything for a new route. """
 

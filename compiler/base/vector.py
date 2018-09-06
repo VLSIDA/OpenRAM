@@ -15,12 +15,12 @@ class vector():
         """ init function support two init method"""
         # will take single input as a coordinate
         if y==None:
-            self.x = x[0]
-            self.y = x[1]
+            self.x = float(x[0])
+            self.y = float(x[1])
         #will take two inputs as the values of a coordinate
         else:
-            self.x = x
-            self.y = y
+            self.x = float(x)
+            self.y = float(y)
 
     def __str__(self):
         """ override print function output """
@@ -36,12 +36,12 @@ class vector():
         can set value by vector[index]=value
         """
         if index==0:
-            self.x=value
+            self.x=float(value)
         elif index==1:
-            self.y=value
+            self.y=float(value)
         else:
-            self.x=value[0]
-            self.y=value[1] 
+            self.x=float(value[0])
+            self.y=float(value[1])
 
     def __getitem__(self, index):
         """
@@ -83,6 +83,14 @@ class vector():
         Override - function (right)
         """
         return vector(other[0]- self.x, other[1] - self.y)
+
+    def __hash__(self):
+        """
+        Override - function (hash)
+        Note: This assumes that you DON'T CHANGE THE VECTOR or it will
+        break things.
+        """
+        return hash((self.x,self.y))
 
     def snap_to_grid(self):
         self.x = self.snap_offset_to_grid(self.x)

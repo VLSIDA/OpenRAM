@@ -15,16 +15,16 @@ class vector3d():
             self.x = x[0]
             self.y = x[1]
             self.z = x[2]
-        #will take two inputs as the values of a coordinate
+        #will take inputs as the values of a coordinate
         else:
             self.x = x
             self.y = y
             self.z = z
-        self.tpl=(x,y,z)
+
             
     def __str__(self):
         """ override print function output """
-        return "vector3d:["+str(self.x)+", "+str(self.y)+", "+str(self.z)+"]"
+        return "["+str(self.x)+", "+str(self.y)+", "+str(self.z)+"]"
 
     def __repr__(self):
         """ override print function output """
@@ -89,7 +89,7 @@ class vector3d():
         Note: This assumes that you DON'T CHANGE THE VECTOR or it will
         break things.
         """
-        return hash(self.tpl)
+        return hash((self.x,self.y,self.z))
 
 
     def __rsub__(self, other):
@@ -118,6 +118,24 @@ class vector3d():
             x_factor=x_factor[0]
         return vector3d(self.y*x_factor,self.x*y_factor,self.z*z_factor)
 
+    def floor(self):
+        """
+        Override floor function
+        """
+        return vector3d(int(math.floor(self.x)),int(math.floor(self.y)), self.z)
+
+    def ceil(self):
+        """
+        Override ceil function
+        """
+        return vector3d(int(math.ceil(self.x)),int(math.ceil(self.y)), self.z)
+
+    def round(self):
+        """
+        Override round function
+        """
+        return vector3d(int(round(self.x)),int(round(self.y)), self.z)
+    
     def __eq__(self, other):
         """Override the default Equals behavior"""
         if isinstance(other, self.__class__):

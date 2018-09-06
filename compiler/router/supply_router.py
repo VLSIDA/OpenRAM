@@ -17,23 +17,21 @@ class supply_router(router):
     """
 
     def __init__(self, gds_name=None, module=None):
-        """Use the gds file for the blockages with the top module topName and
+        """
+        Use the gds file for the blockages with the top module topName and
         layers for the layers to route on
         """
         router.__init__(self, gds_name, module)
         
-        self.pins = {}
-
-            
-    def clear_pins(self):
+    def create_routing_grid(self):
+        """ 
+        Create a sprase routing grid with A* expansion functions.
         """
-        Convert the routed path to blockages.
-        Keep the other blockages unchanged.
-        """
-        self.pins = {}
-        self.rg.reinit()
-        
+        size = self.ur - self.ll
+        debug.info(1,"Size: {0} x {1}".format(size.x,size.y))
 
+        import supply_grid
+        self.rg = supply_grid.supply_grid(self.ll, self.ur, self.track_width)
     
     def route(self, cell, layers, vdd_name="vdd", gnd_name="gnd"):
         """ 
@@ -64,7 +62,7 @@ class supply_router(router):
         # Now add the blockages (all shapes except the pins)
         self.add_blockages()
 
-        #self.route_supply_rails()
+        self.route_supply_rails()
 
         #self.route_supply_pins()
         
@@ -91,13 +89,26 @@ class supply_router(router):
         Add supply rails for vdd and gnd alternating in both layers.
         Connect cross-over points with vias.
         """
-        # vdd will be the even grids
+        # vdd will be the odd grids
+        vdd_rails = self.route_supply_rail(name="vdd",offset=0,width=2)
         
-        # gnd will be the odd grids
-
+        # gnd will be the even grids (0 + width)
+        gnd_rails = self.route_supply_rail(name="gnd",offset=0,width=2)
 
         pass
     
+    def route_supply_rail(self, name, offset=0, width=1):
+        """
+        Add supply rails alternating layers.
+        """
+        wave = self.rg.start_wave(loc=vector3d(0,offset,0), width=width)
+        wave_path = self.rg.probe_wave(wave)
+        self.add_wave(name, wave_path)
+        
+        
+        
+            
+        
     def route_supply_pins(self, pin):
         """
         This will route all the supply pins to supply rails one at a time.
@@ -145,17 +156,6 @@ class supply_router(router):
         self.cell.add_route(self.layers,abs_path)
 
     
-    def create_routing_grid(self):
-        """ 
-        Create a sprase routing grid with A* expansion functions.
-        """
-        # We will add a halo around the boundary
-        # of this many tracks
-        size = self.ur - self.ll
-        debug.info(1,"Size: {0} x {1}".format(size.x,size.y))
-
-        import supply_grid
-        self.rg = supply_grid.supply_grid()
 
 
     

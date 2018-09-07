@@ -87,16 +87,16 @@ cell (sram_2_16_1_freepdk45){
     cell_leakage_power : 0;
     bus(DIN){
         bus_type  : DATA; 
-        direction  : in; 
-        max_capacitance : 1.6728;  
-        min_capacitance : 0.052275;  
+        direction  : input; 
+        capacitance : 0.2091;  
         memory_write(){ 
             address : ADDR; 
             clocked_on  : clk; 
         }
+    }
     bus(DOUT){
         bus_type  : DATA; 
-        direction  : out; 
+        direction  : output; 
         max_capacitance : 1.6728;  
         min_capacitance : 0.052275;  
         memory_read(){ 
@@ -197,39 +197,6 @@ cell (sram_2_16_1_freepdk45){
     }
 
     pin(CSb){
-        direction  : input; 
-        capacitance : 0.2091;  
-        timing(){ 
-            timing_type : setup_rising; 
-            related_pin  : "clk"; 
-            rise_constraint(CONSTRAINT_TABLE) {
-            values("0.009, 0.009, 0.009",\
-                   "0.009, 0.009, 0.009",\
-                   "0.009, 0.009, 0.009");
-            }
-            fall_constraint(CONSTRAINT_TABLE) {
-            values("0.009, 0.009, 0.009",\
-                   "0.009, 0.009, 0.009",\
-                   "0.009, 0.009, 0.009");
-            }
-        }
-        timing(){ 
-            timing_type : hold_rising; 
-            related_pin  : "clk"; 
-            rise_constraint(CONSTRAINT_TABLE) {
-            values("0.001, 0.001, 0.001",\
-                   "0.001, 0.001, 0.001",\
-                   "0.001, 0.001, 0.001");
-              }
-            fall_constraint(CONSTRAINT_TABLE) {
-            values("0.001, 0.001, 0.001",\
-                   "0.001, 0.001, 0.001",\
-                   "0.001, 0.001, 0.001");
-            }
-        }
-    }
-
-    pin(OEb){
         direction  : input; 
         capacitance : 0.2091;  
         timing(){ 

@@ -54,7 +54,7 @@ class timing_sram_test(openram_test):
         if OPTS.tech_name == "freepdk45":
             golden_data = {'delay_hl0': [2.5829000000000004],
                             'delay_lh0': [0.2255964],
-                            'leakage_power0': 0.0019498999999999996,
+                            'leakage_power': 0.0019498999999999996,
                             'min_period': 4.844,
                             'read0_power0': [0.055371399999999994],
                             'read1_power0': [0.0520225],

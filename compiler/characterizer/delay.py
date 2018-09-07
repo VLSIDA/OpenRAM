@@ -304,7 +304,7 @@ class delay():
                                  t_initial=t_initial,
                                  t_final=t_final)
         
-    def find_feasible_period(self):
+    def find_feasible_period_one_port(self, port):
         """
         Uses an initial period and finds a feasible period before we
         run the binary search algorithm to find min period. We check if
@@ -312,8 +312,9 @@ class delay():
         double the period until we find a valid period to use as a
         starting point. 
         """
-        feasible_delays_lh = {}
-        feasible_delays_hl = {}
+        debug.check(port in self.read_ports, "Characterizer requires a read port to determine a period.")
+        #Adding this as a sanity check for editing this function later. This function assumes period has been set previously
+        debug.check(self.period > 0, "Initial starting period not defined") 
         feasible_period = float(tech.spice["feasible_period"])
         #feasible_period = float(2.5)#What happens if feasible starting point is wrong?
         time_out = 9
@@ -322,45 +323,69 @@ class delay():
             if (time_out <= 0):
                 debug.error("Timed out, could not find a feasible period.",2)
             
-            #Clear any write target ports
+            #Clear any write target ports and set read port
             self.targ_write_ports = []
+            self.targ_read_ports = [port]
             success = False
+           
+            debug.info(1, "Trying feasible period: {0}ns on Port {1}".format(feasible_period, port))
+            self.period = feasible_period
+            (success, results)=self.run_delay_simulation()
+            #Clear these target ports after simulation
+            self.targ_read_ports = []
             
-            #Loops through all the ports checks if the feasible period works. Everything restarts it if does not.
-            #Write ports do not produce delays which is why they are not included here.
-            for port in self.read_ports:
-                debug.info(1, "Trying feasible period: {0}ns on Port {1}".format(feasible_period, port))
-                
-                self.period = feasible_period
-                #Test one port at a time. Using this weird logic to avoid two for loops. Will likely change later.
-                self.targ_read_ports = [port]
-                (success, results)=self.run_delay_simulation()
-                #Clear these target ports after every simulation
-                self.targ_read_ports = []
-                
-                if not success:
-                    feasible_period = 2 * feasible_period
-                    break
-                feasible_delay_lh = results["delay_lh{0}".format(port)]
-                feasible_delay_hl = results["delay_hl{0}".format(port)]
-                feasible_slew_lh = results["slew_lh{0}".format(port)]
-                feasible_slew_hl = results["slew_hl{0}".format(port)]
+            if not success:
+                feasible_period = 2 * feasible_period
+                break
+            feasible_delay_lh = results["delay_lh{0}".format(port)]
+            feasible_delay_hl = results["delay_hl{0}".format(port)]
+            feasible_slew_lh = results["slew_lh{0}".format(port)]
+            feasible_slew_hl = results["slew_hl{0}".format(port)]
 
-                delay_str = "feasible_delay {0:.4f}ns/{1:.4f}ns".format(feasible_delay_lh, feasible_delay_hl)
-                slew_str = "slew {0:.4f}ns/{1:.4f}ns".format(feasible_slew_lh, feasible_slew_hl)
-                debug.info(2, "feasible_period passed for Port {3}: {0}ns {1} {2} ".format(feasible_period,
-                                                                             delay_str,
-                                                                             slew_str,
-                                                                             port))
-                #Add feasible delays of each port to dict
-                feasible_delays_lh[port] = feasible_delay_lh
-                feasible_delays_hl[port] = feasible_delay_hl
+            delay_str = "feasible_delay {0:.4f}ns/{1:.4f}ns".format(feasible_delay_lh, feasible_delay_hl)
+            slew_str = "slew {0:.4f}ns/{1:.4f}ns".format(feasible_slew_lh, feasible_slew_hl)
+            debug.info(2, "feasible_period passed for Port {3}: {0}ns {1} {2} ".format(feasible_period,
+                                                                         delay_str,
+                                                                         slew_str,
+                                                                         port))
+            #Add feasible delays of port to dict
+            #feasible_delays_lh[port] = feasible_delay_lh
+            #feasible_delays_hl[port] = feasible_delay_hl
                 
             if success:
                 debug.info(1, "Found feasible_period: {0}ns".format(feasible_period))
                 self.period = feasible_period
-                return (feasible_delays_lh, feasible_delays_hl)
+                return (feasible_delay_lh, feasible_delay_hl)
 
+    def find_feasible_period(self):
+        """
+        Loops through all read ports determining the feasible period and collecting 
+        delay information from each port.
+        """
+        feasible_delays_lh = {}
+        feasible_delays_hl = {}
+        self.period = float(tech.spice["feasible_period"])
+        
+        #Get initial feasible period from first port
+        (feasible_delays_lh[0], feasible_delays_hl[0]) = self.find_feasible_period_one_port(self.read_ports[0])
+        previous_period = self.period
+        
+        
+        #Loops through all the ports checks if the feasible period works. Everything restarts it if does not.
+        #Write ports do not produce delays which is why they are not included here.
+        i = 1
+        while i < len(self.read_ports):
+            port = self.read_ports[i]
+            (feasible_delays_lh[port], feasible_delays_hl[port]) = self.find_feasible_period_one_port(port)
+            #Function sets the period. Restart the entire process if period changes to collect accurate delays 
+            if self.period > previous_period:
+                i = 0
+            else:
+                i+=1
+            previous_period = self.period
+        return (feasible_delays_lh, feasible_delays_hl)
+           
+                
     def parse_values(self, values_names, mult = 1.0):
         """Parse multiple values in the timing output file. Optional multiplier."""
         values = []

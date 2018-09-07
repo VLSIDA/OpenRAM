@@ -183,9 +183,9 @@ class openram_test(unittest.TestCase):
             
             # 4. Check if remaining string matches
             if line1 != line2:
-                #Uncomment if you want to see all the chars of the two lines separated
-                #print(str([i for i in line1]))
-                #print(str([i for i in line2]))
+                #Uncomment if you want to see all the individual chars of the two lines 
+                print(str([i for i in line1]))
+                print(str([i for i in line2]))
                 if mismatches==0:
                     debug.error("Mismatching files:\nfile1={0}\nfile2={1}".format(filename1,filename2))
                 mismatches += 1

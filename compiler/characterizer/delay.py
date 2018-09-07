@@ -165,34 +165,21 @@ class delay():
         
         # generate data and addr signals
         self.sf.write("\n* Generation of data and address signals\n")
-        for readwrite_input in range(OPTS.num_rw_ports):
+        for write_port in self.write_ports:
             for i in range(self.word_size):
-                self.stim.gen_constant(sig_name="DIN_RWP{0}[{1}] ".format(readwrite_input, i),
+                self.stim.gen_constant(sig_name="DIN{0}[{1}] ".format(write_port, i),
                                     v_val=0)
-        for write_port in range(OPTS.num_w_ports):
-            for i in range(self.word_size):
-                self.stim.gen_constant(sig_name="DIN_WP{0}[{1}] ".format(write_port, i),
-                                    v_val=0)
-        for i in range(self.addr_size):
-            self.stim.gen_constant(sig_name="A[{0}]".format(i),
-                                   v_val=0)
-        for readwrite_addr in range(OPTS.num_rw_ports):
+        for port in range(self.total_port_num):
             for i in range(self.addr_size):
-                self.stim.gen_constant(sig_name="A_RWP{0}[{1}]".format(readwrite_addr,i),
-                                   v_val=0)
-        for write_addr in range(OPTS.num_w_ports):
-            for i in range(self.addr_size):
-                self.stim.gen_constant(sig_name="A_WP{0}[{1}]".format(write_addr,i),
-                                   v_val=0)
-        for read_addr in range(OPTS.num_r_ports):
-            for i in range(self.addr_size):
-                self.stim.gen_constant(sig_name="A_RP{0}[{1}]".format(read_addr,i),
-                                   v_val=0)
+                self.stim.gen_constant(sig_name="A{0}[{1}]".format(port, i),
+                                       v_val=0)
 
         # generate control signals
         self.sf.write("\n* Generation of control signals\n")
-        self.stim.gen_constant(sig_name="CSb", v_val=self.vdd_voltage)
-        self.stim.gen_constant(sig_name="WEb", v_val=self.vdd_voltage)
+        for port in range(self.total_port_num):
+            self.stim.gen_constant(sig_name="CSB{0}".format(port), v_val=self.vdd_voltage)
+            if port in self.read_ports and port in self.write_ports:
+                self.stim.gen_constant(sig_name="WEB{0}".format(port), v_val=self.vdd_voltage)
 
         self.sf.write("\n* Generation of global clock signal\n")
         self.stim.gen_constant(sig_name="CLK", v_val=0)  

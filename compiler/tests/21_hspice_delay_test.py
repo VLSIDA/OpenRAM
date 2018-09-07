@@ -76,7 +76,6 @@ class timing_sram_test(openram_test):
         else:
             self.assertTrue(False) # other techs fail
         # Check if no too many or too few results
-        print(data)
         self.assertTrue(len(data.keys())==len(golden_data.keys()))
 
         self.assertTrue(self.check_golden_data(data,golden_data,0.25))

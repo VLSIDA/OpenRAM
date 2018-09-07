@@ -11,7 +11,7 @@ import globals
 from globals import OPTS
 import debug
 
-@unittest.skip("SKIPPING 19_psingle_bank_test")
+#@unittest.skip("SKIPPING 19_psingle_bank_test")
 class psingle_bank_test(openram_test):
 
     def runTest(self):

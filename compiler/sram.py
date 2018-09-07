@@ -12,8 +12,9 @@ class sram():
     results.
     We can later add visualizer and other high-level functions as needed.
     """
-    def __init__(self, sram_config, name="sram"):
+    def __init__(self, sram_config, name):
 
+        sram_config.compute_sizes()
         sram_config.set_local_config(self)
         
         # reset the static duplicate name checker for unit tests
@@ -27,6 +28,8 @@ class sram():
         start_time = datetime.datetime.now()
 
         self.name = name
+
+        
         if self.num_banks == 1:
             from sram_1bank import sram_1bank as sram
         elif self.num_banks == 2:
@@ -35,8 +38,8 @@ class sram():
             from sram_4bank import sram_4bank as sram
         else:
             debug.error("Invalid number of banks.",-1)
-            
-        self.s = sram(sram_config, name)                        
+
+        self.s = sram(name, sram_config)  
         self.s.create_netlist()
         if not OPTS.netlist_only:
             self.s.create_layout()

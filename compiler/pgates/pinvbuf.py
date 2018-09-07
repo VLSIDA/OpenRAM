@@ -11,13 +11,9 @@ class pinvbuf(design.design):
     This is a simple inverter/buffer used for driving loads. It is
     used in the column decoder for 1:2 decoding and as the clock buffer.
     """
-    from importlib import reload
-    c = reload(__import__(OPTS.bitcell))
-    bitcell = getattr(c, OPTS.bitcell)
-
     unique_id = 1
 
-    def __init__(self, driver_size=4, height=bitcell.height, name=""):
+    def __init__(self, driver_size=4, height=None, name=""):
 
         self.stage_effort = 4
         self.row_height = height
@@ -32,7 +28,7 @@ class pinvbuf(design.design):
             name = "pinvbuf_{0}_{1}_{2}".format(self.predriver_size, self.driver_size, pinvbuf.unique_id)
             pinvbuf.unique_id += 1
 
-        design.design.__init__(self, name)
+        design.design.__init__(self, name) 
         debug.info(1, "Creating {}".format(self.name))
 
         self.create_netlist()

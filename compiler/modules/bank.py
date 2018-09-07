@@ -29,6 +29,10 @@ class bank(design.design):
         design.design.__init__(self, name)
         debug.info(2, "create sram of size {0} with {1} words".format(self.word_size,self.num_words))
 
+
+        self.total_write = OPTS.num_rw_ports + OPTS.num_w_ports
+        self.total_read = OPTS.num_rw_ports + OPTS.num_r_ports
+        self.total_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
         
         # The local control signals are gated when we have bank select logic,
         # so this prefix will be added to all of the input signals to create

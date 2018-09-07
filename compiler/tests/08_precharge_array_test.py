@@ -28,13 +28,13 @@ class precharge_test(openram_test):
         OPTS.num_r_ports = 2
         OPTS.num_w_ports = 2
         
-        pc = precharge_array.precharge_array(columns=3, bitcell_bl="rwbl0", bitcell_br="rwbl_bar0")
+        pc = precharge_array.precharge_array(columns=3, bitcell_bl="bl0", bitcell_br="br0")
         self.local_check(pc)
         
-        pc = precharge_array.precharge_array(columns=3, bitcell_bl="wbl0", bitcell_br="wbl_bar0")
+        pc = precharge_array.precharge_array(columns=3, bitcell_bl="bl2", bitcell_br="br2")
         self.local_check(pc)
         
-        pc = precharge_array.precharge_array(columns=3, bitcell_bl="rbl0", bitcell_br="rbl_bar0")
+        pc = precharge_array.precharge_array(columns=3, bitcell_bl="bl4", bitcell_br="br4")
         self.local_check(pc)
 
         globals.end_openram()

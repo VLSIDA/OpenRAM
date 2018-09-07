@@ -17,26 +17,22 @@ class pinv(pgate.pgate):
     from center of rail to rail..  The route_output will route the
     output to the right side of the cell for easier access.
     """
-    from importlib import reload
-    c = reload(__import__(OPTS.bitcell))
-    bitcell = getattr(c, OPTS.bitcell)
 
     unique_id = 1
     
-    def __init__(self, size=1, beta=parameter["beta"], height=bitcell.height, route_output=True):
+    def __init__(self, size=1, beta=parameter["beta"], height=None, route_output=True):
         # We need to keep unique names because outputting to GDSII
         # will use the last record with a given name. I.e., you will
         # over-write a design in GDS if one has and the other doesn't
         # have poly connected, for example.
         name = "pinv_{}".format(pinv.unique_id)
         pinv.unique_id += 1
-        pgate.pgate.__init__(self, name)
+        pgate.pgate.__init__(self, name, height)
         debug.info(2, "create pinv structure {0} with size of {1}".format(name, size))
 
         self.nmos_size = size
         self.pmos_size = beta*size
         self.beta = beta
-        self.height = height # Maybe minimize height if not defined in future?
         self.route_output = False
 
         

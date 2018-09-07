@@ -22,10 +22,9 @@ class lib_test(openram_test):
         c = sram_config(word_size=2,
                         num_words=16,
                         num_banks=1)
-
+        c.words_per_row=1
         debug.info(1, "Testing analytical timing for sample 2 bit, 16 words SRAM with 1 bank")
         s = sram(c, "sram_2_16_1_{0}".format(OPTS.tech_name))
-
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)
 

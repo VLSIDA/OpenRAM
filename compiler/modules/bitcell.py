@@ -50,16 +50,6 @@ class bitcell(design.design):
         row_pins = ["wl"]    
         return row_pins
     
-    def list_read_wl_names(self):
-        """ Creates a list of wordline pin names associated with read ports """
-        row_pins = ["wl"]    
-        return row_pins
-        
-    def list_write_wl_names(self):
-        """ Creates a list of wordline pin names associated with write ports """
-        row_pins = ["wl"]    
-        return row_pins
-    
     def list_all_bitline_names(self):
         """ Creates a list of all bitline pin names (both bl and br) """
         column_pins = ["bl", "br"]

@@ -27,13 +27,13 @@ class precharge_test(openram_test):
         OPTS.num_rw_ports = 2
         OPTS.num_r_ports = 2
         OPTS.num_w_ports = 2
-        tx = precharge.precharge(name="precharge_driver", size=1, bitcell_bl="rwbl0", bitcell_br="rwbl_bar0")
+        tx = precharge.precharge(name="precharge_driver", size=1, bitcell_bl="bl0", bitcell_br="br0")
         self.local_check(tx)
         
-        tx = precharge.precharge(name="precharge_driver", size=1, bitcell_bl="wbl0", bitcell_br="wbl_bar0")
+        tx = precharge.precharge(name="precharge_driver", size=1, bitcell_bl="bl2", bitcell_br="br2")
         self.local_check(tx)
         
-        tx = precharge.precharge(name="precharge_driver", size=1, bitcell_bl="rbl0", bitcell_br="rbl_bar0")
+        tx = precharge.precharge(name="precharge_driver", size=1, bitcell_bl="bl4", bitcell_br="br4")
         self.local_check(tx)
 
         globals.end_openram()

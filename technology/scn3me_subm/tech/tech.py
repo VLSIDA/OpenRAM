@@ -39,8 +39,8 @@ layer["via1"]           = 50
 layer["metal2"]         = 51 
 layer["via2"]           = 61 
 layer["metal3"]         = 62 
-layer["text"]           = 83 
-layer["boundary"]       = 83 
+layer["text"]           = 63 
+layer["boundary"]       = 63 
 
 ###################################################
 ##END GDS Layer Map

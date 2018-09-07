@@ -12,18 +12,13 @@ class pnand3(pgate.pgate):
     This model use ptx to generate a 2-input nand within a cetrain height.
     """
 
-    from importlib import reload
-    c = reload(__import__(OPTS.bitcell))
-    mod_bitcell = getattr(c, OPTS.bitcell)
-    bitcell = mod_bitcell()
-
     unique_id = 1
     
-    def __init__(self, size=1, height=bitcell.height):
+    def __init__(self, size=1, height=None):
         """ Creates a cell for a simple 3 input nand """
         name = "pnand3_{0}".format(pnand3.unique_id)
         pnand3.unique_id += 1
-        pgate.pgate.__init__(self, name)
+        pgate.pgate.__init__(self, name, height)
         debug.info(2, "create pnand3 structure {0} with size of {1}".format(name, size))
 
         # We have trouble pitch matching a 3x sizes to the bitcell...
@@ -32,7 +27,6 @@ class pnand3(pgate.pgate):
         self.pmos_size = parameter["beta"]*size
         self.nmos_width = self.nmos_size*drc["minwidth_tx"]
         self.pmos_width = self.pmos_size*drc["minwidth_tx"]
-        self.height = height
 
         # FIXME: Allow these to be sized
         debug.check(size==1,"Size 1 pnand3 is only supported now.")

@@ -656,7 +656,7 @@ class delay():
         # Make a list for each type of measurement to append results to
         for port in range(self.total_port_num):
             for m in ["delay_lh", "delay_hl", "slew_lh", "slew_hl", "read0_power",
-                    "read1_power", "write0_power", "write1_power", "leakage_power"]:
+                    "read1_power", "write0_power", "write1_power"]:
                 char_data["{0}{1}".format(m,port)]=[]
 
         # 3) Find the leakage power of the trimmmed and  UNtrimmed arrays.

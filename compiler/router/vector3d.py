@@ -24,11 +24,11 @@ class vector3d():
             
     def __str__(self):
         """ override print function output """
-        return "["+str(self.x)+", "+str(self.y)+", "+str(self.z)+"]"
+        return "v3d["+str(self.x)+", "+str(self.y)+", "+str(self.z)+"]"
 
     def __repr__(self):
         """ override print function output """
-        return "["+str(self.x)+", "+str(self.y)+", "+str(self.z)+"]"
+        return "v3d["+str(self.x)+", "+str(self.y)+", "+str(self.z)+"]"
 
     def __setitem__(self, index, value):
         """ 
@@ -139,7 +139,7 @@ class vector3d():
     def __eq__(self, other):
         """Override the default Equals behavior"""
         if isinstance(other, self.__class__):
-            return self.__dict__ == other.__dict__
+            return self.x==other.x and self.y==other.y and self.z==other.z
         return False
 
     def __ne__(self, other):

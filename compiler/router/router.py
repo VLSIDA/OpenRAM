@@ -37,6 +37,8 @@ class router:
 
         # A map of pin names to pin structures
         self.pins = {}
+        # A map of pin names to pin structures
+        self.pins_grids = {}
 
         # A list of pin blockages (represented by the pin structures too)
         self.blockages=[]
@@ -75,16 +77,17 @@ class router:
         elif zindex==0:
             return self.horiz_layer_name
         else:
-            debug.error(-1,"Invalid zindex {}".format(zindex))
+            debug.error("Invalid zindex {}".format(zindex),-1)
         
     def is_wave(self,path):
         """
-        Determines if this is a wave (True) or a normal route (False)
+        Determines if this is a multi-track width wave (True) or a normal route (False)
         """
-        return isinstance(path[0],list)
+        return len(path[0])>1
     
     def set_layers(self, layers):
-        """Allows us to change the layers that we are routing on. First layer
+        """
+        Allows us to change the layers that we are routing on. First layer
         is always horizontal, middle is via, and last is always
         vertical.
         """
@@ -117,7 +120,6 @@ class router:
 
 
 
-
     def find_pin(self,pin_name):
         """ 
         Finds the pin shapes and converts to tracks. 
@@ -144,9 +146,8 @@ class router:
         This doesn't consider whether the obstacles will be pins or not. They get reset later
         if they are not actually a blockage.
         """
-        #for layer in [self.vert_layer_number,self.horiz_layer_number]:
-        #    self.get_blockages(layer)
-        self.get_blockages(self.horiz_layer_number)
+        for layer in [self.vert_layer_number,self.horiz_layer_number]:
+            self.get_blockages(layer)
             
     def clear_pins(self):
         """
@@ -209,23 +210,6 @@ class router:
             return 2
 
         
-    def contract_path(self,path):
-        """ 
-        Remove intermediate points in a rectilinear path. 
-        """
-        newpath = [path[0]]
-        for i in range(1,len(path)-1):
-            prev_inertia=self.get_inertia(path[i-1],path[i])
-            next_inertia=self.get_inertia(path[i],path[i+1])
-            # if we switch directions, add the point, otherwise don't
-            if prev_inertia!=next_inertia:
-                newpath.append(path[i])
-
-        # always add the last path
-        newpath.append(path[-1])
-        return newpath
-    
-
     def add_path_blockages(self):
         """
         Go through all of the past paths and add them as blockages.
@@ -472,48 +456,50 @@ class router:
         called once or the labels will overlap.
         """
         debug.info(0,"Adding router info")
-        grid_keys=self.rg.map.keys()
-        partial_track=vector(0,self.track_width/6.0)
-        for g in grid_keys:
-            shape = self.convert_track_to_shape(g)
-            self.cell.add_rect(layer="text",
-                               offset=shape[0],
-                               width=shape[1].x-shape[0].x,
-                               height=shape[1].y-shape[0].y)
-            # These are the on grid pins
-            #rect = self.convert_track_to_pin(g)
-            #self.cell.add_rect(layer="boundary",
-            #                   offset=rect[0],
-            #                   width=rect[1].x-rect[0].x,
-            #                   height=rect[1].y-rect[0].y)
-            
-            t=self.rg.map[g].get_type()
 
-            # midpoint offset
-            off=vector((shape[1].x+shape[0].x)/2,
-                       (shape[1].y+shape[0].y)/2)
-            if g[2]==1:
-                # Upper layer is upper right label
-                type_off=off+partial_track
-            else:
-                # Lower layer is lower left label
-                type_off=off-partial_track
-            if t!=None:
-                self.cell.add_label(text=str(t),
+        if OPTS.debug_level>0:
+            for blockage in self.blockages:
+                # Display the inflated blockage
+                (ll,ur) = blockage.inflate()
+                self.cell.add_rect(layer="text",
+                                   offset=ll,
+                                   width=ur.x-ll.x,
+                                   height=ur.y-ll.y)
+        if OPTS.debug_level>1:
+            grid_keys=self.rg.map.keys()
+            partial_track=vector(0,self.track_width/6.0)
+            for g in grid_keys:
+                shape = self.convert_track_to_shape(g)
+                self.cell.add_rect(layer="text",
+                                   offset=shape[0],
+                                   width=shape[1].x-shape[0].x,
+                                   height=shape[1].y-shape[0].y)
+                # These are the on grid pins
+                #rect = self.convert_track_to_pin(g)
+                #self.cell.add_rect(layer="boundary",
+                #                   offset=rect[0],
+                #                   width=rect[1].x-rect[0].x,
+                #                   height=rect[1].y-rect[0].y)
+                
+                t=self.rg.map[g].get_type()
+                
+                # midpoint offset
+                off=vector((shape[1].x+shape[0].x)/2,
+                           (shape[1].y+shape[0].y)/2)
+                if g[2]==1:
+                    # Upper layer is upper right label
+                    type_off=off+partial_track
+                else:
+                    # Lower layer is lower left label
+                    type_off=off-partial_track
+                if t!=None:
+                    self.cell.add_label(text=str(t),
+                                        layer="text",
+                                        offset=type_off)
+                self.cell.add_label(text="{0},{1}".format(g[0],g[1]),
                                     layer="text",
-                                    offset=type_off)
-            self.cell.add_label(text="{0},{1}".format(g[0],g[1]),
-                                layer="text",
-                                offset=shape[0],
-                                zoom=0.05)
-
-        for blockage in self.blockages:
-            # Display the inflated blockage
-            (ll,ur) = blockage.inflate()
-            self.cell.add_rect(layer="blockage",
-                               offset=ll,
-                               width=ur.x-ll.x,
-                               height=ur.y-ll.y)
+                                    offset=shape[0],
+                                    zoom=0.05)
 
 
     def prepare_path(self,path):
@@ -526,7 +512,7 @@ class router:
         self.paths.append(path)
         
         # This is marked for debug
-        self.rg.add_path(path)
+        path.set_path()
 
         # For debugging... if the path failed to route.
         if False or path==None:
@@ -548,24 +534,35 @@ class router:
         path=self.prepare_path(path)
         
         # convert the path back to absolute units from tracks
-        abs_path = list(map(self.convert_point_to_units,path))
+        # This assumes 1-track wide again
+        abs_path = [self.convert_point_to_units(x[0]) for x in path]
         debug.info(1,str(abs_path))
         self.cell.add_route(self.layers,abs_path)
 
+    def add_via(self,loc,size=1):
+        """ 
+        Add a via centered at the current location
+        """
+        loc = self.convert_point_to_units(vector3d(loc[0],loc[1],0))
+        self.cell.add_via_center(layers=self.layers,
+                                 offset=vector(loc.x,loc.y),
+                                 size=(size,size))
+        
+        
 
-    def add_wave(self, name, path):
+    def add_wavepath(self, name, path):
         """ 
         Add the current wave to the given design instance.
         """
         path=self.prepare_path(path)
-        
+
         # convert the path back to absolute units from tracks
         abs_path = [self.convert_wave_to_units(i) for i in path]
-        #debug.info(1,str(abs_path))
+
         ur = abs_path[-1][-1]
         ll = abs_path[0][0]
         pin = self.cell.add_layout_pin(name,
-                                       layer=self.get_layer(ll.z),
+                                       layer=self.get_layer(path[0][0].z),
                                        offset=vector(ll.x,ll.y),
                                        width=ur.x-ll.x,
                                        height=ur.y-ll.y)
@@ -596,8 +593,8 @@ class router:
         # Make a list only of points that change inertia of the path
         newpath = [path[0]]
         for i in range(1,len(path)-1):
-            prev_inertia=self.get_inertia(path[i-1],path[i])
-            next_inertia=self.get_inertia(path[i],path[i+1])
+            prev_inertia=self.get_inertia(path[i-1][0],path[i][0])
+            next_inertia=self.get_inertia(path[i][0],path[i+1][0])
             # if we switch directions, add the point, otherwise don't
             if prev_inertia!=next_inertia:
                 newpath.append(path[i])

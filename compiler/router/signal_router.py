@@ -82,14 +82,15 @@ class signal_router(router):
             debug.info(1,"Found path: cost={0} ".format(cost))
             debug.info(2,str(path))
             self.add_route(path)
-            return True
         else:
             self.write_debug_gds()
             # clean up so we can try a reroute
             self.clear_pins()
-            
+            return False
 
-        return False
+        self.write_debug_gds()
+        
+        return True
 
                            
         

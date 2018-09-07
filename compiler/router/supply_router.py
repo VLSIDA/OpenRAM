@@ -3,12 +3,13 @@ import tech
 from contact import contact
 import math
 import debug
+from globals import OPTS
 import grid
 from pin_layout import pin_layout
 from vector import vector
 from vector3d import vector3d 
-from globals import OPTS
 from router import router
+from direction import direction
 
 class supply_router(router):
     """
@@ -64,8 +65,8 @@ class supply_router(router):
         self.add_blockages()
 
         self.route_supply_rails()
-
-        #self.route_supply_pins()
+        self.connect_supply_rails()
+        #self.route_pins_to_rails()
         
         # source pin will be a specific layout pin
         # target pin will be the rails only
@@ -85,107 +86,113 @@ class supply_router(router):
         self.write_debug_gds()
         return False
 
+    def connect_supply_rails(self):
+        """
+        Add vias between overlapping supply rails.
+        """
+        self.connect_supply_rail("vdd")
+        self.connect_supply_rail("gnd")
+        
+    def connect_supply_rail(self, name):
+        """
+        Add vias between overlapping supply rails.
+        """
+        paths = [x for x in self.paths if x.name == name]
+        
+        # Split into horizontal and vertical
+        vertical_paths = [x for x in paths if x[0][0].z==1]
+        horizontal_paths = [x for x in paths if x[0][0].z==0]
+
+        shared_areas = []
+        for v in vertical_paths:
+            for h in horizontal_paths:
+                overlap = v.overlap(h)
+                if overlap:
+                    shared_areas.append(overlap)
+
+
+        for (ll,ur) in shared_areas:
+            center = (ll + ur).scale(0.5,0.5,0)
+            self.add_via(center,self.rail_track_width)
+        
+
+                
     def route_supply_rails(self):
         """
         Add supply rails for vdd and gnd alternating in both layers.
         Connect cross-over points with vias.
         """
-        # width in grid units
-        width = 2
+        # Width in grid units.
+        self.rail_track_width = 2
 
-        # List of all the rails
-        self.rails = []
-        self.wave_paths = []        
+        # Keep a list of all the rail wavepaths
+        self.paths = []
             
         # vdd will be the even grids every 2 widths
-        for offset in range(0, self.rg.ur.y, 2*width):
-            loc = vector3d(0,offset,0)
+        for offset in range(0, self.rg.ur.y, 2*self.rail_track_width):
+            # Seed the function at the location with the given width
+            wave = [vector3d(0,offset+i,0) for i in range(self.rail_track_width)]
             # While we can keep expanding east
-            while loc and loc.x < self.rg.ur.x:
-                loc = self.route_horizontal_supply_rail("vdd",loc,width)
-        
-        # gnd will be the odd grids every 2 widths
-        for offset in range(width, self.rg.ur.y, 2*width):
-            loc = vector3d(0,offset,0)
+            while wave and wave[0].x < self.rg.ur.x:
+                wave = self.route_supply_rail("vdd", wave, direction.EAST)
+
+        # gnd will be the even grids every 2 widths
+        for offset in range(self.rail_track_width, self.rg.ur.y, 2*self.rail_track_width):
+            # Seed the function at the location with the given width
+            wave = [vector3d(0,offset+i,0) for i in range(self.rail_track_width)]
             # While we can keep expanding east
-            while loc and loc.x < self.rg.ur.x:
-                loc = self.route_horizontal_supply_rail("gnd",loc,width)
+            while wave and wave[0].x < self.rg.ur.x:
+                wave = self.route_supply_rail("gnd", wave, direction.EAST)
 
         # vdd will be the even grids every 2 widths
-        for offset in range(0, self.rg.ur.x, 2*width):
-            loc = vector3d(offset,0,0)
-            # While we can keep expanding up
-            while loc and loc.y < self.rg.ur.y:
-                loc = self.route_vertical_supply_rail("vdd",loc,width)
-        
-        # gnd will be the odd grids every 2 widths
-        for offset in range(width, self.rg.ur.x, 2*width):
-            loc = vector3d(offset,0,0)
-            # While we can keep expanding up
-            while loc and loc.y < self.rg.ur.y:
-                loc = self.route_vertical_supply_rail("gnd",loc,width)
-                
+        for offset in range(0, self.rg.ur.x, 2*self.rail_track_width):
+            # Seed the function at the location with the given width
+            wave = [vector3d(offset+i,0,1) for i in range(self.rail_track_width)]
+            # While we can keep expanding east
+            while wave and wave[0].y < self.rg.ur.y:
+                wave = self.route_supply_rail("vdd", wave, direction.NORTH)
 
-    
-    def route_horizontal_supply_rail(self, name, loc, width):
+        # gnd will be the even grids every 2 widths
+        for offset in range(self.rail_track_width, self.rg.ur.x, 2*self.rail_track_width):
+            # Seed the function at the location with the given width
+            wave = [vector3d(offset+i,0,1) for i in range(self.rail_track_width)]
+            # While we can keep expanding east
+            while wave and wave[0].y < self.rg.ur.y:
+                wave = self.route_supply_rail("gnd", wave, direction.NORTH)
+
+
+    def route_supply_rail(self, name, seed_wave, direct):
         """
         Add supply rails alternating layers.
         Return the final wavefront for seeding the next wave.
         """
-        # Sweep to find an initial wave
-        start_wave = self.rg.find_horizontal_start_wave(loc, width)
+
+        # Sweep to find an initial unblocked valid wave
+        start_wave = self.rg.find_start_wave(seed_wave, len(seed_wave), direct)
         if not start_wave:
             return None
 
         # Expand the wave to the right
-        wave_path = self.rg.probe_east_wave(start_wave)
+        wave_path = self.rg.probe(start_wave, direct)
         if not wave_path:
             return None
 
-        # Filter single unit paths
-        # FIXME: Should we filter bigger sizes?
-        if len(wave_path)>1:
-            new_pin = self.add_wave(name, wave_path)
-            self.rails.append(new_pin)
-            self.wave_paths.append(wave_path)
+        # Filter any path that won't span 2 rails
+        # so that we can guarantee it is connected
+        if len(wave_path)>=2*self.rail_track_width:
+            self.add_wavepath(name, wave_path)
+            wave_path.name = name
+            self.paths.append(wave_path)
 
         # seed the next start wave location
         wave_end = wave_path[-1]
-        next_seed = wave_end[0]+vector3d(1,0,0)
-        return next_seed
-
-    def route_vertical_supply_rail(self, name, loc, width):
-        """
-        Add supply rails alternating layers.
-        Return the final wavefront for seeding the next wave.
-        """
-        # Sweep to find an initial wave
-        start_wave = self.rg.find_vertical_start_wave(loc, width)
-        if not start_wave:
-            return None
-
-        # Expand the wave to the right
-        wave_path = self.rg.probe_up_wave(start_wave)
-        if not wave_path:
-            return None
-
-        # Filter single unit paths
-        # FIXME: Should we filter bigger sizes?
-        if len(wave_path)>1:
-            new_pin = self.add_wave(name, wave_path)
-            self.rails.append(new_pin)
-            self.wave_paths.append(wave_path)            
-
-        # seed the next start wave location
-        wave_end = wave_path[-1]
-        next_seed = wave_end[0]+vector3d(0,1,0)
-        return next_seed
+        return wave_path.neighbor(direct)
     
 
                     
                 
         
-    def route_supply_pins(self, pin):
+    def route_pins_to_rails(self):
         """
         This will route all the supply pins to supply rails one at a time.
         After each one, it adds the cells to the blockage list.

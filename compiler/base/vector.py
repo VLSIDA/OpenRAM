@@ -24,11 +24,11 @@ class vector():
 
     def __str__(self):
         """ override print function output """
-        return "["+str(self.x)+","+str(self.y)+"]"
+        return "v["+str(self.x)+","+str(self.y)+"]"
 
     def __repr__(self):
         """ override print function output """
-        return "["+str(self.x)+","+str(self.y)+"]"
+        return "v["+str(self.x)+","+str(self.y)+"]"
 
     def __setitem__(self, index, value):
         """ 

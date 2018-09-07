@@ -1,4 +1,4 @@
-class cell:
+class grid_cell:
     """
     A single cell that can be occupied in a given layer, blocked,
     visited, etc.

@@ -1,26 +1,24 @@
 import numpy as np
 import string
-from itertools import tee
 import debug
 from vector3d import vector3d
-from cell import cell
-import os
+from grid_cell import grid_cell
 
 class grid:
     """
     A two layer routing map. Each cell can be blocked in the vertical
     or horizontal layer.
     """
+    # costs are relative to a unit grid
+    # non-preferred cost allows an off-direction jog of 1 grid
+    # rather than 2 vias + preferred direction (cost 5)
+    VIA_COST = 2 
+    NONPREFERRED_COST = 4
+    PREFERRED_COST = 1
+
 
     def __init__(self, ll, ur, track_width):
         """ Initialize the map and define the costs. """
-
-        # costs are relative to a unit grid
-        # non-preferred cost allows an off-direction jog of 1 grid
-        # rather than 2 vias + preferred direction (cost 5)
-        self.VIA_COST = 2
-        self.NONPREFERRED_COST = 4
-        self.PREFERRED_COST = 1
 
         # list of the source/target grid coordinates
         self.source = []
@@ -47,8 +45,16 @@ class grid:
             self.map[n].blocked=value
 
     def is_blocked(self,n):
-        self.add_map(n)
-        return self.map[n].blocked
+        if isinstance(n,list):
+            for item in n:
+                if self.is_blocked(item):
+                    return True
+            else:
+                return False
+        else:
+            self.add_map(n)
+            return self.map[n].blocked
+
 
     def set_path(self,n,value=True):
         if isinstance(n,list):
@@ -98,6 +104,7 @@ class grid:
         for n in track_list:
             debug.info(3,"Adding source ={0}".format(str(n)))
             self.set_source(n)
+            self.set_blocked(n,False)
 
 
     def add_target(self,track_list):
@@ -105,6 +112,7 @@ class grid:
         for n in track_list:
             debug.info(3,"Adding target ={0}".format(str(n)))                                
             self.set_target(n)
+            self.set_blocked(n,False)            
 
     def is_target(self,point):
         """
@@ -121,52 +129,17 @@ class grid:
                 self.add_map(item)
         else:
             if n not in self.map.keys():
-                self.map[n]=cell()
+                self.map[n]=grid_cell()
         
-    def add_path(self,path):
-        """ 
-        Mark the path in the routing grid for visualization
-        """
-        self.path=path
-        for p in path:
-            self.set_path(p)
 
     def block_path(self,path):
         """ 
         Mark the path in the routing grid as blocked. 
         Also unsets the path flag.
         """
-        for p in path:
-            self.set_path(p,False)
-            self.set_blocked(p)
+        path.set_path(False)
+        path.set_blocked(True)
             
-    def cost(self,path):
-        """ 
-        The cost of the path is the length plus a penalty for the number
-        of vias. We assume that non-preferred direction is penalized.
-        """
-
-        # Ignore the source pin layer change, FIXME?
-        def pairwise(iterable):
-            "s -> (s0,s1), (s1,s2), (s2, s3), ..."
-            a, b = tee(iterable)
-            next(b, None)
-            return zip(a, b)
-
-
-        plist = pairwise(path)
-        cost = 0
-        for p0,p1 in plist:
-            if p0.z != p1.z: # via
-                cost += self.VIA_COST
-            elif p0.x != p1.x: # horizontal
-                cost += self.NONPREFERRED_COST if (p0.z == 1) else self.PREFERRED_COST
-            elif p0.y != p1.y: # vertical
-                cost += self.NONPREFERRED_COST if (p0.z == 0) else self.PREFERRED_COST
-            else:
-                debug.error("Non-changing direction!")
-
-        return cost
     
 
         

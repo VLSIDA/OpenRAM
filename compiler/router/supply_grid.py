@@ -1,9 +1,11 @@
 import debug
 from vector3d import vector3d
-import grid
+from grid import grid
+from grid_path import grid_path
+from direction import direction
 
 
-class supply_grid(grid.grid):
+class supply_grid(grid):
     """
     A two layer routing map. Each cell can be blocked in the vertical
     or horizontal layer.
@@ -11,7 +13,7 @@ class supply_grid(grid.grid):
 
     def __init__(self, ll, ur, track_width):
         """ Create a routing map of width x height cells and 2 in the z-axis. """
-        grid.grid.__init__(self, ll, ur, track_width)
+        grid.__init__(self, ll, ur, track_width)
         
         # Current rail
         self.rail = []
@@ -24,48 +26,27 @@ class supply_grid(grid.grid):
             p.reset()
         
 
-    def find_horizontal_start_wave(self, loc, width):
-        """ 
-        Finds the first loc  starting at loc and to the right that is open.
-        Returns None if it reaches max size first.
-        """
-        wave = [loc+vector3d(0,i,0) for i in range(width)]
-        self.width = width
-
-        # Don't expand outside the bounding box
-        if wave[0].y > self.ur.y:
-            return None
-
-        # Increment while the wave is blocked
-        if self.is_wave_blocked(wave):
-            while wave:
-                wave=self.increment_east_wave(wave)
-                if not self.is_wave_blocked(wave):
-                    return wave
-                
-        # This may return None
-        return wave
-
-    def find_vertical_start_wave(self, loc, width):
+    def find_start_wave(self, wave, width, direct):
         """ 
         Finds the first loc  starting at loc and up that is open.
         Returns None if it reaches max size first.
         """
-        wave = [loc+vector3d(i,0,1) for i in range(width)]
-        self.width = width
-
         # Don't expand outside the bounding box
         if wave[0].x > self.ur.x:
             return None
+        if wave[-1].y > self.ur.y:
+            return None
 
-        # Increment while the wave is blocked
-        if self.is_wave_blocked(wave):
-            while wave:
-                wave=self.increment_up_wave(wave)
-                if not self.is_wave_blocked(wave):
-                    return wave
+        while wave and self.is_wave_blocked(wave):
+            wf=grid_path(wave)
+            wave=wf.neighbor(direct)
+            # Bail out if we couldn't increment futher
+            if wave[0].x > self.ur.x or wave[-1].y > self.ur.y:
+                return None
+            # Return a start if it isn't blocked
+            if not self.is_wave_blocked(wave):
+                return wave
                 
-        # This may return None
         return wave
     
         
@@ -79,55 +60,19 @@ class supply_grid(grid.grid):
         else:
             return False
 
-
     
-    def increment_east_wave(self, wave):
-        """ 
-        Increment the head by moving one step right. Return
-        new wave if successful.
-        """
-        new_wave = [v+vector3d(1,0,0) for v in wave]
-
-        # Don't expand outside the bounding box
-        if new_wave[0].x>self.ur.x:
-            return None
-        
-        return new_wave
-
-    def increment_up_wave(self, wave):
-        """ 
-        Increment the head by moving one step up. Return
-        new wave if successful.
-        """
-        new_wave = [v+vector3d(0,1,0) for v in wave]
-
-        # Don't expand outside the bounding box
-        if new_wave[0].y>self.ur.y:
-            return None
-        
-        return new_wave
-    
-    def probe_east_wave(self, wave):
+    def probe(self, wave, direct):
         """
         Expand the wave until there is a blockage and return
         the wave path.
         """
-        wave_path = []
+        wave_path = grid_path()
         while wave and not self.is_wave_blocked(wave):
+            if wave[0].x > self.ur.x or wave[-1].y > self.ur.y:
+                break
             wave_path.append(wave)
-            wave = self.increment_east_wave(wave)
+            wave = wave_path.neighbor(direct)
 
         return wave_path
 
-    def probe_up_wave(self, wave):
-        """
-        Expand the wave until there is a blockage and return
-        the wave path.
-        """
-        wave_path = []
-        while wave and not self.is_wave_blocked(wave):
-            wave_path.append(wave)
-            wave = self.increment_up_wave(wave)
-
-        return wave_path
     

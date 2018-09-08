@@ -147,7 +147,7 @@ class delay():
         self.check_arguments()
 
         # obtains list of time-points for each rising clk edge
-        self.create_test_cycles()
+        #self.create_test_cycles()
 
         # creates and opens stimulus file for writing
         temp_stim = "{0}/stim.sp".format(OPTS.openram_temp)
@@ -453,18 +453,25 @@ class delay():
         This simulates a disabled SRAM to get the leakage power when it is off.
         
         """
-
+        #Select any available port. Does not need to be specified for leakage power.
+        #Doing this just passes a debug check and nothing else. Put on TODO to remove...
+        self.targ_read_ports = [self.get_available_port(get_read_port=True)]
+        
+        debug.info(1, "Performing leakage power simulations.")
         self.write_power_stimulus(trim=False)
         self.stim.run_sim()
         leakage_power=parse_spice_list("timing", "leakage_power")
         debug.check(leakage_power!="Failed","Could not measure leakage power.")
-
+        debug.info(1, "Leakage power of full array is {0} mW".format(leakage_power*1e3))
+        #debug
+        #sys.exit(1)
 
         self.write_power_stimulus(trim=True)
         self.stim.run_sim()
         trim_leakage_power=parse_spice_list("timing", "leakage_power")
         debug.check(trim_leakage_power!="Failed","Could not measure leakage power.")
-
+        debug.info(1, "Leakage power of trimmed array is {0} mW".format(trim_leakage_power*1e3))
+        
         # For debug, you sometimes want to inspect each simulation.
         #key=raw_input("press return to continue")
         return (leakage_power*1e3, trim_leakage_power*1e3)
@@ -498,50 +505,70 @@ class delay():
 
         return True
         
-
     def find_min_period(self, feasible_delays_lh, feasible_delays_hl):
         """
-        Searches for the smallest period with output delays being within 5% of 
-        long period. 
+        Determine the minimum period for all ports.
         """
 
-        previous_period = ub_period = self.period
+        feasible_period = ub_period = self.period
         lb_period = 0.0
         target_period = 0.5 * (ub_period + lb_period)
         
         #Find the minimum period for all ports. Start at one port and perform binary search then use that delay as a starting position.
         #For testing purposes, only checks read ports.
         for port in self.read_ports:
-            # Binary search algorithm to find the min period (max frequency) of design
-            time_out = 25
-            self.targ_read_ports = [port]
-            while True:
-                time_out -= 1
-                if (time_out <= 0):
-                    debug.error("Timed out, could not converge on minimum period.",2)
+            target_period = self.find_min_period_one_port(feasible_delays_lh, feasible_delays_hl, port, lb_period, ub_period, target_period)
+            #The min period of one port becomes the new lower bound. Reset the upper_bound.
+            lb_period = target_period
+            ub_period = feasible_period        
+        
+        #Clear the target ports before leaving
+        self.targ_read_ports = []
+        self.targ_write_ports = []
+        return target_period 
+        
+    def find_min_period_one_port(self, feasible_delays_lh, feasible_delays_hl, port, lb_period, ub_period, target_period):
+        """
+        Searches for the smallest period with output delays being within 5% of 
+        long period. For the current logic to characterize multiport, bound are required as an input.
+        """
 
-                self.period = target_period
-                debug.info(1, "MinPeriod Search Port {3}: {0}ns (ub: {1} lb: {2})".format(target_period,
-                                                                                 ub_period,
-                                                                                 lb_period,
-                                                                                 port))
+        #previous_period = ub_period = self.period
+        #ub_period = self.period
+        #lb_period = 0.0
+        #target_period = 0.5 * (ub_period + lb_period)
+        
+        # Binary search algorithm to find the min period (max frequency) of input port
+        time_out = 25
+        self.targ_read_ports = [port]
+        while True:
+            time_out -= 1
+            if (time_out <= 0):
+                debug.error("Timed out, could not converge on minimum period.",2)
 
-                if self.try_period(feasible_delays_lh, feasible_delays_hl):
-                    ub_period = target_period
-                else:
-                    lb_period = target_period
+            self.period = target_period
+            debug.info(1, "MinPeriod Search Port {3}: {0}ns (ub: {1} lb: {2})".format(target_period,
+                                                                             ub_period,
+                                                                             lb_period,
+                                                                             port))
 
-                if relative_compare(ub_period, lb_period, error_tolerance=0.05):
-                    # ub_period is always feasible. When done with a port, set the target period of the next port as the lower bound
-                    # and reset the upperbound
-                    target_period = lb_period = ub_period
-                    ub_period = previous_period
-                    break
-                
-                #Update target
-                target_period = 0.5 * (ub_period + lb_period)
-                
-        return target_period
+            if self.try_period(feasible_delays_lh, feasible_delays_hl):
+                ub_period = target_period
+            else:
+                lb_period = target_period
+
+            if relative_compare(ub_period, lb_period, error_tolerance=0.05):
+                # ub_period is always feasible. When done with a port, set the target period of the next port as the lower bound
+                # and reset the upperbound
+                return ub_period
+                #target_period = lb_period = ub_period
+                #ub_period = previous_period
+                #break
+            
+            #Update target
+            target_period = 0.5 * (ub_period + lb_period)
+
+        
     def try_period(self, feasible_delays_lh, feasible_delays_hl):
         """ 
         This tries to simulate a period and checks if the result
@@ -612,14 +639,11 @@ class delay():
         """
         Main function to characterize an SRAM for a table. Computes both delay and power characterization.
         """
-        # Data structure for all the characterization values
-        char_data = {}
-        
         self.set_probe(probe_address, probe_data)
         
-        #A helper functions to set port names for the characterizer. Actually, I should change this to not confuse with the 
-        #already existing functions with similar names... 
-        self.gen_port_names()
+        self.create_port_names()
+        
+        self.create_char_data_dict()
         
         self.load=max(loads)
         self.slew=max(slews)
@@ -634,10 +658,6 @@ class delay():
         # sys.exit(1)
 
         #For debugging, skips characterization and returns dummy values.
-        # for port in range(self.total_port_num):
-            # for m in ["delay_lh", "delay_hl", "slew_lh", "slew_hl", "read0_power",
-                    # "read1_power", "write0_power", "write1_power", "leakage_power"]:
-                # char_data["{0}{1}".format(m,port)]=[]
         # i = 1.0
         # for slew in slews:
             # for load in loads:
@@ -662,21 +682,20 @@ class delay():
         min_period = self.find_min_period(feasible_delays_lh, feasible_delays_hl)
         debug.check(type(min_period)==float,"Couldn't find minimum period.")
         debug.info(1, "Min Period Found: {0}ns".format(min_period))
-        #debug.info(1, "Min Period: {0}n with a delay of {1} / {2}".format(min_period, feasible_delay_lh, feasible_delay_hl))
-        char_data["min_period"] = round_time(min_period)
-
-        # Make a list for each type of measurement to append results to
-        for port in range(self.total_port_num):
-            for m in ["delay_lh", "delay_hl", "slew_lh", "slew_hl", "read0_power",
-                    "read1_power", "write0_power", "write1_power"]:
-                char_data["{0}{1}".format(m,port)]=[]
+        self.char_data["min_period"] = round_time(min_period)
 
         # 3) Find the leakage power of the trimmmed and  UNtrimmed arrays.
         (full_array_leakage, trim_array_leakage)=self.run_power_simulation()
-        char_data["leakage_power"]=full_array_leakage
-
-        # 4) At the minimum period, measure the delay, slew and power for all slew/load pairs.
+        self.char_data["leakage_power"]=full_array_leakage
+        leakage_offset = full_array_leakage - trim_array_leakage
         
+        # 4) At the minimum period, measure the delay, slew and power for all slew/load pairs.
+        self.simulate_loads_and_slews(slews, loads, leakage_offset)
+
+        return self.char_data
+
+    def simulate_loads_and_slews(self, slews, loads, leakage_offset):
+        """Simulate all specified output loads and input slews pairs"""
         #Set the target simulation ports to all available ports. This make sims slower but failed sims exit anyways.
         self.targ_read_ports = self.read_ports
         self.targ_write_ports = self.write_ports
@@ -689,15 +708,10 @@ class delay():
                 for k,v in delay_results.items():
                     if "power" in k:
                         # Subtract partial array leakage and add full array leakage for the power measures
-                        char_data[k].append(v - trim_array_leakage + full_array_leakage)
+                        self.char_data[k].append(v + leakage_offset)
                     else:
-                        char_data[k].append(v)
-
-        
-        return char_data
-
-
-
+                        self.char_data[k].append(v)
+                        
     def add_data(self, data, port):
         """ Add the array of data values """
         debug.check(len(data)==self.word_size, "Invalid data word size.")
@@ -987,7 +1001,7 @@ class delay():
             self.stim.gen_pwl("WEB{0}".format(readwrite_port), self.cycle_times, self.web_values[readwrite_port], self.period, self.slew, 0.05)
             
 
-    def gen_port_names(self):
+    def create_port_names(self):
         """Generates the port names to be used in characterization and sets default simulation target ports"""
         self.write_ports = []
         self.read_ports = []
@@ -1010,3 +1024,12 @@ class delay():
         #Set the default target ports for simulation. Default is all the ports.
         self.targ_read_ports = self.read_ports
         self.targ_write_ports = self.write_ports
+    
+    def create_char_data_dict(self):
+        """Make a dict of lists for each type of measurement to append results to"""
+        #Making this a member variable may not be the best option, but helps reduce code clutter
+        self.char_data = {}
+        for port in range(self.total_port_num):
+            for m in ["delay_lh", "delay_hl", "slew_lh", "slew_hl", "read0_power",
+                    "read1_power", "write0_power", "write1_power"]:
+                self.char_data ["{0}{1}".format(m,port)]=[]

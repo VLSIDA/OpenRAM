@@ -24,6 +24,10 @@ class supply_router(router):
         """
         router.__init__(self, gds_name, module)
 
+        # Power rail width in grid units.
+        self.rail_track_width = 2
+        
+
         
     def create_routing_grid(self):
         """ 
@@ -41,8 +45,8 @@ class supply_router(router):
         """
         debug.info(1,"Running supply router on {0} and {1}...".format(vdd_name, gnd_name))
         self.cell = cell
-        self.pins[vdd_name] = []
-        self.pins[gnd_name] = []
+        self.vdd_name = vdd_name
+        self.gnd_name = gnd_name
 
         # Clear the pins if we have previously routed
         if (hasattr(self,'rg')):
@@ -58,40 +62,25 @@ class supply_router(router):
             self.find_blockages()
 
         # Get the pin shapes
-        self.get_pin(vdd_name)
-        self.get_pin(gnd_name)
+        self.find_pins(vdd_name)
+        self.find_pins(gnd_name)
         
-        # Now add the blockages (all shapes except the pins)
-        self.add_blockages()
 
-        self.route_supply_rails()
-        self.connect_supply_rails()
-        #self.route_pins_to_rails()
+        self.add_blockages()
+        self.add_pin_blockages(vdd_name)
+        self.route_supply_rails(gnd_name,0)
+        self.connect_supply_rail(gnd_name)
+        self.route_pins_to_rails(gnd_name)
+
+        self.clear_blockages()
+        self.add_pin_blockages(gnd_name)
+        self.route_supply_rails(vdd_name,1)
+        self.connect_supply_rail(vdd_name)
+        self.route_pins_to_rails(vdd_name)
         
-        # source pin will be a specific layout pin
-        # target pin will be the rails only
-            
-        # returns the path in tracks
-        # (path,cost) = self.rg.route(detour_scale)
-        # if path:
-        #     debug.info(1,"Found path: cost={0} ".format(cost))
-        #     debug.info(2,str(path))
-        #     self.add_route(path)
-        #     return True
-        # else:
-        #     self.write_debug_gds()
-        #     # clean up so we can try a reroute
-        #     self.clear_pins()
-            
         self.write_debug_gds()
         return False
 
-    def connect_supply_rails(self):
-        """
-        Add vias between overlapping supply rails.
-        """
-        self.connect_supply_rail("vdd")
-        self.connect_supply_rail("gnd")
         
     def connect_supply_rail(self, name):
         """
@@ -117,54 +106,43 @@ class supply_router(router):
         
 
                 
-    def route_supply_rails(self):
+    def route_supply_rails(self, name, supply_number):
         """
-        Add supply rails for vdd and gnd alternating in both layers.
-        Connect cross-over points with vias.
+        Route the horizontal and vertical supply rails across the entire design.
         """
-        # Width in grid units.
-        self.rail_track_width = 2
 
-        # Keep a list of all the rail wavepaths
-        self.paths = []
-            
-        # vdd will be the even grids every 2 widths
-        for offset in range(0, self.rg.ur.y, 2*self.rail_track_width):
+        start_offset = supply_number*self.rail_track_width
+        max_yoffset = self.rg.ur.y
+        max_xoffset = self.rg.ur.x
+        step_offset = 2*self.rail_track_width
+
+        # Horizontal supply rails
+        for offset in range(start_offset, max_yoffset, step_offset):
             # Seed the function at the location with the given width
             wave = [vector3d(0,offset+i,0) for i in range(self.rail_track_width)]
-            # While we can keep expanding east
-            while wave and wave[0].x < self.rg.ur.x:
-                wave = self.route_supply_rail("vdd", wave, direction.EAST)
+            # While we can keep expanding east in this horizontal track
+            while wave and wave[0].x < max_xoffset:
+                wave = self.route_supply_rail(name, wave, direction.EAST)
 
-        # gnd will be the even grids every 2 widths
-        for offset in range(self.rail_track_width, self.rg.ur.y, 2*self.rail_track_width):
-            # Seed the function at the location with the given width
-            wave = [vector3d(0,offset+i,0) for i in range(self.rail_track_width)]
-            # While we can keep expanding east
-            while wave and wave[0].x < self.rg.ur.x:
-                wave = self.route_supply_rail("gnd", wave, direction.EAST)
 
-        # vdd will be the even grids every 2 widths
-        for offset in range(0, self.rg.ur.x, 2*self.rail_track_width):
+        # Vertical supply rails
+        max_offset = self.rg.ur.x
+        for offset in range(start_offset, max_xoffset, step_offset):
             # Seed the function at the location with the given width
             wave = [vector3d(offset+i,0,1) for i in range(self.rail_track_width)]
-            # While we can keep expanding east
-            while wave and wave[0].y < self.rg.ur.y:
-                wave = self.route_supply_rail("vdd", wave, direction.NORTH)
+            # While we can keep expanding north in this vertical track
+            while wave and wave[0].y < max_yoffset:
+                wave = self.route_supply_rail(name, wave, direction.NORTH)
 
-        # gnd will be the even grids every 2 widths
-        for offset in range(self.rail_track_width, self.rg.ur.x, 2*self.rail_track_width):
-            # Seed the function at the location with the given width
-            wave = [vector3d(offset+i,0,1) for i in range(self.rail_track_width)]
-            # While we can keep expanding east
-            while wave and wave[0].y < self.rg.ur.y:
-                wave = self.route_supply_rail("gnd", wave, direction.NORTH)
-
+        # Remember index of path size which is how many rails we had at the start
+        self.num_rails = len(self.paths)
 
     def route_supply_rail(self, name, seed_wave, direct):
         """
-        Add supply rails alternating layers.
-        Return the final wavefront for seeding the next wave.
+        This finds the first valid starting location and routes a supply rail
+        in the given direction.
+        It returns the space after the end of the rail to seed another call for multiple
+        supply rails in the same "track" when there is a blockage.
         """
 
         # Sweep to find an initial unblocked valid wave
@@ -192,14 +170,19 @@ class supply_router(router):
                     
                 
         
-    def route_pins_to_rails(self):
+    def route_pins_to_rails(self,pin_name):
         """
-        This will route all the supply pins to supply rails one at a time.
-        After each one, it adds the cells to the blockage list.
+        This will route each of the pin components to the supply rails. 
+        After it is done, the cells are added to the pin blockage list.
         """
-        for pin_name in self.pins.keys():
-            for pin in self.pins[pin_name]:
-                route_supply_pin(pin)
+        for index in range(self.num_pin_components(pin_name)):
+            # Block all pin components first
+            self.add_component_blockages(pin_name)
+            # Add the single component of the pin as the source (unmarks it as a blockage too)
+            self.add_pin_component(pin_name,index,is_source=True)
+            # Add all of the rails as targets
+            self.add_supply_rail_target(pin_name)
+            #route_supply_pin(pin)
                 
 
 
@@ -209,6 +192,22 @@ class supply_router(router):
         Do not allow other pins to be destinations so that everything is connected 
         to the rails.
         """
+
+        # source pin will be a specific layout pin
+        # target pin will be the rails only
+            
+        # returns the path in tracks
+        # (path,cost) = self.rg.route(detour_scale)
+        # if path:
+        #     debug.info(1,"Found path: cost={0} ".format(cost))
+        #     debug.info(2,str(path))
+        #     self.add_route(path)
+        #     return True
+        # else:
+        #     self.write_debug_gds()
+        #     # clean up so we can try a reroute
+        #     self.clear_pins()
+            
         pass
     
         

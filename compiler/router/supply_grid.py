@@ -15,9 +15,6 @@ class supply_grid(grid):
         """ Create a routing map of width x height cells and 2 in the z-axis. """
         grid.__init__(self, ll, ur, track_width)
         
-        # Current rail
-        self.rail = []
-
     def reinit(self):
         """ Reinitialize everything for a new route. """
 

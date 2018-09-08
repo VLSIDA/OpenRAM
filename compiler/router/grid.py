@@ -64,22 +64,16 @@ class grid:
             self.add_map(n)
             self.map[n].path=value
 
-    
-    def add_blockage_shape(self,ll,ur,z):
-        debug.info(3,"Adding blockage ll={0} ur={1} z={2}".format(str(ll),str(ur),z))
-
-        block_list = []
-        for x in range(int(ll[0]),int(ur[0])+1):
-            for y in range(int(ll[1]),int(ur[1])+1):
-                block_list.append(vector3d(x,y,z))
-
-        self.add_blockage(block_list)
-
-    def add_blockage(self,block_list):
+    def set_blockages(self,block_list,value=True):
         debug.info(2,"Adding blockage list={0}".format(str(block_list)))
         for n in block_list:
-            self.set_blocked(n)
+            self.set_blocked(n,value)
 
+    def clear_blockages(self):
+        debug.info(2,"Clearing all blockages")
+        for n in self.map.keys():
+            self.set_blocked(n,False)
+            
     def set_source(self,n):
         if isinstance(n,list):
             for item in n:

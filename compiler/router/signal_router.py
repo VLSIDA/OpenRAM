@@ -62,11 +62,14 @@ class signal_router(router):
             self.find_blockages()
 
         # Now add the blockages (all shapes except the pins)
-        self.get_pin(src)
-        self.get_pin(dest)
+        self.find_pins(src)
+        self.find_pins(dest)
         
         # Now add the blockages
         self.add_blockages()
+        self.add_pin_blockages(src)
+        self.add_pin_blockages(dest)
+        
         # Add blockages from previous paths
         self.add_path_blockages()
 

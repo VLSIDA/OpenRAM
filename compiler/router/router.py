@@ -7,6 +7,7 @@ from pin_layout import pin_layout
 from vector import vector
 from vector3d import vector3d 
 from globals import OPTS
+from pprint import pformat
 
 class router:
     """
@@ -37,10 +38,14 @@ class router:
 
         # A map of pin names to pin structures
         self.pins = {}
-        # A map of pin names to pin structures
-        self.pins_grids = {}
-
-        # A list of pin blockages (represented by the pin structures too)
+        # A set of connected pin groups
+        self.pin_groups = {}
+        # The corresponding sets of grids of the groups
+        self.pin_grids = {}
+        # The set of partially covered pins to avoid
+        self.pin_blockages = {}
+        
+        # A list of blockages 
         self.blockages=[]
         
         # all the paths we've routed so far (to supplement the blockages)
@@ -59,6 +64,9 @@ class router:
         Keep the other blockages unchanged.
         """
         self.pins = {}
+        self.pin_groups = {}        
+        self.pin_grids = {}
+        self.pin_blockages = {}        
         self.rg.reinit()
         
     def set_top(self,top_name):
@@ -120,12 +128,10 @@ class router:
 
 
 
-    def find_pin(self,pin_name):
-        """ 
-        Finds the pin shapes and converts to tracks. 
-        Pin can either be a label or a location,layer pair: [[x,y],layer].
+    def retrieve_pins(self,pin_name):
         """
-
+        Retrieve the pin shapes from the layout.
+        """
         shape_list=self.layout.getAllPinShapesByLabel(str(pin_name))
         pin_list = []
         for shape in shape_list:
@@ -136,8 +142,16 @@ class router:
             pin_list.append(pin)
 
         debug.check(len(pin_list)>0,"Did not find any pin shapes for {0}.".format(str(pin)))
+        self.pins[pin_name] = pin_list
 
-        return pin_list
+    def find_pins(self,pin_name):
+        """ 
+        Finds the pin shapes and converts to tracks. 
+        Pin can either be a label or a location,layer pair: [[x,y],layer].
+        """
+        self.retrieve_pins(pin_name)
+        self.analyze_pins(pin_name)
+        self.convert_pins(pin_name)
 
 
     def find_blockages(self):
@@ -147,7 +161,9 @@ class router:
         if they are not actually a blockage.
         """
         for layer in [self.vert_layer_number,self.horiz_layer_number]:
-            self.get_blockages(layer)
+            self.retrieve_blockages(layer)
+            
+        self.convert_blockages()
             
     def clear_pins(self):
         """
@@ -157,6 +173,9 @@ class router:
         Keep the other blockages unchanged.
         """
         self.pins = {}
+        self.pin_groups = {}
+        self.pin_grids = {}
+        self.pin_blockages = {}        
         # DO NOT clear the blockages as these don't change
         self.rg.reinit()
         
@@ -218,36 +237,51 @@ class router:
         for path in self.paths:
             for grid in path:
                 self.rg.set_blocked(grid)
+
+    def clear_blockages(self):
+        """ 
+        Clear all blockages on the grid.
+        """
+        self.rg.clear_blockages()
         
-
-    def add_blockages(self):
+    def add_pin_blockages(self, pin_name):
         """ Add the blockages except the pin shapes. Also remove the pin shapes from the blockages list. """
-        # Join all the pin shapes into one big list
-        all_pins = [item for sublist in list(self.pins.values()) for item in sublist]
+        self.add_blockages(self.pin_blockages[pin_name])
+        
+    def add_blockages(self, blockages=None):
+        """ Flag the blockages in the grid """
+        if blockages == None:
+            blockages = self.blockage_grids
+        self.rg.set_blockages(blockages)
+    
+    def get_blockage_tracks(self, ll, ur, z):
+        debug.info(3,"Converting blockage ll={0} ur={1} z={2}".format(str(ll),str(ur),z))
 
-        # Do an n^2 check to see if any shapes are the same, otherwise add them
-        # FIXME: Make faster, but number of pins won't be *that* large
-        real_blockages = []
+        block_list = []
+        for x in range(int(ll[0]),int(ur[0])+1):
+            for y in range(int(ll[1]),int(ur[1])+1):
+                block_list.append(vector3d(x,y,z))
+
+        return block_list
+
+        
+    def convert_blockages(self):
+        """ Convert blockages to grid tracks. """
+        
+        blockage_grids = []
         for blockage in self.blockages:
-            for pin in all_pins:
-                # If the blockage overlaps the pin and is on the same layer,
-                # it must be connected, so skip it.
-                if blockage.overlaps(pin):
-                    debug.info(1,"Removing blockage for pin {}".format(str(pin)))
-                    break
-            else:
-                debug.info(2,"Adding blockage {}".format(str(blockage)))
-                # Inflate the blockage by spacing rule
-                [ll,ur]=self.convert_blockage_to_tracks(blockage.inflate())
-                zlayer = self.get_zindex(blockage.layer_num)
-                self.rg.add_blockage_shape(ll,ur,zlayer)
-                real_blockages.append(blockage)
+            debug.info(2,"Converting blockage {}".format(str(blockage)))
+            # Inflate the blockage by spacing rule
+            [ll,ur]=self.convert_blockage_to_tracks(blockage.inflate())
+            zlayer = self.get_zindex(blockage.layer_num)
+            blockages = self.get_blockage_tracks(ll,ur,zlayer)
+            blockage_grids.extend(blockages)
 
         # Remember the filtered blockages
-        self.blockages = real_blockages
-
+        self.blockage_grids = blockage_grids
         
-    def get_blockages(self, layer_num): 
+        
+    def retrieve_blockages(self, layer_num): 
         """
         Recursive find boundaries as blockages to the routing grid.
         """
@@ -261,7 +295,7 @@ class router:
             self.blockages.append(new_pin)
 
 
-    def convert_point_to_units(self,p):
+    def convert_point_to_units(self, p):
         """ 
         Convert a path set of tracks to center line path.
         """
@@ -269,14 +303,14 @@ class router:
         pt = pt.scale(self.track_widths[0],self.track_widths[1],1)
         return pt
 
-    def convert_wave_to_units(self,wave):
+    def convert_wave_to_units(self, wave):
         """ 
         Convert a wave to a set of center points 
         """
         return [self.convert_point_to_units(i) for i in wave]
     
 
-    def convert_blockage_to_tracks(self,shape):
+    def convert_blockage_to_tracks(self, shape):
         """ 
         Convert a rectangular blockage shape into track units.
         """
@@ -353,7 +387,7 @@ class router:
         #debug.info(1,"Converted [ {0} , {1} ]".format(ll,ur))
         return (track_list,block_list)
 
-    def compute_overlap(self,r1,r2):
+    def compute_overlap(self, r1, r2):
         """ Calculate the rectangular overlap of two rectangles. """
         (r1_ll,r1_ur) = r1
         (r2_ll,r2_ur) = r2
@@ -370,7 +404,7 @@ class router:
             return [0,0]
             
 
-    def convert_track_to_pin(self,track):
+    def convert_track_to_pin(self, track):
         """ 
         Convert a grid point into a rectangle shape that is centered
         track in the track and leaves half a DRC space in each direction.
@@ -393,7 +427,7 @@ class router:
 
         return [ll,ur]
 
-    def convert_track_to_shape(self,track):
+    def convert_track_to_shape(self, track):
         """ 
         Convert a grid point into a rectangle shape that occupies the entire centered
         track.
@@ -407,35 +441,131 @@ class router:
 
         return [ll,ur]
     
-
-    def get_pin(self,pin_name):
+    def analyze_pins(self, pin_name):
         """ 
-        Gets the pin shapes only. Doesn't add to grid.
+        Analyze the shapes of a pin and combine them into groups which are connected.
         """
-        self.pins[pin_name] = self.find_pin(pin_name)
+        pin_list = self.pins[pin_name]
+        
+        # Put each pin in an equivalence class of it's own
+        equiv_classes = [[x] for x in pin_list]
+        #print("INITIAL\n",equiv_classes)
 
-    def add_pin(self,pin_name,is_source=False):
+        def compare_classes(class1, class2):
+            """ 
+            Determine if two classes should be combined and if so return
+            the combined set. Otherwise, return None.
+            """
+            #print("CL1:\n",class1)
+            #print("CL2:\n",class2)
+            # Compare each pin in each class,
+            # and if any overlap, return the combined the class 
+            for p1 in class1:
+                for p2 in class2:
+                    if p1.overlaps(p2):
+                        combined_class = class1+class2
+                        #print("COM:",pformat(combined_class))
+                        return combined_class
+
+            return None
+                        
+        
+        def combine_classes(equiv_classes):
+            """ Recursive function to combine classes. """
+            #print("\nRECURSE:\n",pformat(equiv_classes))
+            if len(equiv_classes)==1:
+                return(equiv_classes)
+            
+            for class1 in equiv_classes:
+                for class2 in equiv_classes:
+                    if class1 == class2:
+                        continue
+                    class3 = compare_classes(class1, class2)
+                    if class3:
+                        new_classes = equiv_classes
+                        new_classes.remove(class1)
+                        new_classes.remove(class2)
+                        new_classes.append(class3)
+                        return(combine_classes(new_classes))
+            else:
+                return(equiv_classes)
+
+        reduced_classes = combine_classes(equiv_classes)
+        #print("FINAL  ",reduced_classes)
+        self.pin_groups[pin_name] = reduced_classes
+        
+    def convert_pins(self, pin_name):
         """ 
-        Mark the grids that are in the pin rectangle ranges to have the pin property. 
-        pin can be a location or a label.
+        Convert the pin groups into pin tracks and blockage tracks
         """
+        self.pin_grids[pin_name] = []
+        self.pin_blockages[pin_name] = []
 
         found_pin = False
-        for pin in self.pins[pin_name]:
-            (pin_in_tracks,blockage_in_tracks)=self.convert_pin_to_tracks(pin)
-            if (len(pin_in_tracks)>0):
-                found_pin=True
-            if is_source:
-                debug.info(1,"Set source: " + str(pin_name) + " " + str(pin_in_tracks))
-                self.rg.add_source(pin_in_tracks)
-            else:
-                debug.info(1,"Set target: " + str(pin_name) + " " + str(pin_in_tracks))
-                self.rg.add_target(pin_in_tracks)
-            self.rg.add_blockage(blockage_in_tracks)
-            
+        for pg in self.pin_groups[pin_name]:
+            for pin in pg:
+                (pin_in_tracks,blockage_in_tracks)=self.convert_pin_to_tracks(pin)
+                # At least one of the groups must have some valid tracks
+                if (len(pin_in_tracks)>0):
+                    found_pin = True
+                    # We need to route each of the classes, so don't combine the groups
+                    self.pin_grids[pin_name].append(pin_in_tracks)
+                # However, we can just block all of the partials, so combine the groups
+                self.pin_blockages[pin_name].extend(blockage_in_tracks)
+
         if not found_pin:
             self.write_debug_gds()
-        debug.check(found_pin,"Unable to find pin on grid.")
+            debug.error("Unable to find pin on grid.",-1)
+        
+    def add_pin(self, pin_name, is_source=False):
+        """ 
+        This will mark the grids for all pin components as a source or a target.
+        Marking as source or target also clears blockage status.
+        """
+        for i in range(self.num_pin_components(pin_name)):
+            self.add_pin_component(pin_name, i, is_source)
+
+    def num_pin_components(self, pin_name):
+        """ 
+        This returns how many disconnected pin components there are.
+        """
+        return len(self.pin_grids[pin_name])
+    
+    def add_pin_component(self, pin_name, index, is_source=False):
+        """ 
+        This will mark only the pin tracks from the indexed pin component as a source/target.
+        It also unsets it as a blockage.
+        """
+        debug.check(index<self.num_pin_components(pin_name),"Pin component index too large.")
+        
+        pin_in_tracks = self.pin_grids[pin_name][index]
+        if is_source:
+            debug.info(1,"Set source: " + str(pin_name) + " " + str(pin_in_tracks))
+            self.rg.add_source(pin_in_tracks)
+        else:
+            debug.info(1,"Set target: " + str(pin_name) + " " + str(pin_in_tracks))
+            self.rg.add_target(pin_in_tracks)
+
+    def add_supply_rail_target(self, pin_name):
+        """
+        Add the supply rails of given name as a routing target.
+        """
+        for i in range(self.num_rails):
+            if self.paths[i].name == pin_name:
+                rail = self.paths[i]
+                for wave_index in range(len(rail)):
+                    pin_in_tracks = rail[wave_index]
+                    #debug.info(1,"Set target: " + str(pin_name) + " " + str(pin_in_tracks))
+                    self.rg.add_target(pin_in_tracks)
+        
+    def add_component_blockages(self, pin_name):
+        """ 
+        Block all of the pin components.
+        """
+        for comp_index in range(self.num_pin_components(pin_name)):
+            pin_in_tracks = self.pin_grids[pin_name][comp_index]
+            self.add_blockages(pin_in_tracks)
+            
 
     def write_debug_gds(self):
         """ 

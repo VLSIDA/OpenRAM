@@ -19,6 +19,7 @@ class sram_base(design):
         self.sram_config = sram_config
         sram_config.set_local_config(self)
 
+        print("PORTS: {} - {} - {}".format(OPTS.num_rw_ports, OPTS.num_w_ports, OPTS.num_r_ports))
         self.total_write = OPTS.num_rw_ports + OPTS.num_w_ports
         self.total_read = OPTS.num_rw_ports + OPTS.num_r_ports
         self.total_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
@@ -28,10 +29,29 @@ class sram_base(design):
 
     def add_pins(self):
         """ Add pins for entire SRAM. """
+        self.din_list = []
+        self.DIN_list = []
+        self.dout_list = []
+        self.DOUT_list = []
+        port_number = 0
+        for port in range(OPTS.num_rw_ports):
+            self.din_list.append("din{}".format(port_number))
+            self.dout_list.append("dout{}".format(port_number))
+            self.DIN_list.append("DIN{}".format(port_number))
+            self.DOUT_list.append("DOUT{}".format(port_number))
+            port_number += 1
+        for port in range(OPTS.num_w_ports):
+            self.din_list.append("din{}".format(port_number))
+            self.DIN_list.append("DIN{}".format(port_number))
+            port_number += 1
+        for port in range(OPTS.num_r_ports):
+            self.dout_list.append("dout{}".format(port_number))
+            self.DOUT_list.append("DOUT{}".format(port_number))
+            port_number += 1
     
         for port in range(self.total_write):
             for bit in range(self.word_size):
-                self.add_pin("DIN{0}[{1}]".format(port,bit),"INPUT")
+                self.add_pin(self.DIN_list[port]+"[{0}]".format(bit),"INPUT")
                 
         for port in range(self.total_ports):
             for bit in range(self.addr_size):
@@ -41,11 +61,15 @@ class sram_base(design):
         self.control_logic_inputs=self.control_logic.get_inputs()
         self.control_logic_outputs=self.control_logic.get_outputs()
         
-        self.add_pin_list(self.control_logic_inputs,"INPUT")
+        #self.add_pin_list(self.control_logic_inputs,"INPUT")
+        self.add_pin("csb","INPUT")
+        for port in range(self.total_write):
+            self.add_pin("web{}".format(port),"INPUT")
+        self.add_pin("clk","INPUT")
 
         for port in range(self.total_read):
             for bit in range(self.word_size):
-                self.add_pin("DOUT{0}[{1}]".format(port,bit),"OUTPUT")
+                self.add_pin(self.DOUT_list[port]+"[{0}]".format(bit),"OUTPUT")
         
         self.add_pin("vdd","POWER")
         self.add_pin("gnd","GROUND")
@@ -234,8 +258,10 @@ class sram_base(design):
         else:
             self.col_addr_dff = None
 
-        self.data_dff = dff_array(name="data_dff", rows=1, columns=self.word_size*self.total_ports)
+        self.data_dff = dff_array(name="data_dff", rows=1, columns=self.word_size*self.total_write)
         self.add_mod(self.data_dff)
+        
+        print("PORTS: {} - {} - {}".format(OPTS.num_rw_ports, OPTS.num_w_ports, OPTS.num_r_ports))
         
         # Create the bank module (up to four are instantiated)
         from bank import bank
@@ -262,7 +288,7 @@ class sram_base(design):
         temp = []
         for port in range(self.total_read):
             for bit in range(self.word_size):
-                temp.append("DOUT{0}[{1}]".format(port,bit))
+                temp.append(self.DOUT_list[port]+"[{0}]".format(bit))
         for port in range(self.total_write):
             for bit in range(self.word_size):
                 temp.append("BANK_DIN{0}[{1}]".format(port,bit))
@@ -321,10 +347,10 @@ class sram_base(design):
         # inputs, outputs/output/bar
         inputs = []
         outputs = []
-        for k in range(self.total_ports):
+        for port in range(self.total_ports):
             for i in range(self.row_addr_size):
-                inputs.append("ADDR{}[{}]".format(k,i+self.col_addr_size))
-                outputs.append("A{}[{}]".format(k,i+self.col_addr_size))
+                inputs.append("ADDR{}[{}]".format(port,i+self.col_addr_size))
+                outputs.append("A{}[{}]".format(port,i+self.col_addr_size))
 
         self.connect_inst(inputs + outputs + ["clk_buf", "vdd", "gnd"])
         return inst
@@ -337,10 +363,10 @@ class sram_base(design):
         # inputs, outputs/output/bar
         inputs = []
         outputs = []
-        for k in range(self.total_ports):
+        for port in range(self.total_ports):
             for i in range(self.col_addr_size):
-                inputs.append("ADDR{}[{}]".format(k,i))
-                outputs.append("A{}[{}]".format(k,i))
+                inputs.append("ADDR{}[{}]".format(port,i))
+                outputs.append("A{}[{}]".format(port,i))
 
         self.connect_inst(inputs + outputs + ["clk_buf", "vdd", "gnd"])
         return inst
@@ -353,20 +379,24 @@ class sram_base(design):
         # inputs, outputs/output/bar
         inputs = []
         outputs = []
-        for k in range(self.total_write):
+        for port in range(self.total_write):
             for i in range(self.word_size):
-                inputs.append("DIN{}[{}]".format(k,i))
-                outputs.append("BANK_DIN{}[{}]".format(k,i))
+                inputs.append("DIN{}[{}]".format(port,i))
+                outputs.append("BANK_DIN{}[{}]".format(port,i))
 
         self.connect_inst(inputs + outputs + ["clk_buf", "vdd", "gnd"])
         return inst
         
-    def create_control_logic(self):
+    def create_control_logic(self, port):
         """ Add and place control logic """
         inst = self.add_inst(name="control",
                              mod=self.control_logic)
               
-        self.connect_inst(self.control_logic_inputs + self.control_logic_outputs + ["vdd", "gnd"])
+        self.connect_inst(["csb", "web{}".format(port), "clk",
+                           "s_en{}".format(port), "w_en{}".format(port), "clk_buf_bar", "clk_buf",
+                           "vdd", "gnd"])
+        
+        #self.connect_inst(self.control_logic_inputs + self.control_logic_outputs + ["vdd", "gnd"])
         return inst
         
         

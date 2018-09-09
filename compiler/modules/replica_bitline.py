@@ -128,7 +128,21 @@ class replica_bitline(design.design):
 
         self.rbl_inst=self.add_inst(name="load",
                                     mod=self.rbl)
-        self.connect_inst(["bl[0]", "br[0]"] + ["gnd"]*self.bitcell_loads + ["vdd", "gnd"])
+        
+        total_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
+        temp = []
+        temp.append("bl[0]")
+        temp.append("br[0]")
+        for port in range(total_ports - 1):
+            temp.append("gnd")
+            temp.append("gnd")
+        for wl in range(self.bitcell_loads):
+            for port in range(total_ports):
+                temp.append("gnd")
+        temp.append("vdd")
+        temp.append("gnd")
+        self.connect_inst(temp)
+        #self.connect_inst(["bl[0]", "br[0]"] + ["gnd"]*self.bitcell_loads + ["vdd", "gnd"])
         
     def place_modules(self):
         """ Add all of the module instances in the logical netlist """

@@ -67,13 +67,27 @@ class bank(design.design):
         self.DRC_LVS()
         
     def add_pins(self):
+        self.din_list = []
+        self.dout_list = []
+        port_number = 0
+        for port in range(OPTS.num_rw_ports):
+            self.din_list.append("din{}".format(port_number))
+            self.dout_list.append("dout{}".format(port_number))
+            port_number += 1
+        for port in range(OPTS.num_w_ports):
+            self.din_list.append("din{}".format(port_number))
+            port_number += 1
+        for port in range(OPTS.num_r_ports):
+            self.dout_list.append("dout{}".format(port_number))
+            port_number += 1
+        
         """ Adding pins for Bank module"""
         for port in range(self.total_read):
             for bit in range(self.word_size):
-                self.add_pin("dout{0}[{1}]".format(port,bit),"OUT")
+                self.add_pin(self.dout_list[port]+"[{0}]".format(bit),"OUT")
         for port in range(self.total_write):
             for bit in range(self.word_size):
-                self.add_pin("din{0}[{1}]".format(port,bit),"IN")
+                self.add_pin(self.din_list[port]+"[{0}]".format(bit),"IN")
         for port in range(self.total_ports):
             for bit in range(self.addr_size):
                 self.add_pin("addr{0}[{1}]".format(port,bit),"INPUT")
@@ -350,7 +364,7 @@ class bank(design.design):
 
             temp = []
             for bit in range(self.word_size):
-                temp.append("dout{0}[{1}]".format(port,bit))
+                temp.append(self.dout_list[port]+"[{0}]".format(bit))
                 if self.words_per_row == 1:
                     temp.append(self.read_bl_list[port]+"[{0}]".format(bit))
                     temp.append(self.read_br_list[port]+"[{0}]".format(bit))
@@ -379,7 +393,7 @@ class bank(design.design):
 
             temp = []
             for bit in range(self.word_size):
-                temp.append("din{0}[{1}]".format(port,bit))
+                temp.append(self.din_list[port]+"[{0}]".format(bit))
             for bit in range(self.word_size):            
                 if (self.words_per_row == 1):            
                     temp.append(self.write_bl_list[port]+"[{0}]".format(bit))
@@ -547,29 +561,35 @@ class bank(design.design):
 
         # These are the instances that every bank has
         top_instances = [self.bitcell_array_inst]
-
+        for port in range(self.total_read):
+            #top_instances.append(self.precharge_array_inst[port])
+            top_instances.append(self.sense_amp_array_inst[port])
+        for port in range(self.total_write):
+            top_instances.append(self.write_driver_array_inst[port])
         for port in range(self.total_ports):
-            top_instances.extend([self.precharge_array_inst[port],
-                                  self.sense_amp_array_inst[port],
-                                  self.write_driver_array_inst[port],
-                                  self.row_decoder_inst[port],
+            top_instances.extend([self.row_decoder_inst[port],
                                   self.wordline_driver_inst[port]])
             # Add these if we use the part...
             if self.col_addr_size > 0:
                 top_instances.append(self.col_decoder_inst[port])
-                top_instances.append(self.col_mux_array_inst[port])
+                #top_instances.append(self.col_mux_array_inst[port])
             
             if self.num_banks > 1:
                 top_instances.append(self.bank_select_inst[port])
-
+        
+        if self.col_addr_size > 0:
+            for port in range(self.total_ports):
+                self.copy_layout_pin(self.col_mux_array_inst[port], "gnd")
+        for port in range(self.total_read):
+            self.copy_layout_pin(self.precharge_array_inst[port], "vdd")
         
         for inst in top_instances:
             # Column mux has no vdd
-            if self.col_addr_size==0 or (self.col_addr_size>0 and inst != self.col_mux_array_inst[0]):
-                self.copy_layout_pin(inst, "vdd")
+            #if self.col_addr_size==0 or (self.col_addr_size>0 and inst != self.col_mux_array_inst[0]):
+            self.copy_layout_pin(inst, "vdd")
             # Precharge has no gnd
-            if inst != self.precharge_array_inst[0]:
-                self.copy_layout_pin(inst, "gnd")
+            #if inst != self.precharge_array_inst[port]:
+            self.copy_layout_pin(inst, "gnd")
         
     def route_bank_select(self):
         """ Route the bank select logic. """

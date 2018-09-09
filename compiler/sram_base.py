@@ -19,7 +19,6 @@ class sram_base(design):
         self.sram_config = sram_config
         sram_config.set_local_config(self)
 
-        print("PORTS: {} - {} - {}".format(OPTS.num_rw_ports, OPTS.num_w_ports, OPTS.num_r_ports))
         self.total_write = OPTS.num_rw_ports + OPTS.num_w_ports
         self.total_read = OPTS.num_rw_ports + OPTS.num_r_ports
         self.total_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
@@ -29,29 +28,20 @@ class sram_base(design):
 
     def add_pins(self):
         """ Add pins for entire SRAM. """
-        self.din_list = []
-        self.DIN_list = []
-        self.dout_list = []
-        self.DOUT_list = []
+        self.read_index = []
         port_number = 0
         for port in range(OPTS.num_rw_ports):
-            self.din_list.append("din{}".format(port_number))
-            self.dout_list.append("dout{}".format(port_number))
-            self.DIN_list.append("DIN{}".format(port_number))
-            self.DOUT_list.append("DOUT{}".format(port_number))
+            self.read_index.append("{}".format(port_number))
             port_number += 1
         for port in range(OPTS.num_w_ports):
-            self.din_list.append("din{}".format(port_number))
-            self.DIN_list.append("DIN{}".format(port_number))
             port_number += 1
         for port in range(OPTS.num_r_ports):
-            self.dout_list.append("dout{}".format(port_number))
-            self.DOUT_list.append("DOUT{}".format(port_number))
+            self.read_index.append("{}".format(port_number))
             port_number += 1
     
         for port in range(self.total_write):
             for bit in range(self.word_size):
-                self.add_pin(self.DIN_list[port]+"[{0}]".format(bit),"INPUT")
+                self.add_pin("DIN{0}[{1}]".format(port,bit),"INPUT")
                 
         for port in range(self.total_ports):
             for bit in range(self.addr_size):
@@ -69,7 +59,7 @@ class sram_base(design):
 
         for port in range(self.total_read):
             for bit in range(self.word_size):
-                self.add_pin(self.DOUT_list[port]+"[{0}]".format(bit),"OUTPUT")
+                self.add_pin("DOUT{0}[{1}]".format(self.read_index[port],bit),"OUTPUT")
         
         self.add_pin("vdd","POWER")
         self.add_pin("gnd","GROUND")
@@ -261,8 +251,6 @@ class sram_base(design):
         self.data_dff = dff_array(name="data_dff", rows=1, columns=self.word_size*self.total_write)
         self.add_mod(self.data_dff)
         
-        print("PORTS: {} - {} - {}".format(OPTS.num_rw_ports, OPTS.num_w_ports, OPTS.num_r_ports))
-        
         # Create the bank module (up to four are instantiated)
         from bank import bank
         self.bank = bank(self.sram_config,
@@ -288,7 +276,7 @@ class sram_base(design):
         temp = []
         for port in range(self.total_read):
             for bit in range(self.word_size):
-                temp.append(self.DOUT_list[port]+"[{0}]".format(bit))
+                temp.append("DOUT{0}[{1}]".format(self.read_index[port],bit))
         for port in range(self.total_write):
             for bit in range(self.word_size):
                 temp.append("BANK_DIN{0}[{1}]".format(port,bit))
@@ -299,7 +287,7 @@ class sram_base(design):
             for port in range(self.total_ports):
                 temp.append("bank_sel{0}[{1}]".format(port,bank_num))
         for port in range(self.total_read):
-            temp.append("s_en{0}".format(port))
+            temp.append("s_en{0}".format(self.read_index[port]))
         for port in range(self.total_write):
             temp.append("w_en{0}".format(port))
         temp.extend(["clk_buf_bar","clk_buf" , "vdd", "gnd"])

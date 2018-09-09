@@ -67,27 +67,24 @@ class bank(design.design):
         self.DRC_LVS()
         
     def add_pins(self):
-        self.din_list = []
-        self.dout_list = []
+        self.read_index = []
         port_number = 0
         for port in range(OPTS.num_rw_ports):
-            self.din_list.append("din{}".format(port_number))
-            self.dout_list.append("dout{}".format(port_number))
+            self.read_index.append("{}".format(port_number))
             port_number += 1
         for port in range(OPTS.num_w_ports):
-            self.din_list.append("din{}".format(port_number))
             port_number += 1
         for port in range(OPTS.num_r_ports):
-            self.dout_list.append("dout{}".format(port_number))
+            self.read_index.append("{}".format(port_number))
             port_number += 1
         
         """ Adding pins for Bank module"""
         for port in range(self.total_read):
             for bit in range(self.word_size):
-                self.add_pin(self.dout_list[port]+"[{0}]".format(bit),"OUT")
+                self.add_pin("dout{0}[{1}]".format(self.read_index[port],bit),"OUT")
         for port in range(self.total_write):
             for bit in range(self.word_size):
-                self.add_pin(self.din_list[port]+"[{0}]".format(bit),"IN")
+                self.add_pin("din{0}[{1}]".format(port,bit),"IN")
         for port in range(self.total_ports):
             for bit in range(self.addr_size):
                 self.add_pin("addr{0}[{1}]".format(port,bit),"INPUT")
@@ -98,7 +95,7 @@ class bank(design.design):
             for port in range(self.total_ports):
                 self.add_pin("bank_sel{}".format(port),"INPUT")
         for port in range(self.total_read):
-            self.add_pin("s_en{0}".format(port), "INPUT")
+            self.add_pin("s_en{0}".format(self.read_index[port]), "INPUT")
         for port in range(self.total_write):
             self.add_pin("w_en{0}".format(port), "INPUT")
         for pin in ["clk_buf_bar","clk_buf"]:
@@ -364,7 +361,7 @@ class bank(design.design):
 
             temp = []
             for bit in range(self.word_size):
-                temp.append(self.dout_list[port]+"[{0}]".format(bit))
+                temp.append("dout{0}[{1}]".format(self.read_index[port],bit))
                 if self.words_per_row == 1:
                     temp.append(self.read_bl_list[port]+"[{0}]".format(bit))
                     temp.append(self.read_br_list[port]+"[{0}]".format(bit))
@@ -393,7 +390,7 @@ class bank(design.design):
 
             temp = []
             for bit in range(self.word_size):
-                temp.append(self.din_list[port]+"[{0}]".format(bit))
+                temp.append("din{0}[{1}]".format(port,bit))
             for bit in range(self.word_size):            
                 if (self.words_per_row == 1):            
                     temp.append(self.write_bl_list[port]+"[{0}]".format(bit))

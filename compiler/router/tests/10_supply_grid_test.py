@@ -32,12 +32,14 @@ class no_blockages_test(openram_test):
                 globals.setup_paths()
                 from control_logic import control_logic
                 cell = control_logic(16)
+                #from pinv import pinv
+                #cell = pinv()
                 #gds_file = "{0}/{1}.gds".format(os.path.dirname(os.path.realpath(__file__)),"control_logic")
                 #cell = gds_cell(name, gds_file)
                 self.add_inst(name=name,
                               mod=cell,
                               offset=[0,0])
-                self.connect_inst(["csb","web","clk","s_en","w_en","clk_buf_bar","clk_buf","vdd","gnd"])
+                self.connect_inst(cell.pin_map.keys())
                 
                 r=router(module=cell)
                 layer_stack =("metal3","via2","metal2")

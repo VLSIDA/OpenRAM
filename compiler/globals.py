@@ -118,9 +118,6 @@ def init_openram(config_file, is_unit_test=True):
 
     init_paths()
 
-    # This depends on the tech, so do it after tech is loaded
-    init_config()
-
     # Reset the static duplicate name checker for unit tests.
     import hierarchy_design
     hierarchy_design.hierarchy_design.name_map=[]
@@ -257,7 +254,8 @@ def cleanup_paths():
     if not OPTS.purge_temp:
         debug.info(0,"Preserving temp directory: {}".format(OPTS.openram_temp))
         return
-    if os.path.exists(OPTS.openram_temp):
+    elif os.path.exists(OPTS.openram_temp):
+        debug.info(1,"Purging temp directory: {}".format(OPTS.openram_temp))
         # This annoyingly means you have to re-cd into the directory each debug iteration
         #shutil.rmtree(OPTS.openram_temp, ignore_errors=True)
         contents = [os.path.join(OPTS.openram_temp, i) for i in os.listdir(OPTS.openram_temp)]
@@ -293,8 +291,6 @@ def setup_paths():
         OPTS.openram_temp += "/"
     debug.info(1, "Temporary files saved in " + OPTS.openram_temp)
 
-    cleanup_paths()
-
 
 
 def is_exe(fpath):
@@ -316,6 +312,7 @@ def init_paths():
 
     # make the directory if it doesn't exist
     try:
+        debug.info(1,"Creating temp directory: {}".format(OPTS.openram_temp))
         os.makedirs(OPTS.openram_temp, 0o750)
     except OSError as e:
         if e.errno == 17:  # errno.EEXIST
@@ -330,16 +327,7 @@ def init_paths():
             os.chmod(OPTS.output_path, 0o750)
     except:
         debug.error("Unable to make output directory.",-1)
-            
-def init_config():
-    """ Initialize the SRAM configurations. """
-    # Create the SRAM configuration
-    from sram_config import sram_config
-    OPTS.sram_config = sram_config(OPTS.word_size,
-                                   OPTS.num_words,
-                                   OPTS.num_banks)
 
-                                   
     
 # imports correct technology directories for testing
 def import_tech():

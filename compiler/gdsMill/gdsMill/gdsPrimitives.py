@@ -141,7 +141,7 @@ class GdsText:
         self.plex=""
         self.drawingLayer=""
         self.purposeLayer = None
-        self.transFlags=[0,00]
+        self.transFlags=[0,0,0]
         self.magFactor=""
         self.rotateAngle=""
         self.pathType=""

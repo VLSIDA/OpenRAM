@@ -171,6 +171,8 @@ class pinv(pgate.pgate):
                                         offset=vector(0.5*self.width,self.height),
                                         width=self.width)
 
+
+
     def create_ptx(self):
         """ 
         Create the PMOS and NMOS netlist.

@@ -379,12 +379,10 @@ class layout(lef.lef):
                               dimensions=size,
                               implant_type=implant_type,
                               well_type=well_type)
-
-        debug.check(mirror=="R0","Use rotate to rotate vias instead of mirror.")
-        
         height = via.height
         width = via.width
-
+        debug.check(mirror=="R0","Use rotate to rotate vias instead of mirror.")
+        
         if rotate==0:
             corrected_offset = offset + vector(-0.5*width,-0.5*height)
         elif rotate==90:
@@ -849,10 +847,10 @@ class layout(lef.lef):
         """
         self.add_via_center(layers=("metal1", "via1", "metal2"),
                             offset=loc,
-                            rotate=rotate)
+                            rotate=float(rotate))
         via=self.add_via_center(layers=("metal2", "via2", "metal3"),
                                 offset=loc,
-                                rotate=rotate)
+                                rotate=float(rotate))
         self.add_layout_pin_rect_center(text=name,
                                         layer="metal3",
                                         offset=loc,

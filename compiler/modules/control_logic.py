@@ -96,7 +96,7 @@ class control_logic(design.design):
         """ Setup bus names, determine the size of the busses etc """
 
         # List of input control signals
-        self.input_list =["csb","web"]
+        self.input_list =["csb","web0"]
         self.dff_output_list =["cs_bar", "cs", "we_bar", "we"]        
         # list of output control signals (for making a vertical bus)
         self.internal_bus_list = ["clk_buf", "clk_buf_bar", "we", "cs"]
@@ -275,7 +275,7 @@ class control_logic(design.design):
                             rotate=90)
 
         self.copy_layout_pin(self.ctrl_dff_inst, "din[0]", "csb")
-        self.copy_layout_pin(self.ctrl_dff_inst, "din[1]", "web")
+        self.copy_layout_pin(self.ctrl_dff_inst, "din[1]", "web0")
         
         
     def create_dffs(self):

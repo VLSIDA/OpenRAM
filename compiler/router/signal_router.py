@@ -78,19 +78,9 @@ class signal_router(router):
         self.add_pin(src,True)
         self.add_pin(dest,False)
 
-            
-        # returns the path in tracks
-        (path,cost) = self.rg.route(detour_scale)
-        if path:
-            debug.info(1,"Found path: cost={0} ".format(cost))
-            debug.info(2,str(path))
-            self.add_route(path)
-        else:
-            self.write_debug_gds()
-            # clean up so we can try a reroute
-            self.clear_pins()
+        if not self.run_router(detour_scale):
             return False
-
+        
         self.write_debug_gds()
         
         return True

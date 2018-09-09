@@ -72,7 +72,10 @@ class supply_router(router):
         self.connect_supply_rail(gnd_name)
         self.route_pins_to_rails(gnd_name)
 
+        # Start fresh. Not the best for run-time, but simpler.
         self.clear_blockages()
+        
+        self.add_blockages()
         self.add_pin_blockages(gnd_name)
         self.route_supply_rails(vdd_name,1)
         self.connect_supply_rail(vdd_name)
@@ -175,67 +178,29 @@ class supply_router(router):
         This will route each of the pin components to the supply rails. 
         After it is done, the cells are added to the pin blockage list.
         """
+
+        # For every component
         for index in range(self.num_pin_components(pin_name)):
-            # Block all pin components first
+            
+            # Block all the pin components first
             self.add_component_blockages(pin_name)
-            # Add the single component of the pin as the source (unmarks it as a blockage too)
+            
+            # Add the single component of the pin as the source
+            # which unmarks it as a blockage too
             self.add_pin_component(pin_name,index,is_source=True)
+            
             # Add all of the rails as targets
+            # Don't add the other pins, but we could?
             self.add_supply_rail_target(pin_name)
-            #route_supply_pin(pin)
+
+            # Actually run the A* router
+            self.run_router(detour_scale=5)
+            
+
+            
+
                 
-
-
-    def route_supply_pin(self, pin):
-        """
-        This will take a single pin and route it to the appropriate supply rail.
-        Do not allow other pins to be destinations so that everything is connected 
-        to the rails.
-        """
-
-        # source pin will be a specific layout pin
-        # target pin will be the rails only
-            
-        # returns the path in tracks
-        # (path,cost) = self.rg.route(detour_scale)
-        # if path:
-        #     debug.info(1,"Found path: cost={0} ".format(cost))
-        #     debug.info(2,str(path))
-        #     self.add_route(path)
-        #     return True
-        # else:
-        #     self.write_debug_gds()
-        #     # clean up so we can try a reroute
-        #     self.clear_pins()
-            
-        pass
     
-        
-    # def add_route(self,path):
-    #     """ 
-    #     Add the current wire route to the given design instance.
-    #     """
-    #     debug.info(3,"Set path: " + str(path))
-
-    #     # Keep track of path for future blockages
-    #     self.paths.append(path)
-        
-    #     # This is marked for debug
-    #     self.rg.add_path(path)
-
-    #     # For debugging... if the path failed to route.
-    #     if False or path==None:
-    #         self.write_debug_gds()
-
-    #     # First, simplify the path for
-    #     #debug.info(1,str(self.path))        
-    #     contracted_path = self.contract_path(path)
-    #     debug.info(1,str(contracted_path))
-
-    #     # convert the path back to absolute units from tracks
-    #     abs_path = map(self.convert_point_to_units,contracted_path)
-    #     debug.info(1,str(abs_path))
-    #     self.cell.add_route(self.layers,abs_path)
 
     
 

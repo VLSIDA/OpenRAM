@@ -57,7 +57,6 @@ class router:
         self.ll = vector(self.boundary[0][0], self.boundary[0][1])
         self.ur = vector(self.boundary[1][0], self.boundary[1][1])
 
-            
     def clear_pins(self):
         """
         Convert the routed path to blockages.
@@ -67,7 +66,7 @@ class router:
         self.pin_groups = {}        
         self.pin_grids = {}
         self.pin_blockages = {}        
-        self.rg.reinit()
+        self.reinit()
         
     def set_top(self,top_name):
         """ If we want to route something besides the top-level cell."""
@@ -165,7 +164,7 @@ class router:
             
         self.convert_blockages()
             
-    def clear_pins(self):
+    def reinit(self):
         """
         Reset the source and destination pins to start a new routing.
         Convert the source/dest pins to blockages.
@@ -742,7 +741,22 @@ class router:
         for path in self.paths:
             self.rg.block_path(path)
             
-
+    def run_router(self, detour_scale):
+        """
+        This assumes the blockages, source, and target are all set up. 
+        """
+        # returns the path in tracks
+        (path,cost) = self.rg.route(detour_scale)
+        if path:
+            debug.info(1,"Found path: cost={0} ".format(cost))
+            debug.info(2,str(path))
+            self.add_route(path)
+        else:
+            self.write_debug_gds()
+            # clean up so we can try a reroute
+            self.reinit()
+            return False
+        return True
         
 # FIXME: This should be replaced with vector.snap_to_grid at some point
 

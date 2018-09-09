@@ -65,7 +65,7 @@ class grid:
             self.map[n].path=value
 
     def set_blockages(self,block_list,value=True):
-        debug.info(2,"Adding blockage list={0}".format(str(block_list)))
+        debug.info(3,"Adding blockage list={0}".format(str(block_list)))
         for n in block_list:
             self.set_blocked(n,value)
 
@@ -94,17 +94,17 @@ class grid:
 
         
     def add_source(self,track_list):
-        debug.info(2,"Adding source list={0}".format(str(track_list)))
+        debug.info(3,"Adding source list={0}".format(str(track_list)))
         for n in track_list:
-            debug.info(3,"Adding source ={0}".format(str(n)))
+            debug.info(4,"Adding source ={0}".format(str(n)))
             self.set_source(n)
             self.set_blocked(n,False)
 
 
     def add_target(self,track_list):
-        debug.info(2,"Adding target list={0}".format(str(track_list)))
+        debug.info(3,"Adding target list={0}".format(str(track_list)))
         for n in track_list:
-            debug.info(3,"Adding target ={0}".format(str(n)))                                
+            debug.info(4,"Adding target ={0}".format(str(n)))                                
             self.set_target(n)
             self.set_blocked(n,False)            
 

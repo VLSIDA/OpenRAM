@@ -1,23 +1,26 @@
 import debug
 from vector3d import vector3d
 from grid import grid
+from signal_grid import signal_grid
 from grid_path import grid_path
 from direction import direction
 
 
-class supply_grid(grid):
+class supply_grid(signal_grid):
     """
-    A two layer routing map. Each cell can be blocked in the vertical
-    or horizontal layer.
+    This routes a supply grid. It is derived from a signal grid because it still
+    routes the pins to the supply rails using the same routines.
+    It has a few extra routines to support "waves" which are multiple track wide
+    directional routes (no bends).
     """
 
     def __init__(self, ll, ur, track_width):
         """ Create a routing map of width x height cells and 2 in the z-axis. """
-        grid.__init__(self, ll, ur, track_width)
+        signal_grid.__init__(self, ll, ur, track_width)
         
     def reinit(self):
         """ Reinitialize everything for a new route. """
-
+        
         # Reset all the cells in the map
         for p in self.map.values():
             p.reset()

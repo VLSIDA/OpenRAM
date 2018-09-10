@@ -11,29 +11,39 @@ import globals
 from globals import OPTS
 import debug
 
+@unittest.skip("SKIPPING 20_psram_1bank_test, multiport layout not complete")
 class sram_1bank_test(openram_test):
 
     def runTest(self):        
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         from sram import sram
         from sram_config import sram_config
+        OPTS.bitcell = "pbitcell"
+        
+        # testing layout of bank using pbitcell with 1 RW port (a 6T-cell equivalent)
+        OPTS.num_rw_ports = 1
+        OPTS.num_w_ports = 0
+        OPTS.num_r_ports = 0
         
         c = sram_config(word_size=4,
                         num_words=16,
                         num_banks=1)
-        
         c.words_per_row=1
         
-        OPTS.bitcell = "pbitcell"
-        OPTS.num_rw_ports = 1
-        OPTS.num_w_ports = 1
-        OPTS.num_r_ports = 1
+        debug.info(1, "Single bank, no column mux with control logic")
+        a = sram(c, "sram1")
+        self.local_check(a, final_verification=True)
+        
+        """
+        OPTS.rw_ports = 1
+        OPTS.w_ports = 1
+        OPTS.r_ports = 1
         OPTS.netlist_only = True
         
         debug.info(1, "Single bank, no column mux with control logic")
         a = sram(c, "sram1")
         self.local_check(a, final_verification=True)
-        """
+        
         c.num_words=32
         c.words_per_row=2
         debug.info(1, "Single bank two way column mux with control logic")

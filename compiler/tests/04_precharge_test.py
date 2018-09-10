@@ -17,7 +17,7 @@ class precharge_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         import precharge
         import tech
-		
+        
         debug.info(2, "Checking precharge for handmade bitcell")
         tx = precharge.precharge(name="precharge_driver", size=1)
         self.local_check(tx)

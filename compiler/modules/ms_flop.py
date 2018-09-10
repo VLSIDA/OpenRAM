@@ -43,8 +43,8 @@ class ms_flop(design.design):
         from tech import spice, parameter
         c_load = load
         c_para = spice["flop_para_cap"]#ff
-        transistion_prob = spice["flop_transisition_prob"]
-        return transistion_prob*(c_load + c_para) 
+        transition_prob = spice["flop_transition_prob"]
+        return transition_prob*(c_load + c_para) 
 
         
         

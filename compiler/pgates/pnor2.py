@@ -237,6 +237,6 @@ class pnor2(pgate.pgate):
         """Computes effective capacitance. Results in fF"""
         c_load = load
         c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff
-        transistion_prob = spice["nor2_transisition_prob"]
-        return transistion_prob*(c_load + c_para) 
+        transition_prob = spice["nor2_transition_prob"]
+        return transition_prob*(c_load + c_para) 
         

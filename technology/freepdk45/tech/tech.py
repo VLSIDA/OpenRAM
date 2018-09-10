@@ -298,11 +298,11 @@ spice["msflop_leakage"] = 1      # Leakage power of flop in nW
 spice["flop_para_cap"] = 2       # Parasitic Output capacitance in fF
 
 spice["default_event_rate"] = 100           # Default event activity of every gate. MHz
-spice["flop_transisition_prob"] = .5        # Transition probability of inverter.
-spice["inv_transisition_prob"] = .5         # Transition probability of inverter.
-spice["nand2_transisition_prob"] = .1875    # Transition probability of 2-input nand.
-spice["nand3_transisition_prob"] = .1094    # Transition probability of 3-input nand.
-spice["nor2_transisition_prob"] = .1875     # Transition probability of 2-input nor.
+spice["flop_transition_prob"] = .5        # Transition probability of inverter.
+spice["inv_transition_prob"] = .5         # Transition probability of inverter.
+spice["nand2_transition_prob"] = .1875    # Transition probability of 2-input nand.
+spice["nand3_transition_prob"] = .1094    # Transition probability of 3-input nand.
+spice["nor2_transition_prob"] = .1875     # Transition probability of 2-input nor.
 
 ###################################################
 ##END Spice Simulation Parameters

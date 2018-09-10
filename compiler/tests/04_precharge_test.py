@@ -24,16 +24,16 @@ class precharge_test(openram_test):
         
         debug.info(2, "Checking precharge for pbitcell")
         OPTS.bitcell = "pbitcell"
-        OPTS.num_rw_ports = 2
-        OPTS.num_r_ports = 2
-        OPTS.num_w_ports = 2
+        OPTS.num_rw_ports = 1
+        OPTS.num_r_ports = 1
+        OPTS.num_w_ports = 1
         tx = precharge.precharge(name="precharge_driver", size=1, bitcell_bl="bl0", bitcell_br="br0")
         self.local_check(tx)
         
-        tx = precharge.precharge(name="precharge_driver", size=1, bitcell_bl="bl2", bitcell_br="br2")
+        tx = precharge.precharge(name="precharge_driver", size=1, bitcell_bl="bl1", bitcell_br="br1")
         self.local_check(tx)
         
-        tx = precharge.precharge(name="precharge_driver", size=1, bitcell_bl="bl4", bitcell_br="br4")
+        tx = precharge.precharge(name="precharge_driver", size=1, bitcell_bl="bl2", bitcell_br="br2")
         self.local_check(tx)
 
         globals.end_openram()

@@ -142,7 +142,8 @@ class replica_bitline(design.design):
         temp.append("vdd")
         temp.append("gnd")
         self.connect_inst(temp)
-        #self.connect_inst(["bl[0]", "br[0]"] + ["gnd"]*self.bitcell_loads + ["vdd", "gnd"])
+        
+        self.wl_list = self.rbl.cell.list_all_wl_names()
         
     def place_modules(self):
         """ Add all of the module instances in the logical netlist """
@@ -174,7 +175,7 @@ class replica_bitline(design.design):
         """ Connect the RBL word lines to gnd """
         # Connect the WL and gnd pins directly to the center and right gnd rails
         for row in range(self.bitcell_loads):
-            wl = "wl[{}]".format(row)
+            wl = self.wl_list[0]+"[{}]".format(row)
             pin = self.rbl_inst.get_pin(wl)
 
             # Route the connection to the right so that it doesn't interfere
@@ -385,7 +386,7 @@ class replica_bitline(design.design):
         
         # Connect the WL and gnd pins directly to the center and right gnd rails
         for row in range(self.bitcell_loads):
-            wl = "wl[{}]".format(row)
+            wl = self.wl_list[0]+"[{}]".format(row)
             pin = self.rbl_inst.get_pin(wl)
             if pin.layer != "metal1":
                 continue

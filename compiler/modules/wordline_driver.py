@@ -52,10 +52,6 @@ class wordline_driver(design.design):
     def add_modules(self):
         # This is just used for measurements,
         # so don't add the module
-        from importlib import reload
-        c = reload(__import__(OPTS.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.bitcell)
-        self.bitcell = self.mod_bitcell()
 
         self.inv = pinv()
         self.add_mod(self.inv)
@@ -134,12 +130,8 @@ class wordline_driver(design.design):
         inv2_xoffset = nand2_xoffset + self.nand2.width
         
         self.width = inv2_xoffset + self.inv.height
-        if self.bitcell.height > self.inv.height:
-            self.height = self.bitcell.height * self.rows
-            driver_height = self.bitcell.height
-        else:
-            self.height = self.inv.height * self.rows
-            driver_height = self.inv.height
+        driver_height = self.inv.height
+        self.height = self.inv.height * self.rows
         
         for row in range(self.rows):
             if (row % 2):

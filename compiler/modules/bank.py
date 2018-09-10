@@ -243,9 +243,13 @@ class bank(design.design):
             self.add_mod(self.precharge_array[port])
 
         if self.col_addr_size > 0:
-            self.column_mux_array = self.mod_column_mux_array(columns=self.num_cols, 
-                                                              word_size=self.word_size)
-            self.add_mod(self.column_mux_array)
+            self.column_mux_array = []
+            for port in range(self.total_ports):
+                self.column_mux_array.append(self.mod_column_mux_array(columns=self.num_cols, 
+                                                                       word_size=self.word_size,
+                                                                       bitcell_bl=self.read_bl_list[port],
+                                                                       bitcell_br=self.read_br_list[port]))
+                self.add_mod(self.column_mux_array[port])
 
 
         self.sense_amp_array = self.mod_sense_amp_array(word_size=self.word_size, 
@@ -325,7 +329,7 @@ class bank(design.design):
         self.col_mux_array_inst = []
         for port in range(self.total_ports):
             self.col_mux_array_inst.append(self.add_inst(name="column_mux_array{}".format(port),
-                                                         mod=self.column_mux_array))
+                                                         mod=self.column_mux_array[port]))
 
             temp = []
             for col in range(self.num_cols):
@@ -342,7 +346,7 @@ class bank(design.design):
     def place_column_mux_array(self):
         """ Placing Column Mux when words_per_row > 1 . """
         if self.col_addr_size > 0:
-            self.column_mux_height = self.column_mux_array.height + self.m2_gap
+            self.column_mux_height = self.column_mux_array[0].height + self.m2_gap
         else:
             self.column_mux_height = 0
             return

@@ -23,8 +23,8 @@ class sram_1bank_test(openram_test):
         
         c.words_per_row=1
         debug.info(1, "Single bank, no column mux with control logic")
-        a = sram(c, "sram1")
-        self.local_check(a, final_verification=True)
+        #a = sram(c, "sram1")
+        #self.local_check(a, final_verification=True)
 
         c.num_words=32
         c.words_per_row=2

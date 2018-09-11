@@ -13,7 +13,7 @@ class lib:
     
     def __init__(self, out_dir, sram, sp_file, use_model=OPTS.analytical_delay):
         #Temporary Workaround to here to set num of ports. Crashes if set in config file.
-        OPTS.num_rw_ports = 2
+        #OPTS.num_rw_ports = 2
         #OPTS.num_r_ports = 1
         #OPTS.num_w_ports = 1
     
@@ -424,7 +424,7 @@ class lib:
         self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]))
 
         #Add power values for the ports. lib generated with this is not syntactically correct. TODO once
-        #top level is done
+        #top level is done.
         for port in range(self.total_port_num):
             self.add_clk_control_power(port)
 

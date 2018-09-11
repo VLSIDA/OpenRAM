@@ -319,8 +319,10 @@ class sram_1bank(sram_base):
 
         route_map = list(zip(bank_names, dff_names))
         dff_pins = {key: self.data_dff_inst.get_pin(key) for key in dff_names }
-        bank_pins = {key: self.bank_inst.get_pin(key) for key in bank_names }   
-        self.create_horizontal_channel_route(route_map, dff_pins, bank_pins, offset)
+        bank_pins = {key: self.bank_inst.get_pin(key) for key in bank_names }
+        # Combine the dff and bank pins into a single dictionary of pin name to pin.
+        all_pins = {**dff_pins, **bank_pins}
+        self.create_horizontal_channel_route(route_map, all_pins, offset)
                 
             
 

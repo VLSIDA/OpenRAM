@@ -835,13 +835,13 @@ class layout(lef.lef):
                 offset -= vector(0,pitch)
 
 
-    def create_vertical_channel_route(self, route_map, left_inst, right_inst, offset, 
+    def create_vertical_channel_route(self, route_map, left_pins, right_pins, offset, 
                                       layer_stack=("metal1", "via1", "metal2"),
                                       pitch=None):
         """
         Wrapper to create a vertical channel route
         """
-        self.create_channel_route(route_map, left_inst, right_inst, offset,
+        self.create_channel_route(route_map, left_pins, right_pins, offset,
                                   layer_stack, pitch, vertical=True)
 
     def create_horizontal_channel_route(self, route_map, top_pins, bottom_pins, offset, 

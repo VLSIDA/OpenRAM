@@ -712,14 +712,17 @@ class layout(lef.lef):
                 self.add_wire(layer_stack, [pin.center(), mid, trunk_mid])
         
     
-    def create_channel_route(self, route_map, top_pins, bottom_pins, offset, 
+    def create_channel_route(self, netlist, pins, offset, 
                              layer_stack=("metal1", "via1", "metal2"), pitch=None,
                              vertical=False):
         """
-        This is a simple channel route for one-to-one connections that
-        will jog the top route whenever there is a conflict. It does NOT
-        try to minimize the number of tracks -- instead, it picks an order to avoid the vertical
-        conflicts between pins.
+        The net list is a list of the nets. Each net is a list of pin
+        names to be connected.  Pins is a dictionary of the pin names
+        to the pin structures.  Offset is the lower-left of where the
+        routing channel will start.  This does NOT try to minimize the
+        number of tracks -- instead, it picks an order to avoid the
+        vertical conflicts between pins.
+
         """
         def remove_net_from_graph(pin, g):
             # Remove the pin from the keys
@@ -758,8 +761,6 @@ class layout(lef.lef):
         if not pitch:
             pitch = self.m2_pitch
 
-        # merge the two dictionaries to easily access all pins
-        all_pins = {**top_pins, **bottom_pins}
 
         # FIXME: Must extend this to a horizontal conflict graph too if we want to minimize the
         # number of tracks!
@@ -771,13 +772,13 @@ class layout(lef.lef):
         # Create names for the nets for the graphs
         nets = {}
         index = 0
-        #print(route_map)
-        for pin_connections in route_map:
+        #print(netlist)
+        for pin_list in netlist:
                 net_name = "n{}".format(index)
                 index += 1
                 nets[net_name] = []
-                for pin_name in pin_connections:
-                    pin = all_pins[pin_name]
+                for pin_name in pin_list:
+                    pin = pins[pin_name]
                     nets[net_name].append(pin)
 
         # Find the vertical pin conflicts
@@ -835,22 +836,22 @@ class layout(lef.lef):
                 offset -= vector(0,pitch)
 
 
-    def create_vertical_channel_route(self, route_map, left_pins, right_pins, offset, 
+    def create_vertical_channel_route(self, netlist, pins, offset, 
                                       layer_stack=("metal1", "via1", "metal2"),
                                       pitch=None):
         """
         Wrapper to create a vertical channel route
         """
-        self.create_channel_route(route_map, left_pins, right_pins, offset,
-                                  layer_stack, pitch, vertical=True)
+        self.create_channel_route(netlist, pins, offset, layer_stack,
+                                  pitch, vertical=True)
 
-    def create_horizontal_channel_route(self, route_map, top_pins, bottom_pins, offset, 
-                                      layer_stack=("metal1", "via1", "metal2"),
-                                      pitch=None):
+    def create_horizontal_channel_route(self, netlist, pins, offset, 
+                                        layer_stack=("metal1", "via1", "metal2"),
+                                        pitch=None):
         """
         Wrapper to create a horizontal channel route
         """
-        self.create_channel_route(route_map, top_pins, bottom_pins, offset,
+        self.create_channel_route(netlist, pins, offset,
                                   layer_stack, pitch, vertical=False)
         
     def add_enclosure(self, insts, layer="nwell"):

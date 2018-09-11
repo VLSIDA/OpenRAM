@@ -658,15 +658,16 @@ class delay():
         # sys.exit(1)
 
         #For debugging, skips characterization and returns dummy values.
-        # i = 1.0
-        # for slew in slews:
-            # for load in loads:
-                # for k,v in char_data.items():        
-                    # char_data[k].append(i)
-                    # i+=1.0
-        # char_data["min_period"] = i
-        # char_data["leakage_power"] = i+1.0
-        # return char_data
+        char_data = self.char_data
+        i = 1.0
+        for slew in slews:
+            for load in loads:
+                for k,v in char_data.items():        
+                    char_data[k].append(i)
+                    i+=1.0
+        char_data["min_period"] = i
+        char_data["leakage_power"] = i+1.0
+        return char_data
         
         # 1) Find a feasible period and it's corresponding delays using the trimmed array.
         (feasible_delays_lh, feasible_delays_hl) = self.find_feasible_period()

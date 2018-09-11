@@ -278,21 +278,21 @@ class setup_hold():
         HL_hold = []
         
         #For debugging, skips characterization and returns dummy values.
-        # i = 1.0
-        # for self.related_input_slew in related_slews:
-            # for self.constrained_input_slew in constrained_slews:
-                # LH_setup.append(i)
-                # HL_setup.append(i+1.0)
-                # LH_hold.append(i+2.0)
-                # HL_hold.append(i+3.0)
-                # i+=4.0
+        i = 1.0
+        for self.related_input_slew in related_slews:
+            for self.constrained_input_slew in constrained_slews:
+                LH_setup.append(i)
+                HL_setup.append(i+1.0)
+                LH_hold.append(i+2.0)
+                HL_hold.append(i+3.0)
+                i+=4.0
                 
-        # times = {"setup_times_LH": LH_setup,
-                 # "setup_times_HL": HL_setup,
-                 # "hold_times_LH": LH_hold,
-                 # "hold_times_HL": HL_hold
-                 # }
-        # return times
+        times = {"setup_times_LH": LH_setup,
+                 "setup_times_HL": HL_setup,
+                 "hold_times_LH": LH_hold,
+                 "hold_times_HL": HL_hold
+                 }
+        return times
         
         
         for self.related_input_slew in related_slews:

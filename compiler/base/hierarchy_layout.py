@@ -721,8 +721,6 @@ class layout(lef.lef):
         try to minimize the number of tracks -- instead, it picks an order to avoid the vertical
         conflicts between pins.
         """
-        local_debug = True
-
         def remove_net_from_graph(pin, g):
             # Remove the pin from the keys
             g.pop(pin,None)
@@ -747,11 +745,11 @@ class layout(lef.lef):
         def vcg_pin_overlap(pin1, pin2, vertical):
             # Check for vertical overlap of the two pins
 
-            # Pin 1 must be in the "LEFT" set and overlap the right
-            x_overlap = pin1.lx() < pin2.lx() and abs(pin1.center().x-pin2.center().x)<pitch
+            # Pin 1 must be in the "TOP" set
+            x_overlap = pin1.by() > pin2.by() and abs(pin1.center().x-pin2.center().x)<pitch
 
-            # Pin 1 must be in the "TOP" set and overlap the bottom
-            y_overlap = pin1.by() > pin2.by() and abs(pin1.center().y-pin2.center().y)<pitch
+            # Pin 1 must be in the "LET" set
+            y_overlap = pin1.lx() < pin2.lx() and abs(pin1.center().y-pin2.center().y)<pitch
             
             return (not vertical and x_overlap) or (vertical and y_overlap)
 
@@ -773,50 +771,42 @@ class layout(lef.lef):
         # Create names for the nets for the graphs
         nets = {}
         index = 0
-        print(route_map)
+        #print(route_map)
         for pin_connections in route_map:
                 net_name = "n{}".format(index)
-                print("N",net_name)
                 index += 1
                 nets[net_name] = []
                 for pin_name in pin_connections:
                     pin = all_pins[pin_name]
                     nets[net_name].append(pin)
-        if local_debug:
-            import pprint
-            pprint.pprint(nets)
 
         # Find the vertical pin conflicts
         # FIXME: O(n^2) but who cares for now
         for net_name1 in nets:
-            print("NET1:",net_name1)
             vcg[net_name1]=[]
             for net_name2 in nets:
-                print("NET2:",net_name2)
                 # Skip yourself
                 if net_name1 == net_name2:
                     continue
                 if vcg_pins_overlap(nets[net_name1], nets[net_name2], vertical):
                     try:
-                        vcg[net_name1].append(net_name2)
+                        vcg[net_name2].append(net_name1)
                     except:
-                        vcg[net_name1] = [net_name2]
+                        vcg[net_name2] = [net_name1]
                     
         #FIXME: What if we have a cycle? 
 
-        # This is the starting offset of the first trunk
-        if vertical:
-            half_minwidth = 0.5*drc["minwidth_{}".format(layer_stack[2])]        
-            offset = offset + vector(half_minwidth,0)
-        else:
-            half_minwidth = 0.5*drc["minwidth_{}".format(layer_stack[0])]        
-            offset = offset + vector(0,half_minwidth)
+        # The starting offset is the first trunk at the top or left
+        # so we must offset from the lower left of the channel placement
+        # in the case of vertical tracks
+        if not vertical:
+            # This will start from top down
+            offset = offset + vector(0,len(nets)*pitch)
 
         # list of routes to do
         while vcg:
-            if local_debug:
-                from pprint import pformat
-                print("VCG:\n",pformat(vcg))
+            #from pprint import pformat
+            #print("VCG:\n",pformat(vcg))
             # get a route from conflict graph with empty fanout set
             net_name=None
             for net_name,conflicts in vcg.items():
@@ -826,23 +816,23 @@ class layout(lef.lef):
             else:
                 # FIXME: We don't support cyclic VCGs right now.
                 debug.error("Cyclic VCG in channel router.",-1)
-                    
-            if local_debug:
-                print("Routing:",net_name,pin_connections)
+
+                
 
             # These are the pins we'll have to connect
             pin_list = nets[net_name]
+            #print("Routing:",net_name,[x.name for x in pin_list])
 
             # Remove the net from other constriants in the VCG
             vcg=remove_net_from_graph(net_name, vcg)
             
-            # Add the trunk route and move up to next track
+            # Add the trunk routes from the bottom up or right to left
             if vertical:
                 self.add_vertical_trunk_route(pin_list, offset, layer_stack, pitch)
-                offset += vector(pitch,0)
+                offset -= vector(pitch,0)
             else:
                 self.add_horizontal_trunk_route(pin_list, offset, layer_stack, pitch)
-                offset += vector(0,pitch)
+                offset -= vector(0,pitch)
 
 
     def create_vertical_channel_route(self, route_map, left_inst, right_inst, offset, 

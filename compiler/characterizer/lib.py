@@ -12,18 +12,43 @@ class lib:
     """ lib file generation."""
     
     def __init__(self, out_dir, sram, sp_file, use_model=OPTS.analytical_delay):
+        #Temporary Workaround to here to set num of ports. Crashes if set in config file.
+        #OPTS.num_rw_ports = 2
+        #OPTS.num_r_ports = 1
+        #OPTS.num_w_ports = 1
+    
         self.out_dir = out_dir
         self.sram = sram
         self.sp_file = sp_file        
         self.use_model = use_model
-
+        self.gen_port_names() #copy and paste from delay.py, names are not final will likely be changed later.
+        
         self.prepare_tables()
         
         self.create_corners()
         
         self.characterize_corners()
         
-
+    def gen_port_names(self):
+        """Generates the port names to be written to the lib file"""
+        #This is basically a copy and paste of whats in delay.py as well. Something more efficient should be done here.
+        self.write_ports = []
+        self.read_ports = []
+        self.total_port_num = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
+        
+        #save a member variable to avoid accessing global. readwrite ports have different control signals.
+        self.readwrite_port_num = OPTS.num_rw_ports
+        
+        #Generate the port names. readwrite ports are required to be added first for this to work.
+        for readwrite_port_num in range(OPTS.num_rw_ports):
+            self.read_ports.append(readwrite_port_num)
+            self.write_ports.append(readwrite_port_num)
+        #This placement is intentional. It makes indexing input data easier. See self.data_values
+        for read_port_num in range(OPTS.num_rw_ports, OPTS.num_r_ports):
+            self.read_ports.append(read_port_num)
+        for write_port_num in range(OPTS.num_rw_ports+OPTS.num_r_ports, OPTS.num_w_ports):
+            self.write_ports.append(write_port_num)
+        
     def prepare_tables(self):
         """ Determine the load/slews if they aren't specified in the config file. """
         # These are the parameters to determine the table sizes
@@ -85,13 +110,14 @@ class lib:
 
         self.write_header()
         
-        self.write_data_bus()
-        
-        self.write_addr_bus()
-        
-        self.write_control_pins()
-        
-        self.write_clk()
+        #Loop over all readwrite ports. This is debugging. Will change later.
+        for port in range(self.total_port_num):
+            #set the read and write port as inputs.
+            self.write_data_bus(port)
+            self.write_addr_bus(port)
+            self.write_control_pins(port) #need to split this into sram and port control signals
+            
+        self.write_clk_timing_power()
 
         self.write_footer()
 
@@ -127,9 +153,14 @@ class lib:
         self.lib.write("    dont_touch : true;\n")
         self.lib.write("    area : {};\n\n".format(self.sram.width * self.sram.height))
 
+        #Build string of all control signals. This is subject to change once control signals finalized.
+        control_str = 'CSb0' #assume at least 1 port
+        for i in range(1, self.total_port_num):
+            control_str += ' & CSb{0}'.format(i)
+            
         # Leakage is included in dynamic when macro is enabled
         self.lib.write("    leakage_power () {\n")
-        self.lib.write("      when : \"CSb\";\n")
+        self.lib.write("      when : \"{0}\";\n".format(control_str))
         self.lib.write("      value : {};\n".format(self.char_results["leakage_power"]))
         self.lib.write("    }\n")
         self.lib.write("    cell_leakage_power : {};\n".format(0))
@@ -295,65 +326,72 @@ class lib:
         self.lib.write("            }\n")
         self.lib.write("        }\n")
 
-
-
-    def write_data_bus(self):
+    def write_data_bus_output(self, read_port):
         """ Adds data bus timing results."""
 
-        self.lib.write("    bus(DIN){\n")
+        self.lib.write("    bus(DOUT{0}){{\n".format(read_port))
         self.lib.write("        bus_type  : DATA; \n")
-        self.lib.write("        direction  : in; \n")
-        # This is conservative, but limit to range that we characterized.
-        self.lib.write("        max_capacitance : {0};  \n".format(max(self.loads)))
-        self.lib.write("        min_capacitance : {0};  \n".format(min(self.loads)))        
-        self.lib.write("        memory_write(){ \n")
-        self.lib.write("            address : ADDR; \n")
-        self.lib.write("            clocked_on  : clk; \n")
-        self.lib.write("        }\n")
-
-        self.lib.write("    bus(DOUT){\n")
-        self.lib.write("        bus_type  : DATA; \n")
-        self.lib.write("        direction  : out; \n")
+        self.lib.write("        direction  : output; \n")
         # This is conservative, but limit to range that we characterized.
         self.lib.write("        max_capacitance : {0};  \n".format(max(self.loads)))
         self.lib.write("        min_capacitance : {0};  \n".format(min(self.loads)))        
         self.lib.write("        memory_read(){ \n")
-        self.lib.write("            address : ADDR; \n")
+        self.lib.write("            address : ADDR{0}; \n".format(read_port))
         self.lib.write("        }\n")
         
 
-        self.lib.write("        pin(DOUT[{0}:0]){{\n".format(self.sram.word_size - 1))
+        self.lib.write("        pin(DOUT{1}[{0}:0]){{\n".format(self.sram.word_size - 1, read_port))
         self.write_FF_setuphold()
         self.lib.write("        timing(){ \n")
         self.lib.write("            timing_sense : non_unate; \n")
         self.lib.write("            related_pin : \"clk\"; \n")
         self.lib.write("            timing_type : rising_edge; \n")
         self.lib.write("            cell_rise(CELL_TABLE) {\n")
-        self.write_values(self.char_results["delay_lh"],len(self.loads),"            ")
+        self.write_values(self.char_results["delay_lh{0}".format(read_port)],len(self.loads),"            ")
         self.lib.write("            }\n") # rise delay
         self.lib.write("            cell_fall(CELL_TABLE) {\n")
-        self.write_values(self.char_results["delay_hl"],len(self.loads),"            ")
+        self.write_values(self.char_results["delay_hl{0}".format(read_port)],len(self.loads),"            ")
         self.lib.write("            }\n") # fall delay
         self.lib.write("            rise_transition(CELL_TABLE) {\n")
-        self.write_values(self.char_results["slew_lh"],len(self.loads),"            ")
+        self.write_values(self.char_results["slew_lh{0}".format(read_port)],len(self.loads),"            ")
         self.lib.write("            }\n") # rise trans
         self.lib.write("            fall_transition(CELL_TABLE) {\n")
-        self.write_values(self.char_results["slew_hl"],len(self.loads),"            ")
+        self.write_values(self.char_results["slew_hl{0}".format(read_port)],len(self.loads),"            ")
         self.lib.write("            }\n") # fall trans
         self.lib.write("        }\n") # timing
         self.lib.write("        }\n") # pin        
         self.lib.write("    }\n\n") # bus
 
+    def write_data_bus_input(self, write_port):
+        """ Adds data bus timing results."""
 
-    def write_addr_bus(self):
+        self.lib.write("    bus(DIN{0}){{\n".format(write_port))
+        self.lib.write("        bus_type  : DATA; \n")
+        self.lib.write("        direction  : input; \n")
+        # This is conservative, but limit to range that we characterized.
+        self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]))
+        self.lib.write("        memory_write(){ \n")
+        self.lib.write("            address : ADDR{0}; \n".format(write_port))
+        self.lib.write("            clocked_on  : clk; \n")
+        self.lib.write("        }\n")
+        self.lib.write("    }\n")
+
+    def write_data_bus(self, port):
+        """ Adds data bus timing results."""
+        if port in self.write_ports:
+            self.write_data_bus_input(port)
+        if port in self.read_ports:
+            self.write_data_bus_output(port)
+
+    def write_addr_bus(self, port):
         """ Adds addr bus timing results."""
-
-        self.lib.write("    bus(ADDR){\n")
+        
+        self.lib.write("    bus(ADDR{0}){{\n".format(port))
         self.lib.write("        bus_type  : ADDR; \n")
         self.lib.write("        direction  : input; \n")
         self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]))
         self.lib.write("        max_transition       : {0};\n".format(self.slews[-1]))
-        self.lib.write("        pin(ADDR[{0}:0])".format(self.sram.addr_size - 1))
+        self.lib.write("        pin(ADDR{1}[{0}:0])".format(self.sram.addr_size - 1, port))
         self.lib.write("{\n")
         
         self.write_FF_setuphold()
@@ -361,10 +399,13 @@ class lib:
         self.lib.write("    }\n\n")
 
 
-    def write_control_pins(self):
+    def write_control_pins(self, port):
         """ Adds control pins timing results."""
-
-        ctrl_pin_names = ["CSb", "OEb", "WEb"]
+        #The control pins are still to be determined. This is a placeholder for what could be.
+        ctrl_pin_names = ["CSb{0}".format(port)]
+        if port in self.write_ports and port in self.read_ports:
+            ctrl_pin_names.append("WEb{0}".format(port))
+            
         for i in ctrl_pin_names:
             self.lib.write("    pin({0})".format(i))
             self.lib.write("{\n")
@@ -373,8 +414,7 @@ class lib:
             self.write_FF_setuphold()
             self.lib.write("    }\n\n")
 
-
-    def write_clk(self):
+    def write_clk_timing_power(self):
         """ Adds clk pin timing results."""
 
         self.lib.write("    pin(clk){\n")
@@ -383,41 +423,10 @@ class lib:
         # FIXME: This depends on the clock buffer size in the control logic
         self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]))
 
-        # Find the average power of 1 and 0 bits for writes and reads over all loads/slews
-        # Could make it a table, but this is fine for now.
-        avg_write_power = np.mean(self.char_results["write1_power"] + self.char_results["write0_power"])
-        avg_read_power = np.mean(self.char_results["read1_power"] + self.char_results["read0_power"])        
-
-        # Equally divide read/write power between first and second half of clock period
-        self.lib.write("        internal_power(){\n")
-        self.lib.write("            when : \"!CSb & clk & !WEb\"; \n")
-        self.lib.write("            rise_power(scalar){\n")
-        self.lib.write("                values(\"{0}\");\n".format(avg_write_power/2.0))
-        self.lib.write("            }\n")
-        self.lib.write("            fall_power(scalar){\n")
-        self.lib.write("                values(\"{0}\");\n".format(avg_write_power/2.0))
-        self.lib.write("            }\n")
-        self.lib.write("        }\n")
-
-        self.lib.write("        internal_power(){\n")
-        self.lib.write("            when : \"!CSb & !clk & WEb\"; \n")
-        self.lib.write("            rise_power(scalar){\n")
-        self.lib.write("                values(\"{0}\");\n".format(avg_read_power/2.0))
-        self.lib.write("            }\n")
-        self.lib.write("            fall_power(scalar){\n")
-        self.lib.write("                values(\"{0}\");\n".format(avg_read_power/2.0))
-        self.lib.write("            }\n")
-        self.lib.write("        }\n")
-        # Have 0 internal power when disabled, this will be represented as leakage power.
-        self.lib.write("        internal_power(){\n")
-        self.lib.write("            when : \"CSb\"; \n")
-        self.lib.write("            rise_power(scalar){\n")
-        self.lib.write("                values(\"0\");\n")
-        self.lib.write("            }\n")
-        self.lib.write("            fall_power(scalar){\n")
-        self.lib.write("                values(\"0\");\n")
-        self.lib.write("            }\n")
-        self.lib.write("        }\n")
+        #Add power values for the ports. lib generated with this is not syntactically correct. TODO once
+        #top level is done.
+        for port in range(self.total_port_num):
+            self.add_clk_control_power(port)
 
         min_pulse_width = round_time(self.char_results["min_period"])/2.0
         min_period = round_time(self.char_results["min_period"])
@@ -443,7 +452,51 @@ class lib:
         self.lib.write("         }\n")
         self.lib.write("    }\n")
         self.lib.write("    }\n")
+    
+    def add_clk_control_power(self, port):
+        """Writes powers under the clock pin group for a specified port"""
+        #Web added to read/write ports. Likely to change when control logic finished.
+        web_name = ""
+            
+        if port in self.write_ports:
+            if port in self.read_ports:
+                web_name = " & !WEb{0}".format(port)
+            avg_write_power = np.mean(self.char_results["write1_power{0}".format(port)] + self.char_results["write0_power{0}".format(port)])
+            self.lib.write("        internal_power(){\n")
+            self.lib.write("            when : \"!CSb{0} & clk{1}\"; \n".format(port, web_name))
+            self.lib.write("            rise_power(scalar){\n")
+            self.lib.write("                values(\"{0}\");\n".format(avg_write_power/2.0))
+            self.lib.write("            }\n")
+            self.lib.write("            fall_power(scalar){\n")
+            self.lib.write("                values(\"{0}\");\n".format(avg_write_power/2.0))
+            self.lib.write("            }\n")
+            self.lib.write("        }\n")
 
+        if port in self.read_ports:
+            if port in self.write_ports:
+                web_name = " & WEb{0}".format(port)
+            avg_read_power = np.mean(self.char_results["read1_power{0}".format(port)] + self.char_results["read0_power{0}".format(port)])
+            self.lib.write("        internal_power(){\n")
+            self.lib.write("            when : \"!CSb{0} & !clk{1}\"; \n".format(port, web_name))
+            self.lib.write("            rise_power(scalar){\n")
+            self.lib.write("                values(\"{0}\");\n".format(avg_read_power/2.0))
+            self.lib.write("            }\n")
+            self.lib.write("            fall_power(scalar){\n")
+            self.lib.write("                values(\"{0}\");\n".format(avg_read_power/2.0))
+            self.lib.write("            }\n")
+            self.lib.write("        }\n")
+            
+        # Have 0 internal power when disabled, this will be represented as leakage power.
+        self.lib.write("        internal_power(){\n")
+        self.lib.write("            when : \"CSb{0}\"; \n".format(port))
+        self.lib.write("            rise_power(scalar){\n")
+        self.lib.write("                values(\"0\");\n")
+        self.lib.write("            }\n")
+        self.lib.write("            fall_power(scalar){\n")
+        self.lib.write("                values(\"0\");\n")
+        self.lib.write("            }\n")
+        self.lib.write("        }\n")
+        
     def compute_delay(self):
         """ Do the analysis if we haven't characterized the SRAM yet """
         if not hasattr(self,"d"):

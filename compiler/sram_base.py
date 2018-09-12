@@ -375,14 +375,19 @@ class sram_base(design):
         self.connect_inst(inputs + outputs + ["clk_buf", "vdd", "gnd"])
         return inst
         
-    def create_control_logic(self, port):
+    def create_control_logic(self):
         """ Add and place control logic """
         inst = self.add_inst(name="control",
                              mod=self.control_logic)
-              
-        self.connect_inst(["csb", "web{}".format(port), "clk",
-                           "s_en{}".format(port), "w_en{}".format(port), "clk_buf_bar", "clk_buf",
-                           "vdd", "gnd"])
+        
+        temp = ["csb"]
+        for port in range(self.total_write):
+            temp.append("web{}".format(port))
+        temp.extend(["clk", "s_en0"])
+        for port in range(self.total_write):
+            temp.append("w_en{}".format(port))
+        temp.extend(["clk_buf_bar", "clk_buf", "vdd", "gnd"])
+        self.connect_inst(temp)
         
         #self.connect_inst(self.control_logic_inputs + self.control_logic_outputs + ["vdd", "gnd"])
         return inst

@@ -24,6 +24,8 @@ class control_logic(design.design):
         debug.info(1, "Creating {}".format(self.name))
 
         self.num_rows = num_rows
+        self.total_write = OPTS.num_rw_ports + OPTS.num_w_ports
+        self.total_read = OPTS.num_rw_ports + OPTS.num_r_ports
         
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -61,7 +63,7 @@ class control_logic(design.design):
         dff = dff_inv() 
         dff_height = dff.height
         
-        self.ctrl_dff_array = dff_inv_array(rows=2,columns=1)
+        self.ctrl_dff_array = dff_inv_array(rows=1+self.total_write,columns=1)
         self.add_mod(self.ctrl_dff_array)
         
         self.nand2 = pnand2(height=dff_height)
@@ -96,14 +98,27 @@ class control_logic(design.design):
         """ Setup bus names, determine the size of the busses etc """
 
         # List of input control signals
-        self.input_list =["csb","web0"]
-        self.dff_output_list =["cs_bar", "cs", "we_bar", "we"]        
+        self.input_list =["csb"]
+        for port in range(self.total_write):
+            self.input_list.append("web{}".format(port))
+        
+        self.dff_output_list =["cs_bar", "cs"]
+        for port in range(self.total_write):
+            self.dff_output_list.append("we_bar{}".format(port))
+            self.dff_output_list.append("we{}".format(port))        
+        
         # list of output control signals (for making a vertical bus)
         self.internal_bus_list = ["clk_buf", "clk_buf_bar", "we", "cs"]
         # leave space for the bus plus one extra space
         self.internal_bus_width = (len(self.internal_bus_list)+1)*self.m2_pitch 
+        
         # Outputs to the bank
-        self.output_list = ["s_en0", "w_en0", "clk_buf_bar", "clk_buf"]
+        self.output_list = ["s_en0"]
+        for port in range(self.total_write):
+            self.output_list.append("w_en{}".format(port))
+        self.output_list.append("clk_buf_bar")
+        self.output_list.append("clk_buf")
+        
         self.supply_list = ["vdd", "gnd"]
 
     
@@ -302,23 +317,31 @@ class control_logic(design.design):
 
     def create_we_row(self):
         # input: WE, CS output: w_en_bar
-        self.w_en_bar_inst=self.add_inst(name="nand3_w_en_bar",
-                                         mod=self.nand3)
-        self.connect_inst(["clk_buf_bar", "cs", "we", "w_en_bar", "vdd", "gnd"])
+        self.w_en_bar_inst = []
+        for port in range(self.total_write):
+            self.w_en_bar_inst.append(self.add_inst(name="nand3_w_en_bar{}".format(port),
+                                                    mod=self.nand3))
+            self.connect_inst(["clk_buf_bar", "cs", "we{}".format(port), "w_en_bar{}".format(port), "vdd", "gnd"])
 
         # input: w_en_bar, output: pre_w_en
-        self.pre_w_en_inst=self.add_inst(name="inv_pre_w_en",
-                                         mod=self.inv1)
-        self.connect_inst(["w_en_bar", "pre_w_en",  "vdd", "gnd"])
+        self.pre_w_en_inst = []
+        for port in range(self.total_write):
+            self.pre_w_en_inst.append(self.add_inst(name="inv_pre_w_en{}".format(port),
+                                                    mod=self.inv1))
+            self.connect_inst(["w_en_bar{}".format(port), "pre_w_en{}".format(port), "vdd", "gnd"])
         
         # BUFFER INVERTERS FOR W_EN
-        self.pre_w_en_bar_inst=self.add_inst(name="inv_pre_w_en_bar",
-                                             mod=self.inv2)
-        self.connect_inst(["pre_w_en", "pre_w_en_bar",  "vdd", "gnd"])
+        self.pre_w_en_bar_inst = []
+        for port in range(self.total_write):
+            self.pre_w_en_bar_inst.append(self.add_inst(name="inv_pre_w_en_bar{}".format(port),
+                                                        mod=self.inv2))
+            self.connect_inst(["pre_w_en{}".format(port), "pre_w_en_bar{}".format(port), "vdd", "gnd"])
 
-        self.w_en_inst=self.add_inst(name="inv_w_en2",
-                                     mod=self.inv8)
-        self.connect_inst(["pre_w_en_bar", "w_en0",  "vdd", "gnd"])
+        self.w_en_inst = []
+        for port in range(self.total_write):
+            self.w_en_inst.append(self.add_inst(name="inv_w_en2_{}".format(port),
+                                                mod=self.inv8))
+            self.connect_inst(["pre_w_en_bar{}".format(port), "w_en{}".format(port), "vdd", "gnd"])
 
 
     def place_we_row(self,row):
@@ -326,26 +349,26 @@ class control_logic(design.design):
         (y_off,mirror)=self.get_offset(row)
             
         w_en_bar_offset = vector(x_off, y_off)
-        self.w_en_bar_inst.place(offset=w_en_bar_offset,
+        self.w_en_bar_inst[0].place(offset=w_en_bar_offset,
                                  mirror=mirror)
         x_off += self.nand3.width
 
         pre_w_en_offset = vector(x_off, y_off)
-        self.pre_w_en_inst.place(offset=pre_w_en_offset,
+        self.pre_w_en_inst[0].place(offset=pre_w_en_offset,
                                  mirror=mirror)
         x_off += self.inv1.width
         
         pre_w_en_bar_offset = vector(x_off, y_off)
-        self.pre_w_en_bar_inst.place(offset=pre_w_en_bar_offset,
+        self.pre_w_en_bar_inst[0].place(offset=pre_w_en_bar_offset,
                                      mirror=mirror)
         x_off += self.inv2.width
 
         w_en_offset = vector(x_off,  y_off)
-        self.w_en_inst.place(offset=w_en_offset,
+        self.w_en_inst[0].place(offset=w_en_offset,
                              mirror=mirror)
         x_off += self.inv8.width
 
-        self.row_end_inst.append(self.w_en_inst)
+        self.row_end_inst.append(self.w_en_inst[0])
         
 
     def route_rbl_in(self):
@@ -423,19 +446,19 @@ class control_logic(design.design):
         
     def route_wen(self):
         wen_map = zip(["A", "B", "C"], ["clk_buf_bar", "cs", "we"])
-        self.connect_vertical_bus(wen_map, self.w_en_bar_inst, self.rail_offsets)  
+        self.connect_vertical_bus(wen_map, self.w_en_bar_inst[0], self.rail_offsets)  
 
         # Connect the NAND3 output to the inverter
         # The pins are assumed to extend all the way to the cell edge
-        w_en_bar_pos = self.w_en_bar_inst.get_pin("Z").center()
-        inv_in_pos = self.pre_w_en_inst.get_pin("A").center()
+        w_en_bar_pos = self.w_en_bar_inst[0].get_pin("Z").center()
+        inv_in_pos = self.pre_w_en_inst[0].get_pin("A").center()
         mid1 = vector(inv_in_pos.x,w_en_bar_pos.y)
         self.add_path("metal1",[w_en_bar_pos,mid1,inv_in_pos])
         
-        self.add_path("metal1",[self.pre_w_en_inst.get_pin("Z").center(), self.pre_w_en_bar_inst.get_pin("A").center()])
-        self.add_path("metal1",[self.pre_w_en_bar_inst.get_pin("Z").center(), self.w_en_inst.get_pin("A").center()])                      
+        self.add_path("metal1",[self.pre_w_en_inst[0].get_pin("Z").center(), self.pre_w_en_bar_inst[0].get_pin("A").center()])
+        self.add_path("metal1",[self.pre_w_en_bar_inst[0].get_pin("Z").center(), self.w_en_inst[0].get_pin("A").center()])                      
 
-        self.connect_output(self.w_en_inst, "Z", "w_en0")
+        self.connect_output(self.w_en_inst[0], "Z", "w_en0")
         
     def route_sen(self):
         rbl_out_pos = self.rbl_inst.get_pin("out").bc()

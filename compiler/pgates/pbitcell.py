@@ -70,7 +70,10 @@ class pbitcell(design.design):
             self.route_read_access()
         self.extend_well()
         
-        self.offset_all_coordinates()
+        # in netlist_only mode, calling offset_all_coordinates will not be possible
+        # this function is not needed to calculate the dimensions of pbitcell in netlist_only mode though
+        if not OPTS.netlist_only:
+            self.offset_all_coordinates()
         self.DRC_LVS()
     
     def add_pins(self):

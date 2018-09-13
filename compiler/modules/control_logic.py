@@ -267,7 +267,7 @@ class control_logic(design.design):
         
         # Connect the clock rail to the other clock rail
         in_pos = self.ctrl_dff_inst.get_pin("clk").uc()
-        mid_pos = in_pos + vector(0,self.m2_pitch)
+        mid_pos = in_pos + vector(0,2*self.m2_pitch)
         rail_pos = vector(self.rail_offsets["clk_buf"].x, mid_pos.y)
         self.add_wire(("metal1","via1","metal2"),[in_pos, mid_pos, rail_pos])
         self.add_via_center(layers=("metal1","via1","metal2"),

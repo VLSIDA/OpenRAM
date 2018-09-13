@@ -174,7 +174,7 @@ drc["metal2_enclosure_via2"] = _lambda_
 # Not a rule
 drc["minarea_metal2"] = 0
 
-# 14.2 Exact size
+# 14.1 Exact size
 drc["minwidth_via2"] = 2*_lambda_
 # 14.2 Minimum spacing
 drc["via2_to_via2"] = 3*_lambda_

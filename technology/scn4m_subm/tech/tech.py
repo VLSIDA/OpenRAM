@@ -189,8 +189,6 @@ drc["metal3_to_metal3"] = 3*_lambda_
 drc["metal3_extend_via2"] = _lambda_
 # Reserved for asymmetric enclosures
 drc["metal3_enclosure_via2"] = _lambda_
-# Reserved for asymmetric enclosures
-drc["metal2_enclosure_via1"] = _lambda_
 # 21.3 Minimum overlap by metal3
 drc["metal3_extend_via3"] = _lambda_
 # Reserved for asymmetric enclosures
@@ -212,7 +210,7 @@ drc["metal4_extend_via3"] = 2*_lambda_
 # Reserved for asymmetric enclosures
 drc["metal4_enclosure_via3"] = 2*_lambda_
 # Not a rule
-drc["minarea_metal3"] = 0
+drc["minarea_metal4"] = 0
 
 ###################################################
 ##END DRC/LVS Rules

@@ -1,0 +1,44 @@
+# SUE version MMI_SUE5.0.7
+
+proc SCHEMATIC_write_driver {} {
+  make inout -name BL -origin {550 260}
+  make inout -name BR -origin {830 250}
+  make inverter -WP 2.1u -LP 0.6u -WN 1.2u -LN 0.6u -origin {280 520}
+  make nand2 -WP 2.1u -WN 2.1u -origin {90 360}
+  make inverter -WP 2.1u -LP 0.6u -WN 1.2u -LN 0.6u -origin {270 360}
+  make nmos -W 3.6u -L 0.6u -origin {830 410}
+  make nmos -W 3.6u -L 0.6u -origin {710 610}
+  make global -name gnd -origin {710 690}
+  make nand2 -WP 2.1u -WN 2.1u -origin {90 520}
+  make nmos -W 3.6u -L 0.6u -origin {550 410}
+  make input -name wen -origin {-290 340}
+  make input -name din -origin {-290 380}
+  make inverter -WP 2.1u -LP 0.6u -WN 1.2u -LN 0.6u -origin {-80 540}
+  make_wire 160 360 240 360
+  make_wire 830 250 830 370
+  make_wire 550 260 550 370
+  make_wire 550 450 550 560
+  make_wire 550 560 710 560
+  make_wire 710 560 710 570
+  make_wire 710 560 830 560
+  make_wire 830 560 830 450
+  make_wire 710 650 710 690
+  make_wire 250 520 160 520
+  make_wire 770 410 770 520
+  make_wire 770 520 330 520
+  make_wire 320 360 490 360
+  make_wire 490 360 490 410
+  make_wire -180 380 -290 380
+  make_wire -180 380 70 380
+  make_wire -180 540 -110 540
+  make_wire -180 380 -180 540
+  make_wire -30 540 70 540
+  make_wire 20 340 20 500
+  make_wire 20 500 70 500
+  make_wire 20 340 70 340
+  make_wire -240 340 -240 610
+  make_wire -240 610 650 610
+  make_wire -240 340 20 340
+  make_wire -240 340 -290 340
+}
+

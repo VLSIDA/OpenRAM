@@ -1,0 +1,37 @@
+# SUE version MMI_SUE5.0.7
+
+proc SCHEMATIC_tri_gate {} {
+  make global -orient RXY -name vdd -origin {630 150}
+  make global -name gnd -origin {630 570}
+  make input -name tri_in -origin {320 340}
+  make output -name tri_out -origin {690 360}
+  make input -name en -origin {570 410}
+  make input -name en_bar -origin {570 310}
+  make nmos -W 1.2u -L 0.6u -origin {630 490}
+  make nmos -W 1.2u -L 0.6u -origin {630 410}
+  make pmos -orient RY -W 2.4u -L 0.6u -origin {630 310}
+  make pmos -orient RY -W 2.4u -L 0.6u -origin {630 230}
+  make pmos -orient RY -W 2.4u -L 0.6u -origin {380 290}
+  make nmos -W 1.2u -L 0.6u -origin {380 400}
+  make_wire 570 490 470 490
+  make_wire 470 230 570 230
+  make_wire 630 550 380 550
+  make_wire 380 550 380 440
+  make_wire 630 550 630 570
+  make_wire 630 550 630 530
+  make_wire 630 170 380 170
+  make_wire 380 170 380 250
+  make_wire 630 170 630 190
+  make_wire 630 170 630 150
+  make_wire 320 340 320 400
+  make_wire 320 340 320 290
+  make_wire 380 340 470 340
+  make_wire 380 340 380 330
+  make_wire 380 340 380 360
+  make_wire 470 340 470 490
+  make_wire 470 340 470 230
+  make_wire 630 360 630 350
+  make_wire 630 360 630 370
+  make_wire 630 360 690 360
+}
+

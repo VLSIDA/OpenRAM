@@ -37,7 +37,7 @@ class grid:
         self.map={}
 
     def set_blocked(self,n,value=True):
-        if isinstance(n,list):
+        if isinstance(n, (list,tuple,set,frozenset)):
             for item in n:
                 self.set_blocked(item,value)
         else:
@@ -45,7 +45,7 @@ class grid:
             self.map[n].blocked=value
 
     def is_blocked(self,n):
-        if isinstance(n,list):
+        if isinstance(n, (list,tuple,set,frozenset)):
             for item in n:
                 if self.is_blocked(item):
                     return True
@@ -57,39 +57,33 @@ class grid:
 
 
     def set_path(self,n,value=True):
-        if isinstance(n,list):
+        if isinstance(n, (list,tuple,set,frozenset)):
             for item in n:
                 self.set_path(item,value)
         else:
             self.add_map(n)
             self.map[n].path=value
 
-    def set_blockages(self,block_list,value=True):
-        debug.info(3,"Adding blockage list={0}".format(str(block_list)))
-        for n in block_list:
-            self.set_blocked(n,value)
-
     def clear_blockages(self):
         debug.info(2,"Clearing all blockages")
-        for n in self.map.keys():
-            self.set_blocked(n,False)
+        self.set_blocked(set(self.map.keys()),False)
             
-    def set_source(self,n):
-        if isinstance(n,list):
+    def set_source(self,n,value=True):
+        if isinstance(n, (list,tuple,set,frozenset)):
             for item in n:
-                self.set_source(item)
+                self.set_source(item,value)
         else:
             self.add_map(n)
-            self.map[n].source=True
+            self.map[n].source=value
             self.source.append(n)
         
-    def set_target(self,n):
-        if isinstance(n,list):
+    def set_target(self,n,value=True):
+        if isinstance(n, (list,tuple,set,frozenset)):
             for item in n:
-                self.set_target(item)
+                self.set_target(item,value)
         else:
             self.add_map(n)
-            self.map[n].target=True
+            self.map[n].target=value
             self.target.append(n)
 
         
@@ -101,11 +95,11 @@ class grid:
             self.set_blocked(n,False)
 
 
-    def add_target(self,track_list):
+    def set_target(self,track_list,value=True):
         debug.info(3,"Adding target list={0}".format(str(track_list)))
         for n in track_list:
             debug.info(4,"Adding target ={0}".format(str(n)))                                
-            self.set_target(n)
+            self.set_target(n,value)
             self.set_blocked(n,False)            
 
     def is_target(self,point):
@@ -118,7 +112,7 @@ class grid:
         """
         Add a point to the map if it doesn't exist.
         """
-        if isinstance(n,list):
+        if isinstance(n, (list,tuple,set,frozenset)):
             for item in n:
                 self.add_map(item)
         else:

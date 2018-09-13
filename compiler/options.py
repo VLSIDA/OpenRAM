@@ -50,8 +50,6 @@ class options(optparse.Values):
     analytical_delay = True
     # Purge the temp directory after a successful run (doesn't purge on errors, anyhow)
     purge_temp = True
-    # Determines whether multi-port portion of unit tests are run or not
-    multiport_check = True
 
     # These are the configuration parameters
     num_rw_ports = 1

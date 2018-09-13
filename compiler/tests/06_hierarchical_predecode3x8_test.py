@@ -18,7 +18,18 @@ class hierarchical_predecode3x8_test(openram_test):
         import hierarchical_predecode3x8 as pre
         import tech
 
+        # checking hierarchical precode 3x8 for single port
         debug.info(1, "Testing sample for hierarchy_predecode3x8")
+        a = pre.hierarchical_predecode3x8()
+        self.local_check(a)
+        
+        # checking hierarchical precode 3x8 for multi-port
+        OPTS.bitcell = "pbitcell"
+        OPTS.num_rw_ports = 1
+        OPTS.num_w_ports = 0
+        OPTS.num_r_ports = 0
+        
+        debug.info(1, "Testing sample for hierarchy_predecode3x8 (multi-port case)")
         a = pre.hierarchical_predecode3x8()
         self.local_check(a)
 

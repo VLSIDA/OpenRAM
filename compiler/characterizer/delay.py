@@ -46,6 +46,7 @@ class delay():
         self.period = 0
         self.set_load_slew(0,0)
         self.set_corner(corner)
+        self.create_port_names()
 
     def set_corner(self,corner):
         """ Set the corner values """
@@ -640,11 +641,10 @@ class delay():
         """
         Main function to characterize an SRAM for a table. Computes both delay and power characterization.
         """
+        #Dict to hold all characterization values
+        char_data = {}
+        
         self.set_probe(probe_address, probe_data)
-        
-        self.create_port_names()
-        
-        self.create_char_data_dict()
         
         self.load=max(loads)
         self.slew=max(slews)
@@ -659,7 +659,7 @@ class delay():
         # sys.exit(1)
 
         #For debugging, skips characterization and returns dummy values.
-        # char_data = self.char_data
+        # char_data = self.get_empty_measure_data_dict()
         # i = 1.0
         # for slew in slews:
             # for load in loads:
@@ -684,21 +684,23 @@ class delay():
         min_period = self.find_min_period(feasible_delays_lh, feasible_delays_hl)
         debug.check(type(min_period)==float,"Couldn't find minimum period.")
         debug.info(1, "Min Period Found: {0}ns".format(min_period))
-        self.char_data["min_period"] = round_time(min_period)
+        char_data["min_period"] = round_time(min_period)
 
         # 3) Find the leakage power of the trimmmed and  UNtrimmed arrays.
         (full_array_leakage, trim_array_leakage)=self.run_power_simulation()
-        self.char_data["leakage_power"]=full_array_leakage
+        char_data["leakage_power"]=full_array_leakage
         leakage_offset = full_array_leakage - trim_array_leakage
         
         # 4) At the minimum period, measure the delay, slew and power for all slew/load pairs.
-        self.simulate_loads_and_slews(slews, loads, leakage_offset)
-
-        return self.char_data
+        load_slew_data = self.simulate_loads_and_slews(slews, loads, leakage_offset)
+        char_data.update(load_slew_data)
+        
+        return char_data
 
     def simulate_loads_and_slews(self, slews, loads, leakage_offset):
-        """Simulate all specified output loads and input slews pairs"""
-        #Set the target simulation ports to all available ports. This make sims slower but failed sims exit anyways.
+        """Simulate all specified output loads and input slews pairs of all ports"""
+        measure_data = self.get_empty_measure_data_dict()
+        #Set the target simulation ports to all available ports. This make sims slower but failed sims exit anyways.        
         self.targ_read_ports = self.read_ports
         self.targ_write_ports = self.write_ports
         for slew in slews:
@@ -707,13 +709,15 @@ class delay():
                 # Find the delay, dynamic power, and leakage power of the trimmed array.
                 (success, delay_results) = self.run_delay_simulation()
                 debug.check(success,"Couldn't run a simulation. slew={0} load={1}\n".format(self.slew,self.load))
+                debug.info(1, "Successful simulation on all ports. slew={0} load={1}".format(self.slew,self.load))
                 for k,v in delay_results.items():
                     if "power" in k:
                         # Subtract partial array leakage and add full array leakage for the power measures
-                        self.char_data[k].append(v + leakage_offset)
+                        measure_data[k].append(v + leakage_offset)
                     else:
-                        self.char_data[k].append(v)
-                        
+                        measure_data[k].append(v)
+        return measure_data
+        
     def add_data(self, data, port):
         """ Add the array of data values """
         debug.check(len(data)==self.word_size, "Invalid data word size.")
@@ -1038,11 +1042,12 @@ class delay():
         self.targ_read_ports = self.read_ports
         self.targ_write_ports = self.write_ports
     
-    def create_char_data_dict(self):
-        """Make a dict of lists for each type of measurement to append results to"""
+    def get_empty_measure_data_dict(self):
+        """Make a dict of lists for each type of delay and power measurement to append results to"""
         #Making this a member variable may not be the best option, but helps reduce code clutter
-        self.char_data = {}
+        measure_data = {}
         for port in range(self.total_port_num):
             for m in ["delay_lh", "delay_hl", "slew_lh", "slew_hl", "read0_power",
                     "read1_power", "write0_power", "write1_power"]:
-                self.char_data ["{0}{1}".format(m,port)]=[]
+                measure_data ["{0}{1}".format(m,port)]=[]
+        return measure_data

@@ -17,6 +17,27 @@ class replica_bitline_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         import replica_bitline
 
+        # check replica bitline in single port
+        stages=4
+        fanout=4
+        rows=13
+        debug.info(2, "Testing RBL with {0} FO4 stages, {1} rows".format(stages,rows))
+        a = replica_bitline.replica_bitline(stages,fanout,rows)
+        self.local_check(a)
+
+        stages=8
+        rows=100
+        debug.info(2, "Testing RBL with {0} FO4 stages, {1} rows".format(stages,rows))
+        a = replica_bitline.replica_bitline(stages,fanout,rows)
+        self.local_check(a)
+        
+        # check replica bitline in multi-port
+        OPTS.bitcell = "pbitcell"
+        OPTS.replica_bitcell = "replica_pbitcell"
+        OPTS.num_rw_ports = 1
+        OPTS.num_w_ports = 0
+        OPTS.num_r_ports = 0
+        
         stages=4
         fanout=4
         rows=13

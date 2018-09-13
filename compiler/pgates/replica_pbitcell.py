@@ -6,12 +6,11 @@ from vector import vector
 from ptx import ptx
 from globals import OPTS
 
-class pbitcell(design.design):
+class replica_pbitcell(design.design):
     """
-    This module implements a parametrically sized multi-port bitcell,
-    with a variable number of read/write, write, and read ports
+    Creates a replica bitcell using pbitcell
     """
-    
+
     def __init__(self):
         
         self.num_rw_ports = OPTS.num_rw_ports
@@ -19,10 +18,10 @@ class pbitcell(design.design):
         self.num_r_ports = OPTS.num_r_ports
         self.total_ports = self.num_rw_ports + self.num_w_ports + self.num_r_ports
                 
-        name = "pbitcell_{0}RW_{1}W_{2}R".format(self.num_rw_ports, self.num_w_ports, self.num_r_ports)
+        name = "replica_pbitcell"
         # This is not a pgate because pgates depend on the bitcell height!
         design.design.__init__(self, name)
-        debug.info(2, "create a multi-port bitcell with {0} rw ports, {1} w ports and {2} r ports".format(self.num_rw_ports,
+        debug.info(2, "create a replica pbitcell with {0} rw ports, {1} w ports and {2} r ports".format(self.num_rw_ports,
                                                                                                           self.num_w_ports,
                                                                                                           self.num_r_ports))  
 
@@ -69,6 +68,7 @@ class pbitcell(design.design):
             self.route_read_bitlines()
             self.route_read_access()
         self.extend_well()
+        self.route_rbc_short()
         
         # in netlist_only mode, calling offset_all_coordinates will not be possible
         # this function is not needed to calculate the dimensions of pbitcell in netlist_only mode though
@@ -232,6 +232,10 @@ class pbitcell(design.design):
         
         # calculation for row line tiling
         self.rail_tile_height = drc["active_to_body_active"] + contact.well.width
+        if self.inverter_pmos_contact_extension > 0:
+            self.vdd_tile_height = self.inverter_pmos_contact_extension + drc["minwidth_metal1"] + contact.well.width
+        else:
+            self.vdd_tile_height = self.rail_tile_height
         self.rowline_tile_height = drc["minwidth_metal1"] + contact.m1m2.width
         
         # calculations related to inverter connections
@@ -295,7 +299,7 @@ class pbitcell(design.design):
                             
         # topmost position = height of the inverter + height of vdd
         self.topmost_ypos = self.inverter_nmos.active_height + self.inverter_gap + self.inverter_pmos.active_height \
-                            + self.rail_tile_height
+                            + self.vdd_tile_height
         
         # calculations for the cell dimensions
         array_vdd_overlap = 0.5*contact.well.width
@@ -312,20 +316,20 @@ class pbitcell(design.design):
         # create active for nmos
         self.inverter_nmos_left = self.add_inst(name="inverter_nmos_left",
                                                 mod=self.inverter_nmos)
-        self.connect_inst(["Q_bar", "Q", "gnd", "gnd"])
+        self.connect_inst(["vdd", "Q", "gnd", "gnd"])
         
         self.inverter_nmos_right = self.add_inst(name="inverter_nmos_right",
                                                  mod=self.inverter_nmos)
-        self.connect_inst(["gnd", "Q_bar", "Q", "gnd"])
+        self.connect_inst(["gnd", "vdd", "Q", "gnd"])
         
         # create active for pmos
         self.inverter_pmos_left = self.add_inst(name="inverter_pmos_left",
                                                 mod=self.inverter_pmos)
-        self.connect_inst(["Q_bar", "Q", "vdd", "vdd"])
+        self.connect_inst(["vdd", "Q", "vdd", "vdd"])
         
         self.inverter_pmos_right = self.add_inst(name="inverter_pmos_right",
                                                  mod=self.inverter_pmos)
-        self.connect_inst(["vdd", "Q_bar", "Q", "vdd"])
+        self.connect_inst(["vdd", "vdd", "Q", "vdd"])
         
         
     def place_storage(self):
@@ -395,7 +399,7 @@ class pbitcell(design.design):
                                        height=contact.well.second_layer_width)
         
         vdd_ypos = self.inverter_nmos.active_height + self.inverter_gap + self.inverter_pmos.active_height \
-                   + drc["active_to_body_active"]
+                   + self.vdd_tile_height - contact.well.second_layer_width
         self.vdd_position = vector(self.leftmost_xpos, vdd_ypos)
         self.vdd = self.add_layout_pin(text="vdd",
                                        layer="metal1",
@@ -442,7 +446,7 @@ class pbitcell(design.design):
             
             self.readwrite_nmos_right[k] = self.add_inst(name="readwrite_nmos_right{}".format(k),
                                                          mod=self.readwrite_nmos)
-            self.connect_inst(["Q_bar", self.rw_wl_names[k], self.rw_br_names[k], "gnd"])
+            self.connect_inst(["vdd", self.rw_wl_names[k], self.rw_br_names[k], "gnd"])
                         
 
     def place_readwrite_ports(self):
@@ -646,7 +650,7 @@ class pbitcell(design.design):
             
             self.write_nmos_right[k] = self.add_inst(name="write_nmos_right{}".format(k),
                                                      mod=self.write_nmos)
-            self.connect_inst(["Q_bar", self.w_wl_names[k], self.w_br_names[k], "gnd"])
+            self.connect_inst(["vdd", self.w_wl_names[k], self.w_br_names[k], "gnd"])
                         
 
     def place_write_ports(self):
@@ -849,7 +853,7 @@ class pbitcell(design.design):
             # add read-access transistors
             self.read_access_nmos_left[k] = self.add_inst(name="read_access_nmos_left{}".format(k),
                                                           mod=self.read_nmos)
-            self.connect_inst(["RA_to_R_left{}".format(k), "Q_bar", "gnd", "gnd"])
+            self.connect_inst(["RA_to_R_left{}".format(k), "vdd", "gnd", "gnd"])
             
             self.read_access_nmos_right[k] = self.add_inst(name="read_access_nmos_right{}".format(k),
                                                            mod=self.read_nmos)
@@ -1162,60 +1166,12 @@ class pbitcell(design.design):
                                 offset=offset,
                                 rotate=90,
                                 implant_type="n",
-                                well_type="n")  
+                                well_type="n")
     
     
-    def list_bitcell_pins(self, col, row):
-        """ Creates a list of connections in the bitcell, indexed by column and row, for instance use in bitcell_array """
-        bitcell_pins = []
-        for port in range(self.total_ports):
-            bitcell_pins.append("bl{0}[{1}]".format(port,col))
-            bitcell_pins.append("br{0}[{1}]".format(port,col))
-        for port in range(self.total_ports):
-            bitcell_pins.append("wl{0}[{1}]".format(port,row))
-        bitcell_pins.append("vdd")
-        bitcell_pins.append("gnd")
-        return bitcell_pins
-    
-    def list_all_wl_names(self):
-        """ Creates a list of all wordline pin names """
-        wordline_names = self.rw_wl_names + self.w_wl_names + self.r_wl_names
-        return wordline_names
-    
-    def list_all_bitline_names(self):
-        """ Creates a list of all bitline pin names (both bl and br) """
-        bitline_pins = []
-        for port in range(self.total_ports):
-            bitline_pins.append("bl{0}".format(port))
-            bitline_pins.append("br{0}".format(port))
-        return bitline_pins
+    def route_rbc_short(self):
+        """ route the short from Q_bar to gnd necessary for the replica bitcell """
+        Q_bar_pos = self.inverter_pmos_left.get_pin("D").uc()
+        vdd_pos = vector(Q_bar_pos.x, self.vdd_position.y)
         
-    def list_all_bl_names(self):
-        """ Creates a list of all bl pins names """
-        bl_pins = self.rw_bl_names + self.w_bl_names + self.r_bl_names    
-        return bl_pins
-        
-    def list_all_br_names(self):
-        """ Creates a list of all br pins names """
-        br_pins = self.rw_br_names + self.w_br_names + self.r_br_names     
-        return br_pins
-        
-    def list_read_bl_names(self):
-        """ Creates a list of bl pin names associated with read ports """
-        bl_pins = self.rw_bl_names + self.r_bl_names     
-        return bl_pins
-        
-    def list_read_br_names(self):
-        """ Creates a list of br pin names associated with read ports """
-        br_pins = self.rw_br_names + self.r_br_names     
-        return br_pins
-        
-    def list_write_bl_names(self):
-        """ Creates a list of bl pin names associated with write ports """
-        bl_pins = self.rw_bl_names + self.w_bl_names  
-        return bl_pins
-    
-    def list_write_br_names(self):
-        """ Creates a list of br pin names asscociated with write ports"""
-        br_pins = self.rw_br_names + self.w_br_names  
-        return br_pins
+        self.add_path("metal1", [Q_bar_pos, vdd_pos])

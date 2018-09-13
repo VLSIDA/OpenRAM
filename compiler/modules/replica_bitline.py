@@ -144,6 +144,7 @@ class replica_bitline(design.design):
         self.connect_inst(temp)
         
         self.wl_list = self.rbl.cell.list_all_wl_names()
+        self.bl_list = self.rbl.cell.list_write_bl_names()
         
     def place_modules(self):
         """ Add all of the module instances in the logical netlist """
@@ -178,14 +179,20 @@ class replica_bitline(design.design):
             wl = self.wl_list[0]+"[{}]".format(row)
             pin = self.rbl_inst.get_pin(wl)
 
-            # Route the connection to the right so that it doesn't interfere
-            # with the cells
+            # Route the connection to the right so that it doesn't interfere with the cells
+            # Wordlines may be close to each other when tiled, so gnd connections are routed in opposite directions
+            if row % 2 == 0:
+                vertical_extension = vector(0, 1.5*drc["minwidth_metal1"] + 0.5*contact.m1m2.height)
+            else:
+                vertical_extension = vector(0, -1.5*drc["minwidth_metal1"] - 1.5*contact.m1m2.height)
+            
             pin_right = pin.rc()
-            pin_extension = pin_right + vector(self.m1_pitch,0)
+            pin_extension1 = pin_right + vector(self.m3_pitch,0)
+            pin_extension2 = pin_extension1 + vertical_extension
             if pin.layer != "metal1":
                 continue
-            self.add_path("metal1", [pin_right, pin_extension])
-            self.add_power_pin("gnd", pin_extension)
+            self.add_path("metal1", [pin_right, pin_extension1, pin_extension2])
+            self.add_power_pin("gnd", pin_extension2)
                                
         
     def route_supplies(self):
@@ -243,11 +250,13 @@ class replica_bitline(design.design):
 
         # 3. Route the contact of previous route to the bitcell WL
         # route bend of previous net to bitcell WL
-        wl_offset = self.rbc_inst.get_pin("wl").lc()
-        xmid_point= 0.5*(wl_offset.x+contact_offset.x)
-        wl_mid1 = vector(xmid_point,contact_offset.y)
-        wl_mid2 = vector(xmid_point,wl_offset.y)
-        self.add_path("metal1", [contact_offset, wl_mid1, wl_mid2, wl_offset])
+        wl_offset = self.rbc_inst.get_pin(self.wl_list[0]).lc()
+        wl_mid1 = wl_offset - vector(1.5*drc["minwidth_metal1"], 0)
+        wl_mid2 = vector(wl_mid1.x, contact_offset.y)
+        #xmid_point= 0.5*(wl_offset.x+contact_offset.x)
+        #wl_mid1 = vector(xmid_point,contact_offset.y)
+        #wl_mid2 = vector(xmid_point,wl_offset.y)
+        self.add_path("metal1", [wl_offset, wl_mid1, wl_mid2, contact_offset])
 
         # DRAIN ROUTE
         # Route the drain to the vdd rail
@@ -262,7 +271,7 @@ class replica_bitline(design.design):
 
         # Route the connection of the source route to the RBL bitline (left)
         # Via will go halfway down from the bitcell
-        bl_offset = self.rbc_inst.get_pin("bl").bc()
+        bl_offset = self.rbc_inst.get_pin(self.bl_list[0]).bc()
         # Route down a pitch so we can use M2 routing
         bl_down_offset = bl_offset - vector(0, self.m2_pitch)
         self.add_path("metal2",[source_offset, bl_down_offset, bl_offset])   

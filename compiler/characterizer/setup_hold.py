@@ -3,7 +3,7 @@ import tech
 from .stimuli import *
 import debug
 from .charutils import *
-import ms_flop
+import dff
 from globals import OPTS
 
 
@@ -16,8 +16,8 @@ class setup_hold():
     def __init__(self, corner):
         # This must match the spice model order
         self.pins = ["data", "dout", "dout_bar", "clk", "vdd", "gnd"]
-        self.model_name = "ms_flop"
-        self.model_location = OPTS.openram_tech + "sp_lib/ms_flop.sp"
+        self.model_name = "dff"
+        self.model_location = OPTS.openram_tech + "sp_lib/dff.sp"
         self.period = tech.spice["feasible_period"]
 
         debug.info(2,"Feasible period from technology file: {0} ".format(self.period))

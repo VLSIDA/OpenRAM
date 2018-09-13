@@ -14,7 +14,7 @@ M1006 a_260_296# a_152_16# vdd vdd p w=4u l=0.4u
 M1007 a_280_24# a_24_24# a_260_296# vdd p w=4u l=0.4u
 M1008 a_320_336# clk a_280_24# vdd p w=2u l=0.4u
 M1009 vdd Q a_320_336# vdd p w=2u l=0.4u
-M1010 gnd clk a_24_24# gnd nfet w=4u l=0.4u
+M1010 gnd clk a_24_24# gnd n w=4u l=0.4u
 M1011 Q a_280_24# vdd vdd p w=8u l=0.4u
 M1012 a_84_24# D gnd gnd n w=2u l=0.4u
 M1013 a_104_24# a_24_24# a_84_24# gnd n w=2u l=0.4u

@@ -157,7 +157,7 @@ drc["minarea_metal1"] = 0
 # 8.1 Exact size 
 drc["minwidth_via1"] = 2*_lambda_
 # 8.2 Minimum via1 spacing 
-drc["via1_to_via1"] = 2*_lambda_
+drc["via1_to_via1"] = 3*_lambda_
 
 # 9.1 Minimum width
 drc["minwidth_metal2"] = 3*_lambda_

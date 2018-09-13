@@ -15,7 +15,7 @@ class setup_hold():
 
     def __init__(self, corner):
         # This must match the spice model order
-        self.pins = ["data", "dout", "dout_bar", "clk", "vdd", "gnd"]
+        self.pins = ["data", "dout", "clk", "vdd", "gnd"]
         self.model_name = "dff"
         self.model_location = OPTS.openram_tech + "sp_lib/dff.sp"
         self.period = tech.spice["feasible_period"]

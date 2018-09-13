@@ -71,8 +71,7 @@ class options(optparse.Values):
 
     # These are the default modules that can be over-riden
     decoder = "hierarchical_decoder"
-    ms_flop = "ms_flop"
-    ms_flop_array = "ms_flop_array"
+    dff_array = "dff_array"
     dff = "dff"
     control_logic = "control_logic"
     bitcell_array = "bitcell_array"

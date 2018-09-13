@@ -184,7 +184,7 @@ drc["via2_to_via2"] = 3*_lambda_
 # 15.1 Minimum width
 drc["minwidth_metal3"] = 3*_lambda_
 # 15.2 Minimum spacing to metal3
-drc["metal3_to_metal3"] = 3*_lamda_
+drc["metal3_to_metal3"] = 3*_lambda_
 # 15.3 Minimum overlap of via 2
 drc["metal3_extend_via2"] = _lambda_
 # Reserved for asymmetric enclosures
@@ -206,9 +206,9 @@ drc["via3_to_via3"] = 3*_lambda_
 # 22.1 Minimum width
 drc["minwidth_metal3"] = 6*_lambda_
 # 22.2 Minimum spacing to metal3
-drc["metal3_to_metal3"] = 6*_lamda_
+drc["metal3_to_metal3"] = 6*_lambda_
 # 22.3 Minimum overlap of via 2
-drc["metal3_extend_via2"] = 2_lambda_
+drc["metal3_extend_via2"] = 2*_lambda_
 # Reserved for asymmetric enclosures
 drc["metal3_enclosure_via2"] = 2*_lambda_
 # Not a rule

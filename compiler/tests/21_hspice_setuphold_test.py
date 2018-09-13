@@ -35,15 +35,15 @@ class timing_setup_test(openram_test):
         data = sh.analyze(slews,slews)
         #print data
         if OPTS.tech_name == "freepdk45":
-            golden_data = {'setup_times_LH': [0.014648399999999999],
-                           'hold_times_LH': [0.0024414],
-                           'hold_times_HL': [-0.0036620999999999997],
-                           'setup_times_HL': [0.0085449]}
+            golden_data = {'hold_times_HL': [-0.01586914],
+                           'hold_times_LH': [-0.01586914],
+                           'setup_times_HL': [0.02685547],
+                           'setup_times_LH': [0.03295898]}
         elif OPTS.tech_name == "scn3me_subm":
-            golden_data = {'setup_times_LH': [0.08178709999999999],
-                           'hold_times_LH': [0.0024414],
-                           'hold_times_HL': [-0.0646973],
-                           'setup_times_HL': [0.0390625]}
+            golden_data = {'hold_times_HL': [-0.15625],
+                           'hold_times_LH': [-0.1257324],
+                           'setup_times_HL': [0.2038574],
+                           'setup_times_LH': [0.2893066]}
         else:
             self.assertTrue(False) # other techs fail
 

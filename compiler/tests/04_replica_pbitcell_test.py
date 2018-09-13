@@ -18,7 +18,6 @@ class replica_pbitcell_test(openram_test):
         import replica_pbitcell
         import tech
         
-        # check precharge in multi-port
         OPTS.bitcell = "pbitcell"
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 0

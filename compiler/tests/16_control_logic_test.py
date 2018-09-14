@@ -18,7 +18,20 @@ class control_logic_test(openram_test):
         import control_logic
         import tech
 
+        # check control logic for single port
         debug.info(1, "Testing sample for control_logic")
+        a = control_logic.control_logic(num_rows=128)
+        self.local_check(a)
+        
+        # check control logic for multi-port
+        # only layout for 1RW is supported at the moment
+        OPTS.bitcell = "pbitcell"
+        OPTS.replica_bitcell = "replica_pbitcell"
+        OPTS.num_rw_ports = 1
+        OPTS.num_w_ports = 0
+        OPTS.num_r_ports = 0
+        
+        debug.info(1, "Testing sample for control_logic for multiport")
         a = control_logic.control_logic(num_rows=128)
         self.local_check(a)
 

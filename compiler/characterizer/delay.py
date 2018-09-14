@@ -47,6 +47,12 @@ class delay():
         self.set_load_slew(0,0)
         self.set_corner(corner)
         self.create_port_names()
+        
+        #Create global measure names. May be an input at some point. Altering the name here will not affect functionality.
+        #Removing names will cause program to crash. TODO: This caused me to hardcode indices, fix this to be more dynamic/readable.
+        self.delay_meas_names = ["delay_lh", "delay_hl", "slew_lh", "slew_hl"]
+        self.power_meas_names = ["read0_power", "read1_power", "write0_power", "write1_power"]
+    
 
     def set_corner(self,corner):
         """ Set the corner values """
@@ -209,7 +215,7 @@ class delay():
         trig_val = targ_val = 0.5 * self.vdd_voltage
 
         # Delay the target to measure after the negative edge
-        self.stim.gen_meas_delay(meas_name="DELAY_HL{0}".format(port),
+        self.stim.gen_meas_delay(meas_name="{0}{1}".format(self.delay_meas_names[1], port),
                                  trig_name=trig_name,
                                  targ_name=targ_name,
                                  trig_val=trig_val,
@@ -219,7 +225,7 @@ class delay():
                                  trig_td=self.cycle_times[self.measure_cycles["read0_{0}".format(port)]],
                                  targ_td=self.cycle_times[self.measure_cycles["read0_{0}".format(port)]])
 
-        self.stim.gen_meas_delay(meas_name="DELAY_LH{0}".format(port),
+        self.stim.gen_meas_delay(meas_name="{0}{1}".format(self.delay_meas_names[0], port),
                                  trig_name=trig_name,
                                  targ_name=targ_name,
                                  trig_val=trig_val,
@@ -229,7 +235,7 @@ class delay():
                                  trig_td=self.cycle_times[self.measure_cycles["read1_{0}".format(port)]],
                                  targ_td=self.cycle_times[self.measure_cycles["read1_{0}".format(port)]])
 
-        self.stim.gen_meas_delay(meas_name="SLEW_HL{0}".format(port),
+        self.stim.gen_meas_delay(meas_name="{0}{1}".format(self.delay_meas_names[3], port),
                                  trig_name=targ_name,
                                  targ_name=targ_name,
                                  trig_val=0.9*self.vdd_voltage,
@@ -239,7 +245,7 @@ class delay():
                                  trig_td=self.cycle_times[self.measure_cycles["read0_{0}".format(port)]],
                                  targ_td=self.cycle_times[self.measure_cycles["read0_{0}".format(port)]])
 
-        self.stim.gen_meas_delay(meas_name="SLEW_LH{0}".format(port),
+        self.stim.gen_meas_delay(meas_name="{0}{1}".format(self.delay_meas_names[2], port),
                                  trig_name=targ_name,
                                  targ_name=targ_name,
                                  trig_val=0.1*self.vdd_voltage,
@@ -252,13 +258,13 @@ class delay():
         # add measure statements for power
         t_initial = self.cycle_times[self.measure_cycles["read0_{0}".format(port)]]
         t_final = self.cycle_times[self.measure_cycles["read0_{0}".format(port)]+1]
-        self.stim.gen_meas_power(meas_name="READ0_POWER{0}".format(port),
+        self.stim.gen_meas_power(meas_name="{0}{1}".format(self.power_meas_names[0], port),
                                  t_initial=t_initial,
                                  t_final=t_final)
 
         t_initial = self.cycle_times[self.measure_cycles["read1_{0}".format(port)]]
         t_final = self.cycle_times[self.measure_cycles["read1_{0}".format(port)]+1]
-        self.stim.gen_meas_power(meas_name="READ1_POWER{0}".format(port),
+        self.stim.gen_meas_power(meas_name="{0}{1}".format(self.power_meas_names[1], port),
                                  t_initial=t_initial,
                                  t_final=t_final)
         
@@ -269,13 +275,13 @@ class delay():
         # add measure statements for power
         t_initial = self.cycle_times[self.measure_cycles["write0_{0}".format(port)]]
         t_final = self.cycle_times[self.measure_cycles["write0_{0}".format(port)]+1]
-        self.stim.gen_meas_power(meas_name="WRITE0_POWER{0}".format(port),
+        self.stim.gen_meas_power(meas_name="{0}{1}".format(self.power_meas_names[2], port),
                                  t_initial=t_initial,
                                  t_final=t_final)
 
         t_initial = self.cycle_times[self.measure_cycles["write1_{0}".format(port)]]
         t_final = self.cycle_times[self.measure_cycles["write1_{0}".format(port)]+1]
-        self.stim.gen_meas_power(meas_name="WRITE1_POWER{0}".format(port),
+        self.stim.gen_meas_power(meas_name="{0}{1}".format(self.power_meas_names[3], port),
                                  t_initial=t_initial,
                                  t_final=t_final)
 
@@ -343,25 +349,21 @@ class delay():
             if not success:
                 feasible_period = 2 * feasible_period
                 break
-            feasible_delay_lh = results["delay_lh{0}".format(port)]
-            feasible_delay_hl = results["delay_hl{0}".format(port)]
-            feasible_slew_lh = results["slew_lh{0}".format(port)]
-            feasible_slew_hl = results["slew_hl{0}".format(port)]
-
-            delay_str = "feasible_delay {0:.4f}ns/{1:.4f}ns".format(feasible_delay_lh, feasible_delay_hl)
-            slew_str = "slew {0:.4f}ns/{1:.4f}ns".format(feasible_slew_lh, feasible_slew_hl)
+            
+            #Positions of measurements currently hardcoded. First 2 are delays, next 2 are slews
+            feasible_delay_measures = [results["{0}{1}".format(mname,port)] for mname in self.delay_meas_names]
+            
+            delay_str = "feasible_delay {0:.4f}ns/{1:.4f}ns".format(feasible_delay_measures[0], feasible_delay_measures[1])
+            slew_str = "slew {0:.4f}ns/{1:.4f}ns".format(feasible_delay_measures[2], feasible_delay_measures[3])
             debug.info(2, "feasible_period passed for Port {3}: {0}ns {1} {2} ".format(feasible_period,
                                                                          delay_str,
                                                                          slew_str,
                                                                          port))
-            #Add feasible delays of port to dict
-            #feasible_delays_lh[port] = feasible_delay_lh
-            #feasible_delays_hl[port] = feasible_delay_hl
                 
             if success:
                 debug.info(1, "Found feasible_period: {0}ns".format(feasible_period))
                 self.period = feasible_period
-                return (feasible_delay_lh, feasible_delay_hl)
+                return (feasible_delay_measures[0], feasible_delay_measures[1])
 
     def find_feasible_period(self):
         """
@@ -426,14 +428,13 @@ class delay():
         #Loop through all targeted ports and collect delays and powers. 
         #Too much duplicate code here. Try reducing
         for port in self.targ_read_ports:
-            delay_names = ["delay_hl{0}".format(port), "delay_lh{0}".format(port),
-                           "slew_hl{0}".format(port), "slew_lh{0}".format(port)]
+            delay_names = ["{0}{1}".format(mname,port) for mname in self.delay_meas_names]
             delays = self.parse_values(delay_names, 1e9) # scale delays to ns
             if not self.check_valid_delays((delays[delay_names[0]],delays[delay_names[1]],delays[delay_names[2]],delays[delay_names[3]])):
                 return (False,{})
             result.update(delays)
             
-            power_names = ["read0_power{0}".format(port), "read1_power{0}".format(port)]
+            power_names = ["{0}{1}".format(mname,port) for mname in self.power_meas_names[:2]]
             powers = self.parse_values(power_names, 1e3) # scale power to mw
             #Check that power parsing worked.
             for name, power in powers.items():
@@ -442,7 +443,7 @@ class delay():
             result.update(powers)
         
         for port in self.targ_write_ports:
-            power_names = ["write0_power{0}".format(port), "write1_power{0}".format(port)]
+            power_names = ["{0}{1}".format(mname,port) for mname in self.power_meas_names[2:]]
             powers = self.parse_values(power_names, 1e3) # scale power to mw
             #Check that power parsing worked.
             for name, power in powers.items():
@@ -583,25 +584,23 @@ class delay():
         
         #Check the values of target readwrite and read ports. Write ports do not produce delays in this current version
         for port in self.targ_read_ports:
-            delay_hl = results["delay_hl{0}".format(port)]
-            delay_lh = results["delay_lh{0}".format(port)]
-            slew_hl = results["slew_hl{0}".format(port)]
-            slew_lh = results["slew_lh{0}".format(port)]
+            #Positions of measurements currently hardcoded. First 2 are delays, next 2 are slews
+            delay_measures = [results["{0}{1}".format(mname,port)] for mname in self.delay_meas_names]
 
-            if not relative_compare(delay_lh,feasible_delays_lh[port],error_tolerance=0.05):
-                debug.info(2,"Delay too big {0} vs {1}".format(delay_lh,feasible_delays_lh[port]))
+            if not relative_compare(delay_measures[0],feasible_delays_lh[port],error_tolerance=0.05):
+                debug.info(2,"Delay too big {0} vs {1}".format(delay_measures[0],feasible_delays_lh[port]))
                 return False
-            elif not relative_compare(delay_hl,feasible_delays_hl[port],error_tolerance=0.05):
-                debug.info(2,"Delay too big {0} vs {1}".format(delay_hl,feasible_delays_hl[port]))
+            elif not relative_compare(delay_measures[1],feasible_delays_hl[port],error_tolerance=0.05):
+                debug.info(2,"Delay too big {0} vs {1}".format(delay_measures[1],feasible_delays_hl[port]))
                 return False
 
             #key=raw_input("press return to continue")
 
-            debug.info(2,"Successful period {0}, Port {5}, delay_hl={1}ns, delay_lh={2}ns slew_hl={3}ns slew_lh={4}ns".format(self.period,
-                                                                                                                    delay_hl,
-                                                                                                                    delay_lh,
-                                                                                                                    slew_hl,
-                                                                                                                    slew_lh,
+            debug.info(2,"Successful period {0}, Port {5}, delay_lh={1}ns, delay_hl={2}ns, slew_lh={3}ns slew_hl={4}ns".format(self.period,
+                                                                                                                    delay_measures[0],
+                                                                                                                    delay_measures[1],
+                                                                                                                    delay_measures[2],
+                                                                                                                    delay_measures[3],
                                                                                                                     port))
         return True
     
@@ -710,12 +709,12 @@ class delay():
                 (success, delay_results) = self.run_delay_simulation()
                 debug.check(success,"Couldn't run a simulation. slew={0} load={1}\n".format(self.slew,self.load))
                 debug.info(1, "Successful simulation on all ports. slew={0} load={1}".format(self.slew,self.load))
-                for k,v in delay_results.items():
-                    if "power" in k:
+                for mname,value in delay_results.items():
+                    if "power" in mname:
                         # Subtract partial array leakage and add full array leakage for the power measures
-                        measure_data[k].append(v + leakage_offset)
+                        measure_data[mname].append(value + leakage_offset)
                     else:
-                        measure_data[k].append(v)
+                        measure_data[mname].append(value)
         return measure_data
         
     def add_data(self, data, port):
@@ -1044,10 +1043,7 @@ class delay():
     
     def get_empty_measure_data_dict(self):
         """Make a dict of lists for each type of delay and power measurement to append results to"""
-        #Making this a member variable may not be the best option, but helps reduce code clutter
-        measure_data = {}
-        for port in range(self.total_port_num):
-            for m in ["delay_lh", "delay_hl", "slew_lh", "slew_hl", "read0_power",
-                    "read1_power", "write0_power", "write1_power"]:
-                measure_data ["{0}{1}".format(m,port)]=[]
+        measure_names = self.delay_meas_names + self.power_meas_names
+        #Create dict of lists of size #measure_names x total_port_num. Some lists are never used.
+        measure_data = {"{0}{1}".format(nmame,port):[] for nmame in measure_names for port in range(self.total_port_num)}
         return measure_data

@@ -94,8 +94,7 @@ class bank(design.design):
         if self.num_banks > 1:
             for port in range(self.total_ports):
                 self.add_pin("bank_sel{}".format(port),"INPUT")
-        for port in range(self.total_read):
-            self.add_pin("s_en{0}".format(self.read_index[port]), "INPUT")
+        self.add_pin("s_en", "INPUT")
         for port in range(self.total_write):
             self.add_pin("w_en{0}".format(port), "INPUT")
         for pin in ["clk_buf_bar","clk_buf"]:
@@ -181,7 +180,7 @@ class bank(design.design):
         # Number of control lines in the bus
         self.num_control_lines = 4
         # The order of the control signals on the control bus:
-        self.input_control_signals = ["clk_buf", "clk_buf_bar", "w_en0", "s_en0"]
+        self.input_control_signals = ["clk_buf", "clk_buf_bar", "w_en0", "s_en"]
 
         # These will be outputs of the gaters if this is multibank, if not, normal signals.
         if self.num_banks > 1:
@@ -373,7 +372,7 @@ class bank(design.design):
                     temp.append(self.read_bl_list[port]+"_out[{0}]".format(bit))
                     temp.append(self.read_br_list[port]+"_out[{0}]".format(bit))
                     
-            temp.extend([self.prefix+"s_en{0}".format(port), "vdd", "gnd"])
+            temp.extend([self.prefix+"s_en", "vdd", "gnd"])
             self.connect_inst(temp)
 
     def place_sense_amp_array(self):
@@ -898,7 +897,7 @@ class bank(design.design):
         connection = []
         connection.append((self.prefix+"clk_buf_bar", self.precharge_array_inst[0].get_pin("en").lc()))
         connection.append((self.prefix+"w_en0", self.write_driver_array_inst[0].get_pin("en").lc()))
-        connection.append((self.prefix+"s_en0", self.sense_amp_array_inst[0].get_pin("en").lc()))
+        connection.append((self.prefix+"s_en", self.sense_amp_array_inst[0].get_pin("en").lc()))
   
         for (control_signal, pin_pos) in connection:
             control_pos = vector(self.bus_xoffset[control_signal].x ,pin_pos.y)

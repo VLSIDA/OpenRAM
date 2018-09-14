@@ -113,7 +113,7 @@ class control_logic(design.design):
         self.internal_bus_width = (len(self.internal_bus_list)+1)*self.m2_pitch 
         
         # Outputs to the bank
-        self.output_list = ["s_en0"]
+        self.output_list = ["s_en"]
         for port in range(self.total_write):
             self.output_list.append("w_en{}".format(port))
         self.output_list.append("clk_buf_bar")
@@ -253,7 +253,7 @@ class control_logic(design.design):
         # input: input: pre_s_en_bar, output: s_en
         self.s_en_inst=self.add_inst(name="inv_s_en",
                                      mod=self.inv8)
-        self.connect_inst(["pre_s_en_bar", "s_en0",  "vdd", "gnd"])
+        self.connect_inst(["pre_s_en_bar", "s_en",  "vdd", "gnd"])
         
     def place_sen_row(self,row):
         """ 
@@ -469,7 +469,7 @@ class control_logic(design.design):
 
         self.add_path("metal1",[self.pre_s_en_bar_inst.get_pin("Z").center(), self.s_en_inst.get_pin("A").center()])
 
-        self.connect_output(self.s_en_inst, "Z", "s_en0")
+        self.connect_output(self.s_en_inst, "Z", "s_en")
         
     def route_clk(self):
         """ Route the clk and clk_buf_bar signal internally """

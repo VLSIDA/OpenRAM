@@ -203,76 +203,64 @@ class delay():
 
         self.sf.close()
         
+    def get_delay_meas_values(self, delay_name, port):
+        """Get the values needed to generate a Spice measurement statement based on the name of the measurement."""
+        debug.check('lh' in delay_name or 'hl' in delay_name, "Measure command {0} does not contain direction (lh/hl)")
+        trig_clk_name = "clk"
+        meas_name="{0}{1}".format(delay_name, port)
+        targ_name = "{0}".format("DOUT{0}[{1}]".format(port,self.probe_data))
+        half_vdd = 0.5 * self.vdd_voltage
+        trig_slew_low = 0.1 * self.vdd_voltage
+        targ_slew_high = 0.9 * self.vdd_voltage
+        if 'delay' in delay_name:
+            trig_dir="RISE"
+            trig_val = half_vdd
+            targ_val = half_vdd
+            trig_name = trig_clk_name
+            if 'lh' in delay_name:
+                targ_dir="RISE"
+                trig_td = targ_td = self.cycle_times[self.measure_cycles["read1_{0}".format(port)]]
+            else:
+                targ_dir="FALL"
+                trig_td = targ_td = self.cycle_times[self.measure_cycles["read0_{0}".format(port)]] 
+                    
+        elif 'slew' in delay_name:
+            trig_name = targ_name
+            if 'lh' in delay_name:
+                trig_val = trig_slew_low
+                targ_val = targ_slew_high
+                targ_dir = trig_dir = "RISE"
+                trig_td = targ_td = self.cycle_times[self.measure_cycles["read1_{0}".format(port)]]
+            else:
+                trig_val = targ_slew_high 
+                targ_val = trig_slew_low
+                targ_dir = trig_dir = "FALL"
+                trig_td = targ_td = self.cycle_times[self.measure_cycles["read0_{0}".format(port)]] 
+        else:
+            debug.error(1, "Measure command {0} not recognized".format(delay_name))
+        return (meas_name,trig_name,targ_name,trig_val,targ_val,trig_dir,targ_dir,trig_td,targ_td)
+        
     def write_delay_measures_read_port(self, port):
         """
         Write the measure statements to quantify the delay and power results for a read port.
         """
-
-        # Trigger on the clk of the appropriate cycle
-        trig_clk_name = trig_name = "clk"
-        #Target name should be an input to the function or a member variable. That way, the ports can be singled out for testing
-        targ_name = "{0}".format("DOUT{0}[{1}]".format(port,self.probe_data))
-        trig_val = targ_val = 0.5 * self.vdd_voltage
-        trig_delay_val = targ_delay_val = 0.5 * self.vdd_voltage
-        trig_slew_low = 0.1 * self.vdd_voltage
-        targ_slew_high = 0.9 * self.vdd_voltage
-        trig_dir = "FALL"
-        targ_dir = "RISE"
-        trig_td = targ_td = 0
-        parse_error = False
-        
-        # Delay the target to measure after the negative edge
+        # add measure statements for delays/slews
         for dname in self.delay_meas_names:
-            if 'delay' in dname:
-                trig_dir="RISE"
-                trig_val = trig_delay_val
-                targ_val = targ_val
-                trig_name = trig_clk_name
-                if 'lh' in dname:
-                    targ_dir="RISE"
-                else:
-                    targ_dir="FALL"
-                    
-            elif 'slew' in dname:
-                trig_name = targ_name
-                if 'lh' in dname:
-                    trig_val = trig_slew_low
-                    targ_val = targ_slew_high
-                    targ_dir = trig_dir = "RISE"
-                else:
-                    trig_val = targ_slew_high 
-                    targ_val = trig_slew_low
-                    targ_dir = trig_dir = "FALL"
-            else:
-                debug.error(1, "Measure command {0} not recognized".format(dname))
+            meas_values = self.get_delay_meas_values(dname, port)
+            self.stim.gen_meas_delay(*meas_values)
             
-            if 'lh' in dname:
-                trig_td = targ_td = self.cycle_times[self.measure_cycles["read1_{0}".format(port)]]
-            elif 'hl' in dname:
-                trig_td = targ_td = self.cycle_times[self.measure_cycles["read0_{0}".format(port)]] 
-            else:
-                debug.error(1, "Measure command {0} does not contain direction (lh/hl)".format(dname))
-                
-            self.stim.gen_meas_delay(meas_name="{0}{1}".format(dname, port),
-                                     trig_name=trig_name,
-                                     targ_name=targ_name,
-                                     trig_val=trig_val,
-                                     targ_val=targ_val,
-                                     trig_dir=trig_dir,
-                                     targ_dir=targ_dir,
-                                     trig_td=trig_td,
-                                     targ_td=targ_td)
-      
         # add measure statements for power
         for pname in self.power_meas_names:
             if "read" not in pname:
                 continue
-            t_initial = self.cycle_times[self.measure_cycles["read0_{0}".format(port)]]
-            t_final = self.cycle_times[self.measure_cycles["read0_{0}".format(port)]+1]
+            #Different naming schemes are used for the measure cycle dict and measurement names. 
+            #TODO: make them the same so they can be indexed the same.
             if '1' in pname:
                 t_initial = self.cycle_times[self.measure_cycles["read1_{0}".format(port)]]
                 t_final = self.cycle_times[self.measure_cycles["read1_{0}".format(port)]+1]
-        
+            elif '0' in pname:
+                t_initial = self.cycle_times[self.measure_cycles["read0_{0}".format(port)]]
+                t_final = self.cycle_times[self.measure_cycles["read0_{0}".format(port)]+1]
             self.stim.gen_meas_power(meas_name="{0}{1}".format(pname, port),
                                      t_initial=t_initial,
                                      t_final=t_final)
@@ -429,7 +417,7 @@ class delay():
         include leakage of all cells.
         """
         #Sanity Check
-        debug.check(self.period > 0, "Initial starting period not defined") 
+        debug.check(self.period > 0, "Target simulation period non-positive") 
         
         result = [{} for i in range(self.total_port_num)]
         # Checking from not data_value to data_value
@@ -645,7 +633,7 @@ class delay():
         Main function to characterize an SRAM for a table. Computes both delay and power characterization.
         """
         #Dict to hold all characterization values
-        char_data = {}
+        char_sram_data = {}
         
         self.set_probe(probe_address, probe_data)
         
@@ -681,18 +669,17 @@ class delay():
         min_period = self.find_min_period(feasible_delays)
         debug.check(type(min_period)==float,"Couldn't find minimum period.")
         debug.info(1, "Min Period Found: {0}ns".format(min_period))
-        char_data["min_period"] = round_time(min_period)
+        char_sram_data["min_period"] = round_time(min_period)
 
         # 3) Find the leakage power of the trimmmed and  UNtrimmed arrays.
         (full_array_leakage, trim_array_leakage)=self.run_power_simulation()
-        char_data["leakage_power"]=full_array_leakage
+        char_sram_data["leakage_power"]=full_array_leakage
         leakage_offset = full_array_leakage - trim_array_leakage
         
         # 4) At the minimum period, measure the delay, slew and power for all slew/load pairs.
-        load_slew_data = self.simulate_loads_and_slews(slews, loads, leakage_offset)
-        #char_data.update(load_slew_data)
+        char_port_data = self.simulate_loads_and_slews(slews, loads, leakage_offset)
         
-        return (char_data, load_slew_data)
+        return (char_sram_data, char_port_data)
 
     def simulate_loads_and_slews(self, slews, loads, leakage_offset):
         """Simulate all specified output loads and input slews pairs of all ports"""
@@ -979,18 +966,18 @@ class delay():
         debug.info(1,"Dynamic Power: {0} mW".format(power.dynamic))        
         debug.info(1,"Leakage Power: {0} mW".format(power.leakage)) 
         
-        data = {"min_period": 0, 
-                "delay_lh0": delay_lh,
-                "delay_hl0": delay_hl,
-                "slew_lh0": slew_lh,
-                "slew_hl0": slew_hl,
-                "read0_power0": power.dynamic,
-                "read1_power0": power.dynamic,
-                "write0_power0": power.dynamic,
-                "write1_power0": power.dynamic,
-                "leakage_power": power.leakage
-                }
-        return data
+        sram_data = { "min_period": 0, 
+                    "leakage_power": power.leakage}
+        port_data = [{"delay_lh": delay_lh,
+                      "delay_hl": delay_hl,
+                      "slew_lh": slew_lh,
+                      "slew_hl": slew_hl,
+                      "read0_power": power.dynamic,
+                      "read1_power": power.dynamic,
+                      "write0_power": power.dynamic,
+                      "write1_power": power.dynamic,
+                }]
+        return (sram_data,port_data)
 
     def gen_data(self):
         """ Generates the PWL data inputs for a simulation timing test. """

@@ -56,8 +56,8 @@ class hierarchical_predecode(design.design):
         # x offset for input inverters
         self.x_off_inv_1 = self.number_of_inputs*self.m2_pitch 
 
-        # x offset to NAND decoder includes the left rails, mid rails and inverters, plus an extra m2 pitch
-        self.x_off_nand = self.x_off_inv_1 + self.inv.width + (2*self.number_of_inputs + 1) * self.m2_pitch
+        # x offset to NAND decoder includes the left rails, mid rails and inverters, plus two extra m2 pitches
+        self.x_off_nand = self.x_off_inv_1 + self.inv.width + (2*self.number_of_inputs + 2) * self.m2_pitch
 
         # x offset to output inverters
         self.x_off_inv_2 = self.x_off_nand + self.nand.width
@@ -78,7 +78,7 @@ class hierarchical_predecode(design.design):
         invert_names = ["Abar[{}]".format(x) for x in range(self.number_of_inputs)]
         non_invert_names = ["A[{}]".format(x) for x in range(self.number_of_inputs)]
         decode_names = invert_names + non_invert_names
-        offset = vector(self.x_off_inv_1 + self.inv.width + self.m2_pitch, 2*self.m1_width)
+        offset = vector(self.x_off_inv_1 + self.inv.width + 2*self.m2_pitch, 2*self.m1_width)
         self.decode_rails = self.create_vertical_bus(layer="metal2",
                                                      pitch=self.m2_pitch,
                                                      offset=offset,

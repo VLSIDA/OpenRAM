@@ -87,20 +87,20 @@ cell (sram_2_16_1_scn3me_subm){
     cell_leakage_power : 0;
     bus(DIN){
         bus_type  : DATA; 
-        direction  : in; 
-        max_capacitance : 78.5936;  
-        min_capacitance : 2.45605;  
+        direction  : input; 
+        capacitance : 9.8242;  
         memory_write(){ 
-            address : ADDR; 
+            address : ADDR0; 
             clocked_on  : clk; 
         }
+    }
     bus(DOUT){
         bus_type  : DATA; 
-        direction  : out; 
+        direction  : output; 
         max_capacitance : 78.5936;  
         min_capacitance : 2.45605;  
         memory_read(){ 
-            address : ADDR; 
+            address : ADDR0; 
         }
         pin(DOUT[1:0]){
         timing(){ 
@@ -197,39 +197,6 @@ cell (sram_2_16_1_scn3me_subm){
     }
 
     pin(CSb){
-        direction  : input; 
-        capacitance : 9.8242;  
-        timing(){ 
-            timing_type : setup_rising; 
-            related_pin  : "clk"; 
-            rise_constraint(CONSTRAINT_TABLE) {
-            values("0.009, 0.009, 0.009",\
-                   "0.009, 0.009, 0.009",\
-                   "0.009, 0.009, 0.009");
-            }
-            fall_constraint(CONSTRAINT_TABLE) {
-            values("0.009, 0.009, 0.009",\
-                   "0.009, 0.009, 0.009",\
-                   "0.009, 0.009, 0.009");
-            }
-        }
-        timing(){ 
-            timing_type : hold_rising; 
-            related_pin  : "clk"; 
-            rise_constraint(CONSTRAINT_TABLE) {
-            values("0.001, 0.001, 0.001",\
-                   "0.001, 0.001, 0.001",\
-                   "0.001, 0.001, 0.001");
-              }
-            fall_constraint(CONSTRAINT_TABLE) {
-            values("0.001, 0.001, 0.001",\
-                   "0.001, 0.001, 0.001",\
-                   "0.001, 0.001, 0.001");
-            }
-        }
-    }
-
-    pin(OEb){
         direction  : input; 
         capacitance : 9.8242;  
         timing(){ 

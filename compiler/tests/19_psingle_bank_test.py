@@ -33,6 +33,25 @@ class psingle_bank_test(openram_test):
         debug.info(1, "No column mux")
         a = bank(c, name="bank1_1rw_0w_0r_single")
         self.local_check(a)
+        
+        c.num_words=32
+        c.words_per_row=2
+        debug.info(1, "Two way column mux")
+        a = bank(c, name="bank1_1rw_0w_0r_single")
+        self.local_check(a)
+        
+        c.num_words=64
+        c.words_per_row=4
+        debug.info(1, "Four way column mux")
+        a = bank(c, name="bank1_1rw_0w_0r_single")
+        self.local_check(a)
+        
+        c.num_words=128
+        c.words_per_row=8
+        debug.info(1, "Four way column mux")
+        a = bank(c, name="bank1_1rw_0w_0r_single")
+        self.local_check(a)
+        
         """
         # multiport can't generate layout yet on the bank level
         OPTS.netlist_only = True
@@ -120,7 +139,7 @@ class psingle_bank_test(openram_test):
         self.local_check(a)
         """
         
-        globals.end_openram()
+        #globals.end_openram()
         
 # instantiate a copy of the class to actually run the test
 if __name__ == "__main__":

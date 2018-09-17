@@ -1,0 +1,46 @@
+# SUE version MMI_SUE5.0.7
+
+proc SCHEMATIC_cell_6t {} {
+  make inout -name BL -origin {190 360}
+  make inout -name BR -origin {830 360}
+  make input -name WL -origin {240 120}
+  make global -orient RXY -name vdd -origin {520 160}
+  make global -name gnd -origin {510 600}
+  make pmos -orient RY -W 0.9u -L 1.2u -origin {630 230}
+  make pmos -orient RXY -W 0.9u -L 1.2u -origin {400 230}
+  make nmos -orient R90 -W 1.2 -L 0.6u -origin {740 360}
+  make nmos -orient R90X -W 1.2 -L 0.6u -origin {270 360}
+  make nmos -W 2.4u -L 0.6u -origin {630 490}
+  make nmos -orient RX -W 2.4u -L 0.6u -origin {400 490}
+  make_wire 630 550 630 530
+  make_wire 400 530 400 550
+  make_wire 400 190 400 170
+  make_wire 630 170 630 190
+  make_wire 400 360 400 270
+  make_wire 310 360 400 360
+  make_wire 630 360 630 450
+  make_wire 630 360 700 360
+  make_wire 270 300 270 120
+  make_wire 270 120 740 120
+  make_wire 740 120 740 300
+  make_wire 230 360 190 360
+  make_wire 780 360 830 360
+  make_wire 510 550 400 550
+  make_wire 510 550 630 550
+  make_wire 510 550 510 600
+  make_wire 520 170 400 170
+  make_wire 520 170 630 170
+  make_wire 520 160 520 170
+  make_wire 240 120 270 120
+  make_wire 460 290 630 290
+  make_wire 460 290 460 490
+  make_wire 460 290 460 230
+  make_wire 630 290 630 360
+  make_wire 630 290 630 270
+  make_wire 570 420 400 420
+  make_wire 570 420 570 490
+  make_wire 570 420 570 230
+  make_wire 400 420 400 360
+  make_wire 400 420 400 450
+}
+

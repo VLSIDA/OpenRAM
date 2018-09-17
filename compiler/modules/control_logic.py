@@ -96,7 +96,7 @@ class control_logic(design.design):
         """ Setup bus names, determine the size of the busses etc """
 
         # List of input control signals
-        self.input_list =["csb","web"]
+        self.input_list =["csb","web0"]
         self.dff_output_list =["cs_bar", "cs", "we_bar", "we"]        
         # list of output control signals (for making a vertical bus)
         self.internal_bus_list = ["clk_buf", "clk_buf_bar", "we", "cs"]
@@ -267,7 +267,7 @@ class control_logic(design.design):
         
         # Connect the clock rail to the other clock rail
         in_pos = self.ctrl_dff_inst.get_pin("clk").uc()
-        mid_pos = in_pos + vector(0,self.m2_pitch)
+        mid_pos = in_pos + vector(0,2*self.m2_pitch)
         rail_pos = vector(self.rail_offsets["clk_buf"].x, mid_pos.y)
         self.add_wire(("metal1","via1","metal2"),[in_pos, mid_pos, rail_pos])
         self.add_via_center(layers=("metal1","via1","metal2"),
@@ -275,7 +275,7 @@ class control_logic(design.design):
                             rotate=90)
 
         self.copy_layout_pin(self.ctrl_dff_inst, "din[0]", "csb")
-        self.copy_layout_pin(self.ctrl_dff_inst, "din[1]", "web")
+        self.copy_layout_pin(self.ctrl_dff_inst, "din[1]", "web0")
         
         
     def create_dffs(self):

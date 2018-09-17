@@ -14,12 +14,18 @@ class single_level_column_mux_array(design.design):
     Array of column mux to read the bitlines through the 6T.
     """
 
-    def __init__(self, columns, word_size):
-        design.design.__init__(self, "columnmux_array")
+    unique_id = 1
+    
+    def __init__(self, columns, word_size, bitcell_bl="bl", bitcell_br="br"):
+        name="single_level_column_mux_array_{}".format(single_level_column_mux_array.unique_id)
+        single_level_column_mux_array.unique_id += 1
+        design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
         self.columns = columns
         self.word_size = word_size
         self.words_per_row = int(self.columns / self.word_size)
+        self.bitcell_bl = bitcell_bl
+        self.bitcell_br = bitcell_br
         
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -56,7 +62,7 @@ class single_level_column_mux_array(design.design):
 
     def add_modules(self):
         # FIXME: Why is this 8x?
-        self.mux = single_level_column_mux(tx_size=8)
+        self.mux = single_level_column_mux(tx_size=8, bitcell_bl=self.bitcell_bl, bitcell_br=self.bitcell_br)
         self.add_mod(self.mux)
 
 

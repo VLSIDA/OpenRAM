@@ -3,7 +3,7 @@ import tech
 from .stimuli import *
 import debug
 from .charutils import *
-import ms_flop
+import dff
 from globals import OPTS
 
 
@@ -15,9 +15,9 @@ class setup_hold():
 
     def __init__(self, corner):
         # This must match the spice model order
-        self.pins = ["data", "dout", "dout_bar", "clk", "vdd", "gnd"]
-        self.model_name = "ms_flop"
-        self.model_location = OPTS.openram_tech + "sp_lib/ms_flop.sp"
+        self.pins = ["data", "dout", "clk", "vdd", "gnd"]
+        self.model_name = "dff"
+        self.model_location = OPTS.openram_tech + "sp_lib/dff.sp"
         self.period = tech.spice["feasible_period"]
 
         debug.info(2,"Feasible period from technology file: {0} ".format(self.period))
@@ -276,17 +276,36 @@ class setup_hold():
         HL_setup = []
         LH_hold = []
         HL_hold = []
+        
+        #For debugging, skips characterization and returns dummy values.
+        # i = 1.0
+        # for self.related_input_slew in related_slews:
+            # for self.constrained_input_slew in constrained_slews:
+                # LH_setup.append(i)
+                # HL_setup.append(i+1.0)
+                # LH_hold.append(i+2.0)
+                # HL_hold.append(i+3.0)
+                # i+=4.0
+                
+        # times = {"setup_times_LH": LH_setup,
+                 # "setup_times_HL": HL_setup,
+                 # "hold_times_LH": LH_hold,
+                 # "hold_times_HL": HL_hold
+                 # }
+        # return times
+        
+        
         for self.related_input_slew in related_slews:
             for self.constrained_input_slew in constrained_slews:
                 debug.info(1, "Clock slew: {0} Data slew: {1}".format(self.related_input_slew,self.constrained_input_slew))
                 LH_setup_time = self.setup_LH_time()
-                debug.info(1, "  Setup Time for low_to_high transistion: {0}".format(LH_setup_time))
+                debug.info(1, "  Setup Time for low_to_high transition: {0}".format(LH_setup_time))
                 HL_setup_time = self.setup_HL_time()
-                debug.info(1, "  Setup Time for high_to_low transistion: {0}".format(HL_setup_time))
+                debug.info(1, "  Setup Time for high_to_low transition: {0}".format(HL_setup_time))
                 LH_hold_time = self.hold_LH_time()
-                debug.info(1, "  Hold Time for low_to_high transistion: {0}".format(LH_hold_time))
+                debug.info(1, "  Hold Time for low_to_high transition: {0}".format(LH_hold_time))
                 HL_hold_time = self.hold_HL_time()
-                debug.info(1, "  Hold Time for high_to_low transistion: {0}".format(HL_hold_time))
+                debug.info(1, "  Hold Time for high_to_low transition: {0}".format(HL_hold_time))
                 LH_setup.append(LH_setup_time)
                 HL_setup.append(HL_setup_time)
                 LH_hold.append(LH_hold_time)

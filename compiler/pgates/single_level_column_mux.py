@@ -12,12 +12,17 @@ class single_level_column_mux(design.design):
     Creates a single columnmux cell.
     """
 
-    def __init__(self, tx_size):
-        name="single_level_column_mux_{}".format(tx_size)
+    unique_id = 1
+    
+    def __init__(self, tx_size, bitcell_bl="bl", bitcell_br="br"):
+        name="single_level_column_mux_{}_no{}".format(tx_size,single_level_column_mux.unique_id)
+        single_level_column_mux.unique_id += 1
         design.design.__init__(self, name)
         debug.info(2, "create single column mux cell: {0}".format(name))
 
         self.tx_size = tx_size
+        self.bitcell_bl = bitcell_bl
+        self.bitcell_br = bitcell_br
         
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -59,8 +64,8 @@ class single_level_column_mux(design.design):
     def add_bitline_pins(self):
         """ Add the top and bottom pins to this cell """
 
-        bl_pos = vector(self.bitcell.get_pin("bl").lx(), 0)
-        br_pos = vector(self.bitcell.get_pin("br").lx(), 0)
+        bl_pos = vector(self.bitcell.get_pin(self.bitcell_bl).lx(), 0)
+        br_pos = vector(self.bitcell.get_pin(self.bitcell_br).lx(), 0)
 
         # bl and br
         self.add_layout_pin(text="bl",

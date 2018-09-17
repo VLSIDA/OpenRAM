@@ -34,7 +34,9 @@ class sram_1bank(sram_base):
         
         self.bank_inst=self.create_bank(0)
 
-        self.control_logic_inst = self.create_control_logic()
+        self.control_logic_inst = [None] * self.total_ports
+        for port in range(self.total_ports):
+            self.control_logic_inst[port] = self.create_control_logic(port)
 
         self.row_addr_dff_inst = self.create_row_addr_dff()
 
@@ -59,11 +61,11 @@ class sram_1bank(sram_base):
         # up to the row address DFFs.
         control_pos = vector(-self.control_logic.width - 2*self.m2_pitch,
                              self.bank.bank_center.y - self.control_logic.control_logic_center.y)
-        self.control_logic_inst.place(control_pos)
+        self.control_logic_inst[0].place(control_pos)
 
         # The row address bits are placed above the control logic aligned on the right.
-        row_addr_pos = vector(self.control_logic_inst.rx() - self.row_addr_dff.width,
-                              self.control_logic_inst.uy())
+        row_addr_pos = vector(self.control_logic_inst[0].rx() - self.row_addr_dff.width,
+                              self.control_logic_inst[0].uy())
         self.row_addr_dff_inst.place(row_addr_pos)
 
         # This is M2 pitch even though it is on M1 to help stem via spacings on the trunk
@@ -95,7 +97,7 @@ class sram_1bank(sram_base):
         """
         # Connect the control pins as inputs
         for n in self.control_logic_inputs + ["clk"]:
-            self.copy_layout_pin(self.control_logic_inst, n)
+            self.copy_layout_pin(self.control_logic_inst[0], n)
 
         for i in range(self.word_size):
             dout_name = "dout0[{}]".format(i)
@@ -134,7 +136,7 @@ class sram_1bank(sram_base):
         """ Route the clock network """
 
         # This is the actual input to the SRAM
-        self.copy_layout_pin(self.control_logic_inst, "clk")
+        self.copy_layout_pin(self.control_logic_inst[0], "clk")
 
         # Connect all of these clock pins to the clock in the central bus
         # This is something like a "spine" clock distribution. The two spines
@@ -158,7 +160,7 @@ class sram_1bank(sram_base):
 
         # This uses a metal2 track to the right of the control/row addr DFF
         # to route vertically.
-        control_clk_buf_pin = self.control_logic_inst.get_pin("clk_buf")
+        control_clk_buf_pin = self.control_logic_inst[0].get_pin("clk_buf")
         control_clk_buf_pos = control_clk_buf_pin.rc()
         row_addr_clk_pin = self.row_addr_dff_inst.get_pin("clk")
         row_addr_clk_pos = row_addr_clk_pin.rc()
@@ -177,7 +179,7 @@ class sram_1bank(sram_base):
         top_instances = [self.bank_inst,
                          self.row_addr_dff_inst,
                          self.data_dff_inst,
-                         self.control_logic_inst]
+                         self.control_logic_inst[0]]
         if self.col_addr_dff:
             top_instances.append(self.col_addr_dff_inst)
 
@@ -193,7 +195,7 @@ class sram_1bank(sram_base):
         top_instances = [self.bank_inst,
                          self.row_addr_dff_inst,
                          self.data_dff_inst,
-                         self.control_logic_inst]
+                         self.control_logic_inst[0]]
         if self.col_addr_dff:
             top_instances.append(self.col_addr_dff_inst)
 
@@ -267,7 +269,7 @@ class sram_1bank(sram_base):
     def route_control_logic(self):
         """ Route the outputs from the control logic module """
         for n in self.control_logic_outputs:
-            src_pin = self.control_logic_inst.get_pin(n)
+            src_pin = self.control_logic_inst[0].get_pin(n)
             dest_pin = self.bank_inst.get_pin(n)                
             self.connect_rail_from_left_m2m3(src_pin, dest_pin)
             self.add_via_center(layers=("metal1","via1","metal2"),
@@ -319,8 +321,10 @@ class sram_1bank(sram_base):
 
         route_map = list(zip(bank_names, dff_names))
         dff_pins = {key: self.data_dff_inst.get_pin(key) for key in dff_names }
-        bank_pins = {key: self.bank_inst.get_pin(key) for key in bank_names }   
-        self.create_horizontal_channel_route(route_map, dff_pins, bank_pins, offset)
+        bank_pins = {key: self.bank_inst.get_pin(key) for key in bank_names }
+        # Combine the dff and bank pins into a single dictionary of pin name to pin.
+        all_pins = {**dff_pins, **bank_pins}
+        self.create_horizontal_channel_route(route_map, all_pins, offset)
                 
             
 
@@ -332,7 +336,7 @@ class sram_1bank(sram_base):
         """
         
         for n in self.control_logic_outputs:
-            pin = self.control_logic_inst.get_pin(n)
+            pin = self.control_logic_inst[0].get_pin(n)
             self.add_label(text=n,
                            layer=pin.layer,
                            offset=pin.center())

@@ -59,7 +59,7 @@ def parse_args():
         OPTS.tech_name = "scmos"
     # Alias SCMOS to AMI 0.5um
     if OPTS.tech_name == "scmos":
-        OPTS.tech_name = "scn3me_subm"
+        OPTS.tech_name = "scn4m_subm"
 
     return (options, args)
 

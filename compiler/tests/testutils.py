@@ -183,6 +183,9 @@ class openram_test(unittest.TestCase):
             
             # 4. Check if remaining string matches
             if line1 != line2:
+                #Uncomment if you want to see all the individual chars of the two lines 
+                #print(str([i for i in line1]))
+                #print(str([i for i in line2]))
                 if mismatches==0:
                     debug.error("Mismatching files:\nfile1={0}\nfile2={1}".format(filename1,filename2))
                 mismatches += 1
@@ -222,17 +225,21 @@ class openram_test(unittest.TestCase):
         check = filecmp.cmp(filename1,filename2)
         if not check:
             debug.error("MISMATCH file1={0} file2={1}".format(filename1,filename2))
-            f1 = open(filename1,"r")
-            s1 = f1.readlines().decode('utf-8')
+            f1 = open(filename1,mode="r",encoding='utf-8')
+            s1 = f1.readlines()
             f1.close()
-            f2 = open(filename2,"r").decode('utf-8')
+            f2 = open(filename2,mode="r",encoding='utf-8')
             s2 = f2.readlines()
             f2.close()
             mismatches=0
-            for line in difflib.unified_diff(s1, s2):
+            for line in list(difflib.unified_diff(s1, s2)):
                 mismatches += 1
-                self.error("DIFF LINES:",line)
-                if mismatches>10:
+                if mismatches==0:
+                    print("DIFF LINES:")
+
+                if mismatches<11:
+                    print(line.rstrip('\n'))
+                else:
                     return False
             return False
         else:

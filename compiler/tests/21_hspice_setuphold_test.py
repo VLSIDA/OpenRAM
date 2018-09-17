@@ -39,11 +39,11 @@ class timing_setup_test(openram_test):
                            'hold_times_LH': [-0.0158691],
                            'setup_times_HL': [0.026855499999999997],
                            'setup_times_LH': [0.032959]}
-        elif OPTS.tech_name == "scn3me_subm":
-            golden_data = {'hold_times_HL': [-0.15625],
-                           'hold_times_LH': [-0.1257324],
-                           'setup_times_HL': [0.2038574],
-                           'setup_times_LH': [0.2893066]}
+        elif OPTS.tech_name == "scn4m_subm":
+            golden_data = {'hold_times_HL': [-0.0891113],
+                            'hold_times_LH': [-0.0769043],
+                            'setup_times_HL': [0.1184082],
+                            'setup_times_LH': [0.1733398]}
         else:
             self.assertTrue(False) # other techs fail
 

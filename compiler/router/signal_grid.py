@@ -64,15 +64,21 @@ class signal_grid(grid):
         # over-ridden if the route fails due to pruning a feasible solution.
         cost_bound = detour_scale*self.cost_to_target(self.source[0])*grid.PREFERRED_COST
 
+        # Check if something in the queue is already a source and a target!
+        for s in self.source:
+            if self.is_target(s):
+                return((grid_path([vector3d(s)]),0))
+            
         # Make sure the queue is empty if we run another route
         while len(self.q)>0:
             heappop(self.q)
-
+            
         # Put the source items into the queue
         self.init_queue()
         cheapest_path = None
         cheapest_cost = None
-        
+
+            
         # Keep expanding and adding to the priority queue until we are done
         while len(self.q)>0:
             # should we keep the path in the queue as well or just the final node?

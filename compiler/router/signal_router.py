@@ -67,16 +67,16 @@ class signal_router(router):
         
         # Now add the blockages
         self.set_blockages(self.blocked_grids,True)
-        self.set_blockages(self.pin_partial[src],True)
-        self.set_blockages(self.pin_partial[dest],True)
+        #self.set_blockages(self.pin_partials[src],True)
+        #self.set_blockages(self.pin_partials[dest],True)
         
         # Add blockages from previous paths
         self.set_path_blockages()
 
 
         # Now add the src/tgt if they are not blocked by other shapes
-        self.add_pin(src,True)
-        self.add_pin(dest,False)
+        self.add_source(src)
+        self.add_target(dest)
 
         if not self.run_router(detour_scale):
             return False

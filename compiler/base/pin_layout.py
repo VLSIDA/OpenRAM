@@ -30,9 +30,26 @@ class pin_layout:
         return "({} layer={} ll={} ur={})".format(self.name,self.layer,self.rect[0],self.rect[1])
 
     def __repr__(self):
-        """ override print function output """
-        return "({} layer={} ll={} ur={})".format(self.name,self.layer,self.rect[0],self.rect[1])
+        """ 
+        override repr function output (don't include 
+        name since pin shapes could have same shape but diff name e.g. blockage vs A)
+        """
+        return "(layer={} ll={} ur={})".format(self.layer,self.rect[0],self.rect[1])
 
+    def __hash__(self):
+        """ Implement the hash function for sets etc. """
+        return hash(repr(self))
+    
+    def __lt__(self, other):
+        """ Provide a function for ordering items by the ll point """
+        (ll, ur) = self.rect
+        (oll, our) = other.rect
+        
+        if ll.x < oll.x and ll.y < oll.y:
+            return True
+            
+        return False
+    
     def __eq__(self, other):
         """ Check if these are the same pins for duplicate checks """
         if isinstance(other, self.__class__):
@@ -71,6 +88,10 @@ class pin_layout:
         """ Check if a shape overlaps with a rectangle  """
         (ll,ur) = self.rect
         (oll,our) = other.rect
+
+        # Can only overlap on the same layer
+        if self.layer != other.layer:
+            return False
         
         # Start assuming no overlaps
         x_overlaps = False

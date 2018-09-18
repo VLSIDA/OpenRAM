@@ -4,7 +4,6 @@ class grid_cell:
     visited, etc.
     """
     def __init__(self):
-        self.visited = False
         self.path = False
         self.blocked = False
         self.source = False
@@ -17,7 +16,6 @@ class grid_cell:
         Reset the dynamic info about routing. The pins/blockages are not reset so
         that they can be reused.
         """
-        self.visited=False
         self.min_cost=-1
         self.min_path=None
         self.blocked=False

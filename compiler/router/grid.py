@@ -87,15 +87,15 @@ class grid:
             self.target.append(n)
 
         
-    def add_source(self,track_list):
+    def add_source(self,track_list,value=True):
         debug.info(3,"Adding source list={0}".format(str(track_list)))
         for n in track_list:
             debug.info(4,"Adding source ={0}".format(str(n)))
-            self.set_source(n)
+            self.set_source(n,value)
             self.set_blocked(n,False)
 
 
-    def set_target(self,track_list,value=True):
+    def add_target(self,track_list,value=True):
         debug.info(3,"Adding target list={0}".format(str(track_list)))
         for n in track_list:
             debug.info(4,"Adding target ={0}".format(str(n)))                                

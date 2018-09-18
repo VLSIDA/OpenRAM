@@ -42,7 +42,7 @@ class no_blockages_test(openram_test):
                 self.connect_inst(cell.pin_map.keys())
                 
                 r=router(module=cell)
-                layer_stack =("metal3","via2","metal2")
+                layer_stack =("metal3","via3","metal4")
                 self.assertTrue(r.route(self,layer_stack))
 
         r=routing("10_supply_grid_test_{0}".format(OPTS.tech_name))

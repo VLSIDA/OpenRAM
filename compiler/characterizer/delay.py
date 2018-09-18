@@ -48,12 +48,65 @@ class delay():
         self.set_corner(corner)
         self.create_port_names()
         
+        #Only used to instantiate SRAM in stim file. TODO, extend to every function in this file.
+        self.create_pin_names()
+        
         #Create global measure names. May be an input at some point.
         #Altering the names will crash the characterizer. TODO: object orientated approach to the measurements.
         self.delay_meas_names = ["delay_lh", "delay_hl", "slew_lh", "slew_hl"]
         self.power_meas_names = ["read0_power", "read1_power", "write0_power", "write1_power"]
     
+    def create_pin_names(self):
+        """Creates the pins names of the SRAM based on the no. of ports"""
+        self.pin_names = []
+        for write_input in self.write_ports:
+            for i in range(self.word_size):
+                self.pin_names.append("DIN{0}[{1}]".format(write_input, i))
+        
+        for port in range(self.total_port_num):
+            for i in range(self.addr_size):
+                self.pin_names.append("A{0}[{1}]".format(port,i))    
 
+        #These control signals assume 6t sram i.e. a single readwrite port. If multiple readwrite ports are used then add more
+        #control signals. Not sure if this is correct, consider a temporary change until control signals for multiport are finalized.
+        for port in range(self.total_port_num):
+            self.pin_names.append("CSB{0}".format(port))
+        for readwrite_port in range(self.readwrite_port_num):
+            self.pin_names.append("WEB{0}".format(readwrite_port))
+            
+        self.pin_names.append("{0}".format(tech.spice["clk"]))
+        for read_output in self.read_ports:
+            for i in range(self.word_size):
+                self.pin_names.append("DOUT{0}[{1}]".format(read_output, i))
+        self.pin_names.append("{0}".format(tech.spice["vdd_name"]))
+        self.pin_names.append("{0}".format(tech.spice["gnd_name"]))
+    
+        #Only checking length. This should check functionality as well (TODO) and/or import that information from the SRAM
+        debug.check(len(self.sram.pins) == len(self.pin_names), "Number of pins generated for characterization do match pins of SRAM")
+    
+    def create_port_names(self):
+        """Generates the port names to be used in characterization and sets default simulation target ports"""
+        self.write_ports = []
+        self.read_ports = []
+        self.total_port_num = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
+        
+        #save a member variable to avoid accessing global. readwrite ports have different control signals.
+        self.readwrite_port_num = OPTS.num_rw_ports
+        
+        #Generate the port names. readwrite ports are required to be added first for this to work.
+        for readwrite_port_num in range(OPTS.num_rw_ports):
+            self.read_ports.append(readwrite_port_num)
+            self.write_ports.append(readwrite_port_num)
+        #This placement is intentional. It makes indexing input data easier. See self.data_values
+        for write_port_num in range(OPTS.num_rw_ports, OPTS.num_rw_ports+OPTS.num_w_ports):
+            self.write_ports.append(write_port_num)
+        for read_port_num in range(OPTS.num_rw_ports+OPTS.num_w_ports, OPTS.num_rw_ports+OPTS.num_w_ports+OPTS.num_r_ports):
+            self.read_ports.append(read_port_num)
+        
+        #Set the default target ports for simulation. Default is all the ports.
+        self.targ_read_ports = self.read_ports
+        self.targ_write_ports = self.write_ports
+    
     def set_corner(self,corner):
         """ Set the corner values """
         self.corner = corner
@@ -92,9 +145,7 @@ class delay():
 
         # instantiate the sram
         self.sf.write("\n* Instantiation of the SRAM\n")
-        self.stim.inst_sram(abits=self.addr_size, 
-                            dbits=self.word_size, 
-                            port_info=(self.total_port_num,self.readwrite_port_num,self.read_ports,self.write_ports),
+        self.stim.inst_sram(pin_names=self.pin_names,
                             sram_name=self.name)
 
         self.sf.write("\n* SRAM output loads\n")
@@ -345,7 +396,7 @@ class delay():
             
             if not success:
                 feasible_period = 2 * feasible_period
-                break
+                continue
             
             #Positions of measurements currently hardcoded. First 2 are delays, next 2 are slews
             feasible_delays = [results[port][mname] for mname in self.delay_meas_names if "delay" in mname]
@@ -1004,30 +1055,6 @@ class delay():
         for readwrite_port in range(self.readwrite_port_num):
             self.stim.gen_pwl("WEB{0}".format(readwrite_port), self.cycle_times, self.web_values[readwrite_port], self.period, self.slew, 0.05)
             
-
-    def create_port_names(self):
-        """Generates the port names to be used in characterization and sets default simulation target ports"""
-        self.write_ports = []
-        self.read_ports = []
-        self.total_port_num = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
-        
-        #save a member variable to avoid accessing global. readwrite ports have different control signals.
-        self.readwrite_port_num = OPTS.num_rw_ports
-        
-        #Generate the port names. readwrite ports are required to be added first for this to work.
-        for readwrite_port_num in range(OPTS.num_rw_ports):
-            self.read_ports.append(readwrite_port_num)
-            self.write_ports.append(readwrite_port_num)
-        #This placement is intentional. It makes indexing input data easier. See self.data_values
-        for write_port_num in range(OPTS.num_rw_ports, OPTS.num_rw_ports+OPTS.num_w_ports):
-            self.write_ports.append(write_port_num)
-        for read_port_num in range(OPTS.num_rw_ports+OPTS.num_w_ports, OPTS.num_rw_ports+OPTS.num_w_ports+OPTS.num_r_ports):
-            self.read_ports.append(read_port_num)
-        
-        #Set the default target ports for simulation. Default is all the ports.
-        self.targ_read_ports = self.read_ports
-        self.targ_write_ports = self.write_ports
-    
     def get_empty_measure_data_dict(self):
         """Make a dict of lists for each type of delay and power measurement to append results to"""
         measure_names = self.delay_meas_names + self.power_meas_names

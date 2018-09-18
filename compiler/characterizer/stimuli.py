@@ -41,13 +41,9 @@ class stimuli():
         self.sf.write("{0}\n".format(sram_name))
     
     
-    def inst_sram(self, abits, dbits, port_info, sram_name):
+    def inst_sram(self, pin_names, sram_name):
         """ Function to instatiate an SRAM subckt. """
         self.sf.write("Xsram ")
-        
-        #Un-tuple the port names. This was done to avoid passing them all as arguments. Could be improved still.
-        #This should be generated from the pin list of the sram... change when multiport pins done.
-        (total_port_num,readwrite_num,read_ports,write_ports) = port_info
 
         for write_input in write_ports:
             for i in range(dbits):

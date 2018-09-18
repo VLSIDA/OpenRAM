@@ -312,7 +312,7 @@ class layout(lef.lef):
                   position_list=coordinates, 
                   width=width)
 
-    def add_route(self, layers, coordinates):
+    def add_route(self, layers, coordinates, layer_widths):
         """Connects a routing path on given layer,coordinates,width. The
         layers are the (horizontal, via, vertical). add_wire assumes
         preferred direction routing whereas this includes layers in
@@ -323,7 +323,8 @@ class layout(lef.lef):
         # add an instance of our path that breaks down into rectangles and contacts
         route.route(obj=self,
                     layer_stack=layers, 
-                    path=coordinates)
+                    path=coordinates,
+                    layer_widths=layer_widths)
 
     
     def add_wire(self, layers, coordinates):

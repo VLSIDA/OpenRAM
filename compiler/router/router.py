@@ -101,17 +101,15 @@ class router:
         vertical.
         """
         self.layers = layers
-        (horiz_layer, via_layer, vert_layer) = self.layers
+        (self.horiz_layer_name, self.via_layer_name, self.vert_layer_name) = self.layers
 
-        self.vert_layer_name = vert_layer
-        self.vert_layer_width = tech.drc["minwidth_{0}".format(vert_layer)]
+        self.vert_layer_width = tech.drc["minwidth_{0}".format(self.vert_layer_name)]
         self.vert_layer_spacing = tech.drc[str(self.vert_layer_name)+"_to_"+str(self.vert_layer_name)] 
-        self.vert_layer_number = tech.layer[vert_layer]
+        self.vert_layer_number = tech.layer[self.vert_layer_name]
         
-        self.horiz_layer_name = horiz_layer
-        self.horiz_layer_width = tech.drc["minwidth_{0}".format(horiz_layer)]
+        self.horiz_layer_width = tech.drc["minwidth_{0}".format(self.horiz_layer_name)]
         self.horiz_layer_spacing = tech.drc[str(self.horiz_layer_name)+"_to_"+str(self.horiz_layer_name)] 
-        self.horiz_layer_number = tech.layer[horiz_layer]
+        self.horiz_layer_number = tech.layer[self.horiz_layer_name]
 
         # Contacted track spacing.
         via_connect = contact(self.layers, (1, 1))
@@ -127,7 +125,8 @@ class router:
         self.track_factor = [1/self.track_width] * 2
         debug.info(1,"Track factor: {0}".format(self.track_factor))
 
-
+        # When we actually create the routes, make them the width of the track (minus 1/2 spacing on each side)
+        self.layer_widths = [self.track_width - self.horiz_layer_spacing, 1, self.track_width - self.vert_layer_spacing]
 
     def retrieve_pins(self,pin_name):
         """
@@ -721,13 +720,15 @@ class router:
         abs_path = [self.convert_point_to_units(x[0]) for x in path]
         debug.info(1,str(abs_path))
 
-        # If we had a single grid route (source was equal to target)
-        self.add_enclosure(abs_path[0])
-        # Otherwise, add teh route and final enclosure
-        if len(abs_path)>1:
-            self.cell.add_route(self.layers,abs_path)
-            self.add_enclosure(abs_path[-1])
-
+        # If it is only a square, add an enclosure to the track
+        if len(path)==1:
+            self.add_enclosure(abs_path[0])
+        else:
+            # Otherwise, add the route which includes enclosures
+            self.cell.add_route(layers=self.layers,
+                                coordinates=abs_path,
+                                layer_widths=self.layer_widths)
+            
     def add_enclosure(self, loc):
         """
         Add a metal enclosure that is the size of the routing grid minus a spacing on each side. 

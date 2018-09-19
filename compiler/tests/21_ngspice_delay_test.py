@@ -57,12 +57,12 @@ class timing_sram_test(openram_test):
                             'delay_lh': [0.22870469999999998],
                             'leakage_power': 0.0009567935,
                             'min_period': 4.844,
-                            'read0_power0': [0.0547588],
-                            'read1_power0': [0.051159970000000006],
-                            'slew_hl0': [0.08164099999999999],
-                            'slew_lh0': [0.025474979999999998],
-                            'write0_power0': [0.06513271999999999],
-                            'write1_power0': [0.058057000000000004]}
+                            'read0_power': [0.0547588],
+                            'read1_power': [0.051159970000000006],
+                            'slew_hl': [0.08164099999999999],
+                            'slew_lh': [0.025474979999999998],
+                            'write0_power': [0.06513271999999999],
+                            'write1_power': [0.058057000000000004]}
         elif OPTS.tech_name == "scn4m_subm":
             golden_data = {'delay_hl': [3.644147],
                             'delay_lh': [1.629815],

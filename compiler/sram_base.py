@@ -227,10 +227,6 @@ class sram_base(design):
         c = reload(__import__(OPTS.control_logic))
         self.mod_control_logic = getattr(c, OPTS.control_logic)
 
-        c = reload(__import__(OPTS.ms_flop))
-        self.mod_ms_flop = getattr(c, OPTS.ms_flop)
-        self.ms_flop = self.mod_ms_flop()
-
         
         from control_logic import control_logic
         # Create the control logic module

@@ -23,7 +23,7 @@ class multibank(design.design):
 
     def __init__(self, word_size, num_words, words_per_row, num_banks=1, name=""):
 
-        mod_list = ["tri_gate", "bitcell", "decoder", "ms_flop_array", "wordline_driver",
+        mod_list = ["tri_gate", "bitcell", "decoder", "wordline_driver",
                     "bitcell_array",   "sense_amp_array",    "precharge_array",
                     "column_mux_array", "write_driver_array", "tri_gate_array",
                     "dff", "bank_select"]

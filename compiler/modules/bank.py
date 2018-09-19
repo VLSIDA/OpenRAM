@@ -205,7 +205,7 @@ class bank(design.design):
     def add_modules(self):
         """ Create all the modules using the class loader """
         
-        mod_list = ["bitcell", "decoder", "ms_flop_array", "wordline_driver",
+        mod_list = ["bitcell", "decoder", "wordline_driver",
                     "bitcell_array",   "sense_amp_array",    "precharge_array",
                     "column_mux_array", "write_driver_array", 
                     "dff", "bank_select"]

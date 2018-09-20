@@ -11,13 +11,16 @@ import globals
 from globals import OPTS
 import debug
 
-#@unittest.skip("SKIPPING 22_sram_func_test")
-class sram_func_test(openram_test):
+#@unittest.skip("SKIPPING 22_psram_func_test")
+class psram_func_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         OPTS.spice_name="hspice"
         OPTS.analytical_delay = False
+        OPTS.netlist_only = True
+        OPTS.bitcell = "pbitcell"
+        OPTS.replica_bitcell="replica_pbitcell"
         
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
@@ -33,7 +36,12 @@ class sram_func_test(openram_test):
                         num_words=16,
                         num_banks=1)
         c.words_per_row=1
-        debug.info(1, "Functional test for 1bit, 16word SRAM, with 1 bank")
+        
+        OPTS.num_rw_ports = 1
+        OPTS.num_w_ports = 0
+        OPTS.num_r_ports = 0
+        
+        debug.info(1, "Functional test for 1bit, 16word SRAM, with 1 bank. Multiport with {}RW {}W {}R.".format(OPTS.num_rw_ports, OPTS.num_w_ports, OPTS.num_r_ports))
         s = sram(c, name="sram1")
 
         tempspice = OPTS.openram_temp + "temp.sp"
@@ -42,6 +50,22 @@ class sram_func_test(openram_test):
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         f = functional(s.s, tempspice, corner)
         f.run()
+        
+        """
+        OPTS.num_rw_ports = 1
+        OPTS.num_w_ports = 1
+        OPTS.num_r_ports = 1
+        
+        debug.info(1, "Functional test for 1bit, 16word SRAM, with 1 bank. Multiport with {}RW {}W {}R.".format(OPTS.num_rw_ports, OPTS.num_w_ports, OPTS.num_r_ports))
+        s = sram(c, name="sram1")
+
+        tempspice = OPTS.openram_temp + "temp.sp"
+        s.sp_write(tempspice)
+
+        corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
+        f = functional(s.s, tempspice, corner)
+        f.run
+        """
 
         #globals.end_openram()
         

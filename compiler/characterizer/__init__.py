@@ -5,6 +5,7 @@ from globals import OPTS,find_exe,get_tool
 from .lib import *
 from .delay import *
 from .setup_hold import *
+from .functional import *
 
 
 debug.info(1,"Initializing characterizer...")

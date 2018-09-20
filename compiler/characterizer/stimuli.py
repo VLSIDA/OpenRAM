@@ -213,6 +213,12 @@ class stimuli():
                                                                             power_exp,
                                                                             t_initial,
                                                                             t_final))
+                                                                            
+    def gen_meas_value(self, meas_name, dout, eo_period, setup, slew):
+        t0 = eo_period - setup - 2*slew
+        t1 = eo_period - setup - slew
+        measure_string=".meas tran {0} AVG v({1}) FROM={2}n TO={3}n\n\n".format(meas_name, dout, t0, t1)
+        self.sf.write(measure_string)
     
     def write_control(self, end_time):
         """ Write the control cards to run and end the simulation """

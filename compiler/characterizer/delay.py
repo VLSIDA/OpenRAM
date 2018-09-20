@@ -48,7 +48,7 @@ class delay():
         self.set_corner(corner)
         self.create_port_names()
         
-        #Only used to instantiate SRAM in stim file. TODO, extend to every function in this file.
+        #Only used to instantiate SRAM in stim file.
         self.create_pin_names()
         
         #Create global measure names. Should maybe be an input at some point.
@@ -72,14 +72,13 @@ class delay():
         
         for write_input in self.write_ports:
             for i in range(self.word_size):
-                self.pin_names.append("{0}{1}[{2}]".format(self.inp_data_name,write_input, i))
+                self.pin_names.append("{0}{1}_{2}".format(self.inp_data_name,write_input, i))
         
         for port in range(self.total_port_num):
             for i in range(self.addr_size):
-                self.pin_names.append("{0}{1}[{2}]".format(self.address_name,port,i))    
+                self.pin_names.append("{0}{1}_{2}".format(self.address_name,port,i))    
 
-        #These control signals assume 6t sram i.e. a single readwrite port. If multiple readwrite ports are used then add more
-        #control signals. Not sure if this is correct, consider a temporary change until control signals for multiport are finalized.
+        #Control signals not finalized.
         for port in range(self.total_port_num):
             self.pin_names.append("CSB{0}".format(port))
         for readwrite_port in range(self.readwrite_port_num):
@@ -88,7 +87,8 @@ class delay():
         self.pin_names.append("{0}".format(tech.spice["clk"]))
         for read_output in self.read_ports:
             for i in range(self.word_size):
-                self.pin_names.append("{0}{1}[{2}]".format(self.out_data_name,read_output, i))
+                self.pin_names.append("{0}{1}_{2}".format(self.out_data_name,read_output, i))
+                
         self.pin_names.append("{0}".format(tech.spice["vdd_name"]))
         self.pin_names.append("{0}".format(tech.spice["gnd_name"]))
     
@@ -162,7 +162,7 @@ class delay():
         self.sf.write("\n* SRAM output loads\n")
         for port in self.read_ports:
             for i in range(self.word_size):
-                self.sf.write("CD{0}{1} {2}{0}[{1}] 0 {3}f\n".format(port,i,self.out_data_name,self.load))
+                self.sf.write("CD{0}{1} {2}{0}_{1} 0 {3}f\n".format(port,i,self.out_data_name,self.load))
         
 
     def write_delay_stimulus(self):
@@ -241,11 +241,11 @@ class delay():
         self.sf.write("\n* Generation of data and address signals\n")
         for write_port in self.write_ports:
             for i in range(self.word_size):
-                self.stim.gen_constant(sig_name="{0}{1}[{2}] ".format(self.inp_data_name,write_port, i),
+                self.stim.gen_constant(sig_name="{0}{1}_{2} ".format(self.inp_data_name,write_port, i),
                                     v_val=0)
         for port in range(self.total_port_num):
             for i in range(self.addr_size):
-                self.stim.gen_constant(sig_name="{0}{1}[{2}]".format(self.address_name,port, i),
+                self.stim.gen_constant(sig_name="{0}{1}_{2}".format(self.address_name,port, i),
                                        v_val=0)
 
         # generate control signals
@@ -270,7 +270,7 @@ class delay():
         debug.check('lh' in delay_name or 'hl' in delay_name, "Measure command {0} does not contain direction (lh/hl)")
         trig_clk_name = "clk"
         meas_name="{0}{1}".format(delay_name, port)
-        targ_name = "{0}".format("{0}{1}[{2}]".format(self.out_data_name,port,self.probe_data))
+        targ_name = "{0}".format("{0}{1}_{2}".format(self.out_data_name,port,self.probe_data))
         half_vdd = 0.5 * self.vdd_voltage
         trig_slew_low = 0.1 * self.vdd_voltage
         targ_slew_high = 0.9 * self.vdd_voltage
@@ -803,9 +803,7 @@ class delay():
     
     def add_noop_all_ports(self, comment, address, data):
         """ Add the control values for a noop to all ports. """
-        self.cycle_comments.append("Cycle {0:2d}\tPort All\t{1:5.2f}ns:\t{2}".format(len(self.cycle_times),
-                                                                           self.t_current,
-                                                                           comment))
+        self.add_comment("All", comment) 
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
          
@@ -816,10 +814,7 @@ class delay():
     def add_read(self, comment, address, data, port):
         """ Add the control values for a read cycle. """
         debug.check(port in self.read_ports, "Cannot add read cycle to a write port.")
-        self.cycle_comments.append("Cycle {0:2d}\tPort {3}\t{1:5.2f}ns:\t{2}".format(len(self.cycle_comments),
-                                                                           self.t_current,
-                                                                           comment,
-                                                                           port))
+        self.add_comment(port, comment) 
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
         self.add_control_one_port(port, "read")
@@ -839,10 +834,7 @@ class delay():
     def add_write(self, comment, address, data, port):
         """ Add the control values for a write cycle. """
         debug.check(port in self.write_ports, "Cannot add read cycle to a read port.")
-        self.cycle_comments.append("Cycle {0:2d}\tPort {3}\t{1:5.2f}ns:\t{2}".format(len(self.cycle_comments),
-                                                                           self.t_current,
-                                                                           comment,
-                                                                           port))
+        self.add_comment(port, comment)
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
         
@@ -876,6 +868,16 @@ class delay():
         if port < len(self.web_values):
             self.web_values[port].append(web_val)
 
+    def add_comment(self, port, comment):
+        """Add comment to list to be printed in stimulus file"""
+        #Clean up time before appending. Make spacing dynamic as well.
+        time = "{0:.2f} ns:".format(self.t_current)
+        time_spacing = len(time)+6
+        self.cycle_comments.append("Cycle {0:<6d} Port {1:<6} {2:<{3}}: {4}".format(len(self.cycle_times),
+                                                                           port,
+                                                                           time,
+                                                                           time_spacing,
+                                                                           comment))    
     def gen_test_cycles_one_port(self, read_port, write_port):
         """Intended but not implemented: Returns a list of key time-points [ns] of the waveform (each rising edge)
         of the cycles to do a timing evaluation of a single port. Current: Values overwritten for multiple calls"""
@@ -1045,7 +1047,7 @@ class delay():
         """ Generates the PWL data inputs for a simulation timing test. """
         for write_port in self.write_ports:
             for i in range(self.word_size):
-                sig_name="{0}{1}[{2}] ".format(self.inp_data_name,write_port, i)
+                sig_name="{0}{1}_{2} ".format(self.inp_data_name,write_port, i)
                 self.stim.gen_pwl(sig_name, self.cycle_times, self.data_values[write_port][i], self.period, self.slew, 0.05)
 
     def gen_addr(self):
@@ -1055,7 +1057,7 @@ class delay():
         """
         for port in range(self.total_port_num):
             for i in range(self.addr_size):
-                sig_name = "{0}{1}[{2}]".format(self.address_name,port,i)
+                sig_name = "{0}{1}_{2}".format(self.address_name,port,i)
                 self.stim.gen_pwl(sig_name, self.cycle_times, self.addr_values[port][i], self.period, self.slew, 0.05)
 
     def gen_control(self):

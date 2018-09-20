@@ -269,12 +269,15 @@ class stimuli():
 
     def write_supply(self):
         """ Writes supply voltage statements """
-        self.sf.write("V{0} {0} 0.0 {1}\n".format(self.vdd_name, self.voltage))
-        self.sf.write("V{0} {0} 0.0 {1}\n".format(self.gnd_name, 0))
+        gnd_node_name = "0"
+        self.sf.write("V{0} {0} {1} {2}\n".format(self.vdd_name, gnd_node_name, self.voltage))
         # This is for the test power supply
-        self.sf.write("V{0} {0} 0.0 {1}\n".format("test"+self.vdd_name, self.voltage))
-        self.sf.write("V{0} {0} 0.0 {1}\n".format("test"+self.gnd_name, 0))
+        self.sf.write("V{0} {0} {1} {2}\n".format("test"+self.vdd_name, gnd_node_name, self.voltage))
+        self.sf.write("V{0} {0} {1} {2}\n".format("test"+self.gnd_name, gnd_node_name, 0.0))
 
+        #Adding a commented out supply for simulators where gnd and 0 are not global grounds.
+        self.sf.write("\n*Nodes gnd and 0 are the same global ground node in ngspice/hspice/xa. Otherwise, this source may be needed.\n")
+        self.sf.write("*V{0} {0} {1} {2}\n".format(self.gnd_name, gnd_node_name, 0.0))
 
     def run_sim(self):
         """ Run hspice in batch mode and output rawfile to parse. """

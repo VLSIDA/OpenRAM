@@ -58,12 +58,13 @@ class signal_router(router):
             # FIXME: This could be created only over the routing region,
             # but this is simplest for now.
             self.create_routing_grid()
-            # This will get all shapes as blockages
-            self.find_blockages()
 
         # Now add the blockages (all shapes except the pins)
         self.find_pins(src)
         self.find_pins(dest)
+        
+        # This will get all shapes as blockages
+        self.find_blockages()
         
         # Now add the blockages
         self.set_blockages(self.blocked_grids,True)

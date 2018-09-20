@@ -57,13 +57,10 @@ class supply_router(router):
             # FIXME: This could be created only over the routing region,
             # but this is simplest for now.
             self.create_routing_grid()
-            # This will get all shapes as blockages
-            self.find_blockages()
 
         # Get the pin shapes
-        self.find_pins(self.vdd_name)
-        self.find_pins(self.gnd_name)
-
+        self.find_pins_and_blockages()
+        
         # Add the supply rails in a mesh network and connect H/V with vias
         # Block everything
         self.prepare_blockages()
@@ -84,8 +81,29 @@ class supply_router(router):
         self.route_pins_to_rails(gnd_name)
         self.route_pins_to_rails(vdd_name)
         
-        self.write_debug_gds()
+        self.write_debug_gds(stop_program=False)
         return True
+
+    def find_pins_and_blockages(self):
+        """
+        Find the pins and blockages in teh design 
+        """
+        # This finds the pin shapes and sorts them into "groups" that are connected
+        self.find_pins(self.vdd_name)
+        self.find_pins(self.gnd_name)
+
+        # This will get all shapes as blockages and convert to grid units
+        # This ignores shapes that were pins 
+        self.find_blockages()
+        
+        # This will convert the pins to grid units
+        # It must be done after blockages to ensure no DRCs between expanded pins and blocked grids
+        self.convert_pins(self.vdd_name)
+        self.convert_pins(self.gnd_name)
+
+        # Enclose the continguous grid units in a metal rectangle to fix some DRCs
+        self.enclose_pins()
+
 
     def prepare_blockages(self):
         """
@@ -104,7 +122,11 @@ class supply_router(router):
         # Block all of the pin components (some will be unblocked if they're a source/target)
         for name in self.pin_components.keys():
             self.set_blockages(self.pin_components[name],True)
-            
+
+        # Block all of the pin component partial blockages 
+        for name in self.pin_component_blockages.keys():
+            self.set_blockages(self.pin_component_blockages[name],True)
+                           
         # These are the paths that have already been routed.
         self.set_path_blockages()
         
@@ -234,11 +256,11 @@ class supply_router(router):
 
 
         num_components = self.num_pin_components(pin_name)
-        debug.info(0,"Pin {0} has {1} components to route.".format(pin_name, num_components))
+        debug.info(1,"Pin {0} has {1} components to route.".format(pin_name, num_components))
         
         # For every component
         for index in range(num_components):
-            debug.info(0,"Routing component {0} {1}".format(pin_name, index))
+            debug.info(2,"Routing component {0} {1}".format(pin_name, index))
             
             self.rg.reinit()
             
@@ -253,12 +275,8 @@ class supply_router(router):
             self.add_supply_rail_target(pin_name)
             
             # Actually run the A* router
-            self.run_router(detour_scale=5)
-            
-            #if index==1:
-            #    self.write_debug_gds()
-            #    import sys
-            #    sys.exit(1)
+            if not self.run_router(detour_scale=5):
+                self.write_debug_gds()
             
 
                 

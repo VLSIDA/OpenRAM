@@ -142,6 +142,15 @@ class vector3d():
             return self.x==other.x and self.y==other.y and self.z==other.z
         return False
 
+    def __lt__(self, other):
+        """Override the default less than behavior"""
+        if isinstance(other, self.__class__):
+            if self.x<other.x:
+                return True
+            if self.x==other.x and self.y<other.y:
+                return True
+        return False
+    
     def __ne__(self, other):
         """Override the default non-equality behavior"""
         return not self.__eq__(other)

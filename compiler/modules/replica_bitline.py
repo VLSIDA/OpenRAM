@@ -107,15 +107,17 @@ class replica_bitline(design.design):
     def create_modules(self):
         """ Create all of the module instances in the logical netlist """
         
+        total_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
+        
         # This is the threshold detect inverter on the output of the RBL
         self.rbl_inv_inst=self.add_inst(name="rbl_inv",
                                         mod=self.inv)
-        self.connect_inst(["bl[0]", "out", "vdd", "gnd"])
+        self.connect_inst(["bl0[0]", "out", "vdd", "gnd"])
 
         self.tx_inst=self.add_inst(name="rbl_access_tx",
                                    mod=self.access_tx)
         # D, G, S, B
-        self.connect_inst(["vdd", "delayed_en", "bl[0]", "vdd"])
+        self.connect_inst(["vdd", "delayed_en", "bl0[0]", "vdd"])
         # add the well and poly contact
 
         self.dc_inst=self.add_inst(name="delay_chain",
@@ -124,18 +126,24 @@ class replica_bitline(design.design):
 
         self.rbc_inst=self.add_inst(name="bitcell",
                                     mod=self.replica_bitcell)
-        self.connect_inst(["bl[0]", "br[0]", "delayed_en", "vdd", "gnd"])
+        temp = []
+        for port in range(total_ports):
+            temp.append("bl{}[0]".format(port))
+            temp.append("br{}[0]".format(port))
+        for port in range(total_ports):
+            temp.append("delayed_en")
+        temp.append("vdd")
+        temp.append("gnd")
+        self.connect_inst(temp)
+        #self.connect_inst(["bl[0]", "br[0]", "delayed_en", "vdd", "gnd"])
 
         self.rbl_inst=self.add_inst(name="load",
                                     mod=self.rbl)
         
-        total_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
         temp = []
-        temp.append("bl[0]")
-        temp.append("br[0]")
-        for port in range(total_ports - 1):
-            temp.append("gnd")
-            temp.append("gnd")
+        for port in range(total_ports):
+            temp.append("bl{}[0]".format(port))
+            temp.append("br{}[0]".format(port))
         for wl in range(self.bitcell_loads):
             for port in range(total_ports):
                 temp.append("gnd")

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """
+
 SRAM Compiler
 
 The output files append the given suffixes to the output name:

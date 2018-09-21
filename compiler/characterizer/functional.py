@@ -56,7 +56,7 @@ class functional():
         self.written_words = []
         
         # control signals: only one cs_b for entire multiported sram, one we_b for each write port
-        self.cs_b = []
+        self.cs_b = [[] for port in range(self.total_ports)]
         self.we_b = [[] for port in range(self.total_write)]
         
         # "end of period" signal used to keep track of when read output should be analyzed
@@ -90,7 +90,9 @@ class functional():
         """ First cycle as noop to enable chip """
         self.cycles = self.cycles + 1
         
-        self.cs_b.append(1)
+        for port in range(self.total_ports):        
+            self.cs_b[port].append(1)
+            
         for port in range(self.total_write):        
             self.we_b[port].append(1)
 
@@ -109,11 +111,15 @@ class functional():
         self.cycles = self.cycles + 1
         
         # Write control signals
-        self.cs_b.append(0)
-        self.we_b[write_port].append(0)
+        for port in range(self.total_ports):
+            if port == write_port:
+                self.cs_b[port].append(0)
+            else:
+                self.cs_b[port].append(1)
+        
         for port in range(self.total_write):
             if port == write_port:
-                continue
+                self.we_b[port].append(0)
             else:
                 self.we_b[port].append(1)
 
@@ -135,7 +141,9 @@ class functional():
         self.cycles = self.cycles + 2
         
         # Read control signals
-        self.cs_b.append(0)
+        for port in range(self.total_ports):
+            self.cs_b[port].append(0)
+            
         for port in range(self.total_write):
             self.we_b[port].append(1)
 
@@ -153,7 +161,9 @@ class functional():
         
         # Add idle cycle since read may take more than 1 cycle
         # Idle control signals
-        self.cs_b.append(1)
+        for port in range(self.total_ports):
+            self.cs_b[port].append(1)
+            
         for port in range(self.total_write):
             self.we_b[port].append(1)
 
@@ -266,7 +276,7 @@ class functional():
         self.sf.write("\n* Instantiation of the SRAM\n")
         self.stim.inst_sram(abits=self.addr_size, 
                             dbits=self.word_size, 
-                            port_info=(self.total_port_num,self.readwrite_port_num,self.read_ports,self.write_ports),
+                            port_info=(self.total_port_num,self.total_write,self.read_ports,self.write_ports),
                             sram_name=self.name)
 
         # Add load capacitance to each of the read ports
@@ -290,7 +300,9 @@ class functional():
 
         # Generate control signals
         self.sf.write("\n * Generation of control signals\n")
-        self.stim.gen_pwl("CSB0", self.cycle_times , self.cs_b, self.period, self.slew, 0.05)
+        for port in range(self.total_ports):
+            self.stim.gen_pwl("CSB{}".format(port), self.cycle_times , self.cs_b[port], self.period, self.slew, 0.05)
+            
         for port in range(self.total_write):
             self.stim.gen_pwl("WEB{}".format(port), self.cycle_times , self.we_b[port], self.period, self.slew, 0.05)
 

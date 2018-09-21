@@ -64,7 +64,7 @@ class psram_func_test(openram_test):
 
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         f = functional(s.s, tempspice, corner)
-        f.run
+        f.run()
         """
 
         #globals.end_openram()

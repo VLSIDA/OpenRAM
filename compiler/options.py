@@ -66,9 +66,11 @@ class options(optparse.Values):
     # These are the main configuration parameters that should be over-ridden
     # in a configuration file.
     #num_words = 0
-    #num_banks = 1
     #word_size = 0
 
+    # You can manually specify banks, but it is better to auto-detect it.
+    num_banks = 1
+    
     # These are the default modules that can be over-riden
     decoder = "hierarchical_decoder"
     dff_array = "dff_array"

@@ -74,10 +74,12 @@ def print_banner():
     print("|=========" + name.center(60) + "=========|")
     print("|=========" + " ".center(60) + "=========|")
     print("|=========" + "VLSI Design and Automation Lab".center(60) + "=========|")
-    print("|=========" + "University of California Santa Cruz CE Department".center(60) + "=========|")
+    print("|=========" + "Computer Science and Engineering Department".center(60) + "=========|")
+    print("|=========" + "University of California Santa Cruz".center(60) + "=========|")
     print("|=========" + " ".center(60) + "=========|")
     print("|=========" + "VLSI Computer Architecture Research Group".center(60) + "=========|")
-    print("|=========" + "Oklahoma State University ECE Department".center(60) + "=========|")
+    print("|=========" + "Electrical and Computer Engineering Department".center(60) + "=========|")
+    print("|=========" + "Oklahoma State University".center(60) + "=========|")
     print("|=========" + " ".center(60) + "=========|")
     user_info = "Usage help: openram-user-group@ucsc.edu"
     print("|=========" + user_info.center(60) + "=========|")
@@ -223,13 +225,12 @@ def read_config(config_file, is_unit_test=True):
         
     # If config didn't set output name, make a reasonable default.
     if (OPTS.output_name == ""):
-        OPTS.output_name = "sram_{0}b_{1}w_{2}bank_{3}rw_{4}w_{5}r_{6}".format(OPTS.word_size,
-                                                                               OPTS.num_words,
-                                                                               OPTS.num_banks,
-                                                                               OPTS.num_rw_ports,
-                                                                               OPTS.num_w_ports,
-                                                                               OPTS.num_r_ports,
-                                                                               OPTS.tech_name)
+        OPTS.output_name = "sram_{0}b_{1}w_{2}rw_{3}w_{4}r_{5}".format(OPTS.word_size,
+                                                                       OPTS.num_words,
+                                                                       OPTS.num_rw_ports,
+                                                                       OPTS.num_w_ports,
+                                                                       OPTS.num_r_ports,
+                                                                       OPTS.tech_name)
         
 
         
@@ -387,8 +388,6 @@ def report_status():
         debug.error("{0} is not an integer in config file.".format(OPTS.word_size))
     if type(OPTS.num_words)!=int:
         debug.error("{0} is not an integer in config file.".format(OPTS.sram_size))
-    if type(OPTS.num_banks)!=int:
-        debug.error("{0} is not an integer in config file.".format(OPTS.num_banks))
 
     if not OPTS.tech_name:
         debug.error("Tech name must be specified in config file.")

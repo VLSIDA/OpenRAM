@@ -225,12 +225,17 @@ def read_config(config_file, is_unit_test=True):
         
     # If config didn't set output name, make a reasonable default.
     if (OPTS.output_name == ""):
-        OPTS.output_name = "sram_{0}b_{1}w_{2}rw_{3}w_{4}r_{5}".format(OPTS.word_size,
-                                                                       OPTS.num_words,
-                                                                       OPTS.num_rw_ports,
-                                                                       OPTS.num_w_ports,
-                                                                       OPTS.num_r_ports,
-                                                                       OPTS.tech_name)
+        ports = ""
+        if OPTS.num_rw_ports>0:
+            ports += "{}rw_".format(OPTS.num_rw_ports)
+        if OPTS.num_w_ports>0:
+            ports += "{}w_".format(OPTS.num_w_ports)
+        if OPTS.num_r_ports>0:
+            ports += "{}r_".format(OPTS.num_r_ports)
+        OPTS.output_name = "sram_{0}b_{1}_{2}{3}".format(OPTS.word_size,
+                                                         OPTS.num_words,
+                                                         ports,
+                                                         OPTS.tech_name)
         
 
         

@@ -1,0 +1,7 @@
+word_size = 32
+num_words = 256
+
+tech_name = "scn4m_subm"
+process_corners = ["TT"]
+supply_voltages = [ 5.0 ]
+temperatures = [ 25 ]

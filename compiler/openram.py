@@ -7,7 +7,6 @@ a spice (.sp) file for circuit simulation
 a GDS2 (.gds) file containing the layout
 a LEF (.lef) file for preliminary P&R (real one should be from layout)
 a Liberty (.lib) file for timing analysis/optimization
-
 """
 
 import sys,os

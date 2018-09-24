@@ -47,9 +47,10 @@ class delay():
         self.set_load_slew(0,0)
         self.set_corner(corner)
         self.create_port_names()
+        self.create_signal_names()
         
         #Only used to instantiate SRAM in stim file.
-        self.create_pin_names()
+        #self.create_pin_names()
         
         #Create global measure names. Should maybe be an input at some point.
         self.create_measurement_names()
@@ -60,23 +61,25 @@ class delay():
         self.delay_meas_names = ["delay_lh", "delay_hl", "slew_lh", "slew_hl"]
         self.power_meas_names = ["read0_power", "read1_power", "write0_power", "write1_power"]
         
-    def create_pin_names(self):
-        """Creates the pins names of the SRAM based on the no. of ports"""
-        self.pin_names = []
-        self.address_name = "A"
-        self.inp_data_name = "DIN"
-        self.out_data_name = "DOUT"
+    def create_signal_names(self):
+        self.addr_name = "A"
+        self.din_name = "DIN"
+        self.dout_name = "DOUT"
         
         #This is TODO once multiport control has been finalized.
         #self.control_name = "CSB"
         
+    def create_pin_names(self):
+        """Creates the pins names of the SRAM based on the no. of ports"""
+        self.pin_names = []
+        
         for write_input in self.write_ports:
             for i in range(self.word_size):
-                self.pin_names.append("{0}{1}_{2}".format(self.inp_data_name,write_input, i))
+                self.pin_names.append("{0}{1}_{2}".format(self.din_name,write_input, i))
         
         for port in range(self.total_port_num):
             for i in range(self.addr_size):
-                self.pin_names.append("{0}{1}_{2}".format(self.address_name,port,i))    
+                self.pin_names.append("{0}{1}_{2}".format(self.addr_name,port,i))    
 
         #Control signals not finalized.
         for port in range(self.total_port_num):
@@ -87,7 +90,7 @@ class delay():
         self.pin_names.append("{0}".format(tech.spice["clk"]))
         for read_output in self.read_ports:
             for i in range(self.word_size):
-                self.pin_names.append("{0}{1}_{2}".format(self.out_data_name,read_output, i))
+                self.pin_names.append("{0}{1}_{2}".format(self.dout_name,read_output, i))
                 
         self.pin_names.append("{0}".format(tech.spice["vdd_name"]))
         self.pin_names.append("{0}".format(tech.spice["gnd_name"]))
@@ -156,13 +159,16 @@ class delay():
 
         # instantiate the sram
         self.sf.write("\n* Instantiation of the SRAM\n")
-        self.stim.inst_sram(pin_names=self.pin_names,
+        self.stim.inst_sram(sram=self.sram,
+                            port_signal_names=(self.addr_name,self.din_name,self.dout_name),
+                            port_info=(self.total_port_num,self.write_ports,self.read_ports),
+                            abits=self.addr_size,
+                            dbits=self.word_size,
                             sram_name=self.name)
-
         self.sf.write("\n* SRAM output loads\n")
         for port in self.read_ports:
             for i in range(self.word_size):
-                self.sf.write("CD{0}{1} {2}{0}_{1} 0 {3}f\n".format(port,i,self.out_data_name,self.load))
+                self.sf.write("CD{0}{1} {2}{0}_{1} 0 {3}f\n".format(port,i,self.dout_name,self.load))
         
 
     def write_delay_stimulus(self):
@@ -241,11 +247,11 @@ class delay():
         self.sf.write("\n* Generation of data and address signals\n")
         for write_port in self.write_ports:
             for i in range(self.word_size):
-                self.stim.gen_constant(sig_name="{0}{1}_{2} ".format(self.inp_data_name,write_port, i),
+                self.stim.gen_constant(sig_name="{0}{1}_{2} ".format(self.din_name,write_port, i),
                                     v_val=0)
         for port in range(self.total_port_num):
             for i in range(self.addr_size):
-                self.stim.gen_constant(sig_name="{0}{1}_{2}".format(self.address_name,port, i),
+                self.stim.gen_constant(sig_name="{0}{1}_{2}".format(self.addr_name,port, i),
                                        v_val=0)
 
         # generate control signals
@@ -270,7 +276,7 @@ class delay():
         debug.check('lh' in delay_name or 'hl' in delay_name, "Measure command {0} does not contain direction (lh/hl)")
         trig_clk_name = "clk"
         meas_name="{0}{1}".format(delay_name, port)
-        targ_name = "{0}".format("{0}{1}_{2}".format(self.out_data_name,port,self.probe_data))
+        targ_name = "{0}".format("{0}{1}_{2}".format(self.dout_name,port,self.probe_data))
         half_vdd = 0.5 * self.vdd_voltage
         trig_slew_low = 0.1 * self.vdd_voltage
         targ_slew_high = 0.9 * self.vdd_voltage
@@ -1047,7 +1053,7 @@ class delay():
         """ Generates the PWL data inputs for a simulation timing test. """
         for write_port in self.write_ports:
             for i in range(self.word_size):
-                sig_name="{0}{1}_{2} ".format(self.inp_data_name,write_port, i)
+                sig_name="{0}{1}_{2} ".format(self.din_name,write_port, i)
                 self.stim.gen_pwl(sig_name, self.cycle_times, self.data_values[write_port][i], self.period, self.slew, 0.05)
 
     def gen_addr(self):
@@ -1057,7 +1063,7 @@ class delay():
         """
         for port in range(self.total_port_num):
             for i in range(self.addr_size):
-                sig_name = "{0}{1}_{2}".format(self.address_name,port,i)
+                sig_name = "{0}{1}_{2}".format(self.addr_name,port,i)
                 self.stim.gen_pwl(sig_name, self.cycle_times, self.addr_values[port][i], self.period, self.slew, 0.05)
 
     def gen_control(self):

@@ -41,36 +41,49 @@ class stimuli():
         self.sf.write("{0}\n".format(sram_name))
     
     
-    def inst_sram(self, pin_names, sram_name):
+    def inst_sram(self, sram, port_signal_names, port_info, abits, dbits, sram_name):
         """ Function to instatiate an SRAM subckt. """
+        pin_names = self.gen_pin_names(port_signal_names, port_info, abits, dbits)
+        #Only checking length. This should check functionality as well (TODO) and/or import that information from the SRAM
+        debug.check(len(sram.pins) == len(pin_names), "Number of pins generated for characterization do match pins of SRAM")
+        
         self.sf.write("Xsram ")
+        for pin in pin_names:
+            self.sf.write("{0} ".format(pin))  
+        self.sf.write("{0}\n".format(sram_name))
 
+    def gen_pin_names(self, port_signal_names, port_info, abits, dbits):
+        """Creates the pins names of the SRAM based on the no. of ports."""
+        #This may seem redundant as the pin names are already defined in the sram. However, it is difficult to extract the
+        #functionality from the names, so they are recreated. As the order is static, changing the order of the pin names
+        #will cause issues here.
+        pin_names = []
+        (addr_name, din_name, dout_name) = port_signal_names
+        (total_port_num, write_ports, read_ports) = port_info
+        
         for write_input in write_ports:
             for i in range(dbits):
-                self.sf.write("DIN{0}[{1}] ".format(write_input, i))
+                pin_names.append("{0}{1}_{2}".format(din_name,write_input, i))
         
         for port in range(total_port_num):
             for i in range(abits):
-                self.sf.write("A{0}[{1}] ".format(port,i))    
+                pin_names.append("{0}{1}_{2}".format(addr_name,port,i))    
 
-        #These control signals assume 6t sram i.e. a single readwrite port. If multiple readwrite ports are used then add more
-        #control signals. Not sure if this is correct, consider a temporary change until control signals for multiport are finalized.
-        for port in range(total_port_num):
-            self.sf.write("CSB{0} ".format(port))
-        for readwrite_port in range(readwrite_num):
-            self.sf.write("WEB{0} ".format(readwrite_port))
-        
-        #for port in range(total_port_num):
-        #    self.sf.write("CLK{0} ".format(port))
-        
-        self.sf.write("{0} ".format(tech.spice["clk"]))
+        #Control signals not finalized.
+        for port in read_ports:
+            pin_names.append("CSB{0}".format(port))
+        for port in write_ports:
+            pin_names.append("WEB{0}".format(port))
+            
+        pin_names.append("{0}".format(tech.spice["clk"]))
         for read_output in read_ports:
             for i in range(dbits):
-                self.sf.write("DOUT{0}[{1}] ".format(read_output, i))
-        self.sf.write("{0} {1} ".format(self.vdd_name, self.gnd_name))
-        self.sf.write("{0}\n".format(sram_name))
-
-
+                pin_names.append("{0}{1}_{2}".format(dout_name,read_output, i))
+                
+        pin_names.append("{0}".format(self.vdd_name))
+        pin_names.append("{0}".format(self.gnd_name))
+        return pin_names
+        
     def inst_model(self, pins, model_name):
         """ Function to instantiate a generic model with a set of pins """
         self.sf.write("X{0} ".format(model_name))

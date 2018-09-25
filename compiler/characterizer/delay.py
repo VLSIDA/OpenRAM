@@ -49,9 +49,6 @@ class delay():
         self.create_port_names()
         self.create_signal_names()
         
-        #Only used to instantiate SRAM in stim file.
-        #self.create_pin_names()
-        
         #Create global measure names. Should maybe be an input at some point.
         self.create_measurement_names()
         
@@ -69,35 +66,6 @@ class delay():
         #This is TODO once multiport control has been finalized.
         #self.control_name = "CSB"
         
-    def create_pin_names(self):
-        """Creates the pins names of the SRAM based on the no. of ports"""
-        self.pin_names = []
-        
-        for write_input in self.write_ports:
-            for i in range(self.word_size):
-                self.pin_names.append("{0}{1}_{2}".format(self.din_name,write_input, i))
-        
-        for port in range(self.total_port_num):
-            for i in range(self.addr_size):
-                self.pin_names.append("{0}{1}_{2}".format(self.addr_name,port,i))    
-
-        #Control signals not finalized.
-        for port in range(self.total_port_num):
-            self.pin_names.append("CSB{0}".format(port))
-        for readwrite_port in range(self.readwrite_port_num):
-            self.pin_names.append("WEB{0}".format(readwrite_port))
-            
-        self.pin_names.append("{0}".format(tech.spice["clk"]))
-        for read_output in self.read_ports:
-            for i in range(self.word_size):
-                self.pin_names.append("{0}{1}_{2}".format(self.dout_name,read_output, i))
-                
-        self.pin_names.append("{0}".format(tech.spice["vdd_name"]))
-        self.pin_names.append("{0}".format(tech.spice["gnd_name"]))
-    
-        #Only checking length. This should check functionality as well (TODO) and/or import that information from the SRAM
-        debug.check(len(self.sram.pins) == len(self.pin_names), "Number of pins generated for characterization do match pins of SRAM")
-    
     def create_port_names(self):
         """Generates the port names to be used in characterization and sets default simulation target ports"""
         self.write_ports = []
@@ -785,7 +753,7 @@ class delay():
             else:
                 debug.error("Non-binary data string",1)
             index += 1
-
+        
     def add_address(self, address, port):
         """ Add the array of address values """
         debug.check(len(address)==self.addr_size, "Invalid address size.")
@@ -978,9 +946,9 @@ class delay():
         #csb represents a basic "enable" signal that all ports have.
         self.csb_values = [[] for i in range(self.total_port_num)]
         
-        # Address and data values for each address/data bit. A dict of 3d lists of size #ports x bits x cycles.
-        self.data_values=[[[] for i in range(self.addr_size)]]*len(self.write_ports) 
-        self.addr_values=[[[] for i in range(self.addr_size)]]*self.total_port_num 
+        # Address and data values for each address/data bit. A 3d list of size #ports x bits x cycles.
+        self.data_values=[[[] for bit in range(self.word_size)] for port in range(len(self.write_ports))]
+        self.addr_values=[[[] for bit in range(self.addr_size)] for port in range(self.total_port_num)]
         
         #Get any available read/write port in case only a single write or read ports is being characterized.
         cur_read_port = self.get_available_port(get_read_port=True)   

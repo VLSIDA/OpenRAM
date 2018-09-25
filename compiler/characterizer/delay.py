@@ -837,9 +837,10 @@ class delay():
             debug.error("Could not add control signals for port {0}. Command {1} not recognized".format(port,op),1)
         
         #Append the values depending on the type of port
-        self.csb_values[port].append(csb_val)
+        if port in self.read_ports:
+            self.csb_values[port].append(csb_val)
         #If port is in both lists, add rw control signal. Condition indicates its a RW port.
-        if port < len(self.web_values):
+        if port in self.write_ports:
             self.web_values[port].append(web_val)
 
     def add_comment(self, port, comment):
@@ -941,10 +942,10 @@ class delay():
         self.measure_cycles = {}
 
         # Control signals for ports. These are not the final signals and will likely be changed later.
-        #write enable bar for readwrite ports to control read or write
-        self.web_values = [[] for i in range(self.readwrite_port_num)]
-        #csb represents a basic "enable" signal that all ports have.
-        self.csb_values = [[] for i in range(self.total_port_num)]
+        #web is the enable for write ports. Dicts used for simplicity as ports are not necessarily incremental.
+        self.web_values = {port:[] for port in self.write_ports}
+        #csb acts as an enable for the read ports. 
+        self.csb_values = {port:[] for port in self.read_ports}
         
         # Address and data values for each address/data bit. A 3d list of size #ports x bits x cycles.
         self.data_values=[[[] for bit in range(self.word_size)] for port in range(len(self.write_ports))]
@@ -1036,11 +1037,11 @@ class delay():
 
     def gen_control(self):
         """ Generates the control signals """
-        for port in range(self.total_port_num):
+        for port in self.read_ports:
             self.stim.gen_pwl("CSB{0}".format(port), self.cycle_times, self.csb_values[port], self.period, self.slew, 0.05)
         
-        for readwrite_port in range(self.readwrite_port_num):
-            self.stim.gen_pwl("WEB{0}".format(readwrite_port), self.cycle_times, self.web_values[readwrite_port], self.period, self.slew, 0.05)
+        for port in self.write_ports:
+            self.stim.gen_pwl("WEB{0}".format(port), self.cycle_times, self.web_values[port], self.period, self.slew, 0.05)
             
     def get_empty_measure_data_dict(self):
         """Make a dict of lists for each type of delay and power measurement to append results to"""

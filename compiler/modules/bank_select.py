@@ -15,9 +15,11 @@ class bank_select(design.design):
         banks are created in upper level SRAM module
     """
 
-    def __init__(self, name="bank_select"):
+    def __init__(self, name="bank_select", port="rw"):
         design.design.__init__(self, name)
 
+        self.port = port
+        
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -38,10 +40,17 @@ class bank_select(design.design):
     def add_pins(self):
         
         # Number of control lines in the bus
-        self.num_control_lines = 4
+        if self.port == "rw":
+            self.num_control_lines = 4
+        else:
+            self.num_control_lines = 3
         # The order of the control signals on the control bus:
         # FIXME: Update for multiport (these names are not right)
-        self.input_control_signals = ["clk_buf", "clk_buf_bar", "w_en0", "s_en"]
+        self.input_control_signals = ["clk_buf", "clk_buf_bar"]
+        if (self.port == "rw") or (self.port == "w"):
+            self.input_control_signals.append("w_en")
+        if (self.port == "rw") or (self.port == "r"):
+            self.input_control_signals.append("s_en")
         # These will be outputs of the gaters if this is multibank
         self.control_signals = ["gated_"+str for str in self.input_control_signals]
 

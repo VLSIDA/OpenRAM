@@ -51,6 +51,23 @@ class replica_bitline_test(openram_test):
         a = replica_bitline.replica_bitline(stages,fanout,rows)
         self.local_check(a)
         
+        OPTS.num_rw_ports = 1
+        OPTS.num_w_ports = 1
+        OPTS.num_r_ports = 1
+        
+        stages=4
+        fanout=4
+        rows=13
+        debug.info(2, "Testing RBL with {0} FO4 stages, {1} rows".format(stages,rows))
+        a = replica_bitline.replica_bitline(stages,fanout,rows)
+        self.local_check(a)
+
+        stages=8
+        rows=100
+        debug.info(2, "Testing RBL with {0} FO4 stages, {1} rows".format(stages,rows))
+        a = replica_bitline.replica_bitline(stages,fanout,rows)
+        self.local_check(a)
+        
         globals.end_openram()
         
 # instantiate a copy of the class to actually run the test

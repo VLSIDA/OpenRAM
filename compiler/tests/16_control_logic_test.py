@@ -24,7 +24,6 @@ class control_logic_test(openram_test):
         self.local_check(a)
         
         # check control logic for multi-port
-        # only layout for 1RW is supported at the moment
         OPTS.bitcell = "pbitcell"
         OPTS.replica_bitcell = "replica_pbitcell"
         OPTS.num_rw_ports = 1
@@ -33,6 +32,19 @@ class control_logic_test(openram_test):
         
         debug.info(1, "Testing sample for control_logic for multiport")
         a = control_logic.control_logic(num_rows=128)
+        self.local_check(a)
+        
+        # Check write-only and read-only control logic
+        OPTS.num_rw_ports = 1
+        OPTS.num_w_ports = 1
+        OPTS.num_r_ports = 1
+        
+        debug.info(1, "Testing sample for control_logic for multiport, only write control logic")
+        a = control_logic.control_logic(num_rows=128, port="w")
+        self.local_check(a)
+        
+        debug.info(1, "Testing sample for control_logic for multiport, only read control logic")
+        a = control_logic.control_logic(num_rows=128, port="r")
         self.local_check(a)
 
         globals.end_openram()

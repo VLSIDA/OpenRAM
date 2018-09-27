@@ -13,8 +13,12 @@ class delay_chain(design.design):
     Usually, this will be constant, but it could have varied fanout.
     """
 
+    unique_id = 1
+
     def __init__(self, fanout_list, name="delay_chain"):
         """init function"""
+        name = name+"_{}".format(delay_chain.unique_id)
+        delay_chain.unique_id += 1
         design.design.__init__(self, name)
 
         # Two fanouts are needed so that we can route the vdd/gnd connections

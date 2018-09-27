@@ -101,7 +101,7 @@ class bank(design.design):
             for port in range(self.total_ports):
                 self.add_pin("bank_sel{}".format(port),"INPUT")
         for port in range(self.total_read):
-            self.add_pin("s_en{0}".format(port), "INPUT")
+            self.add_pin("s_en{0}".format(self.read_index[port]), "INPUT")
         for port in range(self.total_write):
             self.add_pin("w_en{0}".format(port), "INPUT")
         for port in range(self.total_ports):
@@ -399,7 +399,7 @@ class bank(design.design):
                     temp.append(self.read_bl_list[port]+"_out[{0}]".format(bit))
                     temp.append(self.read_br_list[port]+"_out[{0}]".format(bit))
                     
-            temp.extend([self.prefix+"s_en{}".format(port), "vdd", "gnd"])
+            temp.extend([self.prefix+"s_en{}".format(self.read_index[port]), "vdd", "gnd"])
             self.connect_inst(temp)
 
             

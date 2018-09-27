@@ -20,8 +20,9 @@ class control_logic(design.design):
 
     def __init__(self, num_rows, port="rw"):
         """ Constructor """
-        design.design.__init__(self, "control_logic")
-        debug.info(1, "Creating {}".format(self.name))
+        name = "control_logic_" + port
+        design.design.__init__(self, name)
+        debug.info(1, "Creating {}".format(name))
         
         self.num_rows = num_rows
         self.port = port
@@ -95,7 +96,7 @@ class control_logic(design.design):
             delay_stages = 4 # Must be non-inverting
             delay_fanout = 3 # This can be anything >=2
             bitcell_loads = int(math.ceil(self.num_rows / 5.0))
-            self.replica_bitline = replica_bitline(delay_stages, delay_fanout, bitcell_loads)
+            self.replica_bitline = replica_bitline(delay_stages, delay_fanout, bitcell_loads, name="replica_bitline_"+self.port)
             self.add_mod(self.replica_bitline)
 
 

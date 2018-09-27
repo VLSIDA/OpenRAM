@@ -81,8 +81,8 @@ class replica_bitline(design.design):
         """ Add the modules for later usage """
 
         from importlib import reload
-        g = reload(__import__(OPTS.delay_chain))
-        self.mod_delay_chain = getattr(g, OPTS.delay_chain)
+        #g = reload(__import__(OPTS.delay_chain))
+        #self.mod_delay_chain = getattr(g, OPTS.delay_chain)
 
         g = reload(__import__(OPTS.replica_bitcell))
         self.mod_replica_bitcell = getattr(g, OPTS.replica_bitcell)
@@ -95,7 +95,8 @@ class replica_bitline(design.design):
         self.add_mod(self.rbl)
 
         # FIXME: The FO and depth of this should be tuned
-        self.delay_chain = self.mod_delay_chain([self.delay_fanout]*self.delay_stages)
+        from delay_chain import delay_chain
+        self.delay_chain = delay_chain([self.delay_fanout]*self.delay_stages)
         self.add_mod(self.delay_chain)
 
         self.inv = pinv()

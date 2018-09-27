@@ -123,7 +123,8 @@ class layout(lef.lef):
         """Adds an instance of a mod to this module"""
         self.insts.append(geometry.instance(name, mod, offset, mirror, rotate))
         debug.info(3, "adding instance {}".format(self.insts[-1]))
-        debug.info(4, "instance list: " + ",".join(x.name for x in self.insts))
+        # This is commented out for runtime reasons
+        #debug.info(4, "instance list: " + ",".join(x.name for x in self.insts))
         return self.insts[-1]
 
     def get_inst(self, name):

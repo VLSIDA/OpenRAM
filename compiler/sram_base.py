@@ -19,30 +19,11 @@ class sram_base(design):
         self.sram_config = sram_config
         sram_config.set_local_config(self)
 
-        self.total_write = OPTS.num_rw_ports + OPTS.num_w_ports
-        self.total_read = OPTS.num_rw_ports + OPTS.num_r_ports
-        self.total_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
-
         self.bank_insts = []
 
 
     def add_pins(self):
         """ Add pins for entire SRAM. """
-        self.read_index = []
-        self.port_id = []
-        port_number = 0
-        for port in range(OPTS.num_rw_ports):
-            self.read_index.append("{}".format(port_number))
-            self.port_id.append("rw")
-            port_number += 1
-        for port in range(OPTS.num_w_ports):
-            self.port_id.append("w")
-            port_number += 1
-        for port in range(OPTS.num_r_ports):
-            self.read_index.append("{}".format(port_number))
-            self.port_id.append("r")
-            port_number += 1
-    
         for port in range(self.total_write):
             for bit in range(self.word_size):
                 self.add_pin("DIN{0}[{1}]".format(port,bit),"INPUT")

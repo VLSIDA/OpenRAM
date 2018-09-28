@@ -18,6 +18,7 @@ class design(hierarchy_design):
         hierarchy_design.__init__(self,name)
         
         self.setup_drc_constants()
+        self.setup_multiport_constants()
 
         self.m1_pitch = max(contact.m1m2.width,contact.m1m2.height) + max(self.m1_space, self.m2_space)
         self.m2_pitch = max(contact.m2m3.width,contact.m2m3.height) + max(self.m2_space, self.m3_space)
@@ -45,7 +46,34 @@ class design(hierarchy_design):
         self.contact_to_gate = drc["contact_to_gate"]
         self.well_enclose_active = drc["well_enclosure_active"]
         self.implant_enclose_active = drc["implant_enclosure_active"]
-        self.implant_space = drc["implant_to_implant"]   
+        self.implant_space = drc["implant_to_implant"]
+        
+    def setup_multiport_constants(self):
+        """ These are contants and lists that aid multiport design """
+        self.total_write = OPTS.num_rw_ports + OPTS.num_w_ports
+        self.total_read = OPTS.num_rw_ports + OPTS.num_r_ports
+        self.total_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
+        
+        # Port indices used for data, address, and control signals
+        # Port IDs used to identify port type
+        self.write_index = []
+        self.read_index = []
+        self.port_id = []
+        port_number = 0
+        
+        for port in range(OPTS.num_rw_ports):
+            self.write_index.append("{}".format(port_number))
+            self.read_index.append("{}".format(port_number))
+            self.port_id.append("rw")
+            port_number += 1
+        for port in range(OPTS.num_w_ports):
+            self.write_index.append("{}".format(port_number))
+            self.port_id.append("w")
+            port_number += 1
+        for port in range(OPTS.num_r_ports):
+            self.read_index.append("{}".format(port_number))
+            self.port_id.append("r")
+            port_number += 1
 
     def analytical_power(self, proc, vdd, temp, load):
         """ Get total power of a module  """

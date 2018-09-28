@@ -29,10 +29,6 @@ class bank(design.design):
         design.design.__init__(self, name)
         debug.info(2, "create sram of size {0} with {1} words".format(self.word_size,self.num_words))
 
-
-        self.total_write = OPTS.num_rw_ports + OPTS.num_w_ports
-        self.total_read = OPTS.num_rw_ports + OPTS.num_r_ports
-        self.total_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
         
         # The local control signals are gated when we have bank select logic,
         # so this prefix will be added to all of the input signals to create
@@ -69,21 +65,6 @@ class bank(design.design):
  
  
     def add_pins(self):
-        self.read_index = []
-        self.port_id = []
-        port_number = 0
-        for port in range(OPTS.num_rw_ports):
-            self.read_index.append("{}".format(port_number))
-            self.port_id.append("rw")
-            port_number += 1
-        for port in range(OPTS.num_w_ports):
-            self.port_id.append("w")
-            port_number += 1
-        for port in range(OPTS.num_r_ports):
-            self.read_index.append("{}".format(port_number))
-            self.port_id.append("r")
-            port_number += 1
-        
         """ Adding pins for Bank module"""
         for port in range(self.total_read):
             for bit in range(self.word_size):

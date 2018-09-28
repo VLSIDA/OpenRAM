@@ -108,8 +108,6 @@ class replica_bitline(design.design):
     def create_modules(self):
         """ Create all of the module instances in the logical netlist """
         
-        self.total_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
-        
         # This is the threshold detect inverter on the output of the RBL
         self.rbl_inv_inst=self.add_inst(name="rbl_inv",
                                         mod=self.inv)

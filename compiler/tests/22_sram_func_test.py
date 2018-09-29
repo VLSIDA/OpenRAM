@@ -29,7 +29,7 @@ class sram_func_test(openram_test):
 
         from sram import sram
         from sram_config import sram_config
-        c = sram_config(word_size=1,
+        c = sram_config(word_size=4,
                         num_words=16,
                         num_banks=1)
         c.words_per_row=1
@@ -43,7 +43,7 @@ class sram_func_test(openram_test):
         f = functional(s.s, tempspice, corner)
         f.run()
 
-        #globals.end_openram()
+        globals.end_openram()
         
 # instantiate a copdsay of the class to actually run the test
 if __name__ == "__main__":

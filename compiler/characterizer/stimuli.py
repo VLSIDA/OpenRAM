@@ -30,6 +30,17 @@ class stimuli():
         self.device_models = tech.spice["fet_models"][self.process]
 
     
+    def inst_full_sram(self, sram, sram_name):
+        """ Function to instatiate an SRAM subckt. """
+        self.sf.write("Xsram ")
+        for pin in sram.pins:
+            if (pin=="vdd") or (pin=="gnd"):
+                self.sf.write("{0} ".format(pin))
+            else:
+                self.sf.write("{0} ".format(pin.upper()))
+        self.sf.write("{0}\n".format(sram_name))
+    
+    
     def inst_sram(self, abits, dbits, port_info, sram_name):
         """ Function to instatiate an SRAM subckt. """
         self.sf.write("Xsram ")

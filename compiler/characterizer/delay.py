@@ -34,6 +34,13 @@ class delay():
         self.num_rows = self.sram.num_rows
         self.num_banks = self.sram.num_banks
         self.sp_file = spfile
+        
+        self.total_ports = self.sram.total_ports
+        self.total_write = self.sram.total_write
+        self.total_read = self.sram.total_read
+        self.read_index = self.sram.read_index
+        self.write_index = self.sram.write_index
+        self.port_id = self.sram.port_id
 
         # These are the member variables for a simulation
         self.period = 0

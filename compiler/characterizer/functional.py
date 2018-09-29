@@ -1,4 +1,5 @@
 import sys,re,shutil
+from design import design
 import debug
 import math
 import tech
@@ -26,9 +27,12 @@ class functional():
         self.num_banks = self.sram.num_banks
         self.sp_file = spfile
         
-        self.total_write = OPTS.num_rw_ports + OPTS.num_w_ports
-        self.total_read = OPTS.num_rw_ports + OPTS.num_r_ports
-        self.total_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
+        self.total_ports = self.sram.total_ports
+        self.total_write = self.sram.total_write
+        self.total_read = self.sram.total_read
+        self.read_index = self.sram.read_index
+        self.write_index = self.sram.write_index
+        self.port_id = self.sram.port_id
     
         # These are the member variables for a simulation
         self.set_corner(corner)
@@ -37,6 +41,9 @@ class functional():
         
         # Number of checks can be changed
         self.num_checks = 1
+        
+        # set to 1 if functional simulation fails during any check
+        self.functional_fail = 0
 
     def set_corner(self,corner):
         """ Set the corner values """
@@ -66,6 +73,11 @@ class functional():
         self.addresses = [[[] for bit in range(self.addr_size)] for port in range(self.total_write)]
         self.data = [[[] for bit in range(self.word_size)] for port in range(self.total_write)]
         
+        # stored written values and read values for functional check
+        #self.addr_keys = []
+        self.written_values = []
+        self.sp_read_value = ["" for port in range(self.total_read)]
+        
     def run(self):
         """ Main function to generate random writes/reads, run spice, and analyze results """ 
         # Need a NOOP to enable the chip
@@ -76,6 +88,9 @@ class functional():
         for i in range(self.num_checks):
             addr = self.gen_addr()
             word = self.gen_data()
+            #self.addr_keys.append(addr)
+            #self.written_values[addr] = word
+            
             self.write(addr,word)
             self.read(addr,word)
         
@@ -83,8 +98,18 @@ class functional():
         self.stim.run_sim()
         
         # Extrat DOUT values from spice timing.lis
-        read_value = parse_spice_list("timing", "vdout0[0]")
-        print("READ VALUE = {}".format(read_value))
+        for port in range(self.total_read):
+            for bit in range(self.word_size):
+                value = parse_spice_list("timing", "vdout{0}.{1}.".format(port,bit))
+                if value > 0.75 * self.vdd_voltage:
+                    self.sp_read_value[port] = "1" + self.sp_read_value[port]
+                elif value < 0.25 * self.vdd_voltage:
+                    self.sp_read_value[port] = "0" + self.sp_read_value[port]
+                else:
+                    self.functional_fail = 1
+                
+            print("READ VALUE dout{} = {}".format(port,self.sp_read_value[port]))
+        
     
     def first_run(self):
         """ First cycle as noop to enable chip """
@@ -107,7 +132,6 @@ class functional():
     def write(self,addr,word,write_port=0):
         """ Generates signals for a write cycle """
         print("Writing {0} to {1}...".format(word,addr))
-        self.written_words.append(word)
         self.cycles = self.cycles + 1
         
         # Write control signals
@@ -126,13 +150,13 @@ class functional():
         # Write address
         for port in range(self.total_write):
             for bit in range(self.addr_size):
-                current_address_bit = int(addr[bit])
+                current_address_bit = int(addr[self.addr_size-1-bit])
                 self.addresses[port][bit].append(current_address_bit)
         
         # Write data
         for port in range(self.total_write):
             for bit in range(self.word_size):
-                current_word_bit = int(word[bit])
+                current_word_bit = int(word[self.word_size-1-bit])
                 self.data[port][bit].append(current_word_bit)
 
     def read(self,addr,word):
@@ -150,7 +174,7 @@ class functional():
         # Read address
         for port in range(self.total_write):
             for bit in range(self.addr_size):
-                current_address_bit = int(addr[bit])
+                current_address_bit = int(addr[self.addr_size-1-bit])
                 self.addresses[port][bit].append(current_address_bit)
             
         # Data input doesn't matter during read cycle, so arbitrarily set to 0 for simulation
@@ -167,10 +191,10 @@ class functional():
         for port in range(self.total_write):
             self.we_b[port].append(1)
 
-        # Address doesn't matter during idle cycle, but keep the same as read for easier debugging
+        # Address doesn't matter during idle cycle, but keep the same as read cycle for easier debugging
         for port in range(self.total_write):
             for bit in range(self.addr_size):
-                current_address_bit = int(addr[bit])
+                current_address_bit = int(addr[self.addr_size-1-bit])
                 self.addresses[port][bit].append(current_address_bit)
         
         # Data input doesn't matter during idle cycle, so arbitrarily set to 0 for simulation
@@ -181,26 +205,26 @@ class functional():
         
         # Record the end of the period that the read operation occured in
         self.eo_period.append(self.cycles * self.period)
-
+        
     def gen_data(self):
         """ Generates a random word to write """
         rand = random.randint(0,(2**self.word_size)-1)
         data_bits = self.convert_to_bin(rand,False)
         return data_bits
-
+        
     def gen_addr(self):
         """ Generates a random address value to write to """
         rand = random.randint(0,(2**self.addr_size)-1)  
         addr_bits = self.convert_to_bin(rand,True)
         return addr_bits 
-
+        
     def get_data(self):
         """ Gets an available address and corresponding word """
         # Currently unused but may need later depending on how the functional test develops
         addr = random.choice(self.stored_words.keys())
         word = self.stored_words[addr]
         return (addr,word)
-
+        
     def convert_to_bin(self,value,is_addr):
         """ Converts addr & word to usable binary values """
         new_value = str.replace(bin(value),"0b","")
@@ -213,7 +237,7 @@ class functional():
             
         print("Binary Conversion: {} to {}".format(value, new_value))
         return new_value
-
+        
     def obtain_cycle_times(self,period):
         """ Generate clock cycle times based on period and number of cycles """
         t_current = 0
@@ -221,7 +245,7 @@ class functional():
         for i in range(self.cycles):
             self.cycle_times.append(t_current)
             t_current += period 
-    
+            
     def create_port_names(self):
         """Generates the port names to be used in characterization and sets default simulation target ports"""
         self.write_ports = []
@@ -241,17 +265,6 @@ class functional():
         for read_port_num in range(OPTS.num_rw_ports+OPTS.num_w_ports, OPTS.num_rw_ports+OPTS.num_w_ports+OPTS.num_r_ports):
             self.read_ports.append(read_port_num)
             
-        self.read_index = []
-        port_number = 0
-        for port in range(OPTS.num_rw_ports):
-            self.read_index.append("{}".format(port_number))
-            port_number += 1
-        for port in range(OPTS.num_w_ports):
-            port_number += 1
-        for port in range(OPTS.num_r_ports):
-            self.read_index.append("{}".format(port_number))
-            port_number += 1
-
     def write_functional_stimulus(self):
         #Write Stimulus
         
@@ -274,10 +287,8 @@ class functional():
         
         #Instantiate the SRAM
         self.sf.write("\n* Instantiation of the SRAM\n")
-        self.stim.inst_sram(abits=self.addr_size, 
-                            dbits=self.word_size, 
-                            port_info=(self.total_port_num,self.total_write,self.read_ports,self.write_ports),
-                            sram_name=self.name)
+        self.stim.inst_full_sram(sram=self.sram,
+                                 sram_name=self.name)
 
         # Add load capacitance to each of the read ports
         self.sf.write("\n* SRAM output loads\n")
@@ -306,14 +317,15 @@ class functional():
         for port in range(self.total_write):
             self.stim.gen_pwl("WEB{}".format(port), self.cycle_times , self.we_b[port], self.period, self.slew, 0.05)
 
-        # Generate CLK
-        self.stim.gen_pulse(sig_name="CLK",
-                            v1=self.gnd_voltage,
-                            v2=self.vdd_voltage,
-                            offset=self.period,
-                            period=self.period,
-                            t_rise=self.slew,
-                            t_fall=self.slew)
+        # Generate CLK signals
+        for port in range(self.total_ports):
+            self.stim.gen_pulse(sig_name="CLK{}".format(port),
+                                v1=self.gnd_voltage,
+                                v2=self.vdd_voltage,
+                                offset=self.period,
+                                period=self.period,
+                                t_rise=self.slew,
+                                t_fall=self.slew)
         
         # Generate DOUT value measurements
         self.sf.write("\n * Generation of dout measurements\n")

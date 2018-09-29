@@ -75,8 +75,8 @@ class trim_spice():
         self.sp_buffer.insert(0, "* WARNING: This is a TRIMMED NETLIST.")
         
         
-        wl_regex = "wl\d*\[{}\]".format(wl_address)
-        bl_regex = "bl\d*\[{}\]".format(int(self.words_per_row*data_bit + col_address))
+        wl_regex = r"wl\d*\[{}\]".format(wl_address)
+        bl_regex = r"bl\d*\[{}\]".format(int(self.words_per_row*data_bit + col_address))
         self.remove_insts("bitcell_array",[wl_regex,bl_regex])
 
         # 2. Keep sense amps basd on BL
@@ -87,7 +87,7 @@ class trim_spice():
         self.remove_insts("column_mux_array",[bl_regex])
         
         # 4. Keep write driver based on DATA
-        data_regex = "data\[{}\]".format(data_bit)
+        data_regex = r"data\[{}\]".format(data_bit)
         self.remove_insts("write_driver_array",[data_regex])
 
         # 5. Keep wordline driver based on WL

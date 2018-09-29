@@ -227,11 +227,12 @@ class delay():
         self.sf.write("\n* Generation of control signals\n")
         for port in range(self.total_port_num):
             self.stim.gen_constant(sig_name="CSB{0}".format(port), v_val=self.vdd_voltage)
-            if port in self.read_ports and port in self.write_ports:
-                self.stim.gen_constant(sig_name="WEB{0}".format(port), v_val=self.vdd_voltage)
+        for port in self.read_ports:
+            self.stim.gen_constant(sig_name="WEB{0}".format(port), v_val=self.vdd_voltage)
 
         self.sf.write("\n* Generation of global clock signal\n")
-        self.stim.gen_constant(sig_name="CLK", v_val=0)  
+        for port in range(self.total_port_num):
+            self.stim.gen_constant(sig_name="CLK{0}".format(port), v_val=0)  
                           
         self.write_power_measures()
 
@@ -712,7 +713,6 @@ class delay():
         (full_array_leakage, trim_array_leakage)=self.run_power_simulation()
         char_sram_data["leakage_power"]=full_array_leakage
         leakage_offset = full_array_leakage - trim_array_leakage
-        
         # 4) At the minimum period, measure the delay, slew and power for all slew/load pairs.
         self.period = min_period
         char_port_data = self.simulate_loads_and_slews(slews, loads, leakage_offset)

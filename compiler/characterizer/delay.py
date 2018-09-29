@@ -171,14 +171,15 @@ class delay():
         self.sf.write("\n* Generation of control signals\n")
         self.gen_control()
 
-        self.sf.write("\n* Generation of global clock signal\n")
-        self.stim.gen_pulse(sig_name="CLK",
-                            v1=0,
-                            v2=self.vdd_voltage,
-                            offset=self.period,
-                            period=self.period,
-                            t_rise=self.slew,
-                            t_fall=self.slew)
+        self.sf.write("\n* Generation of Port clock signal\n")
+        for port in range(self.total_port_num):
+            self.stim.gen_pulse(sig_name="CLK{0}".format(port),
+                                v1=0,
+                                v2=self.vdd_voltage,
+                                offset=self.period,
+                                period=self.period,
+                                t_rise=self.slew,
+                                t_fall=self.slew)
                           
         self.write_delay_measures()
 
@@ -242,7 +243,7 @@ class delay():
     def get_delay_meas_values(self, delay_name, port):
         """Get the values needed to generate a Spice measurement statement based on the name of the measurement."""
         debug.check('lh' in delay_name or 'hl' in delay_name, "Measure command {0} does not contain direction (lh/hl)")
-        trig_clk_name = "clk"
+        trig_clk_name = "clk{0}".format(port)
         meas_name="{0}{1}".format(delay_name, port)
         targ_name = "{0}".format("{0}{1}_{2}".format(self.dout_name,port,self.probe_data))
         half_vdd = 0.5 * self.vdd_voltage
@@ -570,7 +571,7 @@ class delay():
     def find_min_period_one_port(self, feasible_delays, port, lb_period, ub_period, target_period):
         """
         Searches for the smallest period with output delays being within 5% of 
-        long period. For the current logic to characterize multiport, bound are required as an input.
+        long period. For the current logic to characterize multiport, bounds are required as an input.
         """
 
         #previous_period = ub_period = self.period
@@ -713,6 +714,7 @@ class delay():
         leakage_offset = full_array_leakage - trim_array_leakage
         
         # 4) At the minimum period, measure the delay, slew and power for all slew/load pairs.
+        self.period = min_period
         char_port_data = self.simulate_loads_and_slews(slews, loads, leakage_offset)
         
         return (char_sram_data, char_port_data)
@@ -729,7 +731,7 @@ class delay():
                 # Find the delay, dynamic power, and leakage power of the trimmed array.
                 (success, delay_results) = self.run_delay_simulation()
                 debug.check(success,"Couldn't run a simulation. slew={0} load={1}\n".format(self.slew,self.load))
-                debug.info(1, "Successful simulation on all ports. slew={0} load={1}".format(self.slew,self.load))
+                debug.info(1, "Simulation Passed: Port {0} slew={1} load={2}".format("All", self.slew,self.load))
                 #The results has a dict for every port but dicts can be empty (e.g. ports were not targeted).
                 for port in range(self.total_port_num):
                     for mname,value in delay_results[port].items():
@@ -837,8 +839,7 @@ class delay():
             debug.error("Could not add control signals for port {0}. Command {1} not recognized".format(port,op),1)
         
         #Append the values depending on the type of port
-        if port in self.read_ports:
-            self.csb_values[port].append(csb_val)
+        self.csb_values[port].append(csb_val)
         #If port is in both lists, add rw control signal. Condition indicates its a RW port.
         if port in self.write_ports:
             self.web_values[port].append(web_val)
@@ -945,7 +946,7 @@ class delay():
         #web is the enable for write ports. Dicts used for simplicity as ports are not necessarily incremental.
         self.web_values = {port:[] for port in self.write_ports}
         #csb acts as an enable for the read ports. 
-        self.csb_values = {port:[] for port in self.read_ports}
+        self.csb_values = {port:[] for port in range(self.total_port_num)}
         
         # Address and data values for each address/data bit. A 3d list of size #ports x bits x cycles.
         self.data_values=[[[] for bit in range(self.word_size)] for port in range(len(self.write_ports))]
@@ -1037,7 +1038,7 @@ class delay():
 
     def gen_control(self):
         """ Generates the control signals """
-        for port in self.read_ports:
+        for port in range(self.total_port_num):
             self.stim.gen_pwl("CSB{0}".format(port), self.cycle_times, self.csb_values[port], self.period, self.slew, 0.05)
         
         for port in self.write_ports:

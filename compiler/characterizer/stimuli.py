@@ -70,12 +70,14 @@ class stimuli():
                 pin_names.append("{0}{1}_{2}".format(addr_name,port,i))    
 
         #Control signals not finalized.
-        for port in read_ports:
+        for port in range(total_port_num):
             pin_names.append("CSB{0}".format(port))
         for port in write_ports:
             pin_names.append("WEB{0}".format(port))
             
-        pin_names.append("{0}".format(tech.spice["clk"]))
+        for port in range(total_port_num):
+            pin_names.append("{0}{1}".format(tech.spice["clk"], port))
+            
         for read_output in read_ports:
             for i in range(dbits):
                 pin_names.append("{0}{1}_{2}".format(dout_name,read_output, i))

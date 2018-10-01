@@ -40,10 +40,11 @@ class functional():
         self.set_stimulus_variables()
         
         # Number of checks can be changed
-        self.num_checks = 1
+        self.num_checks = 2
         
         # set to 1 if functional simulation fails during any check
         self.functional_fail = 0
+        self.error = ""
 
     def set_corner(self,corner):
         """ Set the corner values """
@@ -70,49 +71,175 @@ class functional():
         self.eo_period = []
         
         # Three dimensional list to handle each addr and data bits for wach port over the number of checks
-        self.addresses = [[[] for bit in range(self.addr_size)] for port in range(self.total_write)]
+        self.addresses = [[[] for bit in range(self.addr_size)] for port in range(self.total_ports)]
         self.data = [[[] for bit in range(self.word_size)] for port in range(self.total_write)]
-        
-        # stored written values and read values for functional check
-        #self.addr_keys = []
-        self.written_values = []
-        self.sp_read_value = ["" for port in range(self.total_read)]
         
     def run(self):
         """ Main function to generate random writes/reads, run spice, and analyze results """ 
-        # Need a NOOP to enable the chip
-        # Old code. Is this still necessary?
-        self.first_run()
+        self.noop()
         
-        # Generate write and read signals for spice stimulus
-        for i in range(self.num_checks):
-            addr = self.gen_addr()
-            word = self.gen_data()
-            #self.addr_keys.append(addr)
-            #self.written_values[addr] = word
-            
-            self.write(addr,word)
-            self.read(addr,word)
+        self.overwrite_test()
+        self.write_read_test()
         
+        # Run SPICE simulation
         self.write_functional_stimulus()
         self.stim.run_sim()
         
         # Extrat DOUT values from spice timing.lis
-        for port in range(self.total_read):
-            for bit in range(self.word_size):
-                value = parse_spice_list("timing", "vdout{0}.{1}.".format(port,bit))
-                if value > 0.75 * self.vdd_voltage:
-                    self.sp_read_value[port] = "1" + self.sp_read_value[port]
-                elif value < 0.25 * self.vdd_voltage:
-                    self.sp_read_value[port] = "0" + self.sp_read_value[port]
-                else:
-                    self.functional_fail = 1
+        for i in range(2*self.num_checks):
+            self.sp_read_value = ["" for port in range(self.total_read)]
+            for port in range(self.total_read):
+                for bit in range(self.word_size):
+                    value = parse_spice_list("timing", "vdout{0}.{1}..ch{2}".format(self.read_index[port],bit,i))
+                    if value > 0.75 * self.vdd_voltage:
+                        self.sp_read_value[port] = "1" + self.sp_read_value[port]
+                    elif value < 0.25 * self.vdd_voltage:
+                        self.sp_read_value[port] = "0" + self.sp_read_value[port]
+                    else:
+                        self.functional_fail = 1
+                        self.error ="FAILED: dout value ({}) does not fall within noise margins.".format(self.sp_read_value[port])
                 
-            print("READ VALUE dout{} = {}".format(port,self.sp_read_value[port]))
+                if i < self.num_checks:
+                    self.read_values_over_test[i].append(self.sp_read_value[port])
+                else:
+                    self.read_values_test[i-self.num_checks].append(self.sp_read_value[port])
         
+        # Compare written values to read values
+        for i in range(self.num_checks):
+            debug.info(1, "Stored Word - Overwrite Test: {}".format(self.stored_values_over_test[i]))
+            debug.info(1, "Read Word - Overwrite Test: {}".format(self.read_values_over_test[i]))
+            for port in range(self.total_read):
+                if self.stored_values_over_test[i] != self.read_values_over_test[i][port]:
+                    self.functional_fail = 1
+                    self.error ="FAILED: read value {0} does not match writen value {1}.".format(self.read_values_over_test[i][port], self.stored_values_over_test[i])
+        
+        for i in range(self.num_checks):
+            debug.info(1, "Stored Word - Standard W/R Test: {}".format(self.stored_values_test[i]))
+            debug.info(1, "Read Word - Standard W/R Test: {}".format(self.read_values_test[i]))
+            for port in range(self.total_read):
+                if self.stored_values_test[i] != self.read_values_test[i][port]:
+                    self.functional_fail = 1
+                    self.error ="FAILED: read value {0} does not match writen value {1}.".format(self.read_values_test[i][port], self.stored_values_test[i])
+                    
+        return (self.functional_fail, self.error)
     
-    def first_run(self):
-        """ First cycle as noop to enable chip """
+    def multiport_run(self):
+        """ Main function to generate random writes/reads, run spice, and analyze results. This function includes a multiport check. """ 
+        self.noop()
+        
+        self.multi_read_test()
+        self.overwrite_test()
+        self.write_read_test()
+        
+        # Run SPICE simulation
+        self.write_functional_stimulus()
+        self.stim.run_sim()
+        
+        # Extrat DOUT values from spice timing.lis
+        for i in range(3*self.num_checks):
+            self.sp_read_value = ["" for port in range(self.total_read)]
+            for port in range(self.total_read):
+                for bit in range(self.word_size):
+                    value = parse_spice_list("timing", "vdout{0}.{1}..ch{2}".format(self.read_index[port],bit,i))
+                    if value > 0.75 * self.vdd_voltage:
+                        self.sp_read_value[port] = "1" + self.sp_read_value[port]
+                    elif value < 0.25 * self.vdd_voltage:
+                        self.sp_read_value[port] = "0" + self.sp_read_value[port]
+                    else:
+                        self.functional_fail = 1
+                        self.error ="FAILED: dout value ({}) does not fall within noise margins.".format(self.sp_read_value[port])
+                
+                if i < self.num_checks:
+                    self.read_values_multi_test[i][self.multi_addrs[i][port]] = self.sp_read_value[port]
+                elif i < 2*self.num_checks:
+                    self.read_values_over_test[i-self.num_checks].append(self.sp_read_value[port])
+                else:
+                    self.read_values_test[i-2*self.num_checks].append(self.sp_read_value[port])
+        
+        # Compare written values to read values
+        for i in range(self.num_checks):
+            debug.info(1, "Stored Words - Multi Test (addr:word): {}".format(self.stored_values_multi_test[i]))
+            debug.info(1, "Read Words - Mutlti Test (addr:word): {}".format(self.read_values_multi_test[i]))
+            for addr in self.multi_addrs[i]:
+                if self.stored_values_multi_test[i][addr] != self.read_values_multi_test[i][addr]:
+                    self.functional_fail = 1
+                    self.error ="FAILED: read value {0} does not match writen value {1}.".format(self.read_values_multi_test[i][addr], self.stored_values_multi_test[i][addr])
+                    
+        for i in range(self.num_checks):
+            debug.info(1, "Stored Word - Overwrite Test: {}".format(self.stored_values_over_test[i]))
+            debug.info(1, "Read Word - Overwrite Test: {}".format(self.read_values_over_test[i]))
+            for port in range(self.total_read):
+                if self.stored_values_over_test[i] != self.read_values_over_test[i][port]:
+                    self.functional_fail = 1
+                    self.error ="FAILED: read value {0} does not match writen value {1}.".format(self.read_values_over_test[i][port], self.stored_values_over_test[i])
+        
+        for i in range(self.num_checks):
+            debug.info(1, "Stored Word - Standard W/R Test: {}".format(self.stored_values_test[i]))
+            debug.info(1, "Read Word - Standard W/R Test: {}".format(self.read_values_test[i]))
+            for port in range(self.total_read):
+                if self.stored_values_test[i] != self.read_values_test[i][port]:
+                    self.functional_fail = 1
+                    self.error ="FAILED: read value {0} does not match writen value {1}.".format(self.read_values_test[i][port], self.stored_values_test[i])
+        
+        return (self.functional_fail, self.error)
+    
+    def multi_read_test(self):
+        """ Multiport functional test to see if mutliple words on multiple addresses can be accessed at the same time. """
+        self.stored_values_multi_test = [{} for i in range(self.num_checks)]
+        self.read_values_multi_test = [{} for i in range(self.num_checks)]
+        self.multi_addrs = []
+        
+        for i in range(self.num_checks):
+            # Write random words to a random addresses until there are as many stored words as there are RW and R ports
+            while(len(self.stored_values_multi_test[i]) < self.total_read):
+                addr = self.gen_addr()
+                word = self.gen_data()
+                self.write(addr,word)
+                self.stored_values_multi_test[i][addr] = word
+        
+            # Each RW and R port will read from a different address
+            stored_addrs = []
+            stored_words = []
+            for (addr,word) in self.stored_values_multi_test[i].items():
+                stored_addrs.append(addr)
+                stored_words.append(word)
+                
+            self.multi_addrs.append(stored_addrs)
+            self.multi_read(stored_addrs,stored_words)
+    
+    def overwrite_test(self):
+        """ Functional test to see if a word at a particular address can be overwritten without being corrupted. """
+        self.stored_values_over_test = []
+        self.read_values_over_test = [[] for i in range(self.num_checks)]
+        
+        for i in range(self.num_checks):
+            # Write a random word to a random address 3 different times, overwriting the stored word twice
+            addr = self.gen_addr()
+            for j in range(3):
+                word = self.gen_data()
+                self.write(addr,word)
+            self.stored_values_over_test.append(word)
+            
+            # Read word from address (use all RW and R ports)
+            self.read(addr,word)
+    
+    def write_read_test(self):
+        """ A standard functional test for writing to an address and reading back the value. """
+        self.stored_values_test = []
+        self.read_values_test = [[] for i in range(self.num_checks)]
+        
+        for i in range(self.num_checks):
+            # Write a random word to a random address
+            addr = self.gen_addr()
+            word = self.gen_data()
+            self.write(addr,word)
+            self.stored_values_test.append(word)
+            
+            # Read word from address (use all RW and R ports)
+            self.read(addr,word)
+    
+    def noop(self):
+        """ Noop cycle. """
         self.cycles = self.cycles + 1
         
         for port in range(self.total_ports):        
@@ -121,7 +248,7 @@ class functional():
         for port in range(self.total_write):        
             self.we_b[port].append(1)
 
-        for port in range(self.total_write):     
+        for port in range(self.total_ports):     
             for bit in range(self.addr_size):
                 self.addresses[port][bit].append(0)
         
@@ -130,8 +257,8 @@ class functional():
                 self.data[port][bit].append(0)
     
     def write(self,addr,word,write_port=0):
-        """ Generates signals for a write cycle """
-        print("Writing {0} to {1}...".format(word,addr))
+        """ Generates signals for a write cycle. """
+        debug.info(1, "Writing {0} to address {1} in cycle {2}...".format(word,addr,self.cycles))
         self.cycles = self.cycles + 1
         
         # Write control signals
@@ -148,7 +275,7 @@ class functional():
                 self.we_b[port].append(1)
 
         # Write address
-        for port in range(self.total_write):
+        for port in range(self.total_ports):
             for bit in range(self.addr_size):
                 current_address_bit = int(addr[self.addr_size-1-bit])
                 self.addresses[port][bit].append(current_address_bit)
@@ -160,8 +287,8 @@ class functional():
                 self.data[port][bit].append(current_word_bit)
 
     def read(self,addr,word):
-        """ Generates signals for a read cycle """
-        print("Reading {0} from {1}...".format(word,addr))
+        """ Generates signals for a read cycle. """
+        debug.info(1, "Reading {0} from address {1} in cycle {2},{3}...".format(word,addr,self.cycles,self.cycles+1))
         self.cycles = self.cycles + 2
         
         # Read control signals
@@ -172,7 +299,7 @@ class functional():
             self.we_b[port].append(1)
 
         # Read address
-        for port in range(self.total_write):
+        for port in range(self.total_ports):
             for bit in range(self.addr_size):
                 current_address_bit = int(addr[self.addr_size-1-bit])
                 self.addresses[port][bit].append(current_address_bit)
@@ -192,7 +319,7 @@ class functional():
             self.we_b[port].append(1)
 
         # Address doesn't matter during idle cycle, but keep the same as read cycle for easier debugging
-        for port in range(self.total_write):
+        for port in range(self.total_ports):
             for bit in range(self.addr_size):
                 current_address_bit = int(addr[self.addr_size-1-bit])
                 self.addresses[port][bit].append(current_address_bit)
@@ -205,28 +332,91 @@ class functional():
         
         # Record the end of the period that the read operation occured in
         self.eo_period.append(self.cycles * self.period)
+    
+    def multi_read(self,addrs,words):
+        """ Generates signals for a read cycle but all ports read from a different address. The inputs 'addrs' and 'words' are lists. """
+        debug.info(1, "Reading {0} from addresses {1} in cycles {2},{3}...".format(words,addrs,self.cycles,self.cycles+1))
+        self.cycles = self.cycles + 2
+        
+        # Read control signals
+        for port in range(self.total_ports):
+            self.cs_b[port].append(0)
+            
+        for port in range(self.total_write):
+            self.we_b[port].append(1)
+
+        # Read address
+        addr_index = 0
+        for port in range(self.total_ports):
+            for bit in range(self.addr_size):
+                if self.port_id[port] == "w":
+                    current_address_bit = 0
+                else:
+                    current_address_bit = int(addrs[addr_index][self.addr_size-1-bit])
+                
+                self.addresses[port][bit].append(current_address_bit)
+                
+            if self.port_id[port] != "w":
+                addr_index += 1
+            
+        # Data input doesn't matter during read cycle, so arbitrarily set to 0 for simulation
+        for port in range(self.total_write):
+            for bit in range(self.word_size):
+                self.data[port][bit].append(0)
+        
+        
+        # Add idle cycle since read may take more than 1 cycle
+        # Idle control signals
+        for port in range(self.total_ports):
+            self.cs_b[port].append(1)
+            
+        for port in range(self.total_write):
+            self.we_b[port].append(1)
+
+        # Address doesn't matter during idle cycle, but keep the same as read cycle for easier debugging
+        addr_index = 0
+        for port in range(self.total_ports):
+            for bit in range(self.addr_size):
+                if self.port_id[port] == "w":
+                    current_address_bit = 0
+                else:
+                    current_address_bit = int(addrs[addr_index][self.addr_size-1-bit])
+
+                self.addresses[port][bit].append(current_address_bit)
+            
+            if self.port_id[port] != "w":
+                addr_index += 1
+        
+        # Data input doesn't matter during idle cycle, so arbitrarily set to 0 for simulation
+        for port in range(self.total_write):        
+            for bit in range(self.word_size):
+                self.data[port][bit].append(0)
+        
+        
+        # Record the end of the period that the read operation occured in
+        self.eo_period.append(self.cycles * self.period)
         
     def gen_data(self):
-        """ Generates a random word to write """
+        """ Generates a random word to write. """
         rand = random.randint(0,(2**self.word_size)-1)
         data_bits = self.convert_to_bin(rand,False)
         return data_bits
         
     def gen_addr(self):
-        """ Generates a random address value to write to """
+        """ Generates a random address value to write to. """
         rand = random.randint(0,(2**self.addr_size)-1)  
         addr_bits = self.convert_to_bin(rand,True)
         return addr_bits 
         
     def get_data(self):
-        """ Gets an available address and corresponding word """
+        """ Gets an available address and corresponding word. """
         # Currently unused but may need later depending on how the functional test develops
         addr = random.choice(self.stored_words.keys())
         word = self.stored_words[addr]
         return (addr,word)
         
     def convert_to_bin(self,value,is_addr):
-        """ Converts addr & word to usable binary values """
+        """ Converts addr & word to usable binary values. """
         new_value = str.replace(bin(value),"0b","")
         if(is_addr):
             expected_value = self.addr_size
@@ -235,11 +425,11 @@ class functional():
         for i in range (expected_value - len(new_value)):
             new_value =  "0" + new_value
             
-        print("Binary Conversion: {} to {}".format(value, new_value))
+        #print("Binary Conversion: {} to {}".format(value, new_value))
         return new_value
         
     def obtain_cycle_times(self,period):
-        """ Generate clock cycle times based on period and number of cycles """
+        """ Generate clock cycle times based on period and number of cycles. """
         t_current = 0
         self.cycle_times = []
         for i in range(self.cycles):
@@ -247,7 +437,7 @@ class functional():
             t_current += period 
             
     def create_port_names(self):
-        """Generates the port names to be used in characterization and sets default simulation target ports"""
+        """Generates the port names to be used in characterization and sets default simulation target ports. """
         self.write_ports = []
         self.read_ports = []
         self.total_port_num = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
@@ -266,8 +456,7 @@ class functional():
             self.read_ports.append(read_port_num)
             
     def write_functional_stimulus(self):
-        #Write Stimulus
-        
+        """ Writes SPICE stimulus. """
         self.obtain_cycle_times(self.period)
         temp_stim = "{0}/stim.sp".format(OPTS.openram_temp)
         self.sf = open(temp_stim,"w")
@@ -294,7 +483,7 @@ class functional():
         self.sf.write("\n* SRAM output loads\n")
         for port in range(self.total_read):
             for bit in range(self.word_size):
-                self.sf.write("CD{0}{1} DOUT{0}[{1}] 0 {2}f\n".format(port, bit, self.load))
+                self.sf.write("CD{0}{1} DOUT{0}[{1}] 0 {2}f\n".format(self.read_index[port], bit, self.load))
                 
         # Generate data input bits 
         self.sf.write("\n* Generation of data and address signals\n")
@@ -304,9 +493,9 @@ class functional():
                 self.stim.gen_pwl(sig_name, self.cycle_times, self.data[port][bit], self.period, self.slew, 0.05)
         
         # Generate address bits
-        for port in range(self.total_write):
+        for port in range(self.total_ports):
             for bit in range(self.addr_size):
-                sig_name = "A{0}[{1}]".format(port,bit)
+                sig_name = "ADDR{0}[{1}]".format(port,bit)
                 self.stim.gen_pwl(sig_name, self.cycle_times, self.addresses[port][bit], self.period, self.slew, 0.05)
 
         # Generate control signals
@@ -328,12 +517,17 @@ class functional():
                                 t_fall=self.slew)
         
         # Generate DOUT value measurements
+        if self.total_ports > 1:
+            num_tests = 3
+        else:
+            num_tests = 2
+        
         self.sf.write("\n * Generation of dout measurements\n")
-        for i in range(self.num_checks):
+        for i in range(num_tests*self.num_checks):
             for port in range(self.total_read):
                 for bit in range(self.word_size):
-                    self.stim.gen_meas_value(meas_name="VDOUT{0}[{1}]".format(port,bit),
-                                             dout="DOUT{0}[{1}]".format(port,bit),
+                    self.stim.gen_meas_value(meas_name="VDOUT{0}[{1}]_ch{2}".format(self.read_index[port],bit,i),
+                                             dout="DOUT{0}[{1}]".format(self.read_index[port],bit),
                                              eo_period=self.eo_period[i],
                                              slew=self.slew,
                                              setup=0.05)

@@ -32,11 +32,11 @@ class psram_func_test(openram_test):
 
         from sram import sram
         from sram_config import sram_config
-        c = sram_config(word_size=1,
+        c = sram_config(word_size=2,
                         num_words=16,
                         num_banks=1)
         c.words_per_row=1
-        
+        """
         OPTS.num_rw_ports = 1
         OPTS.num_w_ports = 0
         OPTS.num_r_ports = 0
@@ -54,7 +54,7 @@ class psram_func_test(openram_test):
         """
         OPTS.num_rw_ports = 1
         OPTS.num_w_ports = 1
-        OPTS.num_r_ports = 1
+        OPTS.num_r_ports = 2
         
         debug.info(1, "Functional test for 1bit, 16word SRAM, with 1 bank. Multiport with {}RW {}W {}R.".format(OPTS.num_rw_ports, OPTS.num_w_ports, OPTS.num_r_ports))
         s = sram(c, name="sram1")
@@ -64,10 +64,12 @@ class psram_func_test(openram_test):
 
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         f = functional(s.s, tempspice, corner)
-        f.run()
-        """
+        (fail,error) = f.multiport_run()
+        
+        if fail:
+            print(error)
 
-        #globals.end_openram()
+        globals.end_openram()
         
 # instantiate a copdsay of the class to actually run the test
 if __name__ == "__main__":

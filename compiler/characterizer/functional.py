@@ -97,12 +97,15 @@ class functional():
                         self.sp_read_value[port] = "0" + self.sp_read_value[port]
                     else:
                         self.functional_fail = 1
-                        self.error ="FAILED: dout value ({}) does not fall within noise margins.".format(self.sp_read_value[port])
+                        self.error ="FAILED: dout value {0} does not fall within noise margins <{1} or >{2}.".format(value,0.25*self.vdd_voltage,0.75*self.vdd_voltage)
                 
                 if i < self.num_checks:
                     self.read_values_over_test[i].append(self.sp_read_value[port])
                 else:
                     self.read_values_test[i-self.num_checks].append(self.sp_read_value[port])
+        
+        if self.functional_fail:
+            return (self.functional_fail, self.error)
         
         # Compare written values to read values
         for i in range(self.num_checks):
@@ -147,7 +150,7 @@ class functional():
                         self.sp_read_value[port] = "0" + self.sp_read_value[port]
                     else:
                         self.functional_fail = 1
-                        self.error ="FAILED: dout value ({}) does not fall within noise margins.".format(self.sp_read_value[port])
+                        self.error ="FAILED: dout value {0} does not fall within noise margins <{1} or >{2}.".format(value,0.25*self.vdd_voltage,0.75*self.vdd_voltage)
                 
                 if i < self.num_checks:
                     self.read_values_multi_test[i][self.multi_addrs[i][port]] = self.sp_read_value[port]
@@ -155,6 +158,9 @@ class functional():
                     self.read_values_over_test[i-self.num_checks].append(self.sp_read_value[port])
                 else:
                     self.read_values_test[i-2*self.num_checks].append(self.sp_read_value[port])
+                    
+        if self.functional_fail:
+            return (self.functional_fail, self.error)
         
         # Compare written values to read values
         for i in range(self.num_checks):

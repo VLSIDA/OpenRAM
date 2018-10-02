@@ -12,10 +12,6 @@ class lib:
     """ lib file generation."""
     
     def __init__(self, out_dir, sram, sp_file, use_model=OPTS.analytical_delay):
-        #Temporary Workaround to here to set num of ports. Crashes if set in config file.
-        #OPTS.num_rw_ports = 2
-        #OPTS.num_r_ports = 1
-        #OPTS.num_w_ports = 1
     
         self.out_dir = out_dir
         self.sram = sram

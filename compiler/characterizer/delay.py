@@ -227,7 +227,7 @@ class delay():
         self.sf.write("\n* Generation of control signals\n")
         for port in range(self.total_port_num):
             self.stim.gen_constant(sig_name="CSB{0}".format(port), v_val=self.vdd_voltage)
-        for port in self.read_ports:
+        for port in self.write_ports:
             self.stim.gen_constant(sig_name="WEB{0}".format(port), v_val=self.vdd_voltage)
 
         self.sf.write("\n* Generation of global clock signal\n")
@@ -396,19 +396,21 @@ class delay():
                                                                          port))
                 
             if success:
-                debug.info(1, "Found feasible_period: {0}ns".format(feasible_period))
+                debug.info(2, "Found feasible_period for port {0}: {1}ns".format(port, feasible_period))
                 self.period = feasible_period
-                return results
+                #Only return results related to input port.
+                return results[port]
 
     def find_feasible_period(self):
         """
         Loops through all read ports determining the feasible period and collecting 
         delay information from each port.
         """
+        feasible_delays = [{} for i in range(self.total_port_num)]
         self.period = float(tech.spice["feasible_period"])
         
         #Get initial feasible delays from first port
-        feasible_delays = self.find_feasible_period_one_port(self.read_ports[0])
+        feasible_delays[self.read_ports[0]] = self.find_feasible_period_one_port(self.read_ports[0])
         previous_period = self.period
         
         
@@ -417,6 +419,7 @@ class delay():
         i = 1
         while i < len(self.read_ports):
             port = self.read_ports[i]
+            #Only extract port values from the specified port, not the entire results.
             feasible_delays[port].update(self.find_feasible_period_one_port(port))
             #Function sets the period. Restart the entire process if period changes to collect accurate delays 
             if self.period > previous_period:
@@ -424,6 +427,7 @@ class delay():
             else:
                 i+=1
             previous_period = self.period
+        debug.info(1, "Found feasible_period: {0}ns".format(self.period))
         return feasible_delays
            
                 
@@ -466,6 +470,7 @@ class delay():
         #Loop through all targeted ports and collect delays and powers. 
         #Too much duplicate code here. Try reducing
         for port in self.targ_read_ports:
+            debug.info(2, "Check delay values for port {}".format(port))
             delay_names = ["{0}{1}".format(mname,port) for mname in self.delay_meas_names]
             delay_names = [mname for mname in self.delay_meas_names]
             delays = self.parse_values(delay_names, port, 1e9) # scale delays to ns
@@ -549,9 +554,9 @@ class delay():
         
     def find_min_period(self, feasible_delays):
         """
-        Determine the minimum period for all ports.
+        Determine a single minimum period for all ports.
         """
-
+        
         feasible_period = ub_period = self.period
         lb_period = 0.0
         target_period = 0.5 * (ub_period + lb_period)

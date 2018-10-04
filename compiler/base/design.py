@@ -53,6 +53,7 @@ class design(hierarchy_design):
         self.total_write = OPTS.num_rw_ports + OPTS.num_w_ports
         self.total_read = OPTS.num_rw_ports + OPTS.num_r_ports
         self.total_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
+        self.num_rw_ports = OPTS.num_rw_ports
         
         # Port indices used for data, address, and control signals
         # Port IDs used to identify port type

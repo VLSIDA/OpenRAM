@@ -30,9 +30,9 @@ class sram_func_test(openram_test):
         from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=4,
-                        num_words=16,
+                        num_words=32,
                         num_banks=1)
-        c.words_per_row=1
+        c.words_per_row=2
         debug.info(1, "Functional test for 1bit, 16word SRAM, with 1 bank")
         s = sram(c, name="sram1")
 
@@ -41,10 +41,9 @@ class sram_func_test(openram_test):
 
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         f = functional(s.s, tempspice, corner)
-        (fail, error) = f.run()
+        (success, error) = f.run()
 
-        if fail:
-            print(error)
+        self.assertTrue(not success,error)
 
         globals.end_openram()
         

@@ -63,8 +63,11 @@ class stimuli():
             self.sf.write("CSB{0} ".format(port))
         for readwrite_port in range(readwrite_num):
             self.sf.write("WEB{0} ".format(readwrite_port))
-            
-        self.sf.write("{0} ".format(tech.spice["clk"]))
+        
+        for port in range(total_port_num):
+            self.sf.write("CLK{0} ".format(port))
+        
+        #self.sf.write("{0} ".format(tech.spice["clk"]))
         for read_output in read_ports:
             for i in range(dbits):
                 self.sf.write("DOUT{0}[{1}] ".format(read_output, i))
@@ -225,10 +228,8 @@ class stimuli():
                                                                             t_initial,
                                                                             t_final))
                                                                             
-    def gen_meas_value(self, meas_name, dout, eo_period, setup, slew):
-        t0 = eo_period - setup - 2*slew
-        t1 = eo_period - setup - slew
-        measure_string=".meas tran {0} AVG v({1}) FROM={2}n TO={3}n\n\n".format(meas_name, dout, t0, t1)
+    def gen_meas_value(self, meas_name, dout, t_intital, t_final):
+        measure_string=".meas tran {0} AVG v({1}) FROM={2}n TO={3}n\n\n".format(meas_name, dout, t_intital, t_final)
         self.sf.write(measure_string)
     
     def write_control(self, end_time):

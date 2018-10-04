@@ -11,16 +11,13 @@ import globals
 from globals import OPTS
 import debug
 
-#@unittest.skip("SKIPPING 22_psram_func_test")
-class psram_func_test(openram_test):
+#@unittest.skip("SKIPPING 22_sram_func_test")
+class sram_func_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        OPTS.spice_name="hspice"
+        OPTS.spice_name="ngspice"
         OPTS.analytical_delay = False
-        OPTS.netlist_only = True
-        OPTS.bitcell = "pbitcell"
-        OPTS.replica_bitcell="replica_pbitcell"
         
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
@@ -36,12 +33,7 @@ class psram_func_test(openram_test):
                         num_words=32,
                         num_banks=1)
         c.words_per_row=2
-        
-        OPTS.num_rw_ports = 1
-        OPTS.num_w_ports = 2
-        OPTS.num_r_ports = 4
-        
-        debug.info(1, "Functional test for 1bit, 16word SRAM, with 1 bank. Multiport with {}RW {}W {}R.".format(OPTS.num_rw_ports, OPTS.num_w_ports, OPTS.num_r_ports))
+        debug.info(1, "Functional test for 1bit, 16word SRAM, with 1 bank")
         s = sram(c, name="sram1")
 
         tempspice = OPTS.openram_temp + "temp.sp"
@@ -49,8 +41,8 @@ class psram_func_test(openram_test):
 
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         f = functional(s.s, tempspice, corner)
-        (success,error) = f.multiport_run()
-        
+        (success, error) = f.run()
+
         self.assertTrue(not success,error)
 
         globals.end_openram()

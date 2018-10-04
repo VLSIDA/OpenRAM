@@ -6,6 +6,7 @@ from .lib import *
 from .delay import *
 from .setup_hold import *
 from .functional import *
+from .simulation import *
 
 
 debug.info(1,"Initializing characterizer...")

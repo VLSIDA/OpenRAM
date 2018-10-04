@@ -227,8 +227,8 @@ class delay():
         self.sf.write("\n* Generation of control signals\n")
         for port in range(self.total_port_num):
             self.stim.gen_constant(sig_name="CSB{0}".format(port), v_val=self.vdd_voltage)
-        for port in self.write_ports:
-            self.stim.gen_constant(sig_name="WEB{0}".format(port), v_val=self.vdd_voltage)
+            if port in self.write_ports and port in self.read_ports:
+                self.stim.gen_constant(sig_name="WEB{0}".format(port), v_val=self.vdd_voltage)
 
         self.sf.write("\n* Generation of global clock signal\n")
         for port in range(self.total_port_num):
@@ -846,7 +846,7 @@ class delay():
         #Append the values depending on the type of port
         self.csb_values[port].append(csb_val)
         #If port is in both lists, add rw control signal. Condition indicates its a RW port.
-        if port in self.write_ports:
+        if port in self.write_ports and port in self.read_ports:
             self.web_values[port].append(web_val)
 
     def add_comment(self, port, comment):
@@ -1045,9 +1045,9 @@ class delay():
         """ Generates the control signals """
         for port in range(self.total_port_num):
             self.stim.gen_pwl("CSB{0}".format(port), self.cycle_times, self.csb_values[port], self.period, self.slew, 0.05)
+            if port in self.read_ports and port in self.write_ports:
+                self.stim.gen_pwl("WEB{0}".format(port), self.cycle_times, self.web_values[port], self.period, self.slew, 0.05)
         
-        for port in self.write_ports:
-            self.stim.gen_pwl("WEB{0}".format(port), self.cycle_times, self.web_values[port], self.period, self.slew, 0.05)
             
     def get_empty_measure_data_dict(self):
         """Make a dict of lists for each type of delay and power measurement to append results to"""

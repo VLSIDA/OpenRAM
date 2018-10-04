@@ -72,8 +72,9 @@ class stimuli():
         #Control signals not finalized.
         for port in range(total_port_num):
             pin_names.append("CSB{0}".format(port))
-        for port in write_ports:
-            pin_names.append("WEB{0}".format(port))
+        for port in range(total_port_num):
+            if port in read_ports and port in write_ports:
+                pin_names.append("WEB{0}".format(port))
             
         for port in range(total_port_num):
             pin_names.append("{0}{1}".format(tech.spice["clk"], port))

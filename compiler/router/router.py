@@ -826,7 +826,6 @@ class router:
         # FIXME: This could be optimized, but we just do a simple greedy biggest shape
         # for now.
         for pin_name in self.pin_components.keys():
-            print("Enclosing {}".format(pin_name))
             for pin_set,partial_set in zip(self.pin_components[pin_name],self.pin_component_blockages[pin_name]):
                 total_pin_grids = pin_set | partial_set
                 while self.enclose_pin_grids(total_pin_grids):
@@ -949,10 +948,8 @@ class router:
         debug.info(1,"Adding route: {}".format(str(path)))
         # If it is only a square, add an enclosure to the track
         if len(path)==1:
-            print("Single {}".format(str(path[0][0])))
             self.add_single_enclosure(path[0][0])
         else:
-            print("Route")
             # convert the path back to absolute units from tracks
             # This assumes 1-track wide again
             abs_path = [self.convert_point_to_units(x[0]) for x in path]
@@ -961,15 +958,15 @@ class router:
                                 coordinates=abs_path,
                                 layer_widths=self.layer_widths)
             
-    def add_single_enclosure(self, loc):
+    def add_single_enclosure(self, track):
         """
         Add a metal enclosure that is the size of the routing grid minus a spacing on each side. 
         """
-        (ll,ur) = self.convert_track_to_pin(loc)
-        self.cell.add_rect_center(layer=self.get_layer(loc.z),
-                                  offset=vector(loc.x,loc.y),
-                                  width=ur.x-ll.x,
-                                  height=ur.y-ll.y)
+        (ll,ur) = self.convert_track_to_pin(track)
+        self.cell.add_rect(layer=self.get_layer(track.z),
+                           offset=ll,
+                           width=ur.x-ll.x,
+                           height=ur.y-ll.y)
                                   
 
         

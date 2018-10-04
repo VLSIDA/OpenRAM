@@ -64,10 +64,10 @@ class stimuli():
         for readwrite_port in range(readwrite_num):
             self.sf.write("WEB{0} ".format(readwrite_port))
         
-        for port in range(total_port_num):
-            self.sf.write("CLK{0} ".format(port))
+        #for port in range(total_port_num):
+        #    self.sf.write("CLK{0} ".format(port))
         
-        #self.sf.write("{0} ".format(tech.spice["clk"]))
+        self.sf.write("{0} ".format(tech.spice["clk"]))
         for read_output in read_ports:
             for i in range(dbits):
                 self.sf.write("DOUT{0}[{1}] ".format(read_output, i))

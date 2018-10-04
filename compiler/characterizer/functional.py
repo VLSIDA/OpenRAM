@@ -19,7 +19,7 @@ class functional(simulation):
     """
 
     def __init__(self, sram, spfile, corner):
-        super().__init__(sram, spfile, corner)
+        simulation.__init__(self, sram, spfile, corner)
 
         self.set_corner(corner)
         self.set_spice_constants()

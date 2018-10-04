@@ -15,12 +15,12 @@ class signal_router(router):
     route on a given layer. This is limited to two layer routes.
     """
 
-    def __init__(self, gds_name=None, module=None):
+    def __init__(self, layers, design, gds_filename=None):
         """
-        Use the gds file for the blockages with the top module topName and
-        layers for the layers to route on
+        This will route on layers in design. It will get the blockages from
+        either the gds file name or the design itself (by saving to a gds file).
         """
-        router.__init__(self, gds_name, module)
+        router.__init__(self, layers, design, gds_filename)
 
 
     def create_routing_grid(self):
@@ -36,14 +36,13 @@ class signal_router(router):
         self.rg = signal_grid.signal_grid(self.ll, self.ur, self.track_width)
         
 
-    def route(self, cell, layers, src, dest, detour_scale=5):
+    def route(self, src, dest, detour_scale=5):
         """ 
         Route a single source-destination net and return
         the simplified rectilinear path. Cost factor is how sub-optimal to explore for a feasible route. 
         This is used to speed up the routing when there is not much detouring needed.
         """
         debug.info(1,"Running signal router from {0} to {1}...".format(src,dest))
-        self.cell = cell
 
         self.pins[src] = []
         self.pins[dest] = []
@@ -52,38 +51,29 @@ class signal_router(router):
         if (hasattr(self,'rg')):
             self.clear_pins()
         else:
-            # Set up layers and track sizes
-            self.set_layers(layers)
             # Creat a routing grid over the entire area
             # FIXME: This could be created only over the routing region,
             # but this is simplest for now.
             self.create_routing_grid()
 
-        # Now add the blockages (all shapes except the pins)
-        self.find_pins(src)
-        self.find_pins(dest)
+        # Get the pin shapes
+        self.find_pins_and_blockages([src, dest])
         
-        # This will get all shapes as blockages
-        self.find_blockages()
-        
-        # Now add the blockages
-        self.set_blockages(self.blocked_grids,True)
-        #self.set_blockages(self.pin_partials[src],True)
-        #self.set_blockages(self.pin_partials[dest],True)
-        
-        # Add blockages from previous paths
-        self.set_path_blockages()
-
-
+        # Block everything
+        self.prepare_blockages()
+        # Clear the pins we are routing
+        self.set_blockages(self.pin_components[src],False)
+        self.set_blockages(self.pin_components[dest],False)        
+            
         # Now add the src/tgt if they are not blocked by other shapes
         self.add_source(src)
         self.add_target(dest)
 
-        if not self.run_router(detour_scale):
+        if not self.run_router(detour_scale=detour_scale):
+            self.write_debug_gds(stop_program=False)
             return False
         
-        self.write_debug_gds()
-        
+        self.write_debug_gds(stop_program=False)        
         return True
 
                            

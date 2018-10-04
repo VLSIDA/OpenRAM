@@ -53,3 +53,14 @@ class design(hierarchy_design):
         for inst in self.insts:
             total_module_power += inst.mod.analytical_power(proc, vdd, temp, load)
         return total_module_power
+    
+    def __str__(self):
+        """ override print function output """
+        pins = ",".join(self.pins)
+        insts = ["    {}".format(x) for x in self.insts]
+        objs = ["    {}".format(x) for x in self.objs]  
+        s = "********** design {0} **********\n".format(self.name)
+        s += "\n  pins ({0})={1}\n".format(len(self.pins), pins)
+        s += "\n  objs ({0})=\n{1}".format(len(self.objs), "\n".join(objs))
+        s += "\n  insts ({0})=\n{1}\n".format(len(self.insts), "\n".join(insts))
+        return s

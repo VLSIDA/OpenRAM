@@ -17,26 +17,28 @@ class router:
     It populates blockages on a grid class.
     """
 
-    def __init__(self, gds_name=None, module=None):
-        """Use the gds file or the cell for the blockages with the top module topName and
-        layers for the layers to route on
+    def __init__(self, layers, design, gds_filename=None):
         """
-        self.gds_name = gds_name
-        self.module = module
-        debug.check(not (gds_name and module), "Specify only a GDS file or module")
+        This will instantiate a copy of the gds file or the module at (0,0) and
+        route on top of this. The blockages from the gds/module will be considered.
+        """
+        self.cell = design
 
-        # If we specified a module instead, write it out to read the gds
+        # If didn't specify a gds blockage file, write it out to read the gds
         # This isn't efficient, but easy for now
-        if module:
-            gds_name = OPTS.openram_temp+"temp.gds"
-            module.gds_write(gds_name)
+        if not gds_filename:
+            gds_filename = OPTS.openram_temp+"temp.gds"
+            self.cell.gds_write(gds_filename)
         
         # Load the gds file and read in all the shapes
         self.layout = gdsMill.VlsiLayout(units=tech.GDS["unit"])
         self.reader = gdsMill.Gds2reader(self.layout)
-        self.reader.loadFromFile(gds_name)
+        self.reader.loadFromFile(gds_filename)
         self.top_name = self.layout.rootStructureName
 
+        # Set up layers and track sizes
+        self.set_layers(layers)
+        
         ### The pin data structures
         # A map of pin names to pin structures
         self.pins = {}
@@ -157,6 +159,7 @@ class router:
         self.pins[pin_name] = pin_set
         self.all_pins.update(pin_set)
 
+        
     def find_pins(self,pin_name):
         """ 
         Finds the pin shapes and converts to tracks. 
@@ -189,7 +192,53 @@ class router:
     # #     self.rg.reinit()
         
 
-    
+    def find_pins_and_blockages(self, pin_list):
+        """
+        Find the pins and blockages in the design 
+        """
+        # This finds the pin shapes and sorts them into "groups" that are connected
+        for pin in pin_list:
+            self.find_pins(pin)
+
+        # This will get all shapes as blockages and convert to grid units
+        # This ignores shapes that were pins 
+        self.find_blockages()
+        
+        # This will convert the pins to grid units
+        # It must be done after blockages to ensure no DRCs between expanded pins and blocked grids
+        for pin in pin_list:
+            self.convert_pins(pin)
+
+        # Enclose the continguous grid units in a metal rectangle to fix some DRCs
+        self.enclose_pins()
+
+    def prepare_blockages(self):
+        """
+        Reset and add all of the blockages in the design.
+        Names is a list of pins to add as a blockage.
+        """
+        debug.info(1,"Preparing blockages.")
+        
+        # Start fresh. Not the best for run-time, but simpler.
+        self.clear_blockages()
+        # This adds the initial blockges of the design
+        #print("BLOCKING:",self.blocked_grids)
+        self.set_blockages(self.blocked_grids,True)
+
+        # Block all of the supply rails (some will be unblocked if they're a target)
+        self.set_supply_rail_blocked(True)
+        
+        # Block all of the pin components (some will be unblocked if they're a source/target)
+        for name in self.pin_components.keys():
+            self.set_blockages(self.pin_components[name],True)
+
+        # Block all of the pin component partial blockages 
+        for name in self.pin_component_blockages.keys():
+            self.set_blockages(self.pin_component_blockages[name],True)
+                           
+        # These are the paths that have already been routed.
+        self.set_path_blockages()
+        
     def translate_coordinates(self, coord, mirr, angle, xyShift):
         """
         Calculate coordinates after flip, rotate, and shift
@@ -251,6 +300,7 @@ class router:
         """ 
         Clear all blockages on the grid.
         """
+        debug.info(2,"Clearing all blockages")
         self.rg.clear_blockages()
         
     def set_blockages(self, blockages, value=True):
@@ -776,6 +826,7 @@ class router:
         # FIXME: This could be optimized, but we just do a simple greedy biggest shape
         # for now.
         for pin_name in self.pin_components.keys():
+            print("Enclosing {}".format(pin_name))
             for pin_set,partial_set in zip(self.pin_components[pin_name],self.pin_component_blockages[pin_name]):
                 total_pin_grids = pin_set | partial_set
                 while self.enclose_pin_grids(total_pin_grids):
@@ -834,6 +885,7 @@ class router:
         """
         Add the supply rails of given name as a routing target.
         """
+        debug.info(2,"Add supply rail target {}".format(pin_name))
         for rail in self.supply_rails:
             if rail.name != pin_name:
                 continue
@@ -847,6 +899,7 @@ class router:
         """
         Add the supply rails of given name as a routing target.
         """
+        debug.info(2,"Blocking supply rail")        
         for rail in self.supply_rails:
             for wave_index in range(len(rail)):
                 pin_in_tracks = rail[wave_index]
@@ -857,6 +910,7 @@ class router:
         """ 
         Block all of the pin components.
         """
+        debug.info(2,"Setting blockages {0} {1}".format(pin_name,value))
         for component in self.pin_components[pin_name]:
             self.set_blockages(component, value)
             
@@ -892,15 +946,16 @@ class router:
         """
         path=self.prepare_path(path)
         
-        # convert the path back to absolute units from tracks
-        # This assumes 1-track wide again
-        abs_path = [self.convert_point_to_units(x[0]) for x in path]
-        debug.info(1,str(abs_path))
-
+        debug.info(1,"Adding route: {}".format(str(path)))
         # If it is only a square, add an enclosure to the track
         if len(path)==1:
-            self.add_single_enclosure(abs_path[0])
+            print("Single {}".format(str(path[0][0])))
+            self.add_single_enclosure(path[0][0])
         else:
+            print("Route")
+            # convert the path back to absolute units from tracks
+            # This assumes 1-track wide again
+            abs_path = [self.convert_point_to_units(x[0]) for x in path]
             # Otherwise, add the route which includes enclosures
             self.cell.add_route(layers=self.layers,
                                 coordinates=abs_path,

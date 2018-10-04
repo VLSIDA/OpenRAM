@@ -37,13 +37,13 @@ class pin_location_test(openram_test):
                               offset=[0,0])
                 self.connect_inst([])
                 
-                r=router(gds_file)
                 layer_stack =("metal1","via1","metal2")
+                r=router(layer_stack,self,gds_file)
                 # these are user coordinates and layers
                 src_pin = [[0.52, 4.099],11]
                 tgt_pin = [[3.533, 1.087],11]
                 #r.route(layer_stack,src="A",dest="B")
-                self.assertTrue(r.route(self,layer_stack,src=src_pin,dest=tgt_pin))
+                self.assertTrue(r.route(src=src_pin,dest=tgt_pin))
 
         # This only works for freepdk45 since the coordinates are hard coded
         if OPTS.tech_name == "freepdk45":

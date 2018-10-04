@@ -65,7 +65,6 @@ class grid:
             self.map[n].path=value
 
     def clear_blockages(self):
-        debug.info(2,"Clearing all blockages")
         self.set_blocked(set(self.map.keys()),False)
             
     def set_source(self,n,value=True):

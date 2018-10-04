@@ -28,7 +28,7 @@ class layout(lef.lef):
         self.insts = []      # Holds module/cell layout instances
         self.objs = []       # Holds all other objects (labels, geometries, etc)
         self.pin_map = {}    # Holds name->pin_layout map for all pins
-        self.visited = False # Flag for traversing the hierarchy 
+        self.visited = []    # List of modules we have already visited
         self.is_library_cell = False # Flag for library cells 
         self.gds_read()
 
@@ -432,59 +432,66 @@ class layout(lef.lef):
         
         # open the gds file if it exists or else create a blank layout
         if os.path.isfile(self.gds_file):
-            debug.info(3, "opening %s" % self.gds_file)
+            debug.info(3, "opening {}".format(self.gds_file))
             self.is_library_cell=True
             self.gds = gdsMill.VlsiLayout(units=GDS["unit"])
             reader = gdsMill.Gds2reader(self.gds)
             reader.loadFromFile(self.gds_file)
         else:
-            debug.info(4, "creating structure %s" % self.name)
+            debug.info(3, "Creating layout structure {}".format(self.name))
             self.gds = gdsMill.VlsiLayout(name=self.name, units=GDS["unit"])
 
     def print_gds(self, gds_file=None):
         """Print the gds file (not the vlsi class) to the terminal """
         if gds_file == None:
             gds_file = self.gds_file
-        debug.info(4, "Printing %s" % gds_file)
+        debug.info(4, "Printing {}".format(gds_file))
         arrayCellLayout = gdsMill.VlsiLayout(units=GDS["unit"])
         reader = gdsMill.Gds2reader(arrayCellLayout, debugToTerminal=1)
         reader.loadFromFile(gds_file)
 
     def clear_visited(self):
         """ Recursively clear the visited flag """
-        if not self.visited:
-            for i in self.insts:
-                i.mod.clear_visited()
-        self.visited = False
+        self.visited = []
 
-    def gds_write_file(self, newLayout):
+    def gds_write_file(self, gds_layout):
         """Recursive GDS write function"""
         # Visited means that we already prepared self.gds for this subtree
-        if self.visited:
+        if self.name in self.visited:
             return
         for i in self.insts:
-            i.gds_write_file(newLayout)
+            i.gds_write_file(gds_layout)
         for i in self.objs:
-            i.gds_write_file(newLayout)
+            i.gds_write_file(gds_layout)
         for pin_name in self.pin_map.keys():
             for pin in self.pin_map[pin_name]:
-                pin.gds_write_file(newLayout)
-        self.visited = True
+                pin.gds_write_file(gds_layout)
+        self.visited.append(self.name)
 
     def gds_write(self, gds_name):
         """Write the entire gds of the object to the file."""
-        debug.info(3, "Writing to {0}".format(gds_name))
+        debug.info(3, "Writing to {}".format(gds_name))
+
+        # If we already wrote a GDS, we need to reset and traverse it again in
+        # case we made changes.
+        if not self.is_library_cell and self.visited:
+            debug.info(3, "Creating layout structure {}".format(self.name))
+            self.gds = gdsMill.VlsiLayout(name=self.name, units=GDS["unit"])
 
         writer = gdsMill.Gds2writer(self.gds)
         # MRG: 3/2/18 We don't want to clear the visited flag since
         # this would result in duplicates of all instances being placed in self.gds
         # which may have been previously processed!
-        #self.clear_visited()
+        # MRG: 10/4/18 We need to clear if we make changes and write a second GDS!
+        self.clear_visited()
+        
         # recursively create all the remaining objects
         self.gds_write_file(self.gds)
+        
         # populates the xyTree data structure for gds
         # self.gds.prepareForWrite()
         writer.writeToFile(gds_name)
+        debug.info(3, "Done writing to {}".format(gds_name))        
 
     def get_boundary(self):
         """ Return the lower-left and upper-right coordinates of boundary """
@@ -1008,7 +1015,7 @@ class layout(lef.lef):
     def pdf_write(self, pdf_name):
         # NOTE: Currently does not work (Needs further research)
         #self.pdf_name = self.name + ".pdf"
-        debug.info(0, "Writing to %s" % pdf_name)
+        debug.info(0, "Writing to {}".format(pdf_name))
         pdf = gdsMill.pdfLayout(self.gds)
 
         return

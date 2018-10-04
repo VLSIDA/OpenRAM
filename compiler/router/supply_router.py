@@ -17,13 +17,13 @@ class supply_router(router):
     routes a grid to connect the supply on the two layers.
     """
 
-    def __init__(self, gds_name=None, module=None):
+    def __init__(self, layers, design, gds_filename=None):
         """
-        Use the gds file for the blockages with the top module topName and
-        layers for the layers to route on
+        This will route on layers in design. It will get the blockages from
+        either the gds file name or the design itself (by saving to a gds file).
         """
-        router.__init__(self, gds_name, module)
-
+        router.__init__(self, layers, design, gds_filename)
+        
         # Power rail width in grid units.
         self.rail_track_width = 2
 
@@ -38,12 +38,11 @@ class supply_router(router):
         import supply_grid
         self.rg = supply_grid.supply_grid(self.ll, self.ur, self.track_width)
     
-    def route(self, cell, layers, vdd_name="vdd", gnd_name="gnd"):
+    def route(self, vdd_name="vdd", gnd_name="gnd"):
         """ 
         Add power supply rails and connect all pins to these rails.
         """
         debug.info(1,"Running supply router on {0} and {1}...".format(vdd_name, gnd_name))
-        self.cell = cell
         self.vdd_name = vdd_name
         self.gnd_name = gnd_name
 
@@ -51,15 +50,13 @@ class supply_router(router):
         if (hasattr(self,'rg')):
             self.clear_pins()
         else:
-            # Set up layers and track sizes
-            self.set_layers(layers)
             # Creat a routing grid over the entire area
             # FIXME: This could be created only over the routing region,
             # but this is simplest for now.
             self.create_routing_grid()
 
         # Get the pin shapes
-        self.find_pins_and_blockages()
+        self.find_pins_and_blockages([self.vdd_name, self.gnd_name])
         
         # Add the supply rails in a mesh network and connect H/V with vias
         # Block everything
@@ -84,51 +81,6 @@ class supply_router(router):
         self.write_debug_gds(stop_program=False)
         return True
 
-    def find_pins_and_blockages(self):
-        """
-        Find the pins and blockages in teh design 
-        """
-        # This finds the pin shapes and sorts them into "groups" that are connected
-        self.find_pins(self.vdd_name)
-        self.find_pins(self.gnd_name)
-
-        # This will get all shapes as blockages and convert to grid units
-        # This ignores shapes that were pins 
-        self.find_blockages()
-        
-        # This will convert the pins to grid units
-        # It must be done after blockages to ensure no DRCs between expanded pins and blocked grids
-        self.convert_pins(self.vdd_name)
-        self.convert_pins(self.gnd_name)
-
-        # Enclose the continguous grid units in a metal rectangle to fix some DRCs
-        self.enclose_pins()
-
-
-    def prepare_blockages(self):
-        """
-        Reset and add all of the blockages in the design.
-        Names is a list of pins to add as a blockage.
-        """
-        # Start fresh. Not the best for run-time, but simpler.
-        self.clear_blockages()
-        # This adds the initial blockges of the design
-        #print("BLOCKING:",self.blocked_grids)
-        self.set_blockages(self.blocked_grids,True)
-
-        # Block all of the supply rails (some will be unblocked if they're a target)
-        self.set_supply_rail_blocked(True)
-        
-        # Block all of the pin components (some will be unblocked if they're a source/target)
-        for name in self.pin_components.keys():
-            self.set_blockages(self.pin_components[name],True)
-
-        # Block all of the pin component partial blockages 
-        for name in self.pin_component_blockages.keys():
-            self.set_blockages(self.pin_component_blockages[name],True)
-                           
-        # These are the paths that have already been routed.
-        self.set_path_blockages()
         
     def connect_supply_rails(self, name):
         """

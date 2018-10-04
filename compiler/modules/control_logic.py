@@ -18,19 +18,19 @@ class control_logic(design.design):
     Dynamically generated Control logic for the total SRAM circuit.
     """
 
-    def __init__(self, num_rows, port="rw"):
+    def __init__(self, num_rows, port_type="rw"):
         """ Constructor """
-        name = "control_logic_" + port
+        name = "control_logic_" + port_type
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(name))
         
         self.num_rows = num_rows
-        self.port = port
+        self.port_type = port_type
         
-        if self.port == "r":
-            self.num_control_signals = 1
-        else:
+        if self.port_type == "rw":
             self.num_control_signals = 2
+        else:
+            self.num_control_signals = 1
         
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -88,7 +88,7 @@ class control_logic(design.design):
         self.inv8 = pinv(size=16, height=dff_height)
         self.add_mod(self.inv8)
 
-        if (self.port == "rw") or (self.port == "r"):
+        if (self.port_type == "rw") or (self.port_type == "r"):
             from importlib import reload
             c = reload(__import__(OPTS.replica_bitline))
             replica_bitline = getattr(c, OPTS.replica_bitline)
@@ -96,7 +96,7 @@ class control_logic(design.design):
             delay_stages = 4 # Must be non-inverting
             delay_fanout = 3 # This can be anything >=2
             bitcell_loads = int(math.ceil(self.num_rows / 5.0))
-            self.replica_bitline = replica_bitline(delay_stages, delay_fanout, bitcell_loads, name="replica_bitline_"+self.port)
+            self.replica_bitline = replica_bitline(delay_stages, delay_fanout, bitcell_loads, name="replica_bitline_"+self.port_type)
             self.add_mod(self.replica_bitline)
 
 
@@ -104,28 +104,28 @@ class control_logic(design.design):
         """ Setup bus names, determine the size of the busses etc """
 
         # List of input control signals
-        if self.port == "r":
-            self.input_list =["csb"]
+        if self.port_type == "rw":
+            self.input_list = ["csb", "web"]
         else:
-            self.input_list =["csb", "web"]
+            self.input_list = ["csb"]
             
-        if self.port == "r":
-            self.dff_output_list =["cs_bar", "cs"]
+        if self.port_type == "rw":
+            self.dff_output_list = ["cs_bar", "cs", "we_bar", "we"]
         else:
-            self.dff_output_list =["cs_bar", "cs", "we_bar", "we"]
+            self.dff_output_list = ["cs_bar", "cs"]
         
         # list of output control signals (for making a vertical bus)
-        if self.port == "r":
-            self.internal_bus_list = ["clk_buf", "clk_buf_bar", "cs"]
-        else:
+        if self.port_type == "rw":
             self.internal_bus_list = ["clk_buf", "clk_buf_bar", "we", "cs"]
+        else:
+            self.internal_bus_list = ["clk_buf", "clk_buf_bar", "cs"]
         # leave space for the bus plus one extra space
         self.internal_bus_width = (len(self.internal_bus_list)+1)*self.m2_pitch 
         
         # Outputs to the bank
-        if self.port == "r":
+        if self.port_type == "r":
             self.output_list = ["s_en"]
-        elif self.port == "w":
+        elif self.port_type == "w":
             self.output_list = ["w_en"]
         else:
             self.output_list = ["s_en", "w_en"]
@@ -147,9 +147,9 @@ class control_logic(design.design):
         """ Create all the modules """
         self.create_dffs()
         self.create_clk_row()
-        if (self.port == "rw") or (self.port == "w"):
+        if (self.port_type == "rw") or (self.port_type == "w"):
             self.create_we_row()
-        if (self.port == "rw") or (self.port == "r"):
+        if (self.port_type == "rw") or (self.port_type == "r"):
             self.create_rbl_in_row()
             self.create_sen_row()
             self.create_rbl()
@@ -168,12 +168,12 @@ class control_logic(design.design):
         # Add the logic on the right of the bus
         self.place_clk_row(row=row) # clk is a double-high cell
         row += 2
-        if (self.port == "rw") or (self.port == "w"):
+        if (self.port_type == "rw") or (self.port_type == "w"):
             self.place_we_row(row=row)
             pre_height = self.w_en_inst.uy()
             control_center_y = self.w_en_inst.by()
             row += 1
-        if (self.port == "rw") or (self.port == "r"):
+        if (self.port_type == "rw") or (self.port_type == "r"):
             self.place_rbl_in_row(row=row)
             self.place_sen_row(row=row+1)
             self.place_rbl(row=row+2)
@@ -186,7 +186,7 @@ class control_logic(design.design):
         # Extra pitch on top and right
         self.height = pre_height + self.m3_pitch
         # Max of modules or logic rows
-        if (self.port == "rw") or (self.port == "r"):
+        if (self.port_type == "rw") or (self.port_type == "r"):
             self.width = max(self.rbl_inst.rx(), max([inst.rx() for inst in self.row_end_inst])) + self.m2_pitch
         else:
             self.width = max([inst.rx() for inst in self.row_end_inst]) + self.m2_pitch
@@ -194,9 +194,9 @@ class control_logic(design.design):
     def route_all(self):
         """ Routing between modules """
         self.route_dffs()
-        if (self.port == "rw") or (self.port == "w"):
+        if (self.port_type == "rw") or (self.port_type == "w"):
             self.route_wen()
-        if (self.port == "rw") or (self.port == "r"):
+        if (self.port_type == "rw") or (self.port_type == "r"):
             self.route_rbl_in()
             self.route_sen()
         self.route_clk()
@@ -295,7 +295,7 @@ class control_logic(design.design):
     def route_dffs(self):
         """ Route the input inverters """
 
-        if self.port == "r":
+        if self.port_type == "r":
             control_inputs = ["cs"]
         else:
             control_inputs = ["cs", "we"]
@@ -312,7 +312,7 @@ class control_logic(design.design):
                             rotate=90)
 
         self.copy_layout_pin(self.ctrl_dff_inst, "din[0]", "csb")
-        if (self.port == "rw") or (self.port == "w"):
+        if (self.port_type == "rw"):
             self.copy_layout_pin(self.ctrl_dff_inst, "din[1]", "web")
         
         
@@ -340,9 +340,16 @@ class control_logic(design.design):
 
     def create_we_row(self):
         # input: WE, CS output: w_en_bar
+        if self.port_type == "rw":
+            nand_mod = self.nand3
+            temp = ["clk_buf_bar", "cs", "we", "w_en_bar", "vdd", "gnd"]
+        else:
+            nand_mod = self.nand2
+            temp = ["clk_buf_bar", "cs", "w_en_bar", "vdd", "gnd"]
+        
         self.w_en_bar_inst = self.add_inst(name="nand3_w_en_bar",
-                                           mod=self.nand3)
-        self.connect_inst(["clk_buf_bar", "cs", "we", "w_en_bar", "vdd", "gnd"])
+                                           mod=nand_mod)
+        self.connect_inst(temp)
 
         # input: w_en_bar, output: pre_w_en
         self.pre_w_en_inst = self.add_inst(name="inv_pre_w_en",
@@ -366,7 +373,10 @@ class control_logic(design.design):
         w_en_bar_offset = vector(x_off, y_off)
         self.w_en_bar_inst.place(offset=w_en_bar_offset,
                                  mirror=mirror)
-        x_off += self.nand3.width
+        if self.port_type == "rw":
+            x_off += self.nand3.width
+        else:
+            x_off += self.nand2.width
 
         pre_w_en_offset = vector(x_off, y_off)
         self.pre_w_en_inst.place(offset=pre_w_en_offset,
@@ -460,7 +470,10 @@ class control_logic(design.design):
         
         
     def route_wen(self):
-        wen_map = zip(["A", "B", "C"], ["clk_buf_bar", "cs", "we"])
+        if self.port_type == "rw":
+            wen_map = zip(["A", "B", "C"], ["clk_buf_bar", "cs", "we"])
+        else:
+            wen_map = zip(["A", "B"], ["clk_buf_bar", "cs"])
         self.connect_vertical_bus(wen_map, self.w_en_bar_inst, self.rail_offsets)  
 
         # Connect the NAND3 output to the inverter
@@ -536,7 +549,7 @@ class control_logic(design.design):
                     self.add_power_pin("gnd", pin_loc)
                     self.add_path("metal1", [row_loc, pin_loc])
             
-        if (self.port == "rw") or (self.port == "r"):
+        if (self.port_type == "rw") or (self.port_type == "r"):
             self.copy_layout_pin(self.rbl_inst,"gnd")
             self.copy_layout_pin(self.rbl_inst,"vdd")        
 

@@ -48,7 +48,7 @@ class sram_base(design):
         
         for port in range(self.total_ports):
             self.add_pin("csb{}".format(port),"INPUT")
-        for port in range(self.total_write):
+        for port in range(self.num_rw_ports):
             self.add_pin("web{}".format(port),"INPUT")
         for port in range(self.total_ports):
             self.add_pin("clk{}".format(port),"INPUT")
@@ -231,13 +231,13 @@ class sram_base(design):
         from control_logic import control_logic
         # Create the control logic module for each port type
         if OPTS.num_rw_ports>0:
-            self.control_logic = self.control_logic_rw = control_logic(num_rows=self.num_rows, port="rw")
+            self.control_logic = self.control_logic_rw = control_logic(num_rows=self.num_rows, port_type="rw")
             self.add_mod(self.control_logic_rw)
         if OPTS.num_w_ports>0:
-            self.control_logic_w = control_logic(num_rows=self.num_rows, port="w")
+            self.control_logic_w = control_logic(num_rows=self.num_rows, port_type="w")
             self.add_mod(self.control_logic_w)
         if OPTS.num_r_ports>0:
-            self.control_logic_r = control_logic(num_rows=self.num_rows, port="r")
+            self.control_logic_r = control_logic(num_rows=self.num_rows, port_type="r")
             self.add_mod(self.control_logic_r)
 
         # Create the address and control flops (but not the clk)
@@ -404,7 +404,7 @@ class sram_base(design):
                                        mod=mod))
             
             temp = ["csb{}".format(port)]
-            if (self.port_id[port] == "rw") or (self.port_id[port] == "w"):
+            if self.port_id[port] == "rw":
                 temp.append("web{}".format(port))
             temp.append("clk{}".format(port))
             if (self.port_id[port] == "rw") or (self.port_id[port] == "r"):

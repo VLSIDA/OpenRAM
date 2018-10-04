@@ -249,8 +249,8 @@ class bank(design.design):
             for port in range(self.total_ports):
                 self.column_mux_array.append(self.mod_column_mux_array(columns=self.num_cols, 
                                                                        word_size=self.word_size,
-                                                                       bitcell_bl=self.read_bl_list[port],
-                                                                       bitcell_br=self.read_br_list[port]))
+                                                                       bitcell_bl=self.total_bl_list[port],
+                                                                       bitcell_br=self.total_br_list[port]))
                 self.add_mod(self.column_mux_array[port])
 
 

@@ -72,11 +72,10 @@ def write_netgen_script(cell_name, sp_name):
 
     global OPTS
 
-    if os.path.exists(OPTS.openram_tech + "/mag_lib/setup.tcl"):
-        setup_file = OPTS.openram_tech + "/mag_lib/setup.tcl"
+    setup_file = OPTS.openram_tech + "/mag_lib/setup.tcl"
+    if os.path.exists(setup_file):
         # Copy setup.tcl file into temp dir
-        shutil.copy(OPTS.openram_tech + "/mag_lib/setup.tcl",
-                    OPTS.openram_temp)
+        shutil.copy(setup_file, OPTS.openram_temp)
     else:
         setup_file = 'nosetup'
 
@@ -106,8 +105,11 @@ def run_drc(cell_name, gds_name, extract=False):
     num_drc_runs += 1
 
     # Copy .magicrc file into temp dir
-    shutil.copy(OPTS.openram_tech + "/mag_lib/.magicrc",
-                OPTS.openram_temp)
+    magic_file = OPTS.openram_tech + "/mag_lib/setup.tcl"
+    if os.path.exists(magic_file):
+        shutil.copy(magic_file, OPTS.openram_temp)
+    else:
+        debug.warning("Could not locate .magicrc file: {}".format(magic_file))
 
     write_magic_script(cell_name, gds_name, extract)
     

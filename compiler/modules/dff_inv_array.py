@@ -153,6 +153,7 @@ class dff_inv_array(design.design):
                 
         # Create vertical spines to a single horizontal rail
         clk_pin = self.dff_insts[0,0].get_pin("clk")
+        clk_ypos = 2*self.m3_pitch+self.m3_width
         debug.check(clk_pin.layer=="metal2","DFF clk pin not on metal2")
         if self.columns==1:
             self.add_layout_pin(text="clk",
@@ -163,8 +164,8 @@ class dff_inv_array(design.design):
         else:
             self.add_layout_pin_segment_center(text="clk",
                                             layer="metal3",
-                                            start=vector(0,self.m3_pitch+self.m3_width),
-                                            end=vector(self.width,self.m3_pitch+self.m3_width))
+                                            start=vector(0,clk_ypos),
+                                            end=vector(self.width,clk_ypos))
             for col in range(self.columns):
                 clk_pin = self.dff_insts[0,col].get_pin("clk")
                 # Make a vertical strip for each column
@@ -174,7 +175,7 @@ class dff_inv_array(design.design):
                               height=self.height)
                 # Drop a via to the M3 pin
                 self.add_via_center(layers=("metal2","via2","metal3"),
-                                    offset=vector(clk_pin.cx(),self.m3_pitch+self.m3_width))
+                                    offset=vector(clk_pin.cx(),clk_ypos))
                 
                 
         

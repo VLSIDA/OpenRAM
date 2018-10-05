@@ -71,11 +71,14 @@ def write_netgen_script(cell_name, sp_name):
     """ Write a netgen script to perform LVS. """
 
     global OPTS
-    # This is a hack to prevent netgen from re-initializing the LVS
-    # commands. It will be unnecessary after Tim adds the nosetup option.
-    setup_file = OPTS.openram_temp + "setup.tcl"
-    f = open(setup_file, "w")
-    f.close()
+
+    if os.path.exists(OPTS.openram_tech + "/mag_lib/setup.tcl"):
+        setup_file = OPTS.openram_tech + "/mag_lib/setup.tcl"
+        # Copy setup.tcl file into temp dir
+        shutil.copy(OPTS.openram_tech + "/mag_lib/setup.tcl",
+                    OPTS.openram_temp)
+    else:
+        setup_file = 'nosetup'
 
     run_file = OPTS.openram_temp + "run_lvs.sh"
     f = open(run_file, "w")
@@ -89,32 +92,12 @@ def write_netgen_script(cell_name, sp_name):
     #                                                                     cell_name))
     # f.write("property {{{0}{1}.spice pfet}} tolerance {{w 0.1}}\n".format(OPTS.openram_temp,
     #                                                                     cell_name))
-    f.write("lvs {0}.spice {{{1} {0}}} setup.tcl {0}.lvs.report\n".format(cell_name, sp_name))
+    f.write("lvs {0}.spice {{{1} {0}}} {2} {0}.lvs.report\n".format(cell_name, sp_name, setup_file))
     f.write("quit\n")
     f.write("EOF\n")
     f.close()
     os.system("chmod u+x {}".format(run_file))
 
-    setup_file = OPTS.openram_temp + "setup.tcl"
-    f = open(setup_file, "w")
-    f.write("ignore class c\n")
-    f.write("equate class {{nfet {0}.spice}} {{n {1}}}\n".format(cell_name, sp_name))
-    f.write("equate class {{pfet {0}.spice}} {{p {1}}}\n".format(cell_name, sp_name))
-    # This circuit has symmetries and needs to be flattened to resolve them or the banks won't pass
-    # Is there a more elegant way to add this when needed?
-    f.write("flatten class {{{0}.spice precharge_array_1}}\n".format(cell_name))
-    f.write("flatten class {{{0}.spice precharge_array_2}}\n".format(cell_name))
-    f.write("flatten class {{{0}.spice precharge_array_3}}\n".format(cell_name))
-    f.write("flatten class {{{0}.spice precharge_array_4}}\n".format(cell_name))
-    f.write("property {{nfet {0}.spice}} remove as ad ps pd\n".format(cell_name))
-    f.write("property {{pfet {0}.spice}} remove as ad ps pd\n".format(cell_name))
-    f.write("property {{n {0}}} remove as ad ps pd\n".format(sp_name))
-    f.write("property {{p {0}}} remove as ad ps pd\n".format(sp_name))
-    f.write("permute transistors\n")
-    f.write("permute pins n source drain\n")
-    f.write("permute pins p source drain\n")
-    f.close()
-    
     
 def run_drc(cell_name, gds_name, extract=False):
     """Run DRC check on a cell which is implemented in gds_name."""

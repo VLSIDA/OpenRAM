@@ -209,7 +209,8 @@ class supply_router(router):
 
         num_components = self.num_pin_components(pin_name)
         debug.info(1,"Pin {0} has {1} components to route.".format(pin_name, num_components))
-        
+
+        recent_paths = []
         # For every component
         for index in range(num_components):
             debug.info(2,"Routing component {0} {1}".format(pin_name, index))
@@ -225,11 +226,12 @@ class supply_router(router):
             # Add all of the rails as targets
             # Don't add the other pins, but we could?
             self.add_supply_rail_target(pin_name)
-            
+
             # Actually run the A* router
             if not self.run_router(detour_scale=5):
                 self.write_debug_gds()
             
+            recent_paths.append(self.paths[-1])
 
                 
     

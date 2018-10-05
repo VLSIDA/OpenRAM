@@ -56,7 +56,7 @@ class router:
         self.blocked_grids = set()
         # The corresponding set of partially blocked grids for each component.
         # These are blockages for other nets but unblocked for this component.
-        self.pin_component_blockages = {}        
+        #self.pin_component_blockages = {}        
         
         ### The routed data structures
         # A list of paths that have been "routed"
@@ -233,8 +233,8 @@ class router:
             self.set_blockages(self.pin_components[name],True)
 
         # Block all of the pin component partial blockages 
-        for name in self.pin_component_blockages.keys():
-            self.set_blockages(self.pin_component_blockages[name],True)
+        #for name in self.pin_component_blockages.keys():
+        #    self.set_blockages(self.pin_component_blockages[name],True)
                            
         # These are the paths that have already been routed.
         self.set_path_blockages()
@@ -732,10 +732,10 @@ class router:
         except:
             self.pin_components[pin_name] = []
 
-        try:
-            self.pin_component_blockages[pin_name]
-        except:
-            self.pin_component_blockages[pin_name] = []
+        # try:
+        #     self.pin_component_blockages[pin_name]
+        # except:
+        #     self.pin_component_blockages[pin_name] = []
             
         found_pin = False
         for pg in self.pin_groups[pin_name]:
@@ -759,13 +759,13 @@ class router:
             if (len(pin_set) == 0):
                 self.write_debug_gds()
                 debug.error("Unable to find pin on grid.",-1)
-                
+
             # We need to route each of the components, so don't combine the groups
-            self.pin_components[pin_name].append(pin_set)
+            self.pin_components[pin_name].append(pin_set | blockage_set)
 
             # Add all of the blocked grids to the set for the design
-            partial_set = blockage_set - pin_set
-            self.pin_component_blockages[pin_name].append(partial_set)
+            #partial_set = blockage_set - pin_set
+            #self.pin_component_blockages[pin_name].append(partial_set)
 
             # Remove the blockage set from the blockages since these
             # will either be pins or partial pin blockges
@@ -826,8 +826,11 @@ class router:
         # FIXME: This could be optimized, but we just do a simple greedy biggest shape
         # for now.
         for pin_name in self.pin_components.keys():
-            for pin_set,partial_set in zip(self.pin_components[pin_name],self.pin_component_blockages[pin_name]):
-                total_pin_grids = pin_set | partial_set
+            #for pin_set,partial_set in zip(self.pin_components[pin_name],self.pin_component_blockages[pin_name]):
+            #    total_pin_grids = pin_set | partial_set
+            for pin_grids in self.pin_components[pin_name]:
+                # Must duplicate so we don't destroy the original
+                total_pin_grids=set(pin_grids)
                 while self.enclose_pin_grids(total_pin_grids):
                     pass
 
@@ -867,6 +870,13 @@ class router:
         debug.info(1,"Set source: " + str(pin_name) + " " + str(pin_in_tracks))
         self.rg.add_source(pin_in_tracks)
 
+    def add_path_target(self, paths):
+        """ 
+        Set all of the paths as a target too.
+        """
+        for p in paths:
+            self.rg.set_target(p)
+            self.rg.set_blocked(p,False)
 
     def add_pin_component_target(self, pin_name, index):
         """ 

@@ -50,14 +50,17 @@ def write_magic_script(cell_name, gds_name, extract=False):
     f.write("drc catchup\n")
     f.write("drc count total\n")
     f.write("drc count\n")
-    if extract:
-        f.write("extract all\n")
-        f.write("ext2spice hierarchy on\n")        
-        f.write("ext2spice scale off\n")
-        # Can choose hspice, ngspice, or spice3,
-        # but they all seem compatible enough.
-        #f.write("ext2spice format ngspice\n")
-        f.write("ext2spice\n")
+    if not extract:
+        pre = "#"
+    else:
+        pre = ""
+    f.write(pre+"extract all\n")
+    f.write(pre+"ext2spice hierarchy on\n")        
+    f.write(pre+"ext2spice scale off\n")
+    # Can choose hspice, ngspice, or spice3,
+    # but they all seem compatible enough.
+    #f.write(pre+"ext2spice format ngspice\n")
+    f.write(pre+"ext2spice\n")
     f.write("quit -noprompt\n")
     f.write("EOF\n")
         

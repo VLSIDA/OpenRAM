@@ -32,7 +32,7 @@ class no_blockages_test(openram_test):
             c.words_per_row=1
             sram = sram(c, "sram1")
             cell = sram.s
-                
+
         layer_stack =("metal3","via3","metal4")
         rtr=router(layer_stack, cell)
         self.assertTrue(rtr.route())

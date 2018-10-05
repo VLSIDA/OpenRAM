@@ -26,7 +26,7 @@ num_drc_runs = 0
 num_lvs_runs = 0
 num_pex_runs = 0
 
-def write_magic_script(cell_name, gds_name, extract=False):
+def write_magic_script(cell_name, gds_name, extract=False, final_verification=False):
     """ Write a magic script to perform DRC and optionally extraction. """
 
     global OPTS
@@ -41,10 +41,10 @@ def write_magic_script(cell_name, gds_name, extract=False):
     f.write("load {}\n".format(cell_name))
     # Flatten the cell to get rid of DRCs spanning multiple layers
     # (e.g. with routes)
-    f.write("flatten {}_new\n".format(cell_name))
-    f.write("load {}_new\n".format(cell_name))
-    f.write("cellname rename {0}_new {0}\n".format(cell_name))
-    f.write("load {}\n".format(cell_name))
+    #f.write("flatten {}_new\n".format(cell_name))
+    #f.write("load {}_new\n".format(cell_name))
+    #f.write("cellname rename {0}_new {0}\n".format(cell_name))
+    #f.write("load {}\n".format(cell_name))
     f.write("writeall force\n")
     f.write("drc check\n")
     f.write("drc catchup\n")
@@ -54,7 +54,9 @@ def write_magic_script(cell_name, gds_name, extract=False):
         pre = "#"
     else:
         pre = ""
-    f.write(pre+"extract all\n")
+    if final_verification:
+        f.write(pre+"extract unique\n")
+    f.write(pre+"extract\n")
     f.write(pre+"ext2spice hierarchy on\n")        
     f.write(pre+"ext2spice scale off\n")
     # Can choose hspice, ngspice, or spice3,
@@ -98,7 +100,7 @@ def write_netgen_script(cell_name, sp_name):
     os.system("chmod u+x {}".format(run_file))
 
     
-def run_drc(cell_name, gds_name, extract=False):
+def run_drc(cell_name, gds_name, extract=False, final_verification=False):
     """Run DRC check on a cell which is implemented in gds_name."""
 
     global num_drc_runs
@@ -111,7 +113,7 @@ def run_drc(cell_name, gds_name, extract=False):
     else:
         debug.warning("Could not locate .magicrc file: {}".format(magic_file))
 
-    write_magic_script(cell_name, gds_name, extract)
+    write_magic_script(cell_name, gds_name, extract, final_verification)
     
     # run drc
     cwd = os.getcwd()
@@ -164,7 +166,7 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     global num_lvs_runs
     num_lvs_runs += 1
     
-    run_drc(cell_name, gds_name, extract=True)
+    run_drc(cell_name, gds_name, extract=True, final_verification=final_verification)
     write_netgen_script(cell_name, sp_name)
     
     # run LVS

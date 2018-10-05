@@ -73,12 +73,11 @@ class supply_router(router):
         # Determine the rail locations
         self.route_supply_rails(self.vdd_name,1)
 
-
         # Route the supply pins to the supply rails
         self.route_pins_to_rails(gnd_name)
         self.route_pins_to_rails(vdd_name)
         
-        self.write_debug_gds(stop_program=False)
+        #self.write_debug_gds(stop_program=False)
         return True
 
         
@@ -219,6 +218,12 @@ class supply_router(router):
             
             self.prepare_blockages()
 
+            # Don't mark the other components as targets since we want to route
+            # directly to a rail, but unblock all the source components so we can
+            # route over them
+            self.set_blockages(self.pin_components[pin_name],False)
+            self.set_blockages(self.pin_component_blockages[pin_name],False)            
+            
             # Add the single component of the pin as the source
             # which unmarks it as a blockage too
             self.add_pin_component_source(pin_name,index)
@@ -227,6 +232,10 @@ class supply_router(router):
             # Don't add the other pins, but we could?
             self.add_supply_rail_target(pin_name)
 
+            # Add the previous paths as targets too
+            #self.add_path_target(recent_paths)
+
+            
             # Actually run the A* router
             if not self.run_router(detour_scale=5):
                 self.write_debug_gds()

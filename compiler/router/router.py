@@ -56,7 +56,7 @@ class router:
         self.blocked_grids = set()
         # The corresponding set of partially blocked grids for each component.
         # These are blockages for other nets but unblocked for this component.
-        #self.pin_component_blockages = {}        
+        self.pin_component_blockages = {}        
         
         ### The routed data structures
         # A list of paths that have been "routed"
@@ -152,12 +152,15 @@ class router:
             (name,layer,boundary)=shape
             rect = [vector(boundary[0],boundary[1]),vector(boundary[2],boundary[3])]
             pin = pin_layout(pin_name, rect, layer)
-            debug.info(2,"Found pin {}".format(str(pin)))
             pin_set.add(pin)
 
         debug.check(len(pin_set)>0,"Did not find any pin shapes for {0}.".format(str(pin_name)))
         self.pins[pin_name] = pin_set
         self.all_pins.update(pin_set)
+
+        for pin in self.pins[pin_name]:
+            debug.info(2,"Found pin {}".format(str(pin)))
+        
 
         
     def find_pins(self,pin_name):
@@ -197,6 +200,7 @@ class router:
         Find the pins and blockages in the design 
         """
         # This finds the pin shapes and sorts them into "groups" that are connected
+        # This must come before the blockages, so we can ignore metal shapes that are blockages.
         for pin in pin_list:
             self.find_pins(pin)
 
@@ -233,8 +237,8 @@ class router:
             self.set_blockages(self.pin_components[name],True)
 
         # Block all of the pin component partial blockages 
-        #for name in self.pin_component_blockages.keys():
-        #    self.set_blockages(self.pin_component_blockages[name],True)
+        for name in self.pin_component_blockages.keys():
+            self.set_blockages(self.pin_component_blockages[name],True)
                            
         # These are the paths that have already been routed.
         self.set_path_blockages()
@@ -354,6 +358,7 @@ class router:
             ur = vector(boundary[2],boundary[3])
             rect = [ll,ur]
             new_pin = pin_layout("blockage{}".format(len(self.blockages)),rect,layer_num)
+            
             # If there is a rectangle that is the same in the pins, it isn't a blockage!
             if new_pin not in self.all_pins:
                 self.blockages.append(new_pin)
@@ -732,10 +737,10 @@ class router:
         except:
             self.pin_components[pin_name] = []
 
-        # try:
-        #     self.pin_component_blockages[pin_name]
-        # except:
-        #     self.pin_component_blockages[pin_name] = []
+        try:
+            self.pin_component_blockages[pin_name]
+        except:
+            self.pin_component_blockages[pin_name] = []
             
         found_pin = False
         for pg in self.pin_groups[pin_name]:
@@ -761,37 +766,41 @@ class router:
                 debug.error("Unable to find pin on grid.",-1)
 
             # We need to route each of the components, so don't combine the groups
-            self.pin_components[pin_name].append(pin_set | blockage_set)
+            self.pin_components[pin_name].append(pin_set)
 
-            # Add all of the blocked grids to the set for the design
-            #partial_set = blockage_set - pin_set
-            #self.pin_component_blockages[pin_name].append(partial_set)
+            # Add all of the partial blocked grids to the set for the design
+            # if they are not blocked by other metal
+            partial_set = blockage_set - pin_set - self.blocked_grids
+            self.pin_component_blockages[pin_name].append(partial_set)
 
-            # Remove the blockage set from the blockages since these
-            # will either be pins or partial pin blockges
-            self.blocked_grids.difference_update(blockage_set)            
+            # We should not have added the pins to the blockages,
+            # but remove them just in case
+            # Partial set may still be in the blockages if there were
+            # other shapes disconnected from the pins that were also overlapping
+            self.blocked_grids.difference_update(pin_set)
 
-    def enclose_pin_grids(self, grids):
+
+    def enclose_pin_grids(self, grids, seed):
         """
-        This encloses a single pin component with a rectangle. 
-        It returns the set of the unenclosed pins.
+        This encloses a single pin component with a rectangle
+        starting with the seed and expanding right until blocked
+        and then up until blocked.
         """
 
         # We may have started with an empty set
         if not grids:
             return
 
-        # Start with lowest left element 
-        ll = min(grids)
-        grids.remove(ll)
+        # Start with the seed
+        ll = seed
+
         # Start with the ll and make the widest row
         row = [ll]
         # Move right while we can
         while True:
             right = row[-1] + vector3d(1,0,0)
-            # Can't move if not in the pin shape or blocked
-            if right in grids and right not in self.blocked_grids:
-                grids.remove(right)
+            # Can't move if not in the pin shape 
+            if right in grids:
                 row.append(right)
             else:
                 break
@@ -799,11 +808,10 @@ class router:
         while True:
             next_row = [x+vector3d(0,1,0) for x in row]
             for cell in next_row:
-                # Can't move if any cell is not in the pin shape or blocked
-                if cell not in grids or cell in self.blocked_grids:
+                # Can't move if any cell is not in the pin shape 
+                if cell not in grids:
                     break
             else:
-                grids.difference_update(set(next_row))
                 row = next_row
                 # Skips the second break
                 continue
@@ -814,8 +822,6 @@ class router:
         ur = row[-1]
         self.add_enclosure(ll, ur, ll.z)
         
-        # Return the remaining grid set
-        return grids
     
     def enclose_pins(self):
         """
@@ -826,15 +832,15 @@ class router:
         # FIXME: This could be optimized, but we just do a simple greedy biggest shape
         # for now.
         for pin_name in self.pin_components.keys():
-            #for pin_set,partial_set in zip(self.pin_components[pin_name],self.pin_component_blockages[pin_name]):
-            #    total_pin_grids = pin_set | partial_set
-            for pin_grids in self.pin_components[pin_name]:
-                # Must duplicate so we don't destroy the original
-                total_pin_grids=set(pin_grids)
-                while self.enclose_pin_grids(total_pin_grids):
-                    pass
+            for pin_set,partial_set in zip(self.pin_components[pin_name],self.pin_component_blockages[pin_name]):
+                total_pin_grids = pin_set | partial_set
+                # Starting with each pin, add the max enclosure
+                # This will result in redundant overlaps, but it is easy.
+                for seed in total_pin_grids:
+                    self.enclose_pin_grids(total_pin_grids, seed)
 
-        self.write_debug_gds("pin_debug.gds", False)
+
+        #self.write_debug_gds("pin_debug.gds", True)
 
         
     def add_source(self, pin_name):

@@ -80,14 +80,18 @@ class sram_base(design):
         """ Layout creation """    
         self.place_modules()
         self.route()
-        self.supply_route()
+
         self.add_lvs_correspondence_points()
         
         self.offset_all_coordinates()
+
+        # FIXME: Only works in positive directions
+        self.supply_route()
         
         highest_coord = self.find_highest_coords()
         self.width = highest_coord[0]
         self.height = highest_coord[1]
+
         
         self.DRC_LVS(final_verification=True)
 

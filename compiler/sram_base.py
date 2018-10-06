@@ -7,7 +7,7 @@ from vector import vector
 from globals import OPTS, print_time
 
 from design import design
-    
+        
 class sram_base(design):
     """
     Dynamically generated SRAM by connecting banks to control logic. The
@@ -80,6 +80,7 @@ class sram_base(design):
         """ Layout creation """    
         self.place_modules()
         self.route()
+        self.supply_route()
         self.add_lvs_correspondence_points()
         
         self.offset_all_coordinates()
@@ -90,6 +91,36 @@ class sram_base(design):
         
         self.DRC_LVS(final_verification=True)
 
+    def route_vdd_gnd_pins(self):
+        """ Propagate all vdd/gnd pins up to this level for all modules """
+
+        #These are the instances that every bank has
+        top_instances = [self.bank_inst,
+                         self.row_addr_dff_inst,
+                         self.data_dff_inst,
+                         self.control_logic_inst[0]]
+        if self.col_addr_dff:
+            top_instances.append(self.col_addr_dff_inst)
+                         
+        for inst in top_instances:
+            self.copy_layout_pin(inst, "vdd")
+            self.copy_layout_pin(inst, "gnd")
+        
+        
+    def supply_route(self):
+        """ Route the supply grid and connect the pins to them. """
+        
+        for inst in self.insts:
+            self.copy_layout_pin(inst, "vdd")
+            self.copy_layout_pin(inst, "gnd")
+
+        from supply_router import supply_router as router
+        layer_stack =("metal3","via3","metal4")
+        rtr=router(layer_stack, self)
+        rtr.route()
+        
+
+        
         
     def compute_bus_sizes(self):
         """ Compute the independent bus widths shared between two and four bank SRAMs """

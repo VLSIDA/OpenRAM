@@ -192,7 +192,10 @@ class layout(lef.lef):
 
     def get_pins(self, text):
         """ Return a pin list (instead of a single pin) """
-        return self.pin_map[text]
+        if text in self.pin_map.keys():
+            return self.pin_map[text]
+        else:
+            return []
     
     def copy_layout_pin(self, instance, pin_name, new_name=""):
         """ 

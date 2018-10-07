@@ -67,7 +67,7 @@ s.save()
 p = parser.parse(OPTS.openram_temp,os.environ.get('OPENRAM_HOME')+"/datasheets")
 
 # Delete temp files etc.
-#end_openram()
+end_openram()
 print_time("End",datetime.datetime.now(), start_time)
 
 

@@ -40,7 +40,7 @@ report_status()
 import verify
 from sram import sram
 from sram_config import sram_config
-
+import parser
 output_extensions = ["sp","v","lib"]
 if not OPTS.netlist_only:
     output_extensions.extend(["gds","lef"])
@@ -63,8 +63,11 @@ s = sram(sram_config=c,
 # Output the files for the resulting SRAM
 s.save()
 
+# generate datasheet from characterization of created SRAM
+p = parser.parse(OPTS.openram_temp,os.environ.get('OPENRAM_HOME')+"/datasheets")
+
 # Delete temp files etc.
-end_openram()
+#end_openram()
 print_time("End",datetime.datetime.now(), start_time)
 
 

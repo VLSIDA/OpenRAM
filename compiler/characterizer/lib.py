@@ -29,6 +29,8 @@ class lib:
         
         self.characterize_corners()
         
+        
+        
     def gen_port_names(self):
         """Generates the port names to be written to the lib file"""
         #This is basically a copy and paste of whats in delay.py as well. Something more efficient should be done here.
@@ -100,7 +102,7 @@ class lib:
             debug.info(1,"Writing to {0}".format(lib_name))
             self.characterize()
             self.lib.close()
-
+            self.parse_info()
     def characterize(self):
         """ Characterize the current corner. """
 
@@ -518,4 +520,37 @@ class lib:
                 self.times = self.sh.analytical_setuphold(self.slews,self.loads)
             else:
                 self.times = self.sh.analyze(self.slews,self.slews)
+                
+                
+    def parse_info(self):
+        if OPTS.is_unit_test:
+            return
+        datasheet = open(OPTS.openram_temp +'/datasheet.info', 'a+')
+        
+        for (self.corner,lib_name) in zip(self.corners,self.lib_files):
+        
+            ports = ""
+            if OPTS.num_rw_ports>0:
+                ports += "{}_".format(OPTS.num_rw_ports)
+            if OPTS.num_w_ports>0:
+                ports += "{}_".format(OPTS.num_w_ports)
+            if OPTS.num_r_ports>0:
+                ports += "{}_".format(OPTS.num_r_ports)
+
+            datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12}".format("sram_{0}_{1}_{2}{3}".format(OPTS.word_size, OPTS.num_words, ports, OPTS.tech_name),
+                                                                                            OPTS.num_words,
+                                                                                            OPTS.num_banks,
+                                                                                            OPTS.num_rw_ports,  
+                                                                                            OPTS.num_w_ports,
+                                                                                            OPTS.num_r_ports,
+                                                                                            OPTS.tech_name,
+                                                                                            self.corner[1],
+                                                                                            self.corner[2],
+                                                                                            self.corner[0],
+                                                                                            round_time(self.char_results["min_period"]),
+                                                                                            self.out_dir,
+                                                                                            lib_name))
+                                                                                            
+  
+        datasheet.close()
                 

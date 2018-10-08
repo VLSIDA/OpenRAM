@@ -515,10 +515,13 @@ class bank(design.design):
         
         # FIXME: place for multiport        
         for port in range(self.total_ports):
+            col_decoder_inst = self.col_decoder_inst[port]
+            
             # Place the col decoder right aligned with row decoder
             x_off = -(self.central_bus_width + self.wordline_driver.width + self.col_decoder.width)
             y_off = -(self.col_decoder.height + 2*drc["well_to_well"])
-            self.col_decoder_inst[port].place(vector(x_off,y_off))
+            col_decoder_inst.place(vector(x_off,y_off))
+
 
             
     def create_bank_select(self):
@@ -559,38 +562,9 @@ class bank(design.design):
         
     def route_vdd_gnd(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """
-
-        # These are the instances that every bank has
-        top_instances = [self.bitcell_array_inst]
-        for port in range(self.total_read):
-            #top_instances.append(self.precharge_array_inst[port])
-            top_instances.append(self.sense_amp_array_inst[port])
-        for port in range(self.total_write):
-            top_instances.append(self.write_driver_array_inst[port])
-        for port in range(self.total_ports):
-            top_instances.extend([self.row_decoder_inst[port],
-                                  self.wordline_driver_inst[port]])
-            # Add these if we use the part...
-            if self.col_addr_size > 0:
-                top_instances.append(self.col_decoder_inst[port])
-                #top_instances.append(self.col_mux_array_inst[port])
-            
-            if self.num_banks > 1:
-                top_instances.append(self.bank_select_inst[port])
-        
-        if self.col_addr_size > 0:
-            for port in range(self.total_ports):
-                self.copy_layout_pin(self.col_mux_array_inst[port], "gnd")
-        for port in range(self.total_read):
-            self.copy_layout_pin(self.precharge_array_inst[port], "vdd")
-        
-        for inst in top_instances:
-            # Column mux has no vdd
-            #if self.col_addr_size==0 or (self.col_addr_size>0 and inst != self.col_mux_array_inst[0]):
-            self.copy_layout_pin(inst, "vdd")
-            # Precharge has no gnd
-            #if inst != self.precharge_array_inst[port]:
-            self.copy_layout_pin(inst, "gnd")
+        for inst in self.insts:
+            self.copy_power_pins(inst,"vdd")
+            self.copy_power_pins(inst,"gnd")
         
     def route_bank_select(self):
         """ Route the bank select logic. """

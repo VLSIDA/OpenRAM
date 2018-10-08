@@ -113,10 +113,10 @@ class sram_base(design):
         
     def supply_route(self):
         """ Route the supply grid and connect the pins to them. """
-        
+
         for inst in self.insts:
-            self.copy_layout_pin(inst, "vdd")
-            self.copy_layout_pin(inst, "gnd")
+            self.copy_power_pins(inst,"vdd")
+            self.copy_power_pins(inst,"gnd")
 
         from supply_router import supply_router as router
         layer_stack =("metal3","via3","metal4")
@@ -223,6 +223,7 @@ class sram_base(design):
                          self.tri_gate_array_inst,
                          self.row_decoder_inst,
                          self.wordline_driver_inst]
+        
         # Add these if we use the part...
         if self.col_addr_size > 0:
             top_instances.append(self.col_decoder_inst)
@@ -233,12 +234,8 @@ class sram_base(design):
 
         
         for inst in top_instances:
-            # Column mux has no vdd
-            if self.col_addr_size==0 or (self.col_addr_size>0 and inst != self.col_mux_array_inst):
-                self.copy_layout_pin(inst, "vdd")
-            # Precharge has no gnd
-            if inst != self.precharge_array_inst:
-                self.copy_layout_pin(inst, "gnd")
+            self.copy_layout_pin(inst, "vdd")
+            self.copy_layout_pin(inst, "gnd")
         
         
     def add_multi_bank_modules(self):

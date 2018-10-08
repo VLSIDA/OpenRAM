@@ -97,13 +97,13 @@ class pinvbuf(design.design):
         # Add INV1 to the left (capacitance shield)
         self.inv1_inst.place(vector(0,0))
 
-        # Add INV2 to the right of INVX1
+        # Add INV2 to the right of INV1
         self.inv2_inst.place(vector(self.inv1_inst.rx(),0))
         
-        # Add INV3 to the right of INVX2
+        # Add INV3 to the right of INV2
         self.inv3_inst.place(vector(self.inv2_inst.rx(),0))
 
-        # Add INV4 flipped to the bottom aligned with INVX2
+        # Add INV4 flipped to the bottom aligned with INV2
         self.inv4_inst.place(offset=vector(self.inv2_inst.rx(),2*self.inv2.height),
                              mirror = "MX")
         
@@ -135,18 +135,27 @@ class pinvbuf(design.design):
 
         # Continous vdd rail along with label.
         vdd_pin=self.inv1_inst.get_pin("vdd")
-        self.add_power_pin(name="vdd",
-                           loc=vdd_pin.lc())
+        self.add_layout_pin(text="vdd",
+                            layer="metal1",
+                            offset=vdd_pin.ll().scale(0,1),
+                            width=self.width,
+                            height=vdd_pin.height())
 
         # Continous vdd rail along with label.
         gnd_pin=self.inv4_inst.get_pin("gnd")
-        self.add_power_pin(name="gnd",
-                           loc=gnd_pin.lc())
+        self.add_layout_pin(text="gnd",
+                            layer="metal1",
+                            offset=gnd_pin.ll().scale(0,1),
+                            width=self.width,
+                            height=gnd_pin.height())
         
         # Continous gnd rail along with label.
         gnd_pin=self.inv1_inst.get_pin("gnd")
-        self.add_power_pin(name="gnd",
-                           loc=gnd_pin.lc())
+        self.add_layout_pin(text="gnd",
+                            layer="metal1",
+                            offset=gnd_pin.ll().scale(0,1),
+                            width=self.width,
+                            height=vdd_pin.height())
             
         z_pin = self.inv4_inst.get_pin("Z")
         self.add_layout_pin_rect_center(text="Z",

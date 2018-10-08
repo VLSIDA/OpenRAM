@@ -885,6 +885,22 @@ class layout(lef.lef):
                       width=xmax-xmin,
                       height=ymax-ymin)
 
+
+    def copy_power_pins(self, inst, name):
+        """
+        This will copy a power pin if it is on M3. If it is on M1, it will add a power via too.
+        """
+        pins=inst.get_pins(name)
+        for pin in pins:
+            if pin.layer=="metal3":
+                self.add_layout_pin(name, pin.layer, pin.ll(), pin.width(), pin.height())
+            elif pin.layer=="metal1":
+                self.add_power_pin(name, pin.center())
+            else:
+                debug.warning("{0} pins of {1} should be on metal3 or metal1 for supply router.".format(name,inst.name))
+
+                
+        
     def add_power_pin(self, name, loc, rotate=90):
         """ 
         Add a single power pin from M3 down to M1 at the given center location

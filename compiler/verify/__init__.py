@@ -54,7 +54,6 @@ else:
 
 if OPTS.pex_exe == None:
     from .none import run_pex,print_pex_stats
-    print("why god why")
 elif "calibre"==OPTS.pex_exe[0]:
     from .calibre import run_pex,print_pex_stats
 elif "magic"==OPTS.pex_exe[0]:

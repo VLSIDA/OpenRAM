@@ -86,7 +86,6 @@ class sram():
         # Save the extracted spice file
         if OPTS.use_pex:
             import verify
-            print(verify.__file__)
             start_time = datetime.datetime.now()
             # Output the extracted design if requested
             sp_file = OPTS.output_path + "temp_pex.sp"

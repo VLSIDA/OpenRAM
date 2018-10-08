@@ -111,6 +111,7 @@ class trim_spice():
         match of the line with a term so you can search for a single
         net connection, the instance name, anything..
         """
+        removed_insts = 0
         #Expects keep_inst_list are regex patterns. Compile them here.
         compiled_patterns = [re.compile(pattern) for pattern in keep_inst_list]
         
@@ -127,11 +128,14 @@ class trim_spice():
                 new_buffer.append(line)
                 in_subckt=False
             elif in_subckt:
+                removed_insts += 1
                 for pattern in compiled_patterns:
                     if pattern.search(line) != None:
                         new_buffer.append(line)
+                        removed_insts -= 1
                         break
             else:
                 new_buffer.append(line)
 
         self.sp_buffer = new_buffer
+        debug.info(2, "Removed {} instances from {} subcircuit.".format(removed_insts, subckt_name))

@@ -94,16 +94,16 @@ class pinvbuf(design.design):
         self.connect_inst(["zb_int", "Z",  "vdd", "gnd"])
 
     def place_modules(self):
-        # Add INV1 to the right (capacitance shield)
+        # Add INV1 to the left (capacitance shield)
         self.inv1_inst.place(vector(0,0))
 
-        # Add INV2 to the right
+        # Add INV2 to the right of INVX1
         self.inv2_inst.place(vector(self.inv1_inst.rx(),0))
         
-        # Add INV3 to the right
+        # Add INV3 to the right of INVX2
         self.inv3_inst.place(vector(self.inv2_inst.rx(),0))
 
-        # Add INV4 to the bottom
+        # Add INV4 flipped to the bottom aligned with INVX2
         self.inv4_inst.place(offset=vector(self.inv2_inst.rx(),2*self.inv2.height),
                              mirror = "MX")
         
@@ -135,27 +135,18 @@ class pinvbuf(design.design):
 
         # Continous vdd rail along with label.
         vdd_pin=self.inv1_inst.get_pin("vdd")
-        self.add_layout_pin(text="vdd",
-                            layer="metal1",
-                            offset=vdd_pin.ll().scale(0,1),
-                            width=self.width,
-                            height=vdd_pin.height())
+        self.add_power_pin(name="vdd",
+                           loc=vdd_pin.lc())
 
         # Continous vdd rail along with label.
         gnd_pin=self.inv4_inst.get_pin("gnd")
-        self.add_layout_pin(text="gnd",
-                            layer="metal1",
-                            offset=gnd_pin.ll().scale(0,1),
-                            width=self.width,
-                            height=gnd_pin.height())
+        self.add_power_pin(name="gnd",
+                           loc=gnd_pin.lc())
         
         # Continous gnd rail along with label.
         gnd_pin=self.inv1_inst.get_pin("gnd")
-        self.add_layout_pin(text="gnd",
-                            layer="metal1",
-                            offset=gnd_pin.ll().scale(0,1),
-                            width=self.width,
-                            height=vdd_pin.height())
+        self.add_power_pin(name="gnd",
+                           loc=gnd_pin.lc())
             
         z_pin = self.inv4_inst.get_pin("Z")
         self.add_layout_pin_rect_center(text="Z",

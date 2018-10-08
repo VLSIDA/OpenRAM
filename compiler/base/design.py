@@ -63,16 +63,16 @@ class design(hierarchy_design):
         port_number = 0
         
         for port in range(OPTS.num_rw_ports):
-            self.write_index.append("{}".format(port_number))
-            self.read_index.append("{}".format(port_number))
+            self.write_index.append(port_number)
+            self.read_index.append(port_number)
             self.port_id.append("rw")
             port_number += 1
         for port in range(OPTS.num_w_ports):
-            self.write_index.append("{}".format(port_number))
+            self.write_index.append(port_number)
             self.port_id.append("w")
             port_number += 1
         for port in range(OPTS.num_r_ports):
-            self.read_index.append("{}".format(port_number))
+            self.read_index.append(port_number)
             self.port_id.append("r")
             port_number += 1
 

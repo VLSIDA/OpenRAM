@@ -38,8 +38,8 @@ class psram_func_test(openram_test):
         c.words_per_row=2
         
         OPTS.num_rw_ports = 1
-        OPTS.num_w_ports = 2
-        OPTS.num_r_ports = 4
+        OPTS.num_w_ports = 1
+        OPTS.num_r_ports = 1
         
         debug.info(1, "Functional test for 1bit, 16word SRAM, with 1 bank. Multiport with {}RW {}W {}R.".format(OPTS.num_rw_ports, OPTS.num_w_ports, OPTS.num_r_ports))
         s = sram(c, name="sram1")
@@ -49,9 +49,10 @@ class psram_func_test(openram_test):
 
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         f = functional(s.s, tempspice, corner)
-        (success,error) = f.multiport_run()
+        f.num_cycles = 5
+        (fail,error) = f.run()
         
-        self.assertTrue(not success,error)
+        self.assertTrue(fail,error)
 
         globals.end_openram()
         

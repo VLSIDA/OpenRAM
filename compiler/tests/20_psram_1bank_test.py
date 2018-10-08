@@ -11,7 +11,7 @@ import globals
 from globals import OPTS
 import debug
 
-@unittest.skip("SKIPPING 20_psram_1bank_test, multiport layout not complete")
+#@unittest.skip("SKIPPING 20_psram_1bank_test, multiport layout not complete")
 class sram_1bank_test(openram_test):
 
     def runTest(self):        
@@ -40,7 +40,7 @@ class sram_1bank_test(openram_test):
         debug.info(1, "Single bank two way column mux with control logic")
         a = sram(c, "sram2")
         self.local_check(a, final_verification=True)
-
+        """
         c.num_words=64
         c.words_per_row=4
         debug.info(1, "Single bank, four way column mux with control logic")
@@ -69,7 +69,7 @@ class sram_1bank_test(openram_test):
         debug.info(1, "Single bank, no column mux with control logic")
         a = sram(c, "sram1")
         self.local_check(a, final_verification=True)
-        
+        """
         OPTS.num_rw_ports = 0
         OPTS.num_w_ports = 2
         OPTS.num_r_ports = 2

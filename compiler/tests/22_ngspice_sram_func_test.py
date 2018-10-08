@@ -41,9 +41,10 @@ class sram_func_test(openram_test):
 
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         f = functional(s.s, tempspice, corner)
-        (success, error) = f.run()
+        f.num_cycles = 10
+        (fail, error) = f.run()
 
-        self.assertTrue(not success,error)
+        self.assertTrue(fail,error)
 
         globals.end_openram()
         

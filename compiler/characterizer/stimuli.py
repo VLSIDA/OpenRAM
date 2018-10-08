@@ -28,24 +28,12 @@ class stimuli():
         
         (self.process, self.voltage, self.temperature) = corner
         self.device_models = tech.spice["fet_models"][self.process]
-
-    
-    def inst_full_sram(self, sram, sram_name):
-        """ Function to instatiate an SRAM subckt. """
-        self.sf.write("Xsram ")
-        for pin in sram.pins:
-            if (pin=="vdd") or (pin=="gnd"):
-                self.sf.write("{0} ".format(pin))
-            else:
-                self.sf.write("{0} ".format(pin.upper()))
-        self.sf.write("{0}\n".format(sram_name))
-    
     
     def inst_sram(self, sram, port_signal_names, port_info, abits, dbits, sram_name):
         """ Function to instatiate an SRAM subckt. """
         pin_names = self.gen_pin_names(port_signal_names, port_info, abits, dbits)
         #Only checking length. This should check functionality as well (TODO) and/or import that information from the SRAM
-        debug.check(len(sram.pins) == len(pin_names), "Number of pins generated for characterization do match pins of SRAM")
+        debug.check(len(sram.pins) == len(pin_names), "Number of pins generated for characterization do match pins of SRAM\nsram.pins = {0}\npin_names = {1}".format(sram.pins,pin_names))
         
         self.sf.write("Xsram ")
         for pin in pin_names:
@@ -59,27 +47,27 @@ class stimuli():
         #will cause issues here.
         pin_names = []
         (addr_name, din_name, dout_name) = port_signal_names
-        (total_port_num, write_ports, read_ports) = port_info
+        (total_ports, write_index, read_index) = port_info
         
-        for write_input in write_ports:
+        for write_input in write_index:
             for i in range(dbits):
                 pin_names.append("{0}{1}_{2}".format(din_name,write_input, i))
         
-        for port in range(total_port_num):
+        for port in range(total_ports):
             for i in range(abits):
                 pin_names.append("{0}{1}_{2}".format(addr_name,port,i))    
 
         #Control signals not finalized.
-        for port in range(total_port_num):
+        for port in range(total_ports):
             pin_names.append("CSB{0}".format(port))
-        for port in range(total_port_num):
-            if port in read_ports and port in write_ports:
+        for port in range(total_ports):
+            if (port in read_index) and (port in write_index):
                 pin_names.append("WEB{0}".format(port))
             
-        for port in range(total_port_num):
+        for port in range(total_ports):
             pin_names.append("{0}{1}".format(tech.spice["clk"], port))
             
-        for read_output in read_ports:
+        for read_output in read_index:
             for i in range(dbits):
                 pin_names.append("{0}{1}_{2}".format(dout_name,read_output, i))
                 
@@ -179,7 +167,7 @@ class stimuli():
             to the initial value.
         """
         # the initial value is not a clock time
-        debug.check(len(clk_times)==len(data_values),"Clock and data value lengths don't match.")
+        debug.check(len(clk_times)==len(data_values),"Clock and data value lengths don't match. {0} clock values, {1} data values for {2}".format(len(clk_times), len(data_values), sig_name))
     
         # shift signal times earlier for setup time
         times = np.array(clk_times) - setup*period

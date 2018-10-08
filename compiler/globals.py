@@ -24,7 +24,7 @@ def parse_args():
     global OPTS
 
     option_list = {
-        optparse.make_option("-b", "--backannotated", action="store_true", dest="run_pex",
+        optparse.make_option("-b", "--backannotated", action="store_true", dest="use_pex",
                              help="Back annotate simulation"),
         optparse.make_option("-o", "--output", dest="output_name",
                              help="Base output file name(s) prefix", metavar="FILE"),

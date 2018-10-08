@@ -1,5 +1,6 @@
 import debug
 from math import log
+import re
 
 class trim_spice():
     """
@@ -73,25 +74,28 @@ class trim_spice():
         self.sp_buffer.insert(0, "* It should NOT be used for LVS!!")
         self.sp_buffer.insert(0, "* WARNING: This is a TRIMMED NETLIST.")
         
-        self.remove_insts("bitcell_array",[wl_name,bl_name])
+        
+        wl_regex = r"wl\d*\[{}\]".format(wl_address)
+        bl_regex = r"bl\d*\[{}\]".format(int(self.words_per_row*data_bit + col_address))
+        self.remove_insts("bitcell_array",[wl_regex,bl_regex])
 
         # 2. Keep sense amps basd on BL
         # FIXME: The bit lines are not indexed the same in sense_amp_array
-        #self.remove_insts("sense_amp_array",[bl_name])
+        #self.remove_insts("sense_amp_array",[bl_regex])
 
         # 3. Keep column muxes basd on BL
-        self.remove_insts("column_mux_array",[bl_name])
+        self.remove_insts("column_mux_array",[bl_regex])
         
         # 4. Keep write driver based on DATA
-        data_name = "data[{}]".format(data_bit)
-        self.remove_insts("write_driver_array",[data_name])
+        data_regex = r"data\[{}\]".format(data_bit)
+        self.remove_insts("write_driver_array",[data_regex])
 
         # 5. Keep wordline driver based on WL
         # Need to keep the gater too
-        #self.remove_insts("wordline_driver",wl_name)
+        #self.remove_insts("wordline_driver",wl_regex)
         
         # 6. Keep precharges based on BL
-        self.remove_insts("precharge_array",[bl_name])
+        self.remove_insts("precharge_array",[bl_regex])
         
         # Everything else isn't worth removing. :)
         
@@ -107,6 +111,9 @@ class trim_spice():
         match of the line with a term so you can search for a single
         net connection, the instance name, anything..
         """
+        #Expects keep_inst_list are regex patterns. Compile them here.
+        compiled_patterns = [re.compile(pattern) for pattern in keep_inst_list]
+        
         start_name = ".SUBCKT {}".format(subckt_name)
         end_name = ".ENDS {}".format(subckt_name)
 
@@ -120,8 +127,8 @@ class trim_spice():
                 new_buffer.append(line)
                 in_subckt=False
             elif in_subckt:
-                for k in keep_inst_list:
-                    if k in line:
+                for pattern in compiled_patterns:
+                    if pattern.search(line) != None:
                         new_buffer.append(line)
                         break
             else:

@@ -28,6 +28,7 @@ class hierarchical_decoder_test(openram_test):
         # a = hierarchical_decoder.hierarchical_decoder(rows=8)
         # self.local_check(a)
 
+        # check hierarchical decoder for single port
         debug.info(1, "Testing 16 row sample for hierarchical_decoder")
         a = hierarchical_decoder.hierarchical_decoder(rows=16)
         self.local_check(a)
@@ -41,6 +42,28 @@ class hierarchical_decoder_test(openram_test):
         self.local_check(a)
 
         debug.info(1, "Testing 512 row sample for hierarchical_decoder")
+        a = hierarchical_decoder.hierarchical_decoder(rows=512)
+        self.local_check(a)
+        
+        # check hierarchical decoder for multi-port
+        OPTS.bitcell = "pbitcell"
+        OPTS.num_rw_ports = 1
+        OPTS.num_w_ports = 0
+        OPTS.num_r_ports = 0
+        
+        debug.info(1, "Testing 16 row sample for hierarchical_decoder (multi-port case)")
+        a = hierarchical_decoder.hierarchical_decoder(rows=16)
+        self.local_check(a)
+
+        debug.info(1, "Testing 32 row sample for hierarchical_decoder (multi-port case)")
+        a = hierarchical_decoder.hierarchical_decoder(rows=32)
+        self.local_check(a)
+
+        debug.info(1, "Testing 128 row sample for hierarchical_decoder (multi-port case)")
+        a = hierarchical_decoder.hierarchical_decoder(rows=128)
+        self.local_check(a)
+
+        debug.info(1, "Testing 512 row sample for hierarchical_decoder (multi-port case)")
         a = hierarchical_decoder.hierarchical_decoder(rows=512)
         self.local_check(a)
 

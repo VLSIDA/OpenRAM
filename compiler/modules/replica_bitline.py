@@ -81,8 +81,8 @@ class replica_bitline(design.design):
         """ Add the modules for later usage """
 
         from importlib import reload
-        g = reload(__import__(OPTS.delay_chain))
-        self.mod_delay_chain = getattr(g, OPTS.delay_chain)
+        #g = reload(__import__(OPTS.delay_chain))
+        #self.mod_delay_chain = getattr(g, OPTS.delay_chain)
 
         g = reload(__import__(OPTS.replica_bitcell))
         self.mod_replica_bitcell = getattr(g, OPTS.replica_bitcell)
@@ -95,7 +95,8 @@ class replica_bitline(design.design):
         self.add_mod(self.rbl)
 
         # FIXME: The FO and depth of this should be tuned
-        self.delay_chain = self.mod_delay_chain([self.delay_fanout]*self.delay_stages)
+        from delay_chain import delay_chain
+        self.delay_chain = delay_chain([self.delay_fanout]*self.delay_stages)
         self.add_mod(self.delay_chain)
 
         self.inv = pinv()
@@ -110,12 +111,12 @@ class replica_bitline(design.design):
         # This is the threshold detect inverter on the output of the RBL
         self.rbl_inv_inst=self.add_inst(name="rbl_inv",
                                         mod=self.inv)
-        self.connect_inst(["bl[0]", "out", "vdd", "gnd"])
+        self.connect_inst(["bl0[0]", "out", "vdd", "gnd"])
 
         self.tx_inst=self.add_inst(name="rbl_access_tx",
                                    mod=self.access_tx)
         # D, G, S, B
-        self.connect_inst(["vdd", "delayed_en", "bl[0]", "vdd"])
+        self.connect_inst(["vdd", "delayed_en", "bl0[0]", "vdd"])
         # add the well and poly contact
 
         self.dc_inst=self.add_inst(name="delay_chain",
@@ -124,26 +125,33 @@ class replica_bitline(design.design):
 
         self.rbc_inst=self.add_inst(name="bitcell",
                                     mod=self.replica_bitcell)
-        self.connect_inst(["bl[0]", "br[0]", "delayed_en", "vdd", "gnd"])
+        temp = []
+        for port in range(self.total_ports):
+            temp.append("bl{}[0]".format(port))
+            temp.append("br{}[0]".format(port))
+        for port in range(self.total_ports):
+            temp.append("delayed_en")
+        temp.append("vdd")
+        temp.append("gnd")
+        self.connect_inst(temp)
+        #self.connect_inst(["bl[0]", "br[0]", "delayed_en", "vdd", "gnd"])
 
         self.rbl_inst=self.add_inst(name="load",
                                     mod=self.rbl)
         
-        total_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
         temp = []
-        temp.append("bl[0]")
-        temp.append("br[0]")
-        for port in range(total_ports - 1):
-            temp.append("gnd")
-            temp.append("gnd")
+        for port in range(self.total_ports):
+            temp.append("bl{}[0]".format(port))
+            temp.append("br{}[0]".format(port))
         for wl in range(self.bitcell_loads):
-            for port in range(total_ports):
+            for port in range(self.total_ports):
                 temp.append("gnd")
         temp.append("vdd")
         temp.append("gnd")
         self.connect_inst(temp)
         
         self.wl_list = self.rbl.cell.list_all_wl_names()
+        self.bl_list = self.rbl.cell.list_write_bl_names()
         
     def place_modules(self):
         """ Add all of the module instances in the logical netlist """
@@ -160,9 +168,6 @@ class replica_bitline(design.design):
                             mirror="MX")
 
         self.rbl_inst.place(self.rbl_offset)
-        
-        
-
 
 
     def route(self):
@@ -178,15 +183,27 @@ class replica_bitline(design.design):
             wl = self.wl_list[0]+"[{}]".format(row)
             pin = self.rbl_inst.get_pin(wl)
 
-            # Route the connection to the right so that it doesn't interfere
-            # with the cells
+            # Route the connection to the right so that it doesn't interfere with the cells
+            # Wordlines may be close to each other when tiled, so gnd connections are routed in opposite directions
+            if row % 2 == 0:
+                vertical_extension = vector(0, 1.5*drc["minwidth_metal1"] + 0.5*contact.m1m2.height)
+            else:
+                vertical_extension = vector(0, -1.5*drc["minwidth_metal1"] - 1.5*contact.m1m2.height)
+            
             pin_right = pin.rc()
-            pin_extension = pin_right + vector(self.m1_pitch,0)
+            pin_extension1 = pin_right + vector(self.m3_pitch,0)
+            pin_extension2 = pin_extension1 + vertical_extension
             if pin.layer != "metal1":
                 continue
-            self.add_path("metal1", [pin_right, pin_extension])
-            self.add_power_pin("gnd", pin_extension)
-                               
+            self.add_path("metal1", [pin_right, pin_extension1, pin_extension2])
+            self.add_power_pin("gnd", pin_extension2)
+            
+            # for multiport, need to short wordlines to each other so they all connect to gnd 
+            wl_last = self.wl_list[self.total_ports-1]+"[{}]".format(row)
+            pin_last = self.rbl_inst.get_pin(wl_last)
+            
+            correct = vector(0.5*drc["minwidth_metal1"], 0)
+            self.add_path("metal1", [pin.rc()-correct, pin_last.rc()-correct])
         
     def route_supplies(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """
@@ -243,11 +260,22 @@ class replica_bitline(design.design):
 
         # 3. Route the contact of previous route to the bitcell WL
         # route bend of previous net to bitcell WL
-        wl_offset = self.rbc_inst.get_pin("wl").lc()
-        xmid_point= 0.5*(wl_offset.x+contact_offset.x)
-        wl_mid1 = vector(xmid_point,contact_offset.y)
-        wl_mid2 = vector(xmid_point,wl_offset.y)
-        self.add_path("metal1", [contact_offset, wl_mid1, wl_mid2, wl_offset])
+        wl_offset = self.rbc_inst.get_pin(self.wl_list[0]).lc()
+        wl_mid1 = wl_offset - vector(1.5*drc["minwidth_metal1"], 0)
+        wl_mid2 = vector(wl_mid1.x, contact_offset.y)
+        #xmid_point= 0.5*(wl_offset.x+contact_offset.x)
+        #wl_mid1 = vector(xmid_point,contact_offset.y)
+        #wl_mid2 = vector(xmid_point,wl_offset.y)
+        self.add_path("metal1", [wl_offset, wl_mid1, wl_mid2, contact_offset])
+        
+        # 4. Short wodlines if multiport
+        wl = self.wl_list[0]
+        wl_last = self.wl_list[self.total_ports-1]
+        pin = self.rbc_inst.get_pin(wl)
+        pin_last = self.rbc_inst.get_pin(wl_last)
+        
+        correct = vector(0.5*drc["minwidth_metal1"], 0)
+        self.add_path("metal1", [pin.lc()+correct, pin_last.lc()+correct])
 
         # DRAIN ROUTE
         # Route the drain to the vdd rail
@@ -262,7 +290,7 @@ class replica_bitline(design.design):
 
         # Route the connection of the source route to the RBL bitline (left)
         # Via will go halfway down from the bitcell
-        bl_offset = self.rbc_inst.get_pin("bl").bc()
+        bl_offset = self.rbc_inst.get_pin(self.bl_list[0]).bc()
         # Route down a pitch so we can use M2 routing
         bl_down_offset = bl_offset - vector(0, self.m2_pitch)
         self.add_path("metal2",[source_offset, bl_down_offset, bl_offset])   

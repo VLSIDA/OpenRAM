@@ -12,10 +12,6 @@ class lib:
     """ lib file generation."""
     
     def __init__(self, out_dir, sram, sp_file, use_model=OPTS.analytical_delay):
-        #Temporary Workaround to here to set num of ports. Crashes if set in config file.
-        #OPTS.num_rw_ports = 2
-        #OPTS.num_r_ports = 1
-        #OPTS.num_w_ports = 1
     
         self.out_dir = out_dir
         self.sram = sram
@@ -161,7 +157,7 @@ class lib:
         # Leakage is included in dynamic when macro is enabled
         self.lib.write("    leakage_power () {\n")
         self.lib.write("      when : \"{0}\";\n".format(control_str))
-        self.lib.write("      value : {};\n".format(self.char_results["leakage_power"]))
+        self.lib.write("      value : {};\n".format(self.char_sram_results["leakage_power"]))
         self.lib.write("    }\n")
         self.lib.write("    cell_leakage_power : {};\n".format(0))
         
@@ -347,16 +343,16 @@ class lib:
         self.lib.write("            related_pin : \"clk\"; \n")
         self.lib.write("            timing_type : rising_edge; \n")
         self.lib.write("            cell_rise(CELL_TABLE) {\n")
-        self.write_values(self.char_results["delay_lh{0}".format(read_port)],len(self.loads),"            ")
+        self.write_values(self.char_port_results[read_port]["delay_lh"],len(self.loads),"            ")
         self.lib.write("            }\n") # rise delay
         self.lib.write("            cell_fall(CELL_TABLE) {\n")
-        self.write_values(self.char_results["delay_hl{0}".format(read_port)],len(self.loads),"            ")
+        self.write_values(self.char_port_results[read_port]["delay_hl"],len(self.loads),"            ")
         self.lib.write("            }\n") # fall delay
         self.lib.write("            rise_transition(CELL_TABLE) {\n")
-        self.write_values(self.char_results["slew_lh{0}".format(read_port)],len(self.loads),"            ")
+        self.write_values(self.char_port_results[read_port]["slew_lh"],len(self.loads),"            ")
         self.lib.write("            }\n") # rise trans
         self.lib.write("            fall_transition(CELL_TABLE) {\n")
-        self.write_values(self.char_results["slew_hl{0}".format(read_port)],len(self.loads),"            ")
+        self.write_values(self.char_port_results[read_port]["slew_hl"],len(self.loads),"            ")
         self.lib.write("            }\n") # fall trans
         self.lib.write("        }\n") # timing
         self.lib.write("        }\n") # pin        
@@ -428,8 +424,8 @@ class lib:
         for port in range(self.total_port_num):
             self.add_clk_control_power(port)
 
-        min_pulse_width = round_time(self.char_results["min_period"])/2.0
-        min_period = round_time(self.char_results["min_period"])
+        min_pulse_width = round_time(self.char_sram_results["min_period"])/2.0
+        min_period = round_time(self.char_sram_results["min_period"])
         self.lib.write("        timing(){ \n")
         self.lib.write("            timing_type :\"min_pulse_width\"; \n")
         self.lib.write("            related_pin  : clk; \n")
@@ -461,7 +457,7 @@ class lib:
         if port in self.write_ports:
             if port in self.read_ports:
                 web_name = " & !WEb{0}".format(port)
-            avg_write_power = np.mean(self.char_results["write1_power{0}".format(port)] + self.char_results["write0_power{0}".format(port)])
+            avg_write_power = np.mean(self.char_port_results[port]["write1_power"] + self.char_port_results[port]["write0_power"])
             self.lib.write("        internal_power(){\n")
             self.lib.write("            when : \"!CSb{0} & clk{1}\"; \n".format(port, web_name))
             self.lib.write("            rise_power(scalar){\n")
@@ -475,7 +471,7 @@ class lib:
         if port in self.read_ports:
             if port in self.write_ports:
                 web_name = " & WEb{0}".format(port)
-            avg_read_power = np.mean(self.char_results["read1_power{0}".format(port)] + self.char_results["read0_power{0}".format(port)])
+            avg_read_power = np.mean(self.char_port_results[port]["read1_power"] + self.char_port_results[port]["read0_power"])
             self.lib.write("        internal_power(){\n")
             self.lib.write("            when : \"!CSb{0} & !clk{1}\"; \n".format(port, web_name))
             self.lib.write("            rise_power(scalar){\n")
@@ -502,13 +498,14 @@ class lib:
         if not hasattr(self,"d"):
             self.d = delay(self.sram, self.sp_file, self.corner)
             if self.use_model:
-                self.char_results = self.d.analytical_delay(self.sram,self.slews,self.loads)
+                char_results = self.d.analytical_delay(self.sram,self.slews,self.loads)
+                self.char_sram_results, self.char_port_results = char_results  
             else:
                 probe_address = "1" * self.sram.addr_size
                 probe_data = self.sram.word_size - 1
-                self.char_results = self.d.analyze(probe_address, probe_data, self.slews, self.loads)
-
-
+                char_results = self.d.analyze(probe_address, probe_data, self.slews, self.loads)
+                self.char_sram_results, self.char_port_results = char_results  
+              
     def compute_setup_hold(self):
         """ Do the analysis if we haven't characterized a FF yet """
         # Do the analysis if we haven't characterized a FF yet

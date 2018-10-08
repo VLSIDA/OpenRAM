@@ -41,8 +41,9 @@ class ptx(design.design):
         self.num_contacts = num_contacts
 
         self.create_netlist()
-        if not OPTS.netlist_only:
-            self.create_layout()
+        # We must always create ptx layout for pbitcell
+        # some transistor sizes in other netlist depend on pbitcell
+        self.create_layout()
 
 
     

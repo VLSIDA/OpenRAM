@@ -20,19 +20,20 @@ class wordline_driver_test(openram_test):
         import wordline_driver
         import tech
 
+        # check wordline driver for single port
         debug.info(2, "Checking driver")
         tx = wordline_driver.wordline_driver(rows=8)
         self.local_check(tx)
 
-        if OPTS.multiport_check:
-            OPTS.bitcell = "pbitcell"
-            OPTS.num_rw_ports = 1
-            OPTS.num_w_ports = 0
-            OPTS.num_r_ports = 0
-            
-            debug.info(2, "Checking driver (multi-port case)")
-            tx = wordline_driver.wordline_driver(rows=8)
-            self.local_check(tx)
+        # check wordline driver for multi-port
+        OPTS.bitcell = "pbitcell"
+        OPTS.num_rw_ports = 1
+        OPTS.num_w_ports = 0
+        OPTS.num_r_ports = 0
+        
+        debug.info(2, "Checking driver (multi-port case)")
+        tx = wordline_driver.wordline_driver(rows=8)
+        self.local_check(tx)
 
         globals.end_openram()
         

@@ -28,39 +28,53 @@ class stimuli():
         
         (self.process, self.voltage, self.temperature) = corner
         self.device_models = tech.spice["fet_models"][self.process]
-
     
-    def inst_sram(self, abits, dbits, port_info, sram_name):
+    def inst_sram(self, sram, port_signal_names, port_info, abits, dbits, sram_name):
         """ Function to instatiate an SRAM subckt. """
+        pin_names = self.gen_pin_names(port_signal_names, port_info, abits, dbits)
+        #Only checking length. This should check functionality as well (TODO) and/or import that information from the SRAM
+        debug.check(len(sram.pins) == len(pin_names), "Number of pins generated for characterization do match pins of SRAM\nsram.pins = {0}\npin_names = {1}".format(sram.pins,pin_names))
+        
         self.sf.write("Xsram ")
-        
-        #Un-tuple the port names. This was done to avoid passing them all as arguments. Could be improved still.
-        #This should be generated from the pin list of the sram... change when multiport pins done.
-        (total_port_num,readwrite_num,read_ports,write_ports) = port_info
-
-        for write_input in write_ports:
-            for i in range(dbits):
-                self.sf.write("DIN{0}[{1}] ".format(write_input, i))
-        
-        for port in range(total_port_num):
-            for i in range(abits):
-                self.sf.write("A{0}[{1}] ".format(port,i))    
-
-        #These control signals assume 6t sram i.e. a single readwrite port. If multiple readwrite ports are used then add more
-        #control signals. Not sure if this is correct, consider a temporary change until control signals for multiport are finalized.
-        for port in range(total_port_num):
-            self.sf.write("CSB{0} ".format(port))
-        for readwrite_port in range(readwrite_num):
-            self.sf.write("WEB{0} ".format(readwrite_port))
-            
-        self.sf.write("{0} ".format(tech.spice["clk"]))
-        for read_output in read_ports:
-            for i in range(dbits):
-                self.sf.write("DOUT{0}[{1}] ".format(read_output, i))
-        self.sf.write("{0} {1} ".format(self.vdd_name, self.gnd_name))
+        for pin in pin_names:
+            self.sf.write("{0} ".format(pin))  
         self.sf.write("{0}\n".format(sram_name))
 
+    def gen_pin_names(self, port_signal_names, port_info, abits, dbits):
+        """Creates the pins names of the SRAM based on the no. of ports."""
+        #This may seem redundant as the pin names are already defined in the sram. However, it is difficult to extract the
+        #functionality from the names, so they are recreated. As the order is static, changing the order of the pin names
+        #will cause issues here.
+        pin_names = []
+        (addr_name, din_name, dout_name) = port_signal_names
+        (total_ports, write_index, read_index) = port_info
+        
+        for write_input in write_index:
+            for i in range(dbits):
+                pin_names.append("{0}{1}_{2}".format(din_name,write_input, i))
+        
+        for port in range(total_ports):
+            for i in range(abits):
+                pin_names.append("{0}{1}_{2}".format(addr_name,port,i))    
 
+        #Control signals not finalized.
+        for port in range(total_ports):
+            pin_names.append("CSB{0}".format(port))
+        for port in range(total_ports):
+            if (port in read_index) and (port in write_index):
+                pin_names.append("WEB{0}".format(port))
+            
+        for port in range(total_ports):
+            pin_names.append("{0}{1}".format(tech.spice["clk"], port))
+            
+        for read_output in read_index:
+            for i in range(dbits):
+                pin_names.append("{0}{1}_{2}".format(dout_name,read_output, i))
+                
+        pin_names.append("{0}".format(self.vdd_name))
+        pin_names.append("{0}".format(self.gnd_name))
+        return pin_names
+        
     def inst_model(self, pins, model_name):
         """ Function to instantiate a generic model with a set of pins """
         self.sf.write("X{0} ".format(model_name))
@@ -153,7 +167,7 @@ class stimuli():
             to the initial value.
         """
         # the initial value is not a clock time
-        debug.check(len(clk_times)==len(data_values),"Clock and data value lengths don't match.")
+        debug.check(len(clk_times)==len(data_values),"Clock and data value lengths don't match. {0} clock values, {1} data values for {2}".format(len(clk_times), len(data_values), sig_name))
     
         # shift signal times earlier for setup time
         times = np.array(clk_times) - setup*period
@@ -213,6 +227,10 @@ class stimuli():
                                                                             power_exp,
                                                                             t_initial,
                                                                             t_final))
+                                                                            
+    def gen_meas_value(self, meas_name, dout, t_intital, t_final):
+        measure_string=".meas tran {0} AVG v({1}) FROM={2}n TO={3}n\n\n".format(meas_name, dout, t_intital, t_final)
+        self.sf.write(measure_string)
     
     def write_control(self, end_time):
         """ Write the control cards to run and end the simulation """
@@ -255,12 +273,15 @@ class stimuli():
 
     def write_supply(self):
         """ Writes supply voltage statements """
-        self.sf.write("V{0} {0} 0.0 {1}\n".format(self.vdd_name, self.voltage))
-        self.sf.write("V{0} {0} 0.0 {1}\n".format(self.gnd_name, 0))
+        gnd_node_name = "0"
+        self.sf.write("V{0} {0} {1} {2}\n".format(self.vdd_name, gnd_node_name, self.voltage))
         # This is for the test power supply
-        self.sf.write("V{0} {0} 0.0 {1}\n".format("test"+self.vdd_name, self.voltage))
-        self.sf.write("V{0} {0} 0.0 {1}\n".format("test"+self.gnd_name, 0))
+        self.sf.write("V{0} {0} {1} {2}\n".format("test"+self.vdd_name, gnd_node_name, self.voltage))
+        self.sf.write("V{0} {0} {1} {2}\n".format("test"+self.gnd_name, gnd_node_name, 0.0))
 
+        #Adding a commented out supply for simulators where gnd and 0 are not global grounds.
+        self.sf.write("\n*Nodes gnd and 0 are the same global ground node in ngspice/hspice/xa. Otherwise, this source may be needed.\n")
+        self.sf.write("*V{0} {0} {1} {2}\n".format(self.gnd_name, gnd_node_name, 0.0))
 
     def run_sim(self):
         """ Run hspice in batch mode and output rawfile to parse. """

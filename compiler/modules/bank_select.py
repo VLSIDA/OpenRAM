@@ -15,9 +15,11 @@ class bank_select(design.design):
         banks are created in upper level SRAM module
     """
 
-    def __init__(self, name="bank_select"):
+    def __init__(self, name="bank_select", port="rw"):
         design.design.__init__(self, name)
 
+        self.port = port
+        
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -38,10 +40,17 @@ class bank_select(design.design):
     def add_pins(self):
         
         # Number of control lines in the bus
-        self.num_control_lines = 4
+        if self.port == "rw":
+            self.num_control_lines = 4
+        else:
+            self.num_control_lines = 3
         # The order of the control signals on the control bus:
         # FIXME: Update for multiport (these names are not right)
-        self.input_control_signals = ["clk_buf", "clk_buf_bar", "w_en0", "s_en0"]
+        self.input_control_signals = ["clk_buf", "clk_buf_bar"]
+        if (self.port == "rw") or (self.port == "w"):
+            self.input_control_signals.append("w_en")
+        if (self.port == "rw") or (self.port == "r"):
+            self.input_control_signals.append("s_en")
         # These will be outputs of the gaters if this is multibank
         self.control_signals = ["gated_"+str for str in self.input_control_signals]
 
@@ -53,16 +62,26 @@ class bank_select(design.design):
 
     def add_modules(self):
         """ Create modules for later instantiation """
+        from importlib import reload
+        c = reload(__import__(OPTS.bitcell))
+        self.mod_bitcell = getattr(c, OPTS.bitcell)
+        self.bitcell = self.mod_bitcell()
+        
+        height = self.bitcell.height + drc["poly_to_active"]
+
         # 1x Inverter
-        self.inv = pinv()
-        self.add_mod(self.inv)
+        self.inv_sel = pinv(height=height)
+        self.add_mod(self.inv_sel)
 
         # 4x Inverter
-        self.inv4x = pinv(4)
+        self.inv = self.inv4x = pinv(4)
         self.add_mod(self.inv4x)
 
-        self.nor2 = pnor2()
+        self.nor2 = pnor2(height=height)
         self.add_mod(self.nor2)
+        
+        self.inv4x_nor = pinv(size=4, height=height)
+        self.add_mod(self.inv4x_nor)
 
         self.nand2 = pnand2()
         self.add_mod(self.nand2)
@@ -83,7 +102,7 @@ class bank_select(design.design):
     def create_modules(self):
         
         self.bank_sel_inv=self.add_inst(name="bank_sel_inv", 
-                                        mod=self.inv)
+                                        mod=self.inv_sel)
         self.connect_inst(["bank_sel", "bank_sel_bar", "vdd", "gnd"])
 
         self.logic_inst = []
@@ -107,6 +126,14 @@ class bank_select(design.design):
                                    "vdd",
                                    "gnd"])
                 
+                # They all get inverters on the output
+                self.inv_inst.append(self.add_inst(name=name_inv, 
+                                                   mod=self.inv4x_nor))
+                self.connect_inst([gated_name+"_temp_bar",
+                                   gated_name,
+                                   "vdd",
+                                   "gnd"])
+                
             # the rest are AND (nand2+inv) gates
             else:
                 self.logic_inst.append(self.add_inst(name=name_nand, 
@@ -117,13 +144,13 @@ class bank_select(design.design):
                                    "vdd",
                                    "gnd"])
 
-            # They all get inverters on the output
-            self.inv_inst.append(self.add_inst(name=name_inv, 
-                                               mod=self.inv4x))
-            self.connect_inst([gated_name+"_temp_bar",
-                               gated_name,
-                               "vdd",
-                               "gnd"])
+                # They all get inverters on the output
+                self.inv_inst.append(self.add_inst(name=name_inv, 
+                                                   mod=self.inv4x))
+                self.connect_inst([gated_name+"_temp_bar",
+                                   gated_name,
+                                   "vdd",
+                                   "gnd"])
 
     def place_modules(self):
         
@@ -140,7 +167,11 @@ class bank_select(design.design):
             
             input_name = self.input_control_signals[i]
 
-            y_offset = self.inv.height * i
+            if i == 0:
+                y_offset = 0
+            else:
+                y_offset = self.inv4x_nor.height + self.inv.height * (i-1)
+            
             if i%2:
                 y_offset += self.inv.height
                 mirror = "MX"

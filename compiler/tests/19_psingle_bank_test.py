@@ -52,18 +52,14 @@ class psingle_bank_test(openram_test):
         a = bank(c, name="bank1_1rw_0w_0r_single")
         self.local_check(a)
         
+        
+        # testing bank using pbitcell in various port combinations
+        # layout for multiple ports does not work yet
         """
-        # multiport can't generate layout yet on the bank level
         OPTS.netlist_only = True
-        
-        OPTS.num_rw_ports = 1
-        OPTS.num_w_ports = 1
-        OPTS.num_r_ports = 1
-        
-        debug.info(1, "No column mux")
-        name = "bank1_{0}rw_{1}w_{2}r_single".format(c.num_rw_ports, c.num_w_ports, c.num_r_ports)
-        a = bank(c, name=name)
-        self.local_check(a)
+
+        c.num_words=16
+        c.words_per_row=1
         
         OPTS.num_rw_ports = c.num_rw_ports = 2
         OPTS.num_w_ports = c.num_w_ports = 2
@@ -139,7 +135,7 @@ class psingle_bank_test(openram_test):
         self.local_check(a)
         """
         
-        #globals.end_openram()
+        globals.end_openram()
         
 # instantiate a copy of the class to actually run the test
 if __name__ == "__main__":

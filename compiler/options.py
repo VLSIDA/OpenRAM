@@ -50,8 +50,6 @@ class options(optparse.Values):
     analytical_delay = True
     # Purge the temp directory after a successful run (doesn't purge on errors, anyhow)
     purge_temp = True
-    # Determines whether multi-port portion of unit tests are run or not
-    multiport_check = True
 
     # These are the configuration parameters
     num_rw_ports = 1
@@ -66,9 +64,11 @@ class options(optparse.Values):
     # These are the main configuration parameters that should be over-ridden
     # in a configuration file.
     #num_words = 0
-    #num_banks = 1
     #word_size = 0
 
+    # You can manually specify banks, but it is better to auto-detect it.
+    num_banks = 1
+    
     # These are the default modules that can be over-riden
     decoder = "hierarchical_decoder"
     dff_array = "dff_array"

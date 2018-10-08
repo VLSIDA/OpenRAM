@@ -29,17 +29,19 @@ class openram_test(unittest.TestCase):
         tempgds = OPTS.openram_temp + "temp.gds"
 
         a.sp_write(tempspice)
-        a.gds_write(tempgds)
+        # cannot write gds in netlist_only mode
+        if not OPTS.netlist_only:
+            a.gds_write(tempgds)
 
-        import verify
-        result=verify.run_drc(a.name, tempgds)
-        if result != 0:
-            self.fail("DRC failed: {}".format(a.name))
+            import verify
+            result=verify.run_drc(a.name, tempgds)
+            if result != 0:
+                self.fail("DRC failed: {}".format(a.name))
 
             
-        result=verify.run_lvs(a.name, tempgds, tempspice, final_verification)
-        if result != 0:
-            self.fail("LVS mismatch: {}".format(a.name))
+            result=verify.run_lvs(a.name, tempgds, tempspice, final_verification)
+            if result != 0:
+                self.fail("LVS mismatch: {}".format(a.name))
 
         if OPTS.purge_temp:
             self.cleanup()

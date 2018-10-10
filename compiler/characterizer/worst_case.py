@@ -43,8 +43,8 @@ class worst_case(delay):
         test_bits = self.get_test_bits()
         bit_delays = self.simulate_for_bit_delays(test_bits)
         
-        for delay in bit_delays:
-            debug.info(1, "{}".format(delay))
+        for i in range(len(test_bits)):
+            debug.info(1, "Bit tested: addr {0[0]} data_pos {0[1]}\n Values {1}".format(test_bits[i], bit_delays[i]))
     
     def simulate_for_bit_delays(self, test_bits):
         """Simulates the delay of the sram of over several bits."""

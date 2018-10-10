@@ -31,14 +31,14 @@ class worst_case_timing_sram_test(openram_test):
         if not OPTS.spice_exe:
             debug.error("Could not find {} simulator.".format(OPTS.spice_name),-1)
 
-        word_size, num_words, num_banks = 32, 32, 1
+        word_size, num_words, num_banks = 2, 16, 1
         from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=word_size,
                         num_words=num_words,
                         num_banks=num_banks)
-        #c.words_per_row=1
-        c.compute_sizes()
+        c.words_per_row=1
+        #c.compute_sizes()
         debug.info(1, "Testing the timing different bitecells inside a {}bit, {} words SRAM with {} bank".format(
                                                                        word_size, num_words, num_banks))
         s = sram(c, name="sram1")
@@ -56,8 +56,10 @@ class worst_case_timing_sram_test(openram_test):
             sp_pex_file = OPTS.output_path + s.name + "_pex.sp"
             verify.run_pex(s.name, gdsname, sp_netlist_file, output=sp_pex_file)
             sp_sim_file = sp_pex_file
+            debug.info(1, "Performing spice simulations with backannotated spice file.")
         else:
             sp_sim_file = sp_netlist_file
+            debug.info(1, "Performing spice simulations with spice netlist.")
             
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         wc = worst_case(s.s, sp_sim_file, corner)

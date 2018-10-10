@@ -620,7 +620,7 @@ class VlsiLayout:
     def updateBoundary(self,thisBoundary,cellBoundary):
         [left_bott_X,left_bott_Y,right_top_X,right_top_Y]=thisBoundary
         # If any are None
-        if cellBoundary[0]==None or cellBoundary[1]==None or cellBoundary[2]==None or cellBoundary[3]==None:
+        if not (cellBoundary[0] and cellBoundary[1] and cellBoundary[2] and cellBoundary[3]):
             cellBoundary=thisBoundary
         else:
             if cellBoundary[0]>left_bott_X:

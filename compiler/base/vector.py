@@ -11,18 +11,16 @@ class vector():
     concise vector operations, output, and other more complex
     data structures like lists.
     """
-    def __init__(self, x, y=None):
+    def __init__(self, x, y=0):
         """ init function support two init method"""
         # will take single input as a coordinate
-        if len(x)==2:
+        if isinstance(x, (list,tuple,vector)):
             self.x = float(x[0])
             self.y = float(x[1])
         #will take two inputs as the values of a coordinate
-        elif y:
+        else:
             self.x = float(x)
             self.y = float(y)
-        else:
-            debug.error("Invalid vector specification.",-1)
 
     def __str__(self):
         """ override print function output """

@@ -82,9 +82,9 @@ class sram_base(design):
         
         self.offset_all_coordinates()
 
-        # FIXME: Only works in positive directions
-        self.supply_route()
-        
+        # Must be done after offsetting lower-left
+        self.route_supplies()
+
         highest_coord = self.find_highest_coords()
         self.width = highest_coord[0]
         self.height = highest_coord[1]
@@ -92,23 +92,8 @@ class sram_base(design):
         
         self.DRC_LVS(final_verification=True)
 
-    def route_vdd_gnd_pins(self):
-        """ Propagate all vdd/gnd pins up to this level for all modules """
-
-        #These are the instances that every bank has
-        top_instances = [self.bank_inst,
-                         self.row_addr_dff_inst,
-                         self.data_dff_inst,
-                         self.control_logic_inst[0]]
-        if self.col_addr_dff:
-            top_instances.append(self.col_addr_dff_inst)
-                         
-        for inst in top_instances:
-            self.copy_layout_pin(inst, "vdd")
-            self.copy_layout_pin(inst, "gnd")
         
-        
-    def supply_route(self):
+    def route_supplies(self):
         """ Route the supply grid and connect the pins to them. """
 
         for inst in self.insts:
@@ -211,31 +196,6 @@ class sram_base(design):
                                                                               length=self.control_bus_width))
         
 
-    def route_vdd_gnd(self):
-        """ Propagate all vdd/gnd pins up to this level for all modules """
-
-        # These are the instances that every bank has
-        top_instances = [self.bitcell_array_inst,
-                         self.precharge_array_inst,
-                         self.sense_amp_array_inst,
-                         self.write_driver_array_inst,
-                         self.tri_gate_array_inst,
-                         self.row_decoder_inst,
-                         self.wordline_driver_inst]
-        
-        # Add these if we use the part...
-        if self.col_addr_size > 0:
-            top_instances.append(self.col_decoder_inst)
-            top_instances.append(self.col_mux_array_inst)
-            
-        if self.num_banks > 1:
-            top_instances.append(self.bank_select_inst)
-
-        
-        for inst in top_instances:
-            self.copy_layout_pin(inst, "vdd")
-            self.copy_layout_pin(inst, "gnd")
-        
         
     def add_multi_bank_modules(self):
         """ Create the multibank address flops and bank decoder """

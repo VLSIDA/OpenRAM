@@ -60,69 +60,66 @@ class supply_router(router):
         
         # Add the supply rails in a mesh network and connect H/V with vias
         # Block everything
-        self.prepare_blockages()
-        # Clear the rail we're routing
-        self.set_blockages(self.pin_components[self.gnd_name],False)
+        self.prepare_blockages(self.gnd_name)
         # Determine the rail locations
         self.route_supply_rails(self.gnd_name,0)
         
         # Block everything
-        self.prepare_blockages()
-        # Clear the rail we're routing
-        self.set_blockages(self.pin_components[self.vdd_name],False)
+        self.prepare_blockages(self.vdd_name)
         # Determine the rail locations
         self.route_supply_rails(self.vdd_name,1)
-
+        
+        #self.write_debug_gds("pre_pin_debug.gds",stop_program=True)
+        
         # Route the supply pins to the supply rails
         self.route_pins_to_rails(gnd_name)
         self.route_pins_to_rails(vdd_name)
         
-        #self.write_debug_gds(stop_program=False)
+        #self.write_debug_gds("post_pin_debug.gds",stop_program=False)
+        
         return True
 
         
     def connect_supply_rails(self, name):
         """
         Determine which supply rails overlap and can accomodate a via.
-        Remove any paths that do not have a via since they are disconnected.
+        Remove any supply rails that do not have a via since they are disconnected.
+        NOTE: It is still possible though unlikely that there are disconnected groups of rails.
         """
             
-        # Split into horizontal and vertical
-        vertical_paths = [(i,x) for i,x in enumerate(self.supply_rails) if x[0][0].z==1 and x.name==name]
-        horizontal_paths = [(i,x) for i,x in enumerate(self.supply_rails) if x[0][0].z==0 and x.name==name]
+        # Split into horizontal and vertical paths
+        vertical_rails = [x for x in self.supply_rails if x[0][0].z==1 and x.name==name]
+        horizontal_rails = [x for x in self.supply_rails if x[0][0].z==0 and x.name==name]
         
-        # Flag to see if the paths have a via
-        via_flag = [False] * len(self.supply_rails)
-        # Ignore the other nets that we aren't considering
-        for i,p in enumerate(self.supply_rails):
-            if p.name != name:
-                via_flag[i]=True
+        # Flag to see if each supply rail has at least one via (i.e. it is "connected")
+        vertical_flags = [False] * len(vertical_rails)
+        horizontal_flags = [False] * len(horizontal_rails)
         
         # Compute a list of "shared areas" that are bigger than a via
         via_areas = []
-        for vindex,v in vertical_paths:
-            for hindex,h in horizontal_paths:
+        for vindex,v in enumerate(vertical_rails):
+            for hindex,h in enumerate(horizontal_rails):
                 # Compute the overlap of the two paths, None if no overlap
                 overlap = v.overlap(h)
                 if overlap:
                     (ll,ur) = overlap
                     # We can add a via only if it is a full track width in each dimension
                     if ur.x-ll.x >= self.rail_track_width-1 and ur.y-ll.y >= self.rail_track_width-1:
-                        via_flag[vindex]=True
-                        via_flag[hindex]=True
+                        vertical_flags[vindex]=True
+                        horizontal_flags[hindex]=True
                         via_areas.append(overlap)
-
 
         # Go through and add the vias at the center of the intersection
         for (ll,ur) in via_areas:
             center = (ll + ur).scale(0.5,0.5,0)
             self.add_via(center,self.rail_track_width)
 
-        # Remove the paths that have not been connected by any via
-        remove_indices = [i for i,x in enumerate(via_flag) if not x]
-        for index in remove_indices:
-            debug.info(1,"Removing disconnected supply rail {}".format(self.supply_rails[index]))
-            del self.supply_rails[index]
+        # Retrieve the original indices into supply_rails for removal
+        remove_hrails = [rail for flag,rail in zip(horizontal_flags,horizontal_rails) if not flag]
+        remove_vrails = [rail for flag,rail in zip(vertical_flags,vertical_rails) if not flag]
+        for rail in remove_hrails + remove_vrails:
+            debug.info(1,"Removing disconnected supply rail {}".format(rail))
+            self.supply_rails.remove(rail)
         
     def add_supply_rails(self, name):
         """
@@ -139,8 +136,8 @@ class supply_router(router):
     def route_supply_rails(self, name, supply_number):
         """
         Route the horizontal and vertical supply rails across the entire design.
+        Must be done with lower left at 0,0
         """
-
         start_offset = supply_number*self.rail_track_width
         max_yoffset = self.rg.ur.y
         max_xoffset = self.rg.ur.x
@@ -166,6 +163,7 @@ class supply_router(router):
 
         # Add the supply rail vias (and prune disconnected rails)
         self.connect_supply_rails(name)
+        
         # Add the rails themselves
         self.add_supply_rails(name)
 
@@ -187,7 +185,17 @@ class supply_router(router):
         if not wave_path:
             return None
 
-        if len(wave_path)>=2*self.rail_track_width:
+        # We must have at least 2 tracks to drop plus 2 tracks for a via
+        if len(wave_path)>=4*self.rail_track_width:
+            # drop the first and last steps to leave escape routing room
+            # around the blockage that stopped the probe
+            # except, don't drop the first if it is the first in a row/column
+            if (direct==direction.NORTH and seed_wave[0].y>0):
+                wave_path.trim_first()
+            elif (direct == direction.EAST and seed_wave[0].x>0):
+                wave_path.trim_first()
+                
+            wave_path.trim_last()
             wave_path.name = name
             self.supply_rails.append(wave_path)
 
@@ -216,13 +224,7 @@ class supply_router(router):
             
             self.rg.reinit()
             
-            self.prepare_blockages()
-
-            # Don't mark the other components as targets since we want to route
-            # directly to a rail, but unblock all the source components so we can
-            # route over them
-            self.set_blockages(self.pin_components[pin_name],False)
-            self.set_blockages(self.pin_component_blockages[pin_name],False)            
+            self.prepare_blockages(pin_name)
             
             # Add the single component of the pin as the source
             # which unmarks it as a blockage too

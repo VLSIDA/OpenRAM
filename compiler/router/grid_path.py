@@ -63,6 +63,18 @@ class grid_path:
     def __len__(self):
         return len(self.pathlist)
         
+    def trim_last(self):
+        """
+        Drop the last item
+        """
+        self.pathlist.pop()
+
+    def trim_first(self):
+        """
+        Drop the first item
+        """
+        self.pathlist.pop(0)
+        
     def append(self,item):
         """
         Append the list of items to the cells

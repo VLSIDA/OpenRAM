@@ -107,8 +107,7 @@ class bank(design.design):
         if self.num_banks > 1:
             self.route_bank_select()            
         
-        self.route_vdd_gnd()
-
+        self.route_supplies()
         
     def create_modules(self):
         """ Add modules. The order should not matter! """
@@ -573,7 +572,7 @@ class bank(design.design):
             self.bank_select_inst[port].place(self.bank_select_pos)
 
         
-    def route_vdd_gnd(self):
+    def route_supplies(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """
         for inst in self.insts:
             self.copy_power_pins(inst,"vdd")

@@ -83,26 +83,27 @@ class pin_layout:
         max_y = min(ll.y, oll.y)
 
         return [vector(min_x,min_y),vector(max_x,max_y)]
-    
-    def overlaps(self, other):
-        """ Check if a shape overlaps with a rectangle  """
+
+    def xoverlaps(self, other):
+        """ Check if shape has x overlap """
         (ll,ur) = self.rect
         (oll,our) = other.rect
-
-        # Can only overlap on the same layer
-        if self.layer != other.layer:
-            return False
-        
-        # Start assuming no overlaps
         x_overlaps = False
-        y_overlaps = False
         # check if self is within other x range
         if (ll.x >= oll.x and ll.x <= our.x) or (ur.x >= oll.x and ur.x <= our.x):
             x_overlaps = True
         # check if other is within self x range
         if (oll.x >= ll.x and oll.x <= ur.x) or (our.x >= ll.x and our.x <= ur.x):
             x_overlaps = True
-            
+
+        return x_overlaps
+
+    def yoverlaps(self, other):
+        """ Check if shape has x overlap """
+        (ll,ur) = self.rect
+        (oll,our) = other.rect
+        y_overlaps = False
+
         # check if self is within other y range
         if (ll.y >= oll.y and ll.y <= our.y) or (ur.y >= oll.y and ur.y <= our.y):
             y_overlaps = True
@@ -110,7 +111,41 @@ class pin_layout:
         if (oll.y >= ll.y and oll.y <= ur.y) or (our.y >= ll.y and our.y <= ur.y):
             y_overlaps = True
 
+        return y_overlaps
+    
+    def contains(self, other):
+        """ Check if a shape contains another rectangle  """
+        # Can only overlap on the same layer
+        if self.layer != other.layer:
+            return False
+
+        (ll,ur) = self.rect
+        (oll,our) = other.rect
+
+
+        if not (oll.y >= ll.y and oll.y <= ur.y):
+            return False
+
+        if not (oll.x >= ll.x and oll.x <= ur.x):
+            return False
+
+        return True
+        
+    
+    def overlaps(self, other):
+        """ Check if a shape overlaps with a rectangle  """
+        # Can only overlap on the same layer
+        if self.layer != other.layer:
+            return False
+        
+        x_overlaps = self.xoverlaps(other)
+        y_overlaps = self.yoverlaps(other)
+
         return x_overlaps and y_overlaps
+
+    def area(self):
+        """ Return the area. """
+        return self.height()*self.width()
     
     def height(self):
         """ Return height. Abs is for pre-normalized value."""

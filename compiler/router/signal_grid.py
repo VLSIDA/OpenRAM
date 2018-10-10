@@ -42,14 +42,14 @@ class signal_grid(grid):
         We will use an A* search, so this cost must be pessimistic.
         Cost so far will be the length of the path.
         """
-        debug.info(1,"Initializing queue.")
+        #debug.info(3,"Initializing queue.")
 
         # Counter is used to not require data comparison in Python 3.x
         # Items will be returned in order they are added during cost ties
         self.counter = 0
         for s in self.source:
             cost = self.cost_to_target(s)
-            debug.info(2,"Init: cost=" + str(cost) + " " + str([s]))
+            debug.info(3,"Init: cost=" + str(cost) + " " + str([s]))
             heappush(self.q,(cost,self.counter,grid_path([vector3d(s)])))
             self.counter+=1
 
@@ -83,12 +83,12 @@ class signal_grid(grid):
         while len(self.q)>0:
             # should we keep the path in the queue as well or just the final node?
             (cost,count,curpath) = heappop(self.q)
-            debug.info(2,"Queue size: size=" + str(len(self.q)) + " " + str(cost))
-            debug.info(3,"Expanding: cost=" + str(cost) + " " + str(curpath))
+            debug.info(3,"Queue size: size=" + str(len(self.q)) + " " + str(cost))
+            debug.info(4,"Expanding: cost=" + str(cost) + " " + str(curpath))
             
             # expand the last element
             neighbors =  self.expand_dirs(curpath)
-            debug.info(3,"Neighbors: " + str(neighbors))
+            debug.info(4,"Neighbors: " + str(neighbors))
             
             for n in neighbors:
                 # make a new copy of the path to not update the old ones
@@ -108,7 +108,7 @@ class signal_grid(grid):
                         if (self.map[n[0]].min_cost==-1 or predicted_cost<self.map[n[0]].min_cost):
                             self.map[n[0]].min_path = newpath
                             self.map[n[0]].min_cost = predicted_cost
-                            debug.info(3,"Enqueuing: cost=" + str(current_cost) + "+" + str(target_cost) + " " + str(newpath))
+                            debug.info(4,"Enqueuing: cost=" + str(current_cost) + "+" + str(target_cost) + " " + str(newpath))
                             # add the cost to get to this point if we haven't reached it yet
                             heappush(self.q,(predicted_cost,self.counter,newpath))
                             self.counter += 1

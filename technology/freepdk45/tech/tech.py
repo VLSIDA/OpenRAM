@@ -222,9 +222,11 @@ drc["metal4_extend_via3"] = 0.07
 # Reserved for asymmetric enclosure
 drc["metal4_enclosure_via3"] = 0
 # METALSMG.3 Minimum enclosure around via[3-6] on two opposite sides
-drc["metal4_enclosure_via4"] = 0
-# Reserved for asymmetric enclosure
 drc["metal4_extend_via4"] = 0.07
+# Reserved for asymmetric enclosure
+drc["metal4_enclosure_via4"] = 0
+# Not a rule
+drc["minarea_metal4"] = 0
 
 # Metal 5-10 are ommitted
 

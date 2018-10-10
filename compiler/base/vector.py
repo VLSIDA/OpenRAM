@@ -14,13 +14,15 @@ class vector():
     def __init__(self, x, y=None):
         """ init function support two init method"""
         # will take single input as a coordinate
-        if y==None:
+        if len(x)==2:
             self.x = float(x[0])
             self.y = float(x[1])
         #will take two inputs as the values of a coordinate
-        else:
+        elif y:
             self.x = float(x)
             self.y = float(y)
+        else:
+            debug.error("Invalid vector specification.",-1)
 
     def __str__(self):
         """ override print function output """

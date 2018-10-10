@@ -155,9 +155,6 @@ class delay(simulation):
         """
         self.check_arguments()
 
-        # obtains list of time-points for each rising clk edge
-        #self.create_test_cycles()
-
         # creates and opens stimulus file for writing
         temp_stim = "{0}/stim.sp".format(OPTS.openram_temp)
         self.sf = open(temp_stim, "w")
@@ -217,10 +214,10 @@ class delay(simulation):
             trig_name = trig_clk_name
             if 'lh' in delay_name:
                 targ_dir="RISE"
-                trig_td = targ_td = self.cycle_times[self.measure_cycles["read1_{0}".format(port)]]
+                trig_td = targ_td = self.cycle_times[self.measure_cycles[port]["read1"]]
             else:
                 targ_dir="FALL"
-                trig_td = targ_td = self.cycle_times[self.measure_cycles["read0_{0}".format(port)]] 
+                trig_td = targ_td = self.cycle_times[self.measure_cycles[port]["read0"]] 
                     
         elif 'slew' in delay_name:
             trig_name = targ_name
@@ -228,12 +225,12 @@ class delay(simulation):
                 trig_val = trig_slew_low
                 targ_val = targ_slew_high
                 targ_dir = trig_dir = "RISE"
-                trig_td = targ_td = self.cycle_times[self.measure_cycles["read1_{0}".format(port)]]
+                trig_td = targ_td = self.cycle_times[self.measure_cycles[port]["read1"]]
             else:
                 trig_val = targ_slew_high 
                 targ_val = trig_slew_low
                 targ_dir = trig_dir = "FALL"
-                trig_td = targ_td = self.cycle_times[self.measure_cycles["read0_{0}".format(port)]] 
+                trig_td = targ_td = self.cycle_times[self.measure_cycles[port]["read0"]] 
         else:
             debug.error(1, "Measure command {0} not recognized".format(delay_name))
         return (meas_name,trig_name,targ_name,trig_val,targ_val,trig_dir,targ_dir,trig_td,targ_td)
@@ -254,11 +251,11 @@ class delay(simulation):
             #Different naming schemes are used for the measure cycle dict and measurement names. 
             #TODO: make them the same so they can be indexed the same.
             if '1' in pname:
-                t_initial = self.cycle_times[self.measure_cycles["read1_{0}".format(port)]]
-                t_final = self.cycle_times[self.measure_cycles["read1_{0}".format(port)]+1]
+                t_initial = self.cycle_times[self.measure_cycles[port]["read1"]]
+                t_final = self.cycle_times[self.measure_cycles[port]["read1"]+1]
             elif '0' in pname:
-                t_initial = self.cycle_times[self.measure_cycles["read0_{0}".format(port)]]
-                t_final = self.cycle_times[self.measure_cycles["read0_{0}".format(port)]+1]
+                t_initial = self.cycle_times[self.measure_cycles[port]["read0"]]
+                t_final = self.cycle_times[self.measure_cycles[port]["read0"]+1]
             self.stim.gen_meas_power(meas_name="{0}{1}".format(pname, port),
                                      t_initial=t_initial,
                                      t_final=t_final)
@@ -271,11 +268,11 @@ class delay(simulation):
         for pname in self.power_meas_names:
             if "write" not in pname:
                 continue
-            t_initial = self.cycle_times[self.measure_cycles["write0_{0}".format(port)]]
-            t_final = self.cycle_times[self.measure_cycles["write0_{0}".format(port)]+1]
+            t_initial = self.cycle_times[self.measure_cycles[port]["write0"]]
+            t_final = self.cycle_times[self.measure_cycles[port]["write0"]+1]
             if '1' in pname:
-                t_initial = self.cycle_times[self.measure_cycles["write1_{0}".format(port)]]
-                t_final = self.cycle_times[self.measure_cycles["write1_{0}".format(port)]+1]
+                t_initial = self.cycle_times[self.measure_cycles[port]["write1"]]
+                t_final = self.cycle_times[self.measure_cycles[port]["write1"]+1]
         
             self.stim.gen_meas_power(meas_name="{0}{1}".format(pname, port),
                                      t_initial=t_initial,
@@ -733,8 +730,7 @@ class delay(simulation):
 
         self.add_write("W data 0 address 11..11 to write value",
                        self.probe_address,data_zeros,write_port)
-        self.measure_cycles["write0_{0}".format(write_port)] = len(self.cycle_times)-1
-        #self.write0_cycle=len(self.cycle_times)-1 # Remember for power measure
+        self.measure_cycles[write_port]["write0"] = len(self.cycle_times)-1
         
         # This also ensures we will have a H->L transition on the next read
         self.add_read("R data 1 address 00..00 to set DOUT caps",
@@ -742,18 +738,14 @@ class delay(simulation):
 
         self.add_read("R data 0 address 11..11 to check W0 worked",
                       self.probe_address,data_zeros,read_port)
-        self.measure_cycles["read0_{0}".format(read_port)] = len(self.cycle_times)-1              
-        #self.read0_cycle=len(self.cycle_times)-1 # Remember for power measure
+        self.measure_cycles[read_port]["read0"] = len(self.cycle_times)-1              
         
         self.add_noop_all_ports("Idle cycle (if read takes >1 cycle)",
                       inverse_address,data_zeros)
-        #Does not seem like is is used anywhere commenting out for now.
-        #self.idle_cycle=len(self.cycle_times)-1 # Remember for power measure
 
         self.add_write("W data 1 address 11..11 to write value",
                        self.probe_address,data_ones,write_port)
-        self.measure_cycles["write1_{0}".format(write_port)] = len(self.cycle_times)-1
-        #self.write1_cycle=len(self.cycle_times)-1 # Remember for power measure
+        self.measure_cycles[write_port]["write1"] = len(self.cycle_times)-1
 
         self.add_write("W data 0 address 00..00 to clear DIN caps",
                        inverse_address,data_zeros,write_port)
@@ -764,8 +756,7 @@ class delay(simulation):
         
         self.add_read("R data 1 address 11..11 to check W1 worked",
                       self.probe_address,data_zeros,read_port)
-        self.measure_cycles["read1_{0}".format(read_port)] = len(self.cycle_times)-1                
-        #self.read1_cycle=len(self.cycle_times)-1 # Remember for power measure
+        self.measure_cycles[read_port]["read1"] = len(self.cycle_times)-1                
         
         self.add_noop_all_ports("Idle cycle (if read takes >1 cycle))",
                       self.probe_address,data_zeros)
@@ -780,7 +771,7 @@ class delay(simulation):
      
     def set_stimulus_variables(self):
         simulation.set_stimulus_variables(self)
-        self.measure_cycles = {}
+        self.measure_cycles = [{} for port in range(self.total_ports)]
         
     def create_test_cycles(self):
         """Returns a list of key time-points [ns] of the waveform (each rising edge)
@@ -794,11 +785,10 @@ class delay(simulation):
         #Get any available read/write port in case only a single write or read ports is being characterized.
         cur_read_port = self.get_available_port(get_read_port=True)   
         cur_write_port = self.get_available_port(get_read_port=False)          
-        
         debug.check(cur_read_port != None, "Characterizer requires at least 1 read port")
         debug.check(cur_write_port != None, "Characterizer requires at least 1 write port")
         
-        #Characterizing the remaining target ports. Not the final design.
+        #Create test cycles for specified target ports.
         write_pos = 0
         read_pos = 0
         while True:

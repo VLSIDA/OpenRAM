@@ -27,7 +27,6 @@ if len(args) != 1:
 # These depend on arguments, so don't load them until now.
 import debug
 
-
 init_openram(config_file=args[0], is_unit_test=False)
 
 # Only print banner here so it's not in unit tests
@@ -40,7 +39,7 @@ report_status()
 import verify
 from sram import sram
 from sram_config import sram_config
-import parser
+#from parser import *
 output_extensions = ["sp","v","lib"]
 if not OPTS.netlist_only:
     output_extensions.extend(["gds","lef"])
@@ -65,7 +64,9 @@ s.save()
 
 # generate datasheet from characterization of created SRAM
 if not OPTS.analytical_delay:
-    p = parser.parse(OPTS.openram_temp,os.environ.get('OPENRAM_HOME')+"/datasheets")
+    import datasheet_gen
+    p = datasheet_gen.parse(OPTS.openram_temp,os.environ.get('OPENRAM_HOME')+"/datasheet/datasheets")
+
 
 # Delete temp files etc.
 end_openram()

@@ -63,9 +63,9 @@ class openram_test(openram_test):
         files = glob.glob('{0}/*.lib'.format(out_path))
         self.assertTrue(len(files)>0)
         
-        # Make sure there is any .html file if characterizer was ran
-        if not OPTS.analytical_delay:
-            datasheets = glob.glob('{0}/{1}/*html'.format(OPENRAM_HOME,'datasheets'))
+        # Make sure there is any .html file 
+        if os.path.exists(os.environ.get('OPENRAM_HOME')+"/datasheet/datasheets"):
+            datasheets = glob.glob('{0}/{1}/*html'.format(OPENRAM_HOME,'datasheet/datasheets'))
             self.assertTrue(len(datasheets)>0)
         
         # grep any errors from the output

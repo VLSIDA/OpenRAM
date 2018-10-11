@@ -83,21 +83,21 @@ class dff_array(design.design):
                 
     def get_din_name(self, row, col):
         if self.columns == 1:
-            din_name = "din[{0}]".format(row)
+            din_name = "din_{0}".format(row)
         elif self.rows == 1:
-            din_name = "din[{0}]".format(col)
+            din_name = "din_{0}".format(col)
         else:
-            din_name = "din[{0}][{1}]".format(row,col)
+            din_name = "din_{0}_{1}".format(row,col)
 
         return din_name
     
     def get_dout_name(self, row, col):
         if self.columns == 1:
-            dout_name = "dout[{0}]".format(row)
+            dout_name = "dout_{0}".format(row)
         elif self.rows == 1:
-            dout_name = "dout[{0}]".format(col)
+            dout_name = "dout_{0}".format(col)
         else:
-            dout_name = "dout[{0}][{1}]".format(row,col)
+            dout_name = "dout_{0}_{1}".format(row,col)
 
         return dout_name
     

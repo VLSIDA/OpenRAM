@@ -75,11 +75,11 @@ class multibank(design.design):
     def add_pins(self):
         """ Adding pins for Bank module"""
         for i in range(self.word_size):
-            self.add_pin("DOUT[{0}]".format(i),"OUT")
+            self.add_pin("DOUT_{0}".format(i),"OUT")
         for i in range(self.word_size):
-            self.add_pin("BANK_DIN[{0}]".format(i),"IN")
+            self.add_pin("BANK_DIN_{0}".format(i),"IN")
         for i in range(self.addr_size):
-            self.add_pin("A[{0}]".format(i),"INPUT")
+            self.add_pin("A_{0}".format(i),"INPUT")
 
         # For more than one bank, we have a bank select and name
         # the signals gated_*.
@@ -227,10 +227,10 @@ class multibank(design.design):
                                               offset=vector(0,0))
         temp = []
         for i in range(self.num_cols):
-            temp.append("bl[{0}]".format(i))
-            temp.append("br[{0}]".format(i))
+            temp.append("bl_{0}".format(i))
+            temp.append("br_{0}".format(i))
         for j in range(self.num_rows):
-            temp.append("wl[{0}]".format(j))
+            temp.append("wl_{0}".format(j))
         temp.extend(["vdd", "gnd"])
         self.connect_inst(temp)
 
@@ -246,8 +246,8 @@ class multibank(design.design):
                                                 offset=vector(0,y_offset))
         temp = []
         for i in range(self.num_cols):
-            temp.append("bl[{0}]".format(i))
-            temp.append("br[{0}]".format(i))
+            temp.append("bl_{0}".format(i))
+            temp.append("br_{0}".format(i))
         temp.extend([self.prefix+"clk_buf_bar", "vdd"])
         self.connect_inst(temp)
 
@@ -265,13 +265,13 @@ class multibank(design.design):
                                               offset=vector(0,y_offset).scale(-1,-1))
         temp = []
         for i in range(self.num_cols):
-            temp.append("bl[{0}]".format(i))
-            temp.append("br[{0}]".format(i))
+            temp.append("bl_{0}".format(i))
+            temp.append("br_{0}".format(i))
         for k in range(self.words_per_row):
-                temp.append("sel[{0}]".format(k))
+                temp.append("sel_{0}".format(k))
         for j in range(self.word_size):
-            temp.append("bl_out[{0}]".format(j))
-            temp.append("br_out[{0}]".format(j))
+            temp.append("bl_out_{0}".format(j))
+            temp.append("br_out_{0}".format(j))
         temp.append("gnd")
         self.connect_inst(temp)
 
@@ -284,13 +284,13 @@ class multibank(design.design):
                                                 offset=vector(0,y_offset).scale(-1,-1))
         temp = []
         for i in range(self.word_size):
-            temp.append("sa_out[{0}]".format(i))
+            temp.append("sa_out_{0}".format(i))
             if self.words_per_row == 1:
-                temp.append("bl[{0}]".format(i))
-                temp.append("br[{0}]".format(i))
+                temp.append("bl_{0}".format(i))
+                temp.append("br_{0}".format(i))
             else:
-                temp.append("bl_out[{0}]".format(i))
-                temp.append("br_out[{0}]".format(i))
+                temp.append("bl_out_{0}".format(i))
+                temp.append("br_out_{0}".format(i))
                 
         temp.extend([self.prefix+"s_en", "vdd", "gnd"])
         self.connect_inst(temp)
@@ -306,14 +306,14 @@ class multibank(design.design):
 
         temp = []
         for i in range(self.word_size):
-            temp.append("BANK_DIN[{0}]".format(i))
+            temp.append("BANK_DIN_{0}".format(i))
         for i in range(self.word_size):            
             if (self.words_per_row == 1):            
-                temp.append("bl[{0}]".format(i))
-                temp.append("br[{0}]".format(i))
+                temp.append("bl_{0}".format(i))
+                temp.append("br_{0}".format(i))
             else:
-                temp.append("bl_out[{0}]".format(i))
-                temp.append("br_out[{0}]".format(i))
+                temp.append("bl_out_{0}".format(i))
+                temp.append("br_out_{0}".format(i))
         temp.extend([self.prefix+"w_en", "vdd", "gnd"])
         self.connect_inst(temp)
 
@@ -327,9 +327,9 @@ class multibank(design.design):
                   
         temp = []
         for i in range(self.word_size):
-            temp.append("sa_out[{0}]".format(i))
+            temp.append("sa_out_{0}".format(i))
         for i in range(self.word_size):
-            temp.append("DOUT[{0}]".format(i))
+            temp.append("DOUT_{0}".format(i))
         temp.extend([self.prefix+"tri_en", self.prefix+"tri_en_bar", "vdd", "gnd"])
         self.connect_inst(temp)
 
@@ -350,9 +350,9 @@ class multibank(design.design):
 
         temp = []
         for i in range(self.row_addr_size):
-            temp.append("A[{0}]".format(i+self.col_addr_size))
+            temp.append("A_{0}".format(i+self.col_addr_size))
         for j in range(self.num_rows):
-            temp.append("dec_out[{0}]".format(j))
+            temp.append("dec_out_{0}".format(j))
         temp.extend(["vdd", "gnd"])
         self.connect_inst(temp)
 
@@ -367,9 +367,9 @@ class multibank(design.design):
 
         temp = []
         for i in range(self.num_rows):
-            temp.append("dec_out[{0}]".format(i))
+            temp.append("dec_out_{0}".format(i))
         for i in range(self.num_rows):
-            temp.append("wl[{0}]".format(i))
+            temp.append("wl_{0}".format(i))
         temp.append(self.prefix+"clk_buf")
         temp.append("vdd")
         temp.append("gnd")
@@ -389,9 +389,9 @@ class multibank(design.design):
 
         temp = []
         for i in range(self.col_addr_size):
-            temp.append("A[{0}]".format(i))
+            temp.append("A_{0}".format(i))
         for j in range(self.num_col_addr_lines):
-            temp.append("sel[{0}]".format(j))
+            temp.append("sel_{0}".format(j))
         temp.extend(["vdd", "gnd"])
         self.connect_inst(temp)
         
@@ -528,10 +528,10 @@ class multibank(design.design):
         """ Routing of BL and BR between pre-charge and bitcell array """
 
         for i in range(self.num_cols):
-            precharge_bl = self.precharge_array_inst.get_pin("bl[{}]".format(i)).bc()
-            precharge_br = self.precharge_array_inst.get_pin("br[{}]".format(i)).bc()
-            bitcell_bl = self.bitcell_array_inst.get_pin("bl[{}]".format(i)).uc()
-            bitcell_br = self.bitcell_array_inst.get_pin("br[{}]".format(i)).uc()
+            precharge_bl = self.precharge_array_inst.get_pin("bl_{}".format(i)).bc()
+            precharge_br = self.precharge_array_inst.get_pin("br_{}".format(i)).bc()
+            bitcell_bl = self.bitcell_array_inst.get_pin("bl_{}".format(i)).uc()
+            bitcell_br = self.bitcell_array_inst.get_pin("br_{}".format(i)).uc()
 
             yoffset = 0.5*(precharge_bl.y+bitcell_bl.y)
             self.add_path("metal2",[precharge_bl, vector(precharge_bl.x,yoffset),
@@ -548,10 +548,10 @@ class multibank(design.design):
             return
         
         for i in range(self.num_cols):
-            col_mux_bl = self.col_mux_array_inst.get_pin("bl[{}]".format(i)).uc()
-            col_mux_br = self.col_mux_array_inst.get_pin("br[{}]".format(i)).uc()
-            bitcell_bl = self.bitcell_array_inst.get_pin("bl[{}]".format(i)).bc()
-            bitcell_br = self.bitcell_array_inst.get_pin("br[{}]".format(i)).bc()
+            col_mux_bl = self.col_mux_array_inst.get_pin("bl_{}".format(i)).uc()
+            col_mux_br = self.col_mux_array_inst.get_pin("br_{}".format(i)).uc()
+            bitcell_bl = self.bitcell_array_inst.get_pin("bl_{}".format(i)).bc()
+            bitcell_br = self.bitcell_array_inst.get_pin("br_{}".format(i)).bc()
 
             yoffset = 0.5*(col_mux_bl.y+bitcell_bl.y)
             self.add_path("metal2",[col_mux_bl, vector(col_mux_bl.x,yoffset),
@@ -563,17 +563,17 @@ class multibank(design.design):
         """ Routing of BL and BR between sense_amp and column mux or bitcell array """
 
         for i in range(self.word_size):
-            sense_amp_bl = self.sense_amp_array_inst.get_pin("bl[{}]".format(i)).uc()
-            sense_amp_br = self.sense_amp_array_inst.get_pin("br[{}]".format(i)).uc()
+            sense_amp_bl = self.sense_amp_array_inst.get_pin("bl_{}".format(i)).uc()
+            sense_amp_br = self.sense_amp_array_inst.get_pin("br_{}".format(i)).uc()
 
             if self.col_addr_size>0:
                 # Sense amp is connected to the col mux
-                connect_bl = self.col_mux_array_inst.get_pin("bl_out[{}]".format(i)).bc()
-                connect_br = self.col_mux_array_inst.get_pin("br_out[{}]".format(i)).bc()
+                connect_bl = self.col_mux_array_inst.get_pin("bl_out_{}".format(i)).bc()
+                connect_br = self.col_mux_array_inst.get_pin("br_out_{}".format(i)).bc()
             else:
                 # Sense amp is directly connected to the bitcell array
-                connect_bl = self.bitcell_array_inst.get_pin("bl[{}]".format(i)).bc()
-                connect_br = self.bitcell_array_inst.get_pin("br[{}]".format(i)).bc()
+                connect_bl = self.bitcell_array_inst.get_pin("bl_{}".format(i)).bc()
+                connect_br = self.bitcell_array_inst.get_pin("br_{}".format(i)).bc()
             
                 
             yoffset = 0.5*(sense_amp_bl.y+connect_bl.y)
@@ -587,8 +587,8 @@ class multibank(design.design):
 
         for i in range(self.word_size):
             # Connection of data_out of sense amp to data_in 
-            tri_gate_in = self.tri_gate_array_inst.get_pin("in[{}]".format(i)).lc()
-            sa_data_out = self.sense_amp_array_inst.get_pin("data[{}]".format(i)).bc()
+            tri_gate_in = self.tri_gate_array_inst.get_pin("in_{}".format(i)).lc()
+            sa_data_out = self.sense_amp_array_inst.get_pin("data_{}".format(i)).bc()
 
             self.add_via_center(layers=("metal2", "via2", "metal3"),
                                 offset=tri_gate_in)
@@ -599,8 +599,8 @@ class multibank(design.design):
     def route_sense_amp_out(self):
         """ Add pins for the sense amp output """
         for i in range(self.word_size):
-            data_pin = self.sense_amp_array_inst.get_pin("data[{}]".format(i))
-            self.add_layout_pin_rect_center(text="DOUT[{}]".format(i),
+            data_pin = self.sense_amp_array_inst.get_pin("data_{}".format(i))
+            self.add_layout_pin_rect_center(text="DOUT_{}".format(i),
                                             layer=data_pin.layer, 
                                             offset=data_pin.center(),
                                             height=data_pin.height(),
@@ -609,8 +609,8 @@ class multibank(design.design):
     def route_tri_gate_out(self):
         """ Metal 3 routing of tri_gate output data """
         for i in range(self.word_size):
-            data_pin = self.tri_gate_array_inst.get_pin("out[{}]".format(i))
-            self.add_layout_pin_rect_center(text="DOUT[{}]".format(i),
+            data_pin = self.tri_gate_array_inst.get_pin("out_{}".format(i))
+            self.add_layout_pin_rect_center(text="DOUT_{}".format(i),
                                             layer=data_pin.layer, 
                                             offset=data_pin.center(),
                                             height=data_pin.height(),
@@ -623,8 +623,8 @@ class multibank(design.design):
         # Create inputs for the row address lines
         for i in range(self.row_addr_size):
             addr_idx = i + self.col_addr_size
-            decoder_name = "A[{}]".format(i)
-            addr_name = "A[{}]".format(addr_idx)
+            decoder_name = "A_{}".format(i)
+            addr_name = "A_{}".format(addr_idx)
             self.copy_layout_pin(self.row_decoder_inst, decoder_name, addr_name)
             
             
@@ -632,8 +632,8 @@ class multibank(design.design):
         """ Connecting write driver   """
         
         for i in range(self.word_size):
-            data_name = "data[{}]".format(i)            
-            din_name = "BANK_DIN[{}]".format(i)
+            data_name = "data_{}".format(i)            
+            din_name = "BANK_DIN_{}".format(i)
             self.copy_layout_pin(self.write_driver_array_inst, data_name, din_name)
                         
 
@@ -644,15 +644,15 @@ class multibank(design.design):
         # we don't care about bends after connecting to the input pin, so let the path code decide.
         for i in range(self.num_rows):
             # The pre/post is to access the pin from "outside" the cell to avoid DRCs
-            decoder_out_pos = self.row_decoder_inst.get_pin("decode[{}]".format(i)).rc()
-            driver_in_pos = self.wordline_driver_inst.get_pin("in[{}]".format(i)).lc()
+            decoder_out_pos = self.row_decoder_inst.get_pin("decode_{}".format(i)).rc()
+            driver_in_pos = self.wordline_driver_inst.get_pin("in_{}".format(i)).lc()
             mid1 = decoder_out_pos.scale(0.5,1)+driver_in_pos.scale(0.5,0)
             mid2 = decoder_out_pos.scale(0.5,0)+driver_in_pos.scale(0.5,1)
             self.add_path("metal1", [decoder_out_pos, mid1, mid2, driver_in_pos])
 
             # The mid guarantees we exit the input cell to the right.
-            driver_wl_pos = self.wordline_driver_inst.get_pin("wl[{}]".format(i)).rc()
-            bitcell_wl_pos = self.bitcell_array_inst.get_pin("wl[{}]".format(i)).lc()
+            driver_wl_pos = self.wordline_driver_inst.get_pin("wl_{}".format(i)).rc()
+            bitcell_wl_pos = self.bitcell_array_inst.get_pin("wl_{}".format(i)).lc()
             mid1 = driver_wl_pos.scale(0.5,1)+bitcell_wl_pos.scale(0.5,0)
             mid2 = driver_wl_pos.scale(0.5,0)+bitcell_wl_pos.scale(0.5,1)
             self.add_path("metal1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
@@ -677,20 +677,20 @@ class multibank(design.design):
         elif self.col_addr_size > 1:
             decode_names = []
             for i in range(self.num_col_addr_lines):
-                decode_names.append("out[{}]".format(i))
+                decode_names.append("out_{}".format(i))
 
             for i in range(self.col_addr_size):
-                decoder_name = "in[{}]".format(i)
-                addr_name = "A[{}]".format(i)
+                decoder_name = "in_{}".format(i)
+                addr_name = "A_{}".format(i)
                 self.copy_layout_pin(self.col_decoder_inst, decoder_name, addr_name)
                 
 
         # This will do a quick "river route" on two layers.
         # When above the top select line it will offset "inward" again to prevent conflicts.
         # This could be done on a single layer, but we follow preferred direction rules for later routing.
-        top_y_offset = self.col_mux_array_inst.get_pin("sel[{}]".format(self.num_col_addr_lines-1)).cy()
+        top_y_offset = self.col_mux_array_inst.get_pin("sel_{}".format(self.num_col_addr_lines-1)).cy()
         for (decode_name,i) in zip(decode_names,range(self.num_col_addr_lines)):
-            mux_name = "sel[{}]".format(i)
+            mux_name = "sel_{}".format(i)
             mux_addr_pos = self.col_mux_array_inst.get_pin(mux_name).lc()
             
             decode_out_pos = self.col_decoder_inst.get_pin(decode_name).center()
@@ -716,7 +716,7 @@ class multibank(design.design):
         """
         # Add the wordline names
         for i in range(self.num_rows):
-            wl_name = "wl[{}]".format(i)
+            wl_name = "wl_{}".format(i)
             wl_pin = self.bitcell_array_inst.get_pin(wl_name)
             self.add_label(text=wl_name,
                            layer="metal1",  
@@ -724,8 +724,8 @@ class multibank(design.design):
         
         # Add the bitline names
         for i in range(self.num_cols):
-            bl_name = "bl[{}]".format(i)
-            br_name = "br[{}]".format(i)
+            bl_name = "bl_{}".format(i)
+            br_name = "br_{}".format(i)
             bl_pin = self.bitcell_array_inst.get_pin(bl_name)
             br_pin = self.bitcell_array_inst.get_pin(br_name)
             self.add_label(text=bl_name,
@@ -737,16 +737,16 @@ class multibank(design.design):
 
         # # Add the data output names to the sense amp output     
         # for i in range(self.word_size):
-        #     data_name = "data[{}]".format(i)
+        #     data_name = "data_{}".format(i)
         #     data_pin = self.sense_amp_array_inst.get_pin(data_name)
-        #     self.add_label(text="sa_out[{}]".format(i),
+        #     self.add_label(text="sa_out_{}".format(i),
         #                    layer="metal2",  
         #                    offset=data_pin.center())
 
         # Add labels on the decoder
         for i in range(self.word_size):
-            data_name = "dec_out[{}]".format(i)
-            pin_name = "in[{}]".format(i)            
+            data_name = "dec_out_{}".format(i)
+            pin_name = "in_{}".format(i)            
             data_pin = self.wordline_driver_inst.get_pin(pin_name)
             self.add_label(text=data_name,
                            layer="metal1",  

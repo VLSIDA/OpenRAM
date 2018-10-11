@@ -158,7 +158,7 @@ class sram_base(design):
                                                                                 length=self.addr_bus_height))
 
             
-            self.bank_sel_bus_names = ["bank_sel{0}[{1}]".format(port,i) for i in range(self.num_banks)]
+            self.bank_sel_bus_names = ["bank_sel{0}_{1}".format(port,i) for i in range(self.num_banks)]
             self.vert_control_bus_positions.update(self.create_vertical_pin_bus(layer="metal2",
                                                                                 pitch=self.m2_pitch,
                                                                                 offset=self.bank_sel_bus_offset,

@@ -299,7 +299,7 @@ class control_logic(design.design):
             control_inputs = ["cs"]
         else:
             control_inputs = ["cs", "we"]
-        dff_out_map = zip(["dout_bar[{}]".format(i) for i in range(2*self.num_control_signals - 1)], control_inputs)
+        dff_out_map = zip(["dout_bar_{}".format(i) for i in range(2*self.num_control_signals - 1)], control_inputs)
         self.connect_vertical_bus(dff_out_map, self.ctrl_dff_inst, self.rail_offsets)
         
         # Connect the clock rail to the other clock rail
@@ -311,9 +311,9 @@ class control_logic(design.design):
                             offset=rail_pos,
                             rotate=90)
 
-        self.copy_layout_pin(self.ctrl_dff_inst, "din[0]", "csb")
+        self.copy_layout_pin(self.ctrl_dff_inst, "din_0", "csb")
         if (self.port_type == "rw"):
-            self.copy_layout_pin(self.ctrl_dff_inst, "din[1]", "web")
+            self.copy_layout_pin(self.ctrl_dff_inst, "din_1", "web")
         
         
     def create_dffs(self):

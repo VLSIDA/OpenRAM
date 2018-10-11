@@ -31,8 +31,8 @@ class precharge_array(design.design):
     def add_pins(self):
         """Adds pins for spice file"""
         for i in range(self.columns):
-            self.add_pin("bl[{0}]".format(i))
-            self.add_pin("br[{0}]".format(i))
+            self.add_pin("bl_{0}".format(i))
+            self.add_pin("br_{0}".format(i))
         self.add_pin("en")
         self.add_pin("vdd")
 
@@ -71,13 +71,13 @@ class precharge_array(design.design):
         for i in range(len(self.local_insts)):
             inst = self.local_insts[i]
             bl_pin = inst.get_pin("bl")
-            self.add_layout_pin(text="bl[{0}]".format(i),
+            self.add_layout_pin(text="bl_{0}".format(i),
                                 layer="metal2",
                                 offset=bl_pin.ll(),
                                 width=drc["minwidth_metal2"],
                                 height=bl_pin.height())
             br_pin = inst.get_pin("br") 
-            self.add_layout_pin(text="br[{0}]".format(i),
+            self.add_layout_pin(text="br_{0}".format(i),
                                 layer="metal2",
                                 offset=br_pin.ll(),
                                 width=drc["minwidth_metal2"],
@@ -94,7 +94,7 @@ class precharge_array(design.design):
                                  mod=self.pc_cell,
                                  offset=offset)
             self.local_insts.append(inst)
-            self.connect_inst(["bl[{0}]".format(i), "br[{0}]".format(i), "en", "vdd"])
+            self.connect_inst(["bl_{0}".format(i), "br_{0}".format(i), "en", "vdd"])
 
 
     def place_insts(self):

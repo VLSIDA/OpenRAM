@@ -1186,10 +1186,10 @@ class pbitcell(design.design):
         """ Creates a list of connections in the bitcell, indexed by column and row, for instance use in bitcell_array """
         bitcell_pins = []
         for port in range(self.total_ports):
-            bitcell_pins.append("bl{0}[{1}]".format(port,col))
-            bitcell_pins.append("br{0}[{1}]".format(port,col))
+            bitcell_pins.append("bl{0}_{1}".format(port,col))
+            bitcell_pins.append("br{0}_{1}".format(port,col))
         for port in range(self.total_ports):
-            bitcell_pins.append("wl{0}[{1}]".format(port,row))
+            bitcell_pins.append("wl{0}_{1}".format(port,row))
         bitcell_pins.append("vdd")
         bitcell_pins.append("gnd")
         return bitcell_pins

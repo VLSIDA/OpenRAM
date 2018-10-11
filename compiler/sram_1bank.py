@@ -100,17 +100,17 @@ class sram_1bank(sram_base):
                 self.copy_layout_pin(self.control_logic_inst[port], signal, signal+"{}".format(port))
 
             for bit in range(self.word_size):
-                self.copy_layout_pin(self.bank_inst, "dout{0}[{1}]".format(port,bit), "DOUT{0}[{1}]".format(port,bit))
+                self.copy_layout_pin(self.bank_inst, "dout{0}_{1}".format(port,bit), "DOUT{0}[{1}]".format(port,bit))
 
             # Lower address bits
             for bit in range(self.col_addr_size):
-                self.copy_layout_pin(self.col_addr_dff_inst[port], "din[{}]".format(bit),"ADDR{0}[{1}]".format(port,bit))
+                self.copy_layout_pin(self.col_addr_dff_inst[port], "din_{}".format(bit),"ADDR{0}[{1}]".format(port,bit))
             # Upper address bits
             for bit in range(self.row_addr_size):
-                self.copy_layout_pin(self.row_addr_dff_inst[port], "din[{}]".format(bit),"ADDR{0}[{1}]".format(port,bit+self.col_addr_size))
+                self.copy_layout_pin(self.row_addr_dff_inst[port], "din_{}".format(bit),"ADDR{0}[{1}]".format(port,bit+self.col_addr_size))
 
             for bit in range(self.word_size):
-                self.copy_layout_pin(self.data_dff_inst[port], "din[{}]".format(bit), "DIN{0}[{1}]".format(port,bit))
+                self.copy_layout_pin(self.data_dff_inst[port], "din_{}".format(bit), "DIN{0}[{1}]".format(port,bit))
             
     def route(self):
         """ Route a single bank SRAM """
@@ -285,8 +285,8 @@ class sram_1bank(sram_base):
         """ Connect the output of the row flops to the bank pins """
         for port in range(self.total_ports):
             for bit in range(self.row_addr_size):
-                flop_name = "dout[{}]".format(bit)
-                bank_name = "addr{0}[{1}]".format(port,bit+self.col_addr_size)
+                flop_name = "dout_{}".format(bit)
+                bank_name = "addr{0}_{1}".format(port,bit+self.col_addr_size)
                 flop_pin = self.row_addr_dff_inst[port].get_pin(flop_name)
                 bank_pin = self.bank_inst.get_pin(bank_name)
                 flop_pos = flop_pin.center()
@@ -300,18 +300,18 @@ class sram_1bank(sram_base):
     def route_col_addr_dff(self):
         """ Connect the output of the row flops to the bank pins """
         for port in range(self.total_ports):
-            bus_names = ["addr[{}]".format(x) for x in range(self.col_addr_size)]        
+            bus_names = ["addr_{}".format(x) for x in range(self.col_addr_size)]        
             col_addr_bus_offsets = self.create_horizontal_bus(layer="metal1",
                                                               pitch=self.m1_pitch,
                                                               offset=self.col_addr_dff_inst[port].ul() + vector(0, self.m1_pitch),
                                                               names=bus_names,
                                                               length=self.col_addr_dff_inst[port].width)
 
-            dff_names = ["dout[{}]".format(x) for x in range(self.col_addr_size)]
+            dff_names = ["dout_{}".format(x) for x in range(self.col_addr_size)]
             data_dff_map = zip(dff_names, bus_names)
             self.connect_horizontal_bus(data_dff_map, self.col_addr_dff_inst[port], col_addr_bus_offsets)
             
-            bank_names = ["addr{0}[{1}]".format(port,x) for x in range(self.col_addr_size)]
+            bank_names = ["addr{0}_{1}".format(port,x) for x in range(self.col_addr_size)]
             data_bank_map = zip(bank_names, bus_names)
             self.connect_horizontal_bus(data_bank_map, self.bank_inst, col_addr_bus_offsets)
         
@@ -322,8 +322,8 @@ class sram_1bank(sram_base):
         for port in range(self.total_write):
             offset = self.data_dff_inst[port].ul() + vector(0, self.m1_pitch)
 
-            dff_names = ["dout[{}]".format(x) for x in range(self.word_size)]
-            bank_names = ["din{0}[{1}]".format(port,x) for x in range(self.word_size)]
+            dff_names = ["dout_{}".format(x) for x in range(self.word_size)]
+            bank_names = ["din{0}_{1}".format(port,x) for x in range(self.word_size)]
 
             route_map = list(zip(bank_names, dff_names))
             dff_pins = {key: self.data_dff_inst[port].get_pin(key) for key in dff_names }

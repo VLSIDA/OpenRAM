@@ -38,9 +38,9 @@ class bitcell(design.design):
  
     def list_bitcell_pins(self, col, row):
         """ Creates a list of connections in the bitcell, indexed by column and row, for instance use in bitcell_array """
-        bitcell_pins = ["bl[{0}]".format(col),
-                        "br[{0}]".format(col),
-                        "wl[{0}]".format(row),
+        bitcell_pins = ["bl_{0}".format(col),
+                        "br_{0}".format(col),
+                        "wl_{0}".format(row),
                         "vdd",
                         "gnd"]
         return bitcell_pins

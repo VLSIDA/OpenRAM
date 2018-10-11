@@ -69,10 +69,10 @@ class bitcell_array(design.design):
         column_list = self.cell.list_all_bitline_names()
         for col in range(self.column_size):
             for cell_column in column_list:
-                self.add_pin(cell_column+"[{0}]".format(col))
+                self.add_pin(cell_column+"_{0}".format(col))
         for row in range(self.row_size):
             for cell_row in row_list:
-                    self.add_pin(cell_row+"[{0}]".format(row))
+                    self.add_pin(cell_row+"_{0}".format(row))
         self.add_pin("vdd")
         self.add_pin("gnd")
 
@@ -105,7 +105,7 @@ class bitcell_array(design.design):
         for col in range(self.column_size):
             for cell_column in column_list:
                 bl_pin = self.cell_inst[0,col].get_pin(cell_column)
-                self.add_layout_pin(text=cell_column+"[{0}]".format(col),
+                self.add_layout_pin(text=cell_column+"_{0}".format(col),
                                     layer="metal2",
                                     offset=bl_pin.ll(),
                                     width=bl_pin.width(),
@@ -118,7 +118,7 @@ class bitcell_array(design.design):
         for row in range(self.row_size):
             for cell_row in row_list:
                 wl_pin = self.cell_inst[row,0].get_pin(cell_row)
-                self.add_layout_pin(text=cell_row+"[{0}]".format(row),
+                self.add_layout_pin(text=cell_row+"_{0}".format(row),
                                     layer="metal1",
                                     offset=wl_pin.ll(),
                                     width=self.width,

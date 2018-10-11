@@ -40,10 +40,10 @@ class wordline_driver(design.design):
     def add_pins(self):
         # inputs to wordline_driver.
         for i in range(self.rows):
-            self.add_pin("in[{0}]".format(i))
+            self.add_pin("in_{0}".format(i))
         # Outputs from wordline_driver.
         for i in range(self.rows):
-            self.add_pin("wl[{0}]".format(i))
+            self.add_pin("wl_{0}".format(i))
         self.add_pin("en")
         self.add_pin("vdd")
         self.add_pin("gnd")
@@ -107,20 +107,20 @@ class wordline_driver(design.design):
             self.inv1_inst.append(self.add_inst(name=name_inv1,
                                                mod=self.inv_no_output))
             self.connect_inst(["en",
-                               "en_bar[{0}]".format(row),
+                               "en_bar_{0}".format(row),
                                "vdd", "gnd"])
             # add nand 2
             self.nand_inst.append(self.add_inst(name=name_nand,
                                                 mod=self.nand2))
-            self.connect_inst(["en_bar[{0}]".format(row),
-                               "in[{0}]".format(row),
-                               "wl_bar[{0}]".format(row),
+            self.connect_inst(["en_bar_{0}".format(row),
+                               "in_{0}".format(row),
+                               "wl_bar_{0}".format(row),
                                "vdd", "gnd"])
             # add inv2
             self.inv2_inst.append(self.add_inst(name=name_inv2,
                                                 mod=self.inv))
-            self.connect_inst(["wl_bar[{0}]".format(row),
-                               "wl[{0}]".format(row),
+            self.connect_inst(["wl_bar_{0}".format(row),
+                               "wl_{0}".format(row),
                                "vdd", "gnd"])
 
 
@@ -205,7 +205,7 @@ class wordline_driver(design.design):
             input_offset = vector(0,b_pos.y + up_or_down) 
             mid_via_offset = vector(clk_offset.x,input_offset.y) + vector(0.5*self.m2_width+self.m2_space+0.5*contact.m1m2.width,0) 
             # must under the clk line in M1
-            self.add_layout_pin_segment_center(text="in[{0}]".format(row),
+            self.add_layout_pin_segment_center(text="in_{0}".format(row),
                                                layer="metal1",
                                                start=input_offset,
                                                end=mid_via_offset)
@@ -221,7 +221,7 @@ class wordline_driver(design.design):
 
             # output each WL on the right
             wl_offset = inv2_inst.get_pin("Z").rc()
-            self.add_layout_pin_segment_center(text="wl[{0}]".format(row),
+            self.add_layout_pin_segment_center(text="wl_{0}".format(row),
                                                layer="metal1",
                                                start=wl_offset,
                                                end=wl_offset-vector(self.m1_width,0))

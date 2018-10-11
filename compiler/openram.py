@@ -64,7 +64,8 @@ s = sram(sram_config=c,
 s.save()
 
 # generate datasheet from characterization of created SRAM
-p = parser.parse(OPTS.openram_temp,os.environ.get('OPENRAM_HOME')+"/datasheets")
+if not OPTS.analytical_delay:
+    p = parser.parse(OPTS.openram_temp,os.environ.get('OPENRAM_HOME')+"/datasheets")
 
 # Delete temp files etc.
 end_openram()

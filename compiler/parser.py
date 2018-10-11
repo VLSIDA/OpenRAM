@@ -163,9 +163,10 @@ class datasheet():
         self.operating = []
         self.dlv = []
         self.name = identifier
+        self.html = ""
 
-    def print(self):
-        print("""<style>
+    def generate_html(self):
+        self.html += """<style>
 #data {
     font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
     border-collapse: collapse;
@@ -189,18 +190,18 @@ class datasheet():
     background-color: #4CAF50;
     color: white;
 }
-</style>""")
-        print('<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>{0}</p>')
-        print('<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>{0}</p>')
-        print('<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>{0}</p>')
-        print('<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>Operating Conditions</p>')
-        print(operating_conditions(self.operating,table_id='data').__html__())
-        print('<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>Timing and Current Data</p>')
-        print(timing_and_current_data(self.timing,table_id='data').__html__())
-        print('<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>Characterization Corners</p>')
-        print(characterization_corners(self.corners,table_id='data').__html__())
-        print('<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>Deliverables</p>')
-        print(deliverables(self.dlv,table_id='data').__html__().replace('&lt;','<').replace('&#34;','"').replace('&gt;',">"))
+</style>"""
+        self.html +='<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>{0}</p>'
+        self.html +='<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>{0}</p>'
+        self.html +='<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>{0}</p>'
+        self.html +='<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>Operating Conditions</p>'
+        self.html += operating_conditions(self.operating,table_id='data').__html__()
+        self.html += '<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>Timing and Current Data</p>'
+        self.html += timing_and_current_data(self.timing,table_id='data').__html__()
+        self.html += '<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>Characterization Corners</p>'
+        self.html += characterization_corners(self.corners,table_id='data').__html__()
+        self.html +='<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>Deliverables</p>'
+        self.html += deliverables(self.dlv,table_id='data').__html__().replace('&lt;','<').replace('&#34;','"').replace('&gt;',">")
 
 
 class parse():
@@ -217,7 +218,7 @@ class parse():
 
 
         for sheets in datasheets:
-            print (out_dir + sheets.name + ".html")
+#            print (out_dir + sheets.name + ".html")
             with open(out_dir + "/" + sheets.name + ".html", 'w+') as f:
-                with contextlib.redirect_stdout(f):
-                    sheets.print()
+                sheets.generate_html()
+                f.write(sheets.html)

@@ -209,22 +209,18 @@ drc["metal3_enclosure_via3"] = 0
 drc["minarea_metal3"] = 0
 
 # VIA2-3.1 Minimum width of Via[2-3]
-drc["minwidth_via3"] = 0.065
+drc["minwidth_via3"] = 0.07
 # VIA2-3.2 Minimum spacing of Via[2-3]
-drc["via3_to_via3"] = 0.07
+drc["via3_to_via3"] = 0.085
 
 # METALSMG.1 Minimum width of semi-global metal
 drc["minwidth_metal4"] = 0.14
 # METALSMG.2 Minimum spacing of semi-global metal
 drc["metal4_to_metal4"] = 0.14
 # METALSMG.3 Minimum enclosure around via[3-6] on two opposite sides
-drc["metal4_extend_via3"] = 0.07
+drc["metal4_extend_via3"] = 0.0025
 # Reserved for asymmetric enclosure
-drc["metal4_enclosure_via3"] = 0
-# METALSMG.3 Minimum enclosure around via[3-6] on two opposite sides
-drc["metal4_extend_via4"] = 0.07
-# Reserved for asymmetric enclosure
-drc["metal4_enclosure_via4"] = 0
+drc["metal4_enclosure_via3"] = 0.0025
 # Not a rule
 drc["minarea_metal4"] = 0
 

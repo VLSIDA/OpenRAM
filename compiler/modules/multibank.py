@@ -109,7 +109,7 @@ class multibank(design.design):
         if self.num_banks > 1:
             self.route_bank_select()            
         
-        self.route_vdd_gnd()
+        self.route_supplies()
         
     def add_modules(self):
         """ Add modules. The order should not matter! """
@@ -440,33 +440,11 @@ class multibank(design.design):
         temp.extend(["vdd", "gnd"])
         self.connect_inst(temp)
 
-    def route_vdd_gnd(self):
+    def route_supplies(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """
-
-        # These are the instances that every bank has
-        top_instances = [self.bitcell_array_inst,
-                         self.precharge_array_inst,
-                         self.sense_amp_array_inst,
-                         self.write_driver_array_inst,
-#                         self.tri_gate_array_inst,
-                         self.row_decoder_inst,
-                         self.wordline_driver_inst]
-        # Add these if we use the part...
-        if self.col_addr_size > 0:
-            top_instances.append(self.col_decoder_inst)
-            top_instances.append(self.col_mux_array_inst)
-            
-        if self.num_banks > 1:
-            top_instances.append(self.bank_select_inst)
-
-        
-        for inst in top_instances:
-            # Column mux has no vdd
-            if self.col_addr_size==0 or (self.col_addr_size>0 and inst != self.col_mux_array_inst):
-                self.copy_layout_pin(inst, "vdd")
-            # Precharge has no gnd
-            if inst != self.precharge_array_inst:
-                self.copy_layout_pin(inst, "gnd")
+        for inst in self.insts:
+            self.copy_power_pins(inst,"vdd")
+            self.copy_power_pins(inst,"gnd")
         
     def route_bank_select(self):
         """ Route the bank select logic. """

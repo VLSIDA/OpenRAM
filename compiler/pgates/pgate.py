@@ -1,7 +1,7 @@
 import contact
 import design
 import debug
-from tech import drc, parameter, spice, info
+from tech import drc, parameter, spice
 from ptx import ptx
 from vector import vector
 from globals import OPTS
@@ -110,7 +110,7 @@ class pgate(design.design):
         max_y_offset = self.height + 0.5*self.m1_width
         self.nwell_position = middle_position
         nwell_height = max_y_offset - middle_position.y
-        if info["has_nwell"]:
+        if drc["has_nwell"]:
             self.add_rect(layer="nwell",
                           offset=middle_position,
                           width=self.well_width,
@@ -122,7 +122,7 @@ class pgate(design.design):
 
         pwell_position = vector(0,-0.5*self.m1_width)
         pwell_height = middle_position.y-pwell_position.y
-        if info["has_pwell"]:
+        if drc["has_pwell"]:
             self.add_rect(layer="pwell",
                           offset=pwell_position,
                           width=self.well_width,

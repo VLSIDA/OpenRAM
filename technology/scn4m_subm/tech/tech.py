@@ -1,14 +1,9 @@
 import os
+from design_rules import *
 
 """
 File containing the process technology parameters for SCMOS 3me, subm, 180nm.
 """
-
-info={}
-info["name"]="scn3me_subm"
-info["body_tie_down"] = 0
-info["has_pwell"] = True
-info["has_nwell"] = True
 
 #GDS file info
 GDS={}
@@ -61,14 +56,19 @@ parameter["beta"] = 2
 
 drclvs_home=os.environ.get("DRCLVS_HOME")
 
-drc={}
+drc = design_rules("scn4me_sub")
+
+drc["body_tie_down"] = 0
+drc["has_pwell"] = True
+drc["has_nwell"] = True
+
 #grid size is 1/2 a lambda
 drc["grid"]=0.5*_lambda_
+
 #DRC/LVS test set_up
 drc["drc_rules"]=drclvs_home+"/calibreDRC_scn3me_subm.rul"
 drc["lvs_rules"]=drclvs_home+"/calibreLVS_scn3me_subm.rul"
 drc["layer_map"]=os.environ.get("OPENRAM_TECH")+"/scn3me_subm/layers.map"
-
         	      					
 # minwidth_tx with contact (no dog bone transistors)
 drc["minwidth_tx"] = 4*_lambda_

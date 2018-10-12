@@ -1,14 +1,9 @@
 import os
+from design_rules import *
 
 """
 File containing the process technology parameters for FreePDK 45nm.
 """
-
-info = {}
-info["name"] = "freepdk45"
-info["body_tie_down"] = 0
-info["has_pwell"] = True
-info["has_nwell"] = True
 
 #GDS file info
 GDS = {}
@@ -72,7 +67,13 @@ parameter["min_tx_size"] = 0.09
 parameter["beta"] = 3
 
 drclvs_home=os.environ.get("DRCLVS_HOME")
-drc={}
+
+drc = design_rules("freepdk45")
+
+drc["body_tie_down"] = 0
+drc["has_pwell"] = True
+drc["has_nwell"] = True
+
 #grid size
 drc["grid"] = 0.0025
 
@@ -83,7 +84,7 @@ drc["xrc_rules"]=drclvs_home+"/calibrexRC.rul"
 drc["layer_map"]=os.environ.get("OPENRAM_TECH")+"/freepdk45/layers.map"
 
 # minwidth_tx with contact (no dog bone transistors)
-drc["minwidth_tx"]=0.09
+drc["minwidth_tx"] = 0.09
 drc["minlength_channel"] = 0.05
 
 # WELL.2 Minimum spacing of nwell/pwell at different potential
@@ -196,7 +197,18 @@ drc["via2_to_via2"] = 0.075
 # METALINT.1 Minimum width of intermediate metal
 drc["minwidth_metal3"] = 0.07
 # METALINT.2 Minimum spacing of intermediate metal
-drc["metal3_to_metal3"] = 0.07
+#drc["metal3_to_metal3"] = 0.07
+# Minimum spacing of metal3 wider than 0.09 & longer than 0.3 = 0.09
+# Minimum spacing of metal3 wider than 0.27 & longer than 0.9 = 0.27
+# Minimum spacing of metal3 wider than 0.5 & longer than 1.8 = 0.5
+# Minimum spacing of metal3 wider than 0.9 & longer than 2.7 = 0.9
+# Minimum spacing of metal3 wider than 1.5 & longer than 4.0 = 1.5
+drc["metal3_to_metal3"] = drc_lut({(0.00, 0.0) : 0.07,
+                                   (0.09, 0.3) : 0.09,
+                                   (0.27, 0.9) : 0.27,
+                                   (0.50, 1.8) : 0.5,
+                                   (0.90, 2.7) : 0.9,
+                                   (1.50, 4.0) : 1.5})
 # METALINT.3 Minimum enclosure around via1 on two opposite sides
 drc["metal3_extend_via2"] = 0.035
 # Reserved for asymmetric enclosures
@@ -216,7 +228,16 @@ drc["via3_to_via3"] = 0.085
 # METALSMG.1 Minimum width of semi-global metal
 drc["minwidth_metal4"] = 0.14
 # METALSMG.2 Minimum spacing of semi-global metal
-drc["metal4_to_metal4"] = 0.14
+#drc["metal4_to_metal4"] = 0.14
+# Minimum spacing of metal4 wider than 0.27 & longer than 0.9 = 0.27
+# Minimum spacing of metal4 wider than 0.5 & longer than 1.8 = 0.5
+# Minimum spacing of metal4 wider than 0.9 & longer than 2.7 = 0.9
+# Minimum spacing of metal4 wider than 1.5 & longer than 4.0 = 1.5
+drc["metal4_to_metal4"] = drc_lut({(0.00, 0.0) : 0.14,
+                                   (0.27, 0.9) : 0.27,
+                                   (0.50, 1.8) : 0.5,
+                                   (0.90, 2.7) : 0.9,
+                                   (1.50, 4.0) : 1.5})
 # METALSMG.3 Minimum enclosure around via[3-6] on two opposite sides
 drc["metal4_extend_via3"] = 0.0025
 # Reserved for asymmetric enclosure

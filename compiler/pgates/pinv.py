@@ -1,7 +1,7 @@
 import contact
 import pgate
 import debug
-from tech import drc, parameter, spice, info
+from tech import drc, parameter, spice
 from ptx import ptx
 from vector import vector
 from math import ceil

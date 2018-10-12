@@ -33,7 +33,7 @@ class design(hierarchy_design):
         self.poly_width = drc["minwidth_poly"]
         self.poly_space = drc["poly_to_poly"]        
         self.m1_width = drc["minwidth_metal1"]
-        self.m1_space = drc["metal1_to_metal1"]        
+        self.m1_space = drc["metal1_to_metal1"]
         self.m2_width = drc["minwidth_metal2"]
         self.m2_space = drc["metal2_to_metal2"]        
         self.m3_width = drc["minwidth_metal3"]

@@ -287,7 +287,8 @@ def setup_paths():
 
     # Add all of the subdirs to the python path
     # These subdirs are modules and don't need to be added: characterizer, verify
-    for subdir in ["gdsMill", "tests", "modules", "base", "pgates", "bitcells", "router"]:
+    subdirlist = [ item for item in os.listdir(OPENRAM_HOME) if os.path.isdir(os.path.join(OPENRAM_HOME, item)) ]
+    for subdir in subdirlist:
         full_path = "{0}/{1}".format(OPENRAM_HOME,subdir)
         debug.check(os.path.isdir(full_path),
                     "$OPENRAM_HOME/{0} does not exist: {1}".format(subdir,full_path))

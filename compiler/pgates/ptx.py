@@ -1,6 +1,6 @@
 import design
 import debug
-from tech import drc, info, spice
+from tech import drc, spice
 from vector import vector
 from contact import contact
 from globals import OPTS
@@ -129,7 +129,7 @@ class ptx(design.design):
         self.active_offset = vector([self.well_enclose_active]*2)
 
         # Well enclosure of active, ensure minwidth as well
-        if info["has_{}well".format(self.well_type)]:
+        if drc["has_{}well".format(self.well_type)]:
             self.cell_well_width = max(self.active_width + 2*self.well_enclose_active,
                                   self.well_width)
             self.cell_well_height = max(self.tx_width + 2*self.well_enclose_active,
@@ -280,7 +280,7 @@ class ptx(design.design):
         """
         Add an (optional) well and implant for the type of transistor.
         """
-        if info["has_{}well".format(self.well_type)]:
+        if drc["has_{}well".format(self.well_type)]:
             self.add_rect(layer="{}well".format(self.well_type),
                           offset=(0,0),
                           width=self.cell_well_width,

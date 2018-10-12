@@ -186,9 +186,9 @@ class replica_bitline(design.design):
             # Route the connection to the right so that it doesn't interfere with the cells
             # Wordlines may be close to each other when tiled, so gnd connections are routed in opposite directions
             if row % 2 == 0:
-                vertical_extension = vector(0, 1.5*drc["minwidth_metal1"] + 0.5*contact.m1m2.height)
+                vertical_extension = vector(0, 1.5*drc("minwidth_metal1") + 0.5*contact.m1m2.height)
             else:
-                vertical_extension = vector(0, -1.5*drc["minwidth_metal1"] - 1.5*contact.m1m2.height)
+                vertical_extension = vector(0, -1.5*drc("minwidth_metal1") - 1.5*contact.m1m2.height)
             
             pin_right = pin.rc()
             pin_extension1 = pin_right + vector(self.m3_pitch,0)
@@ -202,7 +202,7 @@ class replica_bitline(design.design):
             wl_last = self.wl_list[self.total_ports-1]+"_{}".format(row)
             pin_last = self.rbl_inst.get_pin(wl_last)
             
-            correct = vector(0.5*drc["minwidth_metal1"], 0)
+            correct = vector(0.5*drc("minwidth_metal1"), 0)
             self.add_path("metal1", [pin.rc()-correct, pin_last.rc()-correct])
         
     def route_supplies(self):
@@ -261,7 +261,7 @@ class replica_bitline(design.design):
         # 3. Route the contact of previous route to the bitcell WL
         # route bend of previous net to bitcell WL
         wl_offset = self.rbc_inst.get_pin(self.wl_list[0]).lc()
-        wl_mid1 = wl_offset - vector(1.5*drc["minwidth_metal1"], 0)
+        wl_mid1 = wl_offset - vector(1.5*drc("minwidth_metal1"), 0)
         wl_mid2 = vector(wl_mid1.x, contact_offset.y)
         #xmid_point= 0.5*(wl_offset.x+contact_offset.x)
         #wl_mid1 = vector(xmid_point,contact_offset.y)
@@ -274,7 +274,7 @@ class replica_bitline(design.design):
         pin = self.rbc_inst.get_pin(wl)
         pin_last = self.rbc_inst.get_pin(wl_last)
         
-        correct = vector(0.5*drc["minwidth_metal1"], 0)
+        correct = vector(0.5*drc("minwidth_metal1"), 0)
         self.add_path("metal1", [pin.lc()+correct, pin_last.lc()+correct])
 
         # DRAIN ROUTE

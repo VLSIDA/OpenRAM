@@ -1,3 +1,4 @@
+import debug
 from drc_value import *
 from drc_lut import *
 
@@ -13,7 +14,11 @@ class design_rules():
         self.rules[name] = value
 
     def __call__(self, name, *args):
-        return self.rules[name](args)
+        rule = self.rules[name]
+        if callable(rule):
+            return rule(args)
+        else:
+            return rule
 
     def __setitem__(self, b, c):
         """
@@ -26,10 +31,10 @@ class design_rules():
         For backward compatibility with existing rules.
         """
         rule = self.rules[b]
-        if callable(rule):
-            return rule()
-        else:
+        if not callable(rule):
             return rule
+        else:
+            debug.error("Must call complex DRC rule {} with arguments.".format(b),-1)
         
         
     

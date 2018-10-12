@@ -52,7 +52,7 @@ class single_level_column_mux(design.design):
         self.bitcell = self.mod_bitcell()
 
         # Adds nmos_lower,nmos_upper to the module
-        self.ptx_width = self.tx_size * drc["minwidth_tx"]
+        self.ptx_width = self.tx_size * drc("minwidth_tx")
         self.nmos = ptx(width=self.ptx_width)
         self.add_mod(self.nmos)
 

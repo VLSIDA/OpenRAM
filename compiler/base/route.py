@@ -40,9 +40,9 @@ class route(design):
         (self.horiz_layer_width, self.num_vias, self.vert_layer_width) = self.layer_widths
         
         if not self.vert_layer_width:
-            self.vert_layer_width = drc["minwidth_{0}".format(self.vert_layer_name)]
+            self.vert_layer_width = drc("minwidth_{0}".format(self.vert_layer_name))
         if not self.horiz_layer_width:
-            self.horiz_layer_width = drc["minwidth_{0}".format(self.horiz_layer_name)]
+            self.horiz_layer_width = drc("minwidth_{0}".format(self.horiz_layer_name))
         
         # offset this by 1/2 the via size
         self.c=contact(self.layer_stack, (self.num_vias, self.num_vias))

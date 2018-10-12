@@ -200,7 +200,7 @@ class bank(design.design):
         self.central_bus_width = self.m2_pitch * self.num_control_lines + 2*self.m2_width
 
         # A space for wells or jogging m2
-        self.m2_gap = max(2*drc["pwell_to_nwell"] + drc["well_enclosure_active"],
+        self.m2_gap = max(2*drc("pwell_to_nwell") + drc("well_enclosure_active"),
                           2*self.m2_pitch)
 
 
@@ -530,7 +530,7 @@ class bank(design.design):
             
             # Place the col decoder right aligned with row decoder
             x_off = -(self.central_bus_width + self.wordline_driver.width + self.col_decoder.width)
-            y_off = -(self.col_decoder.height + 2*drc["well_to_well"])
+            y_off = -(self.col_decoder.height + 2*drc("well_to_well"))
             col_decoder_inst.place(vector(x_off,y_off))
 
 
@@ -567,7 +567,7 @@ class bank(design.design):
                 y_off = min(self.col_decoder_inst[port].by(), self.col_mux_array_inst[port].by())
             else:
                 y_off = self.row_decoder_inst[port].by()
-            y_off -= (self.bank_select.height + drc["well_to_well"])
+            y_off -= (self.bank_select.height + drc("well_to_well"))
             self.bank_select_pos = vector(x_off,y_off)
             self.bank_select_inst[port].place(self.bank_select_pos)
 

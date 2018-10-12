@@ -130,7 +130,7 @@ class write_driver_array(design.design):
                             layer="metal1",
                             offset=self.driver_insts[0].get_pin("en").ll().scale(0,1),
                             width=self.width,
-                            height=drc['minwidth_metal1'])
+                            height=drc('minwidth_metal1'))
                        
                        
 

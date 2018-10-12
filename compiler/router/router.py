@@ -1,6 +1,6 @@
 import sys
 import gdsMill
-import tech
+from tech import drc,GDS,layer
 from contact import contact
 import math
 import debug
@@ -31,7 +31,7 @@ class router:
             self.cell.gds_write(gds_filename)
         
         # Load the gds file and read in all the shapes
-        self.layout = gdsMill.VlsiLayout(units=tech.GDS["unit"])
+        self.layout = gdsMill.VlsiLayout(units=GDS["unit"])
         self.reader = gdsMill.Gds2reader(self.layout)
         self.reader.loadFromFile(gds_filename)
         self.top_name = self.layout.rootStructureName
@@ -118,17 +118,18 @@ class router:
         self.layers = layers
         (self.horiz_layer_name, self.via_layer_name, self.vert_layer_name) = self.layers
 
-        self.vert_layer_minwidth = tech.drc["minwidth_{0}".format(self.vert_layer_name)]
-        self.vert_layer_spacing = tech.drc[str(self.vert_layer_name)+"_to_"+str(self.vert_layer_name)] 
-        self.vert_layer_number = tech.layer[self.vert_layer_name]
-        
-        self.horiz_layer_minwidth = tech.drc["minwidth_{0}".format(self.horiz_layer_name)]
-        self.horiz_layer_spacing = tech.drc[str(self.horiz_layer_name)+"_to_"+str(self.horiz_layer_name)] 
-        self.horiz_layer_number = tech.layer[self.horiz_layer_name]
-
-        # Contacted track spacing.
+        # This is the minimum routed track spacing
         via_connect = contact(self.layers, (1, 1))
         self.max_via_size = max(via_connect.width,via_connect.height)
+        
+        self.vert_layer_minwidth = drc("minwidth_{0}".format(self.vert_layer_name))
+        self.vert_layer_spacing = drc(str(self.vert_layer_name)+"_to_"+str(self.vert_layer_name))
+        self.vert_layer_number = layer[self.vert_layer_name]
+        
+        self.horiz_layer_minwidth = drc("minwidth_{0}".format(self.horiz_layer_name))
+        self.horiz_layer_spacing = drc(str(self.horiz_layer_name)+"_to_"+str(self.horiz_layer_name))
+        self.horiz_layer_number = layer[self.horiz_layer_name]
+
         self.horiz_track_width = self.max_via_size + self.horiz_layer_spacing
         self.vert_track_width = self.max_via_size + self.vert_layer_spacing
 
@@ -263,7 +264,7 @@ class router:
         """ 
         Scale a shape (two vector list) to user units 
         """
-        unit_factor = [tech.GDS["unit"][0]] * 2
+        unit_factor = [GDS["unit"][0]] * 2
         ll=shape[0].scale(unit_factor)
         ur=shape[1].scale(unit_factor)
         return [ll,ur]
@@ -470,18 +471,20 @@ class router:
         return set([best_coord])
 
         
-    def get_layer_width_space(self, zindex):
+    def get_layer_width_space(self, zindex, width=0, length=0):
         """
-         Return the width and spacing of a given layer. 
+        Return the width and spacing of a given layer
+        and wire of a given width and length.
         """
         if zindex==1:
-            width = self.vert_layer_minwidth
-            spacing = self.vert_layer_spacing
+            layer_name = self.vert_layer_name
         elif zindex==0:
-            width = self.horiz_layer_minwidth
-            spacing = self.horiz_layer_spacing
+            layer_name = self.horiz_layer_name
         else:
             debug.error("Invalid zindex for track", -1)
+
+        width = drc("minwidth_{0}".format(layer_name), width, length)
+        spacing = drc(str(layer_name)+"_to_"+str(layer_name), width, length)
 
         return (width,spacing)
 
@@ -1022,31 +1025,6 @@ class router:
         self.rg.add_target(pin_in_tracks)
             
 
-    def add_supply_rail_target(self, pin_name):
-        """
-        Add the supply rails of given name as a routing target.
-        """
-        debug.info(2,"Add supply rail target {}".format(pin_name))
-        for rail in self.supply_rails:
-            if rail.name != pin_name:
-                continue
-            for wave_index in range(len(rail)):
-                pin_in_tracks = rail[wave_index]
-                #debug.info(1,"Set target: " + str(pin_name) + " " + str(pin_in_tracks))
-                self.rg.set_target(pin_in_tracks)
-                self.rg.set_blocked(pin_in_tracks,False)
-
-    def set_supply_rail_blocked(self, value=True):
-        """
-        Add the supply rails of given name as a routing target.
-        """
-        debug.info(3,"Blocking supply rail")        
-        for rail in self.supply_rails:
-            for wave_index in range(len(rail)):
-                pin_in_tracks = rail[wave_index]
-                #debug.info(1,"Set target: " + str(pin_name) + " " + str(pin_in_tracks))
-                self.rg.set_blocked(pin_in_tracks,value)
-                
     def set_component_blockages(self, pin_name, value=True):
         """ 
         Block all of the pin components.
@@ -1126,7 +1104,8 @@ class router:
     def add_wavepath(self, name, path):
         """ 
         Add the current wave to the given design instance.
-        This is a single layer path that is multiple tracks wide.
+        This is a single rectangle that is multiple tracks wide.
+        It must pay attention to wide metal spacing rules.
         """
         path=self.prepare_path(path)
 
@@ -1149,17 +1128,25 @@ class router:
         If name is supplied, it is added as a pin and not just a rectangle.
 
         """
+
+        # Find the pin enclosure of the whole track shape (ignoring DRCs)
+        (abs_ll,unused) = self.convert_track_to_shape(ll)
+        (unused,abs_ur) = self.convert_track_to_shape(ur)
+
         # Get the layer information
-        (width, space) = self.get_layer_width_space(zindex)
+        x_distance = abs(abs_ll.x-abs_ur.x)
+        y_distance = abs(abs_ll.y-abs_ur.y)
+        shape_width = min(x_distance, y_distance)
+        shape_length = max(x_distance, y_distance)
+
+        # Get the DRC rule for the grid dimensions
+        (width, space) = self.get_layer_width_space(zindex, shape_width, shape_length)
         layer = self.get_layer(zindex)
 
-        # This finds the pin shape enclosed by the track with DRC spacing on the sides
-        (abs_ll,unused) = self.convert_track_to_pin(ll)
-        (unused,abs_ur) = self.convert_track_to_pin(ur)
-        #print("enclose ll={0} ur={1}".format(ll,ur))
-        #print("enclose ll={0} ur={1}".format(abs_ll,abs_ur))
-
-        pin = pin_layout(name, [abs_ll, abs_ur], layer)
+        # Compute the shape offsets with correct spacing
+        new_ll = abs_ll + vector(0.5*space, 0.5*space)
+        new_ur = abs_ur - vector(0.5*space, 0.5*space)        
+        pin = pin_layout(name, [new_ll, new_ur], layer)
         
         return pin
             
@@ -1319,7 +1306,7 @@ def snap_to_grid(offset):
     return vector(xoff, yoff)
 
 def snap_val_to_grid(x):
-    grid = tech.drc["grid"]
+    grid = drc("grid")
     xgrid = int(round(round((x / grid), 2), 0))
     xoff = xgrid * grid
     return xoff

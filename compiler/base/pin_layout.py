@@ -63,7 +63,7 @@ class pin_layout:
         and return the new rectangle. 
         """
         if not spacing:
-            spacing = 0.5*drc["{0}_to_{0}".format(self.layer)]
+            spacing = 0.5*drc("{0}_to_{0}".format(self.layer))
             
         (ll,ur) = self.rect
         spacing = vector(spacing, spacing)

@@ -29,24 +29,24 @@ class design(hierarchy_design):
     def setup_drc_constants(self):
         """ These are some DRC constants used in many places in the compiler."""
         from tech import drc
-        self.well_width = drc["minwidth_well"]
-        self.poly_width = drc["minwidth_poly"]
-        self.poly_space = drc["poly_to_poly"]        
-        self.m1_width = drc["minwidth_metal1"]
-        self.m1_space = drc["metal1_to_metal1"]
-        self.m2_width = drc["minwidth_metal2"]
-        self.m2_space = drc["metal2_to_metal2"]        
-        self.m3_width = drc["minwidth_metal3"]
-        self.m3_space = drc["metal3_to_metal3"]
-        self.active_width = drc["minwidth_active"]
-        self.contact_width = drc["minwidth_contact"]
+        self.well_width = drc("minwidth_well")
+        self.poly_width = drc("minwidth_poly")
+        self.poly_space = drc("poly_to_poly")        
+        self.m1_width = drc("minwidth_metal1")
+        self.m1_space = drc("metal1_to_metal1")
+        self.m2_width = drc("minwidth_metal2")
+        self.m2_space = drc("metal2_to_metal2")        
+        self.m3_width = drc("minwidth_metal3")
+        self.m3_space = drc("metal3_to_metal3")
+        self.active_width = drc("minwidth_active")
+        self.contact_width = drc("minwidth_contact")
 
-        self.poly_to_active = drc["poly_to_active"]
-        self.poly_extend_active = drc["poly_extend_active"]
-        self.contact_to_gate = drc["contact_to_gate"]
-        self.well_enclose_active = drc["well_enclosure_active"]
-        self.implant_enclose_active = drc["implant_enclosure_active"]
-        self.implant_space = drc["implant_to_implant"]
+        self.poly_to_active = drc("poly_to_active")
+        self.poly_extend_active = drc("poly_extend_active")
+        self.contact_to_gate = drc("contact_to_gate")
+        self.well_enclose_active = drc("well_enclosure_active")
+        self.implant_enclose_active = drc("implant_enclosure_active")
+        self.implant_space = drc("implant_to_implant")
         
     def setup_multiport_constants(self):
         """ These are contants and lists that aid multiport design """

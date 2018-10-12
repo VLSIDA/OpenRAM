@@ -162,7 +162,7 @@ class precharge(pgate.pgate):
         """Adds a nwell tap to connect to the vdd rail"""
         # adds the contact from active to metal1
         well_contact_pos = self.upper_pmos1_inst.get_pin("D").center().scale(1,0) \
-                           + vector(0, self.upper_pmos1_inst.uy() + contact.well.height/2 + drc["well_extend_active"])
+                           + vector(0, self.upper_pmos1_inst.uy() + contact.well.height/2 + drc("well_extend_active"))
         self.add_contact_center(layers=("active", "contact", "metal1"),
                                 offset=well_contact_pos,
                                 implant_type="n",
@@ -184,7 +184,7 @@ class precharge(pgate.pgate):
         self.add_layout_pin(text="bl",
                             layer="metal2",
                             offset=offset,
-                            width=drc['minwidth_metal2'],
+                            width=drc("minwidth_metal2"),
                             height=self.height)
 
         # adds the BR on metal 2
@@ -192,7 +192,7 @@ class precharge(pgate.pgate):
         self.add_layout_pin(text="br",
                             layer="metal2",
                             offset=offset,
-                            width=drc['minwidth_metal2'],
+                            width=drc("minwidth_metal2"),
                             height=self.height)
 
     def connect_to_bitlines(self):

@@ -244,10 +244,29 @@ class supply_router(router):
             
             recent_paths.append(self.paths[-1])
 
+    
+    def add_supply_rail_target(self, pin_name):
+        """
+        Add the supply rails of given name as a routing target.
+        """
+        debug.info(2,"Add supply rail target {}".format(pin_name))
+        for rail in self.supply_rails:
+            if rail.name != pin_name:
+                continue
+            for wave_index in range(len(rail)):
+                pin_in_tracks = rail[wave_index]
+                #debug.info(1,"Set target: " + str(pin_name) + " " + str(pin_in_tracks))
+                self.rg.set_target(pin_in_tracks)
+                self.rg.set_blocked(pin_in_tracks,False)
+
+    def set_supply_rail_blocked(self, value=True):
+        """
+        Add the supply rails of given name as a routing target.
+        """
+        debug.info(3,"Blocking supply rail")        
+        for rail in self.supply_rails:
+            for wave_index in range(len(rail)):
+                pin_in_tracks = rail[wave_index]
+                #debug.info(1,"Set target: " + str(pin_name) + " " + str(pin_in_tracks))
+                self.rg.set_blocked(pin_in_tracks,value)
                 
-    
-
-    
-
-
-    

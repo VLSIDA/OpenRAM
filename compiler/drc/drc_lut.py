@@ -12,18 +12,16 @@ class drc_lut():
     def __init__(self, table):
         self.table = table
 
-    def __call__(self, *args):
+    def __call__(self, *key):
         """
         Lookup a given tuple in the table.
         """
-        
-        key_tuple = args
-        if not key_tuple:
+        if len(*key)==0:
             key_size = len(list(self.table.keys())[0])
-            key_tuple = tuple(0 for i in range(key_size))
-        for key in sorted(self.table.keys(), reverse=True):
-            if self.match(key_tuple, key):
-                return self.table[key]
+            key = tuple(0 for i in range(key_size))
+        for table_key in sorted(self.table.keys(), reverse=True):
+            if self.match(key, table_key):
+                return self.table[table_key]
 
     def match(self, t1, t2):
         """

@@ -170,23 +170,23 @@ class single_level_column_mux_array(design.design):
                 self.add_rect(layer="metal1",
                               offset=bl_out_offset,
                               width=width,
-                              height=drc["minwidth_metal2"])
+                              height=drc("minwidth_metal2"))
                 self.add_rect(layer="metal1",
                               offset=br_out_offset,
                               width=width,
-                              height=drc["minwidth_metal2"])
+                              height=drc("minwidth_metal2"))
                           
 
                 # Extend the bitline output rails and gnd downward on the first bit of each n-way mux
                 self.add_layout_pin(text="bl_out_{}".format(int(j/self.words_per_row)),
                                     layer="metal2",
                                     offset=bl_out_offset.scale(1,0),
-                                    width=drc['minwidth_metal2'],
+                                    width=drc('minwidth_metal2'),
                                     height=self.route_height)
                 self.add_layout_pin(text="br_out_{}".format(int(j/self.words_per_row)),
                                     layer="metal2",
                                     offset=br_out_offset.scale(1,0),
-                                    width=drc['minwidth_metal2'],
+                                    width=drc('minwidth_metal2'),
                                     height=self.route_height)
 
                 # This via is on the right of the wire                
@@ -202,7 +202,7 @@ class single_level_column_mux_array(design.design):
                 
                 self.add_rect(layer="metal2",
                               offset=bl_out_offset,
-                              width=drc['minwidth_metal2'],
+                              width=drc('minwidth_metal2'),
                               height=self.route_height-bl_out_offset.y)
                 # This via is on the right of the wire
                 self.add_via(layers=("metal1", "via1", "metal2"),
@@ -210,7 +210,7 @@ class single_level_column_mux_array(design.design):
                              rotate=90)
                 self.add_rect(layer="metal2",
                               offset=br_out_offset,
-                              width=drc['minwidth_metal2'],
+                              width=drc('minwidth_metal2'),
                               height=self.route_height-br_out_offset.y)
                 # This via is on the left of the wire                
                 self.add_via(layers=("metal1", "via1", "metal2"),

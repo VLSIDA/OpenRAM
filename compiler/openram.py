@@ -40,7 +40,7 @@ import verify
 from sram import sram
 from sram_config import sram_config
 #from parser import *
-output_extensions = ["sp","v","lib"]
+output_extensions = ["sp","v","lib","html"]
 if not OPTS.netlist_only:
     output_extensions.extend(["gds","lef"])
 output_files = ["{0}.{1}".format(OPTS.output_name,x) for x in output_extensions]
@@ -61,12 +61,6 @@ s = sram(sram_config=c,
 
 # Output the files for the resulting SRAM
 s.save()
-
-# generate datasheet from characterization of created SRAM
-if not OPTS.analytical_delay:
-    import datasheet_gen
-    p = datasheet_gen.parse(OPTS.openram_temp,os.environ.get('OPENRAM_HOME')+"/datasheet/datasheets")
-
 
 # Delete temp files etc.
 end_openram()

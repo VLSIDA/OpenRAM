@@ -527,7 +527,7 @@ class lib:
             return
         datasheet = open(OPTS.openram_temp +'/datasheet.info', 'a+')
         
-        for (self.corner,lib_name) in zip(self.corners,self.lib_files):
+        for (corner, lib_name) in zip(self.corners, self.lib_files):
         
             ports = ""
             if OPTS.num_rw_ports>0:

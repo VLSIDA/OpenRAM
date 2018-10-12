@@ -64,8 +64,8 @@ class openram_test(openram_test):
         self.assertTrue(len(files)>0)
         
         # Make sure there is any .html file 
-        if os.path.exists(os.environ.get('OPENRAM_HOME')+"/datasheet/datasheets"):
-            datasheets = glob.glob('{0}/{1}/*html'.format(OPENRAM_HOME,'datasheet/datasheets'))
+        if os.path.exists(out_path):
+            datasheets = glob.glob('{0}/*html'.format(out_path))
             self.assertTrue(len(datasheets)>0)
         
         # grep any errors from the output

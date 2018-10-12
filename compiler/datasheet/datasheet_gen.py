@@ -75,8 +75,11 @@ def parse_file(f,pages):
                                 item.min = VOLT
 
                         if item.parameter == 'Operating Frequncy (F)':
-                            if float(math.floor(1000/float(MIN_PERIOD)) < float(item.max)):
-                                item.max = str(math.floor(1000/float(MIN_PERIOD)))
+                            try:
+                                if float(math.floor(1000/float(MIN_PERIOD)) < float(item.max)):
+                                    item.max = str(math.floor(1000/float(MIN_PERIOD)))
+                            except Exception:
+                                pass
 
 
 
@@ -91,7 +94,13 @@ def parse_file(f,pages):
 
                 new_sheet.operating.append(operating_conditions_item('Power supply (VDD) range',VOLT,VOLT,VOLT,'Volts'))
                 new_sheet.operating.append(operating_conditions_item('Operating Temperature',TEMP,TEMP,TEMP,'Celsius'))
-                new_sheet.operating.append(operating_conditions_item('Operating Frequency (F)','','',str(math.floor(1000/float(MIN_PERIOD))),'MHz'))
+                try:
+                    new_sheet.operating.append(operating_conditions_item('Operating Frequency (F)','','',str(math.floor(1000/float(MIN_PERIOD))),'MHz'))
+                except Exception:
+                    new_sheet.operating.append(operating_conditions_item('Operating Frequency (F)','','',"unknown",'MHz')) #analytical model fails to provide MIN_PERIOD
+ 
+                    
+
 
                 new_sheet.timing.append(timing_and_current_data_item('1','2','3','4'))
 
@@ -103,21 +112,22 @@ def parse_file(f,pages):
 
 
 
-class parse():
-    def __init__(self,in_dir,out_dir):
+class datasheet_gen():
+     def datasheet_write(name):
 
+        in_dir = OPTS.openram_temp
+        
         if not (os.path.isdir(in_dir)):
             os.mkdir(in_dir)
 
-        if not (os.path.isdir(out_dir)):
-            os.mkdir(out_dir)
+        #if not (os.path.isdir(out_dir)):
+        #    os.mkdir(out_dir)
 
         datasheets = []
         parse_file(in_dir + "/datasheet.info", datasheets)
 
 
         for sheets in datasheets:
-#            print (out_dir + sheets.name + ".html")
-            with open(out_dir + "/" + sheets.name + ".html", 'w+') as f:
+            with open(name, 'w+') as f:
                 sheets.generate_html()
                 f.write(sheets.html)

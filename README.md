@@ -8,6 +8,7 @@ The OpenRAM compiler has very few dependencies:
 * ngspice-26 (or later) or HSpice I-2013.12-1 (or later) or CustomSim 2017 (or later)
 * Python 3.5 and higher
 * Python numpy
+* flask_table
 * a setup script for each technology
 * a technology directory for each technology with the base cells
 

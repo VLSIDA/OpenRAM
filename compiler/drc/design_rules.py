@@ -16,7 +16,7 @@ class design_rules():
     def __call__(self, name, *args):
         rule = self.rules[name]
         if callable(rule):
-            return rule(args)
+            return rule(*args)
         else:
             return rule
 

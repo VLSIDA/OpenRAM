@@ -483,10 +483,10 @@ class router:
         else:
             debug.error("Invalid zindex for track", -1)
 
-        width = drc("minwidth_{0}".format(layer_name), width, length)
-        spacing = drc(str(layer_name)+"_to_"+str(layer_name), width, length)
+        min_width = drc("minwidth_{0}".format(layer_name), width, length)
+        min_spacing = drc(str(layer_name)+"_to_"+str(layer_name), width, length)
 
-        return (width,spacing)
+        return (min_width,min_spacing)
 
     def convert_pin_coord_to_tracks(self, pin, coord):
         """ 
@@ -1112,8 +1112,8 @@ class router:
         ll = path[0][0]
         ur = path[-1][-1]
         z = ll.z
-        
         pin = self.add_enclosure(ll, ur, z, name)
+        print(ll, ur, ll.z, "->",pin)
         self.cell.add_layout_pin(text=name,
                                  layer=pin.layer,
                                  offset=pin.ll(),
@@ -1133,20 +1133,11 @@ class router:
         (abs_ll,unused) = self.convert_track_to_shape(ll)
         (unused,abs_ur) = self.convert_track_to_shape(ur)
 
-        # Get the layer information
-        x_distance = abs(abs_ll.x-abs_ur.x)
-        y_distance = abs(abs_ll.y-abs_ur.y)
-        shape_width = min(x_distance, y_distance)
-        shape_length = max(x_distance, y_distance)
-
         # Get the DRC rule for the grid dimensions
-        (width, space) = self.get_layer_width_space(zindex, shape_width, shape_length)
+        (width, space) = self.get_layer_width_space(zindex)
         layer = self.get_layer(zindex)
 
-        # Compute the shape offsets with correct spacing
-        new_ll = abs_ll + vector(0.5*space, 0.5*space)
-        new_ur = abs_ur - vector(0.5*space, 0.5*space)        
-        pin = pin_layout(name, [new_ll, new_ur], layer)
+        pin = pin_layout(name, [abs_ll, abs_ur], layer)
         
         return pin
             

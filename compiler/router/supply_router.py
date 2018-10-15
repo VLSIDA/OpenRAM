@@ -69,7 +69,7 @@ class supply_router(router):
         # Determine the rail locations
         self.route_supply_rails(self.vdd_name,1)
         
-        #self.write_debug_gds("pre_pin_debug.gds",stop_program=True)
+        self.write_debug_gds("pre_pin_debug.gds",stop_program=True)
         
         # Route the supply pins to the supply rails
         self.route_pins_to_rails(gnd_name)
@@ -132,16 +132,27 @@ class supply_router(router):
                 self.add_wavepath(name, wave_path)
 
 
-                
-    def route_supply_rails(self, name, supply_number):
+    def compute_supply_rails(self, name, start_offset):
         """
-        Route the horizontal and vertical supply rails across the entire design.
-        Must be done with lower left at 0,0
+        Compute the unblocked locations for the horizontal and vertical supply rails.
+        Go in a raster order from bottom to the top (for horizontal) and left to right
+        (for vertical). Start with an initial start_offset in x and y direction.
         """
-        start_offset = supply_number*self.rail_track_width
+
         max_yoffset = self.rg.ur.y
         max_xoffset = self.rg.ur.x
-        step_offset = 2*self.rail_track_width
+        max_length = max(max_yoffset,max_xoffset)
+
+        # Convert the number of tracks to dimensions to get the design rule spacing
+        rail_width = self.track_width*self.rail_track_width
+        (horizontal_width, horizontal_space) = self.get_layer_width_space(0, rail_width, max_length)
+        (vertical_width, vertical_space) = self.get_layer_width_space(1, rail_width, max_length)
+        width = max(horizontal_width, vertical_width)
+        space = max(horizontal_space, vertical_space)
+
+        # This is the supply rail pitch in terms of routing grids
+        # The 2* is to alternate the two supplies
+        step_offset = 2*math.ceil((width+space)/self.track_width)
 
         # Horizontal supply rails
         for offset in range(start_offset, max_yoffset, step_offset):
@@ -161,6 +172,16 @@ class supply_router(router):
             while wave and wave[0].y < max_yoffset:
                 wave = self.find_supply_rail(name, wave, direction.NORTH)
 
+    def route_supply_rails(self, name, supply_number):
+        """
+        Route the horizontal and vertical supply rails across the entire design.
+        Must be done with lower left at 0,0
+        """
+
+        # Compute the grid locations of the supply rails
+        start_offset = supply_number*self.rail_track_width
+        self.compute_supply_rails(name, start_offset)
+        
         # Add the supply rail vias (and prune disconnected rails)
         self.connect_supply_rails(name)
         

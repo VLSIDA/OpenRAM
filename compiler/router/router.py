@@ -1113,7 +1113,7 @@ class router:
         ur = path[-1][-1]
         z = ll.z
         pin = self.add_enclosure(ll, ur, z, name)
-        print(ll, ur, ll.z, "->",pin)
+        #print(ll, ur, ll.z, "->",pin)
         self.cell.add_layout_pin(text=name,
                                  layer=pin.layer,
                                  offset=pin.ll(),

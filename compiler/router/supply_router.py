@@ -275,6 +275,7 @@ class supply_router(router):
             # Add the previous paths as targets too
             #self.add_path_target(recent_paths)
 
+            #print(self.rg.target)
             
             # Actually run the A* router
             if not self.run_router(detour_scale=5):
@@ -291,12 +292,16 @@ class supply_router(router):
         for rail in self.supply_rails:
             if rail.name != pin_name:
                 continue
+            # Set the middle track only as the target since wide metal
+            # spacings may mean the other grids are actually empty space
+            middle_index = math.floor(len(rail[0])/2)
             for wave_index in range(len(rail)):
                 pin_in_tracks = rail[wave_index]
                 #debug.info(1,"Set target: " + str(pin_name) + " " + str(pin_in_tracks))
-                self.rg.set_target(pin_in_tracks)
+                self.rg.set_target(pin_in_tracks[middle_index])
                 self.rg.set_blocked(pin_in_tracks,False)
 
+                
     def set_supply_rail_blocked(self, value=True):
         """
         Add the supply rails of given name as a routing target.

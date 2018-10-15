@@ -72,8 +72,9 @@ class supply_router(router):
         #self.write_debug_gds("pre_pin_debug.gds",stop_program=True)
         
         # Route the supply pins to the supply rails
-        self.route_pins_to_rails(gnd_name)
+        # Route vdd first since we want it to be shorter
         self.route_pins_to_rails(vdd_name)
+        self.route_pins_to_rails(gnd_name)
         
         #self.write_debug_gds("post_pin_debug.gds",stop_program=False)
         
@@ -155,21 +156,22 @@ class supply_router(router):
         # space
         track_pitch = self.rail_track_width*width + space
         
-        self.supply_rail_step = math.ceil(track_pitch/self.track_width)
-        debug.info(1,"Rail step: {}".format(self.supply_rail_step))
+        self.supply_rail_width = math.ceil(track_pitch/self.track_width)
+        debug.info(1,"Rail step: {}".format(self.supply_rail_width))
 
 
-    def compute_supply_rails(self, name, start_offset):
+    def compute_supply_rails(self, name, supply_number):
         """
         Compute the unblocked locations for the horizontal and vertical supply rails.
         Go in a raster order from bottom to the top (for horizontal) and left to right
         (for vertical). Start with an initial start_offset in x and y direction.
         """
+        start_offset = supply_number*self.supply_rail_width
 
         # Horizontal supply rails
-        for offset in range(start_offset, self.max_yoffset, self.supply_rail_step):
+        for offset in range(start_offset, self.max_yoffset, 2*self.supply_rail_width):
             # Seed the function at the location with the given width
-            wave = [vector3d(0,offset+i,0) for i in range(self.supply_rail_step)]
+            wave = [vector3d(0,offset+i,0) for i in range(self.supply_rail_width)]
             # While we can keep expanding east in this horizontal track
             while wave and wave[0].x < self.max_xoffset:
                 wave = self.find_supply_rail(name, wave, direction.EAST)
@@ -177,9 +179,9 @@ class supply_router(router):
 
         # Vertical supply rails
         max_offset = self.rg.ur.x
-        for offset in range(start_offset, self.max_xoffset, self.supply_rail_step):
+        for offset in range(start_offset, self.max_xoffset, 2*self.supply_rail_width):
             # Seed the function at the location with the given width
-            wave = [vector3d(offset+i,0,1) for i in range(self.supply_rail_step)]
+            wave = [vector3d(offset+i,0,1) for i in range(self.supply_rail_width)]
             # While we can keep expanding north in this vertical track
             while wave and wave[0].y < self.max_yoffset:
                 wave = self.find_supply_rail(name, wave, direction.NORTH)
@@ -234,8 +236,7 @@ class supply_router(router):
         self.compute_supply_rail_dimensions()
         
         # Compute the grid locations of the supply rails
-        start_offset = supply_number*self.rail_track_width
-        self.compute_supply_rails(name, start_offset)
+        self.compute_supply_rails(name, supply_number)
         
         # Add the supply rail vias (and prune disconnected rails)
         self.connect_supply_rails(name)

@@ -233,7 +233,7 @@ class pbitcell(design.design):
                              - self.num_rw_ports*(self.readwrite_nmos.active_width + self.port_spacing) \
                              - self.num_w_ports*(self.write_nmos.active_width + self.port_spacing) \
                              - self.num_r_ports*(self.read_port_width + self.port_spacing) \
-                             - self.bitline_offset - 0.5*self.m2_space
+                             - self.bitline_offset - 0.5*self.m2_width
         
         self.width = -2*self.leftmost_xpos
         self.height = self.topmost_ypos - self.botmost_ypos
@@ -925,7 +925,7 @@ class pbitcell(design.design):
         
     def route_rbc_short(self):
         """ route the short from Q_bar to gnd necessary for the replica bitcell """
-        Q_bar_pos = self.inverter_pmos_left.get_pin("D").uc()
+        Q_bar_pos = self.inverter_pmos_right.get_pin("S").uc()
         vdd_pos = vector(Q_bar_pos.x, self.vdd_position.y)
         
         self.add_path("metal1", [Q_bar_pos, vdd_pos])

@@ -142,19 +142,19 @@ class pbitcell(design.design):
         """
         # if there are any read/write ports, then the inverter nmos is sized based the number of read/write ports
         if(self.num_rw_ports > 0):
-            inverter_nmos_width = self.num_rw_ports*3*parameter["min_tx_size"]
-            inverter_pmos_width = parameter["min_tx_size"]
-            readwrite_nmos_width = 1.5*parameter["min_tx_size"]
-            write_nmos_width = parameter["min_tx_size"]
-            read_nmos_width = 2*parameter["min_tx_size"]
+            inverter_nmos_width = self.num_rw_ports*parameter["6T_inv_nmos_size"]
+            inverter_pmos_width = parameter["6T_inv_pmos_size"]
+            readwrite_nmos_width = parameter["6T_access_size"]
+            write_nmos_width = parameter["6T_access_size"]
+            read_nmos_width = 2*parameter["6T_inv_pmos_size"]
         
         # if there are no read/write ports, then the inverter nmos is statically sized for the dual port case
         else:
-            inverter_nmos_width = 2*parameter["min_tx_size"]
-            inverter_pmos_width = parameter["min_tx_size"]
-            readwrite_nmos_width = 1.5*parameter["min_tx_size"]
-            write_nmos_width = parameter["min_tx_size"]
-            read_nmos_width = 2*parameter["min_tx_size"]
+            inverter_nmos_width = 2*parameter["6T_inv_pmos_size"]
+            inverter_pmos_width = parameter["6T_inv_pmos_size"]
+            readwrite_nmos_width = parameter["6T_access_size"]
+            write_nmos_width = parameter["6T_access_size"]
+            read_nmos_width = 2*parameter["6T_inv_pmos_size"]
     
         # create ptx for inverter transistors
         self.inverter_nmos = ptx(width=inverter_nmos_width,
@@ -206,9 +206,17 @@ class pbitcell(design.design):
         
         # calculations related to inverter connections
         inverter_pmos_contact_extension = 0.5*(self.inverter_pmos.active_contact.height - self.inverter_pmos.active_height)
-        self.inverter_gap = self.poly_to_active + self.poly_to_polycontact + 2*contact.poly.width + self.m1_space + inverter_pmos_contact_extension
-        self.cross_couple_lower_ypos = self.inverter_nmos_ypos + self.inverter_nmos.active_height + self.poly_to_active + 0.5*contact.poly.width
-        self.cross_couple_upper_ypos = self.inverter_nmos_ypos + self.inverter_nmos.active_height + self.poly_to_active + self.poly_to_polycontact + 1.5*contact.poly.width
+        inverter_nmos_contact_extension = 0.5*(self.inverter_nmos.active_contact.height - self.inverter_nmos.active_height)
+        self.inverter_gap = max(self.poly_to_active, self.m1_space + inverter_nmos_contact_extension) \
+                            + self.poly_to_polycontact + 2*contact.poly.width \
+                            + self.m1_space + inverter_pmos_contact_extension
+        self.cross_couple_lower_ypos = self.inverter_nmos_ypos + self.inverter_nmos.active_height \
+                                       + max(self.poly_to_active, self.m1_space + inverter_nmos_contact_extension) \
+                                       + 0.5*contact.poly.width
+        self.cross_couple_upper_ypos = self.inverter_nmos_ypos + self.inverter_nmos.active_height \
+                                       + max(self.poly_to_active, self.m1_space + inverter_nmos_contact_extension) \
+                                       + self.poly_to_polycontact \
+                                       + 1.5*contact.poly.width
         
         # spacing between wordlines (and gnd)
         self.rowline_spacing = self.m1_space + contact.m1m2.width

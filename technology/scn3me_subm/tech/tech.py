@@ -57,6 +57,10 @@ parameter={}
 parameter["min_tx_size"] = 4*_lambda_
 parameter["beta"] = 2 
 
+parameter["6T_inv_nmos_size"] = 8*_lambda_
+parameter["6T_inv_pmos_size"] = 3*_lambda_
+parameter["6T_access_size"] = 4*_lambda_
+
 drclvs_home=os.environ.get("DRCLVS_HOME")
 
 drc={}

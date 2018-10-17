@@ -66,6 +66,10 @@ parameter={}
 parameter["min_tx_size"] = 0.09
 parameter["beta"] = 3
 
+parameter["6T_inv_nmos_size"] = 0.205
+parameter["6T_inv_pmos_size"] = 0.09
+parameter["6T_access_size"] = 0.135
+
 drclvs_home=os.environ.get("DRCLVS_HOME")
 
 drc = design_rules("freepdk45")

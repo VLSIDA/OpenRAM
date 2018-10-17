@@ -544,7 +544,7 @@ class lib:
                                                                                             self.corner[1],
                                                                                             self.corner[2],
                                                                                             self.corner[0],
-                                                                                            round_time(self.char_results["min_period"]),
+                                                                                            round_time(self.char_sram_results["min_period"]),
                                                                                             self.out_dir,
                                                                                             lib_name))
                                                                                             

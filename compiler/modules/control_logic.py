@@ -95,7 +95,7 @@ class control_logic(design.design):
             # FIXME: These should be tuned according to the size!
             delay_stages = 4 # Must be non-inverting
             delay_fanout = 3 # This can be anything >=2
-            bitcell_loads = int(math.ceil(self.num_rows / 5.0))
+            bitcell_loads = int(math.ceil(self.num_rows / 2.0))
             self.replica_bitline = replica_bitline(delay_stages, delay_fanout, bitcell_loads, name="replica_bitline_"+self.port_type)
             self.add_mod(self.replica_bitline)
 

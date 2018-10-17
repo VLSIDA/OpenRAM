@@ -16,7 +16,7 @@ class psram_func_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        OPTS.spice_name="ngspice"
+        #OPTS.spice_name="hspice"
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
         OPTS.bitcell = "pbitcell"
@@ -33,7 +33,7 @@ class psram_func_test(openram_test):
         from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=4,
-                        num_words=32,
+                        num_words=64,
                         num_banks=1)
         c.words_per_row=2
         

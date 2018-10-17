@@ -57,7 +57,7 @@ class sram():
     def verilog_write(self,name):
         self.s.verilog_write(name)
 
-        
+
     def save(self):
         """ Save all the output files while reporting time to do it as well. """
 
@@ -107,6 +107,14 @@ class sram():
             print("LEF: Writing to {0}".format(lefname))
             self.s.lef_write(lefname)
             print_time("LEF", datetime.datetime.now(), start_time)
+        
+        # Write the datasheet
+        start_time = datetime.datetime.now()
+        from datasheet_gen import datasheet_gen
+        dname = OPTS.output_path + self.s.name + ".html"
+        print("Datasheet: writing to {0}".format(dname))
+        datasheet_gen.datasheet_write(dname)
+        print_time("Datasheet", datetime.datetime.now(), start_time)
 
         # Write a verilog model
         start_time = datetime.datetime.now()

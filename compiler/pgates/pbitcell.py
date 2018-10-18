@@ -222,9 +222,9 @@ class pbitcell(design.design):
         self.rowline_spacing = self.m1_space + contact.m1m2.width
         
         # spacing for vdd
-        vdd_offset_well_constraint = self.well_enclose_active + 0.5*contact.well.width
-        vdd_offset_metal1_constraint = max(inverter_pmos_contact_extension, 0) + self.m1_space + 0.5*contact.well.width
-        self.vdd_offset = max(vdd_offset_well_constraint, vdd_offset_metal1_constraint)
+        implant_constraint = max(inverter_pmos_contact_extension, 0) + 2*self.implant_enclose_active + 0.5*(contact.well.width - self.m1_width)
+        metal1_constraint = max(inverter_pmos_contact_extension, 0) + self.m1_space
+        self.vdd_offset = max(implant_constraint, metal1_constraint)  + 0.5*self.m1_width
         
         # read port dimensions
         width_reduction = self.read_nmos.active_width - self.read_nmos.get_pin("D").cx()
@@ -334,7 +334,7 @@ class pbitcell(design.design):
                                                    layer="metal1",
                                                    offset=self.gnd_position,
                                                    width=self.width,
-                                                   height=contact.well.second_layer_width)
+                                                   height=self.m1_width)
         
         vdd_ypos = self.inverter_nmos_ypos + self.inverter_nmos.active_height + self.inverter_gap + self.inverter_pmos.active_height + self.vdd_offset
         self.vdd_position = vector(0, vdd_ypos)
@@ -342,7 +342,7 @@ class pbitcell(design.design):
                                                    layer="metal1",
                                                    offset=self.vdd_position,
                                                    width=self.width,
-                                                   height=contact.well.second_layer_width)
+                                                   height=self.m1_width)
 
     def create_readwrite_ports(self):
         """
@@ -933,8 +933,9 @@ class pbitcell(design.design):
         
     def route_rbc_short(self):
         """ route the short from Q_bar to gnd necessary for the replica bitcell """
-        Q_bar_pos = self.inverter_pmos_right.get_pin("S").uc()
-        vdd_pos = vector(Q_bar_pos.x, self.vdd_position.y)
+        Q_bar_pos = self.inverter_pmos_right.get_pin("S").center()
+        vdd_pos = self.inverter_pmos_right.get_pin("D").center()
+        #vdd_pos = vector(Q_bar_pos.x, self.vdd_position.y)
         
         self.add_path("metal1", [Q_bar_pos, vdd_pos])
         

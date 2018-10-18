@@ -109,13 +109,12 @@ class sram():
             print_time("LEF", datetime.datetime.now(), start_time)
         
         # Write the datasheet
-        if OPTS.datasheet_gen:
-            start_time = datetime.datetime.now()
-            from datasheet_gen import datasheet_gen
-            dname = OPTS.output_path + self.s.name + ".html"
-            print("Datasheet: writing to {0}".format(dname))
-            datasheet_gen.datasheet_write(dname)
-            print_time("Datasheet", datetime.datetime.now(), start_time)
+        start_time = datetime.datetime.now()
+        from datasheet_gen import datasheet_gen
+        dname = OPTS.output_path + self.s.name + ".html"
+        print("Datasheet: writing to {0}".format(dname))
+        datasheet_gen.datasheet_write(dname)
+        print_time("Datasheet", datetime.datetime.now(), start_time)
 
         # Write a verilog model
         start_time = datetime.datetime.now()

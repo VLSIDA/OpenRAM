@@ -109,7 +109,6 @@ def check_versions():
         import flask_table
         OPTS.datasheet_gen = 1
     except:
-        debug.warning("flask_table is not installed. HTML datasheet will not be generated")
         OPTS.datasheet_gen = 0
 
 

@@ -8,18 +8,24 @@ Locate all timing elements in .lib
 Diagram generation
 Improve css
 """
-
-import os, math
-import optparse
-from flask_table import *
-import csv
+import debug
 from globals import OPTS
-from deliverables import *
-from operating_conditions import *
-from timing_and_current_data import *
-from characterization_corners import *
-from datasheet import *
-from in_out import *
+
+if OPTS.datasheet_gen:
+    import flask_table
+    import os, math
+    import optparse
+    import csv
+    from deliverables import *
+    from operating_conditions import *
+    from timing_and_current_data import *
+    from characterization_corners import *
+    from datasheet import *
+    from in_out import *
+else:
+    debug.warning("Python library flask_table not found. Skipping html datasheet generation. This can be installed with pip install flask-table.")
+
+
 
 def process_name(corner):
     if corner == "TT":
@@ -131,20 +137,21 @@ def parse_file(f,pages):
 
 class datasheet_gen():
      def datasheet_write(name):
-
-        in_dir = OPTS.openram_temp
         
-        if not (os.path.isdir(in_dir)):
-            os.mkdir(in_dir)
+        if OPTS.datasheet_gen:
+            in_dir = OPTS.openram_temp
+        
+            if not (os.path.isdir(in_dir)):
+                os.mkdir(in_dir)
 
-        #if not (os.path.isdir(out_dir)):
-        #    os.mkdir(out_dir)
+            #if not (os.path.isdir(out_dir)):
+            #    os.mkdir(out_dir)
 
-        datasheets = []
-        parse_file(in_dir + "/datasheet.info", datasheets)
+            datasheets = []
+            parse_file(in_dir + "/datasheet.info", datasheets)
 
 
-        for sheets in datasheets:
-            with open(name, 'w+') as f:
-                sheets.generate_html()
-                f.write(sheets.html)
+            for sheets in datasheets:
+                with open(name, 'w+') as f:
+                    sheets.generate_html()
+                    f.write(sheets.html)

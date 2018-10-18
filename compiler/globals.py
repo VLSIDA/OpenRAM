@@ -100,9 +100,18 @@ def check_versions():
     minor_required = 5
     if not (major_python_version == major_required and minor_python_version >= minor_required):
         debug.error("Python {0}.{1} or greater is required.".format(major_required,minor_required),-1)
-
+ 
     # FIXME: Check versions of other tools here??
     # or, this could be done in each module (e.g. verify, characterizer, etc.)
+    global OPTS
+
+    try:
+        import flask_table
+        OPTS.datasheet_gen = 1
+    except:
+        debug.warning("flask_table is not installed. HTML datasheet will not be generated")
+        OPTS.datasheet_gen = 0
+
 
 def init_openram(config_file, is_unit_test=True):
     """Initialize the technology, paths, simulators, etc."""

@@ -526,15 +526,15 @@ class lib:
         
         for (corner, lib_name) in zip(self.corners, self.lib_files):
         
-            ports = ""
-            if OPTS.num_rw_ports>0:
-                ports += "{}_".format(OPTS.num_rw_ports)
-            if OPTS.num_w_ports>0:
-                ports += "{}_".format(OPTS.num_w_ports)
-            if OPTS.num_r_ports>0:
-                ports += "{}_".format(OPTS.num_r_ports)
+#            ports = ""
+#            if OPTS.num_rw_ports>0:
+#                ports += "{}_".format(OPTS.num_rw_ports)
+#            if OPTS.num_w_ports>0:
+#                ports += "{}_".format(OPTS.num_w_ports)
+#            if OPTS.num_r_ports>0:
+#                ports += "{}_".format(OPTS.num_r_ports)
 
-            datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12}".format("sram_{0}_{1}_{2}{3}".format(OPTS.word_size, OPTS.num_words, ports, OPTS.tech_name),
+            datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13}".format("sram_{0}_{1}_{2}".format(OPTS.word_size, OPTS.num_words, OPTS.tech_name),
                                                                                             OPTS.num_words,
                                                                                             OPTS.num_banks,
                                                                                             OPTS.num_rw_ports,  
@@ -546,7 +546,8 @@ class lib:
                                                                                             self.corner[0],
                                                                                             round_time(self.char_sram_results["min_period"]),
                                                                                             self.out_dir,
-                                                                                            lib_name))
+                                                                                            lib_name,
+                                                                                            OPTS.word_size))
                                                                                             
   
         datasheet.close()

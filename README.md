@@ -7,8 +7,8 @@ https://github.com/mguthaus/OpenRAM/blob/master/OpenRAM_ICCAD_2016_presentation.
 The OpenRAM compiler has very few dependencies:
 * ngspice-26 (or later) or HSpice I-2013.12-1 (or later) or CustomSim 2017 (or later)
 * Python 3.5 and higher
-* Python numpy
-* flask_table
+* Python numpy (pip3 install numpy)
+* flask_table (pip3 install flask)
 * a setup script for each technology
 * a technology directory for each technology with the base cells
 
@@ -49,7 +49,7 @@ We do not distribute the PDK, but you may get it from:
 If you are using SCMOS, you should install Magic and netgen from:
 	http://opencircuitdesign.com/magic/
 	http://opencircuitdesign.com/netgen/
-We have included the SCN3ME design rules from QFlow:
+We have included the SCN4M design rules from QFlow:
 	http://opencircuitdesign.com/qflow/
 
 # DIRECTORY STRUCTURE
@@ -65,7 +65,7 @@ We have included the SCN3ME design rules from QFlow:
   * compiler/tests - unit tests
 * technology - openram technology directory (pointed to by OPENRAM_TECH)
   * technology/freepdk45 - example configuration library for freepdk45 technology node
-  * technology/scn3me_subm - example configuration library SCMOS technology node
+  * technology/scn4m_subm - example configuration library SCMOS technology node
   * technology/setup_scripts - setup scripts to customize your PDKs and OpenRAM technologies
 * docs - LaTeX manual (likely outdated)
 * lib - IP library of pregenerated memories
@@ -90,8 +90,8 @@ To increase the verbosity of the test, add one (or more) -v options:
    python tests/00_code_format_check_test.py -v -t freepdk45
 ```
 To specify a particular technology use "-t <techname>" such as
-"-t scn3me_subm". The default for a unit test is freepdk45 whereas
-the default for openram.py is specified in the configuration file.
+"-t freepdk45" or "-t scn4m_subm". The default for a unit test is scn4m_subm. 
+The default for openram.py is specified in the configuration file.
 
 
 # CREATING CUSTOM TECHNOLOGIES

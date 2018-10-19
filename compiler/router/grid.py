@@ -36,6 +36,12 @@ class grid:
         # let's leave the map sparse, cells are created on demand to reduce memory
         self.map={}
 
+    def add_all_grids(self):
+        for x in range(self.ll.x, self.ur.x, 1):
+            for y in range(self.ll.y, self.ur.y, 1):
+                self.add_map(vector3d(x,y,0))
+                self.add_map(vector3d(x,y,1))
+        
     def set_blocked(self,n,value=True):
         if isinstance(n, (list,tuple,set,frozenset)):
             for item in n:

@@ -4,7 +4,6 @@ from contact import contact
 import math
 import debug
 from globals import OPTS
-import grid
 from pin_layout import pin_layout
 from vector import vector
 from vector3d import vector3d 
@@ -23,6 +22,13 @@ class supply_router(router):
         either the gds file name or the design itself (by saving to a gds file).
         """
         router.__init__(self, layers, design, gds_filename)
+        
+
+        # The list of supply rails that may be routed
+        self.supply_rails = []
+        # This is the same as above but the sets of pins
+        self.supply_rail_tracks = {}
+        self.supply_rail_wire_tracks = {}        
         
         # Power rail width in grid units.
         self.rail_track_width = 2
@@ -57,7 +63,9 @@ class supply_router(router):
 
         # Get the pin shapes
         self.find_pins_and_blockages([self.vdd_name, self.gnd_name])
-        
+
+        #self.write_debug_gds("pin_enclosures.gds",stop_program=True)
+
         # Add the supply rails in a mesh network and connect H/V with vias
         # Block everything
         self.prepare_blockages(self.gnd_name)
@@ -70,17 +78,108 @@ class supply_router(router):
         self.route_supply_rails(self.vdd_name,1)
         
         #self.write_debug_gds("pre_pin_debug.gds",stop_program=True)
+        remaining_vdd_pin_indices = self.route_simple_overlaps(vdd_name)
+        remaining_gnd_pin_indices = self.route_simple_overlaps(gnd_name)
         
         # Route the supply pins to the supply rails
         # Route vdd first since we want it to be shorter
-        self.route_pins_to_rails(vdd_name)
-        self.route_pins_to_rails(gnd_name)
+        self.route_pins_to_rails(vdd_name, remaining_vdd_pin_indices)
+        self.route_pins_to_rails(gnd_name, remaining_gnd_pin_indices)
         
-        #self.write_debug_gds("post_pin_debug.gds",stop_program=False)
+        self.write_debug_gds("post_pin_debug.gds",stop_program=False)
         
         return True
 
+
+                
+                
+    
+    def route_simple_overlaps(self, pin_name):
+        """
+        This checks for simple cases where a pin component already overlaps a supply rail.
+        It will add an enclosure to ensure the overlap in wide DRC rule cases.
+        """
+        num_components = self.num_pin_components(pin_name)
+        remaining_pins = []
+        supply_tracks = self.supply_rail_tracks[pin_name]
+
+        for index in range(num_components):
+            pin_in_tracks = self.pin_grids[pin_name][index]
+            common_set = supply_tracks & pin_in_tracks
+
+            if len(common_set)==0:
+                # if no overlap, add it to the complex route pins
+                remaining_pins.append(index)
+            else:
+                print("Overlap!",index)
+                self.create_simple_overlap_enclosure(pin_name, common_set)
+            
+        return remaining_pins
+
+    def recurse_simple_overlap_enclosure(self, pin_name, start_set, direct):
+        """
+        Recursive function to return set of tracks that connects to
+        the actual supply rail wire in a given direction (or terminating
+        when any track is no longer in the supply rail.
+        """
+        import grid_utils
+        next_set = grid_utils.expand_border(start_set, direct)
+
+        supply_tracks = self.supply_rail_tracks[pin_name]
+        supply_wire_tracks = self.supply_rail_wire_tracks[pin_name]
         
+        supply_overlap = next_set & supply_tracks
+        wire_overlap = next_set & supply_wire_tracks
+
+        print("EXAMINING: ",start_set,len(start_set),len(supply_overlap),len(wire_overlap),direct)
+        # If the rail overlap is the same, we are done, since we connected to the actual wire
+        if len(wire_overlap)==len(start_set):
+            print("HIT RAIL", wire_overlap)
+            new_set = start_set | wire_overlap
+        # If the supply overlap is the same, keep expanding unti we hit the wire or move out of the rail region
+        elif len(supply_overlap)==len(start_set):
+            print("RECURSE", supply_overlap)
+            recurse_set = self.recurse_simple_overlap_enclosure(pin_name, supply_overlap, direct)
+            new_set = start_set | supply_overlap | recurse_set
+        else:
+            # If we got no next set, we are done, can't expand!
+            print("NO MORE OVERLAP", supply_overlap)
+            new_set = set()
+            
+        return new_set
+            
+    def create_simple_overlap_enclosure(self, pin_name, start_set):
+        """
+        This takes a set of tracks that overlap a supply rail and creates an enclosure
+        that is ensured to overlap the supply rail wire.
+        It then adds rectangle(s) for the enclosure.
+        """
+        import grid_utils
+
+        additional_set = set()
+        # Check the layer of any element in the pin to determine which direction to route it
+        e = next(iter(start_set))
+        new_set = start_set.copy()
+        if e.z==0:
+            new_set = self.recurse_simple_overlap_enclosure(pin_name, start_set, direction.NORTH)
+            if not new_set:
+                new_set = self.recurse_simple_overlap_enclosure(pin_name, start_set, direction.SOUTH)
+        else:
+            new_set = self.recurse_simple_overlap_enclosure(pin_name, start_set, direction.EAST)
+            if not new_set:
+                new_set = self.recurse_simple_overlap_enclosure(pin_name, start_set, direction.WEST)
+
+        enclosure_list = self.compute_enclosures(new_set)
+        for pin in enclosure_list:
+            debug.info(2,"Adding simple overlap enclosure {0} {1}".format(pin_name, pin))
+            self.cell.add_rect(layer=pin.layer,
+                               offset=pin.ll(),
+                               width=pin.width(),
+                               height=pin.height())
+
+
+
+    
     def connect_supply_rails(self, name):
         """
         Determine which supply rails overlap and can accomodate a via.
@@ -119,7 +218,7 @@ class supply_router(router):
         remove_hrails = [rail for flag,rail in zip(horizontal_flags,horizontal_rails) if not flag]
         remove_vrails = [rail for flag,rail in zip(vertical_flags,vertical_rails) if not flag]
         for rail in remove_hrails + remove_vrails:
-            debug.info(1,"Removing disconnected supply rail {}".format(rail))
+            debug.info(1,"Removing disconnected supply rail {0} .. {1}".format(rail[0][0],rail[-1][-1]))
             self.supply_rails.remove(rail)
         
     def add_supply_rails(self, name):
@@ -155,9 +254,19 @@ class supply_router(router):
         # i.e. a rail of self.rail_track_width needs this many tracks including
         # space
         track_pitch = self.rail_track_width*width + space
-        
+
+        # Determine the pitch (in tracks) of the rail wire + spacing
         self.supply_rail_width = math.ceil(track_pitch/self.track_width)
         debug.info(1,"Rail step: {}".format(self.supply_rail_width))
+        
+        # Conservatively determine the number of tracks that the rail actually occupies
+        space_tracks = math.ceil(space/self.track_width)
+        self.supply_rail_wire_width = self.supply_rail_width - space_tracks
+        debug.info(1,"Rail wire tracks: {}".format(self.supply_rail_wire_width))
+        total_space = self.supply_rail_width - self.supply_rail_wire_width
+        debug.check(total_space % 2 == 0, "Asymmetric wire track spacing...")
+        self.supply_rail_space_width = int(0.5*total_space)
+        debug.info(1,"Rail space tracks: {} (on both sides)".format(self.supply_rail_space_width))
 
 
     def compute_supply_rails(self, name, supply_number):
@@ -244,21 +353,46 @@ class supply_router(router):
         # Add the rails themselves
         self.add_supply_rails(name)
 
+        # Make the supply rails into a big giant set of grids
+        self.create_supply_track_set(name)
+        
+
+    def create_supply_track_set(self, pin_name):
+        """
+        Take the remaining supply rails and put the middle grids into a set.
+        The middle grids will be guaranteed to have the wire.
+        FIXME: Do this instead with the supply_rail_pitch and width
+        """
+        rail_set = set()
+        wire_set = set()
+        for rail in self.supply_rails:
+            if rail.name != pin_name:
+                continue
+            # FIXME: Select based on self.supply_rail_wire_width and self.supply_rail_width
+            start_wire_index = self.supply_rail_space_width
+            end_wire_index = self.supply_rail_width - self.supply_rail_space_width 
+            for wave_index in range(len(rail)):
+                rail_set.update(rail[wave_index])
+                wire_set.update(rail[wave_index][start_wire_index:end_wire_index])
+
+        self.supply_rail_tracks[pin_name] = rail_set
+        self.supply_rail_wire_tracks[pin_name] = wire_set
+
                 
         
-    def route_pins_to_rails(self, pin_name):
+    def route_pins_to_rails(self, pin_name, remaining_component_indices):
         """
-        This will route each of the pin components to the supply rails. 
+        This will route each of the remaining pin components to the supply rails. 
         After it is done, the cells are added to the pin blockage list.
         """
 
-
-        num_components = self.num_pin_components(pin_name)
-        debug.info(1,"Pin {0} has {1} components to route.".format(pin_name, num_components))
+        
+        debug.info(1,"Pin {0} has {1} remaining components to route.".format(pin_name,
+                                                                             len(remaining_component_indices)))
 
         recent_paths = []
         # For every component
-        for index in range(num_components):
+        for index in remaining_component_indices:
             debug.info(2,"Routing component {0} {1}".format(pin_name, index))
             
             self.rg.reinit()

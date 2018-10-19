@@ -62,8 +62,6 @@ class router:
         ### The routed data structures
         # A list of paths that have been "routed"
         self.paths = []
-        # The list of supply rails that may be routed
-        self.supply_rails = []
 
         # The boundary will determine the limits to the size of the routing grid
         self.boundary = self.layout.measureBoundary(self.top_name)
@@ -833,8 +831,31 @@ class router:
 
         # Add a shape from ll to ur
         ur = row[-1]
-        return self.add_enclosure(ll, ur, ll.z)
+        return self.compute_pin_enclosure(ll, ur, ll.z)
+
+    def remove_redundant_shapes(self, pin_list):
+        """
+        Remove any pin layout that is contained within another.
+        """
         
+        print("INITIAL:",pin_list)
+        
+        # Make a copy of the list to start
+        new_pin_list = pin_list.copy()
+        
+        # This is n^2, but the number is small
+        for pin1 in pin_list:
+            for pin2 in pin_list:
+                # Can't contain yourself
+                if pin1 == pin2:
+                    continue
+                if pin2.contains(pin1):
+                    # It may have already been removed by being enclosed in another pin
+                    if pin1 in new_pin_list:
+                        new_pin_list.remove(pin1)
+                        
+        print("FINAL  :",new_pin_list)
+        return new_pin_list
 
     def compute_enclosures(self, tracks):
         """
@@ -844,19 +865,7 @@ class router:
         for seed in tracks:
             pin_list.append(self.enclose_pin_grids(tracks, seed))
 
-        # Prune any enclosre that is contained in another
-        new_pin_list = pin_list
-        for pin1 in pin_list:
-            for pin2 in pin_list:
-                if pin1 == pin2:
-                    continue
-                if pin2.contains(pin1):
-                    try:
-                        new_pin_list.remove(pin1)
-                    except ValueError:
-                        pass
-        
-        return new_pin_list
+        return self.remove_redundant_shapes(pin_list)
 
     def overlap_any_shape(self, pin_list, shape_list):
         """
@@ -900,19 +909,24 @@ class router:
         put a rectangle over it. It does not enclose grid squares that are blocked
         by other shapes.
         """
+        # These are used for debugging
+        self.connector_enclosure = []
+        self.enclosures = []
+        
         for pin_name in self.pin_grids.keys():
             debug.info(1,"Enclosing pins for {}".format(pin_name))
             debug.check(len(self.pin_groups[pin_name])==len(self.pin_grids[pin_name]),"Unequal pin_group and pin_grid")
-            for pin_group,pin_set in zip(self.pin_groups[pin_name],self.pin_grids[pin_name]):
+            for pin_group,pin_grid_set in zip(self.pin_groups[pin_name],self.pin_grids[pin_name]):
 
                 # Compute the enclosure pin_layout list of the set of tracks
-                enclosure_list = self.compute_enclosures(pin_set)
+                enclosure_list = self.compute_enclosures(pin_grid_set)
                 for pin in enclosure_list:
                     debug.info(2,"Adding enclosure {0} {1}".format(pin_name, pin))
                     self.cell.add_rect(layer=pin.layer,
                                        offset=pin.ll(),
                                        width=pin.width(),
                                        height=pin.height())
+                    self.enclosures.append(pin)
                                   
                 # Check if a pin shape overlaps any enclosure.
                 # If so, we are done.
@@ -926,6 +940,7 @@ class router:
                                        offset=new_enclosure.ll(),
                                        width=new_enclosure.width(),
                                        height=new_enclosure.height())
+                    self.connector_enclosure.append(new_enclosure)
                                   
                     
 
@@ -956,7 +971,7 @@ class router:
             xmin = min(pbc.x,ebc.x)
             xmax = max(pbc.x,ebc.x)
             ll = vector(xmin, pbc.y)
-            ur = vetor(xmax, puc.y)
+            ur = vector(xmax, puc.y)
             p = pin_layout(pin.name, [ll, ur], pin.layer)
         else:
             # Neither, so we must do a corner-to corner
@@ -1112,7 +1127,7 @@ class router:
         ll = path[0][0]
         ur = path[-1][-1]
         z = ll.z
-        pin = self.add_enclosure(ll, ur, z, name)
+        pin = self.compute_wide_enclosure(ll, ur, z, name)
         #print(ll, ur, ll.z, "->",pin)
         self.cell.add_layout_pin(text=name,
                                  layer=pin.layer,
@@ -1122,7 +1137,28 @@ class router:
         
         return pin
 
-    def add_enclosure(self, ll, ur, zindex, name=""):
+    def compute_pin_enclosure(self, ll, ur, zindex, name=""):
+        """
+        Enclose the tracks from ll to ur in a single rectangle that meets
+        the track DRC rules.  If name is supplied, it is added as a pin and
+        not just a rectangle.
+        """
+        # Get the layer information
+        (width, space) = self.get_layer_width_space(zindex)
+        layer = self.get_layer(zindex)
+        
+        # This finds the pin shape enclosed by the track with DRC spacing on the sides
+        (abs_ll,unused) = self.convert_track_to_pin(ll)
+        (unused,abs_ur) = self.convert_track_to_pin(ur)
+        #print("enclose ll={0} ur={1}".format(ll,ur))
+        #print("enclose ll={0} ur={1}".format(abs_ll,abs_ur))
+        
+        pin = pin_layout(name, [abs_ll, abs_ur], layer)
+        
+        return pin
+    
+
+    def compute_wide_enclosure(self, ll, ur, zindex, name=""):
         """ 
         Enclose the tracks from ll to ur in a single rectangle that meets the track DRC rules.
         If name is supplied, it is added as a pin and not just a rectangle.
@@ -1142,14 +1178,18 @@ class router:
         # Get the DRC rule for the grid dimensions
         (width, space) = self.get_layer_width_space(zindex, shape_width, shape_length)
         layer = self.get_layer(zindex)
-        
+
+        if zindex==0:
+            spacing = vector(0.5*self.track_width, 0.5*space)
+        else:
+            spacing = vector(0.5*space, 0.5*self.track_width)
         # Compute the shape offsets with correct spacing
-        new_ll = abs_ll + vector(0.5*space, 0.5*space)
-        new_ur = abs_ur - vector(0.5*space, 0.5*space)
+        new_ll = abs_ll + spacing
+        new_ur = abs_ur - spacing
         pin = pin_layout(name, [new_ll, new_ur], layer)
         
         return pin
-            
+    
 
     def get_inertia(self,p0,p1):
         """ 
@@ -1246,7 +1286,37 @@ class router:
         if stop_program:
             import sys
             sys.exit(1)
-        
+
+    def annotate_grid(self, g):
+        """
+        Display grid information in the GDS file for a single grid cell.
+        """
+        shape = self.convert_track_to_shape(g)
+        partial_track=vector(0,self.track_width/6.0)
+        self.cell.add_rect(layer="text",
+                           offset=shape[0],
+                           width=shape[1].x-shape[0].x,
+                           height=shape[1].y-shape[0].y)
+        t=self.rg.map[g].get_type()
+                
+        # midpoint offset
+        off=vector((shape[1].x+shape[0].x)/2,
+                   (shape[1].y+shape[0].y)/2)
+        if g[2]==1:
+            # Upper layer is upper right label
+            type_off=off+partial_track
+        else:
+            # Lower layer is lower left label
+            type_off=off-partial_track
+        if t!=None:
+            self.cell.add_label(text=str(t),
+                                layer="text",
+                                offset=type_off)
+            self.cell.add_label(text="{0},{1}".format(g[0],g[1]),
+                                layer="text",
+                                offset=shape[0],
+                                zoom=0.05)
+
     def add_router_info(self):
         """
         Write the routing grid and router cost, blockage, pins on 
@@ -1255,7 +1325,18 @@ class router:
         """
         debug.info(0,"Adding router info")
 
-        if OPTS.debug_level>0:
+        show_blockages = False
+        show_blockage_grids = False
+        show_enclosures = False
+        show_connectors = False
+        show_all_grids = True
+        
+        if show_all_grids:
+            self.rg.add_all_grids()
+            for g in self.rg.map.keys():
+                self.annotate_grid(g)
+            
+        if show_blockages:
             # Display the inflated blockage
             for blockage in self.blockages:
                 debug.info(1,"Adding {}".format(blockage))
@@ -1264,36 +1345,26 @@ class router:
                                    offset=ll,
                                    width=ur.x-ll.x,
                                    height=ur.y-ll.y)
-        if OPTS.debug_level>1:
+        if show_blockage_grids:
             self.set_blockages(self.blocked_grids,True)
             grid_keys=self.rg.map.keys()
-            partial_track=vector(0,self.track_width/6.0)
             for g in grid_keys:
-                shape = self.convert_track_to_shape(g)
-                self.cell.add_rect(layer="text",
-                                   offset=shape[0],
-                                   width=shape[1].x-shape[0].x,
-                                   height=shape[1].y-shape[0].y)
-                t=self.rg.map[g].get_type()
-                
-                # midpoint offset
-                off=vector((shape[1].x+shape[0].x)/2,
-                           (shape[1].y+shape[0].y)/2)
-                if g[2]==1:
-                    # Upper layer is upper right label
-                    type_off=off+partial_track
-                else:
-                    # Lower layer is lower left label
-                    type_off=off-partial_track
-                if t!=None:
-                    self.cell.add_label(text=str(t),
-                                        layer="text",
-                                        offset=type_off)
-                self.cell.add_label(text="{0},{1}".format(g[0],g[1]),
-                                    layer="text",
-                                    offset=shape[0],
-                                    zoom=0.05)
+                self.annotate_grid(g)
 
+        if show_connectors:
+            for pin in self.connector_enclosure:
+                #print("connector: ",str(pin))
+                self.cell.add_rect(layer="text",
+                                   offset=pin.ll(),
+                                   width=pin.width(),
+                                   height=pin.height())
+        if show_enclosures:
+            for pin in self.enclosures:
+                #print("enclosure: ",pin.name,pin.ll(),pin.width(),pin.height())
+                self.cell.add_rect(layer="text",
+                                   offset=pin.ll(),
+                                   width=pin.width(),
+                                   height=pin.height())
     
 # FIXME: This should be replaced with vector.snap_to_grid at some point
 

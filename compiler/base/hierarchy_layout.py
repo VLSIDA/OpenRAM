@@ -134,11 +134,13 @@ class layout(lef.lef):
                 return inst
         return None
     
-    def add_rect(self, layer, offset, width=0, height=0):
-        """Adds a rectangle on a given layer,offset with width and height"""
-        if width==0:
+    def add_rect(self, layer, offset, width=None, height=None):
+        """
+        Adds a rectangle on a given layer,offset with width and height
+        """
+        if not width:
             width=drc["minwidth_{}".format(layer)]
-        if height==0:
+        if not height:
             height=drc["minwidth_{}".format(layer)]
         # negative layers indicate "unused" layers in a given technology
         layer_num = techlayer[layer]
@@ -147,11 +149,13 @@ class layout(lef.lef):
             return self.objs[-1]
         return None
 
-    def add_rect_center(self, layer, offset, width=0, height=0):
-        """Adds a rectangle on a given layer at the center point with width and height"""
-        if width==0:
+    def add_rect_center(self, layer, offset, width=None, height=None):
+        """
+        Adds a rectangle on a given layer at the center point with width and height
+        """
+        if not width:
             width=drc["minwidth_{}".format(layer)]
-        if height==0:
+        if not height:
             height=drc["minwidth_{}".format(layer)]
         # negative layers indicate "unused" layers in a given technology
         layer_num = techlayer[layer]
@@ -163,7 +167,9 @@ class layout(lef.lef):
 
 
     def add_segment_center(self, layer, start, end):
-        """ Add a min-width rectanglular segment using center line on the start to end point """
+        """ 
+        Add a min-width rectanglular segment using center line on the start to end point 
+        """
         minwidth_layer = drc["minwidth_{}".format(layer)]        
         if start.x!=end.x and start.y!=end.y:
             debug.error("Nonrectilinear center rect!",-1)
@@ -177,7 +183,9 @@ class layout(lef.lef):
 
     
     def get_pin(self, text):
-        """ Return the pin or list of pins """
+        """ 
+        Return the pin or list of pins 
+        """
         try:
             if len(self.pin_map[text])>1:
                 debug.error("Should use a pin iterator since more than one pin {}".format(text),-1)
@@ -192,7 +200,9 @@ class layout(lef.lef):
             
 
     def get_pins(self, text):
-        """ Return a pin list (instead of a single pin) """
+        """ 
+        Return a pin list (instead of a single pin) 
+        """
         if text in self.pin_map.keys():
             return self.pin_map[text]
         else:
@@ -210,7 +220,9 @@ class layout(lef.lef):
             self.add_layout_pin(new_name, pin.layer, pin.ll(), pin.width(), pin.height())
 
     def add_layout_pin_segment_center(self, text, layer, start, end):
-        """ Creates a path like pin with center-line convention """
+        """ 
+        Creates a path like pin with center-line convention 
+        """
 
         debug.check(start.x==end.x or start.y==end.y,"Cannot have a non-manhatten layout pin.")
         
@@ -235,9 +247,9 @@ class layout(lef.lef):
 
     def add_layout_pin_rect_center(self, text, layer, offset, width=None, height=None):
         """ Creates a path like pin with center-line convention """
-        if width==None:
+        if not width:
             width=drc["minwidth_{0}".format(layer)]
-        if height==None:
+        if not height:
             height=drc["minwidth_{0}".format(layer)]
 
         ll_offset = offset - vector(0.5*width,0.5*height)
@@ -246,14 +258,18 @@ class layout(lef.lef):
 
     
     def remove_layout_pin(self, text):
-        """Delete a labeled pin (or all pins of the same name)"""
+        """
+        Delete a labeled pin (or all pins of the same name)
+        """
         self.pin_map[text]=[]
         
     def add_layout_pin(self, text, layer, offset, width=None, height=None):
-        """Create a labeled pin """
-        if width==None:
+        """
+        Create a labeled pin 
+        """
+        if not width:
             width=drc["minwidth_{0}".format(layer)]
-        if height==None:
+        if not height:
             height=drc["minwidth_{0}".format(layer)]
 
         new_pin = pin_layout(text, [offset,offset+vector(width,height)], layer)
@@ -273,13 +289,14 @@ class layout(lef.lef):
         return new_pin
 
     def add_label_pin(self, text, layer, offset, width=None, height=None):
-        """Create a labeled pin WITHOUT the pin data structure. This is not an
+        """
+        Create a labeled pin WITHOUT the pin data structure. This is not an
         actual pin but a named net so that we can add a correspondence point
         in LVS.
         """
-        if width==None:
+        if not width:
             width=drc["minwidth_{0}".format(layer)]
-        if height==None:
+        if not height:
             height=drc["minwidth_{0}".format(layer)]
         self.add_rect(layer=layer,
                       offset=offset,

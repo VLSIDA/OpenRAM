@@ -20,34 +20,10 @@ class datasheet():
         
 
     def generate_html(self):
-        self.html = """<style>
-#data {
-    font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
-    border-collapse: collapse;
-    width: 100%;
-    max-width: 800px
-}
-
-#data td, #data th {
-    border: 1px solid #ddd;
-    padding: 8px;
-}
-
-#data tr:nth-child(even){background-color: #f2f2f2;}
-
-#data tr:hover {background-color: #ddd;}
-
-#data th {
-    padding-top: 12px;
-    padding-bottom: 12px;
-    text-align: left;
-    background-color: #4CAF50;
-    color: white;
-}
-</style>"""
+        with open(os.path.abspath(os.environ.get("OPENRAM_HOME")) + '/datasheet/assets/datasheet.css', 'r') as datasheet_css:
+            self.html += datasheet_css.read()
+         
         self.html +='<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>'+ self.name + '.html' + '</p>'
-#        self.html +='<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>{0}</p>'
-#        self.html +='<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>{0}</p>'
 
         self.html +='<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>Ports and Configuration (DEBUG)</p>'
         self.html += in_out(self.io,table_id='data').__html__().replace('&lt;','<').replace('&#34;','"').replace('&gt;',">")

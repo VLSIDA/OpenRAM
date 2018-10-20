@@ -5,10 +5,10 @@ import math
 import debug
 from globals import OPTS
 from pin_layout import pin_layout
-from vector import vector
 from vector3d import vector3d 
 from router import router
 from direction import direction
+import grid
 import grid_utils
 
 class supply_router(router):
@@ -23,7 +23,12 @@ class supply_router(router):
         either the gds file name or the design itself (by saving to a gds file).
         """
         router.__init__(self, layers, design, gds_filename)
-        
+
+        # We over-ride the regular router costs to allow
+        # more off-direction router in the supply grid
+        grid.VIA_COST = 1
+        grid.NONPREFERRED_COST = 1
+        grid.PREFERRED_COST = 1
 
         # The list of supply rails (grid sets) that may be routed
         self.supply_rails = {}

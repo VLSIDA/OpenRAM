@@ -4,8 +4,6 @@ from contact import contact
 import math
 import debug
 from pin_layout import pin_layout
-from vector import vector
-from vector3d import vector3d 
 from globals import OPTS
 from router import router
 

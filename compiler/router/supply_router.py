@@ -89,6 +89,8 @@ class supply_router(router):
         self.route_pins_to_rails(gnd_name, remaining_gnd_pin_indices)
         #self.write_debug_gds("debug_pin_routes.gds",stop_program=True)
         
+        #self.write_debug_gds("final.gds")  
+        
         return True
 
 
@@ -112,7 +114,6 @@ class supply_router(router):
                 # if no overlap, add it to the complex route pins
                 remaining_pins.append(index)
             else:
-                print("Overlap!",index)
                 self.create_simple_overlap_enclosure(pin_name, common_set)
             
         return remaining_pins
@@ -131,19 +132,15 @@ class supply_router(router):
         supply_overlap = next_set & supply_tracks
         wire_overlap = next_set & supply_wire_tracks
 
-        print("EXAMINING: ",start_set,len(start_set),len(supply_overlap),len(wire_overlap),direct)
         # If the rail overlap is the same, we are done, since we connected to the actual wire
         if len(wire_overlap)==len(start_set):
-            print("HIT RAIL", wire_overlap)
             new_set = start_set | wire_overlap
         # If the supply overlap is the same, keep expanding unti we hit the wire or move out of the rail region
         elif len(supply_overlap)==len(start_set):
-            print("RECURSE", supply_overlap)
             recurse_set = self.recurse_simple_overlap_enclosure(pin_name, supply_overlap, direct)
             new_set = start_set | supply_overlap | recurse_set
         else:
             # If we got no next set, we are done, can't expand!
-            print("NO MORE OVERLAP", supply_overlap)
             new_set = set()
             
         return new_set
@@ -190,15 +187,43 @@ class supply_router(router):
         connections = set()
         via_areas = []
         for i1,r1 in enumerate(all_rails):
-            # We need to move this rail to the other layer for the intersection to work
+            # Only consider r1 horizontal rails
             e = next(iter(r1))
-            newz = (e.z+1)%2
-            new_r1 = {vector3d(i.x,i.y,newz) for i in r1}
+            if e.z==1:
+                continue
+
+            # We need to move this rail to the other layer for the z indices to match
+            # during the intersection. This also makes a copy.
+            new_r1 = {vector3d(i.x,i.y,1) for i in r1}
+            
+            # If horizontal, subtract off the left/right track to prevent end of rail via
+            #ll = grid_utils.get_lower_left(new_r1)
+            #ur = grid_utils.get_upper_right(new_r1)
+            grid_utils.remove_border(new_r1, direction.EAST)
+            grid_utils.remove_border(new_r1, direction.WEST)
+                
             for i2,r2 in enumerate(all_rails):
+                # Never compare to yourself
                 if i1==i2:
                     continue
-                overlap = new_r1 & r2
+                
+                # Only consider r2 vertical rails
+                e = next(iter(r2))
+                if e.z==0:
+                    continue
+
+                # Need to maek a copy to consider via overlaps to ignore the end-caps
+                new_r2 = r2.copy()
+                grid_utils.remove_border(new_r2, direction.NORTH)
+                grid_utils.remove_border(new_r2, direction.SOUTH)                
+
+                # Determine if we hhave sufficient overlap and, if so,
+                # remember:
+                # the indices to determine a rail is connected to another
+                # the overlap area for placement of a via
+                overlap = new_r1 & new_r2
                 if len(overlap) >= self.supply_rail_wire_width**2:
+                    debug.info(2,"Via overlap {0} {1} {2}".format(len(overlap),self.supply_rail_wire_width**2,overlap))
                     connections.add(i1)
                     connections.add(i2)
                     via_areas.append(overlap)
@@ -210,9 +235,11 @@ class supply_router(router):
             center = (ll + ur).scale(0.5,0.5,0)
             self.add_via(center,self.rail_track_width)
 
+        # Determien which indices were not connected to anything above
         all_indices = set([x for x in range(len(self.supply_rails[name]))])
         missing_indices = all_indices ^ connections
-
+        # Go through and remove those disconnected indices
+        # (No via was added, so that doesn't need to be removed)
         for rail_index in missing_indices:
             ll = grid_utils.get_lower_left(all_rails[rail_index])
             ur = grid_utils.get_upper_right(all_rails[rail_index])
@@ -220,8 +247,8 @@ class supply_router(router):
             self.supply_rails[name].pop(rail_index)
             self.supply_rail_wires[name].pop(rail_index)            
 
-        # Make the supply rails into a big giant set of grids
-        # Must be done after determine which ones are connected)
+        # Make the supply rails into a big giant set of grids for easy blockages.
+        # Must be done after we determine which ones are connected.
         self.create_supply_track_set(name)
         
             
@@ -381,6 +408,7 @@ class supply_router(router):
         if len(wave_path)>=4*self.rail_track_width:
             grid_set = wave_path.get_grids()
             self.supply_rails[name].append(grid_set)
+            
             start_wire_index = self.supply_rail_space_width
             end_wire_index = self.supply_rail_width - self.supply_rail_space_width
             wire_set = wave_path.get_wire_grids(start_wire_index,end_wire_index)

@@ -32,6 +32,14 @@ def increment_set(curset, direct):
 
         return newset
 
+def remove_border(curset, direct):
+    """ 
+    Remove the cells on a given border.
+    """
+    border = get_border(curset, direct)
+    curset.difference_update(border)
+
+
 def get_upper_right(curset):
     ur = None
     for p in curset:

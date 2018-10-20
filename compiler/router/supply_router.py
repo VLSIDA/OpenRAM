@@ -9,6 +9,7 @@ from vector import vector
 from vector3d import vector3d 
 from router import router
 from direction import direction
+import grid_utils
 
 class supply_router(router):
     """
@@ -24,9 +25,10 @@ class supply_router(router):
         router.__init__(self, layers, design, gds_filename)
         
 
-        # The list of supply rails that may be routed
-        self.supply_rails = []
-        # This is the same as above but the sets of pins
+        # The list of supply rails (grid sets) that may be routed
+        self.supply_rails = {}
+        self.supply_rail_wires = {}        
+        # This is the same as above but as a sigle set for the all the rails
         self.supply_rail_tracks = {}
         self.supply_rail_wire_tracks = {}        
         
@@ -76,17 +78,17 @@ class supply_router(router):
         self.prepare_blockages(self.vdd_name)
         # Determine the rail locations
         self.route_supply_rails(self.vdd_name,1)
+        #self.write_debug_gds("debug_rails.gds",stop_program=True)
         
-        #self.write_debug_gds("pre_pin_debug.gds",stop_program=True)
         remaining_vdd_pin_indices = self.route_simple_overlaps(vdd_name)
         remaining_gnd_pin_indices = self.route_simple_overlaps(gnd_name)
+        #self.write_debug_gds("debug_simple_route.gds",stop_program=True)
         
         # Route the supply pins to the supply rails
         # Route vdd first since we want it to be shorter
         self.route_pins_to_rails(vdd_name, remaining_vdd_pin_indices)
         self.route_pins_to_rails(gnd_name, remaining_gnd_pin_indices)
-        
-        self.write_debug_gds("post_pin_debug.gds",stop_program=False)
+        #self.write_debug_gds("debug_pin_routes.gds",stop_program=True)
         
         return True
 
@@ -122,7 +124,6 @@ class supply_router(router):
         the actual supply rail wire in a given direction (or terminating
         when any track is no longer in the supply rail.
         """
-        import grid_utils
         next_set = grid_utils.expand_border(start_set, direct)
 
         supply_tracks = self.supply_rail_tracks[pin_name]
@@ -154,8 +155,6 @@ class supply_router(router):
         that is ensured to overlap the supply rail wire.
         It then adds rectangle(s) for the enclosure.
         """
-        import grid_utils
-
         additional_set = set()
         # Check the layer of any element in the pin to determine which direction to route it
         e = next(iter(start_set))
@@ -180,56 +179,70 @@ class supply_router(router):
 
 
     
-    def connect_supply_rails(self, name):
+    def finalize_supply_rails(self, name):
         """
         Determine which supply rails overlap and can accomodate a via.
         Remove any supply rails that do not have a via since they are disconnected.
         NOTE: It is still possible though unlikely that there are disconnected groups of rails.
         """
-            
-        # Split into horizontal and vertical paths
-        vertical_rails = [x for x in self.supply_rails if x[0][0].z==1 and x.name==name]
-        horizontal_rails = [x for x in self.supply_rails if x[0][0].z==0 and x.name==name]
-        
-        # Flag to see if each supply rail has at least one via (i.e. it is "connected")
-        vertical_flags = [False] * len(vertical_rails)
-        horizontal_flags = [False] * len(horizontal_rails)
-        
-        # Compute a list of "shared areas" that are bigger than a via
-        via_areas = []
-        for vindex,v in enumerate(vertical_rails):
-            for hindex,h in enumerate(horizontal_rails):
-                # Compute the overlap of the two paths, None if no overlap
-                overlap = v.overlap(h)
-                if overlap:
-                    (ll,ur) = overlap
-                    # We can add a via only if it is a full track width in each dimension
-                    if ur.x-ll.x >= self.rail_track_width-1 and ur.y-ll.y >= self.rail_track_width-1:
-                        vertical_flags[vindex]=True
-                        horizontal_flags[hindex]=True
-                        via_areas.append(overlap)
 
+        all_rails = self.supply_rail_wires[name]
+
+        connections = set()
+        via_areas = []
+        for i1,r1 in enumerate(all_rails):
+            # We need to move this rail to the other layer for the intersection to work
+            e = next(iter(r1))
+            newz = (e.z+1)%2
+            new_r1 = {vector3d(i.x,i.y,newz) for i in r1}
+            for i2,r2 in enumerate(all_rails):
+                if i1==i2:
+                    continue
+                overlap = new_r1 & r2
+                if len(overlap) >= self.supply_rail_wire_width**2:
+                    connections.add(i1)
+                    connections.add(i2)
+                    via_areas.append(overlap)
+                
         # Go through and add the vias at the center of the intersection
-        for (ll,ur) in via_areas:
+        for area in via_areas:
+            ll = grid_utils.get_lower_left(area)
+            ur = grid_utils.get_upper_right(area)
             center = (ll + ur).scale(0.5,0.5,0)
             self.add_via(center,self.rail_track_width)
 
-        # Retrieve the original indices into supply_rails for removal
-        remove_hrails = [rail for flag,rail in zip(horizontal_flags,horizontal_rails) if not flag]
-        remove_vrails = [rail for flag,rail in zip(vertical_flags,vertical_rails) if not flag]
-        for rail in remove_hrails + remove_vrails:
-            debug.info(1,"Removing disconnected supply rail {0} .. {1}".format(rail[0][0],rail[-1][-1]))
-            self.supply_rails.remove(rail)
+        all_indices = set([x for x in range(len(self.supply_rails[name]))])
+        missing_indices = all_indices ^ connections
+
+        for rail_index in missing_indices:
+            ll = grid_utils.get_lower_left(all_rails[rail_index])
+            ur = grid_utils.get_upper_right(all_rails[rail_index])
+            debug.info(1,"Removing disconnected supply rail {0} .. {1}".format(ll,ur))
+            self.supply_rails[name].pop(rail_index)
+            self.supply_rail_wires[name].pop(rail_index)            
+
+        # Make the supply rails into a big giant set of grids
+        # Must be done after determine which ones are connected)
+        self.create_supply_track_set(name)
         
+            
     def add_supply_rails(self, name):
         """
         Add the shapes that represent the routed supply rails.
         This is after the paths have been pruned and only include rails that are
         connected with vias.
         """
-        for wave_path in self.supply_rails:
-            if wave_path.name == name:
-                self.add_wavepath(name, wave_path)
+        for rail in self.supply_rails[name]:
+            ll = grid_utils.get_lower_left(rail)
+            ur = grid_utils.get_upper_right(rail)        
+            z = ll.z
+            pin = self.compute_wide_enclosure(ll, ur, z, name)
+            debug.info(1,"Adding supply rail {0} {1}->{2} {3}".format(name,ll,ur,pin))
+            self.cell.add_layout_pin(text=name,
+                                     layer=pin.layer,
+                                     offset=pin.ll(),
+                                     width=pin.width(),
+                                     height=pin.height())
 
     def compute_supply_rail_dimensions(self):
         """
@@ -275,6 +288,10 @@ class supply_router(router):
         Go in a raster order from bottom to the top (for horizontal) and left to right
         (for vertical). Start with an initial start_offset in x and y direction.
         """
+
+        self.supply_rails[name]=[]
+        self.supply_rail_wires[name]=[]        
+        
         start_offset = supply_number*self.supply_rail_width
 
         # Horizontal supply rails
@@ -283,7 +300,11 @@ class supply_router(router):
             wave = [vector3d(0,offset+i,0) for i in range(self.supply_rail_width)]
             # While we can keep expanding east in this horizontal track
             while wave and wave[0].x < self.max_xoffset:
-                wave = self.find_supply_rail(name, wave, direction.EAST)
+                added_rail = self.find_supply_rail(name, wave, direction.EAST)
+                if added_rail:
+                    wave = added_rail.neighbor(direction.EAST)
+                else:
+                    wave = None
 
 
         # Vertical supply rails
@@ -293,10 +314,41 @@ class supply_router(router):
             wave = [vector3d(offset+i,0,1) for i in range(self.supply_rail_width)]
             # While we can keep expanding north in this vertical track
             while wave and wave[0].y < self.max_yoffset:
-                wave = self.find_supply_rail(name, wave, direction.NORTH)
+                added_rail = self.find_supply_rail(name, wave, direction.NORTH)
+                if added_rail:
+                    wave = added_rail.neighbor(direction.NORTH)
+                else:
+                    wave = None
 
-                
     def find_supply_rail(self, name, seed_wave, direct):
+        """
+        Find a start location, probe in the direction, and see if the rail is big enough
+        to contain a via, and, if so, add it.
+        """
+        start_wave = self.find_supply_rail_start(name, seed_wave, direct)
+        if not start_wave:
+            return None
+        
+        wave_path = self.probe_supply_rail(name, start_wave, direct)
+        
+        if self.approve_supply_rail(name, wave_path):
+            return wave_path
+        else:
+            return None
+
+    def find_supply_rail_start(self, name, seed_wave, direct):
+        """
+        This finds the first valid starting location and routes a supply rail
+        in the given direction.
+        It returns the space after the end of the rail to seed another call for multiple
+        supply rails in the same "track" when there is a blockage.
+        """
+        # Sweep to find an initial unblocked valid wave
+        start_wave = self.rg.find_start_wave(seed_wave, len(seed_wave), direct)
+
+        return start_wave
+    
+    def probe_supply_rail(self, name, start_wave, direct):
         """
         This finds the first valid starting location and routes a supply rail
         in the given direction.
@@ -304,33 +356,41 @@ class supply_router(router):
         supply rails in the same "track" when there is a blockage.
         """
 
-        # Sweep to find an initial unblocked valid wave
-        start_wave = self.rg.find_start_wave(seed_wave, len(seed_wave), direct)
-        if not start_wave:
-            return None
-
         # Expand the wave to the right
         wave_path = self.rg.probe(start_wave, direct)
+
         if not wave_path:
             return None
 
+        # drop the first and last steps to leave escape routing room
+        # around the blockage that stopped the probe
+        # except, don't drop the first if it is the first in a row/column
+        if (direct==direction.NORTH and start_wave[0].y>0):
+            wave_path.trim_first()
+        elif (direct == direction.EAST and start_wave[0].x>0):
+            wave_path.trim_first()
+
+        wave_path.trim_last()
+            
+        return wave_path
+
+    def approve_supply_rail(self, name, wave_path):
+        """
+        Check if the supply rail is sufficient (big enough) and add it to the
+        data structure. Return whether it was added or not.
+        """
         # We must have at least 2 tracks to drop plus 2 tracks for a via
         if len(wave_path)>=4*self.rail_track_width:
-            # drop the first and last steps to leave escape routing room
-            # around the blockage that stopped the probe
-            # except, don't drop the first if it is the first in a row/column
-            if (direct==direction.NORTH and seed_wave[0].y>0):
-                wave_path.trim_first()
-            elif (direct == direction.EAST and seed_wave[0].x>0):
-                wave_path.trim_first()
-                
-            wave_path.trim_last()
-            wave_path.name = name
-            self.supply_rails.append(wave_path)
+            grid_set = wave_path.get_grids()
+            self.supply_rails[name].append(grid_set)
+            start_wire_index = self.supply_rail_space_width
+            end_wire_index = self.supply_rail_width - self.supply_rail_space_width
+            wire_set = wave_path.get_wire_grids(start_wire_index,end_wire_index)
+            self.supply_rail_wires[name].append(wire_set)
+            return True
+        
+        return False
 
-        # seed the next start wave location
-        wave_end = wave_path[-1]
-        return wave_path.neighbor(direct)
     
 
                     
@@ -348,37 +408,26 @@ class supply_router(router):
         self.compute_supply_rails(name, supply_number)
         
         # Add the supply rail vias (and prune disconnected rails)
-        self.connect_supply_rails(name)
-        
+        self.finalize_supply_rails(name)
+
         # Add the rails themselves
         self.add_supply_rails(name)
 
-        # Make the supply rails into a big giant set of grids
-        self.create_supply_track_set(name)
         
-
     def create_supply_track_set(self, pin_name):
         """
-        Take the remaining supply rails and put the middle grids into a set.
-        The middle grids will be guaranteed to have the wire.
-        FIXME: Do this instead with the supply_rail_pitch and width
+        Make a single set of all the tracks for the rail and wire itself.
         """
         rail_set = set()
-        wire_set = set()
-        for rail in self.supply_rails:
-            if rail.name != pin_name:
-                continue
-            # FIXME: Select based on self.supply_rail_wire_width and self.supply_rail_width
-            start_wire_index = self.supply_rail_space_width
-            end_wire_index = self.supply_rail_width - self.supply_rail_space_width 
-            for wave_index in range(len(rail)):
-                rail_set.update(rail[wave_index])
-                wire_set.update(rail[wave_index][start_wire_index:end_wire_index])
-
+        for rail in self.supply_rails[pin_name]:
+            rail_set.update(rail)
         self.supply_rail_tracks[pin_name] = rail_set
+
+        wire_set = set()
+        for rail in self.supply_rail_wires[pin_name]:
+            wire_set.update(rail)
         self.supply_rail_wire_tracks[pin_name] = wire_set
 
-                
         
     def route_pins_to_rails(self, pin_name, remaining_component_indices):
         """
@@ -424,17 +473,10 @@ class supply_router(router):
         Add the supply rails of given name as a routing target.
         """
         debug.info(2,"Add supply rail target {}".format(pin_name))
-        for rail in self.supply_rails:
-            if rail.name != pin_name:
-                continue
-            # Set the middle track only as the target since wide metal
-            # spacings may mean the other grids are actually empty space
-            middle_index = math.floor(len(rail[0])/2)
-            for wave_index in range(len(rail)):
-                pin_in_tracks = rail[wave_index]
-                #debug.info(1,"Set target: " + str(pin_name) + " " + str(pin_in_tracks))
-                self.rg.set_target(pin_in_tracks[middle_index])
-                self.rg.set_blocked(pin_in_tracks,False)
+        # Add the wire itself as the target
+        self.rg.set_target(self.supply_rail_wire_tracks[pin_name])
+        # But unblock all the rail tracks including the space
+        self.rg.set_blocked(self.supply_rail_tracks[pin_name],False)
 
                 
     def set_supply_rail_blocked(self, value=True):
@@ -442,9 +484,6 @@ class supply_router(router):
         Add the supply rails of given name as a routing target.
         """
         debug.info(3,"Blocking supply rail")        
-        for rail in self.supply_rails:
-            for wave_index in range(len(rail)):
-                pin_in_tracks = rail[wave_index]
-                #debug.info(1,"Set target: " + str(pin_name) + " " + str(pin_in_tracks))
-                self.rg.set_blocked(pin_in_tracks,value)
+        for rail_name in self.supply_rail_tracks:
+            self.rg.set_blocked(self.supply_rail_tracks[rail_name])
                 

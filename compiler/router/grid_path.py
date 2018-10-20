@@ -67,13 +67,15 @@ class grid_path:
         """
         Drop the last item
         """
-        self.pathlist.pop()
+        if len(self.pathlist)>0:
+            self.pathlist.pop()
 
     def trim_first(self):
         """
         Drop the first item
         """
-        self.pathlist.pop(0)
+        if len(self.pathlist)>0:
+            self.pathlist.pop(0)
         
     def append(self,item):
         """
@@ -97,6 +99,25 @@ class grid_path:
             for p in sublist:
                 p.blocked=value
 
+    def get_grids(self):
+        """
+        Return a set of all the grids in this path.
+        """
+        newset = set()
+        for sublist in self.pathlist:
+            newset.update(sublist)
+        return newset
+
+    def get_wire_grids(self, start_index, end_index):
+        """
+        Return a set of all the wire grids in this path.
+        These are the indices in the wave path in a certain range.
+        """
+        newset = set()
+        for sublist in self.pathlist:
+            newset.update(sublist[start_index:end_index])
+        return newset
+    
     def cost(self):
         """ 
         The cost of the path is the length plus a penalty for the number

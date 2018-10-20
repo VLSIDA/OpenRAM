@@ -9,6 +9,7 @@ from vector import vector
 from vector3d import vector3d 
 from globals import OPTS
 from pprint import pformat
+import grid_utils
 
 class router:
     """
@@ -837,8 +838,9 @@ class router:
         """
         Remove any pin layout that is contained within another.
         """
-        
-        print("INITIAL:",pin_list)
+        local_debug = False
+        if local_debug:
+            debug.info(0,"INITIAL:",pin_list)
         
         # Make a copy of the list to start
         new_pin_list = pin_list.copy()
@@ -854,7 +856,8 @@ class router:
                     if pin1 in new_pin_list:
                         new_pin_list.remove(pin1)
                         
-        print("FINAL  :",new_pin_list)
+        if local_debug:
+            debug.info(0,"FINAL  :",new_pin_list)
         return new_pin_list
 
     def compute_enclosures(self, tracks):
@@ -932,7 +935,8 @@ class router:
                 # If so, we are done.
                 # FIXME: Check if by more than a DRC width
                 if self.overlap_any_shape(pin_group, enclosure_list):
-                    debug.info(2,"Pin overlaps enclosure {0}".format(pin_name))  
+                    #debug.info(2,"Pin overlaps enclosure {0}".format(pin_name))
+                    pass
                 else:
                     new_enclosure = self.find_smallest_connector(pin_group, enclosure_list)
                     debug.info(2,"Adding connector enclosure {0} {1}".format(pin_name, new_enclosure))  
@@ -1113,29 +1117,6 @@ class router:
         self.cell.add_via_center(layers=self.layers,
                                  offset=vector(loc.x,loc.y),
                                  size=(size,size))
-        
-        
-
-    def add_wavepath(self, name, path):
-        """ 
-        Add the current wave to the given design instance.
-        This is a single rectangle that is multiple tracks wide.
-        It must pay attention to wide metal spacing rules.
-        """
-        path=self.prepare_path(path)
-
-        ll = path[0][0]
-        ur = path[-1][-1]
-        z = ll.z
-        pin = self.compute_wide_enclosure(ll, ur, z, name)
-        #print(ll, ur, ll.z, "->",pin)
-        self.cell.add_layout_pin(text=name,
-                                 layer=pin.layer,
-                                 offset=pin.ll(),
-                                 width=pin.width(),
-                                 height=pin.height())
-        
-        return pin
 
     def compute_pin_enclosure(self, ll, ur, zindex, name=""):
         """

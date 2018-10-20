@@ -774,7 +774,7 @@ class router:
                        
             # At least one of the groups must have some valid tracks
             if (len(pin_set)==0 and len(blockage_set)==0):
-                self.write_debug_gds()
+                self.write_debug_gds("blocked_pin.gds")
                 debug.error("Unable to find unblocked pin on grid.")
 
             # We need to route each of the components, so don't combine the groups
@@ -1306,8 +1306,8 @@ class router:
         """
         debug.info(0,"Adding router info")
 
-        show_blockages = False
-        show_blockage_grids = False
+        show_blockages = True
+        show_blockage_grids = True
         show_enclosures = False
         show_connectors = False
         show_all_grids = True

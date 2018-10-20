@@ -548,30 +548,27 @@ class hierarchical_decoder(design.design):
     def route_vdd_gnd(self):
         """ Add a pin for each row of vdd/gnd which are must-connects next level up. """
 
-        # Find the x offsets for where the vias/pins should be placed
-        a_xoffset = self.inv_inst[0].lx()
-        b_xoffset = self.inv_inst[0].rx()
-        
+        # The vias will be placed in the center and right of the cells, respectively.
+        xoffset = self.nand_inst[0].cx()
         for num in range(0,self.rows):
-            # this will result in duplicate polygons for rails, but who cares
-            
-            # Route both supplies
-            for n in ["vdd", "gnd"]:
-                supply_pin = self.inv_inst[num].get_pin(n)
+            for pin_name in ["vdd", "gnd"]:
+                # The nand and inv are the same height rows...
+                supply_pin = self.nand_inst[num].get_pin(pin_name)
+                pin_pos = vector(xoffset, supply_pin.cy())
+                self.add_power_pin(name=pin_name,
+                                   loc=pin_pos)
 
-                # Add pins in two locations
-                for xoffset in [a_xoffset, b_xoffset]:
-                    pin_pos = vector(xoffset, supply_pin.cy())
-                    self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                        offset=pin_pos,
-                                        rotate=90)
-                    self.add_via_center(layers=("metal2", "via2", "metal3"),
-                                        offset=pin_pos,
-                                        rotate=90)
-                    self.add_layout_pin_rect_center(text=n,
-                                                    layer="metal3",
-                                                    offset=pin_pos)
-
+        # Make a redundant rail too
+        for num in range(0,self.rows,2):
+            for pin_name in ["vdd", "gnd"]:
+                start = self.nand_inst[num].get_pin(pin_name).lc()
+                end = self.inv_inst[num].get_pin(pin_name).rc()
+                mid = (start+end).scale(0.5,0.5)
+                self.add_rect_center(layer="metal1",
+                                     offset=mid,
+                                     width=end.x-start.x)
+                
+                
         # Copy the pins from the predecoders
         for pre in self.pre2x4_inst + self.pre3x8_inst:
             self.copy_layout_pin(pre, "vdd")

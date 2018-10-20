@@ -277,8 +277,7 @@ class supply_router(router):
         self.supply_rail_wire_width = self.supply_rail_width - space_tracks
         debug.info(1,"Rail wire tracks: {}".format(self.supply_rail_wire_width))
         total_space = self.supply_rail_width - self.supply_rail_wire_width
-        debug.check(total_space % 2 == 0, "Asymmetric wire track spacing...")
-        self.supply_rail_space_width = int(0.5*total_space)
+        self.supply_rail_space_width = math.floor(0.5*total_space)
         debug.info(1,"Rail space tracks: {} (on both sides)".format(self.supply_rail_space_width))
 
 

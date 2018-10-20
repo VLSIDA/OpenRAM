@@ -39,7 +39,9 @@ import verify
 from sram import sram
 from sram_config import sram_config
 #from parser import *
-output_extensions = ["sp","v","lib","html"]
+output_extensions = ["sp","v","lib"]
+if OPTS.datasheet_gen:
+    output_extensions.append("html")
 if not OPTS.netlist_only:
     output_extensions.extend(["gds","lef"])
 output_files = ["{0}.{1}".format(OPTS.output_name,x) for x in output_extensions]

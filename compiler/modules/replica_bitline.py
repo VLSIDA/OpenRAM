@@ -76,7 +76,6 @@ class replica_bitline(design.design):
         self.access_tx_offset = vector(-gap_width-self.access_tx.width-self.inv.width, 0.5*self.inv.height)
 
 
-
     def add_modules(self):
         """ Add the modules for later usage """
 
@@ -184,19 +183,14 @@ class replica_bitline(design.design):
             pin = self.rbl_inst.get_pin(wl)
 
             # Route the connection to the right so that it doesn't interfere with the cells
-            # Wordlines may be close to each other when tiled, so gnd connections are routed in opposite directions
-            if row % 2 == 0:
-                vertical_extension = vector(0, 1.5*drc("minwidth_metal1") + 0.5*contact.m1m2.height)
-            else:
-                vertical_extension = vector(0, -1.5*drc("minwidth_metal1") - 1.5*contact.m1m2.height)
-            
+            # Wordlines may be close to each other when tiled, so gnd connections are routed in opposite directions            
             pin_right = pin.rc()
-            pin_extension1 = pin_right + vector(self.m3_pitch,0)
-            pin_extension2 = pin_extension1 + vertical_extension
+            pin_extension = pin_right + vector(self.m3_pitch,0)
+
             if pin.layer != "metal1":
                 continue
-            self.add_path("metal1", [pin_right, pin_extension1, pin_extension2])
-            self.add_power_pin("gnd", pin_extension2)
+            self.add_path("metal1", [pin_right, pin_extension])
+            self.add_power_pin("gnd", pin_extension)
             
             # for multiport, need to short wordlines to each other so they all connect to gnd 
             wl_last = self.wl_list[self.total_ports-1]+"_{}".format(row)
@@ -280,7 +274,7 @@ class replica_bitline(design.design):
         # DRAIN ROUTE
         # Route the drain to the vdd rail
         drain_offset = self.tx_inst.get_pin("D").center()
-        self.add_power_pin("vdd", drain_offset)
+        self.add_power_pin("vdd", drain_offset, rotate=0)
         
         # SOURCE ROUTE
         # Route the drain to the RBL inverter input 

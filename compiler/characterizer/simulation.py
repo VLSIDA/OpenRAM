@@ -198,3 +198,24 @@ class simulation():
             self.add_data(data,port)
         self.add_address(address, port)
         
+    def cycle_comment(self, op, word, addr, port, t_current):
+        if op == "noop":
+            comment = "\tIdle during cycle {0} ({1}ns - {2}ns)".format(int(t_current/self.period),
+                                                                     t_current,
+                                                                     t_current+self.period)
+        elif op == "write":
+            comment = "\tWriting {0}  to  address {1} (from port {2}) during cylce {3} ({4}ns - {5}ns)".format(word,
+                                                                                                           addr,
+                                                                                                           port,
+                                                                                                           int(t_current/self.period),
+                                                                                                           t_current,
+                                                                                                           t_current+self.period)
+        else:
+            comment = "\tReading {0} from address {1} (from port {2}) during cylce {3} ({4}ns - {5}ns)".format(word,
+                                                                                                           addr,
+                                                                                                           port,
+                                                                                                           int(t_current/self.period),
+                                                                                                           t_current,
+                                                                                                           t_current+self.period)
+        return comment
+        

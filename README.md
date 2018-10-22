@@ -7,9 +7,9 @@ https://github.com/mguthaus/OpenRAM/blob/master/OpenRAM_ICCAD_2016_presentation.
 The OpenRAM compiler has very few dependencies:
 * ngspice-26 (or later) or HSpice I-2013.12-1 (or later) or CustomSim 2017 (or later)
 * Python 3.5 and higher
-* Python numpy (pip3 install numpy)
-* flask_table (pip3 install flask)
-* a setup script for each technology
+* Python numpy (pip3 install numpy to install)
+* flask_table (pip3 install flask to install)
+* a setup script for each technology you want to use
 * a technology directory for each technology with the base cells
 
 If you want to perform DRC and LVS, you will need either:
@@ -21,13 +21,13 @@ the compiler source directory. OPENERAM_TECH should point to a root
 technology directory that contains subdirs of all other technologies.
 For example, in bash, add to your .bashrc:
 ```
-  export OPENRAM_HOME="$HOME/OpenRAM/compiler"
-  export OPENRAM_TECH="$HOME/OpenRAM/technology"
+  export OPENRAM_HOME="$HOME/openram/compiler"
+  export OPENRAM_TECH="$HOME/openram/technology"
 ```
 For example, in csh/tcsh, add to your .cshrc/.tcshrc:
 ```
-  setenv OPENRAM_HOME "$HOME/OpenRAM/compiler"
-  setenv OPENRAM_TECH "$HOME/OpenRAM/technology"
+  setenv OPENRAM_HOME "$HOME/openram/compiler"
+  setenv OPENRAM_TECH "$HOME/openram/technology"
 ```
 
 We include the tech files necessary for FreePDK and SCMOS. The SCMOS
@@ -57,17 +57,19 @@ We have included the SCN4M design rules from QFlow:
 * compiler - openram compiler itself (pointed to by OPENRAM_HOME)
   * compiler/base - base data structure modules
   * compiler/pgates - parameterized cells (e.g. logic gates)
+  * compiler/bitcells - various bitcell styles
   * compiler/modules - high-level modules (e.g. decoders, etc.)
-  * compiler/verify - DRC and LVS verification wrappers  
+  * compiler/verify - DRC and LVS verification wrappers
   * compiler/characterizer - timing characterization code
   * compiler/gdsMill - GDSII reader/writer
-  * compiler/router - detailed router
+  * compiler/router - router for signals and power supplies
   * compiler/tests - unit tests
 * technology - openram technology directory (pointed to by OPENRAM_TECH)
   * technology/freepdk45 - example configuration library for freepdk45 technology node
   * technology/scn4m_subm - example configuration library SCMOS technology node
+  * technology/scn3me_subm - unsupported configuration (not enough metal layers)
   * technology/setup_scripts - setup scripts to customize your PDKs and OpenRAM technologies
-* docs - LaTeX manual (likely outdated)
+* docs - LaTeX manual (outdated)
 * lib - IP library of pregenerated memories
 
 

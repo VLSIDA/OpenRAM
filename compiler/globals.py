@@ -100,9 +100,17 @@ def check_versions():
     minor_required = 5
     if not (major_python_version == major_required and minor_python_version >= minor_required):
         debug.error("Python {0}.{1} or greater is required.".format(major_required,minor_required),-1)
-
+ 
     # FIXME: Check versions of other tools here??
     # or, this could be done in each module (e.g. verify, characterizer, etc.)
+    global OPTS
+
+    try:
+        import flask_table
+        OPTS.datasheet_gen = 1
+    except:
+        OPTS.datasheet_gen = 0
+
 
 def init_openram(config_file, is_unit_test=True):
     """Initialize the technology, paths, simulators, etc."""
@@ -287,7 +295,8 @@ def setup_paths():
 
     # Add all of the subdirs to the python path
     # These subdirs are modules and don't need to be added: characterizer, verify
-    for subdir in ["gdsMill", "tests", "modules", "base", "pgates"]:
+    subdirlist = [ item for item in os.listdir(OPENRAM_HOME) if os.path.isdir(os.path.join(OPENRAM_HOME, item)) ]
+    for subdir in subdirlist:
         full_path = "{0}/{1}".format(OPENRAM_HOME,subdir)
         debug.check(os.path.isdir(full_path),
                     "$OPENRAM_HOME/{0} does not exist: {1}".format(subdir,full_path))

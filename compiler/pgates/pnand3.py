@@ -25,8 +25,8 @@ class pnand3(pgate.pgate):
         # If we relax this, we could size this better.
         self.nmos_size = 2*size
         self.pmos_size = parameter["beta"]*size
-        self.nmos_width = self.nmos_size*drc["minwidth_tx"]
-        self.pmos_width = self.pmos_size*drc["minwidth_tx"]
+        self.nmos_width = self.nmos_size*drc("minwidth_tx")
+        self.pmos_width = self.pmos_size*drc("minwidth_tx")
 
         # FIXME: Allow these to be sized
         debug.check(size==1,"Size 1 pnand3 is only supported now.")
@@ -83,7 +83,7 @@ class pnand3(pgate.pgate):
         # Two PMOS devices and a well contact. Separation between each.
         # Enclosure space on the sides.
         self.well_width = 3*self.pmos.active_width + self.pmos.active_contact.width \
-                          + 2*drc["active_to_body_active"] + 2*drc["well_enclosure_active"] \
+                          + 2*drc("active_to_body_active") + 2*drc("well_enclosure_active") \
                           - self.overlap_offset.x
         self.width = self.well_width
         # Height is an input parameter, so it is not recomputed.
@@ -96,7 +96,7 @@ class pnand3(pgate.pgate):
         extra_contact_space = max(-nmos.get_pin("D").by(),0)
         # This is a poly-to-poly of a flipped cell
         self.top_bottom_space = max(0.5*self.m1_width + self.m1_space + extra_contact_space, 
-                                    drc["poly_extend_active"], self.poly_space)
+                                    drc("poly_extend_active"), self.poly_space)
         
     def route_supply_rails(self):
         """ Add vdd/gnd rails to the top and bottom. """
@@ -191,7 +191,7 @@ class pnand3(pgate.pgate):
         metal_spacing = max(self.m1_space + self.m1_width, self.m2_space + self.m2_width,
                             self.m1_space + 0.5*contact.poly.width + 0.5*self.m1_width)
 
-        active_spacing = max(self.m1_space, 0.5*contact.poly.first_layer_width + drc["poly_to_active"])
+        active_spacing = max(self.m1_space, 0.5*contact.poly.first_layer_width + drc("poly_to_active"))
         inputC_yoffset = self.nmos3_pos.y + self.nmos.active_height + active_spacing
         self.route_input_gate(self.pmos3_inst, self.nmos3_inst, inputC_yoffset, "C", position="center")
 

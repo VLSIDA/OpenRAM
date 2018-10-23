@@ -1,7 +1,7 @@
 import contact
 import pgate
 import debug
-from tech import drc, parameter, spice, info
+from tech import drc, parameter, spice
 from ptx import ptx
 from vector import vector
 from math import ceil
@@ -76,8 +76,8 @@ class pinv(pgate.pgate):
         # This may make the result differ when the layout is created...
         if OPTS.netlist_only:
             self.tx_mults = 1
-            self.nmos_width = self.nmos_size*drc["minwidth_tx"]
-            self.pmos_width = self.pmos_size*drc["minwidth_tx"]
+            self.nmos_width = self.nmos_size*drc("minwidth_tx")
+            self.pmos_width = self.pmos_size*drc("minwidth_tx")
             return
         
         # Do a quick sanity check and bail if unlikely feasible height
@@ -85,16 +85,16 @@ class pinv(pgate.pgate):
         # Assume we need 3 metal 1 pitches (2 power rails, one between the tx for the drain)
         # plus the tx height
         nmos = ptx(tx_type="nmos")
-        pmos = ptx(width=drc["minwidth_tx"], tx_type="pmos")
+        pmos = ptx(width=drc("minwidth_tx"), tx_type="pmos")
         tx_height = nmos.poly_height + pmos.poly_height
         # rotated m1 pitch or poly to active spacing
         min_channel = max(contact.poly.width + self.m1_space,
-                          contact.poly.width + 2*drc["poly_to_active"])
+                          contact.poly.width + 2*drc("poly_to_active"))
         # This is the extra space needed to ensure DRC rules to the active contacts
         extra_contact_space = max(-nmos.get_pin("D").by(),0)
         # This is a poly-to-poly of a flipped cell
         self.top_bottom_space = max(0.5*self.m1_width + self.m1_space + extra_contact_space, 
-                                    drc["poly_extend_active"], self.poly_space)
+                                    drc("poly_extend_active"), self.poly_space)
         total_height = tx_height + min_channel + 2*self.top_bottom_space
         debug.check(self.height> total_height,"Cell height {0} too small for simple min height {1}.".format(self.height,total_height))
 
@@ -103,16 +103,16 @@ class pinv(pgate.pgate):
         # Divide the height in half. Could divide proportional to beta, but this makes
         # connecting wells of multiple cells easier.
         # Subtract the poly space under the rail of the tx
-        nmos_height_available = 0.5 * tx_height_available - 0.5*drc["poly_to_poly"]
-        pmos_height_available = 0.5 * tx_height_available - 0.5*drc["poly_to_poly"]
+        nmos_height_available = 0.5 * tx_height_available - 0.5*drc("poly_to_poly")
+        pmos_height_available = 0.5 * tx_height_available - 0.5*drc("poly_to_poly")
 
         debug.info(2,"Height avail {0:.4f} PMOS {1:.4f} NMOS {2:.4f}".format(tx_height_available,
                                                                              nmos_height_available,
                                                                              pmos_height_available))
 
         # Determine the number of mults for each to fit width into available space
-        self.nmos_width = self.nmos_size*drc["minwidth_tx"]
-        self.pmos_width = self.pmos_size*drc["minwidth_tx"]
+        self.nmos_width = self.nmos_size*drc("minwidth_tx")
+        self.pmos_width = self.pmos_size*drc("minwidth_tx")
         nmos_required_mults = max(int(ceil(self.nmos_width/nmos_height_available)),1)
         pmos_required_mults = max(int(ceil(self.pmos_width/pmos_height_available)),1)
         # The mults must be the same for easy connection of poly
@@ -124,9 +124,9 @@ class pinv(pgate.pgate):
         # We also need to round the width to the grid or we will end up with LVS property
         # mismatch errors when fingers are not a grid length and get rounded in the offset geometry.
         self.nmos_width = round_to_grid(self.nmos_width / self.tx_mults)
-        debug.check(self.nmos_width>=drc["minwidth_tx"],"Cannot finger NMOS transistors to fit cell height.")
+        debug.check(self.nmos_width>=drc("minwidth_tx"),"Cannot finger NMOS transistors to fit cell height.")
         self.pmos_width = round_to_grid(self.pmos_width / self.tx_mults)
-        debug.check(self.pmos_width>=drc["minwidth_tx"],"Cannot finger PMOS transistors to fit cell height.")
+        debug.check(self.pmos_width>=drc("minwidth_tx"),"Cannot finger PMOS transistors to fit cell height.")
         
 
     def setup_layout_constants(self):
@@ -137,7 +137,7 @@ class pinv(pgate.pgate):
         # the well width is determined the multi-finger PMOS device width plus
         # the well contact width and half well enclosure on both sides
         self.well_width = self.pmos.active_width + self.pmos.active_contact.width \
-                          + drc["active_to_body_active"] + 2*drc["well_enclosure_active"]
+                          + drc("active_to_body_active") + 2*drc("well_enclosure_active")
         self.width = self.well_width
         # Height is an input parameter, so it is not recomputed. 
         

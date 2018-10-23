@@ -84,31 +84,31 @@ class dff_buf_array(design.design):
                 
     def get_din_name(self, row, col):
         if self.columns == 1:
-            din_name = "din[{0}]".format(row)
+            din_name = "din_{0}".format(row)
         elif self.rows == 1:
-            din_name = "din[{0}]".format(col)
+            din_name = "din_{0}".format(col)
         else:
-            din_name = "din[{0}][{1}]".format(row,col)
+            din_name = "din_{0}_{1}".format(row,col)
 
         return din_name
     
     def get_dout_name(self, row, col):
         if self.columns == 1:
-            dout_name = "dout[{0}]".format(row)
+            dout_name = "dout_{0}".format(row)
         elif self.rows == 1:
-            dout_name = "dout[{0}]".format(col)
+            dout_name = "dout_{0}".format(col)
         else:
-            dout_name = "dout[{0}][{1}]".format(row,col)
+            dout_name = "dout_{0}_{1}".format(row,col)
 
         return dout_name
     
     def get_dout_bar_name(self, row, col):
         if self.columns == 1:
-            dout_bar_name = "dout_bar[{0}]".format(row)
+            dout_bar_name = "dout_bar_{0}".format(row)
         elif self.rows == 1:
-            dout_bar_name = "dout_bar[{0}]".format(col)
+            dout_bar_name = "dout_bar_{0}".format(col)
         else:
-            dout_bar_name = "dout_bar[{0}][{1}]".format(row,col)
+            dout_bar_name = "dout_bar_{0}_{1}".format(row,col)
 
         return dout_bar_name
     
@@ -153,6 +153,7 @@ class dff_buf_array(design.design):
                 
         # Create vertical spines to a single horizontal rail
         clk_pin = self.dff_insts[0,0].get_pin("clk")
+        clk_ypos = 2*self.m3_pitch+self.m3_width
         debug.check(clk_pin.layer=="metal2","DFF clk pin not on metal2")
         if self.columns==1:
             self.add_layout_pin(text="clk",
@@ -163,8 +164,8 @@ class dff_buf_array(design.design):
         else:
             self.add_layout_pin_segment_center(text="clk",
                                             layer="metal3",
-                                            start=vector(0,self.m3_pitch+self.m3_width),
-                                            end=vector(self.width,self.m3_pitch+self.m3_width))
+                                            start=vector(0,clk_ypos),
+                                            end=vector(self.width,clk_ypos))
             for col in range(self.columns):
                 clk_pin = self.dff_insts[0,col].get_pin("clk")
 
@@ -175,7 +176,7 @@ class dff_buf_array(design.design):
                               height=self.height)
                 # Drop a via to the M3 pin
                 self.add_via_center(layers=("metal2","via2","metal3"),
-                                    offset=vector(clk_pin.cx(),self.m3_pitch+self.m3_width))
+                                    offset=vector(clk_pin.cx(),clk_ypos))
                 
         
 

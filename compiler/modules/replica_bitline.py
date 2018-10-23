@@ -76,7 +76,6 @@ class replica_bitline(design.design):
         self.access_tx_offset = vector(-gap_width-self.access_tx.width-self.inv.width, 0.5*self.inv.height)
 
 
-
     def add_modules(self):
         """ Add the modules for later usage """
 
@@ -111,12 +110,12 @@ class replica_bitline(design.design):
         # This is the threshold detect inverter on the output of the RBL
         self.rbl_inv_inst=self.add_inst(name="rbl_inv",
                                         mod=self.inv)
-        self.connect_inst(["bl0[0]", "out", "vdd", "gnd"])
+        self.connect_inst(["bl0_0", "out", "vdd", "gnd"])
 
         self.tx_inst=self.add_inst(name="rbl_access_tx",
                                    mod=self.access_tx)
         # D, G, S, B
-        self.connect_inst(["vdd", "delayed_en", "bl0[0]", "vdd"])
+        self.connect_inst(["vdd", "delayed_en", "bl0_0", "vdd"])
         # add the well and poly contact
 
         self.dc_inst=self.add_inst(name="delay_chain",
@@ -127,22 +126,22 @@ class replica_bitline(design.design):
                                     mod=self.replica_bitcell)
         temp = []
         for port in range(self.total_ports):
-            temp.append("bl{}[0]".format(port))
-            temp.append("br{}[0]".format(port))
+            temp.append("bl{}_0".format(port))
+            temp.append("br{}_0".format(port))
         for port in range(self.total_ports):
             temp.append("delayed_en")
         temp.append("vdd")
         temp.append("gnd")
         self.connect_inst(temp)
-        #self.connect_inst(["bl[0]", "br[0]", "delayed_en", "vdd", "gnd"])
+        #self.connect_inst(["bl_0", "br_0", "delayed_en", "vdd", "gnd"])
 
         self.rbl_inst=self.add_inst(name="load",
                                     mod=self.rbl)
         
         temp = []
         for port in range(self.total_ports):
-            temp.append("bl{}[0]".format(port))
-            temp.append("br{}[0]".format(port))
+            temp.append("bl{}_0".format(port))
+            temp.append("br{}_0".format(port))
         for wl in range(self.bitcell_loads):
             for port in range(self.total_ports):
                 temp.append("gnd")
@@ -180,29 +179,24 @@ class replica_bitline(design.design):
         """ Connect the RBL word lines to gnd """
         # Connect the WL and gnd pins directly to the center and right gnd rails
         for row in range(self.bitcell_loads):
-            wl = self.wl_list[0]+"[{}]".format(row)
+            wl = self.wl_list[0]+"_{}".format(row)
             pin = self.rbl_inst.get_pin(wl)
 
             # Route the connection to the right so that it doesn't interfere with the cells
-            # Wordlines may be close to each other when tiled, so gnd connections are routed in opposite directions
-            if row % 2 == 0:
-                vertical_extension = vector(0, 1.5*drc["minwidth_metal1"] + 0.5*contact.m1m2.height)
-            else:
-                vertical_extension = vector(0, -1.5*drc["minwidth_metal1"] - 1.5*contact.m1m2.height)
-            
+            # Wordlines may be close to each other when tiled, so gnd connections are routed in opposite directions            
             pin_right = pin.rc()
-            pin_extension1 = pin_right + vector(self.m3_pitch,0)
-            pin_extension2 = pin_extension1 + vertical_extension
+            pin_extension = pin_right + vector(self.m3_pitch,0)
+
             if pin.layer != "metal1":
                 continue
-            self.add_path("metal1", [pin_right, pin_extension1, pin_extension2])
-            self.add_power_pin("gnd", pin_extension2)
+            self.add_path("metal1", [pin_right, pin_extension])
+            self.add_power_pin("gnd", pin_extension)
             
             # for multiport, need to short wordlines to each other so they all connect to gnd 
-            wl_last = self.wl_list[self.total_ports-1]+"[{}]".format(row)
+            wl_last = self.wl_list[self.total_ports-1]+"_{}".format(row)
             pin_last = self.rbl_inst.get_pin(wl_last)
             
-            correct = vector(0.5*drc["minwidth_metal1"], 0)
+            correct = vector(0.5*drc("minwidth_metal1"), 0)
             self.add_path("metal1", [pin.rc()-correct, pin_last.rc()-correct])
         
     def route_supplies(self):
@@ -261,7 +255,7 @@ class replica_bitline(design.design):
         # 3. Route the contact of previous route to the bitcell WL
         # route bend of previous net to bitcell WL
         wl_offset = self.rbc_inst.get_pin(self.wl_list[0]).lc()
-        wl_mid1 = wl_offset - vector(1.5*drc["minwidth_metal1"], 0)
+        wl_mid1 = wl_offset - vector(1.5*drc("minwidth_metal1"), 0)
         wl_mid2 = vector(wl_mid1.x, contact_offset.y)
         #xmid_point= 0.5*(wl_offset.x+contact_offset.x)
         #wl_mid1 = vector(xmid_point,contact_offset.y)
@@ -274,13 +268,13 @@ class replica_bitline(design.design):
         pin = self.rbc_inst.get_pin(wl)
         pin_last = self.rbc_inst.get_pin(wl_last)
         
-        correct = vector(0.5*drc["minwidth_metal1"], 0)
+        correct = vector(0.5*drc("minwidth_metal1"), 0)
         self.add_path("metal1", [pin.lc()+correct, pin_last.lc()+correct])
 
         # DRAIN ROUTE
         # Route the drain to the vdd rail
         drain_offset = self.tx_inst.get_pin("D").center()
-        self.add_power_pin("vdd", drain_offset)
+        self.add_power_pin("vdd", drain_offset, rotate=0)
         
         # SOURCE ROUTE
         # Route the drain to the RBL inverter input 
@@ -414,7 +408,7 @@ class replica_bitline(design.design):
         
         # Connect the WL and gnd pins directly to the center and right gnd rails
         for row in range(self.bitcell_loads):
-            wl = self.wl_list[0]+"[{}]".format(row)
+            wl = self.wl_list[0]+"_{}".format(row)
             pin = self.rbl_inst.get_pin(wl)
             if pin.layer != "metal1":
                 continue

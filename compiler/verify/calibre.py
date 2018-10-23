@@ -70,7 +70,7 @@ num_drc_runs = 0
 num_lvs_runs = 0
 num_pex_runs = 0
 
-def run_drc(cell_name, gds_name):
+def run_drc(cell_name, gds_name, extract=False, final_verification=False):
     """Run DRC check on a given top-level name which is
        implemented in gds_name."""
     
@@ -175,18 +175,21 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
         'cmnFDIUseLayerMap': 1,
         'cmnTranscriptFile': './lvs.log',
         'cmnTranscriptEchoToFile': 1,
-        'lvsRecognizeGates': 'NONE',
-        # FIXME: Remove when vdd/gnd connected
-        'cmnVConnectNamesState' : 'ALL', #connects all nets with the same namee
-        # FIXME: Remove when vdd/gnd connected        
-        'lvsAbortOnSupplyError' : 0
+        'lvsRecognizeGates': 'NONE',        
     }
+        # FIXME: Remove when vdd/gnd connected
+        #'cmnVConnectNamesState' : 'ALL', #connects all nets with the same namee
+        # FIXME: Remove when vdd/gnd connected        
+        #'lvsAbortOnSupplyError' : 0
 
     # This should be removed for final verification
     if not final_verification:
         lvs_runset['cmnVConnectReport']=1
         lvs_runset['cmnVConnectNamesState']='SOME'
         lvs_runset['cmnVConnectNames']='vdd gnd'
+    else:
+        lvs_runset['lvsAbortOnSupplyError']=1
+        
 
 
     # write the runset file

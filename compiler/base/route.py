@@ -10,15 +10,17 @@ class route(design):
     """ 
     Object route (used by the router module)
     Add a route of minimium metal width between a set of points.
+    The widths are the layer widths of the layer stack. 
+    (Vias are in numer of vias.)
     The wire must be completely rectilinear and the 
-    z-dimension of the points refers to the layers (plus via)
+    z-dimension of the points refers to the layers.
     The points are the center of the wire.
     This can have non-preferred direction routing.
     """
 
     unique_route_id = 0
 
-    def __init__(self, obj, layer_stack, path):
+    def __init__(self, obj, layer_stack, path, layer_widths=[None,1,None]):
         name = "route_{0}".format(route.unique_route_id)
         route.unique_route_id += 1
         design.__init__(self, name)
@@ -26,6 +28,7 @@ class route(design):
 
         self.obj = obj
         self.layer_stack = layer_stack
+        self.layer_widths = layer_widths
         self.path = path
 
         self.setup_layers()
@@ -33,16 +36,16 @@ class route(design):
 
 
     def setup_layers(self):
-        (horiz_layer, via_layer, vert_layer) = self.layer_stack
-        self.via_layer_name = via_layer
-
-        self.vert_layer_name = vert_layer
-        self.vert_layer_width = drc["minwidth_{0}".format(vert_layer)]
-
-        self.horiz_layer_name = horiz_layer
-        self.horiz_layer_width = drc["minwidth_{0}".format(horiz_layer)]
+        (self.horiz_layer_name, self.via_layer, self.vert_layer_name) = self.layer_stack
+        (self.horiz_layer_width, self.num_vias, self.vert_layer_width) = self.layer_widths
+        
+        if not self.vert_layer_width:
+            self.vert_layer_width = drc("minwidth_{0}".format(self.vert_layer_name))
+        if not self.horiz_layer_width:
+            self.horiz_layer_width = drc("minwidth_{0}".format(self.horiz_layer_name))
+        
         # offset this by 1/2 the via size
-        self.c=contact(self.layer_stack, (1, 1))
+        self.c=contact(self.layer_stack, (self.num_vias, self.num_vias))
 
 
     def create_wires(self):
@@ -63,7 +66,8 @@ class route(design):
                 #via_offset = vector(p0.x+0.5*self.c.width,p0.y+0.5*self.c.height)
                 # offset if rotated
                 via_offset = vector(p0.x+0.5*self.c.height,p0.y-0.5*self.c.width)
-                self.obj.add_via(self.layer_stack,via_offset,rotate=90)
+                via_size = [self.num_vias]*2
+                self.obj.add_via(self.layer_stack,via_offset,size=via_size,rotate=90)
             elif p0.x != p1.x and p0.y != p1.y: # diagonal!
                 debug.error("Non-changing direction!")
             else:
@@ -79,14 +83,36 @@ class route(design):
         self.draw_corner_wire(plist[-1][1])
 
                 
-        
+    def get_layer_width(self, layer_zindex):
+        """
+        Return the layer width 
+        """
+        if layer_zindex==0:
+            return self.horiz_layer_width
+        elif layer_zindex==1:
+            return self.vert_layer_width
+        else:
+            debug.error("Incorrect layer zindex.",-1)
+
+    def get_layer_name(self, layer_zindex):
+        """
+        Return the layer name
+        """
+        if layer_zindex==0:
+            return self.horiz_layer_name
+        elif layer_zindex==1:
+            return self.vert_layer_name
+        else:
+            debug.error("Incorrect layer zindex.",-1)
+            
 
     def draw_wire(self, p0, p1):
         """
         This draws a straight wire with layer_minwidth 
         """
-        layer_name = self.layer_stack[2*p0.z]
-        layer_width = drc["minwidth_{0}".format(layer_name)]
+
+        layer_width = self.get_layer_width(p0.z)
+        layer_name = self.get_layer_name(p0.z)
 
         # always route left to right or bottom to top
         if p0.z != p1.z:
@@ -120,8 +146,8 @@ class route(design):
         """ This function adds the corner squares since the center
         line convention only draws to the center of the corner."""
 
-        layer_name = self.layer_stack[2*p0.z]
-        layer_width = drc["minwidth_{0}".format(layer_name)]
+        layer_width = self.get_layer_width(p0.z)
+        layer_name = self.get_layer_name(p0.z)
         offset = vector(p0.x-0.5*layer_width,p0.y-0.5*layer_width)
         self.obj.add_rect(layer=layer_name,
                           offset=offset,

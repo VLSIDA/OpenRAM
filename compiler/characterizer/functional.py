@@ -56,14 +56,14 @@ class functional(simulation):
         check = 0
         
         # First cycle idle
-        self.add_noop_all_ports("Idle at time {0}n".format(self.t_current),
-                                "0"*self.addr_size, "0"*self.word_size)
+        debug_comment = self.cycle_comment("noop", "0"*self.word_size, "0"*self.addr_size, 0, self.t_current)
+        self.add_noop_all_ports(debug_comment, "0"*self.addr_size, "0"*self.word_size)
         
         # Write at least once
         addr = self.gen_addr()
         word = self.gen_data()
-        self.add_write("Writing {0} to address {1} (from port {2}) at time {3}n".format(word, addr, 0, self.t_current),
-                       addr, word, 0)
+        debug_comment = self.cycle_comment("write", word, addr, 0, self.t_current)
+        self.add_write(debug_comment, addr, word, 0)
         self.stored_words[addr] = word
         
         # Read at least once. For multiport, it is important that one read cycle uses all RW and R port to read from the same address simultaniously.
@@ -72,8 +72,8 @@ class functional(simulation):
             if self.port_id[port] == "w":
                 self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, port)
             else:
-                self.add_read_one_port("Reading {0} from address {1} (from port {2}) at time {3}n".format(word, addr, port, self.t_current),
-                                       addr, rw_read_data, port)
+                debug_comment = self.cycle_comment("read", word, addr, port, self.t_current)
+                self.add_read_one_port(debug_comment, addr, rw_read_data, port)
                 self.write_check.append([word, "{0}{1}".format(self.dout_name,port), self.t_current+self.period, check])
                 check += 1
         self.cycle_times.append(self.t_current)
@@ -101,8 +101,8 @@ class functional(simulation):
                     if addr in w_addrs:
                         self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, port)
                     else:
-                        self.add_write_one_port("Writing {0} to address {1} (from port {2}) at time {3}n".format(word, addr, port, self.t_current),
-                                                addr, word, port)
+                        debug_comment = self.cycle_comment("write", word, addr, port, self.t_current)
+                        self.add_write_one_port(debug_comment, addr, word, port)
                         self.stored_words[addr] = word
                         w_addrs.append(addr)
                 else:
@@ -111,8 +111,8 @@ class functional(simulation):
                     if addr in w_addrs:
                         self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, port)
                     else:
-                        self.add_read_one_port("Reading {0} from address {1} (from port {2}) at time {3}n".format(word, addr, port, self.t_current),
-                                                addr, rw_read_data, port)
+                        debug_comment = self.cycle_comment("read", word, addr, port, self.t_current)
+                        self.add_read_one_port(debug_comment, addr, rw_read_data, port)
                         self.write_check.append([word, "{0}{1}".format(self.dout_name,port), self.t_current+self.period, check])
                         check += 1
                 
@@ -120,8 +120,8 @@ class functional(simulation):
             self.t_current += self.period
         
         # Last cycle idle needed to correctly measure the value on the second to last clock edge
-        self.add_noop_all_ports("Idle at time {0}n".format(self.t_current),
-                                "0"*self.addr_size, "0"*self.word_size)
+        debug_comment = self.cycle_comment("noop", "0"*self.word_size, "0"*self.addr_size, 0, self.t_current)
+        self.add_noop_all_ports(debug_comment, "0"*self.addr_size, "0"*self.word_size)
             
     def read_stim_results(self):
         # Extrat DOUT values from spice timing.lis
@@ -148,10 +148,11 @@ class functional(simulation):
     def check_stim_results(self):
         for i in range(len(self.write_check)):
             if self.write_check[i][0] != self.read_check[i][0]:
-                error = "FAILED: {0} value {1} does not match written value {2} read at time {3}n".format(self.read_check[i][1],
-                                                                                                          self.read_check[i][0],
-                                                                                                          self.write_check[i][0],
-                                                                                                          self.read_check[i][2])
+                error = "FAILED: {0} value {1} does not match written value {2} read during cycle {3} at time {4}n".format(self.read_check[i][1],
+                                                                                                                           self.read_check[i][0],
+                                                                                                                           self.write_check[i][0],
+                                                                                                                           int((self.read_check[i][2]-self.period)/self.period),
+                                                                                                                           self.read_check[i][2])
                 return(0, error)
         return(1, "SUCCESS")
         

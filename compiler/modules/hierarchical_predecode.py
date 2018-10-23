@@ -25,9 +25,9 @@ class hierarchical_predecode(design.design):
     
     def add_pins(self):
         for k in range(self.number_of_inputs):
-            self.add_pin("in[{0}]".format(k))
+            self.add_pin("in_{0}".format(k))
         for i in range(self.number_of_outputs):
-            self.add_pin("out[{0}]".format(i))
+            self.add_pin("out_{0}".format(i))
         self.add_pin("vdd")
         self.add_pin("gnd")
 
@@ -67,7 +67,7 @@ class hierarchical_predecode(design.design):
 
     def route_rails(self):
         """ Create all of the rails for the inputs and vdd/gnd/inputs_bar/inputs """
-        input_names = ["in[{}]".format(x) for x in range(self.number_of_inputs)]
+        input_names = ["in_{}".format(x) for x in range(self.number_of_inputs)]
         offset = vector(0.5*self.m2_width,2*self.m1_width)
         self.input_rails = self.create_vertical_pin_bus(layer="metal2",
                                                         pitch=self.m2_pitch,
@@ -75,8 +75,8 @@ class hierarchical_predecode(design.design):
                                                         names=input_names,
                                                         length=self.height - 2*self.m1_width)
 
-        invert_names = ["Abar[{}]".format(x) for x in range(self.number_of_inputs)]
-        non_invert_names = ["A[{}]".format(x) for x in range(self.number_of_inputs)]
+        invert_names = ["Abar_{}".format(x) for x in range(self.number_of_inputs)]
+        non_invert_names = ["A_{}".format(x) for x in range(self.number_of_inputs)]
         decode_names = invert_names + non_invert_names
         offset = vector(self.x_off_inv_1 + self.inv.width + 2*self.m2_pitch, 2*self.m1_width)
         self.decode_rails = self.create_vertical_bus(layer="metal2",
@@ -90,11 +90,11 @@ class hierarchical_predecode(design.design):
         """ Create the input inverters to invert input signals for the decode stage. """
         self.in_inst = []
         for inv_num in range(self.number_of_inputs):
-            name = "Xpre_inv[{0}]".format(inv_num)
+            name = "Xpre_inv_{0}".format(inv_num)
             self.in_inst.append(self.add_inst(name=name,
                                               mod=self.inv))
-            self.connect_inst(["in[{0}]".format(inv_num),
-                               "inbar[{0}]".format(inv_num),
+            self.connect_inst(["in_{0}".format(inv_num),
+                               "inbar_{0}".format(inv_num),
                                "vdd", "gnd"])
 
     def place_input_inverters(self):
@@ -114,11 +114,11 @@ class hierarchical_predecode(design.design):
         """ Create inverters for the inverted output decode signals. """
         self.inv_inst = []
         for inv_num in range(self.number_of_outputs):
-            name = "Xpre_nand_inv[{}]".format(inv_num)
+            name = "Xpre_nand_inv_{}".format(inv_num)
             self.inv_inst.append(self.add_inst(name=name,
                                                mod=self.inv))
-            self.connect_inst(["Z[{}]".format(inv_num),
-                               "out[{}]".format(inv_num),
+            self.connect_inst(["Z_{}".format(inv_num),
+                               "out_{}".format(inv_num),
                                "vdd", "gnd"])
 
 
@@ -140,7 +140,7 @@ class hierarchical_predecode(design.design):
         self.nand_inst = []        
         for nand_input in range(self.number_of_outputs):
             inout = str(self.number_of_inputs)+"x"+str(self.number_of_outputs)
-            name = "Xpre{0}_nand[{1}]".format(inout,nand_input)
+            name = "Xpre{0}_nand_{1}".format(inout,nand_input)
             self.nand_inst.append(self.add_inst(name=name,
                                                 mod=self.nand))
             self.connect_inst(connections[nand_input])
@@ -175,8 +175,8 @@ class hierarchical_predecode(design.design):
             # typically where the p/n devices are and there are no
             # pins in the nand gates. 
             y_offset = (num+self.number_of_inputs) * self.inv.height + contact.m1m2.width + self.m1_space
-            in_pin = "in[{}]".format(num)            
-            a_pin = "A[{}]".format(num)
+            in_pin = "in_{}".format(num)            
+            a_pin = "A_{}".format(num)
             in_pos = vector(self.input_rails[in_pin].x,y_offset)
             a_pos = vector(self.decode_rails[a_pin].x,y_offset)            
             self.add_path("metal1",[in_pos, a_pos])
@@ -202,7 +202,7 @@ class hierarchical_predecode(design.design):
             self.add_path("metal1", [zr_pos, mid1_pos, mid2_pos, al_pos])
 
             z_pin = self.inv_inst[num].get_pin("Z")
-            self.add_layout_pin(text="out[{}]".format(num),
+            self.add_layout_pin(text="out_{}".format(num),
                                 layer="metal1",
                                 offset=z_pin.ll(),
                                 height=z_pin.height(),
@@ -214,8 +214,8 @@ class hierarchical_predecode(design.design):
         Route all conections of the inputs inverters [Inputs, outputs, vdd, gnd] 
         """
         for inv_num in range(self.number_of_inputs):
-            out_pin = "Abar[{}]".format(inv_num)
-            in_pin = "in[{}]".format(inv_num)
+            out_pin = "Abar_{}".format(inv_num)
+            in_pin = "in_{}".format(inv_num)
             
             #add output so that it is just below the vdd or gnd rail
             # since this is where the p/n devices are and there are no
@@ -282,15 +282,7 @@ class hierarchical_predecode(design.design):
                 # Add pins in two locations
                 for xoffset in [in_xoffset, out_xoffset]:
                     pin_pos = vector(xoffset, nand_pin.cy())
-                    self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                        offset=pin_pos,
-                                        rotate=90)
-                    self.add_via_center(layers=("metal2", "via2", "metal3"),
-                                        offset=pin_pos,
-                                        rotate=90)
-                    self.add_layout_pin_rect_center(text=n,
-                                                    layer="metal3",
-                                                    offset=pin_pos)
+                    self.add_power_pin(n, pin_pos)
             
 
 

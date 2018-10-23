@@ -29,24 +29,25 @@ class design(hierarchy_design):
     def setup_drc_constants(self):
         """ These are some DRC constants used in many places in the compiler."""
         from tech import drc
-        self.well_width = drc["minwidth_well"]
-        self.poly_width = drc["minwidth_poly"]
-        self.poly_space = drc["poly_to_poly"]        
-        self.m1_width = drc["minwidth_metal1"]
-        self.m1_space = drc["metal1_to_metal1"]        
-        self.m2_width = drc["minwidth_metal2"]
-        self.m2_space = drc["metal2_to_metal2"]        
-        self.m3_width = drc["minwidth_metal3"]
-        self.m3_space = drc["metal3_to_metal3"]
-        self.active_width = drc["minwidth_active"]
-        self.contact_width = drc["minwidth_contact"]
+        self.well_width = drc("minwidth_well")
+        self.poly_width = drc("minwidth_poly")
+        self.poly_space = drc("poly_to_poly")        
+        self.m1_width = drc("minwidth_metal1")
+        self.m1_space = drc("metal1_to_metal1")
+        self.m2_width = drc("minwidth_metal2")
+        self.m2_space = drc("metal2_to_metal2")        
+        self.m3_width = drc("minwidth_metal3")
+        self.m3_space = drc("metal3_to_metal3")
+        self.active_width = drc("minwidth_active")
+        self.contact_width = drc("minwidth_contact")
 
-        self.poly_to_active = drc["poly_to_active"]
-        self.poly_extend_active = drc["poly_extend_active"]
-        self.contact_to_gate = drc["contact_to_gate"]
-        self.well_enclose_active = drc["well_enclosure_active"]
-        self.implant_enclose_active = drc["implant_enclosure_active"]
-        self.implant_space = drc["implant_to_implant"]
+        self.poly_to_active = drc("poly_to_active")
+        self.poly_extend_active = drc("poly_extend_active")
+        self.poly_to_polycontact = drc("poly_to_polycontact")
+        self.contact_to_gate = drc("contact_to_gate")
+        self.well_enclose_active = drc("well_enclosure_active")
+        self.implant_enclose_active = drc("implant_enclosure_active")
+        self.implant_space = drc("implant_to_implant")
         
     def setup_multiport_constants(self):
         """ These are contants and lists that aid multiport design """
@@ -82,3 +83,14 @@ class design(hierarchy_design):
         for inst in self.insts:
             total_module_power += inst.mod.analytical_power(proc, vdd, temp, load)
         return total_module_power
+    
+    def __str__(self):
+        """ override print function output """
+        pins = ",".join(self.pins)
+        insts = ["    {}".format(x) for x in self.insts]
+        objs = ["    {}".format(x) for x in self.objs]  
+        s = "********** design {0} **********\n".format(self.name)
+        s += "\n  pins ({0})={1}\n".format(len(self.pins), pins)
+        s += "\n  objs ({0})=\n{1}".format(len(self.objs), "\n".join(objs))
+        s += "\n  insts ({0})=\n{1}\n".format(len(self.insts), "\n".join(insts))
+        return s

@@ -39,7 +39,7 @@ class bitcell_array(design.design):
     def create_layout(self):
 
         # We increase it by a well enclosure so the precharges don't overlap our wells
-        self.height = self.row_size*self.cell.height + drc["well_enclosure_active"] + self.m1_width
+        self.height = self.row_size*self.cell.height + drc("well_enclosure_active") + self.m1_width
         self.width = self.column_size*self.cell.width + self.m1_width
         
         xoffset = 0.0
@@ -69,10 +69,10 @@ class bitcell_array(design.design):
         column_list = self.cell.list_all_bitline_names()
         for col in range(self.column_size):
             for cell_column in column_list:
-                self.add_pin(cell_column+"[{0}]".format(col))
+                self.add_pin(cell_column+"_{0}".format(col))
         for row in range(self.row_size):
             for cell_row in row_list:
-                    self.add_pin(cell_row+"[{0}]".format(row))
+                    self.add_pin(cell_row+"_{0}".format(row))
         self.add_pin("vdd")
         self.add_pin("gnd")
 
@@ -105,7 +105,7 @@ class bitcell_array(design.design):
         for col in range(self.column_size):
             for cell_column in column_list:
                 bl_pin = self.cell_inst[0,col].get_pin(cell_column)
-                self.add_layout_pin(text=cell_column+"[{0}]".format(col),
+                self.add_layout_pin(text=cell_column+"_{0}".format(col),
                                     layer="metal2",
                                     offset=bl_pin.ll(),
                                     width=bl_pin.width(),
@@ -118,7 +118,7 @@ class bitcell_array(design.design):
         for row in range(self.row_size):
             for cell_row in row_list:
                 wl_pin = self.cell_inst[row,0].get_pin(cell_row)
-                self.add_layout_pin(text=cell_row+"[{0}]".format(row),
+                self.add_layout_pin(text=cell_row+"_{0}".format(row),
                                     layer="metal1",
                                     offset=wl_pin.ll(),
                                     width=self.width,
@@ -199,13 +199,13 @@ class bitcell_array(design.design):
         return total_power
 
     def gen_wl_wire(self):
-        wl_wire = self.generate_rc_net(int(self.column_size), self.width, drc["minwidth_metal1"])
+        wl_wire = self.generate_rc_net(int(self.column_size), self.width, drc("minwidth_metal1"))
         wl_wire.wire_c = 2*spice["min_tx_gate_c"] + wl_wire.wire_c # 2 access tx gate per cell
         return wl_wire
 
     def gen_bl_wire(self):
         bl_pos = 0
-        bl_wire = self.generate_rc_net(int(self.row_size-bl_pos), self.height, drc["minwidth_metal1"])
+        bl_wire = self.generate_rc_net(int(self.row_size-bl_pos), self.height, drc("minwidth_metal1"))
         bl_wire.wire_c =spice["min_tx_drain_c"] + bl_wire.wire_c # 1 access tx d/s per cell
         return bl_wire
 

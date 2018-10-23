@@ -78,13 +78,14 @@ class precharge(pgate.pgate):
         self.add_path("metal1", [pmos_pin.uc(), vdd_pos])
 
         # Add the M1->M2->M3 stack at the left edge
+        vdd_contact_pos = vector(0.5*self.width, vdd_position.y + 0.5*self.m1_width)
         self.add_via_center(layers=("metal1", "via1", "metal2"),
-                            offset=vdd_pos.scale(0,1))
+                            offset=vdd_contact_pos)
         self.add_via_center(layers=("metal2", "via2", "metal3"),
-                            offset=vdd_pos.scale(0,1))
+                            offset=vdd_contact_pos)
         self.add_layout_pin_rect_center(text="vdd",
                                         layer="metal3",
-                                        offset=vdd_pos.scale(0,1))
+                                        offset=vdd_contact_pos)
         
         
     def create_ptx(self):
@@ -112,7 +113,7 @@ class precharge(pgate.pgate):
         
         # adds the lower pmos to layout
         #base = vector(self.width - 2*self.pmos.width + self.overlap_offset.x, 0)
-        self.lower_pmos_position = vector(self.bitcell.get_pin(self.bitcell_bl).lx(),
+        self.lower_pmos_position = vector(max(self.bitcell.get_pin(self.bitcell_bl).lx(), self.well_enclose_active),
                                           self.pmos.active_offset.y)
         self.lower_pmos_inst.place(self.lower_pmos_position)
 
@@ -162,7 +163,7 @@ class precharge(pgate.pgate):
         """Adds a nwell tap to connect to the vdd rail"""
         # adds the contact from active to metal1
         well_contact_pos = self.upper_pmos1_inst.get_pin("D").center().scale(1,0) \
-                           + vector(0, self.upper_pmos1_inst.uy() + contact.well.height/2 + drc["well_extend_active"])
+                           + vector(0, self.upper_pmos1_inst.uy() + contact.well.height/2 + drc("well_extend_active"))
         self.add_contact_center(layers=("active", "contact", "metal1"),
                                 offset=well_contact_pos,
                                 implant_type="n",
@@ -184,7 +185,7 @@ class precharge(pgate.pgate):
         self.add_layout_pin(text="bl",
                             layer="metal2",
                             offset=offset,
-                            width=drc['minwidth_metal2'],
+                            width=drc("minwidth_metal2"),
                             height=self.height)
 
         # adds the BR on metal 2
@@ -192,7 +193,7 @@ class precharge(pgate.pgate):
         self.add_layout_pin(text="br",
                             layer="metal2",
                             offset=offset,
-                            width=drc['minwidth_metal2'],
+                            width=drc("minwidth_metal2"),
                             height=self.height)
 
     def connect_to_bitlines(self):

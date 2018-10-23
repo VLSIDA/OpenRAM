@@ -26,7 +26,7 @@ num_drc_runs = 0
 num_lvs_runs = 0
 num_pex_runs = 0
 
-def write_magic_script(cell_name, gds_name, extract=False):
+def write_magic_script(cell_name, gds_name, extract=False, final_verification=False):
     """ Write a magic script to perform DRC and optionally extraction. """
 
     global OPTS
@@ -41,23 +41,28 @@ def write_magic_script(cell_name, gds_name, extract=False):
     f.write("load {}\n".format(cell_name))
     # Flatten the cell to get rid of DRCs spanning multiple layers
     # (e.g. with routes)
-    f.write("flatten {}_new\n".format(cell_name))
-    f.write("load {}_new\n".format(cell_name))
-    f.write("cellname rename {0}_new {0}\n".format(cell_name))
-    f.write("load {}\n".format(cell_name))
+    #f.write("flatten {}_new\n".format(cell_name))
+    #f.write("load {}_new\n".format(cell_name))
+    #f.write("cellname rename {0}_new {0}\n".format(cell_name))
+    #f.write("load {}\n".format(cell_name))
     f.write("writeall force\n")
     f.write("drc check\n")
     f.write("drc catchup\n")
     f.write("drc count total\n")
     f.write("drc count\n")
-    if extract:
-        f.write("extract all\n")
-        f.write("ext2spice hierarchy on\n")        
-        f.write("ext2spice scale off\n")
-        # Can choose hspice, ngspice, or spice3,
-        # but they all seem compatible enough.
-        #f.write("ext2spice format ngspice\n")
-        f.write("ext2spice\n")
+    if not extract:
+        pre = "#"
+    else:
+        pre = ""
+    if final_verification:
+        f.write(pre+"extract unique\n")
+    f.write(pre+"extract\n")
+    f.write(pre+"ext2spice hierarchy on\n")        
+    f.write(pre+"ext2spice scale off\n")
+    # Can choose hspice, ngspice, or spice3,
+    # but they all seem compatible enough.
+    #f.write(pre+"ext2spice format ngspice\n")
+    f.write(pre+"ext2spice\n")
     f.write("quit -noprompt\n")
     f.write("EOF\n")
         
@@ -68,11 +73,13 @@ def write_netgen_script(cell_name, sp_name):
     """ Write a netgen script to perform LVS. """
 
     global OPTS
-    # This is a hack to prevent netgen from re-initializing the LVS
-    # commands. It will be unnecessary after Tim adds the nosetup option.
-    setup_file = OPTS.openram_temp + "setup.tcl"
-    f = open(setup_file, "w")
-    f.close()
+
+    setup_file = OPTS.openram_tech + "mag_lib/setup.tcl"
+    if os.path.exists(setup_file):
+        # Copy setup.tcl file into temp dir
+        shutil.copy(setup_file, OPTS.openram_temp)
+    else:
+        setup_file = 'nosetup'
 
     run_file = OPTS.openram_temp + "run_lvs.sh"
     f = open(run_file, "w")
@@ -86,44 +93,27 @@ def write_netgen_script(cell_name, sp_name):
     #                                                                     cell_name))
     # f.write("property {{{0}{1}.spice pfet}} tolerance {{w 0.1}}\n".format(OPTS.openram_temp,
     #                                                                     cell_name))
-    f.write("lvs {0}.spice {{{1} {0}}} setup.tcl {0}.lvs.report\n".format(cell_name, sp_name))
+    f.write("lvs {0}.spice {{{1} {0}}} {2} {0}.lvs.report\n".format(cell_name, sp_name, setup_file))
     f.write("quit\n")
     f.write("EOF\n")
     f.close()
     os.system("chmod u+x {}".format(run_file))
 
-    setup_file = OPTS.openram_temp + "setup.tcl"
-    f = open(setup_file, "w")
-    f.write("ignore class c\n")
-    f.write("equate class {{nfet {0}.spice}} {{n {1}}}\n".format(cell_name, sp_name))
-    f.write("equate class {{pfet {0}.spice}} {{p {1}}}\n".format(cell_name, sp_name))
-    # This circuit has symmetries and needs to be flattened to resolve them or the banks won't pass
-    # Is there a more elegant way to add this when needed?
-    f.write("flatten class {{{0}.spice precharge_array_1}}\n".format(cell_name))
-    f.write("flatten class {{{0}.spice precharge_array_2}}\n".format(cell_name))
-    f.write("flatten class {{{0}.spice precharge_array_3}}\n".format(cell_name))
-    f.write("flatten class {{{0}.spice precharge_array_4}}\n".format(cell_name))
-    f.write("property {{nfet {0}.spice}} remove as ad ps pd\n".format(cell_name))
-    f.write("property {{pfet {0}.spice}} remove as ad ps pd\n".format(cell_name))
-    f.write("property {{n {0}}} remove as ad ps pd\n".format(sp_name))
-    f.write("property {{p {0}}} remove as ad ps pd\n".format(sp_name))
-    f.write("permute transistors\n")
-    f.write("permute pins n source drain\n")
-    f.write("permute pins p source drain\n")
-    f.close()
     
-    
-def run_drc(cell_name, gds_name, extract=False):
+def run_drc(cell_name, gds_name, extract=False, final_verification=False):
     """Run DRC check on a cell which is implemented in gds_name."""
 
     global num_drc_runs
     num_drc_runs += 1
 
     # Copy .magicrc file into temp dir
-    shutil.copy(OPTS.openram_tech + "/mag_lib/.magicrc",
-                OPTS.openram_temp)
+    magic_file = OPTS.openram_tech + "mag_lib/.magicrc"
+    if os.path.exists(magic_file):
+        shutil.copy(magic_file, OPTS.openram_temp)
+    else:
+        debug.warning("Could not locate .magicrc file: {}".format(magic_file))
 
-    write_magic_script(cell_name, gds_name, extract)
+    write_magic_script(cell_name, gds_name, extract, final_verification)
     
     # run drc
     cwd = os.getcwd()
@@ -176,7 +166,7 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     global num_lvs_runs
     num_lvs_runs += 1
     
-    run_drc(cell_name, gds_name, extract=True)
+    run_drc(cell_name, gds_name, extract=True, final_verification=final_verification)
     write_netgen_script(cell_name, sp_name)
     
     # run LVS

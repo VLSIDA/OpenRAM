@@ -67,7 +67,7 @@ class bank_select(design.design):
         self.mod_bitcell = getattr(c, OPTS.bitcell)
         self.bitcell = self.mod_bitcell()
         
-        height = self.bitcell.height + drc["poly_to_active"]
+        height = self.bitcell.height + drc("poly_to_active")
 
         # 1x Inverter
         self.inv_sel = pinv(height=height)
@@ -88,8 +88,8 @@ class bank_select(design.design):
 
     def calculate_module_offsets(self):
         
-        self.xoffset_nand =  self.inv4x.width + 2*self.m2_pitch + drc["pwell_to_nwell"]
-        self.xoffset_nor =  self.inv4x.width + 2*self.m2_pitch + drc["pwell_to_nwell"]
+        self.xoffset_nand =  self.inv4x.width + 2*self.m2_pitch + drc("pwell_to_nwell")
+        self.xoffset_nor =  self.inv4x.width + 2*self.m2_pitch + drc("pwell_to_nwell")
         self.xoffset_inv = max(self.xoffset_nand + self.nand2.width, self.xoffset_nor + self.nor2.width) 
         self.xoffset_bank_sel_inv = 0 
         self.xoffset_inputs = 0

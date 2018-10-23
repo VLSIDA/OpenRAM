@@ -28,7 +28,7 @@ class layout(lef.lef):
         self.insts = []      # Holds module/cell layout instances
         self.objs = []       # Holds all other objects (labels, geometries, etc)
         self.pin_map = {}    # Holds name->pin_layout map for all pins
-        self.visited = False # Flag for traversing the hierarchy 
+        self.visited = []    # List of modules we have already visited
         self.is_library_cell = False # Flag for library cells 
         self.gds_read()
 
@@ -134,11 +134,13 @@ class layout(lef.lef):
                 return inst
         return None
     
-    def add_rect(self, layer, offset, width=0, height=0):
-        """Adds a rectangle on a given layer,offset with width and height"""
-        if width==0:
+    def add_rect(self, layer, offset, width=None, height=None):
+        """
+        Adds a rectangle on a given layer,offset with width and height
+        """
+        if not width:
             width=drc["minwidth_{}".format(layer)]
-        if height==0:
+        if not height:
             height=drc["minwidth_{}".format(layer)]
         # negative layers indicate "unused" layers in a given technology
         layer_num = techlayer[layer]
@@ -147,11 +149,13 @@ class layout(lef.lef):
             return self.objs[-1]
         return None
 
-    def add_rect_center(self, layer, offset, width=0, height=0):
-        """Adds a rectangle on a given layer at the center point with width and height"""
-        if width==0:
+    def add_rect_center(self, layer, offset, width=None, height=None):
+        """
+        Adds a rectangle on a given layer at the center point with width and height
+        """
+        if not width:
             width=drc["minwidth_{}".format(layer)]
-        if height==0:
+        if not height:
             height=drc["minwidth_{}".format(layer)]
         # negative layers indicate "unused" layers in a given technology
         layer_num = techlayer[layer]
@@ -163,7 +167,9 @@ class layout(lef.lef):
 
 
     def add_segment_center(self, layer, start, end):
-        """ Add a min-width rectanglular segment using center line on the start to end point """
+        """ 
+        Add a min-width rectanglular segment using center line on the start to end point 
+        """
         minwidth_layer = drc["minwidth_{}".format(layer)]        
         if start.x!=end.x and start.y!=end.y:
             debug.error("Nonrectilinear center rect!",-1)
@@ -177,7 +183,9 @@ class layout(lef.lef):
 
     
     def get_pin(self, text):
-        """ Return the pin or list of pins """
+        """ 
+        Return the pin or list of pins 
+        """
         try:
             if len(self.pin_map[text])>1:
                 debug.error("Should use a pin iterator since more than one pin {}".format(text),-1)
@@ -192,8 +200,13 @@ class layout(lef.lef):
             
 
     def get_pins(self, text):
-        """ Return a pin list (instead of a single pin) """
-        return self.pin_map[text]
+        """ 
+        Return a pin list (instead of a single pin) 
+        """
+        if text in self.pin_map.keys():
+            return self.pin_map[text]
+        else:
+            return []
     
     def copy_layout_pin(self, instance, pin_name, new_name=""):
         """ 
@@ -207,7 +220,9 @@ class layout(lef.lef):
             self.add_layout_pin(new_name, pin.layer, pin.ll(), pin.width(), pin.height())
 
     def add_layout_pin_segment_center(self, text, layer, start, end):
-        """ Creates a path like pin with center-line convention """
+        """ 
+        Creates a path like pin with center-line convention 
+        """
 
         debug.check(start.x==end.x or start.y==end.y,"Cannot have a non-manhatten layout pin.")
         
@@ -232,9 +247,9 @@ class layout(lef.lef):
 
     def add_layout_pin_rect_center(self, text, layer, offset, width=None, height=None):
         """ Creates a path like pin with center-line convention """
-        if width==None:
+        if not width:
             width=drc["minwidth_{0}".format(layer)]
-        if height==None:
+        if not height:
             height=drc["minwidth_{0}".format(layer)]
 
         ll_offset = offset - vector(0.5*width,0.5*height)
@@ -243,14 +258,18 @@ class layout(lef.lef):
 
     
     def remove_layout_pin(self, text):
-        """Delete a labeled pin (or all pins of the same name)"""
+        """
+        Delete a labeled pin (or all pins of the same name)
+        """
         self.pin_map[text]=[]
         
     def add_layout_pin(self, text, layer, offset, width=None, height=None):
-        """Create a labeled pin """
-        if width==None:
+        """
+        Create a labeled pin 
+        """
+        if not width:
             width=drc["minwidth_{0}".format(layer)]
-        if height==None:
+        if not height:
             height=drc["minwidth_{0}".format(layer)]
 
         new_pin = pin_layout(text, [offset,offset+vector(width,height)], layer)
@@ -270,13 +289,14 @@ class layout(lef.lef):
         return new_pin
 
     def add_label_pin(self, text, layer, offset, width=None, height=None):
-        """Create a labeled pin WITHOUT the pin data structure. This is not an
+        """
+        Create a labeled pin WITHOUT the pin data structure. This is not an
         actual pin but a named net so that we can add a correspondence point
         in LVS.
         """
-        if width==None:
+        if not width:
             width=drc["minwidth_{0}".format(layer)]
-        if height==None:
+        if not height:
             height=drc["minwidth_{0}".format(layer)]
         self.add_rect(layer=layer,
                       offset=offset,
@@ -313,7 +333,7 @@ class layout(lef.lef):
                   position_list=coordinates, 
                   width=width)
 
-    def add_route(self, layers, coordinates):
+    def add_route(self, layers, coordinates, layer_widths):
         """Connects a routing path on given layer,coordinates,width. The
         layers are the (horizontal, via, vertical). add_wire assumes
         preferred direction routing whereas this includes layers in
@@ -324,7 +344,8 @@ class layout(lef.lef):
         # add an instance of our path that breaks down into rectangles and contacts
         route.route(obj=self,
                     layer_stack=layers, 
-                    path=coordinates)
+                    path=coordinates,
+                    layer_widths=layer_widths)
 
     
     def add_wire(self, layers, coordinates):
@@ -432,59 +453,66 @@ class layout(lef.lef):
         
         # open the gds file if it exists or else create a blank layout
         if os.path.isfile(self.gds_file):
-            debug.info(3, "opening %s" % self.gds_file)
+            debug.info(3, "opening {}".format(self.gds_file))
             self.is_library_cell=True
             self.gds = gdsMill.VlsiLayout(units=GDS["unit"])
             reader = gdsMill.Gds2reader(self.gds)
             reader.loadFromFile(self.gds_file)
         else:
-            debug.info(4, "creating structure %s" % self.name)
+            debug.info(3, "Creating layout structure {}".format(self.name))
             self.gds = gdsMill.VlsiLayout(name=self.name, units=GDS["unit"])
 
     def print_gds(self, gds_file=None):
         """Print the gds file (not the vlsi class) to the terminal """
         if gds_file == None:
             gds_file = self.gds_file
-        debug.info(4, "Printing %s" % gds_file)
+        debug.info(4, "Printing {}".format(gds_file))
         arrayCellLayout = gdsMill.VlsiLayout(units=GDS["unit"])
         reader = gdsMill.Gds2reader(arrayCellLayout, debugToTerminal=1)
         reader.loadFromFile(gds_file)
 
     def clear_visited(self):
         """ Recursively clear the visited flag """
-        if not self.visited:
-            for i in self.insts:
-                i.mod.clear_visited()
-        self.visited = False
+        self.visited = []
 
-    def gds_write_file(self, newLayout):
+    def gds_write_file(self, gds_layout):
         """Recursive GDS write function"""
         # Visited means that we already prepared self.gds for this subtree
-        if self.visited:
+        if self.name in self.visited:
             return
         for i in self.insts:
-            i.gds_write_file(newLayout)
+            i.gds_write_file(gds_layout)
         for i in self.objs:
-            i.gds_write_file(newLayout)
+            i.gds_write_file(gds_layout)
         for pin_name in self.pin_map.keys():
             for pin in self.pin_map[pin_name]:
-                pin.gds_write_file(newLayout)
-        self.visited = True
+                pin.gds_write_file(gds_layout)
+        self.visited.append(self.name)
 
     def gds_write(self, gds_name):
         """Write the entire gds of the object to the file."""
-        debug.info(3, "Writing to {0}".format(gds_name))
+        debug.info(3, "Writing to {}".format(gds_name))
+
+        # If we already wrote a GDS, we need to reset and traverse it again in
+        # case we made changes.
+        if not self.is_library_cell and self.visited:
+            debug.info(3, "Creating layout structure {}".format(self.name))
+            self.gds = gdsMill.VlsiLayout(name=self.name, units=GDS["unit"])
 
         writer = gdsMill.Gds2writer(self.gds)
         # MRG: 3/2/18 We don't want to clear the visited flag since
         # this would result in duplicates of all instances being placed in self.gds
         # which may have been previously processed!
-        #self.clear_visited()
+        # MRG: 10/4/18 We need to clear if we make changes and write a second GDS!
+        self.clear_visited()
+        
         # recursively create all the remaining objects
         self.gds_write_file(self.gds)
+        
         # populates the xyTree data structure for gds
         # self.gds.prepareForWrite()
         writer.writeToFile(gds_name)
+        debug.info(3, "Done writing to {}".format(gds_name))        
 
     def get_boundary(self):
         """ Return the lower-left and upper-right coordinates of boundary """
@@ -875,6 +903,22 @@ class layout(lef.lef):
                       width=xmax-xmin,
                       height=ymax-ymin)
 
+
+    def copy_power_pins(self, inst, name):
+        """
+        This will copy a power pin if it is on M3. If it is on M1, it will add a power via too.
+        """
+        pins=inst.get_pins(name)
+        for pin in pins:
+            if pin.layer=="metal3":
+                self.add_layout_pin(name, pin.layer, pin.ll(), pin.width(), pin.height())
+            elif pin.layer=="metal1":
+                self.add_power_pin(name, pin.center())
+            else:
+                debug.warning("{0} pins of {1} should be on metal3 or metal1 for supply router.".format(name,inst.name))
+
+                
+        
     def add_power_pin(self, name, loc, rotate=90):
         """ 
         Add a single power pin from M3 down to M1 at the given center location
@@ -1008,7 +1052,7 @@ class layout(lef.lef):
     def pdf_write(self, pdf_name):
         # NOTE: Currently does not work (Needs further research)
         #self.pdf_name = self.name + ".pdf"
-        debug.info(0, "Writing to %s" % pdf_name)
+        debug.info(0, "Writing to {}".format(pdf_name))
         pdf = gdsMill.pdfLayout(self.gds)
 
         return

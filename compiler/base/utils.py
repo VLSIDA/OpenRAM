@@ -3,6 +3,7 @@ import gdsMill
 import tech
 import math
 import globals
+import debug
 from vector import vector
 from pin_layout import pin_layout
 
@@ -65,6 +66,7 @@ def get_gds_size(name, gds_filename, units, layer):
     Open a GDS file and return the size from either the
     bounding box or a border layer.
     """
+    debug.info(2,"Creating VLSI layout for {}".format(name))
     cell_vlsi = gdsMill.VlsiLayout(units=units)
     reader = gdsMill.Gds2reader(cell_vlsi)
     reader.loadFromFile(gds_filename)
@@ -72,6 +74,7 @@ def get_gds_size(name, gds_filename, units, layer):
     cell = {}
     measure_result = cell_vlsi.getLayoutBorder(layer)
     if measure_result == None:
+        debug.info(2,"Layout border failed. Trying to measure size for {}".format(name))
         measure_result = cell_vlsi.measureSize(name)
     # returns width,height
     return measure_result

@@ -53,7 +53,7 @@ class sram_config:
             # Estimate the number of rows given the tentative words per row
             self.tentative_num_rows = self.num_bits_per_bank / (self.words_per_row*self.word_size)
             self.words_per_row = self.amend_words_per_row(self.tentative_num_rows, self.words_per_row)
-        
+
         # Fix the number of columns and rows
         self.num_cols = int(self.words_per_row*self.word_size)
         self.num_rows = int(self.num_words_per_bank/self.words_per_row)

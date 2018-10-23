@@ -295,6 +295,7 @@ spice["channel"] = drc["minlength_channel"]
 spice["clk"] = "clk"
 
 # analytical delay parameters
+spice["v_threshold_typical"] = 0.4    # Typical Threshold voltage in Volts
 spice["wire_unit_r"] = 0.075     # Unit wire resistance in ohms/square
 spice["wire_unit_c"] = 0.64      # Unit wire capacitance ff/um^2
 spice["min_tx_r"] = 9250.0       # Minimum transistor on resistance in ohms

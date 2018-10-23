@@ -121,7 +121,7 @@ class lib:
         
     def write_footer(self):
         """ Write the footer """
-        self.lib.write("}\n") #Closing brace for the cell
+        self.lib.write("    }\n") #Closing brace for the cell
         self.lib.write("}\n") #Closing brace for the library
 
     def write_header(self):

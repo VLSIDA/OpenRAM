@@ -451,8 +451,8 @@ class sram_base(design):
         sp.close()
 
         
-    def analytical_delay(self,slew,load):
+    def analytical_delay(self, vdd, slew,load):
         """ LH and HL are the same in analytical model. """
-        return self.bank.analytical_delay(slew,load)
+        return self.bank.analytical_delay(vdd,slew,load)
 
         

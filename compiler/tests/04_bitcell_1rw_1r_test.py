@@ -13,7 +13,7 @@ import debug
 
 OPTS = globals.OPTS
 
-#@unittest.skip("SKIPPING 04_bitcell_1rw_1r_test")
+@unittest.skip("SKIPPING 04_bitcell_1rw_1r_test")
 class bitcell_1rw_1r_test(openram_test):
 
     def runTest(self):

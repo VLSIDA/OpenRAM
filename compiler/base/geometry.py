@@ -143,8 +143,9 @@ class instance(geometry):
         self.rotate = rotate
         self.offset = vector(offset).snap_to_grid()
         self.mirror = mirror
-        self.width = round_to_grid(mod.width)
-        self.height = round_to_grid(mod.height)
+        if not OPTS.netlist_only:
+            self.width = round_to_grid(mod.width)
+            self.height = round_to_grid(mod.height)
         self.compute_boundary(offset,mirror,rotate)
         
         debug.info(4, "creating instance: " + self.name)

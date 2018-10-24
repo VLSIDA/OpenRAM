@@ -17,7 +17,6 @@ class lib:
         self.sram = sram
         self.sp_file = sp_file        
         self.use_model = use_model
-        #self.gen_port_names() #copy and paste from delay.py, names are not final will likely be changed later.
         self.set_port_indices()
         
         self.prepare_tables()
@@ -27,30 +26,11 @@ class lib:
         self.characterize_corners()
         
     def set_port_indices(self):
+        """Copies port information set in the SRAM instance"""
         self.total_port_num = self.sram.total_ports
         self.read_ports = self.sram.read_index
         self.write_ports = self.sram.write_index
-        
-    def gen_port_names(self):
-        """Generates the port names to be written to the lib file"""
-        #This is basically a copy and paste of whats in delay.py as well. Something more efficient should be done here.
-        self.write_ports = []
-        self.read_ports = []
-        self.total_port_num = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
-        
-        #save a member variable to avoid accessing global. readwrite ports have different control signals.
-        self.readwrite_port_num = OPTS.num_rw_ports
-        
-        #Generate the port names. readwrite ports are required to be added first for this to work.
-        for readwrite_port_num in range(OPTS.num_rw_ports):
-            self.read_ports.append(readwrite_port_num)
-            self.write_ports.append(readwrite_port_num)
-        #This placement is intentional. It makes indexing input data easier. See self.data_values
-        for read_port_num in range(OPTS.num_rw_ports, OPTS.num_r_ports):
-            self.read_ports.append(read_port_num)
-        for write_port_num in range(OPTS.num_rw_ports+OPTS.num_r_ports, OPTS.num_w_ports):
-            self.write_ports.append(write_port_num)
-        
+             
     def prepare_tables(self):
         """ Determine the load/slews if they aren't specified in the config file. """
         # These are the parameters to determine the table sizes

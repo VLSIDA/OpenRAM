@@ -19,9 +19,10 @@ class bitcell_1rw_1r(design.design):
         design.design.__init__(self, "cell_1rw_1r")
         debug.info(2, "Create bitcell with 1RW and 1R Port")
 
-        self.width = bitcell.width
-        self.height = bitcell.height
-        self.pin_map = bitcell.pin_map
+        self.width = bitcell_1rw_1r.width
+        self.height = bitcell_1rw_1r.height
+        debug.info(1, "Multiport width {}, height {}".format(self.width, self.height))
+        self.pin_map = bitcell_1rw_1r.pin_map
 
     def analytical_delay(self, slew, load=0, swing = 0.5):
         # delay of bit cell is not like a driver(from WL)

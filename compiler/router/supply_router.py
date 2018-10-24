@@ -331,11 +331,12 @@ class supply_router(router):
             # While we can keep expanding east in this horizontal track
             while wave and wave[0].x < self.max_xoffset:
                 added_rail = self.find_supply_rail(name, wave, direction.EAST)
-                if added_rail:
-                    wave = added_rail.neighbor(direction.EAST)
+                if not added_rail:
+                    # Just seed with the next one
+                    wave = [x+vector3d(1,0,0) for x in wave]
                 else:
-                    wave = None
-
+                    # Seed with the neighbor of the end of the last rail
+                    wave = added_rail.neighbor(direction.EAST)
 
         # Vertical supply rails
         max_offset = self.rg.ur.x
@@ -345,10 +346,12 @@ class supply_router(router):
             # While we can keep expanding north in this vertical track
             while wave and wave[0].y < self.max_yoffset:
                 added_rail = self.find_supply_rail(name, wave, direction.NORTH)
-                if added_rail:
-                    wave = added_rail.neighbor(direction.NORTH)
+                if not added_rail:
+                    # Just seed with the next one
+                    wave = [x+vector3d(0,1,0) for x in wave]
                 else:
-                    wave = None
+                    # Seed with the neighbor of the end of the last rail                    
+                    wave = added_rail.neighbor(direction.NORTH)
 
     def find_supply_rail(self, name, seed_wave, direct):
         """
@@ -356,15 +359,18 @@ class supply_router(router):
         to contain a via, and, if so, add it.
         """
         start_wave = self.find_supply_rail_start(name, seed_wave, direct)
+        
+        # This means there were no more unblocked grids in the row/col
         if not start_wave:
             return None
-        
+
         wave_path = self.probe_supply_rail(name, start_wave, direct)
         
-        if self.approve_supply_rail(name, wave_path):
-            return wave_path
-        else:
-            return None
+        self.approve_supply_rail(name, wave_path)
+
+        # Return the rail whether we approved it or not,
+        # as it will be used to find the next start location
+        return wave_path
 
     def find_supply_rail_start(self, name, seed_wave, direct):
         """

@@ -234,6 +234,17 @@ class stimuli():
     
     def write_control(self, end_time, runlvl=4):
         """ Write the control cards to run and end the simulation """
+        
+        # These are guesses... 
+        if runlvl==1:
+            reltol = 0.02 # 2%
+        elif runlvl==2:
+            reltol = 0.01 # 1%
+        elif runlvl==3:
+            reltol = 0.005 # 0.5%
+        else:
+            reltol = 0.001 # 0.1%
+            
         # UIC is needed for ngspice to converge
         self.sf.write(".TRAN 5p {0}n UIC\n".format(end_time))
         if OPTS.spice_name == "ngspice":
@@ -241,7 +252,7 @@ class stimuli():
             # which is more accurate, but slower than the default trapezoid method
             # Do not remove this or it may not converge due to some "pa_00" nodes
             # unless you figure out what these are.
-            self.sf.write(".OPTIONS POST=1 RUNLVL={0} PROBE method=gear TEMP={1}\n".format(runlvl,self.temperature))
+            self.sf.write(".OPTIONS POST=1 RELTOL={0} PROBE method=gear TEMP={1}\n".format(reltol,self.temperature))
         else:
             self.sf.write(".OPTIONS POST=1 RUNLVL={0} PROBE TEMP={1}\n".format(runlvl,self.temperature))
 

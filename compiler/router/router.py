@@ -624,8 +624,6 @@ class router:
                 # Blockages will be a super-set of pins since it uses the inflated pin shape.
                 blockage_in_tracks = self.convert_blockage(pin) 
                 blockage_set.update(blockage_in_tracks)
-                debug.info(2,"     .pins   {}".format(pin_set))
-                debug.info(2,"     .blocks {}".format(blockage_set))
 
             # If we have a blockage, we must remove the grids
             # Remember, this excludes the pin blockages already
@@ -839,7 +837,7 @@ class router:
                                   
                     
 
-        self.write_debug_gds("pin_debug.gds", True)
+        #self.write_debug_gds("pin_debug.gds", True)
 
     def compute_enclosure(self, pin, enclosure):
         """ 

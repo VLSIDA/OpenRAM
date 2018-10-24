@@ -17,7 +17,8 @@ class lib:
         self.sram = sram
         self.sp_file = sp_file        
         self.use_model = use_model
-        self.gen_port_names() #copy and paste from delay.py, names are not final will likely be changed later.
+        #self.gen_port_names() #copy and paste from delay.py, names are not final will likely be changed later.
+        self.set_port_indices()
         
         self.prepare_tables()
         
@@ -25,7 +26,10 @@ class lib:
         
         self.characterize_corners()
         
-        
+    def set_port_indices(self):
+        self.total_port_num = self.sram.total_ports
+        self.read_ports = self.sram.read_index
+        self.write_ports = self.sram.write_index
         
     def gen_port_names(self):
         """Generates the port names to be written to the lib file"""
@@ -339,7 +343,6 @@ class lib:
         
 
         self.lib.write("        pin(DOUT{1}[{0}:0]){{\n".format(self.sram.word_size - 1, read_port))
-        self.write_FF_setuphold(read_port)
         self.lib.write("        timing(){ \n")
         self.lib.write("            timing_sense : non_unate; \n")
         self.lib.write("            related_pin : \"clk{0}\"; \n".format(read_port))
@@ -361,7 +364,7 @@ class lib:
         self.lib.write("    }\n\n") # bus
 
     def write_data_bus_input(self, write_port):
-        """ Adds data bus timing results."""
+        """ Adds DIN data bus timing results."""
 
         self.lib.write("    bus(DIN{0}){{\n".format(write_port))
         self.lib.write("        bus_type  : DATA; \n")
@@ -371,8 +374,11 @@ class lib:
         self.lib.write("        memory_write(){ \n")
         self.lib.write("            address : ADDR{0}; \n".format(write_port))
         self.lib.write("            clocked_on  : clk{0}; \n".format(write_port))
-        self.lib.write("        }\n")
-        self.lib.write("    }\n")
+        self.lib.write("        }\n") 
+        self.lib.write("        pin(DIN{1}[{0}:0]){{\n".format(self.sram.word_size - 1, write_port))
+        self.write_FF_setuphold(write_port)
+        self.lib.write("        }\n") # pin  
+        self.lib.write("    }\n") #bus
 
     def write_data_bus(self, port):
         """ Adds data bus timing results."""

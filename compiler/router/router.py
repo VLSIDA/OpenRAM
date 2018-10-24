@@ -183,18 +183,6 @@ class router:
             self.retrieve_blockages(layer)
             
             
-    # # def reinit(self):
-    # #     """
-    # #     Reset the source and destination pins to start a new routing.
-    # #     Convert the source/dest pins to blockages.
-    # #     Convert the routed path to blockages.
-    # #     Keep the other blockages unchanged.
-    # #     """
-    # #     self.clear_pins()
-    # #     # DO NOT clear the blockages as these don't change
-    # #     self.rg.reinit()
-        
-
     def find_pins_and_blockages(self, pin_list):
         """
         Find the pins and blockages in the design 
@@ -248,16 +236,16 @@ class router:
         # These are the paths that have already been routed.
         self.set_path_blockages()
         
-    def translate_coordinates(self, coord, mirr, angle, xyShift):
-        """
-        Calculate coordinates after flip, rotate, and shift
-        """
-        coordinate = []
-        for item in coord:
-            x = (item[0]*math.cos(angle)-item[1]*mirr*math.sin(angle)+xyShift[0])
-            y = (item[0]*math.sin(angle)+item[1]*mirr*math.cos(angle)+xyShift[1])
-            coordinate += [(x, y)]
-        return coordinate
+    # def translate_coordinates(self, coord, mirr, angle, xyShift):
+    #     """
+    #     Calculate coordinates after flip, rotate, and shift
+    #     """
+    #     coordinate = []
+    #     for item in coord:
+    #         x = (item[0]*math.cos(angle)-item[1]*mirr*math.sin(angle)+xyShift[0])
+    #         y = (item[0]*math.sin(angle)+item[1]*mirr*math.cos(angle)+xyShift[1])
+    #         coordinate += [(x, y)]
+    #     return coordinate
 
     def convert_shape_to_units(self, shape):
         """ 
@@ -458,9 +446,9 @@ class router:
         best_coord = None
         best_overlap = -math.inf
         for coord in insufficient_list:
-            full_rect = self.convert_track_to_pin(coord)
+            full_pin = self.convert_track_to_pin(coord)
             # Compute the overlap with that rectangle
-            overlap_rect=self.compute_overlap(pin.rect,full_rect)
+            overlap_rect=pin.compute_overlap(full_pin)
             # Determine the min x or y overlap
             min_overlap = min(overlap_rect)
             if min_overlap>best_overlap:
@@ -497,144 +485,21 @@ class router:
         (width, spacing) = self.get_layer_width_space(coord.z)
             
         # This is the rectangle if we put a pin in the center of the track
-        track_rect = self.convert_track_to_pin(coord)
-        overlap_width = self.compute_overlap_width(pin.rect, track_rect)
+        track_pin = self.convert_track_to_pin(coord)
+        overlap_length = pin.overlap_length(track_pin)
         
-        debug.info(3,"Check overlap: {0} {1} . {2} = {3}".format(coord, pin.rect, track_rect, overlap_width))
+        debug.info(3,"Check overlap: {0} {1} . {2} = {3}".format(coord, pin.rect, track_pin, overlap_length))
         # If it overlaps by more than the min width DRC, we can just use the track
-        if overlap_width==math.inf or snap_val_to_grid(overlap_width) >= snap_val_to_grid(width):
-            debug.info(3,"  Overlap: {0} >? {1}".format(overlap_width,spacing))  
+        if overlap_length==math.inf or snap_val_to_grid(overlap_length) >= snap_val_to_grid(width):
+            debug.info(3,"  Overlap: {0} >? {1}".format(overlap_length,spacing))  
             return (coord, None)
         # Otherwise, keep track of the partial overlap grids in case we need to patch it later.
         else:
-            debug.info(3,"  Partial/no overlap: {0} >? {1}".format(overlap_width,spacing))
+            debug.info(3,"  Partial/no overlap: {0} >? {1}".format(overlap_length,spacing))
             return (None, coord)
         
 
 
-    def compute_overlap(self, r1, r2):
-        """ Calculate the rectangular overlap of two rectangles. """
-        (r1_ll,r1_ur) = r1
-        (r2_ll,r2_ur) = r2
-
-        #ov_ur = vector(min(r1_ur.x,r2_ur.x),min(r1_ur.y,r2_ur.y))
-        #ov_ll = vector(max(r1_ll.x,r2_ll.x),max(r1_ll.y,r2_ll.y))
-
-        dy = min(r1_ur.y,r2_ur.y)-max(r1_ll.y,r2_ll.y)
-        dx = min(r1_ur.x,r2_ur.x)-max(r1_ll.x,r2_ll.x)
-
-        if dx>0 and dy>0:
-            return [dx,dy]
-        else:
-            return [0,0]
-
-    def compute_overlap_width(self, r1, r2):
-        """ 
-        Calculate the intersection segment and determine its width.
-        """
-        intersections = self.compute_overlap_segment(r1,r2)
-
-        if len(intersections)==2:
-            (p1,p2) = intersections
-            return math.sqrt(pow(p1[0]-p2[0],2) + pow(p1[1]-p2[1],2))
-        else:
-            # we either have no overlap or complete overlap
-            # Compute the width of the overlap of the two rectangles
-            overlap_rect=self.compute_overlap(r1, r2)
-            # Determine the min x or y overlap
-            min_overlap = min(overlap_rect)
-            if min_overlap>0:
-                return math.inf
-            else:
-                return 0
-
-    
-    def compute_overlap_segment(self, r1, r2):
-        """ 
-        Calculate the intersection segment of two rectangles 
-        (if any)
-        """
-        (r1_ll,r1_ur) = r1
-        (r2_ll,r2_ur) = r2
-
-        # The other corners besides ll and ur
-        r1_ul = vector(r1_ll.x, r1_ur.y)
-        r1_lr = vector(r1_ur.x, r1_ll.y)
-        r2_ul = vector(r2_ll.x, r2_ur.y)
-        r2_lr = vector(r2_ur.x, r2_ll.y)
-
-        from itertools import tee
-        def pairwise(iterable):
-            "s -> (s0,s1), (s1,s2), (s2, s3), ..."
-            a, b = tee(iterable)
-            next(b, None)
-            return zip(a, b)
-        
-        # R1 edges CW
-        r1_cw_points = [r1_ll, r1_ul, r1_ur, r1_lr, r1_ll]
-        r1_edges = []
-        for (p,q) in pairwise(r1_cw_points):
-            r1_edges.append([p,q])
-        
-        # R2 edges CW
-        r2_cw_points = [r2_ll, r2_ul, r2_ur, r2_lr, r2_ll]
-        r2_edges = []
-        for (p,q) in pairwise(r2_cw_points):
-            r2_edges.append([p,q])
-
-        # There are 4 edges on each rectangle
-        # so just brute force check intersection of each
-        # Two pairs of them should intersect
-        intersections = []
-        for r1e in r1_edges:
-            for r2e in r2_edges:
-                i = self.segment_intersection(r1e, r2e)
-                if i:
-                    intersections.append(i)
-
-        return intersections
-
-    def on_segment(self, p, q, r):
-        """
-        Given three co-linear points, determine if q lies on segment pr
-        """
-        if q[0] <= max(p[0], r[0]) and \
-           q[0] >= min(p[0], r[0]) and \
-           q[1] <= max(p[1], r[1]) and \
-           q[1] >= min(p[1], r[1]):
-            return True 
-        
-        return False
-    
-    def segment_intersection(self, s1, s2):
-        """ 
-        Determine the intersection point of two segments
-        Return the a segment if they overlap.
-        Return None if they don't.
-        """
-        (a,b) = s1
-        (c,d) = s2
-        # Line AB represented as a1x + b1y = c1
-        a1 = b.y - a.y
-        b1 = a.x - b.x
-        c1 = a1*a.x + b1*a.y
-        
-        # Line CD represented as a2x + b2y = c2
-        a2 = d.y - c.y
-        b2 = c.x - d.x
-        c2 = a2*c.x + b2*c.y
-        
-        determinant = a1*b2 - a2*b1
-
-        if determinant!=0:
-            x = (b2*c1 - b1*c2)/determinant
-            y = (a1*c2 - a2*c1)/determinant
-            
-            r = [x,y]
-            if self.on_segment(a, r, b) and self.on_segment(c, r, d):
-                return [x, y]
-           
-        return None
 
                                                         
 
@@ -659,7 +524,8 @@ class router:
         y = track.y*self.track_width + 0.5*self.track_width - space
         ur = snap_to_grid(vector(x,y))
 
-        return [ll,ur]
+        p = pin_layout("", [ll, ur], self.get_layer(track[2]))
+        return p
 
     def convert_track_to_shape(self, track):
         """ 
@@ -758,6 +624,8 @@ class router:
                 # Blockages will be a super-set of pins since it uses the inflated pin shape.
                 blockage_in_tracks = self.convert_blockage(pin) 
                 blockage_set.update(blockage_in_tracks)
+                debug.info(2,"     .pins   {}".format(pin_set))
+                debug.info(2,"     .blocks {}".format(blockage_set))
 
             # If we have a blockage, we must remove the grids
             # Remember, this excludes the pin blockages already
@@ -864,10 +732,13 @@ class router:
         """
         Find the minimum rectangle enclosures of the given tracks.
         """
+        # Enumerate every possible enclosure
         pin_list = []
         for seed in tracks:
             pin_list.append(self.enclose_pin_grids(tracks, seed))
 
+        #return pin_list
+        # We used to do this, but smaller enclosures can be
         return self.remove_redundant_shapes(pin_list)
 
     def overlap_any_shape(self, pin_list, shape_list):
@@ -881,6 +752,27 @@ class router:
 
         return False
 
+    def find_smallest_overlapping(self, pin_list, shape_list):
+        """
+        Find the smallest area shape in shape_list that overlaps with any 
+        pin in pin_list by a min width.
+        """
+
+        smallest_shape = None
+        for pin in pin_list:
+            # They may not be all on the same layer... in the future.
+            zindex=self.get_zindex(pin.layer_num)
+            (min_width,min_space) = self.get_layer_width_space(zindex)
+
+            # Now compare it with every other shape to check how much they overlap
+            for other in shape_list:
+                overlap_length = pin.overlap_length(other)
+                if overlap_length > min_width:
+                    if smallest_shape == None or other.area()<smallest_shape.area():
+                        smallest_shape = other
+                        
+        return smallest_shape
+    
     def max_pin_layout(self, pin_list):
         """ 
         Return the max area pin_layout
@@ -923,20 +815,19 @@ class router:
 
                 # Compute the enclosure pin_layout list of the set of tracks
                 enclosure_list = self.compute_enclosures(pin_grid_set)
-                for pin in enclosure_list:
-                    debug.info(2,"Adding enclosure {0} {1}".format(pin_name, pin))
-                    self.cell.add_rect(layer=pin.layer,
-                                       offset=pin.ll(),
-                                       width=pin.width(),
-                                       height=pin.height())
-                    self.enclosures.append(pin)
-                                  
-                # Check if a pin shape overlaps any enclosure.
-                # If so, we are done.
-                # FIXME: Check if by more than a DRC width
-                if self.overlap_any_shape(pin_group, enclosure_list):
+                smallest_enclosure = self.find_smallest_overlapping(pin_group, enclosure_list)
+                if smallest_enclosure:
+                #for smallest_enclosure in enclosure_list:
+                    debug.info(2,"Adding enclosure {0} {1}".format(pin_name, smallest_enclosure))
+                    self.cell.add_rect(layer=smallest_enclosure.layer,
+                                       offset=smallest_enclosure.ll(),
+                                       width=smallest_enclosure.width(),
+                                       height=smallest_enclosure.height())
+                    self.enclosures.append(smallest_enclosure)
+
+                #if self.overlap_any_shape(pin_group, enclosure_list):
                     #debug.info(2,"Pin overlaps enclosure {0}".format(pin_name))
-                    pass
+                #    pass
                 else:
                     new_enclosure = self.find_smallest_connector(pin_group, enclosure_list)
                     debug.info(2,"Adding connector enclosure {0} {1}".format(pin_name, new_enclosure))  
@@ -948,7 +839,7 @@ class router:
                                   
                     
 
-        #self.write_debug_gds("pin_debug.gds", True)
+        self.write_debug_gds("pin_debug.gds", True)
 
     def compute_enclosure(self, pin, enclosure):
         """ 
@@ -1101,7 +992,8 @@ class router:
         """
         Add a metal enclosure that is the size of the routing grid minus a spacing on each side. 
         """
-        (ll,ur) = self.convert_track_to_pin(track)
+        pin = self.convert_track_to_pin(track)
+        (ll,ur) = pin.rect
         self.cell.add_rect(layer=self.get_layer(track.z),
                            offset=ll,
                            width=ur.x-ll.x,
@@ -1129,8 +1021,10 @@ class router:
         layer = self.get_layer(zindex)
         
         # This finds the pin shape enclosed by the track with DRC spacing on the sides
-        (abs_ll,unused) = self.convert_track_to_pin(ll)
-        (unused,abs_ur) = self.convert_track_to_pin(ur)
+        pin = self.convert_track_to_pin(ll)
+        (abs_ll,unused) = pin.rect
+        pin = self.convert_track_to_pin(ur)
+        (unused,abs_ur) = pin.rect
         #print("enclose ll={0} ur={1}".format(ll,ur))
         #print("enclose ll={0} ur={1}".format(abs_ll,abs_ur))
         
@@ -1246,7 +1140,7 @@ class router:
                                offset=ll,
                                width=ur[0]-ll[0],
                                height=ur[1]-ll[1])
-            (ll,ur) = self.convert_track_to_pin(coord)
+            (ll,ur) = self.convert_track_to_pin(coord).rect
             self.cell.add_rect(layer="boundary",
                                offset=ll,
                                width=ur[0]-ll[0],

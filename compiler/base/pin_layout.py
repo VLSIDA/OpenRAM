@@ -2,6 +2,7 @@ import debug
 from tech import GDS, drc
 from vector import vector
 from tech import layer
+import math
 
 class pin_layout:
     """
@@ -274,3 +275,127 @@ class pin_layout:
                           magnification=GDS["zoom"],
                           rotate=None)
     
+
+    def compute_overlap(self, other):
+        """ Calculate the rectangular overlap of two rectangles. """
+        (r1_ll,r1_ur) = self.rect
+        (r2_ll,r2_ur) = other.rect
+
+        #ov_ur = vector(min(r1_ur.x,r2_ur.x),min(r1_ur.y,r2_ur.y))
+        #ov_ll = vector(max(r1_ll.x,r2_ll.x),max(r1_ll.y,r2_ll.y))
+
+        dy = min(r1_ur.y,r2_ur.y)-max(r1_ll.y,r2_ll.y)
+        dx = min(r1_ur.x,r2_ur.x)-max(r1_ll.x,r2_ll.x)
+        
+        if dx>=0 and dy>=0:
+            return [dx,dy]
+        else:
+            return [0,0]
+        
+    def overlap_length(self, other):
+        """ 
+        Calculate the intersection segment and determine its length
+        """
+
+        if self.contains(other):
+            return math.inf
+        elif other.contains(self):
+            return math.inf
+        else:
+            intersections = self.compute_overlap_segment(other)
+            # This is the common case where two pairs of edges overlap
+            # at two points, so just find the distance between those two points
+            if len(intersections)==2:
+                (p1,p2) = intersections
+                return math.sqrt(pow(p1[0]-p2[0],2) + pow(p1[1]-p2[1],2))
+            else:
+                # This is where we had a corner intersection or none
+                return 0
+
+    
+    def compute_overlap_segment(self, other):
+        """ 
+        Calculate the intersection segment of two rectangles 
+        (if any)
+        """
+        (r1_ll,r1_ur) = self.rect
+        (r2_ll,r2_ur) = other.rect
+
+        # The other corners besides ll and ur
+        r1_ul = vector(r1_ll.x, r1_ur.y)
+        r1_lr = vector(r1_ur.x, r1_ll.y)
+        r2_ul = vector(r2_ll.x, r2_ur.y)
+        r2_lr = vector(r2_ur.x, r2_ll.y)
+
+        from itertools import tee
+        def pairwise(iterable):
+            "s -> (s0,s1), (s1,s2), (s2, s3), ..."
+            a, b = tee(iterable)
+            next(b, None)
+            return zip(a, b)
+        
+        # R1 edges CW
+        r1_cw_points = [r1_ll, r1_ul, r1_ur, r1_lr, r1_ll]
+        r1_edges = []
+        for (p,q) in pairwise(r1_cw_points):
+            r1_edges.append([p,q])
+        
+        # R2 edges CW
+        r2_cw_points = [r2_ll, r2_ul, r2_ur, r2_lr, r2_ll]
+        r2_edges = []
+        for (p,q) in pairwise(r2_cw_points):
+            r2_edges.append([p,q])
+
+        # There are 4 edges on each rectangle
+        # so just brute force check intersection of each
+        # Two pairs of them should intersect
+        intersections = []
+        for r1e in r1_edges:
+            for r2e in r2_edges:
+                i = self.segment_intersection(r1e, r2e)
+                if i:
+                    intersections.append(i)
+
+        return intersections
+
+    def on_segment(self, p, q, r):
+        """
+        Given three co-linear points, determine if q lies on segment pr
+        """
+        if q[0] <= max(p[0], r[0]) and \
+           q[0] >= min(p[0], r[0]) and \
+           q[1] <= max(p[1], r[1]) and \
+           q[1] >= min(p[1], r[1]):
+            return True 
+        
+        return False
+    
+    def segment_intersection(self, s1, s2):
+        """ 
+        Determine the intersection point of two segments
+        Return the a segment if they overlap.
+        Return None if they don't.
+        """
+        (a,b) = s1
+        (c,d) = s2
+        # Line AB represented as a1x + b1y = c1
+        a1 = b.y - a.y
+        b1 = a.x - b.x
+        c1 = a1*a.x + b1*a.y
+        
+        # Line CD represented as a2x + b2y = c2
+        a2 = d.y - c.y
+        b2 = c.x - d.x
+        c2 = a2*c.x + b2*c.y
+        
+        determinant = a1*b2 - a2*b1
+
+        if determinant!=0:
+            x = (b2*c1 - b1*c2)/determinant
+            y = (a1*c2 - a2*c1)/determinant
+            
+            r = [x,y]
+            if self.on_segment(a, r, b) and self.on_segment(c, r, d):
+                return [x, y]
+           
+        return None

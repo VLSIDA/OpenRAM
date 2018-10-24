@@ -11,12 +11,11 @@ import globals
 from globals import OPTS
 import debug
 
-@unittest.skip("SKIPPING 22_psram_func_test")
+#@unittest.skip("SKIPPING 22_psram_func_test")
 class psram_func_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        #OPTS.spice_name="hspice"
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
         OPTS.bitcell = "pbitcell"
@@ -49,7 +48,7 @@ class psram_func_test(openram_test):
 
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         f = functional(s.s, tempspice, corner)
-        f.num_cycles = 5
+        f.num_cycles = 10
         (fail,error) = f.run()
         
         self.assertTrue(fail,error)

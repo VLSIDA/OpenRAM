@@ -21,7 +21,6 @@ class bitcell_1rw_1r(design.design):
 
         self.width = bitcell_1rw_1r.width
         self.height = bitcell_1rw_1r.height
-        debug.info(1, "Multiport width {}, height {}".format(self.width, self.height))
         self.pin_map = bitcell_1rw_1r.pin_map
 
     def analytical_delay(self, slew, load=0, swing = 0.5):
@@ -39,12 +38,12 @@ class bitcell_1rw_1r(design.design):
  
     def list_bitcell_pins(self, col, row):
         """ Creates a list of connections in the bitcell, indexed by column and row, for instance use in bitcell_array """
-        bitcell_pins = ["bl0[{0}]".format(col),
-                        "br0[{0}]".format(col),
-                        "bl1[{0}]".format(col),
-                        "br1[{0}]".format(col),
-                        "wl0[{0}]".format(row),
-                        "wl1[{0}]".format(row),
+        bitcell_pins = ["bl0_{0}".format(col),
+                        "br0_{0}".format(col),
+                        "bl1_{0}".format(col),
+                        "br1_{0}".format(col),
+                        "wl0_{0}".format(row),
+                        "wl1_{0}".format(row),
                         "vdd",
                         "gnd"]
         return bitcell_pins

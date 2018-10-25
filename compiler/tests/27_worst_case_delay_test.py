@@ -19,6 +19,7 @@ class worst_case_timing_sram_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         OPTS.spice_name="hspice"
         OPTS.analytical_delay = False
+        OPTS.netlist_only = True
         OPTS.trim_netlist = False
         OPTS.check_lvsdrc = True
         

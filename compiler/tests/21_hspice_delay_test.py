@@ -17,16 +17,13 @@ class timing_sram_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         OPTS.spice_name="hspice"
         OPTS.analytical_delay = False
-
+        OPTS.netlist_only = True
         
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
         import characterizer
         reload(characterizer)
         from characterizer import delay
-        if not OPTS.spice_exe:
-            debug.error("Could not find {} simulator.".format(OPTS.spice_name),-1)
-
         from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=1,

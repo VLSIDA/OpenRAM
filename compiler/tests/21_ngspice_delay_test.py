@@ -24,9 +24,6 @@ class timing_sram_test(openram_test):
         import characterizer
         reload(characterizer)
         from characterizer import delay
-        if not OPTS.spice_exe:
-            debug.error("Could not find {} simulator.".format(OPTS.spice_name),-1)
-
         from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=1,

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Run a regression test on various srams
+Run a functioal test on 1 bank SRAM
 """
 
 import unittest
@@ -12,7 +12,7 @@ from globals import OPTS
 import debug
 
 #@unittest.skip("SKIPPING 22_sram_func_test")
-class sram_func_test(openram_test):
+class sram_1bank_nomux_func_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
@@ -24,31 +24,30 @@ class sram_func_test(openram_test):
         import characterizer
         reload(characterizer)
         from characterizer import functional
-        if not OPTS.spice_exe:
-            debug.error("Could not find {} simulator.".format(OPTS.spice_name),-1)
-
         from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=4,
-                        num_words=64,
+                        num_words=32,
                         num_banks=1)
-        c.words_per_row=2
-        debug.info(1, "Functional test for 1bit, 16word SRAM, with 1 bank")
-        s = sram(c, name="sram1")
-
+        c.words_per_row=1
+        debug.info(1, "Functional test for sram with {} bit words, {} words, {} words per row, {} banks".format(c.word_size,
+                                                                                                                c.num_words,
+                                                                                                                c.words_per_row,
+                                                                                                                c.num_banks))
+        s = sram(c, name="sram")
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)
-
+        
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
+        
         f = functional(s.s, tempspice, corner)
         f.num_cycles = 10
         (fail, error) = f.run()
-
         self.assertTrue(fail,error)
-
+        
         globals.end_openram()
         
-# instantiate a copdsay of the class to actually run the test
+# instantiate a copy of the class to actually run the test
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

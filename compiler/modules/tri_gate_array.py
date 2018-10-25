@@ -107,14 +107,14 @@ class tri_gate_array(design.design):
                             layer="metal1",
                             offset=en_pin.ll().scale(0, 1),
                             width=width,
-                            height=drc["minwidth_metal1"])
+                            height=drc("minwidth_metal1"))
         
         enbar_pin = self.tri_inst[0].get_pin("en_bar")
         self.add_layout_pin(text="en_bar",
                             layer="metal1",
                             offset=enbar_pin.ll().scale(0, 1),
                             width=width,
-                            height=drc["minwidth_metal1"])
+                            height=drc("minwidth_metal1"))
         
 
 

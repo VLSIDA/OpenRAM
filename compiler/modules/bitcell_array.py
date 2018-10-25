@@ -39,7 +39,7 @@ class bitcell_array(design.design):
     def create_layout(self):
 
         # We increase it by a well enclosure so the precharges don't overlap our wells
-        self.height = self.row_size*self.cell.height + drc["well_enclosure_active"] + self.m1_width
+        self.height = self.row_size*self.cell.height + drc("well_enclosure_active") + self.m1_width
         self.width = self.column_size*self.cell.width + self.m1_width
         
         xoffset = 0.0
@@ -199,13 +199,13 @@ class bitcell_array(design.design):
         return total_power
 
     def gen_wl_wire(self):
-        wl_wire = self.generate_rc_net(int(self.column_size), self.width, drc["minwidth_metal1"])
+        wl_wire = self.generate_rc_net(int(self.column_size), self.width, drc("minwidth_metal1"))
         wl_wire.wire_c = 2*spice["min_tx_gate_c"] + wl_wire.wire_c # 2 access tx gate per cell
         return wl_wire
 
     def gen_bl_wire(self):
         bl_pos = 0
-        bl_wire = self.generate_rc_net(int(self.row_size-bl_pos), self.height, drc["minwidth_metal1"])
+        bl_wire = self.generate_rc_net(int(self.row_size-bl_pos), self.height, drc("minwidth_metal1"))
         bl_wire.wire_c =spice["min_tx_drain_c"] + bl_wire.wire_c # 1 access tx d/s per cell
         return bl_wire
 

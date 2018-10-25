@@ -6,6 +6,7 @@ from vector import vector
 import tech
 import math
 from globals import OPTS
+from utils import round_to_grid
 
 class geometry:
     """
@@ -46,8 +47,8 @@ class geometry:
     def normalize(self):
         """ Re-find the LL and UR points after a transform """
         (first,second)=self.boundary
-        ll = vector(min(first[0],second[0]),min(first[1],second[1]))
-        ur = vector(max(first[0],second[0]),max(first[1],second[1]))
+        ll = vector(min(first[0],second[0]),min(first[1],second[1])).snap_to_grid()
+        ur = vector(max(first[0],second[0]),max(first[1],second[1])).snap_to_grid()
         self.boundary=[ll,ur]
 
     def update_boundary(self):
@@ -142,8 +143,12 @@ class instance(geometry):
         self.rotate = rotate
         self.offset = vector(offset).snap_to_grid()
         self.mirror = mirror
-        self.width = mod.width
-        self.height = mod.height
+        if OPTS.netlist_only:
+            self.width = 0
+            self.height = 0
+        else:
+            self.width = round_to_grid(mod.width)
+            self.height = round_to_grid(mod.height)
         self.compute_boundary(offset,mirror,rotate)
         
         debug.info(4, "creating instance: " + self.name)
@@ -191,15 +196,15 @@ class instance(geometry):
         self.mod.gds_write_file(self.gds)
         # now write an instance of my module/structure
         new_layout.addInstance(self.gds,
-                              offsetInMicrons=self.offset,
-                              mirror=self.mirror,
-                              rotate=self.rotate)
-
+                               offsetInMicrons=self.offset,
+                               mirror=self.mirror,
+                               rotate=self.rotate)
+        
     def place(self, offset, mirror="R0", rotate=0):
         """ This updates the placement of an instance. """
         debug.info(3, "placing instance {}".format(self.name))
         # Update the placement of an already added instance
-        self.offset = vector(offset)
+        self.offset = vector(offset).snap_to_grid()
         self.mirror = mirror
         self.rotate = rotate
         self.update_boundary()
@@ -238,7 +243,7 @@ class instance(geometry):
         
     def __str__(self):
         """ override print function output """
-        return "inst: " + self.name + " mod=" + self.mod.name 
+        return "( inst: " + self.name + " @" + str(self.offset) + " mod=" + self.mod.name + " " + self.mirror + " R=" + str(self.rotate) + ")"
 
     def __repr__(self):
         """ override print function output """
@@ -260,13 +265,13 @@ class path(geometry):
         # supported right now. It might not work in gdsMill.
         assert(0)
 
-    def gds_write_file(self, newLayout):
+    def gds_write_file(self, new_layout):
         """Writes the path to GDS"""
         debug.info(4, "writing path (" + str(self.layerNumber) +  "): " + self.coordinates)
-        newLayout.addPath(layerNumber=self.layerNumber,
-                          purposeNumber=0,
-                          coordinates=self.coordinates,
-                          width=self.path_width)
+        new_layout.addPath(layerNumber=self.layerNumber,
+                           purposeNumber=0,
+                           coordinates=self.coordinates,
+                           width=self.path_width)
 
     def get_blockages(self, layer):
         """ Fail since we don't support paths yet. """
@@ -301,15 +306,15 @@ class label(geometry):
 
         debug.info(4,"creating label " + self.text + " " + str(self.layerNumber) + " " + str(self.offset))
 
-    def gds_write_file(self, newLayout):
+    def gds_write_file(self, new_layout):
         """Writes the text label to GDS"""
         debug.info(4, "writing label (" + str(self.layerNumber) + "): " + self.text)
-        newLayout.addText(text=self.text,
-                          layerNumber=self.layerNumber,
-                          purposeNumber=0,
-                          offsetInMicrons=self.offset,
-                          magnification=self.zoom,
-                          rotate=None)
+        new_layout.addText(text=self.text,
+                           layerNumber=self.layerNumber,
+                           purposeNumber=0,
+                           offsetInMicrons=self.offset,
+                           magnification=self.zoom,
+                           rotate=None)
 
     def get_blockages(self, layer):
         """ Returns an empty list since text cannot be blockages. """
@@ -321,7 +326,7 @@ class label(geometry):
 
     def __repr__(self):
         """ override print function output """
-        return "( label: " + self.text + " @" + str(self.offset) + " layer=" + self.layerNumber + " )"
+        return "( label: " + self.text + " @" + str(self.offset) + " layer=" + str(self.layerNumber) + " )"
 
 class rectangle(geometry):
     """Represents a rectangular shape"""
@@ -333,8 +338,8 @@ class rectangle(geometry):
         self.layerNumber = layerNumber
         self.offset = vector(offset).snap_to_grid()
         self.size = vector(width, height).snap_to_grid()
-        self.width = self.size.x
-        self.height = self.size.y
+        self.width = round_to_grid(self.size.x)
+        self.height = round_to_grid(self.size.y)
         self.compute_boundary(offset,"",0)
 
         debug.info(4, "creating rectangle (" + str(self.layerNumber) + "): " 
@@ -348,16 +353,16 @@ class rectangle(geometry):
         else:
             return []
 
-    def gds_write_file(self, newLayout):
+    def gds_write_file(self, new_layout):
         """Writes the rectangular shape to GDS"""
         debug.info(4, "writing rectangle (" + str(self.layerNumber) + "):" 
                    + str(self.width) + "x" + str(self.height) + " @ " + str(self.offset))
-        newLayout.addBox(layerNumber=self.layerNumber,
-                         purposeNumber=0,
-                         offsetInMicrons=self.offset,
-                         width=self.width,
-                         height=self.height,
-                         center=False)
+        new_layout.addBox(layerNumber=self.layerNumber,
+                          purposeNumber=0,
+                          offsetInMicrons=self.offset,
+                          width=self.width,
+                          height=self.height,
+                          center=False)
 
     def __str__(self):
         """ override print function output """

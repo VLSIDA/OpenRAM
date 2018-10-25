@@ -33,14 +33,14 @@ class wire(path):
         self.via_layer_name = via_layer
 
         self.vert_layer_name = vert_layer
-        self.vert_layer_width = drc["minwidth_{0}".format(vert_layer)]
+        self.vert_layer_width = drc("minwidth_{0}".format(vert_layer))
 
         self.horiz_layer_name = horiz_layer
-        self.horiz_layer_width = drc["minwidth_{0}".format(horiz_layer)]
+        self.horiz_layer_width = drc("minwidth_{0}".format(horiz_layer))
         via_connect = contact(self.layer_stack,
                               (1, 1))
-        self.node_to_node = [drc["minwidth_" + str(self.horiz_layer_name)] + via_connect.width,
-                             drc["minwidth_" + str(self.horiz_layer_name)] + via_connect.height]
+        self.node_to_node = [drc("minwidth_" + str(self.horiz_layer_name)) + via_connect.width,
+                             drc("minwidth_" + str(self.horiz_layer_name)) + via_connect.height]
 
     # create a 1x1 contact
     def create_vias(self):

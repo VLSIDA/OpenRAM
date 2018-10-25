@@ -109,7 +109,7 @@ class multibank(design.design):
         if self.num_banks > 1:
             self.route_bank_select()            
         
-        self.route_vdd_gnd()
+        self.route_supplies()
         
     def add_modules(self):
         """ Add modules. The order should not matter! """
@@ -170,7 +170,7 @@ class multibank(design.design):
         self.central_bus_width = self.m2_pitch * self.num_control_lines + 2*self.m2_width
 
         # A space for wells or jogging m2
-        self.m2_gap = max(2*drc["pwell_to_nwell"] + drc["well_enclosure_active"],
+        self.m2_gap = max(2*drc("pwell_to_nwell"] + drc["well_enclosure_active"),
                           2*self.m2_pitch)
 
 
@@ -382,7 +382,7 @@ class multibank(design.design):
         """
         # Place the col decoder right aligned with row decoder
         x_off = -(self.central_bus_width + self.wordline_driver.width + self.col_decoder.width)
-        y_off = -(self.col_decoder.height + 2*drc["well_to_well"])
+        y_off = -(self.col_decoder.height + 2*drc("well_to_well"))
         self.col_decoder_inst=self.add_inst(name="col_address_decoder", 
                                             mod=self.col_decoder, 
                                             offset=vector(x_off,y_off))
@@ -427,7 +427,7 @@ class multibank(design.design):
             y_off = min(self.col_decoder_inst.by(), self.col_mux_array_inst.by())
         else:
             y_off = self.row_decoder_inst.by()
-        y_off -= (self.bank_select.height + drc["well_to_well"])
+        y_off -= (self.bank_select.height + drc("well_to_well"))
         self.bank_select_pos = vector(x_off,y_off)
         self.bank_select_inst = self.add_inst(name="bank_select",
                                               mod=self.bank_select,
@@ -440,33 +440,11 @@ class multibank(design.design):
         temp.extend(["vdd", "gnd"])
         self.connect_inst(temp)
 
-    def route_vdd_gnd(self):
+    def route_supplies(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """
-
-        # These are the instances that every bank has
-        top_instances = [self.bitcell_array_inst,
-                         self.precharge_array_inst,
-                         self.sense_amp_array_inst,
-                         self.write_driver_array_inst,
-#                         self.tri_gate_array_inst,
-                         self.row_decoder_inst,
-                         self.wordline_driver_inst]
-        # Add these if we use the part...
-        if self.col_addr_size > 0:
-            top_instances.append(self.col_decoder_inst)
-            top_instances.append(self.col_mux_array_inst)
-            
-        if self.num_banks > 1:
-            top_instances.append(self.bank_select_inst)
-
-        
-        for inst in top_instances:
-            # Column mux has no vdd
-            if self.col_addr_size==0 or (self.col_addr_size>0 and inst != self.col_mux_array_inst):
-                self.copy_layout_pin(inst, "vdd")
-            # Precharge has no gnd
-            if inst != self.precharge_array_inst:
-                self.copy_layout_pin(inst, "gnd")
+        for inst in self.insts:
+            self.copy_power_pins(inst,"vdd")
+            self.copy_power_pins(inst,"gnd")
         
     def route_bank_select(self):
         """ Route the bank select logic. """

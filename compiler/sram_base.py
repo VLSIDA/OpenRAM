@@ -7,7 +7,7 @@ from vector import vector
 from globals import OPTS, print_time
 
 from design import design
-    
+        
 class sram_base(design):
     """
     Dynamically generated SRAM by connecting banks to control logic. The
@@ -77,16 +77,36 @@ class sram_base(design):
         """ Layout creation """    
         self.place_modules()
         self.route()
+
         self.add_lvs_correspondence_points()
         
         self.offset_all_coordinates()
-        
+
+        # Must be done after offsetting lower-left
+        self.route_supplies()
+
         highest_coord = self.find_highest_coords()
         self.width = highest_coord[0]
         self.height = highest_coord[1]
+
         
         self.DRC_LVS(final_verification=True)
 
+        
+    def route_supplies(self):
+        """ Route the supply grid and connect the pins to them. """
+
+        for inst in self.insts:
+            self.copy_power_pins(inst,"vdd")
+            self.copy_power_pins(inst,"gnd")
+
+        from supply_router import supply_router as router
+        layer_stack =("metal3","via3","metal4")
+        rtr=router(layer_stack, self)
+        rtr.route()
+        
+
+        
         
     def compute_bus_sizes(self):
         """ Compute the independent bus widths shared between two and four bank SRAMs """
@@ -176,34 +196,6 @@ class sram_base(design):
                                                                               length=self.control_bus_width))
         
 
-    def route_vdd_gnd(self):
-        """ Propagate all vdd/gnd pins up to this level for all modules """
-
-        # These are the instances that every bank has
-        top_instances = [self.bitcell_array_inst,
-                         self.precharge_array_inst,
-                         self.sense_amp_array_inst,
-                         self.write_driver_array_inst,
-                         self.tri_gate_array_inst,
-                         self.row_decoder_inst,
-                         self.wordline_driver_inst]
-        # Add these if we use the part...
-        if self.col_addr_size > 0:
-            top_instances.append(self.col_decoder_inst)
-            top_instances.append(self.col_mux_array_inst)
-            
-        if self.num_banks > 1:
-            top_instances.append(self.bank_select_inst)
-
-        
-        for inst in top_instances:
-            # Column mux has no vdd
-            if self.col_addr_size==0 or (self.col_addr_size>0 and inst != self.col_mux_array_inst):
-                self.copy_layout_pin(inst, "vdd")
-            # Precharge has no gnd
-            if inst != self.precharge_array_inst:
-                self.copy_layout_pin(inst, "gnd")
-        
         
     def add_multi_bank_modules(self):
         """ Create the multibank address flops and bank decoder """
@@ -459,8 +451,8 @@ class sram_base(design):
         sp.close()
 
         
-    def analytical_delay(self,slew,load):
+    def analytical_delay(self, vdd, slew,load):
         """ LH and HL are the same in analytical model. """
-        return self.bank.analytical_delay(slew,load)
+        return self.bank.analytical_delay(vdd,slew,load)
 
         

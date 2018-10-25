@@ -6,6 +6,7 @@ from .lib import *
 from .delay import *
 from .setup_hold import *
 from .functional import *
+from .worst_case import *
 from .simulation import *
 
 
@@ -17,7 +18,7 @@ if not OPTS.analytical_delay:
 
     if OPTS.spice_name != "":
         OPTS.spice_exe=find_exe(OPTS.spice_name)
-        if OPTS.spice_exe=="":
+        if OPTS.spice_exe=="" or OPTS.spice_exe==None:
             debug.error("{0} not found. Unable to perform characterization.".format(OPTS.spice_name),1)
     else:
         (OPTS.spice_name,OPTS.spice_exe) = get_tool("spice",["xa", "hspice", "ngspice", "ngspice.exe"])

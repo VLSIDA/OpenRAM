@@ -11,7 +11,7 @@ import globals
 from globals import OPTS
 import debug
 
-#@unittest.skip("SKIPPING 20_psram_1bank_test, multiport layout not complete")
+@unittest.skip("SKIPPING 20_psram_1bank_test, multiport layout not complete")
 class sram_1bank_test(openram_test):
 
     def runTest(self):        

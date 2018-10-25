@@ -63,7 +63,7 @@ class precharge_array(design.design):
                             layer="metal1",
                             offset=self.pc_cell.get_pin("en").ll(),
                             width=self.width,
-                            height=drc["minwidth_metal1"])
+                            height=drc("minwidth_metal1"))
 
         for inst in self.local_insts:
             self.copy_layout_pin(inst, "vdd")
@@ -74,13 +74,13 @@ class precharge_array(design.design):
             self.add_layout_pin(text="bl_{0}".format(i),
                                 layer="metal2",
                                 offset=bl_pin.ll(),
-                                width=drc["minwidth_metal2"],
+                                width=drc("minwidth_metal2"),
                                 height=bl_pin.height())
             br_pin = inst.get_pin("br") 
             self.add_layout_pin(text="br_{0}".format(i),
                                 layer="metal2",
                                 offset=br_pin.ll(),
-                                width=drc["minwidth_metal2"],
+                                width=drc("minwidth_metal2"),
                                 height=bl_pin.height())
         
 

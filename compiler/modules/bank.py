@@ -107,8 +107,7 @@ class bank(design.design):
         if self.num_banks > 1:
             self.route_bank_select()            
         
-        self.route_vdd_gnd()
-
+        self.route_supplies()
         
     def create_modules(self):
         """ Add modules. The order should not matter! """
@@ -201,7 +200,7 @@ class bank(design.design):
         self.central_bus_width = self.m2_pitch * self.num_control_lines + 2*self.m2_width
 
         # A space for wells or jogging m2
-        self.m2_gap = max(2*drc["pwell_to_nwell"] + drc["well_enclosure_active"],
+        self.m2_gap = max(2*drc("pwell_to_nwell") + drc("well_enclosure_active"),
                           2*self.m2_pitch)
 
 
@@ -527,10 +526,13 @@ class bank(design.design):
         
         # FIXME: place for multiport        
         for port in range(self.total_ports):
+            col_decoder_inst = self.col_decoder_inst[port]
+            
             # Place the col decoder right aligned with row decoder
             x_off = -(self.central_bus_width + self.wordline_driver.width + self.col_decoder.width)
-            y_off = -(self.col_decoder.height + 2*drc["well_to_well"])
-            self.col_decoder_inst[port].place(vector(x_off,y_off))
+            y_off = -(self.col_decoder.height + 2*drc("well_to_well"))
+            col_decoder_inst.place(vector(x_off,y_off))
+
 
             
     def create_bank_select(self):
@@ -565,47 +567,17 @@ class bank(design.design):
                 y_off = min(self.col_decoder_inst[port].by(), self.col_mux_array_inst[port].by())
             else:
                 y_off = self.row_decoder_inst[port].by()
-            y_off -= (self.bank_select.height + drc["well_to_well"])
+            y_off -= (self.bank_select.height + drc("well_to_well"))
             self.bank_select_pos = vector(x_off,y_off)
             self.bank_select_inst[port].place(self.bank_select_pos)
 
         
-    def route_vdd_gnd(self):
+    def route_supplies(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """
+        for inst in self.insts:
+            self.copy_power_pins(inst,"vdd")
+            self.copy_power_pins(inst,"gnd")
 
-        # These are the instances that every bank has
-        top_instances = [self.bitcell_array_inst]
-        for port in range(self.total_read):
-            #top_instances.append(self.precharge_array_inst[port])
-            top_instances.append(self.sense_amp_array_inst[port])
-        for port in range(self.total_write):
-            top_instances.append(self.write_driver_array_inst[port])
-        for port in range(self.total_ports):
-            top_instances.extend([self.row_decoder_inst[port],
-                                  self.wordline_driver_inst[port]])
-            # Add these if we use the part...
-            if self.col_addr_size > 0:
-                top_instances.append(self.col_decoder_inst[port])
-                #top_instances.append(self.col_mux_array_inst[port])
-            
-            if self.num_banks > 1:
-                top_instances.append(self.bank_select_inst[port])
-        
-        if self.col_addr_size > 0:
-            for port in range(self.total_ports):
-                self.copy_layout_pin(self.col_mux_array_inst[port], "gnd")
-        for port in range(self.total_read):
-            self.copy_layout_pin(self.precharge_array_inst[port], "vdd")
-        
-        for inst in top_instances:
-            # Column mux has no vdd
-            #if self.col_addr_size==0 or (self.col_addr_size>0 and inst != self.col_mux_array_inst[0]):
-            self.copy_layout_pin(inst, "vdd")
-            # Precharge has no gnd
-            #if inst != self.precharge_array_inst[port]:
-            self.copy_layout_pin(inst, "gnd")
-
-            
     def route_bank_select(self):
         """ Route the bank select logic. """
         
@@ -953,7 +925,7 @@ class bank(design.design):
                                 rotate=90)
 
         
-    def analytical_delay(self, slew, load):
+    def analytical_delay(self, vdd, slew, load):
         """ return  analytical delay of the bank"""
         decoder_delay = self.row_decoder.analytical_delay(slew, self.wordline_driver.input_load())
 
@@ -961,10 +933,17 @@ class bank(design.design):
 
         bitcell_array_delay = self.bitcell_array.analytical_delay(word_driver_delay.slew)
 
-        bl_t_data_out_delay = self.sense_amp_array.analytical_delay(bitcell_array_delay.slew,
+        if self.words_per_row > 1:
+            port = 0 #Analytical delay only supports single port
+            column_mux_delay = self.column_mux_array[port].analytical_delay(vdd, bitcell_array_delay.slew,
+                                                                     self.sense_amp_array.input_load())
+        else:
+            column_mux_delay = self.return_delay(delay = 0.0, slew=word_driver_delay.slew)
+            
+        bl_t_data_out_delay = self.sense_amp_array.analytical_delay(column_mux_delay.slew,
                                                                     self.bitcell_array.output_load())
         # output load of bitcell_array is set to be only small part of bl for sense amp.
 
-        result = decoder_delay + word_driver_delay + bitcell_array_delay + bl_t_data_out_delay 
+        result = decoder_delay + word_driver_delay + bitcell_array_delay + column_mux_delay + bl_t_data_out_delay 
         return result
         

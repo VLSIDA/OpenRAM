@@ -61,6 +61,21 @@ class sram():
     def save(self):
         """ Save all the output files while reporting time to do it as well. """
 
+        if not OPTS.netlist_only:
+            # Write the layout
+            start_time = datetime.datetime.now()
+            gdsname = OPTS.output_path + self.s.name + ".gds"
+            print("GDS: Writing to {0}".format(gdsname))
+            self.s.gds_write(gdsname)
+            print_time("GDS", datetime.datetime.now(), start_time)
+
+            # Create a LEF physical model
+            start_time = datetime.datetime.now()
+            lefname = OPTS.output_path + self.s.name + ".lef"
+            print("LEF: Writing to {0}".format(lefname))
+            self.s.lef_write(lefname)
+            print_time("LEF", datetime.datetime.now(), start_time)
+        
         # Save the spice file
         start_time = datetime.datetime.now()
         spname = OPTS.output_path + self.s.name + ".sp"
@@ -70,6 +85,7 @@ class sram():
 
         # Save the extracted spice file
         if OPTS.use_pex:
+            import verify
             start_time = datetime.datetime.now()
             # Output the extracted design if requested
             sp_file = OPTS.output_path + "temp_pex.sp"
@@ -92,21 +108,6 @@ class sram():
                 print("Trimming netlist to speed up characterization.")
         lib(out_dir=OPTS.output_path, sram=self.s, sp_file=sp_file)
         print_time("Characterization", datetime.datetime.now(), start_time)
-
-        if not OPTS.netlist_only:
-            # Write the layout
-            start_time = datetime.datetime.now()
-            gdsname = OPTS.output_path + self.s.name + ".gds"
-            print("GDS: Writing to {0}".format(gdsname))
-            self.s.gds_write(gdsname)
-            print_time("GDS", datetime.datetime.now(), start_time)
-
-            # Create a LEF physical model
-            start_time = datetime.datetime.now()
-            lefname = OPTS.output_path + self.s.name + ".lef"
-            print("LEF: Writing to {0}".format(lefname))
-            self.s.lef_write(lefname)
-            print_time("LEF", datetime.datetime.now(), start_time)
         
         # Write the datasheet
         start_time = datetime.datetime.now()

@@ -30,9 +30,26 @@ class pin_layout:
         return "({} layer={} ll={} ur={})".format(self.name,self.layer,self.rect[0],self.rect[1])
 
     def __repr__(self):
-        """ override print function output """
-        return "({} layer={} ll={} ur={})".format(self.name,self.layer,self.rect[0],self.rect[1])
+        """ 
+        override repr function output (don't include 
+        name since pin shapes could have same shape but diff name e.g. blockage vs A)
+        """
+        return "(layer={} ll={} ur={})".format(self.layer,self.rect[0],self.rect[1])
 
+    def __hash__(self):
+        """ Implement the hash function for sets etc. """
+        return hash(repr(self))
+    
+    def __lt__(self, other):
+        """ Provide a function for ordering items by the ll point """
+        (ll, ur) = self.rect
+        (oll, our) = other.rect
+        
+        if ll.x < oll.x and ll.y < oll.y:
+            return True
+            
+        return False
+    
     def __eq__(self, other):
         """ Check if these are the same pins for duplicate checks """
         if isinstance(other, self.__class__):
@@ -46,7 +63,7 @@ class pin_layout:
         and return the new rectangle. 
         """
         if not spacing:
-            spacing = drc["{0}_to_{0}".format(self.layer)]
+            spacing = 0.5*drc("{0}_to_{0}".format(self.layer))
             
         (ll,ur) = self.rect
         spacing = vector(spacing, spacing)
@@ -54,21 +71,39 @@ class pin_layout:
         newur = ur + spacing
         
         return (newll, newur)
-        
-    def overlaps(self, other):
+
+    def intersection(self, other):
         """ Check if a shape overlaps with a rectangle  """
         (ll,ur) = self.rect
         (oll,our) = other.rect
-        # Start assuming no overlaps
+
+        min_x = max(ll.x, oll.x)
+        max_x = min(ll.x, oll.x)
+        min_y = max(ll.y, oll.y)
+        max_y = min(ll.y, oll.y)
+
+        return [vector(min_x,min_y),vector(max_x,max_y)]
+
+    def xoverlaps(self, other):
+        """ Check if shape has x overlap """
+        (ll,ur) = self.rect
+        (oll,our) = other.rect
         x_overlaps = False
-        y_overlaps = False
         # check if self is within other x range
         if (ll.x >= oll.x and ll.x <= our.x) or (ur.x >= oll.x and ur.x <= our.x):
             x_overlaps = True
         # check if other is within self x range
         if (oll.x >= ll.x and oll.x <= ur.x) or (our.x >= ll.x and our.x <= ur.x):
             x_overlaps = True
-            
+
+        return x_overlaps
+
+    def yoverlaps(self, other):
+        """ Check if shape has x overlap """
+        (ll,ur) = self.rect
+        (oll,our) = other.rect
+        y_overlaps = False
+
         # check if self is within other y range
         if (ll.y >= oll.y and ll.y <= our.y) or (ur.y >= oll.y and ur.y <= our.y):
             y_overlaps = True
@@ -76,7 +111,42 @@ class pin_layout:
         if (oll.y >= ll.y and oll.y <= ur.y) or (our.y >= ll.y and our.y <= ur.y):
             y_overlaps = True
 
+        return y_overlaps
+    
+    def contains(self, other):
+        """ Check if a shape contains another rectangle  """
+        # Can only overlap on the same layer
+        if self.layer != other.layer:
+            return False
+
+        (ll,ur) = self.rect
+        (oll,our) = other.rect
+
+
+        if not (oll.y >= ll.y and oll.y <= ur.y):
+            return False
+
+        if not (oll.x >= ll.x and oll.x <= ur.x):
+            return False
+
+        return True
+        
+    
+    def overlaps(self, other):
+        """ Check if a shape overlaps with a rectangle  """
+        # Can only overlap on the same layer
+        if self.layer != other.layer:
+            return False
+        
+        x_overlaps = self.xoverlaps(other)
+        y_overlaps = self.yoverlaps(other)
+
         return x_overlaps and y_overlaps
+
+    def area(self):
+        """ Return the area. """
+        return self.height()*self.width()
+    
     def height(self):
         """ Return height. Abs is for pre-normalized value."""
         return abs(self.rect[1].y-self.rect[0].y)

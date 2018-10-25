@@ -132,8 +132,11 @@ class sense_amp_array(design.design):
                       layer="metal1",
                       offset=sclk_offset,
                       width=self.width,
-                      height=drc["minwidth_metal1"])
+                      height=drc("minwidth_metal1"))
 
+    def input_load(self):
+        return self.amp.input_load()
+    
     def analytical_delay(self, slew, load=0.0):
         return self.amp.analytical_delay(slew=slew, load=load)
         

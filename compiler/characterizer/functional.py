@@ -52,18 +52,18 @@ class functional(simulation):
         rw_ops = ["noop", "write", "read"]
         w_ops = ["noop", "write"]
         r_ops = ["noop", "read"]
-        rw_read_data = "0"*self.word_size
+        rw_read_din_data = "0"*self.word_size
         check = 0
         
         # First cycle idle
-        self.add_noop_all_ports("Idle at time {0}n".format(self.t_current),
-                                "0"*self.addr_size, "0"*self.word_size)
+        comment = self.gen_cycle_comment("noop", "0"*self.word_size, "0"*self.addr_size, 0, self.t_current)
+        self.add_noop_all_ports(comment, "0"*self.addr_size, "0"*self.word_size)
         
         # Write at least once
         addr = self.gen_addr()
         word = self.gen_data()
-        self.add_write("Writing {0} to address {1} (from port {2}) at time {3}n".format(word, addr, 0, self.t_current),
-                       addr, word, 0)
+        comment = self.gen_cycle_comment("write", word, addr, 0, self.t_current)
+        self.add_write(comment, addr, word, 0)
         self.stored_words[addr] = word
         
         # Read at least once. For multiport, it is important that one read cycle uses all RW and R port to read from the same address simultaniously.
@@ -72,8 +72,8 @@ class functional(simulation):
             if self.port_id[port] == "w":
                 self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, port)
             else:
-                self.add_read_one_port("Reading {0} from address {1} (from port {2}) at time {3}n".format(word, addr, port, self.t_current),
-                                       addr, rw_read_data, port)
+                comment = self.gen_cycle_comment("read", word, addr, port, self.t_current)
+                self.add_read_one_port(comment, addr, rw_read_din_data, port)
                 self.write_check.append([word, "{0}{1}".format(self.dout_name,port), self.t_current+self.period, check])
                 check += 1
         self.cycle_times.append(self.t_current)
@@ -101,8 +101,8 @@ class functional(simulation):
                     if addr in w_addrs:
                         self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, port)
                     else:
-                        self.add_write_one_port("Writing {0} to address {1} (from port {2}) at time {3}n".format(word, addr, port, self.t_current),
-                                                addr, word, port)
+                        comment = self.gen_cycle_comment("write", word, addr, port, self.t_current)
+                        self.add_write_one_port(comment, addr, word, port)
                         self.stored_words[addr] = word
                         w_addrs.append(addr)
                 else:
@@ -111,8 +111,8 @@ class functional(simulation):
                     if addr in w_addrs:
                         self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, port)
                     else:
-                        self.add_read_one_port("Reading {0} from address {1} (from port {2}) at time {3}n".format(word, addr, port, self.t_current),
-                                                addr, rw_read_data, port)
+                        comment = self.gen_cycle_comment("read", word, addr, port, self.t_current)
+                        self.add_read_one_port(comment, addr, rw_read_din_data, port)
                         self.write_check.append([word, "{0}{1}".format(self.dout_name,port), self.t_current+self.period, check])
                         check += 1
                 
@@ -120,8 +120,8 @@ class functional(simulation):
             self.t_current += self.period
         
         # Last cycle idle needed to correctly measure the value on the second to last clock edge
-        self.add_noop_all_ports("Idle at time {0}n".format(self.t_current),
-                                "0"*self.addr_size, "0"*self.word_size)
+        comment = self.gen_cycle_comment("noop", "0"*self.word_size, "0"*self.addr_size, 0, self.t_current)
+        self.add_noop_all_ports(comment, "0"*self.addr_size, "0"*self.word_size)
             
     def read_stim_results(self):
         # Extrat DOUT values from spice timing.lis
@@ -129,17 +129,17 @@ class functional(simulation):
             sp_read_value = ""
             for bit in range(self.word_size):
                 value = parse_spice_list("timing", "v{0}.{1}ck{2}".format(dout_port.lower(),bit,check))
-                if value > 0.9 * self.vdd_voltage:
+                if value > 0.88 * self.vdd_voltage:
                     sp_read_value = "1" + sp_read_value
-                elif value < 0.1 * self.vdd_voltage:
+                elif value < 0.12 * self.vdd_voltage:
                     sp_read_value = "0" + sp_read_value
                 else:
                     error ="FAILED: {0}_{1} value {2} at time {3}n does not fall within noise margins <{4} or >{5}.".format(dout_port,
                                                                                                                             bit,
                                                                                                                             value,
                                                                                                                             eo_period,
-                                                                                                                            0.1*self.vdd_voltage,
-                                                                                                                            0.9*self.vdd_voltage)
+                                                                                                                            0.12*self.vdd_voltage,
+                                                                                                                            0.88*self.vdd_voltage)
                     return (0, error)
                     
             self.read_check.append([sp_read_value, dout_port, eo_period, check])                    
@@ -148,10 +148,11 @@ class functional(simulation):
     def check_stim_results(self):
         for i in range(len(self.write_check)):
             if self.write_check[i][0] != self.read_check[i][0]:
-                error = "FAILED: {0} value {1} does not match written value {2} read at time {3}n".format(self.read_check[i][1],
-                                                                                                          self.read_check[i][0],
-                                                                                                          self.write_check[i][0],
-                                                                                                          self.read_check[i][2])
+                error = "FAILED: {0} value {1} does not match written value {2} read during cycle {3} at time {4}n".format(self.read_check[i][1],
+                                                                                                                           self.read_check[i][0],
+                                                                                                                           self.write_check[i][0],
+                                                                                                                           int((self.read_check[i][2]-self.period)/self.period),
+                                                                                                                           self.read_check[i][2])
                 return(0, error)
         return(1, "SUCCESS")
         
@@ -223,6 +224,11 @@ class functional(simulation):
             for bit in range(self.word_size):
                 sig_name="{0}{1}_{2} ".format(self.dout_name, self.read_index[port], bit)
                 self.sf.write("CD{0}{1} {2} 0 {3}f\n".format(self.read_index[port], bit, sig_name, self.load))
+                
+        # Write debug comments to stim file
+        self.sf.write("\n\n * Sequence of operations\n")
+        for comment in self.fn_cycle_comments:
+            self.sf.write("*{}\n".format(comment))
                 
         # Generate data input bits 
         self.sf.write("\n* Generation of data and address signals\n")

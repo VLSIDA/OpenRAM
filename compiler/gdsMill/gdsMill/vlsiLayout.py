@@ -155,10 +155,10 @@ class VlsiLayout:
     def traverseTheHierarchy(self, startingStructureName=None, delegateFunction = None, 
                              transformPath = [], rotateAngle = 0, transFlags = [0,0,0], coordinates = (0,0)):
         #since this is a recursive function, must deal with the default
-        #parameters explicitly        
+        #parameters explicitly      
         if startingStructureName == None:
             startingStructureName = self.rootStructureName            
-
+            
         #set up the rotation matrix        
         if(rotateAngle == None or rotateAngle == ""):
             angle = 0
@@ -619,7 +619,8 @@ class VlsiLayout:
         
     def updateBoundary(self,thisBoundary,cellBoundary):
         [left_bott_X,left_bott_Y,right_top_X,right_top_Y]=thisBoundary
-        if cellBoundary==[None,None,None,None]:
+        # If any are None
+        if not (cellBoundary[0] and cellBoundary[1] and cellBoundary[2] and cellBoundary[3]):
             cellBoundary=thisBoundary
         else:
             if cellBoundary[0]>left_bott_X:
@@ -713,9 +714,9 @@ class VlsiLayout:
         # Convert to user units
         new_boundaries = []
         for pin_boundary in pin_boundaries:
-            new_boundaries.append([pin_boundary[0]*self.units[0],pin_boundary[1]*self.units[0],
-                                   pin_boundary[2]*self.units[0],pin_boundary[3]*self.units[0]])
-
+            new_pin_boundary = [pin_boundary[0]*self.units[0],pin_boundary[1]*self.units[0],
+                                pin_boundary[2]*self.units[0],pin_boundary[3]*self.units[0]]
+            new_boundaries.append(["p"+str(coordinate)+"_"+str(layer), layer, new_pin_boundary])
         return new_boundaries
     
     def getPinShapeByLabel(self,label_name):

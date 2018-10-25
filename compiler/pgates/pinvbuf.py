@@ -94,16 +94,16 @@ class pinvbuf(design.design):
         self.connect_inst(["zb_int", "Z",  "vdd", "gnd"])
 
     def place_modules(self):
-        # Add INV1 to the right (capacitance shield)
+        # Add INV1 to the left (capacitance shield)
         self.inv1_inst.place(vector(0,0))
 
-        # Add INV2 to the right
+        # Add INV2 to the right of INV1
         self.inv2_inst.place(vector(self.inv1_inst.rx(),0))
         
-        # Add INV3 to the right
+        # Add INV3 to the right of INV2
         self.inv3_inst.place(vector(self.inv2_inst.rx(),0))
 
-        # Add INV4 to the bottom
+        # Add INV4 flipped to the bottom aligned with INV2
         self.inv4_inst.place(offset=vector(self.inv2_inst.rx(),2*self.inv2.height),
                              mirror = "MX")
         

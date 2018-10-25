@@ -56,12 +56,14 @@ class functional(simulation):
         check = 0
         
         # First cycle idle
-        self.add_noop_all_ports("0"*self.addr_size, "0"*self.word_size)
+        comment = self.gen_cycle_comment("noop", "0"*self.word_size, "0"*self.addr_size, 0, self.t_current)
+        self.add_noop_all_ports(comment, "0"*self.addr_size, "0"*self.word_size)
         
         # Write at least once
         addr = self.gen_addr()
         word = self.gen_data()
-        self.add_write(addr, word, 0)
+        comment = self.gen_cycle_comment("write", word, addr, 0, self.t_current)
+        self.add_write(comment, addr, word, 0)
         self.stored_words[addr] = word
         
         # Read at least once. For multiport, it is important that one read cycle uses all RW and R port to read from the same address simultaniously.
@@ -70,7 +72,8 @@ class functional(simulation):
             if self.port_id[port] == "w":
                 self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, port)
             else:
-                self.add_read_one_port(addr, rw_read_din_data, word, port)
+                comment = self.gen_cycle_comment("read", word, addr, port, self.t_current)
+                self.add_read_one_port(comment, addr, rw_read_din_data, port)
                 self.write_check.append([word, "{0}{1}".format(self.dout_name,port), self.t_current+self.period, check])
                 check += 1
         self.cycle_times.append(self.t_current)
@@ -98,7 +101,8 @@ class functional(simulation):
                     if addr in w_addrs:
                         self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, port)
                     else:
-                        self.add_write_one_port(addr, word, port)
+                        comment = self.gen_cycle_comment("write", word, addr, port, self.t_current)
+                        self.add_write_one_port(comment, addr, word, port)
                         self.stored_words[addr] = word
                         w_addrs.append(addr)
                 else:
@@ -107,7 +111,8 @@ class functional(simulation):
                     if addr in w_addrs:
                         self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, port)
                     else:
-                        self.add_read_one_port(addr, rw_read_din_data, word, port)
+                        comment = self.gen_cycle_comment("read", word, addr, port, self.t_current)
+                        self.add_read_one_port(comment, addr, rw_read_din_data, port)
                         self.write_check.append([word, "{0}{1}".format(self.dout_name,port), self.t_current+self.period, check])
                         check += 1
                 
@@ -115,7 +120,8 @@ class functional(simulation):
             self.t_current += self.period
         
         # Last cycle idle needed to correctly measure the value on the second to last clock edge
-        self.add_noop_all_ports("0"*self.addr_size, "0"*self.word_size)
+        comment = self.gen_cycle_comment("noop", "0"*self.word_size, "0"*self.addr_size, 0, self.t_current)
+        self.add_noop_all_ports(comment, "0"*self.addr_size, "0"*self.word_size)
             
     def read_stim_results(self):
         # Extrat DOUT values from spice timing.lis
@@ -221,7 +227,7 @@ class functional(simulation):
                 
         # Write debug comments to stim file
         self.sf.write("\n\n * Sequence of operations\n")
-        for comment in self.cycle_comments:
+        for comment in self.fn_cycle_comments:
             self.sf.write("*{}\n".format(comment))
                 
         # Generate data input bits 
@@ -266,7 +272,7 @@ class functional(simulation):
                                          t_intital=t_intital,
                                          t_final=t_final)
         
-        self.stim.write_control(self.cycle_times[-1] + self.period, runlvl=1)
+        self.stim.write_control(self.cycle_times[-1] + self.period)
         self.sf.close()
 
 

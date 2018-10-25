@@ -107,13 +107,11 @@ class simulation():
                 debug.error("Non-binary address string",1)
             bit -= 1
                 
-    def add_write(self, address, data, port):
+    def add_write(self, comment, address, data, port):
         """ Add the control values for a write cycle. """
         debug.check(port in self.write_index, "Cannot add write cycle to a read port. Port {0}, Write Ports {1}".format(port, self.write_index))
-        comment = self.gen_cycle_comment("write", data, address, port, self.t_current)
         debug.info(2, comment)
         self.fn_cycle_comments.append(comment)
-
         self.append_cycle_comment(port, comment)
 
         self.cycle_times.append(self.t_current)
@@ -130,13 +128,11 @@ class simulation():
             if unselected_port != port:
                 self.add_noop_one_port(address, noop_data, unselected_port)
                     
-    def add_read(self, address, din_data, dout_data, port):
+    def add_read(self, comment, address, din_data, port):
         """ Add the control values for a read cycle. """
         debug.check(port in self.read_index, "Cannot add read cycle to a write port. Port {0}, Read Ports {1}".format(port, self.read_index))
-        comment = self.gen_cycle_comment("read", dout_data, address, port, self.t_current)
         debug.info(2, comment)
         self.fn_cycle_comments.append(comment)
-        
         self.append_cycle_comment(port, comment)
 
         self.cycle_times.append(self.t_current)
@@ -155,12 +151,10 @@ class simulation():
             if unselected_port != port:
                 self.add_noop_one_port(address, noop_data, unselected_port)
 
-    def add_noop_all_ports(self, address, data):
+    def add_noop_all_ports(self, comment, address, data):
         """ Add the control values for a noop to all ports. """
-        comment = self.gen_cycle_comment("noop", "0"*self.word_size, "0"*self.addr_size, 0, self.t_current)
         debug.info(2, comment)
         self.fn_cycle_comments.append(comment)
-        
         self.append_cycle_comment("All", comment)
 
         self.cycle_times.append(self.t_current)
@@ -169,10 +163,9 @@ class simulation():
         for port in range(self.total_ports):
             self.add_noop_one_port(address, data, port)
             
-    def add_write_one_port(self, address, data, port):
+    def add_write_one_port(self, comment, address, data, port):
         """ Add the control values for a write cycle. Does not increment the period. """
         debug.check(port in self.write_index, "Cannot add write cycle to a read port. Port {0}, Write Ports {1}".format(port, self.write_index))
-        comment = self.gen_cycle_comment("write", data, address, port, self.t_current)
         debug.info(2, comment)
         self.fn_cycle_comments.append(comment)
         
@@ -180,10 +173,9 @@ class simulation():
         self.add_data(data,port)
         self.add_address(address,port)
                 
-    def add_read_one_port(self, address, din_data, dout_data, port):
+    def add_read_one_port(self, comment, address, din_data, port):
         """ Add the control values for a read cycle. Does not increment the period. """
         debug.check(port in self.read_index, "Cannot add read cycle to a write port. Port {0}, Read Ports {1}".format(port, self.read_index))
-        comment = self.gen_cycle_comment("read", dout_data, address, port, self.t_current)
         debug.info(2, comment)
         self.fn_cycle_comments.append(comment)
         

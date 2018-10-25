@@ -99,7 +99,7 @@ class supply_router(router):
         
         return True
 
-                
+
     
     def route_simple_overlaps(self, pin_name):
         """

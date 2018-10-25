@@ -152,9 +152,44 @@ class router(router_tech):
         for pin in pin_list:
             self.convert_pins(pin)
 
+        for pin in pin_list:
+            self.combine_adjacent_pins(pin)
+        #self.write_debug_gds("debug_combine_pins.gds",stop_program=True)
+            
         # Enclose the continguous grid units in a metal rectangle to fix some DRCs
         self.enclose_pins()
 
+    def combine_adjacent_pins(self, pin_name):
+        """
+        This checks for simple cases where a pin component already overlaps a supply rail.
+        It will add an enclosure to ensure the overlap in wide DRC rule cases.
+        """
+        # Make a copy since we are going to reduce this list
+        pin_groups = self.pin_groups[pin_name].copy()
+
+        remove_indices = []
+        for index1,pg1 in enumerate(self.pin_groups[pin_name]):
+            for index2,pg2 in enumerate(self.pin_groups[pin_name]):
+                
+                if index1==index2:
+                    continue
+
+                if pg1.adjacent(pg2):
+                    debug.info(2,"Combing {0}:\n  {1}\n  {2}".format(pin_name, pg1.pins, pg2.pins))
+                    combined = pin_group(pin_name, pg1.pins | pg2.pins, self)
+                    combined.grids = pg1.grids | pg2.grids
+                    
+                    # check if there are any blockage problems??
+                    remove_indices.append(index1)
+                    remove_indices.append(index2)
+                    pin_groups.append(combined)
+                    
+        # Remove them in decreasing order to not invalidate the indices
+        for i in sorted(remove_indices, reverse=True):
+            del pin_groups[i]
+            
+        self.pin_groups[pin_name] = pin_groups
+        
     def prepare_blockages(self, pin_name):
         """
         Reset and add all of the blockages in the design.
@@ -539,50 +574,7 @@ class router(router_tech):
         Convert the pin groups into pin tracks and blockage tracks.
         """
         for pg in self.pin_groups[pin_name]:
-            #print("PG  ",pg)
-            # Keep the same groups for each pin
-            pin_set = set()
-            blockage_set = set()
-            for pin in pg.shapes:
-                debug.info(2,"  Converting {0}".format(pin))
-                # Determine which tracks the pin overlaps 
-                pin_in_tracks=self.convert_pin_to_tracks(pin_name, pin)
-                pin_set.update(pin_in_tracks)
-                # Blockages will be a super-set of pins since it uses the inflated pin shape.
-                blockage_in_tracks = self.convert_blockage(pin) 
-                blockage_set.update(blockage_in_tracks)
-
-            # If we have a blockage, we must remove the grids
-            # Remember, this excludes the pin blockages already
-            shared_set = pin_set & self.blocked_grids
-            if shared_set:
-                debug.info(2,"Removing pins {}".format(shared_set))
-            shared_set = blockage_set & self.blocked_grids
-            if shared_set:
-                debug.info(2,"Removing blocks {}".format(shared_set))
-            pin_set.difference_update(self.blocked_grids)
-            blockage_set.difference_update(self.blocked_grids)
-            debug.info(2,"     pins   {}".format(pin_set))
-            debug.info(2,"     blocks {}".format(blockage_set))
-                       
-            # At least one of the groups must have some valid tracks
-            if (len(pin_set)==0 and len(blockage_set)==0):
-                self.write_debug_gds("blocked_pin.gds")
-                debug.error("Unable to find unblocked pin on grid.")
-
-            # We need to route each of the components, so don't combine the groups
-            pg.grids = pin_set | blockage_set
-
-            # Add all of the partial blocked grids to the set for the design
-            # if they are not blocked by other metal
-            #partial_set = blockage_set - pin_set
-            #self.pin_blockages[pin_name].append(partial_set)
-
-            # We should not have added the pins to the blockages,
-            # but remove them just in case
-            # Partial set may still be in the blockages if there were
-            # other shapes disconnected from the pins that were also overlapping
-            #self.blocked_grids.difference_update(pin_set)
+            pg.convert_pin(self)
 
 
     

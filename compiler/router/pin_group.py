@@ -12,7 +12,7 @@ class pin_group:
         self.name = name
         # Flag for when it is routed
         self.routed = False
-        self.shapes = pin_shapes
+        self.pins = pin_shapes
         self.router = router
         # These are the corresponding pin grids for each pin group.
         self.grids = set()
@@ -115,7 +115,7 @@ class pin_group:
         Return the smallest.
         """
         smallest = None
-        for pin in self.shapes:
+        for pin in self.pins:
             for enclosure in enclosure_list:
                 new_enclosure = self.compute_enclosure(pin, enclosure)
                 if smallest == None or new_enclosure.area()<smallest.area():
@@ -130,7 +130,7 @@ class pin_group:
         """
 
         smallest_shape = None
-        for pin in self.shapes:
+        for pin in self.pins:
             # They may not be all on the same layer... in the future.
             zindex=self.router.get_zindex(pin.layer_num)
             (min_width,min_space) = self.router.get_layer_width_space(zindex)
@@ -221,18 +221,77 @@ class pin_group:
         self.enclosure = self.find_smallest_overlapping(enclosure_list)
         if not self.enclosure:
             self.enclosure = self.find_smallest_connector(enclosure_list)
-        debug.info(2,"Computed enclosure {0} {1}".format(self.name, self.enclosure))  
+        debug.info(2,"Computed enclosure {0}\n  {1}\n  {2}\n  {3}".format(self.name, self.pins, self.grids, self.enclosure))
+        
+
             
     def add_enclosure(self, cell):
         """
         Add the enclosure shape to the given cell.
         """
         debug.info(2,"Adding enclosure {0} {1}".format(self.name, self.enclosure))  
-        self.router.cell.add_rect(layer=self.enclosure.layer,
-                                  offset=self.enclosure.ll(),
-                                  width=self.enclosure.width(),
-                                  height=self.enclosure.height())
-            
+        cell.add_rect(layer=self.enclosure.layer,
+                      offset=self.enclosure.ll(),
+                      width=self.enclosure.width(),
+                      height=self.enclosure.height())
+        
 
     
     
+    def adjacent(self, other):
+        """ 
+        Chck if the two pin groups have at least one adjacent pin grid.
+        """
+        # We could optimize this to just check the boundaries
+        for g1 in self.grids:
+            for g2 in other.grids:
+                if g1.adjacent(g2):
+                    return True
+
+        return False
+
+    def convert_pin(self, router):
+        #print("PG  ",pg)
+        # Keep the same groups for each pin
+        pin_set = set()
+        blockage_set = set()
+        for pin in self.pins:
+            debug.info(2,"  Converting {0}".format(pin))
+            # Determine which tracks the pin overlaps 
+            pin_in_tracks=router.convert_pin_to_tracks(self.name, pin)
+            pin_set.update(pin_in_tracks)
+            # Blockages will be a super-set of pins since it uses the inflated pin shape.
+            blockage_in_tracks = router.convert_blockage(pin) 
+            blockage_set.update(blockage_in_tracks)
+
+        # If we have a blockage, we must remove the grids
+        # Remember, this excludes the pin blockages already
+        shared_set = pin_set & router.blocked_grids
+        if shared_set:
+            debug.info(2,"Removing pins {}".format(shared_set))
+        shared_set = blockage_set & router.blocked_grids
+        if shared_set:
+            debug.info(2,"Removing blocks {}".format(shared_set))
+        pin_set.difference_update(router.blocked_grids)
+        blockage_set.difference_update(router.blocked_grids)
+        debug.info(2,"     pins   {}".format(pin_set))
+        debug.info(2,"     blocks {}".format(blockage_set))
+                       
+        # At least one of the groups must have some valid tracks
+        if (len(pin_set)==0 and len(blockage_set)==0):
+            self.write_debug_gds("blocked_pin.gds")
+            debug.error("Unable to find unblocked pin on grid.")
+
+        # We need to route each of the components, so don't combine the groups
+        self.grids = pin_set | blockage_set
+
+        # Add all of the partial blocked grids to the set for the design
+        # if they are not blocked by other metal
+        #partial_set = blockage_set - pin_set
+        #self.blockages = partial_set
+
+        # We should not have added the pins to the blockages,
+        # but remove them just in case
+        # Partial set may still be in the blockages if there were
+        # other shapes disconnected from the pins that were also overlapping
+        #route.blocked_grids.difference_update(pin_set)

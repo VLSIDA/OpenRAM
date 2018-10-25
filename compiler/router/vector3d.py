@@ -163,3 +163,17 @@ class vector3d():
         """ Min of both values """
         return vector3d(min(self.x,other.x),min(self.y,other.y),min(self.z,other.z))
 
+
+    def adjacent(self, other):
+        """ Is the one grid adjacent in any planar direction to the other """
+        if self == other + vector3d(1,0,0):
+            return True
+        elif self == other + vector3d(-1,0,0):
+            return True
+        elif self == other + vector3d(0,1,0):
+            return True
+        elif self == other + vector3d(0,-1,0):
+            return True
+        else:
+            return False
+        

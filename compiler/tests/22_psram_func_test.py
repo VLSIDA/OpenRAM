@@ -32,27 +32,90 @@ class psram_func_test(openram_test):
         from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=4,
-                        num_words=64,
+                        num_words=32,
                         num_banks=1)
-        c.words_per_row=2
+        c.words_per_row=1
         
         OPTS.num_rw_ports = 1
         OPTS.num_w_ports = 1
         OPTS.num_r_ports = 1
         
-        debug.info(1, "Functional test for 1bit, 16word SRAM, with 1 bank. Multiport with {}RW {}W {}R.".format(OPTS.num_rw_ports, OPTS.num_w_ports, OPTS.num_r_ports))
+        # no column mux
+        debug.info(1, "Functional test for multi-port ({0}RW {1}W {2}R) sram with {3}bit words, {4}words, {5}words per row, {6}banks".format(OPTS.num_rw_ports,
+                                                                                                                                             OPTS.num_w_ports,
+                                                                                                                                             OPTS.num_r_ports,
+                                                                                                                                             c.word_size,
+                                                                                                                                             c.num_words,
+                                                                                                                                             c.words_per_row,
+                                                                                                                                             c.num_banks))
         s = sram(c, name="sram1")
-
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)
-
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
+        
         f = functional(s.s, tempspice, corner)
         f.num_cycles = 10
         (fail,error) = f.run()
-        
         self.assertTrue(fail,error)
+        self.reset()
+        
+        # 2-way column mux
+        c.num_words = 64
+        c.words_per_row = 2
+        debug.info(1, "Functional test for multi-port ({0}RW {1}W {2}R) sram with {3}bit words, {4}words, {5}words per row, {6}banks".format(OPTS.num_rw_ports,
+                                                                                                                                             OPTS.num_w_ports,
+                                                                                                                                             OPTS.num_r_ports,
+                                                                                                                                             c.word_size,
+                                                                                                                                             c.num_words,
+                                                                                                                                             c.words_per_row,
+                                                                                                                                             c.num_banks))
+        s = sram(c, name="sram2")
+        s.sp_write(tempspice)
 
+        f = functional(s.s, tempspice, corner)
+        f.num_cycles = 10
+        (fail,error) = f.run()
+        self.assertTrue(fail,error)
+        self.reset()
+        """ 
+        # 4-way column mux
+        c.num_words = 256
+        c.words_per_row = 4
+        debug.info(1, "Functional test for multi-port ({0}RW {1}W {2}R) sram with {3}bit words, {4}words, {5}words per row, {6}banks".format(OPTS.num_rw_ports,
+                                                                                                                                             OPTS.num_w_ports,
+                                                                                                                                             OPTS.num_r_ports,
+                                                                                                                                             c.word_size,
+                                                                                                                                             c.num_words,
+                                                                                                                                             c.words_per_row,
+                                                                                                                                             c.num_banks))
+        s = sram(c, name="sram1")
+        s.sp_write(tempspice)
+
+        f = functional(s.s, tempspice, corner)
+        f.num_cycles = 10
+        (fail,error) = f.run()
+        self.assertTrue(fail,error)
+        self.reset()
+        
+        # 8-way column mux
+        c.num_words = 512
+        c.words_per_row = 8
+        debug.info(1, "Functional test for multi-port ({0}RW {1}W {2}R) sram with {3}bit words, {4}words, {5}words per row, {6}banks".format(OPTS.num_rw_ports,
+                                                                                                                                             OPTS.num_w_ports,
+                                                                                                                                             OPTS.num_r_ports,
+                                                                                                                                             c.word_size,
+                                                                                                                                             c.num_words,
+                                                                                                                                             c.words_per_row,
+                                                                                                                                             c.num_banks))
+        s = sram(c, name="sram1")
+        s.sp_write(tempspice)
+
+        f = functional(s.s, tempspice, corner)
+        f.num_cycles = 10
+        (fail,error) = f.run()
+        self.assertTrue(fail,error)
+        self.reset()
+        """
         globals.end_openram()
         
 # instantiate a copdsay of the class to actually run the test

@@ -167,7 +167,7 @@ class router(router_tech):
         # Make a copy since we are going to reduce this list
         pin_groups = self.pin_groups[pin_name].copy()
 
-        remove_indices = []
+        remove_indices = set()
         for index1,pg1 in enumerate(self.pin_groups[pin_name]):
             for index2,pg2 in enumerate(self.pin_groups[pin_name]):
                 
@@ -180,8 +180,7 @@ class router(router_tech):
                     combined.grids = pg1.grids | pg2.grids
                     
                     # check if there are any blockage problems??
-                    remove_indices.append(index1)
-                    remove_indices.append(index2)
+                    remove_indices.update([index1,index2])
                     pin_groups.append(combined)
                     
         # Remove them in decreasing order to not invalidate the indices

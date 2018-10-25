@@ -266,7 +266,7 @@ class functional(simulation):
                                          t_intital=t_intital,
                                          t_final=t_final)
         
-        self.stim.write_control(self.cycle_times[-1] + self.period)
+        self.stim.write_control(self.cycle_times[-1] + self.period, runlvl=1)
         self.sf.close()
 
 

@@ -78,11 +78,11 @@ cell (sram_2_16_1_scn4m_subm){
     dont_use  : true;
     map_only   : true;
     dont_touch : true;
-    area : 60176.520000000004;
+    area : 60774.3;
 
     leakage_power () {
       when : "CSb0";
-      value : 0.025716199999999998;
+      value : 0.0009813788999999999;
     }
     cell_leakage_power : 0;
     bus(DIN0){
@@ -91,7 +91,37 @@ cell (sram_2_16_1_scn4m_subm){
         capacitance : 9.8242;  
         memory_write(){ 
             address : ADDR0; 
-            clocked_on  : clk; 
+            clocked_on  : clk0; 
+        }
+        pin(DIN0[1:0]){
+        timing(){ 
+            timing_type : setup_rising; 
+            related_pin  : "clk0"; 
+            rise_constraint(CONSTRAINT_TABLE) {
+            values("0.167, 0.167, 0.228",\
+                   "0.167, 0.167, 0.228",\
+                   "0.167, 0.167, 0.228");
+            }
+            fall_constraint(CONSTRAINT_TABLE) {
+            values("0.131, 0.125, 0.137",\
+                   "0.131, 0.125, 0.137",\
+                   "0.131, 0.125, 0.137");
+            }
+        }
+        timing(){ 
+            timing_type : hold_rising; 
+            related_pin  : "clk0"; 
+            rise_constraint(CONSTRAINT_TABLE) {
+            values("-0.065, -0.071, -0.114",\
+                   "-0.065, -0.071, -0.114",\
+                   "-0.065, -0.071, -0.114");
+              }
+            fall_constraint(CONSTRAINT_TABLE) {
+            values("-0.089, -0.089, -0.089",\
+                   "-0.089, -0.089, -0.089",\
+                   "-0.089, -0.089, -0.089");
+            }
+        }
         }
     }
     bus(DOUT0){
@@ -104,56 +134,28 @@ cell (sram_2_16_1_scn4m_subm){
         }
         pin(DOUT0[1:0]){
         timing(){ 
-            timing_type : setup_rising; 
-            related_pin  : "clk"; 
-            rise_constraint(CONSTRAINT_TABLE) {
-            values("0.179, 0.173, 0.228",\
-                   "0.179, 0.173, 0.228",\
-                   "0.179, 0.173, 0.228");
-            }
-            fall_constraint(CONSTRAINT_TABLE) {
-            values("0.125, 0.125, 0.143",\
-                   "0.125, 0.125, 0.143",\
-                   "0.125, 0.125, 0.143");
-            }
-        }
-        timing(){ 
-            timing_type : hold_rising; 
-            related_pin  : "clk"; 
-            rise_constraint(CONSTRAINT_TABLE) {
-            values("-0.065, -0.071, -0.114",\
-                   "-0.065, -0.071, -0.114",\
-                   "-0.065, -0.071, -0.114");
-              }
-            fall_constraint(CONSTRAINT_TABLE) {
-            values("-0.089, -0.089, -0.095",\
-                   "-0.089, -0.089, -0.095",\
-                   "-0.089, -0.089, -0.095");
-            }
-        }
-        timing(){ 
             timing_sense : non_unate; 
-            related_pin : "clk"; 
+            related_pin : "clk0"; 
             timing_type : rising_edge; 
             cell_rise(CELL_TABLE) {
-            values("1.277, 1.297, 1.475",\
-                   "1.28, 1.3, 1.479",\
-                   "1.347, 1.367, 1.545");
+            values("1.542, 1.562, 1.738",\
+                   "1.545, 1.565, 1.741",\
+                   "1.609, 1.629, 1.805");
             }
             cell_fall(CELL_TABLE) {
-            values("3.217, 3.281, 3.71",\
-                   "3.22, 3.285, 3.714",\
-                   "3.261, 3.325, 3.75");
+            values("3.446, 3.505, 3.924",\
+                   "3.45, 3.508, 3.927",\
+                   "3.491, 3.55, 3.97");
             }
             rise_transition(CELL_TABLE) {
-            values("0.122, 0.164, 0.579",\
-                   "0.122, 0.164, 0.578",\
-                   "0.122, 0.164, 0.58");
+            values("0.129, 0.169, 0.573",\
+                   "0.129, 0.169, 0.573",\
+                   "0.129, 0.169, 0.573");
             }
             fall_transition(CELL_TABLE) {
-            values("0.363, 0.396, 0.958",\
-                   "0.363, 0.396, 0.957",\
-                   "0.366, 0.399, 0.951");
+            values("0.457, 0.481, 0.956",\
+                   "0.457, 0.481, 0.956",\
+                   "0.459, 0.483, 0.957");
             }
         }
         }
@@ -167,30 +169,30 @@ cell (sram_2_16_1_scn4m_subm){
         pin(ADDR0[3:0]){
         timing(){ 
             timing_type : setup_rising; 
-            related_pin  : "clk"; 
+            related_pin  : "clk0"; 
             rise_constraint(CONSTRAINT_TABLE) {
-            values("0.179, 0.173, 0.228",\
-                   "0.179, 0.173, 0.228",\
-                   "0.179, 0.173, 0.228");
+            values("0.167, 0.167, 0.228",\
+                   "0.167, 0.167, 0.228",\
+                   "0.167, 0.167, 0.228");
             }
             fall_constraint(CONSTRAINT_TABLE) {
-            values("0.125, 0.125, 0.143",\
-                   "0.125, 0.125, 0.143",\
-                   "0.125, 0.125, 0.143");
+            values("0.131, 0.125, 0.137",\
+                   "0.131, 0.125, 0.137",\
+                   "0.131, 0.125, 0.137");
             }
         }
         timing(){ 
             timing_type : hold_rising; 
-            related_pin  : "clk"; 
+            related_pin  : "clk0"; 
             rise_constraint(CONSTRAINT_TABLE) {
             values("-0.065, -0.071, -0.114",\
                    "-0.065, -0.071, -0.114",\
                    "-0.065, -0.071, -0.114");
               }
             fall_constraint(CONSTRAINT_TABLE) {
-            values("-0.089, -0.089, -0.095",\
-                   "-0.089, -0.089, -0.095",\
-                   "-0.089, -0.089, -0.095");
+            values("-0.089, -0.089, -0.089",\
+                   "-0.089, -0.089, -0.089",\
+                   "-0.089, -0.089, -0.089");
             }
         }
         }
@@ -201,30 +203,30 @@ cell (sram_2_16_1_scn4m_subm){
         capacitance : 9.8242;  
         timing(){ 
             timing_type : setup_rising; 
-            related_pin  : "clk"; 
+            related_pin  : "clk0"; 
             rise_constraint(CONSTRAINT_TABLE) {
-            values("0.179, 0.173, 0.228",\
-                   "0.179, 0.173, 0.228",\
-                   "0.179, 0.173, 0.228");
+            values("0.167, 0.167, 0.228",\
+                   "0.167, 0.167, 0.228",\
+                   "0.167, 0.167, 0.228");
             }
             fall_constraint(CONSTRAINT_TABLE) {
-            values("0.125, 0.125, 0.143",\
-                   "0.125, 0.125, 0.143",\
-                   "0.125, 0.125, 0.143");
+            values("0.131, 0.125, 0.137",\
+                   "0.131, 0.125, 0.137",\
+                   "0.131, 0.125, 0.137");
             }
         }
         timing(){ 
             timing_type : hold_rising; 
-            related_pin  : "clk"; 
+            related_pin  : "clk0"; 
             rise_constraint(CONSTRAINT_TABLE) {
             values("-0.065, -0.071, -0.114",\
                    "-0.065, -0.071, -0.114",\
                    "-0.065, -0.071, -0.114");
               }
             fall_constraint(CONSTRAINT_TABLE) {
-            values("-0.089, -0.089, -0.095",\
-                   "-0.089, -0.089, -0.095",\
-                   "-0.089, -0.089, -0.095");
+            values("-0.089, -0.089, -0.089",\
+                   "-0.089, -0.089, -0.089",\
+                   "-0.089, -0.089, -0.089");
             }
         }
     }
@@ -234,54 +236,54 @@ cell (sram_2_16_1_scn4m_subm){
         capacitance : 9.8242;  
         timing(){ 
             timing_type : setup_rising; 
-            related_pin  : "clk"; 
+            related_pin  : "clk0"; 
             rise_constraint(CONSTRAINT_TABLE) {
-            values("0.179, 0.173, 0.228",\
-                   "0.179, 0.173, 0.228",\
-                   "0.179, 0.173, 0.228");
+            values("0.167, 0.167, 0.228",\
+                   "0.167, 0.167, 0.228",\
+                   "0.167, 0.167, 0.228");
             }
             fall_constraint(CONSTRAINT_TABLE) {
-            values("0.125, 0.125, 0.143",\
-                   "0.125, 0.125, 0.143",\
-                   "0.125, 0.125, 0.143");
+            values("0.131, 0.125, 0.137",\
+                   "0.131, 0.125, 0.137",\
+                   "0.131, 0.125, 0.137");
             }
         }
         timing(){ 
             timing_type : hold_rising; 
-            related_pin  : "clk"; 
+            related_pin  : "clk0"; 
             rise_constraint(CONSTRAINT_TABLE) {
             values("-0.065, -0.071, -0.114",\
                    "-0.065, -0.071, -0.114",\
                    "-0.065, -0.071, -0.114");
               }
             fall_constraint(CONSTRAINT_TABLE) {
-            values("-0.089, -0.089, -0.095",\
-                   "-0.089, -0.089, -0.095",\
-                   "-0.089, -0.089, -0.095");
+            values("-0.089, -0.089, -0.089",\
+                   "-0.089, -0.089, -0.089",\
+                   "-0.089, -0.089, -0.089");
             }
         }
     }
 
-    pin(clk){
+    pin(clk0){
         clock             : true;
         direction  : input; 
         capacitance : 9.8242;  
         internal_power(){
-            when : "!CSb0 & clk & !WEb0"; 
+            when : "!CSb0 & clk0 & !WEb0"; 
             rise_power(scalar){
-                values("9.141838916666668");
+                values("9.602821763527778");
             }
             fall_power(scalar){
-                values("9.141838916666668");
+                values("9.602821763527778");
             }
         }
         internal_power(){
-            when : "!CSb0 & !clk & WEb0"; 
+            when : "!CSb0 & !clk0 & WEb0"; 
             rise_power(scalar){
-                values("8.304491694444444");
+                values("8.647938152416664");
             }
             fall_power(scalar){
-                values("8.304491694444444");
+                values("8.647938152416664");
             }
         }
         internal_power(){
@@ -295,7 +297,7 @@ cell (sram_2_16_1_scn4m_subm){
         }
         timing(){ 
             timing_type :"min_pulse_width"; 
-            related_pin  : clk; 
+            related_pin  : clk0; 
             rise_constraint(scalar) {
                 values("2.344"); 
             }
@@ -305,7 +307,7 @@ cell (sram_2_16_1_scn4m_subm){
          }
         timing(){ 
             timing_type :"minimum_period"; 
-            related_pin  : clk; 
+            related_pin  : clk0; 
             rise_constraint(scalar) {
                 values("4.688"); 
             }
@@ -314,5 +316,6 @@ cell (sram_2_16_1_scn4m_subm){
             }
          }
     }
+
     }
 }

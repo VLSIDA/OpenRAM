@@ -58,6 +58,7 @@ class simulation():
         
         # For generating comments in SPICE stimulus
         self.cycle_comments = []
+        self.fn_cycle_comments = []
 
     def add_control_one_port(self, port, op):
         """Appends control signals for operation to a given port"""
@@ -81,7 +82,6 @@ class simulation():
     def add_data(self, data, port):
         """ Add the array of data values """
         debug.check(len(data)==self.word_size, "Invalid data word size.")
-        #debug.check(port < len(self.data_values), "Port number cannot index data values.")
         
         bit = self.word_size - 1
         for c in data:
@@ -111,8 +111,10 @@ class simulation():
         """ Add the control values for a write cycle. """
         debug.check(port in self.write_index, "Cannot add write cycle to a read port. Port {0}, Write Ports {1}".format(port, self.write_index))
         comment = self.gen_cycle_comment("write", data, address, port, self.t_current)
-        debug.info(1, comment)
-        self.cycle_comments.append(comment)
+        debug.info(2, comment)
+        self.fn_cycle_comments.append(comment)
+
+        self.append_cycle_comment(port, comment)
 
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
@@ -132,9 +134,11 @@ class simulation():
         """ Add the control values for a read cycle. """
         debug.check(port in self.read_index, "Cannot add read cycle to a write port. Port {0}, Read Ports {1}".format(port, self.read_index))
         comment = self.gen_cycle_comment("read", dout_data, address, port, self.t_current)
-        debug.info(1, comment)
-        self.cycle_comments.append(comment)
+        debug.info(2, comment)
+        self.fn_cycle_comments.append(comment)
         
+        self.append_cycle_comment(port, comment)
+
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
         self.add_control_one_port(port, "read")
@@ -154,9 +158,11 @@ class simulation():
     def add_noop_all_ports(self, address, data):
         """ Add the control values for a noop to all ports. """
         comment = self.gen_cycle_comment("noop", "0"*self.word_size, "0"*self.addr_size, 0, self.t_current)
-        debug.info(1, comment)
-        self.cycle_comments.append(comment)
+        debug.info(2, comment)
+        self.fn_cycle_comments.append(comment)
         
+        self.append_cycle_comment("All", comment)
+
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
          
@@ -167,8 +173,8 @@ class simulation():
         """ Add the control values for a write cycle. Does not increment the period. """
         debug.check(port in self.write_index, "Cannot add write cycle to a read port. Port {0}, Write Ports {1}".format(port, self.write_index))
         comment = self.gen_cycle_comment("write", data, address, port, self.t_current)
-        debug.info(1, comment)
-        self.cycle_comments.append(comment)
+        debug.info(2, comment)
+        self.fn_cycle_comments.append(comment)
         
         self.add_control_one_port(port, "write")
         self.add_data(data,port)
@@ -178,8 +184,8 @@ class simulation():
         """ Add the control values for a read cycle. Does not increment the period. """
         debug.check(port in self.read_index, "Cannot add read cycle to a write port. Port {0}, Read Ports {1}".format(port, self.read_index))
         comment = self.gen_cycle_comment("read", dout_data, address, port, self.t_current)
-        debug.info(1, comment)
-        self.cycle_comments.append(comment)
+        debug.info(2, comment)
+        self.fn_cycle_comments.append(comment)
         
         self.add_control_one_port(port, "read")
         #If the port is also a readwrite then add data.
@@ -193,6 +199,17 @@ class simulation():
         if port in self.write_index:
             self.add_data(data,port)
         self.add_address(address, port)
+
+    def append_cycle_comment(self, port, comment):
+        """Add comment to list to be printed in stimulus file"""
+        #Clean up time before appending. Make spacing dynamic as well.
+        time = "{0:.2f} ns:".format(self.t_current)
+        time_spacing = len(time)+6
+        self.cycle_comments.append("Cycle {0:<6d} Port {1:<6} {2:<{3}}: {4}".format(len(self.cycle_times),
+                                                                           port,
+                                                                           time,
+                                                                           time_spacing,
+                                                                           comment))  
         
     def gen_cycle_comment(self, op, word, addr, port, t_current):
         if op == "noop":

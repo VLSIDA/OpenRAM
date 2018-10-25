@@ -261,6 +261,7 @@ spice["clk"] = "clk"
 
 # analytical delay parameters
 # FIXME: These need to be updated for SCMOS, they are copied from FreePDK45.
+spice["v_threshold_typical"] = 1.3   # Typical Threshold voltage in Volts
 spice["wire_unit_r"] = 0.075    # Unit wire resistance in ohms/square
 spice["wire_unit_c"] = 0.64     # Unit wire capacitance ff/um^2
 spice["min_tx_r"] = 9250.0      # Minimum transistor on resistance in ohms

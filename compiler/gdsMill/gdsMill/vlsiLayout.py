@@ -155,10 +155,10 @@ class VlsiLayout:
     def traverseTheHierarchy(self, startingStructureName=None, delegateFunction = None, 
                              transformPath = [], rotateAngle = 0, transFlags = [0,0,0], coordinates = (0,0)):
         #since this is a recursive function, must deal with the default
-        #parameters explicitly        
+        #parameters explicitly      
         if startingStructureName == None:
             startingStructureName = self.rootStructureName            
-
+            
         #set up the rotation matrix        
         if(rotateAngle == None or rotateAngle == ""):
             angle = 0

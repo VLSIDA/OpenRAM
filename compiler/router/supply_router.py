@@ -1,9 +1,10 @@
 import gdsMill
 import tech
-from contact import contact
 import math
 import debug
 from globals import OPTS
+from contact import contact
+from pin_group import pin_group
 from pin_layout import pin_layout
 from vector3d import vector3d 
 from router import router
@@ -83,15 +84,15 @@ class supply_router(router):
         # Determine the rail locations
         self.route_supply_rails(self.vdd_name,1)
         #self.write_debug_gds("debug_rails.gds",stop_program=True)
-        
-        remaining_vdd_pin_indices = self.route_simple_overlaps(vdd_name)
-        remaining_gnd_pin_indices = self.route_simple_overlaps(gnd_name)
+
+        self.route_simple_overlaps(vdd_name)
+        self.route_simple_overlaps(gnd_name)
         #self.write_debug_gds("debug_simple_route.gds",stop_program=True)
         
         # Route the supply pins to the supply rails
         # Route vdd first since we want it to be shorter
-        self.route_pins_to_rails(vdd_name, remaining_vdd_pin_indices)
-        self.route_pins_to_rails(gnd_name, remaining_gnd_pin_indices)
+        self.route_pins_to_rails(vdd_name)
+        self.route_pins_to_rails(gnd_name)
         #self.write_debug_gds("debug_pin_routes.gds",stop_program=True)
         
         #self.write_debug_gds("final.gds")  
@@ -105,21 +106,18 @@ class supply_router(router):
         This checks for simple cases where a pin component already overlaps a supply rail.
         It will add an enclosure to ensure the overlap in wide DRC rule cases.
         """
-        num_components = self.num_pin_components(pin_name)
-        remaining_pins = []
         supply_tracks = self.supply_rail_tracks[pin_name]
-
-        for index in range(num_components):
-            pin_in_tracks = self.pin_grids[pin_name][index]
-            common_set = supply_tracks & pin_in_tracks
-
-            if len(common_set)==0:
-                # if no overlap, add it to the complex route pins
-                remaining_pins.append(index)
-            else:
-                self.create_simple_overlap_enclosure(pin_name, common_set)
+        for pg in self.pin_groups[pin_name]:
+            if pg.is_routed():
+                continue
             
-        return remaining_pins
+            common_set = supply_tracks & pg.grids
+
+            if len(common_set)>0:
+                self.create_simple_overlap_enclosure(pin_name, common_set)
+                pg.set_routed()
+            
+
 
     def recurse_simple_overlap_enclosure(self, pin_name, start_set, direct):
         """
@@ -167,7 +165,9 @@ class supply_router(router):
             if not new_set:
                 new_set = self.recurse_simple_overlap_enclosure(pin_name, start_set, direction.WEST)
 
-        enclosure_list = self.compute_enclosures(new_set)
+        pg = pin_group(name=pin_name, pin_shapes=[], router=self)
+        pg.grids=new_set
+        enclosure_list = pg.compute_enclosures()
         for pin in enclosure_list:
             debug.info(2,"Adding simple overlap enclosure {0} {1}".format(pin_name, pin))
             self.cell.add_rect(layer=pin.layer,
@@ -464,23 +464,26 @@ class supply_router(router):
         self.supply_rail_wire_tracks[pin_name] = wire_set
 
         
-    def route_pins_to_rails(self, pin_name, remaining_component_indices):
+    def route_pins_to_rails(self, pin_name):
         """
         This will route each of the remaining pin components to the supply rails. 
         After it is done, the cells are added to the pin blockage list.
         """
 
-        
+        remaining_components = sum(not x.is_routed() for x in self.pin_groups[pin_name])
         debug.info(1,"Pin {0} has {1} remaining components to route.".format(pin_name,
-                                                                             len(remaining_component_indices)))
+                                                                             remaining_components))
 
-        recent_paths = []
-        # For every component
-        for index in remaining_component_indices:
+        for index,pg in enumerate(self.pin_groups[pin_name]):
+            if pg.is_routed():
+                continue
             debug.info(2,"Routing component {0} {1}".format(pin_name, index))
-            
+
+            # Clear everything in the routing grid.
             self.rg.reinit()
-            
+
+            # This is inefficient since it is non-incremental, but it was
+            # easier to debug.
             self.prepare_blockages(pin_name)
             
             # Add the single component of the pin as the source
@@ -491,16 +494,10 @@ class supply_router(router):
             # Don't add the other pins, but we could?
             self.add_supply_rail_target(pin_name)
 
-            # Add the previous paths as targets too
-            #self.add_path_target(recent_paths)
-
-            #print(self.rg.target)
-            
             # Actually run the A* router
             if not self.run_router(detour_scale=5):
                 self.write_debug_gds()
             
-            recent_paths.append(self.paths[-1])
 
     
     def add_supply_rail_target(self, pin_name):

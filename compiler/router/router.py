@@ -1,17 +1,18 @@
 import sys
 import gdsMill
-from tech import drc,GDS,layer
-from contact import contact
+from tech import drc,GDS
 import math
 import debug
+from router_tech import router_tech
 from pin_layout import pin_layout
+from pin_group import pin_group
 from vector import vector
 from vector3d import vector3d 
 from globals import OPTS
 from pprint import pformat
 import grid_utils
 
-class router:
+class router(router_tech):
     """
     A router class to read an obstruction map from a gds and plan a
     route on a given layer. This is limited to two layer routes.
@@ -23,6 +24,8 @@ class router:
         This will instantiate a copy of the gds file or the module at (0,0) and
         route on top of this. The blockages from the gds/module will be considered.
         """
+        router_tech.__init__(self, layers)
+        
         self.cell = design
 
         # If didn't specify a gds blockage file, write it out to read the gds
@@ -37,22 +40,16 @@ class router:
         self.reader.loadFromFile(gds_filename)
         self.top_name = self.layout.rootStructureName
 
-        # Set up layers and track sizes
-        self.set_layers(layers)
-        
         ### The pin data structures
-        # A map of pin names to pin structures
+        # A map of pin names to a set of pin_layout structures
         self.pins = {}
-        # This is a set of all pins so that we don't create blockages for these shapes.
+        # This is a set of all pins (ignoring names) so that can quickly not create blockages for pins
+        # (They will be blocked based on the names we are routing)
         self.all_pins = set()
         
-        # This is a set of pin groups. Each group consists of overlapping pin shapes on the same layer.
+        # A map of pin names to a list of pin groups
+        # A pin group is a set overlapping pin shapes on the same layer.
         self.pin_groups = {}
-        # These are the corresponding pin grids for each pin group.
-        self.pin_grids = {}
-        # The corresponding set of partially blocked grids for each pin group.
-        # These are blockages for other nets but unblocked for this component.
-        self.pin_blockages = {}        
         
         ### The blockage data structures
         # A list of metal shapes (using the same pin_layout structure) that are not pins but blockages.
@@ -78,8 +75,6 @@ class router:
         self.pins = {}
         self.all_pins = set()
         self.pin_groups = {}        
-        self.pin_grids = {}
-        self.pin_blockages = {}        
         # DO NOT clear the blockages as these don't change
         self.rg.reinit()
 
@@ -88,19 +83,6 @@ class router:
         """ If we want to route something besides the top-level cell."""
         self.top_name = top_name
 
-    def get_zindex(self,layer_num):
-        if layer_num==self.horiz_layer_number:
-            return 0
-        else:
-            return 1
-
-    def get_layer(self, zindex):
-        if zindex==1:
-            return self.vert_layer_name
-        elif zindex==0:
-            return self.horiz_layer_name
-        else:
-            debug.error("Invalid zindex {}".format(zindex),-1)
         
     def is_wave(self,path):
         """
@@ -108,40 +90,6 @@ class router:
         """
         return len(path[0])>1
     
-    def set_layers(self, layers):
-        """
-        Allows us to change the layers that we are routing on. First layer
-        is always horizontal, middle is via, and last is always
-        vertical.
-        """
-        self.layers = layers
-        (self.horiz_layer_name, self.via_layer_name, self.vert_layer_name) = self.layers
-
-        # This is the minimum routed track spacing
-        via_connect = contact(self.layers, (1, 1))
-        self.max_via_size = max(via_connect.width,via_connect.height)
-        
-        self.vert_layer_minwidth = drc("minwidth_{0}".format(self.vert_layer_name))
-        self.vert_layer_spacing = drc(str(self.vert_layer_name)+"_to_"+str(self.vert_layer_name))
-        self.vert_layer_number = layer[self.vert_layer_name]
-        
-        self.horiz_layer_minwidth = drc("minwidth_{0}".format(self.horiz_layer_name))
-        self.horiz_layer_spacing = drc(str(self.horiz_layer_name)+"_to_"+str(self.horiz_layer_name))
-        self.horiz_layer_number = layer[self.horiz_layer_name]
-
-        self.horiz_track_width = self.max_via_size + self.horiz_layer_spacing
-        self.vert_track_width = self.max_via_size + self.vert_layer_spacing
-
-        # We'll keep horizontal and vertical tracks the same for simplicity.
-        self.track_width = max(self.horiz_track_width,self.vert_track_width)
-        debug.info(1,"Track width: "+str(self.track_width))
-
-        self.track_widths = [self.track_width] * 2
-        self.track_factor = [1/self.track_width] * 2
-        debug.info(1,"Track factor: {0}".format(self.track_factor))
-
-        # When we actually create the routes, make them the width of the track (minus 1/2 spacing on each side)
-        self.layer_widths = [self.track_width - self.horiz_layer_spacing, 1, self.track_width - self.vert_layer_spacing]
 
     def retrieve_pins(self,pin_name):
         """
@@ -224,14 +172,16 @@ class router:
         self.set_supply_rail_blocked(True)
         
         # Block all of the pin components (some will be unblocked if they're a source/target)
-        for name in self.pin_grids.keys():
-            self.set_blockages(self.pin_grids[name],True)
+        for name in self.pin_groups.keys():
+            blockage_grids = {y for x in self.pin_groups[name] for y in x.grids}
+            self.set_blockages(blockage_grids,True)
 
 
         # Don't mark the other components as targets since we want to route
         # directly to a rail, but unblock all the source components so we can
         # route over them
-        self.set_blockages(self.pin_grids[pin_name],False)
+        blockage_grids = {y for x in self.pin_groups[pin_name] for y in x.grids}
+        self.set_blockages(blockage_grids,False)
             
         # These are the paths that have already been routed.
         self.set_path_blockages()
@@ -458,23 +408,6 @@ class router:
         return set([best_coord])
 
         
-    def get_layer_width_space(self, zindex, width=0, length=0):
-        """
-        Return the width and spacing of a given layer
-        and wire of a given width and length.
-        """
-        if zindex==1:
-            layer_name = self.vert_layer_name
-        elif zindex==0:
-            layer_name = self.horiz_layer_name
-        else:
-            debug.error("Invalid zindex for track", -1)
-
-        min_width = drc("minwidth_{0}".format(layer_name), width, length)
-        min_spacing = drc(str(layer_name)+"_to_"+str(layer_name), width, length)
-
-        return (min_width,min_spacing)
-
     def convert_pin_coord_to_tracks(self, pin, coord):
         """ 
         Given a pin and a track coordinate, determine if the pin overlaps enough.
@@ -599,24 +532,18 @@ class router:
         reduced_classes = combine_classes(equiv_classes)
         if local_debug:
             debug.info(0,"FINAL  ",reduced_classes)
-        self.pin_groups[pin_name]=reduced_classes
+        self.pin_groups[pin_name] = [pin_group(name=pin_name, pin_shapes=x, router=self) for x in reduced_classes]
         
     def convert_pins(self, pin_name):
         """ 
         Convert the pin groups into pin tracks and blockage tracks.
         """
-        try:
-            self.pin_grids[pin_name]
-        except:
-            self.pin_grids[pin_name] = []
-
-        found_pin = False
         for pg in self.pin_groups[pin_name]:
             #print("PG  ",pg)
             # Keep the same groups for each pin
             pin_set = set()
             blockage_set = set()
-            for pin in pg:
+            for pin in pg.shapes:
                 debug.info(2,"  Converting {0}".format(pin))
                 # Determine which tracks the pin overlaps 
                 pin_in_tracks=self.convert_pin_to_tracks(pin_name, pin)
@@ -644,7 +571,7 @@ class router:
                 debug.error("Unable to find unblocked pin on grid.")
 
             # We need to route each of the components, so don't combine the groups
-            self.pin_grids[pin_name].append(pin_set | blockage_set)
+            pg.grids = pin_set | blockage_set
 
             # Add all of the partial blocked grids to the set for the design
             # if they are not blocked by other metal
@@ -658,143 +585,6 @@ class router:
             #self.blocked_grids.difference_update(pin_set)
 
 
-    def enclose_pin_grids(self, grids, seed):
-        """
-        This encloses a single pin component with a rectangle
-        starting with the seed and expanding right until blocked
-        and then up until blocked.
-        """
-
-        # We may have started with an empty set
-        if not grids:
-            return None
-
-        # Start with the seed
-        ll = seed
-
-        # Start with the ll and make the widest row
-        row = [ll]
-        # Move right while we can
-        while True:
-            right = row[-1] + vector3d(1,0,0)
-            # Can't move if not in the pin shape 
-            if right in grids and right not in self.blocked_grids:
-                row.append(right)
-            else:
-                break
-        # Move up while we can
-        while True:
-            next_row = [x+vector3d(0,1,0) for x in row]
-            for cell in next_row:
-                # Can't move if any cell is not in the pin shape 
-                if cell not in grids or cell in self.blocked_grids:
-                    break
-            else:
-                row = next_row
-                # Skips the second break
-                continue
-            # Breaks from the nested break
-            break
-
-        # Add a shape from ll to ur
-        ur = row[-1]
-        return self.compute_pin_enclosure(ll, ur, ll.z)
-
-    def remove_redundant_shapes(self, pin_list):
-        """
-        Remove any pin layout that is contained within another.
-        """
-        local_debug = False
-        if local_debug:
-            debug.info(0,"INITIAL:",pin_list)
-        
-        # Make a copy of the list to start
-        new_pin_list = pin_list.copy()
-        
-        # This is n^2, but the number is small
-        for pin1 in pin_list:
-            for pin2 in pin_list:
-                # Can't contain yourself
-                if pin1 == pin2:
-                    continue
-                if pin2.contains(pin1):
-                    # It may have already been removed by being enclosed in another pin
-                    if pin1 in new_pin_list:
-                        new_pin_list.remove(pin1)
-                        
-        if local_debug:
-            debug.info(0,"FINAL  :",new_pin_list)
-        return new_pin_list
-
-    def compute_enclosures(self, tracks):
-        """
-        Find the minimum rectangle enclosures of the given tracks.
-        """
-        # Enumerate every possible enclosure
-        pin_list = []
-        for seed in tracks:
-            pin_list.append(self.enclose_pin_grids(tracks, seed))
-
-        #return pin_list
-        # We used to do this, but smaller enclosures can be
-        return self.remove_redundant_shapes(pin_list)
-
-    def overlap_any_shape(self, pin_list, shape_list):
-        """
-        Does the given pin overlap any of the shapes in the pin list.
-        """
-        for pin in pin_list:
-            for other in shape_list:
-                if pin.overlaps(other):
-                    return True
-
-        return False
-
-    def find_smallest_overlapping(self, pin_list, shape_list):
-        """
-        Find the smallest area shape in shape_list that overlaps with any 
-        pin in pin_list by a min width.
-        """
-
-        smallest_shape = None
-        for pin in pin_list:
-            # They may not be all on the same layer... in the future.
-            zindex=self.get_zindex(pin.layer_num)
-            (min_width,min_space) = self.get_layer_width_space(zindex)
-
-            # Now compare it with every other shape to check how much they overlap
-            for other in shape_list:
-                overlap_length = pin.overlap_length(other)
-                if overlap_length > min_width:
-                    if smallest_shape == None or other.area()<smallest_shape.area():
-                        smallest_shape = other
-                        
-        return smallest_shape
-    
-    def max_pin_layout(self, pin_list):
-        """ 
-        Return the max area pin_layout
-        """
-        biggest = pin_list[0]
-        for pin in pin_list:
-            if pin.area() > biggest.area():
-                biggest = pin
-                
-        return pin
-
-    def find_smallest_connector(self, pin_list, enclosure_list):
-        """
-        Compute all of the connectors between non-overlapping pins and enclosures.
-        Return the smallest.
-        """
-        smallest = None
-        for pin in pin_list:
-            for enclosure in enclosure_list:
-                new_enclosure = self.compute_enclosure(pin, enclosure)
-                if smallest == None or new_enclosure.area()<smallest.area():
-                    smallest = new_enclosure
-                    
-        return smallest
     
     def enclose_pins(self):
         """
@@ -806,86 +596,20 @@ class router:
         self.connector_enclosure = []
         self.enclosures = []
         
-        for pin_name in self.pin_grids.keys():
+        for pin_name in self.pin_groups.keys():
             debug.info(1,"Enclosing pins for {}".format(pin_name))
-            debug.check(len(self.pin_groups[pin_name])==len(self.pin_grids[pin_name]),"Unequal pin_group and pin_grid")
-            for pin_group,pin_grid_set in zip(self.pin_groups[pin_name],self.pin_grids[pin_name]):
-
-                # Compute the enclosure pin_layout list of the set of tracks
-                enclosure_list = self.compute_enclosures(pin_grid_set)
-                smallest_enclosure = self.find_smallest_overlapping(pin_group, enclosure_list)
-                if smallest_enclosure:
-                #for smallest_enclosure in enclosure_list:
-                    debug.info(2,"Adding enclosure {0} {1}".format(pin_name, smallest_enclosure))
-                    self.cell.add_rect(layer=smallest_enclosure.layer,
-                                       offset=smallest_enclosure.ll(),
-                                       width=smallest_enclosure.width(),
-                                       height=smallest_enclosure.height())
-                    self.enclosures.append(smallest_enclosure)
-
-                #if self.overlap_any_shape(pin_group, enclosure_list):
-                    #debug.info(2,"Pin overlaps enclosure {0}".format(pin_name))
-                #    pass
-                else:
-                    new_enclosure = self.find_smallest_connector(pin_group, enclosure_list)
-                    debug.info(2,"Adding connector enclosure {0} {1}".format(pin_name, new_enclosure))  
-                    self.cell.add_rect(layer=new_enclosure.layer,
-                                       offset=new_enclosure.ll(),
-                                       width=new_enclosure.width(),
-                                       height=new_enclosure.height())
-                    self.connector_enclosure.append(new_enclosure)
-                                  
-                    
+            for pg in self.pin_groups[pin_name]:
+                pg.enclose_pin()
+                pg.add_enclosure(self.cell)
 
         #self.write_debug_gds("pin_debug.gds", True)
-
-    def compute_enclosure(self, pin, enclosure):
-        """ 
-        Compute an enclosure to connect the pin to the enclosure shape. 
-        This assumes the shape will be the dimension of the pin.
-        """
-        if pin.xoverlaps(enclosure):
-            # Is it vertical overlap, extend pin shape to enclosure
-            plc = pin.lc()
-            prc = pin.rc()
-            elc = enclosure.lc()
-            erc = enclosure.rc()
-            ymin = min(plc.y,elc.y)
-            ymax = max(plc.y,elc.y)
-            ll = vector(plc.x, ymin)
-            ur = vector(prc.x, ymax)
-            p = pin_layout(pin.name, [ll, ur], pin.layer) 
-        elif pin.yoverlaps(enclosure):
-            # Is it horizontal overlap, extend pin shape to enclosure
-            pbc = pin.bc()
-            puc = pin.uc()
-            ebc = enclosure.bc()
-            euc = enclosure.uc()
-            xmin = min(pbc.x,ebc.x)
-            xmax = max(pbc.x,ebc.x)
-            ll = vector(xmin, pbc.y)
-            ur = vector(xmax, puc.y)
-            p = pin_layout(pin.name, [ll, ur], pin.layer)
-        else:
-            # Neither, so we must do a corner-to corner
-            pc = pin.center()
-            ec = enclosure.center()
-            xmin = min(pc.x, ec.x)
-            xmax = max(pc.x, ec.x)
-            ymin = min(pc.y, ec.y)
-            ymax = max(pc.y, ec.y)
-            ll = vector(xmin, ymin)
-            ur = vector(xmax, ymax)
-            p = pin_layout(pin.name, [ll, ur], pin.layer)
-
-        return p
     
     def add_source(self, pin_name):
         """ 
         This will mark the grids for all pin components as a source.
         Marking as source or target also clears blockage status.
         """
-        for i in range(self.num_pin_grids(pin_name)):
+        for i in range(self.num_pin_components(pin_name)):
             self.add_pin_component_source(pin_name, i)
 
     def add_target(self, pin_name):
@@ -893,14 +617,14 @@ class router:
         This will mark the grids for all pin components as a target.
         Marking as source or target also clears blockage status.
         """
-        for i in range(self.num_pin_grids(pin_name)):
+        for i in range(self.num_pin_components(pin_name)):
             self.add_pin_component_target(pin_name, i)
             
     def num_pin_components(self, pin_name):
         """ 
         This returns how many disconnected pin components there are.
         """
-        return len(self.pin_grids[pin_name])
+        return len(self.pin_groups[pin_name])
     
     def add_pin_component_source(self, pin_name, index):
         """ 
@@ -909,7 +633,7 @@ class router:
         """
         debug.check(index<self.num_pin_components(pin_name),"Pin component index too large.")
         
-        pin_in_tracks = self.pin_grids[pin_name][index]
+        pin_in_tracks = self.pin_groups[pin_name][index].grids
         debug.info(1,"Set source: " + str(pin_name) + " " + str(pin_in_tracks))
         self.rg.add_source(pin_in_tracks)
 
@@ -928,7 +652,7 @@ class router:
         """
         debug.check(index<self.num_pin_grids(pin_name),"Pin component index too large.")
         
-        pin_in_tracks = self.pin_grids[pin_name][index]
+        pin_in_tracks = self.pin_groups[pin_name][index].grids
         debug.info(1,"Set target: " + str(pin_name) + " " + str(pin_in_tracks))
         self.rg.add_target(pin_in_tracks)
             
@@ -938,8 +662,8 @@ class router:
         Block all of the pin components.
         """
         debug.info(2,"Setting blockages {0} {1}".format(pin_name,value))
-        for component in self.pin_grids[pin_name]:
-            self.set_blockages(component, value)
+        for pg in self.pin_groups[pin_name]:
+            self.set_blockages(pg.grids, value)
             
 
     def prepare_path(self,path):
@@ -1011,8 +735,7 @@ class router:
     def compute_pin_enclosure(self, ll, ur, zindex, name=""):
         """
         Enclose the tracks from ll to ur in a single rectangle that meets
-        the track DRC rules.  If name is supplied, it is added as a pin and
-        not just a rectangle.
+        the track DRC rules. 
         """
         # Get the layer information
         (width, space) = self.get_layer_width_space(zindex)
@@ -1034,8 +757,6 @@ class router:
     def compute_wide_enclosure(self, ll, ur, zindex, name=""):
         """ 
         Enclose the tracks from ll to ur in a single rectangle that meets the track DRC rules.
-        If name is supplied, it is added as a pin and not just a rectangle.
-
         """
 
         # Find the pin enclosure of the whole track shape (ignoring DRCs)
@@ -1063,19 +784,6 @@ class router:
         
         return pin
     
-
-    def get_inertia(self,p0,p1):
-        """ 
-        Sets the direction based on the previous direction we came from. 
-        """
-        # direction (index) of movement
-        if p0.x!=p1.x:
-            return 0
-        elif p0.y!=p1.y:
-            return 1
-        else:
-            # z direction
-            return 2
 
     def contract_path(self,path):
         """ 

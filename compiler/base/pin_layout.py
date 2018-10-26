@@ -122,14 +122,20 @@ class pin_layout:
 
         (ll,ur) = self.rect
         (oll,our) = other.rect
-
-
+        
+        # Check if the oll is inside the y range
         if not (oll.y >= ll.y and oll.y <= ur.y):
             return False
-
+        # Check if the oll is inside the x range
         if not (oll.x >= ll.x and oll.x <= ur.x):
             return False
-
+        # Check if the our is inside the y range
+        if not (our.y >= ll.y and our.y <= ur.y):
+            return False
+        # Check if the our is inside the x range
+        if not (our.x >= ll.x and our.x <= ur.x):
+            return False
+        
         return True
         
     

@@ -36,7 +36,7 @@ class pin_group:
         """
         local_debug = False
         if local_debug:
-            debug.info(0,"INITIAL:",pin_list)
+            debug.info(0,"INITIAL: {}".format(pin_list))
         
         # Make a copy of the list to start
         new_pin_list = pin_list.copy()
@@ -48,12 +48,14 @@ class pin_group:
                 if pin1 == pin2:
                     continue
                 if pin2.contains(pin1):
+                    if local_debug:
+                        debug.info(0,"{0} contains {1}".format(pin1,pin2))
                     # It may have already been removed by being enclosed in another pin
                     if pin1 in new_pin_list:
                         new_pin_list.remove(pin1)
                         
         if local_debug:
-            debug.info(0,"FINAL  :",new_pin_list)
+            debug.info(0,"FINAL  : {}".format(new_pin_list))
         return new_pin_list
 
     # FIXME: This relies on some technology parameters from router which is not clean.
@@ -68,9 +70,6 @@ class pin_group:
             enclosure = self.router.compute_pin_enclosure(ll, ur, ll.z)
             pin_list.append(enclosure)
 
-        print("ENCLOS",pin_list)
-        #return pin_list
-        # We used to do this, but smaller enclosures can be
         return self.remove_redundant_shapes(pin_list)
         
     def compute_enclosure(self, pin, enclosure):

@@ -71,7 +71,7 @@ class supply_router(router):
 
         # Get the pin shapes
         self.find_pins_and_blockages([self.vdd_name, self.gnd_name])
-        #self.write_debug_gds("pin_enclosures.gds",stop_program=False)
+        self.write_debug_gds("pin_enclosures.gds",stop_program=True)
 
         # Add the supply rails in a mesh network and connect H/V with vias
         # Block everything
@@ -226,9 +226,8 @@ class supply_router(router):
                 # the overlap area for placement of a via
                 overlap = new_r1 & new_r2
                 if len(overlap) >= self.supply_rail_wire_width**2:
-                    debug.info(2,"Via overlap {0} {1} {2}".format(len(overlap),self.supply_rail_wire_width**2,overlap))
-                    connections.add(i1)
-                    connections.add(i2)
+                    debug.info(3,"Via overlap {0} {1} {2}".format(len(overlap),self.supply_rail_wire_width**2,overlap))
+                    connections.update([i1,i2])
                     via_areas.append(overlap)
                 
         # Go through and add the vias at the center of the intersection
@@ -239,11 +238,12 @@ class supply_router(router):
             self.add_via(center,self.rail_track_width)
 
         # Determien which indices were not connected to anything above
-        all_indices = set([x for x in range(len(self.supply_rails[name]))])
-        missing_indices = all_indices ^ connections
+        missing_indices = set([x for x in range(len(self.supply_rails[name]))])
+        missing_indices.difference_update(connections)
+        
         # Go through and remove those disconnected indices
         # (No via was added, so that doesn't need to be removed)
-        for rail_index in missing_indices:
+        for rail_index in sorted(missing_indices, reverse=True):
             ll = grid_utils.get_lower_left(all_rails[rail_index])
             ur = grid_utils.get_upper_right(all_rails[rail_index])
             debug.info(1,"Removing disconnected supply rail {0} .. {1}".format(ll,ur))

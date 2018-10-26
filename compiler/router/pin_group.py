@@ -1,10 +1,12 @@
+from pin_layout import pin_layout
 from vector3d import vector3d
+from vector import vector
 from tech import drc
 import debug
 
 class pin_group:
     """
-    A class to represent a group of touching rectangular design pin. 
+    A class to represent a group of rectangular design pin. 
     It requires a router to define the track widths and blockages which 
     determine how pin shapes get mapped to tracks. 
     """
@@ -12,7 +14,9 @@ class pin_group:
         self.name = name
         # Flag for when it is routed
         self.routed = False
-        self.pins = pin_shapes
+        # This is a list because we can have a pin group of disconnected sets of pins
+        # and these are represented by separate lists
+        self.pins = [pin_shapes]
         self.router = router
         # These are the corresponding pin grids for each pin group.
         self.grids = set()
@@ -52,7 +56,7 @@ class pin_group:
             debug.info(0,"FINAL  :",new_pin_list)
         return new_pin_list
 
-    # FIXME: This relies on some technology parameters from router which is not clearn.
+    # FIXME: This relies on some technology parameters from router which is not clean.
     def compute_enclosures(self):
         """
         Find the minimum rectangle enclosures of the given tracks.
@@ -64,6 +68,7 @@ class pin_group:
             enclosure = self.router.compute_pin_enclosure(ll, ur, ll.z)
             pin_list.append(enclosure)
 
+        print("ENCLOS",pin_list)
         #return pin_list
         # We used to do this, but smaller enclosures can be
         return self.remove_redundant_shapes(pin_list)
@@ -115,32 +120,48 @@ class pin_group:
         Return the smallest.
         """
         smallest = None
-        for pin in self.pins:
-            for enclosure in enclosure_list:
-                new_enclosure = self.compute_enclosure(pin, enclosure)
-                if smallest == None or new_enclosure.area()<smallest.area():
-                    smallest = new_enclosure
+        for pin_list in self.pins:
+            for pin in pin_list:
+                for enclosure in enclosure_list:
+                    new_enclosure = self.compute_enclosure(pin, enclosure)
+                    if smallest == None or new_enclosure.area()<smallest.area():
+                        smallest = new_enclosure
                     
         return smallest
 
-    def find_smallest_overlapping(self, shape_list):
+    def find_smallest_overlapping(self, pin_list, shape_list):
         """
         Find the smallest area shape in shape_list that overlaps with any 
         pin in pin_list by a min width.
         """
 
         smallest_shape = None
-        for pin in self.pins:
-            # They may not be all on the same layer... in the future.
-            zindex=self.router.get_zindex(pin.layer_num)
-            (min_width,min_space) = self.router.get_layer_width_space(zindex)
+        for pin in pin_list:
+            overlap_shape = self.find_smallest_overlapping_pin(pin,shape_list)
+            if overlap_shape:
+                overlap_length = pin.overlap_length(overlap_shape)
+                if smallest_shape == None or overlap_shape.area()<smallest_shape.area():
+                    smallest_shape = overlap_shape
+                        
+        return smallest_shape
 
-            # Now compare it with every other shape to check how much they overlap
-            for other in shape_list:
-                overlap_length = pin.overlap_length(other)
-                if overlap_length > min_width:
-                    if smallest_shape == None or other.area()<smallest_shape.area():
-                        smallest_shape = other
+
+    def find_smallest_overlapping_pin(self, pin, shape_list):
+        """
+        Find the smallest area shape in shape_list that overlaps with any 
+        pin in pin_list by a min width.
+        """
+
+        smallest_shape = None
+        zindex=self.router.get_zindex(pin.layer_num)
+        (min_width,min_space) = self.router.get_layer_width_space(zindex)
+
+        # Now compare it with every other shape to check how much they overlap
+        for other in shape_list:
+            overlap_length = pin.overlap_length(other)
+            if overlap_length > min_width:
+                if smallest_shape == None or other.area()<smallest_shape.area():
+                    smallest_shape = other
                         
         return smallest_shape
     
@@ -167,7 +188,7 @@ class pin_group:
                 
         return pin
 
-    def enclose_pin_grids(self, seed):
+    def enclose_pin_grids(self, ll):
         """
         This encloses a single pin component with a rectangle
         starting with the seed and expanding right until blocked
@@ -177,9 +198,6 @@ class pin_group:
         # We may have started with an empty set
         if not self.grids:
             return None
-
-        # Start with the seed
-        ll = seed
 
         # Start with the ll and make the widest row
         row = [ll]
@@ -218,22 +236,36 @@ class pin_group:
         """
         # Compute the enclosure pin_layout list of the set of tracks
         enclosure_list = self.compute_enclosures()
-        self.enclosure = self.find_smallest_overlapping(enclosure_list)
-        if not self.enclosure:
-            self.enclosure = self.find_smallest_connector(enclosure_list)
-        debug.info(2,"Computed enclosure {0}\n  {1}\n  {2}\n  {3}".format(self.name, self.pins, self.grids, self.enclosure))
         
+        # A single set of connected pins is easy, so use the optimized set
+        if len(self.pins)==1:
+            smallest = self.find_smallest_overlapping(self.pins[0],enclosure_list)
+            if smallest:
+                self.enclosures=[smallest]
+            else:
+                connector=self.find_smallest_connector(enclosure_list)
+                if connector:
+                    self.enclosures=[connector]
+                else:
+                    debug.error("Unable to enclose pin {}".format(self.pins),-1)
+        else:
+            # Multiple pins is hard, so just use all of the enclosure shapes!
+            # FIXME: Find the minimum set of enclosures to reduce number of shapes.
+            self.enclosures = enclosure_list
+            
+        debug.info(2,"Computed enclosure(s) {0}\n  {1}\n  {2}\n  {3}".format(self.name, self.pins, self.grids, self.enclosures))
 
             
     def add_enclosure(self, cell):
         """
         Add the enclosure shape to the given cell.
         """
-        debug.info(2,"Adding enclosure {0} {1}".format(self.name, self.enclosure))  
-        cell.add_rect(layer=self.enclosure.layer,
-                      offset=self.enclosure.ll(),
-                      width=self.enclosure.width(),
-                      height=self.enclosure.height())
+        for enclosure in self.enclosures:
+            debug.info(2,"Adding enclosure {0} {1}".format(self.name, enclosure))  
+            cell.add_rect(layer=enclosure.layer,
+                          offset=enclosure.ll(),
+                          width=enclosure.width(),
+                          height=enclosure.height())
         
 
     
@@ -255,14 +287,15 @@ class pin_group:
         # Keep the same groups for each pin
         pin_set = set()
         blockage_set = set()
-        for pin in self.pins:
-            debug.info(2,"  Converting {0}".format(pin))
-            # Determine which tracks the pin overlaps 
-            pin_in_tracks=router.convert_pin_to_tracks(self.name, pin)
-            pin_set.update(pin_in_tracks)
-            # Blockages will be a super-set of pins since it uses the inflated pin shape.
-            blockage_in_tracks = router.convert_blockage(pin) 
-            blockage_set.update(blockage_in_tracks)
+        for pin_list in self.pins:
+            for pin in pin_list:
+                debug.info(2,"  Converting {0}".format(pin))
+                # Determine which tracks the pin overlaps 
+                pin_in_tracks=router.convert_pin_to_tracks(self.name, pin)
+                pin_set.update(pin_in_tracks)
+                # Blockages will be a super-set of pins since it uses the inflated pin shape.
+                blockage_in_tracks = router.convert_blockage(pin) 
+                blockage_set.update(blockage_in_tracks)
 
         # If we have a blockage, we must remove the grids
         # Remember, this excludes the pin blockages already

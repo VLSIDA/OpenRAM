@@ -175,13 +175,15 @@ class router(router_tech):
                     continue
 
                 if pg1.adjacent(pg2):
-                    debug.info(2,"Combing {0}:\n  {1}\n  {2}".format(pin_name, pg1.pins, pg2.pins))
-                    combined = pin_group(pin_name, pg1.pins | pg2.pins, self)
+                    combined = pin_group(pin_name, [], self)
+                    combined.pins = [pg1.pins, pg2.pins]
                     combined.grids = pg1.grids | pg2.grids
-                    
-                    # check if there are any blockage problems??
-                    remove_indices.update([index1,index2])
-                    pin_groups.append(combined)
+                    blocked_grids = combined.grids & self.blocked_grids
+                    # Only add this if we can 
+                    if len(blocked_grids)==0:
+                        debug.info(2,"Combing {0}:\n  {1}\n  {2}".format(pin_name, pg1.pins, pg2.pins))
+                        remove_indices.update([index1,index2])
+                        pin_groups.append(combined)
                     
         # Remove them in decreasing order to not invalidate the indices
         for i in sorted(remove_indices, reverse=True):
@@ -884,10 +886,10 @@ class router(router_tech):
             self.cell.add_label(text=str(t),
                                 layer="text",
                                 offset=type_off)
-            self.cell.add_label(text="{0},{1}".format(g[0],g[1]),
-                                layer="text",
-                                offset=shape[0],
-                                zoom=0.05)
+        self.cell.add_label(text="{0},{1}".format(g[0],g[1]),
+                            layer="text",
+                            offset=shape[0],
+                            zoom=0.05)
 
     def add_router_info(self):
         """
@@ -899,8 +901,7 @@ class router(router_tech):
 
         show_blockages = True
         show_blockage_grids = True
-        show_enclosures = False
-        show_connectors = False
+        show_enclosures = True
         show_all_grids = True
         
         if show_all_grids:
@@ -923,20 +924,15 @@ class router(router_tech):
             for g in grid_keys:
                 self.annotate_grid(g)
 
-        if show_connectors:
-            for pin in self.connector_enclosure:
-                #print("connector: ",str(pin))
-                self.cell.add_rect(layer="text",
-                                   offset=pin.ll(),
-                                   width=pin.width(),
-                                   height=pin.height())
         if show_enclosures:
-            for pin in self.enclosures:
-                #print("enclosure: ",pin.name,pin.ll(),pin.width(),pin.height())
-                self.cell.add_rect(layer="text",
-                                   offset=pin.ll(),
-                                   width=pin.width(),
-                                   height=pin.height())
+            for key in self.pin_groups.keys():
+                for pg in self.pin_groups[key]:
+                    for pin in pg.enclosures:
+                        #print("enclosure: ",pin.name,pin.ll(),pin.width(),pin.height())
+                        self.cell.add_rect(layer="text",
+                                           offset=pin.ll(),
+                                           width=pin.width(),
+                                           height=pin.height())
     
 # FIXME: This should be replaced with vector.snap_to_grid at some point
 

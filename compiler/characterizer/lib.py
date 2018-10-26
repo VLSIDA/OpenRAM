@@ -482,7 +482,7 @@ class lib:
         if not hasattr(self,"d"):
             self.d = delay(self.sram, self.sp_file, self.corner)
             if self.use_model:
-                char_results = self.d.analytical_delay(self.sram,self.slews,self.loads)
+                char_results = self.d.analytical_delay(self.slews,self.loads)
                 self.char_sram_results, self.char_port_results = char_results  
             else:
                 probe_address = "1" * self.sram.addr_size

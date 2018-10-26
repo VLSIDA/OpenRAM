@@ -884,3 +884,19 @@ class pbitcell(design.design):
         Q_bar_pos = self.inverter_pmos_right.get_pin("S").center()
         vdd_pos = self.inverter_pmos_right.get_pin("D").center()
         self.add_path("metal1", [Q_bar_pos, vdd_pos])
+
+    def analytical_delay(self, slew, load=0, swing = 0.5):
+        #FIXME: Delay copied exactly over from bitcell
+        from tech import spice
+        r = spice["min_tx_r"]*3
+        c_para = spice["min_tx_drain_c"]
+        result = self.cal_delay_with_rc(r = r, c =  c_para+load, slew = slew, swing = swing)
+        return result
+        
+    def analytical_power(self, proc, vdd, temp, load):
+        """Bitcell power in nW. Only characterizes leakage."""
+        from tech import spice
+        leakage = spice["bitcell_leakage"]
+        dynamic = 0 #temporary
+        total_power = self.return_power(dynamic, leakage)
+        return total_power

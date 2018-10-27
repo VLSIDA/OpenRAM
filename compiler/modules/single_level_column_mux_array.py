@@ -218,7 +218,7 @@ class single_level_column_mux_array(design.design):
                              rotate=90)
 
     def analytical_delay(self, vdd, slew, load=0.0):
-        from tech import spice
+        from tech import spice, parameter
         r = spice["min_tx_r"]/(self.mux.ptx_width/parameter["min_tx_size"])
         #Drains of mux transistors make up capacitance. 
         c_para = spice["min_tx_drain_c"]*(self.mux.ptx_width/parameter["min_tx_size"])*self.words_per_row#ff

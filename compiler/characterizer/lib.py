@@ -82,7 +82,7 @@ class lib:
             debug.info(1,"Writing to {0}".format(lib_name))
             self.characterize()
             self.lib.close()
-            self.parse_info()
+            self.parse_info(self.corner,lib_name)
     def characterize(self):
         """ Characterize the current corner. """
 
@@ -501,31 +501,21 @@ class lib:
                 self.times = self.sh.analyze(self.slews,self.slews)
                 
                 
-    def parse_info(self):
+    def parse_info(self,corner,lib_name):
         if OPTS.is_unit_test:
             return
         datasheet = open(OPTS.openram_temp +'/datasheet.info', 'a+')
-        
-        for (corner, lib_name) in zip(self.corners, self.lib_files):
-        
-#            ports = ""
-#            if OPTS.num_rw_ports>0:
-#                ports += "{}_".format(OPTS.num_rw_ports)
-#            if OPTS.num_w_ports>0:
-#                ports += "{}_".format(OPTS.num_w_ports)
-#            if OPTS.num_r_ports>0:
-#                ports += "{}_".format(OPTS.num_r_ports)
 
-            datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13}".format("sram_{0}_{1}_{2}".format(OPTS.word_size, OPTS.num_words, OPTS.tech_name),
+        datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13}\n".format("sram_{0}_{1}_{2}".format(OPTS.word_size, OPTS.num_words, OPTS.tech_name),
                                                                                             OPTS.num_words,
                                                                                             OPTS.num_banks,
                                                                                             OPTS.num_rw_ports,  
                                                                                             OPTS.num_w_ports,
                                                                                             OPTS.num_r_ports,
                                                                                             OPTS.tech_name,
-                                                                                            self.corner[1],
-                                                                                            self.corner[2],
-                                                                                            self.corner[0],
+                                                                                            corner[1],
+                                                                                            corner[2],
+                                                                                            corner[0],
                                                                                             round_time(self.char_sram_results["min_period"]),
                                                                                             self.out_dir,
                                                                                             lib_name,

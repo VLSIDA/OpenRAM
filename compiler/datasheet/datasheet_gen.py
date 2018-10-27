@@ -117,12 +117,17 @@ def parse_file(f,pages):
                 new_sheet.timing.append(timing_and_current_data_item('Standby current','2','3','4'))
                 new_sheet.timing.append(timing_and_current_data_item('Area','2','3','4'))
 
+                if not OPTS.netlist_only:
+                    new_sheet.dlv.append(deliverables_item('.gds','GDSII layout views','<a href="file://{0}{1}.{2}">{1}.{2}</a>'.format(OUT_DIR,NAME,'gds')))
+                    new_sheet.dlv.append(deliverables_item('.lef','LEF files','<a href="file://{0}{1}.{2}">{1}.{2}</a>'.format(OUT_DIR,NAME,'lef')))
+   
 
                 new_sheet.dlv.append(deliverables_item('.sp','SPICE netlists','<a href="file://{0}{1}.{2}">{1}.{2}</a>'.format(OUT_DIR,NAME,'sp')))
                 new_sheet.dlv.append(deliverables_item('.v','Verilog simulation models','<a href="file://{0}{1}.{2}">{1}.{2}</a>'.format(OUT_DIR,NAME,'v')))
-                new_sheet.dlv.append(deliverables_item('.gds','GDSII layout views','<a href="file://{0}{1}.{2}">{1}.{2}</a>'.format(OUT_DIR,NAME,'gds')))
-                new_sheet.dlv.append(deliverables_item('.lef','LEF files','<a href="file://{0}{1}.{2}">{1}.{2}</a>'.format(OUT_DIR,NAME,'lef')))
+                new_sheet.dlv.append(deliverables_item('.html','This datasheet','<a href="file://{0}{1}.{2}">{1}.{2}</a>'.format(OUT_DIR,NAME,'html')))
                 new_sheet.dlv.append(deliverables_item('.lib','Synthesis models','<a href="file://{0}">{1}</a>'.format(LIB_NAME,LIB_NAME.replace(OUT_DIR,''))))
+
+
                 
                 new_sheet.io.append(in_out_item('WORD_SIZE',WORD_SIZE))
                 new_sheet.io.append(in_out_item('NUM_WORDS',NUM_WORDS))

@@ -30,6 +30,25 @@ class pin_group:
     def is_routed(self):
         return self.routed
         
+    def pins_enclosed(self):
+        """
+        Check if all of the pin shapes are enclosed.
+        Does not check if the DRC is correct, but just touching.
+        """
+        for pin_list in self.pins:
+            pin_is_enclosed=False
+            for pin in pin_list:
+                if pin_is_enclosed:
+                    break
+                for encosure in self.enclosures:
+                    if pin.overlaps(enclosure):
+                        pin_is_enclosed=True
+                        break
+            else:
+                return False
+            
+        return True
+        
     def remove_redundant_shapes(self, pin_list):
         """
         Remove any pin layout that is contained within another.

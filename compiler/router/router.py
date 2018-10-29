@@ -169,21 +169,25 @@ class router(router_tech):
 
         remove_indices = set()
         for index1,pg1 in enumerate(self.pin_groups[pin_name]):
+            # Cannot combine more than once
+            if index1 in remove_indices:
+                continue
             for index2,pg2 in enumerate(self.pin_groups[pin_name]):
-                
+                # Cannot combine with yourself
                 if index1==index2:
+                    continue
+                # Cannot combine more than once
+                if index2 in remove_indices:
                     continue
 
                 if pg1.adjacent(pg2):
                     combined = pin_group(pin_name, [], self)
-                    combined.pins = [pg1.pins, pg2.pins]
+                    combined.pins = [*pg1.pins, *pg2.pins]
                     combined.grids = pg1.grids | pg2.grids
-                    blocked_grids = combined.grids & self.blocked_grids
-                    # Only add this if we can 
-                    if len(blocked_grids)==0:
-                        debug.info(2,"Combing {0}:\n  {1}\n  {2}".format(pin_name, pg1.pins, pg2.pins))
-                        remove_indices.update([index1,index2])
-                        pin_groups.append(combined)
+                    debug.info(2,"Combining {0}:\n  {1}\n  {2}".format(pin_name, pg1.pins, pg2.pins))
+                    debug.info(2,"  --> {0}\n      {1}\n".format(combined.pins,combined.grids))
+                    remove_indices.update([index1,index2])
+                    pin_groups.append(combined)
                     
         # Remove them in decreasing order to not invalidate the indices
         for i in sorted(remove_indices, reverse=True):

@@ -127,7 +127,6 @@ class pin_group:
             ymax = max(plc.y,elc.y)
             ll = vector(plc.x, ymin)
             ur = vector(prc.x, ymax)
-            print(pin,enclosure,ll,ur)
             p = pin_layout(pin.name, [ll, ur], pin.layer) 
         elif pin.yoverlaps(enclosure):
             # Is it horizontal overlap, extend pin shape to enclosure

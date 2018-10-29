@@ -155,19 +155,27 @@ class router(router_tech):
         for pin in pin_list:
             self.combine_adjacent_pins(pin)
         #self.write_debug_gds("debug_combine_pins.gds",stop_program=True)
+
+        # Separate any adjacent grids of differing net names to prevent wide metal DRC violations
+        self.separate_adjacent_pins(pin)
             
         # Enclose the continguous grid units in a metal rectangle to fix some DRCs
         self.enclose_pins()
 
-    def combine_adjacent_pins(self, pin_name):
+        
+    def combine_adjacent_pins_pass(self, pin_name):
         """
-        This checks for simple cases where a pin component already overlaps a supply rail.
-        It will add an enclosure to ensure the overlap in wide DRC rule cases.
-        """
-        # Make a copy since we are going to reduce this list
-        pin_groups = self.pin_groups[pin_name].copy()
+        Find pins that have adjacent routing tracks and merge them into a
+        single pin_group.  The pins themselves may not be touching, but 
+        enclose_pis in the next step will ensure they are touching.
+        """        
 
+        # Make a copy since we are going to add to (and then reduce) this list
+        pin_groups = self.pin_groups[pin_name].copy()
+        
+        # Start as None to signal the first iteration
         remove_indices = set()
+            
         for index1,pg1 in enumerate(self.pin_groups[pin_name]):
             # Cannot combine more than once
             if index1 in remove_indices:
@@ -180,6 +188,7 @@ class router(router_tech):
                 if index2 in remove_indices:
                     continue
 
+                # Combine if at least 1 grid cell is adjacent
                 if pg1.adjacent(pg2):
                     combined = pin_group(pin_name, [], self)
                     combined.pins = [*pg1.pins, *pg2.pins]
@@ -189,12 +198,48 @@ class router(router_tech):
                     remove_indices.update([index1,index2])
                     pin_groups.append(combined)
                     
+
         # Remove them in decreasing order to not invalidate the indices
+        debug.info(2,"Removing {}".format(sorted(remove_indices)))
         for i in sorted(remove_indices, reverse=True):
             del pin_groups[i]
-            
+
+        # Use the new pin group!
         self.pin_groups[pin_name] = pin_groups
         
+        removed_pairs = len(remove_indices)/2
+        debug.info(1, "Combined {0} pin pairs for {1}".format(removed_pairs,pin_name))
+        
+        return(removed_pairs)
+            
+    def combine_adjacent_pins(self, pin_name):
+        """
+        Make multiple passes of the combine adjacent pins until we have no
+        more combinations or hit an iteration limit.
+        """
+        
+        # Start as None to signal the first iteration
+        num_removed_pairs = None
+
+        # Just used in case there's a circular combination or something weird
+        for iteration_count in range(10):
+            num_removed_pairs = self.combine_adjacent_pins_pass(pin_name)
+            if num_removed_pairs==0:
+                break
+        else:
+            debug.warning("Did not converge combining adjacent pins in supply router.")
+
+    def separate_adjacent_pins(self, pin_name, separation=1):
+        """
+        This will try to separate all grid pins by the supplied number of separation 
+        tracks (default is to prevent adjacency).
+        Go through all of the pin groups and check if any other pin group is 
+        within a separation of it.
+        If so, reduce the pin group grid to not include the adjacent grid.
+        Try to do this intelligently to keep th pins enclosed.
+        """
+        pass
+
     def prepare_blockages(self, pin_name):
         """
         Reset and add all of the blockages in the design.

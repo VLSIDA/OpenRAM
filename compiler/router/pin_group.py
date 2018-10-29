@@ -16,7 +16,11 @@ class pin_group:
         self.routed = False
         # This is a list because we can have a pin group of disconnected sets of pins
         # and these are represented by separate lists
-        self.pins = [pin_shapes]
+        if pin_shapes:
+            self.pins = [pin_shapes]
+        else:
+            self.pins = []
+    
         self.router = router
         # These are the corresponding pin grids for each pin group.
         self.grids = set()
@@ -53,28 +57,37 @@ class pin_group:
         """
         Remove any pin layout that is contained within another.
         """
-        local_debug = False
+        local_debug = True
         if local_debug:
             debug.info(0,"INITIAL: {}".format(pin_list))
         
         # Make a copy of the list to start
         new_pin_list = pin_list.copy()
-        
+
+        remove_indices = set()
         # This is n^2, but the number is small
-        for pin1 in pin_list:
-            for pin2 in pin_list:
+        for index1,pin1 in enumerate(pin_list):
+            if index1 in remove_indices:
+                continue
+            
+            for index2,pin2 in enumerate(pin_list):
                 # Can't contain yourself
                 if pin1 == pin2:
                     continue
+                if index2 in remove_indices:
+                    continue
+                
                 if pin2.contains(pin1):
                     if local_debug:
                         debug.info(0,"{0} contains {1}".format(pin1,pin2))
-                    # It may have already been removed by being enclosed in another pin
-                    if pin1 in new_pin_list:
-                        new_pin_list.remove(pin1)
+                        remove_indices.add(index2)
+        # Remove them in decreasing order to not invalidate the indices
+        for i in sorted(remove_indices, reverse=True):
+            del new_pin_list[i]
                         
         if local_debug:
             debug.info(0,"FINAL  : {}".format(new_pin_list))
+            
         return new_pin_list
 
     # FIXME: This relies on some technology parameters from router which is not clean.
@@ -106,6 +119,7 @@ class pin_group:
             ymax = max(plc.y,elc.y)
             ll = vector(plc.x, ymin)
             ur = vector(prc.x, ymax)
+            print(pin,enclosure,ll,ur)
             p = pin_layout(pin.name, [ll, ur], pin.layer) 
         elif pin.yoverlaps(enclosure):
             # Is it horizontal overlap, extend pin shape to enclosure
@@ -248,13 +262,13 @@ class pin_group:
     
     def enclose_pin(self):
         """
-        This will find the biggest rectangle enclosing some grid squares and
-        put a rectangle over it. It does not enclose grid squares that are blocked
-        by other shapes.
+        If there is one set of connected pin shapes, 
+        this will find the smallest rectangle enclosure that overlaps with any pin.
+        If there is not, it simply returns all the enclosures.
         """
         # Compute the enclosure pin_layout list of the set of tracks
         enclosure_list = self.compute_enclosures()
-        
+
         # A single set of connected pins is easy, so use the optimized set
         if len(self.pins)==1:
             smallest = self.find_smallest_overlapping(self.pins[0],enclosure_list)
@@ -268,7 +282,7 @@ class pin_group:
             #         debug.error("Unable to enclose pin {}".format(self.pins),-1)
         else:
             # Multiple pins is hard, so just use all of the enclosure shapes!
-            # FIXME: Find the minimum set of enclosures to reduce number of shapes.
+            # At least none of these are redundant shapes though.
             self.enclosures = enclosure_list
             
         debug.info(2,"Computed enclosure(s) {0}\n  {1}\n  {2}\n  {3}".format(self.name, self.pins, self.grids, self.enclosures))
@@ -305,6 +319,7 @@ class pin_group:
         # Keep the same groups for each pin
         pin_set = set()
         blockage_set = set()
+        print("PINLIST:",self.pins)
         for pin_list in self.pins:
             for pin in pin_list:
                 debug.info(2,"  Converting {0}".format(pin))
@@ -318,10 +333,10 @@ class pin_group:
         # If we have a blockage, we must remove the grids
         # Remember, this excludes the pin blockages already
         shared_set = pin_set & router.blocked_grids
-        if shared_set:
+        if len(shared_set)>0:
             debug.info(2,"Removing pins {}".format(shared_set))
         shared_set = blockage_set & router.blocked_grids
-        if shared_set:
+        if len(shared_set)>0:
             debug.info(2,"Removing blocks {}".format(shared_set))
         pin_set.difference_update(router.blocked_grids)
         blockage_set.difference_update(router.blocked_grids)

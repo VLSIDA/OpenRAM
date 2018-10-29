@@ -260,12 +260,12 @@ class pin_group:
             smallest = self.find_smallest_overlapping(self.pins[0],enclosure_list)
             if smallest:
                 self.enclosures=[smallest]
-            else:
-                connector=self.find_smallest_connector(enclosure_list)
-                if connector:
-                    self.enclosures=[connector]
-                else:
-                    debug.error("Unable to enclose pin {}".format(self.pins),-1)
+            # else:
+            #     connector=self.find_smallest_connector(enclosure_list)
+            #     if connector:
+            #         self.enclosures=[connector]
+            #     else:
+            #         debug.error("Unable to enclose pin {}".format(self.pins),-1)
         else:
             # Multiple pins is hard, so just use all of the enclosure shapes!
             # FIXME: Find the minimum set of enclosures to reduce number of shapes.

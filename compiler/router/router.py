@@ -191,8 +191,8 @@ class router(router_tech):
                 # Combine if at least 1 grid cell is adjacent
                 if pg1.adjacent(pg2):
                     combined = pin_group(pin_name, [], self)
-                    combined.pins = [*pg1.pins, *pg2.pins]
-                    combined.grids = pg1.grids | pg2.grids
+                    combined.pins = [*pg1.pins, *pg2.pins] # Join the two lists of pins
+                    combined.grids = pg1.grids | pg2.grids # OR the set of grid locations
                     debug.info(2,"Combining {0}:\n  {1}\n  {2}".format(pin_name, pg1.pins, pg2.pins))
                     debug.info(2,"  --> {0}\n      {1}\n".format(combined.pins,combined.grids))
                     remove_indices.update([index1,index2])
@@ -210,7 +210,7 @@ class router(router_tech):
         removed_pairs = len(remove_indices)/2
         debug.info(1, "Combined {0} pin pairs for {1}".format(removed_pairs,pin_name))
         
-        return(removed_pairs)
+        return removed_pairs
             
     def combine_adjacent_pins(self, pin_name):
         """
@@ -564,7 +564,8 @@ class router(router_tech):
         Analyze the shapes of a pin and combine them into groups which are connected.
         """
         pin_set = self.pins[pin_name]
-        local_debug=False
+        local_debug = False
+
         # Put each pin in an equivalence class of it's own
         equiv_classes = [set([x]) for x in pin_set]
         if local_debug:
@@ -595,6 +596,8 @@ class router(router_tech):
         
         def combine_classes(equiv_classes):
             """ Recursive function to combine classes. """
+            local_debug = False
+
             if local_debug:
                 debug.info(0,"\nRECURSE:\n",pformat(equiv_classes))
             if len(equiv_classes)==1:
@@ -634,10 +637,6 @@ class router(router_tech):
         put a rectangle over it. It does not enclose grid squares that are blocked
         by other shapes.
         """
-        # These are used for debugging
-        self.connector_enclosure = []
-        self.enclosures = []
-        
         for pin_name in self.pin_groups.keys():
             debug.info(1,"Enclosing pins for {}".format(pin_name))
             for pg in self.pin_groups[pin_name]:

@@ -1,3 +1,4 @@
+from direction import direction
 from pin_layout import pin_layout
 from vector3d import vector3d
 from vector import vector
@@ -57,7 +58,7 @@ class pin_group:
         """
         Remove any pin layout that is contained within another.
         """
-        local_debug = True
+        local_debug = False
         if local_debug:
             debug.info(0,"INITIAL: {}".format(pin_list))
         
@@ -67,6 +68,7 @@ class pin_group:
         remove_indices = set()
         # This is n^2, but the number is small
         for index1,pin1 in enumerate(pin_list):
+            # If we remove this pin, it can't contain other pins
             if index1 in remove_indices:
                 continue
             
@@ -74,6 +76,7 @@ class pin_group:
                 # Can't contain yourself
                 if pin1 == pin2:
                     continue
+                # If we already removed it, can't remove it again...
                 if index2 in remove_indices:
                     continue
                 
@@ -81,6 +84,7 @@ class pin_group:
                     if local_debug:
                         debug.info(0,"{0} contains {1}".format(pin1,pin2))
                         remove_indices.add(index2)
+
         # Remove them in decreasing order to not invalidate the indices
         for i in sorted(remove_indices, reverse=True):
             del new_pin_list[i]
@@ -98,15 +102,19 @@ class pin_group:
         # Enumerate every possible enclosure
         pin_list = []
         for seed in self.grids:
-            (ll, ur) = self.enclose_pin_grids(seed)
+            (ll, ur) = self.enclose_pin_grids(seed, direction.NORTH, direction.EAST)
+            enclosure = self.router.compute_pin_enclosure(ll, ur, ll.z)
+            pin_list.append(enclosure)
+
+            (ll, ur) = self.enclose_pin_grids(seed, direction.EAST, direction.NORTH)
             enclosure = self.router.compute_pin_enclosure(ll, ur, ll.z)
             pin_list.append(enclosure)
 
         return self.remove_redundant_shapes(pin_list)
         
-    def compute_enclosure(self, pin, enclosure):
+    def compute_connector(self, pin, enclosure):
         """ 
-        Compute an enclosure to connect the pin to the enclosure shape. 
+        Compute a shape to connect the pin to the enclosure shape. 
         This assumes the shape will be the dimension of the pin.
         """
         if pin.xoverlaps(enclosure):
@@ -155,7 +163,7 @@ class pin_group:
         for pin_list in self.pins:
             for pin in pin_list:
                 for enclosure in enclosure_list:
-                    new_enclosure = self.compute_enclosure(pin, enclosure)
+                    new_enclosure = self.compute_connector(pin, enclosure)
                     if smallest == None or new_enclosure.area()<smallest.area():
                         smallest = new_enclosure
                     
@@ -220,12 +228,16 @@ class pin_group:
                 
         return pin
 
-    def enclose_pin_grids(self, ll):
+    def enclose_pin_grids(self, ll, dir1=direction.NORTH, dir2=direction.EAST):
         """
         This encloses a single pin component with a rectangle
         starting with the seed and expanding right until blocked
         and then up until blocked.
+        dir1 and dir2 should be two orthogonal directions.
         """
+
+        offset1= direction.get_offset(dir1)
+        offset2= direction.get_offset(dir2)
 
         # We may have started with an empty set
         if not self.grids:
@@ -233,17 +245,17 @@ class pin_group:
 
         # Start with the ll and make the widest row
         row = [ll]
-        # Move right while we can
+        # Move in dir1 while we can
         while True:
-            right = row[-1] + vector3d(1,0,0)
+            next_cell = row[-1] + offset1
             # Can't move if not in the pin shape 
-            if right in self.grids and right not in self.router.blocked_grids:
-                row.append(right)
+            if next_cell in self.grids and next_cell not in self.router.blocked_grids:
+                row.append(next_cell)
             else:
                 break
-        # Move up while we can
+        # Move in dir2 while we can
         while True:
-            next_row = [x+vector3d(0,1,0) for x in row]
+            next_row = [x+offset2 for x in row]
             for cell in next_row:
                 # Can't move if any cell is not in the pin shape 
                 if cell not in self.grids or cell in self.router.blocked_grids:
@@ -313,7 +325,7 @@ class pin_group:
         # Keep the same groups for each pin
         pin_set = set()
         blockage_set = set()
-        print("PINLIST:",self.pins)
+
         for pin_list in self.pins:
             for pin in pin_list:
                 debug.info(2,"  Converting {0}".format(pin))

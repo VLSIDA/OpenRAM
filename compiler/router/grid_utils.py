@@ -6,25 +6,13 @@ import debug
 from direction import direction
 from vector3d import vector3d
 
+
 def increment_set(curset, direct):
         """
         Return the cells incremented in given direction
         """
-        if direct==direction.NORTH:
-            offset = vector3d(0,1,0)
-        elif direct==direction.SOUTH:
-            offset = vector3d(0,-1,0)            
-        elif direct==direction.EAST:
-            offset = vector3d(1,0,0)            
-        elif direct==direction.WEST:
-            offset = vector3d(-1,0,0)            
-        elif direct==direction.UP:
-            offset = vector3d(0,0,1)            
-        elif direct==direction.DOWN:
-            offset = vector3d(0,0,-1)
-        else:
-            debug.error("Invalid direction {}".format(dirct))
-            
+        offset = direction.get_offset(direct)
+
         newset = set()
         for c in curset:
             newc = c+offset

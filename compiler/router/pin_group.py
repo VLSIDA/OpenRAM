@@ -267,25 +267,19 @@ class pin_group:
         If there is not, it simply returns all the enclosures.
         """
         # Compute the enclosure pin_layout list of the set of tracks
-        enclosure_list = self.compute_enclosures()
+        self.enclosures = self.compute_enclosures()
 
         # A single set of connected pins is easy, so use the optimized set
         if len(self.pins)==1:
+            enclosure_list = self.enclosures
             smallest = self.find_smallest_overlapping(self.pins[0],enclosure_list)
             if smallest:
                 self.enclosures=[smallest]
-            # else:
-            #     connector=self.find_smallest_connector(enclosure_list)
-            #     if connector:
-            #         self.enclosures=[connector]
-            #     else:
-            #         debug.error("Unable to enclose pin {}".format(self.pins),-1)
-        else:
-            # Multiple pins is hard, so just use all of the enclosure shapes!
-            # At least none of these are redundant shapes though.
-            self.enclosures = enclosure_list
             
-        debug.info(2,"Computed enclosure(s) {0}\n  {1}\n  {2}\n  {3}".format(self.name, self.pins, self.grids, self.enclosures))
+        debug.info(2,"Computed enclosure(s) {0}\n  {1}\n  {2}\n  {3}".format(self.name,
+                                                                             self.pins,
+                                                                             self.grids,
+                                                                             self.enclosures))
 
             
     def add_enclosure(self, cell):

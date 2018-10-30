@@ -48,7 +48,6 @@ class router(router_tech):
         self.all_pins = set()
         
         # A map of pin names to a list of pin groups
-        # A pin group is a set overlapping pin shapes on the same layer.
         self.pin_groups = {}
         
         ### The blockage data structures
@@ -157,10 +156,14 @@ class router(router_tech):
         #self.write_debug_gds("debug_combine_pins.gds",stop_program=True)
 
         # Separate any adjacent grids of differing net names to prevent wide metal DRC violations
-        self.separate_adjacent_pins(pin)
-            
+        # Must be done before enclosing pins
+        self.separate_adjacent_pins(self.supply_rail_space_width)
+        # For debug
+        #self.separate_adjacent_pins(1)
+        
         # Enclose the continguous grid units in a metal rectangle to fix some DRCs
         self.enclose_pins()
+        #self.write_debug_gds("debug_enclose_pins.gds",stop_program=True)
 
         
     def combine_adjacent_pins_pass(self, pin_name):
@@ -191,13 +194,13 @@ class router(router_tech):
                 # Combine if at least 1 grid cell is adjacent
                 if pg1.adjacent(pg2):
                     combined = pin_group(pin_name, [], self)
-                    combined.pins = [*pg1.pins, *pg2.pins] # Join the two lists of pins
-                    combined.grids = pg1.grids | pg2.grids # OR the set of grid locations
-                    debug.info(2,"Combining {0}:\n  {1}\n  {2}".format(pin_name, pg1.pins, pg2.pins))
-                    debug.info(2,"  --> {0}\n      {1}\n".format(combined.pins,combined.grids))
+                    combined.combine_pins(pg1, pg2)
+                    debug.info(2,"Combining {0} {1} {2}:".format(pin_name, index1, index2))
+                    debug.info(2, "     {0}\n  {1}".format(pg1.pins, pg2.pins))
+                    debug.info(2,"  --> {0}\n      {1}".format(combined.pins,combined.grids))
                     remove_indices.update([index1,index2])
                     pin_groups.append(combined)
-                    
+                    break
 
         # Remove them in decreasing order to not invalidate the indices
         debug.info(2,"Removing {}".format(sorted(remove_indices)))
@@ -207,7 +210,7 @@ class router(router_tech):
         # Use the new pin group!
         self.pin_groups[pin_name] = pin_groups
         
-        removed_pairs = len(remove_indices)/2
+        removed_pairs = int(len(remove_indices)/2)
         debug.info(1, "Combined {0} pin pairs for {1}".format(removed_pairs,pin_name))
         
         return removed_pairs
@@ -229,17 +232,77 @@ class router(router_tech):
         else:
             debug.warning("Did not converge combining adjacent pins in supply router.")
 
-    def separate_adjacent_pins(self, pin_name, separation=1):
+    def separate_adjacent_pins(self, separation):
         """
         This will try to separate all grid pins by the supplied number of separation 
         tracks (default is to prevent adjacency).
+        """
+        # Commented out to debug with SCMOS
+        #if separation==0:
+        #    return
+        
+        pin_names = self.pin_groups.keys()
+        for pin_name1 in pin_names:
+            for pin_name2 in pin_names:
+                if pin_name1==pin_name2:
+                    continue
+                self.separate_adjacent_pin(pin_name1, pin_name2, separation)
+
+    def separate_adjacent_pin(self, pin_name1, pin_name2, separation):
+        """
         Go through all of the pin groups and check if any other pin group is 
         within a separation of it.
         If so, reduce the pin group grid to not include the adjacent grid.
         Try to do this intelligently to keep th pins enclosed.
         """
-        pass
+        debug.info(1,"Comparing {0} and {1} adjacency".format(pin_name1, pin_name2))
+        for index1,pg1 in enumerate(self.pin_groups[pin_name1]):
+            for index2,pg2 in enumerate(self.pin_groups[pin_name2]):
+                # FIXME: Use separation distance and edge grids only
+                grids_g1, grids_g2 = pg1.adjacent_grids(pg2, separation)
+                # These should have the same length, so...
+                if len(grids_g1)>0:
+                    debug.info(1,"Adjacent grids {0} {1} {2} {3}".format(index1,grids_g1,index2,grids_g2))
+                    self.remove_adjacent_grid(pg1, grids_g1, pg2, grids_g2)
 
+    def remove_adjacent_grid(self, pg1, grids1, pg2, grids2):
+        """
+        Remove one of the adjacent grids in a heuristic manner.
+        """
+        # Determine the bigger and smaller group
+        if pg1.size()>pg2.size():
+            bigger = pg1
+            bigger_grids = grids1
+            smaller = pg2
+            smaller_grids = grids2
+        else:
+            bigger = pg2
+            bigger_grids = grids2
+            smaller = pg1
+            smaller_grids = grids1
+        
+        # First, see if we can remove grids that are in the secondary grids
+        # i.e. they aren't necessary to the pin grids
+        if bigger_grids.issubset(bigger.secondary_grids):
+            debug.info(1,"Removing {} from bigger {}".format(str(bigger_grids), bigger))
+            bigger.grids.difference_update(bigger_grids)
+            self.blocked_grids.update(bigger_grids)
+            return
+        elif smaller_grids.issubset(smaller.secondary_grids):
+            debug.info(1,"Removing {} from smaller {}".format(str(smaller_grids), smaller))
+            smaller.grids.difference_update(smaller_grids)
+            self.blocked_grids.update(smaller_grids)
+            return
+            
+        # If that fails, just randomly remove from the bigger one and give a warning.
+        # This might fail later.
+        debug.warning("Removing arbitrary grids from a pin group {} {}".format(bigger, bigger_grids))
+        debug.check(len(bigger.grids)>len(bigger_grids),"Zero size pin group after adjacency removal {} {}".format(bigger, bigger_grids))
+        bigger.grids.difference_update(bigger_grids)
+        self.blocked_grids.update(bigger_grids)
+
+
+    
     def prepare_blockages(self, pin_name):
         """
         Reset and add all of the blockages in the design.
@@ -975,6 +1038,8 @@ class router(router_tech):
         if show_enclosures:
             for key in self.pin_groups.keys():
                 for pg in self.pin_groups[key]:
+                    if not pg.enclosed:
+                        continue
                     for pin in pg.enclosures:
                         #print("enclosure: ",pin.name,pin.ll(),pin.width(),pin.height())
                         self.cell.add_rect(layer="text",

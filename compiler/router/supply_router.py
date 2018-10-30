@@ -41,6 +41,7 @@ class supply_router(router):
         # Power rail width in grid units.
         self.rail_track_width = 2
 
+
         
     def create_routing_grid(self):
         """ 
@@ -69,6 +70,9 @@ class supply_router(router):
             # but this is simplest for now.
             self.create_routing_grid()
 
+        # Compute the grid dimensions
+        self.compute_supply_rail_dimensions()
+            
         # Get the pin shapes
         self.find_pins_and_blockages([self.vdd_name, self.gnd_name])
         #self.write_debug_gds("pin_enclosures.gds",stop_program=True)
@@ -87,7 +91,7 @@ class supply_router(router):
 
         self.route_simple_overlaps(vdd_name)
         self.route_simple_overlaps(gnd_name)
-        #self.write_debug_gds("debug_simple_route.gds",stop_program=True)
+        self.write_debug_gds("debug_simple_route.gds",stop_program=False)
         
         # Route the supply pins to the supply rails
         # Route vdd first since we want it to be shorter
@@ -436,9 +440,6 @@ class supply_router(router):
         Must be done with lower left at 0,0
         """
 
-        # Compute the grid dimensions
-        self.compute_supply_rail_dimensions()
-        
         # Compute the grid locations of the supply rails
         self.compute_supply_rails(name, supply_number)
         

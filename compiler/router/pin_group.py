@@ -15,6 +15,9 @@ class pin_group:
         self.name = name
         # Flag for when it is routed
         self.routed = False
+        # Flag for when it is enclosed
+        self.enclosed = False
+        
         # This is a list because we can have a pin group of disconnected sets of pins
         # and these are represented by separate lists
         if pin_shapes:
@@ -25,10 +28,40 @@ class pin_group:
         self.router = router
         # These are the corresponding pin grids for each pin group.
         self.grids = set()
+        # These are the secondary grids that could or could not be part of the pin
+        self.secondary_grids = set()
+        
         # The corresponding set of partially blocked grids for each pin group.
         # These are blockages for other nets but unblocked for routing this group.
         self.blockages = set()
 
+    def __str__(self):
+        """ override print function output """
+        total_string = "(pg {} ".format(self.name)
+        
+        pin_string = "\n  pins={}".format(self.pins)
+        total_string += pin_string
+        
+        grids_string = "\n  grids={}".format(self.grids)
+        total_string += grids_string
+
+        grids_string = "\n  secondary={}".format(self.secondary_grids)
+        total_string += grids_string
+        
+        if self.enclosed:
+            enlosure_string = "\n  enclose={}".format(self.enclosures)
+            total_string += enclosure_string
+
+        total_string += ")"
+        return total_string
+
+    def __repr__(self):
+        """ override repr function output """
+        return str(self)
+    
+    def size(self):
+        return len(self.grids)
+    
     def set_routed(self, value=True):
         self.routed = value
 
@@ -277,22 +310,41 @@ class pin_group:
         this will find the smallest rectangle enclosure that overlaps with any pin.
         If there is not, it simply returns all the enclosures.
         """
+        self.enclosed = True
+        
         # Compute the enclosure pin_layout list of the set of tracks
         self.enclosures = self.compute_enclosures()
 
         # A single set of connected pins is easy, so use the optimized set
-        if len(self.pins)==1:
-            enclosure_list = self.enclosures
-            smallest = self.find_smallest_overlapping(self.pins[0],enclosure_list)
-            if smallest:
-                self.enclosures=[smallest]
-            
-        debug.info(2,"Computed enclosure(s) {0}\n  {1}\n  {2}\n  {3}".format(self.name,
+        # if len(self.pins)==1:
+        #     enclosure_list = self.enclosures
+        #     smallest = self.find_smallest_overlapping(self.pins[0],enclosure_list)
+        #     if smallest:
+        #         self.enclosures=[smallest]
+
+        # Save the list of all grids
+        #self.all_grids = self.grids.copy()
+        
+        # Remove the grids that are not covered by the enclosures
+        # FIXME: We could probably just store what grids each enclosure overlaps when
+        # it was created.
+        #for enclosure in self.enclosures:
+        #    enclosure_in_tracks=router.convert_pin_to_tracks(self.name, enclosure)
+        #    self.grids.difference_update(enclosure_in_tracks)
+
+        debug.info(3,"Computed enclosure(s) {0}\n  {1}\n  {2}\n  {3}".format(self.name,
                                                                              self.pins,
                                                                              self.grids,
                                                                              self.enclosures))
 
-            
+    def combine_pins(self, pg1, pg2):
+        """
+        Combine two pin groups into one.
+        """
+        self.pins = [*pg1.pins, *pg2.pins] # Join the two lists of pins
+        self.grids = pg1.grids | pg2.grids # OR the set of grid locations
+        self.secondary_grids = pg1.secondary_grids | pg2.secondary_grids
+
     def add_enclosure(self, cell):
         """
         Add the enclosure shape to the given cell.
@@ -305,23 +357,57 @@ class pin_group:
                           height=enclosure.height())
         
 
-    
+    def perimeter_grids(self):
+        """
+        Return a list of the grids on the perimeter.
+        This assumes that we have a single contiguous shape.
+        """
+        perimeter_set = set()
+        cardinal_offsets = direction.cardinal_offsets()
+        for g1 in self.grids:
+            neighbor_grids = [g1 + offset for offset in cardinal_offsets]
+            neighbor_count = sum([x in self.grids for x in neighbor_grids])
+            # If we aren't completely enclosed, we are on the perimeter
+            if neighbor_count < 4:
+                perimeter_set.add(g1)
+                
+        return perimeter_set
     
     def adjacent(self, other):
         """ 
         Chck if the two pin groups have at least one adjacent pin grid.
         """
         # We could optimize this to just check the boundaries
-        for g1 in self.grids:
-            for g2 in other.grids:
+        for g1 in self.perimeter_grids():
+            for g2 in other.perimeter_grids():
                 if g1.adjacent(g2):
                     return True
 
         return False
 
+
+    def adjacent_grids(self, other, separation):
+        """ 
+        Determine the sets of grids that are within a separation distance
+        of any grid in the other set.
+        """
+        # We could optimize this to just check the boundaries
+        g1_grids = set()
+        g2_grids = set()
+        for g1 in self.grids:
+            for g2 in other.grids:
+                if g1.distance(g2) <= separation:
+                    g1_grids.add(g1)
+                    g2_grids.add(g2)
+
+        return g1_grids,g2_grids
+    
     def convert_pin(self, router):
-        #print("PG  ",pg)
-        # Keep the same groups for each pin
+        """
+        Convert the list of pin shapes into sets of routing grids.
+        The secondary set of grids are "optional" pin shapes that could be
+        should be either blocked or part of the pin.
+        """
         pin_set = set()
         blockage_set = set()
 
@@ -334,19 +420,6 @@ class pin_group:
                 # Blockages will be a super-set of pins since it uses the inflated pin shape.
                 blockage_in_tracks = router.convert_blockage(pin) 
                 blockage_set.update(blockage_in_tracks)
-
-        # If we have a blockage, we must remove the grids
-        # Remember, this excludes the pin blockages already
-        shared_set = pin_set & router.blocked_grids
-        if len(shared_set)>0:
-            debug.info(2,"Removing pins {}".format(shared_set))
-        shared_set = blockage_set & router.blocked_grids
-        if len(shared_set)>0:
-            debug.info(2,"Removing blocks {}".format(shared_set))
-        pin_set.difference_update(router.blocked_grids)
-        blockage_set.difference_update(router.blocked_grids)
-        debug.info(2,"     pins   {}".format(pin_set))
-        debug.info(2,"     blocks {}".format(blockage_set))
                        
         # At least one of the groups must have some valid tracks
         if (len(pin_set)==0 and len(blockage_set)==0):
@@ -355,14 +428,9 @@ class pin_group:
 
         # We need to route each of the components, so don't combine the groups
         self.grids = pin_set | blockage_set
+        # Remember the secondary grids for removing adjacent pins in wide metal spacing
+        self.secondary_grids = blockage_set - pin_set
 
-        # Add all of the partial blocked grids to the set for the design
-        # if they are not blocked by other metal
-        #partial_set = blockage_set - pin_set
-        #self.blockages = partial_set
-
-        # We should not have added the pins to the blockages,
-        # but remove them just in case
-        # Partial set may still be in the blockages if there were
-        # other shapes disconnected from the pins that were also overlapping
-        #route.blocked_grids.difference_update(pin_set)
+        debug.info(2,"     pins   {}".format(self.grids))
+        debug.info(2,"     secondary {}".format(self.secondary_grids))
+        

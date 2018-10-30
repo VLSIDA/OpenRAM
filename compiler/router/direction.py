@@ -30,3 +30,10 @@ class direction(Enum):
             debug.error("Invalid direction {}".format(dirct))
 
         return offset
+
+    def cardinal_directions():
+        return [direction.NORTH, direction.EAST, direction.SOUTH, direction.WEST]
+    
+    def cardinal_offsets():
+        return [direction.get_offset(d) for d in direction.cardinal_directions()]
+

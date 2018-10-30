@@ -106,8 +106,9 @@ class pin_group:
                 continue
             
             for index2,pin2 in enumerate(pin_list):
-                # Can't contain yourself
-                if pin1 == pin2:
+                # Can't contain yourself, but compare the indices and not the pins
+                # so you can remove duplicate copies.
+                if index1==index2:
                     continue
                 # If we already removed it, can't remove it again...
                 if index2 in remove_indices:
@@ -420,7 +421,19 @@ class pin_group:
                 # Blockages will be a super-set of pins since it uses the inflated pin shape.
                 blockage_in_tracks = router.convert_blockage(pin) 
                 blockage_set.update(blockage_in_tracks)
-                       
+
+        # If we have a blockage, we must remove the grids
+        # Remember, this excludes the pin blockages already
+        shared_set = pin_set & router.blocked_grids
+        if len(shared_set)>0:
+            debug.info(2,"Removing pins {}".format(shared_set))
+        pin_set.difference_update(router.blocked_grids)
+        
+        shared_set = blockage_set & router.blocked_grids
+        if len(shared_set)>0:
+            debug.info(2,"Removing blocks {}".format(shared_set))
+        blockage_set.difference_update(router.blocked_grids)
+        
         # At least one of the groups must have some valid tracks
         if (len(pin_set)==0 and len(blockage_set)==0):
             self.write_debug_gds("blocked_pin.gds")

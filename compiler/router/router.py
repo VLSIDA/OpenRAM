@@ -135,7 +135,8 @@ class router(router_tech):
         Find the pins and blockages in the design 
         """
         # This finds the pin shapes and sorts them into "groups" that are connected
-        # This must come before the blockages, so we can ignore metal shapes that are blockages.
+        # This must come before the blockages, so we can not count the pins themselves
+        # as blockages.
         for pin in pin_list:
             self.find_pins(pin)
 

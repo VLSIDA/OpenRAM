@@ -36,21 +36,27 @@ class openram_test(openram_test):
                 os.chmod(out_path, 0o0750)
 
         # specify the same verbosity for the system call
-        verbosity = ""
+        opts = ""
         for i in range(OPTS.debug_level):
-            verbosity += " -v"
-
+            opts += " -v"
+        # keep the temp directory around
+        if not OPTS.purge_temp:
+            opts += " -d"
+            
             
         OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
 
         cmd = "python3 {0}/openram.py -n -o {1} -p {2} {3} config_20_{4}.py 2>&1 > {5}/output.log".format(OPENRAM_HOME,
-                                                                                                            out_file,
-                                                                                                            out_path,
-                                                                                                            verbosity,
-                                                                                                            OPTS.tech_name,
-                                                                                                            out_path)
+                                                                                                          out_file,
+                                                                                                          out_path,
+                                                                                                          opts,
+                                                                                                          OPTS.tech_name,
+                                                                                                          out_path)
         debug.info(1, cmd)
         os.system(cmd)
+
+        # check that the output path was created
+        self.assertEqual(os.path.exists(out_path),True)
         
         # assert an error until we actually check a resul
         for extension in ["gds", "v", "lef", "sp"]:
@@ -64,9 +70,8 @@ class openram_test(openram_test):
         self.assertTrue(len(files)>0)
         
         # Make sure there is any .html file 
-        if os.path.exists(out_path):
-            datasheets = glob.glob('{0}/*html'.format(out_path))
-            self.assertTrue(len(datasheets)>0)
+        datasheets = glob.glob('{0}/*html'.format(out_path))
+        self.assertTrue(len(datasheets)>0)
         
         # grep any errors from the output
         output_log = open("{0}/output.log".format(out_path),"r")
@@ -76,10 +81,10 @@ class openram_test(openram_test):
         self.assertEqual(len(re.findall('WARNING',output)),0)
 
 
-        # now clean up the directory
-        if os.path.exists(out_path):
+        # now clean up the output directory (or preserve if specified to preserve temp dirs)
+        if os.path.exists(out_path) and OPTS.purge_temp:
             shutil.rmtree(out_path, ignore_errors=True)
-        self.assertEqual(os.path.exists(out_path),False)
+            self.assertEqual(os.path.exists(out_path),False)
 
         globals.end_openram()
 

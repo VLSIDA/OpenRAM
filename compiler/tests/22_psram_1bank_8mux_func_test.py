@@ -11,7 +11,7 @@ import globals
 from globals import OPTS
 import debug
 
-@unittest.skip("SKIPPING 22_psram_1bank_8mux_func_test")
+#@unittest.skip("SKIPPING 22_psram_1bank_8mux_func_test")
 class psram_1bank_8mux_func_test(openram_test):
 
     def runTest(self):
@@ -29,7 +29,7 @@ class psram_1bank_8mux_func_test(openram_test):
         from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=4,
-                        num_words=512,
+                        num_words=256,
                         num_banks=1)
         c.words_per_row=8
         debug.info(1, "Functional test for psram with {} bit words, {} words, {} words per row, {} banks".format(c.word_size,
@@ -37,6 +37,7 @@ class psram_1bank_8mux_func_test(openram_test):
                                                                                                                 c.words_per_row,
                                                                                                                 c.num_banks))
         s = sram(c, name="sram")
+        tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)
         
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])

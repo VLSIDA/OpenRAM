@@ -81,8 +81,8 @@ def parse_characterizer_csv(f,pages):
 
             FF_HOLD_HL_MIN = row[20]
             FF_HOLD_HL_MAX = row[21]
-
-
+            
+    
             for sheet in pages:
 
 
@@ -121,25 +121,25 @@ def parse_characterizer_csv(f,pages):
                     for item in sheet.timing:
                         if item.paramter == "CSb setup rising":
                             if float(FF_SETUP_LH_MIN) < float(item.min):
-                                item.min = FF_SETUP_LH
+                                item.min = FF_SETUP_LH_MIN
                             elif float(FF_SETUP_LH_MAX) > float(item.max):
-                                item.max = FF_SETUP_LH
+                                item.max = FF_SETUP_LH_MAX
 
                         if item.paramter == "CSb setup falling":
-                            if float(FF_SETUP_HL_MIN) > float(item.min):
-                                item.max = FF_SETUP_HL_MIN
+                            if float(FF_SETUP_HL_MIN) < float(item.min):
+                                item.min = FF_SETUP_HL_MIN
                             elif float(FF_SETUP_HL_MAX) > float(item.nax):
                                 item.max = FF_SETUP_HL_MAX
 
                         if item.paramter == "CSb hold rising":
-                            if float(FF_HOLD_HL_MIN) > float(item.min):
-                                item.max = FF_SETUP_HL_MIN
+                            if float(FF_HOLD_HL_MIN) < float(item.min):
+                                item.min = FF_SETUP_HL_MIN
                             elif float(FF_HOLD_HL_MAX) > float(item.nax):
                                 item.max = FF_SETUP_HL_MAX
 
-                        if item.paramter == "CSb hold rising":
-                            if float(FF_HOLD_HL_MIN) > float(item.min):
-                                item.max = FF_SETUP_HL_MIN
+                        if item.paramter == "CSb hold falling":
+                            if float(FF_HOLD_HL_MIN) < float(item.min):
+                                item.min = FF_SETUP_HL_MIN
                             elif float(FF_HOLD_HL_MAX) > float(item.nax):
                                 item.max = FF_SETUP_HL_MAX
                             
@@ -149,7 +149,7 @@ def parse_characterizer_csv(f,pages):
                     new_sheet.dlv.append(deliverables_item('.lib','Synthesis models','<a href="file://{0}">{1}</a>'.format(LIB_NAME,LIB_NAME.replace(OUT_DIR,''))))
 
             if found == 0:
-
+                
                 #if this is the first corner for this sram, run first time configuration and set up tables
                 new_sheet = datasheet(NAME)
                 pages.append(new_sheet)
@@ -170,8 +170,8 @@ def parse_characterizer_csv(f,pages):
                 new_sheet.timing.append(timing_and_current_data_item('Positive clk hold','2','3','4'))
                 new_sheet.timing.append(timing_and_current_data_item('CSb setup rising',FF_SETUP_LH_MIN,FF_SETUP_LH_MAX,'ns'))
                 new_sheet.timing.append(timing_and_current_data_item('CSb setup falling',FF_SETUP_HL_MIN,FF_SETUP_HL_MAX,'ns'))
-                new_sheet.timing.append(timing_and_current_data_item('CSb hold rising',FF_SETUP_LH_MIN,FF_SETUP_LH_MAX,'ns'))
-                new_sheet.timing.append(timing_and_current_data_item('CSb hold falling',FF_SETUP_HL_MIN,FF_SETUP_HL_MAX,'ns'))
+                new_sheet.timing.append(timing_and_current_data_item('CSb hold rising',FF_HOLD_LH_MIN,FF_HOLD_LH_MAX,'ns'))
+                new_sheet.timing.append(timing_and_current_data_item('CSb hold falling',FF_HOLD_HL_MIN,FF_HOLD_HL_MAX,'ns'))
                 new_sheet.timing.append(timing_and_current_data_item('AC current','2','3','4'))
                 new_sheet.timing.append(timing_and_current_data_item('Standby current','2','3','4'))
                 new_sheet.timing.append(timing_and_current_data_item('Area','2','3','4'))

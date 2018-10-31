@@ -108,7 +108,15 @@ class sram():
                 print("Trimming netlist to speed up characterization.")
         lib(out_dir=OPTS.output_path, sram=self.s, sp_file=sp_file)
         print_time("Characterization", datetime.datetime.now(), start_time)
-        
+       
+
+        # Write the config file
+        start_time = datetime.datetime.now()
+        from shutil import copyfile
+        copyfile(OPTS.config_file + '.py', OPTS.output_path + OPTS.output_name + '.py')
+        print("Config: writing to {0}".format(OPTS.output_path + OPTS.output_name + '.py'))
+        print_time("Config", datetime.datetime.now(), start_time)
+
         # Write the datasheet
         start_time = datetime.datetime.now()
         from datasheet_gen import datasheet_gen

@@ -185,7 +185,9 @@ def parse_characterizer_csv(f,pages):
                 new_sheet.dlv.append(deliverables_item('.sp','SPICE netlists','<a href="file://{0}{1}.{2}">{1}.{2}</a>'.format(OUT_DIR,OPTS.output_name,'sp')))
                 new_sheet.dlv.append(deliverables_item('.v','Verilog simulation models','<a href="file://{0}{1}.{2}">{1}.{2}</a>'.format(OUT_DIR,OPTS.output_name,'v')))
                 new_sheet.dlv.append(deliverables_item('.html','This datasheet','<a href="file://{0}{1}.{2}">{1}.{2}</a>'.format(OUT_DIR,OPTS.output_name,'html')))
-                new_sheet.dlv.append(deliverables_item('.lib','Synthesis models','<a href="file://{0}">{1}</a>'.format(LIB_NAME,LIB_NAME.replace(OUT_DIR,''))))
+                new_sheet.dlv.append(deliverables_item('.lib','Synthesis models','<a href="file://{0}">{1}</a>'.format(LIB_NAME,LIB_NAME.replace(OUT_DIR,'lib'))))
+                new_sheet.dlv.append(deliverables_item('.py','OpenRAM configuration file','<a href="file://{0}{1}.{2}">{1}.{2}</a>'.format(OUT_DIR,OPTS.output_name,'py')))
+
 
 
                 #debug table for multiport information

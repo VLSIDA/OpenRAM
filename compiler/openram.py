@@ -39,7 +39,7 @@ import verify
 from sram import sram
 from sram_config import sram_config
 #from parser import *
-output_extensions = ["sp","v","lib"]
+output_extensions = ["sp","v","lib","py"]
 if OPTS.datasheet_gen:
     output_extensions.append("html")
 if not OPTS.netlist_only:

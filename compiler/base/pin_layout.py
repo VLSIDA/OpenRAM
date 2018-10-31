@@ -118,6 +118,20 @@ class pin_layout:
 
         return y_overlaps
     
+    def xcontains(self, other):
+        """ Check if shape contains the x overlap """
+        (ll,ur) = self.rect
+        (oll,our) = other.rect
+
+        return (oll.x >= ll.x and our.x <= ur.x)
+
+    def ycontains(self, other):
+        """ Check if shape contains the y overlap """
+        (ll,ur) = self.rect
+        (oll,our) = other.rect
+
+        return (oll.y >= ll.y and our.y <= ur.y)
+    
     def contains(self, other):
         """ Check if a shape contains another rectangle  """
         # If it is the same shape entirely, it is contained!
@@ -127,23 +141,13 @@ class pin_layout:
         # Can only overlap on the same layer
         if self.layer != other.layer:
             return False
-        
-        (ll,ur) = self.rect
-        (oll,our) = other.rect
-        
-        # Check if the oll is inside the y range
-        if not (oll.y >= ll.y and oll.y <= ur.y):
+
+        if not self.xcontains(other):
             return False
-        # Check if the oll is inside the x range
-        if not (oll.x >= ll.x and oll.x <= ur.x):
+
+        if not self.ycontains(other):
             return False
-        # Check if the our is inside the y range
-        if not (our.y >= ll.y and our.y <= ur.y):
-            return False
-        # Check if the our is inside the x range
-        if not (our.x >= ll.x and our.x <= ur.x):
-            return False
-        
+
         return True
         
     

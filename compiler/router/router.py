@@ -707,7 +707,7 @@ class router(router_tech):
                 pg.enclose_pin()
                 pg.add_enclosure(self.cell)
 
-        #self.write_debug_gds("pin_debug.gds", True)
+        #self.write_debug_gds("pin_debug.gds", False)
     
     def add_source(self, pin_name):
         """ 

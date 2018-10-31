@@ -114,10 +114,10 @@ class pin_group:
                 if index2 in remove_indices:
                     continue
                 
-                if pin2.contains(pin1):
+                if pin1.contains(pin2):
                     if local_debug:
                         debug.info(0,"{0} contains {1}".format(pin1,pin2))
-                        remove_indices.add(index2)
+                    remove_indices.add(index2)
 
         # Remove them in decreasing order to not invalidate the indices
         for i in sorted(remove_indices, reverse=True):
@@ -144,7 +144,7 @@ class pin_group:
             enclosure = self.router.compute_pin_enclosure(ll, ur, ll.z)
             pin_list.append(enclosure)
 
-        return self.remove_redundant_shapes(pin_list)
+        return pin_list
         
     def compute_connector(self, pin, enclosure):
         """ 
@@ -187,6 +187,138 @@ class pin_group:
 
         return p
 
+    def find_above_connector(self, pin, enclosures):
+        """ 
+        Find the enclosure that is to above the pin
+        and make a connector to it's upper edge.
+        """
+        # Create the list of shapes that contain the pin edge
+        edge_list = []
+        for shape in enclosures:
+            if shape.xcontains(pin):
+                edge_list.append(shape)
+        
+        # Sort them by their bottom edge
+        edge_list.sort(key=lambda x: x.by(), reverse=True)
+
+        # Find the bottom edge that is next to the pin's top edge
+        above_item = None
+        for item in edge_list:
+            if item.by()>=pin.uy():
+                above_item = item
+            else:
+                break
+
+        # There was nothing 
+        if above_item==None:
+            return None
+        # If it already overlaps, no connector needed
+        if above_item.overlaps(pin):
+            return None
+        
+        # Otherwise, make a connector to the item
+        p = self.compute_connector(pin, above_item)
+        return p
+
+    def find_below_connector(self, pin, enclosures):
+        """ 
+        Find the enclosure that is below the pin
+        and make a connector to it's upper edge.
+        """
+        # Create the list of shapes that contain the pin edge
+        edge_list = []
+        for shape in enclosures:
+            if shape.xcontains(pin):
+                edge_list.append(shape)
+        
+        # Sort them by their upper edge
+        edge_list.sort(key=lambda x: x.uy())
+
+        # Find the upper edge that is next to the pin's bottom edge
+        bottom_item = None
+        for item in edge_list:
+            if item.uy()<=pin.by():
+                bottom_item = item
+            else:
+                break
+
+        # There was nothing to the left
+        if bottom_item==None:
+            return None
+        # If it already overlaps, no connector needed
+        if bottom_item.overlaps(pin):
+            return None
+        
+        # Otherwise, make a connector to the item
+        p = self.compute_connector(pin, bottom_item)
+        return p
+    
+    def find_left_connector(self, pin, enclosures):
+        """ 
+        Find the enclosure that is to the left of the pin
+        and make a connector to it's right edge.
+        """
+        # Create the list of shapes that contain the pin edge
+        edge_list = []
+        for shape in enclosures:
+            if shape.ycontains(pin):
+                edge_list.append(shape)
+        
+        # Sort them by their right edge
+        edge_list.sort(key=lambda x: x.rx())
+
+        # Find the right edge that is to the pin's left edge
+        left_item = None
+        for item in edge_list:
+            if item.rx()<=pin.lx():
+                left_item = item
+            else:
+                break
+
+        # There was nothing to the left
+        if left_item==None:
+            return None
+        # If it already overlaps, no connector needed
+        if left_item.overlaps(pin):
+            return None
+        
+        # Otherwise, make a connector to the item
+        p = self.compute_connector(pin, left_item)
+        return p
+    
+    def find_right_connector(self, pin, enclosures):
+        """ 
+        Find the enclosure that is to the right of the pin
+        and make a connector to it's left edge.
+        """
+        # Create the list of shapes that contain the pin edge
+        edge_list = []
+        for shape in enclosures:
+            if shape.ycontains(pin):
+                edge_list.append(shape)
+        
+        # Sort them by their right edge
+        edge_list.sort(key=lambda x: x.lx(), reverse=True)
+
+        # Find the left edge that is next to the pin's right edge
+        right_item = None
+        for item in edge_list:
+            if item.lx()>=pin.rx():
+                right_item = item
+            else:
+                break
+
+        # There was nothing to the right
+        if right_item==None:
+            return None
+        # If it already overlaps, no connector needed
+        if right_item.overlaps(pin):
+            return None
+        
+        # Otherwise, make a connector to the item
+        p = self.compute_connector(pin, right_item)
+        return p
+    
     def find_smallest_connector(self, pin_list, shape_list):
         """
         Compute all of the connectors between the overlapping pins and enclosure shape list..
@@ -313,16 +445,30 @@ class pin_group:
         self.enclosed = True
         
         # Compute the enclosure pin_layout list of the set of tracks
-        self.enclosures = self.compute_enclosures()
+        redundant_enclosures = self.compute_enclosures()
+
+        # Now simplify the enclosure list 
+        self.enclosures = self.remove_redundant_shapes(redundant_enclosures)
+
+        for pin_list in self.pins:
+            for pin in pin_list:
+                left_connector = self.find_left_connector(pin, self.enclosures)
+                right_connector = self.find_right_connector(pin, self.enclosures)
+                above_connector = self.find_above_connector(pin, self.enclosures)
+                below_connector = self.find_below_connector(pin, self.enclosures)
+                for connector in [left_connector, right_connector, above_connector, below_connector]:
+                    if connector:
+                        self.enclosures.append(connector)
 
         # Now, make sure each pin touches an enclosure. If not, add a connector.
+        # This could only happen when there was no enclosure in any cardinal direction from a pin
         for pin_list in self.pins:
             if not self.overlap_any_shape(pin_list, self.enclosures):
                 connector = self.find_smallest_connector(pin_list, self.enclosures)
                 debug.check(connector!=None, "Could not find a connector for {} with {}".format(pin_list, self.enclosures))
                 self.enclosures.append(connector)
-        
 
+                        
         debug.info(3,"Computed enclosure(s) {0}\n  {1}\n  {2}\n  {3}".format(self.name,
                                                                              self.pins,
                                                                              self.grids,

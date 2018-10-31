@@ -20,7 +20,7 @@ class control_logic_test(openram_test):
 
         # check control logic for single port
         debug.info(1, "Testing sample for control_logic")
-        a = control_logic.control_logic(num_rows=128)
+        a = control_logic.control_logic(num_rows=128, words_per_row=1)
         self.local_check(a)
         
         # check control logic for multi-port
@@ -31,7 +31,7 @@ class control_logic_test(openram_test):
         OPTS.num_r_ports = 0
         
         debug.info(1, "Testing sample for control_logic for multiport")
-        a = control_logic.control_logic(num_rows=128)
+        a = control_logic.control_logic(num_rows=128, words_per_row=1)
         self.local_check(a)
         
         # Check port specific control logic
@@ -40,15 +40,15 @@ class control_logic_test(openram_test):
         OPTS.num_r_ports = 1
 
         debug.info(1, "Testing sample for control_logic for multiport, only write control logic")
-        a = control_logic.control_logic(num_rows=128, port_type="rw")
+        a = control_logic.control_logic(num_rows=128, words_per_row=1,  port_type="rw")
         self.local_check(a)
         
         debug.info(1, "Testing sample for control_logic for multiport, only write control logic")
-        a = control_logic.control_logic(num_rows=128, port_type="w")
+        a = control_logic.control_logic(num_rows=128, words_per_row=1, port_type="w")
         self.local_check(a)
         
         debug.info(1, "Testing sample for control_logic for multiport, only read control logic")
-        a = control_logic.control_logic(num_rows=128, port_type="r")
+        a = control_logic.control_logic(num_rows=128, words_per_row=1, port_type="r")
         self.local_check(a)
 
         globals.end_openram()

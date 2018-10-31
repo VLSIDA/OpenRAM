@@ -91,7 +91,7 @@ class supply_router(router):
 
         self.route_simple_overlaps(vdd_name)
         self.route_simple_overlaps(gnd_name)
-        self.write_debug_gds("debug_simple_route.gds",stop_program=False)
+        #self.write_debug_gds("debug_simple_route.gds",stop_program=False)
         
         # Route the supply pins to the supply rails
         # Route vdd first since we want it to be shorter

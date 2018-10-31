@@ -187,18 +187,17 @@ class pin_group:
 
         return p
 
-    def find_smallest_connector(self, enclosure_list):
+    def find_smallest_connector(self, pin_list, shape_list):
         """
-        Compute all of the connectors between non-overlapping pins and enclosures.
+        Compute all of the connectors between the overlapping pins and enclosure shape list..
         Return the smallest.
         """
         smallest = None
-        for pin_list in self.pins:
-            for pin in pin_list:
-                for enclosure in enclosure_list:
-                    new_enclosure = self.compute_connector(pin, enclosure)
-                    if smallest == None or new_enclosure.area()<smallest.area():
-                        smallest = new_enclosure
+        for pin in pin_list:
+            for enclosure in shape_list:
+                new_enclosure = self.compute_connector(pin, enclosure)
+                if smallest == None or new_enclosure.area()<smallest.area():
+                    smallest = new_enclosure
                     
         return smallest
 
@@ -316,22 +315,13 @@ class pin_group:
         # Compute the enclosure pin_layout list of the set of tracks
         self.enclosures = self.compute_enclosures()
 
-        # A single set of connected pins is easy, so use the optimized set
-        # if len(self.pins)==1:
-        #     enclosure_list = self.enclosures
-        #     smallest = self.find_smallest_overlapping(self.pins[0],enclosure_list)
-        #     if smallest:
-        #         self.enclosures=[smallest]
-
-        # Save the list of all grids
-        #self.all_grids = self.grids.copy()
+        # Now, make sure each pin touches an enclosure. If not, add a connector.
+        for pin_list in self.pins:
+            if not self.overlap_any_shape(pin_list, self.enclosures):
+                connector = self.find_smallest_connector(pin_list, self.enclosures)
+                debug.check(connector!=None, "Could not find a connector for {} with {}".format(pin_list, self.enclosures))
+                self.enclosures.append(connector)
         
-        # Remove the grids that are not covered by the enclosures
-        # FIXME: We could probably just store what grids each enclosure overlaps when
-        # it was created.
-        #for enclosure in self.enclosures:
-        #    enclosure_in_tracks=router.convert_pin_to_tracks(self.name, enclosure)
-        #    self.grids.difference_update(enclosure_in_tracks)
 
         debug.info(3,"Computed enclosure(s) {0}\n  {1}\n  {2}\n  {3}".format(self.name,
                                                                              self.pins,

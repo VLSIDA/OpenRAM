@@ -119,28 +119,28 @@ def parse_characterizer_csv(f,pages):
                                 pass
 
                     for item in sheet.timing:
-                        if item.paramter == "CSb setup rising":
+                        if item.parameter == "CSb setup rising":
                             if float(FF_SETUP_LH_MIN) < float(item.min):
                                 item.min = FF_SETUP_LH_MIN
                             elif float(FF_SETUP_LH_MAX) > float(item.max):
                                 item.max = FF_SETUP_LH_MAX
 
-                        if item.paramter == "CSb setup falling":
+                        if item.parameter == "CSb setup falling":
                             if float(FF_SETUP_HL_MIN) < float(item.min):
                                 item.min = FF_SETUP_HL_MIN
-                            elif float(FF_SETUP_HL_MAX) > float(item.nax):
+                            elif float(FF_SETUP_HL_MAX) > float(item.max):
                                 item.max = FF_SETUP_HL_MAX
 
-                        if item.paramter == "CSb hold rising":
+                        if item.parameter == "CSb hold rising":
                             if float(FF_HOLD_HL_MIN) < float(item.min):
                                 item.min = FF_SETUP_HL_MIN
-                            elif float(FF_HOLD_HL_MAX) > float(item.nax):
+                            elif float(FF_HOLD_HL_MAX) > float(item.max):
                                 item.max = FF_SETUP_HL_MAX
 
-                        if item.paramter == "CSb hold falling":
+                        if item.parameter == "CSb hold falling":
                             if float(FF_HOLD_HL_MIN) < float(item.min):
                                 item.min = FF_SETUP_HL_MIN
-                            elif float(FF_HOLD_HL_MAX) > float(item.nax):
+                            elif float(FF_HOLD_HL_MAX) > float(item.max):
                                 item.max = FF_SETUP_HL_MAX
                             
 

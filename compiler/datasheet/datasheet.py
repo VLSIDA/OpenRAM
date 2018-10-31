@@ -8,7 +8,9 @@ import os
 from globals import OPTS
 
 class datasheet():
-
+    """
+    Defines the layout,but not the data,  of the html datasheet
+    """
     def __init__(self,identifier):
         self.io = []
         self.corners = []
@@ -20,7 +22,11 @@ class datasheet():
         
 
     def generate_html(self):
+        """
+        Generates html tables using flask-table
+        """
         with open(os.path.abspath(os.environ.get("OPENRAM_HOME")) + '/datasheet/assets/datasheet.css', 'r') as datasheet_css:
+            #css styling is kept in a seperate file
             self.html += datasheet_css.read()
          
         self.html +='<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>'+ self.name + '.html' + '</p>'

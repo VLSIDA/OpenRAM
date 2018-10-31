@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 """
-Datasheet Generator
-
-TODO:
-locate all port elements in .lib
-Locate all timing elements in .lib
-Diagram generation
-Improve css
+This is a script to load data from the characterization and layout processes into 
+a web friendly html datasheet. This script requres the python-flask and flask-table
+packages to be installed.
 """
+#TODO:
+#locate all port elements in .lib
+#Locate all timing elements in .lib
+#Calculate area from .gds file
+#Diagram generation
+#Improve css
+
 import debug
 from globals import OPTS
 
@@ -24,10 +27,13 @@ if OPTS.datasheet_gen:
     from in_out import *
 else:
     debug.warning("Python library flask_table not found. Skipping html datasheet generation. This can be installed with pip install flask-table.")
-
+    #make sure appropriate python libraries are installed
 
 
 def process_name(corner):
+    """
+    Expands the names of the characterization corner types into something human friendly
+    """
     if corner == "TT":
         return "Typical - Typical"
     if corner == "SS":
@@ -37,12 +43,18 @@ def process_name(corner):
     else:
         return "custom"
 
-def parse_file(f,pages):
+def parse_characterizer_csv(f,pages):
+    """
+    Parses output data of the Liberty file generator in order to construct the timing and
+    current table
+    """
     with open(f) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         line_count = 0
         for row in csv_reader:
             found = 0
+
+            #defines layout of csv file
             NAME = row[0]
             NUM_WORDS = row[1]
             NUM_BANKS = row[2]
@@ -65,6 +77,7 @@ def parse_file(f,pages):
                     #if the .lib information is for an existing datasheet compare timing data
 
                     for item in sheet.operating:
+                        #check if the new corner dataa is worse than the previous worse corner data
 
                         if item.parameter == 'Operating Temperature':
                             if float(TEMP) > float(item.max):
@@ -87,14 +100,17 @@ def parse_file(f,pages):
                                 if float(math.floor(1000/float(MIN_PERIOD)) < float(item.max)):
                                     item.max = str(math.floor(1000/float(MIN_PERIOD)))
                             except Exception:
+                                #pass if MIN_PERIOD is zero (not supported by analyitcal model)
                                 pass
 
 
-
+                    #regardless of if there is already a corner for the current sram, append the new corner to the datasheet
                     new_sheet.corners.append(characterization_corners_item(PROC,process_name(PROC),VOLT,TEMP,LIB_NAME.replace(OUT_DIR,'').replace(NAME,'')))
                     new_sheet.dlv.append(deliverables_item('.lib','Synthesis models','<a href="file://{0}">{1}</a>'.format(LIB_NAME,LIB_NAME.replace(OUT_DIR,''))))
 
             if found == 0:
+
+                #if this is the first corner for this sram, run first time configuration and set up tables
                 new_sheet = datasheet(NAME)
                 pages.append(new_sheet)
 
@@ -106,7 +122,8 @@ def parse_file(f,pages):
                     new_sheet.operating.append(operating_conditions_item('Operating Frequency (F)*','','',str(math.floor(1000/float(MIN_PERIOD))),'MHz'))
                 except Exception:
                     new_sheet.operating.append(operating_conditions_item('Operating Frequency (F)*','','',"unknown",'MHz')) #analytical model fails to provide MIN_PERIOD
- 
+                
+                #place holder timing and current data
                 new_sheet.timing.append(timing_and_current_data_item('Cycle time','2','3','4'))
                 new_sheet.timing.append(timing_and_current_data_item('Access time','2','3','4'))
                 new_sheet.timing.append(timing_and_current_data_item('Positive clk setup','2','3','4'))
@@ -118,6 +135,7 @@ def parse_file(f,pages):
                 new_sheet.timing.append(timing_and_current_data_item('Area','2','3','4'))
 
                 if not OPTS.netlist_only:
+                    #physical layout files should not be generated in netlist only mode
                     new_sheet.dlv.append(deliverables_item('.gds','GDSII layout views','<a href="file://{0}{1}.{2}">{1}.{2}</a>'.format(OUT_DIR,NAME,'gds')))
                     new_sheet.dlv.append(deliverables_item('.lef','LEF files','<a href="file://{0}{1}.{2}">{1}.{2}</a>'.format(OUT_DIR,NAME,'lef')))
    
@@ -128,7 +146,7 @@ def parse_file(f,pages):
                 new_sheet.dlv.append(deliverables_item('.lib','Synthesis models','<a href="file://{0}">{1}</a>'.format(LIB_NAME,LIB_NAME.replace(OUT_DIR,''))))
 
 
-                
+                #debug table for multiport information
                 new_sheet.io.append(in_out_item('WORD_SIZE',WORD_SIZE))
                 new_sheet.io.append(in_out_item('NUM_WORDS',NUM_WORDS))
                 new_sheet.io.append(in_out_item('NUM_BANKS',NUM_BANKS))
@@ -149,11 +167,9 @@ class datasheet_gen():
             if not (os.path.isdir(in_dir)):
                 os.mkdir(in_dir)
 
-            #if not (os.path.isdir(out_dir)):
-            #    os.mkdir(out_dir)
 
             datasheets = []
-            parse_file(in_dir + "/datasheet.info", datasheets)
+            parse_characterizer_csv(in_dir + "/datasheet.info", datasheets)
 
 
             for sheets in datasheets:

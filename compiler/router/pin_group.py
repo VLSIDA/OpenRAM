@@ -474,7 +474,7 @@ class pin_group:
                                                                              self.grids,
                                                                              self.enclosures))
 
-    def combine_pins(self, pg1, pg2):
+    def combine_groups(self, pg1, pg2):
         """
         Combine two pin groups into one.
         """

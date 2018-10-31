@@ -195,9 +195,9 @@ class router(router_tech):
                 # Combine if at least 1 grid cell is adjacent
                 if pg1.adjacent(pg2):
                     combined = pin_group(pin_name, [], self)
-                    combined.combine_pins(pg1, pg2)
+                    combined.combine_groups(pg1, pg2)
                     debug.info(2,"Combining {0} {1} {2}:".format(pin_name, index1, index2))
-                    debug.info(2, "\n     {0}\n  {1}".format(pg1.pins, pg2.pins))
+                    debug.info(2, "     {0}\n  {1}".format(pg1.pins, pg2.pins))
                     debug.info(2,"  --> {0}\n      {1}".format(combined.pins,combined.grids))
                     remove_indices.update([index1,index2])
                     pin_groups.append(combined)

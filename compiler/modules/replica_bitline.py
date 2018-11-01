@@ -84,6 +84,7 @@ class replica_bitline(design.design):
         #self.mod_delay_chain = getattr(g, OPTS.delay_chain)
 
         g = reload(__import__(OPTS.replica_bitcell))
+        print(OPTS.replica_bitcell)
         self.mod_replica_bitcell = getattr(g, OPTS.replica_bitcell)
         
         self.bitcell = self.replica_bitcell = self.mod_replica_bitcell()
@@ -192,13 +193,54 @@ class replica_bitline(design.design):
             self.add_path("metal1", [pin_right, pin_extension])
             self.add_power_pin("gnd", pin_extension)
             
-            # for multiport, need to short wordlines to each other so they all connect to gnd 
+            # for multiport, need to short wordlines to each other so they all connect to gnd.
             wl_last = self.wl_list[self.total_ports-1]+"_{}".format(row)
             pin_last = self.rbl_inst.get_pin(wl_last)
+            self.short_wordlines(pin, pin_last, "right", False)
+            # if self.total_ports > 1:
+                # wl_last = self.wl_list[self.total_ports-1]+"_{}".format(row)
+                # pin_last = self.rbl_inst.get_pin(wl_last)
+                
+                # #m1 needs to be extended in the y directions, direction needs to be determined as every other cell is flipped
+                # correct_x = vector(0.5*drc("minwidth_metal1"), 0)
+                # correct_y = vector(0, 0.5*drc("minwidth_metal1"))
+                # if pin.uy() > pin_last.uy():
+                    # self.add_path("metal1", [pin.rc()+correct_x+correct_y, pin_last.rc()+correct_x-correct_y])
+                # else:
+                    # self.add_path("metal1", [pin.rc()+correct_x-correct_y, pin_last.rc()+correct_x+correct_y])
+                    
+    def short_wordlines(self, wl_pin_a, wl_pin_b, pin_side, is_replica_cell):
+        """Connects the word lines together for a single bitcell. Also requires which side of the bitcell to short the pins."""
+        #Assumes input pins are wordlines. Also assumes the word lines are horizontal in metal1. Also assumes pins have same x coord.
+        #This is my (Hunter) first time editing layout in openram so this function is likely not optimal.
+        if self.total_ports > 1:
+            #1. Create vertical metal for all the bitlines to connect to
+            #m1 needs to be extended in the y directions, direction needs to be determined as every other cell is flipped
+            correct_y = vector(0, 0.5*drc("minwidth_metal1"))
+            #x spacing depends on the side being drawn. Unknown to me (Hunter) why the size of the space differs by the side.
+            #I assume this is related to how a wire is draw, but I have not investigated the issue.
+            if pin_side == "right":
+                correct_x = vector(0.5*drc("minwidth_metal1"), 0)
+                if wl_pin_a.uy() > wl_pin_b.uy():
+                    self.add_path("metal1", [wl_pin_a.rc()+correct_x+correct_y, wl_pin_b.rc()+correct_x-correct_y])
+                else:
+                    self.add_path("metal1", [wl_pin_a.rc()+correct_x-correct_y, wl_pin_b.rc()+correct_x+correct_y])
+            elif pin_side == "left":
+                correct_x = vector(1.5*drc("minwidth_metal1"), 0)
+                if wl_pin_a.uy() > wl_pin_b.uy():
+                    self.add_path("metal1", [wl_pin_a.lc()-correct_x+correct_y, wl_pin_b.lc()-correct_x-correct_y])
+                else:
+                    self.add_path("metal1", [wl_pin_a.lc()-correct_x-correct_y, wl_pin_b.lc()-correct_x+correct_y])
+            else:
+                debug.error("Could not connect wordlines on specified input side={}".format(pin_side),1)
             
-            correct = vector(0.5*drc("minwidth_metal1"), 0)
-            self.add_path("metal1", [pin.rc()-correct, pin_last.rc()-correct])
-        
+            #2. Connect word lines horizontally. Only replica cell needs. Bitline loads currently already do this.
+            if is_replica_cell:
+                for port in range(self.total_ports):
+                    wl = self.wl_list[port]
+                    pin = self.rbc_inst.get_pin(wl)
+                    self.add_path("metal1", [pin.lc()-correct_x, pin.lc()])
+                
     def route_supplies(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """
 
@@ -267,9 +309,10 @@ class replica_bitline(design.design):
         wl_last = self.wl_list[self.total_ports-1]
         pin = self.rbc_inst.get_pin(wl)
         pin_last = self.rbc_inst.get_pin(wl_last)
+        x_offset = self.short_wordlines(pin, pin_last, "left", True)
         
-        correct = vector(0.5*drc("minwidth_metal1"), 0)
-        self.add_path("metal1", [pin.lc()+correct, pin_last.lc()+correct])
+        #correct = vector(0.5*drc("minwidth_metal1"), 0)
+        #self.add_path("metal1", [pin.lc()+correct, pin_last.lc()+correct])
 
         # DRAIN ROUTE
         # Route the drain to the vdd rail

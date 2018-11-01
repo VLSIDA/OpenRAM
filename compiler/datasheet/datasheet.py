@@ -4,6 +4,8 @@ from characterization_corners import *
 from deliverables import *
 from timing_and_current_data import *
 from in_out import *
+from hierarchy_design import total_drc_errors
+from hierarchy_design import total_lvs_errors
 import os
 from globals import OPTS
 
@@ -29,19 +31,20 @@ class datasheet():
             #css styling is kept in a seperate file
             self.html += datasheet_css.read()
 
-#        if OPTS.check_lvsdrc:
-#            DVS = 'checked'
-#            LVS = 'checked'
-#            PEX = 'checked'
-#        else:
-#            DVS = 'skipped'
-#            LVS = 'skipped'
-#            PEX = 'skipped'
-        
+        if OPTS.check_lvsdrc:
+            
+            DRC = total_drc_errors
+            LVS = total_lvs_errors
+            PEX = 'n/a'
+        else:
+            DRC = 'skipped'
+            LVS = 'skipped'
+            PEX = 'skipped'
+       
 
         self.html +='<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>'+ self.name + '.html' + '</p>'
-#        self.html +='<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>'+ 'DVS: ' + DVS  + '</p>'
-#        self.html +='<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>'+ 'LVS: ' + LVS  + '</p>'
+        self.html +='<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>'+ 'DRC: ' + str(DRC)  + ' errors'+'</p>'
+        self.html +='<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>'+ 'LVS: ' + str(LVS)  + ' errors'+'</p>'
 
         self.html +='<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>Ports and Configuration (DEBUG)</p>'
         self.html += in_out(self.io,table_id='data').__html__().replace('&lt;','<').replace('&#34;','"').replace('&gt;',">")

@@ -149,7 +149,14 @@ class pin_layout:
             return False
 
         return True
-        
+
+    def contained_by_any(self, shape_list):
+        """ Checks if shape is contained by any in the list """
+        for shape in shape_list:
+            if shape.contains(self):
+                return True
+        return False
+    
     
     def overlaps(self, other):
         """ Check if a shape overlaps with a rectangle  """

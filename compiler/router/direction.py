@@ -43,11 +43,14 @@ class direction(Enum):
 
         return offset
 
-    def cardinal_directions():
-        return [direction.NORTH, direction.EAST, direction.SOUTH, direction.WEST]
+    def cardinal_directions(up_down_too=False):
+        temp_dirs = [direction.NORTH, direction.EAST, direction.SOUTH, direction.WEST]
+        if up_down_too:
+            temp_dirs.extend([direction.UP, direction.DOWN])
+        return temp_dirs
     
-    def cardinal_offsets():
-        return [direction.get_offset(d) for d in direction.cardinal_directions()]
+    def cardinal_offsets(up_down_too=False):
+        return [direction.get_offset(d) for d in direction.cardinal_directions(up_down_too)]
 
     def all_directions():
         return [direction.NORTH, direction.EAST, direction.SOUTH, direction.WEST,

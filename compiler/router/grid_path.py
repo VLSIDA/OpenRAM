@@ -150,7 +150,7 @@ class grid_path:
 
         return cost
 
-    def expand_dirs(self,up_down_too=True):
+    def expand_dirs(self):
         """
         Expand from the end in each of the four cardinal directions plus up
         or down but not expanding to blocked cells. Expands in all
@@ -162,9 +162,7 @@ class grid_path:
         """
         neighbors = []
 
-        for d in list(direction):
-            if not up_down_too and (d==direction.UP or d==direction.DOWN):
-                continue
+        for d in direction.cardinal_directions(True):
             n = self.neighbor(d)
             if n:
                 neighbors.append(n)

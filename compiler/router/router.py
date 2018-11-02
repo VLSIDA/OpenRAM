@@ -59,6 +59,8 @@ class router(router_tech):
         ### The routed data structures
         # A list of paths that have been "routed"
         self.paths = []
+        # A list of path blockages (they might be expanded for wide metal DRC)
+        self.path_blockages = []
 
         # The boundary will determine the limits to the size of the routing grid
         self.boundary = self.layout.measureBoundary(self.top_name)
@@ -326,10 +328,16 @@ class router(router_tech):
         self.set_supply_rail_blocked(True)
         
         # Block all of the pin components (some will be unblocked if they're a source/target)
+        # Also block the previous routes
         for name in self.pin_groups.keys():
             blockage_grids = {y for x in self.pin_groups[name] for y in x.grids}
             self.set_blockages(blockage_grids,True)
+            blockage_grids = {y for x in self.pin_groups[name] for y in x.blockages}
+            self.set_blockages(blockage_grids,True)
 
+        # FIXME: These duplicate a bit of work
+        # These are the paths that have already been routed.
+        self.set_path_blockages()
 
         # Don't mark the other components as targets since we want to route
         # directly to a rail, but unblock all the source components so we can
@@ -337,8 +345,6 @@ class router(router_tech):
         blockage_grids = {y for x in self.pin_groups[pin_name] for y in x.grids}
         self.set_blockages(blockage_grids,False)
             
-        # These are the paths that have already been routed.
-        self.set_path_blockages()
         
     # def translate_coordinates(self, coord, mirr, angle, xyShift):
     #     """
@@ -387,16 +393,6 @@ class router(router_tech):
             # z direction
             return 2
 
-        
-    def add_path_blockages(self):
-        """
-        Go through all of the past paths and add them as blockages.
-        This is so we don't have to write/reload the GDS.
-        """
-        for path in self.paths:
-            for grid in path:
-                self.rg.set_blocked(grid)
-
     def clear_blockages(self):
         """ 
         Clear all blockages on the grid.
@@ -411,9 +407,9 @@ class router(router_tech):
     def set_path_blockages(self,value=True):
         """ Flag the paths as blockages """
         # These are the paths that have already been routed.
-        # This adds the initial blockges of the design
-        for p in self.paths:
-            p.set_blocked(value)
+        for path_set in self.path_blockages:
+            for c in path_set:
+                self.rg.set_blocked(c,value)
         
     def get_blockage_tracks(self, ll, ur, z):
         debug.info(3,"Converting blockage ll={0} ur={1} z={2}".format(str(ll),str(ur),z))
@@ -696,7 +692,7 @@ class router(router_tech):
         Convert the pin groups into pin tracks and blockage tracks.
         """
         for pg in self.pin_groups[pin_name]:
-            pg.convert_pin(self)
+            pg.convert_pin()
 
 
     
@@ -918,13 +914,6 @@ class router(router_tech):
         return newpath
     
 
-    def add_path_blockages(self):
-        """
-        Go through all of the past paths and add them as blockages.
-        This is so we don't have to write/reload the GDS.
-        """
-        for path in self.paths:
-            self.rg.block_path(path)
             
     def run_router(self, detour_scale):
         """
@@ -936,6 +925,9 @@ class router(router_tech):
             debug.info(2,"Found path: cost={0} ".format(cost))
             debug.info(3,str(path))
             self.paths.append(path)
+            path_set = grid_utils.flatten_set(path)
+            inflated_path = grid_utils.inflate_set(path_set,self.supply_rail_space_width)
+            self.path_blockages.append(inflated_path)
             self.add_route(path)
         else:
             self.write_debug_gds("failed_route.gds")

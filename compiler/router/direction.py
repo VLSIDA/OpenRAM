@@ -8,6 +8,10 @@ class direction(Enum):
     WEST = 4
     UP = 5
     DOWN = 6
+    NORTHEAST = 7
+    NORTHWEST = 8
+    SOUTHEAST = 9
+    SOUTHWEST = 10
 
 
     def get_offset(direct):
@@ -26,8 +30,16 @@ class direction(Enum):
             offset = vector3d(0,0,1)
         elif direct==direction.DOWN:
             offset = vector3d(0,0,-1)
+        elif direct==direction.NORTHEAST:
+            offset = vector3d(1,1,0)
+        elif direct==direction.NORTHWEST:
+            offset = vector3d(-1,1,0)
+        elif direct==direction.SOUTHEAST:
+            offset = vector3d(1,-1,0)
+        elif direct==direction.SOUTHWEST:
+            offset = vector3d(-1,-1,0)
         else:
-            debug.error("Invalid direction {}".format(dirct))
+            debug.error("Invalid direction {}".format(direct))
 
         return offset
 
@@ -37,3 +49,16 @@ class direction(Enum):
     def cardinal_offsets():
         return [direction.get_offset(d) for d in direction.cardinal_directions()]
 
+    def all_directions():
+        return [direction.NORTH, direction.EAST, direction.SOUTH, direction.WEST,
+                direction.NORTHEAST, direction.NORTHWEST, direction.SOUTHEAST, direction.SOUTHWEST]
+    
+    def all_offsets():
+        return [direction.get_offset(d) for d in direction.all_directions()]
+
+    def all_neighbors(cell):
+        return [cell+x for x in direction.all_offsets()]
+
+    def cardinal_neighbors(cell):
+        return [cell+x for x in direction.cardinal_offsets()]
+    

@@ -337,7 +337,7 @@ class router(router_tech):
 
         # FIXME: These duplicate a bit of work
         # These are the paths that have already been routed.
-        self.set_path_blockages()
+        self.set_blockages(self.path_blockages)
 
         # Don't mark the other components as targets since we want to route
         # directly to a rail, but unblock all the source components so we can
@@ -404,13 +404,6 @@ class router(router_tech):
         """ Flag the blockages in the grid """
         self.rg.set_blocked(blockages, value)
 
-    def set_path_blockages(self,value=True):
-        """ Flag the paths as blockages """
-        # These are the paths that have already been routed.
-        for path_set in self.path_blockages:
-            for c in path_set:
-                self.rg.set_blocked(c,value)
-        
     def get_blockage_tracks(self, ll, ur, z):
         debug.info(3,"Converting blockage ll={0} ur={1} z={2}".format(str(ll),str(ur),z))
 
@@ -924,11 +917,13 @@ class router(router_tech):
         if path:
             debug.info(2,"Found path: cost={0} ".format(cost))
             debug.info(3,str(path))
+            
             self.paths.append(path)
+            self.add_route(path)
+            
             path_set = grid_utils.flatten_set(path)
             inflated_path = grid_utils.inflate_set(path_set,self.supply_rail_space_width)
             self.path_blockages.append(inflated_path)
-            self.add_route(path)
         else:
             self.write_debug_gds("failed_route.gds")
             # clean up so we can try a reroute
@@ -985,16 +980,30 @@ class router(router_tech):
         # midpoint offset
         off=vector((shape[1].x+shape[0].x)/2,
                    (shape[1].y+shape[0].y)/2)
-        if g[2]==1:
-            # Upper layer is upper right label
-            type_off=off+partial_track
-        else:
-            # Lower layer is lower left label
-            type_off=off-partial_track
         if t!=None:
+            if g[2]==1:
+                # Upper layer is upper right label
+                type_off=off+partial_track
+            else:
+                # Lower layer is lower left label
+                type_off=off-partial_track
             self.cell.add_label(text=str(t),
                                 layer="text",
                                 offset=type_off)
+
+        t=self.rg.map[g].get_cost()
+        partial_track=vector(self.track_width/6.0,0) 
+        if t!=None:
+            if g[2]==1:
+                # Upper layer is right label
+                type_off=off+partial_track
+            else:
+                # Lower layer is left label
+                type_off=off-partial_track
+            self.cell.add_label(text=str(t),
+                                layer="text",
+                                offset=type_off)
+            
         self.cell.add_label(text="{0},{1}".format(g[0],g[1]),
                             layer="text",
                             offset=shape[0],
@@ -1008,9 +1017,9 @@ class router(router_tech):
         """
         debug.info(0,"Adding router info")
 
-        show_blockages = True
-        show_blockage_grids = True
-        show_enclosures = True
+        show_blockages = False
+        show_blockage_grids = False
+        show_enclosures = False
         show_all_grids = True
         
         if show_all_grids:

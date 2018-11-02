@@ -196,11 +196,11 @@ class pbitcell(design.design):
         # y-position of inverter nmos
         self.inverter_nmos_ypos = self.port_ypos
 
-        # spacing between ports
+        # spacing between ports (same for read/write and write ports)
         self.bitline_offset = -0.5*self.readwrite_nmos.active_width + 0.5*contact.m1m2.height + self.m2_space + self.m2_width
         m2_constraint = self.bitline_offset + self.m2_space + 0.5*contact.m1m2.height - 0.5*self.readwrite_nmos.active_width
-        self.rw_w_spacing = max(self.active_space, self.m1_space, m2_constraint)
-        self.r_spacing = self.bitline_offset + self.m2_space
+        self.write_port_spacing = max(self.active_space, self.m1_space, m2_constraint)
+        self.read_port_spacing = self.bitline_offset + self.m2_space
 
         # spacing between cross coupled inverters
         self.inverter_to_inverter_spacing = contact.poly.height + self.m1_space
@@ -238,10 +238,10 @@ class pbitcell(design.design):
         self.topmost_ypos = self.inverter_nmos_ypos + self.inverter_nmos.active_height + self.inverter_gap + self.inverter_pmos.active_height + self.vdd_offset
 
         self.leftmost_xpos = -0.5*self.inverter_to_inverter_spacing - self.inverter_nmos.active_width \
-                             - self.num_rw_ports*(self.readwrite_nmos.active_width + self.rw_w_spacing) \
-                             - self.num_w_ports*(self.write_nmos.active_width + self.rw_w_spacing) \
-                             - self.num_r_ports*(self.read_port_width + self.r_spacing) \
-                             - self.bitline_offset - 0.5*self.m2_width
+                             - self.num_rw_ports*(self.readwrite_nmos.active_width + self.write_port_spacing) \
+                             - self.num_w_ports*(self.write_nmos.active_width + self.write_port_spacing) \
+                             - self.num_r_ports*(self.read_port_width + self.read_port_spacing) \
+                             - self.bitline_offset - 0.5*contact.m1m2.width
 
         self.width = -2*self.leftmost_xpos
         self.height = self.topmost_ypos - self.botmost_ypos
@@ -372,11 +372,11 @@ class pbitcell(design.design):
         for k in range(0,self.num_rw_ports):
             # calculate read/write transistor offsets
             left_readwrite_transistor_xpos = self.left_building_edge \
-                                             - (k+1)*self.rw_w_spacing \
+                                             - (k+1)*self.write_port_spacing \
                                              - (k+1)*self.readwrite_nmos.active_width
 
             right_readwrite_transistor_xpos = self.right_building_edge \
-                                              + (k+1)*self.rw_w_spacing \
+                                              + (k+1)*self.write_port_spacing \
                                               + k*self.readwrite_nmos.active_width
 
             # place read/write transistors
@@ -449,11 +449,11 @@ class pbitcell(design.design):
             # Add transistors
             # calculate write transistor offsets
             left_write_transistor_xpos = self.left_building_edge \
-                                         - (k+1)*self.rw_w_spacing \
+                                         - (k+1)*self.write_port_spacing \
                                          - (k+1)*self.write_nmos.active_width
 
             right_write_transistor_xpos = self.right_building_edge \
-                                          + (k+1)*self.rw_w_spacing \
+                                          + (k+1)*self.write_port_spacing \
                                           + k*self.write_nmos.active_width
 
             # add write transistors
@@ -543,11 +543,11 @@ class pbitcell(design.design):
         for k in range(0,self.num_r_ports):
             # calculate transistor offsets
             left_read_transistor_xpos = self.left_building_edge \
-                                        - (k+1)*self.r_spacing \
+                                        - (k+1)*self.read_port_spacing \
                                         - (k+1)*self.read_port_width
 
             right_read_transistor_xpos = self.right_building_edge \
-                                         + (k+1)*self.r_spacing \
+                                         + (k+1)*self.read_port_spacing \
                                          + k*self.read_port_width
 
             # add read-access transistors

@@ -144,8 +144,8 @@ class single_level_column_mux(design.design):
         # bl_out -> nmos_upper/S on metal2
         self.add_path("metal1",[bl_pin.ll(), vector(nmos_upper_d_pin.cx(),bl_pin.by()), nmos_upper_d_pin.center()])
         # halfway up, move over
-        mid1 = bl_out_pin.uc().scale(1,0.5)+nmos_upper_s_pin.bc().scale(0,0.5)
-        mid2 = bl_out_pin.uc().scale(0,0.5)+nmos_upper_s_pin.bc().scale(1,0.5)        
+        mid1 = bl_out_pin.uc().scale(1,0.4)+nmos_upper_s_pin.bc().scale(0,0.4)
+        mid2 = bl_out_pin.uc().scale(0,0.4)+nmos_upper_s_pin.bc().scale(1,0.4)        
         self.add_path("metal2",[bl_out_pin.uc(), mid1, mid2, nmos_upper_s_pin.bc()])
         
         # br -> nmos_lower/D on metal2
@@ -164,7 +164,7 @@ class single_level_column_mux(design.design):
         """
 
         # Add it to the right, aligned in between the two tx
-        active_pos = vector(self.bitcell.width,self.nmos_upper.by())
+        active_pos = vector(self.bitcell.width,self.nmos_upper.by() - 0.5*self.poly_space)
         active_via = self.add_via_center(layers=("active", "contact", "metal1"),
                                          offset=active_pos,
                                          implant_type="p",

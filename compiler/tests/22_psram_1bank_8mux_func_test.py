@@ -37,6 +37,7 @@ class psram_1bank_8mux_func_test(openram_test):
                                                                                                                 c.words_per_row,
                                                                                                                 c.num_banks))
         s = sram(c, name="sram")
+        tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)
         
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
@@ -48,7 +49,7 @@ class psram_1bank_8mux_func_test(openram_test):
         
         globals.end_openram()
         
-# instantiate a copy of the class to actually run the test
+# run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

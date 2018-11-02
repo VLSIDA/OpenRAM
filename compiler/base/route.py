@@ -62,14 +62,10 @@ class route(design):
         plist = list(pairwise(self.path))
         for p0,p1 in plist:
             if p0.z != p1.z: # via
-                # offset if not rotated
-                #via_offset = vector(p0.x+0.5*self.c.width,p0.y+0.5*self.c.height)
-                # offset if rotated
-                via_offset = vector(p0.x+0.5*self.c.height,p0.y-0.5*self.c.width)
                 via_size = [self.num_vias]*2
-                self.obj.add_via(self.layer_stack,via_offset,size=via_size,rotate=90)
+                self.obj.add_via_center(self.layer_stack,vector(p0.x,p0.y),size=via_size,rotate=90)
             elif p0.x != p1.x and p0.y != p1.y: # diagonal!
-                debug.error("Non-changing direction! {}".format(self.path))
+                debug.error("Diagonal route! {}".format(self.path),-3)
             else:
                 # this will draw an extra corner at the end but that is ok
                 self.draw_corner_wire(p1)

@@ -25,12 +25,6 @@ class supply_router(router):
         """
         router.__init__(self, layers, design, gds_filename)
 
-        # We over-ride the regular router costs to allow
-        # more off-direction router in the supply grid
-        grid.VIA_COST = 1
-        grid.NONPREFERRED_COST = 1
-        grid.PREFERRED_COST = 1
-
         # The list of supply rails (grid sets) that may be routed
         self.supply_rails = {}
         self.supply_rail_wires = {}        

@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"Run a regression test on a basic parameterized transistors"
+"""
+Run a regression test on a basic array
+"""
 
 import unittest
 from testutils import header,openram_test
@@ -9,23 +11,23 @@ import globals
 from globals import OPTS
 import debug
 
-class ptx_test(openram_test):
+#@unittest.skip("SKIPPING 05_bitcell_1rw_1r_array_test")
+
+class bitcell_1rw_1r_array_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        import ptx
-        import tech
+        import bitcell_array
 
-        debug.info(2, "Checking three fingers PMOS")
-        fet = ptx.ptx(width=tech.drc["minwidth_tx"],
-                      mults=4,
-                      tx_type="pmos",
-                      connect_active=True,
-                      connect_poly=True)
-        self.local_drc_check(fet)
+        debug.info(2, "Testing 4x4 array for cell_1rw_1r")
+        OPTS.bitcell = "bitcell_1rw_1r"
+        OPTS.num_rw_ports = 1
+        OPTS.num_r_ports = 1
+        OPTS.num_w_ports = 0
+        a = bitcell_array.bitcell_array(name="bitcell_1rw_1r_array", cols=4, rows=4)
+        self.local_check(a)
 
         globals.end_openram()
-        
 
 # run the test from the command line
 if __name__ == "__main__":

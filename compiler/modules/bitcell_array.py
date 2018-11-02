@@ -199,13 +199,21 @@ class bitcell_array(design.design):
         return total_power
 
     def gen_wl_wire(self):
-        wl_wire = self.generate_rc_net(int(self.column_size), self.width, drc("minwidth_metal1"))
+        if OPTS.netlist_only:
+            width = 0
+        else:
+            width = self.width
+        wl_wire = self.generate_rc_net(int(self.column_size), width, drc("minwidth_metal1"))
         wl_wire.wire_c = 2*spice["min_tx_gate_c"] + wl_wire.wire_c # 2 access tx gate per cell
         return wl_wire
 
     def gen_bl_wire(self):
+        if OPTS.netlist_only:
+            height = 0
+        else:
+            height = self.height
         bl_pos = 0
-        bl_wire = self.generate_rc_net(int(self.row_size-bl_pos), self.height, drc("minwidth_metal1"))
+        bl_wire = self.generate_rc_net(int(self.row_size-bl_pos), height, drc("minwidth_metal1"))
         bl_wire.wire_c =spice["min_tx_drain_c"] + bl_wire.wire_c # 1 access tx d/s per cell
         return bl_wire
 

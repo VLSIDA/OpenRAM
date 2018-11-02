@@ -927,23 +927,27 @@ class bank(design.design):
         
     def analytical_delay(self, vdd, slew, load):
         """ return  analytical delay of the bank"""
+        results = []
+        
         decoder_delay = self.row_decoder.analytical_delay(slew, self.wordline_driver.input_load())
 
         word_driver_delay = self.wordline_driver.analytical_delay(decoder_delay.slew, self.bitcell_array.input_load())
 
+        #FIXME: Array delay is the same for every port.
         bitcell_array_delay = self.bitcell_array.analytical_delay(word_driver_delay.slew)
 
-        if self.words_per_row > 1:
-            port = 0 #Analytical delay only supports single port
-            column_mux_delay = self.column_mux_array[port].analytical_delay(vdd, bitcell_array_delay.slew,
-                                                                     self.sense_amp_array.input_load())
-        else:
-            column_mux_delay = self.return_delay(delay = 0.0, slew=word_driver_delay.slew)
-            
-        bl_t_data_out_delay = self.sense_amp_array.analytical_delay(column_mux_delay.slew,
-                                                                    self.bitcell_array.output_load())
-        # output load of bitcell_array is set to be only small part of bl for sense amp.
+        #This also essentially creates the same delay for each port. Good structure, no substance
+        for port in range(self.total_ports):
+            if self.words_per_row > 1:
+                column_mux_delay = self.column_mux_array[port].analytical_delay(vdd, bitcell_array_delay.slew,
+                                                                         self.sense_amp_array.input_load())
+            else:
+                column_mux_delay = self.return_delay(delay = 0.0, slew=word_driver_delay.slew)
+                
+            bl_t_data_out_delay = self.sense_amp_array.analytical_delay(column_mux_delay.slew,
+                                                                        self.bitcell_array.output_load())
+            # output load of bitcell_array is set to be only small part of bl for sense amp.
+            results.append(decoder_delay + word_driver_delay + bitcell_array_delay + column_mux_delay + bl_t_data_out_delay) 
 
-        result = decoder_delay + word_driver_delay + bitcell_array_delay + column_mux_delay + bl_t_data_out_delay 
-        return result
+        return results
         

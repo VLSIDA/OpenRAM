@@ -807,46 +807,74 @@ class delay(simulation):
             #Add test cycle of read/write port pair. One port could have been used already, but the other has not.
             self.gen_test_cycles_one_port(cur_read_port, cur_write_port)
 
-    def analytical_delay(self,sram, slews, loads):
+    def analytical_delay(self, slews, loads):
         """ Return the analytical model results for the SRAM. 
         """
-        debug.check(OPTS.num_rw_ports < 2 and OPTS.num_w_ports < 1 and OPTS.num_r_ports < 1 ,
-                    "Analytical characterization does not currently support multiport.")
+        if OPTS.num_rw_ports > 1 or OPTS.num_w_ports > 0 and OPTS.num_r_ports > 0:
+            debug.warning("Analytical characterization results are not supported for multiport.")
         
-        delay_lh = []
-        delay_hl = []
-        slew_lh = []
-        slew_hl = []
+        power = self.analytical_power(slews, loads)
+        port_data = self.get_empty_measure_data_dict()
         for slew in slews:
             for load in loads:
                 self.set_load_slew(load,slew)
-                bank_delay = sram.analytical_delay(self.vdd_voltage, self.slew,self.load)
-                # Convert from ps to ns
-                delay_lh.append(bank_delay.delay/1e3)
-                delay_hl.append(bank_delay.delay/1e3)
-                slew_lh.append(bank_delay.slew/1e3)
-                slew_hl.append(bank_delay.slew/1e3)
+                bank_delay = self.sram.analytical_delay(self.vdd_voltage, self.slew,self.load)
+                for port in range(self.total_ports):
+                    for mname in self.delay_meas_names+self.power_meas_names:
+                        if "power" in mname:
+                            port_data[port][mname].append(power.dynamic)
+                        elif "delay" in mname:
+                            port_data[port][mname].append(bank_delay[port].delay/1e3)
+                        elif "slew" in mname:
+                            port_data[port][mname].append(bank_delay[port].slew/1e3)
+                        else:
+                            debug.error("Measurement name not recognized: {}".format(mname),1)
+        sram_data = { "min_period": 0, 
+                      "leakage_power": power.leakage}                    
+         
+        return (sram_data,port_data)
         
-        power = sram.analytical_power(self.process, self.vdd_voltage, self.temperature, load) 
+        # delay_lh = []
+        # delay_hl = []
+        # slew_lh = []
+        # slew_hl = []
+        # for slew in slews:
+            # for load in loads:
+                # self.set_load_slew(load,slew)
+                # bank_delay = sram.analytical_delay(self.vdd_voltage, self.slew,self.load)
+                # # Convert from ps to ns
+                # delay_lh.append(bank_delay.delay/1e3)
+                # delay_hl.append(bank_delay.delay/1e3)
+                # slew_lh.append(bank_delay.slew/1e3)
+                # slew_hl.append(bank_delay.slew/1e3)
+        
+        # power = self.analytical_power()
+        
+        # sram_data = { "min_period": 0, 
+                    # "leakage_power": power.leakage}
+        # port_data = [{"delay_lh": delay_lh,
+                      # "delay_hl": delay_hl,
+                      # "slew_lh": slew_lh,
+                      # "slew_hl": slew_hl,
+                      # "read0_power": power.dynamic,
+                      # "read1_power": power.dynamic,
+                      # "write0_power": power.dynamic,
+                      # "write1_power": power.dynamic,
+                # }]
+        # return (sram_data,port_data)
+    
+    def analytical_power(self, slews, loads):
+        """Get the dynamic and leakage power from the SRAM"""
+        #slews unused, only last load is used
+        load = loads[-1]
+        power = self.sram.analytical_power(self.process, self.vdd_voltage, self.temperature, load) 
         #convert from nW to mW
         power.dynamic /= 1e6 
         power.leakage /= 1e6
         debug.info(1,"Dynamic Power: {0} mW".format(power.dynamic))        
         debug.info(1,"Leakage Power: {0} mW".format(power.leakage)) 
+        return power
         
-        sram_data = { "min_period": 0, 
-                    "leakage_power": power.leakage}
-        port_data = [{"delay_lh": delay_lh,
-                      "delay_hl": delay_hl,
-                      "slew_lh": slew_lh,
-                      "slew_hl": slew_hl,
-                      "read0_power": power.dynamic,
-                      "read1_power": power.dynamic,
-                      "write0_power": power.dynamic,
-                      "write1_power": power.dynamic,
-                }]
-        return (sram_data,port_data)
-
     def gen_data(self):
         """ Generates the PWL data inputs for a simulation timing test. """
         for write_port in self.write_index:

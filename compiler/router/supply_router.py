@@ -99,7 +99,7 @@ class supply_router(router):
         self.route_pins_to_rails(gnd_name)
         #self.write_debug_gds("debug_pin_routes.gds",stop_program=True)
         
-        #self.write_debug_gds("final.gds")  
+        #self.write_debug_gds("final.gds",False)  
         
         return True
 
@@ -110,75 +110,29 @@ class supply_router(router):
         This checks for simple cases where a pin component already overlaps a supply rail.
         It will add an enclosure to ensure the overlap in wide DRC rule cases.
         """
+        debug.info(1,"Routing simple overlap pins for {0}".format(pin_name))
+
+        # These are the wire tracks
+        wire_tracks = self.supply_rail_wire_tracks[pin_name]
+        # These are the wire and space tracks
         supply_tracks = self.supply_rail_tracks[pin_name]
+        
         for pg in self.pin_groups[pin_name]:
             if pg.is_routed():
                 continue
             
-            common_set = supply_tracks & pg.grids
-
-            if len(common_set)>0:
-                self.create_simple_overlap_enclosure(pin_name, common_set)
+            # First, check if we just overlap, if so, we are done.
+            overlap_grids = wire_tracks & pg.grids
+            if len(overlap_grids)>0:
                 pg.set_routed()
+                continue
+
+            # Else, if we overlap some of the space track, we can patch it with an enclosure
+            common_set = supply_tracks & pg.grids
+            if len(common_set)>0:
+                pg.create_simple_overlap_enclosure(common_set)
+                pg.add_enclosure(self.cell)
             
-
-
-    def recurse_simple_overlap_enclosure(self, pin_name, start_set, direct):
-        """
-        Recursive function to return set of tracks that connects to
-        the actual supply rail wire in a given direction (or terminating
-        when any track is no longer in the supply rail.
-        """
-        next_set = grid_utils.expand_border(start_set, direct)
-
-        supply_tracks = self.supply_rail_tracks[pin_name]
-        supply_wire_tracks = self.supply_rail_wire_tracks[pin_name]
-        
-        supply_overlap = next_set & supply_tracks
-        wire_overlap = next_set & supply_wire_tracks
-
-        # If the rail overlap is the same, we are done, since we connected to the actual wire
-        if len(wire_overlap)==len(start_set):
-            new_set = start_set | wire_overlap
-        # If the supply overlap is the same, keep expanding unti we hit the wire or move out of the rail region
-        elif len(supply_overlap)==len(start_set):
-            recurse_set = self.recurse_simple_overlap_enclosure(pin_name, supply_overlap, direct)
-            new_set = start_set | supply_overlap | recurse_set
-        else:
-            # If we got no next set, we are done, can't expand!
-            new_set = set()
-            
-        return new_set
-            
-    def create_simple_overlap_enclosure(self, pin_name, start_set):
-        """
-        This takes a set of tracks that overlap a supply rail and creates an enclosure
-        that is ensured to overlap the supply rail wire.
-        It then adds rectangle(s) for the enclosure.
-        """
-        additional_set = set()
-        # Check the layer of any element in the pin to determine which direction to route it
-        e = next(iter(start_set))
-        new_set = start_set.copy()
-        if e.z==0:
-            new_set = self.recurse_simple_overlap_enclosure(pin_name, start_set, direction.NORTH)
-            if not new_set:
-                new_set = self.recurse_simple_overlap_enclosure(pin_name, start_set, direction.SOUTH)
-        else:
-            new_set = self.recurse_simple_overlap_enclosure(pin_name, start_set, direction.EAST)
-            if not new_set:
-                new_set = self.recurse_simple_overlap_enclosure(pin_name, start_set, direction.WEST)
-
-        pg = pin_group(name=pin_name, pin_set=[], router=self)
-        pg.grids=new_set
-        enclosure_list = pg.compute_enclosures()
-        for pin in enclosure_list:
-            debug.info(2,"Adding simple overlap enclosure {0} {1}".format(pin_name, pin))
-            self.cell.add_rect(layer=pin.layer,
-                               offset=pin.ll(),
-                               width=pin.width(),
-                               height=pin.height())
-
 
 
     
@@ -478,6 +432,7 @@ class supply_router(router):
         for index,pg in enumerate(self.pin_groups[pin_name]):
             if pg.is_routed():
                 continue
+            
             debug.info(2,"Routing component {0} {1}".format(pin_name, index))
 
             # Clear everything in the routing grid.
@@ -498,7 +453,6 @@ class supply_router(router):
             # Actually run the A* router
             if not self.run_router(detour_scale=5):
                 self.write_debug_gds()
-            
 
     
     def add_supply_rail_target(self, pin_name):

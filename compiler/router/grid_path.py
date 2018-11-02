@@ -172,20 +172,7 @@ class grid_path:
         return neighbors
 
     def neighbor(self, d):
-        if d==direction.EAST:
-            offset = vector3d(1,0,0)
-        elif d==direction.WEST:
-            offset = vector3d(-1,0,0)
-        elif d==direction.NORTH:
-            offset = vector3d(0,1,0)
-        elif d==direction.SOUTH:
-            offset = vector3d(0,-1,0)
-        elif d==direction.UP:
-            offset = vector3d(0,0,1)
-        elif d==direction.DOWN:
-            offset = vector3d(0,0,-1)
-        else:
-            debug.error("Invalid direction {}".format(d),-1)
+        offset = direction.get_offset(d)
 
         newwave = [point + offset for point in self.pathlist[-1]]
 

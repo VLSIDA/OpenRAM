@@ -69,7 +69,7 @@ class route(design):
                 via_size = [self.num_vias]*2
                 self.obj.add_via(self.layer_stack,via_offset,size=via_size,rotate=90)
             elif p0.x != p1.x and p0.y != p1.y: # diagonal!
-                debug.error("Non-changing direction!")
+                debug.error("Non-changing direction! {}".format(self.path))
             else:
                 # this will draw an extra corner at the end but that is ok
                 self.draw_corner_wire(p1)

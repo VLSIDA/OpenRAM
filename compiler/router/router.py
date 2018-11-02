@@ -98,11 +98,16 @@ class router(router_tech):
         pin_set = set()
         for shape in shape_list:
             (name,layer,boundary)=shape
-            rect = [vector(boundary[0],boundary[1]),vector(boundary[2],boundary[3])]
+            # GDSMill boundaries are in (left, bottom, right, top) order
+            # so repack and snap to the grid
+            ll = vector(boundary[0],boundary[1]).snap_to_grid()
+            ur = vector(boundary[2],boundary[3]).snap_to_grid()
+            rect = [ll,ur]
             pin = pin_layout(pin_name, rect, layer)
             pin_set.add(pin)
 
         debug.check(len(pin_set)>0,"Did not find any pin shapes for {0}.".format(str(pin_name)))
+
         self.pins[pin_name] = pin_set
         self.all_pins.update(pin_set)
 
@@ -411,7 +416,7 @@ class router(router_tech):
             p.set_blocked(value)
         
     def get_blockage_tracks(self, ll, ur, z):
-        debug.info(4,"Converting blockage ll={0} ur={1} z={2}".format(str(ll),str(ur),z))
+        debug.info(3,"Converting blockage ll={0} ur={1} z={2}".format(str(ll),str(ur),z))
 
         block_list = []
         for x in range(int(ll[0]),int(ur[0])+1):
@@ -684,7 +689,7 @@ class router(router_tech):
         reduced_classes = combine_classes(equiv_classes)
         if local_debug:
             debug.info(0,"FINAL  ",reduced_classes)
-        self.pin_groups[pin_name] = [pin_group(name=pin_name, pin_shapes=x, router=self) for x in reduced_classes]
+        self.pin_groups[pin_name] = [pin_group(name=pin_name, pin_set=x, router=self) for x in reduced_classes]
         
     def convert_pins(self, pin_name):
         """ 

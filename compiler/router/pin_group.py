@@ -10,21 +10,22 @@ class pin_group:
     A class to represent a group of rectangular design pin. 
     It requires a router to define the track widths and blockages which 
     determine how pin shapes get mapped to tracks. 
+    It is initially constructed with a single set of (touching) pins.
     """
-    def __init__(self, name, pin_shapes, router):
+    def __init__(self, name, pin_set, router):
         self.name = name
         # Flag for when it is routed
         self.routed = False
         # Flag for when it is enclosed
         self.enclosed = False
         
+        # Remove any redundant pins (i.e. contained in other pins)
+        irredundant_pin_set = self.remove_redundant_shapes(list(pin_set))
+        
         # This is a list because we can have a pin group of disconnected sets of pins
         # and these are represented by separate lists
-        if pin_shapes:
-            self.pins = [pin_shapes]
-        else:
-            self.pins = []
-    
+        self.pins = [set(irredundant_pin_set)]
+
         self.router = router
         # These are the corresponding pin grids for each pin group.
         self.grids = set()
@@ -34,6 +35,9 @@ class pin_group:
         # The corresponding set of partially blocked grids for each pin group.
         # These are blockages for other nets but unblocked for routing this group.
         self.blockages = set()
+
+        # This is a set of pin_layout shapes to cover the grids
+        self.enclosures = set()
 
     def __str__(self):
         """ override print function output """
@@ -90,6 +94,7 @@ class pin_group:
     def remove_redundant_shapes(self, pin_list):
         """
         Remove any pin layout that is contained within another.
+        Returns a new list without modifying pin_list.
         """
         local_debug = False
         if local_debug:
@@ -144,7 +149,11 @@ class pin_group:
             enclosure = self.router.compute_pin_enclosure(ll, ur, ll.z)
             pin_list.append(enclosure)
 
-        return pin_list
+
+        # Now simplify the enclosure list 
+        new_pin_list = self.remove_redundant_shapes(pin_list)
+            
+        return new_pin_list
         
     def compute_connector(self, pin, enclosure):
         """ 
@@ -445,13 +454,15 @@ class pin_group:
         self.enclosed = True
         
         # Compute the enclosure pin_layout list of the set of tracks
-        redundant_enclosures = self.compute_enclosures()
-
-        # Now simplify the enclosure list 
-        self.enclosures = self.remove_redundant_shapes(redundant_enclosures)
+        self.enclosures = self.compute_enclosures()
 
         for pin_list in self.pins:
             for pin in pin_list:
+                
+                # If it is contained, it won't need a connector
+                if pin.contained_by_any(self.enclosures):
+                    continue
+                
                 left_connector = self.find_left_connector(pin, self.enclosures)
                 right_connector = self.find_right_connector(pin, self.enclosures)
                 above_connector = self.find_above_connector(pin, self.enclosures)
@@ -553,9 +564,11 @@ class pin_group:
                 debug.info(2,"  Converting {0}".format(pin))
                 # Determine which tracks the pin overlaps 
                 pin_in_tracks=router.convert_pin_to_tracks(self.name, pin)
+
                 pin_set.update(pin_in_tracks)
                 # Blockages will be a super-set of pins since it uses the inflated pin shape.
                 blockage_in_tracks = router.convert_blockage(pin) 
+
                 blockage_set.update(blockage_in_tracks)
 
         # If we have a blockage, we must remove the grids

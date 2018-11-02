@@ -169,7 +169,7 @@ class supply_router(router):
             if not new_set:
                 new_set = self.recurse_simple_overlap_enclosure(pin_name, start_set, direction.WEST)
 
-        pg = pin_group(name=pin_name, pin_shapes=[], router=self)
+        pg = pin_group(name=pin_name, pin_set=[], router=self)
         pg.grids=new_set
         enclosure_list = pg.compute_enclosures()
         for pin in enclosure_list:

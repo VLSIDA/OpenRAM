@@ -84,7 +84,6 @@ class replica_bitline(design.design):
         #self.mod_delay_chain = getattr(g, OPTS.delay_chain)
 
         g = reload(__import__(OPTS.replica_bitcell))
-        print(OPTS.replica_bitcell)
         self.mod_replica_bitcell = getattr(g, OPTS.replica_bitcell)
         
         self.bitcell = self.replica_bitcell = self.mod_replica_bitcell()
@@ -190,26 +189,17 @@ class replica_bitline(design.design):
 
             if pin.layer != "metal1":
                 continue
-            self.add_path("metal1", [pin_right, pin_extension])
+            pin_width_ydir = pin.uy()-pin.by()
+            #Width is set to pin y width to avoid DRC issues with m1 gaps
+            self.add_path("metal1", [pin_right, pin_extension], pin_width_ydir)
             self.add_power_pin("gnd", pin_extension)
             
             # for multiport, need to short wordlines to each other so they all connect to gnd.
             wl_last = self.wl_list[self.total_ports-1]+"_{}".format(row)
             pin_last = self.rbl_inst.get_pin(wl_last)
-            self.short_wordlines(pin, pin_last, "right", False)
-            # if self.total_ports > 1:
-                # wl_last = self.wl_list[self.total_ports-1]+"_{}".format(row)
-                # pin_last = self.rbl_inst.get_pin(wl_last)
-                
-                # #m1 needs to be extended in the y directions, direction needs to be determined as every other cell is flipped
-                # correct_x = vector(0.5*drc("minwidth_metal1"), 0)
-                # correct_y = vector(0, 0.5*drc("minwidth_metal1"))
-                # if pin.uy() > pin_last.uy():
-                    # self.add_path("metal1", [pin.rc()+correct_x+correct_y, pin_last.rc()+correct_x-correct_y])
-                # else:
-                    # self.add_path("metal1", [pin.rc()+correct_x-correct_y, pin_last.rc()+correct_x+correct_y])
+            self.short_wordlines(pin, pin_last, "right", False, row, vector(self.m3_pitch,0))
                     
-    def short_wordlines(self, wl_pin_a, wl_pin_b, pin_side, is_replica_cell):
+    def short_wordlines(self, wl_pin_a, wl_pin_b, pin_side, is_replica_cell, cell_row=0, offset_x_vec=None):
         """Connects the word lines together for a single bitcell. Also requires which side of the bitcell to short the pins."""
         #Assumes input pins are wordlines. Also assumes the word lines are horizontal in metal1. Also assumes pins have same x coord.
         #This is my (Hunter) first time editing layout in openram so this function is likely not optimal.
@@ -221,12 +211,21 @@ class replica_bitline(design.design):
             #I assume this is related to how a wire is draw, but I have not investigated the issue.
             if pin_side == "right":
                 correct_x = vector(0.5*drc("minwidth_metal1"), 0)
+                if offset_x_vec != None:
+                    correct_x = offset_x_vec
+                else:
+                    correct_x = vector(1.5*drc("minwidth_metal1"), 0)
+                    
                 if wl_pin_a.uy() > wl_pin_b.uy():
                     self.add_path("metal1", [wl_pin_a.rc()+correct_x+correct_y, wl_pin_b.rc()+correct_x-correct_y])
                 else:
                     self.add_path("metal1", [wl_pin_a.rc()+correct_x-correct_y, wl_pin_b.rc()+correct_x+correct_y])
             elif pin_side == "left":
-                correct_x = vector(1.5*drc("minwidth_metal1"), 0)
+                if offset_x_vec != None:
+                    correct_x = offset_x_vec
+                else:
+                    correct_x = vector(1.5*drc("minwidth_metal1"), 0)
+                
                 if wl_pin_a.uy() > wl_pin_b.uy():
                     self.add_path("metal1", [wl_pin_a.lc()-correct_x+correct_y, wl_pin_b.lc()-correct_x-correct_y])
                 else:
@@ -235,11 +234,20 @@ class replica_bitline(design.design):
                 debug.error("Could not connect wordlines on specified input side={}".format(pin_side),1)
             
             #2. Connect word lines horizontally. Only replica cell needs. Bitline loads currently already do this.
-            if is_replica_cell:
-                for port in range(self.total_ports):
+            for port in range(self.total_ports):
+                if is_replica_cell:
                     wl = self.wl_list[port]
                     pin = self.rbc_inst.get_pin(wl)
+                else:
+                    wl = self.wl_list[port]+"_{}".format(cell_row)
+                    pin = self.rbl_inst.get_pin(wl)
+                    
+                if pin_side == "left":    
                     self.add_path("metal1", [pin.lc()-correct_x, pin.lc()])
+                elif pin_side == "right":
+                    self.add_path("metal1", [pin.rc()+correct_x, pin.rc()])
+                
+            
                 
     def route_supplies(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """
@@ -259,8 +267,13 @@ class replica_bitline(design.design):
             
         # Replica bitcell needs to be routed up to M3
         pin=self.rbc_inst.get_pin("vdd")
-        # Don't rotate this via to vit in FreePDK45
-        self.add_power_pin("vdd", pin.center(), rotate=0)
+        # Don't rotate this via to vit in FreePDK45. In the custom cell, the pin cannot be placed
+        # directly on vdd or there will be a drc error with a wordline. Place the pin slightly farther
+        # away then route to it. A better solution would be to rotate the m1 in the via or move the pin
+        # a m1_pitch below the entire cell.
+        pin_extension = pin.center() - vector(0,self.m1_pitch)
+        self.add_power_pin("vdd", pin_extension, rotate=0)
+        self.add_path("metal1", [pin.center(), pin_extension])
         
         for pin in self.rbc_inst.get_pins("gnd"):
             self.add_power_pin("gnd", pin.center())

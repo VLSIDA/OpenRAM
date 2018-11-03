@@ -218,7 +218,7 @@ class supply_router(router):
             ur = grid_utils.get_upper_right(rail)        
             z = ll.z
             pin = self.compute_wide_enclosure(ll, ur, z, name)
-            debug.info(1,"Adding supply rail {0} {1}->{2} {3}".format(name,ll,ur,pin))
+            debug.info(2,"Adding supply rail {0} {1}->{2} {3}".format(name,ll,ur,pin))
             self.cell.add_layout_pin(text=name,
                                      layer=pin.layer,
                                      offset=pin.ll(),
@@ -387,6 +387,7 @@ class supply_router(router):
         Route the horizontal and vertical supply rails across the entire design.
         Must be done with lower left at 0,0
         """
+        debug.info(1,"Routing supply rail {0}.".format(name))
 
         # Compute the grid locations of the supply rails
         self.compute_supply_rails(name, supply_number)
@@ -420,14 +421,14 @@ class supply_router(router):
         """
 
         remaining_components = sum(not x.is_routed() for x in self.pin_groups[pin_name])
-        debug.info(1,"Pin {0} has {1} remaining components to route.".format(pin_name,
-                                                                             remaining_components))
+        debug.info(1,"Routing {0} with {1} pin components to route.".format(pin_name,
+                                                                            remaining_components))
 
         for index,pg in enumerate(self.pin_groups[pin_name]):
             if pg.is_routed():
                 continue
             
-            debug.info(2,"Routing component {0} {1}".format(pin_name, index))
+            debug.info(3,"Routing component {0} {1}".format(pin_name, index))
 
             # Clear everything in the routing grid.
             self.rg.reinit()
@@ -453,7 +454,7 @@ class supply_router(router):
         """
         Add the supply rails of given name as a routing target.
         """
-        debug.info(2,"Add supply rail target {}".format(pin_name))
+        debug.info(4,"Add supply rail target {}".format(pin_name))
         # Add the wire itself as the target
         self.rg.set_target(self.supply_rail_wire_tracks[pin_name])
         # But unblock all the rail tracks including the space
@@ -464,7 +465,7 @@ class supply_router(router):
         """
         Add the supply rails of given name as a routing target.
         """
-        debug.info(3,"Blocking supply rail")        
+        debug.info(4,"Blocking supply rail")        
         for rail_name in self.supply_rail_tracks:
             self.rg.set_blocked(self.supply_rail_tracks[rail_name])
                 

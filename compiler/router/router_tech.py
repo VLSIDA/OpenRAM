@@ -37,7 +37,7 @@ class router_tech:
 
         self.track_widths = [self.track_width] * 2
         self.track_factor = [1/self.track_width] * 2
-        debug.info(1,"Track factor: {0}".format(self.track_factor))
+        debug.info(2,"Track factor: {0}".format(self.track_factor))
 
         # When we actually create the routes, make them the width of the track (minus 1/2 spacing on each side)
         self.layer_widths = [self.track_width - self.horiz_layer_spacing, 1, self.track_width - self.vert_layer_spacing]

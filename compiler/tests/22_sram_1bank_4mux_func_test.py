@@ -11,7 +11,7 @@ import globals
 from globals import OPTS
 import debug
 
-#@unittest.skip("SKIPPING 22_sram_1bank_4mux_func_test")
+@unittest.skip("SKIPPING 22_sram_1bank_4mux_func_test")
 class sram_1bank_4mux_func_test(openram_test):
 
     def runTest(self):

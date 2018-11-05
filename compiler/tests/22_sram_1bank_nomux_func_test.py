@@ -39,7 +39,7 @@ class sram_1bank_nomux_func_test(openram_test):
         s.sp_write(tempspice)
         
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
-        
+
         f = functional(s.s, tempspice, corner)
         f.num_cycles = 10
         (fail, error) = f.run()

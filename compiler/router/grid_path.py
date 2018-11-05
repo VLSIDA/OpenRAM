@@ -150,7 +150,7 @@ class grid_path:
 
         return cost
 
-    def expand_dirs(self,up_down_too=True):
+    def expand_dirs(self):
         """
         Expand from the end in each of the four cardinal directions plus up
         or down but not expanding to blocked cells. Expands in all
@@ -162,9 +162,7 @@ class grid_path:
         """
         neighbors = []
 
-        for d in list(direction):
-            if not up_down_too and (d==direction.UP or d==direction.DOWN):
-                continue
+        for d in direction.cardinal_directions(True):
             n = self.neighbor(d)
             if n:
                 neighbors.append(n)
@@ -172,20 +170,7 @@ class grid_path:
         return neighbors
 
     def neighbor(self, d):
-        if d==direction.EAST:
-            offset = vector3d(1,0,0)
-        elif d==direction.WEST:
-            offset = vector3d(-1,0,0)
-        elif d==direction.NORTH:
-            offset = vector3d(0,1,0)
-        elif d==direction.SOUTH:
-            offset = vector3d(0,-1,0)
-        elif d==direction.UP:
-            offset = vector3d(0,0,1)
-        elif d==direction.DOWN:
-            offset = vector3d(0,0,-1)
-        else:
-            debug.error("Invalid direction {}".format(d),-1)
+        offset = direction.get_offset(d)
 
         newwave = [point + offset for point in self.pathlist[-1]]
 

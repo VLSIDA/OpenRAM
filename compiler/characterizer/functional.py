@@ -20,6 +20,10 @@ class functional(simulation):
 
     def __init__(self, sram, spfile, corner):
         simulation.__init__(self, sram, spfile, corner)
+        
+        # Seed the characterizer with a constant seed for unit tests
+        if OPTS.is_unit_test:
+            random.seed(12345)
 
         self.set_corner(corner)
         self.set_spice_constants()

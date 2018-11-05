@@ -66,7 +66,7 @@ def get_gds_size(name, gds_filename, units, layer):
     Open a GDS file and return the size from either the
     bounding box or a border layer.
     """
-    debug.info(2,"Creating VLSI layout for {}".format(name))
+    debug.info(4,"Creating VLSI layout for {}".format(name))
     cell_vlsi = gdsMill.VlsiLayout(units=units)
     reader = gdsMill.Gds2reader(cell_vlsi)
     reader.loadFromFile(gds_filename)

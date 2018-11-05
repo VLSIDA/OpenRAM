@@ -3,7 +3,6 @@ from design import design
 import debug
 import math
 import tech
-import random
 from .stimuli import *
 from .trim_spice import *
 from .charutils import *

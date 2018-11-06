@@ -18,13 +18,14 @@ class control_logic(design.design):
     Dynamically generated Control logic for the total SRAM circuit.
     """
 
-    def __init__(self, num_rows, port_type="rw"):
+    def __init__(self, num_rows, words_per_row, port_type="rw"):
         """ Constructor """
         name = "control_logic_" + port_type
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(name))
         
         self.num_rows = num_rows
+        self.words_per_row = words_per_row
         self.port_type = port_type
         
         if self.port_type == "rw":
@@ -92,14 +93,25 @@ class control_logic(design.design):
             from importlib import reload
             c = reload(__import__(OPTS.replica_bitline))
             replica_bitline = getattr(c, OPTS.replica_bitline)
-            # FIXME: These should be tuned according to the size!
-            delay_stages = 4 # Must be non-inverting
-            delay_fanout = 3 # This can be anything >=2
+            
+            delay_stages, delay_fanout = self.get_delay_chain_size()
             bitcell_loads = int(math.ceil(self.num_rows / 2.0))
             self.replica_bitline = replica_bitline(delay_stages, delay_fanout, bitcell_loads, name="replica_bitline_"+self.port_type)
             self.add_mod(self.replica_bitline)
 
-
+    def get_delay_chain_size(self):
+        """Determine the size of the delay chain used for the Sense Amp Enable """
+        # FIXME: These should be tuned according to the additional size parameters
+        delay_fanout = 3 # This can be anything >=2
+        # Delay stages Must be non-inverting
+        if self.words_per_row >= 8:
+            delay_stages = 8
+        elif self.words_per_row == 4:
+            delay_stages = 6
+        else:
+            delay_stages = 4
+        return (delay_stages, delay_fanout)
+        
     def setup_signal_busses(self):
         """ Setup bus names, determine the size of the busses etc """
 

@@ -20,6 +20,9 @@ class psram_1bank_2mux_func_test(openram_test):
         OPTS.netlist_only = True
         OPTS.bitcell = "pbitcell"
         OPTS.replica_bitcell="replica_pbitcell"
+        OPTS.num_rw_ports = 1
+        OPTS.num_r_ports = 1
+        OPTS.num_w_ports = 1
         
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload

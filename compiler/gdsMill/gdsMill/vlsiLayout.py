@@ -60,7 +60,9 @@ class VlsiLayout:
         self.tempCoordinates=None
         self.tempPassFail = True
 
-        # This is the pin map
+        # This is a dict indexed by the pin labels.
+        # It contains a list of list of shapes, one for each occurance of the label.
+        # Multiple labels may be disconnected.
         self.pins = {}
 
     def rotatedCoordinates(self,coordinatesToRotate,rotateAngle):
@@ -661,19 +663,22 @@ class VlsiLayout:
         """
         Search for a pin label and return the largest enclosing rectangle
         on the same layer as the pin label.
-        Signal an error if there are multiple labels on different layers.
+        If there are multiple pin lists, return the max of each.
         """
-        pin_list = self.getAllPinShapes(pin_name)
-        max_pin = None
-        max_area = 0
-        for pin in pin_list:
-            (layer,boundary) = pin
-            new_area = boundaryArea(boundary)
-            if max_pin == None or new_area>max_area:
-                max_pin = pin
-                max_area = new_area
+        pin_map = self.pins[pin_name]
+        max_pins = []
+        for pin_list in pin_map:
+            max_pin = None
+            max_area = 0
+            for pin in pin_list:
+                (layer,boundary) = pin
+                new_area = boundaryArea(boundary)
+                if max_pin == None or new_area>max_area:
+                    max_pin = pin
+                    max_area = new_area
+            max_pins.append(max_pin)
 
-        return max_pin
+        return max_pins
         
 
     def getAllPinShapes(self, pin_name):
@@ -683,9 +688,10 @@ class VlsiLayout:
         """
         shape_list = []
         pin_map = self.pins[pin_name]
-        for pin in pin_map:
-            (pin_layer, boundary) = pin            
-            shape_list.append(pin)
+        for pin_list in pin_map:
+            for pin in pin_list:
+                (pin_layer, boundary) = pin            
+                shape_list.append(pin)
 
         return shape_list
             
@@ -718,7 +724,7 @@ class VlsiLayout:
                 self.pins[label_text]
             except KeyError:
                 self.pins[label_text] = []
-            self.pins[label_text].extend(pin_shapes)
+            self.pins[label_text].append(pin_shapes)
         
         
 

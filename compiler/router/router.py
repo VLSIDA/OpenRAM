@@ -127,14 +127,8 @@ class router(router_tech):
         Pin can either be a label or a location,layer pair: [[x,y],layer].
         """
         debug.info(1,"Finding pins for {}.".format(pin_name))
-        import datetime
-        from globals import print_time
-        start_time = datetime.datetime.now()
         self.retrieve_pins(pin_name)
-        print_time("Retrieve pins", datetime.datetime.now(), start_time)
-        start_time = datetime.datetime.now()
         self.analyze_pins(pin_name)
-        print_time("Analyze pins", datetime.datetime.now(), start_time)
 
     def find_blockages(self):
         """

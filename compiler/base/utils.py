@@ -100,12 +100,11 @@ def get_gds_pins(pin_names, name, gds_filename, units):
     cell = {}
     for pin_name in pin_names:
         cell[str(pin_name)]=[]
-        pin_list=cell_vlsi.getAllPinShapes(str(pin_name))
-        for pin_shape in pin_list:
-            (layer,boundary)=pin_shape
-            rect=[vector(boundary[0],boundary[1]),vector(boundary[2],boundary[3])]
-            # this is a list because other cells/designs may have must-connect pins
-            cell[str(pin_name)].append(pin_layout(pin_name, rect, layer))
+        pin_shape=cell_vlsi.getPinShape(str(pin_name))
+        (layer,boundary)=pin_shape
+        rect=[vector(boundary[0],boundary[1]),vector(boundary[2],boundary[3])]
+        # this is a list because other cells/designs may have must-connect pins
+        cell[str(pin_name)].append(pin_layout(pin_name, rect, layer))
     return cell
 
 def get_libcell_pins(pin_list, name, units):

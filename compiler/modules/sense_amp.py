@@ -13,7 +13,7 @@ class sense_amp(design.design):
 
     pin_names = ["bl", "br", "dout", "en", "vdd", "gnd"]
     (width,height) = utils.get_libcell_size("sense_amp", GDS["unit"], layer["boundary"])
-    pin_map = utils.get_libcell_pins(pin_names, "sense_amp", GDS["unit"], layer["boundary"])
+    pin_map = utils.get_libcell_pins(pin_names, "sense_amp", GDS["unit"])
 
     def __init__(self, name):
         design.design.__init__(self, name)

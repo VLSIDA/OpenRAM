@@ -1,6 +1,7 @@
 import sys
 import gdsMill
 from tech import drc,GDS
+from tech import layer as techlayer
 import math
 import debug
 from router_tech import router_tech
@@ -39,7 +40,7 @@ class router(router_tech):
         self.reader = gdsMill.Gds2reader(self.layout)
         self.reader.loadFromFile(gds_filename)
         self.top_name = self.layout.rootStructureName
-
+        
         ### The pin data structures
         # A map of pin names to a set of pin_layout structures
         self.pins = {}
@@ -95,12 +96,13 @@ class router(router_tech):
 
     def retrieve_pins(self,pin_name):
         """
-        Retrieve the pin shapes from the layout.
+        Retrieve the pin shapes on metal 3 from the layout.
         """
-        shape_list=self.layout.getAllPinShapesByLabel(str(pin_name))
+        debug.info(2,"Retrieving pins for {}.".format(pin_name))        
+        shape_list=self.layout.getAllPinShapes(str(pin_name))
         pin_set = set()
         for shape in shape_list:
-            (name,layer,boundary)=shape
+            (layer,boundary)=shape
             # GDSMill boundaries are in (left, bottom, right, top) order
             # so repack and snap to the grid
             ll = vector(boundary[0],boundary[1]).snap_to_grid()
@@ -125,10 +127,14 @@ class router(router_tech):
         Pin can either be a label or a location,layer pair: [[x,y],layer].
         """
         debug.info(1,"Finding pins for {}.".format(pin_name))
-        
+        import datetime
+        from globals import print_time
+        start_time = datetime.datetime.now()
         self.retrieve_pins(pin_name)
+        print_time("Retrieve pins", datetime.datetime.now(), start_time)
+        start_time = datetime.datetime.now()
         self.analyze_pins(pin_name)
-
+        print_time("Analyze pins", datetime.datetime.now(), start_time)
 
     def find_blockages(self):
         """
@@ -443,7 +449,7 @@ class router(router_tech):
         Recursive find boundaries as blockages to the routing grid.
         """
 
-        shapes = self.layout.getAllShapesInStructureList(layer_num)
+        shapes = self.layout.getAllShapes(layer_num)
         for boundary in shapes:
             ll = vector(boundary[0],boundary[1])
             ur = vector(boundary[2],boundary[3])
@@ -626,6 +632,8 @@ class router(router_tech):
         """ 
         Analyze the shapes of a pin and combine them into groups which are connected.
         """
+        debug.info(2,"Analyzing pin groups for {}.".format(pin_name))        
+        
         pin_set = self.pins[pin_name]
         local_debug = False
 

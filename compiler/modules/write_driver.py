@@ -13,7 +13,7 @@ class write_driver(design.design):
 
     pin_names = ["din", "bl", "br", "en", "gnd", "vdd"]
     (width,height) = utils.get_libcell_size("write_driver", GDS["unit"], layer["boundary"])
-    pin_map = utils.get_libcell_pins(pin_names, "write_driver", GDS["unit"], layer["boundary"])
+    pin_map = utils.get_libcell_pins(pin_names, "write_driver", GDS["unit"])
 
     def __init__(self, name):
         design.design.__init__(self, name)

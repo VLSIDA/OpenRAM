@@ -12,7 +12,7 @@ class dff(design.design):
 
     pin_names = ["D", "Q", "clk", "vdd", "gnd"]
     (width,height) = utils.get_libcell_size("dff", GDS["unit"], layer["boundary"])
-    pin_map = utils.get_libcell_pins(pin_names, "dff", GDS["unit"], layer["boundary"])
+    pin_map = utils.get_libcell_pins(pin_names, "dff", GDS["unit"])
     
     def __init__(self, name="dff"):
         design.design.__init__(self, name)

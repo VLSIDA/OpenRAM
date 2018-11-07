@@ -12,7 +12,7 @@ class replica_bitcell_1rw_1r(design.design):
 
     pin_names = ["bl0", "br0", "bl1", "br1", "wl0", "wl1", "vdd", "gnd"]
     (width,height) = utils.get_libcell_size("replica_cell_1rw_1r", GDS["unit"], layer["boundary"])
-    pin_map = utils.get_libcell_pins(pin_names, "replica_cell_1rw_1r", GDS["unit"], layer["boundary"])
+    pin_map = utils.get_libcell_pins(pin_names, "replica_cell_1rw_1r", GDS["unit"])
 
     def __init__(self):
         design.design.__init__(self, "replica_cell_1rw_1r")

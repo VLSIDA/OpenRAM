@@ -170,7 +170,7 @@ class precharge(pgate.pgate):
                                 well_type="n")
 
 
-        self.height = well_contact_pos.y + contact.well.height
+        self.height = well_contact_pos.y + contact.well.height + self.m1_pitch
 
         self.add_rect(layer="nwell",
                       offset=vector(0,0),
@@ -182,19 +182,19 @@ class precharge(pgate.pgate):
         """Adds both bit-line and bit-line-bar to the module"""
         # adds the BL on metal 2
         offset = vector(self.bitcell.get_pin(self.bitcell_bl).cx(),0) - vector(0.5 * self.m2_width,0)
-        self.add_layout_pin(text="bl",
-                            layer="metal2",
-                            offset=offset,
-                            width=drc("minwidth_metal2"),
-                            height=self.height)
+        self.bl_pin = self.add_layout_pin(text="bl",
+                                          layer="metal2",
+                                          offset=offset,
+                                          width=drc("minwidth_metal2"),
+                                          height=self.height)
 
         # adds the BR on metal 2
         offset = vector(self.bitcell.get_pin(self.bitcell_br).cx(),0) - vector(0.5 * self.m2_width,0)
-        self.add_layout_pin(text="br",
-                            layer="metal2",
-                            offset=offset,
-                            width=drc("minwidth_metal2"),
-                            height=self.height)
+        self.br_pin = self.add_layout_pin(text="br",
+                                          layer="metal2",
+                                          offset=offset,
+                                          width=drc("minwidth_metal2"),
+                                          height=self.height)
 
     def connect_to_bitlines(self):
         self.add_bitline_contacts()
@@ -208,29 +208,23 @@ class precharge(pgate.pgate):
         """Adds contacts/via from metal1 to metal2 for bit-lines"""
 
         stack=("metal1", "via1", "metal2")
-        pos = self.lower_pmos_inst.get_pin("S").center()
+        upper_y = self.upper_pmos1_inst.get_pin("S").cy()
+        lower_y = self.lower_pmos_inst.get_pin("S").cy()        
+
         self.add_contact_center(layers=stack,
-                                offset=pos)
-        pos = self.lower_pmos_inst.get_pin("D").center()
+                                offset = vector(self.bl_pin.cx(), upper_y))
         self.add_contact_center(layers=stack,
-                                offset=pos)
-        pos = self.upper_pmos1_inst.get_pin("S").center()
+                                offset = vector(self.br_pin.cx(), upper_y))
         self.add_contact_center(layers=stack,
-                                offset=pos)
-        pos = self.upper_pmos2_inst.get_pin("D").center()
+                                offset = vector(self.bl_pin.cx(), lower_y))
         self.add_contact_center(layers=stack,
-                                offset=pos)
+                                offset = vector(self.br_pin.cx(), lower_y))
 
     def connect_pmos(self, pmos_pin, bit_pin):
         """ Connect pmos pin to bitline pin """
 
-        ll_pos = vector(min(pmos_pin.lx(),bit_pin.lx()), pmos_pin.by())
-        ur_pos = vector(max(pmos_pin.rx(),bit_pin.rx()), pmos_pin.uy())
+        left_pos = vector(min(pmos_pin.cx(),bit_pin.cx()), pmos_pin.cy())
+        right_pos = vector(max(pmos_pin.cx(),bit_pin.cx()), pmos_pin.cy())
 
-        width = ur_pos.x-ll_pos.x
-        height = ur_pos.y-ll_pos.y
-        self.add_rect(layer="metal2",
-                      offset=ll_pos,
-                      width=width,
-                      height=height)
+        self.add_path("metal1", [ left_pos, right_pos] )
         

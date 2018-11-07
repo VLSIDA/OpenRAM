@@ -100,7 +100,7 @@ def write_netgen_script(cell_name, sp_name):
     os.system("chmod u+x {}".format(run_file))
 
     
-def run_drc(cell_name, gds_name, extract=False, final_verification=False):
+def run_drc(cell_name, gds_name, extract=True, final_verification=False):
     """Run DRC check on a cell which is implemented in gds_name."""
 
     global num_drc_runs
@@ -166,7 +166,6 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     global num_lvs_runs
     num_lvs_runs += 1
     
-    run_drc(cell_name, gds_name, extract=True, final_verification=final_verification)
     write_netgen_script(cell_name, sp_name)
     
     # run LVS

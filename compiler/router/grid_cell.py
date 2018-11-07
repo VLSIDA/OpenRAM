@@ -22,6 +22,11 @@ class grid_cell:
         self.source=False
         self.target=False
 
+    def get_cost(self):
+        # We can display the cost of the frontier
+        if self.min_cost > 0:
+            return self.min_cost
+        
         
     def get_type(self):
         if self.blocked:
@@ -36,8 +41,4 @@ class grid_cell:
         if self.path:
             return "P"
 
-        # We can display the cost of the frontier
-        if self.min_cost > 0:
-            return self.min_cost
-        
         return None

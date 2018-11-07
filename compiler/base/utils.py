@@ -66,7 +66,7 @@ def get_gds_size(name, gds_filename, units, layer):
     Open a GDS file and return the size from either the
     bounding box or a border layer.
     """
-    debug.info(2,"Creating VLSI layout for {}".format(name))
+    debug.info(4,"Creating VLSI layout for {}".format(name))
     cell_vlsi = gdsMill.VlsiLayout(units=units)
     reader = gdsMill.Gds2reader(cell_vlsi)
     reader.loadFromFile(gds_filename)
@@ -88,9 +88,9 @@ def get_libcell_size(name, units, layer):
     return(get_gds_size(name, cell_gds, units, layer))
 
 
-def get_gds_pins(pin_list, name, gds_filename, units, layer):
+def get_gds_pins(pin_names, name, gds_filename, units):
     """
-    Open a GDS file and find the pins in pin_list as text on a given layer.
+    Open a GDS file and find the pins in pin_names as text on a given layer.
     Return these as a rectangle layer pair for each pin.
     """
     cell_vlsi = gdsMill.VlsiLayout(units=units)
@@ -98,23 +98,23 @@ def get_gds_pins(pin_list, name, gds_filename, units, layer):
     reader.loadFromFile(gds_filename)
 
     cell = {}
-    for pin in pin_list:
-        cell[str(pin)]=[]
-        label_list=cell_vlsi.getPinShapeByLabel(str(pin))
-        for label in label_list:
-            (name,layer,boundary)=label
+    for pin_name in pin_names:
+        cell[str(pin_name)]=[]
+        pin_list=cell_vlsi.getPinShape(str(pin_name))
+        for pin_shape in pin_list:
+            (layer,boundary)=pin_shape
             rect=[vector(boundary[0],boundary[1]),vector(boundary[2],boundary[3])]
             # this is a list because other cells/designs may have must-connect pins
-            cell[str(pin)].append(pin_layout(pin, rect, layer))
+            cell[str(pin_name)].append(pin_layout(pin_name, rect, layer))
     return cell
 
-def get_libcell_pins(pin_list, name, units, layer):
+def get_libcell_pins(pin_list, name, units):
     """
     Open a GDS file and find the pins in pin_list as text on a given layer.
     Return these as a rectangle layer pair for each pin.
     """
     cell_gds = OPTS.openram_tech + "gds_lib/" + str(name) + ".gds"
-    return(get_gds_pins(pin_list, name, cell_gds, units, layer))
+    return(get_gds_pins(pin_list, name, cell_gds, units))
 
 
 

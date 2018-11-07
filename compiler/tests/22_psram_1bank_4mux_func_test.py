@@ -11,7 +11,7 @@ import globals
 from globals import OPTS
 import debug
 
-@unittest.skip("SKIPPING 22_psram_1bank_4mux_func_test")
+#@unittest.skip("SKIPPING 22_psram_1bank_4mux_func_test")
 class psram_1bank_4mux_func_test(openram_test):
 
     def runTest(self):
@@ -20,6 +20,9 @@ class psram_1bank_4mux_func_test(openram_test):
         OPTS.netlist_only = True
         OPTS.bitcell = "pbitcell"
         OPTS.replica_bitcell="replica_pbitcell"
+        OPTS.num_rw_ports = 1
+        OPTS.num_r_ports = 1
+        OPTS.num_w_ports = 1
         
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
@@ -49,7 +52,7 @@ class psram_1bank_4mux_func_test(openram_test):
 
         globals.end_openram()
         
-# instantiate a copdsay of the class to actually run the test
+# run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

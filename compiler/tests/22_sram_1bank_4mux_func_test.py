@@ -11,7 +11,7 @@ import globals
 from globals import OPTS
 import debug
 
-@unittest.skip("SKIPPING 22_sram_1bank_4mux_func_test")
+#@unittest.skip("SKIPPING 22_sram_1bank_4mux_func_test")
 class sram_1bank_4mux_func_test(openram_test):
 
     def runTest(self):
@@ -47,7 +47,7 @@ class sram_1bank_4mux_func_test(openram_test):
 
         globals.end_openram()
         
-# instantiate a copdsay of the class to actually run the test
+# run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

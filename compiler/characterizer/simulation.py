@@ -208,14 +208,14 @@ class simulation():
                                                                      t_current,
                                                                      t_current+self.period)
         elif op == "write":
-            comment = "\tWriting {0}  to  address {1} (from port {2}) during cylce {3} ({4}ns - {5}ns)".format(word,
+            comment = "\tWriting {0}  to  address {1} (from port {2}) during cycle {3} ({4}ns - {5}ns)".format(word,
                                                                                                            addr,
                                                                                                            port,
                                                                                                            int(t_current/self.period),
                                                                                                            t_current,
                                                                                                            t_current+self.period)
         else:
-            comment = "\tReading {0} from address {1} (from port {2}) during cylce {3} ({4}ns - {5}ns)".format(word,
+            comment = "\tReading {0} from address {1} (from port {2}) during cycle {3} ({4}ns - {5}ns)".format(word,
                                                                                                            addr,
                                                                                                            port,
                                                                                                            int(t_current/self.period),

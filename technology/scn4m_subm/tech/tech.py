@@ -240,7 +240,7 @@ spice["fet_models"] = { "TT" : [SPICE_MODEL_DIR+"/nom/pmos.sp",SPICE_MODEL_DIR+"
                         
 
 #spice stimulus related variables
-spice["feasible_period"] = 5         # estimated feasible period in ns
+spice["feasible_period"] = 5       # estimated feasible period in ns
 spice["supply_voltages"] = [4.5, 5.0, 5.5]  # Supply voltage corners in [Volts]
 spice["nom_supply_voltage"] = 5.0    # Nominal supply voltage in [Volts]
 spice["rise_time"] = 0.05            # rise time in [Nano-seconds]

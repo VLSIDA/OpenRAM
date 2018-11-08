@@ -1,5 +1,5 @@
 tech
-  format 29
+  format 31
  scmos
 end
 
@@ -300,11 +300,6 @@ cifoutput
 style  lambda=0.20(p)
  scalefactor  20 10
  options calma-permissive-labels
-
- # This is a custom section to add bounding boxes in OpenRAM
- layer BB bb
- labels bb
- calma 63 0
 
  layer CWN nwell,rnw,nwr,nwsd,nwsc
  bloat-or pdiff,apres,rpd,pdc/a,pfet * 120
@@ -1768,11 +1763,6 @@ cifinput
 
 style  lambda=0.20(p)
  scalefactor  20
-
- # This is a custom section to add bounding boxes in OpenRAM
- layer bb BB
- labels BB
- calma 63 0
 
  layer nwell CWN
  and-not CWNR
@@ -6701,7 +6691,7 @@ drc
  edge4way nfet,pfet,fet space/active,ndiff,anres,rnd,ndc/a,pdiff,apres,rpd,pdc/a 3 ndiff,anres,rnd,ndc/a,pdiff,apres,rpd,pdc/a,nfet,pfet,fet 0 0 \
  "N-Diffusion,P-Diffusion overhang of Transistor < 3 (Mosis #3.4)" active
 
- edge4way poly,fp,rp,pc/a ~(poly,fp,pres,rp,pc/a,nfet,pfet,fet,prp)/active 1 space space 1 \
+ edge4way poly,fp,rp,pc/a ~(poly,fp,pres,rp,pc/a,nfet,pfet,fet,prp)/active 1 space/a space/a 1 \
  "Poly spacing to Diffusion < 1 (Mosis #3.5)"
 
  edge4way nfet ~(nfet)/active 2 ~(pselect)/select ~(nfet)/active 2 \
@@ -7212,13 +7202,15 @@ extract
  planeorder via3 14
  planeorder fill 15
 
+ substrate *psd,space/w,pwell well
+
  resist (ndiff,anres,rnd,ndc,nsd,nwsd,nsc,nwsc)/active 3700
  resist (pdiff,apres,rpd,pdc,psd,psc)/active 2800
  resist (nwell)/well 1018000
- resist (rnw,nwr)/active 1018000
+ resist (rnw,nwr)/active 1018000 0.5
  resist (pwell)/well 1
  resist (poly,fp,rp,pc,pc,nfet,pfet,fet)/active 6000
- resist (pres)/active 6000
+ resist (pres)/active 6000 0.5
  resist (m1,fm1,rm1,ndc,nsc,nwsc,pdc,psc,pc,m2c,m2c)/metal1  80
  resist (m2,fm2,rm2,m2c,m3c,m3c)/metal2  70
  resist (m3,fm3,rm3,m3c,m4c,m4c)/metal3  80
@@ -7416,33 +7408,30 @@ extract
 
 #metali
 
-#fets
+#devices
 
- fet  pfet pdiff,pdc 2 pfet Vdd! nwell 52 181
- fet  pfet pdiff,pdc 1 pfet Vdd! nwell 52 181
-
- fet  nfet ndiff,ndc 2 nfet Gnd! pwell 55 182
- fet  nfet ndiff,ndc 1 nfet Gnd! pwell 55 182
+ device mosfet pfet pfet pdiff,pdc nwell ERROR 52 181
+ device mosfet nfet nfet ndiff,ndc pwell,space/w ERROR 55 182
 
  fetresis  pfet linear		12182
  fetresis  pfet saturation	12182
  fetresis  nfet linear		3961
  fetresis  nfet saturation	3961
 
- fet  rnwell	nsd,nsc	2	nwellResistor	Gnd!	nwell,pwell 0 0
- fet  rpoly	poly,pc	2	polyResistor	Gnd!	nwell,pwell 0 0
- fet  nwr	nwsd	2	nwellFig1bResistor	Gnd!	nwell,pwell 0 0
- fet  rndiff	ndiff,ndc	2	ndiffResistor	Gnd!	nwell,pwell 0 0
- fet  rpdiff	pdiff,pdc	2	pdiffResistor	Gnd!	nwell,pwell 0 0
+ device resistor nwellResistor rnwell *nsd
+ device resistor polyResistor rpoly *poly
+ device resistor nwellFig1bResistor nwr nwsd
+ device resistor ndiffResistor rndiff *ndiff
+ device resistor pdiffResistor rpdiff *pdiff
 
- fet  rmetal1	metal1	2	metal1Resistor	Gnd!	nwell,pwell 0 0
- fet  rmetal2	metal2	2	metal2Resistor	Gnd!	nwell,pwell 0 0
- fet  rmetal3	metal3	2	metal3Resistor	Gnd!	nwell,pwell 0 0
- fet  rmetal4	metal4	2	metal4Resistor	Gnd!	nwell,pwell 0 0
+ device resistor metal1Resistor rmetal1 *metal1
+ device resistor metal2Resistor rmetal2 *metal2
+ device resistor metal3Resistor rmetal3 *metal3
+ device resistor metal4Resistor rmetal4 *metal4
 
- fet  pres	poly,pc	2	presResistor	Gnd!	nwell,pwell 0 0
- fet  anres	ndiff,ndc	2	anresResistor	Gnd!	nwell,pwell 0 0
- fet  apres	pdiff,pdc	2	apresResistor	Gnd!	nwell,pwell 0 0
+ device resistor presResistor pres *poly
+ device resistor anresResistor anres *ndiff
+ device resistor apresResistor apres *pdiff
 
 end
 

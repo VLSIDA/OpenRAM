@@ -1,6 +1,7 @@
 from tech import drc,layer
 from contact import contact
 from pin_group import pin_group
+from vector import vector
 import debug
 
 class router_tech:
@@ -35,9 +36,9 @@ class router_tech:
         self.track_width = max(self.horiz_track_width,self.vert_track_width)
         debug.info(1,"Track width: "+str(self.track_width))
 
-        self.track_widths = [self.track_width] * 2
-        self.track_factor = [1/self.track_width] * 2
-        debug.info(1,"Track factor: {0}".format(self.track_factor))
+        self.track_widths = vector([self.track_width] * 2)
+        self.track_factor = vector([1/self.track_width] * 2)
+        debug.info(2,"Track factor: {0}".format(self.track_factor))
 
         # When we actually create the routes, make them the width of the track (minus 1/2 spacing on each side)
         self.layer_widths = [self.track_width - self.horiz_layer_spacing, 1, self.track_width - self.vert_layer_spacing]

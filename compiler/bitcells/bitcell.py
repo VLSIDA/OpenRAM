@@ -13,7 +13,7 @@ class bitcell(design.design):
 
     pin_names = ["bl", "br", "wl", "vdd", "gnd"]
     (width,height) = utils.get_libcell_size("cell_6t", GDS["unit"], layer["boundary"])
-    pin_map = utils.get_libcell_pins(pin_names, "cell_6t", GDS["unit"], layer["boundary"])
+    pin_map = utils.get_libcell_pins(pin_names, "cell_6t", GDS["unit"])
 
     def __init__(self):
         design.design.__init__(self, "cell_6t")

@@ -60,6 +60,11 @@ class VlsiLayout:
         self.tempCoordinates=None
         self.tempPassFail = True
 
+        # This is a dict indexed by the pin labels.
+        # It contains a list of list of shapes, one for each occurance of the label.
+        # Multiple labels may be disconnected.
+        self.pins = {}
+
     def rotatedCoordinates(self,coordinatesToRotate,rotateAngle):
         #helper method to rotate a list of coordinates
         angle=math.radians(float(0))
@@ -206,7 +211,11 @@ class VlsiLayout:
     def initialize(self):
         self.deduceHierarchy()
         #self.traverseTheHierarchy()
-        self.populateCoordinateMap()    
+        self.populateCoordinateMap()
+
+        for layerNumber in self.layerNumbersInUse:
+            self.processLabelPins(layerNumber)
+        
     
     def populateCoordinateMap(self):
         def addToXyTree(startingStructureName = None,transformPath = None):
@@ -478,6 +487,10 @@ class VlsiLayout:
         return False #these shapes are ok
     
     def isPointInsideOfBox(self,pointCoordinates,boxCoordinates):
+        """
+        Check if a point is contained in the shape
+        """
+        debug.check(len(boxCoordinates)==4,"Invalid number of coordinates for box.")
         leftBound = boxCoordinates[0][0]
         rightBound = boxCoordinates[0][0]
         topBound = boxCoordinates[0][1]
@@ -499,7 +512,9 @@ class VlsiLayout:
         return True
     
     def isShapeInsideOfBox(self,shapeCoordinates, boxCoordinates):
-        #go through every point in the shape to test if they are all inside the box
+        """
+        Go through every point in the shape to test if they are all inside the box.
+        """
         for point in shapeCoordinates:
             if not self.isPointInsideOfBox(point,boxCoordinates):
                 return False
@@ -634,160 +649,89 @@ class VlsiLayout:
         return cellBoundary
 
 
-    def getLabelDBInfo(self,label_name):
+    def getTexts(self, layer):
         """
-        Return the coordinates in DB units and layer of all matching labels
+        Get all of the labels on a given layer only at the root level.
         """
-        label_list = []
-        label_layer = None
-        label_coordinate = [None, None]
-
-        # Why must this be the last one found? It breaks if we return the first.
+        text_list = []
         for Text in self.structures[self.rootStructureName].texts:
-            if Text.textString == label_name or Text.textString == label_name+"\x00":
-                label_layer = Text.drawingLayer
-                label_coordinate = Text.coordinates[0]
-                if label_layer!=None:
-                    label_list.append((label_coordinate,label_layer))
-
-        debug.check(len(label_list)>0,"Did not find labels {0}.".format(label_name))
-        return label_list
-
-
-    def getLabelInfo(self,label_name):
-        """
-        Return the coordinates in USER units and layer of a label
-        """
-        label_list=self.getLabelDBInfo(label_name)
-        new_list=[]
-        for label in label_list:
-            (label_coordinate,label_layer)=label
-            user_coordinates = [x*self.units[0] for x in label_coordinate]
-            new_list.append(user_coordinates,label_layer)
-        return new_list
+            if Text.drawingLayer == layer:
+                text_list.append(Text)
+        return text_list
     
-    def getPinShapeByLocLayer(self, coordinate, layer):
-        """
-        Return the largest enclosing rectangle on a layer and at a location.
-        Coordinates should be in USER units.
-        """
-        db_coordinate = [x/self.units[0] for x in coordinate]
-        return self.getPinShapeByDBLocLayer(db_coordinate, layer)
-
-    def getPinShapeByDBLocLayer(self, coordinate, layer):
-        """
-        Return the largest enclosing rectangle on a layer and at a location.
-        Coordinates should be in DB units.
-        """
-        pin_boundaries=self.getAllPinShapesInStructureList(coordinate, layer)
-
-        if len(pin_boundaries) == 0:
-            debug.warning("Did not find pin on layer {0} at coordinate {1}".format(layer, coordinate))
-            
-        # sort the boundaries, return the max area pin boundary
-        pin_boundaries.sort(key=boundaryArea,reverse=True)
-        pin_boundary=pin_boundaries[0]
-
-        # Convert to USER units
-        pin_boundary=[pin_boundary[0]*self.units[0],pin_boundary[1]*self.units[0],
-                      pin_boundary[2]*self.units[0],pin_boundary[3]*self.units[0]]
-        
-        # Make a name if we don't have the pin name
-        return ["p"+str(coordinate)+"_"+str(layer), layer, pin_boundary]
-
-    def getAllPinShapesByLocLayer(self, coordinate, layer):
-        """
-        Return ALL the enclosing rectangles on the same layer
-        at the given coordinate. Coordinates should be in USER units.
-        """
-        db_coordinate = [int(x/self.units[0]) for x in coordinate]
-        return self.getAllPinShapesByDBLocLayer(db_coordinate, layer)
-
-    def getAllPinShapesByDBLocLayer(self, coordinate, layer):
-        """
-        Return ALL the enclosing rectangles on the same layer
-        at the given coordinate. Input coordinates should be in DB units.
-        Returns user unit shapes.
-        """
-        pin_boundaries=self.getAllPinShapesInStructureList(coordinate, layer)
-
-        # Convert to user units
-        new_boundaries = []
-        for pin_boundary in pin_boundaries:
-            new_pin_boundary = [pin_boundary[0]*self.units[0],pin_boundary[1]*self.units[0],
-                                pin_boundary[2]*self.units[0],pin_boundary[3]*self.units[0]]
-            new_boundaries.append(["p"+str(coordinate)+"_"+str(layer), layer, new_pin_boundary])
-        return new_boundaries
-    
-    def getPinShapeByLabel(self,label_name):
+    def getPinShape(self, pin_name):
         """
         Search for a pin label and return the largest enclosing rectangle
         on the same layer as the pin label.
+        If there are multiple pin lists, return the max of each.
         """
-        label_list=self.getLabelDBInfo(label_name)
-        shape_list=[]
-        for label in label_list:
-            (label_coordinate,label_layer)=label
-            shape = self.getPinShapeByDBLocLayer(label_coordinate, label_layer)
-            shape_list.append(shape)
-        return shape_list
+        pin_map = self.pins[pin_name]
+        max_pins = []
+        for pin_list in pin_map:
+            max_pin = None
+            max_area = 0
+            for pin in pin_list:
+                (layer,boundary) = pin
+                new_area = boundaryArea(boundary)
+                if max_pin == None or new_area>max_area:
+                    max_pin = pin
+                    max_area = new_area
+            max_pins.append(max_pin)
 
-    def getAllPinShapesByLabel(self,label_name):
+        return max_pins
+        
+
+    def getAllPinShapes(self, pin_name):
         """
         Search for a pin label and return ALL the enclosing rectangles on the same layer
         as the pin label.
         """
-        
-        label_list=self.getLabelDBInfo(label_name)
-        shape_list=[]
-        for label in label_list:
-            (label_coordinate,label_layer)=label
-            shape_list.extend(self.getAllPinShapesByDBLocLayer(label_coordinate, label_layer))
+        shape_list = []
+        pin_map = self.pins[pin_name]
+        for pin_list in pin_map:
+            for pin in pin_list:
+                (pin_layer, boundary) = pin            
+                shape_list.append(pin)
+
         return shape_list
-    
-    def getAllPinShapesInStructureList(self,coordinates,layer):
+            
+
+    def processLabelPins(self, layer):
         """
-        Given a coordinate, search for enclosing structures on the given layer.
-        Return all pin shapes.
+        Find all text labels and create a map to a list of shapes that
+        they enclose on the given layer.
         """
-        boundaries = []
-        for TreeUnit in self.xyTree:
-            boundaries.extend(self.getPinInStructure(coordinates,layer,TreeUnit))
+        # Get the labels on a layer in the root level
+        labels = self.getTexts(layer)
+        # Get all of the shapes on the layer at all levels
+        # and transform them to the current level
+        shapes =  self.getAllShapes(layer)
 
-        return boundaries
+        for label in labels:
+            label_coordinate = label.coordinates[0]
+            user_coordinate = [x*self.units[0] for x in label_coordinate]
+            pin_shapes = []
+            for boundary in shapes:
+                if self.labelInRectangle(user_coordinate,boundary):
+                    pin_shapes.append((layer, boundary))
 
+            label_text = label.textString
+            # Remove the padding if it exists
+            if label_text[-1] == "\x00":
+                label_text = label_text[0:-1]
 
-    def getPinInStructure(self,coordinates,layer,structure):
-        """ 
-        Go through all the shapes in a structure and return the list of shapes
-        that the label coordinates are inside.
+            try:
+                self.pins[label_text]
+            except KeyError:
+                self.pins[label_text] = []
+            self.pins[label_text].append(pin_shapes)
+        
+        
+
+    def getAllShapes(self,layer):
         """
-
-        (structureName,structureOrigin,structureuVector,structurevVector)=structure
-        boundaries = []
-        for boundary in self.structures[str(structureName)].boundaries:
-            # Pin enclosures only work on rectangular pins so ignore any non rectangle
-            # This may report not finding pins, but the user should fix this by adding a rectangle.
-            if len(boundary.coordinates)!=5:
-                continue
-            if layer==boundary.drawingLayer:
-                left_bottom=boundary.coordinates[0]
-                right_top=boundary.coordinates[2]
-                # Rectangle is [leftx, bottomy, rightx, topy].
-                boundaryRect=[left_bottom[0],left_bottom[1],right_top[0],right_top[1]]
-                boundaryRect=self.transformRectangle(boundaryRect,structureuVector,structurevVector)
-                boundaryRect=[boundaryRect[0]+structureOrigin[0].item(),boundaryRect[1]+structureOrigin[1].item(),
-                              boundaryRect[2]+structureOrigin[0].item(),boundaryRect[3]+structureOrigin[1].item()]
-
-                if self.labelInRectangle(coordinates,boundaryRect):
-                    boundaries.append(boundaryRect)
-                    
-        return boundaries
-
-
-    def getAllShapesInStructureList(self,layer):
-        """
-        Return all pin shapes on a given layer.
+        Return all gshapes on a given layer in [llx, lly, urx, ury] format and 
+        user units.
         """
         boundaries = []
         for TreeUnit in self.xyTree:
@@ -812,7 +756,8 @@ class VlsiLayout:
 
     def getShapesInStructure(self,layer,structure):
         """ 
-        Go through all the shapes in a structure and return the list of shapes.
+        Go through all the shapes in a structure and return the list of shapes in
+        the form [llx, lly, urx, ury]
         """
 
         (structureName,structureOrigin,structureuVector,structurevVector)=structure
@@ -820,6 +765,7 @@ class VlsiLayout:
         boundaries = []
         for boundary in self.structures[str(structureName)].boundaries:
             # FIXME: Right now, this only supports rectangular shapes!
+            #debug.check(len(boundary.coordinates)==5,"Non-rectangular shape.")
             if len(boundary.coordinates)!=5:
                 continue
             if layer==boundary.drawingLayer:
@@ -874,8 +820,8 @@ class VlsiLayout:
         """
         Checks if a coordinate is within a given rectangle. Rectangle is [leftx, bottomy, rightx, topy].
         """
-        coordinate_In_Rectangle_x_range=(coordinate[0]>=int(rectangle[0]))&(coordinate[0]<=int(rectangle[2]))
-        coordinate_In_Rectangle_y_range=(coordinate[1]>=int(rectangle[1]))&(coordinate[1]<=int(rectangle[3]))
+        coordinate_In_Rectangle_x_range=(coordinate[0]>=rectangle[0])&(coordinate[0]<=rectangle[2])
+        coordinate_In_Rectangle_y_range=(coordinate[1]>=rectangle[1])&(coordinate[1]<=rectangle[3])
         if coordinate_In_Rectangle_x_range & coordinate_In_Rectangle_y_range:
             return True
         else:

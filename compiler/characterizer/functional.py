@@ -35,7 +35,15 @@ class functional(simulation):
         self.stored_words = {}      
         self.write_check = []
         self.read_check = []
-        
+    
+    def set_spice_constants(self):
+        """Spice constants for functional test"""
+        simulation.set_spice_constants(self)
+        #Heuristic increase for functional period. Base feasible period typically does not pass the functional test
+        #for column mux of this size. Increase the feasible period by 20% for this case.
+        if self.sram.words_per_row >= 4:
+            self.period = self.period*1.2
+    
     def run(self):
         # Generate a random sequence of reads and writes
         self.write_random_memory_sequence()

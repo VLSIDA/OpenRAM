@@ -223,13 +223,13 @@ class sram_base(design):
         from control_logic import control_logic
         # Create the control logic module for each port type
         if OPTS.num_rw_ports>0:
-            self.control_logic = self.control_logic_rw = control_logic(num_rows=self.num_rows, port_type="rw")
+            self.control_logic = self.control_logic_rw = control_logic(num_rows=self.num_rows, words_per_row=self.words_per_row, port_type="rw")
             self.add_mod(self.control_logic_rw)
         if OPTS.num_w_ports>0:
-            self.control_logic_w = control_logic(num_rows=self.num_rows, port_type="w")
+            self.control_logic_w = control_logic(num_rows=self.num_rows, words_per_row=self.words_per_row, port_type="w")
             self.add_mod(self.control_logic_w)
         if OPTS.num_r_ports>0:
-            self.control_logic_r = control_logic(num_rows=self.num_rows, port_type="r")
+            self.control_logic_r = control_logic(num_rows=self.num_rows, words_per_row=self.words_per_row, port_type="r")
             self.add_mod(self.control_logic_r)
 
         # Create the address and control flops (but not the clk)

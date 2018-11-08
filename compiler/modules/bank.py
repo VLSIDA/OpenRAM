@@ -99,6 +99,7 @@ class bank(design.design):
         self.route_precharge_to_bitcell_array()
         self.route_col_mux_to_precharge_array()
         self.route_sense_amp_to_col_mux_or_precharge_array()
+        self.route_write_driver_to_sense_amp()
         self.route_sense_amp_out()
         self.route_wordline_driver()
         self.route_write_driver()        
@@ -143,11 +144,11 @@ class bank(design.design):
         y_offset = self.precharge_array[0].height + self.m2_gap
         self.precharge_offset = vector(0,-y_offset)
         if self.col_addr_size > 0:
-            y_offset += self.column_mux_array[0].height
+            y_offset += self.column_mux_array[0].height + self.m2_gap
         self.column_mux_offset = vector(0,-y_offset)
-        y_offset += self.sense_amp_array.height
+        y_offset += self.sense_amp_array.height + self.m2_gap
         self.sense_amp_offset = vector(0,-y_offset)                                
-        y_offset += self.write_driver_array.height
+        y_offset += self.write_driver_array.height + self.m2_gap
         self.write_driver_offset = vector(0,-y_offset)
 
         # UPPER LEFT QUADRANT
@@ -583,7 +584,7 @@ class bank(design.design):
         debug.check(len(offsets)>=len(self.all_ports), "Insufficient offsets to place column decoder.")        
 
         for port in self.all_ports:
-            col_decoder_inst.place(offsets[port])
+            self.col_decoder_inst[port].place(offsets[port])
 
 
             
@@ -746,43 +747,43 @@ class bank(design.design):
         
         # FIXME: Update for multiport
         for port in self.all_ports:
-            for col in range(self.num_cols):
-                col_mux_bl = self.col_mux_array_inst[port].get_pin("bl_{}".format(col)).uc()
-                col_mux_br = self.col_mux_array_inst[port].get_pin("br_{}".format(col)).uc()
-                precharge_bl = self.precharge_array_inst[port].get_pin(self.total_bl_names[port]+"_{}".format(col)).bc()
-                precharge_br = self.precharge_array_inst[port].get_pin(self.total_br_names[port]+"_{}".format(col)).bc()
-
-                yoffset = 0.5*(col_mux_bl.y+precharge_bl.y)
-                self.add_path("metal2",[col_mux_bl, vector(col_mux_bl.x,yoffset),
-                                        vector(precharge_bl.x,yoffset), precharge_bl])
-                self.add_path("metal2",[col_mux_br, vector(col_mux_br.x,yoffset),
-                                        vector(precharge_br.x,yoffset), precharge_br])
+            bottom_inst = self.col_mux_array_inst[port]
+            top_inst = self.precharge_array_inst[port]
+            top_bl = self.total_bl_names[port]+"_{}"
+            top_br = self.total_br_names[port]+"_{}"
+            self.connect_bitlines(top_inst, bottom_inst, self.num_cols,
+                                  top_bl_name=top_bl, top_br_name=top_br)
 
                                         
     def route_sense_amp_to_col_mux_or_precharge_array(self):
         """ Routing of BL and BR between sense_amp and column mux or precharge array """
 
         for port in self.read_ports:
-            for bit in range(self.word_size):
-                sense_amp_bl = self.sense_amp_array_inst[port].get_pin("bl_{}".format(bit)).uc()
-                sense_amp_br = self.sense_amp_array_inst[port].get_pin("br_{}".format(bit)).uc()
-
-                if self.col_addr_size>0:
-                    # Sense amp is connected to the col mux
-                    connect_bl = self.col_mux_array_inst[port].get_pin("bl_out_{}".format(bit)).bc()
-                    connect_br = self.col_mux_array_inst[port].get_pin("br_out_{}".format(bit)).bc()
-                else:
-                    # Sense amp is directly connected to the precharge array
-                    connect_bl = self.precharge_array_inst[port].get_pin(self.read_bl_names[port]+"_{}".format(bit)).bc()
-                    connect_br = self.precharge_array_inst[port].get_pin(self.read_br_names[port]+"_{}".format(bit)).bc()
+            bottom_inst = self.sense_amp_array_inst[port]
+            
+            if self.col_addr_size>0:
+                # Sense amp is connected to the col mux
+                top_inst = self.col_mux_array_inst[port]
+                top_bl = "bl_out_{}"
+                top_br = "br_out_{}"
+            else:
+                # Sense amp is directly connected to the precharge array
+                top_inst = self.precharge_array_inst[port]
+                top_bl = self.total_bl_names[port]+"_{}"
+                top_br = self.total_br_names[port]+"_{}"
                 
-                    
-                yoffset = 0.5*(sense_amp_bl.y+connect_bl.y)
-                self.add_path("metal2",[sense_amp_bl, vector(sense_amp_bl.x,yoffset),
-                                        vector(connect_bl.x,yoffset), connect_bl])
-                self.add_path("metal2",[sense_amp_br, vector(sense_amp_br.x,yoffset),
-                                        vector(connect_br.x,yoffset), connect_br])
+            self.connect_bitlines(top_inst, bottom_inst, self.word_size,
+                                  top_bl_name=top_bl, top_br_name=top_br)
 
+    def route_write_driver_to_sense_amp(self):
+        """ Routing of BL and BR between write driver and sense amp """
+
+        for port in self.write_ports:
+            bottom_inst = self.write_driver_array_inst[port]
+            top_inst = self.sense_amp_array_inst[port]
+            self.connect_bitlines(top_inst, bottom_inst, self.word_size)
+
+                
 
     def route_sense_amp_out(self):
         """ Add pins for the sense amp output """
@@ -819,6 +820,25 @@ class bank(design.design):
                 din_name = "din{0}_{1}".format(port,row)
                 self.copy_layout_pin(self.write_driver_array_inst[port], data_name, din_name)
 
+    def connect_bitlines(self, top_inst, bottom_inst, num_items,
+                         top_bl_name="bl_{}", top_br_name="br_{}", bottom_bl_name="bl_{}", bottom_br_name="br_{}"):
+        """
+        Connect the bl and br of two modules.
+        This assumes that they have sufficient space to create a jog
+        in the middle between the two modules (if needed)
+        """
+        for col in range(num_items):
+            bottom_bl = bottom_inst.get_pin(bottom_bl_name.format(col)).uc()
+            bottom_br = bottom_inst.get_pin(bottom_br_name.format(col)).uc()
+            top_bl = top_inst.get_pin(top_bl_name.format(col)).bc()
+            top_br = top_inst.get_pin(top_br_name.format(col)).bc()
+
+            yoffset = 0.5*(top_bl.y+bottom_bl.y)
+            self.add_path("metal2",[bottom_bl, vector(bottom_bl.x,yoffset),
+                                    vector(top_bl.x,yoffset), top_bl])
+            self.add_path("metal2",[bottom_br, vector(bottom_br.x,yoffset),
+                                    vector(top_br.x,yoffset), top_br])
+        
     
     def route_wordline_driver(self):
         """ Connecting Wordline driver output to Bitcell WL connection  """

@@ -17,7 +17,7 @@ class timing_sram_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         OPTS.spice_name="ngspice"
         OPTS.analytical_delay = False
-        OPTS.trim_netlist = False
+        OPTS.netlist_only = True
 
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload

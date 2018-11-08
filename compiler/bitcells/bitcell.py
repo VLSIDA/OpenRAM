@@ -65,26 +65,6 @@ class bitcell(design.design):
         column_pins = ["br"]
         return column_pins
         
-    def list_read_bl_names(self):
-        """ Creates a list of bl pin names associated with read ports """
-        column_pins = ["bl"]
-        return column_pins
-    
-    def list_read_br_names(self):
-        """ Creates a list of br pin names associated with read ports """
-        column_pins = ["br"]
-        return column_pins
-        
-    def list_write_bl_names(self):
-        """ Creates a list of bl pin names associated with write ports """
-        column_pins = ["bl"]
-        return column_pins
-    
-    def list_write_br_names(self):
-        """ Creates a list of br pin names asscociated with write ports"""
-        column_pins = ["br"]
-        return column_pins
-    
     def analytical_power(self, proc, vdd, temp, load):
         """Bitcell power in nW. Only characterizes leakage."""
         from tech import spice

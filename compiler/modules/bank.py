@@ -278,22 +278,16 @@ class bank(design.design):
         self.add_mod(self.bitcell_array)
         
         # create arrays of bitline and bitline_bar names for read, write, or all ports
-        self.read_bl_names = self.bitcell.list_read_bl_names()
-        self.read_br_names = self.bitcell.list_read_br_names()
+        self.bl_names = self.bitcell.list_all_bl_names()
+        self.br_names = self.bitcell.list_all_br_names()
         
-        self.write_bl_names = self.bitcell.list_write_bl_names()
-        self.write_br_names = self.bitcell.list_write_br_names()
-        
-        self.total_bl_names = self.bitcell.list_all_bl_names()
-        self.total_br_names = self.bitcell.list_all_br_names()
-        
-        self.total_wl_names = self.bitcell.list_all_wl_names()
-        self.total_bitline_names = self.bitcell.list_all_bitline_names()
+        self.wl_names = self.bitcell.list_all_wl_names()
+        self.bitline_names = self.bitcell.list_all_bitline_names()
 
         self.precharge_array = []
         for port in self.all_ports:
             if port in self.read_ports:
-                self.precharge_array.append(self.mod_precharge_array(columns=self.num_cols, bitcell_bl=self.total_bl_names[port], bitcell_br=self.total_br_names[port]))
+                self.precharge_array.append(self.mod_precharge_array(columns=self.num_cols, bitcell_bl=self.bl_names[port], bitcell_br=self.br_names[port]))
                 self.add_mod(self.precharge_array[port])
             else:
                 self.precharge_array.append(None)
@@ -303,8 +297,8 @@ class bank(design.design):
             for port in self.all_ports:
                 self.column_mux_array.append(self.mod_column_mux_array(columns=self.num_cols, 
                                                                        word_size=self.word_size,
-                                                                       bitcell_bl=self.total_bl_names[port],
-                                                                       bitcell_br=self.total_br_names[port]))
+                                                                       bitcell_bl=self.bl_names[port],
+                                                                       bitcell_br=self.br_names[port]))
                 self.add_mod(self.column_mux_array[port])
 
 
@@ -339,10 +333,10 @@ class bank(design.design):
 
         temp = []
         for col in range(self.num_cols):
-            for bitline in self.total_bitline_names:
+            for bitline in self.bitline_names:
                 temp.append(bitline+"_{0}".format(col))
         for row in range(self.num_rows):
-            for wordline in self.total_wl_names:
+            for wordline in self.wl_names:
                     temp.append(wordline+"_{0}".format(row))
         temp.append("vdd")
         temp.append("gnd")
@@ -363,8 +357,8 @@ class bank(design.design):
                                                            mod=self.precharge_array[port]))
             temp = []
             for i in range(self.num_cols):
-                temp.append(self.total_bl_names[port]+"_{0}".format(i))
-                temp.append(self.total_br_names[port]+"_{0}".format(i))
+                temp.append(self.bl_names[port]+"_{0}".format(i))
+                temp.append(self.br_names[port]+"_{0}".format(i))
             temp.extend([self.prefix+"clk_buf_bar{0}".format(port), "vdd"])
             self.connect_inst(temp)
 
@@ -392,13 +386,13 @@ class bank(design.design):
 
             temp = []
             for col in range(self.num_cols):
-                temp.append(self.total_bl_names[port]+"_{0}".format(col))
-                temp.append(self.total_br_names[port]+"_{0}".format(col))
+                temp.append(self.bl_names[port]+"_{0}".format(col))
+                temp.append(self.br_names[port]+"_{0}".format(col))
             for word in range(self.words_per_row):
                     temp.append("sel{0}_{1}".format(port,word))
             for bit in range(self.word_size):
-                temp.append(self.total_bl_names[port]+"_out_{0}".format(bit))
-                temp.append(self.total_br_names[port]+"_out_{0}".format(bit))
+                temp.append(self.bl_names[port]+"_out_{0}".format(bit))
+                temp.append(self.br_names[port]+"_out_{0}".format(bit))
             temp.append("gnd")
             self.connect_inst(temp)
 
@@ -427,11 +421,11 @@ class bank(design.design):
             for bit in range(self.word_size):
                 temp.append("dout{0}_{1}".format(port,bit))
                 if self.words_per_row == 1:
-                    temp.append(self.total_bl_names[port]+"_{0}".format(bit))
-                    temp.append(self.total_br_names[port]+"_{0}".format(bit))
+                    temp.append(self.bl_names[port]+"_{0}".format(bit))
+                    temp.append(self.br_names[port]+"_{0}".format(bit))
                 else:
-                    temp.append(self.total_bl_names[port]+"_out_{0}".format(bit))
-                    temp.append(self.total_br_names[port]+"_out_{0}".format(bit))
+                    temp.append(self.bl_names[port]+"_out_{0}".format(bit))
+                    temp.append(self.br_names[port]+"_out_{0}".format(bit))
                     
             temp.extend([self.prefix+"s_en{}".format(port), "vdd", "gnd"])
             self.connect_inst(temp)
@@ -463,11 +457,11 @@ class bank(design.design):
                 temp.append("din{0}_{1}".format(port,bit))
             for bit in range(self.word_size):            
                 if (self.words_per_row == 1):            
-                    temp.append(self.total_bl_names[port]+"_{0}".format(bit))
-                    temp.append(self.total_br_names[port]+"_{0}".format(bit))
+                    temp.append(self.bl_names[port]+"_{0}".format(bit))
+                    temp.append(self.br_names[port]+"_{0}".format(bit))
                 else:
-                    temp.append(self.total_bl_names[port]+"_out_{0}".format(bit))
-                    temp.append(self.total_br_names[port]+"_out_{0}".format(bit))
+                    temp.append(self.bl_names[port]+"_out_{0}".format(bit))
+                    temp.append(self.br_names[port]+"_out_{0}".format(bit))
             temp.extend([self.prefix+"w_en{0}".format(port), "vdd", "gnd"])
             self.connect_inst(temp)
 
@@ -526,7 +520,7 @@ class bank(design.design):
             for row in range(self.num_rows):
                 temp.append("dec_out{0}_{1}".format(port,row))
             for row in range(self.num_rows):
-                temp.append(self.total_wl_names[port]+"_{0}".format(row))
+                temp.append(self.wl_names[port]+"_{0}".format(row))
             temp.append(self.prefix+"clk_buf{0}".format(port))
             temp.append("vdd")
             temp.append("gnd")
@@ -728,8 +722,8 @@ class bank(design.design):
             for col in range(self.num_cols):
                 precharge_bl = self.precharge_array_inst[port].get_pin("bl_{}".format(col)).uc()
                 precharge_br = self.precharge_array_inst[port].get_pin("br_{}".format(col)).uc()
-                bitcell_bl = self.bitcell_array_inst.get_pin(self.read_bl_names[port]+"_{}".format(col)).bc()
-                bitcell_br = self.bitcell_array_inst.get_pin(self.read_br_names[port]+"_{}".format(col)).bc()
+                bitcell_bl = self.bitcell_array_inst.get_pin(self.bl_names[port]+"_{}".format(col)).bc()
+                bitcell_br = self.bitcell_array_inst.get_pin(self.br_names[port]+"_{}".format(col)).bc()
 
                 yoffset = 0.5*(precharge_bl.y+bitcell_bl.y)
                 self.add_path("metal2",[precharge_bl, vector(precharge_bl.x,yoffset),
@@ -749,10 +743,8 @@ class bank(design.design):
         for port in self.all_ports:
             bottom_inst = self.col_mux_array_inst[port]
             top_inst = self.precharge_array_inst[port]
-            top_bl = self.total_bl_names[port]+"_{}"
-            top_br = self.total_br_names[port]+"_{}"
-            self.connect_bitlines(top_inst, bottom_inst, self.num_cols,
-                                  top_bl_name=top_bl, top_br_name=top_br)
+            self.connect_bitlines(top_inst, bottom_inst, self.num_cols)
+
 
                                         
     def route_sense_amp_to_col_mux_or_precharge_array(self):
@@ -769,8 +761,8 @@ class bank(design.design):
             else:
                 # Sense amp is directly connected to the precharge array
                 top_inst = self.precharge_array_inst[port]
-                top_bl = self.total_bl_names[port]+"_{}"
-                top_br = self.total_br_names[port]+"_{}"
+                top_bl = "bl_{}"
+                top_br = "br_{}"
                 
             self.connect_bitlines(top_inst, bottom_inst, self.word_size,
                                   top_bl_name=top_bl, top_br_name=top_br)
@@ -853,7 +845,7 @@ class bank(design.design):
 
                 # The mid guarantees we exit the input cell to the right.
                 driver_wl_pos = self.wordline_driver_inst[port].get_pin("wl_{}".format(row)).rc()
-                bitcell_wl_pos = self.bitcell_array_inst.get_pin(self.total_wl_names[port]+"_{}".format(row)).lc()
+                bitcell_wl_pos = self.bitcell_array_inst.get_pin(self.wl_names[port]+"_{}".format(row)).lc()
                 mid1 = driver_wl_pos.scale(0.5,1)+bitcell_wl_pos.scale(0.5,0)
                 mid2 = driver_wl_pos.scale(0.5,0)+bitcell_wl_pos.scale(0.5,1)
                 self.add_path("metal1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])

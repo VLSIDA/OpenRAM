@@ -5,6 +5,7 @@ from tech import drc, parameter, spice
 from ptx import ptx
 from vector import vector
 from globals import OPTS
+import logical_effort
 
 class pnand2(pgate.pgate):
     """
@@ -21,6 +22,7 @@ class pnand2(pgate.pgate):
         pgate.pgate.__init__(self, name, height)
         debug.info(2, "create pnand2 structure {0} with size of {1}".format(name, size))
 
+        self.size = size
         self.nmos_size = 2*size
         self.pmos_size = parameter["beta"]*size
         self.nmos_width = self.nmos_size*drc("minwidth_tx")
@@ -242,3 +244,12 @@ class pnand2(pgate.pgate):
         c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff
         transition_prob = spice["nand2_transition_prob"]
         return transition_prob*(c_load + c_para) 
+
+    def get_cin(self):
+        """Return the relative input capacitance of a single input"""
+        return self.nmos_size+self.pmos_size
+        
+    def get_effort_stage(self, cout):
+        """Returns an object representing the parameters for delay in tau units."""
+        parasitic_delay = 2 
+        return logical_effort.logical_effort(self.size, self.get_cin(), cout, parasitic_delay)

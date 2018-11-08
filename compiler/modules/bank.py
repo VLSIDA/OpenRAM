@@ -950,4 +950,18 @@ class bank(design.design):
             results.append(decoder_delay + word_driver_delay + bitcell_array_delay + column_mux_delay + bl_t_data_out_delay) 
 
         return results
+         
+    def determine_wordline_stage_efforts(self, external_cout):    
+        """Get the all the stage efforts for each stage in the path within the bank clk_buf to a wordline"""
+        #Decoder is assumed to have settled before the negative edge of the clock. Delay model relies on this assumption
+        stage_effort_list = []
+        wordline_cout = self.bitcell_array.get_wordline_cin() + external_cout
+        stage_effort_list += self.wordline_driver.determine_wordline_stage_efforts(wordline_cout)
         
+        return stage_effort_list
+        
+    def get_clk_cin(self):
+        """Get the relative capacitance of all the clk connections in the bank"""
+        #Current bank only uses clock (clk_buf) as an enable for the wordline driver.
+        total_clk_cin = self.wordline_driver.get_clk_cin()
+        return total_clk_cin

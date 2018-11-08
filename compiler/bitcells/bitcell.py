@@ -1,7 +1,7 @@
 import design
 import debug
 import utils
-from tech import GDS,layer
+from tech import GDS,layer, parameter
 
 class bitcell(design.design):
     """
@@ -93,3 +93,8 @@ class bitcell(design.design):
         total_power = self.return_power(dynamic, leakage)
         return total_power
 
+    def get_wl_cin(self):
+        """Return the total capacitance (in relative units) that the clock is loaded by in the dff"""
+        #This is a handmade cell so the value must be entered in the tech.py file or estimated.
+        #Calculated in the tech file by summing the widths of all the gates and dividing by the minimum width.
+        return parameter["6tcell_wl_cin"]

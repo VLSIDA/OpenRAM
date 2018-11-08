@@ -328,6 +328,10 @@ spice["nand2_transition_prob"] = .1875    # Transition probability of 2-input na
 spice["nand3_transition_prob"] = .1094    # Transition probability of 3-input nand.
 spice["nor2_transition_prob"] = .1875     # Transition probability of 2-input nor.
 
+#Logical Effort relative values for the Handmade cells
+spice["dff_clk_cin"] = 30.6
+parameter["6tcell_wl_cin"] = 3
+
 ###################################################
 ##END Spice Simulation Parameters
 ###################################################

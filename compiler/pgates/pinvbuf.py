@@ -187,3 +187,14 @@ class pinvbuf(design.design):
         inv2_delay = self.inv2.analytical_delay(slew=inv1_delay.slew, load=load)
         return inv1_delay + inv2_delay
             
+    def determine_wordline_stage_efforts(self, external_cout):
+        """Get the stage efforts of the clk -> clk_buf path"""
+        stage_effort_list = []
+        stage1_cout = self.inv1.get_cin() + self.inv2.get_cin()
+        stage1 = self.inv.get_effort_stage(stage1_cout)
+        stage_effort_list.append(stage1)
+        
+        stage2 = self.inv2.get_effort_stage(external_cout)
+        stage_effort_list.append(stage2)
+        
+        return stage_effort_list

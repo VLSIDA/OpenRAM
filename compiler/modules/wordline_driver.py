@@ -238,4 +238,27 @@ class wordline_driver(design.design):
 
         
     def input_load(self):
+        """Gets the capacitance of the wordline driver in absolute units (fF)"""
         return self.nand2.input_load()
+
+    def determine_wordline_stage_efforts(self, external_cout):
+        """Follows the clk_buf to a wordline signal adding each stages stage effort to a list"""
+        stage_effort_list = []
+        stage1_cout = self.nand2.get_cin()
+        stage1 = self.inv_no_output.get_effort_stage(stage1_cout)
+        stage_effort_list.append(stage1)
+        
+        stage2_cout = self.inv.get_cin()
+        stage2 = self.nand2.get_effort_stage(stage2_cout)
+        stage_effort_list.append(stage2)
+        
+        stage3 = self.inv.get_effort_stage(external_cout)
+        stage_effort_list.append(stage3)
+        
+        return stage_effort_list
+        
+    def get_clk_cin(self):
+        """Get the relative capacitance of all the clk connections in the bank"""
+        #Clock is connected as an input to 1 inverter per row
+        total_cin = self.inv_no_output.get_cin() * self.rows
+        return total_cin

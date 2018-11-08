@@ -596,4 +596,14 @@ class control_logic(design.design):
                            height=pin.height(),
                            width=pin.width())
         
+    def determine_wordline_stage_efforts(self, external_cout):
+        """Follows the clock signal to the clk_buf signal adding each stages stage effort to a list"""
+        stage_effort_list = []
+        #Calculate the load on clk_buf within the module and add it to external load
+        internal_cout = self.ctrl_dff_array.get_clk_cin()
+        clk_buf_cap = internal_cout+external_cout
+        #First stage is the clock buffer
+        stage_effort_list += self.clkbuf.determine_wordline_stage_efforts(clk_buf_cap)
+        
+        return stage_effort_list
         

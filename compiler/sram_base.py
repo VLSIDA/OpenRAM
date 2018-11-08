@@ -455,4 +455,36 @@ class sram_base(design):
         """ LH and HL are the same in analytical model. """
         return self.bank.analytical_delay(vdd,slew,load)
 
+    def calculate_delay_to_wl(self):    
+        stage_efforts = self.determine_wordline_stage_efforts()
+        return 0
         
+    def determine_wordline_stage_efforts(self):
+        """Get the all the stage efforts for each stage in the path from clk to a wordline"""
+        stage_effort_list = []
+        clk_buf_cout = self.get_clk_cin()
+        #Assume rw only. There are important differences with multiport that will need to be accounted for.
+        if self.control_logic_rw != None:
+            stage_effort_list += self.control_logic_rw.determine_wordline_stage_efforts(clk_buf_cout)
+        else: 
+            stage_effort_list += self.control_logic_r.determine_wordline_stage_efforts(clk_buf_cout)
+
+        #Clk_buf then move to the bank/wordline driver. Get the delay stages there.
+        external_wordline_cout = 0 #No loading on the wordline other than in the bank.
+        stage_effort_list += self.bank.determine_wordline_stage_efforts(external_wordline_cout)
+        
+        return stage_effort_list
+        
+    def get_clk_cin(self):
+        """Gets the capacitive load the of clock (clk_buf) for the sram"""
+        #As clk_buf is an output of the control logic. The cap for that module is not determined here.
+        row_addr_clk_cin = self.row_addr_dff.get_clk_cin()
+        data_clk_cin = self.data_dff.get_clk_cin()
+        col_addr_clk_cin = 0
+        if self.col_addr_size > 0:
+            col_addr_clk_cin = self.col_addr_dff.get_clk_cin()
+
+        #Bank cin...
+        bank_clk_cin = self.bank.get_clk_cin()
+        
+        return row_addr_clk_cin + data_clk_cin + col_addr_clk_cin + bank_clk_cin

@@ -50,31 +50,36 @@ class design(hierarchy_design):
         self.implant_space = drc("implant_to_implant")
         
     def setup_multiport_constants(self):
-        """ These are contants and lists that aid multiport design """
-        self.total_write = OPTS.num_rw_ports + OPTS.num_w_ports
-        self.total_read = OPTS.num_rw_ports + OPTS.num_r_ports
-        self.total_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
-        self.num_rw_ports = OPTS.num_rw_ports
+        """ 
+        These are contants and lists that aid multiport design.
+        Ports are always in the order RW, W, R.
+        Port indices start from 0 and increment.
+        A first RW port will have clk0, csb0, web0, addr0, data0
+        A first W port (with no RW ports) will be: clk0, csb0, addr0, data0
+
+        """
+        total_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
+
+        # These are the read/write port indices.
+        self.readwrite_ports = []
+        # These are the read/write and write-only port indices
+        self.write_ports = []
+        # These are teh read/write and read-only port indice
+        self.read_ports = []
+        # These are all the ports
+        self.all_ports = list(range(total_ports))
         
-        # Port indices used for data, address, and control signals
-        # Port IDs used to identify port type
-        self.write_index = []
-        self.read_index = []
-        self.port_id = []
         port_number = 0
-        
         for port in range(OPTS.num_rw_ports):
-            self.write_index.append(port_number)
-            self.read_index.append(port_number)
-            self.port_id.append("rw")
+            self.readwrite_ports.append(port_number)
+            self.write_ports.append(port_number)
+            self.read_ports.append(port_number)
             port_number += 1
         for port in range(OPTS.num_w_ports):
-            self.write_index.append(port_number)
-            self.port_id.append("w")
+            self.write_ports.append(port_number)
             port_number += 1
         for port in range(OPTS.num_r_ports):
-            self.read_index.append(port_number)
-            self.port_id.append("r")
+            self.read_ports.append(port_number)
             port_number += 1
 
     def analytical_power(self, proc, vdd, temp, load):

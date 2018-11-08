@@ -77,7 +77,8 @@ class openram_test(unittest.TestCase):
                     if not self.isclose(k,data[k][i],golden_data[k][i],error_tolerance):
                         data_matches = False
             else:
-                self.isclose(k,data[k],golden_data[k],error_tolerance)
+                if not self.isclose(k,data[k],golden_data[k],error_tolerance):
+                    data_matches = False
         if not data_matches:
             import pprint
             data_string=pprint.pformat(data)

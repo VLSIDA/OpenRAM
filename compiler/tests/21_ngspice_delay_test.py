@@ -63,7 +63,7 @@ class timing_sram_test(openram_test):
         elif OPTS.tech_name == "scn4m_subm":
             golden_data = {'delay_hl': [3.644147],
                             'delay_lh': [1.629815],
-                            'leakage_power': 0.0009299118999999999,
+                            'leakage_power': 0.001542964,
                             'min_period': 4.688,
                             'read0_power': [16.28732],
                             'read1_power': [15.75155],

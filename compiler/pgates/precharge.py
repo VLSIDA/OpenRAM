@@ -81,8 +81,8 @@ class precharge(pgate.pgate):
         pmos_vdd_pos = vector(pmos_pin.cx(), vdd_position.y)
         self.add_path("metal1", [pmos_pin.uc(), pmos_vdd_pos])
 
-        # Add layout pin
-        self.add_power_pin("vdd", vdd_position)
+        # Add vdd pin above the transistor
+        self.add_power_pin("vdd", pmos_pin.center(), rotate=0)
         
         
     def create_ptx(self):

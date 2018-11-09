@@ -329,8 +329,11 @@ spice["nand3_transition_prob"] = .1094    # Transition probability of 3-input na
 spice["nor2_transition_prob"] = .1875     # Transition probability of 2-input nor.
 
 #Logical Effort relative values for the Handmade cells
-spice["dff_clk_cin"] = 30.6
-parameter["6tcell_wl_cin"] = 3
+parameter["dff_clk_cin"] = 30.6             #relative capacitance
+parameter["6tcell_wl_cin"] = 3              #relative capacitance
+parameter["min_inv_para_delay"] = .5        #Tau delay units
+parameter["sa_en_pmos_size"] = .72          #micro-meters
+parameter["sa_en_nmos_size"] = .27          #micro-meters
 
 ###################################################
 ##END Spice Simulation Parameters

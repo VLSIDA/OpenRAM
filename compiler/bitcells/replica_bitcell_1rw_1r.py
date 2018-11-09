@@ -1,7 +1,7 @@
 import design
 import debug
 import utils
-from tech import GDS,layer
+from tech import GDS,layer,drc,parameter
 
 class replica_bitcell_1rw_1r(design.design):
     """
@@ -21,3 +21,11 @@ class replica_bitcell_1rw_1r(design.design):
         self.width = replica_bitcell_1rw_1r.width
         self.height = replica_bitcell_1rw_1r.height
         self.pin_map = replica_bitcell_1rw_1r.pin_map
+
+    def get_wl_cin(self):
+        """Return the relative capacitance of the access transistor gates"""
+        #This is a handmade cell so the value must be entered in the tech.py file or estimated.
+        #Calculated in the tech file by summing the widths of all the related gates and dividing by the minimum width.
+        #FIXME: sizing is not accurate with the handmade cell. Change once cell widths are fixed.
+        access_tx_cin = parameter["6T_access_size"]/drc["minwidth_tx"]
+        return 2*access_tx_cin

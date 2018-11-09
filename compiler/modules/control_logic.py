@@ -603,7 +603,51 @@ class control_logic(design.design):
         internal_cout = self.ctrl_dff_array.get_clk_cin()
         clk_buf_cap = internal_cout+external_cout
         #First stage is the clock buffer
-        stage_effort_list += self.clkbuf.determine_wordline_stage_efforts(clk_buf_cap)
+        stage_effort_list += self.clkbuf.determine_clk_buf_stage_efforts(clk_buf_cap)
         
         return stage_effort_list
         
+    def determine_sa_enable_stage_efforts(self, ext_clk_buf_cout, ext_sen_cout):
+        """Follows the clock signal to the sense amp enable signal adding each stages stage effort to a list"""
+        stage_effort_list = []
+        #Calculate the load on clk_buf_bar
+        int_clk_buf_cout = self.get_clk_buf_bar_cin()
+        clk_buf_bar_cout = int_clk_buf_cout+ext_clk_buf_cout
+        #First stage is the clock buffer
+        stage1 = self.clkbuf.determine_clk_buf_bar_stage_efforts(clk_buf_bar_cout)
+        stage_effort_list += stage1
+        
+        #nand2 stage
+        stage2_cout = self.inv1.get_cin()
+        stage2 = self.nand2.get_effort_stage(stage2_cout)
+        stage_effort_list.append(stage2)
+        
+        #inverter stage
+        stage3_cout = self.replica_bitline.get_en_cin()
+        stage3 = self.inv1.get_effort_stage(stage3_cout)
+        stage_effort_list.append(stage3)
+        
+        #Replica bitline stage
+        stage4_cout = self.inv2.get_cin()
+        stage4 = self.replica_bitline.determine_sen_stage_efforts(stage4_cout)
+        stage_effort_list += stage4
+        
+        #inverter (inv2) stage
+        stage5_cout = self.inv8.get_cin()
+        stage5 = self.inv2.get_effort_stage(stage5_cout)
+        stage_effort_list.append(stage5)
+        
+        #inverter (inv8) stage, s_en output
+        stage6 = self.inv8.get_effort_stage(ext_sen_cout)
+        stage_effort_list.append(stage6)
+        return stage_effort_list    
+       
+    def get_clk_buf_bar_cin(self):
+        """Get the relative capacitance off the clk_buf_bar signal internal to the control logic"""
+        we_nand_cin = self.nand2.get_cin()
+        if self.port_type == "rw":
+            nand_mod = self.nand3
+        else:
+            nand_mod = self.nand2
+        sen_nand_cin = nand_mod.get_cin()
+        return we_nand_cin + sen_nand_cin

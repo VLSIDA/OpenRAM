@@ -353,4 +353,6 @@ class ptx(design.design):
         if self.connect_active:
             self.connect_fingered_active(drain_positions, source_positions)
 
-        
+    def get_cin(self):
+        """Returns the relative gate cin of the tx"""
+        return self.tx_width/drc("minwidth_tx")

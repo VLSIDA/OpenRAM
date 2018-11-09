@@ -965,3 +965,18 @@ class bank(design.design):
         #Current bank only uses clock (clk_buf) as an enable for the wordline driver.
         total_clk_cin = self.wordline_driver.get_clk_cin()
         return total_clk_cin
+        
+    def get_clk_bar_cin(self):
+        """Get the relative capacitance of all the clk_bar connections in the bank"""
+        #Current bank only uses clock bar (clk_buf_bar) as an enable for the precharge array.
+        
+        #Assume single port
+        port = 0
+        total_clk_bar_cin = self.precharge_array[port].get_en_cin()
+        return total_clk_bar_cin 
+
+    def get_sen_cin(self):
+        """Get the relative capacitance of all the sense amp enable connections in the bank"""
+        #Current bank only uses sen as an enable for the sense amps.
+        total_sen_cin = self.sense_amp_array.get_en_cin()
+        return total_sen_cin  

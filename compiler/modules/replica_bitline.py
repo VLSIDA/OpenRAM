@@ -608,4 +608,29 @@ class replica_bitline(design.design):
                            offset=pin.ll(),
                            height=pin.height(),
                            width=pin.width())
-
+                           
+    def get_en_cin(self):
+        """Get the enable input relative capacitance"""
+        #The enable is only connected to the delay, get the cin from that module
+        en_cin = self.delay_chain.get_cin()
+        return en_cin
+        
+    def determine_sen_stage_efforts(self, ext_cout):
+        """Get the stage efforts from the en to s_en. Does not compute the delay for the bitline load."""
+        stage_effort_list = []
+        #Stage 1 is the delay chain
+        stage1_cout = self.get_delayed_en_cin()
+        stage1 = self.delay_chain.determine_delayed_en_stage_efforts(stage1_cout)
+        stage_effort_list += stage1
+        
+        #The delay chain triggers the enable on the replica bitline (rbl). This is used to track the bitline delay whereas this
+        #model is intended to track every but that. Therefore, the next stage is the inverter after the rbl.
+        stage2 = self.inv.get_effort_stage(ext_cout)
+        stage_effort_list.append(stage2)
+        
+        return stage_effort_list
+        
+    def get_delayed_en_cin(self):
+        access_tx_cin = self.access_tx.get_cin()
+        rbc_cin = self.replica_bitcell.get_wl_cin()
+        return access_tx_cin + rbc_cin

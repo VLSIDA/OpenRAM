@@ -906,3 +906,9 @@ class pbitcell(design.design):
         dynamic = 0 #temporary
         total_power = self.return_power(dynamic, leakage)
         return total_power
+        
+    def get_wl_cin(self):
+        """Return the relative capacitance of the access transistor gates"""
+        #pbitcell uses the different sizing for the port access tx's. Not accounted for in this model.
+        access_tx_cin = self.readwrite_nmos.get_cin()
+        return 2*access_tx_cin

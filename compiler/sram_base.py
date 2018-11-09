@@ -5,7 +5,7 @@ import debug
 from importlib import reload
 from vector import vector
 from globals import OPTS, print_time
-
+import logical_effort
 from design import design
         
 class sram_base(design):
@@ -67,7 +67,8 @@ class sram_base(design):
         # Must create the control logic before pins to get the pins
         self.add_modules()
         self.add_pins()
-        
+        self.calculate_delay_to_wl()
+        self.calculate_delay_to_sen()
         # This is for the lib file if we don't create layout
         self.width=0
         self.height=0
@@ -455,9 +456,12 @@ class sram_base(design):
         """ LH and HL are the same in analytical model. """
         return self.bank.analytical_delay(vdd,slew,load)
 
-    def calculate_delay_to_wl(self):    
+    def calculate_delay_to_wl(self):
+        """Get the delay (in delay units) of the clk to a wordline in the bitcell array"""
         stage_efforts = self.determine_wordline_stage_efforts()
-        return 0
+        clk_to_wl_delay = logical_effort.calculate_relative_delay(stage_efforts, 0)
+        debug.info(1, "Clock to wordline delay is {} delay units".format(clk_to_wl_delay))
+        return clk_to_wl_delay
         
     def determine_wordline_stage_efforts(self):
         """Get the all the stage efforts for each stage in the path from clk to a wordline"""
@@ -483,8 +487,45 @@ class sram_base(design):
         col_addr_clk_cin = 0
         if self.col_addr_size > 0:
             col_addr_clk_cin = self.col_addr_dff.get_clk_cin()
-
-        #Bank cin...
         bank_clk_cin = self.bank.get_clk_cin()
         
         return row_addr_clk_cin + data_clk_cin + col_addr_clk_cin + bank_clk_cin
+
+    def calculate_delay_to_sen(self):
+        """Get the delay (in delay units) of the clk to a sense amp enable. 
+           This does not incorporate the delay of the replica bitline.
+        """
+        stage_efforts = self.determine_sa_enable_stage_efforts()
+        clk_to_sen_delay = logical_effort.calculate_relative_delay(stage_efforts, 0)
+        debug.info(1, "Clock to s_en delay is {} delay units".format(clk_to_sen_delay))
+        return clk_to_sen_delay    
+        
+    def determine_sa_enable_stage_efforts(self):
+        """Get the all the stage efforts for each stage in the path from clk to a sense amp enable"""
+        stage_effort_list = []
+        clk_buf_bar_cout = self.get_clk_bar_cin()
+        clk_sen_cout = self.get_sen_cin()
+        #Assume rw only. There are important differences with multiport that will need to be accounted for.
+        if self.control_logic_rw != None:
+            stage_effort_list += self.control_logic_rw.determine_sa_enable_stage_efforts(clk_buf_bar_cout, clk_sen_cout)
+        else: 
+            stage_effort_list += self.control_logic_r.determine_sa_enable_stage_efforts(clk_buf_bar_cout, clk_sen_cout)
+        
+        return stage_effort_list      
+        
+    def get_clk_bar_cin(self):
+        """Gets the capacitive load the of clock (clk_buf_bar) for the sram"""
+        #As clk_buf_bar is an output of the control logic. The cap for that module is not determined here.
+        #Only the precharge cells use this signal (other than the control logic)
+        bank_clk_cin = self.bank.get_clk_bar_cin()
+        return bank_clk_cin
+    
+    def get_sen_cin(self):
+        """Gets the capacitive load the of sense amp enable for the sram"""
+        #As clk_buf_bar is an output of the control logic. The cap for that module is not determined here.
+        #Only the sense_amps use this signal (other than the control logic)
+        bank_sen_cin = self.bank.get_sen_cin()
+        return bank_sen_cin
+    
+      
+      

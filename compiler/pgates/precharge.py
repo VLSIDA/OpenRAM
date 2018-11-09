@@ -110,11 +110,13 @@ class precharge(pgate.pgate):
 
         # Compute the other pmos2 location, but determining offset to overlap the
         # source and drain pins
-        self.overlap_offset = self.pmos.get_pin("D").ll() - self.pmos.get_pin("S").ll()
+        overlap_offset = self.pmos.get_pin("D").ll() - self.pmos.get_pin("S").ll()
+        # This is how much the contact is placed inside the ptx active
+        contact_xdiff = self.pmos.get_pin("S").lx()
         
         # adds the lower pmos to layout
-        #base = vector(self.width - 2*self.pmos.width + self.overlap_offset.x, 0)
-        self.lower_pmos_position = vector(max(self.bitcell.get_pin(self.bitcell_bl).lx(), self.well_enclose_active),
+        bl_xoffset = self.bitcell.get_pin(self.bitcell_bl).lx()
+        self.lower_pmos_position = vector(max(bl_xoffset - contact_xdiff, self.well_enclose_active),
                                           self.pmos.active_offset.y)
         self.lower_pmos_inst.place(self.lower_pmos_position)
 
@@ -123,7 +125,7 @@ class precharge(pgate.pgate):
         self.upper_pmos1_pos = self.lower_pmos_position + vector(0, ydiff)
         self.upper_pmos1_inst.place(self.upper_pmos1_pos)
 
-        upper_pmos2_pos = self.upper_pmos1_pos + self.overlap_offset
+        upper_pmos2_pos = self.upper_pmos1_pos + overlap_offset
         self.upper_pmos2_inst.place(upper_pmos2_pos)
         
     def connect_poly(self):

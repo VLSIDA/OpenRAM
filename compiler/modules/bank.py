@@ -253,7 +253,7 @@ class bank(design.design):
 
         # A space for wells or jogging m2
         self.m2_gap = max(2*drc("pwell_to_nwell") + drc("well_enclosure_active"),
-                          2*self.m2_pitch)
+                          3*self.m2_pitch)
 
 
     def add_modules(self):
@@ -451,6 +451,7 @@ class bank(design.design):
                                                                   mod=self.write_driver_array))
             else:
                 self.write_driver_array_inst.append(None)
+                continue
 
             temp = []
             for bit in range(self.word_size):

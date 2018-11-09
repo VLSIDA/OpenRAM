@@ -282,7 +282,7 @@ class sram_base(design):
                 temp.append("bank_sel{0}[{1}]".format(port,bank_num))
         for port in self.read_ports:
             temp.append("s_en{0}".format(port))
-        for port in self.readwrite_ports:
+        for port in self.write_ports:
             temp.append("w_en{0}".format(port))
         for port in self.all_ports:
             temp.append("clk_buf_bar{0}".format(port))

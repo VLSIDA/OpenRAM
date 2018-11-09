@@ -874,27 +874,17 @@ class bank(design.design):
                     decoder_name = "in_{}".format(i)
                     addr_name = "addr{0}_{1}".format(port,i)
                     self.copy_layout_pin(self.col_decoder_inst[port], decoder_name, addr_name)
-                    
 
-            # This will do a quick "river route" on two layers.
-            # When above the top select line it will offset "inward" again to prevent conflicts.
-            # This could be done on a single layer, but we follow preferred direction rules for later routing.
-            top_y_offset = self.col_mux_array_inst[port].get_pin("sel_{}".format(self.num_col_addr_lines-1)).cy()
-            for (decode_name,i) in zip(decode_names,range(self.num_col_addr_lines)):
-                mux_name = "sel_{}".format(i)
-                mux_addr_pos = self.col_mux_array_inst[port].get_pin(mux_name).lc()
-                
-                decode_out_pos = self.col_decoder_inst[port].get_pin(decode_name).center()
+            offset = self.col_decoder_inst[port].lr() + vector(self.m2_pitch, 0)
 
-                # To get to the edge of the decoder and one track out
-                delta_offset = self.col_decoder_inst[port].rx() - decode_out_pos.x + self.m2_pitch
-                if decode_out_pos.y > top_y_offset:
-                    mid1_pos = vector(decode_out_pos.x + delta_offset + i*self.m2_pitch,decode_out_pos.y)
-                else:
-                    mid1_pos = vector(decode_out_pos.x + delta_offset + (self.num_col_addr_lines-i)*self.m2_pitch,decode_out_pos.y)
-                mid2_pos = vector(mid1_pos.x,mux_addr_pos.y)
-                #self.add_wire(("metal1","via1","metal2"),[decode_out_pos, mid1_pos, mid2_pos, mux_addr_pos])
-                self.add_path("metal1",[decode_out_pos, mid1_pos, mid2_pos, mux_addr_pos])
+            sel_names = ["sel_{}".format(x) for x in range(self.num_col_addr_lines)]
+
+            route_map = list(zip(decode_names, sel_names))
+            decode_pins = {key: self.col_decoder_inst[port].get_pin(key) for key in decode_names }
+            col_mux_pins = {key: self.col_mux_array_inst[port].get_pin(key) for key in sel_names }
+            # Combine the dff and bank pins into a single dictionary of pin name to pin.
+            all_pins = {**decode_pins, **col_mux_pins}
+            self.create_vertical_channel_route(route_map, all_pins, offset)
 
 
     def add_lvs_correspondence_points(self):

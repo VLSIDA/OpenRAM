@@ -196,9 +196,11 @@ class pbitcell(design.design):
         # y-position of inverter nmos
         self.inverter_nmos_ypos = self.port_ypos
 
-        # spacing between ports
-        self.bitline_offset = -self.active_width + 0.5*contact.m1m2.height + self.m2_space + self.m2_width
-        self.port_spacing = self.bitline_offset + self.m2_space
+        # spacing between ports (same for read/write and write ports)
+        self.bitline_offset = -0.5*self.readwrite_nmos.active_width + 0.5*contact.m1m2.height + self.m2_space + self.m2_width
+        m2_constraint = self.bitline_offset + self.m2_space + 0.5*contact.m1m2.height - 0.5*self.readwrite_nmos.active_width
+        self.write_port_spacing = max(self.active_space, self.m1_space, m2_constraint)
+        self.read_port_spacing = self.bitline_offset + self.m2_space
 
         # spacing between cross coupled inverters
         self.inverter_to_inverter_spacing = contact.poly.height + self.m1_space
@@ -236,10 +238,10 @@ class pbitcell(design.design):
         self.topmost_ypos = self.inverter_nmos_ypos + self.inverter_nmos.active_height + self.inverter_gap + self.inverter_pmos.active_height + self.vdd_offset
 
         self.leftmost_xpos = -0.5*self.inverter_to_inverter_spacing - self.inverter_nmos.active_width \
-                             - self.num_rw_ports*(self.readwrite_nmos.active_width + self.port_spacing) \
-                             - self.num_w_ports*(self.write_nmos.active_width + self.port_spacing) \
-                             - self.num_r_ports*(self.read_port_width + self.port_spacing) \
-                             - self.bitline_offset - 0.5*self.m2_width
+                             - self.num_rw_ports*(self.readwrite_nmos.active_width + self.write_port_spacing) \
+                             - self.num_w_ports*(self.write_nmos.active_width + self.write_port_spacing) \
+                             - self.num_r_ports*(self.read_port_width + self.read_port_spacing) \
+                             - self.bitline_offset - 0.5*contact.m1m2.width
 
         self.width = -2*self.leftmost_xpos
         self.height = self.topmost_ypos - self.botmost_ypos
@@ -370,11 +372,11 @@ class pbitcell(design.design):
         for k in range(0,self.num_rw_ports):
             # calculate read/write transistor offsets
             left_readwrite_transistor_xpos = self.left_building_edge \
-                                             - (k+1)*self.port_spacing \
+                                             - (k+1)*self.write_port_spacing \
                                              - (k+1)*self.readwrite_nmos.active_width
 
             right_readwrite_transistor_xpos = self.right_building_edge \
-                                              + (k+1)*self.port_spacing \
+                                              + (k+1)*self.write_port_spacing \
                                               + k*self.readwrite_nmos.active_width
 
             # place read/write transistors
@@ -392,7 +394,7 @@ class pbitcell(design.design):
                                             height=self.m1_width)
 
             # add pins for RWBL and RWBR
-            rwbl_xpos = left_readwrite_transistor_xpos - self.bitline_offset + self.m2_width
+            rwbl_xpos = left_readwrite_transistor_xpos - self.bitline_offset + 0.5*self.m2_width
             self.rwbl_positions[k] = vector(rwbl_xpos, self.center_ypos)
             self.add_layout_pin_rect_center(text=self.rw_bl_names[k],
                                             layer="metal2",
@@ -400,7 +402,7 @@ class pbitcell(design.design):
                                             width=drc["minwidth_metal2"],
                                             height=self.height)
 
-            rwbr_xpos = right_readwrite_transistor_xpos + self.readwrite_nmos.active_width + self.bitline_offset - self.m2_width
+            rwbr_xpos = right_readwrite_transistor_xpos + self.readwrite_nmos.active_width + self.bitline_offset - 0.5*self.m2_width
             self.rwbr_positions[k] = vector(rwbr_xpos, self.center_ypos)
             self.add_layout_pin_rect_center(text=self.rw_br_names[k],
                                             layer="metal2",
@@ -447,11 +449,11 @@ class pbitcell(design.design):
             # Add transistors
             # calculate write transistor offsets
             left_write_transistor_xpos = self.left_building_edge \
-                                         - (k+1)*self.port_spacing \
+                                         - (k+1)*self.write_port_spacing \
                                          - (k+1)*self.write_nmos.active_width
 
             right_write_transistor_xpos = self.right_building_edge \
-                                          + (k+1)*self.port_spacing \
+                                          + (k+1)*self.write_port_spacing \
                                           + k*self.write_nmos.active_width
 
             # add write transistors
@@ -469,7 +471,7 @@ class pbitcell(design.design):
                                             height=self.m1_width)
 
             # add pins for WBL and WBR
-            wbl_xpos = left_write_transistor_xpos - self.bitline_offset + self.m2_width
+            wbl_xpos = left_write_transistor_xpos - self.bitline_offset + 0.5*self.m2_width
             self.wbl_positions[k] = vector(wbl_xpos, self.center_ypos)
             self.add_layout_pin_rect_center(text=self.w_bl_names[k],
                                             layer="metal2",
@@ -477,7 +479,7 @@ class pbitcell(design.design):
                                             width=drc["minwidth_metal2"],
                                             height=self.height)
 
-            wbr_xpos = right_write_transistor_xpos + self.write_nmos.active_width + self.bitline_offset - self.m2_width
+            wbr_xpos = right_write_transistor_xpos + self.write_nmos.active_width + self.bitline_offset - 0.5*self.m2_width
             self.wbr_positions[k] = vector(wbr_xpos, self.center_ypos)
             self.add_layout_pin_rect_center(text=self.w_br_names[k],
                                             layer="metal2",
@@ -541,11 +543,11 @@ class pbitcell(design.design):
         for k in range(0,self.num_r_ports):
             # calculate transistor offsets
             left_read_transistor_xpos = self.left_building_edge \
-                                        - (k+1)*self.port_spacing \
+                                        - (k+1)*self.read_port_spacing \
                                         - (k+1)*self.read_port_width
 
             right_read_transistor_xpos = self.right_building_edge \
-                                         + (k+1)*self.port_spacing \
+                                         + (k+1)*self.read_port_spacing \
                                          + k*self.read_port_width
 
             # add read-access transistors
@@ -568,7 +570,7 @@ class pbitcell(design.design):
                                             height=self.m1_width)
 
             # add pins for RBL and RBR
-            rbl_xpos = left_read_transistor_xpos - self.bitline_offset + self.m2_width
+            rbl_xpos = left_read_transistor_xpos - self.bitline_offset + 0.5*self.m2_width
             self.rbl_positions[k] = vector(rbl_xpos, self.center_ypos)
             self.add_layout_pin_rect_center(text=self.r_bl_names[k],
                                             layer="metal2",
@@ -576,7 +578,7 @@ class pbitcell(design.design):
                                             width=drc["minwidth_metal2"],
                                             height=self.height)
 
-            rbr_xpos = right_read_transistor_xpos + self.read_port_width + self.bitline_offset - self.m2_width
+            rbr_xpos = right_read_transistor_xpos + self.read_port_width + self.bitline_offset - 0.5*self.m2_width
             self.rbr_positions[k] = vector(rbr_xpos, self.center_ypos)
             self.add_layout_pin_rect_center(text=self.r_br_names[k],
                                             layer="metal2",
@@ -692,7 +694,11 @@ class pbitcell(design.design):
             self.add_contact_center(layers=("metal1", "via1", "metal2"),
                                     offset=position)
 
-            supply_offset = vector(position.x, self.gnd_position.y)
+            if position.x > 0:
+                contact_correct = 0.5*contact.m1m2.height
+            else:
+                contact_correct = -0.5*contact.m1m2.height
+            supply_offset = vector(position.x + contact_correct, self.gnd_position.y)
             self.add_contact_center(layers=("metal1", "via1", "metal2"),
                                     offset=supply_offset,
                                     rotate=90)

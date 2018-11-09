@@ -39,6 +39,7 @@ class design(hierarchy_design):
         self.m3_width = drc("minwidth_metal3")
         self.m3_space = drc("metal3_to_metal3")
         self.active_width = drc("minwidth_active")
+        self.active_space = drc("active_to_body_active")
         self.contact_width = drc("minwidth_contact")
 
         self.poly_to_active = drc("poly_to_active")

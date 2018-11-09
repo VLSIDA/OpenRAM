@@ -587,8 +587,8 @@ class pin_group:
         
         # At least one of the groups must have some valid tracks
         if (len(pin_set)==0 and len(blockage_set)==0):
-            self.write_debug_gds("blocked_pin.gds")
-            debug.error("Unable to find unblocked pin on grid.")
+            debug.error("Unable to find unblocked pin {} {}".format(self.name, self.pins))
+            self.router.write_debug_gds("blocked_pin.gds")
 
         # We need to route each of the components, so don't combine the groups
         self.grids = pin_set | blockage_set

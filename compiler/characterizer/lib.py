@@ -502,6 +502,7 @@ class lib:
                 
                 
     def parse_info(self,corner,lib_name):
+        """ Copies important characterization data to datasheet.info to be added to datasheet """
         if OPTS.is_unit_test:
             return
         datasheet = open(OPTS.openram_temp +'/datasheet.info', 'a+')

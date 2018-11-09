@@ -7,7 +7,6 @@ packages to be installed.
 #TODO:
 #locate all port elements in .lib
 #Locate all timing elements in .lib
-#Calculate area from .gds file
 #Diagram generation
 #Improve css
 
@@ -43,7 +42,7 @@ def process_name(corner):
     else:
         return "custom"
 
-def parse_characterizer_csv(f,pages):
+def parse_characterizer_csv(sram,f,pages):
     """
     Parses output data of the Liberty file generator in order to construct the timing and
     current table
@@ -174,8 +173,7 @@ def parse_characterizer_csv(f,pages):
                 new_sheet.timing.append(timing_and_current_data_item('CSb hold falling',FF_HOLD_HL_MIN,FF_HOLD_HL_MAX,'ns'))
                 new_sheet.timing.append(timing_and_current_data_item('AC current','2','3','4'))
                 new_sheet.timing.append(timing_and_current_data_item('Standby current','2','3','4'))
-                new_sheet.timing.append(timing_and_current_data_item('Area','2','3','4'))
-
+                
                 if not OPTS.netlist_only:
                     #physical layout files should not be generated in netlist only mode
                     new_sheet.dlv.append(deliverables_item('.gds','GDSII layout views','<a href="file://{0}{1}.{2}">{1}.{2}</a>'.format(OUT_DIR,OPTS.output_name,'gds')))
@@ -197,13 +195,15 @@ def parse_characterizer_csv(f,pages):
                 new_sheet.io.append(in_out_item('NUM_RW_PORTS',NUM_RW_PORTS))
                 new_sheet.io.append(in_out_item('NUM_R_PORTS',NUM_R_PORTS))
                 new_sheet.io.append(in_out_item('NUM_W_PORTS',NUM_W_PORTS))
+                new_sheet.io.append(in_out_item('Area',sram.width * sram.height))
+                
 
 
 
 
 
 class datasheet_gen():
-     def datasheet_write(name):
+     def datasheet_write(sram,name):
         
         if OPTS.datasheet_gen:
             in_dir = OPTS.openram_temp
@@ -213,7 +213,7 @@ class datasheet_gen():
 
 
             datasheets = []
-            parse_characterizer_csv(in_dir + "/datasheet.info", datasheets)
+            parse_characterizer_csv(sram, in_dir + "/datasheet.info", datasheets)
 
 
             for sheets in datasheets:

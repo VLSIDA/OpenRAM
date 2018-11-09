@@ -495,10 +495,11 @@ class router(router_tech):
         #     debug.info(0,"Pin {}".format(pin))
         return [ll,ur]
 
-    def convert_pin_to_tracks(self, pin_name, pin):
+    def convert_pin_to_tracks(self, pin_name, pin, expansion=0):
         """ 
         Convert a rectangular pin shape into a list of track locations,layers.
         If no pins are "on-grid" (i.e. sufficient overlap) it makes the one with most overlap if it is not blocked.
+        If expansion>0, expamine areas beyond the current pin when it is blocked.
         """
         (ll,ur) = pin.rect
         debug.info(3,"Converting pin [ {0} , {1} ]".format(ll,ur))
@@ -512,8 +513,8 @@ class router(router_tech):
         insufficient_list = set()
         
         zindex=self.get_zindex(pin.layer_num)
-        for x in range(int(ll[0]),int(ur[0])+1):
-            for y in range(int(ll[1]),int(ur[1])+1):
+        for x in range(int(ll[0])+expansion,int(ur[0])+1+expansion):
+            for y in range(int(ll[1]+expansion),int(ur[1])+1+expansion):
                 debug.info(4,"Converting [ {0} , {1} ]".format(x,y))
                 (full_overlap,partial_overlap) = self.convert_pin_coord_to_tracks(pin, vector3d(x,y,zindex))
                 if full_overlap:
@@ -523,9 +524,14 @@ class router(router_tech):
 
         if len(sufficient_list)>0:
             return sufficient_list
-        elif len(insufficient_list)>0:
-            # If there wasn't a sufficient grid, find the best and patch it to be on grid.
+        elif expansion==0 and len(insufficient_list)>0:
+            #Remove blockages and return the best to be patched
+            insufficient_list.difference_update(self.blocked_grids)
             return self.get_best_offgrid_pin(pin, insufficient_list)
+        elif expansion>0:
+            #Remove blockages and return the nearest
+            insufficient_list.difference_update(self.blocked_grids)
+            return self.get_nearest_offgrid_pin(pin, insufficient_list)
         else:
             debug.error("Unable to find any overlapping grids.", -1)
             
@@ -555,6 +561,24 @@ class router(router_tech):
             
         return set([best_coord])
 
+    def get_nearest_offgrid_pin(self, pin, insufficient_list):
+        """ 
+        Given a pin and a list of grid cells (probably non-overlapping),
+        return the nearest grid cell (center to center).
+        """
+        #print("INSUFFICIENT LIST",insufficient_list)
+        # Find the coordinate with the most overlap
+        best_coord = None
+        best_dist = math.inf
+        for coord in insufficient_list:
+            track_pin = self.convert_track_to_pin(coord)
+            min_dist = pin.distance(track_pin)
+            if min_dist<best_dist:
+                best_dist=min_dist
+                best_coord=coord
+            
+        return set([best_coord])
+    
         
     def convert_pin_coord_to_tracks(self, pin, coord):
         """ 

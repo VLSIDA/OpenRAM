@@ -862,7 +862,7 @@ class layout(lef.lef):
                 offset += vector(pitch,0)
             else:
                 self.add_horizontal_trunk_route(pin_list, offset, layer_stack, pitch)
-                offset += vector(0,pitch)
+                offset -= vector(0,pitch)
 
 
     def create_vertical_channel_route(self, netlist, pins, offset, 

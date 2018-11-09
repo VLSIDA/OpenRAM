@@ -150,7 +150,7 @@ class replica_bitline(design.design):
         self.connect_inst(temp)
         
         self.wl_list = self.rbl.cell.list_all_wl_names()
-        self.bl_list = self.rbl.cell.list_write_bl_names()
+        self.bl_list = self.rbl.cell.list_all_bl_names()
         
     def place_modules(self):
         """ Add all of the module instances in the logical netlist """

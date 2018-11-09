@@ -966,6 +966,7 @@ class router(router_tech):
         """ 
         Write out a GDS file with the routing grid and search information annotated on it.
         """
+        debug.info(0,"Writing annotated router gds file to {}".format(gds_name))
         self.add_router_info()
         self.cell.gds_write(gds_name)
 

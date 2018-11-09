@@ -69,27 +69,20 @@ class precharge(pgate.pgate):
         Adds a vdd rail at the top of the cell
         """
         
-        # adds the rail across the width of the cell
-        vdd_position = vector(0, self.height - self.m1_width)
-        self.add_rect(layer="metal1",
-                      offset=vdd_position,
-                      width=self.width,
-                      height=self.m1_width)
+        # Adds the rail across the width of the cell
+        vdd_position = vector(0.5*self.width, self.height)
+        self.add_rect_center(layer="metal1",
+                             offset=vdd_position,
+                             width=self.width,
+                             height=self.m1_width)
 
         pmos_pin = self.upper_pmos2_inst.get_pin("S")
         # center of vdd rail
-        vdd_pos = vector(pmos_pin.cx(), vdd_position.y + 0.5*self.m1_width)
-        self.add_path("metal1", [pmos_pin.uc(), vdd_pos])
+        pmos_vdd_pos = vector(pmos_pin.cx(), vdd_position.y)
+        self.add_path("metal1", [pmos_pin.uc(), pmos_vdd_pos])
 
-        # Add the M1->M2->M3 stack 
-        vdd_contact_pos = vector(0.5*self.width, vdd_position.y + 0.5*self.m1_width)
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
-                            offset=vdd_contact_pos)
-        self.add_via_center(layers=("metal2", "via2", "metal3"),
-                            offset=vdd_contact_pos)
-        self.add_layout_pin_rect_center(text="vdd",
-                                        layer="metal3",
-                                        offset=vdd_contact_pos)
+        # Add layout pin
+        self.add_power_pin("vdd", vdd_position)
         
         
     def create_ptx(self):
@@ -221,10 +214,10 @@ class precharge(pgate.pgate):
         Connect the bitlines to the devices
         """
         self.add_bitline_contacts()
-        self.connect_pmos(self.lower_pmos_inst.get_pin("S"),self.get_pin("bl"))
-        self.connect_pmos(self.lower_pmos_inst.get_pin("D"),self.get_pin("br"))        
-        self.connect_pmos(self.upper_pmos1_inst.get_pin("S"),self.get_pin("bl"))        
-        self.connect_pmos(self.upper_pmos2_inst.get_pin("D"),self.get_pin("br"))
+        self.connect_pmos_m2(self.lower_pmos_inst.get_pin("S"),self.get_pin("bl"))
+        self.connect_pmos_m2(self.upper_pmos1_inst.get_pin("S"),self.get_pin("bl"))        
+        self.connect_pmos_m1(self.lower_pmos_inst.get_pin("D"),self.get_pin("br"))        
+        self.connect_pmos_m1(self.upper_pmos2_inst.get_pin("D"),self.get_pin("br"))
         
 
     def add_bitline_contacts(self):
@@ -233,19 +226,22 @@ class precharge(pgate.pgate):
         """
 
         stack=("metal1", "via1", "metal2")
-        upper_y = self.upper_pmos1_inst.get_pin("S").cy()
-        lower_y = self.lower_pmos_inst.get_pin("S").cy()        
+        upper_pin = self.upper_pmos1_inst.get_pin("S")
+        lower_pin = self.lower_pmos_inst.get_pin("S")
+        
+        # BL goes up to M2 at the transistor
+        self.bl_contact=self.add_contact_center(layers=stack,
+                                                offset=upper_pin.center())
+        self.add_contact_center(layers=stack,
+                                offset=lower_pin.center())
 
+        # BR routes over on M1 first
         self.add_contact_center(layers=stack,
-                                offset = vector(self.bl_pin.cx(), upper_y))
+                                offset = vector(self.br_pin.cx(), upper_pin.cy()))
         self.add_contact_center(layers=stack,
-                                offset = vector(self.br_pin.cx(), upper_y))
-        self.add_contact_center(layers=stack,
-                                offset = vector(self.bl_pin.cx(), lower_y))
-        self.add_contact_center(layers=stack,
-                                offset = vector(self.br_pin.cx(), lower_y))
+                                offset = vector(self.br_pin.cx(), lower_pin.cy()))
 
-    def connect_pmos(self, pmos_pin, bit_pin):
+    def connect_pmos_m1(self, pmos_pin, bit_pin):
         """ 
         Connect a pmos pin to bitline pin 
         """
@@ -254,4 +250,14 @@ class precharge(pgate.pgate):
         right_pos = vector(max(pmos_pin.cx(),bit_pin.cx()), pmos_pin.cy())
 
         self.add_path("metal1", [ left_pos, right_pos] )
+
+    def connect_pmos_m2(self, pmos_pin, bit_pin):
+        """ 
+        Connect a pmos pin to bitline pin 
+        """
+
+        left_pos = vector(min(pmos_pin.cx(),bit_pin.cx()), pmos_pin.cy())
+        right_pos = vector(max(pmos_pin.cx(),bit_pin.cx()), pmos_pin.cy())
+
+        self.add_path("metal2", [ left_pos, right_pos], self.bl_contact.height)
         

@@ -32,6 +32,10 @@ class precharge_test(openram_test):
         debug.info(2, "Checking precharge for pbitcell (innermost connections)")
         tx = precharge.precharge(name="precharge_driver", size=1, bitcell_bl="bl0", bitcell_br="br0")
         self.local_check(tx)
+
+        debug.info(2, "Checking precharge for pbitcell (innermost connections)")
+        tx = precharge.precharge(name="precharge_driver", size=1, bitcell_bl="bl1", bitcell_br="br1")
+        self.local_check(tx)
         
         debug.info(2, "Checking precharge for pbitcell (outermost connections)")
         tx = precharge.precharge(name="precharge_driver", size=1, bitcell_bl="bl2", bitcell_br="br2")

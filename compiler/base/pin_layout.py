@@ -316,7 +316,43 @@ class pin_layout:
             return [dx,dy]
         else:
             return [0,0]
+
+    def distance(self, other):
+        """ 
+        Calculate the distance to another pin layout.
+        """
+        (r1_ll,r1_ur) = self.rect
+        (r2_ll,r2_ur) = other.rect
+
+        def dist(x1, y1, x2, y2):
+            return sqrt((x2-x1)**2 + (y2-y1)**2)
         
+        left = r2_ur.x < r1_ll.x
+        right = r1_ur.x < r2_ll.x
+        bottom = r2_ur.y < r1_ll.y
+        top = r1_ur.y < r2_ll.y
+
+        if top and left:
+            return dist(r1_ll.x, r1_ur.y, r2_ur.x, r2_ll.y)
+        elif left and bottom:
+            return dist(r1_ll.x, r1_ll.y, r2_ur.x, r2_ur.y)
+        elif bottom and right:
+            return dist(r1_ur.x, r1_ll.y, r2_ll.x, r2_ur.y)
+        elif right and top:
+            return dist(r1_ur.x, r1_ur.y, r2_ll.x, r2_ll.y)
+        elif left:
+            return r1_ll.x - r2_ur.x
+        elif right:
+            return r2_ll.x - r1.ur.x
+        elif bottom:
+            return r1_ll.y - r2_ur.y
+        elif top:
+            return r2_ll.y - r1_ur.y
+        else:
+            # rectangles intersect
+            return 0
+        
+    
     def overlap_length(self, other):
         """ 
         Calculate the intersection segment and determine its length

@@ -38,7 +38,6 @@ class single_bank_test(openram_test):
         a = bank(c, name="bank3_single")
         self.local_check(a)
 
-        # Eight way has a short circuit of one column mux select to gnd rail
         c.word_size=2
         c.num_words=128
         c.words_per_row=8

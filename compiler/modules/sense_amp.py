@@ -26,6 +26,8 @@ class sense_amp(design.design):
     def input_load(self):
         #Input load for the bitlines which are connected to the source/drain of a TX. Not the selects.
         from tech import spice, parameter
+        # Default is 8x. Per Samira and Hodges-Jackson book:
+        # "Column-mux transistors driven by the decoder must be sized for optimal speed"
         bitline_pmos_size = 8 #FIXME: This should be set somewhere and referenced. Probably in tech file.
         return spice["min_tx_drain_c"]*(bitline_pmos_size/parameter["min_tx_size"])#ff   
         

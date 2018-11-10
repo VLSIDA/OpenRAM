@@ -80,8 +80,8 @@ class functional(simulation):
         
         # Read at least once. For multiport, it is important that one read cycle uses all RW and R port to read from the same address simultaniously.
         # This will test the viablilty of the transistor sizing in the bitcell.
-        for port in range(self.total_ports):
-            if self.port_id[port] == "w":
+        for port in self.all_ports:
+            if port in self.write_ports:
                 self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, port)
             else:
                 comment = self.gen_cycle_comment("read", word, addr, port, self.t_current)
@@ -94,10 +94,10 @@ class functional(simulation):
         # Perform a random sequence of writes and reads on random ports, using random addresses and random words
         for i in range(self.num_cycles):
             w_addrs = []
-            for port in range(self.total_ports):
-                if self.port_id[port] == "rw":
+            for port in self.all_ports:
+                if port in self.readwrite_ports:
                     op = random.choice(rw_ops)
-                elif self.port_id[port] == "w":
+                elif port in self.write_ports:
                     op = random.choice(w_ops)
                 else:
                     op = random.choice(r_ops)
@@ -225,17 +225,17 @@ class functional(simulation):
         self.sf.write("\n* Instantiation of the SRAM\n")
         self.stim.inst_sram(sram=self.sram,
                             port_signal_names=(self.addr_name,self.din_name,self.dout_name),
-                            port_info=(self.total_ports, self.write_index, self.read_index),
+                            port_info=(len(self.all_ports), self.write_ports, self.read_ports),
                             abits=self.addr_size,
                             dbits=self.word_size,
                             sram_name=self.name)
 
         # Add load capacitance to each of the read ports
         self.sf.write("\n* SRAM output loads\n")
-        for port in range(self.total_read):
+        for port in self.read_ports:
             for bit in range(self.word_size):
-                sig_name="{0}{1}_{2} ".format(self.dout_name, self.read_index[port], bit)
-                self.sf.write("CD{0}{1} {2} 0 {3}f\n".format(self.read_index[port], bit, sig_name, self.load))
+                sig_name="{0}{1}_{2} ".format(self.dout_name, port, bit)
+                self.sf.write("CD{0}{1} {2} 0 {3}f\n".format(port, bit, sig_name, self.load))
                 
         # Write debug comments to stim file
         self.sf.write("\n\n * Sequence of operations\n")
@@ -244,27 +244,27 @@ class functional(simulation):
                 
         # Generate data input bits 
         self.sf.write("\n* Generation of data and address signals\n")
-        for port in range(self.total_write):
+        for port in self.write_ports:
             for bit in range(self.word_size):
                 sig_name="{0}{1}_{2} ".format(self.din_name, port, bit)
                 self.stim.gen_pwl(sig_name, self.cycle_times, self.data_values[port][bit], self.period, self.slew, 0.05)
         
         # Generate address bits
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             for bit in range(self.addr_size):
                 sig_name="{0}{1}_{2} ".format(self.addr_name, port, bit)
                 self.stim.gen_pwl(sig_name, self.cycle_times, self.addr_values[port][bit], self.period, self.slew, 0.05)
 
         # Generate control signals
         self.sf.write("\n * Generation of control signals\n")
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             self.stim.gen_pwl("CSB{}".format(port), self.cycle_times , self.csb_values[port], self.period, self.slew, 0.05)
             
-        for port in range(self.num_rw_ports):
+        for port in self.readwrite_ports:
             self.stim.gen_pwl("WEB{}".format(port), self.cycle_times , self.web_values[port], self.period, self.slew, 0.05)
 
         # Generate CLK signals
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             self.stim.gen_pulse(sig_name="{0}{1}".format(tech.spice["clk"], port),
                                 v1=self.gnd_voltage,
                                 v2=self.vdd_voltage,

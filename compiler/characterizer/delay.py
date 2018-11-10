@@ -73,9 +73,9 @@ class delay(simulation):
             debug.error("Given probe_data is not an integer to specify a data bit",1)
         
         #Adding port options here which the characterizer cannot handle. Some may be added later like ROM
-        if len(self.read_index) == 0:
+        if len(self.read_ports) == 0:
            debug.error("Characterizer does not currently support SRAMs without read ports.",1)
-        if len(self.write_index) == 0:
+        if len(self.write_ports) == 0:
            debug.error("Characterizer does not currently support SRAMs without write ports.",1)
 
     def write_generic_stimulus(self):
@@ -89,12 +89,12 @@ class delay(simulation):
         self.sf.write("\n* Instantiation of the SRAM\n")
         self.stim.inst_sram(sram=self.sram,
                             port_signal_names=(self.addr_name,self.din_name,self.dout_name),
-                            port_info=(self.total_ports,self.write_index,self.read_index),
+                            port_info=(len(self.all_ports),self.write_ports,self.read_ports),
                             abits=self.addr_size,
                             dbits=self.word_size,
                             sram_name=self.name)
         self.sf.write("\n* SRAM output loads\n")
-        for port in self.read_index:
+        for port in self.read_ports:
             for i in range(self.word_size):
                 self.sf.write("CD{0}{1} {2}{0}_{1} 0 {3}f\n".format(port,i,self.dout_name,self.load))
         
@@ -132,7 +132,7 @@ class delay(simulation):
         self.gen_control()
 
         self.sf.write("\n* Generation of Port clock signal\n")
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             self.stim.gen_pulse(sig_name="CLK{0}".format(port),
                                 v1=0,
                                 v2=self.vdd_voltage,
@@ -171,24 +171,24 @@ class delay(simulation):
         
         # generate data and addr signals
         self.sf.write("\n* Generation of data and address signals\n")
-        for write_port in self.write_index:
+        for write_port in self.write_ports:
             for i in range(self.word_size):
                 self.stim.gen_constant(sig_name="{0}{1}_{2} ".format(self.din_name,write_port, i),
                                     v_val=0)
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             for i in range(self.addr_size):
                 self.stim.gen_constant(sig_name="{0}{1}_{2}".format(self.addr_name,port, i),
                                        v_val=0)
 
         # generate control signals
         self.sf.write("\n* Generation of control signals\n")
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             self.stim.gen_constant(sig_name="CSB{0}".format(port), v_val=self.vdd_voltage)
-            if port in self.write_index and port in self.read_index:
+            if port in self.readwrite_ports:
                 self.stim.gen_constant(sig_name="WEB{0}".format(port), v_val=self.vdd_voltage)
 
         self.sf.write("\n* Generation of global clock signal\n")
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             self.stim.gen_constant(sig_name="CLK{0}".format(port), v_val=0)  
                           
         self.write_power_measures()
@@ -317,7 +317,7 @@ class delay(simulation):
         double the period until we find a valid period to use as a
         starting point. 
         """
-        debug.check(port in self.read_index, "Characterizer requires a read port to determine a period.")
+        debug.check(port in self.read_ports, "Characterizer requires a read port to determine a period.")
         
         feasible_period = float(tech.spice["feasible_period"])
         time_out = 9
@@ -362,18 +362,18 @@ class delay(simulation):
         Loops through all read ports determining the feasible period and collecting 
         delay information from each port.
         """
-        feasible_delays = [{} for i in range(self.total_ports)]
+        feasible_delays = [{} for i in self.all_ports]
         
         #Get initial feasible delays from first port
-        feasible_delays[self.read_index[0]] = self.find_feasible_period_one_port(self.read_index[0])
+        feasible_delays[self.read_ports[0]] = self.find_feasible_period_one_port(self.read_ports[0])
         previous_period = self.period
         
         
         #Loops through all the ports checks if the feasible period works. Everything restarts it if does not.
         #Write ports do not produce delays which is why they are not included here.
         i = 1
-        while i < len(self.read_index):
-            port = self.read_index[i]
+        while i < len(self.read_ports):
+            port = self.read_ports[i]
             #Only extract port values from the specified port, not the entire results.
             feasible_delays[port].update(self.find_feasible_period_one_port(port))
             #Function sets the period. Restart the entire process if period changes to collect accurate delays 
@@ -416,7 +416,7 @@ class delay(simulation):
         #Sanity Check
         debug.check(self.period > 0, "Target simulation period non-positive") 
         
-        result = [{} for i in range(self.total_ports)]
+        result = [{} for i in self.all_ports]
         # Checking from not data_value to data_value
         self.write_delay_stimulus()
 
@@ -518,7 +518,7 @@ class delay(simulation):
         
         #Find the minimum period for all ports. Start at one port and perform binary search then use that delay as a starting position.
         #For testing purposes, only checks read ports.
-        for port in self.read_index:
+        for port in self.read_ports:
             target_period = self.find_min_period_one_port(feasible_delays, port, lb_period, ub_period, target_period)
             #The min period of one port becomes the new lower bound. Reset the upper_bound.
             lb_period = target_period
@@ -683,8 +683,8 @@ class delay(simulation):
         """Simulate all specified output loads and input slews pairs of all ports"""
         measure_data = self.get_empty_measure_data_dict()
         #Set the target simulation ports to all available ports. This make sims slower but failed sims exit anyways.        
-        self.targ_read_ports = self.read_index
-        self.targ_write_ports = self.write_index
+        self.targ_read_ports = self.read_ports
+        self.targ_write_ports = self.write_ports
         for slew in slews:
             for load in loads:
                 self.set_load_slew(load,slew)
@@ -693,7 +693,7 @@ class delay(simulation):
                 debug.check(success,"Couldn't run a simulation. slew={0} load={1}\n".format(self.slew,self.load))
                 debug.info(1, "Simulation Passed: Port {0} slew={1} load={2}".format("All", self.slew,self.load))
                 #The results has a dict for every port but dicts can be empty (e.g. ports were not targeted).
-                for port in range(self.total_ports):
+                for port in self.all_ports:
                     for mname,value in delay_results[port].items():
                         if "power" in mname:
                             # Subtract partial array leakage and add full array leakage for the power measures
@@ -763,15 +763,15 @@ class delay(simulation):
                       
     def get_available_port(self,get_read_port):
         """Returns the first accessible read or write port. """   
-        if get_read_port and len(self.read_index) > 0:
-            return self.read_index[0]
-        elif not get_read_port and len(self.write_index) > 0:
-            return self.write_index[0]
+        if get_read_port and len(self.read_ports) > 0:
+            return self.read_ports[0]
+        elif not get_read_port and len(self.write_ports) > 0:
+            return self.write_ports[0]
         return None
      
     def set_stimulus_variables(self):
         simulation.set_stimulus_variables(self)
-        self.measure_cycles = [{} for port in range(self.total_ports)]
+        self.measure_cycles = [{} for port in self.all_ports]
         
     def create_test_cycles(self):
         """Returns a list of key time-points [ns] of the waveform (each rising edge)
@@ -819,7 +819,7 @@ class delay(simulation):
             for load in loads:
                 self.set_load_slew(load,slew)
                 bank_delay = self.sram.analytical_delay(self.vdd_voltage, self.slew,self.load)
-                for port in range(self.total_ports):
+                for port in self.all_ports:
                     for mname in self.delay_meas_names+self.power_meas_names:
                         if "power" in mname:
                             port_data[port][mname].append(power.dynamic)
@@ -877,7 +877,7 @@ class delay(simulation):
         
     def gen_data(self):
         """ Generates the PWL data inputs for a simulation timing test. """
-        for write_port in self.write_index:
+        for write_port in self.write_ports:
             for i in range(self.word_size):
                 sig_name="{0}{1}_{2} ".format(self.din_name,write_port, i)
                 self.stim.gen_pwl(sig_name, self.cycle_times, self.data_values[write_port][i], self.period, self.slew, 0.05)
@@ -887,16 +887,16 @@ class delay(simulation):
         Generates the address inputs for a simulation timing test. 
         This alternates between all 1's and all 0's for the address.
         """
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             for i in range(self.addr_size):
                 sig_name = "{0}{1}_{2}".format(self.addr_name,port,i)
                 self.stim.gen_pwl(sig_name, self.cycle_times, self.addr_values[port][i], self.period, self.slew, 0.05)
 
     def gen_control(self):
         """ Generates the control signals """
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             self.stim.gen_pwl("CSB{0}".format(port), self.cycle_times, self.csb_values[port], self.period, self.slew, 0.05)
-            if port in self.read_index and port in self.write_index:
+            if port in self.readwrite_ports:
                 self.stim.gen_pwl("WEB{0}".format(port), self.cycle_times, self.web_values[port], self.period, self.slew, 0.05)
         
             
@@ -904,5 +904,5 @@ class delay(simulation):
         """Make a dict of lists for each type of delay and power measurement to append results to"""
         measure_names = self.delay_meas_names + self.power_meas_names
         #Create list of dicts. List lengths is # of ports. Each dict maps the measurement names to lists.
-        measure_data = [{mname:[] for mname in measure_names} for i in range(self.total_ports)]
+        measure_data = [{mname:[] for mname in measure_names} for i in self.all_ports]
         return measure_data

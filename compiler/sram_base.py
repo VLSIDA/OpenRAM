@@ -26,38 +26,38 @@ class sram_base(design):
 
     def add_pins(self):
         """ Add pins for entire SRAM. """
-        for port in range(self.total_write):
+        for port in self.write_ports:
             for bit in range(self.word_size):
                 self.add_pin("DIN{0}[{1}]".format(port,bit),"INPUT")
                 
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             for bit in range(self.addr_size):
                 self.add_pin("ADDR{0}[{1}]".format(port,bit),"INPUT")
 
         # These are used to create the physical pins
         self.control_logic_inputs = []
         self.control_logic_outputs = []
-        for port in range(self.total_ports):
-            if self.port_id[port] == "rw":
+        for port in self.all_ports:
+            if port in self.readwrite_ports:
                 self.control_logic_inputs.append(self.control_logic_rw.get_inputs())
                 self.control_logic_outputs.append(self.control_logic_rw.get_outputs())
-            elif self.port_id[port] == "w":
+            elif port in self.write_ports:
                 self.control_logic_inputs.append(self.control_logic_w.get_inputs())
                 self.control_logic_outputs.append(self.control_logic_w.get_outputs())
             else:
                 self.control_logic_inputs.append(self.control_logic_r.get_inputs())
                 self.control_logic_outputs.append(self.control_logic_r.get_outputs())
         
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             self.add_pin("csb{}".format(port),"INPUT")
-        for port in range(self.num_rw_ports):
+        for port in self.readwrite_ports:
             self.add_pin("web{}".format(port),"INPUT")
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             self.add_pin("clk{}".format(port),"INPUT")
 
-        for port in range(self.total_read):
+        for port in self.read_ports:
             for bit in range(self.word_size):
-                self.add_pin("DOUT{0}[{1}]".format(self.read_index[port],bit),"OUTPUT")
+                self.add_pin("DOUT{0}[{1}]".format(port,bit),"OUTPUT")
         
         self.add_pin("vdd","POWER")
         self.add_pin("gnd","GROUND")
@@ -139,7 +139,7 @@ class sram_base(design):
         # Vertical bus
         # The order of the control signals on the control bus:
         self.control_bus_names = []
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             self.control_bus_names[port] = ["clk_buf{}".format(port), "clk_buf_bar{}".format(port)]
             if (self.port_id[port] == "rw") or (self.port_id[port] == "w"):
                 self.control_bus_names[port].append("w_en{}".format(port))
@@ -269,23 +269,23 @@ class sram_base(design):
                                              mod=self.bank))
 
         temp = []
-        for port in range(self.total_read):
+        for port in self.read_ports:
             for bit in range(self.word_size):
-                temp.append("DOUT{0}[{1}]".format(self.read_index[port],bit))
-        for port in range(self.total_write):
+                temp.append("DOUT{0}[{1}]".format(port,bit))
+        for port in self.write_ports:
             for bit in range(self.word_size):
                 temp.append("BANK_DIN{0}[{1}]".format(port,bit))
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             for bit in range(self.bank_addr_size):
                 temp.append("A{0}[{1}]".format(port,bit))
         if(self.num_banks > 1):
-            for port in range(self.total_ports):
+            for port in self.all_ports:
                 temp.append("bank_sel{0}[{1}]".format(port,bank_num))
-        for port in range(self.total_read):
-            temp.append("s_en{0}".format(self.read_index[port]))
-        for port in range(self.total_write):
+        for port in self.read_ports:
+            temp.append("s_en{0}".format(port))
+        for port in self.write_ports:
             temp.append("w_en{0}".format(port))
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             temp.append("clk_buf_bar{0}".format(port))
             temp.append("clk_buf{0}".format(port))
         temp.extend(["vdd", "gnd"])
@@ -328,7 +328,7 @@ class sram_base(design):
     def create_row_addr_dff(self):
         """ Add all address flops for the main decoder """
         insts = []
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             insts.append(self.add_inst(name="row_address{}".format(port),
                                        mod=self.row_addr_dff))
                     
@@ -347,7 +347,7 @@ class sram_base(design):
     def create_col_addr_dff(self):
         """ Add and place all address flops for the column decoder """
         insts = []
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             insts.append(self.add_inst(name="col_address{}".format(port),
                                        mod=self.col_addr_dff))
                   
@@ -366,7 +366,7 @@ class sram_base(design):
     def create_data_dff(self):
         """ Add and place all data flops """
         insts = []
-        for port in range(self.total_write):
+        for port in self.write_ports:
             insts.append(self.add_inst(name="data_dff{}".format(port),
                                       mod=self.data_dff))
                   
@@ -385,10 +385,10 @@ class sram_base(design):
     def create_control_logic(self):
         """ Add and place control logic """
         insts = []
-        for port in range(self.total_ports):
-            if self.port_id[port] == "rw":
+        for port in self.all_ports:
+            if port in self.readwrite_ports:
                 mod = self.control_logic_rw
-            elif self.port_id[port] == "w":
+            elif port in self.write_ports:
                 mod = self.control_logic_w
             else:
                 mod = self.control_logic_r
@@ -397,12 +397,12 @@ class sram_base(design):
                                        mod=mod))
             
             temp = ["csb{}".format(port)]
-            if self.port_id[port] == "rw":
+            if port in self.readwrite_ports:
                 temp.append("web{}".format(port))
             temp.append("clk{}".format(port))
-            if (self.port_id[port] == "rw") or (self.port_id[port] == "r"):
+            if port in self.read_ports:
                 temp.append("s_en{}".format(port))
-            if (self.port_id[port] == "rw") or (self.port_id[port] == "w"):
+            if port in self.write_ports:
                 temp.append("w_en{}".format(port))
             temp.extend(["clk_buf_bar{}".format(port), "clk_buf{}".format(port), "vdd", "gnd"])
             self.connect_inst(temp)

@@ -856,10 +856,10 @@ class layout(lef.lef):
             # Remove the net from other constriants in the VCG
             vcg=remove_net_from_graph(net_name, vcg)
             
-            # Add the trunk routes from the bottom up or right to left
+            # Add the trunk routes from the bottom up or the left to right
             if vertical:
                 self.add_vertical_trunk_route(pin_list, offset, layer_stack, pitch)
-                offset -= vector(pitch,0)
+                offset += vector(pitch,0)
             else:
                 self.add_horizontal_trunk_route(pin_list, offset, layer_stack, pitch)
                 offset -= vector(0,pitch)

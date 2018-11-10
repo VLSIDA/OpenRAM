@@ -12,13 +12,14 @@ from dff_inv_array import dff_inv_array
 import math
 from vector import vector
 from globals import OPTS
+import logical_effort
 
 class control_logic(design.design):
     """
     Dynamically generated Control logic for the total SRAM circuit.
     """
 
-    def __init__(self, num_rows, words_per_row, port_type="rw"):
+    def __init__(self, num_rows, words_per_row, sram=None, port_type="rw"):
         """ Constructor """
         name = "control_logic_" + port_type
         design.design.__init__(self, name)
@@ -27,6 +28,11 @@ class control_logic(design.design):
         self.num_rows = num_rows
         self.words_per_row = words_per_row
         self.port_type = port_type
+        
+        #This is needed to resize the delay chain. Likely to be changed at some point.
+        self.sram=sram
+        self.wl_timing_tolerance = 1 #Determines how much larger the sen delay should be. Accounts for possible error in model.
+        self.parasitic_inv_delay = 0 #Keeping 0 for now until further testing.
         
         if self.port_type == "rw":
             self.num_control_signals = 2
@@ -94,13 +100,19 @@ class control_logic(design.design):
             c = reload(__import__(OPTS.replica_bitline))
             replica_bitline = getattr(c, OPTS.replica_bitline)
             
-            delay_stages, delay_fanout = self.get_delay_chain_size()
+            delay_stages_heuristic, delay_fanout_heuristic = self.get_heuristic_delay_chain_size()
             bitcell_loads = int(math.ceil(self.num_rows / 2.0))
-            self.replica_bitline = replica_bitline(delay_stages, delay_fanout, bitcell_loads, name="replica_bitline_"+self.port_type)
+            self.replica_bitline = replica_bitline(delay_stages_heuristic, delay_fanout_heuristic, bitcell_loads, name="replica_bitline_"+self.port_type)
+            
+            if self.sram != None and not self.is_sen_timing_okay():
+                #Resize the delay chain (by instantiating a new rbl) if the analytical timing failed.
+                delay_stages, delay_fanout = self.get_dynamic_delay_chain_size(delay_stages_heuristic, delay_fanout_heuristic)
+                self.replica_bitline = replica_bitline(delay_stages, delay_fanout, bitcell_loads, name="replica_bitline_resized_"+self.port_type)
+            
             self.add_mod(self.replica_bitline)
 
-    def get_delay_chain_size(self):
-        """Determine the size of the delay chain used for the Sense Amp Enable """
+    def get_heuristic_delay_chain_size(self):
+        """Use a basic heuristic to determine the size of the delay chain used for the Sense Amp Enable """
         # FIXME: These should be tuned according to the additional size parameters
         delay_fanout = 3 # This can be anything >=2
         # Delay stages Must be non-inverting
@@ -110,6 +122,35 @@ class control_logic(design.design):
             delay_stages = 6
         else:
             delay_stages = 4
+        return (delay_stages, delay_fanout)
+        
+    def is_sen_timing_okay(self):
+        self.wl_delay = self.get_delay_to_wl()
+        self.sen_delay = self.get_delay_to_sen()
+        
+        #The sen delay must always be bigger than than the wl delay. This decides how much larger the sen delay must be before 
+        #a re-size is warranted.
+        
+        if self.wl_delay*self.wl_timing_tolerance >= self.sen_delay:
+            return False
+        else:
+            return True
+            
+    def get_dynamic_delay_chain_size(self, previous_stages, previous_fanout):
+        """Determine the size of the delay chain used for the Sense Amp Enable using path delays"""
+        previous_delay_chain_delay = (previous_fanout+1+self.parasitic_inv_delay)*previous_stages
+        debug.info(2, "Previous delay chain produced {} delay units".format(previous_delay_chain_delay))
+        
+        delay_fanout = 3 # This can be anything >=2
+        #The delay chain uses minimum sized inverters. There are (fanout+1)*stages inverters and each
+        #inverter adds 1 unit of delay (due to minimum size). This also depends on the pinv value
+        required_delay = self.wl_delay*self.wl_timing_tolerance - (self.sen_delay-previous_delay_chain_delay)
+        debug.check(required_delay > 0, "Cannot size delay chain to have negative delay")
+        delay_stages = int(required_delay/(delay_fanout+1+self.parasitic_inv_delay))
+        if delay_stages%2 == 1: #force an even number of stages. 
+            delay_stages+=1
+            #Fanout can be varied as well but is a little more complicated but potentially optimal.
+        debug.info(1, "Setting delay chain to {} stages with {} fanout to match {} delay".format(delay_stages, delay_fanout, required_delay))
         return (delay_stages, delay_fanout)
         
     def setup_signal_busses(self):
@@ -595,26 +636,48 @@ class control_logic(design.design):
                            offset=pin.ll(),
                            height=pin.height(),
                            width=pin.width())
+                           
+    def get_delay_to_wl(self):
+        """Get the delay (in delay units) of the clk to a wordline in the bitcell array"""
+        debug.check(self.sram.all_mods_except_control_done, "Cannot calculate sense amp enable delay unless all module have been added.")
+        stage_efforts = self.determine_wordline_stage_efforts()
+        clk_to_wl_delay = logical_effort.calculate_relative_delay(stage_efforts, self.parasitic_inv_delay)
+        debug.info(1, "Clock to wordline delay is {} delay units".format(clk_to_wl_delay))
+        return clk_to_wl_delay
         
-    def determine_wordline_stage_efforts(self, external_cout):
-        """Follows the clock signal to the clk_buf signal adding each stages stage effort to a list"""
+    def determine_wordline_stage_efforts(self):
+        """Follows the clock signal to the clk_buf signal to the wordline signal for the total path efforts"""
         stage_effort_list = []
         #Calculate the load on clk_buf within the module and add it to external load
         internal_cout = self.ctrl_dff_array.get_clk_cin()
-        clk_buf_cap = internal_cout+external_cout
+        external_cout = self.sram.get_clk_cin()
         #First stage is the clock buffer
-        stage_effort_list += self.clkbuf.determine_clk_buf_stage_efforts(clk_buf_cap)
+        stage_effort_list += self.clkbuf.determine_clk_buf_stage_efforts(internal_cout+external_cout)
+        
+        #Then ask the sram for the other path delays (from the bank)
+        stage_effort_list += self.sram.determine_wordline_stage_efforts()
         
         return stage_effort_list
         
-    def determine_sa_enable_stage_efforts(self, ext_clk_buf_cout, ext_sen_cout):
+    def get_delay_to_sen(self):
+        """Get the delay (in delay units) of the clk to a sense amp enable. 
+           This does not incorporate the delay of the replica bitline.
+        """
+        debug.check(self.sram.all_mods_except_control_done, "Cannot calculate sense amp enable delay unless all module have been added.")
+        stage_efforts = self.determine_sa_enable_stage_efforts()
+        clk_to_sen_delay = logical_effort.calculate_relative_delay(stage_efforts, self.parasitic_inv_delay)
+        debug.info(1, "Clock to s_en delay is {} delay units".format(clk_to_sen_delay))
+        return clk_to_sen_delay   
+          
+    def determine_sa_enable_stage_efforts(self):
         """Follows the clock signal to the sense amp enable signal adding each stages stage effort to a list"""
         stage_effort_list = []
         #Calculate the load on clk_buf_bar
         int_clk_buf_cout = self.get_clk_buf_bar_cin()
-        clk_buf_bar_cout = int_clk_buf_cout+ext_clk_buf_cout
+        ext_clk_buf_cout = self.sram.get_clk_bar_cin()
+        
         #First stage is the clock buffer
-        stage1 = self.clkbuf.determine_clk_buf_bar_stage_efforts(clk_buf_bar_cout)
+        stage1 = self.clkbuf.determine_clk_buf_bar_stage_efforts(int_clk_buf_cout+ext_clk_buf_cout)
         stage_effort_list += stage1
         
         #nand2 stage
@@ -638,7 +701,8 @@ class control_logic(design.design):
         stage_effort_list.append(stage5)
         
         #inverter (inv8) stage, s_en output
-        stage6 = self.inv8.get_effort_stage(ext_sen_cout)
+        clk_sen_cout = self.sram.get_sen_cin()
+        stage6 = self.inv8.get_effort_stage(clk_sen_cout)
         stage_effort_list.append(stage6)
         return stage_effort_list    
        

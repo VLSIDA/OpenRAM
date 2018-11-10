@@ -8,6 +8,8 @@ class logical_effort():
     """
     beta = parameter["beta"]
     min_inv_cin = 1+beta
+    pinv=parameter["min_inv_para_delay"]
+    
     def __init__(self, size, cin, cout, parasitic):
         self.cin = cin
         self.cout = cout
@@ -33,3 +35,4 @@ def calculate_relative_delay(stage_effort_list, pinv=parameter["min_inv_para_del
     for stage in stage_effort_list:
         total_delay += stage.get_stage_delay(pinv)
     return total_delay
+    

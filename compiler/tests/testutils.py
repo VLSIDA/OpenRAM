@@ -36,6 +36,9 @@ class openram_test(unittest.TestCase):
             import verify
             result=verify.run_drc(a.name, tempgds)
             if result != 0:
+                new_file = "/tmp/"+a.name+".gds"
+                debug.info(0,"Copying failed file to {}".format(new_file))
+                os.copy(tempgds, newfile)
                 self.fail("DRC failed: {}".format(a.name))
 
             

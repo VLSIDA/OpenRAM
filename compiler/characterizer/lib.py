@@ -27,9 +27,11 @@ class lib:
         
     def set_port_indices(self):
         """Copies port information set in the SRAM instance"""
-        self.total_port_num = self.sram.total_ports
-        self.read_ports = self.sram.read_index
-        self.write_ports = self.sram.write_index
+        self.total_port_num = len(self.sram.all_ports)
+        self.all_ports = self.sram.all_ports
+        self.readwrite_ports = self.sram.readwrite_ports
+        self.read_ports = self.sram.read_ports
+        self.write_ports = self.sram.write_ports
              
     def prepare_tables(self):
         """ Determine the load/slews if they aren't specified in the config file. """
@@ -93,7 +95,7 @@ class lib:
         self.write_header()
         
         #Loop over all ports. 
-        for port in range(self.total_port_num):
+        for port in self.all_ports:
             #set the read and write port as inputs.
             self.write_data_bus(port)
             self.write_addr_bus(port)
@@ -387,7 +389,7 @@ class lib:
         """ Adds control pins timing results."""
         #The control pins are still to be determined. This is a placeholder for what could be.
         ctrl_pin_names = ["CSb{0}".format(port)]
-        if port in self.write_ports and port in self.read_ports:
+        if port in self.readwrite_ports:
             ctrl_pin_names.append("WEb{0}".format(port))
             
         for i in ctrl_pin_names:

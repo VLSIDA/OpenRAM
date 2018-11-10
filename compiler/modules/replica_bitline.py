@@ -125,10 +125,10 @@ class replica_bitline(design.design):
         self.rbc_inst=self.add_inst(name="bitcell",
                                     mod=self.replica_bitcell)
         temp = []
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             temp.append("bl{}_0".format(port))
             temp.append("br{}_0".format(port))
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             temp.append("delayed_en")
         temp.append("vdd")
         temp.append("gnd")
@@ -139,18 +139,18 @@ class replica_bitline(design.design):
                                     mod=self.rbl)
         
         temp = []
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             temp.append("bl{}_0".format(port))
             temp.append("br{}_0".format(port))
         for wl in range(self.bitcell_loads):
-            for port in range(self.total_ports):
+            for port in self.all_ports:
                 temp.append("gnd")
         temp.append("vdd")
         temp.append("gnd")
         self.connect_inst(temp)
         
         self.wl_list = self.rbl.cell.list_all_wl_names()
-        self.bl_list = self.rbl.cell.list_write_bl_names()
+        self.bl_list = self.rbl.cell.list_all_bl_names()
         
     def place_modules(self):
         """ Add all of the module instances in the logical netlist """
@@ -195,7 +195,7 @@ class replica_bitline(design.design):
             self.add_power_pin("gnd", pin_extension)
             
             # for multiport, need to short wordlines to each other so they all connect to gnd.
-            wl_last = self.wl_list[self.total_ports-1]+"_{}".format(row)
+            wl_last = self.wl_list[-1]+"_{}".format(row)
             pin_last = self.rbl_inst.get_pin(wl_last)
             self.short_wordlines(pin, pin_last, "right", False, row, vector(self.m3_pitch,0))
                     
@@ -203,7 +203,7 @@ class replica_bitline(design.design):
         """Connects the word lines together for a single bitcell. Also requires which side of the bitcell to short the pins."""
         #Assumes input pins are wordlines. Also assumes the word lines are horizontal in metal1. Also assumes pins have same x coord.
         #This is my (Hunter) first time editing layout in openram so this function is likely not optimal.
-        if self.total_ports > 1:
+        if len(self.all_ports) > 1:
             #1. Create vertical metal for all the bitlines to connect to
             #m1 needs to be extended in the y directions, direction needs to be determined as every other cell is flipped
             correct_y = vector(0, 0.5*drc("minwidth_metal1"))
@@ -234,7 +234,7 @@ class replica_bitline(design.design):
                 debug.error("Could not connect wordlines on specified input side={}".format(pin_side),1)
             
             #2. Connect word lines horizontally. Only replica cell needs. Bitline loads currently already do this.
-            for port in range(self.total_ports):
+            for port in self.all_ports:
                 if is_replica_cell:
                     wl = self.wl_list[port]
                     pin = self.rbc_inst.get_pin(wl)
@@ -319,7 +319,7 @@ class replica_bitline(design.design):
         
         # 4. Short wodlines if multiport
         wl = self.wl_list[0]
-        wl_last = self.wl_list[self.total_ports-1]
+        wl_last = self.wl_list[-1]
         pin = self.rbc_inst.get_pin(wl)
         pin_last = self.rbc_inst.get_pin(wl_last)
         x_offset = self.short_wordlines(pin, pin_last, "left", True)

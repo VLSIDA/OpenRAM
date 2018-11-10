@@ -9,18 +9,21 @@ from globals import OPTS
 class single_level_column_mux(design.design):
     """
     This module implements the columnmux bitline cell used in the design.
-    Creates a single columnmux cell.
+    Creates a single columnmux cell with the given integer size relative
+    to minimum size. Default is 8x. Per Samira and Hodges-Jackson book:
+    Column-mux transistors driven by the decoder must be sized for optimal speed
     """
 
+    # This is needed for different bitline spacings
     unique_id = 1
     
-    def __init__(self, tx_size, bitcell_bl="bl", bitcell_br="br"):
-        name="single_level_column_mux_{}_no{}".format(tx_size,single_level_column_mux.unique_id)
+    def __init__(self, tx_size=8, bitcell_bl="bl", bitcell_br="br"):
+        self.tx_size = int(tx_size)
+        name="single_level_column_mux_{}_{}".format(self.tx_size,single_level_column_mux.unique_id)
         single_level_column_mux.unique_id += 1
         design.design.__init__(self, name)
         debug.info(2, "create single column mux cell: {0}".format(name))
 
-        self.tx_size = tx_size
         self.bitcell_bl = bitcell_bl
         self.bitcell_br = bitcell_br
         
@@ -52,7 +55,7 @@ class single_level_column_mux(design.design):
         self.bitcell = self.mod_bitcell()
 
         # Adds nmos_lower,nmos_upper to the module
-        self.ptx_width = self.tx_size * drc("minwidth_tx")
+        self.ptx_width = self.tx_size*drc("minwidth_tx")
         self.nmos = ptx(width=self.ptx_width)
         self.add_mod(self.nmos)
 

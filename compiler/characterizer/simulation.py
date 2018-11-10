@@ -22,13 +22,10 @@ class simulation():
         self.num_banks = self.sram.num_banks
         self.sp_file = spfile
         
-        self.total_ports = self.sram.total_ports
-        self.total_write = self.sram.total_write
-        self.total_read = self.sram.total_read
-        self.read_index = self.sram.read_index
-        self.write_index = self.sram.write_index
-        self.num_rw_ports = self.sram.num_rw_ports
-        self.port_id = self.sram.port_id
+        self.all_ports = self.sram.all_ports
+        self.readwrite_ports = self.sram.readwrite_ports
+        self.read_ports = self.sram.read_ports
+        self.write_ports = self.sram.write_ports
 
     def set_corner(self,corner):
         """ Set the corner values """
@@ -48,12 +45,12 @@ class simulation():
         self.t_current = 0
         
         # control signals: only one cs_b for entire multiported sram, one we_b for each write port
-        self.csb_values = [[] for port in range(self.total_ports)]
-        self.web_values = [[] for port in range(self.num_rw_ports)]
+        self.csb_values = [[] for port in self.all_ports]
+        self.web_values = [[] for port in self.readwrite_ports]
         
         # Three dimensional list to handle each addr and data bits for wach port over the number of checks
-        self.addr_values = [[[] for bit in range(self.addr_size)] for port in range(self.total_ports)]
-        self.data_values = [[[] for bit in range(self.word_size)] for port in range(self.total_write)]
+        self.addr_values = [[[] for bit in range(self.addr_size)] for port in self.all_ports]
+        self.data_values = [[[] for bit in range(self.word_size)] for port in self.write_ports]
         
         # For generating comments in SPICE stimulus
         self.cycle_comments = []
@@ -75,7 +72,7 @@ class simulation():
         # Append the values depending on the type of port
         self.csb_values[port].append(csb_val)
         # If port is in both lists, add rw control signal. Condition indicates its a RW port.
-        if port < self.num_rw_ports:
+        if port in self.readwrite_ports:
             self.web_values[port].append(web_val)
             
     def add_data(self, data, port):
@@ -108,7 +105,7 @@ class simulation():
                 
     def add_write(self, comment, address, data, port):
         """ Add the control values for a write cycle. """
-        debug.check(port in self.write_index, "Cannot add write cycle to a read port. Port {0}, Write Ports {1}".format(port, self.write_index))
+        debug.check(port in self.write_ports, "Cannot add write cycle to a read port. Port {0}, Write Ports {1}".format(port, self.write_ports))
         debug.info(2, comment)
         self.fn_cycle_comments.append(comment)
         self.append_cycle_comment(port, comment)
@@ -123,13 +120,13 @@ class simulation():
         #This value is hard coded here. Possibly change to member variable or set in add_noop_one_port
         noop_data = "0"*self.word_size
         #Add noops to all other ports.
-        for unselected_port in range(self.total_ports):
+        for unselected_port in self.all_ports:
             if unselected_port != port:
                 self.add_noop_one_port(address, noop_data, unselected_port)
                     
     def add_read(self, comment, address, din_data, port):
         """ Add the control values for a read cycle. """
-        debug.check(port in self.read_index, "Cannot add read cycle to a write port. Port {0}, Read Ports {1}".format(port, self.read_index))
+        debug.check(port in self.read_ports, "Cannot add read cycle to a write port. Port {0}, Read Ports {1}".format(port, self.read_ports))
         debug.info(2, comment)
         self.fn_cycle_comments.append(comment)
         self.append_cycle_comment(port, comment)
@@ -139,14 +136,14 @@ class simulation():
         self.add_control_one_port(port, "read")
         
         #If the port is also a readwrite then add data.
-        if port in self.write_index:
+        if port in self.write_ports:
             self.add_data(din_data,port)
         self.add_address(address, port)
         
         #This value is hard coded here. Possibly change to member variable or set in add_noop_one_port
         noop_data = "0"*self.word_size
         #Add noops to all other ports.
-        for unselected_port in range(self.total_ports):
+        for unselected_port in self.all_ports:
             if unselected_port != port:
                 self.add_noop_one_port(address, noop_data, unselected_port)
 
@@ -159,12 +156,12 @@ class simulation():
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
          
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             self.add_noop_one_port(address, data, port)
             
     def add_write_one_port(self, comment, address, data, port):
         """ Add the control values for a write cycle. Does not increment the period. """
-        debug.check(port in self.write_index, "Cannot add write cycle to a read port. Port {0}, Write Ports {1}".format(port, self.write_index))
+        debug.check(port in self.write_ports, "Cannot add write cycle to a read port. Port {0}, Write Ports {1}".format(port, self.write_ports))
         debug.info(2, comment)
         self.fn_cycle_comments.append(comment)
         
@@ -174,20 +171,20 @@ class simulation():
                 
     def add_read_one_port(self, comment, address, din_data, port):
         """ Add the control values for a read cycle. Does not increment the period. """
-        debug.check(port in self.read_index, "Cannot add read cycle to a write port. Port {0}, Read Ports {1}".format(port, self.read_index))
+        debug.check(port in self.read_ports, "Cannot add read cycle to a write port. Port {0}, Read Ports {1}".format(port, self.read_ports))
         debug.info(2, comment)
         self.fn_cycle_comments.append(comment)
         
         self.add_control_one_port(port, "read")
         #If the port is also a readwrite then add data.
-        if port in self.write_index:
+        if port in self.write_ports:
             self.add_data(din_data,port)
         self.add_address(address, port)
                 
     def add_noop_one_port(self, address, data, port):
         """ Add the control values for a noop to a single port. Does not increment the period. """   
         self.add_control_one_port(port, "noop")
-        if port in self.write_index:
+        if port in self.write_ports:
             self.add_data(data,port)
         self.add_address(address, port)
 

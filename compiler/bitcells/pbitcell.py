@@ -865,26 +865,6 @@ class pbitcell(design.design):
         br_pins = self.rw_br_names + self.w_br_names + self.r_br_names
         return br_pins
 
-    def list_read_bl_names(self):
-        """ Creates a list of bl pin names associated with read ports """
-        bl_pins = self.rw_bl_names + self.r_bl_names
-        return bl_pins
-
-    def list_read_br_names(self):
-        """ Creates a list of br pin names associated with read ports """
-        br_pins = self.rw_br_names + self.r_br_names
-        return br_pins
-
-    def list_write_bl_names(self):
-        """ Creates a list of bl pin names associated with write ports """
-        bl_pins = self.rw_bl_names + self.w_bl_names
-        return bl_pins
-
-    def list_write_br_names(self):
-        """ Creates a list of br pin names asscociated with write ports"""
-        br_pins = self.rw_br_names + self.w_br_names
-        return br_pins
-
     def route_rbc_short(self):
         """ route the short from Q_bar to gnd necessary for the replica bitcell """
         Q_bar_pos = self.inverter_pmos_right.get_pin("S").center()

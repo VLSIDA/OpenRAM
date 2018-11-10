@@ -17,7 +17,7 @@ class timing_sram_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         OPTS.spice_name="ngspice"
         OPTS.analytical_delay = False
-        OPTS.trim_netlist = False
+        OPTS.netlist_only = True
 
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
@@ -63,7 +63,7 @@ class timing_sram_test(openram_test):
         elif OPTS.tech_name == "scn4m_subm":
             golden_data = {'delay_hl': [3.644147],
                             'delay_lh': [1.629815],
-                            'leakage_power': 0.0009299118999999999,
+                            'leakage_power': 0.001542964,
                             'min_period': 4.688,
                             'read0_power': [16.28732],
                             'read1_power': [15.75155],

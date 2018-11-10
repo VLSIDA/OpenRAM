@@ -61,8 +61,7 @@ class single_level_column_mux_array(design.design):
 
 
     def add_modules(self):
-        # FIXME: Why is this 8x?
-        self.mux = single_level_column_mux(tx_size=8, bitcell_bl=self.bitcell_bl, bitcell_br=self.bitcell_br)
+        self.mux = single_level_column_mux(bitcell_bl=self.bitcell_bl, bitcell_br=self.bitcell_br)
         self.add_mod(self.mux)
 
 

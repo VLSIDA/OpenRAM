@@ -57,7 +57,7 @@ class sram_1bank(sram_base):
         # the sense amps/column mux and cell array)
         # The x-coordinate is placed to allow a single clock wire (plus an extra pitch)
         # up to the row address DFFs.
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             control_pos = vector(-self.control_logic.width - 2*self.m2_pitch,
                                  self.bank.bank_center.y - self.control_logic.control_logic_center.y)
             self.control_logic_inst[port].place(control_pos)
@@ -94,13 +94,14 @@ class sram_1bank(sram_base):
         """
         Add the top-level pins for a single bank SRAM with control.
         """
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             # Connect the control pins as inputs
             for signal in self.control_logic_inputs[port] + ["clk"]:
                 self.copy_layout_pin(self.control_logic_inst[port], signal, signal+"{}".format(port))
 
-            for bit in range(self.word_size):
-                self.copy_layout_pin(self.bank_inst, "dout{0}_{1}".format(port,bit), "DOUT{0}[{1}]".format(port,bit))
+            if port in self.read_ports:
+                for bit in range(self.word_size):
+                    self.copy_layout_pin(self.bank_inst, "dout{0}_{1}".format(port,bit), "DOUT{0}[{1}]".format(port,bit))
 
             # Lower address bits
             for bit in range(self.col_addr_size):
@@ -109,8 +110,9 @@ class sram_1bank(sram_base):
             for bit in range(self.row_addr_size):
                 self.copy_layout_pin(self.row_addr_dff_inst[port], "din_{}".format(bit),"ADDR{0}[{1}]".format(port,bit+self.col_addr_size))
 
-            for bit in range(self.word_size):
-                self.copy_layout_pin(self.data_dff_inst[port], "din_{}".format(bit), "DIN{0}[{1}]".format(port,bit))
+            if port in self.write_ports:
+                for bit in range(self.word_size):
+                    self.copy_layout_pin(self.data_dff_inst[port], "din_{}".format(bit), "DIN{0}[{1}]".format(port,bit))
             
     def route(self):
         """ Route a single bank SRAM """
@@ -132,7 +134,7 @@ class sram_1bank(sram_base):
         """ Route the clock network """
 
         # This is the actual input to the SRAM
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             self.copy_layout_pin(self.control_logic_inst[port], "clk", "clk{}".format(port))
 
             # Connect all of these clock pins to the clock in the central bus
@@ -172,7 +174,7 @@ class sram_1bank(sram_base):
             
     def route_control_logic(self):
         """ Route the outputs from the control logic module """
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             for signal in self.control_logic_outputs[port]:
                 src_pin = self.control_logic_inst[port].get_pin(signal)
                 dest_pin = self.bank_inst.get_pin(signal+"{}".format(port))                
@@ -184,7 +186,7 @@ class sram_1bank(sram_base):
 
     def route_row_addr_dff(self):
         """ Connect the output of the row flops to the bank pins """
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             for bit in range(self.row_addr_size):
                 flop_name = "dout_{}".format(bit)
                 bank_name = "addr{0}_{1}".format(port,bit+self.col_addr_size)
@@ -200,7 +202,7 @@ class sram_1bank(sram_base):
 
     def route_col_addr_dff(self):
         """ Connect the output of the row flops to the bank pins """
-        for port in range(self.total_ports):
+        for port in self.all_ports:
             bus_names = ["addr_{}".format(x) for x in range(self.col_addr_size)]        
             col_addr_bus_offsets = self.create_horizontal_bus(layer="metal1",
                                                               pitch=self.m1_pitch,
@@ -220,7 +222,7 @@ class sram_1bank(sram_base):
     def route_data_dff(self):
         """ Connect the output of the data flops to the write driver """
         # This is where the channel will start (y-dimension at least)
-        for port in range(self.total_write):
+        for port in self.write_ports:
             offset = self.data_dff_inst[port].ul() + vector(0, self.m1_pitch)
 
             dff_names = ["dout_{}".format(x) for x in range(self.word_size)]

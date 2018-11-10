@@ -46,12 +46,12 @@ class openram_test(openram_test):
             
         OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
 
-        cmd = "python3 {0}/openram.py -n -o {1} -p {2} {3} config_20_{4}.py 2>&1 > {5}/output.log".format(OPENRAM_HOME,
-                                                                                                          out_file,
-                                                                                                          out_path,
-                                                                                                          opts,
-                                                                                                          OPTS.tech_name,
-                                                                                                          out_path)
+        cmd_string = "python3 {0}/openram.py -n -o {1} -p {2} {3} {0}/tests/config_20_{4}.py 2>&1 > {2}/output.log"
+        cmd = cmd_string.format(OPENRAM_HOME,
+                                out_file,
+                                out_path,
+                                opts,
+                                OPTS.tech_name)
         debug.info(1, cmd)
         os.system(cmd)
 

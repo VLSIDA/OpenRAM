@@ -33,8 +33,8 @@ class datasheet():
 
         if OPTS.check_lvsdrc:
             
-            DRC = total_drc_errors
-            LVS = total_lvs_errors
+            DRC = str(total_drc_errors) + ' errors'
+            LVS = str(total_lvs_errors) + ' errors'
             PEX = 'n/a'
         else:
             DRC = 'skipped'
@@ -43,8 +43,8 @@ class datasheet():
        
 
         self.html +='<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>'+ self.name + '.html' + '</p>'
-        self.html +='<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>'+ 'DRC: ' + str(DRC)  + ' errors'+'</p>'
-        self.html +='<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>'+ 'LVS: ' + str(LVS)  + ' errors'+'</p>'
+        self.html +='<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>'+ 'DRC: ' + str(DRC) + '</p>'
+        self.html +='<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>'+ 'LVS: ' + str(LVS) + '</p>'
 
         self.html +='<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>Ports and Configuration (DEBUG)</p>'
         self.html += in_out(self.io,table_id='data').__html__().replace('&lt;','<').replace('&#34;','"').replace('&gt;',">")

@@ -1,6 +1,6 @@
 <style>
 #data {
-    font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+    font-family: Trebuchet MS, Arial, Helvetica, sans-serif;
     border-collapse: collapse;
     width: 99%;
     max-width: 799px
@@ -19,8 +19,10 @@
     padding-top: 11px;
     padding-bottom: 11px;
     text-align: left;
-    background-color: 	#FF8C00;
-    color: black;
+    background-color: 	#004184;
+    color: #F1B521;
 }
+
+
 </style>
 

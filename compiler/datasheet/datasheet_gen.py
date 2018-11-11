@@ -51,41 +51,70 @@ def parse_characterizer_csv(sram,f,pages):
         csv_reader = csv.reader(csv_file, delimiter=',')
         line_count = 0
         for row in csv_reader:
+
             found = 0
+            col = 0
 
             #defines layout of csv file
-            NAME = row[0]
-            NUM_WORDS = row[1]
-            NUM_BANKS = row[2]
-            NUM_RW_PORTS = row[3]
-            NUM_W_PORTS = row[4]
-            NUM_R_PORTS = row[5]
-            TECH_NAME = row[6]
-            TEMP = row[8]
-            VOLT = row[7]
-            PROC = row[9]
-            MIN_PERIOD = row[10]
-            OUT_DIR = row[11]
-            LIB_NAME = row[12]
-            WORD_SIZE = row[13]
+            NAME = row[col]
+            col += 1
 
-            FF_SETUP_LH_MIN = row[14]
-            FF_SETUP_LH_MAX = row[15]
+            NUM_WORDS = row[col]
+            col += 1
 
-            FF_SETUP_HL_MIN = row[16]
-            FF_SETUP_HL_MAX = row[17]
+            NUM_BANKS = row[col]
+            col += 1
 
-            FF_HOLD_LH_MIN = row[18]
-            FF_HOLD_LH_MAX = row[19]
+            NUM_RW_PORTS = row[col]
+            col += 1
 
-            FF_HOLD_HL_MIN = row[20]
-            FF_HOLD_HL_MAX = row[21]
-            
+            NUM_W_PORTS = row[col]
+            col += 1
+
+            NUM_R_PORTS = row[col]
+            col += 1
+
+            TECH_NAME = row[col]
+            col += 1
+
+            TEMP = row[col]
+            col += 1
+
+            VOLT = row[col]
+            col += 1
+
+            PROC = row[col]
+            col += 1
+
+            MIN_PERIOD = row[col]
+            col += 1
+
+            OUT_DIR = row[col]
+            col += 1
+
+            LIB_NAME = row[col]
+            col += 1
+
+            WORD_SIZE = row[col]
+            col += 1
+
+            FF_SETUP_LH_MIN = "1"
+            FF_SETUP_LH_MAX = "2"
+
+            FF_SETUP_HL_MIN = "3"
+            FF_SETUP_HL_MAX = "4"
+
+            FF_HOLD_LH_MIN = "5"
+            FF_HOLD_LH_MAX = "6"
+
+            FF_HOLD_HL_MIN = "7"
+            FF_HOLD_HL_MAX = "8"
+           
     
             for sheet in pages:
 
 
-                if sheet.name == row[0]:
+                if sheet.name == NAME:
 
                     found = 1
                     #if the .lib information is for an existing datasheet compare timing data
@@ -117,31 +146,208 @@ def parse_characterizer_csv(sram,f,pages):
                                 #pass if MIN_PERIOD is zero (not supported by analyitcal model)
                                 pass
 
-                    for item in sheet.timing:
-                        if item.parameter == "CSb setup rising":
-                            if float(FF_SETUP_LH_MIN) < float(item.min):
-                                item.min = FF_SETUP_LH_MIN
-                            elif float(FF_SETUP_LH_MAX) > float(item.max):
-                                item.max = FF_SETUP_LH_MAX
 
-                        if item.parameter == "CSb setup falling":
-                            if float(FF_SETUP_HL_MIN) < float(item.min):
-                                item.min = FF_SETUP_HL_MIN
-                            elif float(FF_SETUP_HL_MAX) > float(item.max):
-                                item.max = FF_SETUP_HL_MAX
 
-                        if item.parameter == "CSb hold rising":
-                            if float(FF_HOLD_HL_MIN) < float(item.min):
-                                item.min = FF_SETUP_HL_MIN
-                            elif float(FF_HOLD_HL_MAX) > float(item.max):
-                                item.max = FF_SETUP_HL_MAX
+                    while(True):
+                        if(row[col].startswith('DIN')):
+                            start = col
+                            for item in sheet.timing:
+                                if item.parameter.startswith(row[col]):
 
-                        if item.parameter == "CSb hold falling":
-                            if float(FF_HOLD_HL_MIN) < float(item.min):
-                                item.min = FF_SETUP_HL_MIN
-                            elif float(FF_HOLD_HL_MAX) > float(item.max):
-                                item.max = FF_SETUP_HL_MAX
-                            
+                                    if item.parameter.endswith('setup rising'):
+                                        if float(row[col+1]) < float(item.min):
+                                            item.min = row[col+1]
+                                        if float(row[col+2]) > float(item.max):
+                                            item.max = row[col+2]
+
+                                        col += 2
+
+                                    elif item.parameter.endswith('setup falling'):
+                                        if float(row[col+1]) < float(item.min):
+                                            item.min = row[col+1]
+                                        if float(row[col+2]) > float(item.max):
+                                            item.max = row[col+2]
+
+                                        col += 2
+
+                                    elif item.parameter.endswith('hold rising'):
+                                        if float(row[col+1]) < float(item.min):
+                                            item.min = row[col+1]
+                                        if float(row[col+2]) > float(item.max):
+                                            item.max = row[col+2]
+
+                                        col += 2
+
+                                    elif item.parameter.endswith('hold falling'):
+                                        if float(row[col+1]) < float(item.min):
+                                            item.min = row[col+1]
+                                        if float(row[col+2]) > float(item.max):
+                                            item.max = row[col+2]
+
+                                        col += 2
+
+                            col += 1
+
+                        elif(row[col].startswith('DOUT')):
+                            start = col
+                            for item in sheet.timing:
+                                if item.parameter.startswith(row[col]):
+
+                                    if item.parameter.endswith('cell rise'):
+                                        if float(row[col+1]) < float(item.min):
+                                            item.min = row[col+1]
+                                        if float(row[col+2]) > float(item.max):
+                                            item.max = row[col+2]
+
+                                        col += 2
+
+                                    elif item.parameter.endswith('cell fall'):
+                                        if float(row[col+1]) < float(item.min):
+                                            item.min = row[col+1]
+                                        if float(row[col+2]) > float(item.max):
+                                            item.max = row[col+2]
+
+                                        col += 2
+
+                                    elif item.parameter.endswith('rise transition'):
+                                        if float(row[col+1]) < float(item.min):
+                                            item.min = row[col+1]
+                                        if float(row[col+2]) > float(item.max):
+                                            item.max = row[col+2]
+
+                                        col += 2
+
+                                    elif item.parameter.endswith('fall transition'):
+                                        if float(row[col+1]) < float(item.min):
+                                            item.min = row[col+1]
+                                        if float(row[col+2]) > float(item.max):
+                                            item.max = row[col+2]
+
+                                        col += 2
+
+                            col += 1
+
+                        elif(row[col].startswith('CSb')):
+                            start = col
+                            for item in sheet.timing:
+                                if item.parameter.startswith(row[col]):
+
+                                    if item.parameter.endswith('setup rising'):
+                                        if float(row[col+1]) < float(item.min):
+                                            item.min = row[col+1]
+                                        if float(row[col+2]) > float(item.max):
+                                            item.max = row[col+2]
+
+                                        col += 2
+
+                                    elif item.parameter.endswith('setup falling'):
+                                        if float(row[col+1]) < float(item.min):
+                                            item.min = row[col+1]
+                                        if float(row[col+2]) > float(item.max):
+                                            item.max = row[col+2]
+
+                                        col += 2
+
+                                    elif item.parameter.endswith('hold rising'):
+                                        if float(row[col+1]) < float(item.min):
+                                            item.min = row[col+1]
+                                        if float(row[col+2]) > float(item.max):
+                                            item.max = row[col+2]
+
+                                        col += 2
+
+                                    elif item.parameter.endswith('hold falling'):
+                                        if float(row[col+1]) < float(item.min):
+                                            item.min = row[col+1]
+                                        if float(row[col+2]) > float(item.max):
+                                            item.max = row[col+2]
+
+                                        col += 2
+
+                            col += 1
+
+
+                        elif(row[col].startswith('WEb')):
+                            start = col
+                            for item in sheet.timing:
+                                if item.parameter.startswith(row[col]):
+
+                                    if item.parameter.endswith('setup rising'):
+                                        if float(row[col+1]) < float(item.min):
+                                            item.min = row[col+1]
+                                        if float(row[col+2]) > float(item.max):
+                                            item.max = row[col+2]
+
+                                        col += 2
+
+                                    elif item.parameter.endswith('setup falling'):
+                                        if float(row[col+1]) < float(item.min):
+                                            item.min = row[col+1]
+                                        if float(row[col+2]) > float(item.max):
+                                            item.max = row[col+2]
+
+                                        col += 2
+
+                                    elif item.parameter.endswith('hold rising'):
+                                        if float(row[col+1]) < float(item.min):
+                                            item.min = row[col+1]
+                                        if float(row[col+2]) > float(item.max):
+                                            item.max = row[col+2]
+
+                                        col += 2
+
+                                    elif item.parameter.endswith('hold falling'):
+                                        if float(row[col+1]) < float(item.min):
+                                            item.min = row[col+1]
+                                        if float(row[col+2]) > float(item.max):
+                                            item.max = row[col+2]
+
+                                        col += 2
+
+                            col += 1
+
+
+                        elif(row[col].startswith('ADDR')):
+                            start = col
+                            for item in sheet.timing:
+                                if item.parameter.startswith(row[col]):
+
+                                    if item.parameter.endswith('setup rising'):
+                                        if float(row[col+1]) < float(item.min):
+                                            item.min = row[col+1]
+                                        if float(row[col+2]) > float(item.max):
+                                            item.max = row[col+2]
+
+                                        col += 2
+
+                                    elif item.parameter.endswith('setup falling'):
+                                        if float(row[col+1]) < float(item.min):
+                                            item.min = row[col+1]
+                                        if float(row[col+2]) > float(item.max):
+                                            item.max = row[col+2]
+
+                                        col += 2
+
+                                    elif item.parameter.endswith('hold rising'):
+                                        if float(row[col+1]) < float(item.min):
+                                            item.min = row[col+1]
+                                        if float(row[col+2]) > float(item.max):
+                                            item.max = row[col+2]
+
+                                        col += 2
+
+                                    elif item.parameter.endswith('hold falling'):
+                                        if float(row[col+1]) < float(item.min):
+                                            item.min = row[col+1]
+                                        if float(row[col+2]) > float(item.max):
+                                            item.max = row[col+2]
+
+                                        col += 2
+
+                            col += 1
+                        else:
+                            break
+
 
                     #regardless of if there is already a corner for the current sram, append the new corner to the datasheet
                     new_sheet.corners.append(characterization_corners_item(PROC,process_name(PROC),VOLT,TEMP,LIB_NAME.replace(OUT_DIR,'').replace(NAME,'')))
@@ -163,14 +369,98 @@ def parse_characterizer_csv(sram,f,pages):
                     new_sheet.operating.append(operating_conditions_item('Operating Frequency (F)*','','',"unknown",'MHz')) #analytical model fails to provide MIN_PERIOD
                 
                 #place holder timing and current data
+                
                 new_sheet.timing.append(timing_and_current_data_item('Cycle time','2','3','4'))
                 new_sheet.timing.append(timing_and_current_data_item('Access time','2','3','4'))
+
                 new_sheet.timing.append(timing_and_current_data_item('Positive clk setup','2','3','4'))
                 new_sheet.timing.append(timing_and_current_data_item('Positive clk hold','2','3','4'))
-                new_sheet.timing.append(timing_and_current_data_item('CSb setup rising',FF_SETUP_LH_MIN,FF_SETUP_LH_MAX,'ns'))
-                new_sheet.timing.append(timing_and_current_data_item('CSb setup falling',FF_SETUP_HL_MIN,FF_SETUP_HL_MAX,'ns'))
-                new_sheet.timing.append(timing_and_current_data_item('CSb hold rising',FF_HOLD_LH_MIN,FF_HOLD_LH_MAX,'ns'))
-                new_sheet.timing.append(timing_and_current_data_item('CSb hold falling',FF_HOLD_HL_MIN,FF_HOLD_HL_MAX,'ns'))
+
+                while(True):
+                    if(row[col].startswith('DIN')):
+                        start = col
+                        new_sheet.timing.append(timing_and_current_data_item('{0} setup rising'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        col += 2
+
+                        new_sheet.timing.append(timing_and_current_data_item('{0} setup falling'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        col += 2
+                    
+                        new_sheet.timing.append(timing_and_current_data_item('{0} hold rising'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        col += 2
+
+                        new_sheet.timing.append(timing_and_current_data_item('{0} hold falling'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        col += 2
+
+                        col +=1
+                        
+                    elif(row[col].startswith('DOUT')):
+                        start = col
+                        new_sheet.timing.append(timing_and_current_data_item('{0} cell rise'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        col += 2
+
+                        new_sheet.timing.append(timing_and_current_data_item('{0} cell fall'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        col += 2
+                    
+                        new_sheet.timing.append(timing_and_current_data_item('{0} rise transition'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        col += 2
+
+                        new_sheet.timing.append(timing_and_current_data_item('{0} fall transition'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        col += 2
+
+                        col +=1
+
+                    elif(row[col].startswith('CSb')):
+                        start = col
+                        new_sheet.timing.append(timing_and_current_data_item('{0} setup rising'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        col += 2
+
+                        new_sheet.timing.append(timing_and_current_data_item('{0} setup falling'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        col += 2
+                    
+                        new_sheet.timing.append(timing_and_current_data_item('{0} hold rising'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        col += 2
+
+                        new_sheet.timing.append(timing_and_current_data_item('{0} hold falling'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        col += 2
+
+                        col +=1
+
+                    elif(row[col].startswith('WEb')):
+                        start = col
+                        new_sheet.timing.append(timing_and_current_data_item('{0} setup rising'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        col += 2
+
+                        new_sheet.timing.append(timing_and_current_data_item('{0} setup falling'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        col += 2
+                    
+                        new_sheet.timing.append(timing_and_current_data_item('{0} hold rising'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        col += 2
+
+                        new_sheet.timing.append(timing_and_current_data_item('{0} hold falling'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        col += 2
+
+                        col +=1
+
+                    elif(row[col].startswith('ADDR')):
+                        start = col
+                        new_sheet.timing.append(timing_and_current_data_item('{0} setup rising'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        col += 2
+
+                        new_sheet.timing.append(timing_and_current_data_item('{0} setup falling'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        col += 2
+                    
+                        new_sheet.timing.append(timing_and_current_data_item('{0} hold rising'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        col += 2
+
+                        new_sheet.timing.append(timing_and_current_data_item('{0} hold falling'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        col += 2
+
+                        col +=1
+                    else:
+                        break
+
+
+                    
                 new_sheet.timing.append(timing_and_current_data_item('AC current','2','3','4'))
                 new_sheet.timing.append(timing_and_current_data_item('Standby current','2','3','4'))
                 

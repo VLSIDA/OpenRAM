@@ -509,32 +509,120 @@ class lib:
             return
         datasheet = open(OPTS.openram_temp +'/datasheet.info', 'a+')
 
-        datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},{17},{18},{19},{20},{21}\n".format("sram_{0}_{1}_{2}".format(OPTS.word_size, OPTS.num_words, OPTS.tech_name),
-                                                                                            OPTS.num_words,
-                                                                                            OPTS.num_banks,
-                                                                                            OPTS.num_rw_ports,  
-                                                                                            OPTS.num_w_ports,
-                                                                                            OPTS.num_r_ports,
-                                                                                            OPTS.tech_name,
-                                                                                            corner[1],
-                                                                                            corner[2],
-                                                                                            corner[0],
-                                                                                            round_time(self.char_sram_results["min_period"]),
-                                                                                            self.out_dir,
-                                                                                            lib_name,
-                                                                                            OPTS.word_size,
-                                                                                            min(list(map(round_time,self.times["setup_times_LH"]))),
-                                                                                            max(list(map(round_time,self.times["setup_times_LH"]))),
+        datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},".format(
+                        "sram_{0}_{1}_{2}".format(OPTS.word_size, OPTS.num_words, OPTS.tech_name),
+                        OPTS.num_words,
+                        OPTS.num_banks,
+                        OPTS.num_rw_ports,  
+                        OPTS.num_w_ports,
+                        OPTS.num_r_ports,
+                        OPTS.tech_name,
+                        corner[2],
+                        corner[1],
+                        corner[0],
+                        round_time(self.char_sram_results["min_period"]),
+                        self.out_dir,
+                        lib_name,
+                        OPTS.word_size
+                        
+                        ))
 
-                                                                                            min(list(map(round_time,self.times["setup_times_HL"]))),
-                                                                                            max(list(map(round_time,self.times["setup_times_HL"]))),
+        for port in self.all_ports:
+            #DIN timings
+            if port in self.write_ports:
+                datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
+                        "DIN{1}[{0}:0]".format(self.sram.word_size - 1, port),
+                        min(list(map(round_time,self.times["setup_times_LH"]))),
+                        max(list(map(round_time,self.times["setup_times_LH"]))),
 
-                                                                                            min(list(map(round_time,self.times["hold_times_LH"]))),
-                                                                                            max(list(map(round_time,self.times["hold_times_LH"]))),
+                        min(list(map(round_time,self.times["setup_times_HL"]))),
+                        max(list(map(round_time,self.times["setup_times_HL"]))),
 
-                                                                                            min(list(map(round_time,self.times["hold_times_HL"]))),
-                                                                                            max(list(map(round_time,self.times["hold_times_HL"])))))
+                        min(list(map(round_time,self.times["hold_times_LH"]))),
+                        max(list(map(round_time,self.times["hold_times_LH"]))),
+
+                        min(list(map(round_time,self.times["hold_times_HL"]))),
+                        max(list(map(round_time,self.times["hold_times_HL"])))
+                        
+                        ))
+
+        for port in self.all_ports:
+            #DOUT timing
+            if port in self.read_ports:
+                datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
+                        "DOUT{1}[{0}:0]".format(self.sram.word_size - 1, port),
+                        min(list(map(round_time,self.char_port_results[port]["delay_lh"]))),
+                        max(list(map(round_time,self.char_port_results[port]["delay_lh"]))),
+
+                        min(list(map(round_time,self.char_port_results[port]["delay_hl"]))),
+                        max(list(map(round_time,self.char_port_results[port]["delay_hl"]))),
+
+                        min(list(map(round_time,self.char_port_results[port]["slew_lh"]))),
+                        max(list(map(round_time,self.char_port_results[port]["slew_lh"]))),
+
+                        min(list(map(round_time,self.char_port_results[port]["slew_hl"]))),
+                        max(list(map(round_time,self.char_port_results[port]["slew_hl"])))
+
+                        
+                        ))
+
+        for port in self.all_ports:
+            #CSb timings
+            datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
+                    "CSb{1}[{0}:0]".format(self.sram.word_size - 1, port),
+                    min(list(map(round_time,self.times["setup_times_LH"]))),
+                    max(list(map(round_time,self.times["setup_times_LH"]))),
+
+                    min(list(map(round_time,self.times["setup_times_HL"]))),
+                    max(list(map(round_time,self.times["setup_times_HL"]))),
+
+                    min(list(map(round_time,self.times["hold_times_LH"]))),
+                    max(list(map(round_time,self.times["hold_times_LH"]))),
+
+                    min(list(map(round_time,self.times["hold_times_HL"]))),
+                    max(list(map(round_time,self.times["hold_times_HL"])))
+
+                    ))
+
+        for port in self.all_ports:
+            #ADDR timings
+            datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
+                    "ADDR{1}[{0}:0]".format(self.sram.addr_size - 1, port),
+                    min(list(map(round_time,self.times["setup_times_LH"]))),
+                    max(list(map(round_time,self.times["setup_times_LH"]))),
+
+                    min(list(map(round_time,self.times["setup_times_HL"]))),
+                    max(list(map(round_time,self.times["setup_times_HL"]))),
+
+                    min(list(map(round_time,self.times["hold_times_LH"]))),
+                    max(list(map(round_time,self.times["hold_times_LH"]))),
+
+                    min(list(map(round_time,self.times["hold_times_HL"]))),
+                    max(list(map(round_time,self.times["hold_times_HL"])))
+
+                    ))
+
+
+        for port in self.all_ports:
+            if port in self.readwrite_ports:
+
+            #WEb timings
+                datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
+                        "WEb{1}[{0}:0]".format(self.sram.word_size - 1, port),
+                        min(list(map(round_time,self.times["setup_times_LH"]))),
+                        max(list(map(round_time,self.times["setup_times_LH"]))),
+
+                        min(list(map(round_time,self.times["setup_times_HL"]))),
+                        max(list(map(round_time,self.times["setup_times_HL"]))),
+
+                        min(list(map(round_time,self.times["hold_times_LH"]))),
+                        max(list(map(round_time,self.times["hold_times_LH"]))),
+
+                        min(list(map(round_time,self.times["hold_times_HL"]))),
+                        max(list(map(round_time,self.times["hold_times_HL"])))
+
+                        )) 
                                                                                             
-  
+        datasheet.write("END\n")
         datasheet.close()
                 

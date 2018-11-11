@@ -223,7 +223,7 @@ class sram_1bank(sram_base):
         """ Connect the output of the data flops to the write driver """
         # This is where the channel will start (y-dimension at least)
         for port in self.write_ports:
-            offset = self.data_dff_inst[port].ul() + vector(0, self.m1_pitch)
+            offset = self.data_dff_inst[port].ul() + vector(0, 2*self.m1_pitch)
 
             dff_names = ["dout_{}".format(x) for x in range(self.word_size)]
             bank_names = ["din{0}_{1}".format(port,x) for x in range(self.word_size)]

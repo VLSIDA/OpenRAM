@@ -569,7 +569,7 @@ class lib:
         for port in self.all_ports:
             #CSb timings
             datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
-                    "CSb{1}[{0}:0]".format(self.sram.word_size - 1, port),
+                    "CSb{0}".format(port),
                     min(list(map(round_time,self.times["setup_times_LH"]))),
                     max(list(map(round_time,self.times["setup_times_LH"]))),
 
@@ -608,7 +608,7 @@ class lib:
 
             #WEb timings
                 datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
-                        "WEb{1}[{0}:0]".format(self.sram.word_size - 1, port),
+                        "WEb{0}".format(port),
                         min(list(map(round_time,self.times["setup_times_LH"]))),
                         max(list(map(round_time,self.times["setup_times_LH"]))),
 

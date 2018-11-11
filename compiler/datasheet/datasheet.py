@@ -41,7 +41,7 @@ class datasheet():
             LVS = 'skipped'
             PEX = 'skipped'
        
-
+        self.html +='<img src=' + os.path.abspath(os.environ.get("OPENRAM_HOME")) + '/datasheet/assets/vlsi_logo.png alt="VLSIDA" />' 
         self.html +='<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>'+ self.name + '.html' + '</p>'
         self.html +='<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>'+ 'DRC: ' + str(DRC) + '</p>'
         self.html +='<p style=font-size: 20px;font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;>'+ 'LVS: ' + str(LVS) + '</p>'

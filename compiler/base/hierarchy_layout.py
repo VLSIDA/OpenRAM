@@ -783,8 +783,8 @@ class layout(lef.lef):
         def vcg_pin_overlap(pin1, pin2, vertical):
             """ Check for vertical or horizontal overlap of the two pins """
 
-            # Pin 1 must be in the "TOP" set
-            x_overlap = pin1.by() > pin2.by() and abs(pin1.center().x-pin2.center().x)<pitch
+            # Pin 1 must be in the "BOTTOM" set
+            x_overlap = pin1.by() < pin2.by() and abs(pin1.center().x-pin2.center().x)<pitch
 
             # Pin 1 must be in the "LEFT" set
             y_overlap = pin1.lx() < pin2.lx() and abs(pin1.center().y-pin2.center().y)<pitch
@@ -832,13 +832,6 @@ class layout(lef.lef):
                     
         #FIXME: What if we have a cycle? 
 
-        # The starting offset is the first trunk at the top or left
-        # so we must offset from the lower left of the channel placement
-        # in the case of vertical tracks
-        if not vertical:
-            # This will start from top down
-            offset = offset + vector(0,len(nets)*pitch)
-
         # list of routes to do
         while vcg:
             #from pprint import pformat
@@ -862,13 +855,13 @@ class layout(lef.lef):
             # Remove the net from other constriants in the VCG
             vcg=remove_net_from_graph(net_name, vcg)
             
-            # Add the trunk routes from the bottom up or the left to right
+            # Add the trunk routes from the bottom up for horizontal or the left to right for vertical
             if vertical:
                 self.add_vertical_trunk_route(pin_list, offset, layer_stack, pitch)
                 offset += vector(pitch,0)
             else:
                 self.add_horizontal_trunk_route(pin_list, offset, layer_stack, pitch)
-                offset -= vector(0,pitch)
+                offset += vector(0,pitch)
 
 
     def create_vertical_channel_route(self, netlist, pins, offset, 

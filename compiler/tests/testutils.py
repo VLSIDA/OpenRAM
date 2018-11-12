@@ -1,12 +1,14 @@
 import unittest,warnings
 import sys,os,glob,copy
+import shutil
 sys.path.append(os.path.join(sys.path[0],".."))
 from globals import OPTS
 import debug
 
 class openram_test(unittest.TestCase):
     """ Base unit test that we have some shared classes in. """
-    
+
+                
     def local_drc_check(self, w):
 
         self.reset()
@@ -29,17 +31,25 @@ class openram_test(unittest.TestCase):
         tempgds = OPTS.openram_temp + "temp.gds"
 
         a.sp_write(tempspice)
-        a.gds_write(tempgds)
+        # cannot write gds in netlist_only mode
+        if not OPTS.netlist_only:
+            a.gds_write(tempgds)
 
-        import verify
-        result=verify.run_drc(a.name, tempgds)
-        if result != 0:
-            self.fail("DRC failed: {}".format(a.name))
+            import verify
+            result=verify.run_drc(a.name, tempgds)
+            if result != 0:
+                #zip_file = "/tmp/{0}_{1}".format(a.name,os.getpid())
+                #debug.info(0,"Archiving failed files to {}.zip".format(zip_file))
+                #shutil.make_archive(zip_file, 'zip', OPTS.openram_temp)
+                self.fail("DRC failed: {}".format(a.name))
 
             
-        result=verify.run_lvs(a.name, tempgds, tempspice, final_verification)
-        if result != 0:
-            self.fail("LVS mismatch: {}".format(a.name))
+            result=verify.run_lvs(a.name, tempgds, tempspice, final_verification)
+            if result != 0:
+                #zip_file = "/tmp/{0}_{1}".format(a.name,os.getpid())
+                #debug.info(0,"Archiving failed files to {}.zip".format(zip_file))
+                #shutil.make_archive(zip_file, 'zip', OPTS.openram_temp)
+                self.fail("LVS mismatch: {}".format(a.name))
 
         if OPTS.purge_temp:
             self.cleanup()
@@ -75,7 +85,8 @@ class openram_test(unittest.TestCase):
                     if not self.isclose(k,data[k][i],golden_data[k][i],error_tolerance):
                         data_matches = False
             else:
-                self.isclose(k,data[k],golden_data[k],error_tolerance)
+                if not self.isclose(k,data[k],golden_data[k],error_tolerance):
+                    data_matches = False
         if not data_matches:
             import pprint
             data_string=pprint.pformat(data)
@@ -183,6 +194,9 @@ class openram_test(unittest.TestCase):
             
             # 4. Check if remaining string matches
             if line1 != line2:
+                #Uncomment if you want to see all the individual chars of the two lines 
+                #print(str([i for i in line1]))
+                #print(str([i for i in line2]))
                 if mismatches==0:
                     debug.error("Mismatching files:\nfile1={0}\nfile2={1}".format(filename1,filename2))
                 mismatches += 1
@@ -222,17 +236,21 @@ class openram_test(unittest.TestCase):
         check = filecmp.cmp(filename1,filename2)
         if not check:
             debug.error("MISMATCH file1={0} file2={1}".format(filename1,filename2))
-            f1 = open(filename1,"r")
-            s1 = f1.readlines().decode('utf-8')
+            f1 = open(filename1,mode="r",encoding='utf-8')
+            s1 = f1.readlines()
             f1.close()
-            f2 = open(filename2,"r").decode('utf-8')
+            f2 = open(filename2,mode="r",encoding='utf-8')
             s2 = f2.readlines()
             f2.close()
             mismatches=0
-            for line in difflib.unified_diff(s1, s2):
+            for line in list(difflib.unified_diff(s1, s2)):
                 mismatches += 1
-                self.error("DIFF LINES:",line)
-                if mismatches>10:
+                if mismatches==0:
+                    print("DIFF LINES:")
+
+                if mismatches<11:
+                    print(line.rstrip('\n'))
+                else:
                     return False
             return False
         else:

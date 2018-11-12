@@ -12,31 +12,26 @@ class pnor2(pgate.pgate):
     This model use ptx to generate a 2-input nor within a cetrain height.
     """
 
-    from importlib import reload
-    c = reload(__import__(OPTS.bitcell))
-    bitcell = getattr(c, OPTS.bitcell)
-
     unique_id = 1
     
-    def __init__(self, size=1, height=bitcell.height):
+    def __init__(self, size=1, height=None):
         """ Creates a cell for a simple 2 input nor """
         name = "pnor2_{0}".format(pnor2.unique_id)
         pnor2.unique_id += 1
-        pgate.pgate.__init__(self, name)
+        pgate.pgate.__init__(self, name, height)
         debug.info(2, "create pnor2 structure {0} with size of {1}".format(name, size))
 
         self.nmos_size = size
         # We will just make this 1.5 times for now. NORs are not ideal anyhow.
         self.pmos_size = 1.5*parameter["beta"]*size
-        self.nmos_width = self.nmos_size*drc["minwidth_tx"]
-        self.pmos_width = self.pmos_size*drc["minwidth_tx"]
-        self.height = height
+        self.nmos_width = self.nmos_size*drc("minwidth_tx")
+        self.pmos_width = self.pmos_size*drc("minwidth_tx")
 
         # FIXME: Allow these to be sized
         debug.check(size==1,"Size 1 pnor2 is only supported now.")
         self.tx_mults = 1
 
-        self.add_pins()
+        self.create_netlist()
         self.create_layout()
         #self.DRC_LVS()
 
@@ -45,6 +40,9 @@ class pnor2(pgate.pgate):
         """ Adds pins for spice netlist """
         self.add_pin_list(["A", "B", "Z", "vdd", "gnd"])
 
+    def create_netlist(self):
+        self.add_pins()
+        
     def create_layout(self):
         """ Calls all functions related to the generation of the layout """
 
@@ -94,7 +92,7 @@ class pnor2(pgate.pgate):
         # Two PMOS devices and a well contact. Separation between each.
         # Enclosure space on the sides.
         self.well_width = 2*self.pmos.active_width + self.pmos.active_contact.width \
-                          + 2*drc["active_to_body_active"] + 2*drc["well_enclosure_active"]
+                          + 2*drc("active_to_body_active") + 2*drc("well_enclosure_active")
 
         self.width = self.well_width
         # Height is an input parameter, so it is not recomputed.
@@ -103,7 +101,7 @@ class pnor2(pgate.pgate):
         extra_contact_space = max(-self.nmos.get_pin("D").by(),0)
         # This is a poly-to-poly of a flipped cell
         self.top_bottom_space = max(0.5*self.m1_width + self.m1_space + extra_contact_space, 
-                                    drc["poly_extend_active"], self.poly_space)
+                                    drc("poly_extend_active"), self.poly_space)
         
     def add_supply_rails(self):
         """ Add vdd/gnd rails to the top and bottom. """
@@ -239,6 +237,6 @@ class pnor2(pgate.pgate):
         """Computes effective capacitance. Results in fF"""
         c_load = load
         c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff
-        transistion_prob = spice["nor2_transisition_prob"]
-        return transistion_prob*(c_load + c_para) 
+        transition_prob = spice["nor2_transition_prob"]
+        return transition_prob*(c_load + c_para) 
         

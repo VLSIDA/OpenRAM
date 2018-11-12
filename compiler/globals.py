@@ -24,7 +24,7 @@ def parse_args():
     global OPTS
 
     option_list = {
-        optparse.make_option("-b", "--backannotated", action="store_true", dest="run_pex",
+        optparse.make_option("-b", "--backannotated", action="store_true", dest="use_pex",
                              help="Back annotate simulation"),
         optparse.make_option("-o", "--output", dest="output_name",
                              help="Base output file name(s) prefix", metavar="FILE"),
@@ -59,7 +59,7 @@ def parse_args():
         OPTS.tech_name = "scmos"
     # Alias SCMOS to AMI 0.5um
     if OPTS.tech_name == "scmos":
-        OPTS.tech_name = "scn3me_subm"
+        OPTS.tech_name = "scn4m_subm"
 
     return (options, args)
 
@@ -74,10 +74,12 @@ def print_banner():
     print("|=========" + name.center(60) + "=========|")
     print("|=========" + " ".center(60) + "=========|")
     print("|=========" + "VLSI Design and Automation Lab".center(60) + "=========|")
-    print("|=========" + "University of California Santa Cruz CE Department".center(60) + "=========|")
+    print("|=========" + "Computer Science and Engineering Department".center(60) + "=========|")
+    print("|=========" + "University of California Santa Cruz".center(60) + "=========|")
     print("|=========" + " ".center(60) + "=========|")
     print("|=========" + "VLSI Computer Architecture Research Group".center(60) + "=========|")
-    print("|=========" + "Oklahoma State University ECE Department".center(60) + "=========|")
+    print("|=========" + "Electrical and Computer Engineering Department".center(60) + "=========|")
+    print("|=========" + "Oklahoma State University".center(60) + "=========|")
     print("|=========" + " ".center(60) + "=========|")
     user_info = "Usage help: openram-user-group@ucsc.edu"
     print("|=========" + user_info.center(60) + "=========|")
@@ -98,9 +100,17 @@ def check_versions():
     minor_required = 5
     if not (major_python_version == major_required and minor_python_version >= minor_required):
         debug.error("Python {0}.{1} or greater is required.".format(major_required,minor_required),-1)
-
+ 
     # FIXME: Check versions of other tools here??
     # or, this could be done in each module (e.g. verify, characterizer, etc.)
+    global OPTS
+
+    try:
+        import flask_table
+        OPTS.datasheet_gen = 1
+    except:
+        OPTS.datasheet_gen = 0
+
 
 def init_openram(config_file, is_unit_test=True):
     """Initialize the technology, paths, simulators, etc."""
@@ -115,6 +125,8 @@ def init_openram(config_file, is_unit_test=True):
     read_config(config_file, is_unit_test)
 
     import_tech()
+
+    init_paths()
 
     # Reset the static duplicate name checker for unit tests.
     import hierarchy_design
@@ -142,22 +154,31 @@ def init_openram(config_file, is_unit_test=True):
     
 
 
-def get_tool(tool_type, preferences):
+def get_tool(tool_type, preferences, default_name=None):
     """
     Find which tool we have from a list of preferences and return the
-    one selected and its full path.
+    one selected and its full path. If default is specified,
+    find that one only and error otherwise.
     """
     debug.info(2,"Finding {} tool...".format(tool_type))
 
-    for name in preferences:
-        exe_name = find_exe(name)
-        if exe_name != None:
-            debug.info(1, "Using {0}: {1}".format(tool_type,exe_name))
-            return(name,exe_name)
+    if default_name:
+        exe_name=find_exe(default_name)
+        if exe_name == None:
+            debug.error("{0} not found. Cannot find {1} tool.".format(default_name,tool_type),2)
         else:
-            debug.info(1, "Could not find {0}, trying next {1} tool.".format(name,tool_type))
+            debug.info(1, "Using {0}: {1}".format(tool_type,exe_name))
+            return(default_name,exe_name)
     else:
-        return(None,"")
+        for name in preferences:
+            exe_name = find_exe(name)
+            if exe_name != None:
+                debug.info(1, "Using {0}: {1}".format(tool_type,exe_name))
+                return(name,exe_name)
+            else:
+                debug.info(1, "Could not find {0}, trying next {1} tool.".format(name,tool_type))
+        else:
+            return(None,"")
 
     
 def read_config(config_file, is_unit_test=True):
@@ -195,32 +216,35 @@ def read_config(config_file, is_unit_test=True):
         # Note that if we re-read a config file, nothing will get read again!
         if not k in OPTS.__dict__ or k=="tech_name":
             OPTS.__dict__[k]=v
-    
+
+    # Massage the output path to be an absolute one
     if not OPTS.output_path.endswith('/'):
         OPTS.output_path += "/"
     if not OPTS.output_path.startswith('/'):
         OPTS.output_path = os.getcwd() + "/" + OPTS.output_path
     debug.info(1, "Output saved in " + OPTS.output_path)
 
+    # Remember if we are running unit tests to reduce output
     OPTS.is_unit_test=is_unit_test
 
+    # If we are only generating a netlist, we can't do DRC/LVS
+    if OPTS.netlist_only:
+        OPTS.check_lvsdrc=False
+        
     # If config didn't set output name, make a reasonable default.
     if (OPTS.output_name == ""):
-        OPTS.output_name = "sram_{0}rw_{1}b_{2}w_{3}bank_{4}".format(OPTS.rw_ports,
-                                                                     OPTS.word_size,
-                                                                     OPTS.num_words,
-                                                                     OPTS.num_banks,
-                                                                     OPTS.tech_name)
+        ports = ""
+        if OPTS.num_rw_ports>0:
+            ports += "{}rw_".format(OPTS.num_rw_ports)
+        if OPTS.num_w_ports>0:
+            ports += "{}w_".format(OPTS.num_w_ports)
+        if OPTS.num_r_ports>0:
+            ports += "{}r_".format(OPTS.num_r_ports)
+        OPTS.output_name = "sram_{0}b_{1}_{2}{3}".format(OPTS.word_size,
+                                                         OPTS.num_words,
+                                                         ports,
+                                                         OPTS.tech_name)
         
-    # Don't delete the output dir, it may have other files!
-    # make the directory if it doesn't exist
-    try:
-        os.makedirs(OPTS.output_path, 0o750)
-    except OSError as e:
-        if e.errno == 17:  # errno.EEXIST
-            os.chmod(OPTS.output_path, 0o750)
-    except:
-        debug.error("Unable to make output directory.",-1)
 
         
 def end_openram():
@@ -244,7 +268,8 @@ def cleanup_paths():
     if not OPTS.purge_temp:
         debug.info(0,"Preserving temp directory: {}".format(OPTS.openram_temp))
         return
-    if os.path.exists(OPTS.openram_temp):
+    elif os.path.exists(OPTS.openram_temp):
+        debug.info(1,"Purging temp directory: {}".format(OPTS.openram_temp))
         # This annoyingly means you have to re-cd into the directory each debug iteration
         #shutil.rmtree(OPTS.openram_temp, ignore_errors=True)
         contents = [os.path.join(OPTS.openram_temp, i) for i in os.listdir(OPTS.openram_temp)]
@@ -270,7 +295,8 @@ def setup_paths():
 
     # Add all of the subdirs to the python path
     # These subdirs are modules and don't need to be added: characterizer, verify
-    for subdir in ["gdsMill", "tests", "router", "modules", "base", "pgates"]:
+    subdirlist = [ item for item in os.listdir(OPENRAM_HOME) if os.path.isdir(os.path.join(OPENRAM_HOME, item)) ]
+    for subdir in subdirlist:
         full_path = "{0}/{1}".format(OPENRAM_HOME,subdir)
         debug.check(os.path.isdir(full_path),
                     "$OPENRAM_HOME/{0} does not exist: {1}".format(subdir,full_path))
@@ -280,14 +306,6 @@ def setup_paths():
         OPTS.openram_temp += "/"
     debug.info(1, "Temporary files saved in " + OPTS.openram_temp)
 
-    cleanup_paths()
-
-    # make the directory if it doesn't exist
-    try:
-        os.makedirs(OPTS.openram_temp, 0o750)
-    except OSError as e:
-        if e.errno == 17:  # errno.EEXIST
-            os.chmod(OPTS.openram_temp, 0o750)
 
 
 def is_exe(fpath):
@@ -303,7 +321,29 @@ def find_exe(check_exe):
         if is_exe(exe):
             return exe
     return None
-        
+
+def init_paths():
+    """ Create the temp and output directory if it doesn't exist """
+
+    # make the directory if it doesn't exist
+    try:
+        debug.info(1,"Creating temp directory: {}".format(OPTS.openram_temp))
+        os.makedirs(OPTS.openram_temp, 0o750)
+    except OSError as e:
+        if e.errno == 17:  # errno.EEXIST
+            os.chmod(OPTS.openram_temp, 0o750)
+    
+    # Don't delete the output dir, it may have other files!
+    # make the directory if it doesn't exist
+    try:
+        os.makedirs(OPTS.output_path, 0o750)
+    except OSError as e:
+        if e.errno == 17:  # errno.EEXIST
+            os.chmod(OPTS.output_path, 0o750)
+    except:
+        debug.error("Unable to make output directory.",-1)
+
+    
 # imports correct technology directories for testing
 def import_tech():
     global OPTS
@@ -362,8 +402,6 @@ def report_status():
         debug.error("{0} is not an integer in config file.".format(OPTS.word_size))
     if type(OPTS.num_words)!=int:
         debug.error("{0} is not an integer in config file.".format(OPTS.sram_size))
-    if type(OPTS.num_banks)!=int:
-        debug.error("{0} is not an integer in config file.".format(OPTS.num_banks))
 
     if not OPTS.tech_name:
         debug.error("Tech name must be specified in config file.")
@@ -372,6 +410,9 @@ def report_status():
     print("Word size: {0}\nWords: {1}\nBanks: {2}".format(OPTS.word_size,
                                                           OPTS.num_words,
                                                           OPTS.num_banks))
+    if OPTS.netlist_only:
+        print("Netlist only mode (no physical design is being done).")
+    
     if not OPTS.check_lvsdrc:
         print("DRC/LVS/PEX checking is disabled.")
     

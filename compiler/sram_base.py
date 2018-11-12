@@ -2,124 +2,112 @@ import sys
 import datetime
 import getpass
 import debug
-from math import log,sqrt,ceil
+from importlib import reload
 from vector import vector
 from globals import OPTS, print_time
 
 from design import design
-    
+        
 class sram_base(design):
     """
     Dynamically generated SRAM by connecting banks to control logic. The
     number of banks should be 1 , 2 or 4
     """
-    def __init__(self, word_size, num_words, num_banks, name):
+    def __init__(self, name, sram_config):
         design.__init__(self, name)
         
-        from importlib import reload
-        c = reload(__import__(OPTS.control_logic))
-        self.mod_control_logic = getattr(c, OPTS.control_logic)
+        self.sram_config = sram_config
+        sram_config.set_local_config(self)
 
-        c = reload(__import__(OPTS.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.bitcell)
-        self.bitcell = self.mod_bitcell()
+        self.bank_insts = []
 
-        c = reload(__import__(OPTS.ms_flop))
-        self.mod_ms_flop = getattr(c, OPTS.ms_flop)
-        self.ms_flop = self.mod_ms_flop()
-        
-        self.word_size = word_size
-        self.num_words = num_words
-        self.num_banks = num_banks
-
-    def compute_sizes(self):
-        """  Computes the organization of the memory using bitcell size by trying to make it square."""
-
-        debug.check(self.num_banks in [1,2,4], "Valid number of banks are 1 , 2 and 4.")
-
-        self.num_words_per_bank = self.num_words/self.num_banks
-        self.num_bits_per_bank = self.word_size*self.num_words_per_bank
-
-        # Compute the area of the bitcells and estimate a square bank (excluding auxiliary circuitry)
-        self.bank_area = self.bitcell.width*self.bitcell.height*self.num_bits_per_bank
-        self.bank_side_length = sqrt(self.bank_area)
-
-        # Estimate the words per row given the height of the bitcell and the square side length
-        self.tentative_num_cols = int(self.bank_side_length/self.bitcell.width)
-        self.words_per_row = self.estimate_words_per_row(self.tentative_num_cols, self.word_size)
-
-        # Estimate the number of rows given the tentative words per row
-        self.tentative_num_rows = self.num_bits_per_bank / (self.words_per_row*self.word_size)
-        self.words_per_row = self.amend_words_per_row(self.tentative_num_rows, self.words_per_row)
-        
-        # Fix the number of columns and rows
-        self.num_cols = int(self.words_per_row*self.word_size)
-        self.num_rows = int(self.num_words_per_bank/self.words_per_row)
-
-        # Compute the address and bank sizes
-        self.row_addr_size = int(log(self.num_rows, 2))
-        self.col_addr_size = int(log(self.words_per_row, 2))
-        self.bank_addr_size = self.col_addr_size + self.row_addr_size
-        self.addr_size = self.bank_addr_size + int(log(self.num_banks, 2))
-        
-        debug.info(1,"Words per row: {}".format(self.words_per_row))
-
-    def estimate_words_per_row(self,tentative_num_cols, word_size):
-        """
-        This provides a heuristic rounded estimate for the number of words
-        per row.
-        """
-
-        if tentative_num_cols < 1.5*word_size:
-            return 1
-        elif tentative_num_cols > 3*word_size:
-            return 4
-        else:
-            return 2
-
-    def amend_words_per_row(self,tentative_num_rows, words_per_row):
-        """
-        This picks the number of words per row more accurately by limiting
-        it to a minimum and maximum.
-        """
-        # Recompute the words per row given a hard max
-        if(tentative_num_rows > 512):
-            debug.check(tentative_num_rows*words_per_row <= 2048, "Number of words exceeds 2048")
-            return int(words_per_row*tentative_num_rows/512)
-        # Recompute the words per row given a hard min
-        if(tentative_num_rows < 16):
-            debug.check(tentative_num_rows*words_per_row >= 16, "Minimum number of rows is 16, but given {0}".format(tentative_num_rows))
-            return int(words_per_row*tentative_num_rows/16)
-            
-        return words_per_row
 
     def add_pins(self):
         """ Add pins for entire SRAM. """
+        for port in self.write_ports:
+            for bit in range(self.word_size):
+                self.add_pin("DIN{0}[{1}]".format(port,bit),"INPUT")
+                
+        for port in self.all_ports:
+            for bit in range(self.addr_size):
+                self.add_pin("ADDR{0}[{1}]".format(port,bit),"INPUT")
 
-        for i in range(self.word_size):
-            self.add_pin("DIN[{0}]".format(i),"INPUT")
-        for i in range(self.addr_size):
-            self.add_pin("ADDR[{0}]".format(i),"INPUT")
-
-        # These are used to create the physical pins too
-        self.control_logic_inputs=self.control_logic.get_inputs()
-        self.control_logic_outputs=self.control_logic.get_outputs()
+        # These are used to create the physical pins
+        self.control_logic_inputs = []
+        self.control_logic_outputs = []
+        for port in self.all_ports:
+            if port in self.readwrite_ports:
+                self.control_logic_inputs.append(self.control_logic_rw.get_inputs())
+                self.control_logic_outputs.append(self.control_logic_rw.get_outputs())
+            elif port in self.write_ports:
+                self.control_logic_inputs.append(self.control_logic_w.get_inputs())
+                self.control_logic_outputs.append(self.control_logic_w.get_outputs())
+            else:
+                self.control_logic_inputs.append(self.control_logic_r.get_inputs())
+                self.control_logic_outputs.append(self.control_logic_r.get_outputs())
         
-        self.add_pin_list(self.control_logic_inputs,"INPUT")
+        for port in self.all_ports:
+            self.add_pin("csb{}".format(port),"INPUT")
+        for port in self.readwrite_ports:
+            self.add_pin("web{}".format(port),"INPUT")
+        for port in self.all_ports:
+            self.add_pin("clk{}".format(port),"INPUT")
 
-        for i in range(self.word_size):
-            self.add_pin("DOUT[{0}]".format(i),"OUTPUT")
+        for port in self.read_ports:
+            for bit in range(self.word_size):
+                self.add_pin("DOUT{0}[{1}]".format(port,bit),"OUTPUT")
         
         self.add_pin("vdd","POWER")
         self.add_pin("gnd","GROUND")
 
 
+    def create_netlist(self):
+        """ Netlist creation """
+
+        # Must create the control logic before pins to get the pins
+        self.add_modules()
+        self.add_pins()
+        
+        # This is for the lib file if we don't create layout
+        self.width=0
+        self.height=0
+
+        
     def create_layout(self):
         """ Layout creation """    
-        self.add_modules()
+        self.place_modules()
         self.route()
-        self.add_lvs_correspondence_points()
 
+        self.add_lvs_correspondence_points()
+        
+        self.offset_all_coordinates()
+
+        # Must be done after offsetting lower-left
+        self.route_supplies()
+
+        highest_coord = self.find_highest_coords()
+        self.width = highest_coord[0]
+        self.height = highest_coord[1]
+
+        
+        self.DRC_LVS(final_verification=True)
+
+        
+    def route_supplies(self):
+        """ Route the supply grid and connect the pins to them. """
+
+        for inst in self.insts:
+            self.copy_power_pins(inst,"vdd")
+            self.copy_power_pins(inst,"gnd")
+
+        from supply_router import supply_router as router
+        layer_stack =("metal3","via3","metal4")
+        rtr=router(layer_stack, self)
+        rtr.route()
+        
+
+        
+        
     def compute_bus_sizes(self):
         """ Compute the independent bus widths shared between two and four bank SRAMs """
         
@@ -145,97 +133,71 @@ class sram_base(design):
                     "Bank is too small compared to control logic.")
         
         
-        
     def add_busses(self):
         """ Add the horizontal and vertical busses """
         # Vertical bus
         # The order of the control signals on the control bus:
-        self.control_bus_names = ["clk_buf", "tri_en_bar", "tri_en", "clk_buf_bar", "w_en", "s_en"]
-        self.vert_control_bus_positions = self.create_vertical_bus(layer="metal2",
-                                                                   pitch=self.m2_pitch,
-                                                                   offset=self.vertical_bus_offset,
-                                                                   names=self.control_bus_names,
-                                                                   length=self.vertical_bus_height)
+        self.control_bus_names = []
+        for port in self.all_ports:
+            self.control_bus_names[port] = ["clk_buf{}".format(port), "clk_buf_bar{}".format(port)]
+            if (self.port_id[port] == "rw") or (self.port_id[port] == "w"):
+                self.control_bus_names[port].append("w_en{}".format(port))
+            if (self.port_id[port] == "rw") or (self.port_id[port] == "r"):
+                self.control_bus_names[port].append("s_en{}".format(port))
+            self.vert_control_bus_positions = self.create_vertical_bus(layer="metal2",
+                                                                       pitch=self.m2_pitch,
+                                                                       offset=self.vertical_bus_offset,
+                                                                       names=self.control_bus_names[port],
+                                                                       length=self.vertical_bus_height)
 
-        self.addr_bus_names=["A[{}]".format(i) for i in range(self.addr_size)]
-        self.vert_control_bus_positions.update(self.create_vertical_pin_bus(layer="metal2",
-                                                                            pitch=self.m2_pitch,
-                                                                            offset=self.addr_bus_offset,
-                                                                            names=self.addr_bus_names,
-                                                                            length=self.addr_bus_height))
+            self.addr_bus_names=["A{0}[{1}]".format(port,i) for i in range(self.addr_size)]
+            self.vert_control_bus_positions.update(self.create_vertical_pin_bus(layer="metal2",
+                                                                                pitch=self.m2_pitch,
+                                                                                offset=self.addr_bus_offset,
+                                                                                names=self.addr_bus_names,
+                                                                                length=self.addr_bus_height))
 
-        
-        self.bank_sel_bus_names = ["bank_sel[{}]".format(i) for i in range(self.num_banks)]
-        self.vert_control_bus_positions.update(self.create_vertical_pin_bus(layer="metal2",
-                                                                            pitch=self.m2_pitch,
-                                                                            offset=self.bank_sel_bus_offset,
-                                                                            names=self.bank_sel_bus_names,
-                                                                            length=self.vertical_bus_height))
-        
-
-        # Horizontal data bus
-        self.data_bus_names = ["DATA[{}]".format(i) for i in range(self.word_size)]
-        self.data_bus_positions = self.create_horizontal_pin_bus(layer="metal3",
-                                                                 pitch=self.m3_pitch,
-                                                                 offset=self.data_bus_offset,
-                                                                 names=self.data_bus_names,
-                                                                 length=self.data_bus_width)
-
-        # Horizontal control logic bus
-        # vdd/gnd in bus go along whole SRAM
-        # FIXME: Fatten these wires?
-        self.horz_control_bus_positions = self.create_horizontal_bus(layer="metal1",
-                                                                     pitch=self.m1_pitch,
-                                                                     offset=self.supply_bus_offset,
-                                                                     names=["vdd"],
-                                                                     length=self.supply_bus_width)
-        # The gnd rail must not be the entire width since we protrude the right-most vdd rail up for
-        # the decoder in 4-bank SRAMs
-        self.horz_control_bus_positions.update(self.create_horizontal_bus(layer="metal1",
-                                                                          pitch=self.m1_pitch,
-                                                                          offset=self.supply_bus_offset+vector(0,self.m1_pitch),
-                                                                          names=["gnd"],
-                                                                          length=self.supply_bus_width))
-        self.horz_control_bus_positions.update(self.create_horizontal_bus(layer="metal1",
-                                                                          pitch=self.m1_pitch,
-                                                                          offset=self.control_bus_offset,
-                                                                          names=self.control_bus_names,
-                                                                          length=self.control_bus_width))
-
-        
-
-        
-
-    def route_vdd_gnd(self):
-        """ Propagate all vdd/gnd pins up to this level for all modules """
-
-        # These are the instances that every bank has
-        top_instances = [self.bitcell_array_inst,
-                         self.precharge_array_inst,
-                         self.sense_amp_array_inst,
-                         self.write_driver_array_inst,
-                         self.tri_gate_array_inst,
-                         self.row_decoder_inst,
-                         self.wordline_driver_inst]
-        # Add these if we use the part...
-        if self.col_addr_size > 0:
-            top_instances.append(self.col_decoder_inst)
-            top_instances.append(self.col_mux_array_inst)
             
-        if self.num_banks > 1:
-            top_instances.append(self.bank_select_inst)
+            self.bank_sel_bus_names = ["bank_sel{0}_{1}".format(port,i) for i in range(self.num_banks)]
+            self.vert_control_bus_positions.update(self.create_vertical_pin_bus(layer="metal2",
+                                                                                pitch=self.m2_pitch,
+                                                                                offset=self.bank_sel_bus_offset,
+                                                                                names=self.bank_sel_bus_names,
+                                                                                length=self.vertical_bus_height))
+            
+
+            # Horizontal data bus
+            self.data_bus_names = ["DATA{0}[{1}]".format(port,i) for i in range(self.word_size)]
+            self.data_bus_positions = self.create_horizontal_pin_bus(layer="metal3",
+                                                                     pitch=self.m3_pitch,
+                                                                     offset=self.data_bus_offset,
+                                                                     names=self.data_bus_names,
+                                                                     length=self.data_bus_width)
+
+            # Horizontal control logic bus
+            # vdd/gnd in bus go along whole SRAM
+            # FIXME: Fatten these wires?
+            self.horz_control_bus_positions = self.create_horizontal_bus(layer="metal1",
+                                                                         pitch=self.m1_pitch,
+                                                                         offset=self.supply_bus_offset,
+                                                                         names=["vdd"],
+                                                                         length=self.supply_bus_width)
+            # The gnd rail must not be the entire width since we protrude the right-most vdd rail up for
+            # the decoder in 4-bank SRAMs
+            self.horz_control_bus_positions.update(self.create_horizontal_bus(layer="metal1",
+                                                                              pitch=self.m1_pitch,
+                                                                              offset=self.supply_bus_offset+vector(0,self.m1_pitch),
+                                                                              names=["gnd"],
+                                                                              length=self.supply_bus_width))
+            self.horz_control_bus_positions.update(self.create_horizontal_bus(layer="metal1",
+                                                                              pitch=self.m1_pitch,
+                                                                              offset=self.control_bus_offset,
+                                                                              names=self.control_bus_names[port],
+                                                                              length=self.control_bus_width))
+        
 
         
-        for inst in top_instances:
-            # Column mux has no vdd
-            if self.col_addr_size==0 or (self.col_addr_size>0 and inst != self.col_mux_array_inst):
-                self.copy_layout_pin(inst, "vdd")
-            # Precharge has no gnd
-            if inst != self.precharge_array_inst:
-                self.copy_layout_pin(inst, "gnd")
-        
-        
-    def create_multi_bank_modules(self):
+    def add_multi_bank_modules(self):
         """ Create the multibank address flops and bank decoder """
         from dff_buf_array import dff_buf_array
         self.msb_address = dff_buf_array(name="msb_address",
@@ -247,13 +209,28 @@ class sram_base(design):
             self.msb_decoder = self.bank.decoder.pre2_4
             self.add_mod(self.msb_decoder)
 
-    def create_modules(self):
+            
+    def add_modules(self):
         """ Create all the modules that will be used """
+        c = reload(__import__(OPTS.bitcell))
+        self.mod_bitcell = getattr(c, OPTS.bitcell)
+        self.bitcell = self.mod_bitcell()
+        
+        #c = reload(__import__(OPTS.control_logic))
+        #self.mod_control_logic = getattr(c, OPTS.control_logic)
 
+        
         from control_logic import control_logic
-        # Create the control logic module
-        self.control_logic = self.mod_control_logic(num_rows=self.num_rows)
-        self.add_mod(self.control_logic)
+        # Create the control logic module for each port type
+        if OPTS.num_rw_ports>0:
+            self.control_logic = self.control_logic_rw = control_logic(num_rows=self.num_rows, words_per_row=self.words_per_row, port_type="rw")
+            self.add_mod(self.control_logic_rw)
+        if OPTS.num_w_ports>0:
+            self.control_logic_w = control_logic(num_rows=self.num_rows, words_per_row=self.words_per_row, port_type="w")
+            self.add_mod(self.control_logic_w)
+        if OPTS.num_r_ports>0:
+            self.control_logic_r = control_logic(num_rows=self.num_rows, words_per_row=self.words_per_row, port_type="r")
+            self.add_mod(self.control_logic_r)
 
         # Create the address and control flops (but not the clk)
         from dff_array import dff_array
@@ -271,16 +248,13 @@ class sram_base(design):
         
         # Create the bank module (up to four are instantiated)
         from bank import bank
-        self.bank = bank(word_size=self.word_size,
-                         num_words=self.num_words_per_bank,
-                         words_per_row=self.words_per_row,
-                         num_banks=self.num_banks,
+        self.bank = bank(self.sram_config,
                          name="bank")
         self.add_mod(self.bank)
 
         # Create bank decoder
         if(self.num_banks > 1):
-            self.create_multi_bank_modules()
+            self.add_multi_bank_modules()
 
         self.bank_count = 0
 
@@ -288,8 +262,38 @@ class sram_base(design):
         self.supply_rail_pitch = self.bank.supply_rail_pitch
 
 
+    def create_bank(self,bank_num):
+        """ Create a bank  """      
+        self.bank_insts.append(self.add_inst(name="bank{0}".format(bank_num),
+                                             mod=self.bank))
 
-    def add_bank(self, bank_num, position, x_flip, y_flip):
+        temp = []
+        for port in self.read_ports:
+            for bit in range(self.word_size):
+                temp.append("DOUT{0}[{1}]".format(port,bit))
+        for port in self.write_ports:
+            for bit in range(self.word_size):
+                temp.append("BANK_DIN{0}[{1}]".format(port,bit))
+        for port in self.all_ports:
+            for bit in range(self.bank_addr_size):
+                temp.append("A{0}[{1}]".format(port,bit))
+        if(self.num_banks > 1):
+            for port in self.all_ports:
+                temp.append("bank_sel{0}[{1}]".format(port,bank_num))
+        for port in self.read_ports:
+            temp.append("s_en{0}".format(port))
+        for port in self.write_ports:
+            temp.append("w_en{0}".format(port))
+        for port in self.all_ports:
+            temp.append("clk_buf_bar{0}".format(port))
+            temp.append("clk_buf{0}".format(port))
+        temp.extend(["vdd", "gnd"])
+        self.connect_inst(temp)
+
+        return self.bank_insts[-1]
+
+
+    def place_bank(self, bank_inst, position, x_flip, y_flip):
         """ Place a bank at the given position with orientations """
 
         # x_flip ==  1 --> no flip in x_axis
@@ -313,86 +317,96 @@ class sram_base(design):
         else:
             bank_mirror = "R0"
             
-        bank_inst=self.add_inst(name="bank{0}".format(bank_num),
-                                mod=self.bank,
-                                offset=position,
-                                mirror=bank_mirror,
-                                rotate=bank_rotation)
-
-        temp = []
-        for i in range(self.word_size):
-            temp.append("DOUT[{0}]".format(i))
-        for i in range(self.word_size):
-            temp.append("BANK_DIN[{0}]".format(i))
-        for i in range(self.bank_addr_size):
-            temp.append("A[{0}]".format(i))
-        if(self.num_banks > 1):
-            temp.append("bank_sel[{0}]".format(bank_num))
-        temp.extend(["s_en", "w_en", "tri_en_bar", "tri_en",
-                     "clk_buf_bar","clk_buf" , "vdd", "gnd"])
-        self.connect_inst(temp)
+        bank_inst.place(offset=position,
+                        mirror=bank_mirror,
+                        rotate=bank_rotation)
 
         return bank_inst
 
+    
+    def create_row_addr_dff(self):
+        """ Add all address flops for the main decoder """
+        insts = []
+        for port in self.all_ports:
+            insts.append(self.add_inst(name="row_address{}".format(port),
+                                       mod=self.row_addr_dff))
+                    
+            # inputs, outputs/output/bar
+            inputs = []
+            outputs = []
+            for bit in range(self.row_addr_size):
+                inputs.append("ADDR{}[{}]".format(port,bit+self.col_addr_size))
+                outputs.append("A{}[{}]".format(port,bit+self.col_addr_size))
 
-    def add_row_addr_dff(self, position):
-        """ Add and place all address flops for the main decoder """
-        self.row_addr_dff_inst = self.add_inst(name="row_address",
-                                               mod=self.row_addr_dff,
-                                               offset=position)
-        # inputs, outputs/output/bar
-        inputs = []
-        outputs = []
-        for i in range(self.row_addr_size):
-            inputs.append("ADDR[{}]".format(i+self.col_addr_size))
-            outputs.append("A[{}]".format(i+self.col_addr_size))
-
-        # FIXME clk->clk_buf
-        self.connect_inst(inputs + outputs + ["clk", "vdd", "gnd"])
+            self.connect_inst(inputs + outputs + ["clk_buf{}".format(port), "vdd", "gnd"])
+        
+        return insts
 
         
-    def add_col_addr_dff(self, position):
+    def create_col_addr_dff(self):
         """ Add and place all address flops for the column decoder """
-        self.col_addr_dff_inst = self.add_inst(name="row_address",
-                                               mod=self.col_addr_dff,
-                                               offset=position)
-        # inputs, outputs/output/bar
-        inputs = []
-        outputs = []
-        for i in range(self.col_addr_size):
-            inputs.append("ADDR[{}]".format(i))
-            outputs.append("A[{}]".format(i))
+        insts = []
+        for port in self.all_ports:
+            insts.append(self.add_inst(name="col_address{}".format(port),
+                                       mod=self.col_addr_dff))
+                  
+            # inputs, outputs/output/bar
+            inputs = []
+            outputs = []
+            for bit in range(self.col_addr_size):
+                inputs.append("ADDR{}[{}]".format(port,bit))
+                outputs.append("A{}[{}]".format(port,bit))
 
-        # FIXME clk->clk_buf
-        self.connect_inst(inputs + outputs + ["clk", "vdd", "gnd"])
+            self.connect_inst(inputs + outputs + ["clk_buf{}".format(port), "vdd", "gnd"])
+        
+        return insts
 
-    def add_data_dff(self, position):
+        
+    def create_data_dff(self):
         """ Add and place all data flops """
-        self.data_dff_inst = self.add_inst(name="data_dff",
-                                           mod=self.data_dff,
-                                           offset=position)
-        # inputs, outputs/output/bar
-        inputs = []
-        outputs = []
-        for i in range(self.word_size):
-            inputs.append("DIN[{}]".format(i))
-            outputs.append("BANK_DIN[{}]".format(i))
+        insts = []
+        for port in self.write_ports:
+            insts.append(self.add_inst(name="data_dff{}".format(port),
+                                      mod=self.data_dff))
+                  
+            # inputs, outputs/output/bar
+            inputs = []
+            outputs = []
+            for bit in range(self.word_size):
+                inputs.append("DIN{}[{}]".format(port,bit))
+                outputs.append("BANK_DIN{}[{}]".format(port,bit))
 
-        # FIXME clk->clk_buf_bar
-        self.connect_inst(inputs + outputs + ["clk", "vdd", "gnd"])
+            self.connect_inst(inputs + outputs + ["clk_buf{}".format(port), "vdd", "gnd"])
         
-    def add_control_logic(self, position):
+        return insts
+
+        
+    def create_control_logic(self):
         """ Add and place control logic """
-        self.control_logic_inst=self.add_inst(name="control",
-                                              mod=self.control_logic,
-                                              offset=position)
-        self.connect_inst(self.control_logic_inputs + self.control_logic_outputs + ["vdd", "gnd"])
-
-
+        insts = []
+        for port in self.all_ports:
+            if port in self.readwrite_ports:
+                mod = self.control_logic_rw
+            elif port in self.write_ports:
+                mod = self.control_logic_w
+            else:
+                mod = self.control_logic_r
+                
+            insts.append(self.add_inst(name="control{}".format(port),
+                                       mod=mod))
+            
+            temp = ["csb{}".format(port)]
+            if port in self.readwrite_ports:
+                temp.append("web{}".format(port))
+            temp.append("clk{}".format(port))
+            if port in self.read_ports:
+                temp.append("s_en{}".format(port))
+            if port in self.write_ports:
+                temp.append("w_en{}".format(port))
+            temp.extend(["clk_buf_bar{}".format(port), "clk_buf{}".format(port), "vdd", "gnd"])
+            self.connect_inst(temp)
         
-
-
-
+        return insts
 
 
     def connect_rail_from_left_m2m3(self, src_pin, dest_pin):
@@ -403,14 +417,14 @@ class sram_base(design):
         self.add_via_center(layers=("metal2","via2","metal3"),
                             offset=src_pin.rc(),
                             rotate=90)
-        
+
+                            
     def connect_rail_from_left_m2m1(self, src_pin, dest_pin):
         """ Helper routine to connect an unrotated/mirrored oriented instance to the rails """
         in_pos = src_pin.rc()
         out_pos = vector(dest_pin.cx(), in_pos.y)
         self.add_wire(("metal2","via1","metal1"),[in_pos, out_pos, out_pos - vector(0,self.m2_pitch)])
 
-        
 
     def sp_write(self, sp_name):
         # Write the entire spice of the object to the file
@@ -436,8 +450,9 @@ class sram_base(design):
         del usedMODS
         sp.close()
 
-    def analytical_delay(self,slew,load):
+        
+    def analytical_delay(self, vdd, slew,load):
         """ LH and HL are the same in analytical model. """
-        return self.bank.analytical_delay(slew,load)
+        return self.bank.analytical_delay(vdd,slew,load)
 
         

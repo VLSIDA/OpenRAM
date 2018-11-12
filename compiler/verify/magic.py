@@ -1,65 +1,22 @@
 """
 This is a DRC/LVS/PEX interface file for magic + netgen. 
 
-This assumes you have the SCMOS magic rules installed. Get these from:
-ftp://ftp.mosis.edu/pub/sondeen/magic/new/beta/current.tar.gz
-and install them in:
-cd /opt/local/lib/magic/sys
-tar zxvf current.tar.gz
-ln -s 2001a current
+We include the tech file for SCN3ME_SUBM in the tech directory,
+that is included in OpenRAM during DRC. 
+You can use this interactively by appending the magic system path in 
+your .magicrc file
+path sys /Users/mrg/openram/technology/scn3me_subm/tech
 
-1. magic can perform drc with the following:
-#!/bin/sh
-magic -dnull -noconsole << EOF
-tech load SCN3ME_SUBM.30
-#scalegrid 1 2
-gds rescale no
-gds polygon subcell true
-gds warning default
-gds read $1
-load $1
-writeall force
-drc count
-drc why
-quit -noprompt
-EOF
-
-2. magic can perform extraction with the following:
-#!/bin/sh
-rm -f $1.ext
-rm -f $1.spice
-magic -dnull -noconsole << EOF
-tech load SCN3ME_SUBM.30
-#scalegrid 1 2
-gds rescale no
-gds polygon subcell true
-gds warning default
-gds read $1
-extract
-ext2spice scale off
-ext2spice
-quit -noprompt
-EOF
-
-3. netgen can perform LVS with:
-#!/bin/sh
-netgen -noconsole <<EOF
-readnet spice $1.spice
-readnet spice $1.sp
-ignore class c
-equate class {$1.spice nfet} {$2.sp n}
-equate class {$1.spice pfet} {$2.sp p}
-permute default
-compare hierarchical $1.spice {$1.sp $1}
-run converge
-EOF
-
+We require the version 30 Magic rules which allow via stacking.
+We obtained this file from Qflow ( http://opencircuitdesign.com/qflow/index.html )
+and include its appropriate license.
 """
 
 
 import os
 import re
 import time
+import shutil
 import debug
 from globals import OPTS
 import subprocess
@@ -69,7 +26,7 @@ num_drc_runs = 0
 num_lvs_runs = 0
 num_pex_runs = 0
 
-def write_magic_script(cell_name, gds_name, extract=False):
+def write_magic_script(cell_name, gds_name, extract=False, final_verification=False):
     """ Write a magic script to perform DRC and optionally extraction. """
 
     global OPTS
@@ -78,26 +35,34 @@ def write_magic_script(cell_name, gds_name, extract=False):
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
     f.write("{} -dnull -noconsole << EOF\n".format(OPTS.drc_exe[1]))
-    f.write("tech load SCN3ME_SUBM.30\n")
-    #gf.write("scalegrid 1 8\n")
-    #f.write("gds rescale no\n")
     f.write("gds polygon subcell true\n")
     f.write("gds warning default\n")
     f.write("gds read {}\n".format(gds_name))
     f.write("load {}\n".format(cell_name))
+    # Flatten the cell to get rid of DRCs spanning multiple layers
+    # (e.g. with routes)
+    #f.write("flatten {}_new\n".format(cell_name))
+    #f.write("load {}_new\n".format(cell_name))
+    #f.write("cellname rename {0}_new {0}\n".format(cell_name))
+    #f.write("load {}\n".format(cell_name))
     f.write("writeall force\n")
     f.write("drc check\n")
     f.write("drc catchup\n")
     f.write("drc count total\n")
     f.write("drc count\n")
-    if extract:
-        f.write("extract all\n")
-        f.write("ext2spice hierarchy on\n")        
-        f.write("ext2spice scale off\n")
-        # Can choose hspice, ngspice, or spice3,
-        # but they all seem compatible enough.
-        #f.write("ext2spice format ngspice\n")
-        f.write("ext2spice\n")
+    if not extract:
+        pre = "#"
+    else:
+        pre = ""
+    if final_verification:
+        f.write(pre+"extract unique\n")
+    f.write(pre+"extract\n")
+    f.write(pre+"ext2spice hierarchy on\n")        
+    f.write(pre+"ext2spice scale off\n")
+    # Can choose hspice, ngspice, or spice3,
+    # but they all seem compatible enough.
+    #f.write(pre+"ext2spice format ngspice\n")
+    f.write(pre+"ext2spice\n")
     f.write("quit -noprompt\n")
     f.write("EOF\n")
         
@@ -108,11 +73,13 @@ def write_netgen_script(cell_name, sp_name):
     """ Write a netgen script to perform LVS. """
 
     global OPTS
-    # This is a hack to prevent netgen from re-initializing the LVS
-    # commands. It will be unnecessary after Tim adds the nosetup option.
-    setup_file = OPTS.openram_temp + "setup.tcl"
-    f = open(setup_file, "w")
-    f.close()
+
+    setup_file = OPTS.openram_tech + "mag_lib/setup.tcl"
+    if os.path.exists(setup_file):
+        # Copy setup.tcl file into temp dir
+        shutil.copy(setup_file, OPTS.openram_temp)
+    else:
+        setup_file = 'nosetup'
 
     run_file = OPTS.openram_temp + "run_lvs.sh"
     f = open(run_file, "w")
@@ -126,37 +93,27 @@ def write_netgen_script(cell_name, sp_name):
     #                                                                     cell_name))
     # f.write("property {{{0}{1}.spice pfet}} tolerance {{w 0.1}}\n".format(OPTS.openram_temp,
     #                                                                     cell_name))
-    f.write("lvs {0}.spice {{{1} {0}}} setup.tcl {0}.lvs.report\n".format(cell_name, sp_name))
+    f.write("lvs {0}.spice {{{1} {0}}} {2} {0}.lvs.report\n".format(cell_name, sp_name, setup_file))
     f.write("quit\n")
     f.write("EOF\n")
     f.close()
     os.system("chmod u+x {}".format(run_file))
 
-    setup_file = OPTS.openram_temp + "setup.tcl"
-    f = open(setup_file, "w")
-    f.write("ignore class c\n")
-    f.write("equate class {{nfet {0}.spice}} {{n {1}}}\n".format(cell_name, sp_name))
-    f.write("equate class {{pfet {0}.spice}} {{p {1}}}\n".format(cell_name, sp_name))
-    # This circuit has symmetries and needs to be flattened to resolve them or the banks won't pass
-    # Is there a more elegant way to add this when needed?
-    f.write("flatten class {{{0}.spice precharge_array}}\n".format(cell_name))
-    f.write("property {{nfet {0}.spice}} remove as ad ps pd\n".format(cell_name))
-    f.write("property {{pfet {0}.spice}} remove as ad ps pd\n".format(cell_name))
-    f.write("property {{n {0}}} remove as ad ps pd\n".format(sp_name))
-    f.write("property {{p {0}}} remove as ad ps pd\n".format(sp_name))
-    f.write("permute transistors\n")
-    f.write("permute pins n source drain\n")
-    f.write("permute pins p source drain\n")
-    f.close()
     
-    
-def run_drc(cell_name, gds_name, extract=False):
+def run_drc(cell_name, gds_name, extract=True, final_verification=False):
     """Run DRC check on a cell which is implemented in gds_name."""
 
     global num_drc_runs
     num_drc_runs += 1
 
-    write_magic_script(cell_name, gds_name, extract)
+    # Copy .magicrc file into temp dir
+    magic_file = OPTS.openram_tech + "mag_lib/.magicrc"
+    if os.path.exists(magic_file):
+        shutil.copy(magic_file, OPTS.openram_temp)
+    else:
+        debug.warning("Could not locate .magicrc file: {}".format(magic_file))
+
+    write_magic_script(cell_name, gds_name, extract, final_verification)
     
     # run drc
     cwd = os.getcwd()
@@ -209,7 +166,6 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     global num_lvs_runs
     num_lvs_runs += 1
     
-    run_drc(cell_name, gds_name, extract=True)
     write_netgen_script(cell_name, sp_name)
     
     # run LVS
@@ -299,6 +255,25 @@ def run_pex(name, gds_name, sp_name, output=None):
         run_drc(name, gds_name)
         run_lvs(name, gds_name, sp_name)
 
+        """
+        2. magic can perform extraction with the following:
+        #!/bin/sh
+        rm -f $1.ext
+        rm -f $1.spice
+        magic -dnull -noconsole << EOF
+        tech load SCN3ME_SUBM.30
+        #scalegrid 1 2
+        gds rescale no
+        gds polygon subcell true
+        gds warning default
+        gds read $1
+        extract
+        ext2spice scale off
+        ext2spice
+        quit -noprompt
+        EOF
+        """
+        
     pex_rules = drc["xrc_rules"]
     pex_runset = {
         'pexRulesFile': pex_rules,

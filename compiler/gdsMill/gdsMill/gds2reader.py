@@ -294,7 +294,7 @@ class Gds2reader:
                 mirrorFlag = bool(transFlags&0x8000)   ##these flags are a bit sketchy
                 rotateFlag = bool(transFlags&0x0002)
                 magnifyFlag = bool(transFlags&0x0004)
-                thisSref.transFlags=(mirrorFlag,rotateFlag,magnifyFlag)
+                thisSref.transFlags=[mirrorFlag,magnifyFlag,rotateFlag]
                 if(self.debugToTerminal==1):
                     print("\t\t\tMirror X:"+str(mirrorFlag))
                     print( "\t\t\tRotate:"+str(rotateFlag))
@@ -345,7 +345,7 @@ class Gds2reader:
                 mirrorFlag = bool(transFlags&0x8000)   ##these flags are a bit sketchy
                 rotateFlag = bool(transFlags&0x0002)
                 magnifyFlag = bool(transFlags&0x0004)
-                thisAref.transFlags=(mirrorFlag,rotateFlag,magnifyFlag)
+                thisAref.transFlags=[mirrorFlag,magnifyFlag,rotateFlag]
                 if(self.debugToTerminal==1):
                     print("\t\t\tMirror X:"+str(mirrorFlag))
                     print("\t\t\tRotate:"+str(rotateFlag))
@@ -408,7 +408,7 @@ class Gds2reader:
                 mirrorFlag = bool(transFlags&0x8000)   ##these flags are a bit sketchy
                 rotateFlag = bool(transFlags&0x0002)
                 magnifyFlag = bool(transFlags&0x0004)
-                thisText.transFlags=(mirrorFlag,rotateFlag,magnifyFlag)
+                thisText.transFlags=[mirrorFlag,magnifyFlag,rotateFlag]
                 if(self.debugToTerminal==1):
                     print("\t\t\tMirror X:"+str(mirrorFlag))
                     print("\t\t\tRotate:"+str(rotateFlag))

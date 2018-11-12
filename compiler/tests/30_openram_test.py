@@ -62,7 +62,12 @@ class openram_test(openram_test):
         import glob
         files = glob.glob('{0}/*.lib'.format(out_path))
         self.assertTrue(len(files)>0)
-
+        
+        # Make sure there is any .html file 
+        if os.path.exists(out_path):
+            datasheets = glob.glob('{0}/*html'.format(out_path))
+            self.assertTrue(len(datasheets)>0)
+        
         # grep any errors from the output
         output_log = open("{0}/output.log".format(out_path),"r")
         output = output_log.read()
@@ -78,7 +83,7 @@ class openram_test(openram_test):
 
         globals.end_openram()
 
-# instantiate a copy of the class to actually run the test
+# run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

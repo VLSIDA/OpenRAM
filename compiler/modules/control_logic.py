@@ -18,23 +18,40 @@ class control_logic(design.design):
     Dynamically generated Control logic for the total SRAM circuit.
     """
 
-    def __init__(self, num_rows):
+    def __init__(self, num_rows, words_per_row, port_type="rw"):
         """ Constructor """
-        design.design.__init__(self, "control_logic")
-        debug.info(1, "Creating {}".format(self.name))
-
+        name = "control_logic_" + port_type
+        design.design.__init__(self, name)
+        debug.info(1, "Creating {}".format(name))
+        
         self.num_rows = num_rows
-        self.create_layout()
-        self.DRC_LVS()
+        self.words_per_row = words_per_row
+        self.port_type = port_type
+        
+        if self.port_type == "rw":
+            self.num_control_signals = 2
+        else:
+            self.num_control_signals = 1
+        
+        self.create_netlist()
+        if not OPTS.netlist_only:
+            self.create_layout()
 
+    def create_netlist(self):
+        self.setup_signal_busses()
+        self.add_pins()
+        self.add_modules()
+        self.create_modules()
+        
     def create_layout(self):
         """ Create layout and route between modules """
-        self.setup_layout_offsets()
-        self.add_pins()
-        self.create_modules()
-        self.add_rails()
-        self.add_modules()
-        self.add_routing()
+        self.route_rails()
+        self.place_modules()
+        self.route_all()
+        
+        #self.add_lvs_correspondence_points()
+
+        self.DRC_LVS()
 
 
     def add_pins(self):
@@ -46,13 +63,13 @@ class control_logic(design.design):
         self.add_pin("vdd","POWER")
         self.add_pin("gnd","GROUND")
 
-    def create_modules(self):
-        """ add all the required modules """
+    def add_modules(self):
+        """ Add all the required modules """
         
         dff = dff_inv() 
         dff_height = dff.height
         
-        self.ctrl_dff_array = dff_inv_array(rows=3,columns=1)
+        self.ctrl_dff_array = dff_inv_array(rows=self.num_control_signals,columns=1)
         self.add_mod(self.ctrl_dff_array)
         
         self.nand2 = pnand2(height=dff_height)
@@ -72,41 +89,65 @@ class control_logic(design.design):
         self.inv8 = pinv(size=16, height=dff_height)
         self.add_mod(self.inv8)
 
-        from importlib import reload
-        c = reload(__import__(OPTS.replica_bitline))
-        replica_bitline = getattr(c, OPTS.replica_bitline)
-        # FIXME: These should be tuned according to the size!
-        delay_stages = 4 # Must be non-inverting
+        if (self.port_type == "rw") or (self.port_type == "r"):
+            from importlib import reload
+            c = reload(__import__(OPTS.replica_bitline))
+            replica_bitline = getattr(c, OPTS.replica_bitline)
+            
+            delay_stages, delay_fanout = self.get_delay_chain_size()
+            bitcell_loads = int(math.ceil(self.num_rows / 2.0))
+            self.replica_bitline = replica_bitline(delay_stages, delay_fanout, bitcell_loads, name="replica_bitline_"+self.port_type)
+            self.add_mod(self.replica_bitline)
+
+    def get_delay_chain_size(self):
+        """Determine the size of the delay chain used for the Sense Amp Enable """
+        # FIXME: These should be tuned according to the additional size parameters
         delay_fanout = 3 # This can be anything >=2
-        bitcell_loads = int(math.ceil(self.num_rows / 5.0))
-        self.replica_bitline = replica_bitline(delay_stages, delay_fanout, bitcell_loads)
-        self.add_mod(self.replica_bitline)
-
-
-    def setup_layout_offsets(self):
-        """ Setup layout offsets, determine the size of the busses etc """
-        # These aren't for instantiating, but we use them to get the dimensions
-        #self.poly_contact_offset = vector(0.5*contact.poly.width,0.5*contact.poly.height)
-
-        # Have the cell gap leave enough room to route an M2 wire.
-        # Some cells may have pwell/nwell spacing problems too when the wells are different heights.
-        #self.cell_gap = max(self.m2_pitch,drc["pwell_to_nwell"])
+        # Delay stages Must be non-inverting
+        if self.words_per_row >= 8:
+            delay_stages = 8
+        elif self.words_per_row == 4:
+            delay_stages = 6
+        else:
+            delay_stages = 4
+        return (delay_stages, delay_fanout)
+        
+    def setup_signal_busses(self):
+        """ Setup bus names, determine the size of the busses etc """
 
         # List of input control signals
-        self.input_list =["csb","web","oeb"]
-        self.dff_output_list =["cs_bar", "cs", "we_bar", "we", "oe_bar", "oe"]        
+        if self.port_type == "rw":
+            self.input_list = ["csb", "web"]
+        else:
+            self.input_list = ["csb"]
+            
+        if self.port_type == "rw":
+            self.dff_output_list = ["cs_bar", "cs", "we_bar", "we"]
+        else:
+            self.dff_output_list = ["cs_bar", "cs"]
+        
         # list of output control signals (for making a vertical bus)
-        self.internal_bus_list = ["clk_buf", "clk_buf_bar", "we", "cs", "oe"]
+        if self.port_type == "rw":
+            self.internal_bus_list = ["clk_buf", "clk_buf_bar", "we", "cs"]
+        else:
+            self.internal_bus_list = ["clk_buf", "clk_buf_bar", "cs"]
         # leave space for the bus plus one extra space
         self.internal_bus_width = (len(self.internal_bus_list)+1)*self.m2_pitch 
-        # Ooutputs to the bank
-        self.output_list = ["s_en", "w_en", "clk_buf_bar", "clk_buf"]
-        # # with tri/tri_en
-        # self.output_list = ["s_en", "w_en", "tri_en", "tri_en_bar", "clk_buf_bar", "clk_buf"]        
+        
+        # Outputs to the bank
+        if self.port_type == "r":
+            self.output_list = ["s_en"]
+        elif self.port_type == "w":
+            self.output_list = ["w_en"]
+        else:
+            self.output_list = ["s_en", "w_en"]
+        self.output_list.append("clk_buf_bar")
+        self.output_list.append("clk_buf")
+        
         self.supply_list = ["vdd", "gnd"]
 
     
-    def add_rails(self):
+    def route_rails(self):
         """ Add the input signal inverted tracks """
         height = 4*self.inv1.height - self.m2_pitch
         offset = vector(self.ctrl_dff_array.width,0)
@@ -114,223 +155,189 @@ class control_logic(design.design):
         self.rail_offsets = self.create_vertical_bus("metal2", self.m2_pitch, offset, self.internal_bus_list, height)
             
             
-    def add_modules(self):
+    def create_modules(self):
+        """ Create all the modules """
+        self.create_dffs()
+        self.create_clk_row()
+        if (self.port_type == "rw") or (self.port_type == "w"):
+            self.create_we_row()
+        if (self.port_type == "rw") or (self.port_type == "r"):
+            self.create_rbl_in_row()
+            self.create_sen_row()
+            self.create_rbl()
+
+
+    def place_modules(self):
         """ Place all the modules """
         # Keep track of all right-most instances to determine row boundary
         # and add the vdd/gnd pins
         self.row_end_inst = []
 
-
         # Add the control flops on the left of the bus
-        self.add_dffs()
+        self.place_dffs()
 
+        row = 0
         # Add the logic on the right of the bus
-        self.add_clk_row(row=0) # clk is a double-high cell
-        self.add_we_row(row=2)
-        # self.add_trien_row(row=3)
-        # self.add_trien_bar_row(row=4)
-        self.add_rbl_in_row(row=3)
-        self.add_sen_row(row=4)
-        self.add_rbl(row=5)
-        
+        self.place_clk_row(row=row) # clk is a double-high cell
+        row += 2
+        if (self.port_type == "rw") or (self.port_type == "w"):
+            self.place_we_row(row=row)
+            pre_height = self.w_en_inst.uy()
+            control_center_y = self.w_en_inst.by()
+            row += 1
+        if (self.port_type == "rw") or (self.port_type == "r"):
+            self.place_rbl_in_row(row=row)
+            self.place_sen_row(row=row+1)
+            self.place_rbl(row=row+2)
+            pre_height = self.rbl_inst.uy()
+            control_center_y = self.rbl_inst.by()
 
-        self.add_lvs_correspondence_points()
+        # This offset is used for placement of the control logic in the SRAM level.
+        self.control_logic_center = vector(self.ctrl_dff_inst.rx(), control_center_y)
 
-        # This offset is used for placement of the control logic in
-        # the SRAM level.
-        self.control_logic_center = vector(self.ctrl_dff_inst.rx(), self.rbl_inst.by())
-        
-        self.height = self.rbl_inst.uy()
+        # Extra pitch on top and right
+        self.height = pre_height + self.m3_pitch
         # Max of modules or logic rows
-        self.width = max(self.rbl_inst.rx(), max([inst.rx() for inst in self.row_end_inst]))
+        if (self.port_type == "rw") or (self.port_type == "r"):
+            self.width = max(self.rbl_inst.rx(), max([inst.rx() for inst in self.row_end_inst])) + self.m2_pitch
+        else:
+            self.width = max([inst.rx() for inst in self.row_end_inst]) + self.m2_pitch
 
-
-    def add_routing(self):
+    def route_all(self):
         """ Routing between modules """
         self.route_dffs()
-        #self.route_trien()
-        #self.route_trien_bar()
-        self.route_rbl_in()
-        self.route_wen()
-        self.route_sen()
+        if (self.port_type == "rw") or (self.port_type == "w"):
+            self.route_wen()
+        if (self.port_type == "rw") or (self.port_type == "r"):
+            self.route_rbl_in()
+            self.route_sen()
         self.route_clk()
         self.route_supply()
 
 
-    def add_rbl(self,row):
-        """ Add the replica bitline """
+    def create_rbl(self):
+        """ Create the replica bitline """
+        self.rbl_inst=self.add_inst(name="replica_bitline",
+                                    mod=self.replica_bitline)
+        self.connect_inst(["rbl_in", "pre_s_en", "vdd", "gnd"])
+
+    def place_rbl(self,row):
+        """ Place the replica bitline """
         y_off = row * self.inv1.height + 2*self.m1_pitch
 
         # Add the RBL above the rows
         # Add to the right of the control rows and routing channel
         self.replica_bitline_offset = vector(0, y_off)
-        self.rbl_inst=self.add_inst(name="replica_bitline",
-                                    mod=self.replica_bitline,
-                                    offset=self.replica_bitline_offset)
-        self.connect_inst(["rbl_in", "pre_s_en", "vdd", "gnd"])
+        self.rbl_inst.place(self.replica_bitline_offset)
         
         
-    def add_clk_row(self,row):
-        """ Add the multistage clock buffer below the control flops """
-        x_off = self.ctrl_dff_array.width + self.internal_bus_width
-        (y_off,mirror)=self.get_offset(row)
-
-        clkbuf_offset = vector(x_off,y_off)
+    def create_clk_row(self):
+        """ Create the multistage clock buffer  """
         self.clkbuf_inst = self.add_inst(name="clkbuf",
-                                         mod=self.clkbuf,
-                                         offset=clkbuf_offset)
-
+                                         mod=self.clkbuf)
         self.connect_inst(["clk","clk_buf_bar","clk_buf","vdd","gnd"])
 
+    def place_clk_row(self,row):
+        """ Place the multistage clock buffer below the control flops """
+        x_off = self.ctrl_dff_array.width + self.internal_bus_width
+        (y_off,mirror)=self.get_offset(row)
+        clkbuf_offset = vector(x_off,y_off)
+        self.clkbuf_inst.place(clkbuf_offset)
         self.row_end_inst.append(self.clkbuf_inst)
         
 
-    def add_rbl_in_row(self,row):
-        x_off = self.ctrl_dff_array.width + self.internal_bus_width 
-        (y_off,mirror)=self.get_offset(row)
-
-
-        # input: OE, clk_buf_bar,CS output: rbl_in_bar
-        self.rbl_in_bar_offset = vector(x_off, y_off)
-        self.rbl_in_bar_inst=self.add_inst(name="nand3_rbl_in_bar",
-                                         mod=self.nand3,
-                                         offset=self.rbl_in_bar_offset,
-                                         mirror=mirror)
-        self.connect_inst(["clk_buf_bar", "oe", "cs", "rbl_in_bar", "vdd", "gnd"])
-        x_off += self.nand3.width
+    def create_rbl_in_row(self):
+        self.rbl_in_bar_inst=self.add_inst(name="nand2_rbl_in_bar",
+                                         mod=self.nand2)
+        self.connect_inst(["clk_buf_bar", "cs", "rbl_in_bar", "vdd", "gnd"])
 
         # input: rbl_in_bar, output: rbl_in
-        self.rbl_in_offset = vector(x_off, y_off)
         self.rbl_in_inst=self.add_inst(name="inv_rbl_in",
-                                       mod=self.inv1,
-                                       offset=self.rbl_in_offset,
-                                       mirror=mirror)
+                                       mod=self.inv1)
         self.connect_inst(["rbl_in_bar", "rbl_in",  "vdd", "gnd"])
         
-        self.row_end_inst.append(self.rbl_in_inst)
-        
-    def add_sen_row(self,row):
-        """ The sense enable buffer gets placed to the far right of the 
-        row. """
+
+    def place_rbl_in_row(self,row):
         x_off = self.ctrl_dff_array.width + self.internal_bus_width 
         (y_off,mirror)=self.get_offset(row)
 
+
+        self.rbl_in_bar_offset = vector(x_off, y_off)
+        self.rbl_in_bar_inst.place(offset=self.rbl_in_bar_offset,
+                                   mirror=mirror)
+        x_off += self.nand2.width
+
+        self.rbl_in_offset = vector(x_off, y_off)
+        self.rbl_in_inst.place(offset=self.rbl_in_offset,
+                               mirror=mirror)
+        self.row_end_inst.append(self.rbl_in_inst)
+        
+    def create_sen_row(self):
+        """ Create the sense enable buffer. """
         # input: pre_s_en, output: pre_s_en_bar
-        self.pre_s_en_bar_offset = vector(x_off, y_off)
         self.pre_s_en_bar_inst=self.add_inst(name="inv_pre_s_en_bar",
-                                             mod=self.inv2,
-                                             offset=self.pre_s_en_bar_offset,
-                                             mirror=mirror)
+                                             mod=self.inv2)
         self.connect_inst(["pre_s_en", "pre_s_en_bar",  "vdd", "gnd"])
 
-        x_off += self.inv2.width
-        
         # BUFFER INVERTERS FOR S_EN
         # input: input: pre_s_en_bar, output: s_en
-        self.s_en_offset = vector(x_off, y_off)
         self.s_en_inst=self.add_inst(name="inv_s_en",
-                                     mod=self.inv8,
-                                     offset=self.s_en_offset,
-                                     mirror=mirror)
+                                     mod=self.inv8)
         self.connect_inst(["pre_s_en_bar", "s_en",  "vdd", "gnd"])
         
+    def place_sen_row(self,row):
+        """ 
+        The sense enable buffer gets placed to the far right of the 
+        row. 
+        """
+        x_off = self.ctrl_dff_array.width + self.internal_bus_width 
+        (y_off,mirror)=self.get_offset(row)
 
+        self.pre_s_en_bar_offset = vector(x_off, y_off)
+        self.pre_s_en_bar_inst.place(offset=self.pre_s_en_bar_offset,
+                                     mirror=mirror)
+        x_off += self.inv2.width
+        
+        self.s_en_offset = vector(x_off, y_off)
+        self.s_en_inst.place(offset=self.s_en_offset,
+                             mirror=mirror)
         self.row_end_inst.append(self.s_en_inst)
         
-    def add_trien_row(self, row):
-        x_off = self.ctrl_dff_array.width + self.internal_bus_width
-        (y_off,mirror)=self.get_offset(row)
-        
-        
-        x_off += self.nand2.width
- 
-        # BUFFER INVERTERS FOR TRI_EN
-        tri_en_offset = vector(x_off, y_off)
-        self.tri_en_inst=self.add_inst(name="inv_tri_en1",
-                                       mod=self.inv2,
-                                       offset=tri_en_offset,
-                                       mirror=mirror)
-        self.connect_inst(["pre_tri_en_bar", "pre_tri_en1",  "vdd", "gnd"])
-        x_off += self.inv2.width
-        
-        tri_en_buf1_offset = vector(x_off, y_off)
-        self.tri_en_buf1_inst=self.add_inst(name="tri_en_buf1",
-                                            mod=self.inv2,
-                                            offset=tri_en_buf1_offset,
-                                            mirror=mirror)
-        self.connect_inst(["pre_tri_en1", "pre_tri_en_bar1",  "vdd", "gnd"])
-        x_off += self.inv2.width
-
-        tri_en_buf2_offset = vector(x_off,  y_off)
-        self.tri_en_buf2_inst=self.add_inst(name="tri_en_buf2",
-                                            mod=self.inv8,
-                                            offset=tri_en_buf2_offset,
-                                            mirror=mirror)
-        self.connect_inst(["pre_tri_en_bar1", "tri_en",  "vdd", "gnd"])
-        
-        self.row_end_inst.append(self.tri_en_inst)
-
-    def add_trien_bar_row(self, row):
-        x_off = self.ctrl_dff_array.width + self.internal_bus_width
-        (y_off,mirror)=self.get_offset(row)
-
- 
-        # input: OE, clk_buf_bar output: tri_en_bar
-        tri_en_bar_offset = vector(x_off,y_off)
-        self.tri_en_bar_inst=self.add_inst(name="nand2_tri_en",
-                                           mod=self.nand2,
-                                           offset=tri_en_bar_offset,
-                                           mirror=mirror)
-        self.connect_inst(["clk_buf_bar", "oe",  "pre_tri_en_bar", "vdd", "gnd"])
-        x_off += self.nand2.width 
-
-        # BUFFER INVERTERS FOR TRI_EN
-        tri_en_bar_buf1_offset = vector(x_off, y_off)
-        self.tri_en_bar_buf1_inst=self.add_inst(name="tri_en_bar_buf1",
-                                                mod=self.inv2,
-                                                offset=tri_en_bar_buf1_offset,
-                                                mirror=mirror)
-        self.connect_inst(["pre_tri_en_bar", "pre_tri_en2",  "vdd", "gnd"])
-        x_off += self.inv2.width
-
-        tri_en_bar_buf2_offset = vector(x_off,  y_off)
-        self.tri_en_bar_buf2_inst=self.add_inst(name="tri_en_bar_buf2",
-                                                mod=self.inv8,
-                                                offset=tri_en_bar_buf2_offset,
-                                                mirror=mirror)
-        self.connect_inst(["pre_tri_en2", "tri_en_bar",  "vdd", "gnd"])
-        x_off += self.inv8.width
-        
-        self.row_end_inst.append(self.tri_en_bar_buf2_inst)
         
     def route_dffs(self):
         """ Route the input inverters """
 
-        dff_out_map = zip(["dout_bar[{}]".format(i) for i in range(3)], ["cs", "we", "oe"])
+        if self.port_type == "r":
+            control_inputs = ["cs"]
+        else:
+            control_inputs = ["cs", "we"]
+        dff_out_map = zip(["dout_bar_{}".format(i) for i in range(2*self.num_control_signals - 1)], control_inputs)
         self.connect_vertical_bus(dff_out_map, self.ctrl_dff_inst, self.rail_offsets)
         
         # Connect the clock rail to the other clock rail
         in_pos = self.ctrl_dff_inst.get_pin("clk").uc()
-        mid_pos = in_pos + vector(0,self.m2_pitch)
+        mid_pos = in_pos + vector(0,2*self.m2_pitch)
         rail_pos = vector(self.rail_offsets["clk_buf"].x, mid_pos.y)
         self.add_wire(("metal1","via1","metal2"),[in_pos, mid_pos, rail_pos])
         self.add_via_center(layers=("metal1","via1","metal2"),
                             offset=rail_pos,
                             rotate=90)
 
-        self.copy_layout_pin(self.ctrl_dff_inst, "din[0]", "csb")
-        self.copy_layout_pin(self.ctrl_dff_inst, "din[1]", "web")
-        self.copy_layout_pin(self.ctrl_dff_inst, "din[2]", "oeb")
+        self.copy_layout_pin(self.ctrl_dff_inst, "din_0", "csb")
+        if (self.port_type == "rw"):
+            self.copy_layout_pin(self.ctrl_dff_inst, "din_1", "web")
         
         
-    def add_dffs(self):
+    def create_dffs(self):
         """ Add the three input DFFs (with inverters) """
         self.ctrl_dff_inst=self.add_inst(name="ctrl_dffs",
-                                         mod=self.ctrl_dff_array,
-                                         offset=vector(0,0))
-
+                                         mod=self.ctrl_dff_array)
         self.connect_inst(self.input_list + self.dff_output_list + ["clk_buf"] + self.supply_list)
 
+    def place_dffs(self):
+        """ Place the input DFFs (with inverters) """
+        self.ctrl_dff_inst.place(vector(0,0))
+        
 
     def get_offset(self,row):
         """ Compute the y-offset and mirroring """
@@ -343,52 +350,67 @@ class control_logic(design.design):
 
         return (y_off,mirror)
 
-    def add_we_row(self,row):
+    def create_we_row(self):
+        # input: WE, CS output: w_en_bar
+        if self.port_type == "rw":
+            nand_mod = self.nand3
+            temp = ["clk_buf_bar", "cs", "we", "w_en_bar", "vdd", "gnd"]
+        else:
+            nand_mod = self.nand2
+            temp = ["clk_buf_bar", "cs", "w_en_bar", "vdd", "gnd"]
+        
+        self.w_en_bar_inst = self.add_inst(name="nand3_w_en_bar",
+                                           mod=nand_mod)
+        self.connect_inst(temp)
+
+        # input: w_en_bar, output: pre_w_en
+        self.pre_w_en_inst = self.add_inst(name="inv_pre_w_en",
+                                           mod=self.inv1)
+        self.connect_inst(["w_en_bar", "pre_w_en", "vdd", "gnd"])
+        
+        # BUFFER INVERTERS FOR W_EN
+        self.pre_w_en_bar_inst = self.add_inst(name="inv_pre_w_en_bar",
+                                               mod=self.inv2)
+        self.connect_inst(["pre_w_en", "pre_w_en_bar", "vdd", "gnd"])
+
+        self.w_en_inst = self.add_inst(name="inv_w_en2",
+                                       mod=self.inv8)
+        self.connect_inst(["pre_w_en_bar", "w_en", "vdd", "gnd"])
+
+
+    def place_we_row(self,row):
         x_off = self.ctrl_dff_inst.width + self.internal_bus_width
         (y_off,mirror)=self.get_offset(row)
             
-        # input: WE, CS output: w_en_bar
         w_en_bar_offset = vector(x_off, y_off)
-        self.w_en_bar_inst=self.add_inst(name="nand3_w_en_bar",
-                                         mod=self.nand3,
-                                         offset=w_en_bar_offset,
-                                         mirror=mirror)
-        self.connect_inst(["clk_buf_bar", "cs", "we", "w_en_bar", "vdd", "gnd"])
-        x_off += self.nand3.width
+        self.w_en_bar_inst.place(offset=w_en_bar_offset,
+                                 mirror=mirror)
+        if self.port_type == "rw":
+            x_off += self.nand3.width
+        else:
+            x_off += self.nand2.width
 
-        # input: w_en_bar, output: pre_w_en
         pre_w_en_offset = vector(x_off, y_off)
-        self.pre_w_en_inst=self.add_inst(name="inv_pre_w_en",
-                                         mod=self.inv1,
-                                         offset=pre_w_en_offset,
-                                         mirror=mirror)
-
-        self.connect_inst(["w_en_bar", "pre_w_en",  "vdd", "gnd"])
+        self.pre_w_en_inst.place(offset=pre_w_en_offset,
+                                 mirror=mirror)
         x_off += self.inv1.width
         
-        # BUFFER INVERTERS FOR W_EN
         pre_w_en_bar_offset = vector(x_off, y_off)
-        self.pre_w_en_bar_inst=self.add_inst(name="inv_pre_w_en_bar",
-                                             mod=self.inv2,
-                                             offset=pre_w_en_bar_offset,
-                                             mirror=mirror)
-        self.connect_inst(["pre_w_en", "pre_w_en_bar",  "vdd", "gnd"])
+        self.pre_w_en_bar_inst.place(offset=pre_w_en_bar_offset,
+                                     mirror=mirror)
         x_off += self.inv2.width
 
         w_en_offset = vector(x_off,  y_off)
-        self.w_en_inst=self.add_inst(name="inv_w_en2",
-                                     mod=self.inv8,
-                                     offset=w_en_offset,
-                                     mirror=mirror)
-        self.connect_inst(["pre_w_en_bar", "w_en",  "vdd", "gnd"])
+        self.w_en_inst.place(offset=w_en_offset,
+                             mirror=mirror)
         x_off += self.inv8.width
 
         self.row_end_inst.append(self.w_en_inst)
-
+        
 
     def route_rbl_in(self):
         """ Connect the logic for the rbl_in generation """
-        rbl_in_map = zip(["A", "B", "C"], ["clk_buf_bar", "oe", "cs"])
+        rbl_in_map = zip(["A", "B"], ["clk_buf_bar", "cs"])
         self.connect_vertical_bus(rbl_in_map, self.rbl_in_bar_inst, self.rail_offsets)  
         
         # Connect the NAND3 output to the inverter
@@ -460,7 +482,10 @@ class control_logic(design.design):
         
         
     def route_wen(self):
-        wen_map = zip(["A", "B", "C"], ["clk_buf_bar", "cs", "we"])
+        if self.port_type == "rw":
+            wen_map = zip(["A", "B", "C"], ["clk_buf_bar", "cs", "we"])
+        else:
+            wen_map = zip(["A", "B"], ["clk_buf_bar", "cs"])
         self.connect_vertical_bus(wen_map, self.w_en_bar_inst, self.rail_offsets)  
 
         # Connect the NAND3 output to the inverter
@@ -475,44 +500,6 @@ class control_logic(design.design):
 
         self.connect_output(self.w_en_inst, "Z", "w_en")
         
-    def route_trien(self):
-
-        # Connect the NAND2 output to the buffer
-        tri_en_bar_pos = self.tri_en_bar_inst.get_pin("Z").center()
-        inv_in_pos = self.tri_en_inst.get_pin("A").center()
-        mid1 = vector(tri_en_bar_pos.x,inv_in_pos.y)
-        self.add_wire(("metal1","via1","metal2"),[tri_en_bar_pos,mid1,inv_in_pos])
-        
-        # Connect the INV output to the buffer
-        tri_en_pos = self.tri_en_inst.get_pin("Z").center()
-        inv_in_pos = self.tri_en_buf1_inst.get_pin("A").center()
-        mid_xoffset = 0.5*(tri_en_pos.x + inv_in_pos.x)
-        mid1 = vector(mid_xoffset,tri_en_pos.y)
-        mid2 = vector(mid_xoffset,inv_in_pos.y)        
-        self.add_path("metal1",[tri_en_pos,mid1,mid2,inv_in_pos])
-        
-        self.add_path("metal1",[self.tri_en_buf1_ist.get_pin("Z").center(), self.tri_en_buf2_inst.get_pin("A").center()])                      
-        
-        self.connect_output(self.tri_en_buf2_inst, "Z", "tri_en")
-        
-    def route_trien_bar(self):
-        
-        trien_map = zip(["A", "B"], ["clk_buf_bar", "oe"])
-        self.connect_vertical_bus(trien_map, self.tri_en_bar_inst, self.rail_offsets)  
-
-        # Connect the NAND2 output to the buffer
-        tri_en_bar_pos = self.tri_en_bar_inst.get_pin("Z").center()
-        inv_in_pos = self.tri_en_bar_buf1_inst.get_pin("A").center()
-        mid_xoffset = 0.5*(tri_en_bar_pos.x + inv_in_pos.x)
-        mid1 = vector(mid_xoffset,tri_en_bar_pos.y)
-        mid2 = vector(mid_xoffset,inv_in_pos.y)        
-        self.add_path("metal1",[tri_en_bar_pos,mid1,mid2,inv_in_pos])
-
-        self.add_path("metal1",[self.tri_en_bar_buf1_inst.get_pin("Z").center(), self.tri_en_bar_buf2_inst.get_pin("A").center()])                      
-        
-        self.connect_output(self.tri_en_bar_buf2_inst, "Z", "tri_en_bar")
-        
-
     def route_sen(self):
         rbl_out_pos = self.rbl_inst.get_pin("out").bc()
         in_pos = self.pre_s_en_bar_inst.get_pin("A").lc()
@@ -574,9 +561,9 @@ class control_logic(design.design):
                     self.add_power_pin("gnd", pin_loc)
                     self.add_path("metal1", [row_loc, pin_loc])
             
-
-        self.copy_layout_pin(self.rbl_inst,"gnd")
-        self.copy_layout_pin(self.rbl_inst,"vdd")        
+        if (self.port_type == "rw") or (self.port_type == "r"):
+            self.copy_layout_pin(self.rbl_inst,"gnd")
+            self.copy_layout_pin(self.rbl_inst,"vdd")        
 
         self.copy_layout_pin(self.ctrl_dff_inst,"gnd")
         self.copy_layout_pin(self.ctrl_dff_inst,"vdd")        

@@ -20,20 +20,28 @@ class dff_inv_array(design.design):
             name = "dff_inv_array_{0}x{1}".format(rows, columns)
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(self.name))
+        self.inv_size = inv_size
+        
+        self.create_netlist()
+        if not OPTS.netlist_only:
+            self.create_layout()
 
-        self.dff = dff_inv.dff_inv(inv_size)
-        self.add_mod(self.dff)
-
+    def create_netlist(self):
+        self.add_pins()
+        self.add_modules()
+        self.create_dff_array()
+        
+    def create_layout(self):
         self.width = self.columns * self.dff.width
         self.height = self.rows * self.dff.height
 
-        self.create_layout()
-
-    def create_layout(self):
-        self.add_pins()
-        self.create_dff_array()
+        self.place_dff_array()
         self.add_layout_pins()
         self.DRC_LVS()
+
+    def add_modules(self):
+        self.dff = dff_inv.dff_inv(self.inv_size)
+        self.add_mod(self.dff)
 
     def add_pins(self):
         for row in range(self.rows):  
@@ -52,16 +60,8 @@ class dff_inv_array(design.design):
         for row in range(self.rows):  
             for col in range(self.columns):
                 name = "Xdff_r{0}_c{1}".format(row,col)
-                if (row % 2 == 0):
-                    base = vector(col*self.dff.width,row*self.dff.height)
-                    mirror = "R0"
-                else:
-                    base = vector(col*self.dff.width,(row+1)*self.dff.height)
-                    mirror = "MX"
                 self.dff_insts[row,col]=self.add_inst(name=name,
-                                                      mod=self.dff,
-                                                      offset=base, 
-                                                      mirror=mirror)
+                                                      mod=self.dff)
                 self.connect_inst([self.get_din_name(row,col),
                                    self.get_dout_name(row,col),
                                    self.get_dout_bar_name(row,col),  
@@ -69,44 +69,57 @@ class dff_inv_array(design.design):
                                    "vdd",
                                    "gnd"])
 
+    def place_dff_array(self):
+        for row in range(self.rows):  
+            for col in range(self.columns):
+                name = "Xdff_r{0}_c{1}".format(row,col)
+                if (row % 2 == 0):
+                    base = vector(col*self.dff.width,row*self.dff.height)
+                    mirror = "R0"
+                else:
+                    base = vector(col*self.dff.width,(row+1)*self.dff.height)
+                    mirror = "MX"
+                self.dff_insts[row,col].place(offset=base, 
+                                              mirror=mirror)
+                
     def get_din_name(self, row, col):
         if self.columns == 1:
-            din_name = "din[{0}]".format(row)
+            din_name = "din_{0}".format(row)
         elif self.rows == 1:
-            din_name = "din[{0}]".format(col)
+            din_name = "din_{0}".format(col)
         else:
-            din_name = "din[{0}][{1}]".format(row,col)
+            din_name = "din_{0}_{1}".format(row,col)
 
         return din_name
     
     def get_dout_name(self, row, col):
         if self.columns == 1:
-            dout_name = "dout[{0}]".format(row)
+            dout_name = "dout_{0}".format(row)
         elif self.rows == 1:
-            dout_name = "dout[{0}]".format(col)
+            dout_name = "dout_{0}".format(col)
         else:
-            dout_name = "dout[{0}][{1}]".format(row,col)
+            dout_name = "dout_{0}_{1}".format(row,col)
 
         return dout_name
     
     def get_dout_bar_name(self, row, col):
         if self.columns == 1:
-            dout_bar_name = "dout_bar[{0}]".format(row)
+            dout_bar_name = "dout_bar_{0}".format(row)
         elif self.rows == 1:
-            dout_bar_name = "dout_bar[{0}]".format(col)
+            dout_bar_name = "dout_bar_{0}".format(col)
         else:
-            dout_bar_name = "dout_bar[{0}][{1}]".format(row,col)
+            dout_bar_name = "dout_bar_{0}_{1}".format(row,col)
 
         return dout_bar_name
     
     def add_layout_pins(self):
         for row in range(self.rows):
             for col in range(self.columns):                        
-                # Continous vdd rail along with label.
+                # Adds power pin on left of row
                 vdd_pin=self.dff_insts[row,col].get_pin("vdd")
                 self.add_power_pin("vdd", vdd_pin.lc())
 
-                # Continous gnd rail along with label.
+                # Adds gnd pin on left of row
                 gnd_pin=self.dff_insts[row,col].get_pin("gnd")
                 self.add_power_pin("gnd", gnd_pin.lc())
             
@@ -140,6 +153,7 @@ class dff_inv_array(design.design):
                 
         # Create vertical spines to a single horizontal rail
         clk_pin = self.dff_insts[0,0].get_pin("clk")
+        clk_ypos = 2*self.m3_pitch+self.m3_width
         debug.check(clk_pin.layer=="metal2","DFF clk pin not on metal2")
         if self.columns==1:
             self.add_layout_pin(text="clk",
@@ -150,8 +164,8 @@ class dff_inv_array(design.design):
         else:
             self.add_layout_pin_segment_center(text="clk",
                                             layer="metal3",
-                                            start=vector(0,self.m3_pitch+self.m3_width),
-                                            end=vector(self.width,self.m3_pitch+self.m3_width))
+                                            start=vector(0,clk_ypos),
+                                            end=vector(self.width,clk_ypos))
             for col in range(self.columns):
                 clk_pin = self.dff_insts[0,col].get_pin("clk")
                 # Make a vertical strip for each column
@@ -161,7 +175,7 @@ class dff_inv_array(design.design):
                               height=self.height)
                 # Drop a via to the M3 pin
                 self.add_via_center(layers=("metal2","via2","metal3"),
-                                    offset=vector(clk_pin.cx(),self.m3_pitch+self.m3_width))
+                                    offset=vector(clk_pin.cx(),clk_ypos))
                 
                 
         

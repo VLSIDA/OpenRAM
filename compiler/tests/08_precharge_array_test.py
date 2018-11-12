@@ -15,20 +15,35 @@ class precharge_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        global verify
-        import verify
-
         import precharge_array
         import tech
 
+        # check precharge array in single port
         debug.info(2, "Checking 3 column precharge")
         pc = precharge_array.precharge_array(columns=3)
         self.local_check(pc)
+        
+        # check precharge array in multi-port
+        OPTS.bitcell = "bitcell_1rw_1r"
+        OPTS.num_rw_ports = 1
+        OPTS.num_r_ports = 1
+        OPTS.num_w_ports = 0
+        
+        debug.info(2, "Checking 3 column precharge array for 1RW/1R bitcell")
+        pc = precharge_array.precharge_array(columns=3, bitcell_bl="bl0", bitcell_br="br0")
+        self.local_check(pc)
+        
+        # debug.info(2, "Checking 3 column precharge array for pbitcell (innermost connections)")
+        # pc = precharge_array.precharge_array(columns=3, bitcell_bl="bl0", bitcell_br="br0")
+        # self.local_check(pc)
+        
+        # debug.info(2, "Checking 3 column precharge array for pbitcell (outermost connections)")
+        # pc = precharge_array.precharge_array(columns=3, bitcell_bl="bl2", bitcell_br="br2")
+        # self.local_check(pc)
 
         globals.end_openram()
-        
 
-# instantiate a copy of the class to actually run the test
+# run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

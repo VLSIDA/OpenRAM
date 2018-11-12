@@ -1,5 +1,6 @@
 import debug
 from math import log
+import re
 
 class trim_spice():
     """
@@ -54,8 +55,8 @@ class trim_spice():
         else:
             col_address = 0
         # 1. Keep cells in the bitcell array based on WL and BL
-        wl_name = "wl[{}]".format(wl_address)
-        bl_name = "bl[{}]".format(int(self.words_per_row*data_bit + col_address))
+        wl_name = "wl_{}".format(wl_address)
+        bl_name = "bl_{}".format(int(self.words_per_row*data_bit + col_address))
 
         # Prepend info about the trimming
         addr_msg = "Keeping {} address".format(address)
@@ -73,25 +74,28 @@ class trim_spice():
         self.sp_buffer.insert(0, "* It should NOT be used for LVS!!")
         self.sp_buffer.insert(0, "* WARNING: This is a TRIMMED NETLIST.")
         
-        self.remove_insts("bitcell_array",[wl_name,bl_name])
+        
+        wl_regex = r"wl\d*_{}".format(wl_address)
+        bl_regex = r"bl\d*_{}".format(int(self.words_per_row*data_bit + col_address))
+        self.remove_insts("bitcell_array",[wl_regex,bl_regex])
 
         # 2. Keep sense amps basd on BL
         # FIXME: The bit lines are not indexed the same in sense_amp_array
-        #self.remove_insts("sense_amp_array",[bl_name])
+        #self.remove_insts("sense_amp_array",[bl_regex])
 
         # 3. Keep column muxes basd on BL
-        self.remove_insts("column_mux_array",[bl_name])
+        self.remove_insts("column_mux_array",[bl_regex])
         
         # 4. Keep write driver based on DATA
-        data_name = "data[{}]".format(data_bit)
-        self.remove_insts("write_driver_array",[data_name])
+        data_regex = r"data_{}".format(data_bit)
+        self.remove_insts("write_driver_array",[data_regex])
 
         # 5. Keep wordline driver based on WL
         # Need to keep the gater too
-        #self.remove_insts("wordline_driver",wl_name)
+        #self.remove_insts("wordline_driver",wl_regex)
         
         # 6. Keep precharges based on BL
-        self.remove_insts("precharge_array",[bl_name])
+        self.remove_insts("precharge_array",[bl_regex])
         
         # Everything else isn't worth removing. :)
         
@@ -107,6 +111,10 @@ class trim_spice():
         match of the line with a term so you can search for a single
         net connection, the instance name, anything..
         """
+        removed_insts = 0
+        #Expects keep_inst_list are regex patterns. Compile them here.
+        compiled_patterns = [re.compile(pattern) for pattern in keep_inst_list]
+        
         start_name = ".SUBCKT {}".format(subckt_name)
         end_name = ".ENDS {}".format(subckt_name)
 
@@ -120,11 +128,14 @@ class trim_spice():
                 new_buffer.append(line)
                 in_subckt=False
             elif in_subckt:
-                for k in keep_inst_list:
-                    if k in line:
+                removed_insts += 1
+                for pattern in compiled_patterns:
+                    if pattern.search(line) != None:
                         new_buffer.append(line)
+                        removed_insts -= 1
                         break
             else:
                 new_buffer.append(line)
 
         self.sp_buffer = new_buffer
+        debug.info(2, "Removed {} instances from {} subcircuit.".format(removed_insts, subckt_name))

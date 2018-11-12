@@ -11,34 +11,45 @@ import globals
 from globals import OPTS
 import debug
 
+@unittest.skip("SKIPPING 19_multi_bank_test")
 class multi_bank_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        global verify
-        import verify
-
         from bank import bank
+        from sram_config import sram_config
 
+        c = sram_config(word_size=4,
+                        num_words=16)
+        c.num_banks=2
+
+        c.words_per_row=1
         debug.info(1, "No column mux")
-        a = bank(word_size=4, num_words=16, words_per_row=1, num_banks=2, name="bank1_multi")
+        a = bank(c, name="bank1_multi")
         self.local_check(a)
 
+        c.num_words=32
+        c.words_per_row=2
         debug.info(1, "Two way column mux")
-        a = bank(word_size=4, num_words=32, words_per_row=2, num_banks=2, name="bank2_multi")
+        a = bank(c, name="bank2_multi")
         self.local_check(a)
 
+        c.num_words=64
+        c.words_per_row=4
         debug.info(1, "Four way column mux")
-        a = bank(word_size=4, num_words=64, words_per_row=4, num_banks=2, name="bank3_multi")
+        a = bank(c, name="bank3_multi")
         self.local_check(a)
 
+        c.word_size=2
+        c.num_words=128
+        c.words_per_row=8
         debug.info(1, "Eight way column mux")
-        a = bank(word_size=2, num_words=128, words_per_row=8, num_banks=2, name="bank4_multi")
+        a = bank(c, name="bank4_multi")
         self.local_check(a)
         
         globals.end_openram()
         
-# instantiate a copy of the class to actually run the test
+# run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

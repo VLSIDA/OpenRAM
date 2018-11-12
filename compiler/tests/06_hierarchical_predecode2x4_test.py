@@ -15,19 +15,27 @@ class hierarchical_predecode2x4_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        global verify
-        import verify
-
         import hierarchical_predecode2x4 as pre
         import tech
 
+        # checking hierarchical precode 2x4 for single port
         debug.info(1, "Testing sample for hierarchy_predecode2x4")
         a = pre.hierarchical_predecode2x4()
         self.local_check(a)
 
+        # checking hierarchical precode 2x4 for multi-port
+        OPTS.bitcell = "pbitcell"
+        OPTS.num_rw_ports = 1
+        OPTS.num_w_ports = 0
+        OPTS.num_r_ports = 0
+        
+        debug.info(1, "Testing sample for hierarchy_predecode2x4 (multi-port case)")
+        a = pre.hierarchical_predecode2x4()
+        self.local_check(a)
+        
         globals.end_openram()
         
-# instantiate a copdsay of the class to actually run the test
+# run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

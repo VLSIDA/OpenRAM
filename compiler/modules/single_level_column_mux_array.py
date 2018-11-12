@@ -6,7 +6,7 @@ from tech import drc
 import debug
 import math
 from vector import vector
-
+from globals import OPTS
 
 class single_level_column_mux_array(design.design):
     """
@@ -14,31 +14,31 @@ class single_level_column_mux_array(design.design):
     Array of column mux to read the bitlines through the 6T.
     """
 
-    def __init__(self, columns, word_size):
-        design.design.__init__(self, "columnmux_array")
+    unique_id = 1
+    
+    def __init__(self, columns, word_size, bitcell_bl="bl", bitcell_br="br"):
+        name="single_level_column_mux_array_{}".format(single_level_column_mux_array.unique_id)
+        single_level_column_mux_array.unique_id += 1
+        design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
         self.columns = columns
         self.word_size = word_size
         self.words_per_row = int(self.columns / self.word_size)
-        self.add_pins()
-        self.create_layout()
-        self.DRC_LVS()
+        self.bitcell_bl = bitcell_bl
+        self.bitcell_br = bitcell_br
+        
+        self.create_netlist()
+        if not OPTS.netlist_only:
+            self.create_layout()
 
-    def add_pins(self):
-        for i in range(self.columns):
-            self.add_pin("bl[{}]".format(i))
-            self.add_pin("br[{}]".format(i))
-        for i in range(self.words_per_row):
-            self.add_pin("sel[{}]".format(i))
-        for i in range(self.word_size):
-            self.add_pin("bl_out[{}]".format(i))
-            self.add_pin("br_out[{}]".format(i))
-        self.add_pin("gnd")
-
-    def create_layout(self):
+    def create_netlist(self):
         self.add_modules()
-        self.setup_layout_constants()
+        self.add_pins()
         self.create_array()
+        
+    def create_layout(self):
+        self.setup_layout_constants()
+        self.place_array()
         self.add_routing()
         # Find the highest shapes to determine height before adding well
         highest = self.find_highest_coords()
@@ -46,11 +46,22 @@ class single_level_column_mux_array(design.design):
         self.add_layout_pins()
         self.add_enclosure(self.mux_inst, "pwell")
 
+        self.DRC_LVS()
         
+    def add_pins(self):
+        for i in range(self.columns):
+            self.add_pin("bl_{}".format(i))
+            self.add_pin("br_{}".format(i))
+        for i in range(self.words_per_row):
+            self.add_pin("sel_{}".format(i))
+        for i in range(self.word_size):
+            self.add_pin("bl_out_{}".format(i))
+            self.add_pin("br_out_{}".format(i))
+        self.add_pin("gnd")
+
 
     def add_modules(self):
-        # FIXME: Why is this 8x?
-        self.mux = single_level_column_mux(tx_size=8)
+        self.mux = single_level_column_mux(bitcell_bl=self.bitcell_bl, bitcell_br=self.bitcell_br)
         self.add_mod(self.mux)
 
 
@@ -65,22 +76,26 @@ class single_level_column_mux_array(design.design):
         
     def create_array(self):
         self.mux_inst = []
+        # For every column, add a pass gate
+        for col_num in range(self.columns):
+            name = "XMUX{0}".format(col_num)
+            self.mux_inst.append(self.add_inst(name=name,
+                                               mod=self.mux))
+            
+            self.connect_inst(["bl_{}".format(col_num),
+                               "br_{}".format(col_num),
+                               "bl_out_{}".format(int(col_num/self.words_per_row)),
+                               "br_out_{}".format(int(col_num/self.words_per_row)),
+                               "sel_{}".format(col_num % self.words_per_row),
+                               "gnd"])
 
+    def place_array(self):
         # For every column, add a pass gate
         for col_num in range(self.columns):
             name = "XMUX{0}".format(col_num)
             x_off = vector(col_num * self.mux.width, self.route_height)
-            self.mux_inst.append(self.add_inst(name=name,
-                                               mod=self.mux,
-                                               offset=x_off))
+            self.mux_inst[col_num].place(x_off)
             
-            self.connect_inst(["bl[{}]".format(col_num),
-                               "br[{}]".format(col_num),
-                               "bl_out[{}]".format(int(col_num/self.words_per_row)),
-                               "br_out[{}]".format(int(col_num/self.words_per_row)),
-                               "sel[{}]".format(col_num % self.words_per_row),
-                               "gnd"])
-
 
     def add_layout_pins(self):
         """ Add the pins after we determine the height. """
@@ -88,13 +103,13 @@ class single_level_column_mux_array(design.design):
         for col_num in range(self.columns):
             mux_inst = self.mux_inst[col_num]
             offset = mux_inst.get_pin("bl").ll()
-            self.add_layout_pin(text="bl[{}]".format(col_num),
+            self.add_layout_pin(text="bl_{}".format(col_num),
                                 layer="metal2",
                                 offset=offset,
                                 height=self.height-offset.y)
 
             offset = mux_inst.get_pin("br").ll()
-            self.add_layout_pin(text="br[{}]".format(col_num),
+            self.add_layout_pin(text="br_{}".format(col_num),
                                 layer="metal2",
                                 offset=offset,
                                 height=self.height-offset.y)
@@ -112,7 +127,7 @@ class single_level_column_mux_array(design.design):
         """ Create address input rails on M1 below the mux transistors  """
         for j in range(self.words_per_row):
             offset = vector(0, self.route_height + (j-self.words_per_row)*self.m1_pitch)
-            self.add_layout_pin(text="sel[{}]".format(j),
+            self.add_layout_pin(text="sel_{}".format(j),
                                 layer="metal1",
                                 offset=offset,
                                 width=self.mux.width * self.columns,
@@ -128,9 +143,9 @@ class single_level_column_mux_array(design.design):
             # Add the column x offset to find the right select bit
             gate_offset = self.mux_inst[col].get_pin("sel").bc()
             # height to connect the gate to the correct horizontal row
-            sel_height = self.get_pin("sel[{}]".format(sel_index)).by()
+            sel_height = self.get_pin("sel_{}".format(sel_index)).by()
             # use the y offset from the sel pin and the x offset from the gate
-            offset = vector(gate_offset.x,self.get_pin("sel[{}]".format(sel_index)).cy())
+            offset = vector(gate_offset.x,self.get_pin("sel_{}".format(sel_index)).cy())
             # Add the poly contact with a shift to account for the rotation
             self.add_via_center(layers=("metal1", "contact", "poly"),
                                 offset=offset,
@@ -154,23 +169,23 @@ class single_level_column_mux_array(design.design):
                 self.add_rect(layer="metal1",
                               offset=bl_out_offset,
                               width=width,
-                              height=drc["minwidth_metal2"])
+                              height=drc("minwidth_metal2"))
                 self.add_rect(layer="metal1",
                               offset=br_out_offset,
                               width=width,
-                              height=drc["minwidth_metal2"])
+                              height=drc("minwidth_metal2"))
                           
 
                 # Extend the bitline output rails and gnd downward on the first bit of each n-way mux
-                self.add_layout_pin(text="bl_out[{}]".format(int(j/self.words_per_row)),
+                self.add_layout_pin(text="bl_out_{}".format(int(j/self.words_per_row)),
                                     layer="metal2",
                                     offset=bl_out_offset.scale(1,0),
-                                    width=drc['minwidth_metal2'],
+                                    width=drc('minwidth_metal2'),
                                     height=self.route_height)
-                self.add_layout_pin(text="br_out[{}]".format(int(j/self.words_per_row)),
+                self.add_layout_pin(text="br_out_{}".format(int(j/self.words_per_row)),
                                     layer="metal2",
                                     offset=br_out_offset.scale(1,0),
-                                    width=drc['minwidth_metal2'],
+                                    width=drc('minwidth_metal2'),
                                     height=self.route_height)
 
                 # This via is on the right of the wire                
@@ -186,7 +201,7 @@ class single_level_column_mux_array(design.design):
                 
                 self.add_rect(layer="metal2",
                               offset=bl_out_offset,
-                              width=drc['minwidth_metal2'],
+                              width=drc('minwidth_metal2'),
                               height=self.route_height-bl_out_offset.y)
                 # This via is on the right of the wire
                 self.add_via(layers=("metal1", "via1", "metal2"),
@@ -194,12 +209,20 @@ class single_level_column_mux_array(design.design):
                              rotate=90)
                 self.add_rect(layer="metal2",
                               offset=br_out_offset,
-                              width=drc['minwidth_metal2'],
+                              width=drc('minwidth_metal2'),
                               height=self.route_height-br_out_offset.y)
                 # This via is on the left of the wire                
                 self.add_via(layers=("metal1", "via1", "metal2"),
                              offset= br_out_offset,
                              rotate=90)
 
-                
+    def analytical_delay(self, vdd, slew, load=0.0):
+        from tech import spice, parameter
+        r = spice["min_tx_r"]/(self.mux.ptx_width/parameter["min_tx_size"])
+        #Drains of mux transistors make up capacitance. 
+        c_para = spice["min_tx_drain_c"]*(self.mux.ptx_width/parameter["min_tx_size"])*self.words_per_row#ff
+        volt_swing = spice["v_threshold_typical"]/vdd
+        
+        result = self.cal_delay_with_rc(r = r, c =  c_para+load, slew = slew, swing = volt_swing)
+        return self.return_delay(result.delay, result.slew)            
             

@@ -16,8 +16,8 @@ class sram_2bank(sram_base):
     """
     Procedures specific to a two bank SRAM.
     """
-    def __init__(self, word_size, num_words, name):
-        sram_base.__init__(self, word_size, num_words, 2, name)
+    def __init__(self, name, sram_config):
+        sram_base.__init__(self, name, sram_config)
 
     def compute_bank_offsets(self):
         """ Compute the overall offsets for a two bank SRAM """

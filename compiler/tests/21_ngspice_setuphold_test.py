@@ -17,15 +17,13 @@ class timing_setup_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         OPTS.spice_name="ngspice"
         OPTS.analytical_delay = False
-
+        OPTS.netlist_only = True
+        
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
         import characterizer
         reload(characterizer)
         from characterizer import setup_hold
-        if not OPTS.spice_exe:
-            debug.error("Could not find {} simulator.".format(OPTS.spice_name),-1)
-        
         import sram
         import tech
         slews = [tech.spice["rise_time"]*2]
@@ -35,15 +33,15 @@ class timing_setup_test(openram_test):
         data = sh.analyze(slews,slews)
         #print data
         if OPTS.tech_name == "freepdk45":
-            golden_data = {'setup_times_LH': [0.01464844],
-                           'hold_times_LH': [0.0024414059999999997],
-                           'hold_times_HL': [-0.003662109],
-                           'setup_times_HL': [0.008544922]}
-        elif OPTS.tech_name == "scn3me_subm":
-            golden_data = {'setup_times_LH': [0.07568359],
-                           'hold_times_LH': [0.008544922],
-                           'hold_times_HL': [-0.05859374999999999],
-                           'setup_times_HL': [0.03295898]}
+            golden_data = {'hold_times_HL': [-0.01586914],
+                           'hold_times_LH': [-0.01586914],
+                           'setup_times_HL': [0.02685547],
+                           'setup_times_LH': [0.03295898]}
+        elif OPTS.tech_name == "scn4m_subm":
+            golden_data = {'hold_times_HL': [-0.08911132999999999],
+                            'hold_times_LH': [-0.0769043],
+                            'setup_times_HL': [0.1184082],
+                            'setup_times_LH': [0.1672363]}
         else:
             self.assertTrue(False) # other techs fail
 
@@ -55,7 +53,7 @@ class timing_setup_test(openram_test):
         reload(characterizer)
         globals.end_openram()
 
-# instantiate a copdsay of the class to actually run the test
+# run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

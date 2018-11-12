@@ -3,7 +3,7 @@ import datetime
 import getpass
 import debug
 from globals import OPTS, print_time
-
+from sram_config import sram_config
     
 class sram():
     """
@@ -12,46 +12,38 @@ class sram():
     results.
     We can later add visualizer and other high-level functions as needed.
     """
-    def __init__(self, word_size, num_words, num_banks, name):
+    def __init__(self, sram_config, name):
 
+        sram_config.compute_sizes()
+        sram_config.set_local_config(self)
+        
         # reset the static duplicate name checker for unit tests
         # in case we create more than one SRAM
         from design import design
         design.name_map=[]
 
-        debug.info(2, "create sram of size {0} with {1} num of words".format(word_size, 
-                                                                             num_words))
+        debug.info(2, "create sram of size {0} with {1} num of words {2} banks".format(self.word_size, 
+                                                                                       self.num_words,
+                                                                                       self.num_banks))
         start_time = datetime.datetime.now()
 
         self.name = name
+
         
-        if num_banks == 1:
-            from sram_1bank import sram_1bank
-            self.s=sram_1bank(word_size, num_words, name)
-        elif num_banks == 2:
-            from sram_2bank import sram_2bank
-            self.s=sram_2bank(word_size, num_words, name)            
-        elif num_banks == 4:
-            from sram_4bank import sram_4bank
-            self.s=sram_4bank(word_size, num_words, name)                        
+        if self.num_banks == 1:
+            from sram_1bank import sram_1bank as sram
+        elif self.num_banks == 2:
+            from sram_2bank import sram_2bank as sram
+        elif self.num_banks == 4:
+            from sram_4bank import sram_4bank as sram
         else:
             debug.error("Invalid number of banks.",-1)
 
-        self.s.compute_sizes()
-        self.s.create_modules()
-        self.s.add_pins()
-        self.s.create_layout()
+        self.s = sram(name, sram_config)  
+        self.s.create_netlist()
+        if not OPTS.netlist_only:
+            self.s.create_layout()
         
-        # Can remove the following, but it helps for debug!
-        self.s.add_lvs_correspondence_points()
-        
-        self.s.offset_all_coordinates()
-        highest_coord = self.s.find_highest_coords()
-        self.s.width = highest_coord[0]
-        self.s.height = highest_coord[1]
-        
-        self.s.DRC_LVS(final_verification=True)
-
         if not OPTS.is_unit_test:
             print_time("SRAM creation", datetime.datetime.now(), start_time)
 
@@ -65,10 +57,25 @@ class sram():
     def verilog_write(self,name):
         self.s.verilog_write(name)
 
-        
+
     def save(self):
         """ Save all the output files while reporting time to do it as well. """
 
+        if not OPTS.netlist_only:
+            # Write the layout
+            start_time = datetime.datetime.now()
+            gdsname = OPTS.output_path + self.s.name + ".gds"
+            print("GDS: Writing to {0}".format(gdsname))
+            self.s.gds_write(gdsname)
+            print_time("GDS", datetime.datetime.now(), start_time)
+
+            # Create a LEF physical model
+            start_time = datetime.datetime.now()
+            lefname = OPTS.output_path + self.s.name + ".lef"
+            print("LEF: Writing to {0}".format(lefname))
+            self.s.lef_write(lefname)
+            print_time("LEF", datetime.datetime.now(), start_time)
+        
         # Save the spice file
         start_time = datetime.datetime.now()
         spname = OPTS.output_path + self.s.name + ".sp"
@@ -78,6 +85,7 @@ class sram():
 
         # Save the extracted spice file
         if OPTS.use_pex:
+            import verify
             start_time = datetime.datetime.now()
             # Output the extracted design if requested
             sp_file = OPTS.output_path + "temp_pex.sp"
@@ -100,20 +108,14 @@ class sram():
                 print("Trimming netlist to speed up characterization.")
         lib(out_dir=OPTS.output_path, sram=self.s, sp_file=sp_file)
         print_time("Characterization", datetime.datetime.now(), start_time)
-
-        # Write the layout
+        
+        # Write the datasheet
         start_time = datetime.datetime.now()
-        gdsname = OPTS.output_path + self.s.name + ".gds"
-        print("GDS: Writing to {0}".format(gdsname))
-        self.s.gds_write(gdsname)
-        print_time("GDS", datetime.datetime.now(), start_time)
-
-        # Create a LEF physical model
-        start_time = datetime.datetime.now()
-        lefname = OPTS.output_path + self.s.name + ".lef"
-        print("LEF: Writing to {0}".format(lefname))
-        self.s.lef_write(lefname)
-        print_time("LEF", datetime.datetime.now(), start_time)
+        from datasheet_gen import datasheet_gen
+        dname = OPTS.output_path + self.s.name + ".html"
+        print("Datasheet: writing to {0}".format(dname))
+        datasheet_gen.datasheet_write(dname)
+        print_time("Datasheet", datetime.datetime.now(), start_time)
 
         # Write a verilog model
         start_time = datetime.datetime.now()

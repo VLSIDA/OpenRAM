@@ -3,6 +3,7 @@ import debug
 import design
 from vector import vector
 from hierarchical_predecode import hierarchical_predecode
+from globals import OPTS
 
 class hierarchical_predecode2x4(hierarchical_predecode):
     """
@@ -11,11 +12,20 @@ class hierarchical_predecode2x4(hierarchical_predecode):
     def __init__(self):
         hierarchical_predecode.__init__(self, 2)
 
+        self.create_netlist()
+        if not OPTS.netlist_only:
+            self.create_layout()
+
+    def create_netlist(self):
         self.add_pins()
         self.create_modules()
-        self.setup_constraints()
-        self.create_layout()
-        self.DRC_LVS()        
+        self.create_input_inverters()
+        self.create_output_inverters()
+        connections =[["inbar_0", "inbar_1", "Z_0", "vdd", "gnd"],
+                      ["in_0",    "inbar_1", "Z_1", "vdd", "gnd"],
+                      ["inbar_0", "in_1",    "Z_2", "vdd", "gnd"],
+                      ["in_0",    "in_1",    "Z_3", "vdd", "gnd"]]
+        self.create_nand_array(connections)
 
     def create_layout(self):
         """ The general organization is from left to right:
@@ -24,22 +34,20 @@ class hierarchical_predecode2x4(hierarchical_predecode):
         3) a set of M2 rails for the vdd, gnd, inverted inputs, inputs
         4) a set of NAND gates for inversion
         """
-        self.create_rails()
-        self.add_input_inverters()
-        self.add_output_inverters()
-        connections =[["inbar[0]", "inbar[1]", "Z[0]", "vdd", "gnd"],
-                      ["in[0]",    "inbar[1]", "Z[1]", "vdd", "gnd"],
-                      ["inbar[0]", "in[1]",    "Z[2]", "vdd", "gnd"],
-                      ["in[0]",    "in[1]",    "Z[3]", "vdd", "gnd"]]
-        self.add_nand(connections)
+        self.setup_layout_constraints()
+        self.route_rails()
+        self.place_input_inverters()
+        self.place_output_inverters()
+        self.place_nand_array()
         self.route()
+        self.DRC_LVS()        
 
     def get_nand_input_line_combination(self):
         """ These are the decoder connections of the NAND gates to the A,B pins """
-        combination = [["Abar[0]", "Abar[1]"],
-                       ["A[0]",    "Abar[1]"],
-                       ["Abar[0]", "A[1]"],
-                       ["A[0]",    "A[1]"]]
+        combination = [["Abar_0", "Abar_1"],
+                       ["A_0",    "Abar_1"],
+                       ["Abar_0", "A_1"],
+                       ["A_0",    "A_1"]]
         return combination 
 
 

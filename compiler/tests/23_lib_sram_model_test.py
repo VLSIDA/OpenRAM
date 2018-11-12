@@ -16,15 +16,15 @@ class lib_test(openram_test):
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
 
-        import sram
         from characterizer import lib
-
-        debug.info(1, "Testing timing for sample 2 bit, 16 words SRAM with 1 bank")
-        s = sram.sram(word_size=2,
-                      num_words=16,
-                      num_banks=1,
-                      name="sram_2_16_1_{0}".format(OPTS.tech_name))
-        
+        from sram import sram
+        from sram_config import sram_config
+        c = sram_config(word_size=2,
+                        num_words=16,
+                        num_banks=1)
+        c.words_per_row=1
+        debug.info(1, "Testing analytical timing for sample 2 bit, 16 words SRAM with 1 bank")
+        s = sram(c, "sram_2_16_1_{0}".format(OPTS.tech_name))
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)
 
@@ -44,7 +44,7 @@ class lib_test(openram_test):
             
         globals.end_openram()
 
-# instantiate a copdsay of the class to actually run the test
+# run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

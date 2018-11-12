@@ -17,23 +17,21 @@ class timing_sram_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         OPTS.spice_name="ngspice"
         OPTS.analytical_delay = False
-        OPTS.trim_netlist = False
+        OPTS.netlist_only = True
 
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
         import characterizer
         reload(characterizer)
         from characterizer import delay
-        if not OPTS.spice_exe:
-            debug.error("Could not find {} simulator.".format(OPTS.spice_name),-1)
-
-        import sram
-        import tech
+        from sram import sram
+        from sram_config import sram_config
+        c = sram_config(word_size=1,
+                        num_words=16,
+                        num_banks=1)
+        c.words_per_row=1
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
-        s = sram.sram(word_size=OPTS.word_size,
-                      num_words=OPTS.num_words,
-                      num_banks=OPTS.num_banks,
-                      name="sram1")
+        s = sram(c, name="sram1")
 
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)
@@ -47,30 +45,32 @@ class timing_sram_test(openram_test):
         import tech
         loads = [tech.spice["msflop_in_cap"]*4]
         slews = [tech.spice["rise_time"]*2]
-        data = d.analyze(probe_address, probe_data, slews, loads)
+        data, port_data = d.analyze(probe_address, probe_data, slews, loads)
+        #Combine info about port into all data
+        data.update(port_data[0])
 
         if OPTS.tech_name == "freepdk45":
-            golden_data = {'delay_hl': [2.562671],
-                            'delay_lh': [0.2320771],
-                            'leakage_power': 0.00102373,
+            golden_data = {'delay_hl': [2.584251],
+                            'delay_lh': [0.22870469999999998],
+                            'leakage_power': 0.0009567935,
                             'min_period': 4.844,
-                            'read0_power': [0.047404110000000006],
-                            'read1_power': [0.0438884],
-                            'slew_hl': [0.1140206],
-                            'slew_lh': [0.02492785],
-                            'write0_power': [0.04765188],
-                            'write1_power': [0.04434999]}
-        elif OPTS.tech_name == "scn3me_subm":
-            golden_data = {'delay_hl': [11.69536],
-                            'delay_lh': [1.260921],
-                            'leakage_power': 0.00039469710000000004,
-                            'min_period': 20.0,
-                            'read0_power': [4.40238],
-                            'read1_power': [4.126633],
-                            'slew_hl': [1.259555],
-                            'slew_lh': [0.9150649],
-                            'write0_power': [4.988347],
-                            'write1_power': [4.473887]}
+                            'read0_power': [0.0547588],
+                            'read1_power': [0.051159970000000006],
+                            'slew_hl': [0.08164099999999999],
+                            'slew_lh': [0.025474979999999998],
+                            'write0_power': [0.06513271999999999],
+                            'write1_power': [0.058057000000000004]}
+        elif OPTS.tech_name == "scn4m_subm":
+            golden_data = {'delay_hl': [3.644147],
+                            'delay_lh': [1.629815],
+                            'leakage_power': 0.001542964,
+                            'min_period': 4.688,
+                            'read0_power': [16.28732],
+                            'read1_power': [15.75155],
+                            'slew_hl': [0.6722473],
+                            'slew_lh': [0.3386347],
+                            'write0_power': [18.545450000000002],
+                            'write1_power': [16.81084]}
         else:
             self.assertTrue(False) # other techs fail
 
@@ -81,7 +81,7 @@ class timing_sram_test(openram_test):
 
         globals.end_openram()
 
-# instantiate a copdsay of the class to actually run the test
+# run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

@@ -18,31 +18,30 @@ class dff_inv(design.design):
             name = "dff_inv_{0}".format(inv_size)
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(self.name))
-
+        self.inv_size = inv_size
+        
         # This is specifically for SCMOS where the DFF vdd/gnd rails are more than min width.
         # This causes a DRC in the pinv which assumes min width rails. This ensures the output
         # contact does not violate spacing to the rail in the NMOS.
         debug.check(inv_size>=2, "Inverter must be greater than two for rail spacing DRC rules.")
 
-        from importlib import reload
-        c = reload(__import__(OPTS.dff))
-        self.mod_dff = getattr(c, OPTS.dff)
-        self.dff = self.mod_dff("dff")
-        self.add_mod(self.dff)
-        
-        self.inv1 = pinv(size=inv_size,height=self.dff.height)
-        self.add_mod(self.inv1)
+        self.create_netlist()
+        if not OPTS.netlist_only:
+            self.create_layout()
 
+    def create_netlist(self):
+        self.add_pins()
+        self.add_modules()
+        self.create_modules()
+        
+    def create_layout(self):
         self.width = self.dff.width + self.inv1.width
         self.height = self.dff.height
 
-        self.create_layout()
-
-    def create_layout(self):
-        self.add_pins()
-        self.add_insts()
+        self.place_modules()
         self.add_wires()
         self.add_layout_pins()
+        
         self.DRC_LVS()
         
     def add_pins(self):
@@ -53,18 +52,31 @@ class dff_inv(design.design):
         self.add_pin("vdd")
         self.add_pin("gnd")
 
-    def add_insts(self):
-        # Add the DFF
+    def add_modules(self):
+        from importlib import reload
+        c = reload(__import__(OPTS.dff))
+        self.mod_dff = getattr(c, OPTS.dff)
+        self.dff = self.mod_dff("dff")
+        self.add_mod(self.dff)
+        
+        self.inv1 = pinv(size=self.inv_size,height=self.dff.height)
+        self.add_mod(self.inv1)
+
+    def create_modules(self):
         self.dff_inst=self.add_inst(name="dff_inv_dff",
-                                    mod=self.dff,
-                                    offset=vector(0,0))
+                                    mod=self.dff)
         self.connect_inst(["D", "Q", "clk", "vdd", "gnd"])
 
-        # Add INV1 to the right
         self.inv1_inst=self.add_inst(name="dff_inv_inv1",
-                                     mod=self.inv1,
-                                     offset=vector(self.dff_inst.rx(),0))
+                                     mod=self.inv1)
         self.connect_inst(["Q", "Qb",  "vdd", "gnd"])
+
+    def place_modules(self):
+        # Place the DFF
+        self.dff_inst.place(vector(0,0))
+
+        # Place the INV1 to the right
+        self.inv1_inst.place(vector(self.dff_inst.rx(),0))
         
         
     def add_wires(self):

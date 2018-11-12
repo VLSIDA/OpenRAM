@@ -12,52 +12,53 @@ class pnand2(pgate.pgate):
     This model use ptx to generate a 2-input nand within a cetrain height.
     """
 
-    from importlib import reload
-    c = reload(__import__(OPTS.bitcell))
-    bitcell = getattr(c, OPTS.bitcell)
-
     unique_id = 1
     
-    def __init__(self, size=1, height=bitcell.height):
+    def __init__(self, size=1, height=None):
         """ Creates a cell for a simple 2 input nand """
         name = "pnand2_{0}".format(pnand2.unique_id)
         pnand2.unique_id += 1
-        pgate.pgate.__init__(self, name)
+        pgate.pgate.__init__(self, name, height)
         debug.info(2, "create pnand2 structure {0} with size of {1}".format(name, size))
 
         self.nmos_size = 2*size
         self.pmos_size = parameter["beta"]*size
-        self.nmos_width = self.nmos_size*drc["minwidth_tx"]
-        self.pmos_width = self.pmos_size*drc["minwidth_tx"]
-        self.height = height
+        self.nmos_width = self.nmos_size*drc("minwidth_tx")
+        self.pmos_width = self.pmos_size*drc("minwidth_tx")
 
         # FIXME: Allow these to be sized
         debug.check(size==1,"Size 1 pnand2 is only supported now.")
         self.tx_mults = 1
 
-        self.add_pins()
-        self.create_layout()
+        self.create_netlist()
+        if not OPTS.netlist_only:
+            self.create_layout()
         #self.DRC_LVS()
 
         
-    def add_pins(self):
-        """ Adds pins for spice netlist """
-        self.add_pin_list(["A", "B", "Z", "vdd", "gnd"])
-
+    def create_netlist(self):
+        self.add_pins()
+        self.add_ptx()
+        self.create_ptx()
+        
     def create_layout(self):
         """ Calls all functions related to the generation of the layout """
 
-        self.create_ptx()
         self.setup_layout_constants()
-        self.add_supply_rails()
-        self.add_ptx()
+        self.route_supply_rails()
+        self.place_ptx()
         self.connect_rails()
         self.add_well_contacts()
         self.extend_wells(self.well_pos)
         self.route_inputs()
         self.route_output()
 
-    def create_ptx(self):
+    def add_pins(self):
+        """ Adds pins for spice netlist """
+        self.add_pin_list(["A", "B", "Z", "vdd", "gnd"])
+
+        
+    def add_ptx(self):
         """ Create the PMOS and NMOS transistors. """
         self.nmos = ptx(width=self.nmos_width,
                         mults=self.tx_mults,
@@ -90,7 +91,7 @@ class pnand2(pgate.pgate):
         # Two PMOS devices and a well contact. Separation between each.
         # Enclosure space on the sides.
         self.well_width = 2*self.pmos.active_width + contact.active.width \
-                          + 2*drc["active_to_body_active"] + 2*drc["well_enclosure_active"]
+                          + 2*drc("active_to_body_active") + 2*drc("well_enclosure_active")
 
         self.width = self.well_width
         # Height is an input parameter, so it is not recomputed.
@@ -99,9 +100,9 @@ class pnand2(pgate.pgate):
         extra_contact_space = max(-self.nmos.get_pin("D").by(),0)
         # This is a poly-to-poly of a flipped cell
         self.top_bottom_space = max(0.5*self.m1_width + self.m1_space + extra_contact_space, 
-                                    drc["poly_extend_active"], self.poly_space)
+                                    drc("poly_extend_active"), self.poly_space)
         
-    def add_supply_rails(self):
+    def route_supply_rails(self):
         """ Add vdd/gnd rails to the top and bottom. """
         self.add_layout_pin_rect_center(text="gnd",
                                         layer="metal1",
@@ -113,37 +114,47 @@ class pnand2(pgate.pgate):
                                         offset=vector(0.5*self.width,self.height),
                                         width=self.width)
 
-    def add_ptx(self):
+    def create_ptx(self):
         """ 
-        Add PMOS and NMOS to the layout at the upper-most and lowest position
+        Add PMOS and NMOS to the netlist.
+        """
+
+        self.pmos1_inst=self.add_inst(name="pnand2_pmos1",
+                                      mod=self.pmos)
+        self.connect_inst(["vdd", "A", "Z", "vdd"])
+
+        self.pmos2_inst = self.add_inst(name="pnand2_pmos2",
+                                        mod=self.pmos)
+        self.connect_inst(["Z", "B", "vdd", "vdd"])
+
+        self.nmos1_inst=self.add_inst(name="pnand2_nmos1",
+                                      mod=self.nmos)
+        self.connect_inst(["Z", "B", "net1", "gnd"])
+
+        self.nmos2_inst=self.add_inst(name="pnand2_nmos2",
+                                      mod=self.nmos)
+        self.connect_inst(["net1", "A", "gnd", "gnd"])
+
+
+    def place_ptx(self):
+        """ 
+        Place PMOS and NMOS to the layout at the upper-most and lowest position
         to provide maximum routing in channel
         """
 
         pmos1_pos = vector(self.pmos.active_offset.x,
                            self.height - self.pmos.active_height - self.top_bottom_space)
-        self.pmos1_inst=self.add_inst(name="pnand2_pmos1",
-                                      mod=self.pmos,
-                                      offset=pmos1_pos)
-        self.connect_inst(["vdd", "A", "Z", "vdd"])
+        self.pmos1_inst.place(pmos1_pos)
 
         self.pmos2_pos = pmos1_pos + self.overlap_offset
-        self.pmos2_inst = self.add_inst(name="pnand2_pmos2",
-                                        mod=self.pmos,
-                                        offset=self.pmos2_pos)
-        self.connect_inst(["Z", "B", "vdd", "vdd"])
+        self.pmos2_inst.place(self.pmos2_pos)
 
         
         nmos1_pos = vector(self.pmos.active_offset.x, self.top_bottom_space)
-        self.nmos1_inst=self.add_inst(name="pnand2_nmos1",
-                                      mod=self.nmos,
-                                      offset=nmos1_pos)
-        self.connect_inst(["Z", "B", "net1", "gnd"])
+        self.nmos1_inst.place(nmos1_pos)
 
         self.nmos2_pos = nmos1_pos + self.overlap_offset
-        self.nmos2_inst=self.add_inst(name="pnand2_nmos2",
-                                      mod=self.nmos,
-                                      offset=self.nmos2_pos)
-        self.connect_inst(["net1", "A", "gnd", "gnd"])
+        self.nmos2_inst.place(self.nmos2_pos)
 
         # Output position will be in between the PMOS and NMOS        
         self.output_pos = vector(0,0.5*(pmos1_pos.y+nmos1_pos.y+self.nmos.active_height))
@@ -229,5 +240,5 @@ class pnand2(pgate.pgate):
         """Computes effective capacitance. Results in fF"""
         c_load = load
         c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff
-        transistion_prob = spice["nand2_transisition_prob"]
-        return transistion_prob*(c_load + c_para) 
+        transition_prob = spice["nand2_transition_prob"]
+        return transition_prob*(c_load + c_para) 

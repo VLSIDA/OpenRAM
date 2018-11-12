@@ -18,18 +18,24 @@ class options(optparse.Values):
     # This is the verbosity level to control debug information. 0 is none, 1
     # is minimal, etc.
     debug_level = 0
+    # When enabled, layout is not generated (and no DRC or LVS are performed)
+    netlist_only = False
     # This determines whether  LVS and DRC is checked for each submodule.
     check_lvsdrc = True
     # Variable to select the variant of spice
     spice_name = ""
-    # Should we print out the banner at startup
-    print_banner = True
+    # The spice executable being used which is derived from the user PATH.
+    spice_exe = ""
+    # Variable to select the variant of drc, lvs, pex
+    drc_name = ""
+    lvs_name = ""
+    pex_name = ""
     # The DRC/LVS/PEX executable being used which is derived from the user PATH.
     drc_exe = None
     lvs_exe = None
     pex_exe = None
-    # The spice executable being used which is derived from the user PATH.
-    spice_exe = ""
+    # Should we print out the banner at startup
+    print_banner = True
     # Run with extracted parasitics
     use_pex = False
     # Remove noncritical memory cells for characterization speed-up
@@ -46,19 +52,26 @@ class options(optparse.Values):
     purge_temp = True
 
     # These are the configuration parameters
-    rw_ports = 1
-    r_ports = 0
-    w_ports = 0
+    num_rw_ports = 1
+    num_r_ports = 0
+    num_w_ports = 0
+    
     # These will get initialized by the the file
     supply_voltages = ""
     temperatures = ""
     process_corners = ""
-    
 
+    # These are the main configuration parameters that should be over-ridden
+    # in a configuration file.
+    #num_words = 0
+    #word_size = 0
+
+    # You can manually specify banks, but it is better to auto-detect it.
+    num_banks = 1
+    
     # These are the default modules that can be over-riden
     decoder = "hierarchical_decoder"
-    ms_flop = "ms_flop"
-    ms_flop_array = "ms_flop_array"
+    dff_array = "dff_array"
     dff = "dff"
     control_logic = "control_logic"
     bitcell_array = "bitcell_array"

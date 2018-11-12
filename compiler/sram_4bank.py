@@ -16,8 +16,8 @@ class sram_4bank(sram_base):
     """
     Procedures specific to a four bank SRAM.
     """
-    def __init__(self, word_size, num_words, name):
-        sram_base.__init__(self, word_size, num_words, 4, name)
+    def __init__(self, name, sram_config):
+        sram_base.__init__(self, name, sram_config)
 
     def compute_bank_offsets(self):
         """ Compute the overall offsets for a four bank SRAM """
@@ -123,7 +123,7 @@ class sram_4bank(sram_base):
 
         # connect the MSB flops to the address input bus
         for i in [0,1]:
-            msb_pins = self.msb_address_inst.get_pins("din[{}]".format(i))
+            msb_pins = self.msb_address_inst.get_pins("din_{}".format(i))
             for msb_pin in msb_pins:
                 if msb_pin.layer == "metal3":
                     msb_pin_pos = msb_pin.lc()
@@ -141,7 +141,7 @@ class sram_4bank(sram_base):
 
         # Connect bank decoder outputs to the bank select vertical bus wires
         for i in range(self.num_banks):
-            msb_pin = self.msb_decoder_inst.get_pin("out[{}]".format(i))
+            msb_pin = self.msb_decoder_inst.get_pin("out_{}".format(i))
             msb_pin_pos = msb_pin.lc()
             rail_pos = vector(self.vert_control_bus_positions["bank_sel[{}]".format(i)].x,msb_pin_pos.y)
             self.add_path("metal1",[msb_pin_pos,rail_pos])

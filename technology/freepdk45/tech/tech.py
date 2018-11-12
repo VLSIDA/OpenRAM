@@ -1,14 +1,9 @@
 import os
+from design_rules import *
 
 """
 File containing the process technology parameters for FreePDK 45nm.
 """
-
-info = {}
-info["name"] = "freepdk45"
-info["body_tie_down"] = 0
-info["has_pwell"] = True
-info["has_nwell"] = True
 
 #GDS file info
 GDS = {}
@@ -56,6 +51,7 @@ layer["via9"]    = 28
 layer["metal10"] = 29
 layer["text"]    = 239
 layer["boundary"]= 239
+layer["blockage"]= 239
 
 ###################################################
 ##END GDS Layer Map
@@ -70,8 +66,18 @@ parameter={}
 parameter["min_tx_size"] = 0.09
 parameter["beta"] = 3
 
+parameter["6T_inv_nmos_size"] = 0.205
+parameter["6T_inv_pmos_size"] = 0.09
+parameter["6T_access_size"] = 0.135
+
 drclvs_home=os.environ.get("DRCLVS_HOME")
-drc={}
+
+drc = design_rules("freepdk45")
+
+drc["body_tie_down"] = 0
+drc["has_pwell"] = True
+drc["has_nwell"] = True
+
 #grid size
 drc["grid"] = 0.0025
 
@@ -82,7 +88,7 @@ drc["xrc_rules"]=drclvs_home+"/calibrexRC.rul"
 drc["layer_map"]=os.environ.get("OPENRAM_TECH")+"/freepdk45/layers.map"
 
 # minwidth_tx with contact (no dog bone transistors)
-drc["minwidth_tx"]=0.09
+drc["minwidth_tx"] = 0.09
 drc["minlength_channel"] = 0.05
 
 # WELL.2 Minimum spacing of nwell/pwell at different potential
@@ -98,6 +104,8 @@ drc["minwidth_poly"] = 0.05
 drc["poly_to_poly"] = 0.14
 # POLY.3 Minimum poly extension beyond active
 drc["poly_extend_active"] = 0.055
+# Not a rule
+drc["poly_to_polycontact"] = 0.075
 # POLY.4 Minimum enclosure of active around gate
 drc["active_enclosure_gate"] = 0.07
 # POLY.5 Minimum spacing of field poly to active
@@ -193,7 +201,18 @@ drc["via2_to_via2"] = 0.075
 # METALINT.1 Minimum width of intermediate metal
 drc["minwidth_metal3"] = 0.07
 # METALINT.2 Minimum spacing of intermediate metal
-drc["metal3_to_metal3"] = 0.07
+#drc["metal3_to_metal3"] = 0.07
+# Minimum spacing of metal3 wider than 0.09 & longer than 0.3 = 0.09
+# Minimum spacing of metal3 wider than 0.27 & longer than 0.9 = 0.27
+# Minimum spacing of metal3 wider than 0.5 & longer than 1.8 = 0.5
+# Minimum spacing of metal3 wider than 0.9 & longer than 2.7 = 0.9
+# Minimum spacing of metal3 wider than 1.5 & longer than 4.0 = 1.5
+drc["metal3_to_metal3"] = drc_lut({(0.00, 0.0) : 0.07,
+                                   (0.09, 0.3) : 0.09,
+                                   (0.27, 0.9) : 0.27,
+                                   (0.50, 1.8) : 0.5,
+                                   (0.90, 2.7) : 0.9,
+                                   (1.50, 4.0) : 1.5})
 # METALINT.3 Minimum enclosure around via1 on two opposite sides
 drc["metal3_extend_via2"] = 0.035
 # Reserved for asymmetric enclosures
@@ -206,22 +225,29 @@ drc["metal3_enclosure_via3"] = 0
 drc["minarea_metal3"] = 0
 
 # VIA2-3.1 Minimum width of Via[2-3]
-drc["minwidth_via3"] = 0.065
+drc["minwidth_via3"] = 0.07
 # VIA2-3.2 Minimum spacing of Via[2-3]
-drc["via3_to_via3"] = 0.07
+drc["via3_to_via3"] = 0.085
 
 # METALSMG.1 Minimum width of semi-global metal
 drc["minwidth_metal4"] = 0.14
 # METALSMG.2 Minimum spacing of semi-global metal
-drc["metal4_to_metal4"] = 0.14
+#drc["metal4_to_metal4"] = 0.14
+# Minimum spacing of metal4 wider than 0.27 & longer than 0.9 = 0.27
+# Minimum spacing of metal4 wider than 0.5 & longer than 1.8 = 0.5
+# Minimum spacing of metal4 wider than 0.9 & longer than 2.7 = 0.9
+# Minimum spacing of metal4 wider than 1.5 & longer than 4.0 = 1.5
+drc["metal4_to_metal4"] = drc_lut({(0.00, 0.0) : 0.14,
+                                   (0.27, 0.9) : 0.27,
+                                   (0.50, 1.8) : 0.5,
+                                   (0.90, 2.7) : 0.9,
+                                   (1.50, 4.0) : 1.5})
 # METALSMG.3 Minimum enclosure around via[3-6] on two opposite sides
-drc["metal4_extend_via3"] = 0.07
+drc["metal4_extend_via3"] = 0.0025
 # Reserved for asymmetric enclosure
-drc["metal4_enclosure_via3"] = 0
-# METALSMG.3 Minimum enclosure around via[3-6] on two opposite sides
-drc["metal4_enclosure_via4"] = 0
-# Reserved for asymmetric enclosure
-drc["metal4_extend_via4"] = 0.07
+drc["metal4_enclosure_via3"] = 0.0025
+# Not a rule
+drc["minarea_metal4"] = 0
 
 # Metal 5-10 are ommitted
 
@@ -261,7 +287,7 @@ spice["nom_temperature"] = 25        # Nominal temperature (celcius)
 #FIXME: We don't use these everywhere...
 spice["vdd_name"] = "vdd"
 spice["gnd_name"] = "gnd"
-spice["control_signals"] = ["CSb", "WEb", "OEb"]
+spice["control_signals"] = ["CSB", "WEB"]
 spice["data_name"] = "DATA"
 spice["addr_name"] = "ADDR"
 spice["minwidth_tx"] = drc["minwidth_tx"]
@@ -269,6 +295,7 @@ spice["channel"] = drc["minlength_channel"]
 spice["clk"] = "clk"
 
 # analytical delay parameters
+spice["v_threshold_typical"] = 0.4    # Typical Threshold voltage in Volts
 spice["wire_unit_r"] = 0.075     # Unit wire resistance in ohms/square
 spice["wire_unit_c"] = 0.64      # Unit wire capacitance ff/um^2
 spice["min_tx_r"] = 9250.0       # Minimum transistor on resistance in ohms
@@ -295,11 +322,11 @@ spice["msflop_leakage"] = 1      # Leakage power of flop in nW
 spice["flop_para_cap"] = 2       # Parasitic Output capacitance in fF
 
 spice["default_event_rate"] = 100           # Default event activity of every gate. MHz
-spice["flop_transisition_prob"] = .5        # Transition probability of inverter.
-spice["inv_transisition_prob"] = .5         # Transition probability of inverter.
-spice["nand2_transisition_prob"] = .1875    # Transition probability of 2-input nand.
-spice["nand3_transisition_prob"] = .1094    # Transition probability of 3-input nand.
-spice["nor2_transisition_prob"] = .1875     # Transition probability of 2-input nor.
+spice["flop_transition_prob"] = .5        # Transition probability of inverter.
+spice["inv_transition_prob"] = .5         # Transition probability of inverter.
+spice["nand2_transition_prob"] = .1875    # Transition probability of 2-input nand.
+spice["nand3_transition_prob"] = .1094    # Transition probability of 3-input nand.
+spice["nor2_transition_prob"] = .1875     # Transition probability of 2-input nor.
 
 ###################################################
 ##END Spice Simulation Parameters

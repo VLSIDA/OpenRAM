@@ -12,7 +12,11 @@ class precharge(pgate.pgate):
     This module implements the precharge bitline cell used in the design.
     """
 
-    def __init__(self, name, size=1):
+    unique_id = 1
+    
+    def __init__(self, name, size=1, bitcell_bl="bl", bitcell_br="br"):
+        name = name+"_{}".format(precharge.unique_id)
+        precharge.unique_id += 1
         pgate.pgate.__init__(self, name)
         debug.info(2, "create single precharge cell: {0}".format(name))
 
@@ -24,87 +28,110 @@ class precharge(pgate.pgate):
         self.beta = parameter["beta"]
         self.ptx_width = self.beta*parameter["min_tx_size"]
         self.width = self.bitcell.width
+        self.bitcell_bl = bitcell_bl
+        self.bitcell_br = bitcell_br
 
+        self.create_netlist()
+        if not OPTS.netlist_only:
+            self.create_layout()
+
+    def create_netlist(self):
         self.add_pins()
-        self.create_layout()
+        self.add_ptx()
+        self.create_ptx()
+        
+    def create_layout(self):
+        self.place_ptx()
+        self.connect_poly()
+        self.route_en()
+        self.place_nwell_and_contact()
+        self.route_vdd_rail()
+        self.route_bitlines()
+        self.connect_to_bitlines()
         self.DRC_LVS()
 
     def add_pins(self):
         self.add_pin_list(["bl", "br", "en", "vdd"])
 
-    def create_layout(self):
-        self.create_ptx()
-        self.add_ptx()
-        self.connect_poly()
-        self.add_en()
-        self.add_nwell_and_contact()
-        self.add_vdd_rail()
-        self.add_bitlines()
-        self.connect_to_bitlines()
-
-    def create_ptx(self):
-        """Initializes the upper and lower pmos"""
+    def add_ptx(self):
+        """
+        Initializes the upper and lower pmos
+        """
         self.pmos = ptx(width=self.ptx_width,
                         tx_type="pmos")
         self.add_mod(self.pmos)
 
-        # Compute the other pmos2 location, but determining offset to overlap the
-        # source and drain pins
-        self.overlap_offset = self.pmos.get_pin("D").ll() - self.pmos.get_pin("S").ll()
         
 
 
-    def add_vdd_rail(self):
-        """Adds a vdd rail at the top of the cell"""
-        # adds the rail across the width of the cell
-        vdd_position = vector(0, self.height - self.m1_width)
-        self.add_rect(layer="metal1",
-                      offset=vdd_position,
-                      width=self.width,
-                      height=self.m1_width)
+    def route_vdd_rail(self):
+        """
+        Adds a vdd rail at the top of the cell
+        """
+        
+        # Adds the rail across the width of the cell
+        vdd_position = vector(0.5*self.width, self.height)
+        self.add_rect_center(layer="metal1",
+                             offset=vdd_position,
+                             width=self.width,
+                             height=self.m1_width)
 
         pmos_pin = self.upper_pmos2_inst.get_pin("S")
         # center of vdd rail
-        vdd_pos = vector(pmos_pin.cx(), vdd_position.y + 0.5*self.m1_width)
-        self.add_path("metal1", [pmos_pin.uc(), vdd_pos])
+        pmos_vdd_pos = vector(pmos_pin.cx(), vdd_position.y)
+        self.add_path("metal1", [pmos_pin.uc(), pmos_vdd_pos])
 
-        # Add the M1->M2->M3 stack at the left edge
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
-                            offset=vdd_pos.scale(0,1))
-        self.add_via_center(layers=("metal2", "via2", "metal3"),
-                            offset=vdd_pos.scale(0,1))
-        self.add_layout_pin_rect_center(text="vdd",
-                                        layer="metal3",
-                                        offset=vdd_pos.scale(0,1))
+        # Add vdd pin above the transistor
+        self.add_power_pin("vdd", pmos_pin.center(), rotate=0)
         
         
-    def add_ptx(self):
-        """Adds both the upper_pmos and lower_pmos to the module"""
-        # adds the lower pmos to layout
-        #base = vector(self.width - 2*self.pmos.width + self.overlap_offset.x, 0)
-        self.lower_pmos_position = vector(self.bitcell.get_pin("bl").lx(),
-                                          self.pmos.active_offset.y)
+    def create_ptx(self):
+        """
+        Create both the upper_pmos and lower_pmos to the module
+        """
+
         self.lower_pmos_inst=self.add_inst(name="lower_pmos",
-                                           mod=self.pmos,
-                                           offset=self.lower_pmos_position)
+                                           mod=self.pmos)
         self.connect_inst(["bl", "en", "br", "vdd"])
+
+        self.upper_pmos1_inst=self.add_inst(name="upper_pmos1",
+                                            mod=self.pmos)
+        self.connect_inst(["bl", "en", "vdd", "vdd"])
+
+        self.upper_pmos2_inst=self.add_inst(name="upper_pmos2",
+                                            mod=self.pmos)
+        self.connect_inst(["br", "en", "vdd", "vdd"])
+        
+
+    def place_ptx(self):
+        """
+        Place both the upper_pmos and lower_pmos to the module
+        """
+
+        # Compute the other pmos2 location, but determining offset to overlap the
+        # source and drain pins
+        overlap_offset = self.pmos.get_pin("D").ll() - self.pmos.get_pin("S").ll()
+        # This is how much the contact is placed inside the ptx active
+        contact_xdiff = self.pmos.get_pin("S").lx()
+        
+        # adds the lower pmos to layout
+        bl_xoffset = self.bitcell.get_pin(self.bitcell_bl).lx()
+        self.lower_pmos_position = vector(max(bl_xoffset - contact_xdiff, self.well_enclose_active),
+                                          self.pmos.active_offset.y)
+        self.lower_pmos_inst.place(self.lower_pmos_position)
 
         # adds the upper pmos(s) to layout
         ydiff = self.pmos.height + 2*self.m1_space + contact.poly.width
         self.upper_pmos1_pos = self.lower_pmos_position + vector(0, ydiff)
-        self.upper_pmos1_inst=self.add_inst(name="upper_pmos1",
-                                            mod=self.pmos,
-                                            offset=self.upper_pmos1_pos)
-        self.connect_inst(["bl", "en", "vdd", "vdd"])
+        self.upper_pmos1_inst.place(self.upper_pmos1_pos)
 
-        upper_pmos2_pos = self.upper_pmos1_pos + self.overlap_offset
-        self.upper_pmos2_inst=self.add_inst(name="upper_pmos2",
-                                            mod=self.pmos,
-                                            offset=upper_pmos2_pos)
-        self.connect_inst(["br", "en", "vdd", "vdd"])
-
+        upper_pmos2_pos = self.upper_pmos1_pos + overlap_offset
+        self.upper_pmos2_inst.place(upper_pmos2_pos)
+        
     def connect_poly(self):
-        """Connects the upper and lower pmos together"""
+        """
+        Connects the upper and lower pmos together
+        """
 
         offset = self.lower_pmos_inst.get_pin("G").ll()
         # connects the top and bottom pmos' gates together
@@ -122,8 +149,11 @@ class precharge(pgate.pgate):
                       width=xlength,
                       height=self.poly_width)
 
-    def add_en(self):
-        """Adds the en input rail, en contact/vias, and connects to the pmos"""
+    def route_en(self):
+        """
+        Adds the en input rail, en contact/vias, and connects to the pmos
+        """
+        
         # adds the en contact to connect the gates to the en rail on metal1
         offset = self.lower_pmos_inst.get_pin("G").ul() + vector(0,0.5*self.poly_space)
         self.add_contact_center(layers=("poly", "contact", "metal1"),
@@ -137,78 +167,99 @@ class precharge(pgate.pgate):
                                            end=offset.scale(0,1)+vector(self.width,0))
 
                      
-    def add_nwell_and_contact(self):
-        """Adds a nwell tap to connect to the vdd rail"""
+    def place_nwell_and_contact(self):
+        """
+        Adds a nwell tap to connect to the vdd rail
+        """
+        
         # adds the contact from active to metal1
         well_contact_pos = self.upper_pmos1_inst.get_pin("D").center().scale(1,0) \
-                           + vector(0, self.upper_pmos1_inst.uy() + contact.well.height/2 + drc["well_extend_active"])
+                           + vector(0, self.upper_pmos1_inst.uy() + contact.well.height/2 + drc("well_extend_active"))
         self.add_contact_center(layers=("active", "contact", "metal1"),
                                 offset=well_contact_pos,
                                 implant_type="n",
                                 well_type="n")
 
+        # leave an extra pitch for the height
+        self.height = well_contact_pos.y + contact.well.height + self.m1_pitch
 
-        self.height = well_contact_pos.y + contact.well.height
-
+        # nwell should span the whole design since it is pmos only
         self.add_rect(layer="nwell",
                       offset=vector(0,0),
                       width=self.width,
                       height=self.height)
 
 
-    def add_bitlines(self):
-        """Adds both bit-line and bit-line-bar to the module"""
+    def route_bitlines(self):
+        """
+        Adds both bit-line and bit-line-bar to the module
+        """
+        
         # adds the BL on metal 2
-        offset = vector(self.bitcell.get_pin("bl").cx(),0) - vector(0.5 * self.m2_width,0)
-        self.add_layout_pin(text="bl",
-                            layer="metal2",
-                            offset=offset,
-                            width=drc['minwidth_metal2'],
-                            height=self.height)
+        offset = vector(self.bitcell.get_pin(self.bitcell_bl).cx(),0) - vector(0.5 * self.m2_width,0)
+        self.bl_pin = self.add_layout_pin(text="bl",
+                                          layer="metal2",
+                                          offset=offset,
+                                          width=drc("minwidth_metal2"),
+                                          height=self.height)
 
         # adds the BR on metal 2
-        offset = vector(self.bitcell.get_pin("br").cx(),0) - vector(0.5 * self.m2_width,0)
-        self.add_layout_pin(text="br",
-                            layer="metal2",
-                            offset=offset,
-                            width=drc['minwidth_metal2'],
-                            height=self.height)
+        offset = vector(self.bitcell.get_pin(self.bitcell_br).cx(),0) - vector(0.5 * self.m2_width,0)
+        self.br_pin = self.add_layout_pin(text="br",
+                                          layer="metal2",
+                                          offset=offset,
+                                          width=drc("minwidth_metal2"),
+                                          height=self.height)
 
     def connect_to_bitlines(self):
+        """
+        Connect the bitlines to the devices
+        """
         self.add_bitline_contacts()
-        self.connect_pmos(self.lower_pmos_inst.get_pin("S"),self.get_pin("bl"))
-        self.connect_pmos(self.lower_pmos_inst.get_pin("D"),self.get_pin("br"))        
-        self.connect_pmos(self.upper_pmos1_inst.get_pin("S"),self.get_pin("bl"))        
-        self.connect_pmos(self.upper_pmos2_inst.get_pin("D"),self.get_pin("br"))        
+        self.connect_pmos_m2(self.lower_pmos_inst.get_pin("S"),self.get_pin("bl"))
+        self.connect_pmos_m2(self.upper_pmos1_inst.get_pin("S"),self.get_pin("bl"))        
+        self.connect_pmos_m1(self.lower_pmos_inst.get_pin("D"),self.get_pin("br"))        
+        self.connect_pmos_m1(self.upper_pmos2_inst.get_pin("D"),self.get_pin("br"))
         
 
     def add_bitline_contacts(self):
-        """Adds contacts/via from metal1 to metal2 for bit-lines"""
+        """
+        Adds contacts/via from metal1 to metal2 for bit-lines
+        """
 
         stack=("metal1", "via1", "metal2")
-        pos = self.lower_pmos_inst.get_pin("S").center()
+        upper_pin = self.upper_pmos1_inst.get_pin("S")
+        lower_pin = self.lower_pmos_inst.get_pin("S")
+        
+        # BL goes up to M2 at the transistor
+        self.bl_contact=self.add_contact_center(layers=stack,
+                                                offset=upper_pin.center())
         self.add_contact_center(layers=stack,
-                                offset=pos)
-        pos = self.lower_pmos_inst.get_pin("D").center()
-        self.add_contact_center(layers=stack,
-                                offset=pos)
-        pos = self.upper_pmos1_inst.get_pin("S").center()
-        self.add_contact_center(layers=stack,
-                                offset=pos)
-        pos = self.upper_pmos2_inst.get_pin("D").center()
-        self.add_contact_center(layers=stack,
-                                offset=pos)
+                                offset=lower_pin.center())
 
-    def connect_pmos(self, pmos_pin, bit_pin):
-        """ Connect pmos pin to bitline pin """
+        # BR routes over on M1 first
+        self.add_contact_center(layers=stack,
+                                offset = vector(self.br_pin.cx(), upper_pin.cy()))
+        self.add_contact_center(layers=stack,
+                                offset = vector(self.br_pin.cx(), lower_pin.cy()))
 
-        ll_pos = vector(min(pmos_pin.lx(),bit_pin.lx()), pmos_pin.by())
-        ur_pos = vector(max(pmos_pin.rx(),bit_pin.rx()), pmos_pin.uy())
+    def connect_pmos_m1(self, pmos_pin, bit_pin):
+        """ 
+        Connect a pmos pin to bitline pin 
+        """
 
-        width = ur_pos.x-ll_pos.x
-        height = ur_pos.y-ll_pos.y
-        self.add_rect(layer="metal2",
-                      offset=ll_pos,
-                      width=width,
-                      height=height)
+        left_pos = vector(min(pmos_pin.cx(),bit_pin.cx()), pmos_pin.cy())
+        right_pos = vector(max(pmos_pin.cx(),bit_pin.cx()), pmos_pin.cy())
+
+        self.add_path("metal1", [ left_pos, right_pos] )
+
+    def connect_pmos_m2(self, pmos_pin, bit_pin):
+        """ 
+        Connect a pmos pin to bitline pin 
+        """
+
+        left_pos = vector(min(pmos_pin.cx(),bit_pin.cx()), pmos_pin.cy())
+        right_pos = vector(max(pmos_pin.cx(),bit_pin.cx()), pmos_pin.cy())
+
+        self.add_path("metal2", [ left_pos, right_pos], self.bl_contact.height)
         

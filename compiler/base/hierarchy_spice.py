@@ -91,26 +91,33 @@ class spice(verilog.verilog):
         group of modules are generated."""
 
         if (check and (len(self.insts[-1].mod.pins) != len(args))):
-            debug.error("Connections: {}".format(self.insts[-1].mod.pins))
-            debug.error("Connections: {}".format(args))
+            from pprint import pformat
+            modpins_string=pformat(self.insts[-1].mod.pins)
+            argpins_string=pformat(args)
+            debug.error("Connections: {}".format(modpins_string))
+            debug.error("Connections: {}".format(argpins_string))
             debug.error("Number of net connections ({0}) does not match last instance ({1})".format(len(self.insts[-1].mod.pins),
                                                                                                     len(args)), 1)
         self.conns.append(args)
 
         if check and (len(self.insts)!=len(self.conns)):
+            from pprint import pformat
+            insts_string=pformat(self.insts)
+            conns_string=pformat(self.conns)
+            
             debug.error("{0} : Not all instance pins ({1}) are connected ({2}).".format(self.name,
                                                                                         len(self.insts),
                                                                                         len(self.conns)))
-            debug.error("Instances: \n"+str(self.insts))
+            debug.error("Instances: \n"+str(insts_string))
             debug.error("-----")
-            debug.error("Connections: \n"+str(self.conns),1)
+            debug.error("Connections: \n"+str(conns_string),1)
 
 
 
     def sp_read(self):
         """Reads the sp file (and parse the pins) from the library 
            Otherwise, initialize it to null for dynamic generation"""
-        if os.path.isfile(self.sp_file):
+        if self.sp_file and os.path.isfile(self.sp_file):
             debug.info(3, "opening {0}".format(self.sp_file))
             f = open(self.sp_file)
             self.spice = f.readlines()

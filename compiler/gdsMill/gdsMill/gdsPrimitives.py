@@ -118,7 +118,7 @@ class GdsSref:
         self.elementFlags=""
         self.plex=""
         self.sName=""
-        self.transFlags=(False,False,False)
+        self.transFlags=[0,0,0]
         self.magFactor=""
         self.rotateAngle=""
         self.coordinates=""
@@ -129,7 +129,7 @@ class GdsAref:
         self.elementFlags=""
         self.plex=""
         self.aName=""
-        self.transFlags=(False,False,False)
+        self.transFlags=[0,0,0]
         self.magFactor=""
         self.rotateAngle=""
         self.coordinates=""
@@ -141,7 +141,7 @@ class GdsText:
         self.plex=""
         self.drawingLayer=""
         self.purposeLayer = None
-        self.transFlags=(False,False,False)
+        self.transFlags=[0,0,0]
         self.magFactor=""
         self.rotateAngle=""
         self.pathType=""

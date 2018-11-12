@@ -1,8 +1,9 @@
 import design
 import debug
-from tech import drc, info, spice
+from tech import drc, spice
 from vector import vector
 from contact import contact
+from globals import OPTS
 import path
 
 class ptx(design.design):
@@ -14,7 +15,7 @@ class ptx(design.design):
     you to connect the fingered gates and active for parallel devices.
 
     """
-    def __init__(self, width=drc["minwidth_tx"], mults=1, tx_type="nmos", connect_active=False, connect_poly=False, num_contacts=None):
+    def __init__(self, width=drc("minwidth_tx"), mults=1, tx_type="nmos", connect_active=False, connect_poly=False, num_contacts=None):
         # We need to keep unique names because outputting to GDSII
         # will use the last record with a given name. I.e., you will
         # over-write a design in GDS if one has and the other doesn't
@@ -39,14 +40,11 @@ class ptx(design.design):
         self.connect_poly = connect_poly
         self.num_contacts = num_contacts
 
-        self.create_spice()
+        self.create_netlist()
+        # We must always create ptx layout for pbitcell
+        # some transistor sizes in other netlist depend on pbitcell
         self.create_layout()
 
-        self.translate_all(self.active_offset)
-
-        # for run-time, we won't check every transitor DRC independently
-        # but this may be uncommented for debug purposes
-        #self.DRC()
 
     
     def create_layout(self):
@@ -56,19 +54,24 @@ class ptx(design.design):
         self.add_well_implant()  
         self.add_poly()
         self.add_active_contacts()
+        self.translate_all(self.active_offset)
 
-    def create_spice(self):
+        # for run-time, we won't check every transitor DRC independently
+        # but this may be uncommented for debug purposes
+        #self.DRC()
+
+    def create_netlist(self):
         self.add_pin_list(["D", "G", "S", "B"])
         
         # self.spice.append("\n.SUBCKT {0} {1}".format(self.name,
         #                                              " ".join(self.pins)))
         # Just make a guess since these will actually be decided in the layout later.
-        area_sd = 2.5*drc["minwidth_poly"]*self.tx_width
-        perimeter_sd = 2*drc["minwidth_poly"] + 2*self.tx_width
+        area_sd = 2.5*drc("minwidth_poly")*self.tx_width
+        perimeter_sd = 2*drc("minwidth_poly") + 2*self.tx_width
         self.spice_device="M{{0}} {{1}} {0} m={1} w={2}u l={3}u pd={4}u ps={4}u as={5}p ad={5}p".format(spice[self.tx_type],
                                                                                                     self.mults,
                                                                                                     self.tx_width,
-                                                                                                    drc["minwidth_poly"],
+                                                                                                    drc("minwidth_poly"),
                                                                                                     perimeter_sd,
                                                                                                     area_sd)
         self.spice.append("\n* ptx " + self.spice_device)
@@ -106,7 +109,7 @@ class ptx(design.design):
         self.contact_pitch = 2*self.contact_to_gate + self.contact_width + self.poly_width
         
         # The enclosure of an active contact. Not sure about second term.
-        active_enclose_contact = max(drc["active_enclosure_contact"],
+        active_enclose_contact = max(drc("active_enclosure_contact"),
                                      (self.active_width - self.contact_width)/2)
         # This is the distance from the edge of poly to the contacted end of active
         self.end_to_poly = active_enclose_contact + self.contact_width + self.contact_to_gate
@@ -126,7 +129,7 @@ class ptx(design.design):
         self.active_offset = vector([self.well_enclose_active]*2)
 
         # Well enclosure of active, ensure minwidth as well
-        if info["has_{}well".format(self.well_type)]:
+        if drc("has_{}well".format(self.well_type)):
             self.cell_well_width = max(self.active_width + 2*self.well_enclose_active,
                                   self.well_width)
             self.cell_well_height = max(self.tx_width + 2*self.well_enclose_active,
@@ -148,9 +151,9 @@ class ptx(design.design):
                                      
         
         # Min area results are just flagged for now.
-        debug.check(self.active_width*self.active_height>=drc["minarea_active"],"Minimum active area violated.")
+        debug.check(self.active_width*self.active_height>=drc("minarea_active"),"Minimum active area violated.")
         # We do not want to increase the poly dimensions to fix an area problem as it would cause an LVS issue.
-        debug.check(self.poly_width*self.poly_height>=drc["minarea_poly"],"Minimum poly area violated.")
+        debug.check(self.poly_width*self.poly_height>=drc("minarea_poly"),"Minimum poly area violated.")
 
     def connect_fingered_poly(self, poly_positions):
         """
@@ -178,7 +181,7 @@ class ptx(design.design):
                             layer="poly",
                             offset=poly_offset,
                             width=poly_width,
-                            height=drc["minwidth_poly"])
+                            height=drc("minwidth_poly"))
 
 
     def connect_fingered_active(self, drain_positions, source_positions):
@@ -266,7 +269,7 @@ class ptx(design.design):
                       height=self.active_height)
         # If the implant must enclose the active, shift offset
         # and increase width/height
-        enclose_width = drc["implant_enclosure_active"]
+        enclose_width = drc("implant_enclosure_active")
         enclose_offset = [enclose_width]*2
         self.add_rect(layer="{}implant".format(self.implant_type),
                       offset=self.active_offset - enclose_offset,
@@ -277,7 +280,7 @@ class ptx(design.design):
         """
         Add an (optional) well and implant for the type of transistor.
         """
-        if info["has_{}well".format(self.well_type)]:
+        if drc("has_{}well".format(self.well_type)):
             self.add_rect(layer="{}well".format(self.well_type),
                           offset=(0,0),
                           width=self.cell_well_width,

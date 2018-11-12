@@ -13,9 +13,6 @@ class ptx_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        global verify
-        import verify
-
         import ptx
         import tech
 
@@ -30,7 +27,7 @@ class ptx_test(openram_test):
         globals.end_openram()
         
 
-# instantiate a copy of the class to actually run the test
+# run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

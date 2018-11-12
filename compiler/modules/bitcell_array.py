@@ -21,41 +21,28 @@ class bitcell_array(design.design):
         self.column_size = cols
         self.row_size = rows
 
-        from importlib import reload
-        c = reload(__import__(OPTS.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.bitcell)
-        self.cell = self.mod_bitcell()
-        self.add_mod(self.cell)
-
-        # We increase it by a well enclosure so the precharges don't overlap our wells
-        self.height = self.row_size*self.cell.height + drc["well_enclosure_active"] + self.m1_width
-        self.width = self.column_size*self.cell.width + self.m1_width
-        
-        self.add_pins()
-        self.create_layout()
-        self.add_layout_pins()
+        self.create_netlist()
+        if not OPTS.netlist_only:
+            self.create_layout()
 
         # We don't offset this because we need to align
         # the replica bitcell in the control logic
         #self.offset_all_coordinates()
         
-        self.DRC_LVS()
-
-    def add_pins(self):
-        row_list = self.cell.list_row_pins()
-        column_list = self.cell.list_column_pins()
-        for col in range(self.column_size):
-            for cell_column in column_list:
-                self.add_pin(cell_column+"[{0}]".format(col))
-        for row in range(self.row_size):
-            for cell_row in row_list:
-                    self.add_pin(cell_row+"[{0}]".format(row))
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+        
+    def create_netlist(self):
+        """ Create and connect the netlist """
+        self.add_modules()
+        self.add_pins()
+        self.create_modules()
 
     def create_layout(self):
+
+        # We increase it by a well enclosure so the precharges don't overlap our wells
+        self.height = self.row_size*self.cell.height + drc("well_enclosure_active") + self.m1_width
+        self.width = self.column_size*self.cell.width + self.m1_width
+        
         xoffset = 0.0
-        self.cell_inst = {}
         for col in range(self.column_size):
             yoffset = 0.0
             for row in range(self.row_size):
@@ -68,25 +55,57 @@ class bitcell_array(design.design):
                     tempy = yoffset
                     dir_key = ""
 
-                self.cell_inst[row,col]=self.add_inst(name=name,
-                                                      mod=self.cell,
-                                                      offset=[xoffset, tempy],
-                                                      mirror=dir_key)
-                self.connect_inst(self.cell.list_bitcell_pins(col, row))
-                
+                self.cell_inst[row,col].place(offset=[xoffset, tempy],
+                                              mirror=dir_key)
                 yoffset += self.cell.height
             xoffset += self.cell.width
 
+        self.add_layout_pins()
 
+        self.DRC_LVS()
+
+    def add_pins(self):
+        row_list = self.cell.list_all_wl_names()
+        column_list = self.cell.list_all_bitline_names()
+        for col in range(self.column_size):
+            for cell_column in column_list:
+                self.add_pin(cell_column+"_{0}".format(col))
+        for row in range(self.row_size):
+            for cell_row in row_list:
+                    self.add_pin(cell_row+"_{0}".format(row))
+        self.add_pin("vdd")
+        self.add_pin("gnd")
+
+    def add_modules(self):
+        """ Add the modules used in this design """
+
+        from importlib import reload
+        c = reload(__import__(OPTS.bitcell))
+        self.mod_bitcell = getattr(c, OPTS.bitcell)
+        self.cell = self.mod_bitcell()
+        self.add_mod(self.cell)
+
+    def create_modules(self):
+        """ Create the module instances used in this design """
+        self.cell_inst = {}
+        for col in range(self.column_size):
+            for row in range(self.row_size):
+                name = "bit_r{0}_c{1}".format(row, col)
+                self.cell_inst[row,col]=self.add_inst(name=name,
+                                                      mod=self.cell)
+                self.connect_inst(self.cell.list_bitcell_pins(col, row))
+        
     def add_layout_pins(self):
         """ Add the layout pins """
-                
-        column_list = self.cell.list_column_pins()
+        
+        row_list = self.cell.list_all_wl_names()
+        column_list = self.cell.list_all_bitline_names()
+        
         offset = vector(0.0, 0.0)
         for col in range(self.column_size):
             for cell_column in column_list:
                 bl_pin = self.cell_inst[0,col].get_pin(cell_column)
-                self.add_layout_pin(text=cell_column+"[{0}]".format(col),
+                self.add_layout_pin(text=cell_column+"_{0}".format(col),
                                     layer="metal2",
                                     offset=bl_pin.ll(),
                                     width=bl_pin.width(),
@@ -95,12 +114,11 @@ class bitcell_array(design.design):
             # increments to the next column width
             offset.x += self.cell.width
 
-        row_list = self.cell.list_row_pins()
         offset.x = 0.0
         for row in range(self.row_size):
             for cell_row in row_list:
                 wl_pin = self.cell_inst[row,0].get_pin(cell_row)
-                self.add_layout_pin(text=cell_row+"[{0}]".format(row),
+                self.add_layout_pin(text=cell_row+"_{0}".format(row),
                                     layer="metal1",
                                     offset=wl_pin.ll(),
                                     width=self.width,
@@ -181,13 +199,21 @@ class bitcell_array(design.design):
         return total_power
 
     def gen_wl_wire(self):
-        wl_wire = self.generate_rc_net(int(self.column_size), self.width, drc["minwidth_metal1"])
+        if OPTS.netlist_only:
+            width = 0
+        else:
+            width = self.width
+        wl_wire = self.generate_rc_net(int(self.column_size), width, drc("minwidth_metal1"))
         wl_wire.wire_c = 2*spice["min_tx_gate_c"] + wl_wire.wire_c # 2 access tx gate per cell
         return wl_wire
 
     def gen_bl_wire(self):
+        if OPTS.netlist_only:
+            height = 0
+        else:
+            height = self.height
         bl_pos = 0
-        bl_wire = self.generate_rc_net(int(self.row_size-bl_pos), self.height, drc["minwidth_metal1"])
+        bl_wire = self.generate_rc_net(int(self.row_size-bl_pos), height, drc("minwidth_metal1"))
         bl_wire.wire_c =spice["min_tx_drain_c"] + bl_wire.wire_c # 1 access tx d/s per cell
         return bl_wire
 

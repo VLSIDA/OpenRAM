@@ -15,9 +15,6 @@ class tri_gate_array_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        global verify
-        import verify
-
         import tri_gate_array
 
         debug.info(1, "Testing tri_gate_array for columns=8, word_size=8")
@@ -30,7 +27,7 @@ class tri_gate_array_test(openram_test):
         
         globals.end_openram()
         
-# instantiate a copdsay of the class to actually run the test
+# run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

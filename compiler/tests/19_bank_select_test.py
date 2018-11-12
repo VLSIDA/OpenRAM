@@ -15,18 +15,32 @@ class bank_select_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        global verify
-        import verify
-
         import bank_select
 
-        debug.info(1, "No column mux")
-        a = bank_select.bank_select()
+        debug.info(1, "No column mux, rw control logic")
+        a = bank_select.bank_select(port="rw")
+        self.local_check(a)
+        
+        OPTS.bitcell = "pbitcell"
+        debug.info(1, "No column mux, rw control logic")
+        a = bank_select.bank_select(port="rw")
+        self.local_check(a)
+        
+        OPTS.num_rw_ports = 0
+        OPTS.num_w_ports = 1
+        OPTS.num_r_ports = 1
+
+        debug.info(1, "No column mux, w control logic")
+        a = bank_select.bank_select(port="w")
+        self.local_check(a)
+        
+        debug.info(1, "No column mux, r control logic")
+        a = bank_select.bank_select(port="r")
         self.local_check(a)
         
         globals.end_openram()
         
-# instantiate a copy of the class to actually run the test
+# run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

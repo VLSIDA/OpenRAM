@@ -1,12 +1,14 @@
 import unittest,warnings
 import sys,os,glob,copy
+import shutil
 sys.path.append(os.path.join(sys.path[0],".."))
 from globals import OPTS
 import debug
 
 class openram_test(unittest.TestCase):
     """ Base unit test that we have some shared classes in. """
-    
+
+                
     def local_drc_check(self, w):
 
         self.reset()
@@ -36,11 +38,17 @@ class openram_test(unittest.TestCase):
             import verify
             result=verify.run_drc(a.name, tempgds)
             if result != 0:
+                #zip_file = "/tmp/{0}_{1}".format(a.name,os.getpid())
+                #debug.info(0,"Archiving failed files to {}.zip".format(zip_file))
+                #shutil.make_archive(zip_file, 'zip', OPTS.openram_temp)
                 self.fail("DRC failed: {}".format(a.name))
 
             
             result=verify.run_lvs(a.name, tempgds, tempspice, final_verification)
             if result != 0:
+                #zip_file = "/tmp/{0}_{1}".format(a.name,os.getpid())
+                #debug.info(0,"Archiving failed files to {}.zip".format(zip_file))
+                #shutil.make_archive(zip_file, 'zip', OPTS.openram_temp)
                 self.fail("LVS mismatch: {}".format(a.name))
 
         if OPTS.purge_temp:

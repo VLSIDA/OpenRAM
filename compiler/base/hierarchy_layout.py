@@ -754,36 +754,42 @@ class layout(lef.lef):
 
         """
         def remove_net_from_graph(pin, g):
-            # Remove the pin from the keys
+            """
+            Remove the pin from the graph and all conflicts
+            """
             g.pop(pin,None)
+            
             # Remove the pin from all conflicts
-            # This is O(n^2), so maybe optimize it.
+            # FIXME: This is O(n^2), so maybe optimize it.
             for other_pin,conflicts in g.items():
                 if pin in conflicts:
                     conflicts.remove(pin)
                     g[other_pin]=conflicts
             return g
 
-        def vcg_pins_overlap(pins1, pins2, vertical):
-            # Check all the pin pairs on two nets and return a pin
-            # overlap if any pin overlaps vertically
-            for pin1 in pins1:
-                for pin2 in pins2:
+        def vcg_nets_overlap(net1, net2, vertical):
+            """ 
+            Check all the pin pairs on two nets and return a pin
+            overlap if any pin overlaps 
+            """
+            
+            for pin1 in net1:
+                for pin2 in net2:
                     if vcg_pin_overlap(pin1, pin2, vertical):
                         return True
 
             return False
                             
         def vcg_pin_overlap(pin1, pin2, vertical):
-            # Check for vertical overlap of the two pins
+            """ Check for vertical or horizontal overlap of the two pins """
 
-            # Pin 1 must be in the "TOP" set
-            x_overlap = pin1.by() > pin2.by() and abs(pin1.center().x-pin2.center().x)<pitch
+            # Pin 1 must be in the "BOTTOM" set
+            x_overlap = pin1.by() < pin2.by() and abs(pin1.center().x-pin2.center().x)<pitch
 
-            # Pin 1 must be in the "LET" set
+            # Pin 1 must be in the "LEFT" set
             y_overlap = pin1.lx() < pin2.lx() and abs(pin1.center().y-pin2.center().y)<pitch
-            
-            return (not vertical and x_overlap) or (vertical and y_overlap)
+            overlaps = (not vertical and x_overlap) or (vertical and y_overlap)
+            return overlaps
 
 
 
@@ -813,25 +819,18 @@ class layout(lef.lef):
         # Find the vertical pin conflicts
         # FIXME: O(n^2) but who cares for now
         for net_name1 in nets:
-            vcg[net_name1]=[]
+            if net_name1 not in vcg.keys():
+                vcg[net_name1]=[]
             for net_name2 in nets:
+                if net_name2 not in vcg.keys():
+                    vcg[net_name2]=[]
                 # Skip yourself
                 if net_name1 == net_name2:
                     continue
-                if vcg_pins_overlap(nets[net_name1], nets[net_name2], vertical):
-                    try:
-                        vcg[net_name2].append(net_name1)
-                    except:
-                        vcg[net_name2] = [net_name1]
+                if vcg_nets_overlap(nets[net_name1], nets[net_name2], vertical):
+                    vcg[net_name2].append(net_name1)
                     
         #FIXME: What if we have a cycle? 
-
-        # The starting offset is the first trunk at the top or left
-        # so we must offset from the lower left of the channel placement
-        # in the case of vertical tracks
-        if not vertical:
-            # This will start from top down
-            offset = offset + vector(0,len(nets)*pitch)
 
         # list of routes to do
         while vcg:
@@ -856,13 +855,13 @@ class layout(lef.lef):
             # Remove the net from other constriants in the VCG
             vcg=remove_net_from_graph(net_name, vcg)
             
-            # Add the trunk routes from the bottom up or the left to right
+            # Add the trunk routes from the bottom up for horizontal or the left to right for vertical
             if vertical:
                 self.add_vertical_trunk_route(pin_list, offset, layer_stack, pitch)
                 offset += vector(pitch,0)
             else:
                 self.add_horizontal_trunk_route(pin_list, offset, layer_stack, pitch)
-                offset -= vector(0,pitch)
+                offset += vector(0,pitch)
 
 
     def create_vertical_channel_route(self, netlist, pins, offset, 

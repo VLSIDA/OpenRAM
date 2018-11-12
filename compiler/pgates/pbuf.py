@@ -31,18 +31,18 @@ class pbuf(design.design):
         
         # Shield the cap, but have at least a stage effort of 4
         input_size = max(1,int(driver_size/stage_effort))
-        self.inv = pinv(size=input_size, height=height) # 1 
+        self.inv1 = pinv(size=input_size, height=height) # 1 
         self.add_mod(self.inv)
         
-        self.inv1 = pinv(size=driver_size, height=height) # 2
+        self.inv2 = pinv(size=driver_size, height=height) # 2
         self.add_mod(self.inv1)
 
-        self.width = 2*self.inv1.width + self.inv2.width
-        self.height = 2*self.inv1.height
+        self.width = self.inv1.width + self.inv2.width
+        self.height = self.inv1.height
 
         self.create_layout()
 
-        self.offset_all_coordinates()
+        #self.offset_all_coordinates()
         
         self.DRC_LVS()
 
@@ -61,14 +61,14 @@ class pbuf(design.design):
     def add_insts(self):
         # Add INV1 to the right 
         self.inv1_inst=self.add_inst(name="buf_inv1",
-                                     mod=self.inv,
+                                     mod=self.inv1,
                                      offset=vector(0,0))
         self.connect_inst(["A", "zb_int",  "vdd", "gnd"])
         
 
         # Add INV2 to the right
         self.inv2_inst=self.add_inst(name="buf_inv2",
-                                     mod=self.inv1,
+                                     mod=self.inv2,
                                      offset=vector(self.inv1_inst.rx(),0))
         self.connect_inst(["zb_int", "Z",  "vdd", "gnd"])
         
@@ -106,7 +106,7 @@ class pbuf(design.design):
                             width=self.width,
                             height=vdd_pin.height())
             
-        z_pin = self.inv4_inst.get_pin("Z")
+        z_pin = self.inv2_inst.get_pin("Z")
         self.add_layout_pin_rect_center(text="Z",
                                         layer="metal2",
                                         offset=z_pin.center())

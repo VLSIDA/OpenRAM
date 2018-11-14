@@ -31,6 +31,7 @@ class control_logic(design.design):
         
         #This is needed to resize the delay chain. Likely to be changed at some point.
         self.sram=sram
+        #self.sram=None #disable re-sizing for debugging
         self.wl_timing_tolerance = 1 #Determines how much larger the sen delay should be. Accounts for possible error in model.
         self.parasitic_inv_delay = 0 #Keeping 0 for now until further testing.
         

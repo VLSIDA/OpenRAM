@@ -40,8 +40,8 @@ class functional(simulation):
         """Spice constants for functional test"""
         simulation.set_spice_constants(self)
         #Heuristic increase for functional period. Base feasible period typically does not pass the functional test
-        #for column mux of this size. Increase the feasible period by 20% for this case.
-        if self.sram.words_per_row >= 4:
+        #for column mux or srams of this size. Increase the feasible period by 20% for this case.
+        if self.sram.words_per_row >= 4 or self.sram.num_cols*self.sram.num_rows >= 1024:
             self.period = self.period*1.2
     
     def run(self):

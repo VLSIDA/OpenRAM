@@ -653,7 +653,7 @@ class router(router_tech):
         debug.info(2,"Analyzing pin groups for {}.".format(pin_name))        
         
         pin_set = self.pins[pin_name]
-        local_debug = True
+        local_debug = False
 
         # Put each pin in an equivalence class of it's own
         equiv_classes = [set([x]) for x in pin_set]

@@ -129,16 +129,15 @@ class wordline_driver(design.design):
         nand2_xoffset = inv1_xoffset + self.inv.width
         inv2_xoffset = nand2_xoffset + self.nand2.width
         
-        self.width = inv2_xoffset + self.inv.height
-        driver_height = self.inv.height
+        self.width = inv2_xoffset + self.inv.width
         self.height = self.inv.height * self.rows
         
         for row in range(self.rows):
             if (row % 2):
-                y_offset = driver_height*(row + 1)
+                y_offset = self.inv.height*(row + 1)
                 inst_mirror = "MX"
             else:
-                y_offset = driver_height*row
+                y_offset = self.inv.height*row
                 inst_mirror = "R0"
 
             inv1_offset = [inv1_xoffset, y_offset]

@@ -18,7 +18,7 @@ class hierarchical_predecode3x8(hierarchical_predecode):
 
     def create_netlist(self):
         self.add_pins()
-        self.create_modules()
+        self.add_modules()
         self.create_input_inverters()
         self.create_output_inverters()
         connections=[["inbar_0", "inbar_1", "inbar_2", "Z_0", "vdd", "gnd"],

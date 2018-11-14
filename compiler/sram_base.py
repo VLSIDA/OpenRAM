@@ -216,6 +216,29 @@ class sram_base(design):
         c = reload(__import__(OPTS.bitcell))
         self.mod_bitcell = getattr(c, OPTS.bitcell)
         self.bitcell = self.mod_bitcell()
+# <<<<<<< HEAD
+# =======
+        
+        # c = reload(__import__(OPTS.control_logic))
+        # self.mod_control_logic = getattr(c, OPTS.control_logic)
+        
+        # # Create the control logic module for each port type
+        # if len(self.readwrite_ports)>0:
+            # self.control_logic_rw = self.mod_control_logic(num_rows=self.num_rows,
+                                                           # words_per_row=self.words_per_row,
+                                                           # port_type="rw")
+            # self.add_mod(self.control_logic_rw)
+        # if len(self.write_ports)>0:
+            # self.control_logic_w = self.mod_control_logic(num_rows=self.num_rows,
+                                                          # words_per_row=self.words_per_row,
+                                                          # port_type="w")
+            # self.add_mod(self.control_logic_w)
+        # if len(self.read_ports)>0:
+            # self.control_logic_r = self.mod_control_logic(num_rows=self.num_rows,
+                                                          # words_per_row=self.words_per_row,
+                                                          # port_type="r")
+            # self.add_mod(self.control_logic_r)
+# >>>>>>> dev
 
         # Create the address and control flops (but not the clk)
         from dff_array import dff_array
@@ -249,18 +272,27 @@ class sram_base(design):
         #The control logic can resize itself based on the other modules. Requires all other modules added before control logic.
         self.all_mods_except_control_done = True
 
-        #c = reload(__import__(OPTS.control_logic))
-        #self.mod_control_logic = getattr(c, OPTS.control_logic)
-        from control_logic import control_logic
+        c = reload(__import__(OPTS.control_logic))
+        self.mod_control_logic = getattr(c, OPTS.control_logic)
+        
         # Create the control logic module for each port type
-        if OPTS.num_rw_ports>0:
-            self.control_logic = self.control_logic_rw = control_logic(num_rows=self.num_rows, words_per_row=self.words_per_row,sram=self, port_type="rw")
+        if len(self.readwrite_ports)>0:
+            self.control_logic_rw = self.mod_control_logic(num_rows=self.num_rows, 
+                                                           words_per_row=self.words_per_row,
+                                                           sram=self, 
+                                                           port_type="rw")
             self.add_mod(self.control_logic_rw)
-        if OPTS.num_w_ports>0:
-            self.control_logic_w = control_logic(num_rows=self.num_rows, words_per_row=self.words_per_row,sram=self, port_type="w")
+        if len(self.write_ports)>0:
+            self.control_logic_w = self.mod_control_logic(num_rows=self.num_rows, 
+                                                          words_per_row=self.words_per_row,
+                                                          sram=self, 
+                                                          port_type="w")
             self.add_mod(self.control_logic_w)
-        if OPTS.num_r_ports>0:
-            self.control_logic_r = control_logic(num_rows=self.num_rows, words_per_row=self.words_per_row,sram=self, port_type="r")
+        if len(self.read_ports)>0:
+            self.control_logic_r = self.mod_control_logic(num_rows=self.num_rows, 
+                                                          words_per_row=self.words_per_row,
+                                                          sram=self, 
+                                                          port_type="r")
             self.add_mod(self.control_logic_r)
 
     def create_bank(self,bank_num):
@@ -383,7 +415,8 @@ class sram_base(design):
 
         
     def create_control_logic(self):
-        """ Add and place control logic """
+        """ Add control logic instances """
+
         insts = []
         for port in self.all_ports:
             if port in self.readwrite_ports:
@@ -393,8 +426,7 @@ class sram_base(design):
             else:
                 mod = self.control_logic_r
                 
-            insts.append(self.add_inst(name="control{}".format(port),
-                                       mod=mod))
+            insts.append(self.add_inst(name="control{}".format(port), mod=mod))
             
             temp = ["csb{}".format(port)]
             if port in self.readwrite_ports:
@@ -455,25 +487,10 @@ class sram_base(design):
     def analytical_delay(self, vdd, slew,load):
         """ LH and HL are the same in analytical model. """
         return self.bank.analytical_delay(vdd,slew,load)
-
-    # def get_delay_to_wl(self):
-        # """Get the delay (in delay units) of the clk to a wordline in the bitcell array"""
-        # debug.check(self.all_mods_except_control_done, "Cannot calculate sense amp enable delay unless all module have been added.")
-        # stage_efforts = self.determine_wordline_stage_efforts()
-        # clk_to_wl_delay = logical_effort.calculate_relative_delay(stage_efforts, self.pinv)
-        # debug.info(1, "Clock to wordline delay is {} delay units".format(clk_to_wl_delay))
-        # return clk_to_wl_delay
         
     def determine_wordline_stage_efforts(self):
         """Get the all the stage efforts for each stage in the path from clk_buf to a wordline"""
-        #clk
         stage_effort_list = []
-        # clk_buf_cout = self.get_clk_cin()
-        # #Assume rw only. There are important differences with multiport that will need to be accounted for.
-        # if self.control_logic_rw != None:
-            # stage_effort_list += self.control_logic_rw.determine_wordline_stage_efforts(clk_buf_cout)
-        # else: 
-            # stage_effort_list += self.control_logic_r.determine_wordline_stage_efforts(clk_buf_cout)
 
         #Clk_buf originates from the control logic so only the bank is related to the wordline path
         external_wordline_cout = 0 #No loading on the wordline other than in the bank.
@@ -491,30 +508,7 @@ class sram_base(design):
             col_addr_clk_cin = self.col_addr_dff.get_clk_cin()
         bank_clk_cin = self.bank.get_clk_cin()
         
-        return row_addr_clk_cin + data_clk_cin + col_addr_clk_cin + bank_clk_cin
-
-    # def get_delay_to_sen(self):
-        # """Get the delay (in delay units) of the clk to a sense amp enable. 
-           # This does not incorporate the delay of the replica bitline.
-        # """
-        # debug.check(self.all_mods_except_control_done, "Cannot calculate sense amp enable delay unless all module have been added.")
-        # stage_efforts = self.determine_sa_enable_stage_efforts()
-        # clk_to_sen_delay = logical_effort.calculate_relative_delay(stage_efforts, self.pinv)
-        # debug.info(1, "Clock to s_en delay is {} delay units".format(clk_to_sen_delay))
-        # return clk_to_sen_delay    
-        
-    # def determine_sa_enable_stage_efforts(self):
-        # """Get the all the stage efforts for each stage in the path from clk to a sense amp enable"""
-        # stage_effort_list = []
-        # clk_buf_bar_cout = self.get_clk_bar_cin()
-        # clk_sen_cout = self.get_sen_cin()
-        # #Assume rw only. There are important differences with multiport that will need to be accounted for.
-        # if self.control_logic_rw != None:
-            # stage_effort_list += self.control_logic_rw.determine_sa_enable_stage_efforts(clk_buf_bar_cout, clk_sen_cout)
-        # else: 
-            # stage_effort_list += self.control_logic_r.determine_sa_enable_stage_efforts(clk_buf_bar_cout, clk_sen_cout)
-        
-        # return stage_effort_list      
+        return row_addr_clk_cin + data_clk_cin + col_addr_clk_cin + bank_clk_cin 
         
     def get_clk_bar_cin(self):
         """Gets the capacitive load the of clock (clk_buf_bar) for the sram"""

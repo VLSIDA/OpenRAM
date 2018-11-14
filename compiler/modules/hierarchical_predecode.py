@@ -31,8 +31,8 @@ class hierarchical_predecode(design.design):
         self.add_pin("vdd")
         self.add_pin("gnd")
 
-    def create_modules(self):
-        """ Create the INV and NAND gate """
+    def add_modules(self):
+        """ Add the INV and NAND gate modules """
         
         self.inv = pinv()
         self.add_mod(self.inv)

@@ -34,7 +34,7 @@ class bitcell_array(design.design):
         """ Create and connect the netlist """
         self.add_modules()
         self.add_pins()
-        self.create_modules()
+        self.create_instances()
 
     def create_layout(self):
 
@@ -85,7 +85,7 @@ class bitcell_array(design.design):
         self.cell = self.mod_bitcell()
         self.add_mod(self.cell)
 
-    def create_modules(self):
+    def create_instances(self):
         """ Create the module instances used in this design """
         self.cell_inst = {}
         for col in range(self.column_size):

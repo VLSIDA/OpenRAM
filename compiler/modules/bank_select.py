@@ -27,12 +27,12 @@ class bank_select(design.design):
     def create_netlist(self):
         self.add_pins()
         self.add_modules()
-        self.create_modules()
+        self.create_instances()
         
     def create_layout(self):
         self.calculate_module_offsets()
-        self.place_modules()
-        self.route_modules()
+        self.place_instances()
+        self.route_instances()
 
         self.DRC_LVS()
 
@@ -99,7 +99,7 @@ class bank_select(design.design):
         self.height = self.yoffset_maxpoint + 2*self.m1_pitch
         self.width = self.xoffset_inv + self.inv4x.width
         
-    def create_modules(self):
+    def create_instances(self):
         
         self.bank_sel_inv=self.add_inst(name="bank_sel_inv", 
                                         mod=self.inv_sel)
@@ -152,7 +152,7 @@ class bank_select(design.design):
                                    "vdd",
                                    "gnd"])
 
-    def place_modules(self):
+    def place_instances(self):
         
         # bank select inverter
         self.bank_select_inv_position = vector(self.xoffset_bank_sel_inv, 0)
@@ -195,7 +195,7 @@ class bank_select(design.design):
                            mirror=mirror)
             
 
-    def route_modules(self):
+    def route_instances(self):
         
         # bank_sel is vertical wire
         bank_sel_inv_pin = self.bank_sel_inv.get_pin("A")

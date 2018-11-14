@@ -54,8 +54,8 @@ class multibank(design.design):
         
         self.compute_sizes()
         self.add_pins()
-        self.create_modules()
         self.add_modules()
+        self.create_instances()
         self.setup_layout_constraints()
 
         # FIXME: Move this to the add modules function
@@ -111,7 +111,7 @@ class multibank(design.design):
         
         self.route_supplies()
         
-    def add_modules(self):
+    def create_instances(self):
         """ Add modules. The order should not matter! """
 
         # Above the bitcell array
@@ -175,8 +175,8 @@ class multibank(design.design):
 
 
 
-    def create_modules(self):
-        """ Create all the modules using the class loader """
+    def add_modules(self):
+        """ Add all the modules using the class loader """
         self.tri = self.mod_tri_gate()
         self.bitcell = self.mod_bitcell()
         

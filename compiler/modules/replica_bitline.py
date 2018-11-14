@@ -29,11 +29,11 @@ class replica_bitline(design.design):
     def create_netlist(self):
         self.add_modules()
         self.add_pins()
-        self.create_modules()
+        self.create_instances()
 
     def create_layout(self):
         self.calculate_module_offsets()
-        self.place_modules()
+        self.place_instances()
         self.route()
         self.add_layout_pins()
 
@@ -104,7 +104,7 @@ class replica_bitline(design.design):
         self.access_tx = ptx(tx_type="pmos")
         self.add_mod(self.access_tx)
 
-    def create_modules(self):
+    def create_instances(self):
         """ Create all of the module instances in the logical netlist """
         
         # This is the threshold detect inverter on the output of the RBL
@@ -152,7 +152,7 @@ class replica_bitline(design.design):
         self.wl_list = self.rbl.cell.list_all_wl_names()
         self.bl_list = self.rbl.cell.list_all_bl_names()
         
-    def place_modules(self):
+    def place_instances(self):
         """ Add all of the module instances in the logical netlist """
         
         # This is the threshold detect inverter on the output of the RBL

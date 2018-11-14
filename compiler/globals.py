@@ -389,10 +389,10 @@ def import_tech():
 def print_time(name, now_time, last_time=None):
     """ Print a statement about the time delta. """
     if last_time:
-        time = round((now_time-last_time).total_seconds(),1)
+        time = str(round((now_time-last_time).total_seconds(),1)) + " seconds"
     else:
-        time = now_time
-    print("** {0}: {1} seconds".format(name,time))
+        time = now_time.strftime('%m/%d/%Y %H:%M:%S')
+    print("** {0}: {1}".format(name,time))
 
 
 def report_status():

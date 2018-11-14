@@ -30,8 +30,10 @@ def parse_args():
                              help="Base output file name(s) prefix", metavar="FILE"),
         optparse.make_option("-p", "--outpath", dest="output_path",
                              help="Output file(s) location"),
+        optparse.make_option("-i", "--inlinecheck", action="store_true",
+                             help="Enable inline LVS/DRC checks", dest="inline_lvsdrc"),
         optparse.make_option("-n", "--nocheck", action="store_false",
-                             help="Disable inline LVS/DRC checks", dest="check_lvsdrc"),
+                             help="Disable all LVS/DRC checks", dest="check_lvsdrc"),
         optparse.make_option("-v", "--verbose", action="count", dest="debug_level",
                              help="Increase the verbosity level"),
         optparse.make_option("-t", "--tech", dest="tech_name",
@@ -413,6 +415,9 @@ def report_status():
     if OPTS.netlist_only:
         print("Netlist only mode (no physical design is being done).")
     
+    if not OPTS.inline_lvsdrc:
+        print("DRC/LVS/PEX is only run on the top-level design.")
+
     if not OPTS.check_lvsdrc:
-        print("DRC/LVS/PEX checking is disabled.")
-    
+        print("DRC/LVS/PEX is completely disabled.")
+        

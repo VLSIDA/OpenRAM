@@ -653,63 +653,49 @@ class router(router_tech):
         debug.info(2,"Analyzing pin groups for {}.".format(pin_name))        
         
         pin_set = self.pins[pin_name]
-        local_debug = False
+        local_debug = True
 
         # Put each pin in an equivalence class of it's own
         equiv_classes = [set([x]) for x in pin_set]
         if local_debug:
-            debug.info(0,"INITIAL\n",equiv_classes)
+            debug.info(0,"INITIAL\n"+pformat(equiv_classes))
 
-        def compare_classes(class1, class2):
-            """ 
-            Determine if two classes should be combined and if so return
-            the combined set. Otherwise, return None.
-            """
-            if local_debug:
-                debug.info(0,"CLASS1:\n",class1)
-                debug.info(0,"CLASS2:\n",class2)
-            # Compare each pin in each class,
-            # and if any overlap, return the combined the class 
-            for p1 in class1:
-                for p2 in class2:
-                    if p1.overlaps(p2):
-                        combined_class = class1 | class2
-                        if local_debug:
-                            debug.info(0,"COMBINE:",pformat(combined_class))
-                        return combined_class
-                        
-            if local_debug:
-                debug.info(0,"NO COMBINE")
-            return None
-                        
-        
-        def combine_classes(equiv_classes):
-            """ Recursive function to combine classes. """
-            local_debug = False
-
-            if local_debug:
-                debug.info(0,"\nRECURSE:\n",pformat(equiv_classes))
-            if len(equiv_classes)==1:
-                return(equiv_classes)
-            
+        first_run = True
+        while (first_run or len(equiv_classes)<len(old_equiv_classes)):
+            first_run=False
             for class1 in equiv_classes:
                 for class2 in equiv_classes:
                     if class1 == class2:
                         continue
-                    class3 = compare_classes(class1, class2)
-                    if class3:
-                        new_classes = equiv_classes
-                        new_classes.remove(class1)
-                        new_classes.remove(class2)
-                        new_classes.append(class3)
-                        return(combine_classes(new_classes))
-            else:
-                return(equiv_classes)
+                    #class3 = compare_classes(class1, class2)
+                    # Compare each pin in each class,
+                    # and if any overlap, return the combined the class
+                    combined_class = None
+                    for p1 in class1:
+                        for p2 in class2:
+                            if p1.overlaps(p2):
+                                combined_class = class1 | class2
+                                if local_debug:
+                                    debug.info(0,"COMBINE:"+pformat(combined_class))
+                                break
+                        else:
+                            continue
+                        break
+                                    
+                    if combined_class:
+                        old_equiv_classes = equiv_classes
+                        equiv_classes.remove(class1)
+                        equiv_classes.remove(class2)
+                        equiv_classes.append(combined_class)
+                        break
+                else:
+                    continue
+                break
+                            
 
-        reduced_classes = combine_classes(equiv_classes)
         if local_debug:
-            debug.info(0,"FINAL  ",reduced_classes)
-        self.pin_groups[pin_name] = [pin_group(name=pin_name, pin_set=x, router=self) for x in reduced_classes]
+            debug.info(0,"FINAL  "+pformat(equiv_classes))
+        self.pin_groups[pin_name] = [pin_group(name=pin_name, pin_set=x, router=self) for x in equiv_classes]
         
     def convert_pins(self, pin_name):
         """ 

@@ -41,12 +41,12 @@ class control_logic(design.design):
         self.setup_signal_busses()
         self.add_pins()
         self.add_modules()
-        self.create_modules()
+        self.create_instances()
         
     def create_layout(self):
         """ Create layout and route between modules """
         self.route_rails()
-        self.place_modules()
+        self.place_instances()
         self.route_all()
         
         #self.add_lvs_correspondence_points()
@@ -155,8 +155,8 @@ class control_logic(design.design):
         self.rail_offsets = self.create_vertical_bus("metal2", self.m2_pitch, offset, self.internal_bus_list, height)
             
             
-    def create_modules(self):
-        """ Create all the modules """
+    def create_instances(self):
+        """ Create all the instances """
         self.create_dffs()
         self.create_clk_row()
         if (self.port_type == "rw") or (self.port_type == "w"):
@@ -167,8 +167,8 @@ class control_logic(design.design):
             self.create_rbl()
 
 
-    def place_modules(self):
-        """ Place all the modules """
+    def place_instances(self):
+        """ Place all the instances """
         # Keep track of all right-most instances to determine row boundary
         # and add the vdd/gnd pins
         self.row_end_inst = []

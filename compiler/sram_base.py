@@ -216,20 +216,24 @@ class sram_base(design):
         self.mod_bitcell = getattr(c, OPTS.bitcell)
         self.bitcell = self.mod_bitcell()
         
-        #c = reload(__import__(OPTS.control_logic))
-        #self.mod_control_logic = getattr(c, OPTS.control_logic)
-
+        c = reload(__import__(OPTS.control_logic))
+        self.mod_control_logic = getattr(c, OPTS.control_logic)
         
-        from control_logic import control_logic
         # Create the control logic module for each port type
-        if OPTS.num_rw_ports>0:
-            self.control_logic = self.control_logic_rw = control_logic(num_rows=self.num_rows, words_per_row=self.words_per_row, port_type="rw")
+        if len(self.readwrite_ports)>0:
+            self.control_logic_rw = self.mod_control_logic(num_rows=self.num_rows,
+                                                           words_per_row=self.words_per_row,
+                                                           port_type="rw")
             self.add_mod(self.control_logic_rw)
-        if OPTS.num_w_ports>0:
-            self.control_logic_w = control_logic(num_rows=self.num_rows, words_per_row=self.words_per_row, port_type="w")
+        if len(self.write_ports)>0:
+            self.control_logic_w = self.mod_control_logic(num_rows=self.num_rows,
+                                                          words_per_row=self.words_per_row,
+                                                          port_type="w")
             self.add_mod(self.control_logic_w)
-        if OPTS.num_r_ports>0:
-            self.control_logic_r = control_logic(num_rows=self.num_rows, words_per_row=self.words_per_row, port_type="r")
+        if len(self.read_ports)>0:
+            self.control_logic_r = self.mod_control_logic(num_rows=self.num_rows,
+                                                          words_per_row=self.words_per_row,
+                                                          port_type="r")
             self.add_mod(self.control_logic_r)
 
         # Create the address and control flops (but not the clk)
@@ -382,7 +386,8 @@ class sram_base(design):
 
         
     def create_control_logic(self):
-        """ Add and place control logic """
+        """ Add control logic instances """
+
         insts = []
         for port in self.all_ports:
             if port in self.readwrite_ports:
@@ -392,8 +397,7 @@ class sram_base(design):
             else:
                 mod = self.control_logic_r
                 
-            insts.append(self.add_inst(name="control{}".format(port),
-                                       mod=mod))
+            insts.append(self.add_inst(name="control{}".format(port), mod=mod))
             
             temp = ["csb{}".format(port)]
             if port in self.readwrite_ports:

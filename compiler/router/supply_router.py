@@ -2,13 +2,14 @@ import gdsMill
 import tech
 import math
 import debug
-from globals import OPTS
+from globals import OPTS,print_time
 from contact import contact
 from pin_group import pin_group
 from pin_layout import pin_layout
 from vector3d import vector3d 
 from router import router
 from direction import direction
+from datetime import datetime
 import grid
 import grid_utils
 
@@ -68,10 +69,13 @@ class supply_router(router):
         self.compute_supply_rail_dimensions()
             
         # Get the pin shapes
+        #start_time = datetime.now()
         self.find_pins_and_blockages([self.vdd_name, self.gnd_name])
+        #print_time("Pins and blockages",datetime.now(), start_time)
         #self.write_debug_gds("pin_enclosures.gds",stop_program=True)
 
         # Add the supply rails in a mesh network and connect H/V with vias
+        #start_time = datetime.now()
         # Block everything
         self.prepare_blockages(self.gnd_name)
         # Determine the rail locations
@@ -82,15 +86,20 @@ class supply_router(router):
         # Determine the rail locations
         self.route_supply_rails(self.vdd_name,1)
         #self.write_debug_gds("debug_rails.gds",stop_program=True)
-
+        #print_time("Supply rails",datetime.now(), start_time)
+        
+        #start_time = datetime.now()
         self.route_simple_overlaps(vdd_name)
         self.route_simple_overlaps(gnd_name)
+        #print_time("Simple overlaps",datetime.now(), start_time)
         #self.write_debug_gds("debug_simple_route.gds",stop_program=False)
         
         # Route the supply pins to the supply rails
         # Route vdd first since we want it to be shorter
+        #start_time = datetime.now()
         self.route_pins_to_rails(vdd_name)
         self.route_pins_to_rails(gnd_name)
+        #print_time("Routing",datetime.now(), start_time)        
         #self.write_debug_gds("debug_pin_routes.gds",stop_program=True)
         
         #self.write_debug_gds("final.gds",False)  

@@ -7,6 +7,8 @@ An open-source static random access memory (SRAM) compiler.
 
 # What is OpenRAM?
 
+<img align="right" width="25%" src="images/SCMOS_16kb_sram.jpg">
+
 OpenRAM is an open-source Python framework to create the layout,
 netlists, timing and power models, placement and routing models, and
 other views necessary to use SRAMs in ASIC design. OpenRAM supports
@@ -28,7 +30,8 @@ If you want to perform DRC and LVS, you will need either:
 You must set two environment variables: 
 + OPENRAM\_HOME should point to the compiler source directory. 
 + OPENERAM\_TECH should point to a root technology directory.
-For example, in bash, add to your .bashrc:
+
+For example add this to your .bashrc:
 
 ```
   export OPENRAM_HOME="$HOME/openram/compiler"
@@ -39,7 +42,7 @@ We include the tech files necessary for [FreePDK45] and [SCMOS]
 SCN4M_SUBM. The [SCMOS] spice models, however, are generic and should
 be replaced with foundry models.  If you are using [FreePDK45], you
 should also have that set up and have the environment variable point
-to the PDK.  For example, in bash, add to your .bashrc:
+to the PDK. For example add this to your .bashrc:
 
 ```
   export FREEPDK45="/bsoe/software/design-kits/FreePDK45"
@@ -55,8 +58,8 @@ Once you have defined the environment, you can run OpenRAM from the command line
 using a single configuration file written in Python. You may wish to add
 $OPENRAM\_HOME to your $PYTHONPATH.
 
-For example, create a file called myconfig.py specifying the following
-parameters:
+For example, create a file called *myconfig.py* specifying the following
+parameters for your memory:
 
 ```
 # Data word size
@@ -77,6 +80,9 @@ temperatures = [ 25 ]
 output_path = "temp"
 # Output file base name
 output_name = "sram_{0}_{1}_{2}".format(word_size,num_words,tech_name)
+
+# Disable analytical models for full characterization (WARNING: slow!)
+# analytical_delay = False
 ```
 
 You can then run OpenRAM by executing:
@@ -85,6 +91,7 @@ python3 $OPENRAM\_HOME/openram.py myconfig
 ```
 You can see all of the options for the configuration file in
 $OPENRAM\_HOME/options.py
+
 
 # Unit Tests
 
@@ -152,6 +159,13 @@ Each specific technology (e.g., [FreePDK45]) should be a subdirectory
 + Follow our [project][Github projects].
 + Read and cite our [ICCAD paper][OpenRAMpaper]
 
+# Further Help
+
++ [Additional hints](./HINTS.md)
++ [OpenRAM Slack Workspace][Slack]
++ [OpenRAM Users Group][user-group] ([subscribe here][user-group-subscribe])
++ [OpenRAM Developers Group][dev-group] ([subscribe here][dev-group-subscribe])
+
 # License 
 
 OpenRAM is licensed under the [BSD 3-clause License](./LICENSE).
@@ -179,9 +193,14 @@ OpenRAM is licensed under the [BSD 3-clause License](./LICENSE).
 [OpenRAMpaper]:          https://ieeexplore.ieee.org/document/7827670/
 
 [Github issues]:         https://github.com/PrivateRAM/PrivateRAM/issues
-[Github pull request]:  https://github.com/PrivateRAM/PrivateRAM/pulls
+[Github pull request]:   https://github.com/PrivateRAM/PrivateRAM/pulls
 [Github projects]:       https://github.com/PrivateRAM/PrivateRAM/projects
+
 [email me]:              mailto:mrg+openram@ucsc.edu
+[dev-group]:             mailto:openram-dev-group@ucsc.edu
+[user-group]:            mailto:openram-user-group@ucsc.edu
+[dev-group-subscribe]:   mailto:openram-dev-group+subscribe@ucsc.edu
+[user-group-subscribe]:  mailto:openram-user-group+subscribe@ucsc.edu
 
 [Magic]:                 http://opencircuitdesign.com/magic/
 [Netgen]:                http://opencircuitdesign.com/netgen/
@@ -191,3 +210,5 @@ OpenRAM is licensed under the [BSD 3-clause License](./LICENSE).
 [OSUPDK]:                https://vlsiarch.ecen.okstate.edu/flow/
 [FreePDK45]:             https://www.eda.ncsu.edu/wiki/FreePDK45:Contents
 [SCMOS]:                 https://www.mosis.com/files/scmos/scmos.pdf
+
+[Slack]:                 https://join.slack.com/t/openram/shared_invite/enQtNDgxMjc3NzU5NTI1LTE4ODMyM2I0Mzk2ZmFiMjgwYTYyMTQ4NTgwMmUwMDhiM2E1MDViNDRjYzU1NjJhZTQxNWZjMzE3M2FlODBmZjA

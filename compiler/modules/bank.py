@@ -1190,8 +1190,8 @@ class bank(design.design):
 
         # clk to wordline_driver
         control_signal = self.prefix+"clk_buf{}".format(port)
-        pin_pos = self.wordline_driver_inst[port].get_pin("en").uc()
-        mid_pos = pin_pos + vector(0,self.m1_pitch)
+        pin_pos = self.wordline_driver_inst[port].get_pin("en").bc()
+        mid_pos = pin_pos - vector(0,self.m1_pitch)
         control_x_offset = self.bus_xoffset[port][control_signal].x
         control_pos = vector(control_x_offset, mid_pos.y)
         self.add_wire(("metal1","via1","metal2"),[pin_pos, mid_pos, control_pos])

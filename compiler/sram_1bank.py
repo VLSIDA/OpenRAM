@@ -67,6 +67,7 @@ class sram_1bank(sram_base):
 
         # Port 0
         port = 0
+        # This includes 2 M2 pitches for the row addr clock line
         control_pos[port] = vector(-self.control_logic_insts[port].width - 2*self.m2_pitch,
                                    self.bank.bank_array_ll.y - self.control_logic_insts[port].mod.control_logic_center.y)
         self.control_logic_insts[port].place(control_pos[port])
@@ -96,12 +97,13 @@ class sram_1bank(sram_base):
         if len(self.all_ports)>1:
             # Port 1
             port = 1
+            # This includes 2 M2 pitches for the row addr clock line            
             control_pos[port] = vector(self.bank_inst.rx() + self.control_logic_insts[port].width + 2*self.m2_pitch,
                                        self.bank.bank_array_ll.y - self.control_logic_insts[port].mod.control_logic_center.y)
             self.control_logic_insts[port].place(control_pos[port], mirror="MY")
         
             # The row address bits are placed above the control logic aligned on the left.
-            row_addr_pos[port] = vector(self.bank_inst.rx() + self.row_addr_dff_insts[port].width,
+            row_addr_pos[port] = vector(control_pos[port].x - self.control_logic_insts[port].width + self.row_addr_dff_insts[port].width,
                                         self.control_logic_insts[port].uy())
             self.row_addr_dff_insts[port].place(row_addr_pos[port], mirror="MY")
         
@@ -190,14 +192,20 @@ class sram_1bank(sram_base):
                 mid_pos = vector(bank_clk_buf_pos.x, data_dff_clk_pos.y)
                 self.add_wire(("metal3","via2","metal2"),[data_dff_clk_pos, mid_pos, bank_clk_buf_pos])
 
-            # This uses a metal2 track to the right of the control/row addr DFF
-            # to route vertically.
+            # This uses a metal2 track to the right (for port0) of the control/row addr DFF
+            # to route vertically. For port1, it is to the left.
             control_clk_buf_pin = self.control_logic_insts[port].get_pin("clk_buf")
-            control_clk_buf_pos = control_clk_buf_pin.rc()
             row_addr_clk_pin = self.row_addr_dff_insts[port].get_pin("clk")
-            row_addr_clk_pos = row_addr_clk_pin.rc()
-            mid1_pos = vector(self.row_addr_dff_insts[port].rx() + self.m2_pitch,
-                              row_addr_clk_pos.y)
+            if port%2:
+                control_clk_buf_pos = control_clk_buf_pin.lc()
+                row_addr_clk_pos = row_addr_clk_pin.lc()
+                mid1_pos = vector(self.row_addr_dff_insts[port].lx() - self.m2_pitch,
+                                  row_addr_clk_pos.y)
+            else:
+                control_clk_buf_pos = control_clk_buf_pin.rc()
+                row_addr_clk_pos = row_addr_clk_pin.rc()
+                mid1_pos = vector(self.row_addr_dff_insts[port].rx() + self.m2_pitch,
+                                  row_addr_clk_pos.y)
             mid2_pos = vector(mid1_pos.x,
                               control_clk_buf_pos.y)
             # Note, the via to the control logic is taken care of when we route

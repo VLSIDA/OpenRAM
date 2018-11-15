@@ -93,32 +93,33 @@ class sram_1bank(sram_base):
             self.data_dff_insts[port].place(data_pos[port])
 
 
-        # Port 1
-        port = 1
-        control_pos[port] = vector(self.bank_inst.rx() + self.control_logic_insts[port].width + 2*self.m2_pitch,
-                                   self.bank.bank_array_ll.y - self.control_logic_insts[port].mod.control_logic_center.y)
-        self.control_logic_insts[port].place(control_pos[port], mirror="MY")
+        if len(self.all_ports)>1:
+            # Port 1
+            port = 1
+            control_pos[port] = vector(self.bank_inst.rx() + self.control_logic_insts[port].width + 2*self.m2_pitch,
+                                       self.bank.bank_array_ll.y - self.control_logic_insts[port].mod.control_logic_center.y)
+            self.control_logic_insts[port].place(control_pos[port], mirror="MY")
         
-        # The row address bits are placed above the control logic aligned on the left.
-        row_addr_pos[port] = vector(self.bank_inst.rx() + self.row_addr_dff_insts[port].width,
-                                    self.control_logic_insts[port].uy())
-        self.row_addr_dff_insts[port].place(row_addr_pos[port], mirror="MY")
+            # The row address bits are placed above the control logic aligned on the left.
+            row_addr_pos[port] = vector(self.bank_inst.rx() + self.row_addr_dff_insts[port].width,
+                                        self.control_logic_insts[port].uy())
+            self.row_addr_dff_insts[port].place(row_addr_pos[port], mirror="MY")
         
-        # Add the col address flops above the bank to the right of the upper-right of bank array
-        if self.col_addr_dff:
-            col_addr_pos[port] = vector(self.bank.bank_array_ur.x + self.bank.central_bus_width,
-                                        self.bank_inst.uy() + data_gap + self.col_addr_dff_insts[port].height)
-            self.col_addr_dff_insts[port].place(col_addr_pos[port], mirror="MX")
+            # Add the col address flops above the bank to the right of the upper-right of bank array
+            if self.col_addr_dff:
+                col_addr_pos[port] = vector(self.bank.bank_array_ur.x + self.bank.central_bus_width,
+                                            self.bank_inst.uy() + data_gap + self.col_addr_dff_insts[port].height)
+                self.col_addr_dff_insts[port].place(col_addr_pos[port], mirror="MX")
             
-        # Add the data flops above the bank to the left of the upper-right of bank array
-        # This relies on the upper-right of the array of the bank
-        # decoder in upper left, bank in upper right, sensing in lower right.
-        # These flops go below the sensing and leave a gap to channel route to the
-        # sense amps.
-        if port in self.write_ports:
-            data_pos[port] = vector(self.bank.bank_array_ur.x - self.data_dff_insts[port].width,
-                                    self.bank.uy() + data_gap + self.data_dff_insts[port].height)
-            self.data_dff_insts[port].place(data_pos[port], mirror="MX")
+            # Add the data flops above the bank to the left of the upper-right of bank array
+            # This relies on the upper-right of the array of the bank
+            # decoder in upper left, bank in upper right, sensing in lower right.
+            # These flops go below the sensing and leave a gap to channel route to the
+            # sense amps.
+            if port in self.write_ports:
+                data_pos[port] = vector(self.bank.bank_array_ur.x - self.data_dff_insts[port].width,
+                                        self.bank.uy() + data_gap + self.data_dff_insts[port].height)
+                self.data_dff_insts[port].place(data_pos[port], mirror="MX")
         
             
     def add_layout_pins(self):

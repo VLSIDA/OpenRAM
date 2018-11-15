@@ -1,6 +1,7 @@
 # OpenRAM
 [![pipeline status](https://scone.soe.ucsc.edu:8888/mrg/PrivateRAM/badges/dev/pipeline.svg)](https://scone.soe.ucsc.edu:8888/mrg/PrivateRAM/commits/dev)
-[![License: BSD 3-clause](./image/license_badge.svg)](./LICENSE)
+[![Download](images/download.svg)](https://github.com/VLSIDA/PrivateRAM/archive/dev.zip)
+[![License: BSD 3-clause](./images/license_badge.svg)](./LICENSE)
 
 An open-source static random access memory (SRAM) compiler.
 
@@ -10,16 +11,14 @@ An open-source static random access memory (SRAM) compiler.
 # Basic Setup
 
 The OpenRAM compiler has very few dependencies:
-+ ngspice-26 (or later) or HSpice I-2013.12-1 (or later) or CustomSim 2017 (or later)
++ [Ngspice] 26 (or later) or HSpice I-2013.12-1 (or later) or CustomSim 2017 (or later)
 + Python 3.5 and higher
 + Python numpy (pip3 install numpy to install)
 + flask_table (pip3 install flask to install)
-+ a setup script for each technology you want to use
-+ a technology directory for each technology with the base cells (comes with [SCMOS][SCMOS] and [FreePDK45][FreePDK45])
 
 If you want to perform DRC and LVS, you will need either:
-+ Calibre (for [FreePDK45][FreePDK45] or [SCMOS][SCMOS])
-+ Magic + Netgen (for [SCMOS][SCMOS] only)
++ Calibre (for [FreePDK45] or [SCMOS])
++ Magic + Netgen (for [SCMOS] only)
 
 You must set two environment variables: OPENRAM\_HOME should point to
 the compiler source directory. OPENERAM\_TECH should point to a root
@@ -35,10 +34,10 @@ For example, in csh/tcsh, add to your .cshrc/.tcshrc:
   setenv OPENRAM_TECH "$HOME/openram/technology"
 ```
 
-We include the tech files necessary for FreePDK and [SCMOS][SCMOS]. The [SCMOS][SCMOS]
+We include the tech files necessary for [FreePDK45] and [SCMOS]. The [SCMOS]
 spice models, however, are generic and should be replaced with foundry 
 models.
-If you are using FreePDK, you should also have that set up and have the
+If you are using [FreePDK45], you should also have that set up and have the
 environment variable point to the PDK. 
 For example, in bash, add to your .bashrc:
 ```
@@ -48,10 +47,10 @@ For example, in csh/tcsh, add to your .tcshrc:
 ```
   setenv FREEPDK45 "/bsoe/software/design-kits/FreePDK45"
 ```
-We do not distribute the PDK, but you may download [FreePDK45][FreePDK45]
+We do not distribute the PDK, but you may download [FreePDK45]
 
-If you are using [SCMOS][SCMOS], you should install [Magic][Magic] and [Netgen][Netgen].
-We have included the SCN4M design rules from [Qflow][Qflow].
+If you are using [SCMOS], you should install [Magic] and [Netgen].
+We have included the SCN4M design rules from [Qflow].
 
 # Directory Structure
 
@@ -66,8 +65,8 @@ We have included the SCN4M design rules from [Qflow][Qflow].
   * compiler/router - router for signals and power supplies
   * compiler/tests - unit tests
 * technology - openram technology directory (pointed to by OPENRAM_TECH)
-  * technology/freepdk45 - example configuration library for freepdk45 technology node
-  * technology/scn4m_subm - example configuration library [SCMOS][SCMOS] technology node
+  * technology/freepdk45 - example configuration library for [FreePDK45 technology node
+  * technology/scn4m_subm - example configuration library [SCMOS] technology node
   * technology/scn3me_subm - unsupported configuration (not enough metal layers)
   * technology/setup_scripts - setup scripts to customize your PDKs and OpenRAM technologies
 * docs - LaTeX manual (outdated)
@@ -80,17 +79,17 @@ Regression testing  performs a number of tests for all modules in OpenRAM.
 
 Use the command:
 ```
-   python regress.py
+   python3 regress.py
 ```
 To run a specific test:
 ```
-   python {unit test}.py 
+   python3 {unit test}.py 
 ```
 The unit tests take the same arguments as openram.py itself. 
 
 To increase the verbosity of the test, add one (or more) -v options:
 ```
-   python tests/00_code_format_check_test.py -v -t freepdk45
+   python3 tests/00_code_format_check_test.py -v -t freepdk45
 ```
 To specify a particular technology use "-t <techname>" such as
 "-t freepdk45" or "-t scn4m\_subm". The default for a unit test is scn4m_subm. 
@@ -99,15 +98,19 @@ The default for openram.py is specified in the configuration file.
 
 # Creating Custom Technologies
 
+If you want to support a enw technology, you will need to create:
++ a setup script for each technology you want to use
++ a technology directory for each technology with the base cells 
+
 All setup scripts should be in the setup\_scripts directory under the
-$OPENRAM\_TECH directory.  Please look at the following file for an
-example of what is needed for OpenRAM:
+$OPENRAM\_TECH directory.  We provide two technology examples for [SCMOS] and [FreePDK45]. 
+Please look at the following file for an example of what is needed for OpenRAM:
 ```
   $OPENRAM_TECH/setup_scripts/setup_openram_freepdk45.py
 ```
 Each setup script should be named as: setup\_openram\_{tech name}.py.
 
-Each specific technology (e.g., freepdk45) should be a subdirectory
+Each specific technology (e.g., [FreePDK45]) should be a subdirectory
 (e.g., $OPENRAM_TECH/freepdk45) and include certain folders and files:
   1. gds_lib folder with all the .gds (premade) library cells. At a
      minimum this includes:
@@ -150,3 +153,4 @@ OpenRAM is licensed under the [BSD 3-clause License](./LICENSE).
 [Qflow]:                 http://opencircuitdesign.com/qflow/history.html
 [FreePDK45]:             https://www.eda.ncsu.edu/wiki/FreePDK45:Contents
 [SCMOS]:                 https://www.mosis.com/files/scmos/scmos.pdf
+[Ngspice]:               http://ngspice.sourceforge.net/

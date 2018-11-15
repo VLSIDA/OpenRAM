@@ -162,7 +162,7 @@ Each specific technology (e.g., [FreePDK45]) should be a subdirectory
 
 # Get Involved
 
-+ Report bugs by submitting a [Github issue].
++ Report bugs by submitting [Github issues].
 + Develop new features (see [how to contribute](./CONTRIBUTING.md))
 + Submit code/fixes using a [Github pull request] 
 + Follow our [project][Github projects].

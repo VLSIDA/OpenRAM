@@ -288,7 +288,9 @@ class pinv(pgate.pgate):
         """Return the capacitance of the gate connection in generic capacitive units relative to the minimum width of a transistor"""
         return self.nmos_size + self.pmos_size
         
-    def get_effort_stage(self, cout):
-        """Returns an object representing the parameters for delay in tau units."""
+    def get_effort_stage(self, cout, inp_is_rise=True):
+        """Returns an object representing the parameters for delay in tau units.
+           Optional is_rise refers to the input direction rise/fall. Input inverted by this stage.
+        """
         parasitic_delay = 1 
-        return logical_effort.logical_effort(self.size, self.get_cin(), cout, parasitic_delay)
+        return logical_effort.logical_effort(self.size, self.get_cin(), cout, parasitic_delay, not inp_is_rise)

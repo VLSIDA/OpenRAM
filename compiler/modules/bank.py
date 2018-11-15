@@ -1225,12 +1225,12 @@ class bank(design.design):
 
         return results
          
-    def determine_wordline_stage_efforts(self, external_cout):    
+    def determine_wordline_stage_efforts(self, external_cout, inp_is_rise=True):    
         """Get the all the stage efforts for each stage in the path within the bank clk_buf to a wordline"""
         #Decoder is assumed to have settled before the negative edge of the clock. Delay model relies on this assumption
         stage_effort_list = []
         wordline_cout = self.bitcell_array.get_wordline_cin() + external_cout
-        stage_effort_list += self.wordline_driver.determine_wordline_stage_efforts(wordline_cout)
+        stage_effort_list += self.wordline_driver.determine_wordline_stage_efforts(wordline_cout,inp_is_rise)
         
         return stage_effort_list
         

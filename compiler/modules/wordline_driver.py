@@ -240,18 +240,20 @@ class wordline_driver(design.design):
         """Gets the capacitance of the wordline driver in absolute units (fF)"""
         return self.nand2.input_load()
 
-    def determine_wordline_stage_efforts(self, external_cout):
+    def determine_wordline_stage_efforts(self, external_cout, inp_is_rise=True):
         """Follows the clk_buf to a wordline signal adding each stages stage effort to a list"""
         stage_effort_list = []
         stage1_cout = self.nand2.get_cin()
-        stage1 = self.inv_no_output.get_effort_stage(stage1_cout)
+        stage1 = self.inv_no_output.get_effort_stage(stage1_cout, inp_is_rise)
         stage_effort_list.append(stage1)
+        last_stage_is_rise = stage1.is_rise
         
         stage2_cout = self.inv.get_cin()
-        stage2 = self.nand2.get_effort_stage(stage2_cout)
+        stage2 = self.nand2.get_effort_stage(stage2_cout, last_stage_is_rise)
         stage_effort_list.append(stage2)
+        last_stage_is_rise = stage2.is_rise
         
-        stage3 = self.inv.get_effort_stage(external_cout)
+        stage3 = self.inv.get_effort_stage(external_cout, last_stage_is_rise)
         stage_effort_list.append(stage3)
         
         return stage_effort_list

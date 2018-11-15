@@ -10,12 +10,13 @@ class logical_effort():
     min_inv_cin = 1+beta
     pinv=parameter["min_inv_para_delay"]
     
-    def __init__(self, size, cin, cout, parasitic):
+    def __init__(self, size, cin, cout, parasitic, out_is_rise=True):
         self.cin = cin
         self.cout = cout
         self.logical_effort = (self.cin/size)/logical_effort.min_inv_cin
         self.eletrical_effort = self.cout/self.cin
         self.parasitic_scale = parasitic
+        self.is_rise = out_is_rise
      
     def __str__(self):
         return "g = " + str(self.logical_effort) + ", h = " + str(self.eletrical_effort) + ", p = " + str(self.parasitic_scale)+"*pinv"
@@ -31,8 +32,16 @@ class logical_effort():
     
 def calculate_relative_delay(stage_effort_list, pinv=parameter["min_inv_para_delay"]):
     """Calculates the total delay of a given delay path made of a list of logical effort objects."""
-    total_delay = 0
-    for stage in stage_effort_list:
-        total_delay += stage.get_stage_delay(pinv)
-    return total_delay
+    total_rise_delay, total_fall_delay = calculate_relative_rise_fall_delays(stage_effort_list, pinv)
+    return total_rise_delay + total_fall_delay
     
+def calculate_relative_rise_fall_delays(stage_effort_list, pinv=parameter["min_inv_para_delay"]):
+    """Calculates the rise/fall delays of a given delay path made of a list of logical effort objects."""
+    total_rise_delay, total_fall_delay = 0,0
+    for stage in stage_effort_list:
+        if stage.is_rise:
+            total_rise_delay += stage.get_stage_delay(pinv)
+        else:
+            total_fall_delay += stage.get_stage_delay(pinv)
+    return total_rise_delay, total_fall_delay
+   

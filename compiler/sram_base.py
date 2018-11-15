@@ -488,13 +488,13 @@ class sram_base(design):
         """ LH and HL are the same in analytical model. """
         return self.bank.analytical_delay(vdd,slew,load)
         
-    def determine_wordline_stage_efforts(self):
+    def determine_wordline_stage_efforts(self, inp_is_rise=True):
         """Get the all the stage efforts for each stage in the path from clk_buf to a wordline"""
         stage_effort_list = []
 
         #Clk_buf originates from the control logic so only the bank is related to the wordline path
         external_wordline_cout = 0 #No loading on the wordline other than in the bank.
-        stage_effort_list += self.bank.determine_wordline_stage_efforts(external_wordline_cout)
+        stage_effort_list += self.bank.determine_wordline_stage_efforts(external_wordline_cout, inp_is_rise)
         
         return stage_effort_list
         

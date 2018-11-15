@@ -615,17 +615,21 @@ class replica_bitline(design.design):
         en_cin = self.delay_chain.get_cin()
         return en_cin
         
-    def determine_sen_stage_efforts(self, ext_cout):
+    def determine_sen_stage_efforts(self, ext_cout, inp_is_rise=True):
         """Get the stage efforts from the en to s_en. Does not compute the delay for the bitline load."""
         stage_effort_list = []
         #Stage 1 is the delay chain
         stage1_cout = self.get_delayed_en_cin()
-        stage1 = self.delay_chain.determine_delayed_en_stage_efforts(stage1_cout)
+        stage1 = self.delay_chain.determine_delayed_en_stage_efforts(stage1_cout, inp_is_rise)
         stage_effort_list += stage1
         
+        #There is a disconnect between the delay chain and inverter. The rise/fall of the input to the inverter
+        #Will be the negation of the previous stage.
+        last_stage_is_rise = not stage_effort_list[-1].is_rise
+        
         #The delay chain triggers the enable on the replica bitline (rbl). This is used to track the bitline delay whereas this
-        #model is intended to track every but that. Therefore, the next stage is the inverter after the rbl.
-        stage2 = self.inv.get_effort_stage(ext_cout)
+        #model is intended to track every but that. Therefore, the next stage is the inverter after the rbl. 
+        stage2 = self.inv.get_effort_stage(ext_cout, last_stage_is_rise)
         stage_effort_list.append(stage2)
         
         return stage_effort_list

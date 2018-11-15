@@ -5,8 +5,13 @@
 
 An open-source static random access memory (SRAM) compiler.
 
-# Why OpenRAM?
+# What is OpenRAM?
 
+OpenRAM is an open-source Python framework to create the layout,
+netlists, timing and power models, placement and routing models, and
+other views necessary to use SRAMs in ASIC design. OpenRAM supports
+integration in both commercial and open-source flows with both
+predictive and fabricable technologies.
 
 # Basic Setup
 
@@ -52,6 +57,34 @@ We do not distribute the PDK, but you may download [FreePDK45]
 If you are using [SCMOS], you should install [Magic] and [Netgen].
 We have included the SCN4M design rules from [Qflow].
 
+# Basic Usage
+
+Once you have defined the environment, you can run OpenRAM from the command line 
+using a single configuration file written in Python. For example,
+create a file called myconfig.py specifying the following parameters:
+```
+word_size = 2
+num_words = 16
+
+tech_name = "scn4m_subm"
+process_corners = ["TT"]
+supply_voltages = [ 3.3 ]
+temperatures = [ 25 ]
+
+output_path = "temp"
+output_name = "sram_{0}_{1}_{2}".format(word_size,num_words,tech_name)
+
+drc_name = "magic"
+lvs_name = "netgen"
+pex_name = "magic"
+```
+and run OpenRAM by executing:
+```
+$OPENRAM\_HOME/openram.py myconfig
+```
+You can see all of the options for the configuration file in
+$OPENRAM\_HOME/options.py
+
 # Directory Structure
 
 * compiler - openram compiler itself (pointed to by OPENRAM_HOME)
@@ -76,8 +109,8 @@ We have included the SCN4M design rules from [Qflow].
 # Unit Tests
 
 Regression testing  performs a number of tests for all modules in OpenRAM.
-
-Use the command:
+From the unit test directory ($OPENRAM\_HOME/tests), 
+use the following command to run all regression tests:
 ```
    python3 regress.py
 ```
@@ -112,21 +145,20 @@ Each setup script should be named as: setup\_openram\_{tech name}.py.
 
 Each specific technology (e.g., [FreePDK45]) should be a subdirectory
 (e.g., $OPENRAM_TECH/freepdk45) and include certain folders and files:
-  1. gds_lib folder with all the .gds (premade) library cells. At a
-     minimum this includes:
-     * ms_flop.gds
-     * sense_amp.gds
-     * write_driver.gds
-     * cell_6t.gds
-     * replica_cell_6t.gds 
-     * tri_gate.gds
-  2. sp_lib folder with all the .sp (premade) library netlists for the above cells.
-  3. layers.map 
-  4. A valid tech Python module (tech directory with __init__.py and tech.py) with:
-     * References in tech.py to spice models
-     * DRC/LVS rules needed for dynamic cells and routing
-     * Layer information
-     * etc.
+* gds_lib folder with all the .gds (premade) library cells:
+  * dff.gds
+  * sense_amp.gds
+  * write_driver.gds
+  * cell_6t.gds
+  * replica\_cell\_6t.gds 
+* sp_lib folder with all the .sp (premade) library netlists for the above cells.
+* layers.map 
+* A valid tech Python module (tech directory with __init__.py and tech.py) with:
+  * References in tech.py to spice models
+  * DRC/LVS rules needed for dynamic cells and routing
+  * Layer information
+  * Spice and supply information
+  * etc.
 
 # Get Involved
 
@@ -142,22 +174,36 @@ OpenRAM is licensed under the [BSD 3-clause License](./LICENSE).
 
 # Contributors & Acknowledgment
 
-- [Matthew Guthaus][Matthew Guthaus] created the OpenRAM project and is the lead architect.
-
+- [Matthew Guthaus] from [VLSIDA] created the OpenRAM project and is the lead architect.
+- [James Stine] from [VLSIARCH] co-founded the project.
+- Hunter Nichols maintains and updates the timing characterization.
+- Michael Grims created and maintains the multiport netlist code.
+- Jennifer Sowash is creating the OpenRAM IP library.
+- Jesse Cirimelli-Low created the datasheet generation.
+- Samira Ataei created early multi-bank layouts.
+- Bin Wu created early parameterized cells.
+- Yusu Wang is porting parameterized cells to new technologies.
+- Brian Chen created early prototypes of the timing characterizer.
+- Jeff Butera created early prototypes of the bank layout.
 
 * * *
 
 [Matthew Guthaus]:       https://users.soe.ucsc.edu/~mrg
+[James Stine]:           https://ece.okstate.edu/content/stine-james-e-jr-phd
+[VLSIDA]:                https://vlsida.soe.ucsc.edu
+[VLSIARCH]:              https://vlsiarch.ecen.okstate.edu/
+[OpenRAMpaper]:          https://ieeexplore.ieee.org/document/7827670/
+
 [Github issues]:         https://github.com/PrivateRAM/PrivateRAM/issues
 [Github pull request]:  https://github.com/PrivateRAM/PrivateRAM/pulls
 [Github projects]:       https://github.com/PrivateRAM/PrivateRAM/projects
 [email me]:              mailto:mrg+openram@ucsc.edu
-[VLSIDA]:                https://vlsida.soe.ucsc.edu
-[OSUPDK]:                https://vlsiarch.ecen.okstate.edu/flow/
+
 [Magic]:                 http://opencircuitdesign.com/magic/
 [Netgen]:                http://opencircuitdesign.com/netgen/
 [Qflow]:                 http://opencircuitdesign.com/qflow/history.html
+[Ngspice]:               http://ngspice.sourceforge.net/
+
+[OSUPDK]:                https://vlsiarch.ecen.okstate.edu/flow/
 [FreePDK45]:             https://www.eda.ncsu.edu/wiki/FreePDK45:Contents
 [SCMOS]:                 https://www.mosis.com/files/scmos/scmos.pdf
-[Ngspice]:               http://ngspice.sourceforge.net/
-[OpenRAMpaper]:          https://ieeexplore.ieee.org/document/7827670/

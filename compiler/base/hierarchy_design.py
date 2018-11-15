@@ -70,40 +70,47 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         """Checks both DRC and LVS for a module"""
         # Unit tests will check themselves.
         # Do not run if disabled in options.
-        if not OPTS.is_unit_test and OPTS.check_lvsdrc:
+
+        if (not OPTS.is_unit_test and OPTS.check_lvsdrc and (OPTS.inline_lvsdrc or final_verification)):
+
             global total_drc_errors
             global total_lvs_errors
             tempspice = OPTS.openram_temp + "/temp.sp"
             tempgds = OPTS.openram_temp + "/temp.gds"
             self.sp_write(tempspice)
             self.gds_write(tempgds)
-            num_drc_errors = verify.run_drc(self.name, tempgds)
-            num_lvs_errors = verify.run_lvs(self.name, tempgds, tempspice, final_verification)
+
+            num_drc_errors = verify.run_drc(self.name, tempgds, final_verification) 
+            num_lvs_errors = verify.run_lvs(self.name, tempgds, tempspice, final_verification) 
             debug.check(num_drc_errors == 0,"DRC failed for {0} with {1} error(s)".format(self.name,num_drc_errors))
             debug.check(num_lvs_errors == 0,"LVS failed for {0} with {1} errors(s)".format(self.name,num_lvs_errors))
             total_drc_errors += num_drc_errors
             total_lvs_errors += num_lvs_errors
+
             os.remove(tempspice)
             os.remove(tempgds)
 
-    def DRC(self):
+    def DRC(self, final_verification=False):
         """Checks DRC for a module"""
         # Unit tests will check themselves.
         # Do not run if disabled in options.
-        if not OPTS.is_unit_test and OPTS.check_lvsdrc:
+
+        if (not OPTS.is_unit_test and OPTS.check_lvsdrc and (OPTS.inline_lvsdrc or final_verification)):
             global total_drc_errors
             tempgds = OPTS.openram_temp + "/temp.gds"
             self.gds_write(tempgds)
-            num_errors = verify.run_drc(self.name, tempgds)
+            num_errors = verify.run_drc(self.name, tempgds, final_verification)  
             total_drc_errors += num_errors
             debug.check(num_errors == 0,"DRC failed for {0} with {1} error(s)".format(self.name,num_error))
+
             os.remove(tempgds)
 
     def LVS(self, final_verification=False):
         """Checks LVS for a module"""
         # Unit tests will check themselves.
         # Do not run if disabled in options.
-        if not OPTS.is_unit_test and OPTS.check_lvsdrc:
+
+        if (not OPTS.is_unit_test and OPTS.check_lvsdrc and (OPTS.inline_lvsdrc or final_verification)):
             global total_lvs_errors
             tempspice = OPTS.openram_temp + "/temp.sp"
             tempgds = OPTS.openram_temp + "/temp.gds"

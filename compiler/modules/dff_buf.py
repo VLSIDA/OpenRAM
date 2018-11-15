@@ -36,13 +36,13 @@ class dff_buf(design.design):
     def create_netlist(self):
         self.add_modules()
         self.add_pins()
-        self.create_modules()
+        self.create_instances()
 
     def create_layout(self):
         self.width = self.dff.width + self.inv1.width + self.inv2.width
         self.height = self.dff.height
         
-        self.place_modules()
+        self.place_instances()
         self.route_wires()
         self.add_layout_pins()
         self.DRC_LVS()
@@ -70,7 +70,7 @@ class dff_buf(design.design):
         self.add_pin("vdd")
         self.add_pin("gnd")
 
-    def create_modules(self):
+    def create_instances(self):
         self.dff_inst=self.add_inst(name="dff_buf_dff",
                                     mod=self.dff)
         self.connect_inst(["D", "qint", "clk", "vdd", "gnd"])
@@ -83,7 +83,7 @@ class dff_buf(design.design):
                                      mod=self.inv2)
         self.connect_inst(["Qb", "Q",  "vdd", "gnd"])
 
-    def place_modules(self):
+    def place_instances(self):
         # Add the DFF
         self.dff_inst.place(vector(0,0))
 

@@ -20,8 +20,10 @@ class options(optparse.Values):
     debug_level = 0
     # When enabled, layout is not generated (and no DRC or LVS are performed)
     netlist_only = False
-    # This determines whether  LVS and DRC is checked for each submodule.
+    # This determines whether LVS and DRC is checked at all.
     check_lvsdrc = True
+    # This determines whether LVS and DRC is checked for every submodule.
+    inline_lvsdrc = False
     # Variable to select the variant of spice
     spice_name = ""
     # The spice executable being used which is derived from the user PATH.

@@ -75,8 +75,9 @@ class sram_base(design):
         
     def create_layout(self):
         """ Layout creation """    
-        self.place_modules()
-        self.route()
+        self.place_instances()
+
+        self.route_layout()
 
         self.add_lvs_correspondence_points()
         
@@ -369,9 +370,13 @@ class sram_base(design):
     def create_data_dff(self):
         """ Add and place all data flops """
         insts = []
-        for port in self.write_ports:
-            insts.append(self.add_inst(name="data_dff{}".format(port),
-                                      mod=self.data_dff))
+        for port in self.all_ports:
+            if port in self.write_ports:
+                insts.append(self.add_inst(name="data_dff{}".format(port),
+                                           mod=self.data_dff))
+            else:
+                insts.append(None)
+                continue
                   
             # inputs, outputs/output/bar
             inputs = []

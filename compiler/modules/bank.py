@@ -61,7 +61,8 @@ class bank(design.design):
         #self.add_lvs_correspondence_points() 
 
         # Remember the bank center for further placement
-        self.bank_center=self.offset_all_coordinates().scale(-1,-1)
+        self.bank_array_ll = self.offset_all_coordinates().scale(-1,-1)
+        self.bank_array_ur = self.bitcell_array_inst.ur()
         
         self.DRC_LVS()
  

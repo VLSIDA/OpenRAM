@@ -17,100 +17,81 @@ predictive and fabricable technologies.
 
 The OpenRAM compiler has very few dependencies:
 + [Ngspice] 26 (or later) or HSpice I-2013.12-1 (or later) or CustomSim 2017 (or later)
-+ Python 3.5 and higher
++ Python 3.5 or higher
 + Python numpy (pip3 install numpy to install)
 + flask_table (pip3 install flask to install)
 
 If you want to perform DRC and LVS, you will need either:
-+ Calibre (for [FreePDK45] or [SCMOS])
-+ [Magic] + [Netgen] (for [SCMOS] only)
++ Calibre (for [FreePDK45])
++ [Magic] + [Netgen] (for [SCMOS])
 
-You must set two environment variables: OPENRAM\_HOME should point to
-the compiler source directory. OPENERAM\_TECH should point to a root
-technology directory that contains subdirs of all other technologies.
+You must set two environment variables: 
++ OPENRAM\_HOME should point to the compiler source directory. 
++ OPENERAM\_TECH should point to a root technology directory.
 For example, in bash, add to your .bashrc:
+
 ```
   export OPENRAM_HOME="$HOME/openram/compiler"
   export OPENRAM_TECH="$HOME/openram/technology"
 ```
-For example, in csh/tcsh, add to your .cshrc/.tcshrc:
-```
-  setenv OPENRAM_HOME "$HOME/openram/compiler"
-  setenv OPENRAM_TECH "$HOME/openram/technology"
-```
 
-We include the tech files necessary for [FreePDK45] and [SCMOS]. The [SCMOS]
-spice models, however, are generic and should be replaced with foundry 
-models.
-If you are using [FreePDK45], you should also have that set up and have the
-environment variable point to the PDK. 
-For example, in bash, add to your .bashrc:
+We include the tech files necessary for [FreePDK45] and [SCMOS]
+SCN4M_SUBM. The [SCMOS] spice models, however, are generic and should
+be replaced with foundry models.  If you are using [FreePDK45], you
+should also have that set up and have the environment variable point
+to the PDK.  For example, in bash, add to your .bashrc:
+
 ```
   export FREEPDK45="/bsoe/software/design-kits/FreePDK45"
 ```
-For example, in csh/tcsh, add to your .tcshrc:
-```
-  setenv FREEPDK45 "/bsoe/software/design-kits/FreePDK45"
-```
-We do not distribute the PDK, but you may download [FreePDK45]
 
+You may get the entire [FreePDK45 PDK here][FreePDK45].
 If you are using [SCMOS], you should install [Magic] and [Netgen].
-We have included the SCN4M design rules from [Qflow].
+We have included the most recent SCN4M_SUBM design rules from [Qflow].
 
 # Basic Usage
 
 Once you have defined the environment, you can run OpenRAM from the command line 
-using a single configuration file written in Python. For example,
-create a file called myconfig.py specifying the following parameters:
+using a single configuration file written in Python. You may wish to add
+$OPENRAM\_HOME to your $PYTHONPATH.
+
+For example, create a file called myconfig.py specifying the following
+parameters:
+
 ```
+# Data word size
 word_size = 2
+# Number of words in the memory
 num_words = 16
 
+# Technology to use in $OPENRAM\_TECH
 tech_name = "scn4m_subm"
+# Process corners to characterize
 process_corners = ["TT"]
+# Voltage corners to characterize
 supply_voltages = [ 3.3 ]
+# Temperature corners to characterize
 temperatures = [ 25 ]
 
+# Output directory for the results
 output_path = "temp"
+# Output file base name
 output_name = "sram_{0}_{1}_{2}".format(word_size,num_words,tech_name)
+```
 
-drc_name = "magic"
-lvs_name = "netgen"
-pex_name = "magic"
+You can then run OpenRAM by executing:
 ```
-and run OpenRAM by executing:
-```
-$OPENRAM\_HOME/openram.py myconfig
+python3 $OPENRAM\_HOME/openram.py myconfig
 ```
 You can see all of the options for the configuration file in
 $OPENRAM\_HOME/options.py
-
-# Directory Structure
-
-* compiler - openram compiler itself (pointed to by OPENRAM_HOME)
-  * compiler/base - base data structure modules
-  * compiler/pgates - parameterized cells (e.g. logic gates)
-  * compiler/bitcells - various bitcell styles
-  * compiler/modules - high-level modules (e.g. decoders, etc.)
-  * compiler/verify - DRC and LVS verification wrappers
-  * compiler/characterizer - timing characterization code
-  * compiler/gdsMill - GDSII reader/writer
-  * compiler/router - router for signals and power supplies
-  * compiler/tests - unit tests
-* technology - openram technology directory (pointed to by OPENRAM_TECH)
-  * technology/freepdk45 - example configuration library for [FreePDK45 technology node
-  * technology/scn4m_subm - example configuration library [SCMOS] technology node
-  * technology/scn3me_subm - unsupported configuration (not enough metal layers)
-  * technology/setup_scripts - setup scripts to customize your PDKs and OpenRAM technologies
-* docs - LaTeX manual (outdated)
-* lib - IP library of pregenerated memories
-
 
 # Unit Tests
 
 Regression testing  performs a number of tests for all modules in OpenRAM.
 From the unit test directory ($OPENRAM\_HOME/tests), 
 use the following command to run all regression tests:
+
 ```
    python3 regress.py
 ```
@@ -129,18 +110,21 @@ To specify a particular technology use "-t <techname>" such as
 The default for openram.py is specified in the configuration file.
 
 
-# Creating Custom Technologies
+# Porting to a New Technology
 
 If you want to support a enw technology, you will need to create:
 + a setup script for each technology you want to use
 + a technology directory for each technology with the base cells 
 
 All setup scripts should be in the setup\_scripts directory under the
-$OPENRAM\_TECH directory.  We provide two technology examples for [SCMOS] and [FreePDK45]. 
-Please look at the following file for an example of what is needed for OpenRAM:
+$OPENRAM\_TECH directory.  We provide two technology examples for
+[SCMOS] and [FreePDK45].  Please look at the following file for an
+example of what is needed for OpenRAM:
+
 ```
   $OPENRAM_TECH/setup_scripts/setup_openram_freepdk45.py
 ```
+
 Each setup script should be named as: setup\_openram\_{tech name}.py.
 
 Each specific technology (e.g., [FreePDK45]) should be a subdirectory
@@ -180,7 +164,7 @@ OpenRAM is licensed under the [BSD 3-clause License](./LICENSE).
 - Michael Grims created and maintains the multiport netlist code.
 - Jennifer Sowash is creating the OpenRAM IP library.
 - Jesse Cirimelli-Low created the datasheet generation.
-- Samira Ataei created early multi-bank layouts.
+- Samira Ataei created early multi-bank layouts and control logic.
 - Bin Wu created early parameterized cells.
 - Yusu Wang is porting parameterized cells to new technologies.
 - Brian Chen created early prototypes of the timing characterizer.

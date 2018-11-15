@@ -724,7 +724,7 @@ class bank(design.design):
 
         for port in self.all_ports:
             if port%2 == 1:
-                mirror = "MY"
+                mirror = "XY"
             else:
                 mirror = "R0"
             self.column_decoder_inst[port].place(offset=offsets[port], mirror=mirror)

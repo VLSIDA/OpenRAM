@@ -1,5 +1,5 @@
 # OpenRAM
-[![pipeline status](https://scone.soe.ucsc.edu:8888/mrg/PrivateRAM/badges/dev/pipeline.svg)](https://scone.soe.ucsc.edu:8888/mrg/PrivateRAM/commits/dev)
+[![pipeline status](https://scone.soe.ucsc.edu:8888/mrg/PrivateRAM/badges/dev/pipeline.svg?private_token=ynB6rSFLzvKUseoBPcwV)](https://scone.soe.ucsc.edu:8888/mrg/PrivateRAM/commits/dev)
 [![Download](images/download.svg)](https://github.com/VLSIDA/PrivateRAM/archive/dev.zip)
 [![License: BSD 3-clause](./images/license_badge.svg)](./LICENSE)
 

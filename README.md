@@ -18,7 +18,7 @@ The OpenRAM compiler has very few dependencies:
 
 If you want to perform DRC and LVS, you will need either:
 + Calibre (for [FreePDK45] or [SCMOS])
-+ Magic + Netgen (for [SCMOS] only)
++ [Magic] + [Netgen] (for [SCMOS] only)
 
 You must set two environment variables: OPENRAM\_HOME should point to
 the compiler source directory. OPENERAM\_TECH should point to a root
@@ -128,6 +128,14 @@ Each specific technology (e.g., [FreePDK45]) should be a subdirectory
      * Layer information
      * etc.
 
+# Get Involved
+
++ Report bugs by submitting a [Github issue].
++ Develop new features (see [how to contribute](./CONTRIBUTING.md))
++ Submit code/fixes using a [Github pull request] 
++ Follow our [project][Github projects].
++ Read and cite our [ICCAD paper][OpenRAMpaper]
+
 # License 
 
 OpenRAM is licensed under the [BSD 3-clause License](./LICENSE).
@@ -140,11 +148,9 @@ OpenRAM is licensed under the [BSD 3-clause License](./LICENSE).
 * * *
 
 [Matthew Guthaus]:       https://users.soe.ucsc.edu/~mrg
-[Github releases]:       https://github.com/PrivateRAM/PrivateRAM/releases
 [Github issues]:         https://github.com/PrivateRAM/PrivateRAM/issues
-[Github pull requests]:  https://github.com/PrivateRAM/PrivateRAM/pulls
+[Github pull request]:  https://github.com/PrivateRAM/PrivateRAM/pulls
 [Github projects]:       https://github.com/PrivateRAM/PrivateRAM/projects
-[Github insights]:       https://github.com/PrivateRAM/PrivateRAM/pulse
 [email me]:              mailto:mrg+openram@ucsc.edu
 [VLSIDA]:                https://vlsida.soe.ucsc.edu
 [OSUPDK]:                https://vlsiarch.ecen.okstate.edu/flow/
@@ -154,3 +160,4 @@ OpenRAM is licensed under the [BSD 3-clause License](./LICENSE).
 [FreePDK45]:             https://www.eda.ncsu.edu/wiki/FreePDK45:Contents
 [SCMOS]:                 https://www.mosis.com/files/scmos/scmos.pdf
 [Ngspice]:               http://ngspice.sourceforge.net/
+[OpenRAMpaper]:          https://ieeexplore.ieee.org/document/7827670/

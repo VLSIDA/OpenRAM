@@ -1,5 +1,6 @@
 # OpenRAM
-[![pipeline status](https://scone.soe.ucsc.edu:8888/mrg/PrivateRAM/badges/dev/pipeline.svg?private_token=ynB6rSFLzvKUseoBPcwV)](https://github.com/VLSIDA/PrivateRAM/commits)
+Master: [![pipeline status](https://scone.soe.ucsc.edu:8888/mrg/PrivateRAM/badges/master/pipeline.svg?private_token=ynB6rSFLzvKUseoBPcwV)](https://github.com/VLSIDA/PrivateRAM/commits/master)
+Dev: [![pipeline status](https://scone.soe.ucsc.edu:8888/mrg/PrivateRAM/badges/dev/pipeline.svg?private_token=ynB6rSFLzvKUseoBPcwV)](https://github.com/VLSIDA/PrivateRAM/commits/dev)
 [![Download](images/download.svg)](https://github.com/VLSIDA/PrivateRAM/archive/dev.zip)
 [![License: BSD 3-clause](./images/license_badge.svg)](./LICENSE)
 
@@ -87,7 +88,7 @@ output_name = "sram_{0}_{1}_{2}".format(word_size,num_words,tech_name)
 
 You can then run OpenRAM by executing:
 ```
-python3 $OPENRAM\_HOME/openram.py myconfig
+python3 $OPENRAM_HOME/openram.py myconfig
 ```
 You can see all of the options for the configuration file in
 $OPENRAM\_HOME/options.py
@@ -192,9 +193,9 @@ OpenRAM is licensed under the [BSD 3-clause License](./LICENSE).
 [VLSIARCH]:              https://vlsiarch.ecen.okstate.edu/
 [OpenRAMpaper]:          https://ieeexplore.ieee.org/document/7827670/
 
-[Github issues]:         https://github.com/PrivateRAM/PrivateRAM/issues
-[Github pull request]:   https://github.com/PrivateRAM/PrivateRAM/pulls
-[Github projects]:       https://github.com/PrivateRAM/PrivateRAM/projects
+[Github issues]:         https://github.com/VLSIDA/PrivateRAM/issues
+[Github pull request]:   https://github.com/VLSIDA/PrivateRAM/pulls
+[Github projects]:       https://github.com/VLSIDA/PrivateRAM/projects
 
 [email me]:              mailto:mrg+openram@ucsc.edu
 [dev-group]:             mailto:openram-dev-group@ucsc.edu

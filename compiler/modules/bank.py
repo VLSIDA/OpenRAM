@@ -877,9 +877,9 @@ class bank(design.design):
         if self.col_addr_size==0:
             return
         
-        bottom_inst = self.column_mux_array_inst[port]
-        top_inst = self.precharge_array_inst[port]
-        self.connect_bitlines(top_inst, bottom_inst, self.num_cols)
+        inst1 = self.column_mux_array_inst[port]
+        inst2 = self.precharge_array_inst[port]
+        self.connect_bitlines(inst1, inst2, self.num_cols)
 
     def route_column_mux_to_bitcell_array(self, port):
         """ Routing of BL and BR between col mux  bitcell array """
@@ -888,47 +888,50 @@ class bank(design.design):
         if self.col_addr_size==0:
             return
         
-        bottom_inst = self.column_mux_array_inst[port]
-        top_inst = self.bitcell_array_inst
-        self.connect_bitlines(top_inst, bottom_inst, self.num_cols)
+        inst2 = self.column_mux_array_inst[port]
+        inst1 = self.bitcell_array_inst
+        inst1_bl_name = self.bl_names[port]+"_{}"
+        inst1_br_name = self.br_names[port]+"_{}"
+        self.connect_bitlines(inst1=inst1, inst2=inst2, num_bits=self.num_cols,
+                              inst1_bl_name=inst1_bl_name, inst1_br_name=inst1_br_name)
         
 
                                         
     def route_sense_amp_to_column_mux_or_precharge_array(self, port):
         """ Routing of BL and BR between sense_amp and column mux or precharge array """
-        bottom_inst = self.sense_amp_array_inst[port]
+        inst2 = self.sense_amp_array_inst[port]
         
         if self.col_addr_size>0:
             # Sense amp is connected to the col mux
-            top_inst = self.column_mux_array_inst[port]
-            top_bl = "bl_out_{}"
-            top_br = "br_out_{}"
+            inst1 = self.column_mux_array_inst[port]
+            inst1_bl_name = "bl_out_{}"
+            inst1_br_name = "br_out_{}"
         else:
             # Sense amp is directly connected to the precharge array
-            top_inst = self.precharge_array_inst[port]
-            top_bl = "bl_{}"
-            top_br = "br_{}"
+            inst1 = self.precharge_array_inst[port]
+            inst1_bl_name = "bl_{}"
+            inst1_br_name = "br_{}"
             
-        self.connect_bitlines(inst1=top_inst, inst2=bottom_inst, num_bits=self.word_size,
-                              inst1_bl_name=top_bl, inst1_br_name=top_br)
+        self.connect_bitlines(inst1=inst1, inst2=inst2, num_bits=self.word_size,
+                              inst1_bl_name=inst1_bl_name, inst1_br_name=inst1_br_name)
 
-    def route_write_driver_to_column_mux_or_precharge_array(self, port):
-        """ Routing of BL and BR between sense_amp and column mux or precharge array """
-        bottom_inst = self.write_driver_array_inst[port]
+    def route_write_driver_to_column_mux_or_bitcell_array(self, port):
+        """ Routing of BL and BR between sense_amp and column mux or bitcell array """
+        inst2 = self.write_driver_array_inst[port]
         
         if self.col_addr_size>0:
-            # Sense amp is connected to the col mux
-            top_inst = self.column_mux_array_inst[port]
-            top_bl = "bl_out_{}"
-            top_br = "br_out_{}"
+            # Write driver is connected to the col mux
+            inst1 = self.column_mux_array_inst[port]
+            inst1_bl_name = "bl_out_{}"
+            inst1_br_name = "br_out_{}"
         else:
-            # Sense amp is directly connected to the precharge array
-            top_inst = self.precharge_array_inst[port]
-            top_bl = "bl_{}"
-            top_br = "br_{}"
+            # Write driver is directly connected to the bitcell array
+            inst1 = self.bitcell_array_inst
+            inst1_bl_name = self.bl_names[port]+"_{}"
+            inst1_br_name = self.br_names[port]+"_{}"
             
-        self.connect_bitlines(inst1=top_inst, inst2=bottom_inst, num_bits=self.word_size,
-                              inst1_bl_name=top_bl, inst1_br_name=top_br)
+        self.connect_bitlines(inst1=inst1, inst2=inst2, num_bits=self.word_size,
+                              inst1_bl_name=inst1_bl_name, inst1_br_name=inst1_br_name)
         
     def route_write_driver_to_sense_amp(self, port):
         """ Routing of BL and BR between write driver and sense amp """
@@ -943,7 +946,7 @@ class bank(design.design):
         
         for bit in range(self.word_size):
             data_pin = self.sense_amp_array_inst[port].get_pin("data_{}".format(bit))
-            self.add_layout_pin_rect_center(text="dout{0}_{1}".format(self.read_ports[port],bit),
+            self.add_layout_pin_rect_center(text="dout{0}_{1}".format(port,bit),
                                             layer=data_pin.layer, 
                                             offset=data_pin.center(),
                                             height=data_pin.height(),

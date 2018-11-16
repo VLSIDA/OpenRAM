@@ -233,8 +233,8 @@ class bank(design.design):
         self.row_decoder_offsets[port] = vector(-x_offset,0)
 
         # LOWER LEFT QUADRANT
-        # Place the col decoder right aligned with row decoder (x_offset doesn't change)
-        # Below the bitcell array
+        # Place the col decoder left aligned with row decoder (x_offset doesn't change)
+        # Below the bitcell array with well spacing
         if self.col_addr_size > 0:
             y_offset = self.column_decoder.height
         else:
@@ -291,8 +291,11 @@ class bank(design.design):
 
         # UPPER RIGHT QUADRANT
         # Place the col decoder right aligned with row decoder (x_offset doesn't change)
-        # Below the bitcell array
-        y_offset = self.bitcell_array.height + self.m2_gap
+        # Above the bitcell array with a well spacing
+        if self.col_addr_size > 0:
+            y_offset = self.bitcell_array.height + self.column_decoder.height
+        else:
+            y_offset = self.bitcell_array.height
         y_offset += 2*drc("well_to_well")
         self.column_decoder_offsets[port] = vector(x_offset,y_offset)
 

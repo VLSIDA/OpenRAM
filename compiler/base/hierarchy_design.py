@@ -36,6 +36,8 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         # aren't unique
         ok_list = ['contact',
                    'ptx',
+                   'pbitcell',
+                   'bitcell',
                    'sram',
                    'hierarchical_predecode2x4',
                    'hierarchical_predecode3x8']

@@ -11,13 +11,15 @@ class dff_buf_array(design.design):
     This is a simple row (or multiple rows) of flops.
     Unlike the data flops, these are never spaced out.
     """
-
+    unique_id = 1
+    
     def __init__(self, rows, columns, inv1_size=2, inv2_size=4, name=""):
         self.rows = rows
         self.columns = columns
 
         if name=="":
-            name = "dff_buf_array_{0}x{1}".format(rows, columns)
+            name = "dff_buf_array_{0}x{1}_{2}".format(rows, columns, dff_buf_array.unique_id)
+            dff_buf_array.unique_id += 1
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(self.name))
         self.inv1_size = inv1_size

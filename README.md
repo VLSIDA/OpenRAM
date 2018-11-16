@@ -67,7 +67,7 @@ word_size = 2
 # Number of words in the memory
 num_words = 16
 
-# Technology to use in $OPENRAM\_TECH
+# Technology to use in $OPENRAM_TECH
 tech_name = "scn4m_subm"
 # Process corners to characterize
 process_corners = ["TT"]

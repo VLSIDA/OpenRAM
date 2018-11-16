@@ -172,5 +172,5 @@ active = contact(layer_stack=("active", "contact", "poly"))
 poly = contact(layer_stack=("poly", "contact", "metal1"))
 m1m2 = contact(layer_stack=("metal1", "via1", "metal2"))
 m2m3 = contact(layer_stack=("metal2", "via2", "metal3"))
-#m3m4 = contact(layer_stack=("metal3", "via3", "metal4"))
+m3m4 = contact(layer_stack=("metal3", "via3", "metal4"))
 

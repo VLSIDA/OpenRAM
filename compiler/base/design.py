@@ -65,8 +65,12 @@ class design(hierarchy_design):
         self.readwrite_ports = []
         # These are the read/write and write-only port indices
         self.write_ports = []
+        # These are the write-only port indices.
+        self.writeonly_ports = []
         # These are teh read/write and read-only port indice
         self.read_ports = []
+        # These are the read-only port indices.
+        self.readonly_ports = []
         # These are all the ports
         self.all_ports = list(range(total_ports))
         
@@ -78,9 +82,11 @@ class design(hierarchy_design):
             port_number += 1
         for port in range(OPTS.num_w_ports):
             self.write_ports.append(port_number)
+            self.writeonly_ports.append(port_number)            
             port_number += 1
         for port in range(OPTS.num_r_ports):
             self.read_ports.append(port_number)
+            self.readonly_ports.append(port_number)
             port_number += 1
 
     def analytical_power(self, proc, vdd, temp, load):

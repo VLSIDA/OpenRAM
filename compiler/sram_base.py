@@ -226,12 +226,12 @@ class sram_base(design):
                                                            words_per_row=self.words_per_row,
                                                            port_type="rw")
             self.add_mod(self.control_logic_rw)
-        if len(self.write_ports)>0:
+        if len(self.writeonly_ports)>0:
             self.control_logic_w = self.mod_control_logic(num_rows=self.num_rows,
                                                           words_per_row=self.words_per_row,
                                                           port_type="w")
             self.add_mod(self.control_logic_w)
-        if len(self.read_ports)>0:
+        if len(self.readonly_ports)>0:
             self.control_logic_r = self.mod_control_logic(num_rows=self.num_rows,
                                                           words_per_row=self.words_per_row,
                                                           port_type="r")

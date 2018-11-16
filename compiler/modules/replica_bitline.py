@@ -90,7 +90,7 @@ class replica_bitline(design.design):
         self.add_mod(self.bitcell)
 
         # This is the replica bitline load column that is the height of our array
-        self.rbl = bitcell_array(name="bitline_load", cols=1, rows=self.bitcell_loads)
+        self.rbl = bitcell_array(cols=1, rows=self.bitcell_loads)
         self.add_mod(self.rbl)
 
         # FIXME: The FO and depth of this should be tuned

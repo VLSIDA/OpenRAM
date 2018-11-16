@@ -37,10 +37,11 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         ok_list = ['contact',
                    'ptx',
                    'pbitcell',
-                   'bitcell',
+                   'replica_pbitcell',                   
                    'sram',
                    'hierarchical_predecode2x4',
                    'hierarchical_predecode3x8']
+
         # Library cells don't change
         if self.is_library_cell:
             return

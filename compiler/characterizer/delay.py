@@ -208,7 +208,7 @@ class delay(simulation):
         trig_slew_low = 0.1 * self.vdd_voltage
         targ_slew_high = 0.9 * self.vdd_voltage
         if 'delay' in delay_name:
-            trig_dir="RISE"
+            trig_dir="RISE" #FALL
             trig_val = half_vdd
             targ_val = half_vdd
             trig_name = trig_clk_name
@@ -429,6 +429,7 @@ class delay(simulation):
             delay_names = ["{0}{1}".format(mname,port) for mname in self.delay_meas_names]
             delay_names = [mname for mname in self.delay_meas_names]
             delays = self.parse_values(delay_names, port, 1e9) # scale delays to ns
+            debug.info(2,"Delay values = {}".format(delays))
             if not self.check_valid_delays(tuple(delays.values())):
                 return (False,{})
             result[port].update(delays)
@@ -646,18 +647,6 @@ class delay(simulation):
         # slew=0.04
         # self.try_period(target_period, feasible_delay_lh, feasible_delay_hl)
         # sys.exit(1)
-
-        #For debugging, skips characterization and returns dummy values.
-        # char_data = self.get_empty_measure_data_dict()
-        # i = 1.0
-        # for slew in slews:
-            # for load in loads:
-                # for k,v in char_data.items():        
-                    # char_data[k].append(i)
-                    # i+=1.0
-        # char_data["min_period"] = i
-        # char_data["leakage_power"] = i+1.0
-        # return char_data
         
         # 1) Find a feasible period and it's corresponding delays using the trimmed array.
         feasible_delays = self.find_feasible_period()
@@ -834,34 +823,6 @@ class delay(simulation):
          
         return (sram_data,port_data)
         
-        # delay_lh = []
-        # delay_hl = []
-        # slew_lh = []
-        # slew_hl = []
-        # for slew in slews:
-            # for load in loads:
-                # self.set_load_slew(load,slew)
-                # bank_delay = sram.analytical_delay(self.vdd_voltage, self.slew,self.load)
-                # # Convert from ps to ns
-                # delay_lh.append(bank_delay.delay/1e3)
-                # delay_hl.append(bank_delay.delay/1e3)
-                # slew_lh.append(bank_delay.slew/1e3)
-                # slew_hl.append(bank_delay.slew/1e3)
-        
-        # power = self.analytical_power()
-        
-        # sram_data = { "min_period": 0, 
-                    # "leakage_power": power.leakage}
-        # port_data = [{"delay_lh": delay_lh,
-                      # "delay_hl": delay_hl,
-                      # "slew_lh": slew_lh,
-                      # "slew_hl": slew_hl,
-                      # "read0_power": power.dynamic,
-                      # "read1_power": power.dynamic,
-                      # "write0_power": power.dynamic,
-                      # "write1_power": power.dynamic,
-                # }]
-        # return (sram_data,port_data)
     
     def analytical_power(self, slews, loads):
         """Get the dynamic and leakage power from the SRAM"""

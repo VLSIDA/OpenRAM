@@ -103,13 +103,17 @@ class control_logic(design.design):
             
             delay_stages_heuristic, delay_fanout_heuristic = self.get_heuristic_delay_chain_size()
             bitcell_loads = int(math.ceil(self.num_rows / 2.0))
-            self.replica_bitline = replica_bitline(delay_stages_heuristic, delay_fanout_heuristic, bitcell_loads, name="replica_bitline_"+self.port_type)
+            self.replica_bitline = replica_bitline([delay_fanout_heuristic]*delay_stages_heuristic, bitcell_loads, name="replica_bitline_"+self.port_type)
             
             if self.sram != None and not self.is_sen_timing_okay():
-                #Resize the delay chain (by instantiating a new rbl) if the analytical timing failed.
+                #This resizes to match fall and rise delays, can make the delay chain weird sizes.
+                #stage_list = self.get_dynamic_delay_fanout_list(delay_stages_heuristic, delay_fanout_heuristic)
+                #self.replica_bitline = replica_bitline(stage_list, bitcell_loads, name="replica_bitline_resized_"+self.port_type)
+                
+                #This resizes based on total delay. 
                 delay_stages, delay_fanout = self.get_dynamic_delay_chain_size(delay_stages_heuristic, delay_fanout_heuristic)
-                self.replica_bitline = replica_bitline(delay_stages, delay_fanout, bitcell_loads, name="replica_bitline_resized_"+self.port_type)
-                self.sen_delay = self.get_delay_to_sen() #get the new timing
+                self.replica_bitline = replica_bitline([delay_fanout]*delay_stages, bitcell_loads, name="replica_bitline_resized_"+self.port_type)
+                self.sen_delay_rise,self.sen_delay_fall = self.get_delays_to_sen() #get the new timing
                 
             self.add_mod(self.replica_bitline)
 
@@ -124,16 +128,20 @@ class control_logic(design.design):
             delay_stages = 6
         else:
             delay_stages = 4
+            
         return (delay_stages, delay_fanout)
         
     def is_sen_timing_okay(self):
-        self.wl_delay = self.get_delay_to_wl()
-        self.sen_delay = self.get_delay_to_sen()
+        self.wl_delay_rise,self.wl_delay_fall = self.get_delays_to_wl()
+        self.sen_delay_rise,self.sen_delay_fall = self.get_delays_to_sen()
         
+        self.wl_delay = self.wl_delay_rise+self.wl_delay_fall
+        self.sen_delay = self.sen_delay_rise+self.sen_delay_fall
         #The sen delay must always be bigger than than the wl delay. This decides how much larger the sen delay must be before 
         #a re-size is warranted.
         
-        if self.wl_delay*self.wl_timing_tolerance >= self.sen_delay:
+        if (self.wl_delay_rise*self.wl_timing_tolerance >= self.sen_delay_rise or 
+            self.wl_delay_fall*self.wl_timing_tolerance >= self.sen_delay_fall):
             return False
         else:
             return True
@@ -155,7 +163,59 @@ class control_logic(design.design):
             #Fanout can be varied as well but is a little more complicated but potentially optimal.
         debug.info(1, "Setting delay chain to {} stages with {} fanout to match {} delay".format(delay_stages, delay_fanout, required_delay))
         return (delay_stages, delay_fanout)
+    
+    def get_dynamic_delay_fanout_list(self, previous_stages, previous_fanout):
+        """Determine the size of the delay chain used for the Sense Amp Enable using path delays"""
         
+        previous_delay_chain_delay = (previous_fanout+1+self.parasitic_inv_delay)*previous_stages
+        debug.info(2, "Previous delay chain produced {} delay units".format(previous_delay_chain_delay))
+        
+        fanout_rise = fanout_fall = 2 # This can be anything >=2
+        #The delay chain uses minimum sized inverters. There are (fanout+1)*stages inverters and each
+        #inverter adds 1 unit of delay (due to minimum size). This also depends on the pinv value
+        required_delay_fall = self.wl_delay_fall*self.wl_timing_tolerance - (self.sen_delay_fall-previous_delay_chain_delay/2)
+        required_delay_rise = self.wl_delay_rise*self.wl_timing_tolerance - (self.sen_delay_rise-previous_delay_chain_delay/2)
+        debug.info(2,"Required delays from chain: fall={}, rise={}".format(required_delay_fall,required_delay_rise))
+        
+        #The stages need to be equal (or at least a even number of stages with matching rise/fall delays)
+        while True:
+            stages_fall = self.calculate_stages_with_fixed_fanout(required_delay_fall,fanout_fall)
+            stages_rise = self.calculate_stages_with_fixed_fanout(required_delay_rise,fanout_rise)
+            debug.info(1,"Fall stages={}, rise stages={}".format(stages_fall,stages_rise))
+            if stages_fall == stages_rise: 
+                break
+            elif abs(stages_fall-stages_rise) == 1:
+                break
+            #There should also be a condition to make sure the fanout does not get too large.    
+            #Otherwise, increase the fanout of delay with the most stages, calculate new stages
+            elif stages_fall>stages_rise:
+                fanout_fall+=1
+            else:
+                fanout_rise+=1
+        
+        total_stages = max(stages_fall,stages_rise)*2
+        debug.info(1, "New Delay chain: stages={}, fanout_rise={}, fanout_fall={}".format(total_stages, fanout_rise, fanout_fall))
+        
+        #Creates interleaved fanout list of rise/fall delays. Assumes fall is the first stage.
+        stage_list = [fanout_fall if i%2==0 else fanout_rise for i in range(total_stages)]
+        return stage_list
+    
+    def calculate_stages_with_fixed_fanout(self, required_delay, fanout):
+        from math import ceil
+        #Delay being negative is not an error. It implies that any amount of stages would have a negative effect on the overall delay
+        if required_delay<=3: #3 is the minimum delay per stage.
+            return 1
+        delay_stages = ceil(required_delay/(fanout+1+self.parasitic_inv_delay))
+        return delay_stages
+    
+    def calculate_stage_list(self, total_stages, fanout_rise, fanout_fall):
+        """Produces a list of fanouts which determine the size of the delay chain. List length is the number of stages.
+           Assumes the first stage is falling.
+        """
+        stage_list = []
+        for i in range(total_stages):
+            if i%2 == 0:
+                stage_list.append()
     def setup_signal_busses(self):
         """ Setup bus names, determine the size of the busses etc """
 
@@ -641,14 +701,14 @@ class control_logic(design.design):
                            width=pin.width())
                            
 
-    def get_delay_to_wl(self):
+    def get_delays_to_wl(self):
         """Get the delay (in delay units) of the clk to a wordline in the bitcell array"""
         debug.check(self.sram.all_mods_except_control_done, "Cannot calculate sense amp enable delay unless all module have been added.")
         stage_efforts = self.determine_wordline_stage_efforts()
         clk_to_wl_rise,clk_to_wl_fall = logical_effort.calculate_relative_rise_fall_delays(stage_efforts, self.parasitic_inv_delay)
         total_delay = clk_to_wl_rise + clk_to_wl_fall 
         debug.info(1, "Clock to wl delay is rise={:.3f}, fall={:.3f}, total={:.3f} in delay units".format(clk_to_wl_rise, clk_to_wl_fall,total_delay))
-        return total_delay 
+        return clk_to_wl_rise,clk_to_wl_fall 
      
         
     def determine_wordline_stage_efforts(self):
@@ -670,7 +730,7 @@ class control_logic(design.design):
         
         return stage_effort_list
         
-    def get_delay_to_sen(self):
+    def get_delays_to_sen(self):
         """Get the delay (in delay units) of the clk to a sense amp enable. 
            This does not incorporate the delay of the replica bitline.
         """
@@ -679,7 +739,7 @@ class control_logic(design.design):
         clk_to_sen_rise, clk_to_sen_fall = logical_effort.calculate_relative_rise_fall_delays(stage_efforts, self.parasitic_inv_delay)
         total_delay = clk_to_sen_rise + clk_to_sen_fall 
         debug.info(1, "Clock to s_en delay is rise={:.3f}, fall={:.3f}, total={:.3f} in delay units".format(clk_to_sen_rise, clk_to_sen_fall,total_delay))
-        return total_delay   
+        return clk_to_sen_rise, clk_to_sen_fall   
           
     def determine_sa_enable_stage_efforts(self):
         """Follows the clock signal to the sense amp enable signal adding each stages stage effort to a list"""

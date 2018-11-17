@@ -15,12 +15,11 @@ class replica_bitline(design.design):
     line and rows is the height of the replica bit loads.
     """
 
-    def __init__(self, delay_stages, delay_fanout, bitcell_loads, name="replica_bitline"):
+    def __init__(self, delay_fanout_list, bitcell_loads, name="replica_bitline"):
         design.design.__init__(self, name)
 
         self.bitcell_loads = bitcell_loads
-        self.delay_stages = delay_stages
-        self.delay_fanout = delay_fanout
+        self.delay_fanout_list = delay_fanout_list
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -95,7 +94,7 @@ class replica_bitline(design.design):
 
         # FIXME: The FO and depth of this should be tuned
         from delay_chain import delay_chain
-        self.delay_chain = delay_chain([self.delay_fanout]*self.delay_stages)
+        self.delay_chain = delay_chain(self.delay_fanout_list)
         self.add_mod(self.delay_chain)
 
         self.inv = pinv()

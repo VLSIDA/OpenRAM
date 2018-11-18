@@ -195,7 +195,7 @@ class control_logic(design.design):
         self.control_logic_center = vector(self.ctrl_dff_inst.rx(), control_center_y)
 
         # Extra pitch on top and right
-        self.height = height + self.m2_pitch
+        self.height = height + 2*self.m1_pitch
         # Max of modules or logic rows
         if (self.port_type == "rw") or (self.port_type == "r"):
             self.width = max(self.rbl_inst.rx(), max([inst.rx() for inst in self.row_end_inst])) + self.m2_pitch

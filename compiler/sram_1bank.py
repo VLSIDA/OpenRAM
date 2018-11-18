@@ -73,8 +73,9 @@ class sram_1bank(sram_base):
         self.control_logic_insts[port].place(control_pos[port])
         
         # The row address bits are placed above the control logic aligned on the right.
+        # Or just below the top of the bank, whichever is greater.
         row_addr_pos[port] = vector(self.control_logic_insts[port].rx() - self.row_addr_dff_insts[port].width,
-                                    self.control_logic_insts[port].uy())
+                                    max(self.control_logic_insts[port].uy(), self.bank_inst.ul().y - self.row_addr_dff_insts[port].height))
         self.row_addr_dff_insts[port].place(row_addr_pos[port])
         
         # Add the col address flops below the bank to the left of the lower-left of bank array
@@ -103,8 +104,9 @@ class sram_1bank(sram_base):
             self.control_logic_insts[port].place(control_pos[port], mirror="MY")
         
             # The row address bits are placed above the control logic aligned on the left.
+            # Or just below the top of the bank, whichever is greater.
             row_addr_pos[port] = vector(control_pos[port].x - self.control_logic_insts[port].width + self.row_addr_dff_insts[port].width,
-                                        self.control_logic_insts[port].uy())
+                                        max(self.control_logic_insts[port].uy(), self.bank_inst.ul().y - self.row_addr_dff_insts[port].height))
             self.row_addr_dff_insts[port].place(row_addr_pos[port], mirror="MY")
         
             # Add the col address flops above the bank to the right of the upper-right of bank array

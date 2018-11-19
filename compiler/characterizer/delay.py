@@ -208,14 +208,15 @@ class delay(simulation):
         trig_slew_low = 0.1 * self.vdd_voltage
         targ_slew_high = 0.9 * self.vdd_voltage
         if 'delay' in delay_name:
-            trig_dir="RISE" #FALL
             trig_val = half_vdd
             targ_val = half_vdd
             trig_name = trig_clk_name
             if 'lh' in delay_name:
+                trig_dir="RISE" 
                 targ_dir="RISE"
                 trig_td = targ_td = self.cycle_times[self.measure_cycles[port]["read1"]]
             else:
+                trig_dir="FALL" 
                 targ_dir="FALL"
                 trig_td = targ_td = self.cycle_times[self.measure_cycles[port]["read0"]] 
                     
@@ -426,11 +427,10 @@ class delay(simulation):
         #Too much duplicate code here. Try reducing
         for port in self.targ_read_ports:
             debug.info(2, "Check delay values for port {}".format(port))
-            delay_names = ["{0}{1}".format(mname,port) for mname in self.delay_meas_names]
             delay_names = [mname for mname in self.delay_meas_names]
             delays = self.parse_values(delay_names, port, 1e9) # scale delays to ns
             debug.info(2,"Delay values = {}".format(delays))
-            if not self.check_valid_delays(tuple(delays.values())):
+            if not self.check_valid_delays(delays):
                 return (False,{})
             result[port].update(delays)
             
@@ -479,10 +479,13 @@ class delay(simulation):
         #key=raw_input("press return to continue")
         return (leakage_power*1e3, trim_leakage_power*1e3)
     
-    def check_valid_delays(self, delay_tuple):
+    def check_valid_delays(self, delay_dict):
         """ Check if the measurements are defined and if they are valid. """
-
-        (delay_hl, delay_lh, slew_hl, slew_lh) = delay_tuple
+        #Hard coded names currently
+        delay_hl = delay_dict["delay_hl"]
+        delay_lh = delay_dict["delay_lh"]
+        slew_hl = delay_dict["slew_hl"]
+        slew_lh = delay_dict["slew_lh"]
         period_load_slew_str = "period {0} load {1} slew {2}".format(self.period,self.load, self.slew)
         
         # if it failed or the read was longer than a period
@@ -496,7 +499,8 @@ class delay(simulation):
             
         delays_str = "delay_hl={0} delay_lh={1}".format(delay_hl, delay_lh)
         slews_str = "slew_hl={0} slew_lh={1}".format(slew_hl,slew_lh)
-        if delay_hl>self.period or delay_lh>self.period or slew_hl>self.period or slew_lh>self.period:
+        half_period = self.period/2 #high-to-low delays start at neg. clk edge, so they need to be less than half_period
+        if delay_hl>half_period or delay_lh>self.period or slew_hl>half_period or slew_lh>self.period:
             debug.info(2,"UNsuccessful simulation (in ns):\n\t\t{0}\n\t\t{1}\n\t\t{2}".format(period_load_slew_str,
                                                                                               delays_str,
                                                                                               slews_str))
@@ -580,8 +584,7 @@ class delay(simulation):
         
         #Check the values of target readwrite and read ports. Write ports do not produce delays in this current version
         for port in self.targ_read_ports:          
-            delay_port_names = [mname for mname in self.delay_meas_names if "delay" in mname]
-            for dname in delay_port_names: 
+            for dname in self.delay_meas_names: #check that the delays and slews do not degrade with tested period.
                 if not relative_compare(results[port][dname],feasible_delays[port][dname],error_tolerance=0.05):
                     debug.info(2,"Delay too big {0} vs {1}".format(results[port][dname],feasible_delays[port][dname]))
                     return False

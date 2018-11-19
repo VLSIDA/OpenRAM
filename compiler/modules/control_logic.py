@@ -33,7 +33,7 @@ class control_logic(design.design):
         self.sram=sram
         #self.sram=None #disable re-sizing for debugging
         self.wl_timing_tolerance = 1 #Determines how much larger the sen delay should be. Accounts for possible error in model.
-        self.parasitic_inv_delay = 0 #Keeping 0 for now until further testing.
+        self.parasitic_inv_delay = parameter["min_inv_para_delay"] #Keeping 0 for now until further testing.
         
         if self.port_type == "rw":
             self.num_control_signals = 2
@@ -106,14 +106,15 @@ class control_logic(design.design):
             self.replica_bitline = replica_bitline([delay_fanout_heuristic]*delay_stages_heuristic, bitcell_loads, name="replica_bitline_"+self.port_type)
             self.set_sen_wl_delays()
             
-            if self.sram != None and not self.does_sen_total_timing_match():
+            if self.sram != None and not self.does_sen_rise_fall_timing_match():
                 #This resizes to match fall and rise delays, can make the delay chain weird sizes.
-                #stage_list = self.get_dynamic_delay_fanout_list(delay_stages_heuristic, delay_fanout_heuristic)
-                #self.replica_bitline = replica_bitline(stage_list, bitcell_loads, name="replica_bitline_resized_"+self.port_type)
+                stage_list = self.get_dynamic_delay_fanout_list(delay_stages_heuristic, delay_fanout_heuristic)
+                self.replica_bitline = replica_bitline(stage_list, bitcell_loads, name="replica_bitline_resized_"+self.port_type)
                 
                 #This resizes based on total delay. 
-                delay_stages, delay_fanout = self.get_dynamic_delay_chain_size(delay_stages_heuristic, delay_fanout_heuristic)
-                self.replica_bitline = replica_bitline([delay_fanout]*delay_stages, bitcell_loads, name="replica_bitline_resized_"+self.port_type)
+                # delay_stages, delay_fanout = self.get_dynamic_delay_chain_size(delay_stages_heuristic, delay_fanout_heuristic)
+                # self.replica_bitline = replica_bitline([delay_fanout]*delay_stages, bitcell_loads, name="replica_bitline_resized_"+self.port_type)
+                
                 self.sen_delay_rise,self.sen_delay_fall = self.get_delays_to_sen() #get the new timing
                 
             self.add_mod(self.replica_bitline)
@@ -214,7 +215,7 @@ class control_logic(design.design):
     def calculate_stages_with_fixed_fanout(self, required_delay, fanout):
         from math import ceil
         #Delay being negative is not an error. It implies that any amount of stages would have a negative effect on the overall delay
-        if required_delay<=3: #3 is the minimum delay per stage.
+        if required_delay <= 3+self.parasitic_inv_delay: #3 is the minimum delay per stage (with pinv=0).
             return 1
         delay_stages = ceil(required_delay/(fanout+1+self.parasitic_inv_delay))
         return delay_stages

@@ -669,8 +669,18 @@ class delay(simulation):
         self.period = min_period
         char_port_data = self.simulate_loads_and_slews(slews, loads, leakage_offset)
         
+        #FIXME: low-to-high delays are altered to be independent of the period. This makes the lib results less accurate.
+        self.alter_lh_char_data(char_port_data)
+        
         return (char_sram_data, char_port_data)
 
+    def alter_lh_char_data(self, char_port_data):
+        """Copies high-to-low data to low-to-high data to make them consistent on the same clock edge."""
+       #This is basically a hack solution which should be removed/fixed later.
+        for port in self.all_ports:
+            char_port_data[port]['delay_lh'] = char_port_data[port]['delay_hl']
+            char_port_data[port]['slew_lh'] = char_port_data[port]['slew_hl']
+        
     def simulate_loads_and_slews(self, slews, loads, leakage_offset):
         """Simulate all specified output loads and input slews pairs of all ports"""
         measure_data = self.get_empty_measure_data_dict()

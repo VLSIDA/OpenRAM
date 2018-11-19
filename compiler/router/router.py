@@ -523,35 +523,51 @@ class router(router_tech):
         zindex=self.get_zindex(pin.layer_num)
         for x in range(int(ll[0])+expansion,int(ur[0])+1+expansion):
             for y in range(int(ll[1]+expansion),int(ur[1])+1+expansion):
-                debug.info(4,"Converting [ {0} , {1} ]".format(x,y))
                 (full_overlap,partial_overlap) = self.convert_pin_coord_to_tracks(pin, vector3d(x,y,zindex))
                 if full_overlap:
                     sufficient_list.update([full_overlap])
                 if partial_overlap:
                     insufficient_list.update([partial_overlap])
+                debug.info(4,"Converting [ {0} , {1} ] full={2} partial={3}".format(x,y, full_overlap, partial_overlap))
+                    
 
         if len(sufficient_list)>0:
             return sufficient_list
         elif expansion==0 and len(insufficient_list)>0:
-            #Remove blockages and return the best to be patched
+            #Remove blockages and return any overlap
             insufficient_list.difference_update(self.blocked_grids)
-            return self.get_best_offgrid_pin(pin, insufficient_list)
+            best_pin = self.get_all_offgrid_pin(pin, insufficient_list)
+            return best_pin
         elif expansion>0:
             #Remove blockages and return the nearest
             insufficient_list.difference_update(self.blocked_grids)
-            return self.get_nearest_offgrid_pin(pin, insufficient_list)
+            nearest_pin = self.get_nearest_offgrid_pin(pin, insufficient_list)
+            return nearest_pin
         else:
             debug.error("Unable to find any overlapping grids.", -1)
             
 
+    def get_all_offgrid_pin(self, pin, insufficient_list):
+        """ 
+        Find a list of all pins with some overlap.
+        """
+        #print("INSUFFICIENT LIST",insufficient_list)
+        # Find the coordinate with the most overlap
+        any_overlap = set()
+        for coord in insufficient_list:
+            full_pin = self.convert_track_to_pin(coord)
+            # Compute the overlap with that rectangle
+            overlap_rect=pin.compute_overlap(full_pin)
+            # Determine the max x or y overlap
+            max_overlap = max(overlap_rect)
+            if max_overlap>0:
+                any_overlap.update([coord])
+            
+        return any_overlap
+
     def get_best_offgrid_pin(self, pin, insufficient_list):
         """ 
-        Given a pin and a list of partial overlap grids:
-        1) Find the unblocked grids.
-        2) If one, use it.
-        3) If not, find the greatest overlap.
-        4) Add a pin with the most overlap to make it "on grid"
-        that is not blocked.
+        Find a list of the single pin with the most overlap.
         """
         #print("INSUFFICIENT LIST",insufficient_list)
         # Find the coordinate with the most overlap
@@ -568,7 +584,7 @@ class router(router_tech):
                 best_coord=coord
             
         return set([best_coord])
-
+    
     def get_nearest_offgrid_pin(self, pin, insufficient_list):
         """ 
         Given a pin and a list of grid cells (probably non-overlapping),

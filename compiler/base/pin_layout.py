@@ -72,9 +72,7 @@ class pin_layout:
         min_y = ll.y
         max_y = ur.y
 
-        filtered_list = [x for x in pin_list if x != None]
-        debug.check(len(filtered_list)>0,"Cannot find bbox of empty list.")
-        for pin in filtered_list:
+        for pin in pin_list:
             min_x = min(min_x, pin.ll().x)
             max_x = max(max_x, pin.ur().x)
             min_y = min(min_y, pin.ll().y)

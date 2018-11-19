@@ -1,6 +1,6 @@
 # OpenRAM
-Stable: [![pipeline status](https://scone.soe.ucsc.edu:8888/mrg/PrivateRAM/badges/master/pipeline.svg?private_token=ynB6rSFLzvKUseoBPcwV)](https://github.com/VLSIDA/PrivateRAM/commits/master)
-Unstable: [![pipeline status](https://scone.soe.ucsc.edu:8888/mrg/PrivateRAM/badges/dev/pipeline.svg?private_token=ynB6rSFLzvKUseoBPcwV)](https://github.com/VLSIDA/PrivateRAM/commits/dev)
+Master: [![pipeline status](https://scone.soe.ucsc.edu:8888/mrg/PrivateRAM/badges/master/pipeline.svg?private_token=ynB6rSFLzvKUseoBPcwV)](https://github.com/VLSIDA/PrivateRAM/commits/master)
+Dev: [![pipeline status](https://scone.soe.ucsc.edu:8888/mrg/PrivateRAM/badges/dev/pipeline.svg?private_token=ynB6rSFLzvKUseoBPcwV)](https://github.com/VLSIDA/PrivateRAM/commits/dev)
 [![Download](images/download.svg)](https://github.com/VLSIDA/PrivateRAM/archive/master.zip)
 [![License: BSD 3-clause](./images/license_badge.svg)](./LICENSE)
 

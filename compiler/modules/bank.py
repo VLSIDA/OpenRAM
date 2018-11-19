@@ -65,8 +65,7 @@ class bank(design.design):
         self.bank_array_ur = self.bitcell_array_inst.ur()
         
         self.DRC_LVS()
- 
- 
+
     def add_pins(self):
         """ Adding pins for Bank module"""
         for port in self.read_ports:

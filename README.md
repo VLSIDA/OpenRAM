@@ -1,238 +1,222 @@
-# BASIC SETUP
+# OpenRAM
+Stable: [![pipeline status](https://scone.soe.ucsc.edu:8888/mrg/PrivateRAM/badges/master/pipeline.svg?private_token=ynB6rSFLzvKUseoBPcwV)](https://github.com/VLSIDA/PrivateRAM/commits/master)
+Unstable: [![pipeline status](https://scone.soe.ucsc.edu:8888/mrg/PrivateRAM/badges/dev/pipeline.svg?private_token=ynB6rSFLzvKUseoBPcwV)](https://github.com/VLSIDA/PrivateRAM/commits/dev)
+[![Download](images/download.svg)](https://github.com/VLSIDA/PrivateRAM/archive/master.zip)
+[![License: BSD 3-clause](./images/license_badge.svg)](./LICENSE)
 
-Please look at the OpenRAM ICCAD paper and presentation in the repository:
-https://github.com/mguthaus/OpenRAM/blob/master/OpenRAM_ICCAD_2016_paper.pdf
-https://github.com/mguthaus/OpenRAM/blob/master/OpenRAM_ICCAD_2016_presentation.pdf
+An open-source static random access memory (SRAM) compiler.
+
+# What is OpenRAM?
+
+<img align="right" width="25%" src="images/SCMOS_16kb_sram.jpg">
+
+OpenRAM is an open-source Python framework to create the layout,
+netlists, timing and power models, placement and routing models, and
+other views necessary to use SRAMs in ASIC design. OpenRAM supports
+integration in both commercial and open-source flows with both
+predictive and fabricable technologies.
+
+# Basic Setup
 
 The OpenRAM compiler has very few dependencies:
-* ngspice-26 (or later) or HSpice I-2013.12-1 (or later) or CustomSim 2017 (or later)
-* Python 3.5 and higher
-* Python numpy (pip3 install numpy to install)
-* flask_table (pip3 install flask to install)
-* a setup script for each technology you want to use
-* a technology directory for each technology with the base cells
++ [Ngspice] 26 (or later) or HSpice I-2013.12-1 (or later) or CustomSim 2017 (or later)
++ Python 3.5 or higher
++ Python numpy (pip3 install numpy to install)
++ flask_table (pip3 install flask to install)
 
 If you want to perform DRC and LVS, you will need either:
-* Calibre (for FreePDK45 or SCMOS)
-* Magic + Netgen (for SCMOS only)
++ Calibre (for [FreePDK45])
++ [Magic] + [Netgen] (for [SCMOS])
 
-You must set two environment variables: OPENRAM_HOME should point to
-the compiler source directory. OPENERAM_TECH should point to a root
-technology directory that contains subdirs of all other technologies.
-For example, in bash, add to your .bashrc:
+You must set two environment variables: 
++ OPENRAM\_HOME should point to the compiler source directory. 
++ OPENERAM\_TECH should point to a root technology directory.
+
+For example add this to your .bashrc:
+
 ```
   export OPENRAM_HOME="$HOME/openram/compiler"
   export OPENRAM_TECH="$HOME/openram/technology"
 ```
-For example, in csh/tcsh, add to your .cshrc/.tcshrc:
+
+You may also wish to add OPENRAM\_HOME to your PYTHONPATH:
+
 ```
-  setenv OPENRAM_HOME "$HOME/openram/compiler"
-  setenv OPENRAM_TECH "$HOME/openram/technology"
+  export PYTHONPATH="$PYTHONPATH:$OPENRAM_HOME"
 ```
 
-We include the tech files necessary for FreePDK and SCMOS. The SCMOS
-spice models, however, are generic and should be replaced with foundry 
-models.
-If you are using FreePDK, you should also have that set up and have the
-environment variable point to the PDK. 
-For example, in bash, add to your .bashrc:
+We include the tech files necessary for [FreePDK45] and [SCMOS]
+SCN4M_SUBM. The [SCMOS] spice models, however, are generic and should
+be replaced with foundry models.  If you are using [FreePDK45], you
+should also have that set up and have the environment variable point
+to the PDK. For example add this to your .bashrc:
+
 ```
   export FREEPDK45="/bsoe/software/design-kits/FreePDK45"
 ```
-For example, in csh/tcsh, add to your .tcshrc:
+
+You may get the entire [FreePDK45 PDK here][FreePDK45].
+If you are using [SCMOS], you should install [Magic] and [Netgen].
+We have included the most recent SCN4M_SUBM design rules from [Qflow].
+
+# Basic Usage
+
+Once you have defined the environment, you can run OpenRAM from the command line 
+using a single configuration file written in Python. 
+
+For example, create a file called *myconfig.py* specifying the following
+parameters for your memory:
+
 ```
-  setenv FREEPDK45 "/bsoe/software/design-kits/FreePDK45"
+# Data word size
+word_size = 2
+# Number of words in the memory
+num_words = 16
+
+# Technology to use in $OPENRAM_TECH
+tech_name = "scn4m_subm"
+# Process corners to characterize
+process_corners = ["TT"]
+# Voltage corners to characterize
+supply_voltages = [ 3.3 ]
+# Temperature corners to characterize
+temperatures = [ 25 ]
+
+# Output directory for the results
+output_path = "temp"
+# Output file base name
+output_name = "sram_{0}_{1}_{2}".format(word_size,num_words,tech_name)
+
+# Disable analytical models for full characterization (WARNING: slow!)
+# analytical_delay = False
 ```
-We do not distribute the PDK, but you may get it from:
-    https://www.eda.ncsu.edu/wiki/FreePDK45:Contents
 
-If you are using SCMOS, you should install Magic and netgen from:
-	http://opencircuitdesign.com/magic/
-	http://opencircuitdesign.com/netgen/
-We have included the SCN4M design rules from QFlow:
-	http://opencircuitdesign.com/qflow/
-
-# DIRECTORY STRUCTURE
-
-* compiler - openram compiler itself (pointed to by OPENRAM_HOME)
-  * compiler/base - base data structure modules
-  * compiler/pgates - parameterized cells (e.g. logic gates)
-  * compiler/bitcells - various bitcell styles
-  * compiler/modules - high-level modules (e.g. decoders, etc.)
-  * compiler/verify - DRC and LVS verification wrappers
-  * compiler/characterizer - timing characterization code
-  * compiler/gdsMill - GDSII reader/writer
-  * compiler/router - router for signals and power supplies
-  * compiler/tests - unit tests
-* technology - openram technology directory (pointed to by OPENRAM_TECH)
-  * technology/freepdk45 - example configuration library for freepdk45 technology node
-  * technology/scn4m_subm - example configuration library SCMOS technology node
-  * technology/scn3me_subm - unsupported configuration (not enough metal layers)
-  * technology/setup_scripts - setup scripts to customize your PDKs and OpenRAM technologies
-* docs - LaTeX manual (outdated)
-* lib - IP library of pregenerated memories
+You can then run OpenRAM by executing:
+```
+python3 $OPENRAM_HOME/openram.py myconfig
+```
+You can see all of the options for the configuration file in
+$OPENRAM\_HOME/options.py
 
 
-# UNIT TESTS
+# Unit Tests
 
 Regression testing  performs a number of tests for all modules in OpenRAM.
+From the unit test directory ($OPENRAM\_HOME/tests), 
+use the following command to run all regression tests:
 
-Use the command:
 ```
-   python regress.py
+   python3 regress.py
 ```
 To run a specific test:
 ```
-   python {unit test}.py 
+   python3 {unit test}.py 
 ```
 The unit tests take the same arguments as openram.py itself. 
 
 To increase the verbosity of the test, add one (or more) -v options:
 ```
-   python tests/00_code_format_check_test.py -v -t freepdk45
+   python3 tests/00_code_format_check_test.py -v -t freepdk45
 ```
 To specify a particular technology use "-t <techname>" such as
-"-t freepdk45" or "-t scn4m_subm". The default for a unit test is scn4m_subm. 
+"-t freepdk45" or "-t scn4m\_subm". The default for a unit test is scn4m_subm. 
 The default for openram.py is specified in the configuration file.
 
 
-# CREATING CUSTOM TECHNOLOGIES
+# Porting to a New Technology
 
-All setup scripts should be in the setup_scripts directory under the
-$OPENRAM_TECH directory.  Please look at the following file for an
+If you want to support a enw technology, you will need to create:
++ a setup script for each technology you want to use
++ a technology directory for each technology with the base cells 
+
+All setup scripts should be in the setup\_scripts directory under the
+$OPENRAM\_TECH directory.  We provide two technology examples for
+[SCMOS] and [FreePDK45].  Please look at the following file for an
 example of what is needed for OpenRAM:
+
 ```
   $OPENRAM_TECH/setup_scripts/setup_openram_freepdk45.py
 ```
-Each setup script should be named as: setup_openram_{tech name}.py.
 
-Each specific technology (e.g., freepdk45) should be a subdirectory
+Each setup script should be named as: setup\_openram\_{tech name}.py.
+
+Each specific technology (e.g., [FreePDK45]) should be a subdirectory
 (e.g., $OPENRAM_TECH/freepdk45) and include certain folders and files:
-  1. gds_lib folder with all the .gds (premade) library cells. At a
-     minimum this includes:
-     * ms_flop.gds
-     * sense_amp.gds
-     * write_driver.gds
-     * cell_6t.gds
-     * replica_cell_6t.gds 
-     * tri_gate.gds
-  2. sp_lib folder with all the .sp (premade) library netlists for the above cells.
-  3. layers.map 
-  4. A valid tech Python module (tech directory with __init__.py and tech.py) with:
-     * References in tech.py to spice models
-     * DRC/LVS rules needed for dynamic cells and routing
-     * Layer information
-     * etc.
+* gds_lib folder with all the .gds (premade) library cells:
+  * dff.gds
+  * sense_amp.gds
+  * write_driver.gds
+  * cell_6t.gds
+  * replica\_cell\_6t.gds 
+* sp_lib folder with all the .sp (premade) library netlists for the above cells.
+* layers.map 
+* A valid tech Python module (tech directory with __init__.py and tech.py) with:
+  * References in tech.py to spice models
+  * DRC/LVS rules needed for dynamic cells and routing
+  * Layer information
+  * Spice and supply information
+  * etc.
 
-# DEBUGGING
+# Get Involved
 
-When OpenRAM runs, it puts files in a temporary directory that is
-shown in the banner at the top. Like:
-```
-  /tmp/openram_mrg_18128_temp/
-```
-This is where simulations and DRC/LVS get run so there is no network
-traffic. The directory name is unique for each person and run of
-OpenRAM to not clobber any files and allow simultaneous runs. If it
-passes, the files are deleted. If it fails, you will see these files:
-* temp.gds is the layout
-* (.mag files if using SCMOS)
-* temp.sp is the netlist
-* test1.drc.err is the std err output of the DRC command
-* test1.drc.out is the standard output of the DRC command
-* test1.drc.results is the DRC results file
-* test1.lvs.err is the std err output of the LVS command
-* test1.lvs.out is the standard output of the LVS command
-* test1.lvs.results is the DRC results file
++ Report bugs by submitting [Github issues].
++ Develop new features (see [how to contribute](./CONTRIBUTING.md))
++ Submit code/fixes using a [Github pull request] 
++ Follow our [project][Github projects].
++ Read and cite our [ICCAD paper][OpenRAMpaper]
 
-Depending on your DRC/LVS tools, there will also be:
-* _calibreDRC.rul_ is the DRC rule file (Calibre)
-* dc_runset is the command file (Calibre)
-* extracted.sp (Calibre)
-* run_lvs.sh is a Netgen script for LVS (Netgen)
-* run_drc.sh is a Magic script for DRC (Magic)
-* <topcell>.spice (Magic)
+# Further Help
 
-If DRC/LVS fails, the first thing is to check if it ran in the .out and
-.err file. This shows the standard output and error output from
-running DRC/LVS. If there is a setup problem it will be shown here.
++ [Additional hints](./HINTS.md)
++ [OpenRAM Slack Workspace][Slack]
++ [OpenRAM Users Group][user-group] ([subscribe here][user-group-subscribe])
++ [OpenRAM Developers Group][dev-group] ([subscribe here][dev-group-subscribe])
 
-If DRC/LVS runs, but doesn't pass, you then should look at the .results
-file. If the DRC fails, it will typically show you the command that was used
-to run Calibre or Magic+Netgen. 
+# License 
 
-To debug, you will need a layout viewer. I prefer to use Glade 
-on my Mac, but you can also use Calibre, Magic, etc. 
+OpenRAM is licensed under the [BSD 3-clause License](./LICENSE).
 
-1. Calibre
+# Contributors & Acknowledgment
 
-   Start the Calibre DESIGNrev viewer in the temp directory and load your GDS file:
-```
-  calibredrv temp.gds
-```
-   Select Verification->Start RVE and select the results database file in
-   the new form (e.g., test1.drc.db). This will start the RVE (results
-   viewer). Scroll through the check pane and find the DRC check with an
-   error.  Select it and it will open some numbers to the right.  Double
-   click on any of the errors in the result browser. These will be
-   labelled as numbers "1 2 3 4" for example will be 4 DRC errors.
+- [Matthew Guthaus] from [VLSIDA] created the OpenRAM project and is the lead architect.
+- [James Stine] from [VLSIARCH] co-founded the project.
+- Hunter Nichols maintains and updates the timing characterization.
+- Michael Grimes created and maintains the multiport netlist code.
+- Jennifer Sowash is creating the OpenRAM IP library.
+- Jesse Cirimelli-Low created the datasheet generation.
+- Samira Ataei created early multi-bank layouts and control logic.
+- Bin Wu created early parameterized cells.
+- Yusu Wang is porting parameterized cells to new technologies.
+- Brian Chen created early prototypes of the timing characterizer.
+- Jeff Butera created early prototypes of the bank layout.
 
-   In the viewer ">" opens the layout down a level.
+If I forgot to add you, please let me know!
 
-2. Glade
+* * *
 
-   You can view errors in Glade as well. I like this because it is on my laptop.
-   You can get it from:  http://www.peardrop.co.uk/glade/
+[Matthew Guthaus]:       https://users.soe.ucsc.edu/~mrg
+[James Stine]:           https://ece.okstate.edu/content/stine-james-e-jr-phd
+[VLSIDA]:                https://vlsida.soe.ucsc.edu
+[VLSIARCH]:              https://vlsiarch.ecen.okstate.edu/
+[OpenRAMpaper]:          https://ieeexplore.ieee.org/document/7827670/
 
-   To remote display over X windows, you need to disable OpenGL acceleration or use vnc
-   or something. You can disable by adding this to your .bashrc in bash:
-```
-  export GLADE_USE_OPENGL=no
-```
-   or in .cshrc/.tcshrc in csh/tcsh:
-```
-  setenv GLADE_USE_OPENGAL no
-```
-   To use this with the FreePDK45 or SCMOS layer views you should use the
-   tech files. Then create a .glade.py file in your user directory with
-   these commands to load the technology layers:
-```
-ui().importCds("default",
-"/Users/mrg/techfiles/freepdk45/display.drf",
-"/Users/mrg/techfiles/freepdk45/FreePDK45.tf", 1000, 1,
-"/Users/mrg/techfiles/freepdk45/layers.map")
-```
-   Obviously, edit the paths to point to your directory. To switch
-   between processes, you have to change the importCds command (or you
-   can manually run the command each time you start glade).
+[Github issues]:         https://github.com/VLSIDA/PrivateRAM/issues
+[Github pull request]:   https://github.com/VLSIDA/PrivateRAM/pulls
+[Github projects]:       https://github.com/VLSIDA/PrivateRAM/projects
 
-   To load the errors, you simply do Verify->Import Calibre Errors select
-   the .results file from Calibre.
+[email me]:              mailto:mrg+openram@ucsc.edu
+[dev-group]:             mailto:openram-dev-group@ucsc.edu
+[user-group]:            mailto:openram-user-group@ucsc.edu
+[dev-group-subscribe]:   mailto:openram-dev-group+subscribe@ucsc.edu
+[user-group-subscribe]:  mailto:openram-user-group+subscribe@ucsc.edu
 
-3. Magic
+[Magic]:                 http://opencircuitdesign.com/magic/
+[Netgen]:                http://opencircuitdesign.com/netgen/
+[Qflow]:                 http://opencircuitdesign.com/qflow/history.html
+[Ngspice]:               http://ngspice.sourceforge.net/
 
-   Magic is only supported in SCMOS. You will need to install the MOSIS SCMOS rules
-   and Magic from: http://opencircuitdesign.com/
+[OSUPDK]:                https://vlsiarch.ecen.okstate.edu/flow/
+[FreePDK45]:             https://www.eda.ncsu.edu/wiki/FreePDK45:Contents
+[SCMOS]:                 https://www.mosis.com/files/scmos/scmos.pdf
 
-   When running DRC or extraction, OpenRAM will load the GDS file, save
-   the .ext/.mag files, and export an extracted netlist (.spice).
-
-4. It is possible to use other viewers as well, such as:
-   * LayoutEditor http://www.layouteditor.net/ 
-
-
-# Example to output/input .gds layout files from/to Cadence
-
-1. To create your component layouts, you should stream them to
-   individual gds files using our provided layermap and flatten
-   cells. For example,
-```
-  strmout -layerMap layers.map -library sram -topCell $i -view layout -flattenVias -flattenPcells -strmFile ../gds_lib/$i.gds
-```
-2. To stream a layout back into Cadence, do this:
-```
-  strmin -layerMap layers.map -attachTechFileOfLib NCSU_TechLib_FreePDK45 -library sram_4_32 -strmFile sram_4_32.gds
-```
-   When you import a gds file, make sure to attach the correct tech lib
-   or you will get incorrect layers in the resulting library.
-
+[Slack]:                 https://join.slack.com/t/openram/shared_invite/enQtNDgxMjc3NzU5NTI1LTE4ODMyM2I0Mzk2ZmFiMjgwYTYyMTQ4NTgwMmUwMDhiM2E1MDViNDRjYzU1NjJhZTQxNWZjMzE3M2FlODBmZjA

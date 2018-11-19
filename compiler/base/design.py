@@ -22,9 +22,7 @@ class design(hierarchy_design):
 
         self.m1_pitch = max(contact.m1m2.width,contact.m1m2.height) + max(self.m1_space, self.m2_space)
         self.m2_pitch = max(contact.m2m3.width,contact.m2m3.height) + max(self.m2_space, self.m3_space)
-        # SCMOS doesn't have m4...
-        #self.m3_pitch = max(contact.m3m4.width,contact.m3m4.height) + max(self.m3_space, self.m4_space)
-        self.m3_pitch = self.m2_pitch
+        self.m3_pitch = max(contact.m3m4.width,contact.m3m4.height) + max(self.m3_space, self.m4_space)
 
     def setup_drc_constants(self):
         """ These are some DRC constants used in many places in the compiler."""
@@ -38,6 +36,8 @@ class design(hierarchy_design):
         self.m2_space = drc("metal2_to_metal2")        
         self.m3_width = drc("minwidth_metal3")
         self.m3_space = drc("metal3_to_metal3")
+        self.m4_width = drc("minwidth_metal4")
+        self.m4_space = drc("metal4_to_metal4")
         self.active_width = drc("minwidth_active")
         self.active_space = drc("active_to_body_active")
         self.contact_width = drc("minwidth_contact")

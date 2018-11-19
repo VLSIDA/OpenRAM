@@ -61,7 +61,8 @@ class bank(design.design):
         #self.add_lvs_correspondence_points() 
 
         # Remember the bank center for further placement
-        self.bank_center=self.offset_all_coordinates().scale(-1,-1)
+        self.bank_array_ll = self.offset_all_coordinates().scale(-1,-1)
+        self.bank_array_ur = self.bitcell_array_inst.ur()
         
         self.DRC_LVS()
  
@@ -232,8 +233,8 @@ class bank(design.design):
         self.row_decoder_offsets[port] = vector(-x_offset,0)
 
         # LOWER LEFT QUADRANT
-        # Place the col decoder right aligned with row decoder (x_offset doesn't change)
-        # Below the bitcell array
+        # Place the col decoder left aligned with row decoder (x_offset doesn't change)
+        # Below the bitcell array with well spacing
         if self.col_addr_size > 0:
             y_offset = self.column_decoder.height
         else:
@@ -290,8 +291,11 @@ class bank(design.design):
 
         # UPPER RIGHT QUADRANT
         # Place the col decoder right aligned with row decoder (x_offset doesn't change)
-        # Below the bitcell array
-        y_offset = self.bitcell_array.height + self.m2_gap
+        # Above the bitcell array with a well spacing
+        if self.col_addr_size > 0:
+            y_offset = self.bitcell_array.height + self.column_decoder.height
+        else:
+            y_offset = self.bitcell_array.height
         y_offset += 2*drc("well_to_well")
         self.column_decoder_offsets[port] = vector(x_offset,y_offset)
 
@@ -723,7 +727,7 @@ class bank(design.design):
 
         for port in self.all_ports:
             if port%2 == 1:
-                mirror = "MY"
+                mirror = "XY"
             else:
                 mirror = "R0"
             self.column_decoder_inst[port].place(offset=offsets[port], mirror=mirror)
@@ -1189,8 +1193,8 @@ class bank(design.design):
 
         # clk to wordline_driver
         control_signal = self.prefix+"clk_buf{}".format(port)
-        pin_pos = self.wordline_driver_inst[port].get_pin("en").uc()
-        mid_pos = pin_pos + vector(0,self.m1_pitch)
+        pin_pos = self.wordline_driver_inst[port].get_pin("en").bc()
+        mid_pos = pin_pos - vector(0,self.m1_pitch)
         control_x_offset = self.bus_xoffset[port][control_signal].x
         control_pos = vector(control_x_offset, mid_pos.y)
         self.add_wire(("metal1","via1","metal2"),[pin_pos, mid_pos, control_pos])

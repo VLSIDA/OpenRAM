@@ -4,7 +4,7 @@ from tech import drc, spice
 from vector import vector
 from globals import OPTS
 
-
+unique_id = 1
 
 class bitcell_array(design.design):
     """
@@ -12,8 +12,13 @@ class bitcell_array(design.design):
     and word line is connected by abutment.
     Connects the word lines and bit lines.
     """
+    unique_id = 1
+    
+    def __init__(self, cols, rows, name=""):
 
-    def __init__(self, cols, rows, name="bitcell_array"):
+        if name == "":
+            name = "bitcell_array_{0}x{1}_{2}".format(rows,cols,bitcell_array.unique_id)
+            bitcell_array.unique_id += 1
         design.design.__init__(self, name)
         debug.info(1, "Creating {0} {1} x {2}".format(self.name, rows, cols))
 

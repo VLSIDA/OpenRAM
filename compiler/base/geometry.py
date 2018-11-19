@@ -200,18 +200,19 @@ class instance(geometry):
         self.mod.gds_write_file(self.gds)
         # now write an instance of my module/structure
         new_layout.addInstance(self.gds,
+                               self.mod.name,
                                offsetInMicrons=self.offset,
                                mirror=self.mirror,
                                rotate=self.rotate)
         
     def place(self, offset, mirror="R0", rotate=0):
         """ This updates the placement of an instance. """
-        debug.info(3, "placing instance {}".format(self.name))
         # Update the placement of an already added instance
         self.offset = vector(offset).snap_to_grid()
         self.mirror = mirror
         self.rotate = rotate
         self.update_boundary()
+        debug.info(3, "placing instance {}".format(self))
         
     
     def get_pin(self,name,index=-1):

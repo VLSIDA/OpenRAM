@@ -495,6 +495,16 @@ class pin_group:
         self.grids = pg1.grids | pg2.grids # OR the set of grid locations
         self.secondary_grids = pg1.secondary_grids | pg2.secondary_grids
 
+    def add_group(self, pg):
+        """
+        Combine the pin group into this one. This will add to the first item in the pins
+        so this should be used before there are disconnected pins.
+        """
+        debug.check(len(self.pins)==1,"Don't know which group to add pins to.")
+        self.pins[0].update(*pg.pins) # Join the two lists of pins
+        self.grids |= pg.grids # OR the set of grid locations
+        self.secondary_grids |= pg.secondary_grids
+        
     def add_enclosure(self, cell):
         """
         Add the enclosure shape to the given cell.

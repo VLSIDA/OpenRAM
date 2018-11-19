@@ -62,6 +62,26 @@ class pin_layout:
         else:
             return False    
 
+    def bbox(self, pin_list):
+        """
+        Given a list of layout pins, create a bounding box layout.
+        """
+        (ll, ur) = self.rect        
+        min_x = ll.x
+        max_x = ur.x
+        min_y = ll.y
+        max_y = ur.y
+
+        filtered_list = [x for x in pin_list if x != None]
+        debug.check(len(filtered_list)>0,"Cannot find bbox of empty list.")
+        for pin in filtered_list:
+            min_x = min(min_x, pin.ll().x)
+            max_x = max(max_x, pin.ur().x)
+            min_y = min(min_y, pin.ll().y)
+            max_y = max(max_y, pin.ur().y)
+
+        self.rect = [vector(min_x,min_y),vector(max_x,max_y)]
+             
     def inflate(self, spacing=None):
         """ 
         Inflate the rectangle by the spacing (or other rule) 

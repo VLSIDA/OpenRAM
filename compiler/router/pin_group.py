@@ -464,14 +464,15 @@ class pin_group:
                 # If it is contained, it won't need a connector
                 if pin.contained_by_any(self.enclosures):
                     continue
-                
+
                 left_connector = self.find_left_connector(pin, self.enclosures)
                 right_connector = self.find_right_connector(pin, self.enclosures)
                 above_connector = self.find_above_connector(pin, self.enclosures)
                 below_connector = self.find_below_connector(pin, self.enclosures)
-                for connector in [left_connector, right_connector, above_connector, below_connector]:
-                    if connector:
-                        self.enclosures.append(connector)
+                import copy
+                bbox_connector =  copy.copy(pin)
+                bbox_connector.bbox([left_connector, right_connector, above_connector, below_connector])
+                self.enclosures.append(bbox_connector)
 
         # Now, make sure each pin touches an enclosure. If not, add a connector.
         # This could only happen when there was no enclosure in any cardinal direction from a pin

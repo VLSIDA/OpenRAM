@@ -48,7 +48,7 @@ class datasheet():
                 self.html += row
             self.html +='-->'
 
-        self.html +=   '<img src=' + os.path.abspath(os.environ.get("OPENRAM_HOME")) + '/datasheet/assets/vlsi_logo.png alt="VLSIDA"><img src=' + os.path.abspath(os.environ.get("OPENRAM_HOME")) + '/datasheet/assets/openram_logo_placeholder.png alt="OpenRAM">'
+        self.html +=   '<a href="https://vlsida.soe.ucsc.edu/"><img src=' + os.path.abspath(os.environ.get("OPENRAM_HOME")) + '/datasheet/assets/vlsi_logo.png alt="VLSIDA"></a><a href="https://vlsida.github.io/OpenRAM"><img src=' + os.path.abspath(os.environ.get("OPENRAM_HOME")) + '/datasheet/assets/openram_logo_placeholder.png alt="OpenRAM"></a>'
          
 
 

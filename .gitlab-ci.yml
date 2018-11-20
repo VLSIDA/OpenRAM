@@ -1,6 +1,6 @@
 before_script:
-    - export OPENRAM_HOME="$(pwd)/compiler"
-    - export OPENRAM_TECH="$(pwd)/technology"
+    - export OPENRAM_HOME="`pwd`/compiler"
+    - export OPENRAM_TECH="`pwd`/technology"
 
 freepdk45:
   script: 

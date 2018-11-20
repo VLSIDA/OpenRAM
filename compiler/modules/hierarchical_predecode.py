@@ -267,7 +267,7 @@ class hierarchical_predecode(design.design):
 
         # Find the x offsets for where the vias/pins should be placed
         in_xoffset = self.in_inst[0].rx()
-        out_xoffset = self.inv_inst[0].lx()
+        out_xoffset = self.inv_inst[0].lx() - self.m1_space
         for num in range(0,self.number_of_outputs):
             # this will result in duplicate polygons for rails, but who cares
             

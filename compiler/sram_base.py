@@ -217,29 +217,6 @@ class sram_base(design):
         c = reload(__import__(OPTS.bitcell))
         self.mod_bitcell = getattr(c, OPTS.bitcell)
         self.bitcell = self.mod_bitcell()
-# <<<<<<< HEAD
-# =======
-        
-        # c = reload(__import__(OPTS.control_logic))
-        # self.mod_control_logic = getattr(c, OPTS.control_logic)
-        
-        # # Create the control logic module for each port type
-        # if len(self.readwrite_ports)>0:
-            # self.control_logic_rw = self.mod_control_logic(num_rows=self.num_rows,
-                                                           # words_per_row=self.words_per_row,
-                                                           # port_type="rw")
-            # self.add_mod(self.control_logic_rw)
-        # if len(self.write_ports)>0:
-            # self.control_logic_w = self.mod_control_logic(num_rows=self.num_rows,
-                                                          # words_per_row=self.words_per_row,
-                                                          # port_type="w")
-            # self.add_mod(self.control_logic_w)
-        # if len(self.read_ports)>0:
-            # self.control_logic_r = self.mod_control_logic(num_rows=self.num_rows,
-                                                          # words_per_row=self.words_per_row,
-                                                          # port_type="r")
-            # self.add_mod(self.control_logic_r)
-# >>>>>>> dev
 
         # Create the address and control flops (but not the clk)
         from dff_array import dff_array
@@ -283,13 +260,13 @@ class sram_base(design):
                                                            sram=self, 
                                                            port_type="rw")
             self.add_mod(self.control_logic_rw)
-        if len(self.write_ports)>0:
+        if len(self.writeonly_ports)>0:
             self.control_logic_w = self.mod_control_logic(num_rows=self.num_rows, 
                                                           words_per_row=self.words_per_row,
                                                           sram=self, 
                                                           port_type="w")
             self.add_mod(self.control_logic_w)
-        if len(self.read_ports)>0:
+        if len(self.readonly_ports)>0:
             self.control_logic_r = self.mod_control_logic(num_rows=self.num_rows, 
                                                           words_per_row=self.words_per_row,
                                                           sram=self, 

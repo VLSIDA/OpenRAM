@@ -73,8 +73,10 @@ class sram_1bank(sram_base):
         self.control_logic_insts[port].place(control_pos[port])
         
         # The row address bits are placed above the control logic aligned on the right.
-        row_addr_pos[port] = vector(self.control_logic_insts[port].rx() - self.row_addr_dff_insts[port].width,
-                                    self.control_logic_insts[port].uy())
+        x_offset = self.control_logic_insts[port].rx() - self.row_addr_dff_insts[port].width
+        # It is aove the control logic but below the top of the bitcell array
+        y_offset = max(self.control_logic_insts[port].uy(), self.bank.bank_array_ur.y - self.row_addr_dff_insts[port].height)
+        row_addr_pos[port] = vector(x_offset, y_offset)
         self.row_addr_dff_insts[port].place(row_addr_pos[port])
         
         # Add the col address flops below the bank to the left of the lower-left of bank array
@@ -103,8 +105,10 @@ class sram_1bank(sram_base):
             self.control_logic_insts[port].place(control_pos[port], mirror="MY")
         
             # The row address bits are placed above the control logic aligned on the left.
-            row_addr_pos[port] = vector(control_pos[port].x - self.control_logic_insts[port].width + self.row_addr_dff_insts[port].width,
-                                        self.control_logic_insts[port].uy())
+            x_offset = control_pos[port].x - self.control_logic_insts[port].width + self.row_addr_dff_insts[port].width
+            # It is above the control logic but below the top of the bitcell array
+            y_offset = max(self.control_logic_insts[port].uy(), self.bank.bank_array_ur.y - self.row_addr_dff_insts[port].height)
+            row_addr_pos[port] = vector(x_offset, y_offset)
             self.row_addr_dff_insts[port].place(row_addr_pos[port], mirror="MY")
         
             # Add the col address flops above the bank to the right of the upper-right of bank array

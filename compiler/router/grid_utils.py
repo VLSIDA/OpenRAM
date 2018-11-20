@@ -3,6 +3,7 @@ Some utility functions for sets of grid cells.
 """
 
 import debug
+import math
 from direction import direction
 from vector3d import vector3d
 
@@ -139,3 +140,16 @@ def flatten_set(curset):
         else:
             newset.update(flatten_set(c))
     return newset
+
+
+    
+def distance_set(coord, curset):
+    """
+    Return the distance from a coordinate to any item in the set
+    """
+    min_dist = math.inf
+    for c in curset:
+        min_dist = min(coord.euclidean_distance(c), min_dist)
+
+    return min_dist
+        

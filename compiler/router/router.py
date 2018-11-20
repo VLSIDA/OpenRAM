@@ -515,7 +515,7 @@ class router(router_tech):
         # scale the size bigger to include neaby tracks
         ll=ll.scale(self.track_factor).floor()
         ur=ur.scale(self.track_factor).ceil()
-
+        #print(pin)
         # Keep tabs on tracks with sufficient and insufficient overlap
         sufficient_list = set()
         insufficient_list = set()
@@ -529,23 +529,22 @@ class router(router_tech):
                 if partial_overlap:
                     insufficient_list.update([partial_overlap])
                 debug.info(4,"Converting [ {0} , {1} ] full={2} partial={3}".format(x,y, full_overlap, partial_overlap))
-                    
 
+        # Remove the blocked grids 
+        sufficient_list.difference_update(self.blocked_grids)
+        insufficient_list.difference_update(self.blocked_grids)
+        
         if len(sufficient_list)>0:
             return sufficient_list
         elif expansion==0 and len(insufficient_list)>0:
-            #Remove blockages and return any overlap
-            insufficient_list.difference_update(self.blocked_grids)
             best_pin = self.get_all_offgrid_pin(pin, insufficient_list)
+            #print(best_pin)
             return best_pin
         elif expansion>0:
-            #Remove blockages and return the nearest
-            insufficient_list.difference_update(self.blocked_grids)
-            nearest_pin = self.get_nearest_offgrid_pin(pin, insufficient_list)
+            nearest_pin = self.get_furthest_offgrid_pin(pin, insufficient_list)
             return nearest_pin
         else:
-            debug.error("Unable to find any overlapping grids.", -1)
-            
+            return set()
 
     def get_all_offgrid_pin(self, pin, insufficient_list):
         """ 
@@ -585,6 +584,23 @@ class router(router_tech):
             
         return set([best_coord])
     
+    def get_furthest_offgrid_pin(self, pin, insufficient_list):
+        """ 
+        Get a grid cell that is the furthest from the blocked grids.
+        """
+        
+        #print("INSUFFICIENT LIST",insufficient_list)
+        # Find the coordinate with the most overlap
+        best_coord = None
+        best_dist = math.inf
+        for coord in insufficient_list:
+            min_dist = grid_utils.distance_set(coord, self.blocked_grids)
+            if min_dist<best_dist:
+                best_dist=min_dist
+                best_coord=coord
+            
+        return set([best_coord])
+
     def get_nearest_offgrid_pin(self, pin, insufficient_list):
         """ 
         Given a pin and a list of grid cells (probably non-overlapping),

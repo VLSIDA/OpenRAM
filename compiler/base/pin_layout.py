@@ -343,7 +343,7 @@ class pin_layout:
         (r2_ll,r2_ur) = other.rect
 
         def dist(x1, y1, x2, y2):
-            return sqrt((x2-x1)**2 + (y2-y1)**2)
+            return math.sqrt((x2-x1)**2 + (y2-y1)**2)
         
         left = r2_ur.x < r1_ll.x
         right = r1_ur.x < r2_ll.x

@@ -164,8 +164,12 @@ class vector3d():
         return vector3d(min(self.x,other.x),min(self.y,other.y),min(self.z,other.z))
 
     def distance(self, other):
-        """ Return the planar distance between two values """
+        """ Return the manhattan distance between two values """
         return abs(self.x-other.x)+abs(self.y-other.y)
+
+    def euclidean_distance(self, other):
+        """ Return the euclidean distance between two values """
+        return math.sqrt((self.x-other.x)**2+(self.y-other.y)**2)
     
 
     def adjacent(self, other):

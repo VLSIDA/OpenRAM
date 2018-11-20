@@ -104,16 +104,15 @@ class control_logic(design.design):
             delay_stages_heuristic, delay_fanout_heuristic = self.get_heuristic_delay_chain_size()
             bitcell_loads = int(math.ceil(self.num_rows / 2.0))
             self.replica_bitline = replica_bitline([delay_fanout_heuristic]*delay_stages_heuristic, bitcell_loads, name="replica_bitline_"+self.port_type)
-            self.set_sen_wl_delays()
             
-            if self.sram != None and not self.does_sen_rise_fall_timing_match():
+            if self.sram != None and not self.does_sen_total_timing_match(): #check condition based on resizing method
                 #This resizes to match fall and rise delays, can make the delay chain weird sizes.
-                stage_list = self.get_dynamic_delay_fanout_list(delay_stages_heuristic, delay_fanout_heuristic)
-                self.replica_bitline = replica_bitline(stage_list, bitcell_loads, name="replica_bitline_resized_"+self.port_type)
+                # stage_list = self.get_dynamic_delay_fanout_list(delay_stages_heuristic, delay_fanout_heuristic)
+                # self.replica_bitline = replica_bitline(stage_list, bitcell_loads, name="replica_bitline_resized_"+self.port_type)
                 
                 #This resizes based on total delay. 
-                # delay_stages, delay_fanout = self.get_dynamic_delay_chain_size(delay_stages_heuristic, delay_fanout_heuristic)
-                # self.replica_bitline = replica_bitline([delay_fanout]*delay_stages, bitcell_loads, name="replica_bitline_resized_"+self.port_type)
+                delay_stages, delay_fanout = self.get_dynamic_delay_chain_size(delay_stages_heuristic, delay_fanout_heuristic)
+                self.replica_bitline = replica_bitline([delay_fanout]*delay_stages, bitcell_loads, name="replica_bitline_resized_"+self.port_type)
                 
                 self.sen_delay_rise,self.sen_delay_fall = self.get_delays_to_sen() #get the new timing
                 
@@ -142,6 +141,7 @@ class control_logic(design.design):
         
     def does_sen_rise_fall_timing_match(self):
         """Compare the relative rise/fall delays of the sense amp enable and wordline"""
+        self.set_sen_wl_delays()
         #This is not necessarily more reliable than total delay in some cases.
         if (self.wl_delay_rise*self.wl_timing_tolerance >= self.sen_delay_rise or 
             self.wl_delay_fall*self.wl_timing_tolerance >= self.sen_delay_fall):
@@ -151,6 +151,7 @@ class control_logic(design.design):
     
     def does_sen_total_timing_match(self):
         """Compare the total delays of the sense amp enable and wordline"""
+        self.set_sen_wl_delays()
         #The sen delay must always be bigger than than the wl delay. This decides how much larger the sen delay must be before 
         #a re-size is warranted.
         if self.wl_delay*self.wl_timing_tolerance >= self.sen_delay:

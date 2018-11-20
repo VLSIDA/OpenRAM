@@ -1,6 +1,23 @@
+stages:
+  - test
+  - analyze
+
 freepdk45:
-  script: "/home/gitlab-runner/regress_freepdk45.sh"
+  stage: test
+  script: 
+	- /home/gitlab-runner/regress_freepdk45.sh
 
 scn4m_subm:
-  script: "/home/gitlab-runner/regress_scn4m_subm.sh"
+  stage: test
+  script: 
+	- /home/gitlab-runner/regress_scn4m_subm.sh
 
+analyze:
+  stage: analyze
+  script:
+	- coverage report -m
+  artifacts:
+    paths:
+      - public
+    expire_in: 30 days
+  coverage: '/TOTAL.+ ([0-9]{1,3}%)/'

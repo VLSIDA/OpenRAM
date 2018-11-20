@@ -1,4 +1,5 @@
 before_script:
+    - . /home/gitlab-runner/setup-paths.sh 
     - export OPENRAM_HOME="`pwd`/compiler"
     - export OPENRAM_TECH="`pwd`/technology"
 

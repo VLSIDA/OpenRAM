@@ -1,10 +1,10 @@
 freepdk45:
   script: 
-	- /home/gitlab-runner/regress_freepdk45.sh
+    - /home/gitlab-runner/regress_freepdk45.sh
 
 scn4m_subm:
   script: 
-	- /home/gitlab-runner/regress_scn4m_subm.sh
-	- coverage report -m
+    - /home/gitlab-runner/regress_scn4m_subm.sh
+    - coverage report -m
   coverage: '/TOTAL.+ ([0-9]{1,3}%)/'
 

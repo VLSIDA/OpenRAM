@@ -12,11 +12,13 @@ class dff_buf(design.design):
     with two inverters, of variable size, to provide q
     and qbar. This is to enable driving large fanout loads.
     """
-
+    unique_id = 1
+    
     def __init__(self, inv1_size=2, inv2_size=4, name=""):
 
         if name=="":
-            name = "dff_buf_{0}_{1}".format(inv1_size, inv2_size)
+            name = "dff_buf_{0}".format(dff_buf.unique_id)
+            dff_buf.unique_id += 1
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(self.name))
 

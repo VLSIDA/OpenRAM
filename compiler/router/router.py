@@ -9,9 +9,10 @@ from pin_layout import pin_layout
 from pin_group import pin_group
 from vector import vector
 from vector3d import vector3d 
-from globals import OPTS
+from globals import OPTS,print_time
 from pprint import pformat
 import grid_utils
+from datetime import datetime
 
 class router(router_tech):
     """
@@ -31,16 +32,18 @@ class router(router_tech):
 
         # If didn't specify a gds blockage file, write it out to read the gds
         # This isn't efficient, but easy for now
+        #start_time = datetime.now()
         if not gds_filename:
             gds_filename = OPTS.openram_temp+"temp.gds"
             self.cell.gds_write(gds_filename)
-        
+
         # Load the gds file and read in all the shapes
         self.layout = gdsMill.VlsiLayout(units=GDS["unit"])
         self.reader = gdsMill.Gds2reader(self.layout)
         self.reader.loadFromFile(gds_filename)
         self.top_name = self.layout.rootStructureName
-        
+        #print_time("GDS read",datetime.now(), start_time)
+            
         ### The pin data structures
         # A map of pin names to a set of pin_layout structures
         self.pins = {}
@@ -127,8 +130,12 @@ class router(router_tech):
         Pin can either be a label or a location,layer pair: [[x,y],layer].
         """
         debug.info(1,"Finding pins for {}.".format(pin_name))
+        #start_time = datetime.now()
         self.retrieve_pins(pin_name)
+        #print_time("Retrieved pins",datetime.now(), start_time)        
+        #start_time = datetime.now()
         self.analyze_pins(pin_name)
+        #print_time("Analyzed pins",datetime.now(), start_time)                
 
     def find_blockages(self):
         """
@@ -152,97 +159,98 @@ class router(router_tech):
             self.find_pins(pin)
 
         # This will get all shapes as blockages and convert to grid units
-        # This ignores shapes that were pins 
+        # This ignores shapes that were pins
+        #start_time = datetime.now()
         self.find_blockages()
+        #print_time("Find blockags",datetime.now(), start_time)                
 
         # Convert the blockages to grid units
+        #start_time = datetime.now()
         self.convert_blockages()
+        #print_time("Find blockags",datetime.now(), start_time)
         
         # This will convert the pins to grid units
         # It must be done after blockages to ensure no DRCs between expanded pins and blocked grids
+        #start_time = datetime.now()
         for pin in pin_list:
             self.convert_pins(pin)
-
+        #print_time("Convert pins",datetime.now(), start_time)
+        
+        #start_time = datetime.now()
         for pin in pin_list:
             self.combine_adjacent_pins(pin)
+        #print_time("Combine pins",datetime.now(), start_time)
         #self.write_debug_gds("debug_combine_pins.gds",stop_program=True)
 
         # Separate any adjacent grids of differing net names to prevent wide metal DRC violations
         # Must be done before enclosing pins
+        #start_time = datetime.now()
         self.separate_adjacent_pins(self.supply_rail_space_width)
+        #print_time("Separate pins",datetime.now(), start_time)
         # For debug
         #self.separate_adjacent_pins(1)
         
         # Enclose the continguous grid units in a metal rectangle to fix some DRCs
+        #start_time = datetime.now()
         self.enclose_pins()
+        #print_time("Enclose pins",datetime.now(), start_time)
         #self.write_debug_gds("debug_enclose_pins.gds",stop_program=True)
 
         
-    def combine_adjacent_pins_pass(self, pin_name):
+    def combine_adjacent_pins(self, pin_name):
         """
         Find pins that have adjacent routing tracks and merge them into a
         single pin_group.  The pins themselves may not be touching, but 
         enclose_pis in the next step will ensure they are touching.
         """        
-
-        # Make a copy since we are going to add to (and then reduce) this list
-        pin_groups = self.pin_groups[pin_name].copy()
-        
-        # Start as None to signal the first iteration
-        remove_indices = set()
-            
+        debug.info(1,"Combining adjacent pins for {}.".format(pin_name))        
+        # Find all adjacencies
+        adjacent_pins = {}
         for index1,pg1 in enumerate(self.pin_groups[pin_name]):
-            # Cannot combine more than once
-            if index1 in remove_indices:
-                continue
             for index2,pg2 in enumerate(self.pin_groups[pin_name]):
-                # Cannot combine with yourself
-                if index1==index2:
+                # Cannot combine with yourself, also don't repeat 
+                if index1<=index2:
                     continue
-                # Cannot combine more than once
-                if index2 in remove_indices:
-                    continue
-
                 # Combine if at least 1 grid cell is adjacent
                 if pg1.adjacent(pg2):
-                    combined = pin_group(pin_name, [], self)
-                    combined.combine_groups(pg1, pg2)
-                    debug.info(3,"Combining {0} {1} {2}:".format(pin_name, index1, index2))
-                    debug.info(3, "     {0}\n  {1}".format(pg1.pins, pg2.pins))
-                    debug.info(3,"  --> {0}\n      {1}".format(combined.pins,combined.grids))
-                    remove_indices.update([index1,index2])
-                    pin_groups.append(combined)
-                    break
+                    if not index1 in adjacent_pins.keys():
+                        adjacent_pins[index1] = set([index2])
+                    else:
+                        adjacent_pins[index1].add(index2)
 
-        # Remove them in decreasing order to not invalidate the indices
-        debug.info(4,"Removing {}".format(sorted(remove_indices)))
-        for i in sorted(remove_indices, reverse=True):
-            del pin_groups[i]
-
-        # Use the new pin group!
-        self.pin_groups[pin_name] = pin_groups
+        # Make a list of indices to ensure every group gets in the new set
+        all_indices = set([x for x in range(len(self.pin_groups[pin_name]))])
         
-        removed_pairs = int(len(remove_indices)/2)
-        debug.info(1, "Combined {0} pin pairs for {1}".format(removed_pairs,pin_name))
+        # Now reconstruct the new groups
+        new_pin_groups = []
+        for index1,index2_set in adjacent_pins.items():
+            # Remove the indices if they are added to the new set
+            all_indices.discard(index1)
+            all_indices.difference_update(index2_set)
+
+            # Create the combined group starting with the first item
+            combined = self.pin_groups[pin_name][index1]
+            # Add all of the other items that overlapped
+            for index2 in index2_set:
+                pg = self.pin_groups[pin_name][index2]
+                combined.add_group(pg)
+                debug.info(3,"Combining {0} {1}:".format(pin_name, index2))
+                debug.info(3, "     {0}\n  {1}".format(combined.pins, pg.pins))
+                debug.info(3,"  --> {0}\n      {1}".format(combined.pins,combined.grids))
+                new_pin_groups.append(combined)
+
+        # Add the pin groups that weren't added to the new set
+        for index in all_indices:
+            new_pin_groups.append(self.pin_groups[pin_name][index])
+
+        old_size = len(self.pin_groups[pin_name])   
+        # Use the new pin group!
+        self.pin_groups[pin_name] = new_pin_groups
+        removed_pairs = old_size - len(new_pin_groups)
+        debug.info(1, "Combined {0} pin groups for {1}".format(removed_pairs,pin_name))
         
         return removed_pairs
             
-    def combine_adjacent_pins(self, pin_name):
-        """
-        Make multiple passes of the combine adjacent pins until we have no
-        more combinations or hit an iteration limit.
-        """
-        debug.info(1,"Combining adjacent pins for {}.".format(pin_name))        
-        # Start as None to signal the first iteration
-        num_removed_pairs = None
-
-        # Just used in case there's a circular combination or something weird
-        for iteration_count in range(10):
-            num_removed_pairs = self.combine_adjacent_pins_pass(pin_name)
-            if num_removed_pairs==0:
-                break
-        else:
-            debug.warning("Did not converge combining adjacent pins in supply router.")
 
     def separate_adjacent_pins(self, separation):
         """
@@ -271,7 +279,7 @@ class router(router_tech):
         debug.info(1,"Comparing {0} and {1} adjacency".format(pin_name1, pin_name2))
         for index1,pg1 in enumerate(self.pin_groups[pin_name1]):
             for index2,pg2 in enumerate(self.pin_groups[pin_name2]):
-                # FIXME: Use separation distance and edge grids only
+                # FIgXME: Use separation distance and edge grids only
                 grids_g1, grids_g2 = pg1.adjacent_grids(pg2, separation)
                 # These should have the same length, so...
                 if len(grids_g1)>0:
@@ -507,7 +515,7 @@ class router(router_tech):
         # scale the size bigger to include neaby tracks
         ll=ll.scale(self.track_factor).floor()
         ur=ur.scale(self.track_factor).ceil()
-
+        #print(pin)
         # Keep tabs on tracks with sufficient and insufficient overlap
         sufficient_list = set()
         insufficient_list = set()
@@ -515,35 +523,50 @@ class router(router_tech):
         zindex=self.get_zindex(pin.layer_num)
         for x in range(int(ll[0])+expansion,int(ur[0])+1+expansion):
             for y in range(int(ll[1]+expansion),int(ur[1])+1+expansion):
-                debug.info(4,"Converting [ {0} , {1} ]".format(x,y))
                 (full_overlap,partial_overlap) = self.convert_pin_coord_to_tracks(pin, vector3d(x,y,zindex))
                 if full_overlap:
                     sufficient_list.update([full_overlap])
                 if partial_overlap:
                     insufficient_list.update([partial_overlap])
+                debug.info(4,"Converting [ {0} , {1} ] full={2} partial={3}".format(x,y, full_overlap, partial_overlap))
 
+        # Remove the blocked grids 
+        sufficient_list.difference_update(self.blocked_grids)
+        insufficient_list.difference_update(self.blocked_grids)
+        
         if len(sufficient_list)>0:
             return sufficient_list
         elif expansion==0 and len(insufficient_list)>0:
-            #Remove blockages and return the best to be patched
-            insufficient_list.difference_update(self.blocked_grids)
-            return self.get_best_offgrid_pin(pin, insufficient_list)
+            best_pin = self.get_all_offgrid_pin(pin, insufficient_list)
+            #print(best_pin)
+            return best_pin
         elif expansion>0:
-            #Remove blockages and return the nearest
-            insufficient_list.difference_update(self.blocked_grids)
-            return self.get_nearest_offgrid_pin(pin, insufficient_list)
+            nearest_pin = self.get_furthest_offgrid_pin(pin, insufficient_list)
+            return nearest_pin
         else:
-            debug.error("Unable to find any overlapping grids.", -1)
+            return set()
+
+    def get_all_offgrid_pin(self, pin, insufficient_list):
+        """ 
+        Find a list of all pins with some overlap.
+        """
+        #print("INSUFFICIENT LIST",insufficient_list)
+        # Find the coordinate with the most overlap
+        any_overlap = set()
+        for coord in insufficient_list:
+            full_pin = self.convert_track_to_pin(coord)
+            # Compute the overlap with that rectangle
+            overlap_rect=pin.compute_overlap(full_pin)
+            # Determine the max x or y overlap
+            max_overlap = max(overlap_rect)
+            if max_overlap>0:
+                any_overlap.update([coord])
             
+        return any_overlap
 
     def get_best_offgrid_pin(self, pin, insufficient_list):
         """ 
-        Given a pin and a list of partial overlap grids:
-        1) Find the unblocked grids.
-        2) If one, use it.
-        3) If not, find the greatest overlap.
-        4) Add a pin with the most overlap to make it "on grid"
-        that is not blocked.
+        Find a list of the single pin with the most overlap.
         """
         #print("INSUFFICIENT LIST",insufficient_list)
         # Find the coordinate with the most overlap
@@ -557,6 +580,23 @@ class router(router_tech):
             min_overlap = min(overlap_rect)
             if min_overlap>best_overlap:
                 best_overlap=min_overlap
+                best_coord=coord
+            
+        return set([best_coord])
+    
+    def get_furthest_offgrid_pin(self, pin, insufficient_list):
+        """ 
+        Get a grid cell that is the furthest from the blocked grids.
+        """
+        
+        #print("INSUFFICIENT LIST",insufficient_list)
+        # Find the coordinate with the most overlap
+        best_coord = None
+        best_dist = math.inf
+        for coord in insufficient_list:
+            min_dist = grid_utils.distance_set(coord, self.blocked_grids)
+            if min_dist<best_dist:
+                best_dist=min_dist
                 best_coord=coord
             
         return set([best_coord])

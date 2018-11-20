@@ -464,16 +464,23 @@ class pin_group:
                 # If it is contained, it won't need a connector
                 if pin.contained_by_any(self.enclosures):
                     continue
-                
+
+                # Find a connector in the cardinal directions
+                # If there is overlap, but it isn't contained, these could all be None
+                # These could also be none if the pin is diagonal from the enclosure
                 left_connector = self.find_left_connector(pin, self.enclosures)
                 right_connector = self.find_right_connector(pin, self.enclosures)
                 above_connector = self.find_above_connector(pin, self.enclosures)
                 below_connector = self.find_below_connector(pin, self.enclosures)
-                for connector in [left_connector, right_connector, above_connector, below_connector]:
-                    if connector:
-                        self.enclosures.append(connector)
+                connector_list = [left_connector, right_connector, above_connector, below_connector]
+                filtered_list = list(filter(lambda x: x!=None, connector_list))
+                if (len(filtered_list)>0):
+                    import copy
+                    bbox_connector =  copy.copy(pin)
+                    bbox_connector.bbox(filtered_list)
+                    self.enclosures.append(bbox_connector)
 
-        # Now, make sure each pin touches an enclosure. If not, add a connector.
+        # Now, make sure each pin touches an enclosure. If not, add another (diagonal) connector.
         # This could only happen when there was no enclosure in any cardinal direction from a pin
         for pin_list in self.pins:
             if not self.overlap_any_shape(pin_list, self.enclosures):
@@ -495,6 +502,16 @@ class pin_group:
         self.grids = pg1.grids | pg2.grids # OR the set of grid locations
         self.secondary_grids = pg1.secondary_grids | pg2.secondary_grids
 
+    def add_group(self, pg):
+        """
+        Combine the pin group into this one. This will add to the first item in the pins
+        so this should be used before there are disconnected pins.
+        """
+        debug.check(len(self.pins)==1,"Don't know which group to add pins to.")
+        self.pins[0].update(*pg.pins) # Join the two lists of pins
+        self.grids |= pg.grids # OR the set of grid locations
+        self.secondary_grids |= pg.secondary_grids
+        
     def add_enclosure(self, cell):
         """
         Add the enclosure shape to the given cell.
@@ -585,7 +602,7 @@ class pin_group:
         
         # At least one of the groups must have some valid tracks
         if (len(pin_set)==0 and len(blockage_set)==0):
-            debug.warning("Pin is very close to metal blockage.\nAttempting to expand blocked pin {}".format(self.pins))
+            #debug.warning("Pin is very close to metal blockage.\nAttempting to expand blocked pin {}".format(self.pins))
             
             for pin_list in self.pins:
                 for pin in pin_list:
@@ -593,7 +610,7 @@ class pin_group:
                     # Determine which tracks the pin overlaps 
                     pin_in_tracks=self.router.convert_pin_to_tracks(self.name, pin, expansion=1)
                     pin_set.update(pin_in_tracks)
-
+                    
             if len(pin_set)==0:
                 debug.error("Unable to find unblocked pin {} {}".format(self.name, self.pins))
                 self.router.write_debug_gds("blocked_pin.gds")
@@ -639,7 +656,6 @@ class pin_group:
         that is ensured to overlap the supply rail wire.
         It then adds rectangle(s) for the enclosure.
         """
-        
         additional_set = set()
         # Check the layer of any element in the pin to determine which direction to route it
         e = next(iter(start_set))
@@ -662,4 +678,7 @@ class pin_group:
         # Add the polygon enclosures and set this pin group as routed
         self.set_routed()
         self.enclosures = self.compute_enclosures()
+
+
+        
 

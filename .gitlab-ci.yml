@@ -8,7 +8,7 @@ freepdk45:
 
 scn4m_subm:
   script: 
-    - $OPENRAM_HOME/tests/regress.py -t scn4m_subm
+    - coverage run $OPENRAM_HOME/tests/regress.py -t scn4m_subm
     - coverage report -m
   coverage: '/TOTAL.+ ([0-9]{1,3}%)/'
   artifacts:

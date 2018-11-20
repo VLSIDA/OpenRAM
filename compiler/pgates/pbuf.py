@@ -32,10 +32,10 @@ class pbuf(design.design):
         # Shield the cap, but have at least a stage effort of 4
         input_size = max(1,int(driver_size/stage_effort))
         self.inv1 = pinv(size=input_size, height=height) # 1 
-        self.add_mod(self.inv)
+        self.add_mod(self.inv1)
         
         self.inv2 = pinv(size=driver_size, height=height) # 2
-        self.add_mod(self.inv1)
+        self.add_mod(self.inv2)
 
         self.width = self.inv1.width + self.inv2.width
         self.height = self.inv1.height
@@ -89,14 +89,6 @@ class pbuf(design.design):
                             offset=vdd_pin.ll().scale(0,1),
                             width=self.width,
                             height=vdd_pin.height())
-
-        # Continous vdd rail along with label.
-        gnd_pin=self.inv4_inst.get_pin("gnd")
-        self.add_layout_pin(text="gnd",
-                            layer="metal1",
-                            offset=gnd_pin.ll().scale(0,1),
-                            width=self.width,
-                            height=gnd_pin.height())
         
         # Continous gnd rail along with label.
         gnd_pin=self.inv1_inst.get_pin("gnd")

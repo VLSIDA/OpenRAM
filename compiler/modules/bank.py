@@ -1281,8 +1281,8 @@ class bank(design.design):
         """Get the relative capacitance of all the clk_bar connections in the bank"""
         #Current bank only uses clock bar (clk_buf_bar) as an enable for the precharge array.
         
-        #Assume single port
-        port = 0
+        #Precharges are the all the same in Mulitport, one is picked
+        port = self.read_ports[0]
         total_clk_bar_cin = self.precharge_array[port].get_en_cin()
         return total_clk_bar_cin 
 

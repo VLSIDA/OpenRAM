@@ -429,7 +429,6 @@ class delay(simulation):
             debug.info(2, "Check delay values for port {}".format(port))
             delay_names = [mname for mname in self.delay_meas_names]
             delays = self.parse_values(delay_names, port, 1e9) # scale delays to ns
-            debug.info(2,"Delay values = {}".format(delays))
             if not self.check_valid_delays(delays):
                 return (False,{})
             result[port].update(delays)

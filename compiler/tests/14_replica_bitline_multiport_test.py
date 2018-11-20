@@ -28,7 +28,7 @@ class replica_bitline_multiport_test(openram_test):
         OPTS.num_w_ports = 0
         
         debug.info(2, "Testing 1rw 1r RBL with {0} FO4 stages, {1} rows".format(stages,rows))
-        a = replica_bitline.replica_bitline(stages,fanout,rows)
+        a = replica_bitline.replica_bitline(stages*[fanout],rows)
         self.local_check(a)
         
         # check replica bitline in pbitcell multi-port
@@ -39,7 +39,7 @@ class replica_bitline_multiport_test(openram_test):
         OPTS.num_r_ports = 0
         
         debug.info(2, "Testing RBL pbitcell 1rw with {0} FO4 stages, {1} rows".format(stages,rows))
-        a = replica_bitline.replica_bitline(stages,fanout,rows)
+        a = replica_bitline.replica_bitline(stages*[fanout],rows)
         self.local_check(a)
 
         OPTS.num_rw_ports = 1
@@ -47,7 +47,7 @@ class replica_bitline_multiport_test(openram_test):
         OPTS.num_r_ports = 1
         
         debug.info(2, "Testing RBL pbitcell 1rw 1w 1r with {0} FO4 stages, {1} rows".format(stages,rows))
-        a = replica_bitline.replica_bitline(stages,fanout,rows)
+        a = replica_bitline.replica_bitline(stages*[fanout],rows)
         self.local_check(a)
         
         globals.end_openram()

@@ -51,27 +51,27 @@ class timing_sram_test(openram_test):
         
         #Assumes single rw port (6t sram)
         if OPTS.tech_name == "freepdk45":
-            golden_data = {'delay_hl': [2.5829000000000004],
-                            'delay_lh': [0.2255964],
-                            'leakage_power': 0.0019498999999999996,
-                            'min_period': 4.844,
-                            'read0_power': [0.055371399999999994],
-                            'read1_power': [0.0520225],
-                            'slew_hl': [0.0794261],
-                            'slew_lh': [0.0236264],
-                            'write0_power': [0.06545659999999999],
-                            'write1_power': [0.057846299999999996]}
+            golden_data = {'delay_hl': [0.15801],
+                             'delay_lh': [0.15801],
+                             'leakage_power': 0.0023949,
+                             'min_period': 0.41,
+                             'read0_power': [0.628],
+                             'read1_power': [0.60328],
+                             'slew_hl': [0.092516],
+                             'slew_lh': [0.092516],
+                             'write0_power': [0.7510600000000001],
+                             'write1_power': [0.66619]}
         elif OPTS.tech_name == "scn4m_subm":
-            golden_data = {'delay_hl': [3.452],
-                            'delay_lh': [1.3792000000000002],
-                            'leakage_power': 0.0257065,
-                            'min_period': 4.688,
-                            'read0_power': [15.0755],
-                            'read1_power': [14.4526],
-                            'slew_hl': [0.6137363],
-                            'slew_lh': [0.3381045],
-                            'write0_power': [16.9203],
-                            'write1_power': [15.367]}
+            golden_data = {'delay_hl': [1.2],
+                         'delay_lh': [1.2],
+                         'leakage_power': 0.026912,
+                         'min_period': 2.891,
+                         'read0_power': [24.7996],
+                         'read1_power': [23.9464],
+                         'slew_hl': [0.7045815],
+                         'slew_lh': [0.7045815],
+                         'write0_power': [27.8985],
+                         'write1_power': [25.1812]}
         else:
             self.assertTrue(False) # other techs fail
         # Check if no too many or too few results

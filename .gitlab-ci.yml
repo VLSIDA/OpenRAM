@@ -1,6 +1,39 @@
+before_script:
+    - . /home/gitlab-runner/setup-paths.sh 
+    - export OPENRAM_HOME="`pwd`/compiler"
+    - export OPENRAM_TECH="`pwd`/technology"
+
+stages:
+  - test
+  - coverage
+    
 freepdk45:
-  script: "/home/gitlab-runner/regress_freepdk45.sh"
+  stage: test
+  script: 
+    - coverage run -p $OPENRAM_HOME/tests/regress.py -t freepdk45
+  artifacts:
+    paths:
+      - .coverage.*
+    expire_in: 1 week
 
 scn4m_subm:
-  script: "/home/gitlab-runner/regress_scn4m_subm.sh"
+  stage: test
+  script: 
+    - coverage run -p $OPENRAM_HOME/tests/regress.py -t scn4m_subm
+  artifacts:
+    paths:
+      - .coverage.*
+    expire_in: 1 week
+
+coverage:
+  stage: coverage
+  script:
+    - coverage combine
+    - coverage report
+    - coverage html -d coverage_html
+  artifacts:
+    paths:
+      - coverage_html
+    expire_in: 1 week
+  coverage: '/TOTAL.+ ([0-9]{1,3}%)/'
 

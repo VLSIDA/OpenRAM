@@ -1,8 +1,17 @@
 # OpenRAM
-Master: [![pipeline status](https://scone.soe.ucsc.edu:8888/mrg/OpenRAM/badges/master/pipeline.svg?private_token=ynB6rSFLzvKUseoBPcwV)](https://github.com/VLSIDA/OpenRAM/commits/master)
-Dev: [![pipeline status](https://scone.soe.ucsc.edu:8888/mrg/OpenRAM/badges/dev/pipeline.svg?private_token=ynB6rSFLzvKUseoBPcwV)](https://github.com/VLSIDA/OpenRAM/commits/dev)
-[![Download](images/download.svg)](https://github.com/VLSIDA/OpenRAM/archive/master.zip)
+
+[![Python 3.5](https://img.shields.io/badge/Python-3.5-green.svg)](https://www.python.org/)
 [![License: BSD 3-clause](./images/license_badge.svg)](./LICENSE)
+
+Master: 
+[![Pipeline Status](https://scone.soe.ucsc.edu:8888/mrg/OpenRAM/badges/master/pipeline.svg?private_token=ynB6rSFLzvKUseoBPcwV)](https://github.com/VLSIDA/OpenRAM/commits/master)
+![Coverage](https://scone.soe.ucsc.edu:8888/mrg/OpenRAM/badges/master/coverage.svg?private_token=ynB6rSFLzvKUseoBPcwV)
+[![Download](./images/download-stable-blue.svg)](https://github.com/VLSIDA/OpenRAM/archive/master.zip)
+
+Dev: 
+[![Pipeline Status](https://scone.soe.ucsc.edu:8888/mrg/OpenRAM/badges/dev/pipeline.svg?private_token=ynB6rSFLzvKUseoBPcwV)](https://github.com/VLSIDA/OpenRAM/commits/dev)
+![Coverage](https://scone.soe.ucsc.edu:8888/mrg/OpenRAM/badges/dev/coverage.svg?private_token=ynB6rSFLzvKUseoBPcwV)
+[![Download](./images/download-unstable-blue.svg)](https://github.com/VLSIDA/OpenRAM/archive/dev.zip)
 
 An open-source static random access memory (SRAM) compiler.
 
@@ -39,6 +48,12 @@ For example add this to your .bashrc:
   export OPENRAM_TECH="$HOME/openram/technology"
 ```
 
+You may also wish to add OPENRAM\_HOME to your PYTHONPATH:
+
+```
+  export PYTHONPATH="$PYTHONPATH:$OPENRAM_HOME"
+```
+
 We include the tech files necessary for [FreePDK45] and [SCMOS]
 SCN4M_SUBM. The [SCMOS] spice models, however, are generic and should
 be replaced with foundry models.  If you are using [FreePDK45], you
@@ -56,8 +71,7 @@ We have included the most recent SCN4M_SUBM design rules from [Qflow].
 # Basic Usage
 
 Once you have defined the environment, you can run OpenRAM from the command line 
-using a single configuration file written in Python. You may wish to add
-$OPENRAM\_HOME to your $PYTHONPATH.
+using a single configuration file written in Python. 
 
 For example, create a file called *myconfig.py* specifying the following
 parameters for your memory:
@@ -68,7 +82,7 @@ word_size = 2
 # Number of words in the memory
 num_words = 16
 
-# Technology to use in $OPENRAM\_TECH
+# Technology to use in $OPENRAM_TECH
 tech_name = "scn4m_subm"
 # Process corners to characterize
 process_corners = ["TT"]
@@ -88,7 +102,7 @@ output_name = "sram_{0}_{1}_{2}".format(word_size,num_words,tech_name)
 
 You can then run OpenRAM by executing:
 ```
-python3 $OPENRAM\_HOME/openram.py myconfig
+python3 $OPENRAM_HOME/openram.py myconfig
 ```
 You can see all of the options for the configuration file in
 $OPENRAM\_HOME/options.py
@@ -176,7 +190,7 @@ OpenRAM is licensed under the [BSD 3-clause License](./LICENSE).
 - [Matthew Guthaus] from [VLSIDA] created the OpenRAM project and is the lead architect.
 - [James Stine] from [VLSIARCH] co-founded the project.
 - Hunter Nichols maintains and updates the timing characterization.
-- Michael Grims created and maintains the multiport netlist code.
+- Michael Grimes created and maintains the multiport netlist code.
 - Jennifer Sowash is creating the OpenRAM IP library.
 - Jesse Cirimelli-Low created the datasheet generation.
 - Samira Ataei created early multi-bank layouts and control logic.
@@ -184,6 +198,8 @@ OpenRAM is licensed under the [BSD 3-clause License](./LICENSE).
 - Yusu Wang is porting parameterized cells to new technologies.
 - Brian Chen created early prototypes of the timing characterizer.
 - Jeff Butera created early prototypes of the bank layout.
+
+If I forgot to add you, please let me know!
 
 * * *
 
@@ -193,9 +209,9 @@ OpenRAM is licensed under the [BSD 3-clause License](./LICENSE).
 [VLSIARCH]:              https://vlsiarch.ecen.okstate.edu/
 [OpenRAMpaper]:          https://ieeexplore.ieee.org/document/7827670/
 
-[Github issues]:         https://github.com/OpenRAM/OpenRAM/issues
-[Github pull request]:   https://github.com/OpenRAM/OpenRAM/pulls
-[Github projects]:       https://github.com/OpenRAM/OpenRAM/projects
+[Github issues]:         https://github.com/VLSIDA/OpenRAM/issues
+[Github pull request]:   https://github.com/VLSIDA/OpenRAM/pulls
+[Github projects]:       https://github.com/VLSIDA/OpenRAM/projects
 
 [email me]:              mailto:mrg+openram@ucsc.edu
 [dev-group]:             mailto:openram-dev-group@ucsc.edu

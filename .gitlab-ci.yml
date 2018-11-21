@@ -3,17 +3,36 @@ before_script:
     - export OPENRAM_HOME="`pwd`/compiler"
     - export OPENRAM_TECH="`pwd`/technology"
 
+stages:
+  - test
+  - coverage
+    
 freepdk45:
+  stage: test
   script: 
-    - $OPENRAM_HOME/tests/regress.py -t freepdk45
-
-scn4m_subm:
-  script: 
-    - coverage run $OPENRAM_HOME/tests/regress.py -t scn4m_subm
-    - coverage report -m
-  coverage: '/TOTAL.+ ([0-9]{1,3}%)/'
+    - coverage run -p $OPENRAM_HOME/tests/regress.py -t freepdk45
   artifacts:
     paths:
-      - .coverage
+      - .coverage*
     expire_in: 1 week
+
+scn4m_subm:
+  stage: test
+  script: 
+    - coverage run -p $OPENRAM_HOME/tests/regress.py -t scn4m_subm
+  artifacts:
+    paths:
+      - .coverage*
+    expire_in: 1 week
+
+coverage:
+  stage: coverage
+  script:
+    - coverage combine
+    - coverage html -d coverage_html
+  artifacts:
+    paths:
+      - coverage_html
+    expire_in: 1 week
+  coverage: '/TOTAL.+ ([0-9]{1,3}%)/'
 

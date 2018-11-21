@@ -3,11 +3,13 @@
 [![Python 3.5](https://img.shields.io/badge/Python-3.5-green.svg)](https://www.python.org/)
 [![License: BSD 3-clause](./images/license_badge.svg)](./LICENSE)
 
-Master: [![Pipeline Status](https://scone.soe.ucsc.edu:8888/mrg/PrivateRAM/badges/master/pipeline.svg?private_token=ynB6rSFLzvKUseoBPcwV)](https://github.com/VLSIDA/PrivateRAM/commits/master)
+Master: 
+[![Pipeline Status](https://scone.soe.ucsc.edu:8888/mrg/PrivateRAM/badges/master/pipeline.svg?private_token=ynB6rSFLzvKUseoBPcwV)](https://github.com/VLSIDA/PrivateRAM/commits/master)
 ![Coverage](https://scone.soe.ucsc.edu:8888/mrg/PrivateRAM/badges/master/coverage.svg?job=coverage?private_token=ynB6rSFLzvKUseoBPcwV)
 [![Download](./images/download-stable-blue.svg)](https://github.com/VLSIDA/PrivateRAM/archive/master.zip)
 
-Dev: [![Pipeline Status](https://scone.soe.ucsc.edu:8888/mrg/PrivateRAM/badges/dev/pipeline.svg?private_token=ynB6rSFLzvKUseoBPcwV)](https://github.com/VLSIDA/PrivateRAM/commits/dev)
+Dev: 
+[![Pipeline Status](https://scone.soe.ucsc.edu:8888/mrg/PrivateRAM/badges/dev/pipeline.svg?private_token=ynB6rSFLzvKUseoBPcwV)](https://github.com/VLSIDA/PrivateRAM/commits/dev)
 ![Coverage](https://scone.soe.ucsc.edu:8888/mrg/PrivateRAM/badges/dev/coverage.svg?job=coverage?private_token=ynB6rSFLzvKUseoBPcwV)
 [![Download](./images/download-unstable-blue.svg)](https://github.com/VLSIDA/PrivateRAM/archive/dev.zip)
 

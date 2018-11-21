@@ -4,3 +4,12 @@ omit =
     */.local/*
     # omit everything in /usr
     /usr/*
+[paths]
+source =
+  /home/gitlab-runner/builds/2fd64746/0
+  /home/gitlab-runner/builds/2fd64746/1
+  /home/gitlab-runner/builds/2fd64746/2
+  /home/gitlab-runner/builds/2fd64746/3
+  /home/gitlab-runner/builds/2fd64746/4
+  /home/gitlab-runner/builds/2fd64746/5
+  

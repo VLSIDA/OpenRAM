@@ -13,7 +13,7 @@ freepdk45:
     - coverage run -p $OPENRAM_HOME/tests/regress.py -t freepdk45
   artifacts:
     paths:
-      - .coverage*
+      - .coverage.*
     expire_in: 1 week
 
 scn4m_subm:
@@ -22,7 +22,7 @@ scn4m_subm:
     - coverage run -p $OPENRAM_HOME/tests/regress.py -t scn4m_subm
   artifacts:
     paths:
-      - .coverage*
+      - .coverage.*
     expire_in: 1 week
 
 coverage:

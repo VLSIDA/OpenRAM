@@ -29,6 +29,7 @@ coverage:
   stage: coverage
   script:
     - coverage combine
+    - coverage report
     - coverage html -d coverage_html
   artifacts:
     paths:

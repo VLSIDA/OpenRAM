@@ -14,6 +14,7 @@ class sram():
     """
     def __init__(self, sram_config, name):
 
+        #sram_config.words_per_row = 1 #Disables column mux generation
         sram_config.compute_sizes()
         sram_config.set_local_config(self)
         

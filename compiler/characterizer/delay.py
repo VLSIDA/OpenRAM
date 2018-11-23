@@ -499,7 +499,7 @@ class delay(simulation):
         delays_str = "delay_hl={0} delay_lh={1}".format(delay_hl, delay_lh)
         slews_str = "slew_hl={0} slew_lh={1}".format(slew_hl,slew_lh)
         half_period = self.period/2 #high-to-low delays start at neg. clk edge, so they need to be less than half_period
-        if delay_hl>half_period or delay_lh>self.period or slew_hl>half_period or slew_lh>self.period:
+        if abs(delay_hl)>half_period or abs(delay_lh)>self.period or abs(slew_hl)>half_period or abs(slew_lh)>self.period:
             debug.info(2,"UNsuccessful simulation (in ns):\n\t\t{0}\n\t\t{1}\n\t\t{2}".format(period_load_slew_str,
                                                                                               delays_str,
                                                                                               slews_str))
@@ -584,6 +584,13 @@ class delay(simulation):
         #Check the values of target readwrite and read ports. Write ports do not produce delays in this current version
         for port in self.targ_read_ports:          
             for dname in self.delay_meas_names: #check that the delays and slews do not degrade with tested period.
+                
+                #FIXME: This is a hack solution to fix the min period search. The slew will always be based on the period when there
+                #is a column mux. Therefore, the checks are skipped for this condition. This is hard to solve without changing the netlist.
+                #Delays/slews based on the period will cause the min_period search to come to the wrong period.
+                if self.sram.col_addr_size>0 and "slew" in dname:
+                    continue
+            
                 if not relative_compare(results[port][dname],feasible_delays[port][dname],error_tolerance=0.05):
                     debug.info(2,"Delay too big {0} vs {1}".format(results[port][dname],feasible_delays[port][dname]))
                     return False
@@ -703,20 +710,27 @@ class delay(simulation):
                             measure_data[port][mname].append(value)
         return measure_data
     
-
-    def gen_test_cycles_one_port(self, read_port, write_port):
-        """Intended but not implemented: Returns a list of key time-points [ns] of the waveform (each rising edge)
-        of the cycles to do a timing evaluation of a single port. Current: Values overwritten for multiple calls"""
-
-        # Create the inverse address for a scratch address
+    def calculate_inverse_address(self):
+        """Determine dummy test address based on probe address and column mux size."""
+        #The inverse address needs to share the same bitlines as the probe address as the trimming will remove all other bitlines
+        #This is only an issue when there is a column mux and the address maps to different bitlines. 
+        column_addr = self.probe_address[:self.sram.col_addr_size] #do not invert this part
         inverse_address = ""
-        for c in self.probe_address:
+        for c in self.probe_address[self.sram.col_addr_size:]: #invert everything else
             if c=="0":
                 inverse_address += "1"
             elif c=="1":
                 inverse_address += "0"
             else:
                 debug.error("Non-binary address string",1)
+        return inverse_address+column_addr
+
+    def gen_test_cycles_one_port(self, read_port, write_port):
+        """Sets a list of key time-points [ns] of the waveform (each rising edge)
+        of the cycles to do a timing evaluation of a single port """
+
+        # Create the inverse address for a scratch address
+        inverse_address = self.calculate_inverse_address()
 
         # For now, ignore data patterns and write ones or zeros
         data_ones = "1"*self.word_size
@@ -726,36 +740,36 @@ class delay(simulation):
             self.add_noop_all_ports("Idle cycle (no positive clock edge)",
                       inverse_address, data_zeros)
         
-        self.add_write("W data 1 address 0..00",
+        self.add_write("W data 1 address {}".format(inverse_address),
                        inverse_address,data_ones,write_port) 
 
-        self.add_write("W data 0 address 11..11 to write value",
+        self.add_write("W data 0 address {} to write value".format(self.probe_address),
                        self.probe_address,data_zeros,write_port)
         self.measure_cycles[write_port]["write0"] = len(self.cycle_times)-1
         
         # This also ensures we will have a H->L transition on the next read
-        self.add_read("R data 1 address 00..00 to set DOUT caps",
+        self.add_read("R data 1 address {} to set DOUT caps".format(inverse_address),
                       inverse_address,data_zeros,read_port) 
 
-        self.add_read("R data 0 address 11..11 to check W0 worked",
+        self.add_read("R data 0 address {} to check W0 worked".format(self.probe_address),
                       self.probe_address,data_zeros,read_port)
         self.measure_cycles[read_port]["read0"] = len(self.cycle_times)-1              
         
         self.add_noop_all_ports("Idle cycle (if read takes >1 cycle)",
                       inverse_address,data_zeros)
 
-        self.add_write("W data 1 address 11..11 to write value",
+        self.add_write("W data 1 address {} to write value".format(self.probe_address),
                        self.probe_address,data_ones,write_port)
         self.measure_cycles[write_port]["write1"] = len(self.cycle_times)-1
 
-        self.add_write("W data 0 address 00..00 to clear DIN caps",
+        self.add_write("W data 0 address {} to clear DIN caps".format(inverse_address),
                        inverse_address,data_zeros,write_port)
 
         # This also ensures we will have a L->H transition on the next read
-        self.add_read("R data 0 address 00..00 to clear DOUT caps",
+        self.add_read("R data 0 address {} to clear DOUT caps".format(inverse_address),
                       inverse_address,data_zeros,read_port)
         
-        self.add_read("R data 1 address 11..11 to check W1 worked",
+        self.add_read("R data 1 address {} to check W1 worked".format(self.probe_address),
                       self.probe_address,data_zeros,read_port)
         self.measure_cycles[read_port]["read1"] = len(self.cycle_times)-1                
         

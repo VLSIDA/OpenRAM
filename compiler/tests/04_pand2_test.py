@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Run a regression test on a 2-row buffer cell
+Run a regression test on a pand2 cell
 """
 
 import unittest
@@ -11,17 +11,17 @@ import globals
 from globals import OPTS
 import debug
 
-class pbuf_test(openram_test):
+class pand2_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         global verify
         import verify
 
-        import pbuf
+        import pand2
 
-        debug.info(2, "Testing inverter/buffer 4x 8x")
-        a = pbuf.pbuf(8)
+        debug.info(2, "Testing pand2 gate 4x")
+        a = pand2.pand2(4)
         self.local_check(a)
 
         globals.end_openram()

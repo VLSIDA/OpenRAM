@@ -33,7 +33,6 @@ class pnand2(pgate.pgate):
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
-        #self.DRC_LVS()
 
         
     def create_netlist(self):

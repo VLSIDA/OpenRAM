@@ -16,39 +16,33 @@ class pbuf(design.design):
 
     unique_id = 1
 
-    def __init__(self, driver_size=4, height=bitcell.height, name=""):
+    def __init__(self, size=4, height=bitcell.height, name=""):
 
-        stage_effort = 4
+        self.stage_effort = 4
+        self.size = size
+        self.width = 0
+        self.height = height
         # FIXME: Change the number of stages to support high drives.
 
         if name=="":
-            name = "pbuf_{0}_{1}".format(driver_size, pbuf.unique_id)
+            name = "pbuf_{0}_{1}".format(self.size, pbuf.unique_id)
             pbuf.unique_id += 1
 
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(self.name))
 
-        
-        # Shield the cap, but have at least a stage effort of 4
-        input_size = max(1,int(driver_size/stage_effort))
-        self.inv1 = pinv(size=input_size, height=height) # 1 
-        self.add_mod(self.inv1)
-        
-        self.inv2 = pinv(size=driver_size, height=height) # 2
-        self.add_mod(self.inv2)
+        self.create_netlist()
+        if not OPTS.netlist_only:
+            self.create_layout()
 
-        self.width = self.inv1.width + self.inv2.width
-        self.height = self.inv1.height
-
-        self.create_layout()
-
-        #self.offset_all_coordinates()
-        
-        self.DRC_LVS()
+    def create_netlist(self):
+        self.add_pins()
+        self.create_modules()
+        self.create_insts()
 
     def create_layout(self):
-        self.add_pins()
-        self.add_insts()
+        self.width = self.inv1.width + self.inv2.width
+        self.place_insts()
         self.add_wires()
         self.add_layout_pins()
         
@@ -58,19 +52,31 @@ class pbuf(design.design):
         self.add_pin("vdd")
         self.add_pin("gnd")
 
-    def add_insts(self):
-        # Add INV1 to the right 
+    def create_modules(self):
+        # Shield the cap, but have at least a stage effort of 4
+        input_size = max(1,int(self.size/self.stage_effort))
+        self.inv1 = pinv(size=input_size, height=self.height) 
+        self.add_mod(self.inv1)
+        
+        self.inv2 = pinv(size=self.size, height=self.height)
+        self.add_mod(self.inv2)
+
+    def create_insts(self):
         self.inv1_inst=self.add_inst(name="buf_inv1",
-                                     mod=self.inv1,
-                                     offset=vector(0,0))
+                                     mod=self.inv1)
         self.connect_inst(["A", "zb_int",  "vdd", "gnd"])
         
 
-        # Add INV2 to the right
         self.inv2_inst=self.add_inst(name="buf_inv2",
-                                     mod=self.inv2,
-                                     offset=vector(self.inv1_inst.rx(),0))
+                                     mod=self.inv2)
         self.connect_inst(["zb_int", "Z",  "vdd", "gnd"])
+
+    def place_insts(self):
+        # Add INV1 to the right 
+        self.inv1_inst.place(vector(0,0))
+
+        # Add INV2 to the right
+        self.inv2_inst.place(vector(self.inv1_inst.rx(),0))
         
         
     def add_wires(self):

@@ -17,38 +17,40 @@ class pand2(design.design):
 
     unique_id = 1
 
-    def __init__(self, driver_size=4, height=bitcell.height, name=""):
+    def __init__(self, size=1, height=bitcell.height, name=""):
 
-        stage_effort = 4
-        # FIXME: Change the number of stages to support high drives.
-
+        self.size = size
+        self.height = height
+        
         if name=="":
-            name = "pand2_{0}_{1}".format(driver_size, pand2.unique_id)
+            name = "pand2_{0}_{1}".format(size, pand2.unique_id)
             pand2.unique_id += 1
 
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(self.name))
 
         
+        self.create_netlist()
+        if not OPTS.netlist_only:        
+            self.create_layout()
+
+
+    def create_netlist(self):
+        self.add_pins()
+        self.create_modules()
+        self.create_insts()
+
+    def create_modules(self):
         # Shield the cap, but have at least a stage effort of 4
-        self.nand = pnand2(height=height) 
+        self.nand = pnand2(height=self.height) 
         self.add_mod(self.nand)
         
-        self.inv = pinv(size=driver_size, height=height)
+        self.inv = pinv(size=self.size, height=self.height)
         self.add_mod(self.inv)
 
-        self.width = self.nand.width + self.inv.width
-        self.height = self.inv.height
-
-        self.create_layout()
-
-        #self.offset_all_coordinates()
-        
-        self.DRC_LVS()
-
     def create_layout(self):
-        self.add_pins()
-        self.add_insts()
+        self.width = self.nand.width + self.inv.width
+        self.place_insts()
         self.add_wires()
         self.add_layout_pins()
         
@@ -59,20 +61,21 @@ class pand2(design.design):
         self.add_pin("vdd")
         self.add_pin("gnd")
 
-    def add_insts(self):
-        # Add NAND to the right 
+    def create_insts(self):
         self.nand_inst=self.add_inst(name="pand2_nand",
-                                     mod=self.nand,
-                                     offset=vector(0,0))
+                                     mod=self.nand)
         self.connect_inst(["A", "B", "zb_int",  "vdd", "gnd"])
         
+        self.inv_inst=self.add_inst(name="pand2_inv",
+                                    mod=self.inv)
+        self.connect_inst(["zb_int", "Z",  "vdd", "gnd"])
+
+    def place_insts(self):
+        # Add NAND to the right 
+        self.nand_inst.place(offset=vector(0,0))
 
         # Add INV to the right
-        self.inv_inst=self.add_inst(name="pand2_inv",
-                                    mod=self.inv,
-                                    offset=vector(self.nand_inst.rx(),0))
-        self.connect_inst(["zb_int", "Z",  "vdd", "gnd"])
-        
+        self.inv_inst.place(offset=vector(self.nand_inst.rx(),0))
         
     def add_wires(self):
         # nand Z to inv A

@@ -249,7 +249,7 @@ class control_logic(design.design):
         self.connect_inst(["clk","clk_buf","vdd","gnd"])
 
         self.gated_clk_inst = self.add_inst(name="gated_clkbuf",
-                                            mod=self.pbuf1)
+                                            mod=self.nand2)
         self.connect_inst(["cs","clk_buf","gated_clk","vdd","gnd"])
 
     def place_clkbuf_row(self,row):
@@ -360,7 +360,7 @@ class control_logic(design.design):
         # input: we, gated_clk output: pre_w_en
         if self.port_type == "rw":
             self.pre_w_en_inst = self.add_inst(name="and_pre_w_en",
-                                               mod=self.pand2)
+                                               mod=self.and2)
             self.connect_inst(["we", "gated_clk", "pre_w_en", "vdd", "gnd"])
             input_name = "pre_w_en"
         else:

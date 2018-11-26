@@ -45,7 +45,6 @@ class control_logic(design.design):
         
     def create_layout(self):
         """ Create layout and route between modules """
-        self.route_rails()
         self.place_instances()
         self.route_all()
         
@@ -149,7 +148,7 @@ class control_logic(design.design):
     
     def route_rails(self):
         """ Add the input signal inverted tracks """
-        height = 4*self.inv1.height - self.m2_pitch
+        height = self.control_logic_center.y - self.m2_pitch
         offset = vector(self.ctrl_dff_array.width,0)
         
         self.rail_offsets = self.create_vertical_bus("metal2", self.m2_pitch, offset, self.internal_bus_list, height)
@@ -182,21 +181,21 @@ class control_logic(design.design):
         row += 2
         if (self.port_type == "rw") or (self.port_type == "w"):
             self.place_we_row(row=row)
-            pre_height = self.w_en_inst.uy()
-            control_center_y = self.w_en_inst.by()
+            height = self.w_en_inst.uy()
+            control_center_y = self.w_en_inst.uy()
             row += 1
         if (self.port_type == "rw") or (self.port_type == "r"):
             self.place_rbl_in_row(row=row)
             self.place_sen_row(row=row+1)
             self.place_rbl(row=row+2)
-            pre_height = self.rbl_inst.uy()
+            height = self.rbl_inst.uy()
             control_center_y = self.rbl_inst.by()
 
         # This offset is used for placement of the control logic in the SRAM level.
         self.control_logic_center = vector(self.ctrl_dff_inst.rx(), control_center_y)
 
         # Extra pitch on top and right
-        self.height = pre_height + self.m3_pitch
+        self.height = height + 2*self.m1_pitch
         # Max of modules or logic rows
         if (self.port_type == "rw") or (self.port_type == "r"):
             self.width = max(self.rbl_inst.rx(), max([inst.rx() for inst in self.row_end_inst])) + self.m2_pitch
@@ -205,6 +204,7 @@ class control_logic(design.design):
 
     def route_all(self):
         """ Routing between modules """
+        self.route_rails()
         self.route_dffs()
         if (self.port_type == "rw") or (self.port_type == "w"):
             self.route_wen()

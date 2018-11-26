@@ -447,6 +447,11 @@ class layout(lef.lef):
     def gds_read(self):
         """Reads a GDSII file in the library and checks if it exists
            Otherwise, start a new layout for dynamic generation."""
+
+        # This must be done for netlist only mode too
+        if os.path.isfile(self.gds_file):
+            self.is_library_cell=True
+            
         if OPTS.netlist_only:
             self.gds = None
             return
@@ -454,7 +459,6 @@ class layout(lef.lef):
         # open the gds file if it exists or else create a blank layout
         if os.path.isfile(self.gds_file):
             debug.info(3, "opening {}".format(self.gds_file))
-            self.is_library_cell=True
             self.gds = gdsMill.VlsiLayout(units=GDS["unit"])
             reader = gdsMill.Gds2reader(self.gds)
             reader.loadFromFile(self.gds_file)

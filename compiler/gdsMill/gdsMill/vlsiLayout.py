@@ -148,13 +148,13 @@ class VlsiLayout:
         structureNames=[]
         for name in self.structures:
             structureNames.append(name)
-            
         for name in self.structures:
             if(len(self.structures[name].srefs)>0): #does this structure reference any others?
                 for sref in self.structures[name].srefs: #go through each reference
                     if sref.sName in structureNames: #and compare to our list
                         structureNames.remove(sref.sName)
 
+        debug.check(len(structureNames)==1,"Multiple possible root structures in the layout: {}".format(str(structureNames)))
         self.rootStructureName = structureNames[0]
 
     def traverseTheHierarchy(self, startingStructureName=None, delegateFunction = None, 
@@ -304,6 +304,7 @@ class VlsiLayout:
                         debug.info(1,"DEBUG:  Structure %s Found"%StructureName)
                     StructureFound = True
 
+        debug.check(StructureFound,"Could not find layout to instantiate {}".format(StructureName))
 
 
         # If layoutToAdd is a unique object (not this), then copy hierarchy, 

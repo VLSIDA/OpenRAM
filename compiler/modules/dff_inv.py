@@ -11,11 +11,13 @@ class dff_inv(design.design):
     This is a simple DFF with an inverted output. Some DFFs
     do not have Qbar, so this will create it.
     """
-
+    unique_id = 1
+    
     def __init__(self, inv_size=2, name=""):
 
         if name=="":
-            name = "dff_inv_{0}".format(inv_size)
+            name = "dff_inv_{0}".format(dff_inv.unique_id)
+            dff_inv.unique_id += 1
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(self.name))
         self.inv_size = inv_size

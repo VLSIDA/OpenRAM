@@ -1210,7 +1210,7 @@ class bank(design.design):
         
         connection = []
         if port in self.read_ports:
-            connection.append((self.prefix+"p_en{}".format(port), self.precharge_array_inst[port].get_pin("en").lc()))
+            connection.append((self.prefix+"p_en_bar{}".format(port), self.precharge_array_inst[port].get_pin("en_bar").lc()))
                 
         if port in self.write_ports:
             connection.append((self.prefix+"w_en{}".format(port), self.write_driver_array_inst[port].get_pin("en").lc()))

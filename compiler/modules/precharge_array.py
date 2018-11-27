@@ -33,7 +33,7 @@ class precharge_array(design.design):
         for i in range(self.columns):
             self.add_pin("bl_{0}".format(i))
             self.add_pin("br_{0}".format(i))
-        self.add_pin("en")
+        self.add_pin("en_bar")
         self.add_pin("vdd")
 
     def create_netlist(self):
@@ -59,9 +59,9 @@ class precharge_array(design.design):
         
     def add_layout_pins(self):
 
-        self.add_layout_pin(text="en",
+        self.add_layout_pin(text="en_bar",
                             layer="metal1",
-                            offset=self.pc_cell.get_pin("en").ll(),
+                            offset=self.pc_cell.get_pin("en_bar").ll(),
                             width=self.width,
                             height=drc("minwidth_metal1"))
 

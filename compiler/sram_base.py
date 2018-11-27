@@ -143,7 +143,7 @@ class sram_base(design):
             self.control_bus_names[port] = ["clk_buf{}".format(port)]
             wen = "w_en{}".format(port)
             sen = "s_en{}".format(port)
-            pen = "p_en{}".format(port)
+            pen = "p_en_bar{}".format(port)
             if self.port_id[port] == "r":
                 self.control_bus_names[port].extend([sen, pen])
             elif self.port_id[port] == "w":
@@ -293,7 +293,7 @@ class sram_base(design):
         for port in self.read_ports:
             temp.append("s_en{0}".format(port))
         for port in self.read_ports:
-            temp.append("p_en{0}".format(port))
+            temp.append("p_en_bar{0}".format(port))
         for port in self.write_ports:
             temp.append("w_en{0}".format(port))
         for port in self.all_ports:
@@ -419,7 +419,7 @@ class sram_base(design):
             if port in self.write_ports:
                 temp.append("w_en{}".format(port))
             if port in self.read_ports:
-                temp.append("p_en{}".format(port))
+                temp.append("p_en_bar{}".format(port))
             temp.extend(["wl_en{}".format(port), "clk_buf{}".format(port), "vdd", "gnd"])
             self.connect_inst(temp)
         

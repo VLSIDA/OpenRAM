@@ -90,7 +90,7 @@ class hierarchical_predecode(design.design):
         """ Create the input inverters to invert input signals for the decode stage. """
         self.in_inst = []
         for inv_num in range(self.number_of_inputs):
-            name = "Xpre_inv_{0}".format(inv_num)
+            name = "pre_inv_{0}".format(inv_num)
             self.in_inst.append(self.add_inst(name=name,
                                               mod=self.inv))
             self.connect_inst(["in_{0}".format(inv_num),
@@ -114,7 +114,7 @@ class hierarchical_predecode(design.design):
         """ Create inverters for the inverted output decode signals. """
         self.inv_inst = []
         for inv_num in range(self.number_of_outputs):
-            name = "Xpre_nand_inv_{}".format(inv_num)
+            name = "pre_nand_inv_{}".format(inv_num)
             self.inv_inst.append(self.add_inst(name=name,
                                                mod=self.inv))
             self.connect_inst(["Z_{}".format(inv_num),

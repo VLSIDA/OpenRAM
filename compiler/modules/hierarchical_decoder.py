@@ -336,7 +336,7 @@ class hierarchical_decoder(design.design):
         if (self.num_inputs == 4 or self.num_inputs == 5):
             for i in range(len(self.predec_groups[0])):
                 for j in range(len(self.predec_groups[1])):
-                    row = len(self.predec_groups[1])*i + j
+                    row = len(self.predec_groups[0])*j + i
                     name = self.NAND_FORMAT.format(row)
                     self.nand_inst.append(self.add_inst(name=name,
                                                         mod=self.nand2))
@@ -352,8 +352,8 @@ class hierarchical_decoder(design.design):
             for i in range(len(self.predec_groups[0])):
                 for j in range(len(self.predec_groups[1])):
                     for k in range(len(self.predec_groups[2])):
-                        row = len(self.predec_groups[1])*len(self.predec_groups[2]) * i \
-                            + len(self.predec_groups[2])*j + k
+                        row = (len(self.predec_groups[0])+len(self.predec_groups[1])) * k \
+                            + len(self.predec_groups[0])*j + i
 
                         name = self.NAND_FORMAT.format(row)
                         self.nand_inst.append(self.add_inst(name=name,

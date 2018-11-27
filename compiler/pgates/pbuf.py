@@ -1,12 +1,12 @@
 import debug
-import design
 from tech import drc
 from math import log
 from vector import vector
 from globals import OPTS
 from pinv import pinv
+import pgate
 
-class pbuf(design.design):
+class pbuf(pgate.pgate):
     """
     This is a simple buffer used for driving loads. 
     """
@@ -16,24 +16,23 @@ class pbuf(design.design):
 
     unique_id = 1
 
-    def __init__(self, size=4, height=bitcell.height, name=""):
+    def __init__(self, size=4, height=None, name=""):
 
         self.stage_effort = 4
         self.size = size
-        self.width = 0
         self.height = height
-        # FIXME: Change the number of stages to support high drives.
 
         if name=="":
             name = "pbuf_{0}_{1}".format(self.size, pbuf.unique_id)
             pbuf.unique_id += 1
 
-        design.design.__init__(self, name)
-        debug.info(1, "Creating {}".format(self.name))
+        pgate.pgate.__init__(self, name, height)
+        debug.info(1, "creating {0} with size of {1}".format(self.name,self.size))
 
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
+
 
     def create_netlist(self):
         self.add_pins()

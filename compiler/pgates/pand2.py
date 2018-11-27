@@ -1,13 +1,13 @@
 import debug
-import design
 from tech import drc
 from math import log
 from vector import vector
 from globals import OPTS
 from pnand2 import pnand2
 from pinv import pinv
+import pgate
 
-class pand2(design.design):
+class pand2(pgate.pgate):
     """
     This is a simple buffer used for driving loads. 
     """
@@ -17,16 +17,15 @@ class pand2(design.design):
 
     unique_id = 1
 
-    def __init__(self, size=1, height=bitcell.height, name=""):
+    def __init__(self, size=1, height=None, name=""):
 
         self.size = size
-        self.height = height
         
         if name=="":
             name = "pand2_{0}_{1}".format(size, pand2.unique_id)
             pand2.unique_id += 1
 
-        design.design.__init__(self, name)
+        pgate.pgate.__init__(self, name, height)
         debug.info(1, "Creating {}".format(self.name))
 
         

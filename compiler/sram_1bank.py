@@ -113,7 +113,7 @@ class sram_1bank(sram_base):
         
             # Add the col address flops above the bank to the right of the upper-right of bank array
             if self.col_addr_dff:
-                col_addr_pos[port] = vector(self.bank.bank_array_ur.x + self.bank.central_bus_width,
+                col_addr_pos[port] = vector(self.bank.bank_array_ur.x + self.bank.m2_gap,
                                             self.bank_inst.uy() + data_gap + self.col_addr_dff_insts[port].height)
                 self.col_addr_dff_insts[port].place(col_addr_pos[port], mirror="MX")
             

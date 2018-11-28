@@ -287,16 +287,20 @@ class control_logic(design.design):
 
         clkbuf_map = zip(["Z"], ["clk_buf"])
         self.connect_vertical_bus(clkbuf_map, self.clkbuf_inst, self.rail_offsets, ("metal3", "via2", "metal2"))  
+        # The pin is on M1, so we need another via as well
+        self.add_via_center(layers=("metal1","via1","metal2"),
+                            offset=self.clkbuf_inst.get_pin("Z").center(),
+                            rotate=90)
 
         self.connect_output(self.clkbuf_inst, "Z", "clk_buf")
 
     def create_gated_clk_bar_row(self):
-        self.clk_bar_inst = self.add_inst(name="clk_bar",
+        self.clk_bar_inst = self.add_inst(name="inv_clk_bar",
                                             mod=self.inv)
         self.connect_inst(["clk_buf","clk_bar","vdd","gnd"])
         
-        self.gated_clk_bar_inst = self.add_inst(name="gated_clkbuf",
-                                            mod=self.and2)
+        self.gated_clk_bar_inst = self.add_inst(name="and2_gated_clk_bar",
+                                                mod=self.and2)
         self.connect_inst(["cs","clk_bar","gated_clk_bar","vdd","gnd"])
 
     def place_gated_clk_bar_row(self,row):
@@ -321,17 +325,27 @@ class control_logic(design.design):
         out_pos = self.clk_bar_inst.get_pin("Z").center()
         in_pos = self.gated_clk_bar_inst.get_pin("B").center()
         mid1 = vector(in_pos.x,out_pos.y)
-        self.add_wire(("metal1","via1","metal2"),[out_pos, mid1, in_pos])
+        self.add_path("metal1",[out_pos, mid1, in_pos])
 
+        # This is the second gate over, so it needs to be on M3
         clkbuf_map = zip(["A"], ["cs"])
         self.connect_vertical_bus(clkbuf_map, self.gated_clk_bar_inst, self.rail_offsets, ("metal3", "via2", "metal2"))  
+        # The pin is on M1, so we need another via as well
+        self.add_via_center(layers=("metal1","via1","metal2"),
+                            offset=self.gated_clk_bar_inst.get_pin("A").center(),
+                            rotate=90)
 
+        # This is the second gate over, so it needs to be on M3
         clkbuf_map = zip(["Z"], ["gated_clk_bar"])
         self.connect_vertical_bus(clkbuf_map, self.gated_clk_bar_inst, self.rail_offsets, ("metal3", "via2", "metal2"))  
+        # The pin is on M1, so we need another via as well
+        self.add_via_center(layers=("metal1","via1","metal2"),
+                            offset=self.gated_clk_bar_inst.get_pin("Z").center(),
+                            rotate=90)
 
     def create_gated_clk_buf_row(self):
-        self.gated_clk_buf_inst = self.add_inst(name="gated_clkinv",
-                                            mod=self.and2)
+        self.gated_clk_buf_inst = self.add_inst(name="and2_gated_clk_buf",
+                                                mod=self.and2)
         self.connect_inst(["clk_buf", "cs","gated_clk_buf","vdd","gnd"])
 
     def place_gated_clk_buf_row(self,row):
@@ -351,6 +365,10 @@ class control_logic(design.design):
         
         clkbuf_map = zip(["Z"], ["gated_clk_buf"])
         self.connect_vertical_bus(clkbuf_map, self.gated_clk_buf_inst, self.rail_offsets, ("metal3", "via2", "metal2"))  
+        # The pin is on M1, so we need another via as well
+        self.add_via_center(layers=("metal1","via1","metal2"),
+                            offset=self.gated_clk_buf_inst.get_pin("Z").center(),
+                            rotate=90)
         
     def create_wlen_row(self):
         # input pre_p_en, output: wl_en
@@ -565,8 +583,6 @@ class control_logic(design.design):
         if (self.port_type == "rw"):
             self.copy_layout_pin(self.ctrl_dff_inst, "din_1", "web")
         
-
-            
     def get_offset(self,row):
         """ Compute the y-offset and mirroring """
         y_off = row*self.and2.height
@@ -578,59 +594,7 @@ class control_logic(design.design):
 
         return (y_off,mirror)
 
-        
-
-
                       
-    def connect_rail_from_right(self,inst, pin, rail):
-        """ Helper routine to connect an unrotated/mirrored oriented instance to the rails """
-        in_pos = inst.get_pin(pin).center()
-        rail_pos = vector(self.rail_offsets[rail].x, in_pos.y)
-        self.add_wire(("metal1","via1","metal2"),[in_pos, rail_pos])
-        self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=rail_pos,
-                            rotate=90)
-
-    def connect_rail_from_right_m2m3(self,inst, pin, rail):
-        """ Helper routine to connect an unrotated/mirrored oriented instance to the rails """
-        in_pos = inst.get_pin(pin).center()
-        rail_pos = vector(self.rail_offsets[rail].x, in_pos.y)
-        self.add_wire(("metal3","via2","metal2"),[in_pos, rail_pos])
-        # Bring it up to M2 for M2/M3 routing
-        self.add_via_center(layers=("metal1","via1","metal2"),
-                     offset=in_pos,
-                     rotate=90)
-        self.add_via_center(layers=("metal2","via2","metal3"),
-                     offset=in_pos,
-                     rotate=90)
-        self.add_via_center(layers=("metal2","via2","metal3"),
-                            offset=rail_pos,
-                            rotate=90)
-        
-        
-    def connect_rail_from_left(self,inst, pin, rail):
-        """ Helper routine to connect an unrotated/mirrored oriented instance to the rails """
-        in_pos = inst.get_pin(pin).lc()
-        rail_pos = vector(self.rail_offsets[rail].x, in_pos.y)
-        self.add_wire(("metal1","via1","metal2"),[in_pos, rail_pos])
-        self.add_via_center(layers=("metal1","via1","metal2"),
-                     offset=rail_pos,
-                     rotate=90)
-
-    def connect_rail_from_left_m2m3(self,inst, pin, rail):
-        """ Helper routine to connect an unrotated/mirrored oriented instance to the rails """
-        in_pos = inst.get_pin(pin).lc()
-        rail_pos = vector(self.rail_offsets[rail].x, in_pos.y)
-        self.add_wire(("metal3","via2","metal2"),[in_pos, rail_pos])
-        self.add_via_center(layers=("metal2","via2","metal3"),
-                     offset=in_pos,
-                     rotate=90)
-        self.add_via_center(layers=("metal2","via2","metal3"),
-                     offset=rail_pos,
-                     rotate=90)
-        
-        
-        
     def connect_output(self, inst, pin_name, out_name):
         """ Create an output pin on the right side from the pin of a given instance. """
         

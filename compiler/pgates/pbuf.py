@@ -105,17 +105,17 @@ class pbuf(pgate.pgate):
             
         z_pin = self.inv2_inst.get_pin("Z")
         self.add_layout_pin_rect_center(text="Z",
-                                        layer="metal2",
-                                        offset=z_pin.center())
-        self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=z_pin.center())
+                                        layer=z_pin.layer,
+                                        offset=z_pin.center(),
+                                        width=z_pin.width(),
+                                        height=z_pin.height())
 
         a_pin = self.inv1_inst.get_pin("A")
         self.add_layout_pin_rect_center(text="A",
-                                        layer="metal2",
-                                        offset=a_pin.center())
-        self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=a_pin.center())
+                                        layer=a_pin.layer,
+                                        offset=a_pin.center(),
+                                        width=a_pin.width(),
+                                        height=a_pin.height())
         
         
 

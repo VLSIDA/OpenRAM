@@ -102,22 +102,20 @@ class pand2(pgate.pgate):
                             width=self.width,
                             height=vdd_pin.height())
             
-        z_pin = self.inv_inst.get_pin("Z")
-        self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=z_pin.center(),
-                            rotate=90)
+        pin = self.inv_inst.get_pin("Z")
         self.add_layout_pin_rect_center(text="Z",
-                                        layer="metal2",
-                                        offset=z_pin.center())
+                                        layer=pin.layer,
+                                        offset=pin.center(),
+                                        width=pin.width(),
+                                        height=pin.height())
 
         for pin_name in ["A","B"]:
             pin = self.nand_inst.get_pin(pin_name)
             self.add_layout_pin_rect_center(text=pin_name,
-                                            layer="metal2",
-                                            offset=pin.center())
-            self.add_via_center(layers=("metal1","via1","metal2"),
-                                offset=pin.center(),
-                                rotate=90)
+                                            layer=pin.layer,
+                                            offset=pin.center(),
+                                            width=pin.width(),
+                                            height=pin.height())
         
         
 

@@ -114,9 +114,9 @@ class dff_buf(design.design):
         z1_pin = self.inv1_inst.get_pin("Z")
         a2_pin = self.inv2_inst.get_pin("A")
         mid_x_offset = 0.5*(z1_pin.cx() + a2_pin.cx())
-        mid1 = vector(mid_x_offset, z1_pin.cy())
+        self.mid_qb_pos = vector(mid_x_offset, z1_pin.cy())
         mid2 = vector(mid_x_offset, a2_pin.cy())
-        self.add_path("metal1", [z1_pin.center(), mid1, mid2, a2_pin.center()])
+        self.add_path("metal1", [z1_pin.center(), self.mid_qb_pos, mid2, a2_pin.center()])
         
     def add_layout_pins(self):
 
@@ -151,22 +151,22 @@ class dff_buf(design.design):
                             height=din_pin.height())
 
         dout_pin = self.inv2_inst.get_pin("Z")
-        dout_pos = dout_pin.center() - vector(0,2*self.m2_pitch)
+        mid_pos = dout_pin.center() + vector(self.m1_pitch,0)
+        q_pos = mid_pos - vector(0,self.m2_pitch)
         self.add_layout_pin_rect_center(text="Q",
                                         layer="metal2",
-                                        offset=dout_pos)
-        self.add_path("metal1", [dout_pin.center(), dout_pos])
+                                        offset=q_pos)
+        self.add_path("metal1", [dout_pin.center(), mid_pos, q_pos])
         self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=dout_pin.center())
+                            offset=q_pos)
 
-        dout_pin = self.inv1_inst.get_pin("Z")
-        dout_pos = dout_pin.center() + vector(0,2*self.m2_pitch)        
+        qb_pos = self.mid_qb_pos + vector(0,self.m2_pitch)
         self.add_layout_pin_rect_center(text="Qb",
                                         layer="metal2",
-                                        offset=dout_pos)
-        self.add_path("metal1", [dout_pin.center(), dout_pos])
+                                        offset=qb_pos)
+        self.add_path("metal1", [self.mid_qb_pos, qb_pos])
         self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=dout_pin.center())
+                            offset=qb_pos)
         
         
 

@@ -352,7 +352,7 @@ class hierarchical_decoder(design.design):
             for i in range(len(self.predec_groups[0])):
                 for j in range(len(self.predec_groups[1])):
                     for k in range(len(self.predec_groups[2])):
-                        row = (len(self.predec_groups[0])+len(self.predec_groups[1])) * k \
+                        row = (len(self.predec_groups[0])*len(self.predec_groups[1])) * k \
                             + len(self.predec_groups[0])*j + i
 
                         name = self.NAND_FORMAT.format(row)

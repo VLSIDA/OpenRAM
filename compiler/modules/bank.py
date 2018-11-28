@@ -86,7 +86,7 @@ class bank(design.design):
         for port in self.read_ports:
             self.add_pin("s_en{0}".format(port), "INPUT")
         for port in self.read_ports:
-            self.add_pin("p_en{0}".format(port), "INPUT")
+            self.add_pin("p_en_bar{0}".format(port), "INPUT")
         for port in self.write_ports:
             self.add_pin("w_en{0}".format(port), "INPUT")
         for port in self.all_ports:
@@ -356,13 +356,13 @@ class bank(design.design):
         self.input_control_signals = []
         port_num = 0
         for port in range(OPTS.num_rw_ports):
-            self.input_control_signals.append(["clk_buf{}".format(port_num), "wl_en{}".format(port_num), "w_en{}".format(port_num), "s_en{}".format(port_num), "p_en{}".format(port_num)])
+            self.input_control_signals.append(["clk_buf{}".format(port_num), "wl_en{}".format(port_num), "w_en{}".format(port_num), "s_en{}".format(port_num), "p_en_bar{}".format(port_num)])
             port_num += 1
         for port in range(OPTS.num_w_ports):
             self.input_control_signals.append(["clk_buf{}".format(port_num), "wl_en{}".format(port_num), "w_en{}".format(port_num)])
             port_num += 1
         for port in range(OPTS.num_r_ports):
-            self.input_control_signals.append(["clk_buf{}".format(port_num), "wl_en{}".format(port_num), "s_en{}".format(port_num), "p_en{}".format(port_num)])
+            self.input_control_signals.append(["clk_buf{}".format(port_num), "wl_en{}".format(port_num), "s_en{}".format(port_num), "p_en_bar{}".format(port_num)])
             port_num += 1
 
         # These will be outputs of the gaters if this is multibank, if not, normal signals.
@@ -490,7 +490,7 @@ class bank(design.design):
             for i in range(self.num_cols):
                 temp.append(self.bl_names[port]+"_{0}".format(i))
                 temp.append(self.br_names[port]+"_{0}".format(i))
-            temp.extend([self.prefix+"p_en{0}".format(port), "vdd"])
+            temp.extend([self.prefix+"p_en_bar{0}".format(port), "vdd"])
             self.connect_inst(temp)
 
             
@@ -775,14 +775,14 @@ class bank(design.design):
         """ Route the bank select logic. """
         
         if self.port_id[port] == "rw":
-            bank_sel_signals = ["clk_buf", "w_en", "s_en", "p_en", "bank_sel"]
-            gated_bank_sel_signals = ["gated_clk_buf", "gated_w_en", "gated_s_en", "gated_p_en"]
+            bank_sel_signals = ["clk_buf", "w_en", "s_en", "p_en_bar", "bank_sel"]
+            gated_bank_sel_signals = ["gated_clk_buf", "gated_w_en", "gated_s_en", "gated_p_en_bar"]
         elif self.port_id[port] == "w":
             bank_sel_signals = ["clk_buf", "w_en", "bank_sel"]
             gated_bank_sel_signals = ["gated_clk_buf", "gated_w_en"]
         else:
-            bank_sel_signals = ["clk_buf", "s_en", "p_en", "bank_sel"]
-            gated_bank_sel_signals = ["gated_clk_buf", "gated_s_en", "gated_p_en"]
+            bank_sel_signals = ["clk_buf", "s_en", "p_en_bar", "bank_sel"]
+            gated_bank_sel_signals = ["gated_clk_buf", "gated_s_en", "gated_p_en_bar"]
         
         copy_control_signals = self.input_control_signals[port]+["bank_sel{}".format(port)]
         for signal in range(len(copy_control_signals)):
@@ -1226,7 +1226,7 @@ class bank(design.design):
                                 rotate=90)
 
         # clk to wordline_driver
-        control_signal = self.prefix+"p_en{}".format(port)
+        control_signal = self.prefix+"p_en_bar{}".format(port)
         pin_pos = self.wordline_driver_inst[port].get_pin("en").bc()
         mid_pos = pin_pos - vector(0,self.m1_pitch)
         control_x_offset = self.bus_xoffset[port][control_signal].x

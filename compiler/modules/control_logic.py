@@ -135,9 +135,9 @@ class control_logic(design.design):
         
         # list of output control signals (for making a vertical bus)
         if self.port_type == "rw":
-            self.internal_bus_list = ["clk_buf", "gated_clk", "we", "we_bar", "cs"]
+            self.internal_bus_list = ["clk_buf", "gated_clk_bar", "gated_clk_buf", "we", "we_bar", "cs"]
         else:
-            self.internal_bus_list = ["clk_buf", "gated_clk", "cs"]
+            self.internal_bus_list = ["clk_buf", "gated_clk_bar", "gated_clk_buf", "cs"]
         # leave space for the bus plus one extra space
         self.internal_bus_width = (len(self.internal_bus_list)+1)*self.m2_pitch 
         
@@ -165,12 +165,15 @@ class control_logic(design.design):
     def create_instances(self):
         """ Create all the instances """
         self.create_dffs()
-        self.create_clk_rows()
+        self.create_clk_buf_row()
+        self.create_gated_clk_bar_row()
+        self.create_gated_clk_buf_row()
         self.create_wlen_row()
         if (self.port_type == "rw") or (self.port_type == "w"):
             self.create_wen_row()
         if (self.port_type == "rw") or (self.port_type == "r"):
-            self.create_pen_row()
+            self.create_rbl_in_row()
+            self.create_pen_row()            
             self.create_sen_row()
             self.create_rbl()
 
@@ -184,20 +187,27 @@ class control_logic(design.design):
         # Add the control flops on the left of the bus
         self.place_dffs()
 
+        # All of the control logic is placed to the right of the DFFs and bus
+        self.control_x_offset = self.ctrl_dff_array.width + self.internal_bus_width
+        
         row = 0
         # Add the logic on the right of the bus
-        self.place_clkbuf_row(row) 
+        self.place_clk_buf_row(row) 
         row += 1
-        self.place_gated_clk_row(row) 
+        self.place_gated_clk_bar_row(row) 
+        row += 1
+        self.place_gated_clk_buf_row(row) 
         row += 1
         self.place_wlen_row(row) 
         row += 1
         if (self.port_type == "rw") or (self.port_type == "w"):
-            self.place_we_row(row)
+            self.place_wen_row(row)
             height = self.w_en_inst.uy()
             control_center_y = self.w_en_inst.uy()
             row += 1
         if (self.port_type == "rw") or (self.port_type == "r"):
+            self.place_rbl_in_row(row)
+            row += 1
             self.place_pen_row(row)
             row += 1
             self.place_sen_row(row)
@@ -212,10 +222,10 @@ class control_logic(design.design):
         # Extra pitch on top and right
         self.height = height + 2*self.m1_pitch
         # Max of modules or logic rows
+        self.width = max([inst.rx() for inst in self.row_end_inst])
         if (self.port_type == "rw") or (self.port_type == "r"):
-            self.width = max(self.rbl_inst.rx(), max([inst.rx() for inst in self.row_end_inst])) + self.m2_pitch
-        else:
-            self.width = max([inst.rx() for inst in self.row_end_inst]) + self.m2_pitch
+            self.width = max(self.rbl_inst.rx() , self.width)
+        self.width += self.m2_pitch
 
     def route_all(self):
         """ Routing between modules """
@@ -225,9 +235,12 @@ class control_logic(design.design):
         if (self.port_type == "rw") or (self.port_type == "w"):
             self.route_wen()
         if (self.port_type == "rw") or (self.port_type == "r"):
-            self.route_rbl()
+            self.route_rbl_in()
+            self.route_pen()
             self.route_sen()
-        self.route_clk()
+        self.route_clk_buf()
+        self.route_gated_clk_bar()
+        self.route_gated_clk_buf()
         self.route_supply()
 
 
@@ -243,85 +256,191 @@ class control_logic(design.design):
 
         # Add the RBL above the rows
         # Add to the right of the control rows and routing channel
-        self.replica_bitline_offset = vector(0, y_off)
-        self.rbl_inst.place(self.replica_bitline_offset)
+        offset = vector(0, y_off)
+        self.rbl_inst.place(offset)
         
         
-    def create_clk_rows(self):
+    def create_clk_buf_row(self):
         """ Create the multistage and gated clock buffer  """
         self.clkbuf_inst = self.add_inst(name="clkbuf",
                                          mod=self.clkbuf)
         self.connect_inst(["clk","clk_buf","vdd","gnd"])
-
         
+    def place_clk_buf_row(self,row):
+        """ Place the multistage clock buffer below the control flops """
+        x_off = self.control_x_offset
+        (y_off,mirror)=self.get_offset(row)
+        
+        offset = vector(x_off,y_off)
+        self.clkbuf_inst.place(offset, mirror)
+        
+        self.row_end_inst.append(self.clkbuf_inst)
+
+    def route_clk_buf(self):
+        clk_pin = self.clkbuf_inst.get_pin("A")
+        self.add_layout_pin_segment_center(text="clk",
+                                           layer="metal2",
+                                           start=clk_pin.bc(),
+                                           end=clk_pin.bc().scale(1,0))
+
+        clkbuf_map = zip(["Z"], ["clk_buf"])
+        self.connect_vertical_bus(clkbuf_map, self.clkbuf_inst, self.rail_offsets, ("metal3", "via2", "metal2"))  
+
+        self.connect_output(self.clkbuf_inst, "Z", "clk_buf")
+
+    def create_gated_clk_bar_row(self):
         self.clk_bar_inst = self.add_inst(name="clk_bar",
                                             mod=self.inv)
         self.connect_inst(["clk_buf","clk_bar","vdd","gnd"])
-        self.gated_clk_inst = self.add_inst(name="gated_clkbuf",
-                                            mod=self.and2)
-        self.connect_inst(["cs","clk_bar","gated_clk","vdd","gnd"])
-
-    def place_clkbuf_row(self,row):
-        """ Place the multistage clock buffer below the control flops """
-        x_off = self.ctrl_dff_array.width + self.internal_bus_width
-        (y_off,mirror)=self.get_offset(row)
-        offset = vector(x_off,y_off)
-        self.clkbuf_inst.place(offset)
-        self.row_end_inst.append(self.clkbuf_inst)
-
-    def place_gated_clk_row(self,row):
-        """ Place the gated clk logic below the control flops """
-        x_off = self.ctrl_dff_array.width + self.internal_bus_width
-        (y_off,mirror)=self.get_offset(row)
-        offset = vector(x_off,y_off)
         
-        self.clk_bar_inst.place(offset)
+        self.gated_clk_bar_inst = self.add_inst(name="gated_clkbuf",
+                                            mod=self.and2)
+        self.connect_inst(["cs","clk_bar","gated_clk_bar","vdd","gnd"])
+
+    def place_gated_clk_bar_row(self,row):
+        """ Place the gated clk logic below the control flops """
+        x_off = self.control_x_offset
+        (y_off,mirror)=self.get_offset(row)
+        
+        offset = vector(x_off,y_off)
+        self.clk_bar_inst.place(offset, mirror)
+        
         x_off += self.inv.width
         
         offset = vector(x_off,y_off)
-        self.gated_clk_inst.place(offset)
-        self.row_end_inst.append(self.gated_clk_inst)
-
-    def create_wlen_row(self):
-        # input pre_p_en, output: wl_en
-        self.p_en_inst=self.add_inst(name="buf_wl_en",
-                                         mod=self.buf16)
-        self.connect_inst(["gated_clk", "wl_en", "vdd", "gnd"])
+        self.gated_clk_bar_inst.place(offset, mirror)
         
+        self.row_end_inst.append(self.gated_clk_bar_inst)
 
-    def place_wlen_row(self, row):
-        x_off = self.ctrl_dff_array.width + self.internal_bus_width 
+    def route_gated_clk_bar(self):
+        out_pos = self.clk_bar_inst.get_pin("Z").center()
+        in_pos = self.gated_clk_bar_inst.get_pin("B").center()
+        mid1 = vector(in_pos.x,out_pos.y)
+        self.add_wire(("metal1","via1","metal2"),[out_pos, mid1, in_pos])
+
+        clkbuf_map = zip(["A"], ["cs"])
+        self.connect_vertical_bus(clkbuf_map, self.gated_clk_bar_inst, self.rail_offsets)  
+
+        clkbuf_map = zip(["A"], ["clk_buf"])
+        self.connect_vertical_bus(clkbuf_map, self.clk_bar_inst, self.rail_offsets)  
+        
+        clkbuf_map = zip(["Z"], ["gated_clk_bar"])
+        self.connect_vertical_bus(clkbuf_map, self.gated_clk_bar_inst, self.rail_offsets, ("metal3", "via2", "metal2"))  
+
+    def create_gated_clk_buf_row(self):
+        self.gated_clk_buf_inst = self.add_inst(name="gated_clkinv",
+                                            mod=self.and2)
+        self.connect_inst(["cs","clk_buf","gated_clk_buf","vdd","gnd"])
+
+    def place_gated_clk_buf_row(self,row):
+        """ Place the gated clk logic below the control flops """
+        x_off = self.control_x_offset
         (y_off,mirror)=self.get_offset(row)
         
-        self.wl_en_offset = vector(x_off, y_off)
-        self.wl_en_inst.place(offset=self.wl_en_offset,
-                                 mirror=mirror)
+        offset = vector(x_off,y_off)
+        self.gated_clk_buf_inst.place(offset, mirror)
+        
+        self.row_end_inst.append(self.gated_clk_buf_inst)
+        
+    def route_gated_clk_buf(self):
+        clkbuf_map = zip(["A", "B"], ["clk_buf", "we_bar"])
+        self.connect_vertical_bus(clkbuf_map, self.gated_clk_buf_inst, self.rail_offsets)  
+
+        
+        clkbuf_map = zip(["Z"], ["gated_clk_buf"])
+        self.connect_vertical_bus(clkbuf_map, self.gated_clk_buf_inst, self.rail_offsets, ("metal3", "via2", "metal2"))  
+        
+    def create_wlen_row(self):
+        # input pre_p_en, output: wl_en
+        self.wl_en_inst=self.add_inst(name="buf_wl_en",
+                                      mod=self.buf16)
+        self.connect_inst(["gated_clk_bar", "wl_en", "vdd", "gnd"])
+
+    def place_wlen_row(self, row):
+        x_off = self.control_x_offset
+        (y_off,mirror)=self.get_offset(row)
+        
+        offset = vector(x_off, y_off)
+        self.wl_en_inst.place(offset, mirror)
 
         self.row_end_inst.append(self.wl_en_inst)
 
+    def route_wlen(self):
+        wlen_map = zip(["A"], ["gated_clk_bar"])
+        self.connect_vertical_bus(wlen_map, self.wl_en_inst, self.rail_offsets)  
+        self.connect_output(self.wl_en_inst, "Z", "wl_en")
+
+    def create_rbl_in_row(self):
+        # input: gated_clk_bar, we_bar, output: rbl_in
+        self.rbl_in_inst=self.add_inst(name="and2_rbl_in",
+                                         mod=self.and2)
+        self.connect_inst(["gated_clk_bar", "we_bar", "rbl_in", "vdd", "gnd"])
+
+    def place_rbl_in_row(self,row):
+        x_off = self.control_x_offset
+        (y_off,mirror)=self.get_offset(row)
+
+        offset = vector(x_off, y_off)
+        self.rbl_in_inst.place(offset, mirror)
+
+        self.row_end_inst.append(self.rbl_in_inst)
+
+    def route_rbl_in(self):
+        """ Connect the logic for the rbl_in generation """
+
+        # Connect the NAND gate inputs to the bus
+        rbl_in_map = zip(["A", "B"], ["gated_clk_bar", "we_bar"])
+        self.connect_vertical_bus(rbl_in_map, self.rbl_in_inst, self.rail_offsets)  
+        
+        # Connect the output of the precharge enable to the RBL input
+        out_pos = self.rbl_in_inst.get_pin("Z").center()
+        in_pos = self.rbl_inst.get_pin("en").center()
+        mid1 = vector(in_pos.x,out_pos.y)
+        self.add_wire(("metal3","via2","metal2"),[out_pos, mid1, in_pos])
+        self.add_via_center(layers=("metal1","via1","metal2"),
+                            offset=out_pos,
+                            rotate=90)
+        self.add_via_center(layers=("metal2","via2","metal3"),
+                            offset=out_pos,
+                            rotate=90)
+        
     def create_pen_row(self):
-        # input: gated_clk, we_bar, output: pre_p_en
+        # input: gated_clk_bar, we_bar, output: pre_p_en
         self.pre_p_en_inst=self.add_inst(name="and2_pre_p_en",
                                          mod=self.and2)
-        self.connect_inst(["gated_clk", "we_bar", "pre_p_en", "vdd", "gnd"])
+        self.connect_inst(["gated_clk_buf", "we_bar", "pre_p_en", "vdd", "gnd"])
         
-
         # input: pre_p_en, output: p_en_bar
-        self.p_en_inst=self.add_inst(name="inv_p_en_bar",
+        self.p_en_bar_inst=self.add_inst(name="inv_p_en_bar",
                                          mod=self.inv8)
         self.connect_inst(["pre_p_en", "p_en_bar", "vdd", "gnd"])
         
         
     def place_pen_row(self,row):
-        x_off = self.ctrl_dff_array.width + self.internal_bus_width 
+        x_off = self.control_x_offset
         (y_off,mirror)=self.get_offset(row)
 
+        offset = vector(x_off, y_off)
+        self.pre_p_en_inst.place(offset, mirror)
 
-        self.pre_p_en_offset = vector(x_off, y_off)
-        self.pre_p_en_inst.place(offset=self.pre_p_en_offset,
-                                 mirror=mirror)
+        x_off += self.and2.width
+        
+        offset = vector(x_off,y_off)
+        self.p_en_bar_inst.place(offset, mirror)
 
         self.row_end_inst.append(self.pre_p_en_inst)
+
+    def route_pen(self):
+        # Connect the NAND gate inputs to the bus
+        pre_p_en_in_map = zip(["A", "B"], ["gated_clk_buf", "we_bar"])
+        self.connect_vertical_bus(pre_p_en_in_map, self.pre_p_en_inst, self.rail_offsets)  
+        
+        out_pos = self.pre_p_en_inst.get_pin("Z").center()
+        in_pos = self.p_en_bar_inst.get_pin("A").lc()
+        mid1 = vector(out_pos.x,in_pos.y)
+        self.add_wire(("metal1","via1","metal2"),[out_pos,mid1,in_pos])                
+        
+        self.connect_output(self.p_en_bar_inst, "Z", "p_en_bar")
         
     def create_sen_row(self):
         """ Create the sense enable buffer. """
@@ -336,14 +455,69 @@ class control_logic(design.design):
         The sense enable buffer gets placed to the far right of the 
         row. 
         """
-        x_off = self.ctrl_dff_array.width + self.internal_bus_width 
+        x_off = self.control_x_offset
         (y_off,mirror)=self.get_offset(row)
 
-        self.s_en_offset = vector(x_off, y_off)
-        self.s_en_inst.place(offset=self.s_en_offset,
-                             mirror=mirror)
-        self.row_end_inst.append(self.s_en_inst)
+        offset = vector(x_off, y_off)
+        self.s_en_inst.place(offset, mirror)
         
+        self.row_end_inst.append(self.s_en_inst)
+
+        
+    def route_sen(self):
+        
+        out_pos = self.rbl_inst.get_pin("out").bc()
+        in_pos = self.s_en_inst.get_pin("A").lc()
+        mid1 = vector(out_pos.x,in_pos.y)
+        self.add_wire(("metal1","via1","metal2"),[out_pos, mid1,in_pos])                
+
+        self.connect_output(self.s_en_inst, "Z", "s_en")
+        
+        
+    def create_wen_row(self):
+        # input: we (or cs) output: w_en
+        if self.port_type == "rw":
+            input_name = "we"
+        else:
+            # No we for write-only reports, so use cs
+            input_name = "cs"
+            
+        # BUFFER FOR W_EN
+        self.w_en_inst = self.add_inst(name="buf_w_en_buf",
+                                       mod=self.buf8)
+        self.connect_inst([input_name, "w_en", "vdd", "gnd"])
+
+
+    def place_wen_row(self,row):
+        x_off = self.ctrl_dff_inst.width + self.internal_bus_width
+        (y_off,mirror)=self.get_offset(row)
+            
+        offset = vector(x_off, y_off)
+        self.w_en_inst.place(offset, mirror)
+        
+        self.row_end_inst.append(self.w_en_inst)
+        
+    def route_wen(self):
+        
+        if self.port_type == "rw":
+            input_name = "we"
+        else:
+            input_name = "cs"
+            
+        wen_map = zip(["A"], [input_name])
+        self.connect_vertical_bus(wen_map, self.w_en_inst, self.rail_offsets)  
+
+        self.connect_output(self.w_en_inst, "Z", "w_en")
+        
+    def create_dffs(self):
+        """ Add the three input DFFs (with inverters) """
+        self.ctrl_dff_inst=self.add_inst(name="ctrl_dffs",
+                                         mod=self.ctrl_dff_array)
+        self.connect_inst(self.input_list + self.dff_output_list + ["clk_buf"] + self.supply_list)
+
+    def place_dffs(self):
+        """ Place the input DFFs (with inverters) """
+        self.ctrl_dff_inst.place(vector(0,0))
         
     def route_dffs(self):
         """ Route the input inverters """
@@ -368,18 +542,8 @@ class control_logic(design.design):
         if (self.port_type == "rw"):
             self.copy_layout_pin(self.ctrl_dff_inst, "din_1", "web")
         
-        
-    def create_dffs(self):
-        """ Add the three input DFFs (with inverters) """
-        self.ctrl_dff_inst=self.add_inst(name="ctrl_dffs",
-                                         mod=self.ctrl_dff_array)
-        self.connect_inst(self.input_list + self.dff_output_list + ["clk_buf"] + self.supply_list)
 
-    def place_dffs(self):
-        """ Place the input DFFs (with inverters) """
-        self.ctrl_dff_inst.place(vector(0,0))
-        
-
+            
     def get_offset(self,row):
         """ Compute the y-offset and mirroring """
         y_off = row*self.and2.height
@@ -391,55 +555,8 @@ class control_logic(design.design):
 
         return (y_off,mirror)
 
-    def create_wen_row(self):
-        # input: we (or cs) output: w_en
-        if self.port_type == "rw":
-            input_name = "we"
-        else:
-            # No we for write-only reports, so use cs
-            input_name = "cs"
-            
-        # BUFFER FOR W_EN
-        self.w_en_inst = self.add_inst(name="buf_w_en_buf",
-                                       mod=self.buf8)
-        self.connect_inst(["we", "w_en", "vdd", "gnd"])
-
-
-    def place_wen_row(self,row):
-        x_off = self.ctrl_dff_inst.width + self.internal_bus_width
-        (y_off,mirror)=self.get_offset(row)
-            
-        if self.port_type == "rw":
-            pre_w_en_offset = vector(x_off, y_off)
-            self.pre_w_en_inst.place(offset=pre_w_en_offset,
-                                     mirror=mirror)
-            x_off += self.and2.width
-
-        w_en_offset = vector(x_off, y_off)
-        self.w_en_inst.place(offset=w_en_offset,
-                             mirror=mirror)
-        
-        self.row_end_inst.append(self.w_en_inst)
         
 
-    def route_rbl(self):
-        """ Connect the logic for the rbl_in generation """
-
-        # Connect the NAND gate inputs to the bus
-        pre_p_en_in_map = zip(["A", "B"], ["gated_clk", "we_bar"])
-        self.connect_vertical_bus(pre_p_en_in_map, self.pre_p_en_inst, self.rail_offsets)  
-        
-        # Connect the output of the precharge enable to the RBL input
-        pre_p_en_out_pos = self.pre_p_en_inst.get_pin("Z").center()
-        rbl_in_pos = self.rbl_inst.get_pin("en").center()
-        mid1 = vector(rbl_in_pos.x,pre_p_en_out_pos.y)
-        self.add_wire(("metal3","via2","metal2"),[pre_p_en_out_pos,mid1,rbl_in_pos])
-        self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=pre_p_en_out_pos,
-                            rotate=90)
-        self.add_via_center(layers=("metal2","via2","metal3"),
-                            offset=pre_p_en_out_pos,
-                            rotate=90)
 
                       
     def connect_rail_from_right(self,inst, pin, rail):
@@ -489,62 +606,7 @@ class control_logic(design.design):
                      offset=rail_pos,
                      rotate=90)
         
-    def route_pen(self):
-        pre_p_en_out_pos = self.pre_p_en_inst.get_pin("Z").center()
-        in_pos = self.s_en_inst.get_pin("A").lc()
-        mid1 = vector(rbl_out_pos.x,in_pos.y)
-        self.add_wire(("metal1","via1","metal2"),[rbl_out_pos,mid1,in_pos])                
         
-        self.connect_output(self.inv_p_en_bar_inst, "Z", "p_en_bar")
-        
-    def route_wlen(self):
-        
-        wlen_map = zip(["A"], ["gated_clk"])
-        self.connect_vertical_bus(wlen_map, self.wl_en_inst, self.rail_offsets)  
-        self.connect_output(self.wl_en_inst, "Z", "wl_en")
-
-    def route_wen(self):
-        
-        if self.port_type == "rw":
-            input_name = "we"
-        else:
-            input_name = "cs"
-            
-        wen_map = zip(["A"], [input_name])
-        self.connect_vertical_bus(wen_map, self.w_en_inst, self.rail_offsets)  
-
-        self.connect_output(self.w_en_inst, "Z", "w_en")
-        
-    def route_sen(self):
-        
-        rbl_out_pos = self.rbl_inst.get_pin("out").bc()
-        in_pos = self.s_en_inst.get_pin("A").lc()
-        mid1 = vector(rbl_out_pos.x,in_pos.y)
-        self.add_wire(("metal1","via1","metal2"),[rbl_out_pos,mid1,in_pos])                
-
-        self.connect_output(self.s_en_inst, "Z", "s_en")
-        
-    def route_clk(self):
-        """ Route the clk and clk_buf_bar signal internally """
-
-        clk_pin = self.clkbuf_inst.get_pin("A")
-        self.add_layout_pin_segment_center(text="clk",
-                                           layer="metal2",
-                                           start=clk_pin.bc(),
-                                           end=clk_pin.bc().scale(1,0))
-
-        clk_bar_out_pin = self.clk_bar_inst.get_pin("Z")
-        clk_bar_in_pin = self.gated_clk_inst.get_pin("B")
-        mid1 = vector(clk_bar_out_pos.x,clk_bar_in_pos.y)
-        self.add_wire(("metal1","via1","metal2"),[clk_bar_out_pos,mid1,clk_bar_in_pos])
-        
-        clkbuf_map = zip(["Z"], ["clk_buf"])
-        self.connect_vertical_bus(clkbuf_map, self.clkbuf_inst, self.rail_offsets, ("metal3", "via2", "metal2"))  
-
-        clkbuf_map = zip(["Z"], ["gated_clk"])
-        self.connect_vertical_bus(clkbuf_map, self.gated_clk_inst, self.rail_offsets, ("metal3", "via2", "metal2"))  
-        
-        self.connect_output(self.clkbuf_inst, "Z", "clk_buf")
         
     def connect_output(self, inst, pin_name, out_name):
         """ Create an output pin on the right side from the pin of a given instance. """

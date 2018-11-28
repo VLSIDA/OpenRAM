@@ -12,7 +12,7 @@ class filelist:
             for file in files:
                 self.list.append(root + '/' + file)
                 out_file.write('{}/{}\n'.format(root,file))
-                print('{}/{}'.format(root,file))
+                #print('{}/{}'.format(root,file))
 
 
 

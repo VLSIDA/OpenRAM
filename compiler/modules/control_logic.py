@@ -144,12 +144,12 @@ class control_logic(design.design):
         self.internal_bus_width = (len(self.internal_bus_list)+1)*self.m2_pitch 
         
         # Outputs to the bank
-        if self.port_type == "r":
-            self.output_list = ["s_en", "p_en_bar"]
-        elif self.port_type == "w":
-            self.output_list = ["w_en"]
-        else:
+        if self.port_type == "rw":
             self.output_list = ["s_en", "w_en", "p_en_bar"]
+        elif self.port_type == "r":
+            self.output_list = ["s_en", "p_en_bar"]
+        else:
+            self.output_list = ["w_en"]
         self.output_list.append("wl_en")
         self.output_list.append("clk_buf")
         

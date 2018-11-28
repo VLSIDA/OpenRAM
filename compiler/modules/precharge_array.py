@@ -94,7 +94,7 @@ class precharge_array(design.design):
                                  mod=self.pc_cell,
                                  offset=offset)
             self.local_insts.append(inst)
-            self.connect_inst(["bl_{0}".format(i), "br_{0}".format(i), "en", "vdd"])
+            self.connect_inst(["bl_{0}".format(i), "br_{0}".format(i), "en_bar", "vdd"])
 
 
     def place_insts(self):

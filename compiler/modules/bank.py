@@ -227,7 +227,7 @@ class bank(design.design):
         # UPPER LEFT QUADRANT
         # To the left of the bitcell array
         # The wordline driver is placed to the right of the main decoder width.
-        x_offset = self.central_bus_width + self.wordline_driver.width 
+        x_offset = self.m2_gap + self.wordline_driver.width 
         self.wordline_driver_offsets[port] = vector(-x_offset,0)
         x_offset += self.row_decoder.width + self.m2_gap
         self.row_decoder_offsets[port] = vector(-x_offset,0)
@@ -284,7 +284,7 @@ class bank(design.design):
         # LOWER RIGHT QUADRANT
         # To the left of the bitcell array
         # The wordline driver is placed to the right of the main decoder width.
-        x_offset = self.bitcell_array.width + self.central_bus_width + self.wordline_driver.width 
+        x_offset = self.bitcell_array.width + self.m2_gap + self.wordline_driver.width 
         self.wordline_driver_offsets[port] = vector(x_offset,0)
         x_offset += self.row_decoder.width + self.m2_gap
         self.row_decoder_offsets[port] = vector(x_offset,0)
@@ -350,20 +350,22 @@ class bank(design.design):
         # FIXME: This spacing should be width dependent...
         self.supply_rail_pitch = self.supply_rail_width + 4*self.m2_space
         
-        # Number of control lines in the bus
-        self.num_control_lines = 4
         # The order of the control signals on the control bus:
         self.input_control_signals = []
         port_num = 0
         for port in range(OPTS.num_rw_ports):
-            self.input_control_signals.append(["clk_buf{}".format(port_num), "wl_en{}".format(port_num), "w_en{}".format(port_num), "s_en{}".format(port_num), "p_en_bar{}".format(port_num)])
+            self.input_control_signals.append(["wl_en{}".format(port_num), "w_en{}".format(port_num), "s_en{}".format(port_num), "p_en_bar{}".format(port_num)])
             port_num += 1
         for port in range(OPTS.num_w_ports):
-            self.input_control_signals.append(["clk_buf{}".format(port_num), "wl_en{}".format(port_num), "w_en{}".format(port_num)])
+            self.input_control_signals.append(["wl_en{}".format(port_num), "w_en{}".format(port_num)])
             port_num += 1
         for port in range(OPTS.num_r_ports):
-            self.input_control_signals.append(["clk_buf{}".format(port_num), "wl_en{}".format(port_num), "s_en{}".format(port_num), "p_en_bar{}".format(port_num)])
+            self.input_control_signals.append(["wl_en{}".format(port_num), "s_en{}".format(port_num), "p_en_bar{}".format(port_num)])
             port_num += 1
+
+        # Number of control lines in the bus
+        self.num_control_lines = max([len(x) for x in self.input_control_signals])
+
 
         # These will be outputs of the gaters if this is multibank, if not, normal signals.
         self.control_signals = []
@@ -372,6 +374,7 @@ class bank(design.design):
                 self.control_signals.append(["gated_"+str for str in self.input_control_signals[port]])
             else:
                 self.control_signals.append(self.input_control_signals[port])
+
         # The central bus is the column address (one hot) and row address (binary)
         if self.col_addr_size>0:
             self.num_col_addr_lines = 2**self.col_addr_size
@@ -380,7 +383,7 @@ class bank(design.design):
 
         # The width of this bus is needed to place other modules (e.g. decoder)
         # A width on each side too
-        self.central_bus_width = self.m2_pitch * self.num_control_lines + self.m2_width
+        #self.central_bus_width = self.m2_pitch * self.num_control_lines + self.m2_width
 
         # A space for wells or jogging m2
         self.m2_gap = max(2*drc("pwell_to_nwell") + drc("well_enclosure_active"),
@@ -837,7 +840,8 @@ class bank(design.design):
         # The bank is at (0,0), so this is to the left of the y-axis.
         # 2 pitches on the right for vias/jogs to access the inputs 
         control_bus_offset = vector(-self.m2_pitch * self.num_control_lines - self.m2_width, self.min_y_offset)
-        control_bus_length = self.max_y_offset - self.min_y_offset
+        # The control bus is routed up to two pitches below the bitcell array
+        control_bus_length = -2*self.m1_pitch - self.min_y_offset
         self.bus_xoffset[0] = self.create_bus(layer="metal2",
                                               pitch=self.m2_pitch,
                                               offset=control_bus_offset,
@@ -849,6 +853,8 @@ class bank(design.design):
         # Port 1
         if len(self.all_ports)==2:
             control_bus_offset = vector(self.bitcell_array.width + self.m2_width, self.min_y_offset)
+            # The other control bus is routed up to two pitches above the bitcell array
+            control_bus_length = self.max_y_offset + self.bitcell_array.height + 2*self.m1_pitch
             self.bus_xoffset[1] = self.create_bus(layer="metal2",
                                                   pitch=self.m2_pitch,
                                                   offset=control_bus_offset,
@@ -1226,9 +1232,9 @@ class bank(design.design):
                                 rotate=90)
 
         # clk to wordline_driver
-        control_signal = self.prefix+"p_en_bar{}".format(port)
+        control_signal = self.prefix+"wl_en{}".format(port)
         pin_pos = self.wordline_driver_inst[port].get_pin("en_bar").bc()
-        mid_pos = pin_pos - vector(0,self.m1_pitch)
+        mid_pos = pin_pos - vector(0,self.m2_gap) # to route down to the top of the bus
         control_x_offset = self.bus_xoffset[port][control_signal].x
         control_pos = vector(control_x_offset, mid_pos.y)
         self.add_wire(("metal1","via1","metal2"),[pin_pos, mid_pos, control_pos])

@@ -409,11 +409,14 @@ class sram_base(design):
                 mod = self.control_logic_r
                 
             insts.append(self.add_inst(name="control{}".format(port), mod=mod))
-            
+
+            # Inputs
             temp = ["csb{}".format(port)]
             if port in self.readwrite_ports:
                 temp.append("web{}".format(port))
             temp.append("clk{}".format(port))
+
+            # Ouputs
             if port in self.read_ports:
                 temp.append("s_en{}".format(port))
             if port in self.write_ports:

@@ -81,7 +81,7 @@ class sram_1bank(sram_base):
         
         # Add the col address flops below the bank to the left of the lower-left of bank array
         if self.col_addr_dff:
-            col_addr_pos[port] = vector(self.bank.bank_array_ll.x - self.col_addr_dff_insts[port].width - self.bank.central_bus_width,
+            col_addr_pos[port] = vector(self.bank.bank_array_ll.x - self.col_addr_dff_insts[port].width - self.bank.m2_gap,
                                         -data_gap - self.col_addr_dff_insts[port].height)
             self.col_addr_dff_insts[port].place(col_addr_pos[port])
 
@@ -178,27 +178,11 @@ class sram_1bank(sram_base):
             # Connect all of these clock pins to the clock in the central bus
             # This is something like a "spine" clock distribution. The two spines
             # are clk_buf and clk_buf_bar
+            control_clk_buf_pin = self.control_logic_insts[port].get_pin("clk_buf")
+            control_clk_buf_pos = control_clk_buf_pin.center()
             
-            bank_clk_buf_pin = self.bank_inst.get_pin("clk_buf{}".format(port))
-            bank_clk_buf_pos = bank_clk_buf_pin.center()
-            bank_clk_buf_bar_pin = self.bank_inst.get_pin("clk_buf_bar{}".format(port))
-            bank_clk_buf_bar_pos = bank_clk_buf_bar_pin.center()
-
-            if self.col_addr_dff:
-                dff_clk_pin = self.col_addr_dff_insts[port].get_pin("clk")
-                dff_clk_pos = dff_clk_pin.center()
-                mid_pos = vector(bank_clk_buf_pos.x, dff_clk_pos.y)
-                self.add_wire(("metal3","via2","metal2"),[dff_clk_pos, mid_pos, bank_clk_buf_pos])
-
-            if port in self.write_ports:
-                data_dff_clk_pin = self.data_dff_insts[port].get_pin("clk")
-                data_dff_clk_pos = data_dff_clk_pin.center()
-                mid_pos = vector(bank_clk_buf_pos.x, data_dff_clk_pos.y)
-                self.add_wire(("metal3","via2","metal2"),[data_dff_clk_pos, mid_pos, bank_clk_buf_pos])
-
             # This uses a metal2 track to the right (for port0) of the control/row addr DFF
             # to route vertically. For port1, it is to the left.
-            control_clk_buf_pin = self.control_logic_insts[port].get_pin("clk_buf")
             row_addr_clk_pin = self.row_addr_dff_insts[port].get_pin("clk")
             if port%2:
                 control_clk_buf_pos = control_clk_buf_pin.lc()
@@ -210,17 +194,38 @@ class sram_1bank(sram_base):
                 row_addr_clk_pos = row_addr_clk_pin.rc()
                 mid1_pos = vector(self.row_addr_dff_insts[port].rx() + self.m2_pitch,
                                   row_addr_clk_pos.y)
-            mid2_pos = vector(mid1_pos.x,
-                              control_clk_buf_pos.y)
+
+            # This is the steiner point where the net branches out
+            clk_steiner_pos = vector(mid1_pos.x, control_clk_buf_pos.y)
+            self.add_path("metal1", [control_clk_buf_pos, clk_steiner_pos])
+            self.add_via_center(layers=("metal1","via1","metal2"),
+                                offset=clk_steiner_pos,
+                                rotate=90)
+            
             # Note, the via to the control logic is taken care of when we route
             # the control logic to the bank
-            self.add_wire(("metal3","via2","metal2"),[row_addr_clk_pos, mid1_pos, mid2_pos, control_clk_buf_pos])
+            self.add_wire(("metal3","via2","metal2"),[row_addr_clk_pos, mid1_pos, clk_steiner_pos, control_clk_buf_pos])
         
+            if self.col_addr_dff:
+                dff_clk_pin = self.col_addr_dff_insts[port].get_pin("clk")
+                dff_clk_pos = dff_clk_pin.center()
+                mid_pos = vector(clk_steiner_pos.x, dff_clk_pos.y)
+                self.add_wire(("metal3","via2","metal2"),[dff_clk_pos, mid_pos, clk_steiner_pos])
+
+            if port in self.write_ports:
+                data_dff_clk_pin = self.data_dff_insts[port].get_pin("clk")
+                data_dff_clk_pos = data_dff_clk_pin.center()
+                mid_pos = vector(clk_steiner_pos.x, data_dff_clk_pos.y)
+                self.add_wire(("metal3","via2","metal2"),[data_dff_clk_pos, mid_pos, clk_steiner_pos])
+
             
     def route_control_logic(self):
         """ Route the outputs from the control logic module """
         for port in self.all_ports:
             for signal in self.control_logic_outputs[port]:
+                # The clock gets routed separately and is not a part of the bank
+                if "clk" in signal:
+                    continue
                 src_pin = self.control_logic_insts[port].get_pin(signal)
                 dest_pin = self.bank_inst.get_pin(signal+"{}".format(port))                
                 self.connect_rail_from_left_m2m3(src_pin, dest_pin)

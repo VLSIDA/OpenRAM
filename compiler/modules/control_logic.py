@@ -280,17 +280,21 @@ class control_logic(design.design):
 
     def route_clk_buf(self):
         clk_pin = self.clkbuf_inst.get_pin("A")
+        clk_pos = clk_pin.center()
         self.add_layout_pin_segment_center(text="clk",
                                            layer="metal2",
-                                           start=clk_pin.bc(),
-                                           end=clk_pin.bc().scale(1,0))
+                                           start=clk_pos,
+                                           end=clk_pos.scale(1,0))
+        self.add_via_center(layers=("metal1","via1","metal2"),
+                            offset=clk_pos)
+
 
         clkbuf_map = zip(["Z"], ["clk_buf"])
         self.connect_vertical_bus(clkbuf_map, self.clkbuf_inst, self.rail_offsets, ("metal3", "via2", "metal2"))  
         # The pin is on M1, so we need another via as well
         self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=self.clkbuf_inst.get_pin("Z").center(),
-                            rotate=90)
+                            offset=self.clkbuf_inst.get_pin("Z").center())
+        
 
         self.connect_output(self.clkbuf_inst, "Z", "clk_buf")
 
@@ -332,16 +336,15 @@ class control_logic(design.design):
         self.connect_vertical_bus(clkbuf_map, self.gated_clk_bar_inst, self.rail_offsets, ("metal3", "via2", "metal2"))  
         # The pin is on M1, so we need another via as well
         self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=self.gated_clk_bar_inst.get_pin("A").center(),
-                            rotate=90)
+                            offset=self.gated_clk_bar_inst.get_pin("A").center())
+
 
         # This is the second gate over, so it needs to be on M3
         clkbuf_map = zip(["Z"], ["gated_clk_bar"])
         self.connect_vertical_bus(clkbuf_map, self.gated_clk_bar_inst, self.rail_offsets, ("metal3", "via2", "metal2"))  
         # The pin is on M1, so we need another via as well
         self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=self.gated_clk_bar_inst.get_pin("Z").center(),
-                            rotate=90)
+                            offset=self.gated_clk_bar_inst.get_pin("Z").center())
 
     def create_gated_clk_buf_row(self):
         self.gated_clk_buf_inst = self.add_inst(name="and2_gated_clk_buf",
@@ -367,8 +370,7 @@ class control_logic(design.design):
         self.connect_vertical_bus(clkbuf_map, self.gated_clk_buf_inst, self.rail_offsets, ("metal3", "via2", "metal2"))  
         # The pin is on M1, so we need another via as well
         self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=self.gated_clk_buf_inst.get_pin("Z").center(),
-                            rotate=90)
+                            offset=self.gated_clk_buf_inst.get_pin("Z").center())
         
     def create_wlen_row(self):
         # input pre_p_en, output: wl_en

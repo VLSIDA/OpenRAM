@@ -1227,7 +1227,7 @@ class bank(design.design):
 
         # clk to wordline_driver
         control_signal = self.prefix+"p_en_bar{}".format(port)
-        pin_pos = self.wordline_driver_inst[port].get_pin("en").bc()
+        pin_pos = self.wordline_driver_inst[port].get_pin("en_bar").bc()
         mid_pos = pin_pos - vector(0,self.m1_pitch)
         control_x_offset = self.bus_xoffset[port][control_signal].x
         control_pos = vector(control_x_offset, mid_pos.y)

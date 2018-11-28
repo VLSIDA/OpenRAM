@@ -523,8 +523,8 @@ class hierarchical_decoder(design.design):
         """
         row_index = 0
         if (self.num_inputs == 4 or self.num_inputs == 5):
-            for index_A in self.predec_groups[0]:
-                for index_B in self.predec_groups[1]:
+            for index_B in self.predec_groups[1]:
+                for index_A in self.predec_groups[0]:
                     # FIXME: convert to connect_bus?
                     predecode_name = "predecode_{}".format(index_A)
                     self.route_predecode_rail(predecode_name, self.nand_inst[row_index].get_pin("A"))
@@ -533,9 +533,9 @@ class hierarchical_decoder(design.design):
                     row_index = row_index + 1
 
         elif (self.num_inputs > 5):
-            for index_A in self.predec_groups[0]:
+            for index_C in self.predec_groups[2]:
                 for index_B in self.predec_groups[1]:
-                    for index_C in self.predec_groups[2]:
+                    for index_A in self.predec_groups[0]:
                         # FIXME: convert to connect_bus?
                         predecode_name = "predecode_{}".format(index_A) 
                         self.route_predecode_rail(predecode_name, self.nand_inst[row_index].get_pin("A"))

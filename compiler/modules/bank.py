@@ -235,7 +235,9 @@ class bank(design.design):
         # Place the col decoder left aligned with wordline driver plus halfway under row decoder
         # Place the col decoder left aligned with row decoder (x_offset doesn't change)
         # Below the bitcell array with well spacing
-        x_offset = self.central_bus_width[port] + self.wordline_driver.width + 0.5*self.row_decoder.width
+        x_offset = self.central_bus_width[port] + self.wordline_driver.width \
+            + self.column_decoder.width + self.col_addr_bus_width
+        
         if self.col_addr_size > 0:
             y_offset = self.m2_gap + self.column_decoder.height 
         else:
@@ -293,7 +295,8 @@ class bank(design.design):
         # UPPER RIGHT QUADRANT
         # Place the col decoder right aligned with wordline driver plus halfway under row decoder
         # Above the bitcell array with a well spacing
-        x_offset = self.bitcell_array.width + self.central_bus_width[port] + self.wordline_driver.width + 0.5*self.row_decoder.width
+        x_offset = self.bitcell_array.width + self.central_bus_width[port] + self.wordline_driver.width \
+            + self.column_decoder.width + self.col_addr_bus_width
         if self.col_addr_size > 0:
             y_offset = self.bitcell_array.height + self.column_decoder.height + self.m2_gap
         else:
@@ -370,7 +373,6 @@ class bank(design.design):
 
         # The width of this bus is needed to place other modules (e.g. decoder) for each port
         self.central_bus_width = [self.m2_pitch*x + self.m2_width for x in self.num_control_lines]
-        
 
         # These will be outputs of the gaters if this is multibank, if not, normal signals.
         self.control_signals = []
@@ -385,10 +387,7 @@ class bank(design.design):
             self.num_col_addr_lines = 2**self.col_addr_size
         else:
             self.num_col_addr_lines = 0            
-
-        # The width of this bus is needed to place other modules (e.g. decoder)
-        # A width on each side too
-        #self.central_bus_width = self.m2_pitch * self.num_control_lines + self.m2_width
+        self.col_addr_bus_width = self.m2_pitch*self.num_col_addr_lines
 
         # A space for wells or jogging m2
         self.m2_gap = max(2*drc("pwell_to_nwell") + drc("well_enclosure_active"),
@@ -1096,12 +1095,6 @@ class bank(design.design):
             mid2 = driver_wl_pos.scale(0.5,0)+bitcell_wl_pos.scale(0.5,1)
             self.add_path("metal1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
 
-    # def route_column_address_lines(self, port):
-    #     if port%2:
-    #         self.route_column_address_lines_right(port)
-    #     else:
-    #         self.route_column_address_lines_left(port)
-
     def route_column_address_lines(self, port):
         """ Connecting the select lines of column mux to the address bus """
         if not self.col_addr_size>0:
@@ -1138,40 +1131,6 @@ class bank(design.design):
         route_map = list(zip(decode_pins, column_mux_pins))
         self.create_vertical_channel_route(route_map, offset)
 
-    # def route_column_address_lines_right(self, port):
-    #     """ Connecting the select lines of column mux to the address bus """
-    #     if not self.col_addr_size>0:
-    #         return
-
-    #     if self.col_addr_size == 1:
-            
-    #         # Connect to sel[0] and sel[1]
-    #         decode_names = ["Zb", "Z"]
-            
-    #         # The Address LSB
-    #         self.copy_layout_pin(self.column_decoder_inst[port], "A", "addr{}_0".format(port)) 
-                
-    #     elif self.col_addr_size > 1:
-    #         decode_names = []
-    #         for i in range(self.num_col_addr_lines):
-    #             decode_names.append("out_{}".format(i))
-
-    #         for i in range(self.col_addr_size):
-    #             decoder_name = "in_{}".format(i)
-    #             addr_name = "addr{0}_{1}".format(port,i)
-    #             self.copy_layout_pin(self.column_decoder_inst[port], decoder_name, addr_name)
-
-    #     offset = self.column_decoder_inst[port].ll() - vector(self.num_col_addr_lines*self.m2_pitch, 0)
-
-    #     sel_names = ["sel_{}".format(x) for x in range(self.num_col_addr_lines)]
-
-    #     route_map = list(zip(decode_names, sel_names))
-    #     decode_pins = {key: self.column_decoder_inst[port].get_pin(key) for key in decode_names }
-    #     column_mux_pins = {key: self.column_mux_array_inst[port].get_pin(key) for key in sel_names }
-    #     # Combine the dff and bank pins into a single dictionary of pin name to pin.
-    #     all_pins = {**decode_pins, **column_mux_pins}
-    #     self.create_vertical_channel_route(route_map, all_pins, offset)
-        
 
     def add_lvs_correspondence_points(self):
         """ This adds some points for easier debugging if LVS goes wrong. 

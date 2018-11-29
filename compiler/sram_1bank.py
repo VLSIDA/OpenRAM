@@ -61,15 +61,18 @@ class sram_1bank(sram_base):
         row_addr_pos = [None]*len(self.all_ports)
         col_addr_pos = [None]*len(self.all_ports)
         data_pos = [None]*len(self.all_ports)
-        
-        # This is M2 pitch even though it is on M1 to help stem via spacings on the trunk
-        data_gap = self.m2_pitch*(self.word_size+1)
 
+        # This is M2 pitch even though it is on M1 to help stem via spacings on the trunk
+        # The M1 pitch is for supply rail spacings
+        max_gap_size = self.m2_pitch*max(self.word_size+1,self.col_addr_size+1) + 2*self.m1_pitch
+        
         # Port 0
         port = 0
-        # This includes 2 M2 pitches for the row addr clock line
+
+        # This includes 2 M2 pitches for the row addr clock line.
+        # It is also placed to align with the column decoder (if it exists hence the bank gap)
         control_pos[port] = vector(-self.control_logic_insts[port].width - 2*self.m2_pitch,
-                                   self.bank.bank_array_ll.y - self.control_logic_insts[port].mod.control_logic_center.y)
+                                   self.bank.bank_array_ll.y - self.control_logic_insts[port].mod.control_logic_center.y - self.bank.m2_gap)
         self.control_logic_insts[port].place(control_pos[port])
         
         # The row address bits are placed above the control logic aligned on the right.
@@ -82,7 +85,7 @@ class sram_1bank(sram_base):
         # Add the col address flops below the bank to the left of the lower-left of bank array
         if self.col_addr_dff:
             col_addr_pos[port] = vector(self.bank.bank_array_ll.x - self.col_addr_dff_insts[port].width - self.bank.m2_gap,
-                                        -data_gap - self.col_addr_dff_insts[port].height)
+                                        -max_gap_size - self.col_addr_dff_insts[port].height)
             self.col_addr_dff_insts[port].place(col_addr_pos[port])
 
         # Add the data flops below the bank to the right of the lower-left of bank array
@@ -92,16 +95,18 @@ class sram_1bank(sram_base):
         # sense amps.
         if port in self.write_ports:
             data_pos[port] = vector(self.bank.bank_array_ll.x,
-                                    -data_gap - self.data_dff_insts[port].height)
+                                    -max_gap_size - self.data_dff_insts[port].height)
             self.data_dff_insts[port].place(data_pos[port])
 
 
         if len(self.all_ports)>1:
             # Port 1
             port = 1
+
             # This includes 2 M2 pitches for the row addr clock line            
+            # It is also placed to align with the column decoder (if it exists hence the bank gap)
             control_pos[port] = vector(self.bank_inst.rx() + self.control_logic_insts[port].width + 2*self.m2_pitch,
-                                       self.bank.bank_array_ll.y - self.control_logic_insts[port].mod.control_logic_center.y)
+                                       self.bank.bank_array_ll.y - self.control_logic_insts[port].mod.control_logic_center.y + self.bank.m2_gap)
             self.control_logic_insts[port].place(control_pos[port], mirror="MY")
         
             # The row address bits are placed above the control logic aligned on the left.
@@ -114,7 +119,7 @@ class sram_1bank(sram_base):
             # Add the col address flops above the bank to the right of the upper-right of bank array
             if self.col_addr_dff:
                 col_addr_pos[port] = vector(self.bank.bank_array_ur.x + self.bank.m2_gap,
-                                            self.bank_inst.uy() + data_gap + self.col_addr_dff_insts[port].height)
+                                            self.bank_inst.uy() + max_gap_size + self.col_addr_dff_insts[port].height)
                 self.col_addr_dff_insts[port].place(col_addr_pos[port], mirror="MX")
             
             # Add the data flops above the bank to the left of the upper-right of bank array
@@ -124,7 +129,7 @@ class sram_1bank(sram_base):
             # sense amps.
             if port in self.write_ports:
                 data_pos[port] = vector(self.bank.bank_array_ur.x - self.data_dff_insts[port].width,
-                                        self.bank.uy() + data_gap + self.data_dff_insts[port].height)
+                                        self.bank.uy() + max_gap_size + self.data_dff_insts[port].height)
                 self.data_dff_insts[port].place(data_pos[port], mirror="MX")
         
             

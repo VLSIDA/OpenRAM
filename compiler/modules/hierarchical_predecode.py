@@ -33,7 +33,7 @@ class hierarchical_predecode(design.design):
     def add_modules(self):
         """ Add the INV and NAND gate modules """
         
-        self.inv = pinv()
+        self.inv = pinv(height=self.cell_height)
         self.add_mod(self.inv)
         
         self.add_nand(self.number_of_inputs)
@@ -42,9 +42,9 @@ class hierarchical_predecode(design.design):
     def add_nand(self,inputs):
         """ Create the NAND for the predecode input stage """
         if inputs==2:
-            self.nand = pnand2()
+            self.nand = pnand2(height=self.cell_height)
         elif inputs==3:
-            self.nand = pnand3()
+            self.nand = pnand3(height=self.cell_height)
         else:
             debug.error("Invalid number of predecode inputs: {}".format(inputs),-1)
             

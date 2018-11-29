@@ -119,7 +119,7 @@ class sram_1bank(sram_base):
             # Add the col address flops above the bank to the right of the upper-right of bank array
             if self.col_addr_dff:
                 col_addr_pos[port] = vector(self.bank.bank_array_ur.x + self.bank.m2_gap,
-                                            self.bank_inst.uy() + max_gap_size + self.col_addr_dff_insts[port].height)
+                                            self.bank.height + max_gap_size + self.col_addr_dff_insts[port].height)
                 self.col_addr_dff_insts[port].place(col_addr_pos[port], mirror="MX")
             
             # Add the data flops above the bank to the left of the upper-right of bank array
@@ -129,7 +129,7 @@ class sram_1bank(sram_base):
             # sense amps.
             if port in self.write_ports:
                 data_pos[port] = vector(self.bank.bank_array_ur.x - self.data_dff_insts[port].width,
-                                        self.bank.uy() + max_gap_size + self.data_dff_insts[port].height)
+                                        self.bank.height + max_gap_size + self.data_dff_insts[port].height)
                 self.data_dff_insts[port].place(data_pos[port], mirror="MX")
         
             

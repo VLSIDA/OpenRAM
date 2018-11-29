@@ -37,6 +37,9 @@ class simulation():
         self.period = tech.spice["feasible_period"]
         self.slew = tech.spice["rise_time"]*2
         self.load = tech.spice["msflop_in_cap"]*4
+
+        self.v_high = self.vdd_voltage - tech.spice["v_threshold_typical"]
+        self.v_low = tech.spice["v_threshold_typical"]        
         self.gnd_voltage = 0
         
     def set_stimulus_variables(self):

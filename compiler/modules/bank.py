@@ -295,7 +295,7 @@ class bank(design.design):
         # Above the bitcell array with a well spacing
         x_offset = self.bitcell_array.width + self.central_bus_width[port] + self.wordline_driver.width + 0.5*self.row_decoder.width
         if self.col_addr_size > 0:
-            y_offset = self.bitcell_array.height + self.column_decoder.height
+            y_offset = self.bitcell_array.height + self.column_decoder.height + self.m2_gap
         else:
             y_offset = self.bitcell_array.height
         y_offset += 2*drc("well_to_well")

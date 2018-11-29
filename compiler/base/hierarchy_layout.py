@@ -745,13 +745,14 @@ class layout(lef.lef):
                 self.add_wire(layer_stack, [pin.center(), mid, trunk_mid])
         
     
-    def create_channel_route(self, netlist, pins, offset, 
-                             layer_stack=("metal1", "via1", "metal2"), pitch=None,
+    def create_channel_route(self, netlist,
+                             offset, 
+                             layer_stack=("metal1", "via1", "metal2"),
+                             pitch=None,
                              vertical=False):
         """
-        The net list is a list of the nets. Each net is a list of pin
-        names to be connected.  Pins is a dictionary of the pin names
-        to the pin structures.  Offset is the lower-left of where the
+        The net list is a list of the nets. Each net is a list of pins
+        to be connected.  Offset is the lower-left of where the
         routing channel will start.  This does NOT try to minimize the
         number of tracks -- instead, it picks an order to avoid the
         vertical conflicts between pins.
@@ -786,7 +787,10 @@ class layout(lef.lef):
                             
         def vcg_pin_overlap(pin1, pin2, vertical):
             """ Check for vertical or horizontal overlap of the two pins """
-
+            # FIXME: If the pins are not in a row, this may break.
+            # However, a top pin shouldn't overlap another top pin, for example, so the
+            # extra comparison *shouldn't* matter.
+            
             # Pin 1 must be in the "BOTTOM" set
             x_overlap = pin1.by() < pin2.by() and abs(pin1.center().x-pin2.center().x)<pitch
 
@@ -815,10 +819,7 @@ class layout(lef.lef):
         for pin_list in netlist:
                 net_name = "n{}".format(index)
                 index += 1
-                nets[net_name] = []
-                for pin_name in pin_list:
-                    pin = pins[pin_name]
-                    nets[net_name].append(pin)
+                nets[net_name] = pin_list
 
         # Find the vertical pin conflicts
         # FIXME: O(n^2) but who cares for now
@@ -868,23 +869,21 @@ class layout(lef.lef):
                 offset += vector(0,pitch)
 
 
-    def create_vertical_channel_route(self, netlist, pins, offset, 
+    def create_vertical_channel_route(self, netlist, offset, 
                                       layer_stack=("metal1", "via1", "metal2"),
                                       pitch=None):
         """
         Wrapper to create a vertical channel route
         """
-        self.create_channel_route(netlist, pins, offset, layer_stack,
-                                  pitch, vertical=True)
+        self.create_channel_route(netlist, offset, layer_stack, pitch, vertical=True)
 
-    def create_horizontal_channel_route(self, netlist, pins, offset, 
+    def create_horizontal_channel_route(self, netlist, offset, 
                                         layer_stack=("metal1", "via1", "metal2"),
                                         pitch=None):
         """
         Wrapper to create a horizontal channel route
         """
-        self.create_channel_route(netlist, pins, offset,
-                                  layer_stack, pitch, vertical=False)
+        self.create_channel_route(netlist, offset, layer_stack, pitch, vertical=False)
         
     def add_enclosure(self, insts, layer="nwell"):
         """ Add a layer that surrounds the given instances. Useful

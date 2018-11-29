@@ -907,6 +907,9 @@ class bank(design.design):
         inst1 = self.bitcell_array_inst
         inst1_bl_name = self.bl_names[port]+"_{}"
         inst1_br_name = self.br_names[port]+"_{}"
+
+        # The column mux is constructed to match the bitline pitch, so we can directly connect
+        # here and not channel route the bitlines.
         self.connect_bitlines(inst1=inst1, inst2=inst2, num_bits=self.num_cols,
                               inst1_bl_name=inst1_bl_name, inst1_br_name=inst1_br_name)
         
@@ -927,8 +930,8 @@ class bank(design.design):
             inst1_bl_name = "bl_{}"
             inst1_br_name = "br_{}"
             
-        self.connect_bitlines(inst1=inst1, inst2=inst2, num_bits=self.word_size,
-                              inst1_bl_name=inst1_bl_name, inst1_br_name=inst1_br_name)
+        self.channel_route_bitlines(inst1=inst1, inst2=inst2, num_bits=self.word_size,
+                                    inst1_bl_name=inst1_bl_name, inst1_br_name=inst1_br_name)
 
     def route_write_driver_to_column_mux_or_bitcell_array(self, port):
         """ Routing of BL and BR between sense_amp and column mux or bitcell array """
@@ -953,7 +956,11 @@ class bank(design.design):
         
         inst1 = self.write_driver_array_inst[port]
         inst2 = self.sense_amp_array_inst[port]
-        self.connect_bitlines(inst1, inst2, self.word_size)
+
+        # These should be pitch matched in the cell library,
+        # but just in case, do a channel route.
+        self.channel_route_bitlines(inst1=inst1, inst2=inst2, num_bits=self.word_size)
+
                 
 
     def route_sense_amp_out(self, port):
@@ -1008,14 +1015,10 @@ class bank(design.design):
         # of tracks in teh channel router yet. If we did, we could route all the bits at once!
         offset = bottom_inst.ul() + vector(0,self.m1_pitch)
         for bit in range(num_bits):
-            bottom_names = [bottom_bl_name.format(bit), bottom_br_name.format(bit)]
-            top_names = [top_bl_name.format(bit), top_br_name.format(bit)]            
+            bottom_names = [bottom_inst.get_pin(bottom_bl_name.format(bit)), bottom_inst.get_pin(bottom_br_name.format(bit))]
+            top_names = [top_inst.get_pin(top_bl_name.format(bit)), top_inst.get_pin(top_br_name.format(bit))]            
             route_map = list(zip(bottom_names, top_names))
-            bottom_pins = {key: bottom_inst.get_pin(key) for key in bottom_names }
-            top_pins = {key: top_inst.get_pin(key) for key in top_names }
-            all_pins = {**bottom_pins, **top_pins}
-            debug.check(len(all_pins)==len(bottom_pins)+len(top_pins),"Duplicate named pins in bitline channel route.")
-            self.create_horizontal_channel_route(route_map, all_pins, offset)
+            self.create_horizontal_channel_route(route_map, offset)
             
 
     def connect_bitlines(self, inst1, inst2, num_bits,
@@ -1093,79 +1096,81 @@ class bank(design.design):
             mid2 = driver_wl_pos.scale(0.5,0)+bitcell_wl_pos.scale(0.5,1)
             self.add_path("metal1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
 
+    # def route_column_address_lines(self, port):
+    #     if port%2:
+    #         self.route_column_address_lines_right(port)
+    #     else:
+    #         self.route_column_address_lines_left(port)
+
     def route_column_address_lines(self, port):
+        """ Connecting the select lines of column mux to the address bus """
+        if not self.col_addr_size>0:
+            return
+
+        if self.col_addr_size == 1:
+            
+            # Connect to sel[0] and sel[1]
+            decode_names = ["Zb", "Z"]
+            
+            # The Address LSB
+            self.copy_layout_pin(self.column_decoder_inst[port], "A", "addr{}_0".format(port)) 
+                
+        elif self.col_addr_size > 1:
+            decode_names = []
+            for i in range(self.num_col_addr_lines):
+                decode_names.append("out_{}".format(i))
+
+            for i in range(self.col_addr_size):
+                decoder_name = "in_{}".format(i)
+                addr_name = "addr{0}_{1}".format(port,i)
+                self.copy_layout_pin(self.column_decoder_inst[port], decoder_name, addr_name)
+
         if port%2:
-            self.route_column_address_lines_right(port)
+            offset = self.column_decoder_inst[port].ll() - vector(self.num_col_addr_lines*self.m2_pitch, 0)
         else:
-            self.route_column_address_lines_left(port)
+            offset = self.column_decoder_inst[port].lr() + vector(self.m2_pitch, 0)
 
-    def route_column_address_lines_left(self, port):
-        """ Connecting the select lines of column mux to the address bus """
-        if not self.col_addr_size>0:
-            return
-
-        if self.col_addr_size == 1:
-            
-            # Connect to sel[0] and sel[1]
-            decode_names = ["Zb", "Z"]
-            
-            # The Address LSB
-            self.copy_layout_pin(self.column_decoder_inst[port], "A", "addr{}_0".format(port)) 
-                
-        elif self.col_addr_size > 1:
-            decode_names = []
-            for i in range(self.num_col_addr_lines):
-                decode_names.append("out_{}".format(i))
-
-            for i in range(self.col_addr_size):
-                decoder_name = "in_{}".format(i)
-                addr_name = "addr{0}_{1}".format(port,i)
-                self.copy_layout_pin(self.column_decoder_inst[port], decoder_name, addr_name)
-
-        offset = self.column_decoder_inst[port].lr() + vector(self.m2_pitch, 0)
-
+        decode_pins = [self.column_decoder_inst[port].get_pin(x) for x in decode_names]
+        
         sel_names = ["sel_{}".format(x) for x in range(self.num_col_addr_lines)]
+        column_mux_pins = [self.column_mux_array_inst[port].get_pin(x) for x in sel_names]
+        
+        route_map = list(zip(decode_pins, column_mux_pins))
+        self.create_vertical_channel_route(route_map, offset)
 
-        route_map = list(zip(decode_names, sel_names))
-        decode_pins = {key: self.column_decoder_inst[port].get_pin(key) for key in decode_names }
-        column_mux_pins = {key: self.column_mux_array_inst[port].get_pin(key) for key in sel_names }
-        # Combine the dff and bank pins into a single dictionary of pin name to pin.
-        all_pins = {**decode_pins, **column_mux_pins}
-        self.create_vertical_channel_route(route_map, all_pins, offset)
+    # def route_column_address_lines_right(self, port):
+    #     """ Connecting the select lines of column mux to the address bus """
+    #     if not self.col_addr_size>0:
+    #         return
 
-    def route_column_address_lines_right(self, port):
-        """ Connecting the select lines of column mux to the address bus """
-        if not self.col_addr_size>0:
-            return
-
-        if self.col_addr_size == 1:
+    #     if self.col_addr_size == 1:
             
-            # Connect to sel[0] and sel[1]
-            decode_names = ["Zb", "Z"]
+    #         # Connect to sel[0] and sel[1]
+    #         decode_names = ["Zb", "Z"]
             
-            # The Address LSB
-            self.copy_layout_pin(self.column_decoder_inst[port], "A", "addr{}_0".format(port)) 
+    #         # The Address LSB
+    #         self.copy_layout_pin(self.column_decoder_inst[port], "A", "addr{}_0".format(port)) 
                 
-        elif self.col_addr_size > 1:
-            decode_names = []
-            for i in range(self.num_col_addr_lines):
-                decode_names.append("out_{}".format(i))
+    #     elif self.col_addr_size > 1:
+    #         decode_names = []
+    #         for i in range(self.num_col_addr_lines):
+    #             decode_names.append("out_{}".format(i))
 
-            for i in range(self.col_addr_size):
-                decoder_name = "in_{}".format(i)
-                addr_name = "addr{0}_{1}".format(port,i)
-                self.copy_layout_pin(self.column_decoder_inst[port], decoder_name, addr_name)
+    #         for i in range(self.col_addr_size):
+    #             decoder_name = "in_{}".format(i)
+    #             addr_name = "addr{0}_{1}".format(port,i)
+    #             self.copy_layout_pin(self.column_decoder_inst[port], decoder_name, addr_name)
 
-        offset = self.column_decoder_inst[port].ll() - vector(self.num_col_addr_lines*self.m2_pitch, 0)
+    #     offset = self.column_decoder_inst[port].ll() - vector(self.num_col_addr_lines*self.m2_pitch, 0)
 
-        sel_names = ["sel_{}".format(x) for x in range(self.num_col_addr_lines)]
+    #     sel_names = ["sel_{}".format(x) for x in range(self.num_col_addr_lines)]
 
-        route_map = list(zip(decode_names, sel_names))
-        decode_pins = {key: self.column_decoder_inst[port].get_pin(key) for key in decode_names }
-        column_mux_pins = {key: self.column_mux_array_inst[port].get_pin(key) for key in sel_names }
-        # Combine the dff and bank pins into a single dictionary of pin name to pin.
-        all_pins = {**decode_pins, **column_mux_pins}
-        self.create_vertical_channel_route(route_map, all_pins, offset)
+    #     route_map = list(zip(decode_names, sel_names))
+    #     decode_pins = {key: self.column_decoder_inst[port].get_pin(key) for key in decode_names }
+    #     column_mux_pins = {key: self.column_mux_array_inst[port].get_pin(key) for key in sel_names }
+    #     # Combine the dff and bank pins into a single dictionary of pin name to pin.
+    #     all_pins = {**decode_pins, **column_mux_pins}
+    #     self.create_vertical_channel_route(route_map, all_pins, offset)
         
 
     def add_lvs_correspondence_points(self):

@@ -278,17 +278,20 @@ class sram_1bank(sram_base):
         """ Connect the output of the data flops to the write driver """
         # This is where the channel will start (y-dimension at least)
         for port in self.write_ports:
-            offset = self.data_dff_insts[port].ul() + vector(0, 2*self.m1_pitch)
+            if port%2:
+                offset = self.data_dff_insts[port].ll() - vector(0, (self.word_size+2)*self.m1_pitch) 
+            else:
+                offset = self.data_dff_insts[port].ul() + vector(0, 2*self.m1_pitch)                                
+
 
             dff_names = ["dout_{}".format(x) for x in range(self.word_size)]
+            dff_pins = [self.data_dff_insts[port].get_pin(x) for x in dff_names]
+            
             bank_names = ["din{0}_{1}".format(port,x) for x in range(self.word_size)]
-
-            route_map = list(zip(bank_names, dff_names))
-            dff_pins = {key: self.data_dff_insts[port].get_pin(key) for key in dff_names }
-            bank_pins = {key: self.bank_inst.get_pin(key) for key in bank_names }
-            # Combine the dff and bank pins into a single dictionary of pin name to pin.
-            all_pins = {**dff_pins, **bank_pins}
-            self.create_horizontal_channel_route(route_map, all_pins, offset)
+            bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
+            
+            route_map = list(zip(bank_pins, dff_pins))
+            self.create_horizontal_channel_route(route_map, offset)
                 
             
 

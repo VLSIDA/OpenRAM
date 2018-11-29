@@ -235,7 +235,7 @@ class bank(design.design):
         # Place the col decoder left aligned with wordline driver plus halfway under row decoder
         # Place the col decoder left aligned with row decoder (x_offset doesn't change)
         # Below the bitcell array with well spacing
-        x_offset = self.m2_gap + self.wordline_driver.width + 0.5*self.row_decoder.width
+        x_offset = self.central_bus_width[port] + self.wordline_driver.width + 0.5*self.row_decoder.width
         if self.col_addr_size > 0:
             y_offset = self.m2_gap + self.column_decoder.height 
         else:
@@ -293,7 +293,7 @@ class bank(design.design):
         # UPPER RIGHT QUADRANT
         # Place the col decoder right aligned with wordline driver plus halfway under row decoder
         # Above the bitcell array with a well spacing
-        x_offset = self.bitcell_array.width + self.m2_gap + self.wordline_driver.width + 0.5*self.row_decoder.width
+        x_offset = self.bitcell_array.width + self.central_bus_width[port] + self.wordline_driver.width + 0.5*self.row_decoder.width
         if self.col_addr_size > 0:
             y_offset = self.bitcell_array.height + self.column_decoder.height
         else:
@@ -365,9 +365,12 @@ class bank(design.design):
             self.input_control_signals.append(["wl_en{}".format(port_num), "s_en{}".format(port_num), "p_en_bar{}".format(port_num)])
             port_num += 1
 
-        # Number of control lines in the bus
-        self.num_control_lines = max([len(x) for x in self.input_control_signals])
+        # Number of control lines in the bus for each port
+        self.num_control_lines = [len(x) for x in self.input_control_signals]
 
+        # The width of this bus is needed to place other modules (e.g. decoder) for each port
+        self.central_bus_width = [self.m2_pitch*x + self.m2_width for x in self.num_control_lines]
+        
 
         # These will be outputs of the gaters if this is multibank, if not, normal signals.
         self.control_signals = []
@@ -700,10 +703,10 @@ class bank(design.design):
             self.column_decoder = pinvbuf(height=self.mod_dff.height)
         elif self.col_addr_size == 2:
             from hierarchical_predecode2x4 import hierarchical_predecode2x4 as pre2x4
-            self.column_decoder = pre2_4(height=self.mod_dff.height)
+            self.column_decoder = pre2x4(height=self.mod_dff.height)
         elif self.col_addr_size == 3:
             from hierarchical_predecode3x8 import hierarchical_predecode3x8 as pre3x8
-            self.column_decoder = pre3_8(height=self.mod_dff.height)
+            self.column_decoder = pre3x8(height=self.mod_dff.height)
         else:
             # No error checking before?
             debug.error("Invalid column decoder?",-1)
@@ -843,7 +846,7 @@ class bank(design.design):
         # Port 0
         # The bank is at (0,0), so this is to the left of the y-axis.
         # 2 pitches on the right for vias/jogs to access the inputs 
-        control_bus_offset = vector(-self.m2_pitch * self.num_control_lines - self.m2_width, self.min_y_offset)
+        control_bus_offset = vector(-self.m2_pitch * self.num_control_lines[0] - self.m2_width, self.min_y_offset)
         # The control bus is routed up to two pitches below the bitcell array
         control_bus_length = -2*self.m1_pitch - self.min_y_offset
         self.bus_xoffset[0] = self.create_bus(layer="metal2",
@@ -856,9 +859,11 @@ class bank(design.design):
         
         # Port 1
         if len(self.all_ports)==2:
-            control_bus_offset = vector(self.bitcell_array.width + self.m2_width, self.min_y_offset)
             # The other control bus is routed up to two pitches above the bitcell array
-            control_bus_length = self.max_y_offset + self.bitcell_array.height + 2*self.m1_pitch
+            control_bus_length = self.max_y_offset - self.bitcell_array.height - 2*self.m1_pitch
+            control_bus_offset = vector(self.bitcell_array.width + self.m2_width,
+                                        self.max_y_offset - control_bus_length)
+            
             self.bus_xoffset[1] = self.create_bus(layer="metal2",
                                                   pitch=self.m2_pitch,
                                                   offset=control_bus_offset,
@@ -1237,8 +1242,12 @@ class bank(design.design):
 
         # clk to wordline_driver
         control_signal = self.prefix+"wl_en{}".format(port)
-        pin_pos = self.wordline_driver_inst[port].get_pin("en_bar").bc()
-        mid_pos = pin_pos - vector(0,self.m2_gap) # to route down to the top of the bus
+        if port%2:
+            pin_pos = self.wordline_driver_inst[port].get_pin("en_bar").uc()
+            mid_pos = pin_pos + vector(0,self.m2_gap) # to route down to the top of the bus
+        else:
+            pin_pos = self.wordline_driver_inst[port].get_pin("en_bar").bc()
+            mid_pos = pin_pos - vector(0,self.m2_gap) # to route down to the top of the bus
         control_x_offset = self.bus_xoffset[port][control_signal].x
         control_pos = vector(control_x_offset, mid_pos.y)
         self.add_wire(("metal1","via1","metal2"),[pin_pos, mid_pos, control_pos])

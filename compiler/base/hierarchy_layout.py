@@ -673,11 +673,13 @@ class layout(lef.lef):
                                     offset=bus_pos,
                                     rotate=90)
 
-    def add_horizontal_trunk_route(self, pins, trunk_offset,
+    def add_horizontal_trunk_route(self,
+                                   pins,
+                                   trunk_offset,
                                    layer_stack=("metal1", "via1", "metal2"),
                                    pitch=None):
         """
-        Create a trunk route for all pins with the the trunk located at the given y offset. 
+        Create a trunk route for all pins with  the trunk located at the given y offset. 
         """
         if not pitch:
             pitch = self.m1_pitch
@@ -704,15 +706,18 @@ class layout(lef.lef):
 
             # Route each pin to the trunk
             for pin in pins:
-                # Bend to the center of the trunk so it adds a via automatically
                 mid = vector(pin.center().x, trunk_offset.y)
-                self.add_wire(layer_stack, [pin.center(), mid, trunk_mid])
+                self.add_path(layer_stack[2], [pin.center(), mid])
+                self.add_via_center(layers=layer_stack,
+                                    offset=mid)
 
-    def add_vertical_trunk_route(self, pins, trunk_offset,
+    def add_vertical_trunk_route(self,
+                                 pins,
+                                 trunk_offset,
                                  layer_stack=("metal1", "via1", "metal2"),
                                  pitch=None):
         """
-        Create a trunk route for all pins with the the trunk located at the given x offset. 
+        Create a trunk route for all pins with the trunk located at the given x offset. 
         """
         if not pitch:
             pitch = self.m2_pitch
@@ -740,9 +745,11 @@ class layout(lef.lef):
 
             # Route each pin to the trunk
             for pin in pins:
-                # Bend to the center of the trunk so it adds a via automatically
                 mid = vector(trunk_offset.x, pin.center().y)
-                self.add_wire(layer_stack, [pin.center(), mid, trunk_mid])
+                self.add_path(layer_stack[0], [pin.center(), mid])
+                self.add_via_center(layers=layer_stack,
+                                    offset=mid,
+                                    rotate=90)
         
     
     def create_channel_route(self, netlist,
@@ -835,8 +842,6 @@ class layout(lef.lef):
                 if vcg_nets_overlap(nets[net_name1], nets[net_name2], vertical):
                     vcg[net_name2].append(net_name1)
                     
-        #FIXME: What if we have a cycle? 
-
         # list of routes to do
         while vcg:
             #from pprint import pformat

@@ -4,9 +4,9 @@
 
     <button class="collapsible">files</button>
     <div class="content">
-
         {% for root, dir, files in os.walk(filedir) %}
-    
+        {% if root != filedir %}
+            
 
         <button class="collapsible">{{ root }}</button>
         <div class="content">
@@ -18,7 +18,7 @@
             {% endfor %}
         </div>
 
-
+        {% endif  %}
         {% endfor %}
     </div>
 

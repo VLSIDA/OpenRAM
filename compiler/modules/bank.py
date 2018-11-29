@@ -235,10 +235,9 @@ class bank(design.design):
         # Place the col decoder left aligned with wordline driver plus halfway under row decoder
         # Place the col decoder left aligned with row decoder (x_offset doesn't change)
         # Below the bitcell array with well spacing
-        x_offset = self.central_bus_width[port] + self.wordline_driver.width \
-            + self.column_decoder.width + self.col_addr_bus_width
-        
+        x_offset = self.central_bus_width[port] + self.wordline_driver.width
         if self.col_addr_size > 0:
+            x_offset += self.column_decoder.width + self.col_addr_bus_width
             y_offset = self.m2_gap + self.column_decoder.height 
         else:
             y_offset = 0
@@ -295,9 +294,9 @@ class bank(design.design):
         # UPPER RIGHT QUADRANT
         # Place the col decoder right aligned with wordline driver plus halfway under row decoder
         # Above the bitcell array with a well spacing
-        x_offset = self.bitcell_array.width + self.central_bus_width[port] + self.wordline_driver.width \
-            + self.column_decoder.width + self.col_addr_bus_width
+        x_offset = self.bitcell_array.width + self.central_bus_width[port] + self.wordline_driver.width 
         if self.col_addr_size > 0:
+            x_offset += self.column_decoder.width + self.col_addr_bus_width
             y_offset = self.bitcell_array.height + self.column_decoder.height + self.m2_gap
         else:
             y_offset = self.bitcell_array.height

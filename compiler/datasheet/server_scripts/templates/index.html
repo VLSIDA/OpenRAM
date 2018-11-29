@@ -2,22 +2,25 @@
 </ul>
     <link rel="stylesheet" href="static/index.css">
 
+    <button class="collapsible">files</button>
+    <div class="content">
 
-    {% for root, dir, files in os.walk(filedir) %}
+        {% for root, dir, files in os.walk(filedir) %}
     
 
-    <button class="collapsible">{{ root }}</button>
-    <div class="content">
-        {% for f in files %}
-        <button class="collapsible">{{ f }}</button>
+        <button class="collapsible">{{ root }}</button>
         <div class="content">
-            <p> file information </p> 
-         </div>
+            {% for f in files %}
+            <button class="collapsible">{{ f }}</button>
+            <div class="content">
+                <a href="{{ root }}/{{ f }}">link</a> 
+             </div>
+            {% endfor %}
+        </div>
+
+
         {% endfor %}
     </div>
-
-
-    {% endfor %}
 
 
     <script type="text/javascript">

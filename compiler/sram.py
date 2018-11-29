@@ -34,8 +34,6 @@ class sram():
             from sram_1bank import sram_1bank as sram
         elif self.num_banks == 2:
             from sram_2bank import sram_2bank as sram
-        elif self.num_banks == 4:
-            from sram_4bank import sram_4bank as sram
         else:
             debug.error("Invalid number of banks.",-1)
 

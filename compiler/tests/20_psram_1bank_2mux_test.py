@@ -31,7 +31,13 @@ class psram_1bank_2mux_test(openram_test):
                         num_banks=1)
         c.num_words=32
         c.words_per_row=2
-        debug.info(1, "Single bank two way column mux with control logic")
+        debug.info(1, "Layout test for {}rw,{}r,{}w psram with {} bit words, {} words, {} words per row, {} banks".format(OPTS.num_rw_ports,
+                                                                                                                          OPTS.num_r_ports,
+                                                                                                                          OPTS.num_w_ports,
+                                                                                                                          c.word_size,
+                                                                                                                          c.num_words,
+                                                                                                                          c.words_per_row,
+                                                                                                                          c.num_banks))
         a = sram(c, "sram")
         self.local_check(a, final_verification=True)
         

@@ -7,14 +7,9 @@ from filelist import *
 filedir = './files'
 file_data = './filelist.info'
 
-def render_without_request(template_name, **template_vars):
-    env = jinja2.Environment(
-            loader = jinja2.PackageLoader('server_scripts','templates')
-    )
-    template = env.get_template(template_name)
-    return template.render(**template_vars)
 
 app = Flask('server_scripts')
+
 
 if __name__ == '__main__':
     
@@ -22,8 +17,8 @@ if __name__ == '__main__':
 
     files.update_filelist(filedir,file_data)
     
-    f = open('./output/index.html','w')
+    f = open('./index.html','w')
     with app.app_context():
-        f.write(render_template('index.html', files=files.list))
+        f.write(render_template('index.html', filedir = filedir , os = os))
 
        

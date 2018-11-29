@@ -1,5 +1,39 @@
-<ul>
-    {% for file in files %}
-    <li><a href="{{ file }}">{{ file }}</a></li>
+
+</ul>
+    <link rel="stylesheet" href="static/index.css">
+
+
+    {% for root, dir, files in os.walk(filedir) %}
+    
+
+    <button class="collapsible">{{ root }}</button>
+    <div class="content">
+        {% for f in files %}
+        <button class="collapsible">{{ f }}</button>
+        <div class="content">
+            <p> file information </p> 
+         </div>
+        {% endfor %}
+    </div>
+
+
     {% endfor %}
+
+
+    <script type="text/javascript">
+        var coll = document.getElementsByClassName("collapsible");
+        var i;
+
+        for (i = 0; i < coll.length; i++) {
+            coll[i].addEventListener("click", function() {
+        this.classList.toggle("active");
+        var content = this.nextElementSibling;
+        if (content.style.display === "block") {
+            content.style.display = "none";
+        } else {
+          content.style.display = "block";
+        }
+          });
+        }
+        </script>
 </ul>

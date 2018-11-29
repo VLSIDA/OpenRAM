@@ -10,7 +10,6 @@ from pinv import pinv
 from pnand2 import pnand2
 from pnor2 import pnor2
 from vector import vector
-from pinvbuf import pinvbuf
 
 from globals import OPTS
 
@@ -233,10 +232,12 @@ class bank(design.design):
         self.row_decoder_offsets[port] = vector(-x_offset,0)
 
         # LOWER LEFT QUADRANT
+        # Place the col decoder left aligned with wordline driver plus halfway under row decoder
         # Place the col decoder left aligned with row decoder (x_offset doesn't change)
         # Below the bitcell array with well spacing
+        x_offset = self.m2_gap + self.wordline_driver.width + 0.5*self.row_decoder.width
         if self.col_addr_size > 0:
-            y_offset = self.column_decoder.height
+            y_offset = self.m2_gap + self.column_decoder.height 
         else:
             y_offset = 0
         y_offset += 2*drc("well_to_well")
@@ -290,8 +291,9 @@ class bank(design.design):
         self.row_decoder_offsets[port] = vector(x_offset,0)
 
         # UPPER RIGHT QUADRANT
-        # Place the col decoder right aligned with row decoder (x_offset doesn't change)
+        # Place the col decoder right aligned with wordline driver plus halfway under row decoder
         # Above the bitcell array with a well spacing
+        x_offset = self.bitcell_array.width + self.m2_gap + self.wordline_driver.width + 0.5*self.row_decoder.width
         if self.col_addr_size > 0:
             y_offset = self.bitcell_array.height + self.column_decoder.height
         else:
@@ -405,16 +407,15 @@ class bank(design.design):
             setattr (self, "mod_"+mod_name, mod_class)
 
         
-        self.bitcell = self.mod_bitcell()
         
         self.bitcell_array = self.mod_bitcell_array(cols=self.num_cols,
                                                     rows=self.num_rows)
         self.add_mod(self.bitcell_array)
         
         # create arrays of bitline and bitline_bar names for read, write, or all ports
+        self.bitcell = self.mod_bitcell()
         self.bl_names = self.bitcell.list_all_bl_names()
         self.br_names = self.bitcell.list_all_br_names()
-        
         self.wl_names = self.bitcell.list_all_wl_names()
         self.bitline_names = self.bitcell.list_all_bitline_names()
 
@@ -695,16 +696,19 @@ class bank(design.design):
         if self.col_addr_size == 0:
             return
         elif self.col_addr_size == 1:
+            from pinvbuf import pinvbuf
             self.column_decoder = pinvbuf(height=self.mod_dff.height)
-            self.add_mod(self.column_decoder)
         elif self.col_addr_size == 2:
-            self.column_decoder = self.row_decoder.pre2_4
+            from hierarchical_predecode2x4 import hierarchical_predecode2x4 as pre2x4
+            self.column_decoder = pre2_4(height=self.mod_dff.height)
         elif self.col_addr_size == 3:
-            self.column_decoder = self.row_decoder.pre3_8
+            from hierarchical_predecode3x8 import hierarchical_predecode3x8 as pre3x8
+            self.column_decoder = pre3_8(height=self.mod_dff.height)
         else:
             # No error checking before?
             debug.error("Invalid column decoder?",-1)
-
+        self.add_mod(self.column_decoder)
+            
         self.column_decoder_inst = [None]*len(self.all_ports)
         for port in self.all_ports:
             self.column_decoder_inst[port] = self.add_inst(name="col_address_decoder{}".format(port), 

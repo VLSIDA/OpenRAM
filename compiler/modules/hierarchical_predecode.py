@@ -9,19 +9,18 @@ from globals import OPTS
 from pnand2 import pnand2
 from pnand3 import pnand3
 
-
 class hierarchical_predecode(design.design):
     """
     Pre 2x4 and 3x8 decoder shared code.
     """
-    def __init__(self, input_number):
+    unique_id = 1
+    
+    def __init__(self, input_number, height=None):
         self.number_of_inputs = input_number
+        self.cell_height = height
         self.number_of_outputs = int(math.pow(2, self.number_of_inputs))
-        design.design.__init__(self, name="pre{0}x{1}".format(self.number_of_inputs,self.number_of_outputs))
-
-        from importlib import reload
-        c = reload(__import__(OPTS.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.bitcell)
+        design.design.__init__(self, name="pre{0}x{1}_{2}".format(self.number_of_inputs,self.number_of_outputs,hierarchical_predecode.unique_id))
+        hierarchical_predecode.unique_id += 1
     
     def add_pins(self):
         for k in range(self.number_of_inputs):

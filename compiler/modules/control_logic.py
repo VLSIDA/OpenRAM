@@ -173,8 +173,9 @@ class control_logic(design.design):
         self.create_wlen_row()
         if (self.port_type == "rw") or (self.port_type == "w"):
             self.create_wen_row()
-        if (self.port_type == "rw") or (self.port_type == "r"):
+        if self.port_type == "rw": 
             self.create_rbl_in_row()
+        if (self.port_type == "rw") or (self.port_type == "r"): 
             self.create_pen_row()            
             self.create_sen_row()
             self.create_rbl()
@@ -207,9 +208,10 @@ class control_logic(design.design):
             height = self.w_en_inst.uy()
             control_center_y = self.w_en_inst.uy()
             row += 1
-        if (self.port_type == "rw") or (self.port_type == "r"):
+        if self.port_type == "rw": 
             self.place_rbl_in_row(row)
             row += 1
+        if (self.port_type == "rw") or (self.port_type == "r"):            
             self.place_pen_row(row)
             row += 1
             self.place_sen_row(row)
@@ -248,9 +250,13 @@ class control_logic(design.design):
 
     def create_rbl(self):
         """ Create the replica bitline """
+        if self.port_type == "r":
+            input_name = "gated_clk_bar"
+        else:
+            input_name = "rbl_in"
         self.rbl_inst=self.add_inst(name="replica_bitline",
                                     mod=self.replica_bitline)
-        self.connect_inst(["rbl_in", "pre_s_en", "vdd", "gnd"])
+        self.connect_inst([input_name, "pre_s_en", "vdd", "gnd"])
 
     def place_rbl(self,row):
         """ Place the replica bitline """
@@ -393,16 +399,11 @@ class control_logic(design.design):
         self.connect_output(self.wl_en_inst, "Z", "wl_en")
 
     def create_rbl_in_row(self):
-
-        if self.port_type == "rw":
-            input_name = "we_bar"
-        else:
-            input_name = "cs_bar"
         
         # input: gated_clk_bar, we_bar, output: rbl_in
         self.rbl_in_inst=self.add_inst(name="and2_rbl_in",
                                          mod=self.and2)
-        self.connect_inst(["gated_clk_bar", input_name, "rbl_in", "vdd", "gnd"])
+        self.connect_inst(["gated_clk_bar", "we_bar", "rbl_in", "vdd", "gnd"])
 
     def place_rbl_in_row(self,row):
         x_off = self.control_x_offset
@@ -418,15 +419,16 @@ class control_logic(design.design):
 
         if self.port_type == "rw":
             input_name = "we_bar"
-        else:
-            input_name = "cs_bar"
-            
-        # Connect the NAND gate inputs to the bus
-        rbl_in_map = zip(["A", "B"], ["gated_clk_bar", input_name])
-        self.connect_vertical_bus(rbl_in_map, self.rbl_in_inst, self.rail_offsets)  
+            # Connect the NAND gate inputs to the bus
+            rbl_in_map = zip(["A", "B"], ["gated_clk_bar", "we_bar"])
+            self.connect_vertical_bus(rbl_in_map, self.rbl_in_inst, self.rail_offsets)  
         
+            
         # Connect the output of the precharge enable to the RBL input
-        out_pos = self.rbl_in_inst.get_pin("Z").center()
+        if self.port_type == "rw":
+            out_pos = self.rbl_in_inst.get_pin("Z").center()
+        else:
+            out_pos = vector(self.rail_offsets["gated_clk_bar"].x, self.rbl_inst.by()-3*self.m2_pitch)
         in_pos = self.rbl_inst.get_pin("en").center()
         mid1 = vector(in_pos.x,out_pos.y)
         self.add_wire(("metal3","via2","metal2"),[out_pos, mid1, in_pos])
@@ -439,51 +441,48 @@ class control_logic(design.design):
         
     def create_pen_row(self):
         if self.port_type == "rw":
-            input_name = "we_bar"
+            # input: gated_clk_bar, we_bar, output: pre_p_en
+            self.pre_p_en_inst=self.add_inst(name="and2_pre_p_en",
+                                             mod=self.and2)
+            self.connect_inst(["gated_clk_buf", "we_bar", "pre_p_en", "vdd", "gnd"])
+            input_name = "pre_p_en"
         else:
-            # No we for read-only reports, so use cs
-            input_name = "cs_bar"
+            input_name = "gated_clk_buf"
 
-        # input: gated_clk_bar, we_bar, output: pre_p_en
-        self.pre_p_en_inst=self.add_inst(name="and2_pre_p_en",
-                                         mod=self.and2)
-        self.connect_inst(["gated_clk_buf", input_name, "pre_p_en", "vdd", "gnd"])
-        
         # input: pre_p_en, output: p_en_bar
         self.p_en_bar_inst=self.add_inst(name="inv_p_en_bar",
                                          mod=self.inv8)
-        self.connect_inst(["pre_p_en", "p_en_bar", "vdd", "gnd"])
+        self.connect_inst([input_name, "p_en_bar", "vdd", "gnd"])
         
         
     def place_pen_row(self,row):
         x_off = self.control_x_offset
         (y_off,mirror)=self.get_offset(row)
+        
+        if self.port_type == "rw":
+            offset = vector(x_off, y_off)
+            self.pre_p_en_inst.place(offset, mirror)
 
-        offset = vector(x_off, y_off)
-        self.pre_p_en_inst.place(offset, mirror)
-
-        x_off += self.and2.width
+            x_off += self.and2.width
         
         offset = vector(x_off,y_off)
         self.p_en_bar_inst.place(offset, mirror)
 
-        self.row_end_inst.append(self.pre_p_en_inst)
+        self.row_end_inst.append(self.p_en_bar_inst)
 
     def route_pen(self):
         if self.port_type == "rw":
-            input_name = "we_bar"
+            # Connect the NAND gate inputs to the bus
+            pre_p_en_in_map = zip(["A", "B"], ["gated_clk_buf", "we_bar"])
+            self.connect_vertical_bus(pre_p_en_in_map, self.pre_p_en_inst, self.rail_offsets)  
+
+            out_pos = self.pre_p_en_inst.get_pin("Z").center()
+            in_pos = self.p_en_bar_inst.get_pin("A").lc()
+            mid1 = vector(out_pos.x,in_pos.y)
+            self.add_wire(("metal1","via1","metal2"),[out_pos,mid1,in_pos])                
         else:
-            # No we for read-only reports, so use cs
-            input_name = "cs_bar"
-            
-        # Connect the NAND gate inputs to the bus
-        pre_p_en_in_map = zip(["A", "B"], ["gated_clk_buf", input_name])
-        self.connect_vertical_bus(pre_p_en_in_map, self.pre_p_en_inst, self.rail_offsets)  
-        
-        out_pos = self.pre_p_en_inst.get_pin("Z").center()
-        in_pos = self.p_en_bar_inst.get_pin("A").lc()
-        mid1 = vector(out_pos.x,in_pos.y)
-        self.add_wire(("metal1","via1","metal2"),[out_pos,mid1,in_pos])                
+            in_map = zip(["A"], ["gated_clk_buf"])
+            self.connect_vertical_bus(in_map, self.p_en_bar_inst, self.rail_offsets)  
         
         self.connect_output(self.p_en_bar_inst, "Z", "p_en_bar")
         

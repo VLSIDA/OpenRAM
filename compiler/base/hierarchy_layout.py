@@ -926,13 +926,14 @@ class layout(lef.lef):
 
                 
         
-    def add_power_pin(self, name, loc, rotate=90):
+    def add_power_pin(self, name, loc, rotate=90, m1_too=True):
         """ 
         Add a single power pin from M3 down to M1 at the given center location
         """
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
-                            offset=loc,
-                            rotate=float(rotate))
+        if m1_too:
+            self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                offset=loc,
+                                rotate=float(rotate))
         via=self.add_via_center(layers=("metal2", "via2", "metal3"),
                                 offset=loc,
                                 rotate=float(rotate))

@@ -138,7 +138,7 @@ class bitcell_array(design.design):
                 inst = self.cell_inst[row,col]
                 for pin_name in ["vdd", "gnd"]:
                     for pin in inst.get_pins(pin_name):
-                        self.add_power_pin(pin_name, pin.center(), 90)
+                        self.add_power_pin(pin_name, pin.center(), 0, pin.layer=="metal1")
 
     def analytical_delay(self, slew, load=0):
         from tech import drc

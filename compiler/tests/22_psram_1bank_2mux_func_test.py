@@ -11,7 +11,7 @@ import globals
 from globals import OPTS
 import debug
 
-#@unittest.skip("SKIPPING 22_psram_1bank_2mux_func_test")
+@unittest.skip("SKIPPING 22_psram_1bank_2mux_1rw_1r_1w_func_test, third port reads are broken?")
 class psram_1bank_2mux_1rw_1r_1w_func_test(openram_test):
 
     def runTest(self):

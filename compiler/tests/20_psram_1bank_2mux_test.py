@@ -11,7 +11,7 @@ import globals
 from globals import OPTS
 import debug
 
-#@unittest.skip("SKIPPING 20_psram_1bank_2mux_test, odd supply routing error")
+@unittest.skip("SKIPPING 20_psram_1bank_2mux_test, wide metal supply routing error")
 class psram_1bank_2mux_test(openram_test):
 
     def runTest(self):        

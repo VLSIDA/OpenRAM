@@ -36,13 +36,10 @@ class openram_test(openram_test):
                 os.chmod(out_path, 0o0750)
 
         # specify the same verbosity for the system call
-        opts = ""
+        verbosity = ""
         for i in range(OPTS.debug_level):
-            opts += " -v"
-        # keep the temp directory around
-        if not OPTS.purge_temp:
-            opts += " -d"
-            
+            verbosity += " -v"
+
             
         OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
         # Always perform code coverage
@@ -55,9 +52,6 @@ class openram_test(openram_test):
                                                                                        out_path)
         debug.info(1, cmd)
         os.system(cmd)
-
-        # check that the output path was created
-        self.assertEqual(os.path.exists(out_path),True)
         
         # assert an error until we actually check a resul
         for extension in ["gds", "v", "lef", "sp"]:
@@ -71,8 +65,9 @@ class openram_test(openram_test):
         self.assertTrue(len(files)>0)
         
         # Make sure there is any .html file 
-        datasheets = glob.glob('{0}/*html'.format(out_path))
-        self.assertTrue(len(datasheets)>0)
+        if os.path.exists(out_path):
+            datasheets = glob.glob('{0}/*html'.format(out_path))
+            self.assertTrue(len(datasheets)>0)
         
         # grep any errors from the output
         output_log = open("{0}/output.log".format(out_path),"r")
@@ -82,10 +77,10 @@ class openram_test(openram_test):
         self.assertEqual(len(re.findall('WARNING',output)),0)
 
 
-        # now clean up the output directory (or preserve if specified to preserve temp dirs)
-        if os.path.exists(out_path) and OPTS.purge_temp:
+        # now clean up the directory
+        if os.path.exists(out_path):
             shutil.rmtree(out_path, ignore_errors=True)
-            self.assertEqual(os.path.exists(out_path),False)
+        self.assertEqual(os.path.exists(out_path),False)
 
         globals.end_openram()
 

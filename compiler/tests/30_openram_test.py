@@ -43,6 +43,8 @@ class openram_test(openram_test):
             
         OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
         # Always perform code coverage
+        if OPTS.coverage == 0:
+            debug.warning("Failed to find coverage installation. This can be installed with pip3 install coverage")
         exe_name = "coverage run -p {0}/openram.py ".format(OPENRAM_HOME)
         cmd = "{0} -n -o {1} -p {2} {3} config_20_{4}.py 2>&1 > {5}/output.log".format(exe_name,
                                                                                        out_file,

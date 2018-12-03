@@ -113,6 +113,11 @@ def check_versions():
     except:
         OPTS.datasheet_gen = 0
 
+    try:
+        import coverage
+        OPTS.coverage = 1
+    except:
+        OPTS.coverage = 0
 
 def init_openram(config_file, is_unit_test=True):
     """Initialize the technology, paths, simulators, etc."""

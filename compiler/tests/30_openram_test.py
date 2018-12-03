@@ -42,13 +42,14 @@ class openram_test(openram_test):
 
             
         OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
-
-        cmd = "python3 {0}/openram.py -n -o {1} -p {2} {3} config_20_{4}.py 2>&1 > {5}/output.log".format(OPENRAM_HOME,
-                                                                                                            out_file,
-                                                                                                            out_path,
-                                                                                                            verbosity,
-                                                                                                            OPTS.tech_name,
-                                                                                                            out_path)
+        # Always perform code coverage
+        exe_name = "coverage run -p {0}/openram.py ".format(OPENRAM_HOME)
+        cmd = "{0} -n -o {1} -p {2} {3} config_20_{4}.py 2>&1 > {5}/output.log".format(exe_name,
+                                                                                       out_file,
+                                                                                       out_path,
+                                                                                       verbosity,
+                                                                                       OPTS.tech_name,
+                                                                                       out_path)
         debug.info(1, cmd)
         os.system(cmd)
         

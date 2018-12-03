@@ -508,8 +508,11 @@ class lib:
         if OPTS.is_unit_test:
             return
         datasheet = open(OPTS.openram_temp +'/datasheet.info', 'a+')
+        
+        with open(os.environ.get("OPENRAM_HOME") + "/../.git/ORIG_HEAD", "r") as f:
+            origin_id = f.readline()
 
-        datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},".format(
+        datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},".format(
                         "sram_{0}_{1}_{2}".format(OPTS.word_size, OPTS.num_words, OPTS.tech_name),
                         OPTS.num_words,
                         OPTS.num_banks,
@@ -523,8 +526,8 @@ class lib:
                         round_time(self.char_sram_results["min_period"]),
                         self.out_dir,
                         lib_name,
-                        OPTS.word_size
-                        
+                        OPTS.word_size,
+                        origin_id[:-1]
                         ))
 
         for port in self.all_ports:

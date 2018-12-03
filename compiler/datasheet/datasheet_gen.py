@@ -97,18 +97,21 @@ def parse_characterizer_csv(sram,f,pages):
 
             WORD_SIZE = row[col]
             col += 1
+            
+            ORIGIN_ID = row[col]
+            col += 1
 
-            FF_SETUP_LH_MIN = "1"
-            FF_SETUP_LH_MAX = "2"
+#            FF_SETUP_LH_MIN = "1"
+#            FF_SETUP_LH_MAX = "2"
 
-            FF_SETUP_HL_MIN = "3"
-            FF_SETUP_HL_MAX = "4"
+#            FF_SETUP_HL_MIN = "3"
+#            FF_SETUP_HL_MAX = "4"
 
-            FF_HOLD_LH_MIN = "5"
-            FF_HOLD_LH_MAX = "6"
+#            FF_HOLD_LH_MIN = "5"
+#            FF_HOLD_LH_MAX = "6"
 
-            FF_HOLD_HL_MIN = "7"
-            FF_HOLD_HL_MAX = "8"
+#            FF_HOLD_HL_MIN = "7"
+#            FF_HOLD_HL_MAX = "8"
            
     
             for sheet in pages:
@@ -120,7 +123,7 @@ def parse_characterizer_csv(sram,f,pages):
                     #if the .lib information is for an existing datasheet compare timing data
 
                     for item in sheet.operating:
-                        #check if the new corner dataa is worse than the previous worse corner data
+                        #check if the new corner data is worse than the previous worse corner data
 
                         if item.parameter == 'Operating Temperature':
                             if float(TEMP) > float(item.max):
@@ -358,6 +361,8 @@ def parse_characterizer_csv(sram,f,pages):
                 #if this is the first corner for this sram, run first time configuration and set up tables
                 new_sheet = datasheet(NAME)
                 pages.append(new_sheet)
+
+                new_sheet.git_id = ORIGIN_ID 
 
                 new_sheet.corners.append(characterization_corners_item(PROC,process_name(PROC),VOLT,TEMP,LIB_NAME.replace(OUT_DIR,'').replace(NAME,'')))
 

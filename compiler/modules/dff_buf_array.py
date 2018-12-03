@@ -61,7 +61,7 @@ class dff_buf_array(design.design):
         self.dff_insts={}
         for row in range(self.rows):  
             for col in range(self.columns):
-                name = "Xdff_r{0}_c{1}".format(row,col)
+                name = "dff_r{0}_c{1}".format(row,col)
                 self.dff_insts[row,col]=self.add_inst(name=name,
                                                       mod=self.dff)
                 self.connect_inst([self.get_din_name(row,col),

@@ -140,11 +140,16 @@ class sram_base(design):
         # The order of the control signals on the control bus:
         self.control_bus_names = []
         for port in self.all_ports:
-            self.control_bus_names[port] = ["clk_buf{}".format(port), "clk_buf_bar{}".format(port)]
-            if (self.port_id[port] == "rw") or (self.port_id[port] == "w"):
-                self.control_bus_names[port].append("w_en{}".format(port))
-            if (self.port_id[port] == "rw") or (self.port_id[port] == "r"):
-                self.control_bus_names[port].append("s_en{}".format(port))
+            self.control_bus_names[port] = ["clk_buf{}".format(port)]
+            wen = "w_en{}".format(port)
+            sen = "s_en{}".format(port)
+            pen = "p_en_bar{}".format(port)
+            if self.port_id[port] == "r":
+                self.control_bus_names[port].extend([sen, pen])
+            elif self.port_id[port] == "w":
+                self.control_bus_names[port].extend([wen])
+            else:
+                self.control_bus_names[port].extend([sen, wen, pen])
             self.vert_control_bus_positions = self.create_vertical_bus(layer="metal2",
                                                                        pitch=self.m2_pitch,
                                                                        offset=self.vertical_bus_offset,
@@ -287,11 +292,12 @@ class sram_base(design):
                 temp.append("bank_sel{0}[{1}]".format(port,bank_num))
         for port in self.read_ports:
             temp.append("s_en{0}".format(port))
+        for port in self.read_ports:
+            temp.append("p_en_bar{0}".format(port))
         for port in self.write_ports:
             temp.append("w_en{0}".format(port))
         for port in self.all_ports:
-            temp.append("clk_buf_bar{0}".format(port))
-            temp.append("clk_buf{0}".format(port))
+            temp.append("wl_en{0}".format(port))
         temp.extend(["vdd", "gnd"])
         self.connect_inst(temp)
 
@@ -403,16 +409,21 @@ class sram_base(design):
                 mod = self.control_logic_r
                 
             insts.append(self.add_inst(name="control{}".format(port), mod=mod))
-            
+
+            # Inputs
             temp = ["csb{}".format(port)]
             if port in self.readwrite_ports:
                 temp.append("web{}".format(port))
             temp.append("clk{}".format(port))
+
+            # Ouputs
             if port in self.read_ports:
                 temp.append("s_en{}".format(port))
             if port in self.write_ports:
                 temp.append("w_en{}".format(port))
-            temp.extend(["clk_buf_bar{}".format(port), "clk_buf{}".format(port), "vdd", "gnd"])
+            if port in self.read_ports:
+                temp.append("p_en_bar{}".format(port))
+            temp.extend(["wl_en{}".format(port), "clk_buf{}".format(port), "vdd", "gnd"])
             self.connect_inst(temp)
         
         return insts

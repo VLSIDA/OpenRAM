@@ -33,7 +33,6 @@ class pnand2(pgate.pgate):
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
-        #self.DRC_LVS()
 
         
     def create_netlist(self):
@@ -192,26 +191,33 @@ class pnand2(pgate.pgate):
         """ Route the Z output """
         # PMOS1 drain 
         pmos_pin = self.pmos1_inst.get_pin("D")
+        top_pin_offset = pmos_pin.center()
         # NMOS2 drain
-        nmos_pin = self.nmos2_inst.get_pin("D")        
+        nmos_pin = self.nmos2_inst.get_pin("D")
+        bottom_pin_offset = nmos_pin.center()
+        
         # Output pin
-        mid_offset = vector(nmos_pin.center().x,self.inputA_yoffset)
+        out_offset = vector(nmos_pin.center().x + self.m1_pitch,self.inputA_yoffset)
+
+        # Midpoints of the L routes go horizontal first then vertical
+        mid1_offset = vector(out_offset.x, top_pin_offset.y)
+        mid2_offset = vector(out_offset.x, bottom_pin_offset.y)        
         
         self.add_contact_center(layers=("metal1", "via1", "metal2"),
                                 offset=pmos_pin.center())
         self.add_contact_center(layers=("metal1", "via1", "metal2"),
                                 offset=nmos_pin.center())
         self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                offset=mid_offset,
+                                offset=out_offset,
                                 rotate=90)
 
         # PMOS1 to mid-drain to NMOS2 drain
-        self.add_path("metal2",[pmos_pin.bc(), mid_offset, nmos_pin.uc()])
+        self.add_path("metal2",[top_pin_offset, mid1_offset, out_offset, mid2_offset, bottom_pin_offset])
 
         # This extends the output to the edge of the cell
         self.add_layout_pin_rect_center(text="Z",
                                         layer="metal1",
-                                        offset=mid_offset,
+                                        offset=out_offset,
                                         width=contact.m1m2.first_layer_height,
                                         height=contact.m1m2.first_layer_width)
 

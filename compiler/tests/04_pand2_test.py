@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Run a regression test on a dff_inv.
+Run a regression test on a pand2 cell
 """
 
 import unittest
@@ -11,19 +11,22 @@ import globals
 from globals import OPTS
 import debug
 
-class dff_inv_test(openram_test):
+class pand2_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        import dff_inv
+        global verify
+        import verify
 
-        debug.info(2, "Testing dff_inv 4x")
-        a = dff_inv.dff_inv(4)
+        import pand2
+
+        debug.info(2, "Testing pand2 gate 4x")
+        a = pand2.pand2(4)
         self.local_check(a)
 
         globals.end_openram()
 
-# run the test from the command line
+# instantiate a copdsay of the class to actually run the test
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

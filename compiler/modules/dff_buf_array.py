@@ -61,7 +61,7 @@ class dff_buf_array(design.design):
         self.dff_insts={}
         for row in range(self.rows):  
             for col in range(self.columns):
-                name = "Xdff_r{0}_c{1}".format(row,col)
+                name = "dff_r{0}_c{1}".format(row,col)
                 self.dff_insts[row,col]=self.add_inst(name=name,
                                                       mod=self.dff)
                 self.connect_inst([self.get_din_name(row,col),
@@ -184,3 +184,9 @@ class dff_buf_array(design.design):
 
     def analytical_delay(self, slew, load=0.0):
         return self.dff.analytical_delay(slew=slew, load=load)
+
+    def get_clk_cin(self):
+        """Return the total capacitance (in relative units) that the clock is loaded by in the dff array"""
+        dff_clk_cin = self.dff.get_clk_cin()
+        total_cin = dff_clk_cin * self.rows * self.columns
+        return total_cin

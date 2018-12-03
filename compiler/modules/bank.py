@@ -10,7 +10,6 @@ from pinv import pinv
 from pnand2 import pnand2
 from pnor2 import pnor2
 from vector import vector
-from pinvbuf import pinvbuf
 
 from globals import OPTS
 
@@ -85,11 +84,12 @@ class bank(design.design):
                 self.add_pin("bank_sel{}".format(port),"INPUT")
         for port in self.read_ports:
             self.add_pin("s_en{0}".format(port), "INPUT")
+        for port in self.read_ports:
+            self.add_pin("p_en_bar{0}".format(port), "INPUT")
         for port in self.write_ports:
             self.add_pin("w_en{0}".format(port), "INPUT")
         for port in self.all_ports:
-            self.add_pin("clk_buf_bar{0}".format(port),"INPUT")
-            self.add_pin("clk_buf{0}".format(port),"INPUT")
+            self.add_pin("wl_en{0}".format(port), "INPUT")
         self.add_pin("vdd","POWER")
         self.add_pin("gnd","GROUND")
 
@@ -226,16 +226,19 @@ class bank(design.design):
         # UPPER LEFT QUADRANT
         # To the left of the bitcell array
         # The wordline driver is placed to the right of the main decoder width.
-        x_offset = self.central_bus_width + self.wordline_driver.width 
+        x_offset = self.m2_gap + self.wordline_driver.width 
         self.wordline_driver_offsets[port] = vector(-x_offset,0)
         x_offset += self.row_decoder.width + self.m2_gap
         self.row_decoder_offsets[port] = vector(-x_offset,0)
 
         # LOWER LEFT QUADRANT
+        # Place the col decoder left aligned with wordline driver plus halfway under row decoder
         # Place the col decoder left aligned with row decoder (x_offset doesn't change)
         # Below the bitcell array with well spacing
+        x_offset = self.central_bus_width[port] + self.wordline_driver.width
         if self.col_addr_size > 0:
-            y_offset = self.column_decoder.height
+            x_offset += self.column_decoder.width + self.col_addr_bus_width
+            y_offset = self.m2_gap + self.column_decoder.height 
         else:
             y_offset = 0
         y_offset += 2*drc("well_to_well")
@@ -283,16 +286,18 @@ class bank(design.design):
         # LOWER RIGHT QUADRANT
         # To the left of the bitcell array
         # The wordline driver is placed to the right of the main decoder width.
-        x_offset = self.bitcell_array.width + self.central_bus_width + self.wordline_driver.width 
+        x_offset = self.bitcell_array.width + self.m2_gap + self.wordline_driver.width 
         self.wordline_driver_offsets[port] = vector(x_offset,0)
         x_offset += self.row_decoder.width + self.m2_gap
         self.row_decoder_offsets[port] = vector(x_offset,0)
 
         # UPPER RIGHT QUADRANT
-        # Place the col decoder right aligned with row decoder (x_offset doesn't change)
+        # Place the col decoder right aligned with wordline driver plus halfway under row decoder
         # Above the bitcell array with a well spacing
+        x_offset = self.bitcell_array.width + self.central_bus_width[port] + self.wordline_driver.width 
         if self.col_addr_size > 0:
-            y_offset = self.bitcell_array.height + self.column_decoder.height
+            x_offset += self.column_decoder.width + self.col_addr_bus_width
+            y_offset = self.bitcell_array.height + self.column_decoder.height + self.m2_gap
         else:
             y_offset = self.bitcell_array.height
         y_offset += 2*drc("well_to_well")
@@ -349,20 +354,24 @@ class bank(design.design):
         # FIXME: This spacing should be width dependent...
         self.supply_rail_pitch = self.supply_rail_width + 4*self.m2_space
         
-        # Number of control lines in the bus
-        self.num_control_lines = 4
         # The order of the control signals on the control bus:
         self.input_control_signals = []
         port_num = 0
         for port in range(OPTS.num_rw_ports):
-            self.input_control_signals.append(["clk_buf{}".format(port_num), "clk_buf_bar{}".format(port_num), "w_en{}".format(port_num), "s_en{}".format(port_num)])
+            self.input_control_signals.append(["wl_en{}".format(port_num), "w_en{}".format(port_num), "s_en{}".format(port_num), "p_en_bar{}".format(port_num)])
             port_num += 1
         for port in range(OPTS.num_w_ports):
-            self.input_control_signals.append(["clk_buf{}".format(port_num), "clk_buf_bar{}".format(port_num), "w_en{}".format(port_num)])
+            self.input_control_signals.append(["wl_en{}".format(port_num), "w_en{}".format(port_num)])
             port_num += 1
         for port in range(OPTS.num_r_ports):
-            self.input_control_signals.append(["clk_buf{}".format(port_num), "clk_buf_bar{}".format(port_num), "s_en{}".format(port_num)])
+            self.input_control_signals.append(["wl_en{}".format(port_num), "s_en{}".format(port_num), "p_en_bar{}".format(port_num)])
             port_num += 1
+
+        # Number of control lines in the bus for each port
+        self.num_control_lines = [len(x) for x in self.input_control_signals]
+
+        # The width of this bus is needed to place other modules (e.g. decoder) for each port
+        self.central_bus_width = [self.m2_pitch*x + self.m2_width for x in self.num_control_lines]
 
         # These will be outputs of the gaters if this is multibank, if not, normal signals.
         self.control_signals = []
@@ -371,15 +380,13 @@ class bank(design.design):
                 self.control_signals.append(["gated_"+str for str in self.input_control_signals[port]])
             else:
                 self.control_signals.append(self.input_control_signals[port])
+
         # The central bus is the column address (one hot) and row address (binary)
         if self.col_addr_size>0:
             self.num_col_addr_lines = 2**self.col_addr_size
         else:
             self.num_col_addr_lines = 0            
-
-        # The width of this bus is needed to place other modules (e.g. decoder)
-        # A width on each side too
-        self.central_bus_width = self.m2_pitch * self.num_control_lines + self.m2_width
+        self.col_addr_bus_width = self.m2_pitch*self.num_col_addr_lines
 
         # A space for wells or jogging m2
         self.m2_gap = max(2*drc("pwell_to_nwell") + drc("well_enclosure_active"),
@@ -401,16 +408,15 @@ class bank(design.design):
             setattr (self, "mod_"+mod_name, mod_class)
 
         
-        self.bitcell = self.mod_bitcell()
         
         self.bitcell_array = self.mod_bitcell_array(cols=self.num_cols,
                                                     rows=self.num_rows)
         self.add_mod(self.bitcell_array)
         
         # create arrays of bitline and bitline_bar names for read, write, or all ports
+        self.bitcell = self.mod_bitcell()
         self.bl_names = self.bitcell.list_all_bl_names()
         self.br_names = self.bitcell.list_all_br_names()
-        
         self.wl_names = self.bitcell.list_all_wl_names()
         self.bitline_names = self.bitcell.list_all_bitline_names()
 
@@ -489,7 +495,7 @@ class bank(design.design):
             for i in range(self.num_cols):
                 temp.append(self.bl_names[port]+"_{0}".format(i))
                 temp.append(self.br_names[port]+"_{0}".format(i))
-            temp.extend([self.prefix+"clk_buf_bar{0}".format(port), "vdd"])
+            temp.extend([self.prefix+"p_en_bar{0}".format(port), "vdd"])
             self.connect_inst(temp)
 
             
@@ -664,7 +670,7 @@ class bank(design.design):
                 temp.append("dec_out{0}_{1}".format(port,row))
             for row in range(self.num_rows):
                 temp.append(self.wl_names[port]+"_{0}".format(row))
-            temp.append(self.prefix+"clk_buf{0}".format(port))
+            temp.append(self.prefix+"wl_en{0}".format(port))
             temp.append("vdd")
             temp.append("gnd")
             self.connect_inst(temp)
@@ -691,16 +697,19 @@ class bank(design.design):
         if self.col_addr_size == 0:
             return
         elif self.col_addr_size == 1:
+            from pinvbuf import pinvbuf
             self.column_decoder = pinvbuf(height=self.mod_dff.height)
-            self.add_mod(self.column_decoder)
         elif self.col_addr_size == 2:
-            self.column_decoder = self.row_decoder.pre2_4
+            from hierarchical_predecode2x4 import hierarchical_predecode2x4 as pre2x4
+            self.column_decoder = pre2x4(height=self.mod_dff.height)
         elif self.col_addr_size == 3:
-            self.column_decoder = self.row_decoder.pre3_8
+            from hierarchical_predecode3x8 import hierarchical_predecode3x8 as pre3x8
+            self.column_decoder = pre3x8(height=self.mod_dff.height)
         else:
             # No error checking before?
             debug.error("Invalid column decoder?",-1)
-
+        self.add_mod(self.column_decoder)
+            
         self.column_decoder_inst = [None]*len(self.all_ports)
         for port in self.all_ports:
             self.column_decoder_inst[port] = self.add_inst(name="col_address_decoder{}".format(port), 
@@ -774,14 +783,14 @@ class bank(design.design):
         """ Route the bank select logic. """
         
         if self.port_id[port] == "rw":
-            bank_sel_signals = ["clk_buf", "clk_buf_bar", "w_en", "s_en", "bank_sel"]
-            gated_bank_sel_signals = ["gated_clk_buf", "gated_clk_buf_bar", "gated_w_en", "gated_s_en"]
+            bank_sel_signals = ["clk_buf", "w_en", "s_en", "p_en_bar", "bank_sel"]
+            gated_bank_sel_signals = ["gated_clk_buf", "gated_w_en", "gated_s_en", "gated_p_en_bar"]
         elif self.port_id[port] == "w":
-            bank_sel_signals = ["clk_buf", "clk_buf_bar", "w_en", "bank_sel"]
-            gated_bank_sel_signals = ["gated_clk_buf", "gated_clk_buf_bar", "gated_w_en"]
+            bank_sel_signals = ["clk_buf", "w_en", "bank_sel"]
+            gated_bank_sel_signals = ["gated_clk_buf", "gated_w_en"]
         else:
-            bank_sel_signals = ["clk_buf", "clk_buf_bar", "s_en", "bank_sel"]
-            gated_bank_sel_signals = ["gated_clk_buf", "gated_clk_buf_bar", "gated_s_en"]
+            bank_sel_signals = ["clk_buf", "s_en", "p_en_bar", "bank_sel"]
+            gated_bank_sel_signals = ["gated_clk_buf", "gated_s_en", "gated_p_en_bar"]
         
         copy_control_signals = self.input_control_signals[port]+["bank_sel{}".format(port)]
         for signal in range(len(copy_control_signals)):
@@ -835,8 +844,9 @@ class bank(design.design):
         # Port 0
         # The bank is at (0,0), so this is to the left of the y-axis.
         # 2 pitches on the right for vias/jogs to access the inputs 
-        control_bus_offset = vector(-self.m2_pitch * self.num_control_lines - self.m2_width, self.min_y_offset)
-        control_bus_length = self.max_y_offset - self.min_y_offset
+        control_bus_offset = vector(-self.m2_pitch * self.num_control_lines[0] - self.m2_width, self.min_y_offset)
+        # The control bus is routed up to two pitches below the bitcell array
+        control_bus_length = -2*self.m1_pitch - self.min_y_offset
         self.bus_xoffset[0] = self.create_bus(layer="metal2",
                                               pitch=self.m2_pitch,
                                               offset=control_bus_offset,
@@ -847,7 +857,11 @@ class bank(design.design):
         
         # Port 1
         if len(self.all_ports)==2:
-            control_bus_offset = vector(self.bitcell_array.width + self.m2_width, self.min_y_offset)
+            # The other control bus is routed up to two pitches above the bitcell array
+            control_bus_length = self.max_y_offset - self.bitcell_array.height - 2*self.m1_pitch
+            control_bus_offset = vector(self.bitcell_array.width + self.m2_width,
+                                        self.max_y_offset - control_bus_length)
+            
             self.bus_xoffset[1] = self.create_bus(layer="metal2",
                                                   pitch=self.m2_pitch,
                                                   offset=control_bus_offset,
@@ -891,6 +905,9 @@ class bank(design.design):
         inst1 = self.bitcell_array_inst
         inst1_bl_name = self.bl_names[port]+"_{}"
         inst1_br_name = self.br_names[port]+"_{}"
+
+        # The column mux is constructed to match the bitline pitch, so we can directly connect
+        # here and not channel route the bitlines.
         self.connect_bitlines(inst1=inst1, inst2=inst2, num_bits=self.num_cols,
                               inst1_bl_name=inst1_bl_name, inst1_br_name=inst1_br_name)
         
@@ -911,8 +928,8 @@ class bank(design.design):
             inst1_bl_name = "bl_{}"
             inst1_br_name = "br_{}"
             
-        self.connect_bitlines(inst1=inst1, inst2=inst2, num_bits=self.word_size,
-                              inst1_bl_name=inst1_bl_name, inst1_br_name=inst1_br_name)
+        self.channel_route_bitlines(inst1=inst1, inst2=inst2, num_bits=self.word_size,
+                                    inst1_bl_name=inst1_bl_name, inst1_br_name=inst1_br_name)
 
     def route_write_driver_to_column_mux_or_bitcell_array(self, port):
         """ Routing of BL and BR between sense_amp and column mux or bitcell array """
@@ -937,7 +954,11 @@ class bank(design.design):
         
         inst1 = self.write_driver_array_inst[port]
         inst2 = self.sense_amp_array_inst[port]
-        self.connect_bitlines(inst1, inst2, self.word_size)
+
+        # These should be pitch matched in the cell library,
+        # but just in case, do a channel route.
+        self.channel_route_bitlines(inst1=inst1, inst2=inst2, num_bits=self.word_size)
+
                 
 
     def route_sense_amp_out(self, port):
@@ -992,14 +1013,10 @@ class bank(design.design):
         # of tracks in teh channel router yet. If we did, we could route all the bits at once!
         offset = bottom_inst.ul() + vector(0,self.m1_pitch)
         for bit in range(num_bits):
-            bottom_names = [bottom_bl_name.format(bit), bottom_br_name.format(bit)]
-            top_names = [top_bl_name.format(bit), top_br_name.format(bit)]            
+            bottom_names = [bottom_inst.get_pin(bottom_bl_name.format(bit)), bottom_inst.get_pin(bottom_br_name.format(bit))]
+            top_names = [top_inst.get_pin(top_bl_name.format(bit)), top_inst.get_pin(top_br_name.format(bit))]            
             route_map = list(zip(bottom_names, top_names))
-            bottom_pins = {key: bottom_inst.get_pin(key) for key in bottom_names }
-            top_pins = {key: top_inst.get_pin(key) for key in top_names }
-            all_pins = {**bottom_pins, **top_pins}
-            debug.check(len(all_pins)==len(bottom_pins)+len(top_pins),"Duplicate named pins in bitline channel route.")
-            self.create_horizontal_channel_route(route_map, all_pins, offset)
+            self.create_horizontal_channel_route(route_map, offset)
             
 
     def connect_bitlines(self, inst1, inst2, num_bits,
@@ -1078,79 +1095,41 @@ class bank(design.design):
             self.add_path("metal1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
 
     def route_column_address_lines(self, port):
+        """ Connecting the select lines of column mux to the address bus """
+        if not self.col_addr_size>0:
+            return
+
+        if self.col_addr_size == 1:
+            
+            # Connect to sel[0] and sel[1]
+            decode_names = ["Zb", "Z"]
+            
+            # The Address LSB
+            self.copy_layout_pin(self.column_decoder_inst[port], "A", "addr{}_0".format(port)) 
+                
+        elif self.col_addr_size > 1:
+            decode_names = []
+            for i in range(self.num_col_addr_lines):
+                decode_names.append("out_{}".format(i))
+
+            for i in range(self.col_addr_size):
+                decoder_name = "in_{}".format(i)
+                addr_name = "addr{0}_{1}".format(port,i)
+                self.copy_layout_pin(self.column_decoder_inst[port], decoder_name, addr_name)
+
         if port%2:
-            self.route_column_address_lines_right(port)
+            offset = self.column_decoder_inst[port].ll() - vector(self.num_col_addr_lines*self.m2_pitch, 0)
         else:
-            self.route_column_address_lines_left(port)
+            offset = self.column_decoder_inst[port].lr() + vector(self.m2_pitch, 0)
 
-    def route_column_address_lines_left(self, port):
-        """ Connecting the select lines of column mux to the address bus """
-        if not self.col_addr_size>0:
-            return
-
-        if self.col_addr_size == 1:
-            
-            # Connect to sel[0] and sel[1]
-            decode_names = ["Zb", "Z"]
-            
-            # The Address LSB
-            self.copy_layout_pin(self.column_decoder_inst[port], "A", "addr{}_0".format(port)) 
-                
-        elif self.col_addr_size > 1:
-            decode_names = []
-            for i in range(self.num_col_addr_lines):
-                decode_names.append("out_{}".format(i))
-
-            for i in range(self.col_addr_size):
-                decoder_name = "in_{}".format(i)
-                addr_name = "addr{0}_{1}".format(port,i)
-                self.copy_layout_pin(self.column_decoder_inst[port], decoder_name, addr_name)
-
-        offset = self.column_decoder_inst[port].lr() + vector(self.m2_pitch, 0)
-
-        sel_names = ["sel_{}".format(x) for x in range(self.num_col_addr_lines)]
-
-        route_map = list(zip(decode_names, sel_names))
-        decode_pins = {key: self.column_decoder_inst[port].get_pin(key) for key in decode_names }
-        column_mux_pins = {key: self.column_mux_array_inst[port].get_pin(key) for key in sel_names }
-        # Combine the dff and bank pins into a single dictionary of pin name to pin.
-        all_pins = {**decode_pins, **column_mux_pins}
-        self.create_vertical_channel_route(route_map, all_pins, offset)
-
-    def route_column_address_lines_right(self, port):
-        """ Connecting the select lines of column mux to the address bus """
-        if not self.col_addr_size>0:
-            return
-
-        if self.col_addr_size == 1:
-            
-            # Connect to sel[0] and sel[1]
-            decode_names = ["Zb", "Z"]
-            
-            # The Address LSB
-            self.copy_layout_pin(self.column_decoder_inst[port], "A", "addr{}_0".format(port)) 
-                
-        elif self.col_addr_size > 1:
-            decode_names = []
-            for i in range(self.num_col_addr_lines):
-                decode_names.append("out_{}".format(i))
-
-            for i in range(self.col_addr_size):
-                decoder_name = "in_{}".format(i)
-                addr_name = "addr{0}_{1}".format(port,i)
-                self.copy_layout_pin(self.column_decoder_inst[port], decoder_name, addr_name)
-
-        offset = self.column_decoder_inst[port].ll() - vector(self.num_col_addr_lines*self.m2_pitch, 0)
-
-        sel_names = ["sel_{}".format(x) for x in range(self.num_col_addr_lines)]
-
-        route_map = list(zip(decode_names, sel_names))
-        decode_pins = {key: self.column_decoder_inst[port].get_pin(key) for key in decode_names }
-        column_mux_pins = {key: self.column_mux_array_inst[port].get_pin(key) for key in sel_names }
-        # Combine the dff and bank pins into a single dictionary of pin name to pin.
-        all_pins = {**decode_pins, **column_mux_pins}
-        self.create_vertical_channel_route(route_map, all_pins, offset)
+        decode_pins = [self.column_decoder_inst[port].get_pin(x) for x in decode_names]
         
+        sel_names = ["sel_{}".format(x) for x in range(self.num_col_addr_lines)]
+        column_mux_pins = [self.column_mux_array_inst[port].get_pin(x) for x in sel_names]
+        
+        route_map = list(zip(decode_pins, column_mux_pins))
+        self.create_vertical_channel_route(route_map, offset)
+
 
     def add_lvs_correspondence_points(self):
         """ This adds some points for easier debugging if LVS goes wrong. 
@@ -1209,7 +1188,7 @@ class bank(design.design):
         
         connection = []
         if port in self.read_ports:
-            connection.append((self.prefix+"clk_buf_bar{}".format(port), self.precharge_array_inst[port].get_pin("en").lc()))
+            connection.append((self.prefix+"p_en_bar{}".format(port), self.precharge_array_inst[port].get_pin("en_bar").lc()))
                 
         if port in self.write_ports:
             connection.append((self.prefix+"w_en{}".format(port), self.write_driver_array_inst[port].get_pin("en").lc()))
@@ -1225,9 +1204,13 @@ class bank(design.design):
                                 rotate=90)
 
         # clk to wordline_driver
-        control_signal = self.prefix+"clk_buf{}".format(port)
-        pin_pos = self.wordline_driver_inst[port].get_pin("en").bc()
-        mid_pos = pin_pos - vector(0,self.m1_pitch)
+        control_signal = self.prefix+"wl_en{}".format(port)
+        if port%2:
+            pin_pos = self.wordline_driver_inst[port].get_pin("en_bar").uc()
+            mid_pos = pin_pos + vector(0,self.m2_gap) # to route down to the top of the bus
+        else:
+            pin_pos = self.wordline_driver_inst[port].get_pin("en_bar").bc()
+            mid_pos = pin_pos - vector(0,self.m2_gap) # to route down to the top of the bus
         control_x_offset = self.bus_xoffset[port][control_signal].x
         control_pos = vector(control_x_offset, mid_pos.y)
         self.add_wire(("metal1","via1","metal2"),[pin_pos, mid_pos, control_pos])

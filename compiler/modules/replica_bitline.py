@@ -264,15 +264,8 @@ class replica_bitline(design.design):
         pin = self.rbl_inv_inst.get_pin("vdd")
         self.add_power_pin("vdd", pin.lc())
             
-        # Replica bitcell needs to be routed up to M3
         pin=self.rbc_inst.get_pin("vdd")
-        # Don't rotate this via to vit in FreePDK45. In the custom cell, the pin cannot be placed
-        # directly on vdd or there will be a drc error with a wordline. Place the pin slightly farther
-        # away then route to it. A better solution would be to rotate the m1 in the via or move the pin
-        # a m1_pitch below the entire cell.
-        pin_extension = pin.center() - vector(0,self.m1_pitch)
-        self.add_power_pin("vdd", pin_extension, rotate=0)
-        self.add_path("metal1", [pin.center(), pin_extension])
+        self.add_power_pin("vdd", pin.center(), 0, pin.layer)
         
         for pin in self.rbc_inst.get_pins("gnd"):
             self.add_power_pin("gnd", pin.center())

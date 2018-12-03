@@ -80,7 +80,7 @@ class pbitcell(design.design):
             self.offset_all_coordinates()
             gnd_overlap = vector(0, 0.5*contact.well.width)
             self.translate_all(gnd_overlap)
-        self.DRC_LVS()
+
 
     def add_pins(self):
         """ add pins and set names for bitlines and wordlines """
@@ -323,20 +323,21 @@ class pbitcell(design.design):
         # Add rails for vdd and gnd
         gnd_ypos = self.rowline_offset - self.total_ports*self.rowline_spacing
         self.gnd_position = vector(0, gnd_ypos)
-        self.gnd = self.add_layout_pin_rect_center(text="gnd",
-                                                   layer="metal1",
-                                                   offset=self.gnd_position,
-                                                   width=self.width,
-                                                   height=self.m1_width)
-
+        self.add_rect_center(layer="metal1",
+                             offset=self.gnd_position,
+                             width=self.width,
+                             height=self.m1_width)
+        self.add_power_pin("gnd", vector(0,gnd_ypos))
+        
+        
         vdd_ypos = self.inverter_nmos_ypos + self.inverter_nmos.active_height + self.inverter_gap + self.inverter_pmos.active_height + self.vdd_offset
         self.vdd_position = vector(0, vdd_ypos)
-        self.vdd = self.add_layout_pin_rect_center(text="vdd",
-                                                   layer="metal1",
-                                                   offset=self.vdd_position,
-                                                   width=self.width,
-                                                   height=self.m1_width)
-
+        self.add_rect_center(layer="metal1",
+                             offset=self.vdd_position,
+                             width=self.width,
+                             height=self.m1_width)
+        self.add_power_pin("vdd", vector(0,vdd_ypos))
+        
     def create_readwrite_ports(self):
         """
         Creates read/write ports to the bit cell. A differential pair of transistor can both read and write, like in a 6T cell.

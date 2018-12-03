@@ -30,6 +30,7 @@ class functional(simulation):
         self.set_feasible_period(sram, spfile, corner)
         self.set_stimulus_variables()
         self.create_signal_names()
+
         
         # Number of checks can be changed
         self.num_cycles = 2
@@ -154,17 +155,17 @@ class functional(simulation):
             sp_read_value = ""
             for bit in range(self.word_size):
                 value = parse_spice_list("timing", "v{0}.{1}ck{2}".format(dout_port.lower(),bit,check))
-                if value > 0.88 * self.vdd_voltage:
+                if value > self.v_high:
                     sp_read_value = "1" + sp_read_value
-                elif value < 0.12 * self.vdd_voltage:
+                elif value < self.v_low:
                     sp_read_value = "0" + sp_read_value
                 else:
                     error ="FAILED: {0}_{1} value {2} at time {3}n does not fall within noise margins <{4} or >{5}.".format(dout_port,
                                                                                                                             bit,
                                                                                                                             value,
                                                                                                                             eo_period,
-                                                                                                                            0.12*self.vdd_voltage,
-                                                                                                                            0.88*self.vdd_voltage)
+                                                                                                                            self.v_low,
+                                                                                                                            self.v_high)
                     return (0, error)
                     
             self.read_check.append([sp_read_value, dout_port, eo_period, check])                    

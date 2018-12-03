@@ -1,6 +1,6 @@
 import debug
 import design
-from tech import drc
+from tech import drc,parameter
 from math import log
 from vector import vector
 from globals import OPTS
@@ -102,8 +102,7 @@ class dff_buf(design.design):
         mid_x_offset = 0.5*(a1_pin.cx() + q_pin.cx())
         mid1 = vector(mid_x_offset, q_pin.cy())
         mid2 = vector(mid_x_offset, a1_pin.cy())
-        self.add_path("metal3",
-                      [q_pin.center(), mid1, mid2, a1_pin.center()])
+        self.add_path("metal3", [q_pin.center(), mid1, mid2, a1_pin.center()])
         self.add_via_center(layers=("metal2","via2","metal3"),
                             offset=q_pin.center())
         self.add_via_center(layers=("metal2","via2","metal3"),
@@ -114,8 +113,10 @@ class dff_buf(design.design):
         # Route inv1 z to inv2 a
         z1_pin = self.inv1_inst.get_pin("Z")
         a2_pin = self.inv2_inst.get_pin("A")
-        mid_point = vector(z1_pin.cx(), a2_pin.cy())        
-        self.add_path("metal1", [z1_pin.center(), mid_point, a2_pin.center()])
+        mid_x_offset = 0.5*(z1_pin.cx() + a2_pin.cx())
+        self.mid_qb_pos = vector(mid_x_offset, z1_pin.cy())
+        mid2 = vector(mid_x_offset, a2_pin.cy())
+        self.add_path("metal1", [z1_pin.center(), self.mid_qb_pos, mid2, a2_pin.center()])
         
     def add_layout_pins(self):
 
@@ -150,18 +151,22 @@ class dff_buf(design.design):
                             height=din_pin.height())
 
         dout_pin = self.inv2_inst.get_pin("Z")
+        mid_pos = dout_pin.center() + vector(self.m1_pitch,0)
+        q_pos = mid_pos - vector(0,self.m2_pitch)
         self.add_layout_pin_rect_center(text="Q",
                                         layer="metal2",
-                                        offset=dout_pin.center())
+                                        offset=q_pos)
+        self.add_path("metal1", [dout_pin.center(), mid_pos, q_pos])
         self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=dout_pin.center())
+                            offset=q_pos)
 
-        dout_pin = self.inv2_inst.get_pin("A")
+        qb_pos = self.mid_qb_pos + vector(0,self.m2_pitch)
         self.add_layout_pin_rect_center(text="Qb",
                                         layer="metal2",
-                                        offset=dout_pin.center())
+                                        offset=qb_pos)
+        self.add_path("metal1", [self.mid_qb_pos, qb_pos])
         self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=dout_pin.center())
+                            offset=qb_pos)
         
         
 
@@ -172,3 +177,9 @@ class dff_buf(design.design):
         inv2_delay = self.inv2.analytical_delay(slew=inv1_delay.slew, load=load)
         return dff_delay + inv1_delay + inv2_delay
             
+    def get_clk_cin(self):
+        """Return the total capacitance (in relative units) that the clock is loaded by in the dff"""
+        #This is a handmade cell so the value must be entered in the tech.py file or estimated.
+        #Calculated in the tech file by summing the widths of all the gates and dividing by the minimum width.
+        #FIXME: Dff changed in a past commit. The parameter need to be updated.
+        return parameter["dff_clk_cin"]

@@ -35,10 +35,13 @@ class psram_1bank_8mux_func_test(openram_test):
                         num_words=256,
                         num_banks=1)
         c.words_per_row=8
-        debug.info(1, "Functional test for psram with {} bit words, {} words, {} words per row, {} banks".format(c.word_size,
-                                                                                                                c.num_words,
-                                                                                                                c.words_per_row,
-                                                                                                                c.num_banks))
+        debug.info(1, "Functional test for {}rw,{}r,{}w psram with {} bit words, {} words, {} words per row, {} banks".format(OPTS.num_rw_ports,
+                                                                                                                              OPTS.num_r_ports,
+                                                                                                                              OPTS.num_w_ports,
+                                                                                                                              c.word_size,
+                                                                                                                              c.num_words,
+                                                                                                                              c.words_per_row,
+                                                                                                                              c.num_banks))
         s = sram(c, name="sram")
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)

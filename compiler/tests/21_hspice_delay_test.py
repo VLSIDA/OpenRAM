@@ -49,7 +49,6 @@ class timing_sram_test(openram_test):
         #Combine info about port into all data
         data.update(port_data[0])
         
-        #Assumes single rw port (6t sram)
         if OPTS.tech_name == "freepdk45":
             golden_data = {'delay_hl': [0.15801],
                              'delay_lh': [0.15801],

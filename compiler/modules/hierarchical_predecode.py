@@ -9,19 +9,18 @@ from globals import OPTS
 from pnand2 import pnand2
 from pnand3 import pnand3
 
-
 class hierarchical_predecode(design.design):
     """
     Pre 2x4 and 3x8 decoder shared code.
     """
-    def __init__(self, input_number):
+    unique_id = 1
+    
+    def __init__(self, input_number, height=None):
         self.number_of_inputs = input_number
+        self.cell_height = height
         self.number_of_outputs = int(math.pow(2, self.number_of_inputs))
-        design.design.__init__(self, name="pre{0}x{1}".format(self.number_of_inputs,self.number_of_outputs))
-
-        from importlib import reload
-        c = reload(__import__(OPTS.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.bitcell)
+        design.design.__init__(self, name="pre{0}x{1}_{2}".format(self.number_of_inputs,self.number_of_outputs,hierarchical_predecode.unique_id))
+        hierarchical_predecode.unique_id += 1
     
     def add_pins(self):
         for k in range(self.number_of_inputs):
@@ -34,7 +33,7 @@ class hierarchical_predecode(design.design):
     def add_modules(self):
         """ Add the INV and NAND gate modules """
         
-        self.inv = pinv()
+        self.inv = pinv(height=self.cell_height)
         self.add_mod(self.inv)
         
         self.add_nand(self.number_of_inputs)
@@ -43,9 +42,9 @@ class hierarchical_predecode(design.design):
     def add_nand(self,inputs):
         """ Create the NAND for the predecode input stage """
         if inputs==2:
-            self.nand = pnand2()
+            self.nand = pnand2(height=self.cell_height)
         elif inputs==3:
-            self.nand = pnand3()
+            self.nand = pnand3(height=self.cell_height)
         else:
             debug.error("Invalid number of predecode inputs: {}".format(inputs),-1)
             
@@ -90,7 +89,7 @@ class hierarchical_predecode(design.design):
         """ Create the input inverters to invert input signals for the decode stage. """
         self.in_inst = []
         for inv_num in range(self.number_of_inputs):
-            name = "Xpre_inv_{0}".format(inv_num)
+            name = "pre_inv_{0}".format(inv_num)
             self.in_inst.append(self.add_inst(name=name,
                                               mod=self.inv))
             self.connect_inst(["in_{0}".format(inv_num),
@@ -114,7 +113,7 @@ class hierarchical_predecode(design.design):
         """ Create inverters for the inverted output decode signals. """
         self.inv_inst = []
         for inv_num in range(self.number_of_outputs):
-            name = "Xpre_nand_inv_{}".format(inv_num)
+            name = "pre_nand_inv_{}".format(inv_num)
             self.inv_inst.append(self.add_inst(name=name,
                                                mod=self.inv))
             self.connect_inst(["Z_{}".format(inv_num),

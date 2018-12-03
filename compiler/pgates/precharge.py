@@ -51,7 +51,7 @@ class precharge(pgate.pgate):
         self.DRC_LVS()
 
     def add_pins(self):
-        self.add_pin_list(["bl", "br", "en", "vdd"])
+        self.add_pin_list(["bl", "br", "en_bar", "vdd"])
 
     def add_ptx(self):
         """
@@ -92,15 +92,15 @@ class precharge(pgate.pgate):
 
         self.lower_pmos_inst=self.add_inst(name="lower_pmos",
                                            mod=self.pmos)
-        self.connect_inst(["bl", "en", "br", "vdd"])
+        self.connect_inst(["bl", "en_bar", "br", "vdd"])
 
         self.upper_pmos1_inst=self.add_inst(name="upper_pmos1",
                                             mod=self.pmos)
-        self.connect_inst(["bl", "en", "vdd", "vdd"])
+        self.connect_inst(["bl", "en_bar", "vdd", "vdd"])
 
         self.upper_pmos2_inst=self.add_inst(name="upper_pmos2",
                                             mod=self.pmos)
-        self.connect_inst(["br", "en", "vdd", "vdd"])
+        self.connect_inst(["br", "en_bar", "vdd", "vdd"])
         
 
     def place_ptx(self):
@@ -161,7 +161,7 @@ class precharge(pgate.pgate):
                                 rotate=90)
 
         # adds the en rail on metal1
-        self.add_layout_pin_segment_center(text="en",
+        self.add_layout_pin_segment_center(text="en_bar",
                                            layer="metal1",
                                            start=offset.scale(0,1),
                                            end=offset.scale(0,1)+vector(self.width,0))

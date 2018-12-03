@@ -72,7 +72,7 @@ class supply_router(router):
         #start_time = datetime.now()
         self.find_pins_and_blockages([self.vdd_name, self.gnd_name])
         #print_time("Pins and blockages",datetime.now(), start_time)
-        #self.write_debug_gds("pin_enclosures.gds",stop_program=True)
+        self.write_debug_gds("pin_enclosures.gds",stop_program=True)
 
         # Add the supply rails in a mesh network and connect H/V with vias
         #start_time = datetime.now()
@@ -248,8 +248,8 @@ class supply_router(router):
         rail_width = self.track_width*self.rail_track_width
 
         # Get the conservative width and spacing of the top rails
-        (horizontal_width, horizontal_space) = self.get_layer_width_space(0, rail_width, rail_length)
-        (vertical_width, vertical_space) = self.get_layer_width_space(1, rail_width, rail_length)
+        (horizontal_width, horizontal_space) = self.get_supply_layer_width_space(0,2)
+        (vertical_width, vertical_space) = self.get_supply_layer_width_space(1,2)
         width = max(horizontal_width, vertical_width)
         space = max(horizontal_space, vertical_space)
         

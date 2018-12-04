@@ -71,7 +71,7 @@ class supply_router(router):
         #start_time = datetime.now()
         self.find_pins_and_blockages([self.vdd_name, self.gnd_name])
         #print_time("Pins and blockages",datetime.now(), start_time)
-        self.write_debug_gds("pin_enclosures.gds",stop_program=True)
+        #self.write_debug_gds("pin_enclosures.gds",stop_program=True)
 
         # Add the supply rails in a mesh network and connect H/V with vias
         #start_time = datetime.now()

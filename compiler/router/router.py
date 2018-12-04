@@ -182,10 +182,10 @@ class router(router_tech):
         #print_time("Combine pins",datetime.now(), start_time)
         #self.write_debug_gds("debug_combine_pins.gds",stop_program=True)
 
-        # Separate any adjacent grids of differing net names to prevent wide metal DRC violations
+        # Separate any adjacent grids of differing net names that overlap
         # Must be done before enclosing pins
         #start_time = datetime.now()
-        #self.separate_adjacent_pins(self.supply_rail_space_width)
+        self.separate_adjacent_pins(0)
         #print_time("Separate pins",datetime.now(), start_time)
         # For debug
         #self.separate_adjacent_pins(1)
@@ -515,7 +515,7 @@ class router(router_tech):
         # scale the size bigger to include neaby tracks
         ll=ll.scale(self.track_factor).floor()
         ur=ur.scale(self.track_factor).ceil()
-        #print(pin)
+
         # Keep tabs on tracks with sufficient and insufficient overlap
         sufficient_list = set()
         insufficient_list = set()
@@ -528,23 +528,26 @@ class router(router_tech):
                     sufficient_list.update([full_overlap])
                 if partial_overlap:
                     insufficient_list.update([partial_overlap])
-                debug.info(3,"Converting [ {0} , {1} ] full={2} partial={3}".format(x,y, full_overlap, partial_overlap))
+                debug.info(2,"Converting [ {0} , {1} ] full={2} partial={3}".format(x,y, full_overlap, partial_overlap))
 
-        # Remove the blocked grids 
-        sufficient_list.difference_update(self.blocked_grids)
-        insufficient_list.difference_update(self.blocked_grids)
+        # Return all grids with any potential overlap (sufficient or not)
+        return sufficient_list|insufficient_list
+    
+        # # Remove the blocked grids 
+        # sufficient_list.difference_update(self.blocked_grids)
+        # insufficient_list.difference_update(self.blocked_grids)
         
-        if len(sufficient_list)>0:
-            return sufficient_list
-        elif expansion==0 and len(insufficient_list)>0:
-            best_pin = self.get_all_offgrid_pin(pin, insufficient_list)
-            #print(best_pin)
-            return best_pin
-        elif expansion>0:
-            nearest_pin = self.get_furthest_offgrid_pin(pin, insufficient_list)
-            return nearest_pin
-        else:
-            return set()
+        # if len(sufficient_list)>0:
+        #     return sufficient_list
+        # elif expansion==0 and len(insufficient_list)>0:
+        #     best_pin = self.get_all_offgrid_pin(pin, insufficient_list)
+        #     #print(best_pin)
+        #     return best_pin
+        # elif expansion>0:
+        #     nearest_pin = self.get_furthest_offgrid_pin(pin, insufficient_list)
+        #     return nearest_pin
+        # else:
+        #     return set()
 
     def get_all_offgrid_pin(self, pin, insufficient_list):
         """ 

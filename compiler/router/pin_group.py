@@ -608,7 +608,7 @@ class pin_group:
             
             for pin_list in self.pins:
                 for pin in pin_list:
-                    debug.info(2,"  Converting {0}".format(pin))
+                    debug.warning("  Expanding conversion {0}".format(pin))
                     # Determine which tracks the pin overlaps 
                     pin_in_tracks=self.router.convert_pin_to_tracks(self.name, pin, expansion=1)
                     pin_set.update(pin_in_tracks)
@@ -618,7 +618,7 @@ class pin_group:
                 self.router.write_debug_gds("blocked_pin.gds")
 
         # We need to route each of the components, so don't combine the groups
-        self.grids = pin_set | blockage_set
+        self.grids = pin_set 
         # Remember the secondary grids for removing adjacent pins in wide metal spacing
         self.secondary_grids = blockage_set - pin_set
 

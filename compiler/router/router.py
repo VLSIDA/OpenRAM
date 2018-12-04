@@ -317,7 +317,7 @@ class router(router_tech):
             
         # If that fails, just randomly remove from the bigger one and give a warning.
         # This might fail later.
-        debug.warning("Removing arbitrary grids from a pin group {} {}".format(bigger, bigger_grids))
+        debug.info(1,"Removing arbitrary grids from a pin group {} {}".format(bigger, bigger_grids))
         debug.check(len(bigger.grids)>len(bigger_grids),"Zero size pin group after adjacency removal {} {}".format(bigger, bigger_grids))
         bigger.grids.difference_update(bigger_grids)
         self.blocked_grids.update(bigger_grids)

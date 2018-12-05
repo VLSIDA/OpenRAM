@@ -303,24 +303,19 @@ class router(router_tech):
 
             # If the adjacent grids are a subset of the secondary grids (i.e. not necessary)
             # remove them from each
-            removed_flag = False
             if adj in bigger.secondary_grids:
                 debug.info(2,"Removing {} from bigger secondary {}".format(adj, bigger))
                 bigger.grids.remove(adj)
                 bigger.secondary_grids.remove(adj)
                 self.blocked_grids.add(adj)
-                removed_flag=True
-            
-            if adj in smaller.secondary_grids:
+            elif adj in smaller.secondary_grids:
                 debug.info(2,"Removing {} from smaller secondary {}".format(adj, smaller))
-                smaller.gris.remove(adj)
-                secondary.secondary_grids.remove(adj)
+                smaller.grids.remove(adj)
+                smaller.secondary_grids.remove(adj)
                 self.blocked_grids.add(adj)
-                removed_flag=True
-
-            # If we couldn't remove from a secondary grid, we must remove from the primary
-            # grid of at least one pin
-            if not removed_flag:
+            else:
+                # If we couldn't remove from a secondary grid, we must remove from the primary
+                # grid of at least one pin
                 if adj in bigger.grids:
                     debug.info(2,"Removing {} from bigger primary {}".format(adj, bigger))
                     bigger.grids.remove(adj)

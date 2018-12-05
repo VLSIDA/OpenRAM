@@ -569,6 +569,7 @@ class delay(simulation):
                 
             #Update target
             target_period = 0.5 * (ub_period + lb_period)
+            #key=input("press return to continue")
 
         
     def try_period(self, feasible_delays):
@@ -590,7 +591,7 @@ class delay(simulation):
                 #Delays/slews based on the period will cause the min_period search to come to the wrong period.
                 if self.sram.col_addr_size>0 and "slew" in dname:
                     continue
-            
+
                 if not relative_compare(results[port][dname],feasible_delays[port][dname],error_tolerance=0.05):
                     debug.info(2,"Delay too big {0} vs {1}".format(results[port][dname],feasible_delays[port][dname]))
                     return False

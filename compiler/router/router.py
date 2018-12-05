@@ -70,8 +70,7 @@ class router(router_tech):
         self.boundary = self.layout.measureBoundary(self.top_name)
         # These must be un-indexed to get rid of the matrix type
         self.ll = vector(self.boundary[0][0], self.boundary[0][1])
-        # Pad the UR by a few tracks to add an extra rail possibly
-        self.ur = vector(self.boundary[1][0], self.boundary[1][1]) + self.track_widths.scale(5,5)
+        self.ur = vector(self.boundary[1][0], self.boundary[1][1]) 
 
     def clear_pins(self):
         """

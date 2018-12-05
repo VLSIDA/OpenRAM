@@ -48,9 +48,9 @@ class router_tech:
         self.track_width = max(self.horiz_track_width,self.vert_track_width)
         debug.info(1,"Track width: {:.3f}".format(self.track_width))
         self.track_space = max(self.horiz_layer_spacing,self.vert_layer_spacing)
-        debug.info(1,"Track spacing: {:.3f}".format(self.track_space))
+        debug.info(1,"Track space: {:.3f}".format(self.track_space))
         self.track_wire = self.track_width - self.track_space
-        debug.info(1,"Wire width: {:.3f}".format(self.track_wire))
+        debug.info(1,"Track wire width: {:.3f}".format(self.track_wire))
         
         self.track_widths = vector([self.track_width] * 2)
         self.track_factor = vector([1/self.track_width] * 2)

@@ -129,12 +129,8 @@ class router(router_tech):
         Pin can either be a label or a location,layer pair: [[x,y],layer].
         """
         debug.info(1,"Finding pins for {}.".format(pin_name))
-        #start_time = datetime.now()
         self.retrieve_pins(pin_name)
-        #print_time("Retrieved pins",datetime.now(), start_time)        
-        #start_time = datetime.now()
         self.analyze_pins(pin_name)
-        #print_time("Analyzed pins",datetime.now(), start_time)                
 
     def find_blockages(self):
         """
@@ -159,41 +155,25 @@ class router(router_tech):
 
         # This will get all shapes as blockages and convert to grid units
         # This ignores shapes that were pins
-        #start_time = datetime.now()
         self.find_blockages()
-        #print_time("Find blockags",datetime.now(), start_time)                
 
         # Convert the blockages to grid units
-        #start_time = datetime.now()
         self.convert_blockages()
-        #print_time("Find blockags",datetime.now(), start_time)
         
         # This will convert the pins to grid units
         # It must be done after blockages to ensure no DRCs between expanded pins and blocked grids
-        #start_time = datetime.now()
         for pin in pin_list:
             self.convert_pins(pin)
-        #print_time("Convert pins",datetime.now(), start_time)
         
-        #start_time = datetime.now()
         #for pin in pin_list:
         #    self.combine_adjacent_pins(pin)
-        #print_time("Combine pins",datetime.now(), start_time)
-        #self.write_debug_gds("debug_combine_pins.gds",stop_program=True)
 
         # Separate any adjacent grids of differing net names that overlap
         # Must be done before enclosing pins
-        #start_time = datetime.now()
         self.separate_adjacent_pins(0)
-        #print_time("Separate pins",datetime.now(), start_time)
-        # For debug
-        #self.separate_adjacent_pins(1)
         
         # Enclose the continguous grid units in a metal rectangle to fix some DRCs
-        #start_time = datetime.now()
         self.enclose_pins()
-        #print_time("Enclose pins",datetime.now(), start_time)
-        #self.write_debug_gds("debug_enclose_pins.gds",stop_program=True)
 
         
     def combine_adjacent_pins(self, pin_name):
@@ -281,7 +261,7 @@ class router(router_tech):
                 adj_grids = pg1.adjacent_grids(pg2, separation)
                 # These should have the same length, so...
                 if len(adj_grids)>0:
-                    debug.info(2,"Adjacent grids {0} {1} adj={2}".format(index1,index2,adj_grids))
+                    debug.info(3,"Adjacent grids {0} {1} adj={2}".format(index1,index2,adj_grids))
                     self.remove_adjacent_grid(pg1, pg2, adj_grids)
 
     def remove_adjacent_grid(self, pg1, pg2, adj_grids):
@@ -303,12 +283,12 @@ class router(router_tech):
             # If the adjacent grids are a subset of the secondary grids (i.e. not necessary)
             # remove them from each
             if adj in bigger.secondary_grids:
-                debug.info(2,"Removing {} from bigger secondary {}".format(adj, bigger))
+                debug.info(3,"Removing {} from bigger secondary {}".format(adj, bigger))
                 bigger.grids.remove(adj)
                 bigger.secondary_grids.remove(adj)
                 self.blocked_grids.add(adj)
             elif adj in smaller.secondary_grids:
-                debug.info(2,"Removing {} from smaller secondary {}".format(adj, smaller))
+                debug.info(3,"Removing {} from smaller secondary {}".format(adj, smaller))
                 smaller.grids.remove(adj)
                 smaller.secondary_grids.remove(adj)
                 self.blocked_grids.add(adj)
@@ -316,10 +296,10 @@ class router(router_tech):
                 # If we couldn't remove from a secondary grid, we must remove from the primary
                 # grid of at least one pin
                 if adj in bigger.grids:
-                    debug.info(2,"Removing {} from bigger primary {}".format(adj, bigger))
+                    debug.info(3,"Removing {} from bigger primary {}".format(adj, bigger))
                     bigger.grids.remove(adj)
                 elif adj in smaller.grids:
-                    debug.info(2,"Removing {} from smaller primary {}".format(adj, smaller))
+                    debug.info(3,"Removing {} from smaller primary {}".format(adj, smaller))
                     smaller.grids.remove(adj)
 
 
@@ -360,17 +340,6 @@ class router(router_tech):
         self.set_blockages(blockage_grids,False)
             
         
-    # def translate_coordinates(self, coord, mirr, angle, xyShift):
-    #     """
-    #     Calculate coordinates after flip, rotate, and shift
-    #     """
-    #     coordinate = []
-    #     for item in coord:
-    #         x = (item[0]*math.cos(angle)-item[1]*mirr*math.sin(angle)+xyShift[0])
-    #         y = (item[0]*math.sin(angle)+item[1]*mirr*math.cos(angle)+xyShift[1])
-    #         coordinate += [(x, y)]
-    #     return coordinate
-
     def convert_shape_to_units(self, shape):
         """ 
         Scale a shape (two vector list) to user units 
@@ -497,11 +466,6 @@ class router(router_tech):
         # and the track points are at the center
         ll = ll.round()
         ur = ur.round()
-        # if ll[0]<45 and ll[0]>35 and ll[1]<5 and ll[1]>-5:
-        #     debug.info(0,"Converting [ {0} , {1} ]".format(old_ll,old_ur))
-        #     debug.info(0,"Converted [ {0} , {1} ]".format(ll,ur))
-        #     pin=self.convert_track_to_shape(ll)            
-        #     debug.info(0,"Pin {}".format(pin))
         return [ll,ur]
 
     def convert_pin_to_tracks(self, pin_name, pin, expansion=0):
@@ -557,7 +521,6 @@ class router(router_tech):
         """ 
         Find a list of the single pin with the most overlap.
         """
-        #print("INSUFFICIENT LIST",insufficient_list)
         # Find the coordinate with the most overlap
         best_coord = None
         best_overlap = -math.inf
@@ -578,7 +541,6 @@ class router(router_tech):
         Get a grid cell that is the furthest from the blocked grids.
         """
         
-        #print("INSUFFICIENT LIST",insufficient_list)
         # Find the coordinate with the most overlap
         best_coord = None
         best_dist = math.inf
@@ -595,7 +557,6 @@ class router(router_tech):
         Given a pin and a list of grid cells (probably non-overlapping),
         return the nearest grid cell (center to center).
         """
-        #print("INSUFFICIENT LIST",insufficient_list)
         # Find the coordinate with the most overlap
         best_coord = None
         best_dist = math.inf
@@ -637,10 +598,6 @@ class router(router_tech):
         else:
             debug.info(2,"  No overlap: {0} {1}".format(overlap_length,0))
             return (None,None)
-        
-
-
-
                                                         
 
     def convert_track_to_pin(self, track):
@@ -763,8 +720,6 @@ class router(router_tech):
                 pg.enclose_pin()
                 pg.add_enclosure(self.cell)
 
-        #self.write_debug_gds("pin_debug.gds", False)
-    
     def add_source(self, pin_name):
         """ 
         This will mark the grids for all pin components as a source.
@@ -834,9 +789,6 @@ class router(router_tech):
         """
         debug.info(4,"Set path: " + str(path))
 
-        # Keep track of path for future blockages
-        #path.set_blocked()
-        
         # This is marked for debug
         path.set_path()
 
@@ -905,44 +857,10 @@ class router(router_tech):
         (abs_ll,unused) = pin.rect
         pin = self.convert_track_to_pin(ur)
         (unused,abs_ur) = pin.rect
-        #print("enclose ll={0} ur={1}".format(ll,ur))
-        #print("enclose ll={0} ur={1}".format(abs_ll,abs_ur))
         
         pin = pin_layout(name, [abs_ll, abs_ur], layer)
         
         return pin
-    
-
-    # def compute_wide_enclosure(self, ll, ur, zindex, name=""):
-    #     """ 
-    #     Enclose the tracks from ll to ur in a single rectangle that meets the track DRC rules.
-    #     """
-
-    #     # Find the pin enclosure of the whole track shape (ignoring DRCs)
-    #     (abs_ll,unused) = self.convert_track_to_shape(ll)
-    #     (unused,abs_ur) = self.convert_track_to_shape(ur)
-        
-    #     # Get the layer information
-    #     x_distance = abs(abs_ll.x-abs_ur.x)
-    #     y_distance = abs(abs_ll.y-abs_ur.y)
-    #     shape_width = min(x_distance, y_distance)
-    #     shape_length = max(x_distance, y_distance)
-
-    #     # Get the DRC rule for the grid dimensions
-    #     (width, space) = self.get_supply_layer_width_space(zindex)
-    #     layer = self.get_layer(zindex)
-
-    #     if zindex==0:
-    #         spacing = vector(0.5*self.track_width, 0.5*space)
-    #     else:
-    #         spacing = vector(0.5*space, 0.5*self.track_width)
-    #     # Compute the shape offsets with correct spacing
-    #     new_ll = abs_ll + spacing
-    #     new_ur = abs_ur - spacing
-    #     pin = pin_layout(name, [new_ll, new_ur], layer)
-        
-    #     return pin
-    
 
     def contract_path(self,path):
         """ 

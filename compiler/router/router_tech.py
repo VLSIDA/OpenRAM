@@ -46,15 +46,15 @@ class router_tech:
             
         # We'll keep horizontal and vertical tracks the same for simplicity.
         self.track_width = max(self.horiz_track_width,self.vert_track_width)
-        debug.info(1,"Track width: "+str(self.track_width))
+        debug.info(1,"Track width: {:.3f}".format(self.track_width))
         self.track_space = max(self.horiz_layer_spacing,self.vert_layer_spacing)
-        debug.info(1,"Track spacing: "+str(self.track_space))
+        debug.info(1,"Track spacing: {:.3f}".format(self.track_space))
         self.track_wire = self.track_width - self.track_space
-        debug.info(1,"Wire width: "+str(self.track_wire))
+        debug.info(1,"Wire width: {:.3f}".format(self.track_wire))
         
         self.track_widths = vector([self.track_width] * 2)
         self.track_factor = vector([1/self.track_width] * 2)
-        debug.info(2,"Track factor: {0}".format(self.track_factor))
+        debug.info(2,"Track factor: {}".format(self.track_factor))
     
         # When we actually create the routes, make them the width of the track (minus 1/2 spacing on each side)
         self.layer_widths = [self.track_wire, 1, self.track_wire]

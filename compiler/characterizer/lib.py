@@ -509,7 +509,7 @@ class lib:
             return
         datasheet = open(OPTS.openram_temp +'/datasheet.info', 'a+')
         
-        with open(os.environ.get("OPENRAM_HOME") + "/../.git/ORIG_HEAD", "r") as f:
+        with open(os.environ.get("OPENRAM_HOME") + "/datasheet/ORIG_HEAD", "r") as f:
             origin_id = f.readline()
 
         datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},".format(

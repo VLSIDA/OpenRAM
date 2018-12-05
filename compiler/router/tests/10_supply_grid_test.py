@@ -22,6 +22,9 @@ class no_blockages_test(openram_test):
         if False:
             from control_logic import control_logic
             cell = control_logic(16)
+            layer_stack =("metal3","via3","metal4")
+            rtr=router(layer_stack, cell)
+            self.assertTrue(rtr.route())
         else:
             from sram import sram
             from sram_config import sram_config
@@ -33,9 +36,6 @@ class no_blockages_test(openram_test):
             sram = sram(c, "sram1")
             cell = sram.s
 
-        layer_stack =("metal3","via3","metal4")
-        rtr=router(layer_stack, cell)
-        self.assertTrue(rtr.route())
         self.local_check(cell,True)
         
         # fails if there are any DRC errors on any cells

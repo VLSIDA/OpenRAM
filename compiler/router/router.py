@@ -21,12 +21,12 @@ class router(router_tech):
     It populates blockages on a grid class.
     """
 
-    def __init__(self, layers, design, gds_filename=None):
+    def __init__(self, layers, design, gds_filename=None, rail_track_width=1):
         """
         This will instantiate a copy of the gds file or the module at (0,0) and
         route on top of this. The blockages from the gds/module will be considered.
         """
-        router_tech.__init__(self, layers)
+        router_tech.__init__(self, layers, rail_track_width)
         
         self.cell = design
 
@@ -177,15 +177,15 @@ class router(router_tech):
         #print_time("Convert pins",datetime.now(), start_time)
         
         #start_time = datetime.now()
-        for pin in pin_list:
-            self.combine_adjacent_pins(pin)
+        #for pin in pin_list:
+        #    self.combine_adjacent_pins(pin)
         #print_time("Combine pins",datetime.now(), start_time)
         #self.write_debug_gds("debug_combine_pins.gds",stop_program=True)
 
-        # Separate any adjacent grids of differing net names to prevent wide metal DRC violations
+        # Separate any adjacent grids of differing net names that overlap
         # Must be done before enclosing pins
         #start_time = datetime.now()
-        self.separate_adjacent_pins(self.supply_rail_space_width)
+        self.separate_adjacent_pins(0)
         #print_time("Separate pins",datetime.now(), start_time)
         # For debug
         #self.separate_adjacent_pins(1)
@@ -201,7 +201,7 @@ class router(router_tech):
         """
         Find pins that have adjacent routing tracks and merge them into a
         single pin_group.  The pins themselves may not be touching, but 
-        enclose_pis in the next step will ensure they are touching.
+        enclose_pins in the next step will ensure they are touching.
         """        
         debug.info(1,"Combining adjacent pins for {}.".format(pin_name))        
         # Find all adjacencies
@@ -279,48 +279,50 @@ class router(router_tech):
         debug.info(1,"Comparing {0} and {1} adjacency".format(pin_name1, pin_name2))
         for index1,pg1 in enumerate(self.pin_groups[pin_name1]):
             for index2,pg2 in enumerate(self.pin_groups[pin_name2]):
-                # FIgXME: Use separation distance and edge grids only
-                grids_g1, grids_g2 = pg1.adjacent_grids(pg2, separation)
+                adj_grids = pg1.adjacent_grids(pg2, separation)
                 # These should have the same length, so...
-                if len(grids_g1)>0:
-                    debug.info(3,"Adjacent grids {0} {1} {2} {3}".format(index1,grids_g1,index2,grids_g2))
-                    self.remove_adjacent_grid(pg1, grids_g1, pg2, grids_g2)
+                if len(adj_grids)>0:
+                    debug.info(2,"Adjacent grids {0} {1} adj={2}".format(index1,index2,adj_grids))
+                    self.remove_adjacent_grid(pg1, pg2, adj_grids)
 
-    def remove_adjacent_grid(self, pg1, grids1, pg2, grids2):
+    def remove_adjacent_grid(self, pg1, pg2, adj_grids):
         """
         Remove one of the adjacent grids in a heuristic manner.
+        This will try to keep the groups similar sized by removing from the bigger group.
         """
-        # Determine the bigger and smaller group
+
         if pg1.size()>pg2.size():
             bigger = pg1
-            bigger_grids = grids1
             smaller = pg2
-            smaller_grids = grids2
         else:
             bigger = pg2
-            bigger_grids = grids2
             smaller = pg1
-            smaller_grids = grids1
         
-        # First, see if we can remove grids that are in the secondary grids
-        # i.e. they aren't necessary to the pin grids
-        if bigger_grids.issubset(bigger.secondary_grids):
-            debug.info(3,"Removing {} from bigger {}".format(str(bigger_grids), bigger))
-            bigger.grids.difference_update(bigger_grids)
-            self.blocked_grids.update(bigger_grids)
-            return
-        elif smaller_grids.issubset(smaller.secondary_grids):
-            debug.info(3,"Removing {} from smaller {}".format(str(smaller_grids), smaller))
-            smaller.grids.difference_update(smaller_grids)
-            self.blocked_grids.update(smaller_grids)
-            return
+        for adj in adj_grids:
             
-        # If that fails, just randomly remove from the bigger one and give a warning.
-        # This might fail later.
-        debug.warning("Removing arbitrary grids from a pin group {} {}".format(bigger, bigger_grids))
-        debug.check(len(bigger.grids)>len(bigger_grids),"Zero size pin group after adjacency removal {} {}".format(bigger, bigger_grids))
-        bigger.grids.difference_update(bigger_grids)
-        self.blocked_grids.update(bigger_grids)
+
+            # If the adjacent grids are a subset of the secondary grids (i.e. not necessary)
+            # remove them from each
+            if adj in bigger.secondary_grids:
+                debug.info(2,"Removing {} from bigger secondary {}".format(adj, bigger))
+                bigger.grids.remove(adj)
+                bigger.secondary_grids.remove(adj)
+                self.blocked_grids.add(adj)
+            elif adj in smaller.secondary_grids:
+                debug.info(2,"Removing {} from smaller secondary {}".format(adj, smaller))
+                smaller.grids.remove(adj)
+                smaller.secondary_grids.remove(adj)
+                self.blocked_grids.add(adj)
+            else:
+                # If we couldn't remove from a secondary grid, we must remove from the primary
+                # grid of at least one pin
+                if adj in bigger.grids:
+                    debug.info(2,"Removing {} from bigger primary {}".format(adj, bigger))
+                    bigger.grids.remove(adj)
+                elif adj in smaller.grids:
+                    debug.info(2,"Removing {} from smaller primary {}".format(adj, smaller))
+                    smaller.grids.remove(adj)
+
 
 
     
@@ -515,36 +517,24 @@ class router(router_tech):
         # scale the size bigger to include neaby tracks
         ll=ll.scale(self.track_factor).floor()
         ur=ur.scale(self.track_factor).ceil()
-        #print(pin)
+
         # Keep tabs on tracks with sufficient and insufficient overlap
         sufficient_list = set()
         insufficient_list = set()
-        
+
         zindex=self.get_zindex(pin.layer_num)
         for x in range(int(ll[0])+expansion,int(ur[0])+1+expansion):
             for y in range(int(ll[1]+expansion),int(ur[1])+1+expansion):
-                (full_overlap,partial_overlap) = self.convert_pin_coord_to_tracks(pin, vector3d(x,y,zindex))
+                (full_overlap, partial_overlap) = self.convert_pin_coord_to_tracks(pin, vector3d(x,y,zindex))
                 if full_overlap:
                     sufficient_list.update([full_overlap])
                 if partial_overlap:
                     insufficient_list.update([partial_overlap])
-                debug.info(4,"Converting [ {0} , {1} ] full={2} partial={3}".format(x,y, full_overlap, partial_overlap))
+                debug.info(2,"Converting [ {0} , {1} ] full={2}".format(x,y, full_overlap))
 
-        # Remove the blocked grids 
-        sufficient_list.difference_update(self.blocked_grids)
-        insufficient_list.difference_update(self.blocked_grids)
-        
-        if len(sufficient_list)>0:
-            return sufficient_list
-        elif expansion==0 and len(insufficient_list)>0:
-            best_pin = self.get_all_offgrid_pin(pin, insufficient_list)
-            #print(best_pin)
-            return best_pin
-        elif expansion>0:
-            nearest_pin = self.get_furthest_offgrid_pin(pin, insufficient_list)
-            return nearest_pin
-        else:
-            return set()
+        # Return all grids with any potential overlap (sufficient or not)
+        return (sufficient_list,insufficient_list)
+    
 
     def get_all_offgrid_pin(self, pin, insufficient_list):
         """ 
@@ -622,26 +612,32 @@ class router(router_tech):
         
     def convert_pin_coord_to_tracks(self, pin, coord):
         """ 
-        Given a pin and a track coordinate, determine if the pin overlaps enough.
-        If it does, add additional metal to make the pin "on grid". 
-        If it doesn't, add it to the blocked grid list.
+        Return all tracks that an inflated pin overlaps
         """
 
-        (width, spacing) = self.get_layer_width_space(coord.z)
-            
-        # This is the rectangle if we put a pin in the center of the track
-        track_pin = self.convert_track_to_pin(coord)
-        overlap_length = pin.overlap_length(track_pin)
+        # This is using the full track shape rather than a single track pin shape
+        # because we will later patch a connector if there isn't overlap.
+        track_pin = self.convert_track_to_shape_pin(coord)
+
+        # This is the normal pin inflated by a minimum design rule
+        inflated_pin = pin_layout(pin.name, pin.inflate(0.5*self.track_space), pin.layer)
         
-        debug.info(3,"Check overlap: {0} {1} . {2} = {3}".format(coord, pin.rect, track_pin, overlap_length))
-        # If it overlaps by more than the min width DRC, we can just use the track
-        if overlap_length==math.inf or snap_val_to_grid(overlap_length) >= snap_val_to_grid(width):
-            debug.info(3,"  Overlap: {0} >? {1}".format(overlap_length,spacing))  
-            return (coord, None)
-        # Otherwise, keep track of the partial overlap grids in case we need to patch it later.
+        overlap_length = pin.overlap_length(track_pin)
+        debug.info(2,"Check overlap: {0} {1} . {2} = {3}".format(coord, pin.rect, track_pin, overlap_length))
+        inflated_overlap_length = inflated_pin.overlap_length(track_pin)
+        debug.info(2,"Check overlap: {0} {1} . {2} = {3}".format(coord, inflated_pin.rect, track_pin, inflated_overlap_length))
+
+        # If it overlaps with the pin, it is sufficient
+        if overlap_length==math.inf or overlap_length > 0:
+            debug.info(2,"  Overlap: {0} >? {1}".format(overlap_length,0))  
+            return (coord,None)
+        # If it overlaps with the inflated pin, it is partial
+        elif inflated_overlap_length==math.inf or inflated_overlap_length > 0:
+            debug.info(2,"  Partial overlap: {0} >? {1}".format(inflated_overlap_length,0))  
+            return (None,coord)
         else:
-            debug.info(3,"  Partial/no overlap: {0} >? {1}".format(overlap_length,spacing))
-            return (None, coord)
+            debug.info(2,"  No overlap: {0} {1}".format(overlap_length,0))
+            return (None,None)
         
 
 
@@ -653,21 +649,30 @@ class router(router_tech):
         Convert a grid point into a rectangle shape that is centered
         track in the track and leaves half a DRC space in each direction.
         """
-        # space depends on which layer it is
-        if self.get_layer(track[2])==self.horiz_layer_name:
-            space = 0.5*self.horiz_layer_spacing
-        else:
-            space = 0.5*self.vert_layer_spacing
-            
         # calculate lower left 
-        x = track.x*self.track_width - 0.5*self.track_width + space
-        y = track.y*self.track_width - 0.5*self.track_width + space
+        x = track.x*self.track_width - 0.5*self.track_width + 0.5*self.track_space
+        y = track.y*self.track_width - 0.5*self.track_width + 0.5*self.track_space
         ll = snap_to_grid(vector(x,y))
             
         # calculate upper right
-        x = track.x*self.track_width + 0.5*self.track_width - space
-        y = track.y*self.track_width + 0.5*self.track_width - space
+        x = track.x*self.track_width + 0.5*self.track_width - 0.5*self.track_space
+        y = track.y*self.track_width + 0.5*self.track_width - 0.5*self.track_space
         ur = snap_to_grid(vector(x,y))
+
+        p = pin_layout("", [ll, ur], self.get_layer(track[2]))
+        return p
+
+    def convert_track_to_shape_pin(self, track):
+        """ 
+        Convert a grid point into a rectangle shape that occupies the entire centered
+        track.
+        """
+        # to scale coordinates to tracks
+        x = track[0]*self.track_width - 0.5*self.track_width
+        y = track[1]*self.track_width - 0.5*self.track_width
+        # offset lowest corner object to to (-track halo,-track halo)
+        ll = snap_to_grid(vector(x,y))
+        ur = snap_to_grid(ll + vector(self.track_width,self.track_width))
 
         p = pin_layout("", [ll, ur], self.get_layer(track[2]))
         return p
@@ -685,6 +690,23 @@ class router(router_tech):
         ur = snap_to_grid(ll + vector(self.track_width,self.track_width))
 
         return [ll,ur]
+    
+    def convert_track_to_inflated_pin(self, track):
+        """ 
+        Convert a grid point into a rectangle shape that is inflated by a half DRC space.
+        """
+        # calculate lower left 
+        x = track.x*self.track_width - 0.5*self.track_width - 0.5*self.track_space
+        y = track.y*self.track_width - 0.5*self.track_width - 0.5*self.track_space
+        ll = snap_to_grid(vector(x,y))
+            
+        # calculate upper right
+        x = track.x*self.track_width + 0.5*self.track_width + 0.5*self.track_space
+        y = track.y*self.track_width + 0.5*self.track_width + 0.5*self.track_space
+        ur = snap_to_grid(vector(x,y))
+
+        p = pin_layout("", [ll, ur], self.get_layer(track[2]))
+        return p
     
     def analyze_pins(self, pin_name):
         """ 
@@ -877,8 +899,6 @@ class router(router_tech):
         Enclose the tracks from ll to ur in a single rectangle that meets
         the track DRC rules. 
         """
-        # Get the layer information
-        (width, space) = self.get_layer_width_space(zindex)
         layer = self.get_layer(zindex)
         
         # This finds the pin shape enclosed by the track with DRC spacing on the sides
@@ -894,35 +914,35 @@ class router(router_tech):
         return pin
     
 
-    def compute_wide_enclosure(self, ll, ur, zindex, name=""):
-        """ 
-        Enclose the tracks from ll to ur in a single rectangle that meets the track DRC rules.
-        """
+    # def compute_wide_enclosure(self, ll, ur, zindex, name=""):
+    #     """ 
+    #     Enclose the tracks from ll to ur in a single rectangle that meets the track DRC rules.
+    #     """
 
-        # Find the pin enclosure of the whole track shape (ignoring DRCs)
-        (abs_ll,unused) = self.convert_track_to_shape(ll)
-        (unused,abs_ur) = self.convert_track_to_shape(ur)
+    #     # Find the pin enclosure of the whole track shape (ignoring DRCs)
+    #     (abs_ll,unused) = self.convert_track_to_shape(ll)
+    #     (unused,abs_ur) = self.convert_track_to_shape(ur)
         
-        # Get the layer information
-        x_distance = abs(abs_ll.x-abs_ur.x)
-        y_distance = abs(abs_ll.y-abs_ur.y)
-        shape_width = min(x_distance, y_distance)
-        shape_length = max(x_distance, y_distance)
+    #     # Get the layer information
+    #     x_distance = abs(abs_ll.x-abs_ur.x)
+    #     y_distance = abs(abs_ll.y-abs_ur.y)
+    #     shape_width = min(x_distance, y_distance)
+    #     shape_length = max(x_distance, y_distance)
 
-        # Get the DRC rule for the grid dimensions
-        (width, space) = self.get_layer_width_space(zindex, shape_width, shape_length)
-        layer = self.get_layer(zindex)
+    #     # Get the DRC rule for the grid dimensions
+    #     (width, space) = self.get_supply_layer_width_space(zindex)
+    #     layer = self.get_layer(zindex)
 
-        if zindex==0:
-            spacing = vector(0.5*self.track_width, 0.5*space)
-        else:
-            spacing = vector(0.5*space, 0.5*self.track_width)
-        # Compute the shape offsets with correct spacing
-        new_ll = abs_ll + spacing
-        new_ur = abs_ur - spacing
-        pin = pin_layout(name, [new_ll, new_ur], layer)
+    #     if zindex==0:
+    #         spacing = vector(0.5*self.track_width, 0.5*space)
+    #     else:
+    #         spacing = vector(0.5*space, 0.5*self.track_width)
+    #     # Compute the shape offsets with correct spacing
+    #     new_ll = abs_ll + spacing
+    #     new_ur = abs_ur - spacing
+    #     pin = pin_layout(name, [new_ll, new_ur], layer)
         
-        return pin
+    #     return pin
     
 
     def contract_path(self,path):
@@ -963,8 +983,7 @@ class router(router_tech):
             self.add_route(path)
             
             path_set = grid_utils.flatten_set(path)
-            inflated_path = grid_utils.inflate_set(path_set,self.supply_rail_space_width)
-            self.path_blockages.append(inflated_path)
+            self.path_blockages.append(path_set)
         else:
             self.write_debug_gds("failed_route.gds")
             # clean up so we can try a reroute

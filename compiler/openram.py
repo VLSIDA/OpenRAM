@@ -42,7 +42,6 @@ from sram_config import sram_config
 output_extensions = ["sp","v","lib","py"]
 if OPTS.datasheet_gen:
     output_extensions.append("html")
-    os.system('git rev-parse HEAD > git_id')
 if not OPTS.netlist_only:
     output_extensions.extend(["gds","lef"])
 output_files = ["{0}.{1}".format(OPTS.output_name,x) for x in output_extensions]

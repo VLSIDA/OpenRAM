@@ -506,11 +506,14 @@ class lib:
     def parse_info(self,corner,lib_name):
         """ Copies important characterization data to datasheet.info to be added to datasheet """
         if OPTS.is_unit_test:
-            return
+            git_id = 'AAAAAAAAAAAAAAAAAAAA'
+        else:
+            with open(os.devnull, 'wb') as devnull:
+                proc = subprocess.Popen(['git','rev-parse','HEAD'], stdout=subprocess.PIPE)
+                git_id = str(proc.stdout.read())
+                git_id = git_id[2:-3] 
+
         datasheet = open(OPTS.openram_temp +'/datasheet.info', 'a+')
-        
-        with open(os.environ.get("OPENRAM_HOME") + "/git_id", "r") as f:
-            origin_id = f.readline()
 
         datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},".format(
                         "sram_{0}_{1}_{2}".format(OPTS.word_size, OPTS.num_words, OPTS.tech_name),
@@ -527,7 +530,7 @@ class lib:
                         self.out_dir,
                         lib_name,
                         OPTS.word_size,
-                        origin_id[:-1]
+                        git_id
                         ))
 
         for port in self.all_ports:

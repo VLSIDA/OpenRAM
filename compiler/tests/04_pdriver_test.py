@@ -21,11 +21,19 @@ class pdriver_test(openram_test):
         import pdriver
 
         debug.info(2, "Testing inverter/buffer 4x 8x")
+        # a tests the error message for specifying conflicting conditions
         #a = pdriver.pdriver(c_load = 4,size_list = [1,2,4,8])
-        #a = pdriver.pdriver(size_list = [1,2,4,8])
-        a = pdriver.pdriver(c_load = 4)
-        #a = pdriver.pdriver(c_load = 4, neg_polarity = True)
-        self.local_check(a)
+        b = pdriver.pdriver(size_list = [1,2,4,8])
+        c = pdriver.pdriver(c_load = 4)
+        d = pdriver.pdriver(c_load = 4, neg_polarity = True)
+        e = pdriver.pdriver(c_load = 64)
+        f = pdriver.pdriver(c_load = 64, neg_polarity = False)
+        #self.local_check(a)
+        self.local_check(b)
+        self.local_check(c)
+        self.local_check(d)
+        self.local_check(e)
+        self.local_check(f)
 
         globals.end_openram()
 

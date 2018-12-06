@@ -1,5 +1,5 @@
 import debug
-import design
+import pgate
 import math
 from tech import drc
 from math import log
@@ -7,7 +7,7 @@ from vector import vector
 from globals import OPTS
 from pinv import pinv
 
-class pdriver(design.design):
+class pdriver(pgate.pgate):
     """
     This instantiates an even or odd number of inverters sized for driving a load. 
     """
@@ -15,62 +15,59 @@ class pdriver(design.design):
     inv_list = []
     inv_inst_list = []
 
-    def __init__(self, driver_size=4, height=None, name="", neg_polarity=False, c_load=8, size_list = []):
+    def __init__(self, height=None, name="", neg_polarity=False, c_load=8, size_list = []):
 
         self.stage_effort = 4
-        self.row_height = height
-        # FIXME: Change the number of stages to support high drives.
-        
-        # stage effort of 4 or less
-        self.driver_size = driver_size
+        self.row_height = height 
         self.neg_polarity = neg_polarity
         self.size_list = size_list
         self.c_load = c_load
 
         if len(self.size_list) > 0 and (self.c_load != 8 or self.neg_polarity):
             raise Exception("Cannot specify both size_list and neg_polarity or c_load.")
-
-        # size_list specified
-        if len(self.size_list) > 0:
-            if not len(self.size_list) % 2:
-                neg_polarity = True
-            self.inv_num = len(self.size_list)
-        else:
-            # with pinv = i
-            rho = 3.59
-            N = max(1, int(math.log1p(self.stage_effort)/math.log1p(rho)))
-            if self.neg_polarity:
-                if (N % 2 == 0):            # if N is even
-                    self.inv_num = int(N)+1
-                else:                       # if N is odd
-                    self.inv_num = int(N)
-            else: # positive polarity
-                if (N % 2 == 0):        
-                    self.inv_num = int(N)
-                else:
-                    self.inv_num = int(N)+1
+        
+        self.compute_sizes()
 
         if name=="":
-            name = "pdriver_{0}_{1}_{2}".format(self.driver_size, self.inv_num, 
+            name = "pdriver_{0}_{1}_{2}".format(self.stage_effort, self.num_inv, 
                                                 pdriver.unique_id)
             pdriver.unique_id += 1
 
-        design.design.__init__(self, name) 
+        pgate.pgate.__init__(self, name) 
         debug.info(1, "Creating {}".format(self.name))
 
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
 
-
+    def compute_sizes(self):
+        # size_list specified
+        if len(self.size_list) > 0:
+            if not len(self.size_list) % 2:
+                neg_polarity = True
+            self.num_inv = len(self.size_list)
+        else:
+            # rho with p_inv = 1
+            rho = 3.59
+            num_stages = max(1, int(math.log1p(self.stage_effort)/math.log1p(rho)))
+            if self.neg_polarity:
+                if (num_stages % 2 == 0):   # if num_stages is even
+                    self.num_inv = int(num_stages)+1
+                else:                       # if num_stages is odd
+                    self.num_inv = int(num_stages)
+            else: # positive polarity
+                if (num_stages % 2 == 0):        
+                    self.num_inv = int(num_stages)
+                else:
+                    self.num_inv = int(num_stages)+1
+   
     def create_netlist(self):
         self.add_pins()
         self.add_modules()
         self.create_insts()
 
     def create_layout(self):
-
-        self.width = self.inv_num * self.inv_list[0].width
+        self.width = self.num_inv * self.inv_list[0].width
         self.height = self.inv_list[0].height
         
         self.place_modules()
@@ -91,31 +88,27 @@ class pdriver(design.design):
                 self.inv_list.append(pinv(size=self.size_list[x], height=self.row_height))
                 self.add_mod(self.inv_list[x])
         else: # find inv sizes
-            # shield the cap, but have at least a stage effort of 4
-            input_size = max(1,int(self.driver_size/self.stage_effort))
-            self.inv_list.append(pinv(size=input_size, height=self.row_height))
-            self.add_mod(self.inv_list[0])
-            
-            # work backwards
-            for x in range(self.inv_num-1, 0, -1):
-                c_in = max(input_size, int(round(self.c_load/self.stage_effort ,0)))
+            # work backwards to find the size of each stage
+            for x in range(self.num_inv-1, -1, -1):
+                c_in = max(1, int(round(self.c_load/self.stage_effort,0)))
                 self.c_load = c_in
                 self.inv_list.append(pinv(size=c_in, height=self.row_height))
                 self.add_mod(self.inv_list[x])
 
     def create_insts(self):
-        for x in range(1,self.inv_num+1):
+        for x in range(1,self.num_inv+1):
             # Create first inverter
             if x == 1:
                 zbx_int = "Zb{}_int".format(x);
                 self.inv_inst_list.append(self.add_inst(name="buf_inv{}".format(x),
                                                         mod=self.inv_list[x-1]))
-                if self.inv_num == 1:
+                if self.num_inv == 1:
                     self.connect_inst(["A", "Z", "vdd", "gnd"])
                 else:
                     self.connect_inst(["A", zbx_int, "vdd", "gnd"])
+            
             # Create last inverter
-            elif x == self.inv_num:
+            elif x == self.num_inv:
                 zbn_int = "Zb{}_int".format(x-1);
                 self.inv_inst_list.append(self.add_inst(name="buf_inv{}".format(x),
                                                         mod=self.inv_list[x-1]))
@@ -182,7 +175,7 @@ class pdriver(design.design):
                                         height = a_pin.height())
         
     def analytical_delay(self, slew, load=0.0):
-        """Calculate the analytical delay of DFF -> INV -> ... -> INV"""
+        """Calculate the analytical delay of INV1 -> ... -> INVn"""
         delay = 0;
         if len(self.inv_inst_list) == 1:
             delay = self.inv_inst_list[x].analytical_delay(slew=slew);

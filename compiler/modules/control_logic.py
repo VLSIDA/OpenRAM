@@ -114,8 +114,6 @@ class control_logic(design.design):
             bitcell_loads = int(math.ceil(self.num_rows / 2.0))
             self.replica_bitline = replica_bitline([delay_fanout_heuristic]*delay_stages_heuristic, bitcell_loads, name="replica_bitline_"+self.port_type)
             
-            self.set_sen_wl_delays()
-            
             if self.sram != None and self.enable_delay_chain_resizing and not self.does_sen_total_timing_match(): #check condition based on resizing method
                 #This resizes to match fall and rise delays, can make the delay chain weird sizes.
                 # stage_list = self.get_dynamic_delay_fanout_list(delay_stages_heuristic, delay_fanout_heuristic)

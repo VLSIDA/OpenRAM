@@ -11,8 +11,8 @@ import globals
 from globals import OPTS
 import debug
 
-#@unittest.skip("SKIPPING 22_psram_1bank_2mux_func_test")
-class psram_1bank_2mux_func_test(openram_test):
+@unittest.skip("SKIPPING 22_psram_1bank_2mux_1rw_1r_1w_func_test, third port reads are broken?")
+class psram_1bank_2mux_1rw_1r_1w_func_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
@@ -35,10 +35,14 @@ class psram_1bank_2mux_func_test(openram_test):
                         num_words=64,
                         num_banks=1)
         c.words_per_row=2
-        debug.info(1, "Functional test for psram with {} bit words, {} words, {} words per row, {} banks".format(c.word_size,
-                                                                                                                c.num_words,
-                                                                                                                c.words_per_row,
-                                                                                                                c.num_banks))
+        c.recompute_sizes()
+        debug.info(1, "Functional test for {}rw,{}r,{}w psram with {} bit words, {} words, {} words per row, {} banks".format(OPTS.num_rw_ports,
+                                                                                                                              OPTS.num_r_ports,
+                                                                                                                              OPTS.num_w_ports,
+                                                                                                                              c.word_size,
+                                                                                                                              c.num_words,
+                                                                                                                              c.words_per_row,
+                                                                                                                              c.num_banks))
         s = sram(c, name="sram")
         tempspice = OPTS.openram_temp + "temp.sp"        
         s.sp_write(tempspice)

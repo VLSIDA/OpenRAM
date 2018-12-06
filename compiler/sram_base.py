@@ -2,6 +2,7 @@ import sys
 import datetime
 import getpass
 import debug
+from datetime import datetime
 from importlib import reload
 from vector import vector
 from globals import OPTS, print_time
@@ -63,37 +64,52 @@ class sram_base(design):
 
     def create_netlist(self):
         """ Netlist creation """
-
+        
+        start_time = datetime.now()
+        
         # Must create the control logic before pins to get the pins
         self.add_modules()
         self.add_pins()
+        self.create_modules()
         
         # This is for the lib file if we don't create layout
         self.width=0
         self.height=0
+        
+
+        if not OPTS.is_unit_test:
+            print_time("Submodules",datetime.now(), start_time)
 
         
     def create_layout(self):
         """ Layout creation """    
+        start_time = datetime.now()
         self.place_instances()
+        if not OPTS.is_unit_test:
+            print_time("Placement",datetime.now(), start_time)
 
+        start_time = datetime.now()
         self.route_layout()
+        self.route_supplies()
+        if not OPTS.is_unit_test:
+            print_time("Routing",datetime.now(), start_time)
 
         self.add_lvs_correspondence_points()
         
         self.offset_all_coordinates()
 
-        # Must be done after offsetting lower-left
-        self.route_supplies()
-
         highest_coord = self.find_highest_coords()
         self.width = highest_coord[0]
         self.height = highest_coord[1]
 
-        
+        start_time = datetime.now()
         self.DRC_LVS(final_verification=True)
+        if not OPTS.is_unit_test:
+            print_time("Verification",datetime.now(), start_time)
 
-        
+    def create_modules(self):
+        debug.error("Must override pure virtual function.",-1)
+    
     def route_supplies(self):
         """ Route the supply grid and connect the pins to them. """
 
@@ -140,11 +156,16 @@ class sram_base(design):
         # The order of the control signals on the control bus:
         self.control_bus_names = []
         for port in self.all_ports:
-            self.control_bus_names[port] = ["clk_buf{}".format(port), "clk_buf_bar{}".format(port)]
-            if (self.port_id[port] == "rw") or (self.port_id[port] == "w"):
-                self.control_bus_names[port].append("w_en{}".format(port))
-            if (self.port_id[port] == "rw") or (self.port_id[port] == "r"):
-                self.control_bus_names[port].append("s_en{}".format(port))
+            self.control_bus_names[port] = ["clk_buf{}".format(port)]
+            wen = "w_en{}".format(port)
+            sen = "s_en{}".format(port)
+            pen = "p_en_bar{}".format(port)
+            if self.port_id[port] == "r":
+                self.control_bus_names[port].extend([sen, pen])
+            elif self.port_id[port] == "w":
+                self.control_bus_names[port].extend([wen])
+            else:
+                self.control_bus_names[port].extend([sen, wen, pen])
             self.vert_control_bus_positions = self.create_vertical_bus(layer="metal2",
                                                                        pitch=self.m2_pitch,
                                                                        offset=self.vertical_bus_offset,
@@ -287,11 +308,12 @@ class sram_base(design):
                 temp.append("bank_sel{0}[{1}]".format(port,bank_num))
         for port in self.read_ports:
             temp.append("s_en{0}".format(port))
+        for port in self.read_ports:
+            temp.append("p_en_bar{0}".format(port))
         for port in self.write_ports:
             temp.append("w_en{0}".format(port))
         for port in self.all_ports:
-            temp.append("clk_buf_bar{0}".format(port))
-            temp.append("clk_buf{0}".format(port))
+            temp.append("wl_en{0}".format(port))
         temp.extend(["vdd", "gnd"])
         self.connect_inst(temp)
 
@@ -403,16 +425,21 @@ class sram_base(design):
                 mod = self.control_logic_r
                 
             insts.append(self.add_inst(name="control{}".format(port), mod=mod))
-            
+
+            # Inputs
             temp = ["csb{}".format(port)]
             if port in self.readwrite_ports:
                 temp.append("web{}".format(port))
             temp.append("clk{}".format(port))
+
+            # Ouputs
             if port in self.read_ports:
                 temp.append("s_en{}".format(port))
             if port in self.write_ports:
                 temp.append("w_en{}".format(port))
-            temp.extend(["clk_buf_bar{}".format(port), "clk_buf{}".format(port), "vdd", "gnd"])
+            if port in self.read_ports:
+                temp.append("p_en_bar{}".format(port))
+            temp.extend(["wl_en{}".format(port), "clk_buf{}".format(port), "vdd", "gnd"])
             self.connect_inst(temp)
         
         return insts

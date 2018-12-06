@@ -10,6 +10,7 @@ from globals import OPTS, print_time
 
 from sram_base import sram_base
 from bank import bank
+from contact import m2m3
 from dff_buf_array import dff_buf_array
 from dff_array import dff_array
 
@@ -21,11 +22,6 @@ class sram_1bank(sram_base):
     def __init__(self, name, sram_config):
         sram_base.__init__(self, name, sram_config)
         
-
-    def create_netlist(self):
-        sram_base.create_netlist(self)
-        self.create_modules()
-
     def create_modules(self):
         """ 
         This adds the modules for a single bank SRAM with control
@@ -61,15 +57,18 @@ class sram_1bank(sram_base):
         row_addr_pos = [None]*len(self.all_ports)
         col_addr_pos = [None]*len(self.all_ports)
         data_pos = [None]*len(self.all_ports)
-        
-        # This is M2 pitch even though it is on M1 to help stem via spacings on the trunk
-        data_gap = self.m2_pitch*(self.word_size+1)
 
+        # This is M2 pitch even though it is on M1 to help stem via spacings on the trunk
+        # The M1 pitch is for supply rail spacings
+        max_gap_size = self.m2_pitch*max(self.word_size+1,self.col_addr_size+1) + 2*self.m1_pitch
+        
         # Port 0
         port = 0
-        # This includes 2 M2 pitches for the row addr clock line
+
+        # This includes 2 M2 pitches for the row addr clock line.
+        # It is also placed to align with the column decoder (if it exists hence the bank gap)
         control_pos[port] = vector(-self.control_logic_insts[port].width - 2*self.m2_pitch,
-                                   self.bank.bank_array_ll.y - self.control_logic_insts[port].mod.control_logic_center.y)
+                                   self.bank.bank_array_ll.y - self.control_logic_insts[port].mod.control_logic_center.y - self.bank.m2_gap)
         self.control_logic_insts[port].place(control_pos[port])
         
         # The row address bits are placed above the control logic aligned on the right.
@@ -81,8 +80,8 @@ class sram_1bank(sram_base):
         
         # Add the col address flops below the bank to the left of the lower-left of bank array
         if self.col_addr_dff:
-            col_addr_pos[port] = vector(self.bank.bank_array_ll.x - self.col_addr_dff_insts[port].width - self.bank.central_bus_width,
-                                        -data_gap - self.col_addr_dff_insts[port].height)
+            col_addr_pos[port] = vector(self.bank.bank_array_ll.x - self.col_addr_dff_insts[port].width - self.bank.m2_gap,
+                                        -max_gap_size - self.col_addr_dff_insts[port].height)
             self.col_addr_dff_insts[port].place(col_addr_pos[port])
 
         # Add the data flops below the bank to the right of the lower-left of bank array
@@ -92,16 +91,18 @@ class sram_1bank(sram_base):
         # sense amps.
         if port in self.write_ports:
             data_pos[port] = vector(self.bank.bank_array_ll.x,
-                                    -data_gap - self.data_dff_insts[port].height)
+                                    -max_gap_size - self.data_dff_insts[port].height)
             self.data_dff_insts[port].place(data_pos[port])
 
 
         if len(self.all_ports)>1:
             # Port 1
             port = 1
+
             # This includes 2 M2 pitches for the row addr clock line            
+            # It is also placed to align with the column decoder (if it exists hence the bank gap)
             control_pos[port] = vector(self.bank_inst.rx() + self.control_logic_insts[port].width + 2*self.m2_pitch,
-                                       self.bank.bank_array_ll.y - self.control_logic_insts[port].mod.control_logic_center.y)
+                                       self.bank.bank_array_ll.y - self.control_logic_insts[port].mod.control_logic_center.y + self.bank.m2_gap)
             self.control_logic_insts[port].place(control_pos[port], mirror="MY")
         
             # The row address bits are placed above the control logic aligned on the left.
@@ -113,8 +114,8 @@ class sram_1bank(sram_base):
         
             # Add the col address flops above the bank to the right of the upper-right of bank array
             if self.col_addr_dff:
-                col_addr_pos[port] = vector(self.bank.bank_array_ur.x + self.bank.central_bus_width,
-                                            self.bank_inst.uy() + data_gap + self.col_addr_dff_insts[port].height)
+                col_addr_pos[port] = vector(self.bank.bank_array_ur.x + self.bank.m2_gap,
+                                            self.bank.height + max_gap_size + self.col_addr_dff_insts[port].height)
                 self.col_addr_dff_insts[port].place(col_addr_pos[port], mirror="MX")
             
             # Add the data flops above the bank to the left of the upper-right of bank array
@@ -124,7 +125,7 @@ class sram_1bank(sram_base):
             # sense amps.
             if port in self.write_ports:
                 data_pos[port] = vector(self.bank.bank_array_ur.x - self.data_dff_insts[port].width,
-                                        self.bank.uy() + data_gap + self.data_dff_insts[port].height)
+                                        self.bank.height + max_gap_size + self.data_dff_insts[port].height)
                 self.data_dff_insts[port].place(data_pos[port], mirror="MX")
         
             
@@ -178,27 +179,11 @@ class sram_1bank(sram_base):
             # Connect all of these clock pins to the clock in the central bus
             # This is something like a "spine" clock distribution. The two spines
             # are clk_buf and clk_buf_bar
+            control_clk_buf_pin = self.control_logic_insts[port].get_pin("clk_buf")
+            control_clk_buf_pos = control_clk_buf_pin.center()
             
-            bank_clk_buf_pin = self.bank_inst.get_pin("clk_buf{}".format(port))
-            bank_clk_buf_pos = bank_clk_buf_pin.center()
-            bank_clk_buf_bar_pin = self.bank_inst.get_pin("clk_buf_bar{}".format(port))
-            bank_clk_buf_bar_pos = bank_clk_buf_bar_pin.center()
-
-            if self.col_addr_dff:
-                dff_clk_pin = self.col_addr_dff_insts[port].get_pin("clk")
-                dff_clk_pos = dff_clk_pin.center()
-                mid_pos = vector(bank_clk_buf_pos.x, dff_clk_pos.y)
-                self.add_wire(("metal3","via2","metal2"),[dff_clk_pos, mid_pos, bank_clk_buf_pos])
-
-            if port in self.write_ports:
-                data_dff_clk_pin = self.data_dff_insts[port].get_pin("clk")
-                data_dff_clk_pos = data_dff_clk_pin.center()
-                mid_pos = vector(bank_clk_buf_pos.x, data_dff_clk_pos.y)
-                self.add_wire(("metal3","via2","metal2"),[data_dff_clk_pos, mid_pos, bank_clk_buf_pos])
-
             # This uses a metal2 track to the right (for port0) of the control/row addr DFF
             # to route vertically. For port1, it is to the left.
-            control_clk_buf_pin = self.control_logic_insts[port].get_pin("clk_buf")
             row_addr_clk_pin = self.row_addr_dff_insts[port].get_pin("clk")
             if port%2:
                 control_clk_buf_pos = control_clk_buf_pin.lc()
@@ -210,17 +195,40 @@ class sram_1bank(sram_base):
                 row_addr_clk_pos = row_addr_clk_pin.rc()
                 mid1_pos = vector(self.row_addr_dff_insts[port].rx() + self.m2_pitch,
                                   row_addr_clk_pos.y)
-            mid2_pos = vector(mid1_pos.x,
-                              control_clk_buf_pos.y)
-            # Note, the via to the control logic is taken care of when we route
-            # the control logic to the bank
-            self.add_wire(("metal3","via2","metal2"),[row_addr_clk_pos, mid1_pos, mid2_pos, control_clk_buf_pos])
+
+            # This is the steiner point where the net branches out
+            clk_steiner_pos = vector(mid1_pos.x, control_clk_buf_pos.y)
+            self.add_path("metal1", [control_clk_buf_pos, clk_steiner_pos])
+            self.add_via_center(layers=("metal1","via1","metal2"),
+                                offset=clk_steiner_pos,
+                                rotate=90)
+            
+            # Note, the via to the control logic is taken care of above
+            self.add_wire(("metal3","via2","metal2"),[row_addr_clk_pos, mid1_pos, clk_steiner_pos])
         
+            if self.col_addr_dff:
+                dff_clk_pin = self.col_addr_dff_insts[port].get_pin("clk")
+                dff_clk_pos = dff_clk_pin.center()
+                mid_pos = vector(clk_steiner_pos.x, dff_clk_pos.y)
+                self.add_wire(("metal3","via2","metal2"),[dff_clk_pos, mid_pos, clk_steiner_pos])
+
+            if port in self.write_ports:
+                data_dff_clk_pin = self.data_dff_insts[port].get_pin("clk")
+                data_dff_clk_pos = data_dff_clk_pin.center()
+                mid_pos = vector(clk_steiner_pos.x, data_dff_clk_pos.y)
+                # In some designs, the steiner via will be too close to the mid_pos via
+                # so make the wire as wide as the contacts
+                self.add_path("metal2",[mid_pos, clk_steiner_pos], width=max(m2m3.width,m2m3.height))
+                self.add_wire(("metal3","via2","metal2"),[data_dff_clk_pos, mid_pos, clk_steiner_pos])
+
             
     def route_control_logic(self):
         """ Route the outputs from the control logic module """
         for port in self.all_ports:
             for signal in self.control_logic_outputs[port]:
+                # The clock gets routed separately and is not a part of the bank
+                if "clk" in signal:
+                    continue
                 src_pin = self.control_logic_insts[port].get_pin(signal)
                 dest_pin = self.bank_inst.get_pin(signal+"{}".format(port))                
                 self.connect_rail_from_left_m2m3(src_pin, dest_pin)
@@ -268,17 +276,20 @@ class sram_1bank(sram_base):
         """ Connect the output of the data flops to the write driver """
         # This is where the channel will start (y-dimension at least)
         for port in self.write_ports:
-            offset = self.data_dff_insts[port].ul() + vector(0, 2*self.m1_pitch)
+            if port%2:
+                offset = self.data_dff_insts[port].ll() - vector(0, (self.word_size+2)*self.m1_pitch) 
+            else:
+                offset = self.data_dff_insts[port].ul() + vector(0, 2*self.m1_pitch)                                
+
 
             dff_names = ["dout_{}".format(x) for x in range(self.word_size)]
+            dff_pins = [self.data_dff_insts[port].get_pin(x) for x in dff_names]
+            
             bank_names = ["din{0}_{1}".format(port,x) for x in range(self.word_size)]
-
-            route_map = list(zip(bank_names, dff_names))
-            dff_pins = {key: self.data_dff_insts[port].get_pin(key) for key in dff_names }
-            bank_pins = {key: self.bank_inst.get_pin(key) for key in bank_names }
-            # Combine the dff and bank pins into a single dictionary of pin name to pin.
-            all_pins = {**dff_pins, **bank_pins}
-            self.create_horizontal_channel_route(route_map, all_pins, offset)
+            bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
+            
+            route_map = list(zip(bank_pins, dff_pins))
+            self.create_horizontal_channel_route(route_map, offset)
                 
             
 

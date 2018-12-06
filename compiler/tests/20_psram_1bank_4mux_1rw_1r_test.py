@@ -11,8 +11,7 @@ import globals
 from globals import OPTS
 import debug
 
-#@unittest.skip("SKIPPING 20_psram_1bank_2mux_test, wide metal supply routing error")
-class psram_1bank_2mux_test(openram_test):
+class psram_1bank_4mux_1rw_1r_test(openram_test):
 
     def runTest(self):        
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
@@ -21,16 +20,15 @@ class psram_1bank_2mux_test(openram_test):
         OPTS.bitcell = "pbitcell"
         OPTS.replica_bitcell="replica_pbitcell"
         
-        # testing layout of sram using pbitcell with 1 RW port (a 6T-cell equivalent)
         OPTS.num_rw_ports = 1
         OPTS.num_w_ports = 0
-        OPTS.num_r_ports = 0
+        OPTS.num_r_ports = 1
         
         c = sram_config(word_size=4,
-                        num_words=32,
+                        num_words=64,
                         num_banks=1)
-        c.num_words=32
-        c.words_per_row=2
+        c.num_words=64
+        c.words_per_row=4
         c.recompute_sizes()
         debug.info(1, "Layout test for {}rw,{}r,{}w psram with {} bit words, {} words, {} words per row, {} banks".format(OPTS.num_rw_ports,
                                                                                                                           OPTS.num_r_ports,

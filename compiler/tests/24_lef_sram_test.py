@@ -23,6 +23,7 @@ class lef_test(openram_test):
                         num_words=16,
                         num_banks=1)
         c.words_per_row=1
+        c.recompute_sizes()
         debug.info(1, "Testing LEF for sample 2 bit, 16 words SRAM with 1 bank")
         s = sram(c, "sram_2_16_1_{0}".format(OPTS.tech_name))
 

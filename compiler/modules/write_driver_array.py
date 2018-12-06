@@ -68,7 +68,7 @@ class write_driver_array(design.design):
     def create_write_array(self):
         self.driver_insts = {}
         for i in range(0,self.columns,self.words_per_row):
-            name = "Xwrite_driver{}".format(i)
+            name = "write_driver{}".format(i)
             index = int(i/self.words_per_row)
             self.driver_insts[index]=self.add_inst(name=name,
                                                    mod=self.driver)

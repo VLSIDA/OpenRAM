@@ -441,10 +441,10 @@ class pin_layout:
         """
         Given three co-linear points, determine if q lies on segment pr
         """
-        if q[0] <= max(p[0], r[0]) and \
-           q[0] >= min(p[0], r[0]) and \
-           q[1] <= max(p[1], r[1]) and \
-           q[1] >= min(p[1], r[1]):
+        if q.x <= max(p.x, r.x) and \
+           q.x >= min(p.x, r.x) and \
+           q.y <= max(p.y, r.y) and \
+           q.y >= min(p.y, r.y):
             return True 
         
         return False
@@ -473,8 +473,8 @@ class pin_layout:
             x = (b2*c1 - b1*c2)/determinant
             y = (a1*c2 - a2*c1)/determinant
             
-            r = [x,y]
+            r = vector(x,y).snap_to_grid()
             if self.on_segment(a, r, b) and self.on_segment(c, r, d):
-                return [x, y]
+                return r
            
         return None

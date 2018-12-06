@@ -59,7 +59,7 @@ def parse_args():
     # This may be overridden when we read a config file though...
     if OPTS.tech_name == "":
         OPTS.tech_name = "scmos"
-    # Alias SCMOS to AMI 0.5um
+    # Alias SCMOS to 180nm
     if OPTS.tech_name == "scmos":
         OPTS.tech_name = "scn4m_subm"
 
@@ -89,6 +89,7 @@ def print_banner():
     print("|=========" + dev_info.center(60) + "=========|")
     temp_info = "Temp dir: {}".format(OPTS.openram_temp)
     print("|=========" + temp_info.center(60) + "=========|")
+    print("|=========" + "See LICENSE for license info".center(60) + "=========|")
     print("|==============================================================================|")
 
 
@@ -412,6 +413,9 @@ def report_status():
     print("Word size: {0}\nWords: {1}\nBanks: {2}".format(OPTS.word_size,
                                                           OPTS.num_words,
                                                           OPTS.num_banks))
+    print("RW ports: {0}\nR-only ports: {1}\nW-only ports: {2}".format(OPTS.num_rw_ports,
+                                                                       OPTS.num_r_ports,
+                                                                       OPTS.num_w_ports))
     if OPTS.netlist_only:
         print("Netlist only mode (no physical design is being done).")
     

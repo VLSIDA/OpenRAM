@@ -1,12 +1,12 @@
 import debug
-import design
 from tech import drc
 from math import log
 from vector import vector
 from globals import OPTS
 from pinv import pinv
+import pgate
 
-class pbuf(design.design):
+class pbuf(pgate.pgate):
     """
     This is a simple buffer used for driving loads. 
     """
@@ -16,39 +16,32 @@ class pbuf(design.design):
 
     unique_id = 1
 
-    def __init__(self, driver_size=4, height=bitcell.height, name=""):
+    def __init__(self, size=4, height=None, name=""):
 
-        stage_effort = 4
-        # FIXME: Change the number of stages to support high drives.
+        self.stage_effort = 4
+        self.size = size
+        self.height = height
 
         if name=="":
-            name = "pbuf_{0}_{1}".format(driver_size, pbuf.unique_id)
+            name = "pbuf_{0}_{1}".format(self.size, pbuf.unique_id)
             pbuf.unique_id += 1
 
-        design.design.__init__(self, name)
-        debug.info(1, "Creating {}".format(self.name))
+        pgate.pgate.__init__(self, name, height)
+        debug.info(1, "creating {0} with size of {1}".format(self.name,self.size))
 
-        
-        # Shield the cap, but have at least a stage effort of 4
-        input_size = max(1,int(driver_size/stage_effort))
-        self.inv1 = pinv(size=input_size, height=height) # 1 
-        self.add_mod(self.inv1)
-        
-        self.inv2 = pinv(size=driver_size, height=height) # 2
-        self.add_mod(self.inv2)
+        self.create_netlist()
+        if not OPTS.netlist_only:
+            self.create_layout()
 
-        self.width = self.inv1.width + self.inv2.width
-        self.height = self.inv1.height
 
-        self.create_layout()
-
-        #self.offset_all_coordinates()
-        
-        self.DRC_LVS()
+    def create_netlist(self):
+        self.add_pins()
+        self.create_modules()
+        self.create_insts()
 
     def create_layout(self):
-        self.add_pins()
-        self.add_insts()
+        self.width = self.inv1.width + self.inv2.width
+        self.place_insts()
         self.add_wires()
         self.add_layout_pins()
         
@@ -58,19 +51,31 @@ class pbuf(design.design):
         self.add_pin("vdd")
         self.add_pin("gnd")
 
-    def add_insts(self):
-        # Add INV1 to the right 
+    def create_modules(self):
+        # Shield the cap, but have at least a stage effort of 4
+        input_size = max(1,int(self.size/self.stage_effort))
+        self.inv1 = pinv(size=input_size, height=self.height) 
+        self.add_mod(self.inv1)
+        
+        self.inv2 = pinv(size=self.size, height=self.height)
+        self.add_mod(self.inv2)
+
+    def create_insts(self):
         self.inv1_inst=self.add_inst(name="buf_inv1",
-                                     mod=self.inv1,
-                                     offset=vector(0,0))
+                                     mod=self.inv1)
         self.connect_inst(["A", "zb_int",  "vdd", "gnd"])
         
 
-        # Add INV2 to the right
         self.inv2_inst=self.add_inst(name="buf_inv2",
-                                     mod=self.inv2,
-                                     offset=vector(self.inv1_inst.rx(),0))
+                                     mod=self.inv2)
         self.connect_inst(["zb_int", "Z",  "vdd", "gnd"])
+
+    def place_insts(self):
+        # Add INV1 to the right 
+        self.inv1_inst.place(vector(0,0))
+
+        # Add INV2 to the right
+        self.inv2_inst.place(vector(self.inv1_inst.rx(),0))
         
         
     def add_wires(self):
@@ -100,17 +105,17 @@ class pbuf(design.design):
             
         z_pin = self.inv2_inst.get_pin("Z")
         self.add_layout_pin_rect_center(text="Z",
-                                        layer="metal2",
-                                        offset=z_pin.center())
-        self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=z_pin.center())
+                                        layer=z_pin.layer,
+                                        offset=z_pin.center(),
+                                        width=z_pin.width(),
+                                        height=z_pin.height())
 
         a_pin = self.inv1_inst.get_pin("A")
         self.add_layout_pin_rect_center(text="A",
-                                        layer="metal2",
-                                        offset=a_pin.center())
-        self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=a_pin.center())
+                                        layer=a_pin.layer,
+                                        offset=a_pin.center(),
+                                        width=a_pin.width(),
+                                        height=a_pin.height())
         
         
 

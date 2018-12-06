@@ -17,15 +17,11 @@ class hierarchical_decoder(design.design):
     """
     Dynamically generated hierarchical decoder.
     """
-
-    def __init__(self, rows):
-        design.design.__init__(self, "hierarchical_decoder_{0}rows".format(rows))
-
-        from importlib import reload
-        c = reload(__import__(OPTS.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.bitcell)
-        b = self.mod_bitcell()
-        self.bitcell_height = b.height
+    unique_id = 1
+    
+    def __init__(self, rows, height=None):
+        design.design.__init__(self, "hierarchical_decoder_{0}rows_{1}".format(rows,hierarchical_decoder.unique_id))
+        hierarchical_decoder.unique_id += 1
 
         self.NAND_FORMAT = "DEC_NAND_{0}"
         self.INV_FORMAT = "DEC_INV_{0}"
@@ -33,6 +29,7 @@ class hierarchical_decoder(design.design):
         self.pre2x4_inst = []
         self.pre3x8_inst = []
 
+        self.cell_height = height        
         self.rows = rows
         self.num_inputs = int(math.log(self.rows, 2))
         (self.no_of_pre2x4,self.no_of_pre3x8)=self.determine_predecodes(self.num_inputs)
@@ -60,21 +57,21 @@ class hierarchical_decoder(design.design):
         self.DRC_LVS()
                 
     def add_modules(self):
-        self.inv = pinv()
+        self.inv = pinv(height=self.cell_height)
         self.add_mod(self.inv)
-        self.nand2 = pnand2()
+        self.nand2 = pnand2(height=self.cell_height)
         self.add_mod(self.nand2)
-        self.nand3 = pnand3()
+        self.nand3 = pnand3(height=self.cell_height)
         self.add_mod(self.nand3)
         
         self.add_decoders()
 
     def add_decoders(self):
         """ Create the decoders based on the number of pre-decodes """
-        self.pre2_4 = pre2x4()
+        self.pre2_4 = pre2x4(height=self.cell_height)
         self.add_mod(self.pre2_4)
         
-        self.pre3_8 = pre3x8()
+        self.pre3_8 = pre3x8(height=self.cell_height)
         self.add_mod(self.pre3_8)
 
     def determine_predecodes(self,num_inputs):
@@ -336,7 +333,7 @@ class hierarchical_decoder(design.design):
         if (self.num_inputs == 4 or self.num_inputs == 5):
             for i in range(len(self.predec_groups[0])):
                 for j in range(len(self.predec_groups[1])):
-                    row = len(self.predec_groups[1])*i + j
+                    row = len(self.predec_groups[0])*j + i
                     name = self.NAND_FORMAT.format(row)
                     self.nand_inst.append(self.add_inst(name=name,
                                                         mod=self.nand2))
@@ -352,8 +349,8 @@ class hierarchical_decoder(design.design):
             for i in range(len(self.predec_groups[0])):
                 for j in range(len(self.predec_groups[1])):
                     for k in range(len(self.predec_groups[2])):
-                        row = len(self.predec_groups[1])*len(self.predec_groups[2]) * i \
-                            + len(self.predec_groups[2])*j + k
+                        row = (len(self.predec_groups[0])*len(self.predec_groups[1])) * k \
+                            + len(self.predec_groups[0])*j + i
 
                         name = self.NAND_FORMAT.format(row)
                         self.nand_inst.append(self.add_inst(name=name,
@@ -523,8 +520,8 @@ class hierarchical_decoder(design.design):
         """
         row_index = 0
         if (self.num_inputs == 4 or self.num_inputs == 5):
-            for index_A in self.predec_groups[0]:
-                for index_B in self.predec_groups[1]:
+            for index_B in self.predec_groups[1]:
+                for index_A in self.predec_groups[0]:
                     # FIXME: convert to connect_bus?
                     predecode_name = "predecode_{}".format(index_A)
                     self.route_predecode_rail(predecode_name, self.nand_inst[row_index].get_pin("A"))
@@ -533,9 +530,9 @@ class hierarchical_decoder(design.design):
                     row_index = row_index + 1
 
         elif (self.num_inputs > 5):
-            for index_A in self.predec_groups[0]:
+            for index_C in self.predec_groups[2]:
                 for index_B in self.predec_groups[1]:
-                    for index_C in self.predec_groups[2]:
+                    for index_A in self.predec_groups[0]:
                         # FIXME: convert to connect_bus?
                         predecode_name = "predecode_{}".format(index_A) 
                         self.route_predecode_rail(predecode_name, self.nand_inst[row_index].get_pin("A"))

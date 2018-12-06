@@ -172,7 +172,6 @@ class pin_group:
             ymax = max(plc.y,elc.y)
             ll = vector(plc.x, ymin)
             ur = vector(prc.x, ymax)
-            p = pin_layout(pin.name, [ll, ur], pin.layer) 
         elif pin.yoverlaps(enclosure):
             # Is it horizontal overlap, extend pin shape to enclosure
             pbc = pin.bc()
@@ -183,7 +182,6 @@ class pin_group:
             xmax = max(pbc.x,ebc.x)
             ll = vector(xmin, pbc.y)
             ur = vector(xmax, puc.y)
-            p = pin_layout(pin.name, [ll, ur], pin.layer)
         else:
             # Neither, so we must do a corner-to corner
             pc = pin.center()
@@ -194,8 +192,10 @@ class pin_group:
             ymax = max(pc.y, ec.y)
             ll = vector(xmin, ymin)
             ur = vector(xmax, ymax)
-            p = pin_layout(pin.name, [ll, ur], pin.layer)
 
+        if ll.x==ur.x or ll.y==ur.y:
+            return None
+        p = pin_layout(pin.name, [ll, ur], pin.layer)
         return p
 
     def find_above_connector(self, pin, enclosures):
@@ -226,7 +226,7 @@ class pin_group:
         # If it already overlaps, no connector needed
         if above_item.overlaps(pin):
             return None
-        
+
         # Otherwise, make a connector to the item
         p = self.compute_connector(pin, above_item)
         return p
@@ -485,7 +485,9 @@ class pin_group:
         for pin_list in self.pins:
             if not self.overlap_any_shape(pin_list, self.enclosures):
                 connector = self.find_smallest_connector(pin_list, self.enclosures)
-                debug.check(connector!=None, "Could not find a connector for {} with {}".format(pin_list, self.enclosures))
+                if connector==None:
+                    debug.error("Could not find a connector for {} with {}".format(pin_list, self.enclosures))
+                    self.router.write_debug_gds("no_connector.gds")
                 self.enclosures.append(connector)
 
                         
@@ -559,15 +561,13 @@ class pin_group:
         of any grid in the other set.
         """
         # We could optimize this to just check the boundaries
-        g1_grids = set()
-        g2_grids = set()
+        adj_grids = set()
         for g1 in self.grids:
             for g2 in other.grids:
                 if g1.distance(g2) <= separation:
-                    g1_grids.add(g1)
-                    g2_grids.add(g2)
+                    adj_grids.add(g1)
 
-        return g1_grids,g2_grids
+        return adj_grids
     
     def convert_pin(self):
         """
@@ -576,14 +576,16 @@ class pin_group:
         should be either blocked or part of the pin.
         """
         pin_set = set()
+        partial_set = set()
         blockage_set = set()
 
         for pin_list in self.pins:
             for pin in pin_list:
                 debug.info(2,"  Converting {0}".format(pin))
                 # Determine which tracks the pin overlaps 
-                pin_in_tracks=self.router.convert_pin_to_tracks(self.name, pin)
-                pin_set.update(pin_in_tracks)
+                (sufficient,insufficient)=self.router.convert_pin_to_tracks(self.name, pin)
+                pin_set.update(sufficient)
+                partial_set.update(insufficient)
                 
                 # Blockages will be a super-set of pins since it uses the inflated pin shape.
                 blockage_in_tracks = self.router.convert_blockage(pin) 
@@ -595,89 +597,94 @@ class pin_group:
         if len(shared_set)>0:
             debug.info(2,"Removing pins {}".format(shared_set))
         pin_set.difference_update(shared_set)
+        shared_set = partial_set & self.router.blocked_grids
+        if len(shared_set)>0:
+            debug.info(2,"Removing pins {}".format(shared_set))
+        partial_set.difference_update(shared_set)
         shared_set = blockage_set & self.router.blocked_grids
         if len(shared_set)>0:
             debug.info(2,"Removing blocks {}".format(shared_set))
         blockage_set.difference_update(shared_set)
         
         # At least one of the groups must have some valid tracks
-        if (len(pin_set)==0 and len(blockage_set)==0):
+        if (len(pin_set)==0 and len(partial_set)==0 and len(blockage_set)==0):
             #debug.warning("Pin is very close to metal blockage.\nAttempting to expand blocked pin {}".format(self.pins))
             
             for pin_list in self.pins:
                 for pin in pin_list:
-                    debug.info(2,"  Converting {0}".format(pin))
+                    debug.warning("  Expanding conversion {0}".format(pin))
                     # Determine which tracks the pin overlaps 
-                    pin_in_tracks=self.router.convert_pin_to_tracks(self.name, pin, expansion=1)
-                    pin_set.update(pin_in_tracks)
+                    (sufficient,insufficient)=self.router.convert_pin_to_tracks(self.name, pin, expansion=1)
+                    pin_set.update(sufficient)
+                    partial_set.update(insufficient)
                     
-            if len(pin_set)==0:
+            if len(pin_set)==0 and len(partial_set)==0:
                 debug.error("Unable to find unblocked pin {} {}".format(self.name, self.pins))
                 self.router.write_debug_gds("blocked_pin.gds")
 
-        # We need to route each of the components, so don't combine the groups
-        self.grids = pin_set | blockage_set
-        # Remember the secondary grids for removing adjacent pins in wide metal spacing
-        self.secondary_grids = blockage_set - pin_set
+        # Consider all the grids that would be blocked
+        self.grids = pin_set  | partial_set
+        # Remember the secondary grids for removing adjacent pins 
+        self.secondary_grids = partial_set 
 
         debug.info(2,"     pins   {}".format(self.grids))
         debug.info(2,"     secondary {}".format(self.secondary_grids))
         
-    def recurse_simple_overlap_enclosure(self, start_set, direct):
-        """
-        Recursive function to return set of tracks that connects to
-        the actual supply rail wire in a given direction (or terminating
-        when any track is no longer in the supply rail.
-        """
-        next_set = grid_utils.expand_border(start_set, direct)
+    # def recurse_simple_overlap_enclosure(self, start_set, direct):
+    #     """
+    #     Recursive function to return set of tracks that connects to
+    #     the actual supply rail wire in a given direction (or terminating
+    #     when any track is no longer in the supply rail.
+    #     """
+    #     next_set = grid_utils.expand_border(start_set, direct)
 
-        supply_tracks = self.router.supply_rail_tracks[self.name]
-        supply_wire_tracks = self.router.supply_rail_wire_tracks[self.name]
+    #     supply_tracks = self.router.supply_rail_tracks[self.name]
+    #     supply_wire_tracks = self.router.supply_rail_wire_tracks[self.name]
         
-        supply_overlap = next_set & supply_tracks
-        wire_overlap = next_set & supply_wire_tracks
+    #     supply_overlap = next_set & supply_tracks
+    #     wire_overlap = next_set & supply_wire_tracks
 
-        # If the rail overlap is the same, we are done, since we connected to the actual wire
-        if len(wire_overlap)==len(start_set):
-            new_set = start_set | wire_overlap
-        # If the supply overlap is the same, keep expanding unti we hit the wire or move out of the rail region
-        elif len(supply_overlap)==len(start_set):
-            recurse_set = self.recurse_simple_overlap_enclosure(supply_overlap, direct)
-            new_set = start_set | supply_overlap | recurse_set
-        else:
-            # If we got no next set, we are done, can't expand!
-            new_set = set()
+    #     # If the rail overlap is the same, we are done, since we connected to the actual wire
+    #     if len(wire_overlap)==len(start_set):
+    #         new_set = start_set | wire_overlap
+    #     # If the supply overlap is the same, keep expanding unti we hit the wire or move out of the rail region
+    #     elif len(supply_overlap)==len(start_set):
+    #         recurse_set = self.recurse_simple_overlap_enclosure(supply_overlap, direct)
+    #         new_set = start_set | supply_overlap | recurse_set
+    #     else:
+    #         # If we got no next set, we are done, can't expand!
+    #         new_set = set()
             
-        return new_set
+    #     return new_set
             
-    def create_simple_overlap_enclosure(self, start_set):
-        """
-        This takes a set of tracks that overlap a supply rail and creates an enclosure
-        that is ensured to overlap the supply rail wire.
-        It then adds rectangle(s) for the enclosure.
-        """
-        additional_set = set()
-        # Check the layer of any element in the pin to determine which direction to route it
-        e = next(iter(start_set))
-        new_set = start_set.copy()
-        if e.z==0:
-            new_set = self.recurse_simple_overlap_enclosure(start_set, direction.NORTH)
-            if not new_set:
-                new_set = self.recurse_simple_overlap_enclosure(start_set, direction.SOUTH)
-        else:
-            new_set = self.recurse_simple_overlap_enclosure(start_set, direction.EAST)
-            if not new_set:
-                new_set = self.recurse_simple_overlap_enclosure(start_set, direction.WEST)
+    # def create_simple_overlap_enclosure(self, start_set):
+    #     """
+    #     This takes a set of tracks that overlap a supply rail and creates an enclosure
+    #     that is ensured to overlap the supply rail wire.
+    #     It then adds rectangle(s) for the enclosure.
+    #     """
+    #     additional_set = set()
+    #     # Check the layer of any element in the pin to determine which direction to route it
+    #     e = next(iter(start_set))
+    #     new_set = start_set.copy()
+    #     if e.z==0:
+    #         new_set = self.recurse_simple_overlap_enclosure(start_set, direction.NORTH)
+    #         if not new_set:
+    #             new_set = self.recurse_simple_overlap_enclosure(start_set, direction.SOUTH)
+    #     else:
+    #         new_set = self.recurse_simple_overlap_enclosure(start_set, direction.EAST)
+    #         if not new_set:
+    #             new_set = self.recurse_simple_overlap_enclosure(start_set, direction.WEST)
 
-        # Expand the pin grid set to include some extra grids that connect the supply rail
-        self.grids.update(new_set)
+    #     # Expand the pin grid set to include some extra grids that connect the supply rail
+    #     self.grids.update(new_set)
 
-        # Add the inflated set so we don't get wide metal spacing issues (if it exists)
-        self.blockages.update(grid_utils.inflate_set(new_set,self.router.supply_rail_space_width))
+    #     # Block the grids
+    #     self.blockages.update(new_set)
 
-        # Add the polygon enclosures and set this pin group as routed
-        self.set_routed()
-        self.enclosures = self.compute_enclosures()
+    #     # Add the polygon enclosures and set this pin group as routed
+    #     self.set_routed()
+    #     self.enclosures = self.compute_enclosures()
 
 
         

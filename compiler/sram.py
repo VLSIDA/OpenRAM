@@ -14,7 +14,6 @@ class sram():
     """
     def __init__(self, sram_config, name):
 
-        sram_config.compute_sizes()
         sram_config.set_local_config(self)
         
         # reset the static duplicate name checker for unit tests
@@ -34,8 +33,6 @@ class sram():
             from sram_1bank import sram_1bank as sram
         elif self.num_banks == 2:
             from sram_2bank import sram_2bank as sram
-        elif self.num_banks == 4:
-            from sram_4bank import sram_4bank as sram
         else:
             debug.error("Invalid number of banks.",-1)
 

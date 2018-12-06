@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Run a regression test on a 1 bank, 2 port SRAM
+Run a regression test on a 1 bank SRAM
 """
 
 import unittest
@@ -11,24 +11,24 @@ import globals
 from globals import OPTS
 import debug
 
-class sram_1bank_nomux_1rw_1r_test(openram_test):
+class sram_1bank_8mux_1rw_1r_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         from sram import sram
         from sram_config import sram_config
-        
+
         OPTS.bitcell = "bitcell_1rw_1r"
         OPTS.replica_bitcell = "replica_bitcell_1rw_1r"
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
-        
-        c = sram_config(word_size=4,
-                        num_words=16,
+
+        c = sram_config(word_size=2,
+                        num_words=128,
                         num_banks=1)
 
-        c.words_per_row=1
+        c.words_per_row=8
         c.recompute_sizes()
         debug.info(1, "Layout test for {}rw,{}r,{}w sram with {} bit words, {} words, {} words per row, {} banks".format(OPTS.num_rw_ports,
                                                                                                                          OPTS.num_r_ports,

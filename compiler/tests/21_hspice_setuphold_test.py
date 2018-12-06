@@ -33,7 +33,7 @@ class timing_setup_test(openram_test):
         data = sh.analyze(slews,slews)
         #print data
         if OPTS.tech_name == "freepdk45":
-            golden_data = {'hold_times_HL': [-0.0097656],
+            golden_data = {'hold_times_HL': [-0.0158691],
                            'hold_times_LH': [-0.0158691],
                            'setup_times_HL': [0.026855499999999997],
                            'setup_times_LH': [0.032959]}

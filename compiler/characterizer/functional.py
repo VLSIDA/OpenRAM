@@ -27,7 +27,7 @@ class functional(simulation):
 
         self.set_corner(corner)
         self.set_spice_constants()
-        self.set_feasible_period(sram, spfile, corner)
+        #self.set_feasible_period(sram, spfile, corner)
         self.set_stimulus_variables()
         self.create_signal_names()
 
@@ -38,27 +38,9 @@ class functional(simulation):
         self.write_check = []
         self.read_check = []
     
-    def set_feasible_period(self, sram, spfile, corner):
-        """Creates a delay simulation to determine a feasible period for the functional tests to run.
-           Only determines the feasible period for a single port and assumes that for all ports for performance.
-        """
-        OPTS.trim_netlist = False #This has to be false or the write port will flip a bit in the trimmed netlist.
-        debug.info(1, "Determining feasible period using untrimmed netlist for functional test.")
-        delay_sim = delay(sram, spfile, corner)
-        delay_sim.set_load_slew(self.load,self.slew)
-        delay_sim.set_probe(probe_address="1"*self.addr_size, probe_data=(self.sram.word_size-1))
-        delay_sim.find_feasible_period_one_port(self.read_ports[0]) #Finds feasible and sets internal period
-        self.period = delay_sim.period #copy internal period of delay object here
-    
-    # def set_spice_constants(self):
-        # """Spice constants for functional test"""
-        # simulation.set_spice_constants(self)
-        # #Heuristic increase for functional period. Base feasible period typically does not pass the functional test
-        # #for column mux or srams of this size. Increase the feasible period by 20% for this case.
-        # if self.sram.words_per_row >= 4 or self.sram.num_cols*self.sram.num_rows >= 1024:
-            # self.period = self.period*1.2
-    
-    def run(self):
+    def run(self, feasible_period=None):
+        if feasible_period: #period defaults to tech.py feasible period otherwise.
+            self.period = feasible_period
         # Generate a random sequence of reads and writes
         self.write_random_memory_sequence()
     

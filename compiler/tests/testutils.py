@@ -54,6 +54,17 @@ class openram_test(unittest.TestCase):
         if OPTS.purge_temp:
             self.cleanup()
 
+    def find_feasible_test_period(self, delay_obj, sram, load, slew):
+        """Creates a delay simulation to determine a feasible period for the functional tests to run.
+           Only determines the feasible period for a single port and assumes that for all ports for performance.
+        """
+        debug.info(1, "Finding feasible period for current test.")
+        delay_obj.set_load_slew(load, slew)
+        delay_obj.set_probe(probe_address="1"*sram.addr_size, probe_data=(sram.word_size-1))
+        test_port = delay_obj.read_ports[0] #Only test one port, assumes other ports have similar period.
+        delay_obj.find_feasible_period_one_port(test_port) 
+        return delay_obj.period        
+            
     def cleanup(self):
         """ Reset the duplicate checker and cleanup files. """
         files = glob.glob(OPTS.openram_temp + '*')

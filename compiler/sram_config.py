@@ -87,12 +87,14 @@ class sram_config:
 
         if tentative_num_cols < 1.5*word_size:
             return 1
-        elif tentative_num_cols > 3*word_size:
-            return 4
-        elif tentative_num_cols > 6*word_size:
-            return 8
-        else:
+        elif tentative_num_cols < 3*word_size:
             return 2
+        elif tentative_num_cols < 6*word_size:
+            return 4
+        else:
+            if tentative_num_cols > 10*word_size:
+                debug.warning("Reaching column mux size limit. Consider increasing above 8-way.")
+            return 8
 
     def amend_words_per_row(self,tentative_num_rows, words_per_row):
         """

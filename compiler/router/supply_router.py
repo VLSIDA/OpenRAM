@@ -101,7 +101,7 @@ class supply_router(router):
 
         # These are the wire tracks
         wire_tracks = self.supply_rail_tracks[pin_name]
-        
+        routed_count=0
         for pg in self.pin_groups[pin_name]:
             if pg.is_routed():
                 continue
@@ -109,6 +109,7 @@ class supply_router(router):
             # First, check if we just overlap, if so, we are done.
             overlap_grids = wire_tracks & pg.grids
             if len(overlap_grids)>0:
+                routed_count += 1
                 pg.set_routed()
                 continue
             
@@ -116,7 +117,7 @@ class supply_router(router):
             #pg.create_simple_overlap_enclosure(pg.grids)
             #pg.add_enclosure(self.cell)
 
-
+        debug.info(1,"Routed {} simple overlap pins".format(routed_count))
     
     def finalize_supply_rails(self, name):
         """
@@ -366,8 +367,8 @@ class supply_router(router):
         """
 
         remaining_components = sum(not x.is_routed() for x in self.pin_groups[pin_name])
-        debug.info(1,"Routing {0} with {1} pin components to route.".format(pin_name,
-                                                                            remaining_components))
+        debug.info(1,"Maze routing {0} with {1} pin components to connect.".format(pin_name,
+                                                                                   remaining_components))
 
         for index,pg in enumerate(self.pin_groups[pin_name]):
             if pg.is_routed():

@@ -236,18 +236,19 @@ class router(router_tech):
         This will try to separate all grid pins by the supplied number of separation 
         tracks (default is to prevent adjacency).
         """
-        debug.info(1,"Separating adjacent pins.")
         # Commented out to debug with SCMOS
         #if separation==0:
         #    return
-        
-        pin_names = self.pin_groups.keys()
-        for pin_name1 in pin_names:
-            for pin_name2 in pin_names:
-                if pin_name1==pin_name2:
-                    continue
-                self.separate_adjacent_pin(pin_name1, pin_name2, separation)
 
+        pin_names = self.pin_groups.keys()
+        for i,pin_name1 in enumerate(pin_names):
+            for j,pin_name2 in enumerate(pin_names):
+                if i==j:
+                    continue
+                if i>j:
+                    return
+                self.separate_adjacent_pin(pin_name1, pin_name2, separation)
+        
     def separate_adjacent_pin(self, pin_name1, pin_name2, separation):
         """
         Go through all of the pin groups and check if any other pin group is 
@@ -256,13 +257,18 @@ class router(router_tech):
         Try to do this intelligently to keep th pins enclosed.
         """
         debug.info(1,"Comparing {0} and {1} adjacency".format(pin_name1, pin_name2))
+        removed_grids = 0
         for index1,pg1 in enumerate(self.pin_groups[pin_name1]):
             for index2,pg2 in enumerate(self.pin_groups[pin_name2]):
                 adj_grids = pg1.adjacent_grids(pg2, separation)
+                removed_grids += len(adj_grids)
                 # These should have the same length, so...
                 if len(adj_grids)>0:
                     debug.info(3,"Adjacent grids {0} {1} adj={2}".format(index1,index2,adj_grids))
                     self.remove_adjacent_grid(pg1, pg2, adj_grids)
+                    
+
+        debug.info(1,"Removed {} adjacent grids.".format(removed_grids))
 
     def remove_adjacent_grid(self, pg1, pg2, adj_grids):
         """

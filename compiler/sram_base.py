@@ -491,17 +491,13 @@ class sram_base(design):
         
         return stage_effort_list
         
-    def get_clk_cin(self):
+    def get_wl_en_cin(self):
         """Gets the capacitive load the of clock (clk_buf) for the sram"""
         #As clk_buf is an output of the control logic. The cap for that module is not determined here.
-        row_addr_clk_cin = self.row_addr_dff.get_clk_cin()
-        data_clk_cin = self.data_dff.get_clk_cin()
-        col_addr_clk_cin = 0
-        if self.col_addr_size > 0:
-            col_addr_clk_cin = self.col_addr_dff.get_clk_cin()
-        bank_clk_cin = self.bank.get_clk_cin()
+        #Only the wordline drivers within the bank use this signal
+        bank_clk_cin = self.bank.get_wl_en_cin()
         
-        return row_addr_clk_cin + data_clk_cin + col_addr_clk_cin + bank_clk_cin 
+        return bank_clk_cin 
         
     def get_clk_bar_cin(self):
         """Gets the capacitive load the of clock (clk_buf_bar) for the sram"""

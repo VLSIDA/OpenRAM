@@ -30,9 +30,11 @@ class control_logic(design.design):
         self.words_per_row = words_per_row
         self.port_type = port_type
         
+        self.enable_delay_chain_resizing = False
+        
         #This is needed to resize the delay chain. Likely to be changed at some point.
-        #self.sram=sram
-        self.sram=None #disable re-sizing for debugging, FIXME: resizing is not working, needs to be adjusted for new control logic.
+        self.sram=sram
+        #self.sram=None #disable re-sizing for debugging, FIXME: resizing is not working, needs to be adjusted for new control logic.
         self.wl_timing_tolerance = 1 #Determines how much larger the sen delay should be. Accounts for possible error in model.
         self.parasitic_inv_delay = parameter["min_inv_para_delay"] #Keeping 0 for now until further testing.
         
@@ -112,7 +114,9 @@ class control_logic(design.design):
             bitcell_loads = int(math.ceil(self.num_rows / 2.0))
             self.replica_bitline = replica_bitline([delay_fanout_heuristic]*delay_stages_heuristic, bitcell_loads, name="replica_bitline_"+self.port_type)
             
-            if self.sram != None and not self.does_sen_total_timing_match(): #check condition based on resizing method
+            self.set_sen_wl_delays()
+            
+            if self.sram != None and self.enable_delay_chain_resizing and not self.does_sen_total_timing_match(): #check condition based on resizing method
                 #This resizes to match fall and rise delays, can make the delay chain weird sizes.
                 # stage_list = self.get_dynamic_delay_fanout_list(delay_stages_heuristic, delay_fanout_heuristic)
                 # self.replica_bitline = replica_bitline(stage_list, bitcell_loads, name="replica_bitline_resized_"+self.port_type)
@@ -794,17 +798,16 @@ class control_logic(design.design):
      
         
     def determine_wordline_stage_efforts(self):
-        """Follows the clock signal to the clk_buf signal to the wordline signal for the total path efforts"""
+        """Follows the gated_clk_bar -> wl_en -> wordline signal for the total path efforts"""
         stage_effort_list = []
         
-        #Initial direction of clock signal for this path
-        is_clk_rise = False
+        #Initial direction of gated_clk_bar signal for this path
+        is_clk_bar_rise = True
         
-        #Calculate the load on clk_buf within the module and add it to external load
-        internal_cout = self.ctrl_dff_array.get_clk_cin()
-        external_cout = self.sram.get_clk_cin()
+        #Calculate the load on wl_en within the module and add it to external load
+        external_cout = self.sram.get_wl_en_cin()
         #First stage is the clock buffer
-        stage_effort_list += self.clkbuf.determine_z_stage_efforts(internal_cout+external_cout, is_clk_rise)
+        stage_effort_list += self.clkbuf.get_output_stage_efforts(external_cout, is_clk_bar_rise)
         last_stage_is_rise = stage_effort_list[-1].is_rise
         
         #Then ask the sram for the other path delays (from the bank)
@@ -824,56 +827,28 @@ class control_logic(design.design):
         return clk_to_sen_rise, clk_to_sen_fall   
           
     def determine_sa_enable_stage_efforts(self):
-        """Follows the clock signal to the sense amp enable signal adding each stages stage effort to a list"""
+        """Follows the gated_clk_bar signal to the sense amp enable signal adding each stages stage effort to a list"""
         stage_effort_list = []
         #Calculate the load on clk_buf_bar
-        int_clk_buf_cout = self.get_clk_buf_bar_cin()
         ext_clk_buf_cout = self.sram.get_clk_bar_cin()
         
         #Initial direction of clock signal for this path
-        is_clk_rise = False
+        is_clk_bar_rise = True
         
-        #First stage is the clock buffer
-        stage1 = self.clkbuf.determine_clk_buf_bar_stage_efforts(int_clk_buf_cout+ext_clk_buf_cout, is_clk_rise)
-        stage_effort_list += stage1
+        #First stage, gated_clk_bar -(and2)-> rbl_in
+        stage1_cout = self.replica_bitline.get_en_cin()
+        stage_effort_list += self.and2.get_output_stage_efforts(stage1_cout, is_clk_bar_rise)
         last_stage_rise = stage_effort_list[-1].is_rise
         
-        #nand2 stage
-        stage2_cout = self.inv1.get_cin()
-        stage2 = self.nand2.get_effort_stage(stage2_cout, last_stage_rise)
-        stage_effort_list.append(stage2)
+        #Replica bitline stage, rbl_in -(rbl)-> pre_s_en
+        stage2_cout = self.buf8.get_cin()
+        stage_effort_list += self.replica_bitline.determine_sen_stage_efforts(stage2_cout, last_stage_rise)
         last_stage_rise = stage_effort_list[-1].is_rise
         
-        #inverter stage
-        stage3_cout = self.replica_bitline.get_en_cin()
-        stage3 = self.inv1.get_effort_stage(stage3_cout, last_stage_rise)
-        stage_effort_list.append(stage3)
+        #buffer stage, pre_s_en -(buffer)-> s_en
+        stage3_cout = self.sram.get_sen_cin()
+        stage_effort_list += self.buf8.get_output_stage_efforts(stage3_cout, last_stage_rise)
         last_stage_rise = stage_effort_list[-1].is_rise
         
-        #Replica bitline stage
-        stage4_cout = self.inv2.get_cin()
-        stage4 = self.replica_bitline.determine_sen_stage_efforts(stage4_cout, last_stage_rise)
-        stage_effort_list += stage4
-        last_stage_rise = stage_effort_list[-1].is_rise
-        
-        #inverter (inv2) stage
-        stage5_cout = self.inv8.get_cin()
-        stage5 = self.inv2.get_effort_stage(stage5_cout, last_stage_rise)
-        stage_effort_list.append(stage5)
-        last_stage_rise = stage_effort_list[-1].is_rise
-        
-        #inverter (inv8) stage, s_en output
-        clk_sen_cout = self.sram.get_sen_cin()
-        stage6 = self.inv8.get_effort_stage(clk_sen_cout, last_stage_rise)
-        stage_effort_list.append(stage6)
         return stage_effort_list    
        
-    def get_clk_buf_bar_cin(self):
-        """Get the relative capacitance off the clk_buf_bar signal internal to the control logic"""
-        we_nand_cin = self.nand2.get_cin()
-        if self.port_type == "rw":
-            nand_mod = self.nand3
-        else:
-            nand_mod = self.nand2
-        sen_nand_cin = nand_mod.get_cin()
-        return we_nand_cin + sen_nand_cin

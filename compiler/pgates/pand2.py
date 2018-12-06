@@ -125,4 +125,15 @@ class pand2(pgate.pgate):
         inv_delay = self.inv.analytical_delay(slew=nand_delay.slew, load=load)
         return nand_delay + inv_delay
     
-    
+    def get_output_stage_efforts(self, external_cout, inp_is_rise=False):
+        """Get the stage efforts of the A or B -> Z path"""
+        stage_effort_list = []
+        stage1_cout = self.inv.get_cin()
+        stage1 = self.nand.get_effort_stage(stage1_cout, inp_is_rise)
+        stage_effort_list.append(stage1)
+        last_stage_is_rise = stage1.is_rise
+        
+        stage2 = self.inv.get_effort_stage(external_cout, last_stage_is_rise)
+        stage_effort_list.append(stage2)
+        
+        return stage_effort_list

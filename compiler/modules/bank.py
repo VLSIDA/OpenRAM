@@ -1254,10 +1254,10 @@ class bank(design.design):
         
         return stage_effort_list
         
-    def get_clk_cin(self):
+    def get_wl_en_cin(self):
         """Get the relative capacitance of all the clk connections in the bank"""
-        #Current bank only uses clock (clk_buf) as an enable for the wordline driver.
-        total_clk_cin = self.wordline_driver.get_clk_cin()
+        #wl_en only used in the wordline driver.
+        total_clk_cin = self.wordline_driver.get_wl_en_cin()
         return total_clk_cin
         
     def get_clk_bar_cin(self):

@@ -627,6 +627,8 @@ class replica_bitline(design.design):
         return stage_effort_list
         
     def get_delayed_en_cin(self):
+        """Get the fanout capacitance (relative) of the delayed enable from the delay chain."""
         access_tx_cin = self.access_tx.get_cin()
         rbc_cin = self.replica_bitcell.get_wl_cin()
         return access_tx_cin + rbc_cin
+        

@@ -125,7 +125,7 @@ class pbuf(pgate.pgate):
         inv2_delay = self.inv2.analytical_delay(slew=inv1_delay.slew, load=load)
         return inv1_delay + inv2_delay
     
-    def determine_z_stage_efforts(self, external_cout, inp_is_rise=False):
+    def get_output_stage_efforts(self, external_cout, inp_is_rise=False):
         """Get the stage efforts of the A -> Z path"""
         stage_effort_list = []
         stage1_cout = self.inv2.get_cin()
@@ -137,3 +137,8 @@ class pbuf(pgate.pgate):
         stage_effort_list.append(stage2)
         
         return stage_effort_list
+
+    def get_cin(self):
+        """Returns the relative capacitance of the input"""
+        input_cin = self.inv1.get_cin()
+        return input_cin

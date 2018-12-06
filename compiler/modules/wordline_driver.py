@@ -222,23 +222,19 @@ class wordline_driver(design.design):
     def determine_wordline_stage_efforts(self, external_cout, inp_is_rise=True):
         """Follows the clk_buf to a wordline signal adding each stages stage effort to a list"""
         stage_effort_list = []
-        stage1_cout = self.nand2.get_cin()
-        stage1 = self.inv_no_output.get_effort_stage(stage1_cout, inp_is_rise)
+        
+        stage1_cout = self.inv.get_cin()
+        stage1 = self.nand2.get_effort_stage(stage1_cout, inp_is_rise)
         stage_effort_list.append(stage1)
         last_stage_is_rise = stage1.is_rise
         
-        stage2_cout = self.inv.get_cin()
-        stage2 = self.nand2.get_effort_stage(stage2_cout, last_stage_is_rise)
+        stage2 = self.inv.get_effort_stage(external_cout, last_stage_is_rise)
         stage_effort_list.append(stage2)
-        last_stage_is_rise = stage2.is_rise
-        
-        stage3 = self.inv.get_effort_stage(external_cout, last_stage_is_rise)
-        stage_effort_list.append(stage3)
         
         return stage_effort_list
         
-    def get_clk_cin(self):
-        """Get the relative capacitance of all the clk connections in the bank"""
-        #Clock is connected as an input to 1 inverter per row
-        total_cin = self.inv_no_output.get_cin() * self.rows
+    def get_wl_en_cin(self):
+        """Get the relative capacitance of all the enable connections in the bank"""
+        #The enable is connected to a nand2 for every row.
+        total_cin = self.nand2.get_cin() * self.rows
         return total_cin

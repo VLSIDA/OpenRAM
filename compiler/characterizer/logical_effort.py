@@ -19,7 +19,7 @@ class logical_effort():
         self.is_rise = out_is_rise
      
     def __str__(self):
-        return "g = " + str(self.logical_effort) + ", h = " + str(self.eletrical_effort) + ", p = " + str(self.parasitic_scale)+"*pinv"
+        return "g=" + str(self.logical_effort) + ", h=" + str(self.eletrical_effort) + ", p=" + str(self.parasitic_scale)+"*pinv, rise_delay="+str(self.is_rise)
     
     def get_stage_effort(self):
         return  self.logical_effort*self.eletrical_effort
@@ -37,8 +37,10 @@ def calculate_relative_delay(stage_effort_list, pinv=parameter["min_inv_para_del
     
 def calculate_relative_rise_fall_delays(stage_effort_list, pinv=parameter["min_inv_para_delay"]):
     """Calculates the rise/fall delays of a given delay path made of a list of logical effort objects."""
+    debug.info(2, "Calculating rise/fall relative delays")
     total_rise_delay, total_fall_delay = 0,0
     for stage in stage_effort_list:
+        debug.info(3, stage)
         if stage.is_rise:
             total_rise_delay += stage.get_stage_delay(pinv)
         else:

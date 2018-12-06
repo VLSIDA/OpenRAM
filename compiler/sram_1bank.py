@@ -203,9 +203,8 @@ class sram_1bank(sram_base):
                                 offset=clk_steiner_pos,
                                 rotate=90)
             
-            # Note, the via to the control logic is taken care of when we route
-            # the control logic to the bank
-            self.add_wire(("metal3","via2","metal2"),[row_addr_clk_pos, mid1_pos, clk_steiner_pos, control_clk_buf_pos])
+            # Note, the via to the control logic is taken care of above
+            self.add_wire(("metal3","via2","metal2"),[row_addr_clk_pos, mid1_pos, clk_steiner_pos])
         
             if self.col_addr_dff:
                 dff_clk_pin = self.col_addr_dff_insts[port].get_pin("clk")

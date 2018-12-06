@@ -39,7 +39,7 @@ class worst_case_timing_sram_test(openram_test):
                         num_words=num_words,
                         num_banks=num_banks)
         c.words_per_row=1
-        #c.compute_sizes()
+        c.recompute_sizes()
         debug.info(1, "Testing the timing different bitecells inside a {}bit, {} words SRAM with {} bank".format(
                                                                        word_size, num_words, num_banks))
         s = sram(c, name="sram1")

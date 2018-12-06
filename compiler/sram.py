@@ -14,7 +14,6 @@ class sram():
     """
     def __init__(self, sram_config, name):
 
-        sram_config.compute_sizes()
         sram_config.set_local_config(self)
         
         # reset the static duplicate name checker for unit tests

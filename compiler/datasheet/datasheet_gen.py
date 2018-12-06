@@ -359,7 +359,7 @@ def parse_characterizer_csv(sram,f,pages):
                 try:
                     new_sheet.operating.append(operating_conditions_item('Operating Frequency (F)','','',str(math.floor(1000/float(MIN_PERIOD))),'MHz'))
                 except Exception:
-                    new_sheet.operating.append(operating_conditions_item('Operating Frequency (F)','','',"unknown",'MHz')) #failed to provide MIN_PERIOD
+                    new_sheet.operating.append(operating_conditions_item('Operating Frequency (F)','','',"not available in netlist only",'MHz')) #failed to provide non-zero MIN_PERIOD
                 
                 
                 while(True):

@@ -10,6 +10,7 @@ packages to be installed.
 #Diagram generation
 #Improve css
 
+
 import debug
 from globals import OPTS
 
@@ -101,18 +102,6 @@ def parse_characterizer_csv(sram,f,pages):
             ORIGIN_ID = row[col]
             col += 1
 
-#            FF_SETUP_LH_MIN = "1"
-#            FF_SETUP_LH_MAX = "2"
-
-#            FF_SETUP_HL_MIN = "3"
-#            FF_SETUP_HL_MAX = "4"
-
-#            FF_HOLD_LH_MIN = "5"
-#            FF_HOLD_LH_MAX = "6"
-
-#            FF_HOLD_HL_MIN = "7"
-#            FF_HOLD_HL_MAX = "8"
-           
     
             for sheet in pages:
 
@@ -146,7 +135,6 @@ def parse_characterizer_csv(sram,f,pages):
                                 if float(math.floor(1000/float(MIN_PERIOD)) < float(item.max)):
                                     item.max = str(math.floor(1000/float(MIN_PERIOD)))
                             except Exception:
-                                #pass if MIN_PERIOD is zero (not supported by analyitcal model)
                                 pass
 
 
@@ -371,7 +359,7 @@ def parse_characterizer_csv(sram,f,pages):
                 try:
                     new_sheet.operating.append(operating_conditions_item('Operating Frequency (F)*','','',str(math.floor(1000/float(MIN_PERIOD))),'MHz'))
                 except Exception:
-                    new_sheet.operating.append(operating_conditions_item('Operating Frequency (F)*','','',"unknown",'MHz')) #analytical model fails to provide MIN_PERIOD
+                    new_sheet.operating.append(operating_conditions_item('Operating Frequency (F)*','','',"unknown",'MHz')) #failed to provide MIN_PERIOD
                 
                 #place holder timing and current data
                 
@@ -471,8 +459,8 @@ def parse_characterizer_csv(sram,f,pages):
                 
                 if not OPTS.netlist_only:
                     #physical layout files should not be generated in netlist only mode
-                    new_sheet.dlv.append(deliverables_item('.gds','GDSII layout views','<a href="file://{0}{1}.{2}">{1}.{2}</a>'.format(OUT_DIR,OPTS.output_name,'gds')))
-                    new_sheet.dlv.append(deliverables_item('.lef','LEF files','<a href="file://{0}{1}.{2}">{1}.{2}</a>'.format(OUT_DIR,OPTS.output_name,'lef')))
+                    new_sheet.dlv.append(deliverables_item('.gds','GDSII layout views','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'gds')))
+                    new_sheet.dlv.append(deliverables_item('.lef','LEF files','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'lef')))
    
 
                 new_sheet.dlv.append(deliverables_item('.sp','SPICE netlists','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'sp')))

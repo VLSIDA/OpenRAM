@@ -8,6 +8,7 @@ from hierarchy_design import total_drc_errors
 from hierarchy_design import total_lvs_errors
 import os
 import csv
+import base64
 from globals import OPTS
 
 class datasheet():
@@ -47,8 +48,17 @@ class datasheet():
             for row in info:
                 self.html += row
             self.html +='-->'
+    
+        vlsi_logo = 0
+        with open(os.path.abspath(os.environ.get("OPENRAM_HOME")) + '/datasheet/assets/vlsi_logo.png' , "rb") as image_file:
+            vlsi_logo = base64.b64encode(image_file.read())
 
-        self.html +=   '<a href="https://vlsida.soe.ucsc.edu/"><img src=' + os.path.abspath(os.environ.get("OPENRAM_HOME")) + '/datasheet/assets/vlsi_logo.png alt="VLSIDA"></a><a href="https://vlsida.github.io/OpenRAM"><img src=' + os.path.abspath(os.environ.get("OPENRAM_HOME")) + '/datasheet/assets/openram_logo_placeholder.png alt="OpenRAM"></a>'
+        openram_logo = 0
+        with open(os.path.abspath(os.environ.get("OPENRAM_HOME")) + '/datasheet/assets/openram_logo_placeholder.png' , "rb") as image_file:
+            openram_logo = base64.b64encode(image_file.read())
+
+
+        self.html +=   '<a href="https://vlsida.soe.ucsc.edu/"><img src="data:image/png;base64,{0}" alt="VLSIDA"></a><a href="https://vlsida.github.io/OpenRAM"><img src="data:image/png;base64,{1}"="OpenRAM"></a>'.format(str(vlsi_logo)[2:-1],str(openram_logo)[2:-1])
          
 
 

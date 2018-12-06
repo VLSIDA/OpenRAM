@@ -84,6 +84,5 @@ class datasheet():
         self.html +='<p style="font-size: 26px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Deliverables</p>'
         self.html += deliverables(self.dlv,table_id='data').__html__().replace('&lt;','<').replace('&#34;','"').replace('&gt;',">")
 
-        self.html +='<p style="font-size: 18px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">*Feature only supported with characterizer</p>'
         
        

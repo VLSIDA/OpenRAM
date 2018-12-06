@@ -357,18 +357,11 @@ def parse_characterizer_csv(sram,f,pages):
                 new_sheet.operating.append(operating_conditions_item('Power supply (VDD) range',VOLT,VOLT,VOLT,'Volts'))
                 new_sheet.operating.append(operating_conditions_item('Operating Temperature',TEMP,TEMP,TEMP,'Celsius'))
                 try:
-                    new_sheet.operating.append(operating_conditions_item('Operating Frequency (F)*','','',str(math.floor(1000/float(MIN_PERIOD))),'MHz'))
+                    new_sheet.operating.append(operating_conditions_item('Operating Frequency (F)','','',str(math.floor(1000/float(MIN_PERIOD))),'MHz'))
                 except Exception:
-                    new_sheet.operating.append(operating_conditions_item('Operating Frequency (F)*','','',"unknown",'MHz')) #failed to provide MIN_PERIOD
+                    new_sheet.operating.append(operating_conditions_item('Operating Frequency (F)','','',"unknown",'MHz')) #failed to provide MIN_PERIOD
                 
-                #place holder timing and current data
                 
-                new_sheet.timing.append(timing_and_current_data_item('Cycle time','2','3','4'))
-                new_sheet.timing.append(timing_and_current_data_item('Access time','2','3','4'))
-
-                new_sheet.timing.append(timing_and_current_data_item('Positive clk setup','2','3','4'))
-                new_sheet.timing.append(timing_and_current_data_item('Positive clk hold','2','3','4'))
-
                 while(True):
                     if(row[col].startswith('DIN')):
                         start = col
@@ -454,9 +447,7 @@ def parse_characterizer_csv(sram,f,pages):
 
 
                     
-                new_sheet.timing.append(timing_and_current_data_item('AC current','2','3','4'))
-                new_sheet.timing.append(timing_and_current_data_item('Standby current','2','3','4'))
-                
+               
                 if not OPTS.netlist_only:
                     #physical layout files should not be generated in netlist only mode
                     new_sheet.dlv.append(deliverables_item('.gds','GDSII layout views','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'gds')))

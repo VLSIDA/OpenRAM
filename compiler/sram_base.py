@@ -2,6 +2,7 @@ import sys
 import datetime
 import getpass
 import debug
+from datetime import datetime
 from importlib import reload
 from vector import vector
 from globals import OPTS, print_time
@@ -65,36 +66,52 @@ class sram_base(design):
 
     def create_netlist(self):
         """ Netlist creation """
-
+        
+        start_time = datetime.now()
+        
         # Must create the control logic before pins to get the pins
         self.add_modules()
         self.add_pins()
+        self.create_modules()
+        
         # This is for the lib file if we don't create layout
         self.width=0
         self.height=0
+        
+
+        if not OPTS.is_unit_test:
+            print_time("Netlisting",datetime.now(), start_time)
 
         
     def create_layout(self):
         """ Layout creation """    
+        start_time = datetime.now()
         self.place_instances()
+        if not OPTS.is_unit_test:
+            print_time("Placement",datetime.now(), start_time)
 
+        start_time = datetime.now()
         self.route_layout()
+        self.route_supplies()
+        if not OPTS.is_unit_test:
+            print_time("Routing",datetime.now(), start_time)
 
         self.add_lvs_correspondence_points()
         
         self.offset_all_coordinates()
 
-        # Must be done after offsetting lower-left
-        self.route_supplies()
-
         highest_coord = self.find_highest_coords()
         self.width = highest_coord[0]
         self.height = highest_coord[1]
 
-        
+        start_time = datetime.now()
         self.DRC_LVS(final_verification=True)
+        if not OPTS.is_unit_test:
+            print_time("Verification",datetime.now(), start_time)
 
-        
+    def create_modules(self):
+        debug.error("Must override pure virtual function.",-1)
+    
     def route_supplies(self):
         """ Route the supply grid and connect the pins to them. """
 

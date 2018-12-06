@@ -226,9 +226,9 @@ class supply_router(router):
         min_yoffset = self.rg.ll.y
         min_xoffset = self.rg.ll.x
 
-        start_offset = min_yoffset + supply_number
         
         # Horizontal supply rails
+        start_offset = min_yoffset + supply_number
         for offset in range(start_offset, max_yoffset, 2):
             # Seed the function at the location with the given width
             wave = [vector3d(min_xoffset,offset,0)]
@@ -243,7 +243,7 @@ class supply_router(router):
                     wave = added_rail.neighbor(direction.EAST)
 
         # Vertical supply rails
-        max_offset = self.rg.ur.x
+        start_offset = min_xoffset + supply_number
         for offset in range(start_offset, max_xoffset, 2):
             # Seed the function at the location with the given width
             wave = [vector3d(offset,min_yoffset,1)]

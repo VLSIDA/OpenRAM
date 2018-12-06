@@ -92,7 +92,7 @@ class sram_config:
         elif tentative_num_cols < 6*word_size:
             return 4
         else:
-            if tentative_num_cols > 10*word_size:
+            if tentative_num_cols > 16*word_size:
                 debug.warning("Reaching column mux size limit. Consider increasing above 8-way.")
             return 8
 

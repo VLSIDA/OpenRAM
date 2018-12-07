@@ -64,17 +64,10 @@ class supply_router(router):
             # but this is simplest for now.
             self.create_routing_grid()
 
-        # Compute the grid dimensions
-        self.compute_supply_rail_dimensions()
-            
         # Get the pin shapes
-        #start_time = datetime.now()
         self.find_pins_and_blockages([self.vdd_name, self.gnd_name])
-        #print_time("Pins and blockages",datetime.now(), start_time)
-        #self.write_debug_gds("pin_enclosures.gds",stop_program=True)
 
         # Add the supply rails in a mesh network and connect H/V with vias
-        #start_time = datetime.now()
         # Block everything
         self.prepare_blockages(self.gnd_name)
         # Determine the rail locations
@@ -84,23 +77,15 @@ class supply_router(router):
         self.prepare_blockages(self.vdd_name)
         # Determine the rail locations
         self.route_supply_rails(self.vdd_name,1)
-        #self.write_debug_gds("debug_rails.gds",stop_program=True)
-        #print_time("Supply rails",datetime.now(), start_time)
         
-        #start_time = datetime.now()
         self.route_simple_overlaps(vdd_name)
         self.route_simple_overlaps(gnd_name)
-        #print_time("Simple overlaps",datetime.now(), start_time)
-        #self.write_debug_gds("debug_simple_route.gds",stop_program=False)
         
         # Route the supply pins to the supply rails
         # Route vdd first since we want it to be shorter
-        #start_time = datetime.now()
         self.route_pins_to_rails(vdd_name)
         self.route_pins_to_rails(gnd_name)
-        #print_time("Routing",datetime.now(), start_time)        
-        #self.write_debug_gds("debug_pin_routes.gds",stop_program=True)
-        
+
         #self.write_debug_gds("final.gds",False)  
         
         return True
@@ -116,7 +101,7 @@ class supply_router(router):
 
         # These are the wire tracks
         wire_tracks = self.supply_rail_tracks[pin_name]
-        
+        routed_count=0
         for pg in self.pin_groups[pin_name]:
             if pg.is_routed():
                 continue
@@ -124,6 +109,7 @@ class supply_router(router):
             # First, check if we just overlap, if so, we are done.
             overlap_grids = wire_tracks & pg.grids
             if len(overlap_grids)>0:
+                routed_count += 1
                 pg.set_routed()
                 continue
             
@@ -131,7 +117,7 @@ class supply_router(router):
             #pg.create_simple_overlap_enclosure(pg.grids)
             #pg.add_enclosure(self.cell)
 
-
+        debug.info(1,"Routed {} simple overlap pins".format(routed_count))
     
     def finalize_supply_rails(self, name):
         """
@@ -227,40 +213,6 @@ class supply_router(router):
                                      width=pin.width(),
                                      height=pin.height())
 
-    def compute_supply_rail_dimensions(self):
-        """
-        Compute the supply rail dimensions including wide metal spacing rules.
-        """
-        
-        self.max_yoffset = self.rg.ur.y
-        self.max_xoffset = self.rg.ur.x
-
-        # # Longest length is conservative
-        # rail_length = max(self.max_yoffset,self.max_xoffset)
-        # # Convert the number of tracks to dimensions to get the design rule spacing
-        # rail_width = self.track_width*self.rail_track_width
-
-        # # Get the conservative width and spacing of the top rails
-        # (horizontal_width, horizontal_space) = self.get_supply_layer_width_space(0)
-        # (vertical_width, vertical_space) = self.get_supply_layer_width_space(1)
-        # width = max(horizontal_width, vertical_width)
-        # space = max(horizontal_space, vertical_space)
-        
-        # track_pitch = width + space
-
-        # # Determine the pitch (in tracks) of the rail wire + spacing
-        # self.supply_rail_width = math.ceil(track_pitch/self.track_width)
-        # debug.info(1,"Rail step: {}".format(self.supply_rail_width))
-        
-        # # Conservatively determine the number of tracks that the rail actually occupies
-        # space_tracks = math.ceil(space/self.track_width)
-        # self.supply_rail_wire_width = self.supply_rail_width - space_tracks
-        # debug.info(1,"Rail wire tracks: {}".format(self.supply_rail_wire_width))
-        # total_space = self.supply_rail_width - self.supply_rail_wire_width
-        # self.supply_rail_space_width = math.floor(0.5*total_space)
-        # debug.info(1,"Rail space tracks: {} (on both sides)".format(self.supply_rail_space_width))
-
-
     def compute_supply_rails(self, name, supply_number):
         """
         Compute the unblocked locations for the horizontal and vertical supply rails.
@@ -270,14 +222,19 @@ class supply_router(router):
 
         self.supply_rails[name]=[]
         
-        start_offset = supply_number
+        max_yoffset = self.rg.ur.y
+        max_xoffset = self.rg.ur.x
+        min_yoffset = self.rg.ll.y
+        min_xoffset = self.rg.ll.x
 
+        
         # Horizontal supply rails
-        for offset in range(start_offset, self.max_yoffset, 2):
+        start_offset = min_yoffset + supply_number
+        for offset in range(start_offset, max_yoffset, 2):
             # Seed the function at the location with the given width
-            wave = [vector3d(0,offset,0)]
+            wave = [vector3d(min_xoffset,offset,0)]
             # While we can keep expanding east in this horizontal track
-            while wave and wave[0].x < self.max_xoffset:
+            while wave and wave[0].x < max_xoffset:
                 added_rail = self.find_supply_rail(name, wave, direction.EAST)
                 if not added_rail:
                     # Just seed with the next one
@@ -287,12 +244,12 @@ class supply_router(router):
                     wave = added_rail.neighbor(direction.EAST)
 
         # Vertical supply rails
-        max_offset = self.rg.ur.x
-        for offset in range(start_offset, self.max_xoffset, 2):
+        start_offset = min_xoffset + supply_number
+        for offset in range(start_offset, max_xoffset, 2):
             # Seed the function at the location with the given width
-            wave = [vector3d(offset,0,1)]
+            wave = [vector3d(offset,min_yoffset,1)]
             # While we can keep expanding north in this vertical track
-            while wave and wave[0].y < self.max_yoffset:
+            while wave and wave[0].y < max_yoffset:
                 added_rail = self.find_supply_rail(name, wave, direction.NORTH)
                 if not added_rail:
                     # Just seed with the next one
@@ -410,8 +367,8 @@ class supply_router(router):
         """
 
         remaining_components = sum(not x.is_routed() for x in self.pin_groups[pin_name])
-        debug.info(1,"Routing {0} with {1} pin components to route.".format(pin_name,
-                                                                            remaining_components))
+        debug.info(1,"Maze routing {0} with {1} pin components to connect.".format(pin_name,
+                                                                                   remaining_components))
 
         for index,pg in enumerate(self.pin_groups[pin_name]):
             if pg.is_routed():

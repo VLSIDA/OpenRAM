@@ -26,14 +26,14 @@ if len(args) != 1:
 # These depend on arguments, so don't load them until now.
 import debug
 
-# Keep track of running stats
-start_time = datetime.datetime.now()
-print_time("Start",start_time)
-
 init_openram(config_file=args[0], is_unit_test=False)
 
 # Only print banner here so it's not in unit tests
 print_banner()
+
+# Keep track of running stats
+start_time = datetime.datetime.now()
+print_time("Start",start_time)
 
 # Output info about this run
 report_status()

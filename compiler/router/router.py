@@ -737,11 +737,10 @@ class router(router_tech):
             gid = group_id[pin]
             if gid not in group_map.keys():
                 group_map[gid] = pin_group(name=pin_name, pin_set=[], router=self)
-            group = group_map[gid]
             # We always add it to the first set since they are touching
-            group.pins[0].add(pin)
+            group_map[gid].pins[0].add(pin)
 
-        self.pin_groups[pin_name] = group_map.values()
+        self.pin_groups[pin_name] = list(group_map.values())
 
     # This is the old O(n^2) implementation
     # def analyze_pins(self, pin_name):

@@ -9,12 +9,9 @@ from pinv import pinv
 
 class pdriver(pgate.pgate):
     """
-    This instantiates an even or odd number of inverters sized for driving a load. 
+    This instantiates an even or odd number of inverters sized for driving a load.
     """
     unique_id = 1
-    inv_list = []
-    inv_inst_list = []
-    calc_size_list = []
 
     def __init__(self, height=None, name="", neg_polarity=False, c_load=8, size_list = []):
 
@@ -48,26 +45,24 @@ class pdriver(pgate.pgate):
             self.num_inv = len(self.size_list)
         else:
             # find the number of stages
-            c_prev = int(round(self.c_load/self.stage_effort))
-            num_stages = 1
-            while c_prev > 1: #stop when the first stage is 1
-                c_prev = int(round(c_prev/self.stage_effort))
-                num_stages+=1
+            #c_load is a unit inverter fanout, not a capacitance so c_in=1
+            num_stages = int(round(log(self.c_load)/log(4)))
 
             # find inv_num and compute sizes
             if self.neg_polarity:
                 if (num_stages % 2 == 0):   # if num_stages is even
                     self.diff_polarity(num_stages=num_stages)
                 else:                       # if num_stages is odd
-                    self.same_polarity(num_stages=num_stages)    
+                    self.same_polarity(num_stages=num_stages)  
             else: # positive polarity
                 if (num_stages % 2 == 0):        
                     self.same_polarity(num_stages=num_stages)
                 else:
-                    self.diff_polarity(num_stages=num_stages) 
+                    self.diff_polarity(num_stages=num_stages)
             
 
     def same_polarity(self, num_stages):
+        self.calc_size_list = []
         self.num_inv = num_stages
         # compute sizes
         c_prev = self.c_load
@@ -77,6 +72,7 @@ class pdriver(pgate.pgate):
 
 
     def diff_polarity(self, num_stages):
+        self.calc_size_list = []
         # find which delay is smaller
         delay_below = ((num_stages-1)*(self.c_load**(1/num_stages-1))) + num_stages-1
         delay_above = ((num_stages+1)*(self.c_load**(1/num_stages+1))) + num_stages+1
@@ -96,6 +92,8 @@ class pdriver(pgate.pgate):
 
 
     def create_netlist(self):
+        inv_list = []
+
         self.add_pins()
         self.add_modules()
         self.create_insts()
@@ -116,7 +114,8 @@ class pdriver(pgate.pgate):
         self.add_pin("vdd")
         self.add_pin("gnd")
 
-    def add_modules(self):           
+    def add_modules(self):     
+        self.inv_list = []
         if len(self.size_list) > 0: # size list specified
             for x in range(len(self.size_list)):
                 self.inv_list.append(pinv(size=self.size_list[x], height=self.row_height))
@@ -128,6 +127,7 @@ class pdriver(pgate.pgate):
     
     
     def create_insts(self):
+        self.inv_inst_list = []
         for x in range(1,self.num_inv+1):
             # Create first inverter
             if x == 1:

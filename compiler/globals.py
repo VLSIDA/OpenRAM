@@ -114,6 +114,11 @@ def check_versions():
     except:
         OPTS.datasheet_gen = 0
 
+    try:
+        import coverage
+        OPTS.coverage = 1
+    except:
+        OPTS.coverage = 0
 
 def init_openram(config_file, is_unit_test=True):
     """Initialize the technology, paths, simulators, etc."""
@@ -200,6 +205,7 @@ def read_config(config_file, is_unit_test=True):
     config_file = re.sub(r'\.py$', "", config_file)
     # Expand the user if it is used
     config_file = os.path.expanduser(config_file)
+    OPTS.config_file = config_file
     # Add the path to the system path so we can import things in the other directory
     dir_name = os.path.dirname(config_file)
     file_name = os.path.basename(config_file)
@@ -247,7 +253,7 @@ def read_config(config_file, is_unit_test=True):
                                                          OPTS.num_words,
                                                          ports,
                                                          OPTS.tech_name)
-        
+    
 
         
 def end_openram():

@@ -47,7 +47,7 @@ c = sram_config(word_size=OPTS.word_size,
 print("Words per row: {}".format(c.words_per_row))
 
 #from parser import *
-output_extensions = ["sp","v","lib"]
+output_extensions = ["sp","v","lib","py"]
 if OPTS.datasheet_gen:
     output_extensions.append("html")
 if not OPTS.netlist_only:

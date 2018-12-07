@@ -10,7 +10,7 @@ omit =
     debug.py
 [paths]
 source =
-  .
+  ../..
   /home/gitlab-runner/builds/2fd64746/0
   /home/gitlab-runner/builds/2fd64746/1
   /home/gitlab-runner/builds/2fd64746/2

@@ -46,12 +46,13 @@ class router(router_tech):
             
         ### The pin data structures
         # A map of pin names to a set of pin_layout structures
+        # (i.e. pins with a given label)
         self.pins = {}
         # This is a set of all pins (ignoring names) so that can quickly not create blockages for pins
-        # (They will be blocked based on the names we are routing)
+        # (They will be blocked when we are routing other nets based on their name.)
         self.all_pins = set()
         
-        # A map of pin names to a list of pin groups
+        # The labeled pins above categorized into pin groups that are touching/connected.
         self.pin_groups = {}
         
         ### The blockage data structures
@@ -673,37 +674,109 @@ class router(router_tech):
     
     def analyze_pins(self, pin_name):
         """ 
-        Analyze the shapes of a pin and combine them into groups which are connected.
+        Analyze the shapes of a pin and combine them into pin_groups which are connected.
         """
         debug.info(2,"Analyzing pin groups for {}.".format(pin_name))        
-        
         pin_set = self.pins[pin_name]
 
-        # Put each pin in an equivalence class of it's own
-        equiv_classes = [set([x]) for x in pin_set]
-        def combine_classes(equiv_classes):
-            for class1 in equiv_classes:
-                for class2 in equiv_classes:
-                    if class1 == class2:
-                        continue
-                    # Compare each pin in each class,
-                    # and if any overlap, update equiv_classes to include the combined the class
-                    for p1 in class1:
-                        for p2 in class2:
-                            if p1.overlaps(p2):
-                                combined_class = class1 | class2
-                                equiv_classes.remove(class1)
-                                equiv_classes.remove(class2)
-                                equiv_classes.append(combined_class)
-                                return(equiv_classes)
-            return(equiv_classes)
+        # This will be a list of pin tuples that overlap
+        overlap_list = []
 
-        old_length = math.inf
-        while (len(equiv_classes)<old_length):
-            old_length = len(equiv_classes)
-            equiv_classes = combine_classes(equiv_classes)
+        # Sort the rectangles into a list with lower/upper y coordinates
+        bottom_y_coordinates = [(x.by(), x, "bottom") for x in pin_set]
+        top_y_coordinates = [(x.uy(), x, "top") for x in pin_set]
+        y_coordinates = bottom_y_coordinates + top_y_coordinates
+        y_coordinates.sort(key=lambda x: x[0])
 
-        self.pin_groups[pin_name] = [pin_group(name=pin_name, pin_set=x, router=self) for x in equiv_classes]
+        # Map the pins to the lower indices
+        bottom_index_map = {x[1]:i for i,x in enumerate(y_coordinates) if x[2]=="bottom"}
+        top_index_map = {x[1]:i for i,x in enumerate(y_coordinates) if x[2]=="bottom"}
+
+        # Sort the pin list by x coordinate
+        pin_list = list(pin_set)
+        pin_list.sort(key=lambda x: x.lx())
+
+        # for shapes in x order
+        for pin in pin_list:
+            # start at pin's lower y coordinate
+            bottom_index = bottom_index_map[pin]
+            compared_pins = set()
+            for i in range(bottom_index,len(y_coordinates)):
+                compare_pin = y_coordinates[i][1]
+                # Don't overlap yourself
+                if pin==compare_pin:
+                    continue
+                # Done when we encounter any shape above the pin
+                if compare_pin.by() > pin.uy():
+                    break
+                # Don't double compare the same pin twice
+                if compare_pin in compared_pins:
+                    continue
+                compared_pins.add(compare_pin)
+                # If we overlap, add them to the list
+                if pin.overlaps(compare_pin):
+                    overlap_list.append((pin,compare_pin))
+
+        # Initial unique group assignments
+        group_id = {}
+        gid = 1
+        for pin in pin_list:
+            group_id[pin] = gid
+            gid += 1
+                    
+        for p in overlap_list:
+            (p1,p2) = p
+            for pin in pin_list:
+                if group_id[pin] == group_id[p2]:
+                    group_id[pin] = group_id[p1]
+            
+
+        # For each pin add it to it's group
+        group_map = {}
+        for pin in pin_list:
+            gid = group_id[pin]
+            if gid not in group_map.keys():
+                group_map[gid] = pin_group(name=pin_name, pin_set=[], router=self)
+            group = group_map[gid]
+            # We always add it to the first set since they are touching
+            group.pins[0].add(pin)
+
+        self.pin_groups[pin_name] = group_map.values()
+
+    # This is the old O(n^2) implementation
+    # def analyze_pins(self, pin_name):
+    #     """ 
+    #     Analyze the shapes of a pin and combine them into pin_groups which are connected.
+    #     """
+    #     debug.info(2,"Analyzing pin groups for {}.".format(pin_name))        
+        
+    #     pin_set = self.pins[pin_name]
+        
+    #     # Put each pin in an equivalence class of it's own
+    #     equiv_classes = [set([x]) for x in pin_set]
+    #     def combine_classes(equiv_classes):
+    #         for class1 in equiv_classes:
+    #             for class2 in equiv_classes:
+    #                 if class1 == class2:
+    #                     continue
+    #                 # Compare each pin in each class,
+    #                 # and if any overlap, update equiv_classes to include the combined the class
+    #                 for p1 in class1:
+    #                     for p2 in class2:
+    #                         if p1.overlaps(p2):
+    #                             combined_class = class1 | class2
+    #                             equiv_classes.remove(class1)
+    #                             equiv_classes.remove(class2)
+    #                             equiv_classes.append(combined_class)
+    #                             return(equiv_classes)
+    #         return(equiv_classes)
+
+    #     old_length = math.inf
+    #     while (len(equiv_classes)<old_length):
+    #         old_length = len(equiv_classes)
+    #         equiv_classes = combine_classes(equiv_classes)
+
+    #     self.pin_groups[pin_name] = [pin_group(name=pin_name, pin_set=x, router=self) for x in equiv_classes]
         
     def convert_pins(self, pin_name):
         """ 

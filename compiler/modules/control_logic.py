@@ -114,6 +114,9 @@ class control_logic(design.design):
             bitcell_loads = int(math.ceil(self.num_rows / 2.0))
             self.replica_bitline = replica_bitline([delay_fanout_heuristic]*delay_stages_heuristic, bitcell_loads, name="replica_bitline_"+self.port_type)
             
+            if self.sram != None:
+                self.set_sen_wl_delays()
+            
             if self.sram != None and self.enable_delay_chain_resizing and not self.does_sen_total_timing_match(): #check condition based on resizing method
                 #This resizes to match fall and rise delays, can make the delay chain weird sizes.
                 # stage_list = self.get_dynamic_delay_fanout_list(delay_stages_heuristic, delay_fanout_heuristic)
@@ -135,7 +138,7 @@ class control_logic(design.design):
         if self.words_per_row >= 8:
             delay_stages = 8
         elif self.words_per_row == 4:
-            delay_stages = 6
+            delay_stages = 8
         else:
             delay_stages = 4
             
@@ -831,12 +834,13 @@ class control_logic(design.design):
         ext_clk_buf_cout = self.sram.get_clk_bar_cin()
         
         #Initial direction of clock signal for this path
-        is_clk_bar_rise = True
+        last_stage_rise = True
         
-        #First stage, gated_clk_bar -(and2)-> rbl_in
-        stage1_cout = self.replica_bitline.get_en_cin()
-        stage_effort_list += self.and2.get_output_stage_efforts(stage1_cout, is_clk_bar_rise)
-        last_stage_rise = stage_effort_list[-1].is_rise
+        #First stage, gated_clk_bar -(and2)-> rbl_in. Only for RW ports.
+        if self.port_type == "rw":
+            stage1_cout = self.replica_bitline.get_en_cin()
+            stage_effort_list += self.and2.get_output_stage_efforts(stage1_cout, last_stage_rise)
+            last_stage_rise = stage_effort_list[-1].is_rise
         
         #Replica bitline stage, rbl_in -(rbl)-> pre_s_en
         stage2_cout = self.buf8.get_cin()

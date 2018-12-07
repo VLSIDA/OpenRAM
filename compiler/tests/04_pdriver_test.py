@@ -24,10 +24,10 @@ class pdriver_test(openram_test):
         # a tests the error message for specifying conflicting conditions
         #a = pdriver.pdriver(c_load = 4,size_list = [1,2,4,8])
         b = pdriver.pdriver(size_list = [1,2,4,8])
-        c = pdriver.pdriver(c_load = 4)
-        d = pdriver.pdriver(c_load = 4, neg_polarity = True)
+        c = pdriver.pdriver(c_load = 50)
+        d = pdriver.pdriver(c_load = 50, neg_polarity = True)
         e = pdriver.pdriver(c_load = 64)
-        f = pdriver.pdriver(c_load = 64, neg_polarity = False)
+        f = pdriver.pdriver(c_load = 64, neg_polarity = True)
         #self.local_check(a)
         self.local_check(b)
         self.local_check(c)

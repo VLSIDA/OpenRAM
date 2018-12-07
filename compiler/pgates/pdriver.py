@@ -14,6 +14,7 @@ class pdriver(pgate.pgate):
     unique_id = 1
     inv_list = []
     inv_inst_list = []
+    calc_size_list = []
 
     def __init__(self, height=None, name="", neg_polarity=False, c_load=8, size_list = []):
 
@@ -29,8 +30,7 @@ class pdriver(pgate.pgate):
         self.compute_sizes()
 
         if name=="":
-            name = "pdriver_{0}_{1}_{2}".format(self.stage_effort, self.num_inv, 
-                                                pdriver.unique_id)
+            name = "pdriver_{0}_{1}_".format(self.num_inv, pdriver.unique_id)
             pdriver.unique_id += 1
 
         pgate.pgate.__init__(self, name) 
@@ -47,20 +47,54 @@ class pdriver(pgate.pgate):
                 neg_polarity = True
             self.num_inv = len(self.size_list)
         else:
-            # rho with p_inv = 1
-            rho = 3.59
-            num_stages = max(1, int(math.log1p(self.stage_effort)/math.log1p(rho)))
+            # find the number of stages
+            c_prev = int(round(self.c_load/self.stage_effort))
+            num_stages = 1
+            while c_prev > 1: #stop when the first stage is 1
+                c_prev = int(round(c_prev/self.stage_effort))
+                num_stages+=1
+
+            # find inv_num and compute sizes
             if self.neg_polarity:
                 if (num_stages % 2 == 0):   # if num_stages is even
-                    self.num_inv = int(num_stages)+1
+                    self.diff_polarity(num_stages=num_stages)
                 else:                       # if num_stages is odd
-                    self.num_inv = int(num_stages)
+                    self.same_polarity(num_stages=num_stages)    
             else: # positive polarity
                 if (num_stages % 2 == 0):        
-                    self.num_inv = int(num_stages)
+                    self.same_polarity(num_stages=num_stages)
                 else:
-                    self.num_inv = int(num_stages)+1
-   
+                    self.diff_polarity(num_stages=num_stages) 
+            
+
+    def same_polarity(self, num_stages):
+        self.num_inv = num_stages
+        # compute sizes
+        c_prev = self.c_load
+        for x in range(self.num_inv-1,-1,-1):
+            c_prev = int(round(c_prev/self.stage_effort))
+            self.calc_size_list.append(c_prev)
+
+
+    def diff_polarity(self, num_stages):
+        # find which delay is smaller
+        delay_below = ((num_stages-1)*(self.c_load**(1/num_stages-1))) + num_stages-1
+        delay_above = ((num_stages+1)*(self.c_load**(1/num_stages+1))) + num_stages+1
+        if (delay_above < delay_below):
+            # recompute stage_effort for this delay
+            self.num_inv = num_stages+1
+            polarity_stage_effort = self.c_load**(1/self.num_inv)
+        else:
+            self.num_inv = num_stages-1
+            polarity_stage_effort = self.c_load**(1/self.num_inv)
+        
+        # compute sizes
+        c_prev = self.c_load
+        for x in range(self.num_inv-1,-1,-1):
+            c_prev = int(round(c_prev/polarity_stage_effort))
+            self.calc_size_list.append(c_prev)
+
+
     def create_netlist(self):
         self.add_pins()
         self.add_modules()
@@ -88,13 +122,11 @@ class pdriver(pgate.pgate):
                 self.inv_list.append(pinv(size=self.size_list[x], height=self.row_height))
                 self.add_mod(self.inv_list[x])
         else: # find inv sizes
-            # work backwards to find the size of each stage
-            for x in range(self.num_inv-1, -1, -1):
-                c_in = max(1, int(round(self.c_load/self.stage_effort,0)))
-                self.c_load = c_in
-                self.inv_list.append(pinv(size=c_in, height=self.row_height))
+            for x in range(len(self.calc_size_list)):
+                self.inv_list.append(pinv(size=self.calc_size_list[x], height=self.row_height))
                 self.add_mod(self.inv_list[x])
-
+    
+    
     def create_insts(self):
         for x in range(1,self.num_inv+1):
             # Create first inverter

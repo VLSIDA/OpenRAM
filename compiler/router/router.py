@@ -164,9 +164,10 @@ class router(router_tech):
         # It must be done after blockages to ensure no DRCs between expanded pins and blocked grids
         for pin in pin_list:
             self.convert_pins(pin)
-        
-        #for pin in pin_list:
-        #    self.combine_adjacent_pins(pin)
+
+        # Combine adjacent pins into pin groups to reduce run-time
+        for pin in pin_list:
+            self.combine_adjacent_pins(pin)
 
         # Separate any adjacent grids of differing net names that overlap
         # Must be done before enclosing pins

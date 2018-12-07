@@ -9,7 +9,7 @@ from pinv import pinv
 
 class pdriver(pgate.pgate):
     """
-    This instantiates an even or odd number of inverters sized for driving a load. 
+    This instantiates an even or odd number of inverters sized for driving a load.
     """
     unique_id = 1
     inv_list = []
@@ -48,11 +48,8 @@ class pdriver(pgate.pgate):
             self.num_inv = len(self.size_list)
         else:
             # find the number of stages
-            c_prev = int(round(self.c_load/self.stage_effort))
-            num_stages = 1
-            while c_prev > 1: #stop when the first stage is 1
-                c_prev = int(round(c_prev/self.stage_effort))
-                num_stages+=1
+            #c_load is a unit inverter fanout, not a capacitance so c_in=1
+            num_stages = int(round(log(self.c_load)/log(4)))
 
             # find inv_num and compute sizes
             if self.neg_polarity:

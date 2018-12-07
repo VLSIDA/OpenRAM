@@ -387,13 +387,13 @@ def import_tech():
         OPTS.temperatures = tech.spice["temperatures"]
 
 
-def print_time(name, now_time, last_time=None):
+def print_time(name, now_time, last_time=None, indentation=2):
     """ Print a statement about the time delta. """
     if last_time:
         time = str(round((now_time-last_time).total_seconds(),1)) + " seconds"
     else:
         time = now_time.strftime('%m/%d/%Y %H:%M:%S')
-    print("** {0}: {1}".format(name,time))
+    print("{0} {1}: {2}".format("*"*indentation,name,time))
 
 
 def report_status():
@@ -410,6 +410,7 @@ def report_status():
         debug.error("Tech name must be specified in config file.")
 
     print("Technology: {0}".format(OPTS.tech_name))
+    print("Total size: {} kbits".format(OPTS.word_size*OPTS.num_words*OPTS.num_banks))
     print("Word size: {0}\nWords: {1}\nBanks: {2}".format(OPTS.word_size,
                                                           OPTS.num_words,
                                                           OPTS.num_banks))

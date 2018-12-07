@@ -123,16 +123,6 @@ class router(router_tech):
             debug.info(3,"Retrieved pin {}".format(str(pin)))
         
 
-        
-    def find_pins(self,pin_name):
-        """ 
-        Finds the pin shapes and converts to tracks. 
-        Pin can either be a label or a location,layer pair: [[x,y],layer].
-        """
-        debug.info(1,"Finding pins for {}.".format(pin_name))
-        self.retrieve_pins(pin_name)
-        self.analyze_pins(pin_name)
-
     def find_blockages(self):
         """
         Iterate through all the layers and write the obstacles to the routing grid.
@@ -143,7 +133,6 @@ class router(router_tech):
         for layer in [self.vert_layer_number,self.horiz_layer_number]:
             self.retrieve_blockages(layer)
             
-            
     def find_pins_and_blockages(self, pin_list):
         """
         Find the pins and blockages in the design 
@@ -151,32 +140,53 @@ class router(router_tech):
         # This finds the pin shapes and sorts them into "groups" that are connected
         # This must come before the blockages, so we can not count the pins themselves
         # as blockages.
-        for pin in pin_list:
-            self.find_pins(pin)
+        start_time = datetime.now()
+        for pin_name in pin_list:
+            self.retrieve_pins(pin_name)
+        print_time("Retrieving pins",datetime.now(), start_time, 4)
+        
+        start_time = datetime.now()
+        for pin_name in pin_list:
+            self.analyze_pins(pin_name)
+        print_time("Analyzing pins",datetime.now(), start_time, 4)
 
         # This will get all shapes as blockages and convert to grid units
         # This ignores shapes that were pins
+        start_time = datetime.now()
         self.find_blockages()
+        print_time("Finding blockages",datetime.now(), start_time, 4)
 
         # Convert the blockages to grid units
+        start_time = datetime.now()
         self.convert_blockages()
+        print_time("Converting blockages",datetime.now(), start_time, 4)
         
         # This will convert the pins to grid units
         # It must be done after blockages to ensure no DRCs between expanded pins and blocked grids
+        start_time = datetime.now()
         for pin in pin_list:
             self.convert_pins(pin)
+        print_time("Converting pins",datetime.now(), start_time, 4)
 
         # Combine adjacent pins into pin groups to reduce run-time
-        for pin in pin_list:
-            self.combine_adjacent_pins(pin)
+        # by reducing the number of maze routes.
+        # This algorithm is > O(n^2) so remove it for now
+        # start_time = datetime.now()
+        # for pin in pin_list:
+        #     self.combine_adjacent_pins(pin)
+        # print_time("Combining adjacent pins",datetime.now(), start_time, 4)
+
 
         # Separate any adjacent grids of differing net names that overlap
         # Must be done before enclosing pins
+        start_time = datetime.now()
         self.separate_adjacent_pins(0)
+        print_time("Separating adjacent pins",datetime.now(), start_time, 4)
         
         # Enclose the continguous grid units in a metal rectangle to fix some DRCs
+        start_time = datetime.now()
         self.enclose_pins()
-
+        print_time("Enclosing pins",datetime.now(), start_time, 4)
         
     def combine_adjacent_pins(self, pin_name):
         """

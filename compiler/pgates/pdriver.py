@@ -13,25 +13,25 @@ class pdriver(pgate.pgate):
     """
     unique_id = 1
 
-    def __init__(self, height=None, name="", neg_polarity=False, c_load=8, size_list = []):
+    def __init__(self, neg_polarity=False, fanout_size=8, size_list = [], height=None, name=""):
 
         self.stage_effort = 4
-        self.row_height = height 
+        self.height = height 
         self.neg_polarity = neg_polarity
         self.size_list = size_list
-        self.c_load = c_load
+        self.fanout_size = fanout_size
 
-        if len(self.size_list) > 0 and (self.c_load != 8 or self.neg_polarity):
-            raise Exception("Cannot specify both size_list and neg_polarity or c_load.")
-        
-        self.compute_sizes()
-
+        if len(self.size_list) > 0 and (self.fanout_size != 8 or self.neg_polarity):
+            debug.error("Cannot specify both size_list and neg_polarity or fanout_size.", -1)
+ 
         if name=="":
-            name = "pdriver_{0}_{1}_".format(self.num_inv, pdriver.unique_id)
-            pdriver.unique_id += 1
-
+            name = "pdriver_{}".format(pdriver.unique_id)
+            pdriver.unique_id += 1               
+        
         pgate.pgate.__init__(self, name) 
         debug.info(1, "Creating {}".format(self.name))
+        
+        self.compute_sizes()
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -45,8 +45,8 @@ class pdriver(pgate.pgate):
             self.num_inv = len(self.size_list)
         else:
             # find the number of stages
-            #c_load is a unit inverter fanout, not a capacitance so c_in=1
-            num_stages = int(round(log(self.c_load)/log(4)))
+            #fanout_size is a unit inverter fanout, not a capacitance so c_in=1
+            num_stages = max(1,int(round(log(self.fanout_size)/log(4))))
 
             # find inv_num and compute sizes
             if self.neg_polarity:
@@ -65,30 +65,35 @@ class pdriver(pgate.pgate):
         self.calc_size_list = []
         self.num_inv = num_stages
         # compute sizes
-        c_prev = self.c_load
+        fanout_size_prev = self.fanout_size
         for x in range(self.num_inv-1,-1,-1):
-            c_prev = int(round(c_prev/self.stage_effort))
-            self.calc_size_list.append(c_prev)
+            fanout_size_prev = int(round(fanout_size_prev/self.stage_effort))
+            self.calc_size_list.append(fanout_size_prev)
 
 
     def diff_polarity(self, num_stages):
         self.calc_size_list = []
         # find which delay is smaller
-        delay_below = ((num_stages-1)*(self.c_load**(1/num_stages-1))) + num_stages-1
-        delay_above = ((num_stages+1)*(self.c_load**(1/num_stages+1))) + num_stages+1
-        if (delay_above < delay_below):
-            # recompute stage_effort for this delay
+        if (num_stages > 1):
+            delay_below = ((num_stages-1)*(self.fanout_size**(1/num_stages-1))) + num_stages-1
+            delay_above = ((num_stages+1)*(self.fanout_size**(1/num_stages+1))) + num_stages+1
+            if (delay_above < delay_below):
+                # recompute stage_effort for this delay
+                self.num_inv = num_stages+1
+                polarity_stage_effort = self.fanout_size**(1/self.num_inv)
+            else:
+                self.num_inv = num_stages-1
+                polarity_stage_effort = self.fanout_size**(1/self.num_inv)
+        else: # num_stages is 1, can't go to 0
             self.num_inv = num_stages+1
-            polarity_stage_effort = self.c_load**(1/self.num_inv)
-        else:
-            self.num_inv = num_stages-1
-            polarity_stage_effort = self.c_load**(1/self.num_inv)
+            polarity_stage_effort = self.fanout_size**(1/self.num_inv)
+
         
         # compute sizes
-        c_prev = self.c_load
+        fanout_size_prev = self.fanout_size
         for x in range(self.num_inv-1,-1,-1):
-            c_prev = int(round(c_prev/polarity_stage_effort))
-            self.calc_size_list.append(c_prev)
+            fanout_size_prev = int(round(fanout_size_prev/polarity_stage_effort))
+            self.calc_size_list.append(fanout_size_prev)
 
 
     def create_netlist(self):
@@ -118,11 +123,11 @@ class pdriver(pgate.pgate):
         self.inv_list = []
         if len(self.size_list) > 0: # size list specified
             for x in range(len(self.size_list)):
-                self.inv_list.append(pinv(size=self.size_list[x], height=self.row_height))
+                self.inv_list.append(pinv(size=self.size_list[x], height=self.height))
                 self.add_mod(self.inv_list[x])
         else: # find inv sizes
             for x in range(len(self.calc_size_list)):
-                self.inv_list.append(pinv(size=self.calc_size_list[x], height=self.row_height))
+                self.inv_list.append(pinv(size=self.calc_size_list[x], height=self.height))
                 self.add_mod(self.inv_list[x])
     
     

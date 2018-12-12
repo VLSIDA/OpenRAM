@@ -50,7 +50,7 @@ class trim_spice():
 
         # Split up the address and convert to an int
         wl_address = int(address[self.col_addr_size:],2)
-        if self.col_addr_size>1:
+        if self.col_addr_size>0:
             col_address = int(address[0:self.col_addr_size],2)
         else:
             col_address = 0

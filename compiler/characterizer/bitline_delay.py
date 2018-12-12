@@ -19,7 +19,7 @@ class bitline_delay(delay):
 
     def __init__(self, sram, spfile, corner):
         delay.__init__(self,sram,spfile,corner)
-        self.period = 1
+        self.period = tech.spice["feasible_period"]
         self.is_bitline_measure = True
     
     def create_measurement_names(self):
@@ -38,17 +38,75 @@ class bitline_delay(delay):
             self.sf.write("* {}\n".format(comment))
             
         for read_port in self.targ_read_ports:
-           self.write_bitline_measures_read_port(read_port)
-
+           self.write_bitline_measures_read_port(read_port)       
+           
     def write_bitline_measures_read_port(self, port):
         """
         Write the measure statements to quantify the delay and power results for a read port.
         """
         # add measure statements for delays/slews
-        for dname in self.delay_meas_names:
-            meas_values = self.get_delay_meas_values(dname, port)
-            self.stim.gen_meas_delay(*meas_values)
+        measure_bit = 0
+        self.stim.gen_meas_find_voltage("bl_volt", "Xsram.s_en0", "Xsram.Xbank0.bl_{}".format(measure_bit), .5, "RISE", 3*self.period)
+        self.stim.gen_meas_find_voltage("br_volt", "Xsram.s_en0", "Xsram.Xbank0.br_{}".format(measure_bit), .5, "RISE", 3*self.period)
     
+    def gen_test_cycles_one_port(self, read_port, write_port):
+        """Sets a list of key time-points [ns] of the waveform (each rising edge)
+        of the cycles to do a timing evaluation of a single port """
+
+        # Create the inverse address for a scratch address
+        inverse_address = self.calculate_inverse_address()
+
+        # For now, ignore data patterns and write ones or zeros
+        data_ones = "1"*self.word_size
+        data_zeros = "0"*self.word_size
+        
+        if self.t_current == 0:
+            self.add_noop_all_ports("Idle cycle (no positive clock edge)",
+                      inverse_address, data_zeros)
+        
+        self.add_write("W data 1 address {}".format(inverse_address),
+                       inverse_address,data_ones,write_port) 
+
+        self.add_write("W data 0 address {} to write value".format(self.probe_address),
+                       self.probe_address,data_zeros,write_port)
+        self.measure_cycles[write_port]["write0"] = len(self.cycle_times)-1
+        
+        # This also ensures we will have a H->L transition on the next read
+        self.add_read("R data 1 address {} to set DOUT caps".format(inverse_address),
+                      inverse_address,data_zeros,read_port) 
+
+        self.add_read("R data 0 address {} to check W0 worked".format(self.probe_address),
+                      self.probe_address,data_zeros,read_port)
+    
+    def run_delay_simulation(self):
+        """
+        This tries to simulate a period and checks if the result works. If
+        so, it returns True and the delays, slews, and powers.  It
+        works on the trimmed netlist by default, so powers do not
+        include leakage of all cells.
+        """
+        #Sanity Check
+        debug.check(self.period > 0, "Target simulation period non-positive") 
+        
+        result = [{} for i in self.all_ports]
+        # Checking from not data_value to data_value
+        self.write_delay_stimulus()
+
+        self.stim.run_sim() #running sim prodoces spice output file.
+          
+        for port in self.targ_read_ports:  
+            bitlines_meas_vals = {}
+            for mname in self.bitline_meas_names:
+                bitlines_meas_vals[mname] = parse_spice_list("timing", mname)
+            #Check that power parsing worked.
+            for name, val in bitlines_meas_vals.items():
+                if type(val)!=float:
+                    debug.error("Failed to Parse Bitline Values:\n\t\t{0}".format(bitlines_meas_vals),1) #Printing the entire dict looks bad.
+            result[port].update(bitlines_meas_vals)
+        
+          
+        # The delay is from the negative edge for our SRAM
+        return (True,result)
     
     def analyze(self, probe_address, probe_data, slews, loads):
         """Measures the bitline swing of the differential bitlines (bl/br) at 50% s_en """

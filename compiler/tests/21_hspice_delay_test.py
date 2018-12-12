@@ -23,13 +23,12 @@ class timing_sram_test(openram_test):
         from importlib import reload
         import characterizer
         reload(characterizer)
-        from characterizer import delay
+        from characterizer import delay, bitline_delay
         from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=1,
                         num_words=16,
                         num_banks=1)
-        c.words_per_row=1
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
         s = sram(c, name="sram1")
 
@@ -42,10 +41,12 @@ class timing_sram_test(openram_test):
 
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         d = delay(s.s, tempspice, corner)
+        bl = bitline_delay(s.s, tempspice, corner)
         import tech
         loads = [tech.spice["msflop_in_cap"]*4]
         slews = [tech.spice["rise_time"]*2]
         data, port_data = d.analyze(probe_address, probe_data, slews, loads)
+        #bitline_swing = bl.analyze(probe_address, probe_data, slews, loads)
         #Combine info about port into all data
         data.update(port_data[0])
         

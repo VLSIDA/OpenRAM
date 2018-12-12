@@ -216,6 +216,16 @@ class stimuli():
                                             targ_dir,
                                             targ_td))
     
+    def gen_meas_find_voltage(self, meas_name, trig_name, targ_name, trig_val, trig_dir, trig_td):
+        """ Creates the .meas statement for the measurement of delay """
+        measure_string=".meas tran {0} FIND v({1}) WHEN v({2})={3}v {4}=1 TD={5}n \n\n"
+        self.sf.write(measure_string.format(meas_name,
+                                            targ_name,
+                                            trig_name,
+                                            trig_val,
+                                            trig_dir,
+                                            trig_td))
+    
     def gen_meas_power(self, meas_name, t_initial, t_final):
         """ Creates the .meas statement for the measurement of avg power """
         # power mea cmd is different in different spice:

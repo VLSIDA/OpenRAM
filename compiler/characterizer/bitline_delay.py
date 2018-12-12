@@ -45,9 +45,19 @@ class bitline_delay(delay):
         Write the measure statements to quantify the delay and power results for a read port.
         """
         # add measure statements for delays/slews
-        measure_bit = 0
-        self.stim.gen_meas_find_voltage("bl_volt", "Xsram.s_en0", "Xsram.Xbank0.bl_{}".format(measure_bit), .5, "RISE", 3*self.period)
-        self.stim.gen_meas_find_voltage("br_volt", "Xsram.s_en0", "Xsram.Xbank0.br_{}".format(measure_bit), .5, "RISE", 3*self.period)
+        measure_bitline = self.get_data_bit_column_number(self.probe_address, self.probe_data)
+        debug.info(2, "Measuring bitline column={}".format(measure_bitline))
+        for port in self.targ_read_ports:
+            if len(self.all_ports) == 1: #special naming case for single port sram bitlines
+                bitline_port = ""
+            else:
+                bitline_port = str(port)
+                
+            sen_name = "Xsram.s_en{}".format(port)
+            bl_name = "Xsram.Xbank0.bl{}_{}".format(bitline_port, measure_bitline)
+            br_name = "Xsram.Xbank0.br{}_{}".format(bitline_port, measure_bitline)
+            self.stim.gen_meas_find_voltage("bl_volt", sen_name, bl_name, .5, "RISE", self.cycle_times[self.measure_cycles[port]["read0"]])
+            self.stim.gen_meas_find_voltage("br_volt", sen_name, br_name, .5, "RISE", self.cycle_times[self.measure_cycles[port]["read0"]])
     
     def gen_test_cycles_one_port(self, read_port, write_port):
         """Sets a list of key time-points [ns] of the waveform (each rising edge)
@@ -74,10 +84,20 @@ class bitline_delay(delay):
         # This also ensures we will have a H->L transition on the next read
         self.add_read("R data 1 address {} to set DOUT caps".format(inverse_address),
                       inverse_address,data_zeros,read_port) 
-
+        self.measure_cycles[read_port]["read1"] = len(self.cycle_times)-1
+                      
         self.add_read("R data 0 address {} to check W0 worked".format(self.probe_address),
                       self.probe_address,data_zeros,read_port)
-    
+        self.measure_cycles[read_port]["read0"] = len(self.cycle_times)-1
+    def get_data_bit_column_number(self, probe_address, probe_data):
+        """Calculates bitline column number of data bit under test using bit position and mux size"""
+        if self.sram.col_addr_size>0:
+            col_address = int(probe_address[0:self.sram.col_addr_size],2)
+        else:
+            col_address = 0
+        bl_column = int(self.sram.words_per_row*probe_data + col_address)
+        return bl_column
+        
     def run_delay_simulation(self):
         """
         This tries to simulate a period and checks if the result works. If
@@ -114,15 +134,15 @@ class bitline_delay(delay):
         self.load=max(loads)
         self.slew=max(slews)
         
-        port = 0
+        read_port = self.read_ports[0] #only test the first read port
         bitline_swings = {}
-        self.targ_read_ports = [self.read_ports[port]]
-        self.targ_write_ports = [self.write_ports[port]]
+        self.targ_read_ports = [read_port]
+        self.targ_write_ports = [self.write_ports[0]]
         debug.info(1,"Bitline swing test: corner {}".format(self.corner))
         (success, results)=self.run_delay_simulation()
         debug.check(success, "Bitline Failed: period {}".format(self.period))
         for mname in self.bitline_meas_names:
-            bitline_swings[mname] = results[port][mname]
+            bitline_swings[mname] = results[read_port][mname]
         debug.info(1,"Bitline values (bl/br): {}".format(bitline_swings))
         return bitline_swings
 

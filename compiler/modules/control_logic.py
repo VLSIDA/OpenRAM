@@ -135,10 +135,10 @@ class control_logic(design.design):
         # FIXME: These should be tuned according to the additional size parameters
         delay_fanout = 3 # This can be anything >=2
         # Delay stages Must be non-inverting
-        if self.words_per_row >= 8:
+        if self.words_per_row >= 4:
             delay_stages = 8
-        elif self.words_per_row == 4:
-            delay_stages = 8
+        elif self.words_per_row == 2:
+            delay_stages = 6
         else:
             delay_stages = 4
             

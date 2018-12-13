@@ -10,6 +10,7 @@ from globals import OPTS, print_time
 
 from sram_base import sram_base
 from bank import bank
+from contact import m2m3
 from dff_buf_array import dff_buf_array
 from dff_array import dff_array
 
@@ -202,9 +203,8 @@ class sram_1bank(sram_base):
                                 offset=clk_steiner_pos,
                                 rotate=90)
             
-            # Note, the via to the control logic is taken care of when we route
-            # the control logic to the bank
-            self.add_wire(("metal3","via2","metal2"),[row_addr_clk_pos, mid1_pos, clk_steiner_pos, control_clk_buf_pos])
+            # Note, the via to the control logic is taken care of above
+            self.add_wire(("metal3","via2","metal2"),[row_addr_clk_pos, mid1_pos, clk_steiner_pos])
         
             if self.col_addr_dff:
                 dff_clk_pin = self.col_addr_dff_insts[port].get_pin("clk")
@@ -216,6 +216,9 @@ class sram_1bank(sram_base):
                 data_dff_clk_pin = self.data_dff_insts[port].get_pin("clk")
                 data_dff_clk_pos = data_dff_clk_pin.center()
                 mid_pos = vector(clk_steiner_pos.x, data_dff_clk_pos.y)
+                # In some designs, the steiner via will be too close to the mid_pos via
+                # so make the wire as wide as the contacts
+                self.add_path("metal2",[mid_pos, clk_steiner_pos], width=max(m2m3.width,m2m3.height))
                 self.add_wire(("metal3","via2","metal2"),[data_dff_clk_pos, mid_pos, clk_steiner_pos])
 
             

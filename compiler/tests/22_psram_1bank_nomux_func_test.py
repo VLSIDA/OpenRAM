@@ -36,6 +36,7 @@ class psram_1bank_nomux_func_test(openram_test):
                         num_words=32,
                         num_banks=1)
         c.words_per_row=1
+        c.recompute_sizes()
         debug.info(1, "Functional test for {}rw,{}r,{}w psram with {} bit words, {} words, {} words per row, {} banks".format(OPTS.num_rw_ports,
                                                                                                                               OPTS.num_r_ports,
                                                                                                                               OPTS.num_w_ports,

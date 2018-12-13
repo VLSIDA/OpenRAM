@@ -65,9 +65,12 @@ class supply_router(router):
             self.create_routing_grid()
 
         # Get the pin shapes
+        start_time = datetime.now()
         self.find_pins_and_blockages([self.vdd_name, self.gnd_name])
+        print_time("Finding pins and blockages",datetime.now(), start_time, 3)
 
         # Add the supply rails in a mesh network and connect H/V with vias
+        start_time = datetime.now()
         # Block everything
         self.prepare_blockages(self.gnd_name)
         # Determine the rail locations
@@ -77,15 +80,19 @@ class supply_router(router):
         self.prepare_blockages(self.vdd_name)
         # Determine the rail locations
         self.route_supply_rails(self.vdd_name,1)
-        
+        print_time("Routing supply rails",datetime.now(), start_time, 3)
+
+        start_time = datetime.now()
         self.route_simple_overlaps(vdd_name)
         self.route_simple_overlaps(gnd_name)
+        print_time("Simple overlap routing",datetime.now(), start_time, 3)
         
         # Route the supply pins to the supply rails
         # Route vdd first since we want it to be shorter
+        start_time = datetime.now()
         self.route_pins_to_rails(vdd_name)
         self.route_pins_to_rails(gnd_name)
-
+        print_time("Maze routing supplies",datetime.now(), start_time, 3)
         #self.write_debug_gds("final.gds",False)  
         
         return True
@@ -101,7 +108,7 @@ class supply_router(router):
 
         # These are the wire tracks
         wire_tracks = self.supply_rail_tracks[pin_name]
-        
+        routed_count=0
         for pg in self.pin_groups[pin_name]:
             if pg.is_routed():
                 continue
@@ -109,6 +116,7 @@ class supply_router(router):
             # First, check if we just overlap, if so, we are done.
             overlap_grids = wire_tracks & pg.grids
             if len(overlap_grids)>0:
+                routed_count += 1
                 pg.set_routed()
                 continue
             
@@ -116,7 +124,7 @@ class supply_router(router):
             #pg.create_simple_overlap_enclosure(pg.grids)
             #pg.add_enclosure(self.cell)
 
-
+        debug.info(1,"Routed {} simple overlap pins".format(routed_count))
     
     def finalize_supply_rails(self, name):
         """
@@ -226,9 +234,9 @@ class supply_router(router):
         min_yoffset = self.rg.ll.y
         min_xoffset = self.rg.ll.x
 
-        start_offset = min_yoffset + supply_number
         
         # Horizontal supply rails
+        start_offset = min_yoffset + supply_number
         for offset in range(start_offset, max_yoffset, 2):
             # Seed the function at the location with the given width
             wave = [vector3d(min_xoffset,offset,0)]
@@ -243,7 +251,7 @@ class supply_router(router):
                     wave = added_rail.neighbor(direction.EAST)
 
         # Vertical supply rails
-        max_offset = self.rg.ur.x
+        start_offset = min_xoffset + supply_number
         for offset in range(start_offset, max_xoffset, 2):
             # Seed the function at the location with the given width
             wave = [vector3d(offset,min_yoffset,1)]
@@ -366,8 +374,8 @@ class supply_router(router):
         """
 
         remaining_components = sum(not x.is_routed() for x in self.pin_groups[pin_name])
-        debug.info(1,"Routing {0} with {1} pin components to route.".format(pin_name,
-                                                                            remaining_components))
+        debug.info(1,"Maze routing {0} with {1} pin components to connect.".format(pin_name,
+                                                                                   remaining_components))
 
         for index,pg in enumerate(self.pin_groups[pin_name]):
             if pg.is_routed():

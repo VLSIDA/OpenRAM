@@ -14,7 +14,7 @@ class sram_config:
         # This will get over-written when we determine the organization
         self.words_per_row = None
 
-        # Move the module names to this?
+        self.compute_sizes()
         
 
     def set_local_config(self, module):
@@ -54,6 +54,20 @@ class sram_config:
             self.tentative_num_rows = self.num_bits_per_bank / (self.words_per_row*self.word_size)
             self.words_per_row = self.amend_words_per_row(self.tentative_num_rows, self.words_per_row)
 
+        debug.info(1,"Words per row: {}".format(self.words_per_row))
+        self.recompute_sizes()
+
+    def recompute_sizes(self):
+        """ 
+        Calculate the auxiliary values assuming fixed number of words per row. 
+        This can be called multiple times from the unit test when we reconfigure an 
+        SRAM for testing.
+        """
+
+        # If the banks changed
+        self.num_words_per_bank = self.num_words/self.num_banks
+        self.num_bits_per_bank = self.word_size*self.num_words_per_bank
+        
         # Fix the number of columns and rows
         self.num_cols = int(self.words_per_row*self.word_size)
         self.num_rows = int(self.num_words_per_bank/self.words_per_row)
@@ -64,7 +78,6 @@ class sram_config:
         self.bank_addr_size = self.col_addr_size + self.row_addr_size
         self.addr_size = self.bank_addr_size + int(log(self.num_banks, 2))
 
-        debug.info(1,"Words per row: {}".format(self.words_per_row))
 
     def estimate_words_per_row(self,tentative_num_cols, word_size):
         """
@@ -74,10 +87,14 @@ class sram_config:
 
         if tentative_num_cols < 1.5*word_size:
             return 1
-        elif tentative_num_cols > 3*word_size:
+        elif tentative_num_cols < 3*word_size:
+            return 2
+        elif tentative_num_cols < 6*word_size:
             return 4
         else:
-            return 2
+            if tentative_num_cols > 16*word_size:
+                debug.warning("Reaching column mux size limit. Consider increasing above 8-way.")
+            return 8
 
     def amend_words_per_row(self,tentative_num_rows, words_per_row):
         """

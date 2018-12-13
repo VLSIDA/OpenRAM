@@ -14,8 +14,6 @@ class sram():
     """
     def __init__(self, sram_config, name):
 
-        #sram_config.words_per_row = 1 #Disables column mux generation
-        sram_config.compute_sizes()
         sram_config.set_local_config(self)
         
         # reset the static duplicate name checker for unit tests
@@ -107,13 +105,21 @@ class sram():
                 print("Trimming netlist to speed up characterization.")
         lib(out_dir=OPTS.output_path, sram=self.s, sp_file=sp_file)
         print_time("Characterization", datetime.datetime.now(), start_time)
-        
+       
+
+        # Write the config file
+        start_time = datetime.datetime.now()
+        from shutil import copyfile
+        copyfile(OPTS.config_file + '.py', OPTS.output_path + OPTS.output_name + '.py')
+        print("Config: writing to {0}".format(OPTS.output_path + OPTS.output_name + '.py'))
+        print_time("Config", datetime.datetime.now(), start_time)
+
         # Write the datasheet
         start_time = datetime.datetime.now()
         from datasheet_gen import datasheet_gen
         dname = OPTS.output_path + self.s.name + ".html"
         print("Datasheet: writing to {0}".format(dname))
-        datasheet_gen.datasheet_write(dname)
+        datasheet_gen.datasheet_write(self.s,dname)
         print_time("Datasheet", datetime.datetime.now(), start_time)
 
         # Write a verilog model

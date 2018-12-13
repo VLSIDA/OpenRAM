@@ -114,6 +114,11 @@ def check_versions():
     except:
         OPTS.datasheet_gen = 0
 
+    try:
+        import coverage
+        OPTS.coverage = 1
+    except:
+        OPTS.coverage = 0
 
 def init_openram(config_file, is_unit_test=True):
     """Initialize the technology, paths, simulators, etc."""
@@ -200,6 +205,7 @@ def read_config(config_file, is_unit_test=True):
     config_file = re.sub(r'\.py$', "", config_file)
     # Expand the user if it is used
     config_file = os.path.expanduser(config_file)
+    OPTS.config_file = config_file
     # Add the path to the system path so we can import things in the other directory
     dir_name = os.path.dirname(config_file)
     file_name = os.path.basename(config_file)
@@ -247,7 +253,7 @@ def read_config(config_file, is_unit_test=True):
                                                          OPTS.num_words,
                                                          ports,
                                                          OPTS.tech_name)
-        
+    
 
         
 def end_openram():
@@ -387,13 +393,17 @@ def import_tech():
         OPTS.temperatures = tech.spice["temperatures"]
 
 
-def print_time(name, now_time, last_time=None):
+def print_time(name, now_time, last_time=None, indentation=2):
     """ Print a statement about the time delta. """
-    if last_time:
-        time = str(round((now_time-last_time).total_seconds(),1)) + " seconds"
-    else:
-        time = now_time.strftime('%m/%d/%Y %H:%M:%S')
-    print("** {0}: {1}".format(name,time))
+    global OPTS
+    
+    # Don't print during testing
+    if not OPTS.is_unit_test or OPTS.debug_level>0:
+        if last_time:
+            time = str(round((now_time-last_time).total_seconds(),1)) + " seconds"
+        else:
+            time = now_time.strftime('%m/%d/%Y %H:%M:%S')
+        print("{0} {1}: {2}".format("*"*indentation,name,time))
 
 
 def report_status():
@@ -410,9 +420,13 @@ def report_status():
         debug.error("Tech name must be specified in config file.")
 
     print("Technology: {0}".format(OPTS.tech_name))
+    print("Total size: {} kbits".format(OPTS.word_size*OPTS.num_words*OPTS.num_banks))
     print("Word size: {0}\nWords: {1}\nBanks: {2}".format(OPTS.word_size,
                                                           OPTS.num_words,
                                                           OPTS.num_banks))
+    print("RW ports: {0}\nR-only ports: {1}\nW-only ports: {2}".format(OPTS.num_rw_ports,
+                                                                       OPTS.num_r_ports,
+                                                                       OPTS.num_w_ports))
     if OPTS.netlist_only:
         print("Netlist only mode (no physical design is being done).")
     

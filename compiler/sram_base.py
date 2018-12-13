@@ -80,7 +80,7 @@ class sram_base(design):
         
 
         if not OPTS.is_unit_test:
-            print_time("Netlisting",datetime.now(), start_time)
+            print_time("Submodules",datetime.now(), start_time)
 
         
     def create_layout(self):

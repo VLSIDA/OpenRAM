@@ -31,6 +31,7 @@ class sram_1bank_2mux_func_test(openram_test):
                         num_words=64,
                         num_banks=1)
         c.words_per_row=2
+        c.recompute_sizes()
         debug.info(1, "Functional test for sram with {} bit words, {} words, {} words per row, {} banks".format(c.word_size,
                                                                                                                 c.num_words,
                                                                                                                 c.words_per_row,

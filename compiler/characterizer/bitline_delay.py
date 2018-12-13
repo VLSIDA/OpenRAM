@@ -89,6 +89,7 @@ class bitline_delay(delay):
         self.add_read("R data 0 address {} to check W0 worked".format(self.probe_address),
                       self.probe_address,data_zeros,read_port)
         self.measure_cycles[read_port]["read0"] = len(self.cycle_times)-1
+        
     def get_data_bit_column_number(self, probe_address, probe_data):
         """Calculates bitline column number of data bit under test using bit position and mux size"""
         if self.sram.col_addr_size>0:
@@ -128,6 +129,44 @@ class bitline_delay(delay):
         # The delay is from the negative edge for our SRAM
         return (True,result)
     
+    def check_bitline_all_results(self, results):
+        """Checks the bitline values measured for each tested port"""
+        for port in self.targ_read_ports:
+            self.check_bitline_port_results(results[port])
+  
+    def check_bitline_port_results(self, port_results)
+        """Performs three different checks for the bitline values: functionality, bitline swing from vdd, and differential bit swing"""
+        bl_volt, br_volt = port_results["bl_volt"], port_results["br_volt"]
+        self.check_functionality(bl_volt,br_volt)
+        self.check_swing_from_vdd(bl_volt,br_volt)
+        self.check_differential_swing(bl_volt,br_volt)
+        
+    def check_functionality(self, bl_volt, br_volt):
+        """Checks whether the read failed or not. Measured values are hardcoded with the intention of reading a 0."""
+        if bl_volt > br_volt:
+            debug.error("Read failure. Value 1 was read instead of 0.",1)
+            
+    def check_swing_from_vdd(self, bl_volt, br_volt):
+        """Checks difference on discharging bitline from VDD to see if it is within margin of the RBL height parameter."""
+        if bl_volt < br_volt:
+            discharge_volt = bl_volt
+        else:
+            discharge_volt = br_volt
+        desired_bl_volt = tech.parameter["rbl_height_percentage"]*self.vdd_voltage
+        debug.info(1, "Active bitline={:.3f}v, Desired bitline={:.3f}v".format(discharge_volt,desired_bl_volt))
+        vdd_error_margin = .2 #20% of vdd margin for bitline, a little high for now.
+        if abs(discharge_volt - desired_bl_volt) > vdd_error_margin*self.vdd_voltage:
+            debug.warning("Bitline voltage is not within {}% Vdd margin. Delay chain/RBL could need resizing.".format(vdd_error_margin))
+    
+    def check_differential_swing(self, bl_volt, br_volt):
+        """This check looks at the difference between the bitline voltages. This needs to be large enough to prevent
+           sensing errors."""
+        bitline_swing = abs(bl_volt-br_volt)
+        debug.info(1,"Bitline swing={:.3f}v".format(bitline_swing))
+        vdd_error_margin = .2 #20% of vdd margin for bitline, a little high for now.
+        if bitline_swing < vdd_error_margin*self.vdd_voltage:
+            debug.warning("Bitline swing less than {}% Vdd margin. Sensing errors more likely to occur.".format(vdd_error_margin))
+    
     def analyze(self, probe_address, probe_data, slews, loads):
         """Measures the bitline swing of the differential bitlines (bl/br) at 50% s_en """
         self.set_probe(probe_address, probe_data)
@@ -141,10 +180,10 @@ class bitline_delay(delay):
         debug.info(1,"Bitline swing test: corner {}".format(self.corner))
         (success, results)=self.run_delay_simulation()
         debug.check(success, "Bitline Failed: period {}".format(self.period))
-        for mname in self.bitline_meas_names:
-            bitline_swings[mname] = results[read_port][mname]
-        debug.info(1,"Bitline values (bl/br): {}".format(bitline_swings))
-        return bitline_swings
+        debug.info(1,"Bitline values (bl/br): {}".format(results[read_port]))
+        self.check_bitline_all_results(results)
+        
+        return results
 
         
     

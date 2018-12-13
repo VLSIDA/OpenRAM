@@ -300,6 +300,7 @@ parameter["6tcell_wl_cin"] = 2
 parameter["min_inv_para_delay"] = .5
 parameter["sa_en_pmos_size"] = 24*_lambda_
 parameter["sa_en_nmos_size"] = 9*_lambda_
+parameter["rbl_height_percentage"] = .5     #Height of RBL compared to bitcell array 
 
 ###################################################
 ##END Spice Simulation Parameters

@@ -111,7 +111,7 @@ class control_logic(design.design):
             replica_bitline = getattr(c, OPTS.replica_bitline)
             
             delay_stages_heuristic, delay_fanout_heuristic = self.get_heuristic_delay_chain_size()
-            bitcell_loads = int(math.ceil(self.num_rows / 2.0))
+            bitcell_loads = int(math.ceil(self.num_rows * parameter["rbl_height_percentage"]))
             self.replica_bitline = replica_bitline([delay_fanout_heuristic]*delay_stages_heuristic, bitcell_loads, name="replica_bitline_"+self.port_type)
             
             if self.sram != None:

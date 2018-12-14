@@ -48,10 +48,10 @@ class timing_sram_test(openram_test):
         loads = [tech.spice["msflop_in_cap"]*4]
         slews = [tech.spice["rise_time"]*2]
         data, port_data = d.analyze(probe_address, probe_data, slews, loads)
-        #bitline_swing = bl.analyze(probe_address, probe_data, slews, loads)
+        bitline_data = bl.analyze(probe_address, probe_data, slews, loads)
         #Combine info about port into all data
         data.update(port_data[0])
-        
+        data.update(bitline_data[0])
         if OPTS.tech_name == "freepdk45":
             golden_data = {'delay_hl': [0.2011],
                          'delay_lh': [0.2011],
@@ -62,7 +62,10 @@ class timing_sram_test(openram_test):
                          'slew_hl': [0.10853],
                          'slew_lh': [0.10853],
                          'write0_power': [0.51742],
-                         'write1_power': [0.51095]}
+                         'write1_power': [0.51095],
+                         'volt_bl': 0.045626, 
+                         'volt_br': 1.0709,
+                         'delay_bl_vth': 0.1813}
         elif OPTS.tech_name == "scn4m_subm":
             golden_data = {'delay_hl': [1.3911],
                          'delay_lh': [1.3911],
@@ -73,7 +76,10 @@ class timing_sram_test(openram_test):
                          'slew_hl': [0.7397553],
                          'slew_lh': [0.7397553],
                          'write0_power': [19.4103],
-                         'write1_power': [20.1167]}
+                         'write1_power': [20.1167],
+                         'volt_bl': 1.8329, 
+                         'volt_br': 5.081, 
+                         'delay_bl_vth': 1.1141}
         else:
             self.assertTrue(False) # other techs fail
         # Check if no too many or too few results

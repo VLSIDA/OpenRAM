@@ -28,7 +28,7 @@ class pdriver(pgate.pgate):
             name = "pdriver_{}".format(pdriver.unique_id)
             pdriver.unique_id += 1               
         
-        pgate.pgate.__init__(self, name) 
+        pgate.pgate.__init__(self, name, height) 
         debug.info(1, "Creating {}".format(self.name))
         
         self.compute_sizes()

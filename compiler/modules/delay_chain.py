@@ -219,4 +219,23 @@ class delay_chain(design.design):
                                            start=mid_point,
                                            end=mid_point.scale(1,0))
 
+    def get_cin(self):
+        """Get the enable input ralative capacitance"""
+        #Only 1 input to the delay chain which is connected to an inverter.
+        dc_cin = self.inv.get_cin()
+        return dc_cin        
+
+    def determine_delayed_en_stage_efforts(self, ext_delayed_en_cout, inp_is_rise=True):
+        """Get the stage efforts from the en to s_en. Does not compute the delay for the bitline load."""
+        stage_effort_list = []
+        #Add a stage to the list for every stage in delay chain. Stages only differ in fanout except the last which has an external cout.
+        last_stage_is_rise = inp_is_rise
+        for stage_fanout in self.fanout_list:
+            stage_cout = self.inv.get_cin()*(stage_fanout+1) 
+            if len(stage_effort_list) == len(self.fanout_list)-1: #last stage
+                stage_cout+=ext_delayed_en_cout
+            stage = self.inv.get_effort_stage(stage_cout, last_stage_is_rise)
+            stage_effort_list.append(stage)
+            last_stage_is_rise = stage.is_rise
             
+        return stage_effort_list

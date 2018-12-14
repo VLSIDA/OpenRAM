@@ -22,14 +22,14 @@ class replica_bitline_test(openram_test):
         fanout=4
         rows=13
         debug.info(2, "Testing RBL with {0} FO4 stages, {1} rows".format(stages,rows))
-        a = replica_bitline.replica_bitline(stages,fanout,rows)
+        a = replica_bitline.replica_bitline(stages*[fanout],rows)
         self.local_check(a)
         #debug.error("Exiting...", 1)
         
         stages=8
         rows=100
         debug.info(2, "Testing RBL with {0} FO4 stages, {1} rows".format(stages,rows))
-        a = replica_bitline.replica_bitline(stages,fanout,rows)
+        a = replica_bitline.replica_bitline(stages*[fanout],rows)
         self.local_check(a)
         
         

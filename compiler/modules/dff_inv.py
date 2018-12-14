@@ -150,3 +150,6 @@ class dff_inv(design.design):
         inv1_delay = self.inv1.analytical_delay(slew=dff_delay.slew, load=load) 
         return dff_delay + inv1_delay 
             
+    def get_clk_cin(self):
+        """Return the total capacitance (in relative units) that the clock is loaded by in the dff"""
+        return self.dff.get_clk_cin()

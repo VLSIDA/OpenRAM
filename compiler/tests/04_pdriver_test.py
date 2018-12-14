@@ -11,8 +11,6 @@ import globals
 from globals import OPTS
 import debug
 
-#os.system("chmod u+x 04_pdriver_test.py")
-
 class pdriver_test(openram_test):
 
     def runTest(self):

@@ -140,3 +140,7 @@ class sense_amp_array(design.design):
     def analytical_delay(self, slew, load=0.0):
         return self.amp.analytical_delay(slew=slew, load=load)
         
+    def get_en_cin(self):
+        """Get the relative capacitance of all the sense amp enable connections in the array"""
+        sense_amp_en_cin = self.amp.get_en_cin()
+        return sense_amp_en_cin * self.words_per_row

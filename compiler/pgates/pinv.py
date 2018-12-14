@@ -7,6 +7,7 @@ from vector import vector
 from math import ceil
 from globals import OPTS
 from utils import round_to_grid
+import logical_effort
 
 class pinv(pgate.pgate):
     """
@@ -29,7 +30,8 @@ class pinv(pgate.pgate):
         pinv.unique_id += 1
         pgate.pgate.__init__(self, name, height)
         debug.info(2, "create pinv structure {0} with size of {1}".format(name, size))
-
+        
+        self.size = size
         self.nmos_size = size
         self.pmos_size = beta*size
         self.beta = beta
@@ -281,3 +283,14 @@ class pinv(pgate.pgate):
         c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff
         transition_prob = spice["inv_transition_prob"]
         return transition_prob*(c_load + c_para) 
+
+    def get_cin(self):
+        """Return the capacitance of the gate connection in generic capacitive units relative to the minimum width of a transistor"""
+        return self.nmos_size + self.pmos_size
+        
+    def get_effort_stage(self, cout, inp_is_rise=True):
+        """Returns an object representing the parameters for delay in tau units.
+           Optional is_rise refers to the input direction rise/fall. Input inverted by this stage.
+        """
+        parasitic_delay = 1 
+        return logical_effort.logical_effort(self.size, self.get_cin(), cout, parasitic_delay, not inp_is_rise)

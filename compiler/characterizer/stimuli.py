@@ -216,6 +216,16 @@ class stimuli():
                                             targ_dir,
                                             targ_td))
     
+    def gen_meas_find_voltage(self, meas_name, trig_name, targ_name, trig_val, trig_dir, trig_td):
+        """ Creates the .meas statement for the measurement of delay """
+        measure_string=".meas tran {0} FIND v({1}) WHEN v({2})={3}v {4}=1 TD={5}n \n\n"
+        self.sf.write(measure_string.format(meas_name,
+                                            targ_name,
+                                            trig_name,
+                                            trig_val,
+                                            trig_dir,
+                                            trig_td))
+    
     def gen_meas_power(self, meas_name, t_initial, t_final):
         """ Creates the .meas statement for the measurement of avg power """
         # power mea cmd is different in different spice:
@@ -244,9 +254,10 @@ class stimuli():
             reltol = 0.005 # 0.5%
         else:
             reltol = 0.001 # 0.1%
-            
+        timestep = 10 #ps, was 5ps but ngspice was complaining the timestep was too small in certain tests.
+           
         # UIC is needed for ngspice to converge
-        self.sf.write(".TRAN 5p {0}n UIC\n".format(end_time))
+        self.sf.write(".TRAN {0}p {1}n UIC\n".format(timestep,end_time))
         if OPTS.spice_name == "ngspice":
             # ngspice sometimes has convergence problems if not using gear method
             # which is more accurate, but slower than the default trapezoid method

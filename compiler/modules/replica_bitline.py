@@ -15,12 +15,11 @@ class replica_bitline(design.design):
     line and rows is the height of the replica bit loads.
     """
 
-    def __init__(self, delay_stages, delay_fanout, bitcell_loads, name="replica_bitline"):
+    def __init__(self, delay_fanout_list, bitcell_loads, name="replica_bitline"):
         design.design.__init__(self, name)
 
         self.bitcell_loads = bitcell_loads
-        self.delay_stages = delay_stages
-        self.delay_fanout = delay_fanout
+        self.delay_fanout_list = delay_fanout_list
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -95,7 +94,7 @@ class replica_bitline(design.design):
 
         # FIXME: The FO and depth of this should be tuned
         from delay_chain import delay_chain
-        self.delay_chain = delay_chain([self.delay_fanout]*self.delay_stages)
+        self.delay_chain = delay_chain(self.delay_fanout_list)
         self.add_mod(self.delay_chain)
 
         self.inv = pinv()
@@ -601,4 +600,35 @@ class replica_bitline(design.design):
                            offset=pin.ll(),
                            height=pin.height(),
                            width=pin.width())
-
+                           
+    def get_en_cin(self):
+        """Get the enable input relative capacitance"""
+        #The enable is only connected to the delay, get the cin from that module
+        en_cin = self.delay_chain.get_cin()
+        return en_cin
+        
+    def determine_sen_stage_efforts(self, ext_cout, inp_is_rise=True):
+        """Get the stage efforts from the en to s_en. Does not compute the delay for the bitline load."""
+        stage_effort_list = []
+        #Stage 1 is the delay chain
+        stage1_cout = self.get_delayed_en_cin()
+        stage1 = self.delay_chain.determine_delayed_en_stage_efforts(stage1_cout, inp_is_rise)
+        stage_effort_list += stage1
+        
+        #There is a disconnect between the delay chain and inverter. The rise/fall of the input to the inverter
+        #Will be the negation of the previous stage.
+        last_stage_is_rise = not stage_effort_list[-1].is_rise
+        
+        #The delay chain triggers the enable on the replica bitline (rbl). This is used to track the bitline delay whereas this
+        #model is intended to track every but that. Therefore, the next stage is the inverter after the rbl. 
+        stage2 = self.inv.get_effort_stage(ext_cout, last_stage_is_rise)
+        stage_effort_list.append(stage2)
+        
+        return stage_effort_list
+        
+    def get_delayed_en_cin(self):
+        """Get the fanout capacitance (relative) of the delayed enable from the delay chain."""
+        access_tx_cin = self.access_tx.get_cin()
+        rbc_cin = self.replica_bitcell.get_wl_cin()
+        return access_tx_cin + rbc_cin
+        

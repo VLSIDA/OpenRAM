@@ -263,3 +263,9 @@ class precharge(pgate.pgate):
 
         self.add_path("metal2", [ left_pos, right_pos], self.bl_contact.height)
         
+    def get_en_cin(self):
+        """Get the relative capacitance of the enable in the precharge cell"""    
+        #The enable connect to three pmos gates. They all use the same size pmos.
+        pmos_cin = self.pmos.get_cin()
+        return 3*pmos_cin
+        

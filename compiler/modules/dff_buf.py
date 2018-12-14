@@ -1,6 +1,6 @@
 import debug
 import design
-from tech import drc
+from tech import drc,parameter
 from math import log
 from vector import vector
 from globals import OPTS
@@ -177,3 +177,9 @@ class dff_buf(design.design):
         inv2_delay = self.inv2.analytical_delay(slew=inv1_delay.slew, load=load)
         return dff_delay + inv1_delay + inv2_delay
             
+    def get_clk_cin(self):
+        """Return the total capacitance (in relative units) that the clock is loaded by in the dff"""
+        #This is a handmade cell so the value must be entered in the tech.py file or estimated.
+        #Calculated in the tech file by summing the widths of all the gates and dividing by the minimum width.
+        #FIXME: Dff changed in a past commit. The parameter need to be updated.
+        return parameter["dff_clk_cin"]

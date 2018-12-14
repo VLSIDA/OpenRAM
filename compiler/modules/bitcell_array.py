@@ -204,3 +204,10 @@ class bitcell_array(design.design):
     def input_load(self):
         wl_wire = self.gen_wl_wire()
         return wl_wire.return_input_cap()
+
+    def get_wordline_cin(self):
+        """Get the relative input capacitance from the wordline connections in all the bitcell"""
+        #A single wordline is connected to all the bitcells in a single row meaning the capacitance depends on the # of columns
+        bitcell_wl_cin = self.cell.get_wl_cin()
+        total_cin = bitcell_wl_cin * self.column_size
+        return total_cin

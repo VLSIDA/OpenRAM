@@ -18,12 +18,13 @@ class sram_1bank_8mux_func_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
+        OPTS.trim_netlist = False
         
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
         import characterizer
         reload(characterizer)
-        from characterizer import functional
+        from characterizer import functional, delay
         if not OPTS.spice_exe:
             debug.error("Could not find {} simulator.".format(OPTS.spice_name),-1)
 
@@ -39,13 +40,14 @@ class sram_1bank_8mux_func_test(openram_test):
                                                                                                                 c.words_per_row,
                                                                                                                 c.num_banks))
         s = sram(c, name="sram")
-        tempspice = OPTS.openram_temp + "temp.sp"
         tempspice = OPTS.openram_temp + "temp.sp"        
         s.sp_write(tempspice)
         
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
-        
         f = functional(s.s, tempspice, corner)
+        d = delay(s.s, tempspice, corner)
+        feasible_period = self.find_feasible_test_period(d, s.s, f.load, f.slew)
+        
         f.num_cycles = 10
         (fail, error) = f.run()
         self.assertTrue(fail,error)

@@ -208,14 +208,15 @@ class delay(simulation):
         trig_slew_low = 0.1 * self.vdd_voltage
         targ_slew_high = 0.9 * self.vdd_voltage
         if 'delay' in delay_name:
-            trig_dir="RISE"
             trig_val = half_vdd
             targ_val = half_vdd
             trig_name = trig_clk_name
             if 'lh' in delay_name:
+                trig_dir="RISE" 
                 targ_dir="RISE"
                 trig_td = targ_td = self.cycle_times[self.measure_cycles[port]["read1"]]
             else:
+                trig_dir="FALL" 
                 targ_dir="FALL"
                 trig_td = targ_td = self.cycle_times[self.measure_cycles[port]["read0"]] 
                     
@@ -426,10 +427,9 @@ class delay(simulation):
         #Too much duplicate code here. Try reducing
         for port in self.targ_read_ports:
             debug.info(2, "Check delay values for port {}".format(port))
-            delay_names = ["{0}{1}".format(mname,port) for mname in self.delay_meas_names]
             delay_names = [mname for mname in self.delay_meas_names]
             delays = self.parse_values(delay_names, port, 1e9) # scale delays to ns
-            if not self.check_valid_delays(tuple(delays.values())):
+            if not self.check_valid_delays(delays):
                 return (False,{})
             result[port].update(delays)
             
@@ -478,10 +478,13 @@ class delay(simulation):
         #key=raw_input("press return to continue")
         return (leakage_power*1e3, trim_leakage_power*1e3)
     
-    def check_valid_delays(self, delay_tuple):
+    def check_valid_delays(self, delay_dict):
         """ Check if the measurements are defined and if they are valid. """
-
-        (delay_hl, delay_lh, slew_hl, slew_lh) = delay_tuple
+        #Hard coded names currently
+        delay_hl = delay_dict["delay_hl"]
+        delay_lh = delay_dict["delay_lh"]
+        slew_hl = delay_dict["slew_hl"]
+        slew_lh = delay_dict["slew_lh"]
         period_load_slew_str = "period {0} load {1} slew {2}".format(self.period,self.load, self.slew)
         
         # if it failed or the read was longer than a period
@@ -495,7 +498,8 @@ class delay(simulation):
             
         delays_str = "delay_hl={0} delay_lh={1}".format(delay_hl, delay_lh)
         slews_str = "slew_hl={0} slew_lh={1}".format(slew_hl,slew_lh)
-        if delay_hl>self.period or delay_lh>self.period or slew_hl>self.period or slew_lh>self.period:
+        half_period = self.period/2 #high-to-low delays start at neg. clk edge, so they need to be less than half_period
+        if abs(delay_hl)>half_period or abs(delay_lh)>self.period or abs(slew_hl)>half_period or abs(slew_lh)>self.period:
             debug.info(2,"UNsuccessful simulation (in ns):\n\t\t{0}\n\t\t{1}\n\t\t{2}".format(period_load_slew_str,
                                                                                               delays_str,
                                                                                               slews_str))
@@ -565,6 +569,7 @@ class delay(simulation):
                 
             #Update target
             target_period = 0.5 * (ub_period + lb_period)
+            #key=input("press return to continue")
 
         
     def try_period(self, feasible_delays):
@@ -579,8 +584,14 @@ class delay(simulation):
         
         #Check the values of target readwrite and read ports. Write ports do not produce delays in this current version
         for port in self.targ_read_ports:          
-            delay_port_names = [mname for mname in self.delay_meas_names if "delay" in mname]
-            for dname in delay_port_names: 
+            for dname in self.delay_meas_names: #check that the delays and slews do not degrade with tested period.
+                
+                #FIXME: This is a hack solution to fix the min period search. The slew will always be based on the period when there
+                #is a column mux. Therefore, the checks are skipped for this condition. This is hard to solve without changing the netlist.
+                #Delays/slews based on the period will cause the min_period search to come to the wrong period.
+                if self.sram.col_addr_size>0 and "slew" in dname:
+                    continue
+
                 if not relative_compare(results[port][dname],feasible_delays[port][dname],error_tolerance=0.05):
                     debug.info(2,"Delay too big {0} vs {1}".format(results[port][dname],feasible_delays[port][dname]))
                     return False
@@ -646,18 +657,6 @@ class delay(simulation):
         # slew=0.04
         # self.try_period(target_period, feasible_delay_lh, feasible_delay_hl)
         # sys.exit(1)
-
-        #For debugging, skips characterization and returns dummy values.
-        # char_data = self.get_empty_measure_data_dict()
-        # i = 1.0
-        # for slew in slews:
-            # for load in loads:
-                # for k,v in char_data.items():        
-                    # char_data[k].append(i)
-                    # i+=1.0
-        # char_data["min_period"] = i
-        # char_data["leakage_power"] = i+1.0
-        # return char_data
         
         # 1) Find a feasible period and it's corresponding delays using the trimmed array.
         feasible_delays = self.find_feasible_period()
@@ -677,8 +676,18 @@ class delay(simulation):
         self.period = min_period
         char_port_data = self.simulate_loads_and_slews(slews, loads, leakage_offset)
         
+        #FIXME: low-to-high delays are altered to be independent of the period. This makes the lib results less accurate.
+        self.alter_lh_char_data(char_port_data)
+        
         return (char_sram_data, char_port_data)
 
+    def alter_lh_char_data(self, char_port_data):
+        """Copies high-to-low data to low-to-high data to make them consistent on the same clock edge."""
+       #This is basically a hack solution which should be removed/fixed later.
+        for port in self.all_ports:
+            char_port_data[port]['delay_lh'] = char_port_data[port]['delay_hl']
+            char_port_data[port]['slew_lh'] = char_port_data[port]['slew_hl']
+        
     def simulate_loads_and_slews(self, slews, loads, leakage_offset):
         """Simulate all specified output loads and input slews pairs of all ports"""
         measure_data = self.get_empty_measure_data_dict()
@@ -702,20 +711,27 @@ class delay(simulation):
                             measure_data[port][mname].append(value)
         return measure_data
     
-
-    def gen_test_cycles_one_port(self, read_port, write_port):
-        """Intended but not implemented: Returns a list of key time-points [ns] of the waveform (each rising edge)
-        of the cycles to do a timing evaluation of a single port. Current: Values overwritten for multiple calls"""
-
-        # Create the inverse address for a scratch address
+    def calculate_inverse_address(self):
+        """Determine dummy test address based on probe address and column mux size."""
+        #The inverse address needs to share the same bitlines as the probe address as the trimming will remove all other bitlines
+        #This is only an issue when there is a column mux and the address maps to different bitlines. 
+        column_addr = self.probe_address[:self.sram.col_addr_size] #do not invert this part
         inverse_address = ""
-        for c in self.probe_address:
+        for c in self.probe_address[self.sram.col_addr_size:]: #invert everything else
             if c=="0":
                 inverse_address += "1"
             elif c=="1":
                 inverse_address += "0"
             else:
                 debug.error("Non-binary address string",1)
+        return inverse_address+column_addr
+
+    def gen_test_cycles_one_port(self, read_port, write_port):
+        """Sets a list of key time-points [ns] of the waveform (each rising edge)
+        of the cycles to do a timing evaluation of a single port """
+
+        # Create the inverse address for a scratch address
+        inverse_address = self.calculate_inverse_address()
 
         # For now, ignore data patterns and write ones or zeros
         data_ones = "1"*self.word_size
@@ -725,36 +741,36 @@ class delay(simulation):
             self.add_noop_all_ports("Idle cycle (no positive clock edge)",
                       inverse_address, data_zeros)
         
-        self.add_write("W data 1 address 0..00",
+        self.add_write("W data 1 address {}".format(inverse_address),
                        inverse_address,data_ones,write_port) 
 
-        self.add_write("W data 0 address 11..11 to write value",
+        self.add_write("W data 0 address {} to write value".format(self.probe_address),
                        self.probe_address,data_zeros,write_port)
         self.measure_cycles[write_port]["write0"] = len(self.cycle_times)-1
         
         # This also ensures we will have a H->L transition on the next read
-        self.add_read("R data 1 address 00..00 to set DOUT caps",
+        self.add_read("R data 1 address {} to set DOUT caps".format(inverse_address),
                       inverse_address,data_zeros,read_port) 
 
-        self.add_read("R data 0 address 11..11 to check W0 worked",
+        self.add_read("R data 0 address {} to check W0 worked".format(self.probe_address),
                       self.probe_address,data_zeros,read_port)
         self.measure_cycles[read_port]["read0"] = len(self.cycle_times)-1              
         
         self.add_noop_all_ports("Idle cycle (if read takes >1 cycle)",
                       inverse_address,data_zeros)
 
-        self.add_write("W data 1 address 11..11 to write value",
+        self.add_write("W data 1 address {} to write value".format(self.probe_address),
                        self.probe_address,data_ones,write_port)
         self.measure_cycles[write_port]["write1"] = len(self.cycle_times)-1
 
-        self.add_write("W data 0 address 00..00 to clear DIN caps",
+        self.add_write("W data 0 address {} to clear DIN caps".format(inverse_address),
                        inverse_address,data_zeros,write_port)
 
         # This also ensures we will have a L->H transition on the next read
-        self.add_read("R data 0 address 00..00 to clear DOUT caps",
+        self.add_read("R data 0 address {} to clear DOUT caps".format(inverse_address),
                       inverse_address,data_zeros,read_port)
         
-        self.add_read("R data 1 address 11..11 to check W1 worked",
+        self.add_read("R data 1 address {} to check W1 worked".format(self.probe_address),
                       self.probe_address,data_zeros,read_port)
         self.measure_cycles[read_port]["read1"] = len(self.cycle_times)-1                
         
@@ -834,34 +850,6 @@ class delay(simulation):
          
         return (sram_data,port_data)
         
-        # delay_lh = []
-        # delay_hl = []
-        # slew_lh = []
-        # slew_hl = []
-        # for slew in slews:
-            # for load in loads:
-                # self.set_load_slew(load,slew)
-                # bank_delay = sram.analytical_delay(self.vdd_voltage, self.slew,self.load)
-                # # Convert from ps to ns
-                # delay_lh.append(bank_delay.delay/1e3)
-                # delay_hl.append(bank_delay.delay/1e3)
-                # slew_lh.append(bank_delay.slew/1e3)
-                # slew_hl.append(bank_delay.slew/1e3)
-        
-        # power = self.analytical_power()
-        
-        # sram_data = { "min_period": 0, 
-                    # "leakage_power": power.leakage}
-        # port_data = [{"delay_lh": delay_lh,
-                      # "delay_hl": delay_hl,
-                      # "slew_lh": slew_lh,
-                      # "slew_hl": slew_hl,
-                      # "read0_power": power.dynamic,
-                      # "read1_power": power.dynamic,
-                      # "write0_power": power.dynamic,
-                      # "write1_power": power.dynamic,
-                # }]
-        # return (sram_data,port_data)
     
     def analytical_power(self, slews, loads):
         """Get the dynamic and leakage power from the SRAM"""

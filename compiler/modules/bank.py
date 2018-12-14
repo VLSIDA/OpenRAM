@@ -1244,4 +1244,33 @@ class bank(design.design):
             results.append(decoder_delay + word_driver_delay + bitcell_array_delay + column_mux_delay + bl_t_data_out_delay) 
 
         return results
+         
+    def determine_wordline_stage_efforts(self, external_cout, inp_is_rise=True):    
+        """Get the all the stage efforts for each stage in the path within the bank clk_buf to a wordline"""
+        #Decoder is assumed to have settled before the negative edge of the clock. Delay model relies on this assumption
+        stage_effort_list = []
+        wordline_cout = self.bitcell_array.get_wordline_cin() + external_cout
+        stage_effort_list += self.wordline_driver.determine_wordline_stage_efforts(wordline_cout,inp_is_rise)
         
+        return stage_effort_list
+        
+    def get_wl_en_cin(self):
+        """Get the relative capacitance of all the clk connections in the bank"""
+        #wl_en only used in the wordline driver.
+        total_clk_cin = self.wordline_driver.get_wl_en_cin()
+        return total_clk_cin
+        
+    def get_clk_bar_cin(self):
+        """Get the relative capacitance of all the clk_bar connections in the bank"""
+        #Current bank only uses clock bar (clk_buf_bar) as an enable for the precharge array.
+        
+        #Precharges are the all the same in Mulitport, one is picked
+        port = self.read_ports[0]
+        total_clk_bar_cin = self.precharge_array[port].get_en_cin()
+        return total_clk_bar_cin 
+
+    def get_sen_cin(self):
+        """Get the relative capacitance of all the sense amp enable connections in the bank"""
+        #Current bank only uses sen as an enable for the sense amps.
+        total_sen_cin = self.sense_amp_array.get_en_cin()
+        return total_sen_cin  

@@ -10,7 +10,7 @@ import utils
 from globals import OPTS
 
 from .simulation import simulation
-
+from .delay import delay
 
 class functional(simulation):
     """
@@ -27,6 +27,7 @@ class functional(simulation):
 
         self.set_corner(corner)
         self.set_spice_constants()
+        #self.set_feasible_period(sram, spfile, corner)
         self.set_stimulus_variables()
         self.create_signal_names()
 
@@ -37,15 +38,9 @@ class functional(simulation):
         self.write_check = []
         self.read_check = []
     
-    def set_spice_constants(self):
-        """Spice constants for functional test"""
-        simulation.set_spice_constants(self)
-        #Heuristic increase for functional period. Base feasible period typically does not pass the functional test
-        #for column mux of this size. Increase the feasible period by 20% for this case.
-        if self.sram.words_per_row >= 4:
-            self.period = self.period*1.2
-    
-    def run(self):
+    def run(self, feasible_period=None):
+        if feasible_period: #period defaults to tech.py feasible period otherwise.
+            self.period = feasible_period
         # Generate a random sequence of reads and writes
         self.write_random_memory_sequence()
     

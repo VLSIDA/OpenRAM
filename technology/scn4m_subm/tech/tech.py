@@ -293,6 +293,14 @@ spice["inv_transition_prob"] = .5         # Transition probability of inverter.
 spice["nand2_transition_prob"] = .1875    # Transition probability of 2-input nand.
 spice["nand3_transition_prob"] = .1094    # Transition probability of 3-input nand.
 spice["nor2_transition_prob"] = .1875     # Transition probability of 2-input nor.
+
+#Logical Effort relative values for the Handmade cells
+parameter["dff_clk_cin"] = 27.5
+parameter["6tcell_wl_cin"] = 2
+parameter["min_inv_para_delay"] = .5
+parameter["sa_en_pmos_size"] = 24*_lambda_
+parameter["sa_en_nmos_size"] = 9*_lambda_
+
 ###################################################
 ##END Spice Simulation Parameters
 ###################################################

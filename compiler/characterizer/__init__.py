@@ -8,7 +8,7 @@ from .setup_hold import *
 from .functional import *
 from .worst_case import *
 from .simulation import *
-
+from .bitline_delay import *
 
 debug.info(1,"Initializing characterizer...")
 OPTS.spice_exe = ""

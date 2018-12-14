@@ -11,13 +11,14 @@ import globals
 from globals import OPTS
 import debug
 
-@unittest.skip("SKIPPING 22_psram_1bank_2mux_1rw_1r_1w_func_test, third port reads are broken?")
+#@unittest.skip("SKIPPING 22_psram_1bank_2mux_1rw_1r_1w_func_test, third port reads are broken?")
 class psram_1bank_2mux_1rw_1r_1w_func_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
+        OPTS.trim_netlist = False
         OPTS.bitcell = "pbitcell"
         OPTS.replica_bitcell="replica_pbitcell"
         OPTS.num_rw_ports = 1
@@ -28,7 +29,7 @@ class psram_1bank_2mux_1rw_1r_1w_func_test(openram_test):
         from importlib import reload
         import characterizer
         reload(characterizer)
-        from characterizer import functional
+        from characterizer import functional, delay
         from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=4,
@@ -48,8 +49,10 @@ class psram_1bank_2mux_1rw_1r_1w_func_test(openram_test):
         s.sp_write(tempspice)
         
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
-        
         f = functional(s.s, tempspice, corner)
+        d = delay(s.s, tempspice, corner)
+        feasible_period = self.find_feasible_test_period(d, s.s, f.load, f.slew)
+        
         f.num_cycles = 10
         (fail, error) = f.run()
         self.assertTrue(fail,error)

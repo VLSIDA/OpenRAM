@@ -23,7 +23,7 @@ class timing_sram_test(openram_test):
         from importlib import reload
         import characterizer
         reload(characterizer)
-        from characterizer import delay
+        from characterizer import delay, bitline_delay
         from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=1,
@@ -43,12 +43,15 @@ class timing_sram_test(openram_test):
 
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         d = delay(s.s, tempspice, corner)
+        bl = bitline_delay(s.s, tempspice, corner)
         import tech
         loads = [tech.spice["msflop_in_cap"]*4]
         slews = [tech.spice["rise_time"]*2]
         data, port_data = d.analyze(probe_address, probe_data, slews, loads)
+        bitline_data = bl.analyze(probe_address, probe_data, slews, loads)
         #Combine info about port into all data
         data.update(port_data[0])
+        data.update(bitline_data[0])
 
         if OPTS.tech_name == "freepdk45":
             golden_data = {'delay_hl': [0.20443139999999999],
@@ -60,7 +63,10 @@ class timing_sram_test(openram_test):
                          'slew_hl': [0.1138734],
                          'slew_lh': [0.1138734],
                          'write0_power': [0.5205761],
-                         'write1_power': [0.5213689]}
+                         'write1_power': [0.5213689],
+                         'volt_bl': 0.03667602, 
+                         'volt_br': 1.056013, 
+                         'delay_bl_vth': 0.184373}
         elif OPTS.tech_name == "scn4m_subm":
             golden_data = {'delay_hl': [1.610911],
                          'delay_lh': [1.610911],
@@ -71,7 +77,10 @@ class timing_sram_test(openram_test):
                          'slew_hl': [0.7986348999999999],
                          'slew_lh': [0.7986348999999999],
                          'write0_power': [17.58272],
-                         'write1_power': [18.523419999999998]}
+                         'write1_power': [18.523419999999998],
+                         'volt_bl': 1.639692, 
+                         'volt_br': 5.06107, 
+                         'delay_bl_vth': 1.322235}
         else:
             self.assertTrue(False) # other techs fail
 

@@ -329,12 +329,15 @@ spice["nand3_transition_prob"] = .1094    # Transition probability of 3-input na
 spice["nor2_transition_prob"] = .1875     # Transition probability of 2-input nor.
 
 #Parameters related to sense amp enable timing and delay chain/RBL sizing
+parameter["static_delay_stages"] = 4
+parameter["static_fanout_per_stage"] = 3
 parameter["dff_clk_cin"] = 30.6             #relative capacitance
 parameter["6tcell_wl_cin"] = 3              #relative capacitance
 parameter["min_inv_para_delay"] = .5        #Tau delay units
 parameter["sa_en_pmos_size"] = .72          #micro-meters
 parameter["sa_en_nmos_size"] = .27          #micro-meters
 parameter["rbl_height_percentage"] = .5     #Height of RBL compared to bitcell array 
+
 ###################################################
 ##END Spice Simulation Parameters
 ###################################################

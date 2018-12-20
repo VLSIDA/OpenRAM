@@ -8,6 +8,7 @@ from .charutils import *
 import utils
 from globals import OPTS
 from .simulation import simulation
+from .measurements import *
 
 class delay(simulation):
     """Functions to measure the delay and power of an SRAM at a given address and
@@ -45,6 +46,16 @@ class delay(simulation):
         #Altering the names will crash the characterizer. TODO: object orientated approach to the measurements.
         self.delay_meas_names = ["delay_lh", "delay_hl", "slew_lh", "slew_hl"]
         self.power_meas_names = ["read0_power", "read1_power", "write0_power", "write1_power"]
+       
+    def create_measurement_objects(self):
+        self.meas_objs = []
+        trig_delay_name = "clk{0}"
+        targ_name = "{0}{1}_{2}".format(self.dout_name,"{}",self.probe_data) #Empty values are the port and probe data bit
+        self.meas_objs.append(delay_measure("delay_lh{}", trig_delay_name, targ_name, "RISE", "RISE"))
+        self.meas_objs.append(delay_measure("delay_hl{}", trig_delay_name, targ_name, "FALL", "FALL"))
+        
+        self.meas_objs.append(slew_measure("slew_lh{}", targ_name, "RISE"))
+        self.meas_objs.append(slew_measure("slew_hl{}", targ_name, "FALL"))
         
     def create_signal_names(self):
         self.addr_name = "A"
@@ -235,15 +246,28 @@ class delay(simulation):
         else:
             debug.error(1, "Measure command {0} not recognized".format(delay_name))
         return (meas_name,trig_name,targ_name,trig_val,targ_val,trig_dir,targ_dir,trig_td,targ_td)
+       
+    def get_measure_variants(self, port, measure_obj):
+        """Get the measurement values that can either vary from simulation to simulation (vdd, address) or port to port (time delays)"""
+        #Return value is intended to match the delay measure format:  trig_td, targ_td, vdd, port
+        #vdd is arguably constant as that is true for a single lib file.
+        if measure_obj.targ_dir_str == "FALL":
+            meas_cycle_delay = self.cycle_times[self.measure_cycles[port]["read0"]]
+        elif measure_obj.targ_dir_str == "RISE":
+            meas_cycle_delay = self.cycle_times[self.measure_cycles[port]["read1"]]
+        else:
+            debug.error("Unrecognised measurement direction={}".format(measure_obj.targ_dir_str),1)
+            
+        return (meas_cycle_delay, meas_cycle_delay, self.vdd_voltage, port)
         
     def write_delay_measures_read_port(self, port):
         """
         Write the measure statements to quantify the delay and power results for a read port.
         """
         # add measure statements for delays/slews
-        for dname in self.delay_meas_names:
-            meas_values = self.get_delay_meas_values(dname, port)
-            self.stim.gen_meas_delay(*meas_values)
+        for measure in self.meas_objs:
+            measure_variant_tuple = self.get_measure_variants(port, measure)
+            measure.write_measure(self.stim, measure_variant_tuple)
             
         # add measure statements for power
         for pname in self.power_meas_names:
@@ -645,6 +669,7 @@ class delay(simulation):
         char_sram_data = {}
         
         self.set_probe(probe_address, probe_data)
+        self.create_measurement_objects()
         
         self.load=max(loads)
         self.slew=max(slews)

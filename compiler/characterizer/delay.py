@@ -48,15 +48,31 @@ class delay(simulation):
         self.power_meas_names = ["read0_power", "read1_power", "write0_power", "write1_power"]
        
     def create_measurement_objects(self):
-        self.meas_objs = []
+        """Create the measurements used for read and write ports"""
+        self.create_read_port_measurement_objects()
+        self.create_write_port_measurement_objects()
+        
+    def create_read_port_measurement_objects(self):
+        """Create the measurements used for read ports: delays, slews, powers"""
+        self.read_meas_objs = []
         trig_delay_name = "clk{0}"
         targ_name = "{0}{1}_{2}".format(self.dout_name,"{}",self.probe_data) #Empty values are the port and probe data bit
-        self.meas_objs.append(delay_measure("delay_lh{}", trig_delay_name, targ_name, "RISE", "RISE"))
-        self.meas_objs.append(delay_measure("delay_hl{}", trig_delay_name, targ_name, "FALL", "FALL"))
+        self.read_meas_objs.append(delay_measure("delay_lh", trig_delay_name, targ_name, "RISE", "RISE", 1e9))
+        self.read_meas_objs.append(delay_measure("delay_hl", trig_delay_name, targ_name, "FALL", "FALL", 1e9))
         
-        self.meas_objs.append(slew_measure("slew_lh{}", targ_name, "RISE"))
-        self.meas_objs.append(slew_measure("slew_hl{}", targ_name, "FALL"))
+        self.read_meas_objs.append(slew_measure("slew_lh", targ_name, "RISE", 1e9))
+        self.read_meas_objs.append(slew_measure("slew_hl", targ_name, "FALL", 1e9))
         
+        self.read_meas_objs.append(power_measure("read1_power", "RISE", 1e3))
+        self.read_meas_objs.append(power_measure("read0_power", "FALL", 1e3))    
+     
+    def create_write_port_measurement_objects(self):
+        """Create the measurements used for read ports: delays, slews, powers"""
+        self.write_meas_objs = []
+
+        self.write_meas_objs.append(power_measure("write1_power", "RISE", 1e3))
+        self.write_meas_objs.append(power_measure("write0_power", "FALL", 1e3))
+     
     def create_signal_names(self):
         self.addr_name = "A"
         self.din_name = "DIN"
@@ -209,99 +225,68 @@ class delay(simulation):
 
         self.sf.close()
         
-    def get_delay_meas_values(self, delay_name, port):
-        """Get the values needed to generate a Spice measurement statement based on the name of the measurement."""
-        debug.check('lh' in delay_name or 'hl' in delay_name, "Measure command {0} does not contain direction (lh/hl)")
-        trig_clk_name = "clk{0}".format(port)
-        meas_name="{0}{1}".format(delay_name, port)
-        targ_name = "{0}".format("{0}{1}_{2}".format(self.dout_name,port,self.probe_data))
-        half_vdd = 0.5 * self.vdd_voltage
-        trig_slew_low = 0.1 * self.vdd_voltage
-        targ_slew_high = 0.9 * self.vdd_voltage
-        if 'delay' in delay_name:
-            trig_val = half_vdd
-            targ_val = half_vdd
-            trig_name = trig_clk_name
-            if 'lh' in delay_name:
-                trig_dir="RISE" 
-                targ_dir="RISE"
-                trig_td = targ_td = self.cycle_times[self.measure_cycles[port]["read1"]]
-            else:
-                trig_dir="FALL" 
-                targ_dir="FALL"
-                trig_td = targ_td = self.cycle_times[self.measure_cycles[port]["read0"]] 
-                    
-        elif 'slew' in delay_name:
-            trig_name = targ_name
-            if 'lh' in delay_name:
-                trig_val = trig_slew_low
-                targ_val = targ_slew_high
-                targ_dir = trig_dir = "RISE"
-                trig_td = targ_td = self.cycle_times[self.measure_cycles[port]["read1"]]
-            else:
-                trig_val = targ_slew_high 
-                targ_val = trig_slew_low
-                targ_dir = trig_dir = "FALL"
-                trig_td = targ_td = self.cycle_times[self.measure_cycles[port]["read0"]] 
+    def get_read_measure_variants(self, port, measure_obj):
+        """Checks the measurement object and calls respective function for related measurement inputs."""
+        meas_type = type(measure_obj)
+        if meas_type is delay_measure or meas_type is slew_measure:
+            return self.get_delay_measure_variants(port, measure_obj)
+        elif meas_type is power_measure:
+            return self.get_power_measure_variants(port, measure_obj, "read")
         else:
-            debug.error(1, "Measure command {0} not recognized".format(delay_name))
-        return (meas_name,trig_name,targ_name,trig_val,targ_val,trig_dir,targ_dir,trig_td,targ_td)
-       
-    def get_measure_variants(self, port, measure_obj):
+            debug.error("Input function not defined for measurement type={}".format(meas_type))
+            
+    def get_delay_measure_variants(self, port, delay_obj):
         """Get the measurement values that can either vary from simulation to simulation (vdd, address) or port to port (time delays)"""
         #Return value is intended to match the delay measure format:  trig_td, targ_td, vdd, port
         #vdd is arguably constant as that is true for a single lib file.
-        if measure_obj.targ_dir_str == "FALL":
+        if delay_obj.targ_dir_str == "FALL":
             meas_cycle_delay = self.cycle_times[self.measure_cycles[port]["read0"]]
-        elif measure_obj.targ_dir_str == "RISE":
+        elif delay_obj.targ_dir_str == "RISE":
             meas_cycle_delay = self.cycle_times[self.measure_cycles[port]["read1"]]
         else:
-            debug.error("Unrecognised measurement direction={}".format(measure_obj.targ_dir_str),1)
+            debug.error("Unrecognised measurement direction={}".format(delay_obj.targ_dir_str),1)
             
         return (meas_cycle_delay, meas_cycle_delay, self.vdd_voltage, port)
-        
+    
+    def get_power_measure_variants(self, port, power_obj, operation):
+        """Get the measurement values that can either vary port to port (time delays)"""
+        #Return value is intended to match the power measure format:  t_initial, t_final, port
+        if power_obj.power_type == "FALL":
+            t_initial = self.cycle_times[self.measure_cycles[port]["{}0".format(operation)]]
+            t_final = self.cycle_times[self.measure_cycles[port]["{}0".format(operation)]+1]
+        elif power_obj.power_type == "RISE":
+            t_initial = self.cycle_times[self.measure_cycles[port]["{}1".format(operation)]]
+            t_final = self.cycle_times[self.measure_cycles[port]["{}1".format(operation)]+1]
+        else:
+            debug.error("Unrecognised power measurement type={}".format(power_obj.power_type),1)
+            
+        return (t_initial, t_final, port)
+    
     def write_delay_measures_read_port(self, port):
         """
         Write the measure statements to quantify the delay and power results for a read port.
         """
         # add measure statements for delays/slews
-        for measure in self.meas_objs:
-            measure_variant_tuple = self.get_measure_variants(port, measure)
-            measure.write_measure(self.stim, measure_variant_tuple)
+        for measure in self.read_meas_objs:
+            measure_variant_inp_tuple = self.get_read_measure_variants(port, measure)
+            measure.write_measure(self.stim, measure_variant_inp_tuple)
+
+    def get_write_measure_variants(self, port, measure_obj):
+        """Checks the measurement object and calls respective function for related measurement inputs."""
+        meas_type = type(measure_obj)
+        if meas_type is power_measure:
+            return self.get_power_measure_variants(port, measure_obj, "write")
+        else:
+            debug.error("Input function not defined for measurement type={}".format(meas_type))        
             
-        # add measure statements for power
-        for pname in self.power_meas_names:
-            if "read" not in pname:
-                continue
-            #Different naming schemes are used for the measure cycle dict and measurement names. 
-            #TODO: make them the same so they can be indexed the same.
-            if '1' in pname:
-                t_initial = self.cycle_times[self.measure_cycles[port]["read1"]]
-                t_final = self.cycle_times[self.measure_cycles[port]["read1"]+1]
-            elif '0' in pname:
-                t_initial = self.cycle_times[self.measure_cycles[port]["read0"]]
-                t_final = self.cycle_times[self.measure_cycles[port]["read0"]+1]
-            self.stim.gen_meas_power(meas_name="{0}{1}".format(pname, port),
-                                     t_initial=t_initial,
-                                     t_final=t_final)
-       
     def write_delay_measures_write_port(self, port):
         """
         Write the measure statements to quantify the power results for a write port.
         """
         # add measure statements for power
-        for pname in self.power_meas_names:
-            if "write" not in pname:
-                continue
-            t_initial = self.cycle_times[self.measure_cycles[port]["write0"]]
-            t_final = self.cycle_times[self.measure_cycles[port]["write0"]+1]
-            if '1' in pname:
-                t_initial = self.cycle_times[self.measure_cycles[port]["write1"]]
-                t_final = self.cycle_times[self.measure_cycles[port]["write1"]+1]
-        
-            self.stim.gen_meas_power(meas_name="{0}{1}".format(pname, port),
-                                     t_initial=t_initial,
-                                     t_final=t_final)
+        for measure in self.write_meas_objs:
+            measure_variant_inp_tuple = self.get_read_measure_variants(port, measure)
+            measure.write_measure(self.stim, measure_variant_inp_tuple)
 
     def write_delay_measures(self):
         """
@@ -451,28 +436,27 @@ class delay(simulation):
         #Too much duplicate code here. Try reducing
         for port in self.targ_read_ports:
             debug.info(2, "Check delay values for port {}".format(port))
-            delay_names = [mname for mname in self.delay_meas_names]
-            delays = self.parse_values(delay_names, port, 1e9) # scale delays to ns
-            if not self.check_valid_delays(delays):
-                return (False,{})
-            result[port].update(delays)
+            read_port_dict = {}
+            #Get measurements from output file
+            for measure in self.read_meas_objs:
+                read_port_dict[measure.name] = measure.retrieve_measure(port=port)
             
-            power_names = [mname for mname in self.power_meas_names if 'read' in mname]
-            powers = self.parse_values(power_names, port, 1e3) # scale power to mw
-            #Check that power parsing worked.
-            for name, power in powers.items():
-                if type(power)!=float:
-                    debug.error("Failed to Parse Power Values:\n\t\t{0}".format(powers),1) #Printing the entire dict looks bad.
-            result[port].update(powers)
-        
+            #Check timing for read ports. Power is only checked if it was read correctly
+            if not self.check_valid_delays(read_port_dict):
+                return (False,{})
+            if not check_dict_values_is_float(read_port_dict):
+                debug.error("Failed to Measure Read Port Values:\n\t\t{0}".format(read_port_dict),1) #Printing the entire dict looks bad.    
+                
+            result[port].update(read_port_dict)
+
         for port in self.targ_write_ports:
-            power_names = [mname for mname in self.power_meas_names if 'write' in mname]
-            powers = self.parse_values(power_names, port, 1e3) # scale power to mw
-            #Check that power parsing worked.
-            for name, power in powers.items():
-                if type(power)!=float:
-                    debug.error("Failed to Parse Power Values:\n\t\t{0}".format(powers),1) #Printing the entire dict looks bad.
-            result[port].update(powers)
+            write_port_dict = {}
+            for measure in self.read_meas_objs:
+                write_port_dict[measure.name] = measure.retrieve_measure(port=port)
+
+            if not check_dict_values_is_float(write_port_dict):
+                debug.error("Failed to Measure Write Port Values:\n\t\t{0}".format(write_port_dict),1) #Printing the entire dict looks bad. 
+            result[port].update(write_port_dict)
             
         # The delay is from the negative edge for our SRAM
         return (True,result)
@@ -502,13 +486,13 @@ class delay(simulation):
         #key=raw_input("press return to continue")
         return (leakage_power*1e3, trim_leakage_power*1e3)
     
-    def check_valid_delays(self, delay_dict):
+    def check_valid_delays(self, result_dict):
         """ Check if the measurements are defined and if they are valid. """
         #Hard coded names currently
-        delay_hl = delay_dict["delay_hl"]
-        delay_lh = delay_dict["delay_lh"]
-        slew_hl = delay_dict["slew_hl"]
-        slew_lh = delay_dict["slew_lh"]
+        delay_hl = result_dict["delay_hl"]
+        delay_lh = result_dict["delay_lh"]
+        slew_hl = result_dict["slew_hl"]
+        slew_lh = result_dict["slew_lh"]
         period_load_slew_str = "period {0} load {1} slew {2}".format(self.period,self.load, self.slew)
         
         # if it failed or the read was longer than a period

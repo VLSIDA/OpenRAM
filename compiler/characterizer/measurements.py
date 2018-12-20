@@ -2,13 +2,15 @@ import debug
 from tech import drc, parameter, spice
 from abc import ABC, abstractmethod
 from .stimuli import *
+from .charutils import *
 
 class spice_measurement(ABC):
     """Base class for spice stimulus measurements."""
-    def __init__(self, measure_name):
+    def __init__(self, measure_name, measure_scale=None):
         #Names must be unique for correct spice simulation, but not enforced here.
         self.name = measure_name
-
+        self.measure_scale = measure_scale
+        
     @abstractmethod
     def get_measure_function(self):
         return None    
@@ -23,13 +25,19 @@ class spice_measurement(ABC):
             debug.error("Did not set measure function",1)
         measure_vals = self.get_measure_values(*input_tuple)
         measure_func(stim_obj, *measure_vals)
-       
+    
+    def retrieve_measure(self, port=""):
+        value = parse_spice_list("timing", "{0}{1}".format(self.name.lower(), port)) 
+        if type(value)!=float or self.measure_scale == None: 
+            return value
+        else:
+            return value*self.measure_scale
            
 class delay_measure(spice_measurement):
     """Generates a spice measurement for the delay of 50%-to-50% points of two signals."""
     
-    def __init__(self, measure_name, trig_name, targ_name, trig_dir_str, targ_dir_str):
-        spice_measurement.__init__(self, measure_name)
+    def __init__(self, measure_name, trig_name, targ_name, trig_dir_str, targ_dir_str, measure_scale=None):
+        spice_measurement.__init__(self, measure_name, measure_scale)
         self.set_meas_constants(trig_name, targ_name, trig_dir_str, targ_dir_str)
     
     def get_measure_function(self):
@@ -54,7 +62,8 @@ class delay_measure(spice_measurement):
         targ_val = self.targ_val_of_vdd * vdd_voltage
         
         if port != None:
-            meas_name = self.name.format(port)
+            #For dictionary indexing reasons, the name is formatted differently than the signals
+            meas_name = "{}{}".format(self.name, port)
             trig_name = self.trig_name_no_port.format(port)
             targ_name = self.targ_name_no_port.format(port)
         else:
@@ -63,12 +72,11 @@ class delay_measure(spice_measurement):
             targ_name = self.targ_name_no_port
 
         return (meas_name,trig_name,targ_name,trig_val,targ_val,self.trig_dir_str,self.targ_dir_str,trig_td,targ_td)            
- 
- 
+
 class slew_measure(delay_measure):        
     
-    def __init__(self, measure_name, signal_name, slew_dir_str):
-        spice_measurement.__init__(self, measure_name)
+    def __init__(self, measure_name, signal_name, slew_dir_str, measure_scale=None):
+        spice_measurement.__init__(self, measure_name, measure_scale)
         self.set_meas_constants(signal_name, slew_dir_str)
     
     def set_meas_constants(self, signal_name, slew_dir_str):
@@ -90,3 +98,25 @@ class slew_measure(delay_measure):
         
         #Time delays and ports are variant and needed as inputs when writing the measurement 
  
+class power_measure(spice_measurement):
+    """Generates a spice measurement for the delay of 50%-to-50% points of two signals."""
+    
+    def __init__(self, measure_name, power_type="", measure_scale=None):
+        spice_measurement.__init__(self, measure_name, measure_scale)
+        self.set_meas_constants(power_type)
+    
+    def get_measure_function(self):
+        return stimuli.gen_meas_power
+    
+    def set_meas_constants(self, power_type):
+        """Sets values useful for power simulations. This value is only meta related to the lib file (rise/fall)"""
+        #Not needed for power simulation
+        self.power_type = power_type #Expected to be  "RISE"/"FALL"
+        
+    def get_measure_values(self, t_initial, t_final, port=None):    
+        """Constructs inputs to stimulus measurement function. Variant values are inputs here."""
+        if port != None:
+            meas_name = "{}{}".format(self.name, port)
+        else:
+            meas_name = self.name
+        return (meas_name,t_initial,t_final)  

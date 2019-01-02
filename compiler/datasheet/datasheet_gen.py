@@ -102,6 +102,9 @@ def parse_characterizer_csv(sram,f,pages):
             ORIGIN_ID = row[col]
             col += 1
 
+            DATETIME = row[col]
+            col+= 1
+
             DRC = row[col]
             col += 1
 
@@ -358,7 +361,8 @@ def parse_characterizer_csv(sram,f,pages):
                 new_sheet = datasheet(NAME)
                 pages.append(new_sheet)
 
-                new_sheet.git_id = ORIGIN_ID 
+                new_sheet.git_id = ORIGIN_ID
+                new_sheet.time = DATETIME
                 new_sheet.DRC = DRC
                 new_sheet.LVS = LVS
 

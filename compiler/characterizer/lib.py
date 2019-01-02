@@ -1,6 +1,7 @@
 import os,sys,re
 import debug
 import math
+import datetime
 from .setup_hold import *
 from .delay import *
 from .charutils import *
@@ -515,7 +516,8 @@ class lib:
 
         datasheet = open(OPTS.openram_temp +'/datasheet.info', 'a+')
 
-        datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},".format(
+        current_time = datetime.datetime.now()
+        datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},".format(
                         "sram_{0}_{1}_{2}".format(OPTS.word_size, OPTS.num_words, OPTS.tech_name),
                         OPTS.num_words,
                         OPTS.num_banks,
@@ -530,7 +532,8 @@ class lib:
                         self.out_dir,
                         lib_name,
                         OPTS.word_size,
-                        git_id
+                        git_id,
+                        current_time
                         ))
 
         # information of checks

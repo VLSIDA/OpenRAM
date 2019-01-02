@@ -533,6 +533,17 @@ class lib:
                         git_id
                         ))
 
+        # information of checks
+        from hierarchy_design import total_drc_errors
+        from hierarchy_design import total_lvs_errors
+        DRC = 'skipped'
+        LVS = 'skipped'
+        if OPTS.check_lvsdrc:
+            DRC = str(total_drc_errors)
+            LVS = str(total_lvs_errors)
+
+        datasheet.write("{0},{1},".format(DRC, LVS))
+
         for port in self.all_ports:
             #DIN timings
             if port in self.write_ports:
@@ -627,8 +638,11 @@ class lib:
                         min(list(map(round_time,self.times["hold_times_HL"]))),
                         max(list(map(round_time,self.times["hold_times_HL"])))
 
-                        )) 
-                                                                                            
+                        ))
+
+
+
+
         datasheet.write("END\n")
         datasheet.close()
                 

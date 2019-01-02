@@ -14,6 +14,3 @@ class filelist:
                 out_file.write('{}/{}\n'.format(root,file))
                 #print('{}/{}'.format(root,file))
 
-
-
-

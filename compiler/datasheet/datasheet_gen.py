@@ -102,6 +102,11 @@ def parse_characterizer_csv(sram,f,pages):
             ORIGIN_ID = row[col]
             col += 1
 
+            DRC = row[col]
+            col += 1
+
+            LVS = row[col]
+            col += 1
     
             for sheet in pages:
 
@@ -336,6 +341,9 @@ def parse_characterizer_csv(sram,f,pages):
                                         col += 2
 
                             col += 1
+
+
+
                         else:
                             break
 
@@ -351,6 +359,9 @@ def parse_characterizer_csv(sram,f,pages):
                 pages.append(new_sheet)
 
                 new_sheet.git_id = ORIGIN_ID 
+                new_sheet.DRC = DRC
+                new_sheet.LVS = LVS
+
 
                 new_sheet.corners.append(characterization_corners_item(PROC,process_name(PROC),VOLT,TEMP,LIB_NAME.replace(OUT_DIR,'').replace(NAME,'')))
 
@@ -470,7 +481,8 @@ def parse_characterizer_csv(sram,f,pages):
                 new_sheet.io.append(in_out_item('NUM_R_PORTS',NUM_R_PORTS))
                 new_sheet.io.append(in_out_item('NUM_W_PORTS',NUM_W_PORTS))
                 new_sheet.io.append(in_out_item('Area',sram.width * sram.height))
-                
+
+
 
 
 

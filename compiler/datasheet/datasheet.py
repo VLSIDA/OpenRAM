@@ -4,8 +4,6 @@ from characterization_corners import *
 from deliverables import *
 from timing_and_current_data import *
 from in_out import *
-from hierarchy_design import total_drc_errors
-from hierarchy_design import total_lvs_errors
 import os
 import csv
 import base64
@@ -33,15 +31,6 @@ class datasheet():
             #css styling is kept in a seperate file
             self.html += datasheet_css.read()
 
-        if OPTS.check_lvsdrc:
-            
-            DRC = str(total_drc_errors) + ' errors'
-            LVS = str(total_lvs_errors) + ' errors'
-            PEX = 'n/a'
-        else:
-            DRC = 'skipped'
-            LVS = 'skipped'
-            PEX = 'skipped'
         
         with open(OPTS.openram_temp + "/datasheet.info") as info:           
             self.html += '<!--'
@@ -65,8 +54,8 @@ class datasheet():
 
 
         self.html +='<p style="font-size: 18px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">'+ self.name + '.html' + '</p>'
-        self.html +='<p style="font-size: 18px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">'+ 'DRC: ' + str(DRC) + '</p>'
-        self.html +='<p style="font-size: 18px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">'+ 'LVS: ' + str(LVS) + '</p>'
+        self.html +='<p style="font-size: 18px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">'+ 'DRC: ' + str(self.DRC) + '</p>'
+        self.html +='<p style="font-size: 18px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">'+ 'LVS: ' + str(self.LVS) + '</p>'
         self.html += '<p style="font-size: 18px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">'+ 'Git commit id: ' + str(self.git_id) + '</p>'
 
         self.html +='<p style="font-size: 26px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Ports and Configuration (DEBUG)</p>'

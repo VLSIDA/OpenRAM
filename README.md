@@ -98,6 +98,12 @@ output_name = "sram_{0}_{1}_{2}".format(word_size,num_words,tech_name)
 
 # Disable analytical models for full characterization (WARNING: slow!)
 # analytical_delay = False
+
+# To force this to use magic and netgen for DRC/LVS/PEX
+# Could be calibre for FreePDK45
+drc_name = "magic"
+lvs_name = "netgen"
+pex_name = "magic"
 ```
 
 You can then run OpenRAM by executing:

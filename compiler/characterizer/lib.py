@@ -510,7 +510,6 @@ class lib:
             git_id = 'AAAAAAAAAAAAAAAAAAAA'
         else:
             with open(os.devnull, 'wb') as devnull:
-                print(os.path.abspath(os.environ.get("OPENRAM_HOME")) + '/')
                 proc = subprocess.Popen(['git','rev-parse','HEAD'], cwd=os.path.abspath(os.environ.get("OPENRAM_HOME")) + '/', stdout=subprocess.PIPE)
 
                 git_id = str(proc.stdout.read())

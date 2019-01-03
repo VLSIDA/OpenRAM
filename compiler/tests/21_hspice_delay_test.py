@@ -23,7 +23,7 @@ class timing_sram_test(openram_test):
         from importlib import reload
         import characterizer
         reload(characterizer)
-        from characterizer import delay, bitline_delay
+        from characterizer import delay
         from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=1,
@@ -43,15 +43,14 @@ class timing_sram_test(openram_test):
 
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         d = delay(s.s, tempspice, corner)
-        bl = bitline_delay(s.s, tempspice, corner)
         import tech
         loads = [tech.spice["msflop_in_cap"]*4]
         slews = [tech.spice["rise_time"]*2]
         data, port_data = d.analyze(probe_address, probe_data, slews, loads)
-        bitline_data = bl.analyze(probe_address, probe_data, slews, loads)
         #Combine info about port into all data
         data.update(port_data[0])
-        data.update(bitline_data[0])
+
+        print(data)
         
         if OPTS.tech_name == "freepdk45":
             golden_data = {'delay_hl': [0.2011],
@@ -60,13 +59,14 @@ class timing_sram_test(openram_test):
                          'min_period': 0.41,
                          'read0_power': [0.63604],
                          'read1_power': [0.6120599999999999],
-                         'slew_hl': [0.10853],
-                         'slew_lh': [0.10853],
+                         'slew_hl': [0.07078999999999999],
+                         'slew_lh': [0.07078999999999999],
                          'write0_power': [0.51742],
                          'write1_power': [0.51095],
-                         'volt_bl': 0.045626, 
-                         'volt_br': 1.0709,
-                         'delay_bl_vth': 0.1813}
+                         'volt_bl': [0.2017],
+                         'volt_br': [1.0765], 
+                         'delay_bl': [0.18114999999999998],
+                         'delay_br': [0.17763]}
         elif OPTS.tech_name == "scn4m_subm":
             golden_data = {'delay_hl': [1.3911],
                          'delay_lh': [1.3911],
@@ -74,13 +74,14 @@ class timing_sram_test(openram_test):
                          'min_period': 2.812,
                          'read0_power': [22.1183],
                          'read1_power': [21.4388],
-                         'slew_hl': [0.7397553],
-                         'slew_lh': [0.7397553],
+                         'slew_hl': [0.6],
+                         'slew_lh': [0.6],
                          'write0_power': [19.4103],
                          'write1_power': [20.1167],
-                         'volt_bl': 1.8329, 
-                         'volt_br': 5.081, 
-                         'delay_bl_vth': 1.1141}
+                         'volt_bl': [3.1763], 
+                         'volt_br': [5.5731], 
+                         'delay_bl': [1.1133000000000002], 
+                         'delay_br': [0.9958395]}
         else:
             self.assertTrue(False) # other techs fail
         # Check if no too many or too few results

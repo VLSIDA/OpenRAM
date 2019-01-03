@@ -37,6 +37,8 @@ class control_logic(design.design):
         #self.sram=None #disable re-sizing for debugging, FIXME: resizing is not working, needs to be adjusted for new control logic.
         self.wl_timing_tolerance = 1 #Determines how much larger the sen delay should be. Accounts for possible error in model.
         self.parasitic_inv_delay = parameter["min_inv_para_delay"] #Keeping 0 for now until further testing.
+        self.wl_stage_efforts = None
+        self.sen_stage_efforts = None
         
         if self.port_type == "rw":
             self.num_control_signals = 2
@@ -157,7 +159,7 @@ class control_logic(design.design):
         elif self.words_per_row == 2:
             delay_stages = 6
         else:
-            delay_stages = 4
+            delay_stages = 2
             
         return (delay_stages, delay_fanout)
         
@@ -808,8 +810,8 @@ class control_logic(design.design):
     def get_delays_to_wl(self):
         """Get the delay (in delay units) of the clk to a wordline in the bitcell array"""
         debug.check(self.sram.all_mods_except_control_done, "Cannot calculate sense amp enable delay unless all module have been added.")
-        stage_efforts = self.determine_wordline_stage_efforts()
-        clk_to_wl_rise,clk_to_wl_fall = logical_effort.calculate_relative_rise_fall_delays(stage_efforts, self.parasitic_inv_delay)
+        self.wl_stage_efforts = self.determine_wordline_stage_efforts()
+        clk_to_wl_rise,clk_to_wl_fall = logical_effort.calculate_relative_rise_fall_delays(self.wl_stage_efforts, self.parasitic_inv_delay)
         total_delay = clk_to_wl_rise + clk_to_wl_fall 
         debug.info(1, "Clock to wl delay is rise={:.3f}, fall={:.3f}, total={:.3f} in delay units".format(clk_to_wl_rise, clk_to_wl_fall,total_delay))
         return clk_to_wl_rise,clk_to_wl_fall 
@@ -838,8 +840,8 @@ class control_logic(design.design):
            This does not incorporate the delay of the replica bitline.
         """
         debug.check(self.sram.all_mods_except_control_done, "Cannot calculate sense amp enable delay unless all module have been added.")
-        stage_efforts = self.determine_sa_enable_stage_efforts()
-        clk_to_sen_rise, clk_to_sen_fall = logical_effort.calculate_relative_rise_fall_delays(stage_efforts, self.parasitic_inv_delay)
+        self.sen_stage_efforts = self.determine_sa_enable_stage_efforts()
+        clk_to_sen_rise, clk_to_sen_fall = logical_effort.calculate_relative_rise_fall_delays(self.sen_stage_efforts, self.parasitic_inv_delay)
         total_delay = clk_to_sen_rise + clk_to_sen_fall 
         debug.info(1, "Clock to s_en delay is rise={:.3f}, fall={:.3f}, total={:.3f} in delay units".format(clk_to_sen_rise, clk_to_sen_fall,total_delay))
         return clk_to_sen_rise, clk_to_sen_fall   
@@ -871,3 +873,11 @@ class control_logic(design.design):
         
         return stage_effort_list    
        
+    def get_wl_sen_delays(self):
+        """Gets a list of the stages and delays in order of their path."""
+        if self.sen_stage_efforts == None or self.wl_stage_efforts == None:
+            debug.error("Model delays not calculated for SRAM.", 1)
+        wl_delays = logical_effort.calculate_delays(self.wl_stage_efforts, self.parasitic_inv_delay)
+        sen_delays = logical_effort.calculate_delays(self.sen_stage_efforts, self.parasitic_inv_delay)
+        return wl_delays, sen_delays
+        

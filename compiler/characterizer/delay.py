@@ -46,32 +46,77 @@ class delay(simulation):
         #Altering the names will crash the characterizer. TODO: object orientated approach to the measurements.
         self.delay_meas_names = ["delay_lh", "delay_hl", "slew_lh", "slew_hl"]
         self.power_meas_names = ["read0_power", "read1_power", "write0_power", "write1_power"]
+        self.voltage_when_names = ["volt_bl", "volt_br"]
+        self.bitline_delay_names = ["delay_bl", "delay_br"]
        
     def create_measurement_objects(self):
         """Create the measurements used for read and write ports"""
         self.create_read_port_measurement_objects()
         self.create_write_port_measurement_objects()
-        
+
     def create_read_port_measurement_objects(self):
         """Create the measurements used for read ports: delays, slews, powers"""
+        
         self.read_meas_objs = []
         trig_delay_name = "clk{0}"
         targ_name = "{0}{1}_{2}".format(self.dout_name,"{}",self.probe_data) #Empty values are the port and probe data bit
-        self.read_meas_objs.append(delay_measure("delay_lh", trig_delay_name, targ_name, "RISE", "RISE", 1e9))
-        self.read_meas_objs.append(delay_measure("delay_hl", trig_delay_name, targ_name, "FALL", "FALL", 1e9))
+        self.read_meas_objs.append(delay_measure("delay_lh", trig_delay_name, targ_name, "RISE", "RISE", measure_scale=1e9))
+        self.read_meas_objs[-1].meta_str = "read1" #Used to index time delay values when measurements written to spice file.
+        self.read_meas_objs.append(delay_measure("delay_hl", trig_delay_name, targ_name, "FALL", "FALL", measure_scale=1e9))
+        self.read_meas_objs[-1].meta_str = "read0"
         
-        self.read_meas_objs.append(slew_measure("slew_lh", targ_name, "RISE", 1e9))
-        self.read_meas_objs.append(slew_measure("slew_hl", targ_name, "FALL", 1e9))
+        self.read_meas_objs.append(slew_measure("slew_lh", targ_name, "RISE", measure_scale=1e9))
+        self.read_meas_objs[-1].meta_str = "read1"
+        self.read_meas_objs.append(slew_measure("slew_hl", targ_name, "FALL", measure_scale=1e9))
+        self.read_meas_objs[-1].meta_str = "read0"
         
-        self.read_meas_objs.append(power_measure("read1_power", "RISE", 1e3))
-        self.read_meas_objs.append(power_measure("read0_power", "FALL", 1e3))    
-     
+        self.read_meas_objs.append(power_measure("read1_power", "RISE", measure_scale=1e3))
+        self.read_meas_objs[-1].meta_str = "read1"
+        self.read_meas_objs.append(power_measure("read0_power", "FALL", measure_scale=1e3))
+        self.read_meas_objs[-1].meta_str = "read0"
+
+        trig_name = "Xsram.s_en{}" #Sense amp enable
+        if len(self.all_ports) == 1: #special naming case for single port sram bitlines which does not include the port in name
+            port_format = ""
+        else:
+            port_format = "{}"
+        
+        bl_name = "Xsram.Xbank0.bl{}_{}".format(port_format, self.bitline_column)
+        br_name = "Xsram.Xbank0.br{}_{}".format(port_format, self.bitline_column)
+        self.read_meas_objs.append(voltage_when_measure(self.voltage_when_names[0], trig_name, bl_name, "RISE", .5))
+        self.read_meas_objs.append(voltage_when_measure(self.voltage_when_names[1], trig_name, br_name, "RISE", .5))
+        
+        #These are read values but need to be separated for unique error checking.
+        self.create_bitline_delay_measurement_objects()
+    
+    def create_bitline_delay_measurement_objects(self):
+        """Create the measurements used for bitline delay values. Due to unique error checking, these are separated from other measurements.
+           These measurements are only associated with read values
+        """
+        self.bitline_delay_objs = []
+        trig_name = "clk{0}"
+        if len(self.all_ports) == 1: #special naming case for single port sram bitlines which does not include the port in name
+            port_format = ""
+        else:
+            port_format = "{}"
+        bl_name = "Xsram.Xbank0.bl{}_{}".format(port_format, self.bitline_column)
+        br_name = "Xsram.Xbank0.br{}_{}".format(port_format, self.bitline_column)
+        targ_val = (self.vdd_voltage - tech.spice["v_threshold_typical"])/self.vdd_voltage #Calculate as a percentage of vdd
+        
+        targ_name = "{0}{1}_{2}".format(self.dout_name,"{}",self.probe_data) #Empty values are the port and probe data bit
+        self.bitline_delay_objs.append(delay_measure(self.bitline_delay_names[0], trig_name, bl_name, "FALL", "FALL", targ_vdd=targ_val, measure_scale=1e9))
+        self.bitline_delay_objs[-1].meta_str = "read0"
+        self.bitline_delay_objs.append(delay_measure(self.bitline_delay_names[1], trig_name, br_name, "FALL", "FALL", targ_vdd=targ_val, measure_scale=1e9))
+        self.bitline_delay_objs[-1].meta_str = "read1"
+
     def create_write_port_measurement_objects(self):
         """Create the measurements used for read ports: delays, slews, powers"""
         self.write_meas_objs = []
 
-        self.write_meas_objs.append(power_measure("write1_power", "RISE", 1e3))
-        self.write_meas_objs.append(power_measure("write0_power", "FALL", 1e3))
+        self.write_meas_objs.append(power_measure("write1_power", "RISE", measure_scale=1e3))
+        self.write_meas_objs[-1].meta_str = "read1"
+        self.write_meas_objs.append(power_measure("write0_power", "FALL", measure_scale=1e3))
+        self.write_meas_objs[-1].meta_str = "write0"
      
     def create_signal_names(self):
         self.addr_name = "A"
@@ -232,6 +277,8 @@ class delay(simulation):
             return self.get_delay_measure_variants(port, measure_obj)
         elif meas_type is power_measure:
             return self.get_power_measure_variants(port, measure_obj, "read")
+        elif meas_type is voltage_when_measure:
+            return self.get_volt_when_measure_variants(port, measure_obj)
         else:
             debug.error("Input function not defined for measurement type={}".format(meas_type))
             
@@ -239,35 +286,37 @@ class delay(simulation):
         """Get the measurement values that can either vary from simulation to simulation (vdd, address) or port to port (time delays)"""
         #Return value is intended to match the delay measure format:  trig_td, targ_td, vdd, port
         #vdd is arguably constant as that is true for a single lib file.
-        if delay_obj.targ_dir_str == "FALL":
-            meas_cycle_delay = self.cycle_times[self.measure_cycles[port]["read0"]]
-        elif delay_obj.targ_dir_str == "RISE":
-            meas_cycle_delay = self.cycle_times[self.measure_cycles[port]["read1"]]
+        if delay_obj.meta_str == "read0":
+            #Falling delay are measured starting from neg. clk edge. Delay adjusted to that.
+            meas_cycle_delay = self.cycle_times[self.measure_cycles[port][delay_obj.meta_str]] + self.period/2
+        elif delay_obj.meta_str == "read1":
+            meas_cycle_delay = self.cycle_times[self.measure_cycles[port][delay_obj.meta_str]]
         else:
-            debug.error("Unrecognised measurement direction={}".format(delay_obj.targ_dir_str),1)
+            debug.error("Unrecognised delay Index={}".format(delay_obj.meta_str),1)
             
         return (meas_cycle_delay, meas_cycle_delay, self.vdd_voltage, port)
     
     def get_power_measure_variants(self, port, power_obj, operation):
         """Get the measurement values that can either vary port to port (time delays)"""
         #Return value is intended to match the power measure format:  t_initial, t_final, port
-        if power_obj.power_type == "FALL":
-            t_initial = self.cycle_times[self.measure_cycles[port]["{}0".format(operation)]]
-            t_final = self.cycle_times[self.measure_cycles[port]["{}0".format(operation)]+1]
-        elif power_obj.power_type == "RISE":
-            t_initial = self.cycle_times[self.measure_cycles[port]["{}1".format(operation)]]
-            t_final = self.cycle_times[self.measure_cycles[port]["{}1".format(operation)]+1]
-        else:
-            debug.error("Unrecognised power measurement type={}".format(power_obj.power_type),1)
-            
+        t_initial = self.cycle_times[self.measure_cycles[port][power_obj.meta_str]]
+        t_final = self.cycle_times[self.measure_cycles[port][power_obj.meta_str]+1]
+    
         return (t_initial, t_final, port)
+    
+    def get_volt_when_measure_variants(self, port, power_obj):
+        """Get the measurement values that can either vary port to port (time delays)"""
+        #Only checking 0 value reads for now.
+        t_trig = meas_cycle_delay = self.cycle_times[self.measure_cycles[port]["read0"]]
+
+        return (t_trig, self.vdd_voltage, port)
     
     def write_delay_measures_read_port(self, port):
         """
         Write the measure statements to quantify the delay and power results for a read port.
         """
         # add measure statements for delays/slews
-        for measure in self.read_meas_objs:
+        for measure in self.read_meas_objs+self.bitline_delay_objs:
             measure_variant_inp_tuple = self.get_read_measure_variants(port, measure)
             measure.write_measure(self.stim, measure_variant_inp_tuple)
 
@@ -285,7 +334,7 @@ class delay(simulation):
         """
         # add measure statements for power
         for measure in self.write_meas_objs:
-            measure_variant_inp_tuple = self.get_read_measure_variants(port, measure)
+            measure_variant_inp_tuple = self.get_write_measure_variants(port, measure)
             measure.write_measure(self.stim, measure_variant_inp_tuple)
 
     def write_delay_measures(self):
@@ -394,28 +443,7 @@ class delay(simulation):
             previous_period = self.period
         debug.info(1, "Found feasible_period: {0}ns".format(self.period))
         return feasible_delays
-           
-                
-    def parse_values(self, values_names, port, mult = 1.0):
-        """Parse multiple values in the timing output file. Optional multiplier.
-           Return a dict of the input names and values. Port used for parsing file.
-        """
-        values = []
-        all_values_floats = True
-        for vname in values_names:
-            #ngspice converts all measure characters to lowercase, not tested on other sims
-            value = parse_spice_list("timing", "{0}{1}".format(vname.lower(), port)) 
-            #Check if any of the values fail to parse
-            if type(value)!=float: 
-                all_values_floats = False
-            values.append(value)
-            
-        #Apply Multiplier only if all values are floats. Let other check functions handle this error.
-        if all_values_floats:
-            return {values_names[i]:values[i]*mult for i in range(len(values))}
-        else:
-            return {values_names[i]:values[i] for i in range(len(values))}
-            
+    
     def run_delay_simulation(self):
         """
         This tries to simulate a period and checks if the result works. If
@@ -448,10 +476,13 @@ class delay(simulation):
                 debug.error("Failed to Measure Read Port Values:\n\t\t{0}".format(read_port_dict),1) #Printing the entire dict looks bad.    
                 
             result[port].update(read_port_dict)
-
+            
+            bitline_delay_dict = self.evaluate_bitline_delay(port)
+            result[port].update(bitline_delay_dict)
+            
         for port in self.targ_write_ports:
             write_port_dict = {}
-            for measure in self.read_meas_objs:
+            for measure in self.write_meas_objs:
                 write_port_dict[measure.name] = measure.retrieve_measure(port=port)
 
             if not check_dict_values_is_float(write_port_dict):
@@ -461,7 +492,17 @@ class delay(simulation):
         # The delay is from the negative edge for our SRAM
         return (True,result)
 
-
+    def evaluate_bitline_delay(self, port):
+        """Parse and check the bitline delay. One of the measurements is expected to fail which warrants its own function."""
+        bl_delay_meas_dict = {}
+        values_added = 0 #For error checking
+        for measure in self.bitline_delay_objs:
+            bl_delay_val = measure.retrieve_measure(port=port)
+            if type(bl_delay_val) != float or 0 > bl_delay_val or bl_delay_val > self.period/2: #Only add if value is valid, do not error.
+                debug.error("Bitline delay measurement failed: half-period={}, {}={}".format(self.period/2, measure.name, bl_delay_val),1)
+            bl_delay_meas_dict[measure.name] = bl_delay_val
+        return bl_delay_meas_dict
+        
     def run_power_simulation(self):
         """ 
         This simulates a disabled SRAM to get the leakage power when it is off.
@@ -618,9 +659,18 @@ class delay(simulation):
         functions in this characterizer besides analyze."""
         self.probe_address = probe_address
         self.probe_data = probe_data
-
+        self.bitline_column = self.get_data_bit_column_number(probe_address, probe_data)
+        
         self.prepare_netlist()
         
+    def get_data_bit_column_number(self, probe_address, probe_data):
+        """Calculates bitline column number of data bit under test using bit position and mux size"""
+        if self.sram.col_addr_size>0:
+            col_address = int(probe_address[0:self.sram.col_addr_size],2)
+        else:
+            col_address = 0
+        bl_column = int(self.sram.words_per_row*probe_data + col_address)
+        return bl_column    
 
     def prepare_netlist(self):
         """ Prepare a trimmed netlist and regular netlist. """
@@ -899,7 +949,7 @@ class delay(simulation):
             
     def get_empty_measure_data_dict(self):
         """Make a dict of lists for each type of delay and power measurement to append results to"""
-        measure_names = self.delay_meas_names + self.power_meas_names
+        measure_names = self.delay_meas_names + self.power_meas_names + self.voltage_when_names + self.bitline_delay_names
         #Create list of dicts. List lengths is # of ports. Each dict maps the measurement names to lists.
         measure_data = [{mname:[] for mname in measure_names} for i in self.all_ports]
         return measure_data

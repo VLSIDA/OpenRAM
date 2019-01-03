@@ -35,6 +35,10 @@ class logical_effort():
     
     def get_stage_delay(self, pinv):
         return self.get_stage_effort()+self.get_parasitic_delay(pinv)
+
+def calculate_delays(stage_effort_list, pinv):
+    """Convert stage effort objects to list of delay values"""
+    return [stage.get_stage_delay(pinv) for stage in stage_effort_list]
     
 def calculate_relative_delay(stage_effort_list, pinv=parameter["min_inv_para_delay"]):
     """Calculates the total delay of a given delay path made of a list of logical effort objects."""

@@ -10,6 +10,7 @@ from .worst_case import *
 from .simulation import *
 from .bitline_delay import *
 from .measurements import *
+from .model_check import *
 
 debug.info(1,"Initializing characterizer...")
 OPTS.spice_exe = ""

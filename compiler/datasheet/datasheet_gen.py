@@ -365,6 +365,7 @@ def parse_characterizer_csv(sram,f,pages):
                 new_sheet.time = DATETIME
                 new_sheet.DRC = DRC
                 new_sheet.LVS = LVS
+                new_sheet.description = [NAME, NUM_WORDS, NUM_BANKS, NUM_RW_PORTS, NUM_W_PORTS, NUM_R_PORTS, TECH_NAME, WORD_SIZE, ORIGIN_ID, DATETIME]
 
 
                 new_sheet.corners.append(characterization_corners_item(PROC,process_name(PROC),VOLT,TEMP,LIB_NAME.replace(OUT_DIR,'').replace(NAME,'')))

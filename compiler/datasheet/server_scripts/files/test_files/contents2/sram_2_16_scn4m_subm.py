@@ -14,5 +14,5 @@ netlist_only = True
 bitcell = "pbitcell"
 replica_bitcell="replica_pbitcell"
 num_rw_ports = 1
-num_r_ports = 1
-num_w_ports = 1
+num_r_ports = 0
+num_w_ports = 0

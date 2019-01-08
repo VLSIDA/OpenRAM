@@ -32,10 +32,13 @@ class datasheet():
             self.html += datasheet_css.read()
 
         
-        with open(OPTS.openram_temp + "/datasheet.info") as info:           
+#        with open(OPTS.openram_temp + "/datasheet.info") as info:           
             self.html += '<!--'
-            for row in info:
-                self.html += row
+#            for row in info:
+#                self.html += row
+            for item in self.description:
+               self.html += item + ','
+               self.teml += 'EOL'
             self.html +='-->'
     
         vlsi_logo = 0

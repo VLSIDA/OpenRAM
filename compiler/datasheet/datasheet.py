@@ -65,6 +65,9 @@ class datasheet():
         self.html +='<p style="font-size: 26px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Ports and Configuration (DEBUG)</p>'
         self.html += in_out(self.io,table_id='data').__html__().replace('&lt;','<').replace('&#34;','"').replace('&gt;',">")
 
+#        for row in self.io_table.rows:
+#            print(row)
+        
         self.html +='<p style="font-size: 26px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Operating Conditions</p>'
         self.html += operating_conditions(self.operating,table_id='data').__html__()
 

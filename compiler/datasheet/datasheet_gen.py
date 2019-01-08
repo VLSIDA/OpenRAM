@@ -19,6 +19,7 @@ if OPTS.datasheet_gen:
     import os, math
     import optparse
     import csv
+    from table_gen import *
     from deliverables import *
     from operating_conditions import *
     from timing_and_current_data import *
@@ -355,6 +356,11 @@ def parse_characterizer_csv(sram,f,pages):
                     new_sheet.corners.append(characterization_corners_item(PROC,process_name(PROC),VOLT,TEMP,LIB_NAME.replace(OUT_DIR,'').replace(NAME,'')))
                     new_sheet.dlv.append(deliverables_item('.lib','Synthesis models','<a href="file://{0}">{1}</a>'.format(LIB_NAME,LIB_NAME.replace(OUT_DIR,''))))
 
+                    #
+                    new_sheet.corners.add_row([PROC,process_name(PROC),VOLT,TEMP,LIB_NAME.replace(OUT_DIR,'').replace(NAME,'')])
+                    new_sheet.dlv.add_row(['.lib','Synthesis models','<a href="file://{0}">{1}</a>'.format(LIB_NAME,LIB_NAME.replace(OUT_DIR,''))])
+                    #
+
             if found == 0:
                 
                 #if this is the first corner for this sram, run first time configuration and set up tables
@@ -367,18 +373,62 @@ def parse_characterizer_csv(sram,f,pages):
                 new_sheet.LVS = LVS
                 new_sheet.description = [NAME, NUM_WORDS, NUM_BANKS, NUM_RW_PORTS, NUM_W_PORTS, NUM_R_PORTS, TECH_NAME, WORD_SIZE, ORIGIN_ID, DATETIME]
 
+            
 
                 new_sheet.corners.append(characterization_corners_item(PROC,process_name(PROC),VOLT,TEMP,LIB_NAME.replace(OUT_DIR,'').replace(NAME,'')))
 
+                #
+                new_sheet.corners_table = table_gen("corners")               
+                new_sheet.corners_table.add_row([PROC,process_name(PROC),VOLT,TEMP,LIB_NAME.replace(OUT_DIR,'').replace(NAME,'')])
+                #
+
                 new_sheet.operating.append(operating_conditions_item('Power supply (VDD) range',VOLT,VOLT,VOLT,'Volts'))
                 new_sheet.operating.append(operating_conditions_item('Operating Temperature',TEMP,TEMP,TEMP,'Celsius'))
+
+                #
+                new_sheet.operating_table = table_gen("operating_table")
+                new_sheet.operating_table.add_row(['Power supply (VDD) range',VOLT,VOLT,VOLT,'Volts'])
+                new_sheet.operating_table.add_row(['Operating Temperature',TEMP,TEMP,TEMP,'Celsius'])
+                #
+
                 try:
                     new_sheet.operating.append(operating_conditions_item('Operating Frequency (F)','','',str(math.floor(1000/float(MIN_PERIOD))),'MHz'))
+                    #
+                    new_sheet.operating_table.add_row(['Operating Frequency (F)','','',str(math.floor(1000/float(MIN_PERIOD))),'MHz'])
+                    #
                 except Exception:
                     new_sheet.operating.append(operating_conditions_item('Operating Frequency (F)','','',"not available in netlist only",'MHz')) #failed to provide non-zero MIN_PERIOD
-                
-                
+                    #
+                    new_sheet.operating_table.add_row(['Operating Frequency (F)','','',"not available in netlist only",'MHz']) #failed to provide non-zero MIN_PERIOD
+                    #
+
+                #
+                new_sheet.timing_table = table_gen("timing")
+                #
                 while(True):
+                    #
+                    if(row[col].startswith('DIN')):
+                        start = col
+                        
+                        new_sheet.timing_table.add_row(['{0} setup rising'.format(row[start]),row[col+1],row[col+2],'ns'])
+                        col += 2
+
+                        
+                        new_sheet.timing_table.add_row(['{0} setup falling'.format(row[start]),row[col+1],row[col+2],'ns'])
+
+                        col += 2
+                    
+                        new_sheet.timing_table.add_row(['{0} hold rising'.format(row[start]),row[col+1],row[col+2],'ns'])
+
+                        col += 2
+
+                        new_sheet.timing_table.add_row(['{0} hold falling'.format(row[start]),row[col+1],row[col+2],'ns'])
+
+                        col += 2
+
+                        col +=1
+
+                    #
                     if(row[col].startswith('DIN')):
                         start = col
                         new_sheet.timing.append(timing_and_current_data_item('{0} setup rising'.format(row[start]),row[col+1],row[col+2],'ns'))
@@ -394,6 +444,8 @@ def parse_characterizer_csv(sram,f,pages):
                         col += 2
 
                         col +=1
+
+                    #
                         
                     elif(row[col].startswith('DOUT')):
                         start = col
@@ -410,7 +462,29 @@ def parse_characterizer_csv(sram,f,pages):
                         col += 2
 
                         col +=1
+                    #
+                    elif(row[col].startswith('DOUT')):
+                        start = col
+                        
+                        new_sheet.timing_table.add_row(['{0} cell rise'.format(row[start]),row[col+1],row[col+2],'ns'])
+                        col += 2
 
+                        
+                        new_sheet.timing_table.add_row(['{0} cell fall'.format(row[start]),row[col+1],row[col+2],'ns'])
+
+                        col += 2
+                    
+                        new_sheet.timing_table.add_row(['{0} rise transition'.format(row[start]),row[col+1],row[col+2],'ns'])
+
+                        col += 2
+
+                        new_sheet.timing_table.add_row(['{0} fall transition'.format(row[start]),row[col+1],row[col+2],'ns'])
+
+                        col += 2
+
+                        col +=1
+
+                    #
                     elif(row[col].startswith('CSb')):
                         start = col
                         new_sheet.timing.append(timing_and_current_data_item('{0} setup rising'.format(row[start]),row[col+1],row[col+2],'ns'))
@@ -426,7 +500,29 @@ def parse_characterizer_csv(sram,f,pages):
                         col += 2
 
                         col +=1
+                    #
+                    elif(row[col].startswith('CSb')):
+                        start = col
+                        
+                        new_sheet.timing_table.add_row(['{0} setup rising'.format(row[start]),row[col+1],row[col+2],'ns'])
+                        col += 2
 
+                        
+                        new_sheet.timing_table.add_row(['{0} setup falling'.format(row[start]),row[col+1],row[col+2],'ns'])
+
+                        col += 2
+                    
+                        new_sheet.timing_table.add_row(['{0} hold rising'.format(row[start]),row[col+1],row[col+2],'ns'])
+
+                        col += 2
+
+                        new_sheet.timing_table.add_row(['{0} hold falling'.format(row[start]),row[col+1],row[col+2],'ns'])
+
+                        col += 2
+
+                        col +=1
+
+                    #
                     elif(row[col].startswith('WEb')):
                         start = col
                         new_sheet.timing.append(timing_and_current_data_item('{0} setup rising'.format(row[start]),row[col+1],row[col+2],'ns'))
@@ -442,7 +538,29 @@ def parse_characterizer_csv(sram,f,pages):
                         col += 2
 
                         col +=1
+                    #
+                    elif(row[col].startswith('WEb')):
+                        start = col
+                        
+                        new_sheet.timing_table.add_row(['{0} setup rising'.format(row[start]),row[col+1],row[col+2],'ns'])
+                        col += 2
 
+                        
+                        new_sheet.timing_table.add_row(['{0} setup falling'.format(row[start]),row[col+1],row[col+2],'ns'])
+
+                        col += 2
+                    
+                        new_sheet.timing_table.add_row(['{0} hold rising'.format(row[start]),row[col+1],row[col+2],'ns'])
+
+                        col += 2
+
+                        new_sheet.timing_table.add_row(['{0} hold falling'.format(row[start]),row[col+1],row[col+2],'ns'])
+
+                        col += 2
+
+                        col +=1
+
+                    #
                     elif(row[col].startswith('ADDR')):
                         start = col
                         new_sheet.timing.append(timing_and_current_data_item('{0} setup rising'.format(row[start]),row[col+1],row[col+2],'ns'))
@@ -458,25 +576,58 @@ def parse_characterizer_csv(sram,f,pages):
                         col += 2
 
                         col +=1
+                    #
+                    elif(row[col].startswith('ADDR')):
+                        start = col
+                        
+                        new_sheet.timing_table.add_row(['{0} setup rising'.format(row[start]),row[col+1],row[col+2],'ns'])
+                        col += 2
+
+                        
+                        new_sheet.timing_table.add_row(['{0} setup falling'.format(row[start]),row[col+1],row[col+2],'ns'])
+
+                        col += 2
+                    
+                        new_sheet.timing_table.add_row(['{0} hold rising'.format(row[start]),row[col+1],row[col+2],'ns'])
+
+                        col += 2
+
+                        new_sheet.timing_table.add_row(['{0} hold falling'.format(row[start]),row[col+1],row[col+2],'ns'])
+
+                        col += 2
+
+                        col +=1
+
+                    #
                     else:
                         break
 
 
                     
-               
+                #
+                new_sheet.dlv_table = table_gen("dlv")
+                new_sheet.io_table = table_gen("io")
+                #
+
                 if not OPTS.netlist_only:
                     #physical layout files should not be generated in netlist only mode
                     new_sheet.dlv.append(deliverables_item('.gds','GDSII layout views','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'gds')))
                     new_sheet.dlv.append(deliverables_item('.lef','LEF files','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'lef')))
-   
-
+  
+               
                 new_sheet.dlv.append(deliverables_item('.sp','SPICE netlists','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'sp')))
                 new_sheet.dlv.append(deliverables_item('.v','Verilog simulation models','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'v')))
                 new_sheet.dlv.append(deliverables_item('.html','This datasheet','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'html')))
                 new_sheet.dlv.append(deliverables_item('.lib','Synthesis models','<a href="{1}">{1}</a>'.format(LIB_NAME,LIB_NAME.replace(OUT_DIR,''))))
                 new_sheet.dlv.append(deliverables_item('.py','OpenRAM configuration file','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'py')))
 
-
+                #
+                new_sheet.dlv_table.add_row(['.sp','SPICE netlists','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'sp')])
+                new_sheet.dlv_table.add_row(['.v','Verilog simulation models','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'v')])
+                new_sheet.dlv_table.add_row(['.html','This datasheet','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'html')])
+                new_sheet.dlv_table.add_row(['.lib','Synthesis models','<a href="{1}">{1}</a>'.format(LIB_NAME,LIB_NAME.replace(OUT_DIR,''))])
+                new_sheet.dlv_table.add_row(['.py','OpenRAM configuration file','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'py')])
+                #
 
                 #debug table for multiport information
                 new_sheet.io.append(in_out_item('WORD_SIZE',WORD_SIZE))
@@ -487,7 +638,15 @@ def parse_characterizer_csv(sram,f,pages):
                 new_sheet.io.append(in_out_item('NUM_W_PORTS',NUM_W_PORTS))
                 new_sheet.io.append(in_out_item('Area',sram.width * sram.height))
 
-
+                #
+                new_sheet.io_table.add_row(['WORD_SIZE',WORD_SIZE])
+                new_sheet.io_table.add_row(['NUM_WORDS',NUM_WORDS])
+                new_sheet.io_table.add_row(['NUM_BANKS',NUM_BANKS])
+                new_sheet.io_table.add_row(['NUM_RW_PORTS',NUM_RW_PORTS])
+                new_sheet.io_table.add_row(['NUM_R_PORTS',NUM_R_PORTS])
+                new_sheet.io_table.add_row(['NUM_W_PORTS',NUM_W_PORTS])
+                new_sheet.io_table.add_row(['Area',sram.width * sram.height])
+                #
 
 
 

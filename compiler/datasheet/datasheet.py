@@ -40,7 +40,7 @@ class datasheet():
             openram_logo = base64.b64encode(image_file.read())
 
 
-        self.html +=   '<a href="https://vlsida.soe.ucsc.edu/"><img src="data:image/png;base64,{0}" alt="VLSIDA"></a><a href="https://vlsida.github.io/OpenRAM"><img src="data:image/png;base64,{1}"="OpenRAM"></a>'.format(str(vlsi_logo)[2:-1],str(openram_logo)[2:-1])
+        self.html +=   '<a href="https://vlsida.soe.ucsc.edu/"><img src="data:image/png;base64,{0}" alt="VLSIDA"></a>'.format(str(vlsi_logo)[2:-1])
          
 
 

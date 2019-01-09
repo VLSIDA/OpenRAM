@@ -111,14 +111,14 @@ class sram():
         start_time = datetime.datetime.now()
         from shutil import copyfile
         copyfile(OPTS.config_file + '.py', OPTS.output_path + OPTS.output_name + '.py')
-        print("Config: writing to {0}".format(OPTS.output_path + OPTS.output_name + '.py'))
+        print("Config: Writing to {0}".format(OPTS.output_path + OPTS.output_name + '.py'))
         print_time("Config", datetime.datetime.now(), start_time)
 
         # Write the datasheet
         start_time = datetime.datetime.now()
         from datasheet_gen import datasheet_gen
         dname = OPTS.output_path + self.s.name + ".html"
-        print("Datasheet: writing to {0}".format(dname))
+        print("Datasheet: Writing to {0}".format(dname))
         datasheet_gen.datasheet_write(self.s,dname)
         print_time("Datasheet", datetime.datetime.now(), start_time)
 

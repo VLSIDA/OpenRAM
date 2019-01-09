@@ -1,34 +1,21 @@
 #!/usr/bin/env python3
 """
 This is a script to load data from the characterization and layout processes into 
-a web friendly html datasheet. This script requres the python-flask and flask-table
-packages to be installed.
+a web friendly html datasheet.
 """
 #TODO:
-#locate all port elements in .lib
-#Locate all timing elements in .lib
+#include log file
 #Diagram generation
 #Improve css
 
 
 import debug
 from globals import OPTS
-
-if OPTS.datasheet_gen:
-    import flask_table
-    import os, math
-    import optparse
-    import csv
-    from deliverables import *
-    from operating_conditions import *
-    from timing_and_current_data import *
-    from characterization_corners import *
-    from datasheet import *
-    from in_out import *
-else:
-    debug.warning("Python library flask_table not found. Skipping html datasheet generation. This can be installed with pip install flask-table.")
-    #make sure appropriate python libraries are installed
-
+import os, math
+import optparse
+import csv
+from datasheet import *
+from table_gen import *
 
 def process_name(corner):
     """
@@ -119,69 +106,70 @@ def parse_characterizer_csv(sram,f,pages):
                     found = 1
                     #if the .lib information is for an existing datasheet compare timing data
 
-                    for item in sheet.operating:
+                    for item in sheet.operating_table.rows:
                         #check if the new corner data is worse than the previous worse corner data
 
-                        if item.parameter == 'Operating Temperature':
-                            if float(TEMP) > float(item.max):
-                                item.typ = item.max
-                                item.max = TEMP
-                            if float(TEMP) < float(item.min):
-                                item.typ = item.min
-                                item.min = TEMP
+                        if item[0] == 'Operating Temperature':
+                            if float(TEMP) > float(item[3]):
+                                item[2] = item[3]
+                                item[3] = TEMP
+                            if float(TEMP) < float(item[1]):
+                                item[2] = item[1]
+                                item[1] = TEMP
 
-                        if item.parameter == 'Power supply (VDD) range':
-                            if float(VOLT) > float(item.max):
-                                item.typ = item.max
-                                item.max = VOLT
-                            if float(VOLT) < float(item.min):
-                                item.typ = item.min
-                                item.min = VOLT
+                        if item[0] == 'Power supply (VDD) range':
+                            if float(VOLT) > float(item[3]):
+                                item[2] = item[3]
+                                item[3] = VOLT
+                            if float(VOLT) < float(item[1]):
+                                item[2] = item[1]
+                                item[1] = VOLT
 
-                        if item.parameter == 'Operating Frequncy (F)':
+                        if item[0] == 'Operating Frequncy (F)':
                             try:
-                                if float(math.floor(1000/float(MIN_PERIOD)) < float(item.max)):
-                                    item.max = str(math.floor(1000/float(MIN_PERIOD)))
+                                if float(math.floor(1000/float(MIN_PERIOD)) < float(item[3])):
+                                    item[3] = str(math.floor(1000/float(MIN_PERIOD)))
                             except Exception:
                                 pass
 
 
-
                     while(True):
+
+                       
                         if(row[col].startswith('DIN')):
                             start = col
-                            for item in sheet.timing:
-                                if item.parameter.startswith(row[col]):
+                            for item in sheet.timing_table.rows:
+                                if item[0].startswith(row[col]):
 
-                                    if item.parameter.endswith('setup rising'):
-                                        if float(row[col+1]) < float(item.min):
-                                            item.min = row[col+1]
-                                        if float(row[col+2]) > float(item.max):
-                                            item.max = row[col+2]
-
-                                        col += 2
-
-                                    elif item.parameter.endswith('setup falling'):
-                                        if float(row[col+1]) < float(item.min):
-                                            item.min = row[col+1]
-                                        if float(row[col+2]) > float(item.max):
-                                            item.max = row[col+2]
+                                    if item[0].endswith('setup rising'):
+                                        if float(row[col+1]) < float(item[1]):
+                                            item[1] = row[col+1]
+                                        if float(row[col+2]) > float(item[2]):
+                                            item[2] = row[col+2]
 
                                         col += 2
 
-                                    elif item.parameter.endswith('hold rising'):
-                                        if float(row[col+1]) < float(item.min):
-                                            item.min = row[col+1]
-                                        if float(row[col+2]) > float(item.max):
-                                            item.max = row[col+2]
+                                    elif item[0].endswith('setup falling'):
+                                        if float(row[col+1]) < float(item[1]):
+                                            item[1] = row[col+1]
+                                        if float(row[col+2]) > float(item[2]):
+                                            item[2] = row[col+2]
 
                                         col += 2
 
-                                    elif item.parameter.endswith('hold falling'):
-                                        if float(row[col+1]) < float(item.min):
-                                            item.min = row[col+1]
-                                        if float(row[col+2]) > float(item.max):
-                                            item.max = row[col+2]
+                                    elif item[0].endswith('hold rising'):
+                                        if float(row[col+1]) < float(item[1]):
+                                            item[1] = row[col+1]
+                                        if float(row[col+2]) > float(item[2]):
+                                            item[2] = row[col+2]
+
+                                        col += 2
+
+                                    elif item[0].endswith('hold falling'):
+                                        if float(row[col+1]) < float(item[1]):
+                                            item[1] = row[col+1]
+                                        if float(row[col+2]) > float(item[2]):
+                                            item[2] = row[col+2]
 
                                         col += 2
 
@@ -189,38 +177,38 @@ def parse_characterizer_csv(sram,f,pages):
 
                         elif(row[col].startswith('DOUT')):
                             start = col
-                            for item in sheet.timing:
-                                if item.parameter.startswith(row[col]):
+                            for item in sheet.timing_table.rows:
+                                if item[0].startswith(row[col]):
 
-                                    if item.parameter.endswith('cell rise'):
-                                        if float(row[col+1]) < float(item.min):
-                                            item.min = row[col+1]
-                                        if float(row[col+2]) > float(item.max):
-                                            item.max = row[col+2]
-
-                                        col += 2
-
-                                    elif item.parameter.endswith('cell fall'):
-                                        if float(row[col+1]) < float(item.min):
-                                            item.min = row[col+1]
-                                        if float(row[col+2]) > float(item.max):
-                                            item.max = row[col+2]
+                                    if item[0].endswith('cell rise'):
+                                        if float(row[col+1]) < float(item[1]):
+                                            item[1] = row[col+1]
+                                        if float(row[col+2]) > float(item[2]):
+                                            item[2] = row[col+2]
 
                                         col += 2
 
-                                    elif item.parameter.endswith('rise transition'):
-                                        if float(row[col+1]) < float(item.min):
-                                            item.min = row[col+1]
-                                        if float(row[col+2]) > float(item.max):
-                                            item.max = row[col+2]
+                                    elif item[0].endswith('cell fall'):
+                                        if float(row[col+1]) < float(item[1]):
+                                            item[1] = row[col+1]
+                                        if float(row[col+2]) > float(item[2]):
+                                            item[2] = row[col+2]
 
                                         col += 2
 
-                                    elif item.parameter.endswith('fall transition'):
-                                        if float(row[col+1]) < float(item.min):
-                                            item.min = row[col+1]
-                                        if float(row[col+2]) > float(item.max):
-                                            item.max = row[col+2]
+                                    elif item[0].endswith('rise transition'):
+                                        if float(row[col+1]) < float(item[1]):
+                                            item[1] = row[col+1]
+                                        if float(row[col+2]) > float(item[2]):
+                                            item[2] = row[col+2]
+
+                                        col += 2
+
+                                    elif item[0].endswith('fall transition'):
+                                        if float(row[col+1]) < float(item[1]):
+                                            item[1] = row[col+1]
+                                        if float(row[col+2]) > float(item[2]):
+                                            item[2] = row[col+2]
 
                                         col += 2
 
@@ -228,38 +216,38 @@ def parse_characterizer_csv(sram,f,pages):
 
                         elif(row[col].startswith('CSb')):
                             start = col
-                            for item in sheet.timing:
-                                if item.parameter.startswith(row[col]):
+                            for item in sheet.timing_table.rows:
+                                if item[0].startswith(row[col]):
 
-                                    if item.parameter.endswith('setup rising'):
-                                        if float(row[col+1]) < float(item.min):
-                                            item.min = row[col+1]
-                                        if float(row[col+2]) > float(item.max):
-                                            item.max = row[col+2]
-
-                                        col += 2
-
-                                    elif item.parameter.endswith('setup falling'):
-                                        if float(row[col+1]) < float(item.min):
-                                            item.min = row[col+1]
-                                        if float(row[col+2]) > float(item.max):
-                                            item.max = row[col+2]
+                                    if item[0].endswith('setup rising'):
+                                        if float(row[col+1]) < float(item[1]):
+                                            item[1] = row[col+1]
+                                        if float(row[col+2]) > float(item[2]):
+                                            item[2] = row[col+2]
 
                                         col += 2
 
-                                    elif item.parameter.endswith('hold rising'):
-                                        if float(row[col+1]) < float(item.min):
-                                            item.min = row[col+1]
-                                        if float(row[col+2]) > float(item.max):
-                                            item.max = row[col+2]
+                                    elif item[0].endswith('setup falling'):
+                                        if float(row[col+1]) < float(item[1]):
+                                            item[1] = row[col+1]
+                                        if float(row[col+2]) > float(item[2]):
+                                            item[2] = row[col+2]
 
                                         col += 2
 
-                                    elif item.parameter.endswith('hold falling'):
-                                        if float(row[col+1]) < float(item.min):
-                                            item.min = row[col+1]
-                                        if float(row[col+2]) > float(item.max):
-                                            item.max = row[col+2]
+                                    elif item[0].endswith('hold rising'):
+                                        if float(row[col+1]) < float(item[1]):
+                                            item[1] = row[col+1]
+                                        if float(row[col+2]) > float(item[2]):
+                                            item[2] = row[col+2]
+
+                                        col += 2
+
+                                    elif item[0].endswith('hold falling'):
+                                        if float(row[col+1]) < float(item[1]):
+                                            item[1] = row[col+1]
+                                        if float(row[col+2]) > float(item[2]):
+                                            item[2] = row[col+2]
 
                                         col += 2
 
@@ -268,38 +256,38 @@ def parse_characterizer_csv(sram,f,pages):
 
                         elif(row[col].startswith('WEb')):
                             start = col
-                            for item in sheet.timing:
-                                if item.parameter.startswith(row[col]):
+                            for item in sheet.timing_table.rows:
+                                if item[0].startswith(row[col]):
 
-                                    if item.parameter.endswith('setup rising'):
-                                        if float(row[col+1]) < float(item.min):
-                                            item.min = row[col+1]
-                                        if float(row[col+2]) > float(item.max):
-                                            item.max = row[col+2]
-
-                                        col += 2
-
-                                    elif item.parameter.endswith('setup falling'):
-                                        if float(row[col+1]) < float(item.min):
-                                            item.min = row[col+1]
-                                        if float(row[col+2]) > float(item.max):
-                                            item.max = row[col+2]
+                                    if item[0].endswith('setup rising'):
+                                        if float(row[col+1]) < float(item[1]):
+                                            item[1] = row[col+1]
+                                        if float(row[col+2]) > float(item[2]):
+                                            item[2] = row[col+2]
 
                                         col += 2
 
-                                    elif item.parameter.endswith('hold rising'):
-                                        if float(row[col+1]) < float(item.min):
-                                            item.min = row[col+1]
-                                        if float(row[col+2]) > float(item.max):
-                                            item.max = row[col+2]
+                                    elif item[0].endswith('setup falling'):
+                                        if float(row[col+1]) < float(item[1]):
+                                            item[1] = row[col+1]
+                                        if float(row[col+2]) > float(item[2]):
+                                            item[2] = row[col+2]
 
                                         col += 2
 
-                                    elif item.parameter.endswith('hold falling'):
-                                        if float(row[col+1]) < float(item.min):
-                                            item.min = row[col+1]
-                                        if float(row[col+2]) > float(item.max):
-                                            item.max = row[col+2]
+                                    elif item[0].endswith('hold rising'):
+                                        if float(row[col+1]) < float(item[1]):
+                                            item[1] = row[col+1]
+                                        if float(row[col+2]) > float(item[2]):
+                                            item[2] = row[col+2]
+
+                                        col += 2
+
+                                    elif item[0].endswith('hold falling'):
+                                        if float(row[col+1]) < float(item[1]):
+                                            item[1] = row[col+1]
+                                        if float(row[col+2]) > float(item[2]):
+                                            item[2] = row[col+2]
 
                                         col += 2
 
@@ -308,38 +296,38 @@ def parse_characterizer_csv(sram,f,pages):
 
                         elif(row[col].startswith('ADDR')):
                             start = col
-                            for item in sheet.timing:
-                                if item.parameter.startswith(row[col]):
+                            for item in sheet.timing_table.rows:
+                                if item[0].startswith(row[col]):
 
-                                    if item.parameter.endswith('setup rising'):
-                                        if float(row[col+1]) < float(item.min):
-                                            item.min = row[col+1]
-                                        if float(row[col+2]) > float(item.max):
-                                            item.max = row[col+2]
-
-                                        col += 2
-
-                                    elif item.parameter.endswith('setup falling'):
-                                        if float(row[col+1]) < float(item.min):
-                                            item.min = row[col+1]
-                                        if float(row[col+2]) > float(item.max):
-                                            item.max = row[col+2]
+                                    if item[0].endswith('setup rising'):
+                                        if float(row[col+1]) < float(item[1]):
+                                            item[1] = row[col+1]
+                                        if float(row[col+2]) > float(item[2]):
+                                            item[2] = row[col+2]
 
                                         col += 2
 
-                                    elif item.parameter.endswith('hold rising'):
-                                        if float(row[col+1]) < float(item.min):
-                                            item.min = row[col+1]
-                                        if float(row[col+2]) > float(item.max):
-                                            item.max = row[col+2]
+                                    elif item[0].endswith('setup falling'):
+                                        if float(row[col+1]) < float(item[1]):
+                                            item[1] = row[col+1]
+                                        if float(row[col+2]) > float(item[2]):
+                                            item[2] = row[col+2]
 
                                         col += 2
 
-                                    elif item.parameter.endswith('hold falling'):
-                                        if float(row[col+1]) < float(item.min):
-                                            item.min = row[col+1]
-                                        if float(row[col+2]) > float(item.max):
-                                            item.max = row[col+2]
+                                    elif item[0].endswith('hold rising'):
+                                        if float(row[col+1]) < float(item[1]):
+                                            item[1] = row[col+1]
+                                        if float(row[col+2]) > float(item[2]):
+                                            item[2] = row[col+2]
+
+                                        col += 2
+
+                                    elif item[0].endswith('hold falling'):
+                                        if float(row[col+1]) < float(item[1]):
+                                            item[1] = row[col+1]
+                                        if float(row[col+2]) > float(item[2]):
+                                            item[2] = row[col+2]
 
                                         col += 2
 
@@ -351,9 +339,8 @@ def parse_characterizer_csv(sram,f,pages):
                             break
 
 
-                    #regardless of if there is already a corner for the current sram, append the new corner to the datasheet
-                    new_sheet.corners.append(characterization_corners_item(PROC,process_name(PROC),VOLT,TEMP,LIB_NAME.replace(OUT_DIR,'').replace(NAME,'')))
-                    new_sheet.dlv.append(deliverables_item('.lib','Synthesis models','<a href="file://{0}">{1}</a>'.format(LIB_NAME,LIB_NAME.replace(OUT_DIR,''))))
+                    new_sheet.corners_table.add_row([PROC,process_name(PROC),VOLT,TEMP,LIB_NAME.replace(OUT_DIR,'').replace(NAME,'')])
+                    new_sheet.dlv_table.add_row(['.lib','Synthesis models','<a href="file://{0}">{1}</a>'.format(LIB_NAME,LIB_NAME.replace(OUT_DIR,''))])
 
             if found == 0:
                 
@@ -367,127 +354,157 @@ def parse_characterizer_csv(sram,f,pages):
                 new_sheet.LVS = LVS
                 new_sheet.description = [NAME, NUM_WORDS, NUM_BANKS, NUM_RW_PORTS, NUM_W_PORTS, NUM_R_PORTS, TECH_NAME, WORD_SIZE, ORIGIN_ID, DATETIME]
 
+                new_sheet.corners_table = table_gen("corners")
+                new_sheet.corners_table.add_row(['Corner Name','Process','Power Supply','Temperature','Library Name Suffix'])
+                new_sheet.corners_table.add_row([PROC,process_name(PROC),VOLT,TEMP,LIB_NAME.replace(OUT_DIR,'').replace(NAME,'')])
+                new_sheet.operating_table = table_gen("operating_table")
+                new_sheet.operating_table.add_row(['Parameter','Min','Typ','Max','Units'])
+                new_sheet.operating_table.add_row(['Power supply (VDD) range',VOLT,VOLT,VOLT,'Volts'])
+                new_sheet.operating_table.add_row(['Operating Temperature',TEMP,TEMP,TEMP,'Celsius'])
 
-                new_sheet.corners.append(characterization_corners_item(PROC,process_name(PROC),VOLT,TEMP,LIB_NAME.replace(OUT_DIR,'').replace(NAME,'')))
-
-                new_sheet.operating.append(operating_conditions_item('Power supply (VDD) range',VOLT,VOLT,VOLT,'Volts'))
-                new_sheet.operating.append(operating_conditions_item('Operating Temperature',TEMP,TEMP,TEMP,'Celsius'))
                 try:
-                    new_sheet.operating.append(operating_conditions_item('Operating Frequency (F)','','',str(math.floor(1000/float(MIN_PERIOD))),'MHz'))
+                    new_sheet.operating_table.add_row(['Operating Frequency (F)','','',str(math.floor(1000/float(MIN_PERIOD))),'MHz'])
                 except Exception:
-                    new_sheet.operating.append(operating_conditions_item('Operating Frequency (F)','','',"not available in netlist only",'MHz')) #failed to provide non-zero MIN_PERIOD
-                
-                
+                    new_sheet.operating_table.add_row(['Operating Frequency (F)','','',"not available in netlist only",'MHz']) #failed to provide non-zero MIN_PERIOD
+                new_sheet.timing_table = table_gen("timing")
+                new_sheet.timing_table.add_row(['Parameter','Min','Max','Units'])
                 while(True):
                     if(row[col].startswith('DIN')):
                         start = col
-                        new_sheet.timing.append(timing_and_current_data_item('{0} setup rising'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        
+                        new_sheet.timing_table.add_row(['{0} setup rising'.format(row[start]),row[col+1],row[col+2],'ns'])
                         col += 2
 
-                        new_sheet.timing.append(timing_and_current_data_item('{0} setup falling'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        
+                        new_sheet.timing_table.add_row(['{0} setup falling'.format(row[start]),row[col+1],row[col+2],'ns'])
+
                         col += 2
                     
-                        new_sheet.timing.append(timing_and_current_data_item('{0} hold rising'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        new_sheet.timing_table.add_row(['{0} hold rising'.format(row[start]),row[col+1],row[col+2],'ns'])
+
                         col += 2
 
-                        new_sheet.timing.append(timing_and_current_data_item('{0} hold falling'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        new_sheet.timing_table.add_row(['{0} hold falling'.format(row[start]),row[col+1],row[col+2],'ns'])
+
                         col += 2
 
                         col +=1
-                        
+
                     elif(row[col].startswith('DOUT')):
                         start = col
-                        new_sheet.timing.append(timing_and_current_data_item('{0} cell rise'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        
+                        new_sheet.timing_table.add_row(['{0} cell rise'.format(row[start]),row[col+1],row[col+2],'ns'])
                         col += 2
 
-                        new_sheet.timing.append(timing_and_current_data_item('{0} cell fall'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        
+                        new_sheet.timing_table.add_row(['{0} cell fall'.format(row[start]),row[col+1],row[col+2],'ns'])
+
                         col += 2
                     
-                        new_sheet.timing.append(timing_and_current_data_item('{0} rise transition'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        new_sheet.timing_table.add_row(['{0} rise transition'.format(row[start]),row[col+1],row[col+2],'ns'])
+
                         col += 2
 
-                        new_sheet.timing.append(timing_and_current_data_item('{0} fall transition'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        new_sheet.timing_table.add_row(['{0} fall transition'.format(row[start]),row[col+1],row[col+2],'ns'])
+
                         col += 2
 
                         col +=1
 
                     elif(row[col].startswith('CSb')):
                         start = col
-                        new_sheet.timing.append(timing_and_current_data_item('{0} setup rising'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        
+                        new_sheet.timing_table.add_row(['{0} setup rising'.format(row[start]),row[col+1],row[col+2],'ns'])
                         col += 2
 
-                        new_sheet.timing.append(timing_and_current_data_item('{0} setup falling'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        
+                        new_sheet.timing_table.add_row(['{0} setup falling'.format(row[start]),row[col+1],row[col+2],'ns'])
+
                         col += 2
                     
-                        new_sheet.timing.append(timing_and_current_data_item('{0} hold rising'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        new_sheet.timing_table.add_row(['{0} hold rising'.format(row[start]),row[col+1],row[col+2],'ns'])
+
                         col += 2
 
-                        new_sheet.timing.append(timing_and_current_data_item('{0} hold falling'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        new_sheet.timing_table.add_row(['{0} hold falling'.format(row[start]),row[col+1],row[col+2],'ns'])
+
                         col += 2
 
                         col +=1
 
                     elif(row[col].startswith('WEb')):
                         start = col
-                        new_sheet.timing.append(timing_and_current_data_item('{0} setup rising'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        
+                        new_sheet.timing_table.add_row(['{0} setup rising'.format(row[start]),row[col+1],row[col+2],'ns'])
                         col += 2
 
-                        new_sheet.timing.append(timing_and_current_data_item('{0} setup falling'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        
+                        new_sheet.timing_table.add_row(['{0} setup falling'.format(row[start]),row[col+1],row[col+2],'ns'])
+
                         col += 2
                     
-                        new_sheet.timing.append(timing_and_current_data_item('{0} hold rising'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        new_sheet.timing_table.add_row(['{0} hold rising'.format(row[start]),row[col+1],row[col+2],'ns'])
+
                         col += 2
 
-                        new_sheet.timing.append(timing_and_current_data_item('{0} hold falling'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        new_sheet.timing_table.add_row(['{0} hold falling'.format(row[start]),row[col+1],row[col+2],'ns'])
+
                         col += 2
 
                         col +=1
 
                     elif(row[col].startswith('ADDR')):
                         start = col
-                        new_sheet.timing.append(timing_and_current_data_item('{0} setup rising'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        
+                        new_sheet.timing_table.add_row(['{0} setup rising'.format(row[start]),row[col+1],row[col+2],'ns'])
                         col += 2
 
-                        new_sheet.timing.append(timing_and_current_data_item('{0} setup falling'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        
+                        new_sheet.timing_table.add_row(['{0} setup falling'.format(row[start]),row[col+1],row[col+2],'ns'])
+
                         col += 2
                     
-                        new_sheet.timing.append(timing_and_current_data_item('{0} hold rising'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        new_sheet.timing_table.add_row(['{0} hold rising'.format(row[start]),row[col+1],row[col+2],'ns'])
+
                         col += 2
 
-                        new_sheet.timing.append(timing_and_current_data_item('{0} hold falling'.format(row[start]),row[col+1],row[col+2],'ns'))
+                        new_sheet.timing_table.add_row(['{0} hold falling'.format(row[start]),row[col+1],row[col+2],'ns'])
+
                         col += 2
 
                         col +=1
+
                     else:
                         break
 
 
                     
-               
+                new_sheet.dlv_table = table_gen("dlv")
+                new_sheet.dlv_table.add_row(['Type','Description','Link'])
+
+                new_sheet.io_table = table_gen("io")
+                new_sheet.io_table.add_row(['Type', 'Value'])
+
                 if not OPTS.netlist_only:
                     #physical layout files should not be generated in netlist only mode
-                    new_sheet.dlv.append(deliverables_item('.gds','GDSII layout views','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'gds')))
-                    new_sheet.dlv.append(deliverables_item('.lef','LEF files','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'lef')))
-   
+                    new_sheet.dlv_table.add_row(['.gds','GDSII layout views','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'gds')])
+                    new_sheet.dlv_table.add_row(['.lef','LEF files','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'lef')])
+ 
+               
+                new_sheet.dlv_table.add_row(['.sp','SPICE netlists','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'sp')])
+                new_sheet.dlv_table.add_row(['.v','Verilog simulation models','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'v')])
+                new_sheet.dlv_table.add_row(['.html','This datasheet','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'html')])
+                new_sheet.dlv_table.add_row(['.lib','Synthesis models','<a href="{1}">{1}</a>'.format(LIB_NAME,LIB_NAME.replace(OUT_DIR,''))])
+                new_sheet.dlv_table.add_row(['.py','OpenRAM configuration file','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'py')])
 
-                new_sheet.dlv.append(deliverables_item('.sp','SPICE netlists','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'sp')))
-                new_sheet.dlv.append(deliverables_item('.v','Verilog simulation models','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'v')))
-                new_sheet.dlv.append(deliverables_item('.html','This datasheet','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'html')))
-                new_sheet.dlv.append(deliverables_item('.lib','Synthesis models','<a href="{1}">{1}</a>'.format(LIB_NAME,LIB_NAME.replace(OUT_DIR,''))))
-                new_sheet.dlv.append(deliverables_item('.py','OpenRAM configuration file','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'py')))
-
-
-
-                #debug table for multiport information
-                new_sheet.io.append(in_out_item('WORD_SIZE',WORD_SIZE))
-                new_sheet.io.append(in_out_item('NUM_WORDS',NUM_WORDS))
-                new_sheet.io.append(in_out_item('NUM_BANKS',NUM_BANKS))
-                new_sheet.io.append(in_out_item('NUM_RW_PORTS',NUM_RW_PORTS))
-                new_sheet.io.append(in_out_item('NUM_R_PORTS',NUM_R_PORTS))
-                new_sheet.io.append(in_out_item('NUM_W_PORTS',NUM_W_PORTS))
-                new_sheet.io.append(in_out_item('Area',sram.width * sram.height))
-
-
+                new_sheet.io_table.add_row(['WORD_SIZE',WORD_SIZE])
+                new_sheet.io_table.add_row(['NUM_WORDS',NUM_WORDS])
+                new_sheet.io_table.add_row(['NUM_BANKS',NUM_BANKS])
+                new_sheet.io_table.add_row(['NUM_RW_PORTS',NUM_RW_PORTS])
+                new_sheet.io_table.add_row(['NUM_R_PORTS',NUM_R_PORTS])
+                new_sheet.io_table.add_row(['NUM_W_PORTS',NUM_W_PORTS])
+                new_sheet.io_table.add_row(['Area',sram.width * sram.height])
+                
 
 
 
@@ -496,18 +513,18 @@ def parse_characterizer_csv(sram,f,pages):
 class datasheet_gen():
      def datasheet_write(sram,name):
         
-        if OPTS.datasheet_gen:
-            in_dir = OPTS.openram_temp
-        
-            if not (os.path.isdir(in_dir)):
-                os.mkdir(in_dir)
+
+        in_dir = OPTS.openram_temp
+
+        if not (os.path.isdir(in_dir)):
+            os.mkdir(in_dir)
 
 
-            datasheets = []
-            parse_characterizer_csv(sram, in_dir + "/datasheet.info", datasheets)
+        datasheets = []
+        parse_characterizer_csv(sram, in_dir + "/datasheet.info", datasheets)
 
 
-            for sheets in datasheets:
-                with open(name, 'w+') as f:
-                    sheets.generate_html()
-                    f.write(sheets.html)
+        for sheets in datasheets:
+            with open(name, 'w+') as f:
+                sheets.generate_html()
+                f.write(sheets.html)

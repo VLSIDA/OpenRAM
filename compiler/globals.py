@@ -107,13 +107,7 @@ def check_versions():
     # FIXME: Check versions of other tools here??
     # or, this could be done in each module (e.g. verify, characterizer, etc.)
     global OPTS
-
-    try:
-        import flask_table
-        OPTS.datasheet_gen = 1
-    except:
-        OPTS.datasheet_gen = 0
-
+ 
     try:
         import coverage
         OPTS.coverage = 1

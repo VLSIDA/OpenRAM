@@ -378,7 +378,7 @@ class lib:
         self.lib.write("        direction  : input; \n")
         self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]))
         self.lib.write("        max_transition       : {0};\n".format(self.slews[-1]))
-        self.lib.write("        pin(ADDR{}])".format(port))
+        self.lib.write("        pin(ADDR{})".format(port))
         self.lib.write("{\n")
         
         self.write_FF_setuphold(port)

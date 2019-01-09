@@ -354,9 +354,11 @@ def parse_characterizer_csv(sram,f,pages):
                 new_sheet.LVS = LVS
                 new_sheet.description = [NAME, NUM_WORDS, NUM_BANKS, NUM_RW_PORTS, NUM_W_PORTS, NUM_R_PORTS, TECH_NAME, WORD_SIZE, ORIGIN_ID, DATETIME]
 
-                new_sheet.corners_table = table_gen("corners")               
+                new_sheet.corners_table = table_gen("corners")
+                new_sheet.corners_table.add_row(['Corner Name','Process','Power Supply','Temperature','Library Name Suffix'])
                 new_sheet.corners_table.add_row([PROC,process_name(PROC),VOLT,TEMP,LIB_NAME.replace(OUT_DIR,'').replace(NAME,'')])
                 new_sheet.operating_table = table_gen("operating_table")
+                new_sheet.operating_table.add_row(['Parameter','Min','Typ','Max','Units'])
                 new_sheet.operating_table.add_row(['Power supply (VDD) range',VOLT,VOLT,VOLT,'Volts'])
                 new_sheet.operating_table.add_row(['Operating Temperature',TEMP,TEMP,TEMP,'Celsius'])
 
@@ -365,6 +367,7 @@ def parse_characterizer_csv(sram,f,pages):
                 except Exception:
                     new_sheet.operating_table.add_row(['Operating Frequency (F)','','',"not available in netlist only",'MHz']) #failed to provide non-zero MIN_PERIOD
                 new_sheet.timing_table = table_gen("timing")
+                new_sheet.timing_table.add_row(['Parameter','Min','Max','Units'])
                 while(True):
                     if(row[col].startswith('DIN')):
                         start = col
@@ -477,7 +480,10 @@ def parse_characterizer_csv(sram,f,pages):
 
                     
                 new_sheet.dlv_table = table_gen("dlv")
+                new_sheet.dlv_table.add_row(['Type','Description','Link'])
+
                 new_sheet.io_table = table_gen("io")
+                new_sheet.io_table.add_row(['Type', 'Value'])
 
                 if not OPTS.netlist_only:
                     #physical layout files should not be generated in netlist only mode

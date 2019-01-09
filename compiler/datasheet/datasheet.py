@@ -48,8 +48,8 @@ class datasheet():
 
         self.html +='<p style="font-size: 18px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">'+ self.name + '.html' + '</p>'
         self.html +='<p style="font-size: 18px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Compiled at: '+ self.time + '</p>'
-        self.html +='<p style="font-size: 18px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">'+ 'DRC: ' + str(self.DRC) + '</p>'
-        self.html +='<p style="font-size: 18px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">'+ 'LVS: ' + str(self.LVS) + '</p>'
+        self.html +='<p style="font-size: 18px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">'+ 'DRC errors: ' + str(self.DRC) + '</p>'
+        self.html +='<p style="font-size: 18px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">'+ 'LVS errors: ' + str(self.LVS) + '</p>'
         self.html += '<p style="font-size: 18px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">'+ 'Git commit id: ' + str(self.git_id) + '</p>'
 
         self.html +='<p style="font-size: 26px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Ports and Configuration (DEBUG)</p>'

@@ -45,14 +45,16 @@ class openram_test(openram_test):
         # Always perform code coverage
         if OPTS.coverage == 0:
             debug.warning("Failed to find coverage installation. This can be installed with pip3 install coverage")
-        exe_name = "coverage run -p {0}/openram.py ".format(OPENRAM_HOME) 
+            exe_name = "{0}/openram.py ".format(OPENRAM_HOME)
+        else:
+            exe_name = "coverage run -p {0}/openram.py ".format(OPENRAM_HOME) 
         config_name = "{0}config_20_{1}.py".format(OPENRAM_HOME + "/tests/",OPTS.tech_name)
         cmd = "{0} -n -o {1} -p {2} {3} {4} 2>&1 > {5}/output.log".format(exe_name,
-                                                                                       out_file,
-                                                                                       out_path,
-                                                                                       verbosity,
-                                                                                       config_name,
-                                                                                       out_path)
+                                                                          out_file,
+                                                                          out_path,
+                                                                          verbosity,
+                                                                          config_name,
+                                                                          out_path)
         debug.info(1, cmd)
         os.system(cmd)
         

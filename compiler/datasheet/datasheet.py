@@ -1,3 +1,4 @@
+from table_gen import *
 from flask_table import *
 from operating_conditions import *
 from characterization_corners import *
@@ -63,8 +64,8 @@ class datasheet():
         self.html += '<p style="font-size: 18px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">'+ 'Git commit id: ' + str(self.git_id) + '</p>'
 
         self.html +='<p style="font-size: 26px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Ports and Configuration (DEBUG)</p>'
-        self.html += in_out(self.io,table_id='data').__html__().replace('&lt;','<').replace('&#34;','"').replace('&gt;',">")
-
+        #self.html += in_out(self.io,table_id='data').__html__().replace('&lt;','<').replace('&#34;','"').replace('&gt;',">")
+        self.html += self.io_table.to_html()
 #        for row in self.io_table.rows:
 #            print(row)
         

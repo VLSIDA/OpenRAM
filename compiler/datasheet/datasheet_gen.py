@@ -145,8 +145,33 @@ def parse_characterizer_csv(sram,f,pages):
                                     item.max = str(math.floor(1000/float(MIN_PERIOD)))
                             except Exception:
                                 pass
+                    #
+                    for item in sheet.operating_table.rows:
+                        #check if the new corner data is worse than the previous worse corner data
 
+                        if item[0] == 'Operating Temperature':
+                            if float(TEMP) > float(ite[3]):
+                                item[2] = item[3]
+                                item[3] = TEMP
+                            if float(TEMP) < float(item[1]):
+                                item[2] = item[1]
+                                item[1] = TEMP
 
+                        if item[0] == 'Power supply (VDD) range':
+                            if float(VOLT) > float(item[3]):
+                                item[2] = item[3]
+                                item[3] = VOLT
+                            if float(VOLT) < float(item[1]):
+                                item[2] = item[1]
+                                item[1] = VOLT
+
+                        if item.parameter == 'Operating Frequncy (F)':
+                            try:
+                                if float(math.floor(1000/float(MIN_PERIOD)) < float(item[3])):
+                                    item[3] = str(math.floor(1000/float(MIN_PERIOD)))
+                            except Exception:
+                                pass
+                    #
 
                     while(True):
                         if(row[col].startswith('DIN')):

@@ -26,26 +26,7 @@ class bitline_delay(delay):
         delay.create_signal_names(self)
         self.bl_signal_names = ["Xsram.Xbank0.bl", "Xsram.Xbank0.br"]
         self.sen_name = "Xsram.s_en"
-    
-    def create_measurement_objects(self):
-        """Create the measurements used for read and write ports"""
-        self.meas_objs = []
-        self.create_bitline_find_measurement_objects()
-        self.create_bitline_delay_measurement_objects()
-    
-    def create_bitline_delay_measurement_objects(self):
-        self.find_meas_objs = []
-        trig_delay_name = "clk{0}"
-        targ_name = "{0}{1}_{2}".format(self.dout_name,"{}",self.probe_data) #Empty values are the port and probe data bit
-        self.read_meas_objs.append(delay_measure("delay_lh", trig_delay_name, targ_name, "RISE", "RISE", 1e9))
-        self.read_meas_objs.append(delay_measure("delay_hl", trig_delay_name, targ_name, "FALL", "FALL", 1e9))
-        
-        self.read_meas_objs.append(slew_measure("slew_lh", targ_name, "RISE", 1e9))
-        self.read_meas_objs.append(slew_measure("slew_hl", targ_name, "FALL", 1e9))
-        
-        self.read_meas_objs.append(power_measure("read1_power", "RISE", 1e3))
-        self.read_meas_objs.append(power_measure("read0_power", "FALL", 1e3))
-    
+
     def create_measurement_names(self):
         """Create measurement names. The names themselves currently define the type of measurement"""
         #Altering the names will crash the characterizer. TODO: object orientated approach to the measurements.

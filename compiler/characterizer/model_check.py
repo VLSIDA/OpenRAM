@@ -26,8 +26,12 @@ class model_check(delay):
         """Create measurement names. The names themselves currently define the type of measurement"""
         #Altering the names will crash the characterizer. TODO: object orientated approach to the measurements.
         self.wl_delay_meas_names = ["delay_wl_en_bar", "delay_wl_en", "delay_dvr_en_bar", "delay_wl"]
+        self.wl_slew_meas_names = ["slew_wl_gated_clk_bar","slew_wl_en_bar", "slew_wl_en", "slew_drv_en_bar", "slew_wl"]
+        
         self.rbl_delay_meas_names = ["delay_gated_clk_nand", "delay_delay_chain_in", "delay_delay_chain_stage_1", "delay_delay_chain_stage_2"]
+        self.rbl_slew_meas_names = ["slew_rbl_gated_clk_bar","slew_gated_clk_nand", "slew_delay_chain_in", "slew_delay_chain_stage_1", "slew_delay_chain_stage_2"]
         self.sae_delay_meas_names = ["delay_pre_sen", "delay_sen_bar", "delay_sen"]
+        self.sae_slew_meas_names = ["slew_replica_bl0", "slew_pre_sen", "slew_sen_bar", "slew_sen"]
        
     def create_signal_names(self):
         delay.create_signal_names(self)
@@ -50,10 +54,12 @@ class model_check(delay):
         
         for i in range(1, len(self.wl_signal_names)):
             self.wl_meas_objs.append(delay_measure(self.wl_delay_meas_names[i-1], self.wl_signal_names[i-1], self.wl_signal_names[i], trig_dir, targ_dir, measure_scale=1e9))
+            self.wl_meas_objs.append(slew_measure(self.wl_slew_meas_names[i-1], self.wl_signal_names[i-1], trig_dir, measure_scale=1e9))
             temp_dir = trig_dir
             trig_dir = targ_dir
             targ_dir = temp_dir
-     
+        self.wl_meas_objs.append(slew_measure(self.wl_slew_meas_names[-1], self.wl_signal_names[-1], trig_dir, measure_scale=1e9))
+        
     def create_sae_measurement_objects(self):
         """Create the measurements to measure the sense amp enable path from the gated_clk_bar signal. The RBL splits this path into two."""
         
@@ -63,20 +69,24 @@ class model_check(delay):
         #Add measurements from gated_clk_bar to RBL
         for i in range(1, len(self.rbl_en_signal_names)):
             self.sae_meas_objs.append(delay_measure(self.rbl_delay_meas_names[i-1], self.rbl_en_signal_names[i-1], self.rbl_en_signal_names[i], trig_dir, targ_dir, measure_scale=1e9))
+            self.sae_meas_objs.append(slew_measure(self.rbl_slew_meas_names[i-1], self.rbl_en_signal_names[i-1], trig_dir, measure_scale=1e9))
             temp_dir = trig_dir
             trig_dir = targ_dir
             targ_dir = temp_dir
-            
+        self.sae_meas_objs.append(slew_measure(self.rbl_slew_meas_names[-1], self.rbl_en_signal_names[-1], trig_dir, measure_scale=1e9))
+        
         #Add measurements from rbl_out to sae. Trigger directions do not invert from previous stage due to RBL.
         trig_dir = "FALL"
         targ_dir = "RISE"
         #Add measurements from gated_clk_bar to RBL
         for i in range(1, len(self.sae_signal_names)):
             self.sae_meas_objs.append(delay_measure(self.sae_delay_meas_names[i-1], self.sae_signal_names[i-1], self.sae_signal_names[i], trig_dir, targ_dir, measure_scale=1e9))
+            self.sae_meas_objs.append(slew_measure(self.sae_slew_meas_names[i-1], self.sae_signal_names[i-1], trig_dir, measure_scale=1e9))
             temp_dir = trig_dir
             trig_dir = targ_dir
             targ_dir = temp_dir
-
+        self.sae_meas_objs.append(slew_measure(self.sae_slew_meas_names[-1], self.sae_signal_names[-1], trig_dir, measure_scale=1e9))
+        
     def write_delay_measures(self):
         """
         Write the measure statements to quantify the delay and power results for all targeted ports.
@@ -90,10 +100,12 @@ class model_check(delay):
         for read_port in self.targ_read_ports:
            self.write_measures_read_port(read_port)
 
-    def get_delay_measure_variants(self, port, delay_obj):
+    def get_delay_measure_variants(self, port, measure_obj):
         """Get the measurement values that can either vary from simulation to simulation (vdd, address) or port to port (time delays)"""
         #Return value is intended to match the delay measure format:  trig_td, targ_td, vdd, port
         #Assuming only read 0 for now
+        if not (type(measure_obj) is delay_measure or type(measure_obj) is slew_measure):
+            debug.error("Measurement not recognized by the model checker.",1)
         meas_cycle_delay = self.cycle_times[self.measure_cycles[port]["read0"]] + self.period/2
         return (meas_cycle_delay, meas_cycle_delay, self.vdd_voltage, port)
     
@@ -106,7 +118,22 @@ class model_check(delay):
             measure_variant_inp_tuple = self.get_delay_measure_variants(port, measure)
             measure.write_measure(self.stim, measure_variant_inp_tuple)
     
-
+    def get_measurement_values(self, meas_objs, port):
+        """Gets the delays and slews from a specified port from the spice output file and returns them as lists."""
+        delay_meas_list = []  
+        slew_meas_list = [] 
+        for measure in meas_objs:
+            measure_value = measure.retrieve_measure(port=port)
+            if type(measure_value) != float:
+                debug.error("Failed to Measure Value:\n\t\t{}={}".format(measure.name, measure_value),1) 
+            if type(measure) is delay_measure:
+                delay_meas_list.append(measure_value)
+            elif type(measure)is slew_measure:
+                slew_meas_list.append(measure_value)
+            else:
+                debug.error("Measurement object not recognized.",1)
+        return delay_meas_list, slew_meas_list
+        
     def run_delay_simulation(self):
         """
         This tries to simulate a period and checks if the result works. If
@@ -117,31 +144,21 @@ class model_check(delay):
         #Sanity Check
         debug.check(self.period > 0, "Target simulation period non-positive") 
         
-        wl_result = [[] for i in self.all_ports]
-        sae_result = [[] for i in self.all_ports]
+        wl_delay_result = [[] for i in self.all_ports]
+        wl_slew_result = [[] for i in self.all_ports]
+        sae_delay_result = [[] for i in self.all_ports]
+        sae_slew_result = [[] for i in self.all_ports]
         # Checking from not data_value to data_value
         self.write_delay_stimulus()
 
         self.stim.run_sim() #running sim prodoces spice output file.
-         
+        
+        #Retrieve the results from the output file
         for port in self.targ_read_ports:  
             #Parse and check the voltage measurements
-            wl_meas_list = []  
-            for measure in self.wl_meas_objs:
-                wl_meas_list.append(measure.retrieve_measure(port=port))
-                if type(wl_meas_list[-1]) != float:
-                    debug.error("Failed to Measure Value:\n\t\t{}={}".format(measure.name, wl_meas_list[-1]),1) #Printing the entire dict looks bad. 
-            wl_result[port] = wl_meas_list
-            
-            sae_meas_list = [] 
-            for measure in self.sae_meas_objs:
-                sae_meas_list.append(measure.retrieve_measure(port=port))
-                if type(sae_meas_list[-1]) != float:
-                    debug.error("Failed to Measure Value:\n\t\t{}={}".format(measure.name, sae_meas_list[-1]),1) #Printing the entire dict looks bad. 
-            sae_result[port] = sae_meas_list
-            
-        # The delay is from the negative edge for our SRAM
-        return (True,wl_result, sae_result)
+            wl_delay_result[port], wl_slew_result[port] = self.get_measurement_values(self.wl_meas_objs, port)
+            sae_delay_result[port], sae_slew_result[port] = self.get_measurement_values(self.sae_meas_objs, port)
+        return (True,wl_delay_result, sae_delay_result, wl_slew_result, sae_slew_result)
   
     def get_model_delays(self, port):
         """Get model delays based on port. Currently assumes single RW port."""
@@ -158,14 +175,16 @@ class model_check(delay):
         self.targ_read_ports = [read_port]
         self.targ_write_ports = [self.write_ports[0]]
         debug.info(1,"Bitline swing test: corner {}".format(self.corner))
-        (success, wl_delays, sae_delays)=self.run_delay_simulation()
+        (success, wl_delays, sae_delays, wl_slews, sae_slews)=self.run_delay_simulation()
         debug.check(success, "Model measurements Failed: period={}".format(self.period))
         wl_model_delays, sae_model_delays = self.get_model_delays(read_port)
         
         debug.info(1,"Measured Wordline delays (ns):\n\t {}".format(wl_delays[read_port]))
         debug.info(1,"Wordline model delays:\n\t {}".format(wl_model_delays))
+        debug.info(1,"Measured Wordline slews:\n\t {}".format(wl_slews[read_port]))
         debug.info(1,"Measured SAE delays (ns):\n\t {}".format(sae_delays[read_port]))
         debug.info(1,"SAE model delays:\n\t {}".format(sae_model_delays))
+        debug.info(1,"Measured SAE slews:\n\t {}".format(sae_slews[read_port]))
         
         return wl_delays, sae_delays
 

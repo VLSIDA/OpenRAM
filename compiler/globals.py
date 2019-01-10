@@ -414,7 +414,7 @@ def report_status():
         debug.error("Tech name must be specified in config file.")
 
     print("Technology: {0}".format(OPTS.tech_name))
-    print("Total size: {} kbits".format(OPTS.word_size*OPTS.num_words*OPTS.num_banks))
+    print("Total size: {} bits".format(OPTS.word_size*OPTS.num_words*OPTS.num_banks))
     print("Word size: {0}\nWords: {1}\nBanks: {2}".format(OPTS.word_size,
                                                           OPTS.num_words,
                                                           OPTS.num_banks))

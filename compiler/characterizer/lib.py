@@ -329,7 +329,7 @@ class lib:
         self.lib.write("        timing(){ \n")
         self.lib.write("            timing_sense : non_unate; \n")
         self.lib.write("            related_pin : \"clk{0}\"; \n".format(read_port))
-        self.lib.write("            timing_type : rising_edge; \n")
+        self.lib.write("            timing_type : negative_edge; \n")
         self.lib.write("            cell_rise(CELL_TABLE) {\n")
         self.write_values(self.char_port_results[read_port]["delay_lh"],len(self.loads),"            ")
         self.lib.write("            }\n") # rise delay

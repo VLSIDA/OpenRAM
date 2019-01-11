@@ -2,9 +2,8 @@ import debug
 import re
 import os
 import math
-import verilog
 
-class spice(verilog.verilog):
+class spice():
     """
     This provides a set of useful generic types for hierarchy
     management. If a module is a custom designed cell, it will read from

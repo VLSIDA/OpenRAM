@@ -8,14 +8,18 @@ from vector import vector
 from globals import OPTS, print_time
 import logical_effort
 from design import design
-        
-class sram_base(design):
+from verilog import verilog
+from lef import lef
+
+class sram_base(design, verilog, lef):
     """
     Dynamically generated SRAM by connecting banks to control logic. The
     number of banks should be 1 , 2 or 4
     """
     def __init__(self, name, sram_config):
         design.__init__(self, name)
+        lef.__init__(self, ["metal1", "metal2", "metal3"])
+        verilog.__init__(self)
         
         self.sram_config = sram_config
         sram_config.set_local_config(self)

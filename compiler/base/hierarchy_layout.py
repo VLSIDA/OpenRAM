@@ -10,7 +10,7 @@ from vector import vector
 from pin_layout import pin_layout
 import lef
 
-class layout(lef.lef):
+class layout():
     """
     Class consisting of a set of objs and instances for a module
     This provides a set of useful generic types for hierarchy
@@ -21,7 +21,6 @@ class layout(lef.lef):
     """
 
     def __init__(self, name):
-        lef.lef.__init__(self, ["metal1", "metal2", "metal3"])
         self.name = name
         self.width = None
         self.height = None

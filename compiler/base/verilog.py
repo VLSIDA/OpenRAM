@@ -75,14 +75,14 @@ class verilog:
         """ 
         Create the input regs for the given port.
         """
-        self.vf.write("  reg 			   csb{0}_reg;\n".format(port))
+        self.vf.write("  reg  csb{0}_reg;\n".format(port))
         if port in self.readwrite_ports:
-            self.vf.write("  reg 			   web{0}_reg;\n".format(port))
-        self.vf.write("  reg [ADDR_WIDTH-1:0]    ADDR{0}_reg;\n".format(port))
+            self.vf.write("  reg  web{0}_reg;\n".format(port))
+        self.vf.write("  reg [ADDR_WIDTH-1:0]  ADDR{0}_reg;\n".format(port))
         if port in self.write_ports:
-            self.vf.write("  reg [DATA_WIDTH-1:0]    DIN{0}_reg;\n".format(port))
+            self.vf.write("  reg [DATA_WIDTH-1:0]  DIN{0}_reg;\n".format(port))
         if port in self.read_ports:
-            self.vf.write("  reg [DATA_WIDTH-1:0]    DOUT{0};\n".format(port))
+            self.vf.write("  reg [DATA_WIDTH-1:0]  DOUT{0};\n".format(port))
             
     def add_flops(self, port):
         """
@@ -120,10 +120,10 @@ class verilog:
         """
         Add the module input and output declaration for a port.
         """
-        self.vf.write("  input 		   clk{0};             // clock\n".format(port))
-        self.vf.write("  input 		   csb{0};             // active low chip select\n".format(port))
+        self.vf.write("  input  clk{0}; // clock\n".format(port))
+        self.vf.write("  input   csb{0}; // active low chip select\n".format(port))
         if port in self.readwrite_ports:
-            self.vf.write("  input 		   web{0};             // active low write control\n".format(port))
+            self.vf.write("  input  web{0}; // active low write control\n".format(port))
         self.vf.write("  input [ADDR_WIDTH-1:0]  ADDR{0};\n".format(port))
         if port in self.write_ports:
             self.vf.write("  input [DATA_WIDTH-1:0]  DIN{0};\n".format(port))

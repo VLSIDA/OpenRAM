@@ -136,7 +136,7 @@ cell (sram_2_16_1_scn4m_subm){
         timing(){ 
             timing_sense : non_unate; 
             related_pin : "clk0"; 
-            timing_type : rising_edge; 
+            timing_type : falling_edge; 
             cell_rise(CELL_TABLE) {
             values("1.542, 1.562, 1.738",\
                    "1.545, 1.565, 1.741",\

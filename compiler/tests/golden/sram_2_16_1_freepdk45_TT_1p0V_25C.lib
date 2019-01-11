@@ -136,7 +136,7 @@ cell (sram_2_16_1_freepdk45){
         timing(){ 
             timing_sense : non_unate; 
             related_pin : "clk0"; 
-            timing_type : rising_edge; 
+            timing_type : falling_edge; 
             cell_rise(CELL_TABLE) {
             values("0.235, 0.235, 0.239",\
                    "0.235, 0.236, 0.24",\

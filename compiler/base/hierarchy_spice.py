@@ -2,9 +2,8 @@ import debug
 import re
 import os
 import math
-import verilog
 
-class spice(verilog.verilog):
+class spice():
     """
     This provides a set of useful generic types for hierarchy
     management. If a module is a custom designed cell, it will read from
@@ -91,9 +90,9 @@ class spice(verilog.verilog):
         group of modules are generated."""
 
         if (check and (len(self.insts[-1].mod.pins) != len(args))):
-            import pprint
-            modpins_string=pprint.pformat(self.insts[-1].mod.pins)
-            argpins_string=pprint.pformat(args)
+            from pprint import pformat
+            modpins_string=pformat(self.insts[-1].mod.pins)
+            argpins_string=pformat(args)
             debug.error("Connections: {}".format(modpins_string))
             debug.error("Connections: {}".format(argpins_string))
             debug.error("Number of net connections ({0}) does not match last instance ({1})".format(len(self.insts[-1].mod.pins),
@@ -101,9 +100,9 @@ class spice(verilog.verilog):
         self.conns.append(args)
 
         if check and (len(self.insts)!=len(self.conns)):
-            import pprint
-            insts_string=pprint.pformat(self.insts)
-            conns_string=pprint.pformat(self.conns)
+            from pprint import pformat
+            insts_string=pformat(self.insts)
+            conns_string=pformat(self.conns)
             
             debug.error("{0} : Not all instance pins ({1}) are connected ({2}).".format(self.name,
                                                                                         len(self.insts),

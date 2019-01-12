@@ -17,15 +17,13 @@ class timing_setup_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         OPTS.spice_name="ngspice"
         OPTS.analytical_delay = False
-
+        OPTS.netlist_only = True
+        
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
         import characterizer
         reload(characterizer)
         from characterizer import setup_hold
-        if not OPTS.spice_exe:
-            debug.error("Could not find {} simulator.".format(OPTS.spice_name),-1)
-        
         import sram
         import tech
         slews = [tech.spice["rise_time"]*2]
@@ -55,7 +53,7 @@ class timing_setup_test(openram_test):
         reload(characterizer)
         globals.end_openram()
 
-# instantiate a copdsay of the class to actually run the test
+# run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

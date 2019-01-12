@@ -31,11 +31,11 @@ class code_format_test(openram_test):
                 continue
             if re.search("testutils.py$", code):
                 continue
-            if re.search("grid.py$", code):
-                continue
             if re.search("globals.py$", code):
                 continue
             if re.search("openram.py$", code):
+                continue
+            if re.search("sram.py$", code):
                 continue
             if re.search("gen_stimulus.py$", code):
                 continue
@@ -52,7 +52,7 @@ def setup_files(path):
         for f in current_files:
             files.append(os.path.join(dir, f))
     nametest = re.compile("\.py$", re.IGNORECASE)
-    select_files = filter(nametest.search, files)
+    select_files = list(filter(nametest.search, files))
     return select_files
 
 
@@ -102,20 +102,21 @@ def check_print_output(file_name):
     """Check if any files (except debug.py) call the _print_ function. We should
     use the debug output with verbosity instead!"""
     file = open(file_name, "r+b")
-    line = file.read()
+    line = file.read().decode('utf-8')
     # skip comments with a hash
     line = re.sub(r'#.*', '', line)
     # skip doc string comments
     line=re.sub(r'\"\"\"[^\"]*\"\"\"', '', line, flags=re.S|re.M)
-    count = len(re.findall("\s*print\s+", line))
+    count = len(re.findall("[^p]+print\(", line))
     if count > 0:
         debug.info(0, "\nFound " + str(count) +
                    " _print_ calls " + str(file_name))
 
+    file.close()
     return(count)
 
 
-# instantiate a copy of the class to actually run the test
+# run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

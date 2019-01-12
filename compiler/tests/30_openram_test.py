@@ -17,7 +17,8 @@ import getpass
 class openram_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
+        globals.init_openram("{0}/tests/config_20_{1}".format(OPENRAM_HOME,OPTS.tech_name))
         
         debug.info(1, "Testing top-level openram.py with 2-bit, 16 word SRAM.")
         out_file = "testsram"
@@ -41,14 +42,19 @@ class openram_test(openram_test):
             verbosity += " -v"
 
             
-        OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
-
-        cmd = "python3 {0}/openram.py -n -o {1} -p {2} {3} config_20_{4}.py 2>&1 > {5}/output.log".format(OPENRAM_HOME,
-                                                                                                            out_file,
-                                                                                                            out_path,
-                                                                                                            verbosity,
-                                                                                                            OPTS.tech_name,
-                                                                                                            out_path)
+        # Always perform code coverage
+        if OPTS.coverage == 0:
+            debug.warning("Failed to find coverage installation. This can be installed with pip3 install coverage")
+            exe_name = "{0}/openram.py ".format(OPENRAM_HOME)
+        else:
+            exe_name = "coverage run -p {0}/openram.py ".format(OPENRAM_HOME) 
+        config_name = "{0}config_20_{1}.py".format(OPENRAM_HOME + "/tests/",OPTS.tech_name)
+        cmd = "{0} -n -o {1} -p {2} {3} {4} 2>&1 > {5}/output.log".format(exe_name,
+                                                                          out_file,
+                                                                          out_path,
+                                                                          verbosity,
+                                                                          config_name,
+                                                                          out_path)
         debug.info(1, cmd)
         os.system(cmd)
         
@@ -62,7 +68,12 @@ class openram_test(openram_test):
         import glob
         files = glob.glob('{0}/*.lib'.format(out_path))
         self.assertTrue(len(files)>0)
-
+        
+        # Make sure there is any .html file 
+        if os.path.exists(out_path):
+            datasheets = glob.glob('{0}/*html'.format(out_path))
+            self.assertTrue(len(datasheets)>0)
+        
         # grep any errors from the output
         output_log = open("{0}/output.log".format(out_path),"r")
         output = output_log.read()
@@ -78,7 +89,7 @@ class openram_test(openram_test):
 
         globals.end_openram()
 
-# instantiate a copy of the class to actually run the test
+# run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

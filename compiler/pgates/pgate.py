@@ -1,7 +1,7 @@
 import contact
 import design
 import debug
-from tech import drc, parameter, spice, info
+from tech import drc, parameter, spice
 from ptx import ptx
 from vector import vector
 from globals import OPTS
@@ -110,7 +110,7 @@ class pgate(design.design):
         max_y_offset = self.height + 0.5*self.m1_width
         self.nwell_position = middle_position
         nwell_height = max_y_offset - middle_position.y
-        if info["has_nwell"]:
+        if drc("has_nwell"):
             self.add_rect(layer="nwell",
                           offset=middle_position,
                           width=self.well_width,
@@ -122,7 +122,7 @@ class pgate(design.design):
 
         pwell_position = vector(0,-0.5*self.m1_width)
         pwell_height = middle_position.y-pwell_position.y
-        if info["has_pwell"]:
+        if drc("has_pwell"):
             self.add_rect(layer="pwell",
                           offset=pwell_position,
                           width=self.well_width,
@@ -138,7 +138,7 @@ class pgate(design.design):
         layer_stack = ("active", "contact", "metal1")
         
         # To the right a spacing away from the pmos right active edge
-        contact_xoffset = pmos_pos.x + pmos.active_width + drc["active_to_body_active"]
+        contact_xoffset = pmos_pos.x + pmos.active_width + drc("active_to_body_active")
         # Must be at least an well enclosure of active down from the top of the well
         # OR align the active with the top of PMOS active.
         max_y_offset = self.height + 0.5*self.m1_width
@@ -185,7 +185,7 @@ class pgate(design.design):
         pwell_position = vector(0,-0.5*self.m1_width)
         
         # To the right a spacing away from the nmos right active edge
-        contact_xoffset = nmos_pos.x + nmos.active_width + drc["active_to_body_active"]
+        contact_xoffset = nmos_pos.x + nmos.active_width + drc("active_to_body_active")
         # Must be at least an well enclosure of active up from the bottom of the well
         contact_yoffset = max(nmos_pos.y,
                               self.well_enclose_active - nmos.active_contact.first_layer_height/2)

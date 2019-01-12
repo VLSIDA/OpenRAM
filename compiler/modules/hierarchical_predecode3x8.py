@@ -9,8 +9,8 @@ class hierarchical_predecode3x8(hierarchical_predecode):
     """
     Pre 3x8 decoder used in hierarchical_decoder.
     """
-    def __init__(self):
-        hierarchical_predecode.__init__(self, 3)
+    def __init__(self, height=None):
+        hierarchical_predecode.__init__(self, 3, height)
 
         self.create_netlist()
         if not OPTS.netlist_only:        
@@ -18,17 +18,17 @@ class hierarchical_predecode3x8(hierarchical_predecode):
 
     def create_netlist(self):
         self.add_pins()
-        self.create_modules()
+        self.add_modules()
         self.create_input_inverters()
         self.create_output_inverters()
-        connections=[["inbar[0]", "inbar[1]", "inbar[2]", "Z[0]", "vdd", "gnd"],
-                     ["in[0]",    "inbar[1]", "inbar[2]", "Z[1]", "vdd", "gnd"],            
-                     ["inbar[0]", "in[1]",    "inbar[2]", "Z[2]", "vdd", "gnd"],
-                     ["in[0]",    "in[1]",    "inbar[2]", "Z[3]", "vdd", "gnd"],            
-                     ["inbar[0]", "inbar[1]", "in[2]",    "Z[4]", "vdd", "gnd"],
-                     ["in[0]",    "inbar[1]", "in[2]",    "Z[5]", "vdd", "gnd"],
-                     ["inbar[0]", "in[1]",    "in[2]",    "Z[6]", "vdd", "gnd"],
-                     ["in[0]",    "in[1]",    "in[2]",    "Z[7]", "vdd", "gnd"]]
+        connections=[["inbar_0", "inbar_1", "inbar_2", "Z_0", "vdd", "gnd"],
+                     ["in_0",    "inbar_1", "inbar_2", "Z_1", "vdd", "gnd"],            
+                     ["inbar_0", "in_1",    "inbar_2", "Z_2", "vdd", "gnd"],
+                     ["in_0",    "in_1",    "inbar_2", "Z_3", "vdd", "gnd"],            
+                     ["inbar_0", "inbar_1", "in_2",    "Z_4", "vdd", "gnd"],
+                     ["in_0",    "inbar_1", "in_2",    "Z_5", "vdd", "gnd"],
+                     ["inbar_0", "in_1",    "in_2",    "Z_6", "vdd", "gnd"],
+                     ["in_0",    "in_1",    "in_2",    "Z_7", "vdd", "gnd"]]
         self.create_nand_array(connections)
 
     def create_layout(self):
@@ -49,14 +49,14 @@ class hierarchical_predecode3x8(hierarchical_predecode):
         
     def get_nand_input_line_combination(self):
         """ These are the decoder connections of the NAND gates to the A,B,C pins """
-        combination = [["Abar[0]", "Abar[1]", "Abar[2]"],
-                       ["A[0]",    "Abar[1]", "Abar[2]"],
-                       ["Abar[0]", "A[1]",    "Abar[2]"],
-                       ["A[0]",    "A[1]",    "Abar[2]"],
-                       ["Abar[0]", "Abar[1]", "A[2]"], 
-                       ["A[0]",    "Abar[1]", "A[2]"], 
-                       ["Abar[0]", "A[1]",    "A[2]"], 
-                       ["A[0]",    "A[1]",    "A[2]"]]
+        combination = [["Abar_0", "Abar_1", "Abar_2"],
+                       ["A_0",    "Abar_1", "Abar_2"],
+                       ["Abar_0", "A_1",    "Abar_2"],
+                       ["A_0",    "A_1",    "Abar_2"],
+                       ["Abar_0", "Abar_1", "A_2"], 
+                       ["A_0",    "Abar_1", "A_2"], 
+                       ["Abar_0", "A_1",    "A_2"], 
+                       ["A_0",    "A_1",    "A_2"]]
         return combination
 
 

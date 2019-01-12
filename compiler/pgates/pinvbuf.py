@@ -94,16 +94,16 @@ class pinvbuf(design.design):
         self.connect_inst(["zb_int", "Z",  "vdd", "gnd"])
 
     def place_modules(self):
-        # Add INV1 to the right (capacitance shield)
+        # Add INV1 to the left (capacitance shield)
         self.inv1_inst.place(vector(0,0))
 
-        # Add INV2 to the right
+        # Add INV2 to the right of INV1
         self.inv2_inst.place(vector(self.inv1_inst.rx(),0))
         
-        # Add INV3 to the right
+        # Add INV3 to the right of INV2
         self.inv3_inst.place(vector(self.inv2_inst.rx(),0))
 
-        # Add INV4 to the bottom
+        # Add INV4 flipped to the bottom aligned with INV2
         self.inv4_inst.place(offset=vector(self.inv2_inst.rx(),2*self.inv2.height),
                              mirror = "MX")
         
@@ -187,3 +187,34 @@ class pinvbuf(design.design):
         inv2_delay = self.inv2.analytical_delay(slew=inv1_delay.slew, load=load)
         return inv1_delay + inv2_delay
             
+    def determine_clk_buf_stage_efforts(self, external_cout, inp_is_rise=False):
+        """Get the stage efforts of the clk -> clk_buf path"""
+        stage_effort_list = []
+        stage1_cout = self.inv1.get_cin() + self.inv2.get_cin()
+        stage1 = self.inv.get_effort_stage(stage1_cout, inp_is_rise)
+        stage_effort_list.append(stage1)
+        last_stage_is_rise = stage1.is_rise
+        
+        stage2 = self.inv2.get_effort_stage(external_cout, last_stage_is_rise)
+        stage_effort_list.append(stage2)
+        
+        return stage_effort_list
+        
+    def determine_clk_buf_bar_stage_efforts(self, external_cout, inp_is_rise=False):
+        """Get the stage efforts of the clk -> clk_buf path"""
+        #After (almost) every stage, the direction of the signal inverts.
+        stage_effort_list = []
+        stage1_cout = self.inv1.get_cin() + self.inv2.get_cin()
+        stage1 = self.inv.get_effort_stage(stage1_cout, inp_is_rise)
+        stage_effort_list.append(stage1)
+        last_stage_is_rise = stage_effort_list[-1].is_rise
+        
+        stage2_cout = self.inv2.get_cin()
+        stage2 = self.inv1.get_effort_stage(stage2_cout, last_stage_is_rise)
+        stage_effort_list.append(stage2)
+        last_stage_is_rise = stage_effort_list[-1].is_rise
+        
+        stage3 = self.inv2.get_effort_stage(external_cout, last_stage_is_rise)
+        stage_effort_list.append(stage3)
+        
+        return stage_effort_list

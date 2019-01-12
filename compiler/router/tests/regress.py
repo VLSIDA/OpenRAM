@@ -4,7 +4,6 @@ import re
 import unittest
 import sys,os
 sys.path.append(os.path.join(sys.path[0],"../../compiler"))
-print(sys.path)
 import globals
 
 (OPTS, args) = globals.parse_args()

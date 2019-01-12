@@ -9,8 +9,8 @@ class hierarchical_predecode2x4(hierarchical_predecode):
     """
     Pre 2x4 decoder used in hierarchical_decoder.
     """
-    def __init__(self):
-        hierarchical_predecode.__init__(self, 2)
+    def __init__(self, height=None):
+        hierarchical_predecode.__init__(self, 2, height)
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -18,13 +18,13 @@ class hierarchical_predecode2x4(hierarchical_predecode):
 
     def create_netlist(self):
         self.add_pins()
-        self.create_modules()
+        self.add_modules()
         self.create_input_inverters()
         self.create_output_inverters()
-        connections =[["inbar[0]", "inbar[1]", "Z[0]", "vdd", "gnd"],
-                      ["in[0]",    "inbar[1]", "Z[1]", "vdd", "gnd"],
-                      ["inbar[0]", "in[1]",    "Z[2]", "vdd", "gnd"],
-                      ["in[0]",    "in[1]",    "Z[3]", "vdd", "gnd"]]
+        connections =[["inbar_0", "inbar_1", "Z_0", "vdd", "gnd"],
+                      ["in_0",    "inbar_1", "Z_1", "vdd", "gnd"],
+                      ["inbar_0", "in_1",    "Z_2", "vdd", "gnd"],
+                      ["in_0",    "in_1",    "Z_3", "vdd", "gnd"]]
         self.create_nand_array(connections)
 
     def create_layout(self):
@@ -44,10 +44,10 @@ class hierarchical_predecode2x4(hierarchical_predecode):
 
     def get_nand_input_line_combination(self):
         """ These are the decoder connections of the NAND gates to the A,B pins """
-        combination = [["Abar[0]", "Abar[1]"],
-                       ["A[0]",    "Abar[1]"],
-                       ["Abar[0]", "A[1]"],
-                       ["A[0]",    "A[1]"]]
+        combination = [["Abar_0", "Abar_1"],
+                       ["A_0",    "Abar_1"],
+                       ["Abar_0", "A_1"],
+                       ["A_0",    "A_1"]]
         return combination 
 
 

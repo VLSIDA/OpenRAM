@@ -73,21 +73,21 @@ class contact(hierarchy_design.hierarchy_design):
         self.second_layer_name = second_layer
 
     def setup_layout_constants(self):
-        self.contact_width = drc["minwidth_{0}". format(self.via_layer_name)]
-        contact_to_contact = drc["{0}_to_{0}".format(self.via_layer_name)]
+        self.contact_width = drc("minwidth_{0}". format(self.via_layer_name))
+        contact_to_contact = drc("{0}_to_{0}".format(self.via_layer_name))
         self.contact_pitch = self.contact_width + contact_to_contact
         self.contact_array_width = self.contact_width + (self.dimensions[0] - 1) * self.contact_pitch
         self.contact_array_height = self.contact_width + (self.dimensions[1] - 1) * self.contact_pitch
 
         # DRC rules
-        first_layer_minwidth = drc["minwidth_{0}".format(self.first_layer_name)]
-        first_layer_minarea = drc["minarea_{0}".format(self.first_layer_name)]
-        first_layer_enclosure = drc["{0}_enclosure_{1}".format(self.first_layer_name, self.via_layer_name)]
-        first_layer_extend = drc["{0}_extend_{1}".format(self.first_layer_name, self.via_layer_name)]
-        second_layer_minwidth = drc["minwidth_{0}".format(self.second_layer_name)]
-        second_layer_minarea = drc["minarea_{0}".format(self.second_layer_name)]
-        second_layer_enclosure = drc["{0}_enclosure_{1}".format(self.second_layer_name, self.via_layer_name)]
-        second_layer_extend = drc["{0}_extend_{1}".format(self.second_layer_name, self.via_layer_name)]
+        first_layer_minwidth = drc("minwidth_{0}".format(self.first_layer_name))
+        first_layer_minarea = drc("minarea_{0}".format(self.first_layer_name))
+        first_layer_enclosure = drc("{0}_enclosure_{1}".format(self.first_layer_name, self.via_layer_name))
+        first_layer_extend = drc("{0}_extend_{1}".format(self.first_layer_name, self.via_layer_name))
+        second_layer_minwidth = drc("minwidth_{0}".format(self.second_layer_name))
+        second_layer_minarea = drc("minarea_{0}".format(self.second_layer_name))
+        second_layer_enclosure = drc("{0}_enclosure_{1}".format(self.second_layer_name, self.via_layer_name))
+        second_layer_extend = drc("{0}_extend_{1}".format(self.second_layer_name, self.via_layer_name))
 
         self.first_layer_horizontal_enclosure = max((first_layer_minwidth - self.contact_array_width) / 2,
                                                     first_layer_enclosure)
@@ -145,16 +145,16 @@ class contact(hierarchy_design.hierarchy_design):
                       height=self.second_layer_height)
 
     def create_implant_well_enclosures(self):
-        implant_position = self.first_layer_position - [drc["implant_enclosure_active"]]*2
-        implant_width =  self.first_layer_width  + 2*drc["implant_enclosure_active"]
-        implant_height = self.first_layer_height + 2*drc["implant_enclosure_active"]
+        implant_position = self.first_layer_position - [drc("implant_enclosure_active")]*2
+        implant_width =  self.first_layer_width  + 2*drc("implant_enclosure_active")
+        implant_height = self.first_layer_height + 2*drc("implant_enclosure_active")
         self.add_rect(layer="{}implant".format(self.implant_type),
                       offset=implant_position,
                       width=implant_width,
                       height=implant_height)
-        well_position = self.first_layer_position - [drc["well_enclosure_active"]]*2
-        well_width =  self.first_layer_width  + 2*drc["well_enclosure_active"]
-        well_height = self.first_layer_height + 2*drc["well_enclosure_active"]
+        well_position = self.first_layer_position - [drc("well_enclosure_active")]*2
+        well_width =  self.first_layer_width  + 2*drc("well_enclosure_active")
+        well_height = self.first_layer_height + 2*drc("well_enclosure_active")
         self.add_rect(layer="{}well".format(self.well_type),
                       offset=well_position,
                       width=well_width,
@@ -172,5 +172,5 @@ active = contact(layer_stack=("active", "contact", "poly"))
 poly = contact(layer_stack=("poly", "contact", "metal1"))
 m1m2 = contact(layer_stack=("metal1", "via1", "metal2"))
 m2m3 = contact(layer_stack=("metal2", "via2", "metal3"))
-#m3m4 = contact(layer_stack=("metal3", "via3", "metal4"))
+m3m4 = contact(layer_stack=("metal3", "via3", "metal4"))
 

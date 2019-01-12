@@ -40,11 +40,11 @@ class wordline_driver(design.design):
     def add_pins(self):
         # inputs to wordline_driver.
         for i in range(self.rows):
-            self.add_pin("in[{0}]".format(i))
+            self.add_pin("in_{0}".format(i))
         # Outputs from wordline_driver.
         for i in range(self.rows):
-            self.add_pin("wl[{0}]".format(i))
-        self.add_pin("en")
+            self.add_pin("wl_{0}".format(i))
+        self.add_pin("en_bar")
         self.add_pin("vdd")
         self.add_pin("gnd")
 
@@ -67,7 +67,7 @@ class wordline_driver(design.design):
         """ Add a pin for each row of vdd/gnd which are must-connects next level up. """
 
         # Find the x offsets for where the vias/pins should be placed
-        a_xoffset = self.inv1_inst[0].rx()
+        a_xoffset = self.nand_inst[0].rx()
         b_xoffset = self.inv2_inst[0].lx()
         for num in range(self.rows):
             # this will result in duplicate polygons for rails, but who cares
@@ -95,59 +95,45 @@ class wordline_driver(design.design):
 
 
     def create_drivers(self):
-        self.inv1_inst = []
         self.nand_inst = []            
         self.inv2_inst = []            
         for row in range(self.rows):
-            name_inv1 = "wl_driver_inv_en{}".format(row)
             name_nand = "wl_driver_nand{}".format(row)
             name_inv2 = "wl_driver_inv{}".format(row)
 
-            # add inv1 based on the info above
-            self.inv1_inst.append(self.add_inst(name=name_inv1,
-                                               mod=self.inv_no_output))
-            self.connect_inst(["en",
-                               "en_bar[{0}]".format(row),
-                               "vdd", "gnd"])
             # add nand 2
             self.nand_inst.append(self.add_inst(name=name_nand,
                                                 mod=self.nand2))
-            self.connect_inst(["en_bar[{0}]".format(row),
-                               "in[{0}]".format(row),
-                               "wl_bar[{0}]".format(row),
+            self.connect_inst(["en_bar",
+                               "in_{0}".format(row),
+                               "wl_bar_{0}".format(row),
                                "vdd", "gnd"])
             # add inv2
             self.inv2_inst.append(self.add_inst(name=name_inv2,
                                                 mod=self.inv))
-            self.connect_inst(["wl_bar[{0}]".format(row),
-                               "wl[{0}]".format(row),
+            self.connect_inst(["wl_bar_{0}".format(row),
+                               "wl_{0}".format(row),
                                "vdd", "gnd"])
 
 
     def place_drivers(self):
-        inv1_xoffset = 2*self.m1_width + 5*self.m1_space
-        nand2_xoffset = inv1_xoffset + self.inv.width
+        nand2_xoffset = 2*self.m1_width + 5*self.m1_space 
         inv2_xoffset = nand2_xoffset + self.nand2.width
         
-        self.width = inv2_xoffset + self.inv.height
-        driver_height = self.inv.height
+        self.width = inv2_xoffset + self.inv.width
         self.height = self.inv.height * self.rows
         
         for row in range(self.rows):
             if (row % 2):
-                y_offset = driver_height*(row + 1)
+                y_offset = self.inv.height*(row + 1)
                 inst_mirror = "MX"
             else:
-                y_offset = driver_height*row
+                y_offset = self.inv.height*row
                 inst_mirror = "R0"
 
-            inv1_offset = [inv1_xoffset, y_offset]
             nand2_offset=[nand2_xoffset, y_offset]
             inv2_offset=[inv2_xoffset, y_offset]
             
-            # add inv1 based on the info above
-            self.inv1_inst[row].place(offset=inv1_offset,
-                                      mirror=inst_mirror)
             # add nand 2
             self.nand_inst[row].place(offset=nand2_offset,
                                       mirror=inst_mirror)
@@ -160,7 +146,7 @@ class wordline_driver(design.design):
         """ Route all of the signals """
 
         # Wordline enable connection
-        en_pin=self.add_layout_pin(text="en",
+        en_pin=self.add_layout_pin(text="en_bar",
                                    layer="metal2",
                                    offset=[self.m1_width + 2*self.m1_space,0],
                                    width=self.m2_width,
@@ -168,12 +154,11 @@ class wordline_driver(design.design):
         
         
         for row in range(self.rows):
-            inv1_inst = self.inv1_inst[row]
             nand_inst = self.nand_inst[row]
             inv2_inst = self.inv2_inst[row]
             
-            # en connection
-            a_pin = inv1_inst.get_pin("A")
+            # en_bar connection
+            a_pin = nand_inst.get_pin("A")
             a_pos = a_pin.lc()
             clk_offset = vector(en_pin.bc().x,a_pos.y)
             self.add_segment_center(layer="metal1",
@@ -181,13 +166,6 @@ class wordline_driver(design.design):
                                     end=a_pos)
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=clk_offset)
-
-            # first inv to nand2 A
-            zb_pos = inv1_inst.get_pin("Z").bc()
-            zu_pos = inv1_inst.get_pin("Z").uc()
-            bl_pos = nand_inst.get_pin("A").lc()
-            br_pos = nand_inst.get_pin("A").rc()
-            self.add_path("metal1", [zb_pos, zu_pos, bl_pos, br_pos])
 
             # Nand2 out to 2nd inv
             zr_pos = nand_inst.get_pin("Z").rc()
@@ -205,7 +183,7 @@ class wordline_driver(design.design):
             input_offset = vector(0,b_pos.y + up_or_down) 
             mid_via_offset = vector(clk_offset.x,input_offset.y) + vector(0.5*self.m2_width+self.m2_space+0.5*contact.m1m2.width,0) 
             # must under the clk line in M1
-            self.add_layout_pin_segment_center(text="in[{0}]".format(row),
+            self.add_layout_pin_segment_center(text="in_{0}".format(row),
                                                layer="metal1",
                                                start=input_offset,
                                                end=mid_via_offset)
@@ -221,7 +199,7 @@ class wordline_driver(design.design):
 
             # output each WL on the right
             wl_offset = inv2_inst.get_pin("Z").rc()
-            self.add_layout_pin_segment_center(text="wl[{0}]".format(row),
+            self.add_layout_pin_segment_center(text="wl_{0}".format(row),
                                                layer="metal1",
                                                start=wl_offset,
                                                end=wl_offset-vector(self.m1_width,0))
@@ -238,4 +216,25 @@ class wordline_driver(design.design):
 
         
     def input_load(self):
+        """Gets the capacitance of the wordline driver in absolute units (fF)"""
         return self.nand2.input_load()
+
+    def determine_wordline_stage_efforts(self, external_cout, inp_is_rise=True):
+        """Follows the clk_buf to a wordline signal adding each stages stage effort to a list"""
+        stage_effort_list = []
+        
+        stage1_cout = self.inv.get_cin()
+        stage1 = self.nand2.get_effort_stage(stage1_cout, inp_is_rise)
+        stage_effort_list.append(stage1)
+        last_stage_is_rise = stage1.is_rise
+        
+        stage2 = self.inv.get_effort_stage(external_cout, last_stage_is_rise)
+        stage_effort_list.append(stage2)
+        
+        return stage_effort_list
+        
+    def get_wl_en_cin(self):
+        """Get the relative capacitance of all the enable connections in the bank"""
+        #The enable is connected to a nand2 for every row.
+        total_cin = self.nand2.get_cin() * self.rows
+        return total_cin

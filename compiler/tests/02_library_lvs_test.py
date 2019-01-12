@@ -16,22 +16,25 @@ class library_lvs_test(openram_test):
         import verify
 
         (gds_dir, sp_dir, allnames) = setup_files()
+        drc_errors = 0
         lvs_errors = 0
         debug.info(1, "Performing LVS on: " + ", ".join(allnames))
 
         for f in allnames:
             gds_name = "{0}/{1}.gds".format(gds_dir, f)
             sp_name = "{0}/{1}.sp".format(sp_dir, f)
+            name = re.sub('\.gds$', '', f)
             if not os.path.isfile(gds_name):
                 lvs_errors += 1
                 debug.error("Missing GDS file {}".format(gds_name))
             if not os.path.isfile(sp_name):
                 lvs_errors += 1
                 debug.error("Missing SPICE file {}".format(gds_name))
+            drc_errors += verify.run_drc(name, gds_name)
             lvs_errors += verify.run_lvs(f, gds_name, sp_name)
 
         # fail if the error count is not zero
-        self.assertEqual(lvs_errors, 0)
+        self.assertEqual(drc_errors+lvs_errors, 0)
         globals.end_openram()
 
 def setup_files():
@@ -59,7 +62,7 @@ def setup_files():
 
     return (gds_dir, sp_dir, allnames)
 
-# instantiate a copy of the class to actually run the test
+# run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

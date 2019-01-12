@@ -12,7 +12,7 @@ class tri_gate(design.design):
 
     pin_names = ["in", "en", "en_bar", "out", "gnd", "vdd"]
     (width,height) = utils.get_libcell_size("tri_gate", GDS["unit"], layer["boundary"])
-    pin_map = utils.get_libcell_pins(pin_names, "tri_gate", GDS["unit"], layer["boundary"])
+    pin_map = utils.get_libcell_pins(pin_names, "tri_gate", GDS["unit"])
 
     unique_id = 1
     

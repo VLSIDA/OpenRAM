@@ -23,6 +23,7 @@ class lef_test(openram_test):
                         num_words=16,
                         num_banks=1)
         c.words_per_row=1
+        c.recompute_sizes()
         debug.info(1, "Testing LEF for sample 2 bit, 16 words SRAM with 1 bank")
         s = sram(c, "sram_2_16_1_{0}".format(OPTS.tech_name))
 
@@ -35,14 +36,11 @@ class lef_test(openram_test):
 
         # let's diff the result with a golden model
         golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),leffile)
-        self.isdiff(lefname,golden)
-
-        os.system("rm {0}".format(gdsname))
-        os.system("rm {0}".format(lefname))
+        self.assertTrue(self.isdiff(lefname,golden))
 
         globals.end_openram()
 
-# instantiate a copdsay of the class to actually run the test
+# run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

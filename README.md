@@ -16,7 +16,6 @@ Dev:
 An open-source static random access memory (SRAM) compiler.
 
 # What is OpenRAM?
-
 <img align="right" width="25%" src="images/SCMOS_16kb_sram.jpg">
 
 OpenRAM is an open-source Python framework to create the layout,
@@ -31,7 +30,6 @@ The OpenRAM compiler has very few dependencies:
 + [Ngspice] 26 (or later) or HSpice I-2013.12-1 (or later) or CustomSim 2017 (or later)
 + Python 3.5 or higher
 + Python numpy (pip3 install numpy to install)
-+ flask_table (pip3 install flask to install)
 
 If you want to perform DRC and LVS, you will need either:
 + Calibre (for [FreePDK45])
@@ -98,6 +96,12 @@ output_name = "sram_{0}_{1}_{2}".format(word_size,num_words,tech_name)
 
 # Disable analytical models for full characterization (WARNING: slow!)
 # analytical_delay = False
+
+# To force this to use magic and netgen for DRC/LVS/PEX
+# Could be calibre for FreePDK45
+drc_name = "magic"
+lvs_name = "netgen"
+pex_name = "magic"
 ```
 
 You can then run OpenRAM by executing:

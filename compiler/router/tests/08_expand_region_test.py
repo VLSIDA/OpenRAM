@@ -37,12 +37,12 @@ class expand_region_test(openram_test):
                               offset=[0,0])
                 self.connect_inst([])
                 
-                r=router(gds_file)
                 layer_stack =("metal1","via1","metal2")
+                r=router(layer_stack,self,gds_file)
                 # This should be infeasible because it is blocked without a detour. 
-                self.assertFalse(r.route(self,layer_stack,src="A",dest="B",detour_scale=1))
+                self.assertFalse(r.route(src="A",dest="B",detour_scale=1))
                 # This should be feasible because we allow it to detour
-                self.assertTrue(r.route(self,layer_stack,src="A",dest="B",detour_scale=3))
+                self.assertTrue(r.route(src="A",dest="B",detour_scale=3))
 
         r = routing("08_expand_region_test_{0}".format(OPTS.tech_name))
         self.local_drc_check(r)

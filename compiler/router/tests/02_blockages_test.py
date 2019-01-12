@@ -37,9 +37,9 @@ class blockages_test(openram_test):
                               offset=[0,0])
                 self.connect_inst([])
                 
-                r=router(gds_file)
                 layer_stack =("metal1","via1","metal2")
-                self.assertTrue(r.route(self,layer_stack,src="A",dest="B"))
+                r=router(layer_stack,self,gds_file)
+                self.assertTrue(r.route(src="A",dest="B"))
 
         r=routing("02_blockages_test_{0}".format(OPTS.tech_name))
         self.local_drc_check(r)

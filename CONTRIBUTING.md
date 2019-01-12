@@ -7,6 +7,26 @@ list at openram-dev-group@ucsc.edu. We are happy to give insights into
 the best way to implement a change to ensure your contribution will be
 accepted and help other OpenRAM users.
 
+# Directory Structure
+
+* compiler - openram compiler itself (pointed to by OPENRAM_HOME)
+  * compiler/base - base data structure modules
+  * compiler/pgates - parameterized cells (e.g. logic gates)
+  * compiler/bitcells - various bitcell styles
+  * compiler/modules - high-level modules (e.g. decoders, etc.)
+  * compiler/verify - DRC and LVS verification wrappers
+  * compiler/characterizer - timing characterization code
+  * compiler/gdsMill - GDSII reader/writer
+  * compiler/router - router for signals and power supplies
+  * compiler/tests - unit tests
+* technology - openram technology directory (pointed to by OPENRAM_TECH)
+  * technology/freepdk45 - example configuration library for [FreePDK45 technology node
+  * technology/scn4m_subm - example configuration library [SCMOS] technology node
+  * technology/scn3me_subm - unsupported configuration (not enough metal layers)
+  * technology/setup_scripts - setup scripts to customize your PDKs and OpenRAM technologies
+* docs - LaTeX manual (outdated)
+* lib - IP library of pregenerated memories
+
 # Code Style
 
 Our code may not be the best and we acknowledge that. We welcome 
@@ -20,7 +40,7 @@ other OpenRAM features. Please see the README.md file on how to run
 the unit tests. Unit tests should work in all technologies. We will run
 the tests on your contributions before they will be accepted.
 
-# Internally Development
+# Internal Development
 
 For internal development, follow all of the following steps EXCEPT
 do not fork your own copy. Instead, create a branch in our private repository
@@ -32,21 +52,21 @@ All unit tests should pass first.
 1. One time, create a GitHub account at http://github.com
 
 2. Create a fork of the OpenRAM project on the github web page:
-   https://github.com/mguthaus/OpenRAM
+   https://github.com/vlsida/openram
    It is on the upper right and says "Fork": This will make your own
    OpenRAM repository on GitHub in your account.
 
 3. Clone your repository (or use an existing cloned copy if you've
    already done this once):
 ```
-  git clone https://github.com/<youruser>/OpenRAM.git
-  cd OpenRAM
+  git clone https://github.com/<youruser>/oepnram.git
+  cd openram
 ```
 
 4. Set up a new upstream that points to MY OpenRAM repository that you
    forked (only first time):
 ```
-   git remote add upstream https://github.com/mguthaus/OpenRAM.git
+   git remote add upstream https://github.com/vlsida/openram.git
 ```
    You now have two remotes for this project:
    * origin which points to your GitHub fork of the project. You can read

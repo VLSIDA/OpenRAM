@@ -1,6 +1,7 @@
 import os,sys,re
 import debug
 import math
+import datetime
 from .setup_hold import *
 from .delay import *
 from .charutils import *
@@ -12,16 +13,12 @@ class lib:
     """ lib file generation."""
     
     def __init__(self, out_dir, sram, sp_file, use_model=OPTS.analytical_delay):
-        #Temporary Workaround to here to set num of ports. Crashes if set in config file.
-        #OPTS.num_rw_ports = 2
-        #OPTS.num_r_ports = 1
-        #OPTS.num_w_ports = 1
     
         self.out_dir = out_dir
         self.sram = sram
         self.sp_file = sp_file        
         self.use_model = use_model
-        self.gen_port_names() #copy and paste from delay.py, names are not final will likely be changed later.
+        self.set_port_indices()
         
         self.prepare_tables()
         
@@ -29,26 +26,14 @@ class lib:
         
         self.characterize_corners()
         
-    def gen_port_names(self):
-        """Generates the port names to be written to the lib file"""
-        #This is basically a copy and paste of whats in delay.py as well. Something more efficient should be done here.
-        self.write_ports = []
-        self.read_ports = []
-        self.total_port_num = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
-        
-        #save a member variable to avoid accessing global. readwrite ports have different control signals.
-        self.readwrite_port_num = OPTS.num_rw_ports
-        
-        #Generate the port names. readwrite ports are required to be added first for this to work.
-        for readwrite_port_num in range(OPTS.num_rw_ports):
-            self.read_ports.append(readwrite_port_num)
-            self.write_ports.append(readwrite_port_num)
-        #This placement is intentional. It makes indexing input data easier. See self.data_values
-        for read_port_num in range(OPTS.num_rw_ports, OPTS.num_r_ports):
-            self.read_ports.append(read_port_num)
-        for write_port_num in range(OPTS.num_rw_ports+OPTS.num_r_ports, OPTS.num_w_ports):
-            self.write_ports.append(write_port_num)
-        
+    def set_port_indices(self):
+        """Copies port information set in the SRAM instance"""
+        self.total_port_num = len(self.sram.all_ports)
+        self.all_ports = self.sram.all_ports
+        self.readwrite_ports = self.sram.readwrite_ports
+        self.read_ports = self.sram.read_ports
+        self.write_ports = self.sram.write_ports
+             
     def prepare_tables(self):
         """ Determine the load/slews if they aren't specified in the config file. """
         # These are the parameters to determine the table sizes
@@ -100,7 +85,7 @@ class lib:
             debug.info(1,"Writing to {0}".format(lib_name))
             self.characterize()
             self.lib.close()
-
+            self.parse_info(self.corner,lib_name)
     def characterize(self):
         """ Characterize the current corner. """
 
@@ -110,21 +95,21 @@ class lib:
 
         self.write_header()
         
-        #Loop over all readwrite ports. This is debugging. Will change later.
-        for port in range(self.total_port_num):
+        #Loop over all ports. 
+        for port in self.all_ports:
             #set the read and write port as inputs.
             self.write_data_bus(port)
             self.write_addr_bus(port)
             self.write_control_pins(port) #need to split this into sram and port control signals
-            
-        self.write_clk_timing_power()
+            self.write_clk_timing_power(port)
 
         self.write_footer()
 
         
     def write_footer(self):
         """ Write the footer """
-        self.lib.write("}\n")
+        self.lib.write("    }\n") #Closing brace for the cell
+        self.lib.write("}\n") #Closing brace for the library
 
     def write_header(self):
         """ Write the header information """
@@ -153,7 +138,7 @@ class lib:
         self.lib.write("    dont_touch : true;\n")
         self.lib.write("    area : {};\n\n".format(self.sram.width * self.sram.height))
 
-        #Build string of all control signals. This is subject to change once control signals finalized.
+        #Build string of all control signals. 
         control_str = 'CSb0' #assume at least 1 port
         for i in range(1, self.total_port_num):
             control_str += ' & CSb{0}'.format(i)
@@ -161,7 +146,7 @@ class lib:
         # Leakage is included in dynamic when macro is enabled
         self.lib.write("    leakage_power () {\n")
         self.lib.write("      when : \"{0}\";\n".format(control_str))
-        self.lib.write("      value : {};\n".format(self.char_results["leakage_power"]))
+        self.lib.write("      value : {};\n".format(self.char_sram_results["leakage_power"]))
         self.lib.write("    }\n")
         self.lib.write("    cell_leakage_power : {};\n".format(0))
         
@@ -298,12 +283,12 @@ class lib:
         self.lib.write("    }\n\n")
 
 
-    def write_FF_setuphold(self):
+    def write_FF_setuphold(self, port):
         """ Adds Setup and Hold timing results"""
 
         self.lib.write("        timing(){ \n")
         self.lib.write("            timing_type : setup_rising; \n")
-        self.lib.write("            related_pin  : \"clk\"; \n")
+        self.lib.write("            related_pin  : \"clk{0}\"; \n".format(port))
         self.lib.write("            rise_constraint(CONSTRAINT_TABLE) {\n")
         rounded_values = list(map(round_time,self.times["setup_times_LH"]))
         self.write_values(rounded_values,len(self.slews),"            ")
@@ -315,7 +300,7 @@ class lib:
         self.lib.write("        }\n")
         self.lib.write("        timing(){ \n")
         self.lib.write("            timing_type : hold_rising; \n")
-        self.lib.write("            related_pin  : \"clk\"; \n")
+        self.lib.write("            related_pin  : \"clk{0}\"; \n".format(port))
         self.lib.write("            rise_constraint(CONSTRAINT_TABLE) {\n")
         rounded_values = list(map(round_time,self.times["hold_times_LH"]))
         self.write_values(rounded_values,len(self.slews),"            ")
@@ -340,30 +325,29 @@ class lib:
         self.lib.write("        }\n")
         
 
-        self.lib.write("        pin(DOUT{1}[{0}:0]){{\n".format(self.sram.word_size - 1, read_port))
-        self.write_FF_setuphold()
+        self.lib.write("        pin(DOUT{}){{\n".format(read_port))
         self.lib.write("        timing(){ \n")
         self.lib.write("            timing_sense : non_unate; \n")
-        self.lib.write("            related_pin : \"clk\"; \n")
-        self.lib.write("            timing_type : rising_edge; \n")
+        self.lib.write("            related_pin : \"clk{0}\"; \n".format(read_port))
+        self.lib.write("            timing_type : falling_edge; \n")
         self.lib.write("            cell_rise(CELL_TABLE) {\n")
-        self.write_values(self.char_results["delay_lh{0}".format(read_port)],len(self.loads),"            ")
+        self.write_values(self.char_port_results[read_port]["delay_lh"],len(self.loads),"            ")
         self.lib.write("            }\n") # rise delay
         self.lib.write("            cell_fall(CELL_TABLE) {\n")
-        self.write_values(self.char_results["delay_hl{0}".format(read_port)],len(self.loads),"            ")
+        self.write_values(self.char_port_results[read_port]["delay_hl"],len(self.loads),"            ")
         self.lib.write("            }\n") # fall delay
         self.lib.write("            rise_transition(CELL_TABLE) {\n")
-        self.write_values(self.char_results["slew_lh{0}".format(read_port)],len(self.loads),"            ")
+        self.write_values(self.char_port_results[read_port]["slew_lh"],len(self.loads),"            ")
         self.lib.write("            }\n") # rise trans
         self.lib.write("            fall_transition(CELL_TABLE) {\n")
-        self.write_values(self.char_results["slew_hl{0}".format(read_port)],len(self.loads),"            ")
+        self.write_values(self.char_port_results[read_port]["slew_hl"],len(self.loads),"            ")
         self.lib.write("            }\n") # fall trans
         self.lib.write("        }\n") # timing
         self.lib.write("        }\n") # pin        
         self.lib.write("    }\n\n") # bus
 
     def write_data_bus_input(self, write_port):
-        """ Adds data bus timing results."""
+        """ Adds DIN data bus timing results."""
 
         self.lib.write("    bus(DIN{0}){{\n".format(write_port))
         self.lib.write("        bus_type  : DATA; \n")
@@ -372,9 +356,12 @@ class lib:
         self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]))
         self.lib.write("        memory_write(){ \n")
         self.lib.write("            address : ADDR{0}; \n".format(write_port))
-        self.lib.write("            clocked_on  : clk; \n")
-        self.lib.write("        }\n")
-        self.lib.write("    }\n")
+        self.lib.write("            clocked_on  : clk{0}; \n".format(write_port))
+        self.lib.write("        }\n") 
+        self.lib.write("        pin(DIN{}){{\n".format(write_port))
+        self.write_FF_setuphold(write_port)
+        self.lib.write("        }\n") # pin  
+        self.lib.write("    }\n") #bus
 
     def write_data_bus(self, port):
         """ Adds data bus timing results."""
@@ -391,10 +378,10 @@ class lib:
         self.lib.write("        direction  : input; \n")
         self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]))
         self.lib.write("        max_transition       : {0};\n".format(self.slews[-1]))
-        self.lib.write("        pin(ADDR{1}[{0}:0])".format(self.sram.addr_size - 1, port))
+        self.lib.write("        pin(ADDR{})".format(port))
         self.lib.write("{\n")
         
-        self.write_FF_setuphold()
+        self.write_FF_setuphold(port)
         self.lib.write("        }\n")        
         self.lib.write("    }\n\n")
 
@@ -403,7 +390,7 @@ class lib:
         """ Adds control pins timing results."""
         #The control pins are still to be determined. This is a placeholder for what could be.
         ctrl_pin_names = ["CSb{0}".format(port)]
-        if port in self.write_ports and port in self.read_ports:
+        if port in self.readwrite_ports:
             ctrl_pin_names.append("WEb{0}".format(port))
             
         for i in ctrl_pin_names:
@@ -411,28 +398,25 @@ class lib:
             self.lib.write("{\n")
             self.lib.write("        direction  : input; \n")
             self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]))
-            self.write_FF_setuphold()
+            self.write_FF_setuphold(port)
             self.lib.write("    }\n\n")
 
-    def write_clk_timing_power(self):
+    def write_clk_timing_power(self, port):
         """ Adds clk pin timing results."""
 
-        self.lib.write("    pin(clk){\n")
+        self.lib.write("    pin(clk{0}){{\n".format(port))
         self.lib.write("        clock             : true;\n")
         self.lib.write("        direction  : input; \n")
         # FIXME: This depends on the clock buffer size in the control logic
         self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]))
 
-        #Add power values for the ports. lib generated with this is not syntactically correct. TODO once
-        #top level is done.
-        for port in range(self.total_port_num):
-            self.add_clk_control_power(port)
+        self.add_clk_control_power(port)
 
-        min_pulse_width = round_time(self.char_results["min_period"])/2.0
-        min_period = round_time(self.char_results["min_period"])
+        min_pulse_width = round_time(self.char_sram_results["min_period"])/2.0
+        min_period = round_time(self.char_sram_results["min_period"])
         self.lib.write("        timing(){ \n")
         self.lib.write("            timing_type :\"min_pulse_width\"; \n")
-        self.lib.write("            related_pin  : clk; \n")
+        self.lib.write("            related_pin  : clk{0}; \n".format(port))
         self.lib.write("            rise_constraint(scalar) {\n")
         self.lib.write("                values(\"{0}\"); \n".format(min_pulse_width))
         self.lib.write("            }\n")
@@ -442,7 +426,7 @@ class lib:
         self.lib.write("         }\n")
         self.lib.write("        timing(){ \n")
         self.lib.write("            timing_type :\"minimum_period\"; \n")
-        self.lib.write("            related_pin  : clk; \n")
+        self.lib.write("            related_pin  : clk{0}; \n".format(port))
         self.lib.write("            rise_constraint(scalar) {\n")
         self.lib.write("                values(\"{0}\"); \n".format(min_period))
         self.lib.write("            }\n")
@@ -450,8 +434,7 @@ class lib:
         self.lib.write("                values(\"{0}\"); \n".format(min_period))
         self.lib.write("            }\n")
         self.lib.write("         }\n")
-        self.lib.write("    }\n")
-        self.lib.write("    }\n")
+        self.lib.write("    }\n\n")
     
     def add_clk_control_power(self, port):
         """Writes powers under the clock pin group for a specified port"""
@@ -461,9 +444,9 @@ class lib:
         if port in self.write_ports:
             if port in self.read_ports:
                 web_name = " & !WEb{0}".format(port)
-            avg_write_power = np.mean(self.char_results["write1_power{0}".format(port)] + self.char_results["write0_power{0}".format(port)])
+            avg_write_power = np.mean(self.char_port_results[port]["write1_power"] + self.char_port_results[port]["write0_power"])
             self.lib.write("        internal_power(){\n")
-            self.lib.write("            when : \"!CSb{0} & clk{1}\"; \n".format(port, web_name))
+            self.lib.write("            when : \"!CSb{0} & clk{0}{1}\"; \n".format(port, web_name))
             self.lib.write("            rise_power(scalar){\n")
             self.lib.write("                values(\"{0}\");\n".format(avg_write_power/2.0))
             self.lib.write("            }\n")
@@ -475,9 +458,9 @@ class lib:
         if port in self.read_ports:
             if port in self.write_ports:
                 web_name = " & WEb{0}".format(port)
-            avg_read_power = np.mean(self.char_results["read1_power{0}".format(port)] + self.char_results["read0_power{0}".format(port)])
+            avg_read_power = np.mean(self.char_port_results[port]["read1_power"] + self.char_port_results[port]["read0_power"])
             self.lib.write("        internal_power(){\n")
-            self.lib.write("            when : \"!CSb{0} & !clk{1}\"; \n".format(port, web_name))
+            self.lib.write("            when : \"!CSb{0} & !clk{0}{1}\"; \n".format(port, web_name))
             self.lib.write("            rise_power(scalar){\n")
             self.lib.write("                values(\"{0}\");\n".format(avg_read_power/2.0))
             self.lib.write("            }\n")
@@ -502,13 +485,14 @@ class lib:
         if not hasattr(self,"d"):
             self.d = delay(self.sram, self.sp_file, self.corner)
             if self.use_model:
-                self.char_results = self.d.analytical_delay(self.sram,self.slews,self.loads)
+                char_results = self.d.analytical_delay(self.slews,self.loads)
+                self.char_sram_results, self.char_port_results = char_results  
             else:
                 probe_address = "1" * self.sram.addr_size
                 probe_data = self.sram.word_size - 1
-                self.char_results = self.d.analyze(probe_address, probe_data, self.slews, self.loads)
-
-
+                char_results = self.d.analyze(probe_address, probe_data, self.slews, self.loads)
+                self.char_sram_results, self.char_port_results = char_results  
+              
     def compute_setup_hold(self):
         """ Do the analysis if we haven't characterized a FF yet """
         # Do the analysis if we haven't characterized a FF yet
@@ -518,4 +502,159 @@ class lib:
                 self.times = self.sh.analytical_setuphold(self.slews,self.loads)
             else:
                 self.times = self.sh.analyze(self.slews,self.slews)
+                
+                
+    def parse_info(self,corner,lib_name):
+        """ Copies important characterization data to datasheet.info to be added to datasheet """
+        if OPTS.is_unit_test:
+            git_id = 'AAAAAAAAAAAAAAAAAAAA'
+        else:
+            with open(os.devnull, 'wb') as devnull:
+                proc = subprocess.Popen(['git','rev-parse','HEAD'], cwd=os.path.abspath(os.environ.get("OPENRAM_HOME")) + '/', stdout=subprocess.PIPE)
+
+                git_id = str(proc.stdout.read())
+                
+                try:
+                    git_id = git_id[2:-3] 
+                except:
+                    pass
+
+                if len(git_id) != 40:
+                    debug.warning("Failed to retrieve git id")
+                    git_id = 'Failed to retruieve'
+
+        datasheet = open(OPTS.openram_temp +'/datasheet.info', 'a+')
+
+        current_time = datetime.datetime.now()
+        datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},".format(
+                        "sram_{0}_{1}_{2}".format(OPTS.word_size, OPTS.num_words, OPTS.tech_name),
+                        OPTS.num_words,
+                        OPTS.num_banks,
+                        OPTS.num_rw_ports,  
+                        OPTS.num_w_ports,
+                        OPTS.num_r_ports,
+                        OPTS.tech_name,
+                        corner[2],
+                        corner[1],
+                        corner[0],
+                        round_time(self.char_sram_results["min_period"]),
+                        self.out_dir,
+                        lib_name,
+                        OPTS.word_size,
+                        git_id,
+                        current_time
+                        ))
+
+        # information of checks
+        from hierarchy_design import total_drc_errors
+        from hierarchy_design import total_lvs_errors
+        DRC = 'skipped'
+        LVS = 'skipped'
+        if OPTS.check_lvsdrc:
+            DRC = str(total_drc_errors)
+            LVS = str(total_lvs_errors)
+
+        datasheet.write("{0},{1},".format(DRC, LVS))
+
+        for port in self.all_ports:
+            #DIN timings
+            if port in self.write_ports:
+                datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
+                        "DIN{1}[{0}:0]".format(self.sram.word_size - 1, port),
+                        min(list(map(round_time,self.times["setup_times_LH"]))),
+                        max(list(map(round_time,self.times["setup_times_LH"]))),
+
+                        min(list(map(round_time,self.times["setup_times_HL"]))),
+                        max(list(map(round_time,self.times["setup_times_HL"]))),
+
+                        min(list(map(round_time,self.times["hold_times_LH"]))),
+                        max(list(map(round_time,self.times["hold_times_LH"]))),
+
+                        min(list(map(round_time,self.times["hold_times_HL"]))),
+                        max(list(map(round_time,self.times["hold_times_HL"])))
+                        
+                        ))
+
+        for port in self.all_ports:
+            #DOUT timing
+            if port in self.read_ports:
+                datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
+                        "DOUT{1}[{0}:0]".format(self.sram.word_size - 1, port),
+                        min(list(map(round_time,self.char_port_results[port]["delay_lh"]))),
+                        max(list(map(round_time,self.char_port_results[port]["delay_lh"]))),
+
+                        min(list(map(round_time,self.char_port_results[port]["delay_hl"]))),
+                        max(list(map(round_time,self.char_port_results[port]["delay_hl"]))),
+
+                        min(list(map(round_time,self.char_port_results[port]["slew_lh"]))),
+                        max(list(map(round_time,self.char_port_results[port]["slew_lh"]))),
+
+                        min(list(map(round_time,self.char_port_results[port]["slew_hl"]))),
+                        max(list(map(round_time,self.char_port_results[port]["slew_hl"])))
+
+                        
+                        ))
+
+        for port in self.all_ports:
+            #CSb timings
+            datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
+                    "CSb{0}".format(port),
+                    min(list(map(round_time,self.times["setup_times_LH"]))),
+                    max(list(map(round_time,self.times["setup_times_LH"]))),
+
+                    min(list(map(round_time,self.times["setup_times_HL"]))),
+                    max(list(map(round_time,self.times["setup_times_HL"]))),
+
+                    min(list(map(round_time,self.times["hold_times_LH"]))),
+                    max(list(map(round_time,self.times["hold_times_LH"]))),
+
+                    min(list(map(round_time,self.times["hold_times_HL"]))),
+                    max(list(map(round_time,self.times["hold_times_HL"])))
+
+                    ))
+
+        for port in self.all_ports:
+            #ADDR timings
+            datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
+                    "ADDR{1}[{0}:0]".format(self.sram.addr_size - 1, port),
+                    min(list(map(round_time,self.times["setup_times_LH"]))),
+                    max(list(map(round_time,self.times["setup_times_LH"]))),
+
+                    min(list(map(round_time,self.times["setup_times_HL"]))),
+                    max(list(map(round_time,self.times["setup_times_HL"]))),
+
+                    min(list(map(round_time,self.times["hold_times_LH"]))),
+                    max(list(map(round_time,self.times["hold_times_LH"]))),
+
+                    min(list(map(round_time,self.times["hold_times_HL"]))),
+                    max(list(map(round_time,self.times["hold_times_HL"])))
+
+                    ))
+
+
+        for port in self.all_ports:
+            if port in self.readwrite_ports:
+
+            #WEb timings
+                datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
+                        "WEb{0}".format(port),
+                        min(list(map(round_time,self.times["setup_times_LH"]))),
+                        max(list(map(round_time,self.times["setup_times_LH"]))),
+
+                        min(list(map(round_time,self.times["setup_times_HL"]))),
+                        max(list(map(round_time,self.times["setup_times_HL"]))),
+
+                        min(list(map(round_time,self.times["hold_times_LH"]))),
+                        max(list(map(round_time,self.times["hold_times_LH"]))),
+
+                        min(list(map(round_time,self.times["hold_times_HL"]))),
+                        max(list(map(round_time,self.times["hold_times_HL"])))
+
+                        ))
+
+
+
+
+        datasheet.write("END\n")
+        datasheet.close()
                 

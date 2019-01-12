@@ -24,14 +24,16 @@ def parse_args():
     global OPTS
 
     option_list = {
-        optparse.make_option("-b", "--backannotated", action="store_true", dest="run_pex",
+        optparse.make_option("-b", "--backannotated", action="store_true", dest="use_pex",
                              help="Back annotate simulation"),
         optparse.make_option("-o", "--output", dest="output_name",
                              help="Base output file name(s) prefix", metavar="FILE"),
         optparse.make_option("-p", "--outpath", dest="output_path",
                              help="Output file(s) location"),
+        optparse.make_option("-i", "--inlinecheck", action="store_true",
+                             help="Enable inline LVS/DRC checks", dest="inline_lvsdrc"),
         optparse.make_option("-n", "--nocheck", action="store_false",
-                             help="Disable inline LVS/DRC checks", dest="check_lvsdrc"),
+                             help="Disable all LVS/DRC checks", dest="check_lvsdrc"),
         optparse.make_option("-v", "--verbose", action="count", dest="debug_level",
                              help="Increase the verbosity level"),
         optparse.make_option("-t", "--tech", dest="tech_name",
@@ -57,7 +59,7 @@ def parse_args():
     # This may be overridden when we read a config file though...
     if OPTS.tech_name == "":
         OPTS.tech_name = "scmos"
-    # Alias SCMOS to AMI 0.5um
+    # Alias SCMOS to 180nm
     if OPTS.tech_name == "scmos":
         OPTS.tech_name = "scn4m_subm"
 
@@ -87,6 +89,7 @@ def print_banner():
     print("|=========" + dev_info.center(60) + "=========|")
     temp_info = "Temp dir: {}".format(OPTS.openram_temp)
     print("|=========" + temp_info.center(60) + "=========|")
+    print("|=========" + "See LICENSE for license info".center(60) + "=========|")
     print("|==============================================================================|")
 
 
@@ -100,9 +103,16 @@ def check_versions():
     minor_required = 5
     if not (major_python_version == major_required and minor_python_version >= minor_required):
         debug.error("Python {0}.{1} or greater is required.".format(major_required,minor_required),-1)
-
+ 
     # FIXME: Check versions of other tools here??
     # or, this could be done in each module (e.g. verify, characterizer, etc.)
+    global OPTS
+ 
+    try:
+        import coverage
+        OPTS.coverage = 1
+    except:
+        OPTS.coverage = 0
 
 def init_openram(config_file, is_unit_test=True):
     """Initialize the technology, paths, simulators, etc."""
@@ -189,6 +199,7 @@ def read_config(config_file, is_unit_test=True):
     config_file = re.sub(r'\.py$', "", config_file)
     # Expand the user if it is used
     config_file = os.path.expanduser(config_file)
+    OPTS.config_file = config_file
     # Add the path to the system path so we can import things in the other directory
     dir_name = os.path.dirname(config_file)
     file_name = os.path.basename(config_file)
@@ -236,7 +247,7 @@ def read_config(config_file, is_unit_test=True):
                                                          OPTS.num_words,
                                                          ports,
                                                          OPTS.tech_name)
-        
+    
 
         
 def end_openram():
@@ -287,7 +298,8 @@ def setup_paths():
 
     # Add all of the subdirs to the python path
     # These subdirs are modules and don't need to be added: characterizer, verify
-    for subdir in ["gdsMill", "tests", "modules", "base", "pgates"]:
+    subdirlist = [ item for item in os.listdir(OPENRAM_HOME) if os.path.isdir(os.path.join(OPENRAM_HOME, item)) ]
+    for subdir in subdirlist:
         full_path = "{0}/{1}".format(OPENRAM_HOME,subdir)
         debug.check(os.path.isdir(full_path),
                     "$OPENRAM_HOME/{0} does not exist: {1}".format(subdir,full_path))
@@ -375,13 +387,17 @@ def import_tech():
         OPTS.temperatures = tech.spice["temperatures"]
 
 
-def print_time(name, now_time, last_time=None):
+def print_time(name, now_time, last_time=None, indentation=2):
     """ Print a statement about the time delta. """
-    if last_time:
-        time = round((now_time-last_time).total_seconds(),1)
-    else:
-        time = now_time
-    print("** {0}: {1} seconds".format(name,time))
+    global OPTS
+    
+    # Don't print during testing
+    if not OPTS.is_unit_test or OPTS.debug_level>0:
+        if last_time:
+            time = str(round((now_time-last_time).total_seconds(),1)) + " seconds"
+        else:
+            time = now_time.strftime('%m/%d/%Y %H:%M:%S')
+        print("{0} {1}: {2}".format("*"*indentation,name,time))
 
 
 def report_status():
@@ -398,12 +414,19 @@ def report_status():
         debug.error("Tech name must be specified in config file.")
 
     print("Technology: {0}".format(OPTS.tech_name))
+    print("Total size: {} bits".format(OPTS.word_size*OPTS.num_words*OPTS.num_banks))
     print("Word size: {0}\nWords: {1}\nBanks: {2}".format(OPTS.word_size,
                                                           OPTS.num_words,
                                                           OPTS.num_banks))
+    print("RW ports: {0}\nR-only ports: {1}\nW-only ports: {2}".format(OPTS.num_rw_ports,
+                                                                       OPTS.num_r_ports,
+                                                                       OPTS.num_w_ports))
     if OPTS.netlist_only:
         print("Netlist only mode (no physical design is being done).")
     
+    if not OPTS.inline_lvsdrc:
+        print("DRC/LVS/PEX is only run on the top-level design.")
+
     if not OPTS.check_lvsdrc:
-        print("DRC/LVS/PEX checking is disabled.")
-    
+        print("DRC/LVS/PEX is completely disabled.")
+        

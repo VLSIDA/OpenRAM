@@ -36,10 +36,7 @@ class lef_test(openram_test):
 
         # let's diff the result with a golden model
         golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),leffile)
-        self.isdiff(lefname,golden)
-
-        os.system("rm {0}".format(gdsname))
-        os.system("rm {0}".format(lefname))
+        self.assertTrue(self.isdiff(lefname,golden))
 
         globals.end_openram()
 

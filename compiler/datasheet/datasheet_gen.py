@@ -491,11 +491,12 @@ def parse_characterizer_csv(sram,f,pages):
                     new_sheet.dlv_table.add_row(['.lef','LEF files','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'lef')])
  
                
-                new_sheet.dlv_table.add_row(['.sp','SPICE netlists','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'sp')])
+                new_sheet.dlv_table.add_row(['.log','OpenRAM compile log','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'log')])
                 new_sheet.dlv_table.add_row(['.v','Verilog simulation models','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'v')])
                 new_sheet.dlv_table.add_row(['.html','This datasheet','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'html')])
                 new_sheet.dlv_table.add_row(['.lib','Synthesis models','<a href="{1}">{1}</a>'.format(LIB_NAME,LIB_NAME.replace(OUT_DIR,''))])
                 new_sheet.dlv_table.add_row(['.py','OpenRAM configuration file','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'py')])
+                new_sheet.dlv_table.add_row(['.sp','SPICE netlists','<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name,'sp')])
 
                 new_sheet.io_table.add_row(['WORD_SIZE',WORD_SIZE])
                 new_sheet.io_table.add_row(['NUM_WORDS',NUM_WORDS])

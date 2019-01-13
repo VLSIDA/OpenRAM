@@ -65,21 +65,21 @@ class sram():
             # Write the layout
             start_time = datetime.datetime.now()
             gdsname = OPTS.output_path + self.s.name + ".gds"
-            print("GDS: Writing to {0}".format(gdsname))
+            debug.print_raw("GDS: Writing to {0}".format(gdsname))
             self.gds_write(gdsname)
             print_time("GDS", datetime.datetime.now(), start_time)
 
             # Create a LEF physical model
             start_time = datetime.datetime.now()
             lefname = OPTS.output_path + self.s.name + ".lef"
-            print("LEF: Writing to {0}".format(lefname))
+            debug.print_raw("LEF: Writing to {0}".format(lefname))
             self.lef_write(lefname)
             print_time("LEF", datetime.datetime.now(), start_time)
         
         # Save the spice file
         start_time = datetime.datetime.now()
         spname = OPTS.output_path + self.s.name + ".sp"
-        print("SP: Writing to {0}".format(spname))
+        debug.print_raw("SP: Writing to {0}".format(spname))
         self.sp_write(spname)
         print_time("Spice writing", datetime.datetime.now(), start_time)
 
@@ -98,14 +98,14 @@ class sram():
         # Characterize the design
         start_time = datetime.datetime.now()
         from characterizer import lib
-        print("LIB: Characterizing... ")
+        debug.print_raw("LIB: Characterizing... ")
         if OPTS.analytical_delay:
-            print("Using analytical delay models (no characterization)")
+            debug.print_raw("Using analytical delay models (no characterization)")
         else:
             if OPTS.spice_name!="":
-                print("Performing simulation-based characterization with {}".format(OPTS.spice_name))
+                debug.print_raw("Performing simulation-based characterization with {}".format(OPTS.spice_name))
             if OPTS.trim_netlist:
-                print("Trimming netlist to speed up characterization.")
+                debug.print_raw("Trimming netlist to speed up characterization.")
         lib(out_dir=OPTS.output_path, sram=self.s, sp_file=sp_file)
         print_time("Characterization", datetime.datetime.now(), start_time)
        
@@ -114,20 +114,20 @@ class sram():
         start_time = datetime.datetime.now()
         from shutil import copyfile
         copyfile(OPTS.config_file + '.py', OPTS.output_path + OPTS.output_name + '.py')
-        print("Config: Writing to {0}".format(OPTS.output_path + OPTS.output_name + '.py'))
+        debug.print_raw("Config: Writing to {0}".format(OPTS.output_path + OPTS.output_name + '.py'))
         print_time("Config", datetime.datetime.now(), start_time)
 
         # Write the datasheet
         start_time = datetime.datetime.now()
         from datasheet_gen import datasheet_gen
         dname = OPTS.output_path + self.s.name + ".html"
-        print("Datasheet: Writing to {0}".format(dname))
+        debug.print_raw("Datasheet: Writing to {0}".format(dname))
         datasheet_gen.datasheet_write(self.s,dname)
         print_time("Datasheet", datetime.datetime.now(), start_time)
 
         # Write a verilog model
         start_time = datetime.datetime.now()
         vname = OPTS.output_path + self.s.name + ".v"
-        print("Verilog: Writing to {0}".format(vname))
+        debug.print_raw("Verilog: Writing to {0}".format(vname))
         self.verilog_write(vname)
         print_time("Verilog", datetime.datetime.now(), start_time)

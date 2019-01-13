@@ -14,19 +14,50 @@ def check(check,str):
      index) = inspect.getouterframes(inspect.currentframe())[1]
     if not check:
         sys.stderr.write("ERROR: file {0}: line {1}: {2}\n".format(os.path.basename(filename),line_number,str))
+        log("ERROR: file {0}: line {1}: {2}\n".format(os.path.basename(filename),line_number,str))
+
         assert 0
 
 def error(str,return_value=0):
     (frame, filename, line_number, function_name, lines,
      index) = inspect.getouterframes(inspect.currentframe())[1]
     sys.stderr.write("ERROR: file {0}: line {1}: {2}\n".format(os.path.basename(filename),line_number,str))
+    log("ERROR: file {0}: line {1}: {2}\n".format(os.path.basename(filename),line_number,str))
+
     assert return_value==0
 
 def warning(str):
     (frame, filename, line_number, function_name, lines,
      index) = inspect.getouterframes(inspect.currentframe())[1]
     sys.stderr.write("WARNING: file {0}: line {1}: {2}\n".format(os.path.basename(filename),line_number,str))
+    log("WARNING: file {0}: line {1}: {2}\n".format(os.path.basename(filename),line_number,str))
 
+
+
+def print_raw(str):
+    print(str)
+    log(str)
+
+
+def log(str):
+    try:
+        if log.create_file:
+            compile_log = open(globals.OPTS.output_path + globals.OPTS.output_name + '.log',"w+")
+            log.create_file = 0
+        else:
+             compile_log = open(globals.OPTS.output_path + globals.OPTS.output_name + '.log',"a")
+             
+        if len(log.setup_output) != 0:
+            for line in log.setup_output:
+                compile_log.write(line)
+            log.setup_output = []
+        compile_log.write(str + '\n')
+    except:
+        log.setup_out.append(str + "\n")
+        
+#use a static list of strings to store messages until the global paths are set up
+log.setup_output = []
+log.create_file = 1
 
 def info(lev, str):
     from globals import OPTS

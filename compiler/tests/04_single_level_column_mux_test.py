@@ -19,29 +19,29 @@ class single_level_column_mux_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         import single_level_column_mux
         import tech
-
+        
+        # check single level column mux in single port
         debug.info(2, "Checking column mux")
         tx = single_level_column_mux.single_level_column_mux(tx_size=8)
         self.local_check(tx)
         
-        if OPTS.multiport_check:
-            debug.info(2, "Checking column mux for pbitcell")
-            OPTS.bitcell = "pbitcell"
-            OPTS.num_rw_ports = 1
-            OPTS.num_r_ports = 1
-            OPTS.num_w_ports = 1
-            tx = single_level_column_mux.single_level_column_mux(tx_size=8, bitcell_bl="bl0", bitcell_br="br0")
-            self.local_check(tx)
-            
-            tx = single_level_column_mux.single_level_column_mux(tx_size=8, bitcell_bl="bl1", bitcell_br="br1")
-            self.local_check(tx)
-            
-            tx = single_level_column_mux.single_level_column_mux(tx_size=8, bitcell_bl="bl2", bitcell_br="br2")
-            self.local_check(tx)
+        # check single level column mux in multi-port
+        OPTS.bitcell = "pbitcell"
+        OPTS.num_rw_ports = 1
+        OPTS.num_r_ports = 1
+        OPTS.num_w_ports = 1
+        
+        debug.info(2, "Checking column mux for pbitcell (innermost connections)")
+        tx = single_level_column_mux.single_level_column_mux(tx_size=8, bitcell_bl="bl0", bitcell_br="br0")
+        self.local_check(tx)
+        
+        debug.info(2, "Checking column mux for pbitcell (outermost connections)")
+        tx = single_level_column_mux.single_level_column_mux(tx_size=8, bitcell_bl="bl2", bitcell_br="br2")
+        self.local_check(tx)
 
         globals.end_openram()
         
-# instantiate a copy of the class to actually run the test
+# run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

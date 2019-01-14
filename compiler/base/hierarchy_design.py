@@ -6,6 +6,8 @@ import debug
 import os
 from globals import OPTS
 
+total_drc_errors = 0 
+total_lvs_errors = 0
 
 class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
     """
@@ -13,7 +15,6 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
     Class consisting of a set of modules and instances of these modules
     """
     name_map = []
-    
 
     def __init__(self, name):
         try:
@@ -28,26 +29,30 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         self.name = name
         hierarchy_layout.layout.__init__(self, name)
         hierarchy_spice.spice.__init__(self, name)
-
         
+            
         # Check if the name already exists, if so, give an error
         # because each reference must be a unique name.
         # These modules ensure unique names or have no changes if they
         # aren't unique
-        ok_list = ['ms_flop',
-                   'dff',
-                   'dff_buf',
-                   'bitcell',
-                   'contact',
+        ok_list = ['contact',
                    'ptx',
+                   'pbitcell',
+                   'replica_pbitcell',                   
                    'sram',
                    'hierarchical_predecode2x4',
                    'hierarchical_predecode3x8']
-        if name not in hierarchy_design.name_map:
+
+        # Library cells don't change
+        if self.is_library_cell:
+            return
+        # Name is unique so far
+        elif name not in hierarchy_design.name_map:
             hierarchy_design.name_map.append(name)
         else:
+            # Name is in our list of exceptions (they don't change)
             for ok_names in ok_list:
-                if ok_names in self.__class__.__name__:
+                if ok_names == self.__class__.__name__:
                     break
             else:
                 debug.error("Duplicate layout reference name {0} of class {1}. GDS2 requires names be unique.".format(name,self.__class__),-1)
@@ -69,36 +74,55 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         """Checks both DRC and LVS for a module"""
         # Unit tests will check themselves.
         # Do not run if disabled in options.
-        if not OPTS.is_unit_test and OPTS.check_lvsdrc:
+
+        if (not OPTS.is_unit_test and OPTS.check_lvsdrc and (OPTS.inline_lvsdrc or final_verification)):
+
+            global total_drc_errors
+            global total_lvs_errors
             tempspice = OPTS.openram_temp + "/temp.sp"
             tempgds = OPTS.openram_temp + "/temp.gds"
             self.sp_write(tempspice)
             self.gds_write(tempgds)
-            debug.check(verify.run_drc(self.name, tempgds) == 0,"DRC failed for {0}".format(self.name))
-            debug.check(verify.run_lvs(self.name, tempgds, tempspice, final_verification) == 0,"LVS failed for {0}".format(self.name))
+
+            num_drc_errors = verify.run_drc(self.name, tempgds, final_verification) 
+            num_lvs_errors = verify.run_lvs(self.name, tempgds, tempspice, final_verification) 
+            debug.check(num_drc_errors == 0,"DRC failed for {0} with {1} error(s)".format(self.name,num_drc_errors))
+            debug.check(num_lvs_errors == 0,"LVS failed for {0} with {1} errors(s)".format(self.name,num_lvs_errors))
+            total_drc_errors += num_drc_errors
+            total_lvs_errors += num_lvs_errors
+
             os.remove(tempspice)
             os.remove(tempgds)
 
-    def DRC(self):
+    def DRC(self, final_verification=False):
         """Checks DRC for a module"""
         # Unit tests will check themselves.
         # Do not run if disabled in options.
-        if not OPTS.is_unit_test and OPTS.check_lvsdrc:
+
+        if (not OPTS.is_unit_test and OPTS.check_lvsdrc and (OPTS.inline_lvsdrc or final_verification)):
+            global total_drc_errors
             tempgds = OPTS.openram_temp + "/temp.gds"
             self.gds_write(tempgds)
-            debug.check(verify.run_drc(self.name, tempgds) == 0,"DRC failed for {0}".format(self.name))
+            num_errors = verify.run_drc(self.name, tempgds, final_verification)  
+            total_drc_errors += num_errors
+            debug.check(num_errors == 0,"DRC failed for {0} with {1} error(s)".format(self.name,num_error))
+
             os.remove(tempgds)
 
     def LVS(self, final_verification=False):
         """Checks LVS for a module"""
         # Unit tests will check themselves.
         # Do not run if disabled in options.
-        if not OPTS.is_unit_test and OPTS.check_lvsdrc:
+
+        if (not OPTS.is_unit_test and OPTS.check_lvsdrc and (OPTS.inline_lvsdrc or final_verification)):
+            global total_lvs_errors
             tempspice = OPTS.openram_temp + "/temp.sp"
             tempgds = OPTS.openram_temp + "/temp.gds"
             self.sp_write(tempspice)
             self.gds_write(tempgds)
-            debug.check(verify.run_lvs(self.name, tempgds, tempspice, final_verification) == 0,"LVS failed for {0}".format(self.name))
+            num_errors = verify.run_lvs(self.name, tempgds, tempspice, final_verification)
+            total_lvs_errors += num_errors
+            debug.check(num_errors == 0,"LVS failed for {0} with {1} error(s)".format(self.name,num_errors))
             os.remove(tempspice)
             os.remove(tempgds)
 

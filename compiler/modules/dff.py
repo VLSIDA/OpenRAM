@@ -2,7 +2,7 @@ import globals
 import design
 from math import log
 import design
-from tech import GDS,layer
+from tech import GDS,layer,spice,parameter
 import utils
 
 class dff(design.design):
@@ -12,7 +12,7 @@ class dff(design.design):
 
     pin_names = ["D", "Q", "clk", "vdd", "gnd"]
     (width,height) = utils.get_libcell_size("dff", GDS["unit"], layer["boundary"])
-    pin_map = utils.get_libcell_pins(pin_names, "dff", GDS["unit"], layer["boundary"])
+    pin_map = utils.get_libcell_pins(pin_names, "dff", GDS["unit"])
     
     def __init__(self, name="dff"):
         design.design.__init__(self, name)
@@ -23,7 +23,6 @@ class dff(design.design):
     
     def analytical_power(self, proc, vdd, temp, load):
         """Returns dynamic and leakage power. Results in nW"""
-        from tech import spice
         c_eff = self.calculate_effective_capacitance(load)
         f = spice["default_event_rate"]
         power_dyn = c_eff*vdd*vdd*f
@@ -34,7 +33,7 @@ class dff(design.design):
         
     def calculate_effective_capacitance(self, load):
         """Computes effective capacitance. Results in fF"""
-        from tech import spice, parameter
+        from tech import parameter
         c_load = load
         c_para = spice["flop_para_cap"]#ff
         transition_prob = spice["flop_transition_prob"]
@@ -42,7 +41,12 @@ class dff(design.design):
 
     def analytical_delay(self, slew, load = 0.0):
         # dont know how to calculate this now, use constant in tech file
-        from tech import spice
         result = self.return_delay(spice["dff_delay"], spice["dff_slew"])
         return result
+        
+    def get_clk_cin(self):
+        """Return the total capacitance (in relative units) that the clock is loaded by in the dff"""
+        #This is a handmade cell so the value must be entered in the tech.py file or estimated.
+        #Calculated in the tech file by summing the widths of all the gates and dividing by the minimum width.
+        return parameter["dff_clk_cin"]
 

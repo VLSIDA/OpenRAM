@@ -5,7 +5,7 @@ from globals import OPTS
         
 def relative_compare(value1,value2,error_tolerance=0.001):
     """ This is used to compare relative values for convergence. """
-    return (abs(value1 - value2) / max(value1,value2) <= error_tolerance)
+    return (abs(value1 - value2) / abs(max(value1,value2)) <= error_tolerance)
 
 
 def parse_spice_list(filename, key):

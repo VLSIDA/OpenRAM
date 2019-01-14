@@ -1,12 +1,14 @@
 import unittest,warnings
 import sys,os,glob,copy
+import shutil
 sys.path.append(os.path.join(sys.path[0],".."))
 from globals import OPTS
 import debug
 
 class openram_test(unittest.TestCase):
     """ Base unit test that we have some shared classes in. """
-    
+
+                
     def local_drc_check(self, w):
 
         self.reset()
@@ -29,21 +31,40 @@ class openram_test(unittest.TestCase):
         tempgds = OPTS.openram_temp + "temp.gds"
 
         a.sp_write(tempspice)
-        a.gds_write(tempgds)
+        # cannot write gds in netlist_only mode
+        if not OPTS.netlist_only:
+            a.gds_write(tempgds)
 
-        import verify
-        result=verify.run_drc(a.name, tempgds)
-        if result != 0:
-            self.fail("DRC failed: {}".format(a.name))
+            import verify
+            result=verify.run_drc(a.name, tempgds)
+            if result != 0:
+                #zip_file = "/tmp/{0}_{1}".format(a.name,os.getpid())
+                #debug.info(0,"Archiving failed files to {}.zip".format(zip_file))
+                #shutil.make_archive(zip_file, 'zip', OPTS.openram_temp)
+                self.fail("DRC failed: {}".format(a.name))
 
             
-        result=verify.run_lvs(a.name, tempgds, tempspice, final_verification)
-        if result != 0:
-            self.fail("LVS mismatch: {}".format(a.name))
+            result=verify.run_lvs(a.name, tempgds, tempspice, final_verification)
+            if result != 0:
+                #zip_file = "/tmp/{0}_{1}".format(a.name,os.getpid())
+                #debug.info(0,"Archiving failed files to {}.zip".format(zip_file))
+                #shutil.make_archive(zip_file, 'zip', OPTS.openram_temp)
+                self.fail("LVS mismatch: {}".format(a.name))
 
         if OPTS.purge_temp:
             self.cleanup()
 
+    def find_feasible_test_period(self, delay_obj, sram, load, slew):
+        """Creates a delay simulation to determine a feasible period for the functional tests to run.
+           Only determines the feasible period for a single port and assumes that for all ports for performance.
+        """
+        debug.info(1, "Finding feasible period for current test.")
+        delay_obj.set_load_slew(load, slew)
+        delay_obj.set_probe(probe_address="1"*sram.addr_size, probe_data=(sram.word_size-1))
+        test_port = delay_obj.read_ports[0] #Only test one port, assumes other ports have similar period.
+        delay_obj.find_feasible_period_one_port(test_port) 
+        return delay_obj.period        
+            
     def cleanup(self):
         """ Reset the duplicate checker and cleanup files. """
         files = glob.glob(OPTS.openram_temp + '*')
@@ -75,7 +96,8 @@ class openram_test(unittest.TestCase):
                     if not self.isclose(k,data[k][i],golden_data[k][i],error_tolerance):
                         data_matches = False
             else:
-                self.isclose(k,data[k],golden_data[k],error_tolerance)
+                if not self.isclose(k,data[k],golden_data[k],error_tolerance):
+                    data_matches = False
         if not data_matches:
             import pprint
             data_string=pprint.pformat(data)

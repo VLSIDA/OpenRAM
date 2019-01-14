@@ -31,9 +31,9 @@ class precharge_array(design.design):
     def add_pins(self):
         """Adds pins for spice file"""
         for i in range(self.columns):
-            self.add_pin("bl[{0}]".format(i))
-            self.add_pin("br[{0}]".format(i))
-        self.add_pin("en")
+            self.add_pin("bl_{0}".format(i))
+            self.add_pin("br_{0}".format(i))
+        self.add_pin("en_bar")
         self.add_pin("vdd")
 
     def create_netlist(self):
@@ -59,11 +59,11 @@ class precharge_array(design.design):
         
     def add_layout_pins(self):
 
-        self.add_layout_pin(text="en",
+        self.add_layout_pin(text="en_bar",
                             layer="metal1",
-                            offset=self.pc_cell.get_pin("en").ll(),
+                            offset=self.pc_cell.get_pin("en_bar").ll(),
                             width=self.width,
-                            height=drc["minwidth_metal1"])
+                            height=drc("minwidth_metal1"))
 
         for inst in self.local_insts:
             self.copy_layout_pin(inst, "vdd")
@@ -71,16 +71,16 @@ class precharge_array(design.design):
         for i in range(len(self.local_insts)):
             inst = self.local_insts[i]
             bl_pin = inst.get_pin("bl")
-            self.add_layout_pin(text="bl[{0}]".format(i),
+            self.add_layout_pin(text="bl_{0}".format(i),
                                 layer="metal2",
                                 offset=bl_pin.ll(),
-                                width=drc["minwidth_metal2"],
+                                width=drc("minwidth_metal2"),
                                 height=bl_pin.height())
             br_pin = inst.get_pin("br") 
-            self.add_layout_pin(text="br[{0}]".format(i),
+            self.add_layout_pin(text="br_{0}".format(i),
                                 layer="metal2",
                                 offset=br_pin.ll(),
-                                width=drc["minwidth_metal2"],
+                                width=drc("minwidth_metal2"),
                                 height=bl_pin.height())
         
 
@@ -94,7 +94,7 @@ class precharge_array(design.design):
                                  mod=self.pc_cell,
                                  offset=offset)
             self.local_insts.append(inst)
-            self.connect_inst(["bl[{0}]".format(i), "br[{0}]".format(i), "en", "vdd"])
+            self.connect_inst(["bl_{0}".format(i), "br_{0}".format(i), "en_bar", "vdd"])
 
 
     def place_insts(self):
@@ -102,3 +102,9 @@ class precharge_array(design.design):
         for i in range(self.columns):
             offset = vector(self.pc_cell.width * i, 0)
             self.local_insts[i].place(offset)                                   
+
+    def get_en_cin(self):
+        """Get the relative capacitance of all the clk connections in the precharge array"""        
+        #Assume single port
+        precharge_en_cin = self.pc_cell.get_en_cin()
+        return precharge_en_cin*self.columns  

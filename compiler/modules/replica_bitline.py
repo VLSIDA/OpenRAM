@@ -15,12 +15,11 @@ class replica_bitline(design.design):
     line and rows is the height of the replica bit loads.
     """
 
-    def __init__(self, delay_stages, delay_fanout, bitcell_loads, name="replica_bitline"):
+    def __init__(self, delay_fanout_list, bitcell_loads, name="replica_bitline"):
         design.design.__init__(self, name)
 
         self.bitcell_loads = bitcell_loads
-        self.delay_stages = delay_stages
-        self.delay_fanout = delay_fanout
+        self.delay_fanout_list = delay_fanout_list
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -29,11 +28,11 @@ class replica_bitline(design.design):
     def create_netlist(self):
         self.add_modules()
         self.add_pins()
-        self.create_modules()
+        self.create_instances()
 
     def create_layout(self):
         self.calculate_module_offsets()
-        self.place_modules()
+        self.place_instances()
         self.route()
         self.add_layout_pins()
 
@@ -76,13 +75,12 @@ class replica_bitline(design.design):
         self.access_tx_offset = vector(-gap_width-self.access_tx.width-self.inv.width, 0.5*self.inv.height)
 
 
-
     def add_modules(self):
         """ Add the modules for later usage """
 
         from importlib import reload
-        g = reload(__import__(OPTS.delay_chain))
-        self.mod_delay_chain = getattr(g, OPTS.delay_chain)
+        #g = reload(__import__(OPTS.delay_chain))
+        #self.mod_delay_chain = getattr(g, OPTS.delay_chain)
 
         g = reload(__import__(OPTS.replica_bitcell))
         self.mod_replica_bitcell = getattr(g, OPTS.replica_bitcell)
@@ -91,11 +89,12 @@ class replica_bitline(design.design):
         self.add_mod(self.bitcell)
 
         # This is the replica bitline load column that is the height of our array
-        self.rbl = bitcell_array(name="bitline_load", cols=1, rows=self.bitcell_loads)
+        self.rbl = bitcell_array(cols=1, rows=self.bitcell_loads)
         self.add_mod(self.rbl)
 
         # FIXME: The FO and depth of this should be tuned
-        self.delay_chain = self.mod_delay_chain([self.delay_fanout]*self.delay_stages)
+        from delay_chain import delay_chain
+        self.delay_chain = delay_chain(self.delay_fanout_list)
         self.add_mod(self.delay_chain)
 
         self.inv = pinv()
@@ -104,18 +103,18 @@ class replica_bitline(design.design):
         self.access_tx = ptx(tx_type="pmos")
         self.add_mod(self.access_tx)
 
-    def create_modules(self):
+    def create_instances(self):
         """ Create all of the module instances in the logical netlist """
         
         # This is the threshold detect inverter on the output of the RBL
         self.rbl_inv_inst=self.add_inst(name="rbl_inv",
                                         mod=self.inv)
-        self.connect_inst(["bl[0]", "out", "vdd", "gnd"])
+        self.connect_inst(["bl0_0", "out", "vdd", "gnd"])
 
         self.tx_inst=self.add_inst(name="rbl_access_tx",
                                    mod=self.access_tx)
         # D, G, S, B
-        self.connect_inst(["vdd", "delayed_en", "bl[0]", "vdd"])
+        self.connect_inst(["vdd", "delayed_en", "bl0_0", "vdd"])
         # add the well and poly contact
 
         self.dc_inst=self.add_inst(name="delay_chain",
@@ -124,28 +123,35 @@ class replica_bitline(design.design):
 
         self.rbc_inst=self.add_inst(name="bitcell",
                                     mod=self.replica_bitcell)
-        self.connect_inst(["bl[0]", "br[0]", "delayed_en", "vdd", "gnd"])
+        temp = []
+        for port in self.all_ports:
+            temp.append("bl{}_0".format(port))
+            temp.append("br{}_0".format(port))
+        for port in self.all_ports:
+            temp.append("delayed_en")
+        temp.append("vdd")
+        temp.append("gnd")
+        self.connect_inst(temp)
+        #self.connect_inst(["bl_0", "br_0", "delayed_en", "vdd", "gnd"])
 
         self.rbl_inst=self.add_inst(name="load",
                                     mod=self.rbl)
         
-        total_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
         temp = []
-        temp.append("bl[0]")
-        temp.append("br[0]")
-        for port in range(total_ports - 1):
-            temp.append("gnd")
-            temp.append("gnd")
+        for port in self.all_ports:
+            temp.append("bl{}_0".format(port))
+            temp.append("br{}_0".format(port))
         for wl in range(self.bitcell_loads):
-            for port in range(total_ports):
+            for port in self.all_ports:
                 temp.append("gnd")
         temp.append("vdd")
         temp.append("gnd")
         self.connect_inst(temp)
         
         self.wl_list = self.rbl.cell.list_all_wl_names()
+        self.bl_list = self.rbl.cell.list_all_bl_names()
         
-    def place_modules(self):
+    def place_instances(self):
         """ Add all of the module instances in the logical netlist """
         
         # This is the threshold detect inverter on the output of the RBL
@@ -160,9 +166,6 @@ class replica_bitline(design.design):
                             mirror="MX")
 
         self.rbl_inst.place(self.rbl_offset)
-        
-        
-
 
 
     def route(self):
@@ -175,19 +178,76 @@ class replica_bitline(design.design):
         """ Connect the RBL word lines to gnd """
         # Connect the WL and gnd pins directly to the center and right gnd rails
         for row in range(self.bitcell_loads):
-            wl = self.wl_list[0]+"[{}]".format(row)
+            wl = self.wl_list[0]+"_{}".format(row)
             pin = self.rbl_inst.get_pin(wl)
 
-            # Route the connection to the right so that it doesn't interfere
-            # with the cells
+            # Route the connection to the right so that it doesn't interfere with the cells
+            # Wordlines may be close to each other when tiled, so gnd connections are routed in opposite directions            
             pin_right = pin.rc()
-            pin_extension = pin_right + vector(self.m1_pitch,0)
+            pin_extension = pin_right + vector(self.m3_pitch,0)
+
             if pin.layer != "metal1":
                 continue
-            self.add_path("metal1", [pin_right, pin_extension])
+            pin_width_ydir = pin.uy()-pin.by()
+            #Width is set to pin y width to avoid DRC issues with m1 gaps
+            self.add_path("metal1", [pin_right, pin_extension], pin_width_ydir)
             self.add_power_pin("gnd", pin_extension)
-                               
-        
+            
+            # for multiport, need to short wordlines to each other so they all connect to gnd.
+            wl_last = self.wl_list[-1]+"_{}".format(row)
+            pin_last = self.rbl_inst.get_pin(wl_last)
+            self.short_wordlines(pin, pin_last, "right", False, row, vector(self.m3_pitch,0))
+                    
+    def short_wordlines(self, wl_pin_a, wl_pin_b, pin_side, is_replica_cell, cell_row=0, offset_x_vec=None):
+        """Connects the word lines together for a single bitcell. Also requires which side of the bitcell to short the pins."""
+        #Assumes input pins are wordlines. Also assumes the word lines are horizontal in metal1. Also assumes pins have same x coord.
+        #This is my (Hunter) first time editing layout in openram so this function is likely not optimal.
+        if len(self.all_ports) > 1:
+            #1. Create vertical metal for all the bitlines to connect to
+            #m1 needs to be extended in the y directions, direction needs to be determined as every other cell is flipped
+            correct_y = vector(0, 0.5*drc("minwidth_metal1"))
+            #x spacing depends on the side being drawn. Unknown to me (Hunter) why the size of the space differs by the side.
+            #I assume this is related to how a wire is draw, but I have not investigated the issue.
+            if pin_side == "right":
+                correct_x = vector(0.5*drc("minwidth_metal1"), 0)
+                if offset_x_vec != None:
+                    correct_x = offset_x_vec
+                else:
+                    correct_x = vector(1.5*drc("minwidth_metal1"), 0)
+                    
+                if wl_pin_a.uy() > wl_pin_b.uy():
+                    self.add_path("metal1", [wl_pin_a.rc()+correct_x+correct_y, wl_pin_b.rc()+correct_x-correct_y])
+                else:
+                    self.add_path("metal1", [wl_pin_a.rc()+correct_x-correct_y, wl_pin_b.rc()+correct_x+correct_y])
+            elif pin_side == "left":
+                if offset_x_vec != None:
+                    correct_x = offset_x_vec
+                else:
+                    correct_x = vector(1.5*drc("minwidth_metal1"), 0)
+                
+                if wl_pin_a.uy() > wl_pin_b.uy():
+                    self.add_path("metal1", [wl_pin_a.lc()-correct_x+correct_y, wl_pin_b.lc()-correct_x-correct_y])
+                else:
+                    self.add_path("metal1", [wl_pin_a.lc()-correct_x-correct_y, wl_pin_b.lc()-correct_x+correct_y])
+            else:
+                debug.error("Could not connect wordlines on specified input side={}".format(pin_side),1)
+            
+            #2. Connect word lines horizontally. Only replica cell needs. Bitline loads currently already do this.
+            for port in self.all_ports:
+                if is_replica_cell:
+                    wl = self.wl_list[port]
+                    pin = self.rbc_inst.get_pin(wl)
+                else:
+                    wl = self.wl_list[port]+"_{}".format(cell_row)
+                    pin = self.rbl_inst.get_pin(wl)
+                    
+                if pin_side == "left":    
+                    self.add_path("metal1", [pin.lc()-correct_x, pin.lc()])
+                elif pin_side == "right":
+                    self.add_path("metal1", [pin.rc()+correct_x, pin.rc()])
+                
+            
+                
     def route_supplies(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """
 
@@ -204,10 +264,8 @@ class replica_bitline(design.design):
         pin = self.rbl_inv_inst.get_pin("vdd")
         self.add_power_pin("vdd", pin.lc())
             
-        # Replica bitcell needs to be routed up to M3
         pin=self.rbc_inst.get_pin("vdd")
-        # Don't rotate this via to vit in FreePDK45
-        self.add_power_pin("vdd", pin.center(), rotate=0)
+        self.add_power_pin("vdd", pin.center(), 0, pin.layer)
         
         for pin in self.rbc_inst.get_pins("gnd"):
             self.add_power_pin("gnd", pin.center())
@@ -243,16 +301,28 @@ class replica_bitline(design.design):
 
         # 3. Route the contact of previous route to the bitcell WL
         # route bend of previous net to bitcell WL
-        wl_offset = self.rbc_inst.get_pin("wl").lc()
-        xmid_point= 0.5*(wl_offset.x+contact_offset.x)
-        wl_mid1 = vector(xmid_point,contact_offset.y)
-        wl_mid2 = vector(xmid_point,wl_offset.y)
-        self.add_path("metal1", [contact_offset, wl_mid1, wl_mid2, wl_offset])
+        wl_offset = self.rbc_inst.get_pin(self.wl_list[0]).lc()
+        wl_mid1 = wl_offset - vector(1.5*drc("minwidth_metal1"), 0)
+        wl_mid2 = vector(wl_mid1.x, contact_offset.y)
+        #xmid_point= 0.5*(wl_offset.x+contact_offset.x)
+        #wl_mid1 = vector(xmid_point,contact_offset.y)
+        #wl_mid2 = vector(xmid_point,wl_offset.y)
+        self.add_path("metal1", [wl_offset, wl_mid1, wl_mid2, contact_offset])
+        
+        # 4. Short wodlines if multiport
+        wl = self.wl_list[0]
+        wl_last = self.wl_list[-1]
+        pin = self.rbc_inst.get_pin(wl)
+        pin_last = self.rbc_inst.get_pin(wl_last)
+        x_offset = self.short_wordlines(pin, pin_last, "left", True)
+        
+        #correct = vector(0.5*drc("minwidth_metal1"), 0)
+        #self.add_path("metal1", [pin.lc()+correct, pin_last.lc()+correct])
 
         # DRAIN ROUTE
         # Route the drain to the vdd rail
         drain_offset = self.tx_inst.get_pin("D").center()
-        self.add_power_pin("vdd", drain_offset)
+        self.add_power_pin("vdd", drain_offset, rotate=0)
         
         # SOURCE ROUTE
         # Route the drain to the RBL inverter input 
@@ -262,7 +332,7 @@ class replica_bitline(design.design):
 
         # Route the connection of the source route to the RBL bitline (left)
         # Via will go halfway down from the bitcell
-        bl_offset = self.rbc_inst.get_pin("bl").bc()
+        bl_offset = self.rbc_inst.get_pin(self.bl_list[0]).bc()
         # Route down a pitch so we can use M2 routing
         bl_down_offset = bl_offset - vector(0, self.m2_pitch)
         self.add_path("metal2",[source_offset, bl_down_offset, bl_offset])   
@@ -386,7 +456,7 @@ class replica_bitline(design.design):
         
         # Connect the WL and gnd pins directly to the center and right gnd rails
         for row in range(self.bitcell_loads):
-            wl = self.wl_list[0]+"[{}]".format(row)
+            wl = self.wl_list[0]+"_{}".format(row)
             pin = self.rbl_inst.get_pin(wl)
             if pin.layer != "metal1":
                 continue
@@ -530,4 +600,35 @@ class replica_bitline(design.design):
                            offset=pin.ll(),
                            height=pin.height(),
                            width=pin.width())
-
+                           
+    def get_en_cin(self):
+        """Get the enable input relative capacitance"""
+        #The enable is only connected to the delay, get the cin from that module
+        en_cin = self.delay_chain.get_cin()
+        return en_cin
+        
+    def determine_sen_stage_efforts(self, ext_cout, inp_is_rise=True):
+        """Get the stage efforts from the en to s_en. Does not compute the delay for the bitline load."""
+        stage_effort_list = []
+        #Stage 1 is the delay chain
+        stage1_cout = self.get_delayed_en_cin()
+        stage1 = self.delay_chain.determine_delayed_en_stage_efforts(stage1_cout, inp_is_rise)
+        stage_effort_list += stage1
+        
+        #There is a disconnect between the delay chain and inverter. The rise/fall of the input to the inverter
+        #Will be the negation of the previous stage.
+        last_stage_is_rise = not stage_effort_list[-1].is_rise
+        
+        #The delay chain triggers the enable on the replica bitline (rbl). This is used to track the bitline delay whereas this
+        #model is intended to track every but that. Therefore, the next stage is the inverter after the rbl. 
+        stage2 = self.inv.get_effort_stage(ext_cout, last_stage_is_rise)
+        stage_effort_list.append(stage2)
+        
+        return stage_effort_list
+        
+    def get_delayed_en_cin(self):
+        """Get the fanout capacitance (relative) of the delayed enable from the delay chain."""
+        access_tx_cin = self.access_tx.get_cin()
+        rbc_cin = self.replica_bitcell.get_wl_cin()
+        return access_tx_cin + rbc_cin
+        

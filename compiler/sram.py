@@ -14,7 +14,6 @@ class sram():
     """
     def __init__(self, sram_config, name):
 
-        sram_config.compute_sizes()
         sram_config.set_local_config(self)
         
         # reset the static duplicate name checker for unit tests
@@ -34,8 +33,6 @@ class sram():
             from sram_1bank import sram_1bank as sram
         elif self.num_banks == 2:
             from sram_2bank import sram_2bank as sram
-        elif self.num_banks == 4:
-            from sram_4bank import sram_4bank as sram
         else:
             debug.error("Invalid number of banks.",-1)
 
@@ -51,25 +48,44 @@ class sram():
     def sp_write(self,name):
         self.s.sp_write(name)
 
+    def lef_write(self,name):
+        self.s.lef_write(name)
+
     def gds_write(self,name):
         self.s.gds_write(name)
 
     def verilog_write(self,name):
         self.s.verilog_write(name)
 
-        
+
     def save(self):
         """ Save all the output files while reporting time to do it as well. """
 
+        if not OPTS.netlist_only:
+            # Write the layout
+            start_time = datetime.datetime.now()
+            gdsname = OPTS.output_path + self.s.name + ".gds"
+            print("GDS: Writing to {0}".format(gdsname))
+            self.gds_write(gdsname)
+            print_time("GDS", datetime.datetime.now(), start_time)
+
+            # Create a LEF physical model
+            start_time = datetime.datetime.now()
+            lefname = OPTS.output_path + self.s.name + ".lef"
+            print("LEF: Writing to {0}".format(lefname))
+            self.lef_write(lefname)
+            print_time("LEF", datetime.datetime.now(), start_time)
+        
         # Save the spice file
         start_time = datetime.datetime.now()
         spname = OPTS.output_path + self.s.name + ".sp"
         print("SP: Writing to {0}".format(spname))
-        self.s.sp_write(spname)
+        self.sp_write(spname)
         print_time("Spice writing", datetime.datetime.now(), start_time)
 
         # Save the extracted spice file
         if OPTS.use_pex:
+            import verify
             start_time = datetime.datetime.now()
             # Output the extracted design if requested
             sp_file = OPTS.output_path + "temp_pex.sp"
@@ -92,25 +108,26 @@ class sram():
                 print("Trimming netlist to speed up characterization.")
         lib(out_dir=OPTS.output_path, sram=self.s, sp_file=sp_file)
         print_time("Characterization", datetime.datetime.now(), start_time)
+       
 
-        if not OPTS.netlist_only:
-            # Write the layout
-            start_time = datetime.datetime.now()
-            gdsname = OPTS.output_path + self.s.name + ".gds"
-            print("GDS: Writing to {0}".format(gdsname))
-            self.s.gds_write(gdsname)
-            print_time("GDS", datetime.datetime.now(), start_time)
+        # Write the config file
+        start_time = datetime.datetime.now()
+        from shutil import copyfile
+        copyfile(OPTS.config_file + '.py', OPTS.output_path + OPTS.output_name + '.py')
+        print("Config: Writing to {0}".format(OPTS.output_path + OPTS.output_name + '.py'))
+        print_time("Config", datetime.datetime.now(), start_time)
 
-            # Create a LEF physical model
-            start_time = datetime.datetime.now()
-            lefname = OPTS.output_path + self.s.name + ".lef"
-            print("LEF: Writing to {0}".format(lefname))
-            self.s.lef_write(lefname)
-            print_time("LEF", datetime.datetime.now(), start_time)
+        # Write the datasheet
+        start_time = datetime.datetime.now()
+        from datasheet_gen import datasheet_gen
+        dname = OPTS.output_path + self.s.name + ".html"
+        print("Datasheet: Writing to {0}".format(dname))
+        datasheet_gen.datasheet_write(self.s,dname)
+        print_time("Datasheet", datetime.datetime.now(), start_time)
 
         # Write a verilog model
         start_time = datetime.datetime.now()
         vname = OPTS.output_path + self.s.name + ".v"
         print("Verilog: Writing to {0}".format(vname))
-        self.s.verilog_write(vname)
+        self.verilog_write(vname)
         print_time("Verilog", datetime.datetime.now(), start_time)

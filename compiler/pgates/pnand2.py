@@ -5,6 +5,7 @@ from tech import drc, parameter, spice
 from ptx import ptx
 from vector import vector
 from globals import OPTS
+import logical_effort
 
 class pnand2(pgate.pgate):
     """
@@ -21,10 +22,11 @@ class pnand2(pgate.pgate):
         pgate.pgate.__init__(self, name, height)
         debug.info(2, "create pnand2 structure {0} with size of {1}".format(name, size))
 
+        self.size = size
         self.nmos_size = 2*size
         self.pmos_size = parameter["beta"]*size
-        self.nmos_width = self.nmos_size*drc["minwidth_tx"]
-        self.pmos_width = self.pmos_size*drc["minwidth_tx"]
+        self.nmos_width = self.nmos_size*drc("minwidth_tx")
+        self.pmos_width = self.pmos_size*drc("minwidth_tx")
 
         # FIXME: Allow these to be sized
         debug.check(size==1,"Size 1 pnand2 is only supported now.")
@@ -33,7 +35,6 @@ class pnand2(pgate.pgate):
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
-        #self.DRC_LVS()
 
         
     def create_netlist(self):
@@ -91,7 +92,7 @@ class pnand2(pgate.pgate):
         # Two PMOS devices and a well contact. Separation between each.
         # Enclosure space on the sides.
         self.well_width = 2*self.pmos.active_width + contact.active.width \
-                          + 2*drc["active_to_body_active"] + 2*drc["well_enclosure_active"]
+                          + 2*drc("active_to_body_active") + 2*drc("well_enclosure_active")
 
         self.width = self.well_width
         # Height is an input parameter, so it is not recomputed.
@@ -100,7 +101,7 @@ class pnand2(pgate.pgate):
         extra_contact_space = max(-self.nmos.get_pin("D").by(),0)
         # This is a poly-to-poly of a flipped cell
         self.top_bottom_space = max(0.5*self.m1_width + self.m1_space + extra_contact_space, 
-                                    drc["poly_extend_active"], self.poly_space)
+                                    drc("poly_extend_active"), self.poly_space)
         
     def route_supply_rails(self):
         """ Add vdd/gnd rails to the top and bottom. """
@@ -192,26 +193,33 @@ class pnand2(pgate.pgate):
         """ Route the Z output """
         # PMOS1 drain 
         pmos_pin = self.pmos1_inst.get_pin("D")
+        top_pin_offset = pmos_pin.center()
         # NMOS2 drain
-        nmos_pin = self.nmos2_inst.get_pin("D")        
+        nmos_pin = self.nmos2_inst.get_pin("D")
+        bottom_pin_offset = nmos_pin.center()
+        
         # Output pin
-        mid_offset = vector(nmos_pin.center().x,self.inputA_yoffset)
+        out_offset = vector(nmos_pin.center().x + self.m1_pitch,self.inputA_yoffset)
+
+        # Midpoints of the L routes go horizontal first then vertical
+        mid1_offset = vector(out_offset.x, top_pin_offset.y)
+        mid2_offset = vector(out_offset.x, bottom_pin_offset.y)        
         
         self.add_contact_center(layers=("metal1", "via1", "metal2"),
                                 offset=pmos_pin.center())
         self.add_contact_center(layers=("metal1", "via1", "metal2"),
                                 offset=nmos_pin.center())
         self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                offset=mid_offset,
+                                offset=out_offset,
                                 rotate=90)
 
         # PMOS1 to mid-drain to NMOS2 drain
-        self.add_path("metal2",[pmos_pin.bc(), mid_offset, nmos_pin.uc()])
+        self.add_path("metal2",[top_pin_offset, mid1_offset, out_offset, mid2_offset, bottom_pin_offset])
 
         # This extends the output to the edge of the cell
         self.add_layout_pin_rect_center(text="Z",
                                         layer="metal1",
-                                        offset=mid_offset,
+                                        offset=out_offset,
                                         width=contact.m1m2.first_layer_height,
                                         height=contact.m1m2.first_layer_width)
 
@@ -242,3 +250,14 @@ class pnand2(pgate.pgate):
         c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff
         transition_prob = spice["nand2_transition_prob"]
         return transition_prob*(c_load + c_para) 
+
+    def get_cin(self):
+        """Return the relative input capacitance of a single input"""
+        return self.nmos_size+self.pmos_size
+        
+    def get_effort_stage(self, cout, inp_is_rise=True):
+        """Returns an object representing the parameters for delay in tau units.
+           Optional is_rise refers to the input direction rise/fall. Input inverted by this stage.
+        """
+        parasitic_delay = 2 
+        return logical_effort.logical_effort(self.size, self.get_cin(), cout, parasitic_delay, not inp_is_rise)

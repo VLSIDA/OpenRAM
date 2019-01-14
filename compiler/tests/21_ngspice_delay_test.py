@@ -17,22 +17,20 @@ class timing_sram_test(openram_test):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         OPTS.spice_name="ngspice"
         OPTS.analytical_delay = False
-        OPTS.trim_netlist = False
+        OPTS.netlist_only = True
 
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
         import characterizer
         reload(characterizer)
         from characterizer import delay
-        if not OPTS.spice_exe:
-            debug.error("Could not find {} simulator.".format(OPTS.spice_name),-1)
-
         from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=1,
                         num_words=16,
                         num_banks=1)
         c.words_per_row=1
+        c.recompute_sizes()
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
         s = sram(c, name="sram1")
 
@@ -48,30 +46,32 @@ class timing_sram_test(openram_test):
         import tech
         loads = [tech.spice["msflop_in_cap"]*4]
         slews = [tech.spice["rise_time"]*2]
-        data = d.analyze(probe_address, probe_data, slews, loads)
+        data, port_data = d.analyze(probe_address, probe_data, slews, loads)
+        #Combine info about port into all data
+        data.update(port_data[0])
 
         if OPTS.tech_name == "freepdk45":
-            golden_data = {'delay_hl0': [2.584251],
-                            'delay_lh0': [0.22870469999999998],
-                            'leakage_power': 0.0009567935,
-                            'min_period': 4.844,
-                            'read0_power0': [0.0547588],
-                            'read1_power0': [0.051159970000000006],
-                            'slew_hl0': [0.08164099999999999],
-                            'slew_lh0': [0.025474979999999998],
-                            'write0_power0': [0.06513271999999999],
-                            'write1_power0': [0.058057000000000004]}
+            golden_data = {'delay_hl': [0.20443139999999999],
+                         'delay_lh': [0.20443139999999999],
+                         'leakage_power': 0.0017840640000000001,
+                         'min_period': 0.41,
+                         'read0_power': [0.6435831],
+                         'read1_power': [0.6233463],
+                         'slew_hl': [0.1138734],
+                         'slew_lh': [0.1138734],
+                         'write0_power': [0.5205761],
+                         'write1_power': [0.5213689]}
         elif OPTS.tech_name == "scn4m_subm":
-            golden_data = {'delay_hl0': [3.644147],
-                            'delay_lh0': [1.629815],
-                            'leakage_power': 0.0009299118999999999,
-                            'min_period': 4.688,
-                            'read0_power0': [16.28732],
-                            'read1_power0': [15.75155],
-                            'slew_hl0': [0.6722473],
-                            'slew_lh0': [0.3386347],
-                            'write0_power0': [18.545450000000002],
-                            'write1_power0': [16.81084]}
+            golden_data = {'delay_hl': [1.610911],
+                         'delay_lh': [1.610911],
+                         'leakage_power': 0.0023593859999999998,
+                         'min_period': 3.281,
+                         'read0_power': [20.763569999999998],
+                         'read1_power': [20.32745],
+                         'slew_hl': [0.7986348999999999],
+                         'slew_lh': [0.7986348999999999],
+                         'write0_power': [17.58272],
+                         'write1_power': [18.523419999999998]}
         else:
             self.assertTrue(False) # other techs fail
 
@@ -82,7 +82,7 @@ class timing_sram_test(openram_test):
 
         globals.end_openram()
 
-# instantiate a copdsay of the class to actually run the test
+# run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

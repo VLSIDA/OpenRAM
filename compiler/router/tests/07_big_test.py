@@ -37,8 +37,8 @@ class big_test(openram_test):
                               offset=[0,0])
                 self.connect_inst([])
                 
-                r=router(gds_file)
                 layer_stack =("metal1","via1","metal2")
+                r=router(layer_stack,self,gds_file)
                 connections=[('out_0_2', 'a_0_0'),
                              ('out_0_3', 'b_0_0'),
                              ('out_0_0', 'a_0_1'),
@@ -61,7 +61,7 @@ class big_test(openram_test):
                              ('out_4_1', 'a_4_3'),
                              ('out_4_5', 'b_4_3')]
                 for (src,tgt) in connections:
-                    self.assertTrue(r.route(self,layer_stack,src=src,dest=tgt))
+                    self.assertTrue(r.route(src=src,dest=tgt))
 
         # This test only runs on scn3me_subm tech
         if OPTS.tech_name=="scn3me_subm":

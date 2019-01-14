@@ -7,7 +7,6 @@ a spice (.sp) file for circuit simulation
 a GDS2 (.gds) file containing the layout
 a LEF (.lef) file for preliminary P&R (real one should be from layout)
 a Liberty (.lib) file for timing analysis/optimization
-
 """
 
 import sys,os
@@ -27,36 +26,36 @@ if len(args) != 1:
 # These depend on arguments, so don't load them until now.
 import debug
 
-
 init_openram(config_file=args[0], is_unit_test=False)
 
 # Only print banner here so it's not in unit tests
 print_banner()
 
-# Output info about this run
-report_status()
-
-# Start importing design modules after we have the config file
-import verify
-from sram import sram
-from sram_config import sram_config
-
-output_extensions = ["sp","v","lib"]
-if not OPTS.netlist_only:
-    output_extensions.extend(["gds","lef"])
-output_files = ["{0}.{1}".format(OPTS.output_name,x) for x in output_extensions]
-print("Output files are: ")
-print(*output_files,sep="\n")
-
 # Keep track of running stats
 start_time = datetime.datetime.now()
 print_time("Start",start_time)
 
+# Output info about this run
+report_status()
+
+from sram_config import sram_config
+
+
 # Configure the SRAM organization
 c = sram_config(word_size=OPTS.word_size,
                 num_words=OPTS.num_words)
+print("Words per row: {}".format(c.words_per_row))
 
-# import SRAM test generation
+#from parser import *
+output_extensions = ["sp","v","lib","py","html"]
+if not OPTS.netlist_only:
+    output_extensions.extend(["gds","lef"])
+output_files = ["{0}{1}.{2}".format(OPTS.output_path,OPTS.output_name,x) for x in output_extensions]
+print("Output files are: ")
+print(*output_files,sep="\n")
+
+
+from sram import sram
 s = sram(sram_config=c,
          name=OPTS.output_name)
 

@@ -1,6 +1,6 @@
 import design
 import debug
-from tech import drc, info
+from tech import drc
 from vector import vector
 import contact
 from ptx import ptx
@@ -9,18 +9,21 @@ from globals import OPTS
 class single_level_column_mux(design.design):
     """
     This module implements the columnmux bitline cell used in the design.
-    Creates a single columnmux cell.
+    Creates a single columnmux cell with the given integer size relative
+    to minimum size. Default is 8x. Per Samira and Hodges-Jackson book:
+    Column-mux transistors driven by the decoder must be sized for optimal speed
     """
 
+    # This is needed for different bitline spacings
     unique_id = 1
     
-    def __init__(self, tx_size, bitcell_bl="bl", bitcell_br="br"):
-        name="single_level_column_mux_{}_no{}".format(tx_size,single_level_column_mux.unique_id)
+    def __init__(self, tx_size=8, bitcell_bl="bl", bitcell_br="br"):
+        self.tx_size = int(tx_size)
+        name="single_level_column_mux_{}_{}".format(self.tx_size,single_level_column_mux.unique_id)
         single_level_column_mux.unique_id += 1
         design.design.__init__(self, name)
         debug.info(2, "create single column mux cell: {0}".format(name))
 
-        self.tx_size = tx_size
         self.bitcell_bl = bitcell_bl
         self.bitcell_br = bitcell_br
         
@@ -52,7 +55,7 @@ class single_level_column_mux(design.design):
         self.bitcell = self.mod_bitcell()
 
         # Adds nmos_lower,nmos_upper to the module
-        self.ptx_width = self.tx_size * drc["minwidth_tx"]
+        self.ptx_width = self.tx_size*drc("minwidth_tx")
         self.nmos = ptx(width=self.ptx_width)
         self.add_mod(self.nmos)
 
@@ -144,8 +147,8 @@ class single_level_column_mux(design.design):
         # bl_out -> nmos_upper/S on metal2
         self.add_path("metal1",[bl_pin.ll(), vector(nmos_upper_d_pin.cx(),bl_pin.by()), nmos_upper_d_pin.center()])
         # halfway up, move over
-        mid1 = bl_out_pin.uc().scale(1,0.5)+nmos_upper_s_pin.bc().scale(0,0.5)
-        mid2 = bl_out_pin.uc().scale(0,0.5)+nmos_upper_s_pin.bc().scale(1,0.5)        
+        mid1 = bl_out_pin.uc().scale(1,0.4)+nmos_upper_s_pin.bc().scale(0,0.4)
+        mid2 = bl_out_pin.uc().scale(0,0.4)+nmos_upper_s_pin.bc().scale(1,0.4)        
         self.add_path("metal2",[bl_out_pin.uc(), mid1, mid2, nmos_upper_s_pin.bc()])
         
         # br -> nmos_lower/D on metal2
@@ -164,7 +167,7 @@ class single_level_column_mux(design.design):
         """
 
         # Add it to the right, aligned in between the two tx
-        active_pos = vector(self.bitcell.width,self.nmos_upper.by())
+        active_pos = vector(self.bitcell.width,self.nmos_upper.by() - 0.5*self.poly_space)
         active_via = self.add_via_center(layers=("active", "contact", "metal1"),
                                          offset=active_pos,
                                          implant_type="p",

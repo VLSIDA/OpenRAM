@@ -11,13 +11,15 @@ class dff_buf_array(design.design):
     This is a simple row (or multiple rows) of flops.
     Unlike the data flops, these are never spaced out.
     """
-
+    unique_id = 1
+    
     def __init__(self, rows, columns, inv1_size=2, inv2_size=4, name=""):
         self.rows = rows
         self.columns = columns
 
         if name=="":
-            name = "dff_buf_array_{0}x{1}".format(rows, columns)
+            name = "dff_buf_array_{0}x{1}_{2}".format(rows, columns, dff_buf_array.unique_id)
+            dff_buf_array.unique_id += 1
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(self.name))
         self.inv1_size = inv1_size
@@ -59,7 +61,7 @@ class dff_buf_array(design.design):
         self.dff_insts={}
         for row in range(self.rows):  
             for col in range(self.columns):
-                name = "Xdff_r{0}_c{1}".format(row,col)
+                name = "dff_r{0}_c{1}".format(row,col)
                 self.dff_insts[row,col]=self.add_inst(name=name,
                                                       mod=self.dff)
                 self.connect_inst([self.get_din_name(row,col),
@@ -84,31 +86,31 @@ class dff_buf_array(design.design):
                 
     def get_din_name(self, row, col):
         if self.columns == 1:
-            din_name = "din[{0}]".format(row)
+            din_name = "din_{0}".format(row)
         elif self.rows == 1:
-            din_name = "din[{0}]".format(col)
+            din_name = "din_{0}".format(col)
         else:
-            din_name = "din[{0}][{1}]".format(row,col)
+            din_name = "din_{0}_{1}".format(row,col)
 
         return din_name
     
     def get_dout_name(self, row, col):
         if self.columns == 1:
-            dout_name = "dout[{0}]".format(row)
+            dout_name = "dout_{0}".format(row)
         elif self.rows == 1:
-            dout_name = "dout[{0}]".format(col)
+            dout_name = "dout_{0}".format(col)
         else:
-            dout_name = "dout[{0}][{1}]".format(row,col)
+            dout_name = "dout_{0}_{1}".format(row,col)
 
         return dout_name
     
     def get_dout_bar_name(self, row, col):
         if self.columns == 1:
-            dout_bar_name = "dout_bar[{0}]".format(row)
+            dout_bar_name = "dout_bar_{0}".format(row)
         elif self.rows == 1:
-            dout_bar_name = "dout_bar[{0}]".format(col)
+            dout_bar_name = "dout_bar_{0}".format(col)
         else:
-            dout_bar_name = "dout_bar[{0}][{1}]".format(row,col)
+            dout_bar_name = "dout_bar_{0}_{1}".format(row,col)
 
         return dout_bar_name
     
@@ -153,6 +155,7 @@ class dff_buf_array(design.design):
                 
         # Create vertical spines to a single horizontal rail
         clk_pin = self.dff_insts[0,0].get_pin("clk")
+        clk_ypos = 2*self.m3_pitch+self.m3_width
         debug.check(clk_pin.layer=="metal2","DFF clk pin not on metal2")
         if self.columns==1:
             self.add_layout_pin(text="clk",
@@ -163,8 +166,8 @@ class dff_buf_array(design.design):
         else:
             self.add_layout_pin_segment_center(text="clk",
                                             layer="metal3",
-                                            start=vector(0,self.m3_pitch+self.m3_width),
-                                            end=vector(self.width,self.m3_pitch+self.m3_width))
+                                            start=vector(0,clk_ypos),
+                                            end=vector(self.width,clk_ypos))
             for col in range(self.columns):
                 clk_pin = self.dff_insts[0,col].get_pin("clk")
 
@@ -175,9 +178,15 @@ class dff_buf_array(design.design):
                               height=self.height)
                 # Drop a via to the M3 pin
                 self.add_via_center(layers=("metal2","via2","metal3"),
-                                    offset=vector(clk_pin.cx(),self.m3_pitch+self.m3_width))
+                                    offset=vector(clk_pin.cx(),clk_ypos))
                 
         
 
     def analytical_delay(self, slew, load=0.0):
         return self.dff.analytical_delay(slew=slew, load=load)
+
+    def get_clk_cin(self):
+        """Return the total capacitance (in relative units) that the clock is loaded by in the dff array"""
+        dff_clk_cin = self.dff.get_clk_cin()
+        total_cin = dff_clk_cin * self.rows * self.columns
+        return total_cin

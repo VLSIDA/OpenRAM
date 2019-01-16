@@ -122,7 +122,7 @@ class sram():
         from datasheet_gen import datasheet_gen
         dname = OPTS.output_path + self.s.name + ".html"
         debug.print_raw("Datasheet: Writing to {0}".format(dname))
-        datasheet_gen.datasheet_write(self.s,dname)
+        datasheet_gen.datasheet_write(dname)
         print_time("Datasheet", datetime.datetime.now(), start_time)
 
         # Write a verilog model

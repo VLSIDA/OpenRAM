@@ -4,7 +4,7 @@ This is a script to load data from the characterization and layout processes int
 a web friendly html datasheet.
 """
 # TODO:
-# include log file
+# include power
 # Diagram generation
 # Improve css
 
@@ -31,7 +31,7 @@ def process_name(corner):
         return "custom"
 
 
-def parse_characterizer_csv(sram, f, pages):
+def parse_characterizer_csv(f, pages):
     """
     Parses output data of the Liberty file generator in order to construct the timing and
     current table
@@ -98,6 +98,8 @@ def parse_characterizer_csv(sram, f, pages):
             LVS = row[col]
             col += 1
 
+            AREA = row[col]
+            col += 1
             for sheet in pages:
 
                 if sheet.name == NAME:
@@ -529,11 +531,11 @@ def parse_characterizer_csv(sram, f, pages):
                 new_sheet.io_table.add_row(['NUM_RW_PORTS', NUM_RW_PORTS])
                 new_sheet.io_table.add_row(['NUM_R_PORTS', NUM_R_PORTS])
                 new_sheet.io_table.add_row(['NUM_W_PORTS', NUM_W_PORTS])
-                new_sheet.io_table.add_row(['Area', sram.width * sram.height])
+                new_sheet.io_table.add_row(['Area', AREA])
 
 
 class datasheet_gen():
-    def datasheet_write(sram, name):
+    def datasheet_write(name):
 
         in_dir = OPTS.openram_temp
 
@@ -541,7 +543,7 @@ class datasheet_gen():
             os.mkdir(in_dir)
 
         datasheets = []
-        parse_characterizer_csv(sram, in_dir + "/datasheet.info", datasheets)
+        parse_characterizer_csv(in_dir + "/datasheet.info", datasheets)
 
         for sheets in datasheets:
             with open(name, 'w+') as f:

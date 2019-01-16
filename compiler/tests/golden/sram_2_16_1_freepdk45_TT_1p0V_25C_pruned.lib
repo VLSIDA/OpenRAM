@@ -93,7 +93,7 @@ cell (sram_2_16_1_freepdk45){
             address : ADDR0; 
             clocked_on  : clk0; 
         }
-        pin(DIN0[1:0]){
+        pin(DIN0){
         timing(){ 
             timing_type : setup_rising; 
             related_pin  : "clk0"; 
@@ -132,11 +132,11 @@ cell (sram_2_16_1_freepdk45){
         memory_read(){ 
             address : ADDR0; 
         }
-        pin(DOUT0[1:0]){
+        pin(DOUT0){
         timing(){ 
             timing_sense : non_unate; 
             related_pin : "clk0"; 
-            timing_type : rising_edge; 
+            timing_type : falling_edge; 
             cell_rise(CELL_TABLE) {
             values("0.233, 0.233, 0.237",\
                    "0.233, 0.234, 0.237",\
@@ -166,7 +166,7 @@ cell (sram_2_16_1_freepdk45){
         direction  : input; 
         capacitance : 0.2091;  
         max_transition       : 0.04;
-        pin(ADDR0[3:0]){
+        pin(ADDR0){
         timing(){ 
             timing_type : setup_rising; 
             related_pin  : "clk0"; 

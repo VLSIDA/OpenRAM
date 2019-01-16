@@ -11,7 +11,6 @@ import globals
 from globals import OPTS
 import debug
 
-@unittest.skip("SKIPPING 04_pdriver_test, LVS error in FreePDK45")
 class pdriver_test(openram_test):
 
     def runTest(self):
@@ -23,12 +22,12 @@ class pdriver_test(openram_test):
 
         debug.info(2, "Testing inverter/buffer 4x 8x")
         # a tests the error message for specifying conflicting conditions
-        #a = pdriver.pdriver(c_load = 4,size_list = [1,2,4,8])
+        #a = pdriver.pdriver(fanout_size = 4,size_list = [1,2,4,8])
         b = pdriver.pdriver(size_list = [1,2,4,8])
-        c = pdriver.pdriver(c_load = 50)
-        d = pdriver.pdriver(c_load = 50, neg_polarity = True)
-        e = pdriver.pdriver(c_load = 64)
-        f = pdriver.pdriver(c_load = 64, neg_polarity = True)
+        c = pdriver.pdriver(fanout_size = 50)
+        d = pdriver.pdriver(fanout_size = 50, neg_polarity = True)
+        e = pdriver.pdriver(fanout_size = 64)
+        f = pdriver.pdriver(fanout_size = 64, neg_polarity = True)
         #self.local_check(a)
         self.local_check(b)
         self.local_check(c)

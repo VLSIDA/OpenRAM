@@ -107,13 +107,7 @@ def check_versions():
     # FIXME: Check versions of other tools here??
     # or, this could be done in each module (e.g. verify, characterizer, etc.)
     global OPTS
-
-    try:
-        import flask_table
-        OPTS.datasheet_gen = 1
-    except:
-        OPTS.datasheet_gen = 0
-
+ 
     try:
         import coverage
         OPTS.coverage = 1
@@ -420,7 +414,7 @@ def report_status():
         debug.error("Tech name must be specified in config file.")
 
     print("Technology: {0}".format(OPTS.tech_name))
-    print("Total size: {} kbits".format(OPTS.word_size*OPTS.num_words*OPTS.num_banks))
+    print("Total size: {} bits".format(OPTS.word_size*OPTS.num_words*OPTS.num_banks))
     print("Word size: {0}\nWords: {1}\nBanks: {2}".format(OPTS.word_size,
                                                           OPTS.num_words,
                                                           OPTS.num_banks))

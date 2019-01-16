@@ -1,11 +1,4 @@
-from flask_table import *
-from operating_conditions import *
-from characterization_corners import *
-from deliverables import *
-from timing_and_current_data import *
-from in_out import *
-from hierarchy_design import total_drc_errors
-from hierarchy_design import total_lvs_errors
+from table_gen import *
 import os
 import csv
 import base64
@@ -16,11 +9,6 @@ class datasheet():
     Defines the layout,but not the data,  of the html datasheet
     """
     def __init__(self,identifier):
-        self.io = []
-        self.corners = []
-        self.timing = []
-        self.operating = []
-        self.dlv = []
         self.name = identifier
         self.html = ""
         
@@ -33,20 +21,14 @@ class datasheet():
             #css styling is kept in a seperate file
             self.html += datasheet_css.read()
 
-        if OPTS.check_lvsdrc:
-            
-            DRC = str(total_drc_errors) + ' errors'
-            LVS = str(total_lvs_errors) + ' errors'
-            PEX = 'n/a'
-        else:
-            DRC = 'skipped'
-            LVS = 'skipped'
-            PEX = 'skipped'
         
-        with open(OPTS.openram_temp + "/datasheet.info") as info:           
+#        with open(OPTS.openram_temp + "/datasheet.info") as info:           
             self.html += '<!--'
-            for row in info:
-                self.html += row
+#            for row in info:
+#                self.html += row
+            for item in self.description:
+               self.html += item + ','
+            self.html += 'EOL'
             self.html +='-->'
     
         vlsi_logo = 0
@@ -58,31 +40,37 @@ class datasheet():
             openram_logo = base64.b64encode(image_file.read())
 
 
-        self.html +=   '<a href="https://vlsida.soe.ucsc.edu/"><img src="data:image/png;base64,{0}" alt="VLSIDA"></a><a href="https://vlsida.github.io/OpenRAM"><img src="data:image/png;base64,{1}"="OpenRAM"></a>'.format(str(vlsi_logo)[2:-1],str(openram_logo)[2:-1])
+        self.html +=   '<a href="https://vlsida.soe.ucsc.edu/"><img src="data:image/png;base64,{0}" alt="VLSIDA"></a>'.format(str(vlsi_logo)[2:-1])
          
 
 
 
 
         self.html +='<p style="font-size: 18px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">'+ self.name + '.html' + '</p>'
-        self.html +='<p style="font-size: 18px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">'+ 'DRC: ' + str(DRC) + '</p>'
-        self.html +='<p style="font-size: 18px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">'+ 'LVS: ' + str(LVS) + '</p>'
+        self.html +='<p style="font-size: 18px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Compiled at: '+ self.time + '</p>'
+        self.html +='<p style="font-size: 18px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">'+ 'DRC errors: ' + str(self.DRC) + '</p>'
+        self.html +='<p style="font-size: 18px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">'+ 'LVS errors: ' + str(self.LVS) + '</p>'
         self.html += '<p style="font-size: 18px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">'+ 'Git commit id: ' + str(self.git_id) + '</p>'
 
-        self.html +='<p style="font-size: 26px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Ports and Configuration (DEBUG)</p>'
-        self.html += in_out(self.io,table_id='data').__html__().replace('&lt;','<').replace('&#34;','"').replace('&gt;',">")
-
+        self.html +='<p style="font-size: 26px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Ports and Configuration</p>'
+#        self.html += in_out(self.io,table_id='data').__html__().replace('&lt;','<').replace('&#34;','"').replace('&gt;',">")
+        self.html += self.io_table.to_html()
+        
         self.html +='<p style="font-size: 26px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Operating Conditions</p>'
-        self.html += operating_conditions(self.operating,table_id='data').__html__()
+#        self.html += operating_conditions(self.operating,table_id='data').__html__()
+        self.html += self.operating_table.to_html()
 
         self.html += '<p style="font-size: 26px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Timing and Current Data</p>'
-        self.html += timing_and_current_data(self.timing,table_id='data').__html__()
+#        self.html += timing_and_current_data(self.timing,table_id='data').__html__()
+        self.html += self.timing_table.to_html()
 
         self.html += '<p style="font-size: 26px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Characterization Corners</p>'
-        self.html += characterization_corners(self.corners,table_id='data').__html__()
+#        self.html += characterization_corners(self.corners,table_id='data').__html__()
+        self.html += self.corners_table.to_html()
 
         self.html +='<p style="font-size: 26px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Deliverables</p>'
-        self.html += deliverables(self.dlv,table_id='data').__html__().replace('&lt;','<').replace('&#34;','"').replace('&gt;',">")
+#        self.html += deliverables(self.dlv,table_id='data').__html__().replace('&lt;','<').replace('&#34;','"').replace('&gt;',">")
+        self.html += self.dlv_table.to_html()
 
         
        

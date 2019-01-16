@@ -21,7 +21,7 @@ class sram_1bank(sram_base):
     """
     def __init__(self, name, sram_config):
         sram_base.__init__(self, name, sram_config)
-        
+            
     def create_modules(self):
         """ 
         This adds the modules for a single bank SRAM with control

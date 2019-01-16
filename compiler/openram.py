@@ -47,12 +47,10 @@ c = sram_config(word_size=OPTS.word_size,
 print("Words per row: {}".format(c.words_per_row))
 
 #from parser import *
-output_extensions = ["sp","v","lib","py"]
-if OPTS.datasheet_gen:
-    output_extensions.append("html")
+output_extensions = ["sp","v","lib","py","html"]
 if not OPTS.netlist_only:
     output_extensions.extend(["gds","lef"])
-output_files = ["{0}.{1}".format(OPTS.output_name,x) for x in output_extensions]
+output_files = ["{0}{1}.{2}".format(OPTS.output_path,OPTS.output_name,x) for x in output_extensions]
 print("Output files are: ")
 print(*output_files,sep="\n")
 

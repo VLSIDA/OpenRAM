@@ -48,6 +48,9 @@ class sram():
     def sp_write(self,name):
         self.s.sp_write(name)
 
+    def lef_write(self,name):
+        self.s.lef_write(name)
+
     def gds_write(self,name):
         self.s.gds_write(name)
 
@@ -63,21 +66,21 @@ class sram():
             start_time = datetime.datetime.now()
             gdsname = OPTS.output_path + self.s.name + ".gds"
             print("GDS: Writing to {0}".format(gdsname))
-            self.s.gds_write(gdsname)
+            self.gds_write(gdsname)
             print_time("GDS", datetime.datetime.now(), start_time)
 
             # Create a LEF physical model
             start_time = datetime.datetime.now()
             lefname = OPTS.output_path + self.s.name + ".lef"
             print("LEF: Writing to {0}".format(lefname))
-            self.s.lef_write(lefname)
+            self.lef_write(lefname)
             print_time("LEF", datetime.datetime.now(), start_time)
         
         # Save the spice file
         start_time = datetime.datetime.now()
         spname = OPTS.output_path + self.s.name + ".sp"
         print("SP: Writing to {0}".format(spname))
-        self.s.sp_write(spname)
+        self.sp_write(spname)
         print_time("Spice writing", datetime.datetime.now(), start_time)
 
         # Save the extracted spice file
@@ -111,14 +114,14 @@ class sram():
         start_time = datetime.datetime.now()
         from shutil import copyfile
         copyfile(OPTS.config_file + '.py', OPTS.output_path + OPTS.output_name + '.py')
-        print("Config: writing to {0}".format(OPTS.output_path + OPTS.output_name + '.py'))
+        print("Config: Writing to {0}".format(OPTS.output_path + OPTS.output_name + '.py'))
         print_time("Config", datetime.datetime.now(), start_time)
 
         # Write the datasheet
         start_time = datetime.datetime.now()
         from datasheet_gen import datasheet_gen
         dname = OPTS.output_path + self.s.name + ".html"
-        print("Datasheet: writing to {0}".format(dname))
+        print("Datasheet: Writing to {0}".format(dname))
         datasheet_gen.datasheet_write(self.s,dname)
         print_time("Datasheet", datetime.datetime.now(), start_time)
 
@@ -126,5 +129,5 @@ class sram():
         start_time = datetime.datetime.now()
         vname = OPTS.output_path + self.s.name + ".v"
         print("Verilog: Writing to {0}".format(vname))
-        self.s.verilog_write(vname)
+        self.verilog_write(vname)
         print_time("Verilog", datetime.datetime.now(), start_time)

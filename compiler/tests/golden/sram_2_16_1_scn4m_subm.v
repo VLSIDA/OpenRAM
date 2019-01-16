@@ -2,46 +2,60 @@
 // Words: 16
 // Word size: 2
 
-module sram_2_16_1_scn4m_subm(DATA,ADDR,CSb,WEb,OEb,clk);
+module sram_2_16_1_scn4m_subm(
+// Port 0: RW
+    clk0,csb0,web0,ADDR0,DIN0,DOUT0
+  );
 
   parameter DATA_WIDTH = 2 ;
   parameter ADDR_WIDTH = 4 ;
   parameter RAM_DEPTH = 1 << ADDR_WIDTH;
+  // FIXME: This delay is arbitrary.
   parameter DELAY = 3 ;
 
-  inout [DATA_WIDTH-1:0] DATA;
-  input [ADDR_WIDTH-1:0] ADDR;
-  input CSb;             // active low chip select
-  input WEb;             // active low write control
-  input OEb;             // active output enable
-  input clk;             // clock
+  input  clk0; // clock
+  input   csb0; // active low chip select
+  input  web0; // active low write control
+  input [ADDR_WIDTH-1:0]  ADDR0;
+  input [DATA_WIDTH-1:0]  DIN0;
+  output [DATA_WIDTH-1:0] DOUT0;
 
-  reg [DATA_WIDTH-1:0] data_out ;
-  reg [DATA_WIDTH-1:0] mem [0:RAM_DEPTH-1];
+  reg  csb0_reg;
+  reg  web0_reg;
+  reg [ADDR_WIDTH-1:0]  ADDR0_reg;
+  reg [DATA_WIDTH-1:0]  DIN0_reg;
+  reg [DATA_WIDTH-1:0]  DOUT0;
 
-  // Tri-State Buffer control
-  // output : When WEb = 1, oeb = 0, csb = 0
-  assign DATA = (!CSb && !OEb && WEb) ? data_out : 2'bz;
-
-  // Memory Write Block
-  // Write Operation : When WEb = 0, CSb = 0
-  always @ (posedge clk)
-  begin : MEM_WRITE
-  if ( !CSb && !WEb ) begin
-    mem[ADDR] = DATA;
-    $display($time," Writing %m ABUS=%b DATA=%b",ADDR,DATA);
-    end
+  // All inputs are registers
+  always @(posedge clk0)
+  begin
+    csb0_reg = csb0;
+    web0_reg = web0;
+    ADDR0_reg = ADDR0;
+    DIN0_reg = DIN0;
+    DOUT0 = 2'bx;
+    if ( !csb0_reg && web0_reg ) 
+      $display($time," Reading %m ADDR0=%b DOUT0=%b",ADDR0_reg,mem[ADDR0_reg]);
+    if ( !csb0_reg && !web0_reg )
+      $display($time," Writing %m ADDR0=%b DIN0=%b",ADDR0_reg,DIN0_reg);
   end
 
+reg [DATA_WIDTH-1:0]    mem [0:RAM_DEPTH-1];
 
-  // Memory Read Block
-  // Read Operation : When WEb = 1, CSb = 0
-  always @ (posedge clk)
-  begin : MEM_READ
-  if (!CSb && WEb) begin
-    data_out <= #(DELAY) mem[ADDR];
-    $display($time," Reading %m ABUS=%b DATA=%b",ADDR,mem[ADDR]);
-    end
+  // Memory Write Block Port 0
+  // Write Operation : When web0 = 0, csb0 = 0
+  always @ (negedge clk0)
+  begin : MEM_WRITE0
+    if ( !csb0_reg && !web0_reg )
+        mem[ADDR0_reg] = DIN0_reg;
+  end
+
+  // Memory Read Block Port 0
+  // Read Operation : When web0 = 1, csb0 = 0
+  always @ (negedge clk0)
+  begin : MEM_READ0
+    if (!csb0_reg && web0_reg)
+       DOUT0 <= #(DELAY) mem[ADDR0_reg];
   end
 
 endmodule

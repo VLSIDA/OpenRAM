@@ -1,6 +1,7 @@
 import os,sys,re
 import debug
 import math
+import datetime
 from .setup_hold import *
 from .delay import *
 from .charutils import *
@@ -324,11 +325,11 @@ class lib:
         self.lib.write("        }\n")
         
 
-        self.lib.write("        pin(DOUT{1}[{0}:0]){{\n".format(self.sram.word_size - 1, read_port))
+        self.lib.write("        pin(DOUT{}){{\n".format(read_port))
         self.lib.write("        timing(){ \n")
         self.lib.write("            timing_sense : non_unate; \n")
         self.lib.write("            related_pin : \"clk{0}\"; \n".format(read_port))
-        self.lib.write("            timing_type : rising_edge; \n")
+        self.lib.write("            timing_type : falling_edge; \n")
         self.lib.write("            cell_rise(CELL_TABLE) {\n")
         self.write_values(self.char_port_results[read_port]["delay_lh"],len(self.loads),"            ")
         self.lib.write("            }\n") # rise delay
@@ -357,7 +358,7 @@ class lib:
         self.lib.write("            address : ADDR{0}; \n".format(write_port))
         self.lib.write("            clocked_on  : clk{0}; \n".format(write_port))
         self.lib.write("        }\n") 
-        self.lib.write("        pin(DIN{1}[{0}:0]){{\n".format(self.sram.word_size - 1, write_port))
+        self.lib.write("        pin(DIN{}){{\n".format(write_port))
         self.write_FF_setuphold(write_port)
         self.lib.write("        }\n") # pin  
         self.lib.write("    }\n") #bus
@@ -377,7 +378,7 @@ class lib:
         self.lib.write("        direction  : input; \n")
         self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]))
         self.lib.write("        max_transition       : {0};\n".format(self.slews[-1]))
-        self.lib.write("        pin(ADDR{1}[{0}:0])".format(self.sram.addr_size - 1, port))
+        self.lib.write("        pin(ADDR{})".format(port))
         self.lib.write("{\n")
         
         self.write_FF_setuphold(port)
@@ -509,13 +510,23 @@ class lib:
             git_id = 'AAAAAAAAAAAAAAAAAAAA'
         else:
             with open(os.devnull, 'wb') as devnull:
-                proc = subprocess.Popen(['git','rev-parse','HEAD'], stdout=subprocess.PIPE)
+                proc = subprocess.Popen(['git','rev-parse','HEAD'], cwd=os.path.abspath(os.environ.get("OPENRAM_HOME")) + '/', stdout=subprocess.PIPE)
+
                 git_id = str(proc.stdout.read())
-                git_id = git_id[2:-3] 
+                
+                try:
+                    git_id = git_id[2:-3] 
+                except:
+                    pass
+
+                if len(git_id) != 40:
+                    debug.warning("Failed to retrieve git id")
+                    git_id = 'Failed to retruieve'
 
         datasheet = open(OPTS.openram_temp +'/datasheet.info', 'a+')
 
-        datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},".format(
+        current_time = datetime.datetime.now()
+        datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},".format(
                         "sram_{0}_{1}_{2}".format(OPTS.word_size, OPTS.num_words, OPTS.tech_name),
                         OPTS.num_words,
                         OPTS.num_banks,
@@ -530,8 +541,20 @@ class lib:
                         self.out_dir,
                         lib_name,
                         OPTS.word_size,
-                        git_id
+                        git_id,
+                        current_time
                         ))
+
+        # information of checks
+        from hierarchy_design import total_drc_errors
+        from hierarchy_design import total_lvs_errors
+        DRC = 'skipped'
+        LVS = 'skipped'
+        if OPTS.check_lvsdrc:
+            DRC = str(total_drc_errors)
+            LVS = str(total_lvs_errors)
+
+        datasheet.write("{0},{1},".format(DRC, LVS))
 
         for port in self.all_ports:
             #DIN timings
@@ -627,8 +650,11 @@ class lib:
                         min(list(map(round_time,self.times["hold_times_HL"]))),
                         max(list(map(round_time,self.times["hold_times_HL"])))
 
-                        )) 
-                                                                                            
+                        ))
+
+
+
+
         datasheet.write("END\n")
         datasheet.close()
                 

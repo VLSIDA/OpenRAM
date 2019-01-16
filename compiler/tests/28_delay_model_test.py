@@ -18,6 +18,8 @@ class delay_model_test(openram_test):
         OPTS.spice_name="hspice"
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
+        OPTS.trim_netlist = False
+        debug.info(1, "Trimming disabled for this test. Simulation could be slow.")
         
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload

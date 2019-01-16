@@ -164,6 +164,36 @@ class model_check(delay):
         """Get model delays based on port. Currently assumes single RW port."""
         return self.sram.control_logic_rw.get_wl_sen_delays()
             
+    def scale_delays(self, delay_list):
+        """Takes in a list of measured delays and convert it to simple units to easily compare to model values."""
+        converted_values = []
+        #Calculate average
+        total = 0
+        for meas_value in delay_list:
+            total+=meas_value
+        average = total/len(delay_list)
+        
+        #Convert values
+        for meas_value in delay_list:
+            converted_values.append(meas_value/average)
+        return converted_values
+    
+    def min_max_normalization(self, value_list):
+        """Re-scales input values on a range from 0-1 where min(list)=0, max(list)=1"""
+        scaled_values = []
+        min_val = min(value_list)
+        min_max_diff = max(value_list) - min_val
+        for value in value_list:
+            scaled_values.append((value-min_val)/(min_max_diff))
+        return scaled_values
+        
+    def calculate_error_l2_norm(self, list_a, list_b):    
+        """Calculates error between two lists using the l2 norm"""
+        error_list = []
+        for val_a, val_b in zip(list_a, list_b):
+            error_list.append((val_a-val_b)**2)
+        return error_list
+        
     def analyze(self, probe_address, probe_data, slews, loads):
         """Measures entire delay path along the wordline and sense amp enable and compare it to the model delays."""
         self.set_probe(probe_address, probe_data)
@@ -185,6 +215,13 @@ class model_check(delay):
         debug.info(1,"Measured SAE delays (ns):\n\t {}".format(sae_delays[read_port]))
         debug.info(1,"SAE model delays:\n\t {}".format(sae_model_delays))
         debug.info(1,"Measured SAE slews:\n\t {}".format(sae_slews[read_port]))
+        
+        scaled_wl_meas = self.min_max_normalization(wl_delays[read_port])
+        debug.info(1, "Scaled wordline delays:\n{}".format(scaled_wl_meas))
+        scaled_wl_model = self.min_max_normalization(wl_model_delays)
+        debug.info(1, "Scaled wordline model:\n{}".format(scaled_wl_model))
+        errors = self.calculate_error_l2_norm(scaled_wl_meas, scaled_wl_model)
+        debug.info(1, "Model errors:\n{}".format(errors))
         
         return wl_delays, sae_delays
 

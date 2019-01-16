@@ -49,9 +49,7 @@ class timing_sram_test(openram_test):
         data, port_data = d.analyze(probe_address, probe_data, slews, loads)
         #Combine info about port into all data
         data.update(port_data[0])
-
-        print(data)
-        
+     
         if OPTS.tech_name == "freepdk45":
             golden_data = {'delay_hl': [0.2011],
                          'delay_lh': [0.2011],

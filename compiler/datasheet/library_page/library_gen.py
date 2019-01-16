@@ -1,9 +1,10 @@
 import library
-import csv
+from pathlib import Path
 
 
 class library_item():
     def __init__(self):
+        self.name = ''
         self.comment = ''
         self.word_size = ''
         self.num_words = ''
@@ -13,14 +14,15 @@ class library_item():
         self.num_w_ports = ''
         self.Area = ''
         self.git_id = ''
-        self.technology = ''
-        self.min_op = ''
+        self.tech_name = ''
+        self.min_period = ''
+        self.datetime = ''
 
 
 class library_gen():
-    def library_write(name):
+    def library_write(name, book):
         with open(name, 'w+') as f:
-            library_page.generate_html()
+            library_page.generate_html(book)
             f.write(library_page.html)
 
     def search_file(file, name):
@@ -37,6 +39,66 @@ class library_gen():
             i += 1
         return i
 
+    def parse_comment(item):
+        row = item.comment.split(',')
+        print(row)
+        found = 0
+        col = 0
+
+        item.name = row[col]
+        col += 1
+
+        item.num_words = row[col]
+        col += 1
+
+        item.num_banks = row[col]
+        col += 1
+
+        item.num_rw_ports = row[col]
+        col += 1
+
+        item.num_w_port = row[col]
+        col += 1
+
+        item.num_r_ports = row[col]
+        col += 1
+
+        item.tech_name = row[col]
+        col += 1
+        print(item.tech_name)
+#        TEMP = row[col]
+        col += 1
+
+#        VOLT = row[col]
+        col += 1
+
+#        PROC = row[col]
+        col += 1
+
+        item.min_period = row[col]
+        col += 1
+        print(item.min_period)
+#        OUT_DIR = row[col]
+        col += 1
+
+#        LIB_NAME = row[col]
+        col += 1
+
+        item.word_size = row[col]
+        col += 1
+
+        item.git_id = row[col]
+        col += 1
+
+        item.datetime = row[col]
+        col += 1
+
+#        DRC = row[col]
+        col += 1
+
+#        LVS = row[col]
+        col += 1
+
     def parse_html(file):
         item = library_item()
         start_tag = '<!--'
@@ -48,13 +110,18 @@ class library_gen():
 
             f.seek(start_byte)
             item.comment = f.read(end_byte - start_byte)
-        print(item.comment)
+        library_gen.parse_comment(item)
+
         return item
 
-    def parse_comment(comment, item):
+    def get_file_tree(path):
+        return list(Path(path).rglob("*.html"))
 
-        pass
 
-
+datasheet_list = library_gen.get_file_tree('./deliverables')
+print(datasheet_list)
 library_page = library.library()
-library_gen.parse_html('../../temp/sram_2_16_scn4m_subm.html')
+book = []
+for datasheet in datasheet_list:
+    book.append(library_gen.parse_html(datasheet))
+library_gen.library_write('index.html', book)

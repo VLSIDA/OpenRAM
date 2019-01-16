@@ -7,7 +7,7 @@ class library():
     def __init__(self):
         self.html = ''
 
-    def generate_html(self):
+    def generate_html(self,book):
         vlsi_logo = 0
         with open(os.path.abspath(os.environ.get("OPENRAM_HOME")) + '/datasheet/assets/vlsi_logo.png', "rb") as image_file:
             vlsi_logo = base64.b64encode(image_file.read())

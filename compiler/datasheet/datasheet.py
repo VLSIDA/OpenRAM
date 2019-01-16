@@ -1,6 +1,5 @@
 from table_gen import *
 import os
-import csv
 import base64
 from globals import OPTS
 
@@ -22,13 +21,12 @@ class datasheet():
             # css styling is kept in a seperate file
             self.html += datasheet_css.read()
 
-
-#        with open(OPTS.openram_temp + "/datasheet.info") as info:
+        with open(OPTS.openram_temp + "/datasheet.info") as info:
             self.html += '<!--'
-#            for row in info:
-#                self.html += row
-            for item in self.description:
-                self.html += item + ','
+            for row in info:
+                self.html += row
+#            for item in self.description:
+#                self.html += item + ','
             self.html += 'EOL'
             self.html += '-->'
 

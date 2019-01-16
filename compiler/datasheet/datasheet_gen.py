@@ -135,7 +135,7 @@ def parse_characterizer_csv(f, pages):
                                 pass
 
                     while(True):
-
+                        col_start = col
                         if(row[col].startswith('DIN')):
                             start = col
                             for item in sheet.timing_table.rows:
@@ -332,11 +332,13 @@ def parse_characterizer_csv(f, pages):
                             col += 1
 
                         else:
+                            for element in row[col_start: col - 1]:
+                                sheet.description.append(str(element))
                             break
 
-                    datasheet.new_sheet.corners_table.add_row([PROC, process_name(
+                    new_sheet.corners_table.add_row([PROC, process_name(
                         PROC), VOLT, TEMP, LIB_NAME.replace(OUT_DIR, '').replace(NAME, '')])
-                    datasheet.new_sheet.dlv_table.add_row(
+                    new_sheet.dlv_table.add_row(
                         ['.lib', 'Synthesis models', '<a href="file://{0}">{1}</a>'.format(LIB_NAME, LIB_NAME.replace(OUT_DIR, ''))])
 
             if found == 0:
@@ -349,15 +351,16 @@ def parse_characterizer_csv(f, pages):
                 new_sheet.time = DATETIME
                 new_sheet.DRC = DRC
                 new_sheet.LVS = LVS
-                new_sheet.description = [NAME, NUM_WORDS, NUM_BANKS, NUM_RW_PORTS,
-                                         NUM_W_PORTS, NUM_R_PORTS, TECH_NAME, WORD_SIZE, ORIGIN_ID, DATETIME]
+                new_sheet.description = [NAME, NUM_WORDS, NUM_BANKS, NUM_RW_PORTS, NUM_W_PORTS,
+                                         NUM_R_PORTS, TECH_NAME, MIN_PERIOD, WORD_SIZE, ORIGIN_ID, DATETIME]
 
                 new_sheet.corners_table = table_gen.table_gen("corners")
                 new_sheet.corners_table.add_row(
                     ['Corner Name', 'Process', 'Power Supply', 'Temperature', 'Library Name Suffix'])
                 new_sheet.corners_table.add_row([PROC, process_name(
                     PROC), VOLT, TEMP, LIB_NAME.replace(OUT_DIR, '').replace(NAME, '')])
-                new_sheet.operating_table = table_gen.table_gen("operating_table")
+                new_sheet.operating_table = table_gen.table_gen(
+                    "operating_table")
                 new_sheet.operating_table.add_row(
                     ['Parameter', 'Min', 'Typ', 'Max', 'Units'])
                 new_sheet.operating_table.add_row(
@@ -376,6 +379,7 @@ def parse_characterizer_csv(f, pages):
                 new_sheet.timing_table.add_row(
                     ['Parameter', 'Min', 'Max', 'Units'])
                 while(True):
+                    col_start = col
                     if(row[col].startswith('DIN')):
                         start = col
 
@@ -497,6 +501,8 @@ def parse_characterizer_csv(f, pages):
                         col += 1
 
                     else:
+                        for element in row[col_start:col-1]:
+                            sheet.description.append(str(element))
                         break
 
                 new_sheet.dlv_table = table_gen.table_gen("dlv")

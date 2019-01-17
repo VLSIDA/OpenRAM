@@ -17,9 +17,8 @@ class pbitcell_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        
         from pbitcell import pbitcell
-        import tech
+
         OPTS.num_rw_ports=1
         OPTS.num_w_ports=1
         OPTS.num_r_ports=1

@@ -71,26 +71,26 @@ def print_banner():
     if OPTS.is_unit_test:
         return
 
-    print("|==============================================================================|")
+    debug.print_raw("|==============================================================================|")
     name = "OpenRAM Compiler"
-    print("|=========" + name.center(60) + "=========|")
-    print("|=========" + " ".center(60) + "=========|")
-    print("|=========" + "VLSI Design and Automation Lab".center(60) + "=========|")
-    print("|=========" + "Computer Science and Engineering Department".center(60) + "=========|")
-    print("|=========" + "University of California Santa Cruz".center(60) + "=========|")
-    print("|=========" + " ".center(60) + "=========|")
-    print("|=========" + "VLSI Computer Architecture Research Group".center(60) + "=========|")
-    print("|=========" + "Electrical and Computer Engineering Department".center(60) + "=========|")
-    print("|=========" + "Oklahoma State University".center(60) + "=========|")
-    print("|=========" + " ".center(60) + "=========|")
+    debug.print_raw("|=========" + name.center(60) + "=========|")
+    debug.print_raw("|=========" + " ".center(60) + "=========|")
+    debug.print_raw("|=========" + "VLSI Design and Automation Lab".center(60) + "=========|")
+    debug.print_raw("|=========" + "Computer Science and Engineering Department".center(60) + "=========|")
+    debug.print_raw("|=========" + "University of California Santa Cruz".center(60) + "=========|")
+    debug.print_raw("|=========" + " ".center(60) + "=========|")
+    debug.print_raw("|=========" + "VLSI Computer Architecture Research Group".center(60) + "=========|")
+    debug.print_raw("|=========" + "Electrical and Computer Engineering Department".center(60) + "=========|")
+    debug.print_raw("|=========" + "Oklahoma State University".center(60) + "=========|")
+    debug.print_raw("|=========" + " ".center(60) + "=========|")
     user_info = "Usage help: openram-user-group@ucsc.edu"
-    print("|=========" + user_info.center(60) + "=========|")
+    debug.print_raw("|=========" + user_info.center(60) + "=========|")
     dev_info = "Development help: openram-dev-group@ucsc.edu"
-    print("|=========" + dev_info.center(60) + "=========|")
+    debug.print_raw("|=========" + dev_info.center(60) + "=========|")
     temp_info = "Temp dir: {}".format(OPTS.openram_temp)
-    print("|=========" + temp_info.center(60) + "=========|")
-    print("|=========" + "See LICENSE for license info".center(60) + "=========|")
-    print("|==============================================================================|")
+    debug.print_raw("|=========" + temp_info.center(60) + "=========|")
+    debug.print_raw("|=========" + "See LICENSE for license info".center(60) + "=========|")
+    debug.print_raw("|==============================================================================|")
 
 
 def check_versions():
@@ -397,7 +397,7 @@ def print_time(name, now_time, last_time=None, indentation=2):
             time = str(round((now_time-last_time).total_seconds(),1)) + " seconds"
         else:
             time = now_time.strftime('%m/%d/%Y %H:%M:%S')
-        print("{0} {1}: {2}".format("*"*indentation,name,time))
+        debug.print_raw("{0} {1}: {2}".format("*"*indentation,name,time))
 
 
 def report_status():
@@ -413,20 +413,20 @@ def report_status():
     if not OPTS.tech_name:
         debug.error("Tech name must be specified in config file.")
 
-    print("Technology: {0}".format(OPTS.tech_name))
-    print("Total size: {} bits".format(OPTS.word_size*OPTS.num_words*OPTS.num_banks))
-    print("Word size: {0}\nWords: {1}\nBanks: {2}".format(OPTS.word_size,
+    debug.print_raw("Technology: {0}".format(OPTS.tech_name))
+    debug.print_raw("Total size: {} bits".format(OPTS.word_size*OPTS.num_words*OPTS.num_banks))
+    debug.print_raw("Word size: {0}\nWords: {1}\nBanks: {2}".format(OPTS.word_size,
                                                           OPTS.num_words,
                                                           OPTS.num_banks))
-    print("RW ports: {0}\nR-only ports: {1}\nW-only ports: {2}".format(OPTS.num_rw_ports,
+    debug.print_raw("RW ports: {0}\nR-only ports: {1}\nW-only ports: {2}".format(OPTS.num_rw_ports,
                                                                        OPTS.num_r_ports,
                                                                        OPTS.num_w_ports))
     if OPTS.netlist_only:
-        print("Netlist only mode (no physical design is being done).")
+        debug.print_raw("Netlist only mode (no physical design is being done).")
     
     if not OPTS.inline_lvsdrc:
-        print("DRC/LVS/PEX is only run on the top-level design.")
+        debug.print_raw("DRC/LVS/PEX is only run on the top-level design.")
 
     if not OPTS.check_lvsdrc:
-        print("DRC/LVS/PEX is completely disabled.")
+        debug.print_raw("DRC/LVS/PEX is completely disabled.")
         

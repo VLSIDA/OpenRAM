@@ -44,15 +44,16 @@ from sram_config import sram_config
 # Configure the SRAM organization
 c = sram_config(word_size=OPTS.word_size,
                 num_words=OPTS.num_words)
-print("Words per row: {}".format(c.words_per_row))
+debug.print_raw("Words per row: {}".format(c.words_per_row))
 
 #from parser import *
-output_extensions = ["sp","v","lib","py","html"]
+output_extensions = ["sp","v","lib","py","html","log"]
 if not OPTS.netlist_only:
     output_extensions.extend(["gds","lef"])
 output_files = ["{0}{1}.{2}".format(OPTS.output_path,OPTS.output_name,x) for x in output_extensions]
-print("Output files are: ")
-print(*output_files,sep="\n")
+debug.print_raw("Output files are: ")
+for path  in output_files:
+    debug.print_raw(path)
 
 
 from sram import sram

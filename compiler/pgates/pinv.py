@@ -2,12 +2,12 @@ import contact
 import pgate
 import debug
 from tech import drc, parameter, spice
-from ptx import ptx
 from vector import vector
 from math import ceil
 from globals import OPTS
 from utils import round_to_grid
 import logical_effort
+from sram_factory import factory
 
 class pinv(pgate.pgate):
     """
@@ -82,8 +82,8 @@ class pinv(pgate.pgate):
         # Sanity check. can we make an inverter in the height with minimum tx sizes?
         # Assume we need 3 metal 1 pitches (2 power rails, one between the tx for the drain)
         # plus the tx height
-        nmos = ptx(tx_type="nmos")
-        pmos = ptx(width=drc("minwidth_tx"), tx_type="pmos")
+        nmos = factory.create(module_type="ptx", tx_type="nmos")
+        pmos = factory.create(module_type="ptx", width=drc("minwidth_tx"), tx_type="pmos")
         tx_height = nmos.poly_height + pmos.poly_height
         # rotated m1 pitch or poly to active spacing
         min_channel = max(contact.poly.width + self.m1_space,
@@ -143,18 +143,20 @@ class pinv(pgate.pgate):
         
     def add_ptx(self):
         """ Create the PMOS and NMOS transistors. """
-        self.nmos = ptx(width=self.nmos_width,
-                        mults=self.tx_mults,
-                        tx_type="nmos",
-                        connect_poly=True,
-                        connect_active=True)
+        self.nmos = factory.create(module_type="ptx",
+                                   width=self.nmos_width,
+                                   mults=self.tx_mults,
+                                   tx_type="nmos",
+                                   connect_poly=True,
+                                   connect_active=True)
         self.add_mod(self.nmos)
         
-        self.pmos = ptx(width=self.pmos_width,
-                        mults=self.tx_mults,
-                        tx_type="pmos",
-                        connect_poly=True,
-                        connect_active=True)
+        self.pmos = factory.create(module_type="ptx",
+                                   width=self.pmos_width,
+                                   mults=self.tx_mults,
+                                   tx_type="pmos",
+                                   connect_poly=True,
+                                   connect_active=True)
         self.add_mod(self.pmos)
         
     def route_supply_rails(self):

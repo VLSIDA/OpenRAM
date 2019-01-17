@@ -2,9 +2,9 @@ import contact
 import pgate
 import debug
 from tech import drc, parameter, spice
-from ptx import ptx
 from vector import vector
 from globals import OPTS
+from sram_factory import factory
 
 class pnor2(pgate.pgate):
     """
@@ -53,18 +53,20 @@ class pnor2(pgate.pgate):
 
     def create_ptx(self):
         """ Create the PMOS and NMOS transistors. """
-        self.nmos = ptx(width=self.nmos_width,
-                        mults=self.tx_mults,
-                        tx_type="nmos",
-                        connect_poly=True,
-                        connect_active=True)
+        self.nmos = factory.create(module_type="ptx",
+                                   width=self.nmos_width,
+                                   mults=self.tx_mults,
+                                   tx_type="nmos",
+                                   connect_poly=True,
+                                   connect_active=True)
         self.add_mod(self.nmos)
 
-        self.pmos = ptx(width=self.pmos_width,
-                        mults=self.tx_mults,
-                        tx_type="pmos",
-                        connect_poly=True,
-                        connect_active=True)
+        self.pmos = factory.create(module_type="ptx",
+                                   width=self.pmos_width,
+                                   mults=self.tx_mults,
+                                   tx_type="pmos",
+                                   connect_poly=True,
+                                   connect_active=True)
         self.add_mod(self.pmos)
 
     def setup_layout_constants(self):

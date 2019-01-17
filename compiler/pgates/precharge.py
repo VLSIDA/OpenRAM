@@ -2,7 +2,6 @@ import contact
 import pgate
 import debug
 from tech import drc, parameter
-from ptx import ptx
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
@@ -50,8 +49,9 @@ class precharge(pgate.pgate):
         """
         Initializes the upper and lower pmos
         """
-        self.pmos = ptx(width=self.ptx_width,
-                        tx_type="pmos")
+        self.pmos = factory.create(module_type="ptx",
+                                   width=self.ptx_width,
+                                   tx_type="pmos")
         self.add_mod(self.pmos)
 
         

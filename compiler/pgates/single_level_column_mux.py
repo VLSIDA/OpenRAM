@@ -3,7 +3,6 @@ import debug
 from tech import drc
 from vector import vector
 import contact
-from ptx import ptx
 from globals import OPTS
 from sram_factory import factory
 
@@ -48,7 +47,7 @@ class single_level_column_mux(design.design):
 
         # Adds nmos_lower,nmos_upper to the module
         self.ptx_width = self.tx_size*drc("minwidth_tx")
-        self.nmos = ptx(width=self.ptx_width)
+        self.nmos = factory.create(module_type="ptx", width=self.ptx_width)
         self.add_mod(self.nmos)
 
         

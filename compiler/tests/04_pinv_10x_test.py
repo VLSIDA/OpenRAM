@@ -19,7 +19,7 @@ class pinv_test(openram_test):
         import tech
 
         debug.info(2, "Checking 10x inverter")
-        tx = pinv.pinv(size=8)
+        tx = pinv.pinv(name="pinvx10",size=8)
         self.local_check(tx)
 
         globals.end_openram()        

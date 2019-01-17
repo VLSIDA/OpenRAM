@@ -12,19 +12,13 @@ class pbitcell(design.design):
     with a variable number of read/write, write, and read ports
     """
 
-    def __init__(self, replica_bitcell=False):
-
+    def __init__(self, name, replica_bitcell=False):
         self.num_rw_ports = OPTS.num_rw_ports
         self.num_w_ports = OPTS.num_w_ports
         self.num_r_ports = OPTS.num_r_ports
         self.total_ports = self.num_rw_ports + self.num_w_ports + self.num_r_ports
 
         self.replica_bitcell = replica_bitcell
-
-        if self.replica_bitcell:
-            name = "replica_pbitcell_{0}RW_{1}W_{2}R".format(self.num_rw_ports, self.num_w_ports, self.num_r_ports)
-        else:
-            name = "pbitcell_{0}RW_{1}W_{2}R".format(self.num_rw_ports, self.num_w_ports, self.num_r_ports)
 
         design.design.__init__(self, name)
         debug.info(2, "create a multi-port bitcell with {0} rw ports, {1} w ports and {2} r ports".format(self.num_rw_ports,

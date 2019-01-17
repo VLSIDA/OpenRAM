@@ -130,6 +130,9 @@ def init_openram(config_file, is_unit_test=True):
 
     init_paths()
 
+    from sram_factory import factory
+    factory.reset()
+    
     # Reset the static duplicate name checker for unit tests.
     import hierarchy_design
     hierarchy_design.hierarchy_design.name_map=[]

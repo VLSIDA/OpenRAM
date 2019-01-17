@@ -3,6 +3,7 @@ import design
 from tech import drc
 from math import log
 from vector import vector
+from sram_factory import factory
 from globals import OPTS
 
 class dff_array(design.design):
@@ -38,10 +39,7 @@ class dff_array(design.design):
         self.DRC_LVS()
 
     def add_modules(self):
-        from importlib import reload
-        c = reload(__import__(OPTS.dff))
-        self.mod_dff = getattr(c, OPTS.dff)
-        self.dff = self.mod_dff("dff")
+        self.dff = factory.create(module_type="dff")
         self.add_mod(self.dff)
         
     def add_pins(self):
@@ -61,7 +59,7 @@ class dff_array(design.design):
             for col in range(self.columns):
                 name = "dff_r{0}_c{1}".format(row,col)
                 self.dff_insts[row,col]=self.add_inst(name=name,
-                                                  mod=self.dff)
+                                                      mod=self.dff)
                 self.connect_inst([self.get_din_name(row,col),
                                    self.get_dout_name(row,col),
                                    "clk",

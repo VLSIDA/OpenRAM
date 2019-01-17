@@ -21,7 +21,7 @@ class pnor2_test(openram_test):
         import tech
 
         debug.info(2, "Checking 2-input nor gate")
-        tx = pnor2.pnor2(size=1)
+        tx = pnor2.pnor2(name="pnor2", size=1)
         self.local_check(tx)
 
         globals.end_openram()

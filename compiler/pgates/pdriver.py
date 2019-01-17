@@ -5,15 +5,13 @@ from tech import drc
 from math import log
 from vector import vector
 from globals import OPTS
-from pinv import pinv
+from sram_factory import factory
 
 class pdriver(pgate.pgate):
     """
     This instantiates an even or odd number of inverters sized for driving a load.
     """
-    unique_id = 1
-
-    def __init__(self, neg_polarity=False, fanout_size=8, size_list = [], height=None, name=""):
+    def __init__(self, name, neg_polarity=False, fanout_size=8, size_list = [], height=None):
 
         self.stage_effort = 4
         self.height = height 
@@ -24,10 +22,6 @@ class pdriver(pgate.pgate):
         if len(self.size_list) > 0 and (self.fanout_size != 8 or self.neg_polarity):
             debug.error("Cannot specify both size_list and neg_polarity or fanout_size.", -1)
  
-        if name=="":
-            name = "pdriver_{}".format(pdriver.unique_id)
-            pdriver.unique_id += 1               
-        
         pgate.pgate.__init__(self, name, height) 
         debug.info(1, "Creating {}".format(self.name))
         
@@ -123,11 +117,13 @@ class pdriver(pgate.pgate):
         self.inv_list = []
         if len(self.size_list) > 0: # size list specified
             for x in range(len(self.size_list)):
-                self.inv_list.append(pinv(size=self.size_list[x], height=self.height))
+                temp_inv = factory.create(module_type="pinv", size=self.size_list[x], height=self.height)
+                self.inv_list.append(temp_inv)
                 self.add_mod(self.inv_list[x])
         else: # find inv sizes
             for x in range(len(self.calc_size_list)):
-                self.inv_list.append(pinv(size=self.calc_size_list[x], height=self.height))
+                temp_inv = factory.create(module_type="pinv", size=self.calc_size_list[x], height=self.height)
+                self.inv_list.append(temp_inv)
                 self.add_mod(self.inv_list[x])
     
     

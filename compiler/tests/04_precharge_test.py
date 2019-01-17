@@ -10,6 +10,7 @@ sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
+from sram_factory import factory
 
 class precharge_test(openram_test):
 
@@ -28,7 +29,8 @@ class precharge_test(openram_test):
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 1
-        
+
+        factory.reset()
         debug.info(2, "Checking precharge for pbitcell (innermost connections)")
         tx = precharge.precharge(name="precharge_driver", size=1, bitcell_bl="bl0", bitcell_br="br0")
         self.local_check(tx)

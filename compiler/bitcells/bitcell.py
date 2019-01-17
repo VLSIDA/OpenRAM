@@ -15,14 +15,15 @@ class bitcell(design.design):
     (width,height) = utils.get_libcell_size("cell_6t", GDS["unit"], layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "cell_6t", GDS["unit"])
 
-    def __init__(self):
+    def __init__(self, name=""):
+        # Ignore the name argument
         design.design.__init__(self, "cell_6t")
         debug.info(2, "Create bitcell")
 
         self.width = bitcell.width
         self.height = bitcell.height
         self.pin_map = bitcell.pin_map
-
+        
     def analytical_delay(self, slew, load=0, swing = 0.5):
         # delay of bit cell is not like a driver(from WL)
         # so the slew used should be 0

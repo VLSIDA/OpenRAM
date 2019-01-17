@@ -6,7 +6,6 @@ import debug
 import os
 from globals import OPTS
 
-
 class design(hierarchy_design):
     """
     This is the same as the hierarchy_design class except it contains

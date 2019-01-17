@@ -4,12 +4,8 @@ import design
 from math import log
 from math import sqrt
 import math
-import contact 
-from pnand2 import pnand2
-from pnand3 import pnand3 
-from pinv import pinv 
-from hierarchical_predecode2x4 import hierarchical_predecode2x4 as pre2x4
-from hierarchical_predecode3x8 import hierarchical_predecode3x8 as pre3x8
+import contact
+from sram_factory import factory
 from vector import vector
 from globals import OPTS
 
@@ -17,11 +13,8 @@ class hierarchical_decoder(design.design):
     """
     Dynamically generated hierarchical decoder.
     """
-    unique_id = 1
-    
-    def __init__(self, rows, height=None):
-        design.design.__init__(self, "hierarchical_decoder_{0}rows_{1}".format(rows,hierarchical_decoder.unique_id))
-        hierarchical_decoder.unique_id += 1
+    def __init__(self, name, rows, height=None):
+        design.design.__init__(self, name)
 
         self.NAND_FORMAT = "DEC_NAND_{0}"
         self.INV_FORMAT = "DEC_INV_{0}"
@@ -57,21 +50,26 @@ class hierarchical_decoder(design.design):
         self.DRC_LVS()
                 
     def add_modules(self):
-        self.inv = pinv(height=self.cell_height)
+        self.inv = factory.create(module_type="pinv",
+                                  height=self.cell_height)
         self.add_mod(self.inv)
-        self.nand2 = pnand2(height=self.cell_height)
+        self.nand2 = factory.create(module_type="pnand2",
+                                    height=self.cell_height)
         self.add_mod(self.nand2)
-        self.nand3 = pnand3(height=self.cell_height)
+        self.nand3 = factory.create(module_type="pnand3",
+                                    height=self.cell_height)
         self.add_mod(self.nand3)
         
         self.add_decoders()
 
     def add_decoders(self):
         """ Create the decoders based on the number of pre-decodes """
-        self.pre2_4 = pre2x4(height=self.cell_height)
+        self.pre2_4 = factory.create(module_type="hierarchical_predecode2x4",
+                                     height=self.cell_height)
         self.add_mod(self.pre2_4)
         
-        self.pre3_8 = pre3x8(height=self.cell_height)
+        self.pre3_8 = factory.create(module_type="hierarchical_predecode3x8",
+                                     height=self.cell_height)
         self.add_mod(self.pre3_8)
 
     def determine_predecodes(self,num_inputs):

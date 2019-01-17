@@ -16,11 +16,14 @@ class spice():
     def __init__(self, name):
         self.name = name
 
-        self.mods = []  # Holds subckts/mods for this module
-        self.pins = []  # Holds the pins for this module
-        self.pin_type = {} # The type map of each pin: INPUT, OUTPUT, INOUT, POWER, GROUND
+        # Holds subckts/mods for this module
+        self.mods = []  
+        # Holds the pins for this module
+        self.pins = []  
+        # The type map of each pin: INPUT, OUTPUT, INOUT, POWER, GROUND
         # for each instance, this is the set of nets/nodes that map to the pins for this instance
-        # THIS MUST MATCH THE ORDER OF THE PINS (restriction imposed by the
+        self.pin_type = {} 
+        # THE CONNECTIONS MUST MATCH THE ORDER OF THE PINS (restriction imposed by the
         # Spice format)
         self.conns = []
 
@@ -93,8 +96,8 @@ class spice():
             from pprint import pformat
             modpins_string=pformat(self.insts[-1].mod.pins)
             argpins_string=pformat(args)
-            debug.error("Connections: {}".format(modpins_string))
-            debug.error("Connections: {}".format(argpins_string))
+            debug.error("Mod  connections: {}".format(modpins_string))
+            debug.error("Inst connections: {}".format(argpins_string))
             debug.error("Number of net connections ({0}) does not match last instance ({1})".format(len(self.insts[-1].mod.pins),
                                                                                                     len(args)), 1)
         self.conns.append(args)

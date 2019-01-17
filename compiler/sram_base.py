@@ -10,6 +10,7 @@ import logical_effort
 from design import design
 from verilog import verilog
 from lef import lef
+from sram_factory import factory
 
 class sram_base(design, verilog, lef):
     """
@@ -239,10 +240,7 @@ class sram_base(design, verilog, lef):
 
             
     def add_modules(self):
-        """ Create all the modules that will be used """
-        c = reload(__import__(OPTS.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.bitcell)
-        self.bitcell = self.mod_bitcell()
+        self.bitcell = factory.create(module_type=OPTS.bitcell)
 
         # Create the address and control flops (but not the clk)
         from dff_array import dff_array

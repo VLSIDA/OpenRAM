@@ -3,13 +3,7 @@ import design
 from tech import drc, parameter
 import debug
 import contact
-from pinv import pinv
-from pbuf import pbuf
-from pand2 import pand2
-from pnand2 import pnand2
-from pinvbuf import pinvbuf
-from dff_buf import dff_buf
-from dff_buf_array import dff_buf_array
+from sram_factory import factory
 import math
 from vector import vector
 from globals import OPTS
@@ -73,46 +67,56 @@ class control_logic(design.design):
     def add_modules(self):
         """ Add all the required modules """
         
-        dff = dff_buf() 
+        dff = factory.create(module_type="dff_buf")
         dff_height = dff.height
         
-        self.ctrl_dff_array = dff_buf_array(rows=self.num_control_signals,columns=1)
+        self.ctrl_dff_array = factory.create(module_type="dff_buf_array",
+                                             rows=self.num_control_signals,
+                                             columns=1)
+                                             
         self.add_mod(self.ctrl_dff_array)
         
-        self.and2 = pand2(size=4,height=dff_height)
+        self.and2 = factory.create(module_type="pand2",
+                                   size=4,
+                                   height=dff_height)
         self.add_mod(self.and2)
         
         # Special gates: inverters for buffering
         # Size the clock for the number of rows (fanout)
         clock_driver_size = max(1,int(self.num_rows/4))
-        self.clkbuf = pbuf(size=clock_driver_size, height=dff_height)
+        self.clkbuf = factory.create(module_type="pbuf",
+                                     size=clock_driver_size,
+                                     height=dff_height)
+        
         self.add_mod(self.clkbuf)
 
-        self.buf16 = pbuf(size=16, height=dff_height)
+        self.buf16 = factory.create(module_type="pbuf",
+                                    size=16,
+                                    height=dff_height)
         self.add_mod(self.buf16)
 
-        self.buf8 = pbuf(size=8, height=dff_height)
+        self.buf8 = factory.create(module_type="pbuf",
+                                   size=8,
+                                   height=dff_height)
         self.add_mod(self.buf8)
         
-        self.inv = self.inv1 = pinv(size=1, height=dff_height)
+        self.inv = self.inv1 = factory.create(module_type="pinv",
+                                              size=1,
+                                              height=dff_height)
         self.add_mod(self.inv1)
         
-        self.inv8 = pinv(size=8, height=dff_height)
+        self.inv8 = factory.create(module_type="pinv",
+                                   size=8,
+                                   height=dff_height)
         self.add_mod(self.inv8)
         
-        # self.inv2 = pinv(size=4, height=dff_height)
-        # self.add_mod(self.inv2)
-        #self.inv16 = pinv(size=16, height=dff_height)
-        #self.add_mod(self.inv16)
-
         if (self.port_type == "rw") or (self.port_type == "r"):
-            from importlib import reload
-            c = reload(__import__(OPTS.replica_bitline))
-            replica_bitline = getattr(c, OPTS.replica_bitline)
-            
             delay_stages_heuristic, delay_fanout_heuristic = self.get_heuristic_delay_chain_size()
             bitcell_loads = int(math.ceil(self.num_rows / 2.0))
-            self.replica_bitline = replica_bitline([delay_fanout_heuristic]*delay_stages_heuristic, bitcell_loads, name="replica_bitline_"+self.port_type)
+            self.replica_bitline = factory.create(module_type="replica_bitline",
+                                                  delay_fanout_list=[delay_fanout_heuristic]*delay_stages_heuristic,
+                                                  bitcell_loads=bitcell_loads)
+
             
             if self.sram != None:
                 self.set_sen_wl_delays()
@@ -124,8 +128,10 @@ class control_logic(design.design):
                 
                 #This resizes based on total delay. 
                 delay_stages, delay_fanout = self.get_dynamic_delay_chain_size(delay_stages_heuristic, delay_fanout_heuristic)
-                self.replica_bitline = replica_bitline([delay_fanout]*delay_stages, bitcell_loads, name="replica_bitline_resized_"+self.port_type)
-                
+                self.replica_bitline = factory.create(module_type="replica_bitline",
+                                                      delay_fanout_list=[delay_fanout]*delay_stages,
+                                                      bitcell_loads=bitcell_loads)
+
                 self.sen_delay_rise,self.sen_delay_fall = self.get_delays_to_sen() #get the new timing
                 
             self.add_mod(self.replica_bitline)

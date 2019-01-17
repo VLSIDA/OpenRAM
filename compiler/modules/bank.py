@@ -6,9 +6,7 @@ import math
 from math import log,sqrt,ceil
 import contact
 import pgates
-from pinv import pinv
-from pnand2 import pnand2
-from pnor2 import pnor2
+from sram_factory import factory
 from vector import vector
 
 from globals import OPTS
@@ -396,25 +394,14 @@ class bank(design.design):
     def add_modules(self):
         """ Add all the modules using the class loader """
         
-        mod_list = ["bitcell", "decoder", "wordline_driver",
-                    "bitcell_array",   "sense_amp_array",    "precharge_array",
-                    "column_mux_array", "write_driver_array", 
-                    "dff", "bank_select"]
-        from importlib import reload
-        for mod_name in mod_list:
-            config_mod_name = getattr(OPTS, mod_name)
-            class_file = reload(__import__(config_mod_name))
-            mod_class = getattr(class_file , config_mod_name)
-            setattr (self, "mod_"+mod_name, mod_class)
 
-        
-        
-        self.bitcell_array = self.mod_bitcell_array(cols=self.num_cols,
-                                                    rows=self.num_rows)
+        self.bitcell_array = factory.create(module_type="bitcell_array",
+                                            cols=self.num_cols,
+                                            rows=self.num_rows)
         self.add_mod(self.bitcell_array)
         
         # create arrays of bitline and bitline_bar names for read, write, or all ports
-        self.bitcell = self.mod_bitcell()
+        self.bitcell = factory.create(module_type="bitcell") 
         self.bl_names = self.bitcell.list_all_bl_names()
         self.br_names = self.bitcell.list_all_br_names()
         self.wl_names = self.bitcell.list_all_wl_names()
@@ -423,7 +410,11 @@ class bank(design.design):
         self.precharge_array = []
         for port in self.all_ports:
             if port in self.read_ports:
-                self.precharge_array.append(self.mod_precharge_array(columns=self.num_cols, bitcell_bl=self.bl_names[port], bitcell_br=self.br_names[port]))
+                temp_pre = factory.create(module_type="precharge_array",
+                                          columns=self.num_cols,
+                                          bitcell_bl=self.bl_names[port],
+                                          bitcell_br=self.br_names[port])
+                self.precharge_array.append(temp_pre)
                 self.add_mod(self.precharge_array[port])
             else:
                 self.precharge_array.append(None)
@@ -431,32 +422,38 @@ class bank(design.design):
         if self.col_addr_size > 0:
             self.column_mux_array = []
             for port in self.all_ports:
-                self.column_mux_array.append(self.mod_column_mux_array(columns=self.num_cols, 
-                                                                       word_size=self.word_size,
-                                                                       bitcell_bl=self.bl_names[port],
-                                                                       bitcell_br=self.br_names[port]))
+                temp_col = factory.create(module_type="column_mux_array",
+                                          columns=self.num_cols, 
+                                          word_size=self.word_size,
+                                          bitcell_bl=self.bl_names[port],
+                                          bitcell_br=self.br_names[port])
+                self.column_mux_array.append(temp_col)
                 self.add_mod(self.column_mux_array[port])
 
 
-        self.sense_amp_array = self.mod_sense_amp_array(word_size=self.word_size, 
-                                                        words_per_row=self.words_per_row)
+        self.sense_amp_array = factory.create(module_type="sense_amp_array",
+                                              word_size=self.word_size, 
+                                              words_per_row=self.words_per_row)
         self.add_mod(self.sense_amp_array)
 
-        self.write_driver_array = self.mod_write_driver_array(columns=self.num_cols,
-                                                              word_size=self.word_size)
+        self.write_driver_array = factory.create(module_type="write_driver_array",
+                                                 columns=self.num_cols,
+                                                 word_size=self.word_size)
         self.add_mod(self.write_driver_array)
 
-        self.row_decoder = self.mod_decoder(rows=self.num_rows)
+        self.row_decoder = factory.create(module_type="decoder",
+                                          rows=self.num_rows)
         self.add_mod(self.row_decoder)
         
-        self.wordline_driver = self.mod_wordline_driver(rows=self.num_rows)
+        self.wordline_driver = factory.create(module_type="wordline_driver",
+                                              rows=self.num_rows)
         self.add_mod(self.wordline_driver)
 
-        self.inv = pinv()
+        self.inv = factory.create(module_type="pinv")
         self.add_mod(self.inv)
 
         if(self.num_banks > 1):
-            self.bank_select = self.mod_bank_select()
+            self.bank_select = factory.create(module_type="bank_select")
             self.add_mod(self.bank_select)
         
 
@@ -693,18 +690,17 @@ class bank(design.design):
         """ 
         Create a 2:4 or 3:8 column address decoder.
         """
+
+        dff = factory.create(module_type="dff")
         
         if self.col_addr_size == 0:
             return
         elif self.col_addr_size == 1:
-            from pinvbuf import pinvbuf
-            self.column_decoder = pinvbuf(height=self.mod_dff.height)
+            self.column_decoder = factory.create(module_type="pinvbuf", height=dff.height)
         elif self.col_addr_size == 2:
-            from hierarchical_predecode2x4 import hierarchical_predecode2x4 as pre2x4
-            self.column_decoder = pre2x4(height=self.mod_dff.height)
+            self.column_decoder = factory.create(module_type="hierarchical_predecode2x4", height=dff.height)
         elif self.col_addr_size == 3:
-            from hierarchical_predecode3x8 import hierarchical_predecode3x8 as pre3x8
-            self.column_decoder = pre3x8(height=self.mod_dff.height)
+            self.column_decoder = factory.create(module_type="hierarchical_predecode3x8", height=dff.height)
         else:
             # No error checking before?
             debug.error("Invalid column decoder?",-1)

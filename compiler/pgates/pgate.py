@@ -5,6 +5,7 @@ from tech import drc, parameter, spice
 from ptx import ptx
 from vector import vector
 from globals import OPTS
+from sram_factory import factory
 
 class pgate(design.design):
     """
@@ -18,10 +19,7 @@ class pgate(design.design):
         if height:
             self.height = height
         elif not height:
-            from importlib import reload
-            c = reload(__import__(OPTS.bitcell))
-            bitcell = getattr(c, OPTS.bitcell)
-            b = bitcell()
+            b = factory.create(module_type="bitcell")
             self.height = b.height
 
 

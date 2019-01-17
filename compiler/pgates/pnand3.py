@@ -11,13 +11,8 @@ class pnand3(pgate.pgate):
     This module generates gds of a parametrically sized 2-input nand.
     This model use ptx to generate a 2-input nand within a cetrain height.
     """
-
-    unique_id = 1
-    
-    def __init__(self, size=1, height=None):
+    def __init__(self, name, size=1, height=None):
         """ Creates a cell for a simple 3 input nand """
-        name = "pnand3_{0}".format(pnand3.unique_id)
-        pnand3.unique_id += 1
         pgate.pgate.__init__(self, name, height)
         debug.info(2, "create pnand3 structure {0} with size of {1}".format(name, size))
 

@@ -42,7 +42,7 @@ class dff_inv_array(design.design):
         self.DRC_LVS()
 
     def add_modules(self):
-        self.dff = dff_inv.dff_inv(self.inv_size)
+        self.dff = factory.create(module_type="dff")        
         self.add_mod(self.dff)
 
     def add_pins(self):

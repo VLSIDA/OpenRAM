@@ -19,15 +19,11 @@ class pinv(pgate.pgate):
     output to the right side of the cell for easier access.
     """
 
-    unique_id = 1
-    
-    def __init__(self, size=1, beta=parameter["beta"], height=None, route_output=True):
+    def __init__(self, name, size=1, beta=parameter["beta"], height=None, route_output=True):
         # We need to keep unique names because outputting to GDSII
         # will use the last record with a given name. I.e., you will
         # over-write a design in GDS if one has and the other doesn't
         # have poly connected, for example.
-        name = "pinv_{}".format(pinv.unique_id)
-        pinv.unique_id += 1
         pgate.pgate.__init__(self, name, height)
         debug.info(2, "create pinv structure {0} with size of {1}".format(name, size))
         

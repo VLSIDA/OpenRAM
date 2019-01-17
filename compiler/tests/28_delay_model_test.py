@@ -25,10 +25,11 @@ class delay_model_test(openram_test):
         from importlib import reload
         import characterizer
         reload(characterizer)
+        
         from characterizer import model_check
         from sram import sram
         from sram_config import sram_config
-        c = sram_config(word_size=1,
+        c = sram_config(word_size=4,
                         num_words=16,
                         num_banks=1)
         c.words_per_row=1
@@ -48,7 +49,7 @@ class delay_model_test(openram_test):
         import tech
         loads = [tech.spice["msflop_in_cap"]*4]
         slews = [tech.spice["rise_time"]*2]
-        wl_data, sae_data = mc.analyze(probe_address, probe_data, slews, loads)
+        sram_data = mc.analyze(probe_address, probe_data, slews, loads)
         #Combine info about port into all data
 
         #debug.info(1,"Data:\n{}".format(wl_data))

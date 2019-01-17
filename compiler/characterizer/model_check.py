@@ -21,6 +21,11 @@ class model_check(delay):
     def __init__(self, sram, spfile, corner):
         delay.__init__(self,sram,spfile,corner)
         self.period = tech.spice["feasible_period"]
+        self.create_data_names()
+    
+    def create_data_names(self):
+        self.wl_meas_name, self.wl_model_name = "wl_measures", "wl_model"
+        self.sae_meas_name, self.sae_model_name = "sae_measures", "sae_model"
         
     def create_measurement_names(self):
         """Create measurement names. The names themselves currently define the type of measurement"""
@@ -39,6 +44,16 @@ class model_check(delay):
         self.wl_signal_names = ["Xsram.Xcontrol0.gated_clk_bar", "Xsram.Xcontrol0.Xbuf_wl_en.zb_int", "Xsram.wl_en0", "Xsram.Xbank0.Xwordline_driver0.wl_bar_15", "Xsram.Xbank0.wl_15"]
         self.rbl_en_signal_names = ["Xsram.Xcontrol0.gated_clk_bar", "Xsram.Xcontrol0.Xand2_rbl_in.zb_int", "Xsram.Xcontrol0.rbl_in", "Xsram.Xcontrol0.Xreplica_bitline.Xdelay_chain.dout_1", "Xsram.Xcontrol0.Xreplica_bitline.delayed_en"]
         self.sae_signal_names = ["Xsram.Xcontrol0.Xreplica_bitline.bl0_0", "Xsram.Xcontrol0.pre_s_en", "Xsram.Xcontrol0.Xbuf_s_en.zb_int", "Xsram.s_en0"]
+    
+    def get_all_signal_names(self):
+        """Returns all signals names as a dict indexed by hardcoded names. Useful for writing the head of the CSV."""
+        name_dict = {}
+        #Signal names are more descriptive than the measurement names, first value trimmed to match size of measurements names.
+        name_dict[self.wl_meas_name] = self.wl_signal_names[1:]
+        name_dict[self.wl_model_name] = name_dict["wl_measures"] #model uses same names as measured.
+        name_dict[self.sae_meas_name] = self.rbl_en_signal_names[1:]+self.sae_signal_names[1:]
+        name_dict[self.sae_model_name] = name_dict["sae_measures"]
+        return name_dict
     
     def create_measurement_objects(self):
         """Create the measurements used for read and write ports"""
@@ -181,10 +196,10 @@ class model_check(delay):
     def min_max_normalization(self, value_list):
         """Re-scales input values on a range from 0-1 where min(list)=0, max(list)=1"""
         scaled_values = []
-        min_val = min(value_list)
-        min_max_diff = max(value_list) - min_val
+        min_max_diff = max(value_list) - min(value_list)
+        average = sum(value_list)/len(value_list)
         for value in value_list:
-            scaled_values.append((value-min_val)/(min_max_diff))
+            scaled_values.append((value-average)/(min_max_diff))
         return scaled_values
         
     def calculate_error_l2_norm(self, list_a, list_b):    
@@ -193,6 +208,15 @@ class model_check(delay):
         for val_a, val_b in zip(list_a, list_b):
             error_list.append((val_a-val_b)**2)
         return error_list
+    
+    def compare_measured_and_model(self, measured_vals, model_vals):
+        """First scales both inputs into similar ranges and then compares the error between both."""
+        scaled_meas = self.min_max_normalization(measured_vals)
+        debug.info(1, "Scaled measurements:\n{}".format(scaled_meas))
+        scaled_model = self.min_max_normalization(model_vals)
+        debug.info(1, "Scaled model:\n{}".format(scaled_model))
+        errors = self.calculate_error_l2_norm(scaled_meas, scaled_model)
+        debug.info(1, "Errors:\n{}\n".format(errors))
         
     def analyze(self, probe_address, probe_data, slews, loads):
         """Measures entire delay path along the wordline and sense amp enable and compare it to the model delays."""
@@ -200,6 +224,7 @@ class model_check(delay):
         self.load=max(loads)
         self.slew=max(slews)
         self.create_measurement_objects()
+        data_dict = {}
         
         read_port = self.read_ports[0] #only test the first read port
         self.targ_read_ports = [read_port]
@@ -216,14 +241,18 @@ class model_check(delay):
         debug.info(1,"SAE model delays:\n\t {}".format(sae_model_delays))
         debug.info(1,"Measured SAE slews:\n\t {}".format(sae_slews[read_port]))
         
-        scaled_wl_meas = self.min_max_normalization(wl_delays[read_port])
-        debug.info(1, "Scaled wordline delays:\n{}".format(scaled_wl_meas))
-        scaled_wl_model = self.min_max_normalization(wl_model_delays)
-        debug.info(1, "Scaled wordline model:\n{}".format(scaled_wl_model))
-        errors = self.calculate_error_l2_norm(scaled_wl_meas, scaled_wl_model)
-        debug.info(1, "Model errors:\n{}".format(errors))
+        data_dict[self.wl_meas_name] = wl_delays[read_port]
+        data_dict[self.wl_model_name] = wl_model_delays
+        data_dict[self.sae_meas_name] = sae_delays[read_port]
+        data_dict[self.sae_model_name] = sae_model_delays
         
-        return wl_delays, sae_delays
+        #Some evaluations of the model and measured values
+        debug.info(1, "Comparing wordline measurements and model.")
+        self.compare_measured_and_model(wl_delays[read_port], wl_model_delays)
+        debug.info(1, "Comparing SAE measurements and model")
+        self.compare_measured_and_model(sae_delays[read_port], sae_model_delays)
+        
+        return data_dict
 
         
     

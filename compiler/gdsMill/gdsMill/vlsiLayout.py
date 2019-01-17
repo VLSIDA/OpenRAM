@@ -1,7 +1,8 @@
 from .gdsPrimitives import *
 from datetime import *
 #from mpmath import matrix
-from numpy import matrix
+#from numpy import matrix
+import numpy as np
 #import gdsPrimitives
 import debug
 
@@ -170,21 +171,20 @@ class VlsiLayout:
         else:
             # MRG: Added negative to make CCW rotate 8/29/18
             angle = math.radians(float(rotateAngle))
-        mRotate = matrix([[math.cos(angle),-math.sin(angle),0.0],
+        mRotate = np.array([[math.cos(angle),-math.sin(angle),0.0],
                           [math.sin(angle),math.cos(angle),0.0],
                           [0.0,0.0,1.0]])
         #set up the translation matrix
         translateX = float(coordinates[0])
         translateY = float(coordinates[1])
-        mTranslate = matrix([[1.0,0.0,translateX],[0.0,1.0,translateY],[0.0,0.0,1.0]])
+        mTranslate = np.array([[1.0,0.0,translateX],[0.0,1.0,translateY],[0.0,0.0,1.0]])
         #set up the scale matrix (handles mirror X)
         scaleX = 1.0
         if(transFlags[0]):
             scaleY = -1.0
         else:
             scaleY = 1.0
-        mScale = matrix([[scaleX,0.0,0.0],[0.0,scaleY,0.0],[0.0,0.0,1.0]])
-        
+        mScale = np.array([[scaleX,0.0,0.0],[0.0,scaleY,0.0],[0.0,0.0,1.0]])
         #we need to keep track of all transforms in the hierarchy
         #when we add an element to the xy tree, we apply all transforms from the bottom up
         transformPath.append((mRotate,mScale,mTranslate))
@@ -219,27 +219,26 @@ class VlsiLayout:
     
     def populateCoordinateMap(self):
         def addToXyTree(startingStructureName = None,transformPath = None):
-        #print("populateCoordinateMap")
-            uVector = matrix([1.0,0.0,0.0]).transpose()  #start with normal basis vectors
-            vVector = matrix([0.0,1.0,0.0]).transpose()
-            origin = matrix([0.0,0.0,1.0]).transpose() #and an origin (Z component is 1.0 to indicate position instead of vector)
+            uVector = np.array([[1.0],[0.0],[0.0]]) #start with normal basis vectors
+            vVector = np.array([[0.0],[1.0],[0.0]])
+            origin = np.array([[0.0],[0.0],[1.0]]) #and an origin (Z component is 1.0 to indicate position instead of vector)
             #make a copy of all the transforms and reverse it            
             reverseTransformPath = transformPath[:]
             if len(reverseTransformPath) > 1:
-                reverseTransformPath.reverse()               
+                reverseTransformPath.reverse()      
             #now go through each transform and apply them to our basis and origin in succession
             for transform in reverseTransformPath:
-                origin = transform[0] * origin  #rotate
-                uVector = transform[0] * uVector  #rotate
-                vVector = transform[0] * vVector  #rotate
-                origin = transform[1] * origin  #scale
-                uVector = transform[1] * uVector  #scale
-                vVector = transform[1] * vVector  #scale
-                origin = transform[2] * origin  #translate
+                origin = np.dot(transform[0], origin)  #rotate
+                uVector = np.dot(transform[0], uVector)  #rotate
+                vVector = np.dot(transform[0], vVector)  #rotate
+                origin = np.dot(transform[1], origin)  #scale
+                uVector = np.dot(transform[1], uVector)  #scale
+                vVector = np.dot(transform[1], vVector)  #scale
+                origin = np.dot(transform[2], origin)  #translate
                 #we don't need to do a translation on the basis vectors            
                 #uVector = transform[2] * uVector  #translate
                 #vVector = transform[2] * vVector  #translate
-            #populate the xyTree with each structureName and coordinate space                
+            #populate the xyTree with each structureName and coordinate space
             self.xyTree.append((startingStructureName,origin,uVector,vVector))
         self.traverseTheHierarchy(delegateFunction = addToXyTree)
         
@@ -522,8 +521,7 @@ class VlsiLayout:
         return True
         
                 
-    def fillAreaDensity(self, layerToFill = 0, offsetInMicrons = (0,0), coverageWidth = 100.0, coverageHeight = 100.0,
-                        minSpacing = 0.22, blockSize = 1.0):
+    def fillAreaDensity(self, layerToFill = 0, offsetInMicrons = (0,0), coverageWidth = 100.0, coverageHeight = 100.0, minSpacing = 0.22, blockSize = 1.0):
         effectiveBlock = blockSize+minSpacing
         widthInBlocks = int(coverageWidth/effectiveBlock)
         heightInBlocks = int(coverageHeight/effectiveBlock)
@@ -810,8 +808,8 @@ class VlsiLayout:
         # This is fixed to be:
         # |u[0] v[0]| |x| |x'|
         # |u[1] v[1]|x|y|=|y'|
-        x=coordinate[0]*uVector[0].item()+coordinate[1]*vVector[0].item()
-        y=coordinate[0]*uVector[1].item()+coordinate[1]*vVector[1].item()
+        x=coordinate[0]*uVector[0][0]+coordinate[1]*vVector[0][0]
+        y=coordinate[0]*uVector[1][0]+coordinate[1]*vVector[1][0]
         transformCoordinate=[x,y]
 
         return transformCoordinate
@@ -836,5 +834,3 @@ def boundaryArea(A):
     area_A=(A[2]-A[0])*(A[3]-A[1])
     return area_A
 
-
-    

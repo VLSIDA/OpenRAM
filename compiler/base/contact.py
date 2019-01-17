@@ -16,7 +16,9 @@ class contact(hierarchy_design.hierarchy_design):
     hierarchy as the contact.
     """
 
-    def __init__(self, layer_stack, dimensions=[1,1], implant_type=None, well_type=None):
+    def __init__(self, layer_stack, dimensions=[1,1], implant_type=None, well_type=None, name=""):
+        # This will ignore the name parameter since we can guarantee a unique name here
+        
         if implant_type or well_type:
             name = "{0}_{1}_{2}_{3}x{4}_{5}{6}".format(layer_stack[0],
                                                        layer_stack[1],
@@ -164,13 +166,13 @@ class contact(hierarchy_design.hierarchy_design):
         """ Get total power of a module  """
         return self.return_power()
 
-
+from sram_factory import factory
 # This is not instantiated and used for calculations only.
 # These are static 1x1 contacts to reuse in all the design modules.
-well = contact(layer_stack=("active", "contact", "metal1"))
-active = contact(layer_stack=("active", "contact", "poly"))
-poly = contact(layer_stack=("poly", "contact", "metal1"))
-m1m2 = contact(layer_stack=("metal1", "via1", "metal2"))
-m2m3 = contact(layer_stack=("metal2", "via2", "metal3"))
-m3m4 = contact(layer_stack=("metal3", "via3", "metal4"))
+well = factory.create(module_type="contact", layer_stack=("active", "contact", "metal1"))
+active = factory.create(module_type="contact", layer_stack=("active", "contact", "poly"))
+poly = factory.create(module_type="contact", layer_stack=("poly", "contact", "metal1"))
+m1m2 = factory.create(module_type="contact", layer_stack=("metal1", "via1", "metal2"))
+m2m3 = factory.create(module_type="contact", layer_stack=("metal2", "via2", "metal3"))
+m3m4 = factory.create(module_type="contact", layer_stack=("metal3", "via3", "metal4"))
 

@@ -1,10 +1,10 @@
 from tech import drc
 import debug
 from design import design
-from contact import contact
 from itertools import tee
 from vector import vector
 from vector3d import vector3d
+from sram_factory import factory
 
 class route(design):
     """ 
@@ -45,7 +45,9 @@ class route(design):
             self.horiz_layer_width = drc("minwidth_{0}".format(self.horiz_layer_name))
         
         # offset this by 1/2 the via size
-        self.c=contact(self.layer_stack, (self.num_vias, self.num_vias))
+        self.c=factory.create(module_type="contact",
+                              layer_stack=self.layer_stack,
+                              dimensions=(self.num_vias, self.num_vias))
 
 
     def create_wires(self):

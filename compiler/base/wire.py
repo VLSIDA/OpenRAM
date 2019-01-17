@@ -1,7 +1,7 @@
 from tech import drc
 import debug
-from contact import contact
 from path import path
+from sram_factory import factory
 
 class wire(path):
     """ 
@@ -37,15 +37,18 @@ class wire(path):
 
         self.horiz_layer_name = horiz_layer
         self.horiz_layer_width = drc("minwidth_{0}".format(horiz_layer))
-        via_connect = contact(self.layer_stack,
-                              (1, 1))
+        via_connect = factory.create(module_type="contact",
+                                     layer_stack=self.layer_stack,
+                                     dimensions=(1, 1))
         self.node_to_node = [drc("minwidth_" + str(self.horiz_layer_name)) + via_connect.width,
                              drc("minwidth_" + str(self.horiz_layer_name)) + via_connect.height]
 
     # create a 1x1 contact
     def create_vias(self):
         """ Add a via and corner square at every corner of the path."""
-        self.c=contact(self.layer_stack, (1, 1))
+        self.c=factory.create(module_type="contact",
+                              layer_stack=self.layer_stack,
+                              dimensions=(1, 1))
         c_width = self.c.width
         c_height = self.c.height
         

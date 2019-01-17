@@ -82,6 +82,7 @@ class options(optparse.Values):
     dff_array = "dff_array"
     dff = "dff"
     precharge_array = "precharge_array"
+    ptx = "ptx"
     replica_bitcell = "replica_bitcell"
     replica_bitline = "replica_bitline"
     sense_amp_array = "sense_amp_array"

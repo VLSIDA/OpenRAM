@@ -1,9 +1,9 @@
-import contact
 import pgate
 import debug
 from tech import drc, parameter, spice
 from vector import vector
 from globals import OPTS
+import contact
 from sram_factory import factory
 
 class pnor2(pgate.pgate):
@@ -72,15 +72,11 @@ class pnor2(pgate.pgate):
     def setup_layout_constants(self):
         """ Pre-compute some handy layout parameters. """
 
-        poly_contact = contact.contact(("poly","contact","metal1"))
-        m1m2_via = contact.contact(("metal1","via1","metal2"))
-        m2m3_via = contact.contact(("metal2","via2","metal3"))        
-        
         # metal spacing to allow contacts on any layer
-        self.input_spacing = max(self.poly_space + poly_contact.first_layer_width,
-                                 self.m1_space + m1m2_via.first_layer_width,
-                                 self.m2_space + m2m3_via.first_layer_width, 
-                                 self.m3_space + m2m3_via.second_layer_width)
+        self.input_spacing = max(self.poly_space + contact.poly.first_layer_width,
+                                 self.m1_space + contact.m1m2.first_layer_width,
+                                 self.m2_space + contact.m2m3.first_layer_width, 
+                                 self.m3_space + contact.m2m3.second_layer_width)
         
         # Compute the other pmos2 location, but determining offset to overlap the
         # source and drain pins

@@ -2,9 +2,9 @@ import design
 import debug
 from tech import drc, spice
 from vector import vector
-from contact import contact
 from globals import OPTS
 import path
+from sram_factory import factory
 
 class ptx(design.design):
     """
@@ -97,8 +97,9 @@ class ptx(design.design):
             
             
         # This is not actually instantiated but used for calculations
-        self.active_contact = contact(layer_stack=("active", "contact", "metal1"),
-                                      dimensions=(1, self.num_contacts))
+        self.active_contact = factory.create(module_type="contact",
+                                             layer_stack=("active", "contact", "metal1"),
+                                             dimensions=(1, self.num_contacts))
 
         
         # The contacted poly pitch (or uncontacted in an odd technology)

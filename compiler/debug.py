@@ -70,3 +70,6 @@ def info(lev, str):
         else:
             class_name=mod.__name__
         print("[{0}/{1}]: {2}".format(class_name,frm[0].f_code.co_name,str))
+        log("[{0}/{1}]: {2}".format(class_name,frm[0].f_code.co_name,str))
+
+

@@ -27,7 +27,6 @@ class datasheet():
                 self.html += row
 #            for item in self.description:
 #                self.html += item + ','
-            self.html += 'EOL'
             self.html += '-->'
 
         vlsi_logo = 0

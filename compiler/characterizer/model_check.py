@@ -33,8 +33,10 @@ class model_check(delay):
         self.wl_delay_meas_names = ["delay_wl_en_bar", "delay_wl_en", "delay_dvr_en_bar", "delay_wl"]
         self.wl_slew_meas_names = ["slew_wl_gated_clk_bar","slew_wl_en_bar", "slew_wl_en", "slew_drv_en_bar", "slew_wl"]
         
-        self.rbl_delay_meas_names = ["delay_gated_clk_nand", "delay_delay_chain_in", "delay_delay_chain_stage_1", "delay_delay_chain_stage_2"]
-        self.rbl_slew_meas_names = ["slew_rbl_gated_clk_bar","slew_gated_clk_nand", "slew_delay_chain_in", "slew_delay_chain_stage_1", "slew_delay_chain_stage_2"]
+        dc_delay_names = ["delay_delay_chain_stage_{}".format(stage) for stage in range(1,self.get_num_delay_stages()+1)]
+        self.rbl_delay_meas_names = ["delay_gated_clk_nand", "delay_delay_chain_in"]+dc_delay_names
+        dc_slew_names = ["slew_delay_chain_stage_{}".format(stage) for stage in range(1,self.get_num_delay_stages()+1)]
+        self.rbl_slew_meas_names = ["slew_rbl_gated_clk_bar","slew_gated_clk_nand", "slew_delay_chain_in"]+dc_slew_names
         self.sae_delay_meas_names = ["delay_pre_sen", "delay_sen_bar", "delay_sen"]
         self.sae_slew_meas_names = ["slew_replica_bl0", "slew_pre_sen", "slew_sen_bar", "slew_sen"]
        
@@ -42,7 +44,8 @@ class model_check(delay):
         delay.create_signal_names(self)
         #Signal names are all hardcoded, need to update to make it work for probe address and different configurations.
         self.wl_signal_names = ["Xsram.Xcontrol0.gated_clk_bar", "Xsram.Xcontrol0.Xbuf_wl_en.zb_int", "Xsram.wl_en0", "Xsram.Xbank0.Xwordline_driver0.wl_bar_15", "Xsram.Xbank0.wl_15"]
-        self.rbl_en_signal_names = ["Xsram.Xcontrol0.gated_clk_bar", "Xsram.Xcontrol0.Xand2_rbl_in.zb_int", "Xsram.Xcontrol0.rbl_in", "Xsram.Xcontrol0.Xreplica_bitline.Xdelay_chain.dout_1", "Xsram.Xcontrol0.Xreplica_bitline.delayed_en"]
+        delay_chain_signal_names = ["Xsram.Xcontrol0.Xreplica_bitline.Xdelay_chain.dout_{}".format(stage) for stage in range(1,self.get_num_delay_stages())] + ["Xsram.Xcontrol0.Xreplica_bitline.delayed_en"]
+        self.rbl_en_signal_names = ["Xsram.Xcontrol0.gated_clk_bar", "Xsram.Xcontrol0.Xand2_rbl_in.zb_int", "Xsram.Xcontrol0.rbl_in"] + delay_chain_signal_names
         self.sae_signal_names = ["Xsram.Xcontrol0.Xreplica_bitline.bl0_0", "Xsram.Xcontrol0.pre_s_en", "Xsram.Xcontrol0.Xbuf_s_en.zb_int", "Xsram.s_en0"]
     
     def get_all_signal_names(self):
@@ -178,7 +181,10 @@ class model_check(delay):
     def get_model_delays(self, port):
         """Get model delays based on port. Currently assumes single RW port."""
         return self.sram.control_logic_rw.get_wl_sen_delays()
-            
+     
+    def get_num_delay_stages(self):
+        return len(self.sram.control_logic_rw.replica_bitline.delay_fanout_list)
+     
     def scale_delays(self, delay_list):
         """Takes in a list of measured delays and convert it to simple units to easily compare to model values."""
         converted_values = []

@@ -530,7 +530,7 @@ class lib:
                         "sram_{0}_{1}_{2}".format(OPTS.word_size, OPTS.num_words, OPTS.tech_name),
                         OPTS.num_words,
                         OPTS.num_banks,
-                        OPTS.num_rw_ports,  
+                        OPTS.num_rw_ports,
                         OPTS.num_w_ports,
                         OPTS.num_r_ports,
                         OPTS.tech_name,
@@ -555,7 +555,7 @@ class lib:
             LVS = str(total_lvs_errors)
 
         datasheet.write("{0},{1},".format(DRC, LVS))
-
+        datasheet.write(str(self.sram.width * self.sram.height)+',')
         for port in self.all_ports:
             #DIN timings
             if port in self.write_ports:

@@ -3,8 +3,8 @@ import debug
 from tech import drc
 from vector import vector
 import contact
-from ptx import ptx
 from globals import OPTS
+from sram_factory import factory
 
 class single_level_column_mux(design.design):
     """
@@ -13,14 +13,10 @@ class single_level_column_mux(design.design):
     to minimum size. Default is 8x. Per Samira and Hodges-Jackson book:
     Column-mux transistors driven by the decoder must be sized for optimal speed
     """
+    def __init__(self, name, tx_size=8, bitcell_bl="bl", bitcell_br="br"):
 
-    # This is needed for different bitline spacings
-    unique_id = 1
-    
-    def __init__(self, tx_size=8, bitcell_bl="bl", bitcell_br="br"):
         self.tx_size = int(tx_size)
-        name="single_level_column_mux_{}_{}".format(self.tx_size,single_level_column_mux.unique_id)
-        single_level_column_mux.unique_id += 1
+
         design.design.__init__(self, name)
         debug.info(2, "create single column mux cell: {0}".format(name))
 
@@ -47,16 +43,11 @@ class single_level_column_mux(design.design):
         self.add_wells()
 
     def add_modules(self):
-        # This is just used for measurements,
-        # so don't add the module
-        from importlib import reload
-        c = reload(__import__(OPTS.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.bitcell)
-        self.bitcell = self.mod_bitcell()
+        self.bitcell = factory.create(module_type="bitcell")
 
         # Adds nmos_lower,nmos_upper to the module
         self.ptx_width = self.tx_size*drc("minwidth_tx")
-        self.nmos = ptx(width=self.ptx_width)
+        self.nmos = factory.create(module_type="ptx", width=self.ptx_width)
         self.add_mod(self.nmos)
 
         

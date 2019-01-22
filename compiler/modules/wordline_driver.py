@@ -5,9 +5,8 @@ import contact
 from math import log
 from math import sqrt
 import math
-from pinv import pinv
-from pnand2 import pnand2
 from vector import vector
+from sram_factory import factory
 from globals import OPTS
 
 class wordline_driver(design.design):
@@ -16,8 +15,8 @@ class wordline_driver(design.design):
     Generates the wordline-driver to drive the bitcell
     """
 
-    def __init__(self, rows):
-        design.design.__init__(self, "wordline_driver")
+    def __init__(self, name, rows):
+        design.design.__init__(self, name)
 
         self.rows = rows
         
@@ -53,13 +52,14 @@ class wordline_driver(design.design):
         # This is just used for measurements,
         # so don't add the module
 
-        self.inv = pinv()
+        self.inv = factory.create(module_type="pinv")
         self.add_mod(self.inv)
 
-        self.inv_no_output = pinv(route_output=False)
+        self.inv_no_output = factory.create(module_type="pinv",
+                                            route_output=False)
         self.add_mod(self.inv_no_output)
         
-        self.nand2 = pnand2()
+        self.nand2 = factory.create(module_type="pnand2")
         self.add_mod(self.nand2)
         
 

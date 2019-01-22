@@ -2,6 +2,7 @@ from math import log
 import design
 from tech import drc
 import debug
+from sram_factory import factory
 from vector import vector
 from globals import OPTS
 
@@ -11,8 +12,8 @@ class write_driver_array(design.design):
     Dynamically generated write driver array of all bitlines.
     """
 
-    def __init__(self, columns, word_size):
-        design.design.__init__(self, "write_driver_array")
+    def __init__(self, name, columns, word_size):
+        design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
 
         self.columns = columns
@@ -53,17 +54,12 @@ class write_driver_array(design.design):
         self.add_pin("gnd")
 
     def add_modules(self):
-        from importlib import reload
-        c = reload(__import__(OPTS.write_driver))
-        self.mod_write_driver = getattr(c, OPTS.write_driver)
-        self.driver = self.mod_write_driver("write_driver")
+        self.driver = factory.create(module_type="write_driver")
         self.add_mod(self.driver)
 
         # This is just used for measurements,
         # so don't add the module
-        c = reload(__import__(OPTS.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.bitcell)
-        self.bitcell = self.mod_bitcell()
+        self.bitcell = factory.create(module_type="bitcell")
 
     def create_write_array(self):
         self.driver_insts = {}

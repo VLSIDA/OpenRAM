@@ -1,10 +1,10 @@
 import debug
 import design
 from tech import drc
-from pinv import pinv
 from contact import contact
 from vector import vector
 from globals import OPTS
+from sram_factory import factory
 
 class delay_chain(design.design):
     """
@@ -13,12 +13,8 @@ class delay_chain(design.design):
     Usually, this will be constant, but it could have varied fanout.
     """
 
-    unique_id = 1
-
-    def __init__(self, fanout_list, name="delay_chain"):
+    def __init__(self, name, fanout_list):
         """init function"""
-        name = name+"_{}".format(delay_chain.unique_id)
-        delay_chain.unique_id += 1
         design.design.__init__(self, name)
 
         # Two fanouts are needed so that we can route the vdd/gnd connections
@@ -57,7 +53,7 @@ class delay_chain(design.design):
         self.add_pin("gnd")
 
     def add_modules(self):
-        self.inv = pinv(route_output=False)
+        self.inv = factory.create(module_type="pinv", route_output=False)
         self.add_mod(self.inv)
 
     def create_inverters(self):

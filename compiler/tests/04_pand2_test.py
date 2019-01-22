@@ -21,7 +21,7 @@ class pand2_test(openram_test):
         import pand2
 
         debug.info(2, "Testing pand2 gate 4x")
-        a = pand2.pand2(4)
+        a = pand2.pand2(name="pand2x4", size=4)
         self.local_check(a)
 
         globals.end_openram()

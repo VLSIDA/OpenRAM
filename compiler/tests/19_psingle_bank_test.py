@@ -10,15 +10,13 @@ sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
+from sram_factory import factory
 
 #@unittest.skip("SKIPPING 19_psingle_bank_test")
 class psingle_bank_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        global verify
-        import verify
-
         from bank import bank
         from sram_config import sram_config
         OPTS.bitcell = "pbitcell"
@@ -31,6 +29,7 @@ class psingle_bank_test(openram_test):
                         num_words=16)
         
         c.words_per_row=1
+        factory.reset()
         c.recompute_sizes()
         debug.info(1, "No column mux")
         name = "bank1_{0}rw_{1}w_{2}r_single".format(OPTS.num_rw_ports, OPTS.num_w_ports, OPTS.num_r_ports)
@@ -39,6 +38,7 @@ class psingle_bank_test(openram_test):
         
         c.num_words=32
         c.words_per_row=2
+        factory.reset()
         c.recompute_sizes()
         debug.info(1, "Two way column mux")
         name = "bank2_{0}rw_{1}w_{2}r_single".format(OPTS.num_rw_ports, OPTS.num_w_ports, OPTS.num_r_ports)
@@ -47,6 +47,7 @@ class psingle_bank_test(openram_test):
         
         c.num_words=64
         c.words_per_row=4
+        factory.reset()
         c.recompute_sizes()
         debug.info(1, "Four way column mux")
         name = "bank3_{0}rw_{1}w_{2}r_single".format(OPTS.num_rw_ports, OPTS.num_w_ports, OPTS.num_r_ports)
@@ -56,6 +57,7 @@ class psingle_bank_test(openram_test):
         c.word_size=2
         c.num_words=128
         c.words_per_row=8
+        factory.reset()
         c.recompute_sizes()
         debug.info(1, "Four way column mux")
         name = "bank4_{0}rw_{1}w_{2}r_single".format(OPTS.num_rw_ports, OPTS.num_w_ports, OPTS.num_r_ports)

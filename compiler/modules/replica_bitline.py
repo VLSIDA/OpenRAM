@@ -1,10 +1,8 @@
 import debug
 import design
 from tech import drc
-from pinv import pinv
 import contact
-from bitcell_array import bitcell_array
-from ptx import ptx
+from sram_factory import factory
 from vector import vector
 from globals import OPTS
 
@@ -15,7 +13,7 @@ class replica_bitline(design.design):
     line and rows is the height of the replica bit loads.
     """
 
-    def __init__(self, delay_fanout_list, bitcell_loads, name="replica_bitline"):
+    def __init__(self, name, delay_fanout_list, bitcell_loads):
         design.design.__init__(self, name)
 
         self.bitcell_loads = bitcell_loads
@@ -78,29 +76,25 @@ class replica_bitline(design.design):
     def add_modules(self):
         """ Add the modules for later usage """
 
-        from importlib import reload
-        #g = reload(__import__(OPTS.delay_chain))
-        #self.mod_delay_chain = getattr(g, OPTS.delay_chain)
-
-        g = reload(__import__(OPTS.replica_bitcell))
-        self.mod_replica_bitcell = getattr(g, OPTS.replica_bitcell)
-        
-        self.bitcell = self.replica_bitcell = self.mod_replica_bitcell()
-        self.add_mod(self.bitcell)
+        self.replica_bitcell = factory.create(module_type="replica_bitcell")
+        self.add_mod(self.replica_bitcell)
 
         # This is the replica bitline load column that is the height of our array
-        self.rbl = bitcell_array(cols=1, rows=self.bitcell_loads)
+        self.rbl = factory.create(module_type="bitcell_array",
+                                  cols=1,
+                                  rows=self.bitcell_loads)
         self.add_mod(self.rbl)
 
         # FIXME: The FO and depth of this should be tuned
-        from delay_chain import delay_chain
-        self.delay_chain = delay_chain(self.delay_fanout_list)
+        self.delay_chain = factory.create(module_type="delay_chain",
+                                          fanout_list=self.delay_fanout_list)
         self.add_mod(self.delay_chain)
 
-        self.inv = pinv()
+        self.inv = factory.create(module_type="pinv")
         self.add_mod(self.inv)
 
-        self.access_tx = ptx(tx_type="pmos")
+        self.access_tx = factory.create(module_type="ptx",
+                                        tx_type="pmos")
         self.add_mod(self.access_tx)
 
     def create_instances(self):
@@ -132,7 +126,6 @@ class replica_bitline(design.design):
         temp.append("vdd")
         temp.append("gnd")
         self.connect_inst(temp)
-        #self.connect_inst(["bl_0", "br_0", "delayed_en", "vdd", "gnd"])
 
         self.rbl_inst=self.add_inst(name="load",
                                     mod=self.rbl)

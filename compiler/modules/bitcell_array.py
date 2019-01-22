@@ -3,8 +3,7 @@ import design
 from tech import drc, spice
 from vector import vector
 from globals import OPTS
-
-unique_id = 1
+from sram_factory import factory
 
 class bitcell_array(design.design):
     """
@@ -12,13 +11,7 @@ class bitcell_array(design.design):
     and word line is connected by abutment.
     Connects the word lines and bit lines.
     """
-    unique_id = 1
-    
-    def __init__(self, cols, rows, name=""):
-
-        if name == "":
-            name = "bitcell_array_{0}x{1}_{2}".format(rows,cols,bitcell_array.unique_id)
-            bitcell_array.unique_id += 1
+    def __init__(self, cols, rows, name):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0} {1} x {2}".format(self.name, rows, cols))
 
@@ -83,11 +76,7 @@ class bitcell_array(design.design):
 
     def add_modules(self):
         """ Add the modules used in this design """
-
-        from importlib import reload
-        c = reload(__import__(OPTS.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.bitcell)
-        self.cell = self.mod_bitcell()
+        self.cell = factory.create(module_type="bitcell")
         self.add_mod(self.cell)
 
     def create_instances(self):

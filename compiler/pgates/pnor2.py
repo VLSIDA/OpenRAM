@@ -1,23 +1,18 @@
-import contact
 import pgate
 import debug
 from tech import drc, parameter, spice
-from ptx import ptx
 from vector import vector
 from globals import OPTS
+import contact
+from sram_factory import factory
 
 class pnor2(pgate.pgate):
     """
     This module generates gds of a parametrically sized 2-input nor.
     This model use ptx to generate a 2-input nor within a cetrain height.
     """
-
-    unique_id = 1
-    
-    def __init__(self, size=1, height=None):
+    def __init__(self, name, size=1, height=None):
         """ Creates a cell for a simple 2 input nor """
-        name = "pnor2_{0}".format(pnor2.unique_id)
-        pnor2.unique_id += 1
         pgate.pgate.__init__(self, name, height)
         debug.info(2, "create pnor2 structure {0} with size of {1}".format(name, size))
 
@@ -58,32 +53,30 @@ class pnor2(pgate.pgate):
 
     def create_ptx(self):
         """ Create the PMOS and NMOS transistors. """
-        self.nmos = ptx(width=self.nmos_width,
-                        mults=self.tx_mults,
-                        tx_type="nmos",
-                        connect_poly=True,
-                        connect_active=True)
+        self.nmos = factory.create(module_type="ptx",
+                                   width=self.nmos_width,
+                                   mults=self.tx_mults,
+                                   tx_type="nmos",
+                                   connect_poly=True,
+                                   connect_active=True)
         self.add_mod(self.nmos)
 
-        self.pmos = ptx(width=self.pmos_width,
-                        mults=self.tx_mults,
-                        tx_type="pmos",
-                        connect_poly=True,
-                        connect_active=True)
+        self.pmos = factory.create(module_type="ptx",
+                                   width=self.pmos_width,
+                                   mults=self.tx_mults,
+                                   tx_type="pmos",
+                                   connect_poly=True,
+                                   connect_active=True)
         self.add_mod(self.pmos)
 
     def setup_layout_constants(self):
         """ Pre-compute some handy layout parameters. """
 
-        poly_contact = contact.contact(("poly","contact","metal1"))
-        m1m2_via = contact.contact(("metal1","via1","metal2"))
-        m2m3_via = contact.contact(("metal2","via2","metal3"))        
-        
         # metal spacing to allow contacts on any layer
-        self.input_spacing = max(self.poly_space + poly_contact.first_layer_width,
-                                 self.m1_space + m1m2_via.first_layer_width,
-                                 self.m2_space + m2m3_via.first_layer_width, 
-                                 self.m3_space + m2m3_via.second_layer_width)
+        self.input_spacing = max(self.poly_space + contact.poly.first_layer_width,
+                                 self.m1_space + contact.m1m2.first_layer_width,
+                                 self.m2_space + contact.m2m3.first_layer_width, 
+                                 self.m3_space + contact.m2m3.second_layer_width)
         
         # Compute the other pmos2 location, but determining offset to overlap the
         # source and drain pins

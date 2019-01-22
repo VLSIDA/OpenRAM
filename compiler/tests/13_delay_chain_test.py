@@ -18,7 +18,7 @@ class delay_chain_test(openram_test):
         import delay_chain
 
         debug.info(2, "Testing delay_chain")
-        a = delay_chain.delay_chain(fanout_list=[4, 4, 4, 4])
+        a = delay_chain.delay_chain(name="dc", fanout_list=[4, 4, 4, 4])
         self.local_check(a)
 
         globals.end_openram()

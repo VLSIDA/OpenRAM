@@ -3,28 +3,18 @@ from tech import drc
 from math import log
 from vector import vector
 from globals import OPTS
-from pinv import pinv
 import pgate
+from sram_factory import factory
 
 class pbuf(pgate.pgate):
     """
     This is a simple buffer used for driving loads. 
     """
-    from importlib import reload
-    c = reload(__import__(OPTS.bitcell))
-    bitcell = getattr(c, OPTS.bitcell)
-
-    unique_id = 1
-
-    def __init__(self, size=4, height=None, name=""):
-
+    def __init__(self, name, size=4, height=None):
+        
         self.stage_effort = 4
         self.size = size
         self.height = height
-
-        if name=="":
-            name = "pbuf_{0}_{1}".format(self.size, pbuf.unique_id)
-            pbuf.unique_id += 1
 
         pgate.pgate.__init__(self, name, height)
         debug.info(1, "creating {0} with size of {1}".format(self.name,self.size))
@@ -54,10 +44,10 @@ class pbuf(pgate.pgate):
     def create_modules(self):
         # Shield the cap, but have at least a stage effort of 4
         input_size = max(1,int(self.size/self.stage_effort))
-        self.inv1 = pinv(size=input_size, height=self.height) 
+        self.inv1 = factory.create(module_type="pinv", size=input_size, height=self.height) 
         self.add_mod(self.inv1)
         
-        self.inv2 = pinv(size=self.size, height=self.height)
+        self.inv2 = factory.create(module_type="pinv", size=self.size, height=self.height)
         self.add_mod(self.inv2)
 
     def create_insts(self):

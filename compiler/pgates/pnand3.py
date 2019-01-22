@@ -2,22 +2,17 @@ import contact
 import pgate
 import debug
 from tech import drc, parameter, spice
-from ptx import ptx
 from vector import vector
 from globals import OPTS
+from sram_factory import factory
 
 class pnand3(pgate.pgate):
     """
     This module generates gds of a parametrically sized 2-input nand.
     This model use ptx to generate a 2-input nand within a cetrain height.
     """
-
-    unique_id = 1
-    
-    def __init__(self, size=1, height=None):
+    def __init__(self, name, size=1, height=None):
         """ Creates a cell for a simple 3 input nand """
-        name = "pnand3_{0}".format(pnand3.unique_id)
-        pnand3.unique_id += 1
         pgate.pgate.__init__(self, name, height)
         debug.info(2, "create pnand3 structure {0} with size of {1}".format(name, size))
 
@@ -61,18 +56,20 @@ class pnand3(pgate.pgate):
 
     def add_ptx(self):
         """ Create the PMOS and NMOS transistors. """
-        self.nmos = ptx(width=self.nmos_width,
-                        mults=self.tx_mults,
-                        tx_type="nmos",
-                        connect_poly=True,
-                        connect_active=True)
+        self.nmos = factory.create(module_type="ptx",
+                                   width=self.nmos_width,
+                                   mults=self.tx_mults,
+                                   tx_type="nmos",
+                                   connect_poly=True,
+                                   connect_active=True)
         self.add_mod(self.nmos)
 
-        self.pmos = ptx(width=self.pmos_width,
-                        mults=self.tx_mults,
-                        tx_type="pmos",
-                        connect_poly=True,
-                        connect_active=True)
+        self.pmos = factory.create(module_type="ptx",
+                                   width=self.pmos_width,
+                                   mults=self.tx_mults,
+                                   tx_type="pmos",
+                                   connect_poly=True,
+                                   connect_active=True)
         self.add_mod(self.pmos)
 
     def setup_layout_constants(self):
@@ -93,7 +90,7 @@ class pnand3(pgate.pgate):
         self.output_pos = vector(0,0.5*self.height)
 
         # This is the extra space needed to ensure DRC rules to the active contacts
-        nmos = ptx(tx_type="nmos")
+        nmos = factory.create(module_type="ptx", tx_type="nmos")
         extra_contact_space = max(-nmos.get_pin("D").by(),0)
         # This is a poly-to-poly of a flipped cell
         self.top_bottom_space = max(0.5*self.m1_width + self.m1_space + extra_contact_space, 

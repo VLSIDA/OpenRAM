@@ -2,9 +2,9 @@ import design
 import debug
 from tech import drc, spice
 from vector import vector
-from contact import contact
 from globals import OPTS
 import path
+from sram_factory import factory
 
 class ptx(design.design):
     """
@@ -15,7 +15,7 @@ class ptx(design.design):
     you to connect the fingered gates and active for parallel devices.
 
     """
-    def __init__(self, width=drc("minwidth_tx"), mults=1, tx_type="nmos", connect_active=False, connect_poly=False, num_contacts=None):
+    def __init__(self, name="", width=drc("minwidth_tx"), mults=1, tx_type="nmos", connect_active=False, connect_poly=False, num_contacts=None):
         # We need to keep unique names because outputting to GDSII
         # will use the last record with a given name. I.e., you will
         # over-write a design in GDS if one has and the other doesn't
@@ -97,8 +97,9 @@ class ptx(design.design):
             
             
         # This is not actually instantiated but used for calculations
-        self.active_contact = contact(layer_stack=("active", "contact", "metal1"),
-                                      dimensions=(1, self.num_contacts))
+        self.active_contact = factory.create(module_type="contact",
+                                             layer_stack=("active", "contact", "metal1"),
+                                             dimensions=(1, self.num_contacts))
 
         
         # The contacted poly pitch (or uncontacted in an odd technology)

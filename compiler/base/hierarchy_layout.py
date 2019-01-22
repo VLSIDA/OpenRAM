@@ -378,11 +378,12 @@ class layout():
     
     def add_via(self, layers, offset, size=[1,1], mirror="R0", rotate=0, implant_type=None, well_type=None):
         """ Add a three layer via structure. """
-        import contact
-        via = contact.contact(layer_stack=layers,
-                              dimensions=size,
-                              implant_type=implant_type,
-                              well_type=well_type)
+        from sram_factory import factory
+        via = factory.create(module_type="contact",
+                             layer_stack=layers,
+                             dimensions=size,
+                             implant_type=implant_type,
+                             well_type=well_type)
         self.add_mod(via)
         inst=self.add_inst(name=via.name, 
                            mod=via, 
@@ -395,11 +396,12 @@ class layout():
 
     def add_via_center(self, layers, offset, size=[1,1], mirror="R0", rotate=0, implant_type=None, well_type=None):
         """ Add a three layer via structure by the center coordinate accounting for mirroring and rotation. """
-        import contact
-        via = contact.contact(layer_stack=layers,
-                              dimensions=size,
-                              implant_type=implant_type,
-                              well_type=well_type)
+        from sram_factory import factory
+        via = factory.create(module_type="contact",
+                             layer_stack=layers,
+                             dimensions=size,
+                             implant_type=implant_type,
+                             well_type=well_type)
         height = via.height
         width = via.width
         debug.check(mirror=="R0","Use rotate to rotate vias instead of mirror.")
@@ -1039,9 +1041,11 @@ class layout():
 
         # Find the number of vias for this pitch
         self.supply_vias = 1
-        import contact
+        from sram_factory import factory
         while True:
-            c=contact.contact(("metal1","via1","metal2"), (self.supply_vias, self.supply_vias))
+            c=factory.create(module_type="contact",
+                             layer_stack=("metal1","via1","metal2"),
+                             dimensions=(self.supply_vias, self.supply_vias))
             if c.second_layer_width < self.supply_rail_width and c.second_layer_height < self.supply_rail_width:
                 self.supply_vias += 1
             else:

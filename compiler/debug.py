@@ -48,7 +48,6 @@ def print_raw(str):
 
 
 def log(str):
-    print(str(log.create_file) + '\n')
     if log.create_file:
         compile_log = open(globals.OPTS.output_path +
                            globals.OPTS.output_name + '.log', "w")

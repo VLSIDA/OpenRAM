@@ -235,7 +235,7 @@ class model_check(delay):
         read_port = self.read_ports[0] #only test the first read port
         self.targ_read_ports = [read_port]
         self.targ_write_ports = [self.write_ports[0]]
-        debug.info(1,"Bitline swing test: corner {}".format(self.corner))
+        debug.info(1,"Model test: corner {}".format(self.corner))
         (success, wl_delays, sae_delays, wl_slews, sae_slews)=self.run_delay_simulation()
         debug.check(success, "Model measurements Failed: period={}".format(self.period))
         wl_model_delays, sae_model_delays = self.get_model_delays(read_port)

@@ -1,3 +1,0 @@
-word_size,num_words,words_per_row,Xsram.Xcontrol0.Xbuf_wl_en.zb_int,Xsram.wl_en0,Xsram.Xbank0.Xwordline_driver0.wl_bar_15,Xsram.Xbank0.wl_15
-1,16,1,0.1257435,0.0364958,0.051171100000000004,0.020759299999999998
-4,16,1,0.124175,0.03654059999999999,0.0507837,0.0433494

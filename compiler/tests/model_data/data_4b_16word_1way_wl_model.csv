@@ -1,0 +1,3 @@
+word_size,num_words,words_per_row,process,voltage,temp,Xsram.Xcontrol0.Xbuf_wl_en.zb_int,Xsram.wl_en0,Xsram.Xbank0.Xwordline_driver0.wl_bar_15,Xsram.Xbank0.wl_15
+4,16,1,TT,1.0,25,4.4,12.4,5.8,5.4
+4,16,1,FF,1.0,25,4.4,12.4,5.8,5.4

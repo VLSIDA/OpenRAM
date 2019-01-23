@@ -271,7 +271,12 @@ spice["fet_models"] = { "TT" : [SPICE_MODEL_DIR+"/models_nom/PMOS_VTG.inc",SPICE
                         "FF" : [SPICE_MODEL_DIR+"/models_ff/PMOS_VTG.inc",SPICE_MODEL_DIR+"/models_ff/NMOS_VTG.inc"],
                         "SF" : [SPICE_MODEL_DIR+"/models_ss/PMOS_VTG.inc",SPICE_MODEL_DIR+"/models_ff/NMOS_VTG.inc"],
                         "FS" : [SPICE_MODEL_DIR+"/models_ff/PMOS_VTG.inc",SPICE_MODEL_DIR+"/models_ss/NMOS_VTG.inc"],
-                        "SS" : [SPICE_MODEL_DIR+"/models_ss/PMOS_VTG.inc",SPICE_MODEL_DIR+"/models_ss/NMOS_VTG.inc"]}
+                        "SS" : [SPICE_MODEL_DIR+"/models_ss/PMOS_VTG.inc",SPICE_MODEL_DIR+"/models_ss/NMOS_VTG.inc"],
+                        "ST" : [SPICE_MODEL_DIR+"/models_ss/PMOS_VTG.inc",SPICE_MODEL_DIR+"/models_nom/NMOS_VTG.inc"],
+                        "TS" : [SPICE_MODEL_DIR+"/models_nom/PMOS_VTG.inc",SPICE_MODEL_DIR+"/models_ss/NMOS_VTG.inc"],
+                        "FT" : [SPICE_MODEL_DIR+"/models_ff/PMOS_VTG.inc",SPICE_MODEL_DIR+"/models_nom/NMOS_VTG.inc"],
+                        "TF" : [SPICE_MODEL_DIR+"/models_nom/PMOS_VTG.inc",SPICE_MODEL_DIR+"/models_ff/NMOS_VTG.inc"],
+                        }
 
 #spice stimulus related variables
 spice["feasible_period"] = 5         # estimated feasible period in ns

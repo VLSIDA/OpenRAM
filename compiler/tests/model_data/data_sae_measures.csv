@@ -1,3 +1,0 @@
-word_size,num_words,words_per_row,Xsram.Xcontrol0.Xand2_rbl_in.zb_int,Xsram.Xcontrol0.rbl_in,Xsram.Xcontrol0.Xreplica_bitline.Xdelay_chain.dout_1,Xsram.Xcontrol0.Xreplica_bitline.delayed_en,Xsram.Xcontrol0.pre_s_en,Xsram.Xcontrol0.Xbuf_s_en.zb_int,Xsram.s_en0
-1,16,1,0.1073407,0.010667,0.1317698,0.0910598,0.04802989999999999,0.1304522,0.0164942
-4,16,1,0.10635089999999998,0.010598499999999999,0.1315219,0.0911604,0.048601,0.12349109999999999,0.05874360000000001

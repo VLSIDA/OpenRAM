@@ -21,30 +21,33 @@ class data_collection(openram_test):
     def runTest(self):
         self.init_data_gen()
      
+        word_size, num_words, words_per_row = 4, 16, 1 
+        self.evalulate_sram_on_corners(word_size, num_words, words_per_row)
+        globals.end_openram()
+    
+    def evalulate_sram_on_corners(self, word_size, num_words, words_per_row):
+        """Performs corner analysis on a single SRAM configuration"""
+        self.create_sram(word_size, num_words, words_per_row)
         #Run on one size to initialize CSV writing (csv names come from return value). Strange, but it is okay for now.
-        sram_data = self.get_sram_data(1,16,1)
-        self.initialize_csv_file(sram_data)
+        corner_gen = self.corner_combination_generator()
+        init_corner = next(corner_gen)
+        sram_data = self.get_sram_data(init_corner)
+        self.initialize_csv_file(sram_data, word_size, num_words, words_per_row)
+        self.add_sram_data_to_csv(sram_data, word_size, num_words, words_per_row, init_corner) 
         
-        self.add_sram_data_to_csv(sram_data, 1, 16, 1) 
-        
-        #Run openRAM for several size configurations
-        #word_size_list, num_word_list, words_per_row_list = self.get_sram_configs()
-        word_size_list, num_word_list, words_per_row_list = [4], [16], [1] #for quick testing.
-        for word_size in word_size_list:
-            for num_word in num_word_list:
-                for words_per_row in words_per_row_list:
-                    #Unfortunately, init needs to be called everytime
-                    self.init_data_gen()
-                    sram_data = self.get_sram_data(word_size, num_word, words_per_row)
-                    self.add_sram_data_to_csv(sram_data, word_size, num_word, words_per_row)
-        
+        #Run openRAM for all corners
+        for corner in corner_gen:
+            sram_data = self.get_sram_data(corner)
+            self.add_sram_data_to_csv(sram_data, word_size, num_words, words_per_row, corner)
+            
         self.close_files()
         debug.info(1,"Data Generated")
-        globals.end_openram()
         
     def init_data_gen(self):
         """Initialization for the data test to run"""
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_data")
+        if OPTS.tech_name == "scmos":
+            debug.warning("Device models not up to date with scn4m technology.")
         OPTS.spice_name="hspice" #Much faster than ngspice.
         OPTS.trim_netlist = False
         OPTS.netlist_only = True
@@ -58,7 +61,18 @@ class data_collection(openram_test):
         """Closes all files stored in the file dict"""
         for key,file in self.csv_files.items():
             file.close()
-            
+   
+    def corner_combination_generator(self):
+        """Generates corner using a combination of values from config file"""
+        processes = OPTS.process_corners
+        voltages = OPTS.supply_voltages
+        temperatures = OPTS.temperatures
+        for proc in processes:
+            for volt in voltages:
+                for temp in temperatures:
+                    yield (proc, volt, temp)
+        
+        
     def get_sram_configs(self):
         """Generate lists of wordsizes, number of words, and column mux size (words per row) to be tested."""
         min_word_size = 1
@@ -70,28 +84,32 @@ class data_collection(openram_test):
         words_per_row = [1]
         return word_sizes, num_words, words_per_row
     
-    def add_sram_data_to_csv(self, sram_data, word_size, num_words, words_per_row):
+    def add_sram_data_to_csv(self, sram_data, word_size, num_words, words_per_row, corner):
         """Writes data to its respective CSV file. There is a CSV for each measurement target (wordline, sense amp enable, and models)"""
-        sram_specs = [word_size,num_words,words_per_row]
+        sram_specs = [word_size,num_words,words_per_row,*corner]
         for data_name, data_values in sram_data.items():
             self.csv_writers[data_name].writerow(sram_specs+sram_data[data_name])
         debug.info(2,"Data Added to CSV file.")
     
-    def initialize_csv_file(self, sram_data):
+    def initialize_csv_file(self, sram_data, word_size, num_words, words_per_row):
         """Opens a CSV file and writer for every data set being written (wl/sae measurements and model values)"""
         #CSV File writing
         header_dict = self.delay_obj.get_all_signal_names()
         self.csv_files = {}
         self.csv_writers = {}
         for data_name, header_list in header_dict.items():
-            self.csv_files[data_name] = open('{}data_{}.csv'.format(MODEL_DIR,data_name), 'w')
-            fields = ('word_size', 'num_words', 'words_per_row', *header_list)
+            file_name = '{}data_{}b_{}word_{}way_{}.csv'.format(MODEL_DIR,
+                                                                word_size, 
+                                                                num_words, 
+                                                                words_per_row, 
+                                                                data_name)
+            self.csv_files[data_name] = open(file_name, 'w')
+            fields = ('word_size', 'num_words', 'words_per_row', 'process', 'voltage', 'temp', *header_list)
             self.csv_writers[data_name] = csv.writer(self.csv_files[data_name], lineterminator = '\n')
             self.csv_writers[data_name].writerow(fields)
-        
-    def get_sram_data(self, word_size, num_words, words_per_row):
-        """Generates the SRAM based on input configuration and returns the data."""
-        from characterizer import model_check
+    
+    def create_sram(self, word_size, num_words, words_per_row):
+        """Generates the SRAM based on input configuration."""
         c = sram_config(word_size=word_size,
                         num_words=num_words,
                         num_banks=1)
@@ -99,19 +117,21 @@ class data_collection(openram_test):
         #if word_size*num_words < 256:
         c.words_per_row=words_per_row #Force no column mux until incorporated into analytical delay.
             
-        debug.info(1, "Getting data for {} bit, {} words SRAM with 1 bank".format(word_size, num_words))
-        s = sram(c, name="sram_{}ws_{}words".format(word_size, num_words))
+        debug.info(1, "Creating SRAM: {} bit, {} words, with 1 bank".format(word_size, num_words))
+        self.sram = sram(c, name="sram_{}ws_{}words".format(word_size, num_words))
 
-        tempspice = OPTS.openram_temp + "temp.sp"
-        s.sp_write(tempspice)
-
-        corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
-        self.delay_obj = model_check(s.s, tempspice, corner)
+        self.sram_spice = OPTS.openram_temp + "temp.sp"
+        self.sram.sp_write(self.sram_spice)
+        
+    def get_sram_data(self, corner):
+        """Generates the delay object using the corner and runs a simulation for data."""
+        from characterizer import model_check
+        self.delay_obj = model_check(self.sram.s, self.sram_spice, corner)
         
         import tech
         #Only 1 at a time
-        probe_address = "1" * s.s.addr_size
-        probe_data = s.s.word_size - 1
+        probe_address = "1" * self.sram.s.addr_size
+        probe_data = self.sram.s.word_size - 1
         loads = [tech.spice["msflop_in_cap"]*4]
         slews = [tech.spice["rise_time"]*2]
 

@@ -614,7 +614,7 @@ class replica_bitline(design.design):
         
         #The delay chain triggers the enable on the replica bitline (rbl). This is used to track the bitline delay whereas this
         #model is intended to track every but that. Therefore, the next stage is the inverter after the rbl. 
-        stage2 = self.inv.get_effort_stage(ext_cout, last_stage_is_rise)
+        stage2 = self.inv.get_stage_effort(ext_cout, last_stage_is_rise)
         stage_effort_list.append(stage2)
         
         return stage_effort_list

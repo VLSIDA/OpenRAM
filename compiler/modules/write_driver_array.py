@@ -130,3 +130,7 @@ class write_driver_array(design.design):
                        
                        
 
+    def get_w_en_cin(self):
+        """Get the relative capacitance of all the enable connections in the bank"""
+        #The enable is connected to a nand2 for every row.
+        return self.driver.get_w_en_cin() * len(self.driver_insts)

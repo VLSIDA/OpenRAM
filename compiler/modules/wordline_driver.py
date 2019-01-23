@@ -224,11 +224,11 @@ class wordline_driver(design.design):
         stage_effort_list = []
         
         stage1_cout = self.inv.get_cin()
-        stage1 = self.nand2.get_effort_stage(stage1_cout, inp_is_rise)
+        stage1 = self.nand2.get_stage_effort(stage1_cout, inp_is_rise)
         stage_effort_list.append(stage1)
         last_stage_is_rise = stage1.is_rise
         
-        stage2 = self.inv.get_effort_stage(external_cout, last_stage_is_rise)
+        stage2 = self.inv.get_stage_effort(external_cout, last_stage_is_rise)
         stage_effort_list.append(stage2)
         
         return stage_effort_list

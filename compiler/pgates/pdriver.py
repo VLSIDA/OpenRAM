@@ -11,16 +11,16 @@ class pdriver(pgate.pgate):
     """
     This instantiates an even or odd number of inverters sized for driving a load.
     """
-    def __init__(self, name, neg_polarity=False, fanout_size=8, size_list = [], height=None):
+    def __init__(self, name, neg_polarity=False, fanout=0, size_list=None, height=None):
 
         self.stage_effort = 4
         self.height = height 
         self.neg_polarity = neg_polarity
         self.size_list = size_list
-        self.fanout_size = fanout_size
+        self.fanout = fanout
 
-        if len(self.size_list) > 0 and (self.fanout_size != 8 or self.neg_polarity):
-            debug.error("Cannot specify both size_list and neg_polarity or fanout_size.", -1)
+        if self.size_list and (self.fanout != 0 or self.neg_polarity):
+            debug.error("Cannot specify both size_list and neg_polarity or fanout.", -1)
  
         pgate.pgate.__init__(self, name, height) 
         debug.info(1, "Creating {}".format(self.name))
@@ -33,14 +33,14 @@ class pdriver(pgate.pgate):
 
     def compute_sizes(self):
         # size_list specified
-        if len(self.size_list) > 0:
+        if self.size_list:
             if not len(self.size_list) % 2:
                 neg_polarity = True
             self.num_inv = len(self.size_list)
         else:
             # find the number of stages
-            #fanout_size is a unit inverter fanout, not a capacitance so c_in=1
-            num_stages = max(1,int(round(log(self.fanout_size)/log(4))))
+            #fanout is a unit inverter fanout, not a capacitance so c_in=1
+            num_stages = max(1,int(round(log(self.fanout)/log(4))))
 
             # find inv_num and compute sizes
             if self.neg_polarity:
@@ -53,42 +53,42 @@ class pdriver(pgate.pgate):
                     self.same_polarity(num_stages=num_stages)
                 else:
                     self.diff_polarity(num_stages=num_stages)
-            
+
 
     def same_polarity(self, num_stages):
-        self.calc_size_list = []
+        self.size_list = []
         self.num_inv = num_stages
         # compute sizes
-        fanout_size_prev = self.fanout_size
+        fanout_prev = self.fanout
         for x in range(self.num_inv-1,-1,-1):
-            fanout_size_prev = int(round(fanout_size_prev/self.stage_effort))
-            self.calc_size_list.append(fanout_size_prev)
+            fanout_prev = max(round(fanout_prev/self.stage_effort),1)
+            self.size_list.append(fanout_prev)
+        self.size_list.reverse()
 
 
     def diff_polarity(self, num_stages):
-        self.calc_size_list = []
+        self.size_list = []
         # find which delay is smaller
         if (num_stages > 1):
-            delay_below = ((num_stages-1)*(self.fanout_size**(1/num_stages-1))) + num_stages-1
-            delay_above = ((num_stages+1)*(self.fanout_size**(1/num_stages+1))) + num_stages+1
+            delay_below = ((num_stages-1)*(self.fanout**(1/num_stages-1))) + num_stages-1
+            delay_above = ((num_stages+1)*(self.fanout**(1/num_stages+1))) + num_stages+1
             if (delay_above < delay_below):
                 # recompute stage_effort for this delay
                 self.num_inv = num_stages+1
-                polarity_stage_effort = self.fanout_size**(1/self.num_inv)
+                polarity_stage_effort = self.fanout**(1/self.num_inv)
             else:
                 self.num_inv = num_stages-1
-                polarity_stage_effort = self.fanout_size**(1/self.num_inv)
+                polarity_stage_effort = self.fanout**(1/self.num_inv)
         else: # num_stages is 1, can't go to 0
             self.num_inv = num_stages+1
-            polarity_stage_effort = self.fanout_size**(1/self.num_inv)
+            polarity_stage_effort = self.fanout**(1/self.num_inv)
 
         
-        # compute sizes
-        fanout_size_prev = self.fanout_size
+        fanout_prev = self.fanout
         for x in range(self.num_inv-1,-1,-1):
-            fanout_size_prev = int(round(fanout_size_prev/polarity_stage_effort))
-            self.calc_size_list.append(fanout_size_prev)
-
+            fanout_prev = round(fanout_prev/polarity_stage_effort)
+            self.size_list.append(fanout_prev)
+        self.size_list.reverse()
 
     def create_netlist(self):
         inv_list = []
@@ -115,16 +115,10 @@ class pdriver(pgate.pgate):
 
     def add_modules(self):     
         self.inv_list = []
-        if len(self.size_list) > 0: # size list specified
-            for x in range(len(self.size_list)):
-                temp_inv = factory.create(module_type="pinv", size=self.size_list[x], height=self.height)
-                self.inv_list.append(temp_inv)
-                self.add_mod(self.inv_list[x])
-        else: # find inv sizes
-            for x in range(len(self.calc_size_list)):
-                temp_inv = factory.create(module_type="pinv", size=self.calc_size_list[x], height=self.height)
-                self.inv_list.append(temp_inv)
-                self.add_mod(self.inv_list[x])
+        for size in self.size_list:
+            temp_inv = factory.create(module_type="pinv", size=size, height=self.height)
+            self.inv_list.append(temp_inv)
+            self.add_mod(temp_inv)
     
     
     def create_insts(self):
@@ -226,3 +220,24 @@ class pdriver(pgate.pgate):
         return delay
 
 
+    def get_stage_efforts(self, external_cout, inp_is_rise=False):
+        """Get the stage efforts of the A -> Z path"""
+
+        cout_list = {}
+        for prev_inv,inv in zip(self.inv_list, self.inv_list[1:]):
+            cout_list[prev_inv]=inv.get_cin()
+            
+        cout_list[self.inv_list[-1]]=external_cout
+        
+        stage_effort_list = []
+        last_inp_is_rise = inp_is_rise
+        for inv in self.inv_list:
+            stage = inv.get_stage_effort(cout_list[inv], last_inp_is_rise)
+            stage_effort_list.append(stage)
+            last_inp_is_rise = stage.is_rise
+            
+        return stage_effort_list
+
+    def get_cin(self):
+        """Returns the relative capacitance of the input"""
+        return self.inv_list[0].get_cin()

@@ -230,7 +230,7 @@ class delay_chain(design.design):
             stage_cout = self.inv.get_cin()*(stage_fanout+1) 
             if len(stage_effort_list) == len(self.fanout_list)-1: #last stage
                 stage_cout+=ext_delayed_en_cout
-            stage = self.inv.get_effort_stage(stage_cout, last_stage_is_rise)
+            stage = self.inv.get_stage_effort(stage_cout, last_stage_is_rise)
             stage_effort_list.append(stage)
             last_stage_is_rise = stage.is_rise
             

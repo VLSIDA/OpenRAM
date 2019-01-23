@@ -279,20 +279,23 @@ class sram_base(design, verilog, lef):
         
         # Create the control logic module for each port type
         if len(self.readwrite_ports)>0:
-            self.control_logic_rw = self.mod_control_logic(num_rows=self.num_rows, 
+            self.control_logic_rw = self.mod_control_logic(num_rows=self.num_rows,
                                                            words_per_row=self.words_per_row,
+                                                           word_size=self.word_size,
                                                            sram=self, 
                                                            port_type="rw")
             self.add_mod(self.control_logic_rw)
         if len(self.writeonly_ports)>0:
             self.control_logic_w = self.mod_control_logic(num_rows=self.num_rows, 
                                                           words_per_row=self.words_per_row,
+                                                          word_size=self.word_size,
                                                           sram=self, 
                                                           port_type="w")
             self.add_mod(self.control_logic_w)
         if len(self.readonly_ports)>0:
             self.control_logic_r = self.mod_control_logic(num_rows=self.num_rows, 
                                                           words_per_row=self.words_per_row,
+                                                          word_size=self.word_size,
                                                           sram=self, 
                                                           port_type="r")
             self.add_mod(self.control_logic_r)
@@ -512,25 +515,30 @@ class sram_base(design, verilog, lef):
         
     def get_wl_en_cin(self):
         """Gets the capacitive load the of clock (clk_buf) for the sram"""
-        #As clk_buf is an output of the control logic. The cap for that module is not determined here.
         #Only the wordline drivers within the bank use this signal
-        bank_clk_cin = self.bank.get_wl_en_cin()
-        
-        return bank_clk_cin 
-        
+        return self.bank.get_wl_en_cin()
+
+    def get_w_en_cin(self):
+        """Gets the capacitive load the of write enable (w_en) for the sram"""
+        #Only the write drivers within the bank use this signal
+        return self.bank.get_w_en_cin()
+    
+
+    def get_p_en_bar_cin(self):
+        """Gets the capacitive load the of precharge enable (p_en_bar) for the sram"""
+        #Only the precharges within the bank use this signal
+        return self.bank.get_p_en_bar_cin()
+    
     def get_clk_bar_cin(self):
         """Gets the capacitive load the of clock (clk_buf_bar) for the sram"""
         #As clk_buf_bar is an output of the control logic. The cap for that module is not determined here.
         #Only the precharge cells use this signal (other than the control logic)
-        bank_clk_cin = self.bank.get_clk_bar_cin()
-        return bank_clk_cin
+        return self.bank.get_clk_bar_cin()
     
     def get_sen_cin(self):
         """Gets the capacitive load the of sense amp enable for the sram"""
-        #As clk_buf_bar is an output of the control logic. The cap for that module is not determined here.
         #Only the sense_amps use this signal (other than the control logic)
-        bank_sen_cin = self.bank.get_sen_cin()
-        return bank_sen_cin
+        return self.bank.get_sen_cin()
     
     
       

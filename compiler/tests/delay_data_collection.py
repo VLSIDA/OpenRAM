@@ -13,6 +13,7 @@ import debug
 import csv
 from sram import sram
 from sram_config import sram_config
+import pandas as pd
 
 MODEL_DIR = "model_data/"
 
@@ -22,10 +23,43 @@ class data_collection(openram_test):
         self.init_data_gen()
      
         word_size, num_words, words_per_row = 4, 16, 1 
-        self.evalulate_sram_on_corners(word_size, num_words, words_per_row)
+        #Get data and write to CSV
+        self.save_data_sram_corners(word_size, num_words, words_per_row)
+        
+        #Only care about the measured data for now, select from all file names. Names are defined in model_check
+        wl_dataframe, sae_dataframe = self.get_csv_data()
+        self.evaluate_data(wl_dataframe, sae_dataframe)
+        
         globals.end_openram()
     
-    def evalulate_sram_on_corners(self, word_size, num_words, words_per_row):
+    def get_csv_data(self):
+        """Hardcoded Hack to get the measurement data from the csv into lists. """
+        wl_files_name = [file_name for file_name in self.file_names if "wl_measures" in file_name][0]
+        sae_files_name = [file_name for file_name in self.file_names if "sae_measures" in file_name][0]
+        wl_dataframe = pd.read_csv(wl_files_name,encoding='utf-8')
+        sae_dataframe = pd.read_csv(sae_files_name,encoding='utf-8')
+        return wl_dataframe,sae_dataframe 
+        
+    def evaluate_data(self, wl_dataframe, sae_dataframe):
+        """Analyze the delay error and variation error"""
+        delay_error = self.calculate_delay_error(wl_dataframe, sae_dataframe)
+        debug.info(1, "Delay errors:\n{}".format(delay_error))
+        
+    def calculate_delay_error(self, wl_dataframe, sae_dataframe):
+        """Calculates the percentage difference in delays between the wordline and sense amp enable"""
+        start_data_pos = len(self.config_fields) #items before this point are configuration related
+        error_list = []
+        row_count = 0
+        for wl_row, sae_row in zip(wl_dataframe.itertuples(), sae_dataframe.itertuples()):             
+            debug.info(1, "wl_row:\n{}".format(wl_row))
+            wl_sum = sum(wl_row[start_data_pos+1:])
+            debug.info(1, "wl_sum:\n{}".format(wl_sum))
+            sae_sum = sum(sae_row[start_data_pos+1:])
+            error_list.append(abs((wl_sum-sae_sum)/wl_sum))
+            
+        return error_list
+        
+    def save_data_sram_corners(self, word_size, num_words, words_per_row):
         """Performs corner analysis on a single SRAM configuration"""
         self.create_sram(word_size, num_words, words_per_row)
         #Run on one size to initialize CSV writing (csv names come from return value). Strange, but it is okay for now.
@@ -97,14 +131,17 @@ class data_collection(openram_test):
         header_dict = self.delay_obj.get_all_signal_names()
         self.csv_files = {}
         self.csv_writers = {}
+        self.file_names = []
         for data_name, header_list in header_dict.items():
             file_name = '{}data_{}b_{}word_{}way_{}.csv'.format(MODEL_DIR,
                                                                 word_size, 
                                                                 num_words, 
                                                                 words_per_row, 
                                                                 data_name)
+            self.file_names.append(file_name)
             self.csv_files[data_name] = open(file_name, 'w')
-            fields = ('word_size', 'num_words', 'words_per_row', 'process', 'voltage', 'temp', *header_list)
+            self.config_fields = ['word_size', 'num_words', 'words_per_row', 'process', 'voltage', 'temp']
+            fields = (*self.config_fields, *header_list)
             self.csv_writers[data_name] = csv.writer(self.csv_files[data_name], lineterminator = '\n')
             self.csv_writers[data_name].writerow(fields)
     

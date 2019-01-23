@@ -26,6 +26,7 @@ class control_logic(design.design):
         self.word_size = word_size
         self.port_type = port_type
 
+        self.num_cols = word_size*words_per_row
         self.num_words = num_rows * words_per_row
         
         self.enable_delay_chain_resizing = False
@@ -100,14 +101,14 @@ class control_logic(design.design):
         self.add_mod(self.wl_en_driver)
 
         # w_en drives every write driver
-        self.w_en_driver = factory.create(module_type="pbuf",
-                                          size=self.word_size,
+        self.w_en_driver = factory.create(module_type="pdriver",
+                                          fanout=self.word_size,
                                           height=dff_height)
         self.add_mod(self.w_en_driver)
 
         # s_en drives every sense amp
-        self.s_en_driver = factory.create(module_type="pbuf",
-                                          size=8,
+        self.s_en_driver = factory.create(module_type="pdriver",
+                                          fanout=self.word_size,
                                           height=dff_height)
         self.add_mod(self.s_en_driver)
 
@@ -119,7 +120,7 @@ class control_logic(design.design):
 
         # p_en_bar drives every column in the bicell array
         self.p_en_bar_driver = factory.create(module_type="pdriver",
-                                              fanout=8,
+                                              fanout=self.num_cols,
                                               height=dff_height)
         self.add_mod(self.p_en_bar_driver)
         

@@ -21,12 +21,27 @@ def process_name(corner):
     """
     Expands the names of the characterization corner types into something human friendly
     """
+    if corner == "TS":
+        return "Typical - Slow"
     if corner == "TT":
         return "Typical - Typical"
+    if corner == "TF":
+        return "Typical - Fast"
+
     if corner == "SS":
         return "Slow - Slow"
+    if corner == "ST":
+        return "Slow - Typical"
+    if corner == "SF":
+        return "Slow - Fast"
+
+    if corner == "FS":
+        return "Fast - Slow"
+    if corner == "FT":
+        return "Fast - Typical"
     if corner == "FF":
         return "Fast - Fast"
+
     else:
         return "custom"
 

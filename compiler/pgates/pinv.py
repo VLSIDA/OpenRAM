@@ -26,6 +26,7 @@ class pinv(pgate.pgate):
         # have poly connected, for example.
         pgate.pgate.__init__(self, name, height)
         debug.info(2, "create pinv structure {0} with size of {1}".format(name, size))
+        self.add_comment("size: {}".format(size))
         
         self.size = size
         self.nmos_size = size

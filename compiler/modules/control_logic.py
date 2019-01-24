@@ -86,8 +86,7 @@ class control_logic(design.design):
         
         # Special gates: inverters for buffering
         # clk_buf drives a flop for every address and control bit
-        clock_fanout = math.log(self.num_words,2) + math.log(self.words_per_row,2) + self.num_control_signals
-        #clock_fanout = max(1,int(self.num_rows/4))
+        clock_fanout = math.log(self.num_words,2) + math.log(self.words_per_row,2)+1 + self.num_control_signals
         self.clkbuf = factory.create(module_type="pdriver",
                                      fanout=clock_fanout,
                                      height=dff_height)

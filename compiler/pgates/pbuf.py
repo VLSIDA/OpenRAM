@@ -18,7 +18,8 @@ class pbuf(pgate.pgate):
 
         pgate.pgate.__init__(self, name, height)
         debug.info(1, "creating {0} with size of {1}".format(self.name,self.size))
-
+        self.add_comment("size: {}".format(size))
+        
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()

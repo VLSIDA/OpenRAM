@@ -15,7 +15,7 @@ class pand2(pgate.pgate):
         
         pgate.pgate.__init__(self, name, height)
         debug.info(1, "Creating {}".format(self.name))
-
+        self.add_comment("size: {}".format(size))
         
         self.create_netlist()
         if not OPTS.netlist_only:        

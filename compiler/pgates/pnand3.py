@@ -15,6 +15,7 @@ class pnand3(pgate.pgate):
         """ Creates a cell for a simple 3 input nand """
         pgate.pgate.__init__(self, name, height)
         debug.info(2, "create pnand3 structure {0} with size of {1}".format(name, size))
+        self.add_comment("size: {}".format(size))
 
         # We have trouble pitch matching a 3x sizes to the bitcell...
         # If we relax this, we could size this better.

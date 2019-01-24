@@ -16,6 +16,7 @@ class pnand2(pgate.pgate):
         """ Creates a cell for a simple 2 input nand """
         pgate.pgate.__init__(self, name, height)
         debug.info(2, "create pnand2 structure {0} with size of {1}".format(name, size))
+        self.add_comment("size: {}".format(size))
 
         self.size = size
         self.nmos_size = 2*size

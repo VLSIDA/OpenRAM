@@ -13,7 +13,7 @@ class pdriver(pgate.pgate):
     """
     def __init__(self, name, neg_polarity=False, fanout=0, size_list=None, height=None):
 
-        self.stage_effort = 4
+        self.stage_effort = 3
         self.height = height 
         self.neg_polarity = neg_polarity
         self.size_list = size_list
@@ -27,6 +27,8 @@ class pdriver(pgate.pgate):
         
         self.compute_sizes()
 
+        self.add_comment("sizes: {}".format(str(self.size_list)))
+        
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()

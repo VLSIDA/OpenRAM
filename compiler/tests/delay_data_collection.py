@@ -2,31 +2,35 @@
 """
 Run a regression test on various srams
 """
+import csv,sys,os
+import pandas as pd
 
 import unittest
 from testutils import header,openram_test
-import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
-import csv
 from sram import sram
 from sram_config import sram_config
-import pandas as pd
 
 MODEL_DIR = "model_data/"
 
 class data_collection(openram_test):
 
     def runTest(self):
-        self.init_data_gen()
-     
-        word_size, num_words, words_per_row = 4, 16, 1 
-        #Get data and write to CSV
-        self.save_data_sram_corners(word_size, num_words, words_per_row)
         
-        #Only care about the measured data for now, select from all file names. Names are defined in model_check
+        word_size, num_words, words_per_row = 4, 16, 1 
+        self.init_data_gen()
+        self.set_delay_chain(2,3)
+        self.save_data_sram_corners(word_size, num_words, words_per_row)
+        wl_dataframe, sae_dataframe = self.get_csv_data()
+        self.evaluate_data(wl_dataframe, sae_dataframe)
+        
+        #Run again but with different delay chain sizes
+        self.init_data_gen() 
+        self.set_delay_chain(4,2)
+        self.save_data_sram_corners(word_size, num_words, words_per_row)
         wl_dataframe, sae_dataframe = self.get_csv_data()
         self.evaluate_data(wl_dataframe, sae_dataframe)
         
@@ -43,7 +47,9 @@ class data_collection(openram_test):
     def evaluate_data(self, wl_dataframe, sae_dataframe):
         """Analyze the delay error and variation error"""
         delay_error = self.calculate_delay_error(wl_dataframe, sae_dataframe)
-        debug.info(1, "Delay errors:\n{}".format(delay_error))
+        debug.info(1, "Delay errors:{}".format(delay_error))
+        variation_error = self.calculate_delay_variation_error(wl_dataframe, sae_dataframe)
+        debug.info(1, "Variation errors:{}".format(variation_error))
         
     def calculate_delay_error(self, wl_dataframe, sae_dataframe):
         """Calculates the percentage difference in delays between the wordline and sense amp enable"""
@@ -51,13 +57,35 @@ class data_collection(openram_test):
         error_list = []
         row_count = 0
         for wl_row, sae_row in zip(wl_dataframe.itertuples(), sae_dataframe.itertuples()):             
-            debug.info(1, "wl_row:\n{}".format(wl_row))
+            debug.info(2, "wl_row:{}".format(wl_row))
             wl_sum = sum(wl_row[start_data_pos+1:])
-            debug.info(1, "wl_sum:\n{}".format(wl_sum))
+            debug.info(2, "wl_sum:{}".format(wl_sum))
             sae_sum = sum(sae_row[start_data_pos+1:])
             error_list.append(abs((wl_sum-sae_sum)/wl_sum))
-            
         return error_list
+        
+    def calculate_delay_variation_error(self, wl_dataframe, sae_dataframe):
+        """Measures a base delay from the first corner then the variations from that base"""
+        start_data_pos = len(self.config_fields)
+        variation_error_list = []
+        count = 0
+        for wl_row, sae_row in zip(wl_dataframe.itertuples(), sae_dataframe.itertuples()):
+            if count == 0:
+                #Create a base delay, variation is defined as the difference between this base
+                wl_base = sum(wl_row[start_data_pos+1:])
+                debug.info(1, "wl_sum base:{}".format(wl_base))
+                sae_base = sum(sae_row[start_data_pos+1:])
+                variation_error_list.append(0.0)
+            else:
+                #Calculate the variation from the respective base and then difference between the variations
+                wl_sum = sum(wl_row[start_data_pos+1:])
+                wl_base_diff = abs((wl_base-wl_sum)/wl_base)
+                sae_sum = sum(sae_row[start_data_pos+1:])
+                sae_base_diff = abs((sae_base-sae_sum)/sae_base)
+                variation_diff = abs((wl_base_diff-sae_base_diff)/wl_base_diff)
+                variation_error_list.append(variation_diff)
+            count+=1
+        return variation_error_list
         
     def save_data_sram_corners(self, word_size, num_words, words_per_row):
         """Performs corner analysis on a single SRAM configuration"""
@@ -80,17 +108,25 @@ class data_collection(openram_test):
     def init_data_gen(self):
         """Initialization for the data test to run"""
         globals.init_openram("config_data")
+        from tech import parameter
+        global parameter
         if OPTS.tech_name == "scmos":
             debug.warning("Device models not up to date with scn4m technology.")
         OPTS.spice_name="hspice" #Much faster than ngspice.
         OPTS.trim_netlist = False
         OPTS.netlist_only = True
         OPTS.analytical_delay = False
+        OPTS.use_tech_delay_chain_size = True
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
         import characterizer
         reload(characterizer) 
 
+    def set_delay_chain(self, stages, fanout):
+        """Force change the parameter in the tech file to specify a delay chain configuration"""
+        parameter["static_delay_stages"] = stages
+        parameter["static_fanout_per_stage"] = fanout
+        
     def close_files(self):
         """Closes all files stored in the file dict"""
         for key,file in self.csv_files.items():
@@ -133,10 +169,12 @@ class data_collection(openram_test):
         self.csv_writers = {}
         self.file_names = []
         for data_name, header_list in header_dict.items():
-            file_name = '{}data_{}b_{}word_{}way_{}.csv'.format(MODEL_DIR,
+            file_name = '{}data_{}b_{}word_{}way_dc{}x{}_{}.csv'.format(MODEL_DIR,
                                                                 word_size, 
                                                                 num_words, 
-                                                                words_per_row, 
+                                                                words_per_row,
+                                                                parameter["static_delay_stages"],
+                                                                parameter["static_fanout_per_stage"],
                                                                 data_name)
             self.file_names.append(file_name)
             self.csv_files[data_name] = open(file_name, 'w')

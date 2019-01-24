@@ -112,6 +112,7 @@ class control_logic(design.design):
             c = reload(__import__(OPTS.replica_bitline))
             replica_bitline = getattr(c, OPTS.replica_bitline)
             bitcell_loads = int(math.ceil(self.num_rows * parameter["rbl_height_percentage"]))
+            #Use a model to determine the delays with that heuristic
             if OPTS.use_tech_delay_chain_size: #Use tech parameters if set.
                 delay_stages =  parameter["static_delay_stages"]
                 delay_fanout = parameter["static_fanout_per_stage"]
@@ -119,6 +120,8 @@ class control_logic(design.design):
                 self.replica_bitline = replica_bitline([delay_fanout]*delay_stages,
                                                         bitcell_loads, 
                                                         name="replica_bitline_"+self.port_type)
+                if self.sram != None: #Calculate model value even for specified sizes
+                    self.set_sen_wl_delays()
                 
             else: #Otherwise, use a heuristic and/or model based sizing.
                 #First use a heuristic
@@ -126,13 +129,10 @@ class control_logic(design.design):
                 self.replica_bitline = replica_bitline([delay_fanout_heuristic]*delay_stages_heuristic, 
                                                         bitcell_loads,
                                                         name="replica_bitline_"+self.port_type)
-                
-                #Use a model to determine the delays with that heuristic
-                if self.sram != None:
+                if self.sram != None: #Calculate delays for potential re-sizing
                     self.set_sen_wl_delays()
-               
-                #Resize if necessary
-                if self.sram != None and self.enable_delay_chain_resizing and not self.does_sen_total_timing_match(): #check condition based on resizing method
+                #Resize if necessary, condition depends on resizing method
+                if self.sram != None and self.enable_delay_chain_resizing and not self.does_sen_total_timing_match(): 
                     #This resizes to match fall and rise delays, can make the delay chain weird sizes.
                     # stage_list = self.get_dynamic_delay_fanout_list(delay_stages_heuristic, delay_fanout_heuristic)
                     # self.replica_bitline = replica_bitline(stage_list, 

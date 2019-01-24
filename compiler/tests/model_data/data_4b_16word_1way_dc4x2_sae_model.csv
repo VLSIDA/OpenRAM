@@ -1,0 +1,6 @@
+word_size,num_words,words_per_row,process,voltage,temp,Xsram.Xcontrol0.Xand2_rbl_in.zb_int,Xsram.Xcontrol0.rbl_in,Xsram.Xcontrol0.Xreplica_bitline.Xdelay_chain.dout_1,Xsram.Xcontrol0.Xreplica_bitline.Xdelay_chain.dout_2,Xsram.Xcontrol0.Xreplica_bitline.Xdelay_chain.dout_3,Xsram.Xcontrol0.Xreplica_bitline.delayed_en,Xsram.Xcontrol0.pre_s_en,Xsram.Xcontrol0.Xbuf_s_en.zb_int,Xsram.s_en0
+4,16,1,TT,1.0,25,8.8,2.65,5.4,5.4,5.4,6.4,4.4,6.4,2.99375
+4,16,1,FF,1.0,25,8.8,2.65,5.4,5.4,5.4,6.4,4.4,6.4,2.99375
+4,16,1,SS,1.0,25,8.8,2.65,5.4,5.4,5.4,6.4,4.4,6.4,2.99375
+4,16,1,SF,1.0,25,8.8,2.65,5.4,5.4,5.4,6.4,4.4,6.4,2.99375
+4,16,1,FS,1.0,25,8.8,2.65,5.4,5.4,5.4,6.4,4.4,6.4,2.99375

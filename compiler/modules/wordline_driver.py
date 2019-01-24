@@ -15,10 +15,11 @@ class wordline_driver(design.design):
     Generates the wordline-driver to drive the bitcell
     """
 
-    def __init__(self, name, rows):
+    def __init__(self, name, rows, cols):
         design.design.__init__(self, name)
 
         self.rows = rows
+        self.cols = cols
         
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -52,7 +53,9 @@ class wordline_driver(design.design):
         # This is just used for measurements,
         # so don't add the module
 
-        self.inv = factory.create(module_type="pinv")
+        self.inv = factory.create(module_type="pdriver",
+                                  fanout=self.cols,
+                                  neg_polarity=True)
         self.add_mod(self.inv)
 
         self.inv_no_output = factory.create(module_type="pinv",

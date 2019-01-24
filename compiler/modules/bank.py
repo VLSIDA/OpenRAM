@@ -446,7 +446,8 @@ class bank(design.design):
         self.add_mod(self.row_decoder)
         
         self.wordline_driver = factory.create(module_type="wordline_driver",
-                                              rows=self.num_rows)
+                                              rows=self.num_rows,
+                                              cols=self.num_cols)
         self.add_mod(self.wordline_driver)
 
         self.inv = factory.create(module_type="pinv")

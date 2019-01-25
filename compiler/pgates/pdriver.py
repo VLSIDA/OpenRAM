@@ -100,13 +100,13 @@ class pdriver(pgate.pgate):
         self.create_insts()
 
     def create_layout(self):
-        self.width = self.inv_inst_list[-1].rx()
-        self.height = self.inv_inst_list[0].height
-        
         self.place_modules()
         self.route_wires()
         self.add_layout_pins()
-                
+
+        self.width = self.inv_inst_list[-1].rx()
+        self.height = self.inv_inst_list[0].height
+        
         self.DRC_LVS()
         
     def add_pins(self):
@@ -153,10 +153,10 @@ class pdriver(pgate.pgate):
         
 
     def place_modules(self):
-        # Add INV1 to the left 
+        # Add the first inverter at the origin
         self.inv_inst_list[0].place(vector(0,0))
 
-        # Add inverters to the right of INV1
+        # Add inverters to the right of the previous inverter
         for x in range(1,len(self.inv_inst_list)):
             self.inv_inst_list[x].place(vector(self.inv_inst_list[x-1].rx(),0))
                 

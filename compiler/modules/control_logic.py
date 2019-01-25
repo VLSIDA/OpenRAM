@@ -443,8 +443,9 @@ class control_logic(design.design):
         # Connect this at the bottom of the buffer
         out_pos = self.clk_buf_inst.get_pin("Z").center()
         mid1 = vector(out_pos.x,2*self.m2_pitch)
-        bus_pos = vector(self.rail_offsets["clk_buf"].x, mid1.y)
-        self.add_wire(("metal3","via2","metal2"),[out_pos, mid1, bus_pos])
+        mid2 = vector(self.rail_offsets["clk_buf"].x, mid1.y)
+        bus_pos = self.rail_offsets["clk_buf"]
+        self.add_wire(("metal3","via2","metal2"),[out_pos, mid1, mid2, bus_pos])
         # The pin is on M1, so we need another via as well
         self.add_via_center(layers=("metal1","via1","metal2"),
                             offset=self.clk_buf_inst.get_pin("Z").center())

@@ -833,7 +833,7 @@ class control_logic(design.design):
         #Calculate the load on wl_en within the module and add it to external load
         external_cout = self.sram.get_wl_en_cin()
         #First stage is the clock buffer
-        stage_effort_list += self.clkbuf.get_stage_efforts(external_cout, is_clk_bar_rise)
+        stage_effort_list += self.clk_buf_driver.get_stage_efforts(external_cout, is_clk_bar_rise)
         last_stage_is_rise = stage_effort_list[-1].is_rise
         
         #Then ask the sram for the other path delays (from the bank)

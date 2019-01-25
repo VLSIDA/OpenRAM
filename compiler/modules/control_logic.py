@@ -89,11 +89,11 @@ class control_logic(design.design):
         # plus about 5 fanouts for the control logic
         clock_fanout = math.log(self.num_words,2) + math.log(self.words_per_row,2) \
                        + self.num_control_signals + 5
-        self.clkbuf = factory.create(module_type="pdriver",
-                                     fanout=clock_fanout,
-                                     height=dff_height)
+        self.clk_buf_driver = factory.create(module_type="pdriver",
+                                             fanout=clock_fanout,
+                                             height=dff_height)
         
-        self.add_mod(self.clkbuf)
+        self.add_mod(self.clk_buf_driver)
 
         # wl_en drives every row in the bank
         self.wl_en_driver = factory.create(module_type="pdriver",
@@ -415,8 +415,8 @@ class control_logic(design.design):
         
     def create_clk_buf_row(self):
         """ Create the multistage and gated clock buffer  """
-        self.clkbuf_inst = self.add_inst(name="clkbuf",
-                                         mod=self.clkbuf)
+        self.clk_buf_inst = self.add_inst(name="clkbuf",
+                                          mod=self.clk_buf_driver)
         self.connect_inst(["clk","clk_buf","vdd","gnd"])
         
     def place_clk_buf_row(self,row):
@@ -425,12 +425,12 @@ class control_logic(design.design):
         (y_off,mirror)=self.get_offset(row)
         
         offset = vector(x_off,y_off)
-        self.clkbuf_inst.place(offset, mirror)
+        self.clk_buf_inst.place(offset, mirror)
         
-        self.row_end_inst.append(self.clkbuf_inst)
+        self.row_end_inst.append(self.clk_buf_inst)
 
     def route_clk_buf(self):
-        clk_pin = self.clkbuf_inst.get_pin("A")
+        clk_pin = self.clk_buf_inst.get_pin("A")
         clk_pos = clk_pin.center()
         self.add_layout_pin_segment_center(text="clk",
                                            layer="metal2",
@@ -440,14 +440,16 @@ class control_logic(design.design):
                             offset=clk_pos)
 
 
-        clkbuf_map = zip(["Z"], ["clk_buf"])
-        self.connect_vertical_bus(clkbuf_map, self.clkbuf_inst, self.rail_offsets, ("metal3", "via2", "metal2"))  
+        # Connect this at the bottom of the buffer
+        out_pos = self.clk_buf_inst.get_pin("Z").center()
+        mid1 = vector(out_pos.x,2*self.m2_pitch)
+        bus_pos = vector(self.rail_offsets["clk_buf"].x, mid1.y)
+        self.add_wire(("metal3","via2","metal2"),[out_pos, mid1, bus_pos])
         # The pin is on M1, so we need another via as well
         self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=self.clkbuf_inst.get_pin("Z").center())
-        
+                            offset=self.clk_buf_inst.get_pin("Z").center())
 
-        self.connect_output(self.clkbuf_inst, "Z", "clk_buf")
+        self.connect_output(self.clk_buf_inst, "Z", "clk_buf")
 
     def create_gated_clk_bar_row(self):
         self.clk_bar_inst = self.add_inst(name="inv_clk_bar",

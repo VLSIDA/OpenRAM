@@ -17,7 +17,9 @@ class wordline_driver(design.design):
 
     def __init__(self, name, rows, cols):
         design.design.__init__(self, name)
-
+        debug.info(1, "Creating {0}".format(self.name))
+        self.add_comment("rows: {0} cols: {1}".format(rows, cols))
+        
         self.rows = rows
         self.cols = cols
         

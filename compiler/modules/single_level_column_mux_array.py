@@ -17,6 +17,8 @@ class single_level_column_mux_array(design.design):
     def __init__(self, name, columns, word_size, bitcell_bl="bl", bitcell_br="br"):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
+        self.add_comment("cols: {0} word_size: {1} bl: {2} br: {3}".format(columns, word_size, bitcell_bl, bitcell_br))
+        
         self.columns = columns
         self.word_size = word_size
         self.words_per_row = int(self.columns / self.word_size)

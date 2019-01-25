@@ -15,6 +15,8 @@ class write_driver_array(design.design):
     def __init__(self, name, columns, word_size):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
+        self.add_comment("columns: {0}".format(columns))
+        self.add_comment("word_size {0}".format(word_size))        
 
         self.columns = columns
         self.word_size = word_size

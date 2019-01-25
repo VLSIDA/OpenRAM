@@ -19,6 +19,9 @@ class control_logic(design.design):
         name = "control_logic_" + port_type
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(name))
+        self.add_comment("num_rows: {0}".format(num_rows))
+        self.add_comment("words_per_row: {0}".format(words_per_row))
+        self.add_comment("word_size {0}".format(word_size))        
         
         self.sram=sram
         self.num_rows = num_rows

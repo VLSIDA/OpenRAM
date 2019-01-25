@@ -22,6 +22,9 @@ class dff_buf_array(design.design):
             dff_buf_array.unique_id += 1
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(self.name))
+        self.add_comment("rows: {0} cols: {1}".format(rows, columns))
+        self.add_comment("inv1: {0} inv2: {1}".format(inv1_size, inv2_size))
+        
         self.inv1_size = inv1_size
         self.inv2_size = inv2_size
         

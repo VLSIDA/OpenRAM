@@ -58,7 +58,7 @@ class sram_factory:
             (obj_kwargs, obj_item) = obj
             # Must have the same dictionary exactly (conservative)
             if obj_kwargs == kwargs:
-                debug.info(1, "Existing module: type={0} name={1} kwargs={2}".format(module_type, obj_item.name, str(kwargs)))
+                #debug.info(1, "Existing module: type={0} name={1} kwargs={2}".format(module_type, obj_item.name, str(kwargs)))
                 return obj_item
 
         # Use the default  name if there are default arguments
@@ -67,7 +67,7 @@ class sram_factory:
             # Create a unique name and increment the index
             module_name = "{0}_{1}".format(module_name, self.module_indices[module_type])
             self.module_indices[module_type] += 1
-        debug.info(1, "New module: type={0} name={1} kwargs={2}".format(module_type,module_name,str(kwargs)))
+        #debug.info(1, "New module: type={0} name={1} kwargs={2}".format(module_type,module_name,str(kwargs)))
         obj = mod(name=module_name,**kwargs)
         self.objects[module_type].append((kwargs,obj))
         return obj

@@ -231,8 +231,8 @@ class wordline_driver(design.design):
         stage_effort_list.append(stage1)
         last_stage_is_rise = stage1.is_rise
         
-        stage2 = self.inv.get_stage_effort(external_cout, last_stage_is_rise)
-        stage_effort_list.append(stage2)
+        stage2 = self.inv.get_stage_efforts(external_cout, last_stage_is_rise)
+        stage_effort_list.extend(stage2)
         
         return stage_effort_list
         

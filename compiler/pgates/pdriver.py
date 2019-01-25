@@ -100,8 +100,8 @@ class pdriver(pgate.pgate):
         self.create_insts()
 
     def create_layout(self):
-        self.width = self.num_inv * self.inv_list[0].width
-        self.height = self.inv_list[0].height
+        self.width = self.inv_inst_list[-1].rx()
+        self.height = self.inv_inst_list[0].uy()
         
         self.place_modules()
         self.route_wires()

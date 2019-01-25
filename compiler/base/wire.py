@@ -1,9 +1,9 @@
 from tech import drc
 import debug
-from path import path
+from wire_path import wire_path
 from sram_factory import factory
 
-class wire(path):
+class wire(wire_path):
     """ 
     Object metal wire; given the layer type
     Add a wire of minimium metal width between a set of points. 
@@ -26,7 +26,7 @@ class wire(path):
         self.create_rectilinear()
         self.create_vias()
         self.create_rectangles()
-        # wires and paths should not be offset to (0,0)
+        # wires and wire_paths should not be offset to (0,0)
 
     def setup_layers(self):
         (horiz_layer, via_layer, vert_layer) = self.layer_stack

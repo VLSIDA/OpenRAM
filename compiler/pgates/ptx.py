@@ -3,7 +3,6 @@ import debug
 from tech import drc, spice
 from vector import vector
 from globals import OPTS
-import path
 from sram_factory import factory
 
 class ptx(design.design):

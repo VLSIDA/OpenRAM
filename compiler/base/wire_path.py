@@ -18,12 +18,12 @@ def create_rectilinear_route(my_list):
     my_list.append(vector(pl[-1]))
     return my_list
         
-class path():
+class wire_path():
     """
-    Object metal path; given the layer type
-    Add a path of minimium metal width between a set of points. 
+    Object metal wire_path; given the layer type
+    Add a wire_path of minimium metal width between a set of points. 
     The points should be rectilinear to control the bend points. If
-    not, it will always go down first. The points are the center of the path.
+    not, it will always go down first. The points are the center of the wire_path.
     If width is not given, it uses minimum layer width.
     """
     def __init__(self, obj, layer, position_list, width=None):
@@ -44,7 +44,7 @@ class path():
         self.create_rectilinear()
         self.connect_corner()
         self.create_rectangles()
-        # wires and paths should not be offset to (0,0)
+        # wires and wire_paths should not be offset to (0,0)
 
     def create_rectilinear(self):
         """ Add intermediate nodes if it isn't rectilinear. Also skip
@@ -52,7 +52,7 @@ class path():
         self.position_list = create_rectilinear_route(self.position_list)
 
     def connect_corner(self):
-        """ Add a corner square at every corner of the path."""
+        """ Add a corner square at every corner of the wire_path."""
         from itertools import tee,islice
         nwise = lambda g,n=2: zip(*(islice(g,i,None) for i,g in enumerate(tee(g,n))))
         threewise=nwise(self.position_list,3)

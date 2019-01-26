@@ -19,8 +19,10 @@ class pdriver(pgate.pgate):
         self.size_list = size_list
         self.fanout = fanout
 
-        if self.size_list and (self.fanout != 0 or self.neg_polarity):
-            debug.error("Cannot specify both size_list and neg_polarity or fanout.", -1)
+        if self.size_list and self.fanout != 0:
+            debug.error("Cannot specify both size_list and fanout.", -1)
+        if self.size_list and self.neg_polarity:
+            debug.error("Cannot specify both size_list and neg_polarity.", -1)
  
         pgate.pgate.__init__(self, name, height) 
         debug.info(1, "Creating {}".format(self.name))
@@ -36,65 +38,29 @@ class pdriver(pgate.pgate):
     def compute_sizes(self):
         # size_list specified
         if self.size_list:
-            if not len(self.size_list) % 2:
-                neg_polarity = True
-            self.num_inv = len(self.size_list)
+            self.num_stages = len(self.size_list)
         else:
-            # find the number of stages
-            #fanout is a unit inverter fanout, not a capacitance so c_in=1
-            num_stages = max(1,int(round(log(self.fanout)/log(4))))
+            # Find the optimal number of stages for the given effort
+            self.num_stages = max(1,int(round(log(self.fanout)/log(self.stage_effort))))
 
-            # find inv_num and compute sizes
-            if self.neg_polarity:
-                if (num_stages % 2 == 0):   # if num_stages is even
-                    self.diff_polarity(num_stages=num_stages)
-                else:                       # if num_stages is odd
-                    self.same_polarity(num_stages=num_stages)  
-            else: # positive polarity
-                if (num_stages % 2 == 0):        
-                    self.same_polarity(num_stages=num_stages)
-                else:
-                    self.diff_polarity(num_stages=num_stages)
+            # Increase the number of stages if we need to fix polarity
+            if self.neg_polarity and (self.num_stages%2==0):
+                self.num_stages += 1
+            elif not self.neg_polarity and (self.num_stages%2): 
+                self.num_stages += 1
 
-
-    def same_polarity(self, num_stages):
         self.size_list = []
-        self.num_inv = num_stages
-        # compute sizes
+        # compute sizes backwards from the fanout
         fanout_prev = self.fanout
-        for x in range(self.num_inv-1,-1,-1):
+        for x in range(self.num_stages):
             fanout_prev = max(round(fanout_prev/self.stage_effort),1)
             self.size_list.append(fanout_prev)
+
+        # reverse the sizes to be from input to output
         self.size_list.reverse()
 
-
-    def diff_polarity(self, num_stages):
-        self.size_list = []
-        # find which delay is smaller
-        if (num_stages > 1):
-            delay_below = ((num_stages-1)*(self.fanout**(1/num_stages-1))) + num_stages-1
-            delay_above = ((num_stages+1)*(self.fanout**(1/num_stages+1))) + num_stages+1
-            if (delay_above < delay_below):
-                # recompute stage_effort for this delay
-                self.num_inv = num_stages+1
-                polarity_stage_effort = self.fanout**(1/self.num_inv)
-            else:
-                self.num_inv = num_stages-1
-                polarity_stage_effort = self.fanout**(1/self.num_inv)
-        else: # num_stages is 1, can't go to 0
-            self.num_inv = num_stages+1
-            polarity_stage_effort = self.fanout**(1/self.num_inv)
-
-        
-        fanout_prev = self.fanout
-        for x in range(self.num_inv-1,-1,-1):
-            fanout_prev = round(fanout_prev/polarity_stage_effort)
-            self.size_list.append(fanout_prev)
-        self.size_list.reverse()
 
     def create_netlist(self):
-        inv_list = []
-
         self.add_pins()
         self.add_modules()
         self.create_insts()
@@ -125,19 +91,19 @@ class pdriver(pgate.pgate):
     
     def create_insts(self):
         self.inv_inst_list = []
-        for x in range(1,self.num_inv+1):
+        for x in range(1,self.num_stages+1):
             # Create first inverter
             if x == 1:
                 zbx_int = "Zb{}_int".format(x);
                 self.inv_inst_list.append(self.add_inst(name="buf_inv{}".format(x),
                                                         mod=self.inv_list[x-1]))
-                if self.num_inv == 1:
+                if self.num_stages == 1:
                     self.connect_inst(["A", "Z", "vdd", "gnd"])
                 else:
                     self.connect_inst(["A", zbx_int, "vdd", "gnd"])
             
             # Create last inverter
-            elif x == self.num_inv:
+            elif x == self.num_stages:
                 zbn_int = "Zb{}_int".format(x-1);
                 self.inv_inst_list.append(self.add_inst(name="buf_inv{}".format(x),
                                                         mod=self.inv_list[x-1]))

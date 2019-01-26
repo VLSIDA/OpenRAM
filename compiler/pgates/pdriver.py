@@ -203,22 +203,28 @@ class pdriver(pgate.pgate):
                                         width = a_pin.width(),
                                         height = a_pin.height())
         
+    def input_load(self):
+        return self.inv_list[0].input_load()
+
     def analytical_delay(self, slew, load=0.0):
         """Calculate the analytical delay of INV1 -> ... -> INVn"""
-        delay = 0;
-        if len(self.inv_inst_list) == 1:
-            delay = self.inv_inst_list[x].analytical_delay(slew=slew);
-        else:
-            for x in range(len(self.inv_inst_list-1)):
-                load_next = 0.0
-                for n in range(x,len(self.inv_inst_list+1)):
-                    load_next += self.inv_inst_list[x+1]
-                if x == 1:
-                    delay += self.inv_inst_list[x].analytical_delay(slew=slew, 
-                                                                load=load_next)
-                else:
-                    delay += self.inv_inst_list[x+1].analytical_delay(slew=delay.slew, 
-                                                                  load=load_next)
+
+        cout_list = []
+        for prev_inv,inv in zip(self.inv_list, self.inv_list[1:]):
+            cout_list.append(inv.input_load())
+        cout_list.append(load)
+        
+        input_slew = slew
+        
+        delays = []
+        for inv,cout in zip(self.inv_list,cout_list):
+            delays.append(inv.analytical_delay(slew=input_slew, load=cout))
+            input_slew = delays[-1].slew
+
+        delay = delays[0]
+        for i in range(len(delays)-1):
+            delay += delays[i]
+            
         return delay
 
 

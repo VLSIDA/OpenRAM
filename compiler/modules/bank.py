@@ -1068,8 +1068,8 @@ class bank(design.design):
             # The mid guarantees we exit the input cell to the right.
             driver_wl_pos = self.wordline_driver_inst[port].get_pin("wl_{}".format(row)).rc()
             bitcell_wl_pos = self.bitcell_array_inst.get_pin(self.wl_names[port]+"_{}".format(row)).lc()
-            mid1 = driver_wl_pos.scale(0.5,1)+bitcell_wl_pos.scale(0.5,0)
-            mid2 = driver_wl_pos.scale(0.5,0)+bitcell_wl_pos.scale(0.5,1)
+            mid1 = driver_wl_pos.scale(0,1) + vector(0.5*self.wordline_driver_inst[port].rx() + 0.5*self.bitcell_array_inst.lx(),0)
+            mid2 = mid1.scale(1,0)+bitcell_wl_pos.scale(0.5,1)
             self.add_path("metal1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
 
 
@@ -1087,8 +1087,8 @@ class bank(design.design):
             # The mid guarantees we exit the input cell to the right.
             driver_wl_pos = self.wordline_driver_inst[port].get_pin("wl_{}".format(row)).lc()
             bitcell_wl_pos = self.bitcell_array_inst.get_pin(self.wl_names[port]+"_{}".format(row)).rc()
-            mid1 = driver_wl_pos.scale(0.5,1)+bitcell_wl_pos.scale(0.5,0)
-            mid2 = driver_wl_pos.scale(0.5,0)+bitcell_wl_pos.scale(0.5,1)
+            mid1 = driver_wl_pos.scale(0,1) + vector(0.5*self.wordline_driver_inst[port].lx() + 0.5*self.bitcell_array_inst.rx(),0)
+            mid2 = mid1.scale(1,0)+bitcell_wl_pos.scale(0.5,1)
             self.add_path("metal1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
 
     def route_column_address_lines(self, port):

@@ -15,6 +15,7 @@ class pnor2(pgate.pgate):
         """ Creates a cell for a simple 2 input nor """
         pgate.pgate.__init__(self, name, height)
         debug.info(2, "create pnor2 structure {0} with size of {1}".format(name, size))
+        self.add_comment("size: {}".format(size))
 
         self.nmos_size = size
         # We will just make this 1.5 times for now. NORs are not ideal anyhow.

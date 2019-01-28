@@ -16,7 +16,9 @@ class delay_chain(design.design):
     def __init__(self, name, fanout_list):
         """init function"""
         design.design.__init__(self, name)
-
+        debug.info(1, "creating delay chain {0}".format(str(fanout_list)))
+        self.add_comment("fanouts: {0}".format(str(fanout_list)))
+        
         # Two fanouts are needed so that we can route the vdd/gnd connections
         for f in fanout_list:
             debug.check(f>=2,"Must have >=2 fanouts for each stage.")
@@ -230,7 +232,7 @@ class delay_chain(design.design):
             stage_cout = self.inv.get_cin()*(stage_fanout+1) 
             if len(stage_effort_list) == len(self.fanout_list)-1: #last stage
                 stage_cout+=ext_delayed_en_cout
-            stage = self.inv.get_effort_stage(stage_cout, last_stage_is_rise)
+            stage = self.inv.get_stage_effort(stage_cout, last_stage_is_rise)
             stage_effort_list.append(stage)
             last_stage_is_rise = stage.is_rise
             

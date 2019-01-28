@@ -446,7 +446,8 @@ class bank(design.design):
         self.add_mod(self.row_decoder)
         
         self.wordline_driver = factory.create(module_type="wordline_driver",
-                                              rows=self.num_rows)
+                                              rows=self.num_rows,
+                                              cols=self.num_cols)
         self.add_mod(self.wordline_driver)
 
         self.inv = factory.create(module_type="pinv")
@@ -1067,8 +1068,8 @@ class bank(design.design):
             # The mid guarantees we exit the input cell to the right.
             driver_wl_pos = self.wordline_driver_inst[port].get_pin("wl_{}".format(row)).rc()
             bitcell_wl_pos = self.bitcell_array_inst.get_pin(self.wl_names[port]+"_{}".format(row)).lc()
-            mid1 = driver_wl_pos.scale(0.5,1)+bitcell_wl_pos.scale(0.5,0)
-            mid2 = driver_wl_pos.scale(0.5,0)+bitcell_wl_pos.scale(0.5,1)
+            mid1 = driver_wl_pos.scale(0,1) + vector(0.5*self.wordline_driver_inst[port].rx() + 0.5*self.bitcell_array_inst.lx(),0)
+            mid2 = mid1.scale(1,0)+bitcell_wl_pos.scale(0.5,1)
             self.add_path("metal1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
 
 
@@ -1086,8 +1087,8 @@ class bank(design.design):
             # The mid guarantees we exit the input cell to the right.
             driver_wl_pos = self.wordline_driver_inst[port].get_pin("wl_{}".format(row)).lc()
             bitcell_wl_pos = self.bitcell_array_inst.get_pin(self.wl_names[port]+"_{}".format(row)).rc()
-            mid1 = driver_wl_pos.scale(0.5,1)+bitcell_wl_pos.scale(0.5,0)
-            mid2 = driver_wl_pos.scale(0.5,0)+bitcell_wl_pos.scale(0.5,1)
+            mid1 = driver_wl_pos.scale(0,1) + vector(0.5*self.wordline_driver_inst[port].lx() + 0.5*self.bitcell_array_inst.rx(),0)
+            mid2 = mid1.scale(1,0)+bitcell_wl_pos.scale(0,1)
             self.add_path("metal1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
 
     def route_column_address_lines(self, port):
@@ -1253,20 +1254,22 @@ class bank(design.design):
     def get_wl_en_cin(self):
         """Get the relative capacitance of all the clk connections in the bank"""
         #wl_en only used in the wordline driver.
-        total_clk_cin = self.wordline_driver.get_wl_en_cin()
-        return total_clk_cin
-        
+        return self.wordline_driver.get_wl_en_cin()
+
+    def get_w_en_cin(self):
+        """Get the relative capacitance of all the clk connections in the bank"""
+        #wl_en only used in the wordline driver.
+        return self.write_driver.get_w_en_cin()
+    
     def get_clk_bar_cin(self):
         """Get the relative capacitance of all the clk_bar connections in the bank"""
         #Current bank only uses clock bar (clk_buf_bar) as an enable for the precharge array.
         
         #Precharges are the all the same in Mulitport, one is picked
         port = self.read_ports[0]
-        total_clk_bar_cin = self.precharge_array[port].get_en_cin()
-        return total_clk_bar_cin 
+        return self.precharge_array[port].get_en_cin()
 
     def get_sen_cin(self):
         """Get the relative capacitance of all the sense amp enable connections in the bank"""
         #Current bank only uses sen as an enable for the sense amps.
-        total_sen_cin = self.sense_amp_array.get_en_cin()
-        return total_sen_cin  
+        return self.sense_amp_array.get_en_cin()

@@ -14,7 +14,7 @@ class bitcell_array(design.design):
     def __init__(self, cols, rows, name):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0} {1} x {2}".format(self.name, rows, cols))
-
+        self.add_comment("rows: {0} cols: {1}".format(rows, cols))
 
         self.column_size = cols
         self.row_size = rows

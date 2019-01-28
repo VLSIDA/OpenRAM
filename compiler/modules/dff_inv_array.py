@@ -22,6 +22,9 @@ class dff_inv_array(design.design):
             dff_inv_array.unique_id += 1
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(self.name))
+        self.add_comment("rows: {0} cols: {1}".format(rows, columns))
+        self.add_comment("inv1: {0}".format(inv1_size))
+        
         self.inv_size = inv_size
         
         self.create_netlist()

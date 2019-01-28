@@ -14,20 +14,26 @@ class control_logic(design.design):
     Dynamically generated Control logic for the total SRAM circuit.
     """
 
-    def __init__(self, num_rows, words_per_row, sram=None, port_type="rw"):
+    def __init__(self, num_rows, words_per_row, word_size, sram=None, port_type="rw"):
         """ Constructor """
         name = "control_logic_" + port_type
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(name))
+        self.add_comment("num_rows: {0}".format(num_rows))
+        self.add_comment("words_per_row: {0}".format(words_per_row))
+        self.add_comment("word_size {0}".format(word_size))        
         
+        self.sram=sram
         self.num_rows = num_rows
         self.words_per_row = words_per_row
+        self.word_size = word_size
         self.port_type = port_type
+
+        self.num_cols = word_size*words_per_row
+        self.num_words = num_rows * words_per_row
         
         self.enable_delay_chain_resizing = False
         
-        #This is needed to resize the delay chain. Likely to be changed at some point.
-        self.sram=sram
         #self.sram=None #disable re-sizing for debugging, FIXME: resizing is not working, needs to be adjusted for new control logic.
         self.wl_timing_tolerance = 1 #Determines how much larger the sen delay should be. Accounts for possible error in model.
         self.parasitic_inv_delay = parameter["min_inv_para_delay"] #Keeping 0 for now until further testing.
@@ -81,34 +87,47 @@ class control_logic(design.design):
                                    height=dff_height)
         self.add_mod(self.and2)
         
-        # Special gates: inverters for buffering
-        # Size the clock for the number of rows (fanout)
-        clock_driver_size = max(1,int(self.num_rows/4))
-        self.clkbuf = factory.create(module_type="pbuf",
-                                     size=clock_driver_size,
-                                     height=dff_height)
+        # clk_buf drives a flop for every address and control bit
+        # plus about 5 fanouts for the control logic
+        # each flop internally has a FO 4 approximately
+        clock_fanout = 4*(math.log(self.num_words,2) + math.log(self.words_per_row,2) \
+                       + self.num_control_signals) + 5
+        self.clk_buf_driver = factory.create(module_type="pdriver",
+                                             fanout=clock_fanout,
+                                             height=dff_height)
         
-        self.add_mod(self.clkbuf)
+        self.add_mod(self.clk_buf_driver)
 
-        self.buf16 = factory.create(module_type="pbuf",
-                                    size=16,
-                                    height=dff_height)
-        self.add_mod(self.buf16)
+        # wl_en drives every row in the bank
+        self.wl_en_driver = factory.create(module_type="pdriver",
+                                           fanout=self.num_rows,
+                                           height=dff_height)
+        self.add_mod(self.wl_en_driver)
 
-        self.buf8 = factory.create(module_type="pbuf",
-                                   size=8,
-                                   height=dff_height)
-        self.add_mod(self.buf8)
-        
-        self.inv = self.inv1 = factory.create(module_type="pinv",
+        # w_en drives every write driver
+        self.w_en_driver = factory.create(module_type="pdriver",
+                                          fanout=self.word_size+8,
+                                          height=dff_height)
+        self.add_mod(self.w_en_driver)
+
+        # s_en drives every sense amp
+        self.s_en_driver = factory.create(module_type="pdriver",
+                                          fanout=self.word_size,
+                                          height=dff_height)
+        self.add_mod(self.s_en_driver)
+
+        # used to generate inverted signals with low fanout 
+        self.inv = factory.create(module_type="pinv",
                                               size=1,
                                               height=dff_height)
-        self.add_mod(self.inv1)
-        
-        self.inv8 = factory.create(module_type="pinv",
-                                   size=8,
-                                   height=dff_height)
-        self.add_mod(self.inv8)
+        self.add_mod(self.inv)
+
+        # p_en_bar drives every column in the bicell array
+        self.p_en_bar_driver = factory.create(module_type="pdriver",
+                                              neg_polarity=True,
+                                              fanout=self.num_cols,
+                                              height=dff_height)
+        self.add_mod(self.p_en_bar_driver)
         
         if (self.port_type == "rw") or (self.port_type == "r"):
             delay_stages_heuristic, delay_fanout_heuristic = self.get_heuristic_delay_chain_size()
@@ -399,8 +418,8 @@ class control_logic(design.design):
         
     def create_clk_buf_row(self):
         """ Create the multistage and gated clock buffer  """
-        self.clkbuf_inst = self.add_inst(name="clkbuf",
-                                         mod=self.clkbuf)
+        self.clk_buf_inst = self.add_inst(name="clkbuf",
+                                          mod=self.clk_buf_driver)
         self.connect_inst(["clk","clk_buf","vdd","gnd"])
         
     def place_clk_buf_row(self,row):
@@ -409,12 +428,12 @@ class control_logic(design.design):
         (y_off,mirror)=self.get_offset(row)
         
         offset = vector(x_off,y_off)
-        self.clkbuf_inst.place(offset, mirror)
+        self.clk_buf_inst.place(offset, mirror)
         
-        self.row_end_inst.append(self.clkbuf_inst)
+        self.row_end_inst.append(self.clk_buf_inst)
 
     def route_clk_buf(self):
-        clk_pin = self.clkbuf_inst.get_pin("A")
+        clk_pin = self.clk_buf_inst.get_pin("A")
         clk_pos = clk_pin.center()
         self.add_layout_pin_segment_center(text="clk",
                                            layer="metal2",
@@ -424,14 +443,17 @@ class control_logic(design.design):
                             offset=clk_pos)
 
 
-        clkbuf_map = zip(["Z"], ["clk_buf"])
-        self.connect_vertical_bus(clkbuf_map, self.clkbuf_inst, self.rail_offsets, ("metal3", "via2", "metal2"))  
+        # Connect this at the bottom of the buffer
+        out_pos = self.clk_buf_inst.get_pin("Z").center()
+        mid1 = vector(out_pos.x,2*self.m2_pitch)
+        mid2 = vector(self.rail_offsets["clk_buf"].x, mid1.y)
+        bus_pos = self.rail_offsets["clk_buf"]
+        self.add_wire(("metal3","via2","metal2"),[out_pos, mid1, mid2, bus_pos])
         # The pin is on M1, so we need another via as well
         self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=self.clkbuf_inst.get_pin("Z").center())
-        
+                            offset=self.clk_buf_inst.get_pin("Z").center())
 
-        self.connect_output(self.clkbuf_inst, "Z", "clk_buf")
+        self.connect_output(self.clk_buf_inst, "Z", "clk_buf")
 
     def create_gated_clk_bar_row(self):
         self.clk_bar_inst = self.add_inst(name="inv_clk_bar",
@@ -510,7 +532,7 @@ class control_logic(design.design):
     def create_wlen_row(self):
         # input pre_p_en, output: wl_en
         self.wl_en_inst=self.add_inst(name="buf_wl_en",
-                                      mod=self.buf16)
+                                      mod=self.wl_en_driver)
         self.connect_inst(["gated_clk_bar", "wl_en", "vdd", "gnd"])
 
     def place_wlen_row(self, row):
@@ -580,7 +602,7 @@ class control_logic(design.design):
 
         # input: pre_p_en, output: p_en_bar
         self.p_en_bar_inst=self.add_inst(name="inv_p_en_bar",
-                                         mod=self.inv8)
+                                         mod=self.p_en_bar_driver)
         self.connect_inst([input_name, "p_en_bar", "vdd", "gnd"])
         
         
@@ -620,7 +642,7 @@ class control_logic(design.design):
         # BUFFER FOR S_EN
         # input: pre_s_en, output: s_en
         self.s_en_inst=self.add_inst(name="buf_s_en",
-                                     mod=self.buf8)
+                                     mod=self.s_en_driver)
         self.connect_inst(["pre_s_en", "s_en",  "vdd", "gnd"])
         
     def place_sen_row(self,row):
@@ -657,7 +679,7 @@ class control_logic(design.design):
             
         # BUFFER FOR W_EN
         self.w_en_inst = self.add_inst(name="buf_w_en_buf",
-                                       mod=self.buf8)
+                                       mod=self.w_en_driver)
         self.connect_inst([input_name, "w_en", "vdd", "gnd"])
 
 
@@ -814,7 +836,7 @@ class control_logic(design.design):
         #Calculate the load on wl_en within the module and add it to external load
         external_cout = self.sram.get_wl_en_cin()
         #First stage is the clock buffer
-        stage_effort_list += self.clkbuf.get_output_stage_efforts(external_cout, is_clk_bar_rise)
+        stage_effort_list += self.clk_buf_driver.get_stage_efforts(external_cout, is_clk_bar_rise)
         last_stage_is_rise = stage_effort_list[-1].is_rise
         
         #Then ask the sram for the other path delays (from the bank)
@@ -845,17 +867,17 @@ class control_logic(design.design):
         #First stage, gated_clk_bar -(and2)-> rbl_in. Only for RW ports.
         if self.port_type == "rw":
             stage1_cout = self.replica_bitline.get_en_cin()
-            stage_effort_list += self.and2.get_output_stage_efforts(stage1_cout, last_stage_rise)
+            stage_effort_list += self.and2.get_stage_efforts(stage1_cout, last_stage_rise)
             last_stage_rise = stage_effort_list[-1].is_rise
         
         #Replica bitline stage, rbl_in -(rbl)-> pre_s_en
-        stage2_cout = self.buf8.get_cin()
+        stage2_cout = self.s_en_driver.get_cin()
         stage_effort_list += self.replica_bitline.determine_sen_stage_efforts(stage2_cout, last_stage_rise)
         last_stage_rise = stage_effort_list[-1].is_rise
         
         #buffer stage, pre_s_en -(buffer)-> s_en
         stage3_cout = self.sram.get_sen_cin()
-        stage_effort_list += self.buf8.get_output_stage_efforts(stage3_cout, last_stage_rise)
+        stage_effort_list += self.s_en_driver.get_stage_efforts(stage3_cout, last_stage_rise)
         last_stage_rise = stage_effort_list[-1].is_rise
         
         return stage_effort_list    

@@ -22,7 +22,7 @@ class wordline_driver_test(openram_test):
 
         # check wordline driver for single port
         debug.info(2, "Checking driver")
-        tx = wordline_driver.wordline_driver(name="wld1", rows=8)
+        tx = wordline_driver.wordline_driver(name="wld1", rows=8, cols=32)
         self.local_check(tx)
 
         # check wordline driver for multi-port
@@ -33,7 +33,7 @@ class wordline_driver_test(openram_test):
 
         factory.reset()
         debug.info(2, "Checking driver (multi-port case)")
-        tx = wordline_driver.wordline_driver(name="wld2", rows=8)
+        tx = wordline_driver.wordline_driver(name="wld2", rows=8, cols=64)
         self.local_check(tx)
 
         globals.end_openram()

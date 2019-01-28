@@ -26,6 +26,7 @@ class pinv(pgate.pgate):
         # have poly connected, for example.
         pgate.pgate.__init__(self, name, height)
         debug.info(2, "create pinv structure {0} with size of {1}".format(name, size))
+        self.add_comment("size: {}".format(size))
         
         self.size = size
         self.nmos_size = size
@@ -286,7 +287,7 @@ class pinv(pgate.pgate):
         """Return the capacitance of the gate connection in generic capacitive units relative to the minimum width of a transistor"""
         return self.nmos_size + self.pmos_size
         
-    def get_effort_stage(self, cout, inp_is_rise=True):
+    def get_stage_effort(self, cout, inp_is_rise=True):
         """Returns an object representing the parameters for delay in tau units.
            Optional is_rise refers to the input direction rise/fall. Input inverted by this stage.
         """

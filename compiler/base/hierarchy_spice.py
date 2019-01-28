@@ -19,13 +19,15 @@ class spice():
         # Holds subckts/mods for this module
         self.mods = []  
         # Holds the pins for this module
-        self.pins = []  
+        self.pins = []
         # The type map of each pin: INPUT, OUTPUT, INOUT, POWER, GROUND
         # for each instance, this is the set of nets/nodes that map to the pins for this instance
         self.pin_type = {} 
         # THE CONNECTIONS MUST MATCH THE ORDER OF THE PINS (restriction imposed by the
         # Spice format)
         self.conns = []
+        # Keep track of any comments to add the the spice
+        self.comments = []
 
         self.sp_read()
 
@@ -33,6 +35,10 @@ class spice():
 # Spice circuit
 ############################################################
 
+    def add_comment(self, comment):
+        """ Add a comment to the spice file """
+        self.comments.append(comment)
+        
     def add_pin(self, name, pin_type="INOUT"):
         """ Adds a pin to the pins list. Default type is INOUT signal. """
         self.pins.append(name)
@@ -162,6 +168,9 @@ class spice():
             sp.write("\n.SUBCKT {0} {1}\n".format(self.name,
                                                   " ".join(self.pins)))
 
+            for line in self.comments:
+                sp.write("* {}\n".format(line))
+                    
             # every instance must have a set of connections, even if it is empty.
             if  len(self.insts)!=len(self.conns):
                 debug.error("{0} : Not all instance pins ({1}) are connected ({2}).".format(self.name,

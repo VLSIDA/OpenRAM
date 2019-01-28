@@ -87,11 +87,11 @@ class control_logic(design.design):
                                    height=dff_height)
         self.add_mod(self.and2)
         
-        # Special gates: inverters for buffering
         # clk_buf drives a flop for every address and control bit
         # plus about 5 fanouts for the control logic
-        clock_fanout = math.log(self.num_words,2) + math.log(self.words_per_row,2) \
-                       + self.num_control_signals + 5
+        # each flop internally has a FO 4 approximately
+        clock_fanout = 4*(math.log(self.num_words,2) + math.log(self.words_per_row,2) \
+                       + self.num_control_signals) + 5
         self.clk_buf_driver = factory.create(module_type="pdriver",
                                              fanout=clock_fanout,
                                              height=dff_height)

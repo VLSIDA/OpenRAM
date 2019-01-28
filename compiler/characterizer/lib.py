@@ -525,7 +525,7 @@ class lib:
 
         datasheet = open(OPTS.openram_temp +'/datasheet.info', 'a+')
 
-        current_time = datetime.datetime.now()
+        current_time = datetime.date.today()
         datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},".format(
                         "sram_{0}_{1}_{2}".format(OPTS.word_size, OPTS.num_words, OPTS.tech_name),
                         OPTS.num_words,

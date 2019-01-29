@@ -4,16 +4,14 @@ from tech import drc
 from math import log
 from vector import vector
 from globals import OPTS
-from pinv import pinv
+from sram_factory import factory
 
 class pinvbuf(design.design):
     """
     This is a simple inverter/buffer used for driving loads. It is
     used in the column decoder for 1:2 decoding and as the clock buffer.
     """
-    unique_id = 1
-
-    def __init__(self, driver_size=4, height=None, name=""):
+    def __init__(self, name, size=4, height=None):
 
         self.stage_effort = 4
         self.row_height = height
@@ -22,14 +20,12 @@ class pinvbuf(design.design):
         # stage effort of 4 or less
         # The pinvbuf has a FO of 2 for the first stage, so the second stage
         # should be sized "half" to prevent loading of the first stage
-        self.driver_size = driver_size
-        self.predriver_size = max(int(self.driver_size/(self.stage_effort/2)),1)
-        if name=="":
-            name = "pinvbuf_{0}_{1}_{2}".format(self.predriver_size, self.driver_size, pinvbuf.unique_id)
-            pinvbuf.unique_id += 1
+        self.size = size
+        self.predriver_size = max(int(self.size/(self.stage_effort/2)),1)
 
         design.design.__init__(self, name) 
         debug.info(1, "Creating {}".format(self.name))
+        self.add_comment("size: {}".format(size))
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -65,13 +61,13 @@ class pinvbuf(design.design):
                 
         # Shield the cap, but have at least a stage effort of 4
         input_size = max(1,int(self.predriver_size/self.stage_effort))
-        self.inv = pinv(size=input_size, height=self.row_height)
+        self.inv = factory.create(module_type="pinv", size=input_size, height=self.row_height)
         self.add_mod(self.inv)
         
-        self.inv1 = pinv(size=self.predriver_size, height=self.row_height)
+        self.inv1 = factory.create(module_type="pinv", size=self.predriver_size, height=self.row_height)
         self.add_mod(self.inv1)
 
-        self.inv2 = pinv(size=self.driver_size, height=self.row_height)
+        self.inv2 = factory.create(module_type="pinv", size=self.size, height=self.row_height)
         self.add_mod(self.inv2)
 
     def create_insts(self):
@@ -191,11 +187,11 @@ class pinvbuf(design.design):
         """Get the stage efforts of the clk -> clk_buf path"""
         stage_effort_list = []
         stage1_cout = self.inv1.get_cin() + self.inv2.get_cin()
-        stage1 = self.inv.get_effort_stage(stage1_cout, inp_is_rise)
+        stage1 = self.inv.get_stage_effort(stage1_cout, inp_is_rise)
         stage_effort_list.append(stage1)
         last_stage_is_rise = stage1.is_rise
         
-        stage2 = self.inv2.get_effort_stage(external_cout, last_stage_is_rise)
+        stage2 = self.inv2.get_stage_effort(external_cout, last_stage_is_rise)
         stage_effort_list.append(stage2)
         
         return stage_effort_list
@@ -205,16 +201,16 @@ class pinvbuf(design.design):
         #After (almost) every stage, the direction of the signal inverts.
         stage_effort_list = []
         stage1_cout = self.inv1.get_cin() + self.inv2.get_cin()
-        stage1 = self.inv.get_effort_stage(stage1_cout, inp_is_rise)
+        stage1 = self.inv.get_stage_effort(stage1_cout, inp_is_rise)
         stage_effort_list.append(stage1)
         last_stage_is_rise = stage_effort_list[-1].is_rise
         
         stage2_cout = self.inv2.get_cin()
-        stage2 = self.inv1.get_effort_stage(stage2_cout, last_stage_is_rise)
+        stage2 = self.inv1.get_stage_effort(stage2_cout, last_stage_is_rise)
         stage_effort_list.append(stage2)
         last_stage_is_rise = stage_effort_list[-1].is_rise
         
-        stage3 = self.inv2.get_effort_stage(external_cout, last_stage_is_rise)
+        stage3 = self.inv2.get_stage_effort(external_cout, last_stage_is_rise)
         stage_effort_list.append(stage3)
         
         return stage_effort_list

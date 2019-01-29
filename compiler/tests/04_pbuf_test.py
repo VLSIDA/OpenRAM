@@ -21,7 +21,7 @@ class pbuf_test(openram_test):
         import pbuf
 
         debug.info(2, "Testing inverter/buffer 4x 8x")
-        a = pbuf.pbuf(8)
+        a = pbuf.pbuf(name="pbufx8", size=8)
         self.local_check(a)
 
         globals.end_openram()

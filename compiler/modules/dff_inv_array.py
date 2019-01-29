@@ -22,6 +22,9 @@ class dff_inv_array(design.design):
             dff_inv_array.unique_id += 1
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(self.name))
+        self.add_comment("rows: {0} cols: {1}".format(rows, columns))
+        self.add_comment("inv1: {0}".format(inv1_size))
+        
         self.inv_size = inv_size
         
         self.create_netlist()
@@ -42,7 +45,7 @@ class dff_inv_array(design.design):
         self.DRC_LVS()
 
     def add_modules(self):
-        self.dff = dff_inv.dff_inv(self.inv_size)
+        self.dff = factory.create(module_type="dff")        
         self.add_mod(self.dff)
 
     def add_pins(self):

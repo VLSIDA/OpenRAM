@@ -15,7 +15,8 @@ class bitcell_1rw_1r(design.design):
     (width,height) = utils.get_libcell_size("cell_1rw_1r", GDS["unit"], layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "cell_1rw_1r", GDS["unit"])
 
-    def __init__(self):
+    def __init__(self, name=""):
+        # Ignore the name argument
         design.design.__init__(self, "cell_1rw_1r")
         debug.info(2, "Create bitcell with 1RW and 1R Port")
 

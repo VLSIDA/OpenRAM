@@ -3,6 +3,7 @@ import design
 from tech import drc
 from math import log
 from vector import vector
+from sram_factory import factory
 from globals import OPTS
 
 class dff_array(design.design):
@@ -11,7 +12,7 @@ class dff_array(design.design):
     Unlike the data flops, these are never spaced out.
     """
 
-    def __init__(self, rows, columns, inv1_size=2, inv2_size=4, name=""):
+    def __init__(self, rows, columns, name=""):
         self.rows = rows
         self.columns = columns
 
@@ -19,7 +20,8 @@ class dff_array(design.design):
             name = "dff_array_{0}x{1}".format(rows, columns)
         design.design.__init__(self, name)
         debug.info(1, "Creating {0} rows={1} cols={2}".format(self.name, self.rows, self.columns))
-
+        self.add_comment("rows: {0} cols: {1}".format(rows, columns))
+        
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -38,10 +40,7 @@ class dff_array(design.design):
         self.DRC_LVS()
 
     def add_modules(self):
-        from importlib import reload
-        c = reload(__import__(OPTS.dff))
-        self.mod_dff = getattr(c, OPTS.dff)
-        self.dff = self.mod_dff("dff")
+        self.dff = factory.create(module_type="dff")
         self.add_mod(self.dff)
         
     def add_pins(self):
@@ -61,7 +60,7 @@ class dff_array(design.design):
             for col in range(self.columns):
                 name = "dff_r{0}_c{1}".format(row,col)
                 self.dff_insts[row,col]=self.add_inst(name=name,
-                                                  mod=self.dff)
+                                                      mod=self.dff)
                 self.connect_inst([self.get_din_name(row,col),
                                    self.get_dout_name(row,col),
                                    "clk",

@@ -3,32 +3,23 @@ from tech import drc
 from math import log
 from vector import vector
 from globals import OPTS
-from pinv import pinv
 import pgate
+from sram_factory import factory
 
 class pbuf(pgate.pgate):
     """
     This is a simple buffer used for driving loads. 
     """
-    from importlib import reload
-    c = reload(__import__(OPTS.bitcell))
-    bitcell = getattr(c, OPTS.bitcell)
-
-    unique_id = 1
-
-    def __init__(self, size=4, height=None, name=""):
-
+    def __init__(self, name, size=4, height=None):
+        
         self.stage_effort = 4
         self.size = size
         self.height = height
 
-        if name=="":
-            name = "pbuf_{0}_{1}".format(self.size, pbuf.unique_id)
-            pbuf.unique_id += 1
-
         pgate.pgate.__init__(self, name, height)
         debug.info(1, "creating {0} with size of {1}".format(self.name,self.size))
-
+        self.add_comment("size: {}".format(size))
+        
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -54,10 +45,10 @@ class pbuf(pgate.pgate):
     def create_modules(self):
         # Shield the cap, but have at least a stage effort of 4
         input_size = max(1,int(self.size/self.stage_effort))
-        self.inv1 = pinv(size=input_size, height=self.height) 
+        self.inv1 = factory.create(module_type="pinv", size=input_size, height=self.height) 
         self.add_mod(self.inv1)
         
-        self.inv2 = pinv(size=self.size, height=self.height)
+        self.inv2 = factory.create(module_type="pinv", size=self.size, height=self.height)
         self.add_mod(self.inv2)
 
     def create_insts(self):
@@ -125,15 +116,15 @@ class pbuf(pgate.pgate):
         inv2_delay = self.inv2.analytical_delay(slew=inv1_delay.slew, load=load)
         return inv1_delay + inv2_delay
     
-    def get_output_stage_efforts(self, external_cout, inp_is_rise=False):
+    def get_stage_efforts(self, external_cout, inp_is_rise=False):
         """Get the stage efforts of the A -> Z path"""
         stage_effort_list = []
         stage1_cout = self.inv2.get_cin()
-        stage1 = self.inv1.get_effort_stage(stage1_cout, inp_is_rise)
+        stage1 = self.inv1.get_stage_effort(stage1_cout, inp_is_rise)
         stage_effort_list.append(stage1)
         last_stage_is_rise = stage1.is_rise
         
-        stage2 = self.inv2.get_effort_stage(external_cout, last_stage_is_rise)
+        stage2 = self.inv2.get_stage_effort(external_cout, last_stage_is_rise)
         stage_effort_list.append(stage2)
         
         return stage_effort_list

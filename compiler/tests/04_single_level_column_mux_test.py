@@ -10,6 +10,7 @@ sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
+from sram_factory import factory
 
 #@unittest.skip("SKIPPING 04_driver_test")
 
@@ -22,7 +23,7 @@ class single_level_column_mux_test(openram_test):
         
         # check single level column mux in single port
         debug.info(2, "Checking column mux")
-        tx = single_level_column_mux.single_level_column_mux(tx_size=8)
+        tx = single_level_column_mux.single_level_column_mux(name="mux8", tx_size=8)
         self.local_check(tx)
         
         # check single level column mux in multi-port
@@ -30,13 +31,15 @@ class single_level_column_mux_test(openram_test):
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 1
-        
+
+        factory.reset()
         debug.info(2, "Checking column mux for pbitcell (innermost connections)")
-        tx = single_level_column_mux.single_level_column_mux(tx_size=8, bitcell_bl="bl0", bitcell_br="br0")
+        tx = single_level_column_mux.single_level_column_mux(name="mux8_2", tx_size=8, bitcell_bl="bl0", bitcell_br="br0")
         self.local_check(tx)
         
+        factory.reset()
         debug.info(2, "Checking column mux for pbitcell (outermost connections)")
-        tx = single_level_column_mux.single_level_column_mux(tx_size=8, bitcell_bl="bl2", bitcell_br="br2")
+        tx = single_level_column_mux.single_level_column_mux(name="mux8_3", tx_size=8, bitcell_bl="bl2", bitcell_br="br2")
         self.local_check(tx)
 
         globals.end_openram()

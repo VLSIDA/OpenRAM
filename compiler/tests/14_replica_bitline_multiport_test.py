@@ -10,6 +10,7 @@ sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
+from sram_factory import factory
 
 class replica_bitline_multiport_test(openram_test):
 
@@ -26,9 +27,10 @@ class replica_bitline_multiport_test(openram_test):
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
-        
+
+        factory.reset()
         debug.info(2, "Testing 1rw 1r RBL with {0} FO4 stages, {1} rows".format(stages,rows))
-        a = replica_bitline.replica_bitline(stages*[fanout],rows)
+        a = replica_bitline.replica_bitline(name="rbl1", delay_fanout_list=stages*[fanout], bitcell_loads=rows)
         self.local_check(a)
         
         # check replica bitline in pbitcell multi-port
@@ -38,16 +40,18 @@ class replica_bitline_multiport_test(openram_test):
         OPTS.num_w_ports = 0
         OPTS.num_r_ports = 0
         
+        factory.reset()
         debug.info(2, "Testing RBL pbitcell 1rw with {0} FO4 stages, {1} rows".format(stages,rows))
-        a = replica_bitline.replica_bitline(stages*[fanout],rows)
+        a = replica_bitline.replica_bitline(name="rbl2", delay_fanout_list=stages*[fanout], bitcell_loads=rows)
         self.local_check(a)
 
         OPTS.num_rw_ports = 1
         OPTS.num_w_ports = 1
         OPTS.num_r_ports = 1
         
+        factory.reset()
         debug.info(2, "Testing RBL pbitcell 1rw 1w 1r with {0} FO4 stages, {1} rows".format(stages,rows))
-        a = replica_bitline.replica_bitline(stages*[fanout],rows)
+        a = replica_bitline.replica_bitline(name="rbl3", delay_fanout_list=stages*[fanout], bitcell_loads=rows)
         self.local_check(a)
         
         globals.end_openram()

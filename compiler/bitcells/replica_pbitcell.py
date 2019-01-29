@@ -3,21 +3,20 @@ import design
 from tech import drc, spice,parameter
 from vector import vector
 from globals import OPTS
-from pbitcell import pbitcell
+from sram_factory import factory
 
 class replica_pbitcell(design.design):
     """
     Creates a replica bitcell using pbitcell
     """
 
-    def __init__(self):
-    
+    def __init__(self, name):
         self.num_rw_ports = OPTS.num_rw_ports
         self.num_w_ports = OPTS.num_w_ports
         self.num_r_ports = OPTS.num_r_ports
         self.total_ports = self.num_rw_ports + self.num_w_ports + self.num_r_ports
     
-        design.design.__init__(self, "replica_pbitcell")
+        design.design.__init__(self, name)
         debug.info(1, "create a replica bitcell using pbitcell with {0} rw ports, {1} w ports and {2} r ports".format(self.num_rw_ports,
                                                                                                                       self.num_w_ports,
                                                                                                                       self.num_r_ports))
@@ -47,7 +46,7 @@ class replica_pbitcell(design.design):
         self.add_pin("gnd")
         
     def add_modules(self):
-        self.prbc = pbitcell(replica_bitcell=True)
+        self.prbc = factory.create(module_type="pbitcell",replica_bitcell=True)
         self.add_mod(self.prbc)
         
         self.height = self.prbc.height

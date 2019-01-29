@@ -132,7 +132,7 @@ To increase the verbosity of the test, add one (or more) -v options:
    python3 tests/00_code_format_check_test.py -v -t freepdk45
 ```
 To specify a particular technology use "-t <techname>" such as
-"-t freepdk45" or "-t scn4m\_subm". The default for a unit test is scn4m_subm. 
+"-t freepdk45". The default for a unit test is scn4m_subm. 
 The default for openram.py is specified in the configuration file.
 
 
@@ -163,7 +163,7 @@ Each specific technology (e.g., [FreePDK45]) should be a subdirectory
   * replica\_cell\_6t.gds 
 * sp_lib folder with all the .sp (premade) library netlists for the above cells.
 * layers.map 
-* A valid tech Python module (tech directory with __init__.py and tech.py) with:
+* A valid tech Python module (tech directory with \_\_init\_\_.py and tech.py) with:
   * References in tech.py to spice models
   * DRC/LVS rules needed for dynamic cells and routing
   * Layer information

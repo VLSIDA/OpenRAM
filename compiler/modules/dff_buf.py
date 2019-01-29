@@ -4,7 +4,7 @@ from tech import drc,parameter
 from math import log
 from vector import vector
 from globals import OPTS
-from pinv import pinv
+from sram_factory import factory
 
 class dff_buf(design.design):
     """
@@ -21,7 +21,8 @@ class dff_buf(design.design):
             dff_buf.unique_id += 1
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(self.name))
-
+        self.add_comment("inv1: {0} inv2: {1}".format(inv1_size, inv2_size))
+        
         # This is specifically for SCMOS where the DFF vdd/gnd rails are more than min width.
         # This causes a DRC in the pinv which assumes min width rails. This ensures the output
         # contact does not violate spacing to the rail in the NMOS.
@@ -50,16 +51,17 @@ class dff_buf(design.design):
         self.DRC_LVS()
 
     def add_modules(self):
-        from importlib import reload
-        c = reload(__import__(OPTS.dff))
-        self.mod_dff = getattr(c, OPTS.dff)
-        self.dff = self.mod_dff("dff")
+        self.dff = factory.create(module_type="dff")
         self.add_mod(self.dff)
 
-        self.inv1 = pinv(size=self.inv1_size,height=self.dff.height)
+        self.inv1 = factory.create(module_type="pinv",
+                                   size=self.inv1_size,
+                                   height=self.dff.height)
         self.add_mod(self.inv1)
 
-        self.inv2 = pinv(size=self.inv2_size,height=self.dff.height)
+        self.inv2 = factory.create(module_type="pinv",
+                                   size=self.inv2_size,
+                                   height=self.dff.height)
         self.add_mod(self.inv2)
 
         

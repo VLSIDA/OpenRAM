@@ -2,9 +2,9 @@ import contact
 import design
 import debug
 from tech import drc, parameter, spice
-from ptx import ptx
 from vector import vector
 from globals import OPTS
+from sram_factory import factory
 
 class pgate(design.design):
     """
@@ -18,15 +18,12 @@ class pgate(design.design):
         if height:
             self.height = height
         elif not height:
-            from importlib import reload
-            c = reload(__import__(OPTS.bitcell))
-            bitcell = getattr(c, OPTS.bitcell)
-            b = bitcell()
+            b = factory.create(module_type="bitcell")
             self.height = b.height
 
 
     def connect_pin_to_rail(self,inst,pin,supply):
-        """ Conencts a ptx pin to a supply rail. """
+        """ Connects a ptx pin to a supply rail. """
         source_pin = inst.get_pin(pin)
         supply_pin = self.get_pin(supply)
         if supply_pin.overlaps(source_pin):

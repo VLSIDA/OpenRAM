@@ -20,7 +20,7 @@ class hierarchical_predecode2x4_test(openram_test):
 
         # checking hierarchical precode 2x4 for single port
         debug.info(1, "Testing sample for hierarchy_predecode2x4")
-        a = pre.hierarchical_predecode2x4()
+        a = pre.hierarchical_predecode2x4(name="pre1")
         self.local_check(a)
 
         # checking hierarchical precode 2x4 for multi-port
@@ -30,7 +30,7 @@ class hierarchical_predecode2x4_test(openram_test):
         OPTS.num_r_ports = 0
         
         debug.info(1, "Testing sample for hierarchy_predecode2x4 (multi-port case)")
-        a = pre.hierarchical_predecode2x4()
+        a = pre.hierarchical_predecode2x4(name="pre2")
         self.local_check(a)
         
         globals.end_openram()

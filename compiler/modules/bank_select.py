@@ -7,6 +7,7 @@ from pinv import pinv
 from pnand2 import pnand2
 from pnor2 import pnor2
 from vector import vector
+from sram_factory import factory
 from globals import OPTS
 
 class bank_select(design.design):
@@ -62,28 +63,25 @@ class bank_select(design.design):
 
     def add_modules(self):
         """ Create modules for later instantiation """
-        from importlib import reload
-        c = reload(__import__(OPTS.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.bitcell)
-        self.bitcell = self.mod_bitcell()
+        self.bitcell = factory.create(module_type="bitcell")
         
         height = self.bitcell.height + drc("poly_to_active")
 
         # 1x Inverter
-        self.inv_sel = pinv(height=height)
+        self.inv_sel = factory.create(module_type="pinv", height=height)
         self.add_mod(self.inv_sel)
 
         # 4x Inverter
-        self.inv = self.inv4x = pinv(4)
+        self.inv4x = factory.create(module_type="pinv", height=height, size=4)
         self.add_mod(self.inv4x)
 
-        self.nor2 = pnor2(height=height)
+        self.nor2 = factory.create(module_type="pnor2", height=height)
         self.add_mod(self.nor2)
         
-        self.inv4x_nor = pinv(size=4, height=height)
+        self.inv4x_nor = factory.create(module_type="pinv", height=height, size=4)
         self.add_mod(self.inv4x_nor)
 
-        self.nand2 = pnand2()
+        self.nand2 = factory.create(module_type="pnand2")
         self.add_mod(self.nand2)
 
     def calculate_module_offsets(self):
@@ -94,7 +92,7 @@ class bank_select(design.design):
         self.xoffset_bank_sel_inv = 0 
         self.xoffset_inputs = 0
 
-        self.yoffset_maxpoint = self.num_control_lines * self.inv.height
+        self.yoffset_maxpoint = self.num_control_lines * self.inv4x.height
         # Include the M1 pitches for the supply rails and spacing
         self.height = self.yoffset_maxpoint + 2*self.m1_pitch
         self.width = self.xoffset_inv + self.inv4x.width
@@ -170,10 +168,10 @@ class bank_select(design.design):
             if i == 0:
                 y_offset = 0
             else:
-                y_offset = self.inv4x_nor.height + self.inv.height * (i-1)
+                y_offset = self.inv4x_nor.height + self.inv4x.height * (i-1)
             
             if i%2:
-                y_offset += self.inv.height
+                y_offset += self.inv4x.height
                 mirror = "MX"
             else:
                 mirror = ""
@@ -223,7 +221,7 @@ class bank_select(design.design):
         self.add_label_pin(text="bank_sel_bar",
                            layer="metal2",  
                            offset=vector(xoffset_bank_sel_bar, 0), 
-                           height=self.inv.height)
+                           height=self.inv4x.height)
         self.add_via_center(layers=("metal1","via1","metal2"),
                             offset=bank_sel_bar_pin.rc())
             

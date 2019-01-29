@@ -1,11 +1,11 @@
 from math import log
 import design
-from single_level_column_mux import single_level_column_mux 
 import contact
 from tech import drc
 import debug
 import math
 from vector import vector
+from sram_factory import factory
 from globals import OPTS
 
 class single_level_column_mux_array(design.design):
@@ -14,13 +14,11 @@ class single_level_column_mux_array(design.design):
     Array of column mux to read the bitlines through the 6T.
     """
 
-    unique_id = 1
-    
-    def __init__(self, columns, word_size, bitcell_bl="bl", bitcell_br="br"):
-        name="single_level_column_mux_array_{}".format(single_level_column_mux_array.unique_id)
-        single_level_column_mux_array.unique_id += 1
+    def __init__(self, name, columns, word_size, bitcell_bl="bl", bitcell_br="br"):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
+        self.add_comment("cols: {0} word_size: {1} bl: {2} br: {3}".format(columns, word_size, bitcell_bl, bitcell_br))
+        
         self.columns = columns
         self.word_size = word_size
         self.words_per_row = int(self.columns / self.word_size)
@@ -61,7 +59,9 @@ class single_level_column_mux_array(design.design):
 
 
     def add_modules(self):
-        self.mux = single_level_column_mux(bitcell_bl=self.bitcell_bl, bitcell_br=self.bitcell_br)
+        self.mux = factory.create(module_type="single_level_column_mux",
+                                  bitcell_bl=self.bitcell_bl,
+                                  bitcell_br=self.bitcell_br)
         self.add_mod(self.mux)
 
 

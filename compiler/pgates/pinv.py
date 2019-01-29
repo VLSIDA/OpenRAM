@@ -2,12 +2,12 @@ import contact
 import pgate
 import debug
 from tech import drc, parameter, spice
-from ptx import ptx
 from vector import vector
 from math import ceil
 from globals import OPTS
 from utils import round_to_grid
 import logical_effort
+from sram_factory import factory
 
 class pinv(pgate.pgate):
     """
@@ -19,17 +19,14 @@ class pinv(pgate.pgate):
     output to the right side of the cell for easier access.
     """
 
-    unique_id = 1
-    
-    def __init__(self, size=1, beta=parameter["beta"], height=None, route_output=True):
+    def __init__(self, name, size=1, beta=parameter["beta"], height=None, route_output=True):
         # We need to keep unique names because outputting to GDSII
         # will use the last record with a given name. I.e., you will
         # over-write a design in GDS if one has and the other doesn't
         # have poly connected, for example.
-        name = "pinv_{}".format(pinv.unique_id)
-        pinv.unique_id += 1
         pgate.pgate.__init__(self, name, height)
         debug.info(2, "create pinv structure {0} with size of {1}".format(name, size))
+        self.add_comment("size: {}".format(size))
         
         self.size = size
         self.nmos_size = size
@@ -86,8 +83,8 @@ class pinv(pgate.pgate):
         # Sanity check. can we make an inverter in the height with minimum tx sizes?
         # Assume we need 3 metal 1 pitches (2 power rails, one between the tx for the drain)
         # plus the tx height
-        nmos = ptx(tx_type="nmos")
-        pmos = ptx(width=drc("minwidth_tx"), tx_type="pmos")
+        nmos = factory.create(module_type="ptx", tx_type="nmos")
+        pmos = factory.create(module_type="ptx", width=drc("minwidth_tx"), tx_type="pmos")
         tx_height = nmos.poly_height + pmos.poly_height
         # rotated m1 pitch or poly to active spacing
         min_channel = max(contact.poly.width + self.m1_space,
@@ -147,18 +144,20 @@ class pinv(pgate.pgate):
         
     def add_ptx(self):
         """ Create the PMOS and NMOS transistors. """
-        self.nmos = ptx(width=self.nmos_width,
-                        mults=self.tx_mults,
-                        tx_type="nmos",
-                        connect_poly=True,
-                        connect_active=True)
+        self.nmos = factory.create(module_type="ptx",
+                                   width=self.nmos_width,
+                                   mults=self.tx_mults,
+                                   tx_type="nmos",
+                                   connect_poly=True,
+                                   connect_active=True)
         self.add_mod(self.nmos)
         
-        self.pmos = ptx(width=self.pmos_width,
-                        mults=self.tx_mults,
-                        tx_type="pmos",
-                        connect_poly=True,
-                        connect_active=True)
+        self.pmos = factory.create(module_type="ptx",
+                                   width=self.pmos_width,
+                                   mults=self.tx_mults,
+                                   tx_type="pmos",
+                                   connect_poly=True,
+                                   connect_active=True)
         self.add_mod(self.pmos)
         
     def route_supply_rails(self):
@@ -288,7 +287,7 @@ class pinv(pgate.pgate):
         """Return the capacitance of the gate connection in generic capacitive units relative to the minimum width of a transistor"""
         return self.nmos_size + self.pmos_size
         
-    def get_effort_stage(self, cout, inp_is_rise=True):
+    def get_stage_effort(self, cout, inp_is_rise=True):
         """Returns an object representing the parameters for delay in tau units.
            Optional is_rise refers to the input direction rise/fall. Input inverted by this stage.
         """

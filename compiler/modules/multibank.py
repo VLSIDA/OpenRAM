@@ -5,12 +5,8 @@ import design
 import math
 from math import log,sqrt,ceil
 import contact
-from pinv import pinv
-from pnand2 import pnand2
-from pnor2 import pnor2
 from vector import vector
-from pinvbuf import pinvbuf
-
+from sram_factory import factory
 from globals import OPTS
 
 class multibank(design.design):
@@ -21,21 +17,8 @@ class multibank(design.design):
     This module includes the tristate and bank select logic. 
     """
 
-    def __init__(self, word_size, num_words, words_per_row, num_banks=1, name=""):
+    def __init__(self, name, word_size, num_words, words_per_row, num_banks=1):
 
-        mod_list = ["tri_gate", "bitcell", "decoder", "wordline_driver",
-                    "bitcell_array",   "sense_amp_array",    "precharge_array",
-                    "column_mux_array", "write_driver_array", "tri_gate_array",
-                    "dff", "bank_select"]
-        from importlib import reload
-        for mod_name in mod_list:
-            config_mod_name = getattr(OPTS, mod_name)
-            class_file = reload(__import__(config_mod_name))
-            mod_class = getattr(class_file , config_mod_name)
-            setattr (self, "mod_"+mod_name, mod_class)
-
-        if name == "":
-            name = "bank_{0}_{1}".format(word_size, num_words)
         design.design.__init__(self, name)
         debug.info(2, "create sram of size {0} with {1} words".format(word_size,num_words))
 

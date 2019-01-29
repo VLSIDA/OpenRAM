@@ -1,6 +1,7 @@
 import design
 from tech import drc
 from vector import vector
+from sram_factory import factory
 import debug
 from globals import OPTS
 
@@ -10,9 +11,11 @@ class sense_amp_array(design.design):
     Dynamically generated sense amp array for all bitlines.
     """
 
-    def __init__(self, word_size, words_per_row):
-        design.design.__init__(self, "sense_amp_array")
+    def __init__(self, name, word_size, words_per_row):
+        design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
+        self.add_comment("word_size {0}".format(word_size))        
+        self.add_comment("words_per_row: {0}".format(words_per_row))
 
         self.word_size = word_size
         self.words_per_row = words_per_row
@@ -51,17 +54,13 @@ class sense_amp_array(design.design):
         self.add_pin("gnd")
         
     def add_modules(self):
-        from importlib import reload
-        c = reload(__import__(OPTS.sense_amp))
-        self.mod_sense_amp = getattr(c, OPTS.sense_amp)
-        self.amp = self.mod_sense_amp("sense_amp")
+        self.amp = factory.create(module_type="sense_amp")
+                   
         self.add_mod(self.amp)
 
         # This is just used for measurements,
         # so don't add the module
-        c = reload(__import__(OPTS.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.bitcell)
-        self.bitcell = self.mod_bitcell()
+        self.bitcell = factory.create(module_type="bitcell")
         
     def create_sense_amp_array(self):
         self.local_insts = []

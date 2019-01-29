@@ -22,17 +22,22 @@ class pdriver_test(openram_test):
 
         debug.info(2, "Testing inverter/buffer 4x 8x")
         # a tests the error message for specifying conflicting conditions
-        #a = pdriver.pdriver(fanout_size = 4,size_list = [1,2,4,8])
-        b = pdriver.pdriver(size_list = [1,2,4,8])
-        c = pdriver.pdriver(fanout_size = 50)
-        d = pdriver.pdriver(fanout_size = 50, neg_polarity = True)
-        e = pdriver.pdriver(fanout_size = 64)
-        f = pdriver.pdriver(fanout_size = 64, neg_polarity = True)
+        #a = pdriver.pdriver(fanout = 4,size_list = [1,2,4,8])
         #self.local_check(a)
+        
+        b = pdriver.pdriver(name="pdriver1", size_list = [1,2,4,8])
         self.local_check(b)
+        
+        c = pdriver.pdriver(name="pdriver2", fanout = 50)
         self.local_check(c)
+        
+        d = pdriver.pdriver(name="pdriver3", fanout = 50, neg_polarity = True)
         self.local_check(d)
+        
+        e = pdriver.pdriver(name="pdriver4", fanout = 64)
         self.local_check(e)
+        
+        f = pdriver.pdriver(name="pdriver5", fanout = 64, neg_polarity = True)
         self.local_check(f)
 
         globals.end_openram()

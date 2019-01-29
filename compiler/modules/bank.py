@@ -6,9 +6,7 @@ import math
 from math import log,sqrt,ceil
 import contact
 import pgates
-from pinv import pinv
-from pnand2 import pnand2
-from pnor2 import pnor2
+from sram_factory import factory
 from vector import vector
 
 from globals import OPTS
@@ -396,25 +394,14 @@ class bank(design.design):
     def add_modules(self):
         """ Add all the modules using the class loader """
         
-        mod_list = ["bitcell", "decoder", "wordline_driver",
-                    "bitcell_array",   "sense_amp_array",    "precharge_array",
-                    "column_mux_array", "write_driver_array", 
-                    "dff", "bank_select"]
-        from importlib import reload
-        for mod_name in mod_list:
-            config_mod_name = getattr(OPTS, mod_name)
-            class_file = reload(__import__(config_mod_name))
-            mod_class = getattr(class_file , config_mod_name)
-            setattr (self, "mod_"+mod_name, mod_class)
 
-        
-        
-        self.bitcell_array = self.mod_bitcell_array(cols=self.num_cols,
-                                                    rows=self.num_rows)
+        self.bitcell_array = factory.create(module_type="bitcell_array",
+                                            cols=self.num_cols,
+                                            rows=self.num_rows)
         self.add_mod(self.bitcell_array)
         
         # create arrays of bitline and bitline_bar names for read, write, or all ports
-        self.bitcell = self.mod_bitcell()
+        self.bitcell = factory.create(module_type="bitcell") 
         self.bl_names = self.bitcell.list_all_bl_names()
         self.br_names = self.bitcell.list_all_br_names()
         self.wl_names = self.bitcell.list_all_wl_names()
@@ -423,7 +410,11 @@ class bank(design.design):
         self.precharge_array = []
         for port in self.all_ports:
             if port in self.read_ports:
-                self.precharge_array.append(self.mod_precharge_array(columns=self.num_cols, bitcell_bl=self.bl_names[port], bitcell_br=self.br_names[port]))
+                temp_pre = factory.create(module_type="precharge_array",
+                                          columns=self.num_cols,
+                                          bitcell_bl=self.bl_names[port],
+                                          bitcell_br=self.br_names[port])
+                self.precharge_array.append(temp_pre)
                 self.add_mod(self.precharge_array[port])
             else:
                 self.precharge_array.append(None)
@@ -431,32 +422,39 @@ class bank(design.design):
         if self.col_addr_size > 0:
             self.column_mux_array = []
             for port in self.all_ports:
-                self.column_mux_array.append(self.mod_column_mux_array(columns=self.num_cols, 
-                                                                       word_size=self.word_size,
-                                                                       bitcell_bl=self.bl_names[port],
-                                                                       bitcell_br=self.br_names[port]))
+                temp_col = factory.create(module_type="column_mux_array",
+                                          columns=self.num_cols, 
+                                          word_size=self.word_size,
+                                          bitcell_bl=self.bl_names[port],
+                                          bitcell_br=self.br_names[port])
+                self.column_mux_array.append(temp_col)
                 self.add_mod(self.column_mux_array[port])
 
 
-        self.sense_amp_array = self.mod_sense_amp_array(word_size=self.word_size, 
-                                                        words_per_row=self.words_per_row)
+        self.sense_amp_array = factory.create(module_type="sense_amp_array",
+                                              word_size=self.word_size, 
+                                              words_per_row=self.words_per_row)
         self.add_mod(self.sense_amp_array)
 
-        self.write_driver_array = self.mod_write_driver_array(columns=self.num_cols,
-                                                              word_size=self.word_size)
+        self.write_driver_array = factory.create(module_type="write_driver_array",
+                                                 columns=self.num_cols,
+                                                 word_size=self.word_size)
         self.add_mod(self.write_driver_array)
 
-        self.row_decoder = self.mod_decoder(rows=self.num_rows)
+        self.row_decoder = factory.create(module_type="decoder",
+                                          rows=self.num_rows)
         self.add_mod(self.row_decoder)
         
-        self.wordline_driver = self.mod_wordline_driver(rows=self.num_rows)
+        self.wordline_driver = factory.create(module_type="wordline_driver",
+                                              rows=self.num_rows,
+                                              cols=self.num_cols)
         self.add_mod(self.wordline_driver)
 
-        self.inv = pinv()
+        self.inv = factory.create(module_type="pinv")
         self.add_mod(self.inv)
 
         if(self.num_banks > 1):
-            self.bank_select = self.mod_bank_select()
+            self.bank_select = factory.create(module_type="bank_select")
             self.add_mod(self.bank_select)
         
 
@@ -693,18 +691,17 @@ class bank(design.design):
         """ 
         Create a 2:4 or 3:8 column address decoder.
         """
+
+        dff = factory.create(module_type="dff")
         
         if self.col_addr_size == 0:
             return
         elif self.col_addr_size == 1:
-            from pinvbuf import pinvbuf
-            self.column_decoder = pinvbuf(height=self.mod_dff.height)
+            self.column_decoder = factory.create(module_type="pinvbuf", height=dff.height)
         elif self.col_addr_size == 2:
-            from hierarchical_predecode2x4 import hierarchical_predecode2x4 as pre2x4
-            self.column_decoder = pre2x4(height=self.mod_dff.height)
+            self.column_decoder = factory.create(module_type="hierarchical_predecode2x4", height=dff.height)
         elif self.col_addr_size == 3:
-            from hierarchical_predecode3x8 import hierarchical_predecode3x8 as pre3x8
-            self.column_decoder = pre3x8(height=self.mod_dff.height)
+            self.column_decoder = factory.create(module_type="hierarchical_predecode3x8", height=dff.height)
         else:
             # No error checking before?
             debug.error("Invalid column decoder?",-1)
@@ -1071,8 +1068,8 @@ class bank(design.design):
             # The mid guarantees we exit the input cell to the right.
             driver_wl_pos = self.wordline_driver_inst[port].get_pin("wl_{}".format(row)).rc()
             bitcell_wl_pos = self.bitcell_array_inst.get_pin(self.wl_names[port]+"_{}".format(row)).lc()
-            mid1 = driver_wl_pos.scale(0.5,1)+bitcell_wl_pos.scale(0.5,0)
-            mid2 = driver_wl_pos.scale(0.5,0)+bitcell_wl_pos.scale(0.5,1)
+            mid1 = driver_wl_pos.scale(0,1) + vector(0.5*self.wordline_driver_inst[port].rx() + 0.5*self.bitcell_array_inst.lx(),0)
+            mid2 = mid1.scale(1,0)+bitcell_wl_pos.scale(0.5,1)
             self.add_path("metal1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
 
 
@@ -1090,8 +1087,8 @@ class bank(design.design):
             # The mid guarantees we exit the input cell to the right.
             driver_wl_pos = self.wordline_driver_inst[port].get_pin("wl_{}".format(row)).lc()
             bitcell_wl_pos = self.bitcell_array_inst.get_pin(self.wl_names[port]+"_{}".format(row)).rc()
-            mid1 = driver_wl_pos.scale(0.5,1)+bitcell_wl_pos.scale(0.5,0)
-            mid2 = driver_wl_pos.scale(0.5,0)+bitcell_wl_pos.scale(0.5,1)
+            mid1 = driver_wl_pos.scale(0,1) + vector(0.5*self.wordline_driver_inst[port].lx() + 0.5*self.bitcell_array_inst.rx(),0)
+            mid2 = mid1.scale(1,0)+bitcell_wl_pos.scale(0,1)
             self.add_path("metal1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
 
     def route_column_address_lines(self, port):
@@ -1257,20 +1254,22 @@ class bank(design.design):
     def get_wl_en_cin(self):
         """Get the relative capacitance of all the clk connections in the bank"""
         #wl_en only used in the wordline driver.
-        total_clk_cin = self.wordline_driver.get_wl_en_cin()
-        return total_clk_cin
-        
+        return self.wordline_driver.get_wl_en_cin()
+
+    def get_w_en_cin(self):
+        """Get the relative capacitance of all the clk connections in the bank"""
+        #wl_en only used in the wordline driver.
+        return self.write_driver.get_w_en_cin()
+    
     def get_clk_bar_cin(self):
         """Get the relative capacitance of all the clk_bar connections in the bank"""
         #Current bank only uses clock bar (clk_buf_bar) as an enable for the precharge array.
         
         #Precharges are the all the same in Mulitport, one is picked
         port = self.read_ports[0]
-        total_clk_bar_cin = self.precharge_array[port].get_en_cin()
-        return total_clk_bar_cin 
+        return self.precharge_array[port].get_en_cin()
 
     def get_sen_cin(self):
         """Get the relative capacitance of all the sense amp enable connections in the bank"""
         #Current bank only uses sen as an enable for the sense amps.
-        total_sen_cin = self.sense_amp_array.get_en_cin()
-        return total_sen_cin  
+        return self.sense_amp_array.get_en_cin()

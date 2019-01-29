@@ -20,6 +20,8 @@ class dff_inv(design.design):
             dff_inv.unique_id += 1
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(self.name))
+        self.add_comment("inv: {0}".format(inv_size))
+
         self.inv_size = inv_size
         
         # This is specifically for SCMOS where the DFF vdd/gnd rails are more than min width.
@@ -55,13 +57,12 @@ class dff_inv(design.design):
         self.add_pin("gnd")
 
     def add_modules(self):
-        from importlib import reload
-        c = reload(__import__(OPTS.dff))
-        self.mod_dff = getattr(c, OPTS.dff)
-        self.dff = self.mod_dff("dff")
+        self.dff = dff_inv.dff_inv(self.inv_size)
         self.add_mod(self.dff)
         
-        self.inv1 = pinv(size=self.inv_size,height=self.dff.height)
+        self.inv1 = factory.create(module_type="pinv",
+                                   size=self.inv_size,
+                                   height=self.dff.height)
         self.add_mod(self.inv1)
 
     def create_modules(self):

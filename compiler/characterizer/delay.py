@@ -36,10 +36,6 @@ class delay(simulation):
         self.period = 0
         self.set_load_slew(0,0)
         self.set_corner(corner)
-        self.create_signal_names()
-        
-        #Create global measure names. Should maybe be an input at some point.
-        self.create_measurement_names()
         
     def create_measurement_names(self):
         """Create measurement names. The names themselves currently define the type of measurement"""
@@ -660,7 +656,7 @@ class delay(simulation):
         self.probe_address = probe_address
         self.probe_data = probe_data
         self.bitline_column = self.get_data_bit_column_number(probe_address, probe_data)
-        
+        self.wordline_row = self.get_address_row_number(probe_address)
         self.prepare_netlist()
         
     def get_data_bit_column_number(self, probe_address, probe_data):
@@ -670,7 +666,11 @@ class delay(simulation):
         else:
             col_address = 0
         bl_column = int(self.sram.words_per_row*probe_data + col_address)
-        return bl_column    
+        return bl_column 
+
+    def get_address_row_number(self, probe_address):
+        """Calculates wordline row number of data bit under test using address and column mux size"""
+        return int(probe_address[self.sram.col_addr_size:],2)
 
     def prepare_netlist(self):
         """ Prepare a trimmed netlist and regular netlist. """
@@ -703,6 +703,8 @@ class delay(simulation):
         char_sram_data = {}
         
         self.set_probe(probe_address, probe_data)
+        self.create_signal_names()
+        self.create_measurement_names()
         self.create_measurement_objects()
         
         self.load=max(loads)

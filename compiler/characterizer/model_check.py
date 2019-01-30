@@ -29,22 +29,22 @@ class model_check(delay):
         
     def create_measurement_names(self):
         """Create measurement names. The names themselves currently define the type of measurement"""
-        wl_en_driver_delay_names = ["delay_wl_en_dvr_{}".format(stage) for stage in range(1,self.get_num_wl_en_driver_stages())]
-        wl_driver_delay_names = ["delay_wl_dvr_{}".format(stage) for stage in range(1,self.get_num_wl_driver_stages())]
-        sen_driver_delay_names = ["delay_sen_dvr_{}".format(stage) for stage in range(1,self.get_num_sen_driver_stages())]
-        
-        wl_en_driver_slew_names = ["slew_wl_en_dvr_{}".format(stage) for stage in range(1,self.get_num_wl_en_driver_stages())]
-        wl_driver_slew_names = ["slew_wl_dvr_{}".format(stage) for stage in range(1,self.get_num_wl_driver_stages())]
-        sen_driver_slew_names = ["slew_sen_dvr_{}".format(stage) for stage in range(1,self.get_num_sen_driver_stages())]
-        
+        #Create delay measurement names
+        wl_en_driver_delay_names = ["delay_wl_en_dvr{}_".format(stage) for stage in range(1,self.get_num_wl_en_driver_stages())]
+        wl_driver_delay_names = ["delay_wl_dvr{}_".format(stage) for stage in range(1,self.get_num_wl_driver_stages())]
+        sen_driver_delay_names = ["delay_sen_dvr{}_".format(stage) for stage in range(1,self.get_num_sen_driver_stages())]
+        dc_delay_names = ["delay_delay_chain_stage{}_".format(stage) for stage in range(1,self.get_num_delay_stages()+1)]
         self.wl_delay_meas_names = wl_en_driver_delay_names+["delay_wl_en", "delay_wl_bar"]+wl_driver_delay_names+["delay_wl"]
-        self.wl_slew_meas_names = ["slew_wl_gated_clk_bar"]+wl_en_driver_slew_names+["slew_wl_en", "slew_wl_bar"]+wl_driver_slew_names+["slew_wl"]
-        
-        dc_delay_names = ["delay_delay_chain_stage_{}".format(stage) for stage in range(1,self.get_num_delay_stages()+1)]
         self.rbl_delay_meas_names = ["delay_gated_clk_nand", "delay_delay_chain_in"]+dc_delay_names
-        dc_slew_names = ["slew_delay_chain_stage_{}".format(stage) for stage in range(1,self.get_num_delay_stages()+1)]
-        self.rbl_slew_meas_names = ["slew_rbl_gated_clk_bar","slew_gated_clk_nand", "slew_delay_chain_in"]+dc_slew_names
         self.sae_delay_meas_names = ["delay_pre_sen"]+sen_driver_delay_names+["delay_sen"]
+
+        #Create slew measurement names
+        wl_en_driver_slew_names = ["slew_wl_en_dvr{}_".format(stage) for stage in range(1,self.get_num_wl_en_driver_stages())]
+        wl_driver_slew_names = ["slew_wl_dvr{}_".format(stage) for stage in range(1,self.get_num_wl_driver_stages())]
+        sen_driver_slew_names = ["slew_sen_dvr{}_".format(stage) for stage in range(1,self.get_num_sen_driver_stages())]
+        dc_slew_names = ["slew_delay_chain_stage{}_".format(stage) for stage in range(1,self.get_num_delay_stages()+1)]
+        self.wl_slew_meas_names = ["slew_wl_gated_clk_bar"]+wl_en_driver_slew_names+["slew_wl_en", "slew_wl_bar"]+wl_driver_slew_names+["slew_wl"]
+        self.rbl_slew_meas_names = ["slew_rbl_gated_clk_bar","slew_gated_clk_nand", "slew_delay_chain_in"]+dc_slew_names
         self.sae_slew_meas_names = ["slew_replica_bl0", "slew_pre_sen"]+sen_driver_slew_names+["slew_sen"]
        
     def create_signal_names(self):
@@ -52,13 +52,21 @@ class model_check(delay):
         delay.create_signal_names(self)
         #Signal names are all hardcoded, need to update to make it work for probe address and different configurations.
         wl_en_driver_signals = ["Xsram.Xcontrol0.Xbuf_wl_en.Zb{}_int".format(stage) for stage in range(1,self.get_num_wl_en_driver_stages())]
-        wl_driver_signals = ["Xsram.Xbank0.Xwordline_driver0.Xwl_driver_inv0.Zb{}_int".format(stage) for stage in range(1,self.get_num_wl_driver_stages())]
+        wl_driver_signals = ["Xsram.Xbank0.Xwordline_driver0.Xwl_driver_inv{}.Zb{}_int".format(self.wordline_row, stage) for stage in range(1,self.get_num_wl_driver_stages())]
         sen_driver_signals = ["Xsram.Xcontrol0.Xbuf_s_en.Zb{}_int".format(stage) for stage in range(1,self.get_num_sen_driver_stages())]
-        delay_chain_signal_names = ["Xsram.Xcontrol0.Xreplica_bitline.Xdelay_chain.dout_{}".format(stage) for stage in range(1,self.get_num_delay_stages())] + ["Xsram.Xcontrol0.Xreplica_bitline.delayed_en"]
+        delay_chain_signal_names = ["Xsram.Xcontrol0.Xreplica_bitline.Xdelay_chain.dout_{}".format(stage) for stage in range(1,self.get_num_delay_stages())] 
         
-        self.wl_signal_names = ["Xsram.Xcontrol0.gated_clk_bar"]+wl_en_driver_signals+["Xsram.wl_en0", "Xsram.Xbank0.Xwordline_driver0.wl_bar_15"]+wl_driver_signals+["Xsram.Xbank0.wl_15"]
-        self.rbl_en_signal_names = ["Xsram.Xcontrol0.gated_clk_bar", "Xsram.Xcontrol0.Xand2_rbl_in.zb_int", "Xsram.Xcontrol0.rbl_in"] + delay_chain_signal_names
-        self.sae_signal_names = ["Xsram.Xcontrol0.Xreplica_bitline.bl0_0", "Xsram.Xcontrol0.pre_s_en"]+sen_driver_signals+["Xsram.s_en0"]
+        self.wl_signal_names = ["Xsram.Xcontrol0.gated_clk_bar"]+\
+                               wl_en_driver_signals+\
+                               ["Xsram.wl_en0", "Xsram.Xbank0.Xwordline_driver0.wl_bar_{}".format(self.wordline_row)]+\
+                               wl_driver_signals+\
+                               ["Xsram.Xbank0.wl_{}".format(self.wordline_row)]
+        self.rbl_en_signal_names = ["Xsram.Xcontrol0.gated_clk_bar", "Xsram.Xcontrol0.Xand2_rbl_in.zb_int", "Xsram.Xcontrol0.rbl_in"]+\
+                                   delay_chain_signal_names+\
+                                   ["Xsram.Xcontrol0.Xreplica_bitline.delayed_en"]
+        self.sae_signal_names = ["Xsram.Xcontrol0.Xreplica_bitline.bl0_0", "Xsram.Xcontrol0.pre_s_en"]+\
+                                sen_driver_signals+\
+                                ["Xsram.s_en0"]
     
     
     def create_measurement_objects(self):
@@ -74,8 +82,16 @@ class model_check(delay):
         targ_dir = "FALL"
         
         for i in range(1, len(self.wl_signal_names)):
-            self.wl_meas_objs.append(delay_measure(self.wl_delay_meas_names[i-1], self.wl_signal_names[i-1], self.wl_signal_names[i], trig_dir, targ_dir, measure_scale=1e9))
-            self.wl_meas_objs.append(slew_measure(self.wl_slew_meas_names[i-1], self.wl_signal_names[i-1], trig_dir, measure_scale=1e9))
+            self.wl_meas_objs.append(delay_measure(self.wl_delay_meas_names[i-1], 
+                                                   self.wl_signal_names[i-1], 
+                                                   self.wl_signal_names[i], 
+                                                   trig_dir, 
+                                                   targ_dir, 
+                                                   measure_scale=1e9))
+            self.wl_meas_objs.append(slew_measure(self.wl_slew_meas_names[i-1], 
+                                                  self.wl_signal_names[i-1], 
+                                                  trig_dir, 
+                                                  measure_scale=1e9))
             temp_dir = trig_dir
             trig_dir = targ_dir
             targ_dir = temp_dir
@@ -89,24 +105,46 @@ class model_check(delay):
         targ_dir = "FALL"
         #Add measurements from gated_clk_bar to RBL
         for i in range(1, len(self.rbl_en_signal_names)):
-            self.sae_meas_objs.append(delay_measure(self.rbl_delay_meas_names[i-1], self.rbl_en_signal_names[i-1], self.rbl_en_signal_names[i], trig_dir, targ_dir, measure_scale=1e9))
-            self.sae_meas_objs.append(slew_measure(self.rbl_slew_meas_names[i-1], self.rbl_en_signal_names[i-1], trig_dir, measure_scale=1e9))
+            self.sae_meas_objs.append(delay_measure(self.rbl_delay_meas_names[i-1], 
+                                                    self.rbl_en_signal_names[i-1], 
+                                                    self.rbl_en_signal_names[i], 
+                                                    trig_dir, 
+                                                    targ_dir, 
+                                                    measure_scale=1e9))
+            self.sae_meas_objs.append(slew_measure(self.rbl_slew_meas_names[i-1], 
+                                                   self.rbl_en_signal_names[i-1], 
+                                                   trig_dir, 
+                                                   measure_scale=1e9))
             temp_dir = trig_dir
             trig_dir = targ_dir
             targ_dir = temp_dir
-        self.sae_meas_objs.append(slew_measure(self.rbl_slew_meas_names[-1], self.rbl_en_signal_names[-1], trig_dir, measure_scale=1e9))
+        self.sae_meas_objs.append(slew_measure(self.rbl_slew_meas_names[-1], 
+                                               self.rbl_en_signal_names[-1], 
+                                               trig_dir, 
+                                               measure_scale=1e9))
         
         #Add measurements from rbl_out to sae. Trigger directions do not invert from previous stage due to RBL.
         trig_dir = "FALL"
         targ_dir = "RISE"
         #Add measurements from gated_clk_bar to RBL
         for i in range(1, len(self.sae_signal_names)):
-            self.sae_meas_objs.append(delay_measure(self.sae_delay_meas_names[i-1], self.sae_signal_names[i-1], self.sae_signal_names[i], trig_dir, targ_dir, measure_scale=1e9))
-            self.sae_meas_objs.append(slew_measure(self.sae_slew_meas_names[i-1], self.sae_signal_names[i-1], trig_dir, measure_scale=1e9))
+            self.sae_meas_objs.append(delay_measure(self.sae_delay_meas_names[i-1], 
+                                                    self.sae_signal_names[i-1], 
+                                                    self.sae_signal_names[i], 
+                                                    trig_dir, 
+                                                    targ_dir, 
+                                                    measure_scale=1e9))
+            self.sae_meas_objs.append(slew_measure(self.sae_slew_meas_names[i-1], 
+                                                   self.sae_signal_names[i-1], 
+                                                   trig_dir, 
+                                                   measure_scale=1e9))
             temp_dir = trig_dir
             trig_dir = targ_dir
             targ_dir = temp_dir
-        self.sae_meas_objs.append(slew_measure(self.sae_slew_meas_names[-1], self.sae_signal_names[-1], trig_dir, measure_scale=1e9))
+        self.sae_meas_objs.append(slew_measure(self.sae_slew_meas_names[-1], 
+                                               self.sae_signal_names[-1], 
+                                               trig_dir, 
+                                               measure_scale=1e9))
         
     def write_delay_measures(self):
         """
@@ -122,7 +160,8 @@ class model_check(delay):
            self.write_measures_read_port(read_port)
 
     def get_delay_measure_variants(self, port, measure_obj):
-        """Get the measurement values that can either vary from simulation to simulation (vdd, address) or port to port (time delays)"""
+        """Get the measurement values that can either vary from simulation to simulation (vdd, address) 
+           or port to port (time delays)"""
         #Return value is intended to match the delay measure format:  trig_td, targ_td, vdd, port
         #Assuming only read 0 for now
         if not (type(measure_obj) is delay_measure or type(measure_obj) is slew_measure):
@@ -242,9 +281,11 @@ class model_check(delay):
         
     def analyze(self, probe_address, probe_data, slews, loads):
         """Measures entire delay path along the wordline and sense amp enable and compare it to the model delays."""
-        self.set_probe(probe_address, probe_data)
         self.load=max(loads)
         self.slew=max(slews)
+        self.set_probe(probe_address, probe_data)
+        self.create_signal_names()
+        self.create_measurement_names()
         self.create_measurement_objects()
         data_dict = {}
         

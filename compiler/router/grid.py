@@ -21,8 +21,8 @@ class grid:
         """ Initialize the map and define the costs. """
 
         # list of the source/target grid coordinates
-        self.source = []
-        self.target = []
+        self.source = set()
+        self.target = set()
 
         self.track_width = track_width
         self.track_widths = [self.track_width, self.track_width, 1.0] 
@@ -80,7 +80,7 @@ class grid:
         else:
             self.add_map(n)
             self.map[n].source=value
-            self.source.append(n)
+            self.source.add(n)
         
     def set_target(self,n,value=True):
         if isinstance(n, (list,tuple,set,frozenset)):
@@ -89,7 +89,7 @@ class grid:
         else:
             self.add_map(n)
             self.map[n].target=value
-            self.target.append(n)
+            self.target.add(n)
 
         
     def add_source(self,track_list,value=True):

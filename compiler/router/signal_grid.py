@@ -62,7 +62,8 @@ class signal_grid(grid):
         
         # We set a cost bound of the HPWL for run-time. This can be 
         # over-ridden if the route fails due to pruning a feasible solution.
-        cost_bound = detour_scale*self.cost_to_target(self.source[0])*grid.PREFERRED_COST
+        any_source_element = next(iter(self.source))
+        cost_bound = detour_scale*self.cost_to_target(any_source_element)*grid.PREFERRED_COST
 
         # Check if something in the queue is already a source and a target!
         for s in self.source:
@@ -153,7 +154,8 @@ class signal_grid(grid):
         Find the cheapest HPWL distance to any target point ignoring 
         blockages for A* search.
         """
-        cost = self.hpwl(source,self.target[0])
+        any_target_element = next(iter(self.target))
+        cost = self.hpwl(source,any_target_element)
         for t in self.target:
             cost = min(self.hpwl(source,t),cost)
 

@@ -142,10 +142,9 @@ class signal_grid(grid):
         Either point can have positive or negative coordinates. 
         Include the via penalty if there is one.
         """
-        hpwl = max(abs(src.x-dest.x),abs(dest.x-src.x))
-        hpwl += max(abs(src.y-dest.y),abs(dest.y-src.y))
-        hpwl += max(abs(src.z-dest.z),abs(dest.z-src.z))
-        if src.x!=dest.x or src.y!=dest.y:
+        hpwl = abs(src.x-dest.x)
+        hpwl += abs(src.y-dest.y)
+        if src.x!=dest.x and src.y!=dest.y:
             hpwl += grid.VIA_COST
         return hpwl
             

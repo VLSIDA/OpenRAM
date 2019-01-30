@@ -732,25 +732,18 @@ class VlsiLayout:
         Return all gshapes on a given layer in [llx, lly, urx, ury] format and 
         user units.
         """
-        boundaries = []
+        boundaries = set()
         for TreeUnit in self.xyTree:
             #print(TreeUnit[0])
-            boundaries.extend(self.getShapesInStructure(layer,TreeUnit))
+            boundaries.update(self.getShapesInStructure(layer,TreeUnit))
 
-        # Remove duplicates without defining a hash
-        # (could be sped up by creating hash and using list(set())
-        new_boundaries = []
-        for boundary in boundaries:
-            if boundary not in new_boundaries:
-                new_boundaries.append(boundary)
-                
         # Convert to user units
-        boundaries = []
-        for boundary in new_boundaries:
-            boundaries.append([boundary[0]*self.units[0],boundary[1]*self.units[0],
-                               boundary[2]*self.units[0],boundary[3]*self.units[0]])
+        user_boundaries = []
+        for boundary in boundaries:
+            user_boundaries.append([boundary[0]*self.units[0],boundary[1]*self.units[0],
+                                    boundary[2]*self.units[0],boundary[3]*self.units[0]])
                 
-        return boundaries
+        return user_boundaries
 
 
     def getShapesInStructure(self,layer,structure):
@@ -764,9 +757,7 @@ class VlsiLayout:
         boundaries = []
         for boundary in self.structures[str(structureName)].boundaries:
             # FIXME: Right now, this only supports rectangular shapes!
-            #debug.check(len(boundary.coordinates)==5,"Non-rectangular shape.")
-            if len(boundary.coordinates)!=5:
-                continue
+            debug.check(len(boundary.coordinates)==5,"Non-rectangular shapes are not supported.")
             if layer==boundary.drawingLayer:
                 left_bottom=boundary.coordinates[0]
                 right_top=boundary.coordinates[2]
@@ -774,9 +765,9 @@ class VlsiLayout:
                 boundaryRect=[left_bottom[0],left_bottom[1],right_top[0],right_top[1]]
                 # perform the rotation
                 boundaryRect=self.transformRectangle(boundaryRect,structureuVector,structurevVector)
-                # add the offset
-                boundaryRect=[boundaryRect[0]+structureOrigin[0].item(),boundaryRect[1]+structureOrigin[1].item(),
-                              boundaryRect[2]+structureOrigin[0].item(),boundaryRect[3]+structureOrigin[1].item()]
+                # add the offset and make it a tuple
+                boundaryRect=(boundaryRect[0]+structureOrigin[0].item(),boundaryRect[1]+structureOrigin[1].item(),
+                              boundaryRect[2]+structureOrigin[0].item(),boundaryRect[3]+structureOrigin[1].item())
                 boundaries.append(boundaryRect)
                     
         return boundaries

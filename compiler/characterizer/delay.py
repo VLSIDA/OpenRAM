@@ -904,7 +904,8 @@ class delay(simulation):
                             port_data[port][mname].append(bank_delay[port].slew/1e3)
                         else:
                             debug.error("Measurement name not recognized: {}".format(mname),1)
-        sram_data = { "min_period": 0, 
+        period_margin = 0.1
+        sram_data = { "min_period": bank_delay[0]*2*period_margin, 
                       "leakage_power": power.leakage}                    
          
         return (sram_data,port_data)

@@ -22,41 +22,44 @@ class model_check(delay):
         delay.__init__(self,sram,spfile,corner)
         self.period = tech.spice["feasible_period"]
         self.create_data_names()
-    
+        
     def create_data_names(self):
         self.wl_meas_name, self.wl_model_name = "wl_measures", "wl_model"
         self.sae_meas_name, self.sae_model_name = "sae_measures", "sae_model"
         
     def create_measurement_names(self):
         """Create measurement names. The names themselves currently define the type of measurement"""
-        #Altering the names will crash the characterizer. TODO: object orientated approach to the measurements.
-        self.wl_delay_meas_names = ["delay_wl_en_bar", "delay_wl_en", "delay_dvr_en_bar", "delay_wl"]
-        self.wl_slew_meas_names = ["slew_wl_gated_clk_bar","slew_wl_en_bar", "slew_wl_en", "slew_drv_en_bar", "slew_wl"]
+        wl_en_driver_delay_names = ["delay_wl_en_dvr_{}".format(stage) for stage in range(1,self.get_num_wl_en_driver_stages())]
+        wl_driver_delay_names = ["delay_wl_dvr_{}".format(stage) for stage in range(1,self.get_num_wl_driver_stages())]
+        sen_driver_delay_names = ["delay_sen_dvr_{}".format(stage) for stage in range(1,self.get_num_sen_driver_stages())]
+        
+        wl_en_driver_slew_names = ["slew_wl_en_dvr_{}".format(stage) for stage in range(1,self.get_num_wl_en_driver_stages())]
+        wl_driver_slew_names = ["slew_wl_dvr_{}".format(stage) for stage in range(1,self.get_num_wl_driver_stages())]
+        sen_driver_slew_names = ["slew_sen_dvr_{}".format(stage) for stage in range(1,self.get_num_sen_driver_stages())]
+        
+        self.wl_delay_meas_names = wl_en_driver_delay_names+["delay_wl_en", "delay_wl_bar"]+wl_driver_delay_names+["delay_wl"]
+        self.wl_slew_meas_names = ["slew_wl_gated_clk_bar"]+wl_en_driver_slew_names+["slew_wl_en", "slew_wl_bar"]+wl_driver_slew_names+["slew_wl"]
         
         dc_delay_names = ["delay_delay_chain_stage_{}".format(stage) for stage in range(1,self.get_num_delay_stages()+1)]
         self.rbl_delay_meas_names = ["delay_gated_clk_nand", "delay_delay_chain_in"]+dc_delay_names
         dc_slew_names = ["slew_delay_chain_stage_{}".format(stage) for stage in range(1,self.get_num_delay_stages()+1)]
         self.rbl_slew_meas_names = ["slew_rbl_gated_clk_bar","slew_gated_clk_nand", "slew_delay_chain_in"]+dc_slew_names
-        self.sae_delay_meas_names = ["delay_pre_sen", "delay_sen_bar", "delay_sen"]
-        self.sae_slew_meas_names = ["slew_replica_bl0", "slew_pre_sen", "slew_sen_bar", "slew_sen"]
+        self.sae_delay_meas_names = ["delay_pre_sen"]+sen_driver_delay_names+["delay_sen"]
+        self.sae_slew_meas_names = ["slew_replica_bl0", "slew_pre_sen"]+sen_driver_slew_names+["slew_sen"]
        
     def create_signal_names(self):
+        """Creates list of the signal names used in the spice file along the wl and sen paths."""
         delay.create_signal_names(self)
         #Signal names are all hardcoded, need to update to make it work for probe address and different configurations.
-        self.wl_signal_names = ["Xsram.Xcontrol0.gated_clk_bar", "Xsram.Xcontrol0.Xbuf_wl_en.zb_int", "Xsram.wl_en0", "Xsram.Xbank0.Xwordline_driver0.wl_bar_15", "Xsram.Xbank0.wl_15"]
+        wl_en_driver_signals = ["Xsram.Xcontrol0.Xbuf_wl_en.Zb{}_int".format(stage) for stage in range(1,self.get_num_wl_en_driver_stages())]
+        wl_driver_signals = ["Xsram.Xbank0.Xwordline_driver0.Xwl_driver_inv0.Zb{}_int".format(stage) for stage in range(1,self.get_num_wl_driver_stages())]
+        sen_driver_signals = ["Xsram.Xcontrol0.Xbuf_s_en.Zb{}_int".format(stage) for stage in range(1,self.get_num_sen_driver_stages())]
         delay_chain_signal_names = ["Xsram.Xcontrol0.Xreplica_bitline.Xdelay_chain.dout_{}".format(stage) for stage in range(1,self.get_num_delay_stages())] + ["Xsram.Xcontrol0.Xreplica_bitline.delayed_en"]
+        
+        self.wl_signal_names = ["Xsram.Xcontrol0.gated_clk_bar"]+wl_en_driver_signals+["Xsram.wl_en0", "Xsram.Xbank0.Xwordline_driver0.wl_bar_15"]+wl_driver_signals+["Xsram.Xbank0.wl_15"]
         self.rbl_en_signal_names = ["Xsram.Xcontrol0.gated_clk_bar", "Xsram.Xcontrol0.Xand2_rbl_in.zb_int", "Xsram.Xcontrol0.rbl_in"] + delay_chain_signal_names
-        self.sae_signal_names = ["Xsram.Xcontrol0.Xreplica_bitline.bl0_0", "Xsram.Xcontrol0.pre_s_en", "Xsram.Xcontrol0.Xbuf_s_en.zb_int", "Xsram.s_en0"]
+        self.sae_signal_names = ["Xsram.Xcontrol0.Xreplica_bitline.bl0_0", "Xsram.Xcontrol0.pre_s_en"]+sen_driver_signals+["Xsram.s_en0"]
     
-    def get_all_signal_names(self):
-        """Returns all signals names as a dict indexed by hardcoded names. Useful for writing the head of the CSV."""
-        name_dict = {}
-        #Signal names are more descriptive than the measurement names, first value trimmed to match size of measurements names.
-        name_dict[self.wl_meas_name] = self.wl_signal_names[1:]
-        name_dict[self.wl_model_name] = name_dict["wl_measures"] #model uses same names as measured.
-        name_dict[self.sae_meas_name] = self.rbl_en_signal_names[1:]+self.sae_signal_names[1:]
-        name_dict[self.sae_model_name] = name_dict["sae_measures"]
-        return name_dict
     
     def create_measurement_objects(self):
         """Create the measurements used for read and write ports"""
@@ -183,7 +186,20 @@ class model_check(delay):
         return self.sram.control_logic_rw.get_wl_sen_delays()
      
     def get_num_delay_stages(self):
+        """Gets the number of stages in the delay chain from the control logic"""
         return len(self.sram.control_logic_rw.replica_bitline.delay_fanout_list)
+     
+    def get_num_wl_en_driver_stages(self):
+        """Gets the number of stages in the wl_en driver from the control logic"""
+        return self.sram.control_logic_rw.wl_en_driver.num_stages
+        
+    def get_num_sen_driver_stages(self):
+        """Gets the number of stages in the sen driver from the control logic"""
+        return self.sram.control_logic_rw.s_en_driver.num_stages
+     
+    def get_num_wl_driver_stages(self):
+        """Gets the number of stages in the wordline driver from the control logic"""
+        return self.sram.bank.wordline_driver.inv.num_stages 
      
     def scale_delays(self, delay_list):
         """Takes in a list of measured delays and convert it to simple units to easily compare to model values."""

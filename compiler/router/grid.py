@@ -71,7 +71,8 @@ class grid:
             self.map[n].path=value
 
     def clear_blockages(self):
-        self.set_blocked(set(self.map.keys()),False)
+        for k in self.map:
+            self.map[k].blocked=False
             
     def set_source(self,n,value=True):
         if isinstance(n, (list,tuple,set,frozenset)):
@@ -121,7 +122,7 @@ class grid:
             for item in n:
                 self.add_map(item)
         else:
-            if n not in self.map.keys():
+            if n not in self.map:
                 self.map[n]=grid_cell()
         
 

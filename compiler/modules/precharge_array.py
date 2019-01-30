@@ -2,7 +2,7 @@ import design
 import debug
 from tech import drc
 from vector import vector
-from precharge import precharge
+from sram_factory import factory
 from globals import OPTS
 
 class precharge_array(design.design):
@@ -11,14 +11,11 @@ class precharge_array(design.design):
     of bit line columns, height is the height of the bit-cell array.
     """
 
-    unique_id = 1
-    
-    def __init__(self, columns, size=1, bitcell_bl="bl", bitcell_br="br"):
-        name = "precharge_array_{}".format(precharge_array.unique_id)
-        precharge_array.unique_id += 1
+    def __init__(self, name, columns, size=1, bitcell_bl="bl", bitcell_br="br"):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
-
+        self.add_comment("cols: {0} size: {1} bl: {2} br: {3}".format(columns, size, bitcell_bl, bitcell_br))
+        
         self.columns = columns
         self.size = size
         self.bitcell_bl = bitcell_bl
@@ -50,10 +47,12 @@ class precharge_array(design.design):
         self.DRC_LVS()
 
     def add_modules(self):
-        self.pc_cell = precharge(name="precharge",
-                                 size=self.size,
-                                 bitcell_bl=self.bitcell_bl,
-                                 bitcell_br=self.bitcell_br)
+        self.pc_cell = factory.create(module_type="precharge",
+                                      size=self.size,
+                                      bitcell_bl=self.bitcell_bl,
+                                      bitcell_br=self.bitcell_br)
+                       
+        
         self.add_mod(self.pc_cell)
 
         

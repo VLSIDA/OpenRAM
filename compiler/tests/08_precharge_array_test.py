@@ -10,17 +10,17 @@ sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
+from sram_factory import factory
 
 class precharge_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         import precharge_array
-        import tech
 
         # check precharge array in single port
         debug.info(2, "Checking 3 column precharge")
-        pc = precharge_array.precharge_array(columns=3)
+        pc = precharge_array.precharge_array(name="pre1", columns=3)
         self.local_check(pc)
         
         # check precharge array in multi-port
@@ -28,17 +28,18 @@ class precharge_test(openram_test):
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
-        
+
+        factory.reset()
         debug.info(2, "Checking 3 column precharge array for 1RW/1R bitcell")
-        pc = precharge_array.precharge_array(columns=3, bitcell_bl="bl0", bitcell_br="br0")
+        pc = precharge_array.precharge_array(name="pre2", columns=3, bitcell_bl="bl0", bitcell_br="br0")
         self.local_check(pc)
         
         # debug.info(2, "Checking 3 column precharge array for pbitcell (innermost connections)")
-        # pc = precharge_array.precharge_array(columns=3, bitcell_bl="bl0", bitcell_br="br0")
+        # pc = precharge_array.precharge_array(name="pre3", columns=3, bitcell_bl="bl0", bitcell_br="br0")
         # self.local_check(pc)
         
         # debug.info(2, "Checking 3 column precharge array for pbitcell (outermost connections)")
-        # pc = precharge_array.precharge_array(columns=3, bitcell_bl="bl2", bitcell_br="br2")
+        # pc = precharge_array.precharge_array(name="pre4", columns=3, bitcell_bl="bl2", bitcell_br="br2")
         # self.local_check(pc)
 
         globals.end_openram()

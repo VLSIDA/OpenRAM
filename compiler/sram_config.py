@@ -2,6 +2,7 @@ import debug
 from math import log,sqrt,ceil
 from importlib import reload
 from globals import OPTS
+from sram_factory import factory
 
 class sram_config:
     """ This is a structure that is used to hold the SRAM configuration options. """
@@ -29,10 +30,7 @@ class sram_config:
     def compute_sizes(self):
         """  Computes the organization of the memory using bitcell size by trying to make it square."""
 
-        c = reload(__import__(OPTS.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.bitcell)
-        # pass a copy of myself for the port numbers
-        self.bitcell = self.mod_bitcell()
+        self.bitcell = factory.create(module_type="bitcell")
         
         
         debug.check(self.num_banks in [1,2,4], "Valid number of banks are 1 , 2 and 4.")

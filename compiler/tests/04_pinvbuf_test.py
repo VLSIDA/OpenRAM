@@ -18,7 +18,7 @@ class pinvbuf_test(openram_test):
         import pinvbuf
 
         debug.info(2, "Testing inverter/buffer 4x 8x")
-        a = pinvbuf.pinvbuf(8)
+        a = pinvbuf.pinvbuf(name="pinvufx8", size=8)
         self.local_check(a)
 
         globals.end_openram()

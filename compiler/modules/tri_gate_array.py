@@ -2,6 +2,7 @@ import debug
 from tech import drc
 import design
 from vector import vector
+from sram_factory import factory
 from globals import OPTS
 
 class tri_gate_array(design.design):
@@ -36,10 +37,7 @@ class tri_gate_array(design.design):
         self.DRC_LVS()
 
     def add_modules(self):
-        from importlib import reload
-        c = reload(__import__(OPTS.tri_gate))
-        self.mod_tri_gate = getattr(c, OPTS.tri_gate)
-        self.tri = self.mod_tri_gate("tri_gate")
+        self.tri = factory.create(module_type="tri_gate")
         self.add_mod(self.tri)
         
     def add_pins(self):

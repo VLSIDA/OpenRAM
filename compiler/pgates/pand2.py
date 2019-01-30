@@ -3,31 +3,19 @@ from tech import drc
 from math import log
 from vector import vector
 from globals import OPTS
-from pnand2 import pnand2
-from pinv import pinv
 import pgate
+from sram_factory import factory
 
 class pand2(pgate.pgate):
     """
     This is a simple buffer used for driving loads. 
     """
-    from importlib import reload
-    c = reload(__import__(OPTS.bitcell))
-    bitcell = getattr(c, OPTS.bitcell)
-
-    unique_id = 1
-
-    def __init__(self, size=1, height=None, name=""):
-
+    def __init__(self, name, size=1, height=None):
         self.size = size
         
-        if name=="":
-            name = "pand2_{0}_{1}".format(size, pand2.unique_id)
-            pand2.unique_id += 1
-
         pgate.pgate.__init__(self, name, height)
         debug.info(1, "Creating {}".format(self.name))
-
+        self.add_comment("size: {}".format(size))
         
         self.create_netlist()
         if not OPTS.netlist_only:        
@@ -41,10 +29,10 @@ class pand2(pgate.pgate):
 
     def create_modules(self):
         # Shield the cap, but have at least a stage effort of 4
-        self.nand = pnand2(height=self.height) 
+        self.nand = factory.create(module_type="pnand2",height=self.height) 
         self.add_mod(self.nand)
         
-        self.inv = pinv(size=self.size, height=self.height)
+        self.inv = factory.create(module_type="pinv", size=self.size, height=self.height)
         self.add_mod(self.inv)
 
     def create_layout(self):
@@ -125,15 +113,15 @@ class pand2(pgate.pgate):
         inv_delay = self.inv.analytical_delay(slew=nand_delay.slew, load=load)
         return nand_delay + inv_delay
     
-    def get_output_stage_efforts(self, external_cout, inp_is_rise=False):
+    def get_stage_efforts(self, external_cout, inp_is_rise=False):
         """Get the stage efforts of the A or B -> Z path"""
         stage_effort_list = []
         stage1_cout = self.inv.get_cin()
-        stage1 = self.nand.get_effort_stage(stage1_cout, inp_is_rise)
+        stage1 = self.nand.get_stage_effort(stage1_cout, inp_is_rise)
         stage_effort_list.append(stage1)
         last_stage_is_rise = stage1.is_rise
         
-        stage2 = self.inv.get_effort_stage(external_cout, last_stage_is_rise)
+        stage2 = self.inv.get_stage_effort(external_cout, last_stage_is_rise)
         stage_effort_list.append(stage2)
         
         return stage_effort_list

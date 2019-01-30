@@ -10,29 +10,31 @@ sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
+from sram_factory import factory
 
 class replica_pbitcell_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         import replica_pbitcell
-        import tech
         
         OPTS.bitcell = "pbitcell"
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 0
         OPTS.num_w_ports = 0
-        
+
+        factory.reset()
         debug.info(2, "Checking replica bitcell using pbitcell (small cell)")
-        tx = replica_pbitcell.replica_pbitcell()
+        tx = replica_pbitcell.replica_pbitcell(name="rpbc")
         self.local_check(tx)
         
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 1
-        
+
+        factory.reset()
         debug.info(2, "Checking replica bitcell using pbitcell (large cell)")
-        tx = replica_pbitcell.replica_pbitcell()
+        tx = replica_pbitcell.replica_pbitcell(name="rpbc")
         self.local_check(tx)
 
         globals.end_openram()

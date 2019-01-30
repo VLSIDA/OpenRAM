@@ -17,20 +17,14 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
     name_map = []
 
     def __init__(self, name):
-        try:
-            self.gds_file
-        except AttributeError:
-            self.gds_file = OPTS.openram_tech + "gds_lib/" + name + ".gds"
-        try:
-            self.sp_file
-        except AttributeError:
-            self.sp_file = OPTS.openram_tech + "sp_lib/" + name + ".sp"
+        self.gds_file = OPTS.openram_tech + "gds_lib/" + name + ".gds"
+        self.sp_file = OPTS.openram_tech + "sp_lib/" + name + ".sp"
 
         self.name = name
         hierarchy_layout.layout.__init__(self, name)
         hierarchy_spice.spice.__init__(self, name)
         
-            
+
         # Check if the name already exists, if so, give an error
         # because each reference must be a unique name.
         # These modules ensure unique names or have no changes if they

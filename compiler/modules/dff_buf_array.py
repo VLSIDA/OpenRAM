@@ -4,7 +4,7 @@ from tech import drc
 from math import log
 from vector import vector
 from globals import OPTS
-import dff_buf
+from sram_factory import factory
 
 class dff_buf_array(design.design):
     """
@@ -22,6 +22,9 @@ class dff_buf_array(design.design):
             dff_buf_array.unique_id += 1
         design.design.__init__(self, name)
         debug.info(1, "Creating {}".format(self.name))
+        self.add_comment("rows: {0} cols: {1}".format(rows, columns))
+        self.add_comment("inv1: {0} inv2: {1}".format(inv1_size, inv2_size))
+        
         self.inv1_size = inv1_size
         self.inv2_size = inv2_size
         
@@ -54,7 +57,9 @@ class dff_buf_array(design.design):
         self.add_pin("gnd")
 
     def add_modules(self):
-        self.dff = dff_buf.dff_buf(self.inv1_size, self.inv2_size)
+        self.dff = factory.create(module_type="dff_buf",
+                                  inv1_size=self.inv1_size,
+                                  inv2_size=self.inv2_size)
         self.add_mod(self.dff)
 
     def create_dff_array(self):

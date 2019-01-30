@@ -10,6 +10,7 @@ sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
+from sram_factory import factory
 
 class write_driver_test(openram_test):
 
@@ -19,11 +20,11 @@ class write_driver_test(openram_test):
 
         # check write driver array for single port
         debug.info(2, "Testing write_driver_array for columns=8, word_size=8")
-        a = write_driver_array.write_driver_array(columns=8, word_size=8)
+        a = write_driver_array.write_driver_array(name="wd1", columns=8, word_size=8)
         self.local_check(a)
 
         debug.info(2, "Testing write_driver_array for columns=16, word_size=8")
-        a = write_driver_array.write_driver_array(columns=16, word_size=8)
+        a = write_driver_array.write_driver_array(name="wd2", columns=16, word_size=8)
         self.local_check(a)
         
         # check write driver array for multi-port
@@ -31,13 +32,14 @@ class write_driver_test(openram_test):
         OPTS.num_rw_ports = 1
         OPTS.num_w_ports = 0
         OPTS.num_r_ports = 0
-        
+
+        factory.reset()
         debug.info(2, "Testing write_driver_array for columns=8, word_size=8 (multi-port case)")
-        a = write_driver_array.write_driver_array(columns=8, word_size=8)
+        a = write_driver_array.write_driver_array(name="wd3", columns=8, word_size=8)
         self.local_check(a)
 
         debug.info(2, "Testing write_driver_array for columns=16, word_size=8 (multi-port case)")
-        a = write_driver_array.write_driver_array(columns=16, word_size=8)
+        a = write_driver_array.write_driver_array(name="wd4", columns=16, word_size=8)
         self.local_check(a)
         
         globals.end_openram()

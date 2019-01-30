@@ -2,28 +2,20 @@ import contact
 import pgate
 import debug
 from tech import drc, parameter
-from ptx import ptx
 from vector import vector
 from globals import OPTS
+from sram_factory import factory
 
 class precharge(pgate.pgate):
     """
     Creates a single precharge cell
     This module implements the precharge bitline cell used in the design.
     """
-
-    unique_id = 1
-    
     def __init__(self, name, size=1, bitcell_bl="bl", bitcell_br="br"):
-        name = name+"_{}".format(precharge.unique_id)
-        precharge.unique_id += 1
         pgate.pgate.__init__(self, name)
         debug.info(2, "create single precharge cell: {0}".format(name))
 
-        from importlib import reload
-        c = reload(__import__(OPTS.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.bitcell)
-        self.bitcell = self.mod_bitcell()
+        self.bitcell = factory.create(module_type="bitcell")
         
         self.beta = parameter["beta"]
         self.ptx_width = self.beta*parameter["min_tx_size"]
@@ -57,8 +49,9 @@ class precharge(pgate.pgate):
         """
         Initializes the upper and lower pmos
         """
-        self.pmos = ptx(width=self.ptx_width,
-                        tx_type="pmos")
+        self.pmos = factory.create(module_type="ptx",
+                                   width=self.ptx_width,
+                                   tx_type="pmos")
         self.add_mod(self.pmos)
 
         

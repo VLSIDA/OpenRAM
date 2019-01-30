@@ -21,7 +21,7 @@ class pnand2_test(openram_test):
         import tech
 
         debug.info(2, "Checking 2-input nand gate")
-        tx = pnand2.pnand2(size=1)
+        tx = pnand2.pnand2(name="pnand2", size=1)
         self.local_check(tx)
 
         globals.end_openram()

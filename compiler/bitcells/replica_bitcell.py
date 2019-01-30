@@ -14,7 +14,8 @@ class replica_bitcell(design.design):
     (width,height) = utils.get_libcell_size("replica_cell_6t", GDS["unit"], layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "replica_cell_6t", GDS["unit"])
 
-    def __init__(self):
+    def __init__(self, name=""):
+        # Ignore the name argument
         design.design.__init__(self, "replica_cell_6t")
         debug.info(2, "Create replica bitcell object")
 

@@ -25,17 +25,11 @@ class code_format_test(openram_test):
         for code in source_codes:
             if re.search("gdsMill", code):
                 continue
-            if re.search("options.py$", code):
-                continue
             if re.search("debug.py$", code):
-                continue
-            if re.search("testutils.py$", code):
-                continue
-            if re.search("globals.py$", code):
                 continue
             if re.search("openram.py$", code):
                 continue
-            if re.search("sram.py$", code):
+            if re.search("testutils.py$", code):
                 continue
             if re.search("gen_stimulus.py$", code):
                 continue

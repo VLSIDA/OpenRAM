@@ -187,16 +187,16 @@ class data_collection(openram_test):
         """Generates the SRAM based on input configuration."""
         c = sram_config(word_size=word_size,
                         num_words=num_words,
-                        num_banks=1)
-        #minimum 16 rows. Most sizes below 16*16 will try to automatically use less rows unless enforced.
-        #if word_size*num_words < 256:
-        c.words_per_row=words_per_row #Force no column mux until incorporated into analytical delay.
+                        num_banks=1,
+                        words_per_row=words_per_row)
             
         debug.info(1, "Creating SRAM: {} bit, {} words, with 1 bank".format(word_size, num_words))
         self.sram = sram(c, name="sram_{}ws_{}words".format(word_size, num_words))
 
         self.sram_spice = OPTS.openram_temp + "temp.sp"
         self.sram.sp_write(self.sram_spice)
+        
+        debug.info(1, "SRAM column address size={}".format(self.sram.s.col_addr_size))
         
     def get_sram_data(self, corner):
         """Generates the delay object using the corner and runs a simulation for data."""

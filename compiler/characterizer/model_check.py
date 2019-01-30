@@ -317,6 +317,15 @@ class model_check(delay):
         
         return data_dict
 
-        
+    def get_all_signal_names(self):
+        """Returns all signals names as a dict indexed by hardcoded names. Useful for writing the head of the CSV."""
+        name_dict = {}
+        #Signal names are more descriptive than the measurement names, first value trimmed to match size of measurements names.
+        name_dict[self.wl_meas_name] = self.wl_signal_names[1:]
+        name_dict[self.wl_model_name] = name_dict["wl_measures"] #model uses same names as measured.
+        name_dict[self.sae_meas_name] = self.rbl_en_signal_names[1:]+self.sae_signal_names[1:]
+        name_dict[self.sae_model_name] = name_dict["sae_measures"]
+        return name_dict
+    
     
   

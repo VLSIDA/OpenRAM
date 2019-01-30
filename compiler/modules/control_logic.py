@@ -141,9 +141,9 @@ class control_logic(design.design):
                 delay_stages =  parameter["static_delay_stages"]
                 delay_fanout = parameter["static_fanout_per_stage"]
                 debug.info(1, "Using tech parameters to size delay chain: stages={}, fanout={}".format(delay_stages,delay_fanout))
-                self.replica_bitline = replica_bitline([delay_fanout]*delay_stages,
-                                                        bitcell_loads, 
-                                                        name="replica_bitline_"+self.port_type)
+                self.replica_bitline = replica_bitline("replica_bitline_"+self.port_type,
+                                                       [delay_fanout]*delay_stages,
+                                                       bitcell_loads)
                 if self.sram != None: #Calculate model value even for specified sizes
                     self.set_sen_wl_delays()
                 
@@ -159,15 +159,15 @@ class control_logic(design.design):
                 if self.sram != None and self.enable_delay_chain_resizing and not self.does_sen_total_timing_match(): 
                     #This resizes to match fall and rise delays, can make the delay chain weird sizes.
                     # stage_list = self.get_dynamic_delay_fanout_list(delay_stages_heuristic, delay_fanout_heuristic)
-                    # self.replica_bitline = replica_bitline(stage_list, 
-                                                             # bitcell_loads, 
-                                                             # name="replica_bitline_resized_"+self.port_type)
+                    # self.replica_bitline = replica_bitline(  "replica_bitline_resized_"+self.port_type
+                                                             # stage_list, 
+                                                             # bitcell_loads)
                     
                     #This resizes based on total delay. 
                     delay_stages, delay_fanout = self.get_dynamic_delay_chain_size(delay_stages_heuristic, delay_fanout_heuristic)
-                    self.replica_bitline = replica_bitline([delay_fanout]*delay_stages, 
-                                                           bitcell_loads, 
-                                                           name="replica_bitline_resized_"+self.port_type)
+                    self.replica_bitline = replica_bitline("replica_bitline_resized_"+self.port_type,
+                                                           [delay_fanout]*delay_stages, 
+                                                           bitcell_loads)
                     
                     self.sen_delay_rise,self.sen_delay_fall = self.get_delays_to_sen() #get the new timing
                 

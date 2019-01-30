@@ -7,13 +7,13 @@ from sram_factory import factory
 class sram_config:
     """ This is a structure that is used to hold the SRAM configuration options. """
     
-    def __init__(self, word_size, num_words, num_banks=1):
+    def __init__(self, word_size, num_words, num_banks=1, words_per_row=None):
         self.word_size = word_size
         self.num_words = num_words
         self.num_banks = num_banks
 
         # This will get over-written when we determine the organization
-        self.words_per_row = None
+        self.words_per_row = words_per_row
 
         self.compute_sizes()
         

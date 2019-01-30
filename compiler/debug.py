@@ -11,9 +11,9 @@ import sys
 
 
 def check(check, str):
-    (frame, filename, line_number, function_name, lines,
-     index) = inspect.getouterframes(inspect.currentframe())[1]
     if not check:
+        (frame, filename, line_number, function_name, lines,
+         index) = inspect.getouterframes(inspect.currentframe())[1]
         sys.stderr.write("ERROR: file {0}: line {1}: {2}\n".format(
             os.path.basename(filename), line_number, str))
         log("ERROR: file {0}: line {1}: {2}\n".format(

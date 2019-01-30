@@ -204,7 +204,7 @@ class router(router_tech):
                     continue
                 # Combine if at least 1 grid cell is adjacent
                 if pg1.adjacent(pg2):
-                    if not index1 in adjacent_pins.keys():
+                    if not index1 in adjacent_pins:
                         adjacent_pins[index1] = set([index2])
                     else:
                         adjacent_pins[index1].add(index2)
@@ -341,7 +341,7 @@ class router(router_tech):
         
         # Block all of the pin components (some will be unblocked if they're a source/target)
         # Also block the previous routes
-        for name in self.pin_groups.keys():
+        for name in self.pin_groups:
             blockage_grids = {y for x in self.pin_groups[name] for y in x.grids}
             self.set_blockages(blockage_grids,True)
             blockage_grids = {y for x in self.pin_groups[name] for y in x.blockages}
@@ -745,7 +745,7 @@ class router(router_tech):
         group_map = {}
         for pin in pin_list:
             gid = group_id[pin]
-            if gid not in group_map.keys():
+            if gid not in group_map:
                 group_map[gid] = pin_group(name=pin_name, pin_set=[], router=self)
             # We always add it to the first set since they are touching
             group_map[gid].pins[0].add(pin)
@@ -803,7 +803,7 @@ class router(router_tech):
         put a rectangle over it. It does not enclose grid squares that are blocked
         by other shapes.
         """
-        for pin_name in self.pin_groups.keys():
+        for pin_name in self.pin_groups:
             debug.info(1,"Enclosing pins for {}".format(pin_name))
             for pg in self.pin_groups[pin_name]:
                 pg.enclose_pin()
@@ -1091,7 +1091,7 @@ class router(router_tech):
         
         if show_all_grids:
             self.rg.add_all_grids()
-            for g in self.rg.map.keys():
+            for g in self.rg.map:
                 self.annotate_grid(g)
             
         if show_blockages:
@@ -1105,12 +1105,11 @@ class router(router_tech):
                                    height=ur.y-ll.y)
         if show_blockage_grids:
             self.set_blockages(self.blocked_grids,True)
-            grid_keys=self.rg.map.keys()
-            for g in grid_keys:
+            for g in self.rg.map:
                 self.annotate_grid(g)
 
         if show_enclosures:
-            for key in self.pin_groups.keys():
+            for key in self.pin_groups:
                 for pg in self.pin_groups[key]:
                     if not pg.enclosed:
                         continue

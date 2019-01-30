@@ -757,7 +757,11 @@ class VlsiLayout:
         boundaries = []
         for boundary in self.structures[str(structureName)].boundaries:
             # FIXME: Right now, this only supports rectangular shapes!
-            debug.check(len(boundary.coordinates)==5,"Non-rectangular shapes are not supported.")
+            # We should trigger an error but some FreePDK45 library cells contain paths.
+            # These get saved fine, but we cannot parse them as blockages... 
+            #debug.check(len(boundary.coordinates)==5,"Non-rectangular shapes are not supported.")
+            if len(boundary.coordinates)!=5:
+                continue
             if layer==boundary.drawingLayer:
                 left_bottom=boundary.coordinates[0]
                 right_top=boundary.coordinates[2]

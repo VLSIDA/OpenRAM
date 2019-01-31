@@ -16,34 +16,34 @@ import csv
 import datasheet
 import table_gen
 
-
-def process_name(corner):
-    """
-    Expands the names of the characterization corner types into something human friendly
-    """
-    if corner == "TS":
-        return "Typical - Slow"
-    if corner == "TT":
-        return "Typical - Typical"
-    if corner == "TF":
-        return "Typical - Fast"
-
-    if corner == "SS":
-        return "Slow - Slow"
-    if corner == "ST":
-        return "Slow - Typical"
-    if corner == "SF":
-        return "Slow - Fast"
-
-    if corner == "FS":
-        return "Fast - Slow"
-    if corner == "FT":
-        return "Fast - Typical"
-    if corner == "FF":
-        return "Fast - Fast"
-
-    else:
-        return "custom"
+# def process_name(corner):
+# """
+# Expands the names of the characterization corner types into something human friendly
+# """
+# if corner == "TS":
+# return "Typical - Slow"
+# if corner == "TT":
+# return "Typical - Typical"
+# if corner == "TF":
+# return "Typical - Fast"
+#
+# if corner == "SS":
+# return "Slow - Slow"
+# if corner == "ST":
+# return "Slow - Typical"
+# if corner == "SF":
+# return "Slow - Fast"
+#
+# if corner == "FS":
+# return "Fast - Slow"
+# if corner == "FT":
+# return "Fast - Typical"
+# if corner == "FF":
+# return "Fast - Fast"
+#
+# else:
+# return "custom"
+#
 
 
 def parse_characterizer_csv(f, pages):
@@ -351,8 +351,7 @@ def parse_characterizer_csv(f, pages):
                                 sheet.description.append(str(element))
                             break
 
-                    new_sheet.corners_table.add_row([PROC, process_name(
-                        PROC), VOLT, TEMP, LIB_NAME.replace(OUT_DIR, '').replace(NAME, '')])
+                    new_sheet.corners_table.add_row([PROC, VOLT, TEMP, LIB_NAME.replace(OUT_DIR, '').replace(NAME, '')])
                     new_sheet.dlv_table.add_row(
                         ['.lib', 'Synthesis models', '<a href="file://{0}">{1}</a>'.format(LIB_NAME, LIB_NAME.replace(OUT_DIR, ''))])
 
@@ -371,9 +370,8 @@ def parse_characterizer_csv(f, pages):
 
                 new_sheet.corners_table = table_gen.table_gen("corners")
                 new_sheet.corners_table.add_row(
-                    ['Corner Name', 'Process', 'Power Supply', 'Temperature', 'Library Name Suffix'])
-                new_sheet.corners_table.add_row([PROC, process_name(
-                    PROC), VOLT, TEMP, LIB_NAME.replace(OUT_DIR, '').replace(NAME, '')])
+                    ['Transistor Type', 'Power Supply', 'Temperature', 'Corner Name'])
+                new_sheet.corners_table.add_row([PROC, VOLT, TEMP, LIB_NAME.replace(OUT_DIR, '').replace(NAME, '')])
                 new_sheet.operating_table = table_gen.table_gen(
                     "operating_table")
                 new_sheet.operating_table.add_row(
@@ -552,7 +550,8 @@ def parse_characterizer_csv(f, pages):
                 new_sheet.io_table.add_row(['NUM_RW_PORTS', NUM_RW_PORTS])
                 new_sheet.io_table.add_row(['NUM_R_PORTS', NUM_R_PORTS])
                 new_sheet.io_table.add_row(['NUM_W_PORTS', NUM_W_PORTS])
-                new_sheet.io_table.add_row(['Area (&microm<sup>2</sup>)', AREA])
+                new_sheet.io_table.add_row(
+                    ['Area (&microm<sup>2</sup>)', AREA])
 
 
 class datasheet_gen():

@@ -59,6 +59,12 @@ class datasheet():
         self.html += self.operating_table.to_html()
 
         self.html += '<p style="font-size: 26px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Timing and Current Data</p>'
+        model = ''
+        if self.ANALYTICAL_MODEL:
+            model = "analytical model: results may not be percise"
+        else:
+            model = "spice characterizer"
+        self.html += '<p style="font-size: 26px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Using '+model+'</p>'
 #        self.html += timing_and_current_data(self.timing,table_id='data').__html__()
         self.html += self.timing_table.to_html()
 

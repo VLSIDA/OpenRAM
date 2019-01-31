@@ -115,6 +115,10 @@ def parse_characterizer_csv(f, pages):
 
             AREA = row[col]
             col += 1
+
+            ANALYTICAL_MODEL = row[col]
+            col += 1
+
             for sheet in pages:
 
                 if sheet.name == NAME:
@@ -365,6 +369,7 @@ def parse_characterizer_csv(f, pages):
                 new_sheet.time = DATETIME
                 new_sheet.DRC = DRC
                 new_sheet.LVS = LVS
+                new_sheet.ANALYTICAL_MODEL = ANALYTICAL_MODEL
                 new_sheet.description = [NAME, NUM_WORDS, NUM_BANKS, NUM_RW_PORTS, NUM_W_PORTS,
                                          NUM_R_PORTS, TECH_NAME, MIN_PERIOD, WORD_SIZE, ORIGIN_ID, DATETIME]
 

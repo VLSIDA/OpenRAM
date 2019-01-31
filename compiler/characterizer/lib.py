@@ -526,7 +526,7 @@ class lib:
         datasheet = open(OPTS.openram_temp +'/datasheet.info', 'a+')
 
         current_time = datetime.date.today()
-        datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},".format(
+        datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},".format(
                         OPTS.output_name,
                         OPTS.num_words,
                         OPTS.num_banks,
@@ -542,7 +542,8 @@ class lib:
                         lib_name,
                         OPTS.word_size,
                         git_id,
-                        current_time
+                        current_time,
+                        OPTS.analytical_delay
                         ))
 
         # information of checks

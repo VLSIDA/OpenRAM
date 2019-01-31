@@ -552,7 +552,7 @@ def parse_characterizer_csv(f, pages):
                 new_sheet.io_table.add_row(['NUM_RW_PORTS', NUM_RW_PORTS])
                 new_sheet.io_table.add_row(['NUM_R_PORTS', NUM_R_PORTS])
                 new_sheet.io_table.add_row(['NUM_W_PORTS', NUM_W_PORTS])
-                new_sheet.io_table.add_row(['Area', AREA])
+                new_sheet.io_table.add_row(['Area (&microm<sup>2</sup>)', AREA])
 
 
 class datasheet_gen():

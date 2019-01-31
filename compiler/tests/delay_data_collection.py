@@ -28,12 +28,16 @@ class data_collection(openram_test):
         self.evaluate_data(wl_dataframe, sae_dataframe)
         
         #Run again but with different delay chain sizes
-        self.init_data_gen() 
-        self.set_delay_chain(4,2)
-        self.save_data_sram_corners(word_size, num_words, words_per_row)
-        wl_dataframe, sae_dataframe = self.get_csv_data()
-        self.evaluate_data(wl_dataframe, sae_dataframe)
+        # self.init_data_gen() 
+        # self.set_delay_chain(4,2)
+        # self.save_data_sram_corners(word_size, num_words, words_per_row)
+        # wl_dataframe, sae_dataframe = self.get_csv_data()
+        # self.evaluate_data(wl_dataframe, sae_dataframe)
         
+        model_delay_ratios, meas_delay_ratios, ratio_error = self.compare_model_to_measure()
+        debug.info(1, "model_delay_ratios={}".format(model_delay_ratios))
+        debug.info(1, "meas_delay_ratios={}".format(meas_delay_ratios))
+        debug.info(1, "ratio_error={}".format(ratio_error))
         globals.end_openram()
     
     def get_csv_data(self):
@@ -50,7 +54,36 @@ class data_collection(openram_test):
         debug.info(1, "Delay errors:{}".format(delay_error))
         variation_error = self.calculate_delay_variation_error(wl_dataframe, sae_dataframe)
         debug.info(1, "Variation errors:{}".format(variation_error))
+    
+    def compare_model_to_measure(self):
+        """Uses the last 4 recent data sets (wl_meas, sen_meas, wl_model, sen_model)
+           and compare the wl-sen delay ratio between model and measured.
+        """
+        model_delay_ratios = {}
+        meas_delay_ratios = {}
+        ratio_error = {}
+        #The full file name contains unrelated portions, separate them into the four that are needed
+        wl_meas_df = [pd.read_csv(file_name,encoding='utf-8') for file_name in self.file_names if "wl_measures" in file_name][0]
+        sae_meas_df = [pd.read_csv(file_name,encoding='utf-8') for file_name in self.file_names if "sae_measures" in file_name][0]
+        wl_model_df = [pd.read_csv(file_name,encoding='utf-8') for file_name in self.file_names if "wl_model" in file_name][0]
+        sae_model_df = [pd.read_csv(file_name,encoding='utf-8') for file_name in self.file_names if "sae_model" in file_name][0]
         
+        #Assume each csv has the same corners (and the same row order), use one of the dfs for corners
+        proc_pos, volt_pos, temp_pos = wl_meas_df.columns.get_loc('process'), wl_meas_df.columns.get_loc('voltage'), wl_meas_df.columns.get_loc('temp')
+        wl_sum_pos = wl_meas_df.columns.get_loc('sum')
+        sae_sum_pos = sae_meas_df.columns.get_loc('sum')
+        
+        df_zip = zip(wl_meas_df.itertuples(),sae_meas_df.itertuples(),wl_model_df.itertuples(),sae_model_df.itertuples())
+        for wl_meas,sae_meas,wl_model,sae_model in df_zip:
+            #Use previously calculated position to index the df row. 
+            corner = (wl_meas[proc_pos+1], wl_meas[volt_pos+1], wl_meas[temp_pos+1])
+            meas_delay_ratios[corner] = wl_meas[wl_sum_pos+1]/sae_meas[sae_sum_pos+1]
+            model_delay_ratios[corner] = wl_model[wl_sum_pos+1]/sae_model[sae_sum_pos+1]
+            debug.info(1,"wl_model sum={}, sae_model_sum={}".format(wl_model[wl_sum_pos+1], sae_model[sae_sum_pos+1]))
+            ratio_error[corner] = 100*abs(model_delay_ratios[corner]-meas_delay_ratios[corner])/meas_delay_ratios[corner]
+            
+        return model_delay_ratios, meas_delay_ratios, ratio_error 
+            
     def calculate_delay_error(self, wl_dataframe, sae_dataframe):
         """Calculates the percentage difference in delays between the wordline and sense amp enable"""
         start_data_pos = len(self.config_fields) #items before this point are configuration related
@@ -94,13 +127,14 @@ class data_collection(openram_test):
         corner_gen = self.corner_combination_generator()
         init_corner = next(corner_gen)
         sram_data = self.get_sram_data(init_corner)
-        self.initialize_csv_file(sram_data, word_size, num_words, words_per_row)
-        self.add_sram_data_to_csv(sram_data, word_size, num_words, words_per_row, init_corner) 
+        dc_resized = self.was_delay_chain_resized()
+        self.initialize_csv_file(word_size, num_words, words_per_row)
+        self.add_sram_data_to_csv(sram_data, word_size, num_words, words_per_row, dc_resized, init_corner) 
         
         #Run openRAM for all corners
         for corner in corner_gen:
             sram_data = self.get_sram_data(corner)
-            self.add_sram_data_to_csv(sram_data, word_size, num_words, words_per_row, corner)
+            self.add_sram_data_to_csv(sram_data, word_size, num_words, words_per_row, dc_resized, corner)
             
         self.close_files()
         debug.info(1,"Data Generated")
@@ -133,10 +167,10 @@ class data_collection(openram_test):
             file.close()
    
     def corner_combination_generator(self):
-        """Generates corner using a combination of values from config file"""
         processes = OPTS.process_corners
         voltages = OPTS.supply_voltages
         temperatures = OPTS.temperatures
+        """Generates corner using a combination of values from config file"""
         for proc in processes:
             for volt in voltages:
                 for temp in temperatures:
@@ -154,14 +188,21 @@ class data_collection(openram_test):
         words_per_row = [1]
         return word_sizes, num_words, words_per_row
     
-    def add_sram_data_to_csv(self, sram_data, word_size, num_words, words_per_row, corner):
-        """Writes data to its respective CSV file. There is a CSV for each measurement target (wordline, sense amp enable, and models)"""
-        sram_specs = [word_size,num_words,words_per_row,*corner]
+    def add_sram_data_to_csv(self, sram_data, word_size, num_words, words_per_row, dc_resized, corner):
+        """Writes data to its respective CSV file. There is a CSV for each measurement target 
+        (wordline, sense amp enable, and models)"""
+        sram_specs = [word_size,num_words,words_per_row,dc_resized,*corner]
         for data_name, data_values in sram_data.items():
-            self.csv_writers[data_name].writerow(sram_specs+sram_data[data_name])
+            other_values = self.calculate_other_data_values(data_values)
+            self.csv_writers[data_name].writerow(sram_specs+sram_data[data_name]+other_values)
         debug.info(2,"Data Added to CSV file.")
     
-    def initialize_csv_file(self, sram_data, word_size, num_words, words_per_row):
+    def calculate_other_data_values(self, sram_data_list):
+        """A function to calculate extra values related to the data. Only does the sum for now"""
+        data_sum = sum(sram_data_list)
+        return [data_sum]
+    
+    def initialize_csv_file(self, word_size, num_words, words_per_row):
         """Opens a CSV file and writer for every data set being written (wl/sae measurements and model values)"""
         #CSV File writing
         header_dict = self.delay_obj.get_all_signal_names()
@@ -178,8 +219,9 @@ class data_collection(openram_test):
                                                                 data_name)
             self.file_names.append(file_name)
             self.csv_files[data_name] = open(file_name, 'w')
-            self.config_fields = ['word_size', 'num_words', 'words_per_row', 'process', 'voltage', 'temp']
-            fields = (*self.config_fields, *header_list)
+            self.config_fields = ['word_size', 'num_words', 'words_per_row', 'dc_resized', 'process', 'voltage', 'temp']
+            self.other_data_fields = ['sum']
+            fields = (*self.config_fields, *header_list, *self.other_data_fields)
             self.csv_writers[data_name] = csv.writer(self.csv_files[data_name], lineterminator = '\n')
             self.csv_writers[data_name].writerow(fields)
     
@@ -223,6 +265,11 @@ class data_collection(openram_test):
                     dict[key] = dict[key][0]
                 else:
                     del dict[key]
+                    
+    def was_delay_chain_resized(self):
+        """Accesses the dc resize boolean in the control logic module."""
+        #FIXME:assumes read/write port only
+        return self.sram.s.control_logic_rw.delay_chain_resized
                 
 # instantiate a copdsay of the class to actually run the test
 if __name__ == "__main__":

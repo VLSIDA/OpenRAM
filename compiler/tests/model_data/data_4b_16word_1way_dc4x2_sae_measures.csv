@@ -1,6 +1,2 @@
-word_size,num_words,words_per_row,process,voltage,temp,Xsram.Xcontrol0.Xand2_rbl_in.zb_int,Xsram.Xcontrol0.rbl_in,Xsram.Xcontrol0.Xreplica_bitline.Xdelay_chain.dout_1,Xsram.Xcontrol0.Xreplica_bitline.Xdelay_chain.dout_2,Xsram.Xcontrol0.Xreplica_bitline.Xdelay_chain.dout_3,Xsram.Xcontrol0.Xreplica_bitline.delayed_en,Xsram.Xcontrol0.pre_s_en,Xsram.Xcontrol0.Xbuf_s_en.Zb1_int,Xsram.s_en0
-4,16,1,TT,1.0,25,0.020572,0.006256,0.015678,0.014110000000000001,0.017755,0.013415,0.0076344,0.010162,0.04153
-4,16,1,FF,1.0,25,0.01907,0.0052328,0.014619000000000002,0.0126,0.016572,0.011862,0.0067348,0.0093334,0.03898
-4,16,1,SS,1.0,25,0.022189,0.0074532999999999995,0.016968,0.015854,0.019286,0.015139,0.0087264,0.011029,0.04439
-4,16,1,SF,1.0,25,0.018689,0.007557800000000001,0.014395999999999999,0.015354,0.016425000000000002,0.014665,0.0084936,0.009411300000000001,0.044714000000000004
-4,16,1,FS,1.0,25,0.022942,0.0046639,0.017356,0.012745999999999999,0.01949,0.012069,0.006808099999999999,0.010822,0.038710999999999995
+word_size,num_words,words_per_row,dc_resized,process,voltage,temp,Xsram.Xcontrol0.Xand2_rbl_in.zb_int,Xsram.Xcontrol0.rbl_in,Xsram.Xcontrol0.Xreplica_bitline.Xdelay_chain.dout_1,Xsram.Xcontrol0.Xreplica_bitline.Xdelay_chain.dout_2,Xsram.Xcontrol0.Xreplica_bitline.Xdelay_chain.dout_3,Xsram.Xcontrol0.Xreplica_bitline.delayed_en,Xsram.Xcontrol0.pre_s_en,Xsram.Xcontrol0.Xbuf_s_en.Zb1_int,Xsram.s_en0,sum
+4,16,1,False,TT,1.0,25,0.020572,0.006256,0.015678,0.014110000000000001,0.017755,0.013415,0.0076344,0.010162,0.04153,0.14711239999999998

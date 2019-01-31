@@ -1,6 +1,2 @@
-word_size,num_words,words_per_row,process,voltage,temp,Xsram.Xcontrol0.Xbuf_wl_en.Zb1_int,Xsram.Xcontrol0.Xbuf_wl_en.Zb2_int,Xsram.Xcontrol0.Xbuf_wl_en.Zb3_int,Xsram.wl_en0,Xsram.Xbank0.Xwordline_driver0.wl_bar_15,Xsram.Xbank0.wl_15
-4,16,1,TT,1.0,25,0.010463,0.0089004,0.014107,0.013630000000000001,0.0146,0.0086902
-4,16,1,FF,1.0,25,0.0096519,0.008039899999999999,0.013115,0.012295,0.013235,0.0077621
-4,16,1,SS,1.0,25,0.011424,0.0098775,0.015351999999999998,0.015194000000000001,0.016227,0.0097375
-4,16,1,SF,1.0,25,0.009697500000000001,0.009592,0.013206,0.014738000000000001,0.013432,0.0094217
-4,16,1,FS,1.0,25,0.011432000000000001,0.0081985,0.015220000000000001,0.012544,0.015973,0.0079455
+word_size,num_words,words_per_row,dc_resized,process,voltage,temp,Xsram.Xcontrol0.Xbuf_wl_en.Zb1_int,Xsram.Xcontrol0.Xbuf_wl_en.Zb2_int,Xsram.Xcontrol0.Xbuf_wl_en.Zb3_int,Xsram.wl_en0,Xsram.Xbank0.Xwordline_driver0.wl_bar_15,Xsram.Xbank0.wl_15,sum
+4,16,1,False,TT,1.0,25,0.010463,0.0089004,0.014107,0.013630000000000001,0.0146,0.0086902,0.0703906

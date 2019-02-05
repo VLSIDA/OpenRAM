@@ -1,3 +1,4 @@
+#Config file used for collecting data.
 word_size = 1
 num_words = 16
 

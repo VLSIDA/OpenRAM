@@ -1,4 +1,4 @@
-word_size = 8
+word_size = 32
 num_words = 128
 
 tech_name = "scn4m_subm"

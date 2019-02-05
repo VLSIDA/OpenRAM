@@ -30,13 +30,13 @@ class control_logic(design.design):
         self.port_type = port_type
 
         self.num_cols = word_size*words_per_row
-        self.num_words = num_rows * words_per_row
+        self.num_words = num_rows*words_per_row
         
-        self.enable_delay_chain_resizing = False
+        self.enable_delay_chain_resizing = True
         
-        #self.sram=None #disable re-sizing for debugging, FIXME: resizing is not working, needs to be adjusted for new control logic.
-        self.wl_timing_tolerance = 1 #Determines how much larger the sen delay should be. Accounts for possible error in model.
-        self.parasitic_inv_delay = parameter["min_inv_para_delay"] #Keeping 0 for now until further testing.
+        #Determines how much larger the sen delay should be. Accounts for possible error in model.
+        self.wl_timing_tolerance = 1 
+        self.parasitic_inv_delay = parameter["min_inv_para_delay"] 
         self.wl_stage_efforts = None
         self.sen_stage_efforts = None
         
@@ -159,16 +159,16 @@ class control_logic(design.design):
                 #Resize if necessary, condition depends on resizing method
                 if self.sram != None and self.enable_delay_chain_resizing and not self.does_sen_total_timing_match(): 
                     #This resizes to match fall and rise delays, can make the delay chain weird sizes.
-                    # stage_list = self.get_dynamic_delay_fanout_list(delay_stages_heuristic, delay_fanout_heuristic)
-                    # self.replica_bitline = factory.create(module_type="replica_bitline",
-                                                          # delay_fanout_list=stage_list,
-                                                          # bitcell_loads=bitcell_loads)
+                    stage_list = self.get_dynamic_delay_fanout_list(delay_stages_heuristic, delay_fanout_heuristic)
+                    self.replica_bitline = factory.create(module_type="replica_bitline",
+                                                          delay_fanout_list=stage_list,
+                                                          bitcell_loads=bitcell_loads)
                     
                     #This resizes based on total delay. 
-                    delay_stages, delay_fanout = self.get_dynamic_delay_chain_size(delay_stages_heuristic, delay_fanout_heuristic)
-                    self.replica_bitline = factory.create(module_type="replica_bitline",
-                                                          delay_fanout_list=[delay_fanout]*delay_stages,
-                                                          bitcell_loads=bitcell_loads)
+                    # delay_stages, delay_fanout = self.get_dynamic_delay_chain_size(delay_stages_heuristic, delay_fanout_heuristic)
+                    # self.replica_bitline = factory.create(module_type="replica_bitline",
+                                                          # delay_fanout_list=[delay_fanout]*delay_stages,
+                                                          # bitcell_loads=bitcell_loads)
                     
                     self.sen_delay_rise,self.sen_delay_fall = self.get_delays_to_sen() #get the new timing
                     self.delay_chain_resized = True
@@ -177,13 +177,10 @@ class control_logic(design.design):
 
     def get_heuristic_delay_chain_size(self):
         """Use a basic heuristic to determine the size of the delay chain used for the Sense Amp Enable """
-        # FIXME: These should be tuned according to the additional size parameters
-        delay_fanout = 3 # This can be anything >=2
+        delay_fanout = 2 # This can be anything >=2
         # Delay stages Must be non-inverting
-        if self.words_per_row >= 4:
-            delay_stages = 8
-        elif self.words_per_row == 2:
-            delay_stages = 6
+        if self.words_per_row >= 2:
+            delay_stages = 4
         else:
             delay_stages = 2
             
@@ -247,6 +244,8 @@ class control_logic(design.design):
         required_delay_rise = self.wl_delay_rise*self.wl_timing_tolerance - (self.sen_delay_rise-previous_delay_chain_delay/2)
         debug.info(2,"Required delays from chain: fall={}, rise={}".format(required_delay_fall,required_delay_rise))
         
+        #If the fanout is different between rise/fall by this amount. Stage algorithm is made more pessimistic.
+        WARNING_FANOUT_DIFF = 5
         #The stages need to be equal (or at least a even number of stages with matching rise/fall delays)
         while True:
             stages_fall = self.calculate_stages_with_fixed_fanout(required_delay_fall,fanout_fall)
@@ -254,7 +253,8 @@ class control_logic(design.design):
             debug.info(1,"Fall stages={}, rise stages={}".format(stages_fall,stages_rise))
             if stages_fall == stages_rise: 
                 break
-            elif abs(stages_fall-stages_rise) == 1:
+            elif abs(stages_fall-stages_rise) == 1 and WARNING_FANOUT_DIFF < abs(fanout_fall-fanout_rise):
+                debug.info(1, "Delay chain fanouts between stages are large. Making chain size larger for safety.")
                 break
             #There should also be a condition to make sure the fanout does not get too large.    
             #Otherwise, increase the fanout of delay with the most stages, calculate new stages

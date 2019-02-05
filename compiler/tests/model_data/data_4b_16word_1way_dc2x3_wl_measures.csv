@@ -1,2 +1,0 @@
-word_size,num_words,words_per_row,dc_resized,process,voltage,temp,Xsram.Xcontrol0.Xbuf_wl_en.Zb1_int,Xsram.Xcontrol0.Xbuf_wl_en.Zb2_int,Xsram.Xcontrol0.Xbuf_wl_en.Zb3_int,Xsram.wl_en0,Xsram.Xbank0.Xwordline_driver0.wl_bar_15,Xsram.Xbank0.wl_15,sum
-4,16,1,False,TT,1.0,25,0.010512,0.0089216,0.014109,0.013643,0.014564,0.0086745,0.0704241

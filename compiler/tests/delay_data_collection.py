@@ -4,6 +4,7 @@ Run a regression test on various srams
 """
 import csv,sys,os
 import pandas as pd
+import matplotlib.pyplot as plt
 
 import unittest
 from testutils import header,openram_test
@@ -19,13 +20,14 @@ MODEL_DIR = "model_data/"
 class data_collection(openram_test):
 
     def runTest(self):
-        
-        word_size, num_words, words_per_row = 4, 16, 1 
-        self.init_data_gen()
-        self.set_delay_chain(2,3)
-        self.save_data_sram_corners(word_size, num_words, words_per_row)
-        wl_dataframe, sae_dataframe = self.get_csv_data()
-        self.evaluate_data(wl_dataframe, sae_dataframe)
+        ratio_data = self.calculate_delay_ratios_of_srams()
+        self.display_data(ratio_data)
+        # word_size, num_words, words_per_row = 4, 16, 1 
+        # self.init_data_gen()
+        # self.set_delay_chain(2,3)
+        # self.save_data_sram_corners(word_size, num_words, words_per_row)
+        # wl_dataframe, sae_dataframe = self.get_csv_data()
+        # self.evaluate_data(wl_dataframe, sae_dataframe)
         
         #Run again but with different delay chain sizes
         # self.init_data_gen() 
@@ -34,12 +36,27 @@ class data_collection(openram_test):
         # wl_dataframe, sae_dataframe = self.get_csv_data()
         # self.evaluate_data(wl_dataframe, sae_dataframe)
         
-        model_delay_ratios, meas_delay_ratios, ratio_error = self.compare_model_to_measure()
-        debug.info(1, "model_delay_ratios={}".format(model_delay_ratios))
-        debug.info(1, "meas_delay_ratios={}".format(meas_delay_ratios))
-        debug.info(1, "ratio_error={}".format(ratio_error))
-        globals.end_openram()
+        # model_delay_ratios, meas_delay_ratios, ratio_error = self.compare_model_to_measure()
+        # debug.info(1, "model_delay_ratios={}".format(model_delay_ratios))
+        # debug.info(1, "meas_delay_ratios={}".format(meas_delay_ratios))
+        # debug.info(1, "ratio_error={}".format(ratio_error))
+        # globals.end_openram()
     
+    def calculate_delay_ratios_of_srams(self):
+        """Runs delay measurements on several sram configurations.
+        Computes the delay ratio for each one."""
+        delay_ratio_data = {}
+        config_tuple_list = [(32, 1024, None)]
+        #config_tuple_list = [(1, 16, 1),(4, 16, 1), (16, 16, 1), (32, 32, 1)]
+        for sram_config in config_tuple_list:
+            word_size, num_words, words_per_row = sram_config
+            self.init_data_gen()
+            self.save_data_sram_corners(word_size, num_words, words_per_row)
+            model_delay_ratios, meas_delay_ratios, ratio_error = self.compare_model_to_measure()
+            delay_ratio_data[sram_config] = ratio_error
+            debug.info(1, "Ratio percentage error={}".format(ratio_error))
+        return delay_ratio_data
+        
     def get_csv_data(self):
         """Hardcoded Hack to get the measurement data from the csv into lists. """
         wl_files_name = [file_name for file_name in self.file_names if "wl_measures" in file_name][0]
@@ -79,11 +96,30 @@ class data_collection(openram_test):
             corner = (wl_meas[proc_pos+1], wl_meas[volt_pos+1], wl_meas[temp_pos+1])
             meas_delay_ratios[corner] = wl_meas[wl_sum_pos+1]/sae_meas[sae_sum_pos+1]
             model_delay_ratios[corner] = wl_model[wl_sum_pos+1]/sae_model[sae_sum_pos+1]
-            debug.info(1,"wl_model sum={}, sae_model_sum={}".format(wl_model[wl_sum_pos+1], sae_model[sae_sum_pos+1]))
-            ratio_error[corner] = 100*abs(model_delay_ratios[corner]-meas_delay_ratios[corner])/meas_delay_ratios[corner]
+            #Not using absolute error, positive error means model was larger, negative error means it was smaller.
+            ratio_error[corner] = 100*(model_delay_ratios[corner]-meas_delay_ratios[corner])/meas_delay_ratios[corner]
             
         return model_delay_ratios, meas_delay_ratios, ratio_error 
-            
+     
+    def display_data(self, data):
+        """Displays the ratio data using matplotlib (requires graphics)"""
+        config_data = []
+        xticks = []
+        #Organize data
+        #First key level if the sram configuration (wordsize, num words, words per row)
+        for config,corner_data_dict in data.items():
+            #Second level is the corner data for that configuration.
+            for corner, corner_data in corner_data_dict.items():
+                #Right now I am only testing with a single corner, will not work with more than 1 corner
+                config_data.append(corner_data)
+            xticks.append("{}b,{}w,{}wpr".format(*config))
+        #plot data
+        data_range = [i+1 for i in range(len(data))]
+        shapes = ['ro', 'bo', 'go', 'co', 'mo']
+        plt.xticks(data_range, xticks)
+        plt.plot(data_range, config_data, 'ro')
+        plt.show()
+        
     def calculate_delay_error(self, wl_dataframe, sae_dataframe):
         """Calculates the percentage difference in delays between the wordline and sense amp enable"""
         start_data_pos = len(self.config_fields) #items before this point are configuration related
@@ -123,6 +159,9 @@ class data_collection(openram_test):
     def save_data_sram_corners(self, word_size, num_words, words_per_row):
         """Performs corner analysis on a single SRAM configuration"""
         self.create_sram(word_size, num_words, words_per_row)
+        #Setting to none forces SRAM to determine the value. Must be checked after sram creation
+        if not words_per_row: 
+            words_per_row = self.sram.s.words_per_row
         #Run on one size to initialize CSV writing (csv names come from return value). Strange, but it is okay for now.
         corner_gen = self.corner_combination_generator()
         init_corner = next(corner_gen)
@@ -150,7 +189,7 @@ class data_collection(openram_test):
         OPTS.trim_netlist = False
         OPTS.netlist_only = True
         OPTS.analytical_delay = False
-        OPTS.use_tech_delay_chain_size = True
+        #OPTS.use_tech_delay_chain_size = True
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
         import characterizer
@@ -209,13 +248,16 @@ class data_collection(openram_test):
         self.csv_files = {}
         self.csv_writers = {}
         self.file_names = []
+        delay_stages = self.delay_obj.get_num_delay_stages()
+        delay_stage_fanout = self.delay_obj.get_num_delay_stage_fanout()
+        
         for data_name, header_list in header_dict.items():
             file_name = '{}data_{}b_{}word_{}way_dc{}x{}_{}.csv'.format(MODEL_DIR,
                                                                 word_size, 
                                                                 num_words, 
                                                                 words_per_row,
-                                                                parameter["static_delay_stages"],
-                                                                parameter["static_fanout_per_stage"],
+                                                                delay_stages,
+                                                                delay_stage_fanout,
                                                                 data_name)
             self.file_names.append(file_name)
             self.csv_files[data_name] = open(file_name, 'w')
@@ -238,13 +280,11 @@ class data_collection(openram_test):
         self.sram_spice = OPTS.openram_temp + "temp.sp"
         self.sram.sp_write(self.sram_spice)
         
-        debug.info(1, "SRAM column address size={}".format(self.sram.s.col_addr_size))
-        
     def get_sram_data(self, corner):
         """Generates the delay object using the corner and runs a simulation for data."""
         from characterizer import model_check
         self.delay_obj = model_check(self.sram.s, self.sram_spice, corner)
-        
+
         import tech
         #Only 1 at a time
         probe_address = "1" * self.sram.s.addr_size
@@ -253,6 +293,7 @@ class data_collection(openram_test):
         slews = [tech.spice["rise_time"]*2]
 
         sram_data = self.delay_obj.analyze(probe_address,probe_data,slews,loads)
+        
         return sram_data
        
     def remove_lists_from_dict(self, dict):

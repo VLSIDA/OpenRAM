@@ -154,10 +154,8 @@ class control_logic(design.design):
                 self.replica_bitline = factory.create(module_type="replica_bitline",
                                                       delay_fanout_list=[delay_fanout_heuristic]*delay_stages_heuristic,
                                                       bitcell_loads=bitcell_loads)
-                if self.sram != None: #Calculate delays for potential re-sizing
-                    self.set_sen_wl_delays()
                 #Resize if necessary, condition depends on resizing method
-                if self.sram != None and self.enable_delay_chain_resizing and not self.does_sen_total_timing_match(): 
+                if self.sram != None and self.enable_delay_chain_resizing and not self.does_sen_rise_fall_timing_match(): 
                     #This resizes to match fall and rise delays, can make the delay chain weird sizes.
                     stage_list = self.get_dynamic_delay_fanout_list(delay_stages_heuristic, delay_fanout_heuristic)
                     self.replica_bitline = factory.create(module_type="replica_bitline",
@@ -177,7 +175,8 @@ class control_logic(design.design):
 
     def get_heuristic_delay_chain_size(self):
         """Use a basic heuristic to determine the size of the delay chain used for the Sense Amp Enable """
-        delay_fanout = 2 # This can be anything >=2
+        #FIXME: The minimum was 2 fanout, now it will not pass DRC unless it is 3. Why?
+        delay_fanout = 3 # This can be anything >=3
         # Delay stages Must be non-inverting
         if self.words_per_row >= 2:
             delay_stages = 4
@@ -246,15 +245,23 @@ class control_logic(design.design):
         
         #If the fanout is different between rise/fall by this amount. Stage algorithm is made more pessimistic.
         WARNING_FANOUT_DIFF = 5
+        stages_close = False
         #The stages need to be equal (or at least a even number of stages with matching rise/fall delays)
         while True:
             stages_fall = self.calculate_stages_with_fixed_fanout(required_delay_fall,fanout_fall)
             stages_rise = self.calculate_stages_with_fixed_fanout(required_delay_rise,fanout_rise)
             debug.info(1,"Fall stages={}, rise stages={}".format(stages_fall,stages_rise))
+            if abs(stages_fall-stages_rise) == 1 and not stages_close:
+                stages_close = True
+                safe_fanout_rise = fanout_rise
+                safe_fanout_fall = fanout_fall
+            
             if stages_fall == stages_rise: 
                 break
             elif abs(stages_fall-stages_rise) == 1 and WARNING_FANOUT_DIFF < abs(fanout_fall-fanout_rise):
                 debug.info(1, "Delay chain fanouts between stages are large. Making chain size larger for safety.")
+                fanout_rise = safe_fanout_rise
+                fanout_fall = safe_fanout_fall
                 break
             #There should also be a condition to make sure the fanout does not get too large.    
             #Otherwise, increase the fanout of delay with the most stages, calculate new stages

@@ -48,4 +48,5 @@ class sense_amp(design.design):
         """Get the relative capacitance of sense amp enable gate cin"""
         pmos_cin = parameter["sa_en_pmos_size"]/drc("minwidth_tx")
         nmos_cin = parameter["sa_en_nmos_size"]/drc("minwidth_tx")
+        #sen is connected to 2 pmos isolation TX and 1 nmos per sense amp.
         return 2*pmos_cin + nmos_cin

@@ -889,7 +889,8 @@ class delay(simulation):
         """
         if OPTS.num_rw_ports > 1 or OPTS.num_w_ports > 0 and OPTS.num_r_ports > 0:
             debug.warning("Analytical characterization results are not supported for multiport.")
-        
+        self.create_signal_names()
+        self.create_measurement_names()
         power = self.analytical_power(slews, loads)
         port_data = self.get_empty_measure_data_dict()
         for slew in slews:
@@ -907,7 +908,8 @@ class delay(simulation):
                         else:
                             debug.error("Measurement name not recognized: {}".format(mname),1)
         period_margin = 0.1
-        sram_data = { "min_period": bank_delay[0]*2*period_margin, 
+        risefall_delay = bank_delay[self.read_ports[0]].delay/1e3
+        sram_data = { "min_period":risefall_delay*2*period_margin, 
                       "leakage_power": power.leakage}                    
          
         return (sram_data,port_data)

@@ -14,7 +14,8 @@ class precharge_array(design.design):
     def __init__(self, name, columns, size=1, bitcell_bl="bl", bitcell_br="br"):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
-
+        self.add_comment("cols: {0} size: {1} bl: {2} br: {3}".format(columns, size, bitcell_bl, bitcell_br))
+        
         self.columns = columns
         self.size = size
         self.bitcell_bl = bitcell_bl

@@ -182,7 +182,6 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
         # FIXME: Remove when vdd/gnd connected        
         #'lvsAbortOnSupplyError' : 0
 
-    # This should be removed for final verification
     if not final_verification:
         lvs_runset['cmnVConnectReport']=1
         lvs_runset['cmnVConnectNamesState']='SOME'

@@ -16,6 +16,7 @@ class pnand2(pgate.pgate):
         """ Creates a cell for a simple 2 input nand """
         pgate.pgate.__init__(self, name, height)
         debug.info(2, "create pnand2 structure {0} with size of {1}".format(name, size))
+        self.add_comment("size: {}".format(size))
 
         self.size = size
         self.nmos_size = 2*size
@@ -252,7 +253,7 @@ class pnand2(pgate.pgate):
         """Return the relative input capacitance of a single input"""
         return self.nmos_size+self.pmos_size
         
-    def get_effort_stage(self, cout, inp_is_rise=True):
+    def get_stage_effort(self, cout, inp_is_rise=True):
         """Returns an object representing the parameters for delay in tau units.
            Optional is_rise refers to the input direction rise/fall. Input inverted by this stage.
         """

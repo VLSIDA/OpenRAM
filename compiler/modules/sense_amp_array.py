@@ -14,6 +14,8 @@ class sense_amp_array(design.design):
     def __init__(self, name, word_size, words_per_row):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
+        self.add_comment("word_size {0}".format(word_size))        
+        self.add_comment("words_per_row: {0}".format(words_per_row))
 
         self.word_size = word_size
         self.words_per_row = words_per_row

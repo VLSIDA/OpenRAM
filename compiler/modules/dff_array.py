@@ -12,7 +12,7 @@ class dff_array(design.design):
     Unlike the data flops, these are never spaced out.
     """
 
-    def __init__(self, rows, columns, inv1_size=2, inv2_size=4, name=""):
+    def __init__(self, rows, columns, name=""):
         self.rows = rows
         self.columns = columns
 
@@ -20,7 +20,8 @@ class dff_array(design.design):
             name = "dff_array_{0}x{1}".format(rows, columns)
         design.design.__init__(self, name)
         debug.info(1, "Creating {0} rows={1} cols={2}".format(self.name, self.rows, self.columns))
-
+        self.add_comment("rows: {0} cols: {1}".format(rows, columns))
+        
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()

@@ -320,17 +320,17 @@ class layout():
     def add_path(self, layer, coordinates, width=None):
         """Connects a routing path on given layer,coordinates,width."""
         debug.info(4,"add path " + str(layer) + " " + str(coordinates))
-        import path
+        import wire_path
         # NOTE: (UNTESTED) add_path(...) is currently not used
         # negative layers indicate "unused" layers in a given technology
         #layer_num = techlayer[layer]
         #if layer_num >= 0:
         #    self.objs.append(geometry.path(layer_num, coordinates, width))
 
-        path.path(obj=self,
-                  layer=layer, 
-                  position_list=coordinates, 
-                  width=width)
+        wire_path.wire_path(obj=self,
+                            layer=layer, 
+                            position_list=coordinates, 
+                            width=width)
 
     def add_route(self, layers, coordinates, layer_widths):
         """Connects a routing path on given layer,coordinates,width. The

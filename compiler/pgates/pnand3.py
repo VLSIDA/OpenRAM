@@ -15,6 +15,7 @@ class pnand3(pgate.pgate):
         """ Creates a cell for a simple 3 input nand """
         pgate.pgate.__init__(self, name, height)
         debug.info(2, "create pnand3 structure {0} with size of {1}".format(name, size))
+        self.add_comment("size: {}".format(size))
 
         # We have trouble pitch matching a 3x sizes to the bitcell...
         # If we relax this, we could size this better.
@@ -264,7 +265,7 @@ class pnand3(pgate.pgate):
         """Return the relative input capacitance of a single input"""
         return self.nmos_size+self.pmos_size
         
-    def get_effort_stage(self, cout, inp_is_rise=True):
+    def get_stage_effort(self, cout, inp_is_rise=True):
         """Returns an object representing the parameters for delay in tau units.
            Optional is_rise refers to the input direction rise/fall. Input inverted by this stage.
         """

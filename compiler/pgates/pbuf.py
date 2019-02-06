@@ -18,7 +18,8 @@ class pbuf(pgate.pgate):
 
         pgate.pgate.__init__(self, name, height)
         debug.info(1, "creating {0} with size of {1}".format(self.name,self.size))
-
+        self.add_comment("size: {}".format(size))
+        
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -115,15 +116,15 @@ class pbuf(pgate.pgate):
         inv2_delay = self.inv2.analytical_delay(slew=inv1_delay.slew, load=load)
         return inv1_delay + inv2_delay
     
-    def get_output_stage_efforts(self, external_cout, inp_is_rise=False):
+    def get_stage_efforts(self, external_cout, inp_is_rise=False):
         """Get the stage efforts of the A -> Z path"""
         stage_effort_list = []
         stage1_cout = self.inv2.get_cin()
-        stage1 = self.inv1.get_effort_stage(stage1_cout, inp_is_rise)
+        stage1 = self.inv1.get_stage_effort(stage1_cout, inp_is_rise)
         stage_effort_list.append(stage1)
         last_stage_is_rise = stage1.is_rise
         
-        stage2 = self.inv2.get_effort_stage(external_cout, last_stage_is_rise)
+        stage2 = self.inv2.get_stage_effort(external_cout, last_stage_is_rise)
         stage_effort_list.append(stage2)
         
         return stage_effort_list

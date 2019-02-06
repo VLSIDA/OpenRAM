@@ -182,7 +182,12 @@ class control_logic(design.design):
             delay_stages = 8
         else:
             delay_stages = 2
-            
+        
+        #Read ports have a shorter s_en delay. The model is not accurate enough to catch this difference
+        #on certain sram configs.
+        if self.port_type == "r":
+            delay_stages+=2
+        
         return (delay_stages, delay_fanout)
         
     def set_sen_wl_delays(self):

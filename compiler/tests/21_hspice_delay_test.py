@@ -51,20 +51,20 @@ class timing_sram_test(openram_test):
         data.update(port_data[0])
      
         if OPTS.tech_name == "freepdk45":
-            golden_data = {'delay_bl': [0.19683],
-                         'delay_br': [0.19474],
-                         'delay_hl': [0.20646],
-                         'delay_lh': [0.20646],
-                         'leakage_power': 0.0013155,
+            golden_data = {'delay_bl': [0.1980959],
+                         'delay_br': [0.1946091],
+                         'delay_hl': [0.2121267],
+                         'delay_lh': [0.2121267],
+                         'leakage_power': 0.0023761999999999998,
                          'min_period': 0.43,
-                         'read0_power': [0.50758],
-                         'read1_power': [0.48225999999999997],
-                         'slew_hl': [0.045869],
-                         'slew_lh': [0.045869],
-                         'volt_bl': [0.6563],
-                         'volt_br': [1.117],
-                         'write0_power': [0.46124000000000004],
-                         'write1_power': [0.48225999999999997]}
+                         'read0_power': [0.5139368],
+                         'read1_power': [0.48940979999999995],
+                         'slew_hl': [0.0516745],
+                         'slew_lh': [0.0516745],
+                         'volt_bl': [0.5374525],
+                         'volt_br': [1.1058],
+                         'write0_power': [0.46267169999999996],
+                         'write1_power': [0.4670826]}
         elif OPTS.tech_name == "scn4m_subm":
             golden_data = {'delay_bl': [1.1029],
                          'delay_br': [0.9656455999999999],

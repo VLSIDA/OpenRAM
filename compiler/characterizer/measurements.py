@@ -10,8 +10,9 @@ class spice_measurement(ABC):
         #Names must be unique for correct spice simulation, but not enforced here.
         self.name = measure_name
         self.measure_scale = measure_scale
-        self.meta_str = None #Some measurements set this, set here to be clear on existence
-        
+        #Some meta values used externally. variables are added here for consistency accross the objects
+        self.meta_str = None 
+        self.meta_add_delay = False
     @abstractmethod
     def get_measure_function(self):
         return None    

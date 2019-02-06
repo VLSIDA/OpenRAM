@@ -177,9 +177,9 @@ class control_logic(design.design):
         """Use a basic heuristic to determine the size of the delay chain used for the Sense Amp Enable """
         #FIXME: The minimum was 2 fanout, now it will not pass DRC unless it is 3. Why?
         delay_fanout = 3 # This can be anything >=3
-        # Delay stages Must be non-inverting
+        # Model poorly captures delay of the column mux. Be pessismistic for column mux
         if self.words_per_row >= 2:
-            delay_stages = 4
+            delay_stages = 8
         else:
             delay_stages = 2
             

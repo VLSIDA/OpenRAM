@@ -70,6 +70,11 @@ class delay(simulation):
         self.read_meas_objs[-1].meta_str = "read1"
         self.read_meas_objs.append(power_measure("read0_power", "FALL", measure_scale=1e3))
         self.read_meas_objs[-1].meta_str = "read0"
+        
+        #This will later add a half-period to the spice time delay. Only for reading 0.
+        for obj in self.read_meas_objs:
+            if obj.meta_str is "read0":
+                obj.meta_add_delay = True
 
         trig_name = "Xsram.s_en{}" #Sense amp enable
         if len(self.all_ports) == 1: #special naming case for single port sram bitlines which does not include the port in name
@@ -104,13 +109,16 @@ class delay(simulation):
         self.bitline_delay_objs[-1].meta_str = "read0"
         self.bitline_delay_objs.append(delay_measure(self.bitline_delay_names[1], trig_name, br_name, "FALL", "FALL", targ_vdd=targ_val, measure_scale=1e9))
         self.bitline_delay_objs[-1].meta_str = "read1"
-
+        #Enforces the time delay on the bitline measurements for read0 or read1
+        for obj in self.bitline_delay_objs:
+            obj.meta_add_delay = True
+        
     def create_write_port_measurement_objects(self):
         """Create the measurements used for read ports: delays, slews, powers"""
         self.write_meas_objs = []
 
         self.write_meas_objs.append(power_measure("write1_power", "RISE", measure_scale=1e3))
-        self.write_meas_objs[-1].meta_str = "read1"
+        self.write_meas_objs[-1].meta_str = "write1"
         self.write_meas_objs.append(power_measure("write0_power", "FALL", measure_scale=1e3))
         self.write_meas_objs[-1].meta_str = "write0"
      
@@ -284,11 +292,14 @@ class delay(simulation):
         #vdd is arguably constant as that is true for a single lib file.
         if delay_obj.meta_str == "read0":
             #Falling delay are measured starting from neg. clk edge. Delay adjusted to that.
-            meas_cycle_delay = self.cycle_times[self.measure_cycles[port][delay_obj.meta_str]] + self.period/2
+            meas_cycle_delay = self.cycle_times[self.measure_cycles[port][delay_obj.meta_str]]
         elif delay_obj.meta_str == "read1":
             meas_cycle_delay = self.cycle_times[self.measure_cycles[port][delay_obj.meta_str]]
         else:
             debug.error("Unrecognised delay Index={}".format(delay_obj.meta_str),1)
+            
+        if delay_obj.meta_add_delay:    
+            meas_cycle_delay += self.period/2
             
         return (meas_cycle_delay, meas_cycle_delay, self.vdd_voltage, port)
     

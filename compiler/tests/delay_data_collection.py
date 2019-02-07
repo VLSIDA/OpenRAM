@@ -36,7 +36,7 @@ class data_collection(openram_test):
         #Constant sram config for this test   
         word_size, num_words, words_per_row = 1, 16, 1
         #Only change delay chain
-        dc_config_list = [(2,3), (3,3), (3,4), (4,2)]
+        dc_config_list = [(2,3), (3,3), (3,4), (4,2), (4,3), (4,4), (2,4), (2,5)]
         #dc_config_list = [(2,3), (3,3)]
         dc_avgs = []
         dc_vars = []
@@ -91,7 +91,7 @@ class data_collection(openram_test):
         color = 'tab:red'
         ax1.set_xlabel('DC (Stages,Fanout)')
         ax1.set_ylabel('Average Delay (ns)', color=color)
-        ax1.plot(data_range, y1_values, marker='o', color=color)
+        ax1.plot(data_range, y1_values, marker='o', color=color, linestyle='')
         ax1.tick_params(axis='y', labelcolor=color)
 
         ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
@@ -99,7 +99,7 @@ class data_collection(openram_test):
         color = 'tab:blue'
         #ax2.set_xticks(data_range, x_labels)
         ax2.set_ylabel('Delay Variance (ns)', color=color)  # we already handled the x-label with ax1
-        ax2.plot(data_range, y2_values, marker='*', color=color)
+        ax2.plot(data_range, y2_values, marker='*', color=color, linestyle='')
         ax2.tick_params(axis='y', labelcolor=color)
 
         fig.tight_layout()  # otherwise the right y-label is slightly clipped

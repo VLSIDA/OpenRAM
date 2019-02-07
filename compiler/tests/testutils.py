@@ -21,7 +21,8 @@ class openram_test(unittest.TestCase):
         if result != 0:
             self.fail("DRC failed: {}".format(w.name))
 
-        self.cleanup()
+        if OPTS.purge_temp:
+            self.cleanup()
     
     def local_check(self, a, final_verification=False):
 

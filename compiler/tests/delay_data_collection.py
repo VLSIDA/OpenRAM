@@ -25,33 +25,38 @@ class data_collection(openram_test):
         # ratio_data = self.calculate_delay_ratios_of_srams()
         # self.display_data(ratio_data)
 
-        self.run_delay_chain_variation_analysis()
+        self.run_delay_chain_analysis()
         
         globals.end_openram()
     
-    def run_delay_chain_variation_analysis(self):
+    def run_delay_chain_analysis(self):
         """Generates sram with different delay chain configs over different corners and 
-           analyzes delay variation."""
+           analyzes delay average and variation."""
         OPTS.use_tech_delay_chain_size = True
         #Constant sram config for this test   
         word_size, num_words, words_per_row = 1, 16, 1
         #Only change delay chain
         dc_config_list = [(2,3), (3,3), (3,4), (4,2)]
+        #dc_config_list = [(2,3), (3,3)]
+        dc_avgs = []
         dc_vars = []
         for stages,fanout in dc_config_list:
             self.init_data_gen()
             self.set_delay_chain(stages,fanout)
             self.save_data_sram_corners(word_size, num_words, words_per_row)
             wl_dataframe, sae_dataframe = self.get_csv_data()
-            var = self.calculate_delay_chain_variance(sae_dataframe)
-            dc_vars.append(var)
-            debug.info(1,"DC config={}, variance={}".format((stages,fanout), var))
+            delay_sums = self.get_delay_chain_sums(sae_dataframe)
+            dc_avgs.append(self.get_average(delay_sums))
+            dc_vars.append(self.get_variance(delay_sums))
+            debug.info(1,"DC config={}: avg={} variance={}".format((stages,fanout), dc_avgs[-1], dc_vars[-1]))
         
-        self.plot_data(dc_config_list, dc_vars)
-        #display data
+        #plot data
+        self.plot_two_data_sets(dc_config_list, dc_avgs, dc_vars)
+        #self.plot_data(dc_config_list, dc_avgs)
+        #self.plot_data(dc_config_list, dc_vars)
     
-    def calculate_delay_chain_variance(self, sae_dataframe):
-        """Determines the delay variance of the delay chain over corners"""
+    def get_delay_chain_sums(self, sae_dataframe):
+        """Calculate the total delay of the delay chain over different corners"""
         (start_dc, end_dc) = self.delay_obj.delay_chain_indices
         start_data_pos = len(self.config_fields)+1 #items before this point are configuration related
         delay_sums = []
@@ -60,11 +65,15 @@ class data_collection(openram_test):
         for sae_row in sae_dataframe.itertuples(): 
             dc_delays = sae_row[start_data_pos+start_dc:start_data_pos+end_dc]
             delay_sums.append(sum(dc_delays))
+        return delay_sums
         
-        #calculate mean then variance 
-        m = sum(delay_sums) / len(delay_sums)
-        delay_variance = sum((xi - m) ** 2 for xi in delay_sums) / len(delay_sums)
+    def get_variance(self, nums):
+        avg = self.get_average(nums)
+        delay_variance = sum((xi - avg) ** 2 for xi in nums) / len(nums)
         return delay_variance
+        
+    def get_average(self,nums):
+        return sum(nums) / len(nums)
     
     def plot_data(self, x_labels, y_values):
         """Display a plot using matplot lib. 
@@ -73,7 +82,30 @@ class data_collection(openram_test):
         plt.xticks(data_range, x_labels)
         plt.plot(data_range, y_values, 'ro')
         plt.show()
-        
+    
+    def plot_two_data_sets(self, x_labels, y1_values, y2_values):
+        """Plots two data sets on the same x-axis."""
+        data_range = [i for i in range(len(x_labels))]
+        fig, ax1 = plt.subplots()
+
+        color = 'tab:red'
+        ax1.set_xlabel('DC (Stages,Fanout)')
+        ax1.set_ylabel('Average Delay (ns)', color=color)
+        ax1.plot(data_range, y1_values, marker='o', color=color)
+        ax1.tick_params(axis='y', labelcolor=color)
+
+        ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+
+        color = 'tab:blue'
+        #ax2.set_xticks(data_range, x_labels)
+        ax2.set_ylabel('Delay Variance (ns)', color=color)  # we already handled the x-label with ax1
+        ax2.plot(data_range, y2_values, marker='*', color=color)
+        ax2.tick_params(axis='y', labelcolor=color)
+
+        fig.tight_layout()  # otherwise the right y-label is slightly clipped
+        plt.xticks(data_range, x_labels)
+        plt.show()
+    
     def calculate_delay_ratios_of_srams(self):
         """Runs delay measurements on several sram configurations.
         Computes the delay ratio for each one."""

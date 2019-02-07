@@ -216,7 +216,7 @@ If I forgot to add you, please let me know!
 
 [Github issues]:         https://github.com/VLSIDA/PrivateRAM/issues
 [Github pull request]:   https://github.com/VLSIDA/PrivateRAM/pulls
-[Github projects]:       https://github.com/VLSIDA/PrivateRAM/projects
+[Github projects]:       https://github.com/VLSIDA/PrivateRAM
 
 [email me]:              mailto:mrg+openram@ucsc.edu
 [dev-group]:             mailto:openram-dev-group@ucsc.edu

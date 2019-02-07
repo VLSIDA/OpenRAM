@@ -20,28 +20,60 @@ MODEL_DIR = "model_data/"
 class data_collection(openram_test):
 
     def runTest(self):
-        ratio_data = self.calculate_delay_ratios_of_srams()
-        self.display_data(ratio_data)
-        # word_size, num_words, words_per_row = 4, 16, 1 
-        # self.init_data_gen()
-        # self.set_delay_chain(2,3)
-        # self.save_data_sram_corners(word_size, num_words, words_per_row)
-        # wl_dataframe, sae_dataframe = self.get_csv_data()
-        # self.evaluate_data(wl_dataframe, sae_dataframe)
-        
-        #Run again but with different delay chain sizes
-        # self.init_data_gen() 
-        # self.set_delay_chain(4,2)
-        # self.save_data_sram_corners(word_size, num_words, words_per_row)
-        # wl_dataframe, sae_dataframe = self.get_csv_data()
-        # self.evaluate_data(wl_dataframe, sae_dataframe)
-        
-        # model_delay_ratios, meas_delay_ratios, ratio_error = self.compare_model_to_measure()
-        # debug.info(1, "model_delay_ratios={}".format(model_delay_ratios))
-        # debug.info(1, "meas_delay_ratios={}".format(meas_delay_ratios))
-        # debug.info(1, "ratio_error={}".format(ratio_error))
-        # globals.end_openram()
     
+        #Uncomment this for model evaluation
+        # ratio_data = self.calculate_delay_ratios_of_srams()
+        # self.display_data(ratio_data)
+
+        self.run_delay_chain_variation_analysis()
+        
+        globals.end_openram()
+    
+    def run_delay_chain_variation_analysis(self):
+        """Generates sram with different delay chain configs over different corners and 
+           analyzes delay variation."""
+        OPTS.use_tech_delay_chain_size = True
+        #Constant sram config for this test   
+        word_size, num_words, words_per_row = 1, 16, 1
+        #Only change delay chain
+        dc_config_list = [(2,3), (3,3), (3,4), (4,2)]
+        dc_vars = []
+        for stages,fanout in dc_config_list:
+            self.init_data_gen()
+            self.set_delay_chain(stages,fanout)
+            self.save_data_sram_corners(word_size, num_words, words_per_row)
+            wl_dataframe, sae_dataframe = self.get_csv_data()
+            var = self.calculate_delay_chain_variance(sae_dataframe)
+            dc_vars.append(var)
+            debug.info(1,"DC config={}, variance={}".format((stages,fanout), var))
+        
+        self.plot_data(dc_config_list, dc_vars)
+        #display data
+    
+    def calculate_delay_chain_variance(self, sae_dataframe):
+        """Determines the delay variance of the delay chain over corners"""
+        (start_dc, end_dc) = self.delay_obj.delay_chain_indices
+        start_data_pos = len(self.config_fields)+1 #items before this point are configuration related
+        delay_sums = []
+        row_count = 0
+        #Get delay sums over different corners
+        for sae_row in sae_dataframe.itertuples(): 
+            dc_delays = sae_row[start_data_pos+start_dc:start_data_pos+end_dc]
+            delay_sums.append(sum(dc_delays))
+        
+        #calculate mean then variance 
+        m = sum(delay_sums) / len(delay_sums)
+        delay_variance = sum((xi - m) ** 2 for xi in delay_sums) / len(delay_sums)
+        return delay_variance
+    
+    def plot_data(self, x_labels, y_values):
+        """Display a plot using matplot lib. 
+           Assumes input x values are just labels and y values are actual data."""
+        data_range = [i+1 for i in range(len(x_labels))]
+        plt.xticks(data_range, x_labels)
+        plt.plot(data_range, y_values, 'ro')
+        plt.show()
+        
     def calculate_delay_ratios_of_srams(self):
         """Runs delay measurements on several sram configurations.
         Computes the delay ratio for each one."""

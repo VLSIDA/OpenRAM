@@ -4,7 +4,7 @@ num_words = 16
 
 tech_name = "freepdk45"
 #process_corners = ["TT", "FF", "SS", "SF", "FS"]
-process_corners = ["TT"]
+process_corners = ["TT", "FF", "SS"]
 supply_voltages = [1.0]
 temperatures = [25]
 

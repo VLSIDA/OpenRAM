@@ -38,6 +38,7 @@ class model_check(delay):
         self.rbl_delay_meas_names = ["delay_gated_clk_nand", "delay_delay_chain_in"]+dc_delay_names
         self.sae_delay_meas_names = ["delay_pre_sen"]+sen_driver_delay_names+["delay_sen"]
 
+        self.delay_chain_indices = (len(self.rbl_delay_meas_names)-len(dc_delay_names), len(self.rbl_delay_meas_names))
         #Create slew measurement names
         wl_en_driver_slew_names = ["slew_wl_en_dvr{}_".format(stage) for stage in range(1,self.get_num_wl_en_driver_stages())]
         wl_driver_slew_names = ["slew_wl_dvr{}_".format(stage) for stage in range(1,self.get_num_wl_driver_stages())]
@@ -61,13 +62,13 @@ class model_check(delay):
                                ["Xsram.wl_en0", "Xsram.Xbank0.Xwordline_driver0.wl_bar_{}".format(self.wordline_row)]+\
                                wl_driver_signals+\
                                ["Xsram.Xbank0.wl_{}".format(self.wordline_row)]
-        self.rbl_en_signal_names = ["Xsram.Xcontrol0.gated_clk_bar", "Xsram.Xcontrol0.Xand2_rbl_in.zb_int", "Xsram.Xcontrol0.rbl_in"]+\
+        pre_delay_chain_names = ["Xsram.Xcontrol0.gated_clk_bar", "Xsram.Xcontrol0.Xand2_rbl_in.zb_int", "Xsram.Xcontrol0.rbl_in"]
+        self.rbl_en_signal_names = pre_delay_chain_names+\
                                    delay_chain_signal_names+\
                                    ["Xsram.Xcontrol0.Xreplica_bitline.delayed_en"]
         self.sae_signal_names = ["Xsram.Xcontrol0.Xreplica_bitline.bl0_0", "Xsram.Xcontrol0.pre_s_en"]+\
                                 sen_driver_signals+\
                                 ["Xsram.s_en0"]
-    
     
     def create_measurement_objects(self):
         """Create the measurements used for read and write ports"""

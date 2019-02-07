@@ -4,7 +4,6 @@ This is a script to load data from the characterization and layout processes int
 a web friendly html datasheet.
 """
 # TODO:
-# include power
 # Diagram generation
 # Improve css
 
@@ -152,7 +151,7 @@ def parse_characterizer_csv(f, pages):
                                         1000/float(MIN_PERIOD)))
                             except Exception:
                                 pass
-
+                    # check current .lib file produces the slowest timing results
                     while(True):
                         col_start = col
                         if(row[col].startswith('DIN')):
@@ -354,6 +353,8 @@ def parse_characterizer_csv(f, pages):
                             for element in row[col_start: col - 1]:
                                 sheet.description.append(str(element))
                             break
+
+                    #check if new power is worse the previous
                     while(True):
                         col_start = col
                         if row[col] == 'power':
@@ -368,7 +369,7 @@ def parse_characterizer_csv(f, pages):
                             col += 4
                         else:
                             break
-
+                    # check if new leakge is worse the previous
                     while(True):
                         col_start = col
                         if row[col] == 'leak':
@@ -380,7 +381,7 @@ def parse_characterizer_csv(f, pages):
 
                         else:
                             break
-
+                    # add new corner information
                     new_sheet.corners_table.add_row(
                         [PROC, VOLT, TEMP, LIB_NAME.replace(OUT_DIR, '').replace(NAME, '')])
                     new_sheet.dlv_table.add_row(
@@ -427,6 +428,7 @@ def parse_characterizer_csv(f, pages):
                 new_sheet.timing_table = table_gen.table_gen("timing")
                 new_sheet.timing_table.add_row(
                     ['Parameter', 'Min', 'Max', 'Units'])
+                # parse initial timing information
                 while(True):
                     col_start = col
                     if(row[col].startswith('DIN')):
@@ -553,7 +555,7 @@ def parse_characterizer_csv(f, pages):
                         for element in row[col_start:col-1]:
                             sheet.description.append(str(element))
                         break
-
+                # parse initial power and leakage information 
                 while(True):
                     start = col
                     if(row[col].startswith('power')):
@@ -618,7 +620,7 @@ def parse_characterizer_csv(f, pages):
 
 class datasheet_gen():
     def datasheet_write(name):
-
+        """writes the datasheet to a file"""
         in_dir = OPTS.openram_temp
 
         if not (os.path.isdir(in_dir)):

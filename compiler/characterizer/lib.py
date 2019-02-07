@@ -511,6 +511,7 @@ class lib:
 
         else:
             with open(os.devnull, 'wb') as devnull:
+                # parses the mose recent git commit id - requres git is installed
                 proc = subprocess.Popen(['git','rev-parse','HEAD'], cwd=os.path.abspath(os.environ.get("OPENRAM_HOME")) + '/', stdout=subprocess.PIPE)
 
                 git_id = str(proc.stdout.read())
@@ -519,7 +520,7 @@ class lib:
                     git_id = git_id[2:-3] 
                 except:
                     pass
-
+                # check if git id is valid
                 if len(git_id) != 40:
                     debug.warning("Failed to retrieve git id")
                     git_id = 'Failed to retruieve'
@@ -527,6 +528,7 @@ class lib:
         datasheet = open(OPTS.openram_temp +'/datasheet.info', 'a+')
         
         current_time = datetime.date.today()
+        # write static information to be parser later
         datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},".format(
                         OPTS.output_name,
                         OPTS.num_words,
@@ -558,6 +560,7 @@ class lib:
 
         datasheet.write("{0},{1},".format(DRC, LVS))
         datasheet.write(str(self.sram.width * self.sram.height)+',')
+        # write timing information for all ports
         for port in self.all_ports:
             #DIN timings
             if port in self.write_ports:
@@ -654,10 +657,12 @@ class lib:
 
                         ))
 
-
+        # write power information
         for port in self.all_ports:
             name = ''
             read_write = ''
+
+            # write dynamic power usage
             if port in self.read_ports:
                 web_name = " & !WEb{0}".format(port)
                 name = "!CSb{0} & clk{0}{1}".format(port, web_name)
@@ -684,6 +689,7 @@ class lib:
 
                         ))
 
+        # write leakage power
         control_str = 'CSb0'
         for i in range(1, self.total_port_num):
             control_str += ' & CSb{0}'.format(i)

@@ -166,31 +166,31 @@ def parse_characterizer_csv(f, pages):
                                         if float(row[col+2]) > float(item[2]):
                                             item[2] = row[col+2]
 
-                                        col += 2
+                                    col += 2
 
-                                    elif item[0].endswith('setup falling'):
+                                    if item[0].endswith('setup falling'):
                                         if float(row[col+1]) < float(item[1]):
                                             item[1] = row[col+1]
                                         if float(row[col+2]) > float(item[2]):
                                             item[2] = row[col+2]
 
-                                        col += 2
+                                    col += 2
 
-                                    elif item[0].endswith('hold rising'):
+                                    if item[0].endswith('hold rising'):
                                         if float(row[col+1]) < float(item[1]):
                                             item[1] = row[col+1]
                                         if float(row[col+2]) > float(item[2]):
                                             item[2] = row[col+2]
 
-                                        col += 2
+                                    col += 2
 
-                                    elif item[0].endswith('hold falling'):
+                                    if item[0].endswith('hold falling'):
                                         if float(row[col+1]) < float(item[1]):
                                             item[1] = row[col+1]
                                         if float(row[col+2]) > float(item[2]):
                                             item[2] = row[col+2]
 
-                                        col += 2
+                                    col += 2
 
                             col += 1
 
@@ -205,31 +205,31 @@ def parse_characterizer_csv(f, pages):
                                         if float(row[col+2]) > float(item[2]):
                                             item[2] = row[col+2]
 
-                                        col += 2
+                                    col += 2
 
-                                    elif item[0].endswith('cell fall'):
+                                    if item[0].endswith('cell fall'):
                                         if float(row[col+1]) < float(item[1]):
                                             item[1] = row[col+1]
                                         if float(row[col+2]) > float(item[2]):
                                             item[2] = row[col+2]
 
-                                        col += 2
+                                    col += 2
 
-                                    elif item[0].endswith('rise transition'):
+                                    if item[0].endswith('rise transition'):
                                         if float(row[col+1]) < float(item[1]):
                                             item[1] = row[col+1]
                                         if float(row[col+2]) > float(item[2]):
                                             item[2] = row[col+2]
 
-                                        col += 2
+                                    col += 2
 
-                                    elif item[0].endswith('fall transition'):
+                                    if item[0].endswith('fall transition'):
                                         if float(row[col+1]) < float(item[1]):
                                             item[1] = row[col+1]
                                         if float(row[col+2]) > float(item[2]):
                                             item[2] = row[col+2]
 
-                                        col += 2
+                                    col += 2
 
                             col += 1
 
@@ -244,31 +244,31 @@ def parse_characterizer_csv(f, pages):
                                         if float(row[col+2]) > float(item[2]):
                                             item[2] = row[col+2]
 
-                                        col += 2
+                                    col += 2
 
-                                    elif item[0].endswith('setup falling'):
+                                    if item[0].endswith('setup falling'):
                                         if float(row[col+1]) < float(item[1]):
                                             item[1] = row[col+1]
                                         if float(row[col+2]) > float(item[2]):
                                             item[2] = row[col+2]
 
-                                        col += 2
+                                    col += 2
 
-                                    elif item[0].endswith('hold rising'):
+                                    if item[0].endswith('hold rising'):
                                         if float(row[col+1]) < float(item[1]):
                                             item[1] = row[col+1]
                                         if float(row[col+2]) > float(item[2]):
                                             item[2] = row[col+2]
 
-                                        col += 2
+                                    col += 2
 
-                                    elif item[0].endswith('hold falling'):
+                                    if item[0].endswith('hold falling'):
                                         if float(row[col+1]) < float(item[1]):
                                             item[1] = row[col+1]
                                         if float(row[col+2]) > float(item[2]):
                                             item[2] = row[col+2]
 
-                                        col += 2
+                                    col += 2
 
                             col += 1
 
@@ -283,31 +283,31 @@ def parse_characterizer_csv(f, pages):
                                         if float(row[col+2]) > float(item[2]):
                                             item[2] = row[col+2]
 
-                                        col += 2
+                                    col += 2
 
-                                    elif item[0].endswith('setup falling'):
+                                    if item[0].endswith('setup falling'):
                                         if float(row[col+1]) < float(item[1]):
                                             item[1] = row[col+1]
                                         if float(row[col+2]) > float(item[2]):
                                             item[2] = row[col+2]
 
-                                        col += 2
+                                    col += 2
 
-                                    elif item[0].endswith('hold rising'):
+                                    if item[0].endswith('hold rising'):
                                         if float(row[col+1]) < float(item[1]):
                                             item[1] = row[col+1]
                                         if float(row[col+2]) > float(item[2]):
                                             item[2] = row[col+2]
 
-                                        col += 2
+                                    col += 2
 
-                                    elif item[0].endswith('hold falling'):
+                                    if item[0].endswith('hold falling'):
                                         if float(row[col+1]) < float(item[1]):
                                             item[1] = row[col+1]
                                         if float(row[col+2]) > float(item[2]):
                                             item[2] = row[col+2]
 
-                                        col += 2
+                                    col += 2
 
                             col += 1
 
@@ -322,31 +322,31 @@ def parse_characterizer_csv(f, pages):
                                         if float(row[col+2]) > float(item[2]):
                                             item[2] = row[col+2]
 
-                                        col += 2
+                                    col += 2
 
-                                    elif item[0].endswith('setup falling'):
+                                    if item[0].endswith('setup falling'):
                                         if float(row[col+1]) < float(item[1]):
                                             item[1] = row[col+1]
                                         if float(row[col+2]) > float(item[2]):
                                             item[2] = row[col+2]
 
-                                        col += 2
+                                    col += 2
 
-                                    elif item[0].endswith('hold rising'):
+                                    if item[0].endswith('hold rising'):
                                         if float(row[col+1]) < float(item[1]):
                                             item[1] = row[col+1]
                                         if float(row[col+2]) > float(item[2]):
                                             item[2] = row[col+2]
 
-                                        col += 2
+                                    col += 2
 
-                                    elif item[0].endswith('hold falling'):
+                                    if item[0].endswith('hold falling'):
                                         if float(row[col+1]) < float(item[1]):
                                             item[1] = row[col+1]
                                         if float(row[col+2]) > float(item[2]):
                                             item[2] = row[col+2]
 
-                                        col += 2
+                                    col += 2
 
                             col += 1
 
@@ -354,8 +354,35 @@ def parse_characterizer_csv(f, pages):
                             for element in row[col_start: col - 1]:
                                 sheet.description.append(str(element))
                             break
+                    while(True):
+                        col_start = col
+                        if row[col] == 'power':
+                            for item in sheet.power_table.rows:
+                                if item[0].startswith(row[col+1]):
+                                    if item[2].startswith('{0} Rising'.format(row[col+2])):
+                                        if float(item[2]) < float(row[col+3]):
+                                            item[2] = row[col+3]
+                                    if item[2].startswith('{0} Falling'.format(row[col+2])):
+                                        if float(item[2]) < float(row[col+3]):
+                                            item[2] = row[col+3]
+                            col += 4
+                        else:
+                            break
 
-                    new_sheet.corners_table.add_row([PROC, VOLT, TEMP, LIB_NAME.replace(OUT_DIR, '').replace(NAME, '')])
+                    while(True):
+                        col_start = col
+                        if row[col] == 'leak':
+                            for item in sheet.power_table.rows:
+                                if item[0].startswith(row[col+1]):
+                                    if float(item[2]) < float(row[col+2]):
+                                            item[2] = row[col+2]
+                            col += 3
+
+                        else:
+                            break
+
+                    new_sheet.corners_table.add_row(
+                        [PROC, VOLT, TEMP, LIB_NAME.replace(OUT_DIR, '').replace(NAME, '')])
                     new_sheet.dlv_table.add_row(
                         ['.lib', 'Synthesis models', '<a href="file://{0}">{1}</a>'.format(LIB_NAME, LIB_NAME.replace(OUT_DIR, ''))])
 
@@ -376,7 +403,8 @@ def parse_characterizer_csv(f, pages):
                 new_sheet.corners_table = table_gen.table_gen("corners")
                 new_sheet.corners_table.add_row(
                     ['Transistor Type', 'Power Supply', 'Temperature', 'Corner Name'])
-                new_sheet.corners_table.add_row([PROC, VOLT, TEMP, LIB_NAME.replace(OUT_DIR, '').replace(NAME, '')])
+                new_sheet.corners_table.add_row(
+                    [PROC, VOLT, TEMP, LIB_NAME.replace(OUT_DIR, '').replace(NAME, '')])
                 new_sheet.operating_table = table_gen.table_gen(
                     "operating_table")
                 new_sheet.operating_table.add_row(
@@ -393,6 +421,9 @@ def parse_characterizer_csv(f, pages):
                     # failed to provide non-zero MIN_PERIOD
                     new_sheet.operating_table.add_row(
                         ['Operating Frequency (F)', '', '', "not available in netlist only", 'MHz'])
+                new_sheet.power_table = table_gen.table_gen("power")
+                new_sheet.power_table.add_row(
+                    ['Pins', 'Mode', 'Power', 'Units'])
                 new_sheet.timing_table = table_gen.table_gen("timing")
                 new_sheet.timing_table.add_row(
                     ['Parameter', 'Min', 'Max', 'Units'])
@@ -521,6 +552,32 @@ def parse_characterizer_csv(f, pages):
                     else:
                         for element in row[col_start:col-1]:
                             sheet.description.append(str(element))
+                        break
+
+                while(True):
+                    start = col
+                    if(row[col].startswith('power')):
+                        new_sheet.power_table.add_row([row[col+1],
+                                                       '{0} Rising'.format(
+                                                           row[col+2]),
+                                                       row[col+3][0:6],
+                                                       'mW']
+                                                      )
+                        new_sheet.power_table.add_row([row[col+1],
+                                                       '{0} Falling'.format(
+                                                           row[col+2]),
+                                                       row[col+3][0:6],
+                                                       'mW']
+                                                      )
+
+                        col += 4
+
+                    elif(row[col].startswith('leak')):
+                        new_sheet.power_table.add_row(
+                            [row[col+1], 'leakage', row[col+2], 'mW'])
+                        col += 3
+
+                    else:
                         break
 
                 new_sheet.dlv_table = table_gen.table_gen("dlv")

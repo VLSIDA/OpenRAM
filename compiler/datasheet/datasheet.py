@@ -58,7 +58,7 @@ class datasheet():
 #        self.html += operating_conditions(self.operating,table_id='data').__html__()
         self.html += self.operating_table.to_html()
 
-        self.html += '<p style="font-size: 26px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Timing and Current Data</p>'
+        self.html += '<p style="font-size: 26px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Timing Data</p>'
         model = ''
         if self.ANALYTICAL_MODEL:
             model = "analytical model: results may not be percise"
@@ -67,6 +67,9 @@ class datasheet():
         self.html += '<p style="font-size: 26px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Using '+model+'</p>'
 #        self.html += timing_and_current_data(self.timing,table_id='data').__html__()
         self.html += self.timing_table.to_html()
+
+        self.html += '<p style="font-size: 26px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Power Data</p>'
+        self.html += self.power_table.to_html()
 
         self.html += '<p style="font-size: 26px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Characterization Corners</p>'
 #        self.html += characterization_corners(self.corners,table_id='data').__html__()

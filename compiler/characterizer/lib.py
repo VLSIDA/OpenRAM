@@ -507,7 +507,8 @@ class lib:
     def parse_info(self,corner,lib_name):
         """ Copies important characterization data to datasheet.info to be added to datasheet """
         if OPTS.is_unit_test:
-            git_id = 'AAAAAAAAAAAAAAAAAAAA'
+            git_id = 'FFFFFFFFFFFFFFFFFFFF'
+
         else:
             with open(os.devnull, 'wb') as devnull:
                 proc = subprocess.Popen(['git','rev-parse','HEAD'], cwd=os.path.abspath(os.environ.get("OPENRAM_HOME")) + '/', stdout=subprocess.PIPE)
@@ -524,7 +525,7 @@ class lib:
                     git_id = 'Failed to retruieve'
 
         datasheet = open(OPTS.openram_temp +'/datasheet.info', 'a+')
-
+        
         current_time = datetime.date.today()
         datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},".format(
                         OPTS.output_name,
@@ -654,8 +655,41 @@ class lib:
                         ))
 
 
+        for port in self.all_ports:
+            name = ''
+            read_write = ''
+            if port in self.read_ports:
+                web_name = " & !WEb{0}".format(port)
+                name = "!CSb{0} & clk{0}{1}".format(port, web_name)
+                read_write = 'Read'
 
+                datasheet.write("{0},{1},{2},{3},".format(
+                    "power",
+                    name,
+                    read_write,
+
+                    np.mean(self.char_port_results[port]["read1_power"] + self.char_port_results[port]["read0_power"])/2
+                    ))
+
+            if port in self.write_ports:
+                web_name = " & WEb{0}".format(port)
+                name = "!CSb{0} & !clk{0}{1}".format(port, web_name)
+                read_write = 'Write'
+
+                datasheet.write("{0},{1},{2},{3},".format(
+                        'power',
+                        name,
+                        read_write,
+                        np.mean(self.char_port_results[port]["write1_power"] + self.char_port_results[port]["write0_power"])/2
+
+                        ))
+
+        control_str = 'CSb0'
+        for i in range(1, self.total_port_num):
+            control_str += ' & CSb{0}'.format(i)
+        
+        datasheet.write("{0},{1},{2},".format('leak', control_str, self.char_sram_results["leakage_power"]))
+                
 
         datasheet.write("END\n")
         datasheet.close()
-                

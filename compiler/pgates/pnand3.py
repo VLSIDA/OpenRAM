@@ -4,6 +4,7 @@ import debug
 from tech import drc, parameter, spice
 from vector import vector
 from globals import OPTS
+import logical_effort
 from sram_factory import factory
 
 class pnand3(pgate.pgate):
@@ -270,4 +271,4 @@ class pnand3(pgate.pgate):
            Optional is_rise refers to the input direction rise/fall. Input inverted by this stage.
         """
         parasitic_delay = 3 
-        return logical_effort.logical_effort(self.size, self.get_cin(), cout, parasitic_delay, not inp_is_rise)
+        return logical_effort.logical_effort(self.name, self.size, self.get_cin(), cout, parasitic_delay, not inp_is_rise)

@@ -5,3 +5,4 @@
 *.out
 *.toc
 *.synctex.gz
+**/model_data

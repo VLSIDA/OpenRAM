@@ -80,3 +80,10 @@ def convert_to_float(number):
         debug.error("Invalid number: {0}".format(number),1)
 
     return float_value
+
+def check_dict_values_is_float(dict):
+    """Checks if all the values are floats. Useful for checking failed Spice measurements."""
+    for key, value in dict.items():
+            if type(value)!=float:
+                return False
+    return True

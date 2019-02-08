@@ -271,7 +271,12 @@ spice["fet_models"] = { "TT" : [SPICE_MODEL_DIR+"/models_nom/PMOS_VTG.inc",SPICE
                         "FF" : [SPICE_MODEL_DIR+"/models_ff/PMOS_VTG.inc",SPICE_MODEL_DIR+"/models_ff/NMOS_VTG.inc"],
                         "SF" : [SPICE_MODEL_DIR+"/models_ss/PMOS_VTG.inc",SPICE_MODEL_DIR+"/models_ff/NMOS_VTG.inc"],
                         "FS" : [SPICE_MODEL_DIR+"/models_ff/PMOS_VTG.inc",SPICE_MODEL_DIR+"/models_ss/NMOS_VTG.inc"],
-                        "SS" : [SPICE_MODEL_DIR+"/models_ss/PMOS_VTG.inc",SPICE_MODEL_DIR+"/models_ss/NMOS_VTG.inc"]}
+                        "SS" : [SPICE_MODEL_DIR+"/models_ss/PMOS_VTG.inc",SPICE_MODEL_DIR+"/models_ss/NMOS_VTG.inc"],
+                        "ST" : [SPICE_MODEL_DIR+"/models_ss/PMOS_VTG.inc",SPICE_MODEL_DIR+"/models_nom/NMOS_VTG.inc"],
+                        "TS" : [SPICE_MODEL_DIR+"/models_nom/PMOS_VTG.inc",SPICE_MODEL_DIR+"/models_ss/NMOS_VTG.inc"],
+                        "FT" : [SPICE_MODEL_DIR+"/models_ff/PMOS_VTG.inc",SPICE_MODEL_DIR+"/models_nom/NMOS_VTG.inc"],
+                        "TF" : [SPICE_MODEL_DIR+"/models_nom/PMOS_VTG.inc",SPICE_MODEL_DIR+"/models_ff/NMOS_VTG.inc"],
+                        }
 
 #spice stimulus related variables
 spice["feasible_period"] = 5         # estimated feasible period in ns
@@ -328,12 +333,15 @@ spice["nand2_transition_prob"] = .1875    # Transition probability of 2-input na
 spice["nand3_transition_prob"] = .1094    # Transition probability of 3-input nand.
 spice["nor2_transition_prob"] = .1875     # Transition probability of 2-input nor.
 
-#Logical Effort relative values for the Handmade cells
+#Parameters related to sense amp enable timing and delay chain/RBL sizing
+parameter["static_delay_stages"] = 4
+parameter["static_fanout_per_stage"] = 3
 parameter["dff_clk_cin"] = 30.6             #relative capacitance
 parameter["6tcell_wl_cin"] = 3              #relative capacitance
-parameter["min_inv_para_delay"] = .5        #Tau delay units
+parameter["min_inv_para_delay"] = 2.4        #Tau delay units
 parameter["sa_en_pmos_size"] = .72          #micro-meters
 parameter["sa_en_nmos_size"] = .27          #micro-meters
+parameter["rbl_height_percentage"] = .5     #Height of RBL compared to bitcell array 
 
 ###################################################
 ##END Spice Simulation Parameters

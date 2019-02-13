@@ -16,6 +16,7 @@ from sram import sram
 from sram_config import sram_config
 
 MODEL_DIR = "model_data/"
+DATASET_CSV_NAME = MODEL_DIR+'datasets.csv'
 
 class data_collection(openram_test):
 
@@ -24,10 +25,55 @@ class data_collection(openram_test):
         #Uncomment this for model evaluation
         # ratio_data = self.calculate_delay_ratios_of_srams()
         # self.display_data(ratio_data)
-
+        
+        self.setup_files()
+        
         self.run_delay_chain_analysis()
         
         globals.end_openram()
+    
+    def setup_files(self):
+        """Checks existence of files used for data collection"""
+        if not os.path.isdir(MODEL_DIR):
+            os.mkdir(MODEL_DIR)
+        
+        #File requires names from the delay measurement object.
+        #Initialization is delayed until one configuration simulation has occurred.
+        self.dataset_initialized=False
+
+    
+    def init_dataset_csv(self, file_fields):
+        """Creates csv which holds files names of all available datasets."""
+        debug.info(2,'Initializing dataset file and dataframe.')
+        self.file_fields = file_fields 
+        self.file_fields.sort()
+        fields = ['word_size', 'num_words', 'words_per_row', 'dc_config']
+        self.dataset_fields = fields+self.file_fields
+        
+        if not os.path.exists(DATASET_CSV_NAME):
+            debug.info(2,'No dataset file found. Creating dataset file.')
+            dataset_csv = open(DATASET_CSV_NAME, 'w')
+            csv_writer = csv.writer(dataset_csv, lineterminator = '\n')
+            csv_writer.writerow(self.dataset_fields)
+            dataset_csv.close()
+            self.dataset_initialized=True
+        self.datasets_df = pd.read_csv(DATASET_CSV_NAME, encoding='utf-8')
+        
+    def add_dataset(self, word_size, num_words, words_per_row):
+        """Added filenames to DATASET_CSV_NAME"""
+        cur_len = len(self.datasets_df)
+        #list converted to str as lists as saved as str in the csv file.
+        #e.g. list=[2,2] -> csv entry = '[2,2]'
+        fanout_str = str(self.delay_obj.get_num_delay_fanout_list())
+        file_names = [self.file_name_dict[fname] for fname in self.file_fields]
+        new_df_row = [word_size, num_words, words_per_row,fanout_str]+file_names
+        
+        df_bool = (self.datasets_df['word_size'] == word_size) & (self.datasets_df['num_words'] == num_words) & (self.datasets_df['words_per_row'] == words_per_row) & (self.datasets_df['dc_config'] == fanout_str)
+        if len(self.datasets_df.loc[df_bool]) == 0:
+            self.datasets_df = self.datasets_df.append(pd.Series(new_df_row, self.dataset_fields), ignore_index=True)
+        else:    
+            self.datasets_df.loc[df_bool] = [new_df_row]
+                           
     
     def run_delay_chain_analysis(self):
         """Generates sram with different delay chain configs over different corners and 
@@ -84,7 +130,7 @@ class data_collection(openram_test):
         plt.show()
     
     def plot_two_data_sets(self, x_labels, y1_values, y2_values):
-        """Plots two data sets on the same x-axis."""
+        """Plots two data sets on the same x-axis. Uses hardcoded axis names."""
         data_range = [i for i in range(len(x_labels))]
         fig, ax1 = plt.subplots()
 
@@ -123,8 +169,9 @@ class data_collection(openram_test):
         
     def get_csv_data(self):
         """Hardcoded Hack to get the measurement data from the csv into lists. """
-        wl_files_name = [file_name for file_name in self.file_names if "wl_measures" in file_name][0]
-        sae_files_name = [file_name for file_name in self.file_names if "sae_measures" in file_name][0]
+        file_list = self.file_name_dict.values()
+        wl_files_name = [file_name for file_name in file_list if "wl_measures" in file_name][0]
+        sae_files_name = [file_name for file_name in file_list if "sae_measures" in file_name][0]
         wl_dataframe = pd.read_csv(wl_files_name,encoding='utf-8')
         sae_dataframe = pd.read_csv(sae_files_name,encoding='utf-8')
         return wl_dataframe,sae_dataframe 
@@ -144,10 +191,11 @@ class data_collection(openram_test):
         meas_delay_ratios = {}
         ratio_error = {}
         #The full file name contains unrelated portions, separate them into the four that are needed
-        wl_meas_df = [pd.read_csv(file_name,encoding='utf-8') for file_name in self.file_names if "wl_measures" in file_name][0]
-        sae_meas_df = [pd.read_csv(file_name,encoding='utf-8') for file_name in self.file_names if "sae_measures" in file_name][0]
-        wl_model_df = [pd.read_csv(file_name,encoding='utf-8') for file_name in self.file_names if "wl_model" in file_name][0]
-        sae_model_df = [pd.read_csv(file_name,encoding='utf-8') for file_name in self.file_names if "sae_model" in file_name][0]
+        file_list = self.file_name_dict.values()
+        wl_meas_df = [pd.read_csv(file_name,encoding='utf-8') for file_name in file_list if "wl_measures" in file_name][0]
+        sae_meas_df = [pd.read_csv(file_name,encoding='utf-8') for file_name in file_list if "sae_measures" in file_name][0]
+        wl_model_df = [pd.read_csv(file_name,encoding='utf-8') for file_name in file_list if "wl_model" in file_name][0]
+        sae_model_df = [pd.read_csv(file_name,encoding='utf-8') for file_name in file_list if "sae_model" in file_name][0]
         
         #Assume each csv has the same corners (and the same row order), use one of the dfs for corners
         proc_pos, volt_pos, temp_pos = wl_meas_df.columns.get_loc('process'), wl_meas_df.columns.get_loc('voltage'), wl_meas_df.columns.get_loc('temp')
@@ -238,7 +286,12 @@ class data_collection(openram_test):
         for corner in corner_gen:
             sram_data = self.get_sram_data(corner)
             self.add_sram_data_to_csv(sram_data, word_size, num_words, words_per_row, dc_resized, corner)
-            
+        
+        #Save file names generated by this run
+        if not self.dataset_initialized:
+            self.init_dataset_csv(list(sram_data))
+        self.add_dataset(word_size, num_words, words_per_row)    
+        
         self.close_files()
         debug.info(1,"Data Generated")
         
@@ -266,8 +319,12 @@ class data_collection(openram_test):
         
     def close_files(self):
         """Closes all files stored in the file dict"""
+        #Close the files holding data
         for key,file in self.csv_files.items():
             file.close()
+        
+        #Write dataframe to the dataset csv
+        self.datasets_df.to_csv(DATASET_CSV_NAME, index=False)
    
     def corner_combination_generator(self):
         processes = OPTS.process_corners
@@ -311,19 +368,20 @@ class data_collection(openram_test):
         header_dict = self.delay_obj.get_all_signal_names()
         self.csv_files = {}
         self.csv_writers = {}
-        self.file_names = []
+        self.file_name_dict = {}
+        delay_fanout_list = self.delay_obj.get_num_delay_fanout_list()
+        fanout_str = '_'.join(str(fanout) for fanout in delay_fanout_list)
         delay_stages = self.delay_obj.get_num_delay_stages()
         delay_stage_fanout = self.delay_obj.get_num_delay_stage_fanout()
         
         for data_name, header_list in header_dict.items():
-            file_name = '{}data_{}b_{}word_{}way_dc{}x{}_{}.csv'.format(MODEL_DIR,
+            file_name = '{}data_{}b_{}word_{}way_dc{}_{}.csv'.format(MODEL_DIR,
                                                                 word_size, 
                                                                 num_words, 
                                                                 words_per_row,
-                                                                delay_stages,
-                                                                delay_stage_fanout,
+                                                                fanout_str,
                                                                 data_name)
-            self.file_names.append(file_name)
+            self.file_name_dict[data_name] = file_name
             self.csv_files[data_name] = open(file_name, 'w')
             self.config_fields = ['word_size', 'num_words', 'words_per_row', 'dc_resized', 'process', 'voltage', 'temp']
             self.other_data_fields = ['sum']

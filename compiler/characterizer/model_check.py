@@ -229,6 +229,10 @@ class model_check(delay):
         """Gets the number of stages in the delay chain from the control logic"""
         return len(self.sram.control_logic_rw.replica_bitline.delay_fanout_list)
     
+    def get_num_delay_fanout_list(self):
+        """Gets the number of stages in the delay chain from the control logic"""
+        return self.sram.control_logic_rw.replica_bitline.delay_fanout_list
+    
     def get_num_delay_stage_fanout(self):
         """Gets fanout in each stage in the delay chain. Assumes each stage is the same"""
         return self.sram.control_logic_rw.replica_bitline.delay_fanout_list[0]

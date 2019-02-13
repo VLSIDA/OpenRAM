@@ -75,6 +75,26 @@ class data_collection(openram_test):
             self.datasets_df.loc[df_bool] = [new_df_row]
                            
     
+    def get_filename_by_config(self, data_types, word_size, num_words, words_per_row, fanout_list):
+        """Searches the dataset csv for a config match. Extracts the filenames for the desired data."""
+        #Names used in file are hardcoded here. There is a check that these names match in the csv.
+        start_fname_ind = 4 # four query items
+        
+        #data_types = ["wl_measures", "wl_model","sae_measures", "sae_model"]
+        fanout_str = str(fanout_list)
+        datasets_df = pd.read_csv(DATASET_CSV_NAME, encoding='utf-8')
+        df_bool = (datasets_df['word_size'] == word_size) & (datasets_df['num_words'] == num_words) & (datasets_df['words_per_row'] == words_per_row) & (datasets_df['dc_config'] == fanout_str)
+        df_filtered = self.datasets_df.loc[df_bool]
+        if len(df_filtered) != 1:    
+            debug.info(1,"Found two dataset entries with the same configuration. Using the first found")
+        df_row = df_filtered.iloc[0]    
+        #Check csv header against expected    
+        csv_data_types = list(df_filtered)[start_fname_ind+1:]
+        if set(data_types) != set(csv_data_types):
+            debug.error("Dataset csv header does not match expected.")
+        
+        return [df_row[dt] for dt in data_types]
+    
     def run_delay_chain_analysis(self):
         """Generates sram with different delay chain configs over different corners and 
            analyzes delay average and variation."""
@@ -82,25 +102,33 @@ class data_collection(openram_test):
         #Constant sram config for this test   
         word_size, num_words, words_per_row = 1, 16, 1
         #Only change delay chain
-        dc_config_list = [(2,3), (3,3), (3,4), (4,2), (4,3), (4,4), (2,4), (2,5)]
-        #dc_config_list = [(2,3), (3,3)]
-        dc_avgs = []
-        dc_vars = []
+        #dc_config_list = [(2,3), (3,3), (3,4), (4,2), (4,3), (4,4), (2,4), (2,5)]
+        dc_config_list = [(2,3), (3,3)]
+        self.save_delay_chain_data(word_size, num_words, words_per_row, dc_config_list)
+        self.analyze_delay_chain_data(word_size, num_words, words_per_row, dc_config_list)
+    
+    def save_delay_chain_data(self, word_size, num_words, words_per_row, dc_config_list):
+        """Get the delay data by only varying the delay chain size."""
         for stages,fanout in dc_config_list:
             self.init_data_gen()
             self.set_delay_chain(stages,fanout)
             self.save_data_sram_corners(word_size, num_words, words_per_row)
-            wl_dataframe, sae_dataframe = self.get_csv_data()
+    
+    def analyze_delay_chain_data(self, word_size, num_words, words_per_row, dc_config_list):
+        """Compare and graph delay chain variations over different configurations."""
+        dc_avgs = []
+        dc_vars = []
+        for stages,fanout in dc_config_list:
+            data_types = ["wl_measures","sae_measures"]
+            filenames = self.get_filename_by_config(data_types, word_size, num_words, words_per_row, [fanout]*stages)
+            wl_dataframe, sae_dataframe = self.get_csv_data(filenames)
+            
             delay_sums = self.get_delay_chain_sums(sae_dataframe)
             dc_avgs.append(self.get_average(delay_sums))
             dc_vars.append(self.get_variance(delay_sums))
             debug.info(1,"DC config={}: avg={} variance={}".format((stages,fanout), dc_avgs[-1], dc_vars[-1]))
-        
-        #plot data
         self.plot_two_data_sets(dc_config_list, dc_avgs, dc_vars)
-        #self.plot_data(dc_config_list, dc_avgs)
-        #self.plot_data(dc_config_list, dc_vars)
-    
+        
     def get_delay_chain_sums(self, sae_dataframe):
         """Calculate the total delay of the delay chain over different corners"""
         (start_dc, end_dc) = self.delay_obj.delay_chain_indices
@@ -167,14 +195,10 @@ class data_collection(openram_test):
             debug.info(1, "Ratio percentage error={}".format(ratio_error))
         return delay_ratio_data
         
-    def get_csv_data(self):
-        """Hardcoded Hack to get the measurement data from the csv into lists. """
-        file_list = self.file_name_dict.values()
-        wl_files_name = [file_name for file_name in file_list if "wl_measures" in file_name][0]
-        sae_files_name = [file_name for file_name in file_list if "sae_measures" in file_name][0]
-        wl_dataframe = pd.read_csv(wl_files_name,encoding='utf-8')
-        sae_dataframe = pd.read_csv(sae_files_name,encoding='utf-8')
-        return wl_dataframe,sae_dataframe 
+    def get_csv_data(self, filenames):
+        """Returns a dataframe for each file name. Returns as tuple for convenience"""
+        dataframes = [pd.read_csv(fname,encoding='utf-8') for fname in filenames]
+        return tuple(dataframes)
         
     def evaluate_data(self, wl_dataframe, sae_dataframe):
         """Analyze the delay error and variation error"""

@@ -126,9 +126,9 @@ def run_drc(cell_name, gds_name, extract=False, final_verification=False):
     f.close()
     # those lines should be the last 3
     results = results[-3:]
-    geometries = int(re.split("\W+", results[0])[5])
-    rulechecks = int(re.split("\W+", results[1])[4])
-    errors = int(re.split("\W+", results[2])[5])
+    geometries = int(re.split(r'\W+', results[0])[5])
+    rulechecks = int(re.split(r'\W+', results[1])[4])
+n    errors = int(re.split(r'\W+', results[2])[5])
 
     # always display this summary
     if errors > 0:
@@ -227,7 +227,7 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     incorrect = list(filter(test.search, results))
 
     # Errors begin with "Error:"
-    test = re.compile("\s+Error:")
+    test = re.compile(r'\s+Error:')
     errors = list(filter(test.search, results))
     for e in errors:
         debug.error(e.strip("\n"))
@@ -363,7 +363,7 @@ def correct_port(name, output_file_name, ref_file_name):
     pex_file.seek(match_index_start)
     rest_text = pex_file.read()
     # locate the end of circuit definition line
-    match = re.search("\* \n", rest_text)
+    match = re.search(r'\* \n', rest_text)
     match_index_end = match.start()
     # store the unchanged part of pex file in memory
     pex_file.seek(0)

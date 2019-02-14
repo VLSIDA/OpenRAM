@@ -140,11 +140,15 @@ def run_drc(cell_name, gds_name, extract=True, final_verification=False):
         debug.error("Unable to retrieve DRC results file. Is magic set up?",1)
     results = f.readlines()
     f.close()
+    errors=1
     # those lines should be the last 3
     for line in results:
         if "Total DRC errors found:" in line:
             errors = int(re.split(": ", line)[1])
             break
+    else:
+        debug.error("Unable to find the total error line in Magic output.",1)
+            
 
     # always display this summary
     if errors > 0:

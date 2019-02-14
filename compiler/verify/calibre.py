@@ -128,7 +128,7 @@ def run_drc(cell_name, gds_name, extract=False, final_verification=False):
     results = results[-3:]
     geometries = int(re.split(r'\W+', results[0])[5])
     rulechecks = int(re.split(r'\W+', results[1])[4])
-n    errors = int(re.split(r'\W+', results[2])[5])
+    errors = int(re.split(r'\W+', results[2])[5])
 
     # always display this summary
     if errors > 0:

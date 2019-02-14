@@ -22,11 +22,24 @@ class bitline_delay(delay):
         self.period = tech.spice["feasible_period"]
         self.is_bitline_measure = True
     
+    def create_signal_names(self):
+        delay.create_signal_names(self)
+        self.bl_signal_names = ["Xsram.Xbank0.bl", "Xsram.Xbank0.br"]
+        self.sen_name = "Xsram.s_en"
+
     def create_measurement_names(self):
         """Create measurement names. The names themselves currently define the type of measurement"""
         #Altering the names will crash the characterizer. TODO: object orientated approach to the measurements.
-        self.bitline_meas_names = ["bl_volt", "br_volt"]
+        self.bl_volt_meas_names = ["volt_bl", "volt_br"]
+        self.bl_delay_meas_names = ["delay_bl", "delay_br"] #only used in SPICE simulation
+        self.bl_delay_result_name = "delay_bl_vth" #Used in the return value
     
+    def set_probe(self,probe_address, probe_data):
+        """ Probe address and data can be set separately to utilize other
+        functions in this characterizer besides analyze."""
+        delay.set_probe(self,probe_address, probe_data)
+        self.bitline_column = self.get_data_bit_column_number(probe_address, probe_data)
+        
     def write_delay_measures(self):
         """
         Write the measure statements to quantify the bitline voltage at sense amp enable 50%.
@@ -38,26 +51,52 @@ class bitline_delay(delay):
             self.sf.write("* {}\n".format(comment))
             
         for read_port in self.targ_read_ports:
-           self.write_bitline_measures_read_port(read_port)       
+           self.write_bitline_voltage_measures(read_port)       
+           self.write_bitline_delay_measures(read_port)
            
-    def write_bitline_measures_read_port(self, port):
+    def write_bitline_voltage_measures(self, port):
+        """
+        Add measurments to capture the bitline voltages at 50% Sense amp enable
+        """
+        debug.info(2, "Measuring bitline column={}, port={}".format(self.bitline_column,port))
+        if len(self.all_ports) == 1: #special naming case for single port sram bitlines
+            bitline_port = ""
+        else:
+            bitline_port = str(port)
+            
+        sen_port_name = "{}{}".format(self.sen_name,port)
+        for (measure_name, bl_signal_name) in zip(self.bl_volt_meas_names, self.bl_signal_names):
+            bl_port_name = "{}{}_{}".format(bl_signal_name, bitline_port, self.bitline_column)
+            measure_port_name = "{}{}".format(measure_name,port)
+            self.stim.gen_meas_find_voltage(measure_port_name, sen_port_name, bl_port_name, .5, "RISE", self.cycle_times[self.measure_cycles[port]["read0"]])
+    
+    def write_bitline_delay_measures(self, port):
         """
         Write the measure statements to quantify the delay and power results for a read port.
         """
         # add measure statements for delays/slews
-        measure_bitline = self.get_data_bit_column_number(self.probe_address, self.probe_data)
-        debug.info(2, "Measuring bitline column={}".format(measure_bitline))
-        for port in self.targ_read_ports:
-            if len(self.all_ports) == 1: #special naming case for single port sram bitlines
-                bitline_port = ""
-            else:
-                bitline_port = str(port)
-                
-            sen_name = "Xsram.s_en{}".format(port)
-            bl_name = "Xsram.Xbank0.bl{}_{}".format(bitline_port, measure_bitline)
-            br_name = "Xsram.Xbank0.br{}_{}".format(bitline_port, measure_bitline)
-            self.stim.gen_meas_find_voltage("bl_volt", sen_name, bl_name, .5, "RISE", self.cycle_times[self.measure_cycles[port]["read0"]])
-            self.stim.gen_meas_find_voltage("br_volt", sen_name, br_name, .5, "RISE", self.cycle_times[self.measure_cycles[port]["read0"]])
+        for (measure_name, bl_signal_name) in zip(self.bl_delay_meas_names, self.bl_signal_names):
+            meas_values = self.get_delay_meas_values(measure_name, bl_signal_name, port)
+            self.stim.gen_meas_delay(*meas_values)
+    
+    def get_delay_meas_values(self, delay_name, bitline_name, port):
+        """Get the values needed to generate a Spice measurement statement based on the name of the measurement."""
+        if len(self.all_ports) == 1: #special naming case for single port sram bitlines
+            bitline_port = ""
+        else:
+            bitline_port = str(port)
+        
+        meas_name="{0}{1}".format(delay_name, port)
+        targ_name = "{0}{1}_{2}".format(bitline_name,bitline_port,self.bitline_column)
+        half_vdd = 0.5 * self.vdd_voltage
+        trig_val = half_vdd
+        targ_val = self.vdd_voltage-tech.spice["v_threshold_typical"]
+        trig_name = "clk{0}".format(port)
+        trig_dir="FALL" 
+        targ_dir="FALL"
+        #Half period added to delay measurement to negative clock edge
+        trig_td = targ_td = self.cycle_times[self.measure_cycles[port]["read0"]]  + self.period/2
+        return (meas_name,trig_name,targ_name,trig_val,targ_val,trig_dir,targ_dir,trig_td,targ_td)
     
     def gen_test_cycles_one_port(self, read_port, write_port):
         """Sets a list of key time-points [ns] of the waveform (each rising edge)
@@ -89,6 +128,7 @@ class bitline_delay(delay):
         self.add_read("R data 0 address {} to check W0 worked".format(self.probe_address),
                       self.probe_address,data_zeros,read_port)
         self.measure_cycles[read_port]["read0"] = len(self.cycle_times)-1
+        
     def get_data_bit_column_number(self, probe_address, probe_data):
         """Calculates bitline column number of data bit under test using bit position and mux size"""
         if self.sram.col_addr_size>0:
@@ -115,19 +155,70 @@ class bitline_delay(delay):
         self.stim.run_sim() #running sim prodoces spice output file.
           
         for port in self.targ_read_ports:  
-            bitlines_meas_vals = {}
-            for mname in self.bitline_meas_names:
-                bitlines_meas_vals[mname] = parse_spice_list("timing", mname)
-            #Check that power parsing worked.
-            for name, val in bitlines_meas_vals.items():
-                if type(val)!=float:
-                    debug.error("Failed to Parse Bitline Values:\n\t\t{0}".format(bitlines_meas_vals),1) #Printing the entire dict looks bad.
-            result[port].update(bitlines_meas_vals)
+            #Parse and check the voltage measurements
+            bl_volt_meas_dict = {}  
+            for mname in self.bl_volt_meas_names:
+                mname_port = "{}{}".format(mname,port)
+                volt_meas_val = parse_spice_list("timing", mname_port)
+                if type(volt_meas_val)!=float:
+                    debug.error("Failed to Parse Bitline Voltage:\n\t\t{0}={1}".format(mname,volt_meas_val),1)
+                bl_volt_meas_dict[mname] = volt_meas_val
+            result[port].update(bl_volt_meas_dict)
+
+            #Parse and check the delay measurements. Intended that one measurement will fail, save the delay that did not fail.
+            bl_delay_meas_dict = {}
+            values_added = 0 #For error checking
+            for mname in self.bl_delay_meas_names: #Parse 
+                mname_port = "{}{}".format(mname,port)
+                delay_meas_val = parse_spice_list("timing", mname_port) 
+                if type(delay_meas_val)==float: #Only add if value is float, do not error.
+                    bl_delay_meas_dict[self.bl_delay_result_name] = delay_meas_val * 1e9 #convert to ns
+                    values_added+=1
+            debug.check(values_added>0, "Bitline delay measurements failed in SPICE simulation.")
+            debug.check(values_added<2, "Both bitlines experienced a Vth drop, check simulation results.")  
+            result[port].update(bl_delay_meas_dict)
         
-          
         # The delay is from the negative edge for our SRAM
         return (True,result)
     
+    def check_bitline_all_results(self, results):
+        """Checks the bitline values measured for each tested port"""
+        for port in self.targ_read_ports:
+            self.check_bitline_port_results(results[port])
+  
+    def check_bitline_port_results(self, port_results):
+        """Performs three different checks for the bitline values: functionality, bitline swing from vdd, and differential bit swing"""
+        bl_volt, br_volt = port_results["volt_bl"], port_results["volt_br"]
+        self.check_functionality(bl_volt,br_volt)
+        self.check_swing_from_vdd(bl_volt,br_volt)
+        self.check_differential_swing(bl_volt,br_volt)
+        
+    def check_functionality(self, bl_volt, br_volt):
+        """Checks whether the read failed or not. Measured values are hardcoded with the intention of reading a 0."""
+        if bl_volt > br_volt:
+            debug.error("Read failure. Value 1 was read instead of 0.",1)
+            
+    def check_swing_from_vdd(self, bl_volt, br_volt):
+        """Checks difference on discharging bitline from VDD to see if it is within margin of the RBL height parameter."""
+        if bl_volt < br_volt:
+            discharge_volt = bl_volt
+        else:
+            discharge_volt = br_volt
+        desired_bl_volt = tech.parameter["rbl_height_percentage"]*self.vdd_voltage
+        debug.info(1, "Active bitline={:.3f}v, Desired bitline={:.3f}v".format(discharge_volt,desired_bl_volt))
+        vdd_error_margin = .2 #20% of vdd margin for bitline, a little high for now.
+        if abs(discharge_volt - desired_bl_volt) > vdd_error_margin*self.vdd_voltage:
+            debug.warning("Bitline voltage is not within {}% Vdd margin. Delay chain/RBL could need resizing.".format(vdd_error_margin*100))
+    
+    def check_differential_swing(self, bl_volt, br_volt):
+        """This check looks at the difference between the bitline voltages. This needs to be large enough to prevent
+           sensing errors."""
+        bitline_swing = abs(bl_volt-br_volt)
+        debug.info(1,"Bitline swing={:.3f}v".format(bitline_swing))
+        vdd_error_margin = .2 #20% of vdd margin for bitline, a little high for now.
+        if bitline_swing < vdd_error_margin*self.vdd_voltage:
+            debug.warning("Bitline swing less than {}% Vdd margin. Sensing errors more likely to occur.".format(vdd_error_margin))
+            
     def analyze(self, probe_address, probe_data, slews, loads):
         """Measures the bitline swing of the differential bitlines (bl/br) at 50% s_en """
         self.set_probe(probe_address, probe_data)
@@ -141,10 +232,10 @@ class bitline_delay(delay):
         debug.info(1,"Bitline swing test: corner {}".format(self.corner))
         (success, results)=self.run_delay_simulation()
         debug.check(success, "Bitline Failed: period {}".format(self.period))
-        for mname in self.bitline_meas_names:
-            bitline_swings[mname] = results[read_port][mname]
-        debug.info(1,"Bitline values (bl/br): {}".format(bitline_swings))
-        return bitline_swings
+        debug.info(1,"Bitline values (voltages/delays):\n\t {}".format(results[read_port]))
+        self.check_bitline_all_results(results)
+        
+        return results
 
         
     

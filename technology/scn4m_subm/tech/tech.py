@@ -302,6 +302,7 @@ spice["nor2_transition_prob"] = .1875     # Transition probability of 2-input no
 #Logical Effort relative values for the Handmade cells
 parameter["static_delay_stages"] = 4
 parameter["static_fanout_per_stage"] = 3
+parameter["static_fanout_list"] = parameter["static_delay_stages"]*[parameter["static_fanout_per_stage"]]
 parameter["dff_clk_cin"] = 27.5
 parameter["6tcell_wl_cin"] = 2
 parameter["min_inv_para_delay"] = .5

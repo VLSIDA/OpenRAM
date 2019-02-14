@@ -139,11 +139,10 @@ class control_logic(design.design):
             bitcell_loads = int(math.ceil(self.num_rows * parameter["rbl_height_percentage"]))
             #Use a model to determine the delays with that heuristic
             if OPTS.use_tech_delay_chain_size: #Use tech parameters if set.
-                delay_stages =  parameter["static_delay_stages"]
-                delay_fanout = parameter["static_fanout_per_stage"]
-                debug.info(1, "Using tech parameters to size delay chain: stages={}, fanout={}".format(delay_stages,delay_fanout))
+                fanout_list = parameter["static_fanout_list"]
+                debug.info(1, "Using tech parameters to size delay chain: fanout_list={}".format(fanout_list))
                 self.replica_bitline = factory.create(module_type="replica_bitline",
-                                                      delay_fanout_list=[delay_fanout]*delay_stages,
+                                                      delay_fanout_list=fanout_list,
                                                       bitcell_loads=bitcell_loads)
                 if self.sram != None: #Calculate model value even for specified sizes
                     self.set_sen_wl_delays()

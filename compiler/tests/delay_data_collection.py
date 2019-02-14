@@ -26,29 +26,34 @@ class data_collection(openram_test):
         # ratio_data = self.calculate_delay_ratios_of_srams()
         # self.display_data(ratio_data)
         
-        self.setup_files()
+        self.run_setup()
         
         self.run_delay_chain_analysis()
         
         globals.end_openram()
     
-    def setup_files(self):
-        """Checks existence of files used for data collection"""
+    def run_setup(self):
+        """Checks file existence and sets some member variables"""
         if not os.path.isdir(MODEL_DIR):
             os.mkdir(MODEL_DIR)
         
         #File requires names from the delay measurement object.
         #Initialization is delayed until one configuration simulation has occurred.
         self.dataset_initialized=False
+        
+        #These help mark positions in the csv file for data collection and analysis
+        self.config_fields = ['word_size', 'num_words', 'words_per_row', 'dc_resized', 'process', 'voltage', 'temp']
+        self.sae_config_fields = ['dc_start_ind', 'dc_end_ind']
+        self.other_data_fields = ['sum']
 
     
     def init_dataset_csv(self, file_fields):
         """Creates csv which holds files names of all available datasets."""
         debug.info(2,'Initializing dataset file and dataframe.')
-        self.file_fields = file_fields 
-        self.file_fields.sort()
-        fields = ['word_size', 'num_words', 'words_per_row', 'dc_config']
-        self.dataset_fields = fields+self.file_fields
+        self.dataset_file_fields = file_fields 
+        self.dataset_file_fields.sort()
+        config_fields = ['word_size', 'num_words', 'words_per_row', 'dc_config']
+        self.dataset_fields = config_fields+self.dataset_file_fields
         
         if not os.path.exists(DATASET_CSV_NAME):
             debug.info(2,'No dataset file found. Creating dataset file.')
@@ -65,7 +70,7 @@ class data_collection(openram_test):
         #list converted to str as lists as saved as str in the csv file.
         #e.g. list=[2,2] -> csv entry = '[2,2]'
         fanout_str = str(self.delay_obj.get_num_delay_fanout_list())
-        file_names = [self.file_name_dict[fname] for fname in self.file_fields]
+        file_names = [self.file_name_dict[fname] for fname in self.dataset_file_fields]
         new_df_row = [word_size, num_words, words_per_row,fanout_str]+file_names
         
         df_bool = (self.datasets_df['word_size'] == word_size) & (self.datasets_df['num_words'] == num_words) & (self.datasets_df['words_per_row'] == words_per_row) & (self.datasets_df['dc_config'] == fanout_str)
@@ -77,21 +82,26 @@ class data_collection(openram_test):
     
     def get_filename_by_config(self, data_types, word_size, num_words, words_per_row, fanout_list):
         """Searches the dataset csv for a config match. Extracts the filenames for the desired data."""
-        #Names used in file are hardcoded here. There is a check that these names match in the csv.
         start_fname_ind = 4 # four query items
         
-        #data_types = ["wl_measures", "wl_model","sae_measures", "sae_model"]
         fanout_str = str(fanout_list)
         datasets_df = pd.read_csv(DATASET_CSV_NAME, encoding='utf-8')
         df_bool = (datasets_df['word_size'] == word_size) & (datasets_df['num_words'] == num_words) & (datasets_df['words_per_row'] == words_per_row) & (datasets_df['dc_config'] == fanout_str)
-        df_filtered = self.datasets_df.loc[df_bool]
-        if len(df_filtered) != 1:    
-            debug.info(1,"Found two dataset entries with the same configuration. Using the first found")
+        df_filtered = datasets_df.loc[df_bool]
+        if len(df_filtered) > 1:    
+            debug.info(1,"Found more than 1 dataset entry with the same configuration. Using the first found")
+        elif len(df_filtered) == 0:
+            debug.error("Dataset for configuration not found:\n \
+            word_size={}, num_words={}, words_per_row={}, fanout_list={}".format(word_size,
+                                                                                 num_words,
+                                                                                 words_per_row,
+                                                                                 fanout_list), 1)
         df_row = df_filtered.iloc[0]    
         #Check csv header against expected    
-        csv_data_types = list(df_filtered)[start_fname_ind+1:]
-        if set(data_types) != set(csv_data_types):
-            debug.error("Dataset csv header does not match expected.")
+        csv_data_types = list(df_filtered)[start_fname_ind:]
+        if not set(data_types).issubset(set(csv_data_types)):
+            debug.error("Dataset csv header does not match expected:\nExpected={}\nCSV={}".format(data_types,
+                                                                                                  csv_data_types),1)
         
         return [df_row[dt] for dt in data_types]
     
@@ -103,40 +113,46 @@ class data_collection(openram_test):
         word_size, num_words, words_per_row = 1, 16, 1
         #Only change delay chain
         #dc_config_list = [(2,3), (3,3), (3,4), (4,2), (4,3), (4,4), (2,4), (2,5)]
-        dc_config_list = [(2,3), (3,3)]
-        self.save_delay_chain_data(word_size, num_words, words_per_row, dc_config_list)
-        self.analyze_delay_chain_data(word_size, num_words, words_per_row, dc_config_list)
+        #dc_config_list = [(2,3), (3,3)]
+        
+        #fanout_configs = [[3,3], [3,3,3]]
+        previous_dc_configs = [[4,4,4], [2,2,2,2], [3,3,3,3], [4,4],[4,4,4,4], [5,5]]
+        fanout_configs = [[3,3], [3,3,3], [2,3,2,3], [2,4,2,4], [3,3,3,3]]+previous_dc_configs
+        #self.save_delay_chain_data(word_size, num_words, words_per_row, fanout_configs)
+        self.analyze_delay_chain_data(word_size, num_words, words_per_row, fanout_configs)
     
-    def save_delay_chain_data(self, word_size, num_words, words_per_row, dc_config_list):
+    def save_delay_chain_data(self, word_size, num_words, words_per_row, fanout_configs):
         """Get the delay data by only varying the delay chain size."""
-        for stages,fanout in dc_config_list:
+        for fanouts in fanout_configs:
             self.init_data_gen()
-            self.set_delay_chain(stages,fanout)
+            self.set_delay_chain(fanouts)
             self.save_data_sram_corners(word_size, num_words, words_per_row)
     
-    def analyze_delay_chain_data(self, word_size, num_words, words_per_row, dc_config_list):
+    def analyze_delay_chain_data(self, word_size, num_words, words_per_row, fanout_configs):
         """Compare and graph delay chain variations over different configurations."""
         dc_avgs = []
         dc_vars = []
-        for stages,fanout in dc_config_list:
+        for fanouts in fanout_configs:
             data_types = ["wl_measures","sae_measures"]
-            filenames = self.get_filename_by_config(data_types, word_size, num_words, words_per_row, [fanout]*stages)
+            filenames = self.get_filename_by_config(data_types, word_size, num_words, words_per_row, fanouts)
             wl_dataframe, sae_dataframe = self.get_csv_data(filenames)
             
             delay_sums = self.get_delay_chain_sums(sae_dataframe)
             dc_avgs.append(self.get_average(delay_sums))
             dc_vars.append(self.get_variance(delay_sums))
-            debug.info(1,"DC config={}: avg={} variance={}".format((stages,fanout), dc_avgs[-1], dc_vars[-1]))
-        self.plot_two_data_sets(dc_config_list, dc_avgs, dc_vars)
+            debug.info(1,"DC config={}: avg={} variance={}".format(fanouts, dc_avgs[-1], dc_vars[-1]))
+        self.plot_two_data_sets(fanout_configs, dc_avgs, dc_vars)
         
     def get_delay_chain_sums(self, sae_dataframe):
         """Calculate the total delay of the delay chain over different corners"""
-        (start_dc, end_dc) = self.delay_obj.delay_chain_indices
-        start_data_pos = len(self.config_fields)+1 #items before this point are configuration related
+        start_dc_pos = sae_dataframe.columns.get_loc('dc_start_ind')
+        end_dc_pos = sae_dataframe.columns.get_loc('dc_end_ind')
+        start_data_pos = len(self.config_fields)+len(self.sae_config_fields)+1 #items before this point are configuration related
         delay_sums = []
         row_count = 0
         #Get delay sums over different corners
-        for sae_row in sae_dataframe.itertuples(): 
+        for sae_row in sae_dataframe.itertuples():
+            start_dc, end_dc = sae_row[start_dc_pos+1], sae_row[end_dc_pos+1]
             dc_delays = sae_row[start_data_pos+start_dc:start_data_pos+end_dc]
             delay_sums.append(sum(dc_delays))
         return delay_sums
@@ -167,6 +183,7 @@ class data_collection(openram_test):
         ax1.set_ylabel('Average Delay (ns)', color=color)
         ax1.plot(data_range, y1_values, marker='o', color=color, linestyle='')
         ax1.tick_params(axis='y', labelcolor=color)
+        ax1.tick_params(axis='x', labelrotation=-90)
 
         ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
 
@@ -177,7 +194,7 @@ class data_collection(openram_test):
         ax2.tick_params(axis='y', labelcolor=color)
 
         fig.tight_layout()  # otherwise the right y-label is slightly clipped
-        plt.xticks(data_range, x_labels)
+        plt.xticks(data_range, x_labels, rotation=90)
         plt.show()
     
     def calculate_delay_ratios_of_srams(self):
@@ -258,34 +275,36 @@ class data_collection(openram_test):
         
     def calculate_delay_error(self, wl_dataframe, sae_dataframe):
         """Calculates the percentage difference in delays between the wordline and sense amp enable"""
-        start_data_pos = len(self.config_fields) #items before this point are configuration related
+        wl_start_data_pos = len(self.config_fields)
+        sae_start_data_pos = len(self.config_fields)+len(self.sae_config_fields) 
         error_list = []
         row_count = 0
         for wl_row, sae_row in zip(wl_dataframe.itertuples(), sae_dataframe.itertuples()):             
             debug.info(2, "wl_row:{}".format(wl_row))
-            wl_sum = sum(wl_row[start_data_pos+1:])
+            wl_sum = sum(wl_row[wl_start_data_pos+1:])
             debug.info(2, "wl_sum:{}".format(wl_sum))
-            sae_sum = sum(sae_row[start_data_pos+1:])
+            sae_sum = sum(sae_row[sae_start_data_pos+1:])
             error_list.append(abs((wl_sum-sae_sum)/wl_sum))
         return error_list
         
     def calculate_delay_variation_error(self, wl_dataframe, sae_dataframe):
         """Measures a base delay from the first corner then the variations from that base"""
-        start_data_pos = len(self.config_fields)
+        wl_start_data_pos = len(self.config_fields)
+        sae_start_data_pos = len(self.config_fields)+len(self.sae_config_fields)
         variation_error_list = []
         count = 0
         for wl_row, sae_row in zip(wl_dataframe.itertuples(), sae_dataframe.itertuples()):
             if count == 0:
                 #Create a base delay, variation is defined as the difference between this base
-                wl_base = sum(wl_row[start_data_pos+1:])
+                wl_base = sum(wl_row[wl_start_data_pos+1:])
                 debug.info(1, "wl_sum base:{}".format(wl_base))
-                sae_base = sum(sae_row[start_data_pos+1:])
+                sae_base = sum(sae_row[sae_start_data_pos+1:])
                 variation_error_list.append(0.0)
             else:
                 #Calculate the variation from the respective base and then difference between the variations
-                wl_sum = sum(wl_row[start_data_pos+1:])
+                wl_sum = sum(wl_row[wl_start_data_pos+1:])
                 wl_base_diff = abs((wl_base-wl_sum)/wl_base)
-                sae_sum = sum(sae_row[start_data_pos+1:])
+                sae_sum = sum(sae_row[sae_start_data_pos+1:])
                 sae_base_diff = abs((sae_base-sae_sum)/sae_base)
                 variation_diff = abs((wl_base_diff-sae_base_diff)/wl_base_diff)
                 variation_error_list.append(variation_diff)
@@ -336,10 +355,9 @@ class data_collection(openram_test):
         import characterizer
         reload(characterizer) 
 
-    def set_delay_chain(self, stages, fanout):
+    def set_delay_chain(self, fanout_list):
         """Force change the parameter in the tech file to specify a delay chain configuration"""
-        parameter["static_delay_stages"] = stages
-        parameter["static_fanout_per_stage"] = fanout
+        parameter["static_fanout_list"] = fanout_list
         
     def close_files(self):
         """Closes all files stored in the file dict"""
@@ -375,10 +393,17 @@ class data_collection(openram_test):
     def add_sram_data_to_csv(self, sram_data, word_size, num_words, words_per_row, dc_resized, corner):
         """Writes data to its respective CSV file. There is a CSV for each measurement target 
         (wordline, sense amp enable, and models)"""
+        dc_start_ind, dc_end_ind = self.delay_obj.delay_chain_indices
         sram_specs = [word_size,num_words,words_per_row,dc_resized,*corner]
+        sae_specs = [dc_start_ind, dc_end_ind]
         for data_name, data_values in sram_data.items():
+            if 'sae' in data_name:
+                all_specs = sram_specs+sae_specs
+            else:
+                all_specs = sram_specs
+                
             other_values = self.calculate_other_data_values(data_values)
-            self.csv_writers[data_name].writerow(sram_specs+sram_data[data_name]+other_values)
+            self.csv_writers[data_name].writerow(all_specs+sram_data[data_name]+other_values)
         debug.info(2,"Data Added to CSV file.")
     
     def calculate_other_data_values(self, sram_data_list):
@@ -407,9 +432,10 @@ class data_collection(openram_test):
                                                                 data_name)
             self.file_name_dict[data_name] = file_name
             self.csv_files[data_name] = open(file_name, 'w')
-            self.config_fields = ['word_size', 'num_words', 'words_per_row', 'dc_resized', 'process', 'voltage', 'temp']
-            self.other_data_fields = ['sum']
-            fields = (*self.config_fields, *header_list, *self.other_data_fields)
+            if 'sae' in data_name:
+                fields = (*self.config_fields, *self.sae_config_fields, *header_list, *self.other_data_fields)
+            else:
+                fields = (*self.config_fields, *header_list, *self.other_data_fields)
             self.csv_writers[data_name] = csv.writer(self.csv_files[data_name], lineterminator = '\n')
             self.csv_writers[data_name].writerow(fields)
     

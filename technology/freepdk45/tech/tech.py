@@ -336,6 +336,7 @@ spice["nor2_transition_prob"] = .1875     # Transition probability of 2-input no
 #Parameters related to sense amp enable timing and delay chain/RBL sizing
 parameter["static_delay_stages"] = 4
 parameter["static_fanout_per_stage"] = 3
+parameter["static_fanout_list"] = parameter["static_delay_stages"]*[parameter["static_fanout_per_stage"]]
 parameter["dff_clk_cin"] = 30.6             #relative capacitance
 parameter["6tcell_wl_cin"] = 3              #relative capacitance
 parameter["min_inv_para_delay"] = 2.4        #Tau delay units

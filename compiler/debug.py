@@ -16,7 +16,7 @@ def check(check, str):
          index) = inspect.getouterframes(inspect.currentframe())[1]
         sys.stderr.write("ERROR: file {0}: line {1}: {2}\n".format(
             os.path.basename(filename), line_number, str))
-        logger.log("ERROR: file {0}: line {1}: {2}\n".format(
+        log("ERROR: file {0}: line {1}: {2}\n".format(
             os.path.basename(filename), line_number, str))
 
         assert 0
@@ -27,7 +27,7 @@ def error(str, return_value=0):
      index) = inspect.getouterframes(inspect.currentframe())[1]
     sys.stderr.write("ERROR: file {0}: line {1}: {2}\n".format(
         os.path.basename(filename), line_number, str))
-    logger.log("ERROR: file {0}: line {1}: {2}\n".format(
+    log("ERROR: file {0}: line {1}: {2}\n".format(
         os.path.basename(filename), line_number, str))
 
     assert return_value == 0
@@ -38,7 +38,7 @@ def warning(str):
      index) = inspect.getouterframes(inspect.currentframe())[1]
     sys.stderr.write("WARNING: file {0}: line {1}: {2}\n".format(
         os.path.basename(filename), line_number, str))
-    logger.log("WARNING: file {0}: line {1}: {2}\n".format(
+    log("WARNING: file {0}: line {1}: {2}\n".format(
         os.path.basename(filename), line_number, str))
 
 
@@ -48,7 +48,7 @@ def print_raw(str):
 
 
 def log(str):
-    if  globals.OPTS.output_name != '':
+    if globals.OPTS.output_name != '':
         if log.create_file:
             compile_log = open(globals.OPTS.output_path +
                                globals.OPTS.output_name + '.log', "w+")

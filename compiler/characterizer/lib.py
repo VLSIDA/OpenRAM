@@ -559,6 +559,7 @@ class lib:
             LVS = str(total_lvs_errors)
 
         datasheet.write("{0},{1},".format(DRC, LVS))
+        # write area
         datasheet.write(str(self.sram.width * self.sram.height)+',')
         # write timing information for all ports
         for port in self.all_ports:

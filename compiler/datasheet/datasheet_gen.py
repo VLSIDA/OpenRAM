@@ -112,10 +112,10 @@ def parse_characterizer_csv(f, pages):
             LVS = row[col]
             col += 1
 
-            AREA = row[col]
+            ANALYTICAL_MODEL = row[col]
             col += 1
 
-            ANALYTICAL_MODEL = row[col]
+            AREA = row[col]
             col += 1
 
             for sheet in pages:

@@ -83,9 +83,11 @@ class lib:
             (self.process, self.voltage, self.temperature) = self.corner
             self.lib = open(lib_name, "w")
             debug.info(1,"Writing to {0}".format(lib_name))
+            self.corner_name = lib_name.replace(self.out_dir,"").replace(".lib","")
             self.characterize()
             self.lib.close()
             self.parse_info(self.corner,lib_name)
+    
     def characterize(self):
         """ Characterize the current corner. """
 

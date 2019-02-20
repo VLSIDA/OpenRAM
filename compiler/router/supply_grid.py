@@ -20,8 +20,8 @@ class supply_grid(signal_grid):
         
     def reinit(self):
         """ Reinitialize everything for a new route. """
-        self.source = []
-        self.target = []
+        self.source = set()
+        self.target = set()
         # Reset all the cells in the map
         for p in self.map.values():
             p.reset()

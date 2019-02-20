@@ -196,17 +196,16 @@ class pdriver(pgate.pgate):
 
     def get_stage_efforts(self, external_cout, inp_is_rise=False):
         """Get the stage efforts of the A -> Z path"""
-
-        cout_list = {}
+        cout_list = []
         for prev_inv,inv in zip(self.inv_list, self.inv_list[1:]):
-            cout_list[prev_inv]=inv.get_cin()
-            
-        cout_list[self.inv_list[-1]]=external_cout
+            cout_list.append(inv.get_cin())
+        
+        cout_list.append(external_cout)
         
         stage_effort_list = []
         last_inp_is_rise = inp_is_rise
-        for inv in self.inv_list:
-            stage = inv.get_stage_effort(cout_list[inv], last_inp_is_rise)
+        for inv,cout in zip(self.inv_list,cout_list):
+            stage = inv.get_stage_effort(cout, last_inp_is_rise)
             stage_effort_list.append(stage)
             last_inp_is_rise = stage.is_rise
             

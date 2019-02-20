@@ -21,8 +21,8 @@ class grid:
         """ Initialize the map and define the costs. """
 
         # list of the source/target grid coordinates
-        self.source = []
-        self.target = []
+        self.source = set()
+        self.target = set()
 
         self.track_width = track_width
         self.track_widths = [self.track_width, self.track_width, 1.0] 
@@ -71,7 +71,8 @@ class grid:
             self.map[n].path=value
 
     def clear_blockages(self):
-        self.set_blocked(set(self.map.keys()),False)
+        for k in self.map:
+            self.map[k].blocked=False
             
     def set_source(self,n,value=True):
         if isinstance(n, (list,tuple,set,frozenset)):
@@ -80,7 +81,7 @@ class grid:
         else:
             self.add_map(n)
             self.map[n].source=value
-            self.source.append(n)
+            self.source.add(n)
         
     def set_target(self,n,value=True):
         if isinstance(n, (list,tuple,set,frozenset)):
@@ -89,7 +90,7 @@ class grid:
         else:
             self.add_map(n)
             self.map[n].target=value
-            self.target.append(n)
+            self.target.add(n)
 
         
     def add_source(self,track_list,value=True):
@@ -121,7 +122,7 @@ class grid:
             for item in n:
                 self.add_map(item)
         else:
-            if n not in self.map.keys():
+            if n not in self.map:
                 self.map[n]=grid_cell()
         
 

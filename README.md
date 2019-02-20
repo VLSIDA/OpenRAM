@@ -27,6 +27,17 @@ predictive and fabricable technologies.
 
 # Basic Setup
 
+## Docker Image
+
+We have a pre-configured Ubuntu [Docker](https://www.docker.com/) image
+available that has all tools installed for the [SCMOS] process. It is
+available at [docker hub](https://hub.docker.com/r/vlsida/openram-ubuntu).
+Please see 
+[our README.md](https://github.com/VLSIDA/openram-docker-images/blob/master/README.md)
+for information on how to use this docker image.
+
+## Dependencies
+
 The OpenRAM compiler has very few dependencies:
 + [Ngspice] 26 (or later) or HSpice I-2013.12-1 (or later) or CustomSim 2017 (or later)
 + Python 3.5 or higher
@@ -39,6 +50,8 @@ If you want to perform DRC and LVS, you will need either:
 You must set two environment variables: 
 + OPENRAM\_HOME should point to the compiler source directory. 
 + OPENERAM\_TECH should point to a root technology directory.
+
+## Environment
 
 For example add this to your .bashrc:
 
@@ -216,7 +229,7 @@ If I forgot to add you, please let me know!
 
 [Github issues]:         https://github.com/VLSIDA/PrivateRAM/issues
 [Github pull request]:   https://github.com/VLSIDA/PrivateRAM/pulls
-[Github projects]:       https://github.com/VLSIDA/PrivateRAM/projects
+[Github projects]:       https://github.com/VLSIDA/PrivateRAM
 
 [email me]:              mailto:mrg+openram@ucsc.edu
 [dev-group]:             mailto:openram-dev-group@ucsc.edu

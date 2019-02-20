@@ -11,9 +11,9 @@ import sys
 
 
 def check(check, str):
-    (frame, filename, line_number, function_name, lines,
-     index) = inspect.getouterframes(inspect.currentframe())[1]
     if not check:
+        (frame, filename, line_number, function_name, lines,
+         index) = inspect.getouterframes(inspect.currentframe())[1]
         sys.stderr.write("ERROR: file {0}: line {1}: {2}\n".format(
             os.path.basename(filename), line_number, str))
         log("ERROR: file {0}: line {1}: {2}\n".format(
@@ -48,17 +48,27 @@ def print_raw(str):
 
 
 def log(str):
-    if log.create_file:
-        compile_log = open(globals.OPTS.output_path +
-                           globals.OPTS.output_name + '.log', "w")
-        log.create_file = 0
+    if globals.OPTS.output_name != '':
+        if log.create_file:
+            compile_log = open(globals.OPTS.output_path +
+                               globals.OPTS.output_name + '.log', "w+")
+            log.create_file = 0
+        else:
+            compile_log = open(globals.OPTS.output_path +
+                               globals.OPTS.output_name + '.log', "a")
+
+        if len(log.setup_output) != 0:
+            for line in log.setup_output:
+                compile_log.write(line)
+            log.setup_output = []
+        compile_log.write(str + '\n')
     else:
-        compile_log = open(globals.OPTS.output_path +
-                           globals.OPTS.output_name + '.log', "a")
-    compile_log.write(str + '\n')
-log.create_file = 1 
+        log.setup_output.append(str + "\n")
 
 
+# use a static list of strings to store messages until the global paths are set up
+log.setup_output = []
+log.create_file = 1
 
 
 def info(lev, str):
@@ -71,5 +81,5 @@ def info(lev, str):
             class_name = ""
         else:
             class_name = mod.__name__
-        print_raw("[{0}/{1}]: {2}".format(class_name, frm[0].f_code.co_name, str))
-
+        print_raw("[{0}/{1}]: {2}".format(class_name,
+                                          frm[0].f_code.co_name, str))

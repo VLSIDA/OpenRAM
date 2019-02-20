@@ -21,7 +21,8 @@ class openram_test(unittest.TestCase):
         if result != 0:
             self.fail("DRC failed: {}".format(w.name))
 
-        self.cleanup()
+        if OPTS.purge_temp:
+            self.cleanup()
     
     def local_check(self, a, final_verification=False):
 
@@ -62,6 +63,9 @@ class openram_test(unittest.TestCase):
         delay_obj.set_load_slew(load, slew)
         delay_obj.set_probe(probe_address="1"*sram.addr_size, probe_data=(sram.word_size-1))
         test_port = delay_obj.read_ports[0] #Only test one port, assumes other ports have similar period.
+        delay_obj.create_signal_names()
+        delay_obj.create_measurement_names()
+        delay_obj.create_measurement_objects()
         delay_obj.find_feasible_period_one_port(test_port) 
         return delay_obj.period        
             

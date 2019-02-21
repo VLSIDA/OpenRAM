@@ -73,8 +73,8 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
 
             global total_drc_errors
             global total_lvs_errors
-            tempspice = OPTS.openram_temp + "/temp.sp"
-            tempgds = OPTS.openram_temp + "/temp.gds"
+            tempspice = "{0}/{1}.sp".format(OPTS.openram_temp,self.name)
+            tempgds = "{0}/{1}.gds".format(OPTS.openram_temp,self.name)
             self.sp_write(tempspice)
             self.gds_write(tempgds)
 

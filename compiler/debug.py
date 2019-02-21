@@ -50,6 +50,14 @@ def print_raw(str):
 def log(str):
     if globals.OPTS.output_name != '':
         if log.create_file:
+            # We may have not yet read the config, so we need to ensure
+            # it ends with a /
+            # This is also done in read_config if we change the path
+            # FIXME: There's actually a bug here. The first few lines
+            # could be in one log file and after read_config it could be
+            # in another log file if the path or name changes.
+            if not globals.OPTS.output_path.endswith('/'):
+                globals.OPTS.output_path += "/"
             compile_log = open(globals.OPTS.output_path +
                                globals.OPTS.output_name + '.log', "w+")
             log.create_file = 0

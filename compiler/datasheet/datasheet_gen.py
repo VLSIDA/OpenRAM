@@ -105,16 +105,16 @@ def parse_characterizer_csv(f, pages):
 
             DATETIME = row[col]
             col += 1
+          
+            ANALYTICAL_MODEL = row[col]
+            col += 1
 
             DRC = row[col]
             col += 1
 
             LVS = row[col]
             col += 1
-
-            ANALYTICAL_MODEL = row[col]
-            col += 1
-
+ 
             AREA = row[col]
             col += 1
 

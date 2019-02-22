@@ -62,7 +62,7 @@ class datasheet():
         self.html += '<p style="font-size: 26px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Timing Data</p>'
         model = ''
         if self.ANALYTICAL_MODEL:
-            model = "analytical model: results may not be percise"
+            model = "analytical model: results may not be precise"
         else:
             model = "spice characterizer"
         # display timing data

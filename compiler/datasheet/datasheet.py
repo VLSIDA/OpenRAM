@@ -61,8 +61,8 @@ class datasheet():
         # check if analytical model is being used
         self.html += '<p style="font-size: 26px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Timing Data</p>'
         model = ''
-        if self.ANALYTICAL_MODEL:
-            model = "analytical model: results may not be percise"
+        if self.ANALYTICAL_MODEL == 'True':
+            model = "analytical model: results may not be precise"
         else:
             model = "spice characterizer"
         # display timing data

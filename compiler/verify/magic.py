@@ -45,7 +45,10 @@ def write_magic_script(cell_name, gds_name, extract=False, final_verification=Fa
     #f.write("load {}_new\n".format(cell_name))
     #f.write("cellname rename {0}_new {0}\n".format(cell_name))
     #f.write("load {}\n".format(cell_name))
+    f.write("cellname delete \(UNNAMED\)\n")
     f.write("writeall force\n")
+    f.write("select top cell\n")
+    f.write("expand\n")
     f.write("drc check\n")
     f.write("drc catchup\n")
     f.write("drc count total\n")
@@ -55,14 +58,27 @@ def write_magic_script(cell_name, gds_name, extract=False, final_verification=Fa
     else:
         pre = ""
     if final_verification:
-        f.write(pre+"extract unique\n")
-    f.write(pre+"extract\n")
-    f.write(pre+"ext2spice hierarchy on\n")        
+        f.write(pre+"extract unique\n".format(cell_name))
+    else:
+        f.write(pre+"extract\n".format(cell_name))
+    #f.write(pre+"ext2spice hierarchy on\n")        
+    #f.write(pre+"ext2spice scale off\n")
+    # lvs exists in 8.2.79, but be backword compatible for now
+    #f.write(pre+"ext2spice lvs\n")
+    f.write(pre+"ext2spice hierarchy on\n")
+    f.write(pre+"ext2spice format ngspice\n")
+    f.write(pre+"ext2spice cthresh infinite\n")
+    f.write(pre+"ext2spice rthresh infinite\n")
+    f.write(pre+"ext2spice renumber off\n")
     f.write(pre+"ext2spice scale off\n")
+    f.write(pre+"ext2spice blackbox on\n")
+    f.write(pre+"ext2spice subcircuit top auto\n")
+    f.write(pre+"ext2spice global off\n")
+    
     # Can choose hspice, ngspice, or spice3,
     # but they all seem compatible enough.
     #f.write(pre+"ext2spice format ngspice\n")
-    f.write(pre+"ext2spice\n")
+    f.write(pre+"ext2spice {}\n".format(cell_name))
     f.write("quit -noprompt\n")
     f.write("EOF\n")
         
@@ -136,8 +152,9 @@ def run_drc(cell_name, gds_name, extract=True, final_verification=False):
     # etc.
     try:
         f = open(outfile, "r")
-    except:
-        debug.error("Unable to retrieve DRC results file. Is magic set up?",1)
+    except FileNotFoundError:
+        debug.error("Unable to load DRC results file from {}. Is magic set up?".format(outfile),1)
+        
     results = f.readlines()
     f.close()
     errors=1
@@ -189,7 +206,11 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     total_errors = 0
     
     # check the result for these lines in the summary:
-    f = open(resultsfile, "r")
+    try:
+        f = open(resultsfile, "r")
+    except FileNotFoundError:
+        debug.error("Unable to load LVS results from {}".format(resultsfile),1)
+                    
     results = f.readlines()
     f.close()
     # Look for the results after the final "Subcircuit summary:"

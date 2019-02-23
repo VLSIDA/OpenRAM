@@ -45,7 +45,7 @@ def write_magic_script(cell_name, gds_name, extract=False, final_verification=Fa
     #f.write("load {}_new\n".format(cell_name))
     #f.write("cellname rename {0}_new {0}\n".format(cell_name))
     #f.write("load {}\n".format(cell_name))
-    f.write("cellname delete \(UNNAMED\)\n")
+    f.write(r'cellname delete \(UNNAMED\)'+"\n")
     f.write("writeall force\n")
     f.write("select top cell\n")
     f.write("expand\n")
@@ -58,9 +58,8 @@ def write_magic_script(cell_name, gds_name, extract=False, final_verification=Fa
     else:
         pre = ""
     if final_verification:
-        f.write(pre+"extract unique\n".format(cell_name))
-    else:
-        f.write(pre+"extract\n".format(cell_name))
+        f.write(pre+"extract unique\n")
+    f.write(pre+"extract\n")
     #f.write(pre+"ext2spice hierarchy on\n")        
     #f.write(pre+"ext2spice scale off\n")
     # lvs exists in 8.2.79, but be backword compatible for now

@@ -53,6 +53,7 @@ def write_magic_script(cell_name, gds_name, extract=False, final_verification=Fa
     f.write("drc catchup\n")
     f.write("drc count total\n")
     f.write("drc count\n")
+    f.write("port makeall\n")
     if not extract:
         pre = "#"
     else:

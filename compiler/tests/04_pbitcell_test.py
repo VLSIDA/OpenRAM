@@ -26,7 +26,7 @@ class pbitcell_test(openram_test):
         debug.info(2, "Bitcell with 1 of each port: read/write, write, and read")
         tx = pbitcell(name="pbc")
         self.local_check(tx)
-        
+
         OPTS.num_rw_ports=0
         OPTS.num_w_ports=1
         OPTS.num_r_ports=1

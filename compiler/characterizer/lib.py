@@ -327,7 +327,7 @@ class lib:
         self.lib.write("        }\n")
         
 
-        self.lib.write("        pin(DOUT{}){{\n".format(read_port))
+        self.lib.write("        pin(DOUT{0}[{1}:0]){{\n".format(read_port,self.sram.word_size-1))
         self.lib.write("        timing(){ \n")
         self.lib.write("            timing_sense : non_unate; \n")
         self.lib.write("            related_pin : \"clk{0}\"; \n".format(read_port))
@@ -360,7 +360,7 @@ class lib:
         self.lib.write("            address : ADDR{0}; \n".format(write_port))
         self.lib.write("            clocked_on  : clk{0}; \n".format(write_port))
         self.lib.write("        }\n") 
-        self.lib.write("        pin(DIN{}){{\n".format(write_port))
+        self.lib.write("        pin(DIN{0}[{1}:0]){{\n".format(write_port,self.sram.word_size-1))
         self.write_FF_setuphold(write_port)
         self.lib.write("        }\n") # pin  
         self.lib.write("    }\n") #bus
@@ -380,7 +380,7 @@ class lib:
         self.lib.write("        direction  : input; \n")
         self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]))
         self.lib.write("        max_transition       : {0};\n".format(self.slews[-1]))
-        self.lib.write("        pin(ADDR{})".format(port))
+        self.lib.write("        pin(ADDR{0}[{1}:0])".format(port,self.sram.addr_size-1))
         self.lib.write("{\n")
         
         self.write_FF_setuphold(port)

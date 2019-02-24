@@ -1,0 +1,38 @@
+****** HSPICE -- M-2017.03 linux64 (Feb 20 2017) ******
+ Input File: cell_6t.sp
+ lic:
+ lic: FLEXlm: SDK_11.6.4
+ lic: USER:   mrg                  HOSTNAME: 72fb17cef281
+ lic: HOSTID: 0242ac110002         PID:      69
+ lic: Using FLEXlm license file:
+ lic: 27000@license.soe.ucsc.edu
+ lic: Checkout 1 hspice
+ lic: License/Maintenance for hspice will expire on 18-dec-2020/2018.09
+ lic: 1(in_use)/50(total) FLOATING license(s) on SERVER 27000@license.soe.ucsc.edu
+ lic:
+ init: begin read circuit files,  cpu clock=  9.60E-01
+       option search = /bsoe/software/synopsys/M-2017.03/hspice/parts/a
+                         d
+       option search = /bsoe/software/synopsys/M-2017.03/hspice/parts/b
+                         ehave
+       option search = /bsoe/software/synopsys/M-2017.03/hspice/parts/c
+                         omlinear
+       option search = /bsoe/software/synopsys/M-2017.03/hspice/parts/d
+                         io
+       option search = /bsoe/software/synopsys/M-2017.03/hspice/parts/f
+                         et
+       option search = /bsoe/software/synopsys/M-2017.03/hspice/parts/l
+                         in_tech
+       option search = /bsoe/software/synopsys/M-2017.03/hspice/parts/p
+                         ci
+       option search = /bsoe/software/synopsys/M-2017.03/hspice/parts/s
+                         ignet
+       option search = /bsoe/software/synopsys/M-2017.03/hspice/parts/t
+                         i
+       option search = /bsoe/software/synopsys/M-2017.03/hspice/parts/x
+                         ilinx
+       option runlvl
+ init: end read circuit files,  cpu clock=  9.60E-01 peak memory=       290 mb
+ init: begin check errors,  cpu clock=  9.60E-01
+>error          ***** hspice job aborted
+ lic: Release hspice token(s)

@@ -9,7 +9,7 @@ drc_warned = False
 lvs_warned = False
 pex_warned = False
 
-def run_drc(cell_name, gds_name, extract=False):
+def run_drc(cell_name, gds_name, extract=False, final_verification=False):
     global drc_warned
     if not drc_warned:
         debug.warning("DRC unable to run.")
@@ -25,7 +25,7 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     # Since we warned, return a failing test.
     return 1
 
-def run_pex(name, gds_name, sp_name, output=None):
+def run_pex(name, gds_name, sp_name, output=None, final_verification=False):
     global pex_warned    
     if not pex_warned:
         debug.warning("PEX unable to run.")

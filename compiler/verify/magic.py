@@ -58,9 +58,8 @@ def write_magic_script(cell_name, gds_name, extract=False, final_verification=Fa
     else:
         pre = ""
     if final_verification:
-        f.write(pre+"extract unique\n".format(cell_name))
-    else:
-        f.write(pre+"extract\n".format(cell_name))
+        f.write(pre+"extract unique all\n".format(cell_name))
+    f.write(pre+"extract\n".format(cell_name))
     #f.write(pre+"ext2spice hierarchy on\n")        
     #f.write(pre+"ext2spice scale off\n")
     # lvs exists in 8.2.79, but be backword compatible for now

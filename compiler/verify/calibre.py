@@ -282,7 +282,7 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     return total_errors
 
 
-def run_pex(cell_name, gds_name, sp_name, output=None):
+def run_pex(cell_name, gds_name, sp_name, output=None, final_verification=False):
     """Run pex on a given top-level name which is
        implemented in gds_name and sp_name. """
 

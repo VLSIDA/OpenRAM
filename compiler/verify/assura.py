@@ -30,7 +30,7 @@ num_drc_runs = 0
 num_lvs_runs = 0
 num_pex_runs = 0
 
-def run_drc(name, gds_name):
+def run_drc(name, gds_name, final_verification=False):
     """Run DRC check on a given top-level name which is
        implemented in gds_name."""
 
@@ -93,7 +93,7 @@ def run_drc(name, gds_name):
     return errors
 
 
-def run_lvs(name, gds_name, sp_name):
+def run_lvs(name, gds_name, sp_name, final_verification=False):
     """Run LVS check on a given top-level name which is
        implemented in gds_name and sp_name. """
 
@@ -178,7 +178,7 @@ def run_lvs(name, gds_name, sp_name):
     return errors
 
 
-def run_pex(name, gds_name, sp_name, output=None):
+def run_pex(name, gds_name, sp_name, output=None, final_verification=False):
     """Run pex on a given top-level name which is
        implemented in gds_name and sp_name. """
     debug.error("PEX extraction not implemented with Assura.",-1)

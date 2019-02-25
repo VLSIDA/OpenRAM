@@ -95,7 +95,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
 
         if (not OPTS.is_unit_test and OPTS.check_lvsdrc and (OPTS.inline_lvsdrc or final_verification)):
             global total_drc_errors
-            tempgds = OPTS.openram_temp + "/temp.gds"
+            tempgds = "{0}/{1}.gds".format(OPTS.openram_temp,self.name)
             self.gds_write(tempgds)
             num_errors = verify.run_drc(self.name, tempgds, final_verification)  
             total_drc_errors += num_errors
@@ -110,8 +110,8 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
 
         if (not OPTS.is_unit_test and OPTS.check_lvsdrc and (OPTS.inline_lvsdrc or final_verification)):
             global total_lvs_errors
-            tempspice = OPTS.openram_temp + "/temp.sp"
-            tempgds = OPTS.openram_temp + "/temp.gds"
+            tempspice = "{0}/{1}.sp".format(OPTS.openram_temp,self.name)
+            tempgds = "{0}/{1}.gds".format(OPTS.openram_temp,self.name)
             self.sp_write(tempspice)
             self.gds_write(tempgds)
             num_errors = verify.run_lvs(self.name, tempgds, tempspice, final_verification)

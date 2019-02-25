@@ -35,11 +35,10 @@ class datasheet():
 
         # Add openram logo
         openram_logo = 0
-        with open(os.path.abspath(os.environ.get("OPENRAM_HOME")) + '/datasheet/assets/openram_logo_placeholder.png', "rb") as image_file:
+        with open(os.path.abspath(os.environ.get("OPENRAM_HOME")) + '/datasheet/assets/OpenRAM_logo.png', "rb") as image_file:
             openram_logo = base64.b64encode(image_file.read())
 
-        self.html += '<a href="https://vlsida.soe.ucsc.edu/"><img src="data:image/png;base64,{0}" alt="VLSIDA"></a>'.format(str(vlsi_logo)[
-                                                                                                                            2:-1])
+        self.html += '<a href="https://vlsida.soe.ucsc.edu/"><img src="data:image/png;base64,{0}" alt="VLSIDA"></a><a href ="https://github.com/VLSIDA/OpenRAM"><img src ="data:image/png;base64,{1}" alt = "OpenRAM"></a>'.format(str(vlsi_logo)[2:-1], str(openram_logo)[2:-1])
 
         self.html += '<p style="font-size: 18px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">' + \
             self.name + '.html' + '</p>'
@@ -53,7 +52,7 @@ class datasheet():
         # print port table
         self.html += '<p style="font-size: 26px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Ports and Configuration</p>'
         self.html += self.io_table.to_html()
-        
+
         # print operating condidition information
         self.html += '<p style="font-size: 26px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Operating Conditions</p>'
         self.html += self.operating_table.to_html()

@@ -191,7 +191,8 @@ def setup_bitcell():
             # Use the pbitcell (and give a warning if not in unit test mode)
             OPTS.bitcell = "pbitcell"
             OPTS.replica_bitcell = "replica_pbitcell"
-            debug.warning("Using the parameterized bitcell which may have suboptimal density.")
+            if not OPTS.is_unit_test:
+                debug.warning("Using the parameterized bitcell which may have suboptimal density.")
         else:
             debug.info(1,"Using custom bitcell: {}".format(OPTS.bitcell))    
 

@@ -83,9 +83,11 @@ class lib:
             (self.process, self.voltage, self.temperature) = self.corner
             self.lib = open(lib_name, "w")
             debug.info(1,"Writing to {0}".format(lib_name))
+            self.corner_name = lib_name.replace(self.out_dir,"").replace(".lib","")
             self.characterize()
             self.lib.close()
             self.parse_info(self.corner,lib_name)
+    
     def characterize(self):
         """ Characterize the current corner. """
 
@@ -325,7 +327,7 @@ class lib:
         self.lib.write("        }\n")
         
 
-        self.lib.write("        pin(DOUT{}){{\n".format(read_port))
+        self.lib.write("        pin(DOUT{0}[{1}:0]){{\n".format(read_port,self.sram.word_size-1))
         self.lib.write("        timing(){ \n")
         self.lib.write("            timing_sense : non_unate; \n")
         self.lib.write("            related_pin : \"clk{0}\"; \n".format(read_port))
@@ -358,7 +360,7 @@ class lib:
         self.lib.write("            address : ADDR{0}; \n".format(write_port))
         self.lib.write("            clocked_on  : clk{0}; \n".format(write_port))
         self.lib.write("        }\n") 
-        self.lib.write("        pin(DIN{}){{\n".format(write_port))
+        self.lib.write("        pin(DIN{0}[{1}:0]){{\n".format(write_port,self.sram.word_size-1))
         self.write_FF_setuphold(write_port)
         self.lib.write("        }\n") # pin  
         self.lib.write("    }\n") #bus
@@ -378,7 +380,7 @@ class lib:
         self.lib.write("        direction  : input; \n")
         self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]))
         self.lib.write("        max_transition       : {0};\n".format(self.slews[-1]))
-        self.lib.write("        pin(ADDR{})".format(port))
+        self.lib.write("        pin(ADDR{0}[{1}:0])".format(port,self.sram.addr_size-1))
         self.lib.write("{\n")
         
         self.write_FF_setuphold(port)
@@ -507,9 +509,11 @@ class lib:
     def parse_info(self,corner,lib_name):
         """ Copies important characterization data to datasheet.info to be added to datasheet """
         if OPTS.is_unit_test:
-            git_id = 'AAAAAAAAAAAAAAAAAAAA'
+            git_id = 'FFFFFFFFFFFFFFFFFFFF'
+
         else:
             with open(os.devnull, 'wb') as devnull:
+                # parses the mose recent git commit id - requres git is installed
                 proc = subprocess.Popen(['git','rev-parse','HEAD'], cwd=os.path.abspath(os.environ.get("OPENRAM_HOME")) + '/', stdout=subprocess.PIPE)
 
                 git_id = str(proc.stdout.read())
@@ -518,16 +522,17 @@ class lib:
                     git_id = git_id[2:-3] 
                 except:
                     pass
-
+                # check if git id is valid
                 if len(git_id) != 40:
                     debug.warning("Failed to retrieve git id")
                     git_id = 'Failed to retruieve'
 
         datasheet = open(OPTS.openram_temp +'/datasheet.info', 'a+')
-
-        current_time = datetime.datetime.now()
-        datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},".format(
-                        "sram_{0}_{1}_{2}".format(OPTS.word_size, OPTS.num_words, OPTS.tech_name),
+        
+        current_time = datetime.date.today()
+        # write static information to be parser later
+        datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},".format(
+                        OPTS.output_name,
                         OPTS.num_words,
                         OPTS.num_banks,
                         OPTS.num_rw_ports,
@@ -542,7 +547,8 @@ class lib:
                         lib_name,
                         OPTS.word_size,
                         git_id,
-                        current_time
+                        current_time,
+                        OPTS.analytical_delay
                         ))
 
         # information of checks
@@ -555,7 +561,9 @@ class lib:
             LVS = str(total_lvs_errors)
 
         datasheet.write("{0},{1},".format(DRC, LVS))
+        # write area
         datasheet.write(str(self.sram.width * self.sram.height)+',')
+        # write timing information for all ports
         for port in self.all_ports:
             #DIN timings
             if port in self.write_ports:
@@ -652,9 +660,45 @@ class lib:
 
                         ))
 
+        # write power information
+        for port in self.all_ports:
+            name = ''
+            read_write = ''
 
+            # write dynamic power usage
+            if port in self.read_ports:
+                web_name = " & !WEb{0}".format(port)
+                name = "!CSb{0} & clk{0}{1}".format(port, web_name)
+                read_write = 'Read'
 
+                datasheet.write("{0},{1},{2},{3},".format(
+                    "power",
+                    name,
+                    read_write,
+
+                    np.mean(self.char_port_results[port]["read1_power"] + self.char_port_results[port]["read0_power"])/2
+                    ))
+
+            if port in self.write_ports:
+                web_name = " & WEb{0}".format(port)
+                name = "!CSb{0} & !clk{0}{1}".format(port, web_name)
+                read_write = 'Write'
+
+                datasheet.write("{0},{1},{2},{3},".format(
+                        'power',
+                        name,
+                        read_write,
+                        np.mean(self.char_port_results[port]["write1_power"] + self.char_port_results[port]["write0_power"])/2
+
+                        ))
+
+        # write leakage power
+        control_str = 'CSb0'
+        for i in range(1, self.total_port_num):
+            control_str += ' & CSb{0}'.format(i)
+        
+        datasheet.write("{0},{1},{2},".format('leak', control_str, self.char_sram_results["leakage_power"]))
+                
 
         datasheet.write("END\n")
         datasheet.close()
-                

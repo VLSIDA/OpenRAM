@@ -26,30 +26,34 @@ class model_check(delay):
     def create_data_names(self):
         self.wl_meas_name, self.wl_model_name = "wl_measures", "wl_model"
         self.sae_meas_name, self.sae_model_name = "sae_measures", "sae_model"
+        self.wl_slew_name, self.sae_slew_name = "wl_slews", "sae_slews"
         
     def create_measurement_names(self):
         """Create measurement names. The names themselves currently define the type of measurement"""
         #Create delay measurement names
-        wl_en_driver_delay_names = ["delay_wl_en_dvr{}_".format(stage) for stage in range(1,self.get_num_wl_en_driver_stages())]
-        wl_driver_delay_names = ["delay_wl_dvr{}_".format(stage) for stage in range(1,self.get_num_wl_driver_stages())]
-        sen_driver_delay_names = ["delay_sen_dvr{}_".format(stage) for stage in range(1,self.get_num_sen_driver_stages())]
-        dc_delay_names = ["delay_delay_chain_stage{}_".format(stage) for stage in range(1,self.get_num_delay_stages()+1)]
+        wl_en_driver_delay_names = ["delay_wl_en_dvr_{}".format(stage) for stage in range(1,self.get_num_wl_en_driver_stages())]
+        wl_driver_delay_names = ["delay_wl_dvr_{}".format(stage) for stage in range(1,self.get_num_wl_driver_stages())]
+        sen_driver_delay_names = ["delay_sen_dvr_{}".format(stage) for stage in range(1,self.get_num_sen_driver_stages())]
+        dc_delay_names = ["delay_delay_chain_stage_{}".format(stage) for stage in range(1,self.get_num_delay_stages()+1)]
         self.wl_delay_meas_names = wl_en_driver_delay_names+["delay_wl_en", "delay_wl_bar"]+wl_driver_delay_names+["delay_wl"]
         self.rbl_delay_meas_names = ["delay_gated_clk_nand", "delay_delay_chain_in"]+dc_delay_names
         self.sae_delay_meas_names = ["delay_pre_sen"]+sen_driver_delay_names+["delay_sen"]
 
         self.delay_chain_indices = (len(self.rbl_delay_meas_names)-len(dc_delay_names), len(self.rbl_delay_meas_names))
         #Create slew measurement names
-        wl_en_driver_slew_names = ["slew_wl_en_dvr{}_".format(stage) for stage in range(1,self.get_num_wl_en_driver_stages())]
-        wl_driver_slew_names = ["slew_wl_dvr{}_".format(stage) for stage in range(1,self.get_num_wl_driver_stages())]
-        sen_driver_slew_names = ["slew_sen_dvr{}_".format(stage) for stage in range(1,self.get_num_sen_driver_stages())]
-        dc_slew_names = ["slew_delay_chain_stage{}_".format(stage) for stage in range(1,self.get_num_delay_stages()+1)]
+        wl_en_driver_slew_names = ["slew_wl_en_dvr_{}".format(stage) for stage in range(1,self.get_num_wl_en_driver_stages())]
+        wl_driver_slew_names = ["slew_wl_dvr_{}".format(stage) for stage in range(1,self.get_num_wl_driver_stages())]
+        sen_driver_slew_names = ["slew_sen_dvr_{}".format(stage) for stage in range(1,self.get_num_sen_driver_stages())]
+        dc_slew_names = ["slew_delay_chain_stage_{}".format(stage) for stage in range(1,self.get_num_delay_stages()+1)]
         self.wl_slew_meas_names = ["slew_wl_gated_clk_bar"]+wl_en_driver_slew_names+["slew_wl_en", "slew_wl_bar"]+wl_driver_slew_names+["slew_wl"]
         self.rbl_slew_meas_names = ["slew_rbl_gated_clk_bar","slew_gated_clk_nand", "slew_delay_chain_in"]+dc_slew_names
         self.sae_slew_meas_names = ["slew_replica_bl0", "slew_pre_sen"]+sen_driver_slew_names+["slew_sen"]
        
     def create_signal_names(self):
-        """Creates list of the signal names used in the spice file along the wl and sen paths."""
+        """Creates list of the signal names used in the spice file along the wl and sen paths.
+           Names are re-harded coded here; i.e. the names are hardcoded in most of OpenRAM and are
+           replicated here.
+        """
         delay.create_signal_names(self)
         #Signal names are all hardcoded, need to update to make it work for probe address and different configurations.
         wl_en_driver_signals = ["Xsram.Xcontrol0.Xbuf_wl_en.Zb{}_int".format(stage) for stage in range(1,self.get_num_wl_en_driver_stages())]
@@ -317,12 +321,14 @@ class model_check(delay):
         data_dict[self.wl_model_name] = wl_model_delays
         data_dict[self.sae_meas_name] = sae_delays[read_port]
         data_dict[self.sae_model_name] = sae_model_delays
+        data_dict[self.wl_slew_name] = wl_slews[read_port]
+        data_dict[self.sae_slew_name] = sae_slews[read_port]
         
         #Some evaluations of the model and measured values
-        debug.info(1, "Comparing wordline measurements and model.")
-        self.compare_measured_and_model(wl_delays[read_port], wl_model_delays)
-        debug.info(1, "Comparing SAE measurements and model")
-        self.compare_measured_and_model(sae_delays[read_port], sae_model_delays)
+        # debug.info(1, "Comparing wordline measurements and model.")
+        # self.compare_measured_and_model(wl_delays[read_port], wl_model_delays)
+        # debug.info(1, "Comparing SAE measurements and model")
+        # self.compare_measured_and_model(sae_delays[read_port], sae_model_delays)
         
         return data_dict
 
@@ -334,6 +340,8 @@ class model_check(delay):
         name_dict[self.wl_model_name] = name_dict["wl_measures"] #model uses same names as measured.
         name_dict[self.sae_meas_name] = self.rbl_en_signal_names[1:]+self.sae_signal_names[1:]
         name_dict[self.sae_model_name] = name_dict["sae_measures"]
+        name_dict[self.wl_slew_name] = self.wl_slew_meas_names
+        name_dict[self.sae_slew_name] = self.rbl_slew_meas_names+self.sae_slew_meas_names
         return name_dict
     
     

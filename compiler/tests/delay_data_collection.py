@@ -18,6 +18,25 @@ from sram_config import sram_config
 MODEL_DIR = "model_data/"
 DATASET_CSV_NAME = MODEL_DIR+'datasets.csv'
 
+# Data Collection class
+# This module can perform two tasks
+#  1) Collect data
+#  2) Display data
+# Data Collection - 
+# A single SRAM simulation will collect 6 datasets: wordline (WL) delays, sense amp enable (SAE) delays,
+# WL slews, SAE slews, WL model delays, SAE model delays.
+# Each dataset is stored in a separate csv file. Each row of the CSV refers to a different corner simulated on.
+# The files names are stored in DATASET_CSV_NAME marked above.
+# There are 2 main ways the collection is targeted: looking at different delay chain sizes and looking at different SRAM configurations.
+# These are separated by different functions and should not be collected together.
+#
+# Data display - 
+# There are many functions in this file which will search (or told) for data using DATASET_CSV_NAME as a guide.
+# Delay chain data is analyzed in analyze_delay_chain_data, graph_delays_and_inp_slews, and graph_inp_slews_and_delay_var
+# WL and SAE graphing is done in analyze_sae_data and graph_delays_and_var
+#
+# Data collection and each analysis can be run independently, but the one you want needs to be commented in/out.
+
 class data_collection(openram_test):
 
     def runTest(self):
@@ -29,7 +48,7 @@ class data_collection(openram_test):
         self.run_setup()
         
         self.run_delay_chain_analysis()
-        
+        #self.run_sae_analysis()
         globals.end_openram()
     
     def run_setup(self):
@@ -105,6 +124,123 @@ class data_collection(openram_test):
         
         return [df_row[dt] for dt in data_types]
     
+    def get_all_filenames(self, data_types):
+        """Gets all files from dataset.csv specified by the datatype (model/measure)"""
+        start_fname_ind = 4 # four query items
+       
+        datasets_df = pd.read_csv(DATASET_CSV_NAME, encoding='utf-8')
+        csv_data_types = list(datasets_df)[start_fname_ind:]
+        if not set(data_types).issubset(set(csv_data_types)):
+            debug.error("Dataset csv header does not match expected:\nExpected={}\nCSV={}".format(data_types,
+                                                                                                  csv_data_types),1)
+
+        return [list(datasets_df[dt]) for dt in data_types]
+    
+    def run_sae_analysis(self):
+        """Generates sram with different delay chain configs over different corners and 
+           analyzes delay average and variation."""
+        #config_tuple_list = [(8, 16, 1),(8, 32, 1),(16, 32, 1), (32, 64, 1), (64, 32, 1), (64, 64, 1), (32, 128, 1)]   
+        #config_tuple_list = [(1, 16, 1),(4, 16, 1),(16, 16, 1), (32, 32, 1)]
+        config_tuple_list = [(1, 16, 1),(4, 16, 1)]
+        self.save_sram_data_using_configs(config_tuple_list)
+        self.analyze_sae_data() #Uses all available data
+        #self.graph_delays_and_var('sae_measures')
+        #self.graph_delays_and_var('wl_measures')
+        #self.compare_wl_sae_data()
+    
+    def save_sram_data_using_configs(self, config_list):
+        """Get SRAM data for different configurations"""
+        for config in config_list:
+            word_size, num_words, words_per_row = config
+            self.init_data_gen()
+            self.save_data_sram_corners(word_size, num_words, words_per_row)
+    
+    def analyze_sae_data(self):
+        """Compare and graph delay chain variations over different configurations."""
+        delay_avgs_ratio = []
+        delay_vars_ratio = []
+        sram_configs = []
+        data_types = ["sae_measures"]
+        sae_filenames = self.get_all_filenames(data_types)[0]
+        sae_dataframes = self.get_csv_data(sae_filenames)
+        
+        for df in sae_dataframes:
+            #Each row in df contains sram config. Only use the first one (they should all be the same)
+            config = df[['word_size', 'num_words', 'words_per_row']].values.tolist()[0]
+            sram_configs.append(config)
+            delay_sums = self.get_sum(df)
+            delay_chain_sums = self.get_delay_chain_sums(df)
+            delay_avgs_ratio.append(self.get_average(delay_chain_sums)/self.get_average(delay_sums))
+            delay_vars_ratio.append(self.get_variance(delay_chain_sums)/self.get_variance(delay_sums))
+            debug.info(1,"DC config={}: avg ratio={} var ratio={}".format(sram_configs[-1], 
+                                                                          delay_avgs_ratio[-1], 
+                                                                          delay_vars_ratio[-1]))
+            
+        #Sort by the delays then graph
+        all_data = zip(delay_avgs_ratio,sram_configs,delay_vars_ratio)
+        delay_avgs_ratio,sram_configs,delay_vars_ratio = zip(*sorted(all_data))
+        x_ax_label = '[word_size, num_words, words_per_row]'
+        y_ax_labels = ['DC/SAE Delay Ratio', 'DC/SAE Var. Ratio']
+        self.plot_delay_variance_data_sets(sram_configs, x_ax_label, y_ax_labels, delay_avgs_ratio, delay_vars_ratio)
+    
+    def compare_wl_sae_data(self):
+        """Compare and graph delay chain variations over different configurations."""
+        delay_avgs_ratio = []
+        delay_vars_ratio = []
+        sram_configs = []
+        data_types = ["wl_measures","sae_measures"]
+        data_filenames = self.get_all_filenames(data_types)
+        wl_filenames = data_filenames[0]
+        wl_dataframes = self.get_csv_data(wl_filenames)
+        sae_filenames = data_filenames[1]
+        sae_dataframes = self.get_csv_data(sae_filenames)
+        
+        #Loop through all configurations found
+        for wl_df,sae_df in zip(wl_dataframes,sae_dataframes):
+            #Each row in df contains sram config. Only use the first one (they should all be the same)
+            config = wl_df[['word_size', 'num_words', 'words_per_row']].values.tolist()[0]
+            sram_configs.append(config)
+            wl_delays = self.get_sum(wl_df)
+            sae_delays = self.get_sum(sae_df)
+            delay_avgs_ratio.append(self.get_average(wl_delays)/self.get_average(sae_delays))
+            delay_vars_ratio.append(self.get_variance(wl_delays)/self.get_variance(sae_delays))
+            debug.info(1,"DC config={}: avg ratio={} var ratio={}".format(sram_configs[-1], 
+                                                                          delay_avgs_ratio[-1], 
+                                                                          delay_vars_ratio[-1]))
+            
+        #Sort by the delays then graph
+        all_data = zip(delay_avgs_ratio,sram_configs,delay_vars_ratio)
+        delay_avgs_ratio,sram_configs,delay_vars_ratio = zip(*sorted(all_data))
+        x_ax_label = 'SRAM Config'
+        y_ax_labels = ['WL/SAE Delay Ratio', 'WL/SAE Var. Ratio']
+        self.plot_delay_variance_data_sets(sram_configs, x_ax_label, y_ax_labels, delay_avgs_ratio, delay_vars_ratio)
+    
+    def graph_delays_and_var(self, data_type):
+        delay_avgs = []
+        delay_vars = []
+        sram_configs = []
+        data_filenames = self.get_all_filenames([data_type])[0]
+        dataframes = self.get_csv_data(data_filenames)
+        
+        #Loop through all configurations found
+        for df in dataframes:
+            #Each row in df contains sram config. Only use the first one (they should all be the same)
+            config = df[['word_size', 'num_words', 'words_per_row']].values.tolist()[0]
+            sram_configs.append(config)
+            delays = self.get_sum(df)
+            delay_avgs.append(self.get_average(delays))
+            delay_vars.append(self.get_variance(delays))
+            debug.info(1,"DC config={}: avg={}, var={}".format(sram_configs[-1], 
+                                                               delay_avgs[-1], 
+                                                               delay_vars[-1]))
+            
+        #Sort by the delays then graph
+        all_data = zip(delay_avgs,sram_configs,delay_vars)
+        delay_avgs,sram_configs,delay_vars = zip(*sorted(all_data))
+        x_ax_label = 'SRAM Config'
+        y_ax_labels = ['Avg. Delay', 'Delay Variance']
+        self.plot_delay_variance_data_sets(sram_configs, x_ax_label, y_ax_labels, delay_avgs, delay_vars)
+        
     def run_delay_chain_analysis(self):
         """Generates sram with different delay chain configs over different corners and 
            analyzes delay average and variation."""
@@ -116,10 +252,16 @@ class data_collection(openram_test):
         #dc_config_list = [(2,3), (3,3)]
         
         #fanout_configs = [[3,3], [3,3,3]]
-        previous_dc_configs = [[4,4,4], [2,2,2,2], [3,3,3,3], [4,4],[4,4,4,4], [5,5]]
-        fanout_configs = [[3,3], [3,3,3], [2,3,2,3], [2,4,2,4], [3,3,3,3]]+previous_dc_configs
+        old_fanout_configs = []
+        fanout_configs = [[3,3], [2,3,2,3], [2,4,2,4], [2,2,2,2], [3,3,3,3], [4,4],[4,4,4,4], [5,5], \
+                              [2,2], [2,5,2,5], [2,6,2,6], [2,8,2,8], [3,5,3,5], [4,5,4,5], [2,2,2,2,2,2], [3,3,3,3,3,3],\
+                              [6,6],[7,7],[8,8],[9,9],[10,10],[11,11],
+                              [5,2,5,2], [6,2,6,2], [8,2,8,2], [5,3,5,3], [5,4,5,4], [2,3,4,5], [7,2,7,2]]
+        analysis_configs = fanout_configs+old_fanout_configs
         #self.save_delay_chain_data(word_size, num_words, words_per_row, fanout_configs)
-        self.analyze_delay_chain_data(word_size, num_words, words_per_row, fanout_configs)
+        #self.analyze_delay_chain_data(word_size, num_words, words_per_row, analysis_configs)
+        #self.graph_delays_and_inp_slews(word_size, num_words, words_per_row, analysis_configs)
+        self.graph_inp_slews_and_delay_var(word_size, num_words, words_per_row, analysis_configs)
     
     def save_delay_chain_data(self, word_size, num_words, words_per_row, fanout_configs):
         """Get the delay data by only varying the delay chain size."""
@@ -130,33 +272,207 @@ class data_collection(openram_test):
     
     def analyze_delay_chain_data(self, word_size, num_words, words_per_row, fanout_configs):
         """Compare and graph delay chain variations over different configurations."""
-        dc_avgs = []
-        dc_vars = []
+        if not os.path.exists(DATASET_CSV_NAME):
+            debug.error("Could not find dataset CSV. Aborting analysis...",1)
+        dc_avgs, dc_vars = [],[]
+        rise_avgs, rise_vars = [],[]
+        fall_avgs, fall_vars = [],[]
         for fanouts in fanout_configs:
             data_types = ["wl_measures","sae_measures"]
             filenames = self.get_filename_by_config(data_types, word_size, num_words, words_per_row, fanouts)
             wl_dataframe, sae_dataframe = self.get_csv_data(filenames)
-            
+            rise_delay, fall_delay = self.get_rise_fall_dc_sum(sae_dataframe)
             delay_sums = self.get_delay_chain_sums(sae_dataframe)
             dc_avgs.append(self.get_average(delay_sums))
             dc_vars.append(self.get_variance(delay_sums))
+            
+            rise_avgs.append(self.get_average(rise_delay))
+            rise_vars.append(self.get_variance(rise_delay))
+            
+            fall_avgs.append(self.get_average(fall_delay))
+            fall_vars.append(self.get_variance(fall_delay))
             debug.info(1,"DC config={}: avg={} variance={}".format(fanouts, dc_avgs[-1], dc_vars[-1]))
-        self.plot_two_data_sets(fanout_configs, dc_avgs, dc_vars)
+            
+        #Sort by the delays then graph
+        config_copy = list(fanout_configs)
+        all_data = zip(dc_avgs,config_copy,dc_vars)
+        dc_avgs,config_copy,dc_vars = zip(*sorted(all_data))
+        x_ax_label = 'DC Fanouts'
+        y_ax_labels = ['Average Delay (ns)', 'Delay Variance (ns)']
+        self.plot_delay_variance_data_sets(config_copy, x_ax_label, y_ax_labels, dc_avgs, dc_vars)
         
-    def get_delay_chain_sums(self, sae_dataframe):
-        """Calculate the total delay of the delay chain over different corners"""
+        config_copy = list(fanout_configs)
+        all_data = zip(rise_avgs,config_copy,rise_vars)
+        rise_avgs,config_copy,rise_vars = zip(*sorted(all_data))
+        x_ax_label = 'DC Fanouts'
+        y_ax_labels = ['Average Rise Delay (ns)', 'Rise Delay Variance (ns)']
+        self.plot_delay_variance_data_sets(config_copy, x_ax_label, y_ax_labels, rise_avgs, rise_vars)
+        
+        config_copy = list(fanout_configs)
+        all_data = zip(fall_avgs,config_copy,fall_vars)
+        fall_avgs,config_copy,fall_vars = zip(*sorted(all_data))
+        x_ax_label = 'DC Fanouts'
+        y_ax_labels = ['Average Fall Delay (ns)', 'Fall Delay Variance (ns)']
+        self.plot_delay_variance_data_sets(config_copy, x_ax_label, y_ax_labels, fall_avgs, fall_vars)
+     
+    def graph_inp_slews_and_delay_var(self, word_size, num_words, words_per_row, fanout_configs):
+        """Compare and graph delay chain variations over different configurations."""
+        if not os.path.exists(DATASET_CSV_NAME):
+            debug.error("Could not find dataset CSV. Aborting analysis...",1)
+        dc_delays_var, dc_slews = [],[]
+        rise_delay_var, rise_slew_avgs = [],[]
+        fall_delay_var, fall_slew_avgs = [],[]
+        for fanouts in fanout_configs:
+            data_types = ["sae_measures", "sae_slews"]
+            filenames = self.get_filename_by_config(data_types, word_size, num_words, words_per_row, fanouts)
+            sae_delay_df, sae_slew_df = self.get_csv_data(filenames)
+            
+            delay_sums = self.get_delay_chain_sums(sae_delay_df)
+            slew_sums = self.get_delay_chain_avg(sae_slew_df)
+            dc_delays_var.append(self.get_variance(delay_sums))
+            dc_slews.append(self.get_average(slew_sums))
+            
+            rise_delay, fall_delay = self.get_rise_fall_dc_sum(sae_delay_df)
+            rise_delay_var.append(self.get_variance(rise_delay))
+            fall_delay_var.append(self.get_variance(fall_delay))
+            
+            rise_slews, fall_slews = self.get_rise_fall_dc_avg(sae_slew_df)
+            rise_slew_avgs.append(self.get_average(rise_slews))
+            fall_slew_avgs.append(self.get_average(fall_slews))
+            debug.info(1,"DC config={}: slew avg={} delay var={}".format(fanouts, dc_slews[-1], dc_delays_var[-1]))
+            
+        #Sort by the delays then graph
+        config_copy = list(fanout_configs)
+        all_data = zip(dc_slews,config_copy,dc_delays_var)
+        dc_slews,config_copy,dc_delays_var = zip(*sorted(all_data))
+        x_ax_label = 'DC Fanouts'
+        y_ax_labels = ['Average Input Slew (ns)', 'Delay Variance (ns)']
+        self.plot_delay_variance_data_sets(config_copy, x_ax_label, y_ax_labels, dc_slews, dc_delays_var)
+        
+        config_copy = list(fanout_configs)
+        all_data = zip(rise_slew_avgs,config_copy,rise_delay_var)
+        rise_slew_avgs,config_copy,rise_delay_var = zip(*sorted(all_data))
+        x_ax_label = 'DC Fanouts'
+        y_ax_labels = ['Average Rise Stage Input Slew (ns)', 'Rise Delay Variance (ns)']
+        self.plot_delay_variance_data_sets(config_copy, x_ax_label, y_ax_labels, rise_slew_avgs, rise_delay_var)
+        
+        config_copy = list(fanout_configs)
+        all_data = zip(fall_slew_avgs,config_copy,fall_delay_var)
+        fall_slew_avgs,config_copy,fall_delay_var = zip(*sorted(all_data))
+        x_ax_label = 'DC Fanouts'
+        y_ax_labels = ['Average Fall Stage Input Slew (ns)', 'Fall Delay Variance (ns)']
+        self.plot_delay_variance_data_sets(config_copy, x_ax_label, y_ax_labels, fall_slew_avgs, fall_delay_var)
+    
+    def graph_delays_and_inp_slews(self, word_size, num_words, words_per_row, fanout_configs):
+        """Compare and graph delay chain variations over different configurations."""
+        if not os.path.exists(DATASET_CSV_NAME):
+            debug.error("Could not find dataset CSV. Aborting analysis...",1)
+        dc_delays, dc_slews = [],[]
+        rise_delay_avgs, rise_slew_avgs = [],[]
+        fall_delay_avgs, fall_slew_avgs = [],[]
+        for fanouts in fanout_configs:
+            data_types = ["sae_measures", "sae_slews"]
+            filenames = self.get_filename_by_config(data_types, word_size, num_words, words_per_row, fanouts)
+            sae_delay_df, sae_slew_df = self.get_csv_data(filenames)
+            
+            delay_sums = self.get_delay_chain_sums(sae_delay_df)
+            slew_sums = self.get_delay_chain_avg(sae_slew_df)
+            dc_delays.append(self.get_average(delay_sums))
+            dc_slews.append(self.get_average(slew_sums))
+            
+            rise_delay, fall_delay = self.get_rise_fall_dc_sum(sae_delay_df)
+            rise_delay_avgs.append(self.get_average(rise_delay))
+            fall_delay_avgs.append(self.get_average(fall_delay))
+            
+            rise_slews, fall_slews = self.get_rise_fall_dc_avg(sae_slew_df)
+            rise_slew_avgs.append(self.get_average(rise_slews))
+            fall_slew_avgs.append(self.get_average(fall_slews))
+            debug.info(1,"DC config={}: delay avg={} slew avg={}".format(fanouts, dc_delays[-1], dc_slews[-1]))
+            
+        #Sort by the delays then graph
+        config_copy = list(fanout_configs)
+        all_data = zip(dc_delays,config_copy,dc_slews)
+        dc_delays,config_copy,dc_slews = zip(*sorted(all_data))
+        x_ax_label = 'DC Fanouts'
+        y_ax_labels = ['Average Delay (ns)', 'Average Input Slew (ns)']
+        self.plot_delay_variance_data_sets(config_copy, x_ax_label, y_ax_labels, dc_delays, dc_slews)
+        
+        config_copy = list(fanout_configs)
+        all_data = zip(rise_delay_avgs,config_copy,rise_slew_avgs)
+        rise_delay_avgs,config_copy,rise_slew_avgs = zip(*sorted(all_data))
+        x_ax_label = 'DC Fanouts'
+        y_ax_labels = ['Average Rise Delay (ns)', 'Average Input Slew (ns)']
+        self.plot_delay_variance_data_sets(config_copy, x_ax_label, y_ax_labels, rise_delay_avgs, rise_slew_avgs)
+        
+        config_copy = list(fanout_configs)
+        all_data = zip(fall_delay_avgs,config_copy,fall_slew_avgs)
+        fall_delay_avgs,config_copy,fall_slew_avgs = zip(*sorted(all_data))
+        x_ax_label = 'DC Fanouts'
+        y_ax_labels = ['Average Fall Delay (ns)', 'Average Input Slew (ns)']
+        self.plot_delay_variance_data_sets(config_copy, x_ax_label, y_ax_labels, fall_delay_avgs, fall_slew_avgs)
+    
+    
+    def get_delay_chain_data(self, sae_dataframe):
+        """Get the data of the delay chain over different corners"""
         start_dc_pos = sae_dataframe.columns.get_loc('dc_start_ind')
         end_dc_pos = sae_dataframe.columns.get_loc('dc_end_ind')
         start_data_pos = len(self.config_fields)+len(self.sae_config_fields)+1 #items before this point are configuration related
-        delay_sums = []
-        row_count = 0
+        delay_data = []
         #Get delay sums over different corners
         for sae_row in sae_dataframe.itertuples():
             start_dc, end_dc = sae_row[start_dc_pos+1], sae_row[end_dc_pos+1]
             dc_delays = sae_row[start_data_pos+start_dc:start_data_pos+end_dc]
-            delay_sums.append(sum(dc_delays))
-        return delay_sums
+            delay_data.append(dc_delays)
+        return delay_data
         
+    def get_delay_chain_sums(self, sae_dataframe):
+        """Calculate the sum of each delay chain for each corner"""
+        dc_data = self.get_delay_chain_data(sae_dataframe)
+        return [sum(data_list) for data_list in dc_data]
+    
+    def get_delay_chain_avg(self, sae_dataframe):
+        """Calculate the average of each delay chain for each corner"""
+        dc_data = self.get_delay_chain_data(sae_dataframe)
+        return [sum(data_list)/len(data_list) for data_list in dc_data]
+    
+    def get_rise_fall_dc_data_per_corner(self,sae_dataframe):
+        """Extracts the data from the dataframe which represents the delay chain.
+           Delay chain data is marked by indices in the CSV.
+        """
+        start_dc_pos = sae_dataframe.columns.get_loc('dc_start_ind')
+        end_dc_pos = sae_dataframe.columns.get_loc('dc_end_ind')
+        start_data_pos = len(self.config_fields)+len(self.sae_config_fields)+1 #items before this point are configuration related
+        rise_data = []
+        fall_data = []
+        #Get delay sums over different corners
+        for sae_row in sae_dataframe.itertuples():
+            start_dc, end_dc = sae_row[start_dc_pos+1], sae_row[end_dc_pos+1]
+            fall_list = sae_row[start_data_pos+start_dc:start_data_pos+end_dc:2]
+            rise_list = sae_row[start_data_pos+start_dc+1:start_data_pos+end_dc:2]
+            fall_data.append(fall_list)
+            rise_data.append(rise_list) 
+        return rise_data, fall_data
+    
+    def get_rise_fall_dc_sum(self,sae_dataframe):
+        """Gets the delay/slew sum of the delay chain for every corner"""
+        #Get list of lists of delay chain data and reduce to sums
+        rise_data, fall_data = self.get_rise_fall_dc_data_per_corner(sae_dataframe)
+        rise_sums = [sum(dc_data) for dc_data in rise_data]
+        fall_sums = [sum(dc_data) for dc_data in fall_data]
+        return rise_sums,fall_sums
+    
+    def get_rise_fall_dc_avg(self,sae_dataframe):
+        """Gets the delay/slew average of the delay chain for every corner"""
+        #Get list of lists of delay chain data and reduce to sums
+        rise_data, fall_data = self.get_rise_fall_dc_data_per_corner(sae_dataframe)
+        rise_avgs = [sum(dc_data)/len(dc_data) for dc_data in rise_data]
+        fall_avgs = [sum(dc_data)/len(dc_data) for dc_data in fall_data]
+        return rise_avgs,fall_avgs
+    
+    def get_sum(self, dataframe):
+        """Get full delay from csv using the sum field in the df"""
+        return list(dataframe['sum'])
+    
     def get_variance(self, nums):
         avg = self.get_average(nums)
         delay_variance = sum((xi - avg) ** 2 for xi in nums) / len(nums)
@@ -173,15 +489,15 @@ class data_collection(openram_test):
         plt.plot(data_range, y_values, 'ro')
         plt.show()
     
-    def plot_two_data_sets(self, x_labels, y1_values, y2_values):
-        """Plots two data sets on the same x-axis. Uses hardcoded axis names."""
+    def plot_delay_variance_data_sets(self, x_labels, x_ax_name, y_labels, y1_delays, y2_vars):
+        """Plots two data sets on the same x-axis."""
         data_range = [i for i in range(len(x_labels))]
         fig, ax1 = plt.subplots()
 
         color = 'tab:red'
-        ax1.set_xlabel('DC (Stages,Fanout)')
-        ax1.set_ylabel('Average Delay (ns)', color=color)
-        ax1.plot(data_range, y1_values, marker='o', color=color, linestyle='')
+        ax1.set_xlabel(str(x_ax_name))
+        ax1.set_ylabel(y_labels[0], color=color)
+        ax1.plot(data_range, y1_delays, marker='o', color=color, linestyle='')
         ax1.tick_params(axis='y', labelcolor=color)
         ax1.tick_params(axis='x', labelrotation=-90)
 
@@ -189,8 +505,8 @@ class data_collection(openram_test):
 
         color = 'tab:blue'
         #ax2.set_xticks(data_range, x_labels)
-        ax2.set_ylabel('Delay Variance (ns)', color=color)  # we already handled the x-label with ax1
-        ax2.plot(data_range, y2_values, marker='*', color=color, linestyle='')
+        ax2.set_ylabel(y_labels[1], color=color)  # we already handled the x-label with ax1
+        ax2.plot(data_range, y2_vars, marker='*', color=color, linestyle='')
         ax2.tick_params(axis='y', labelcolor=color)
 
         fig.tight_layout()  # otherwise the right y-label is slightly clipped

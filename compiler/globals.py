@@ -168,8 +168,10 @@ def setup_bitcell():
     if (OPTS.num_rw_ports==1 and OPTS.num_w_ports==0 and OPTS.num_r_ports==0):
         OPTS.bitcell = "bitcell"
         OPTS.replica_bitcell = "replica_bitcell"
-    # If we have non-1rw ports, figure out the right bitcell to use
-    else:
+    # If we have non-1rw ports,
+    # and the user didn't over-ride the bitcell manually,
+    # figure out the right bitcell to use
+    elsif (OPTs.bitcell=="bitcell" and OPTS.replica_bitcell=="replica_bitcell"):
         ports = ""
         if OPTS.num_rw_ports>0:
             ports += "{}rw_".format(OPTS.num_rw_ports)

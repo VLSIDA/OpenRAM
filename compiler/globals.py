@@ -171,7 +171,7 @@ def setup_bitcell():
     # If we have non-1rw ports,
     # and the user didn't over-ride the bitcell manually,
     # figure out the right bitcell to use
-    elsif (OPTs.bitcell=="bitcell" and OPTS.replica_bitcell=="replica_bitcell"):
+    elif (OPTs.bitcell=="bitcell" and OPTS.replica_bitcell=="replica_bitcell"):
         ports = ""
         if OPTS.num_rw_ports>0:
             ports += "{}rw_".format(OPTS.num_rw_ports)

@@ -1,8 +1,6 @@
 word_size = 2
 num_words = 16
 
-bitcell = "bitcell_1rw_1r"
-replica_bitcell = "replica_bitcell_1rw_1r"
 num_rw_ports = 1
 num_r_ports = 1
 num_w_ports = 0

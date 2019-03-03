@@ -165,23 +165,25 @@ def setup_bitcell():
     """
     global OPTS
 
-    if (OPTS.num_rw_ports==1 and OPTS.num_w_ports==0 and OPTS.num_r_ports==0):
-        OPTS.bitcell = "bitcell"
-        OPTS.replica_bitcell = "replica_bitcell"
     # If we have non-1rw ports,
     # and the user didn't over-ride the bitcell manually,
     # figure out the right bitcell to use
-    elif (OPTs.bitcell=="bitcell" and OPTS.replica_bitcell=="replica_bitcell"):
-        ports = ""
-        if OPTS.num_rw_ports>0:
-            ports += "{}rw_".format(OPTS.num_rw_ports)
-        if OPTS.num_w_ports>0:
-            ports += "{}w_".format(OPTS.num_w_ports)
-        if OPTS.num_r_ports>0:
-            ports += "{}r".format(OPTS.num_r_ports)
+    if (OPTS.bitcell=="bitcell" and OPTS.replica_bitcell=="replica_bitcell"):
+        
+        if (OPTS.num_rw_ports==1 and OPTS.num_w_ports==0 and OPTS.num_r_ports==0):
+            OPTS.bitcell = "bitcell"
+            OPTS.replica_bitcell = "replica_bitcell"
+        else:
+            ports = ""
+            if OPTS.num_rw_ports>0:
+                ports += "{}rw_".format(OPTS.num_rw_ports)
+            if OPTS.num_w_ports>0:
+                ports += "{}w_".format(OPTS.num_w_ports)
+            if OPTS.num_r_ports>0:
+                ports += "{}r".format(OPTS.num_r_ports)
 
-        OPTS.bitcell = "bitcell_"+ports
-        OPTS.replica_bitcell = "replica_bitcell_"+ports
+            OPTS.bitcell = "bitcell_"+ports
+            OPTS.replica_bitcell = "replica_bitcell_"+ports
 
         # See if a custom bitcell exists
         from importlib import find_loader
@@ -195,8 +197,8 @@ def setup_bitcell():
             OPTS.replica_bitcell = "replica_pbitcell"
             if not OPTS.is_unit_test:
                 debug.warning("Using the parameterized bitcell which may have suboptimal density.")
-        else:
-            debug.info(1,"Using custom bitcell: {}".format(OPTS.bitcell))    
+                
+    debug.info(1,"Using bitcell: {}".format(OPTS.bitcell))    
 
 
 def get_tool(tool_type, preferences, default_name=None):

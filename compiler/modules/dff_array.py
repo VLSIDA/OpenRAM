@@ -154,8 +154,8 @@ class dff_array(design.design):
             
         
 
-    def analytical_delay(self, slew, load=0.0):
-        return self.dff.analytical_delay(slew=slew, load=load)
+    def analytical_delay(self, corner, slew, load=0.0):
+        return self.dff.analytical_delay(corner, slew=slew, load=load)
 
     def get_clk_cin(self):
         """Return the total capacitance (in relative units) that the clock is loaded by in the dff array"""

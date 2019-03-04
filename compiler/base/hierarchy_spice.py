@@ -2,6 +2,7 @@ import debug
 import re
 import os
 import math
+import tech
 
 class spice():
     """
@@ -218,7 +219,7 @@ class spice():
         del usedMODS
         spfile.close()
 
-    def analytical_delay(self, slew, load=0.0):
+    def analytical_delay(self, corner, slew, load=0.0):
         """Inform users undefined delay module while building new modules"""
         debug.warning("Design Class {0} delay function needs to be defined"
                       .format(self.__class__.__name__))
@@ -228,15 +229,21 @@ class spice():
         # return 0 to keep code running while building
         return delay_data(0.0, 0.0)
 
-    def cal_delay_with_rc(self, r, c ,slew, swing = 0.5):
+    def cal_delay_with_rc(self, corner, r, c ,slew, swing = 0.5):
         """ 
         Calculate the delay of a mosfet by 
         modeling it as a resistance driving a capacitance
         """
         swing_factor = abs(math.log(1-swing)) # time constant based on swing
+        proc,volt,temp = corner
+        #FIXME: type of delay is needed to know which process to use.
+        proc_mult = max(self.get_process_delay_factor(proc)) 
+        volt_mult = self.get_voltage_delay_factor(volt)
+        temp_mult = self.get_temp_delay_factor(temp)
         delay = swing_factor * r * c #c is in ff and delay is in fs
+        delay = delay * proc_mult * volt_mult * temp_mult
         delay = delay * 0.001 #make the unit to ps
-
+        
         # Output slew should be linear to input slew which is described 
         # as 0.005* slew.
 
@@ -247,6 +254,36 @@ class spice():
         slew = delay * 0.6 * 2 + 0.005 * slew
         return delay_data(delay = delay, slew = slew)
 
+    def get_process_delay_factor(self, proc):
+        """Returns delay increase estimate based off process
+           Currently does +/-10 for fast/slow corners."""
+        proc_factors = []
+        for mos_proc in proc:
+            if mos_proc == 'T':
+                proc_factors.append(1.0)
+            elif mos_proc == 'F':
+                proc_factors.append(0.9)
+            elif mos_proc == 'S':
+                proc_factors.append(1.1)  
+        return proc_factors
+        
+    def get_voltage_delay_factor(self, voltage):
+        """Returns delay increase due to voltage.
+           Implemented as linear factor based off nominal voltage.
+        """
+        return tech.spice['vdd_nominal']/voltage
+        
+    def get_temp_delay_factor(self, temp):
+        """Returns delay increase due to temperature (in C).
+           Determines effect on threshold voltage and then linear factor is estimated.
+        """
+        #Some portions of equation condensed (phi_t = k*T/q for T in Kelvin) in mV
+        #(k/q)/100 = .008625, The division 100 simplifies the conversion from C to K and mV to V
+        thermal_voltage_nom = .008625*tech.spice["temp_nominal"]
+        thermal_voltage = .008625*temp
+        vthresh = (tech.spice["v_threshold_typical"]+2*(thermal_voltage-thermal_voltage_nom))
+        #Calculate effect on Vdd-Vth. The current vdd is not used here. A separate vdd factor is calculated.
+        return (tech.spice['vdd_nominal'] - tech.spice["v_threshold_typical"])/(tech.spice['vdd_nominal']-vthresh)
 
     def return_delay(self, delay, slew):
         return delay_data(delay, slew)

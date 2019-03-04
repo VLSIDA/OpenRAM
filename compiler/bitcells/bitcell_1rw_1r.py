@@ -24,7 +24,7 @@ class bitcell_1rw_1r(design.design):
         self.height = bitcell_1rw_1r.height
         self.pin_map = bitcell_1rw_1r.pin_map
 
-    def analytical_delay(self, slew, load=0, swing = 0.5):
+    def analytical_delay(self, corner, slew, load=0, swing = 0.5):
         # delay of bit cell is not like a driver(from WL)
         # so the slew used should be 0
         # it should not be slew dependent?
@@ -33,7 +33,7 @@ class bitcell_1rw_1r(design.design):
         from tech import spice
         r = spice["min_tx_r"]*3
         c_para = spice["min_tx_drain_c"]
-        result = self.cal_delay_with_rc(r = r, c =  c_para+load, slew = slew, swing = swing)
+        result = self.cal_delay_with_rc(corner, r = r, c =  c_para+load, slew = slew, swing = swing)
         return result
    
  

@@ -60,15 +60,15 @@ class hierarchical_predecode3x8(hierarchical_predecode):
         return combination
 
 
-    def analytical_delay(self, slew, load = 0.0 ):
+    def analytical_delay(self, corner, slew, load = 0.0 ):
         # A -> Abar
-        a_t_b_delay = self.inv.analytical_delay(slew=slew, load=self.nand.input_load())
+        a_t_b_delay = self.inv.analytical_delay(corner, slew=slew, load=self.nand.input_load())
 
         # Abar -> z
-        b_t_z_delay = self.nand.analytical_delay(slew=a_t_b_delay.slew, load=self.inv.input_load())
+        b_t_z_delay = self.nand.analytical_delay(corner, slew=a_t_b_delay.slew, load=self.inv.input_load())
 
         # Z -> out
-        a_t_out_delay = self.inv.analytical_delay(slew=b_t_z_delay.slew, load=load)
+        a_t_out_delay = self.inv.analytical_delay(corner, slew=b_t_z_delay.slew, load=load)
 
         return a_t_b_delay + b_t_z_delay + a_t_out_delay
 

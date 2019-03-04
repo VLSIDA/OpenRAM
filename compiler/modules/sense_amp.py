@@ -31,11 +31,11 @@ class sense_amp(design.design):
         bitline_pmos_size = 8 #FIXME: This should be set somewhere and referenced. Probably in tech file.
         return spice["min_tx_drain_c"]*(bitline_pmos_size/parameter["min_tx_size"])#ff   
         
-    def analytical_delay(self, slew, load=0.0):
+    def analytical_delay(self, corner, slew, load=0.0):
         from tech import spice
         r = spice["min_tx_r"]/(10)
         c_para = spice["min_tx_drain_c"]
-        result = self.cal_delay_with_rc(r = r, c =  c_para+load, slew = slew)
+        result = self.cal_delay_with_rc(corner, r = r, c =  c_para+load, slew = slew)
         return self.return_delay(result.delay, result.slew)
 
     def analytical_power(self, proc, vdd, temp, load):

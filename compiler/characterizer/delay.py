@@ -907,7 +907,7 @@ class delay(simulation):
         for slew in slews:
             for load in loads:
                 self.set_load_slew(load,slew)
-                bank_delay = self.sram.analytical_delay(self.vdd_voltage, self.slew,self.load)
+                bank_delay = self.sram.analytical_delay(self.corner, self.slew,self.load)
                 for port in self.all_ports:
                     for mname in self.delay_meas_names+self.power_meas_names:
                         if "power" in mname:
@@ -921,8 +921,9 @@ class delay(simulation):
         period_margin = 0.1
         risefall_delay = bank_delay[self.read_ports[0]].delay/1e3
         sram_data = { "min_period":risefall_delay*2*period_margin, 
-                      "leakage_power": power.leakage}                    
-         
+                      "leakage_power": power.leakage}
+        debug.info(2,"SRAM Data:\n{}".format(sram_data))                 
+        debug.info(2,"Port Data:\n{}".format(port_data)) 
         return (sram_data,port_data)
         
     

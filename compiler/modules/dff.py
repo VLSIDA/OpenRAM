@@ -39,7 +39,7 @@ class dff(design.design):
         transition_prob = spice["flop_transition_prob"]
         return transition_prob*(c_load + c_para) 
 
-    def analytical_delay(self, slew, load = 0.0):
+    def analytical_delay(self, corner, slew, load = 0.0):
         # dont know how to calculate this now, use constant in tech file
         result = self.return_delay(spice["dff_delay"], spice["dff_slew"])
         return result

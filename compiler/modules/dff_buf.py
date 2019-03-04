@@ -172,11 +172,11 @@ class dff_buf(design.design):
         
         
 
-    def analytical_delay(self, slew, load=0.0):
+    def analytical_delay(self, corner, slew, load=0.0):
         """ Calculate the analytical delay of DFF-> INV -> INV """
-        dff_delay=self.dff.analytical_delay(slew=slew, load=self.inv1.input_load())
-        inv1_delay = self.inv1.analytical_delay(slew=dff_delay.slew, load=self.inv2.input_load()) 
-        inv2_delay = self.inv2.analytical_delay(slew=inv1_delay.slew, load=load)
+        dff_delay=self.dff.analytical_delay(corner, slew=slew, load=self.inv1.input_load())
+        inv1_delay = self.inv1.analytical_delay(corner, slew=dff_delay.slew, load=self.inv2.input_load()) 
+        inv2_delay = self.inv2.analytical_delay(corner, slew=inv1_delay.slew, load=load)
         return dff_delay + inv1_delay + inv2_delay
             
     def get_clk_cin(self):

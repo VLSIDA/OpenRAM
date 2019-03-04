@@ -172,7 +172,7 @@ class pdriver(pgate.pgate):
     def input_load(self):
         return self.inv_list[0].input_load()
 
-    def analytical_delay(self, slew, load=0.0):
+    def analytical_delay(self, corner, slew, load=0.0):
         """Calculate the analytical delay of INV1 -> ... -> INVn"""
 
         cout_list = []
@@ -184,7 +184,7 @@ class pdriver(pgate.pgate):
         
         delays = []
         for inv,cout in zip(self.inv_list,cout_list):
-            delays.append(inv.analytical_delay(slew=input_slew, load=cout))
+            delays.append(inv.analytical_delay(corner, slew=input_slew, load=cout))
             input_slew = delays[-1].slew
 
         delay = delays[0]

@@ -107,10 +107,10 @@ class pand2(pgate.pgate):
         
         
 
-    def analytical_delay(self, slew, load=0.0):
+    def analytical_delay(self, corner, slew, load=0.0):
         """ Calculate the analytical delay of DFF-> INV -> INV """
-        nand_delay = selfnand.analytical_delay(slew=slew, load=self.inv.input_load()) 
-        inv_delay = self.inv.analytical_delay(slew=nand_delay.slew, load=load)
+        nand_delay = self.nand.analytical_delay(corner, slew=slew, load=self.inv.input_load()) 
+        inv_delay = self.inv.analytical_delay(corner, slew=nand_delay.slew, load=load)
         return nand_delay + inv_delay
     
     def get_stage_efforts(self, external_cout, inp_is_rise=False):

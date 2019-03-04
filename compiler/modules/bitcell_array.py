@@ -130,7 +130,7 @@ class bitcell_array(design.design):
                         self.add_power_pin(pin_name, pin.center(), 0, pin.layer)
                             
 
-    def analytical_delay(self, slew, load=0):
+    def analytical_delay(self, corner, slew, load=0):
         from tech import drc
         wl_wire = self.gen_wl_wire()
         wl_wire.return_delay_over_wire(slew)
@@ -141,7 +141,7 @@ class bitcell_array(design.design):
         cell_load = 2 * bl_wire.return_input_cap() # we ingore the wire r
                                                    # hence just use the whole c
         bl_swing = 0.1
-        cell_delay = self.cell.analytical_delay(wl_to_cell_delay.slew, cell_load, swing = bl_swing)
+        cell_delay = self.cell.analytical_delay(corner, wl_to_cell_delay.slew, cell_load, swing = bl_swing)
 
         #we do not consider the delay over the wire for now
         return self.return_delay(cell_delay.delay+wl_to_cell_delay.delay,

@@ -147,19 +147,19 @@ class bitcell_array(design.design):
         return self.return_delay(cell_delay.delay+wl_to_cell_delay.delay,
                                  wl_to_cell_delay.slew)
                         
-    def analytical_power(self, proc, vdd, temp, load):
+    def analytical_power(self, corner, load):
         """Power of Bitcell array and bitline in nW."""
-        from tech import drc
+        from tech import drc, parameter
         
         # Dynamic Power from Bitline
         bl_wire = self.gen_bl_wire()
         cell_load = 2 * bl_wire.return_input_cap() 
-        bl_swing = 0.1 #This should probably be defined in the tech file or input
+        bl_swing = parameter["rbl_height_percentage"]
         freq = spice["default_event_rate"]
-        bitline_dynamic = bl_swing*cell_load*vdd*vdd*freq #not sure if calculation is correct
+        bitline_dynamic = self.calc_dynamic_power(corner, cell_load, freq, swing=bl_swing)
         
         #Calculate the bitcell power which currently only includes leakage 
-        cell_power = self.cell.analytical_power(proc, vdd, temp, load)
+        cell_power = self.cell.analytical_power(corner, load)
         
         #Leakage power grows with entire array and bitlines.
         total_power = self.return_power(cell_power.dynamic + bitline_dynamic * self.column_size,

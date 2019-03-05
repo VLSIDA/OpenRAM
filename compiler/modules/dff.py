@@ -21,11 +21,11 @@ class dff(design.design):
         self.height = dff.height
         self.pin_map = dff.pin_map
     
-    def analytical_power(self, proc, vdd, temp, load):
+    def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""
         c_eff = self.calculate_effective_capacitance(load)
-        f = spice["default_event_rate"]
-        power_dyn = c_eff*vdd*vdd*f
+        freq = spice["default_event_rate"]
+        power_dyn = self.calc_dynamic_power(corner, c_eff, freq)
         power_leak = spice["msflop_leakage"]
         
         total_power = self.return_power(power_dyn, power_leak)

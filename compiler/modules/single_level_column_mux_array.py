@@ -218,11 +218,11 @@ class single_level_column_mux_array(design.design):
 
     def analytical_delay(self, corner, vdd, slew, load=0.0):
         from tech import spice, parameter
-        proc,volt,temp = corner
+        proc,vdd,temp = corner
         r = spice["min_tx_r"]/(self.mux.ptx_width/parameter["min_tx_size"])
         #Drains of mux transistors make up capacitance. 
         c_para = spice["min_tx_drain_c"]*(self.mux.ptx_width/parameter["min_tx_size"])*self.words_per_row#ff
-        volt_swing = spice["v_threshold_typical"]/volt
+        volt_swing = spice["v_threshold_typical"]/vdd
         
         result = self.cal_delay_with_rc(corner, r = r, c =  c_para+load, slew = slew, swing = volt_swing)
         return self.return_delay(result.delay, result.slew)            

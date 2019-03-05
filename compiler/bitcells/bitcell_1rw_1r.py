@@ -89,7 +89,7 @@ class bitcell_1rw_1r(design.design):
         column_pins = ["br0"]
         return column_pins
     
-    def analytical_power(self, proc, vdd, temp, load):
+    def analytical_power(self, corner, load):
         """Bitcell power in nW. Only characterizes leakage."""
         from tech import spice
         leakage = spice["bitcell_leakage"]

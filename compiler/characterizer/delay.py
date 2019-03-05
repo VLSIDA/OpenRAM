@@ -931,7 +931,7 @@ class delay(simulation):
         """Get the dynamic and leakage power from the SRAM"""
         #slews unused, only last load is used
         load = loads[-1]
-        power = self.sram.analytical_power(self.process, self.vdd_voltage, self.temperature, load) 
+        power = self.sram.analytical_power(self.corner, load) 
         #convert from nW to mW
         power.dynamic /= 1e6 
         power.leakage /= 1e6

@@ -88,11 +88,11 @@ class design(hierarchy_design):
             self.readonly_ports.append(port_number)
             port_number += 1
 
-    def analytical_power(self, proc, vdd, temp, load):
+    def analytical_power(self, corner, load):
         """ Get total power of a module  """
         total_module_power = self.return_power()
         for inst in self.insts:
-            total_module_power += inst.mod.analytical_power(proc, vdd, temp, load)
+            total_module_power += inst.mod.analytical_power(corner, load)
         return total_module_power
     
     def __str__(self):

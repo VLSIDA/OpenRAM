@@ -874,7 +874,7 @@ class pbitcell(design.design):
         result = self.cal_delay_with_rc(corner, r = r, c =  c_para+load, slew = slew, swing = swing)
         return result
         
-    def analytical_power(self, proc, vdd, temp, load):
+    def analytical_power(self, corner, load):
         """Bitcell power in nW. Only characterizes leakage."""
         from tech import spice
         leakage = spice["bitcell_leakage"]

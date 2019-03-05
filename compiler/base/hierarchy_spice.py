@@ -235,10 +235,10 @@ class spice():
         modeling it as a resistance driving a capacitance
         """
         swing_factor = abs(math.log(1-swing)) # time constant based on swing
-        proc,volt,temp = corner
+        proc,vdd,temp = corner
         #FIXME: type of delay is needed to know which process to use.
         proc_mult = max(self.get_process_delay_factor(proc)) 
-        volt_mult = self.get_voltage_delay_factor(volt)
+        volt_mult = self.get_voltage_delay_factor(vdd)
         temp_mult = self.get_temp_delay_factor(temp)
         delay = swing_factor * r * c #c is in ff and delay is in fs
         delay = delay * proc_mult * volt_mult * temp_mult
@@ -290,6 +290,22 @@ class spice():
 
     def generate_rc_net(self,lump_num, wire_length, wire_width):
         return wire_spice_model(lump_num, wire_length, wire_width)
+        
+    def calc_dynamic_power(self, corner, c, freq, swing=1.0):
+        """ 
+        Calculate dynamic power using effective capacitance, frequency, and corner (PVT)
+        """
+        proc,vdd,temp = corner
+        net_vswing = vdd*swing
+        power_dyn = c*vdd*net_vswing*freq
+        
+        #Apply process and temperature factors. Roughly, process and Vdd affect the delay which affects the power.
+        #No other estimations are currently used. Increased delay->slower freq.->less power
+        proc_div = max(self.get_process_delay_factor(proc)) 
+        temp_div = self.get_temp_delay_factor(temp)
+        power_dyn = power_dyn/(proc_div*temp_div)
+        
+        return power_dyn  
         
     def return_power(self, dynamic=0.0, leakage=0.0):
         return power_data(dynamic, leakage)

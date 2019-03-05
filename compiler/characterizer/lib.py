@@ -483,17 +483,16 @@ class lib:
         self.lib.write("        }\n")
         
     def compute_delay(self):
-        """ Do the analysis if we haven't characterized the SRAM yet """
-        if not hasattr(self,"d"):
-            self.d = delay(self.sram, self.sp_file, self.corner)
-            if self.use_model:
-                char_results = self.d.analytical_delay(self.slews,self.loads)
-                self.char_sram_results, self.char_port_results = char_results  
-            else:
-                probe_address = "1" * self.sram.addr_size
-                probe_data = self.sram.word_size - 1
-                char_results = self.d.analyze(probe_address, probe_data, self.slews, self.loads)
-                self.char_sram_results, self.char_port_results = char_results  
+        """Compute SRAM delays for current corner"""
+        self.d = delay(self.sram, self.sp_file, self.corner)
+        if self.use_model:
+            char_results = self.d.analytical_delay(self.slews,self.loads)
+            self.char_sram_results, self.char_port_results = char_results  
+        else:
+            probe_address = "1" * self.sram.addr_size
+            probe_data = self.sram.word_size - 1
+            char_results = self.d.analyze(probe_address, probe_data, self.slews, self.loads)
+            self.char_sram_results, self.char_port_results = char_results  
               
     def compute_setup_hold(self):
         """ Do the analysis if we haven't characterized a FF yet """

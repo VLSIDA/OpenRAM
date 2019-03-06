@@ -25,6 +25,13 @@ other views necessary to use SRAMs in ASIC design. OpenRAM supports
 integration in both commercial and open-source flows with both
 predictive and fabricable technologies.
 
+# Documentation
+
+Please take a look at our presentation We have created a detailed
+presentation that serves as our [documentation][documentation].
+This is the most up-to-date information, so please let us know if you see
+things that need to be fixed.
+
 # Basic Setup
 
 ## Docker Image
@@ -197,6 +204,7 @@ Each specific technology (e.g., [FreePDK45]) should be a subdirectory
 # Further Help
 
 + [Additional hints](./HINTS.md)
++ [Documentation][documentation]
 + [OpenRAM Slack Workspace][Slack]
 + [OpenRAM Users Group][user-group] ([subscribe here][user-group-subscribe])
 + [OpenRAM Developers Group][dev-group] ([subscribe here][dev-group-subscribe])
@@ -233,7 +241,7 @@ If I forgot to add you, please let me know!
 [Github pull request]:   https://github.com/VLSIDA/PrivateRAM/pulls
 [Github projects]:       https://github.com/VLSIDA/PrivateRAM
 
-[email me]:              mailto:mrg+openram@ucsc.edu
+[documentation]:         https://docs.google.com/presentation/d/10InGB33N51I6oBHnqpU7_w9DXlx-qe9zdrlco2Yc5co/edit?usp=sharing
 [dev-group]:             mailto:openram-dev-group@ucsc.edu
 [user-group]:            mailto:openram-user-group@ucsc.edu
 [dev-group-subscribe]:   mailto:openram-dev-group+subscribe@ucsc.edu

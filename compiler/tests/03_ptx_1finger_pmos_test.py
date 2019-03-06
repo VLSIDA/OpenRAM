@@ -7,19 +7,20 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
-class ptx_test(openram_test):
+class ptx_1finger_pmos_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        import ptx
         import tech
 
         debug.info(2, "Checking min size PMOS with 1 finger")
-        fet = ptx.ptx(width=tech.drc["minwidth_tx"],
-                      mults=1,
-                      tx_type="pmos")
+        fet = factory.create(module_type="ptx",
+                             width=tech.drc["minwidth_tx"],
+                             mults=1,
+                             tx_type="pmos")
         self.local_drc_check(fet)
 
         globals.end_openram()

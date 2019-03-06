@@ -58,7 +58,7 @@ class sram_factory:
             (obj_kwargs, obj_item) = obj
             # Must have the same dictionary exactly (conservative)
             if obj_kwargs == kwargs:
-                debug.info(1, "Existing module: type={0} name={1} kwargs={2}".format(module_type, obj_item.name, str(kwargs)))
+                debug.info(3, "Existing module: type={0} name={1} kwargs={2}".format(module_type, obj_item.name, str(kwargs)))
                 return obj_item
 
         # Use the default  name if there are default arguments

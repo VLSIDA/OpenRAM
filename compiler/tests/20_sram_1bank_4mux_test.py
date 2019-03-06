@@ -24,13 +24,15 @@ class sram_1bank_4mux_test(openram_test):
 
         c.words_per_row=4
         c.recompute_sizes()
-        debug.info(1, "Layout test for {}rw,{}r,{}w sram with {} bit words, {} words, {} words per row, {} banks".format(OPTS.num_rw_ports,
-                                                                                                                         OPTS.num_r_ports,
-                                                                                                                         OPTS.num_w_ports,
-                                                                                                                         c.word_size,
-                                                                                                                         c.num_words,
-                                                                                                                         c.words_per_row,
-                                                                                                                         c.num_banks))
+        debug.info(1, "Layout test for {}rw,{}r,{}w sram "
+                   "with {} bit words, {} words, {} words per "
+                   "row, {} banks".format(OPTS.num_rw_ports,
+                                          OPTS.num_r_ports,
+                                          OPTS.num_w_ports,
+                                          c.word_size,
+                                          c.num_words,
+                                          c.words_per_row,
+                                          c.num_banks))
         a = factory.create(module_type="sram", sram_config=c)
         self.local_check(a, final_verification=True)
 

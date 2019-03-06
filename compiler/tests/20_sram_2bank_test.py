@@ -24,7 +24,15 @@ class sram_2bank_test(openram_test):
 
         c.words_per_row=1
         c.recompute_sizes()
-        debug.info(1, "Two bank, no column mux with control logic")
+        debug.info(1, "Layout test for {}rw,{}r,{}w sram "
+                   "with {} bit words, {} words, {} words per "
+                   "row, {} banks".format(OPTS.num_rw_ports,
+                                          OPTS.num_r_ports,
+                                          OPTS.num_w_ports,
+                                          c.word_size,
+                                          c.num_words,
+                                          c.words_per_row,
+                                          c.num_banks))
         factory.reset()
         a = factory.create(module_type="sram", sram_config=c)
         self.local_check(a, final_verification=True)
@@ -32,7 +40,15 @@ class sram_2bank_test(openram_test):
         c.num_words=64
         c.words_per_row=2
         c.recompute_sizes()
-        debug.info(1, "Two bank two way column mux with control logic")
+        debug.info(1, "Layout test for {}rw,{}r,{}w sram "
+                   "with {} bit words, {} words, {} words per "
+                   "row, {} banks".format(OPTS.num_rw_ports,
+                                          OPTS.num_r_ports,
+                                          OPTS.num_w_ports,
+                                          c.word_size,
+                                          c.num_words,
+                                          c.words_per_row,
+                                          c.num_banks))
         factory.reset()
         a = factory.create(module_type="sram", sram_config=c)
         self.local_check(a, final_verification=True)
@@ -40,7 +56,15 @@ class sram_2bank_test(openram_test):
         c.num_words=128
         c.words_per_row=4
         c.recompute_sizes()
-        debug.info(1, "Two bank, four way column mux with control logic")
+        debug.info(1, "Layout test for {}rw,{}r,{}w sram "
+                   "with {} bit words, {} words, {} words per "
+                   "row, {} banks".format(OPTS.num_rw_ports,
+                                          OPTS.num_r_ports,
+                                          OPTS.num_w_ports,
+                                          c.word_size,
+                                          c.num_words,
+                                          c.words_per_row,
+                                          c.num_banks))
         factory.reset()
         a = factory.create(module_type="sram", sram_config=c)
         self.local_check(a, final_verification=True)
@@ -49,7 +73,15 @@ class sram_2bank_test(openram_test):
         c.num_words=256
         c.words_per_row=8
         c.recompute_sizes()
-        debug.info(1, "Two bank, eight way column mux with control logic")
+        debug.info(1, "Layout test for {}rw,{}r,{}w sram "
+                   "with {} bit words, {} words, {} words per "
+                   "row, {} banks".format(OPTS.num_rw_ports,
+                                          OPTS.num_r_ports,
+                                          OPTS.num_w_ports,
+                                          c.word_size,
+                                          c.num_words,
+                                          c.words_per_row,
+                                          c.num_banks))
         factory.reset()
         a = factory.create(module_type="sram", sram_config=c)
         self.local_check(a, final_verification=True)

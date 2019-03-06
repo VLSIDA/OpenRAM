@@ -137,10 +137,6 @@ def init_openram(config_file, is_unit_test=True):
 
     setup_bitcell()
     
-    # Reset the static duplicate name checker for unit tests.
-    import hierarchy_design
-    hierarchy_design.hierarchy_design.name_map=[]
-    
     global OPTS
     global CHECKPOINT_OPTS
 

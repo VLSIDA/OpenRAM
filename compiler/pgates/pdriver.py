@@ -172,7 +172,7 @@ class pdriver(pgate.pgate):
     def input_load(self):
         return self.inv_list[0].input_load()
 
-    def analytical_delay(self, slew, load=0.0):
+    def analytical_delay(self, corner, slew, load=0.0):
         """Calculate the analytical delay of INV1 -> ... -> INVn"""
 
         cout_list = []
@@ -184,7 +184,7 @@ class pdriver(pgate.pgate):
         
         delays = []
         for inv,cout in zip(self.inv_list,cout_list):
-            delays.append(inv.analytical_delay(slew=input_slew, load=cout))
+            delays.append(inv.analytical_delay(corner, slew=input_slew, load=cout))
             input_slew = delays[-1].slew
 
         delay = delays[0]
@@ -196,17 +196,16 @@ class pdriver(pgate.pgate):
 
     def get_stage_efforts(self, external_cout, inp_is_rise=False):
         """Get the stage efforts of the A -> Z path"""
-
-        cout_list = {}
+        cout_list = []
         for prev_inv,inv in zip(self.inv_list, self.inv_list[1:]):
-            cout_list[prev_inv]=inv.get_cin()
-            
-        cout_list[self.inv_list[-1]]=external_cout
+            cout_list.append(inv.get_cin())
+        
+        cout_list.append(external_cout)
         
         stage_effort_list = []
         last_inp_is_rise = inp_is_rise
-        for inv in self.inv_list:
-            stage = inv.get_stage_effort(cout_list[inv], last_inp_is_rise)
+        for inv,cout in zip(self.inv_list,cout_list):
+            stage = inv.get_stage_effort(cout, last_inp_is_rise)
             stage_effort_list.append(stage)
             last_inp_is_rise = stage.is_rise
             

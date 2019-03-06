@@ -71,6 +71,9 @@ class options(optparse.Values):
     # You can manually specify banks, but it is better to auto-detect it.
     num_banks = 1
     
+    #Uses the delay chain size in the tech.py file rather automatic sizing.
+    use_tech_delay_chain_size = False
+    
     # These are the default modules that can be over-riden
     bank_select = "bank_select"
     bitcell_array = "bitcell_array"

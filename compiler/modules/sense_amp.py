@@ -31,14 +31,14 @@ class sense_amp(design.design):
         bitline_pmos_size = 8 #FIXME: This should be set somewhere and referenced. Probably in tech file.
         return spice["min_tx_drain_c"]*(bitline_pmos_size/parameter["min_tx_size"])#ff   
         
-    def analytical_delay(self, slew, load=0.0):
+    def analytical_delay(self, corner, slew, load=0.0):
         from tech import spice
         r = spice["min_tx_r"]/(10)
         c_para = spice["min_tx_drain_c"]
-        result = self.cal_delay_with_rc(r = r, c =  c_para+load, slew = slew)
+        result = self.cal_delay_with_rc(corner, r = r, c =  c_para+load, slew = slew)
         return self.return_delay(result.delay, result.slew)
 
-    def analytical_power(self, proc, vdd, temp, load):
+    def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""
         #Power in this module currently not defined. Returns 0 nW (leakage and dynamic).
         total_power = self.return_power()
@@ -48,4 +48,5 @@ class sense_amp(design.design):
         """Get the relative capacitance of sense amp enable gate cin"""
         pmos_cin = parameter["sa_en_pmos_size"]/drc("minwidth_tx")
         nmos_cin = parameter["sa_en_nmos_size"]/drc("minwidth_tx")
+        #sen is connected to 2 pmos isolation TX and 1 nmos per sense amp.
         return 2*pmos_cin + nmos_cin

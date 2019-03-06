@@ -499,9 +499,9 @@ class sram_base(design, verilog, lef):
         sp.close()
 
         
-    def analytical_delay(self, vdd, slew,load):
+    def analytical_delay(self, corner, slew,load):
         """ LH and HL are the same in analytical model. """
-        return self.bank.analytical_delay(vdd,slew,load)
+        return self.bank.analytical_delay(corner,slew,load)
         
     def determine_wordline_stage_efforts(self, inp_is_rise=True):
         """Get the all the stage efforts for each stage in the path from clk_buf to a wordline"""

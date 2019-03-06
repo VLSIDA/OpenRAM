@@ -236,7 +236,12 @@ spice["fet_models"] = { "TT" : [SPICE_MODEL_DIR+"/nom/pmos.sp",SPICE_MODEL_DIR+"
                         "FF" : [SPICE_MODEL_DIR+"/ff/pmos.sp",SPICE_MODEL_DIR+"/ff/nmos.sp"],
                         "FS" : [SPICE_MODEL_DIR+"/ff/pmos.sp",SPICE_MODEL_DIR+"/ss/nmos.sp"],
                         "SF" : [SPICE_MODEL_DIR+"/ss/pmos.sp",SPICE_MODEL_DIR+"/ff/nmos.sp"],                        
-                        "SS" : [SPICE_MODEL_DIR+"/ss/pmos.sp",SPICE_MODEL_DIR+"/ss/nmos.sp"] }
+                        "SS" : [SPICE_MODEL_DIR+"/ss/pmos.sp",SPICE_MODEL_DIR+"/ss/nmos.sp"],
+                        "ST" : [SPICE_MODEL_DIR+"/ss/pmos.sp",SPICE_MODEL_DIR+"/nom/nmos.sp"],
+                        "TS" : [SPICE_MODEL_DIR+"/nom/pmos.sp",SPICE_MODEL_DIR+"/ss/nmos.sp"],
+                        "FT" : [SPICE_MODEL_DIR+"/ff/pmos.sp",SPICE_MODEL_DIR+"/nom/nmos.sp"],
+                        "TF" : [SPICE_MODEL_DIR+"/nom/pmos.sp",SPICE_MODEL_DIR+"/ff/nmos.sp"],
+                        }
                         
 
 #spice stimulus related variables
@@ -261,6 +266,8 @@ spice["clk"] = "clk"
 
 # analytical delay parameters
 # FIXME: These need to be updated for SCMOS, they are copied from FreePDK45.
+spice["vdd_nominal"] = 5.0    # Typical Threshold voltage in Volts
+spice["temp_nominal"] = 25.0   # Typical Threshold voltage in Volts
 spice["v_threshold_typical"] = 1.3   # Typical Threshold voltage in Volts
 spice["wire_unit_r"] = 0.075    # Unit wire resistance in ohms/square
 spice["wire_unit_c"] = 0.64     # Unit wire capacitance ff/um^2
@@ -295,11 +302,15 @@ spice["nand3_transition_prob"] = .1094    # Transition probability of 3-input na
 spice["nor2_transition_prob"] = .1875     # Transition probability of 2-input nor.
 
 #Logical Effort relative values for the Handmade cells
+parameter["static_delay_stages"] = 4
+parameter["static_fanout_per_stage"] = 3
+parameter["static_fanout_list"] = parameter["static_delay_stages"]*[parameter["static_fanout_per_stage"]]
 parameter["dff_clk_cin"] = 27.5
 parameter["6tcell_wl_cin"] = 2
 parameter["min_inv_para_delay"] = .5
 parameter["sa_en_pmos_size"] = 24*_lambda_
 parameter["sa_en_nmos_size"] = 9*_lambda_
+parameter["rbl_height_percentage"] = .5     #Height of RBL compared to bitcell array 
 
 ###################################################
 ##END Spice Simulation Parameters

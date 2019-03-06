@@ -210,12 +210,12 @@ class wordline_driver(design.design):
                                                end=wl_offset-vector(self.m1_width,0))
 
 
-    def analytical_delay(self, slew, load=0):
+    def analytical_delay(self, corner, slew, load=0):
         # decode -> net
-        decode_t_net = self.nand2.analytical_delay(slew, self.inv.input_load())
+        decode_t_net = self.nand2.analytical_delay(corner, slew, self.inv.input_load())
 
         # net -> wl
-        net_t_wl = self.inv.analytical_delay(decode_t_net.slew, load)
+        net_t_wl = self.inv.analytical_delay(corner, decode_t_net.slew, load)
 
         return decode_t_net + net_t_wl
 

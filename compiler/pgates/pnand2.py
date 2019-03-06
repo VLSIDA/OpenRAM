@@ -227,16 +227,16 @@ class pnand2(pgate.pgate):
     def input_load(self):
         return ((self.nmos_size+self.pmos_size)/parameter["min_tx_size"])*spice["min_tx_gate_c"]
 
-    def analytical_delay(self, slew, load=0.0):
+    def analytical_delay(self, corner, slew, load=0.0):
         r = spice["min_tx_r"]/(self.nmos_size/parameter["min_tx_size"])
         c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff
-        return self.cal_delay_with_rc(r = r, c =  c_para+load, slew = slew)
+        return self.cal_delay_with_rc(corner, r = r, c =  c_para+load, slew = slew)
         
-    def analytical_power(self, proc, vdd, temp, load):
+    def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""
         c_eff = self.calculate_effective_capacitance(load)
         freq = spice["default_event_rate"]
-        power_dyn = c_eff*vdd*vdd*freq
+        power_dyn = self.calc_dynamic_power(corner, c_eff, freq)
         power_leak = spice["nand2_leakage"]
         
         total_power = self.return_power(power_dyn, power_leak)
@@ -258,4 +258,4 @@ class pnand2(pgate.pgate):
            Optional is_rise refers to the input direction rise/fall. Input inverted by this stage.
         """
         parasitic_delay = 2 
-        return logical_effort.logical_effort(self.size, self.get_cin(), cout, parasitic_delay, not inp_is_rise)
+        return logical_effort.logical_effort(self.name, self.size, self.get_cin(), cout, parasitic_delay, not inp_is_rise)

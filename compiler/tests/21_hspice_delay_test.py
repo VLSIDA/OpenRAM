@@ -23,7 +23,7 @@ class timing_sram_test(openram_test):
         from importlib import reload
         import characterizer
         reload(characterizer)
-        from characterizer import delay, bitline_delay
+        from characterizer import delay
         from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=1,
@@ -43,37 +43,44 @@ class timing_sram_test(openram_test):
 
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         d = delay(s.s, tempspice, corner)
-        bl = bitline_delay(s.s, tempspice, corner)
         import tech
         loads = [tech.spice["msflop_in_cap"]*4]
         slews = [tech.spice["rise_time"]*2]
         data, port_data = d.analyze(probe_address, probe_data, slews, loads)
-        #bitline_swing = bl.analyze(probe_address, probe_data, slews, loads)
         #Combine info about port into all data
         data.update(port_data[0])
-        
+     
         if OPTS.tech_name == "freepdk45":
-            golden_data = {'delay_hl': [0.2152017],
-                           'delay_lh': [0.2152017],
-                           'leakage_power': 0.0022907,
-                           'min_period': 0.488,
-                           'read0_power': [0.47437749999999995],
-                           'read1_power': [0.45026109999999997],
-                           'slew_hl': [0.0846786],
-                           'slew_lh': [0.0846786],
-                           'write0_power': [0.40809259999999997],
-                           'write1_power': [0.4078904]}
+            golden_data = {'delay_bl': [0.1980959],
+                         'delay_br': [0.1946091],
+                         'delay_hl': [0.2121267],
+                         'delay_lh': [0.2121267],
+                         'leakage_power': 0.0023761999999999998,
+                         'min_period': 0.43,
+                         'read0_power': [0.5139368],
+                         'read1_power': [0.48940979999999995],
+                         'slew_hl': [0.0516745],
+                         'slew_lh': [0.0516745],
+                         'volt_bl': [0.5374525],
+                         'volt_br': [1.1058],
+                         'write0_power': [0.46267169999999996],
+                         'write1_power': [0.4670826]}
         elif OPTS.tech_name == "scn4m_subm":
-            golden_data = {'delay_hl': [1.4333000000000002],
-                           'delay_lh': [1.4333000000000002],
-                           'leakage_power': 0.0271847,
-                           'min_period': 2.891,
-                           'read0_power': [15.714200000000002],
-                           'read1_power': [14.9848],
-                           'slew_hl': [0.6819276999999999],
-                           'slew_lh': [0.6819276999999999],
-                           'write0_power': [13.9658],
-                           'write1_power': [14.8422]}
+            golden_data = {'delay_bl': [1.1029],
+                         'delay_br': [0.9656455999999999],
+                         'delay_hl': [1.288],
+                         'delay_lh': [1.288],
+                         'leakage_power': 0.0273896,
+                         'min_period': 2.578,
+                         'read0_power': [16.9996],
+                         'read1_power': [16.2616],
+                         'slew_hl': [0.47891700000000004],
+                         'slew_lh': [0.47891700000000004],
+                         'volt_bl': [4.2155],
+                         'volt_br': [5.8142],
+                         'write0_power': [16.0656],
+                         'write1_power': [16.2616]}
+
         else:
             self.assertTrue(False) # other techs fail
         # Check if no too many or too few results

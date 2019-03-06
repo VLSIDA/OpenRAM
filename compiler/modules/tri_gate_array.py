@@ -116,6 +116,6 @@ class tri_gate_array(design.design):
         
 
 
-    def analytical_delay(self, slew, load=0.0):
-        return self.tri.analytical_delay(slew = slew, load = load)
+    def analytical_delay(self, corner, slew, load=0.0):
+        return self.tri.analytical_delay(corner, slew = slew, load = load)
         

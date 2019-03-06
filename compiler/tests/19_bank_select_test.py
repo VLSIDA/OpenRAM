@@ -9,21 +9,21 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
 class bank_select_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        import bank_select
 
         debug.info(1, "No column mux, rw control logic")
-        a = bank_select.bank_select(port="rw")
+        a = factory.create(module_type="bank_select", port="rw")
         self.local_check(a)
         
         OPTS.bitcell = "pbitcell"
         debug.info(1, "No column mux, rw control logic")
-        a = bank_select.bank_select(port="rw")
+        a = factory.create(module_type="bank_select", port="rw")
         self.local_check(a)
         
         OPTS.num_rw_ports = 0
@@ -31,11 +31,11 @@ class bank_select_test(openram_test):
         OPTS.num_r_ports = 1
 
         debug.info(1, "No column mux, w control logic")
-        a = bank_select.bank_select(port="w")
+        a = factory.create(module_type="bank_select", port="w")
         self.local_check(a)
         
         debug.info(1, "No column mux, r control logic")
-        a = bank_select.bank_select(port="r")
+        a = factory.create(module_type="bank_select", port="r")
         self.local_check(a)
         
         globals.end_openram()

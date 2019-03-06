@@ -9,6 +9,7 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
 @unittest.skip("SKIPPING 24_lef_sram_test")
@@ -17,7 +18,6 @@ class lef_test(openram_test):
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
 
-        from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=2,
                         num_words=16,
@@ -25,7 +25,7 @@ class lef_test(openram_test):
         c.words_per_row=1
         c.recompute_sizes()
         debug.info(1, "Testing LEF for sample 2 bit, 16 words SRAM with 1 bank")
-        s = sram(c, "sram_2_16_1_{0}".format(OPTS.tech_name))
+        s = factory.create(module_type="sram", sram_config=c, name="sram_2_16_1_{0}".format(OPTS.tech_name))
 
         gdsfile = s.name + ".gds"
         leffile = s.name + ".lef"

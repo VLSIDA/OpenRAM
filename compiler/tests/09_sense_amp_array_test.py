@@ -9,22 +9,21 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
-import debug
 from sram_factory import factory
+import debug
 
 class sense_amp_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        import sense_amp_array
 
         # check sense amp array for single port
         debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=2")
-        a = sense_amp_array.sense_amp_array(name="sa1", word_size=4, words_per_row=2)
+        a = factory.create(module_type="sense_amp_array", word_size=4, words_per_row=2)
         self.local_check(a)
 
         debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=4")
-        a = sense_amp_array.sense_amp_array(name="sa2", word_size=4, words_per_row=4)
+        a = factory.create(module_type="sense_amp_array", word_size=4, words_per_row=4)
         self.local_check(a)
         
         # check sense amp array for multi-port
@@ -35,11 +34,11 @@ class sense_amp_test(openram_test):
 
         factory.reset()
         debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=2 (multi-port case)")
-        a = sense_amp_array.sense_amp_array(name="sa3", word_size=4, words_per_row=2)
+        a = factory.create(module_type="sense_amp_array", word_size=4, words_per_row=2)
         self.local_check(a)
 
         debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=4 (multi-port case)")
-        a = sense_amp_array.sense_amp_array(name="sa4", word_size=4, words_per_row=4)
+        a = factory.create(module_type="sense_amp_array", word_size=4, words_per_row=4)
         self.local_check(a)
         
         globals.end_openram()

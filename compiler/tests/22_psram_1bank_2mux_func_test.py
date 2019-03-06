@@ -9,6 +9,7 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
 #@unittest.skip("SKIPPING 22_psram_1bank_2mux_1rw_1r_1w_func_test, third port reads are broken?")
@@ -30,7 +31,6 @@ class psram_1bank_2mux_1rw_1r_1w_func_test(openram_test):
         import characterizer
         reload(characterizer)
         from characterizer import functional, delay
-        from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=4,
                         num_words=64,
@@ -44,7 +44,7 @@ class psram_1bank_2mux_1rw_1r_1w_func_test(openram_test):
                                                                                                                               c.num_words,
                                                                                                                               c.words_per_row,
                                                                                                                               c.num_banks))
-        s = sram(c, name="sram")
+        s = factory.create(module_type="sram", sram_config=c)
         tempspice = OPTS.openram_temp + "temp.sp"        
         s.sp_write(tempspice)
         

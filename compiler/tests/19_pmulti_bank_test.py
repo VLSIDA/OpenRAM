@@ -9,6 +9,7 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
 @unittest.skip("SKIPPING 19_pmulti_bank_test")
@@ -16,7 +17,6 @@ class multi_bank_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        from bank import bank
         from sram_config import sram_config
         OPTS.bitcell = "pbitcell"
 
@@ -29,27 +29,35 @@ class multi_bank_test(openram_test):
         c.num_banks=2
 
         c.words_per_row=1
+        factory.reset()
+        c.recompute_sizes()
         debug.info(1, "No column mux")
-        a = bank(c, name="bank1_multi")
+        a = factory.create("bank", sram_config=c)
         self.local_check(a)
 
         c.num_words=32
         c.words_per_row=2
+        factory.reset()
+        c.recompute_sizes()
         debug.info(1, "Two way column mux")
-        a = bank(c, name="bank2_multi")
+        a = factory.create("bank", sram_config=c)
         self.local_check(a)
 
         c.num_words=64
         c.words_per_row=4
+        factory.reset()
+        c.recompute_sizes()
         debug.info(1, "Four way column mux")
-        a = bank(c, name="bank3_multi")
+        a = factory.create("bank", sram_config=c)
         self.local_check(a)
 
         c.word_size=2
         c.num_words=128
         c.words_per_row=8
+        factory.reset()
+        c.recompute_sizes()
         debug.info(1, "Eight way column mux")
-        a = bank(c, name="bank4_multi")
+        a = factory.create("bank", sram_config=c)
         self.local_check(a)
         
         globals.end_openram()

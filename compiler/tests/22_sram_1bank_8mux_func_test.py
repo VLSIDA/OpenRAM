@@ -9,6 +9,7 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
 #@unittest.skip("SKIPPING 22_sram_1bank_8mux_func_test")
@@ -28,7 +29,6 @@ class sram_1bank_8mux_func_test(openram_test):
         if not OPTS.spice_exe:
             debug.error("Could not find {} simulator.".format(OPTS.spice_name),-1)
 
-        from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=4,
                         num_words=256,
@@ -39,7 +39,7 @@ class sram_1bank_8mux_func_test(openram_test):
                                                                                                                 c.num_words,
                                                                                                                 c.words_per_row,
                                                                                                                 c.num_banks))
-        s = sram(c, name="sram")
+        s = factory.create(module_type="sram", sram_config=c)
         tempspice = OPTS.openram_temp + "temp.sp"        
         s.sp_write(tempspice)
         

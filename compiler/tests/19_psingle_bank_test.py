@@ -9,8 +9,8 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
-import debug
 from sram_factory import factory
+import debug
 
 #@unittest.skip("SKIPPING 19_psingle_bank_test")
 class psingle_bank_test(openram_test):

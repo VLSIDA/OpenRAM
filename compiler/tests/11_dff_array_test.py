@@ -9,24 +9,24 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
 class dff_array_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        import dff_array
 
         debug.info(2, "Testing dff_array for 3x3")
-        a = dff_array.dff_array(rows=3, columns=3)
+        a = factory.create(module_type="dff_array", rows=3, columns=3)
         self.local_check(a)
 
         debug.info(2, "Testing dff_array for 1x3")
-        a = dff_array.dff_array(rows=1, columns=3)
+        a = factory.create(module_type="dff_array", rows=1, columns=3)
         self.local_check(a)
 
         debug.info(2, "Testing dff_array for 3x1")
-        a = dff_array.dff_array(rows=3, columns=1)
+        a = factory.create(module_type="dff_array", rows=3, columns=1)
         self.local_check(a)
 
         globals.end_openram()

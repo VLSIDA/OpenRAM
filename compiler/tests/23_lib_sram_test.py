@@ -9,6 +9,7 @@ import sys,os,re
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
 class lib_test(openram_test):
@@ -26,7 +27,6 @@ class lib_test(openram_test):
         if not OPTS.spice_exe:
             debug.error("Could not find {} simulator.".format(OPTS.spice_name),-1)
 
-        from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=2,
                         num_words=16,
@@ -34,7 +34,8 @@ class lib_test(openram_test):
         c.words_per_row=1
         c.recompute_sizes()
         debug.info(1, "Testing timing for sample 2 bit, 16 words SRAM with 1 bank")
-        s = sram(c, "sram_2_16_1_{0}".format(OPTS.tech_name))
+
+        s = factory.create(module_type="sram", sram_config=c, name="sram_2_16_1_{0}".format(OPTS.tech_name))
 
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)

@@ -9,17 +9,16 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
 class pinv_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        import pinv
-        import tech
 
-        debug.info(2, "Checking 10x inverter")
-        tx = pinv.pinv(name="pinvx10",size=8)
+        debug.info(2, "Checking 8x inverter")
+        tx = factory.create(module_type="pinv", size=8)
         self.local_check(tx)
 
         globals.end_openram()        

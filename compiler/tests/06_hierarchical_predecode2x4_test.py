@@ -9,18 +9,17 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
 class hierarchical_predecode2x4_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        import hierarchical_predecode2x4 as pre
-        import tech
 
         # checking hierarchical precode 2x4 for single port
         debug.info(1, "Testing sample for hierarchy_predecode2x4")
-        a = pre.hierarchical_predecode2x4(name="pre1")
+        a = factory.create(module_type="hierarchical_predecode2x4")
         self.local_check(a)
 
         # checking hierarchical precode 2x4 for multi-port
@@ -30,7 +29,7 @@ class hierarchical_predecode2x4_test(openram_test):
         OPTS.num_r_ports = 0
         
         debug.info(1, "Testing sample for hierarchy_predecode2x4 (multi-port case)")
-        a = pre.hierarchical_predecode2x4(name="pre2")
+        a = factory.create(module_type="hierarchical_predecode2x4")
         self.local_check(a)
         
         globals.end_openram()

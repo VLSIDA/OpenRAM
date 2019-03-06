@@ -11,6 +11,7 @@ import sys,os,re,shutil
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 import getpass
 

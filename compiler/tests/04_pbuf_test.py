@@ -9,19 +9,16 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
 class pbuf_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        global verify
-        import verify
-
-        import pbuf
 
         debug.info(2, "Testing inverter/buffer 4x 8x")
-        a = pbuf.pbuf(name="pbufx8", size=8)
+        a = factory.create(module_type="pbuf", size=8)
         self.local_check(a)
 
         globals.end_openram()

@@ -13,7 +13,7 @@ class openram_test(unittest.TestCase):
 
         self.reset()
 
-        tempgds = OPTS.openram_temp + "temp.gds"
+        tempgds = "{0}{1}.gds".format(OPTS.openram_temp,w.name)
         w.gds_write(tempgds)
         import verify
 
@@ -21,14 +21,15 @@ class openram_test(unittest.TestCase):
         if result != 0:
             self.fail("DRC failed: {}".format(w.name))
 
-        self.cleanup()
+        if OPTS.purge_temp:
+            self.cleanup()
     
     def local_check(self, a, final_verification=False):
 
         self.reset()
         
-        tempspice = OPTS.openram_temp + "temp.sp"
-        tempgds = OPTS.openram_temp + "temp.gds"
+        tempspice = "{0}{1}.sp".format(OPTS.openram_temp,a.name)
+        tempgds = "{0}{1}.gds".format(OPTS.openram_temp,a.name)
 
         a.sp_write(tempspice)
         # cannot write gds in netlist_only mode
@@ -36,7 +37,7 @@ class openram_test(unittest.TestCase):
             a.gds_write(tempgds)
 
             import verify
-            result=verify.run_drc(a.name, tempgds)
+            result=verify.run_drc(a.name, tempgds, extract=True, final_verification=final_verification)
             if result != 0:
                 #zip_file = "/tmp/{0}_{1}".format(a.name,os.getpid())
                 #debug.info(0,"Archiving failed files to {}.zip".format(zip_file))
@@ -44,7 +45,7 @@ class openram_test(unittest.TestCase):
                 self.fail("DRC failed: {}".format(a.name))
 
             
-            result=verify.run_lvs(a.name, tempgds, tempspice, final_verification)
+            result=verify.run_lvs(a.name, tempgds, tempspice, final_verification=final_verification)
             if result != 0:
                 #zip_file = "/tmp/{0}_{1}".format(a.name,os.getpid())
                 #debug.info(0,"Archiving failed files to {}.zip".format(zip_file))
@@ -53,6 +54,7 @@ class openram_test(unittest.TestCase):
 
         if OPTS.purge_temp:
             self.cleanup()
+            
 
     def find_feasible_test_period(self, delay_obj, sram, load, slew):
         """Creates a delay simulation to determine a feasible period for the functional tests to run.
@@ -62,6 +64,9 @@ class openram_test(unittest.TestCase):
         delay_obj.set_load_slew(load, slew)
         delay_obj.set_probe(probe_address="1"*sram.addr_size, probe_data=(sram.word_size-1))
         test_port = delay_obj.read_ports[0] #Only test one port, assumes other ports have similar period.
+        delay_obj.create_signal_names()
+        delay_obj.create_measurement_names()
+        delay_obj.create_measurement_objects()
         delay_obj.find_feasible_period_one_port(test_port) 
         return delay_obj.period        
             

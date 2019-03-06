@@ -10,7 +10,8 @@ class logical_effort():
     min_inv_cin = 1+beta
     pinv=parameter["min_inv_para_delay"]
     
-    def __init__(self, size, cin, cout, parasitic, out_is_rise=True):
+    def __init__(self, name, size, cin, cout, parasitic, out_is_rise=True):
+        self.name = name
         self.cin = cin
         self.cout = cout
         self.logical_effort = (self.cin/size)/logical_effort.min_inv_cin
@@ -19,8 +20,13 @@ class logical_effort():
         self.is_rise = out_is_rise
      
     def __str__(self):
-        return "g=" + str(self.logical_effort) + ", h=" + str(self.eletrical_effort) + ", p=" + str(self.parasitic_scale)+"*pinv, rise_delay="+str(self.is_rise)
-    
+        return  "Name={}, g={}, h={}, p={}*pinv, rise_delay={}".format(self.name,
+                                                                       self.logical_effort,
+                                                                       self.eletrical_effort,
+                                                                       self.parasitic_scale,
+                                                                       self.is_rise
+                                                                       ) 
+
     def get_stage_effort(self):
         return  self.logical_effort*self.eletrical_effort
         
@@ -29,6 +35,10 @@ class logical_effort():
     
     def get_stage_delay(self, pinv):
         return self.get_stage_effort()+self.get_parasitic_delay(pinv)
+
+def calculate_delays(stage_effort_list, pinv):
+    """Convert stage effort objects to list of delay values"""
+    return [stage.get_stage_delay(pinv) for stage in stage_effort_list]
     
 def calculate_relative_delay(stage_effort_list, pinv=parameter["min_inv_para_delay"]):
     """Calculates the total delay of a given delay path made of a list of logical effort objects."""
@@ -40,7 +50,7 @@ def calculate_relative_rise_fall_delays(stage_effort_list, pinv=parameter["min_i
     debug.info(2, "Calculating rise/fall relative delays")
     total_rise_delay, total_fall_delay = 0,0
     for stage in stage_effort_list:
-        debug.info(3, stage)
+        debug.info(2, stage)
         if stage.is_rise:
             total_rise_delay += stage.get_stage_delay(pinv)
         else:

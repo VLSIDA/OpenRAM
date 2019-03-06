@@ -48,17 +48,35 @@ def print_raw(str):
 
 
 def log(str):
-    if log.create_file:
-        compile_log = open(globals.OPTS.output_path +
-                           globals.OPTS.output_name + '.log', "w")
-        log.create_file = 0
+    if globals.OPTS.output_name != '':
+        if log.create_file:
+            # We may have not yet read the config, so we need to ensure
+            # it ends with a /
+            # This is also done in read_config if we change the path
+            # FIXME: There's actually a bug here. The first few lines
+            # could be in one log file and after read_config it could be
+            # in another log file if the path or name changes.
+            if not globals.OPTS.output_path.endswith('/'):
+                globals.OPTS.output_path += "/"
+            compile_log = open(globals.OPTS.output_path +
+                               globals.OPTS.output_name + '.log', "w+")
+            log.create_file = 0
+        else:
+            compile_log = open(globals.OPTS.output_path +
+                               globals.OPTS.output_name + '.log', "a")
+
+        if len(log.setup_output) != 0:
+            for line in log.setup_output:
+                compile_log.write(line)
+            log.setup_output = []
+        compile_log.write(str + '\n')
     else:
-        compile_log = open(globals.OPTS.output_path +
-                           globals.OPTS.output_name + '.log', "a")
-    compile_log.write(str + '\n')
-log.create_file = 1 
+        log.setup_output.append(str + "\n")
 
 
+# use a static list of strings to store messages until the global paths are set up
+log.setup_output = []
+log.create_file = 1
 
 
 def info(lev, str):
@@ -71,5 +89,5 @@ def info(lev, str):
             class_name = ""
         else:
             class_name = mod.__name__
-        print_raw("[{0}/{1}]: {2}".format(class_name, frm[0].f_code.co_name, str))
-
+        print_raw("[{0}/{1}]: {2}".format(class_name,
+                                          frm[0].f_code.co_name, str))

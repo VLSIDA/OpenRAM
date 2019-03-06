@@ -258,14 +258,15 @@ class stimuli():
            
         # UIC is needed for ngspice to converge
         self.sf.write(".TRAN {0}p {1}n UIC\n".format(timestep,end_time))
+        self.sf.write(".TEMP {}\n".format(self.temperature))
         if OPTS.spice_name == "ngspice":
             # ngspice sometimes has convergence problems if not using gear method
             # which is more accurate, but slower than the default trapezoid method
             # Do not remove this or it may not converge due to some "pa_00" nodes
             # unless you figure out what these are.
-            self.sf.write(".OPTIONS POST=1 RELTOL={0} PROBE method=gear TEMP={1}\n".format(reltol,self.temperature))
+            self.sf.write(".OPTIONS POST=1 RELTOL={0} PROBE method=gear\n".format(reltol))
         else:
-            self.sf.write(".OPTIONS POST=1 RUNLVL={0} PROBE TEMP={1}\n".format(runlvl,self.temperature))
+            self.sf.write(".OPTIONS POST=1 RUNLVL={0} PROBE\n".format(runlvl))
 
         # create plots for all signals
         self.sf.write("* probe is used for hspice/xa, while plot is used in ngspice\n")

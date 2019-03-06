@@ -162,7 +162,7 @@ class contact(hierarchy_design.hierarchy_design):
                       width=well_width,
                       height=well_height)
         
-    def analytical_power(self, proc, vdd, temp, load):
+    def analytical_power(self, corner, load):
         """ Get total power of a module  """
         return self.return_power()
 

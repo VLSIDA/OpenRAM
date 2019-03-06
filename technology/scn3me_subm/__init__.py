@@ -34,8 +34,3 @@ os.environ["DRCLVS_HOME"] = DRCLVS_HOME
 OPENRAM_TECH=os.path.abspath(os.environ.get("OPENRAM_TECH"))
 os.environ["SPICE_MODEL_DIR"] = "{0}/{1}/models".format(OPENRAM_TECH, TECHNOLOGY)
 
-##########################
-# Paths required for OPENRAM to function
-
-LOCAL = "{0}/..".format(os.path.dirname(__file__)) 
-sys.path.append("{0}/{1}/tech".format(LOCAL,TECHNOLOGY))

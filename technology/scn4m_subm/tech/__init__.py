@@ -2,5 +2,5 @@
 Import tech specific modules.
 """
 
-from tech import *
+from .tech import *
 

@@ -8,7 +8,6 @@ import sys
 import os
 
 TECHNOLOGY = "freepdk45"
-LOCAL = "{0}/..".format(os.path.dirname(__file__)) 
 
 ##########################
 # FreePDK45 paths
@@ -33,8 +32,3 @@ os.environ["DRCLVS_HOME"] = DRCLVS_HOME
 # except:
 # Always use the one in the PDK dir for FreePDK45
 os.environ["SPICE_MODEL_DIR"] = PDK_DIR+"/ncsu_basekit/models/hspice/tran_models"
-
-##########################
-#Paths required for OPENRAM to function
-
-sys.path.append("{0}/{1}/tech".format(LOCAL,TECHNOLOGY))

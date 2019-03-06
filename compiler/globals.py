@@ -128,6 +128,8 @@ def init_openram(config_file, is_unit_test=True):
 
     import_tech()
 
+    set_default_corner()
+
     init_paths()
 
     from sram_factory import factory
@@ -393,9 +395,20 @@ def init_paths():
     except:
         debug.error("Unable to make output directory.",-1)
 
+def set_default_corner():
+    """ Set the default corner. """
     
-# imports correct technology directories for testing
+    # Set some default options now based on the technology...
+    if (OPTS.process_corners == ""):
+        OPTS.process_corners = tech.spice["fet_models"].keys()
+    if (OPTS.supply_voltages == ""):
+        OPTS.supply_voltages = tech.spice["supply_voltages"]
+    if (OPTS.temperatures == ""):
+        OPTS.temperatures = tech.spice["temperatures"]
+    
+    
 def import_tech():
+    """ Dynamically adds the tech directory to the path and imports it. """
     global OPTS
 
     debug.info(2,"Importing technology: " + OPTS.tech_name)
@@ -428,13 +441,6 @@ def import_tech():
         import tech
     except ImportError:
         debug.error("Could not load tech module.", -1)
-    # Set some default options now based on the technology...
-    if (OPTS.process_corners == ""):
-        OPTS.process_corners = tech.spice["fet_models"].keys()
-    if (OPTS.supply_voltages == ""):
-        OPTS.supply_voltages = tech.spice["supply_voltages"]
-    if (OPTS.temperatures == ""):
-        OPTS.temperatures = tech.spice["temperatures"]
 
 
 def print_time(name, now_time, last_time=None, indentation=2):

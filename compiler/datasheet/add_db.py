@@ -1,11 +1,12 @@
 from pathlib import Path
 import glob
 import os
+import sys
 
 # This is the path to the directory you would like to search
 # This directory is searched recursively for .html files
 
-path_to_files = '../temp/'
+path_to_files = sys.argv[1]
 
 
 def get_file_tree(path):

@@ -40,7 +40,7 @@ class table_gen:
                 html += '<!--'+row[0]+'<tr>'
                 for col in row:
                     html += '<td>' + str(col) + '</td>'
-                html += '</tr>-->'
+                html += '</tr>'+row[0]+'-->'
 
         html += '</tr>'
         html += '</tbody>'

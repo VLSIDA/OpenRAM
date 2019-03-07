@@ -45,6 +45,8 @@ class table_gen:
         html += '</tr>'
         html += '</tbody>'
         return html
+    def sort(self):
+        self.rows[1:] = sorted(self.rows[1:], key=lambda x : x[0])
 
     def to_html(self,comments):
         """writes table_gen object to inline html"""

@@ -78,4 +78,5 @@ class datasheet():
         self.html += self.corners_table.to_html(comments)
         # display deliverables table
         self.html += '<p style="font-size: 26px;font-family: Trebuchet MS, Arial, Helvetica, sans-serif;">Deliverables</p>'
+        self.dlv_table.sort()
         self.html += self.dlv_table.to_html(comments)

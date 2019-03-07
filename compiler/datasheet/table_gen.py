@@ -22,27 +22,36 @@ class table_gen:
         html += '</thead>'
         return html
 
-    def gen_table_body(self):
+    def gen_table_body(self,comments):
         """generate html body (used after gen_table_head)"""
         html = ''
 
         html += '<tbody>'
         html += '<tr>'
         for row in self.rows[1:]:
-            html += '<tr>'
-            for col in row:
-                html += '<td>' + str(col) + '</td>'
-            html += '</tr>'
+
+            if row[0] not in comments:
+                html += '<tr>'
+                for col in row:
+                    html += '<td>' + str(col) + '</td>'
+                html += '</tr>'
+
+            else:
+                html += '<!--'+row[0]+'<tr>'
+                for col in row:
+                    html += '<td>' + str(col) + '</td>'
+                html += '</tr>-->'
+
         html += '</tr>'
         html += '</tbody>'
         return html
 
-    def to_html(self):
+    def to_html(self,comments):
         """writes table_gen object to inline html"""
         html = ''
         html += '<table id= \"'+self.table_id+'\">'
         html += self.gen_table_head()
-        html += self.gen_table_body()
-        html += '</table>'
+        html += self.gen_table_body(comments)
+        html += '</table>\n'
 
         return html

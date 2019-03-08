@@ -42,8 +42,8 @@ class delay(simulation):
         #Altering the names will crash the characterizer. TODO: object orientated approach to the measurements.
         self.delay_meas_names = ["delay_lh", "delay_hl", "slew_lh", "slew_hl"]
         self.power_meas_names = ["read0_power", "read1_power", "write0_power", "write1_power"]
-        self.voltage_when_names = ["volt_bl", "volt_br"]
-        self.bitline_delay_names = ["delay_bl", "delay_br"]
+        #self.voltage_when_names = ["volt_bl", "volt_br"]
+        #self.bitline_delay_names = ["delay_bl", "delay_br"]
        
     def create_measurement_objects(self):
         """Create the measurements used for read and write ports"""
@@ -84,8 +84,8 @@ class delay(simulation):
         
         bl_name = "Xsram.Xbank0.bl{}_{}".format(port_format, self.bitline_column)
         br_name = "Xsram.Xbank0.br{}_{}".format(port_format, self.bitline_column)
-        self.read_meas_objs.append(voltage_when_measure(self.voltage_when_names[0], trig_name, bl_name, "RISE", .5))
-        self.read_meas_objs.append(voltage_when_measure(self.voltage_when_names[1], trig_name, br_name, "RISE", .5))
+        # self.read_meas_objs.append(voltage_when_measure(self.voltage_when_names[0], trig_name, bl_name, "RISE", .5))
+        # self.read_meas_objs.append(voltage_when_measure(self.voltage_when_names[1], trig_name, br_name, "RISE", .5))
         
         #These are read values but need to be separated for unique error checking.
         self.create_bitline_delay_measurement_objects()
@@ -105,10 +105,10 @@ class delay(simulation):
         targ_val = (self.vdd_voltage - tech.spice["v_threshold_typical"])/self.vdd_voltage #Calculate as a percentage of vdd
         
         targ_name = "{0}{1}_{2}".format(self.dout_name,"{}",self.probe_data) #Empty values are the port and probe data bit
-        self.bitline_delay_objs.append(delay_measure(self.bitline_delay_names[0], trig_name, bl_name, "FALL", "FALL", targ_vdd=targ_val, measure_scale=1e9))
-        self.bitline_delay_objs[-1].meta_str = "read0"
-        self.bitline_delay_objs.append(delay_measure(self.bitline_delay_names[1], trig_name, br_name, "FALL", "FALL", targ_vdd=targ_val, measure_scale=1e9))
-        self.bitline_delay_objs[-1].meta_str = "read1"
+        # self.bitline_delay_objs.append(delay_measure(self.bitline_delay_names[0], trig_name, bl_name, "FALL", "FALL", targ_vdd=targ_val, measure_scale=1e9))
+        # self.bitline_delay_objs[-1].meta_str = "read0"
+        # self.bitline_delay_objs.append(delay_measure(self.bitline_delay_names[1], trig_name, br_name, "FALL", "FALL", targ_vdd=targ_val, measure_scale=1e9))
+        # self.bitline_delay_objs[-1].meta_str = "read1"
         #Enforces the time delay on the bitline measurements for read0 or read1
         for obj in self.bitline_delay_objs:
             obj.meta_add_delay = True
@@ -966,7 +966,7 @@ class delay(simulation):
             
     def get_empty_measure_data_dict(self):
         """Make a dict of lists for each type of delay and power measurement to append results to"""
-        measure_names = self.delay_meas_names + self.power_meas_names + self.voltage_when_names + self.bitline_delay_names
+        measure_names = self.delay_meas_names + self.power_meas_names 
         #Create list of dicts. List lengths is # of ports. Each dict maps the measurement names to lists.
         measure_data = [{mname:[] for mname in measure_names} for i in self.all_ports]
         return measure_data

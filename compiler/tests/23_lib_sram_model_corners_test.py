@@ -28,7 +28,7 @@ class model_corners_lib_test(openram_test):
 
         # This doesn't have to use the factory since worst case
         # it will just replaece the top-level module of the same name
-        s = sram(c, name="sram", name="sram_2_16_1_{0}".format(OPTS.tech_name))
+        s = sram(c, name="sram_2_16_1_{0}".format(OPTS.tech_name))
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)
 

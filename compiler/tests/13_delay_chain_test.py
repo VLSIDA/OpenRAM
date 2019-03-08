@@ -15,7 +15,7 @@ import debug
 class delay_chain_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
 
         debug.info(2, "Testing delay_chain")
         a = factory.create(module_type="delay_chain", fanout_list=[4, 4, 4, 4])

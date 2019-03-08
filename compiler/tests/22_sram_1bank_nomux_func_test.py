@@ -16,7 +16,7 @@ import debug
 class sram_1bank_nomux_func_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
         

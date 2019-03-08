@@ -17,7 +17,7 @@ import debug
 class pnand2_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
 
         debug.info(2, "Checking 2-input nand gate")
         tx = factory.create(module_type="pnand2", size=1)

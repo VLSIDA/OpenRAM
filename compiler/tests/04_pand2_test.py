@@ -15,7 +15,7 @@ import debug
 class pand2_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
         global verify
         import verify
 

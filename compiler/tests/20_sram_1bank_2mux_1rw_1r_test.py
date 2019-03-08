@@ -15,7 +15,7 @@ import debug
 class sram_1bank_2mux_1rw_1r_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
         from sram_config import sram_config
         
         OPTS.bitcell = "bitcell_1rw_1r"

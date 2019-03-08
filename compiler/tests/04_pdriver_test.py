@@ -15,7 +15,7 @@ import debug
 class pdriver_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
 
         debug.info(2, "Testing inverter/buffer 4x 8x")
         # a tests the error message for specifying conflicting conditions

@@ -15,7 +15,7 @@ import debug
 class hierarchical_decoder_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
         # Doesn't require hierarchical decoder
         # debug.info(1, "Testing 4 row sample for hierarchical_decoder")
         # a = hierarchical_decoder.hierarchical_decoder(name="hd1, rows=4)

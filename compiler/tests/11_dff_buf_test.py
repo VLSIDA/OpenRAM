@@ -15,7 +15,7 @@ import debug
 class dff_buf_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
 
         debug.info(2, "Testing dff_buf 4x 8x")
         a = factory.create(module_type="dff_buf", inv1_size=4, inv2_size=8)

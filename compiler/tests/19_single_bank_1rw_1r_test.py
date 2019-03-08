@@ -15,7 +15,7 @@ import debug
 class single_bank_1rw_1r_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
 
         OPTS.bitcell = "bitcell_1rw_1r"
         OPTS.num_rw_ports = 1

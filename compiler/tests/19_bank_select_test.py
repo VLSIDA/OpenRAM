@@ -15,7 +15,7 @@ import debug
 class bank_select_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
 
         debug.info(1, "No column mux, rw control logic")
         a = factory.create(module_type="bank_select", port="rw")

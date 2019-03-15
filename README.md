@@ -75,7 +75,7 @@ You may also wish to add OPENRAM\_HOME to your PYTHONPATH:
   export PYTHONPATH="$PYTHONPATH:$OPENRAM_HOME"
 ```
 
-We include the tech files necessary for [FreePDK45] and [SCMOS]
+We include the tech files necessary for [SCMOS]
 SCN4M_SUBM. The [SCMOS] spice models, however, are generic and should
 be replaced with foundry models.  If you are using [FreePDK45], you
 should also have that set up and have the environment variable point

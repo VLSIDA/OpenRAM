@@ -9,13 +9,13 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
-import debug
 from sram_factory import factory
+import debug
 
 class replica_pbitcell_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
         import replica_pbitcell
         
         OPTS.bitcell = "pbitcell"

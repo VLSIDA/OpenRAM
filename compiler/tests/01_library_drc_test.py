@@ -12,7 +12,7 @@ import debug
 class library_drc_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
         import verify
 
         (gds_dir, gds_files) = setup_files()

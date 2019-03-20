@@ -25,33 +25,6 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         hierarchy_spice.spice.__init__(self, name)
         
 
-        # Check if the name already exists, if so, give an error
-        # because each reference must be a unique name.
-        # These modules ensure unique names or have no changes if they
-        # aren't unique
-        ok_list = ['contact',
-                   'ptx',
-                   'pbitcell',
-                   'replica_pbitcell',                   
-                   'sram',
-                   'hierarchical_predecode2x4',
-                   'hierarchical_predecode3x8']
-
-        # Library cells don't change
-        if self.is_library_cell:
-            return
-        # Name is unique so far
-        elif name not in hierarchy_design.name_map:
-            hierarchy_design.name_map.append(name)
-        else:
-            # Name is in our list of exceptions (they don't change)
-            for ok_names in ok_list:
-                if ok_names == self.__class__.__name__:
-                    break
-            else:
-                debug.error("Duplicate layout reference name {0} of class {1}. GDS2 requires names be unique.".format(name,self.__class__),-1)
-        
-        
     def get_layout_pins(self,inst):
         """ Return a map of pin locations of the instance offset """
         # find the instance

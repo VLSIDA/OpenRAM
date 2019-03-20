@@ -11,17 +11,16 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
 class pnor2_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        import pnor2
-        import tech
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
 
         debug.info(2, "Checking 2-input nor gate")
-        tx = pnor2.pnor2(name="pnor2", size=1)
+        tx = factory.create(module_type="pnor2", size=1)
         self.local_check(tx)
 
         globals.end_openram()

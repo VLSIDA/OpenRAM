@@ -9,20 +9,19 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
-import debug
 from sram_factory import factory
+import debug
 
 #@unittest.skip("SKIPPING 04_driver_test")
 
 class wordline_driver_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        import wordline_driver
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
 
         # check wordline driver for single port
         debug.info(2, "Checking driver")
-        tx = wordline_driver.wordline_driver(name="wld1", rows=8, cols=32)
+        tx = factory.create(module_type="wordline_driver", rows=8, cols=32)
         self.local_check(tx)
 
         # check wordline driver for multi-port
@@ -33,7 +32,7 @@ class wordline_driver_test(openram_test):
 
         factory.reset()
         debug.info(2, "Checking driver (multi-port case)")
-        tx = wordline_driver.wordline_driver(name="wld2", rows=8, cols=64)
+        tx = factory.create(module_type="wordline_driver", rows=8, cols=64)
         self.local_check(tx)
 
         globals.end_openram()

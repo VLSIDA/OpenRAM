@@ -386,6 +386,9 @@ def parse_characterizer_csv(f, pages):
                         [PROC, VOLT, TEMP, LIB_NAME.replace(OUT_DIR, '').replace(NAME, '')])
                     new_sheet.dlv_table.add_row(
                         ['.lib', 'Synthesis models', '<a href="file://{0}">{1}</a>'.format(LIB_NAME, LIB_NAME.replace(OUT_DIR, ''))])
+                    new_sheet.dlv_table.add_row(
+                        ['.db', 'Compiled .lib', '<a href="{1}">{1}</a>'.format(LIB_NAME[:-3] + 'db', LIB_NAME.replace(OUT_DIR, '')[:-3] + 'db')])
+
 
             if found == 0:
 
@@ -603,6 +606,8 @@ def parse_characterizer_csv(f, pages):
                     ['.html', 'This datasheet', '<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name, 'html')])
                 new_sheet.dlv_table.add_row(
                     ['.lib', 'Synthesis models', '<a href="{1}">{1}</a>'.format(LIB_NAME, LIB_NAME.replace(OUT_DIR, ''))])
+                new_sheet.dlv_table.add_row(
+                    ['.db', 'Compiled .lib', '<a href="{1}">{1}</a>'.format(LIB_NAME[:-3] + 'db', LIB_NAME.replace(OUT_DIR, '')[:-3] + 'db')])
                 new_sheet.dlv_table.add_row(
                     ['.py', 'OpenRAM configuration file', '<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name, 'py')])
                 new_sheet.dlv_table.add_row(

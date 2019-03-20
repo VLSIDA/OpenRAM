@@ -9,16 +9,16 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
 class dff_buf_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        import dff_buf
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
 
         debug.info(2, "Testing dff_buf 4x 8x")
-        a = dff_buf.dff_buf(4, 8)
+        a = factory.create(module_type="dff_buf", inv1_size=4, inv2_size=8)
         self.local_check(a)
 
         globals.end_openram()

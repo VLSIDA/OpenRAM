@@ -9,35 +9,32 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
 class pdriver_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        global verify
-        import verify
-
-        import pdriver
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
 
         debug.info(2, "Testing inverter/buffer 4x 8x")
         # a tests the error message for specifying conflicting conditions
         #a = pdriver.pdriver(fanout = 4,size_list = [1,2,4,8])
         #self.local_check(a)
         
-        b = pdriver.pdriver(name="pdriver1", size_list = [1,2,4,8])
+        b = factory.create(module_type="pdriver", size_list = [1,2,4,8])
         self.local_check(b)
         
-        c = pdriver.pdriver(name="pdriver2", fanout = 50)
+        c = factory.create(module_type="pdriver", fanout = 50)
         self.local_check(c)
         
-        d = pdriver.pdriver(name="pdriver3", fanout = 50, neg_polarity = True)
+        d = factory.create(module_type="pdriver", fanout = 50, neg_polarity = True)
         self.local_check(d)
         
-        e = pdriver.pdriver(name="pdriver4", fanout = 64)
+        e = factory.create(module_type="pdriver", fanout = 64)
         self.local_check(e)
         
-        f = pdriver.pdriver(name="pdriver5", fanout = 64, neg_polarity = True)
+        f = factory.create(module_type="pdriver", fanout = 64, neg_polarity = True)
         self.local_check(f)
 
         globals.end_openram()

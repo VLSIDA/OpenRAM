@@ -9,14 +9,14 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
 @unittest.skip("Multibank is not working yet.")
 class sram_2bank_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        from sram import sram
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
         from sram_config import sram_config
         c = sram_config(word_size=16,
                         num_words=32,
@@ -24,30 +24,66 @@ class sram_2bank_test(openram_test):
 
         c.words_per_row=1
         c.recompute_sizes()
-        debug.info(1, "Two bank, no column mux with control logic")
-        a = sram(c, "sram1")
+        debug.info(1, "Layout test for {}rw,{}r,{}w sram "
+                   "with {} bit words, {} words, {} words per "
+                   "row, {} banks".format(OPTS.num_rw_ports,
+                                          OPTS.num_r_ports,
+                                          OPTS.num_w_ports,
+                                          c.word_size,
+                                          c.num_words,
+                                          c.words_per_row,
+                                          c.num_banks))
+        factory.reset()
+        a = factory.create(module_type="sram", sram_config=c)
         self.local_check(a, final_verification=True)
 
         c.num_words=64
         c.words_per_row=2
         c.recompute_sizes()
-        debug.info(1, "Two bank two way column mux with control logic")
-        a = sram(c, "sram2")
+        debug.info(1, "Layout test for {}rw,{}r,{}w sram "
+                   "with {} bit words, {} words, {} words per "
+                   "row, {} banks".format(OPTS.num_rw_ports,
+                                          OPTS.num_r_ports,
+                                          OPTS.num_w_ports,
+                                          c.word_size,
+                                          c.num_words,
+                                          c.words_per_row,
+                                          c.num_banks))
+        factory.reset()
+        a = factory.create(module_type="sram", sram_config=c)
         self.local_check(a, final_verification=True)
 
         c.num_words=128
         c.words_per_row=4
         c.recompute_sizes()
-        debug.info(1, "Two bank, four way column mux with control logic")
-        a = sram(c, "sram3")
+        debug.info(1, "Layout test for {}rw,{}r,{}w sram "
+                   "with {} bit words, {} words, {} words per "
+                   "row, {} banks".format(OPTS.num_rw_ports,
+                                          OPTS.num_r_ports,
+                                          OPTS.num_w_ports,
+                                          c.word_size,
+                                          c.num_words,
+                                          c.words_per_row,
+                                          c.num_banks))
+        factory.reset()
+        a = factory.create(module_type="sram", sram_config=c)
         self.local_check(a, final_verification=True)
 
         c.word_size=2
         c.num_words=256
         c.words_per_row=8
         c.recompute_sizes()
-        debug.info(1, "Two bank, eight way column mux with control logic")
-        a = sram(c, "sram4")
+        debug.info(1, "Layout test for {}rw,{}r,{}w sram "
+                   "with {} bit words, {} words, {} words per "
+                   "row, {} banks".format(OPTS.num_rw_ports,
+                                          OPTS.num_r_ports,
+                                          OPTS.num_w_ports,
+                                          c.word_size,
+                                          c.num_words,
+                                          c.words_per_row,
+                                          c.num_banks))
+        factory.reset()
+        a = factory.create(module_type="sram", sram_config=c)
         self.local_check(a, final_verification=True)
 
         globals.end_openram()

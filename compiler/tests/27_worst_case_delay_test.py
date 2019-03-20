@@ -9,6 +9,7 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
 @unittest.skip("SKIPPING 27_worst_case_delay_test")
@@ -16,7 +17,7 @@ class worst_case_timing_sram_test(openram_test):
 
     def runTest(self):
         OPTS.tech_name = "freepdk45"
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
         OPTS.spice_name="hspice"
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
@@ -33,7 +34,6 @@ class worst_case_timing_sram_test(openram_test):
             debug.error("Could not find {} simulator.".format(OPTS.spice_name),-1)
 
         word_size, num_words, num_banks = 2, 16, 1
-        from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=word_size,
                         num_words=num_words,
@@ -42,7 +42,7 @@ class worst_case_timing_sram_test(openram_test):
         c.recompute_sizes()
         debug.info(1, "Testing the timing different bitecells inside a {}bit, {} words SRAM with {} bank".format(
                                                                        word_size, num_words, num_banks))
-        s = sram(c, name="sram1")
+        s = factory.create(module_type="sram", sram_config=c)
         
         sp_netlist_file = OPTS.openram_temp + "temp.sp"
         s.sp_write(sp_netlist_file)

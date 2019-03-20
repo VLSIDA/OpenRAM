@@ -11,17 +11,16 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
 class pnand3_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        import pnand3
-        import tech
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
 
         debug.info(2, "Checking 3-input nand gate")
-        tx = pnand3.pnand3(name="pnand3", size=1)
+        tx = factory.create(module_type="pnand3", size=1)
         self.local_check(tx)
 
         globals.end_openram()

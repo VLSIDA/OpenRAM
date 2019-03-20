@@ -14,7 +14,7 @@ import debug
 class verilog_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
 
         from sram import sram
         from sram_config import sram_config
@@ -24,6 +24,8 @@ class verilog_test(openram_test):
         c.words_per_row=1
         c.recompute_sizes()
         debug.info(1, "Testing Verilog for sample 2 bit, 16 words SRAM with 1 bank")
+        # This doesn't have to use the factory since worst case
+        # it will just replaece the top-level module of the same name
         s = sram(c, "sram_2_16_1_{0}".format(OPTS.tech_name))
 
         vfile = s.name + ".v"

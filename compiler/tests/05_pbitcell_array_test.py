@@ -9,21 +9,21 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
 #@unittest.skip("SKIPPING 05_pbitcell_array_test")
 class pbitcell_array_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        import bitcell_array
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
 
         debug.info(2, "Testing 4x4 array for multiport bitcell, with read ports at the edge of the bit cell")
         OPTS.bitcell = "pbitcell"
         OPTS.num_rw_ports = 2
         OPTS.num_r_ports = 2
         OPTS.num_w_ports = 2
-        a = bitcell_array.bitcell_array(name="pbitcell_array_Rport_edge", cols=4, rows=4)
+        a = factory.create(module_type="bitcell_array", cols=4, rows=4)
         self.local_check(a)
             
         debug.info(2, "Testing 4x4 array for multiport bitcell, with write ports at the edge of the bit cell")
@@ -31,7 +31,7 @@ class pbitcell_array_test(openram_test):
         OPTS.num_rw_ports = 2
         OPTS.num_r_ports = 0
         OPTS.num_w_ports = 2
-        a = bitcell_array.bitcell_array(name="pbitcell_array_Wport_edge", cols=4, rows=4)
+        a = factory.create(module_type="bitcell_array", cols=4, rows=4)
         self.local_check(a)
         
         debug.info(2, "Testing 4x4 array for multiport bitcell, with read/write ports at the edge of the bit cell")
@@ -39,7 +39,7 @@ class pbitcell_array_test(openram_test):
         OPTS.num_rw_ports = 2
         OPTS.num_r_ports = 0
         OPTS.num_w_ports = 0
-        a = bitcell_array.bitcell_array(name="pbitcell_array_RWport_edge", cols=4, rows=4)
+        a = factory.create(module_type="bitcell_array", cols=4, rows=4)
         self.local_check(a)
 
         globals.end_openram()

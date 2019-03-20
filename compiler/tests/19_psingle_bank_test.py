@@ -9,14 +9,14 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
-import debug
 from sram_factory import factory
+import debug
 
 #@unittest.skip("SKIPPING 19_psingle_bank_test")
 class psingle_bank_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
         from bank import bank
         from sram_config import sram_config
         OPTS.bitcell = "pbitcell"

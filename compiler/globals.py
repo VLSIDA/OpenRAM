@@ -128,16 +128,14 @@ def init_openram(config_file, is_unit_test=True):
 
     import_tech()
 
+    set_default_corner()
+
     init_paths()
 
     from sram_factory import factory
     factory.reset()
 
     setup_bitcell()
-    
-    # Reset the static duplicate name checker for unit tests.
-    import hierarchy_design
-    hierarchy_design.hierarchy_design.name_map=[]
     
     global OPTS
     global CHECKPOINT_OPTS
@@ -187,11 +185,12 @@ def setup_bitcell():
 
         # See if a custom bitcell exists
         from importlib import find_loader
-        bitcell_loader = find_loader(OPTS.bitcell)
-        replica_bitcell_loader = find_loader(OPTS.replica_bitcell)
-        # Use the pbitcell if we couldn't find a custom bitcell
-        # or its custom replica  bitcell
-        if bitcell_loader==None or replica_bitcell_loader==None:
+        try:
+            __import__(OPTS.bitcell)
+            __import__(OPTS.replica_bitcell)
+        except ImportError:
+            # Use the pbitcell if we couldn't find a custom bitcell
+            # or its custom replica  bitcell
             # Use the pbitcell (and give a warning if not in unit test mode)
             OPTS.bitcell = "pbitcell"
             OPTS.replica_bitcell = "replica_pbitcell"
@@ -392,9 +391,20 @@ def init_paths():
     except:
         debug.error("Unable to make output directory.",-1)
 
+def set_default_corner():
+    """ Set the default corner. """
     
-# imports correct technology directories for testing
+    # Set some default options now based on the technology...
+    if (OPTS.process_corners == ""):
+        OPTS.process_corners = tech.spice["fet_models"].keys()
+    if (OPTS.supply_voltages == ""):
+        OPTS.supply_voltages = tech.spice["supply_voltages"]
+    if (OPTS.temperatures == ""):
+        OPTS.temperatures = tech.spice["temperatures"]
+    
+    
 def import_tech():
+    """ Dynamically adds the tech directory to the path and imports it. """
     global OPTS
 
     debug.info(2,"Importing technology: " + OPTS.tech_name)
@@ -403,34 +413,30 @@ def import_tech():
     try:
         OPENRAM_TECH = os.path.abspath(os.environ.get("OPENRAM_TECH"))
     except:
-        debug.error("$OPENRAM_TECH is not properly defined.",1)
-    debug.check(os.path.isdir(OPENRAM_TECH),"$OPENRAM_TECH does not exist: {0}".format(OPENRAM_TECH))
-    
-    OPTS.openram_tech = OPENRAM_TECH + "/" + OPTS.tech_name
-    if not OPTS.openram_tech.endswith('/'):
-        OPTS.openram_tech += "/"
-    debug.info(1, "Technology path is " + OPTS.openram_tech)
+        debug.error("$OPENRAM_TECH environment variable is not defined.",1)
 
+    # Add all of the paths
+    for tech_path in OPENRAM_TECH.split(":"):
+        debug.check(os.path.isdir(tech_path),"$OPENRAM_TECH does not exist: {0}".format(tech_path))
+        sys.path.append(tech_path)
+        debug.info(1, "Adding technology path: {}".format(tech_path))
+
+    # Import the tech 
     try:
-        filename = "setup_openram_{0}".format(OPTS.tech_name)
-        # we assume that the setup scripts (and tech dirs) are located at the
-        # same level as the compielr itself, probably not a good idea though.
-        path = "{0}/setup_scripts".format(os.environ.get("OPENRAM_TECH"))
-        debug.check(os.path.isdir(path),"OPENRAM_TECH does not exist: {0}".format(path))    
-        sys.path.append(os.path.abspath(path))
-        __import__(filename)
+        tech_mod = __import__(OPTS.tech_name)
     except ImportError:
-        debug.error("Nonexistent technology_setup_file: {0}.py".format(filename))
-        sys.exit(1)
+        debug.error("Nonexistent technology_setup_file: {0}.py".format(filename), -1)
 
-    import tech
-    # Set some default options now based on the technology...
-    if (OPTS.process_corners == ""):
-        OPTS.process_corners = tech.spice["fet_models"].keys()
-    if (OPTS.supply_voltages == ""):
-        OPTS.supply_voltages = tech.spice["supply_voltages"]
-    if (OPTS.temperatures == ""):
-        OPTS.temperatures = tech.spice["temperatures"]
+    OPTS.openram_tech = os.path.dirname(tech_mod.__file__) + "/"
+
+
+    # Add the tech directory
+    tech_path = OPTS.openram_tech
+    sys.path.append(tech_path)
+    try:
+        import tech
+    except ImportError:
+        debug.error("Could not load tech module.", -1)
 
 
 def print_time(name, now_time, last_time=None, indentation=2):

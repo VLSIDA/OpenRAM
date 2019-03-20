@@ -9,12 +9,13 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
 class timing_sram_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
         OPTS.spice_name="hspice"
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
@@ -24,7 +25,6 @@ class timing_sram_test(openram_test):
         import characterizer
         reload(characterizer)
         from characterizer import delay
-        from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=1,
                         num_words=16,
@@ -32,7 +32,7 @@ class timing_sram_test(openram_test):
         c.words_per_row=1
         c.recompute_sizes()
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
-        s = sram(c, name="sram1")
+        s = factory.create(module_type="sram", sram_config=c)
 
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)
@@ -51,9 +51,7 @@ class timing_sram_test(openram_test):
         data.update(port_data[0])
      
         if OPTS.tech_name == "freepdk45":
-            golden_data = {'delay_bl': [0.1980959],
-                         'delay_br': [0.1946091],
-                         'delay_hl': [0.2121267],
+            golden_data = {'delay_hl': [0.2121267],
                          'delay_lh': [0.2121267],
                          'leakage_power': 0.0023761999999999998,
                          'min_period': 0.43,
@@ -61,14 +59,10 @@ class timing_sram_test(openram_test):
                          'read1_power': [0.48940979999999995],
                          'slew_hl': [0.0516745],
                          'slew_lh': [0.0516745],
-                         'volt_bl': [0.5374525],
-                         'volt_br': [1.1058],
                          'write0_power': [0.46267169999999996],
                          'write1_power': [0.4670826]}
         elif OPTS.tech_name == "scn4m_subm":
-            golden_data = {'delay_bl': [1.1029],
-                         'delay_br': [0.9656455999999999],
-                         'delay_hl': [1.288],
+            golden_data = {'delay_hl': [1.288],
                          'delay_lh': [1.288],
                          'leakage_power': 0.0273896,
                          'min_period': 2.578,
@@ -76,8 +70,6 @@ class timing_sram_test(openram_test):
                          'read1_power': [16.2616],
                          'slew_hl': [0.47891700000000004],
                          'slew_lh': [0.47891700000000004],
-                         'volt_bl': [4.2155],
-                         'volt_br': [5.8142],
                          'write0_power': [16.0656],
                          'write1_power': [16.2616]}
 

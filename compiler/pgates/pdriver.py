@@ -11,7 +11,7 @@ class pdriver(pgate.pgate):
     """
     This instantiates an even or odd number of inverters sized for driving a load.
     """
-    def __init__(self, name, neg_polarity=False, fanout=0, size_list=None, height=None):
+    def __init__(self, name, neg_polarity=False, fanout=1, size_list=None, height=None):
 
         self.stage_effort = 3
         self.height = height 

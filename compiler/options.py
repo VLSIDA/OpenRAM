@@ -56,13 +56,15 @@ class options(optparse.Values):
 
     ###################
     # Run-time vs accuracy options.
+    # Default, sacrifice accuracy/completeness for speed.
+    # Must turn on options for verification, final routing, etc.
     ###################
     # When enabled, layout is not generated (and no DRC or LVS are performed)
     netlist_only = False
     # Whether we should do the final power routing
     route_supplies = False
     # This determines whether LVS and DRC is checked at all.
-    check_lvsdrc = True
+    check_lvsdrc = False
     # This determines whether LVS and DRC is checked for every submodule.
     inline_lvsdrc = False
     # Remove noncritical memory cells for characterization speed-up

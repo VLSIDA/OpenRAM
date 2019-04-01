@@ -22,7 +22,6 @@ class worst_case_timing_sram_test(openram_test):
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
         OPTS.trim_netlist = False
-        OPTS.check_lvsdrc = True
         
 
         # This is a hack to reload the characterizer __init__ with the spice version

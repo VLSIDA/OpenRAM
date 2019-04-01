@@ -111,7 +111,7 @@ class sram_base(design, verilog, lef):
 
         start_time = datetime.now()
         # We only enable final verification if we have routed the design
-        self.DRC_LVS(final_verification=OPTS.route_supplies)
+        self.DRC_LVS(final_verification=OPTS.route_supplies, top_level=True)
         if not OPTS.is_unit_test:
             print_time("Verification",datetime.now(), start_time)
 

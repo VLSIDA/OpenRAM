@@ -190,7 +190,8 @@ class layout():
                 debug.error("Should use a pin iterator since more than one pin {}".format(text),-1)
             # If we have one pin, return it and not the list.
             # Otherwise, should use get_pins()
-            return self.pin_map[text][0]
+            any_pin = next(iter(self.pin_map[text]))
+            return any_pin
         except Exception as e:
             #print e
             self.gds_write("missing_pin.gds")
@@ -260,7 +261,7 @@ class layout():
         """
         Delete a labeled pin (or all pins of the same name)
         """
-        self.pin_map[text]=[]
+        self.pin_map[text]=set()
         
     def add_layout_pin(self, text, layer, offset, width=None, height=None):
         """
@@ -277,13 +278,11 @@ class layout():
             # Check if there's a duplicate!
             # and if so, silently ignore it.
             # Rounding errors may result in some duplicates.
-            pin_list = self.pin_map[text]
-            for pin in pin_list:
-                if pin == new_pin:
-                    return pin
-            self.pin_map[text].append(new_pin)
+            if new_pin not in self.pin_map[text]:
+                self.pin_map[text].add(new_pin)
         except KeyError:
-            self.pin_map[text] = [new_pin]
+            self.pin_map[text] = set()
+            self.pin_map[text].add(new_pin)
 
         return new_pin
 

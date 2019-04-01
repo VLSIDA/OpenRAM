@@ -206,7 +206,7 @@ class layout():
         if text in self.pin_map.keys():
             return self.pin_map[text]
         else:
-            return []
+            return set()
     
     def copy_layout_pin(self, instance, pin_name, new_name=""):
         """ 

@@ -213,11 +213,9 @@ class hierarchical_decoder(design.design):
         """ Route a vertical M2 coordinate to another vertical M2 coordinate to the predecode inputs """
         
         self.add_via_center(layers=("metal2", "via2", "metal3"),
-                            offset=input_offset,
-                            rotate=90)
+                            offset=input_offset)
         self.add_via_center(layers=("metal2", "via2", "metal3"),
-                            offset=output_offset,
-                            rotate=90)
+                            offset=output_offset)
         self.add_path(("metal3"), [input_offset, output_offset])
 
     
@@ -575,8 +573,7 @@ class hierarchical_decoder(design.design):
         rail_pos = vector(self.predecode_rails[rail_name].x,pin.lc().y)
         self.add_path("metal1", [rail_pos, pin.lc()])
         self.add_via_center(layers=("metal1", "via1", "metal2"),
-                            offset=rail_pos,
-                            rotate=90)
+                            offset=rail_pos)
 
 
     def route_predecode_rail_m3(self, rail_name, pin):
@@ -586,12 +583,10 @@ class hierarchical_decoder(design.design):
         mid_point = vector(pin.cx(), pin.cy()+self.inv.height/2)
         rail_pos = vector(self.predecode_rails[rail_name].x,mid_point.y)
         self.add_via_center(layers=("metal1", "via1", "metal2"),
-                            offset=pin.center(),
-                            rotate=90)
+                            offset=pin.center())
         self.add_wire(("metal3","via2","metal2"), [rail_pos, mid_point, pin.uc()])
         self.add_via_center(layers=("metal2", "via2", "metal3"),
-                            offset=rail_pos,
-                            rotate=90)
+                            offset=rail_pos)
 
         
     def analytical_delay(self, corner, slew, load = 0.0):

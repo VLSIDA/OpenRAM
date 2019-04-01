@@ -42,7 +42,7 @@ class pgate(design.design):
                           height=height,
                           width=source_pin.width())
     
-    def route_input_gate(self, pmos_inst, nmos_inst, ypos, name, position="left", rotate=90):
+    def route_input_gate(self, pmos_inst, nmos_inst, ypos, name, position="left", rotate=False):
         """ Route the input gate to the left side of the cell for access.
         Position specifies to place the contact the left, center, or right of gate. """
 
@@ -61,14 +61,16 @@ class pgate(design.design):
         left_gate_offset = vector(nmos_gate_pin.lx(),ypos)
 
         # Center is completely symmetric. 
-        if rotate==90:
+        if rotate:
             contact_width = contact.poly.height
             contact_m1_width = contact.poly.second_layer_height
             contact_m1_height = contact.poly.second_layer_width
+            directions = ("H","V")
         else:
             contact_width = contact.poly.width
             contact_m1_width = contact.poly.second_layer_width
             contact_m1_height = contact.poly.second_layer_height
+            directions = ("V","H")
             
         if position=="center":
             contact_offset = left_gate_offset + vector(0.5*self.poly_width, 0)
@@ -79,9 +81,12 @@ class pgate(design.design):
         else:
             debug.error("Invalid contact placement option.", -1)
 
-        self.add_contact_center(layers=("poly", "contact", "metal1"),
-                                offset=contact_offset,
-                                rotate=rotate)
+        # Non-preferred direction via
+
+        self.add_via_center(layers=("poly", "contact", "metal1"),
+                            offset=contact_offset,
+                            directions=directions)
+
         # self.add_layout_pin_segment_center(text=name,
         #                                    layer="metal1",
         #                                    start=left_gate_offset.scale(0,1),
@@ -145,10 +150,11 @@ class pgate(design.design):
         # Offset by half a contact in x and y
         contact_offset += vector(0.5*pmos.active_contact.first_layer_width,
                                0.5*pmos.active_contact.first_layer_height)
-        self.nwell_contact=self.add_contact_center(layers=layer_stack,
-                                                   offset=contact_offset,
-                                                   implant_type="n",
-                                                   well_type="n")
+        self.nwell_contact=self.add_via_center(layers=layer_stack,
+                                               offset=contact_offset,
+                                               directions=("H","V"),
+                                               implant_type="n",
+                                               well_type="n")
         self.add_rect_center(layer="metal1",
                              offset=contact_offset + vector(0,0.5*(self.height-contact_offset.y)),
                              width=self.nwell_contact.mod.second_layer_width,
@@ -191,10 +197,11 @@ class pgate(design.design):
         # Offset by half a contact
         contact_offset += vector(0.5*nmos.active_contact.first_layer_width,
                                0.5*nmos.active_contact.first_layer_height)
-        self.pwell_contact=self.add_contact_center(layers=layer_stack,
-                                                   offset=contact_offset,
-                                                   implant_type="p",
-                                                   well_type="p")
+        self.pwell_contact=self.add_via_center(layers=layer_stack,
+                                               offset=contact_offset,
+                                               directions=("H","V"),
+                                               implant_type="p",
+                                               well_type="p")
         self.add_rect_center(layer="metal1",
                              offset=contact_offset.scale(1,0.5),
                              width=self.pwell_contact.mod.second_layer_width,

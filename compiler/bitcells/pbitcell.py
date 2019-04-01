@@ -198,7 +198,7 @@ class pbitcell(design.design):
         self.read_port_spacing = self.bitline_offset + self.m2_space
 
         # spacing between cross coupled inverters
-        self.inverter_to_inverter_spacing = contact.poly.height + self.m1_space
+        self.inverter_to_inverter_spacing = contact.poly.width + self.m1_space
 
         # calculations related to inverter connections
         inverter_pmos_contact_extension = 0.5*(self.inverter_pmos.active_contact.height - self.inverter_pmos.active_height)
@@ -292,19 +292,20 @@ class pbitcell(design.design):
         self.add_path("poly", [self.inverter_nmos_right.get_pin("G").uc(), self.inverter_pmos_right.get_pin("G").bc()])
 
         # connect output (drain/source) of inverters
-        self.add_path("metal1", [self.inverter_nmos_left.get_pin("D").uc(), self.inverter_pmos_left.get_pin("D").bc()], width=contact.well.second_layer_width)
-        self.add_path("metal1", [self.inverter_nmos_right.get_pin("S").uc(), self.inverter_pmos_right.get_pin("S").bc()], width=contact.well.second_layer_width)
+        self.add_path("metal1", [self.inverter_nmos_left.get_pin("D").uc(), self.inverter_pmos_left.get_pin("D").bc()])
+        self.add_path("metal1", [self.inverter_nmos_right.get_pin("S").uc(), self.inverter_pmos_right.get_pin("S").bc()])
 
         # add contacts to connect gate poly to drain/source metal1 (to connect Q to Q_bar)
         contact_offset_left =  vector(self.inverter_nmos_left.get_pin("D").rc().x + 0.5*contact.poly.height, self.cross_couple_upper_ypos)
-        self.add_contact_center(layers=("poly", "contact", "metal1"),
-                                        offset=contact_offset_left,
-                                        rotate=90)
+        self.add_via_center(layers=("poly", "contact", "metal1"),
+                            offset=contact_offset_left,
+                            directions=("H","H"))
+
 
         contact_offset_right =  vector(self.inverter_nmos_right.get_pin("S").lc().x - 0.5*contact.poly.height, self.cross_couple_lower_ypos)
-        self.add_contact_center(layers=("poly", "contact", "metal1"),
-                                        offset=contact_offset_right,
-                                        rotate=90)
+        self.add_via_center(layers=("poly", "contact", "metal1"),
+                            offset=contact_offset_right,
+                            directions=("H","H"))
 
         # connect contacts to gate poly (cross couple connections)
         gate_offset_right = vector(self.inverter_nmos_right.get_pin("G").lc().x, contact_offset_left.y)
@@ -395,7 +396,6 @@ class pbitcell(design.design):
             self.add_layout_pin_rect_center(text=self.rw_bl_names[k],
                                             layer="metal2",
                                             offset=self.rwbl_positions[k],
-                                            width=drc["minwidth_metal2"],
                                             height=self.height)
 
             rwbr_xpos = right_readwrite_transistor_xpos + self.readwrite_nmos.active_width + self.bitline_offset - 0.5*self.m2_width
@@ -403,7 +403,6 @@ class pbitcell(design.design):
             self.add_layout_pin_rect_center(text=self.rw_br_names[k],
                                             layer="metal2",
                                             offset=self.rwbr_positions[k],
-                                            width=drc["minwidth_metal2"],
                                             height=self.height)
 
         # update furthest left and right transistor edges
@@ -472,7 +471,6 @@ class pbitcell(design.design):
             self.add_layout_pin_rect_center(text=self.w_bl_names[k],
                                             layer="metal2",
                                             offset=self.wbl_positions[k],
-                                            width=drc["minwidth_metal2"],
                                             height=self.height)
 
             wbr_xpos = right_write_transistor_xpos + self.write_nmos.active_width + self.bitline_offset - 0.5*self.m2_width
@@ -480,7 +478,6 @@ class pbitcell(design.design):
             self.add_layout_pin_rect_center(text=self.w_br_names[k],
                                             layer="metal2",
                                             offset=self.wbr_positions[k],
-                                            width=drc["minwidth_metal2"],
                                             height=self.height)
 
         # update furthest left and right transistor edges
@@ -571,7 +568,6 @@ class pbitcell(design.design):
             self.add_layout_pin_rect_center(text=self.r_bl_names[k],
                                             layer="metal2",
                                             offset=self.rbl_positions[k],
-                                            width=drc["minwidth_metal2"],
                                             height=self.height)
 
             rbr_xpos = right_read_transistor_xpos + self.read_port_width + self.bitline_offset - 0.5*self.m2_width
@@ -579,7 +575,6 @@ class pbitcell(design.design):
             self.add_layout_pin_rect_center(text=self.r_br_names[k],
                                             layer="metal2",
                                             offset=self.rbr_positions[k],
-                                            width=drc["minwidth_metal2"],
                                             height=self.height)
 
     def route_wordlines(self):
@@ -613,21 +608,21 @@ class pbitcell(design.design):
 
             # first transistor on either side of the cross coupled inverters does not need to route to wordline on metal2
             if (k == 0) or (k == 1):
-                self.add_contact_center(layers=("poly", "contact", "metal1"),
-                                        offset=port_contact_offset)
+                self.add_via_center(layers=("poly", "contact", "metal1"),
+                                    offset=port_contact_offset)
 
                 self.add_path("poly", [gate_offset, port_contact_offset])
                 self.add_path("metal1", [port_contact_offset, wl_contact_offset])
 
             else:
-                self.add_contact_center(layers=("poly", "contact", "metal1"),
-                                        offset=port_contact_offset)
-                self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                        offset=port_contact_offset)
+                self.add_via_center(layers=("poly", "contact", "metal1"),
+                                    offset=port_contact_offset)
+                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                    offset=port_contact_offset)
 
-                self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                        offset=wl_contact_offset,
-                                        rotate=90)
+                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                    offset=wl_contact_offset,
+                                    directions=("H","H"))
 
                 self.add_path("poly", [gate_offset, port_contact_offset])
                 self.add_path("metal2", [port_contact_offset, wl_contact_offset])
@@ -662,8 +657,8 @@ class pbitcell(design.design):
             port_contact_offest = left_port_transistors[k].get_pin("S").center()
             bl_offset = vector(bl_positions[k].x, port_contact_offest.y)
 
-            self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                    offset=port_contact_offest)
+            self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                offset=port_contact_offest)
 
             self.add_path("metal2", [port_contact_offest, bl_offset], width=contact.m1m2.height)
 
@@ -671,8 +666,8 @@ class pbitcell(design.design):
             port_contact_offest = right_port_transistors[k].get_pin("D").center()
             br_offset = vector(br_positions[k].x, port_contact_offest.y)
 
-            self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                    offset=port_contact_offest)
+            self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                offset=port_contact_offest)
 
             self.add_path("metal2", [port_contact_offest, br_offset], width=contact.m1m2.height)
 
@@ -687,17 +682,17 @@ class pbitcell(design.design):
             nmos_contact_positions.append(self.read_access_nmos_right[k].get_pin("S").center())
 
         for position in nmos_contact_positions:
-            self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                    offset=position)
+            self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                offset=position)
 
             if position.x > 0:
                 contact_correct = 0.5*contact.m1m2.height
             else:
                 contact_correct = -0.5*contact.m1m2.height
             supply_offset = vector(position.x + contact_correct, self.gnd_position.y)
-            self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                    offset=supply_offset,
-                                    rotate=90)
+            self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                offset=supply_offset,
+                                directions=("H","H"))
 
             self.add_path("metal2", [position, supply_offset])
 
@@ -713,39 +708,35 @@ class pbitcell(design.design):
         for k in range(self.num_rw_ports):
             mid = vector(self.readwrite_nmos_left[k].get_pin("D").uc().x, self.cross_couple_lower_ypos)
             Q_pos = vector(self.inverter_nmos_left.get_pin("D").lx(), self.cross_couple_lower_ypos)
-            self.add_path("metal1", [self.readwrite_nmos_left[k].get_pin("D").uc(), mid+vector(0,0.5*self.m1_width)], width=contact.poly.second_layer_width)
-            self.add_path("metal1", [mid, Q_pos])
+            self.add_path("metal1", [self.readwrite_nmos_left[k].get_pin("D").uc(), mid, Q_pos])
 
             mid = vector(self.readwrite_nmos_right[k].get_pin("S").uc().x, self.cross_couple_lower_ypos)
             Q_bar_pos = vector(self.inverter_nmos_right.get_pin("S").rx(), self.cross_couple_lower_ypos)
-            self.add_path("metal1", [self.readwrite_nmos_right[k].get_pin("S").uc(), mid+vector(0,0.5*self.m1_width)], width=contact.poly.second_layer_width)
-            self.add_path("metal1", [mid, Q_bar_pos])
+            self.add_path("metal1", [self.readwrite_nmos_right[k].get_pin("S").uc(), mid, Q_bar_pos])
 
     def route_write_access(self):
         """ Routes read/write transistors to the storage component of the bitcell """
         for k in range(self.num_w_ports):
             mid = vector(self.write_nmos_left[k].get_pin("D").uc().x, self.cross_couple_lower_ypos)
             Q_pos = vector(self.inverter_nmos_left.get_pin("D").lx(), self.cross_couple_lower_ypos)
-            self.add_path("metal1", [self.write_nmos_left[k].get_pin("D").uc(), mid+vector(0,0.5*self.m1_width)], width=contact.poly.second_layer_width)
-            self.add_path("metal1", [mid, Q_pos])
+            self.add_path("metal1", [self.write_nmos_left[k].get_pin("D").uc(), mid, Q_pos])
 
             mid = vector(self.write_nmos_right[k].get_pin("S").uc().x, self.cross_couple_lower_ypos)
             Q_bar_pos = vector(self.inverter_nmos_right.get_pin("S").rx(), self.cross_couple_lower_ypos)
-            self.add_path("metal1", [self.write_nmos_right[k].get_pin("S").uc(), mid+vector(0,0.5*self.m1_width)], width=contact.poly.second_layer_width)
-            self.add_path("metal1", [mid, Q_bar_pos])
+            self.add_path("metal1", [self.write_nmos_right[k].get_pin("S").uc(), mid, Q_bar_pos])
 
     def route_read_access(self):
         """  Routes read access transistors to the storage component of the bitcell """
         # add poly to metal1 contacts for gates of the inverters
-        left_storage_contact =  vector(self.inverter_nmos_left.get_pin("G").lc().x - drc["poly_to_polycontact"] - 0.5*contact.poly.width, self.cross_couple_upper_ypos)
-        self.add_contact_center(layers=("poly", "contact", "metal1"),
-                                        offset=left_storage_contact,
-                                        rotate=90)
+        left_storage_contact =  vector(self.inverter_nmos_left.get_pin("G").lc().x - self.poly_to_polycontact - 0.5*contact.poly.width, self.cross_couple_upper_ypos)
+        self.add_via_center(layers=("poly", "contact", "metal1"),
+                            offset=left_storage_contact,
+                            directions=("H","H"))
 
-        right_storage_contact =  vector(self.inverter_nmos_right.get_pin("G").rc().x + drc["poly_to_polycontact"] + 0.5*contact.poly.width, self.cross_couple_upper_ypos)
-        self.add_contact_center(layers=("poly", "contact", "metal1"),
-                                        offset=right_storage_contact,
-                                        rotate=90)
+        right_storage_contact =  vector(self.inverter_nmos_right.get_pin("G").rc().x + self.poly_to_polycontact + 0.5*contact.poly.width, self.cross_couple_upper_ypos)
+        self.add_via_center(layers=("poly", "contact", "metal1"),
+                            offset=right_storage_contact,
+                            directions=("H","H"))
 
         inverter_gate_offset_left = vector(self.inverter_nmos_left.get_pin("G").lc().x, self.cross_couple_upper_ypos)
         self.add_path("poly", [left_storage_contact, inverter_gate_offset_left])
@@ -758,25 +749,23 @@ class pbitcell(design.design):
         for k in range(self.num_r_ports):
             port_contact_offset = self.read_access_nmos_left[k].get_pin("G").uc() + vector(0, self.gate_contact_yoffset - self.poly_extend_active)
 
-            self.add_contact_center(layers=("poly", "contact", "metal1"),
-                                    offset=port_contact_offset)
+            self.add_via_center(layers=("poly", "contact", "metal1"),
+                                offset=port_contact_offset)
 
             self.add_path("poly", [self.read_access_nmos_left[k].get_pin("G").uc(), port_contact_offset])
 
             mid = vector(self.read_access_nmos_left[k].get_pin("G").uc().x, self.cross_couple_upper_ypos)
-            self.add_path("metal1", [port_contact_offset, mid+vector(0,0.5*self.m1_width)], width=contact.poly.second_layer_width)
-            self.add_path("metal1", [mid, left_storage_contact])
+            self.add_path("metal1", [port_contact_offset, mid, left_storage_contact])
 
             port_contact_offset = self.read_access_nmos_right[k].get_pin("G").uc() + vector(0, self.gate_contact_yoffset - self.poly_extend_active)
 
-            self.add_contact_center(layers=("poly", "contact", "metal1"),
-                                    offset=port_contact_offset)
+            self.add_via_center(layers=("poly", "contact", "metal1"),
+                                offset=port_contact_offset)
 
             self.add_path("poly", [self.read_access_nmos_right[k].get_pin("G").uc(), port_contact_offset])
 
             mid = vector(self.read_access_nmos_right[k].get_pin("G").uc().x, self.cross_couple_upper_ypos)
-            self.add_path("metal1", [port_contact_offset, mid+vector(0,0.5*self.m1_width)], width=contact.poly.second_layer_width)
-            self.add_path("metal1", [mid, right_storage_contact])
+            self.add_path("metal1", [port_contact_offset, mid, right_storage_contact])
 
     def extend_well(self):
         """
@@ -795,13 +784,13 @@ class pbitcell(design.design):
 
         # extend nwell to encompass inverter_pmos
         # calculate offset of the left pmos well
-        inverter_well_xpos = -(self.inverter_nmos.active_width + 0.5*self.inverter_to_inverter_spacing) - drc["well_enclosure_active"]
-        inverter_well_ypos = self.inverter_nmos_ypos + self.inverter_nmos.active_height + self.inverter_gap - drc["well_enclosure_active"]
+        inverter_well_xpos = -(self.inverter_nmos.active_width + 0.5*self.inverter_to_inverter_spacing) - self.well_enclose_active
+        inverter_well_ypos = self.inverter_nmos_ypos + self.inverter_nmos.active_height + self.inverter_gap - self.well_enclose_active
 
         # calculate width of the two combined nwells
         # calculate height to encompass nimplant connected to vdd
-        well_width = 2*(self.inverter_nmos.active_width + 0.5*self.inverter_to_inverter_spacing) + 2*drc["well_enclosure_active"]
-        well_height = self.vdd_position.y - inverter_well_ypos + drc["well_enclosure_active"] + drc["minwidth_tx"]
+        well_width = 2*(self.inverter_nmos.active_width + 0.5*self.inverter_to_inverter_spacing) + 2*self.well_enclose_active
+        well_height = self.vdd_position.y - inverter_well_ypos + self.well_enclose_active + drc["minwidth_tx"]
 
         offset = [inverter_well_xpos,inverter_well_ypos]
         self.add_rect(layer="nwell",
@@ -812,19 +801,19 @@ class pbitcell(design.design):
         # add well contacts
         # connect pimplants to gnd
         offset = vector(0, self.gnd_position.y)
-        self.add_contact_center(layers=("active", "contact", "metal1"),
-                                offset=offset,
-                                rotate=90,
-                                implant_type="p",
-                                well_type="p")
+        self.add_via_center(layers=("active", "contact", "metal1"),
+                            offset=offset,
+                            directions=("H","H"),
+                            implant_type="p",
+                            well_type="p")
 
         # connect nimplants to vdd
         offset = vector(0, self.vdd_position.y)
-        self.add_contact_center(layers=("active", "contact", "metal1"),
-                                offset=offset,
-                                rotate=90,
-                                implant_type="n",
-                                well_type="n")
+        self.add_via_center(layers=("active", "contact", "metal1"),
+                            offset=offset,
+                            directions=("H","H"),
+                            implant_type="n",
+                            well_type="n")
 
     def list_bitcell_pins(self, col, row):
         """ Creates a list of connections in the bitcell, indexed by column and row, for instance use in bitcell_array """

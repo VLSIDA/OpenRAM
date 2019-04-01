@@ -200,8 +200,7 @@ class sram_1bank(sram_base):
             clk_steiner_pos = vector(mid1_pos.x, control_clk_buf_pos.y)
             self.add_path("metal1", [control_clk_buf_pos, clk_steiner_pos])
             self.add_via_center(layers=("metal1","via1","metal2"),
-                                offset=clk_steiner_pos,
-                                rotate=90)
+                                offset=clk_steiner_pos)
             
             # Note, the via to the control logic is taken care of above
             self.add_wire(("metal3","via2","metal2"),[row_addr_clk_pos, mid1_pos, clk_steiner_pos])
@@ -233,8 +232,7 @@ class sram_1bank(sram_base):
                 dest_pin = self.bank_inst.get_pin(signal+"{}".format(port))                
                 self.connect_rail_from_left_m2m3(src_pin, dest_pin)
                 self.add_via_center(layers=("metal1","via1","metal2"),
-                                    offset=src_pin.rc(),
-                                    rotate=90)
+                                    offset=src_pin.rc())
             
 
     def route_row_addr_dff(self):
@@ -250,8 +248,7 @@ class sram_1bank(sram_base):
                 mid_pos = vector(bank_pos.x,flop_pos.y)
                 self.add_wire(("metal3","via2","metal2"),[flop_pos, mid_pos,bank_pos])
                 self.add_via_center(layers=("metal2","via2","metal3"),
-                                    offset=flop_pos,
-                                    rotate=90)
+                                    offset=flop_pos)
 
     def route_col_addr_dff(self):
         """ Connect the output of the row flops to the bank pins """

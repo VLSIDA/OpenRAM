@@ -128,7 +128,7 @@ class bitcell_array(design.design):
                 inst = self.cell_inst[row,col]
                 for pin_name in ["vdd", "gnd"]:
                     for pin in inst.get_pins(pin_name):
-                        self.add_power_pin(pin_name, pin.center(), 0, pin.layer)                           
+                        self.add_power_pin(name=pin_name, loc=pin.center(), vertical=True, start_layer=pin.layer)
     
     def analytical_delay(self, corner, slew, load):
         """Returns relative delay of the bitline in the bitcell array"""

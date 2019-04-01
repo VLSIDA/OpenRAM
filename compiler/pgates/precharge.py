@@ -75,7 +75,7 @@ class precharge(pgate.pgate):
         self.add_path("metal1", [pmos_pin.uc(), pmos_vdd_pos])
 
         # Add vdd pin above the transistor
-        self.add_power_pin("vdd", pmos_pin.center(), rotate=0)
+        self.add_power_pin("vdd", pmos_pin.center(), vertical=True)
         
         
     def create_ptx(self):
@@ -149,9 +149,9 @@ class precharge(pgate.pgate):
         
         # adds the en contact to connect the gates to the en rail on metal1
         offset = self.lower_pmos_inst.get_pin("G").ul() + vector(0,0.5*self.poly_space)
-        self.add_contact_center(layers=("poly", "contact", "metal1"),
-                                offset=offset,
-                                rotate=90)
+        self.add_via_center(layers=("poly", "contact", "metal1"),
+                            offset=offset)
+
 
         # adds the en rail on metal1
         self.add_layout_pin_segment_center(text="en_bar",
@@ -168,10 +168,10 @@ class precharge(pgate.pgate):
         # adds the contact from active to metal1
         well_contact_pos = self.upper_pmos1_inst.get_pin("D").center().scale(1,0) \
                            + vector(0, self.upper_pmos1_inst.uy() + contact.well.height/2 + drc("well_extend_active"))
-        self.add_contact_center(layers=("active", "contact", "metal1"),
-                                offset=well_contact_pos,
-                                implant_type="n",
-                                well_type="n")
+        self.add_via_center(layers=("active", "contact", "metal1"),
+                            offset=well_contact_pos,
+                            implant_type="n",
+                            well_type="n")
 
         # leave an extra pitch for the height
         self.height = well_contact_pos.y + contact.well.height + self.m1_pitch
@@ -225,16 +225,20 @@ class precharge(pgate.pgate):
         lower_pin = self.lower_pmos_inst.get_pin("S")
         
         # BL goes up to M2 at the transistor
-        self.bl_contact=self.add_contact_center(layers=stack,
-                                                offset=upper_pin.center())
-        self.add_contact_center(layers=stack,
-                                offset=lower_pin.center())
+        self.bl_contact=self.add_via_center(layers=stack,
+                                            offset=upper_pin.center(),
+                                            directions=("V","V"))
+        self.add_via_center(layers=stack,
+                            offset=lower_pin.center(),
+                            directions=("V","V"))
 
         # BR routes over on M1 first
-        self.add_contact_center(layers=stack,
-                                offset = vector(self.br_pin.cx(), upper_pin.cy()))
-        self.add_contact_center(layers=stack,
-                                offset = vector(self.br_pin.cx(), lower_pin.cy()))
+        self.add_via_center(layers=stack,
+                            offset = vector(self.br_pin.cx(), upper_pin.cy()),
+                            directions=("V","V"))
+        self.add_via_center(layers=stack,
+                            offset = vector(self.br_pin.cx(), lower_pin.cy()),
+                            directions=("V","V"))
 
     def connect_pmos_m1(self, pmos_pin, bit_pin):
         """ 

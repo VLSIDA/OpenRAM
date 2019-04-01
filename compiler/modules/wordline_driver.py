@@ -81,21 +81,13 @@ class wordline_driver(design.design):
             (gate_offset, y_dir) = self.get_gate_offset(0, self.inv.height, num)
 
             # Route both supplies
-            for n in ["vdd", "gnd"]:
-                supply_pin = self.inv2_inst[num].get_pin(n)
+            for name in ["vdd", "gnd"]:
+                supply_pin = self.inv2_inst[num].get_pin(name)
 
                 # Add pins in two locations
                 for xoffset in [a_xoffset, b_xoffset]:
                     pin_pos = vector(xoffset, supply_pin.cy())
-                    self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                        offset=pin_pos,
-                                        rotate=90)
-                    self.add_via_center(layers=("metal2", "via2", "metal3"),
-                                        offset=pin_pos,
-                                        rotate=90)
-                    self.add_layout_pin_rect_center(text=n,
-                                                    layer="metal3",
-                                                    offset=pin_pos)
+                    self.add_power_pin(name, pin_pos)
             
 
 
@@ -193,13 +185,14 @@ class wordline_driver(design.design):
                                                start=input_offset,
                                                end=mid_via_offset)
             self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=mid_via_offset)
+                                offset=mid_via_offset,
+                                directions=("V","V"))
 
             # now connect to the nand2 B
             self.add_path("metal2", [mid_via_offset, b_pos])
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=b_pos - vector(0.5*contact.m1m2.height,0),
-                                rotate=90)
+                                directions=("H","H"))
 
 
             # output each WL on the right

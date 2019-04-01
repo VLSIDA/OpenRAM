@@ -62,18 +62,15 @@ class wire(wire_path):
                 continue
             if a[1] == c[1]:
                 continue
-            via_offset = [offset[0] + 0.5*c_height,
-                           offset[1] - 0.5*c_width]
-            self.obj.add_via(layers=self.layer_stack,
-                             offset=via_offset,
-                             rotate=90)
-            corner_offset = [offset[0] - 0.5*(c_height + self.vert_layer_width),
-                             offset[1] + 0.5*(c_width - self.horiz_layer_width)]
+            self.obj.add_via_center(layers=self.layer_stack,
+                                    offset=offset)
 
 
     def create_rectangles(self):
-        """ Create the actual rectangles on teh appropriate layers
-        using the position list of the corners. """
+        """ 
+        Create the actual rectangles on the appropriate layers
+        using the position list of the corners. 
+        """
         pl = self.position_list  # position list
         for index in range(len(pl) - 1):
             if pl[index][0] != pl[index + 1][0]:

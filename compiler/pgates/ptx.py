@@ -326,11 +326,12 @@ class ptx(design.design):
         [source_positions,drain_positions] = self.get_contact_positions()
 
         for pos in source_positions:
-            contact=self.add_contact_center(layers=("active", "contact", "metal1"),
-                                            offset=pos,
-                                            size=(1, self.num_contacts),
-                                            implant_type=self.implant_type,
-                                            well_type=self.well_type)
+            contact=self.add_via_center(layers=("active", "contact", "metal1"),
+                                        offset=pos,
+                                        size=(1, self.num_contacts),
+                                        directions=("H","V"),
+                                        implant_type=self.implant_type,
+                                        well_type=self.well_type)
             self.add_layout_pin_rect_center(text="S",
                                             layer="metal1",
                                             offset=pos,
@@ -339,11 +340,12 @@ class ptx(design.design):
 
                 
         for pos in drain_positions:
-            contact=self.add_contact_center(layers=("active", "contact", "metal1"),
-                                            offset=pos,
-                                            size=(1, self.num_contacts),
-                                            implant_type=self.implant_type,
-                                            well_type=self.well_type)
+            contact=self.add_via_center(layers=("active", "contact", "metal1"),
+                                        offset=pos,
+                                        size=(1, self.num_contacts),
+                                        directions=("H","V"),
+                                        implant_type=self.implant_type,
+                                        well_type=self.well_type)
             self.add_layout_pin_rect_center(text="D",
                                             layer="metal1",
                                             offset=pos,

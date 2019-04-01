@@ -203,13 +203,15 @@ class pnand2(pgate.pgate):
         mid1_offset = vector(out_offset.x, top_pin_offset.y)
         mid2_offset = vector(out_offset.x, bottom_pin_offset.y)        
         
-        self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                offset=pmos_pin.center())
-        self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                offset=nmos_pin.center())
-        self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                offset=out_offset,
-                                rotate=90)
+        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                            offset=pmos_pin.center(),
+                            directions=("V","H"))
+        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                            offset=nmos_pin.center(),
+                            directions=("V","H"))
+        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                            offset=out_offset)
+        
 
         # PMOS1 to mid-drain to NMOS2 drain
         self.add_path("metal2",[top_pin_offset, mid1_offset, out_offset, mid2_offset, bottom_pin_offset])

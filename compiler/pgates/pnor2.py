@@ -184,11 +184,11 @@ class pnor2(pgate.pgate):
         nmos2_pin = self.nmos2_inst.get_pin("D")
 
         # Go up to metal2 for ease on all output pins
-        self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                offset=pmos_pin.center())
-        m1m2_contact=self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                             offset=nmos_pin.center(),
-                                             rotate=90)
+        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                            offset=pmos_pin.center())
+        m1m2_contact=self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                         offset=nmos_pin.center())
+
         
         mid1_offset = vector(pmos_pin.center().x,nmos2_pin.center().y)
         mid2_offset = vector(pmos_pin.center().x,self.inputA_yoffset)
@@ -198,9 +198,8 @@ class pnor2(pgate.pgate):
         self.add_path("metal2",[pmos_pin.bc(), mid2_offset, mid3_offset])
         self.add_path("metal2",[nmos_pin.rc(), mid1_offset, mid2_offset])
         # This extends the output to the edge of the cell
-        self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                offset=mid3_offset,
-                                rotate=90)
+        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                            offset=mid3_offset)
         self.add_layout_pin_rect_center(text="Z",
                                         layer="metal1",
                                         offset=mid3_offset,

@@ -800,14 +800,11 @@ class bank(design.design):
             bus_pos = vector(self.bus_xoffset[port][name].x, out_pos.y)
             self.add_path("metal3",[out_pos, bus_pos])
             self.add_via_center(layers=("metal2", "via2", "metal3"),
-                                offset=bus_pos,
-                                rotate=90)
+                                offset=bus_pos)
             self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=out_pos,
-                                rotate=90)
+                                offset=out_pos)
             self.add_via_center(layers=("metal2", "via2", "metal3"),
-                                offset=out_pos,
-                                rotate=90)
+                                offset=out_pos)
         
     
     def setup_routing_constraints(self):
@@ -1197,8 +1194,7 @@ class bank(design.design):
             control_pos = vector(self.bus_xoffset[port][control_signal].x ,pin_pos.y)
             self.add_path("metal1", [control_pos, pin_pos])
             self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=control_pos,
-                                rotate=90)
+                                offset=control_pos)
 
         # clk to wordline_driver
         control_signal = self.prefix+"wl_en{}".format(port)
@@ -1212,8 +1208,7 @@ class bank(design.design):
         control_pos = vector(control_x_offset, mid_pos.y)
         self.add_wire(("metal1","via1","metal2"),[pin_pos, mid_pos, control_pos])
         self.add_via_center(layers=("metal1", "via1", "metal2"),
-                            offset=control_pos,
-                            rotate=90)
+                            offset=control_pos)
 
     def analytical_delay(self, corner, slew, load, port):
         """ return  analytical delay of the bank. This will track the clock to output path"""

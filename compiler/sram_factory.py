@@ -54,12 +54,15 @@ class sram_factory:
             self.objects[module_type] = []
             
         # Either retreive a previous object or create a new one
+        #print("new",kwargs)
         for obj in self.objects[module_type]:
             (obj_kwargs, obj_item) = obj
             # Must have the same dictionary exactly (conservative)
             if obj_kwargs == kwargs:
-                debug.info(3, "Existing module: type={0} name={1} kwargs={2}".format(module_type, obj_item.name, str(kwargs)))
+                #debug.info(0, "Existing module: type={0} name={1} kwargs={2}".format(module_type, obj_item.name, str(kwargs)))
                 return obj_item
+            #else:
+            #    print("obj",obj_kwargs)
 
         # Use the default  name if there are default arguments
         # This is especially for library cells so that the spice and gds files can be found.
@@ -67,7 +70,8 @@ class sram_factory:
             # Create a unique name and increment the index
             module_name = "{0}_{1}".format(module_name, self.module_indices[module_type])
             self.module_indices[module_type] += 1
-        #debug.info(1, "New module: type={0} name={1} kwargs={2}".format(module_type,module_name,str(kwargs)))
+            
+        #debug.info(0, "New module: type={0} name={1} kwargs={2}".format(module_type,module_name,str(kwargs)))
         obj = mod(name=module_name,**kwargs)
         self.objects[module_type].append((kwargs,obj))
         return obj

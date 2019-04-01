@@ -7,36 +7,50 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
 class contact_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_{0}".format(OPTS.tech_name))
-        import contact
 
-
-        for layer_stack in [("poly", "contact", "metal1"), ("metal1", "via1", "metal2")]:
+        for layer_stack in [("metal1", "via1", "metal2"), ("poly", "contact", "metal1")]:
             stack_name = ":".join(map(str, layer_stack))
 
             # Check single 1 x 1 contact"
             debug.info(2, "1 x 1 {} test".format(stack_name))
-            c = contact.contact(layer_stack, (1, 1))
+            c = factory.create(module_type="contact", layer_stack=layer_stack, dimensions=(1, 1))
+            self.local_drc_check(c)
+            
+            # Check single 1 x 1 contact"
+            debug.info(2, "1 x 1 {} test".format(stack_name))
+            c = factory.create(module_type="contact", layer_stack=layer_stack, dimensions=(1, 1), directions=("H","V"))
             self.local_drc_check(c)
 
+            # Check single x 1 contact"
+            debug.info(2, "1 x 1 {} test".format(stack_name))
+            c = factory.create(module_type="contact", layer_stack=layer_stack, dimensions=(1, 1), directions=("H","H"))
+            self.local_drc_check(c)
+
+            # Check single 1 x 1 contact"
+            debug.info(2, "1 x 1 {} test".format(stack_name))
+            c = factory.create(module_type="contact", layer_stack=layer_stack, dimensions=(1, 1), directions=("V","V"))
+            self.local_drc_check(c)
+            
             # check vertical array with one in the middle and two ends
             debug.info(2, "1 x 3 {} test".format(stack_name))
-            c = contact.contact(layer_stack, (1, 3))
+            c = factory.create(module_type="contact", layer_stack=layer_stack, dimensions=(1, 3))
             self.local_drc_check(c)
 
             # check horizontal array with one in the middle and two ends
             debug.info(2, "3 x 1 {} test".format(stack_name))
-            c = contact.contact(layer_stack, (3, 1))
+            c = factory.create(module_type="contact", layer_stack=layer_stack, dimensions=(3, 1))
             self.local_drc_check(c)
 
             # check 3x3 array for all possible neighbors
             debug.info(2, "3 x 3 {} test".format(stack_name))
-            c = contact.contact(layer_stack, (3, 3))
+            c = factory.create(module_type="contact", layer_stack=layer_stack, dimensions=(3, 3))
             self.local_drc_check(c)
 
         globals.end_openram()

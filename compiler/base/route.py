@@ -65,7 +65,7 @@ class route(design):
         for p0,p1 in plist:
             if p0.z != p1.z: # via
                 via_size = [self.num_vias]*2
-                self.obj.add_via_center(self.layer_stack,vector(p0.x,p0.y),size=via_size,rotate=90)
+                self.obj.add_via_center(self.layer_stack,vector(p0.x,p0.y),size=via_size)
             elif p0.x != p1.x and p0.y != p1.y: # diagonal!
                 debug.error("Diagonal route! {}".format(self.path),-3)
             else:

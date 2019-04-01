@@ -469,8 +469,7 @@ class sram_base(design, verilog, lef):
         out_pos = dest_pin.center()
         self.add_wire(("metal3","via2","metal2"),[in_pos, vector(out_pos.x,in_pos.y),out_pos])
         self.add_via_center(layers=("metal2","via2","metal3"),
-                            offset=src_pin.rc(),
-                            rotate=90)
+                            offset=src_pin.rc())
 
                             
     def connect_rail_from_left_m2m1(self, src_pin, dest_pin):

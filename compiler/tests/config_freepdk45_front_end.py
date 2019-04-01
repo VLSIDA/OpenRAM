@@ -1,8 +1,11 @@
 word_size = 1
 num_words = 16
 
-tech_name = "scn3me_subm"
+tech_name = "freepdk45"
 process_corners = ["TT"]
-supply_voltages = [5.0]
+supply_voltages = [1.0]
 temperatures = [25]
+
+
+
 

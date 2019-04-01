@@ -110,7 +110,8 @@ class sram_base(design, verilog, lef):
         self.height = highest_coord[1]
 
         start_time = datetime.now()
-        self.DRC_LVS(final_verification=True)
+        # We only enable final verification if we have routed the design
+        self.DRC_LVS(final_verification=OPTS.route_supplies, top_level=True)
         if not OPTS.is_unit_test:
             print_time("Verification",datetime.now(), start_time)
 
@@ -120,6 +121,10 @@ class sram_base(design, verilog, lef):
     def route_supplies(self):
         """ Route the supply grid and connect the pins to them. """
 
+        # Do not route the power supply 
+        if not OPTS.route_supplies:
+            return
+        
         for inst in self.insts:
             self.copy_power_pins(inst,"vdd")
             self.copy_power_pins(inst,"gnd")

@@ -48,8 +48,13 @@ debug.print_raw("Words per row: {}".format(c.words_per_row))
 
 #from parser import *
 output_extensions = ["sp","v","lib","py","html","log"]
+# Only output lef/gds if back-end
 if not OPTS.netlist_only:
-    output_extensions.extend(["gds","lef"])
+    output_extensions.extend(["lef"])
+    # Only output gds if final routing
+    if OPTS.route_supplies:
+        output_extensions.extend(["gds"])
+        
 output_files = ["{0}{1}.{2}".format(OPTS.output_path,OPTS.output_name,x) for x in output_extensions]
 debug.print_raw("Output files are: ")
 for path  in output_files:

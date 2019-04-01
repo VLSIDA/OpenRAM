@@ -79,10 +79,6 @@ def print_banner():
     debug.print_raw("|=========" + "Computer Science and Engineering Department".center(60) + "=========|")
     debug.print_raw("|=========" + "University of California Santa Cruz".center(60) + "=========|")
     debug.print_raw("|=========" + " ".center(60) + "=========|")
-    debug.print_raw("|=========" + "VLSI Computer Architecture Research Group".center(60) + "=========|")
-    debug.print_raw("|=========" + "Electrical and Computer Engineering Department".center(60) + "=========|")
-    debug.print_raw("|=========" + "Oklahoma State University".center(60) + "=========|")
-    debug.print_raw("|=========" + " ".center(60) + "=========|")
     user_info = "Usage help: openram-user-group@ucsc.edu"
     debug.print_raw("|=========" + user_info.center(60) + "=========|")
     dev_info = "Development help: openram-dev-group@ucsc.edu"
@@ -478,11 +474,14 @@ def report_status():
                                                                        OPTS.num_r_ports,
                                                                        OPTS.num_w_ports))
     if OPTS.netlist_only:
-        debug.print_raw("Netlist only mode (no physical design is being done).")
+        debug.print_raw("Netlist only mode (no physical design is being done, netlist_only=False to disable).")
     
+    if not OPTS.route_supplies:
+        debug.print_raw("Design supply routing skipped for run-time (incomplete GDS will not be saved, route_supplies=True to enable).")
+        
     if not OPTS.inline_lvsdrc:
-        debug.print_raw("DRC/LVS/PEX is only run on the top-level design.")
+        debug.print_raw("DRC/LVS/PEX is only run on the top-level design to save run-time (inline_lvsdrc=True to enable).")
 
     if not OPTS.check_lvsdrc:
-        debug.print_raw("DRC/LVS/PEX is completely disabled.")
+        debug.print_raw("DRC/LVS/PEX is disabled (check_lvsdrc=True to enable).")
         

@@ -347,8 +347,7 @@ def run_pex(name, gds_name, sp_name, output=None, final_verification=False):
 
     out_errors = len(stdouterrors)
 
-    assert(os.path.isfile(output))
-    #correct_port(name, output, sp_name)
+    debug.check(os.path.isfile(output),"Couldn't find PEX extracted output.")
 
     return out_errors
 

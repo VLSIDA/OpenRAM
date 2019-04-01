@@ -37,12 +37,17 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         return inst_map
         
 
-    def DRC_LVS(self, final_verification=False):
+    def DRC_LVS(self, final_verification=False, top_level=False):
         """Checks both DRC and LVS for a module"""
+        
+        # Final verification option does not allow nets to be connected by label.
         # Unit tests will check themselves.
+        if OPTS.is_unit_test:
+            return
+        if not OPTS.check_lvsdrc:
+            return
         # Do not run if disabled in options.
-
-        if (not OPTS.is_unit_test and OPTS.check_lvsdrc and (OPTS.inline_lvsdrc or final_verification)):
+        if (OPTS.inline_lvsdrc or top_level):
 
             global total_drc_errors
             global total_lvs_errors

@@ -8,10 +8,41 @@ class options(optparse.Values):
     that is the sole required command-line positional argument for openram.py.
     """
 
+    ###################
+    # Configuration options
+    ###################
     # This is the technology directory.
     openram_tech = ""
+    
     # This is the name of the technology.
     tech_name = ""
+    
+    # Port configuration (1-2 ports allowed)
+    num_rw_ports = 1
+    num_r_ports = 0
+    num_w_ports = 0
+    
+    # These will get initialized by the user or the tech file
+    supply_voltages = ""
+    temperatures = ""
+    process_corners = ""
+
+    # Size parameters must be specified by user in config file.
+    #num_words = 0
+    #word_size = 0
+    # You can manually specify banks, but it is better to auto-detect it.
+    num_banks = 1
+
+    ###################
+    # Optimization options
+    ###################    
+    # Uses the delay chain size in the tech.py file rather automatic sizing.
+    use_tech_delay_chain_size = False
+
+
+    ###################
+    # Debug options.
+    ###################    
     # This is the temp directory where all intermediate results are stored.
     try:
         # If user defined the temporary location in their environment, use it
@@ -22,12 +53,29 @@ class options(optparse.Values):
     # This is the verbosity level to control debug information. 0 is none, 1
     # is minimal, etc.
     debug_level = 0
+
+    ###################
+    # Run-time vs accuracy options.
+    # Default, sacrifice accuracy/completeness for speed.
+    # Must turn on options for verification, final routing, etc.
+    ###################
     # When enabled, layout is not generated (and no DRC or LVS are performed)
     netlist_only = False
+    # Whether we should do the final power routing
+    route_supplies = False
     # This determines whether LVS and DRC is checked at all.
-    check_lvsdrc = True
+    check_lvsdrc = False
     # This determines whether LVS and DRC is checked for every submodule.
     inline_lvsdrc = False
+    # Remove noncritical memory cells for characterization speed-up
+    trim_netlist = True
+    # Run with extracted parasitics
+    use_pex = False
+
+    
+    ###################
+    # Tool options
+    ###################
     # Variable to select the variant of spice
     spice_name = ""
     # The spice executable being used which is derived from the user PATH.
@@ -40,12 +88,9 @@ class options(optparse.Values):
     drc_exe = None
     lvs_exe = None
     pex_exe = None
+    
     # Should we print out the banner at startup
     print_banner = True
-    # Run with extracted parasitics
-    use_pex = False
-    # Remove noncritical memory cells for characterization speed-up
-    trim_netlist = True
     # Use detailed LEF blockages
     detailed_blockages = True
     # Define the output file paths
@@ -57,28 +102,10 @@ class options(optparse.Values):
     # Purge the temp directory after a successful run (doesn't purge on errors, anyhow)
     purge_temp = True
 
-    # These are the configuration parameters
-    num_rw_ports = 1
-    num_r_ports = 0
-    num_w_ports = 0
-    
-    # These will get initialized by the the file
-    supply_voltages = ""
-    temperatures = ""
-    process_corners = ""
 
-    # These are the main configuration parameters that should be over-ridden
-    # in a configuration file.
-    #num_words = 0
-    #word_size = 0
-
-    # You can manually specify banks, but it is better to auto-detect it.
-    num_banks = 1
-    
-    #Uses the delay chain size in the tech.py file rather automatic sizing.
-    use_tech_delay_chain_size = False
-    
+    ###################    
     # These are the default modules that can be over-riden
+    ###################    
     bank_select = "bank_select"
     bitcell_array = "bitcell_array"
     bitcell = "bitcell"

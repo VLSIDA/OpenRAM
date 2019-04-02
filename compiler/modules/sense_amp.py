@@ -2,6 +2,7 @@ import design
 import debug
 import utils
 from tech import GDS,layer, parameter,drc
+import logical_effort
 
 class sense_amp(design.design):
     """
@@ -31,12 +32,13 @@ class sense_amp(design.design):
         bitline_pmos_size = 8 #FIXME: This should be set somewhere and referenced. Probably in tech file.
         return spice["min_tx_drain_c"]*(bitline_pmos_size/parameter["min_tx_size"])#ff   
         
-    def analytical_delay(self, corner, slew, load=0.0):
-        from tech import spice
-        r = spice["min_tx_r"]/(10)
-        c_para = spice["min_tx_drain_c"]
-        result = self.cal_delay_with_rc(corner, r = r, c =  c_para+load, slew = slew)
-        return self.return_delay(result.delay, result.slew)
+    def analytical_delay(self, corner, slew, load):
+        #Delay of the sense amp will depend on the size of the amp and the output load.
+        parasitic_delay = 1
+        cin = (parameter["sa_inv_pmos_size"] + parameter["sa_inv_nmos_size"])/drc("minwidth_tx")
+        sa_size = parameter["sa_inv_nmos_size"]/drc("minwidth_tx")
+        cc_inv_cin = cin
+        return logical_effort.logical_effort('column_mux', sa_size, cin, load+cc_inv_cin, parasitic_delay, False)
 
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""

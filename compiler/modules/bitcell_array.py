@@ -4,6 +4,7 @@ from tech import drc, spice
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
+import logical_effort
 
 class bitcell_array(design.design):
     """
@@ -130,23 +131,32 @@ class bitcell_array(design.design):
                         self.add_power_pin(pin_name, pin.center(), 0, pin.layer)
                             
 
+    # def analytical_delay(self, corner, slew, load=0):
+        # from tech import drc
+        # wl_wire = self.gen_wl_wire()
+        # wl_wire.return_delay_over_wire(slew)
+
+        # wl_to_cell_delay = wl_wire.return_delay_over_wire(slew)
+        # # hypothetical delay from cell to bl end without sense amp
+        # bl_wire = self.gen_bl_wire()
+        # cell_load = 2 * bl_wire.return_input_cap() # we ingore the wire r
+                                                   # # hence just use the whole c
+        # bl_swing = 0.1
+        # cell_delay = self.cell.analytical_delay(corner, wl_to_cell_delay.slew, cell_load, swing = bl_swing)
+
+        # #we do not consider the delay over the wire for now
+        # return self.return_delay(cell_delay.delay+wl_to_cell_delay.delay,
+                                 # wl_to_cell_delay.slew)
+    
     def analytical_delay(self, corner, slew, load=0):
-        from tech import drc
-        wl_wire = self.gen_wl_wire()
-        wl_wire.return_delay_over_wire(slew)
-
-        wl_to_cell_delay = wl_wire.return_delay_over_wire(slew)
-        # hypothetical delay from cell to bl end without sense amp
-        bl_wire = self.gen_bl_wire()
-        cell_load = 2 * bl_wire.return_input_cap() # we ingore the wire r
-                                                   # hence just use the whole c
-        bl_swing = 0.1
-        cell_delay = self.cell.analytical_delay(corner, wl_to_cell_delay.slew, cell_load, swing = bl_swing)
-
-        #we do not consider the delay over the wire for now
-        return self.return_delay(cell_delay.delay+wl_to_cell_delay.delay,
-                                 wl_to_cell_delay.slew)
-                        
+        """Returns relative delay of the bitline in the bitcell array"""
+        #The load being driven/drained is mostly the bitline but could include the sense amp or the column mux.
+        #The load from the bitlines is due to the drain capacitances from all the other bitlines and wire parasitics.
+        drain_parasitics = .5 #each bitcell adds half a parasitic to the delay
+        wire_parasitics = .05 * drain_parasitics #Wires add 5% to this.
+        bitline_load = (drain_parasitics+wire_parasitics)*self.row_size * logical_effort.logical_effort.pinv
+        return [self.cell.analytical_delay(corner, slew, load+bitline_load)]
+    
     def analytical_power(self, corner, load):
         """Power of Bitcell array and bitline in nW."""
         from tech import drc, parameter

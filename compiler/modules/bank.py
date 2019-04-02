@@ -1216,36 +1216,62 @@ class bank(design.design):
                             rotate=90)
 
         
-    def analytical_delay(self, corner, slew, load):
-        """ return  analytical delay of the bank"""
-        results = []
+    # def analytical_delay(self, corner, slew, load):
+        # """ return  analytical delay of the bank"""
+        # results = []
         
-        decoder_delay = self.row_decoder.analytical_delay(corner, slew, self.wordline_driver.input_load())
+        # decoder_delay = self.row_decoder.analytical_delay(corner, slew, self.wordline_driver.input_load())
 
-        word_driver_delay = self.wordline_driver.analytical_delay(corner, 
-                                                                  decoder_delay.slew, 
-                                                                  self.bitcell_array.input_load())
+        # word_driver_delay = self.wordline_driver.analytical_delay(corner, 
+                                                                  # decoder_delay.slew, 
+                                                                  # self.bitcell_array.input_load())
+
+        # #FIXME: Array delay is the same for every port.
+        # bitcell_array_delay = self.bitcell_array.analytical_delay(corner, word_driver_delay.slew)
+
+        # #This also essentially creates the same delay for each port. Good structure, no substance
+        # for port in self.all_ports:
+            # if self.words_per_row > 1:
+                # column_mux_delay = self.column_mux_array[port].analytical_delay(corner, 
+                                                                                # bitcell_array_delay.slew,
+                                                                                # self.sense_amp_array.input_load())
+            # else:
+                # column_mux_delay = self.return_delay(delay = 0.0, slew=word_driver_delay.slew)
+                
+            # bl_t_data_out_delay = self.sense_amp_array.analytical_delay(corner, 
+                                                                        # column_mux_delay.slew,
+                                                                        # self.bitcell_array.output_load())
+            # # output load of bitcell_array is set to be only small part of bl for sense amp.
+            # results.append(decoder_delay + word_driver_delay + bitcell_array_delay + column_mux_delay + bl_t_data_out_delay) 
+
+        # return results
+    
+    def analytical_delay(self, corner, slew, load):
+        """ return  analytical delay of the bank. This will track the clock to output path"""
+        #FIXME: This delay is determined in the control logic. Should be moved here.
+        # word_driver_delay = self.wordline_driver.analytical_delay(corner, 
+                                                                  # slew, 
+                                                                  # self.bitcell_array.input_load())
 
         #FIXME: Array delay is the same for every port.
-        bitcell_array_delay = self.bitcell_array.analytical_delay(corner, word_driver_delay.slew)
+        word_driver_slew =  0
+        bitcell_array_delay = self.bitcell_array.analytical_delay(corner, word_driver_slew)
 
         #This also essentially creates the same delay for each port. Good structure, no substance
-        for port in self.all_ports:
-            if self.words_per_row > 1:
-                column_mux_delay = self.column_mux_array[port].analytical_delay(corner, 
-                                                                                bitcell_array_delay.slew,
-                                                                                self.sense_amp_array.input_load())
-            else:
-                column_mux_delay = self.return_delay(delay = 0.0, slew=word_driver_delay.slew)
-                
-            bl_t_data_out_delay = self.sense_amp_array.analytical_delay(corner, 
-                                                                        column_mux_delay.slew,
-                                                                        self.bitcell_array.output_load())
-            # output load of bitcell_array is set to be only small part of bl for sense amp.
-            results.append(decoder_delay + word_driver_delay + bitcell_array_delay + column_mux_delay + bl_t_data_out_delay) 
-
-        return results
-         
+        if self.words_per_row > 1:
+            column_mux_delay = self.column_mux_array[port].analytical_delay(corner, 
+                                                                            bitcell_array_delay.slew,
+                                                                            self.sense_amp_array.input_load())
+        else:
+            column_mux_delay = []  
+            
+        column_mux_slew =  0    
+        sense_amp_delay = self.sense_amp_array.analytical_delay(corner, 
+                                                                    column_mux_slew,
+                                                                    self.bitcell_array.output_load())
+        # output load of bitcell_array is set to be only small part of bl for sense amp.
+        return  bitcell_array_delay + column_mux_delay + sense_amp_delay
+    
     def determine_wordline_stage_efforts(self, external_cout, inp_is_rise=True):    
         """Get the all the stage efforts for each stage in the path within the bank clk_buf to a wordline"""
         #Decoder is assumed to have settled before the negative edge of the clock. Delay model relies on this assumption

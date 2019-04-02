@@ -227,3 +227,10 @@ class single_level_column_mux_array(design.design):
         result = self.cal_delay_with_rc(corner, r = r, c =  c_para+load, slew = slew, swing = volt_swing)
         return self.return_delay(result.delay, result.slew)            
             
+
+    def analytical_delay(self, corner, slew, load):
+        """Returns relative delay that the column mux adds"""
+        #Single level column mux will add parasitic loads from other mux pass transistors and the sense amp.
+        drain_parasitics = .5 #Assumed parasitics from unused TXs
+        array_load = drain_parasitics*self.words_per_row*logical_effort.pinv
+        return [self.mux.analytical_delay(corner, slew, load+array_load)]

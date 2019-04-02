@@ -15,7 +15,7 @@ class lib_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-
+        OPTS.netlist_only = True
         from characterizer import lib
         from sram import sram
         from sram_config import sram_config

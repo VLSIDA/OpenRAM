@@ -33,10 +33,10 @@ class control_logic(design.design):
         self.num_words = num_rows*words_per_row
         
         self.enable_delay_chain_resizing = True
+        self.inv_parasitic_delay = logical_effort.logical_effort.pinv
         
         #Determines how much larger the sen delay should be. Accounts for possible error in model.
         self.wl_timing_tolerance = 1 
-        self.parasitic_inv_delay = parameter["min_inv_para_delay"] 
         self.wl_stage_efforts = None
         self.sen_stage_efforts = None
         
@@ -219,7 +219,7 @@ class control_logic(design.design):
     def get_dynamic_delay_chain_size(self, previous_stages, previous_fanout):
         """Determine the size of the delay chain used for the Sense Amp Enable using path delays"""
         from math import ceil
-        previous_delay_chain_delay = (previous_fanout+1+self.parasitic_inv_delay)*previous_stages
+        previous_delay_chain_delay = (previous_fanout+1+self.inv_parasitic_delay)*previous_stages
         debug.info(2, "Previous delay chain produced {} delay units".format(previous_delay_chain_delay))
         
         delay_fanout = 3 # This can be anything >=2
@@ -227,7 +227,7 @@ class control_logic(design.design):
         #inverter adds 1 unit of delay (due to minimum size). This also depends on the pinv value
         required_delay = self.wl_delay*self.wl_timing_tolerance - (self.sen_delay-previous_delay_chain_delay)
         debug.check(required_delay > 0, "Cannot size delay chain to have negative delay")
-        delay_stages = ceil(required_delay/(delay_fanout+1+self.parasitic_inv_delay))
+        delay_stages = ceil(required_delay/(delay_fanout+1+self.inv_parasitic_delay))
         if delay_stages%2 == 1: #force an even number of stages. 
             delay_stages+=1
             #Fanout can be varied as well but is a little more complicated but potentially optimal.
@@ -237,7 +237,7 @@ class control_logic(design.design):
     def get_dynamic_delay_fanout_list(self, previous_stages, previous_fanout):
         """Determine the size of the delay chain used for the Sense Amp Enable using path delays"""
         
-        previous_delay_chain_delay = (previous_fanout+1+self.parasitic_inv_delay)*previous_stages
+        previous_delay_chain_delay = (previous_fanout+1+self.inv_parasitic_delay)*previous_stages
         debug.info(2, "Previous delay chain produced {} delay units".format(previous_delay_chain_delay))
         
         fanout_rise = fanout_fall = 2 # This can be anything >=2
@@ -284,9 +284,9 @@ class control_logic(design.design):
     def calculate_stages_with_fixed_fanout(self, required_delay, fanout):
         from math import ceil
         #Delay being negative is not an error. It implies that any amount of stages would have a negative effect on the overall delay
-        if required_delay <= 3+self.parasitic_inv_delay: #3 is the minimum delay per stage (with pinv=0).
+        if required_delay <= 3+self.inv_parasitic_delay: #3 is the minimum delay per stage (with pinv=0).
             return 1
-        delay_stages = ceil(required_delay/(fanout+1+self.parasitic_inv_delay))
+        delay_stages = ceil(required_delay/(fanout+1+self.inv_parasitic_delay))
         return delay_stages
     
     def calculate_stage_list(self, total_stages, fanout_rise, fanout_fall):
@@ -850,14 +850,14 @@ class control_logic(design.design):
     def get_delays_to_wl(self):
         """Get the delay (in delay units) of the clk to a wordline in the bitcell array"""
         debug.check(self.sram.all_mods_except_control_done, "Cannot calculate sense amp enable delay unless all module have been added.")
-        self.wl_stage_efforts = self.determine_wordline_stage_efforts()
-        clk_to_wl_rise,clk_to_wl_fall = logical_effort.calculate_relative_rise_fall_delays(self.wl_stage_efforts, self.parasitic_inv_delay)
+        self.wl_stage_efforts = self.get_wordline_stage_efforts()
+        clk_to_wl_rise,clk_to_wl_fall = logical_effort.calculate_relative_rise_fall_delays(self.wl_stage_efforts)
         total_delay = clk_to_wl_rise + clk_to_wl_fall 
         debug.info(1, "Clock to wl delay is rise={:.3f}, fall={:.3f}, total={:.3f} in delay units".format(clk_to_wl_rise, clk_to_wl_fall,total_delay))
         return clk_to_wl_rise,clk_to_wl_fall 
      
         
-    def determine_wordline_stage_efforts(self):
+    def get_wordline_stage_efforts(self):
         """Follows the gated_clk_bar -> wl_en -> wordline signal for the total path efforts"""
         stage_effort_list = []
         
@@ -871,7 +871,7 @@ class control_logic(design.design):
         last_stage_is_rise = stage_effort_list[-1].is_rise
         
         #Then ask the sram for the other path delays (from the bank)
-        stage_effort_list += self.sram.determine_wordline_stage_efforts(last_stage_is_rise)
+        stage_effort_list += self.sram.get_wordline_stage_efforts(last_stage_is_rise)
         
         return stage_effort_list
         
@@ -880,17 +880,15 @@ class control_logic(design.design):
            This does not incorporate the delay of the replica bitline.
         """
         debug.check(self.sram.all_mods_except_control_done, "Cannot calculate sense amp enable delay unless all module have been added.")
-        self.sen_stage_efforts = self.determine_sa_enable_stage_efforts()
-        clk_to_sen_rise, clk_to_sen_fall = logical_effort.calculate_relative_rise_fall_delays(self.sen_stage_efforts, self.parasitic_inv_delay)
+        self.sen_stage_efforts = self.get_sa_enable_stage_efforts()
+        clk_to_sen_rise, clk_to_sen_fall = logical_effort.calculate_relative_rise_fall_delays(self.sen_stage_efforts)
         total_delay = clk_to_sen_rise + clk_to_sen_fall 
         debug.info(1, "Clock to s_en delay is rise={:.3f}, fall={:.3f}, total={:.3f} in delay units".format(clk_to_sen_rise, clk_to_sen_fall,total_delay))
         return clk_to_sen_rise, clk_to_sen_fall   
           
-    def determine_sa_enable_stage_efforts(self):
+    def get_sa_enable_stage_efforts(self):
         """Follows the gated_clk_bar signal to the sense amp enable signal adding each stages stage effort to a list"""
         stage_effort_list = []
-        #Calculate the load on clk_buf_bar
-        ext_clk_buf_cout = self.sram.get_clk_bar_cin()
         
         #Initial direction of clock signal for this path
         last_stage_rise = True
@@ -917,7 +915,54 @@ class control_logic(design.design):
         """Gets a list of the stages and delays in order of their path."""
         if self.sen_stage_efforts == None or self.wl_stage_efforts == None:
             debug.error("Model delays not calculated for SRAM.", 1)
-        wl_delays = logical_effort.calculate_delays(self.wl_stage_efforts, self.parasitic_inv_delay)
-        sen_delays = logical_effort.calculate_delays(self.sen_stage_efforts, self.parasitic_inv_delay)
+        wl_delays = logical_effort.calculate_delays(self.wl_stage_efforts)
+        sen_delays = logical_effort.calculate_delays(self.sen_stage_efforts)
         return wl_delays, sen_delays
         
+    def analytical_delay(self, corner, slew, load):
+        """Gets the analytical delay from clk input to wl_en output"""
+        stage_effort_list = []
+        #Calculate the load on clk_buf_bar
+        ext_clk_buf_cout = self.sram.get_clk_bar_cin()
+        
+        #Operations logic starts on negative edge
+        last_stage_rise = False 
+        
+        #First stage(s), clk -(pdriver)-> clk_buf. 
+        clk_buf_cout = self.replica_bitline.get_en_cin()
+        stage_effort_list += self.clk_buf_driver.get_stage_efforts(clk_buf_cout, last_stage_rise)
+        last_stage_rise = stage_effort_list[-1].is_rise
+        
+        #Second stage, clk_buf -(inv)-> clk_bar
+        clk_bar_cout = self.and2.get_cin()
+        stage_effort_list += self.and2.get_stage_efforts(clk_bar_cout, last_stage_rise)
+        last_stage_rise = stage_effort_list[-1].is_rise
+        
+        #Third stage clk_bar -(and)-> gated_clk_bar
+        gated_clk_bar_cin = self.get_gated_clk_bar_cin()
+        stage_effort_list.append(self.inv.get_stage_effort(gated_clk_bar_cin, last_stage_rise))
+        last_stage_rise = stage_effort_list[-1].is_rise
+
+        #Stages from gated_clk_bar -------> wordline 
+        stage_effort_list += self.get_wordline_stage_efforts()
+        return stage_effort_list
+       
+    def get_clk_buf_cin(self):
+        """Get the loads that are connected to the buffered clock. 
+           Includes all the DFFs and some logic."""
+       
+        #Control logic internal load
+        int_clk_buf_cap = self.inv.get_cin() + self.ctrl_dff_array.get_clk_cin() + self.and2.get_cin()
+
+        #Control logic external load (in the other parts of the SRAM)
+        ext_clk_buf_cap = self.sram.get_clk_bar_cin()
+       
+        return int_clk_buf_cap + ext_clk_buf_cap
+        
+    def get_gated_clk_bar_cin(self):
+        """Get intermediates net gated_clk_bar's capacitance"""
+        total_cin = 0
+        total_cin += self.wl_en_driver.get_cin()
+        if self.port_type == 'rw':
+            total_cin +=self.and2.get_cin() 
+        return total_cin

@@ -11,6 +11,7 @@ from design import design
 from verilog import verilog
 from lef import lef
 from sram_factory import factory
+import logical_effort
 
 class sram_base(design, verilog, lef):
     """
@@ -500,10 +501,26 @@ class sram_base(design, verilog, lef):
 
         
     def analytical_delay(self, corner, slew,load):
-        """ LH and HL are the same in analytical model. """
-        return self.bank.analytical_delay(corner,slew,load)
+        """ Estimates the delay from clk -> DOUT 
+            LH and HL are the same in analytical model. """
+        delays = {}
+        for port in self.all_ports:
+            if port in self.readonly_ports:
+                control_logic = self.control_logic_r
+            elif port in self.readwrite_ports:
+                control_logic = self.control_logic_rw
+            else:
+                continue
+            clk_to_wlen_delays = control_logic.analytical_delay(corner, slew, load)
+            wlen_to_dout_delays = self.bank.analytical_delay(corner,slew,load) #port should probably be specified...
+            all_delays = clk_to_wlen_delays+wlen_to_dout_delays
+            total_delay = logical_effort.calculate_absolute_delay(all_delays)
+            last_slew = .1*all_delays[-1].get_absolute_delay() #slew approximated as 10% of delay
+            delays[port] = self.return_delay(delay=total_delay, slew=last_slew)
+
+        return delays
         
-    def determine_wordline_stage_efforts(self, inp_is_rise=True):
+    def get_wordline_stage_efforts(self, inp_is_rise=True):
         """Get the all the stage efforts for each stage in the path from clk_buf to a wordline"""
         stage_effort_list = []
 
@@ -541,4 +558,12 @@ class sram_base(design, verilog, lef):
         return self.bank.get_sen_cin()
     
     
-      
+    def get_dff_clk_buf_cin(self):
+        """Get the relative capacitance of the clk_buf signal.
+           Does not get the control logic loading but everything else"""
+        total_cin = 0
+        total_cin += self.row_addr_dff.get_clk_cin()
+        total_cin += self.data_dff.get_clk_cin()
+        if self.col_addr_size > 0:
+            total_cin += self.col_addr_dff.get_clk_cin()
+        return total_cin

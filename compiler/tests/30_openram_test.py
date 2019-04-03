@@ -11,6 +11,7 @@ import sys,os,re,shutil
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 import getpass
 
@@ -18,7 +19,7 @@ class openram_test(openram_test):
 
     def runTest(self):
         OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
-        globals.init_openram("{0}/tests/config_20_{1}".format(OPENRAM_HOME,OPTS.tech_name))
+        globals.init_openram("{0}/tests/config_{1}".format(OPENRAM_HOME,OPTS.tech_name))
         
         debug.info(1, "Testing top-level openram.py with 2-bit, 16 word SRAM.")
         out_file = "testsram"
@@ -48,7 +49,7 @@ class openram_test(openram_test):
             exe_name = "{0}/openram.py ".format(OPENRAM_HOME)
         else:
             exe_name = "coverage run -p {0}/openram.py ".format(OPENRAM_HOME) 
-        config_name = "{0}config_20_{1}.py".format(OPENRAM_HOME + "/tests/",OPTS.tech_name)
+        config_name = "{0}config_{1}.py".format(OPENRAM_HOME + "/tests/",OPTS.tech_name)
         cmd = "{0} -n -o {1} -p {2} {3} {4} 2>&1 > {5}/output.log".format(exe_name,
                                                                           out_file,
                                                                           out_path,

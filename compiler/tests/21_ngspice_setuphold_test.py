@@ -9,12 +9,13 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
 class timing_setup_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
         OPTS.spice_name="ngspice"
         OPTS.analytical_delay = False
         OPTS.netlist_only = True

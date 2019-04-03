@@ -10,9 +10,9 @@ class tri_gate_array(design.design):
     Dynamically generated tri gate array of all bitlines.  words_per_row
     """
 
-    def __init__(self, columns, word_size):
+    def __init__(self, columns, word_size, name):
         """Intial function of tri gate array """
-        design.design.__init__(self, "tri_gate_array")
+        design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
 
         self.columns = columns

@@ -9,13 +9,13 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
 class single_bank_1rw_1r_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        from bank import bank
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
 
         OPTS.bitcell = "bitcell_1rw_1r"
         OPTS.num_rw_ports = 1
@@ -27,27 +27,35 @@ class single_bank_1rw_1r_test(openram_test):
                         num_words=16)
 
         c.words_per_row=1
+        factory.reset()
+        c.recompute_sizes()
         debug.info(1, "No column mux")
-        a = bank(c, name="bank1_single")
+        a = factory.create(module_type="bank", sram_config=c)
         self.local_check(a)
 
         c.num_words=32
         c.words_per_row=2
+        factory.reset()
+        c.recompute_sizes()
         debug.info(1, "Two way column mux")
-        a = bank(c, name="bank2_single")
+        a = factory.create(module_type="bank", sram_config=c)
         self.local_check(a)
 
         c.num_words=64
         c.words_per_row=4
+        factory.reset()
+        c.recompute_sizes()
         debug.info(1, "Four way column mux")
-        a = bank(c, name="bank3_single")
+        a = factory.create(module_type="bank", sram_config=c)
         self.local_check(a)
 
         c.word_size=2
         c.num_words=128
         c.words_per_row=8
+        factory.reset()
+        c.recompute_sizes()
         debug.info(1, "Eight way column mux")
-        a = bank(c, name="bank4_single")
+        a = factory.create(module_type="bank", sram_config=c)
         self.local_check(a)
         
         globals.end_openram()

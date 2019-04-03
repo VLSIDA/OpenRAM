@@ -9,19 +9,17 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
-import debug
 from sram_factory import factory
+import debug
 
 class precharge_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        import precharge
-        import tech
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
         
         # check precharge in single port
         debug.info(2, "Checking precharge for handmade bitcell")
-        tx = precharge.precharge(name="precharge_driver", size=1)
+        tx = factory.create(module_type="precharge", size=1)
         self.local_check(tx)
         
         # check precharge in multi-port
@@ -32,15 +30,17 @@ class precharge_test(openram_test):
 
         factory.reset()
         debug.info(2, "Checking precharge for pbitcell (innermost connections)")
-        tx = precharge.precharge(name="precharge_driver", size=1, bitcell_bl="bl0", bitcell_br="br0")
+        tx = factory.create(module_type="precharge", size=1, bitcell_bl="bl0", bitcell_br="br0")
         self.local_check(tx)
 
+        factory.reset()
         debug.info(2, "Checking precharge for pbitcell (innermost connections)")
-        tx = precharge.precharge(name="precharge_driver", size=1, bitcell_bl="bl1", bitcell_br="br1")
+        tx = factory.create(module_type="precharge", size=1, bitcell_bl="bl1", bitcell_br="br1")
         self.local_check(tx)
         
+        factory.reset()
         debug.info(2, "Checking precharge for pbitcell (outermost connections)")
-        tx = precharge.precharge(name="precharge_driver", size=1, bitcell_bl="bl2", bitcell_br="br2")
+        tx = factory.create(module_type="precharge", size=1, bitcell_bl="bl2", bitcell_br="br2")
         self.local_check(tx)
 
         globals.end_openram()

@@ -1,0 +1,84 @@
+             SVRF(TM) TECHNOLOGY LICENSE AGREEMENT
+                      February 6, 2009
+
+This license is a legal "Agreement" concerning the use of SVRF
+Technology between you, the end user, either individually or as an
+authorized representative of the school or company acquiring the
+license ("You"), and Mentor Graphics Corporation and Mentor Graphics
+(Ireland) Limited acting directly or through their subsidiaries or
+authorized distributors (collectively "Mentor Graphics"). "SVRF
+Technology" shall mean Mentor Graphics' syntax for expressing process
+rules and controlling physical verification, principally the syntax
+expressed in Mentor Graphics. SVRF User Manual. USE OF SVRF TECHNOLOGY
+INDICATES YOUR COMPLETE AND UNCONDITIONAL ACCEPTANCE OF THE TERMS AND
+CONDITIONS SET FORTH IN THIS AGREEMENT. If you do not agree to these
+terms and conditions, promptly certify destruction of the SVRF
+Technology and all accompanying items within five days after receipt
+of SVRF Technology.
+
+1. GRANT OF LICENSE. This file includes SVRF Technology under license
+   by Mentor Graphics Corporation. Mentor Graphics grants to You a
+   nontransferable, nonexclusive license to use SVRF Technology solely
+   for use with Mentor Graphics' Calibre(R) tools and either: (a) in an
+   educational classroom or laboratory environment; or (b) for your
+   internal business purpose as allowed by an existing license
+   agreement between You and Mentor Graphics.
+
+2. RESTRICTIONS ON USE. All SVRF Technology constitutes or contains
+   trade secrets and confidential information of Mentor Graphics or
+   its licensors. You shall not make SVRF Technology available in any
+   form to any person other those persons whose performance requires
+   such access and who are under obligations of confidentiality. You
+   shall take appropriate action to protect the confidentiality of
+   SVRF Technology and ensure that persons permitted access to SVRF
+   Technology do not disclose it or use it except as permitted by this
+   Agreement. The provisions of this Section 2 shall survive the
+   termination or expiration of this Agreement.
+
+3. NO WARRANTY. Mentor Graphics expressly disclaims any warranty for
+   SVRF Technology. TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW,
+   SVRF TECHNOLOGY AND ANY RELATED DOCUMENTATION ARE PROVIDED "AS IS"
+   AND WITH ALL FAULTS AND WITHOUT WARRANTIES OR CONDITIONS OF ANY
+   KIND, EITHER EXPRESS OR IMPLIED, INCLUDING, WITHOUT LIMITATION, THE
+   IMPLIED WARRANTIES OR CONDITIONS OF MERCHANTABILITY, FITNESS FOR A
+   PARTICULAR PURPOSE, OR NONINFRINGEMENT. THE ENTIRE RISK ARISING OUT
+   OF USE OR PERFORMANCE OF SVRF TECHNOLOGY REMAINS WITH YOU.
+
+4. LIMITATION OF LIABILITY. EXCEPT WHERE THIS EXCLUSION OR RESTRICTION
+   OF LIABILITY WOULD BE VOID OR INEFFECTIVE UNDER APPLICABLE LAW, IN
+   NO EVENT WILL MENTOR GRAPHICS OR ITS LICENSORS BE LIABLE FOR
+   INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES (INCLUDING
+   LOST PROFITS OR SAVINGS) WHETHER BASED ON CONTRACT, TORT OR ANY
+   OTHER LEGAL THEORY, EVEN IF MENTOR GRAPHICS OR ITS LICENSORS HAVE
+   BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+5. TERM. This Agreement remains effective until termination. This
+   Agreement will immediately terminate upon notice if you exceed the
+   scope of license granted or otherwise fail to comply with the
+   provisions of Sections 1 or 2. For any other material breach under
+   this Agreement, Mentor Graphics may terminate this Agreement upon
+   30 days written notice if you are in material breach and fail to
+   cure such breach within the 30-day notice period. Upon any
+   termination, you agree to cease all use of SVRF Technology and
+   certify destruction of SVRF Technology, including all copies, to
+   Mentor Graphics. reasonable satisfaction.
+
+6. GOVERNING LAW. This License shall be governed by and construed
+   under the laws of the State of Oregon, USA, if You are located in
+   North or South America, and the laws of Ireland if You are located
+   outside of North or South America.
+
+7. SEVERABILITY. If any provision of this Agreement is held by a court
+   of competent jurisdiction to be void, invalid, unenforceable or
+   illegal, such provision shall be severed from this Agreement and
+   the remaining provisions will remain in full force and effect.
+
+8. MISCELLANEOUS. This Agreement contains the parties' entire
+   understanding relating to its subject matter and supersedes all
+   prior or contemporaneous agreements, except valid license
+   agreements related to the subject matter of this Agreement (which
+   are physically signed by you and an authorized agent of Mentor
+   Graphics). This Agreement may only be modified in writing by
+   authorized representatives of the parties. Waiver of terms or
+   excuse of breach must be in writing and shall not constitute
+   subsequent consent, waiver or excuse.

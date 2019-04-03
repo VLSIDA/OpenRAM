@@ -9,13 +9,13 @@ import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
 class model_delay_sram_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        #OPTS.spice_name="hspice"
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
         
@@ -32,7 +32,7 @@ class model_delay_sram_test(openram_test):
         c.words_per_row=1
         c.recompute_sizes()
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
-        s = sram(c, name="sram1")
+        s = factory.create(module_type="sram", sram_config=c)
 
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)

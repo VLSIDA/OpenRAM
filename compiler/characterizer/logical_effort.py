@@ -68,3 +68,7 @@ def calculate_relative_rise_fall_delays(stage_effort_list):
             total_fall_delay += stage.get_stage_delay()
     return total_rise_delay, total_fall_delay
    
+def convert_farad_to_relative_c(c_farad):
+    """Converts capacitance in Femto-Farads to relative capacitance."""
+    return c_farad*parameter['cap_relative_per_ff']
+   

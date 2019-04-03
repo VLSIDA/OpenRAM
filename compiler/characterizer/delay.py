@@ -9,6 +9,7 @@ import utils
 from globals import OPTS
 from .simulation import simulation
 from .measurements import *
+import logical_effort
 
 class delay(simulation):
     """Functions to measure the delay and power of an SRAM at a given address and
@@ -904,8 +905,9 @@ class delay(simulation):
         self.create_measurement_names()
         power = self.analytical_power(slews, loads)
         port_data = self.get_empty_measure_data_dict()
+        relative_loads = [logical_effort.convert_farad_to_relative_c(c_farad) for c_farad in loads]
         for slew in slews:
-            for load in loads:
+            for load in relative_loads:
                 self.set_load_slew(load,slew)
                 bank_delay = self.sram.analytical_delay(self.corner, self.slew,self.load)
                 for port in self.all_ports:

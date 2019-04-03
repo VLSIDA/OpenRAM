@@ -302,13 +302,14 @@ spice["nand3_transition_prob"] = .1094    # Transition probability of 3-input na
 spice["nor2_transition_prob"] = .1875     # Transition probability of 2-input nor.
 
 #Logical Effort relative values for the Handmade cells
-parameter['le_tau'] = 40 #In pico-seconds. FIXME:This is an assumed value, not measured.
+parameter['le_tau'] = 23                     #In pico-seconds. 
+parameter["min_inv_para_delay"] = .73        #In relative delay units
+parameter['cap_relative_per_ff'] = .91       #Units of Relative Capacitance/ Femto-Farad
 parameter["static_delay_stages"] = 4
 parameter["static_fanout_per_stage"] = 3
 parameter["static_fanout_list"] = parameter["static_delay_stages"]*[parameter["static_fanout_per_stage"]]
-parameter["dff_clk_cin"] = 27.5
-parameter["6tcell_wl_cin"] = 2
-parameter["min_inv_para_delay"] = .5
+parameter["dff_clk_cin"] = 27.5              #In relative capacitance units
+parameter["6tcell_wl_cin"] = 2               #In relative capacitance units
 parameter["sa_en_pmos_size"] = 24*_lambda_
 parameter["sa_en_nmos_size"] = 9*_lambda_
 parameter["sa_inv_pmos_size"] = 18*_lambda_

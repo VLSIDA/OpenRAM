@@ -24,19 +24,7 @@ class bitcell(design.design):
         self.width = bitcell.width
         self.height = bitcell.height
         self.pin_map = bitcell.pin_map
-        
-    # def analytical_delay(self, corner, slew, load=0, swing = 0.5):
-        # # delay of bit cell is not like a driver(from WL)
-        # # so the slew used should be 0
-        # # it should not be slew dependent?
-        # # because the value is there
-        # # the delay is only over half transsmission gate
-        # from tech import spice
-        # r = spice["min_tx_r"]*3
-        # c_para = spice["min_tx_drain_c"]
-        # result = self.cal_delay_with_rc(corner, r = r, c =  c_para+load, slew = slew, swing = swing)
-        # return result
-   
+
     def analytical_delay(self, corner, slew, load=0, swing = 0.5):
         parasitic_delay = 1
         size = 0.5 #This accounts for bitline being drained thought the access TX and internal node

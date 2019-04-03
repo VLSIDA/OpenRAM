@@ -336,7 +336,8 @@ spice["nand3_transition_prob"] = .1094    # Transition probability of 3-input na
 spice["nor2_transition_prob"] = .1875     # Transition probability of 2-input nor.
 
 #Parameters related to sense amp enable timing and delay chain/RBL sizing
-parameter['le_tau'] = 8 #In pico-seconds. FIXME:This is an assumed value, not measured.
+parameter['le_tau'] = 2.25                  #In pico-seconds.
+parameter['cap_relative_per_ff'] = 7.5      #Units of Relative Capacitance/ Femto-Farad
 parameter["static_delay_stages"] = 4
 parameter["static_fanout_per_stage"] = 3
 parameter["static_fanout_list"] = parameter["static_delay_stages"]*[parameter["static_fanout_per_stage"]]

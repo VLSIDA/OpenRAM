@@ -7,6 +7,7 @@ import math
 from vector import vector
 from sram_factory import factory
 from globals import OPTS
+import logical_effort
 
 class single_level_column_mux_array(design.design):
     """
@@ -232,5 +233,11 @@ class single_level_column_mux_array(design.design):
         """Returns relative delay that the column mux adds"""
         #Single level column mux will add parasitic loads from other mux pass transistors and the sense amp.
         drain_parasitics = .5 #Assumed parasitics from unused TXs
-        array_load = drain_parasitics*self.words_per_row*logical_effort.pinv
+        array_load = drain_parasitics*self.words_per_row*logical_effort.logical_effort.pinv
         return [self.mux.analytical_delay(corner, slew, load+array_load)]
+        
+    def get_drain_cin(self):
+        """Get the relative capacitance of the drain of the NMOS pass TX"""
+        #Estimated as half a parasitic delay.
+        drain_parasitics = .5
+        return drain_parasitics * logical_effort.logical_effort.pinv      

@@ -4,6 +4,7 @@ from vector import vector
 from sram_factory import factory
 import debug
 from globals import OPTS
+import logical_effort
 
 class sense_amp_array(design.design):
     """
@@ -143,3 +144,9 @@ class sense_amp_array(design.design):
         """Get the relative capacitance of all the sense amp enable connections in the array"""
         sense_amp_en_cin = self.amp.get_en_cin()
         return sense_amp_en_cin * self.word_size
+        
+    def get_drain_cin(self):
+        """Get the relative capacitance of the drain of the PMOS isolation TX"""
+        #Estimated as half a parasitic delay.
+        drain_parasitics = .5
+        return drain_parasitics * logical_effort.logical_effort.pinv  

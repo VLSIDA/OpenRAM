@@ -11,25 +11,22 @@ import globals
 from globals import OPTS
 import debug
 
-class delay_model_test(openram_test):
+class model_delay_sram_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        OPTS.spice_name="hspice"
+        #OPTS.spice_name="hspice"
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
-        OPTS.trim_netlist = False
-        debug.info(1, "Trimming disabled for this test. Simulation could be slow.")
         
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
         import characterizer
         reload(characterizer)
-        
-        from characterizer import model_check
+        from characterizer import delay
         from sram import sram
         from sram_config import sram_config
-        c = sram_config(word_size=4,
+        c = sram_config(word_size=1,
                         num_words=16,
                         num_banks=1)
         c.words_per_row=1
@@ -45,15 +42,32 @@ class delay_model_test(openram_test):
         debug.info(1, "Probe address {0} probe data bit {1}".format(probe_address, probe_data))
 
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
-        mc = model_check(s.s, tempspice, corner)
+        d = delay(s.s, tempspice, corner)
         import tech
         loads = [tech.spice["msflop_in_cap"]*4]
         slews = [tech.spice["rise_time"]*2]
-        sram_data = mc.analyze(probe_address, probe_data, slews, loads)
-        #Combine info about port into all data
+        spice_data, port_data = d.analyze(probe_address, probe_data, slews, loads)
+        spice_data.update(port_data[0])
+     
+        model_data, port_data = d.analytical_delay(slews, loads)
+        model_data.update(port_data[0])
+        
+        #Only compare the delays
+        spice_delays = {key:value for key, value in spice_data.items() if 'delay' in key}
+        model_delays = {key:value for key, value in model_data.items() if 'delay' in key}
+        debug.info(1,"Spice Delays={}".format(spice_delays))
+        debug.info(1,"Model Delays={}".format(model_delays))
+        if OPTS.tech_name == "freepdk45":
+            error_tolerance = .25
+        elif OPTS.tech_name == "scn4m_subm":
+            error_tolerance = .25
+        else:
+            self.assertTrue(False) # other techs fail
+        # Check if no too many or too few results
+        self.assertTrue(len(spice_delays.keys())==len(model_delays.keys()))
 
-        #debug.info(1,"Data:\n{}".format(wl_data))
-
+        self.assertTrue(self.check_golden_data(spice_delays,model_delays,error_tolerance))
+        
         globals.end_openram()
         
 # run the test from the command line

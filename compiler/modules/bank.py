@@ -1215,37 +1215,6 @@ class bank(design.design):
                             offset=control_pos,
                             rotate=90)
 
-        
-    # def analytical_delay(self, corner, slew, load):
-        # """ return  analytical delay of the bank"""
-        # results = []
-        
-        # decoder_delay = self.row_decoder.analytical_delay(corner, slew, self.wordline_driver.input_load())
-
-        # word_driver_delay = self.wordline_driver.analytical_delay(corner, 
-                                                                  # decoder_delay.slew, 
-                                                                  # self.bitcell_array.input_load())
-
-        # #FIXME: Array delay is the same for every port.
-        # bitcell_array_delay = self.bitcell_array.analytical_delay(corner, word_driver_delay.slew)
-
-        # #This also essentially creates the same delay for each port. Good structure, no substance
-        # for port in self.all_ports:
-            # if self.words_per_row > 1:
-                # column_mux_delay = self.column_mux_array[port].analytical_delay(corner, 
-                                                                                # bitcell_array_delay.slew,
-                                                                                # self.sense_amp_array.input_load())
-            # else:
-                # column_mux_delay = self.return_delay(delay = 0.0, slew=word_driver_delay.slew)
-                
-            # bl_t_data_out_delay = self.sense_amp_array.analytical_delay(corner, 
-                                                                        # column_mux_delay.slew,
-                                                                        # self.bitcell_array.output_load())
-            # # output load of bitcell_array is set to be only small part of bl for sense amp.
-            # results.append(decoder_delay + word_driver_delay + bitcell_array_delay + column_mux_delay + bl_t_data_out_delay) 
-
-        # return results
-    
     def analytical_delay(self, corner, slew, load):
         """ return  analytical delay of the bank. This will track the clock to output path"""
         #FIXME: This delay is determined in the control logic. Should be moved here.
@@ -1255,20 +1224,27 @@ class bank(design.design):
 
         #FIXME: Array delay is the same for every port.
         word_driver_slew =  0
-        bitcell_array_delay = self.bitcell_array.analytical_delay(corner, word_driver_slew)
+        if self.words_per_row > 1:
+            bitline_ext_load = self.column_mux_array[port].get_drain_cin()
+        else:
+            bitline_ext_load = self.sense_amp_array.get_drain_cin()
+            
+        bitcell_array_delay = self.bitcell_array.analytical_delay(corner, word_driver_slew, bitline_ext_load)
 
+        bitcell_array_slew = 0
         #This also essentially creates the same delay for each port. Good structure, no substance
         if self.words_per_row > 1:
+            sa_load = self.sense_amp_array.get_drain_load()
             column_mux_delay = self.column_mux_array[port].analytical_delay(corner, 
-                                                                            bitcell_array_delay.slew,
-                                                                            self.sense_amp_array.input_load())
+                                                                            bitcell_array_slew,
+                                                                            sa_load)
         else:
             column_mux_delay = []  
             
         column_mux_slew =  0    
         sense_amp_delay = self.sense_amp_array.analytical_delay(corner, 
-                                                                    column_mux_slew,
-                                                                    self.bitcell_array.output_load())
+                                                                column_mux_slew,
+                                                                load)
         # output load of bitcell_array is set to be only small part of bl for sense amp.
         return  bitcell_array_delay + column_mux_delay + sense_amp_delay
     

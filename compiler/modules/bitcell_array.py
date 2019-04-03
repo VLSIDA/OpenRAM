@@ -128,27 +128,9 @@ class bitcell_array(design.design):
                 inst = self.cell_inst[row,col]
                 for pin_name in ["vdd", "gnd"]:
                     for pin in inst.get_pins(pin_name):
-                        self.add_power_pin(pin_name, pin.center(), 0, pin.layer)
-                            
-
-    # def analytical_delay(self, corner, slew, load=0):
-        # from tech import drc
-        # wl_wire = self.gen_wl_wire()
-        # wl_wire.return_delay_over_wire(slew)
-
-        # wl_to_cell_delay = wl_wire.return_delay_over_wire(slew)
-        # # hypothetical delay from cell to bl end without sense amp
-        # bl_wire = self.gen_bl_wire()
-        # cell_load = 2 * bl_wire.return_input_cap() # we ingore the wire r
-                                                   # # hence just use the whole c
-        # bl_swing = 0.1
-        # cell_delay = self.cell.analytical_delay(corner, wl_to_cell_delay.slew, cell_load, swing = bl_swing)
-
-        # #we do not consider the delay over the wire for now
-        # return self.return_delay(cell_delay.delay+wl_to_cell_delay.delay,
-                                 # wl_to_cell_delay.slew)
+                        self.add_power_pin(pin_name, pin.center(), 0, pin.layer)                           
     
-    def analytical_delay(self, corner, slew, load=0):
+    def analytical_delay(self, corner, slew, load):
         """Returns relative delay of the bitline in the bitcell array"""
         #The load being driven/drained is mostly the bitline but could include the sense amp or the column mux.
         #The load from the bitlines is due to the drain capacitances from all the other bitlines and wire parasitics.

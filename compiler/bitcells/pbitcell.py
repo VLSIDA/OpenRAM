@@ -5,6 +5,7 @@ from tech import drc, parameter, spice
 from vector import vector
 from ptx import ptx
 from globals import OPTS
+import logical_effort
 
 class pbitcell(design.design):
     """
@@ -867,12 +868,16 @@ class pbitcell(design.design):
         self.add_path("metal1", [Q_bar_pos, vdd_pos])
 
     def analytical_delay(self, corner, slew, load=0, swing = 0.5):
-        #FIXME: Delay copied exactly over from bitcell
-        from tech import spice
-        r = spice["min_tx_r"]*3
-        c_para = spice["min_tx_drain_c"]
-        result = self.cal_delay_with_rc(corner, r = r, c =  c_para+load, slew = slew, swing = swing)
-        return result
+        parasitic_delay = 1
+        size = 0.5 #This accounts for bitline being drained thought the access TX and internal node
+        cin = 3 #Assumes always a minimum sizes inverter. Could be specified in the tech.py file.
+        
+        #Internal loads due to port configs are halved. This is to account for the size already being halved
+        #for stacked TXs, but internal loads do not see this size estimation.
+        write_port_load = self.num_w_ports*logical_effort.convert_farad_to_relative_c(parameter['bitcell_drain_cap'])/2
+        read_port_load = self.num_r_ports/2 #min size NMOS gate load
+        total_load = load+read_port_load+write_port_load
+        return logical_effort.logical_effort('bitline', size, cin, load+read_port_load, parasitic_delay, False)
         
     def analytical_power(self, corner, load):
         """Bitcell power in nW. Only characterizes leakage."""

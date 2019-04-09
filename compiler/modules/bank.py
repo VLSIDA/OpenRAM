@@ -1215,7 +1215,7 @@ class bank(design.design):
                             offset=control_pos,
                             rotate=90)
 
-    def analytical_delay(self, corner, slew, load):
+    def analytical_delay(self, corner, slew, load, port):
         """ return  analytical delay of the bank. This will track the clock to output path"""
         #FIXME: This delay is determined in the control logic. Should be moved here.
         # word_driver_delay = self.wordline_driver.analytical_delay(corner, 
@@ -1224,7 +1224,6 @@ class bank(design.design):
 
         #FIXME: Array delay is the same for every port.
         word_driver_slew =  0
-        port = 0
         if self.words_per_row > 1:
             bitline_ext_load = self.column_mux_array[port].get_drain_cin()
         else:

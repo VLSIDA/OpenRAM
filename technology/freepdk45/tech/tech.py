@@ -349,6 +349,7 @@ parameter["sa_en_nmos_size"] = .27          #micro-meters
 parameter["sa_inv_pmos_size"] = .54          #micro-meters
 parameter["sa_inv_nmos_size"] = .27          #micro-meters
 parameter["rbl_height_percentage"] = .5     #Height of RBL compared to bitcell array 
+parameter['bitcell_drain_cap'] = 0.1        #In Femto-Farad, approximation of drain capacitance
 
 ###################################################
 ##END Spice Simulation Parameters

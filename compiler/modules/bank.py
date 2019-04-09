@@ -1224,6 +1224,7 @@ class bank(design.design):
 
         #FIXME: Array delay is the same for every port.
         word_driver_slew =  0
+        port = 0
         if self.words_per_row > 1:
             bitline_ext_load = self.column_mux_array[port].get_drain_cin()
         else:
@@ -1234,7 +1235,7 @@ class bank(design.design):
         bitcell_array_slew = 0
         #This also essentially creates the same delay for each port. Good structure, no substance
         if self.words_per_row > 1:
-            sa_load = self.sense_amp_array.get_drain_load()
+            sa_load = self.sense_amp_array.get_drain_cin()
             column_mux_delay = self.column_mux_array[port].analytical_delay(corner, 
                                                                             bitcell_array_slew,
                                                                             sa_load)

@@ -132,11 +132,12 @@ class bitcell_array(design.design):
     
     def analytical_delay(self, corner, slew, load):
         """Returns relative delay of the bitline in the bitcell array"""
+        from tech import parameter
         #The load being driven/drained is mostly the bitline but could include the sense amp or the column mux.
         #The load from the bitlines is due to the drain capacitances from all the other bitlines and wire parasitics.
-        drain_parasitics = .5 #each bitcell adds half a parasitic to the delay
-        wire_parasitics = .05 * drain_parasitics #Wires add 5% to this.
-        bitline_load = (drain_parasitics+wire_parasitics)*self.row_size * logical_effort.logical_effort.pinv
+        drain_load = logical_effort.convert_farad_to_relative_c(parameter['bitcell_drain_cap'])
+        wire_unit_load = .05 * drain_load #Wires add 5% to this.
+        bitline_load = (drain_load+wire_unit_load)*self.row_size
         return [self.cell.analytical_delay(corner, slew, load+bitline_load)]
     
     def analytical_power(self, corner, load):

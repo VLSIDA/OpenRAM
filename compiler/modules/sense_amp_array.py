@@ -147,6 +147,7 @@ class sense_amp_array(design.design):
         
     def get_drain_cin(self):
         """Get the relative capacitance of the drain of the PMOS isolation TX"""
-        #Estimated as half a parasitic delay.
-        drain_parasitics = .5
-        return drain_parasitics * logical_effort.logical_effort.pinv  
+        from tech import parameter
+        #Bitcell drain load being used to estimate PMOS drain load
+        drain_load = logical_effort.convert_farad_to_relative_c(parameter['bitcell_drain_cap'])
+        return drain_load

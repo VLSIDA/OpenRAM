@@ -5,6 +5,7 @@ from vector import vector
 import contact
 from globals import OPTS
 from sram_factory import factory
+import logical_effort
 
 class single_level_column_mux(design.design):
     """

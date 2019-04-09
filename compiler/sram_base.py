@@ -520,7 +520,9 @@ class sram_base(design, verilog, lef):
             wlen_to_dout_delays = self.bank.analytical_delay(corner,slew,load,port) #port should probably be specified...
             all_delays = clk_to_wlen_delays+wlen_to_dout_delays
             total_delay = logical_effort.calculate_absolute_delay(all_delays)
+            total_delay = self.apply_corners_analytically(total_delay, corner)
             last_slew = .1*all_delays[-1].get_absolute_delay() #slew approximated as 10% of delay
+            last_slew = self.apply_corners_analytically(last_slew, corner)
             delays[port] = self.return_delay(delay=total_delay, slew=last_slew)
 
         return delays

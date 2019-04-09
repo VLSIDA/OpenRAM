@@ -235,13 +235,8 @@ class spice():
         modeling it as a resistance driving a capacitance
         """
         swing_factor = abs(math.log(1-swing)) # time constant based on swing
-        proc,vdd,temp = corner
-        #FIXME: type of delay is needed to know which process to use.
-        proc_mult = max(self.get_process_delay_factor(proc)) 
-        volt_mult = self.get_voltage_delay_factor(vdd)
-        temp_mult = self.get_temp_delay_factor(temp)
         delay = swing_factor * r * c #c is in ff and delay is in fs
-        delay = delay * proc_mult * volt_mult * temp_mult
+        delay = self.apply_corners_analytically(delay, corner)
         delay = delay * 0.001 #make the unit to ps
         
         # Output slew should be linear to input slew which is described 
@@ -254,6 +249,15 @@ class spice():
         slew = delay * 0.6 * 2 + 0.005 * slew
         return delay_data(delay = delay, slew = slew)
 
+    def apply_corners_analytically(self, delay, corner):
+        """Multiply delay by corner factors"""
+        proc,vdd,temp = corner
+        #FIXME: type of delay is needed to know which process to use.
+        proc_mult = max(self.get_process_delay_factor(proc)) 
+        volt_mult = self.get_voltage_delay_factor(vdd)
+        temp_mult = self.get_temp_delay_factor(temp)
+        return delay * proc_mult * volt_mult * temp_mult
+        
     def get_process_delay_factor(self, proc):
         """Returns delay increase estimate based off process
            Currently does +/-10 for fast/slow corners."""

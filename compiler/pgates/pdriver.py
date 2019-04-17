@@ -19,6 +19,8 @@ class pdriver(pgate.pgate):
         self.size_list = size_list
         self.fanout = fanout
 
+        if size_list == None and self.fanout == 0:
+            debug.error("Either fanout or size list must be specified.", -1)
         if self.size_list and self.fanout != 0:
             debug.error("Cannot specify both size_list and fanout.", -1)
         if self.size_list and self.neg_polarity:

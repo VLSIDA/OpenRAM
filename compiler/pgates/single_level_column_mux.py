@@ -5,6 +5,7 @@ from vector import vector
 import contact
 from globals import OPTS
 from sram_factory import factory
+import logical_effort
 
 class single_level_column_mux(design.design):
     """
@@ -180,5 +181,9 @@ class single_level_column_mux(design.design):
                       width=self.bitcell.width,
                       height=self.height)
         
-
+    def analytical_delay(self, corner, slew, load):
+        """Returns relative delay that the column mux. Difficult to convert to LE model."""
+        parasitic_delay = 1
+        cin = 2*self.tx_size #This is not CMOS, so using this may be incorrect.
+        return logical_effort.logical_effort('column_mux', self.tx_size, cin, load, parasitic_delay, False)
 

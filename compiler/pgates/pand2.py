@@ -125,3 +125,8 @@ class pand2(pgate.pgate):
         stage_effort_list.append(stage2)
         
         return stage_effort_list
+
+    def get_cin(self):
+        """Return the relative input capacitance of a single input"""
+        return self.nand.get_cin()
+        

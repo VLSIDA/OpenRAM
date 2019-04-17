@@ -7,6 +7,7 @@ import math
 from vector import vector
 from sram_factory import factory
 from globals import OPTS
+import logical_effort
 
 class single_level_column_mux_array(design.design):
     """
@@ -215,15 +216,18 @@ class single_level_column_mux_array(design.design):
                 self.add_via(layers=("metal1", "via1", "metal2"),
                              offset= br_out_offset,
                              rotate=90)
-
-    def analytical_delay(self, corner, vdd, slew, load=0.0):
-        from tech import spice, parameter
-        proc,vdd,temp = corner
-        r = spice["min_tx_r"]/(self.mux.ptx_width/parameter["min_tx_size"])
-        #Drains of mux transistors make up capacitance. 
-        c_para = spice["min_tx_drain_c"]*(self.mux.ptx_width/parameter["min_tx_size"])*self.words_per_row#ff
-        volt_swing = spice["v_threshold_typical"]/vdd
+       
+    def analytical_delay(self, corner, slew, load):
+        from tech import parameter
+        """Returns relative delay that the column mux adds"""
+        #Single level column mux will add parasitic loads from other mux pass transistors and the sense amp.
+        drain_load = logical_effort.convert_farad_to_relative_c(parameter['bitcell_drain_cap'])
+        array_load = drain_load*self.words_per_row
+        return [self.mux.analytical_delay(corner, slew, load+array_load)]
         
-        result = self.cal_delay_with_rc(corner, r = r, c =  c_para+load, slew = slew, swing = volt_swing)
-        return self.return_delay(result.delay, result.slew)            
-            
+    def get_drain_cin(self):
+        """Get the relative capacitance of the drain of the NMOS pass TX"""
+        from tech import parameter
+        #Bitcell drain load being used to estimate mux NMOS drain load
+        drain_load = logical_effort.convert_farad_to_relative_c(parameter['bitcell_drain_cap'])
+        return drain_load      

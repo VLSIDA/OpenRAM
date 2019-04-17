@@ -74,6 +74,8 @@ class pgate(design.design):
             
         if position=="center":
             contact_offset = left_gate_offset + vector(0.5*self.poly_width, 0)
+        elif position=="farleft":
+            contact_offset = left_gate_offset - vector(0.5*contact.poly.width, 0)
         elif position=="left":
             contact_offset = left_gate_offset - vector(0.5*contact_width - 0.5*self.poly_width, 0)
         elif position=="right":

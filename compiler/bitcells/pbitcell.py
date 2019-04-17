@@ -292,8 +292,12 @@ class pbitcell(design.design):
         self.add_path("poly", [self.inverter_nmos_right.get_pin("G").uc(), self.inverter_pmos_right.get_pin("G").bc()])
 
         # connect output (drain/source) of inverters
-        self.add_path("metal1", [self.inverter_nmos_left.get_pin("D").uc(), self.inverter_pmos_left.get_pin("D").bc()])
-        self.add_path("metal1", [self.inverter_nmos_right.get_pin("S").uc(), self.inverter_pmos_right.get_pin("S").bc()])
+        self.add_path("metal1",
+                      [self.inverter_nmos_left.get_pin("D").uc(), self.inverter_pmos_left.get_pin("D").bc()],
+                      width=contact.active.second_layer_width)
+        self.add_path("metal1",
+                      [self.inverter_nmos_right.get_pin("S").uc(), self.inverter_pmos_right.get_pin("S").bc()],
+                      width=contact.active.second_layer_width)
 
         # add contacts to connect gate poly to drain/source metal1 (to connect Q to Q_bar)
         contact_offset_left =  vector(self.inverter_nmos_left.get_pin("D").rc().x + 0.5*contact.poly.height, self.cross_couple_upper_ypos)

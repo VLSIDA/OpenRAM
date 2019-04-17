@@ -67,8 +67,7 @@ class replica_pbitcell(design.design):
         self.connect_inst(temp)
         
     def place_pbitcell(self):
-        offset = [0,0]
-        self.prbc_inst.place(offset=offset)
+        self.prbc_inst.place(offset=vector(0,0))
         
     def route_rbc_connections(self):        
         for port in range(self.total_ports):

@@ -58,7 +58,7 @@ class pinv(pgate.pgate):
         self.add_well_contacts()
         self.extend_wells(self.well_pos)
         self.connect_rails()
-        self.route_input_gate(self.pmos_inst, self.nmos_inst, self.output_pos.y, "A")
+        self.route_input_gate(self.pmos_inst, self.nmos_inst, self.output_pos.y, "A", position="farleft")
         self.route_outputs()
         
     def add_pins(self):
@@ -222,7 +222,7 @@ class pinv(pgate.pgate):
         pmos_drain_pin = self.pmos_inst.get_pin("D")
 
         # Pick point at right most of NMOS and connect down to PMOS
-        nmos_drain_pos = nmos_drain_pin.lr()
+        nmos_drain_pos = nmos_drain_pin.bc()
         pmos_drain_pos = vector(nmos_drain_pos.x, pmos_drain_pin.uc().y)
         self.add_path("metal1",[nmos_drain_pos,pmos_drain_pos])
 

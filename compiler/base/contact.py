@@ -185,7 +185,7 @@ from sram_factory import factory
 # This is not instantiated and used for calculations only.
 # These are static 1x1 contacts to reuse in all the design modules.
 well = factory.create(module_type="contact", layer_stack=("active", "contact", "metal1"), directions=("H","V"))
-active = factory.create(module_type="contact", layer_stack=("active", "contact", "poly"), directions=("H","V"))
+active = factory.create(module_type="contact", layer_stack=("active", "contact", "metal1"), directions=("H","V"))
 poly = factory.create(module_type="contact", layer_stack=("poly", "contact", "metal1"), directions=("V","H"))
 m1m2 = factory.create(module_type="contact", layer_stack=("metal1", "via1", "metal2"), directions=("H","V"))
 m2m3 = factory.create(module_type="contact", layer_stack=("metal2", "via2", "metal3"), directions=("V","H"))

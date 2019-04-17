@@ -100,7 +100,14 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
 
     def __str__(self):
         """ override print function output """
-        return "design: " + self.name
+        pins = ",".join(self.pins)
+        insts = ["    {}".format(x) for x in self.insts]
+        objs = ["    {}".format(x) for x in self.objs]  
+        s = "********** design {0} **********".format(self.name)
+        s += "\n  pins ({0})={1}\n".format(len(self.pins), pins)
+        s += "\n  objs ({0})=\n{1}\n".format(len(self.objs), "\n".join(objs))
+        s += "\n  insts ({0})=\n{1}\n".format(len(self.insts), "\n".join(insts))
+        return s
 
     def __repr__(self):
         """ override print function output """

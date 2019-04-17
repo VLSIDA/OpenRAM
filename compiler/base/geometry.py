@@ -371,8 +371,8 @@ class rectangle(geometry):
 
     def __str__(self):
         """ override print function output """
-        return "rect: @" + str(self.offset) + " " + str(self.width) + "x" + str(self.height) + " layer=" +str(self.layerNumber)
+        return self.__repr__()
 
     def __repr__(self):
         """ override print function output """
-        return "( rect: @" + str(self.offset) + " " + str(self.width) + "x" + str(self.height) + " layer=" + str(self.layerNumber) + " )"
+        return "( rect: @" + str(self.offset) + " WxH=" + str(self.width) + "x" + str(self.height) + " layer=" + str(self.layerNumber) + " )"

@@ -58,6 +58,8 @@ def log(str):
             # in another log file if the path or name changes.
             if not globals.OPTS.output_path.endswith('/'):
                 globals.OPTS.output_path += "/"
+            if not os.path.isdir(globals.OPTS.output_path):
+                os.mkdir(globals.OPTS.output_path)
             compile_log = open(globals.OPTS.output_path +
                                globals.OPTS.output_name + '.log', "w+")
             log.create_file = 0

@@ -38,7 +38,6 @@ class pinv(pgate.pgate):
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
-
         # for run-time, we won't check every transitor DRC/LVS independently
         # but this may be uncommented for debug purposes
         #self.DRC_LVS()

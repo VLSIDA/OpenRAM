@@ -5,6 +5,7 @@ import verify
 import debug
 import os
 from globals import OPTS
+import graph_util
 
 total_drc_errors = 0 
 total_lvs_errors = 0
@@ -98,6 +99,39 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             os.remove(tempspice)
             os.remove(tempgds)
 
+    #Example graph run
+    # graph = graph_util.graph()
+    # pins = ['A','Z','vdd','gnd']
+    # d.build_graph(graph,"Xpdriver",pins)
+    # graph.remove_edges('vdd')
+    # graph.remove_edges('gnd')
+    # debug.info(1,"{}".format(graph))
+    # graph.printAllPaths('A', 'Z')    
+            
+    def build_graph(self, graph, inst_name, port_nets):        
+        """Recursively create graph from instances in module."""
+        
+        #Translate port names to external nets
+        if len(port_nets) != len(self.pins):
+            debug.error("Port length mismatch:\nExt nets={}, Ports={}".format(port_nets,self.pins),1)
+        port_dict = {i:j for i,j in zip(self.pins, port_nets)}
+        debug.info(1, "Instance name={}".format(inst_name))
+        for subinst, conns in zip(self.insts, self.conns):
+            debug.info(1, "Sub-Instance={}".format(subinst))
+            subinst_name = inst_name+'.X'+subinst.name
+            subinst_ports = self.translate_nets(conns, port_dict, inst_name)
+            subinst.mod.build_graph(graph, subinst_name, subinst_ports)
+    
+    def translate_nets(self, subinst_ports, port_dict, inst_name):
+        """Converts connection names to their spice hierarchy equivalent"""
+        converted_conns = []
+        for conn in subinst_ports:
+            if conn in port_dict:
+                converted_conns.append(port_dict[conn])
+            else:
+                converted_conns.append("{}.{}".format(inst_name, conn))
+        return converted_conns        
+            
     def __str__(self):
         """ override print function output """
         return "design: " + self.name

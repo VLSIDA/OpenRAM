@@ -18,7 +18,7 @@ class design(hierarchy_design):
         
         self.setup_drc_constants()
         self.setup_multiport_constants()
-
+        
         self.m1_pitch = max(contact.m1m2.width,contact.m1m2.height) + max(self.m1_space, self.m2_space)
         self.m2_pitch = max(contact.m2m3.width,contact.m2m3.height) + max(self.m2_space, self.m3_space)
         self.m3_pitch = max(contact.m3m4.width,contact.m3m4.height) + max(self.m3_space, self.m4_space)
@@ -86,8 +86,8 @@ class design(hierarchy_design):
         for port in range(OPTS.num_r_ports):
             self.read_ports.append(port_number)
             self.readonly_ports.append(port_number)
-            port_number += 1
-
+            port_number += 1                    
+        
     def analytical_power(self, corner, load):
         """ Get total power of a module  """
         total_module_power = self.return_power()

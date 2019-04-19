@@ -356,3 +356,16 @@ class ptx(design.design):
     def get_cin(self):
         """Returns the relative gate cin of the tx"""
         return self.tx_width/drc("minwidth_tx")
+
+    def build_graph(self, graph, inst_name, port_nets):        
+        """Adds ptx edges to graph. Lowest graph level."""
+        #The ptx has four connections: (S)ource, (G)ate, (D)rain, (B)ody. The positions in spice 
+        #are hardcoded which is represented here as well.
+        #Edges are connected as follows: G->S, G->D, D<->S. Body not represented in graph.
+        if len(port_nets) != 4:
+            debug.error("Transistor has non-standard connections.",1)
+        graph.add_edge(port_nets[1],port_nets[0])
+        graph.add_edge(port_nets[1],port_nets[2])
+        graph.add_edge(port_nets[0],port_nets[2])
+        graph.add_edge(port_nets[2],port_nets[0])
+        

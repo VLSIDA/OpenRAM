@@ -70,13 +70,8 @@ num_drc_runs = 0
 num_lvs_runs = 0
 num_pex_runs = 0
 
-def run_drc(cell_name, gds_name, extract=False, final_verification=False):
-    """Run DRC check on a given top-level name which is
-       implemented in gds_name."""
-    
-    global num_drc_runs
-    num_drc_runs += 1
-
+def write_calibre_drc_script(cell_name, gds_name, extract, final_verification):
+    """ Write a Calibre runset file and script to run DRC """
     # the runset file contains all the options to run calibre
     from tech import drc
     drc_rules = drc["drc_rules"]
@@ -100,58 +95,21 @@ def run_drc(cell_name, gds_name, extract=False, final_verification=False):
         f.write("*{0}: {1}\n".format(k, drc_runset[k]))
     f.close()
 
-    # run drc
-    cwd = os.getcwd()
-    os.chdir(OPTS.openram_temp)
-    errfile = "{0}{1}.drc.err".format(OPTS.openram_temp, cell_name)
-    outfile = "{0}{1}.drc.out".format(OPTS.openram_temp, cell_name)
-
-    cmd = "{0} -gui -drc {1}drc_runset -batch 2> {2} 1> {3}".format(OPTS.drc_exe[1],
-                                                                    OPTS.openram_temp,
-                                                                    errfile,
-                                                                    outfile)
-    debug.info(2, cmd)
-    os.system(cmd)
-    os.chdir(cwd)
-
-    # check the result for these lines in the summary:
-    # TOTAL Original Layer Geometries: 106 (157)
-    # TOTAL DRC RuleChecks Executed:   156
-    # TOTAL DRC Results Generated:     0 (0)
-    try:
-        f = open(drc_runset['drcSummaryFile'], "r")
-    except:
-        debug.error("Unable to retrieve DRC results file. Is calibre set up?",1)
-    results = f.readlines()
+    # Create an auxiliary script to run calibre with the runset
+    run_file = OPTS.openram_temp + "run_drc.sh"
+    f = open(run_file, "w")
+    f.write("#!/bin/sh\n")
+    cmd = "{0} -gui -drc {1}drc_runset -batch".format(OPTS.drc_exe[1],
+                                                      OPTS.openram_temp)
+    f.write(cmd)
+    f.write("\n")
     f.close()
-    # those lines should be the last 3
-    results = results[-3:]
-    geometries = int(re.split(r'\W+', results[0])[5])
-    rulechecks = int(re.split(r'\W+', results[1])[4])
-    errors = int(re.split(r'\W+', results[2])[5])
+    os.system("chmod u+x {}".format(run_file))
+    return drc_runset
 
-    # always display this summary
-    if errors > 0:
-        debug.error("{0}\tGeometries: {1}\tChecks: {2}\tErrors: {3}".format(cell_name, 
-                                                                            geometries,
-                                                                            rulechecks,
-                                                                            errors))
-    else:
-        debug.info(1, "{0}\tGeometries: {1}\tChecks: {2}\tErrors: {3}".format(cell_name, 
-                                                                              geometries,
-                                                                              rulechecks,
-                                                                              errors))
-    return errors
+def write_calibre_lvs_script(cell_name, gds_name, sp_name, final_verification):
+    """ Write a Calibre runset file and script to run LVS """
 
-
-def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
-    """Run LVS check on a given top-level name which is
-    implemented in gds_name and sp_name. Final verification will
-    ensure that there are no remaining virtual conections. """
-    
-    global num_lvs_runs
-    num_lvs_runs += 1
-    
     from tech import drc
     lvs_rules = drc["lvs_rules"]
     lvs_runset = {
@@ -197,16 +155,93 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
         f.write("*{0}: {1}\n".format(k, lvs_runset[k]))
     f.close()
 
-    # run LVS
+    # Create an auxiliary script to run calibre with the runset
+    run_file = OPTS.openram_temp + "run_lvs.sh"
+    f = open(run_file, "w")
+    f.write("#!/bin/sh\n")
+    PDK_DIR=os.environ.get("PDK_DIR")
+    f.write("export PDK_DIR={}\n".format(PDK_DIR))
+    cmd = "{0} -gui -lvs {1}lvs_runset -batch".format(OPTS.lvs_exe[1],
+                                                      OPTS.openram_temp)
+    f.write(cmd)
+    f.write("\n")
+    f.close()
+    os.system("chmod u+x {}".format(run_file))
+    
+    return lvs_runset
+    
+    
+def run_drc(cell_name, gds_name, extract=False, final_verification=False):
+    """Run DRC check on a given top-level name which is
+       implemented in gds_name."""
+    
+    global num_drc_runs
+    num_drc_runs += 1
+
+    drc_runset = write_calibre_drc_script(cell_name, gds_name, extract, final_verification)
+    
+    # run drc
+    cwd = os.getcwd()
+    os.chdir(OPTS.openram_temp)
+    errfile = "{0}{1}.drc.err".format(OPTS.openram_temp, cell_name)
+    outfile = "{0}{1}.drc.out".format(OPTS.openram_temp, cell_name)
+
+    cmd = "{0}run_drc.sh 2> {1} 1> {2}".format(OPTS.openram_temp,
+                                               errfile,
+                                               outfile)
+    debug.info(2, cmd)
+    os.system(cmd)
+    os.chdir(cwd)
+
+    # check the result for these lines in the summary:
+    # TOTAL Original Layer Geometries: 106 (157)
+    # TOTAL DRC RuleChecks Executed:   156
+    # TOTAL DRC Results Generated:     0 (0)
+    try:
+        f = open(drc_runset['drcSummaryFile'], "r")
+    except:
+        debug.error("Unable to retrieve DRC results file. Is calibre set up?",1)
+    results = f.readlines()
+    f.close()
+    # those lines should be the last 3
+    results = results[-3:]
+    geometries = int(re.split(r'\W+', results[0])[5])
+    rulechecks = int(re.split(r'\W+', results[1])[4])
+    errors = int(re.split(r'\W+', results[2])[5])
+
+    # always display this summary
+    if errors > 0:
+        debug.error("{0}\tGeometries: {1}\tChecks: {2}\tErrors: {3}".format(cell_name, 
+                                                                            geometries,
+                                                                            rulechecks,
+                                                                            errors))
+    else:
+        debug.info(1, "{0}\tGeometries: {1}\tChecks: {2}\tErrors: {3}".format(cell_name, 
+                                                                              geometries,
+                                                                              rulechecks,
+                                                                              errors))
+    return errors
+
+
+def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
+    """Run LVS check on a given top-level name which is
+    implemented in gds_name and sp_name. Final verification will
+    ensure that there are no remaining virtual conections. """
+    
+    global num_lvs_runs
+    num_lvs_runs += 1
+    
+    lvs_runset = write_calibre_lvs_script(cell_name, gds_name, sp_name, final_verification)
+
+    # run lvs
     cwd = os.getcwd()
     os.chdir(OPTS.openram_temp)
     errfile = "{0}{1}.lvs.err".format(OPTS.openram_temp, cell_name)
     outfile = "{0}{1}.lvs.out".format(OPTS.openram_temp, cell_name)
 
-    cmd = "{0} -gui -lvs {1}lvs_runset -batch 2> {2} 1> {3}".format(OPTS.lvs_exe[1],
-                                                                    OPTS.openram_temp,
-                                                                    errfile,
-                                                                    outfile)
+    cmd = "{0}run_lvs.sh 2> {1} 1> {2}".format(OPTS.openram_temp,
+                                               errfile,
+                                               outfile)
     debug.info(2, cmd)
     os.system(cmd)
     os.chdir(cwd)

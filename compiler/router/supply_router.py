@@ -146,12 +146,6 @@ class supply_router(router):
             # We need to move this rail to the other layer for the z indices to match
             # during the intersection. This also makes a copy.
             new_r1 = {vector3d(i.x,i.y,1) for i in r1}
-            
-            # If horizontal, subtract off the left/right track to prevent end of rail via
-            #ll = grid_utils.get_lower_left(new_r1)
-            #ur = grid_utils.get_upper_right(new_r1)
-            grid_utils.remove_border(new_r1, direction.EAST)
-            grid_utils.remove_border(new_r1, direction.WEST)
                 
             for i2,r2 in enumerate(all_rails):
                 # Never compare to yourself
@@ -163,16 +157,11 @@ class supply_router(router):
                 if e.z==0:
                     continue
 
-                # Need to maek a copy to consider via overlaps to ignore the end-caps
-                new_r2 = r2.copy()
-                grid_utils.remove_border(new_r2, direction.NORTH)
-                grid_utils.remove_border(new_r2, direction.SOUTH)                
-
-                # Determine if we hhave sufficient overlap and, if so,
+                # Determine if we have sufficient overlap and, if so,
                 # remember:
                 # the indices to determine a rail is connected to another
                 # the overlap area for placement of a via
-                overlap = new_r1 & new_r2
+                overlap = new_r1 & r2
                 if len(overlap) >= 1:
                     debug.info(3,"Via overlap {0} {1}".format(len(overlap),overlap))
                     connections.update([i1,i2])
@@ -270,7 +259,8 @@ class supply_router(router):
         Find a start location, probe in the direction, and see if the rail is big enough
         to contain a via, and, if so, add it.
         """
-        start_wave = self.find_supply_rail_start(name, seed_wave, direct)
+        # Sweep to find an initial unblocked valid wave
+        start_wave = self.rg.find_start_wave(seed_wave, direct)
         
         # This means there were no more unblocked grids in the row/col
         if not start_wave:
@@ -284,17 +274,6 @@ class supply_router(router):
         # as it will be used to find the next start location
         return wave_path
 
-    def find_supply_rail_start(self, name, seed_wave, direct):
-        """
-        This finds the first valid starting location and routes a supply rail
-        in the given direction.
-        It returns the space after the end of the rail to seed another call for multiple
-        supply rails in the same "track" when there is a blockage.
-        """
-        # Sweep to find an initial unblocked valid wave
-        start_wave = self.rg.find_start_wave(seed_wave, len(seed_wave), direct)
-
-        return start_wave
     
     def probe_supply_rail(self, name, start_wave, direct):
         """

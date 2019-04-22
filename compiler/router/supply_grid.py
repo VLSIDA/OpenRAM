@@ -27,7 +27,7 @@ class supply_grid(signal_grid):
             p.reset()
         
 
-    def find_start_wave(self, wave, width, direct):
+    def find_start_wave(self, wave, direct):
         """ 
         Finds the first loc  starting at loc and up that is open.
         Returns None if it reaches max size first.

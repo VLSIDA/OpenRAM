@@ -102,13 +102,6 @@ class sram():
         start_time = datetime.datetime.now()
         from characterizer import lib
         debug.print_raw("LIB: Characterizing... ")
-        if OPTS.analytical_delay:
-            debug.print_raw("Using analytical delay models (no characterization)")
-        else:
-            if OPTS.spice_name!="":
-                debug.print_raw("Performing simulation-based characterization with {}".format(OPTS.spice_name))
-            if OPTS.trim_netlist:
-                debug.print_raw("Trimming netlist to speed up characterization.")
         lib(out_dir=OPTS.output_path, sram=self.s, sp_file=sp_file)
         print_time("Characterization", datetime.datetime.now(), start_time)
        

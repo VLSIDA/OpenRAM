@@ -621,3 +621,4 @@ class hierarchical_decoder(design.design):
         else:
             pre = self.pre3_8
         return pre.input_load()
+        

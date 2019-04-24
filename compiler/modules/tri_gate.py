@@ -10,7 +10,7 @@ class tri_gate(design.design):
     netlist should be available in the technology library.  
     """
 
-    pin_names = ["in", "en", "en_bar", "out", "gnd", "vdd"]
+    pin_names = ["in", "out", "en", "en_bar", "gnd", "vdd"]
     (width,height) = utils.get_libcell_size("tri_gate", GDS["unit"], layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "tri_gate", GDS["unit"])
 
@@ -42,3 +42,13 @@ class tri_gate(design.design):
     def input_load(self):
         return 9*spice["min_tx_gate_c"]
 
+    def build_graph(self, graph, inst_name, port_nets):        
+        """Adds edges to graph. Handmade cells must implement this manually."""
+        #The cell has 6 net ports hard-coded in self.pin_names. The edges
+        #are based on the hard-coded name positions.
+        # The edges added are: en->out, en_bar->out, in->out.
+        # A liberal amount of edges were added, may be reduced later for complexity.
+        # Internal nodes of the handmade cell not considered, only ports. vdd/gnd ignored for graph.
+        graph.add_edge(port_nets[0],port_nets[1])
+        graph.add_edge(port_nets[2],port_nets[1])
+        graph.add_edge(port_nets[3],port_nets[1])

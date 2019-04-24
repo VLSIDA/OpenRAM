@@ -893,3 +893,15 @@ class pbitcell(design.design):
         access_tx_cin = self.readwrite_nmos.get_cin()
         return 2*access_tx_cin
 
+    def build_graph(self, graph, inst_name, port_nets):        
+        """Adds edges to graph. Done manually to make the graph acyclic."""
+        #The base graph function can make this but it would contain loops and path
+        #searches would essentially be useless.
+        # Edges added wl->bl, wl->br for every port
+        
+        num_wl = len(self.rw_wl_names) + len(self.w_wl_names) + len(self.r_wl_names)
+        wl_pos = 2*num_wl #there are this many bitlines nets before the wls in the port list
+        for i in range(num_wl):
+            bl_pos = i*2
+            graph.add_edge(port_nets[wl_pos+i],port_nets[bl_pos])
+            graph.add_edge(port_nets[wl_pos+i],port_nets[bl_pos+1])

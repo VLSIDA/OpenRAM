@@ -52,3 +52,14 @@ class sense_amp(design.design):
         nmos_cin = parameter["sa_en_nmos_size"]/drc("minwidth_tx")
         #sen is connected to 2 pmos isolation TX and 1 nmos per sense amp.
         return 2*pmos_cin + nmos_cin
+        
+    def build_graph(self, graph, inst_name, port_nets):        
+        """Adds edges to graph. Handmade cells must implement this manually."""
+        #The cell has 6 net ports hard-coded in self.pin_names. The edges
+        #are based on the hard-coded name positions.
+        # The edges added are: en->dout, bl->dout
+        # br->dout not included to reduce complexity
+        # Internal nodes of the handmade cell not considered, only ports. vdd/gnd ignored for graph.
+        graph.add_edge(port_nets[0],port_nets[2])
+        graph.add_edge(port_nets[3],port_nets[2])
+        

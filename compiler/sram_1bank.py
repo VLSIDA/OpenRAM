@@ -305,3 +305,19 @@ class sram_1bank(sram_base):
             self.add_label(text=n,
                            layer=pin.layer,
                            offset=pin.center())
+                           
+    def graph_exclude_data_dff(self):
+        """Removes data dff from search graph. """
+        #Data dffs are only for writing so are not useful for evaluating read delay.
+        for inst in self.data_dff_insts:
+            self.graph_inst_exclude.add(inst)
+    
+    def graph_exclude_addr_dff(self):
+        """Removes data dff from search graph. """
+        #Address is considered not part of the critical path, subjectively removed
+        for inst in self.row_addr_dff_insts:
+            self.graph_inst_exclude.add(inst)
+            
+        if self.col_addr_dff:
+            for inst in self.col_addr_dff_insts:
+                self.graph_inst_exclude.add(inst)   

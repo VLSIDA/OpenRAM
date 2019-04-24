@@ -28,3 +28,15 @@ class write_driver(design.design):
         """Get the relative capacitance of a single input"""
         # This is approximated from SCMOS. It has roughly 5 3x transistor gates.
         return 5*3
+
+    def build_graph(self, graph, inst_name, port_nets):        
+        """Adds edges to graph. Handmade cells must implement this manually."""
+        #The cell has 6 net ports hard-coded in self.pin_names. The edges
+        #are based on the hard-coded name positions.
+        # The edges added are: din->bl, din->br, en->bl, en->br
+        # A liberal amount of edges were added, may be reduced later for complexity.
+        # Internal nodes of the handmade cell not considered, only ports. vdd/gnd ignored for graph.
+        graph.add_edge(port_nets[0],port_nets[1])
+        graph.add_edge(port_nets[0],port_nets[2])
+        graph.add_edge(port_nets[3],port_nets[1])
+        graph.add_edge(port_nets[3],port_nets[2])

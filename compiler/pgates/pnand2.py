@@ -32,6 +32,8 @@ class pnand2(pgate.pgate):
         if not OPTS.netlist_only:
             self.create_layout()
 
+        #For characterization purposes only
+        self.exclude_nmos_from_graph()
         
     def create_netlist(self):
         self.add_pins()
@@ -259,3 +261,10 @@ class pnand2(pgate.pgate):
         """
         parasitic_delay = 2 
         return logical_effort.logical_effort(self.name, self.size, self.get_cin(), cout, parasitic_delay, not inp_is_rise)
+        
+    def exclude_nmos_from_graph(self):
+        """Exclude the nmos TXs from the graph to reduce complexity"""
+        #The pull-down network has an internal net which causes 2 different in->out paths
+        #Removing them simplifies generic path searching.
+        self.graph_inst_exclude.add(self.nmos1_inst)
+        self.graph_inst_exclude.add(self.nmos2_inst)

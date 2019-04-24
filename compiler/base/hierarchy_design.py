@@ -24,7 +24,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         self.name = name
         hierarchy_layout.layout.__init__(self, name)
         hierarchy_spice.spice.__init__(self, name)
-        
+        self.init_graph_params()
 
     def get_layout_pins(self,inst):
         """ Return a map of pin locations of the instance offset """
@@ -100,6 +100,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             os.remove(tempgds)
 
     #Example graph run
+    # import graph_util
     # graph = graph_util.graph()
     # pins = ['A','Z','vdd','gnd']
     # d.build_graph(graph,"Xpdriver",pins)
@@ -108,6 +109,11 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
     # debug.info(1,"{}".format(graph))
     # graph.printAllPaths('A', 'Z')    
             
+    def init_graph_params(self):
+        """Initializes parameters relevant to the graph creation"""
+        #Only initializes a set for checking instances which should not be added
+        self.graph_inst_exclude = set()
+            
     def build_graph(self, graph, inst_name, port_nets):        
         """Recursively create graph from instances in module."""
         
@@ -115,9 +121,10 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         if len(port_nets) != len(self.pins):
             debug.error("Port length mismatch:\nExt nets={}, Ports={}".format(port_nets,self.pins),1)
         port_dict = {i:j for i,j in zip(self.pins, port_nets)}
-        debug.info(1, "Instance name={}".format(inst_name))
+        debug.info(3, "Instance name={}".format(inst_name))
         for subinst, conns in zip(self.insts, self.conns):
-            debug.info(1, "Sub-Instance={}".format(subinst))
+            if subinst in self.graph_inst_exclude:
+                continue
             subinst_name = inst_name+'.X'+subinst.name
             subinst_ports = self.translate_nets(conns, port_dict, inst_name)
             subinst.mod.build_graph(graph, subinst_name, subinst_ports)

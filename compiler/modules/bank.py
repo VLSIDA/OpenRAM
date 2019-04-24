@@ -1279,3 +1279,9 @@ class bank(design.design):
         """Get the relative capacitance of all the sense amp enable connections in the bank"""
         #Current bank only uses sen as an enable for the sense amps.
         return self.sense_amp_array.get_en_cin()
+        
+    def graph_exclude_precharge(self):
+        """Precharge adds a loop between bitlines, can be excluded to reduce complexity"""
+        for inst in self.precharge_array_inst:
+            if inst != None:
+                self.graph_inst_exclude.add(inst)

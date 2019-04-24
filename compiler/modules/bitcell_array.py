@@ -193,3 +193,13 @@ class bitcell_array(design.design):
         bitcell_wl_cin = self.cell.get_wl_cin()
         total_cin = bitcell_wl_cin * self.column_size
         return total_cin
+        
+    def graph_exclude_bits(self, targ_row, targ_col):
+        """Excludes bits in column from being added to graph except target"""
+        #Function is not robust with column mux configurations
+        for row in range(self.row_size):
+            if row == targ_row:
+                continue
+            self.graph_inst_exclude.add(self.cell_inst[row,targ_col])
+            
+            

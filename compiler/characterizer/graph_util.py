@@ -36,9 +36,11 @@ class graph():
   
         # Create an array to store paths 
         path = [] 
+        self.path_count = 0
   
         # Call the recursive helper function to print all paths 
-        self.printAllPathsUtil(s, d,visited, path)        
+        self.printAllPathsUtil(s, d,visited, path)     
+        debug.info(1, "Paths found={}".format(self.path_count))
             
     def printAllPathsUtil(self, u, d, visited, path): 
   
@@ -50,6 +52,7 @@ class graph():
         # current path[] 
         if u == d: 
             debug.info(1,"{}".format(path)) 
+            self.path_count+=1
         else: 
             # If current vertex is not destination 
             #Recur for all the vertices adjacent to this vertex 

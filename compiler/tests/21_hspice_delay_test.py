@@ -33,6 +33,23 @@ class timing_sram_test(openram_test):
         c.recompute_sizes()
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
         s = factory.create(module_type="sram", sram_config=c)
+        
+        #Exclude things known not to be in critical path.
+        #Intended for characterizing read paths. Somewhat hacky implementation
+        s.s.bank.bitcell_array.graph_exclude_bits(15,0)
+        s.s.bank.graph_exclude_precharge()
+        s.s.graph_exclude_addr_dff()
+        s.s.graph_exclude_data_dff()
+        
+        debug.info(1,'pins={}'.format(s.s.pins))
+        import graph_util
+        graph = graph_util.graph()
+        pins=['DIN0[0]', 'ADDR0[0]', 'ADDR0[1]', 'ADDR0[2]', 'ADDR0[3]', 'csb0', 'web0', 'clk0', 'DOUT0[0]', 'vdd', 'gnd']
+        s.s.build_graph(graph,"Xsram",pins)
+        graph.remove_edges('vdd')
+        graph.remove_edges('gnd')
+        debug.info(1,"{}".format(graph))
+        graph.printAllPaths('clk0', 'DOUT0[0]')
 
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)

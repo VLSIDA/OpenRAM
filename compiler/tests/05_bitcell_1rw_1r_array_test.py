@@ -26,7 +26,7 @@ class bitcell_1rw_1r_array_test(openram_test):
         OPTS.num_w_ports = 0
         a = factory.create(module_type="bitcell_array", cols=4, rows=4)
         self.local_check(a)
-
+        
         globals.end_openram()
 
 # run the test from the command line

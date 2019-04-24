@@ -29,3 +29,12 @@ class replica_bitcell(design.design):
         #Calculated in the tech file by summing the widths of all the related gates and dividing by the minimum width.
         access_tx_cin = parameter["6T_access_size"]/drc["minwidth_tx"]
         return 2*access_tx_cin
+
+    def build_graph(self, graph, inst_name, port_nets):        
+        """Adds edges to graph. Handmade cells must implement this manually."""
+        #The bitcell has 5 net ports hard-coded in self.pin_names. The edges
+        #are based on the hard-coded name positions.
+        # The edges added are: wl->bl, wl->br.
+        # Internal nodes of the handmade cell not considered, only ports. vdd/gnd ignored for graph.
+        graph.add_edge(port_nets[2],port_nets[0])
+        graph.add_edge(port_nets[2],port_nets[1])

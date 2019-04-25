@@ -320,4 +320,10 @@ class sram_1bank(sram_base):
             
         if self.col_addr_dff:
             for inst in self.col_addr_dff_insts:
-                self.graph_inst_exclude.add(inst)   
+                self.graph_inst_exclude.add(inst)
+
+    def graph_exclude_ctrl_dffs(self):
+        """Exclude dffs for CSB, WEB, etc from graph"""
+        #Insts located in control logic, exclusion function called here
+        for inst in self.control_logic_insts:
+            inst.mod.graph_exclude_dffs()

@@ -107,7 +107,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
     # graph.remove_edges('vdd')
     # graph.remove_edges('gnd')
     # debug.info(1,"{}".format(graph))
-    # graph.printAllPaths('A', 'Z')    
+    # graph.print_all_paths('A', 'Z')    
             
     def init_graph_params(self):
         """Initializes parameters relevant to the graph creation"""

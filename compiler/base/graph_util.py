@@ -29,7 +29,7 @@ class graph():
         """Helper function to remove edges, useful for removing vdd/gnd"""
         self.graph[node] = []    
             
-    def printAllPaths(self,s, d): 
+    def print_all_paths(self,s, d): 
   
         # Mark all the vertices as not visited 
         visited = set()
@@ -39,10 +39,10 @@ class graph():
         self.path_count = 0
   
         # Call the recursive helper function to print all paths 
-        self.printAllPathsUtil(s, d,visited, path)     
+        self.print_all_paths_util(s, d,visited, path)     
         debug.info(1, "Paths found={}".format(self.path_count))
             
-    def printAllPathsUtil(self, u, d, visited, path): 
+    def print_all_paths_util(self, u, d, visited, path): 
   
         # Mark the current node as visited and store in path 
         visited.add(u)
@@ -58,7 +58,7 @@ class graph():
             #Recur for all the vertices adjacent to this vertex 
             for i in self.graph[u]: 
                 if i not in visited: 
-                    self.printAllPathsUtil(i, d, visited, path) 
+                    self.print_all_paths_util(i, d, visited, path) 
                       
         # Remove current vertex from path[] and mark it as unvisited 
         path.pop() 

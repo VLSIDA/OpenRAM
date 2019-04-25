@@ -966,3 +966,7 @@ class control_logic(design.design):
         if self.port_type == 'rw':
             total_cin +=self.and2.get_cin() 
         return total_cin
+        
+    def graph_exclude_dffs(self):
+        """Exclude dffs from graph as they do not represent critical path"""
+        self.graph_inst_exclude.add(self.ctrl_dff_inst)

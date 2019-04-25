@@ -40,6 +40,7 @@ class timing_sram_test(openram_test):
         s.s.bank.graph_exclude_precharge()
         s.s.graph_exclude_addr_dff()
         s.s.graph_exclude_data_dff()
+        s.s.graph_exclude_ctrl_dffs()
         
         debug.info(1,'pins={}'.format(s.s.pins))
         import graph_util
@@ -48,8 +49,8 @@ class timing_sram_test(openram_test):
         s.s.build_graph(graph,"Xsram",pins)
         graph.remove_edges('vdd')
         graph.remove_edges('gnd')
-        debug.info(1,"{}".format(graph))
-        graph.printAllPaths('clk0', 'DOUT0[0]')
+        #debug.info(1,"{}".format(graph))
+        graph.print_all_paths('clk0', 'DOUT0[0]')
 
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)

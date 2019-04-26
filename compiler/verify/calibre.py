@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+#Copyright (c) 2019 Regents of the University of California and The Board
+#of Regents for the Oklahoma Agricultural and Mechanical College
+#(acting for and on behalf of Oklahoma State University)
+#All rights reserved.
+#
 """
 This is a DRC/LVS interface for calibre. It implements completely
 independently two functions: run_drc and run_lvs, that perform these

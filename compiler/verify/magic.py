@@ -116,7 +116,7 @@ def write_netgen_script(cell_name, sp_name):
     #                                                                     cell_name))
     # f.write("property {{{0}{1}.spice pfet}} tolerance {{w 0.1}}\n".format(OPTS.openram_temp,
     #                                                                     cell_name))
-    f.write("lvs {0}.spice {{{1} {0}}} {2} {0}.lvs.report\n".format(cell_name, sp_name, setup_file))
+    f.write("lvs {{{0}.spice {0}}} {{{1} {0}}} {2} {0}.lvs.report\n".format(cell_name, sp_name, setup_file))
     f.write("quit\n")
     f.write("EOF\n")
     f.close()

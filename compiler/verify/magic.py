@@ -8,7 +8,7 @@
 """
 This is a DRC/LVS/PEX interface file for magic + netgen. 
 
-We include the tech file for SCN3ME_SUBM in the tech directory,
+We include the tech file for SCN4M_SUBM in the tech directory,
 that is included in OpenRAM during DRC. 
 You can use this interactively by appending the magic system path in 
 your .magicrc file
@@ -26,13 +26,14 @@ import time
 import shutil
 import debug
 from globals import OPTS
-import subprocess
+from run_script import *
 
 # Keep track of statistics
 num_drc_runs = 0
 num_lvs_runs = 0
 num_pex_runs = 0
 
+    
 def write_magic_script(cell_name, extract=False, final_verification=False):
     """ Write a magic script to perform DRC and optionally extraction. """
 
@@ -92,6 +93,7 @@ def write_magic_script(cell_name, extract=False, final_verification=False):
     f.close()
     os.system("chmod u+x {}".format(run_file))
 
+    
 def write_netgen_script(cell_name):
     """ Write a netgen script to perform LVS. """
 
@@ -136,19 +138,8 @@ def run_drc(cell_name, gds_name, extract=True, final_verification=False):
         debug.warning("Could not locate .magicrc file: {}".format(magic_file))
 
     write_magic_script(cell_name, extract, final_verification)
-    
-    # run drc
-    cwd = os.getcwd()
-    os.chdir(OPTS.openram_temp)
-    errfile = "{0}{1}.drc.err".format(OPTS.openram_temp, cell_name)
-    outfile = "{0}{1}.drc.summary".format(OPTS.openram_temp, cell_name)
 
-    cmd = "{0}run_drc.sh 2> {1} 1> {2}".format(OPTS.openram_temp,
-                                               errfile,
-                                               outfile)
-    debug.info(2, cmd)
-    os.system(cmd)
-    os.chdir(cwd)
+    (outfile, errfile, resultsfile) = run_script(cell_name, "drc")
 
     # Check the result for these lines in the summary:
     # Total DRC errors found: 0
@@ -200,21 +191,9 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
         shutil.copy(sp_name, OPTS.openram_temp)
     
     write_netgen_script(cell_name)
+
+    (outfile, errfile, resultsfile) = run_script(cell_name, "lvs")
     
-    # run LVS
-    cwd = os.getcwd()
-    os.chdir(OPTS.openram_temp)
-    errfile = "{0}{1}.lvs.err".format(OPTS.openram_temp, cell_name)
-    outfile = "{0}{1}.lvs.out".format(OPTS.openram_temp, cell_name)
-    resultsfile = "{0}{1}.lvs.report".format(OPTS.openram_temp, cell_name)    
-
-    cmd = "{0}run_lvs.sh lvs 2> {1} 1> {2}".format(OPTS.openram_temp,
-                                                   errfile,
-                                                   outfile)
-    debug.info(2, cmd)
-    os.system(cmd)
-    os.chdir(cwd)
-
     total_errors = 0
     
     # check the result for these lines in the summary:

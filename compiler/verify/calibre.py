@@ -7,61 +7,13 @@
 #
 """
 This is a DRC/LVS interface for calibre. It implements completely
-independently two functions: run_drc and run_lvs, that perform these
+independently three functions: run_drc, run_lvs, run_pex, that perform these
 functions in batch mode and will return true/false if the result
 passes. All of the setup (the rules, temp dirs, etc.) should be
 contained in this file.  Replacing with another DRC/LVS tool involves
 rewriting this code to work properly. Porting to a new technology in
 Calibre means pointing the code to the proper DRC and LVS rule files.
 
-A calibre DRC runset file contains, at the minimum, the following information:
-
-*drcRulesFile: /mada/software/techfiles/FreePDK45/ncsu_basekit/techfile/calibre/calibreDRC.rul
-*drcRunDir: .
-*drcLayoutPaths: ./cell_6t.gds
-*drcLayoutPrimary: cell_6t
-*drcLayoutSystem: GDSII
-*drcResultsformat: ASCII
-*drcResultsFile: cell_6t.drc.results
-*drcSummaryFile: cell_6t.drc.summary
-*cmnFDILayerMapFile: ./layer.map
-*cmnFDIUseLayerMap: 1
-
-This can be executed in "batch" mode with the following command:
-
-calibre -gui -drc example_drc_runset  -batch
-
-To open the results, you can do this:
-
-calibredrv cell_6t.gds
-Select Verification->Start RVE.
-Select the cell_6t.drc.results file.
-Click on the errors and they will highlight in the design layout viewer.
-
-For LVS:
-
-*lvsRulesFile: /mada/software/techfiles/FreePDK45/ncsu_basekit/techfile/calibre/calibreLVS.rul
-*lvsRunDir: .
-*lvsLayoutPaths: ./cell_6t.gds
-*lvsLayoutPrimary: cell_6t
-*lvsSourcePath: ./cell_6t.sp
-*lvsSourcePrimary: cell_6t
-*lvsSourceSystem: SPICE
-*lvsSpiceFile: extracted.sp
-*lvsPowerNames: vdd 
-*lvsGroundNames: vss
-*lvsIgnorePorts: 1
-*lvsERCDatabase: cell_6t.erc.results
-*lvsERCSummaryFile: cell_6t.erc.summary
-*lvsReportFile: cell_6t.lvs.report
-*lvsMaskDBFile: cell_6t.maskdb
-*cmnFDILayerMapFile: ./layer.map
-*cmnFDIUseLayerMap: 1
-
-To run and see results:
-
-calibre -gui -lvs example_lvs_runset -batch
-more cell_6t.lvs.report
 """
 
 
@@ -71,7 +23,7 @@ import re
 import time
 import debug
 from globals import OPTS
-import subprocess
+from run_script import *
 
 # Keep track of statistics
 num_drc_runs = 0
@@ -177,7 +129,52 @@ def write_calibre_lvs_script(cell_name, final_verification):
     os.system("chmod u+x {}".format(run_file))
     
     return lvs_runset
+
+def write_calibre_pex_script(cell_name, extract, output, final_verification):
     
+    if output == None:
+        output = name + ".pex.netlist"
+
+    # check if lvs report has been done
+    # if not run drc and lvs
+    if not os.path.isfile(cell_name + ".lvs.report"):
+        run_drc(cell_name, gds_name)
+        run_lvs(cell_name, gds_name, sp_name)
+
+    pex_rules = drc["xrc_rules"]
+    pex_runset = {
+        'pexRulesFile': pex_rules,
+        'pexRunDir': OPTS.openram_temp,
+        'pexLayoutPaths': cell_name + ".gds",
+        'pexLayoutPrimary': cell_name,
+        #'pexSourcePath' : OPTS.openram_temp+"extracted.sp",
+        'pexSourcePath': cell_name + ".sp",
+        'pexSourcePrimary': cell_name,
+        'pexReportFile': cell_name + ".lvs.report",
+        'pexPexNetlistFile': cell_name + ".pex.netlist",
+        'pexPexReportFile': cell_name + ".pex.report",
+        'pexMaskDBFile': cell_name + ".maskdb",
+        'cmnFDIDEFLayoutPath': cell_name + ".def",
+    }
+
+    # write the runset file
+    f = open(OPTS.openram_temp + "pex_runset", "w")
+    for k in sorted(iter(pex_runset.keys())):
+        f.write("*{0}: {1}\n".format(k, pex_runset[k]))
+    f.close()
+
+    # Create an auxiliary script to run calibre with the runset
+    run_file = OPTS.openram_temp + "run_pex.sh"
+    f = open(run_file, "w")
+    f.write("#!/bin/sh\n")
+    cmd = "{0} -gui -pex {1}pex_runset -batch".format(OPTS.pex_exe[1],
+                                                      OPTS.openram_temp)
+    f.write(cmd)
+    f.write("\n")
+    f.close()
+    os.system("chmod u+x {}".format(run_file))
+
+    return pex_runset
     
 def run_drc(cell_name, gds_name, extract=False, final_verification=False):
     """Run DRC check on a given top-level name which is
@@ -191,17 +188,8 @@ def run_drc(cell_name, gds_name, extract=False, final_verification=False):
         shutil.copy(gds_name, OPTS.openram_temp)
         
     drc_runset = write_calibre_drc_script(cell_name, extract, final_verification)
-    
-    # run drc
-    cwd = os.getcwd()
-    os.chdir(OPTS.openram_temp)
-    errfile = "{0}{1}.drc.err".format(OPTS.openram_temp, cell_name)
-    outfile = "{0}{1}.drc.out".format(OPTS.openram_temp, cell_name)
 
-    cmd = "run_drc.sh 2> {0} 1> {1}".format(errfile, outfile)
-    debug.info(2, cmd)
-    os.system(cmd)
-    os.chdir(cwd)
+    (outfile, errfile, resultsfile) = run_script(cell_name, "drc")
 
     # check the result for these lines in the summary:
     # TOTAL Original Layer Geometries: 106 (157)
@@ -248,17 +236,8 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
         shutil.copy(gds_name, OPTS.openram_temp)
     if os.path.dirname(sp_name)!=OPTS.openram_temp.rstrip('/'):
         shutil.copy(sp_name, OPTS.openram_temp)
-    
-    # run lvs
-    cwd = os.getcwd()
-    os.chdir(OPTS.openram_temp)
-    errfile = "{0}{1}.lvs.err".format(OPTS.openram_temp, cell_name)
-    outfile = "{0}{1}.lvs.out".format(OPTS.openram_temp, cell_name)
 
-    cmd = "run_lvs.sh 2> {0} 1> {1}".format(errfile, outfile)
-    debug.info(2, cmd)
-    os.system(cmd)
-    os.chdir(cwd)
+    (outfile, errfile, resultsfile) = run_script(cell_name, "lvs")
 
     # check the result for these lines in the summary:
     f = open(OPTS.openram_temp + lvs_runset['lvsReportFile'], "r")
@@ -337,52 +316,11 @@ def run_pex(cell_name, gds_name, sp_name, output=None, final_verification=False)
 
     global num_pex_runs
     num_pex_runs += 1
-    
-    from tech import drc
-    if output == None:
-        output = name + ".pex.netlist"
 
-    # check if lvs report has been done
-    # if not run drc and lvs
-    if not os.path.isfile(cell_name + ".lvs.report"):
-        run_drc(cell_name, gds_name)
-        run_lvs(cell_name, gds_name, sp_name)
+    write_calibre_pex_script()
 
-    pex_rules = drc["xrc_rules"]
-    pex_runset = {
-        'pexRulesFile': pex_rules,
-        'pexRunDir': OPTS.openram_temp,
-        'pexLayoutPaths': gds_name,
-        'pexLayoutPrimary': cell_name,
-        #'pexSourcePath' : OPTS.openram_temp+"extracted.sp",
-        'pexSourcePath': sp_name,
-        'pexSourcePrimary': cell_name,
-        'pexReportFile': cell_name + ".lvs.report",
-        'pexPexNetlistFile': output,
-        'pexPexReportFile': cell_name + ".pex.report",
-        'pexMaskDBFile': cell_name + ".maskdb",
-        'cmnFDIDEFLayoutPath': cell_name + ".def",
-    }
-
-    # write the runset file
-    f = open(OPTS.openram_temp + "pex_runset", "w")
-    for k in sorted(iter(pex_runset.keys())):
-        f.write("*{0}: {1}\n".format(k, pex_runset[k]))
-    f.close()
-
-    # run pex
-    cwd = os.getcwd()
-    os.chdir(OPTS.openram_temp)
-    errfile = "{0}{1}.pex.err".format(OPTS.openram_temp, cell_name)
-    outfile = "{0}{1}.pex.out".format(OPTS.openram_temp, cell_name)
-
-    cmd = "{0} -gui -pex {1}pex_runset -batch 2> {2} 1> {3}".format(OPTS.pex_exe[1],
-                                                                    OPTS.openram_temp,
-                                                                    errfile,
-                                                                    outfile)
-    debug.info(2, cmd)
-    os.system(cmd)
-    os.chdir(cwd)
+    (outfile, errfile, resultsfile) = run_script(cell_name, "pex")
+        
 
     # also check the output file
     f = open(outfile, "r")

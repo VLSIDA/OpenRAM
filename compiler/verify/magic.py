@@ -33,7 +33,7 @@ num_drc_runs = 0
 num_lvs_runs = 0
 num_pex_runs = 0
 
-def write_magic_script(cell_name, gds_name, extract=False, final_verification=False):
+def write_magic_script(cell_name, extract=False, final_verification=False):
     """ Write a magic script to perform DRC and optionally extraction. """
 
     global OPTS
@@ -44,7 +44,7 @@ def write_magic_script(cell_name, gds_name, extract=False, final_verification=Fa
     f.write("{} -dnull -noconsole << EOF\n".format(OPTS.drc_exe[1]))
     f.write("gds polygon subcell true\n")
     f.write("gds warning default\n")
-    f.write("gds read {}\n".format(gds_name))
+    f.write("gds read {}.gds\n".format(cell_name))
     f.write("load {}\n".format(cell_name))
     # Flatten the cell to get rid of DRCs spanning multiple layers
     # (e.g. with routes)
@@ -92,7 +92,7 @@ def write_magic_script(cell_name, gds_name, extract=False, final_verification=Fa
     f.close()
     os.system("chmod u+x {}".format(run_file))
 
-def write_netgen_script(cell_name, sp_name):
+def write_netgen_script(cell_name):
     """ Write a netgen script to perform LVS. """
 
     global OPTS
@@ -110,14 +110,8 @@ def write_netgen_script(cell_name, sp_name):
     f.write("#!/bin/sh\n")
     f.write("{} -noconsole << EOF\n".format(OPTS.lvs_exe[1]))
     f.write("readnet spice {0}.spice\n".format(cell_name))
-    f.write("readnet spice {0}\n".format(sp_name))
-    # Allow some flexibility in W size because magic will snap to a lambda grid
-    # This can also cause disconnects unfortunately!
-    # f.write("property {{{0}{1}.spice nfet}} tolerance {{w 0.1}}\n".format(OPTS.openram_temp,
-    #                                                                     cell_name))
-    # f.write("property {{{0}{1}.spice pfet}} tolerance {{w 0.1}}\n".format(OPTS.openram_temp,
-    #                                                                     cell_name))
-    f.write("lvs {{{0}.spice {0}}} {{{1} {0}}} {2} {0}.lvs.report\n".format(cell_name, sp_name, setup_file))
+    f.write("readnet spice {0}.sp\n".format(cell_name))
+    f.write("lvs {{{0}.spice {0}}} {{{0}.sp {0}}} {1} {0}.lvs.report\n".format(cell_name, setup_file))
     f.write("quit\n")
     f.write("EOF\n")
     f.close()
@@ -130,6 +124,10 @@ def run_drc(cell_name, gds_name, extract=True, final_verification=False):
     global num_drc_runs
     num_drc_runs += 1
 
+    # Copy file to local dir if it isn't already
+    if os.path.dirname(gds_name)!=OPTS.openram_temp.rstrip('/'):
+        shutil.copy(gds_name, OPTS.openram_temp)
+    
     # Copy .magicrc file into temp dir
     magic_file = OPTS.openram_tech + "mag_lib/.magicrc"
     if os.path.exists(magic_file):
@@ -137,7 +135,7 @@ def run_drc(cell_name, gds_name, extract=True, final_verification=False):
     else:
         debug.warning("Could not locate .magicrc file: {}".format(magic_file))
 
-    write_magic_script(cell_name, gds_name, extract, final_verification)
+    write_magic_script(cell_name, extract, final_verification)
     
     # run drc
     cwd = os.getcwd()
@@ -194,8 +192,14 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
 
     global num_lvs_runs
     num_lvs_runs += 1
+
+    # Copy file to local dir if it isn't already
+    if os.path.dirname(gds_name)!=OPTS.openram_temp.rstrip('/'):
+        shutil.copy(gds_name, OPTS.openram_temp)
+    if os.path.dirname(sp_name)!=OPTS.openram_temp.rstrip('/'):
+        shutil.copy(sp_name, OPTS.openram_temp)
     
-    write_netgen_script(cell_name, sp_name)
+    write_netgen_script(cell_name)
     
     # run LVS
     cwd = os.getcwd()

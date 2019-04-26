@@ -66,6 +66,7 @@ more cell_6t.lvs.report
 
 
 import os
+import shutil
 import re
 import time
 import debug
@@ -77,7 +78,7 @@ num_drc_runs = 0
 num_lvs_runs = 0
 num_pex_runs = 0
 
-def write_calibre_drc_script(cell_name, gds_name, extract, final_verification):
+def write_calibre_drc_script(cell_name, extract, final_verification):
     """ Write a Calibre runset file and script to run DRC """
     # the runset file contains all the options to run calibre
     from tech import drc
@@ -86,12 +87,12 @@ def write_calibre_drc_script(cell_name, gds_name, extract, final_verification):
     drc_runset = {
         'drcRulesFile': drc_rules,
         'drcRunDir': OPTS.openram_temp,
-        'drcLayoutPaths': gds_name,
+        'drcLayoutPaths': cell_name + ".gds",
         'drcLayoutPrimary': cell_name,
         'drcLayoutSystem': 'GDSII',
         'drcResultsformat': 'ASCII',
-        'drcResultsFile': OPTS.openram_temp + cell_name + ".drc.results",
-        'drcSummaryFile': OPTS.openram_temp + cell_name + ".drc.summary",
+        'drcResultsFile': cell_name + ".drc.results",
+        'drcSummaryFile': cell_name + ".drc.summary",
         'cmnFDILayerMapFile': drc["layer_map"],
         'cmnFDIUseLayerMap': 1
     }
@@ -114,7 +115,7 @@ def write_calibre_drc_script(cell_name, gds_name, extract, final_verification):
     os.system("chmod u+x {}".format(run_file))
     return drc_runset
 
-def write_calibre_lvs_script(cell_name, gds_name, sp_name, final_verification):
+def write_calibre_lvs_script(cell_name, final_verification):
     """ Write a Calibre runset file and script to run LVS """
 
     from tech import drc
@@ -122,20 +123,20 @@ def write_calibre_lvs_script(cell_name, gds_name, sp_name, final_verification):
     lvs_runset = {
         'lvsRulesFile': lvs_rules,
         'lvsRunDir': OPTS.openram_temp,
-        'lvsLayoutPaths': gds_name,
+        'lvsLayoutPaths': cell_name + ".gds",
         'lvsLayoutPrimary': cell_name,
-        'lvsSourcePath': sp_name,
+        'lvsSourcePath': cell_name + ".sp",
         'lvsSourcePrimary': cell_name,
         'lvsSourceSystem': 'SPICE',
-        'lvsSpiceFile': OPTS.openram_temp + "extracted.sp",
+        'lvsSpiceFile': "extracted.sp",
         'lvsPowerNames': 'vdd',
         'lvsGroundNames': 'gnd',
         'lvsIncludeSVRFCmds': 1,
         'lvsIgnorePorts': 1,
-        'lvsERCDatabase': OPTS.openram_temp + cell_name + ".erc.results",
-        'lvsERCSummaryFile': OPTS.openram_temp + cell_name + ".erc.summary",
-        'lvsReportFile': OPTS.openram_temp + cell_name + ".lvs.report",
-        'lvsMaskDBFile': OPTS.openram_temp + cell_name + ".maskdb",
+        'lvsERCDatabase': cell_name + ".erc.results",
+        'lvsERCSummaryFile': cell_name + ".erc.summary",
+        'lvsReportFile': cell_name + ".lvs.report",
+        'lvsMaskDBFile': cell_name + ".maskdb",
         'cmnFDILayerMapFile': drc["layer_map"],
         'cmnFDIUseLayerMap': 1,
         'cmnTranscriptFile': './lvs.log',
@@ -185,7 +186,11 @@ def run_drc(cell_name, gds_name, extract=False, final_verification=False):
     global num_drc_runs
     num_drc_runs += 1
 
-    drc_runset = write_calibre_drc_script(cell_name, gds_name, extract, final_verification)
+    # Copy file to local dir if it isn't already
+    if os.path.dirname(gds_name)!=OPTS.openram_temp.rstrip('/'):
+        shutil.copy(gds_name, OPTS.openram_temp)
+        
+    drc_runset = write_calibre_drc_script(cell_name, extract, final_verification)
     
     # run drc
     cwd = os.getcwd()
@@ -193,9 +198,7 @@ def run_drc(cell_name, gds_name, extract=False, final_verification=False):
     errfile = "{0}{1}.drc.err".format(OPTS.openram_temp, cell_name)
     outfile = "{0}{1}.drc.out".format(OPTS.openram_temp, cell_name)
 
-    cmd = "{0}run_drc.sh 2> {1} 1> {2}".format(OPTS.openram_temp,
-                                               errfile,
-                                               outfile)
+    cmd = "run_drc.sh 2> {0} 1> {1}".format(errfile, outfile)
     debug.info(2, cmd)
     os.system(cmd)
     os.chdir(cwd)
@@ -205,7 +208,7 @@ def run_drc(cell_name, gds_name, extract=False, final_verification=False):
     # TOTAL DRC RuleChecks Executed:   156
     # TOTAL DRC Results Generated:     0 (0)
     try:
-        f = open(drc_runset['drcSummaryFile'], "r")
+        f = open(OPTS.openram_temp + drc_runset['drcSummaryFile'], "r")
     except:
         debug.error("Unable to retrieve DRC results file. Is calibre set up?",1)
     results = f.readlines()
@@ -238,23 +241,27 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     global num_lvs_runs
     num_lvs_runs += 1
     
-    lvs_runset = write_calibre_lvs_script(cell_name, gds_name, sp_name, final_verification)
+    lvs_runset = write_calibre_lvs_script(cell_name, final_verification)
 
+    # Copy file to local dir if it isn't already
+    if os.path.dirname(gds_name)!=OPTS.openram_temp.rstrip('/'):
+        shutil.copy(gds_name, OPTS.openram_temp)
+    if os.path.dirname(sp_name)!=OPTS.openram_temp.rstrip('/'):
+        shutil.copy(sp_name, OPTS.openram_temp)
+    
     # run lvs
     cwd = os.getcwd()
     os.chdir(OPTS.openram_temp)
     errfile = "{0}{1}.lvs.err".format(OPTS.openram_temp, cell_name)
     outfile = "{0}{1}.lvs.out".format(OPTS.openram_temp, cell_name)
 
-    cmd = "{0}run_lvs.sh 2> {1} 1> {2}".format(OPTS.openram_temp,
-                                               errfile,
-                                               outfile)
+    cmd = "run_lvs.sh 2> {0} 1> {1}".format(errfile, outfile)
     debug.info(2, cmd)
     os.system(cmd)
     os.chdir(cwd)
 
     # check the result for these lines in the summary:
-    f = open(lvs_runset['lvsReportFile'], "r")
+    f = open(OPTS.openram_temp + lvs_runset['lvsReportFile'], "r")
     results = f.readlines()
     f.close()
 
@@ -277,7 +284,7 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     summary_errors = len(notcompared) + len(incorrect) + len(errors)
 
     # also check the extraction summary file
-    f = open(lvs_runset['lvsReportFile'] + ".ext", "r")
+    f = open(OPTS.openram_temp + lvs_runset['lvsReportFile'] + ".ext", "r")
     results = f.readlines()
     f.close()
 

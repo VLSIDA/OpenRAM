@@ -97,10 +97,11 @@ def write_netgen_script(cell_name, sp_name):
 
     global OPTS
 
-    setup_file = OPTS.openram_tech + "mag_lib/setup.tcl"
-    if os.path.exists(setup_file):
+    setup_file = "setup.tcl"
+    full_setup_file = OPTS.openram_tech + "mag_lib/" + setup_file
+    if os.path.exists(full_setup_file):
         # Copy setup.tcl file into temp dir
-        shutil.copy(setup_file, OPTS.openram_temp)
+        shutil.copy(full_setup_file, OPTS.openram_temp)
     else:
         setup_file = 'nosetup'
 

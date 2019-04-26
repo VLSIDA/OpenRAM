@@ -29,6 +29,7 @@ class ptx(design.design):
         # replace periods with underscore for newer spice compatibility
         name=name.replace('.','_')
         debug.info(3, "creating ptx {0}".format(name))
+        design.design.__init__(self, name)
 
         self.tx_type = tx_type
         self.mults = mults
@@ -38,8 +39,7 @@ class ptx(design.design):
         self.num_contacts = num_contacts
 
         # Do NOT create the netlist and layout (not a pgate)
-        design.design.__init__(self, name)
-
+        # Since it has variable height, it is not a pgate.
         self.create_netlist()
         # We must always create ptx layout for pbitcell
         # some transistor sizes in other netlist depend on pbitcell

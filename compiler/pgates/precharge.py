@@ -1,12 +1,12 @@
 import contact
-import pgate
+import design
 import debug
 from tech import drc, parameter
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
 
-class precharge(pgate.pgate):
+class precharge(design.design):
     """
     Creates a single precharge cell
     This module implements the precharge bitline cell used in the design.
@@ -14,6 +14,7 @@ class precharge(pgate.pgate):
     def __init__(self, name, size=1, bitcell_bl="bl", bitcell_br="br"):
 
         debug.info(2, "creating precharge cell {0}".format(name))
+        design.design.__init__(self, name)
 
         self.bitcell = factory.create(module_type="bitcell")
         self.beta = parameter["beta"]
@@ -22,9 +23,13 @@ class precharge(pgate.pgate):
         self.bitcell_bl = bitcell_bl
         self.bitcell_br = bitcell_br
         
-        # Creates the netlist and layout        
-        pgate.pgate.__init__(self, name)
         
+        # Creates the netlist and layout
+        # Since it has variable height, it is not a pgate.
+        self.create_netlist()
+        if not OPTS.netlist_only:        
+            self.create_layout()
+            self.DRC_LVS()
 
     def create_netlist(self):
         self.add_pins()
@@ -149,7 +154,6 @@ class precharge(pgate.pgate):
         offset = self.lower_pmos_inst.get_pin("G").ul() + vector(0,0.5*self.poly_space)
         self.add_via_center(layers=("poly", "contact", "metal1"),
                             offset=offset)
-
 
         # adds the en rail on metal1
         self.add_layout_pin_segment_center(text="en_bar",

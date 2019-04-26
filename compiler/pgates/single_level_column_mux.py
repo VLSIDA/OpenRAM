@@ -7,7 +7,7 @@ from globals import OPTS
 from sram_factory import factory
 import logical_effort
 
-class single_level_column_mux(pgate.gate):
+class single_level_column_mux(pgate.pgate):
     """
     This module implements the columnmux bitline cell used in the design.
     Creates a single columnmux cell with the given integer size relative

@@ -11,16 +11,13 @@ class pand2(pgate.pgate):
     This is a simple buffer used for driving loads. 
     """
     def __init__(self, name, size=1, height=None):
-        self.size = size
-        
-        pgate.pgate.__init__(self, name, height)
-        debug.info(1, "Creating {}".format(self.name))
+        debug.info(1, "reating pnand2 {}".format(name))
         self.add_comment("size: {}".format(size))
         
-        self.create_netlist()
-        if not OPTS.netlist_only:        
-            self.create_layout()
-
+        self.size = size
+        
+        # Creates the netlist and layout        
+        pgate.pgate.__init__(self, name, height)
 
     def create_netlist(self):
         self.add_pins()
@@ -40,6 +37,7 @@ class pand2(pgate.pgate):
         self.place_insts()
         self.add_wires()
         self.add_layout_pins()
+        self.DRC_LVS()
         
     def add_pins(self):
         self.add_pin("A")

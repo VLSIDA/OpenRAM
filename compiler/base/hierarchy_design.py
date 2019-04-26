@@ -21,8 +21,8 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         self.sp_file = OPTS.openram_tech + "sp_lib/" + name + ".sp"
 
         self.name = name
-        hierarchy_layout.layout.__init__(self, name)
         hierarchy_spice.spice.__init__(self, name)
+        hierarchy_layout.layout.__init__(self, name)
         
 
     def get_layout_pins(self,inst):

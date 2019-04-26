@@ -14,8 +14,8 @@ class pnand3(pgate.pgate):
     """
     def __init__(self, name, size=1, height=None):
         """ Creates a cell for a simple 3 input nand """
-        pgate.pgate.__init__(self, name, height)
-        debug.info(2, "create pnand3 structure {0} with size of {1}".format(name, size))
+
+        debug.info(2, "creating pnand3 structure {0} with size of {1}".format(name, size))
         self.add_comment("size: {}".format(size))
 
         # We have trouble pitch matching a 3x sizes to the bitcell...
@@ -30,9 +30,8 @@ class pnand3(pgate.pgate):
         debug.check(size==1,"Size 1 pnand3 is only supported now.")
         self.tx_mults = 1
 
-        self.create_netlist()
-        if not OPTS.netlist_only:
-            self.create_layout()
+        # Creates the netlist and layout
+        pgate.pgate.__init__(self, name, height)
 
         
     def add_pins(self):

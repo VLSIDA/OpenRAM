@@ -20,28 +20,18 @@ class pinv(pgate.pgate):
     """
 
     def __init__(self, name, size=1, beta=parameter["beta"], height=None, route_output=True):
-        # We need to keep unique names because outputting to GDSII
-        # will use the last record with a given name. I.e., you will
-        # over-write a design in GDS if one has and the other doesn't
-        # have poly connected, for example.
-        pgate.pgate.__init__(self, name, height)
-        debug.info(2, "create pinv structure {0} with size of {1}".format(name, size))
+
+        debug.info(2, "creating pinv structure {0} with size of {1}".format(name, size))
         self.add_comment("size: {}".format(size))
-        
+
         self.size = size
         self.nmos_size = size
         self.pmos_size = beta*size
         self.beta = beta
         self.route_output = False
-
         
-        self.create_netlist()
-        if not OPTS.netlist_only:
-            self.create_layout()
-
-        # for run-time, we won't check every transitor DRC/LVS independently
-        # but this may be uncommented for debug purposes
-        #self.DRC_LVS()
+        # Creates the netlist and layout
+        pgate.pgate.__init__(self, name, height)
 
     def create_netlist(self):
         """ Calls all functions related to the generation of the netlist """

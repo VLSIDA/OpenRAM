@@ -13,8 +13,8 @@ class pnor2(pgate.pgate):
     """
     def __init__(self, name, size=1, height=None):
         """ Creates a cell for a simple 2 input nor """
-        pgate.pgate.__init__(self, name, height)
-        debug.info(2, "create pnor2 structure {0} with size of {1}".format(name, size))
+
+        debug.info(2, "creating pnor2 structure {0} with size of {1}".format(name, size))
         self.add_comment("size: {}".format(size))
 
         self.nmos_size = size
@@ -27,9 +27,8 @@ class pnor2(pgate.pgate):
         debug.check(size==1,"Size 1 pnor2 is only supported now.")
         self.tx_mults = 1
 
-        self.create_netlist()
-        self.create_layout()
-        #self.DRC_LVS()
+        # Creates the netlist and layout
+        pgate.pgate.__init__(self, name, height)
 
         
     def add_pins(self):
@@ -38,12 +37,11 @@ class pnor2(pgate.pgate):
 
     def create_netlist(self):
         self.add_pins()
+        self.create_ptx()
+        self.setup_layout_constants()
         
     def create_layout(self):
         """ Calls all functions related to the generation of the layout """
-
-        self.create_ptx()
-        self.setup_layout_constants()
         self.add_supply_rails()
         self.add_ptx()
         self.connect_rails()

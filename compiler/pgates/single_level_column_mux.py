@@ -1,4 +1,4 @@
-import design
+import pgate
 import debug
 from tech import drc
 from vector import vector
@@ -7,7 +7,7 @@ from globals import OPTS
 from sram_factory import factory
 import logical_effort
 
-class single_level_column_mux(design.design):
+class single_level_column_mux(pgate.gate):
     """
     This module implements the columnmux bitline cell used in the design.
     Creates a single columnmux cell with the given integer size relative
@@ -15,18 +15,14 @@ class single_level_column_mux(design.design):
     Column-mux transistors driven by the decoder must be sized for optimal speed
     """
     def __init__(self, name, tx_size=8, bitcell_bl="bl", bitcell_br="br"):
+        
+        debug.info(2, "creating single column mux cell: {0}".format(name))
 
         self.tx_size = int(tx_size)
-
-        design.design.__init__(self, name)
-        debug.info(2, "create single column mux cell: {0}".format(name))
-
         self.bitcell_bl = bitcell_bl
         self.bitcell_br = bitcell_br
         
-        self.create_netlist()
-        if not OPTS.netlist_only:
-            self.create_layout()
+        pgate.pgate.__init__(self, name)
 
     def create_netlist(self):
         self.add_modules()

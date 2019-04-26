@@ -12,20 +12,19 @@ class precharge(pgate.pgate):
     This module implements the precharge bitline cell used in the design.
     """
     def __init__(self, name, size=1, bitcell_bl="bl", bitcell_br="br"):
-        pgate.pgate.__init__(self, name)
-        debug.info(2, "create single precharge cell: {0}".format(name))
+
+        debug.info(2, "creating precharge cell {0}".format(name))
 
         self.bitcell = factory.create(module_type="bitcell")
-        
         self.beta = parameter["beta"]
         self.ptx_width = self.beta*parameter["min_tx_size"]
         self.width = self.bitcell.width
         self.bitcell_bl = bitcell_bl
         self.bitcell_br = bitcell_br
-
-        self.create_netlist()
-        if not OPTS.netlist_only:
-            self.create_layout()
+        
+        # Creates the netlist and layout        
+        pgate.pgate.__init__(self, name)
+        
 
     def create_netlist(self):
         self.add_pins()
@@ -40,7 +39,6 @@ class precharge(pgate.pgate):
         self.route_vdd_rail()
         self.route_bitlines()
         self.connect_to_bitlines()
-        self.DRC_LVS()
 
     def add_pins(self):
         self.add_pin_list(["bl", "br", "en_bar", "vdd"])

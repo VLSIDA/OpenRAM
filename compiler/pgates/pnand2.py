@@ -14,8 +14,8 @@ class pnand2(pgate.pgate):
     """
     def __init__(self, name, size=1, height=None):
         """ Creates a cell for a simple 2 input nand """
-        pgate.pgate.__init__(self, name, height)
-        debug.info(2, "create pnand2 structure {0} with size of {1}".format(name, size))
+
+        debug.info(2, "creating pnand2 structure {0} with size of {1}".format(name, size))
         self.add_comment("size: {}".format(size))
 
         self.size = size
@@ -28,9 +28,8 @@ class pnand2(pgate.pgate):
         debug.check(size==1,"Size 1 pnand2 is only supported now.")
         self.tx_mults = 1
 
-        self.create_netlist()
-        if not OPTS.netlist_only:
-            self.create_layout()
+        # Creates the netlist and layout
+        pgate.pgate.__init__(self, name, height)
 
         
     def create_netlist(self):

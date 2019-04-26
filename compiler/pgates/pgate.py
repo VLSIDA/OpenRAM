@@ -21,7 +21,20 @@ class pgate(design.design):
             b = factory.create(module_type="bitcell")
             self.height = b.height
 
+        self.create_netlist()
+        if not OPTS.netlist_only:        
+            self.create_layout()
+            self.DRC_LVS()
+        
 
+    def create_netlist():
+        """ Pure virtual function """
+        debug.error("Must over-ride create_netlist.",-1)
+        
+    def create_layout():
+        """ Pure virtual function """
+        debug.error("Must over-ride create_layout.",-1)
+        
     def connect_pin_to_rail(self,inst,pin,supply):
         """ Connects a ptx pin to a supply rail. """
         source_pin = inst.get_pin(pin)

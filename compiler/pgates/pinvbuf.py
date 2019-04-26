@@ -1,17 +1,20 @@
 import debug
-import design
+import pgate
 from tech import drc
 from math import log
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
 
-class pinvbuf(design.design):
+class pinvbuf(pgate.pgate):
     """
     This is a simple inverter/buffer used for driving loads. It is
     used in the column decoder for 1:2 decoding and as the clock buffer.
     """
     def __init__(self, name, size=4, height=None):
+
+        debug.info(1, "creating pinvbuf {}".format(name))
+        self.add_comment("size: {}".format(size))
 
         self.stage_effort = 4
         self.row_height = height
@@ -23,13 +26,8 @@ class pinvbuf(design.design):
         self.size = size
         self.predriver_size = max(int(self.size/(self.stage_effort/2)),1)
 
-        design.design.__init__(self, name) 
-        debug.info(1, "Creating {}".format(self.name))
-        self.add_comment("size: {}".format(size))
-
-        self.create_netlist()
-        if not OPTS.netlist_only:
-            self.create_layout()
+        # Creates the netlist and layout        
+        pgate.pgate.__init__(self, name) 
 
 
     def create_netlist(self):
@@ -48,7 +46,6 @@ class pinvbuf(design.design):
         
         self.offset_all_coordinates()
         
-        self.DRC_LVS()
         
     def add_pins(self):
         self.add_pin("A")

@@ -28,9 +28,7 @@ class ptx(design.design):
             name += "_c{}".format(num_contacts)
         # replace periods with underscore for newer spice compatibility
         name=name.replace('.','_')
-
-        design.design.__init__(self, name)
-        debug.info(3, "create ptx2 structure {0}".format(name))
+        debug.info(3, "creating ptx {0}".format(name))
 
         self.tx_type = tx_type
         self.mults = mults
@@ -38,6 +36,9 @@ class ptx(design.design):
         self.connect_active = connect_active
         self.connect_poly = connect_poly
         self.num_contacts = num_contacts
+
+        # Do NOT create the netlist and layout (not a pgate)
+        design.design.__init__(self, name)
 
         self.create_netlist()
         # We must always create ptx layout for pbitcell

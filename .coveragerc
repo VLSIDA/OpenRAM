@@ -8,6 +8,8 @@ omit =
     */tests/*
     # ignore the debug utilities
     debug.py
+    # ignore the no DRC/LVS tool options
+    none.py
 [paths]
 source =
   ../..
@@ -21,6 +23,8 @@ source =
 exclude_lines =
   pragma: no cover
   def __repr__
+  def __str__
+  class gdsStreamer
   except Exception
   raise AssertionError
   raise NotImplementedError

@@ -14,7 +14,16 @@ File containing the process technology parameters for FreePDK 45nm.
 
 #GDS file info
 GDS = {}
-# gds units
+# gds units 
+# From http://www.cnf.cornell.edu/cnf_spie9.html: "The first
+#is the size of a database unit in user units. The second is the size
+#of a database unit in meters.  For example, if your library was
+#created with the default units (user unit = 1 m and 1000 database
+#units per user unit), then the first number would be 0.001 and the
+#second number would be 10-9. Typically, the first number is less than
+#1, since you use more than 1 database unit per user unit. To
+#calculate the size of a user unit in meters, divide the second number
+#by the first."
 GDS["unit"] = (0.0005,1e-9)
 # default label zoom
 GDS["zoom"] = 0.05

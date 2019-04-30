@@ -44,13 +44,13 @@ class timing_sram_test(openram_test):
         
         debug.info(1,'pins={}'.format(s.s.pins))
         import graph_util
-        graph = graph_util.graph()
+        graph = graph_util.timing_graph()
         pins=['DIN0[0]', 'ADDR0[0]', 'ADDR0[1]', 'ADDR0[2]', 'ADDR0[3]', 'csb0', 'web0', 'clk0', 'DOUT0[0]', 'vdd', 'gnd']
         s.s.build_graph(graph,"Xsram",pins)
-        graph.remove_edges('vdd')
-        graph.remove_edges('gnd')
         #debug.info(1,"{}".format(graph))
         graph.print_all_paths('clk0', 'DOUT0[0]')
+        # import sys
+        # sys.exit(1)
 
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)

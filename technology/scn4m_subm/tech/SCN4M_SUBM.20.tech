@@ -636,8 +636,8 @@ style  lambda=0.20(p)
 #CRE/CRM layer CRM rm1,prm1,rm2,prm2,rm3,prm3,rm4,prm4
 #CRE/CRM calma 70 0
 
- layer CX comment
- labels comment
+ layer CX comment,bb
+ labels comment,bb
  calma 63 0
 
  layer XP pad,xp
@@ -1075,8 +1075,8 @@ style  lambda=0.20(cp)
 #CRE/CRM layer CRM rm1,prm1,rm2,prm2,rm3,prm3,rm4,prm4
 #CRE/CRM calma 70 0
 
- layer CX comment
- labels comment
+ layer CX comment,bb
+ labels comment,bb
  calma 63 0
 
  layer XP pad,xp
@@ -1412,8 +1412,8 @@ style  lambda=0.20(c)
 #CRE/CRM layer CRM rm1,prm1,rm2,prm2,rm3,prm3,rm4,prm4
 #CRE/CRM calma 70 0
 
- layer CX comment
- labels comment
+ layer CX comment,bb
+ labels comment,bb
  calma 63 0
 
  layer XP pad,xp
@@ -1749,8 +1749,8 @@ style  lambda=0.20()
 #CRE/CRM layer CRM rm1,prm1,rm2,prm2,rm3,prm3,rm4,prm4
 #CRE/CRM calma 70 0
 
- layer CX comment
- labels comment
+ layer CX comment,bb
+ labels comment,bb
  calma 63 0
 
  layer XP pad,xp

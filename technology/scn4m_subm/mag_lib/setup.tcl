@@ -6,10 +6,10 @@ equate class {-circuit1 pfet} {-circuit2 p}
 # or the banks won't pass
 flatten class {-circuit1 bitcell_array_0}
 flatten class {-circuit1 bitcell_array_1}
-flatten class {-circuit1 precharge_array_0}
-flatten class {-circuit1 precharge_array_1}
-flatten class {-circuit1 precharge_array_2}
-flatten class {-circuit1 precharge_array_3}
+#flatten class {-circuit1 precharge_array_0}
+#flatten class {-circuit1 precharge_array_1}
+#flatten class {-circuit1 precharge_array_2}
+#flatten class {-circuit1 precharge_array_3}
 property {-circuit1 nfet} remove as ad ps pd
 property {-circuit1 pfet} remove as ad ps pd
 property {-circuit2 n} remove as ad ps pd

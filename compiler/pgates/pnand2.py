@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+#Copyright (c) 2016-2019 Regents of the University of California and The Board
+#of Regents for the Oklahoma Agricultural and Mechanical College
+#(acting for and on behalf of Oklahoma State University)
+#All rights reserved.
+#
 import contact
 import pgate
 import debug
@@ -14,8 +21,8 @@ class pnand2(pgate.pgate):
     """
     def __init__(self, name, size=1, height=None):
         """ Creates a cell for a simple 2 input nand """
-        pgate.pgate.__init__(self, name, height)
-        debug.info(2, "create pnand2 structure {0} with size of {1}".format(name, size))
+
+        debug.info(2, "creating pnand2 structure {0} with size of {1}".format(name, size))
         self.add_comment("size: {}".format(size))
 
         self.size = size
@@ -28,9 +35,8 @@ class pnand2(pgate.pgate):
         debug.check(size==1,"Size 1 pnand2 is only supported now.")
         self.tx_mults = 1
 
-        self.create_netlist()
-        if not OPTS.netlist_only:
-            self.create_layout()
+        # Creates the netlist and layout
+        pgate.pgate.__init__(self, name, height)
 
         
     def create_netlist(self):
@@ -203,13 +209,15 @@ class pnand2(pgate.pgate):
         mid1_offset = vector(out_offset.x, top_pin_offset.y)
         mid2_offset = vector(out_offset.x, bottom_pin_offset.y)        
         
-        self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                offset=pmos_pin.center())
-        self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                offset=nmos_pin.center())
-        self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                offset=out_offset,
-                                rotate=90)
+        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                            offset=pmos_pin.center(),
+                            directions=("V","H"))
+        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                            offset=nmos_pin.center(),
+                            directions=("V","H"))
+        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                            offset=out_offset)
+        
 
         # PMOS1 to mid-drain to NMOS2 drain
         self.add_path("metal2",[top_pin_offset, mid1_offset, out_offset, mid2_offset, bottom_pin_offset])

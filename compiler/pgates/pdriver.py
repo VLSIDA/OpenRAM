@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+#Copyright (c) 2016-2019 Regents of the University of California and The Board
+#of Regents for the Oklahoma Agricultural and Mechanical College
+#(acting for and on behalf of Oklahoma State University)
+#All rights reserved.
+#
 import debug
 import pgate
 import math
@@ -13,6 +20,8 @@ class pdriver(pgate.pgate):
     """
     def __init__(self, name, neg_polarity=False, fanout=0, size_list=None, height=None):
 
+        debug.info(1, "creating pdriver {}".format(name))
+
         self.stage_effort = 3
         self.height = height 
         self.neg_polarity = neg_polarity
@@ -26,16 +35,9 @@ class pdriver(pgate.pgate):
         if self.size_list and self.neg_polarity:
             debug.error("Cannot specify both size_list and neg_polarity.", -1)
  
+        # Creates the netlist and layout
         pgate.pgate.__init__(self, name, height) 
-        debug.info(1, "Creating {}".format(self.name))
         
-        self.compute_sizes()
-
-        self.add_comment("sizes: {}".format(str(self.size_list)))
-        
-        self.create_netlist()
-        if not OPTS.netlist_only:
-            self.create_layout()
 
     def compute_sizes(self):
         # size_list specified
@@ -63,6 +65,8 @@ class pdriver(pgate.pgate):
 
 
     def create_netlist(self):
+        self.compute_sizes()
+        self.add_comment("sizes: {}".format(str(self.size_list)))
         self.add_pins()
         self.add_modules()
         self.create_insts()
@@ -75,7 +79,6 @@ class pdriver(pgate.pgate):
         self.width = self.inv_inst_list[-1].rx()
         self.height = self.inv_inst_list[0].height
         
-        self.DRC_LVS()
         
     def add_pins(self):
         self.add_pin("A")

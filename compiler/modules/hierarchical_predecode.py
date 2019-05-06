@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+#Copyright (c) 2016-2019 Regents of the University of California and The Board
+#of Regents for the Oklahoma Agricultural and Mechanical College
+#(acting for and on behalf of Oklahoma State University)
+#All rights reserved.
+#
 import debug
 import design
 import math
@@ -178,11 +185,9 @@ class hierarchical_predecode(design.design):
             a_pos = vector(self.decode_rails[a_pin].x,y_offset)            
             self.add_path("metal1",[in_pos, a_pos])
             self.add_via_center(layers = ("metal1", "via1", "metal2"),
-                                offset=[self.input_rails[in_pin].x, y_offset],
-                                rotate=90)
+                                offset=[self.input_rails[in_pin].x, y_offset])
             self.add_via_center(layers = ("metal1", "via1", "metal2"),
-                                offset=[self.decode_rails[a_pin].x, y_offset],
-                                rotate=90)
+                                offset=[self.decode_rails[a_pin].x, y_offset])
 
     def route_output_inverters(self):
         """
@@ -223,8 +228,7 @@ class hierarchical_predecode(design.design):
             rail_pos = vector(self.decode_rails[out_pin].x,y_offset)
             self.add_path("metal1", [inv_out_pos, right_pos, vector(right_pos.x, y_offset), rail_pos])
             self.add_via_center(layers = ("metal1", "via1", "metal2"),
-                                offset=rail_pos,
-                                rotate=90)
+                                offset=rail_pos)
 
             
             #route input
@@ -232,8 +236,7 @@ class hierarchical_predecode(design.design):
             in_pos = vector(self.input_rails[in_pin].x,inv_in_pos.y)
             self.add_path("metal1", [in_pos, inv_in_pos])
             self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=in_pos,
-                                rotate=90)
+                                offset=in_pos)
             
 
     def route_nand_to_rails(self):
@@ -254,8 +257,8 @@ class hierarchical_predecode(design.design):
                 rail_pos = vector(self.decode_rails[rail_pin].x, pin_pos.y)
                 self.add_path("metal1", [rail_pos, pin_pos])
                 self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                    offset=rail_pos,
-                                    rotate=90)
+                                    offset=rail_pos)
+
 
 
 

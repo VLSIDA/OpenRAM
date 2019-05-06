@@ -1,12 +1,20 @@
-import design
+# See LICENSE for licensing information.
+#
+#Copyright (c) 2016-2019 Regents of the University of California and The Board
+#of Regents for the Oklahoma Agricultural and Mechanical College
+#(acting for and on behalf of Oklahoma State University)
+#All rights reserved.
+#
+import pgate
 import debug
 from tech import drc
 from vector import vector
 import contact
 from globals import OPTS
 from sram_factory import factory
+import logical_effort
 
-class single_level_column_mux(design.design):
+class single_level_column_mux(pgate.pgate):
     """
     This module implements the columnmux bitline cell used in the design.
     Creates a single columnmux cell with the given integer size relative
@@ -14,18 +22,14 @@ class single_level_column_mux(design.design):
     Column-mux transistors driven by the decoder must be sized for optimal speed
     """
     def __init__(self, name, tx_size=8, bitcell_bl="bl", bitcell_br="br"):
+        
+        debug.info(2, "creating single column mux cell: {0}".format(name))
 
         self.tx_size = int(tx_size)
-
-        design.design.__init__(self, name)
-        debug.info(2, "create single column mux cell: {0}".format(name))
-
         self.bitcell_bl = bitcell_bl
         self.bitcell_br = bitcell_br
         
-        self.create_netlist()
-        if not OPTS.netlist_only:
-            self.create_layout()
+        pgate.pgate.__init__(self, name)
 
     def create_netlist(self):
         self.add_modules()
@@ -126,13 +130,18 @@ class single_level_column_mux(design.design):
 
         # Add vias to bl, br_out, nmos_upper/S, nmos_lower/D
         self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=bl_pin.bc())
+                            offset=bl_pin.bc(),
+                            directions=("V","V"))
         self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=br_out_pin.uc())
+                            offset=br_out_pin.uc(),
+                            directions=("V","V"))
         self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=nmos_upper_s_pin.center())
+                            offset=nmos_upper_s_pin.center(),
+                            directions=("V","V"))
         self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=nmos_lower_d_pin.center())
+                            offset=nmos_lower_d_pin.center(),
+                            directions=("V","V"))
+        
         
         # bl -> nmos_upper/D on metal1
         # bl_out -> nmos_upper/S on metal2
@@ -180,5 +189,9 @@ class single_level_column_mux(design.design):
                       width=self.bitcell.width,
                       height=self.height)
         
-
+    def analytical_delay(self, corner, slew, load):
+        """Returns relative delay that the column mux. Difficult to convert to LE model."""
+        parasitic_delay = 1
+        cin = 2*self.tx_size #This is not CMOS, so using this may be incorrect.
+        return logical_effort.logical_effort('column_mux', self.tx_size, cin, load, parasitic_delay, False)
 

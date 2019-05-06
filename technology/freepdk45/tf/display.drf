@@ -1097,7 +1097,7 @@ drDefinePacket(
  ( display       metal1Pin            X          solid       blue       blue       )
  ( display       metal1Lbl            blank      solid       blue       blue       )
  ( display       metal1Bnd            blank      solid       blue       blue       )
- ( display       contact              X          solid       black      lime       )
+ ( display       contact              solid      solid       green      green      )
  ( display       contactNe            blank      solid       brown      brown      )
  ( display       contactPin           X          solid       black      black      )
  ( display       contactLbl           blank      solid       black      black      )

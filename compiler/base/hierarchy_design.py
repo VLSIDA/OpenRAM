@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+#Copyright (c) 2016-2019 Regents of the University of California and The Board
+#of Regents for the Oklahoma Agricultural and Mechanical College
+#(acting for and on behalf of Oklahoma State University)
+#All rights reserved.
+#
 import hierarchy_layout
 import hierarchy_spice
 import globals
@@ -21,8 +28,8 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         self.sp_file = OPTS.openram_tech + "sp_lib/" + name + ".sp"
 
         self.name = name
-        hierarchy_layout.layout.__init__(self, name)
         hierarchy_spice.spice.__init__(self, name)
+        hierarchy_layout.layout.__init__(self, name)
         
 
     def get_layout_pins(self,inst):
@@ -100,7 +107,14 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
 
     def __str__(self):
         """ override print function output """
-        return "design: " + self.name
+        pins = ",".join(self.pins)
+        insts = ["    {}".format(x) for x in self.insts]
+        objs = ["    {}".format(x) for x in self.objs]  
+        s = "********** design {0} **********".format(self.name)
+        s += "\n  pins ({0})={1}\n".format(len(self.pins), pins)
+        s += "\n  objs ({0})=\n{1}\n".format(len(self.objs), "\n".join(objs))
+        s += "\n  insts ({0})=\n{1}\n".format(len(self.insts), "\n".join(insts))
+        return s
 
     def __repr__(self):
         """ override print function output """

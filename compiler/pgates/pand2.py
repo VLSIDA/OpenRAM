@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+#Copyright (c) 2016-2019 Regents of the University of California and The Board
+#of Regents for the Oklahoma Agricultural and Mechanical College
+#(acting for and on behalf of Oklahoma State University)
+#All rights reserved.
+#
 import debug
 from tech import drc
 from math import log
@@ -11,16 +18,13 @@ class pand2(pgate.pgate):
     This is a simple buffer used for driving loads. 
     """
     def __init__(self, name, size=1, height=None):
-        self.size = size
-        
-        pgate.pgate.__init__(self, name, height)
-        debug.info(1, "Creating {}".format(self.name))
+        debug.info(1, "reating pnand2 {}".format(name))
         self.add_comment("size: {}".format(size))
         
-        self.create_netlist()
-        if not OPTS.netlist_only:        
-            self.create_layout()
-
+        self.size = size
+        
+        # Creates the netlist and layout        
+        pgate.pgate.__init__(self, name, height)
 
     def create_netlist(self):
         self.add_pins()
@@ -40,6 +44,7 @@ class pand2(pgate.pgate):
         self.place_insts()
         self.add_wires()
         self.add_layout_pins()
+        self.DRC_LVS()
         
     def add_pins(self):
         self.add_pin("A")
@@ -125,3 +130,8 @@ class pand2(pgate.pgate):
         stage_effort_list.append(stage2)
         
         return stage_effort_list
+
+    def get_cin(self):
+        """Return the relative input capacitance of a single input"""
+        return self.nand.get_cin()
+        

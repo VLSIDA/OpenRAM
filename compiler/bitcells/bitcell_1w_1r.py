@@ -1,7 +1,15 @@
+# See LICENSE for licensing information.
+#
+#Copyright (c) 2016-2019 Regents of the University of California and The Board
+#of Regents for the Oklahoma Agricultural and Mechanical College
+#(acting for and on behalf of Oklahoma State University)
+#All rights reserved.
+#
 import design
 import debug
 import utils
 from tech import GDS,layer,parameter,drc
+import logical_effort
 
 class bitcell_1w_1r(design.design):
     """
@@ -25,18 +33,12 @@ class bitcell_1w_1r(design.design):
         self.pin_map = bitcell_1w_1r.pin_map
 
     def analytical_delay(self, corner, slew, load=0, swing = 0.5):
-        # delay of bit cell is not like a driver(from WL)
-        # so the slew used should be 0
-        # it should not be slew dependent?
-        # because the value is there
-        # the delay is only over half transsmission gate
-        from tech import spice
-        r = spice["min_tx_r"]*3
-        c_para = spice["min_tx_drain_c"]
-        result = self.cal_delay_with_rc(corner, r = r, c =  c_para+load, slew = slew, swing = swing)
-        return result
+        parasitic_delay = 1
+        size = 0.5 #This accounts for bitline being drained thought the access TX and internal node
+        cin = 3 #Assumes always a minimum sizes inverter. Could be specified in the tech.py file.
+        read_port_load = 0.5 #min size NMOS gate load
+        return logical_effort.logical_effort('bitline', size, cin, load+read_port_load, parasitic_delay, False)
    
- 
     def list_bitcell_pins(self, col, row):
         """ Creates a list of connections in the bitcell, indexed by column and row, for instance use in bitcell_array """
         bitcell_pins = ["bl0_{0}".format(col),

@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+#Copyright (c) 2016-2019 Regents of the University of California and The Board
+#of Regents for the Oklahoma Agricultural and Mechanical College
+#(acting for and on behalf of Oklahoma State University)
+#All rights reserved.
+#
 import sys
 import gdsMill
 from tech import drc,GDS
@@ -187,60 +194,64 @@ class router(router_tech):
         start_time = datetime.now()
         self.enclose_pins()
         print_time("Enclosing pins",datetime.now(), start_time, 4)
+
+
+    # MRG: Removing this code for now. The later compute enclosure code
+    # assumes that all pins are touching and this may produce sets of pins
+    # that are not connected.
+    # def combine_adjacent_pins(self, pin_name):
+    #     """
+    #     Find pins that have adjacent routing tracks and merge them into a
+    #     single pin_group.  The pins themselves may not be touching, but 
+    #     enclose_pins in the next step will ensure they are touching.
+    #     """        
+    #     debug.info(1,"Combining adjacent pins for {}.".format(pin_name))        
+    #     # Find all adjacencies
+    #     adjacent_pins = {}
+    #     for index1,pg1 in enumerate(self.pin_groups[pin_name]):
+    #         for index2,pg2 in enumerate(self.pin_groups[pin_name]):
+    #             # Cannot combine with yourself, also don't repeat 
+    #             if index1<=index2:
+    #                 continue
+    #             # Combine if at least 1 grid cell is adjacent
+    #             if pg1.adjacent(pg2):
+    #                 if not index1 in adjacent_pins:
+    #                     adjacent_pins[index1] = set([index2])
+    #                 else:
+    #                     adjacent_pins[index1].add(index2)
+
+    #     # Make a list of indices to ensure every group gets in the new set
+    #     all_indices = set([x for x in range(len(self.pin_groups[pin_name]))])
         
-    def combine_adjacent_pins(self, pin_name):
-        """
-        Find pins that have adjacent routing tracks and merge them into a
-        single pin_group.  The pins themselves may not be touching, but 
-        enclose_pins in the next step will ensure they are touching.
-        """        
-        debug.info(1,"Combining adjacent pins for {}.".format(pin_name))        
-        # Find all adjacencies
-        adjacent_pins = {}
-        for index1,pg1 in enumerate(self.pin_groups[pin_name]):
-            for index2,pg2 in enumerate(self.pin_groups[pin_name]):
-                # Cannot combine with yourself, also don't repeat 
-                if index1<=index2:
-                    continue
-                # Combine if at least 1 grid cell is adjacent
-                if pg1.adjacent(pg2):
-                    if not index1 in adjacent_pins:
-                        adjacent_pins[index1] = set([index2])
-                    else:
-                        adjacent_pins[index1].add(index2)
+    #     # Now reconstruct the new groups
+    #     new_pin_groups = []
+    #     for index1,index2_set in adjacent_pins.items():
+    #         # Remove the indices if they are added to the new set
+    #         all_indices.discard(index1)
+    #         all_indices.difference_update(index2_set)
 
-        # Make a list of indices to ensure every group gets in the new set
-        all_indices = set([x for x in range(len(self.pin_groups[pin_name]))])
+    #         # Create the combined group starting with the first item
+    #         combined = self.pin_groups[pin_name][index1]
+    #         # Add all of the other items that overlapped
+    #         for index2 in index2_set:
+    #             pg = self.pin_groups[pin_name][index2]
+    #             combined.add_group(pg)
+    #             debug.info(3,"Combining {0} {1}:".format(pin_name, index2))
+    #             debug.info(3, "     {0}\n  {1}".format(combined.pins, pg.pins))
+    #             debug.info(3,"  --> {0}\n      {1}".format(combined.pins,combined.grids))
+    #             new_pin_groups.append(combined)
+
+    #     # Add the pin groups that weren't added to the new set
+    #     for index in all_indices:
+    #         new_pin_groups.append(self.pin_groups[pin_name][index])
+
+    #     old_size = len(self.pin_groups[pin_name])   
+    #     # Use the new pin group!
+    #     self.pin_groups[pin_name] = new_pin_groups
+    #     removed_pairs = old_size - len(new_pin_groups)
+    #     debug.info(1, "Combined {0} pin groups for {1}".format(removed_pairs,pin_name))
         
-        # Now reconstruct the new groups
-        new_pin_groups = []
-        for index1,index2_set in adjacent_pins.items():
-            # Remove the indices if they are added to the new set
-            all_indices.discard(index1)
-            all_indices.difference_update(index2_set)
-
-            # Create the combined group starting with the first item
-            combined = self.pin_groups[pin_name][index1]
-            # Add all of the other items that overlapped
-            for index2 in index2_set:
-                pg = self.pin_groups[pin_name][index2]
-                combined.add_group(pg)
-                debug.info(3,"Combining {0} {1}:".format(pin_name, index2))
-                debug.info(3, "     {0}\n  {1}".format(combined.pins, pg.pins))
-                debug.info(3,"  --> {0}\n      {1}".format(combined.pins,combined.grids))
-                new_pin_groups.append(combined)
-
-        # Add the pin groups that weren't added to the new set
-        for index in all_indices:
-            new_pin_groups.append(self.pin_groups[pin_name][index])
-
-        old_size = len(self.pin_groups[pin_name])   
-        # Use the new pin group!
-        self.pin_groups[pin_name] = new_pin_groups
-        removed_pairs = old_size - len(new_pin_groups)
-        debug.info(1, "Combined {0} pin groups for {1}".format(removed_pairs,pin_name))
-        
-        return removed_pairs
+    #     return removed_pairs
             
 
     def separate_adjacent_pins(self, separation):
@@ -748,44 +759,10 @@ class router(router_tech):
             if gid not in group_map:
                 group_map[gid] = pin_group(name=pin_name, pin_set=[], router=self)
             # We always add it to the first set since they are touching
-            group_map[gid].pins[0].add(pin)
+            group_map[gid].pins.add(pin)
 
         self.pin_groups[pin_name] = list(group_map.values())
 
-    # This is the old O(n^2) implementation
-    # def analyze_pins(self, pin_name):
-    #     """ 
-    #     Analyze the shapes of a pin and combine them into pin_groups which are connected.
-    #     """
-    #     debug.info(2,"Analyzing pin groups for {}.".format(pin_name))        
-        
-    #     pin_set = self.pins[pin_name]
-        
-    #     # Put each pin in an equivalence class of it's own
-    #     equiv_classes = [set([x]) for x in pin_set]
-    #     def combine_classes(equiv_classes):
-    #         for class1 in equiv_classes:
-    #             for class2 in equiv_classes:
-    #                 if class1 == class2:
-    #                     continue
-    #                 # Compare each pin in each class,
-    #                 # and if any overlap, update equiv_classes to include the combined the class
-    #                 for p1 in class1:
-    #                     for p2 in class2:
-    #                         if p1.overlaps(p2):
-    #                             combined_class = class1 | class2
-    #                             equiv_classes.remove(class1)
-    #                             equiv_classes.remove(class2)
-    #                             equiv_classes.append(combined_class)
-    #                             return(equiv_classes)
-    #         return(equiv_classes)
-
-    #     old_length = math.inf
-    #     while (len(equiv_classes)<old_length):
-    #         old_length = len(equiv_classes)
-    #         equiv_classes = combine_classes(equiv_classes)
-
-    #     self.pin_groups[pin_name] = [pin_group(name=pin_name, pin_set=x, router=self) for x in equiv_classes]
         
     def convert_pins(self, pin_name):
         """ 

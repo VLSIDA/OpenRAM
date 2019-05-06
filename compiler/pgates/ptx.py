@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+#Copyright (c) 2016-2019 Regents of the University of California and The Board
+#of Regents for the Oklahoma Agricultural and Mechanical College
+#(acting for and on behalf of Oklahoma State University)
+#All rights reserved.
+#
 import design
 import debug
 from tech import drc, spice
@@ -28,9 +35,8 @@ class ptx(design.design):
             name += "_c{}".format(num_contacts)
         # replace periods with underscore for newer spice compatibility
         name=name.replace('.','_')
-
+        debug.info(3, "creating ptx {0}".format(name))
         design.design.__init__(self, name)
-        debug.info(3, "create ptx2 structure {0}".format(name))
 
         self.tx_type = tx_type
         self.mults = mults
@@ -39,6 +45,8 @@ class ptx(design.design):
         self.connect_poly = connect_poly
         self.num_contacts = num_contacts
 
+        # Do NOT create the netlist and layout (not a pgate)
+        # Since it has variable height, it is not a pgate.
         self.create_netlist()
         # We must always create ptx layout for pbitcell
         # some transistor sizes in other netlist depend on pbitcell
@@ -326,11 +334,12 @@ class ptx(design.design):
         [source_positions,drain_positions] = self.get_contact_positions()
 
         for pos in source_positions:
-            contact=self.add_contact_center(layers=("active", "contact", "metal1"),
-                                            offset=pos,
-                                            size=(1, self.num_contacts),
-                                            implant_type=self.implant_type,
-                                            well_type=self.well_type)
+            contact=self.add_via_center(layers=("active", "contact", "metal1"),
+                                        offset=pos,
+                                        size=(1, self.num_contacts),
+                                        directions=("H","V"),
+                                        implant_type=self.implant_type,
+                                        well_type=self.well_type)
             self.add_layout_pin_rect_center(text="S",
                                             layer="metal1",
                                             offset=pos,
@@ -339,11 +348,12 @@ class ptx(design.design):
 
                 
         for pos in drain_positions:
-            contact=self.add_contact_center(layers=("active", "contact", "metal1"),
-                                            offset=pos,
-                                            size=(1, self.num_contacts),
-                                            implant_type=self.implant_type,
-                                            well_type=self.well_type)
+            contact=self.add_via_center(layers=("active", "contact", "metal1"),
+                                        offset=pos,
+                                        size=(1, self.num_contacts),
+                                        directions=("H","V"),
+                                        implant_type=self.implant_type,
+                                        well_type=self.well_type)
             self.add_layout_pin_rect_center(text="D",
                                             layer="metal1",
                                             offset=pos,

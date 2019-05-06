@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+#Copyright (c) 2016-2019 Regents of the University of California and The Board
+#of Regents for the Oklahoma Agricultural and Mechanical College
+#(acting for and on behalf of Oklahoma State University)
+#All rights reserved.
+#
 from hierarchy_design import hierarchy_design
 import contact
 import globals
@@ -95,13 +102,3 @@ class design(hierarchy_design):
             total_module_power += inst.mod.analytical_power(corner, load)
         return total_module_power
     
-    def __str__(self):
-        """ override print function output """
-        pins = ",".join(self.pins)
-        insts = ["    {}".format(x) for x in self.insts]
-        objs = ["    {}".format(x) for x in self.objs]  
-        s = "********** design {0} **********\n".format(self.name)
-        s += "\n  pins ({0})={1}\n".format(len(self.pins), pins)
-        s += "\n  objs ({0})=\n{1}".format(len(self.objs), "\n".join(objs))
-        s += "\n  insts ({0})=\n{1}\n".format(len(self.insts), "\n".join(insts))
-        return s

@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+#Copyright (c) 2016-2019 Regents of the University of California and The Board
+#of Regents for the Oklahoma Agricultural and Mechanical College
+#(acting for and on behalf of Oklahoma State University)
+#All rights reserved.
+#
 import debug
 import re
 import os
@@ -28,7 +35,10 @@ class spice():
         # Spice format)
         self.conns = []
         # Keep track of any comments to add the the spice
-        self.comments = []
+        try:
+            self.commments
+        except:
+            self.comments = []
 
         self.sp_read()
 
@@ -38,7 +48,12 @@ class spice():
 
     def add_comment(self, comment):
         """ Add a comment to the spice file """
-        self.comments.append(comment)
+        try:
+            self.commments
+        except:
+            self.comments = []
+        else:
+            self.comments.append(comment)
         
     def add_pin(self, name, pin_type="INOUT"):
         """ Adds a pin to the pins list. Default type is INOUT signal. """
@@ -235,13 +250,8 @@ class spice():
         modeling it as a resistance driving a capacitance
         """
         swing_factor = abs(math.log(1-swing)) # time constant based on swing
-        proc,vdd,temp = corner
-        #FIXME: type of delay is needed to know which process to use.
-        proc_mult = max(self.get_process_delay_factor(proc)) 
-        volt_mult = self.get_voltage_delay_factor(vdd)
-        temp_mult = self.get_temp_delay_factor(temp)
         delay = swing_factor * r * c #c is in ff and delay is in fs
-        delay = delay * proc_mult * volt_mult * temp_mult
+        delay = self.apply_corners_analytically(delay, corner)
         delay = delay * 0.001 #make the unit to ps
         
         # Output slew should be linear to input slew which is described 
@@ -254,6 +264,15 @@ class spice():
         slew = delay * 0.6 * 2 + 0.005 * slew
         return delay_data(delay = delay, slew = slew)
 
+    def apply_corners_analytically(self, delay, corner):
+        """Multiply delay by corner factors"""
+        proc,vdd,temp = corner
+        #FIXME: type of delay is needed to know which process to use.
+        proc_mult = max(self.get_process_delay_factor(proc)) 
+        volt_mult = self.get_voltage_delay_factor(vdd)
+        temp_mult = self.get_temp_delay_factor(temp)
+        return delay * proc_mult * volt_mult * temp_mult
+        
     def get_process_delay_factor(self, proc):
         """Returns delay increase estimate based off process
            Currently does +/-10 for fast/slow corners."""

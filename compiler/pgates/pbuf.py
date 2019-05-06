@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+#Copyright (c) 2016-2019 Regents of the University of California and The Board
+#of Regents for the Oklahoma Agricultural and Mechanical College
+#(acting for and on behalf of Oklahoma State University)
+#All rights reserved.
+#
 import debug
 from tech import drc
 from math import log
@@ -12,17 +19,15 @@ class pbuf(pgate.pgate):
     """
     def __init__(self, name, size=4, height=None):
         
+        debug.info(1, "creating {0} with size of {1}".format(name,size))
+        self.add_comment("size: {}".format(size))
+
         self.stage_effort = 4
         self.size = size
         self.height = height
 
+        # Creates the netlist and layout
         pgate.pgate.__init__(self, name, height)
-        debug.info(1, "creating {0} with size of {1}".format(self.name,self.size))
-        self.add_comment("size: {}".format(size))
-        
-        self.create_netlist()
-        if not OPTS.netlist_only:
-            self.create_layout()
 
 
     def create_netlist(self):

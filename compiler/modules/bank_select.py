@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+#Copyright (c) 2016-2019 Regents of the University of California and The Board
+#of Regents for the Oklahoma Agricultural and Mechanical College
+#(acting for and on behalf of Oklahoma State University)
+#All rights reserved.
+#
 import sys
 from tech import drc, parameter
 import debug
@@ -213,7 +220,7 @@ class bank_select(design.design):
                                            end=bank_sel_pin_end)
         self.add_via_center(layers=("metal2","via2","metal3"),
                             offset=bank_sel_pin_end,
-                            rotate=90)
+                            directions=("H","H"))
 
         # bank_sel_bar is vertical wire
         bank_sel_bar_pin = self.bank_sel_inv.get_pin("Z")
@@ -252,7 +259,7 @@ class bank_select(design.design):
             self.add_path("metal2",[logic_pos, input_pos])
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=logic_pos,
-                                rotate=90)
+                                directions=("H","H"))
 
             
             # Connect the logic A input to the input pin
@@ -260,10 +267,10 @@ class bank_select(design.design):
             input_pos = vector(0,logic_pos.y)
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=logic_pos,
-                                rotate=90)
+                                directions=("H","H"))
             self.add_via_center(layers=("metal2", "via2", "metal3"),
                                 offset=logic_pos,
-                                rotate=90)
+                                directions=("H","H"))
             self.add_layout_pin_segment_center(text=input_name,
                                                layer="metal3",
                                                start=input_pos,
@@ -295,10 +302,10 @@ class bank_select(design.design):
                     pin_pos = vector(xoffset, supply_pin.cy())
                     self.add_via_center(layers=("metal1", "via1", "metal2"),
                                         offset=pin_pos,
-                                        rotate=90)
+                                        directions=("H","H"))
                     self.add_via_center(layers=("metal2", "via2", "metal3"),
                                         offset=pin_pos,
-                                        rotate=90)
+                                        directions=("H","H"))
                     self.add_layout_pin_rect_center(text=n,
                                                     layer="metal3",
                                                     offset=pin_pos)

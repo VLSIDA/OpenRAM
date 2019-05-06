@@ -1,9 +1,17 @@
+# See LICENSE for licensing information.
+#
+#Copyright (c) 2016-2019 Regents of the University of California and The Board
+#of Regents for the Oklahoma Agricultural and Mechanical College
+#(acting for and on behalf of Oklahoma State University)
+#All rights reserved.
+#
 import design
 from tech import drc
 from vector import vector
 from sram_factory import factory
 import debug
 from globals import OPTS
+import logical_effort
 
 class sense_amp_array(design.design):
     """
@@ -136,10 +144,17 @@ class sense_amp_array(design.design):
     def input_load(self):
         return self.amp.input_load()
     
-    def analytical_delay(self, corner, slew, load=0.0):
-        return self.amp.analytical_delay(corner, slew=slew, load=load)
+    def analytical_delay(self, corner, slew, load):
+        return [self.amp.analytical_delay(corner, slew=slew, load=load)]
         
     def get_en_cin(self):
         """Get the relative capacitance of all the sense amp enable connections in the array"""
         sense_amp_en_cin = self.amp.get_en_cin()
         return sense_amp_en_cin * self.word_size
+        
+    def get_drain_cin(self):
+        """Get the relative capacitance of the drain of the PMOS isolation TX"""
+        from tech import parameter
+        #Bitcell drain load being used to estimate PMOS drain load
+        drain_load = logical_effort.convert_farad_to_relative_c(parameter['bitcell_drain_cap'])
+        return drain_load

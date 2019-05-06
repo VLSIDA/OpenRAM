@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+#Copyright (c) 2016-2019 Regents of the University of California and The Board
+#of Regents for the Oklahoma Agricultural and Mechanical College
+#(acting for and on behalf of Oklahoma State University)
+#All rights reserved.
+#
 from math import log
 import design
 import contact
@@ -7,6 +14,7 @@ import math
 from vector import vector
 from sram_factory import factory
 from globals import OPTS
+import logical_effort
 
 class single_level_column_mux_array(design.design):
     """
@@ -130,8 +138,7 @@ class single_level_column_mux_array(design.design):
             self.add_layout_pin(text="sel_{}".format(j),
                                 layer="metal1",
                                 offset=offset,
-                                width=self.mux.width * self.columns,
-                                height=contact.m1m2.width)
+                                width=self.mux.width * self.columns)
 
     def add_vertical_poly_rail(self):
         """  Connect the poly to the address rails """
@@ -148,82 +155,72 @@ class single_level_column_mux_array(design.design):
             offset = vector(gate_offset.x,self.get_pin("sel_{}".format(sel_index)).cy())
             # Add the poly contact with a shift to account for the rotation
             self.add_via_center(layers=("metal1", "contact", "poly"),
-                                offset=offset,
-                                rotate=90)
+                                offset=offset)
             self.add_path("poly", [offset, gate_offset])
 
     def route_bitlines(self):
         """  Connect the output bit-lines to form the appropriate width mux """
         for j in range(self.columns):
-            bl_offset = self.mux_inst[j].get_pin("bl_out").ll()
-            br_offset = self.mux_inst[j].get_pin("br_out").ll()
+            bl_offset = self.mux_inst[j].get_pin("bl_out").bc()
+            br_offset = self.mux_inst[j].get_pin("br_out").bc()
 
             bl_out_offset = bl_offset - vector(0,(self.words_per_row+1)*self.m1_pitch)
             br_out_offset = br_offset - vector(0,(self.words_per_row+2)*self.m1_pitch)
+
+            bl_out_offset_end = bl_out_offset + vector(0,self.route_height)
+            br_out_offset_end = br_out_offset + vector(0,self.route_height)
 
             if (j % self.words_per_row) == 0:
                 # Create the metal1 to connect the n-way mux output from the pass gate
                 # These will be located below the select lines. Yes, these are M2 width
                 # to ensure vias are enclosed and M1 min width rules.
-                width = contact.m1m2.width + self.mux.width * (self.words_per_row - 1)
-                self.add_rect(layer="metal1",
-                              offset=bl_out_offset,
-                              width=width,
-                              height=drc("minwidth_metal2"))
-                self.add_rect(layer="metal1",
-                              offset=br_out_offset,
-                              width=width,
-                              height=drc("minwidth_metal2"))
-                          
+                width = self.m2_width + self.mux.width * (self.words_per_row - 1)
+                self.add_path("metal1", [bl_out_offset, bl_out_offset+vector(width,0)])
+                self.add_path("metal1", [br_out_offset, br_out_offset+vector(width,0)])
 
                 # Extend the bitline output rails and gnd downward on the first bit of each n-way mux
-                self.add_layout_pin(text="bl_out_{}".format(int(j/self.words_per_row)),
-                                    layer="metal2",
-                                    offset=bl_out_offset.scale(1,0),
-                                    width=drc('minwidth_metal2'),
-                                    height=self.route_height)
-                self.add_layout_pin(text="br_out_{}".format(int(j/self.words_per_row)),
-                                    layer="metal2",
-                                    offset=br_out_offset.scale(1,0),
-                                    width=drc('minwidth_metal2'),
-                                    height=self.route_height)
+                self.add_layout_pin_segment_center(text="bl_out_{}".format(int(j/self.words_per_row)),
+                                                   layer="metal2",
+                                                   start=bl_out_offset,
+                                                   end=bl_out_offset_end)
+                self.add_layout_pin_segment_center(text="br_out_{}".format(int(j/self.words_per_row)),
+                                                   layer="metal2",
+                                                   start=br_out_offset,
+                                                   end=br_out_offset_end)
+                                                   
 
                 # This via is on the right of the wire                
-                self.add_via(layers=("metal1", "via1", "metal2"),
-                             offset=bl_out_offset + vector(contact.m1m2.height,0),
-                             rotate=90)
+                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                    offset=bl_out_offset)
+
                 # This via is on the left of the wire
-                self.add_via(layers=("metal1", "via1", "metal2"),
-                             offset= br_out_offset,
-                             rotate=90)
+                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                    offset=br_out_offset)
 
             else:
                 
-                self.add_rect(layer="metal2",
-                              offset=bl_out_offset,
-                              width=drc('minwidth_metal2'),
-                              height=self.route_height-bl_out_offset.y)
+                self.add_path("metal2", [ bl_out_offset, bl_out_offset_end])
+                self.add_path("metal2", [ br_out_offset, br_out_offset_end])
+                                          
                 # This via is on the right of the wire
-                self.add_via(layers=("metal1", "via1", "metal2"),
-                             offset=bl_out_offset + vector(contact.m1m2.height,0),
-                             rotate=90)
-                self.add_rect(layer="metal2",
-                              offset=br_out_offset,
-                              width=drc('minwidth_metal2'),
-                              height=self.route_height-br_out_offset.y)
+                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                    offset=bl_out_offset)
                 # This via is on the left of the wire                
-                self.add_via(layers=("metal1", "via1", "metal2"),
-                             offset= br_out_offset,
-                             rotate=90)
+                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                    offset=br_out_offset)
 
-    def analytical_delay(self, corner, vdd, slew, load=0.0):
-        from tech import spice, parameter
-        proc,vdd,temp = corner
-        r = spice["min_tx_r"]/(self.mux.ptx_width/parameter["min_tx_size"])
-        #Drains of mux transistors make up capacitance. 
-        c_para = spice["min_tx_drain_c"]*(self.mux.ptx_width/parameter["min_tx_size"])*self.words_per_row#ff
-        volt_swing = spice["v_threshold_typical"]/vdd
+       
+    def analytical_delay(self, corner, slew, load):
+        from tech import parameter
+        """Returns relative delay that the column mux adds"""
+        #Single level column mux will add parasitic loads from other mux pass transistors and the sense amp.
+        drain_load = logical_effort.convert_farad_to_relative_c(parameter['bitcell_drain_cap'])
+        array_load = drain_load*self.words_per_row
+        return [self.mux.analytical_delay(corner, slew, load+array_load)]
         
-        result = self.cal_delay_with_rc(corner, r = r, c =  c_para+load, slew = slew, swing = volt_swing)
-        return self.return_delay(result.delay, result.slew)            
-            
+    def get_drain_cin(self):
+        """Get the relative capacitance of the drain of the NMOS pass TX"""
+        from tech import parameter
+        #Bitcell drain load being used to estimate mux NMOS drain load
+        drain_load = logical_effort.convert_farad_to_relative_c(parameter['bitcell_drain_cap'])
+        return drain_load      

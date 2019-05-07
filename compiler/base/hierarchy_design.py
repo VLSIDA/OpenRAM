@@ -120,7 +120,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         #Translate port names to external nets
         if len(port_nets) != len(self.pins):
             debug.error("Port length mismatch:\nExt nets={}, Ports={}".format(port_nets,self.pins),1)
-        port_dict = {i:j for i,j in zip(self.pins, port_nets)}
+        port_dict = {pin:port for pin,port in zip(self.pins, port_nets)}
         debug.info(3, "Instance name={}".format(inst_name))
         for subinst, conns in zip(self.insts, self.conns):
             if subinst in self.graph_inst_exclude:
@@ -138,6 +138,20 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             else:
                 converted_conns.append("{}.{}".format(inst_name, conn))
         return converted_conns        
+            
+    def add_graph_edges(self, graph, port_nets):
+        """For every input, adds an edge to every output.
+           Only intended to be used for gates and other simple modules."""
+        #The final pin names will depend on the spice hierarchy, so
+        #they are passed as an input.
+        pin_dict = {pin:port for pin,port in zip(self.pins, port_nets)}
+        input_pins = self.get_inputs()
+        output_pins = self.get_outputs()
+        inout_pins = self.get_inouts()
+        for inp in input_pins+inout_pins:
+            for out in output_pins+inout_pins:
+                if inp != out: #do not add self loops
+                    graph.add_edge(pin_dict[inp], pin_dict[out])        
             
     def __str__(self):
         """ override print function output """

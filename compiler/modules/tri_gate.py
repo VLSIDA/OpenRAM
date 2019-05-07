@@ -11,6 +11,7 @@ class tri_gate(design.design):
     """
 
     pin_names = ["in", "out", "en", "en_bar", "gnd", "vdd"]
+    type_list = ["INPUT", "OUTPUT", "INPUT", "INPUT", "POWER", "GROUND"]
     (width,height) = utils.get_libcell_size("tri_gate", GDS["unit"], layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "tri_gate", GDS["unit"])
 
@@ -26,6 +27,7 @@ class tri_gate(design.design):
         self.width = tri_gate.width
         self.height = tri_gate.height
         self.pin_map = tri_gate.pin_map
+        self.add_pin_types(self.type_list)
 
     def analytical_delay(self, corner, slew, load=0.0):
         from tech import spice
@@ -43,12 +45,5 @@ class tri_gate(design.design):
         return 9*spice["min_tx_gate_c"]
 
     def build_graph(self, graph, inst_name, port_nets):        
-        """Adds edges to graph. Handmade cells must implement this manually."""
-        #The cell has 6 net ports hard-coded in self.pin_names. The edges
-        #are based on the hard-coded name positions.
-        # The edges added are: en->out, en_bar->out, in->out.
-        # A liberal amount of edges were added, may be reduced later for complexity.
-        # Internal nodes of the handmade cell not considered, only ports. vdd/gnd ignored for graph.
-        graph.add_edge(port_nets[0],port_nets[1])
-        graph.add_edge(port_nets[2],port_nets[1])
-        graph.add_edge(port_nets[3],port_nets[1])
+        """Adds edges based on inputs/outputs. Overrides base class function."""
+        self.add_graph_edges(graph, port_nets) 

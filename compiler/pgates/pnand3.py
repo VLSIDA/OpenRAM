@@ -37,7 +37,9 @@ class pnand3(pgate.pgate):
         
     def add_pins(self):
         """ Adds pins for spice netlist """
-        self.add_pin_list(["A", "B", "C", "Z", "vdd", "gnd"])
+        pin_list = ["A", "B", "C", "Z", "vdd", "gnd"]
+        dir_list = ['INPUT', 'INPUT', 'INPUT', 'OUTPUT', 'POWER', 'GROUND']
+        self.add_pin_list(pin_list, dir_list)
 
     def create_netlist(self):
         self.add_pins()
@@ -272,3 +274,7 @@ class pnand3(pgate.pgate):
         """
         parasitic_delay = 3 
         return logical_effort.logical_effort(self.name, self.size, self.get_cin(), cout, parasitic_delay, not inp_is_rise)
+
+    def build_graph(self, graph, inst_name, port_nets):        
+        """Adds edges based on inputs/outputs. Overrides base class function."""
+        self.add_graph_edges(graph, port_nets) 

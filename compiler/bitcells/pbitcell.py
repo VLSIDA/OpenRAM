@@ -91,40 +91,40 @@ class pbitcell(design.design):
         port = 0
 
         for k in range(self.num_rw_ports):
-            self.add_pin("bl{}".format(port))
-            self.add_pin("br{}".format(port))
+            self.add_pin("bl{}".format(port), "OUTPUT")
+            self.add_pin("br{}".format(port), "OUTPUT")
             self.rw_bl_names.append("bl{}".format(port))
             self.rw_br_names.append("br{}".format(port))
             port += 1
         for k in range(self.num_w_ports):
-            self.add_pin("bl{}".format(port))
-            self.add_pin("br{}".format(port))
+            self.add_pin("bl{}".format(port), "INPUT")
+            self.add_pin("br{}".format(port), "INPUT")
             self.w_bl_names.append("bl{}".format(port))
             self.w_br_names.append("br{}".format(port))
             port += 1
         for k in range(self.num_r_ports):
-            self.add_pin("bl{}".format(port))
-            self.add_pin("br{}".format(port))
+            self.add_pin("bl{}".format(port), "OUTPUT")
+            self.add_pin("br{}".format(port), "OUTPUT")
             self.r_bl_names.append("bl{}".format(port))
             self.r_br_names.append("br{}".format(port))
             port += 1
 
         port = 0
         for k in range(self.num_rw_ports):
-            self.add_pin("wl{}".format(port))
+            self.add_pin("wl{}".format(port), "INPUT")
             self.rw_wl_names.append("wl{}".format(port))
             port += 1
         for k in range(self.num_w_ports):
-            self.add_pin("wl{}".format(port))
+            self.add_pin("wl{}".format(port), "INPUT")
             self.w_wl_names.append("wl{}".format(port))
             port += 1
         for k in range(self.num_r_ports):
-            self.add_pin("wl{}".format(port))
+            self.add_pin("wl{}".format(port), "INPUT")
             self.r_wl_names.append("wl{}".format(port))
             port += 1
 
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
         # if this is a replica bitcell, replace the instances of Q_bar with vdd
         if self.replica_bitcell:
@@ -894,14 +894,13 @@ class pbitcell(design.design):
         return 2*access_tx_cin
 
     def build_graph(self, graph, inst_name, port_nets):        
-        """Adds edges to graph. Done manually to make the graph acyclic."""
-        #The base graph function can make this but it would contain loops and path
-        #searches would essentially be useless.
-        # Edges added wl->bl, wl->br for every port
-        
-        num_wl = len(self.rw_wl_names) + len(self.w_wl_names) + len(self.r_wl_names)
-        wl_pos = 2*num_wl #there are this many bitlines nets before the wls in the port list
-        for i in range(num_wl):
-            bl_pos = i*2
-            graph.add_edge(port_nets[wl_pos+i],port_nets[bl_pos])
-            graph.add_edge(port_nets[wl_pos+i],port_nets[bl_pos+1])
+        """Adds edges to graph for pbitcell. Only readwrite and read ports."""
+        pin_dict = {pin:port for pin,port in zip(self.pins, port_nets)} 
+        # Edges added wl->bl, wl->br for every port except write ports
+        rw_pin_names = zip(self.r_wl_names, self.r_bl_names, self.r_br_names)
+        r_pin_names = zip(self.rw_wl_names, self.rw_bl_names, self.rw_br_names)
+        for pin_zip in zip(rw_pin_names, r_pin_names): 
+            for wl,bl,br in pin_zip:
+                graph.add_edge(pin_dict[wl],pin_dict[bl])
+                graph.add_edge(pin_dict[wl],pin_dict[br])
+

@@ -11,6 +11,7 @@ class dff(design.design):
     """
 
     pin_names = ["D", "Q", "clk", "vdd", "gnd"]
+    type_list = ["INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
     (width,height) = utils.get_libcell_size("dff", GDS["unit"], layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "dff", GDS["unit"])
     
@@ -20,6 +21,7 @@ class dff(design.design):
         self.width = dff.width
         self.height = dff.height
         self.pin_map = dff.pin_map
+        self.add_pin_types(self.type_list)
     
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""
@@ -51,10 +53,6 @@ class dff(design.design):
         return parameter["dff_clk_cin"]
 
     def build_graph(self, graph, inst_name, port_nets):        
-        """Adds edges to graph. Handmade cells must implement this manually."""
-        #The cell has 5 net ports hard-coded in self.pin_names. The edges
-        #are based on the hard-coded name positions.
-        # The edges added are: clk->Q.
-        # Internal nodes of the handmade cell not considered, only ports. vdd/gnd ignored for graph.
-        graph.add_edge(port_nets[2],port_nets[1])
+        """Adds edges based on inputs/outputs. Overrides base class function."""
+        self.add_graph_edges(graph, port_nets) 
         

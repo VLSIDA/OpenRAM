@@ -60,7 +60,13 @@ class ptx(design.design):
         #self.DRC()
 
     def create_netlist(self):
-        self.add_pin_list(["D", "G", "S", "B"])
+        pin_list = ["D", "G", "S", "B"]
+        if self.tx_type=="nmos":
+            body_dir = 'GROUND'
+        else: #Assumed that the check for either pmos or nmos is done elsewhere.
+            body_dir = 'POWER'
+        dir_list = ['INOUT', 'INPUT', 'INOUT', body_dir]
+        self.add_pin_list(pin_list, dir_list)
         
         # self.spice.append("\n.SUBCKT {0} {1}".format(self.name,
         #                                              " ".join(self.pins)))
@@ -358,14 +364,6 @@ class ptx(design.design):
         return self.tx_width/drc("minwidth_tx")
 
     def build_graph(self, graph, inst_name, port_nets):        
-        """Adds ptx edges to graph. Lowest graph level."""
-        #The ptx has four connections: (S)ource, (G)ate, (D)rain, (B)ody. The positions in spice 
-        #are hardcoded which is represented here as well.
-        #Edges are connected as follows: G->S, G->D, D<->S. Body not represented in graph.
-        if len(port_nets) != 4:
-            debug.error("Transistor has non-standard connections.",1)
-        graph.add_edge(port_nets[1],port_nets[0])
-        graph.add_edge(port_nets[1],port_nets[2])
-        graph.add_edge(port_nets[0],port_nets[2])
-        graph.add_edge(port_nets[2],port_nets[0])
+        """Adds edges based on inputs/outputs. Overrides base class function."""
+        self.add_graph_edges(graph, port_nets) 
         

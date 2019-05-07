@@ -58,6 +58,17 @@ class spice():
         else:
             debug.error("Mismatch in type and pin list lengths.", -1)
 
+    def add_pin_types(self, type_list):
+        """Add pin types for all the cell's pins.
+           Typically, should only be used for handmade cells."""
+        #This only works if self.pins == bitcell.pin_names
+        if self.pin_names != self.pins:
+            debug.error("{} spice subcircuit port names do not match pin_names\
+                      \n SPICE names={}\
+                      \n Module names={}\
+                      ".format(self.name, self.pin_names, self.pins),1)         
+        self.pin_type = {pin:type for pin,type in zip(self.pin_names, type_list)}        
+            
     def get_pin_type(self, name):
         """ Returns the type of the signal pin. """
         return self.pin_type[name]
@@ -87,6 +98,14 @@ class spice():
                 output_list.append(pin)
         return output_list
 
+    def get_inouts(self):
+        """ These use pin types to determine pin lists. These
+        may be over-ridden by submodules that didn't use pin directions yet."""
+        inout_list = []
+        for pin in self.pins:
+            if self.pin_type[pin]=="INOUT":
+                inout_list.append(pin)
+        return inout_list
 
     def add_mod(self, mod):
         """Adds a subckt/submodule to the subckt hierarchy"""

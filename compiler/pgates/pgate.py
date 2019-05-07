@@ -216,4 +216,3 @@ class pgate(design.design):
         #               offset=implant_offset,
         #               width=implant_width,
         #               height=implant_height)
-        

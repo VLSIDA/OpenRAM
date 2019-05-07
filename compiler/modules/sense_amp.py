@@ -13,6 +13,7 @@ class sense_amp(design.design):
     """
 
     pin_names = ["bl", "br", "dout", "en", "vdd", "gnd"]
+    type_list = ["INPUT", "INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
     (width,height) = utils.get_libcell_size("sense_amp", GDS["unit"], layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "sense_amp", GDS["unit"])
 
@@ -23,7 +24,8 @@ class sense_amp(design.design):
         self.width = sense_amp.width
         self.height = sense_amp.height
         self.pin_map = sense_amp.pin_map
-
+        self.add_pin_types(self.type_list)
+        
     def input_load(self):
         #Input load for the bitlines which are connected to the source/drain of a TX. Not the selects.
         from tech import spice, parameter
@@ -54,12 +56,6 @@ class sense_amp(design.design):
         return 2*pmos_cin + nmos_cin
         
     def build_graph(self, graph, inst_name, port_nets):        
-        """Adds edges to graph. Handmade cells must implement this manually."""
-        #The cell has 6 net ports hard-coded in self.pin_names. The edges
-        #are based on the hard-coded name positions.
-        # The edges added are: en->dout, bl->dout
-        # br->dout not included to reduce complexity
-        # Internal nodes of the handmade cell not considered, only ports. vdd/gnd ignored for graph.
-        graph.add_edge(port_nets[0],port_nets[2])
-        graph.add_edge(port_nets[3],port_nets[2])
+        """Adds edges based on inputs/outputs. Overrides base class function."""
+        self.add_graph_edges(graph, port_nets) 
         

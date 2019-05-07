@@ -11,7 +11,8 @@ class write_driver(design.design):
     the technology library.
     """
 
-    pin_names = ["din", "bl", "br", "en", "gnd", "vdd"]
+    pin_names = ["din", "bl", "br", "en", "vdd", "gnd"]
+    type_list = ["INPUT", "OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
     (width,height) = utils.get_libcell_size("write_driver", GDS["unit"], layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "write_driver", GDS["unit"])
 
@@ -22,7 +23,7 @@ class write_driver(design.design):
         self.width = write_driver.width
         self.height = write_driver.height
         self.pin_map = write_driver.pin_map
-
+        self.add_pin_types(self.type_list)
 
     def get_w_en_cin(self):
         """Get the relative capacitance of a single input"""
@@ -30,13 +31,5 @@ class write_driver(design.design):
         return 5*3
 
     def build_graph(self, graph, inst_name, port_nets):        
-        """Adds edges to graph. Handmade cells must implement this manually."""
-        #The cell has 6 net ports hard-coded in self.pin_names. The edges
-        #are based on the hard-coded name positions.
-        # The edges added are: din->bl, din->br, en->bl, en->br
-        # A liberal amount of edges were added, may be reduced later for complexity.
-        # Internal nodes of the handmade cell not considered, only ports. vdd/gnd ignored for graph.
-        graph.add_edge(port_nets[0],port_nets[1])
-        graph.add_edge(port_nets[0],port_nets[2])
-        graph.add_edge(port_nets[3],port_nets[1])
-        graph.add_edge(port_nets[3],port_nets[2])
+        """Adds edges based on inputs/outputs. Overrides base class function."""
+        self.add_graph_edges(graph, port_nets) 

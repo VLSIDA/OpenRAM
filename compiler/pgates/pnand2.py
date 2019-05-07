@@ -33,7 +33,7 @@ class pnand2(pgate.pgate):
             self.create_layout()
 
         #For characterization purposes only
-        self.exclude_nmos_from_graph()
+        #self.exclude_nmos_from_graph()
         
     def create_netlist(self):
         self.add_pins()
@@ -54,7 +54,9 @@ class pnand2(pgate.pgate):
 
     def add_pins(self):
         """ Adds pins for spice netlist """
-        self.add_pin_list(["A", "B", "Z", "vdd", "gnd"])
+        pin_list = ["A", "B", "Z", "vdd", "gnd"]
+        dir_list = ['INPUT', 'INPUT', 'OUTPUT', 'POWER', 'GROUND']
+        self.add_pin_list(pin_list, dir_list)
 
         
     def add_ptx(self):
@@ -268,3 +270,7 @@ class pnand2(pgate.pgate):
         #Removing them simplifies generic path searching.
         self.graph_inst_exclude.add(self.nmos1_inst)
         self.graph_inst_exclude.add(self.nmos2_inst)
+
+    def build_graph(self, graph, inst_name, port_nets):        
+        """Adds edges based on inputs/outputs. Overrides base class function."""
+        self.add_graph_edges(graph, port_nets) 

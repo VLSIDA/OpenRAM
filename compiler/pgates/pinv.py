@@ -62,7 +62,9 @@ class pinv(pgate.pgate):
         
     def add_pins(self):
         """ Adds pins for spice netlist """
-        self.add_pin_list(["A", "Z", "vdd", "gnd"])
+        pin_list = ["A", "Z", "vdd", "gnd"]
+        dir_list = ['INPUT', 'OUTPUT', 'POWER', 'GROUND']
+        self.add_pin_list(pin_list, dir_list)
 
 
     def determine_tx_mults(self):
@@ -283,7 +285,8 @@ class pinv(pgate.pgate):
         return transition_prob*(c_load + c_para) 
 
     def get_cin(self):
-        """Return the capacitance of the gate connection in generic capacitive units relative to the minimum width of a transistor"""
+        """Return the capacitance of the gate connection in generic capacitive
+           units relative to the minimum width of a transistor"""
         return self.nmos_size + self.pmos_size
         
     def get_stage_effort(self, cout, inp_is_rise=True):
@@ -291,4 +294,13 @@ class pinv(pgate.pgate):
            Optional is_rise refers to the input direction rise/fall. Input inverted by this stage.
         """
         parasitic_delay = 1 
-        return logical_effort.logical_effort(self.name, self.size, self.get_cin(), cout, parasitic_delay, not inp_is_rise)
+        return logical_effort.logical_effort(self.name, 
+                                             self.size, 
+                                             self.get_cin(), 
+                                             cout, 
+                                             parasitic_delay, 
+                                             not inp_is_rise)
+
+    def build_graph(self, graph, inst_name, port_nets):        
+        """Adds edges based on inputs/outputs. Overrides base class function."""
+        self.add_graph_edges(graph, port_nets)    

@@ -8,7 +8,7 @@
 import hierarchy_design
 import debug
 import utils
-from tech import drc
+from tech import drc,layer
 from vector import vector
 
 
@@ -196,5 +196,8 @@ active = factory.create(module_type="contact", layer_stack=("active", "contact",
 poly = factory.create(module_type="contact", layer_stack=("poly", "contact", "metal1"), directions=("V","H"))
 m1m2 = factory.create(module_type="contact", layer_stack=("metal1", "via1", "metal2"), directions=("H","V"))
 m2m3 = factory.create(module_type="contact", layer_stack=("metal2", "via2", "metal3"), directions=("V","H"))
-m3m4 = factory.create(module_type="contact", layer_stack=("metal3", "via3", "metal4"), directions=("H","V"))
+if "metal4" in layer.keys():
+    m3m4 = factory.create(module_type="contact", layer_stack=("metal3", "via3", "metal4"), directions=("H","V"))
+else:
+    m3m4 = None
 

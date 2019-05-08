@@ -1,0 +1,136 @@
+magic
+tech scmos
+timestamp 1536089670
+<< nwell >>
+rect 0 0 40 102
+<< pwell >>
+rect 0 102 40 163
+<< ntransistor >>
+rect 21 130 23 139
+rect 12 108 14 117
+rect 20 108 22 117
+<< ptransistor >>
+rect 12 78 14 96
+rect 20 78 22 96
+rect 11 20 13 44
+rect 27 20 29 44
+<< ndiffusion >>
+rect 20 130 21 139
+rect 23 130 24 139
+rect 11 108 12 117
+rect 14 108 15 117
+rect 19 108 20 117
+rect 22 108 23 117
+<< pdiffusion >>
+rect 7 94 12 96
+rect 11 80 12 94
+rect 7 78 12 80
+rect 14 94 20 96
+rect 14 80 15 94
+rect 19 80 20 94
+rect 14 78 20 80
+rect 22 94 27 96
+rect 22 80 23 94
+rect 22 78 27 80
+rect 10 20 11 44
+rect 13 20 14 44
+rect 26 20 27 44
+rect 29 20 30 44
+<< ndcontact >>
+rect 16 130 20 139
+rect 24 130 28 139
+rect 7 108 11 117
+rect 15 108 19 117
+rect 23 108 27 117
+<< pdcontact >>
+rect 7 80 11 94
+rect 15 80 19 94
+rect 23 80 27 94
+rect 6 20 10 44
+rect 14 20 18 44
+rect 22 20 26 44
+rect 30 20 34 44
+<< psubstratepcontact >>
+rect 32 137 36 141
+<< nsubstratencontact >>
+rect 27 70 31 74
+<< polysilicon >>
+rect 21 139 23 149
+rect 21 129 23 130
+rect 3 127 23 129
+rect 3 47 5 127
+rect 12 122 34 124
+rect 12 117 14 122
+rect 20 117 22 119
+rect 12 96 14 108
+rect 20 96 22 108
+rect 32 105 34 122
+rect 30 101 34 105
+rect 12 76 14 78
+rect 20 69 22 78
+rect 13 67 22 69
+rect 9 55 11 65
+rect 32 55 34 101
+rect 33 51 34 55
+rect 3 45 13 47
+rect 11 44 13 45
+rect 27 44 29 46
+rect 11 19 13 20
+rect 27 19 29 20
+rect 11 17 29 19
+<< polycontact >>
+rect 20 149 24 153
+rect 26 101 30 105
+rect 9 65 13 69
+rect 9 51 13 55
+rect 29 51 33 55
+<< metal1 >>
+rect -2 149 20 153
+rect 24 149 36 153
+rect 28 133 32 137
+rect 16 117 19 130
+rect 7 94 11 108
+rect 23 105 27 108
+rect 23 101 26 105
+rect 7 69 11 80
+rect 15 94 19 96
+rect 15 78 19 80
+rect 23 94 27 101
+rect 23 78 27 80
+rect 15 75 18 78
+rect 15 74 31 75
+rect 15 72 27 74
+rect 7 65 9 69
+rect 6 44 9 54
+rect 33 51 34 55
+rect 31 44 34 51
+rect 3 20 6 23
+rect 3 15 7 20
+<< m2contact >>
+rect 32 133 36 137
+rect 27 66 31 70
+rect 13 44 17 48
+rect 22 44 26 48
+rect 3 11 7 15
+<< metal2 >>
+rect 10 48 14 163
+rect 20 48 24 163
+rect 32 129 36 133
+rect 27 62 31 66
+rect 10 44 13 48
+rect 20 44 22 48
+rect 3 0 7 11
+rect 10 0 14 44
+rect 20 0 24 44
+<< bb >>
+rect 0 0 34 163
+<< labels >>
+flabel metal1 0 149 0 149 4 FreeSans 26 0 0 0 en
+rlabel metal2 34 131 34 131 1 gnd
+rlabel metal2 29 64 29 64 1 vdd
+rlabel metal2 12 161 12 161 5 bl
+rlabel metal2 22 161 22 161 5 br
+rlabel metal2 5 3 5 3 1 dout
+<< properties >>
+string path 270.000 468.000 270.000 486.000 288.000 486.000 288.000 468.000 270.000 468.000 
+<< end >>

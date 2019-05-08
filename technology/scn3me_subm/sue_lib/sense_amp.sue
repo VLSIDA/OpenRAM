@@ -1,0 +1,52 @@
+# SUE version MMI_SUE5.0.7
+
+proc SCHEMATIC_sense_amp {} {
+  make inout -name BL -origin {260 10}
+  make global -orient RXY -name vdd -origin {490 170}
+  make global -name gnd -origin {480 660}
+  make input -name sclk -origin {180 610}
+  make nmos -W 3.9u -L 0.6u -origin {600 500}
+  make nmos -orient RX -W 3.9u -L 0.6u -origin {370 500}
+  make pmos -orient RY -W 3u -L 0.6u -origin {600 240}
+  make pmos -orient RXY -W 3u -L 0.6u -origin {370 240}
+  make nmos -W 3.9u -L 0.6u -origin {480 610}
+  make inout -name BR -origin {710 20}
+  make pmos -W 3.9u -L 0.6u -origin {710 90}
+  make pmos -orient RX -W 3.9u -L 0.6u -origin {260 90}
+  make output -orient RXY -name dout -origin {110 370}
+  make_wire 600 560 600 540
+  make_wire 370 540 370 560
+  make_wire 370 200 370 180
+  make_wire 600 180 600 200
+  make_wire 490 180 370 180
+  make_wire 490 180 600 180
+  make_wire 490 170 490 180
+  make_wire 430 300 600 300
+  make_wire 430 300 430 500
+  make_wire 430 300 430 240
+  make_wire 600 300 600 280
+  make_wire 540 430 370 430
+  make_wire 540 430 540 500
+  make_wire 540 430 540 240
+  make_wire 370 430 370 460
+  make_wire 480 560 600 560
+  make_wire 480 560 370 560
+  make_wire 480 560 480 570
+  make_wire 480 650 480 660
+  make_wire 420 610 180 610
+  make_wire 650 90 320 90
+  make_wire 600 360 710 360
+  make_wire 710 360 710 130
+  make_wire 600 360 600 300
+  make_wire 600 360 600 460
+  make_wire 370 370 260 370
+  make_wire 260 370 260 130
+  make_wire 370 370 370 430
+  make_wire 370 370 370 280
+  make_wire 260 10 260 50
+  make_wire 710 20 710 50
+  make_wire 320 90 180 90
+  make_wire 180 90 180 610
+  make_wire 110 370 260 370
+}
+

@@ -1,19 +1,13 @@
-# See LICENSE for licensing information.
-#
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
-#
 import os
 from design_rules import *
 
 """
-File containing the process technology parameters for SCMOS 4m, 0.35um
+File containing the process technology parameters for SCMOS 3me, subm, 180nm.
 """
 
 #GDS file info
 GDS={}
+# gds units
 # gds units
 # From http://www.cnf.cornell.edu/cnf_spie9.html: "The first
 #is the size of a database unit in user units. The second is the size
@@ -50,8 +44,6 @@ layer["via1"]           = 50
 layer["metal2"]         = 51 
 layer["via2"]           = 61 
 layer["metal3"]         = 62 
-layer["via3"]           = 30
-layer["metal4"]         = 31 
 layer["text"]           = 63 
 layer["boundary"]       = 63 
 layer["blockage"]       = 83
@@ -63,7 +55,7 @@ layer["blockage"]       = 83
 ###################################################
 ##DRC/LVS Rules Setup
 ###################################################
-_lambda_ = 0.2
+_lambda_ = 0.3
 
 #technology parameter
 parameter={}
@@ -76,19 +68,20 @@ parameter["6T_access_size"] = 4*_lambda_
 
 drclvs_home=os.environ.get("DRCLVS_HOME")
 
-drc = design_rules("scn4me_sub")
+drc = design_rules("scn3me_subm")
 
 drc["body_tie_down"] = 0
 drc["has_pwell"] = True
 drc["has_nwell"] = True
 
+
 #grid size is 1/2 a lambda
 drc["grid"]=0.5*_lambda_
-
 #DRC/LVS test set_up
 drc["drc_rules"]=drclvs_home+"/calibreDRC_scn3me_subm.rul"
 drc["lvs_rules"]=drclvs_home+"/calibreLVS_scn3me_subm.rul"
 drc["layer_map"]=os.environ.get("OPENRAM_TECH")+"/scn3me_subm/layers.map"
+
         	      					
 # minwidth_tx with contact (no dog bone transistors)
 drc["minwidth_tx"] = 4*_lambda_
@@ -202,35 +195,15 @@ drc["minwidth_via2"] = 2*_lambda_
 drc["via2_to_via2"] = 3*_lambda_
 
 # 15.1 Minimum width
-drc["minwidth_metal3"] = 3*_lambda_
+drc["minwidth_metal3"] = 5*_lambda_
 # 15.2 Minimum spacing to metal3
 drc["metal3_to_metal3"] = 3*_lambda_
 # 15.3 Minimum overlap of via 2
-drc["metal3_extend_via2"] = _lambda_
+drc["metal3_extend_via2"] = 2*_lambda_
 # Reserved for asymmetric enclosures
-drc["metal3_enclosure_via2"] = _lambda_
-# 21.3 Minimum overlap by metal3
-drc["metal3_extend_via3"] = _lambda_
-# Reserved for asymmetric enclosures
-drc["metal3_enclosure_via3"] = _lambda_
+drc["metal3_enclosure_via2"] = 2*_lambda_
 # Not a rule
 drc["minarea_metal3"] = 0
-
-# 21.1 Exact size
-drc["minwidth_via3"] = 2*_lambda_
-# 21.2 Minimum spacing
-drc["via3_to_via3"] = 3*_lambda_
-
-# 22.1 Minimum width
-drc["minwidth_metal4"] = 6*_lambda_
-# 22.2 Minimum spacing to metal4
-drc["metal4_to_metal4"] = 6*_lambda_
-# 22.3 Minimum overlap of via 3
-drc["metal4_extend_via3"] = 2*_lambda_
-# Reserved for asymmetric enclosures
-drc["metal4_enclosure_via3"] = 2*_lambda_
-# Not a rule
-drc["minarea_metal4"] = 0
 
 ###################################################
 ##END DRC/LVS Rules

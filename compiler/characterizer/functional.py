@@ -194,12 +194,7 @@ class functional(simulation):
             new_value =  "0" + new_value
             
         #print("Binary Conversion: {} to {}".format(value, new_value))
-        return new_value
-            
-    def create_signal_names(self):
-        self.addr_name = "A"
-        self.din_name = "DIN"
-        self.dout_name = "DOUT"
+        return new_value  
             
     def write_functional_stimulus(self):
         """ Writes SPICE stimulus. """
@@ -219,12 +214,8 @@ class functional(simulation):
         
         #Instantiate the SRAM
         self.sf.write("\n* Instantiation of the SRAM\n")
-        self.stim.inst_sram(sram=self.sram,
-                            port_signal_names=(self.addr_name,self.din_name,self.dout_name),
-                            port_info=(len(self.all_ports), self.write_ports, self.read_ports),
-                            abits=self.addr_size,
-                            dbits=self.word_size,
-                            sram_name=self.name)
+        self.stim.inst_model(pins=self.pins,
+                             model_name=self.sram.name)
 
         # Add load capacitance to each of the read ports
         self.sf.write("\n* SRAM output loads\n")

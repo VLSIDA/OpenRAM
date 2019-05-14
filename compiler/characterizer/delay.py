@@ -10,6 +10,7 @@ from globals import OPTS
 from .simulation import simulation
 from .measurements import *
 import logical_effort
+import graph_util
 
 class delay(simulation):
     """Functions to measure the delay and power of an SRAM at a given address and
@@ -37,6 +38,8 @@ class delay(simulation):
         self.period = 0
         self.set_load_slew(0,0)
         self.set_corner(corner)
+        self.create_signal_names()
+        self.add_graph_exclusions()
         
     def create_measurement_names(self):
         """Create measurement names. The names themselves currently define the type of measurement"""
@@ -157,18 +160,30 @@ class delay(simulation):
             self.debug_volt_meas[-1].meta_str = debug_meas.meta_str
         return self.debug_delay_meas+self.debug_volt_meas
          
-    def create_signal_names(self):
-        self.addr_name = "A"
-        self.din_name = "DIN"
-        self.dout_name = "DOUT"
-        
-        #This is TODO once multiport control has been finalized.
-        #self.control_name = "CSB"
-        
     def set_load_slew(self,load,slew):
         """ Set the load and slew """
         self.load = load
         self.slew = slew
+        
+    def add_graph_exclusions(self):
+        """Exclude portions of SRAM from timing graph which are not relevant"""
+        #other initializations can only be done during analysis when a bit has been selected
+        #for testing.
+        self.sram.bank.graph_exclude_precharge()
+        self.sram.graph_exclude_addr_dff()
+        self.sram.graph_exclude_data_dff()
+        self.sram.graph_exclude_ctrl_dffs()
+        
+    def create_graph(self):
+        """Creates timing graph to generate the timing paths for the SRAM output."""
+        self.sram.bank.bitcell_array.init_graph_params() #Removes previous bit exclusions
+        self.sram.bank.bitcell_array.graph_exclude_bits(self.wordline_row, self.bitline_column)
+        
+        #Generate new graph every analysis as edges might change depending on test bit
+        self.graph = graph_util.timing_graph()
+        self.sram.build_graph(self.graph,"X{}".format(self.sram.name),self.pins)
+        #debug.info(1,"{}".format(graph))
+        #graph.print_all_paths('clk0', 'DOUT0[0]')
         
     def check_arguments(self):
         """Checks if arguments given for write_stimulus() meets requirements"""
@@ -198,12 +213,8 @@ class delay(simulation):
 
         # instantiate the sram
         self.sf.write("\n* Instantiation of the SRAM\n")
-        self.stim.inst_sram(sram=self.sram,
-                            port_signal_names=(self.addr_name,self.din_name,self.dout_name),
-                            port_info=(len(self.all_ports),self.write_ports,self.read_ports),
-                            abits=self.addr_size,
-                            dbits=self.word_size,
-                            sram_name=self.name)
+        self.stim.inst_model(pins=self.pins,
+                             model_name=self.sram.name)
         self.sf.write("\n* SRAM output loads\n")
         for port in self.read_ports:
             for i in range(self.word_size):
@@ -812,7 +823,7 @@ class delay(simulation):
         char_sram_data = {}
         
         self.set_probe(probe_address, probe_data)
-        self.create_signal_names()
+        self.create_graph()
         self.create_measurement_names()
         self.create_measurement_objects()
         
@@ -998,7 +1009,6 @@ class delay(simulation):
         """
         if OPTS.num_rw_ports > 1 or OPTS.num_w_ports > 0 and OPTS.num_r_ports > 0:
             debug.warning("Analytical characterization results are not supported for multiport.")
-        self.create_signal_names()
         self.create_measurement_names()
         power = self.analytical_power(slews, loads)
         port_data = self.get_empty_measure_data_dict()

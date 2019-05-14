@@ -42,6 +42,19 @@ class simulation():
         self.v_low = tech.spice["v_threshold_typical"]        
         self.gnd_voltage = 0
         
+    def create_signal_names(self):
+        self.addr_name = "A"
+        self.din_name = "DIN"
+        self.dout_name = "DOUT"
+        self.pins = self.gen_pin_names(port_signal_names=(self.addr_name,self.din_name,self.dout_name),
+                                       port_info=(len(self.all_ports),self.write_ports,self.read_ports),
+                                       abits=self.addr_size,
+                                       dbits=self.word_size)
+        debug.check(len(self.sram.pins) == len(self.pins), "Number of pins generated for characterization \
+                 do match pins of SRAM\nsram.pins = {0}\npin_names = {1}".format(self.sram.pins,self.pins))
+        #This is TODO once multiport control has been finalized.
+        #self.control_name = "CSB"    
+        
     def set_stimulus_variables(self):
         # Clock signals
         self.cycle_times = []
@@ -222,4 +235,39 @@ class simulation():
                                                                                                            t_current,
                                                                                                            t_current+self.period)
         return comment
+        
+    def gen_pin_names(self, port_signal_names, port_info, abits, dbits):
+        """Creates the pins names of the SRAM based on the no. of ports."""
+        #This may seem redundant as the pin names are already defined in the sram. However, it is difficult 
+        #to extract the functionality from the names, so they are recreated. As the order is static, changing 
+        #the order of the pin names will cause issues here.
+        pin_names = []
+        (addr_name, din_name, dout_name) = port_signal_names
+        (total_ports, write_index, read_index) = port_info
+        
+        for write_input in write_index:
+            for i in range(dbits):
+                pin_names.append("{0}{1}_{2}".format(din_name,write_input, i))
+        
+        for port in range(total_ports):
+            for i in range(abits):
+                pin_names.append("{0}{1}_{2}".format(addr_name,port,i))    
+
+        #Control signals not finalized.
+        for port in range(total_ports):
+            pin_names.append("CSB{0}".format(port))
+        for port in range(total_ports):
+            if (port in read_index) and (port in write_index):
+                pin_names.append("WEB{0}".format(port))
+            
+        for port in range(total_ports):
+            pin_names.append("{0}{1}".format(tech.spice["clk"], port))
+            
+        for read_output in read_index:
+            for i in range(dbits):
+                pin_names.append("{0}{1}_{2}".format(dout_name,read_output, i))
+                
+        pin_names.append("{0}".format(tech.spice["vdd_name"]))
+        pin_names.append("{0}".format(tech.spice["gnd_name"]))
+        return pin_names
         

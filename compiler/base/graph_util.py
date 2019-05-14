@@ -1,4 +1,4 @@
-import os
+import os, copy
 from collections import defaultdict
 
 import gdsMill
@@ -16,6 +16,7 @@ class timing_graph():
     
     def __init__(self):
         self.graph = defaultdict(set)
+        self.all_paths = []
 
     def add_edge(self, src_node, dest_node):
         """Adds edge to graph. Nodes added as well if they do not exist."""
@@ -34,7 +35,7 @@ class timing_graph():
         node = node.lower()
         self.graph[node] = set()    
             
-    def print_all_paths(self, src_node, dest_node, rmv_rail_nodes=True): 
+    def get_all_paths(self, src_node, dest_node, rmv_rail_nodes=True): 
         """Traverse all paths from source to destination"""
         src_node = src_node.lower()
         dest_node = dest_node.lower()
@@ -51,13 +52,15 @@ class timing_graph():
   
         # Create an array to store paths 
         path = [] 
-        self.path_count = 0
+        self.all_paths = []
   
         # Call the recursive helper function to print all paths 
-        self.print_all_paths_util(src_node, dest_node, visited, path)     
-        debug.info(1, "Paths found={}".format(self.path_count))
+        self.get_all_paths_util(src_node, dest_node, visited, path)     
+        debug.info(1, "Paths found={}".format(len(self.all_paths)))
             
-    def print_all_paths_util(self, cur_node, dest_node, visited, path): 
+        return self.all_paths     
+            
+    def get_all_paths_util(self, cur_node, dest_node, visited, path): 
         """Recursive function to find all paths in a Depth First Search manner"""
         # Mark the current node as visited and store in path 
         visited.add(cur_node)
@@ -67,17 +70,31 @@ class timing_graph():
         # current path[] 
         if cur_node == dest_node: 
             debug.info(1,"{}".format(path)) 
-            self.path_count+=1
+            self.all_paths.append(copy.deepcopy(path))
         else: 
             # If current vertex is not destination 
             #Recur for all the vertices adjacent to this vertex 
             for node in self.graph[cur_node]: 
                 if node not in visited: 
-                    self.print_all_paths_util(node, dest_node, visited, path) 
+                    self.get_all_paths_util(node, dest_node, visited, path) 
                       
         # Remove current vertex from path[] and mark it as unvisited 
         path.pop() 
         visited.remove(cur_node)        
+            
+    def get_path_preconvergence_point(self, path1, path2):
+        """Assuming the inputs paths have the same starting point and end point, the
+           paths should split and converge at some point before/at the last stage. Finds the 
+           point before convergence."""
+        debug.check(path1[0] == path2[0], "Paths must start from the same point.")   
+        debug.check(path1[-1] == path2[-1], "Paths must end from the same point.")   
+        #Paths must end at the same point, so the paths are traversed backwards to find
+        #point of convergence. There could be multiple points, only finds first.
+        for point1,point2 in zip(reversed(path1), reversed(path2)):
+            if point1 != point2:
+                return (point1,point2)
+        debug.info(1,"Pre-convergence point not found, paths are equals.")
+        return path1[0],path2[0]
             
     def __str__(self):
         """ override print function output """

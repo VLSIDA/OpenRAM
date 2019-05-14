@@ -140,7 +140,13 @@ class spice():
             debug.error("-----")
             debug.error("Connections: \n"+str(conns_string),1)
 
-
+    def get_conns(self, inst):
+        """Returns the connections of a given instance."""
+        for i in range(len(self.insts)):
+            if inst is self.insts[i]:
+                return self.conns[i]
+        #If not found, returns None
+        return None
 
     def sp_read(self):
         """Reads the sp file (and parse the pins) from the library 

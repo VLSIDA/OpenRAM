@@ -10,7 +10,7 @@ class tri_gate(design.design):
     netlist should be available in the technology library.  
     """
 
-    pin_names = ["in", "out", "en", "en_bar", "gnd", "vdd"]
+    pin_names = ["in", "out", "en", "en_bar", "vdd", "gnd"]
     type_list = ["INPUT", "OUTPUT", "INPUT", "INPUT", "POWER", "GROUND"]
     (width,height) = utils.get_libcell_size("tri_gate", GDS["unit"], layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "tri_gate", GDS["unit"])

@@ -81,49 +81,39 @@ class delay(simulation):
             if obj.meta_str is "read0":
                 obj.meta_add_delay = True
 
-        trig_name = "Xsram.s_en{}" #Sense amp enable
-        if len(self.all_ports) == 1: #special naming case for single port sram bitlines which does not include the port in name
-            port_format = ""
-        else:
-            port_format = "{}"
+        # trig_name = "Xsram.s_en{}" #Sense amp enable
+        # if len(self.all_ports) == 1: #special naming case for single port sram bitlines which does not include the port in name
+            # port_format = ""
+        # else:
+            # port_format = "{}"
         
-        bl_name = "Xsram.Xbank0.bl{}_{}".format(port_format, self.bitline_column)
-        br_name = "Xsram.Xbank0.br{}_{}".format(port_format, self.bitline_column)
+        # bl_name = "Xsram.Xbank0.bl{}_{}".format(port_format, self.bitline_column)
+        # br_name = "Xsram.Xbank0.br{}_{}".format(port_format, self.bitline_column)
         # self.read_lib_meas.append(voltage_when_measure(self.voltage_when_names[0], trig_name, bl_name, "RISE", .5))
         # self.read_lib_meas.append(voltage_when_measure(self.voltage_when_names[1], trig_name, br_name, "RISE", .5))
         
         read_measures = []
         read_measures.append(self.read_lib_meas)
         #Other measurements associated with the read port not included in the liberty file
-        read_measures.append(self.create_bitline_delay_measurement_objects())
+        read_measures.append(self.create_bitline_measurement_objects())
         read_measures.append(self.create_debug_measurement_objects())
 
         return read_measures
     
-    def create_bitline_delay_measurement_objects(self):
+    def create_bitline_measurement_objects(self):
         """Create the measurements used for bitline delay values. Due to unique error checking, these are separated from other measurements.
            These measurements are only associated with read values
         """
-        self.bitline_delay_meas = []
-        trig_name = "clk{0}"
-        if len(self.all_ports) == 1: #special naming case for single port sram bitlines which does not include the port in name
-            port_format = ""
-        else:
-            port_format = "{}"
-        bl_name = "Xsram.Xbank0.bl{}_{}".format(port_format, self.bitline_column)
-        br_name = "Xsram.Xbank0.br{}_{}".format(port_format, self.bitline_column)
-        targ_val = (self.vdd_voltage - tech.spice["v_threshold_typical"])/self.vdd_voltage #Calculate as a percentage of vdd
+        self.bitline_volt_meas = []
+        #Bitline voltage measures
+        self.bitline_volt_meas.append(voltage_at_measure("v_bl_name", 
+                                                       self.bl_name)) 
+        self.bitline_volt_meas[-1].meta_str = 'read0'
         
-        targ_name = "{0}{1}_{2}".format(self.dout_name,"{}",self.probe_data) #Empty values are the port and probe data bit
-        # self.bitline_delay_meas.append(delay_measure(self.bitline_delay_names[0], trig_name, bl_name, "FALL", "FALL", targ_vdd=targ_val, measure_scale=1e9))
-        # self.bitline_delay_meas[-1].meta_str = "read0"
-        # self.bitline_delay_meas.append(delay_measure(self.bitline_delay_names[1], trig_name, br_name, "FALL", "FALL", targ_vdd=targ_val, measure_scale=1e9))
-        # self.bitline_delay_meas[-1].meta_str = "read1"
-        #Enforces the time delay on the bitline measurements for read0 or read1
-        for obj in self.bitline_delay_meas:
-            obj.meta_add_delay = True
-        
-        return self.bitline_delay_meas
+        self.bitline_volt_meas.append(voltage_at_measure("v_br_name", 
+                                                       self.br_name)) 
+        self.bitline_volt_meas[-1].meta_str = 'read1'
+        return self.bitline_volt_meas
         
     def create_write_port_measurement_objects(self):
         """Create the measurements used for read ports: delays, slews, powers"""
@@ -155,9 +145,11 @@ class delay(simulation):
             debug_meas.parent = meas.name
             self.debug_delay_meas.append(debug_meas)
 
+            #Output voltage measures
             self.debug_volt_meas.append(voltage_at_measure("v_{}".format(debug_meas.meta_str), 
                                                            debug_meas.targ_name_no_port)) 
             self.debug_volt_meas[-1].meta_str = debug_meas.meta_str
+            
         return self.debug_delay_meas+self.debug_volt_meas
          
     def set_load_slew(self,load,slew):
@@ -183,7 +175,28 @@ class delay(simulation):
         self.graph = graph_util.timing_graph()
         self.sram.build_graph(self.graph,"X{}".format(self.sram.name),self.pins)
         #debug.info(1,"{}".format(graph))
-        #graph.print_all_paths('clk0', 'DOUT0[0]')
+        port = 0
+        self.graph.get_all_paths('{}{}'.format(tech.spice["clk"], port), \
+                     '{}{}_{}'.format(self.dout_name, port, self.probe_data))
+        sen_name = self.sram.get_sen_name(self.sram.name, port).lower()
+        debug.info(1, "Sen name={}".format(sen_name))
+        sen_path = []
+        for path in self.graph.all_paths:
+            if sen_name in path:
+                sen_path = path
+                break
+        debug.check(len(sen_path)!=0, "Could not find s_en timing path.")
+        preconv_names = []
+        for path in self.graph.all_paths:
+            if not path is sen_path:
+                sen_preconv = self.graph.get_path_preconvergence_point(path, sen_path)
+                if sen_preconv not in preconv_names:
+                    preconv_names.append(sen_preconv[0]) #only save non-sen_path names
+                    
+        #Not an good way to separate inverting and non-inverting bitlines...            
+        self.bl_name = [bl for bl in preconv_names if 'bl' in bl][0]
+        self.br_name = [bl for bl in preconv_names if 'br' in bl][0]          
+        debug.info(1,"bl_name={}".format(self.bl_name))
         
     def check_arguments(self):
         """Checks if arguments given for write_stimulus() meets requirements"""
@@ -551,9 +564,6 @@ class delay(simulation):
                 
             result[port].update(read_port_dict)
             
-            bitline_delay_dict = self.evaluate_bitline_delay(port)
-            result[port].update(bitline_delay_dict)
-            
         for port in self.targ_write_ports:
             write_port_dict = {}
             for measure in self.write_lib_meas:
@@ -589,7 +599,14 @@ class delay(simulation):
                 success = False
                 debug.info(1, "Debug measurement failed. Incorrect Value found on output.") 
                 break
-       
+                
+        #FIXME: these checks need to be re-done to be more robust against possible errors        
+        bitline_results = {}
+        for meas in self.bitline_volt_meas:
+            val = meas.retrieve_measure(port=port)
+            bitline_results[meas.meta_str] = val
+                
+            
         for meas in self.debug_volt_meas:
             val = meas.retrieve_measure(port=port)
             debug.info(2,"{}={}".format(meas.name, val))
@@ -604,19 +621,20 @@ class delay(simulation):
                 success = False
                 debug.info(1, "Debug measurement failed. Value {}v was read on read 0 cycle.".format(val))
                 break
-
+                
+            #If the bitlines have a correct value while the output does not then that is a 
+            #sen error. FIXME: there are other checks that can be done to solidfy this conclusion.
+            if not success and self.check_bitline_meas(bitline_results[meas.meta_str]):
+                debug.error("Sense amp enable timing error. Increase the delay chain through the configuration file.",1)
+            
         return success
         
-    def evaluate_bitline_delay(self, port):
-        """Parse and check the bitline delay. One of the measurements is expected to fail which warrants its own function."""
-        bl_delay_meas_dict = {}
-        values_added = 0 #For error checking
-        for measure in self.bitline_delay_meas:
-            bl_delay_val = measure.retrieve_measure(port=port)
-            if type(bl_delay_val) != float or 0 > bl_delay_val or bl_delay_val > self.period/2: #Only add if value is valid, do not error.
-                debug.error("Bitline delay measurement failed: half-period={}, {}={}".format(self.period/2, measure.name, bl_delay_val),1)
-            bl_delay_meas_dict[measure.name] = bl_delay_val
-        return bl_delay_meas_dict
+        
+    def check_bitline_meas(self, v_bitline):
+        """Checks the value of the discharging bitline"""
+        
+        return v_bitline < self.vdd_voltage*0.9
+        
         
     def run_power_simulation(self):
         """ 

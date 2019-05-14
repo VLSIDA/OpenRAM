@@ -226,6 +226,13 @@ class stimuli():
                                             trig_dir,
                                             trig_td))
     
+    def gen_meas_find_voltage_at_time(self, meas_name, targ_name, time_at):
+        """ Creates the .meas statement for voltage at time"""
+        measure_string=".meas tran {0} FIND v({1}) AT={2}n \n\n"
+        self.sf.write(measure_string.format(meas_name,
+                                            targ_name,
+                                            time_at))
+
     def gen_meas_power(self, meas_name, t_initial, t_final):
         """ Creates the .meas statement for the measurement of avg power """
         # power mea cmd is different in different spice:

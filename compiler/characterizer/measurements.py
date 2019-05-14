@@ -157,3 +157,31 @@ class voltage_when_measure(spice_measurement):
         trig_voltage = self.trig_val_of_vdd*vdd_voltage
             
         return (meas_name,trig_name,targ_name,trig_voltage,self.trig_dir_str,trig_td)
+        
+class voltage_at_measure(spice_measurement):        
+    """Generates a spice measurement to measure the voltage at a specific time.
+       The time is considered variant with different periods."""
+    
+    def __init__(self, measure_name, targ_name, measure_scale=None):
+        spice_measurement.__init__(self, measure_name, measure_scale)
+        self.set_meas_constants(targ_name)
+    
+    def get_measure_function(self):
+        return stimuli.gen_meas_find_voltage_at_time
+    
+    def set_meas_constants(self, targ_name):
+        """Sets values useful for power simulations. This value is only meta related to the lib file (rise/fall)"""
+        self.targ_name_no_port = targ_name
+        
+    def get_measure_values(self, time_at, port=None):    
+        """Constructs inputs to stimulus measurement function. Variant values are inputs here."""
+        if port != None:
+            #For dictionary indexing reasons, the name is formatted differently than the signals
+            meas_name = "{}{}".format(self.name, port)
+            targ_name = self.targ_name_no_port.format(port)
+        else:
+            meas_name = self.name
+            targ_name = self.targ_name_no_port
+            
+        return (meas_name,targ_name,time_at)        
+        

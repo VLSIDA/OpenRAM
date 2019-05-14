@@ -26,10 +26,15 @@ class timing_sram_test(openram_test):
         reload(characterizer)
         from characterizer import delay
         from sram_config import sram_config
-        c = sram_config(word_size=1,
-                        num_words=16,
+        # c = sram_config(word_size=1,
+                        # num_words=16,
+                        # num_banks=1)
+        # c.words_per_row=1
+        c = sram_config(word_size=32,
+                        num_words=256,
                         num_banks=1)
-        c.words_per_row=1
+        c.words_per_row=2
+        OPTS.use_tech_delay_chain_size = True
         c.recompute_sizes()
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
         s = factory.create(module_type="sram", sram_config=c)
@@ -42,13 +47,13 @@ class timing_sram_test(openram_test):
         s.s.graph_exclude_data_dff()
         s.s.graph_exclude_ctrl_dffs()
         
-        debug.info(1,'pins={}'.format(s.s.pins))
-        import graph_util
-        graph = graph_util.timing_graph()
-        pins=['DIN0[0]', 'ADDR0[0]', 'ADDR0[1]', 'ADDR0[2]', 'ADDR0[3]', 'csb0', 'web0', 'clk0', 'DOUT0[0]', 'vdd', 'gnd']
-        s.s.build_graph(graph,"Xsram",pins)
-        #debug.info(1,"{}".format(graph))
-        graph.print_all_paths('clk0', 'DOUT0[0]')
+        # debug.info(1,'pins={}'.format(s.s.pins))
+        # import graph_util
+        # graph = graph_util.timing_graph()
+        # pins=['DIN0[0]', 'ADDR0[0]', 'ADDR0[1]', 'ADDR0[2]', 'ADDR0[3]', 'csb0', 'web0', 'clk0', 'DOUT0[0]', 'vdd', 'gnd']
+        # s.s.build_graph(graph,"Xsram",pins)
+        # #debug.info(1,"{}".format(graph))
+        # graph.print_all_paths('clk0', 'DOUT0[0]')
         # import sys
         # sys.exit(1)
 

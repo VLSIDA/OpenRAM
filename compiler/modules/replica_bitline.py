@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+#Copyright (c) 2016-2019 Regents of the University of California and The Board
+#of Regents for the Oklahoma Agricultural and Mechanical College
+#(acting for and on behalf of Oklahoma State University)
+#All rights reserved.
+#
 import debug
 import design
 from tech import drc
@@ -39,8 +46,8 @@ class replica_bitline(design.design):
         #self.add_lvs_correspondence_points()
 
         # Extra pitch on top and right
-        self.width = self.rbl_inst.rx() - self.dc_inst.lx() + self.m2_pitch
-        self.height = max(self.rbl_inst.uy(), self.dc_inst.uy()) + self.m3_pitch
+        self.width = self.replica_column_inst.rx() - self.delay_chain_inst.lx() + self.m2_pitch
+        self.height = max(self.replica_column_inst.uy(), self.delay_chain_inst.uy()) + self.m3_pitch
 
         self.DRC_LVS()
 
@@ -111,12 +118,12 @@ class replica_bitline(design.design):
         self.connect_inst(["vdd", "delayed_en", "bl0_0", "vdd"])
         # add the well and poly contact
 
-        self.dc_inst=self.add_inst(name="delay_chain",
-                                   mod=self.delay_chain)
+        self.delay_chain_inst=self.add_inst(name="delay_chain",
+                                            mod=self.delay_chain)
         self.connect_inst(["en", "delayed_en", "vdd", "gnd"])
 
-        self.rbc_inst=self.add_inst(name="bitcell",
-                                    mod=self.replica_bitcell)
+        self.replica_cell_inst=self.add_inst(name="bitcell",
+                                             mod=self.replica_bitcell)
         temp = []
         for port in self.all_ports:
             temp.append("bl{}_0".format(port))
@@ -127,8 +134,8 @@ class replica_bitline(design.design):
         temp.append("gnd")
         self.connect_inst(temp)
 
-        self.rbl_inst=self.add_inst(name="load",
-                                    mod=self.rbl)
+        self.replica_column_inst=self.add_inst(name="load",
+                                               mod=self.rbl)
         
         temp = []
         for port in self.all_ports:
@@ -153,12 +160,12 @@ class replica_bitline(design.design):
 
         self.tx_inst.place(self.access_tx_offset)
 
-        self.dc_inst.place(self.delay_chain_offset)
+        self.delay_chain_inst.place(self.delay_chain_offset)
 
-        self.rbc_inst.place(offset=self.bitcell_offset,
+        self.replica_cell_inst.place(offset=self.bitcell_offset,
                             mirror="MX")
 
-        self.rbl_inst.place(self.rbl_offset)
+        self.replica_column_inst.place(self.rbl_offset)
 
 
     def route(self):
@@ -172,7 +179,7 @@ class replica_bitline(design.design):
         # Connect the WL and gnd pins directly to the center and right gnd rails
         for row in range(self.bitcell_loads):
             wl = self.wl_list[0]+"_{}".format(row)
-            pin = self.rbl_inst.get_pin(wl)
+            pin = self.replica_column_inst.get_pin(wl)
 
             # Route the connection to the right so that it doesn't interfere with the cells
             # Wordlines may be close to each other when tiled, so gnd connections are routed in opposite directions            
@@ -188,7 +195,7 @@ class replica_bitline(design.design):
             
             # for multiport, need to short wordlines to each other so they all connect to gnd.
             wl_last = self.wl_list[-1]+"_{}".format(row)
-            pin_last = self.rbl_inst.get_pin(wl_last)
+            pin_last = self.replica_column_inst.get_pin(wl_last)
             self.short_wordlines(pin, pin_last, "right", False, row, vector(self.m3_pitch,0))
                     
     def short_wordlines(self, wl_pin_a, wl_pin_b, pin_side, is_replica_cell, cell_row=0, offset_x_vec=None):
@@ -229,10 +236,10 @@ class replica_bitline(design.design):
             for port in self.all_ports:
                 if is_replica_cell:
                     wl = self.wl_list[port]
-                    pin = self.rbc_inst.get_pin(wl)
+                    pin = self.replica_cell_inst.get_pin(wl)
                 else:
                     wl = self.wl_list[port]+"_{}".format(cell_row)
-                    pin = self.rbl_inst.get_pin(wl)
+                    pin = self.replica_column_inst.get_pin(wl)
                     
                 if pin_side == "left":    
                     self.add_path("metal1", [pin.lc()-correct_x, pin.lc()])
@@ -245,8 +252,8 @@ class replica_bitline(design.design):
         """ Propagate all vdd/gnd pins up to this level for all modules """
 
         # These are the instances that every bank has
-        top_instances = [self.rbl_inst,
-                         self.dc_inst]        
+        top_instances = [self.replica_column_inst,
+                         self.delay_chain_inst]        
         for inst in top_instances:
             self.copy_layout_pin(inst, "vdd")
             self.copy_layout_pin(inst, "gnd")
@@ -257,11 +264,11 @@ class replica_bitline(design.design):
         pin = self.rbl_inv_inst.get_pin("vdd")
         self.add_power_pin("vdd", pin.lc())
             
-        pin=self.rbc_inst.get_pin("vdd")
-        self.add_power_pin("vdd", pin.center(), 0, pin.layer)
+        for pin in self.replica_cell_inst.get_pins("vdd"):
+            self.add_power_pin(name="vdd", loc=pin.center(), vertical=True, start_layer=pin.layer)
         
-        for pin in self.rbc_inst.get_pins("gnd"):
-            self.add_power_pin("gnd", pin.center())
+        for pin in self.replica_cell_inst.get_pins("gnd"):
+            self.add_power_pin("gnd", pin.center(), vertical=True, start_layer=pin.layer)
 
             
 
@@ -275,10 +282,10 @@ class replica_bitline(design.design):
         poly_offset = poly_pin.uc()
         # This centers the contact above the poly by one pitch
         contact_offset = poly_offset + vector(0,self.m2_pitch)
-        self.add_contact_center(layers=("poly", "contact", "metal1"),
-                                offset=contact_offset)
-        self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                offset=contact_offset)
+        self.add_via_center(layers=("poly", "contact", "metal1"),
+                            offset=contact_offset)
+        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                            offset=contact_offset)
         self.add_segment_center(layer="poly",
                                 start=poly_offset,
                                 end=contact_offset)
@@ -289,12 +296,12 @@ class replica_bitline(design.design):
         #               height=self.delay_chain_offset.y-nwell_offset.y)
 
         # 2. Route delay chain output to access tx gate
-        delay_en_offset = self.dc_inst.get_pin("out").bc()
+        delay_en_offset = self.delay_chain_inst.get_pin("out").bc()
         self.add_path("metal2", [delay_en_offset,contact_offset])
 
         # 3. Route the contact of previous route to the bitcell WL
         # route bend of previous net to bitcell WL
-        wl_offset = self.rbc_inst.get_pin(self.wl_list[0]).lc()
+        wl_offset = self.replica_cell_inst.get_pin(self.wl_list[0]).lc()
         wl_mid1 = wl_offset - vector(1.5*drc("minwidth_metal1"), 0)
         wl_mid2 = vector(wl_mid1.x, contact_offset.y)
         #xmid_point= 0.5*(wl_offset.x+contact_offset.x)
@@ -305,8 +312,8 @@ class replica_bitline(design.design):
         # 4. Short wodlines if multiport
         wl = self.wl_list[0]
         wl_last = self.wl_list[-1]
-        pin = self.rbc_inst.get_pin(wl)
-        pin_last = self.rbc_inst.get_pin(wl_last)
+        pin = self.replica_cell_inst.get_pin(wl)
+        pin_last = self.replica_cell_inst.get_pin(wl_last)
         x_offset = self.short_wordlines(pin, pin_last, "left", True)
         
         #correct = vector(0.5*drc("minwidth_metal1"), 0)
@@ -315,7 +322,7 @@ class replica_bitline(design.design):
         # DRAIN ROUTE
         # Route the drain to the vdd rail
         drain_offset = self.tx_inst.get_pin("D").center()
-        self.add_power_pin("vdd", drain_offset, rotate=0)
+        self.add_power_pin("vdd", drain_offset, vertical=True)
         
         # SOURCE ROUTE
         # Route the drain to the RBL inverter input 
@@ -325,7 +332,7 @@ class replica_bitline(design.design):
 
         # Route the connection of the source route to the RBL bitline (left)
         # Via will go halfway down from the bitcell
-        bl_offset = self.rbc_inst.get_pin(self.bl_list[0]).bc()
+        bl_offset = self.replica_cell_inst.get_pin(self.bl_list[0]).bc()
         # Route down a pitch so we can use M2 routing
         bl_down_offset = bl_offset - vector(0, self.m2_pitch)
         self.add_path("metal2",[source_offset, bl_down_offset, bl_offset])   
@@ -344,12 +351,12 @@ class replica_bitline(design.design):
     def route_vdd(self):
         """ Route all signals connected to vdd """
 
-        self.copy_layout_pin(self.dc_inst,"vdd")
-        self.copy_layout_pin(self.rbc_inst,"vdd")        
+        self.copy_layout_pin(self.delay_chain_inst,"vdd")
+        self.copy_layout_pin(self.replica_cell_inst,"vdd")        
         
         # Connect the WL and vdd pins directly to the center and right vdd rails
         # Connect RBL vdd pins to center and right rails
-        rbl_vdd_pins = self.rbl_inst.get_pins("vdd")
+        rbl_vdd_pins = self.replica_column_inst.get_pins("vdd")
         for pin in rbl_vdd_pins:
             if pin.layer != "metal1":
                 continue
@@ -360,11 +367,9 @@ class replica_bitline(design.design):
                                                start=start,
                                                end=end)
             self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=start,
-                                rotate=90)
+                                offset=start)
             self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=end,
-                                rotate=90)
+                                offset=end)
 
         # Add via for the inverter
         pin = self.rbl_inv_inst.get_pin("vdd")
@@ -374,38 +379,34 @@ class replica_bitline(design.design):
                                 start=start,
                                 end=end)
         self.add_via_center(layers=("metal1", "via1", "metal2"),
-                            offset=start,
-                            rotate=90)
+                            offset=start)
 
         self.add_via_center(layers=("metal1", "via1", "metal2"),
-                            offset=end,
-                            rotate=90)
+                            offset=end)
 
 
         # Add via for the RBC
-        pin = self.rbc_inst.get_pin("vdd")
+        pin = self.replica_cell_inst.get_pin("vdd")
         start = pin.lc()
         end = vector(self.right_vdd_pin.cx(),pin.cy())
         self.add_segment_center(layer="metal1",
                                 start=start,
                                 end=end)
         self.add_via_center(layers=("metal1", "via1", "metal2"),
-                            offset=end,
-                            rotate=90)
+                            offset=end)
 
         # Create the RBL rails too
-        rbl_pins = self.rbl_inst.get_pins("vdd")
+        rbl_pins = self.replica_column_inst.get_pins("vdd")
         for pin in rbl_pins:
             if pin.layer != "metal1":
                 continue
             # If above the delay line, route the full width
             left = vector(self.left_vdd_pin.cx(),pin.cy())                
             center = vector(self.center_vdd_pin.cx(),pin.cy())          
-            if pin.cy() > self.dc_inst.uy() + self.m1_pitch:
+            if pin.cy() > self.delay_chain_inst.uy() + self.m1_pitch:
                 start = left
                 self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                    offset=left,
-                                    rotate=90)
+                                    offset=left)
             else:
                 start = center
             end = vector(self.right_vdd_pin.cx()+0.5*self.m1_width,pin.cy())
@@ -425,22 +426,22 @@ class replica_bitline(design.design):
         # Route the gnd lines from left to right
 
         # Add via for the delay chain
-        left_gnd_start = self.dc_inst.ll().scale(1,0) - vector(2*self.m2_pitch,0)
-        left_gnd_end = vector(left_gnd_start.x, self.rbl_inst.uy()+self.m2_pitch)
+        left_gnd_start = self.delay_chain_inst.ll().scale(1,0) - vector(2*self.m2_pitch,0)
+        left_gnd_end = vector(left_gnd_start.x, self.replica_column_inst.uy()+self.m2_pitch)
         self.left_gnd_pin=self.add_segment_center(layer="metal2",
                                                   start=left_gnd_start,
                                                   end=left_gnd_end)
 
         # Gnd line to the left of the replica bitline
-        center_gnd_start = self.rbc_inst.ll().scale(1,0) - vector(2*self.m2_pitch,0)
-        center_gnd_end = vector(center_gnd_start.x, self.rbl_inst.uy()+self.m2_pitch)
+        center_gnd_start = self.replica_cell_inst.ll().scale(1,0) - vector(2*self.m2_pitch,0)
+        center_gnd_end = vector(center_gnd_start.x, self.replica_column_inst.uy()+self.m2_pitch)
         self.center_gnd_pin=self.add_segment_center(layer="metal2",
                                                     start=center_gnd_start,
                                                     end=center_gnd_end)
 
         # Gnd line to the right of the replica bitline
-        right_gnd_start = self.rbc_inst.lr().scale(1,0) + vector(self.m2_pitch,0)
-        right_gnd_end = vector(right_gnd_start.x, self.rbl_inst.uy()+self.m2_pitch)
+        right_gnd_start = self.replica_cell_inst.lr().scale(1,0) + vector(self.m2_pitch,0)
+        right_gnd_end = vector(right_gnd_start.x, self.replica_column_inst.uy()+self.m2_pitch)
         self.right_gnd_pin=self.add_segment_center(layer="metal2",
                                                    start=right_gnd_start,
                                                    end=right_gnd_end)
@@ -450,13 +451,13 @@ class replica_bitline(design.design):
         # Connect the WL and gnd pins directly to the center and right gnd rails
         for row in range(self.bitcell_loads):
             wl = self.wl_list[0]+"_{}".format(row)
-            pin = self.rbl_inst.get_pin(wl)
+            pin = self.replica_column_inst.get_pin(wl)
             if pin.layer != "metal1":
                 continue
             # If above the delay line, route the full width
             left = vector(self.left_gnd_pin.cx(),pin.cy())                
             center = vector(self.center_gnd_pin.cx(),pin.cy())                
-            if pin.cy() > self.dc_inst.uy() + self.m1_pitch:
+            if pin.cy() > self.delay_chain_inst.uy() + self.m1_pitch:
                 start = left
             else:
                 start = center
@@ -467,47 +468,41 @@ class replica_bitline(design.design):
                                                end=end)
             if start == left:
                 self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                    offset=left,
-                                    rotate=90)
+                                    offset=left)
             self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=center,
-                                rotate=90)
+                                offset=center)
             self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=end,
-                                rotate=90)
+                                offset=end)
 
 
-        rbl_gnd_pins = self.rbl_inst.get_pins("gnd")
-        # Add L shapes to each vertical gnd rail
-        for pin in rbl_gnd_pins:
-            if pin.layer != "metal1":
-                continue
-            # If above the delay line, route the full width
-            left = vector(self.left_gnd_pin.cx(),pin.cy())                
-            center = vector(self.center_gnd_pin.cx(),pin.cy())                
-            if pin.cy() > self.dc_inst.uy() + self.m1_pitch:
-                start = left
-            else:
-                start = center
-            end = vector(self.right_gnd_pin.cx(),pin.cy())
-            self.add_segment_center(layer="metal1",
-                                    start=start,
-                                    end=end)
-            if start == left:
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                    offset=left,
-                                    rotate=90)
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=center,
-                                rotate=90)
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=end,
-                                rotate=90)
+        # rbl_gnd_pins = self.replica_column_inst.get_pins("gnd")
+        # # Add L shapes to each vertical gnd rail
+        # for pin in rbl_gnd_pins:
+        #     if pin.layer != "metal1":
+        #         continue
+        #     # If above the delay line, route the full width
+        #     left = vector(self.left_gnd_pin.cx(),pin.cy())                
+        #     center = vector(self.center_gnd_pin.cx(),pin.cy())                
+        #     if pin.cy() > self.delay_chain_inst.uy() + self.m1_pitch:
+        #         start = left
+        #     else:
+        #         start = center
+        #     end = vector(self.right_gnd_pin.cx(),pin.cy())
+        #     self.add_segment_center(layer="metal1",
+        #                             start=start,
+        #                             end=end)
+        #     if start == left:
+        #         self.add_via_center(layers=("metal1", "via1", "metal2"),
+        #                             offset=left)
+        #     self.add_via_center(layers=("metal1", "via1", "metal2"),
+        #                         offset=center)
+        #     self.add_via_center(layers=("metal1", "via1", "metal2"),
+        #                         offset=end)
 
 
 
         # Connect the gnd pins of the delay chain to the left rails
-        dc_gnd_pins = self.dc_inst.get_pins("gnd")
+        dc_gnd_pins = self.delay_chain_inst.get_pins("gnd")
         for pin in dc_gnd_pins:
             if pin.layer != "metal1":
                 continue
@@ -520,12 +515,10 @@ class replica_bitline(design.design):
                                     start=start,
                                     end=end)
             self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=start,
-                                rotate=90)
+                                offset=start)
 
             # self.add_via_center(layers=("metal1", "via1", "metal2"),
-            #                     offset=end,
-            #rotate=90)
+            #                     offset=end)
 
         
         # Add via for the inverter
@@ -536,16 +529,14 @@ class replica_bitline(design.design):
         #                         start=start,
         #                         end=end)
         # self.add_via_center(layers=("metal1", "via1", "metal2"),
-        #                     offset=start,
-        #rotate=90)
+        #                     offset=start)
         # self.add_via_center(layers=("metal1", "via1", "metal2"),
-        #                     offset=end,
-        #rotate=90)
+        #                     offset=end)
 
 
         
         # Create RBL rails too
-        rbl_pins = self.rbl_inst.get_pins("gnd")
+        rbl_pins = self.replica_column_inst.get_pins("gnd")
         for pin in rbl_pins:
             if pin.layer != "metal2":
                 continue
@@ -560,7 +551,7 @@ class replica_bitline(design.design):
 
     def add_layout_pins(self):
         """ Route the input and output signal """
-        en_offset = self.dc_inst.get_pin("in").bc()
+        en_offset = self.delay_chain_inst.get_pin("in").bc()
         self.add_layout_pin_segment_center(text="en",
                                            layer="metal2",
                                            start=en_offset,
@@ -587,7 +578,7 @@ class replica_bitline(design.design):
                            height=pin.height(),
                            width=pin.width())
 
-        pin = self.dc_inst.get_pin("out")
+        pin = self.delay_chain_inst.get_pin("out")
         self.add_label_pin(text="delayed_en",
                            layer=pin.layer,
                            offset=pin.ll(),

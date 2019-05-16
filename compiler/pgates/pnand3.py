@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+#Copyright (c) 2016-2019 Regents of the University of California and The Board
+#of Regents for the Oklahoma Agricultural and Mechanical College
+#(acting for and on behalf of Oklahoma State University)
+#All rights reserved.
+#
 import contact
 import pgate
 import debug
@@ -14,8 +21,8 @@ class pnand3(pgate.pgate):
     """
     def __init__(self, name, size=1, height=None):
         """ Creates a cell for a simple 3 input nand """
-        pgate.pgate.__init__(self, name, height)
-        debug.info(2, "create pnand3 structure {0} with size of {1}".format(name, size))
+
+        debug.info(2, "creating pnand3 structure {0} with size of {1}".format(name, size))
         self.add_comment("size: {}".format(size))
 
         # We have trouble pitch matching a 3x sizes to the bitcell...
@@ -30,9 +37,8 @@ class pnand3(pgate.pgate):
         debug.check(size==1,"Size 1 pnand3 is only supported now.")
         self.tx_mults = 1
 
-        self.create_netlist()
-        if not OPTS.netlist_only:
-            self.create_layout()
+        # Creates the netlist and layout
+        pgate.pgate.__init__(self, name, height)
 
         
     def add_pins(self):
@@ -215,12 +221,12 @@ class pnand3(pgate.pgate):
         nmos3_pin = self.nmos3_inst.get_pin("D")        
 
         # Go up to metal2 for ease on all output pins
-        self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                offset=pmos1_pin.center())
-        self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                offset=pmos3_pin.center())
-        self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                offset=nmos3_pin.center())
+        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                            offset=pmos1_pin.center())
+        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                            offset=pmos3_pin.center())
+        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                            offset=nmos3_pin.center())
         
         # PMOS3 and NMOS3 are drain aligned
         self.add_path("metal2",[pmos3_pin.bc(), nmos3_pin.uc()])
@@ -229,8 +235,8 @@ class pnand3(pgate.pgate):
         self.add_path("metal2",[pmos1_pin.bc(), mid_offset, nmos3_pin.uc()])        
 
         # This extends the output to the edge of the cell
-        self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                offset=mid_offset)
+        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                            offset=mid_offset)
         self.add_layout_pin_rect_center(text="Z",
                                         layer="metal1",
                                         offset=mid_offset,

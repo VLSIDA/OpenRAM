@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+#Copyright (c) 2016-2019 Regents of the University of California and The Board
+#of Regents for the Oklahoma Agricultural and Mechanical College
+#(acting for and on behalf of Oklahoma State University)
+#All rights reserved.
+#
 import gdsMill
 import tech
 import math
@@ -81,7 +88,7 @@ class supply_router(router):
         # Determine the rail locations
         self.route_supply_rails(self.vdd_name,1)
         print_time("Routing supply rails",datetime.now(), start_time, 3)
-
+        
         start_time = datetime.now()
         self.route_simple_overlaps(vdd_name)
         self.route_simple_overlaps(gnd_name)
@@ -94,10 +101,23 @@ class supply_router(router):
         self.route_pins_to_rails(gnd_name)
         print_time("Maze routing supplies",datetime.now(), start_time, 3)
         #self.write_debug_gds("final.gds",False)  
+
+        # Did we route everything??
+        if not self.check_all_routed(vdd_name):
+            return False
+        if not self.check_all_routed(gnd_name):
+            return False
         
         return True
 
 
+    def check_all_routed(self, pin_name):
+        """ 
+        Check that all pin groups are routed.
+        """
+        for pg in self.pin_groups[pin_name]:
+            if not pg.is_routed():
+                return False
     
     def route_simple_overlaps(self, pin_name):
         """
@@ -146,13 +166,7 @@ class supply_router(router):
             # We need to move this rail to the other layer for the z indices to match
             # during the intersection. This also makes a copy.
             new_r1 = {vector3d(i.x,i.y,1) for i in r1}
-            
-            # If horizontal, subtract off the left/right track to prevent end of rail via
-            #ll = grid_utils.get_lower_left(new_r1)
-            #ur = grid_utils.get_upper_right(new_r1)
-            grid_utils.remove_border(new_r1, direction.EAST)
-            grid_utils.remove_border(new_r1, direction.WEST)
-                
+
             for i2,r2 in enumerate(all_rails):
                 # Never compare to yourself
                 if i1==i2:
@@ -163,16 +177,11 @@ class supply_router(router):
                 if e.z==0:
                     continue
 
-                # Need to maek a copy to consider via overlaps to ignore the end-caps
-                new_r2 = r2.copy()
-                grid_utils.remove_border(new_r2, direction.NORTH)
-                grid_utils.remove_border(new_r2, direction.SOUTH)                
-
-                # Determine if we hhave sufficient overlap and, if so,
+                # Determine if we have sufficient overlap and, if so,
                 # remember:
                 # the indices to determine a rail is connected to another
                 # the overlap area for placement of a via
-                overlap = new_r1 & new_r2
+                overlap = new_r1 & r2
                 if len(overlap) >= 1:
                     debug.info(3,"Via overlap {0} {1}".format(len(overlap),overlap))
                     connections.update([i1,i2])
@@ -213,7 +222,7 @@ class supply_router(router):
             ur = grid_utils.get_upper_right(rail)        
             z = ll.z
             pin = self.compute_pin_enclosure(ll, ur, z, name)
-            debug.info(2,"Adding supply rail {0} {1}->{2} {3}".format(name,ll,ur,pin))
+            debug.info(3,"Adding supply rail {0} {1}->{2} {3}".format(name,ll,ur,pin))
             self.cell.add_layout_pin(text=name,
                                      layer=pin.layer,
                                      offset=pin.ll(),
@@ -270,7 +279,8 @@ class supply_router(router):
         Find a start location, probe in the direction, and see if the rail is big enough
         to contain a via, and, if so, add it.
         """
-        start_wave = self.find_supply_rail_start(name, seed_wave, direct)
+        # Sweep to find an initial unblocked valid wave
+        start_wave = self.rg.find_start_wave(seed_wave, direct)
         
         # This means there were no more unblocked grids in the row/col
         if not start_wave:
@@ -284,17 +294,6 @@ class supply_router(router):
         # as it will be used to find the next start location
         return wave_path
 
-    def find_supply_rail_start(self, name, seed_wave, direct):
-        """
-        This finds the first valid starting location and routes a supply rail
-        in the given direction.
-        It returns the space after the end of the rail to seed another call for multiple
-        supply rails in the same "track" when there is a blockage.
-        """
-        # Sweep to find an initial unblocked valid wave
-        start_wave = self.rg.find_start_wave(seed_wave, len(seed_wave), direct)
-
-        return start_wave
     
     def probe_supply_rail(self, name, start_wave, direct):
         """
@@ -400,7 +399,10 @@ class supply_router(router):
 
             # Actually run the A* router
             if not self.run_router(detour_scale=5):
-                self.write_debug_gds()
+                self.write_debug_gds("debug_route.gds",False)
+                
+            #if index==3 and pin_name=="vdd":
+            #    self.write_debug_gds("route.gds",False)
 
     
     def add_supply_rail_target(self, pin_name):

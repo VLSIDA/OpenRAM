@@ -1,7 +1,14 @@
+# See LICENSE for licensing information.
+#
+#Copyright (c) 2016-2019 Regents of the University of California and The Board
+#of Regents for the Oklahoma Agricultural and Mechanical College
+#(acting for and on behalf of Oklahoma State University)
+#All rights reserved.
+#
 """
 This is a DRC/LVS/PEX interface file for magic + netgen. 
 
-We include the tech file for SCN3ME_SUBM in the tech directory,
+We include the tech file for SCN4M_SUBM in the tech directory,
 that is included in OpenRAM during DRC. 
 You can use this interactively by appending the magic system path in 
 your .magicrc file
@@ -19,14 +26,15 @@ import time
 import shutil
 import debug
 from globals import OPTS
-import subprocess
+from run_script import *
 
 # Keep track of statistics
 num_drc_runs = 0
 num_lvs_runs = 0
 num_pex_runs = 0
 
-def write_magic_script(cell_name, gds_name, extract=False, final_verification=False):
+    
+def write_magic_script(cell_name, extract=False, final_verification=False):
     """ Write a magic script to perform DRC and optionally extraction. """
 
     global OPTS
@@ -37,7 +45,7 @@ def write_magic_script(cell_name, gds_name, extract=False, final_verification=Fa
     f.write("{} -dnull -noconsole << EOF\n".format(OPTS.drc_exe[1]))
     f.write("gds polygon subcell true\n")
     f.write("gds warning default\n")
-    f.write("gds read {}\n".format(gds_name))
+    f.write("gds read {}.gds\n".format(cell_name))
     f.write("load {}\n".format(cell_name))
     # Flatten the cell to get rid of DRCs spanning multiple layers
     # (e.g. with routes)
@@ -53,6 +61,7 @@ def write_magic_script(cell_name, gds_name, extract=False, final_verification=Fa
     f.write("drc catchup\n")
     f.write("drc count total\n")
     f.write("drc count\n")
+    f.write("port makeall\n")
     if not extract:
         pre = "#"
     else:
@@ -84,15 +93,17 @@ def write_magic_script(cell_name, gds_name, extract=False, final_verification=Fa
     f.close()
     os.system("chmod u+x {}".format(run_file))
 
-def write_netgen_script(cell_name, sp_name):
+    
+def write_netgen_script(cell_name):
     """ Write a netgen script to perform LVS. """
 
     global OPTS
 
-    setup_file = OPTS.openram_tech + "mag_lib/setup.tcl"
-    if os.path.exists(setup_file):
+    setup_file = "setup.tcl"
+    full_setup_file = OPTS.openram_tech + "mag_lib/" + setup_file
+    if os.path.exists(full_setup_file):
         # Copy setup.tcl file into temp dir
-        shutil.copy(setup_file, OPTS.openram_temp)
+        shutil.copy(full_setup_file, OPTS.openram_temp)
     else:
         setup_file = 'nosetup'
 
@@ -101,14 +112,8 @@ def write_netgen_script(cell_name, sp_name):
     f.write("#!/bin/sh\n")
     f.write("{} -noconsole << EOF\n".format(OPTS.lvs_exe[1]))
     f.write("readnet spice {0}.spice\n".format(cell_name))
-    f.write("readnet spice {0}\n".format(sp_name))
-    # Allow some flexibility in W size because magic will snap to a lambda grid
-    # This can also cause disconnects unfortunately!
-    # f.write("property {{{0}{1}.spice nfet}} tolerance {{w 0.1}}\n".format(OPTS.openram_temp,
-    #                                                                     cell_name))
-    # f.write("property {{{0}{1}.spice pfet}} tolerance {{w 0.1}}\n".format(OPTS.openram_temp,
-    #                                                                     cell_name))
-    f.write("lvs {0}.spice {{{1} {0}}} {2} {0}.lvs.report\n".format(cell_name, sp_name, setup_file))
+    f.write("readnet spice {0}.sp\n".format(cell_name))
+    f.write("lvs {{{0}.spice {0}}} {{{0}.sp {0}}} {1} {0}.lvs.report\n".format(cell_name, setup_file))
     f.write("quit\n")
     f.write("EOF\n")
     f.close()
@@ -121,6 +126,10 @@ def run_drc(cell_name, gds_name, extract=True, final_verification=False):
     global num_drc_runs
     num_drc_runs += 1
 
+    # Copy file to local dir if it isn't already
+    if os.path.dirname(gds_name)!=OPTS.openram_temp.rstrip('/'):
+        shutil.copy(gds_name, OPTS.openram_temp)
+    
     # Copy .magicrc file into temp dir
     magic_file = OPTS.openram_tech + "mag_lib/.magicrc"
     if os.path.exists(magic_file):
@@ -128,20 +137,9 @@ def run_drc(cell_name, gds_name, extract=True, final_verification=False):
     else:
         debug.warning("Could not locate .magicrc file: {}".format(magic_file))
 
-    write_magic_script(cell_name, gds_name, extract, final_verification)
-    
-    # run drc
-    cwd = os.getcwd()
-    os.chdir(OPTS.openram_temp)
-    errfile = "{0}{1}.drc.err".format(OPTS.openram_temp, cell_name)
-    outfile = "{0}{1}.drc.summary".format(OPTS.openram_temp, cell_name)
+    write_magic_script(cell_name, extract, final_verification)
 
-    cmd = "{0}run_drc.sh 2> {1} 1> {2}".format(OPTS.openram_temp,
-                                               errfile,
-                                               outfile)
-    debug.info(2, cmd)
-    os.system(cmd)
-    os.chdir(cwd)
+    (outfile, errfile, resultsfile) = run_script(cell_name, "drc")
 
     # Check the result for these lines in the summary:
     # Total DRC errors found: 0
@@ -185,23 +183,17 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
 
     global num_lvs_runs
     num_lvs_runs += 1
-    
-    write_netgen_script(cell_name, sp_name)
-    
-    # run LVS
-    cwd = os.getcwd()
-    os.chdir(OPTS.openram_temp)
-    errfile = "{0}{1}.lvs.err".format(OPTS.openram_temp, cell_name)
-    outfile = "{0}{1}.lvs.out".format(OPTS.openram_temp, cell_name)
-    resultsfile = "{0}{1}.lvs.report".format(OPTS.openram_temp, cell_name)    
 
-    cmd = "{0}run_lvs.sh lvs 2> {1} 1> {2}".format(OPTS.openram_temp,
-                                                   errfile,
-                                                   outfile)
-    debug.info(2, cmd)
-    os.system(cmd)
-    os.chdir(cwd)
+    # Copy file to local dir if it isn't already
+    if os.path.dirname(gds_name)!=OPTS.openram_temp.rstrip('/'):
+        shutil.copy(gds_name, OPTS.openram_temp)
+    if os.path.dirname(sp_name)!=OPTS.openram_temp.rstrip('/'):
+        shutil.copy(sp_name, OPTS.openram_temp)
+    
+    write_netgen_script(cell_name)
 
+    (outfile, errfile, resultsfile) = run_script(cell_name, "lvs")
+    
     total_errors = 0
     
     # check the result for these lines in the summary:

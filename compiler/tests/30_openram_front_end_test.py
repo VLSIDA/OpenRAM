@@ -20,11 +20,10 @@ class openram_test(openram_test):
     def runTest(self):
         OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
         globals.init_openram("{0}/tests/config_{1}".format(OPENRAM_HOME,OPTS.tech_name))
-        
-        debug.info(1, "Testing top-level openram.py with 2-bit, 16 word SRAM.")
+
+        debug.info(1, "Testing top-level front-end openram.py with 2-bit, 16 word SRAM.")
         out_file = "testsram"
-        # make a temp directory for output
-        out_path = "/tmp/testsram_{0}_{1}_{2}/".format(OPTS.tech_name,getpass.getuser(),os.getpid())
+        out_path = "/tmp/testsram_{0}_{1}_{2}".format(OPTS.tech_name,getpass.getuser(),os.getpid())
 
         # make sure we start without the files existing
         if os.path.exists(out_path):
@@ -49,7 +48,7 @@ class openram_test(openram_test):
             exe_name = "{0}/openram.py ".format(OPENRAM_HOME)
         else:
             exe_name = "coverage run -p {0}/openram.py ".format(OPENRAM_HOME) 
-        config_name = "{0}config_{1}.py".format(OPENRAM_HOME + "/tests/",OPTS.tech_name)
+        config_name = "{0}config_{1}_front_end.py".format(OPENRAM_HOME + "/tests/",OPTS.tech_name)
         cmd = "{0} -n -o {1} -p {2} {3} {4} 2>&1 > {5}/output.log".format(exe_name,
                                                                           out_file,
                                                                           out_path,
@@ -59,11 +58,16 @@ class openram_test(openram_test):
         debug.info(1, cmd)
         os.system(cmd)
         
-        # assert an error until we actually check a resul
-        for extension in ["gds", "v", "lef", "sp"]:
+        # assert an error until we actually check a result
+        for extension in ["v", "lef", "sp"]:
             filename = "{0}/{1}.{2}".format(out_path,out_file,extension)
             debug.info(1,"Checking for file: " + filename)
             self.assertEqual(os.path.exists(filename),True)
+        # assert an error if we output the incomplete gds!
+        for extension in ["gds"]:
+            filename = "{0}/{1}.{2}".format(out_path,out_file,extension)
+            debug.info(1,"Checking file does NOT exist: " + filename)
+            self.assertEqual(os.path.exists(filename),False)
 
         # Make sure there is any .lib file
         import glob

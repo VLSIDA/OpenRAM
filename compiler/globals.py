@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+#Copyright (c) 2016-2019 Regents of the University of California and The Board
+#of Regents for the Oklahoma Agricultural and Mechanical College
+#(acting for and on behalf of Oklahoma State University)
+#All rights reserved.
+#
 """
 This is called globals.py, but it actually parses all the arguments and performs
 the global OpenRAM setup as well.
@@ -477,11 +484,20 @@ def report_status():
         debug.print_raw("Netlist only mode (no physical design is being done, netlist_only=False to disable).")
     
     if not OPTS.route_supplies:
-        debug.print_raw("Design supply routing skipped for run-time (incomplete GDS will not be saved, route_supplies=True to enable).")
+        debug.print_raw("Design supply routing skipped for run-time (incomplete GDS will not be saved) (route_supplies=True to enable).")
         
     if not OPTS.inline_lvsdrc:
         debug.print_raw("DRC/LVS/PEX is only run on the top-level design to save run-time (inline_lvsdrc=True to enable).")
 
     if not OPTS.check_lvsdrc:
         debug.print_raw("DRC/LVS/PEX is disabled (check_lvsdrc=True to enable).")
+
+    if OPTS.analytical_delay:
+        debug.print_raw("Characterization is disabled (using analytical delay models) (analytical_delay=False to enable).")
+    else:
+        if OPTS.spice_name!="":
+            debug.print_raw("Performing simulation-based characterization with {}".format(OPTS.spice_name))
+        if OPTS.trim_netlist:
+            debug.print_raw("Trimming netlist to speed up characterization (trim_netlist=False to disable).")
+        
         

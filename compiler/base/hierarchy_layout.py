@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+#Copyright (c) 2016-2019 Regents of the University of California and The Board
+#of Regents for the Oklahoma Agricultural and Mechanical College
+#(acting for and on behalf of Oklahoma State University)
+#All rights reserved.
+#
 import itertools
 import geometry
 import gdsMill
@@ -355,75 +362,59 @@ class layout():
                   layer_stack=layers, 
                   position_list=coordinates)
 
-    def add_contact(self, layers, offset, size=[1,1], mirror="R0", rotate=0, implant_type=None, well_type=None):
-        """ This is just an alias for a via."""
-        return self.add_via(layers=layers,
-                            offset=offset,
-                            size=size,
-                            mirror=mirror,
-                            rotate=rotate,
-                            implant_type=implant_type,
-                            well_type=well_type)
+    def get_preferred_direction(self, layer):
+        """ Return the preferred routing directions """
+        if layer in ["metal1", "metal3", "metal5"]:
+            return "H"
+        elif layer in ["active", "poly", "metal2", "metal4"]:
+            return "V"
+        else:
+            return "N"
 
-    def add_contact_center(self, layers, offset, size=[1,1], mirror="R0", rotate=0, implant_type=None, well_type=None):
-        """ This is just an alias for a via."""
-        return self.add_via_center(layers=layers,
-                                   offset=offset,
-                                   size=size,
-                                   mirror=mirror,
-                                   rotate=rotate,
-                                   implant_type=implant_type,
-                                   well_type=well_type)      
-    
-    def add_via(self, layers, offset, size=[1,1], mirror="R0", rotate=0, implant_type=None, well_type=None):
+        
+    def add_via(self, layers, offset, size=[1,1], directions=None, implant_type=None, well_type=None):
         """ Add a three layer via structure. """
+
+        if directions==None:
+            directions = (self.get_preferred_direction(layers[0]), self.get_preferred_direction(layers[2]))
+            
         from sram_factory import factory
         via = factory.create(module_type="contact",
                              layer_stack=layers,
                              dimensions=size,
+                             directions=directions,
                              implant_type=implant_type,
                              well_type=well_type)
         self.add_mod(via)
         inst=self.add_inst(name=via.name, 
                            mod=via, 
-                           offset=offset,
-                           mirror=mirror,
-                           rotate=rotate)
+                           offset=offset)
         # We don't model the logical connectivity of wires/paths
         self.connect_inst([])
         return inst
 
-    def add_via_center(self, layers, offset, size=[1,1], mirror="R0", rotate=0, implant_type=None, well_type=None):
+    def add_via_center(self, layers, offset, directions=None, size=[1,1], implant_type=None, well_type=None):
         """ Add a three layer via structure by the center coordinate accounting for mirroring and rotation. """
+
+        if directions==None:
+            directions = (self.get_preferred_direction(layers[0]), self.get_preferred_direction(layers[2]))
+            
         from sram_factory import factory
         via = factory.create(module_type="contact",
                              layer_stack=layers,
                              dimensions=size,
+                             directions=directions,
                              implant_type=implant_type,
                              well_type=well_type)
         height = via.height
         width = via.width
-        debug.check(mirror=="R0","Use rotate to rotate vias instead of mirror.")
         
-        if rotate==0:
-            corrected_offset = offset + vector(-0.5*width,-0.5*height)
-        elif rotate==90:
-            corrected_offset = offset + vector(0.5*height,-0.5*width)
-        elif rotate==180:
-            corrected_offset = offset + vector(0.5*width,0.5*height)
-        elif rotate==270:
-            corrected_offset = offset + vector(-0.5*height,0.5*width)
-        else:
-            debug.error("Invalid rotation argument.",-1)
-            
+        corrected_offset = offset + vector(-0.5*width,-0.5*height)
 
-        #print(rotate,offset,"->",corrected_offset)
         self.add_mod(via)
         inst=self.add_inst(name=via.name, 
                            mod=via, 
-                           offset=corrected_offset,
-                           mirror=mirror,
-                           rotate=rotate)
+                           offset=corrected_offset)
         # We don't model the logical connectivity of wires/paths
         self.connect_inst([])
         return inst
@@ -748,8 +739,7 @@ class layout():
                 mid = vector(trunk_offset.x, pin.center().y)
                 self.add_path(layer_stack[0], [pin.center(), mid])
                 self.add_via_center(layers=layer_stack,
-                                    offset=mid,
-                                    rotate=90)
+                                    offset=mid)
         
     
     def create_channel_route(self, netlist,
@@ -926,20 +916,27 @@ class layout():
 
                 
         
-    def add_power_pin(self, name, loc, rotate=90, start_layer="metal1"):
+    def add_power_pin(self, name, loc, vertical=False, start_layer="metal1"):
         """ 
         Add a single power pin from M3 down to M1 at the given center location.
         The starting layer is specified to determine which vias are needed.
         """
-        
+        if vertical:
+            direction=("V","V")
+        else:
+            direction=("H","H")
+            
         if start_layer=="metal1":
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=loc,
-                                rotate=float(rotate))
+                                directions=direction)
+
+
         if start_layer=="metal1" or start_layer=="metal2":
             via=self.add_via_center(layers=("metal2", "via2", "metal3"),
                                     offset=loc,
-                                    rotate=float(rotate))
+                                    directions=direction) 
+
         if start_layer=="metal3":
             self.add_layout_pin_rect_center(text=name,
                                             layer="metal3",

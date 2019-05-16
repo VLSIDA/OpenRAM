@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+#Copyright (c) 2016-2019 Regents of the University of California and The Board
+#of Regents for the Oklahoma Agricultural and Mechanical College
+#(acting for and on behalf of Oklahoma State University)
+#All rights reserved.
+#
 """
 This provides a set of useful generic types for the gdsMill interface. 
 """
@@ -371,8 +378,8 @@ class rectangle(geometry):
 
     def __str__(self):
         """ override print function output """
-        return "rect: @" + str(self.offset) + " " + str(self.width) + "x" + str(self.height) + " layer=" +str(self.layerNumber)
+        return self.__repr__()
 
     def __repr__(self):
         """ override print function output """
-        return "( rect: @" + str(self.offset) + " " + str(self.width) + "x" + str(self.height) + " layer=" + str(self.layerNumber) + " )"
+        return "( rect: @" + str(self.offset) + " WxH=" + str(self.width) + "x" + str(self.height) + " layer=" + str(self.layerNumber) + " )"

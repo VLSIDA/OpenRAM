@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+#Copyright (c) 2016-2019 Regents of the University of California and The Board
+#of Regents for the Oklahoma Agricultural and Mechanical College
+#(acting for and on behalf of Oklahoma State University)
+#All rights reserved.
+#
 from math import log
 import design
 from tech import drc, parameter
@@ -615,11 +622,9 @@ class control_logic(design.design):
         mid1 = vector(in_pos.x,out_pos.y)
         self.add_wire(("metal3","via2","metal2"),[out_pos, mid1, in_pos])
         self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=out_pos,
-                            rotate=90)
+                            offset=out_pos)
         self.add_via_center(layers=("metal2","via2","metal3"),
-                            offset=out_pos,
-                            rotate=90)
+                            offset=out_pos)
         
     def create_pen_row(self):
         if self.port_type == "rw":
@@ -759,8 +764,7 @@ class control_logic(design.design):
         rail_pos = vector(self.rail_offsets["clk_buf"].x, mid_pos.y)
         self.add_wire(("metal1","via1","metal2"),[in_pos, mid_pos, rail_pos])
         self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=rail_pos,
-                            rotate=90)
+                            offset=rail_pos)
 
         self.copy_layout_pin(self.ctrl_dff_inst, "din_0", "csb")
         if (self.port_type == "rw"):

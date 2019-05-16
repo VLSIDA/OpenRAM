@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+#Copyright (c) 2016-2019 Regents of the University of California and The Board
+#of Regents for the Oklahoma Agricultural and Mechanical College
+#(acting for and on behalf of Oklahoma State University)
+#All rights reserved.
+#
 import debug
 import re
 import os
@@ -28,7 +35,10 @@ class spice():
         # Spice format)
         self.conns = []
         # Keep track of any comments to add the the spice
-        self.comments = []
+        try:
+            self.commments
+        except:
+            self.comments = []
 
         self.sp_read()
 
@@ -38,7 +48,12 @@ class spice():
 
     def add_comment(self, comment):
         """ Add a comment to the spice file """
-        self.comments.append(comment)
+        try:
+            self.commments
+        except:
+            self.comments = []
+        else:
+            self.comments.append(comment)
         
     def add_pin(self, name, pin_type="INOUT"):
         """ Adds a pin to the pins list. Default type is INOUT signal. """

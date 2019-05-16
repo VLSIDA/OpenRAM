@@ -68,24 +68,24 @@ class delay(simulation):
         trig_delay_name = "clk{0}"
         targ_name = "{0}{1}_{2}".format(self.dout_name,"{}",self.probe_data) #Empty values are the port and probe data bit
         self.read_lib_meas.append(delay_measure("delay_lh", trig_delay_name, targ_name, "RISE", "RISE", measure_scale=1e9))
-        self.read_lib_meas[-1].meta_str = "read1" #Used to index time delay values when measurements written to spice file.
+        self.read_lib_meas[-1].meta_str = sram_op.READ_ONE #Used to index time delay values when measurements written to spice file.
         self.read_lib_meas.append(delay_measure("delay_hl", trig_delay_name, targ_name, "FALL", "FALL", measure_scale=1e9))
-        self.read_lib_meas[-1].meta_str = "read0"
+        self.read_lib_meas[-1].meta_str = sram_op.READ_ZERO
         self.delay_meas = self.read_lib_meas[:] #For debugging, kept separated
         
         self.read_lib_meas.append(slew_measure("slew_lh", targ_name, "RISE", measure_scale=1e9))
-        self.read_lib_meas[-1].meta_str = "read1"
+        self.read_lib_meas[-1].meta_str = sram_op.READ_ONE
         self.read_lib_meas.append(slew_measure("slew_hl", targ_name, "FALL", measure_scale=1e9))
-        self.read_lib_meas[-1].meta_str = "read0"
+        self.read_lib_meas[-1].meta_str = sram_op.READ_ZERO
         
         self.read_lib_meas.append(power_measure("read1_power", "RISE", measure_scale=1e3))
-        self.read_lib_meas[-1].meta_str = "read1"
+        self.read_lib_meas[-1].meta_str = sram_op.READ_ONE
         self.read_lib_meas.append(power_measure("read0_power", "FALL", measure_scale=1e3))
-        self.read_lib_meas[-1].meta_str = "read0"
+        self.read_lib_meas[-1].meta_str = sram_op.READ_ZERO
         
         #This will later add a half-period to the spice time delay. Only for reading 0.
         for obj in self.read_lib_meas:
-            if obj.meta_str is "read0":
+            if obj.meta_str is sram_op.READ_ZERO:
                 obj.meta_add_delay = True
 
         # trig_name = "Xsram.s_en{}" #Sense amp enable
@@ -113,13 +113,13 @@ class delay(simulation):
         """
         self.bitline_volt_meas = []
         #Bitline voltage measures
-        self.bitline_volt_meas.append(voltage_at_measure("v_bl_name", 
-                                                       self.bl_name)) 
-        self.bitline_volt_meas[-1].meta_str = 'read0'
+        self.bitline_volt_meas.append(voltage_at_measure("v_bl", 
+                                                         self.bl_name))
+        self.bitline_volt_meas[-1].meta_str = sram_op.READ_ZERO
         
-        self.bitline_volt_meas.append(voltage_at_measure("v_br_name", 
+        self.bitline_volt_meas.append(voltage_at_measure("v_br", 
                                                        self.br_name)) 
-        self.bitline_volt_meas[-1].meta_str = 'read1'
+        self.bitline_volt_meas[-1].meta_str = sram_op.READ_ONE
         return self.bitline_volt_meas
         
     def create_write_port_measurement_objects(self):
@@ -127,9 +127,9 @@ class delay(simulation):
         self.write_lib_meas = []
 
         self.write_lib_meas.append(power_measure("write1_power", "RISE", measure_scale=1e3))
-        self.write_lib_meas[-1].meta_str = "write1"
+        self.write_lib_meas[-1].meta_str = sram_op.WRITE_ONE
         self.write_lib_meas.append(power_measure("write0_power", "FALL", measure_scale=1e3))
-        self.write_lib_meas[-1].meta_str = "write0"
+        self.write_lib_meas[-1].meta_str = sram_op.WRITE_ZERO
         
         write_measures = []
         write_measures.append(self.write_lib_meas)
@@ -358,10 +358,10 @@ class delay(simulation):
         """Get the measurement values that can either vary from simulation to simulation (vdd, address) or port to port (time delays)"""
         #Return value is intended to match the delay measure format:  trig_td, targ_td, vdd, port
         #vdd is arguably constant as that is true for a single lib file.
-        if delay_obj.meta_str == "read0":
+        if delay_obj.meta_str == sram_op.READ_ZERO:
             #Falling delay are measured starting from neg. clk edge. Delay adjusted to that.
             meas_cycle_delay = self.cycle_times[self.measure_cycles[port][delay_obj.meta_str]]
-        elif delay_obj.meta_str == "read1":
+        elif delay_obj.meta_str == sram_op.READ_ONE:
             meas_cycle_delay = self.cycle_times[self.measure_cycles[port][delay_obj.meta_str]]
         else:
             debug.error("Unrecognised delay Index={}".format(delay_obj.meta_str),1)
@@ -383,10 +383,10 @@ class delay(simulation):
     def get_volt_at_measure_variants(self, port, volt_meas):
         """Get the measurement values that can either vary port to port (time delays)"""
         #Only checking 0 value reads for now.
-        if volt_meas.meta_str == "read0":
+        if volt_meas.meta_str == sram_op.READ_ZERO:
             #Falling delay are measured starting from neg. clk edge. Delay adjusted to that.
             meas_cycle = self.cycle_times[self.measure_cycles[port][volt_meas.meta_str]]
-        elif volt_meas.meta_str == "read1":
+        elif volt_meas.meta_str == sram_op.READ_ONE:
             meas_cycle = self.cycle_times[self.measure_cycles[port][volt_meas.meta_str]]
         else:
             debug.error("Unrecognised delay Index={}".format(volt_meas.meta_str),1)
@@ -397,7 +397,7 @@ class delay(simulation):
     def get_volt_when_measure_variants(self, port, volt_meas):
         """Get the measurement values that can either vary port to port (time delays)"""
         #Only checking 0 value reads for now.
-        t_trig = meas_cycle_delay = self.cycle_times[self.measure_cycles[port]["read0"]]
+        t_trig = meas_cycle_delay = self.cycle_times[self.measure_cycles[port][sram_op.READ_ZERO]]
 
         return (t_trig, self.vdd_voltage, port)
     
@@ -621,10 +621,10 @@ class delay(simulation):
             if type(val) != float:
                 continue
 
-            if meas.meta_str == 'read1' and val < tech.spice["v_threshold_typical"]:
+            if meas.meta_str == sram_op.READ_ONE and val < tech.spice["v_threshold_typical"]:
                 success = False
                 debug.info(1, "Debug measurement failed. Value {}v was read on read 1 cycle.".format(val))
-            elif meas.meta_str == 'read0' and val > self.vdd_voltage-tech.spice["v_threshold_typical"]:
+            elif meas.meta_str == sram_op.READ_ZERO and val > self.vdd_voltage-tech.spice["v_threshold_typical"]:
                 success = False
                 debug.info(1, "Debug measurement failed. Value {}v was read on read 0 cycle.".format(val))
                 
@@ -943,7 +943,7 @@ class delay(simulation):
 
         self.add_write("W data 0 address {} to write value".format(self.probe_address),
                        self.probe_address,data_zeros,write_port)
-        self.measure_cycles[write_port]["write0"] = len(self.cycle_times)-1
+        self.measure_cycles[write_port][sram_op.WRITE_ZERO] = len(self.cycle_times)-1
         
         # This also ensures we will have a H->L transition on the next read
         self.add_read("R data 1 address {} to set DOUT caps".format(inverse_address),
@@ -951,14 +951,14 @@ class delay(simulation):
 
         self.add_read("R data 0 address {} to check W0 worked".format(self.probe_address),
                       self.probe_address,data_zeros,read_port)
-        self.measure_cycles[read_port]["read0"] = len(self.cycle_times)-1              
+        self.measure_cycles[read_port][sram_op.READ_ZERO] = len(self.cycle_times)-1              
         
         self.add_noop_all_ports("Idle cycle (if read takes >1 cycle)",
                       inverse_address,data_zeros)
 
         self.add_write("W data 1 address {} to write value".format(self.probe_address),
                        self.probe_address,data_ones,write_port)
-        self.measure_cycles[write_port]["write1"] = len(self.cycle_times)-1
+        self.measure_cycles[write_port][sram_op.WRITE_ONE] = len(self.cycle_times)-1
 
         self.add_write("W data 0 address {} to clear DIN caps".format(inverse_address),
                        inverse_address,data_zeros,write_port)
@@ -969,7 +969,7 @@ class delay(simulation):
         
         self.add_read("R data 1 address {} to check W1 worked".format(self.probe_address),
                       self.probe_address,data_zeros,read_port)
-        self.measure_cycles[read_port]["read1"] = len(self.cycle_times)-1                
+        self.measure_cycles[read_port][sram_op.READ_ONE] = len(self.cycle_times)-1                
         
         self.add_noop_all_ports("Idle cycle (if read takes >1 cycle))",
                       self.probe_address,data_zeros)

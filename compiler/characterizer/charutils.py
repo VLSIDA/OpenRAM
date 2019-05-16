@@ -8,7 +8,13 @@
 import re
 import debug
 from globals import OPTS
+from enum import Enum
 
+class sram_op(Enum):
+    READ_ZERO = 0
+    READ_ONE = 1
+    WRITE_ZERO = 2
+    WRITE_ONE = 3
         
 def relative_compare(value1,value2,error_tolerance=0.001):
     """ This is used to compare relative values for convergence. """

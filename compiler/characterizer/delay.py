@@ -174,7 +174,7 @@ class delay(simulation):
         #Generate new graph every analysis as edges might change depending on test bit
         self.graph = graph_util.timing_graph()
         self.sram.build_graph(self.graph,"X{}".format(self.sram.name),self.pins)
-        #debug.info(1,"{}".format(graph))
+        #debug.info(1,"{}".format(self.graph))
         port = 0
         self.graph.get_all_paths('{}{}'.format(tech.spice["clk"], port), \
                      '{}{}_{}'.format(self.dout_name, port, self.probe_data))
@@ -605,6 +605,7 @@ class delay(simulation):
         for meas in self.bitline_volt_meas:
             val = meas.retrieve_measure(port=port)
             bitline_results[meas.meta_str] = val
+            debug.info(1,"{}={}".format(meas.name,val))
                 
             
         for meas in self.debug_volt_meas:
@@ -616,11 +617,9 @@ class delay(simulation):
             if meas.meta_str == 'read1' and val < tech.spice["v_threshold_typical"]:
                 success = False
                 debug.info(1, "Debug measurement failed. Value {}v was read on read 1 cycle.".format(val))
-                break
             elif meas.meta_str == 'read0' and val > self.vdd_voltage-tech.spice["v_threshold_typical"]:
                 success = False
                 debug.info(1, "Debug measurement failed. Value {}v was read on read 0 cycle.".format(val))
-                break
                 
             #If the bitlines have a correct value while the output does not then that is a 
             #sen error. FIXME: there are other checks that can be done to solidfy this conclusion.
@@ -831,31 +830,23 @@ class delay(simulation):
         # Make a copy in temp for debugging
         shutil.copy(self.sp_file, self.sim_sp_file)
 
-
-
-    def analyze(self,probe_address, probe_data, slews, loads):
-        """
-        Main function to characterize an SRAM for a table. Computes both delay and power characterization.
-        """
-        #Dict to hold all characterization values
-        char_sram_data = {}
-        
+    def analysis_init(self, probe_address, probe_data):
+        """Sets values which are dependent on the data address/bit being tested."""
         self.set_probe(probe_address, probe_data)
         self.create_graph()
         self.create_measurement_names()
         self.create_measurement_objects()
         
+    def analyze(self, probe_address, probe_data, slews, loads):
+        """
+        Main function to characterize an SRAM for a table. Computes both delay and power characterization.
+        """
+        #Dict to hold all characterization values
+        char_sram_data = {}
+        self.analysis_init(probe_address, probe_data)
+        
         self.load=max(loads)
         self.slew=max(slews)
-        # This is for debugging a full simulation
-        # debug.info(0,"Debug simulation running...")
-        # target_period=50.0
-        # feasible_delay_lh=0.059083183
-        # feasible_delay_hl=0.17953789
-        # load=1.6728
-        # slew=0.04
-        # self.try_period(target_period, feasible_delay_lh, feasible_delay_hl)
-        # sys.exit(1)
         
         # 1) Find a feasible period and it's corresponding delays using the trimmed array.
         feasible_delays = self.find_feasible_period()

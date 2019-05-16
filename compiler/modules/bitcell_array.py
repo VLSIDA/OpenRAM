@@ -198,8 +198,9 @@ class bitcell_array(design.design):
         """Excludes bits in column from being added to graph except target"""
         #Function is not robust with column mux configurations
         for row in range(self.row_size):
-            if row == targ_row:
-                continue
-            self.graph_inst_exclude.add(self.cell_inst[row,targ_col])
+            for col in range(self.column_size):
+                if row == targ_row and col == targ_col:
+                    continue
+                self.graph_inst_exclude.add(self.cell_inst[row,col])
             
             

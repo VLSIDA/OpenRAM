@@ -113,11 +113,17 @@ class delay(simulation):
         """
         self.bitline_volt_meas = []
         #Bitline voltage measures
-        self.bitline_volt_meas.append(voltage_at_measure("v_bl", 
+        self.bitline_volt_meas.append(voltage_at_measure("v_bl_READ_ZERO", 
                                                          self.bl_name))
         self.bitline_volt_meas[-1].meta_str = sram_op.READ_ZERO
+        self.bitline_volt_meas.append(voltage_at_measure("v_br_READ_ZERO", 
+                                                         self.br_name))
+        self.bitline_volt_meas[-1].meta_str = sram_op.READ_ZERO
         
-        self.bitline_volt_meas.append(voltage_at_measure("v_br", 
+        self.bitline_volt_meas.append(voltage_at_measure("v_bl_READ_ONE", 
+                                                       self.bl_name)) 
+        self.bitline_volt_meas[-1].meta_str = sram_op.READ_ONE
+        self.bitline_volt_meas.append(voltage_at_measure("v_br_READ_ONE", 
                                                        self.br_name)) 
         self.bitline_volt_meas[-1].meta_str = sram_op.READ_ONE
         return self.bitline_volt_meas
@@ -608,39 +614,52 @@ class delay(simulation):
                 break
                 
         #FIXME: these checks need to be re-done to be more robust against possible errors        
-        bitline_results = {}
+        bl_vals = {}
+        br_vals = {}
         for meas in self.bitline_volt_meas:
             val = meas.retrieve_measure(port=port)
-            bitline_results[meas.meta_str] = val
+            if self.bl_name == meas.targ_name_no_port:
+                bl_vals[meas.meta_str] = val
+            elif self.br_name == meas.targ_name_no_port: 
+                br_vals[meas.meta_str] = val
+
             debug.info(1,"{}={}".format(meas.name,val))
                 
-            
+        bl_check = False    
         for meas in self.debug_volt_meas:
             val = meas.retrieve_measure(port=port)
             debug.info(2,"{}={}".format(meas.name, val))
             if type(val) != float:
                 continue
 
-            if meas.meta_str == sram_op.READ_ONE and val < tech.spice["v_threshold_typical"]:
+            if meas.meta_str == sram_op.READ_ONE and val < self.vdd_voltage*.1:
                 success = False
                 debug.info(1, "Debug measurement failed. Value {}v was read on read 1 cycle.".format(val))
-            elif meas.meta_str == sram_op.READ_ZERO and val > self.vdd_voltage-tech.spice["v_threshold_typical"]:
+                bl_check = self.check_bitline_meas(bl_vals[sram_op.READ_ONE], br_vals[sram_op.READ_ONE])
+            elif meas.meta_str == sram_op.READ_ZERO and val > self.vdd_voltage*.9:
                 success = False
                 debug.info(1, "Debug measurement failed. Value {}v was read on read 0 cycle.".format(val))
+                bl_check = self.check_bitline_meas(br_vals[sram_op.READ_ONE], bl_vals[sram_op.READ_ONE])
                 
             #If the bitlines have a correct value while the output does not then that is a 
             #sen error. FIXME: there are other checks that can be done to solidfy this conclusion.
-            if not success and self.check_bitline_meas(bitline_results[meas.meta_str]):
+            if bl_check:
                 debug.error("Sense amp enable timing error. Increase the delay chain through the configuration file.",1)
             
         return success
         
         
-    def check_bitline_meas(self, v_bitline):
-        """Checks the value of the discharging bitline"""
+    def check_bitline_meas(self, v_discharged_bl, v_charged_bl):
+        """Checks the value of the discharging bitline. Confirms s_en timing errors.
+           Returns true if the bitlines are at there expected value."""
+        #The inputs looks at discharge/charged bitline rather than left or right (bl/br)
+        #Performs two checks, discharging bitline is at least 10% away from vdd and there is a 
+        #10% vdd difference between the bitlines. Both need to fail to be considered a s_en error.
+        min_dicharge = v_discharged_bl < self.vdd_voltage*0.9
+        min_diff = (v_charged_bl - v_discharged_bl) > self.vdd_voltage*0.1
         
-        return v_bitline < self.vdd_voltage*0.9
-        
+        debug.info(1,"min_dicharge={}, min_diff={}".format(min_dicharge,min_diff))
+        return (min_dicharge and min_diff) 
         
     def run_power_simulation(self):
         """ 

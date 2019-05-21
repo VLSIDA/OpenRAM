@@ -20,7 +20,8 @@ class bitcell_1w_1r(design.design):
     """
 
     pin_names = ["bl0", "br0", "bl1", "br1", "wl0", "wl1", "vdd", "gnd"]
-    type_list = ["OUTPUT", "OUTPUT", "INPUT", "INPUT", "INPUT", "INPUT", "POWER", "GROUND"] 
+    type_list = ["OUTPUT", "OUTPUT", "INPUT", "INPUT", "INPUT", "INPUT", "POWER", "GROUND"]
+    storage_nets = ['Q', 'Q_bar']    
     (width,height) = utils.get_libcell_size("cell_1w_1r", GDS["unit"], layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "cell_1w_1r", GDS["unit"])
 
@@ -33,6 +34,7 @@ class bitcell_1w_1r(design.design):
         self.height = bitcell_1w_1r.height
         self.pin_map = bitcell_1w_1r.pin_map
         self.add_pin_types(self.type_list)
+        self.nets_match = self.do_nets_exist(self.storage_nets)
 
     def analytical_delay(self, corner, slew, load=0, swing = 0.5):
         parasitic_delay = 1
@@ -108,6 +110,15 @@ class bitcell_1w_1r(design.design):
         #FIXME: sizing is not accurate with the handmade cell. Change once cell widths are fixed.
         access_tx_cin = parameter["6T_access_size"]/drc["minwidth_tx"]
         return 2*access_tx_cin
+        
+    def get_storage_net_names(self):
+        """Returns names of storage nodes in bitcell in  [non-inverting, inverting] format."""
+        #Checks that they do exist
+        if self.nets_match:
+            return self.storage_nets
+        else:
+            debug.info(1,"Storage nodes={} not found in spice file.".format(self.storage_nets))
+            return None    
         
     def build_graph(self, graph, inst_name, port_nets):        
         """Adds edges to graph. Multiport bitcell timing graph is too complex

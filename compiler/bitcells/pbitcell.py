@@ -138,7 +138,9 @@ class pbitcell(design.design):
             self.Q_bar = "vdd"
         else:
             self.Q_bar = "Q_bar"
-
+        self.Q = "Q"
+        self.storage_nets = [self.Q, self.Q_bar]
+        
     def add_modules(self):
         """ Determine size of transistors and add ptx modules """
         # if there are any read/write ports, then the inverter nmos is sized based the number of read/write ports
@@ -258,20 +260,20 @@ class pbitcell(design.design):
         # create active for nmos
         self.inverter_nmos_left = self.add_inst(name="inverter_nmos_left",
                                                 mod=self.inverter_nmos)
-        self.connect_inst(["Q", self.Q_bar, "gnd", "gnd"])
+        self.connect_inst([self.Q, self.Q_bar, "gnd", "gnd"])
 
         self.inverter_nmos_right = self.add_inst(name="inverter_nmos_right",
                                                  mod=self.inverter_nmos)
-        self.connect_inst(["gnd", "Q", self.Q_bar, "gnd"])
+        self.connect_inst(["gnd", self.Q, self.Q_bar, "gnd"])
 
         # create active for pmos
         self.inverter_pmos_left = self.add_inst(name="inverter_pmos_left",
                                                 mod=self.inverter_pmos)
-        self.connect_inst(["Q", self.Q_bar, "vdd", "vdd"])
+        self.connect_inst([self.Q, self.Q_bar, "vdd", "vdd"])
 
         self.inverter_pmos_right = self.add_inst(name="inverter_pmos_right",
                                                  mod=self.inverter_pmos)
-        self.connect_inst(["vdd", "Q", self.Q_bar, "vdd"])
+        self.connect_inst(["vdd", self.Q, self.Q_bar, "vdd"])
 
     def place_storage(self):
         """ Places the transistors for the crossed coupled inverters in the bitcell """
@@ -363,7 +365,7 @@ class pbitcell(design.design):
             # add read/write transistors
             self.readwrite_nmos_left[k] = self.add_inst(name="readwrite_nmos_left{}".format(k),
                                                         mod=self.readwrite_nmos)
-            self.connect_inst([self.rw_bl_names[k], self.rw_wl_names[k], "Q", "gnd"])
+            self.connect_inst([self.rw_bl_names[k], self.rw_wl_names[k], self.Q, "gnd"])
 
             self.readwrite_nmos_right[k] = self.add_inst(name="readwrite_nmos_right{}".format(k),
                                                          mod=self.readwrite_nmos)
@@ -437,7 +439,7 @@ class pbitcell(design.design):
             # add write transistors
             self.write_nmos_left[k] = self.add_inst(name="write_nmos_left{}".format(k),
                                                     mod=self.write_nmos)
-            self.connect_inst([self.w_bl_names[k], self.w_wl_names[k], "Q", "gnd"])
+            self.connect_inst([self.w_bl_names[k], self.w_wl_names[k], self.Q, "gnd"])
 
             self.write_nmos_right[k] = self.add_inst(name="write_nmos_right{}".format(k),
                                                      mod=self.write_nmos)
@@ -522,7 +524,7 @@ class pbitcell(design.design):
 
             self.read_access_nmos_right[k] = self.add_inst(name="read_access_nmos_right{}".format(k),
                                                            mod=self.read_nmos)
-            self.connect_inst(["gnd", "Q", "RA_to_R_right{}".format(k), "gnd"])
+            self.connect_inst(["gnd", self.Q, "RA_to_R_right{}".format(k), "gnd"])
 
             # add read transistors
             self.read_nmos_left[k] = self.add_inst(name="read_nmos_left{}".format(k),
@@ -866,6 +868,11 @@ class pbitcell(design.design):
         Q_bar_pos = self.inverter_pmos_right.get_pin("S").center()
         vdd_pos = self.inverter_pmos_right.get_pin("D").center()
         self.add_path("metal1", [Q_bar_pos, vdd_pos])
+        
+    def get_storage_net_names(self):
+        """Returns names of storage nodes in bitcell in  [non-inverting, inverting] format."""
+        return self.storage_nets
+     
 
     def analytical_delay(self, corner, slew, load=0, swing = 0.5):
         parasitic_delay = 1

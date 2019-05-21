@@ -197,7 +197,12 @@ class spice():
                 return True
         return False
                 
-                
+    def do_nets_exist(self, nets):
+        """For handmade cell, checks sp file contains the storage nodes."""
+        nets_match = True
+        for net in nets:
+            nets_match = nets_match and self.check_net_in_spice(net)
+        return nets_match            
             
     def contains(self, mod, modlist):
         for x in modlist:

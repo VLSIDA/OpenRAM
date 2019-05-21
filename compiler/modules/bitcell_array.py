@@ -210,4 +210,6 @@ class bitcell_array(design.design):
                     continue
                 self.graph_inst_exclude.add(self.cell_inst[row,col])
             
-            
+    def get_cell_name(self, inst_name, row, col):
+        """Gets the spice name of the target bitcell.""" 
+        return inst_name+'.x'+self.cell_inst[row,col].name, self.cell_inst[row,col]

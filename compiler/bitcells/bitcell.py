@@ -20,6 +20,7 @@ class bitcell(design.design):
     """
 
     pin_names = ["bl", "br", "wl", "vdd", "gnd"]
+    internal_nets = ['Q', 'Qbar']
     type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"] 
     (width,height) = utils.get_libcell_size("cell_6t", GDS["unit"], layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "cell_6t", GDS["unit"])
@@ -33,6 +34,7 @@ class bitcell(design.design):
         self.height = bitcell.height
         self.pin_map = bitcell.pin_map
         self.add_pin_types(self.type_list)
+        self.nets_match = self.check_internal_nets()
         
     def analytical_delay(self, corner, slew, load=0, swing = 0.5):
         parasitic_delay = 1
@@ -77,6 +79,22 @@ class bitcell(design.design):
         total_power = self.return_power(dynamic, leakage)
         return total_power
 
+    def check_internal_nets(self):
+        """For handmade cell, checks sp file contains the storage nodes."""
+        nets_match = True
+        for net in self.internal_nets:
+            nets_match = nets_match and self.check_net_in_spice(net)
+        return nets_match
+    
+    def get_storage_net_names(self):
+        """Returns names of storage nodes in bitcell in  [non-inverting, inverting] format."""
+        #Checks that they do exist
+        if self.nets_match:
+            return self.internal_nets
+        else:
+            debug.info(1,"Storage nodes={} not found in spice file.".format(self.internal_nets))
+            return None
+    
     def get_wl_cin(self):
         """Return the relative capacitance of the access transistor gates"""
         #This is a handmade cell so the value must be entered in the tech.py file or estimated.

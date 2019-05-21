@@ -182,6 +182,23 @@ class spice():
         else:
             self.spice = []
 
+    def check_net_in_spice(self, net_name):
+        """Checks if a net name exists in the current. Intended to be check nets in hand-made cells."""
+        #Remove spaces and lower case then add spaces. Nets are separated by spaces.
+        net_formatted = ' '+net_name.lstrip().rstrip().lower()+' '
+        for line in self.spice:
+            #Lowercase the line and remove any part of the line that is a comment.
+            line = line.lower().split('*')[0]
+
+            #Skip .subckt or .ENDS lines
+            if line.find('.') == 0:
+                continue
+            if net_formatted in line:
+                return True
+        return False
+                
+                
+            
     def contains(self, mod, modlist):
         for x in modlist:
             if x.name == mod.name:

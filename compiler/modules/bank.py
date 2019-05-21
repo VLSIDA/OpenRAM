@@ -1287,3 +1287,7 @@ class bank(design.design):
         for inst in self.precharge_array_inst:
             if inst != None:
                 self.graph_inst_exclude.add(inst)
+                
+    def get_cell_name(self, inst_name, row, col):
+        """Gets the spice name of the target bitcell."""
+        return self.bitcell_array_inst.mod.get_cell_name(inst_name+'.x'+self.bitcell_array_inst.name, row, col)            

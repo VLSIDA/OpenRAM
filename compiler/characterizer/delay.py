@@ -60,7 +60,19 @@ class delay(simulation):
         """Create the measurements used for read and write ports"""
         self.read_meas_lists = self.create_read_port_measurement_objects()
         self.write_meas_lists = self.create_write_port_measurement_objects()
-
+        self.check_meas_names(self.read_meas_lists+self.write_meas_lists)
+        
+    def check_meas_names(self, measures_lists):
+        """Given measurements (in 2d list), checks that their names are unique.
+           Spice sim will fail otherwise."""
+        name_set = set()
+        for meas_list in measures_lists:
+            for meas in meas_list:
+                name = meas.name.lower()
+                debug.check(name not in name_set,("SPICE measurements must have unique names. "
+                                                       "Duplicate name={}").format(name))
+                name_set.add(name)
+    
     def create_read_port_measurement_objects(self):
         """Create the measurements used for read ports: delays, slews, powers"""
         
@@ -104,6 +116,7 @@ class delay(simulation):
         #Other measurements associated with the read port not included in the liberty file
         read_measures.append(self.create_bitline_measurement_objects())
         read_measures.append(self.create_debug_measurement_objects())
+        read_measures.append(self.create_read_bit_measures())
 
         return read_measures
     
@@ -164,6 +177,37 @@ class delay(simulation):
             self.debug_volt_meas[-1].meta_str = debug_meas.meta_str
             
         return self.debug_delay_meas+self.debug_volt_meas
+     
+    def create_read_bit_measures(self):
+        """Adds bit measurements for read0 and read1 cycles"""
+        self.bit_meas = {bit_polarity.NONINVERTING:[], bit_polarity.INVERTING:[]}
+        meas_cycles = (sram_op.READ_ZERO, sram_op.READ_ONE)
+        for cycle in meas_cycles:
+            meas_tag = "a{}_b{}_{}".format(self.probe_address, self.probe_data, cycle.name)
+            single_bit_meas = self.get_bit_measures(meas_tag, self.probe_address, self.probe_data)
+            for polarity,meas in single_bit_meas.items():
+                meas.meta_str = cycle
+                self.bit_meas[polarity].append(meas)
+        #Dictionary values are lists, reduce to a single list of measurements
+        return [meas for meas_list in self.bit_meas.values() for meas in meas_list] 
+     
+    def get_bit_measures(self, meas_tag, probe_address, probe_data):
+        """Creates measurements for the q/qbar of input bit position.
+           meas_tag is a unique identifier for the measurement."""     
+        bit_col = self.get_data_bit_column_number(probe_address, probe_data)
+        bit_row = self.get_address_row_number(probe_address)
+        (cell_name, cell_inst) = self.sram.get_cell_name(self.sram.name, bit_row, bit_col)
+        storage_names = cell_inst.mod.get_storage_net_names()
+        debug.check(len(storage_names) == 2, ("Only inverting/non-inverting storage nodes"
+                  "supported for characterization. Storage nets={}").format(storage_names))
+        q_name = cell_name+'.'+str(storage_names[0])
+        qbar_name = cell_name+'.'+str(storage_names[1])
+        #Bit measures, measurements times to be defined later. The measurement names must be unique
+        # but they is enforced externally
+        q_meas = voltage_at_measure("v_q_{}".format(meas_tag), q_name, has_port=False)
+        qbar_meas = voltage_at_measure("v_qbar_{}".format(meas_tag), qbar_name, has_port=False) 
+        
+        return {bit_polarity.NONINVERTING:q_meas, bit_polarity.INVERTING:qbar_meas}
          
     def set_load_slew(self,load,slew):
         """ Set the load and slew """
@@ -211,6 +255,11 @@ class delay(simulation):
         self.br_name = [bl for bl in preconv_names if 'br' in bl][0]          
         debug.info(1,"bl_name={}".format(self.bl_name))
         
+        (cell_name, cell_inst) = self.sram.get_cell_name(self.sram.name, self.wordline_row, self.bitline_column)
+        debug.info(1, "cell_name={}".format(cell_name))
+     
+    
+     
     def check_arguments(self):
         """Checks if arguments given for write_stimulus() meets requirements"""
         try:
@@ -350,16 +399,22 @@ class delay(simulation):
         """Checks the measurement object and calls respective function for related measurement inputs."""
         meas_type = type(measure_obj)
         if meas_type is delay_measure or meas_type is slew_measure:
-            return self.get_delay_measure_variants(port, measure_obj)
+            variant_tuple = self.get_delay_measure_variants(port, measure_obj)
         elif meas_type is power_measure:
-            return self.get_power_measure_variants(port, measure_obj, "read")
+            variant_tuple = self.get_power_measure_variants(port, measure_obj, "read")
         elif meas_type is voltage_when_measure:
-            return self.get_volt_when_measure_variants(port, measure_obj)
+            variant_tuple = self.get_volt_when_measure_variants(port, measure_obj)
         elif meas_type is voltage_at_measure:
-            return self.get_volt_at_measure_variants(port, measure_obj)
+            variant_tuple = self.get_volt_at_measure_variants(port, measure_obj)
         else:
             debug.error("Input function not defined for measurement type={}".format(meas_type))
-            
+        #Removes port input from any object which does not use it. This shorthand only works if
+        #the measurement has port as the last input. Could be implemented by measurement type or 
+        #remove entirely from measurement classes.
+        if not measure_obj.has_port:
+            variant_tuple = variant_tuple[:-1]
+        return variant_tuple
+        
     def get_delay_measure_variants(self, port, delay_obj):
         """Get the measurement values that can either vary from simulation to simulation (vdd, address) or port to port (time delays)"""
         #Return value is intended to match the delay measure format:  trig_td, targ_td, vdd, port
@@ -567,10 +622,10 @@ class delay(simulation):
             #Get measurements from output file
             for measure in self.read_lib_meas:
                 read_port_dict[measure.name] = measure.retrieve_measure(port=port)
-            debug_passed = self.check_debug_measures(port, read_port_dict)
-            
+            success = self.check_debug_measures(port, read_port_dict)
+            success = success and self.check_bit_measures()
             #Check timing for read ports. Power is only checked if it was read correctly
-            if not self.check_valid_delays(read_port_dict) or not debug_passed:
+            if not self.check_valid_delays(read_port_dict) or not success:
                 return (False,{})
             if not check_dict_values_is_float(read_port_dict):
                 debug.error("Failed to Measure Read Port Values:\n\t\t{0}".format(read_port_dict),1) #Printing the entire dict looks bad.       
@@ -648,7 +703,32 @@ class delay(simulation):
             
         return success
         
-        
+    
+    def check_bit_measures(self):
+        """Checks the measurements which represent the internal storage voltages
+        at the end of the read cycle."""
+        success = True
+        for polarity, meas_list in self.bit_meas.items():
+            for meas in meas_list:
+                val = meas.retrieve_measure()
+                debug.info(1,"{}={}".format(meas.name, val))
+                if type(val) != float:
+                    continue
+                meas_cycle = meas.meta_str
+                if (meas_cycle == sram_op.READ_ZERO and polarity == bit_polarity.NONINVERTING) or\
+                   (meas_cycle == sram_op.READ_ONE and polarity == bit_polarity.INVERTING):
+                    success = val < self.vdd_voltage*.1
+                elif (meas_cycle == sram_op.READ_ZERO and polarity == bit_polarity.INVERTING) or\
+                     (meas_cycle == sram_op.READ_ONE and polarity == bit_polarity.NONINVERTING):
+                    success = val > self.vdd_voltage*.9
+                if not success:
+                    debug.info(1,("Wrong value detected on probe bit during read cycle. " 
+                    "Check writes and control logic for bugs.\n measure={}, op={}, "
+                    "bit_storage={}").format(meas.name, meas_cycle.name, polarity.name))
+        return success        
+                   
+            
+            
     def check_bitline_meas(self, v_discharged_bl, v_charged_bl):
         """Checks the value of the discharging bitline. Confirms s_en timing errors.
            Returns true if the bitlines are at there expected value."""

@@ -343,9 +343,12 @@ class sram_1bank(sram_base):
             debug.error("Signal={} not contained in control logic connections={}"\
                                                  .format(sen_name, control_conns))
         if sen_name in self.pins:
-            debug.error("Internal signal={} contained in port list. Name defined by the parent.")
-        debug.info(1,"pins={}".format(self.pins))                  
-        debug.info(1,"cl conns={}".format(control_conns))                  
+            debug.error("Internal signal={} contained in port list. Name defined by the parent.")                
         return "X{}.{}".format(sram_name, sen_name)
         
-        
+    def get_cell_name(self, inst_name, row, col):
+        """Gets the spice name of the target bitcell."""
+        #Sanity check in case it was forgotten
+        if inst_name.find('x') != 0:
+            inst_name = 'x'+inst_name
+        return self.bank_inst.mod.get_cell_name(inst_name+'.x'+self.bank_inst.name, row, col)

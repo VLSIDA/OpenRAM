@@ -83,7 +83,15 @@ class sram_factory:
         self.objects[module_type].append((kwargs,obj))
         return obj
 
-        
+    def get_mods(self, module_type):
+        """Returns list of all objects of module name's type."""
+        try:
+            mod_tuples = self.objects[module_type]
+            mods = [mod for kwargs,mod in mod_tuples]
+        except KeyError:
+            mods = []
+        return mods
+            
 # Make a factory
 factory = sram_factory()
 

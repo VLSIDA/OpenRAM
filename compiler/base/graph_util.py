@@ -8,7 +8,7 @@ import globals
 import debug
 from vector import vector
 from pin_layout import pin_layout
-
+    
 class timing_graph():
     """Implements a directed graph
        Nodes are currently just Strings.

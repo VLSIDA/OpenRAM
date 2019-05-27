@@ -61,7 +61,14 @@ class sense_amp(design.design):
         nmos_cin = parameter["sa_en_nmos_size"]/drc("minwidth_tx")
         #sen is connected to 2 pmos isolation TX and 1 nmos per sense amp.
         return 2*pmos_cin + nmos_cin
-        
+    
+    def get_enable_name(self):
+        """Returns name used for enable net"""
+        #FIXME: A better programmatic solution to designate pins
+        enable_name = "en"
+        debug.check(enable_name in self.pin_names, "Enable name {} not found in pin list".format(enable_name))
+        return enable_name
+    
     def build_graph(self, graph, inst_name, port_nets):        
         """Adds edges based on inputs/outputs. Overrides base class function."""
         self.add_graph_edges(graph, port_nets) 

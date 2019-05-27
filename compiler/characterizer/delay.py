@@ -18,6 +18,7 @@ from .simulation import simulation
 from .measurements import *
 import logical_effort
 import graph_util
+from sram_factory import factory
 
 class delay(simulation):
     """Functions to measure the delay and power of an SRAM at a given address and
@@ -99,17 +100,6 @@ class delay(simulation):
         for obj in self.read_lib_meas:
             if obj.meta_str is sram_op.READ_ZERO:
                 obj.meta_add_delay = True
-
-        # trig_name = "Xsram.s_en{}" #Sense amp enable
-        # if len(self.all_ports) == 1: #special naming case for single port sram bitlines which does not include the port in name
-            # port_format = ""
-        # else:
-            # port_format = "{}"
-        
-        # bl_name = "Xsram.Xbank0.bl{}_{}".format(port_format, self.bitline_column)
-        # br_name = "Xsram.Xbank0.br{}_{}".format(port_format, self.bitline_column)
-        # self.read_lib_meas.append(voltage_when_measure(self.voltage_when_names[0], trig_name, bl_name, "RISE", .5))
-        # self.read_lib_meas.append(voltage_when_measure(self.voltage_when_names[1], trig_name, br_name, "RISE", .5))
         
         read_measures = []
         read_measures.append(self.read_lib_meas)
@@ -230,19 +220,20 @@ class delay(simulation):
         
         #Generate new graph every analysis as edges might change depending on test bit
         self.graph = graph_util.timing_graph()
-        self.sram.build_graph(self.graph,"X{}".format(self.sram.name),self.pins)
+        self.sram_spc_name = "X{}".format(self.sram.name)
+        self.sram.build_graph(self.graph,self.sram_spc_name,self.pins)
         #debug.info(1,"{}".format(self.graph))
         port = 0
         self.graph.get_all_paths('{}{}'.format(tech.spice["clk"], port), \
                      '{}{}_{}'.format(self.dout_name, port, self.probe_data))
-        sen_name = self.sram.get_sen_name(self.sram.name, port).lower()
-        debug.info(1, "Sen name={}".format(sen_name))
-        sen_path = []
-        for path in self.graph.all_paths:
-            if sen_name in path:
-                sen_path = path
-                break
-        debug.check(len(sen_path)!=0, "Could not find s_en timing path.")
+
+        sen_name = self.get_sen_name(self.graph.all_paths)    
+        debug.info(1,"s_en name = {}".format(sen_name))
+        
+        self.bl_name,self.br_name = self.get_bl_name(self.graph.all_paths)
+        import sys
+        sys.exit(1)
+        
         preconv_names = []
         for path in self.graph.all_paths:
             if not path is sen_path:
@@ -258,7 +249,52 @@ class delay(simulation):
         (cell_name, cell_inst) = self.sram.get_cell_name(self.sram.name, self.wordline_row, self.bitline_column)
         debug.info(1, "cell_name={}".format(cell_name))
      
-    
+    def get_sen_name(self, paths):
+        """Gets the signal name associated with the sense amp enable from input paths.
+           Only expects a single path to contain the sen signal name."""
+        sa_mods = factory.get_mods(OPTS.sense_amp)
+        #Any sense amp instantiated should be identical, any change to that 
+        #will require some identification to determine the mod desired.
+        debug.check(len(sa_mods) == 1, "Only expected one type of Sense Amp. Cannot perform s_en checks.")
+        enable_name = sa_mods[0].get_enable_name()
+        sen_found = False
+        #Only a single path should contain a single s_en name. Anything else is an error.
+        for path in paths:
+            aliases = self.sram.find_aliases(self.sram_spc_name, self.pins, path, enable_name, sa_mods[0])
+            if sen_found and len(aliases) >= 1:
+                debug.error('Found multiple paths with SA enable.',1)
+            elif len(aliases) > 1:
+                debug.error('Found multiple S_EN points in single path. Cannot distinguish between them.',1)
+            elif not sen_found and len(aliases) == 1:
+                sen_name = aliases[0]
+                sen_found = True
+        if not sen_found:
+            debug.error("Could not find S_EN name.",1)
+                
+        return sen_name        
+     
+    def get_bl_name(self, paths):
+        """Gets the signal name associated with the bitlines in the bank."""
+        sa_mods = factory.get_mods(OPTS.sense_amp)
+        #Any sense amp instantiated should be identical, any change to that 
+        #will require some identification to determine the mod desired.
+        debug.check(len(sa_mods) == 1, "Only expected one type of Sense Amp. Cannot perform s_en checks.")
+        enable_name = sa_mods[0].get_enable_name()
+        sen_found = False
+        #Only a single path should contain a single s_en name. Anything else is an error.
+        for path in paths:
+            aliases = self.sram.find_aliases(self.sram_spc_name, self.pins, path, enable_name, sa_mods[0])
+            if sen_found and len(aliases) >= 1:
+                debug.error('Found multiple paths with SA enable.',1)
+            elif len(aliases) > 1:
+                debug.error('Found multiple S_EN points in single path. Cannot distinguish between them.',1)
+            elif not sen_found and len(aliases) == 1:
+                sen_name = aliases[0]
+                sen_found = True
+        if not sen_found:
+            debug.error("Could not find S_EN name.",1)
+                
+        return sen_name         
      
     def check_arguments(self):
         """Checks if arguments given for write_stimulus() meets requirements"""

@@ -104,17 +104,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             total_lvs_errors += num_errors
             debug.check(num_errors == 0,"LVS failed for {0} with {1} error(s)".format(self.name,num_errors))
             os.remove(tempspice)
-            os.remove(tempgds)
-
-    #Example graph run
-    # import graph_util
-    # graph = graph_util.graph()
-    # pins = ['A','Z','vdd','gnd']
-    # d.build_graph(graph,"Xpdriver",pins)
-    # graph.remove_edges('vdd')
-    # graph.remove_edges('gnd')
-    # debug.info(1,"{}".format(graph))
-    # graph.print_all_paths('A', 'Z')    
+            os.remove(tempgds) 
             
     def init_graph_params(self):
         """Initializes parameters relevant to the graph creation"""
@@ -136,6 +126,71 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             subinst_ports = self.translate_nets(conns, port_dict, inst_name)
             subinst.mod.build_graph(graph, subinst_name, subinst_ports)
     
+    def build_names(self, name_dict, inst_name, port_nets):
+        """Collects all the nets and the parent inst of that net."""
+        #Translate port names to external nets
+        if len(port_nets) != len(self.pins):
+            debug.error("Port length mismatch:\nExt nets={}, Ports={}".format(port_nets,self.pins),1)
+        port_dict = {pin:port for pin,port in zip(self.pins, port_nets)}
+        debug.info(3, "Instance name={}".format(inst_name))
+        for subinst, conns in zip(self.insts, self.conns):
+            subinst_name = inst_name+'.X'+subinst.name
+            subinst_ports = self.translate_nets(conns, port_dict, inst_name)
+            for si_port, conn in zip(subinst_ports, conns):
+                #Only add for first occurrence
+                if si_port.lower() not in name_dict:
+                    mod_info = {'mod':self, 'int_net':conn}
+                    name_dict[si_port.lower()] = mod_info
+            subinst.mod.build_names(name_dict, subinst_name, subinst_ports)        
+
+    def find_aliases(self, inst_name, port_nets, path_nets, alias, alias_mod):
+        """Given a list of nets, will compare the internal alias of a mod to determine
+           if the nets have a connection to this mod's net (but not inst).
+        """
+        try:
+            self.name_dict
+        except AttributeError:
+            self.name_dict = {}
+            self.build_names(self.name_dict, inst_name, port_nets)
+        aliases = []
+        for net in path_nets:
+            net = net.lower()
+            int_net = self.name_dict[net]['int_net']
+            int_mod = self.name_dict[net]['mod']
+            if int_mod.is_net_alias(int_net, alias, alias_mod):
+                aliases.append(net)
+        debug.info(1,"Aliases Found={}".format(aliases))
+        return aliases         
+            
+    def is_net_alias(self, known_net, net_alias, mod):
+        """Checks if the alias_net in mod is the same as the input net."""
+        #Check ports of this mod
+        for pin in self.pins:
+            if self.is_net_alias_name_check(known_net, pin, net_alias, mod):
+                return True
+        #Check connections of all other subinsts        
+        for subinst, inst_conns in zip(self.insts, self.conns):
+            for inst_conn, mod_pin in zip(inst_conns, subinst.mod.pins):
+                if self.is_net_alias_name_check(known_net, inst_conn, net_alias, mod):
+                    return True
+                elif inst_conn.lower() == known_net.lower():
+                    return subinst.mod.is_net_alias(mod_pin, net_alias, mod)
+        return False       
+     
+    def is_net_alias_name_check(self, parent_net, child_net, alias_net, mod):
+        """Utility function for checking single net alias."""
+        return self == mod and \
+               child_net.lower() == alias_net.lower() and \
+               parent_net.lower() == alias_net.lower()
+           
+    def get_mod_net(self, parent_net, child_inst, child_conns):
+        """Given an instance and net, returns the internal net in the mod 
+        corresponding to input net."""
+        for conn, pin in zip(child_conns, child_inst.mod.pins):
+            if parent_net.lower() == conn.lower():
+                return pin
+        return None
+      
     def translate_nets(self, subinst_ports, port_dict, inst_name):
         """Converts connection names to their spice hierarchy equivalent"""
         converted_conns = []
@@ -159,7 +214,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             for out in output_pins+inout_pins:
                 if inp != out: #do not add self loops
                     graph.add_edge(pin_dict[inp], pin_dict[out])        
-            
+ 
     def __str__(self):
         """ override print function output """
         pins = ",".join(self.pins)

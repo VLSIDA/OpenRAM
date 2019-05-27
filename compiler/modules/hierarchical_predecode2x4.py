@@ -47,6 +47,7 @@ class hierarchical_predecode2x4(hierarchical_predecode):
         self.place_output_inverters()
         self.place_nand_array()
         self.route()
+        self.add_boundary()
         self.DRC_LVS()        
 
     def get_nand_input_line_combination(self):

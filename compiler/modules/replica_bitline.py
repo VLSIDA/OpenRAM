@@ -49,6 +49,7 @@ class replica_bitline(design.design):
         self.width = self.replica_column_inst.rx() - self.delay_chain_inst.lx() + self.m2_pitch
         self.height = max(self.replica_column_inst.uy(), self.delay_chain_inst.uy()) + self.m3_pitch
 
+        self.add_boundary()
         self.DRC_LVS()
 
     def add_pins(self):

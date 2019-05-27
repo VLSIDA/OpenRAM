@@ -42,6 +42,7 @@ class bank_select(design.design):
         self.place_instances()
         self.route_instances()
 
+        self.add_boundary()
         self.DRC_LVS()
 
 

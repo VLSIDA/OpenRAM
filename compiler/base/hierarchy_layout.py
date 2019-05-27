@@ -879,6 +879,13 @@ class layout():
         Wrapper to create a horizontal channel route
         """
         self.create_channel_route(netlist, offset, layer_stack, pitch, vertical=False)
+
+    def add_boundary(self):
+        """ Add boundary for debugging dimensions """
+        self.add_rect(layer="boundary",
+                      offset=vector(0,0),
+                      height=self.height,
+                      width=self.width)
         
     def add_enclosure(self, insts, layer="nwell"):
         """ Add a layer that surrounds the given instances. Useful

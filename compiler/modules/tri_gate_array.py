@@ -41,6 +41,7 @@ class tri_gate_array(design.design):
 
         self.place_array()
         self.add_layout_pins()
+        self.add_boundary()
         self.DRC_LVS()
 
     def add_modules(self):

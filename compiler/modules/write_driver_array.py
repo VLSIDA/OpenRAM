@@ -50,6 +50,7 @@ class write_driver_array(design.design):
         
         self.place_write_array()
         self.add_layout_pins()
+        self.add_boundary()
         self.DRC_LVS()
 
     def add_pins(self):

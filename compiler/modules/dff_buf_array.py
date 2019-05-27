@@ -49,6 +49,7 @@ class dff_buf_array(design.design):
         self.height = self.rows * self.dff.height
         self.place_dff_array()
         self.add_layout_pins()
+        self.add_boundary()
         self.DRC_LVS()
 
     def add_pins(self):

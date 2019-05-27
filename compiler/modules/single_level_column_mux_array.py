@@ -52,6 +52,7 @@ class single_level_column_mux_array(design.design):
         self.add_layout_pins()
         self.add_enclosure(self.mux_inst, "pwell")
 
+        self.add_boundary()
         self.DRC_LVS()
         
     def add_pins(self):

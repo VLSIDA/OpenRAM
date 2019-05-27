@@ -47,6 +47,7 @@ class bank(design.design):
         if not OPTS.netlist_only:
             debug.check(len(self.all_ports)<=2,"Bank layout cannot handle more than two ports.")
             self.create_layout()
+            self.add_boundary()
 
 
     def create_netlist(self):

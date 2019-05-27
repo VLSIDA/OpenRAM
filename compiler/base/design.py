@@ -30,6 +30,8 @@ class design(hierarchy_design):
         self.m2_pitch = max(contact.m2m3.width,contact.m2m3.height) + max(self.m2_space, self.m3_space)
         if contact.m3m4:
             self.m3_pitch = max(contact.m3m4.width,contact.m3m4.height) + max(self.m3_space, self.m4_space)
+        else:
+            self.m3_pitch = self.m2_pitch
 
     def setup_drc_constants(self):
         """ These are some DRC constants used in many places in the compiler."""

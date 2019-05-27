@@ -33,9 +33,6 @@ else:
     OPTS.lvs_exe = get_tool("LVS", ["calibre","assura","netgen"], OPTS.lvs_name)
     OPTS.pex_exe = get_tool("PEX", ["calibre","magic"], OPTS.pex_name)
 
-if OPTS.check_lvsdrc and OPTS.tech_name == "freepdk45":
-    debug.check(OPTS.drc_exe[0]!="magic","Magic does not support FreePDK45 for DRC.")
-    
 if OPTS.drc_exe == None:
     from .none import run_drc,print_drc_stats
 elif "calibre"==OPTS.drc_exe[0]:

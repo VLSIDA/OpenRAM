@@ -86,8 +86,8 @@ drc["has_nwell"] = True
 drc["grid"]=0.5*_lambda_
 
 #DRC/LVS test set_up
-drc["drc_rules"]=drclvs_home+"/calibreDRC_scn3me_subm.rul"
-drc["lvs_rules"]=drclvs_home+"/calibreLVS_scn3me_subm.rul"
+drc["drc_rules"]=None #drclvs_home+"/calibreDRC_scn3me_subm.rul"
+drc["lvs_rules"]=None #drclvs_home+"/calibreLVS_scn3me_subm.rul"
 drc["layer_map"]=os.environ.get("OPENRAM_TECH")+"/scn3me_subm/layers.map"
         	      					
 # minwidth_tx with contact (no dog bone transistors)

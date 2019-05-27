@@ -51,6 +51,7 @@ class precharge_array(design.design):
 
         self.place_insts()
         self.add_layout_pins()
+        self.add_boundary()
         self.DRC_LVS()
 
     def add_modules(self):

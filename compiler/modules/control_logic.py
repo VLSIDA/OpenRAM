@@ -67,6 +67,7 @@ class control_logic(design.design):
         self.place_instances()
         self.route_all()
         #self.add_lvs_correspondence_points()
+        self.add_boundary()
         self.DRC_LVS()
 
 

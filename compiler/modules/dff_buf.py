@@ -55,6 +55,7 @@ class dff_buf(design.design):
         self.place_instances()
         self.route_wires()
         self.add_layout_pins()
+        self.add_boundary()
         self.DRC_LVS()
 
     def add_modules(self):

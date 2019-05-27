@@ -50,6 +50,7 @@ class sense_amp_array(design.design):
         self.place_sense_amp_array()
         self.add_layout_pins()
         self.route_rails()
+        self.add_boundary()
         self.DRC_LVS()
 
     def add_pins(self):

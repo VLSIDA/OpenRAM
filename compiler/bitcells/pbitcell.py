@@ -36,6 +36,7 @@ class pbitcell(design.design):
         self.create_netlist()
         # We must always create the bitcell layout because some transistor sizes in the other netlists depend on it
         self.create_layout()
+        self.add_boundary()
 
     def create_netlist(self):
         self.add_pins()
@@ -260,11 +261,6 @@ class pbitcell(design.design):
         self.height = self.topmost_ypos - self.botmost_ypos
         self.center_ypos = 0.5*(self.topmost_ypos + self.botmost_ypos)
         
-        # Add this boundary for visual debug 
-        self.add_rect(layer="boundary",
-                      offset=vector(self.leftmost_xpos,self.botmost_ypos),
-                      height=self.height,
-                      width=self.width)
         
     def create_storage(self):
         """

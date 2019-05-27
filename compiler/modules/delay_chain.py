@@ -52,8 +52,9 @@ class delay_chain(design.design):
         self.place_inverters()
         self.route_inverters()
         self.add_layout_pins()
+        self.add_boundary()
         self.DRC_LVS()
-
+        
     def add_pins(self):
         """ Add the pins of the delay chain"""
         self.add_pin("in")

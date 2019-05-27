@@ -44,6 +44,7 @@ class wordline_driver(design.design):
         self.route_layout()
         self.route_vdd_gnd()
         self.offset_all_coordinates()
+        self.add_boundary()
         self.DRC_LVS()
         
     def add_pins(self):

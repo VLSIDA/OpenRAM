@@ -68,6 +68,8 @@ class bitcell_array(design.design):
 
         self.add_layout_pins()
 
+        self.add_boundary()
+        
         self.DRC_LVS()
 
     def add_pins(self):

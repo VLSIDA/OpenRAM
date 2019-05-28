@@ -839,6 +839,15 @@ class router(router_tech):
         self.rg.add_target(pin_in_tracks)
             
 
+    def add_pin_component_target_except(self, pin_name, index):
+        """ 
+        This will mark the grids for all *other* pin components as a target.
+        Marking as source or target also clears blockage status.
+        """
+        for i in range(self.num_pin_components(pin_name)):
+            if i != index:
+                self.add_pin_component_target(pin_name, i)
+        
     def set_component_blockages(self, pin_name, value=True):
         """ 
         Block all of the pin components.

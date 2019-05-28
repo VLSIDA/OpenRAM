@@ -42,6 +42,7 @@ class design_rules():
             return rule
         else:
             debug.error("Must call complex DRC rule {} with arguments.".format(b),-1)
+
         
         
     

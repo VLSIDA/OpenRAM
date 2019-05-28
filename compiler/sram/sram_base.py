@@ -134,14 +134,22 @@ class sram_base(design, verilog, lef):
         for inst in self.insts:
             self.copy_power_pins(inst,"vdd")
             self.copy_power_pins(inst,"gnd")
-        # Do not route the power supply 
+            
+
+        import tech
         if not OPTS.route_supplies:
+            # Do not route the power supply (leave as must-connect pins)
             return
-        
-        from supply_router import supply_router as router
-        layer_stack =("metal3","via3","metal4")
-        rtr=router(layer_stack, self)
+        elif "metal4" in tech.layer:
+            # Route a M3/M4 grid
+            from supply_grid_router import supply_grid_router as router
+            rtr=router(("metal3","via3","metal4"), self)
+        elif "metal3" in tech.layer:
+            from supply_tree_router import supply_tree_router as router
+            rtr=router(("metal3",), self)
+            
         rtr.route()
+
         
 
         

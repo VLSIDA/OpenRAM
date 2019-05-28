@@ -54,6 +54,7 @@ class replica_pbitcell(design.design):
         
     def add_modules(self):
         self.prbc = factory.create(module_type="pbitcell",replica_bitcell=True)
+        debug.info(1,"rbl bitcell name={}".format(self.prbc.name))
         self.add_mod(self.prbc)
         
         self.height = self.prbc.height

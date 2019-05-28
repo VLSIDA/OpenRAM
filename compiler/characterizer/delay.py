@@ -78,18 +78,21 @@ class delay(simulation):
         """Create the measurements used for read ports: delays, slews, powers"""
         
         self.read_lib_meas = []
-        trig_delay_name = "clk{0}"
+        self.clk_frmt = "clk{0}" #Unformatted clock name
         targ_name = "{0}{1}_{2}".format(self.dout_name,"{}",self.probe_data) #Empty values are the port and probe data bit
-        self.read_lib_meas.append(delay_measure("delay_lh", trig_delay_name, targ_name, "RISE", "RISE", measure_scale=1e9))
-        self.read_lib_meas[-1].meta_str = sram_op.READ_ONE #Used to index time delay values when measurements written to spice file.
-        self.read_lib_meas.append(delay_measure("delay_hl", trig_delay_name, targ_name, "FALL", "FALL", measure_scale=1e9))
-        self.read_lib_meas[-1].meta_str = sram_op.READ_ZERO
-        self.delay_meas = self.read_lib_meas[:] #For debugging, kept separated
+        self.delay_meas = []
+        self.delay_meas.append(delay_measure("delay_lh", self.clk_frmt, targ_name, "RISE", "RISE", measure_scale=1e9))
+        self.delay_meas[-1].meta_str = sram_op.READ_ONE #Used to index time delay values when measurements written to spice file.
+        self.delay_meas.append(delay_measure("delay_hl", self.clk_frmt, targ_name, "FALL", "FALL", measure_scale=1e9))
+        self.delay_meas[-1].meta_str = sram_op.READ_ZERO
+        self.read_lib_meas+=self.delay_meas
         
-        self.read_lib_meas.append(slew_measure("slew_lh", targ_name, "RISE", measure_scale=1e9))
-        self.read_lib_meas[-1].meta_str = sram_op.READ_ONE
-        self.read_lib_meas.append(slew_measure("slew_hl", targ_name, "FALL", measure_scale=1e9))
-        self.read_lib_meas[-1].meta_str = sram_op.READ_ZERO
+        self.slew_meas = []
+        self.slew_meas.append(slew_measure("slew_lh", targ_name, "RISE", measure_scale=1e9))
+        self.slew_meas[-1].meta_str = sram_op.READ_ONE
+        self.slew_meas.append(slew_measure("slew_hl", targ_name, "FALL", measure_scale=1e9))
+        self.slew_meas[-1].meta_str = sram_op.READ_ZERO
+        self.read_lib_meas+=self.slew_meas
         
         self.read_lib_meas.append(power_measure("read1_power", "RISE", measure_scale=1e3))
         self.read_lib_meas[-1].meta_str = sram_op.READ_ONE
@@ -162,11 +165,15 @@ class delay(simulation):
             self.debug_delay_meas.append(debug_meas)
 
             #Output voltage measures
-            self.debug_volt_meas.append(voltage_at_measure("v_{}".format(debug_meas.meta_str), 
+            self.debug_volt_meas.append(voltage_at_measure("v_{}".format(debug_meas.name), 
                                                            debug_meas.targ_name_no_port)) 
             self.debug_volt_meas[-1].meta_str = debug_meas.meta_str
-            
-        return self.debug_delay_meas+self.debug_volt_meas
+         
+        self.sen_meas = delay_measure("delay_sen", self.clk_frmt, self.sen_name, "FALL", "RISE", measure_scale=1e9)
+        self.sen_meas.meta_str = sram_op.READ_ZERO        
+        self.sen_meas.meta_add_delay = True
+        
+        return self.debug_delay_meas+self.debug_volt_meas+[self.sen_meas]
      
     def create_read_bit_measures(self):
         """Adds bit measurements for read0 and read1 cycles"""
@@ -227,27 +234,11 @@ class delay(simulation):
         self.graph.get_all_paths('{}{}'.format(tech.spice["clk"], port), \
                      '{}{}_{}'.format(self.dout_name, port, self.probe_data))
 
-        sen_name = self.get_sen_name(self.graph.all_paths)    
-        debug.info(1,"s_en name = {}".format(sen_name))
+        self.sen_name = self.get_sen_name(self.graph.all_paths)    
+        debug.info(1,"s_en name = {}".format(self.sen_name))
         
         self.bl_name,self.br_name = self.get_bl_name(self.graph.all_paths)
-        import sys
-        sys.exit(1)
-        
-        preconv_names = []
-        for path in self.graph.all_paths:
-            if not path is sen_path:
-                sen_preconv = self.graph.get_path_preconvergence_point(path, sen_path)
-                if sen_preconv not in preconv_names:
-                    preconv_names.append(sen_preconv[0]) #only save non-sen_path names
-                    
-        #Not an good way to separate inverting and non-inverting bitlines...            
-        self.bl_name = [bl for bl in preconv_names if 'bl' in bl][0]
-        self.br_name = [bl for bl in preconv_names if 'br' in bl][0]          
-        debug.info(1,"bl_name={}".format(self.bl_name))
-        
-        (cell_name, cell_inst) = self.sram.get_cell_name(self.sram.name, self.wordline_row, self.bitline_column)
-        debug.info(1, "cell_name={}".format(cell_name))
+        debug.info(1,"bl name={}, br name={}".format(self.bl_name,self.br_name))
      
     def get_sen_name(self, paths):
         """Gets the signal name associated with the sense amp enable from input paths.
@@ -257,44 +248,85 @@ class delay(simulation):
         #will require some identification to determine the mod desired.
         debug.check(len(sa_mods) == 1, "Only expected one type of Sense Amp. Cannot perform s_en checks.")
         enable_name = sa_mods[0].get_enable_name()
-        sen_found = False
-        #Only a single path should contain a single s_en name. Anything else is an error.
-        for path in paths:
-            aliases = self.sram.find_aliases(self.sram_spc_name, self.pins, path, enable_name, sa_mods[0])
-            if sen_found and len(aliases) >= 1:
-                debug.error('Found multiple paths with SA enable.',1)
-            elif len(aliases) > 1:
-                debug.error('Found multiple S_EN points in single path. Cannot distinguish between them.',1)
-            elif not sen_found and len(aliases) == 1:
-                sen_name = aliases[0]
-                sen_found = True
-        if not sen_found:
-            debug.error("Could not find S_EN name.",1)
-                
+        sen_name = self.get_alias_in_path(paths, enable_name, sa_mods[0])
         return sen_name        
      
     def get_bl_name(self, paths):
         """Gets the signal name associated with the bitlines in the bank."""
-        sa_mods = factory.get_mods(OPTS.sense_amp)
+        cell_mods = factory.get_mods(OPTS.bitcell)
+        if len(cell_mods)>=1:
+            cell_mod = self.get_primary_cell_mod(cell_mods)
+        elif len(cell_mods)==0:
+            debug.error("No bitcells found. Cannot determine bitline names.", 1)
         #Any sense amp instantiated should be identical, any change to that 
         #will require some identification to determine the mod desired.
-        debug.check(len(sa_mods) == 1, "Only expected one type of Sense Amp. Cannot perform s_en checks.")
-        enable_name = sa_mods[0].get_enable_name()
-        sen_found = False
+        # debug.check(self.are_mod_pins_equal(cell_mods), "Only expected one type of bitcell. Cannot perform bitline checks")
+        # debug.info(1,"num pbitcells={}".format(len(cell_mods)))
+        # debug.info(1,"cell ids={}".format([id(i) for i in cell_mods]))
+        
+        #cell_mods = cell_mods[1:]
+        cell_bl = cell_mod.get_bl_name()
+        cell_br = cell_mod.get_br_name()
+        
+        bl_found = False
         #Only a single path should contain a single s_en name. Anything else is an error.
-        for path in paths:
-            aliases = self.sram.find_aliases(self.sram_spc_name, self.pins, path, enable_name, sa_mods[0])
-            if sen_found and len(aliases) >= 1:
-                debug.error('Found multiple paths with SA enable.',1)
-            elif len(aliases) > 1:
-                debug.error('Found multiple S_EN points in single path. Cannot distinguish between them.',1)
-            elif not sen_found and len(aliases) == 1:
-                sen_name = aliases[0]
-                sen_found = True
-        if not sen_found:
-            debug.error("Could not find S_EN name.",1)
+        bl_names = []
+        exclude_set = self.get_bl_name_search_exclusions()
+        for int_net in [cell_bl, cell_br]:
+            bl_names.append(self.get_alias_in_path(paths, int_net, cell_mod, exclude_set))
                 
-        return sen_name         
+        return bl_names[0], bl_names[1]          
+     
+    def get_bl_name_search_exclusions(self):
+        """Gets the mods as a set which should be excluded while searching for name."""
+        #Exclude the RBL as it contains bitcells which are not in the main bitcell array
+        #so it makes the search awkward
+        return set(factory.get_mods(OPTS.replica_bitline))
+        
+    def get_primary_cell_mod(self, cell_mods):
+        """Distinguish bitcell array mod from replica bitline array.
+           Assume there are no replica bitcells in the primary array."""
+        if len(cell_mods) == 1:
+            return cell_mods[0]
+        rbc_mods = factory.get_mods(OPTS.replica_bitcell)
+        non_rbc_mods = []
+        for bitcell in cell_mods:
+            has_cell = False
+            for replica_cell in rbc_mods:
+                has_cell = has_cell or replica_cell.contains(bitcell, replica_cell.mods)
+            if not has_cell:
+                non_rbc_mods.append(bitcell)
+        if len(non_rbc_mods) != 1:
+            debug.error('Multiple bitcell mods found. Cannot distinguish for characterization',1)
+        return non_rbc_mods[0]
+        
+    def are_mod_pins_equal(self, mods):
+        """Determines if there are pins differences in the input mods"""
+        if len(mods) == 0:
+            return True
+        pins = mods[0].pins
+        for mod in mods[1:]:
+            if pins != mod.pins:
+                return False
+        return True
+        
+    def get_alias_in_path(self, paths, int_net, mod, exclusion_set=None): 
+        """Finds a single alias for the int_net in given paths. 
+        More or less hits cause an error"""
+        net_found = False
+        for path in paths:
+            aliases = self.sram.find_aliases(self.sram_spc_name, self.pins, path, int_net, mod, exclusion_set)
+            if net_found and len(aliases) >= 1:
+                debug.error('Found multiple paths with {} net.'.format(int_net),1)
+            elif len(aliases) > 1:
+                debug.error('Found multiple {} nets in single path.'.format(int_net),1)
+            elif not net_found and len(aliases) == 1:
+                path_net_name = aliases[0]
+                net_found = True
+        if not net_found:
+            debug.error("Could not find {} net in timing paths.".format(int_net),1)
+                
+        return path_net_name 
      
     def check_arguments(self):
         """Checks if arguments given for write_stimulus() meets requirements"""
@@ -658,6 +690,10 @@ class delay(simulation):
             #Get measurements from output file
             for measure in self.read_lib_meas:
                 read_port_dict[measure.name] = measure.retrieve_measure(port=port)
+                
+            #Check sen timing, then bitlines, then general measurements.
+            if not self.check_sen_measure(port):
+                return (False,{})
             success = self.check_debug_measures(port, read_port_dict)
             success = success and self.check_bit_measures()
             #Check timing for read ports. Power is only checked if it was read correctly
@@ -680,6 +716,17 @@ class delay(simulation):
         # The delay is from the negative edge for our SRAM
         return (sim_passed,result)
 
+    def check_sen_measure(self, port):
+        """Checks that the sen occurred within a half-period"""
+        self.sen_meas
+        sen_val = self.sen_meas.retrieve_measure(port=port)
+        debug.info(1,"S_EN delay={} ns".format(sen_val))
+        if self.sen_meas.meta_add_delay:
+            max_delay = self.period/2
+        else:
+            max_delay = self.period
+        return not (type(sen_val) != float or sen_val > max_delay)
+        
     def check_debug_measures(self, port, read_measures):
         """Debug measures that indicate special conditions."""
         #Currently, only check if the opposite than intended value was read during

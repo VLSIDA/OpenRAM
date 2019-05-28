@@ -85,6 +85,7 @@ class bitcell_array(design.design):
     def add_modules(self):
         """ Add the modules used in this design """
         self.cell = factory.create(module_type="bitcell")
+        debug.info(1,"Cell mod created, id={}".format(id(self.cell)))
         self.add_mod(self.cell)
 
     def create_instances(self):

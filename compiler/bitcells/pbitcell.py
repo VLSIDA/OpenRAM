@@ -873,6 +873,13 @@ class pbitcell(design.design):
         """Returns names of storage nodes in bitcell in  [non-inverting, inverting] format."""
         return self.storage_nets
      
+    def get_bl_name(self, port=0):
+        """Get bl name by port"""
+        return "bl{}".format(port)
+    
+    def get_br_name(self, port=0):
+        """Get bl name by port"""
+        return "br{}".format(port) 
 
     def analytical_delay(self, corner, slew, load=0, swing = 0.5):
         parasitic_delay = 1

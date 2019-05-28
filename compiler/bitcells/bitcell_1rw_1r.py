@@ -95,6 +95,14 @@ class bitcell_1rw_1r(design.design):
         column_pins = ["br0"]
         return column_pins
     
+    def get_bl_name(self, port=0):
+        """Get bl name by port"""
+        return "bl{}".format(port)
+    
+    def get_br_name(self, port=0):
+        """Get bl name by port"""
+        return "br{}".format(port)
+    
     def analytical_power(self, corner, load):
         """Bitcell power in nW. Only characterizes leakage."""
         from tech import spice

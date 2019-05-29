@@ -149,31 +149,18 @@ class delay(simulation):
     
     def create_debug_measurement_objects(self):
         """Create debug measurement to help identify failures."""
-        
-        self.debug_delay_meas = []
         self.debug_volt_meas = []
         for meas in self.delay_meas:
-            debug_meas = copy.deepcopy(meas)
-            debug_meas.name = debug_meas.name+'_debug'
-            #This particular debugs check if output value is flipped, so TARG_DIR is flipped
-            if meas.targ_dir_str == 'FALL':
-                debug_meas.targ_dir_str = 'RISE'
-            else:
-                debug_meas.targ_dir_str = 'FALL'
-            #inserting debug member variable
-            debug_meas.parent = meas.name
-            self.debug_delay_meas.append(debug_meas)
-
             #Output voltage measures
-            self.debug_volt_meas.append(voltage_at_measure("v_{}".format(debug_meas.name), 
-                                                           debug_meas.targ_name_no_port)) 
-            self.debug_volt_meas[-1].meta_str = debug_meas.meta_str
+            self.debug_volt_meas.append(voltage_at_measure("v_{}".format(meas.name), 
+                                                           meas.targ_name_no_port)) 
+            self.debug_volt_meas[-1].meta_str = meas.meta_str
          
         self.sen_meas = delay_measure("delay_sen", self.clk_frmt, self.sen_name, "FALL", "RISE", measure_scale=1e9)
         self.sen_meas.meta_str = sram_op.READ_ZERO        
         self.sen_meas.meta_add_delay = True
         
-        return self.debug_delay_meas+self.debug_volt_meas+[self.sen_meas]
+        return self.debug_volt_meas+[self.sen_meas]
      
     def create_read_bit_measures(self):
         """Adds bit measurements for read0 and read1 cycles"""
@@ -694,7 +681,7 @@ class delay(simulation):
             #Check sen timing, then bitlines, then general measurements.
             if not self.check_sen_measure(port):
                 return (False,{})
-            success = self.check_debug_measures(port, read_port_dict)
+            success = self.check_debug_measures(port)
             success = success and self.check_bit_measures()
             #Check timing for read ports. Power is only checked if it was read correctly
             if not self.check_valid_delays(read_port_dict) or not success:
@@ -727,30 +714,11 @@ class delay(simulation):
             max_delay = self.period
         return not (type(sen_val) != float or sen_val > max_delay)
         
-    def check_debug_measures(self, port, read_measures):
+    def check_debug_measures(self, port):
         """Debug measures that indicate special conditions."""
         #Currently, only check if the opposite than intended value was read during
         # the read cycles i.e. neither of these measurements should pass.
-        success = True
-        for meas in self.debug_delay_meas:
-            val = meas.retrieve_measure(port=port)
-            debug.info(2,"{}={}".format(meas.name, val))
-            if type(val) != float:
-                continue
-            
-            if meas.meta_add_delay:
-                max_delay = self.period/2
-            else:
-                max_delay = self.period
-                
-            #If the debug measurement occurs after the original (and passes other conditions)
-            #then it fails i.e. the debug value represents the final (but failing) state of the output
-            parent_compare = type(read_measures[meas.parent]) != float or val > read_measures[meas.parent]
-            if 0 < val < max_delay and parent_compare:
-                success = False
-                debug.info(1, "Debug measurement failed. Incorrect Value found on output.") 
-                break
-                
+        success = True               
         #FIXME: these checks need to be re-done to be more robust against possible errors        
         bl_vals = {}
         br_vals = {}

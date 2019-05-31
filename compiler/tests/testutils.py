@@ -281,6 +281,7 @@ class openram_test(unittest.TestCase):
             debug.info(2,"MATCH {0} {1}".format(filename1,filename2))
         return True
 
+        
 def header(filename, technology):
     # Skip the header for gitlab regression
     import getpass

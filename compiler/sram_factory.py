@@ -7,8 +7,6 @@
 #
 import debug
 from globals import OPTS
-from importlib import reload
-    
 
 class sram_factory:
     """
@@ -54,7 +52,8 @@ class sram_factory:
         try:
             mod = self.modules[module_type]
         except KeyError:
-            c = reload(__import__(module_name))
+            import importlib
+            c = importlib.reload(__import__(module_name))
             mod = getattr(c, module_name)
             self.modules[module_type] = mod
             self.module_indices[module_type] = 0

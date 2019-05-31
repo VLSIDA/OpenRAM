@@ -221,7 +221,7 @@ class pbitcell(design.design):
         inverter_pmos_contact_extension = 0.5*(self.inverter_pmos.active_contact.height - self.inverter_pmos.active_height)
         inverter_nmos_contact_extension = 0.5*(self.inverter_nmos.active_contact.height - self.inverter_nmos.active_height)
         self.inverter_gap = max(self.poly_to_active, self.m1_space + inverter_nmos_contact_extension) \
-                            + self.poly_to_polycontact + 2*contact.poly.height \
+                            + self.poly_to_polycontact + 2*contact.poly.width \
                             + self.m1_space + inverter_pmos_contact_extension
         self.cross_couple_lower_ypos = self.inverter_nmos_ypos + self.inverter_nmos.active_height \
                                        + max(self.poly_to_active, self.m1_space + inverter_nmos_contact_extension) \

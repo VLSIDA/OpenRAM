@@ -36,16 +36,21 @@ class grid_cell:
         
         
     def get_type(self):
+        type_string = ""
+        
         if self.blocked:
-            return "X"
+            type_string += "X"
 
         if self.source:
-            return "S"
+            type_string += "S"
 
         if self.target:
-            return "T"
+            type_string += "T"
 
         if self.path:
-            return "P"
+            type_string += "P"
 
+        if type_string != "":
+            return type_string
+        
         return None

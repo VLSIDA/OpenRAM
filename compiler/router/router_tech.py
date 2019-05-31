@@ -24,7 +24,7 @@ class router_tech:
         """
         self.layers = layers
         self.rail_track_width = rail_track_width
-        print(self.layers,len(self.layers))
+
         if len(self.layers)==1:
             self.horiz_layer_name = self.vert_layer_name = self.layers[0]
             self.horiz_layer_number = self.vert_layer_number = layer[self.layers[0]]

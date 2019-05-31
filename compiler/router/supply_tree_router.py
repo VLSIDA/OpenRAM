@@ -74,13 +74,14 @@ class supply_tree_router(router):
         # Block everything
         self.prepare_blockages(self.gnd_name)
         self.prepare_blockages(self.vdd_name)
-        
+
         # Route the supply pins to the supply rails
         # Route vdd first since we want it to be shorter
         start_time = datetime.now()
         self.route_pins(vdd_name)
         self.route_pins(gnd_name)
         print_time("Maze routing supplies",datetime.now(), start_time, 3)
+
         #self.write_debug_gds("final.gds",False)  
 
         # Did we route everything??
@@ -147,7 +148,7 @@ class supply_tree_router(router):
             if pg.is_routed():
                 continue
             
-            debug.info(3,"Routing component {0} {1}".format(pin_name, index))
+            debug.info(1,"Routing component {0} {1}".format(pin_name, index))
 
             # Clear everything in the routing grid.
             self.rg.reinit()
@@ -159,13 +160,29 @@ class supply_tree_router(router):
             # Add the single component of the pin as the source
             # which unmarks it as a blockage too
             self.add_pin_component_source(pin_name,index)
-
+            
             # Marks all pin components except index as target
             self.add_pin_component_target_except(pin_name,index)
+            # Add the prevous paths as a target too
+            self.add_path_target(self.paths)
 
+            print("SOURCE: ")
+            for k,v in self.rg.map.items():
+                if v.source:
+                    print(k)
+
+            print("TARGET: ")
+            for k,v in self.rg.map.items():
+                if v.target:
+                    print(k)
+
+            import pdb; pdb.set_trace()
+            if index==1:
+                self.write_debug_gds("debug{}.gds".format(pin_name),False)
+                
             # Actually run the A* router
             if not self.run_router(detour_scale=5):
-                self.write_debug_gds("debug_route.gds",False)
+                self.write_debug_gds("debug_route.gds",True)
                 
             #if index==3 and pin_name=="vdd":
             #    self.write_debug_gds("route.gds",False)

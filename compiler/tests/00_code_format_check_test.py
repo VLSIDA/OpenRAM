@@ -8,9 +8,9 @@
 #
 
 import unittest
-from testutils import header,openram_test
+from testutils import *
 import sys,os,re
-sys.path.append(os.path.join(sys.path[0],".."))
+sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 import debug
 
@@ -51,7 +51,7 @@ def setup_files(path):
     files = []
     for (dir, _, current_files) in os.walk(path):
         for f in current_files:
-            files.append(os.path.join(dir, f))
+            files.append(os.getenv("OPENRAM_HOME"))
     nametest = re.compile("\.py$", re.IGNORECASE)
     select_files = list(filter(nametest.search, files))
     return select_files
@@ -122,4 +122,4 @@ if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
-    unittest.main()
+    unittest.main(testRunner=debugTestRunner())

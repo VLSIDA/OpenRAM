@@ -352,7 +352,7 @@ class bank(design.design):
         self.addr_size = self.col_addr_size + self.row_addr_size
 
         debug.check(self.num_rows*self.num_cols==self.word_size*self.num_words,"Invalid bank sizes.")
-        debug.check(self.addr_size==self.col_addr_size + self.row_addr_size,"Invalid address break down.")
+        debug.check(1+self.addr_size==self.col_addr_size + self.row_addr_size,"Invalid address break down.")
 
         # Width for the vdd/gnd rails
         self.supply_rail_width = 4*self.m2_width

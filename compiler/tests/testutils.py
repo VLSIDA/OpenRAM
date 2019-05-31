@@ -6,9 +6,10 @@
 #All rights reserved.
 #
 import unittest,warnings
+import pdb,traceback
 import sys,os,glob,copy
 import shutil
-sys.path.append(os.path.join(sys.path[0],".."))
+sys.path.append(os.getenv("OPENRAM_HOME"))
 from globals import OPTS
 import debug
 
@@ -296,3 +297,19 @@ def header(filename, technology):
     from  globals import OPTS
     print("|=========" + OPTS.openram_temp.center(60) + "=========|")
     print("|==============================================================================|")
+
+def debugTestRunner(post_mortem=None):
+    """unittest runner doing post mortem debugging on failing tests"""
+    if post_mortem is None:
+        post_mortem = pdb.post_mortem
+    class DebugTestResult(unittest.TextTestResult):
+        def addError(self, test, err):
+            # called before tearDown()
+            traceback.print_exception(*err)
+            post_mortem(err[2])
+            super(DebugTestResult, self).addError(test, err)
+        def addFailure(self, test, err):
+            traceback.print_exception(*err)
+            post_mortem(err[2])
+            super(DebugTestResult, self).addFailure(test, err)
+    return unittest.TextTestRunner(resultclass=DebugTestResult)

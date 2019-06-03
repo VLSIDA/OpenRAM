@@ -135,7 +135,6 @@ class sram_base(design, verilog, lef):
             self.copy_power_pins(inst,"vdd")
             self.copy_power_pins(inst,"gnd")
             
-
         import tech
         if not OPTS.route_supplies:
             # Do not route the power supply (leave as must-connect pins)

@@ -6,8 +6,6 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-"Run a regression test for DRC on basic contacts of different array sizes"
-
 import unittest
 from testutils import *
 import sys,os

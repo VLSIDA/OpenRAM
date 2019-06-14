@@ -6,10 +6,6 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-"""
-Run a regression test on a single transistor column_mux.
-"""
-
 from testutils import *
 import sys,os
 sys.path.append(os.getenv("OPENRAM_HOME"))

@@ -6,10 +6,6 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-"""
-Run a functioal test on 1 bank SRAM
-"""
-
 import unittest
 from testutils import *
 import sys,os

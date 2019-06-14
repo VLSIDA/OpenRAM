@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""
-This tests the top-level executable. It checks that it generates the
-appropriate files: .lef, .lib, .sp, .gds, .v. It DOES NOT, however,
-check that these files are right.
-"""
-
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
+#
 import unittest
 from testutils import *
 import sys,os,re,shutil

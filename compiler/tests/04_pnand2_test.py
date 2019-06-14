@@ -6,12 +6,6 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-"""
-Run regression tests on a parameterized nand 2.  This module doesn't
-generate a multi_finger 2-input nand gate.  It generates only a minimum
-size 2-input nand gate.
-"""
-
 import unittest
 from testutils import *
 import sys,os

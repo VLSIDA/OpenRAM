@@ -6,8 +6,6 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-"Run a regression test the library cells for LVS"
-
 import unittest
 from testutils import *
 import sys,os,re

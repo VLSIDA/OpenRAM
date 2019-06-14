@@ -6,10 +6,6 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-"""
-Check the .lib file for an SRAM
-"""
-
 import unittest
 from testutils import *
 import sys,os,re

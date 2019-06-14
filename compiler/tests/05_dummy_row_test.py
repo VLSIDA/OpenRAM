@@ -13,13 +13,13 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class replica_row_test(openram_test):
+class dummy_row_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_{0}".format(OPTS.tech_name))
 
-        debug.info(2, "Testing replica row for 6t_cell")
-        a = factory.create(module_type="replica_row", cols=4)
+        debug.info(2, "Testing dummy row for 6t_cell")
+        a = factory.create(module_type="dummy_row", cols=4)
         self.local_check(a)
 
         globals.end_openram()

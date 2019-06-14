@@ -11,7 +11,7 @@ from sram_factory import factory
 from vector import vector
 from globals import OPTS
 
-class replica_row(design.design):
+class dummy_row(design.design):
     """
     Generate a replica wordline row for the replica array.
     """

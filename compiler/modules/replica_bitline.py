@@ -86,10 +86,12 @@ class replica_bitline(design.design):
         self.replica_bitcell = factory.create(module_type="replica_bitcell")
         self.add_mod(self.replica_bitcell)
 
+        bitcell = factory.create(module_type="bitcell")
         # This is the replica bitline load column that is the height of our array
         self.rbl = factory.create(module_type="bitcell_array",
                                   cols=1,
-                                  rows=self.bitcell_loads)
+                                  rows=self.bitcell_loads,
+                                  bitcell=bitcell)
         self.add_mod(self.rbl)
 
         # FIXME: The FO and depth of this should be tuned

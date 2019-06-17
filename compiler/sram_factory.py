@@ -65,6 +65,8 @@ class sram_factory:
             # Must have the same dictionary exactly (conservative)
             if obj_kwargs == kwargs:
                 #debug.info(0, "Existing module: type={0} name={1} kwargs={2}".format(module_type, obj_item.name, str(kwargs)))
+                if module_type == 'bitcell_array':
+                    debug.info(1,'Returning existing mod!')
                 return obj_item
             #else:
             #    print("obj",obj_kwargs)

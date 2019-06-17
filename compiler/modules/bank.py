@@ -401,18 +401,18 @@ class bank(design.design):
     def add_modules(self):
         """ Add all the modules using the class loader """
         
-
-        self.bitcell_array = factory.create(module_type="bitcell_array",
-                                            cols=self.num_cols,
-                                            rows=self.num_rows)
-        self.add_mod(self.bitcell_array)
-        
         # create arrays of bitline and bitline_bar names for read, write, or all ports
         self.bitcell = factory.create(module_type="bitcell") 
         self.bl_names = self.bitcell.list_all_bl_names()
         self.br_names = self.bitcell.list_all_br_names()
         self.wl_names = self.bitcell.list_all_wl_names()
         self.bitline_names = self.bitcell.list_all_bitline_names()
+        
+        self.bitcell_array = factory.create(module_type="bitcell_array",
+                                            cols=self.num_cols,
+                                            rows=self.num_rows,
+                                            bitcell=self.bitcell)
+        self.add_mod(self.bitcell_array)
 
         self.precharge_array = []
         for port in self.all_ports:

@@ -30,6 +30,14 @@ class replica_bitcell(design.design):
         self.height = replica_bitcell.height
         self.pin_map = replica_bitcell.pin_map
     
+    def analytical_power(self, corner, load):
+        """Bitcell power in nW. Only characterizes leakage."""
+        from tech import spice
+        leakage = spice["bitcell_leakage"]
+        dynamic = 0 #temporary
+        total_power = self.return_power(dynamic, leakage)
+        return total_power
+
     def get_wl_cin(self):
         """Return the relative capacitance of the access transistor gates"""
         #This is a handmade cell so the value must be entered in the tech.py file or estimated.

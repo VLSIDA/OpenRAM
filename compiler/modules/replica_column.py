@@ -19,8 +19,7 @@ class replica_column(design.design):
     def __init__(self, name, rows):
         design.design.__init__(self, name)
 
-        # One extra row for the dummy row
-        self.row_size = rows + 1
+        self.row_size = rows
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -34,6 +33,9 @@ class replica_column(design.design):
     def create_layout(self):
         self.place_instances()
         self.add_layout_pins()
+
+        self.height = self.row_size*self.cell.height
+        self.width = self.cell.width 
 
         self.add_boundary()
         self.DRC_LVS()
@@ -53,6 +55,8 @@ class replica_column(design.design):
     def add_modules(self):
         self.replica_cell = factory.create(module_type="replica_bitcell")
         self.add_mod(self.replica_cell)
+        self.dummy_cell = factory.create(module_type="dummy_bitcell")
+        self.add_mod(self.dummy_cell)
         # Used for pin names only
         self.cell = factory.create(module_type="bitcell")
         
@@ -60,37 +64,32 @@ class replica_column(design.design):
         self.cell_inst = {}
         for row in range(self.row_size):
             name="rbc_{0}".format(row)
-            self.cell_inst[row]=self.add_inst(name=name,
-                                              mod=self.replica_cell)
+            if row>0 and row<self.row_size-2:
+                self.cell_inst[row]=self.add_inst(name=name,
+                                                  mod=self.replica_cell)
+            else:
+                self.cell_inst[row]=self.add_inst(name=name,
+                                                  mod=self.dummy_cell)
             self.connect_inst(self.list_bitcell_pins(0, row))
             
-    def create_layout(self):
+    def place_instances(self):
 
-        # We increase it by a well enclosure so the precharges don't overlap our wells
-        self.height = self.row_size*self.cell.height
-        self.width = self.cell.width 
-        
-        yoffset = 0.0
+        yoffset = 0
         for row in range(self.row_size):
             name = "bit_r{0}_{1}".format(row,"rbl")
 
             # This is opposite of a bitcell array since we will be 1 row off
             if not row % 2:
-                tempy = yoffset + self.cell.height
-                dir_key = "MX"
-            else:
                 tempy = yoffset
                 dir_key = ""
+            else:
+                tempy = yoffset + self.cell.height
+                dir_key = "MX"
 
             self.cell_inst[row].place(offset=[0.0, tempy],
                                           mirror=dir_key)
             yoffset += self.cell.height
 
-        self.add_layout_pins()
-
-        self.add_boundary()
-        
-        self.DRC_LVS()
 
 
     def add_layout_pins(self):
@@ -99,7 +98,7 @@ class replica_column(design.design):
         row_list = self.cell.list_all_wl_names()
         column_list = self.cell.list_all_bitline_names()
 
-        col = "rbl"
+        col = "0"
         for cell_column in column_list:
             bl_pin = self.cell_inst[0].get_pin(cell_column)
             self.add_layout_pin(text=cell_column+"_{0}".format(col),

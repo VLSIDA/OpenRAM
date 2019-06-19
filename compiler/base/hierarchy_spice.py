@@ -102,6 +102,10 @@ class spice():
                 output_list.append(pin)
         return output_list
 
+    def copy_pins(self, other_module, suffix=""):
+        """ This will copy all of the pins from the other module and add an optional suffix."""
+        for pin in other_module.pins:
+            self.add_pin(pin+suffix, other_module.get_pin_type(pin))
 
     def add_mod(self, mod):
         """Adds a subckt/submodule to the subckt hierarchy"""

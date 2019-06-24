@@ -2,6 +2,8 @@ from .gdsPrimitives import *
 from datetime import *
 #from mpmath import matrix
 #from numpy import matrix
+from vector import vector
+from pin_layout import pin_layout
 import numpy as np
 #import gdsPrimitives
 import debug
@@ -729,7 +731,7 @@ class VlsiLayout:
 
     def getAllShapes(self,layer):
         """
-        Return all gshapes on a given layer in [llx, lly, urx, ury] format and 
+        Return all shapes on a given layer in [llx, lly, urx, ury] format and 
         user units.
         """
         boundaries = set()
@@ -744,6 +746,19 @@ class VlsiLayout:
                                     boundary[2]*self.units[0],boundary[3]*self.units[0]])
                 
         return user_boundaries
+
+
+    def getBlockages(self,layer):
+        blockages = []
+
+        shapes = self.getAllShapes(layer)
+        for boundary in shapes:
+            ll = vector(boundary[0],boundary[1])
+            ur = vector(boundary[2],boundary[3])
+            rect = [ll,ur]
+            new_pin = rect
+            blockages.append(new_pin)
+        return blockages 
 
 
     def getShapesInStructure(self,layer,structure):

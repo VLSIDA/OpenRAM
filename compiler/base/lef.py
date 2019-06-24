@@ -21,9 +21,11 @@ class lef:
     """
     def __init__(self,layers):
         # LEF db units per micron
-        self.lef_units = 1000
+        self.lef_units = 2000
         # These are the layers of the obstructions
         self.lef_layers = layers
+        # Round to ensure float values are divisible by 0.0025 (the manufacturing grid)
+        self.round_grid = 4;
 
     def lef_write(self, lef_name):
         """Write the entire lef of the object to the file."""
@@ -48,25 +50,14 @@ class lef:
         self.lef.write("UNITS\n")
         self.lef.write("  DATABASE MICRONS {0} ;\n".format(self.lef_units))
         self.lef.write("END UNITS\n")
-
-        self.lef.write("SITE  MacroSite\n")
-        self.indent += "   "
-        self.lef.write("{0}CLASS Core ;\n".format(self.indent))
-        self.lef.write("{0}SIZE {1} by {2} ;\n".format(self.indent,
-                                                       self.lef_units*self.width,
-                                                       self.lef_units*self.height))
-        self.indent = self.indent[:-3]
-        self.lef.write("END  MacroSite\n")
         
         self.lef.write("{0}MACRO {1}\n".format(self.indent,self.name))
         self.indent += "   "
         self.lef.write("{0}CLASS BLOCK ;\n".format(self.indent))
         self.lef.write("{0}SIZE {1} BY {2} ;\n" .format(self.indent,
-                                                        self.lef_units*self.width,
-                                                        self.lef_units*self.height))
+                                                        round(self.width,self.round_grid),
+                                                        round(self.height,self.round_grid)))
         self.lef.write("{0}SYMMETRY X Y R90 ;\n".format(self.indent))
-        self.lef.write("{0}SITE MacroSite ;\n".format(self.indent))
-
         
     def lef_write_footer(self):
         self.lef.write("{0}END    {1}\n".format(self.indent,self.name))
@@ -119,5 +110,5 @@ class lef:
         """ Write a LEF rectangle """
         self.lef.write("{0}RECT ".format(self.indent)) 
         for item in rect:
-            self.lef.write(" {0} {1}".format(self.lef_units*item[0], self.lef_units*item[1]))
+            self.lef.write(" {0} {1}".format(round(item[0],self.round_grid), round(item[1],self.round_grid)))
         self.lef.write(" ;\n")

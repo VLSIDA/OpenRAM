@@ -1,15 +1,15 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import os
 from design_rules import *
 
 """
-File containing the process technology parameters for SCMOS 3me, subm, 180nm.
+File containing the process technology parameters for SCMOS 4m, 0.35um
 """
 
 #GDS file info
@@ -86,8 +86,8 @@ drc["has_nwell"] = True
 drc["grid"]=0.5*_lambda_
 
 #DRC/LVS test set_up
-drc["drc_rules"]=drclvs_home+"/calibreDRC_scn3me_subm.rul"
-drc["lvs_rules"]=drclvs_home+"/calibreLVS_scn3me_subm.rul"
+drc["drc_rules"]=None #drclvs_home+"/calibreDRC_scn3me_subm.rul"
+drc["lvs_rules"]=None #drclvs_home+"/calibreLVS_scn3me_subm.rul"
 drc["layer_map"]=os.environ.get("OPENRAM_TECH")+"/scn3me_subm/layers.map"
         	      					
 # minwidth_tx with contact (no dog bone transistors)

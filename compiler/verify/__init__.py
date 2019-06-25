@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 """
 This is a module that will import the correct DRC/LVS/PEX 
@@ -33,9 +33,6 @@ else:
     OPTS.lvs_exe = get_tool("LVS", ["calibre","assura","netgen"], OPTS.lvs_name)
     OPTS.pex_exe = get_tool("PEX", ["calibre","magic"], OPTS.pex_name)
 
-if OPTS.check_lvsdrc and OPTS.tech_name == "freepdk45":
-    debug.check(OPTS.drc_exe[0]!="magic","Magic does not support FreePDK45 for DRC.")
-    
 if OPTS.drc_exe == None:
     from .none import run_drc,print_drc_stats
 elif "calibre"==OPTS.drc_exe[0]:

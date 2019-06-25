@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import debug
 from tech import drc
@@ -41,6 +41,7 @@ class tri_gate_array(design.design):
 
         self.place_array()
         self.add_layout_pins()
+        self.add_boundary()
         self.DRC_LVS()
 
     def add_modules(self):

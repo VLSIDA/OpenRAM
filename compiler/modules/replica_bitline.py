@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import debug
 import design
@@ -51,6 +51,7 @@ class replica_bitline(design.design):
         self.width = self.replica_column_inst.rx() - self.delay_chain_inst.lx() + self.m2_pitch
         self.height = max(self.replica_column_inst.uy(), self.delay_chain_inst.uy()) + self.m3_pitch
 
+        self.add_boundary()
         self.DRC_LVS()
 
     def add_pins(self):

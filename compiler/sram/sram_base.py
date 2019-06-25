@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import sys
 import datetime
@@ -129,18 +129,26 @@ class sram_base(design, verilog, lef):
     def route_supplies(self):
         """ Route the supply grid and connect the pins to them. """
 
-        # Do not route the power supply 
-        if not OPTS.route_supplies:
-            return
-        
+        # Copy the pins to the top level
+        # This will either be used to route or left unconnected.
         for inst in self.insts:
             self.copy_power_pins(inst,"vdd")
             self.copy_power_pins(inst,"gnd")
-
-        from supply_router import supply_router as router
-        layer_stack =("metal3","via3","metal4")
-        rtr=router(layer_stack, self)
+            
+        import tech
+        if not OPTS.route_supplies:
+            # Do not route the power supply (leave as must-connect pins)
+            return
+        elif "metal4" in tech.layer:
+            # Route a M3/M4 grid
+            from supply_grid_router import supply_grid_router as router
+            rtr=router(("metal3","via3","metal4"), self)
+        elif "metal3" in tech.layer:
+            from supply_tree_router import supply_tree_router as router
+            rtr=router(("metal3",), self)
+            
         rtr.route()
+
         
 
         

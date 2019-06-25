@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import sys
 from tech import drc, parameter
@@ -47,6 +47,7 @@ class bank(design.design):
         if not OPTS.netlist_only:
             debug.check(len(self.all_ports)<=2,"Bank layout cannot handle more than two ports.")
             self.create_layout()
+            self.add_boundary()
 
 
     def create_netlist(self):

@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 from tech import drc, parameter
 import debug
@@ -44,6 +44,7 @@ class wordline_driver(design.design):
         self.route_layout()
         self.route_vdd_gnd()
         self.offset_all_coordinates()
+        self.add_boundary()
         self.DRC_LVS()
         
     def add_pins(self):

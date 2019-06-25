@@ -1764,6 +1764,11 @@ cifinput
 style  lambda=0.20(p)
  scalefactor  20
 
+ # This is a custom section to add bounding boxes in OpenRAM
+ layer bb BB
+ labels BB
+ calma BB 63 0
+
  layer nwell CWN
  and-not CWNR
  and-not CTA
@@ -2449,10 +2454,6 @@ style  lambda=0.20(p)
  and-not CPS
  and-not CBA
  calma CAA 43 *
-
- layer comment CX
- labels CX
- calma CX 63 *
 
  calma CTA 60 *
 
@@ -2470,6 +2471,11 @@ style  lambda=0.20(p)
 style  lambda=0.20(s)
  scalefactor  20
 
+ # This is a custom section to add bounding boxes in OpenRAM
+ layer bb BB
+ labels BB
+ calma BB 63 0
+
  layer nwell CWN
  and-not CWNR
  and-not CTA
@@ -3157,10 +3163,6 @@ style  lambda=0.20(s)
  and-not CPS
  and-not CBA
  calma CAA 43 *
-
- layer comment CX
- labels CX
- calma CX 63 *
 
  calma CTA 60 *
 
@@ -3178,6 +3180,11 @@ style  lambda=0.20(s)
 style  lambda=0.20(ps)
  scalefactor  20
 
+ # This is a custom section to add bounding boxes in OpenRAM
+ layer bb BB
+ labels BB
+ calma BB 63 0
+
  layer nwell CWN
  and-not CWNR
  and-not CTA
@@ -3810,10 +3817,6 @@ style  lambda=0.20(ps)
  and-not CBA
  calma CAA 43 *
 
- layer comment CX
- labels CX
- calma CX 63 *
-
  calma CTA 60 *
 
  calma CRW 65 *
@@ -3829,6 +3832,11 @@ style  lambda=0.20(ps)
 
 style  lambda=0.20()
  scalefactor  20
+
+ # This is a custom section to add bounding boxes in OpenRAM
+ layer bb BB
+ labels BB
+ calma BB 63 0
 
  layer nwell CWN
  and-not CWNR
@@ -4516,10 +4524,6 @@ style  lambda=0.20()
  and-not CBA
  calma CAA 43 *
 
- layer comment CX
- labels CX
- calma CX 63 *
-
  calma CTA 60 *
 
  calma CRW 65 *
@@ -4535,6 +4539,11 @@ style  lambda=0.20()
 
 style  lambda=0.20(c)
  scalefactor  20
+
+ # This is a custom section to add bounding boxes in OpenRAM
+ layer bb BB
+ labels BB
+ calma BB 63 0
 
  layer nwell CWN
  and-not CWNR
@@ -4988,10 +4997,6 @@ style  lambda=0.20(c)
  and-not CPS
  and-not CBA
  calma CAA 43 *
-
- layer comment CX
- labels CX
- calma CX 63 *
 
  calma CTA 60 *
 
@@ -5009,6 +5014,11 @@ style  lambda=0.20(c)
 style  lambda=0.20(cs)
  scalefactor  20
 
+ # This is a custom section to add bounding boxes in OpenRAM
+ layer bb BB
+ labels BB
+ calma BB 63 0
+
  layer nwell CWN
  and-not CWNR
  and-not CTA
@@ -5464,10 +5474,6 @@ style  lambda=0.20(cs)
  and-not CBA
  calma CAA 43 *
 
- layer comment CX
- labels CX
- calma CX 63 *
-
  calma CTA 60 *
 
  calma CRW 65 *
@@ -5483,6 +5489,11 @@ style  lambda=0.20(cs)
 
 style  lambda=0.20(cps)
  scalefactor  20
+
+ # This is a custom section to add bounding boxes in OpenRAM
+ layer bb BB
+ labels BB
+ calma BB 63 0
 
  layer nwell CWN
  and-not CWNR
@@ -5940,10 +5951,6 @@ style  lambda=0.20(cps)
  and-not CBA
  calma CAA 43 *
 
- layer comment CX
- labels CX
- calma CX 63 *
-
  calma CTA 60 *
 
  calma CRW 65 *
@@ -5959,6 +5966,11 @@ style  lambda=0.20(cps)
 
 style  lambda=0.20(cp)
  scalefactor  20
+
+ # This is a custom section to add bounding boxes in OpenRAM
+ layer bb BB
+ labels BB
+ calma BB 63 0
 
  layer nwell CWN
  and-not CWNR
@@ -6413,10 +6425,6 @@ style  lambda=0.20(cp)
  and-not CPS
  and-not CBA
  calma CAA 43 *
-
- layer comment CX
- labels CX
- calma CX 63 *
 
  calma CTA 60 *
 

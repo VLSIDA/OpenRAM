@@ -1,14 +1,12 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import debug
 from globals import OPTS
-from importlib import reload
-    
 
 class sram_factory:
     """
@@ -52,7 +50,8 @@ class sram_factory:
         try:
             mod = self.modules[module_type]
         except KeyError:
-            c = reload(__import__(module_type))
+            import importlib
+            c = importlib.reload(__import__(module_type))
             mod = getattr(c, module_type)
             self.modules[module_type] = mod
             self.module_indices[module_type] = 0

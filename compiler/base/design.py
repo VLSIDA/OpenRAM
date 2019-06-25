@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 from hierarchy_design import hierarchy_design
 import contact
@@ -25,15 +25,18 @@ class design(hierarchy_design):
         
         self.setup_drc_constants()
         self.setup_multiport_constants()
-        
+
+        from tech import layer
         self.m1_pitch = max(contact.m1m2.width,contact.m1m2.height) + max(self.m1_space, self.m2_space)
         self.m2_pitch = max(contact.m2m3.width,contact.m2m3.height) + max(self.m2_space, self.m3_space)
-        if contact.m3m4:
+        if "metal4" in layer:
             self.m3_pitch = max(contact.m3m4.width,contact.m3m4.height) + max(self.m3_space, self.m4_space)
+        else:
+            self.m3_pitch = self.m2_pitch
 
     def setup_drc_constants(self):
         """ These are some DRC constants used in many places in the compiler."""
-        from tech import drc
+        from tech import drc,layer
         self.well_width = drc("minwidth_well")
         self.poly_width = drc("minwidth_poly")
         self.poly_space = drc("poly_to_poly")        
@@ -43,7 +46,7 @@ class design(hierarchy_design):
         self.m2_space = drc("metal2_to_metal2")        
         self.m3_width = drc("minwidth_metal3")
         self.m3_space = drc("metal3_to_metal3")
-        if contact.m3m4:
+        if "metal4" in layer:
             self.m4_width = drc("minwidth_metal4")
             self.m4_space = drc("metal4_to_metal4")
         self.active_width = drc("minwidth_active")

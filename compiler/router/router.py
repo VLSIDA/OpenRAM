@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import sys
 import gdsMill
@@ -668,7 +668,10 @@ class router(router_tech):
         track.
         """
         # to scale coordinates to tracks
-        x = track[0]*self.track_width - 0.5*self.track_width
+        try:
+            x = track[0]*self.track_width - 0.5*self.track_width
+        except TypeError:
+            print(track[0],type(track[0]),self.track_width,type(self.track_width))
         y = track[1]*self.track_width - 0.5*self.track_width
         # offset lowest corner object to to (-track halo,-track halo)
         ll = snap_to_grid(vector(x,y))
@@ -832,13 +835,22 @@ class router(router_tech):
         This will mark only the pin tracks from the indexed pin component as a target.
         It also unsets it as a blockage.
         """
-        debug.check(index<self.num_pin_grids(pin_name),"Pin component index too large.")
+        debug.check(index<self.num_pin_components(pin_name),"Pin component index too large.")
         
         pin_in_tracks = self.pin_groups[pin_name][index].grids
         debug.info(2,"Set target: " + str(pin_name) + " " + str(pin_in_tracks))
         self.rg.add_target(pin_in_tracks)
             
 
+    def add_pin_component_target_except(self, pin_name, index):
+        """ 
+        This will mark the grids for all *other* pin components as a target.
+        Marking as source or target also clears blockage status.
+        """
+        for i in range(self.num_pin_components(pin_name)):
+            if i != index:
+                self.add_pin_component_target(pin_name, i)
+        
     def set_component_blockages(self, pin_name, value=True):
         """ 
         Block all of the pin components.
@@ -885,9 +897,14 @@ class router(router_tech):
             # This assumes 1-track wide again
             abs_path = [self.convert_point_to_units(x[0]) for x in path]
             # Otherwise, add the route which includes enclosures
-            self.cell.add_route(layers=self.layers,
-                                coordinates=abs_path,
-                                layer_widths=self.layer_widths)
+            if len(self.layers)>1:
+                self.cell.add_route(layers=self.layers,
+                                    coordinates=abs_path,
+                                    layer_widths=self.layer_widths)
+            else:
+                self.cell.add_path(layer=self.layers[0],
+                                   coordinates=abs_path,
+                                   width=self.layer_widths[0])
             
     def add_single_enclosure(self, track):
         """
@@ -956,12 +973,19 @@ class router(router_tech):
         """
         This assumes the blockages, source, and target are all set up. 
         """
+
+        # Double check source and taget are not same node, if so, we are done!
+        for k,v in self.rg.map.items():
+            if v.source and v.target:
+                debug.error("Grid cell is source and target! {}".format(k))
+                return False
+            
         # returns the path in tracks
         (path,cost) = self.rg.route(detour_scale)
         if path:
-            debug.info(2,"Found path: cost={0} ".format(cost))
-            debug.info(3,str(path))
-            
+            debug.info(1,"Found path: cost={0} ".format(cost))
+            debug.info(1,str(path))
+
             self.paths.append(path)
             self.add_route(path)
             
@@ -1002,6 +1026,7 @@ class router(router_tech):
         Write out a GDS file with the routing grid and search information annotated on it.
         """
         debug.info(0,"Writing annotated router gds file to {}".format(gds_name))
+        self.del_router_info()
         self.add_router_info()
         self.cell.gds_write(gds_name)
 
@@ -1052,6 +1077,15 @@ class router(router_tech):
                             layer="text",
                             offset=shape[0],
                             zoom=0.05)
+
+    def del_router_info(self):
+        """
+        Erase all of the comments on the current level.
+        """
+        debug.info(0,"Erasing router info")
+        layer_num = techlayer["text"]
+        self.cell.objs = [x for x in self.cell.objs if x.layerNumber != layer_num]
+        
 
     def add_router_info(self):
         """

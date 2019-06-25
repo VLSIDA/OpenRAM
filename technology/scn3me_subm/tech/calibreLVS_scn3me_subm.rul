@@ -1,0 +1,123 @@
+TITLE   "LVS Rule File for scn3me_subm"
+
+LVS POWER NAME vdd
+LVS GROUND NAME gnd GROUND
+LVS REDUCE PARALLEL MOS yes
+LVS REDUCE SERIES MOS yes
+LVS REDUCE SEMI SERIES MOS yes
+LVS FILTER UNUSED MOS no
+LVS RECOGNIZE GATES all
+LVS COMPONENT TYPE PROPERTY element
+LVS COMPONENT SUBTYPE PROPERTY model
+LVS IGNORE PORTS no
+
+LVS REPORT mask.lvs.rep
+LVS REPORT OPTION N
+LVS REPORT MAXIMUM 50
+MASK RESULTS DATABASE maskdb
+
+precision 1000
+resolution 250
+
+TEXT LAYER metal1 metal2 metal3
+PORT LAYER TEXT  metal1 metal2 metal3 
+
+
+layer pwell              41
+layer nwell              42
+layer active             43
+layer poly               46
+layer nimplant           45
+layer pimplant           44
+layer contact            25
+layer active_contact     48
+layer poly_contact       47
+layer metal1             49
+layer via1               50
+layer metal2             51
+layer via2               61
+layer metal3             62
+layer glass              52
+layer pad                26
+
+connect metal1 metal2 by via1
+connect metal2 metal3 by via2
+
+pdif = active and pimplant     // P-diffusion
+ndif = active and nimplant     // N-diffusion
+
+ngate = poly and ndif          // N-Transistor
+pgate = poly and pdif          // P-transistor
+
+nsrcdrn = ndif not ngate       // N-tansistor Source and Drain contacts diffusion region
+psrcdrn = pdif not pgate       // P-tansistor Source and Drain contacts diffusion region
+
+pcont = psrcdrn and pwell
+
+ntapcont = active not interact pimplant
+ptapcont = active not interact nimplant
+
+bulk = extent
+nsub = (bulk not pwell) and nwell
+ncont = nsrcdrn and nsub
+
+connect metal1 poly psrcdrn nsrcdrn by contact mask
+connect psrcdrn pwell by pcont mask
+connect nsrcdrn nsub by ncont mask
+
+ncont1= ntapcont and nsub
+pcont1= ptapcont and pwell
+connect metal1 ncont1 by contact mask
+connect metal1 pcont1 by contact mask
+connect ncont1 nsub
+connect pcont1 pwell
+
+connect psrcdrn metal1 by contact 
+connect nsrcdrn metal1 by contact
+
+connect psrcdrn metal1 by active_contact 
+connect nsrcdrn metal1 by active_contact
+
+connect poly metal1 by contact
+
+connect poly metal1 by poly_contact
+
+device mp (p) pgate poly (G) psrcdrn (S) psrcdrn (D) nsub  CMACRO FET_PROPERTIES pgate nsub
+device mn (n) ngate poly (G) nsrcdrn (S) nsrcdrn (D) pwell  CMACRO FET_PROPERTIES ngate pwell
+
+VARIABLE trace_delta 4e-9
+
+DMACRO FET_TRACE device_type device_name {
+TRACE PROPERTY device_type(device_name) l l trace_delta ABSOLUTE
+TRACE PROPERTY device_type(device_name) w w trace_delta ABSOLUTE
+
+}
+
+CMACRO FET_TRACE MN n 
+CMACRO FET_TRACE MP p
+
+DMACRO FET_PROPERTIES seed well{
+[
+PROPERTY  W, L, AS, AD, PS, PD
+
+      AS = area(S)
+      AD = area(D)
+      PS = perimeter(S)
+      PD = perimeter(D)
+      if ( AS == 0 ) {
+         AD = area(D) / 2
+         AS = AD
+         PD = perimeter(D) / 2
+         PS = PD
+         }
+      if ( AD == 0 ) {
+         AS = area(S) / 2
+         AD = AS
+         PS = perimeter(S) / 2
+         PD = PS
+         }
+     W = (perim_co(seed,S) + perim_co(seed,D) ) * 0.5
+     L = (perim(seed) - perim_co(seed,S) - perim_in(seed,S) - perim_co(seed,D) - perim_in(seed,D) ) * 0.5
+   
+]
+}

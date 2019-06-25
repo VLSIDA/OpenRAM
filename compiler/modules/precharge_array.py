@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import design
 import debug
@@ -51,6 +51,7 @@ class precharge_array(design.design):
 
         self.place_insts()
         self.add_layout_pins()
+        self.add_boundary()
         self.DRC_LVS()
 
     def add_modules(self):

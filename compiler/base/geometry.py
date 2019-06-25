@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 """
 This provides a set of useful generic types for the gdsMill interface. 
@@ -165,7 +165,7 @@ class instance(geometry):
         debug.info(4, "creating instance: " + self.name)
 
     def get_blockages(self, layer, top=False):
-        """ Retrieve rectangular blockages of all modules in this instance.
+        """ Retrieve blockages of all modules in this instance.
         Apply the transform of the instance placement to give absolute blockages."""
         angle = math.radians(float(self.rotate))
         mirr = 1
@@ -183,21 +183,20 @@ class instance(geometry):
         elif self.mirror=="XY":
             mirr = 1
             angle += math.radians(180.0)
-            
-        if self.mod.is_library_cell:
-            # For lib cells, block the whole thing except on metal3
-            # since they shouldn't use metal3
-            if layer==tech.layer["metal1"] or layer==tech.layer["metal2"]:
-                return [self.transform_coords(self.mod.get_boundary(), self.offset, mirr, angle)]
-            else:
-                return []
-        else:
 
-            blockages = self.mod.get_blockages(layer)
-            new_blockages = []
+        new_blockages = []
+        if self.mod.is_library_cell:
+            # Writes library cell blockages as shapes instead of a large metal blockage
+            blockages = []
+            blockages = self.mod.gds.getBlockages(layer)
             for b in blockages:
                 new_blockages.append(self.transform_coords(b,self.offset, mirr, angle))
-            return new_blockages
+        else:
+            blockages = self.mod.get_blockages(layer)
+            for b in blockages:
+                new_blockages.append(self.transform_coords(b,self.offset, mirr, angle))
+        return new_blockages
+
         
     def gds_write_file(self, new_layout):
         """Recursively writes all the sub-modules in this instance"""

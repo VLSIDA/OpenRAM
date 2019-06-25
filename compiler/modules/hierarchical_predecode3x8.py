@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 from tech import drc
 import debug
@@ -52,6 +52,7 @@ class hierarchical_predecode3x8(hierarchical_predecode):
         self.place_output_inverters()
         self.place_nand_array()
         self.route()
+        self.add_boundary()
         self.DRC_LVS()
         
     def get_nand_input_line_combination(self):

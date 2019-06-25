@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import gdsMill
 import tech
@@ -20,7 +20,7 @@ from datetime import datetime
 import grid
 import grid_utils
 
-class supply_router(router):
+class supply_grid_router(router):
     """
     A router class to read an obstruction map from a gds and
     routes a grid to connect the supply on the two layers.
@@ -391,7 +391,7 @@ class supply_router(router):
             
             # Add the single component of the pin as the source
             # which unmarks it as a blockage too
-            self.add_pin_component_source(pin_name,index)
+            self.add_pin_component_source(pin_name, index)
 
             # Add all of the rails as targets
             # Don't add the other pins, but we could?

@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import itertools
 import geometry
@@ -879,6 +879,13 @@ class layout():
         Wrapper to create a horizontal channel route
         """
         self.create_channel_route(netlist, offset, layer_stack, pitch, vertical=False)
+
+    def add_boundary(self):
+        """ Add boundary for debugging dimensions """
+        self.add_rect(layer="boundary",
+                      offset=vector(0,0),
+                      height=self.height,
+                      width=self.width)
         
     def add_enclosure(self, insts, layer="nwell"):
         """ Add a layer that surrounds the given instances. Useful

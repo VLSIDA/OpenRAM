@@ -16,7 +16,7 @@ import debug
 class openram_test(unittest.TestCase):
     """ Base unit test that we have some shared classes in. """
 
-                
+
     def local_drc_check(self, w):
 
         self.reset()
@@ -31,11 +31,11 @@ class openram_test(unittest.TestCase):
 
         if OPTS.purge_temp:
             self.cleanup()
-    
+
     def local_check(self, a, final_verification=False):
 
         self.reset()
-        
+
         tempspice = "{0}{1}.sp".format(OPTS.openram_temp,a.name)
         tempgds = "{0}{1}.gds".format(OPTS.openram_temp,a.name)
 
@@ -52,7 +52,7 @@ class openram_test(unittest.TestCase):
                 #shutil.make_archive(zip_file, 'zip', OPTS.openram_temp)
                 self.fail("DRC failed: {}".format(a.name))
 
-            
+
             result=verify.run_lvs(a.name, tempgds, tempspice, final_verification=final_verification)
             if result != 0:
                 #zip_file = "/tmp/{0}_{1}".format(a.name,os.getpid())
@@ -63,6 +63,17 @@ class openram_test(unittest.TestCase):
         if OPTS.purge_temp:
             self.cleanup()
             
+    def run_pex(self, a, output=None):
+        if output == None:
+            output = OPTS.openram_temp + a.name + ".pex.netlist"
+        tempspice = "{0}{1}.sp".format(OPTS.openram_temp,a.name)
+        tempgds = "{0}{1}.gds".format(OPTS.openram_temp,a.name)
+
+        import verify
+        result=verify.run_pex(a.name, tempgds, tempspice, output=output, final_verification=False)
+        if result != 0:
+            self.fail("PEX ERROR: {}".format(a.name))
+        return output
 
     def find_feasible_test_period(self, delay_obj, sram, load, slew):
         """Creates a delay simulation to determine a feasible period for the functional tests to run.
@@ -75,19 +86,19 @@ class openram_test(unittest.TestCase):
         delay_obj.create_signal_names()
         delay_obj.create_measurement_names()
         delay_obj.create_measurement_objects()
-        delay_obj.find_feasible_period_one_port(test_port) 
-        return delay_obj.period        
-            
+        delay_obj.find_feasible_period_one_port(test_port)
+        return delay_obj.period
+
     def cleanup(self):
         """ Reset the duplicate checker and cleanup files. """
         files = glob.glob(OPTS.openram_temp + '*')
         for f in files:
             # Only remove the files
             if os.path.isfile(f):
-                os.remove(f)        
+                os.remove(f)
 
     def reset(self):
-        """ 
+        """
         Reset everything after each test.
         """
         # Reset the static duplicate name checker for unit tests.
@@ -116,7 +127,7 @@ class openram_test(unittest.TestCase):
             data_string=pprint.pformat(data)
             debug.error("Results exceeded {:.1f}% tolerance compared to golden results:\n".format(error_tolerance*100)+data_string)
         return data_matches
-            
+
 
 
     def isclose(self,key,value,actual_value,error_tolerance=1e-2):
@@ -132,7 +143,7 @@ class openram_test(unittest.TestCase):
             return False
 
     def relative_diff(self, value1, value2):
-        """ Compute the relative difference of two values and normalize to the largest. 
+        """ Compute the relative difference of two values and normalize to the largest.
         If largest value is 0, just return the difference."""
 
         # Edge case to avoid divide by zero
@@ -148,7 +159,7 @@ class openram_test(unittest.TestCase):
         # Edge case where greater is a zero
         if norm_value == 0:
             min_value = abs(min(value1, value2))
-            
+
         return abs(value1 - value2) / norm_value
 
 
@@ -162,15 +173,15 @@ class openram_test(unittest.TestCase):
         """Compare two files.
 
         Arguments:
-        
+
         filename1 -- First file name
-        
+
         filename2 -- Second file name
 
         Return value:
-        
+
         True if the files are the same, False otherwise.
-        
+
         """
         import re
         import debug
@@ -203,7 +214,7 @@ class openram_test(unittest.TestCase):
             debug.info(3,"line1_floats: "+str(line1_floats))
             debug.info(3,"line2_floats: "+str(line2_floats))
 
-            
+
             # 2. Remove the floats from the string
             for f in line1_floats:
                 line1=line1.replace(f,"",1)
@@ -215,10 +226,10 @@ class openram_test(unittest.TestCase):
             # 3. Convert to floats rather than strings
             line1_floats = [float(x) for x in line1_floats]
             line2_floats = [float(x) for x in line1_floats]
-            
+
             # 4. Check if remaining string matches
             if line1 != line2:
-                #Uncomment if you want to see all the individual chars of the two lines 
+                #Uncomment if you want to see all the individual chars of the two lines
                 #print(str([i for i in line1]))
                 #print(str([i for i in line2]))
                 if mismatches==0:
@@ -281,13 +292,13 @@ class openram_test(unittest.TestCase):
             debug.info(2,"MATCH {0} {1}".format(filename1,filename2))
         return True
 
-        
+
 def header(filename, technology):
     # Skip the header for gitlab regression
     import getpass
     if getpass.getuser() == "gitlab-runner":
         return
-    
+
     tst = "Running Test for:"
     print("\n")
     print(" ______________________________________________________________________________ ")

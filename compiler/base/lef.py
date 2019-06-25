@@ -12,6 +12,7 @@ import math
 import debug
 import datetime
 from collections import defaultdict
+import pdb
 
 class lef:
     """
@@ -84,7 +85,7 @@ class lef:
         pin_list = self.get_pins(name)
         for pin in pin_list:
             self.lef.write("{0}LAYER {1} ;\n".format(self.indent,pin.layer))
-            self.lef_write_rect(pin.rect)
+            self.lef_write_shape(pin.rect)
             
         # End the PORT
         self.indent = self.indent[:-3]
@@ -100,15 +101,29 @@ class lef:
         for layer in self.lef_layers:
             self.lef.write("{0}LAYER  {1} ;\n".format(self.indent,layer))
             self.indent += "   "
+            # pdb.set_trace()
             blockages = self.get_blockages(layer,True)
             for b in blockages:
-                self.lef_write_rect(b)
+                # if len(b) > 2:
+                #     print(b)
+                self.lef_write_shape(b)
             self.indent = self.indent[:-3]
         self.lef.write("{0}END\n".format(self.indent))
 
-    def lef_write_rect(self, rect):
-        """ Write a LEF rectangle """
-        self.lef.write("{0}RECT ".format(self.indent)) 
-        for item in rect:
-            self.lef.write(" {0} {1}".format(round(item[0],self.round_grid), round(item[1],self.round_grid)))
-        self.lef.write(" ;\n")
+    def lef_write_shape(self, rect):
+        if len(rect) == 2: 
+            """ Write a LEF rectangle """
+            self.lef.write("{0}RECT ".format(self.indent)) 
+            for item in rect:
+                # print(rect)
+                self.lef.write(" {0} {1}".format(round(item[0],self.round_grid), round(item[1],self.round_grid)))
+            self.lef.write(" ;\n")
+        else:            
+            """ Write a LEF polygon """
+            self.lef.write("{0}POLYGON ".format(self.indent)) 
+            for item in rect:
+                self.lef.write(" {0} {1}".format(round(item[0],self.round_grid), round(item[1],self.round_grid)))
+            # for i in range(0,len(rect)):
+                # self.lef.write(" {0} {1}".format(round(rect[i][0],self.round_grid), round(rect[i][1],self.round_grid)))
+            self.lef.write(" ;\n")
+

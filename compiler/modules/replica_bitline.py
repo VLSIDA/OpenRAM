@@ -25,6 +25,8 @@ class replica_bitline(design.design):
 
         self.bitcell_loads = bitcell_loads
         self.delay_fanout_list = delay_fanout_list
+        if len(delay_fanout_list) == 0 or len(delay_fanout_list)%2 == 1:
+            debug.error('Delay chain must contain an even amount of stages to maintain polarity.',1)
 
         self.create_netlist()
         if not OPTS.netlist_only:

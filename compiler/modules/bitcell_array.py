@@ -154,7 +154,7 @@ class bitcell_array(design.design):
         # Dynamic Power from Bitline
         bl_wire = self.gen_bl_wire()
         cell_load = 2 * bl_wire.return_input_cap() 
-        bl_swing = parameter["rbl_height_percentage"]
+        bl_swing = OPTS.rbl_delay_percentage
         freq = spice["default_event_rate"]
         bitline_dynamic = self.calc_dynamic_power(corner, cell_load, freq, swing=bl_swing)
         

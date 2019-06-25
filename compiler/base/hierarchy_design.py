@@ -147,7 +147,6 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         """Given a list of nets, will compare the internal alias of a mod to determine
            if the nets have a connection to this mod's net (but not inst).
         """
-        #path_nets = ['xsram_0.xbank0.bl0_7']
         if exclusion_set == None:
             exclusion_set = set()
         try:
@@ -155,31 +154,17 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         except AttributeError:
             self.name_dict = {}
             self.build_names(self.name_dict, inst_name, port_nets)
-        #debug.info(1,"names={}".format(list(self.name_dict)))
         aliases = []
         for net in path_nets:
             net = net.lower()
             int_net = self.name_dict[net]['int_net']
             int_mod = self.name_dict[net]['mod']
-            # debug.info(1,"int_net={}".format(int_net))
-            # debug.info(1,"int_mod={}".format(int_mod.name))
-            # debug.info(1,"alias_net={}".format(alias))
-            # debug.info(1,"alias_mod={}".format(alias_mod.name))
-            # debug.info(1,"mod id={}".format(id(alias_mod)))
             if int_mod.is_net_alias(int_net, alias, alias_mod, exclusion_set):
                 aliases.append(net)
-                # debug.info(1,"Alias found\n")
-            # else:
-                # debug.info(1,"Alias not found\n")
-        debug.info(1,"Aliases Found={}".format(aliases))
         return aliases         
             
     def is_net_alias(self, known_net, net_alias, mod, exclusion_set):
-        """Checks if the alias_net in mod is the same as the input net."""
-        # debug.info(1,"self name={}".format(self.name))
-        # debug.info(1,"self mod id={}".format(id(self)))
-        # debug.info(1,"self pins={}".format(self.pins))
-        # debug.info(1,"known_net={}".format(known_net))
+        """Checks if the alias_net in input mod is the same as the input net for this mod (self)."""
         if self in exclusion_set:
             return False
         #Check ports of this mod
@@ -193,8 +178,6 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
                 if self.is_net_alias_name_check(known_net, inst_conn, net_alias, mod):
                     return True
                 elif inst_conn.lower() == known_net.lower() and subinst.mod not in mod_set:
-                    # debug.info(1,"found matching conn={}".format(inst_conn))
-                    # debug.info(1,"Setting known pin={}".format(mod_pin))
                     if subinst.mod.is_net_alias(mod_pin, net_alias, mod, exclusion_set):
                         return True
                     mod_set.add(subinst.mod)

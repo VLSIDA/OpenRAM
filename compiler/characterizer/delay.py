@@ -216,17 +216,19 @@ class delay(simulation):
         self.graph = graph_util.timing_graph()
         self.sram_spc_name = "X{}".format(self.sram.name)
         self.sram.build_graph(self.graph,self.sram_spc_name,self.pins)
-        #debug.info(1,"{}".format(self.graph))
+
+    def set_internal_spice_names(self):
+        """Sets important names for characterization such as Sense amp enable and internal bit nets."""
         port = 0
         self.graph.get_all_paths('{}{}'.format(tech.spice["clk"], port), \
                      '{}{}_{}'.format(self.dout_name, port, self.probe_data))
 
         self.sen_name = self.get_sen_name(self.graph.all_paths)    
-        debug.info(1,"s_en name = {}".format(self.sen_name))
+        debug.info(2,"s_en name = {}".format(self.sen_name))
         
         self.bl_name,self.br_name = self.get_bl_name(self.graph.all_paths)
-        debug.info(1,"bl name={}, br name={}".format(self.bl_name,self.br_name))
-     
+        debug.info(2,"bl name={}, br name={}".format(self.bl_name,self.br_name))
+    
     def get_sen_name(self, paths):
         """Gets the signal name associated with the sense amp enable from input paths.
            Only expects a single path to contain the sen signal name."""
@@ -245,13 +247,7 @@ class delay(simulation):
             cell_mod = self.get_primary_cell_mod(cell_mods)
         elif len(cell_mods)==0:
             debug.error("No bitcells found. Cannot determine bitline names.", 1)
-        #Any sense amp instantiated should be identical, any change to that 
-        #will require some identification to determine the mod desired.
-        # debug.check(self.are_mod_pins_equal(cell_mods), "Only expected one type of bitcell. Cannot perform bitline checks")
-        # debug.info(1,"num pbitcells={}".format(len(cell_mods)))
-        # debug.info(1,"cell ids={}".format([id(i) for i in cell_mods]))
-        
-        #cell_mods = cell_mods[1:]
+            
         cell_bl = cell_mod.get_bl_name()
         cell_br = cell_mod.get_br_name()
         
@@ -705,9 +701,8 @@ class delay(simulation):
 
     def check_sen_measure(self, port):
         """Checks that the sen occurred within a half-period"""
-        self.sen_meas
         sen_val = self.sen_meas.retrieve_measure(port=port)
-        debug.info(1,"S_EN delay={} ns".format(sen_val))
+        debug.info(2,"S_EN delay={} ns".format(sen_val))
         if self.sen_meas.meta_add_delay:
             max_delay = self.period/2
         else:
@@ -729,7 +724,7 @@ class delay(simulation):
             elif self.br_name == meas.targ_name_no_port: 
                 br_vals[meas.meta_str] = val
 
-            debug.info(1,"{}={}".format(meas.name,val))
+            debug.info(2,"{}={}".format(meas.name,val))
                 
         bl_check = False    
         for meas in self.debug_volt_meas:
@@ -762,24 +757,23 @@ class delay(simulation):
         for polarity, meas_list in self.bit_meas.items():
             for meas in meas_list:
                 val = meas.retrieve_measure()
-                debug.info(1,"{}={}".format(meas.name, val))
+                debug.info(2,"{}={}".format(meas.name, val))
                 if type(val) != float:
                     continue
                 meas_cycle = meas.meta_str
+                #Loose error conditions. Assume it's not metastable but account for noise during reads.
                 if (meas_cycle == sram_op.READ_ZERO and polarity == bit_polarity.NONINVERTING) or\
                    (meas_cycle == sram_op.READ_ONE and polarity == bit_polarity.INVERTING):
-                    success = val < self.vdd_voltage*.1
+                    success = val < self.vdd_voltage/2
                 elif (meas_cycle == sram_op.READ_ZERO and polarity == bit_polarity.INVERTING) or\
                      (meas_cycle == sram_op.READ_ONE and polarity == bit_polarity.NONINVERTING):
-                    success = val > self.vdd_voltage*.9
+                    success = val > self.vdd_voltage/2
                 if not success:
                     debug.info(1,("Wrong value detected on probe bit during read cycle. " 
                     "Check writes and control logic for bugs.\n measure={}, op={}, "
-                    "bit_storage={}").format(meas.name, meas_cycle.name, polarity.name))
+                    "bit_storage={}, V(bit)={}").format(meas.name, meas_cycle.name, polarity.name,val))
         return success        
                    
-            
-            
     def check_bitline_meas(self, v_discharged_bl, v_charged_bl):
         """Checks the value of the discharging bitline. Confirms s_en timing errors.
            Returns true if the bitlines are at there expected value."""
@@ -991,6 +985,7 @@ class delay(simulation):
         """Sets values which are dependent on the data address/bit being tested."""
         self.set_probe(probe_address, probe_data)
         self.create_graph()
+        self.set_internal_spice_names()
         self.create_measurement_names()
         self.create_measurement_objects()
         

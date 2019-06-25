@@ -18,7 +18,7 @@ class pand2(pgate.pgate):
     This is a simple buffer used for driving loads. 
     """
     def __init__(self, name, size=1, height=None):
-        debug.info(1, "reating pnand2 {}".format(name))
+        debug.info(1, "Creating pnand2 {}".format(name))
         self.add_comment("size: {}".format(size))
         
         self.size = size

@@ -56,7 +56,7 @@ class timing_graph():
   
         # Call the recursive helper function to print all paths 
         self.get_all_paths_util(src_node, dest_node, visited, path)     
-        debug.info(1, "Paths found={}".format(len(self.all_paths)))
+        debug.info(2, "Paths found={}".format(len(self.all_paths)))
             
         return self.all_paths     
             
@@ -69,7 +69,6 @@ class timing_graph():
         # If current vertex is same as destination, then print 
         # current path[] 
         if cur_node == dest_node: 
-            debug.info(1,"{}".format(path)) 
             self.all_paths.append(copy.deepcopy(path))
         else: 
             # If current vertex is not destination 
@@ -81,20 +80,6 @@ class timing_graph():
         # Remove current vertex from path[] and mark it as unvisited 
         path.pop() 
         visited.remove(cur_node)        
-            
-    def get_path_preconvergence_point(self, path1, path2):
-        """Assuming the inputs paths have the same starting point and end point, the
-           paths should split and converge at some point before/at the last stage. Finds the 
-           point before convergence."""
-        debug.check(path1[0] == path2[0], "Paths must start from the same point.")   
-        debug.check(path1[-1] == path2[-1], "Paths must end from the same point.")   
-        #Paths must end at the same point, so the paths are traversed backwards to find
-        #point of convergence. There could be multiple points, only finds first.
-        for point1,point2 in zip(reversed(path1), reversed(path2)):
-            if point1 != point2:
-                return (point1,point2)
-        debug.info(1,"Pre-convergence point not found, paths are equals.")
-        return path1[0],path2[0]
             
     def __str__(self):
         """ override print function output """

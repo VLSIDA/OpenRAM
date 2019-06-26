@@ -411,8 +411,7 @@ class bank(design.design):
         
         self.bitcell_array = factory.create(module_type="bitcell_array",
                                             cols=self.num_cols,
-                                            rows=self.num_rows,
-                                            bitcell=self.bitcell)
+                                            rows=self.num_rows)
         self.add_mod(self.bitcell_array)
 
         self.precharge_array = []

@@ -19,14 +19,13 @@ class bitcell_array(design.design):
     and word line is connected by abutment.
     Connects the word lines and bit lines.
     """
-    def __init__(self, cols, rows, name, bitcell):
+    def __init__(self, cols, rows, name):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0} {1} x {2}".format(self.name, rows, cols))
         self.add_comment("rows: {0} cols: {1}".format(rows, cols))
 
         self.column_size = cols
         self.row_size = rows
-        self.cell = bitcell
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -87,6 +86,7 @@ class bitcell_array(design.design):
 
     def add_modules(self):
         """ Add the modules used in this design """
+        self.cell = factory.create(module_type="bitcell")
         self.add_mod(self.cell)
 
     def create_instances(self):

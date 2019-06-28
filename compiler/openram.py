@@ -50,7 +50,8 @@ from sram_config import sram_config
 
 # Configure the SRAM organization
 c = sram_config(word_size=OPTS.word_size,
-                num_words=OPTS.num_words)
+                num_words=OPTS.num_words,
+                write_size=OPTS.write_size)
 debug.print_raw("Words per row: {}".format(c.words_per_row))
 
 #from parser import *

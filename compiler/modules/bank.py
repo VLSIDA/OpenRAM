@@ -79,6 +79,9 @@ class bank(design.design):
         for port in self.write_ports:
             for bit in range(self.word_size):
                 self.add_pin("din{0}_{1}".format(port,bit),"IN")
+        # if (self.word_size != self.write_size):
+        #     for bit in range(self.word_size):
+        #         self.add_pin()
         for port in self.all_ports:
             for bit in range(self.addr_size):
                 self.add_pin("addr{0}_{1}".format(port,bit),"INPUT")

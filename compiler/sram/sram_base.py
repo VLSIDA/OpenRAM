@@ -68,7 +68,10 @@ class sram_base(design, verilog, lef):
             self.add_pin("web{}".format(port),"INPUT")
         for port in self.all_ports:
             self.add_pin("clk{}".format(port),"INPUT")
-
+        # add the optional write mask pins
+        if self.word_size != self.write_size:
+            for port in self.write_ports:
+                self.add_pin("wmask{}".format(port),"INPUT")
         for port in self.read_ports:
             for bit in range(self.word_size):
                 self.add_pin("DOUT{0}[{1}]".format(port,bit),"OUTPUT")
@@ -149,9 +152,6 @@ class sram_base(design, verilog, lef):
             
         rtr.route()
 
-        
-
-        
         
     def compute_bus_sizes(self):
         """ Compute the independent bus widths shared between two and four bank SRAMs """
@@ -464,8 +464,22 @@ class sram_base(design, verilog, lef):
             if port in self.readwrite_ports:
                 temp.append("web{}".format(port))
             temp.append("clk{}".format(port))
+            # if port in self.write_ports:
+            #     temp.append("wmask{}".format(port))
 
-            # Ouputs
+            # for port in self.all_ports:
+            #     self.add_pin("csb{}".format(port), "INPUT")
+            # for port in self.readwrite_ports:
+            #     self.add_pin("web{}".format(port), "INPUT")
+            # for port in self.all_ports:
+            #     self.add_pin("clk{}".format(port), "INPUT")
+            # # add the optional write mask pins
+            # if self.word_size != self.write_size:
+            #     for port in self.write_ports:
+            #         print("write_ports", port)
+            #         self.add_pin("wmask{0}".format(port), "INPUT")
+
+            # Outputs
             if port in self.read_ports:
                 temp.append("s_en{}".format(port))
             if port in self.write_ports:

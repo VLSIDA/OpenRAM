@@ -8,6 +8,7 @@
 import optparse
 import getpass 
 import os
+#import sram_config
 
 class options(optparse.Values):
     """
@@ -28,6 +29,9 @@ class options(optparse.Values):
     num_rw_ports = 1
     num_r_ports = 0
     num_w_ports = 0
+
+    # Write mask size, default will be overwritten with word_size if not user specified
+    write_size = None
     
     # These will get initialized by the user or the tech file
     supply_voltages = ""

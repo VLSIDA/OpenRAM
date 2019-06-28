@@ -98,8 +98,8 @@ class design(hierarchy_design):
         for port in range(OPTS.num_r_ports):
             self.read_ports.append(port_number)
             self.readonly_ports.append(port_number)
-            port_number += 1
-
+            port_number += 1                    
+        
     def analytical_power(self, corner, load):
         """ Get total power of a module  """
         total_module_power = self.return_power()

@@ -115,3 +115,4 @@ class precharge_array(design.design):
         #Assume single port
         precharge_en_cin = self.pc_cell.get_en_cin()
         return precharge_en_cin*self.columns  
+        

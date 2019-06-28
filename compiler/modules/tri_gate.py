@@ -17,7 +17,8 @@ class tri_gate(design.design):
     netlist should be available in the technology library.  
     """
 
-    pin_names = ["in", "en", "en_bar", "out", "gnd", "vdd"]
+    pin_names = ["in", "out", "en", "en_bar", "vdd", "gnd"]
+    type_list = ["INPUT", "OUTPUT", "INPUT", "INPUT", "POWER", "GROUND"]
     (width,height) = utils.get_libcell_size("tri_gate", GDS["unit"], layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "tri_gate", GDS["unit"])
 
@@ -33,6 +34,7 @@ class tri_gate(design.design):
         self.width = tri_gate.width
         self.height = tri_gate.height
         self.pin_map = tri_gate.pin_map
+        self.add_pin_types(self.type_list)
 
     def analytical_delay(self, corner, slew, load=0.0):
         from tech import spice
@@ -49,3 +51,6 @@ class tri_gate(design.design):
     def input_load(self):
         return 9*spice["min_tx_gate_c"]
 
+    def build_graph(self, graph, inst_name, port_nets):        
+        """Adds edges based on inputs/outputs. Overrides base class function."""
+        self.add_graph_edges(graph, port_nets) 

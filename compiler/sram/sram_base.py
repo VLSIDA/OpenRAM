@@ -543,6 +543,7 @@ class sram_base(design, verilog, lef):
             elif port in self.readwrite_ports:
                 control_logic = self.control_logic_rw
             else:
+                delays[port] = self.return_delay(0,0) #Write ports do not have a lib defined delay, marked as 0 
                 continue
             clk_to_wlen_delays = control_logic.analytical_delay(corner, slew, load)
             wlen_to_dout_delays = self.bank.analytical_delay(corner,slew,load,port) #port should probably be specified...

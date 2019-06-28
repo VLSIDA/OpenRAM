@@ -73,6 +73,17 @@ class spice():
         else:
             debug.error("Mismatch in type and pin list lengths.", -1)
 
+    def add_pin_types(self, type_list):
+        """Add pin types for all the cell's pins.
+           Typically, should only be used for handmade cells."""
+        #This only works if self.pins == bitcell.pin_names
+        if self.pin_names != self.pins:
+            debug.error("{} spice subcircuit port names do not match pin_names\
+                      \n SPICE names={}\
+                      \n Module names={}\
+                      ".format(self.name, self.pin_names, self.pins),1)         
+        self.pin_type = {pin:type for pin,type in zip(self.pin_names, type_list)}        
+            
     def get_pin_type(self, name):
         """ Returns the type of the signal pin. """
         return self.pin_type[name]
@@ -102,6 +113,14 @@ class spice():
                 output_list.append(pin)
         return output_list
 
+    def get_inouts(self):
+        """ These use pin types to determine pin lists. These
+        may be over-ridden by submodules that didn't use pin directions yet."""
+        inout_list = []
+        for pin in self.pins:
+            if self.pin_type[pin]=="INOUT":
+                inout_list.append(pin)
+        return inout_list
 
     def add_mod(self, mod):
         """Adds a subckt/submodule to the subckt hierarchy"""
@@ -136,7 +155,13 @@ class spice():
             debug.error("-----")
             debug.error("Connections: \n"+str(conns_string),1)
 
-
+    def get_conns(self, inst):
+        """Returns the connections of a given instance."""
+        for i in range(len(self.insts)):
+            if inst is self.insts[i]:
+                return self.conns[i]
+        #If not found, returns None
+        return None
 
     def sp_read(self):
         """Reads the sp file (and parse the pins) from the library 
@@ -157,6 +182,28 @@ class spice():
         else:
             self.spice = []
 
+    def check_net_in_spice(self, net_name):
+        """Checks if a net name exists in the current. Intended to be check nets in hand-made cells."""
+        #Remove spaces and lower case then add spaces. Nets are separated by spaces.
+        net_formatted = ' '+net_name.lstrip().rstrip().lower()+' '
+        for line in self.spice:
+            #Lowercase the line and remove any part of the line that is a comment.
+            line = line.lower().split('*')[0]
+
+            #Skip .subckt or .ENDS lines
+            if line.find('.') == 0:
+                continue
+            if net_formatted in line:
+                return True
+        return False
+                
+    def do_nets_exist(self, nets):
+        """For handmade cell, checks sp file contains the storage nodes."""
+        nets_match = True
+        for net in nets:
+            nets_match = nets_match and self.check_net_in_spice(net)
+        return nets_match            
+            
     def contains(self, mod, modlist):
         for x in modlist:
             if x.name == mod.name:

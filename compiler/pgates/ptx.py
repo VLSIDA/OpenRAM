@@ -68,7 +68,13 @@ class ptx(design.design):
         #self.DRC()
 
     def create_netlist(self):
-        self.add_pin_list(["D", "G", "S", "B"])
+        pin_list = ["D", "G", "S", "B"]
+        if self.tx_type=="nmos":
+            body_dir = 'GROUND'
+        else: #Assumed that the check for either pmos or nmos is done elsewhere.
+            body_dir = 'POWER'
+        dir_list = ['INOUT', 'INPUT', 'INOUT', body_dir]
+        self.add_pin_list(pin_list, dir_list)
         
         # self.spice.append("\n.SUBCKT {0} {1}".format(self.name,
         #                                              " ".join(self.pins)))
@@ -366,3 +372,8 @@ class ptx(design.design):
     def get_cin(self):
         """Returns the relative gate cin of the tx"""
         return self.tx_width/drc("minwidth_tx")
+
+    def build_graph(self, graph, inst_name, port_nets):        
+        """Adds edges based on inputs/outputs. Overrides base class function."""
+        self.add_graph_edges(graph, port_nets) 
+        

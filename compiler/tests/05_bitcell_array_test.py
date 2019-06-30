@@ -29,7 +29,7 @@ class array_test(openram_test):
         debug.info(2, "Testing 4x4 array for 6t_cell")
         a = factory.create(module_type="bitcell_array", cols=4, rows=4)
         self.local_check(a)
-
+        
         globals.end_openram()
 
 # run the test from the command line

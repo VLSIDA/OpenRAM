@@ -62,7 +62,7 @@ class openram_test(unittest.TestCase):
 
         if OPTS.purge_temp:
             self.cleanup()
-            
+
     def run_pex(self, a, output=None):
         if output == None:
             output = OPTS.openram_temp + a.name + ".pex.netlist"
@@ -81,11 +81,8 @@ class openram_test(unittest.TestCase):
         """
         debug.info(1, "Finding feasible period for current test.")
         delay_obj.set_load_slew(load, slew)
-        delay_obj.set_probe(probe_address="1"*sram.addr_size, probe_data=(sram.word_size-1))
         test_port = delay_obj.read_ports[0] #Only test one port, assumes other ports have similar period.
-        delay_obj.create_signal_names()
-        delay_obj.create_measurement_names()
-        delay_obj.create_measurement_objects()
+        delay_obj.analysis_init(probe_address="1"*sram.addr_size, probe_data=(sram.word_size-1))
         delay_obj.find_feasible_period_one_port(test_port)
         return delay_obj.period
 

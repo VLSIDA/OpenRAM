@@ -40,7 +40,9 @@ class pnor2(pgate.pgate):
         
     def add_pins(self):
         """ Adds pins for spice netlist """
-        self.add_pin_list(["A", "B", "Z", "vdd", "gnd"])
+        pin_list = ["A", "B", "Z", "vdd", "gnd"]
+        dir_list = ['INPUT', 'INPUT', 'OUTPUT', 'INOUT', 'INOUT']
+        self.add_pin_list(pin_list, dir_list)
 
     def create_netlist(self):
         self.add_pins()
@@ -238,3 +240,6 @@ class pnor2(pgate.pgate):
         transition_prob = spice["nor2_transition_prob"]
         return transition_prob*(c_load + c_para) 
         
+    def build_graph(self, graph, inst_name, port_nets):        
+        """Adds edges based on inputs/outputs. Overrides base class function."""
+        self.add_graph_edges(graph, port_nets) 

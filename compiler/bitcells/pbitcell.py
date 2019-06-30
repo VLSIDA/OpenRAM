@@ -97,47 +97,49 @@ class pbitcell(design.design):
         port = 0
 
         for k in range(self.num_rw_ports):
-            self.add_pin("bl{}".format(port))
-            self.add_pin("br{}".format(port))
+            self.add_pin("bl{}".format(port), "OUTPUT")
+            self.add_pin("br{}".format(port), "OUTPUT")
             self.rw_bl_names.append("bl{}".format(port))
             self.rw_br_names.append("br{}".format(port))
             port += 1
         for k in range(self.num_w_ports):
-            self.add_pin("bl{}".format(port))
-            self.add_pin("br{}".format(port))
+            self.add_pin("bl{}".format(port), "INPUT")
+            self.add_pin("br{}".format(port), "INPUT")
             self.w_bl_names.append("bl{}".format(port))
             self.w_br_names.append("br{}".format(port))
             port += 1
         for k in range(self.num_r_ports):
-            self.add_pin("bl{}".format(port))
-            self.add_pin("br{}".format(port))
+            self.add_pin("bl{}".format(port), "OUTPUT")
+            self.add_pin("br{}".format(port), "OUTPUT")
             self.r_bl_names.append("bl{}".format(port))
             self.r_br_names.append("br{}".format(port))
             port += 1
 
         port = 0
         for k in range(self.num_rw_ports):
-            self.add_pin("wl{}".format(port))
+            self.add_pin("wl{}".format(port), "INPUT")
             self.rw_wl_names.append("wl{}".format(port))
             port += 1
         for k in range(self.num_w_ports):
-            self.add_pin("wl{}".format(port))
+            self.add_pin("wl{}".format(port), "INPUT")
             self.w_wl_names.append("wl{}".format(port))
             port += 1
         for k in range(self.num_r_ports):
-            self.add_pin("wl{}".format(port))
+            self.add_pin("wl{}".format(port), "INPUT")
             self.r_wl_names.append("wl{}".format(port))
             port += 1
 
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
         # if this is a replica bitcell, replace the instances of Q_bar with vdd
         if self.replica_bitcell:
             self.Q_bar = "vdd"
         else:
             self.Q_bar = "Q_bar"
-
+        self.Q = "Q"
+        self.storage_nets = [self.Q, self.Q_bar]
+        
     def add_modules(self):
         """ Determine size of transistors and add ptx modules """
         # if there are any read/write ports,
@@ -270,20 +272,20 @@ class pbitcell(design.design):
         # create active for nmos
         self.inverter_nmos_left = self.add_inst(name="inverter_nmos_left",
                                                 mod=self.inverter_nmos)
-        self.connect_inst(["Q", self.Q_bar, "gnd", "gnd"])
+        self.connect_inst([self.Q, self.Q_bar, "gnd", "gnd"])
 
         self.inverter_nmos_right = self.add_inst(name="inverter_nmos_right",
                                                  mod=self.inverter_nmos)
-        self.connect_inst(["gnd", "Q", self.Q_bar, "gnd"])
+        self.connect_inst(["gnd", self.Q, self.Q_bar, "gnd"])
 
         # create active for pmos
         self.inverter_pmos_left = self.add_inst(name="inverter_pmos_left",
                                                 mod=self.inverter_pmos)
-        self.connect_inst(["Q", self.Q_bar, "vdd", "vdd"])
+        self.connect_inst([self.Q, self.Q_bar, "vdd", "vdd"])
 
         self.inverter_pmos_right = self.add_inst(name="inverter_pmos_right",
                                                  mod=self.inverter_pmos)
-        self.connect_inst(["vdd", "Q", self.Q_bar, "vdd"])
+        self.connect_inst(["vdd", self.Q, self.Q_bar, "vdd"])
 
     def place_storage(self):
         """ Places the transistors for the crossed coupled inverters in the bitcell """
@@ -377,7 +379,7 @@ class pbitcell(design.design):
             # add read/write transistors
             self.readwrite_nmos_left[k] = self.add_inst(name="readwrite_nmos_left{}".format(k),
                                                         mod=self.readwrite_nmos)
-            self.connect_inst([self.rw_bl_names[k], self.rw_wl_names[k], "Q", "gnd"])
+            self.connect_inst([self.rw_bl_names[k], self.rw_wl_names[k], self.Q, "gnd"])
 
             self.readwrite_nmos_right[k] = self.add_inst(name="readwrite_nmos_right{}".format(k),
                                                          mod=self.readwrite_nmos)
@@ -451,7 +453,7 @@ class pbitcell(design.design):
             # add write transistors
             self.write_nmos_left[k] = self.add_inst(name="write_nmos_left{}".format(k),
                                                     mod=self.write_nmos)
-            self.connect_inst([self.w_bl_names[k], self.w_wl_names[k], "Q", "gnd"])
+            self.connect_inst([self.w_bl_names[k], self.w_wl_names[k], self.Q, "gnd"])
 
             self.write_nmos_right[k] = self.add_inst(name="write_nmos_right{}".format(k),
                                                      mod=self.write_nmos)
@@ -537,7 +539,7 @@ class pbitcell(design.design):
 
             self.read_access_nmos_right[k] = self.add_inst(name="read_access_nmos_right{}".format(k),
                                                            mod=self.read_nmos)
-            self.connect_inst(["gnd", "Q", "RA_to_R_right{}".format(k), "gnd"])
+            self.connect_inst(["gnd", self.Q, "RA_to_R_right{}".format(k), "gnd"])
 
             # add read transistors
             self.read_nmos_left[k] = self.add_inst(name="read_nmos_left{}".format(k),
@@ -884,6 +886,18 @@ class pbitcell(design.design):
         Q_bar_pos = self.inverter_pmos_right.get_pin("S").center()
         vdd_pos = self.inverter_pmos_right.get_pin("D").center()
         self.add_path("metal1", [Q_bar_pos, vdd_pos])
+        
+    def get_storage_net_names(self):
+        """Returns names of storage nodes in bitcell in  [non-inverting, inverting] format."""
+        return self.storage_nets
+     
+    def get_bl_name(self, port=0):
+        """Get bl name by port"""
+        return "bl{}".format(port)
+    
+    def get_br_name(self, port=0):
+        """Get bl name by port"""
+        return "br{}".format(port) 
 
     def analytical_delay(self, corner, slew, load=0, swing = 0.5):
         parasitic_delay = 1
@@ -910,4 +924,15 @@ class pbitcell(design.design):
         #pbitcell uses the different sizing for the port access tx's. Not accounted for in this model.
         access_tx_cin = self.readwrite_nmos.get_cin()
         return 2*access_tx_cin
+
+    def build_graph(self, graph, inst_name, port_nets):        
+        """Adds edges to graph for pbitcell. Only readwrite and read ports."""
+        pin_dict = {pin:port for pin,port in zip(self.pins, port_nets)} 
+        # Edges added wl->bl, wl->br for every port except write ports
+        rw_pin_names = zip(self.r_wl_names, self.r_bl_names, self.r_br_names)
+        r_pin_names = zip(self.rw_wl_names, self.rw_bl_names, self.rw_br_names)
+        for pin_zip in zip(rw_pin_names, r_pin_names): 
+            for wl,bl,br in pin_zip:
+                graph.add_edge(pin_dict[wl],pin_dict[bl])
+                graph.add_edge(pin_dict[wl],pin_dict[br])
 

@@ -18,6 +18,7 @@ class dff(design.design):
     """
 
     pin_names = ["D", "Q", "clk", "vdd", "gnd"]
+    type_list = ["INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
     (width,height) = utils.get_libcell_size("dff", GDS["unit"], layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "dff", GDS["unit"])
     
@@ -27,6 +28,7 @@ class dff(design.design):
         self.width = dff.width
         self.height = dff.height
         self.pin_map = dff.pin_map
+        self.add_pin_types(self.type_list)
     
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""
@@ -57,3 +59,7 @@ class dff(design.design):
         #Calculated in the tech file by summing the widths of all the gates and dividing by the minimum width.
         return parameter["dff_clk_cin"]
 
+    def build_graph(self, graph, inst_name, port_nets):        
+        """Adds edges based on inputs/outputs. Overrides base class function."""
+        self.add_graph_edges(graph, port_nets) 
+        

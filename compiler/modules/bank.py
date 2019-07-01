@@ -192,10 +192,21 @@ class bank(design.design):
 
         self.column_decoder_offsets = [None]*len(self.all_ports)        
         self.bank_select_offsets = [None]*len(self.all_ports)        
+
+
+        # The center point for these cells are the upper-right corner of
+        # the bitcell array.
+        # The decoder/driver logic is placed on the right and mirrored on Y-axis.
+        # The write/sense/precharge/mux is placed on the top and mirrored on the X-axis.
+
+        self.bitcell_array_top = self.bitcell_array.height + self.m2_gap + drc("well_enclosure_active") + self.m1_width
+        self.bitcell_array_right = self.bitcell_array.width + self.m1_width + self.m2_gap 
         
         self.compute_instance_port0_offsets()
         if len(self.all_ports)==2:
             self.compute_instance_port1_offsets()
+        else:
+            debug.error("Too many ports.", -1)
 
         
     def compute_instance_port0_offsets(self):
@@ -266,19 +277,12 @@ class bank(design.design):
 
         port=1
         
-        # The center point for these cells are the upper-right corner of
-        # the bitcell array.
-        # The decoder/driver logic is placed on the right and mirrored on Y-axis.
-        # The write/sense/precharge/mux is placed on the top and mirrored on the X-axis.
-
-        bitcell_array_top = self.bitcell_array.height + self.m2_gap + drc("well_enclosure_active") + self.m1_width
-        bitcell_array_right = self.bitcell_array.width + self.m1_width + self.m2_gap 
         # LOWER LEFT QUADRANT
         # Bitcell array is placed at (0,0)
 
         # UPPER LEFT QUADRANT
         # Above the bitcell array
-        y_offset = bitcell_array_top
+        y_offset = self.bitcell_array_top
         for i,p in enumerate(self.vertical_port_order[port]):
             if p==None:
                 continue
@@ -294,7 +298,7 @@ class bank(design.design):
         # LOWER RIGHT QUADRANT
         # To the left of the bitcell array
         # The wordline driver is placed to the right of the main decoder width.
-        x_offset = bitcell_array_right + self.wordline_driver.width 
+        x_offset = self.bitcell_array_right + self.wordline_driver.width 
         self.wordline_driver_offsets[port] = vector(x_offset,0)
         x_offset += self.row_decoder.width + self.m2_gap
         self.row_decoder_offsets[port] = vector(x_offset,0)
@@ -302,12 +306,12 @@ class bank(design.design):
         # UPPER RIGHT QUADRANT
         # Place the col decoder right aligned with wordline driver plus halfway under row decoder
         # Above the bitcell array with a well spacing
-        x_offset = bitcell_array_right  + self.central_bus_width[port] + self.wordline_driver.width 
+        x_offset = self.bitcell_array_right  + self.central_bus_width[port] + self.wordline_driver.width 
         if self.col_addr_size > 0:
             x_offset += self.column_decoder.width + self.col_addr_bus_width
-            y_offset = bitcell_array_height + self.column_decoder.height 
+            y_offset = self.bitcell_array_top + self.column_decoder.height 
         else:
-            y_offset = bitcell_array_height
+            y_offset = self.bitcell_array_top
         y_offset += 2*drc("well_to_well")
         self.column_decoder_offsets[port] = vector(x_offset,y_offset)
 
@@ -862,8 +866,8 @@ class bank(design.design):
         # Port 1
         if len(self.all_ports)==2:
             # The other control bus is routed up to two pitches above the bitcell array
-            control_bus_length = self.max_y_offset - bitcell_array_top - 2*self.m1_pitch
-            control_bus_offset = vector(bitcell_array_right,
+            control_bus_length = self.max_y_offset - self.bitcell_array_top - 2*self.m1_pitch
+            control_bus_offset = vector(self.bitcell_array_right,
                                         self.max_y_offset - control_bus_length)
             
             self.bus_xoffset[1] = self.create_bus(layer="metal2",

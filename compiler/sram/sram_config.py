@@ -23,8 +23,8 @@ class sram_config:
         # This will get over-written when we determine the organization
         self.words_per_row = words_per_row
 
-        if OPTS.write_size == None:
-            OPTS.write_size = OPTS.word_size
+        if self.write_size == None:
+            self.write_size = self.word_size
 
         self.compute_sizes()
 

@@ -34,7 +34,6 @@ class sram():
         start_time = datetime.datetime.now()
 
         self.name = name
-
         
         if self.num_banks == 1:
             from sram_1bank import sram_1bank as sram
@@ -84,8 +83,6 @@ class sram():
                 self.gds_write(gdsname)
                 print_time("GDS", datetime.datetime.now(), start_time)
 
-            
-        
         # Save the spice file
         start_time = datetime.datetime.now()
         spname = OPTS.output_path + self.s.name + ".sp"

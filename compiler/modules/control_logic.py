@@ -21,7 +21,7 @@ class control_logic(design.design):
     Dynamically generated Control logic for the total SRAM circuit.
     """
 
-    def __init__(self, num_rows, words_per_row, word_size, sram=None, port_type="rw", name=""):
+    def __init__(self, num_rows, words_per_row, word_size, write_size, sram=None, port_type="rw", name=""):
         """ Constructor """
         name = "control_logic_" + port_type
         design.design.__init__(self, name)
@@ -35,6 +35,7 @@ class control_logic(design.design):
         self.words_per_row = words_per_row
         self.word_size = word_size
         self.port_type = port_type
+        self.write_size = write_size
 
         self.num_cols = word_size*words_per_row
         self.num_words = num_rows*words_per_row
@@ -314,7 +315,11 @@ class control_logic(design.design):
             self.input_list = ["csb", "web"]
         else:
             self.input_list = ["csb"]
-            
+
+        if self.word_size != self.write_size:
+            print(self.word_size, self.write_size)
+            self.input_list = ["wmask"]
+
         if self.port_type == "rw":
             self.dff_output_list = ["cs_bar", "cs", "we_bar", "we"]
         else:

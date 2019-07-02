@@ -205,8 +205,6 @@ class bank(design.design):
         self.compute_instance_port0_offsets()
         if len(self.all_ports)==2:
             self.compute_instance_port1_offsets()
-        else:
-            debug.error("Too many ports.", -1)
 
         
     def compute_instance_port0_offsets(self):

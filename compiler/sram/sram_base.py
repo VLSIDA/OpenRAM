@@ -262,6 +262,7 @@ class sram_base(design, verilog, lef):
             
     def add_modules(self):
         self.bitcell = factory.create(module_type=OPTS.bitcell)
+        self.dff = factory.create(module_type="dff")
 
         # Create the address and control flops (but not the clk)
         from dff_array import dff_array
@@ -276,6 +277,8 @@ class sram_base(design, verilog, lef):
 
         self.data_dff = dff_array(name="data_dff", rows=1, columns=self.word_size)
         self.add_mod(self.data_dff)
+
+        
         
         # Create the bank module (up to four are instantiated)
         from bank import bank

@@ -26,7 +26,7 @@ class ptx(design.design):
         # will use the last record with a given name. I.e., you will
         # over-write a design in GDS if one has and the other doesn't
         # have poly connected, for example.
-        name = "{0}_m{1}_w{2}".format(tx_type, mults, width)
+        name = "{0}_m{1}_w{2:.3f}".format(tx_type, mults, width)
         if connect_active:
             name += "_a"
         if connect_poly:

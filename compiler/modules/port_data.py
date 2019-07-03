@@ -73,29 +73,41 @@ class port_data(design.design):
 
     def add_pins(self):
         """ Adding pins for Bank module"""
+        for bit in range(self.num_cols):
+            self.add_pin(self.bl_names[self.port]+"_{0}".format(bit),"INOUT")
+            self.add_pin(self.br_names[self.port]+"_{0}".format(bit),"INOUT")
         if self.port in self.read_ports:
             for bit in range(self.word_size):
-                self.add_pin("dout{0}_{1}".format(self.port,bit),"OUT")
+                self.add_pin("dout_{}".format(bit),"OUTPUT")
         if self.port in self.write_ports:
             for bit in range(self.word_size):
-                self.add_pin("din{0}_{1}".format(self.port,bit),"IN")
-
+                self.add_pin("din_{}".format(bit),"INPUT")
+        # Will be empty if no col addr lines
+        sel_names = ["sel_{}".format(x) for x in range(self.num_col_addr_lines)]
+        for pin_name in sel_names:
+            self.add_pin(pin_name,"INPUT")
         if self.port in self.read_ports:
-            self.add_pin("s_en{0}".format(self.port), "INPUT")
+            self.add_pin("s_en", "INPUT")
         if self.port in self.read_ports:
-            self.add_pin("p_en_bar{0}".format(self.port), "INPUT")
+            self.add_pin("p_en_bar", "INPUT")
         if self.port in self.write_ports:
-            self.add_pin("w_en{0}".format(self.port), "INPUT")
+            self.add_pin("w_en", "INPUT")
         self.add_pin("vdd","POWER")
         self.add_pin("gnd","GROUND")
 
         
     def route_layout(self):
         """ Create routing amoung the modules """
-        self.route_bitlines()
+        self.route_data_lines()
+        self.route_layout_pins()
         self.route_supplies()
 
-    def route_bitlines(self):
+    def route_layout_pins(self):
+        """ Add the pins """
+        self.route_bitline_pins()
+        self.route_control_pins()
+        
+    def route_data_lines(self):
         """ Route the bitlines depending on the port type rw, w, or r. """
         
         if self.port in self.readwrite_ports:
@@ -164,6 +176,12 @@ class port_data(design.design):
         self.num_cols = int(self.words_per_row*self.word_size)
         self.num_rows = int(self.num_words / self.words_per_row)
 
+        # The central bus is the column address (one hot) and row address (binary)
+        if self.col_addr_size>0:
+            self.num_col_addr_lines = 2**self.col_addr_size
+        else:
+            self.num_col_addr_lines = 0            
+
         # A space for wells or jogging m2 between modules
         self.m2_gap = max(2*drc("pwell_to_nwell") + drc("well_enclosure_active"),
                           3*self.m2_pitch)
@@ -174,7 +192,6 @@ class port_data(design.design):
         self.bl_names = self.bitcell.list_all_bl_names()
         self.br_names = self.bitcell.list_all_br_names()
         self.wl_names = self.bitcell.list_all_wl_names()
-        self.bitline_names = self.bitcell.list_all_bitline_names()
 
     def create_precharge_array(self):
         """ Creating Precharge """
@@ -185,10 +202,10 @@ class port_data(design.design):
         self.precharge_array_inst = self.add_inst(name="precharge_array{}".format(self.port),
                                                   mod=self.precharge_array)
         temp = []
-        for i in range(self.num_cols):
-            temp.append(self.bl_names[self.port]+"_{0}".format(i))
-            temp.append(self.br_names[self.port]+"_{0}".format(i))
-        temp.extend(["p_en_bar{0}".format(self.port), "vdd"])
+        for bit in range(self.num_cols):
+            temp.append(self.bl_names[self.port]+"_{0}".format(bit))
+            temp.append(self.br_names[self.port]+"_{0}".format(bit))
+        temp.extend(["p_en_bar", "vdd"])
         self.connect_inst(temp)
 
             
@@ -207,7 +224,7 @@ class port_data(design.design):
             temp.append(self.bl_names[self.port]+"_{0}".format(col))
             temp.append(self.br_names[self.port]+"_{0}".format(col))
         for word in range(self.words_per_row):
-            temp.append("sel{0}_{1}".format(self.port,word))
+            temp.append("sel_{}".format(word))
         for bit in range(self.word_size):
             temp.append(self.bl_names[self.port]+"_out_{0}".format(bit))
             temp.append(self.br_names[self.port]+"_out_{0}".format(bit))
@@ -231,7 +248,7 @@ class port_data(design.design):
 
         temp = []
         for bit in range(self.word_size):
-            temp.append("dout{0}_{1}".format(self.port,bit))
+            temp.append("dout_{}".format(bit))
             if self.words_per_row == 1:
                 temp.append(self.bl_names[self.port]+"_{0}".format(bit))
                 temp.append(self.br_names[self.port]+"_{0}".format(bit))
@@ -239,7 +256,7 @@ class port_data(design.design):
                 temp.append(self.bl_names[self.port]+"_out_{0}".format(bit))
                 temp.append(self.br_names[self.port]+"_out_{0}".format(bit))
                     
-        temp.extend(["s_en{}".format(self.port), "vdd", "gnd"])
+        temp.extend(["s_en", "vdd", "gnd"])
         self.connect_inst(temp)
 
             
@@ -255,7 +272,7 @@ class port_data(design.design):
 
         temp = []
         for bit in range(self.word_size):
-            temp.append("din{0}_{1}".format(self.port,bit))
+            temp.append("din_{}".format(bit))
         for bit in range(self.word_size):            
             if (self.words_per_row == 1):            
                 temp.append(self.bl_names[self.port]+"_{0}".format(bit))
@@ -263,7 +280,7 @@ class port_data(design.design):
             else:
                 temp.append(self.bl_names[self.port]+"_out_{0}".format(bit))
                 temp.append(self.br_names[self.port]+"_out_{0}".format(bit))
-        temp.extend(["w_en{0}".format(self.port), "vdd", "gnd"])
+        temp.extend(["w_en", "vdd", "gnd"])
         self.connect_inst(temp)
 
             
@@ -320,7 +337,7 @@ class port_data(design.design):
         
         for bit in range(self.word_size):
             data_pin = self.sense_amp_array_inst.get_pin("data_{}".format(bit))
-            self.add_layout_pin_rect_center(text="dout{0}_{1}".format(port,bit),
+            self.add_layout_pin_rect_center(text="dout_{0}".format(bit),
                                             layer=data_pin.layer, 
                                             offset=data_pin.center(),
                                             height=data_pin.height(),
@@ -331,7 +348,7 @@ class port_data(design.design):
 
         for row in range(self.word_size):
             data_name = "data_{}".format(row)
-            din_name = "din{0}_{1}".format(self.port,row)
+            din_name = "din_{}".format(row)
             self.copy_layout_pin(self.write_driver_array_inst, data_name, din_name)
             
     def route_column_mux_to_precharge_array(self, port):
@@ -392,6 +409,34 @@ class port_data(design.design):
         self.channel_route_bitlines(inst1=inst1, inst2=inst2, num_bits=self.word_size)
 
 
+    def route_bitline_pins(self):
+        """ Add the bitline pins for the given port """
+
+        for bit in range(self.num_cols):
+            if self.port in self.read_ports:
+                self.copy_layout_pin(self.precharge_array_inst, "bl_{}".format(bit))
+                self.copy_layout_pin(self.precharge_array_inst, "br_{}".format(bit))
+            elif self.column_mux_array_inst:
+                self.copy_layout_pin(self.column_mux_array_inst, "bl_{}".format(bit))
+                self.copy_layout_pin(self.column_mux_array_inst, "br_{}".format(bit))
+            else:
+                self.copy_layout_pin(self.write_driver_array_inst, "bl_{}".format(bit))  
+                self.copy_layout_pin(self.write_driver_array_inst, "br_{}".format(bit))  
+
+    def route_control_pins(self):
+        """ Add the control pins: s_en, p_en_bar, w_en """
+        if self.precharge_array_inst:
+            self.copy_layout_pin(self.precharge_array_inst, "en_bar", "p_en_bar")
+        if self.column_mux_array_inst:
+            sel_names = ["sel_{}".format(x) for x in range(self.num_col_addr_lines)]
+            for pin_name in sel_names:
+                self.copy_layout_pin(self.column_mux_array_inst, pin_name)
+        if self.sense_amp_array_inst:
+            self.copy_layout_pin(self.sense_amp_array_inst, "en", "s_en")
+        if self.write_driver_array_inst:
+            self.copy_layout_pin(self.write_driver_array_inst, "en", "w_en")
+            
+        
     def channel_route_bitlines(self, inst1, inst2, num_bits,
                                inst1_bl_name="bl_{}", inst1_br_name="br_{}",
                                inst2_bl_name="bl_{}", inst2_br_name="br_{}"):

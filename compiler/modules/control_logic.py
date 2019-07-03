@@ -75,6 +75,7 @@ class control_logic(design.design):
     def add_pins(self):
         """ Add the pins to the control logic module. """
         for pin in self.input_list + ["clk"]:
+            print(pin)
             self.add_pin(pin,"INPUT")
         for pin in self.output_list:
             self.add_pin(pin,"OUTPUT")

@@ -1014,9 +1014,9 @@ class bank(design.design):
         
     def graph_exclude_precharge(self):
         """Precharge adds a loop between bitlines, can be excluded to reduce complexity"""
-        for inst in self.precharge_array_inst:
-            if inst != None:
-                self.graph_inst_exclude.add(inst)
+        for port in self.read_ports:
+            if self.port_data[port]:
+                self.port_data[port].graph_exclude_precharge()
                 
     def get_cell_name(self, inst_name, row, col):
         """Gets the spice name of the target bitcell."""

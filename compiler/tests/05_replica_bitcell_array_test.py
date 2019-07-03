@@ -13,7 +13,6 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-@unittest.skip("SKIPPING 05_replica_bitcell_array_test")
 class replica_bitcell_array_test(openram_test):
 
     def runTest(self):

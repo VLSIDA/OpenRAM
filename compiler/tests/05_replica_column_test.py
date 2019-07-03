@@ -13,7 +13,6 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-@unittest.skip("SKIPPING 05_replica_column_test")
 class replica_column_test(openram_test):
 
     def runTest(self):

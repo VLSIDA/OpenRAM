@@ -494,4 +494,7 @@ class port_data(design.design):
             self.add_path("metal2",[bottom_br, vector(bottom_br.x,yoffset),
                                     vector(top_br.x,yoffset), top_br])
         
-
+    def graph_exclude_precharge(self):
+        """Precharge adds a loop between bitlines, can be excluded to reduce complexity"""
+        if self.precharge_array_inst:
+            self.graph_inst_exclude.add(self.precharge_array_inst)

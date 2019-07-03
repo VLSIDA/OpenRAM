@@ -89,7 +89,7 @@ class bank_select(design.design):
         self.inv4x_nor = factory.create(module_type="pinv", height=height, size=4)
         self.add_mod(self.inv4x_nor)
 
-        self.nand2 = factory.create(module_type="pnand2")
+        self.nand2 = factory.create(module_type="pnand2", height=height)
         self.add_mod(self.nand2)
 
     def calculate_module_offsets(self):

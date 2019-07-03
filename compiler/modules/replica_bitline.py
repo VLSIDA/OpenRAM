@@ -25,6 +25,8 @@ class replica_bitline(design.design):
 
         self.bitcell_loads = bitcell_loads
         self.delay_fanout_list = delay_fanout_list
+        if len(delay_fanout_list) == 0 or len(delay_fanout_list)%2 == 1:
+            debug.error('Delay chain must contain an even amount of stages to maintain polarity.',1)
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -86,7 +88,7 @@ class replica_bitline(design.design):
 
         self.replica_bitcell = factory.create(module_type="replica_bitcell")
         self.add_mod(self.replica_bitcell)
-
+        
         # This is the replica bitline load column that is the height of our array
         self.rbl = factory.create(module_type="bitcell_array",
                                   cols=1,

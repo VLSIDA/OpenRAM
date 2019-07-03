@@ -1,10 +1,10 @@
 library (sram_2_16_1_scn4m_subm_TT_5p0V_25C_lib){
     delay_model : "table_lookup";
     time_unit : "1ns" ;
-    voltage_unit : "1v" ;
+    voltage_unit : "1V" ;
     current_unit : "1mA" ;
     resistance_unit : "1kohm" ;
-    capacitive_load_unit(1 ,fF) ;
+    capacitive_load_unit(1, pF) ;
     leakage_power_unit : "1mW" ;
     pulling_resistance_unit :"1kohm" ;
     operating_conditions(OC){
@@ -81,7 +81,7 @@ cell (sram_2_16_1_scn4m_subm){
     area : 60774.3;
 
     leakage_power () {
-      when : "CSb0";
+      when : "csb0";
       value : 0.0009813788999999999;
     }
     cell_leakage_power : 0;
@@ -198,7 +198,7 @@ cell (sram_2_16_1_scn4m_subm){
         }
     }
 
-    pin(CSb0){
+    pin(csb0){
         direction  : input; 
         capacitance : 9.8242;  
         timing(){ 
@@ -231,7 +231,7 @@ cell (sram_2_16_1_scn4m_subm){
         }
     }
 
-    pin(WEb0){
+    pin(web0){
         direction  : input; 
         capacitance : 9.8242;  
         timing(){ 
@@ -269,7 +269,7 @@ cell (sram_2_16_1_scn4m_subm){
         direction  : input; 
         capacitance : 9.8242;  
         internal_power(){
-            when : "!CSb0 & clk0 & !WEb0"; 
+            when : "!csb0 & clk0 & !web0"; 
             rise_power(scalar){
                 values("9.972790277777777");
             }
@@ -278,7 +278,7 @@ cell (sram_2_16_1_scn4m_subm){
             }
         }
         internal_power(){
-            when : "!CSb0 & !clk0 & WEb0"; 
+            when : "!csb0 & !clk0 & web0"; 
             rise_power(scalar){
                 values("8.899322499999998");
             }
@@ -287,7 +287,7 @@ cell (sram_2_16_1_scn4m_subm){
             }
         }
         internal_power(){
-            when : "CSb0"; 
+            when : "csb0"; 
             rise_power(scalar){
                 values("0");
             }

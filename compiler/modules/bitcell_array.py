@@ -166,7 +166,7 @@ class bitcell_array(design.design):
         # Dynamic Power from Bitline
         bl_wire = self.gen_bl_wire()
         cell_load = 2 * bl_wire.return_input_cap() 
-        bl_swing = parameter["rbl_height_percentage"]
+        bl_swing = OPTS.rbl_delay_percentage
         freq = spice["default_event_rate"]
         bitline_dynamic = self.calc_dynamic_power(corner, cell_load, freq, swing=bl_swing)
         
@@ -212,3 +212,16 @@ class bitcell_array(design.design):
         bitcell_wl_cin = self.cell.get_wl_cin()
         total_cin = bitcell_wl_cin * self.column_size
         return total_cin
+        
+    def graph_exclude_bits(self, targ_row, targ_col):
+        """Excludes bits in column from being added to graph except target"""
+        #Function is not robust with column mux configurations
+        for row in range(self.row_size):
+            for col in range(self.column_size):
+                if row == targ_row and col == targ_col:
+                    continue
+                self.graph_inst_exclude.add(self.cell_inst[row,col])
+            
+    def get_cell_name(self, inst_name, row, col):
+        """Gets the spice name of the target bitcell.""" 
+        return inst_name+'.x'+self.cell_inst[row,col].name, self.cell_inst[row,col]

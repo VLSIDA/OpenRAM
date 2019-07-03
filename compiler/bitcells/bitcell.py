@@ -20,6 +20,8 @@ class bitcell(design.design):
     """
 
     pin_names = ["bl", "br", "wl", "vdd", "gnd"]
+    storage_nets = ['Q', 'Qbar']
+    type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"] 
     (width,height) = utils.get_libcell_size("cell_6t", GDS["unit"], layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "cell_6t", GDS["unit"])
 
@@ -31,7 +33,9 @@ class bitcell(design.design):
         self.width = bitcell.width
         self.height = bitcell.height
         self.pin_map = bitcell.pin_map
-
+        self.add_pin_types(self.type_list)
+        self.nets_match = self.do_nets_exist(self.storage_nets)
+        
     def analytical_delay(self, corner, slew, load=0, swing = 0.5):
         parasitic_delay = 1
         size = 0.5 #This accounts for bitline being drained thought the access TX and internal node
@@ -58,6 +62,14 @@ class bitcell(design.design):
         column_pins = ["br"]
         return column_pins
         
+    def get_bl_name(self):
+        """Get bl name"""
+        return "bl"
+    
+    def get_br_name(self):
+        """Get bl name"""
+        return "br"  
+        
     def analytical_power(self, corner, load):
         """Bitcell power in nW. Only characterizes leakage."""
         from tech import spice
@@ -65,10 +77,23 @@ class bitcell(design.design):
         dynamic = 0 #temporary
         total_power = self.return_power(dynamic, leakage)
         return total_power
-
+  
+    def get_storage_net_names(self):
+        """Returns names of storage nodes in bitcell in  [non-inverting, inverting] format."""
+        #Checks that they do exist
+        if self.nets_match:
+            return self.storage_nets
+        else:
+            debug.info(1,"Storage nodes={} not found in spice file.".format(self.storage_nets))
+            return None
+    
     def get_wl_cin(self):
         """Return the relative capacitance of the access transistor gates"""
         #This is a handmade cell so the value must be entered in the tech.py file or estimated.
         #Calculated in the tech file by summing the widths of all the related gates and dividing by the minimum width.
         access_tx_cin = parameter["6T_access_size"]/drc["minwidth_tx"]
         return 2*access_tx_cin
+
+    def build_graph(self, graph, inst_name, port_nets):        
+        """Adds edges based on inputs/outputs. Overrides base class function."""
+        self.add_graph_edges(graph, port_nets) 

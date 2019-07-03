@@ -322,3 +322,46 @@ class sram_1bank(sram_base):
             self.add_label(text=n,
                            layer=pin.layer,
                            offset=pin.center())
+                           
+    def graph_exclude_data_dff(self):
+        """Removes data dff from search graph. """
+        #Data dffs are only for writing so are not useful for evaluating read delay.
+        for inst in self.data_dff_insts:
+            self.graph_inst_exclude.add(inst)
+    
+    def graph_exclude_addr_dff(self):
+        """Removes data dff from search graph. """
+        #Address is considered not part of the critical path, subjectively removed
+        for inst in self.row_addr_dff_insts:
+            self.graph_inst_exclude.add(inst)
+            
+        if self.col_addr_dff:
+            for inst in self.col_addr_dff_insts:
+                self.graph_inst_exclude.add(inst)
+
+    def graph_exclude_ctrl_dffs(self):
+        """Exclude dffs for CSB, WEB, etc from graph"""
+        #Insts located in control logic, exclusion function called here
+        for inst in self.control_logic_insts:
+            inst.mod.graph_exclude_dffs()
+            
+    def get_sen_name(self, sram_name, port=0):
+        """Returns the s_en spice name."""
+        #Naming scheme is hardcoded using this function, should be built into the 
+        #graph in someway.
+        sen_name = "s_en{}".format(port)
+        control_conns = self.get_conns(self.control_logic_insts[port])
+        #Sanity checks
+        if sen_name not in control_conns:
+            debug.error("Signal={} not contained in control logic connections={}"\
+                                                 .format(sen_name, control_conns))
+        if sen_name in self.pins:
+            debug.error("Internal signal={} contained in port list. Name defined by the parent.")                
+        return "X{}.{}".format(sram_name, sen_name)
+        
+    def get_cell_name(self, inst_name, row, col):
+        """Gets the spice name of the target bitcell."""
+        #Sanity check in case it was forgotten
+        if inst_name.find('x') != 0:
+            inst_name = 'x'+inst_name
+        return self.bank_inst.mod.get_cell_name(inst_name+'.x'+self.bank_inst.name, row, col)

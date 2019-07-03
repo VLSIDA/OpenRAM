@@ -329,18 +329,17 @@ class bank(design.design):
     def add_modules(self):
         """ Add all the modules using the class loader """
         
-
-        self.bitcell_array = factory.create(module_type="bitcell_array",
-                                            cols=self.num_cols,
-                                            rows=self.num_rows)
-        self.add_mod(self.bitcell_array)
-        
         # create arrays of bitline and bitline_bar names for read, write, or all ports
         self.bitcell = factory.create(module_type="bitcell") 
         self.bl_names = self.bitcell.list_all_bl_names()
         self.br_names = self.bitcell.list_all_br_names()
         self.wl_names = self.bitcell.list_all_wl_names()
         self.bitline_names = self.bitcell.list_all_bitline_names()
+        
+        self.bitcell_array = factory.create(module_type="bitcell_array",
+                                            cols=self.num_cols,
+                                            rows=self.num_rows)
+        self.add_mod(self.bitcell_array)
 
         self.port_data = []
         for port in self.all_ports:
@@ -1012,3 +1011,14 @@ class bank(design.design):
         #Current bank only uses sen as an enable for the sense amps.
         port = self.read_ports[0]        
         return self.port_data[port].sense_amp_array.get_en_cin()
+        
+    def graph_exclude_precharge(self):
+        """Precharge adds a loop between bitlines, can be excluded to reduce complexity"""
+        for inst in self.precharge_array_inst:
+            if inst != None:
+                self.graph_inst_exclude.add(inst)
+                
+    def get_cell_name(self, inst_name, row, col):
+        """Gets the spice name of the target bitcell."""
+        return self.bitcell_array_inst.mod.get_cell_name(inst_name+'.x'+self.bitcell_array_inst.name, row, col)            
+

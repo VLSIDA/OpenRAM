@@ -33,10 +33,17 @@ class timing_sram_test(openram_test):
                         num_words=16,
                         num_banks=1)
         c.words_per_row=1
+        # c = sram_config(word_size=32,
+                        # num_words=256,
+                        # num_banks=1)
+        # c.words_per_row=2
+        # OPTS.use_tech_delay_chain_size = True
         c.recompute_sizes()
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
         s = factory.create(module_type="sram", sram_config=c)
-
+        #import sys
+        #sys.exit(1)
+        
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)
 

@@ -8,8 +8,18 @@
 import re
 import debug
 from globals import OPTS
+from enum import Enum
 
-        
+class sram_op(Enum):
+    READ_ZERO = 0
+    READ_ONE = 1
+    WRITE_ZERO = 2
+    WRITE_ONE = 3
+    
+class bit_polarity(Enum):
+    NONINVERTING = 0
+    INVERTING = 1
+    
 def relative_compare(value1,value2,error_tolerance=0.001):
     """ This is used to compare relative values for convergence. """
     return (abs(value1 - value2) / abs(max(value1,value2)) <= error_tolerance)
@@ -32,7 +42,6 @@ def parse_spice_list(filename, key):
     f.close()
     # val = re.search(r"{0}\s*=\s*(-?\d+.?\d*\S*)\s+.*".format(key), contents)
     val = re.search(r"{0}\s*=\s*(-?\d+.?\d*[e]?[-+]?[0-9]*\S*)\s+.*".format(key), contents)
-    
     if val != None:
         debug.info(4, "Key = " + key + " Val = " + val.group(1))
         return convert_to_float(val.group(1))

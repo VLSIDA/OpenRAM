@@ -18,6 +18,7 @@ class replica_bitcell(design.design):
     the technology library. """
 
     pin_names = ["bl", "br", "wl", "vdd", "gnd"]
+    type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"] 
     (width,height) = utils.get_libcell_size("replica_cell_6t", GDS["unit"], layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "replica_cell_6t", GDS["unit"])
 
@@ -29,6 +30,7 @@ class replica_bitcell(design.design):
         self.width = replica_bitcell.width
         self.height = replica_bitcell.height
         self.pin_map = replica_bitcell.pin_map
+        self.add_pin_types(self.type_list)
     
     def analytical_power(self, corner, load):
         """Bitcell power in nW. Only characterizes leakage."""
@@ -44,3 +46,7 @@ class replica_bitcell(design.design):
         #Calculated in the tech file by summing the widths of all the related gates and dividing by the minimum width.
         access_tx_cin = parameter["6T_access_size"]/drc["minwidth_tx"]
         return 2*access_tx_cin
+
+    def build_graph(self, graph, inst_name, port_nets):        
+        """Adds edges based on inputs/outputs. Overrides base class function."""
+        self.add_graph_edges(graph, port_nets) 

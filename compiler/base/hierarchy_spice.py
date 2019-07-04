@@ -114,6 +114,12 @@ class spice():
                 output_list.append(pin)
         return output_list
 
+
+    def copy_pins(self, other_module, suffix=""):
+        """ This will copy all of the pins from the other module and add an optional suffix."""
+        for pin in other_module.pins:
+            self.add_pin(pin+suffix, other_module.get_pin_type(pin))
+
     def get_inouts(self):
         """ These use pin types to determine pin lists. These
         may be over-ridden by submodules that didn't use pin directions yet."""

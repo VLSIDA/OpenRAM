@@ -6,9 +6,6 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-"""
-Run regression tests on a parameterized inverter
-"""
 import unittest
 from testutils import *
 import sys,os

@@ -6,10 +6,6 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-"""
-Run a regression test on a tri_gate_array.
-"""
-
 import unittest
 from testutils import *
 import sys,os

@@ -75,7 +75,6 @@ class control_logic(design.design):
     def add_pins(self):
         """ Add the pins to the control logic module. """
         for pin in self.input_list + ["clk"]:
-            print(pin)
             self.add_pin(pin,"INPUT")
         for pin in self.output_list:
             self.add_pin(pin,"OUTPUT")
@@ -317,12 +316,14 @@ class control_logic(design.design):
         else:
             self.input_list = ["csb"]
 
-        if self.word_size != self.write_size:
-            print(self.word_size, self.write_size)
-            self.input_list = ["wmask"]
+        # if self.word_size != self.write_size:
+        #     self.input_list = ["wmask"]
 
         if self.port_type == "rw":
             self.dff_output_list = ["cs_bar", "cs", "we_bar", "we"]
+            # if self.word_size != self.write_size:
+            #     self.dff_output_list.append("wm_bar")
+            #     self.dff_output_list.append("wm")
         else:
             self.dff_output_list = ["cs_bar", "cs"]
         
@@ -758,7 +759,9 @@ class control_logic(design.design):
         
     def route_dffs(self):
         if self.port_type == "rw":
-            dff_out_map = zip(["dout_bar_0", "dout_bar_1", "dout_1"], ["cs", "we", "we_bar"])            
+            #print("hi")
+            #if (self.word_size == self.write_size):
+            dff_out_map = zip(["dout_bar_0", "dout_bar_1", "dout_1"], ["cs", "we", "we_bar"])
         elif self.port_type == "r":
             dff_out_map = zip(["dout_bar_0", "dout_0"], ["cs", "cs_bar"])            
         else:

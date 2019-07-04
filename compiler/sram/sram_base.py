@@ -276,6 +276,9 @@ class sram_base(design, verilog, lef):
 
         self.data_dff = dff_array(name="data_dff", rows=1, columns=self.word_size)
         self.add_mod(self.data_dff)
+
+        self.wmask_dff = dff_array(name="wmask_dff", rows=1, columns=int(self.word_size/self.write_size))
+        self.add_mod(self.wmask_dff)
         
         # Create the bank module (up to four are instantiated)
         from bank import bank
@@ -319,8 +322,7 @@ class sram_base(design, verilog, lef):
             self.control_logic_r = self.mod_control_logic(num_rows=self.num_rows, 
                                                           words_per_row=self.words_per_row,
                                                           word_size=self.word_size,
-                                                          write_size=self.write_size,
-                                                          sram=self, 
+                                                          sram=self,
                                                           port_type="r")
             self.add_mod(self.control_logic_r)
 
@@ -445,6 +447,29 @@ class sram_base(design, verilog, lef):
 
             self.connect_inst(inputs + outputs + ["clk_buf{}".format(port), "vdd", "gnd"])
         
+        return insts
+
+    def create_wmask_dff(self):
+        """ Add and place all wmask flops """
+        num_wmask = int(self.word_size/self.write_size)
+        insts = []
+        for port in self.all_ports:
+            if port in self.write_ports:
+                insts.append(self.add_inst(name="wmask_dff{}".format(port),
+                                           mod=self.wmask_dff))
+            else:
+                insts.append(None)
+                continue
+
+            # inputs, outputs/output/bar
+            inputs = []
+            outputs = []
+            for bit in range(num_wmask):
+                inputs.append("wmask{}[{}]".format(port, bit))
+                outputs.append("BANK_WMASK{}[{}]".format(port, bit))
+
+            self.connect_inst(inputs + outputs + ["clk_buf{}".format(port), "vdd", "gnd"])
+
         return insts
 
         

@@ -18,10 +18,16 @@ class verilog:
     def verilog_write(self,verilog_name):
         """ Write a behavioral Verilog model. """
         self.vf = open(verilog_name, "w")
+        # Determine if optional write mask is used
+        self.wmask_enabled = False
+        if self.word_size != self.write_size:
+            self.wmask_enabled = True
 
         self.vf.write("// OpenRAM SRAM model\n")
         self.vf.write("// Words: {0}\n".format(self.num_words))
-        self.vf.write("// Word size: {0}\n\n".format(self.word_size))
+        self.vf.write("// Word size: {0}\n".format(self.word_size))
+        if self.wmask_enabled:
+            self.vf.write("// Write size: {0}\n\n".format(self.write_size))
 
         self.vf.write("module {0}(\n".format(self.name))
         for port in self.all_ports:
@@ -32,9 +38,15 @@ class verilog:
             elif port in self.write_ports:
                 self.vf.write("// Port {0}: W\n".format(port))
             if port in self.readwrite_ports:
-                self.vf.write("    clk{0},csb{0},web{0},ADDR{0},DIN{0},DOUT{0}".format(port))
+                self.vf.write("    clk{0},csb{0},web{0},".format(port))
+                if self.wmask_enabled:
+                    self.vf.write("wmask{},".format(port))
+                self.vf.write("ADDR{0},DIN{0},DOUT{0}".format(port))
             elif port in self.write_ports:
-                self.vf.write("    clk{0},csb{0},ADDR{0},DIN{0}".format(port))
+                self.vf.write("    clk{0},csb{0},".format(port))
+                if self.wmask_enabled:
+                    self.vf.write("wmask{},".format(port))
+                self.vf.write("ADDR{0},DIN{0}".format(port))
             elif port in self.read_ports:
                 self.vf.write("    clk{0},csb{0},ADDR{0},DOUT{0}".format(port))
             # Continue for every port on a new line
@@ -44,6 +56,9 @@ class verilog:
         
         self.vf.write("  parameter DATA_WIDTH = {0} ;\n".format(self.word_size))
         self.vf.write("  parameter ADDR_WIDTH = {0} ;\n".format(self.addr_size))
+        if self.wmask_enabled:
+            self.num_wmask = int(self.word_size/self.write_size)
+            self.vf.write("  parameter NUM_WMASK = {0} ;\n".format(self.num_wmask))
         self.vf.write("  parameter RAM_DEPTH = 1 << ADDR_WIDTH;\n")
         self.vf.write("  // FIXME: This delay is arbitrary.\n")
         self.vf.write("  parameter DELAY = 3 ;\n")
@@ -131,6 +146,8 @@ class verilog:
         self.vf.write("  input   csb{0}; // active low chip select\n".format(port))
         if port in self.readwrite_ports:
             self.vf.write("  input  web{0}; // active low write control\n".format(port))
+            if (self.wmask_enabled):
+                self.vf.write("  input [NUM_WMASK-1:0]   wmask{0}; // write mask\n".format(port))
         self.vf.write("  input [ADDR_WIDTH-1:0]  ADDR{0};\n".format(port))
         if port in self.write_ports:
             self.vf.write("  input [DATA_WIDTH-1:0]  DIN{0};\n".format(port))
@@ -151,7 +168,15 @@ class verilog:
             self.vf.write("    if ( !csb{0}_reg && !web{0}_reg )\n".format(port))
         else:
             self.vf.write("    if (!csb{0}_reg)\n".format(port))
-        self.vf.write("        mem[ADDR{0}_reg] = DIN{0}_reg;\n".format(port))
+
+        if self.wmask_enabled:
+            for mask in range(0,self.num_wmask):
+                lower = mask * self.write_size
+                upper = lower + self.write_size-1
+                self.vf.write("        if(wmask[{}])\n".format(mask))
+                self.vf.write("                mem[ADDR{0}_reg][{1}:{2}] = DIN{0}_reg[{1}:{2}];\n".format(port,upper,lower))
+        else:
+            self.vf.write("        mem[ADDR{0}_reg] = DIN_reg{0};\n".format(port))
         self.vf.write("  end\n")
         
     def add_read_block(self, port):

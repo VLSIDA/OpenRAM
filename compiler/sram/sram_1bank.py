@@ -45,6 +45,9 @@ class sram_1bank(sram_base):
             self.col_addr_dff_insts = self.create_col_addr_dff()
         
         self.data_dff_insts = self.create_data_dff()
+
+        if (self.write_size != self.word_size):
+            self.wmask_dff_insts = self.create_wmask_dff()
         
     def place_instances(self):
         """ 
@@ -64,6 +67,7 @@ class sram_1bank(sram_base):
         row_addr_pos = [None]*len(self.all_ports)
         col_addr_pos = [None]*len(self.all_ports)
         data_pos = [None]*len(self.all_ports)
+        wmask_pos = [None]*len(self.all_ports)
 
         # This is M2 pitch even though it is on M1 to help stem via spacings on the trunk
         # The M1 pitch is for supply rail spacings
@@ -101,6 +105,13 @@ class sram_1bank(sram_base):
                                     -max_gap_size - self.data_dff_insts[port].height)
             self.data_dff_insts[port].place(data_pos[port])
 
+        # Add the write mask flops to the left of the din flops.
+        if (self.write_size != self.word_size):
+            if port in self.write_ports:
+                wmask_pos[port] = vector(self.bank.bank_array_ur.x - self.data_dff_insts[port].width,
+                                         self.bank.height + max_gap_size + self.data_dff_insts[port].height)
+                self.wmask_dff_insts[port].place(wmask_pos[port], mirror="MX")
+
 
         if len(self.all_ports)>1:
             # Port 1
@@ -134,7 +145,14 @@ class sram_1bank(sram_base):
                 data_pos[port] = vector(self.bank.bank_array_ur.x - self.data_dff_insts[port].width,
                                         self.bank.height + max_gap_size + self.data_dff_insts[port].height)
                 self.data_dff_insts[port].place(data_pos[port], mirror="MX")
-        
+
+            # Add the write mask flops to the left of the din flops.
+            if (self.write_size != self.word_size):
+                if port in self.write_ports:
+                    wmask_pos[port] = vector(self.bank.bank_array_ur.x - self.data_dff_insts[port].width,
+                                            self.bank.height + max_gap_size + self.data_dff_insts[port].height)
+                    self.wmask_dff_insts[port].place(wmask_pos[port], mirror="MX")
+
             
     def add_layout_pins(self):
         """
@@ -311,10 +329,13 @@ class sram_1bank(sram_base):
                            offset=pin.center())
                            
     def graph_exclude_data_dff(self):
-        """Removes data dff from search graph. """
-        #Data dffs are only for writing so are not useful for evaluating read delay.
+        """Removes data dff and wmask dff (if applicable) from search graph. """
+        #Data dffs and wmask dffs are only for writing so are not useful for evaluating read delay.
         for inst in self.data_dff_insts:
             self.graph_inst_exclude.add(inst)
+        if (self.write_size != self.word_size):
+            for inst in self.wmask_dff_insts:
+                self.graph_inst_exclude.add(inst)
     
     def graph_exclude_addr_dff(self):
         """Removes data dff from search graph. """

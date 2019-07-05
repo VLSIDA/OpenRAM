@@ -28,6 +28,8 @@ class verilog:
         self.vf.write("// Word size: {0}\n".format(self.word_size))
         if self.wmask_enabled:
             self.vf.write("// Write size: {0}\n\n".format(self.write_size))
+        else:
+            self.vf.write("\n")
 
         self.vf.write("module {0}(\n".format(self.name))
         for port in self.all_ports:

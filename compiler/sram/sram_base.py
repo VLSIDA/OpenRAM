@@ -324,6 +324,7 @@ class sram_base(design, verilog, lef):
             self.control_logic_r = self.mod_control_logic(num_rows=self.num_rows, 
                                                           words_per_row=self.words_per_row,
                                                           word_size=self.word_size,
+                                                          write_size=self.write_size,
                                                           sram=self,
                                                           port_type="r")
             self.add_mod(self.control_logic_r)

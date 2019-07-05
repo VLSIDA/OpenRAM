@@ -85,7 +85,7 @@ def log(str):
 
 # use a static list of strings to store messages until the global paths are set up
 log.setup_output = []
-log.create_file = 1
+log.create_file = True
 
 
 def info(lev, str):

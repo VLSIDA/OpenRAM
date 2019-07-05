@@ -16,7 +16,7 @@ from globals import OPTS
 
 class port_data(design.design):
     """
-    Create the data port (column mux, sense amps, write driver, etc.)
+    Create the data port (column mux, sense amps, write driver, etc.) for the given port number.
     """
 
     def __init__(self, sram_config, port, name=""):
@@ -25,9 +25,9 @@ class port_data(design.design):
         self.port = port
         
         if name == "":
-            name = "bank_{0}_{1}".format(self.word_size, self.num_words)
+            name = "port_data_{0}".format(self.port)
         design.design.__init__(self, name)
-        debug.info(2, "create sram of size {0} with {1} words".format(self.word_size,self.num_words))
+        debug.info(2, "create data port of size {0} with {1} words per row".format(self.word_size,self.words_per_row))
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -37,7 +37,7 @@ class port_data(design.design):
 
 
     def create_netlist(self):
-        self.compute_sizes()
+        self.precompute_constants()
         self.add_pins()
         self.add_modules()
         self.create_instances()
@@ -161,7 +161,7 @@ class port_data(design.design):
             self.column_mux_array = None
                 
 
-        if self.port in self.write_ports or self.port in self.readwrite_ports:
+        if self.port in self.write_ports:
             self.write_driver_array = factory.create(module_type="write_driver_array",
                                                      columns=self.num_cols,
                                                      word_size=self.word_size)
@@ -170,17 +170,15 @@ class port_data(design.design):
             self.write_driver_array = None
 
 
-    def compute_sizes(self):
-        """  Computes the required sizes to create the bank """
-
-        self.num_cols = int(self.words_per_row*self.word_size)
-        self.num_rows = int(self.num_words / self.words_per_row)
+    def precompute_constants(self):
+        """  Get some preliminary data ready """
 
         # The central bus is the column address (one hot) and row address (binary)
         if self.col_addr_size>0:
             self.num_col_addr_lines = 2**self.col_addr_size
         else:
             self.num_col_addr_lines = 0            
+        
 
         # A space for wells or jogging m2 between modules
         self.m2_gap = max(2*drc("pwell_to_nwell") + drc("well_enclosure_active"),

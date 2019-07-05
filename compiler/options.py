@@ -127,6 +127,7 @@ class options(optparse.Values):
     delay_chain = "delay_chain"
     dff_array = "dff_array"
     dff = "dff"
+    dummy_bitcell = "dummy_bitcell"
     precharge_array = "precharge_array"
     ptx = "ptx"
     replica_bitcell = "replica_bitcell"

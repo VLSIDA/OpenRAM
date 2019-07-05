@@ -292,9 +292,6 @@ class sram_base(design, verilog, lef):
 
         self.bank_count = 0
 
-        self.supply_rail_width = self.bank.supply_rail_width
-        self.supply_rail_pitch = self.bank.supply_rail_pitch
-        
         #The control logic can resize itself based on the other modules. Requires all other modules added before control logic.
         self.all_mods_except_control_done = True
 

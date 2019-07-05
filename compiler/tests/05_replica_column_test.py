@@ -19,9 +19,13 @@ class replica_column_test(openram_test):
         globals.init_openram("config_{0}".format(OPTS.tech_name))
 
         debug.info(2, "Testing replica column for 6t_cell")
-        a = factory.create(module_type="replica_column", rows=4)
+        a = factory.create(module_type="replica_column", rows=4, num_ports=1)
         self.local_check(a)
 
+        debug.info(2, "Testing replica column for 6t_cell")
+        a = factory.create(module_type="replica_column", rows=4, num_ports=2)
+        self.local_check(a)
+        
         globals.end_openram()
 
 # run the test from the command line

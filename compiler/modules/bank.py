@@ -148,11 +148,12 @@ class bank(design.design):
 
         # The center point for these cells are the upper-right corner of
         # the bitcell array.
-        # The decoder/driver logic is placed on the right and mirrored on Y-axis.
-        # The write/sense/precharge/mux is placed on the top and mirrored on the X-axis.
-
+        # The port address decoder/driver logic is placed on the right and mirrored on X- and Y-axis.
+        # The port data write/sense/precharge/mux is placed on the top and mirrored on the X-axis.
         self.bitcell_array_top = self.bitcell_array.height 
-        self.bitcell_array_right = self.bitcell_array.width + self.m1_width + self.m2_gap 
+        self.bitcell_array_right = self.bitcell_array.width + self.m1_width + self.m2_gap
+        # Offset past the dummy/RBL column
+        self.bitcell_array_left = 2*self.bitcell.width
         
         self.compute_instance_port0_offsets()
         if len(self.all_ports)==2:
@@ -161,7 +162,7 @@ class bank(design.design):
         
     def compute_instance_port0_offsets(self):
         """
-        Compute the instance offsets for port0.
+        Compute the instance offsets for port0 on the left/bottom of the bank.
         """
 
         port = 0
@@ -172,17 +173,15 @@ class bank(design.design):
 
         # LOWER RIGHT QUADRANT
         # Below the bitcell array
-        self.port_data_offsets[port] = vector(0,0)
+        self.port_data_offsets[port] = vector(self.bitcell_array_left,0)
 
         # UPPER LEFT QUADRANT
         # To the left of the bitcell array
-        # The wordline driver is placed to the right of the main decoder width.
         x_offset = self.m2_gap + self.port_address.width 
         self.port_address_offsets[port] = vector(-x_offset,0)
 
         # LOWER LEFT QUADRANT
-        # Place the col decoder left aligned with wordline driver plus halfway under row decoder
-        # Place the col decoder left aligned with row decoder (x_offset doesn't change)
+        # Place the col decoder left aligned with wordline driver 
         # Below the bitcell array with well spacing
         x_offset = self.central_bus_width[port] + self.port_address.wordline_driver.width
         if self.col_addr_size > 0:
@@ -204,7 +203,7 @@ class bank(design.design):
 
     def compute_instance_port1_offsets(self):
         """
-        Compute the instance offsets for port1 on the top of the bank.
+        Compute the instance offsets for port1 on the right/top of the bank.
         """
 
         port=1
@@ -218,12 +217,11 @@ class bank(design.design):
             
         # LOWER RIGHT QUADRANT
         # To the left of the bitcell array
-        # The wordline driver is placed to the right of the main decoder width.
         x_offset = self.bitcell_array_right + self.port_address.width + self.m2_gap
         self.port_address_offsets[port] = vector(x_offset,0)
 
         # UPPER RIGHT QUADRANT
-        # Place the col decoder right aligned with wordline driver plus halfway under row decoder
+        # Place the col decoder right aligned with wordline driver 
         # Above the bitcell array with a well spacing
         x_offset = self.bitcell_array_right  + self.central_bus_width[port] + self.port_address.wordline_driver.width 
         if self.col_addr_size > 0:
@@ -247,16 +245,12 @@ class bank(design.design):
 
         self.compute_instance_offsets()
         
-        # UPPER RIGHT QUADRANT
         self.place_bitcell_array(self.bitcell_array_offset)
 
-        # LOWER RIGHT QUADRANT
         self.place_port_data(self.port_data_offsets)
 
-        # UPPER LEFT QUADRANT
         self.place_port_address(self.port_address_offsets)
 
-        # LOWER LEFT QUADRANT
         self.place_column_decoder(self.column_decoder_offsets)
         self.place_bank_select(self.bank_select_offsets)
  
@@ -274,11 +268,6 @@ class bank(design.design):
         debug.check(self.num_rows*self.num_cols==self.word_size*self.num_words,"Invalid bank sizes.")
         debug.check(self.addr_size==self.col_addr_size + self.row_addr_size,"Invalid address break down.")
 
-        # Width for the vdd/gnd rails
-        self.supply_rail_width = 4*self.m2_width
-        # FIXME: This spacing should be width dependent...
-        self.supply_rail_pitch = self.supply_rail_width + 4*self.m2_space
-        
         # The order of the control signals on the control bus:
         self.input_control_signals = []
         port_num = 0
@@ -328,7 +317,7 @@ class bank(design.design):
         self.wl_names = self.bitcell.list_all_wl_names()
         self.bitline_names = self.bitcell.list_all_bitline_names()
         
-        self.bitcell_array = factory.create(module_type="bitcell_array",
+        self.bitcell_array = factory.create(module_type="replica_bitcell_array",
                                             cols=self.num_cols,
                                             rows=self.num_rows)
         self.add_mod(self.bitcell_array)
@@ -358,11 +347,14 @@ class bank(design.design):
         self.bitcell_array_inst=self.add_inst(name="bitcell_array", 
                                               mod=self.bitcell_array)
                     
-
+        print(self.bitcell_array.pins)
         temp = []
         for col in range(self.num_cols):
             for bitline in self.bitline_names:
                 temp.append(bitline+"_{0}".format(col))
+        for col in range(2):
+            for bitline in self.bitline_names:
+                temp.append("replica_"+bitline+"_{0}".format(col))
         for row in range(self.num_rows):
             for wordline in self.wl_names:
                     temp.append(wordline+"_{0}".format(row))

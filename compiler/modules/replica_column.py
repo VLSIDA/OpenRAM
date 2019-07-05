@@ -16,10 +16,11 @@ class replica_column(design.design):
     Generate a replica bitline column for the replica array.
     """
 
-    def __init__(self, name, rows):
+    def __init__(self, name, rows, num_ports):
         design.design.__init__(self, name)
 
         self.row_size = rows
+        self.num_ports = num_ports
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -64,7 +65,7 @@ class replica_column(design.design):
         self.cell_inst = {}
         for row in range(self.row_size):
             name="rbc_{0}".format(row)
-            if row>0 and row<self.row_size-2:
+            if row>0 and row<self.row_size - self.num_ports:
                 self.cell_inst[row]=self.add_inst(name=name,
                                                   mod=self.replica_cell)
             else:

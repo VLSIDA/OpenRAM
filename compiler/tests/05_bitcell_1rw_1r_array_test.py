@@ -23,7 +23,6 @@ class bitcell_1rw_1r_array_test(openram_test):
         globals.init_openram("config_{0}".format(OPTS.tech_name))
 
         debug.info(2, "Testing 4x4 array for cell_1rw_1r")
-        OPTS.bitcell = "bitcell_1rw_1r"
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0

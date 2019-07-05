@@ -107,8 +107,7 @@ class bank(design.design):
         
         for port in self.all_ports:
             self.route_bitlines(port)
-            self.route_wordline_driver(port)
-            self.route_row_decoder(port)
+            self.route_port_address(port)
             self.route_column_address_lines(port)
             self.route_control_lines(port)
             if self.num_banks > 1:
@@ -131,8 +130,7 @@ class bank(design.design):
 
         self.create_bitcell_array()
         self.create_port_data()
-        self.create_row_decoder()
-        self.create_wordline_driver()
+        self.create_port_address()
         self.create_column_decoder()
         self.create_bank_select()
 
@@ -142,8 +140,7 @@ class bank(design.design):
         """
 
         self.port_data_offsets = [None]*len(self.all_ports)
-        self.wordline_driver_offsets = [None]*len(self.all_ports)        
-        self.row_decoder_offsets = [None]*len(self.all_ports)        
+        self.port_address_offsets = [None]*len(self.all_ports)
 
         self.column_decoder_offsets = [None]*len(self.all_ports)        
         self.bank_select_offsets = [None]*len(self.all_ports)        
@@ -180,16 +177,14 @@ class bank(design.design):
         # UPPER LEFT QUADRANT
         # To the left of the bitcell array
         # The wordline driver is placed to the right of the main decoder width.
-        x_offset = self.m2_gap + self.wordline_driver.width 
-        self.wordline_driver_offsets[port] = vector(-x_offset,0)
-        x_offset += self.row_decoder.width + self.m2_gap
-        self.row_decoder_offsets[port] = vector(-x_offset,0)
+        x_offset = self.m2_gap + self.port_address.width 
+        self.port_address_offsets[port] = vector(-x_offset,0)
 
         # LOWER LEFT QUADRANT
         # Place the col decoder left aligned with wordline driver plus halfway under row decoder
         # Place the col decoder left aligned with row decoder (x_offset doesn't change)
         # Below the bitcell array with well spacing
-        x_offset = self.central_bus_width[port] + self.wordline_driver.width
+        x_offset = self.central_bus_width[port] + self.port_address.wordline_driver.width
         if self.col_addr_size > 0:
             x_offset += self.column_decoder.width + self.col_addr_bus_width
             y_offset = self.m2_gap + self.column_decoder.height 
@@ -202,7 +197,7 @@ class bank(design.design):
         if self.col_addr_size > 0:
             y_offset = min(self.column_decoder_offsets[port].y, self.port_data[port].column_mux_offset.y)
         else:
-            y_offset = self.row_decoder_offsets[port].y
+            y_offset = self.port_address_offsets[port].y
         if self.num_banks > 1:
             y_offset += self.bank_select.height + drc("well_to_well")
         self.bank_select_offsets[port] = vector(-x_offset,-y_offset)
@@ -224,15 +219,13 @@ class bank(design.design):
         # LOWER RIGHT QUADRANT
         # To the left of the bitcell array
         # The wordline driver is placed to the right of the main decoder width.
-        x_offset = self.bitcell_array_right + self.wordline_driver.width 
-        self.wordline_driver_offsets[port] = vector(x_offset,0)
-        x_offset += self.row_decoder.width + self.m2_gap
-        self.row_decoder_offsets[port] = vector(x_offset,0)
+        x_offset = self.bitcell_array_right + self.port_address.width + self.m2_gap
+        self.port_address_offsets[port] = vector(x_offset,0)
 
         # UPPER RIGHT QUADRANT
         # Place the col decoder right aligned with wordline driver plus halfway under row decoder
         # Above the bitcell array with a well spacing
-        x_offset = self.bitcell_array_right  + self.central_bus_width[port] + self.wordline_driver.width 
+        x_offset = self.bitcell_array_right  + self.central_bus_width[port] + self.port_address.wordline_driver.width 
         if self.col_addr_size > 0:
             x_offset += self.column_decoder.width + self.col_addr_bus_width
             y_offset = self.bitcell_array_top + self.m2_gap + self.column_decoder.height 
@@ -246,7 +239,7 @@ class bank(design.design):
             y_offset = max(self.column_decoder_offsets[port].y + self.column_decoder.height,
                            self.port_data[port].column_mux_offset.y + self.port_data[port].column_mux_array.height)
         else:
-            y_offset = self.row_decoder_offsets[port].y
+            y_offset = self.port_address_offsets[port].y
         self.bank_select_offsets[port] = vector(x_offset,y_offset)
         
     def place_instances(self):
@@ -261,8 +254,7 @@ class bank(design.design):
         self.place_port_data(self.port_data_offsets)
 
         # UPPER LEFT QUADRANT
-        self.place_row_decoder(self.row_decoder_offsets)
-        self.place_wordline_driver(self.wordline_driver_offsets)
+        self.place_port_address(self.port_address_offsets)
 
         # LOWER LEFT QUADRANT
         self.place_column_decoder(self.column_decoder_offsets)
@@ -349,15 +341,12 @@ class bank(design.design):
             self.port_data.append(temp_pre)
             self.add_mod(self.port_data[port])
 
-        self.row_decoder = factory.create(module_type="decoder",
-                                          rows=self.num_rows)
-        self.add_mod(self.row_decoder)
-        
-        self.wordline_driver = factory.create(module_type="wordline_driver",
-                                              rows=self.num_rows,
-                                              cols=self.num_cols)
-        self.add_mod(self.wordline_driver)
 
+        self.port_address = factory.create(module_type="port_address",
+                                           cols=self.num_cols,
+                                           rows=self.num_rows)
+        self.add_mod(self.port_address)
+            
         if(self.num_banks > 1):
             self.bank_select = factory.create(module_type="bank_select")
             self.add_mod(self.bank_select)
@@ -430,24 +419,25 @@ class bank(design.design):
                 mirror = "MX"
             self.port_data_inst[port].place(offset=offsets[port], mirror=mirror)
 
-    def create_row_decoder(self):
+    def create_port_address(self):
         """  Create the hierarchical row decoder  """
         
-        self.row_decoder_inst = [None]*len(self.all_ports)
+        self.port_address_inst = [None]*len(self.all_ports)
         for port in self.all_ports:
-            self.row_decoder_inst[port] = self.add_inst(name="row_decoder{}".format(port), 
-                                                        mod=self.row_decoder)
+            self.port_address_inst[port] = self.add_inst(name="port_address{}".format(port), 
+                                                         mod=self.port_address)
 
             temp = []
             for bit in range(self.row_addr_size):
                 temp.append("addr{0}_{1}".format(port,bit+self.col_addr_size))
+            temp.append("wl_en{0}".format(port))
             for row in range(self.num_rows):
-                temp.append("dec_out{0}_{1}".format(port,row))
+                temp.append(self.wl_names[port]+"_{0}".format(row))
             temp.extend(["vdd", "gnd"])
             self.connect_inst(temp)
 
             
-    def place_row_decoder(self, offsets):
+    def place_port_address(self, offsets):
         """  Place the hierarchical row decoder  """
 
         debug.check(len(offsets)>=len(self.all_ports), "Insufficient offsets to place row decoder array.")
@@ -463,39 +453,7 @@ class bank(design.design):
                 mirror = "MY"
             else:
                 mirror = "R0"
-            self.row_decoder_inst[port].place(offset=offsets[port], mirror=mirror)
-
-            
-    def create_wordline_driver(self):
-        """ Create the Wordline Driver """
-
-        self.wordline_driver_inst = [None]*len(self.all_ports)
-        for port in self.all_ports:
-            self.wordline_driver_inst[port] = self.add_inst(name="wordline_driver{}".format(port), 
-                                                            mod=self.wordline_driver)
-
-            temp = []
-            for row in range(self.num_rows):
-                temp.append("dec_out{0}_{1}".format(port,row))
-            for row in range(self.num_rows):
-                temp.append(self.wl_names[port]+"_{0}".format(row))
-            temp.append(self.prefix+"wl_en{0}".format(port))
-            temp.append("vdd")
-            temp.append("gnd")
-            self.connect_inst(temp)
-
-            
-    def place_wordline_driver(self, offsets):
-        """ Place the Wordline Driver """
-
-        debug.check(len(offsets)>=len(self.all_ports), "Insufficient offsets to place wordline driver array.")
-        
-        for port in self.all_ports:
-            if port%2 == 1:
-                mirror = "MY"
-            else:
-                mirror = "R0"
-            self.wordline_driver_inst[port].place(offset=offsets[port], mirror=mirror)
+            self.port_address_inst[port].place(offset=offsets[port], mirror=mirror)
 
         
     def create_column_decoder(self):
@@ -699,7 +657,7 @@ class bank(design.design):
                                             width=data_pin.width())
                 
 
-    def route_row_decoder(self, port):
+    def route_port_address_in(self, port):
         """ Routes the row decoder inputs and supplies """
 
         # Create inputs for the row address lines
@@ -707,7 +665,7 @@ class bank(design.design):
             addr_idx = row + self.col_addr_size
             decoder_name = "addr_{}".format(row)
             addr_name = "addr{0}_{1}".format(port,addr_idx)
-            self.copy_layout_pin(self.row_decoder_inst[port], decoder_name, addr_name)
+            self.copy_layout_pin(self.port_address_inst[port], decoder_name, addr_name)
             
             
     def route_port_data_in(self, port):
@@ -776,47 +734,36 @@ class bank(design.design):
                                     vector(top_br.x,yoffset), top_br])
         
 
-    def route_wordline_driver(self, port):
+    def route_port_address(self, port):
         """ Connect Wordline driver to bitcell array wordline """
+
+        self.route_port_address_in(port)
+        
         if port%2:
-            self.route_wordline_driver_right(port)
+            self.route_port_address_right(port)
         else:
-            self.route_wordline_driver_left(port)
+            self.route_port_address_left(port)
             
-    def route_wordline_driver_left(self, port):
+    def route_port_address_left(self, port):
         """ Connecting Wordline driver output to Bitcell WL connection  """
 
         for row in range(self.num_rows):
-            # The pre/post is to access the pin from "outside" the cell to avoid DRCs
-            decoder_out_pos = self.row_decoder_inst[port].get_pin("decode_{}".format(row)).rc()
-            driver_in_pos = self.wordline_driver_inst[port].get_pin("in_{}".format(row)).lc()
-            mid1 = decoder_out_pos.scale(0.5,1)+driver_in_pos.scale(0.5,0)
-            mid2 = decoder_out_pos.scale(0.5,0)+driver_in_pos.scale(0.5,1)
-            self.add_path("metal1", [decoder_out_pos, mid1, mid2, driver_in_pos])
-
             # The mid guarantees we exit the input cell to the right.
-            driver_wl_pos = self.wordline_driver_inst[port].get_pin("wl_{}".format(row)).rc()
+            driver_wl_pos = self.port_address_inst[port].get_pin("wl_{}".format(row)).rc()
             bitcell_wl_pos = self.bitcell_array_inst.get_pin(self.wl_names[port]+"_{}".format(row)).lc()
-            mid1 = driver_wl_pos.scale(0,1) + vector(0.5*self.wordline_driver_inst[port].rx() + 0.5*self.bitcell_array_inst.lx(),0)
+            mid1 = driver_wl_pos.scale(0,1) + vector(0.5*self.port_address_inst[port].rx() + 0.5*self.bitcell_array_inst.lx(),0)
             mid2 = mid1.scale(1,0)+bitcell_wl_pos.scale(0.5,1)
             self.add_path("metal1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
 
 
-    def route_wordline_driver_right(self, port):
+    def route_port_address_right(self, port):
         """ Connecting Wordline driver output to Bitcell WL connection  """
 
         for row in range(self.num_rows):
-            # The pre/post is to access the pin from "outside" the cell to avoid DRCs
-            decoder_out_pos = self.row_decoder_inst[port].get_pin("decode_{}".format(row)).lc()
-            driver_in_pos = self.wordline_driver_inst[port].get_pin("in_{}".format(row)).rc()
-            mid1 = decoder_out_pos.scale(0.5,1)+driver_in_pos.scale(0.5,0)
-            mid2 = decoder_out_pos.scale(0.5,0)+driver_in_pos.scale(0.5,1)
-            self.add_path("metal1", [decoder_out_pos, mid1, mid2, driver_in_pos])
-
             # The mid guarantees we exit the input cell to the right.
-            driver_wl_pos = self.wordline_driver_inst[port].get_pin("wl_{}".format(row)).lc()
+            driver_wl_pos = self.port_address_inst[port].get_pin("wl_{}".format(row)).lc()
             bitcell_wl_pos = self.bitcell_array_inst.get_pin(self.wl_names[port]+"_{}".format(row)).rc()
-            mid1 = driver_wl_pos.scale(0,1) + vector(0.5*self.wordline_driver_inst[port].lx() + 0.5*self.bitcell_array_inst.rx(),0)
+            mid1 = driver_wl_pos.scale(0,1) + vector(0.5*self.port_address_inst[port].lx() + 0.5*self.bitcell_array_inst.rx(),0)
             mid2 = mid1.scale(1,0)+bitcell_wl_pos.scale(0,1)
             self.add_path("metal1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
 
@@ -931,10 +878,10 @@ class bank(design.design):
         # clk to wordline_driver
         control_signal = self.prefix+"wl_en{}".format(port)
         if port%2:
-            pin_pos = self.wordline_driver_inst[port].get_pin("en_bar").uc()
+            pin_pos = self.port_address_inst[port].get_pin("wl_en").uc()
             mid_pos = pin_pos + vector(0,self.m2_gap) # to route down to the top of the bus
         else:
-            pin_pos = self.wordline_driver_inst[port].get_pin("en_bar").bc()
+            pin_pos = self.port_address_inst[port].get_pin("wl_en").bc()
             mid_pos = pin_pos - vector(0,self.m2_gap) # to route down to the top of the bus
         control_x_offset = self.bus_xoffset[port][control_signal].x
         control_pos = vector(control_x_offset, mid_pos.y)
@@ -980,14 +927,14 @@ class bank(design.design):
         #Decoder is assumed to have settled before the negative edge of the clock. Delay model relies on this assumption
         stage_effort_list = []
         wordline_cout = self.bitcell_array.get_wordline_cin() + external_cout
-        stage_effort_list += self.wordline_driver.determine_wordline_stage_efforts(wordline_cout,inp_is_rise)
+        stage_effort_list += self.port_address.wordline_driver.determine_wordline_stage_efforts(wordline_cout,inp_is_rise)
         
         return stage_effort_list
         
     def get_wl_en_cin(self):
         """Get the relative capacitance of all the clk connections in the bank"""
         #wl_en only used in the wordline driver.
-        return self.wordline_driver.get_wl_en_cin()
+        return self.port_address.wordline_driver.get_wl_en_cin()
 
     def get_w_en_cin(self):
         """Get the relative capacitance of all the clk connections in the bank"""

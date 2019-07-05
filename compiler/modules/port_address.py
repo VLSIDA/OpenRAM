@@ -82,6 +82,9 @@ class port_address(design.design):
         for row in range(self.num_rows):
             driver_name = "wl_{}".format(row)
             self.copy_layout_pin(self.wordline_driver_inst, driver_name)
+
+        # FIXME: Is this still inverted!?
+        self.copy_layout_pin(self.wordline_driver_inst, "en_bar", "wl_en")
             
     def route_internal(self):
         for row in range(self.num_rows):
@@ -91,6 +94,9 @@ class port_address(design.design):
             mid1 = decoder_out_pos.scale(0.5,1)+driver_in_pos.scale(0.5,0)
             mid2 = decoder_out_pos.scale(0.5,0)+driver_in_pos.scale(0.5,1)
             self.add_path("metal1", [decoder_out_pos, mid1, mid2, driver_in_pos])
+
+
+            
         
     def add_modules(self):
 

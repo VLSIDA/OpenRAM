@@ -153,12 +153,12 @@ class replica_bitcell_array(design.design):
         # Replica columns (two even if one port for now)
         self.replica_col_left_inst=self.add_inst(name="replica_col_left",
                                                  mod=self.replica_column)
-        self.connect_inst([x+"_0" for x in self.replica_bl_names] + self.replica_col_wl_names + supplies)
+        self.connect_inst(self.replica_bl0_names + self.replica_col_wl_names + supplies)
 
         if self.num_ports==2:
             self.replica_col_right_inst=self.add_inst(name="replica_col_right",
                                                       mod=self.replica_column)
-            self.connect_inst([x+"_1" for x in self.replica_bl_names] + self.replica_col_wl_names[::-1]  + supplies)
+            self.connect_inst(self.replica_bl1_names + self.replica_col_wl_names[::-1]  + supplies)
             
         # Replica rows with replica bitcell
         self.dummy_row_bottop_inst=self.add_inst(name="dummy_row_bottop",

@@ -26,10 +26,11 @@ class bank(design.design):
     This can create up to two ports in any combination: rw, w, r. 
     """
 
-    def __init__(self, sram_config, name=""):
+    def __init__(self, sram_config, num_ports, name=""):
 
         self.sram_config = sram_config
         sram_config.set_local_config(self)
+        self.num_ports = num_ports
         
         if name == "":
             name = "bank_{0}_{1}".format(self.word_size, self.num_words)
@@ -152,8 +153,11 @@ class bank(design.design):
         # The port data write/sense/precharge/mux is placed on the top and mirrored on the X-axis.
         self.bitcell_array_top = self.bitcell_array.height 
         self.bitcell_array_right = self.bitcell_array.width + self.m1_width + self.m2_gap
-        # Offset past the dummy/RBL column
-        self.bitcell_array_left = 2*self.bitcell.width
+        
+        # These are the offsets of the main array (excluding dummy and replica rows/cols)
+        self.main_bitcell_array_top = self.bitcell_array_top - (self.num_ports*self.bitcell.height)
+        self.main_bitcell_array_left = 2*self.bitcell.width
+        self.main_bitcell_array_bottom = 2*self.bitcell.height
         
         self.compute_instance_port0_offsets()
         if len(self.all_ports)==2:
@@ -173,12 +177,12 @@ class bank(design.design):
 
         # LOWER RIGHT QUADRANT
         # Below the bitcell array
-        self.port_data_offsets[port] = vector(self.bitcell_array_left,0)
+        self.port_data_offsets[port] = vector(self.main_bitcell_array_left,0)
 
         # UPPER LEFT QUADRANT
         # To the left of the bitcell array
         x_offset = self.m2_gap + self.port_address.width 
-        self.port_address_offsets[port] = vector(-x_offset,0)
+        self.port_address_offsets[port] = vector(-x_offset,self.main_bitcell_array_bottom)
 
         # LOWER LEFT QUADRANT
         # Place the col decoder left aligned with wordline driver 
@@ -218,7 +222,7 @@ class bank(design.design):
         # LOWER RIGHT QUADRANT
         # To the left of the bitcell array
         x_offset = self.bitcell_array_right + self.port_address.width + self.m2_gap
-        self.port_address_offsets[port] = vector(x_offset,0)
+        self.port_address_offsets[port] = vector(x_offset,self.main_bitcell_array_top)
 
         # UPPER RIGHT QUADRANT
         # Place the col decoder right aligned with wordline driver 
@@ -319,7 +323,8 @@ class bank(design.design):
         
         self.bitcell_array = factory.create(module_type="replica_bitcell_array",
                                             cols=self.num_cols,
-                                            rows=self.num_rows)
+                                            rows=self.num_rows,
+                                            num_ports=self.num_ports)
         self.add_mod(self.bitcell_array)
 
         self.port_data = []
@@ -347,15 +352,17 @@ class bank(design.design):
         self.bitcell_array_inst=self.add_inst(name="bitcell_array", 
                                               mod=self.bitcell_array)
                     
-        print(self.bitcell_array.pins)
         temp = []
         for col in range(self.num_cols):
             for bitline in self.bitline_names:
                 temp.append(bitline+"_{0}".format(col))
-        for col in range(2):
+        for col in range(self.num_ports):
             for bitline in self.bitline_names:
                 temp.append("replica_"+bitline+"_{0}".format(col))
         for row in range(self.num_rows):
+            for wordline in self.wl_names:
+                    temp.append(wordline+"_{0}".format(row))
+        for row in range(self.num_ports):
             for wordline in self.wl_names:
                     temp.append(wordline+"_{0}".format(row))
         temp.append("vdd")

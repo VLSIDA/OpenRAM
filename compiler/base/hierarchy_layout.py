@@ -227,6 +227,9 @@ class layout():
         You can optionally rename the pin to a new name. 
         """
         pins=instance.get_pins(pin_name)
+        
+        debug.check(len(pins)>0,"Could not find pin {}".format(pin_name))
+        
         for pin in pins:
             if new_name=="":
                 new_name = pin.name
@@ -238,9 +241,7 @@ class layout():
         You can optionally rename the pin to a new name. 
         """
         for pin_name in self.pin_map.keys():
-            pins=instance.get_pins(pin_name)
-            for pin in pins:
-                self.add_layout_pin(prefix+pin_name, pin.layer, pin.ll(), pin.width(), pin.height())
+            self.copy_layout_pin(instance, pin_name, prefix+pin_name)
             
     def add_layout_pin_segment_center(self, text, layer, start, end):
         """ 

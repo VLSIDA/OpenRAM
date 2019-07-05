@@ -1,8 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
-# of Regents for the Oklahoma Agricultural and Mechanical College
-# (acting for and on behalf of Oklahoma State University)
+# Copyright (c) 2016-2019 Regents of the University of California 
 # All rights reserved.
 #
 import sys
@@ -72,7 +70,7 @@ class port_data(design.design):
         self.DRC_LVS()
 
     def add_pins(self):
-        """ Adding pins for Bank module"""
+        """ Adding pins for port address module"""
         for bit in range(self.num_cols):
             self.add_pin(self.bl_names[self.port]+"_{0}".format(bit),"INOUT")
             self.add_pin(self.br_names[self.port]+"_{0}".format(bit),"INOUT")

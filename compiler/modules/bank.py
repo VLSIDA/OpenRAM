@@ -358,9 +358,6 @@ class bank(design.design):
                                               cols=self.num_cols)
         self.add_mod(self.wordline_driver)
 
-        self.inv = factory.create(module_type="pinv")
-        self.add_mod(self.inv)
-
         if(self.num_banks > 1):
             self.bank_select = factory.create(module_type="bank_select")
             self.add_mod(self.bank_select)

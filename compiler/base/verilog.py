@@ -53,12 +53,12 @@ class verilog:
             if port != self.all_ports[-1]:
                 self.vf.write(",\n")
         self.vf.write("\n  );\n\n")
-        
-        self.vf.write("  parameter DATA_WIDTH = {0} ;\n".format(self.word_size))
-        self.vf.write("  parameter ADDR_WIDTH = {0} ;\n".format(self.addr_size))
+
         if self.wmask_enabled:
             self.num_wmask = int(self.word_size/self.write_size)
             self.vf.write("  parameter NUM_WMASK = {0} ;\n".format(self.num_wmask))
+        self.vf.write("  parameter DATA_WIDTH = {0} ;\n".format(self.word_size))
+        self.vf.write("  parameter ADDR_WIDTH = {0} ;\n".format(self.addr_size))
         self.vf.write("  parameter RAM_DEPTH = 1 << ADDR_WIDTH;\n")
         self.vf.write("  // FIXME: This delay is arbitrary.\n")
         self.vf.write("  parameter DELAY = 3 ;\n")
@@ -100,6 +100,9 @@ class verilog:
         self.vf.write("  reg  csb{0}_reg;\n".format(port))
         if port in self.readwrite_ports:
             self.vf.write("  reg  web{0}_reg;\n".format(port))
+        if port in self.write_ports:
+            if self.wmask_enabled:
+                self.vf.write("  reg [NUM_WMASK-1:0]   wmask{0}_reg;\n".format(port))
         self.vf.write("  reg [ADDR_WIDTH-1:0]  ADDR{0}_reg;\n".format(port))
         if port in self.write_ports:
             self.vf.write("  reg [DATA_WIDTH-1:0]  DIN{0}_reg;\n".format(port))
@@ -117,6 +120,9 @@ class verilog:
         self.vf.write("    csb{0}_reg = csb{0};\n".format(port))
         if port in self.readwrite_ports:
             self.vf.write("    web{0}_reg = web{0};\n".format(port))
+        if port in self.write_ports:
+            if self.wmask_enabled:
+                self.vf.write("    wmask{0}_reg = wmask{0};\n".format(port))
         self.vf.write("    ADDR{0}_reg = ADDR{0};\n".format(port))
         if port in self.write_ports:
             self.vf.write("    DIN{0}_reg = DIN{0};\n".format(port))
@@ -128,13 +134,19 @@ class verilog:
         elif port in self.read_ports:
             self.vf.write("    if ( !csb{0}_reg ) \n".format(port))
             self.vf.write("      $display($time,\" Reading %m ADDR{0}=%b DOUT{0}=%b\",ADDR{0}_reg,mem[ADDR{0}_reg]);\n".format(port))
-            
         if port in self.readwrite_ports:
             self.vf.write("    if ( !csb{0}_reg && !web{0}_reg )\n".format(port))
-            self.vf.write("      $display($time,\" Writing %m ADDR{0}=%b DIN{0}=%b\",ADDR{0}_reg,DIN{0}_reg);\n".format(port))
+            if self.wmask_enabled:
+                self.vf.write("      $display($time,\" Writing %m ADDR{0}=%b DIN{0}=%b wmask{0}=%b\",ADDR{0}_reg,DIN{0}_reg,wmask{0}_reg);\n".format(port))
+            else:
+                self.vf.write("      $display($time,\" Writing %m ADDR{0}=%b DIN{0}=%b\",ADDR{0}_reg,DIN{0}_reg);\n".format(port))
         elif port in self.write_ports:
             self.vf.write("    if ( !csb{0}_reg )\n".format(port))
-            self.vf.write("      $display($time,\" Writing %m ADDR{0}=%b DIN{0}=%b\",ADDR{0}_reg,DIN{0}_reg);\n".format(port))
+            if self.wmask_enabled:
+                self.vf.write("      $display($time,\" Writing %m ADDR{0}=%b DIN{0}=%b wmask{0}=%b\",ADDR{0}_reg,DIN{0}_reg,wmask{0}_reg);\n".format(port))
+            else:
+                self.vf.write("      $display($time,\" Writing %m ADDR{0}=%b DIN{0}=%b\",ADDR{0}_reg,DIN{0}_reg);\n".format(port))
+
         self.vf.write("  end\n\n")
             
 
@@ -165,18 +177,19 @@ class verilog:
         self.vf.write("  always @ (negedge clk{0})\n".format(port))
         self.vf.write("  begin : MEM_WRITE{0}\n".format(port))
         if port in self.readwrite_ports:
-            self.vf.write("    if ( !csb{0}_reg && !web{0}_reg )\n".format(port))
+            self.vf.write("    if ( !csb{0}_reg && !web{0}_reg ) begin\n".format(port))
         else:
-            self.vf.write("    if (!csb{0}_reg)\n".format(port))
+            self.vf.write("    if (!csb{0}_reg) begin\n".format(port))
 
         if self.wmask_enabled:
             for mask in range(0,self.num_wmask):
                 lower = mask * self.write_size
                 upper = lower + self.write_size-1
-                self.vf.write("        if(wmask[{}])\n".format(mask))
+                self.vf.write("        if (wmask{0}_reg[{1}])\n".format(port,mask))
                 self.vf.write("                mem[ADDR{0}_reg][{1}:{2}] = DIN{0}_reg[{1}:{2}];\n".format(port,upper,lower))
         else:
             self.vf.write("        mem[ADDR{0}_reg] = DIN_reg{0};\n".format(port))
+        self.vf.write("    end\n")
         self.vf.write("  end\n")
         
     def add_read_block(self, port):

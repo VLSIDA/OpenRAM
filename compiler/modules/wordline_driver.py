@@ -54,7 +54,7 @@ class wordline_driver(design.design):
         # Outputs from wordline_driver.
         for i in range(self.rows):
             self.add_pin("wl_{0}".format(i))
-        self.add_pin("en_bar")
+        self.add_pin("en")
         self.add_pin("vdd")
         self.add_pin("gnd")
 
@@ -109,7 +109,7 @@ class wordline_driver(design.design):
             # add nand 2
             self.nand_inst.append(self.add_inst(name=name_nand,
                                                 mod=self.nand2))
-            self.connect_inst(["en_bar",
+            self.connect_inst(["en",
                                "in_{0}".format(row),
                                "wl_bar_{0}".format(row),
                                "vdd", "gnd"])
@@ -151,7 +151,7 @@ class wordline_driver(design.design):
         """ Route all of the signals """
 
         # Wordline enable connection
-        en_pin=self.add_layout_pin(text="en_bar",
+        en_pin=self.add_layout_pin(text="en",
                                    layer="metal2",
                                    offset=[self.m1_width + 2*self.m1_space,0],
                                    width=self.m2_width,
@@ -162,7 +162,7 @@ class wordline_driver(design.design):
             nand_inst = self.nand_inst[row]
             inv2_inst = self.inv2_inst[row]
             
-            # en_bar connection
+            # en connection
             a_pin = nand_inst.get_pin("A")
             a_pos = a_pin.lc()
             clk_offset = vector(en_pin.bc().x,a_pos.y)

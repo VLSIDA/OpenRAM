@@ -197,7 +197,7 @@ class verilog:
                 self.vf.write("                mem[ADDR{0}_reg][{1}:{2}] = DIN{0}_reg[{1}:{2}];\n".format(port,upper,lower))
             self.vf.write("    end\n")
         else:
-            self.vf.write("        mem[ADDR{0}_reg] = DIN_reg{0};\n".format(port))
+            self.vf.write("        mem[ADDR{0}_reg] = DIN{0}_reg;\n".format(port))
         self.vf.write("  end\n")
         
     def add_read_block(self, port):

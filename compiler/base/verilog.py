@@ -179,9 +179,15 @@ class verilog:
         self.vf.write("  always @ (negedge clk{0})\n".format(port))
         self.vf.write("  begin : MEM_WRITE{0}\n".format(port))
         if port in self.readwrite_ports:
-            self.vf.write("    if ( !csb{0}_reg && !web{0}_reg ) begin\n".format(port))
+            if self.wmask_enabled:
+                self.vf.write("    if ( !csb{0}_reg && !web{0}_reg ) begin\n".format(port))
+            else:
+                self.vf.write("    if ( !csb{0}_reg && !web{0}_reg )\n".format(port))
         else:
-            self.vf.write("    if (!csb{0}_reg) begin\n".format(port))
+            if self.wmask_enabled:
+                self.vf.write("    if (!csb{0}_reg) begin\n".format(port))
+            else:
+                self.vf.write("    if (!csb{0}_reg)\n".format(port))
 
         if self.wmask_enabled:
             for mask in range(0,self.num_wmask):
@@ -189,9 +195,9 @@ class verilog:
                 upper = lower + self.write_size-1
                 self.vf.write("        if (wmask{0}_reg[{1}])\n".format(port,mask))
                 self.vf.write("                mem[ADDR{0}_reg][{1}:{2}] = DIN{0}_reg[{1}:{2}];\n".format(port,upper,lower))
+            self.vf.write("    end\n")
         else:
             self.vf.write("        mem[ADDR{0}_reg] = DIN_reg{0};\n".format(port))
-        self.vf.write("    end\n")
         self.vf.write("  end\n")
         
     def add_read_block(self, port):

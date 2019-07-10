@@ -34,19 +34,19 @@ class control_logic_test(openram_test):
         OPTS.num_r_ports = 1
 
         debug.info(1, "Testing sample for control_logic for multiport, only write control logic")
-        a = factory.create(module_type="control_logic", num_rows=128, words_per_row=1, word_size=8, port_type="rw")
+        a = factory.create(module_type="control_logic", num_rows=128, words_per_row=1, word_size=8, write_size=8, port_type="rw")
         self.local_check(a)
         
         # OPTS.num_rw_ports = 0
         # OPTS.num_w_ports = 1
         debug.info(1, "Testing sample for control_logic for multiport, only write control logic")
-        a = factory.create(module_type="control_logic", num_rows=128, words_per_row=1, word_size=8, port_type="w")
+        a = factory.create(module_type="control_logic", num_rows=128, words_per_row=1, word_size=8, write_size=8, port_type="w")
         self.local_check(a)
         
         # OPTS.num_w_ports = 0
         # OPTS.num_r_ports = 1
         debug.info(1, "Testing sample for control_logic for multiport, only read control logic")
-        a = factory.create(module_type="control_logic", num_rows=128, words_per_row=1, word_size=8, port_type="r")
+        a = factory.create(module_type="control_logic", num_rows=128, words_per_row=1, word_size=8, write_size=8, port_type="r")
         self.local_check(a)
 
         globals.end_openram()

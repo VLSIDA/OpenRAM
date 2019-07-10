@@ -6,10 +6,6 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-"""
-Check the LEF file for an SRMA
-"""
-
 import unittest
 from testutils import *
 import sys,os

@@ -11,6 +11,7 @@ import os
 import math
 import tech
 
+
 class spice():
     """
     This provides a set of useful generic types for hierarchy
@@ -113,6 +114,12 @@ class spice():
                 output_list.append(pin)
         return output_list
 
+
+    def copy_pins(self, other_module, suffix=""):
+        """ This will copy all of the pins from the other module and add an optional suffix."""
+        for pin in other_module.pins:
+            self.add_pin(pin+suffix, other_module.get_pin_type(pin))
+
     def get_inouts(self):
         """ These use pin types to determine pin lists. These
         may be over-ridden by submodules that didn't use pin directions yet."""
@@ -126,13 +133,13 @@ class spice():
         """Adds a subckt/submodule to the subckt hierarchy"""
         self.mods.append(mod)
 
+
     def connect_inst(self, args, check=True):
         """Connects the pins of the last instance added
         It is preferred to use the function with the check to find if
         there is a problem. The check option can be set to false
         where we dynamically generate groups of connections after a
         group of modules are generated."""
-
         if (check and (len(self.insts[-1].mod.pins) != len(args))):
             from pprint import pformat
             modpins_string=pformat(self.insts[-1].mod.pins)

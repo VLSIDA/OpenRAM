@@ -6,12 +6,6 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-"""
-This tests the top-level executable. It checks that it generates the
-appropriate files: .lef, .lib, .sp, .gds, .v. It DOES NOT, however,
-check that these files are right.
-"""
-
 import unittest
 from testutils import *
 import sys,os,re,shutil

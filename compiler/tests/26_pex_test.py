@@ -6,10 +6,6 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-"""
-Run a regression test on an extracted SRAM to ensure functionality.
-"""
-
 import unittest
 from testutils import *
 import sys,os

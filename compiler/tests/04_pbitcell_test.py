@@ -6,10 +6,6 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-"""
-Run regresion tests on a parameterized bitcell
-"""
-
 import unittest
 from testutils import *
 import sys,os

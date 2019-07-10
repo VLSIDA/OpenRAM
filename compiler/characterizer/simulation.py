@@ -24,6 +24,7 @@ class simulation():
         self.name = self.sram.name
         self.word_size = self.sram.word_size
         self.addr_size = self.sram.addr_size
+        self.write_size = self.sram.write_size
         self.num_cols = self.sram.num_cols
         self.num_rows = self.sram.num_rows
         self.num_banks = self.sram.num_banks
@@ -266,7 +267,9 @@ class simulation():
         for port in range(total_ports):
             if (port in read_index) and (port in write_index):
                 pin_names.append("WEB{0}".format(port))
-            
+        if (self.write_size != self.word_size):
+            pin_names.append("WMASK{0}".format(port))
+
         for port in range(total_ports):
             pin_names.append("{0}{1}".format(tech.spice["clk"], port))
             

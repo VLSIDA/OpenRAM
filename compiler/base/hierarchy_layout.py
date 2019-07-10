@@ -214,18 +214,35 @@ class layout():
             return self.pin_map[text]
         else:
             return set()
-    
+
+    def get_pin_names(self):
+        """ 
+        Return a pin list of all pins
+        """
+        return self.pin_map.keys()
+        
     def copy_layout_pin(self, instance, pin_name, new_name=""):
         """ 
         Create a copied version of the layout pin at the current level.
         You can optionally rename the pin to a new name. 
         """
         pins=instance.get_pins(pin_name)
+        
+        debug.check(len(pins)>0,"Could not find pin {}".format(pin_name))
+        
         for pin in pins:
             if new_name=="":
                 new_name = pin.name
             self.add_layout_pin(new_name, pin.layer, pin.ll(), pin.width(), pin.height())
 
+    def copy_layout_pins(self, instance, prefix=""):
+        """ 
+        Create a copied version of the layout pin at the current level.
+        You can optionally rename the pin to a new name. 
+        """
+        for pin_name in self.pin_map.keys():
+            self.copy_layout_pin(instance, pin_name, prefix+pin_name)
+            
     def add_layout_pin_segment_center(self, text, layer, start, end):
         """ 
         Creates a path like pin with center-line convention 
@@ -880,10 +897,10 @@ class layout():
         """
         self.create_channel_route(netlist, offset, layer_stack, pitch, vertical=False)
 
-    def add_boundary(self):
+    def add_boundary(self, offset=vector(0,0)):
         """ Add boundary for debugging dimensions """
         self.add_rect(layer="boundary",
-                      offset=vector(0,0),
+                      offset=offset,
                       height=self.height,
                       width=self.width)
         

@@ -14,16 +14,20 @@ from sram_factory import factory
 class sram_config:
     """ This is a structure that is used to hold the SRAM configuration options. """
     
-    def __init__(self, word_size, num_words, num_banks=1, words_per_row=None):
+    def __init__(self, word_size, num_words, write_size = None, num_banks=1, words_per_row=None):
         self.word_size = word_size
         self.num_words = num_words
+        self.write_size = write_size
         self.num_banks = num_banks
 
         # This will get over-written when we determine the organization
         self.words_per_row = words_per_row
 
+        if self.write_size == None:
+            self.write_size = self.word_size
+
         self.compute_sizes()
-        
+
 
     def set_local_config(self, module):
         """ Copy all of the member variables to the given module for convenience """
@@ -37,7 +41,7 @@ class sram_config:
     def compute_sizes(self):
         """  Computes the organization of the memory using bitcell size by trying to make it square."""
 
-        self.bitcell = factory.create(module_type="bitcell")
+        bitcell = factory.create(module_type="bitcell")
         
         
         debug.check(self.num_banks in [1,2,4], "Valid number of banks are 1 , 2 and 4.")
@@ -48,11 +52,11 @@ class sram_config:
         # If this was hard coded, don't dynamically compute it!
         if not self.words_per_row:
             # Compute the area of the bitcells and estimate a square bank (excluding auxiliary circuitry)
-            self.bank_area = self.bitcell.width*self.bitcell.height*self.num_bits_per_bank
+            self.bank_area = bitcell.width*bitcell.height*self.num_bits_per_bank
             self.bank_side_length = sqrt(self.bank_area)
 
             # Estimate the words per row given the height of the bitcell and the square side length
-            self.tentative_num_cols = int(self.bank_side_length/self.bitcell.width)
+            self.tentative_num_cols = int(self.bank_side_length/bitcell.width)
             self.words_per_row = self.estimate_words_per_row(self.tentative_num_cols, self.word_size)
 
             # Estimate the number of rows given the tentative words per row

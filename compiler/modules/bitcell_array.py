@@ -45,8 +45,8 @@ class bitcell_array(design.design):
     def create_layout(self):
 
         # We increase it by a well enclosure so the precharges don't overlap our wells
-        self.height = self.row_size*self.cell.height + drc("well_enclosure_active") + self.m1_width
-        self.width = self.column_size*self.cell.width + self.m1_width
+        self.height = self.row_size*self.cell.height 
+        self.width = self.column_size*self.cell.width 
         
         xoffset = 0.0
         for col in range(self.column_size):
@@ -89,6 +89,24 @@ class bitcell_array(design.design):
         self.cell = factory.create(module_type="bitcell")
         self.add_mod(self.cell)
 
+    def list_bitcell_pins(self, col, row):
+        """ Creates a list of connections in the bitcell, 
+        indexed by column and row, for instance use in bitcell_array """
+
+        bitcell_pins = []
+        
+        pin_names = self.cell.list_all_bitline_names()
+        for pin in pin_names:
+            bitcell_pins.append(pin+"_{0}".format(col))
+        pin_names = self.cell.list_all_wl_names()
+        for pin in pin_names:
+            bitcell_pins.append(pin+"_{0}".format(row))
+        bitcell_pins.append("vdd")
+        bitcell_pins.append("gnd")
+        
+        return bitcell_pins
+    
+        
     def create_instances(self):
         """ Create the module instances used in this design """
         self.cell_inst = {}
@@ -97,7 +115,7 @@ class bitcell_array(design.design):
                 name = "bit_r{0}_c{1}".format(row, col)
                 self.cell_inst[row,col]=self.add_inst(name=name,
                                                       mod=self.cell)
-                self.connect_inst(self.cell.list_bitcell_pins(col, row))
+                self.connect_inst(self.list_bitcell_pins(col, row))
         
     def add_layout_pins(self):
         """ Add the layout pins """
@@ -105,31 +123,23 @@ class bitcell_array(design.design):
         row_list = self.cell.list_all_wl_names()
         column_list = self.cell.list_all_bitline_names()
         
-        offset = vector(0.0, 0.0)
         for col in range(self.column_size):
             for cell_column in column_list:
                 bl_pin = self.cell_inst[0,col].get_pin(cell_column)
                 self.add_layout_pin(text=cell_column+"_{0}".format(col),
-                                    layer="metal2",
-                                    offset=bl_pin.ll(),
+                                    layer=bl_pin.layer,
+                                    offset=bl_pin.ll().scale(1,0),
                                     width=bl_pin.width(),
                                     height=self.height)
-                    
-            # increments to the next column width
-            offset.x += self.cell.width
 
-        offset.x = 0.0
         for row in range(self.row_size):
             for cell_row in row_list:
                 wl_pin = self.cell_inst[row,0].get_pin(cell_row)
                 self.add_layout_pin(text=cell_row+"_{0}".format(row),
-                                    layer="metal1",
-                                    offset=wl_pin.ll(),
+                                    layer=wl_pin.layer,
+                                    offset=wl_pin.ll().scale(0,1),
                                     width=self.width,
                                     height=wl_pin.height())
-
-            # increments to the next row height
-            offset.y += self.cell.height
 
         # For every second row and column, add a via for gnd and vdd
         for row in range(self.row_size):

@@ -18,14 +18,18 @@ class replica_bitcell_array_test(openram_test):
     def runTest(self):
         globals.init_openram("config_{0}".format(OPTS.tech_name))
 
-        debug.info(2, "Testing 4x4 array for 6t_cell")
-        a = factory.create(module_type="replica_bitcell_array", cols=4, rows=4, left_rbl=1, right_rbl=0)
+        debug.info(2, "Testing 4x4 array for multiport bitcell, with read ports at the edge of the bit cell")
+        OPTS.bitcell = "pbitcell"
+        OPTS.replica_bitcell = "replica_pbitcell"
+        OPTS.dummy_bitcell = "dummy_pbitcell"
+        OPTS.num_rw_ports = 1
+        OPTS.num_r_ports = 1
+        OPTS.num_w_ports = 0
+
+        debug.info(2, "Testing 4x4 array for pbitcell")
+        a = factory.create(module_type="replica_bitcell_array", cols=4, rows=4, left_rbl=1, right_rbl=1)
         self.local_check(a)
 
-        debug.info(2, "Testing 4x4 array for 6t_cell")
-        a = factory.create(module_type="replica_bitcell_array", cols=4, rows=4, left_rbl=0, right_rbl=1)
-        self.local_check(a)
-        
         globals.end_openram()
 
 # run the test from the command line

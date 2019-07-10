@@ -14,13 +14,25 @@ from globals import OPTS
 class replica_column(design.design):
     """
     Generate a replica bitline column for the replica array.
+    Rows is the total number of rows i the main array.
+    Left_rbl and right_rbl are the number of left and right replica bitlines.
+    Replica bit specifies which replica column this is (to determine where to put the 
+    replica cell.
     """
 
-    def __init__(self, name, rows, num_ports):
+    def __init__(self, name, rows, left_rbl, right_rbl, replica_bit):
         design.design.__init__(self, name)
 
-        self.row_size = rows
-        self.num_ports = num_ports
+        self.rows = rows
+        self.left_rbl = left_rbl
+        self.right_rbl = right_rbl
+        self.replica_bit = replica_bit
+        # left, right, regular rows plus top/bottom dummy cells
+        self.total_size = self.left_rbl+rows+self.right_rbl+2
+
+        debug.check(replica_bit!=0 and replica_bit!=rows,"Replica bit cannot be the dummy row.")
+        debug.check(replica_bit<=left_rbl or replica_bit>=self.total_size-right_rbl-1,
+                    "Replica bit cannot be in the regular array.")        
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -32,12 +44,11 @@ class replica_column(design.design):
         self.create_instances()
 
     def create_layout(self):
-        self.place_instances()
-        self.add_layout_pins()
-
-        self.height = self.row_size*self.cell.height
+        self.height = self.total_size*self.cell.height
         self.width = self.cell.width 
 
+        self.place_instances()
+        self.add_layout_pins()
         self.add_boundary()
         self.DRC_LVS()
 
@@ -46,7 +57,7 @@ class replica_column(design.design):
         for cell_column in column_list:
             self.add_pin("{0}_{1}".format(cell_column,0))
         row_list = self.cell.list_all_wl_names()
-        for row in range(self.row_size):
+        for row in range(self.total_size):
             for cell_row in row_list:
                 self.add_pin("{0}_{1}".format(cell_row,row))
                     
@@ -63,9 +74,15 @@ class replica_column(design.design):
         
     def create_instances(self):
         self.cell_inst = {}
-        for row in range(self.row_size):
+        for row in range(self.total_size):
             name="rbc_{0}".format(row)
-            if row>0 and row<self.row_size - self.num_ports:
+            # Top/bottom cell are always dummy cells.
+            # Regular array cells are replica cells (>left_rbl and <rows-right_rbl)
+            # Replic bit specifies which other bit (in the full range (0,rows) to make a replica cell. 
+            if (row>self.left_rbl and row<self.total_size-self.right_rbl-1):
+                self.cell_inst[row]=self.add_inst(name=name,
+                                                  mod=self.replica_cell)
+            elif row==self.replica_bit:
                 self.cell_inst[row]=self.add_inst(name=name,
                                                   mod=self.replica_cell)
             else:
@@ -75,21 +92,20 @@ class replica_column(design.design):
             
     def place_instances(self):
 
-        yoffset = 0
-        for row in range(self.row_size):
+        # Flip the mirrors if we have an odd number of replica+dummy rows at the bottom
+        # so that we will start with mirroring rather than not mirroring
+        rbl_offset = (self.left_rbl+1)%2
+            
+        for row in range(self.total_size):
             name = "bit_r{0}_{1}".format(row,"rbl")
-
-            # This is opposite of a bitcell array since we will be 1 row off
-            if not row % 2:
-                tempy = yoffset
-                dir_key = ""
-            else:
-                tempy = yoffset + self.cell.height
+            offset = vector(0,self.cell.height*(row+(row+rbl_offset)%2))
+            if (row+rbl_offset)%2:
                 dir_key = "MX"
+            else:
+                dir_key = "R0"
 
-            self.cell_inst[row].place(offset=[0.0, tempy],
-                                          mirror=dir_key)
-            yoffset += self.cell.height
+            self.cell_inst[row].place(offset=offset,
+                                      mirror=dir_key)
 
 
 
@@ -99,26 +115,25 @@ class replica_column(design.design):
         row_list = self.cell.list_all_wl_names()
         column_list = self.cell.list_all_bitline_names()
 
-        col = "0"
         for cell_column in column_list:
             bl_pin = self.cell_inst[0].get_pin(cell_column)
-            self.add_layout_pin(text=cell_column+"_{0}".format(col),
+            self.add_layout_pin(text=cell_column,
                                 layer="metal2",
                                 offset=bl_pin.ll(),
                                 width=bl_pin.width(),
                                 height=self.height)
 
-        for row in range(self.row_size):
+        for row in range(self.total_size):
             for cell_row in row_list:
                 wl_pin = self.cell_inst[row].get_pin(cell_row)
                 self.add_layout_pin(text=cell_row+"_{0}".format(row),
                                     layer="metal1",
-                                    offset=wl_pin.ll(),
+                                    offset=wl_pin.ll().scale(0,1),
                                     width=self.width,
                                     height=wl_pin.height())
 
         # For every second row and column, add a via for gnd and vdd
-        for row in range(self.row_size):
+        for row in range(self.total_size):
             inst = self.cell_inst[row]
             for pin_name in ["vdd", "gnd"]:
                 self.copy_layout_pin(inst, pin_name)

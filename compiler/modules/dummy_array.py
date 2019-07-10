@@ -15,13 +15,14 @@ class dummy_array(design.design):
     """
     Generate a dummy row/column for the replica array.
     """
-    def __init__(self, cols, rows, name):
+    def __init__(self, cols, rows, mirror, name):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0} {1} x {2}".format(self.name, rows, cols))
         self.add_comment("rows: {0} cols: {1}".format(rows, cols))
 
         self.column_size = cols
         self.row_size = rows
+        self.mirror = mirror
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -46,7 +47,7 @@ class dummy_array(design.design):
             for row in range(self.row_size):
                 name = "dummy_r{0}_c{1}".format(row, col)
 
-                if row % 2:
+                if (row+self.mirror) % 2:
                     tempy = yoffset + self.dummy_cell.height
                     dir_key = "MX"
                 else:

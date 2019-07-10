@@ -15,24 +15,33 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-#@unittest.skip("SKIPPING 05_bitcell_1rw_1r_array_test")
-
-class bitcell_1rw_1r_array_test(openram_test):
+class replica_pbitcell_test(openram_test):
 
     def runTest(self):
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        import dummy_pbitcell
+        
+        OPTS.bitcell = "pbitcell"
+        OPTS.num_rw_ports = 1
+        OPTS.num_r_ports = 0
+        OPTS.num_w_ports = 0
 
-        debug.info(2, "Testing 4x4 array for cell_1rw_1r")
+        factory.reset()
+        debug.info(2, "Checking dummy bitcell using pbitcell (small cell)")
+        tx = dummy_pbitcell.dummy_pbitcell(name="rpbc")
+        self.local_check(tx)
+        
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
-        OPTS.num_w_ports = 0
-        
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
-        
-        a = factory.create(module_type="bitcell_array", cols=4, rows=4)
-        self.local_check(a)
-        
-        globals.end_openram()
+        OPTS.num_w_ports = 1
 
+        factory.reset()
+        debug.info(2, "Checking dummy bitcell using pbitcell (large cell)")
+        tx = dummy_pbitcell.dummy_pbitcell(name="rpbc")
+        self.local_check(tx)
+
+        globals.end_openram()
+        
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

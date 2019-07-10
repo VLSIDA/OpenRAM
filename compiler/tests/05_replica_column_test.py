@@ -19,11 +19,15 @@ class replica_column_test(openram_test):
         globals.init_openram("config_{0}".format(OPTS.tech_name))
 
         debug.info(2, "Testing replica column for 6t_cell")
-        a = factory.create(module_type="replica_column", rows=4, num_ports=1)
+        a = factory.create(module_type="replica_column", rows=4, left_rbl=1, right_rbl=0, replica_bit=1)
         self.local_check(a)
 
         debug.info(2, "Testing replica column for 6t_cell")
-        a = factory.create(module_type="replica_column", rows=4, num_ports=2)
+        a = factory.create(module_type="replica_column", rows=4, left_rbl=1, right_rbl=1, replica_bit=6)
+        self.local_check(a)
+        
+        debug.info(2, "Testing replica column for 6t_cell")
+        a = factory.create(module_type="replica_column", rows=4, left_rbl=2, right_rbl=0, replica_bit=2)
         self.local_check(a)
         
         globals.end_openram()

@@ -156,7 +156,9 @@ class bank(design.design):
         
         # These are the offsets of the main array (excluding dummy and replica rows/cols)
         self.main_bitcell_array_top = self.bitcell_array_top - (self.num_ports*self.bitcell.height)
-        self.main_bitcell_array_left = 2*self.bitcell.width
+        # Just past the dummy column
+        self.main_bitcell_array_left = self.bitcell.width
+        # Just past the dummy row and replica row
         self.main_bitcell_array_bottom = 2*self.bitcell.height
         
         self.compute_instance_port0_offsets()
@@ -362,9 +364,8 @@ class bank(design.design):
         for row in range(self.num_rows):
             for wordline in self.wl_names:
                     temp.append(wordline+"_{0}".format(row))
-        for row in range(self.num_ports):
-            for wordline in self.wl_names:
-                    temp.append(wordline+"_{0}".format(row))
+        for wordline in self.wl_names:
+            temp.append("replica_"+wordline)
         temp.append("vdd")
         temp.append("gnd")
         self.connect_inst(temp)
@@ -384,6 +385,9 @@ class bank(design.design):
                                                     mod=self.port_data[port])
 
             temp = []
+            if port in self.read_ports:
+                temp.append("rbl_{0}".format(self.bl_names[port]))
+                temp.append("rbl_{0}".format(self.br_names[port]))
             for col in range(self.num_cols):            
                 temp.append("{0}_{1}".format(self.bl_names[port],col))
                 temp.append("{0}_{1}".format(self.br_names[port],col))

@@ -20,13 +20,14 @@ class pbitcell(design.design):
     with a variable number of read/write, write, and read ports
     """
 
-    def __init__(self, name, replica_bitcell=False):
+    def __init__(self, name, replica_bitcell=False, dummy_bitcell=False):
         self.num_rw_ports = OPTS.num_rw_ports
         self.num_w_ports = OPTS.num_w_ports
         self.num_r_ports = OPTS.num_r_ports
         self.total_ports = self.num_rw_ports + self.num_w_ports + self.num_r_ports
 
         self.replica_bitcell = replica_bitcell
+        self.dummy_bitcell = dummy_bitcell
 
         design.design.__init__(self, name)
         debug.info(2, "create a multi-port bitcell with {0} rw ports, {1} w ports and {2} r ports".format(self.num_rw_ports,
@@ -686,8 +687,10 @@ class pbitcell(design.design):
             port_contact_offest = left_port_transistors[k].get_pin("S").center()
             bl_offset = vector(bl_positions[k].x, port_contact_offest.y)
 
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=port_contact_offest)
+            # Leave bitline disconnected if a dummy cell
+            if not self.dummy_bitcell:
+                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                    offset=port_contact_offest)
 
             self.add_path("metal2", [port_contact_offest, bl_offset], width=contact.m1m2.height)
 
@@ -695,8 +698,10 @@ class pbitcell(design.design):
             port_contact_offest = right_port_transistors[k].get_pin("D").center()
             br_offset = vector(br_positions[k].x, port_contact_offest.y)
 
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=port_contact_offest)
+            # Leave bitline disconnected if a dummy cell
+            if not self.dummy_bitcell:
+                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                    offset=port_contact_offest)
 
             self.add_path("metal2", [port_contact_offest, br_offset], width=contact.m1m2.height)
 

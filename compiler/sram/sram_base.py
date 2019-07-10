@@ -283,7 +283,8 @@ class sram_base(design, verilog, lef):
         # Create the bank module (up to four are instantiated)
         from bank import bank
         self.bank = bank(self.sram_config,
-                         name="bank")
+                         name="bank",
+                         num_ports=len(self.all_ports))
         self.add_mod(self.bank)
 
         # Create bank decoder

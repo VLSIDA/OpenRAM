@@ -60,6 +60,8 @@ class openram_test(unittest.TestCase):
                 #shutil.make_archive(zip_file, 'zip', OPTS.openram_temp)
                 self.fail("LVS mismatch: {}".format(a.name))
 
+        # For debug...
+        #import pdb; pdb.set_trace()
         if OPTS.purge_temp:
             self.cleanup()
             

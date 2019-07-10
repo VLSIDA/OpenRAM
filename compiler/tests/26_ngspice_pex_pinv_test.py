@@ -22,9 +22,14 @@ class ngspice_pex_pinv_test(openram_test):
         globals.init_openram("config_{0}".format(OPTS.tech_name))
         import pinv
 
-        # load the hspice
-        OPTS.spice_name = "ngspice"
-        OPTS.spice_exe = "ngspice"
+        # load the ngspice
+        OPTS.spice_name="ngspice"
+        OPTS.analytical_delay = False
+
+        # This is a hack to reload the characterizer __init__ with the spice version
+        from importlib import reload
+        import characterizer
+        reload(characterizer)
 
         # generate the pinv module
         prev_purge_value = OPTS.purge_temp
@@ -114,7 +119,8 @@ class ngspice_pex_pinv_test(openram_test):
                                                    trig_name = "input",
                                                    targ_name = "output",
                                                    trig_dir_str = "FALL",
-                                                   targ_dir_str = "RISE")
+                                                   targ_dir_str = "RISE",
+                                                   has_port = False)
         trig_td = trag_td = 0.01 * run_time
         rest_info = trig_td,trag_td,tech.spice["nom_supply_voltage"]
         delay_measure.write_measure(simulation, rest_info)

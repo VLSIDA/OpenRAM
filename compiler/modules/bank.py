@@ -26,17 +26,18 @@ class bank(design.design):
     This can create up to two ports in any combination: rw, w, r. 
     """
 
-    def __init__(self, sram_config, num_ports, name=""):
+    def __init__(self, sram_config, name=""):
 
         self.sram_config = sram_config
         sram_config.set_local_config(self)
-        self.num_ports = num_ports
         
         if name == "":
             name = "bank_{0}_{1}".format(self.word_size, self.num_words)
         design.design.__init__(self, name)
         debug.info(2, "create sram of size {0} with {1} words".format(self.word_size,self.num_words))
 
+        debug.check(len(self.all_ports)<=2,"Bank layout cannot handle more than two ports.")
+        
         # The local control signals are gated when we have bank select logic,
         # so this prefix will be added to all of the input signals to create
         # the internal gated signals.
@@ -47,7 +48,6 @@ class bank(design.design):
 
         self.create_netlist()
         if not OPTS.netlist_only:
-            debug.check(len(self.all_ports)<=2,"Bank layout cannot handle more than two ports.")
             self.create_layout()
             self.add_boundary()
 
@@ -155,11 +155,11 @@ class bank(design.design):
         self.bitcell_array_right = self.bitcell_array.width + self.m1_width + self.m2_gap
         
         # These are the offsets of the main array (excluding dummy and replica rows/cols)
-        self.main_bitcell_array_top = self.bitcell_array_top - (self.num_ports*self.bitcell.height)
+        self.main_bitcell_array_top = self.bitcell_array.bitcell_array_inst.uy()
         # Just past the dummy column
-        self.main_bitcell_array_left = self.bitcell.width
+        self.main_bitcell_array_left = self.bitcell_array.bitcell_array_inst.lx()
         # Just past the dummy row and replica row
-        self.main_bitcell_array_bottom = 2*self.bitcell.height
+        self.main_bitcell_array_bottom = self.bitcell_array.bitcell_array_inst.by()
         
         self.compute_instance_port0_offsets()
         if len(self.all_ports)==2:
@@ -179,7 +179,10 @@ class bank(design.design):
 
         # LOWER RIGHT QUADRANT
         # Below the bitcell array
-        self.port_data_offsets[port] = vector(self.main_bitcell_array_left,0)
+        if self.port_data[port].has_rbl():
+            self.port_data_offsets[port] = vector(self.main_bitcell_array_left - self.bitcell_array.cell.width,0)
+        else:
+            self.port_data_offsets[port] = vector(self.main_bitcell_array_left,0)
 
         # UPPER LEFT QUADRANT
         # To the left of the bitcell array
@@ -219,12 +222,12 @@ class bank(design.design):
 
         # UPPER LEFT QUADRANT
         # Above the bitcell array
-        self.port_data_offsets[port] = vector(0,self.bitcell_array_top)
+        self.port_data_offsets[port] = vector(self.main_bitcell_array_left, self.bitcell_array_top)
             
         # LOWER RIGHT QUADRANT
         # To the left of the bitcell array
         x_offset = self.bitcell_array_right + self.port_address.width + self.m2_gap
-        self.port_address_offsets[port] = vector(x_offset,self.main_bitcell_array_top)
+        self.port_address_offsets[port] = vector(x_offset,self.main_bitcell_array_bottom)
 
         # UPPER RIGHT QUADRANT
         # Place the col decoder right aligned with wordline driver 
@@ -322,12 +325,6 @@ class bank(design.design):
         self.br_names = self.bitcell.list_all_br_names()
         self.wl_names = self.bitcell.list_all_wl_names()
         self.bitline_names = self.bitcell.list_all_bitline_names()
-        
-        self.bitcell_array = factory.create(module_type="replica_bitcell_array",
-                                            cols=self.num_cols,
-                                            rows=self.num_rows,
-                                            num_ports=self.num_ports)
-        self.add_mod(self.bitcell_array)
 
         self.port_data = []
         for port in self.all_ports:
@@ -342,7 +339,32 @@ class bank(design.design):
                                            cols=self.num_cols,
                                            rows=self.num_rows)
         self.add_mod(self.port_address)
-            
+
+
+        # The number of replica lines depends on the port configuration
+        rbl_num = [self.read_ports.count(p) for p in self.all_ports]
+        if len(rbl_num)<2:
+            rbl_num.append(0)
+        self.num_rbl = sum(rbl_num)
+        # The indices always start at 0
+        self.rbl_indices = []
+        index = 0
+        for num in rbl_num:
+            if num>0:
+                self.rbl_indices.append(index)
+                index += 1
+            else:
+                self.rbl_indices.append(-1)
+                
+                
+        self.bitcell_array = factory.create(module_type="replica_bitcell_array",
+                                            cols=self.num_cols,
+                                            rows=self.num_rows,
+                                            left_rbl=rbl_num[0],
+                                            right_rbl=rbl_num[1])
+        self.add_mod(self.bitcell_array)
+
+        
         if(self.num_banks > 1):
             self.bank_select = factory.create(module_type="bank_select")
             self.add_mod(self.bank_select)
@@ -357,15 +379,16 @@ class bank(design.design):
         temp = []
         for col in range(self.num_cols):
             for bitline in self.bitline_names:
-                temp.append(bitline+"_{0}".format(col))
-        for col in range(self.num_ports):
+                temp.append("{0}_{1}".format(bitline,col))
+        for rbl in range(self.num_rbl):
             for bitline in self.bitline_names:
-                temp.append("replica_"+bitline+"_{0}".format(col))
+                temp.append("rbl_{0}_{1}".format(bitline,rbl))
         for row in range(self.num_rows):
             for wordline in self.wl_names:
-                    temp.append(wordline+"_{0}".format(row))
-        for wordline in self.wl_names:
-            temp.append("replica_"+wordline)
+                    temp.append("{0}_{1}".format(wordline,row))
+        for rbl in range(self.num_rbl):
+            for wordline in self.wl_names:
+                temp.append("rbl_{0}_{1}".format(wordline,rbl))
         temp.append("vdd")
         temp.append("gnd")
         self.connect_inst(temp)
@@ -385,9 +408,9 @@ class bank(design.design):
                                                     mod=self.port_data[port])
 
             temp = []
-            if port in self.read_ports:
-                temp.append("rbl_{0}".format(self.bl_names[port]))
-                temp.append("rbl_{0}".format(self.br_names[port]))
+            if self.port_data[port].has_rbl():
+                temp.append("rbl_{0}_{1}".format(self.bl_names[port],self.rbl_indices[port]))
+                temp.append("rbl_{0}_{1}".format(self.br_names[port],self.rbl_indices[port]))
             for col in range(self.num_cols):            
                 temp.append("{0}_{1}".format(self.bl_names[port],col))
                 temp.append("{0}_{1}".format(self.br_names[port],col))
@@ -435,7 +458,7 @@ class bank(design.design):
                 temp.append("addr{0}_{1}".format(port,bit+self.col_addr_size))
             temp.append("wl_en{0}".format(port))
             for row in range(self.num_rows):
-                temp.append(self.wl_names[port]+"_{0}".format(row))
+                temp.append("{0}_{1}".format(self.wl_names[port],row))
             temp.extend(["vdd", "gnd"])
             self.connect_inst(temp)
 
@@ -452,7 +475,7 @@ class bank(design.design):
         # The address flop and decoder are aligned in the x coord.
         
         for port in self.all_ports:
-            if port%2 == 1:
+            if port%2:
                 mirror = "MY"
             else:
                 mirror = "R0"
@@ -612,7 +635,7 @@ class bank(design.design):
         # 2 pitches on the right for vias/jogs to access the inputs 
         control_bus_offset = vector(-self.m2_pitch * self.num_control_lines[0] - self.m2_width, self.min_y_offset)
         # The control bus is routed up to two pitches below the bitcell array
-        control_bus_length = -2*self.m1_pitch - self.min_y_offset
+        control_bus_length = self.main_bitcell_array_bottom - self.min_y_offset - 2*self.m1_pitch
         self.bus_xoffset[0] = self.create_bus(layer="metal2",
                                               pitch=self.m2_pitch,
                                               offset=control_bus_offset,
@@ -624,7 +647,7 @@ class bank(design.design):
         # Port 1
         if len(self.all_ports)==2:
             # The other control bus is routed up to two pitches above the bitcell array
-            control_bus_length = self.max_y_offset - self.bitcell_array_top - 2*self.m1_pitch
+            control_bus_length = self.max_y_offset - self.main_bitcell_array_top - 2*self.m1_pitch
             control_bus_offset = vector(self.bitcell_array_right,
                                         self.max_y_offset - control_bus_length)
             
@@ -640,12 +663,20 @@ class bank(design.design):
     def route_port_data_to_bitcell_array(self, port):
         """ Routing of BL and BR between port data and bitcell array """
 
+        # Connect the regular bitlines
         inst2 = self.port_data_inst[port]
         inst1 = self.bitcell_array_inst
         inst1_bl_name = self.bl_names[port]+"_{}"
         inst1_br_name = self.br_names[port]+"_{}"
+        
         self.connect_bitlines(inst1=inst1, inst2=inst2, num_bits=self.num_cols,
                               inst1_bl_name=inst1_bl_name, inst1_br_name=inst1_br_name)
+
+        # Connect the replica bitlines
+        if self.port_data[port].has_rbl():
+            self.connect_bitline(inst1, inst2, "rbl_{0}_{1}".format(self.bitcell.get_bl_name(port),self.rbl_indices[port]), "rbl_bl")
+            self.connect_bitline(inst1, inst2, "rbl_{0}_{1}".format(self.bitcell.get_br_name(port),self.rbl_indices[port]), "rbl_br")
+        
         
         
     def route_port_data_out(self, port):
@@ -705,12 +736,9 @@ class bank(design.design):
             route_map = list(zip(bottom_names, top_names))
             self.create_horizontal_channel_route(route_map, offset)
             
-
-    def connect_bitlines(self, inst1, inst2, num_bits,
-                         inst1_bl_name="bl_{}", inst1_br_name="br_{}",
-                         inst2_bl_name="bl_{}", inst2_br_name="br_{}"):
+    def connect_bitline(self, inst1, inst2, inst1_name, inst2_name):
         """
-        Connect the bl and br of two modules.
+        Connect two pins of two modules. 
         This assumes that they have sufficient space to create a jog
         in the middle between the two modules (if needed).
         """
@@ -718,23 +746,34 @@ class bank(design.design):
         # determine top and bottom automatically.
         # since they don't overlap, we can just check the bottom y coordinate.
         if inst1.by() < inst2.by():
-            (bottom_inst, bottom_bl_name, bottom_br_name) = (inst1, inst1_bl_name, inst1_br_name)
-            (top_inst, top_bl_name, top_br_name) = (inst2, inst2_bl_name, inst2_br_name)
+            (bottom_inst, bottom_name) = (inst1, inst1_name)
+            (top_inst, top_name) = (inst2, inst2_name)
         else:
-            (bottom_inst, bottom_bl_name, bottom_br_name) = (inst2, inst2_bl_name, inst2_br_name)
-            (top_inst, top_bl_name, top_br_name) = (inst1, inst1_bl_name, inst1_br_name)
+            (bottom_inst, bottom_name) = (inst2, inst2_name)
+            (top_inst, top_name) = (inst1, inst1_name)
+
+        bottom_pin = bottom_inst.get_pin(bottom_name)
+        top_pin = top_inst.get_pin(top_name)
+        debug.check(bottom_pin.layer == top_pin.layer, "Pin layers do not match.")
+        
+        bottom_loc = bottom_pin.uc()
+        top_loc = top_pin.bc()
+        
+        yoffset = 0.5*(top_loc.y+bottom_loc.y)
+        self.add_path(top_pin.layer,[bottom_loc, vector(bottom_loc.x,yoffset),
+                                     vector(top_loc.x,yoffset), top_loc])
+        
+
+    def connect_bitlines(self, inst1, inst2, num_bits,
+                         inst1_bl_name="bl_{}", inst1_br_name="br_{}",
+                         inst2_bl_name="bl_{}", inst2_br_name="br_{}"):
+        """
+        Connect the bl and br of two modules.
+        """
 
         for col in range(num_bits):
-            bottom_bl = bottom_inst.get_pin(bottom_bl_name.format(col)).uc()
-            bottom_br = bottom_inst.get_pin(bottom_br_name.format(col)).uc()
-            top_bl = top_inst.get_pin(top_bl_name.format(col)).bc()
-            top_br = top_inst.get_pin(top_br_name.format(col)).bc()
-
-            yoffset = 0.5*(top_bl.y+bottom_bl.y)
-            self.add_path("metal2",[bottom_bl, vector(bottom_bl.x,yoffset),
-                                    vector(top_bl.x,yoffset), top_bl])
-            self.add_path("metal2",[bottom_br, vector(bottom_br.x,yoffset),
-                                    vector(top_br.x,yoffset), top_br])
+            self.connect_bitline(inst1, inst2, inst1_bl_name.format(col), inst2_bl_name.format(col))
+            self.connect_bitline(inst1, inst2, inst1_br_name.format(col), inst2_br_name.format(col))
         
 
     def route_port_address(self, port):

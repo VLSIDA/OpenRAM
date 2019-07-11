@@ -97,10 +97,12 @@ class bitcell_1rw_1r(design.design):
     
     def get_bl_name(self, port=0):
         """Get bl name by port"""
+        debug.check(port<2,"Two ports for bitcell_1rw_1r only.")
         return "bl{}".format(port)
     
     def get_br_name(self, port=0):
         """Get bl name by port"""
+        debug.check(port<2,"Two ports for bitcell_1rw_1r only.")
         return "br{}".format(port)
     
     def analytical_power(self, corner, load):

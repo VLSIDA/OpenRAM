@@ -62,12 +62,14 @@ class bitcell(design.design):
         column_pins = ["br"]
         return column_pins
         
-    def get_bl_name(self):
+    def get_bl_name(self, port=0):
         """Get bl name"""
+        debug.check(port==0,"One port for bitcell only.")
         return "bl"
     
-    def get_br_name(self):
+    def get_br_name(self, port=0):
         """Get bl name"""
+        debug.check(port==0,"One port for bitcell only.")
         return "br"  
         
     def analytical_power(self, corner, load):

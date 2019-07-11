@@ -126,7 +126,7 @@ class replica_bitcell_array(design.design):
         self.bl_names = [x for x in self.bitcell_array.pins if x.startswith("b")]
         
         # These are the non-indexed names 
-        self.replica_cell_wl_names = ["replica_"+x for x in self.cell.list_all_wl_names()]
+        self.replica_cell_wl_names = ["rbl_"+x for x in self.cell.list_all_wl_names()]
         self.dummy_cell_wl_names = ["dummy_"+x for x in self.cell.list_all_wl_names()]
         self.dummy_cell_bl_names = ["dummy_"+x for x in self.cell.list_all_bitline_names()]
         self.dummy_row_bl_names = self.bl_names
@@ -136,12 +136,12 @@ class replica_bitcell_array(design.design):
         self.replica_col_wl_names.extend(["{0}_bot".format(x) for x in self.dummy_cell_wl_names])
         # Left port WLs (one dummy for each port when we allow >1 port)
         for bit in range(self.left_rbl):
-            self.replica_col_wl_names.extend(["replica_{0}_{1}".format(x,bit) for x in self.cell.list_all_wl_names()])
+            self.replica_col_wl_names.extend(["rbl_{0}_{1}".format(x,bit) for x in self.cell.list_all_wl_names()])
         # Regular WLs
         self.replica_col_wl_names.extend(self.wl_names)
         # Right port WLs (one dummy for each port when we allow >1 port)
         for bit in  range(self.left_rbl,self.left_rbl+self.right_rbl):
-            self.replica_col_wl_names.extend(["replica_{0}_{1}".format(x,bit) for x in self.cell.list_all_wl_names()])
+            self.replica_col_wl_names.extend(["rbl_{0}_{1}".format(x,bit) for x in self.cell.list_all_wl_names()])
         self.replica_col_wl_names.extend(["{0}_top".format(x) for x in self.dummy_cell_wl_names])
 
         # Left/right dummy columns are connected identically to the replica column
@@ -155,7 +155,7 @@ class replica_bitcell_array(design.design):
         self.replica_bl_names = []
         self.replica_wl_names = []
         for bit in range(self.left_rbl+self.right_rbl):
-            self.replica_bl_names_list[bit] = ["replica_{0}_{1}".format(x,bit) for x in self.cell.list_all_bitline_names()]
+            self.replica_bl_names_list[bit] = ["rbl_{0}_{1}".format(x,bit) for x in self.cell.list_all_bitline_names()]
             self.replica_bl_names.extend(self.replica_bl_names_list[bit])
 
             self.replica_wl_names_list[bit] = ["{0}_{1}".format(x,bit) for x in self.replica_cell_wl_names]
@@ -320,7 +320,7 @@ class replica_bitcell_array(design.design):
             inst = self.replica_col_inst[bit]
             for (pin_name, bl_name) in zip(self.cell.list_all_bitline_names(),self.replica_bl_names_list[bit]):
                 pin = inst.get_pin(pin_name)
-                name = "replica_{0}_{1}".format(pin_name,bit)
+                name = "rbl_{0}_{1}".format(pin_name,bit)
                 self.add_layout_pin(text=name,
                                     layer=pin.layer,
                                     offset=pin.ll().scale(1,0),

@@ -61,7 +61,7 @@ class openram_test(unittest.TestCase):
                 self.fail("LVS mismatch: {}".format(a.name))
 
         # For debug...
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         if OPTS.purge_temp:
             self.cleanup()
             

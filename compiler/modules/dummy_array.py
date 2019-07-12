@@ -15,7 +15,7 @@ class dummy_array(design.design):
     """
     Generate a dummy row/column for the replica array.
     """
-    def __init__(self, cols, rows, mirror, name):
+    def __init__(self, cols, rows, mirror=0, name=""):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0} {1} x {2}".format(self.name, rows, cols))
         self.add_comment("rows: {0} cols: {1}".format(rows, cols))

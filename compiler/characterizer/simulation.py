@@ -34,6 +34,10 @@ class simulation():
         self.readwrite_ports = self.sram.readwrite_ports
         self.read_ports = self.sram.read_ports
         self.write_ports = self.sram.write_ports
+        self.num_wmask = int(self.word_size/self.write_size)
+        self.wmask_enabled = False
+        if self.word_size !=self.write_size:
+            self.wmask_enabled = True
 
     def set_corner(self,corner):
         """ Set the corner values """
@@ -127,7 +131,7 @@ class simulation():
                 debug.error("Non-binary address string",1)
             bit -= 1
                 
-    def add_write(self, comment, address, data, port):
+    def add_write(self, comment, address, data, wmask, port):
         """ Add the control values for a write cycle. """
         debug.check(port in self.write_ports, "Cannot add write cycle to a read port. Port {0}, Write Ports {1}".format(port, self.write_ports))
         debug.info(2, comment)
@@ -223,18 +227,28 @@ class simulation():
                                                                            time_spacing,
                                                                            comment))  
         
-    def gen_cycle_comment(self, op, word, addr, port, t_current):
+    def gen_cycle_comment(self, op, word, addr, port, wmask, t_current):
         if op == "noop":
             comment = "\tIdle during cycle {0} ({1}ns - {2}ns)".format(int(t_current/self.period),
                                                                      t_current,
                                                                      t_current+self.period)
         elif op == "write":
-            comment = "\tWriting {0}  to  address {1} (from port {2}) during cycle {3} ({4}ns - {5}ns)".format(word,
-                                                                                                           addr,
-                                                                                                           port,
-                                                                                                           int(t_current/self.period),
-                                                                                                           t_current,
-                                                                                                           t_current+self.period)
+            if (self.wmask_enabled):
+                comment = "\tWriting {0}  to  address {1} with mask bit {0} (from port {2}) during cycle {3} ({4}ns - {5}ns)".format(word,
+                                                                                                                   addr,
+                                                                                                                   wmask,
+                                                                                                                   port,
+                                                                                                                   int(
+                                                                                                                       t_current / self.period),
+                                                                                                                   t_current + self.period)
+
+            else:
+                comment = "\tWriting {0}  to  address {1} (from port {2}) during cycle {3} ({4}ns - {5}ns)".format(word,
+                                                                                                               addr,
+                                                                                                               port,
+                                                                                                               int(t_current/self.period),
+                                                                                                               t_current,
+                                                                                                               t_current+self.period)
         else:
             comment = "\tReading {0} from address {1} (from port {2}) during cycle {3} ({4}ns - {5}ns)".format(word,
                                                                                                            addr,
@@ -268,7 +282,9 @@ class simulation():
             if (port in read_index) and (port in write_index):
                 pin_names.append("WEB{0}".format(port))
         if (self.write_size != self.word_size):
-            pin_names.append("WMASK{0}".format(port))
+            num_wmask = int(self.word_size/self.write_size)
+            for bit in range(num_wmask):
+                pin_names.append("WMASK{0}_{1}".format(port,bit))
 
         for port in range(total_ports):
             pin_names.append("{0}{1}".format(tech.spice["clk"], port))

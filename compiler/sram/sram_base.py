@@ -40,6 +40,7 @@ class sram_base(design, verilog, lef):
 
     def add_pins(self):
         """ Add pins for entire SRAM. """
+        self.num_masks = int(self.word_size/self.write_size)
         for port in self.write_ports:
             for bit in range(self.word_size):
                 self.add_pin("DIN{0}[{1}]".format(port,bit),"INPUT")
@@ -71,7 +72,8 @@ class sram_base(design, verilog, lef):
         # add the optional write mask pins
         if self.word_size != self.write_size:
             for port in self.write_ports:
-                self.add_pin("wmask{}".format(port),"INPUT")
+                for bit in range(self.num_masks):
+                    self.add_pin("wmask{0}[{1}]".format(port,bit),"INPUT")
         for port in self.read_ports:
             for bit in range(self.word_size):
                 self.add_pin("DOUT{0}[{1}]".format(port,bit),"OUTPUT")
@@ -149,7 +151,7 @@ class sram_base(design, verilog, lef):
         elif "metal3" in tech.layer:
             from supply_tree_router import supply_tree_router as router
             rtr=router(("metal3",), self)
-            
+
         rtr.route()
 
         
@@ -278,8 +280,10 @@ class sram_base(design, verilog, lef):
         self.data_dff = dff_array(name="data_dff", rows=1, columns=self.word_size)
         self.add_mod(self.data_dff)
 
-        self.wmask_dff = dff_array(name="wmask_dff", rows=1, columns=int(self.word_size/self.write_size))
-        self.add_mod(self.wmask_dff)
+        if (self.write_size != self.word_size):
+            num_wmask = int(self.word_size/self.write_size)
+            self.wmask_dff = dff_array(name="wmask_dff", rows=1, columns=num_wmask)
+            self.add_mod(self.wmask_dff)
 
         
         # Create the bank module (up to four are instantiated)
@@ -469,7 +473,7 @@ class sram_base(design, verilog, lef):
             outputs = []
             for bit in range(num_wmask):
                 inputs.append("wmask{}[{}]".format(port, bit))
-                outputs.append("BANK_WMASK{}[{}]".format(port, bit))
+                outputs.append("bank_wmask{}[{}]".format(port, bit))
 
             self.connect_inst(inputs + outputs + ["clk_buf{}".format(port), "vdd", "gnd"])
 

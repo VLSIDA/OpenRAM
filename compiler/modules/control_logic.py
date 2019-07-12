@@ -759,8 +759,6 @@ class control_logic(design.design):
         
     def route_dffs(self):
         if self.port_type == "rw":
-            #print("hi")
-            #if (self.word_size == self.write_size):
             dff_out_map = zip(["dout_bar_0", "dout_bar_1", "dout_1"], ["cs", "we", "we_bar"])
         elif self.port_type == "r":
             dff_out_map = zip(["dout_bar_0", "dout_0"], ["cs", "cs_bar"])            

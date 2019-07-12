@@ -21,6 +21,7 @@ class port_data(design.design):
         
         sram_config.set_local_config(self)
         self.port = port
+        self.num_wmask = int(self.word_size/self.write_size)
         
         if name == "":
             name = "port_data_{0}".format(self.port)
@@ -53,6 +54,8 @@ class port_data(design.design):
 
         if self.write_driver_array:
             self.create_write_driver_array()
+            if (self.word_size != self.write_size):
+                self.create_write_mask_array()
         else:
             self.write_driver_array_inst = None
             
@@ -164,6 +167,12 @@ class port_data(design.design):
                                                      columns=self.num_cols,
                                                      word_size=self.word_size)
             self.add_mod(self.write_driver_array)
+            if (self.word_size != self.write_size):
+                self.write_mask_array = factory.create(module_type="write_mask_array",
+                                                         columns=self.num_cols,
+                                                         word_size=self.word_size,
+                                                         write_size=self.write_size)
+                self.add_mod(self.write_driver_array)
         else:
             self.write_driver_array = None
 
@@ -276,6 +285,18 @@ class port_data(design.design):
             else:
                 temp.append(self.bl_names[self.port]+"_out_{0}".format(bit))
                 temp.append(self.br_names[self.port]+"_out_{0}".format(bit))
+        temp.extend(["w_en", "vdd", "gnd"])
+        self.connect_inst(temp)
+
+
+    def create_write_mask_array(self):
+        """ Creating Write Masks  """
+        self.write_mask_array_inst = self.add_inst(name="write_mask_array{}".format(self.port),
+                                                   mod=self.write_mask_array)
+
+        temp = []
+        for bit in range(self.num_wmask):
+            temp.append("write_mask_".format(bit))
         temp.extend(["w_en", "vdd", "gnd"])
         self.connect_inst(temp)
 

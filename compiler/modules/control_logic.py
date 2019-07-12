@@ -21,7 +21,7 @@ class control_logic(design.design):
     Dynamically generated Control logic for the total SRAM circuit.
     """
 
-    def __init__(self, num_rows, words_per_row, word_size, sram=None, port_type="rw", name=""):
+    def __init__(self, num_rows, words_per_row, word_size, write_size, sram=None, port_type="rw", name=""):
         """ Constructor """
         name = "control_logic_" + port_type
         design.design.__init__(self, name)
@@ -35,6 +35,7 @@ class control_logic(design.design):
         self.words_per_row = words_per_row
         self.word_size = word_size
         self.port_type = port_type
+        self.write_size = write_size
 
         self.num_cols = word_size*words_per_row
         self.num_words = num_rows*words_per_row
@@ -319,7 +320,7 @@ class control_logic(design.design):
         else:
             self.input_list = ["csb"]
             self.rbl_list = []
-            
+
         if self.port_type == "rw":
             self.dff_output_list = ["cs_bar", "cs", "we_bar", "we"]
         else:
@@ -748,7 +749,9 @@ class control_logic(design.design):
         
     def route_dffs(self):
         if self.port_type == "rw":
-            dff_out_map = zip(["dout_bar_0", "dout_bar_1", "dout_1"], ["cs", "we", "we_bar"])            
+            #print("hi")
+            #if (self.word_size == self.write_size):
+            dff_out_map = zip(["dout_bar_0", "dout_bar_1", "dout_1"], ["cs", "we", "we_bar"])
         elif self.port_type == "r":
             dff_out_map = zip(["dout_bar_0", "dout_0"], ["cs", "cs_bar"])            
         else:

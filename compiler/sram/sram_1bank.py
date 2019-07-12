@@ -46,6 +46,9 @@ class sram_1bank(sram_base):
         
         self.data_dff_insts = self.create_data_dff()
 
+        if (self.write_size != self.word_size):
+            self.wmask_dff_insts = self.create_wmask_dff()
+
         
     def place_instances(self):
         """ 
@@ -65,6 +68,7 @@ class sram_1bank(sram_base):
         row_addr_pos = [None]*len(self.all_ports)
         col_addr_pos = [None]*len(self.all_ports)
         data_pos = [None]*len(self.all_ports)
+        wmask_pos = [None]*len(self.all_ports)
 
         # This is M2 pitch even though it is on M1 to help stem via spacings on the trunk
         # The M1 pitch is for supply rail spacings
@@ -105,6 +109,29 @@ class sram_1bank(sram_base):
         row_addr_pos[port] = vector(x_offset, y_offset)
         self.row_addr_dff_insts[port].place(row_addr_pos[port])
         
+        # Add the col address flops below the bank to the left of the lower-left of bank array
+        if self.col_addr_dff:
+            col_addr_pos[port] = vector(self.bank.bank_array_ll.x - self.col_addr_dff_insts[port].width - self.bank.m2_gap,
+                                        -max_gap_size - self.col_addr_dff_insts[port].height)
+            self.col_addr_dff_insts[port].place(col_addr_pos[port])
+
+        # Add the data flops below the bank to the right of the lower-left of bank array
+        # This relies on the lower-left of the array of the bank
+        # decoder in upper left, bank in upper right, sensing in lower right.
+        # These flops go below the sensing and leave a gap to channel route to the
+        # sense amps.
+        if port in self.write_ports:
+            data_pos[port] = vector(self.bank.bank_array_ll.x,
+                                    -max_gap_size - self.data_dff_insts[port].height)
+            self.data_dff_insts[port].place(data_pos[port])
+
+        # Add the write mask flops to the left of the din flops.
+        if (self.write_size != self.word_size):
+            if port in self.write_ports:
+                wmask_pos[port] = vector(self.bank.bank_array_ur.x - self.data_dff_insts[port].width,
+                                         self.bank.height + max_gap_size + self.data_dff_insts[port].height)
+                self.wmask_dff_insts[port].place(wmask_pos[port], mirror="MX")
+
 
         if len(self.all_ports)>1:
             # Port 1
@@ -119,6 +146,13 @@ class sram_1bank(sram_base):
                 data_pos[port] = vector(self.bank.bank_array_ur.x - self.data_dff_insts[port].width,
                                         self.bank.height + max_gap_size + self.dff.height)
                 self.data_dff_insts[port].place(data_pos[port], mirror="MX")
+
+            # Add the write mask flops to the left of the din flops.
+            if (self.write_size != self.word_size):
+                if port in self.write_ports:
+                    wmask_pos[port] = vector(self.bank.bank_array_ur.x - self.data_dff_insts[port].width,
+                                            self.bank.height + max_gap_size + self.data_dff_insts[port].height)
+                    self.wmask_dff_insts[port].place(wmask_pos[port], mirror="MX")
             else:
                 data_pos[port] = self.bank_inst.ur()
 
@@ -143,7 +177,7 @@ class sram_1bank(sram_base):
             self.row_addr_dff_insts[port].place(row_addr_pos[port], mirror="XY")
         
             
-            
+
     def add_layout_pins(self):
         """
         Add the top-level pins for a single bank SRAM with control.
@@ -326,10 +360,13 @@ class sram_1bank(sram_base):
                            offset=pin.center())
                            
     def graph_exclude_data_dff(self):
-        """Removes data dff from search graph. """
-        #Data dffs are only for writing so are not useful for evaluating read delay.
+        """Removes data dff and wmask dff (if applicable) from search graph. """
+        #Data dffs and wmask dffs are only for writing so are not useful for evaluating read delay.
         for inst in self.data_dff_insts:
             self.graph_inst_exclude.add(inst)
+        if (self.write_size != self.word_size):
+            for inst in self.wmask_dff_insts:
+                self.graph_inst_exclude.add(inst)
     
     def graph_exclude_addr_dff(self):
         """Removes data dff from search graph. """

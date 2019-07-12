@@ -71,7 +71,12 @@ class bitcell(design.design):
         """Get bl name"""
         debug.check(port==0,"One port for bitcell only.")
         return "br"  
-        
+
+    def get_wl_name(self, port=0):
+        """Get wl name"""
+        debug.check(port==0,"One port for bitcell only.")
+        return "wl"  
+    
     def analytical_power(self, corner, load):
         """Bitcell power in nW. Only characterizes leakage."""
         from tech import spice

@@ -283,8 +283,7 @@ class sram_base(design, verilog, lef):
         # Create the bank module (up to four are instantiated)
         from bank import bank
         self.bank = bank(self.sram_config,
-                         name="bank",
-                         num_ports=len(self.all_ports))
+                         name="bank")
         self.add_mod(self.bank)
 
         # Create bank decoder
@@ -331,6 +330,10 @@ class sram_base(design, verilog, lef):
         for port in self.read_ports:
             for bit in range(self.word_size):
                 temp.append("DOUT{0}[{1}]".format(port,bit))
+        for port in self.read_ports:
+            temp.append("rbl_bl{0}".format(port))
+        for port in self.read_ports:
+            temp.append("rbl_wl{0}".format(port))
         for port in self.write_ports:
             for bit in range(self.word_size):
                 temp.append("BANK_DIN{0}[{1}]".format(port,bit))
@@ -465,8 +468,12 @@ class sram_base(design, verilog, lef):
             if port in self.readwrite_ports:
                 temp.append("web{}".format(port))
             temp.append("clk{}".format(port))
+            if port in self.read_ports:
+                temp.append("rbl_bl{}".format(port))
 
             # Ouputs
+            if port in self.read_ports:
+                temp.append("rbl_wl{}".format(port))
             if port in self.read_ports:
                 temp.append("s_en{}".format(port))
             if port in self.write_ports:

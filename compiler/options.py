@@ -43,11 +43,11 @@ class options(optparse.Values):
     ###################
     # Optimization options
     ###################
-    rbl_delay_percentage = .5  #Approximate percentage of delay compared to bitlines
+    rbl_delay_percentage = 0.5  #Approximate percentage of delay compared to bitlines
     
     # Allow manual adjustment of the delay chain over automatic
     use_tech_delay_chain_size = False
-    delay_chain_stages = 4
+    delay_chain_stages = 5
     delay_chain_fanout_per_stage = 3
     
     

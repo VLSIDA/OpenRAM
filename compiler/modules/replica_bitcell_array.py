@@ -427,3 +427,8 @@ class replica_bitcell_array(design.design):
         bitcell_wl_cin = self.cell.get_wl_cin()
         total_cin = bitcell_wl_cin * self.column_size
         return total_cin
+
+    def graph_exclude_bits(self, targ_row, targ_col):
+        """Excludes bits in column from being added to graph except target"""
+        self.bitcell_array.graph_exclude_bits(targ_row, targ_col)
+    

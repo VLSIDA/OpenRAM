@@ -45,11 +45,9 @@ class sram_1bank_2mux_func_test(openram_test):
         
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         f = functional(s.s, tempspice, corner)
-        d = delay(s.s, tempspice, corner)
-        feasible_period = self.find_feasible_test_period(d, s.s, f.load, f.slew)
         
         f.num_cycles = 10
-        (fail, error) = f.run(feasible_period)
+        (fail, error) = f.run()
         self.assertTrue(fail,error)
         
         globals.end_openram()

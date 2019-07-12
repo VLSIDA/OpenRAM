@@ -243,6 +243,8 @@ class sram_1bank(sram_base):
                 # The clock gets routed separately and is not a part of the bank
                 if "clk" in signal:
                     continue
+                if signal.startswith("rbl"):
+                    continue
                 src_pin = self.control_logic_insts[port].get_pin(signal)
                 dest_pin = self.bank_inst.get_pin(signal+"{}".format(port))                
                 self.connect_rail_from_left_m2m3(src_pin, dest_pin)

@@ -78,6 +78,9 @@ class bank(design.design):
         for port in self.read_ports:
             for bit in range(self.word_size):
                 self.add_pin("dout{0}_{1}".format(port,bit),"OUT")
+            self.add_pin("rbl_bl{0}_{0}".format(port),"OUT")
+        for port in self.read_ports:            
+            self.add_pin("rbl_wl{0}_{0}".format(port),"IN")
         for port in self.write_ports:
             for bit in range(self.word_size):
                 self.add_pin("din{0}_{1}".format(port,bit),"IN")
@@ -108,6 +111,7 @@ class bank(design.design):
         
         for port in self.all_ports:
             self.route_bitlines(port)
+            self.route_rbl(port)
             self.route_port_address(port)
             self.route_column_address_lines(port)
             self.route_control_lines(port)
@@ -116,6 +120,20 @@ class bank(design.design):
         
         self.route_supplies()
 
+    def route_rbl(self,port):
+        """ Route the rbl_bl and rbl_wl """
+        
+        if self.port_data[port].has_rbl():
+            bl_name = self.bitcell.get_bl_name(port)
+            bl_pin = self.bitcell_array_inst.get_pin("rbl_{0}_{1}".format(bl_name,port))
+            self.add_layout_pin(text="rbl_bl{0}".format(port),
+                                layer=bl_pin.layer,
+                                offset=bl_pin.ll(),
+                                height=bl_pin.height(),
+                                width=bl_pin.width())
+            
+            
+            
     def route_bitlines(self, port):
         """ Route the bitlines depending on the port type rw, w, or r. """
 
@@ -281,13 +299,13 @@ class bank(design.design):
         self.input_control_signals = []
         port_num = 0
         for port in range(OPTS.num_rw_ports):
-            self.input_control_signals.append(["wl_en{}".format(port_num), "w_en{}".format(port_num), "s_en{}".format(port_num), "p_en_bar{}".format(port_num)])
+            self.input_control_signals.append(["wl_en{}".format(port_num), "w_en{}".format(port_num), "s_en{}".format(port_num), "p_en_bar{}".format(port_num), "rbl_wl{}".format(port_num)])
             port_num += 1
         for port in range(OPTS.num_w_ports):
             self.input_control_signals.append(["wl_en{}".format(port_num), "w_en{}".format(port_num)])
             port_num += 1
         for port in range(OPTS.num_r_ports):
-            self.input_control_signals.append(["wl_en{}".format(port_num), "s_en{}".format(port_num), "p_en_bar{}".format(port_num)])
+            self.input_control_signals.append(["wl_en{}".format(port_num), "s_en{}".format(port_num), "p_en_bar{}".format(port_num), "rbl_wl{}".format(port_num)])
             port_num += 1
 
         # Number of control lines in the bus for each port
@@ -904,7 +922,10 @@ class bank(design.design):
         connection = []
         if port in self.read_ports:
             connection.append((self.prefix+"p_en_bar{}".format(port), self.port_data_inst[port].get_pin("p_en_bar").lc()))
-                
+
+        if port in self.read_ports:
+            connection.append((self.prefix+"rbl_wl{}".format(port), self.bitcell_array_inst.get_pin("rbl_{0}_{1}".format(self.bitcell.get_wl_name(port),port)).lc()))
+            
         if port in self.write_ports:
             connection.append((self.prefix+"w_en{}".format(port), self.port_data_inst[port].get_pin("w_en").lc()))
                 

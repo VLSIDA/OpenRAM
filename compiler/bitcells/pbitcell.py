@@ -902,7 +902,13 @@ class pbitcell(design.design):
     
     def get_br_name(self, port=0):
         """Get bl name by port"""
-        return "br{}".format(port) 
+        return "br{}".format(port)
+
+    def get_wl_name(self, port=0):
+        """Get wl name by port"""
+        debug.check(port<2,"Two ports for bitcell_1rw_1r only.")
+        return "wl{}".format(port)
+    
 
     def analytical_delay(self, corner, slew, load=0, swing = 0.5):
         parasitic_delay = 1

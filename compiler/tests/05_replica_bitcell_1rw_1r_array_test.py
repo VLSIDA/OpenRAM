@@ -16,12 +16,15 @@ import debug
 class replica_bitcell_array_test(openram_test):
 
     def runTest(self):
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
+
+        OPTS.bitcell = "bitcell_1rw_1r"
+        OPTS.replica_bitcell = "replica_bitcell_1rw_1r"
+        OPTS.dummy_bitcell="dummy_bitcell_1rw_1r"
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
         
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
-
         debug.info(2, "Testing 4x4 array for cell_1rw_1r")
         a = factory.create(module_type="replica_bitcell_array", cols=4, rows=4, left_rbl=1, right_rbl=1)
         self.local_check(a)

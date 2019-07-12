@@ -365,9 +365,8 @@ class control_logic(design.design):
         self.create_wlen_row()
         if (self.port_type == "rw") or (self.port_type == "w"):
             self.create_wen_row()
-        if self.port_type == "rw": 
-            self.create_rbl_row()
         if (self.port_type == "rw") or (self.port_type == "r"): 
+            self.create_rbl_row()
             self.create_pen_row()            
             self.create_sen_row()
             self.create_delay()

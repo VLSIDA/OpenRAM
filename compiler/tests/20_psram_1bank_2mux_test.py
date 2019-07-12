@@ -23,6 +23,7 @@ class psram_1bank_2mux_test(openram_test):
         from sram_config import sram_config
         OPTS.bitcell = "pbitcell"
         OPTS.replica_bitcell="replica_pbitcell"
+        OPTS.dummy_bitcell="dummy_pbitcell"        
         
         # testing layout of sram using pbitcell with 1 RW port (a 6T-cell equivalent)
         OPTS.num_rw_ports = 1

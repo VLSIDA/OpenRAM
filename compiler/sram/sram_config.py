@@ -73,6 +73,10 @@ class sram_config:
         SRAM for testing.
         """
 
+        # This function is ran without the write mask option, but word_size can be redefined
+        # which makes the tests think there is a write mask.
+        self.write_size = self.word_size
+
         # If the banks changed
         self.num_words_per_bank = self.num_words/self.num_banks
         self.num_bits_per_bank = self.word_size*self.num_words_per_bank

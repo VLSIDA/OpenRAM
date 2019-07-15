@@ -57,8 +57,7 @@ class functional(simulation):
                     self.wmask[self.num_wmask-1 - bit] = 1
                 else:
                     self.wmask[self.num_wmask-1 - bit] = 0
-            print(self.wmask)
-    
+
     def run(self, feasible_period=None):
         if feasible_period: #period defaults to tech.py feasible period otherwise.
             self.period = feasible_period
@@ -110,7 +109,7 @@ class functional(simulation):
                     elif bit == 0:
                         word = old_word[lower:upper+1] + word [upper+1:self.word_size]
                     else:
-                        word = word[0:lower] + old_word[lower:upper+1] + word [upper+1:self.word_size]cfusms
+                        word = word[0:lower] + old_word[lower:upper+1] + word [upper+1:self.word_size]
                     #word = word.replace(word[lower:upper+1],old_word[lower:upper+1],1)
             self.stored_words[addr] = word
         else:

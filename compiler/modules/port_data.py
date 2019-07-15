@@ -56,9 +56,12 @@ class port_data(design.design):
             self.create_write_driver_array()
             if (self.word_size != self.write_size):
                 self.create_write_mask_array()
+            else:
+                self.write_mask_array_inst = None
         else:
             self.write_driver_array_inst = None
-            
+            self.write_mask_array_inst = None
+
         if self.column_mux_array:
             self.create_column_mux_array()
         else:
@@ -173,9 +176,12 @@ class port_data(design.design):
                                                          word_size=self.word_size,
                                                          write_size=self.write_size)
                 self.add_mod(self.write_driver_array)
+            else:
+                self.write_mask_array_inst = None
+
         else:
             self.write_driver_array = None
-
+            self.write_mask_array = None
 
     def precompute_constants(self):
         """  Get some preliminary data ready """

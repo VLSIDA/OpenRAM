@@ -131,7 +131,7 @@ class simulation():
                 debug.error("Non-binary address string",1)
             bit -= 1
                 
-    def add_write(self, comment, address, data, wmask, port):
+    def add_write(self, comment, address, data, port):
         """ Add the control values for a write cycle. """
         debug.check(port in self.write_ports, "Cannot add write cycle to a read port. Port {0}, Write Ports {1}".format(port, self.write_ports))
         debug.info(2, comment)

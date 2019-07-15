@@ -91,7 +91,7 @@ class functional(simulation):
         addr = self.gen_addr()
         word = self.gen_data()
         comment = self.gen_cycle_comment("write", word, addr, 0, self.wmask, self.t_current)
-        self.add_write(comment, addr, word, self.wmask, 0)
+        self.add_write(comment, addr, word, 0)
         if self.wmask_enabled:
             old_word = ""
             if self.stored_words.get(addr) == None:

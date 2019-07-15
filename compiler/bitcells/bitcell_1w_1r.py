@@ -43,7 +43,7 @@ class bitcell_1w_1r(design.design):
         read_port_load = 0.5 #min size NMOS gate load
         return logical_effort.logical_effort('bitline', size, cin, load+read_port_load, parasitic_delay, False)
    
-    def list_bitcell_pins(self, col, row):
+    def get_bitcell_pins(self, col, row):
         """ Creates a list of connections in the bitcell, indexed by column and row, for instance use in bitcell_array """
         bitcell_pins = ["bl0_{0}".format(col),
                         "br0_{0}".format(col),
@@ -55,42 +55,42 @@ class bitcell_1w_1r(design.design):
                         "gnd"]
         return bitcell_pins
     
-    def list_all_wl_names(self):
+    def get_all_wl_names(self):
         """ Creates a list of all wordline pin names """
         row_pins = ["wl0", "wl1"]    
         return row_pins
     
-    def list_all_bitline_names(self):
+    def get_all_bitline_names(self):
         """ Creates a list of all bitline pin names (both bl and br) """
         column_pins = ["bl0", "br0", "bl1", "br1"]
         return column_pins
     
-    def list_all_bl_names(self):
+    def get_all_bl_names(self):
         """ Creates a list of all bl pins names """
         column_pins = ["bl0", "bl1"]
         return column_pins
         
-    def list_all_br_names(self):
+    def get_all_br_names(self):
         """ Creates a list of all br pins names """
         column_pins = ["br0", "br1"]
         return column_pins
         
-    def list_read_bl_names(self):
+    def get_read_bl_names(self):
         """ Creates a list of bl pin names associated with read ports """
         column_pins = ["bl0", "bl1"]
         return column_pins
     
-    def list_read_br_names(self):
+    def get_read_br_names(self):
         """ Creates a list of br pin names associated with read ports """
         column_pins = ["br0", "br1"]
         return column_pins
         
-    def list_write_bl_names(self):
+    def get_write_bl_names(self):
         """ Creates a list of bl pin names associated with write ports """
         column_pins = ["bl0"]
         return column_pins
     
-    def list_write_br_names(self):
+    def get_write_br_names(self):
         """ Creates a list of br pin names asscociated with write ports"""
         column_pins = ["br0"]
         return column_pins

@@ -42,22 +42,22 @@ class bitcell(design.design):
         cin = 3 #Assumes always a minimum sizes inverter. Could be specified in the tech.py file.
         return logical_effort.logical_effort('bitline', size, cin, load, parasitic_delay, False)
  
-    def list_all_wl_names(self):
+    def get_all_wl_names(self):
         """ Creates a list of all wordline pin names """
         row_pins = ["wl"]    
         return row_pins
     
-    def list_all_bitline_names(self):
+    def get_all_bitline_names(self):
         """ Creates a list of all bitline pin names (both bl and br) """
         column_pins = ["bl", "br"]
         return column_pins
     
-    def list_all_bl_names(self):
+    def get_all_bl_names(self):
         """ Creates a list of all bl pins names """
         column_pins = ["bl"]
         return column_pins
         
-    def list_all_br_names(self):
+    def get_all_br_names(self):
         """ Creates a list of all br pins names """
         column_pins = ["br"]
         return column_pins

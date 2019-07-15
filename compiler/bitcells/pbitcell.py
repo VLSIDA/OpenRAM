@@ -851,7 +851,7 @@ class pbitcell(design.design):
                             implant_type="n",
                             well_type="n")
 
-    def list_bitcell_pins(self, col, row):
+    def get_bitcell_pins(self, col, row):
         """ Creates a list of connections in the bitcell, indexed by column and row, for instance use in bitcell_array """
         bitcell_pins = []
         for port in range(self.total_ports):
@@ -863,12 +863,12 @@ class pbitcell(design.design):
         bitcell_pins.append("gnd")
         return bitcell_pins
 
-    def list_all_wl_names(self):
+    def get_all_wl_names(self):
         """ Creates a list of all wordline pin names """
         wordline_names = self.rw_wl_names + self.w_wl_names + self.r_wl_names
         return wordline_names
 
-    def list_all_bitline_names(self):
+    def get_all_bitline_names(self):
         """ Creates a list of all bitline pin names (both bl and br) """
         bitline_pins = []
         for port in range(self.total_ports):
@@ -876,12 +876,12 @@ class pbitcell(design.design):
             bitline_pins.append("br{0}".format(port))
         return bitline_pins
 
-    def list_all_bl_names(self):
+    def get_all_bl_names(self):
         """ Creates a list of all bl pins names """
         bl_pins = self.rw_bl_names + self.w_bl_names + self.r_bl_names
         return bl_pins
 
-    def list_all_br_names(self):
+    def get_all_br_names(self):
         """ Creates a list of all br pins names """
         br_pins = self.rw_br_names + self.w_br_names + self.r_br_names
         return br_pins

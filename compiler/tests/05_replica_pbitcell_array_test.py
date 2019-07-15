@@ -27,7 +27,7 @@ class replica_bitcell_array_test(openram_test):
         OPTS.num_w_ports = 0
 
         debug.info(2, "Testing 4x4 array for pbitcell")
-        a = factory.create(module_type="replica_bitcell_array", cols=4, rows=4, left_rbl=1, right_rbl=1)
+        a = factory.create(module_type="replica_bitcell_array", cols=4, rows=4, left_rbl=1, right_rbl=1, bitcell_ports=[0,1])
         self.local_check(a)
 
         globals.end_openram()

@@ -201,9 +201,9 @@ class port_data(design.design):
 
         # create arrays of bitline and bitline_bar names for read, write, or all ports
         self.bitcell = factory.create(module_type="bitcell") 
-        self.bl_names = self.bitcell.list_all_bl_names()
-        self.br_names = self.bitcell.list_all_br_names()
-        self.wl_names = self.bitcell.list_all_wl_names()
+        self.bl_names = self.bitcell.get_all_bl_names()
+        self.br_names = self.bitcell.get_all_br_names()
+        self.wl_names = self.bitcell.get_all_wl_names()
 
     def create_precharge_array(self):
         """ Creating Precharge """

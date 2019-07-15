@@ -17,12 +17,14 @@ import dummy_array
 
 class replica_bitcell_array(design.design):
     """
-    Creates a bitcell arrow of cols x rows and then adds the replica and dummy columns
-    and rows for one or two read ports. Replica columns are on the left and right, respectively.
+    Creates a bitcell arrow of cols x rows and then adds the replica
+    and dummy columns and rows.  Replica columns are on the left and
+    right, respectively and connected to the given bitcell ports.
     Dummy are the outside columns/rows with WL and BL tied to gnd.
-    Requires a regular bitcell array, replica bitcell, and dummy bitcell (Bl/BR disconnected).
+    Requires a regular bitcell array, replica bitcell, and dummy
+    bitcell (Bl/BR disconnected).
     """
-    def __init__(self, cols, rows, left_rbl, right_rbl,  name):
+    def __init__(self, cols, rows, left_rbl, right_rbl, bitcell_ports, name):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0} {1} x {2}".format(self.name, rows, cols))
         self.add_comment("rows: {0} cols: {1}".format(rows, cols))
@@ -31,8 +33,10 @@ class replica_bitcell_array(design.design):
         self.row_size = rows
         self.left_rbl = left_rbl
         self.right_rbl = right_rbl
+        self.bitcell_ports = bitcell_ports
 
         debug.check(left_rbl+right_rbl==len(self.read_ports),"Invalid number of RBLs for port configuration.")
+        debug.check(left_rbl+right_rbl==len(self.bitcell_ports),"Bitcell ports must match total RBLs.")
         
         # Two dummy rows/cols plus replica for each port
         self.extra_rows = 2 + left_rbl + right_rbl
@@ -122,15 +126,14 @@ class replica_bitcell_array(design.design):
         self.bitcell_array_bl_names = [x for x in self.bitcell_array.pins if x.startswith("b")]
         
         # These are the non-indexed names 
-        self.dummy_cell_wl_names = ["dummy_"+x for x in self.cell.list_all_wl_names()]
-        self.dummy_cell_bl_names = ["dummy_"+x for x in self.cell.list_all_bitline_names()]
+        self.dummy_cell_wl_names = ["dummy_"+x for x in self.cell.get_all_wl_names()]
+        self.dummy_cell_bl_names = ["dummy_"+x for x in self.cell.get_all_bitline_names()]
         self.dummy_row_bl_names = self.bitcell_array_bl_names
 
-        self.rbl_bl_names = []
-        self.rbl_wl_names = []
-        for port in range(self.left_rbl+self.right_rbl):
-            self.rbl_bl_names.append("rbl_bl{}".format(port))
-            self.rbl_wl_names.append("rbl_wl{}".format(port))
+        # A dictionary because some ports may have nothing
+        self.rbl_bl_names = {}
+        self.rbl_br_names = {}
+        self.rbl_wl_names = {}
         
         # Create the full WL names include dummy, replica, and regular bit cells
         self.replica_col_wl_names = []
@@ -138,18 +141,18 @@ class replica_bitcell_array(design.design):
         # Left port WLs (one dummy for each port when we allow >1 port)
         for port in range(self.left_rbl):
             # Make names for all RBLs
-            wl_names = ["rbl_{0}_{1}".format(x,port) for x in self.cell.list_all_wl_names()]
-            # Rename the one we will use
-            wl_names[port] = self.rbl_wl_names[port]
+            wl_names=["rbl_{0}_{1}".format(self.cell.get_wl_name(x),port) for x in range(len(self.all_ports))]
+            # Keep track of the pin that is the RBL
+            self.rbl_wl_names[port]=wl_names[self.bitcell_ports[port]]
             self.replica_col_wl_names.extend(wl_names)
         # Regular WLs
         self.replica_col_wl_names.extend(self.bitcell_array_wl_names)
         # Right port WLs (one dummy for each port when we allow >1 port)
         for port in range(self.left_rbl,self.left_rbl+self.right_rbl):
             # Make names for all RBLs
-            wl_names = ["rbl_{0}_{1}".format(x,port) for x in self.cell.list_all_wl_names()]
-            # Rename the one we will use
-            wl_names[port] = self.rbl_wl_names[port]
+            wl_names=["rbl_{0}_{1}".format(self.cell.get_wl_name(x),port) for x in range(len(self.all_ports))]
+            # Keep track of the pin that is the RBL
+            self.rbl_wl_names[port]=wl_names[self.bitcell_ports[port]]
             self.replica_col_wl_names.extend(wl_names)
         self.replica_col_wl_names.extend(["{0}_top".format(x) for x in self.dummy_cell_wl_names])
 
@@ -162,26 +165,33 @@ class replica_bitcell_array(design.design):
         self.replica_wl_names = {}
         # Array of all port bitline names
         for port in range(self.left_rbl+self.right_rbl):
-            left_names = ["rbl_{0}_{1}".format(x,port) for x in self.cell.list_all_bl_names()]
-            right_names = ["rbl_{0}_{1}".format(x,port) for x in self.cell.list_all_br_names()]
-            left_names[port] = self.rbl_bl_names[port]
+            left_names=["rbl_{0}_{1}".format(self.cell.get_bl_name(x),port) for x in range(len(self.all_ports))]
+            right_names=["rbl_{0}_{1}".format(self.cell.get_br_name(x),port) for x in range(len(self.all_ports))]
+            # Keep track of the left pins that are the RBL
+            self.rbl_bl_names[port]=left_names[self.bitcell_ports[port]]
+            self.rbl_br_names[port]=right_names[self.bitcell_ports[port]]
             # Interleave the left and right lists
             bl_names = [x for t in zip(left_names, right_names) for x in t]
             self.replica_bl_names[port] = bl_names
 
-            wl_names = ["rbl_{0}_{1}".format(x,port) for x in self.cell.list_all_wl_names()]
-            wl_names[port] = "rbl_wl{}".format(port)
+            wl_names = ["rbl_{0}_{1}".format(x,port) for x in self.cell.get_all_wl_names()]
+            #wl_names[port] = "rbl_wl{}".format(port)
             self.replica_wl_names[port] = wl_names
             
 
         # External pins
         self.add_pin_list(self.bitcell_array_bl_names, "INOUT")
-        for port in range(self.left_rbl+self.right_rbl):
-            self.add_pin("rbl_bl{}".format(port),"INPUT")
+        # Need to sort by port order since dictionary values may not be in order
+        bl_names = [self.rbl_bl_names[x] for x in sorted(self.rbl_bl_names.keys())]
+        br_names = [self.rbl_br_names[x] for x in sorted(self.rbl_br_names.keys())]
+        for (bl_name,br_name) in zip(bl_names,br_names):
+            self.add_pin(bl_name,"INPUT")
+            self.add_pin(br_name,"INPUT")
         self.add_pin_list(self.bitcell_array_wl_names, "INPUT")
-        for port in range(self.left_rbl+self.right_rbl):
-            self.add_pin("rbl_wl{}".format(port),"OUTPUT")
-
+        # Need to sort by port order since dictionary values may not be in order        
+        wl_names = [self.rbl_wl_names[x] for x in sorted(self.rbl_wl_names.keys())]
+        for pin_name in wl_names:
+            self.add_pin(pin_name,"INPUT")
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
@@ -310,7 +320,7 @@ class replica_bitcell_array(design.design):
         # Replica wordlines
         for port in range(self.left_rbl+self.right_rbl):
             inst = self.replica_col_inst[port]
-            for (pin_name,wl_name) in zip(self.cell.list_all_wl_names(),self.replica_wl_names[port]):
+            for (pin_name,wl_name) in zip(self.cell.get_all_wl_names(),self.replica_wl_names[port]):
                 # +1 for dummy row
                 pin_bit = port+1
                 # +row_size if above the array 
@@ -319,7 +329,7 @@ class replica_bitcell_array(design.design):
                     
                 pin_name += "_{}".format(pin_bit)
                 pin = inst.get_pin(pin_name)
-                if wl_name in self.rbl_wl_names:
+                if wl_name in self.rbl_wl_names.values():
                     self.add_layout_pin(text=wl_name,
                                         layer=pin.layer,
                                         offset=pin.ll().scale(0,1),
@@ -330,15 +340,17 @@ class replica_bitcell_array(design.design):
         # Replica bitlines
         for port in range(self.left_rbl+self.right_rbl):
             inst = self.replica_col_inst[port]
-            for (pin_name, bl_name) in zip(self.cell.list_all_bitline_names(),self.replica_bl_names[port]):
+            for (pin_name, bl_name) in zip(self.cell.get_all_bitline_names(),self.replica_bl_names[port]):
                 pin = inst.get_pin(pin_name)
-                name = "rbl_{0}_{1}".format(pin_name,port)
-                if bl_name in self.rbl_bl_names:
-                    self.add_layout_pin(text=name,
-                                        layer=pin.layer,
-                                        offset=pin.ll().scale(1,0),
-                                        width=pin.width(),
-                                        height=self.height)
+                if bl_name in self.rbl_bl_names or bl_name in self.rbl_br_names:
+                    name = bl_name
+                else:
+                    name = "rbl_{0}_{1}".format(pin_name,port)
+                self.add_layout_pin(text=name,
+                                    layer=pin.layer,
+                                    offset=pin.ll().scale(1,0),
+                                    width=pin.width(),
+                                    height=self.height)
 
                     
         for pin_name in ["vdd","gnd"]:
@@ -350,7 +362,17 @@ class replica_bitcell_array(design.design):
 
 
                         
+    def get_rbl_wl_name(self, port):
+        """ Return the WL for the given RBL port """
+        return self.rbl_wl_names[port]
+    
+    def get_rbl_bl_name(self, port):
+        """ Return the BL for the given RBL port """
+        return self.rbl_bl_names[port]
 
+    def get_rbl_br_name(self, port):
+        """ Return the BR for the given RBL port """
+        return self.rbl_br_names[port]
     
     def analytical_delay(self, corner, slew, load):
         """Returns relative delay of the bitline in the bitcell array"""
@@ -358,7 +380,7 @@ class replica_bitcell_array(design.design):
         #The load being driven/drained is mostly the bitline but could include the sense amp or the column mux.
         #The load from the bitlines is due to the drain capacitances from all the other bitlines and wire parasitics.
         drain_load = logical_effort.convert_farad_to_relative_c(parameter['bitcell_drain_cap'])
-        wire_unit_load = .05 * drain_load #Wires add 5% to this.
+        wire_unit_load = 0.05 * drain_load #Wires add 5% to this.
         bitline_load = (drain_load+wire_unit_load)*self.row_size
         return [self.cell.analytical_delay(corner, slew, load+bitline_load)]
     

@@ -53,10 +53,10 @@ class replica_column(design.design):
         self.DRC_LVS()
 
     def add_pins(self):
-        column_list = self.cell.list_all_bitline_names()
+        column_list = self.cell.get_all_bitline_names()
         for cell_column in column_list:
             self.add_pin("{0}_{1}".format(cell_column,0))
-        row_list = self.cell.list_all_wl_names()
+        row_list = self.cell.get_all_wl_names()
         for row in range(self.total_size):
             for cell_row in row_list:
                 self.add_pin("{0}_{1}".format(cell_row,row))
@@ -88,7 +88,7 @@ class replica_column(design.design):
             else:
                 self.cell_inst[row]=self.add_inst(name=name,
                                                   mod=self.dummy_cell)
-            self.connect_inst(self.list_bitcell_pins(0, row))
+            self.connect_inst(self.get_bitcell_pins(0, row))
             
     def place_instances(self):
 
@@ -112,8 +112,8 @@ class replica_column(design.design):
     def add_layout_pins(self):
         """ Add the layout pins """
         
-        row_list = self.cell.list_all_wl_names()
-        column_list = self.cell.list_all_bitline_names()
+        row_list = self.cell.get_all_wl_names()
+        column_list = self.cell.get_all_bitline_names()
 
         for cell_column in column_list:
             bl_pin = self.cell_inst[0].get_pin(cell_column)
@@ -138,16 +138,16 @@ class replica_column(design.design):
             for pin_name in ["vdd", "gnd"]:
                 self.copy_layout_pin(inst, pin_name)
 
-    def list_bitcell_pins(self, col, row):
+    def get_bitcell_pins(self, col, row):
         """ Creates a list of connections in the bitcell, 
         indexed by column and row, for instance use in bitcell_array """
 
         bitcell_pins = []
         
-        pin_names = self.cell.list_all_bitline_names()
+        pin_names = self.cell.get_all_bitline_names()
         for pin in pin_names:
             bitcell_pins.append(pin+"_{0}".format(col))
-        pin_names = self.cell.list_all_wl_names()
+        pin_names = self.cell.get_all_wl_names()
         for pin in pin_names:
             bitcell_pins.append(pin+"_{0}".format(row))
         bitcell_pins.append("vdd")

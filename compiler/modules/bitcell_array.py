@@ -73,8 +73,8 @@ class bitcell_array(design.design):
         self.DRC_LVS()
 
     def add_pins(self):
-        row_list = self.cell.list_all_wl_names()
-        column_list = self.cell.list_all_bitline_names()
+        row_list = self.cell.get_all_wl_names()
+        column_list = self.cell.get_all_bitline_names()
         for col in range(self.column_size):
             for cell_column in column_list:
                 self.add_pin(cell_column+"_{0}".format(col))
@@ -89,16 +89,16 @@ class bitcell_array(design.design):
         self.cell = factory.create(module_type="bitcell")
         self.add_mod(self.cell)
 
-    def list_bitcell_pins(self, col, row):
+    def get_bitcell_pins(self, col, row):
         """ Creates a list of connections in the bitcell, 
         indexed by column and row, for instance use in bitcell_array """
 
         bitcell_pins = []
         
-        pin_names = self.cell.list_all_bitline_names()
+        pin_names = self.cell.get_all_bitline_names()
         for pin in pin_names:
             bitcell_pins.append(pin+"_{0}".format(col))
-        pin_names = self.cell.list_all_wl_names()
+        pin_names = self.cell.get_all_wl_names()
         for pin in pin_names:
             bitcell_pins.append(pin+"_{0}".format(row))
         bitcell_pins.append("vdd")
@@ -115,13 +115,13 @@ class bitcell_array(design.design):
                 name = "bit_r{0}_c{1}".format(row, col)
                 self.cell_inst[row,col]=self.add_inst(name=name,
                                                       mod=self.cell)
-                self.connect_inst(self.list_bitcell_pins(col, row))
+                self.connect_inst(self.get_bitcell_pins(col, row))
         
     def add_layout_pins(self):
         """ Add the layout pins """
         
-        row_list = self.cell.list_all_wl_names()
-        column_list = self.cell.list_all_bitline_names()
+        row_list = self.cell.get_all_wl_names()
+        column_list = self.cell.get_all_bitline_names()
         
         for col in range(self.column_size):
             for cell_column in column_list:

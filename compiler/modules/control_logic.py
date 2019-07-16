@@ -422,6 +422,7 @@ class control_logic(design.design):
         if (self.port_type == "rw") or (self.port_type == "r") or self.words_per_row>1:
             self.place_pen_row(row)
             row += 1
+        if (self.port_type == "rw") or (self.port_type == "r"):            
             self.place_sen_row(row)
             row += 1
             self.place_delay(row)

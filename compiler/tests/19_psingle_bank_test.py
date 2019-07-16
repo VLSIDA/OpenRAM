@@ -20,16 +20,16 @@ class psingle_bank_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_{0}".format(OPTS.tech_name))
-        from bank import bank
         from sram_config import sram_config
+        
         OPTS.bitcell = "pbitcell"
         OPTS.replica_bitcell="replica_pbitcell"
         OPTS.dummy_bitcell="dummy_pbitcell"
         
-        # testing layout of bank using pbitcell with 1 RW port (a 6T-cell equivalent)
         OPTS.num_rw_ports = 1
         OPTS.num_w_ports = 0
         OPTS.num_r_ports = 0
+        
         c = sram_config(word_size=4,
                         num_words=16)
         
@@ -37,8 +37,7 @@ class psingle_bank_test(openram_test):
         factory.reset()
         c.recompute_sizes()
         debug.info(1, "No column mux")
-        name = "bank1_{0}rw_{1}w_{2}r_single".format(OPTS.num_rw_ports, OPTS.num_w_ports, OPTS.num_r_ports)
-        a = bank(c, name=name)
+        a = factory.create(module_type="bank", sram_config=c)
         self.local_check(a)
         
         c.num_words=32
@@ -46,8 +45,7 @@ class psingle_bank_test(openram_test):
         factory.reset()
         c.recompute_sizes()
         debug.info(1, "Two way column mux")
-        name = "bank2_{0}rw_{1}w_{2}r_single".format(OPTS.num_rw_ports, OPTS.num_w_ports, OPTS.num_r_ports)
-        a = bank(c, name=name)
+        a = factory.create(module_type="bank", sram_config=c)
         self.local_check(a)
         
         c.num_words=64
@@ -55,8 +53,7 @@ class psingle_bank_test(openram_test):
         factory.reset()
         c.recompute_sizes()
         debug.info(1, "Four way column mux")
-        name = "bank3_{0}rw_{1}w_{2}r_single".format(OPTS.num_rw_ports, OPTS.num_w_ports, OPTS.num_r_ports)
-        a = bank(c, name=name)
+        a = factory.create(module_type="bank", sram_config=c)
         self.local_check(a)
         
         c.word_size=2
@@ -65,8 +62,7 @@ class psingle_bank_test(openram_test):
         factory.reset()
         c.recompute_sizes()
         debug.info(1, "Four way column mux")
-        name = "bank4_{0}rw_{1}w_{2}r_single".format(OPTS.num_rw_ports, OPTS.num_w_ports, OPTS.num_r_ports)
-        a = bank(c, name=name)
+        a = factory.create(module_type="bank", sram_config=c)
         self.local_check(a)
         
         globals.end_openram()

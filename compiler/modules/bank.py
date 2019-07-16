@@ -79,9 +79,9 @@ class bank(design.design):
             for bit in range(self.word_size):
                 self.add_pin("dout{0}_{1}".format(port,bit),"OUT")
         for port in self.read_ports:
-            self.add_pin(self.bitcell_array.get_rbl_bl_name(port),"OUT")
+            self.add_pin(self.bitcell_array.get_rbl_bl_name(self.port_rbl_map[port]),"OUT")
         for port in self.read_ports:
-            self.add_pin(self.bitcell_array.get_rbl_wl_name(port),"IN")
+            self.add_pin(self.bitcell_array.get_rbl_wl_name(self.port_rbl_map[port]),"IN")
         for port in self.write_ports:
             for bit in range(self.word_size):
                 self.add_pin("din{0}_{1}".format(port,bit),"IN")

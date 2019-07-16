@@ -24,6 +24,7 @@ class single_bank_1w_1r_test(openram_test):
         OPTS.bitcell = "bitcell_1w_1r"
         OPTS.replica_bitcell = "replica_bitcell_1w_1r"
         OPTS.dummy_bitcell="dummy_bitcell_1w_1r"
+
         OPTS.num_rw_ports = 0
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 1

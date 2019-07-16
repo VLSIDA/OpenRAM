@@ -36,7 +36,6 @@ class bank(design.design):
         design.design.__init__(self, name)
         debug.info(2, "create sram of size {0} with {1} words".format(self.word_size,self.num_words))
 
-        debug.check(len(self.all_ports)<=2,"Bank layout cannot handle more than two ports.")
         
         # The local control signals are gated when we have bank select logic,
         # so this prefix will be added to all of the input signals to create
@@ -48,6 +47,7 @@ class bank(design.design):
 
         self.create_netlist()
         if not OPTS.netlist_only:
+            debug.check(len(self.all_ports)<=2,"Bank layout cannot handle more than two ports.")
             self.create_layout()
             self.add_boundary()
 

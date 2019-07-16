@@ -95,6 +95,18 @@ class control_logic(design.design):
                                    size=4,
                                    height=dff_height)
         self.add_mod(self.and2)
+
+        if self.port_type=="rw":
+            self.rbl_driver = factory.create(module_type="pand2",
+                                             size=self.num_cols,
+                                             height=dff_height)
+            self.add_mod(self.rbl_driver)
+        elif self.port_type=="r":
+            self.rbl_driver = factory.create(module_type="pbuf",
+                                              size=self.num_cols,
+                                              height=dff_height)
+            self.add_mod(self.rbl_driver)
+        
         
         # clk_buf drives a flop for every address and control bit
         # plus about 5 fanouts for the control logic
@@ -131,12 +143,14 @@ class control_logic(design.design):
                                               height=dff_height)
         self.add_mod(self.inv)
 
-        # p_en_bar drives every column in the bicell array
+        # p_en_bar drives every column in the bitcell array
         self.p_en_bar_driver = factory.create(module_type="pdriver",
                                               neg_polarity=True,
                                               fanout=self.num_cols,
                                               height=dff_height)
         self.add_mod(self.p_en_bar_driver)
+
+        
         
         # if (self.port_type == "rw") or (self.port_type == "r"):
         #     from importlib import reload
@@ -366,11 +380,13 @@ class control_logic(design.design):
         self.create_wlen_row()
         if (self.port_type == "rw") or (self.port_type == "w"):
             self.create_wen_row()
-        if (self.port_type == "rw") or (self.port_type == "r"): 
+        if (self.port_type == "rw") or (self.port_type == "r"):
             self.create_rbl_row()
-            self.create_pen_row()            
             self.create_sen_row()
             self.create_delay()
+        if (self.port_type == "rw") or (self.port_type == "r") or self.words_per_row>1:
+            self.create_pen_row()            
+
 
 
     def place_instances(self):
@@ -400,9 +416,10 @@ class control_logic(design.design):
             height = self.w_en_inst.uy()
             control_center_y = self.w_en_inst.uy()
             row += 1
-        if (self.port_type == "rw") or (self.port_type == "r"):            
+        if (self.port_type == "rw") or (self.port_type == "r"):
             self.place_rbl_row(row)
             row += 1
+        if (self.port_type == "rw") or (self.port_type == "r") or self.words_per_row>1:
             self.place_pen_row(row)
             row += 1
             self.place_sen_row(row)
@@ -431,8 +448,9 @@ class control_logic(design.design):
             self.route_wen()
         if (self.port_type == "rw") or (self.port_type == "r"):
             self.route_rbl()
-            self.route_pen()
             self.route_sen()
+        if (self.port_type == "rw") or (self.port_type == "r") or self.words_per_row>1:            
+            self.route_pen()
         self.route_clk_buf()
         self.route_gated_clk_bar()
         self.route_gated_clk_buf()
@@ -451,8 +469,8 @@ class control_logic(design.design):
 
         # Add the RBL above the rows
         # Add to the right of the control rows and routing channel
-        offset = vector(0, y_off)
-        self.delay_inst.place(offset)
+        offset = vector(self.delay_chain.width, y_off)
+        self.delay_inst.place(offset, mirror="MY")
         
         
     def create_clk_buf_row(self):
@@ -589,11 +607,15 @@ class control_logic(design.design):
         self.connect_output(self.wl_en_inst, "Z", "wl_en")
 
     def create_rbl_row(self):
-        
-        # input: gated_clk_bar, we_bar, output: rbl_in
-        self.rbl_inst=self.add_inst(name="and2_rbl",
-                                         mod=self.and2)
-        self.connect_inst(["gated_clk_bar", "we_bar", "rbl_wl", "vdd", "gnd"])
+
+        self.rbl_inst=self.add_inst(name="rbl_driver",
+                                    mod=self.rbl_driver)
+        if self.port_type == "rw":
+            # input: gated_clk_bar, we_bar, output: rbl_wl
+            self.connect_inst(["gated_clk_bar", "we_bar", "rbl_wl", "vdd", "gnd"])
+        elif self.port_type == "r":
+            # input: gated_clk_bar, output: rbl_wl
+            self.connect_inst(["gated_clk_bar", "rbl_wl", "vdd", "gnd"])
 
     def place_rbl_row(self,row):
         x_off = self.control_x_offset
@@ -608,20 +630,14 @@ class control_logic(design.design):
         """ Connect the logic for the rbl_in generation """
 
         if self.port_type == "rw":
-            input_name = "we_bar"
             # Connect the NAND gate inputs to the bus
             rbl_in_map = zip(["A", "B"], ["gated_clk_bar", "we_bar"])
-            self.connect_vertical_bus(rbl_in_map, self.rbl_inst, self.rail_offsets)  
-        
-            
-        # Connect the output of the precharge enable to the RBL input
-        #if self.port_type == "rw":
-        #    out_pos = self.rbl_in_inst.get_pin("Z").center()
-        #else:
-        #    out_pos = vector(self.rail_offsets["gated_clk_bar"].x, self.rbl_inst.by()-3*self.m2_pitch)
+        else:
+            rbl_in_map = zip(["A"], ["gated_clk_bar"]) 
+        self.connect_vertical_bus(rbl_in_map, self.rbl_inst, self.rail_offsets)
+        self.connect_output(self.rbl_inst, "Z", "rbl_wl")
 
-        self.copy_layout_pin(self.rbl_inst, "Z", "rbl_wl")
-
+        # Input from RBL goes to the delay line for futher delay
         self.copy_layout_pin(self.delay_inst, "in", "rbl_bl")
         
     def create_pen_row(self):
@@ -727,7 +743,6 @@ class control_logic(design.design):
         self.row_end_inst.append(self.w_en_inst)
         
     def route_wen(self):
-        
         if self.port_type == "rw":
             input_name = "we"
         else:

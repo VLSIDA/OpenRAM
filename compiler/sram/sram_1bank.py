@@ -99,13 +99,13 @@ class sram_1bank(sram_base):
             
         # This includes 2 M2 pitches for the row addr clock line.
         control_pos[port] = vector(-self.control_logic_insts[port].width - 2*self.m2_pitch,
-                                   self.bank.bank_array_ll.y - self.control_logic_insts[port].mod.control_logic_center.y - self.bank.m2_gap)
+                                   self.bank.bank_array_ll.y - self.control_logic_insts[port].mod.control_logic_center.y - 2*self.bank.m2_gap )
         self.control_logic_insts[port].place(control_pos[port])
         
         # The row address bits are placed above the control logic aligned on the right.
         x_offset = self.control_logic_insts[port].rx() - self.row_addr_dff_insts[port].width
-        # It is aove the control logic but below the top of the bitcell array
-        y_offset = max(self.control_logic_insts[port].uy(), self.bank.bank_array_ur.y - self.row_addr_dff_insts[port].height)
+        # It is above the control logic but below the top of the bitcell array
+        y_offset = max(self.control_logic_insts[port].uy(), self.bank_inst.uy() - self.row_addr_dff_insts[port].height)
         row_addr_pos[port] = vector(x_offset, y_offset)
         self.row_addr_dff_insts[port].place(row_addr_pos[port])
         
@@ -137,6 +137,30 @@ class sram_1bank(sram_base):
             # Port 1
             port = 1
 
+
+            # Add the col address flops above the bank to the right of the upper-right of bank array
+            if self.col_addr_dff:
+                col_addr_pos[port] = vector(self.bank.bank_array_ur.x + self.bank.m2_gap,
+                                            self.bank.height + max_gap_size + self.dff.height)
+                self.col_addr_dff_insts[port].place(col_addr_pos[port], mirror="MX")
+            else:
+                col_addr_pos[port] = self.bank_inst.ur()
+        
+            # This includes 2 M2 pitches for the row addr clock line
+            control_pos[port] = vector(self.bank_inst.rx() + self.control_logic_insts[port].width + 2*self.m2_pitch,
+                                       self.bank.bank_array_ur.y + self.control_logic_insts[port].height -
+                                       (self.control_logic_insts[port].height - self.control_logic_insts[port].mod.control_logic_center.y)
+                                       + 2*self.bank.m2_gap)
+            #import pdb; pdb.set_trace()
+            self.control_logic_insts[port].place(control_pos[port], mirror="XY")
+        
+            # The row address bits are placed above the control logic aligned on the left.
+            x_offset = control_pos[port].x - self.control_logic_insts[port].width + self.row_addr_dff_insts[port].width
+            # It is below the control logic but below the bottom of the bitcell array
+            y_offset = min(self.control_logic_insts[port].by(), self.bank_inst.by() + self.row_addr_dff_insts[port].height)
+            row_addr_pos[port] = vector(x_offset, y_offset)
+            self.row_addr_dff_insts[port].place(row_addr_pos[port], mirror="XY")
+        
             # Add the data flops above the bank to the left of the upper-right of bank array
             # This relies on the upper-right of the array of the bank
             # decoder in upper left, bank in upper right, sensing in lower right.
@@ -153,29 +177,6 @@ class sram_1bank(sram_base):
                     wmask_pos[port] = vector(self.bank.bank_array_ur.x - self.data_dff_insts[port].width,
                                             self.bank.height + max_gap_size + self.data_dff_insts[port].height)
                     self.wmask_dff_insts[port].place(wmask_pos[port], mirror="MX")
-            else:
-                data_pos[port] = self.bank_inst.ur()
-
-            # Add the col address flops above the bank to the right of the upper-right of bank array
-            if self.col_addr_dff:
-                col_addr_pos[port] = vector(self.bank.bank_array_ur.x + self.bank.m2_gap,
-                                            self.bank.height + max_gap_size + self.dff.height)
-                self.col_addr_dff_insts[port].place(col_addr_pos[port], mirror="MX")
-            else:
-                col_addr_pos[port] = self.bank_inst.ur()
-        
-            # This includes 2 M2 pitches for the row addr clock line
-            control_pos[port] = vector(self.bank_inst.rx() + self.control_logic_insts[port].width + 2*self.m2_pitch,
-                                       self.bank.bank_array_ur.y + self.control_logic_insts[port].mod.control_logic_center.y + self.bank.m2_gap)
-            self.control_logic_insts[port].place(control_pos[port], mirror="XY")
-        
-            # The row address bits are placed above the control logic aligned on the left.
-            x_offset = control_pos[port].x - self.control_logic_insts[port].width + self.row_addr_dff_insts[port].width
-            # It is above the control logic but below the top of the bitcell array
-            y_offset = min(self.control_logic_insts[port].by(), self.bank.bank_array_ll.y - self.row_addr_dff_insts[port].height)
-            row_addr_pos[port] = vector(x_offset, y_offset)
-            self.row_addr_dff_insts[port].place(row_addr_pos[port], mirror="XY")
-        
             
 
     def add_layout_pins(self):
@@ -271,20 +272,23 @@ class sram_1bank(sram_base):
 
             
     def route_control_logic(self):
-        """ Route the outputs from the control logic module """
+        """ Route the control logic pins that are not inputs """
+
         for port in self.all_ports:
             for signal in self.control_logic_outputs[port]:
                 # The clock gets routed separately and is not a part of the bank
                 if "clk" in signal:
                     continue
-                if signal.startswith("rbl"):
-                    continue
                 src_pin = self.control_logic_insts[port].get_pin(signal)
                 dest_pin = self.bank_inst.get_pin(signal+"{}".format(port))                
-                self.connect_rail_from_left_m2m3(src_pin, dest_pin)
-                self.add_via_center(layers=("metal1","via1","metal2"),
-                                    offset=src_pin.rc())
-            
+                self.connect_vbus_m2m3(src_pin, dest_pin)
+
+        for port in self.read_ports:
+            # Only input (besides pins) is the replica bitline
+            src_pin = self.control_logic_insts[port].get_pin("rbl_bl")
+            dest_pin = self.bank_inst.get_pin("rbl_bl{}".format(port))                
+            self.connect_vbus_m2m3(src_pin, dest_pin)
+        
 
     def route_row_addr_dff(self):
         """ Connect the output of the row flops to the bank pins """

@@ -54,8 +54,8 @@ class bank(design.design):
 
     def create_netlist(self):
         self.compute_sizes()
-        self.add_pins()
         self.add_modules()
+        self.add_pins() # Must create the replica bitcell array first
         self.create_instances()
 
         
@@ -78,9 +78,10 @@ class bank(design.design):
         for port in self.read_ports:
             for bit in range(self.word_size):
                 self.add_pin("dout{0}_{1}".format(port,bit),"OUT")
-            self.add_pin("rbl_bl{0}_{0}".format(port),"OUT")
-        for port in self.read_ports:            
-            self.add_pin("rbl_wl{0}_{0}".format(port),"IN")
+        for port in self.read_ports:
+            self.add_pin(self.bitcell_array.get_rbl_bl_name(port),"OUT")
+        for port in self.read_ports:
+            self.add_pin(self.bitcell_array.get_rbl_wl_name(port),"IN")
         for port in self.write_ports:
             for bit in range(self.word_size):
                 self.add_pin("din{0}_{1}".format(port,bit),"IN")
@@ -247,7 +248,7 @@ class bank(design.design):
             
         # LOWER RIGHT QUADRANT
         # To the left of the bitcell array
-        x_offset = self.bitcell_array_right + self.port_address.width + self.m2_gap
+        x_offset = self.bitcell_array_right + self.port_address.width 
         self.port_address_offsets[port] = vector(x_offset,self.main_bitcell_array_bottom)
 
         # UPPER RIGHT QUADRANT
@@ -684,11 +685,12 @@ class bank(design.design):
             control_bus_length = self.max_y_offset - self.main_bitcell_array_top - 2*self.m1_pitch
             control_bus_offset = vector(self.bitcell_array_right,
                                         self.max_y_offset - control_bus_length)
-            
+
+            # The bus for the right port is reversed so that the rbl_wl is closest to the array
             self.bus_xoffset[1] = self.create_bus(layer="metal2",
                                                   pitch=self.m2_pitch,
                                                   offset=control_bus_offset,
-                                                  names=self.control_signals[1],
+                                                  names=list(reversed(self.control_signals[1])),
                                                   length=control_bus_length,
                                                   vertical=True,
                                                   make_pins=(self.num_banks==1))
@@ -950,13 +952,15 @@ class bank(design.design):
                 
         if port in self.read_ports:
             connection.append((self.prefix+"s_en{}".format(port), self.port_data_inst[port].get_pin("s_en").lc()))
-      
+
         for (control_signal, pin_pos) in connection:
+            control_mid_pos = self.bus_xoffset[port][control_signal]
             control_pos = vector(self.bus_xoffset[port][control_signal].x ,pin_pos.y)
-            self.add_path("metal1", [control_pos, pin_pos])
+            self.add_wire(("metal1","via1","metal2"), [control_mid_pos, control_pos, pin_pos])
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=control_pos)
 
+        
         # clk to wordline_driver
         control_signal = self.prefix+"wl_en{}".format(port)
         if port%2:

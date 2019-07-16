@@ -114,7 +114,7 @@ class sram_base(design, verilog, lef):
 
         self.add_lvs_correspondence_points()
         
-        self.offset_all_coordinates()
+        #self.offset_all_coordinates()
 
         highest_coord = self.find_highest_coords()
         self.width = highest_coord[0]
@@ -514,21 +514,28 @@ class sram_base(design, verilog, lef):
         return insts
 
 
-    def connect_rail_from_left_m2m3(self, src_pin, dest_pin):
-        """ Helper routine to connect an unrotated/mirrored oriented instance to the rails """
-        in_pos = src_pin.rc()
+    def connect_vbus_m2m3(self, src_pin, dest_pin):
+        """ Helper routine to connect an instance to a vertical bus.
+        Routes horizontal then vertical L shape.
+        Dest pin is assumed to be on M2.
+        Src pin can be on M1/M2/M3."""
+        
+        if src_pin.cx()<dest_pin.cx():
+            in_pos = src_pin.rc()
+        else:
+            in_pos = src_pin.lc()
         out_pos = dest_pin.center()
+
+        # move horizontal first
         self.add_wire(("metal3","via2","metal2"),[in_pos, vector(out_pos.x,in_pos.y),out_pos])
-        self.add_via_center(layers=("metal2","via2","metal3"),
-                            offset=src_pin.rc())
+        if src_pin.layer=="metal1":
+            self.add_via_center(layers=("metal1","via1","metal2"),
+                                offset=in_pos)
+        if src_pin.layer in ["metal1","metal2"]:
+            self.add_via_center(layers=("metal2","via2","metal3"),
+                                offset=in_pos)
 
-                            
-    def connect_rail_from_left_m2m1(self, src_pin, dest_pin):
-        """ Helper routine to connect an unrotated/mirrored oriented instance to the rails """
-        in_pos = src_pin.rc()
-        out_pos = vector(dest_pin.cx(), in_pos.y)
-        self.add_wire(("metal2","via1","metal1"),[in_pos, out_pos, out_pos - vector(0,self.m2_pitch)])
-
+            
 
     def sp_write(self, sp_name):
         # Write the entire spice of the object to the file

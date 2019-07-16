@@ -171,7 +171,7 @@ class bank(design.design):
 
         # The center point for these cells are the upper-right corner of
         # the bitcell array.
-        # The port address decoder/driver logic is placed on the right and mirrored on X- and Y-axis.
+        # The port address decoder/driver logic is placed on the right and mirrored on Y-axis.
         # The port data write/sense/precharge/mux is placed on the top and mirrored on the X-axis.
         self.bitcell_array_top = self.bitcell_array.height 
         self.bitcell_array_right = self.bitcell_array.width + self.m1_width + self.m2_gap
@@ -213,14 +213,15 @@ class bank(design.design):
 
         # LOWER LEFT QUADRANT
         # Place the col decoder left aligned with wordline driver 
-        # Below the bitcell array with well spacing
+        # This is also placed so that it's supply rails do not align with the SRAM-level
+        # control logic to allow control signals to easily pass over in M3
+        # by placing 1/2 a cell pitch down
         x_offset = self.central_bus_width[port] + self.port_address.wordline_driver.width
         if self.col_addr_size > 0:
             x_offset += self.column_decoder.width + self.col_addr_bus_width
-            y_offset = self.m2_gap + self.column_decoder.height 
+            y_offset = 0.5*self.dff.height + self.column_decoder.height 
         else:
             y_offset = 0
-        y_offset += 2*drc("well_to_well")
         self.column_decoder_offsets[port] = vector(-x_offset,-y_offset)
 
         # Bank select gets placed below the column decoder (x_offset doesn't change)
@@ -257,10 +258,9 @@ class bank(design.design):
         x_offset = self.bitcell_array_right  + self.central_bus_width[port] + self.port_address.wordline_driver.width 
         if self.col_addr_size > 0:
             x_offset += self.column_decoder.width + self.col_addr_bus_width
-            y_offset = self.bitcell_array_top + self.m2_gap + self.column_decoder.height 
+            y_offset = self.bitcell_array_top + 0.5*self.dff.height + self.column_decoder.height 
         else:
             y_offset = self.bitcell_array_top
-        y_offset += 2*drc("well_to_well")
         self.column_decoder_offsets[port] = vector(x_offset,y_offset)
 
         # Bank select gets placed above the column decoder (x_offset doesn't change)
@@ -522,16 +522,16 @@ class bank(design.design):
         Create a 2:4 or 3:8 column address decoder.
         """
 
-        dff = factory.create(module_type="dff")
+        self.dff = factory.create(module_type="dff")
         
         if self.col_addr_size == 0:
             return
         elif self.col_addr_size == 1:
-            self.column_decoder = factory.create(module_type="pinvbuf", height=dff.height)
+            self.column_decoder = factory.create(module_type="pinvbuf", height=self.dff.height)
         elif self.col_addr_size == 2:
-            self.column_decoder = factory.create(module_type="hierarchical_predecode2x4", height=dff.height)
+            self.column_decoder = factory.create(module_type="hierarchical_predecode2x4", height=self.dff.height)
         elif self.col_addr_size == 3:
-            self.column_decoder = factory.create(module_type="hierarchical_predecode3x8", height=dff.height)
+            self.column_decoder = factory.create(module_type="hierarchical_predecode3x8", height=self.dff.height)
         else:
             # No error checking before?
             debug.error("Invalid column decoder?",-1)

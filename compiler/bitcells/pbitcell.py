@@ -878,13 +878,11 @@ class pbitcell(design.design):
 
     def get_all_bl_names(self):
         """ Creates a list of all bl pins names """
-        bl_pins = self.rw_bl_names + self.w_bl_names + self.r_bl_names
-        return bl_pins
+        return self.rw_bl_names + self.w_bl_names + self.r_bl_names
 
     def get_all_br_names(self):
         """ Creates a list of all br pins names """
-        br_pins = self.rw_br_names + self.w_br_names + self.r_br_names
-        return br_pins
+        return self.rw_br_names + self.w_br_names + self.r_br_names
 
     def route_rbc_short(self):
         """ route the short from Q_bar to gnd necessary for the replica bitcell """

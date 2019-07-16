@@ -185,8 +185,8 @@ class replica_bitcell_array(design.design):
         bl_names = [self.rbl_bl_names[x] for x in sorted(self.rbl_bl_names.keys())]
         br_names = [self.rbl_br_names[x] for x in sorted(self.rbl_br_names.keys())]
         for (bl_name,br_name) in zip(bl_names,br_names):
-            self.add_pin(bl_name,"INPUT")
-            self.add_pin(br_name,"INPUT")
+            self.add_pin(bl_name,"OUTPUT")
+            self.add_pin(br_name,"OUTPUT")
         self.add_pin_list(self.bitcell_array_wl_names, "INPUT")
         # Need to sort by port order since dictionary values may not be in order        
         wl_names = [self.rbl_wl_names[x] for x in sorted(self.rbl_wl_names.keys())]

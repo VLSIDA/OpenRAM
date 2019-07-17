@@ -137,7 +137,7 @@ class functional(simulation):
                 if port in self.readwrite_ports:
                     op = random.choice(rw_ops)
                 elif port in self.write_ports:
-                    op = rcandom.choice(w_ops)
+                    op = random.choice(w_ops)
                 else:
                     op = random.choice(r_ops)
                     

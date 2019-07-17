@@ -155,3 +155,8 @@ class replica_column(design.design):
         
         return bitcell_pins
                 
+    def exclude_bits_except_one(self, selected_row):
+        for row, cell in self.cell_inst.items():
+            if row == selected_row:
+                continue
+            self.graph_inst_exclude.add(cell)

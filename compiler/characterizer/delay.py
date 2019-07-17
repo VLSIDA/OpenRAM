@@ -206,6 +206,7 @@ class delay(simulation):
         self.sram.graph_exclude_addr_dff()
         self.sram.graph_exclude_data_dff()
         self.sram.graph_exclude_ctrl_dffs()
+        self.sram.bank.bitcell_array.graph_exclude_replica_col_bits()
         
     def create_graph(self):
         """Creates timing graph to generate the timing paths for the SRAM output."""

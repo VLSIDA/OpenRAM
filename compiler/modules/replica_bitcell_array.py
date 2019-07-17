@@ -138,6 +138,8 @@ class replica_bitcell_array(design.design):
         # Create the full WL names include dummy, replica, and regular bit cells
         self.replica_col_wl_names = []
         self.replica_col_wl_names.extend(["{0}_bot".format(x) for x in self.dummy_cell_wl_names])
+        #Save where the RBL wordlines start for graph purposes. Even positions are changed then graph will break
+        self.rbl_row_pos = len(self.replica_col_wl_names)
         # Left port WLs (one dummy for each port when we allow >1 port)
         for port in range(self.left_rbl):
             # Make names for all RBLs
@@ -442,3 +444,11 @@ class replica_bitcell_array(design.design):
         """Excludes bits in column from being added to graph except target"""
         self.bitcell_array.graph_exclude_bits(targ_row, targ_col)
     
+    def graph_exclude_replica_col_bits(self):
+        for port in range(self.left_rbl+self.right_rbl):
+            #While the rbl_wl bits may be on a few rows. Only keep one for simplicity.
+            self.replica_columns[port].exclude_bits_except_one(self.rbl_row_pos)
+
+    def get_cell_name(self, inst_name, row, col):
+        """Gets the spice name of the target bitcell."""
+        return self.bitcell_array.get_cell_name(inst_name+'.x'+self.bitcell_array_inst.name, row, col)        

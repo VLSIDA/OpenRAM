@@ -52,12 +52,13 @@ class spice():
 
     def add_comment(self, comment):
         """ Add a comment to the spice file """
+
         try:
             self.commments
         except:
             self.comments = []
-        else:
-            self.comments.append(comment)
+
+        self.comments.append(comment)
         
     def add_pin(self, name, pin_type="INOUT"):
         """ Adds a pin to the pins list. Default type is INOUT signal. """
@@ -241,9 +242,12 @@ class spice():
             sp.write("\n.SUBCKT {0} {1}\n".format(self.name,
                                                   " ".join(self.pins)))
 
+            for pin in self.pins:
+                sp.write("* {1:6}: {0} \n".format(pin,self.pin_type[pin]))
+            
             for line in self.comments:
                 sp.write("* {}\n".format(line))
-                    
+                
             # every instance must have a set of connections, even if it is empty.
             if  len(self.insts)!=len(self.conns):
                 debug.error("{0} : Not all instance pins ({1}) are connected ({2}).".format(self.name,

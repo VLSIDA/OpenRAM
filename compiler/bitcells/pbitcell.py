@@ -30,12 +30,20 @@ class pbitcell(design.design):
         self.dummy_bitcell = dummy_bitcell
 
         design.design.__init__(self, name)
-        debug.info(2, "create a multi-port bitcell with {0} rw ports, {1} w ports and {2} r ports".format(self.num_rw_ports,
-                                                                                                          self.num_w_ports,
-                                                                                                          self.num_r_ports))
+        info_string = "{0} rw ports, {1} w ports and {2} r ports".format(self.num_rw_ports,
+                                                                         self.num_w_ports,
+                                                                         self.num_r_ports)
+        debug.info(2, "create a multi-port bitcell with {}".format(info_string))
+        self.add_comment(info_string)
+
+        if self.dummy_bitcell:
+            self.add_comment("dummy bitcell")
+        if self.replica_bitcell:
+            self.add_comment("replica bitcell")
 
         self.create_netlist()
-        # We must always create the bitcell layout because some transistor sizes in the other netlists depend on it
+        # We must always create the bitcell layout
+        # because some transistor sizes in the other netlists depend on it
         self.create_layout()
         self.add_boundary()
 
@@ -377,14 +385,20 @@ class pbitcell(design.design):
 
         # iterate over the number of read/write ports
         for k in range(0,self.num_rw_ports):
+            bl_name = self.rw_bl_names[k]
+            br_name = self.rw_br_names[k]
+            if self.dummy_bitcell:
+                bl_name += "_noconn"
+                br_name += "_noconn"
+                
             # add read/write transistors
             self.readwrite_nmos_left[k] = self.add_inst(name="readwrite_nmos_left{}".format(k),
                                                         mod=self.readwrite_nmos)
-            self.connect_inst([self.rw_bl_names[k], self.rw_wl_names[k], self.Q, "gnd"])
+            self.connect_inst([bl_name, self.rw_wl_names[k], self.Q, "gnd"])
 
             self.readwrite_nmos_right[k] = self.add_inst(name="readwrite_nmos_right{}".format(k),
                                                          mod=self.readwrite_nmos)
-            self.connect_inst([self.Q_bar, self.rw_wl_names[k], self.rw_br_names[k], "gnd"])
+            self.connect_inst([self.Q_bar, self.rw_wl_names[k], br_name, "gnd"])
 
     def place_readwrite_ports(self):
         """ Places read/write ports in the bit cell """
@@ -451,14 +465,20 @@ class pbitcell(design.design):
 
         # iterate over the number of write ports
         for k in range(0,self.num_w_ports):
+            bl_name = self.w_bl_names[k]
+            br_name = self.w_br_names[k]
+            if self.dummy_bitcell:
+                bl_name += "_noconn"
+                br_name += "_noconn"
+
             # add write transistors
             self.write_nmos_left[k] = self.add_inst(name="write_nmos_left{}".format(k),
                                                     mod=self.write_nmos)
-            self.connect_inst([self.w_bl_names[k], self.w_wl_names[k], self.Q, "gnd"])
+            self.connect_inst([bl_name, self.w_wl_names[k], self.Q, "gnd"])
 
             self.write_nmos_right[k] = self.add_inst(name="write_nmos_right{}".format(k),
                                                      mod=self.write_nmos)
-            self.connect_inst([self.Q_bar, self.w_wl_names[k], self.w_br_names[k], "gnd"])
+            self.connect_inst([self.Q_bar, self.w_wl_names[k], br_name, "gnd"])
 
     def place_write_ports(self):
         """ Places write ports in the bit cell """
@@ -533,6 +553,12 @@ class pbitcell(design.design):
 
         # iterate over the number of read ports
         for k in range(0,self.num_r_ports):
+            bl_name = self.r_bl_names[k]
+            br_name = self.r_br_names[k]
+            if self.dummy_bitcell:
+                bl_name += "_noconn"
+                br_name += "_noconn"
+                
             # add read-access transistors
             self.read_access_nmos_left[k] = self.add_inst(name="read_access_nmos_left{}".format(k),
                                                           mod=self.read_nmos)
@@ -545,11 +571,11 @@ class pbitcell(design.design):
             # add read transistors
             self.read_nmos_left[k] = self.add_inst(name="read_nmos_left{}".format(k),
                                                    mod=self.read_nmos)
-            self.connect_inst([self.r_bl_names[k], self.r_wl_names[k], "RA_to_R_left{}".format(k), "gnd"])
+            self.connect_inst([bl_name, self.r_wl_names[k], "RA_to_R_left{}".format(k), "gnd"])
 
             self.read_nmos_right[k] = self.add_inst(name="read_nmos_right{}".format(k),
                                                     mod=self.read_nmos)
-            self.connect_inst(["RA_to_R_right{}".format(k), self.r_wl_names[k], self.r_br_names[k], "gnd"])
+            self.connect_inst(["RA_to_R_right{}".format(k), self.r_wl_names[k], br_name, "gnd"])
 
     def place_read_ports(self):
         """ Places the read ports in the bit cell """

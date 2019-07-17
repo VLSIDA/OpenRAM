@@ -124,6 +124,7 @@ class functional(simulation):
                 comment = self.gen_cycle_comment("read", word, addr, port, self.wmask, self.t_current)
                 self.add_read_one_port(comment, addr, rw_read_din_data, port)
                 self.write_check.append([word, "{0}{1}".format(self.dout_name,port), self.t_current+self.period, check])
+                # don't check X's
                 check += 1
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
@@ -136,7 +137,7 @@ class functional(simulation):
                 if port in self.readwrite_ports:
                     op = random.choice(rw_ops)
                 elif port in self.write_ports:
-                    op = random.choice(w_ops)
+                    op = rcandom.choice(w_ops)
                 else:
                     op = random.choice(r_ops)
                     

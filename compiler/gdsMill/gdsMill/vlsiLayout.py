@@ -729,7 +729,7 @@ class VlsiLayout:
     
     def getBlockages(self,layer):
         """
-        Return all blockages on a given layer in [llx, lly, urx, ury] format and 
+        Return all blockages on a given layer in [coordinate 1, coordinate 2,...] format and
         user units.
         """
         blockages = []
@@ -744,7 +744,7 @@ class VlsiLayout:
 
     def getAllShapes(self,layer):
         """
-        Return all shapes on a given layer in [llx, lly, urx, ury] format and user units for rectangles 
+        Return all shapes on a given layer in [llx, lly, urx, ury] format and user units for rectangles
         and [coordinate 1, coordinate 2,...] format and user units for polygons.
         """
         boundaries = set()

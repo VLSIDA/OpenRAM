@@ -15,7 +15,7 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-#@unittest.skip("SKIPPING sram_wmask_func_test")
+@unittest.skip("SKIPPING sram_wmask_func_test")
 class sram_wmask_func_test(openram_test):
 
     def runTest(self):

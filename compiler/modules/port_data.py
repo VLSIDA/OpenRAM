@@ -175,7 +175,7 @@ class port_data(design.design):
                                                          columns=self.num_cols,
                                                          word_size=self.word_size,
                                                          write_size=self.write_size)
-                self.add_mod(self.write_driver_array)
+                self.add_mod(self.write_mask_array)
             else:
                 self.write_mask_array_inst = None
 
@@ -309,7 +309,7 @@ class port_data(design.design):
             
     def place_write_driver_array(self, offset):
         """ Placing Write Driver  """
-        self.write_driver_array_inst.place(offset=offset, mirror="MX")
+        self .write_driver_array_inst.place(offset=offset, mirror="MX")
             
 
     def compute_instance_offsets(self):

@@ -51,12 +51,13 @@ class functional(simulation):
         self.wmask_enabled = False
         if self.word_size !=self.write_size:
             self.wmask_enabled = True
-            # initialize first wmask bit to 1, otherwise 0
+            # initialize wmask to 1
             for bit in range(self.num_wmask):
-                if bit == 0:
-                    self.wmask[self.num_wmask-1 - bit] = 1
-                else:
-                    self.wmask[self.num_wmask-1 - bit] = 0
+                self.wmask[bit] = 1
+                # if bit == 0:
+                #     self.wmask[self.num_wmask-1 - bit] = 1
+                # else:
+                #     self.wmask[self.num_wmask-1 - bit] = 0
 
     def run(self, feasible_period=None):
         if feasible_period: #period defaults to tech.py feasible period otherwise.
@@ -82,7 +83,7 @@ class functional(simulation):
         r_ops = ["noop", "read"]
         rw_read_din_data = "0"*self.word_size
         check = 0
-        
+
         # First cycle idle
         comment = self.gen_cycle_comment("noop", "0"*self.word_size, "0"*self.addr_size, 0, self.wmask, self.t_current)
         self.add_noop_all_ports(comment, "0"*self.addr_size, "0"*self.word_size)
@@ -92,28 +93,7 @@ class functional(simulation):
         word = self.gen_data()
         comment = self.gen_cycle_comment("write", word, addr, 0, self.wmask, self.t_current)
         self.add_write(comment, addr, word, 0)
-        if self.wmask_enabled:
-            old_word = ""
-            if self.stored_words.get(addr) == None:
-                for i in range(self.word_size):
-                    old_word += "X"
-            else:
-                old_word = self.stored_words[addr]
-            for bit in self.wmask:
-                # Don't write the bits of the new word to the address
-                if self.wmask[bit] == 0:
-                    lower = bit * self.write_size
-                    upper = lower + self.write_size - 1
-                    if bit == self.num_wmask-1:
-                        word = word[0:lower] + old_word[lower:upper+1]
-                    elif bit == 0:
-                        word = old_word[lower:upper+1] + word [upper+1:self.word_size]
-                    else:
-                        word = word[0:lower] + old_word[lower:upper+1] + word [upper+1:self.word_size]
-                    #word = word.replace(word[lower:upper+1],old_word[lower:upper+1],1)
-            self.stored_words[addr] = word
-        else:
-            self.stored_words[addr] = word
+        self.stored_words[addr] = word
 
         # Read at least once. For multiport, it is important that one read cycle uses all RW and R port to read from the same address simultaniously.
         # This will test the viablilty of the transistor sizing in the bitcell.
@@ -124,7 +104,6 @@ class functional(simulation):
                 comment = self.gen_cycle_comment("read", word, addr, port, self.wmask, self.t_current)
                 self.add_read_one_port(comment, addr, rw_read_din_data, port)
                 self.write_check.append([word, "{0}{1}".format(self.dout_name,port), self.t_current+self.period, check])
-                # don't check X's
                 check += 1
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
@@ -148,12 +127,13 @@ class functional(simulation):
                 elif op == "write":
                     addr = self.gen_addr()
                     word = self.gen_data()
-                    wmask  = self.gen_wmask()
+                    # wmask  = self.gen_wmask()
                     # two ports cannot write to the same address
                     if addr in w_addrs:
                         self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, port)
                     else:
-                        comment = self.gen_cycle_comment("write", word, addr, port, wmask, self.t_current)
+                        # comment = self.gen_cycle_comment("write", word, addr, port, wmask, self.t_current)
+                        comment = self.gen_cycle_comment("read", word, addr, port, self.wmask, self.t_current)
                         self.add_write_one_port(comment, addr, word, port)
                         self.stored_words[addr] = word
                         w_addrs.append(addr)
@@ -215,17 +195,26 @@ class functional(simulation):
             wmask_bits[bit] = rand
         return wmask_bits
 
+    # def gen_data(self):
+    #     """ Generates a random word to write. """
+    #     rand = random.randint(0,(2**self.word_size)-1)
+    #     data_bits = self.convert_to_bin(rand,False)
+    #     return data_bits
+
     def gen_data(self):
-        """ Generates a random word to write. """
-        rand = random.randint(0,(2**self.word_size)-1)
-        data_bits = self.convert_to_bin(rand,False)
+        """ Generates a random word, either all 0 or all 1's, to write. """
+        rand = random.randint(0,1)
+        bits = []
+        for bit in range(self.word_size):
+            bits.append(rand)
+        data_bits = ''.join(map(str,bits))
         return data_bits
         
     def gen_addr(self):
         """ Generates a random address value to write to. """
         rand = random.randint(0,(2**self.addr_size)-1)  
         addr_bits = self.convert_to_bin(rand,True)
-        return addr_bits 
+        return addr_bits
         
     def get_data(self):
         """ Gets an available address and corresponding word. """

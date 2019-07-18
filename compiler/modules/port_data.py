@@ -55,12 +55,12 @@ class port_data(design.design):
         if self.write_driver_array:
             self.create_write_driver_array()
             if (self.word_size != self.write_size):
-                self.create_write_mask_array()
+                self.create_write_mask_and_array()
             else:
-                self.write_mask_array_inst = None
+                self.write_mask_and_array_inst = None
         else:
             self.write_driver_array_inst = None
-            self.write_mask_array_inst = None
+            self.write_mask_and_array_inst = None
 
         if self.column_mux_array:
             self.create_column_mux_array()
@@ -171,17 +171,17 @@ class port_data(design.design):
                                                      word_size=self.word_size)
             self.add_mod(self.write_driver_array)
             if (self.word_size != self.write_size):
-                self.write_mask_array = factory.create(module_type="write_mask_array",
-                                                         columns=self.num_cols,
-                                                         word_size=self.word_size,
-                                                         write_size=self.write_size)
-                self.add_mod(self.write_mask_array)
+                self.write_mask_and_array = factory.create(module_type="write_mask_and_array",
+                                                           columns=self.num_cols,
+                                                           word_size=self.word_size,
+                                                           write_size=self.write_size)
+                self.add_mod(self.write_mask_and_array)
             else:
-                self.write_mask_array_inst = None
+                self.write_mask_and_array_inst = None
 
         else:
             self.write_driver_array = None
-            self.write_mask_array = None
+            self.write_mask_and_array = None
 
     def precompute_constants(self):
         """  Get some preliminary data ready """
@@ -282,8 +282,10 @@ class port_data(design.design):
                                                      mod=self.write_driver_array)
 
         temp = []
-        for bit in range(self.word_size):
-            temp.append("din_{}".format(bit))
+ m
+            for bit in range(self.word_size):
+                temp.append("din_{}".format(bit))
+
         for bit in range(self.word_size):            
             if (self.words_per_row == 1):            
                 temp.append(self.bl_names[self.port]+"_{0}".format(bit))
@@ -295,18 +297,18 @@ class port_data(design.design):
         self.connect_inst(temp)
 
 
-    def create_write_mask_array(self):
+    def create_write_mask_and_array(self):
         """ Creating Write Masks  """
-        self.write_mask_array_inst = self.add_inst(name="write_mask_array{}".format(self.port),
-                                                   mod=self.write_mask_array)
+        self.write_mask_and_array_inst = self.add_inst(name="write_mask_and_array{}".format(self.port),
+                                                   mod=self.write_mask_and_array)
 
         temp = []
         for bit in range(self.num_wmask):
-            temp.append("write_mask_".format(bit))
+            temp.append("write_mask_{}".format(bit))
         temp.extend(["w_en", "vdd", "gnd"])
         self.connect_inst(temp)
 
-            
+
     def place_write_driver_array(self, offset):
         """ Placing Write Driver  """
         self .write_driver_array_inst.place(offset=offset, mirror="MX")

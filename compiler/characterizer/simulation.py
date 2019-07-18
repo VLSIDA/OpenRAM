@@ -234,12 +234,12 @@ class simulation():
                                                                      t_current+self.period)
         elif op == "write":
             if (self.wmask_enabled):
-                comment = "\tWriting {0}  to  address {1} with mask bit {0} (from port {2}) during cycle {3} ({4}ns - {5}ns)".format(word,
+                comment = "\tWriting {0}  to  address {1} with mask bit {2} (from port {3}) during cycle {4} ({5}ns - {6}ns)".format(word,
                                                                                                                    addr,
                                                                                                                    wmask,
                                                                                                                    port,
-                                                                                                                   int(
-                                                                                                                       t_current / self.period),
+                                                                                                                   int(t_current / self.period),
+                                                                                                                   t_current,
                                                                                                                    t_current + self.period)
 
             else:

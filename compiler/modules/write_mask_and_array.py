@@ -14,7 +14,7 @@ from vector import vector
 from globals import OPTS
 
 
-class write_mask_array(design.design):
+class write_mask_and_array(design.design):
     """
     Array of tristate drivers to write to the bitlines through the column mux.
     Dynamically generated write driver array of all bitlines.
@@ -40,7 +40,7 @@ class write_mask_array(design.design):
     def create_netlist(self):
         self.add_modules()
         self.add_pins()
-        self.create_write_mask_array()
+#        self.create_write_mask_array()
         self.create_and2_array()
 
 
@@ -67,7 +67,7 @@ class write_mask_array(design.design):
 
     def add_modules(self):
         self.wmask = factory.create(module_type="dff_buf")
-        self.add_mod(self.wmask)
+        #self.add_mod(self.wmask)
         dff_height = self.wmask.height
 
         self.and2 = factory.create(module_type="pand2",
@@ -76,17 +76,17 @@ class write_mask_array(design.design):
         self.add_mod(self.and2)
 
 
-    def create_write_mask_array(self):
-        self.wmask_insts = {}
-        for bit in range(self.num_wmask):
-            name = "write_mask_{}".format(bit)
-            self.wmask_insts[bit] = self.add_inst(name=name,
-                                                   mod=self.wmask)
-
-            self.connect_inst(["wmask_{}".format(bit),
-                               "bank_wmask_{}".format(bit),
-                               "bank_wmask_bar_{}".format(bit),
-                               "clk", "vdd", "gnd"])
+    # def create_write_mask_array(self):
+    #     self.wmask_insts = {}
+    #     for bit in range(self.num_wmask):
+    #         name = "write_mask_{}".format(bit)
+    #         self.wmask_insts[bit] = self.add_inst(name=name,
+    #                                                mod=self.wmask)
+    #
+    #         self.connect_inst(["wmask_{}".format(bit),
+    #                            "bank_wmask_{}".format(bit),
+    #                            "bank_wmask_bar_{}".format(bit),
+    #                            "clk", "vdd", "gnd"])
 
     def create_and2_array(self):
         self.and2_insts = {}

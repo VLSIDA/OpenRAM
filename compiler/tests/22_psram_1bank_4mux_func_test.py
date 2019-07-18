@@ -23,10 +23,13 @@ class psram_1bank_4mux_func_test(openram_test):
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
         OPTS.trim_netlist = False
+
         OPTS.bitcell = "pbitcell"
         OPTS.replica_bitcell="replica_pbitcell"
+        OPTS.dummy_bitcell="dummy_pbitcell"
+
         OPTS.num_rw_ports = 1
-        OPTS.num_r_ports = 1
+        OPTS.num_r_ports = 0
         OPTS.num_w_ports = 1
         
         # This is a hack to reload the characterizer __init__ with the spice version

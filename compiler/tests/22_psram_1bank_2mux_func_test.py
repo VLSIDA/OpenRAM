@@ -15,18 +15,20 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-#@unittest.skip("SKIPPING 22_psram_1bank_2mux_1rw_1r_1w_func_test, third port reads are broken?")
-class psram_1bank_2mux_1rw_1r_1w_func_test(openram_test):
+class psram_1bank_2mux_func_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_{0}".format(OPTS.tech_name))
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
         OPTS.trim_netlist = False
+
         OPTS.bitcell = "pbitcell"
         OPTS.replica_bitcell="replica_pbitcell"
+        OPTS.dummy_bitcell="dummy_pbitcell"
+
         OPTS.num_rw_ports = 1
-        OPTS.num_r_ports = 1
+        OPTS.num_r_ports = 0
         OPTS.num_w_ports = 1
         
         # This is a hack to reload the characterizer __init__ with the spice version

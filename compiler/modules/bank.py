@@ -30,8 +30,10 @@ class bank(design.design):
 
         self.sram_config = sram_config
         sram_config.set_local_config(self)
-        if (self.word_size != self.write_size):
-            self.num_wmask = int(self.word_size/self.write_size)
+        if self.write_size is not None:
+            self.num_wmasks = int(self.word_size/self.write_size)
+        else:
+            self.num_wmasks = 0
         
         if name == "":
             name = "bank_{0}_{1}".format(self.word_size, self.num_words)
@@ -82,9 +84,6 @@ class bank(design.design):
         for port in self.write_ports:
             for bit in range(self.word_size):
                 self.add_pin("din{0}_{1}".format(port,bit),"IN")
-        # if (self.word_size != self.write_size):
-        #     for bit in range(self.word_size):
-        #         self.add_pin()
         for port in self.all_ports:
             for bit in range(self.addr_size):
                 self.add_pin("addr{0}_{1}".format(port,bit),"INPUT")
@@ -100,11 +99,8 @@ class bank(design.design):
             self.add_pin("p_en_bar{0}".format(port), "INPUT")
         for port in self.write_ports:
             self.add_pin("w_en{0}".format(port), "INPUT")
-            if (self.word_size != self.write_size):
-                for bit in range(self.num_wmask):
-                    self.add_pin("bank_wmask{0}_{1}".format(port,bit),"INPUT")
-                # for bit in range(self.num_wmask):
-                #     self.add_pin("wdriver_sel{0}_{1}".format(port, bit),"INOUT")
+            for bit in range(self.num_wmasks):
+                self.add_pin("bank_wmask{0}_{1}".format(port,bit),"INPUT")
         for port in self.all_ports:
             self.add_pin("wl_en{0}".format(port), "INPUT")
         self.add_pin("vdd","POWER")
@@ -413,11 +409,8 @@ class bank(design.design):
                 temp.append("p_en_bar{0}".format(port))
             if port in self.write_ports:
                 temp.append("w_en{0}".format(port))
-                if (self.word_size != self.write_size):
-                    for bit in range(self.num_wmask):
-                        temp.append("bank_wmask{0}_{1}".format(port, bit))
-                    # for bit in range(self.num_wmask):
-                    #     temp.append("wdriver_sel_{0}_{1}".format(port, bit))
+                for bit in range(self.num_wmasks):
+                    temp.append("bank_wmask{0}_{1}".format(port, bit))
             temp.extend(["vdd","gnd"])
             
             self.connect_inst(temp)

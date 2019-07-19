@@ -187,7 +187,7 @@ class multibank(design.design):
                                                         words_per_row=self.words_per_row)
         self.add_mod(self.sense_amp_array)
 
-        if (self.write_size != self.word_size):
+        if self.write_size is not None:
             self.write_mask_driver_array = self.mod_write_mask_driver_array(columns=self.num_cols,
                                                                   word_size=self.word_size,
                                                                   write_size=self.write_size)

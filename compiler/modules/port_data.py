@@ -21,8 +21,10 @@ class port_data(design.design):
         
         sram_config.set_local_config(self)
         self.port = port
-        if (self.word_size != self.write_size):
-            self.num_wmask = int(self.word_size/self.write_size)
+        if self.write_size is not None:
+            self.num_wmasks = int(self.word_size/self.write_size)
+        else:
+            self.num_wmasks = 0
         
         if name == "":
             name = "port_data_{0}".format(self.port)
@@ -55,7 +57,7 @@ class port_data(design.design):
 
         if self.write_driver_array:
             self.create_write_driver_array()
-            if (self.word_size != self.write_size):
+            if self.write_size is not None:
                 self.create_write_mask_and_array()
             else:
                 self.write_mask_and_array_inst = None
@@ -97,11 +99,8 @@ class port_data(design.design):
             self.add_pin("p_en_bar", "INPUT")
         if self.port in self.write_ports:
             self.add_pin("w_en", "INPUT")
-            if (self.word_size != self.write_size):
-                for bit in range(self.num_wmask):
-                    self.add_pin("bank_wmask_{}".format(bit),"INPUT")
-                # for bit in range(self.num_wmask):
-                #     self.add_pin("wdriver_sel_{}".format(bit), "INOUT")
+            for bit in range(self.num_wmasks):
+                self.add_pin("bank_wmask_{}".format(bit),"INPUT")
         self.add_pin("vdd","POWER")
         self.add_pin("gnd","GROUND")
 
@@ -177,7 +176,7 @@ class port_data(design.design):
                                                      word_size=self.word_size,
                                                      write_size=self.write_size)
             self.add_mod(self.write_driver_array)
-            if (self.word_size != self.write_size):
+            if self.write_size is not None:
                 self.write_mask_and_array = factory.create(module_type="write_mask_and_array",
                                                            columns=self.num_cols,
                                                            word_size=self.word_size,
@@ -300,7 +299,7 @@ class port_data(design.design):
                 temp.append(self.bl_names[self.port]+"_out_{0}".format(bit))
                 temp.append(self.br_names[self.port]+"_out_{0}".format(bit))
 
-        if (self.write_size != self.word_size):
+        if self.write_size is not None:
             i = 0
             for bit in range(0,self.word_size,self.write_size):
                 for x in range(self.write_size):
@@ -318,10 +317,10 @@ class port_data(design.design):
                                                    mod=self.write_mask_and_array)
 
         temp = []
-        for bit in range(self.num_wmask):
+        for bit in range(self.num_wmasks):
             temp.append("bank_wmask_{}".format(bit))
         temp.extend(["w_en"])
-        for bit in range(self.num_wmask):
+        for bit in range(self.num_wmasks):
             temp.append("wdriver_sel_{}".format(bit))
         temp.extend(["vdd", "gnd"])
         self.connect_inst(temp)

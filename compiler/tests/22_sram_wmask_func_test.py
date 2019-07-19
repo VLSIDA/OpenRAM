@@ -35,7 +35,7 @@ class sram_wmask_func_test(openram_test):
                         write_size=4,
                         num_banks=1)
         c.words_per_row=1
-        c.recompute_sizes_once()
+        c.recompute_sizes()
         debug.info(1, "Functional test for sram with {} bit words, {} words, {} words per row, {} bit writes, {} banks".format(c.word_size,
                                                                                                                 c.num_words,
                                                                                                                 c.words_per_row,

@@ -31,7 +31,7 @@ class write_mask_and_array(design.design):
         self.word_size = word_size
         self.write_size = write_size
         self.words_per_row = int(columns / word_size)
-        self.num_wmask = int(word_size / write_size)
+        self.num_wmasks = int(word_size / write_size)
 
         self.create_netlist()
         # if not OPTS.netlist_only:
@@ -59,10 +59,10 @@ class write_mask_and_array(design.design):
     #     self.DRC_LVS()
 
     def add_pins(self):
-        for bit in range(self.num_wmask):
+        for bit in range(self.num_wmasks):
             self.add_pin("wmask_in_{}".format(bit),"INPUT")
         self.add_pin("en", "INPUT")
-        for bit in range(self.num_wmask):
+        for bit in range(self.num_wmasks):
             self.add_pin("wmask_out_{}".format(bit),"OUTPUT")
         self.add_pin("vdd","POWER")
         self.add_pin("gnd","GROUND")
@@ -92,7 +92,7 @@ class write_mask_and_array(design.design):
 
     def create_and2_array(self):
         self.and2_insts = {}
-        for bit in range(self.num_wmask):
+        for bit in range(self.num_wmasks):
             name = "and2_{}".format(bit)
             self.and2_insts[bit] = self.add_inst(name=name,
                                                  mod=self.and2)

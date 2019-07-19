@@ -23,8 +23,6 @@ class sram_config:
         # This will get over-written when we determine the organization
         self.words_per_row = words_per_row
 
-        if self.write_size == None:
-            self.write_size = self.word_size
 
         self.compute_sizes()
 
@@ -64,26 +62,7 @@ class sram_config:
             self.words_per_row = self.amend_words_per_row(self.tentative_num_rows, self.words_per_row)
 
         debug.info(1,"Words per row: {}".format(self.words_per_row))
-        self.recompute_sizes_once()
-
-    def recompute_sizes_once(self):
-        """
-        Calculate the auxiliary values assuming fixed number of words per row.
-        """
-
-        # If the banks changed
-        self.num_words_per_bank = self.num_words / self.num_banks
-        self.num_bits_per_bank = self.word_size * self.num_words_per_bank
-
-        # Fix the number of columns and rows
-        self.num_cols = int(self.words_per_row * self.word_size)
-        self.num_rows = int(self.num_words_per_bank / self.words_per_row)
-
-        # Compute the address and bank sizes
-        self.row_addr_size = int(log(self.num_rows, 2))
-        self.col_addr_size = int(log(self.words_per_row, 2))
-        self.bank_addr_size = self.col_addr_size + self.row_addr_size
-        self.addr_size = self.bank_addr_size + int(log(self.num_banks, 2))
+        self.recompute_sizes()
 
     def recompute_sizes(self):
         """ 
@@ -91,10 +70,6 @@ class sram_config:
         This can be called multiple times from the unit test when we reconfigure an 
         SRAM for testing.
         """
-
-        # This function is ran without the write mask option, but word_size can be redefined
-        # which makes the tests think there is a write mask.
-        self.write_size = self.word_size
 
         # If the banks changed
         self.num_words_per_bank = self.num_words/self.num_banks

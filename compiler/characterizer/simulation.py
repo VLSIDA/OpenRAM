@@ -34,10 +34,11 @@ class simulation():
         self.readwrite_ports = self.sram.readwrite_ports
         self.read_ports = self.sram.read_ports
         self.write_ports = self.sram.write_ports
-        self.num_wmask = int(self.word_size/self.write_size)
-        self.wmask_enabled = False
-        if self.word_size !=self.write_size:
-            self.wmask_enabled = True
+        if self.write_size is not None:
+            self.num_wmasks = int(self.word_size/self.write_size)
+        else:
+            self.num_wmasks = 0
+
 
     def set_corner(self,corner):
         """ Set the corner values """
@@ -79,7 +80,7 @@ class simulation():
         # Three dimensional list to handle each addr and data bits for wach port over the number of checks
         self.addr_values = [[[] for bit in range(self.addr_size)] for port in self.all_ports]
         self.data_values = [[[] for bit in range(self.word_size)] for port in self.write_ports]
-        self.wmask_values = [[[] for bit in range(self.num_wmask)] for port in self.write_ports]
+        self.wmask_values = [[[] for bit in range(self.num_wmasks)] for port in self.write_ports]
         
         # For generating comments in SPICE stimulus
         self.cycle_comments = []
@@ -248,7 +249,7 @@ class simulation():
                                                                      t_current,
                                                                      t_current+self.period)
         elif op == "write":
-            if (self.wmask_enabled):
+            if self.write_size is not None:
                 comment = "\tWriting {0}  to  address {1} with mask bit {2} (from port {3}) during cycle {4} ({5}ns - {6}ns)".format(word,
                                                                                                                    addr,
                                                                                                                    wmask,
@@ -300,9 +301,8 @@ class simulation():
         for port in range(total_ports):
             pin_names.append("{0}{1}".format(tech.spice["clk"], port))
 
-        if (self.write_size != self.word_size):
-            num_wmask = int(self.word_size/self.write_size)
-            for bit in range(num_wmask):
+        if self.write_size is not None:
+            for bit in range(self.num_wmasks):
                 pin_names.append("WMASK{0}_{1}".format(port,bit))
             
         for read_output in read_index:

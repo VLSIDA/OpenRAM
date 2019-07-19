@@ -19,7 +19,7 @@ class write_driver_array(design.design):
     Dynamically generated write driver array of all bitlines.
     """
 
-    def __init__(self, name, columns, word_size,write_size):
+    def __init__(self, name, columns, word_size,write_size=None):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("columns: {0}".format(columns))
@@ -60,7 +60,7 @@ class write_driver_array(design.design):
         for i in range(self.word_size):            
             self.add_pin("bl_{0}".format(i))
             self.add_pin("br_{0}".format(i))
-        if self.word_size != self.write_size:
+        if self.write_size != None:
             for i in range(self.word_size):
                 self.add_pin("en_{}".format(i))
         else:
@@ -84,7 +84,7 @@ class write_driver_array(design.design):
             self.driver_insts[index]=self.add_inst(name=name,
                                                    mod=self.driver)
 
-            if self.word_size != self.write_size:
+            if self.write_size != None:
                 self.connect_inst(["data_{0}".format(index),
                                    "bl_{0}".format(index),
                                    "br_{0}".format(index),

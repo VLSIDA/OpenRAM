@@ -32,6 +32,11 @@ class functional(simulation):
         if OPTS.is_unit_test:
             random.seed(12345)
 
+        if self.write_size is not None:
+            self.num_wmasks = int(self.word_size / self.write_size)
+        else:
+            self.num_wmasks = 0
+
         self.set_corner(corner)
         self.set_spice_constants()
         #self.set_feasible_period(sram, spfile, corner)
@@ -46,13 +51,10 @@ class functional(simulation):
         self.read_check = []
 
     def initilize_wmask(self):
-        self.wmask = [None]*self.num_wmask
-        self.num_wmask = int(self.word_size/self.write_size)
-        self.wmask_enabled = False
-        if self.word_size !=self.write_size:
-            self.wmask_enabled = True
+        self.wmask = [None]*self.num_wmasks
+        if self.write_size is not None:
             # initialize wmask to 1
-            for bit in range(self.num_wmask):
+            for bit in range(self.num_wmasks):
                 self.wmask[bit] = 1
                 # if bit == 0:
                 #     self.wmask[self.num_wmask-1 - bit] = 1
@@ -189,8 +191,8 @@ class functional(simulation):
         return(1, "SUCCESS")
 
     def gen_wmask(self):
-        wmask_bits = [None]*self.num_wmask
-        for bit in range(self.num_wmask):
+        wmask_bits = [None]*self.num_wmasks
+        for bit in range(self.num_wmasks):
             rand = random.randint(0, 1)
             wmask_bits[bit] = rand
         return wmask_bits
@@ -292,10 +294,9 @@ class functional(simulation):
 
         # Generate wmask bits
         for port in self.write_ports:
-            self.sf.write("\n* Generation of wmask signals\n")
-            if (self.write_size != self.word_size):
-                num_wmask = int(self.word_size / self.write_size)
-                for bit in range(num_wmask):
+            self.sf.write("\n* Generation of wmask sibfssgnals\n")
+            if self.write_size is not None:
+                for bit in range(self.num_wmasks):
                     sig_name = "WMASK{0}_{1} ".format(port, bit)
                     self.stim.gen_pwl(sig_name, self.cycle_times, self.data_values[port][bit], self.period,
                                       self.slew, 0.05)

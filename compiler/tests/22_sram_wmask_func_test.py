@@ -15,7 +15,7 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-@unittest.skip("SKIPPING sram_wmask_func_test")
+#@unittest.skip("SKIPPING sram_wmask_func_test")
 class sram_wmask_func_test(openram_test):
 
     def runTest(self):
@@ -34,6 +34,8 @@ class sram_wmask_func_test(openram_test):
                         num_words=16,
                         write_size=4,
                         num_banks=1)
+        c.words_per_row=1
+        c.recompute_sizes_once()
         debug.info(1, "Functional test for sram with {} bit words, {} words, {} words per row, {} bit writes, {} banks".format(c.word_size,
                                                                                                                 c.num_words,
                                                                                                                 c.words_per_row,

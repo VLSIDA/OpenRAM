@@ -60,10 +60,12 @@ class write_mask_and_array(design.design):
 
     def add_pins(self):
         for bit in range(self.num_wmask):
-            self.add_pin("wdriver_sel_{}".format(bit))
-        self.add_pin("en")
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+            self.add_pin("wmask_in_{}".format(bit),"INPUT")
+        self.add_pin("en", "INPUT")
+        for bit in range(self.num_wmask):
+            self.add_pin("wmask_out_{}".format(bit),"OUTPUT")
+        self.add_pin("vdd","POWER")
+        self.add_pin("gnd","GROUND")
 
     def add_modules(self):
         self.wmask = factory.create(module_type="dff_buf")
@@ -94,9 +96,9 @@ class write_mask_and_array(design.design):
             name = "and2_{}".format(bit)
             self.and2_insts[bit] = self.add_inst(name=name,
                                                  mod=self.and2)
-            self.connect_inst(["bank_wmask_{}".format(bit),
+            self.connect_inst(["wmask_in_{}".format(bit),
                                "en",
-                               "wdriver_sel_{}".format(bit),
+                               "wmask_out_{}".format(bit),
                                "vdd", "gnd"])
 
 

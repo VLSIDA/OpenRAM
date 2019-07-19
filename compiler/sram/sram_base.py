@@ -357,6 +357,11 @@ class sram_base(design, verilog, lef):
             temp.append("p_en_bar{0}".format(port))
         for port in self.write_ports:
             temp.append("w_en{0}".format(port))
+            if (self.word_size != self.write_size):
+                for bit in range(self.num_masks):
+                    temp.append("bank_wmask{}[{}]".format(port, bit))
+                # for bit in range(self.num_masks):
+                #     temp.append("wdriver_sel{}[{}]".format(port, bit))
         for port in self.all_ports:
             temp.append("wl_en{0}".format(port))
         temp.extend(["vdd", "gnd"])
@@ -499,8 +504,6 @@ class sram_base(design, verilog, lef):
             if port in self.readwrite_ports:
                 temp.append("web{}".format(port))
             temp.append("clk{}".format(port))
-            # if port in self.write_ports:
-            #     temp.append("wmask{}".format(port))
 
             # for port in self.all_ports:
             #     self.add_pin("csb{}".format(port), "INPUT")
@@ -508,11 +511,6 @@ class sram_base(design, verilog, lef):
             #     self.add_pin("web{}".format(port), "INPUT")
             # for port in self.all_ports:
             #     self.add_pin("clk{}".format(port), "INPUT")
-            # # add the optional write mask pins
-            # if self.word_size != self.write_size:
-            #     for port in self.write_ports:
-            #         print("write_ports", port)
-            #         self.add_pin("wmask{0}".format(port), "INPUT")
 
             # Outputs
             if port in self.read_ports:

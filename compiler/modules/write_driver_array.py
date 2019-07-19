@@ -19,7 +19,7 @@ class write_driver_array(design.design):
     Dynamically generated write driver array of all bitlines.
     """
 
-    def __init__(self, name, columns, word_size):
+    def __init__(self, name, columns, word_size,write_size):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("columns: {0}".format(columns))
@@ -27,6 +27,7 @@ class write_driver_array(design.design):
 
         self.columns = columns
         self.word_size = word_size
+        self.write_size = write_size
         self.words_per_row = int(columns / word_size)
 
         self.create_netlist()
@@ -59,7 +60,11 @@ class write_driver_array(design.design):
         for i in range(self.word_size):            
             self.add_pin("bl_{0}".format(i))
             self.add_pin("br_{0}".format(i))
-        self.add_pin("en")
+        if self.word_size != self.write_size:
+            for i in range(self.word_size):
+                self.add_pin("en_{}".format(i))
+        else:
+            self.add_pin("en")
         self.add_pin("vdd")
         self.add_pin("gnd")
 
@@ -79,10 +84,16 @@ class write_driver_array(design.design):
             self.driver_insts[index]=self.add_inst(name=name,
                                                    mod=self.driver)
 
-            self.connect_inst(["data_{0}".format(index),
-                               "bl_{0}".format(index),
-                               "br_{0}".format(index),
-                               "en", "vdd", "gnd"])
+            if self.word_size != self.write_size:
+                self.connect_inst(["data_{0}".format(index),
+                                   "bl_{0}".format(index),
+                                   "br_{0}".format(index),
+                                   "en_{0}".format(index), "vdd", "gnd"])
+            else:
+                self.connect_inst(["data_{0}".format(index),
+                                   "bl_{0}".format(index),
+                                   "br_{0}".format(index),
+                                   "en", "vdd", "gnd"])
 
 
     def place_write_array(self):

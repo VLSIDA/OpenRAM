@@ -79,6 +79,7 @@ class simulation():
         # Three dimensional list to handle each addr and data bits for wach port over the number of checks
         self.addr_values = [[[] for bit in range(self.addr_size)] for port in self.all_ports]
         self.data_values = [[[] for bit in range(self.word_size)] for port in self.write_ports]
+        self.wmask_values = [[[] for bit in range(self.num_wmask)] for port in self.write_ports]
         
         # For generating comments in SPICE stimulus
         self.cycle_comments = []
@@ -129,6 +130,20 @@ class simulation():
                 self.addr_values[port][bit].append(1)
             else:
                 debug.error("Non-binary address string",1)
+            bit -= 1
+
+    def add_wmask(self, wmask, port):
+        """ Add the array of address values """
+        debug.check(len(wmask) == self.num_wmask, "Invalid wmask size.")
+
+        bit = self.addr_size - 1
+        for c in wmask:
+            if c == "0":
+                self.wmask_values[port][bit].append(0)
+            elif c == "1":
+                self.wmask_values[port][bit].append(1)
+            else:
+                debug.error("Non-binary address string", 1)
             bit -= 1
                 
     def add_write(self, comment, address, data, port):
@@ -281,13 +296,14 @@ class simulation():
         for port in range(total_ports):
             if (port in read_index) and (port in write_index):
                 pin_names.append("WEB{0}".format(port))
+
+        for port in range(total_ports):
+            pin_names.append("{0}{1}".format(tech.spice["clk"], port))
+
         if (self.write_size != self.word_size):
             num_wmask = int(self.word_size/self.write_size)
             for bit in range(num_wmask):
                 pin_names.append("WMASK{0}_{1}".format(port,bit))
-
-        for port in range(total_ports):
-            pin_names.append("{0}{1}".format(tech.spice["clk"], port))
             
         for read_output in read_index:
             for i in range(dbits):

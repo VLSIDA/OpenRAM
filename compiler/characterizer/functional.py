@@ -290,6 +290,18 @@ class functional(simulation):
         for port in self.readwrite_ports:
             self.stim.gen_pwl("WEB{}".format(port), self.cycle_times , self.web_values[port], self.period, self.slew, 0.05)
 
+        # Generate wmask bits
+        for port in self.write_ports:
+            self.sf.write("\n* Generation of wmask signals\n")
+            if (self.write_size != self.word_size):
+                num_wmask = int(self.word_size / self.write_size)
+                for bit in range(num_wmask):
+                    sig_name = "WMASK{0}_{1} ".format(port, bit)
+                    self.stim.gen_pwl(sig_name, self.cycle_times, self.data_values[port][bit], self.period,
+                                      self.slew, 0.05)
+                    # self.stim.gen_pwl(sig_name, self.cycle_times, self.wmask_values[port][bit], self.period,
+                    #                   self.slew, 0.05)
+
         # Generate CLK signals
         for port in self.all_ports:
             self.stim.gen_pulse(sig_name="{0}{1}".format(tech.spice["clk"], port),

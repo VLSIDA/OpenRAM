@@ -24,7 +24,7 @@ class control_logic_test(openram_test):
 
         # check control logic for single port
         debug.info(1, "Testing sample for control_logic")
-        a = factory.create(module_type="control_logic", num_rows=128, words_per_row=1, word_size=32, write_size=32)
+        a = factory.create(module_type="control_logic", num_rows=128, words_per_row=1, word_size=32)
         self.local_check(a)
         
 # run the test from the command line

@@ -135,7 +135,7 @@ class simulation():
 
     def add_wmask(self, wmask, port):
         """ Add the array of address values """
-        debug.check(len(wmask) == self.num_wmask, "Invalid wmask size.")
+        debug.check(len(wmask) == self.num_wmasks, "Invalid wmask size.")
 
         bit = self.addr_size - 1
         for c in wmask:
@@ -144,7 +144,8 @@ class simulation():
             elif c == "1":
                 self.wmask_values[port][bit].append(1)
             else:
-                debug.error("Non-binary address string", 1)
+                print(c)
+                #debug.error("Non-binary wmask string", 1)
             bit -= 1
                 
     def add_write(self, comment, address, data, port):
@@ -208,10 +209,24 @@ class simulation():
         debug.check(port in self.write_ports, "Cannot add write cycle to a read port. Port {0}, Write Ports {1}".format(port, self.write_ports))
         debug.info(2, comment)
         self.fn_cycle_comments.append(comment)
-        
+
         self.add_control_one_port(port, "write")
         self.add_data(data,port)
         self.add_address(address,port)
+
+    def add_partial_write_one_port(self, comment, address, data, wmask, port):
+        """ Add the control values for a write cycle (partial). Does not increment the period. """
+        debug.check(port in self.write_ports,
+                    "Cannot add write cycle to a read port. Port {0}, Write Ports {1}".format(port,
+                                                                                              self.write_ports))
+        debug.info(2, comment)
+        self.fn_cycle_comments.append(comment)
+
+        self.add_control_one_port(port, "write")
+        self.add_data(data, port)
+        self.add_address(address, port)
+        #self.add_wmask(wmask,port)
+
                 
     def add_read_one_port(self, comment, address, din_data, port):
         """ Add the control values for a read cycle. Does not increment the period. """
@@ -249,22 +264,20 @@ class simulation():
                                                                      t_current,
                                                                      t_current+self.period)
         elif op == "write":
-            if self.write_size is not None:
-                comment = "\tWriting {0}  to  address {1} with mask bit {2} (from port {3}) during cycle {4} ({5}ns - {6}ns)".format(word,
-                                                                                                                   addr,
-                                                                                                                   wmask,
-                                                                                                                   port,
-                                                                                                                   int(t_current / self.period),
-                                                                                                                   t_current,
-                                                                                                                   t_current + self.period)
-
-            else:
-                comment = "\tWriting {0}  to  address {1} (from port {2}) during cycle {3} ({4}ns - {5}ns)".format(word,
+            comment = "\tWriting {0}  to  address {1} (from port {2}) during cycle {3} ({4}ns - {5}ns)".format(word,
                                                                                                                addr,
                                                                                                                port,
                                                                                                                int(t_current/self.period),
                                                                                                                t_current,
                                                                                                                t_current+self.period)
+        elif op == "partial_write":
+            comment = "\tWriting {0}  to  address {1} with mask bit {2} (from port {3}) during cycle {4} ({5}ns - {6}ns)".format(word,
+                                                                                                            addr,
+                                                                                                            wmask,
+                                                                                                            port,
+                                                                                                            int(t_current / self.period),
+                                                                                                            t_current,
+                                                                                                            t_current + self.period)
         else:
             comment = "\tReading {0} from address {1} (from port {2}) during cycle {3} ({4}ns - {5}ns)".format(word,
                                                                                                            addr,

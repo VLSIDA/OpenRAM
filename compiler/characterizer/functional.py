@@ -152,14 +152,6 @@ class functional(simulation):
                             lower = bit * self.write_size
                             upper = lower + self.write_size - 1
                             new_word = new_word[:lower] + old_word[lower:upper+1] + new_word[upper + 1:]
-                            # if bit == self.num_wmask - 1:
-                            #     new_word = new_word[0:lower] + old_word[lower:upper+1]
-                            # elif bit == 0:
-                            #     new_word = old_word[lower:upper + 1] + new_word[upper + 1:self.word_size]
-                            # else:
-                            #     new_word = new_word[0:lower] + old_word[lower:upper+1] + new_word[upper+1:self.word_size]
-
-                            #wmask = wmask[:index] + "1" + wmask[index + 1:]
 
                     # two ports cannot write to the same address
                     if addr in w_addrs:
@@ -221,15 +213,12 @@ class functional(simulation):
         return(1, "SUCCESS")
 
     def gen_wmask(self):
-        # wmask_bits = [None]*self.num_wmasks
-        # for bit in range(self.num_wmasks):
-        #     rand = random.randint(0,1)
-        #     wmask_bits[bit] = rand
         wmask = ""
+        # generate a random wmask
         for bit in range(self.num_wmasks):
             rand = random.randint(0, 1)
             wmask += str(rand)
-        # prevent the wmask from having all bits on
+        # prevent the wmask from having all bits on or off (not partial write)
         all_zeroes = True
         all_ones = True
         for bit in range(self.num_wmasks):
@@ -243,10 +232,8 @@ class functional(simulation):
         elif all_ones:
             index = random.randint(0, self.num_wmasks - 1)
             wmask = wmask[:index] + "0" + wmask[index + 1:]
-        return wmask
-
-
-        # prevent the wmask from having all bits off
+        # wmask must be reversed since a python list goes right to left and sram bits go left to right.
+        return wmask[::-1]
 
 
     def gen_data(self):

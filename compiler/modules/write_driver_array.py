@@ -30,6 +30,9 @@ class write_driver_array(design.design):
         self.write_size = write_size
         self.words_per_row = int(columns / word_size)
 
+        if self.write_size is not None:
+            self.num_wmasks = int(self.word_size/self.write_size)
+
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -61,7 +64,7 @@ class write_driver_array(design.design):
             self.add_pin("bl_{0}".format(i))
             self.add_pin("br_{0}".format(i))
         if self.write_size != None:
-            for i in range(self.word_size):
+            for i in range(self.num_wmasks):
                 self.add_pin("en_{}".format(i))
         else:
             self.add_pin("en")
@@ -78,17 +81,23 @@ class write_driver_array(design.design):
 
     def create_write_array(self):
         self.driver_insts = {}
+        w = 0
+        windex=0
         for i in range(0,self.columns,self.words_per_row):
             name = "write_driver{}".format(i)
             index = int(i/self.words_per_row)
             self.driver_insts[index]=self.add_inst(name=name,
                                                    mod=self.driver)
 
-            if self.write_size != None:
+            if self.write_size is not None:
                 self.connect_inst(["data_{0}".format(index),
                                    "bl_{0}".format(index),
                                    "br_{0}".format(index),
-                                   "en_{0}".format(index), "vdd", "gnd"])
+                                   "en_{0}".format(windex), "vdd", "gnd"])
+                w+=1
+                if w == self.write_size:
+                    w = 0
+                    windex+=1
             else:
                 self.connect_inst(["data_{0}".format(index),
                                    "bl_{0}".format(index),

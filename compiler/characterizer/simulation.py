@@ -271,7 +271,7 @@ class simulation():
                                                                                                                t_current,
                                                                                                                t_current+self.period)
         elif op == "partial_write":
-            comment = "\tWriting {0}  to  address {1} with mask bit {2} (from port {3}) during cycle {4} ({5}ns - {6}ns)".format(word,
+            comment = "\tWriting (partial) {0}  to  address {1} with mask bit {2} (from port {3}) during cycle {4} ({5}ns - {6}ns)".format(word,
                                                                                                             addr,
                                                                                                             wmask,
                                                                                                             port,

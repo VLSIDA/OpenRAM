@@ -300,11 +300,8 @@ class port_data(design.design):
                 temp.append(self.br_names[self.port]+"_out_{0}".format(bit))
 
         if self.write_size is not None:
-            i = 0
-            for bit in range(0,self.word_size,self.write_size):
-                for x in range(self.write_size):
-                    temp.append("wdriver_sel_{}".format(i))
-                i+=1
+            for i in range(self.num_wmasks):
+                temp.append("wdriver_sel_{}".format(i))
         else:
             temp.append("w_en")
         temp.extend(["vdd", "gnd"])

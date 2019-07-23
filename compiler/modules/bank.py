@@ -174,7 +174,7 @@ class bank(design.design):
         # The port address decoder/driver logic is placed on the right and mirrored on Y-axis.
         # The port data write/sense/precharge/mux is placed on the top and mirrored on the X-axis.
         self.bitcell_array_top = self.bitcell_array.height 
-        self.bitcell_array_right = self.bitcell_array.width + self.m1_width + self.m2_gap
+        self.bitcell_array_right = self.bitcell_array.width 
         
         # These are the offsets of the main array (excluding dummy and replica rows/cols)
         self.main_bitcell_array_top = self.bitcell_array.bitcell_array_inst.uy()
@@ -249,7 +249,7 @@ class bank(design.design):
             
         # LOWER RIGHT QUADRANT
         # To the left of the bitcell array
-        x_offset = self.bitcell_array_right + self.port_address.width 
+        x_offset = self.bitcell_array_right + self.port_address.width + self.m2_gap
         self.port_address_offsets[port] = vector(x_offset,self.main_bitcell_array_bottom)
 
         # UPPER RIGHT QUADRANT
@@ -668,7 +668,7 @@ class bank(design.design):
         # Port 0
         # The bank is at (0,0), so this is to the left of the y-axis.
         # 2 pitches on the right for vias/jogs to access the inputs 
-        control_bus_offset = vector(-self.m2_pitch * self.num_control_lines[0] - self.m2_width, self.min_y_offset)
+        control_bus_offset = vector(-self.m2_pitch * self.num_control_lines[0] - self.m2_pitch, self.min_y_offset)
         # The control bus is routed up to two pitches below the bitcell array
         control_bus_length = self.main_bitcell_array_bottom - self.min_y_offset - 2*self.m1_pitch
         self.bus_xoffset[0] = self.create_bus(layer="metal2",
@@ -683,9 +683,8 @@ class bank(design.design):
         if len(self.all_ports)==2:
             # The other control bus is routed up to two pitches above the bitcell array
             control_bus_length = self.max_y_offset - self.main_bitcell_array_top - 2*self.m1_pitch
-            control_bus_offset = vector(self.bitcell_array_right,
+            control_bus_offset = vector(self.bitcell_array_right + self.m2_pitch,
                                         self.max_y_offset - control_bus_length)
-
             # The bus for the right port is reversed so that the rbl_wl is closest to the array
             self.bus_xoffset[1] = self.create_bus(layer="metal2",
                                                   pitch=self.m2_pitch,

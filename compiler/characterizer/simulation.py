@@ -137,18 +137,17 @@ class simulation():
         """ Add the array of address values """
         debug.check(len(wmask) == self.num_wmasks, "Invalid wmask size.")
 
-        bit = self.addr_size - 1
+        bit = self.num_wmasks - 1
         for c in wmask:
             if c == "0":
                 self.wmask_values[port][bit].append(0)
             elif c == "1":
                 self.wmask_values[port][bit].append(1)
             else:
-                print(c)
-                #debug.error("Non-binary wmask string", 1)
+                debug.error("Non-binary wmask string", 1)
             bit -= 1
                 
-    def add_write(self, comment, address, data, port):
+    def add_write(self, comment, address, data, wmask, port):
         """ Add the control values for a write cycle. """
         debug.check(port in self.write_ports, "Cannot add write cycle to a read port. Port {0}, Write Ports {1}".format(port, self.write_ports))
         debug.info(2, comment)
@@ -161,15 +160,16 @@ class simulation():
         self.add_control_one_port(port, "write")
         self.add_data(data,port)
         self.add_address(address,port)
+        self.add_wmask(wmask,port)
         
         #This value is hard coded here. Possibly change to member variable or set in add_noop_one_port
         noop_data = "0"*self.word_size
         #Add noops to all other ports.
         for unselected_port in self.all_ports:
             if unselected_port != port:
-                self.add_noop_one_port(address, noop_data, unselected_port)
+                self.add_noop_one_port(address, noop_data, wmask, unselected_port)
                     
-    def add_read(self, comment, address, din_data, port):
+    def add_read(self, comment, address, din_data, wmask, port):
         """ Add the control values for a read cycle. """
         debug.check(port in self.read_ports, "Cannot add read cycle to a write port. Port {0}, Read Ports {1}".format(port, self.read_ports))
         debug.info(2, comment)
@@ -183,6 +183,7 @@ class simulation():
         #If the port is also a readwrite then add data.
         if port in self.write_ports:
             self.add_data(din_data,port)
+            self.add_wmask(wmask,port)
         self.add_address(address, port)
         
         #This value is hard coded here. Possibly change to member variable or set in add_noop_one_port
@@ -190,9 +191,9 @@ class simulation():
         #Add noops to all other ports.
         for unselected_port in self.all_ports:
             if unselected_port != port:
-                self.add_noop_one_port(address, noop_data, unselected_port)
+                self.add_noop_one_port(address, noop_data, wmask, unselected_port)
 
-    def add_noop_all_ports(self, comment, address, data):
+    def add_noop_all_ports(self, comment, address, data, wmask):
         """ Add the control values for a noop to all ports. """
         debug.info(2, comment)
         self.fn_cycle_comments.append(comment)
@@ -202,9 +203,9 @@ class simulation():
         self.t_current += self.period
          
         for port in self.all_ports:
-            self.add_noop_one_port(address, data, port)
-            
-    def add_write_one_port(self, comment, address, data, port):
+            self.add_noop_one_port(address, data, wmask, port)
+
+    def add_write_one_port(self, comment, address, data, wmask, port):
         """ Add the control values for a write cycle. Does not increment the period. """
         debug.check(port in self.write_ports, "Cannot add write cycle to a read port. Port {0}, Write Ports {1}".format(port, self.write_ports))
         debug.info(2, comment)
@@ -213,22 +214,24 @@ class simulation():
         self.add_control_one_port(port, "write")
         self.add_data(data,port)
         self.add_address(address,port)
+        self.add_wmask(wmask,port)
 
-    def add_partial_write_one_port(self, comment, address, data, wmask, port):
-        """ Add the control values for a write cycle (partial). Does not increment the period. """
-        debug.check(port in self.write_ports,
-                    "Cannot add write cycle to a read port. Port {0}, Write Ports {1}".format(port,
-                                                                                              self.write_ports))
-        debug.info(2, comment)
-        self.fn_cycle_comments.append(comment)
-
-        self.add_control_one_port(port, "write")
-        self.add_data(data, port)
-        self.add_address(address, port)
-        #self.add_wmask(wmask,port)
+    #
+    # def add_partial_write_one_port(self, comment, address, data, wmask, port):
+    #     """ Add the control values for a write cycle (partial). Does not increment the period. """
+    #     debug.check(port in self.write_ports,
+    #                 "Cannot add write cycle to a read port. Port {0}, Write Ports {1}".format(port,
+    #                                                                                           self.write_ports))
+    #     debug.info(2, comment)
+    #     self.fn_cycle_comments.append(comment)
+    #
+    #     self.add_control_one_port(port, "write")
+    #     self.add_data(data, port)
+    #     self.add_address(address, port)
+    #     self.add_wmask(wmask,port)
 
                 
-    def add_read_one_port(self, comment, address, din_data, port):
+    def add_read_one_port(self, comment, address, din_data, wmask, port):
         """ Add the control values for a read cycle. Does not increment the period. """
         debug.check(port in self.read_ports, "Cannot add read cycle to a write port. Port {0}, Read Ports {1}".format(port, self.read_ports))
         debug.info(2, comment)
@@ -238,13 +241,15 @@ class simulation():
         #If the port is also a readwrite then add data.
         if port in self.write_ports:
             self.add_data(din_data,port)
+            self.add_wmask(wmask,port)
         self.add_address(address, port)
                 
-    def add_noop_one_port(self, address, data, port):
+    def add_noop_one_port(self, address, data, wmask, port):
         """ Add the control values for a noop to a single port. Does not increment the period. """   
         self.add_control_one_port(port, "noop")
         if port in self.write_ports:
             self.add_data(data,port)
+            self.add_wmask(wmask,port)
         self.add_address(address, port)
 
     def append_cycle_comment(self, port, comment):
@@ -258,7 +263,7 @@ class simulation():
                                                                            time_spacing,
                                                                            comment))  
         
-    def gen_cycle_comment(self, op, word, addr, port, wmask, t_current):
+    def gen_cycle_comment(self, op, word, addr, wmask, port, t_current):
         if op == "noop":
             comment = "\tIdle during cycle {0} ({1}ns - {2}ns)".format(int(t_current/self.period),
                                                                      t_current,

@@ -30,7 +30,10 @@ class functional(simulation):
         
         # Seed the characterizer with a constant seed for unit tests
         if OPTS.is_unit_test:
-            random.seed(12345)
+            random.seed(91218)
+            #12364?
+            #12365
+            #91218
 
         if self.write_size is not None:
             self.num_wmasks = int(self.word_size / self.write_size)
@@ -88,24 +91,26 @@ class functional(simulation):
         check = 0
 
         # First cycle idle
-        comment = self.gen_cycle_comment("noop", "0"*self.word_size, "0"*self.addr_size, 0, self.wmask, self.t_current)
-        self.add_noop_all_ports(comment, "0"*self.addr_size, "0"*self.word_size)
+        comment = self.gen_cycle_comment("noop", "0"*self.word_size, "0"*self.addr_size, self.wmask, 0, self.t_current)
+        self.add_noop_all_ports(comment, "0"*self.addr_size, "0"*self.word_size, "0"*self.num_wmasks)
         
         # Write at least once
         addr = self.gen_addr()
         word = self.gen_data()
-        comment = self.gen_cycle_comment("write", word, addr, 0, self.wmask, self.t_current)
-        self.add_write(comment, addr, word, 0)
+        # print("write", self.t_current, addr, word)
+        comment = self.gen_cycle_comment("write", word, addr, self.wmask, 0, self.t_current)
+        self.add_write(comment, addr, word, self.wmask, 0)
         self.stored_words[addr] = word
 
         # Read at least once. For multiport, it is important that one read cycle uses all RW and R port to read from the same address simultaniously.
         # This will test the viablilty of the transistor sizing in the bitcell.
         for port in self.all_ports:
             if port in self.write_ports:
-                self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, port)
+                self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, "0"*self.num_wmasks, port)
             else:
-                comment = self.gen_cycle_comment("read", word, addr, port, self.wmask, self.t_current)
-                self.add_read_one_port(comment, addr, rw_read_din_data, port)
+                # print("read", self.t_current, addr, word)
+                comment = self.gen_cycle_comment("read", word, addr, self.wmask, port, self.t_current)
+                self.add_read_one_port(comment, addr, rw_read_din_data, "1"*self.num_wmasks, port)
                 self.write_check.append([word, "{0}{1}".format(self.dout_name,port), self.t_current+self.period, check])
                 check += 1
         self.cycle_times.append(self.t_current)
@@ -126,21 +131,23 @@ class functional(simulation):
                 if op == "noop":
                     addr = "0"*self.addr_size
                     word = "0"*self.word_size
-                    self.add_noop_one_port(addr, word, port)
+                    wmask = "0" * self.num_wmasks
+                    self.add_noop_one_port(addr, word, wmask, port)
                 elif op == "write":
                     addr = self.gen_addr()
                     word = self.gen_data()
+                    # print("w",self.t_current,addr,word)
                     # two ports cannot write to the same address
                     if addr in w_addrs:
-                        self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, port)
+                        self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, "0"*self.num_wmasks, port)
                     else:
-                        comment = self.gen_cycle_comment("read", word, addr, port, self.wmask, self.t_current)
-                        self.add_write_one_port(comment, addr, word, port)
+                        comment = self.gen_cycle_comment("write", word, addr, self.wmask, port, self.t_current)
+                        self.add_write_one_port(comment, addr, word, self.wmask, port)
                         self.stored_words[addr] = word
                         w_addrs.append(addr)
                 elif op == "partial_write":
                     #write only to a word that's been written to
-                    addr, old_word = self.get_data()
+                    (addr,old_word) = self.get_data()
                     # rand = random.randint(0,len(w_addrs)-1)
                     # addr = w_addrs[rand]
                     word = self.gen_data()
@@ -152,23 +159,24 @@ class functional(simulation):
                             lower = bit * self.write_size
                             upper = lower + self.write_size - 1
                             new_word = new_word[:lower] + old_word[lower:upper+1] + new_word[upper + 1:]
-
+                    # print("partial_w",self.t_current,addr,wmask,word, "new", new_word)
                     # two ports cannot write to the same address
                     if addr in w_addrs:
-                        self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, port)
+                        self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, "0"*self.num_wmasks, port)
                     else:
-                        comment = self.gen_cycle_comment("partial_write", word, addr, port, wmask, self.t_current)
-                        self.add_partial_write_one_port(comment, addr, word, wmask, port)
+                        comment = self.gen_cycle_comment("partial_write", word, addr, wmask, port, self.t_current)
+                        self.add_write_one_port(comment, addr, word, wmask, port)
                         self.stored_words[addr] = new_word
                         w_addrs.append(addr)
                 else:
                     (addr,word) = random.choice(list(self.stored_words.items()))
+                    # print("read",self.t_current,addr,word)
                     # cannot read from an address that is currently being written to
                     if addr in w_addrs:
-                        self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, port)
+                        self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, "0"*self.num_wmasks, port)
                     else:
-                        comment = self.gen_cycle_comment("read", word, addr, port, self.wmask, self.t_current)
-                        self.add_read_one_port(comment, addr, rw_read_din_data, port)
+                        comment = self.gen_cycle_comment("read", word, addr, self.wmask, port, self.t_current)
+                        self.add_read_one_port(comment, addr, rw_read_din_data, "1"*self.num_wmasks, port)
                         self.write_check.append([word, "{0}{1}".format(self.dout_name,port), self.t_current+self.period, check])
                         check += 1
                 
@@ -176,8 +184,8 @@ class functional(simulation):
             self.t_current += self.period
         
         # Last cycle idle needed to correctly measure the value on the second to last clock edge
-        comment = self.gen_cycle_comment("noop", "0"*self.word_size, "0"*self.addr_size, 0, self.wmask, self.t_current)
-        self.add_noop_all_ports(comment, "0"*self.addr_size, "0"*self.word_size)
+        comment = self.gen_cycle_comment("noop", "0"*self.word_size, "0"*self.addr_size, self.wmask, 0, self.t_current)
+        self.add_noop_all_ports(comment, "0"*self.addr_size, "0"*self.word_size, "0"*self.num_wmasks)
             
     def read_stim_results(self):
         # Extrat DOUT values from spice timing.lis
@@ -337,10 +345,10 @@ class functional(simulation):
                 self.sf.write("\n* Generation of wmask signals\n")
                 for bit in range(self.num_wmasks):
                     sig_name = "WMASK{0}_{1} ".format(port, bit)
-                    self.stim.gen_pwl(sig_name, self.cycle_times, self.data_values[port][bit], self.period,
-                                      self.slew, 0.05)
-                    # self.stim.gen_pwl(sig_name, self.cycle_times, self.wmask_values[port][bit], self.period,
+                    # self.stim.gen_pwl(sig_name, self.cycle_times, self.data_values[port][bit], self.period,
                     #                   self.slew, 0.05)
+                    self.stim.gen_pwl(sig_name, self.cycle_times, self.wmask_values[port][bit], self.period,
+                                      self.slew, 0.05)
 
         # Generate CLK signals
         for port in self.all_ports:

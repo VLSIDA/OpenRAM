@@ -70,7 +70,6 @@ class sram_factory:
 
         # Use the default  name if there are default arguments
         # This is especially for library cells so that the spice and gds files can be found.
-        print(module_type,len(kwargs))
         if len(kwargs)>0:
             # Create a unique name and increment the index
             module_name = "{0}_{1}".format(module_type, self.module_indices[module_type])

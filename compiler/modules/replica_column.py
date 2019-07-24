@@ -53,13 +53,13 @@ class replica_column(design.design):
         self.DRC_LVS()
 
     def add_pins(self):
-        column_list = self.cell.get_all_bitline_names()
-        for cell_column in column_list:
-            self.add_pin("{0}_{1}".format(cell_column,0))
-        row_list = self.cell.get_all_wl_names()
+        
+        for bl_name in self.cell.get_all_bitline_names():
+            self.add_pin("{0}_{1}".format(bl_name,0))
+
         for row in range(self.total_size):
-            for cell_row in row_list:
-                self.add_pin("{0}_{1}".format(cell_row,row))
+            for wl_name in self.cell.get_all_wl_names():
+                self.add_pin("{0}_{1}".format(wl_name,row))
                     
         self.add_pin("vdd")
         self.add_pin("gnd")
@@ -112,21 +112,18 @@ class replica_column(design.design):
     def add_layout_pins(self):
         """ Add the layout pins """
         
-        row_list = self.cell.get_all_wl_names()
-        column_list = self.cell.get_all_bitline_names()
-
-        for cell_column in column_list:
-            bl_pin = self.cell_inst[0].get_pin(cell_column)
-            self.add_layout_pin(text=cell_column,
+        for bl_name in self.cell.get_all_bitline_names():
+            bl_pin = self.cell_inst[0].get_pin(bl_name)
+            self.add_layout_pin(text=bl_name,
                                 layer="metal2",
                                 offset=bl_pin.ll(),
                                 width=bl_pin.width(),
                                 height=self.height)
 
         for row in range(self.total_size):
-            for cell_row in row_list:
-                wl_pin = self.cell_inst[row].get_pin(cell_row)
-                self.add_layout_pin(text=cell_row+"_{0}".format(row),
+            for wl_name in self.cell.get_all_wl_names():
+                wl_pin = self.cell_inst[row].get_pin(wl_name)
+                self.add_layout_pin(text="{0}_{1}".format(wl_name,row),
                                     layer="metal1",
                                     offset=wl_pin.ll().scale(0,1),
                                     width=self.width,

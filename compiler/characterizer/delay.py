@@ -82,7 +82,6 @@ class delay(simulation):
     def create_read_port_measurement_objects(self):
         """Create the measurements used for read ports: delays, slews, powers"""
 
-        import pdb; pdb.set_trace()
         self.read_lib_meas = []
         self.clk_frmt = "clk{0}" # Unformatted clock name
         targ_name = "{0}{1}_{2}".format(self.dout_name,"{}",self.probe_data) # Empty values are the port and probe data bit
@@ -161,18 +160,18 @@ class delay(simulation):
     def create_debug_measurement_objects(self):
         """Create debug measurement to help identify failures."""
         
-        self.debug_volt_meas = []
+        self.dout_volt_meas = []
         for meas in self.delay_meas:
             # Output voltage measures
-            self.debug_volt_meas.append(voltage_at_measure("v_{}".format(meas.name), 
+            self.dout_volt_meas.append(voltage_at_measure("v_{}".format(meas.name), 
                                                            meas.targ_name_no_port)) 
-            self.debug_volt_meas[-1].meta_str = meas.meta_str
+            self.dout_volt_meas[-1].meta_str = meas.meta_str
          
         self.sen_meas = delay_measure("delay_sen", self.clk_frmt, self.sen_name, "FALL", "RISE", measure_scale=1e9)
         self.sen_meas.meta_str = sram_op.READ_ZERO        
         self.sen_meas.meta_add_delay = True
         
-        return self.debug_volt_meas+[self.sen_meas]
+        return self.dout_volt_meas+[self.sen_meas]
      
     def create_read_bit_measures(self):
         """ Adds bit measurements for read0 and read1 cycles """
@@ -213,7 +212,7 @@ class delay(simulation):
         (cell_name, cell_inst) = self.sram.get_cell_name(self.sram.name, bit_row, bit_col)
         storage_names = cell_inst.mod.get_storage_net_names()
         debug.check(len(storage_names) == 2, ("Only inverting/non-inverting storage nodes"
-                  "supported for characterization. Storage nets={}").format(storage_names))
+                                              "supported for characterization. Storage nets={}").format(storage_names))
         q_name = cell_name+'.'+str(storage_names[0])
         qbar_name = cell_name+'.'+str(storage_names[1])
         
@@ -559,8 +558,10 @@ class delay(simulation):
         
         meas_cycle = self.cycle_times[self.measure_cycles[port][volt_meas.meta_str]]
 
-        # Measurement occurs at the end of the period -> current period start + period 
-        at_time = meas_cycle+self.period
+        # Measurement occurs slightly into the next period so we know that the value
+        # "stuck" after the end of the period -> current period start + 1.25*period
+        at_time = meas_cycle+1.25*self.period
+            
         return (at_time, port)
     
     def get_volt_when_measure_variants(self, port, volt_meas):
@@ -732,6 +733,11 @@ class delay(simulation):
         # Loop through all targeted ports and collect delays and powers.
         result = [{} for i in self.all_ports]
 
+        
+        # First, check that the memory has the right values at the right times
+        if not self.check_bit_measures():
+            return(False,{})
+
         for port in self.targ_write_ports:
             debug.info(2, "Checking write values for port {}".format(port))            
             write_port_dict = {}
@@ -753,7 +759,6 @@ class delay(simulation):
             if not self.check_sen_measure(port):
                 return (False,{})
             success = self.check_read_debug_measures(port)
-            success = success and self.check_bit_measures()
             
             # Check timing for read ports. Power is only checked if it was read correctly
             if not self.check_valid_delays(read_port_dict) or not success:
@@ -762,7 +767,7 @@ class delay(simulation):
                 debug.error("Failed to Measure Read Port Values:\n\t\t{0}".format(read_port_dict),1) 
                 
             result[port].update(read_port_dict)
-            
+
         return (True,result)
 
     def check_sen_measure(self, port):
@@ -782,7 +787,6 @@ class delay(simulation):
         
         # Currently, only check if the opposite than intended value was read during
         # the read cycles i.e. neither of these measurements should pass.
-        success = True               
         # FIXME: these checks need to be re-done to be more robust against possible errors        
         bl_vals = {}
         br_vals = {}
@@ -794,29 +798,35 @@ class delay(simulation):
                 br_vals[meas.meta_str] = val
 
             debug.info(2,"{}={}".format(meas.name,val))
-                
-        bl_check = False    
-        for meas in self.debug_volt_meas:
+
+        for meas in self.dout_volt_meas:
             val = meas.retrieve_measure(port=port)
             debug.info(2,"{}={}".format(meas.name, val))
-            if type(val) != float:
-                continue
+            debug.check(type(val)==float, "Error retrieving numeric measurement: {0} {1}".format(meas.name,val))
 
             if meas.meta_str == sram_op.READ_ONE and val < self.vdd_voltage*0.1:
-                success = False
+                dout_success = False
                 debug.info(1, "Debug measurement failed. Value {}V was read on read 1 cycle.".format(val))
-                bl_check = self.check_bitline_meas(bl_vals[sram_op.READ_ONE], br_vals[sram_op.READ_ONE])
+                bl_success = self.check_bitline_meas(bl_vals[sram_op.READ_ONE], br_vals[sram_op.READ_ONE])
             elif meas.meta_str == sram_op.READ_ZERO and val > self.vdd_voltage*0.9:
-                success = False
+                dout_success = False
                 debug.info(1, "Debug measurement failed. Value {}V was read on read 0 cycle.".format(val))
-                bl_check = self.check_bitline_meas(br_vals[sram_op.READ_ONE], bl_vals[sram_op.READ_ONE])
-                
+                bl_success = self.check_bitline_meas(br_vals[sram_op.READ_ONE], bl_vals[sram_op.READ_ONE])
+            elif meas.meta_str == sram_op.READ_ONE and val > self.vdd_voltage*0.9:
+                dout_success = True
+                bl_success = True
+            elif meas.meta_str == sram_op.READ_ZERO and val < self.vdd_voltage*0.1:
+                dout_success = True
+                bl_success = True
+            else:
+                dout_success = False
+                bl_success = False
             # If the bitlines have a correct value while the output does not then that is a 
             # sen error. FIXME: there are other checks that can be done to solidfy this conclusion.
-            if bl_check:
+            if not dout_success and bl_success:
                 debug.error("Sense amp enable timing error. Increase the delay chain through the configuration file.",1)
             
-        return success
+        return dout_success
         
     
     def check_bit_measures(self):
@@ -824,7 +834,6 @@ class delay(simulation):
         Checks the measurements which represent the internal storage voltages
         at the end of the read cycle.
         """
-        success = True
         for polarity, meas_list in self.bit_meas.items():
             for meas in meas_list:
                 val = meas.retrieve_measure()
@@ -839,10 +848,18 @@ class delay(simulation):
                 elif (meas_cycle == sram_op.READ_ZERO and polarity == bit_polarity.INVERTING) or\
                      (meas_cycle == sram_op.READ_ONE and polarity == bit_polarity.NONINVERTING):
                     success = val > self.vdd_voltage/2
+                elif (meas_cycle == sram_op.WRITE_ZERO and polarity == bit_polarity.INVERTING) or\
+                     (meas_cycle == sram_op.WRITE_ONE and polarity == bit_polarity.NONINVERTING):
+                    success = val > self.vdd_voltage/2
+                elif (meas_cycle == sram_op.WRITE_ONE and polarity == bit_polarity.INVERTING) or\
+                     (meas_cycle == sram_op.WRITE_ZERO and polarity == bit_polarity.NONINVERTING):
+                    success = val < self.vdd_voltage/2
+                else:
+                    success = False
                 if not success:
-                    debug.info(1,("Wrong value detected on probe bit during read cycle. " 
-                    "Check writes and control logic for bugs.\n measure={}, op={}, "
-                    "bit_storage={}, V(bit)={}").format(meas.name, meas_cycle.name, polarity.name,val))
+                    debug.info(1,("Wrong value detected on probe bit during read/write cycle. " 
+                                  "Check writes and control logic for bugs.\n measure={}, op={}, "
+                                  "bit_storage={}, V(bit)={}").format(meas.name, meas_cycle.name, polarity.name,val))
         return success        
                    
     def check_bitline_meas(self, v_discharged_bl, v_charged_bl):

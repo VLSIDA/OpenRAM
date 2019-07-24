@@ -30,10 +30,7 @@ class functional(simulation):
         
         # Seed the characterizer with a constant seed for unit tests
         if OPTS.is_unit_test:
-            random.seed(91218)
-            #12364?
-            #12365
-            #91218
+            random.seed(12345)
 
         if self.write_size is not None:
             self.num_wmasks = int(self.word_size / self.write_size)
@@ -136,7 +133,7 @@ class functional(simulation):
                 elif op == "write":
                     addr = self.gen_addr()
                     word = self.gen_data()
-                    # print("w",self.t_current,addr,word)
+                    # print("write",self.t_current,addr,word)
                     # two ports cannot write to the same address
                     if addr in w_addrs:
                         self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, "0"*self.num_wmasks, port)
@@ -148,8 +145,6 @@ class functional(simulation):
                 elif op == "partial_write":
                     #write only to a word that's been written to
                     (addr,old_word) = self.get_data()
-                    # rand = random.randint(0,len(w_addrs)-1)
-                    # addr = w_addrs[rand]
                     word = self.gen_data()
                     wmask  = self.gen_wmask()
                     new_word = word
@@ -159,7 +154,7 @@ class functional(simulation):
                             lower = bit * self.write_size
                             upper = lower + self.write_size - 1
                             new_word = new_word[:lower] + old_word[lower:upper+1] + new_word[upper + 1:]
-                    # print("partial_w",self.t_current,addr,wmask,word, "new", new_word)
+                    # print("partial_w",self.t_current,addr,wmask,word, "partial_w_word:", new_word)
                     # two ports cannot write to the same address
                     if addr in w_addrs:
                         self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, "0"*self.num_wmasks, port)
@@ -175,7 +170,7 @@ class functional(simulation):
                     if addr in w_addrs:
                         self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, "0"*self.num_wmasks, port)
                     else:
-                        comment = self.gen_cycle_comment("read", word, addr, self.wmask, port, self.t_current)
+                        # comment = self.gen_cycle_comment("read", word, addr, self.wmask, port, self.t_current)
                         self.add_read_one_port(comment, addr, rw_read_din_data, "1"*self.num_wmasks, port)
                         self.write_check.append([word, "{0}{1}".format(self.dout_name,port), self.t_current+self.period, check])
                         check += 1

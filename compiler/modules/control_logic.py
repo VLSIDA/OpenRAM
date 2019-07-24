@@ -628,14 +628,14 @@ class control_logic(design.design):
                             offset=out_pos)
         
     def create_pen_row(self):
-        if self.port_type == "rw":
-            # input: gated_clk_bar, we_bar, output: pre_p_en
-            self.pre_p_en_inst=self.add_inst(name="and2_pre_p_en",
-                                             mod=self.and2)
-            self.connect_inst(["gated_clk_buf", "we_bar", "pre_p_en", "vdd", "gnd"])
-            input_name = "pre_p_en"
-        else:
-            input_name = "gated_clk_buf"
+        # if self.port_type == "rw":
+        #     # input: gated_clk_bar, we_bar, output: pre_p_en
+        #     self.pre_p_en_inst=self.add_inst(name="and2_pre_p_en",
+        #                                      mod=self.and2)
+        #     self.connect_inst(["gated_clk_buf", "we_bar", "pre_p_en", "vdd", "gnd"])
+        #     input_name = "pre_p_en"
+        # else:
+        input_name = "gated_clk_buf"
 
         # input: pre_p_en, output: p_en_bar
         self.p_en_bar_inst=self.add_inst(name="inv_p_en_bar",

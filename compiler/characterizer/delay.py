@@ -76,12 +76,13 @@ class delay(simulation):
             for meas in meas_list:
                 name = meas.name.lower()
                 debug.check(name not in name_set,("SPICE measurements must have unique names. "
-                                                       "Duplicate name={}").format(name))
+                                                  "Duplicate name={}").format(name))
                 name_set.add(name)
     
     def create_read_port_measurement_objects(self):
         """Create the measurements used for read ports: delays, slews, powers"""
-        
+
+        import pdb; pdb.set_trace()
         self.read_lib_meas = []
         self.clk_frmt = "clk{0}" # Unformatted clock name
         targ_name = "{0}{1}_{2}".format(self.dout_name,"{}",self.probe_data) # Empty values are the port and probe data bit
@@ -496,7 +497,7 @@ class delay(simulation):
 
         self.sf.close()
         
-    def get_read_measure_variants(self, port, measure_obj):
+    def get_measure_variants(self, port, measure_obj, measure_type=None):
         """
         Checks the measurement object and calls respective function for
         related measurement inputs.
@@ -506,7 +507,7 @@ class delay(simulation):
         if meas_type is delay_measure or meas_type is slew_measure:
             variant_tuple = self.get_delay_measure_variants(port, measure_obj)
         elif meas_type is power_measure:
-            variant_tuple = self.get_power_measure_variants(port, measure_obj, "read")
+            variant_tuple = self.get_power_measure_variants(port, measure_obj, measure_type)
         elif meas_type is voltage_when_measure:
             variant_tuple = self.get_volt_when_measure_variants(port, measure_obj)
         elif meas_type is voltage_at_measure:
@@ -580,29 +581,9 @@ class delay(simulation):
         # add measure statements for delays/slews
         for meas_list in self.read_meas_lists:
             for measure in meas_list:
-                measure_variant_inp_tuple = self.get_read_measure_variants(port, measure)
+                measure_variant_inp_tuple = self.get_measure_variants(port, measure, "read")
                 measure.write_measure(self.stim, measure_variant_inp_tuple)
 
-    def get_write_measure_variants(self, port, measure_obj):
-        """
-        Checks the measurement object and calls respective function for related measurement inputs.
-        """
-        
-        meas_type = type(measure_obj)
-        if meas_type is power_measure:
-            return self.get_power_measure_variants(port, measure_obj, "write")
-        elif meas_type is voltage_at_measure:
-            variant_tuple = self.get_volt_at_measure_variants(port, measure_obj)
-        else:
-            debug.error("Input function not defined for measurement type={}".format(meas_type))
-            
-        # Removes port input from any object which does not use it. This shorthand only works if
-        # the measurement has port as the last input. Could be implemented by measurement type or 
-        # remove entirely from measurement classes.
-        if not measure_obj.has_port:
-            variant_tuple = variant_tuple[:-1]
-        return variant_tuple
-            
             
     def write_delay_measures_write_port(self, port):
         """
@@ -612,7 +593,7 @@ class delay(simulation):
         # add measure statements for power
         for meas_list in self.write_meas_lists:
             for measure in meas_list:
-                measure_variant_inp_tuple = self.get_write_measure_variants(port, measure)
+                measure_variant_inp_tuple = self.get_measure_variants(port, measure, "write")
                 measure.write_measure(self.stim, measure_variant_inp_tuple)
 
     def write_delay_measures(self):
@@ -758,14 +739,13 @@ class delay(simulation):
                 write_port_dict[measure.name] = measure.retrieve_measure(port=port)
 
             if not check_dict_values_is_float(write_port_dict):
-                debug.error("Failed to Measure Write Port Values:\n\t\t{0}".format(write_port_dict),1) # Printing the entire dict looks bad. 
+                debug.error("Failed to Measure Write Port Values:\n\t\t{0}".format(write_port_dict),1) 
             result[port].update(write_port_dict)
             
         
         for port in self.targ_read_ports:
             debug.info(2, "Checking read delay values for port {}".format(port))
             read_port_dict = {}
-            # Get measurements from output file
             for measure in self.read_lib_meas:
                 read_port_dict[measure.name] = measure.retrieve_measure(port=port)
                 
@@ -779,7 +759,7 @@ class delay(simulation):
             if not self.check_valid_delays(read_port_dict) or not success:
                 return (False,{})
             if not check_dict_values_is_float(read_port_dict):
-                debug.error("Failed to Measure Read Port Values:\n\t\t{0}".format(read_port_dict),1) # Printing the entire dict looks bad.       
+                debug.error("Failed to Measure Read Port Values:\n\t\t{0}".format(read_port_dict),1) 
                 
             result[port].update(read_port_dict)
             

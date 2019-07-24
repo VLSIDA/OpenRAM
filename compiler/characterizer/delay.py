@@ -653,7 +653,6 @@ class delay(simulation):
             # Clear any write target ports and set read port
             self.targ_write_ports = [port]
             self.targ_read_ports = [port]
-            success = False
            
             debug.info(1, "Trying feasible period: {0}ns on Port {1}".format(feasible_period, port))
             self.period = feasible_period

@@ -52,7 +52,7 @@ class delay(simulation):
         self.add_graph_exclusions()
         
     def create_measurement_names(self):
-        """Create measurement names. The names themselves currently define the type of measurement"""
+        """ Create measurement names. The names themselves currently define the type of measurement """
 
         self.delay_meas_names = ["delay_lh", "delay_hl", "slew_lh", "slew_hl"]
         self.power_meas_names = ["read0_power", "read1_power", "write0_power", "write1_power"]
@@ -60,14 +60,17 @@ class delay(simulation):
         # self.bitline_delay_names = ["delay_bl", "delay_br"]
        
     def create_measurement_objects(self):
-        """Create the measurements used for read and write ports"""
+        """ Create the measurements used for read and write ports """
+        
         self.read_meas_lists = self.create_read_port_measurement_objects()
         self.write_meas_lists = self.create_write_port_measurement_objects()
         self.check_meas_names(self.read_meas_lists+self.write_meas_lists)
         
     def check_meas_names(self, measures_lists):
-        """Given measurements (in 2d list), checks that their names are unique.
-           Spice sim will fail otherwise."""
+        """
+        Given measurements (in 2d list), checks that their names are unique.
+        Spice sim will fail otherwise.
+        """
         name_set = set()
         for meas_list in measures_lists:
             for meas in meas_list:
@@ -121,6 +124,7 @@ class delay(simulation):
         unique error checking, these are separated from other measurements.
         These measurements are only associated with read values.
         """
+        
         self.bitline_volt_meas = []
 
         self.bitline_volt_meas.append(voltage_at_measure("v_bl_READ_ZERO", 
@@ -140,6 +144,7 @@ class delay(simulation):
         
     def create_write_port_measurement_objects(self):
         """Create the measurements used for read ports: delays, slews, powers"""
+        
         self.write_lib_meas = []
 
         self.write_lib_meas.append(power_measure("write1_power", "RISE", measure_scale=1e3))
@@ -149,10 +154,12 @@ class delay(simulation):
         
         write_measures = []
         write_measures.append(self.write_lib_meas)
+        write_measures.append(self.create_write_bit_measures())
         return write_measures
     
     def create_debug_measurement_objects(self):
         """Create debug measurement to help identify failures."""
+        
         self.debug_volt_meas = []
         for meas in self.delay_meas:
             # Output voltage measures
@@ -167,7 +174,8 @@ class delay(simulation):
         return self.debug_volt_meas+[self.sen_meas]
      
     def create_read_bit_measures(self):
-        """Adds bit measurements for read0 and read1 cycles"""
+        """ Adds bit measurements for read0 and read1 cycles """
+        
         self.bit_meas = {bit_polarity.NONINVERTING:[], bit_polarity.INVERTING:[]}
         meas_cycles = (sram_op.READ_ZERO, sram_op.READ_ONE)
         for cycle in meas_cycles:
@@ -178,10 +186,27 @@ class delay(simulation):
                 self.bit_meas[polarity].append(meas)
         # Dictionary values are lists, reduce to a single list of measurements
         return [meas for meas_list in self.bit_meas.values() for meas in meas_list] 
-     
+
+    def create_write_bit_measures(self):
+        """ Adds bit measurements for write0 and write1 cycles """
+        
+        self.bit_meas = {bit_polarity.NONINVERTING:[], bit_polarity.INVERTING:[]}
+        meas_cycles = (sram_op.WRITE_ZERO, sram_op.WRITE_ONE)
+        for cycle in meas_cycles:
+            meas_tag = "a{}_b{}_{}".format(self.probe_address, self.probe_data, cycle.name)
+            single_bit_meas = self.get_bit_measures(meas_tag, self.probe_address, self.probe_data)
+            for polarity,meas in single_bit_meas.items():
+                meas.meta_str = cycle
+                self.bit_meas[polarity].append(meas)
+        # Dictionary values are lists, reduce to a single list of measurements
+        return [meas for meas_list in self.bit_meas.values() for meas in meas_list] 
+    
     def get_bit_measures(self, meas_tag, probe_address, probe_data):
-        """Creates measurements for the q/qbar of input bit position.
-           meas_tag is a unique identifier for the measurement."""     
+        """
+        Creates measurements for the q/qbar of input bit position.
+        meas_tag is a unique identifier for the measurement.
+        """
+        
         bit_col = self.get_data_bit_column_number(probe_address, probe_data)
         bit_row = self.get_address_row_number(probe_address)
         (cell_name, cell_inst) = self.sram.get_cell_name(self.sram.name, bit_row, bit_col)
@@ -190,6 +215,7 @@ class delay(simulation):
                   "supported for characterization. Storage nets={}").format(storage_names))
         q_name = cell_name+'.'+str(storage_names[0])
         qbar_name = cell_name+'.'+str(storage_names[1])
+        
         # Bit measures, measurements times to be defined later. The measurement names must be unique
         # but they is enforced externally
         q_meas = voltage_at_measure("v_q_{}".format(meas_tag), q_name, has_port=False)
@@ -199,11 +225,13 @@ class delay(simulation):
          
     def set_load_slew(self,load,slew):
         """ Set the load and slew """
+        
         self.load = load
         self.slew = slew
         
     def add_graph_exclusions(self):
         """Exclude portions of SRAM from timing graph which are not relevant"""
+        
         # other initializations can only be done during analysis when a bit has been selected
         # for testing.
         self.sram.bank.graph_exclude_precharge()
@@ -214,6 +242,7 @@ class delay(simulation):
         
     def create_graph(self):
         """Creates timing graph to generate the timing paths for the SRAM output."""
+        
         self.sram.bank.bitcell_array.init_graph_params() # Removes previous bit exclusions
         self.sram.bank.bitcell_array.graph_exclude_bits(self.wordline_row, self.bitline_column)
         
@@ -224,6 +253,7 @@ class delay(simulation):
 
     def set_internal_spice_names(self):
         """Sets important names for characterization such as Sense amp enable and internal bit nets."""
+        
         port = 0
         self.graph.get_all_paths('{}{}'.format(tech.spice["clk"], port), \
                      '{}{}_{}'.format(self.dout_name, port, self.probe_data))
@@ -233,10 +263,13 @@ class delay(simulation):
         
         self.bl_name,self.br_name = self.get_bl_name(self.graph.all_paths)
         debug.info(2,"bl name={}, br name={}".format(self.bl_name,self.br_name))
-    
+        
     def get_sen_name(self, paths):
-        """Gets the signal name associated with the sense amp enable from input paths.
-           Only expects a single path to contain the sen signal name."""
+        """
+        Gets the signal name associated with the sense amp enable from input paths.
+        Only expects a single path to contain the sen signal name.
+        """
+        
         sa_mods = factory.get_mods(OPTS.sense_amp)
         # Any sense amp instantiated should be identical, any change to that 
         # will require some identification to determine the mod desired.
@@ -247,6 +280,7 @@ class delay(simulation):
      
     def get_bl_name(self, paths):
         """Gets the signal name associated with the bitlines in the bank."""
+        
         cell_mods = factory.get_mods(OPTS.bitcell)
         if len(cell_mods)>=1:
             cell_mod = self.get_primary_cell_mod(cell_mods)
@@ -264,16 +298,20 @@ class delay(simulation):
             bl_names.append(self.get_alias_in_path(paths, int_net, cell_mod, exclude_set))
                 
         return bl_names[0], bl_names[1]          
-     
+
+    
     def get_bl_name_search_exclusions(self):
         """Gets the mods as a set which should be excluded while searching for name."""
+        
         # Exclude the RBL as it contains bitcells which are not in the main bitcell array
         # so it makes the search awkward
         return set(factory.get_mods(OPTS.replica_bitline))
         
     def get_primary_cell_mod(self, cell_mods):
-        """Distinguish bitcell array mod from replica bitline array.
-           Assume there are no replica bitcells in the primary array."""
+        """
+        Distinguish bitcell array mod from replica bitline array.
+        Assume there are no replica bitcells in the primary array.
+        """
         if len(cell_mods) == 1:
             return cell_mods[0]
         rbc_mods = factory.get_mods(OPTS.replica_bitcell)
@@ -290,6 +328,7 @@ class delay(simulation):
         
     def are_mod_pins_equal(self, mods):
         """Determines if there are pins differences in the input mods"""
+        
         if len(mods) == 0:
             return True
         pins = mods[0].pins
@@ -299,8 +338,11 @@ class delay(simulation):
         return True
         
     def get_alias_in_path(self, paths, int_net, mod, exclusion_set=None): 
-        """Finds a single alias for the int_net in given paths. 
-        More or less hits cause an error"""
+        """
+        Finds a single alias for the int_net in given paths. 
+        More or less hits cause an error
+        """
+        
         net_found = False
         for path in paths:
             aliases = self.sram.find_aliases(self.sram_spc_name, self.pins, path, int_net, mod, exclusion_set)
@@ -318,6 +360,7 @@ class delay(simulation):
      
     def check_arguments(self):
         """Checks if arguments given for write_stimulus() meets requirements"""
+        
         try:
             int(self.probe_address, 2)
         except ValueError:
@@ -353,10 +396,12 @@ class delay(simulation):
         
 
     def write_delay_stimulus(self):
-        """ Creates a stimulus file for simulations to probe a bitcell at a given clock period.
+        """ 
+        Creates a stimulus file for simulations to probe a bitcell at a given clock period.
         Address and bit were previously set with set_probe().
         Input slew (in ns) and output capacitive load (in fF) are required for charaterization.
         """
+        
         self.check_arguments()
 
         # obtains list of time-points for each rising clk edge
@@ -452,7 +497,11 @@ class delay(simulation):
         self.sf.close()
         
     def get_read_measure_variants(self, port, measure_obj):
-        """Checks the measurement object and calls respective function for related measurement inputs."""
+        """
+        Checks the measurement object and calls respective function for
+        related measurement inputs.
+        """
+        
         meas_type = type(measure_obj)
         if meas_type is delay_measure or meas_type is slew_measure:
             variant_tuple = self.get_delay_measure_variants(port, measure_obj)
@@ -472,7 +521,11 @@ class delay(simulation):
         return variant_tuple
         
     def get_delay_measure_variants(self, port, delay_obj):
-        """Get the measurement values that can either vary from simulation to simulation (vdd, address) or port to port (time delays)"""
+        """
+        Get the measurement values that can either vary from simulation to
+        simulation (vdd, address) or port to port (time delays)
+        """
+        
         # Return value is intended to match the delay measure format:  trig_td, targ_td, vdd, port
         # vdd is arguably constant as that is true for a single lib file.
         if delay_obj.meta_str == sram_op.READ_ZERO:
@@ -491,6 +544,7 @@ class delay(simulation):
     
     def get_power_measure_variants(self, port, power_obj, operation):
         """Get the measurement values that can either vary port to port (time delays)"""
+        
         # Return value is intended to match the power measure format:  t_initial, t_final, port
         t_initial = self.cycle_times[self.measure_cycles[port][power_obj.meta_str]]
         t_final = self.cycle_times[self.measure_cycles[port][power_obj.meta_str]+1]
@@ -498,21 +552,21 @@ class delay(simulation):
         return (t_initial, t_final, port)
     
     def get_volt_at_measure_variants(self, port, volt_meas):
-        """Get the measurement values that can either vary port to port (time delays)"""
-        # Only checking 0 value reads for now.
-        if volt_meas.meta_str == sram_op.READ_ZERO:
-            # Falling delay are measured starting from neg. clk edge. Delay adjusted to that.
-            meas_cycle = self.cycle_times[self.measure_cycles[port][volt_meas.meta_str]]
-        elif volt_meas.meta_str == sram_op.READ_ONE:
-            meas_cycle = self.cycle_times[self.measure_cycles[port][volt_meas.meta_str]]
-        else:
-            debug.error("Unrecognised delay Index={}".format(volt_meas.meta_str),1)
+        """
+        Get the measurement values that can either vary port to port (time delays)
+        """
+        
+        meas_cycle = self.cycle_times[self.measure_cycles[port][volt_meas.meta_str]]
+
         # Measurement occurs at the end of the period -> current period start + period 
         at_time = meas_cycle+self.period
         return (at_time, port)
     
     def get_volt_when_measure_variants(self, port, volt_meas):
-        """Get the measurement values that can either vary port to port (time delays)"""
+        """
+        Get the measurement values that can either vary port to port (time delays)
+        """
+        
         # Only checking 0 value reads for now.
         t_trig = meas_cycle_delay = self.cycle_times[self.measure_cycles[port][sram_op.READ_ZERO]]
 
@@ -522,6 +576,7 @@ class delay(simulation):
         """
         Write the measure statements to quantify the delay and power results for a read port.
         """
+        
         # add measure statements for delays/slews
         for meas_list in self.read_meas_lists:
             for measure in meas_list:
@@ -529,17 +584,31 @@ class delay(simulation):
                 measure.write_measure(self.stim, measure_variant_inp_tuple)
 
     def get_write_measure_variants(self, port, measure_obj):
-        """Checks the measurement object and calls respective function for related measurement inputs."""
+        """
+        Checks the measurement object and calls respective function for related measurement inputs.
+        """
+        
         meas_type = type(measure_obj)
         if meas_type is power_measure:
             return self.get_power_measure_variants(port, measure_obj, "write")
+        elif meas_type is voltage_at_measure:
+            variant_tuple = self.get_volt_at_measure_variants(port, measure_obj)
         else:
-            debug.error("Input function not defined for measurement type={}".format(meas_type))        
+            debug.error("Input function not defined for measurement type={}".format(meas_type))
+            
+        # Removes port input from any object which does not use it. This shorthand only works if
+        # the measurement has port as the last input. Could be implemented by measurement type or 
+        # remove entirely from measurement classes.
+        if not measure_obj.has_port:
+            variant_tuple = variant_tuple[:-1]
+        return variant_tuple
+            
             
     def write_delay_measures_write_port(self, port):
         """
         Write the measure statements to quantify the power results for a write port.
         """
+        
         # add measure statements for power
         for meas_list in self.write_meas_lists:
             for measure in meas_list:
@@ -550,17 +619,22 @@ class delay(simulation):
         """
         Write the measure statements to quantify the delay and power results for all targeted ports.
         """
+        
         self.sf.write("\n* Measure statements for delay and power\n")
 
         # Output some comments to aid where cycles start and
         # what is happening
         for comment in self.cycle_comments:
             self.sf.write("* {}\n".format(comment))
-            
+
+        self.sf.write("\n")
         for read_port in self.targ_read_ports:
-           self.write_delay_measures_read_port(read_port)
+            self.sf.write("* Read ports {}\n".format(read_port))
+            self.write_delay_measures_read_port(read_port)
+           
         for write_port in self.targ_write_ports:
-           self.write_delay_measures_write_port(write_port)
+            self.sf.write("* Write ports {}\n".format(write_port))
+            self.write_delay_measures_write_port(write_port)
         
                                  
     def write_power_measures(self):
@@ -595,14 +669,16 @@ class delay(simulation):
                 debug.error("Timed out, could not find a feasible period.",2)
             
             # Clear any write target ports and set read port
-            self.targ_write_ports = []
+            self.targ_write_ports = [port]
             self.targ_read_ports = [port]
             success = False
            
             debug.info(1, "Trying feasible period: {0}ns on Port {1}".format(feasible_period, port))
             self.period = feasible_period
             (success, results)=self.run_delay_simulation()
+            
             # Clear these target ports after simulation
+            self.targ_write_ports = []
             self.targ_read_ports = []
             
             if not success:
@@ -615,9 +691,9 @@ class delay(simulation):
             delay_str = "feasible_delay {0:.4f}ns/{1:.4f}ns".format(*feasible_delays)
             slew_str = "slew {0:.4f}ns/{1:.4f}ns".format(*feasible_slews)
             debug.info(2, "feasible_period passed for Port {3}: {0}ns {1} {2} ".format(feasible_period,
-                                                                         delay_str,
-                                                                         slew_str,
-                                                                         port))
+                                                                                       delay_str,
+                                                                                       slew_str,
+                                                                                       port))
                 
             if success:
                 debug.info(2, "Found feasible_period for port {0}: {1}ns".format(port, feasible_period))
@@ -660,39 +736,23 @@ class delay(simulation):
         works on the trimmed netlist by default, so powers do not
         include leakage of all cells.
         """
-        # Sanity Check
+        
         debug.check(self.period > 0, "Target simulation period non-positive") 
         
-        sim_passed = True
-        result = [{} for i in self.all_ports]
-        # Checking from not data_value to data_value
         self.write_delay_stimulus()
 
         self.stim.run_sim()
+
+        self.check_measurements()
+
+    def check_measurements(self):
+        """ Check the write and read measurements """
         
-        # Loop through all targeted ports and collect delays and powers. 
-        # Too much duplicate code here. Try reducing
-        for port in self.targ_read_ports:
-            debug.info(2, "Checking delay values for port {}".format(port))
-            read_port_dict = {}
-            # Get measurements from output file
-            for measure in self.read_lib_meas:
-                read_port_dict[measure.name] = measure.retrieve_measure(port=port)
-                
-            # Check sen timing, then bitlines, then general measurements.
-            if not self.check_sen_measure(port):
-                return (False,{})
-            success = self.check_debug_measures(port)
-            success = success and self.check_bit_measures()
-            # Check timing for read ports. Power is only checked if it was read correctly
-            if not self.check_valid_delays(read_port_dict) or not success:
-                return (False,{})
-            if not check_dict_values_is_float(read_port_dict):
-                debug.error("Failed to Measure Read Port Values:\n\t\t{0}".format(read_port_dict),1) # Printing the entire dict looks bad.       
-                
-            result[port].update(read_port_dict)
-            
+        # Loop through all targeted ports and collect delays and powers.
+        result = [{} for i in self.all_ports]
+
         for port in self.targ_write_ports:
+            debug.info(2, "Checking write values for port {}".format(port))            
             write_port_dict = {}
             for measure in self.write_lib_meas:
                 write_port_dict[measure.name] = measure.retrieve_measure(port=port)
@@ -701,21 +761,45 @@ class delay(simulation):
                 debug.error("Failed to Measure Write Port Values:\n\t\t{0}".format(write_port_dict),1) # Printing the entire dict looks bad. 
             result[port].update(write_port_dict)
             
-        # The delay is from the negative edge for our SRAM
-        return (sim_passed,result)
+        
+        for port in self.targ_read_ports:
+            debug.info(2, "Checking read delay values for port {}".format(port))
+            read_port_dict = {}
+            # Get measurements from output file
+            for measure in self.read_lib_meas:
+                read_port_dict[measure.name] = measure.retrieve_measure(port=port)
+                
+            # Check sen timing, then bitlines, then general measurements.
+            if not self.check_sen_measure(port):
+                return (False,{})
+            success = self.check_read_debug_measures(port)
+            success = success and self.check_bit_measures()
+            
+            # Check timing for read ports. Power is only checked if it was read correctly
+            if not self.check_valid_delays(read_port_dict) or not success:
+                return (False,{})
+            if not check_dict_values_is_float(read_port_dict):
+                debug.error("Failed to Measure Read Port Values:\n\t\t{0}".format(read_port_dict),1) # Printing the entire dict looks bad.       
+                
+            result[port].update(read_port_dict)
+            
+        return (True,result)
 
     def check_sen_measure(self, port):
         """Checks that the sen occurred within a half-period"""
+        
         sen_val = self.sen_meas.retrieve_measure(port=port)
-        debug.info(2,"S_EN delay={} ns".format(sen_val))
+        debug.info(2,"s_en delay={}ns".format(sen_val))
         if self.sen_meas.meta_add_delay:
             max_delay = self.period/2
         else:
             max_delay = self.period
         return not (type(sen_val) != float or sen_val > max_delay)
         
-    def check_debug_measures(self, port):
+    
+    def check_read_debug_measures(self, port):
         """Debug measures that indicate special conditions."""
+        
         # Currently, only check if the opposite than intended value was read during
         # the read cycles i.e. neither of these measurements should pass.
         success = True               
@@ -756,8 +840,10 @@ class delay(simulation):
         
     
     def check_bit_measures(self):
-        """Checks the measurements which represent the internal storage voltages
-        at the end of the read cycle."""
+        """
+        Checks the measurements which represent the internal storage voltages
+        at the end of the read cycle.
+        """
         success = True
         for polarity, meas_list in self.bit_meas.items():
             for meas in meas_list:
@@ -780,8 +866,10 @@ class delay(simulation):
         return success        
                    
     def check_bitline_meas(self, v_discharged_bl, v_charged_bl):
-        """Checks the value of the discharging bitline. Confirms s_en timing errors.
-           Returns true if the bitlines are at there expected value."""
+        """
+        Checks the value of the discharging bitline. Confirms s_en timing errors.
+        Returns true if the bitlines are at there expected value.
+        """
         # The inputs looks at discharge/charged bitline rather than left or right (bl/br)
         # Performs two checks, discharging bitline is at least 10% away from vdd and there is a 
         # 10% vdd difference between the bitlines. Both need to fail to be considered a s_en error.
@@ -794,8 +882,8 @@ class delay(simulation):
     def run_power_simulation(self):
         """ 
         This simulates a disabled SRAM to get the leakage power when it is off.
-        
         """
+        
         debug.info(1, "Performing leakage power simulations.")
         self.write_power_stimulus(trim=False)
         self.stim.run_sim()
@@ -817,6 +905,7 @@ class delay(simulation):
     
     def check_valid_delays(self, result_dict):
         """ Check if the measurements are defined and if they are valid. """
+        
         # Hard coded names currently
         delay_hl = result_dict["delay_hl"]
         delay_lh = result_dict["delay_lh"]
@@ -884,6 +973,7 @@ class delay(simulation):
         
         # Binary search algorithm to find the min period (max frequency) of input port
         time_out = 25
+        self.targ_write_ports = [port]
         self.targ_read_ports = [port]
         while True:
             time_out -= 1
@@ -892,9 +982,9 @@ class delay(simulation):
 
             self.period = target_period
             debug.info(1, "MinPeriod Search Port {3}: {0}ns (ub: {1} lb: {2})".format(target_period,
-                                                                             ub_period,
-                                                                             lb_period,
-                                                                             port))
+                                                                                      ub_period,
+                                                                                      lb_period,
+                                                                                      port))
 
             if self.try_period(feasible_delays):
                 ub_period = target_period
@@ -915,14 +1005,16 @@ class delay(simulation):
         This tries to simulate a period and checks if the result
         works. If it does and the delay is within 5% still, it returns True.
         """
+        
         # Run Delay simulation but Power results not used.
         (success, results) = self.run_delay_simulation()
         if not success:
             return False
         
         # Check the values of target readwrite and read ports. Write ports do not produce delays in this current version
-        for port in self.targ_read_ports:          
-            for dname in self.delay_meas_names: # check that the delays and slews do not degrade with tested period.
+        for port in self.targ_read_ports:
+            # check that the delays and slews do not degrade with tested period.            
+            for dname in self.delay_meas_names:
                 
                 # FIXME: This is a hack solution to fix the min period search. The slew will always be based on the period when there
                 # is a column mux. Therefore, the checks are skipped for this condition. This is hard to solve without changing the netlist.
@@ -936,7 +1028,6 @@ class delay(simulation):
 
             # key=raw_input("press return to continue")
             
-            # Dynamic way to build string. A bit messy though.
             delay_str = ', '.join("{0}={1}ns".format(mname, results[port][mname]) for mname in self.delay_meas_names)
             debug.info(2,"Successful period {0}, Port {2}, {1}".format(self.period,
                                                                        delay_str,
@@ -944,8 +1035,11 @@ class delay(simulation):
         return True
     
     def set_probe(self,probe_address, probe_data):
-        """ Probe address and data can be set separately to utilize other
-        functions in this characterizer besides analyze."""
+        """ 
+        Probe address and data can be set separately to utilize other
+        functions in this characterizer besides analyze.
+        """
+        
         self.probe_address = probe_address
         self.probe_data = probe_data
         self.bitline_column = self.get_data_bit_column_number(probe_address, probe_data)
@@ -954,6 +1048,7 @@ class delay(simulation):
         
     def get_data_bit_column_number(self, probe_address, probe_data):
         """Calculates bitline column number of data bit under test using bit position and mux size"""
+        
         if self.sram.col_addr_size>0:
             col_address = int(probe_address[0:self.sram.col_addr_size],2)
         else:
@@ -963,6 +1058,7 @@ class delay(simulation):
 
     def get_address_row_number(self, probe_address):
         """Calculates wordline row number of data bit under test using address and column mux size"""
+        
         return int(probe_address[self.sram.col_addr_size:],2)
 
     def prepare_netlist(self):
@@ -988,6 +1084,7 @@ class delay(simulation):
 
     def analysis_init(self, probe_address, probe_data):
         """Sets values which are dependent on the data address/bit being tested."""
+        
         self.set_probe(probe_address, probe_data)
         self.create_graph()
         self.set_internal_spice_names()
@@ -998,6 +1095,7 @@ class delay(simulation):
         """
         Main function to characterize an SRAM for a table. Computes both delay and power characterization.
         """
+        
         # Dict to hold all characterization values
         char_sram_data = {}
         self.analysis_init(probe_address, probe_data)
@@ -1030,6 +1128,7 @@ class delay(simulation):
 
     def alter_lh_char_data(self, char_port_data):
         """Copies high-to-low data to low-to-high data to make them consistent on the same clock edge."""
+        
        # This is basically a hack solution which should be removed/fixed later.
         for port in self.all_ports:
             char_port_data[port]['delay_lh'] = char_port_data[port]['delay_hl']
@@ -1037,6 +1136,7 @@ class delay(simulation):
         
     def simulate_loads_and_slews(self, slews, loads, leakage_offset):
         """Simulate all specified output loads and input slews pairs of all ports"""
+        
         measure_data = self.get_empty_measure_data_dict()
         # Set the target simulation ports to all available ports. This make sims slower but failed sims exit anyways.        
         self.targ_read_ports = self.read_ports
@@ -1060,6 +1160,7 @@ class delay(simulation):
     
     def calculate_inverse_address(self):
         """Determine dummy test address based on probe address and column mux size."""
+        
         # The inverse address needs to share the same bitlines as the probe address as the trimming will remove all other bitlines
         # This is only an issue when there is a column mux and the address maps to different bitlines. 
         column_addr = self.probe_address[:self.sram.col_addr_size] # do not invert this part
@@ -1125,6 +1226,7 @@ class delay(simulation):
                       self.probe_address,data_zeros)
                       
     def get_available_port(self,get_read_port):
+        
         """Returns the first accessible read or write port. """   
         if get_read_port and len(self.read_ports) > 0:
             return self.read_ports[0]
@@ -1142,6 +1244,7 @@ class delay(simulation):
         of the cycles to do a timing evaluation. The last time is the end of the simulation
         and does not need a rising edge.
         """
+        
         # Using this requires setting at least one port to target for simulation.
         if len(self.targ_write_ports) == 0 and len(self.targ_read_ports) == 0:
             debug.error("No port selected for characterization.",1)
@@ -1173,7 +1276,8 @@ class delay(simulation):
             self.gen_test_cycles_one_port(cur_read_port, cur_write_port)
 
     def analytical_delay(self, slews, loads):
-        """ Return the analytical model results for the SRAM. 
+        """ 
+        Return the analytical model results for the SRAM. 
         """
         if OPTS.num_rw_ports > 1 or OPTS.num_w_ports > 0 and OPTS.num_r_ports > 0:
             debug.warning("Analytical characterization results are not supported for multiport.")
@@ -1206,6 +1310,7 @@ class delay(simulation):
     
     def analytical_power(self, slews, loads):
         """Get the dynamic and leakage power from the SRAM"""
+        
         # slews unused, only last load is used
         load = loads[-1]
         power = self.sram.analytical_power(self.corner, load) 
@@ -1218,6 +1323,7 @@ class delay(simulation):
         
     def gen_data(self):
         """ Generates the PWL data inputs for a simulation timing test. """
+        
         for write_port in self.write_ports:
             for i in range(self.word_size):
                 sig_name="{0}{1}_{2} ".format(self.din_name,write_port, i)
@@ -1228,6 +1334,7 @@ class delay(simulation):
         Generates the address inputs for a simulation timing test. 
         This alternates between all 1's and all 0's for the address.
         """
+        
         for port in self.all_ports:
             for i in range(self.addr_size):
                 sig_name = "{0}{1}_{2}".format(self.addr_name,port,i)
@@ -1235,6 +1342,7 @@ class delay(simulation):
 
     def gen_control(self):
         """ Generates the control signals """
+        
         for port in self.all_ports:
             self.stim.gen_pwl("CSB{0}".format(port), self.cycle_times, self.csb_values[port], self.period, self.slew, 0.05)
             if port in self.readwrite_ports:
@@ -1243,6 +1351,7 @@ class delay(simulation):
             
     def get_empty_measure_data_dict(self):
         """Make a dict of lists for each type of delay and power measurement to append results to"""
+        
         measure_names = self.delay_meas_names + self.power_meas_names 
         # Create list of dicts. List lengths is # of ports. Each dict maps the measurement names to lists.
         measure_data = [{mname:[] for mname in measure_names} for i in self.all_ports]

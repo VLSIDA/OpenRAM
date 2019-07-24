@@ -77,14 +77,14 @@ class bank(design.design):
         """ Adding pins for Bank module"""
         for port in self.read_ports:
             for bit in range(self.word_size):
-                self.add_pin("dout{0}_{1}".format(port,bit),"OUT")
+                self.add_pin("dout{0}_{1}".format(port,bit),"OUTPUT")
         for port in self.read_ports:
-            self.add_pin(self.bitcell_array.get_rbl_bl_name(self.port_rbl_map[port]),"OUT")
+            self.add_pin(self.bitcell_array.get_rbl_bl_name(self.port_rbl_map[port]),"OUTPUT")
         for port in self.read_ports:
-            self.add_pin(self.bitcell_array.get_rbl_wl_name(self.port_rbl_map[port]),"IN")
+            self.add_pin(self.bitcell_array.get_rbl_wl_name(self.port_rbl_map[port]),"INPUT")
         for port in self.write_ports:
             for bit in range(self.word_size):
-                self.add_pin("din{0}_{1}".format(port,bit),"IN")
+                self.add_pin("din{0}_{1}".format(port,bit),"INPUT")
         # if (self.word_size != self.write_size):
         #     for bit in range(self.word_size):
         #         self.add_pin()

@@ -28,6 +28,7 @@ class spice():
     def __init__(self, name):
         self.name = name
 
+        self.valid_signal_types = ["INOUT", "INPUT", "OUTPUT", "POWER", "GROUND"]
         # Holds subckts/mods for this module
         self.mods = []  
         # Holds the pins for this module
@@ -64,16 +65,20 @@ class spice():
         """ Adds a pin to the pins list. Default type is INOUT signal. """
         self.pins.append(name)
         self.pin_type[name]=pin_type
+        debug.check(pin_type in self.valid_signal_types, "Invalid signaltype for {0}: {1}".format(name,pin_type))
 
-    def add_pin_list(self, pin_list, pin_type_list="INOUT"):
+    def add_pin_list(self, pin_list, pin_type="INOUT"):
         """ Adds a pin_list to the pins list """
         # The type list can be a single type for all pins
         # or a list that is the same length as the pin list.
-        if type(pin_type_list)==str:
+        if type(pin_type)==str:
             for pin in pin_list:
-                self.add_pin(pin,pin_type_list)
-        elif len(pin_type_list)==len(pin_list):
-            for (pin,ptype) in zip(pin_list, pin_type_list):
+                debug.check(pin_type in self.valid_signal_types, "Invalid signaltype for {0}: {1}".format(pin,pin_type))
+                self.add_pin(pin,pin_type)
+                
+        elif len(pin_type)==len(pin_list):
+            for (pin,ptype) in zip(pin_list, pin_type):
+                debug.check(ptype in self.valid_signal_types, "Invalid signaltype for {0}: {1}".format(pin,ptype))
                 self.add_pin(pin,ptype)
         else:
             debug.error("Mismatch in type and pin list lengths.", -1)
@@ -91,7 +96,9 @@ class spice():
             
     def get_pin_type(self, name):
         """ Returns the type of the signal pin. """
-        return self.pin_type[name]
+        pin_type = self.pin_type[name]
+        debug.check(pin_type in self.valid_signal_types, "Invalid signaltype for {0}: {1}".format(name,pin_type))
+        return pin_type
 
     def get_pin_dir(self, name):
         """ Returns the direction of the pin. (Supply/ground are INOUT). """

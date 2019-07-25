@@ -30,7 +30,7 @@ class functional(simulation):
         
         # Seed the characterizer with a constant seed for unit tests
         if OPTS.is_unit_test:
-            random.seed(687234)
+            random.seed(12345)
 
         if self.write_size is not None:
             self.num_wmasks = int(self.word_size / self.write_size)
@@ -51,7 +51,6 @@ class functional(simulation):
         self.read_check = []
 
     def initialize_wmask(self):
-        #self.wmask = [None]*self.num_wmasks
         self.wmask = ""
         if self.write_size is not None:
             # initialize all wmask bits to 1
@@ -149,7 +148,8 @@ class functional(simulation):
                     wmask  = self.gen_wmask()
                     new_word = word
                     for bit in range(len(wmask)):
-                        # AWhen the write mask's bits are 0, the old data values should appear in the new word
+                        # When the write mask's bits are 0, the old data values should appear in the new word
+                        # as to not overwrite the old values
                         if wmask[bit] == "0":
                             lower = bit * self.write_size
                             upper = lower + self.write_size - 1
@@ -221,7 +221,7 @@ class functional(simulation):
         for bit in range(self.num_wmasks):
             rand = random.randint(0, 1)
             wmask += str(rand)
-        # prevent the wmask from having all bits on or off (not partial write)
+        # prevent the wmask from having all bits on or off (this is not a partial write)
         all_zeroes = True
         all_ones = True
         for bit in range(self.num_wmasks):
@@ -245,14 +245,14 @@ class functional(simulation):
         data_bits = self.convert_to_bin(rand,False)
         return data_bits
 
-    # def gen_data(self):
-    #     """ Generates a random word, either all 0 or all 1's, to write. """
-    #     rand = random.randint(0,1)
-    #     bits = []
-    #     for bit in range(self.word_size):
-    #         bits.append(rand)
-    #     data_bits = ''.join(map(str,bits))
-    #     return data_bits
+    def gen_data_all_bits(self):
+        """ Generates a random word, either all 0's or all 1's, to write. """
+        rand = random.randint(0,1)
+        bits = []
+        for bit in range(self.word_size):
+            bits.append(rand)
+        data_bits = ''.join(map(str,bits))
+        return data_bits
         
     def gen_addr(self):
         """ Generates a random address value to write to. """

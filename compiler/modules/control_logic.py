@@ -909,6 +909,7 @@ class control_logic(design.design):
 
     def get_wl_sen_delays(self):
         """Gets a list of the stages and delays in order of their path."""
+
         if self.sen_stage_efforts == None or self.wl_stage_efforts == None:
             debug.error("Model delays not calculated for SRAM.", 1)
         wl_delays = logical_effort.calculate_delays(self.wl_stage_efforts)
@@ -917,6 +918,7 @@ class control_logic(design.design):
         
     def analytical_delay(self, corner, slew, load):
         """Gets the analytical delay from clk input to wl_en output"""
+
         stage_effort_list = []
         #Calculate the load on clk_buf_bar
         ext_clk_buf_cout = self.sram.get_clk_bar_cin()
@@ -944,8 +946,10 @@ class control_logic(design.design):
         return stage_effort_list
        
     def get_clk_buf_cin(self):
-        """Get the loads that are connected to the buffered clock. 
-           Includes all the DFFs and some logic."""
+        """
+        Get the loads that are connected to the buffered clock. 
+        Includes all the DFFs and some logic.
+        """
        
         #Control logic internal load
         int_clk_buf_cap = self.inv.get_cin() + self.ctrl_dff_array.get_clk_cin() + self.and2.get_cin()
@@ -957,6 +961,7 @@ class control_logic(design.design):
         
     def get_gated_clk_bar_cin(self):
         """Get intermediates net gated_clk_bar's capacitance"""
+        
         total_cin = 0
         total_cin += self.wl_en_driver.get_cin()
         if self.port_type == 'rw':
@@ -965,4 +970,6 @@ class control_logic(design.design):
         
     def graph_exclude_dffs(self):
         """Exclude dffs from graph as they do not represent critical path"""
+        
         self.graph_inst_exclude.add(self.ctrl_dff_inst)
+        self.graph_inst_exclude.add(self.w_en_gate_inst)

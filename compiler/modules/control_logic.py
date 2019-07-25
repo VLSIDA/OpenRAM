@@ -384,8 +384,7 @@ class control_logic(design.design):
             self.create_rbl_row()
             self.create_sen_row()
             self.create_delay()
-        if (self.port_type == "rw") or (self.port_type == "r") or self.words_per_row>1:
-            self.create_pen_row()            
+        self.create_pen_row()            
 
 
 
@@ -419,9 +418,8 @@ class control_logic(design.design):
         if (self.port_type == "rw") or (self.port_type == "r"):
             self.place_rbl_row(row)
             row += 1
-        if (self.port_type == "rw") or (self.port_type == "r") or self.words_per_row>1:
-            self.place_pen_row(row)
-            row += 1
+        self.place_pen_row(row)
+        row += 1
         if (self.port_type == "rw") or (self.port_type == "r"):            
             self.place_sen_row(row)
             row += 1
@@ -450,8 +448,7 @@ class control_logic(design.design):
         if (self.port_type == "rw") or (self.port_type == "r"):
             self.route_rbl()
             self.route_sen()
-        if (self.port_type == "rw") or (self.port_type == "r") or self.words_per_row>1:            
-            self.route_pen()
+        self.route_pen()
         self.route_clk_buf()
         self.route_gated_clk_bar()
         self.route_gated_clk_buf()

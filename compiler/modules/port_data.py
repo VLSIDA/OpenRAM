@@ -125,9 +125,9 @@ class port_data(design.design):
             self.route_sense_amp_to_column_mux_or_precharge_array(self.port)
             self.route_column_mux_to_precharge_array(self.port)
         else:
-            # write_driver -> (column_mux -> precharge) -> bitcell_array
+            # write_driver -> (column_mux ->) precharge -> bitcell_array
             self.route_write_driver_in(self.port)    
-            self.route_write_driver_to_column_mux_or_bitcell_array(self.port)
+            self.route_write_driver_to_column_mux_or_precharge_array(self.port)
             self.route_column_mux_to_precharge_array(self.port)            
         
     def route_supplies(self):
@@ -150,17 +150,14 @@ class port_data(design.design):
                                                   word_size=self.word_size, 
                                                   words_per_row=self.words_per_row)
             self.add_mod(self.sense_amp_array)
-        elif self.col_addr_size>0:
-            # Precharge is needed when we have a column mux
+        else:
+            # Precharge is needed when we have a column mux or for byte writes
+            # to prevent corruption of half-selected cells, so just always add it
             self.precharge_array = factory.create(module_type="precharge_array",
                                                   columns=self.num_cols,
                                                   bitcell_bl=self.bl_names[self.port],
                                                   bitcell_br=self.br_names[self.port])
             self.add_mod(self.precharge_array)
-            self.sense_amp_array = None
-            
-        else:
-            self.precharge_array = None
             self.sense_amp_array = None
             
 
@@ -401,12 +398,12 @@ class port_data(design.design):
         """ Routing of BL and BR between sense_amp and column mux or precharge array """
         inst2 = self.sense_amp_array_inst
 
-        start_bit = 0
         if self.col_addr_size>0:
             # Sense amp is connected to the col mux
             inst1 = self.column_mux_array_inst
             inst1_bl_name = "bl_out_{}"
             inst1_br_name = "br_out_{}"
+            start_bit = 0
         else:
             # Sense amp is directly connected to the precharge array
             inst1 = self.precharge_array_inst
@@ -421,8 +418,8 @@ class port_data(design.design):
         self.channel_route_bitlines(inst1=inst1, inst2=inst2, num_bits=self.word_size,
                                     inst1_bl_name=inst1_bl_name, inst1_br_name=inst1_br_name, inst1_start_bit=start_bit)
 
-    def route_write_driver_to_column_mux_or_bitcell_array(self, port):
-        """ Routing of BL and BR between sense_amp and column mux or bitcell array """
+    def route_write_driver_to_column_mux_or_precharge_array(self, port):
+        """ Routing of BL and BR between sense_amp and column mux or precharge array """
         inst2 = self.write_driver_array_inst
         
         if self.col_addr_size>0:
@@ -430,12 +427,19 @@ class port_data(design.design):
             inst1 = self.column_mux_array_inst
             inst1_bl_name = "bl_out_{}"
             inst1_br_name = "br_out_{}"
+            start_bit = 0
         else:
-            # Write driver is directly connected to the bitcell array
-            return
+            # Sense amp is directly connected to the precharge array
+            inst1 = self.precharge_array_inst
+            inst1_bl_name = "bl_{}"
+            inst1_br_name = "br_{}"
+            if self.has_rbl() and self.port==0:
+                start_bit=1
+            else:
+                start_bit=0
             
         self.channel_route_bitlines(inst1=inst1, inst2=inst2, num_bits=self.word_size,
-                                    inst1_bl_name=inst1_bl_name, inst1_br_name=inst1_br_name)
+                                    inst1_bl_name=inst1_bl_name, inst1_br_name=inst1_br_name, inst1_start_bit=start_bit)
         
     def route_write_driver_to_sense_amp(self, port):
         """ Routing of BL and BR between write driver and sense amp """

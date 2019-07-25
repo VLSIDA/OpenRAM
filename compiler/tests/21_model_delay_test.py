@@ -15,8 +15,9 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class model_delay_sram_test(openram_test):
-
+class model_delay_test(openram_test):
+    """ Compare the accuracy of the analytical model with a spice simulation. """
+    
     def runTest(self):
         globals.init_openram("config_{0}".format(OPTS.tech_name))
         OPTS.analytical_delay = False
@@ -61,9 +62,9 @@ class model_delay_sram_test(openram_test):
         debug.info(1,"Spice Delays={}".format(spice_delays))
         debug.info(1,"Model Delays={}".format(model_delays))
         if OPTS.tech_name == "freepdk45":
-            error_tolerance = .25
+            error_tolerance = 0.25
         elif OPTS.tech_name == "scn4m_subm":
-            error_tolerance = .25
+            error_tolerance = 0.25
         else:
             self.assertTrue(False) # other techs fail
         # Check if no too many or too few results

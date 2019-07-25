@@ -284,26 +284,22 @@ spice["msflop_leakage"] = 1      # Leakage power of flop in nW
 spice["flop_para_cap"] = 2       # Parasitic Output capacitance in fF
 
 spice["default_event_rate"] = 100         # Default event activity of every gate. MHz
-spice["flop_transition_prob"] = .5        # Transition probability of inverter.
-spice["inv_transition_prob"] = .5         # Transition probability of inverter.
-spice["nand2_transition_prob"] = .1875    # Transition probability of 2-input nand.
-spice["nand3_transition_prob"] = .1094    # Transition probability of 3-input nand.
-spice["nor2_transition_prob"] = .1875     # Transition probability of 2-input nor.
+spice["flop_transition_prob"] = 0.5        # Transition probability of inverter.
+spice["inv_transition_prob"] = 0.5         # Transition probability of inverter.
+spice["nand2_transition_prob"] = 0.1875    # Transition probability of 2-input nand.
+spice["nand3_transition_prob"] = 0.1094    # Transition probability of 3-input nand.
+spice["nor2_transition_prob"] = 0.1875     # Transition probability of 2-input nor.
 
 #Logical Effort relative values for the Handmade cells
 parameter['le_tau'] = 23                     #In pico-seconds. 
-parameter["min_inv_para_delay"] = .73        #In relative delay units
-parameter['cap_relative_per_ff'] = .91       #Units of Relative Capacitance/ Femto-Farad
-parameter["static_delay_stages"] = 4
-parameter["static_fanout_per_stage"] = 3
-parameter["static_fanout_list"] = parameter["static_delay_stages"]*[parameter["static_fanout_per_stage"]]
+parameter["min_inv_para_delay"] = 0.73        #In relative delay units
+parameter['cap_relative_per_ff'] = 0.91       #Units of Relative Capacitance/ Femto-Farad
 parameter["dff_clk_cin"] = 27.5              #In relative capacitance units
 parameter["6tcell_wl_cin"] = 2               #In relative capacitance units
 parameter["sa_en_pmos_size"] = 24*_lambda_
 parameter["sa_en_nmos_size"] = 9*_lambda_
 parameter["sa_inv_pmos_size"] = 18*_lambda_
 parameter["sa_inv_nmos_size"] = 9*_lambda_
-parameter["rbl_height_percentage"] = .5     #Height of RBL compared to bitcell array 
 parameter['bitcell_drain_cap'] = 0.2        #In Femto-Farad, approximation of drain capacitance
 
 ###################################################

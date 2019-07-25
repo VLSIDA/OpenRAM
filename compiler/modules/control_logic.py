@@ -628,13 +628,6 @@ class control_logic(design.design):
                             offset=out_pos)
         
     def create_pen_row(self):
-        # if self.port_type == "rw":
-        #     # input: gated_clk_bar, we_bar, output: pre_p_en
-        #     self.pre_p_en_inst=self.add_inst(name="and2_pre_p_en",
-        #                                      mod=self.and2)
-        #     self.connect_inst(["gated_clk_buf", "we_bar", "pre_p_en", "vdd", "gnd"])
-        #     input_name = "pre_p_en"
-        # else:
         input_name = "gated_clk_buf"
 
         # input: pre_p_en, output: p_en_bar
@@ -646,29 +639,13 @@ class control_logic(design.design):
     def place_pen_row(self,row):
         x_off = self.control_x_offset
         (y_off,mirror)=self.get_offset(row)
-        
-        # if self.port_type == "rw":
-        #     offset = vector(x_off, y_off)
-        #     self.pre_p_en_inst.place(offset, mirror)
-        #
-        #     x_off += self.and2.width
-        
+
         offset = vector(x_off,y_off)
         self.p_en_bar_inst.place(offset, mirror)
 
         self.row_end_inst.append(self.p_en_bar_inst)
 
     def route_pen(self):
-        # if self.port_type == "rw":
-        #     # Connect the NAND gate inputs to the bus
-        #     pre_p_en_in_map = zip(["A", "B"], ["gated_clk_buf", "we_bar"])
-        #     self.connect_vertical_bus(pre_p_en_in_map, self.pre_p_en_inst, self.rail_offsets)
-        #
-        #     out_pos = self.pre_p_en_inst.get_pin("Z").center()
-        #     in_pos = self.p_en_bar_inst.get_pin("A").lc()
-        #     mid1 = vector(out_pos.x,in_pos.y)
-        #     self.add_wire(("metal1","via1","metal2"),[out_pos,mid1,in_pos])
-        # else:
         in_map = zip(["A"], ["gated_clk_buf"])
         self.connect_vertical_bus(in_map, self.p_en_bar_inst, self.rail_offsets)
         

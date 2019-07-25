@@ -30,7 +30,7 @@ class functional(simulation):
         
         # Seed the characterizer with a constant seed for unit tests
         if OPTS.is_unit_test:
-            random.seed(12345)
+            random.seed(687234)
 
         if self.write_size is not None:
             self.num_wmasks = int(self.word_size / self.write_size)
@@ -149,7 +149,7 @@ class functional(simulation):
                     wmask  = self.gen_wmask()
                     new_word = word
                     for bit in range(len(wmask)):
-                        # Remove the bits of the word that's been written to
+                        # AWhen the write mask's bits are 0, the old data values should appear in the new word
                         if wmask[bit] == "0":
                             lower = bit * self.write_size
                             upper = lower + self.write_size - 1
@@ -170,7 +170,7 @@ class functional(simulation):
                     if addr in w_addrs:
                         self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, "0"*self.num_wmasks, port)
                     else:
-                        # comment = self.gen_cycle_comment("read", word, addr, self.wmask, port, self.t_current)
+                        comment = self.gen_cycle_comment("read", word, addr, self.wmask, port, self.t_current)
                         self.add_read_one_port(comment, addr, rw_read_din_data, "1"*self.num_wmasks, port)
                         self.write_check.append([word, "{0}{1}".format(self.dout_name,port), self.t_current+self.period, check])
                         check += 1

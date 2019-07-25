@@ -215,21 +215,6 @@ class simulation():
         self.add_data(data,port)
         self.add_address(address,port)
         self.add_wmask(wmask,port)
-
-    #
-    # def add_partial_write_one_port(self, comment, address, data, wmask, port):
-    #     """ Add the control values for a write cycle (partial). Does not increment the period. """
-    #     debug.check(port in self.write_ports,
-    #                 "Cannot add write cycle to a read port. Port {0}, Write Ports {1}".format(port,
-    #                                                                                           self.write_ports))
-    #     debug.info(2, comment)
-    #     self.fn_cycle_comments.append(comment)
-    #
-    #     self.add_control_one_port(port, "write")
-    #     self.add_data(data, port)
-    #     self.add_address(address, port)
-    #     self.add_wmask(wmask,port)
-
                 
     def add_read_one_port(self, comment, address, din_data, wmask, port):
         """ Add the control values for a read cycle. Does not increment the period. """
@@ -320,8 +305,9 @@ class simulation():
             pin_names.append("{0}{1}".format(tech.spice["clk"], port))
 
         if self.write_size is not None:
-            for bit in range(self.num_wmasks):
-                pin_names.append("WMASK{0}_{1}".format(port,bit))
+            for port in write_index:
+                for bit in range(self.num_wmasks):
+                    pin_names.append("WMASK{0}_{1}".format(port,bit))
             
         for read_output in read_index:
             for i in range(dbits):

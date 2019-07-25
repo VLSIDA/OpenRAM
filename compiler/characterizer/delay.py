@@ -724,7 +724,7 @@ class delay(simulation):
 
         self.stim.run_sim()
 
-        self.check_measurements()
+        return self.check_measurements()
 
     def check_measurements(self):
         """ Check the write and read measurements """

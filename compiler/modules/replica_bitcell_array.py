@@ -330,15 +330,6 @@ class replica_bitcell_array(design.design):
                                         cell_power.leakage * self.column_size * self.row_size)
         return total_power
 
-    def gen_wl_wire(self):
-        if OPTS.netlist_only:
-            width = 0
-        else:
-            width = self.width
-        wl_wire = self.generate_rc_net(int(self.column_size), width, drc("minwidth_metal1"))
-        wl_wire.wire_c = 2*spice["min_tx_gate_c"] + wl_wire.wire_c # 2 access tx gate per cell
-        return wl_wire
-
     def gen_bl_wire(self):
         if OPTS.netlist_only:
             height = 0
@@ -348,15 +339,6 @@ class replica_bitcell_array(design.design):
         bl_wire = self.generate_rc_net(int(self.row_size-bl_pos), height, drc("minwidth_metal1"))
         bl_wire.wire_c =spice["min_tx_drain_c"] + bl_wire.wire_c # 1 access tx d/s per cell
         return bl_wire
-
-    def output_load(self, bl_pos=0):
-        bl_wire = self.gen_bl_wire()
-        return bl_wire.wire_c # sense amp only need to charge small portion of the bl
-                              # set as one segment for now
-
-    def input_load(self):
-        wl_wire = self.gen_wl_wire()
-        return wl_wire.return_input_cap()
 
     def get_wordline_cin(self):
         """Get the relative input capacitance from the wordline connections in all the bitcell"""

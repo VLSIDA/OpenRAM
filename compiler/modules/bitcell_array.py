@@ -197,15 +197,6 @@ class bitcell_array(design.design):
         bl_wire.wire_c =spice["min_tx_drain_c"] + bl_wire.wire_c # 1 access tx d/s per cell
         return bl_wire
 
-    def output_load(self, bl_pos=0):
-        bl_wire = self.gen_bl_wire()
-        return bl_wire.wire_c # sense amp only need to charge small portion of the bl
-                              # set as one segment for now
-
-    def input_load(self):
-        wl_wire = self.gen_wl_wire()
-        return wl_wire.return_input_cap()
-
     def get_wordline_cin(self):
         """Get the relative input capacitance from the wordline connections in all the bitcell"""
         #A single wordline is connected to all the bitcells in a single row meaning the capacitance depends on the # of columns

@@ -15,6 +15,7 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
+@unittest.skip("SKIPPING 21_model_delay_test")
 class model_delay_test(openram_test):
     """ Compare the accuracy of the analytical model with a spice simulation. """
     

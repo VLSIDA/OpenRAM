@@ -750,18 +750,21 @@ class delay(simulation):
         
         for port in self.targ_read_ports:
             debug.info(2, "Checking read delay values for port {}".format(port))
+            # Check sen timing, then bitlines, then general measurements.
+            if not self.check_sen_measure(port):
+                return (False,{})
+            
+            if not self.check_read_debug_measures(port):
+                return (False,{})
+            
+            # Check timing for read ports. Power is only checked if it was read correctly
             read_port_dict = {}
             for measure in self.read_lib_meas:
                 read_port_dict[measure.name] = measure.retrieve_measure(port=port)
                 
-            # Check sen timing, then bitlines, then general measurements.
-            if not self.check_sen_measure(port):
+            if not self.check_valid_delays(read_port_dict):
                 return (False,{})
-            success = self.check_read_debug_measures(port)
             
-            # Check timing for read ports. Power is only checked if it was read correctly
-            if not self.check_valid_delays(read_port_dict) or not success:
-                return (False,{})
             if not check_dict_values_is_float(read_port_dict):
                 debug.error("Failed to Measure Read Port Values:\n\t\t{0}".format(read_port_dict),1) 
                 

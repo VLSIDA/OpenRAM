@@ -15,9 +15,10 @@ from .stimuli import *
 from .charutils import *
 import utils
 from globals import OPTS
-
 from .simulation import simulation
 from .delay import delay
+import graph_util
+from sram_factory import factory
 
 class functional(simulation):
     """
@@ -34,10 +35,13 @@ class functional(simulation):
 
         self.set_corner(corner)
         self.set_spice_constants()
-        #self.set_feasible_period(sram, spfile, corner)
         self.set_stimulus_variables()
-        self.create_signal_names()
 
+        # For the debug signal names
+        self.create_signal_names()
+        self.add_graph_exclusions()
+        self.create_graph()
+        self.set_internal_spice_names()
         
         # Number of checks can be changed
         self.num_cycles = 2
@@ -230,9 +234,17 @@ class functional(simulation):
             for bit in range(self.word_size):
                 sig_name="{0}{1}_{2} ".format(self.dout_name, port, bit)
                 self.sf.write("CD{0}{1} {2} 0 {3}f\n".format(port, bit, sig_name, self.load))
+
+        # Write important signals to stim file
+        self.sf.write("\n\n* Important signals for debug\n")
+        self.sf.write("* bl: {}\n".format(self.bl_name))
+        self.sf.write("* br: {}\n".format(self.br_name))
+        self.sf.write("* s_en: {}\n".format(self.sen_name))
+        self.sf.write("* q: {}\n".format(self.q_name))
+        self.sf.write("* qbar: {}\n".format(self.qbar_name))
                 
         # Write debug comments to stim file
-        self.sf.write("\n\n * Sequence of operations\n")
+        self.sf.write("\n\n* Sequence of operations\n")
         for comment in self.fn_cycle_comments:
             self.sf.write("*{}\n".format(comment))
                 
@@ -281,4 +293,151 @@ class functional(simulation):
         self.stim.write_control(self.cycle_times[-1] + self.period)
         self.sf.close()
 
+    # FIXME: refactor to share with delay.py
+    def add_graph_exclusions(self):
+        """Exclude portions of SRAM from timing graph which are not relevant"""
+        
+        # other initializations can only be done during analysis when a bit has been selected
+        # for testing.
+        self.sram.bank.graph_exclude_precharge()
+        self.sram.graph_exclude_addr_dff()
+        self.sram.graph_exclude_data_dff()
+        self.sram.graph_exclude_ctrl_dffs()
+        self.sram.bank.bitcell_array.graph_exclude_replica_col_bits()
+        
+    # FIXME: refactor to share with delay.py
+    def create_graph(self):
+        """Creates timing graph to generate the timing paths for the SRAM output."""
+        
+        self.sram.bank.bitcell_array.init_graph_params() # Removes previous bit exclusions
+        # Does wordline=0 and column=0 just for debug names
+        self.sram.bank.bitcell_array.graph_exclude_bits(0, 0)
+        
+        # Generate new graph every analysis as edges might change depending on test bit
+        self.graph = graph_util.timing_graph()
+        self.sram_spc_name = "X{}".format(self.sram.name)
+        self.sram.build_graph(self.graph,self.sram_spc_name,self.pins)
 
+    # FIXME: refactor to share with delay.py
+    def set_internal_spice_names(self):
+        """Sets important names for characterization such as Sense amp enable and internal bit nets."""
+        
+        port = 0
+        self.graph.get_all_paths('{}{}'.format(tech.spice["clk"], port), 
+                                 '{}{}_{}'.format(self.dout_name, port, 0))
+
+        self.sen_name = self.get_sen_name(self.graph.all_paths)    
+        debug.info(2,"s_en name = {}".format(self.sen_name))
+        
+        self.bl_name,self.br_name = self.get_bl_name(self.graph.all_paths)
+        debug.info(2,"bl name={}, br name={}".format(self.bl_name,self.br_name))
+
+        self.q_name,self.qbar_name = self.get_bit_name()
+        debug.info(2,"q name={}\nqbar name={}".format(self.bl_name,self.br_name))
+        
+    def get_bit_name(self):
+        """ Get a bit cell name """
+        (cell_name, cell_inst) = self.sram.get_cell_name(self.sram.name, 0, 0)
+        storage_names = cell_inst.mod.get_storage_net_names()
+        debug.check(len(storage_names) == 2, ("Only inverting/non-inverting storage nodes"
+                                              "supported for characterization. Storage nets={}").format(storage_names))
+        q_name = cell_name+'.'+str(storage_names[0])
+        qbar_name = cell_name+'.'+str(storage_names[1])
+
+        return (q_name,qbar_name)
+        
+    # FIXME: refactor to share with delay.py
+    def get_sen_name(self, paths):
+        """
+        Gets the signal name associated with the sense amp enable from input paths.
+        Only expects a single path to contain the sen signal name.
+        """
+        
+        sa_mods = factory.get_mods(OPTS.sense_amp)
+        # Any sense amp instantiated should be identical, any change to that 
+        # will require some identification to determine the mod desired.
+        debug.check(len(sa_mods) == 1, "Only expected one type of Sense Amp. Cannot perform s_en checks.")
+        enable_name = sa_mods[0].get_enable_name()
+        sen_name = self.get_alias_in_path(paths, enable_name, sa_mods[0])
+        return sen_name        
+     
+    # FIXME: refactor to share with delay.py
+    def get_bl_name(self, paths):
+        """Gets the signal name associated with the bitlines in the bank."""
+        
+        cell_mods = factory.get_mods(OPTS.bitcell)
+        if len(cell_mods)>=1:
+            cell_mod = self.get_primary_cell_mod(cell_mods)
+        elif len(cell_mods)==0:
+            debug.error("No bitcells found. Cannot determine bitline names.", 1)
+            
+        cell_bl = cell_mod.get_bl_name()
+        cell_br = cell_mod.get_br_name()
+        
+        bl_found = False
+        # Only a single path should contain a single s_en name. Anything else is an error.
+        bl_names = []
+        exclude_set = self.get_bl_name_search_exclusions()
+        for int_net in [cell_bl, cell_br]:
+            bl_names.append(self.get_alias_in_path(paths, int_net, cell_mod, exclude_set))
+                
+        return bl_names[0], bl_names[1]          
+
+    def get_bl_name_search_exclusions(self):
+        """Gets the mods as a set which should be excluded while searching for name."""
+        
+        # Exclude the RBL as it contains bitcells which are not in the main bitcell array
+        # so it makes the search awkward
+        return set(factory.get_mods(OPTS.replica_bitline))
+
+    def get_primary_cell_mod(self, cell_mods):
+        """
+        Distinguish bitcell array mod from replica bitline array.
+        Assume there are no replica bitcells in the primary array.
+        """
+        if len(cell_mods) == 1:
+            return cell_mods[0]
+        rbc_mods = factory.get_mods(OPTS.replica_bitcell)
+        non_rbc_mods = []
+        for bitcell in cell_mods:
+            has_cell = False
+            for replica_cell in rbc_mods:
+                has_cell = has_cell or replica_cell.contains(bitcell, replica_cell.mods)
+            if not has_cell:
+                non_rbc_mods.append(bitcell)
+        if len(non_rbc_mods) != 1:
+            debug.error('Multiple bitcell mods found. Cannot distinguish for characterization',1)
+        return non_rbc_mods[0]
+
+    def are_mod_pins_equal(self, mods):
+        """Determines if there are pins differences in the input mods"""
+        
+        if len(mods) == 0:
+            return True
+        pins = mods[0].pins
+        for mod in mods[1:]:
+            if pins != mod.pins:
+                return False
+        return True
+        
+    def get_alias_in_path(self, paths, int_net, mod, exclusion_set=None): 
+        """
+        Finds a single alias for the int_net in given paths. 
+        More or less hits cause an error
+        """
+        
+        net_found = False
+        for path in paths:
+            aliases = self.sram.find_aliases(self.sram_spc_name, self.pins, path, int_net, mod, exclusion_set)
+            if net_found and len(aliases) >= 1:
+                debug.error('Found multiple paths with {} net.'.format(int_net),1)
+            elif len(aliases) > 1:
+                debug.error('Found multiple {} nets in single path.'.format(int_net),1)
+            elif not net_found and len(aliases) == 1:
+                path_net_name = aliases[0]
+                net_found = True
+        if not net_found:
+            debug.error("Could not find {} net in timing paths.".format(int_net),1)
+                
+        return path_net_name 
+    

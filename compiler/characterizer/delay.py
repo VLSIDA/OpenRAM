@@ -135,10 +135,10 @@ class delay(simulation):
         self.bitline_volt_meas[-1].meta_str = sram_op.READ_ZERO
         
         self.bitline_volt_meas.append(voltage_at_measure("v_bl_READ_ONE", 
-                                                       self.bl_name)) 
+                                                         self.bl_name)) 
         self.bitline_volt_meas[-1].meta_str = sram_op.READ_ONE
         self.bitline_volt_meas.append(voltage_at_measure("v_br_READ_ONE", 
-                                                       self.br_name)) 
+                                                         self.br_name)) 
         self.bitline_volt_meas[-1].meta_str = sram_op.READ_ONE
         return self.bitline_volt_meas
         
@@ -255,8 +255,8 @@ class delay(simulation):
         """Sets important names for characterization such as Sense amp enable and internal bit nets."""
         
         port = 0
-        self.graph.get_all_paths('{}{}'.format(tech.spice["clk"], port), \
-                     '{}{}_{}'.format(self.dout_name, port, self.probe_data))
+        self.graph.get_all_paths('{}{}'.format(tech.spice["clk"], port), 
+                                 '{}{}_{}'.format(self.dout_name, port, self.probe_data))
 
         self.sen_name = self.get_sen_name(self.graph.all_paths)    
         debug.info(2,"s_en name = {}".format(self.sen_name))

@@ -616,11 +616,7 @@ class control_logic(design.design):
     def route_rbl(self):
         """ Connect the logic for the rbl_in generation """
 
-        if self.port_type == "rw":
-            # Connect the NAND gate inputs to the bus
-            rbl_in_map = zip(["A", "B"], ["gated_clk_bar", "we_bar"])
-        else:
-            rbl_in_map = zip(["A"], ["gated_clk_bar"]) 
+        rbl_in_map = zip(["A"], ["gated_clk_bar"]) 
         self.connect_vertical_bus(rbl_in_map, self.rbl_inst, self.rail_offsets)
         self.connect_output(self.rbl_inst, "Z", "rbl_wl")
 
@@ -652,10 +648,14 @@ class control_logic(design.design):
         
     def create_sen_row(self):
         """ Create the sense enable buffer. """
+        if self.port_type=="rw":
+            input_name = "we_bar"
+        else:
+            input_name = "cs_bar"
         # GATE FOR S_EN
         self.s_en_gate_inst = self.add_inst(name="buf_s_en_and",
                                             mod=self.sen_and2)
-        self.connect_inst(["pre_s_en", "we_bar", "s_en", "vdd", "gnd"])
+        self.connect_inst(["pre_s_en", input_name, "s_en", "vdd", "gnd"])
         
         
     def place_sen_row(self,row):
@@ -674,7 +674,12 @@ class control_logic(design.design):
         
     def route_sen(self):
 
-        sen_map = zip(["B"], ["we_bar"])
+        if self.port_type=="rw":
+            input_name = "we_bar"
+        else:
+            input_name = "cs_bar"
+            
+        sen_map = zip(["B"], [input_name])
         self.connect_vertical_bus(sen_map, self.s_en_gate_inst, self.rail_offsets)
         
         out_pos = self.delay_inst.get_pin("out").bc()
@@ -694,7 +699,7 @@ class control_logic(design.design):
             input_name = "cs"
 
         # GATE THE W_EN
-        self.w_en_gate_inst = self.add_inst(name="buf_w_en_and",
+        self.w_en_gate_inst = self.add_inst(name="w_en_and",
                                             mod=self.wen_and2)
         self.connect_inst([input_name, "gated_clk_bar", "w_en", "vdd", "gnd"])
         

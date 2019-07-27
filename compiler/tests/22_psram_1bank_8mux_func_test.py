@@ -43,21 +43,20 @@ class psram_1bank_8mux_func_test(openram_test):
                         num_banks=1)
         c.words_per_row=8
         c.recompute_sizes()
-        debug.info(1, "Functional test for {}rw,{}r,{}w psram with {} bit words, {} words, {} words per row, {} banks".format(OPTS.num_rw_ports,
-                                                                                                                              OPTS.num_r_ports,
-                                                                                                                              OPTS.num_w_ports,
-                                                                                                                              c.word_size,
-                                                                                                                              c.num_words,
-                                                                                                                              c.words_per_row,
-                                                                                                                              c.num_banks))
+         debug.info(1, "Functional test for {}rw,{}r,{}w psram with"
+                   "{} bit words, {} words, {} words per row, {} banks".format(OPTS.num_rw_ports,
+                                                                               OPTS.num_r_ports,
+                                                                               OPTS.num_w_ports,
+                                                                               c.word_size,
+                                                                               c.num_words,
+                                                                               c.words_per_row,
+                                                                               c.num_banks))
         s = factory.create(module_type="sram", sram_config=c)
-        tempspice = OPTS.openram_temp + "temp.sp"        
+        tempspice = OPTS.openram_temp + "sram.sp"        
         s.sp_write(tempspice)
         
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         f = functional(s.s, tempspice, corner)
-        
-        f.num_cycles = 10
         (fail, error) = f.run()
         self.assertTrue(fail,error)
         

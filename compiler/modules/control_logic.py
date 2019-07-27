@@ -95,16 +95,10 @@ class control_logic(design.design):
                                    height=dff_height)
         self.add_mod(self.and2)
 
-        if self.port_type=="rw":
-            self.rbl_driver = factory.create(module_type="pand2",
-                                             size=self.num_cols,
-                                             height=dff_height)
-            self.add_mod(self.rbl_driver)
-        elif self.port_type=="r":
-            self.rbl_driver = factory.create(module_type="pbuf",
-                                              size=self.num_cols,
-                                              height=dff_height)
-            self.add_mod(self.rbl_driver)
+        self.rbl_driver = factory.create(module_type="pbuf",
+                                         size=self.num_cols,
+                                         height=dff_height)
+        self.add_mod(self.rbl_driver)
         
         
         # clk_buf drives a flop for every address and control bit
@@ -607,12 +601,8 @@ class control_logic(design.design):
 
         self.rbl_inst=self.add_inst(name="rbl_driver",
                                     mod=self.rbl_driver)
-        if self.port_type == "rw":
-            # input: gated_clk_bar, we_bar, output: rbl_wl
-            self.connect_inst(["gated_clk_bar", "we_bar", "rbl_wl", "vdd", "gnd"])
-        elif self.port_type == "r":
-            # input: gated_clk_bar, output: rbl_wl
-            self.connect_inst(["gated_clk_bar", "rbl_wl", "vdd", "gnd"])
+        # input: gated_clk_bar, output: rbl_wl
+        self.connect_inst(["gated_clk_bar", "rbl_wl", "vdd", "gnd"])
 
     def place_rbl_row(self,row):
         x_off = self.control_x_offset
@@ -665,7 +655,7 @@ class control_logic(design.design):
         # GATE FOR S_EN
         self.s_en_gate_inst = self.add_inst(name="buf_s_en_and",
                                             mod=self.sen_and2)
-        self.connect_inst(["pre_s_en", "gated_clk_bar", "s_en", "vdd", "gnd"])
+        self.connect_inst(["pre_s_en", "we_bar", "s_en", "vdd", "gnd"])
         
         
     def place_sen_row(self,row):
@@ -684,7 +674,7 @@ class control_logic(design.design):
         
     def route_sen(self):
 
-        sen_map = zip(["B"], ["gated_clk_bar"])
+        sen_map = zip(["B"], ["we_bar"])
         self.connect_vertical_bus(sen_map, self.s_en_gate_inst, self.rail_offsets)
         
         out_pos = self.delay_inst.get_pin("out").bc()

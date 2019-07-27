@@ -51,10 +51,11 @@ class functional(simulation):
         self.initialize_wmask()
 
         # Number of checks can be changed
-        self.num_cycles = 2
+        self.num_cycles = 15
         self.stored_words = {}      
         self.write_check = []
         self.read_check = []
+
 
     def initialize_wmask(self):
         self.wmask = ""
@@ -294,9 +295,7 @@ class functional(simulation):
         self.stim = stimuli(self.sf,self.corner)
 
         #Write include statements
-        self.sram_sp_file = "{}sram.sp".format(OPTS.openram_temp)
-        shutil.copy(self.sp_file, self.sram_sp_file)
-        self.stim.write_include(self.sram_sp_file)
+        self.stim.write_include(self.sp_file)
 
         #Write Vdd/Gnd statements
         self.sf.write("\n* Global Power Supplies\n")

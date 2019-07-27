@@ -41,10 +41,11 @@ class psram_1bank_nomux_func_test(openram_test):
                         num_banks=1)
         c.words_per_row=1
         c.recompute_sizes()
-        debug.info(1, "Functional test for sram 1rw,1r with {} bit words, {} words, {} words per row, {} banks".format(c.word_size,
-                                                                                                                c.num_words,
-                                                                                                                c.words_per_row,
-                                                                                                                c.num_banks))
+        debug.info(1, "Functional test for sram 1rw,1r with "
+                   "{} bit words, {} words, {} words per row, {} banks".format(c.word_size,
+                                                                               c.num_words,
+                                                                               c.words_per_row,
+                                                                               c.num_banks))
         s = factory.create(module_type="sram", sram_config=c)
         tempspice = OPTS.openram_temp + "sram.sp"        
         s.sp_write(tempspice)

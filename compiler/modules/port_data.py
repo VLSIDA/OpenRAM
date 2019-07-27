@@ -81,12 +81,13 @@ class port_data(design.design):
 
     def add_pins(self):
         """ Adding pins for port address module"""
+        
         if self.has_rbl():
             self.add_pin("rbl_bl","INOUT")
             self.add_pin("rbl_br","INOUT")
         for bit in range(self.num_cols):
-            self.add_pin("bl_{0}".format(bit),"INOUT")
-            self.add_pin("br_{0}".format(bit),"INOUT")
+            self.add_pin("{0}_{1}".format(self.bl_names[self.port], bit),"INOUT")
+            self.add_pin("{0}_{1}".format(self.br_names[self.port], bit),"INOUT")
         if self.port in self.read_ports:
             for bit in range(self.word_size):
                 self.add_pin("dout_{}".format(bit),"OUTPUT")
@@ -143,6 +144,7 @@ class port_data(design.design):
         
     def route_supplies(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """
+        
         for inst in self.insts:
             self.copy_power_pins(inst,"vdd")
             self.copy_power_pins(inst,"gnd")
@@ -150,7 +152,8 @@ class port_data(design.design):
     def add_modules(self):
 
         if self.port in self.read_ports:
-            # Extra column for RBL
+            # Extra column +1 is for RBL
+            # Precharge will be shifted left if needed
             self.precharge_array = factory.create(module_type="precharge_array",
                                                   columns=self.num_cols + 1,
                                                   bitcell_bl=self.bl_names[self.port],
@@ -164,6 +167,8 @@ class port_data(design.design):
         else:
             # Precharge is needed when we have a column mux or for byte writes
             # to prevent corruption of half-selected cells, so just always add it
+            # This is a little power inefficient for write ports without a column mux,
+            # but it is simpler.
             self.precharge_array = factory.create(module_type="precharge_array",
                                                   columns=self.num_cols,
                                                   bitcell_bl=self.bl_names[self.port],
@@ -233,12 +238,14 @@ class port_data(design.design):
                                                   mod=self.precharge_array)
 
         temp = []
+        # Use left BLs for RBL
         if self.has_rbl() and self.port==0:
             temp.append("rbl_bl")
             temp.append("rbl_br")
         for bit in range(self.num_cols):
             temp.append(self.bl_names[self.port]+"_{0}".format(bit))
             temp.append(self.br_names[self.port]+"_{0}".format(bit))
+        # Use right BLs for RBL
         if self.has_rbl() and self.port==1:
             temp.append("rbl_bl")
             temp.append("rbl_br")
@@ -248,11 +255,13 @@ class port_data(design.design):
             
     def place_precharge_array(self, offset):
         """ Placing Precharge """
+        
         self.precharge_array_inst.place(offset=offset, mirror="MX")
 
             
     def create_column_mux_array(self):
         """ Creating Column Mux when words_per_row > 1 . """
+        
         self.column_mux_array_inst = self.add_inst(name="column_mux_array{}".format(self.port),
                                                    mod=self.column_mux_array)
 
@@ -498,6 +507,7 @@ class port_data(design.design):
     def route_bitline_pins(self):
         """ Add the bitline pins for the given port """
 
+        # Connect one bitline to the RBL and offset the indices for the other BLs
         if self.has_rbl() and self.port==0:
             self.copy_layout_pin(self.precharge_array_inst, "bl_0", "rbl_bl")
             self.copy_layout_pin(self.precharge_array_inst, "br_0", "rbl_br")
@@ -514,12 +524,8 @@ class port_data(design.design):
             if self.precharge_array_inst:
                 self.copy_layout_pin(self.precharge_array_inst, "bl_{}".format(bit+bit_offset), "bl_{}".format(bit))
                 self.copy_layout_pin(self.precharge_array_inst, "br_{}".format(bit+bit_offset), "br_{}".format(bit))
-            # elif self.column_mux_array_inst:
-            #     self.copy_layout_pin(self.column_mux_array_inst, "bl_{}".format(bit))
-            #     self.copy_layout_pin(self.column_mux_array_inst, "br_{}".format(bit))
             else:
-                self.copy_layout_pin(self.write_driver_array_inst, "bl_{}".format(bit))  
-                self.copy_layout_pin(self.write_driver_array_inst, "br_{}".format(bit))  
+                debug.error("Didn't find precharge arra.")
 
     def route_control_pins(self):
         """ Add the control pins: s_en, p_en_bar, w_en """

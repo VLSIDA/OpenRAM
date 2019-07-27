@@ -23,15 +23,15 @@ class control_logic_test(openram_test):
         import tech
 
         debug.info(1, "Testing sample for control_logic_rw")
-        a = factory.create(module_type="control_logic", num_rows=128, words_per_row=1, word_size=32, write_size=32)
+        a = factory.create(module_type="control_logic", num_rows=128, words_per_row=1, word_size=32)
         self.local_check(a)
 
         debug.info(1, "Testing sample for control_logic_r")
-        a = factory.create(module_type="control_logic", num_rows=128, words_per_row=1, word_size=32, write_size=32, port_type="r")
+        a = factory.create(module_type="control_logic", num_rows=128, words_per_row=1, word_size=32, port_type="r")
         self.local_check(a)
 
         debug.info(1, "Testing sample for control_logic_w")
-        a = factory.create(module_type="control_logic", num_rows=128, words_per_row=1, word_size=32, write_size=32, port_type="w")
+        a = factory.create(module_type="control_logic", num_rows=128, words_per_row=1, word_size=32, port_type="w")
         self.local_check(a)
         
 # run the test from the command line

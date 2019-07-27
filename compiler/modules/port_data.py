@@ -237,8 +237,8 @@ class port_data(design.design):
             temp.append("rbl_bl")
             temp.append("rbl_br")
         for bit in range(self.num_cols):
-            temp.append("bl_{0}".format(bit))
-            temp.append("br_{0}".format(bit))
+            temp.append(self.bl_names[self.port]+"_{0}".format(bit))
+            temp.append(self.br_names[self.port]+"_{0}".format(bit))
         if self.has_rbl() and self.port==1:
             temp.append("rbl_bl")
             temp.append("rbl_br")
@@ -258,16 +258,15 @@ class port_data(design.design):
 
         temp = []
         for col in range(self.num_cols):
-            temp.append("bl_{0}".format(col))
-            temp.append("br_{0}".format(col))
+            temp.append(self.bl_names[self.port]+"_{0}".format(col))
+            temp.append(self.br_names[self.port]+"_{0}".format(col))
         for word in range(self.words_per_row):
             temp.append("sel_{}".format(word))
         for bit in range(self.word_size):
-            temp.append("bl_out_{0}".format(bit))
-            temp.append("br_out_{0}".format(bit))
+            temp.append(self.bl_names[self.port]+"_out_{0}".format(bit))
+            temp.append(self.br_names[self.port]+"_out_{0}".format(bit))
         temp.append("gnd")
         self.connect_inst(temp)
-
 
             
     def place_column_mux_array(self, offset):
@@ -287,12 +286,12 @@ class port_data(design.design):
         for bit in range(self.word_size):
             temp.append("dout_{}".format(bit))
             if self.words_per_row == 1:
-                temp.append("bl_{0}".format(bit))
-                temp.append("br_{0}".format(bit))
+                temp.append(self.bl_names[self.port]+"_{0}".format(bit))
+                temp.append(self.br_names[self.port]+"_{0}".format(bit))
             else:
-                temp.append("bl_out_{0}".format(bit))
-                temp.append("br_out_{0}".format(bit))
-                    
+                temp.append(self.bl_names[self.port]+"_out_{0}".format(bit))
+                temp.append(self.br_names[self.port]+"_out_{0}".format(bit))
+               
         temp.extend(["s_en", "vdd", "gnd"])
         self.connect_inst(temp)
 
@@ -312,9 +311,9 @@ class port_data(design.design):
             temp.append("din_{}".format(bit))
 
         for bit in range(self.word_size):            
-            if (self.words_per_row == 1):            
-                temp.append("bl_{0}".format(bit))
-                temp.append("br_{0}".format(bit))
+            if (self.words_per_row == 1):
+                temp.append(self.bl_names[self.port]+"_{0}".format(bit))
+                temp.append(self.br_names[self.port]+"_{0}".format(bit))
             else:
                 temp.append(self.bl_names[self.port]+"_out_{0}".format(bit))
                 temp.append(self.br_names[self.port]+"_out_{0}".format(bit))

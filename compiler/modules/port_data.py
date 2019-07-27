@@ -22,6 +22,10 @@ class port_data(design.design):
         
         sram_config.set_local_config(self)
         self.port = port
+        if self.write_size is not None:
+            self.num_wmasks = int(self.word_size/self.write_size)
+        else:
+            self.num_wmasks = 0
         
         if name == "":
             name = "port_data_{0}".format(self.port)
@@ -54,9 +58,14 @@ class port_data(design.design):
 
         if self.write_driver_array:
             self.create_write_driver_array()
+            if self.write_size is not None:
+                self.create_write_mask_and_array()
+            else:
+                self.write_mask_and_array_inst = None
         else:
             self.write_driver_array_inst = None
-            
+            self.write_mask_and_array_inst = None
+
         if self.column_mux_array:
             self.create_column_mux_array()
         else:
@@ -94,6 +103,8 @@ class port_data(design.design):
             self.add_pin("p_en_bar", "INPUT")
         if self.port in self.write_ports:
             self.add_pin("w_en", "INPUT")
+            for bit in range(self.num_wmasks):
+                self.add_pin("bank_wmask_{}".format(bit),"INPUT")
         self.add_pin("vdd","POWER")
         self.add_pin("gnd","GROUND")
 
@@ -175,11 +186,21 @@ class port_data(design.design):
         if self.port in self.write_ports:
             self.write_driver_array = factory.create(module_type="write_driver_array",
                                                      columns=self.num_cols,
-                                                     word_size=self.word_size)
+                                                     word_size=self.word_size,
+                                                     write_size=self.write_size)
             self.add_mod(self.write_driver_array)
+            if self.write_size is not None:
+                self.write_mask_and_array = factory.create(module_type="write_mask_and_array",
+                                                           columns=self.num_cols,
+                                                           word_size=self.word_size,
+                                                           write_size=self.write_size)
+                self.add_mod(self.write_mask_and_array)
+            else:
+                self.write_mask_and_array_inst = None
+
         else:
             self.write_driver_array = None
-
+            self.write_mask_and_array = None
 
     def precompute_constants(self):
         """  Get some preliminary data ready """
@@ -289,20 +310,43 @@ class port_data(design.design):
         temp = []
         for bit in range(self.word_size):
             temp.append("din_{}".format(bit))
+
         for bit in range(self.word_size):            
             if (self.words_per_row == 1):            
                 temp.append("bl_{0}".format(bit))
                 temp.append("br_{0}".format(bit))
             else:
-                temp.append("bl_out_{0}".format(bit))
-                temp.append("br_out_{0}".format(bit))
-        temp.extend(["w_en", "vdd", "gnd"])
+                temp.append(self.bl_names[self.port]+"_out_{0}".format(bit))
+                temp.append(self.br_names[self.port]+"_out_{0}".format(bit))
+
+        if self.write_size is not None:
+            for i in range(self.num_wmasks):
+                temp.append("wdriver_sel_{}".format(i))
+        else:
+            temp.append("w_en")
+        temp.extend(["vdd", "gnd"])
+
         self.connect_inst(temp)
 
-            
+
+    def create_write_mask_and_array(self):
+        """ Creating Write Masks  """
+        self.write_mask_and_array_inst = self.add_inst(name="write_mask_and_array{}".format(self.port),
+                                                   mod=self.write_mask_and_array)
+
+        temp = []
+        for bit in range(self.num_wmasks):
+            temp.append("bank_wmask_{}".format(bit))
+        temp.extend(["w_en"])
+        for bit in range(self.num_wmasks):
+            temp.append("wdriver_sel_{}".format(bit))
+        temp.extend(["vdd", "gnd"])
+        self.connect_inst(temp)
+
+
     def place_write_driver_array(self, offset):
         """ Placing Write Driver  """
-        self.write_driver_array_inst.place(offset=offset, mirror="MX")
+        self .write_driver_array_inst.place(offset=offset, mirror="MX")
             
 
     def compute_instance_offsets(self):

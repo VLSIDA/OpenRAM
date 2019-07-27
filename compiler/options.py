@@ -143,4 +143,5 @@ class options(optparse.Values):
     wordline_driver = "wordline_driver"
     write_driver_array = "write_driver_array"
     write_driver = "write_driver"
+    write_mask_and_array = "write_mask_and_array"
 

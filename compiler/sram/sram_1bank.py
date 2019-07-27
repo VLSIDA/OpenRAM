@@ -46,7 +46,7 @@ class sram_1bank(sram_base):
         
         self.data_dff_insts = self.create_data_dff()
 
-        if (self.write_size != self.word_size):
+        if self.write_size is not None:
             self.wmask_dff_insts = self.create_wmask_dff()
 
         
@@ -126,17 +126,35 @@ class sram_1bank(sram_base):
             self.data_dff_insts[port].place(data_pos[port])
 
         # Add the write mask flops to the left of the din flops.
-        if (self.write_size != self.word_size):
+        if self.write_size is not None:
             if port in self.write_ports:
-                wmask_pos[port] = vector(self.bank.bank_array_ur.x - self.data_dff_insts[port].width,
-                                         self.bank.height + max_gap_size + self.data_dff_insts[port].height)
-                self.wmask_dff_insts[port].place(wmask_pos[port], mirror="MX")
+                wmask_pos[port] = vector(self.bank.bank_array_ll.x - self.control_logic_insts[port].width,
+                                    -max_gap_size - self.wmask_dff_insts[port].height)
+                self.wmask_dff_insts[port].place(wmask_pos[port])
 
 
         if len(self.all_ports)>1:
             # Port 1
             port = 1
 
+            # Add the data flops above the bank to the left of the upper-right of bank array
+            # This relies on the upper-right of the array of the bank
+            # decoder in upper left, bank in upper right, sensing in lower right.
+            # These flops go below the sensing and leave a gap to channel route to the
+            # sense amps. 
+            if port in self.write_ports:
+                data_pos[port] = vector(self.bank.bank_array_ur.x - self.data_dff_insts[port].width,
+                                        self.bank.height + max_gap_size + self.dff.height)
+                self.data_dff_insts[port].place(data_pos[port], mirror="MX")
+
+            # Add the write mask flops to the left of the din flops.
+            if self.write_size is not None:
+                if port in self.write_ports:
+                    wmask_pos[port] = vector(self.bank.bank_array_ur.x - self.data_dff_insts[port].width,
+                                            self.bank.height + max_gap_size + self.data_dff_insts[port].height)
+                    self.wmask_dff_insts[port].place(wmask_pos[port], mirror="MX")
+            else:
+                data_pos[port] = self.bank_inst.ur()
 
             # Add the col address flops above the bank to the right of the upper-right of bank array
             if self.col_addr_dff:
@@ -368,7 +386,7 @@ class sram_1bank(sram_base):
         #Data dffs and wmask dffs are only for writing so are not useful for evaluating read delay.
         for inst in self.data_dff_insts:
             self.graph_inst_exclude.add(inst)
-        if (self.write_size != self.word_size):
+        if self.write_size is not None:
             for inst in self.wmask_dff_insts:
                 self.graph_inst_exclude.add(inst)
     

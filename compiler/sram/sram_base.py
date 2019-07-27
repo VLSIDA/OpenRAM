@@ -34,12 +34,18 @@ class sram_base(design, verilog, lef):
         sram_config.set_local_config(self)
 
         self.bank_insts = []
-        
+
+        if self.write_size is not None:
+            self.num_wmasks = int(self.word_size/self.write_size)
+        else:
+            self.num_wmasks = 0
+
         #For logical effort delay calculations.
         self.all_mods_except_control_done = False
 
     def add_pins(self):
         """ Add pins for entire SRAM. """
+
         for port in self.write_ports:
             for bit in range(self.word_size):
                 self.add_pin("DIN{0}[{1}]".format(port,bit),"INPUT")
@@ -69,9 +75,9 @@ class sram_base(design, verilog, lef):
         for port in self.all_ports:
             self.add_pin("clk{}".format(port),"INPUT")
         # add the optional write mask pins
-        if self.word_size != self.write_size:
-            for port in self.write_ports:
-                self.add_pin("wmask{}".format(port),"INPUT")
+        for port in self.write_ports:
+            for bit in range(self.num_wmasks):
+                self.add_pin("wmask{0}[{1}]".format(port,bit),"INPUT")
         for port in self.read_ports:
             for bit in range(self.word_size):
                 self.add_pin("DOUT{0}[{1}]".format(port,bit),"OUTPUT")
@@ -149,7 +155,7 @@ class sram_base(design, verilog, lef):
         elif "metal3" in tech.layer:
             from supply_tree_router import supply_tree_router as router
             rtr=router(("metal3",), self)
-            
+
         rtr.route()
 
         
@@ -278,8 +284,9 @@ class sram_base(design, verilog, lef):
         self.data_dff = dff_array(name="data_dff", rows=1, columns=self.word_size)
         self.add_mod(self.data_dff)
 
-        self.wmask_dff = dff_array(name="wmask_dff", rows=1, columns=int(self.word_size/self.write_size))
-        self.add_mod(self.wmask_dff)
+        if self.write_size is not None:
+            self.wmask_dff = dff_array(name="wmask_dff", rows=1, columns=self.num_wmasks)
+            self.add_mod(self.wmask_dff)
 
         
         # Create the bank module (up to four are instantiated)
@@ -305,23 +312,20 @@ class sram_base(design, verilog, lef):
             self.control_logic_rw = self.mod_control_logic(num_rows=self.num_rows,
                                                            words_per_row=self.words_per_row,
                                                            word_size=self.word_size,
-                                                           write_size = self.write_size,
-                                                           sram=self, 
+                                                           sram=self,
                                                            port_type="rw")
             self.add_mod(self.control_logic_rw)
         if len(self.writeonly_ports)>0:
             self.control_logic_w = self.mod_control_logic(num_rows=self.num_rows, 
                                                           words_per_row=self.words_per_row,
                                                           word_size=self.word_size,
-                                                          write_size=self.write_size,
-                                                          sram=self, 
+                                                          sram=self,
                                                           port_type="w")
             self.add_mod(self.control_logic_w)
         if len(self.readonly_ports)>0:
             self.control_logic_r = self.mod_control_logic(num_rows=self.num_rows, 
                                                           words_per_row=self.words_per_row,
                                                           word_size=self.word_size,
-                                                          write_size=self.write_size,
                                                           sram=self,
                                                           port_type="r")
             self.add_mod(self.control_logic_r)
@@ -354,6 +358,8 @@ class sram_base(design, verilog, lef):
             temp.append("p_en_bar{0}".format(port))
         for port in self.write_ports:
             temp.append("w_en{0}".format(port))
+            for bit in range(self.num_wmasks):
+                temp.append("bank_wmask{}[{}]".format(port, bit))
         for port in self.all_ports:
             temp.append("wl_en{0}".format(port))
         temp.extend(["vdd", "gnd"])
@@ -455,7 +461,6 @@ class sram_base(design, verilog, lef):
 
     def create_wmask_dff(self):
         """ Add and place all wmask flops """
-        num_wmask = int(self.word_size/self.write_size)
         insts = []
         for port in self.all_ports:
             if port in self.write_ports:
@@ -468,9 +473,9 @@ class sram_base(design, verilog, lef):
             # inputs, outputs/output/bar
             inputs = []
             outputs = []
-            for bit in range(num_wmask):
+            for bit in range(self.num_wmasks):
                 inputs.append("wmask{}[{}]".format(port, bit))
-                outputs.append("BANK_WMASK{}[{}]".format(port, bit))
+                outputs.append("bank_wmask{}[{}]".format(port, bit))
 
             self.connect_inst(inputs + outputs + ["clk_buf{}".format(port), "vdd", "gnd"])
 
@@ -496,12 +501,14 @@ class sram_base(design, verilog, lef):
             if port in self.readwrite_ports:
                 temp.append("web{}".format(port))
             temp.append("clk{}".format(port))
+
             if port in self.read_ports:
                 temp.append("rbl_bl{}".format(port))
 
             # Ouputs
             if port in self.read_ports:
                 temp.append("rbl_wl{}".format(port))
+
             if port in self.read_ports:
                 temp.append("s_en{}".format(port))
             if port in self.write_ports:

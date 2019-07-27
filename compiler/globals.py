@@ -470,18 +470,16 @@ def report_status():
         debug.error("{0} is not an integer in config file.".format(OPTS.word_size))
     if type(OPTS.num_words)!=int:
         debug.error("{0} is not an integer in config file.".format(OPTS.sram_size))
-    if type(OPTS.write_size) != int and OPTS.write_size != None:
+    if type(OPTS.write_size) is not int and OPTS.write_size is not None:
         debug.error("{0} is not an integer in config file.".format(OPTS.write_size))
 
-    # Determine if a write mask is specified by the user; if it's not, the mask write size should
-    # be the same as the word size so that an entire word is written at once
-    if OPTS.write_size==None:
-        OPTS.write_size = OPTS.word_size
-
-    if  (OPTS.write_size < 1 or OPTS.write_size > OPTS.word_size):
-        debug.error("Write size needs to be between 1 bit and {0} bits.".format(OPTS.word_size))
-    if (OPTS.word_size % OPTS.write_size != 0):
-        debug.error("Write size needs to be an integer multiple of word size.")
+    # If a write mask is specified by the user, the mask write size should be the same as
+    # the word size so that an entire word is written at once.
+    if OPTS.write_size is not None:
+        if (OPTS.write_size < 1 or OPTS.write_size > OPTS.word_size):
+            debug.error("Write size needs to be between 1 bit and {0} bits.".format(OPTS.word_size))
+        if (OPTS.word_size % OPTS.write_size != 0):
+            debug.error("Write size needs to be an integer multiple of word size.")
 
     if not OPTS.tech_name:
         debug.error("Tech name must be specified in config file.")

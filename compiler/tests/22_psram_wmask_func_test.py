@@ -27,6 +27,7 @@ class psram_wmask_func_test(openram_test):
         OPTS.trim_netlist = False
         OPTS.bitcell = "bitcell_1w_1r"
         OPTS.replica_bitcell = "replica_bitcell_1w_1r"
+        OPTS.dummy_bitcell = "dummy_bitcell_1w_1r"
 
         OPTS.num_rw_ports = 0
         OPTS.num_w_ports = 1

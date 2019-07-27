@@ -964,4 +964,5 @@ class control_logic(design.design):
         """Exclude dffs from graph as they do not represent critical path"""
         
         self.graph_inst_exclude.add(self.ctrl_dff_inst)
-        self.graph_inst_exclude.add(self.w_en_gate_inst)
+        if self.port_type=="rw" or self.port_type=="w":
+            self.graph_inst_exclude.add(self.w_en_gate_inst)

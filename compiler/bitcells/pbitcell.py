@@ -962,11 +962,16 @@ class pbitcell(design.design):
 
     def build_graph(self, graph, inst_name, port_nets):        
         """Adds edges to graph for pbitcell. Only readwrite and read ports."""
+        
+        if self.dummy_bitcell:
+            return
+        
         pin_dict = {pin:port for pin,port in zip(self.pins, port_nets)} 
         # Edges added wl->bl, wl->br for every port except write ports
         rw_pin_names = zip(self.r_wl_names, self.r_bl_names, self.r_br_names)
         r_pin_names = zip(self.rw_wl_names, self.rw_bl_names, self.rw_br_names)
-        for pin_zip in zip(rw_pin_names, r_pin_names): 
+
+        for pin_zip in [rw_pin_names, r_pin_names]: 
             for wl,bl,br in pin_zip:
                 graph.add_edge(pin_dict[wl],pin_dict[bl])
                 graph.add_edge(pin_dict[wl],pin_dict[br])

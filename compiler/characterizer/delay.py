@@ -261,7 +261,7 @@ class delay(simulation):
         port = 0
         self.graph.get_all_paths('{}{}'.format(tech.spice["clk"], port), 
                                  '{}{}_{}'.format(self.dout_name, port, self.probe_data))
-
+        
         self.sen_name = self.get_sen_name(self.graph.all_paths)    
         debug.info(2,"s_en name = {}".format(self.sen_name))
         
@@ -285,12 +285,7 @@ class delay(simulation):
     def get_bl_name(self, paths):
         """Gets the signal name associated with the bitlines in the bank."""
         
-        cell_mods = factory.get_mods(OPTS.bitcell)
-        if len(cell_mods)>=1:
-            cell_mod = self.get_primary_cell_mod(cell_mods)
-        elif len(cell_mods)==0:
-            debug.error("No bitcells found. Cannot determine bitline names.", 1)
-            
+        cell_mod = factory.create(module_type=OPTS.bitcell)  
         cell_bl = cell_mod.get_bl_name()
         cell_br = cell_mod.get_br_name()
         
@@ -301,7 +296,7 @@ class delay(simulation):
         for int_net in [cell_bl, cell_br]:
             bl_names.append(self.get_alias_in_path(paths, int_net, cell_mod, exclude_set))
                 
-        return bl_names[0], bl_names[1]          
+        return bl_names[0], bl_names[1]         
 
     
     def get_bl_name_search_exclusions(self):

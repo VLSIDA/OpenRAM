@@ -413,7 +413,7 @@ class functional(simulation):
         
         port = 0
         self.graph.get_all_paths('{}{}'.format(tech.spice["clk"], port), 
-                                 '{}{}_{}'.format(self.dout_name, port, 0))
+                                 '{}{}_{}'.format(self.dout_name, port, 0).lower())
 
         self.sen_name = self.get_sen_name(self.graph.all_paths)    
         debug.info(2,"s_en name = {}".format(self.sen_name))
@@ -422,7 +422,7 @@ class functional(simulation):
         debug.info(2,"bl name={}, br name={}".format(self.bl_name,self.br_name))
 
         self.q_name,self.qbar_name = self.get_bit_name()
-        debug.info(2,"q name={}\nqbar name={}".format(self.bl_name,self.br_name))
+        debug.info(2,"q name={}\nqbar name={}".format(self.q_name,self.qbar_name))
         
     def get_bit_name(self):
         """ Get a bit cell name """
@@ -454,12 +454,7 @@ class functional(simulation):
     def get_bl_name(self, paths):
         """Gets the signal name associated with the bitlines in the bank."""
         
-        cell_mods = factory.get_mods(OPTS.bitcell)
-        if len(cell_mods)>=1:
-            cell_mod = self.get_primary_cell_mod(cell_mods)
-        elif len(cell_mods)==0:
-            debug.error("No bitcells found. Cannot determine bitline names.", 1)
-            
+        cell_mod = factory.create(module_type=OPTS.bitcell)  
         cell_bl = cell_mod.get_bl_name()
         cell_br = cell_mod.get_br_name()
         
@@ -494,8 +489,9 @@ class functional(simulation):
                 has_cell = has_cell or replica_cell.contains(bitcell, replica_cell.mods)
             if not has_cell:
                 non_rbc_mods.append(bitcell)
+                
         if len(non_rbc_mods) != 1:
-            debug.error('Multiple bitcell mods found. Cannot distinguish for characterization',1)
+            debug.error('{} possible bitcell mods found. Cannot distinguish for characterization'.format(len(non_rbc_mods)),1)
         return non_rbc_mods[0]
 
     def are_mod_pins_equal(self, mods):

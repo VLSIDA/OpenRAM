@@ -150,8 +150,6 @@ class write_driver_array(design.design):
                                                     layer="metal3",
                                                     offset=pin_pos)
 
-
-
         self.add_layout_pin(text="en",
                             layer="metal1",
                             offset=self.driver_insts[0].get_pin("en").ll().scale(0,1),

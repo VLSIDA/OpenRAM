@@ -41,11 +41,5 @@ class dummy_bitcell_1w_1r(design.design):
         return 2*access_tx_cin
 
     def build_graph(self, graph, inst_name, port_nets):        
-        """Adds edges to graph. Multiport bitcell timing graph is too complex
-           to use the add_graph_edges function."""
-        pin_dict = {pin:port for pin,port in zip(self.pins, port_nets)} 
-        #Edges hardcoded here. Essentially wl->bl/br for both ports.
-        # Port 0 edges
-        graph.add_edge(pin_dict["wl0"], pin_dict["bl0"])   
-        graph.add_edge(pin_dict["wl0"], pin_dict["br0"])   
-        # Port 1 is a write port, so its timing is not considered here.
+        """Dummy bitcells are cannot form a path and be part of the timing graph"""
+        return

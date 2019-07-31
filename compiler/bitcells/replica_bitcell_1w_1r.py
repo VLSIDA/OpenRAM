@@ -43,9 +43,10 @@ class replica_bitcell_1w_1r(design.design):
     def build_graph(self, graph, inst_name, port_nets):        
         """Adds edges to graph. Multiport bitcell timing graph is too complex
            to use the add_graph_edges function."""
+        debug.info(1,'Adding edges for {}'.format(inst_name))
         pin_dict = {pin:port for pin,port in zip(self.pins, port_nets)} 
-        #Edges hardcoded here. Essentially wl->bl/br for both ports.
-        # Port 0 edges
-        graph.add_edge(pin_dict["wl0"], pin_dict["bl0"])   
-        graph.add_edge(pin_dict["wl0"], pin_dict["br0"])   
-        # Port 1 is a write port, so its timing is not considered here.
+        #Edges hardcoded here. Essentially wl->bl/br for the read port.
+        # Port 1 edges
+        graph.add_edge(pin_dict["wl1"], pin_dict["bl1"])   
+        graph.add_edge(pin_dict["wl1"], pin_dict["br1"])   
+        # Port 0 is a write port, so its timing is not considered here.

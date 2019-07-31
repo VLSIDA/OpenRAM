@@ -258,14 +258,14 @@ class delay(simulation):
     def set_internal_spice_names(self):
         """Sets important names for characterization such as Sense amp enable and internal bit nets."""
         
-        port = 0
+        port = self.read_ports[0]
         self.graph.get_all_paths('{}{}'.format(tech.spice["clk"], port), 
                                  '{}{}_{}'.format(self.dout_name, port, self.probe_data))
         
         self.sen_name = self.get_sen_name(self.graph.all_paths)    
         debug.info(2,"s_en name = {}".format(self.sen_name))
         
-        self.bl_name,self.br_name = self.get_bl_name(self.graph.all_paths)
+        self.bl_name,self.br_name = self.get_bl_name(self.graph.all_paths, port)
         debug.info(2,"bl name={}, br name={}".format(self.bl_name,self.br_name))
         
     def get_sen_name(self, paths):
@@ -282,12 +282,12 @@ class delay(simulation):
         sen_name = self.get_alias_in_path(paths, enable_name, sa_mods[0])
         return sen_name        
      
-    def get_bl_name(self, paths):
+    def get_bl_name(self, paths, port):
         """Gets the signal name associated with the bitlines in the bank."""
         
         cell_mod = factory.create(module_type=OPTS.bitcell)  
-        cell_bl = cell_mod.get_bl_name()
-        cell_br = cell_mod.get_br_name()
+        cell_bl = cell_mod.get_bl_name(port)
+        cell_br = cell_mod.get_br_name(port)
         
         bl_found = False
         # Only a single path should contain a single s_en name. Anything else is an error.

@@ -29,7 +29,7 @@ class replica_column(design.design):
         self.replica_bit = replica_bit
         # left, right, regular rows plus top/bottom dummy cells
         self.total_size = self.left_rbl+rows+self.right_rbl+2
-
+        
         debug.check(replica_bit!=0 and replica_bit!=rows,"Replica bit cannot be the dummy row.")
         debug.check(replica_bit<=left_rbl or replica_bit>=self.total_size-right_rbl-1,
                     "Replica bit cannot be in the regular array.")        
@@ -152,8 +152,9 @@ class replica_column(design.design):
         
         return bitcell_pins
                 
-    def exclude_bits_except_one(self, selected_row):
+    def exclude_all_but_replica(self):
+        """Excludes all bits except the replica cell (self.replica_bit)."""
+        
         for row, cell in self.cell_inst.items():
-            if row == selected_row:
-                continue
-            self.graph_inst_exclude.add(cell)
+            if row != self.replica_bit:
+                self.graph_inst_exclude.add(cell)

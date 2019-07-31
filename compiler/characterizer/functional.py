@@ -411,14 +411,15 @@ class functional(simulation):
     def set_internal_spice_names(self):
         """Sets important names for characterization such as Sense amp enable and internal bit nets."""
         
-        port = 0
+        # For now, only testing these using first read port.
+        port = self.read_ports[0]
         self.graph.get_all_paths('{}{}'.format(tech.spice["clk"], port), 
                                  '{}{}_{}'.format(self.dout_name, port, 0).lower())
 
         self.sen_name = self.get_sen_name(self.graph.all_paths)    
         debug.info(2,"s_en name = {}".format(self.sen_name))
         
-        self.bl_name,self.br_name = self.get_bl_name(self.graph.all_paths)
+        self.bl_name,self.br_name = self.get_bl_name(self.graph.all_paths, port)
         debug.info(2,"bl name={}, br name={}".format(self.bl_name,self.br_name))
 
         self.q_name,self.qbar_name = self.get_bit_name()
@@ -451,12 +452,12 @@ class functional(simulation):
         return sen_name        
      
     # FIXME: refactor to share with delay.py
-    def get_bl_name(self, paths):
+    def get_bl_name(self, paths, port):
         """Gets the signal name associated with the bitlines in the bank."""
         
         cell_mod = factory.create(module_type=OPTS.bitcell)  
-        cell_bl = cell_mod.get_bl_name()
-        cell_br = cell_mod.get_br_name()
+        cell_bl = cell_mod.get_bl_name(port)
+        cell_br = cell_mod.get_br_name(port)
         
         bl_found = False
         # Only a single path should contain a single s_en name. Anything else is an error.
@@ -473,37 +474,6 @@ class functional(simulation):
         # Exclude the RBL as it contains bitcells which are not in the main bitcell array
         # so it makes the search awkward
         return set(factory.get_mods(OPTS.replica_bitline))
-
-    def get_primary_cell_mod(self, cell_mods):
-        """
-        Distinguish bitcell array mod from replica bitline array.
-        Assume there are no replica bitcells in the primary array.
-        """
-        if len(cell_mods) == 1:
-            return cell_mods[0]
-        rbc_mods = factory.get_mods(OPTS.replica_bitcell)
-        non_rbc_mods = []
-        for bitcell in cell_mods:
-            has_cell = False
-            for replica_cell in rbc_mods:
-                has_cell = has_cell or replica_cell.contains(bitcell, replica_cell.mods)
-            if not has_cell:
-                non_rbc_mods.append(bitcell)
-                
-        if len(non_rbc_mods) != 1:
-            debug.error('{} possible bitcell mods found. Cannot distinguish for characterization'.format(len(non_rbc_mods)),1)
-        return non_rbc_mods[0]
-
-    def are_mod_pins_equal(self, mods):
-        """Determines if there are pins differences in the input mods"""
-        
-        if len(mods) == 0:
-            return True
-        pins = mods[0].pins
-        for mod in mods[1:]:
-            if pins != mod.pins:
-                return False
-        return True
         
     def get_alias_in_path(self, paths, int_net, mod, exclusion_set=None): 
         """

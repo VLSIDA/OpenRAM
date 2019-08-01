@@ -345,11 +345,12 @@ class control_logic(design.design):
         
         # Outputs to the bank
         if self.port_type == "rw":
-            self.output_list = ["rbl_wl", "s_en", "w_en", "p_en_bar"]
+            self.output_list = ["rbl_wl", "s_en", "w_en"]
         elif self.port_type == "r":
-            self.output_list = ["rbl_wl", "s_en", "p_en_bar"]
+            self.output_list = ["rbl_wl", "s_en"]
         else:
             self.output_list = ["w_en"]
+        self.output_list.append("p_en_bar")
         self.output_list.append("wl_en")
         self.output_list.append("clk_buf")
         

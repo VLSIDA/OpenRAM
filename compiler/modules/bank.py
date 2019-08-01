@@ -100,7 +100,8 @@ class bank(design.design):
                 self.add_pin("bank_sel{}".format(port),"INPUT")
         for port in self.read_ports:
             self.add_pin("s_en{0}".format(port), "INPUT")
-        self.add_pin("p_en_bar{0}".format(port), "INPUT")
+        for port in self.all_ports:
+            self.add_pin("p_en_bar{0}".format(port), "INPUT")
         for port in self.write_ports:
             self.add_pin("w_en{0}".format(port), "INPUT")
             for bit in range(self.num_wmasks):

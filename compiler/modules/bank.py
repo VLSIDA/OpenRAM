@@ -100,8 +100,7 @@ class bank(design.design):
                 self.add_pin("bank_sel{}".format(port),"INPUT")
         for port in self.read_ports:
             self.add_pin("s_en{0}".format(port), "INPUT")
-        for port in self.read_ports:
-            self.add_pin("p_en_bar{0}".format(port), "INPUT")
+        self.add_pin("p_en_bar{0}".format(port), "INPUT")
         for port in self.write_ports:
             self.add_pin("w_en{0}".format(port), "INPUT")
             for bit in range(self.num_wmasks):
@@ -309,7 +308,7 @@ class bank(design.design):
             self.input_control_signals.append(["wl_en{}".format(port_num), "w_en{}".format(port_num), "s_en{}".format(port_num), "p_en_bar{}".format(port_num), "rbl_wl{}".format(port_num)])
             port_num += 1
         for port in range(OPTS.num_w_ports):
-            self.input_control_signals.append(["wl_en{}".format(port_num), "w_en{}".format(port_num)])
+            self.input_control_signals.append(["wl_en{}".format(port_num), "w_en{}".format(port_num), "p_en_bar{}".format(port_num)])
             port_num += 1
         for port in range(OPTS.num_r_ports):
             self.input_control_signals.append(["wl_en{}".format(port_num), "s_en{}".format(port_num), "p_en_bar{}".format(port_num), "rbl_wl{}".format(port_num)])
@@ -463,8 +462,7 @@ class bank(design.design):
             temp.extend(sel_names)
             if port in self.read_ports:
                 temp.append("s_en{0}".format(port))
-            if port in self.read_ports:
-                temp.append("p_en_bar{0}".format(port))
+            temp.append("p_en_bar{0}".format(port))
             if port in self.write_ports:
                 temp.append("w_en{0}".format(port))
                 for bit in range(self.num_wmasks):
@@ -618,8 +616,8 @@ class bank(design.design):
             bank_sel_signals = ["clk_buf", "w_en", "s_en", "p_en_bar", "bank_sel"]
             gated_bank_sel_signals = ["gated_clk_buf", "gated_w_en", "gated_s_en", "gated_p_en_bar"]
         elif self.port_id[port] == "w":
-            bank_sel_signals = ["clk_buf", "w_en", "bank_sel"]
-            gated_bank_sel_signals = ["gated_clk_buf", "gated_w_en"]
+            bank_sel_signals = ["clk_buf", "w_en", "p_en_bar", "bank_sel"]
+            gated_bank_sel_signals = ["gated_clk_buf", "gated_w_en", "gated_p_en_bar"]
         else:
             bank_sel_signals = ["clk_buf", "s_en", "p_en_bar", "bank_sel"]
             gated_bank_sel_signals = ["gated_clk_buf", "gated_s_en", "gated_p_en_bar"]
@@ -944,8 +942,7 @@ class bank(design.design):
         read_inst = 0
         
         connection = []
-        if port in self.read_ports:
-            connection.append((self.prefix+"p_en_bar{}".format(port), self.port_data_inst[port].get_pin("p_en_bar").lc()))
+        connection.append((self.prefix+"p_en_bar{}".format(port), self.port_data_inst[port].get_pin("p_en_bar").lc()))
 
         if port in self.read_ports:
             rbl_wl_name = self.bitcell_array.get_rbl_wl_name(self.port_rbl_map[port])

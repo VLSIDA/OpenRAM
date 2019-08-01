@@ -100,8 +100,7 @@ class port_data(design.design):
             self.add_pin(pin_name,"INPUT")
         if self.port in self.read_ports:
             self.add_pin("s_en", "INPUT")
-        if self.port in self.read_ports:
-            self.add_pin("p_en_bar", "INPUT")
+        self.add_pin("p_en_bar", "INPUT")
         if self.port in self.write_ports:
             self.add_pin("w_en", "INPUT")
             for bit in range(self.num_wmasks):

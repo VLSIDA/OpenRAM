@@ -6,6 +6,7 @@
 # All rights reserved.
 #
 import sys,re,shutil
+import collections
 from design import design
 import debug
 import math
@@ -52,7 +53,8 @@ class functional(simulation):
 
         # Number of checks can be changed
         self.num_cycles = 15
-        self.stored_words = {}      
+        # This is to have ordered keys for random selection
+        self.stored_words = collections.OrderedDict()
         self.write_check = []
         self.read_check = []
 
@@ -258,7 +260,7 @@ class functional(simulation):
     def get_data(self):
         """ Gets an available address and corresponding word. """
         # Currently unused but may need later depending on how the functional test develops
-        addr = random.choice(sort(list(self.stored_words.keys())))
+        addr = random.choice(list(self.stored_words.keys()))
         word = self.stored_words[addr]
         return (addr,word)
         

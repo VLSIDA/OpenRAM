@@ -139,7 +139,6 @@ class functional(simulation):
                 elif op == "write":
                     addr = self.gen_addr()
                     word = self.gen_data()
-                    # print("write",self.t_current,addr,word)
                     # two ports cannot write to the same address
                     if addr in w_addrs:
                         self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, "0"*self.num_wmasks, port)
@@ -161,7 +160,6 @@ class functional(simulation):
                             lower = bit * self.write_size
                             upper = lower + self.write_size - 1
                             new_word = new_word[:lower] + old_word[lower:upper+1] + new_word[upper + 1:]
-                    # print("partial_w",self.t_current,addr,wmask,word, "partial_w_word:", new_word)
                     # two ports cannot write to the same address
                     if addr in w_addrs:
                         self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, "0"*self.num_wmasks, port)
@@ -172,7 +170,6 @@ class functional(simulation):
                         w_addrs.append(addr)
                 else:
                     (addr,word) = random.choice(list(self.stored_words.items()))
-                    # print("read",self.t_current,addr,word)
                     # cannot read from an address that is currently being written to
                     if addr in w_addrs:
                         self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, "0"*self.num_wmasks, port)
@@ -248,29 +245,20 @@ class functional(simulation):
 
     def gen_data(self):
         """ Generates a random word to write. """
-        rand = random.randint(0,(2**self.word_size)-1)
-        data_bits = self.convert_to_bin(rand,False)
+        random_value = random.randint(0,(2**self.word_size)-1)
+        data_bits = self.convert_to_bin(random_value,False)
         return data_bits
 
-    def gen_data_all_bits(self):
-        """ Generates a random word, either all 0's or all 1's, to write. """
-        rand = random.randint(0,1)
-        bits = []
-        for bit in range(self.word_size):
-            bits.append(rand)
-        data_bits = ''.join(map(str,bits))
-        return data_bits
-        
     def gen_addr(self):
         """ Generates a random address value to write to. """
-        rand = random.randint(0,(2**self.addr_size)-1)  
-        addr_bits = self.convert_to_bin(rand,True)
+        random_value = random.randint(0,(2**self.addr_size)-1)  
+        addr_bits = self.convert_to_bin(random_value,True)
         return addr_bits
         
     def get_data(self):
         """ Gets an available address and corresponding word. """
         # Currently unused but may need later depending on how the functional test develops
-        addr = random.choice(list(self.stored_words.keys()))
+        addr = random.choice(sort(list(self.stored_words.keys())))
         word = self.stored_words[addr]
         return (addr,word)
         
@@ -280,6 +268,7 @@ class functional(simulation):
         if(is_addr):
             expected_value = self.addr_size
         else:
+
             expected_value = self.word_size
         for i in range (expected_value - len(new_value)):
             new_value =  "0" + new_value

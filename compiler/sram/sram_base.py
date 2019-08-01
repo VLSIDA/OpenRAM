@@ -197,7 +197,7 @@ class sram_base(design, verilog, lef):
             if self.port_id[port] == "r":
                 self.control_bus_names[port].extend([sen, pen])
             elif self.port_id[port] == "w":
-                self.control_bus_names[port].extend([wen])
+                self.control_bus_names[port].extend([wen, pen])
             else:
                 self.control_bus_names[port].extend([sen, wen, pen])
             self.vert_control_bus_positions = self.create_vertical_bus(layer="metal2",
@@ -354,7 +354,7 @@ class sram_base(design, verilog, lef):
                 temp.append("bank_sel{0}[{1}]".format(port,bank_num))
         for port in self.read_ports:
             temp.append("s_en{0}".format(port))
-        for port in self.read_ports:
+        for port in self.all_ports:
             temp.append("p_en_bar{0}".format(port))
         for port in self.write_ports:
             temp.append("w_en{0}".format(port))
@@ -513,8 +513,7 @@ class sram_base(design, verilog, lef):
                 temp.append("s_en{}".format(port))
             if port in self.write_ports:
                 temp.append("w_en{}".format(port))
-            if port in self.read_ports:
-                temp.append("p_en_bar{}".format(port))
+            temp.append("p_en_bar{}".format(port))
             temp.extend(["wl_en{}".format(port), "clk_buf{}".format(port), "vdd", "gnd"])
             self.connect_inst(temp)
         

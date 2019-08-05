@@ -184,6 +184,7 @@ class control_logic(design.design):
         #             self.sen_delay_rise,self.sen_delay_fall = self.get_delays_to_sen() #get the new timing
         #             self.delay_chain_resized = True
 
+        debug.check(OPTS.delay_chain_stages%2, "Must use odd number of delay chain stages for inverting delay chain.")
         self.delay_chain=factory.create(module_type="delay_chain",
                                         fanout_list = OPTS.delay_chain_stages*[OPTS.delay_chain_fanout_per_stage])
         self.add_mod(self.delay_chain)

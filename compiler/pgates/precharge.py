@@ -53,7 +53,7 @@ class precharge(design.design):
         self.connect_to_bitlines()
 
     def add_pins(self):
-        self.add_pin_list(["bl", "br", "en_bar", "vdd"])
+        self.add_pin_list(["bl", "br", "en_bar", "vdd"], ["OUTPUT", "OUTPUT", "INPUT", "POWER"])
 
     def add_ptx(self):
         """

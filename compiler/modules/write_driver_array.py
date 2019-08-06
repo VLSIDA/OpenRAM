@@ -59,17 +59,17 @@ class write_driver_array(design.design):
 
     def add_pins(self):
         for i in range(self.word_size):
-            self.add_pin("data_{0}".format(i))
+            self.add_pin("data_{0}".format(i), "INPUT")
         for i in range(self.word_size):            
-            self.add_pin("bl_{0}".format(i))
-            self.add_pin("br_{0}".format(i))
+            self.add_pin("bl_{0}".format(i), "OUTPUT")
+            self.add_pin("br_{0}".format(i), "OUTPUT")
         if self.write_size != None:
             for i in range(self.num_wmasks):
-                self.add_pin("en_{}".format(i))
+                self.add_pin("en_{}".format(i), "INPUT")
         else:
-            self.add_pin("en")
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+            self.add_pin("en", "INPUT")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
     def add_modules(self):
         self.driver = factory.create(module_type="write_driver")

@@ -26,11 +26,11 @@ class hierarchical_predecode(design.design):
     
     def add_pins(self):
         for k in range(self.number_of_inputs):
-            self.add_pin("in_{0}".format(k))
+            self.add_pin("in_{0}".format(k), "INPUT")
         for i in range(self.number_of_outputs):
-            self.add_pin("out_{0}".format(i))
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+            self.add_pin("out_{0}".format(i), "OUTPUT")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
     def add_modules(self):
         """ Add the INV and NAND gate modules """

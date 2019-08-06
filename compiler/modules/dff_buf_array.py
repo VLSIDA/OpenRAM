@@ -55,14 +55,14 @@ class dff_buf_array(design.design):
     def add_pins(self):
         for row in range(self.rows):  
             for col in range(self.columns):
-                self.add_pin(self.get_din_name(row,col))
+                self.add_pin(self.get_din_name(row,col), "INPUT")
         for row in range(self.rows):  
             for col in range(self.columns):
-                self.add_pin(self.get_dout_name(row,col))
-                self.add_pin(self.get_dout_bar_name(row,col))
-        self.add_pin("clk")
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+                self.add_pin(self.get_dout_name(row,col), "OUTPUT")
+                self.add_pin(self.get_dout_bar_name(row,col), "OUTPUT")
+        self.add_pin("clk", "INPUT")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
     def add_modules(self):
         self.dff = factory.create(module_type="dff_buf",

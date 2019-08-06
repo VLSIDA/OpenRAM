@@ -50,13 +50,13 @@ class wordline_driver(design.design):
     def add_pins(self):
         # inputs to wordline_driver.
         for i in range(self.rows):
-            self.add_pin("in_{0}".format(i))
+            self.add_pin("in_{0}".format(i), "INPUT")
         # Outputs from wordline_driver.
         for i in range(self.rows):
-            self.add_pin("wl_{0}".format(i))
-        self.add_pin("en")
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+            self.add_pin("wl_{0}".format(i), "OUTPUT")
+        self.add_pin("en", "INPUT")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
 
     def add_modules(self):

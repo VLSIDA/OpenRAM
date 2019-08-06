@@ -42,10 +42,10 @@ class pbuf(pgate.pgate):
         self.add_layout_pins()
         
     def add_pins(self):
-        self.add_pin("A")
-        self.add_pin("Z")
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+        self.add_pin("A", "INPUT")
+        self.add_pin("Z", "OUTPUT")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
     def create_modules(self):
         # Shield the cap, but have at least a stage effort of 4

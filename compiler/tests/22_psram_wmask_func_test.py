@@ -27,6 +27,7 @@ class psram_wmask_func_test(openram_test):
         OPTS.trim_netlist = False
         OPTS.bitcell = "bitcell_1w_1r"
         OPTS.replica_bitcell = "replica_bitcell_1w_1r"
+        OPTS.dummy_bitcell = "dummy_bitcell_1w_1r"
 
         OPTS.num_rw_ports = 0
         OPTS.num_w_ports = 1
@@ -52,13 +53,11 @@ class psram_wmask_func_test(openram_test):
                        c.write_size,
                        c.num_banks))
         s = factory.create(module_type="sram", sram_config=c)
-        tempspice = OPTS.openram_temp + "temp.sp"
+        tempspice = OPTS.openram_temp + "sram.sp"
         s.sp_write(tempspice)
 
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
-
         f = functional(s.s, tempspice, corner)
-        f.num_cycles = 10
         (fail, error) = f.run()
         self.assertTrue(fail, error)
 

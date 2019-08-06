@@ -75,12 +75,12 @@ class dff_buf(design.design):
         
         
     def add_pins(self):
-        self.add_pin("D")
-        self.add_pin("Q")
-        self.add_pin("Qb")
-        self.add_pin("clk")
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+        self.add_pin("D", "INPUT")
+        self.add_pin("Q", "OUTPUT")
+        self.add_pin("Qb", "OUTPUT")
+        self.add_pin("clk", "INPUT")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
     def create_instances(self):
         self.dff_inst=self.add_inst(name="dff_buf_dff",

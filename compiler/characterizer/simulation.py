@@ -25,9 +25,6 @@ class simulation():
         self.word_size = self.sram.word_size
         self.addr_size = self.sram.addr_size
         self.write_size = self.sram.write_size
-        self.num_cols = self.sram.num_cols
-        self.num_rows = self.sram.num_rows
-        self.num_banks = self.sram.num_banks
         self.sp_file = spfile
         
         self.all_ports = self.sram.all_ports
@@ -262,19 +259,21 @@ class simulation():
                                                                                                                t_current+self.period)
         elif op == "partial_write":
             comment = "\tWriting (partial) {0}  to  address {1} with mask bit {2} (from port {3}) during cycle {4} ({5}ns - {6}ns)".format(word,
-                                                                                                            addr,
-                                                                                                            wmask,
-                                                                                                            port,
-                                                                                                            int(t_current / self.period),
-                                                                                                            t_current,
-                                                                                                            t_current + self.period)
+                                                                                                                                           addr,
+                                                                                                                                           wmask,
+                                                                                                                                           port,
+                                                                                                                                           int(t_current / self.period),
+                                                                                                                                           t_current,
+                                                                                                                                           t_current + self.period)
         else:
             comment = "\tReading {0} from address {1} (from port {2}) during cycle {3} ({4}ns - {5}ns)".format(word,
-                                                                                                           addr,
-                                                                                                           port,
-                                                                                                           int(t_current/self.period),
-                                                                                                           t_current,
-                                                                                                           t_current+self.period)
+                                                                                                               addr,
+                                                                                                               port,
+                                                                                                               int(t_current/self.period),
+                                                                                                               t_current,
+                                                                                                               t_current+self.period)
+
+        
         return comment
         
     def gen_pin_names(self, port_signal_names, port_info, abits, dbits):

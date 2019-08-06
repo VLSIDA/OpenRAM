@@ -47,12 +47,12 @@ class options(optparse.Values):
     ###################
     # Optimization options
     ###################
-    rbl_delay_percentage = .5  #Approximate percentage of delay compared to bitlines
+    rbl_delay_percentage = 0.5  #Approximate percentage of delay compared to bitlines
     
     # Allow manual adjustment of the delay chain over automatic
     use_tech_delay_chain_size = False
-    delay_chain_stages = 4
-    delay_chain_fanout_per_stage = 3
+    delay_chain_stages = 9
+    delay_chain_fanout_per_stage = 4
     
     
 
@@ -84,7 +84,7 @@ class options(optparse.Values):
     # This determines whether LVS and DRC is checked for every submodule.
     inline_lvsdrc = False
     # Remove noncritical memory cells for characterization speed-up
-    trim_netlist = True
+    trim_netlist = False
     # Run with extracted parasitics
     use_pex = False
 
@@ -131,6 +131,7 @@ class options(optparse.Values):
     delay_chain = "delay_chain"
     dff_array = "dff_array"
     dff = "dff"
+    dummy_bitcell = "dummy_bitcell"
     precharge_array = "precharge_array"
     ptx = "ptx"
     replica_bitcell = "replica_bitcell"

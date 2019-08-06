@@ -345,11 +345,11 @@ spice["msflop_leakage"] = 1      # Leakage power of flop in nW
 spice["flop_para_cap"] = 2       # Parasitic Output capacitance in fF
 
 spice["default_event_rate"] = 100           # Default event activity of every gate. MHz
-spice["flop_transition_prob"] = .5        # Transition probability of inverter.
-spice["inv_transition_prob"] = .5         # Transition probability of inverter.
-spice["nand2_transition_prob"] = .1875    # Transition probability of 2-input nand.
-spice["nand3_transition_prob"] = .1094    # Transition probability of 3-input nand.
-spice["nor2_transition_prob"] = .1875     # Transition probability of 2-input nor.
+spice["flop_transition_prob"] = 0.5        # Transition probability of inverter.
+spice["inv_transition_prob"] = 0.5         # Transition probability of inverter.
+spice["nand2_transition_prob"] = 0.1875    # Transition probability of 2-input nand.
+spice["nand3_transition_prob"] = 0.1094    # Transition probability of 3-input nand.
+spice["nor2_transition_prob"] = 0.1875     # Transition probability of 2-input nor.
 
 #Parameters related to sense amp enable timing and delay chain/RBL sizing
 parameter['le_tau'] = 2.25                  #In pico-seconds.
@@ -357,10 +357,10 @@ parameter['cap_relative_per_ff'] = 7.5      #Units of Relative Capacitance/ Femt
 parameter["dff_clk_cin"] = 30.6             #relative capacitance
 parameter["6tcell_wl_cin"] = 3              #relative capacitance
 parameter["min_inv_para_delay"] = 2.4        #Tau delay units
-parameter["sa_en_pmos_size"] = .72          #micro-meters
-parameter["sa_en_nmos_size"] = .27          #micro-meters
-parameter["sa_inv_pmos_size"] = .54          #micro-meters
-parameter["sa_inv_nmos_size"] = .27          #micro-meters
+parameter["sa_en_pmos_size"] = 0.72          #micro-meters
+parameter["sa_en_nmos_size"] = 0.27          #micro-meters
+parameter["sa_inv_pmos_size"] = 0.54          #micro-meters
+parameter["sa_inv_nmos_size"] = 0.27          #micro-meters
 parameter['bitcell_drain_cap'] = 0.1        #In Femto-Farad, approximation of drain capacitance
 
 ###################################################

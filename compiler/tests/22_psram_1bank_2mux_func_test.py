@@ -15,18 +15,20 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-#@unittest.skip("SKIPPING 22_psram_1bank_2mux_1rw_1r_1w_func_test, third port reads are broken?")
-class psram_1bank_2mux_1rw_1r_1w_func_test(openram_test):
+class psram_1bank_2mux_func_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_{0}".format(OPTS.tech_name))
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
         OPTS.trim_netlist = False
+
         OPTS.bitcell = "pbitcell"
         OPTS.replica_bitcell="replica_pbitcell"
+        OPTS.dummy_bitcell="dummy_pbitcell"
+
         OPTS.num_rw_ports = 1
-        OPTS.num_r_ports = 1
+        OPTS.num_r_ports = 0
         OPTS.num_w_ports = 1
         
         # This is a hack to reload the characterizer __init__ with the spice version
@@ -35,28 +37,25 @@ class psram_1bank_2mux_1rw_1r_1w_func_test(openram_test):
         reload(characterizer)
         from characterizer import functional, delay
         from sram_config import sram_config
-        c = sram_config(word_size=4,
-                        num_words=64,
+        c = sram_config(word_size=2,
+                        num_words=32,
                         num_banks=1)
         c.words_per_row=2
         c.recompute_sizes()
-        debug.info(1, "Functional test for {}rw,{}r,{}w psram with {} bit words, {} words, {} words per row, {} banks".format(OPTS.num_rw_ports,
-                                                                                                                              OPTS.num_r_ports,
-                                                                                                                              OPTS.num_w_ports,
-                                                                                                                              c.word_size,
-                                                                                                                              c.num_words,
-                                                                                                                              c.words_per_row,
-                                                                                                                              c.num_banks))
+        debug.info(1, "Functional test for {}rw,{}r,{}w psram with"
+                   "{} bit words, {} words, {} words per row, {} banks".format(OPTS.num_rw_ports,
+                                                                               OPTS.num_r_ports,
+                                                                               OPTS.num_w_ports,
+                                                                               c.word_size,
+                                                                               c.num_words,
+                                                                               c.words_per_row,
+                                                                               c.num_banks))
         s = factory.create(module_type="sram", sram_config=c)
-        tempspice = OPTS.openram_temp + "temp.sp"        
+        tempspice = OPTS.openram_temp + "sram.sp"        
         s.sp_write(tempspice)
         
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         f = functional(s.s, tempspice, corner)
-        d = delay(s.s, tempspice, corner)
-        feasible_period = self.find_feasible_test_period(d, s.s, f.load, f.slew)
-        
-        f.num_cycles = 10
         (fail, error) = f.run()
         self.assertTrue(fail,error)
         

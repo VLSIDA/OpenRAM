@@ -20,21 +20,30 @@ class pbitcell(design.design):
     with a variable number of read/write, write, and read ports
     """
 
-    def __init__(self, name, replica_bitcell=False):
+    def __init__(self, name, replica_bitcell=False, dummy_bitcell=False):
         self.num_rw_ports = OPTS.num_rw_ports
         self.num_w_ports = OPTS.num_w_ports
         self.num_r_ports = OPTS.num_r_ports
         self.total_ports = self.num_rw_ports + self.num_w_ports + self.num_r_ports
 
         self.replica_bitcell = replica_bitcell
+        self.dummy_bitcell = dummy_bitcell
 
         design.design.__init__(self, name)
-        debug.info(2, "create a multi-port bitcell with {0} rw ports, {1} w ports and {2} r ports".format(self.num_rw_ports,
-                                                                                                          self.num_w_ports,
-                                                                                                          self.num_r_ports))
+        info_string = "{0} rw ports, {1} w ports and {2} r ports".format(self.num_rw_ports,
+                                                                         self.num_w_ports,
+                                                                         self.num_r_ports)
+        debug.info(2, "create a multi-port bitcell with {}".format(info_string))
+        self.add_comment(info_string)
+
+        if self.dummy_bitcell:
+            self.add_comment("dummy bitcell")
+        if self.replica_bitcell:
+            self.add_comment("replica bitcell")
 
         self.create_netlist()
-        # We must always create the bitcell layout because some transistor sizes in the other netlists depend on it
+        # We must always create the bitcell layout
+        # because some transistor sizes in the other netlists depend on it
         self.create_layout()
         self.add_boundary()
 
@@ -376,14 +385,20 @@ class pbitcell(design.design):
 
         # iterate over the number of read/write ports
         for k in range(0,self.num_rw_ports):
+            bl_name = self.rw_bl_names[k]
+            br_name = self.rw_br_names[k]
+            if self.dummy_bitcell:
+                bl_name += "_noconn"
+                br_name += "_noconn"
+                
             # add read/write transistors
             self.readwrite_nmos_left[k] = self.add_inst(name="readwrite_nmos_left{}".format(k),
                                                         mod=self.readwrite_nmos)
-            self.connect_inst([self.rw_bl_names[k], self.rw_wl_names[k], self.Q, "gnd"])
+            self.connect_inst([bl_name, self.rw_wl_names[k], self.Q, "gnd"])
 
             self.readwrite_nmos_right[k] = self.add_inst(name="readwrite_nmos_right{}".format(k),
                                                          mod=self.readwrite_nmos)
-            self.connect_inst([self.Q_bar, self.rw_wl_names[k], self.rw_br_names[k], "gnd"])
+            self.connect_inst([self.Q_bar, self.rw_wl_names[k], br_name, "gnd"])
 
     def place_readwrite_ports(self):
         """ Places read/write ports in the bit cell """
@@ -450,14 +465,20 @@ class pbitcell(design.design):
 
         # iterate over the number of write ports
         for k in range(0,self.num_w_ports):
+            bl_name = self.w_bl_names[k]
+            br_name = self.w_br_names[k]
+            if self.dummy_bitcell:
+                bl_name += "_noconn"
+                br_name += "_noconn"
+
             # add write transistors
             self.write_nmos_left[k] = self.add_inst(name="write_nmos_left{}".format(k),
                                                     mod=self.write_nmos)
-            self.connect_inst([self.w_bl_names[k], self.w_wl_names[k], self.Q, "gnd"])
+            self.connect_inst([bl_name, self.w_wl_names[k], self.Q, "gnd"])
 
             self.write_nmos_right[k] = self.add_inst(name="write_nmos_right{}".format(k),
                                                      mod=self.write_nmos)
-            self.connect_inst([self.Q_bar, self.w_wl_names[k], self.w_br_names[k], "gnd"])
+            self.connect_inst([self.Q_bar, self.w_wl_names[k], br_name, "gnd"])
 
     def place_write_ports(self):
         """ Places write ports in the bit cell """
@@ -532,6 +553,12 @@ class pbitcell(design.design):
 
         # iterate over the number of read ports
         for k in range(0,self.num_r_ports):
+            bl_name = self.r_bl_names[k]
+            br_name = self.r_br_names[k]
+            if self.dummy_bitcell:
+                bl_name += "_noconn"
+                br_name += "_noconn"
+                
             # add read-access transistors
             self.read_access_nmos_left[k] = self.add_inst(name="read_access_nmos_left{}".format(k),
                                                           mod=self.read_nmos)
@@ -544,11 +571,11 @@ class pbitcell(design.design):
             # add read transistors
             self.read_nmos_left[k] = self.add_inst(name="read_nmos_left{}".format(k),
                                                    mod=self.read_nmos)
-            self.connect_inst([self.r_bl_names[k], self.r_wl_names[k], "RA_to_R_left{}".format(k), "gnd"])
+            self.connect_inst([bl_name, self.r_wl_names[k], "RA_to_R_left{}".format(k), "gnd"])
 
             self.read_nmos_right[k] = self.add_inst(name="read_nmos_right{}".format(k),
                                                     mod=self.read_nmos)
-            self.connect_inst(["RA_to_R_right{}".format(k), self.r_wl_names[k], self.r_br_names[k], "gnd"])
+            self.connect_inst(["RA_to_R_right{}".format(k), self.r_wl_names[k], br_name, "gnd"])
 
     def place_read_ports(self):
         """ Places the read ports in the bit cell """
@@ -686,8 +713,10 @@ class pbitcell(design.design):
             port_contact_offest = left_port_transistors[k].get_pin("S").center()
             bl_offset = vector(bl_positions[k].x, port_contact_offest.y)
 
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=port_contact_offest)
+            # Leave bitline disconnected if a dummy cell
+            if not self.dummy_bitcell:
+                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                    offset=port_contact_offest)
 
             self.add_path("metal2", [port_contact_offest, bl_offset], width=contact.m1m2.height)
 
@@ -695,8 +724,10 @@ class pbitcell(design.design):
             port_contact_offest = right_port_transistors[k].get_pin("D").center()
             br_offset = vector(br_positions[k].x, port_contact_offest.y)
 
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=port_contact_offest)
+            # Leave bitline disconnected if a dummy cell
+            if not self.dummy_bitcell:
+                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                    offset=port_contact_offest)
 
             self.add_path("metal2", [port_contact_offest, br_offset], width=contact.m1m2.height)
 
@@ -846,7 +877,7 @@ class pbitcell(design.design):
                             implant_type="n",
                             well_type="n")
 
-    def list_bitcell_pins(self, col, row):
+    def get_bitcell_pins(self, col, row):
         """ Creates a list of connections in the bitcell, indexed by column and row, for instance use in bitcell_array """
         bitcell_pins = []
         for port in range(self.total_ports):
@@ -858,12 +889,12 @@ class pbitcell(design.design):
         bitcell_pins.append("gnd")
         return bitcell_pins
 
-    def list_all_wl_names(self):
+    def get_all_wl_names(self):
         """ Creates a list of all wordline pin names """
         wordline_names = self.rw_wl_names + self.w_wl_names + self.r_wl_names
         return wordline_names
 
-    def list_all_bitline_names(self):
+    def get_all_bitline_names(self):
         """ Creates a list of all bitline pin names (both bl and br) """
         bitline_pins = []
         for port in range(self.total_ports):
@@ -871,15 +902,13 @@ class pbitcell(design.design):
             bitline_pins.append("br{0}".format(port))
         return bitline_pins
 
-    def list_all_bl_names(self):
+    def get_all_bl_names(self):
         """ Creates a list of all bl pins names """
-        bl_pins = self.rw_bl_names + self.w_bl_names + self.r_bl_names
-        return bl_pins
+        return self.rw_bl_names + self.w_bl_names + self.r_bl_names
 
-    def list_all_br_names(self):
+    def get_all_br_names(self):
         """ Creates a list of all br pins names """
-        br_pins = self.rw_br_names + self.w_br_names + self.r_br_names
-        return br_pins
+        return self.rw_br_names + self.w_br_names + self.r_br_names
 
     def route_rbc_short(self):
         """ route the short from Q_bar to gnd necessary for the replica bitcell """
@@ -897,7 +926,13 @@ class pbitcell(design.design):
     
     def get_br_name(self, port=0):
         """Get bl name by port"""
-        return "br{}".format(port) 
+        return "br{}".format(port)
+
+    def get_wl_name(self, port=0):
+        """Get wl name by port"""
+        debug.check(port<2,"Two ports for bitcell_1rw_1r only.")
+        return "wl{}".format(port)
+    
 
     def analytical_delay(self, corner, slew, load=0, swing = 0.5):
         parasitic_delay = 1
@@ -927,11 +962,16 @@ class pbitcell(design.design):
 
     def build_graph(self, graph, inst_name, port_nets):        
         """Adds edges to graph for pbitcell. Only readwrite and read ports."""
+        
+        if self.dummy_bitcell:
+            return
+        
         pin_dict = {pin:port for pin,port in zip(self.pins, port_nets)} 
         # Edges added wl->bl, wl->br for every port except write ports
         rw_pin_names = zip(self.r_wl_names, self.r_bl_names, self.r_br_names)
         r_pin_names = zip(self.rw_wl_names, self.rw_bl_names, self.rw_br_names)
-        for pin_zip in zip(rw_pin_names, r_pin_names): 
+
+        for pin_zip in [rw_pin_names, r_pin_names]: 
             for wl,bl,br in pin_zip:
                 graph.add_edge(pin_dict[wl],pin_dict[bl])
                 graph.add_edge(pin_dict[wl],pin_dict[br])

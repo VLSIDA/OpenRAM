@@ -13,13 +13,13 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class replica_column_test(openram_test):
+class replica_bitcell_array_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_{0}".format(OPTS.tech_name))
 
-        debug.info(2, "Testing replica column for 6t_cell")
-        a = factory.create(module_type="replica_column", rows=4)
+        debug.info(2, "Testing 4x4 array for 6t_cell")
+        a = factory.create(module_type="replica_bitcell_array", cols=4, rows=4, left_rbl=1, right_rbl=0, bitcell_ports=[0])
         self.local_check(a)
 
         globals.end_openram()

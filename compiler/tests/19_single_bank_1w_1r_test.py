@@ -19,13 +19,16 @@ class single_bank_1w_1r_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_{0}".format(OPTS.tech_name))
+        from sram_config import sram_config
 
         OPTS.bitcell = "bitcell_1w_1r"
-        OPTS.num_rw_ports = 1
+        OPTS.replica_bitcell = "replica_bitcell_1w_1r"
+        OPTS.dummy_bitcell="dummy_bitcell_1w_1r"
+
+        OPTS.num_rw_ports = 0
         OPTS.num_r_ports = 1
-        OPTS.num_w_ports = 0
+        OPTS.num_w_ports = 1
         
-        from sram_config import sram_config
         c = sram_config(word_size=4,
                         num_words=16)
 

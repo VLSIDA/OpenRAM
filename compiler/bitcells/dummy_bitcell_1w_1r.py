@@ -10,7 +10,7 @@ import debug
 import utils
 from tech import GDS,layer,drc,parameter
 
-class replica_bitcell_1w_1r(design.design):
+class dummy_bitcell_1w_1r(design.design):
     """
     A single bit cell which is forced to store a 0.
     This module implements the single memory cell used in the design. It
@@ -19,17 +19,17 @@ class replica_bitcell_1w_1r(design.design):
 
     pin_names = ["bl0", "br0", "bl1", "br1", "wl0", "wl1", "vdd", "gnd"]
     type_list = ["OUTPUT", "OUTPUT", "INPUT", "INPUT", "INPUT", "INPUT", "POWER", "GROUND"] 
-    (width,height) = utils.get_libcell_size("replica_cell_1w_1r", GDS["unit"], layer["boundary"])
-    pin_map = utils.get_libcell_pins(pin_names, "replica_cell_1w_1r", GDS["unit"])
+    (width,height) = utils.get_libcell_size("dummy_cell_1w_1r", GDS["unit"], layer["boundary"])
+    pin_map = utils.get_libcell_pins(pin_names, "dummy_cell_1w_1r", GDS["unit"])
 
     def __init__(self, name=""):
         # Ignore the name argument        
-        design.design.__init__(self, "replica_cell_1w_1r")
-        debug.info(2, "Create replica bitcell 1w+1r object")
+        design.design.__init__(self, "dummy_cell_1w_1r")
+        debug.info(2, "Create dummy bitcell 1w+1r object")
 
-        self.width = replica_bitcell_1w_1r.width
-        self.height = replica_bitcell_1w_1r.height
-        self.pin_map = replica_bitcell_1w_1r.pin_map
+        self.width = dummy_bitcell_1w_1r.width
+        self.height = dummy_bitcell_1w_1r.height
+        self.pin_map = dummy_bitcell_1w_1r.pin_map
         self.add_pin_types(self.type_list)
 
     def get_wl_cin(self):
@@ -41,12 +41,5 @@ class replica_bitcell_1w_1r(design.design):
         return 2*access_tx_cin
 
     def build_graph(self, graph, inst_name, port_nets):        
-        """Adds edges to graph. Multiport bitcell timing graph is too complex
-           to use the add_graph_edges function."""
-        debug.info(1,'Adding edges for {}'.format(inst_name))
-        pin_dict = {pin:port for pin,port in zip(self.pins, port_nets)} 
-        #Edges hardcoded here. Essentially wl->bl/br for the read port.
-        # Port 1 edges
-        graph.add_edge(pin_dict["wl1"], pin_dict["bl1"])   
-        graph.add_edge(pin_dict["wl1"], pin_dict["br1"])   
-        # Port 0 is a write port, so its timing is not considered here.
+        """Dummy bitcells are cannot form a path and be part of the timing graph"""
+        return

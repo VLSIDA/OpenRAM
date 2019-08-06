@@ -39,7 +39,7 @@ class control_logic(design.design):
         self.num_cols = word_size*words_per_row
         self.num_words = num_rows*words_per_row
         
-        self.enable_delay_chain_resizing = True
+        self.enable_delay_chain_resizing = False
         self.inv_parasitic_delay = logical_effort.logical_effort.pinv
         
         #Determines how much larger the sen delay should be. Accounts for possible error in model.
@@ -73,10 +73,8 @@ class control_logic(design.design):
 
     def add_pins(self):
         """ Add the pins to the control logic module. """
-        for pin in self.input_list + ["clk"]:
-            self.add_pin(pin,"INPUT")
-        for pin in self.output_list:
-            self.add_pin(pin,"OUTPUT")
+        self.add_pin_list(self.input_list + ["clk"] + self.rbl_list, "INPUT")
+        self.add_pin_list(self.output_list,"OUTPUT")
         self.add_pin("vdd","POWER")
         self.add_pin("gnd","GROUND")
 
@@ -96,6 +94,12 @@ class control_logic(design.design):
                                    size=4,
                                    height=dff_height)
         self.add_mod(self.and2)
+
+        self.rbl_driver = factory.create(module_type="pbuf",
+                                         size=self.num_cols,
+                                         height=dff_height)
+        self.add_mod(self.rbl_driver)
+        
         
         # clk_buf drives a flop for every address and control bit
         # plus about 5 fanouts for the control logic
@@ -115,16 +119,16 @@ class control_logic(design.design):
         self.add_mod(self.wl_en_driver)
 
         # w_en drives every write driver
-        self.w_en_driver = factory.create(module_type="pdriver",
-                                          fanout=self.word_size+8,
-                                          height=dff_height)
-        self.add_mod(self.w_en_driver)
+        self.wen_and2 = factory.create(module_type="pand2",
+                                       size=self.word_size+8,
+                                       height=dff_height)
+        self.add_mod(self.wen_and2)
 
         # s_en drives every sense amp
-        self.s_en_driver = factory.create(module_type="pdriver",
-                                          fanout=self.word_size,
-                                          height=dff_height)
-        self.add_mod(self.s_en_driver)
+        self.sen_and2 = factory.create(module_type="pand2",
+                                       size=self.word_size,
+                                       height=dff_height)
+        self.add_mod(self.sen_and2)
 
         # used to generate inverted signals with low fanout 
         self.inv = factory.create(module_type="pinv",
@@ -132,53 +136,58 @@ class control_logic(design.design):
                                               height=dff_height)
         self.add_mod(self.inv)
 
-        # p_en_bar drives every column in the bicell array
+        # p_en_bar drives every column in the bitcell array
         self.p_en_bar_driver = factory.create(module_type="pdriver",
                                               neg_polarity=True,
                                               fanout=self.num_cols,
                                               height=dff_height)
         self.add_mod(self.p_en_bar_driver)
+
         
-        if (self.port_type == "rw") or (self.port_type == "r"):
-            from importlib import reload
-            self.delay_chain_resized = False
-            c = reload(__import__(OPTS.replica_bitline))
-            replica_bitline = getattr(c, OPTS.replica_bitline)
-            bitcell_loads = int(math.ceil(self.num_rows * OPTS.rbl_delay_percentage))
-            #Use a model to determine the delays with that heuristic
-            if OPTS.use_tech_delay_chain_size: #Use tech parameters if set.
-                fanout_list = OPTS.delay_chain_stages*[OPTS.delay_chain_fanout_per_stage]
-                debug.info(1, "Using tech parameters to size delay chain: fanout_list={}".format(fanout_list))
-                self.replica_bitline = factory.create(module_type="replica_bitline",
-                                                      delay_fanout_list=fanout_list,
-                                                      bitcell_loads=bitcell_loads)
-                if self.sram != None: #Calculate model value even for specified sizes
-                    self.set_sen_wl_delays()
+        
+        # if (self.port_type == "rw") or (self.port_type == "r"):
+        #     from importlib import reload
+        #     self.delay_chain_resized = False
+        #     c = reload(__import__(OPTS.replica_bitline))
+        #     replica_bitline = getattr(c, OPTS.replica_bitline)
+        #     bitcell_loads = int(math.ceil(self.num_rows * OPTS.rbl_delay_percentage))
+        #     #Use a model to determine the delays with that heuristic
+        #     if OPTS.use_tech_delay_chain_size: #Use tech parameters if set.
+        #         fanout_list = OPTS.delay_chain_stages*[OPTS.delay_chain_fanout_per_stage]
+        #         debug.info(1, "Using tech parameters to size delay chain: fanout_list={}".format(fanout_list))
+        #         self.replica_bitline = factory.create(module_type="replica_bitline",
+        #                                               delay_fanout_list=fanout_list,
+        #                                               bitcell_loads=bitcell_loads)
+        #         if self.sram != None: #Calculate model value even for specified sizes
+        #             self.set_sen_wl_delays()
                 
-            else: #Otherwise, use a heuristic and/or model based sizing.
-                #First use a heuristic
-                delay_stages_heuristic, delay_fanout_heuristic = self.get_heuristic_delay_chain_size()
-                self.replica_bitline = factory.create(module_type="replica_bitline",
-                                                      delay_fanout_list=[delay_fanout_heuristic]*delay_stages_heuristic,
-                                                      bitcell_loads=bitcell_loads)
-                #Resize if necessary, condition depends on resizing method
-                if self.sram != None and self.enable_delay_chain_resizing and not self.does_sen_rise_fall_timing_match(): 
-                    #This resizes to match fall and rise delays, can make the delay chain weird sizes.
-                    stage_list = self.get_dynamic_delay_fanout_list(delay_stages_heuristic, delay_fanout_heuristic)
-                    self.replica_bitline = factory.create(module_type="replica_bitline",
-                                                          delay_fanout_list=stage_list,
-                                                          bitcell_loads=bitcell_loads)
+        #     else: #Otherwise, use a heuristic and/or model based sizing.
+        #         #First use a heuristic
+        #         delay_stages_heuristic, delay_fanout_heuristic = self.get_heuristic_delay_chain_size()
+        #         self.replica_bitline = factory.create(module_type="replica_bitline",
+        #                                               delay_fanout_list=[delay_fanout_heuristic]*delay_stages_heuristic,
+        #                                               bitcell_loads=bitcell_loads)
+        #         #Resize if necessary, condition depends on resizing method
+        #         if self.sram != None and self.enable_delay_chain_resizing and not self.does_sen_rise_fall_timing_match(): 
+        #             #This resizes to match fall and rise delays, can make the delay chain weird sizes.
+        #             stage_list = self.get_dynamic_delay_fanout_list(delay_stages_heuristic, delay_fanout_heuristic)
+        #             self.replica_bitline = factory.create(module_type="replica_bitline",
+        #                                                   delay_fanout_list=stage_list,
+        #                                                   bitcell_loads=bitcell_loads)
                     
-                    #This resizes based on total delay. 
-                    # delay_stages, delay_fanout = self.get_dynamic_delay_chain_size(delay_stages_heuristic, delay_fanout_heuristic)
-                    # self.replica_bitline = factory.create(module_type="replica_bitline",
-                                                          # delay_fanout_list=[delay_fanout]*delay_stages,
-                                                          # bitcell_loads=bitcell_loads)
+        #             #This resizes based on total delay. 
+        #             # delay_stages, delay_fanout = self.get_dynamic_delay_chain_size(delay_stages_heuristic, delay_fanout_heuristic)
+        #             # self.replica_bitline = factory.create(module_type="replica_bitline",
+        #                                                   # delay_fanout_list=[delay_fanout]*delay_stages,
+        #                                                   # bitcell_loads=bitcell_loads)
                     
-                    self.sen_delay_rise,self.sen_delay_fall = self.get_delays_to_sen() #get the new timing
-                    self.delay_chain_resized = True
-                
-            self.add_mod(self.replica_bitline)
+        #             self.sen_delay_rise,self.sen_delay_fall = self.get_delays_to_sen() #get the new timing
+        #             self.delay_chain_resized = True
+
+        debug.check(OPTS.delay_chain_stages%2, "Must use odd number of delay chain stages for inverting delay chain.")
+        self.delay_chain=factory.create(module_type="delay_chain",
+                                        fanout_list = OPTS.delay_chain_stages*[OPTS.delay_chain_fanout_per_stage])
+        self.add_mod(self.delay_chain)
 
     def get_heuristic_delay_chain_size(self):
         """Use a basic heuristic to determine the size of the delay chain used for the Sense Amp Enable """
@@ -312,8 +321,13 @@ class control_logic(design.design):
         # List of input control signals
         if self.port_type == "rw":
             self.input_list = ["csb", "web"]
+            self.rbl_list = ["rbl_bl"]
+        elif self.port_type == "r":
+            self.input_list = ["csb"]
+            self.rbl_list = ["rbl_bl"]
         else:
             self.input_list = ["csb"]
+            self.rbl_list = []
 
         if self.port_type == "rw":
             self.dff_output_list = ["cs_bar", "cs", "we_bar", "we"]
@@ -332,11 +346,12 @@ class control_logic(design.design):
         
         # Outputs to the bank
         if self.port_type == "rw":
-            self.output_list = ["s_en", "w_en", "p_en_bar"]
+            self.output_list = ["rbl_wl", "s_en", "w_en"]
         elif self.port_type == "r":
-            self.output_list = ["s_en", "p_en_bar"]
+            self.output_list = ["rbl_wl", "s_en"]
         else:
             self.output_list = ["w_en"]
+        self.output_list.append("p_en_bar")
         self.output_list.append("wl_en")
         self.output_list.append("clk_buf")
         
@@ -360,12 +375,12 @@ class control_logic(design.design):
         self.create_wlen_row()
         if (self.port_type == "rw") or (self.port_type == "w"):
             self.create_wen_row()
-        if self.port_type == "rw": 
-            self.create_rbl_in_row()
-        if (self.port_type == "rw") or (self.port_type == "r"): 
-            self.create_pen_row()            
+        if (self.port_type == "rw") or (self.port_type == "r"):
+            self.create_rbl_row()
             self.create_sen_row()
-            self.create_rbl()
+            self.create_delay()
+        self.create_pen_row()            
+
 
 
     def place_instances(self):
@@ -392,20 +407,20 @@ class control_logic(design.design):
         row += 1
         if (self.port_type == "rw") or (self.port_type == "w"):
             self.place_wen_row(row)
-            height = self.w_en_inst.uy()
-            control_center_y = self.w_en_inst.uy()
+            height = self.w_en_gate_inst.uy()
+            control_center_y = self.w_en_gate_inst.uy()
             row += 1
-        if self.port_type == "rw": 
-            self.place_rbl_in_row(row)
+        if (self.port_type == "rw") or (self.port_type == "r"):
+            self.place_rbl_row(row)
             row += 1
+        self.place_pen_row(row)
+        row += 1
         if (self.port_type == "rw") or (self.port_type == "r"):            
-            self.place_pen_row(row)
-            row += 1
             self.place_sen_row(row)
             row += 1
-            self.place_rbl(row)
-            height = self.rbl_inst.uy()
-            control_center_y = self.rbl_inst.by()
+            self.place_delay(row)
+            height = self.delay_inst.uy()
+            control_center_y = self.delay_inst.by()
 
         # This offset is used for placement of the control logic in the SRAM level.
         self.control_logic_center = vector(self.ctrl_dff_inst.rx(), control_center_y)
@@ -415,7 +430,7 @@ class control_logic(design.design):
         # Max of modules or logic rows
         self.width = max([inst.rx() for inst in self.row_end_inst])
         if (self.port_type == "rw") or (self.port_type == "r"):
-            self.width = max(self.rbl_inst.rx() , self.width)
+            self.width = max(self.delay_inst.rx() , self.width)
         self.width += self.m2_pitch
 
     def route_all(self):
@@ -426,33 +441,29 @@ class control_logic(design.design):
         if (self.port_type == "rw") or (self.port_type == "w"):
             self.route_wen()
         if (self.port_type == "rw") or (self.port_type == "r"):
-            self.route_rbl_in()
-            self.route_pen()
+            self.route_rbl()
             self.route_sen()
+        self.route_pen()
         self.route_clk_buf()
         self.route_gated_clk_bar()
         self.route_gated_clk_buf()
         self.route_supply()
 
 
-    def create_rbl(self):
+    def create_delay(self):
         """ Create the replica bitline """
-        if self.port_type == "r":
-            input_name = "gated_clk_bar"
-        else:
-            input_name = "rbl_in"
-        self.rbl_inst=self.add_inst(name="replica_bitline",
-                                    mod=self.replica_bitline)
-        self.connect_inst([input_name, "pre_s_en", "vdd", "gnd"])
+        self.delay_inst=self.add_inst(name="delay_chain",
+                                      mod=self.delay_chain)
+        self.connect_inst(["rbl_bl", "pre_s_en", "vdd", "gnd"])
 
-    def place_rbl(self,row):
+    def place_delay(self,row):
         """ Place the replica bitline """
         y_off = row * self.and2.height + 2*self.m1_pitch
 
         # Add the RBL above the rows
         # Add to the right of the control rows and routing channel
-        offset = vector(0, y_off)
-        self.rbl_inst.place(offset)
+        offset = vector(self.delay_chain.width, y_off)
+        self.delay_inst.place(offset, mirror="MY")
         
         
     def create_clk_buf_row(self):
@@ -588,44 +599,31 @@ class control_logic(design.design):
         self.connect_vertical_bus(wlen_map, self.wl_en_inst, self.rail_offsets)  
         self.connect_output(self.wl_en_inst, "Z", "wl_en")
 
-    def create_rbl_in_row(self):
-        
-        # input: gated_clk_bar, we_bar, output: rbl_in
-        self.rbl_in_inst=self.add_inst(name="and2_rbl_in",
-                                         mod=self.and2)
-        self.connect_inst(["gated_clk_bar", "we_bar", "rbl_in", "vdd", "gnd"])
+    def create_rbl_row(self):
 
-    def place_rbl_in_row(self,row):
+        self.rbl_inst=self.add_inst(name="rbl_driver",
+                                    mod=self.rbl_driver)
+        # input: gated_clk_bar, output: rbl_wl
+        self.connect_inst(["gated_clk_bar", "rbl_wl", "vdd", "gnd"])
+
+    def place_rbl_row(self,row):
         x_off = self.control_x_offset
         (y_off,mirror)=self.get_offset(row)
 
         offset = vector(x_off, y_off)
-        self.rbl_in_inst.place(offset, mirror)
+        self.rbl_inst.place(offset, mirror)
 
-        self.row_end_inst.append(self.rbl_in_inst)
+        self.row_end_inst.append(self.rbl_inst)
 
-    def route_rbl_in(self):
+    def route_rbl(self):
         """ Connect the logic for the rbl_in generation """
 
-        if self.port_type == "rw":
-            input_name = "we_bar"
-            # Connect the NAND gate inputs to the bus
-            rbl_in_map = zip(["A", "B"], ["gated_clk_bar", "we_bar"])
-            self.connect_vertical_bus(rbl_in_map, self.rbl_in_inst, self.rail_offsets)  
-        
-            
-        # Connect the output of the precharge enable to the RBL input
-        if self.port_type == "rw":
-            out_pos = self.rbl_in_inst.get_pin("Z").center()
-        else:
-            out_pos = vector(self.rail_offsets["gated_clk_bar"].x, self.rbl_inst.by()-3*self.m2_pitch)
-        in_pos = self.rbl_inst.get_pin("en").center()
-        mid1 = vector(in_pos.x,out_pos.y)
-        self.add_wire(("metal3","via2","metal2"),[out_pos, mid1, in_pos])
-        self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=out_pos)
-        self.add_via_center(layers=("metal2","via2","metal3"),
-                            offset=out_pos)
+        rbl_in_map = zip(["A"], ["gated_clk_bar"]) 
+        self.connect_vertical_bus(rbl_in_map, self.rbl_inst, self.rail_offsets)
+        self.connect_output(self.rbl_inst, "Z", "rbl_wl")
+
+        # Input from RBL goes to the delay line for futher delay
+        self.copy_layout_pin(self.delay_inst, "in", "rbl_bl")
         
     def create_pen_row(self):
         input_name = "gated_clk_buf"
@@ -639,7 +637,6 @@ class control_logic(design.design):
     def place_pen_row(self,row):
         x_off = self.control_x_offset
         (y_off,mirror)=self.get_offset(row)
-
         offset = vector(x_off,y_off)
         self.p_en_bar_inst.place(offset, mirror)
 
@@ -647,17 +644,21 @@ class control_logic(design.design):
 
     def route_pen(self):
         in_map = zip(["A"], ["gated_clk_buf"])
-        self.connect_vertical_bus(in_map, self.p_en_bar_inst, self.rail_offsets)
+        self.connect_vertical_bus(in_map, self.p_en_bar_inst, self.rail_offsets)  
         
         self.connect_output(self.p_en_bar_inst, "Z", "p_en_bar")
         
     def create_sen_row(self):
         """ Create the sense enable buffer. """
-        # BUFFER FOR S_EN
-        # input: pre_s_en, output: s_en
-        self.s_en_inst=self.add_inst(name="buf_s_en",
-                                     mod=self.s_en_driver)
-        self.connect_inst(["pre_s_en", "s_en",  "vdd", "gnd"])
+        if self.port_type=="rw":
+            input_name = "we_bar"
+        else:
+            input_name = "cs_bar"
+        # GATE FOR S_EN
+        self.s_en_gate_inst = self.add_inst(name="buf_s_en_and",
+                                            mod=self.sen_and2)
+        self.connect_inst(["pre_s_en", input_name, "s_en", "vdd", "gnd"])
+        
         
     def place_sen_row(self,row):
         """ 
@@ -668,19 +669,27 @@ class control_logic(design.design):
         (y_off,mirror)=self.get_offset(row)
 
         offset = vector(x_off, y_off)
-        self.s_en_inst.place(offset, mirror)
+        self.s_en_gate_inst.place(offset, mirror)
         
-        self.row_end_inst.append(self.s_en_inst)
+        self.row_end_inst.append(self.s_en_gate_inst)
 
         
     def route_sen(self):
+
+        if self.port_type=="rw":
+            input_name = "we_bar"
+        else:
+            input_name = "cs_bar"
+            
+        sen_map = zip(["B"], [input_name])
+        self.connect_vertical_bus(sen_map, self.s_en_gate_inst, self.rail_offsets)
         
-        out_pos = self.rbl_inst.get_pin("out").bc()
-        in_pos = self.s_en_inst.get_pin("A").lc()
+        out_pos = self.delay_inst.get_pin("out").bc()
+        in_pos = self.s_en_gate_inst.get_pin("A").lc()
         mid1 = vector(out_pos.x,in_pos.y)
         self.add_wire(("metal1","via1","metal2"),[out_pos, mid1,in_pos])                
 
-        self.connect_output(self.s_en_inst, "Z", "s_en")
+        self.connect_output(self.s_en_gate_inst, "Z", "s_en")
         
         
     def create_wen_row(self):
@@ -690,34 +699,33 @@ class control_logic(design.design):
         else:
             # No we for write-only reports, so use cs
             input_name = "cs"
-            
-        # BUFFER FOR W_EN
-        self.w_en_inst = self.add_inst(name="buf_w_en_buf",
-                                       mod=self.w_en_driver)
-        self.connect_inst([input_name, "w_en", "vdd", "gnd"])
 
+        # GATE THE W_EN
+        self.w_en_gate_inst = self.add_inst(name="w_en_and",
+                                            mod=self.wen_and2)
+        self.connect_inst([input_name, "gated_clk_bar", "w_en", "vdd", "gnd"])
+        
 
     def place_wen_row(self,row):
         x_off = self.ctrl_dff_inst.width + self.internal_bus_width
         (y_off,mirror)=self.get_offset(row)
             
         offset = vector(x_off, y_off)
-        self.w_en_inst.place(offset, mirror)
+        self.w_en_gate_inst.place(offset, mirror)
         
-        self.row_end_inst.append(self.w_en_inst)
+        self.row_end_inst.append(self.w_en_gate_inst)
         
     def route_wen(self):
-        
         if self.port_type == "rw":
             input_name = "we"
         else:
             # No we for write-only reports, so use cs
             input_name = "cs"
             
-        wen_map = zip(["A"], [input_name])
-        self.connect_vertical_bus(wen_map, self.w_en_inst, self.rail_offsets)  
+        wen_map = zip(["A", "B"], [input_name, "gated_clk_bar"])
+        self.connect_vertical_bus(wen_map, self.w_en_gate_inst, self.rail_offsets)
 
-        self.connect_output(self.w_en_inst, "Z", "w_en")
+        self.connect_output(self.w_en_gate_inst, "Z", "w_en")
         
     def create_dffs(self):
         self.ctrl_dff_inst=self.add_inst(name="ctrl_dffs",
@@ -794,8 +802,8 @@ class control_logic(design.design):
                     self.add_path("metal1", [row_loc, pin_loc])
             
         if (self.port_type == "rw") or (self.port_type == "r"):
-            self.copy_layout_pin(self.rbl_inst,"gnd")
-            self.copy_layout_pin(self.rbl_inst,"vdd")        
+            self.copy_layout_pin(self.delay_inst,"gnd")
+            self.copy_layout_pin(self.delay_inst,"vdd")        
 
         self.copy_layout_pin(self.ctrl_dff_inst,"gnd")
         self.copy_layout_pin(self.ctrl_dff_inst,"vdd")        
@@ -821,7 +829,7 @@ class control_logic(design.design):
         #                    height=pin.height(),
         #                    width=pin.width())
 
-        pin=self.rbl_inst.get_pin("out")
+        pin=self.delay_inst.get_pin("out")
         self.add_label_pin(text="out",
                            layer=pin.layer,
                            offset=pin.ll(),
@@ -882,7 +890,7 @@ class control_logic(design.design):
             last_stage_rise = stage_effort_list[-1].is_rise
         
         #Replica bitline stage, rbl_in -(rbl)-> pre_s_en
-        stage2_cout = self.s_en_driver.get_cin()
+        stage2_cout = self.sen_and2.get_cin()
         stage_effort_list += self.replica_bitline.determine_sen_stage_efforts(stage2_cout, last_stage_rise)
         last_stage_rise = stage_effort_list[-1].is_rise
         
@@ -895,6 +903,7 @@ class control_logic(design.design):
 
     def get_wl_sen_delays(self):
         """Gets a list of the stages and delays in order of their path."""
+
         if self.sen_stage_efforts == None or self.wl_stage_efforts == None:
             debug.error("Model delays not calculated for SRAM.", 1)
         wl_delays = logical_effort.calculate_delays(self.wl_stage_efforts)
@@ -903,6 +912,7 @@ class control_logic(design.design):
         
     def analytical_delay(self, corner, slew, load):
         """Gets the analytical delay from clk input to wl_en output"""
+
         stage_effort_list = []
         #Calculate the load on clk_buf_bar
         ext_clk_buf_cout = self.sram.get_clk_bar_cin()
@@ -930,8 +940,10 @@ class control_logic(design.design):
         return stage_effort_list
        
     def get_clk_buf_cin(self):
-        """Get the loads that are connected to the buffered clock. 
-           Includes all the DFFs and some logic."""
+        """
+        Get the loads that are connected to the buffered clock. 
+        Includes all the DFFs and some logic.
+        """
        
         #Control logic internal load
         int_clk_buf_cap = self.inv.get_cin() + self.ctrl_dff_array.get_clk_cin() + self.and2.get_cin()
@@ -943,6 +955,7 @@ class control_logic(design.design):
         
     def get_gated_clk_bar_cin(self):
         """Get intermediates net gated_clk_bar's capacitance"""
+        
         total_cin = 0
         total_cin += self.wl_en_driver.get_cin()
         if self.port_type == 'rw':
@@ -951,4 +964,7 @@ class control_logic(design.design):
         
     def graph_exclude_dffs(self):
         """Exclude dffs from graph as they do not represent critical path"""
+        
         self.graph_inst_exclude.add(self.ctrl_dff_inst)
+        if self.port_type=="rw" or self.port_type=="w":
+            self.graph_inst_exclude.add(self.w_en_gate_inst)

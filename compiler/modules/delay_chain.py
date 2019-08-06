@@ -57,10 +57,10 @@ class delay_chain(design.design):
         
     def add_pins(self):
         """ Add the pins of the delay chain"""
-        self.add_pin("in")
-        self.add_pin("out")
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+        self.add_pin("in", "INPUT")
+        self.add_pin("out", "OUTPUT")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
     def add_modules(self):
         self.inv = factory.create(module_type="pinv", route_output=False)

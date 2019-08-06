@@ -169,11 +169,12 @@ def setup_bitcell():
     # If we have non-1rw ports,
     # and the user didn't over-ride the bitcell manually,
     # figure out the right bitcell to use
-    if (OPTS.bitcell=="bitcell" and OPTS.replica_bitcell=="replica_bitcell"):
+    if (OPTS.bitcell=="bitcell"):
         
         if (OPTS.num_rw_ports==1 and OPTS.num_w_ports==0 and OPTS.num_r_ports==0):
             OPTS.bitcell = "bitcell"
             OPTS.replica_bitcell = "replica_bitcell"
+            OPTS.dummy_bitcell = "dummy_bitcell"
         else:
             ports = ""
             if OPTS.num_rw_ports>0:
@@ -185,21 +186,26 @@ def setup_bitcell():
 
             OPTS.bitcell = "bitcell_"+ports
             OPTS.replica_bitcell = "replica_bitcell_"+ports
-
-        # See if a custom bitcell exists
-        from importlib import find_loader
-        try:
-            __import__(OPTS.bitcell)
-            __import__(OPTS.replica_bitcell)
-        except ImportError:
-            # Use the pbitcell if we couldn't find a custom bitcell
-            # or its custom replica  bitcell
-            # Use the pbitcell (and give a warning if not in unit test mode)
-            OPTS.bitcell = "pbitcell"
-            OPTS.replica_bitcell = "replica_pbitcell"
-            if not OPTS.is_unit_test:
-                debug.warning("Using the parameterized bitcell which may have suboptimal density.")
+            OPTS.dummy_bitcell = "dummy_bitcell_"+ports
+    else:
+         OPTS.replica_bitcell = "replica_" + OPTS.bitcell       
+         OPTS.replica_bitcell = "dummy_" + OPTS.bitcell
                 
+    # See if bitcell exists
+    from importlib import find_loader
+    try:
+        __import__(OPTS.bitcell)
+        __import__(OPTS.replica_bitcell)
+        __import__(OPTS.dummy_bitcell)
+    except ImportError:
+        # Use the pbitcell if we couldn't find a custom bitcell
+        # or its custom replica  bitcell
+        # Use the pbitcell (and give a warning if not in unit test mode)
+        OPTS.bitcell = "pbitcell"
+        OPTS.replica_bitcell = "replica_pbitcell"
+        OPTS.replica_bitcell = "dummy_pbitcell"
+        if not OPTS.is_unit_test:
+            debug.warning("Using the parameterized bitcell which may have suboptimal density.")
     debug.info(1,"Using bitcell: {}".format(OPTS.bitcell))    
 
 

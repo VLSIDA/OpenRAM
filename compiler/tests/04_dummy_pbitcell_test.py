@@ -15,25 +15,31 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class replica_bitline_test(openram_test):
+class replica_pbitcell_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_{0}".format(OPTS.tech_name))
+        import dummy_pbitcell
+        
+        OPTS.bitcell = "pbitcell"
+        OPTS.num_rw_ports = 1
+        OPTS.num_r_ports = 0
+        OPTS.num_w_ports = 0
 
-        # check replica bitline in single port
-        stages=4
-        fanout=4
-        rows=13
-        debug.info(2, "Testing RBL with {0} FO4 stages, {1} rows".format(stages,rows))
-        a = factory.create(module_type="replica_bitline", delay_fanout_list=stages*[fanout], bitcell_loads=rows)
-        self.local_check(a)
+        factory.reset()
+        debug.info(2, "Checking dummy bitcell using pbitcell (small cell)")
+        tx = dummy_pbitcell.dummy_pbitcell(name="rpbc")
+        self.local_check(tx)
         
-        stages=8
-        rows=100
-        debug.info(2, "Testing RBL with {0} FO4 stages, {1} rows".format(stages,rows))
-        a = factory.create(module_type="replica_bitline", delay_fanout_list=stages*[fanout], bitcell_loads=rows)
-        self.local_check(a)
-        
+        OPTS.num_rw_ports = 1
+        OPTS.num_r_ports = 1
+        OPTS.num_w_ports = 1
+
+        factory.reset()
+        debug.info(2, "Checking dummy bitcell using pbitcell (large cell)")
+        tx = dummy_pbitcell.dummy_pbitcell(name="rpbc")
+        self.local_check(tx)
+
         globals.end_openram()
         
 # run the test from the command line

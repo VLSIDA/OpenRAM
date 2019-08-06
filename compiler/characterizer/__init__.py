@@ -13,7 +13,6 @@ from .lib import *
 from .delay import *
 from .setup_hold import *
 from .functional import *
-from .worst_case import *
 from .simulation import *
 from .measurements import *
 from .model_check import *

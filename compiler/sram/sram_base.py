@@ -120,7 +120,7 @@ class sram_base(design, verilog, lef):
 
         self.add_lvs_correspondence_points()
         
-        self.offset_all_coordinates()
+        #self.offset_all_coordinates()
 
         highest_coord = self.find_highest_coords()
         self.width = highest_coord[0]
@@ -197,7 +197,7 @@ class sram_base(design, verilog, lef):
             if self.port_id[port] == "r":
                 self.control_bus_names[port].extend([sen, pen])
             elif self.port_id[port] == "w":
-                self.control_bus_names[port].extend([wen])
+                self.control_bus_names[port].extend([wen, pen])
             else:
                 self.control_bus_names[port].extend([sen, wen, pen])
             self.vert_control_bus_positions = self.create_vertical_bus(layer="metal2",
@@ -301,9 +301,6 @@ class sram_base(design, verilog, lef):
 
         self.bank_count = 0
 
-        self.supply_rail_width = self.bank.supply_rail_width
-        self.supply_rail_pitch = self.bank.supply_rail_pitch
-        
         #The control logic can resize itself based on the other modules. Requires all other modules added before control logic.
         self.all_mods_except_control_done = True
 
@@ -342,6 +339,10 @@ class sram_base(design, verilog, lef):
         for port in self.read_ports:
             for bit in range(self.word_size):
                 temp.append("DOUT{0}[{1}]".format(port,bit))
+        for port in self.read_ports:
+            temp.append("rbl_bl{0}".format(port))
+        for port in self.read_ports:
+            temp.append("rbl_wl{0}".format(port))
         for port in self.write_ports:
             for bit in range(self.word_size):
                 temp.append("BANK_DIN{0}[{1}]".format(port,bit))
@@ -353,7 +354,7 @@ class sram_base(design, verilog, lef):
                 temp.append("bank_sel{0}[{1}]".format(port,bank_num))
         for port in self.read_ports:
             temp.append("s_en{0}".format(port))
-        for port in self.read_ports:
+        for port in self.all_ports:
             temp.append("p_en_bar{0}".format(port))
         for port in self.write_ports:
             temp.append("w_en{0}".format(port))
@@ -501,41 +502,46 @@ class sram_base(design, verilog, lef):
                 temp.append("web{}".format(port))
             temp.append("clk{}".format(port))
 
-            # for port in self.all_ports:
-            #     self.add_pin("csb{}".format(port), "INPUT")
-            # for port in self.readwrite_ports:
-            #     self.add_pin("web{}".format(port), "INPUT")
-            # for port in self.all_ports:
-            #     self.add_pin("clk{}".format(port), "INPUT")
+            if port in self.read_ports:
+                temp.append("rbl_bl{}".format(port))
 
-            # Outputs
+            # Ouputs
+            if port in self.read_ports:
+                temp.append("rbl_wl{}".format(port))
+
             if port in self.read_ports:
                 temp.append("s_en{}".format(port))
             if port in self.write_ports:
                 temp.append("w_en{}".format(port))
-            if port in self.read_ports:
-                temp.append("p_en_bar{}".format(port))
+            temp.append("p_en_bar{}".format(port))
             temp.extend(["wl_en{}".format(port), "clk_buf{}".format(port), "vdd", "gnd"])
             self.connect_inst(temp)
         
         return insts
 
 
-    def connect_rail_from_left_m2m3(self, src_pin, dest_pin):
-        """ Helper routine to connect an unrotated/mirrored oriented instance to the rails """
-        in_pos = src_pin.rc()
+    def connect_vbus_m2m3(self, src_pin, dest_pin):
+        """ Helper routine to connect an instance to a vertical bus.
+        Routes horizontal then vertical L shape.
+        Dest pin is assumed to be on M2.
+        Src pin can be on M1/M2/M3."""
+        
+        if src_pin.cx()<dest_pin.cx():
+            in_pos = src_pin.rc()
+        else:
+            in_pos = src_pin.lc()
         out_pos = dest_pin.center()
+
+        # move horizontal first
         self.add_wire(("metal3","via2","metal2"),[in_pos, vector(out_pos.x,in_pos.y),out_pos])
-        self.add_via_center(layers=("metal2","via2","metal3"),
-                            offset=src_pin.rc())
+        if src_pin.layer=="metal1":
+            self.add_via_center(layers=("metal1","via1","metal2"),
+                                offset=in_pos)
+        if src_pin.layer in ["metal1","metal2"]:
+            self.add_via_center(layers=("metal2","via2","metal3"),
+                                offset=in_pos)
 
-                            
-    def connect_rail_from_left_m2m1(self, src_pin, dest_pin):
-        """ Helper routine to connect an unrotated/mirrored oriented instance to the rails """
-        in_pos = src_pin.rc()
-        out_pos = vector(dest_pin.cx(), in_pos.y)
-        self.add_wire(("metal2","via1","metal1"),[in_pos, out_pos, out_pos - vector(0,self.m2_pitch)])
-
+            
 
     def sp_write(self, sp_name):
         # Write the entire spice of the object to the file

@@ -35,10 +35,11 @@ class precharge_array(design.design):
     def add_pins(self):
         """Adds pins for spice file"""
         for i in range(self.columns):
-            self.add_pin("bl_{0}".format(i))
-            self.add_pin("br_{0}".format(i))
-        self.add_pin("en_bar")
-        self.add_pin("vdd")
+            # These are outputs from the precharge only
+            self.add_pin("bl_{0}".format(i), "OUTPUT")
+            self.add_pin("br_{0}".format(i), "OUTPUT")
+        self.add_pin("en_bar", "INPUT")
+        self.add_pin("vdd", "POWER")
 
     def create_netlist(self):
         self.add_modules()

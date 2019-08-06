@@ -16,7 +16,7 @@ from sram_factory import factory
 import debug
 import getpass
 
-class openram_test(openram_test):
+class openram_back_end_test(openram_test):
 
     def runTest(self):
         OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))

@@ -16,6 +16,7 @@ temperatures = [25]
 route_supplies = True
 check_lvsdrc = True
 inline_lvsdrc = True
+analytical_delay = False
 
 drc_name = "magic"
 lvs_name = "netgen"

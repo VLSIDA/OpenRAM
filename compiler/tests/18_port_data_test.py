@@ -55,9 +55,9 @@ class port_data_test(openram_test):
         self.local_check(a)
         
         OPTS.bitcell = "bitcell_1w_1r"
-        OPTS.num_rw_ports = 1
+        OPTS.num_rw_ports = 0
         OPTS.num_r_ports = 1
-        OPTS.num_w_ports = 0
+        OPTS.num_w_ports = 1
         
         c.num_words=16
         c.words_per_row=1

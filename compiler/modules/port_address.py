@@ -83,8 +83,7 @@ class port_address(design.design):
             driver_name = "wl_{}".format(row)
             self.copy_layout_pin(self.wordline_driver_inst, driver_name)
 
-        # FIXME: Is this still inverted!?
-        self.copy_layout_pin(self.wordline_driver_inst, "en_bar", "wl_en")
+        self.copy_layout_pin(self.wordline_driver_inst, "en", "wl_en")
             
     def route_internal(self):
         for row in range(self.num_rows):

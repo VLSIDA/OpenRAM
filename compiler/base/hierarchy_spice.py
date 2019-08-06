@@ -10,6 +10,9 @@ import re
 import os
 import math
 import tech
+from delay_data import *
+from wire_spice_model import *
+from power_data import *
 
 
 class spice():
@@ -25,6 +28,7 @@ class spice():
     def __init__(self, name):
         self.name = name
 
+        self.valid_signal_types = ["INOUT", "INPUT", "OUTPUT", "POWER", "GROUND"]
         # Holds subckts/mods for this module
         self.mods = []  
         # Holds the pins for this module
@@ -49,27 +53,32 @@ class spice():
 
     def add_comment(self, comment):
         """ Add a comment to the spice file """
+
         try:
             self.commments
         except:
             self.comments = []
-        else:
-            self.comments.append(comment)
+
+        self.comments.append(comment)
         
     def add_pin(self, name, pin_type="INOUT"):
         """ Adds a pin to the pins list. Default type is INOUT signal. """
         self.pins.append(name)
         self.pin_type[name]=pin_type
+        debug.check(pin_type in self.valid_signal_types, "Invalid signaltype for {0}: {1}".format(name,pin_type))
 
-    def add_pin_list(self, pin_list, pin_type_list="INOUT"):
+    def add_pin_list(self, pin_list, pin_type="INOUT"):
         """ Adds a pin_list to the pins list """
         # The type list can be a single type for all pins
         # or a list that is the same length as the pin list.
-        if type(pin_type_list)==str:
+        if type(pin_type)==str:
             for pin in pin_list:
-                self.add_pin(pin,pin_type_list)
-        elif len(pin_type_list)==len(pin_list):
-            for (pin,ptype) in zip(pin_list, pin_type_list):
+                debug.check(pin_type in self.valid_signal_types, "Invalid signaltype for {0}: {1}".format(pin,pin_type))
+                self.add_pin(pin,pin_type)
+                
+        elif len(pin_type)==len(pin_list):
+            for (pin,ptype) in zip(pin_list, pin_type):
+                debug.check(ptype in self.valid_signal_types, "Invalid signaltype for {0}: {1}".format(pin,ptype))
                 self.add_pin(pin,ptype)
         else:
             debug.error("Mismatch in type and pin list lengths.", -1)
@@ -87,7 +96,9 @@ class spice():
             
     def get_pin_type(self, name):
         """ Returns the type of the signal pin. """
-        return self.pin_type[name]
+        pin_type = self.pin_type[name]
+        debug.check(pin_type in self.valid_signal_types, "Invalid signaltype for {0}: {1}".format(name,pin_type))
+        return pin_type
 
     def get_pin_dir(self, name):
         """ Returns the direction of the pin. (Supply/ground are INOUT). """
@@ -238,9 +249,12 @@ class spice():
             sp.write("\n.SUBCKT {0} {1}\n".format(self.name,
                                                   " ".join(self.pins)))
 
+            for pin in self.pins:
+                sp.write("* {1:6}: {0} \n".format(pin,self.pin_type[pin]))
+            
             for line in self.comments:
                 sp.write("* {}\n".format(line))
-                    
+                
             # every instance must have a set of connections, even if it is empty.
             if  len(self.insts)!=len(self.conns):
                 debug.error("{0} : Not all instance pins ({1}) are connected ({2}).".format(self.name,
@@ -382,103 +396,4 @@ class spice():
         
     def return_power(self, dynamic=0.0, leakage=0.0):
         return power_data(dynamic, leakage)
-
-class delay_data:
-    """
-    This is the delay class to represent the delay information
-    Time is 50% of the signal to 50% of reference signal delay.
-    Slew is the 10% of the signal to 90% of signal
-    """
-    def __init__(self, delay=0.0, slew=0.0):
-        """ init function support two init method"""
-        # will take single input as a coordinate
-        self.delay = delay
-        self.slew = slew
-
-    def __str__(self):
-        """ override print function output """
-        return "Delay Data: Delay "+str(self.delay)+", Slew "+str(self.slew)+""
-
-    def __add__(self, other):
-        """
-        Override - function (left), for delay_data: a+b != b+a
-        """
-        assert isinstance(other,delay_data)
-        return delay_data(other.delay + self.delay,
-                          other.slew)
-
-    def __radd__(self, other):
-        """
-        Override - function (right), for delay_data: a+b != b+a
-        """
-        assert isinstance(other,delay_data)
-        return delay_data(other.delay + self.delay,
-                          self.slew)
-                          
-class power_data:
-    """
-    This is the power class to represent the power information
-    Dynamic and leakage power are stored as a single object with this class.
-    """
-    def __init__(self, dynamic=0.0, leakage=0.0):
-        """ init function support two init method"""
-        # will take single input as a coordinate
-        self.dynamic = dynamic
-        self.leakage = leakage
-
-    def __str__(self):
-        """ override print function output """
-        return "Power Data: Dynamic "+str(self.dynamic)+", Leakage "+str(self.leakage)+" in nW"
-
-    def __add__(self, other):
-        """
-        Override - function (left), for power_data: a+b != b+a
-        """
-        assert isinstance(other,power_data)
-        return power_data(other.dynamic + self.dynamic,
-                          other.leakage + self.leakage)
-
-    def __radd__(self, other):
-        """
-        Override - function (left), for power_data: a+b != b+a
-        """
-        assert isinstance(other,power_data)
-        return power_data(other.dynamic + self.dynamic,
-                          other.leakage + self.leakage)
-
-
-class wire_spice_model:
-    """
-    This is the spice class to represent a wire
-    """
-    def __init__(self, lump_num, wire_length, wire_width):
-        self.lump_num = lump_num # the number of segment the wire delay has
-        self.wire_c = self.cal_wire_c(wire_length, wire_width) # c in each segment  
-        self.wire_r = self.cal_wire_r(wire_length, wire_width) # r in each segment
-
-    def cal_wire_c(self, wire_length, wire_width):
-        from tech import spice
-        total_c = spice["wire_unit_c"] * wire_length * wire_width
-        wire_c = total_c / self.lump_num
-        return wire_c
-
-    def cal_wire_r(self, wire_length, wire_width):
-        from tech import spice
-        total_r = spice["wire_unit_r"] * wire_length / wire_width
-        wire_r = total_r / self.lump_num
-        return wire_r
-
-    def return_input_cap(self):
-        return 0.5 * self.wire_c * self.lump_num
-
-    def return_delay_over_wire(self, slew, swing = 0.5):
-        # delay will be sum of arithmetic sequence start from
-        # rc to self.lump_num*rc with step of rc
-
-        swing_factor = abs(math.log(1-swing)) # time constant based on swing
-        sum_factor = (1+self.lump_num) * self.lump_num * 0.5 # sum of the arithmetic sequence
-        delay = sum_factor * swing_factor * self.wire_r * self.wire_c 
-        slew = delay * 2 + slew
-        result= delay_data(delay, slew)
-        return result
 

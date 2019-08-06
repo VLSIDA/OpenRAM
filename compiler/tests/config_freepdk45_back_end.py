@@ -16,5 +16,5 @@ temperatures = [25]
 inline_lvsdrc = True
 route_supplies = True
 check_lvsdrc = True
-
+analytical_delay = False
 

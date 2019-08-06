@@ -5,14 +5,10 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-word_size = 1
-num_words = 16
 
-tech_name = "freepdk45"
-process_corners = ["TT"]
-supply_voltages = [1.0]
-temperatures = [25]
+from enum import Enum
 
-analytical_delay = False
-
-
+class bit_polarity(Enum):
+    NONINVERTING = 0
+    INVERTING = 1
+    

@@ -23,6 +23,7 @@ class sram_1bank_2mux_1rw_1r_test(openram_test):
         
         OPTS.bitcell = "bitcell_1rw_1r"
         OPTS.replica_bitcell = "replica_bitcell_1rw_1r"
+        OPTS.dummy_bitcell="dummy_bitcell_1rw_1r"
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0

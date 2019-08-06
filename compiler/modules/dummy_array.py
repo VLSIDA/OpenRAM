@@ -15,13 +15,14 @@ class dummy_array(design.design):
     """
     Generate a dummy row/column for the replica array.
     """
-    def __init__(self, cols, rows, name):
+    def __init__(self, cols, rows, mirror=0, name=""):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0} {1} x {2}".format(self.name, rows, cols))
         self.add_comment("rows: {0} cols: {1}".format(rows, cols))
 
         self.column_size = cols
         self.row_size = rows
+        self.mirror = mirror
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -46,7 +47,7 @@ class dummy_array(design.design):
             for row in range(self.row_size):
                 name = "dummy_r{0}_c{1}".format(row, col)
 
-                if row % 2:
+                if (row+self.mirror) % 2:
                     tempy = yoffset + self.dummy_cell.height
                     dir_key = "MX"
                 else:
@@ -65,16 +66,16 @@ class dummy_array(design.design):
         self.DRC_LVS()
 
     def add_pins(self):
-        row_list = self.cell.list_all_wl_names()
-        column_list = self.cell.list_all_bitline_names()
+        row_list = self.cell.get_all_wl_names()
+        column_list = self.cell.get_all_bitline_names()
         for col in range(self.column_size):
             for cell_column in column_list:
-                self.add_pin(cell_column+"_{0}".format(col))
+                self.add_pin(cell_column+"_{0}".format(col), "INOUT")
         for row in range(self.row_size):
             for cell_row in row_list:
-                    self.add_pin(cell_row+"_{0}".format(row))
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+                    self.add_pin(cell_row+"_{0}".format(row), "INPUT")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
     def add_modules(self):
         """ Add the modules used in this design """
@@ -83,16 +84,16 @@ class dummy_array(design.design):
 
         self.cell = factory.create(module_type="bitcell")
         
-    def list_bitcell_pins(self, col, row):
+    def get_bitcell_pins(self, col, row):
         """ Creates a list of connections in the bitcell, 
         indexed by column and row, for instance use in bitcell_array """
 
         bitcell_pins = []
         
-        pin_names = self.cell.list_all_bitline_names()
+        pin_names = self.cell.get_all_bitline_names()
         for pin in pin_names:
             bitcell_pins.append(pin+"_{0}".format(col))
-        pin_names = self.cell.list_all_wl_names()
+        pin_names = self.cell.get_all_wl_names()
         for pin in pin_names:
             bitcell_pins.append(pin+"_{0}".format(row))
         bitcell_pins.append("vdd")
@@ -109,13 +110,13 @@ class dummy_array(design.design):
                 name = "bit_r{0}_c{1}".format(row, col)
                 self.cell_inst[row,col]=self.add_inst(name=name,
                                                       mod=self.dummy_cell)
-                self.connect_inst(self.list_bitcell_pins(col, row))
+                self.connect_inst(self.get_bitcell_pins(col, row))
         
     def add_layout_pins(self):
         """ Add the layout pins """
         
-        row_list = self.cell.list_all_wl_names()
-        column_list = self.cell.list_all_bitline_names()
+        row_list = self.cell.get_all_wl_names()
+        column_list = self.cell.get_all_bitline_names()
         
         for col in range(self.column_size):
             for cell_column in column_list:

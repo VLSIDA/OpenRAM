@@ -84,8 +84,6 @@ class bank(design.design):
                 self.add_pin("dout{0}_{1}".format(port,bit),"OUTPUT")
         for port in self.read_ports:
             self.add_pin(self.bitcell_array.get_rbl_bl_name(self.port_rbl_map[port]),"OUTPUT")
-        for port in self.read_ports:
-            self.add_pin(self.bitcell_array.get_rbl_wl_name(self.port_rbl_map[port]),"INPUT")
         for port in self.write_ports:
             for bit in range(self.word_size):
                 self.add_pin("din{0}_{1}".format(port,bit),"INPUT")
@@ -306,13 +304,13 @@ class bank(design.design):
         self.input_control_signals = []
         port_num = 0
         for port in range(OPTS.num_rw_ports):
-            self.input_control_signals.append(["wl_en{}".format(port_num), "w_en{}".format(port_num), "s_en{}".format(port_num), "p_en_bar{}".format(port_num), "rbl_wl{}".format(port_num)])
+            self.input_control_signals.append(["wl_en{}".format(port_num), "w_en{}".format(port_num), "s_en{}".format(port_num), "p_en_bar{}".format(port_num)])
             port_num += 1
         for port in range(OPTS.num_w_ports):
             self.input_control_signals.append(["wl_en{}".format(port_num), "w_en{}".format(port_num), "p_en_bar{}".format(port_num)])
             port_num += 1
         for port in range(OPTS.num_r_ports):
-            self.input_control_signals.append(["wl_en{}".format(port_num), "s_en{}".format(port_num), "p_en_bar{}".format(port_num), "rbl_wl{}".format(port_num)])
+            self.input_control_signals.append(["wl_en{}".format(port_num), "s_en{}".format(port_num), "p_en_bar{}".format(port_num)])
             port_num += 1
 
         # Number of control lines in the bus for each port
@@ -422,9 +420,9 @@ class bank(design.design):
         for row in range(self.num_rows):
             for wordline in self.wl_names:
                     temp.append("{0}_{1}".format(wordline,row))
-        for rbl in range(self.num_rbl):
-            rbl_wl_name=self.bitcell_array.get_rbl_wl_name(rbl)
-            temp.append(rbl_wl_name)
+        for port in self.all_ports:
+            if self.port_data[port].has_rbl():
+                temp.append("wl_en{0}".format(port))
         temp.append("vdd")
         temp.append("gnd")
         self.connect_inst(temp)
@@ -947,7 +945,7 @@ class bank(design.design):
 
         if port in self.read_ports:
             rbl_wl_name = self.bitcell_array.get_rbl_wl_name(self.port_rbl_map[port])
-            connection.append((self.prefix+"rbl_wl{}".format(port), self.bitcell_array_inst.get_pin(rbl_wl_name).lc()))
+            connection.append((self.prefix+"wl_en{}".format(port), self.bitcell_array_inst.get_pin(rbl_wl_name).lc()))
             
         if port in self.write_ports:
             connection.append((self.prefix+"w_en{}".format(port), self.port_data_inst[port].get_pin("w_en").lc()))
@@ -967,10 +965,10 @@ class bank(design.design):
         control_signal = self.prefix+"wl_en{}".format(port)
         if port%2:
             pin_pos = self.port_address_inst[port].get_pin("wl_en").uc()
-            mid_pos = pin_pos + vector(0,self.m2_gap) # to route down to the top of the bus
+            mid_pos = pin_pos + vector(0,2*self.m2_gap) # to route down to the top of the bus
         else:
             pin_pos = self.port_address_inst[port].get_pin("wl_en").bc()
-            mid_pos = pin_pos - vector(0,self.m2_gap) # to route down to the top of the bus
+            mid_pos = pin_pos - vector(0,2*self.m2_gap) # to route down to the top of the bus
         control_x_offset = self.bus_xoffset[port][control_signal].x
         control_pos = vector(control_x_offset, mid_pos.y)
         self.add_wire(("metal1","via1","metal2"),[pin_pos, mid_pos, control_pos])

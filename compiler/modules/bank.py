@@ -304,13 +304,13 @@ class bank(design.design):
         self.input_control_signals = []
         port_num = 0
         for port in range(OPTS.num_rw_ports):
-            self.input_control_signals.append(["wl_en{}".format(port_num), "w_en{}".format(port_num), "s_en{}".format(port_num), "p_en_bar{}".format(port_num)])
+            self.input_control_signals.append(["w_en{}".format(port_num), "s_en{}".format(port_num), "p_en_bar{}".format(port_num), "wl_en{}".format(port_num)])
             port_num += 1
         for port in range(OPTS.num_w_ports):
-            self.input_control_signals.append(["wl_en{}".format(port_num), "w_en{}".format(port_num), "p_en_bar{}".format(port_num)])
+            self.input_control_signals.append(["w_en{}".format(port_num), "p_en_bar{}".format(port_num), "wl_en{}".format(port_num)])
             port_num += 1
         for port in range(OPTS.num_r_ports):
-            self.input_control_signals.append(["wl_en{}".format(port_num), "s_en{}".format(port_num), "p_en_bar{}".format(port_num)])
+            self.input_control_signals.append(["s_en{}".format(port_num), "p_en_bar{}".format(port_num), "wl_en{}".format(port_num)])
             port_num += 1
 
         # Number of control lines in the bus for each port

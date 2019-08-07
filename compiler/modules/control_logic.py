@@ -120,7 +120,7 @@ class control_logic(design.design):
         
         # wl_en drives every row in the bank
         self.wl_en_driver = factory.create(module_type="pdriver",
-                                           fanout=max_fanout,
+                                           fanout=self.num_rows,
                                            height=dff_height)
         self.add_mod(self.wl_en_driver)
 
@@ -145,9 +145,9 @@ class control_logic(design.design):
         # p_en_bar drives every column in the bitcell array
         # but it is sized the same as the wl_en driver with
         # prepended 3 inverter stages to guarantee it is slower and odd polarity
-        driver_size_list = [1,1,1,*self.wl_en_driver.get_sizes()]
         self.p_en_bar_driver = factory.create(module_type="pdriver",
-                                              size_list=driver_size_list,
+                                              fanout=self.num_cols,
+                                              neg_polarity=True,
                                               height=dff_height)
         self.add_mod(self.p_en_bar_driver)
 

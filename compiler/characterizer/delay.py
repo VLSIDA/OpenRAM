@@ -835,6 +835,7 @@ class delay(simulation):
         Checks the measurements which represent the internal storage voltages
         at the end of the read cycle.
         """
+        success = False
         for polarity, meas_list in self.bit_meas.items():
             for meas in meas_list:
                 val = meas.retrieve_measure()
@@ -855,12 +856,11 @@ class delay(simulation):
                 elif (meas_cycle == sram_op.WRITE_ONE and polarity == bit_polarity.INVERTING) or\
                      (meas_cycle == sram_op.WRITE_ZERO and polarity == bit_polarity.NONINVERTING):
                     success = val < self.vdd_voltage/2
-                else:
-                    success = False
                 if not success:
                     debug.info(1,("Wrong value detected on probe bit during read/write cycle. " 
                                   "Check writes and control logic for bugs.\n measure={}, op={}, "
                                   "bit_storage={}, V(bit)={}").format(meas.name, meas_cycle.name, polarity.name,val))
+                
         return success        
                    
     def check_bitline_meas(self, v_discharged_bl, v_charged_bl):

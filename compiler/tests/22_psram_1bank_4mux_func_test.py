@@ -38,7 +38,7 @@ class psram_1bank_4mux_func_test(openram_test):
         reload(characterizer)
         from characterizer import functional, delay
         from sram_config import sram_config
-        c = sram_config(word_size=4,
+        c = sram_config(word_size=2,
                         num_words=256,
                         num_banks=1)
         c.words_per_row=4

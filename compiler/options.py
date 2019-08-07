@@ -51,8 +51,8 @@ class options(optparse.Values):
     
     # Allow manual adjustment of the delay chain over automatic
     use_tech_delay_chain_size = False
-    delay_chain_stages = 5
-    delay_chain_fanout_per_stage = 3
+    delay_chain_stages = 9
+    delay_chain_fanout_per_stage = 4
     
     
 

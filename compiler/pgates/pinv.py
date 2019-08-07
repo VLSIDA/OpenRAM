@@ -60,7 +60,7 @@ class pinv(pgate.pgate):
     def add_pins(self):
         """ Adds pins for spice netlist """
         pin_list = ["A", "Z", "vdd", "gnd"]
-        dir_list = ['INPUT', 'OUTPUT', 'POWER', 'GROUND']
+        dir_list = ["INPUT", "OUTPUT", "POWER", "GROUND"]
         self.add_pin_list(pin_list, dir_list)
 
 

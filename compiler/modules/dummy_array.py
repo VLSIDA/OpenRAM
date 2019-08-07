@@ -70,12 +70,12 @@ class dummy_array(design.design):
         column_list = self.cell.get_all_bitline_names()
         for col in range(self.column_size):
             for cell_column in column_list:
-                self.add_pin(cell_column+"_{0}".format(col))
+                self.add_pin(cell_column+"_{0}".format(col), "INOUT")
         for row in range(self.row_size):
             for cell_row in row_list:
-                    self.add_pin(cell_row+"_{0}".format(row))
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+                    self.add_pin(cell_row+"_{0}".format(row), "INPUT")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
     def add_modules(self):
         """ Add the modules used in this design """

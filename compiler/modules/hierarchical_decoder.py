@@ -231,12 +231,12 @@ class hierarchical_decoder(design.design):
         """ Add the module pins """
         
         for i in range(self.num_inputs):
-            self.add_pin("addr_{0}".format(i))
+            self.add_pin("addr_{0}".format(i), "INPUT")
 
         for j in range(self.rows):
-            self.add_pin("decode_{0}".format(j))
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+            self.add_pin("decode_{0}".format(j), "OUTPUT")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
 
     def create_pre_decoder(self):

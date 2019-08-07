@@ -47,11 +47,11 @@ class pand2(pgate.pgate):
         self.DRC_LVS()
         
     def add_pins(self):
-        self.add_pin("A")
-        self.add_pin("B")
-        self.add_pin("Z")
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+        self.add_pin("A", "INPUT")
+        self.add_pin("B", "INPUT")
+        self.add_pin("Z", "OUTPUT")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
     def create_insts(self):
         self.nand_inst=self.add_inst(name="pand2_nand",

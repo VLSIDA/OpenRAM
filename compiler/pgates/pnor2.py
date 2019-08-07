@@ -41,7 +41,7 @@ class pnor2(pgate.pgate):
     def add_pins(self):
         """ Adds pins for spice netlist """
         pin_list = ["A", "B", "Z", "vdd", "gnd"]
-        dir_list = ['INPUT', 'INPUT', 'OUTPUT', 'INOUT', 'INOUT']
+        dir_list = ["INPUT", "INPUT", "OUTPUT", "INOUT", "INOUT"]
         self.add_pin_list(pin_list, dir_list)
 
     def create_netlist(self):

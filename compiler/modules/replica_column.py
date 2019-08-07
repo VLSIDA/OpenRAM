@@ -55,14 +55,15 @@ class replica_column(design.design):
     def add_pins(self):
         
         for bl_name in self.cell.get_all_bitline_names():
-            self.add_pin("{0}_{1}".format(bl_name,0))
+            # In the replica column, these are only outputs!
+            self.add_pin("{0}_{1}".format(bl_name,0), "OUTPUT")
 
         for row in range(self.total_size):
             for wl_name in self.cell.get_all_wl_names():
-                self.add_pin("{0}_{1}".format(wl_name,row))
+                self.add_pin("{0}_{1}".format(wl_name,row), "INPUT")
                     
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
     def add_modules(self):
         self.replica_cell = factory.create(module_type="replica_bitcell")

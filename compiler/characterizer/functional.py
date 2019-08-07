@@ -102,7 +102,6 @@ class functional(simulation):
         # Write at least once
         addr = self.gen_addr()
         word = self.gen_data()
-        # print("write", self.t_current, addr, word)
         comment = self.gen_cycle_comment("write", word, addr, self.wmask, 0, self.t_current)
         self.add_write(comment, addr, word, self.wmask, 0)
         self.stored_words[addr] = word
@@ -113,9 +112,8 @@ class functional(simulation):
             if port in self.write_ports:
                 self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, "0"*self.num_wmasks, port)
             else:
-                # print("read", self.t_current, addr, word)
                 comment = self.gen_cycle_comment("read", word, addr, self.wmask, port, self.t_current)
-                self.add_read_one_port(comment, addr, rw_read_din_data, "1"*self.num_wmasks, port)
+                self.add_read_one_port(comment, addr, rw_read_din_data, "0"*self.num_wmasks, port)
                 self.write_check.append([word, "{0}{1}".format(self.dout_name,port), self.t_current+self.period, check])
                 check += 1
         self.cycle_times.append(self.t_current)
@@ -150,7 +148,7 @@ class functional(simulation):
                         self.stored_words[addr] = word
                         w_addrs.append(addr)
                 elif op == "partial_write":
-                    #write only to a word that's been written to
+                    # write only to a word that's been written to
                     (addr,old_word) = self.get_data()
                     word = self.gen_data()
                     wmask  = self.gen_wmask()
@@ -177,7 +175,7 @@ class functional(simulation):
                         self.add_noop_one_port("0"*self.addr_size, "0"*self.word_size, "0"*self.num_wmasks, port)
                     else:
                         comment = self.gen_cycle_comment("read", word, addr, self.wmask, port, self.t_current)
-                        self.add_read_one_port(comment, addr, rw_read_din_data, "1"*self.num_wmasks, port)
+                        self.add_read_one_port(comment, addr, rw_read_din_data, "0"*self.num_wmasks, port)
                         self.write_check.append([word, "{0}{1}".format(self.dout_name,port), self.t_current+self.period, check])
                         check += 1
                 
@@ -259,7 +257,7 @@ class functional(simulation):
         
     def get_data(self):
         """ Gets an available address and corresponding word. """
-        # Currently unused but may need later depending on how the functional test develops
+        # Used for write masks since they should be writing to previously written addresses
         addr = random.choice(list(self.stored_words.keys()))
         word = self.stored_words[addr]
         return (addr,word)

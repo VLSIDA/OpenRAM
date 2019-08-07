@@ -113,14 +113,6 @@ class pbuf(pgate.pgate):
                                         width=a_pin.width(),
                                         height=a_pin.height())
         
-        
-
-    def analytical_delay(self, corner, slew, load=0.0):
-        """ Calculate the analytical delay of DFF-> INV -> INV """
-        inv1_delay = self.inv1.analytical_delay(corner, slew=slew, load=self.inv2.input_load()) 
-        inv2_delay = self.inv2.analytical_delay(corner, slew=inv1_delay.slew, load=load)
-        return inv1_delay + inv2_delay
-    
     def get_stage_efforts(self, external_cout, inp_is_rise=False):
         """Get the stage efforts of the A -> Z path"""
         stage_effort_list = []

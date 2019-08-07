@@ -921,7 +921,8 @@ class control_logic(design.design):
         last_stage_rise = False 
         
         #First stage(s), clk -(pdriver)-> clk_buf. 
-        clk_buf_cout = self.replica_bitline.get_en_cin()
+        #clk_buf_cout = self.replica_bitline.get_en_cin()
+        clk_buf_cout = 0
         stage_effort_list += self.clk_buf_driver.get_stage_efforts(clk_buf_cout, last_stage_rise)
         last_stage_rise = stage_effort_list[-1].is_rise
         

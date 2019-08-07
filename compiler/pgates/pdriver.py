@@ -173,30 +173,6 @@ class pdriver(pgate.pgate):
                                         offset=a_pin.center(),
                                         width = a_pin.width(),
                                         height = a_pin.height())
-        
-    def input_load(self):
-        return self.inv_list[0].input_load()
-
-    def analytical_delay(self, corner, slew, load=0.0):
-        """ Calculate the analytical delay of INV1 -> ... -> INVn """
-
-        cout_list = []
-        for prev_inv,inv in zip(self.inv_list, self.inv_list[1:]):
-            cout_list.append(inv.input_load())
-        cout_list.append(load)
-        
-        input_slew = slew
-        
-        delays = []
-        for inv,cout in zip(self.inv_list,cout_list):
-            delays.append(inv.analytical_delay(corner, slew=input_slew, load=cout))
-            input_slew = delays[-1].slew
-
-        delay = delays[0]
-        for i in range(len(delays)-1):
-            delay += delays[i]
-            
-        return delay
 
     def get_sizes(self):
         """ Return the relative sizes of the buffers """

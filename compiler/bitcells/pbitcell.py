@@ -973,6 +973,6 @@ class pbitcell(design.design):
 
         for pin_zip in [rw_pin_names, r_pin_names]: 
             for wl,bl,br in pin_zip:
-                graph.add_edge(pin_dict[wl],pin_dict[bl])
-                graph.add_edge(pin_dict[wl],pin_dict[br])
+                graph.add_edge(pin_dict[wl],pin_dict[bl], self)
+                graph.add_edge(pin_dict[wl],pin_dict[br], self)
 

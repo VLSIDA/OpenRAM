@@ -219,7 +219,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         for inp in input_pins+inout_pins:
             for out in output_pins+inout_pins:
                 if inp != out: #do not add self loops
-                    graph.add_edge(pin_dict[inp], pin_dict[out])        
+                    graph.add_edge(pin_dict[inp], pin_dict[out], self)        
  
     def __str__(self):
         """ override print function output """

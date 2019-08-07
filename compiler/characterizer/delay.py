@@ -1275,36 +1275,65 @@ class delay(simulation):
             # Add test cycle of read/write port pair. One port could have been used already, but the other has not.
             self.gen_test_cycles_one_port(cur_read_port, cur_write_port)
 
+    def sum_delays(self, delays):
+        """Adds the delays (delay_data objects) so the correct slew is maintained"""
+        delay = delays[0]
+        for i in range(1, len(delays)):
+            delay+=delays[i]
+        return delay 
+        
     def analytical_delay(self, slews, loads):
         """ 
         Return the analytical model results for the SRAM. 
         """
         if OPTS.num_rw_ports > 1 or OPTS.num_w_ports > 0 and OPTS.num_r_ports > 0:
             debug.warning("Analytical characterization results are not supported for multiport.")
+        
+        # Probe set to 0th bit, does not matter for analytical delay.
+        self.set_probe('0', 0)
+        self.create_graph()
+        self.set_internal_spice_names()
         self.create_measurement_names()
-        power = self.analytical_power(slews, loads)
-        port_data = self.get_empty_measure_data_dict()
-        relative_loads = [logical_effort.convert_farad_to_relative_c(c_farad) for c_farad in loads]
+        
+        port = self.read_ports[0]
+        self.graph.get_all_paths('{}{}'.format(tech.spice["clk"], port), 
+                                 '{}{}_{}'.format(self.dout_name, port, self.probe_data))
+        
+        # Select the path with the bitline (bl)
+        bl_name,br_name = self.get_bl_name(self.graph.all_paths, port)
+        bl_path = [path for path in self.graph.all_paths if bl_name in path][0]
+        
+        debug.info(1,'Slew, Load, Delay(ns), Slew(ns)')
         for slew in slews:
-            for load in relative_loads:
-                self.set_load_slew(load,slew)
-                bank_delay = self.sram.analytical_delay(self.corner, self.slew,self.load)
-                for port in self.all_ports:
-                    for mname in self.delay_meas_names+self.power_meas_names:
-                        if "power" in mname:
-                            port_data[port][mname].append(power.dynamic)
-                        elif "delay" in mname:
-                            port_data[port][mname].append(bank_delay[port].delay/1e3)
-                        elif "slew" in mname:
-                            port_data[port][mname].append(bank_delay[port].slew/1e3)
-                        else:
-                            debug.error("Measurement name not recognized: {}".format(mname),1)
-        period_margin = 0.1
-        risefall_delay = bank_delay[self.read_ports[0]].delay/1e3
-        sram_data = { "min_period":risefall_delay*2*period_margin, 
-                      "leakage_power": power.leakage}
-        debug.info(2,"SRAM Data:\n{}".format(sram_data))                 
-        debug.info(2,"Port Data:\n{}".format(port_data)) 
+            for load in loads:
+                path_delays = self.graph.get_timing(bl_path, self.corner, slew, load)
+                total_delay = self.sum_delays(path_delays)
+                debug.info(1,'{}, {}, {}, {}'.format(slew,load,total_delay.delay/1e3, total_delay.slew/1e3))
+                
+        debug.error('Not finished with graph delay characterization.', 1)
+        # power = self.analytical_power(slews, loads)
+        # port_data = self.get_empty_measure_data_dict()
+        # relative_loads = [logical_effort.convert_farad_to_relative_c(c_farad) for c_farad in loads]
+        # for slew in slews:
+            # for load in relative_loads:
+                # self.set_load_slew(load,slew)
+                # bank_delay = self.sram.analytical_delay(self.corner, self.slew,self.load)
+                # for port in self.all_ports:
+                    # for mname in self.delay_meas_names+self.power_meas_names:
+                        # if "power" in mname:
+                            # port_data[port][mname].append(power.dynamic)
+                        # elif "delay" in mname:
+                            # port_data[port][mname].append(bank_delay[port].delay/1e3)
+                        # elif "slew" in mname:
+                            # port_data[port][mname].append(bank_delay[port].slew/1e3)
+                        # else:
+                            # debug.error("Measurement name not recognized: {}".format(mname),1)
+        # period_margin = 0.1
+        # risefall_delay = bank_delay[self.read_ports[0]].delay/1e3
+        # sram_data = { "min_period":risefall_delay*2*period_margin, 
+                      # "leakage_power": power.leakage}
+        # debug.info(2,"SRAM Data:\n{}".format(sram_data))                 
+        # debug.info(2,"Port Data:\n{}".format(port_data)) 
         return (sram_data,port_data)
         
     

@@ -41,7 +41,7 @@ class sense_amp(design.design):
         bitline_pmos_size = 8 #FIXME: This should be set somewhere and referenced. Probably in tech file.
         return spice["min_tx_drain_c"]*(bitline_pmos_size/parameter["min_tx_size"])#ff   
         
-    def analytical_delay(self, corner, slew, load):
+    def get_stage_effort(self, load):
         #Delay of the sense amp will depend on the size of the amp and the output load.
         parasitic_delay = 1
         cin = (parameter["sa_inv_pmos_size"] + parameter["sa_inv_nmos_size"])/drc("minwidth_tx")

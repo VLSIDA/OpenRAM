@@ -141,8 +141,8 @@ class bitcell_1rw_1r(design.design):
         pin_dict = {pin:port for pin,port in zip(self.pins, port_nets)} 
         #Edges hardcoded here. Essentially wl->bl/br for both ports.
         # Port 0 edges
-        graph.add_edge(pin_dict["wl0"], pin_dict["bl0"])   
-        graph.add_edge(pin_dict["wl0"], pin_dict["br0"])   
+        graph.add_edge(pin_dict["wl0"], pin_dict["bl0"], self)   
+        graph.add_edge(pin_dict["wl0"], pin_dict["br0"], self)   
         # Port 1 edges
-        graph.add_edge(pin_dict["wl1"], pin_dict["bl1"])   
-        graph.add_edge(pin_dict["wl1"], pin_dict["br1"])   
+        graph.add_edge(pin_dict["wl1"], pin_dict["bl1"], self)   
+        graph.add_edge(pin_dict["wl1"], pin_dict["br1"], self)   

@@ -36,11 +36,21 @@ class bitcell(design.design):
         self.add_pin_types(self.type_list)
         self.nets_match = self.do_nets_exist(self.storage_nets)
         
-    def analytical_delay(self, corner, slew, load=0, swing = 0.5):
+    def get_stage_effort(self, load):
         parasitic_delay = 1
         size = 0.5 #This accounts for bitline being drained thought the access TX and internal node
         cin = 3 #Assumes always a minimum sizes inverter. Could be specified in the tech.py file.
         return logical_effort.logical_effort('bitline', size, cin, load, parasitic_delay, False)
+ 
+    def input_load(self):
+        """Return the relative capacitance of the access transistor gates"""
+        #This is a handmade cell so the value must be entered in the tech.py file or estimated.
+        #Calculated in the tech file by summing the widths of all the related gates and dividing by the minimum width.
+        
+        #FIXME: The graph algorithm will apply this capacitance to the bitline load as they cannot be
+        # distinguished currently
+        access_tx_cin = parameter["6T_access_size"]/drc["minwidth_tx"]
+        return 2*access_tx_cin
  
     def get_all_wl_names(self):
         """ Creates a list of all wordline pin names """

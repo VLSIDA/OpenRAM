@@ -18,13 +18,16 @@ class timing_graph():
     def __init__(self):
         self.graph = defaultdict(set)
         self.all_paths = []
+        self.edge_mods = {}
 
-    def add_edge(self, src_node, dest_node):
-        """Adds edge to graph. Nodes added as well if they do not exist."""
+    def add_edge(self, src_node, dest_node, edge_mod):
+        """Adds edge to graph. Nodes added as well if they do not exist.
+           Module which defines the edge must be provided for timing information."""
         
         src_node = src_node.lower()
         dest_node = dest_node.lower()
         self.graph[src_node].add(dest_node)
+        self.edge_mods[(src_node, dest_node)] = edge_mod
 
     def add_node(self, node):
         """Add node to graph with no edges"""
@@ -34,8 +37,8 @@ class timing_graph():
             self.graph[node] = set()
             
     def remove_edges(self, node):
-        
         """Helper function to remove edges, useful for removing vdd/gnd"""
+        
         node = node.lower()
         self.graph[node] = set()    
             
@@ -93,7 +96,32 @@ class timing_graph():
                       
         # Remove current vertex from path[] and mark it as unvisited 
         path.pop() 
-        visited.remove(cur_node)        
+        visited.remove(cur_node)    
+
+    def get_timing(self, path, corner, slew, load):
+        """Returns the analytical delays in the input path"""
+        
+        if len(path) == 0:
+            return []
+            
+        delays = []    
+        for i in range(len(path)-1):
+            
+            path_edge_mod = self.edge_mods[(path[i], path[i+1])]
+            
+            # On the output of the current stage, get COUT from all other mods connected
+            cout = 0
+            for node in self.graph[path[i+1]]:
+                output_edge_mode = self.edge_mods[(path[i+1], node)]
+                cout+=output_edge_mode.input_load()
+            # If at the last output, include the final output load    
+            if i == len(path)-2:
+               cout+=load
+            
+            delays.append(path_edge_mod.analytical_delay(corner, slew, cout))    
+            slew = delays[-1].slew
+            
+        return delays
             
     def __str__(self):
         """ override print function output """

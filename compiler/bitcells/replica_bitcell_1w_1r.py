@@ -47,6 +47,6 @@ class replica_bitcell_1w_1r(design.design):
         pin_dict = {pin:port for pin,port in zip(self.pins, port_nets)} 
         #Edges hardcoded here. Essentially wl->bl/br for the read port.
         # Port 1 edges
-        graph.add_edge(pin_dict["wl1"], pin_dict["bl1"])   
-        graph.add_edge(pin_dict["wl1"], pin_dict["br1"])   
+        graph.add_edge(pin_dict["wl1"], pin_dict["bl1"], self)   
+        graph.add_edge(pin_dict["wl1"], pin_dict["br1"], self)   
         # Port 0 is a write port, so its timing is not considered here.

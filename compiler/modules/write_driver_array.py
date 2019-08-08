@@ -107,12 +107,12 @@ class write_driver_array(design.design):
 
     def place_write_array(self):
         if self.bitcell.width > self.driver.width:
-            driver_spacing = self.bitcell.width
+            self.driver_spacing = self.bitcell.width
         else:
-            driver_spacing = self.driver.width
+            self.driver_spacing = self.driver.width
         for i in range(0,self.columns,self.words_per_row):
             index = int(i/self.words_per_row)
-            base = vector(i * driver_spacing, 0)
+            base = vector(i * self.driver_spacing, 0)
             self.driver_insts[index].place(base)
 
             
@@ -151,12 +151,18 @@ class write_driver_array(design.design):
         if self.write_size is not None:
             for bit in range(self.num_wmasks):
                 en_pin = self.driver_insts[bit*self.write_size].get_pin("en")
-                # modifier to stretch enable pin for column mux
-                modifier = (self.words_per_row-1) + 0.65
+                # Determine width of wmask modified en_pin with/without col mux
+                if (self.words_per_row == 1):
+                    wmask_en_len = (self.write_size * self.driver_spacing)
+                    en_gap = self.driver_spacing - en_pin.width()
+                else:
+                    wmask_en_len = 2*(self.write_size * self.driver_spacing)
+                    en_gap = self.driver_spacing
+
                 self.add_layout_pin(text="en_{0}".format(bit),
                                     layer=en_pin.layer,
                                     offset=en_pin.ll(),
-                                    width=modifier*self.write_size*en_pin.width(),
+                                    width=wmask_en_len-en_gap,
                                     height=en_pin.height())
         else:
             self.add_layout_pin(text="en",

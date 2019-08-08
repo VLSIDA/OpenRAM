@@ -23,8 +23,12 @@ class write_driver_test(openram_test):
         globals.init_openram("config_{0}".format(OPTS.tech_name))
 
         # check write driver array for single port
-        debug.info(2, "Testing write_driver_array for columns=8, word_size=8, write_size=2")
-        a = factory.create(module_type="write_driver_array", columns=8, word_size=8, write_size=2)
+        debug.info(2, "Testing write_driver_array for columns=8, word_size=8, write_size=4")
+        a = factory.create(module_type="write_driver_array", columns=8, word_size=8, write_size=4)
+        self.local_check(a)
+
+        debug.info(2, "Testing write_driver_array for columns=16, word_size=16, write_size=2")
+        a = factory.create(module_type="write_driver_array", columns=16, word_size=16, write_size=2)
         self.local_check(a)
 
         debug.info(2, "Testing write_driver_array for columns=16, word_size=8, write_size=4")

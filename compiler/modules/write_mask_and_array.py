@@ -123,9 +123,9 @@ class write_mask_and_array(design.design):
                                                     offset=pin_pos)
 
 
-    # def get_w_en_cin(self):
-    #     """Get the relative capacitance of all the enable connections in the bank"""
-    #     # The enable is connected to a nand2 for every row.
-    #     return self.driver.get_w_en_cin() * len(self.driver_insts)
+    def get_cin(self):
+        """Get the relative capacitance of all the input connections in the bank"""
+        # The enable is connected to an and2 for every row.
+        return self.and2.get_cin() * len(self.and2_insts)
 
 

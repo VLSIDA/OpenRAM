@@ -260,7 +260,7 @@ class pnand3(pgate.pgate):
         transition_prob = spice["nand3_transition_prob"]
         return transition_prob*(c_load + c_para) 
 
-    def get_cin(self):
+    def input_load(self):
         """Return the relative input capacitance of a single input"""
         return self.nmos_size+self.pmos_size
         
@@ -269,7 +269,7 @@ class pnand3(pgate.pgate):
            Optional is_rise refers to the input direction rise/fall. Input inverted by this stage.
         """
         parasitic_delay = 3 
-        return logical_effort.logical_effort(self.name, self.size, self.get_cin(), cout, parasitic_delay, not inp_is_rise)
+        return logical_effort.logical_effort(self.name, self.size, self.input_load(), cout, parasitic_delay, not inp_is_rise)
 
     def build_graph(self, graph, inst_name, port_nets):        
         """Adds edges based on inputs/outputs. Overrides base class function."""

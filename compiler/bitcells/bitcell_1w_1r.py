@@ -36,7 +36,7 @@ class bitcell_1w_1r(design.design):
         self.add_pin_types(self.type_list)
         self.nets_match = self.do_nets_exist(self.storage_nets)
 
-    def analytical_delay(self, corner, slew, load=0, swing = 0.5):
+    def get_stage_effort(self, load):
         parasitic_delay = 1
         size = 0.5 #This accounts for bitline being drained thought the access TX and internal node
         cin = 3 #Assumes always a minimum sizes inverter. Could be specified in the tech.py file.
@@ -116,11 +116,11 @@ class bitcell_1w_1r(design.design):
         total_power = self.return_power(dynamic, leakage)
         return total_power
 
-    def get_wl_cin(self):
+    def input_load(self):
         """Return the relative capacitance of the access transistor gates"""
-        #This is a handmade cell so the value must be entered in the tech.py file or estimated.
-        #Calculated in the tech file by summing the widths of all the related gates and dividing by the minimum width.
-        #FIXME: sizing is not accurate with the handmade cell. Change once cell widths are fixed.
+        
+        # FIXME: This applies to bitline capacitances as well.
+        # FIXME: sizing is not accurate with the handmade cell. Change once cell widths are fixed.
         access_tx_cin = parameter["6T_access_size"]/drc["minwidth_tx"]
         return 2*access_tx_cin
         

@@ -37,10 +37,7 @@ class pnand2(pgate.pgate):
 
         # Creates the netlist and layout
         pgate.pgate.__init__(self, name, height)
-
-        #For characterization purposes only
-        #self.exclude_nmos_from_graph()
-        
+   
     def create_netlist(self):
         self.add_pins()
         self.add_ptx()
@@ -250,10 +247,6 @@ class pnand2(pgate.pgate):
         transition_prob = spice["nand2_transition_prob"]
         return transition_prob*(c_load + c_para) 
 
-    def get_cin(self):
-        """Return the relative input capacitance of a single input"""
-        return self.nmos_size+self.pmos_size
-    
     def input_load(self):
         """Return the relative input capacitance of a single input"""
         return self.nmos_size+self.pmos_size
@@ -263,14 +256,7 @@ class pnand2(pgate.pgate):
            Optional is_rise refers to the input direction rise/fall. Input inverted by this stage.
         """
         parasitic_delay = 2 
-        return logical_effort.logical_effort(self.name, self.size, self.get_cin(), cout, parasitic_delay, not inp_is_rise)
-        
-    def exclude_nmos_from_graph(self):
-        """Exclude the nmos TXs from the graph to reduce complexity"""
-        #The pull-down network has an internal net which causes 2 different in->out paths
-        #Removing them simplifies generic path searching.
-        self.graph_inst_exclude.add(self.nmos1_inst)
-        self.graph_inst_exclude.add(self.nmos2_inst)
+        return logical_effort.logical_effort(self.name, self.size, self.input_load(), cout, parasitic_delay, not inp_is_rise)
 
     def build_graph(self, graph, inst_name, port_nets):        
         """Adds edges based on inputs/outputs. Overrides base class function."""

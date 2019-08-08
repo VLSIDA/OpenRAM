@@ -104,7 +104,8 @@ class timing_graph():
         if len(path) == 0:
             return []
             
-        delays = []    
+        delays = []
+        cur_slew = slew
         for i in range(len(path)-1):
             
             path_edge_mod = self.edge_mods[(path[i], path[i+1])]
@@ -112,14 +113,14 @@ class timing_graph():
             # On the output of the current stage, get COUT from all other mods connected
             cout = 0
             for node in self.graph[path[i+1]]:
-                output_edge_mode = self.edge_mods[(path[i+1], node)]
-                cout+=output_edge_mode.input_load()
+                output_edge_mod = self.edge_mods[(path[i+1], node)]
+                cout+=output_edge_mod.get_cin()
             # If at the last output, include the final output load    
             if i == len(path)-2:
                cout+=load
             
             delays.append(path_edge_mod.analytical_delay(corner, slew, cout))    
-            slew = delays[-1].slew
+            cur_slew = delays[-1].slew
             
         return delays
             

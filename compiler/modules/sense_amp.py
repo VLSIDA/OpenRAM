@@ -33,7 +33,10 @@ class sense_amp(design.design):
         self.pin_map = sense_amp.pin_map
         self.add_pin_types(self.type_list)
         
-    def input_load(self):
+    def get_cin(self):
+    
+        # FIXME: This input load will be applied to both the s_en timing and bitline timing.
+        
         #Input load for the bitlines which are connected to the source/drain of a TX. Not the selects.
         from tech import spice, parameter
         # Default is 8x. Per Samira and Hodges-Jackson book:

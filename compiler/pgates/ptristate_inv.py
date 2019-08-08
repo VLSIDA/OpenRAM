@@ -216,5 +216,5 @@ class ptristate_inv(pgate.pgate):
         total_power = self.return_power() 
         return total_power
 
-    def input_load(self):
+    def get_cin(self):
         return 9*spice["min_tx_gate_c"]

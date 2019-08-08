@@ -272,11 +272,6 @@ class pinv(pgate.pgate):
         transition_prob = spice["inv_transition_prob"]
         return transition_prob*(c_load + c_para) 
 
-    def get_cin(self):
-        """Return the capacitance of the gate connection in generic capacitive
-           units relative to the minimum width of a transistor"""
-        return self.nmos_size + self.pmos_size
-      
     def input_load(self):
         """Return the capacitance of the gate connection in generic capacitive
            units relative to the minimum width of a transistor"""
@@ -289,7 +284,7 @@ class pinv(pgate.pgate):
         parasitic_delay = 1 
         return logical_effort.logical_effort(self.name, 
                                              self.size, 
-                                             self.get_cin(), 
+                                             self.input_load(), 
                                              cout, 
                                              parasitic_delay, 
                                              not inp_is_rise)

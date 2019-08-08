@@ -85,7 +85,3 @@ class replica_pbitcell(design.design):
         self.copy_layout_pin(self.prbc_inst, "vdd")
         self.copy_layout_pin(self.prbc_inst, "gnd")
     
-    def get_wl_cin(self):
-        """Return the relative capacitance of the access transistor gates"""
-        #This module is made using a pbitcell. Get the cin from that module
-        return self.prbc.get_wl_cin()

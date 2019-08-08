@@ -12,7 +12,7 @@ from tech import GDS,layer
 
 class tri_gate(design.design):
     """
-    This module implements the tri gate cell used in the design for
+    This module implements the tri gate cell used in the design forS
     bit-line isolation. It is a hand-made cell, so the layout and
     netlist should be available in the technology library.  
     """
@@ -42,7 +42,7 @@ class tri_gate(design.design):
         total_power = self.return_power() 
         return total_power
 
-    def input_load(self):
+    def get_cin(self):
         return 9*spice["min_tx_gate_c"]
 
     def build_graph(self, graph, inst_name, port_nets):        

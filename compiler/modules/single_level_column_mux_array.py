@@ -210,15 +210,6 @@ class single_level_column_mux_array(design.design):
                 self.add_via_center(layers=("metal1", "via1", "metal2"),
                                     offset=br_out_offset)
 
-       
-    def analytical_delay(self, corner, slew, load):
-        from tech import parameter
-        """Returns relative delay that the column mux adds"""
-        #Single level column mux will add parasitic loads from other mux pass transistors and the sense amp.
-        drain_load = logical_effort.convert_farad_to_relative_c(parameter['bitcell_drain_cap'])
-        array_load = drain_load*self.words_per_row
-        return [self.mux.analytical_delay(corner, slew, load+array_load)]
-        
     def get_drain_cin(self):
         """Get the relative capacitance of the drain of the NMOS pass TX"""
         from tech import parameter

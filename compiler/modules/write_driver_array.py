@@ -113,7 +113,6 @@ class write_driver_array(design.design):
         for i in range(0,self.columns,self.words_per_row):
             index = int(i/self.words_per_row)
             base = vector(i * driver_spacing, 0)
-
             self.driver_insts[index].place(base)
 
             
@@ -152,11 +151,14 @@ class write_driver_array(design.design):
         if self.write_size is not None:
             for bit in range(self.num_wmasks):
                 en_pin = self.driver_insts[bit*self.write_size].get_pin("en")
+                # modifier to stretch enable pin for column mux
+                modifier = (self.words_per_row-1) + 0.65
                 self.add_layout_pin(text="en_{0}".format(bit),
                                     layer=en_pin.layer,
                                     offset=en_pin.ll(),
-                                    width=1.75*self.write_size*en_pin.width(),
+                                    width=modifier*self.write_size*en_pin.width(),
                                     height=en_pin.height())
+        else:
             self.add_layout_pin(text="en",
                                 layer="metal1",
                                 offset=self.driver_insts[0].get_pin("en").ll().scale(0,1),

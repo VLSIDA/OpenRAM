@@ -341,8 +341,6 @@ class sram_base(design, verilog, lef):
                 temp.append("DOUT{0}[{1}]".format(port,bit))
         for port in self.read_ports:
             temp.append("rbl_bl{0}".format(port))
-        for port in self.read_ports:
-            temp.append("rbl_wl{0}".format(port))
         for port in self.write_ports:
             for bit in range(self.word_size):
                 temp.append("BANK_DIN{0}[{1}]".format(port,bit))
@@ -507,9 +505,6 @@ class sram_base(design, verilog, lef):
 
             # Ouputs
             if port in self.read_ports:
-                temp.append("rbl_wl{}".format(port))
-
-            if port in self.read_ports:
                 temp.append("s_en{}".format(port))
             if port in self.write_ports:
                 temp.append("w_en{}".format(port))
@@ -530,7 +525,10 @@ class sram_base(design, verilog, lef):
             in_pos = src_pin.rc()
         else:
             in_pos = src_pin.lc()
-        out_pos = dest_pin.center()
+        if src_pin.cy() < dest_pin.cy():
+            out_pos = dest_pin.bc()
+        else:
+            out_pos = dest_pin.uc()
 
         # move horizontal first
         self.add_wire(("metal3","via2","metal2"),[in_pos, vector(out_pos.x,in_pos.y),out_pos])

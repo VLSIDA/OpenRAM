@@ -125,10 +125,10 @@ class control_logic(design.design):
         self.add_mod(self.wl_en_driver)
 
         # w_en drives every write driver
-        self.wen_and2 = factory.create(module_type="pand2",
+        self.wen_and = factory.create(module_type="pand3",
                                        size=self.word_size+8,
                                        height=dff_height)
-        self.add_mod(self.wen_and2)
+        self.add_mod(self.wen_and)
 
         # s_en drives every sense amp
         self.sen_and2 = factory.create(module_type="pand2",
@@ -141,17 +141,19 @@ class control_logic(design.design):
                                   size=1,
                                   height=dff_height)
         self.add_mod(self.inv)
-
+        
         # p_en_bar drives every column in the bitcell array
         # but it is sized the same as the wl_en driver with
         # prepended 3 inverter stages to guarantee it is slower and odd polarity
         self.p_en_bar_driver = factory.create(module_type="pdriver",
                                               fanout=self.num_cols,
-                                              neg_polarity=True,
                                               height=dff_height)
         self.add_mod(self.p_en_bar_driver)
 
-        
+
+        self.nand2 = factory.create(module_type="pnand2",
+                                    height=dff_height)
+        self.add_mod(self.nand2)
         
         # if (self.port_type == "rw") or (self.port_type == "r"):
         #     from importlib import reload
@@ -330,12 +332,9 @@ class control_logic(design.design):
         if self.port_type == "rw":
             self.input_list = ["csb", "web"]
             self.rbl_list = ["rbl_bl"]
-        elif self.port_type == "r":
-            self.input_list = ["csb"]
-            self.rbl_list = ["rbl_bl"]
         else:
             self.input_list = ["csb"]
-            self.rbl_list = []
+            self.rbl_list = ["rbl_bl"]
 
         if self.port_type == "rw":
             self.dff_output_list = ["cs_bar", "cs", "we_bar", "we"]
@@ -385,7 +384,7 @@ class control_logic(design.design):
             self.create_wen_row()
         if (self.port_type == "rw") or (self.port_type == "r"):
             self.create_sen_row()
-            self.create_delay()
+        self.create_delay()
         self.create_pen_row()            
 
 
@@ -422,9 +421,9 @@ class control_logic(design.design):
         if (self.port_type == "rw") or (self.port_type == "r"):            
             self.place_sen_row(row)
             row += 1
-            self.place_delay(row)
-            height = self.delay_inst.uy()
-            control_center_y = self.delay_inst.by()
+        self.place_delay(row)
+        height = self.delay_inst.uy()
+        control_center_y = self.delay_inst.by()
 
         # This offset is used for placement of the control logic in the SRAM level.
         self.control_logic_center = vector(self.ctrl_dff_inst.rx(), control_center_y)
@@ -446,6 +445,7 @@ class control_logic(design.design):
             self.route_wen()
         if (self.port_type == "rw") or (self.port_type == "r"):
             self.route_sen()
+        self.route_delay()
         self.route_pen()
         self.route_clk_buf()
         self.route_gated_clk_bar()
@@ -457,7 +457,7 @@ class control_logic(design.design):
         """ Create the replica bitline """
         self.delay_inst=self.add_inst(name="delay_chain",
                                       mod=self.delay_chain)
-        self.connect_inst(["rbl_bl", "pre_s_en", "vdd", "gnd"])
+        self.connect_inst(["rbl_bl", "rbl_bl_delay", "vdd", "gnd"])
 
     def place_delay(self,row):
         """ Place the replica bitline """
@@ -467,6 +467,11 @@ class control_logic(design.design):
         # Add to the right of the control rows and routing channel
         offset = vector(self.delay_chain.width, y_off)
         self.delay_inst.place(offset, mirror="MY")
+        
+    def route_delay(self):
+        
+        # Input from RBL goes to the delay line for futher delay
+        self.copy_layout_pin(self.delay_inst, "in", "rbl_bl")
         
         
     def create_clk_buf_row(self):
@@ -604,10 +609,14 @@ class control_logic(design.design):
         self.connect_output(self.wl_en_inst, "Z", "wl_en")
 
     def create_pen_row(self):
-        # input: gated_clk_bar, output: p_en_bar
-        self.p_en_bar_inst=self.add_inst(name="inv_p_en_bar",
+        self.p_en_bar_inst=self.add_inst(name="nand_p_en_bar",
+                                         mod=self.nand2)
+        self.connect_inst(["gated_clk_buf", "rbl_bl_delay", "p_en_bar_unbuf", "vdd", "gnd"])
+
+        self.p_en_bar_inst=self.add_inst(name="buf_p_en_bar",
                                          mod=self.p_en_bar_driver)
-        self.connect_inst(["gated_clk_buf", "p_en_bar", "vdd", "gnd"])
+        self.connect_inst(["p_en_bar_unbuf", "p_en_bar", "vdd", "gnd"])
+
         
         
     def place_pen_row(self,row):
@@ -633,7 +642,7 @@ class control_logic(design.design):
         # GATE FOR S_EN
         self.s_en_gate_inst = self.add_inst(name="buf_s_en_and",
                                             mod=self.sen_and2)
-        self.connect_inst(["pre_s_en", input_name, "s_en", "vdd", "gnd"])
+        self.connect_inst(["rbl_bl_delay", input_name, "s_en", "vdd", "gnd"])
         
         
     def place_sen_row(self,row):
@@ -667,12 +676,13 @@ class control_logic(design.design):
 
         self.connect_output(self.s_en_gate_inst, "Z", "s_en")
 
-        # Input from RBL goes to the delay line for futher delay
-        self.copy_layout_pin(self.delay_inst, "in", "rbl_bl")
-
-        
         
     def create_wen_row(self):
+
+        self.rbl_bl_delay_inv_inst = self.add_inst(name="rbl_bl_delay_inv",
+                                                   mod=self.inv)
+        self.connect_inst(["rbl_bl_delay", "rbl_bl_delay_bar", "vdd", "gnd"])
+        
         # input: we (or cs) output: w_en
         if self.port_type == "rw":
             input_name = "we"
@@ -682,8 +692,8 @@ class control_logic(design.design):
 
         # GATE THE W_EN
         self.w_en_gate_inst = self.add_inst(name="w_en_and",
-                                            mod=self.wen_and2)
-        self.connect_inst([input_name, "gated_clk_bar", "w_en", "vdd", "gnd"])
+                                            mod=self.wen_and)
+        self.connect_inst([input_name, "rbl_bl_delay_bar", "gated_clk_bar", "w_en", "vdd", "gnd"])
         
 
     def place_wen_row(self,row):

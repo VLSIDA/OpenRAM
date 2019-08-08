@@ -82,9 +82,8 @@ class port_data(design.design):
     def add_pins(self):
         """ Adding pins for port address module"""
         
-        if self.has_rbl():
-            self.add_pin("rbl_bl","INOUT")
-            self.add_pin("rbl_br","INOUT")
+        self.add_pin("rbl_bl","INOUT")
+        self.add_pin("rbl_br","INOUT")
         for bit in range(self.num_cols):
             self.add_pin("{0}_{1}".format(self.bl_names[self.port], bit),"INOUT")
             self.add_pin("{0}_{1}".format(self.br_names[self.port], bit),"INOUT")
@@ -150,30 +149,18 @@ class port_data(design.design):
         
     def add_modules(self):
 
-        if self.port in self.read_ports:
-            # Extra column +1 is for RBL
-            # Precharge will be shifted left if needed
-            self.precharge_array = factory.create(module_type="precharge_array",
-                                                  columns=self.num_cols + 1,
-                                                  bitcell_bl=self.bl_names[self.port],
-                                                  bitcell_br=self.br_names[self.port])
-            self.add_mod(self.precharge_array)
-
-            self.sense_amp_array = factory.create(module_type="sense_amp_array",
-                                                  word_size=self.word_size, 
-                                                  words_per_row=self.words_per_row)
-            self.add_mod(self.sense_amp_array)
-        else:
-            # Precharge is needed when we have a column mux or for byte writes
-            # to prevent corruption of half-selected cells, so just always add it
-            # This is a little power inefficient for write ports without a column mux,
-            # but it is simpler.
-            self.precharge_array = factory.create(module_type="precharge_array",
-                                                  columns=self.num_cols,
-                                                  bitcell_bl=self.bl_names[self.port],
-                                                  bitcell_br=self.br_names[self.port])
-            self.add_mod(self.precharge_array)
-            self.sense_amp_array = None
+        # Extra column +1 is for RBL
+        # Precharge will be shifted left if needed
+        self.precharge_array = factory.create(module_type="precharge_array",
+                                              columns=self.num_cols + 1,
+                                              bitcell_bl=self.bl_names[self.port],
+                                              bitcell_br=self.br_names[self.port])
+        self.add_mod(self.precharge_array)
+        
+        self.sense_amp_array = factory.create(module_type="sense_amp_array",
+                                              word_size=self.word_size, 
+                                              words_per_row=self.words_per_row)
+        self.add_mod(self.sense_amp_array)
             
 
         if self.col_addr_size > 0:
@@ -238,14 +225,14 @@ class port_data(design.design):
 
         temp = []
         # Use left BLs for RBL
-        if self.has_rbl() and self.port==0:
+        if self.port==0:
             temp.append("rbl_bl")
             temp.append("rbl_br")
         for bit in range(self.num_cols):
             temp.append(self.bl_names[self.port]+"_{0}".format(bit))
             temp.append(self.br_names[self.port]+"_{0}".format(bit))
         # Use right BLs for RBL
-        if self.has_rbl() and self.port==1:
+        if self.port==1:
             temp.append("rbl_bl")
             temp.append("rbl_br")
         temp.extend(["p_en_bar", "vdd"])
@@ -368,7 +355,7 @@ class port_data(design.design):
         vertical_port_order.append(self.write_driver_array_inst)
 
         # Add one column for the the RBL
-        if self.has_rbl() and self.port==0:
+        if self.port==0:
             x_offset = self.bitcell.width
         else:
             x_offset = 0
@@ -438,7 +425,7 @@ class port_data(design.design):
         
         inst1 = self.column_mux_array_inst
         inst2 = self.precharge_array_inst
-        if self.has_rbl() and self.port==0:
+        if self.port==0:
             self.connect_bitlines(inst1, inst2, self.num_cols, inst2_start_bit=1)
         else:
             self.connect_bitlines(inst1, inst2, self.num_cols)
@@ -460,7 +447,7 @@ class port_data(design.design):
             inst1 = self.precharge_array_inst
             inst1_bl_name = "bl_{}"
             inst1_br_name = "br_{}"
-            if self.has_rbl() and self.port==0:
+            if self.port==0:
                 start_bit=1
             else:
                 start_bit=0
@@ -484,7 +471,7 @@ class port_data(design.design):
             inst1 = self.precharge_array_inst
             inst1_bl_name = "bl_{}"
             inst1_br_name = "br_{}"
-            if self.has_rbl() and self.port==0:
+            if self.port==0:
                 start_bit=1
             else:
                 start_bit=0
@@ -507,11 +494,11 @@ class port_data(design.design):
         """ Add the bitline pins for the given port """
 
         # Connect one bitline to the RBL and offset the indices for the other BLs
-        if self.has_rbl() and self.port==0:
+        if self.port==0:
             self.copy_layout_pin(self.precharge_array_inst, "bl_0", "rbl_bl")
             self.copy_layout_pin(self.precharge_array_inst, "br_0", "rbl_br")
             bit_offset=1
-        elif self.has_rbl() and self.port==1:
+        elif self.port==1:
             self.copy_layout_pin(self.precharge_array_inst, "bl_{}".format(self.num_cols), "rbl_bl")
             self.copy_layout_pin(self.precharge_array_inst, "br_{}".format(self.num_cols), "rbl_br")
             bit_offset=0
@@ -603,5 +590,3 @@ class port_data(design.design):
         if self.precharge_array_inst:
             self.graph_inst_exclude.add(self.precharge_array_inst)
 
-    def has_rbl(self):
-        return self.port in self.read_ports

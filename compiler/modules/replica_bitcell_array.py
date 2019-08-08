@@ -35,7 +35,7 @@ class replica_bitcell_array(design.design):
         self.right_rbl = right_rbl
         self.bitcell_ports = bitcell_ports
 
-        debug.check(left_rbl+right_rbl==len(self.read_ports),"Invalid number of RBLs for port configuration.")
+        debug.check(left_rbl+right_rbl==len(self.all_ports),"Invalid number of RBLs for port configuration.")
         debug.check(left_rbl+right_rbl==len(self.bitcell_ports),"Bitcell ports must match total RBLs.")
         
         # Two dummy rows/cols plus replica for each port

@@ -247,7 +247,7 @@ class delay(simulation):
     def create_graph(self):
         """Creates timing graph to generate the timing paths for the SRAM output."""
         
-        self.sram.bank.bitcell_array.init_graph_params() # Removes previous bit exclusions
+        self.sram.bank.bitcell_array.bitcell_array.init_graph_params() # Removes previous bit exclusions
         self.sram.bank.bitcell_array.graph_exclude_bits(self.wordline_row, self.bitline_column)
         
         # Generate new graph every analysis as edges might change depending on test bit
@@ -1313,6 +1313,7 @@ class delay(simulation):
             for load in loads:
                 # Calculate delay based on slew and load
                 path_delays = self.graph.get_timing(bl_path, self.corner, slew, load)
+                
                 total_delay = self.sum_delays(path_delays)
                 max_delay = max(max_delay, total_delay.delay)
                 debug.info(1,'{}, {}, {}, {}'.format(slew,load,total_delay.delay/1e3, total_delay.slew/1e3))

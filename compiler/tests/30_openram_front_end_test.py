@@ -16,7 +16,7 @@ from sram_factory import factory
 import debug
 import getpass
 
-@unittest.skip("SKIPPING 30_openram_front_end_test")
+#@unittest.skip("SKIPPING 30_openram_front_end_test")
 class openram_front_end_test(openram_test):
 
     def runTest(self):

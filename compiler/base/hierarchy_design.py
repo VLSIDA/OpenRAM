@@ -110,7 +110,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         """Initializes parameters relevant to the graph creation"""
         #Only initializes a set for checking instances which should not be added
         self.graph_inst_exclude = set()
-            
+    
     def build_graph(self, graph, inst_name, port_nets):        
         """Recursively create graph from instances in module."""
         

@@ -51,6 +51,7 @@ class write_mask_and_array(design.design):
 
         self.place_and2_array()
         self.add_layout_pins()
+        self.route_en()
         self.add_boundary()
         self.DRC_LVS()
 
@@ -81,10 +82,28 @@ class write_mask_and_array(design.design):
 
 
     def place_and2_array(self):
-        # place the write mask AND array below the write driver array
-        and2_spacing = self.and2.width
+        # Place the write mask AND array at the start of each write driver enable length.
+        # This ensures the write mask AND array will be directly under the corresponding write driver enable wire.
+
+        # This is just used for measurements, so don't add the module
+        self.bitcell = factory.create(module_type="bitcell")
+        self.driver = factory.create(module_type="write_driver")
+        if self.bitcell.width > self.driver.width:
+            self.driver_spacing = self.bitcell.width
+        else:
+            self.driver_spacing = self.driver.width
+
+        if (self.words_per_row == 1):
+            wmask_en_len = (self.write_size * self.driver_spacing)
+            if self.driver_spacing * self.write_size < self.and2.width:
+                debug.error("Cannot layout write mask AND array. One pand2 is longer than the corresponding write drivers.")
+        else:
+            wmask_en_len = 2 * (self.write_size * self.driver_spacing)
+            if wmask_en_len < self.and2.width:
+                debug.error("Cannot layout write mask AND array. One pand2 is longer than the corresponding write drivers.")
+
         for i in range(self.num_wmasks):
-            base = vector(i * and2_spacing, 0)
+            base = vector(i * wmask_en_len, 0)
             self.and2_insts[i].place(base)
 
 
@@ -98,11 +117,13 @@ class write_mask_and_array(design.design):
                                 height=wmask_in_pin.height())
 
             en_pin = self.and2_insts[i].get_pin("B")
-            self.add_layout_pin(text="en",
-                                layer=en_pin.layer,
-                                offset=en_pin.ll(),
-                                width=en_pin.width(),
-                                height=en_pin.height())
+            self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                offset=en_pin.center())
+            self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                offset=en_pin.center())
+            self.add_layout_pin_rect_center(text="en",
+                                            layer="metal3",
+                                            offset=en_pin.center())
 
             wmask_out_pin = self.and2_insts[i].get_pin("Z")
             self.add_layout_pin(text="wmask_out_{0}".format(i),
@@ -115,6 +136,9 @@ class write_mask_and_array(design.design):
                 pin_list = self.and2_insts[i].get_pins(n)
                 for pin in pin_list:
                     pin_pos = pin.center()
+                    # Add the M1->M2 stack
+                    self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                        offset=pin_pos)
                     # Add the M2->M3 stack
                     self.add_via_center(layers=("metal2", "via2", "metal3"),
                                         offset=pin_pos)
@@ -122,6 +146,15 @@ class write_mask_and_array(design.design):
                                                     layer="metal3",
                                                     offset=pin_pos)
 
+
+    def route_en(self):
+        for i in range(self.num_wmasks-1):
+            en_pin = self.and2_insts[i].get_pin("B")
+            next_en_pin = self.and2_insts[i+1].get_pin("B")
+            offset = en_pin.center()
+            next_offset = next_en_pin.center()
+            self.add_path("metal3", [offset,
+                                     next_offset])
 
     def get_cin(self):
         """Get the relative capacitance of all the input connections in the bank"""

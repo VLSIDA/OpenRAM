@@ -27,6 +27,10 @@ class write_mask_and_array_test(openram_test):
         a = factory.create(module_type="write_mask_and_array", columns=8, word_size=8, write_size=4)
         self.local_check(a)
 
+        debug.info(2, "Testing write_mask_and_array for columns=8, word_size=8, write_size=4")
+        a = factory.create(module_type="write_mask_and_array", columns=16, word_size=16, write_size=4)
+        self.local_check(a)
+
         debug.info(2, "Testing write_mask_and_array for columns=16, word_size=8, write_size=2")
         a = factory.create(module_type="write_mask_and_array", columns=16, word_size=8, write_size=2)
         self.local_check(a)

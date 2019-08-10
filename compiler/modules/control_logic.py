@@ -131,10 +131,10 @@ class control_logic(design.design):
         self.add_mod(self.wen_and)
 
         # s_en drives every sense amp
-        self.sen_and2 = factory.create(module_type="pand2",
+        self.sen_and3 = factory.create(module_type="pand3",
                                        size=self.word_size,
                                        height=dff_height)
-        self.add_mod(self.sen_and2)
+        self.add_mod(self.sen_and3)
 
         # used to generate inverted signals with low fanout 
         self.inv = factory.create(module_type="pinv",
@@ -645,8 +645,8 @@ class control_logic(design.design):
             input_name = "cs_bar"
         # GATE FOR S_EN
         self.s_en_gate_inst = self.add_inst(name="buf_s_en_and",
-                                            mod=self.sen_and2)
-        self.connect_inst(["rbl_bl_delay", input_name, "s_en", "vdd", "gnd"])
+                                            mod=self.sen_and3)
+        self.connect_inst(["rbl_bl_delay", "gated_clk_bar", input_name, "s_en", "vdd", "gnd"])
         
         
     def place_sen_row(self,row):
@@ -664,7 +664,7 @@ class control_logic(design.design):
         else:
             input_name = "cs_bar"
             
-        sen_map = zip(["A", "B"], ["rbl_bl_delay", input_name])
+        sen_map = zip(["A", "B", "C"], ["rbl_bl_delay", "gated_clk_bar", input_name])
         self.connect_vertical_bus(sen_map, self.s_en_gate_inst, self.rail_offsets)
         
         self.connect_output(self.s_en_gate_inst, "Z", "s_en")

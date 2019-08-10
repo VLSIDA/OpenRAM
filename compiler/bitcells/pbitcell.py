@@ -934,7 +934,7 @@ class pbitcell(design.design):
         return "wl{}".format(port)
     
 
-    def analytical_delay(self, corner, slew, load=0, swing = 0.5):
+    def get_stage_effort(self, load):
         parasitic_delay = 1
         size = 0.5 #This accounts for bitline being drained thought the access TX and internal node
         cin = 3 #Assumes always a minimum sizes inverter. Could be specified in the tech.py file.
@@ -954,9 +954,11 @@ class pbitcell(design.design):
         total_power = self.return_power(dynamic, leakage)
         return total_power
         
-    def get_wl_cin(self):
+    def input_load(self):
         """Return the relative capacitance of the access transistor gates"""
-        #pbitcell uses the different sizing for the port access tx's. Not accounted for in this model.
+        
+        # FIXME: This applies to bitline capacitances as well.
+        # pbitcell uses the different sizing for the port access tx's. Not accounted for in this model.
         access_tx_cin = self.readwrite_nmos.get_cin()
         return 2*access_tx_cin
 
@@ -973,6 +975,6 @@ class pbitcell(design.design):
 
         for pin_zip in [rw_pin_names, r_pin_names]: 
             for wl,bl,br in pin_zip:
-                graph.add_edge(pin_dict[wl],pin_dict[bl])
-                graph.add_edge(pin_dict[wl],pin_dict[br])
+                graph.add_edge(pin_dict[wl],pin_dict[bl], self)
+                graph.add_edge(pin_dict[wl],pin_dict[br], self)
 

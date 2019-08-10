@@ -227,16 +227,6 @@ class pnor2(pgate.pgate):
                                         width=contact.m1m2.first_layer_height,
                                         height=contact.m1m2.first_layer_width)
 
-
-
-    def input_load(self):
-        return ((self.nmos_size+self.pmos_size)/parameter["min_tx_size"])*spice["min_tx_gate_c"]
-
-    def analytical_delay(self, corner, slew, load=0.0):
-        r = spice["min_tx_r"]/(self.nmos_size/parameter["min_tx_size"])
-        c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff
-        return self.cal_delay_with_rc(corner, r = r, c =  c_para+load, slew = slew)
-        
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""
         c_eff = self.calculate_effective_capacitance(load)

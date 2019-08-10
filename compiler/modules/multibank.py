@@ -828,21 +828,3 @@ class multibank(design.design):
         self.add_via(layers=("metal2","via2","metal3"),
                      offset=in_pin + self.m2m3_via_offset,
                      rotate=90)
-        
-    def analytical_delay(self, corner, slew, load):
-        """ return  analytical delay of the bank"""
-        decoder_delay = self.row_decoder.analytical_delay(corner, slew, self.wordline_driver.input_load())
-
-        word_driver_delay = self.wordline_driver.analytical_delay(corner, decoder_delay.slew, self.bitcell_array.input_load())
-
-        bitcell_array_delay = self.bitcell_array.analytical_delay(corner, word_driver_delay.slew)
-
-        bl_t_data_out_delay = self.sense_amp_array.analytical_delay(corner, bitcell_array_delay.slew,
-                                                                    self.bitcell_array.output_load())
-        # output load of bitcell_array is set to be only small part of bl for sense amp.
-
-        data_t_DATA_delay = self.tri_gate_array.analytical_delay(corner, bl_t_data_out_delay.slew, load)
-
-        result = decoder_delay + word_driver_delay + bitcell_array_delay + bl_t_data_out_delay + data_t_DATA_delay
-        return result
-        

@@ -33,15 +33,18 @@ class sense_amp(design.design):
         self.pin_map = sense_amp.pin_map
         self.add_pin_types(self.type_list)
         
-    def input_load(self):
+    def get_cin(self):
+    
+        # FIXME: This input load will be applied to both the s_en timing and bitline timing.
+        
         #Input load for the bitlines which are connected to the source/drain of a TX. Not the selects.
         from tech import spice, parameter
         # Default is 8x. Per Samira and Hodges-Jackson book:
         # "Column-mux transistors driven by the decoder must be sized for optimal speed"
         bitline_pmos_size = 8 #FIXME: This should be set somewhere and referenced. Probably in tech file.
-        return spice["min_tx_drain_c"]*(bitline_pmos_size/parameter["min_tx_size"])#ff   
+        return spice["min_tx_drain_c"]*(bitline_pmos_size)#ff   
         
-    def analytical_delay(self, corner, slew, load):
+    def get_stage_effort(self, load):
         #Delay of the sense amp will depend on the size of the amp and the output load.
         parasitic_delay = 1
         cin = (parameter["sa_inv_pmos_size"] + parameter["sa_inv_nmos_size"])/drc("minwidth_tx")

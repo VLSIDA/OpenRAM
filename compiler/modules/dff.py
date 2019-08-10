@@ -48,11 +48,6 @@ class dff(design.design):
         transition_prob = spice["flop_transition_prob"]
         return transition_prob*(c_load + c_para) 
 
-    def analytical_delay(self, corner, slew, load = 0.0):
-        # dont know how to calculate this now, use constant in tech file
-        result = self.return_delay(spice["dff_delay"], spice["dff_slew"])
-        return result
-        
     def get_clk_cin(self):
         """Return the total capacitance (in relative units) that the clock is loaded by in the dff"""
         #This is a handmade cell so the value must be entered in the tech.py file or estimated.

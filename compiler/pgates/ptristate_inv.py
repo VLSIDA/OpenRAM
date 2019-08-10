@@ -210,18 +210,11 @@ class ptristate_inv(pgate.pgate):
         self.connect_pin_to_rail(self.nmos1_inst,"S","gnd")
         self.connect_pin_to_rail(self.pmos1_inst,"S","vdd")
         
-
-    def analytical_delay(self, corner, slew, load=0.0):
-        from tech import spice
-        r = spice["min_tx_r"]
-        c_para = spice["min_tx_drain_c"]
-        return self.cal_delay_with_rc(corner, r = r, c =  c_para+load, slew = slew)
-        
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""
         #Power in this module currently not defined. Returns 0 nW (leakage and dynamic).
         total_power = self.return_power() 
         return total_power
 
-    def input_load(self):
+    def get_cin(self):
         return 9*spice["min_tx_gate_c"]

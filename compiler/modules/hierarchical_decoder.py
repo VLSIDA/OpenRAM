@@ -596,28 +596,6 @@ class hierarchical_decoder(design.design):
         self.add_via_center(layers=("metal2", "via2", "metal3"),
                             offset=rail_pos)
 
-        
-    def analytical_delay(self, corner, slew, load = 0.0):
-        # A -> out
-        if self.determine_predecodes(self.num_inputs)[1]==0:
-            pre = self.pre2_4
-            nand = self.nand2
-        else:
-            pre = self.pre3_8
-            nand = self.nand3
-        a_t_out_delay = pre.analytical_delay(corner, slew=slew,load = nand.input_load())
-
-        # out -> z
-        out_t_z_delay = nand.analytical_delay(corner, slew= a_t_out_delay.slew,
-                                  load = self.inv.input_load())
-        result = a_t_out_delay + out_t_z_delay
-
-        # Z -> decode_out
-        z_t_decodeout_delay = self.inv.analytical_delay(corner, slew = out_t_z_delay.slew , load = load)
-        result = result + z_t_decodeout_delay
-        return result
-
-        
     def input_load(self):
         if self.determine_predecodes(self.num_inputs)[1]==0:
             pre = self.pre2_4

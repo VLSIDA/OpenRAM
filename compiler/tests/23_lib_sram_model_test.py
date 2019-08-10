@@ -14,7 +14,7 @@ import globals
 from globals import OPTS
 import debug
 
-@unittest.skip("SKIPPING 23_lib_sram_model_test")
+#@unittest.skip("SKIPPING 23_lib_sram_model_test")
 class lib_sram_model_test(openram_test):
 
     def runTest(self):

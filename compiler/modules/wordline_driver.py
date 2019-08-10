@@ -210,21 +210,6 @@ class wordline_driver(design.design):
                                                start=wl_offset,
                                                end=wl_offset-vector(self.m1_width,0))
 
-
-    def analytical_delay(self, corner, slew, load=0):
-        # decode -> net
-        decode_t_net = self.nand2.analytical_delay(corner, slew, self.inv.input_load())
-
-        # net -> wl
-        net_t_wl = self.inv.analytical_delay(corner, decode_t_net.slew, load)
-
-        return decode_t_net + net_t_wl
-
-        
-    def input_load(self):
-        """Gets the capacitance of the wordline driver in absolute units (fF)"""
-        return self.nand2.input_load()
-
     def determine_wordline_stage_efforts(self, external_cout, inp_is_rise=True):
         """Follows the clk_buf to a wordline signal adding each stages stage effort to a list"""
         stage_effort_list = []

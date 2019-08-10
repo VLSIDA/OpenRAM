@@ -915,9 +915,8 @@ class bank(design.design):
         connection = []
         connection.append((self.prefix+"p_en_bar{}".format(port), self.port_data_inst[port].get_pin("p_en_bar").lc()))
 
-        if port in self.read_ports:
-            rbl_wl_name = self.bitcell_array.get_rbl_wl_name(self.port_rbl_map[port])
-            connection.append((self.prefix+"wl_en{}".format(port), self.bitcell_array_inst.get_pin(rbl_wl_name).lc()))
+        rbl_wl_name = self.bitcell_array.get_rbl_wl_name(self.port_rbl_map[port])
+        connection.append((self.prefix+"wl_en{}".format(port), self.bitcell_array_inst.get_pin(rbl_wl_name).lc()))
             
         if port in self.write_ports:
             connection.append((self.prefix+"w_en{}".format(port), self.port_data_inst[port].get_pin("w_en").lc()))

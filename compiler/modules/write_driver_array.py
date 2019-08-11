@@ -156,7 +156,7 @@ class write_driver_array(design.design):
                     wmask_en_len = (self.write_size * self.driver_spacing)
                     en_gap = self.driver_spacing - en_pin.width()
                 else:
-                    wmask_en_len = 2*(self.write_size * self.driver_spacing)
+                    wmask_en_len = self.words_per_row*(self.write_size * self.driver_spacing)
                     en_gap = self.driver_spacing
 
                 self.add_layout_pin(text="en_{0}".format(bit),

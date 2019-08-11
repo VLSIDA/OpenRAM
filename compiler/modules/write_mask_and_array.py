@@ -98,7 +98,7 @@ class write_mask_and_array(design.design):
             if self.driver_spacing * self.write_size < self.and2.width:
                 debug.error("Cannot layout write mask AND array. One pand2 is longer than the corresponding write drivers.")
         else:
-            wmask_en_len = 2 * (self.write_size * self.driver_spacing)
+            wmask_en_len = self.words_per_row * (self.write_size * self.driver_spacing)
             if wmask_en_len < self.and2.width:
                 debug.error("Cannot layout write mask AND array. One pand2 is longer than the corresponding write drivers.")
 

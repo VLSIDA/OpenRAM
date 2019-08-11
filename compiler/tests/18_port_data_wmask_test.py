@@ -48,7 +48,6 @@ class port_data_test(openram_test):
         a = factory.create("port_data", sram_config=c, port=0)
         self.local_check(a)
 
-        c.word_size = 2
         c.num_words = 128
         c.words_per_row = 8
         factory.reset()

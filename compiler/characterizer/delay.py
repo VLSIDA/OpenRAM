@@ -800,6 +800,8 @@ class delay(simulation):
 
             debug.info(2,"{}={}".format(meas.name,val))
 
+        dout_success = True
+        bl_success = False
         for meas in self.dout_volt_meas:
             val = meas.retrieve_measure(port=port)
             debug.info(2,"{}={}".format(meas.name, val))
@@ -813,15 +815,7 @@ class delay(simulation):
                 dout_success = False
                 debug.info(1, "Debug measurement failed. Value {}V was read on read 0 cycle.".format(val))
                 bl_success = self.check_bitline_meas(br_vals[sram_op.READ_ONE], bl_vals[sram_op.READ_ONE])
-            elif meas.meta_str == sram_op.READ_ONE and val > self.vdd_voltage*0.9:
-                dout_success = True
-                bl_success = True
-            elif meas.meta_str == sram_op.READ_ZERO and val < self.vdd_voltage*0.1:
-                dout_success = True
-                bl_success = True
-            else:
-                dout_success = False
-                bl_success = False
+                
             # If the bitlines have a correct value while the output does not then that is a 
             # sen error. FIXME: there are other checks that can be done to solidfy this conclusion.
             if not dout_success and bl_success:

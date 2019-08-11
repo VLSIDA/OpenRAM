@@ -156,11 +156,14 @@ class port_data(design.design):
                                               bitcell_bl=self.bl_names[self.port],
                                               bitcell_br=self.br_names[self.port])
         self.add_mod(self.precharge_array)
-        
-        self.sense_amp_array = factory.create(module_type="sense_amp_array",
-                                              word_size=self.word_size, 
-                                              words_per_row=self.words_per_row)
-        self.add_mod(self.sense_amp_array)
+
+        if self.port in self.read_ports:
+            self.sense_amp_array = factory.create(module_type="sense_amp_array",
+                                                  word_size=self.word_size, 
+                                                  words_per_row=self.words_per_row)
+            self.add_mod(self.sense_amp_array)
+        else:
+            self.sense_amp_array = None
             
 
         if self.col_addr_size > 0:
@@ -187,7 +190,7 @@ class port_data(design.design):
                                                            write_size=self.write_size)
                 self.add_mod(self.write_mask_and_array)
             else:
-                self.write_mask_and_array_inst = None
+                self.write_mask_and_array = None
 
         else:
             self.write_driver_array = None

@@ -51,7 +51,7 @@ class write_mask_and_array(design.design):
 
         self.place_and2_array()
         self.add_layout_pins()
-        self.route_en()
+        self.route_enable()
         self.add_boundary()
         self.DRC_LVS()
 
@@ -147,14 +147,13 @@ class write_mask_and_array(design.design):
                                                     offset=pin_pos)
 
 
-    def route_en(self):
+    def route_enable(self):
         for i in range(self.num_wmasks-1):
             en_pin = self.and2_insts[i].get_pin("B")
             next_en_pin = self.and2_insts[i+1].get_pin("B")
             offset = en_pin.center()
             next_offset = next_en_pin.center()
-            self.add_path("metal3", [offset,
-                                     next_offset])
+            self.add_path("metal3", [offset, next_offset])
 
     def get_cin(self):
         """Get the relative capacitance of all the input connections in the bank"""

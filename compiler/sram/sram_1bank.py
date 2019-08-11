@@ -301,7 +301,7 @@ class sram_1bank(sram_base):
                 dest_pin = self.bank_inst.get_pin(signal+"{}".format(port))                
                 self.connect_vbus_m2m3(src_pin, dest_pin)
 
-        for port in self.read_ports:
+        for port in self.all_ports:
             # Only input (besides pins) is the replica bitline
             src_pin = self.control_logic_insts[port].get_pin("rbl_bl")
             dest_pin = self.bank_inst.get_pin("rbl_bl{}".format(port))                

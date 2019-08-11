@@ -13,12 +13,12 @@ from globals import OPTS
 import pgate
 from sram_factory import factory
 
-class pand2(pgate.pgate):
+class pand3(pgate.pgate):
     """
     This is a simple buffer used for driving loads. 
     """
     def __init__(self, name, size=1, height=None):
-        debug.info(1, "Creating pnand2 {}".format(name))
+        debug.info(1, "Creating pand3 {}".format(name))
         self.add_comment("size: {}".format(size))
         
         self.size = size
@@ -33,7 +33,7 @@ class pand2(pgate.pgate):
 
     def create_modules(self):
         # Shield the cap, but have at least a stage effort of 4
-        self.nand = factory.create(module_type="pnand2",height=self.height) 
+        self.nand = factory.create(module_type="pnand3",height=self.height) 
         self.add_mod(self.nand)
         
         self.inv = factory.create(module_type="pinv", size=self.size, height=self.height)
@@ -49,16 +49,17 @@ class pand2(pgate.pgate):
     def add_pins(self):
         self.add_pin("A", "INPUT")
         self.add_pin("B", "INPUT")
+        self.add_pin("C", "INPUT")
         self.add_pin("Z", "OUTPUT")
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
     def create_insts(self):
-        self.nand_inst=self.add_inst(name="pand2_nand",
+        self.nand_inst=self.add_inst(name="pand3_nand",
                                      mod=self.nand)
-        self.connect_inst(["A", "B", "zb_int",  "vdd", "gnd"])
+        self.connect_inst(["A", "B", "C", "zb_int",  "vdd", "gnd"])
         
-        self.inv_inst=self.add_inst(name="pand2_inv",
+        self.inv_inst=self.add_inst(name="pand3_inv",
                                     mod=self.inv)
         self.connect_inst(["zb_int", "Z",  "vdd", "gnd"])
 
@@ -102,7 +103,7 @@ class pand2(pgate.pgate):
                                         width=pin.width(),
                                         height=pin.height())
 
-        for pin_name in ["A","B"]:
+        for pin_name in ["A","B", "C"]:
             pin = self.nand_inst.get_pin(pin_name)
             self.add_layout_pin_rect_center(text=pin_name,
                                             layer=pin.layer,
@@ -110,6 +111,14 @@ class pand2(pgate.pgate):
                                             width=pin.width(),
                                             height=pin.height())
         
+        
+
+    def analytical_delay(self, corner, slew, load=0.0):
+        """ Calculate the analytical delay of DFF-> INV -> INV """
+        nand_delay = self.nand.analytical_delay(corner, slew=slew, load=self.inv.input_load()) 
+        inv_delay = self.inv.analytical_delay(corner, slew=nand_delay.slew, load=load)
+        return nand_delay + inv_delay
+    
     def get_stage_efforts(self, external_cout, inp_is_rise=False):
         """Get the stage efforts of the A or B -> Z path"""
         stage_effort_list = []

@@ -121,9 +121,3 @@ class tri_gate_array(design.design):
                             offset=enbar_pin.ll().scale(0, 1),
                             width=width,
                             height=drc("minwidth_metal1"))
-        
-
-
-    def analytical_delay(self, corner, slew, load=0.0):
-        return self.tri.analytical_delay(corner, slew = slew, load = load)
-        

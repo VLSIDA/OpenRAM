@@ -31,6 +31,20 @@ class replica_bitcell(design.design):
         self.height = replica_bitcell.height
         self.pin_map = replica_bitcell.pin_map
         self.add_pin_types(self.type_list)
+        
+    def get_stage_effort(self, load):
+        parasitic_delay = 1
+        size = 0.5 #This accounts for bitline being drained thought the access TX and internal node
+        cin = 3 #Assumes always a minimum sizes inverter. Could be specified in the tech.py file.
+        read_port_load = 0.5 #min size NMOS gate load
+        return logical_effort.logical_effort('bitline', size, cin, load+read_port_load, parasitic_delay, False)
+        
+    def input_load(self):
+        """Return the relative capacitance of the access transistor gates"""
+        
+        # FIXME: This applies to bitline capacitances as well.
+        access_tx_cin = parameter["6T_access_size"]/drc["minwidth_tx"]
+        return 2*access_tx_cin    
     
     def analytical_power(self, corner, load):
         """Bitcell power in nW. Only characterizes leakage."""
@@ -39,13 +53,6 @@ class replica_bitcell(design.design):
         dynamic = 0 #temporary
         total_power = self.return_power(dynamic, leakage)
         return total_power
-
-    def get_wl_cin(self):
-        """Return the relative capacitance of the access transistor gates"""
-        #This is a handmade cell so the value must be entered in the tech.py file or estimated.
-        #Calculated in the tech file by summing the widths of all the related gates and dividing by the minimum width.
-        access_tx_cin = parameter["6T_access_size"]/drc["minwidth_tx"]
-        return 2*access_tx_cin
 
     def build_graph(self, graph, inst_name, port_nets):        
         """Adds edges based on inputs/outputs. Overrides base class function."""

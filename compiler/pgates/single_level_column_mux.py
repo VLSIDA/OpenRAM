@@ -189,7 +189,7 @@ class single_level_column_mux(pgate.pgate):
                       width=self.bitcell.width,
                       height=self.height)
         
-    def analytical_delay(self, corner, slew, load):
+    def get_stage_effort(self, corner, slew, load):
         """Returns relative delay that the column mux. Difficult to convert to LE model."""
         parasitic_delay = 1
         cin = 2*self.tx_size #This is not CMOS, so using this may be incorrect.

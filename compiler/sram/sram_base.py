@@ -339,7 +339,7 @@ class sram_base(design, verilog, lef):
         for port in self.read_ports:
             for bit in range(self.word_size):
                 temp.append("DOUT{0}[{1}]".format(port,bit))
-        for port in self.read_ports:
+        for port in self.all_ports:
             temp.append("rbl_bl{0}".format(port))
         for port in self.write_ports:
             for bit in range(self.word_size):
@@ -499,9 +499,7 @@ class sram_base(design, verilog, lef):
             if port in self.readwrite_ports:
                 temp.append("web{}".format(port))
             temp.append("clk{}".format(port))
-
-            if port in self.read_ports:
-                temp.append("rbl_bl{}".format(port))
+            temp.append("rbl_bl{}".format(port))
 
             # Ouputs
             if port in self.read_ports:
@@ -564,31 +562,7 @@ class sram_base(design, verilog, lef):
         self.sp_write_file(sp, usedMODS)
         del usedMODS
         sp.close()
-
-        
-    def analytical_delay(self, corner, slew,load):
-        """ Estimates the delay from clk -> DOUT 
-            LH and HL are the same in analytical model. """
-        delays = {}
-        for port in self.all_ports:
-            if port in self.readonly_ports:
-                control_logic = self.control_logic_r
-            elif port in self.readwrite_ports:
-                control_logic = self.control_logic_rw
-            else:
-                delays[port] = self.return_delay(0,0) #Write ports do not have a lib defined delay, marked as 0 
-                continue
-            clk_to_wlen_delays = control_logic.analytical_delay(corner, slew, load)
-            wlen_to_dout_delays = self.bank.analytical_delay(corner,slew,load,port) #port should probably be specified...
-            all_delays = clk_to_wlen_delays+wlen_to_dout_delays
-            total_delay = logical_effort.calculate_absolute_delay(all_delays)
-            total_delay = self.apply_corners_analytically(total_delay, corner)
-            last_slew = .1*all_delays[-1].get_absolute_delay() #slew approximated as 10% of delay
-            last_slew = self.apply_corners_analytically(last_slew, corner)
-            delays[port] = self.return_delay(delay=total_delay, slew=last_slew)
-
-        return delays
-        
+ 
     def get_wordline_stage_efforts(self, inp_is_rise=True):
         """Get the all the stage efforts for each stage in the path from clk_buf to a wordline"""
         stage_effort_list = []

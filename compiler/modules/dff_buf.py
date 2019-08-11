@@ -177,16 +177,7 @@ class dff_buf(design.design):
         self.add_path("metal1", [self.mid_qb_pos, qb_pos])
         self.add_via_center(layers=("metal1","via1","metal2"),
                             offset=qb_pos)
-        
-        
-
-    def analytical_delay(self, corner, slew, load=0.0):
-        """ Calculate the analytical delay of DFF-> INV -> INV """
-        dff_delay=self.dff.analytical_delay(corner, slew=slew, load=self.inv1.input_load())
-        inv1_delay = self.inv1.analytical_delay(corner, slew=dff_delay.slew, load=self.inv2.input_load()) 
-        inv2_delay = self.inv2.analytical_delay(corner, slew=inv1_delay.slew, load=load)
-        return dff_delay + inv1_delay + inv2_delay
-            
+         
     def get_clk_cin(self):
         """Return the total capacitance (in relative units) that the clock is loaded by in the dff"""
         #This is a handmade cell so the value must be entered in the tech.py file or estimated.

@@ -255,15 +255,6 @@ class pinv(pgate.pgate):
 
         self.connect_pin_to_rail(self.pmos_inst,"S","vdd")
         
-
-    def input_load(self):
-        return ((self.nmos_size+self.pmos_size)/parameter["min_tx_size"])*spice["min_tx_gate_c"]
-
-    def analytical_delay(self, corner, slew, load=0.0):
-        r = spice["min_tx_r"]/(self.nmos_size/parameter["min_tx_size"])
-        c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff
-        return self.cal_delay_with_rc(corner, r = r, c =  c_para+load, slew = slew)
-        
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""
         c_eff = self.calculate_effective_capacitance(load)
@@ -281,11 +272,11 @@ class pinv(pgate.pgate):
         transition_prob = spice["inv_transition_prob"]
         return transition_prob*(c_load + c_para) 
 
-    def get_cin(self):
+    def input_load(self):
         """Return the capacitance of the gate connection in generic capacitive
            units relative to the minimum width of a transistor"""
         return self.nmos_size + self.pmos_size
-        
+      
     def get_stage_effort(self, cout, inp_is_rise=True):
         """Returns an object representing the parameters for delay in tau units.
            Optional is_rise refers to the input direction rise/fall. Input inverted by this stage.
@@ -293,7 +284,7 @@ class pinv(pgate.pgate):
         parasitic_delay = 1 
         return logical_effort.logical_effort(self.name, 
                                              self.size, 
-                                             self.get_cin(), 
+                                             self.input_load(), 
                                              cout, 
                                              parasitic_delay, 
                                              not inp_is_rise)

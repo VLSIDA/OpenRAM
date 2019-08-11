@@ -13,7 +13,7 @@ import tech
 from delay_data import *
 from wire_spice_model import *
 from power_data import *
-
+import logical_effort
 
 class spice():
     """
@@ -304,14 +304,48 @@ class spice():
 
     def analytical_delay(self, corner, slew, load=0.0):
         """Inform users undefined delay module while building new modules"""
-        debug.warning("Design Class {0} delay function needs to be defined"
+        
+        # FIXME: Slew is not used in the model right now. Can be added heuristically as linear factor 
+        relative_cap = logical_effort.convert_farad_to_relative_c(load)
+        stage_effort = self.get_stage_effort(relative_cap)
+        
+        # If it fails, then keep running with a valid object.
+        if stage_effort == None:
+            return delay_data(0.0, 0.0)
+            
+        abs_delay = stage_effort.get_absolute_delay()
+        corner_delay = self.apply_corners_analytically(abs_delay, corner)
+        SLEW_APPROXIMATION = 0.1
+        corner_slew = SLEW_APPROXIMATION*corner_delay
+        return delay_data(corner_delay, corner_slew)
+
+    def get_stage_effort(self, corner, slew, load=0.0):
+        """Inform users undefined delay module while building new modules"""
+        debug.warning("Design Class {0} logical effort function needs to be defined"
                       .format(self.__class__.__name__))
         debug.warning("Class {0} name {1}"
                       .format(self.__class__.__name__, 
                               self.name))         
-        # return 0 to keep code running while building
-        return delay_data(0.0, 0.0)
-
+        return None   
+        
+    def get_cin(self):
+        """Returns input load in Femto-Farads. All values generated using
+           relative capacitance function then converted based on tech file parameter."""
+        
+        # Override this function within a module if a more accurate input capacitance is needed.
+        # Input/outputs with differing capacitances is not implemented.
+        relative_cap = self.input_load()
+        return logical_effort.convert_relative_c_to_farad(relative_cap)
+        
+    def input_load(self):
+        """Inform users undefined relative capacitance functions used for analytical delays."""
+        debug.warning("Design Class {0} input capacitance function needs to be defined"
+                      .format(self.__class__.__name__))
+        debug.warning("Class {0} name {1}"
+                      .format(self.__class__.__name__, 
+                              self.name))         
+        return 0   
+        
     def cal_delay_with_rc(self, corner, r, c ,slew, swing = 0.5):
         """ 
         Calculate the delay of a mosfet by 

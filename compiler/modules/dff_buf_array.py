@@ -193,11 +193,6 @@ class dff_buf_array(design.design):
                 self.add_via_center(layers=("metal2","via2","metal3"),
                                     offset=vector(clk_pin.cx(),clk_ypos))
                 
-        
-
-    def analytical_delay(self, corner, slew, load=0.0):
-        return self.dff.analytical_delay(slew=slew, load=load)
-
     def get_clk_cin(self):
         """Return the total capacitance (in relative units) that the clock is loaded by in the dff array"""
         dff_clk_cin = self.dff.get_clk_cin()

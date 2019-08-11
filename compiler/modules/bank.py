@@ -82,7 +82,7 @@ class bank(design.design):
         for port in self.read_ports:
             for bit in range(self.word_size):
                 self.add_pin("dout{0}_{1}".format(port,bit),"OUTPUT")
-        for port in self.read_ports:
+        for port in self.all_ports:
             self.add_pin(self.bitcell_array.get_rbl_bl_name(self.port_rbl_map[port]),"OUTPUT")
         for port in self.write_ports:
             for bit in range(self.word_size):
@@ -128,14 +128,13 @@ class bank(design.design):
     def route_rbl(self,port):
         """ Route the rbl_bl and rbl_wl """
         
-        if self.port_data[port].has_rbl():
-            bl_pin_name = self.bitcell_array.get_rbl_bl_name(self.port_rbl_map[port])
-            bl_pin = self.bitcell_array_inst.get_pin(bl_pin_name)
-            self.add_layout_pin(text="rbl_bl{0}".format(port),
-                                layer=bl_pin.layer,
-                                offset=bl_pin.ll(),
-                                height=bl_pin.height(),
-                                width=bl_pin.width())
+        bl_pin_name = self.bitcell_array.get_rbl_bl_name(self.port_rbl_map[port])
+        bl_pin = self.bitcell_array_inst.get_pin(bl_pin_name)
+        self.add_layout_pin(text="rbl_bl{0}".format(port),
+                            layer=bl_pin.layer,
+                            offset=bl_pin.ll(),
+                            height=bl_pin.height(),
+                            width=bl_pin.width())
             
             
             
@@ -202,10 +201,7 @@ class bank(design.design):
 
         # LOWER RIGHT QUADRANT
         # Below the bitcell array
-        if self.port_data[port].has_rbl():
-            self.port_data_offsets[port] = vector(self.main_bitcell_array_left - self.bitcell_array.cell.width,0)
-        else:
-            self.port_data_offsets[port] = vector(self.main_bitcell_array_left,0)
+        self.port_data_offsets[port] = vector(self.main_bitcell_array_left - self.bitcell_array.cell.width,0)
 
         # UPPER LEFT QUADRANT
         # To the left of the bitcell array
@@ -364,36 +360,15 @@ class bank(design.design):
         self.add_mod(self.port_address)
 
 
-        # The number of replica lines depends on the port configuration
-        rbl_counts = [self.read_ports.count(p) for p in self.all_ports]
-        self.num_rbl = sum(rbl_counts)
-            
-        # The replica array indices always start at 0, so this will map them to
-        # the correct SRAM port
-        # (e.g. if port 0 is w, then port 1 will use RBL 0 in replica bitcell array
-        # because write ports don't use an RBL)
-        self.port_rbl_map = {}
-        index = 0
-        for (i,num) in enumerate(rbl_counts):
-            if num>0:
-                self.port_rbl_map[i]=index
-                index += 1
-        if len(rbl_counts)<2:
-            rbl_counts.append(0)
-
-
-        # Which bitcell port should be used in the RBL
-        # For now (since only 2 ports), if port 0 is not a read port, skip it in the RBLs
-        bitcell_ports=list(range(len(self.read_ports)))
-        if 0 not in self.read_ports:
-            bitcell_ports = [x+1 for x in bitcell_ports]
+        self.port_rbl_map = self.all_ports
+        self.num_rbl = len(self.all_ports)
                 
         self.bitcell_array = factory.create(module_type="replica_bitcell_array",
                                             cols=self.num_cols,
                                             rows=self.num_rows,
-                                            left_rbl=rbl_counts[0],
-                                            right_rbl=rbl_counts[1],
-                                            bitcell_ports=bitcell_ports)
+                                            left_rbl=1,
+                                            right_rbl=1 if len(self.all_ports)>1 else 0,
+                                            bitcell_ports=self.all_ports)
         self.add_mod(self.bitcell_array)
 
         
@@ -421,8 +396,7 @@ class bank(design.design):
             for wordline in self.wl_names:
                     temp.append("{0}_{1}".format(wordline,row))
         for port in self.all_ports:
-            if self.port_data[port].has_rbl():
-                temp.append("wl_en{0}".format(port))
+            temp.append("wl_en{0}".format(port))
         temp.append("vdd")
         temp.append("gnd")
         self.connect_inst(temp)
@@ -442,11 +416,10 @@ class bank(design.design):
                                                     mod=self.port_data[port])
 
             temp = []
-            if self.port_data[port].has_rbl():
-                rbl_bl_name=self.bitcell_array.get_rbl_bl_name(self.port_rbl_map[port])
-                rbl_br_name=self.bitcell_array.get_rbl_br_name(self.port_rbl_map[port])
-                temp.append(rbl_bl_name)
-                temp.append(rbl_br_name)
+            rbl_bl_name=self.bitcell_array.get_rbl_bl_name(self.port_rbl_map[port])
+            rbl_br_name=self.bitcell_array.get_rbl_br_name(self.port_rbl_map[port])
+            temp.append(rbl_bl_name)
+            temp.append(rbl_br_name)
             for col in range(self.num_cols):            
                 temp.append("{0}_{1}".format(self.bl_names[port],col))
                 temp.append("{0}_{1}".format(self.br_names[port],col))
@@ -710,11 +683,10 @@ class bank(design.design):
                               inst1_bl_name=inst1_bl_name, inst1_br_name=inst1_br_name)
 
         # Connect the replica bitlines
-        if self.port_data[port].has_rbl():
-            rbl_bl_name=self.bitcell_array.get_rbl_bl_name(self.port_rbl_map[port])
-            rbl_br_name=self.bitcell_array.get_rbl_br_name(self.port_rbl_map[port])
-            self.connect_bitline(inst1, inst2, rbl_bl_name, "rbl_bl")
-            self.connect_bitline(inst1, inst2, rbl_br_name, "rbl_br")
+        rbl_bl_name=self.bitcell_array.get_rbl_bl_name(self.port_rbl_map[port])
+        rbl_br_name=self.bitcell_array.get_rbl_br_name(self.port_rbl_map[port])
+        self.connect_bitline(inst1, inst2, rbl_bl_name, "rbl_bl")
+        self.connect_bitline(inst1, inst2, rbl_br_name, "rbl_br")
         
         
         
@@ -943,9 +915,8 @@ class bank(design.design):
         connection = []
         connection.append((self.prefix+"p_en_bar{}".format(port), self.port_data_inst[port].get_pin("p_en_bar").lc()))
 
-        if port in self.read_ports:
-            rbl_wl_name = self.bitcell_array.get_rbl_wl_name(self.port_rbl_map[port])
-            connection.append((self.prefix+"wl_en{}".format(port), self.bitcell_array_inst.get_pin(rbl_wl_name).lc()))
+        rbl_wl_name = self.bitcell_array.get_rbl_wl_name(self.port_rbl_map[port])
+        connection.append((self.prefix+"wl_en{}".format(port), self.bitcell_array_inst.get_pin(rbl_wl_name).lc()))
             
         if port in self.write_ports:
             connection.append((self.prefix+"w_en{}".format(port), self.port_data_inst[port].get_pin("w_en").lc()))
@@ -974,40 +945,7 @@ class bank(design.design):
         self.add_wire(("metal1","via1","metal2"),[pin_pos, mid_pos, control_pos])
         self.add_via_center(layers=("metal1", "via1", "metal2"),
                             offset=control_pos)
-
-    def analytical_delay(self, corner, slew, load, port):
-        """ return  analytical delay of the bank. This will track the clock to output path"""
-        #FIXME: This delay is determined in the control logic. Should be moved here.
-        # word_driver_delay = self.wordline_driver.analytical_delay(corner, 
-                                                                  # slew, 
-                                                                  # self.bitcell_array.input_load())
-
-        #FIXME: Array delay is the same for every port.
-        word_driver_slew =  0
-        if self.words_per_row > 1:
-            bitline_ext_load = self.port_data[port].column_mux_array.get_drain_cin()
-        else:
-            bitline_ext_load = self.port_data[port].sense_amp_array.get_drain_cin()
-            
-        bitcell_array_delay = self.bitcell_array.analytical_delay(corner, word_driver_slew, bitline_ext_load)
-
-        bitcell_array_slew = 0
-        #This also essentially creates the same delay for each port. Good structure, no substance
-        if self.words_per_row > 1:
-            sa_load = self.port_data[port].sense_amp_array.get_drain_cin()
-            column_mux_delay = self.port_data[port].column_mux_array.analytical_delay(corner, 
-                                                                                            bitcell_array_slew,
-                                                                                            sa_load)
-        else:
-            column_mux_delay = []  
-            
-        column_mux_slew =  0    
-        sense_amp_delay = self.port_data[port].sense_amp_array.analytical_delay(corner, 
-                                                                                      column_mux_slew,
-                                                                                      load)
-        # output load of bitcell_array is set to be only small part of bl for sense amp.
-        return  bitcell_array_delay + column_mux_delay + sense_amp_delay
-    
+ 
     def determine_wordline_stage_efforts(self, external_cout, inp_is_rise=True):    
         """Get the all the stage efforts for each stage in the path within the bank clk_buf to a wordline"""
         #Decoder is assumed to have settled before the negative edge of the clock. Delay model relies on this assumption

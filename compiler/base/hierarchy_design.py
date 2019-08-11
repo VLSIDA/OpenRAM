@@ -110,7 +110,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         """Initializes parameters relevant to the graph creation"""
         #Only initializes a set for checking instances which should not be added
         self.graph_inst_exclude = set()
-            
+    
     def build_graph(self, graph, inst_name, port_nets):        
         """Recursively create graph from instances in module."""
         
@@ -219,7 +219,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         for inp in input_pins+inout_pins:
             for out in output_pins+inout_pins:
                 if inp != out: #do not add self loops
-                    graph.add_edge(pin_dict[inp], pin_dict[out])        
+                    graph.add_edge(pin_dict[inp], pin_dict[out], self)        
  
     def __str__(self):
         """ override print function output """

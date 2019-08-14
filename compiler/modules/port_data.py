@@ -545,7 +545,6 @@ class port_data(design.design):
             self.add_path("metal2", [wdriver_sel_out_pin.center(), wdriver_sel_in_pin.center()])
 
 
-
     def route_bitline_pins(self):
         """ Add the bitline pins for the given port """
 
@@ -582,9 +581,9 @@ class port_data(design.design):
         if self.write_driver_array_inst:
             if self.write_mask_and_array_inst:
                 for bit in range(self.num_wmasks):
-                    wdriver_en_pin = self.write_driver_array_inst.get_pin("en_{}".format(bit))
+                    self.copy_layout_pin(self.write_driver_array_inst, "en_{}".format(bit), "wdriver_sel_{}".format(bit))
 
-                    # self.copy_layout_pin(self.write_driver_array_inst, "en_{}".format(bit), "wdriver_sel_{}".format(bit))
+                    wdriver_en_pin = self.write_driver_array_inst.get_pin("en_{}".format(bit))
                     self.add_via_center(layers=("metal1", "via1", "metal2"),
                                         offset=wdriver_en_pin.center())
                     self.add_layout_pin_rect_center(text="wdriver_sel_{0}".format(bit),
@@ -594,6 +593,7 @@ class port_data(design.design):
                 self.copy_layout_pin(self.write_driver_array_inst, "en", "w_en")
         if self.write_mask_and_array_inst:
             self.copy_layout_pin(self.write_mask_and_array_inst, "en", "w_en")
+
             
         
     def channel_route_bitlines(self, inst1, inst2, num_bits,

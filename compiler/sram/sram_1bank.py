@@ -125,11 +125,13 @@ class sram_1bank(sram_base):
                                     -max_gap_size - self.data_dff_insts[port].height)
             self.data_dff_insts[port].place(data_pos[port])
 
-        # Add the write mask flops to the left of the din flops.
+        # Add the write mask flops below the din flops.
         if self.write_size is not None:
             if port in self.write_ports:
-                wmask_pos[port] = vector(self.bank.bank_array_ll.x - self.control_logic_insts[port].width,
-                                    -max_gap_size - self.wmask_dff_insts[port].height)
+                wmask_pos[port] = vector(self.bank.bank_array_ll.x,
+                                         -max_gap_size - self.wmask_dff_insts[port].height)
+                # wmask_pos[port] = vector(self.bank.bank_array_ll.x - self.control_logic_insts[port].width,
+                #                     -max_gap_size - self.wmask_dff_insts[port].height)
                 self.wmask_dff_insts[port].place(wmask_pos[port])
 
 

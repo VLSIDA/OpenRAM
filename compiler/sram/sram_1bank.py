@@ -259,7 +259,8 @@ class sram_1bank(sram_base):
             self.route_col_addr_dff()
         
         self.route_data_dff()
-        self.route_wmask_dff()
+        if self.write_size is not None:
+            self.route_wmask_dff()
 
     def route_clk(self):
         """ Route the clock network """

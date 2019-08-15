@@ -51,7 +51,6 @@ class write_mask_and_array(design.design):
 
         self.place_and2_array()
         self.add_layout_pins()
-        # self.route_enable()
         self.add_boundary()
         self.DRC_LVS()
 
@@ -121,12 +120,13 @@ class write_mask_and_array(design.design):
                                 offset=en_pin.center())
             self.add_via_center(layers=("metal2", "via2", "metal3"),
                                 offset=en_pin.center())
+
             if i < self.num_wmasks-1:
                 self.add_layout_pin(text="en",
                                     layer="metal3",
-                                    offset=en_pin.ll(),
-                                    width = self.en_width(i),
-                                    height = en_pin.height())
+                                        offset=en_pin.bc(),
+                                        width = self.en_width(i),
+                                        height = drc('minwidth_metal3'))
 
             wmask_out_pin = self.and2_insts[i].get_pin("Z")
             self.add_layout_pin(text="wmask_out_{0}".format(i),
@@ -152,17 +152,10 @@ class write_mask_and_array(design.design):
     def en_width(self, pin):
         en_pin = self.and2_insts[pin].get_pin("B")
         next_en_pin = self.and2_insts[pin+1].get_pin("B")
-        width = next_en_pin.lr() - en_pin.ll()
+        width = next_en_pin.center() - en_pin.center()
+        # Return x coordinates only
         return width[0]
 
-
-    # def route_enable(self):
-    #     for i in range(self.num_wmasks-1):
-    #         en_pin = self.and2_insts[i].get_pin("B")
-    #         next_en_pin = self.and2_insts[i+1].get_pin("B")
-    #         offset = en_pin.center()
-    #         next_offset = next_en_pin.center()
-    #         self.add_path("metal3", [offset, next_offset])
 
     def get_cin(self):
         """Get the relative capacitance of all the input connections in the bank"""

@@ -124,8 +124,8 @@ class port_data(design.design):
         
         if self.port in self.readwrite_ports:
             # (write_mask_and ->) write_driver -> sense_amp -> (column_mux ->) precharge -> bitcell_array
-            self.route_write_mask_and(self.port)
-            self.route_write_mask_and_to_write_driver(self.port)
+            self.route_write_mask_and_array_in(self.port)
+            self.route_write_mask_and_array_to_write_driver(self.port)
             self.route_write_driver_in(self.port)    
             self.route_sense_amp_out(self.port)
             self.route_write_driver_to_sense_amp(self.port)
@@ -138,10 +138,9 @@ class port_data(design.design):
             self.route_column_mux_to_precharge_array(self.port)
         else:
             # (write_mask_and ->) write_driver -> (column_mux ->) precharge -> bitcell_array
-            self.route_write_mask_and(self.port)
-            self.route_write_mask_and_to_write_driver(self.port)
+            self.route_write_mask_and_array_in(self.port)
+            self.route_write_mask_and_array_to_write_driver(self.port)
             self.route_write_driver_in(self.port)
-            self.route_write_mask_and_to_write_driver(self.port)
             self.route_write_driver_to_column_mux_or_precharge_array(self.port)
             self.route_column_mux_to_precharge_array(self.port)            
         
@@ -432,31 +431,44 @@ class port_data(design.design):
             self.copy_layout_pin(self.write_driver_array_inst, data_name, din_name)
 
 
-    def route_write_mask_and(self, port):
-        """ Add pins for the write mask and array output """
-
-        # for bit in range(self.num_wmasks):
-        #     wmask_out_name = "wmask_out_{}".format(bit)
-        #     wdriver_sel_name = "wdriver_sel_{}".format(bit)
-        #     self.copy_layout_pin(self.write_mask_and_array_inst, wmask_out_name, wdriver_sel_name)
+    def route_write_mask_and_array_in(self, port):
+        """ Add pins for the write mask and array input """
 
         for bit in range(self.num_wmasks):
             wmask_in_name = "wmask_in_{}".format(bit)
             bank_wmask_name = "bank_wmask_{}".format(bit)
             self.copy_layout_pin(self.write_mask_and_array_inst, wmask_in_name, bank_wmask_name)
 
+
+    def route_write_mask_and_array_to_write_driver(self,port):
+        """ Routing of wdriver_sel_{} between write mask AND array and write driver array. Adds layout pin for write
+            mask AND array output and via for write driver enable """
+
+        inst1 = self.write_mask_and_array_inst
+        inst2 = self.write_driver_array_inst
+
         for bit in range(self.num_wmasks):
-            wdriver_sel_pin = self.write_mask_and_array_inst.get_pin("wmask_out_{}".format(bit))
-            # self.add_layout_pin_rect_center(text="wdriver_sel_{0}".format(bit),
-            #                                 layer=wdriver_sel_pin.layer,
-            #                                 offset=wdriver_sel_pin.center(),
-            #                                 height=wdriver_sel_pin.height(),
-            #                                 width=wdriver_sel_pin.width())
+            # Bring write mask AND array output pin to port data level
+            self.copy_layout_pin(inst1,"wmask_out_{0}".format(bit), "wdriver_sel_{0}".format(bit))
+
+            # Add via for the write driver enable input in write driver
+            wmask_out_pin = inst1.get_pin("wmask_out_{0}".format(bit))
+            wdriver_en_pin = inst2.get_pin("en_{0}".format(bit))
+            center_x = wmask_out_pin.cx()
+            center_y = wdriver_en_pin.cy()
+            end_en_pin = vector(wdriver_en_pin.rx(),wmask_out_pin.ly()g)
+            center_wmask = vector(center_x, center_y)
             self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=wdriver_sel_pin.center())
+                                offset=wdriver_en_pin.rc())
             self.add_layout_pin_rect_center(text="wdriver_sel_{0}".format(bit),
                                             layer="metal2",
-                                            offset=wdriver_sel_pin.center())
+                                            offset=wdriver_en_pin.rc())
+
+            # Route between write mask AND array and write driver array
+            self.add_path("metal1",[ wmask_out_pin.center(), end_en_pin])
+            self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                offset=end_en_pin)
+            self.add_path("metal2", [end_en_pin, wdriver_en_pin.rc()])
 
 
     def route_column_mux_to_precharge_array(self, port):
@@ -525,24 +537,13 @@ class port_data(design.design):
 
     def route_write_driver_to_sense_amp(self, port):
         """ Routing of BL and BR between write driver and sense amp """
-        
+
         inst1 = self.write_driver_array_inst
         inst2 = self.sense_amp_array_inst
 
         # These should be pitch matched in the cell library,
         # but just in case, do a channel route.
         self.channel_route_bitlines(inst1=inst1, inst2=inst2, num_bits=self.word_size)
-
-
-    def route_write_mask_and_to_write_driver(self,port):
-        """ Routing of wdriver_sel_{} between write mask AND array and write driver array """
-        inst1 = self.write_mask_and_array_inst
-        inst2 = self.write_driver_array_inst
-
-        for bit in range(self.num_wmasks):
-            wdriver_sel_out_pin = inst1.get_pin("wmask_out_{}".format(bit))
-            wdriver_sel_in_pin = inst2.get_pin("en_{}".format(bit))
-            self.add_path("metal2", [wdriver_sel_out_pin.center(), wdriver_sel_in_pin.center()])
 
 
     def route_bitline_pins(self):
@@ -581,14 +582,8 @@ class port_data(design.design):
         if self.write_driver_array_inst:
             if self.write_mask_and_array_inst:
                 for bit in range(self.num_wmasks):
+                    # Add write driver's en_{} pins
                     self.copy_layout_pin(self.write_driver_array_inst, "en_{}".format(bit), "wdriver_sel_{}".format(bit))
-
-                    wdriver_en_pin = self.write_driver_array_inst.get_pin("en_{}".format(bit))
-                    self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                        offset=wdriver_en_pin.center())
-                    self.add_layout_pin_rect_center(text="wdriver_sel_{0}".format(bit),
-                                                    layer="metal2",
-                                                    offset=wdriver_en_pin.center())
             else:
                 self.copy_layout_pin(self.write_driver_array_inst, "en", "w_en")
         if self.write_mask_and_array_inst:

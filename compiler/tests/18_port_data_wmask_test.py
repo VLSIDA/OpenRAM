@@ -21,7 +21,7 @@ class port_data_test(openram_test):
         globals.init_openram("config_{0}".format(OPTS.tech_name))
         from sram_config import sram_config
 
-        c = sram_config(word_size=8,
+        c = sram_config(word_size=16,
                         write_size=4,
                         num_words=16)
 

@@ -447,7 +447,7 @@ class port_data(design.design):
         inst1 = self.write_mask_and_array_inst
         inst2 = self.write_driver_array_inst
 
-        i = 0
+        loc = 0
         for bit in range(self.num_wmasks):
             # Bring write mask AND array output pin to port data level
             self.copy_layout_pin(inst1, "wmask_out_{0}".format(bit), "wdriver_sel_{0}".format(bit))
@@ -459,13 +459,13 @@ class port_data(design.design):
             # the wdriver_sel_{} pin in the write driver AND array.
             spacing = 2*drc("metal2_to_metal2")
             if bit == 0:
-                while (wmask_out_pin.lx() > inst2.get_pin("data_{0}".format(i)).rx()):
-                    i += 1
-                length = inst2.get_pin("data_{0}".format(i)).rx() + spacing
+                while (wmask_out_pin.lx() > inst2.get_pin("data_{0}".format(loc)).rx()):
+                    loc += 1
+                length = inst2.get_pin("data_{0}".format(loc)).rx() + spacing
 
             else:
-                i = i + ( bit*self.write_size )
-                length =  inst2.get_pin("data_{0}".format(i)).rx() + spacing
+                next_loc = loc + ( bit*self.write_size )
+                length =  inst2.get_pin("data_{0}".format(next_loc)).rx() + spacing
 
             beg_pos = wmask_out_pin.center()
             middle_pos = vector(length,wmask_out_pin.cy())

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+1#!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
 # Copyright (c) 2016-2019 Regents of the University of California
@@ -70,7 +70,7 @@ class port_data_test(openram_test):
         self.local_check(a)
         a = factory.create("port_data", sram_config=c, port=1)
         self.local_check(a)
-
+        #
         c.num_words = 32
         c.words_per_row = 2
         factory.reset()
@@ -91,7 +91,7 @@ class port_data_test(openram_test):
         a = factory.create("port_data", sram_config=c, port=1)
         self.local_check(a)
 
-        c.word_size = 2
+        c.word_size = 8
         c.num_words = 128
         c.words_per_row = 8
         factory.reset()

@@ -438,6 +438,7 @@ class port_data(design.design):
             wmask_in_name = "wmask_in_{}".format(bit)
             bank_wmask_name = "bank_wmask_{}".format(bit)
             self.copy_layout_pin(self.write_mask_and_array_inst, wmask_in_name, bank_wmask_name)
+        # self.copy_layout_pin(self.write_mask_and_array_inst,"wmask_out_{0}".format(bit), "wdriver_sel_{0}".format(bit))
 
 
     def route_write_mask_and_array_to_write_driver(self,port):
@@ -447,28 +448,83 @@ class port_data(design.design):
         inst1 = self.write_mask_and_array_inst
         inst2 = self.write_driver_array_inst
 
+        # get length of a single driver enable
+        driver = factory.create(module_type="write_driver")
+        bitcell = factory.create(module_type="bitcell")
+        if bitcell.width > driver.width:
+            driver_spacing = bitcell.width
+        else:
+            driver_spacing = driver.width
+
         for bit in range(self.num_wmasks):
             # Bring write mask AND array output pin to port data level
-            self.copy_layout_pin(inst1,"wmask_out_{0}".format(bit), "wdriver_sel_{0}".format(bit))
+            self.copy_layout_pin(inst1, "wmask_out_{0}".format(bit), "wdriver_sel_{0}".format(bit))
 
-            # Add via for the write driver enable input in write driver
             wmask_out_pin = inst1.get_pin("wmask_out_{0}".format(bit))
             wdriver_en_pin = inst2.get_pin("en_{0}".format(bit))
-            center_x = wmask_out_pin.cx()
-            center_y = wdriver_en_pin.cy()
-            end_en_pin = vector(wdriver_en_pin.rx(),wmask_out_pin.ly()g)
-            center_wmask = vector(center_x, center_y)
+
+
+            bitline_pin = inst2.get_pin("data_{}".format(bit))
+            half_width = bitline_pin.width() / 2
+
+
+            width = driver.width
+            spacing = 2*drc("metal2_to_metal2")
+            middle_of_driver = driver.width/2
+            len_no_drc = middle_of_driver + spacing + half_width
+
+            if self.words_per_row == 1:
+                length = 3*width + len_no_drc + (bit*driver.width*self.write_size)
+            else:
+                length = 3*width + self.words_per_row*driver_spacing + len_no_drc + (bit*self.words_per_row*driver_spacing*driver.width*self.write_size)
+            # while (wdriver_en_pin.lx() > length):
+            #     length += driver.width
+
+            offset = vector(length, wdriver_en_pin.cy())
+            end_en_pin = vector(length,wmask_out_pin.cy())
+
+            # Add via for the write driver array's enable input
             self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=wdriver_en_pin.rc())
+                                offset=offset)
             self.add_layout_pin_rect_center(text="wdriver_sel_{0}".format(bit),
                                             layer="metal2",
-                                            offset=wdriver_en_pin.rc())
-
+                                            offset=offset)
             # Route between write mask AND array and write driver array
             self.add_path("metal1",[ wmask_out_pin.center(), end_en_pin])
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=end_en_pin)
-            self.add_path("metal2", [end_en_pin, wdriver_en_pin.rc()])
+            self.add_path("metal2", [end_en_pin, offset])
+
+
+
+            # # get length of a single driver enable
+            # self.driver = factory.create(module_type="write_driver")
+            # driver_en = self.driver.get_pin("en")
+            # len = 2*driver_en.width() + bit*driver_en.width()
+            #
+            #
+            # print(len)
+            # while (wdriver_en_pin.lx() > len):
+            #     len += 2*driver_en.width()
+            #     print("here")
+            # len += 2*driver_en.width()
+            # end_en_pin = vector(len,wmask_out_pin.by())
+            #
+            # offset = vector(len, wdriver_en_pin.cy())
+
+
+            # spacing = drc("metal2_to_metal2")
+            # center_x = wmask_out_pin.cy()
+            # center_y = wdriver_en_pin.cx()
+            # end_en_pin = vector(wdriver_en_pin.rx(),wmask_out_pin.by())
+            #
+            # center_wmask = vector(center_x, center_y)
+            #
+            # self.add_path("metal2", [wmask_out_pin.center(), wdriver_en_pin.rc()])
+            #
+            # self.add_path("metal2", [wmask_out_pin.center(), wdriver_en_pin.center()])
+
+            # #
 
 
     def route_column_mux_to_precharge_array(self, port):

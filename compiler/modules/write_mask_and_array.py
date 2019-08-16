@@ -124,9 +124,9 @@ class write_mask_and_array(design.design):
             if i < self.num_wmasks-1:
                 self.add_layout_pin(text="en",
                                     layer="metal3",
-                                        offset=en_pin.bc(),
-                                        width = self.en_width(i),
-                                        height = drc('minwidth_metal3'))
+                                    offset=en_pin.bc(),
+                                    width = self.en_width(i),
+                                    height = drc('minwidth_metal3'))
 
             wmask_out_pin = self.and2_insts[i].get_pin("Z")
             self.add_layout_pin(text="wmask_out_{0}".format(i),

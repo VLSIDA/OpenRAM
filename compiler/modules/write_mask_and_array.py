@@ -64,7 +64,9 @@ class write_mask_and_array(design.design):
         self.add_pin("gnd","GROUND")
 
     def add_modules(self):
-        self.and2 = factory.create(module_type="pand2")
+        # Size the AND gate for the number of write drivers it drives, which is equal to the write size.
+        self.and2 = factory.create(module_type="pand2",
+                                   size=self.write_size)
         self.add_mod(self.and2)
 
 

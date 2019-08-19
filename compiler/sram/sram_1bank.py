@@ -94,7 +94,7 @@ class sram_1bank(sram_base):
         if self.write_size is not None:
             if port in self.write_ports:
                 wmask_pos[port] = vector(self.bank.bank_array_ll.x,
-                                        - 2*max_gap_size - 2*self.dff.height)
+                                        - 1.5*max_gap_size - 2*self.dff.height)
                 self.wmask_dff_insts[port].place(wmask_pos[port])
             else:
                wmask_pos[port] = vector(self.bank.bank_array_ll.x, 0)
@@ -135,15 +135,6 @@ class sram_1bank(sram_base):
                                     -max_gap_size - self.data_dff_insts[port].height)
             self.data_dff_insts[port].place(data_pos[port])
 
-        # # Add the write mask flops below the din flops.
-        # if self.write_size is not None:
-        #     if port in self.write_ports:
-        #         wmask_pos[port] = vector(self.bank.bank_array_ll.x,
-        #                                  -max_gap_size - self.wmask_dff_insts[port].height)
-        #         # wmask_pos[port] = vector(self.bank.bank_array_ll.x - self.control_logic_insts[port].width,
-        #         #                     -max_gap_size - self.wmask_dff_insts[port].height)
-        #         self.wmask_dff_insts[port].place(wmask_pos[port])
-
 
         if len(self.all_ports)>1:
             # Port 1
@@ -163,7 +154,7 @@ class sram_1bank(sram_base):
             if self.write_size is not None:
                 if port in self.write_ports:
                     wmask_pos[port] = vector(self.bank.bank_array_ur.x - self.data_dff_insts[port].width,
-                                             self.bank.height + 2*max_gap_size + 2*self.dff.height)
+                                             self.bank.height + 1.5*max_gap_size + 2*self.dff.height)
                     self.wmask_dff_insts[port].place(wmask_pos[port], mirror="MX")
 
             # Add the write mask flops to the left of the din flops.
@@ -207,14 +198,6 @@ class sram_1bank(sram_base):
                 data_pos[port] = vector(self.bank.bank_array_ur.x - self.data_dff_insts[port].width,
                                         self.bank.height + max_gap_size + self.dff.height)
                 self.data_dff_insts[port].place(data_pos[port], mirror="MX")
-
-            # # Add the write mask flops to the left of the din flops.
-            # if self.write_size is not None:
-            #     if port in self.write_ports:
-            #         wmask_pos[port] = vector(self.bank.bank_array_ur.x - self.data_dff_insts[port].width,
-            #                                 self.bank.height + max_gap_size + self.data_dff_insts[port].height)
-            #         self.wmask_dff_insts[port].place(wmask_pos[port], mirror="MX")
-            #
 
     def add_layout_pins(self):
         """
@@ -412,11 +395,25 @@ class sram_1bank(sram_base):
             dff_names = ["dout_{}".format(x) for x in range(self.num_wmasks)]
             dff_pins = [self.wmask_dff_insts[port].get_pin(x) for x in dff_names]
 
+            for x in dff_names:
+                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                    offset=self.wmask_dff_insts[port].get_pin(x).center())
+                self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                    offset=self.wmask_dff_insts[port].get_pin(x).center())
+
             bank_names = ["bank_wmask{0}_{1}".format(port, x) for x in range(self.num_wmasks)]
             bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
 
+            for x in bank_names:
+                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                    offset=self.bank_inst.get_pin(x).center())
+                self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                    offset=self.bank_inst.get_pin(x).center())
+
             route_map = list(zip(bank_pins, dff_pins))
-            self.create_horizontal_channel_route(route_map, offset)
+            self.create_horizontal_channel_route(netlist=route_map,
+                                                 offset=offset,
+                                                 layer_stack=("metal3", "via3", "metal4"))
             
 
     def add_lvs_correspondence_points(self):

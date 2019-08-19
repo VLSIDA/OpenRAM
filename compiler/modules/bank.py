@@ -700,15 +700,6 @@ class bank(design.design):
                                             offset=data_pin.center(),
                                             height=data_pin.height(),
                                             width=data_pin.width())
-        #
-        # if self.word_size is not None:
-        #     for bit in range(self.num_wmasks):
-        #         wmask_pin = self.port_data_inst[port].get_pin("bank_wmask_{0}".format(bit))
-        #         self.add_layout_pin_rect_center(text="bank_wmask{0}_{1}".format(port, bit),
-        #                                         layer=wmask_pin.layer,
-        #                                         offset=wmask_pin.center(),
-        #                                         height=wmask_pin.height(),
-        #                                         width=wmask_pin.width())
                 
 
     def route_port_address_in(self, port):

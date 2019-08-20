@@ -44,12 +44,10 @@ class write_mask_and_array(design.design):
 
 
     def create_layout(self):
-
-        self.width = self.num_wmasks * self.and2.width
-
-        self.height = self.and2.height
-
         self.place_and2_array()
+        spacing = self.wmask_en_len - self.and2.width
+        self.width = (self.num_wmasks*self.and2.width) + ((self.num_wmasks-1)*spacing)
+        self.height = self.and2.height
         self.add_layout_pins()
         self.add_boundary()
         self.DRC_LVS()
@@ -102,6 +100,7 @@ class write_mask_and_array(design.design):
             wmask_en_len = self.words_per_row * (self.write_size * self.driver_spacing)
             if wmask_en_len < self.and2.width:
                 debug.error("Cannot layout write mask AND array. One pand2 is longer than the corresponding write drivers.")
+        self.wmask_en_len = wmask_en_len
 
         for i in range(self.num_wmasks):
             base = vector(i * wmask_en_len, 0)
@@ -109,6 +108,8 @@ class write_mask_and_array(design.design):
 
 
     def add_layout_pins(self):
+        self.nand2 = factory.create(module_type="pnand2")
+        supply_pin=self.nand2.get_pin("vdd")
         for i in range(self.num_wmasks):
             wmask_in_pin = self.and2_insts[i].get_pin("A")
             self.add_layout_pin(text="wmask_in_{0}".format(i),
@@ -118,8 +119,10 @@ class write_mask_and_array(design.design):
                                 height=wmask_in_pin.height())
 
             en_pin = self.and2_insts[i].get_pin("B")
+            # Add the M1->M2 stack
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=en_pin.center())
+            # Add the M2->M3 stack
             self.add_via_center(layers=("metal2", "via2", "metal3"),
                                 offset=en_pin.center())
 
@@ -137,19 +140,22 @@ class write_mask_and_array(design.design):
                                 width=wmask_out_pin.width(),
                                 height=wmask_out_pin.height())
 
-            for n in ["vdd", "gnd"]:
-                pin_list = self.and2_insts[i].get_pins(n)
-                for pin in pin_list:
-                    pin_pos = pin.center()
-                    # Add the M1->M2 stack
-                    self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                        offset=pin_pos)
-                    # Add the M2->M3 stack
-                    self.add_via_center(layers=("metal2", "via2", "metal3"),
-                                        offset=pin_pos)
-                    self.add_layout_pin_rect_center(text=n,
-                                                    layer="metal3",
-                                                    offset=pin_pos)
+
+            self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                offset=vector(supply_pin.width()+i*self.wmask_en_len,0))
+            self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                offset=vector(supply_pin.width()+i*self.wmask_en_len,0))
+            self.add_layout_pin_rect_center(text="gnd",
+                                            layer="metal3",
+                                            offset=vector(supply_pin.width()+i*self.wmask_en_len,0))
+
+            self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                offset=vector(supply_pin.width()+i*self.wmask_en_len, self.height))
+            self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                offset=vector(supply_pin.width()+i*self.wmask_en_len, self.height))
+            self.add_layout_pin_rect_center(text="vdd",
+                                            layer="metal3",
+                                            offset=vector(supply_pin.width()+i*self.wmask_en_len, self.height))
 
     def en_width(self, pin):
         en_pin = self.and2_insts[pin].get_pin("B")

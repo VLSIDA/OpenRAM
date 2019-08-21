@@ -457,16 +457,17 @@ class port_data(design.design):
 
             # The metal2 wdriver_sel_{} wire must hit the en_{} pin after the closest bitline pin that's right of the
             # the wdriver_sel_{} pin in the write driver AND array.
-            spacing = 2*drc("metal2_to_metal2")
             if bit == 0:
                 # When the write mask output pin is right of the bitline, the target is found
-                while (wmask_out_pin.lx() > inst2.get_pin("data_{0}".format(loc)).rx()):
+                while (wmask_out_pin.lx() + self.m2_pitch > inst2.get_pin("data_{0}".format(loc)).rx()):
                     loc += 1
-                length = inst2.get_pin("data_{0}".format(loc)).rx() + spacing
-
+                length = inst2.get_pin("data_{0}".format(loc)).rx() + self.m2_pitch
+                debug.check(loc<=self.num_wmasks,"Couldn't route the write mask select.")
             else:
-                next_loc = loc + (bit * self.write_size)
-                length =  inst2.get_pin("data_{0}".format(next_loc)).rx() + spacing
+                # Stride by the write size rather than finding the next pin to the right
+                loc += self.write_size
+                length =  inst2.get_pin("data_{0}".format(loc)).rx() + self.m2_pitch
+
 
             beg_pos = wmask_out_pin.center()
             middle_pos = vector(length,wmask_out_pin.cy())
@@ -475,15 +476,9 @@ class port_data(design.design):
             # Add via for the write driver array's enable input
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=end_pos)
-            self.add_layout_pin_rect_center(text="wdriver_sel_{0}".format(bit),
-                                            layer="metal2",
-                                            offset=end_pos)
 
             # Route between write mask AND array and write driver array
-            self.add_path("metal1",[beg_pos, middle_pos])
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=middle_pos)
-            self.add_path("metal2", [middle_pos, end_pos])
+            self.add_wire(("metal1","via1","metal2"), [beg_pos, middle_pos, end_pos])
 
 
     def route_column_mux_to_precharge_array(self, port):

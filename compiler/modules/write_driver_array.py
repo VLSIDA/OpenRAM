@@ -152,11 +152,10 @@ class write_driver_array(design.design):
             for bit in range(self.num_wmasks):
                 en_pin = self.driver_insts[bit*self.write_size].get_pin("en")
                 # Determine width of wmask modified en_pin with/without col mux
+                wmask_en_len = self.words_per_row*(self.write_size * self.driver_spacing)
                 if (self.words_per_row == 1):
-                    wmask_en_len = (self.write_size * self.driver_spacing)
                     en_gap = self.driver_spacing - en_pin.width()
                 else:
-                    wmask_en_len = self.words_per_row*(self.write_size * self.driver_spacing)
                     en_gap = self.driver_spacing
 
                 self.add_layout_pin(text="en_{0}".format(bit),
@@ -168,8 +167,8 @@ class write_driver_array(design.design):
             self.add_layout_pin(text="en",
                                 layer="metal1",
                                 offset=self.driver_insts[0].get_pin("en").ll().scale(0,1),
-                                width=self.width,
-                                height=drc('minwidth_metal1'))
+                                width=self.width)
+
 
                        
 

@@ -365,7 +365,8 @@ class sram_1bank(sram_base):
                 for x in dff_names:
                     pin_offset = self.data_dff_insts[port].get_pin(x).center()
                     self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                        offset=pin_offset)
+                                        offset=pin_offset,
+                                        directions = ("V", "V"))
                     self.add_via_center(layers=("metal2", "via2", "metal3"),
                                         offset=pin_offset)
                     self.add_via_center(layers=("metal3", "via3", "metal4"),
@@ -377,8 +378,7 @@ class sram_1bank(sram_base):
                 for x in bank_names:
                     pin_offset = self.bank_inst.get_pin(x).bc()
                     self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                        offset=pin_offset,
-                                        directions=("V","V"))
+                                        offset=pin_offset)
                     self.add_via_center(layers=("metal2", "via2", "metal3"),
                                         offset=pin_offset)
                     self.add_via_center(layers=("metal3", "via3", "metal4"),
@@ -406,7 +406,8 @@ class sram_1bank(sram_base):
             for x in dff_names:
                 offset_pin = self.wmask_dff_insts[port].get_pin(x).center()
                 self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                    offset=offset_pin)
+                                    offset=offset_pin,
+                                    directions=("V", "V"))
 
             bank_names = ["bank_wmask{0}_{1}".format(port, x) for x in range(self.num_wmasks)]
             bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
@@ -414,7 +415,7 @@ class sram_1bank(sram_base):
                 offset_pin = self.bank_inst.get_pin(x).center()
                 self.add_via_center(layers=("metal1", "via1", "metal2"),
                                     offset=offset_pin)
-            
+
 
             route_map = list(zip(bank_pins, dff_pins))
             self.create_horizontal_channel_route(route_map,offset)

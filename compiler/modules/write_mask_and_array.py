@@ -63,8 +63,9 @@ class write_mask_and_array(design.design):
 
     def add_modules(self):
         # Size the AND gate for the number of write drivers it drives, which is equal to the write size.
+        # Assume stage effort of 3 to compute the size
         self.and2 = factory.create(module_type="pand2",
-                                   size=self.write_size)
+                                   size=self.write_size/4.0)
         self.add_mod(self.and2)
 
 
@@ -92,18 +93,12 @@ class write_mask_and_array(design.design):
         else:
             self.driver_spacing = self.driver.width
 
-        if (self.words_per_row == 1):
-            wmask_en_len = (self.write_size * self.driver_spacing)
-            if self.driver_spacing * self.write_size < self.and2.width:
-                debug.error("Cannot layout write mask AND array. One pand2 is longer than the corresponding write drivers.")
-        else:
-            wmask_en_len = self.words_per_row * (self.write_size * self.driver_spacing)
-            if wmask_en_len < self.and2.width:
-                debug.error("Cannot layout write mask AND array. One pand2 is longer than the corresponding write drivers.")
-        self.wmask_en_len = wmask_en_len
+        self.wmask_en_len = self.words_per_row * (self.write_size * self.driver_spacing)
+        debug.check(self.wmask_en_len >= self.and2.width,
+                    "Write mask AND is wider than the corresponding write drivers {0} vs {1}.".format(self.and2.width,self.wmask_en_len))
 
         for i in range(self.num_wmasks):
-            base = vector(i * wmask_en_len, 0)
+            base = vector(i * self.wmask_en_len, 0)
             self.and2_insts[i].place(base)
 
 
@@ -140,19 +135,8 @@ class write_mask_and_array(design.design):
                                 width=wmask_out_pin.width(),
                                 height=wmask_out_pin.height())
 
-            for n in ["vdd", "gnd"]:
-                pin_list = self.and2_insts[i].get_pins(n)
-                for pin in pin_list:
-                    pin_pos = vector(pin.lx()-0.75*drc('minwidth_metal1'), pin.cy())
-                    # Add the M1->M2 stack
-                    self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                        offset=pin_pos)
-                    # Add the M2->M3 stack
-                    self.add_via_center(layers=("metal2", "via2", "metal3"),
-                                        offset=pin_pos)
-                    self.add_layout_pin_rect_center(text=n,
-                                                    layer="metal3",
-                                                    offset=pin_pos)
+            self.add_power_pin("gnd", vector(supply_pin.width()+i*self.wmask_en_len,0))
+            self.add_power_pin("vdd", vector(supply_pin.width()+i*self.wmask_en_len,self.height))
 
 
     def en_width(self, pin):

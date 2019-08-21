@@ -45,7 +45,7 @@ class pdriver(pgate.pgate):
             self.num_stages = len(self.size_list)
         else:
             # Find the optimal number of stages for the given effort
-            self.num_stages = max(1,int(round(log(self.fanout)/log(self.stage_effort))))
+            self.num_stages = max(1,int(round(self.fanout**(1/self.stage_effort))))
 
             # Increase the number of stages if we need to fix polarity
             if self.neg_polarity and (self.num_stages%2==0):

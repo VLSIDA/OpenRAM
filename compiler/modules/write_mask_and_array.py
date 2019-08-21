@@ -135,22 +135,20 @@ class write_mask_and_array(design.design):
                                 width=wmask_out_pin.width(),
                                 height=wmask_out_pin.height())
 
+            for n in ["vdd", "gnd"]:
+                pin_list = self.and2_insts[i].get_pins(n)
+                for pin in pin_list:
+                    pin_pos = pin.lc()
+                    # Add the M1->M2 stack
+                    self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                        offset=pin_pos)
+                    # Add the M2->M3 stack
+                    self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                        offset=pin_pos)
+                    self.add_layout_pin_rect_center(text=n,
+                                                    layer="metal3",
+                                                    offset=pin_pos)
 
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=vector(supply_pin.width()+i*self.wmask_en_len,0))
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
-                                offset=vector(supply_pin.width()+i*self.wmask_en_len,0))
-            self.add_layout_pin_rect_center(text="gnd",
-                                            layer="metal3",
-                                            offset=vector(supply_pin.width()+i*self.wmask_en_len,0))
-
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=vector(supply_pin.width()+i*self.wmask_en_len, self.height))
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
-                                offset=vector(supply_pin.width()+i*self.wmask_en_len, self.height))
-            self.add_layout_pin_rect_center(text="vdd",
-                                            layer="metal3",
-                                            offset=vector(supply_pin.width()+i*self.wmask_en_len, self.height))
 
     def en_width(self, pin):
         en_pin = self.and2_insts[pin].get_pin("B")

@@ -138,10 +138,9 @@ class write_mask_and_array(design.design):
                                 width=wmask_out_pin.width(),
                                 height=wmask_out_pin.height())
 
-            self.add_power_pin("gnd", vector((supply_pin.lx() - 0.75*drc('minwidth_metal1'))+i*self.wmask_en_len,
-                                                    0))
-            self.add_power_pin("vdd", vector((supply_pin.lx() - 0.75*drc('minwidth_metal1'))+i*self.wmask_en_len,
-                                                    self.height))
+            self.add_power_pin("gnd", vector(supply_pin.width() + i * self.wmask_en_len, 0))
+            self.add_power_pin("vdd", vector(supply_pin.width() + i * self.wmask_en_len, self.height))
+
             if i < self.num_wmasks-1:
                 for n in ["gnd","vdd"]:
                     pin = self.and2_insts[i].get_pin(n)

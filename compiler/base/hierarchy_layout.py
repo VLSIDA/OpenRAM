@@ -680,7 +680,19 @@ class layout():
                 self.add_via_center(layers=layer_stack,
                                     offset=bus_pos,
                                     rotate=90)
-
+    def get_layer_pitch(self, layer):
+        """ Return the track pitch on a given layer """
+        if layer=="metal1":
+            return self.m1_pitch
+        elif layer=="metal2":
+            return self.m2_pitch
+        elif layer=="metal3":
+            return self.m3_pitch
+        elif layer=="metal4":
+            return self.m4_pitch
+        else:
+            debug.error("Cannot find layer pitch.")
+            
     def add_horizontal_trunk_route(self,
                                    pins,
                                    trunk_offset,
@@ -690,7 +702,7 @@ class layout():
         Create a trunk route for all pins with  the trunk located at the given y offset. 
         """
         if not pitch:
-            pitch = self.m1_pitch
+            pitch = self.get_layer_pitch(layer_stack[0])
         
         max_x = max([pin.center().x for pin in pins])
         min_x = min([pin.center().x for pin in pins])
@@ -728,7 +740,7 @@ class layout():
         Create a trunk route for all pins with the trunk located at the given x offset. 
         """
         if not pitch:
-            pitch = self.m2_pitch
+            pitch = self.get_layer_pitch(layer_stack[2])
             
         max_y = max([pin.center().y for pin in pins])
         min_y = min([pin.center().y for pin in pins])
@@ -762,7 +774,6 @@ class layout():
     def create_channel_route(self, netlist,
                              offset, 
                              layer_stack=("metal1", "via1", "metal2"),
-                             pitch=None,
                              vertical=False):
         """
         The net list is a list of the nets. Each net is a list of pins
@@ -786,7 +797,7 @@ class layout():
                     g[other_pin]=conflicts
             return g
 
-        def vcg_nets_overlap(net1, net2, vertical):
+        def vcg_nets_overlap(net1, net2, vertical, pitch):
             """ 
             Check all the pin pairs on two nets and return a pin
             overlap if any pin overlaps 
@@ -794,12 +805,12 @@ class layout():
             
             for pin1 in net1:
                 for pin2 in net2:
-                    if vcg_pin_overlap(pin1, pin2, vertical):
+                    if vcg_pin_overlap(pin1, pin2, vertical, pitch):
                         return True
 
             return False
                             
-        def vcg_pin_overlap(pin1, pin2, vertical):
+        def vcg_pin_overlap(pin1, pin2, vertical, pitch):
             """ Check for vertical or horizontal overlap of the two pins """
             # FIXME: If the pins are not in a row, this may break.
             # However, a top pin shouldn't overlap another top pin, for example, so the
@@ -813,10 +824,10 @@ class layout():
             overlaps = (not vertical and x_overlap) or (vertical and y_overlap)
             return overlaps
 
-
-
-        if not pitch:
-            pitch = self.m2_pitch
+        if vertical:
+            pitch = self.get_layer_pitch(layer_stack[2])
+        else:
+            pitch = self.get_layer_pitch(layer_stack[0])
 
 
         # FIXME: Must extend this to a horizontal conflict graph too if we want to minimize the
@@ -846,7 +857,7 @@ class layout():
                 # Skip yourself
                 if net_name1 == net_name2:
                     continue
-                if vcg_nets_overlap(nets[net_name1], nets[net_name2], vertical):
+                if vcg_nets_overlap(nets[net_name1], nets[net_name2], vertical, pitch):
                     vcg[net_name2].append(net_name1)
                     
         # list of routes to do
@@ -882,20 +893,18 @@ class layout():
 
 
     def create_vertical_channel_route(self, netlist, offset, 
-                                      layer_stack=("metal1", "via1", "metal2"),
-                                      pitch=None):
+                                      layer_stack=("metal1", "via1", "metal2")):
         """
         Wrapper to create a vertical channel route
         """
-        self.create_channel_route(netlist, offset, layer_stack, pitch, vertical=True)
+        self.create_channel_route(netlist, offset, layer_stack, vertical=True)
 
     def create_horizontal_channel_route(self, netlist, offset, 
-                                        layer_stack=("metal1", "via1", "metal2"),
-                                        pitch=None):
+                                        layer_stack=("metal1", "via1", "metal2")):
         """
         Wrapper to create a horizontal channel route
         """
-        self.create_channel_route(netlist, offset, layer_stack, pitch, vertical=False)
+        self.create_channel_route(netlist, offset, layer_stack, vertical=False)
 
     def add_boundary(self, offset=vector(0,0)):
         """ Add boundary for debugging dimensions """

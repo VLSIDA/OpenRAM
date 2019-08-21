@@ -34,7 +34,7 @@ class functional(simulation):
         if OPTS.is_unit_test:
             random.seed(12345)
 
-        if self.write_size is not None:
+        if self.write_size:
             self.num_wmasks = int(self.word_size / self.write_size)
         else:
             self.num_wmasks = 0
@@ -61,7 +61,7 @@ class functional(simulation):
 
     def initialize_wmask(self):
         self.wmask = ""
-        if self.write_size is not None:
+        if self.write_size:
             # initialize all wmask bits to 1
             for bit in range(self.num_wmasks):
                 self.wmask += "1"
@@ -85,7 +85,7 @@ class functional(simulation):
         return self.check_stim_results()
     
     def write_random_memory_sequence(self):
-        if self.write_size is not None:
+        if self.write_size:
             rw_ops = ["noop", "write", "partial_write", "read"]
             w_ops = ["noop", "write", "partial_write"]
         else:
@@ -340,7 +340,7 @@ class functional(simulation):
 
         # Generate wmask bits
         for port in self.write_ports:
-            if self.write_size is not None:
+            if self.write_size:
                 self.sf.write("\n* Generation of wmask signals\n")
                 for bit in range(self.num_wmasks):
                     sig_name = "WMASK{0}_{1} ".format(port, bit)

@@ -35,7 +35,7 @@ class sram_base(design, verilog, lef):
 
         self.bank_insts = []
 
-        if self.write_size is not None:
+        if self.write_size:
             self.num_wmasks = int(self.word_size/self.write_size)
         else:
             self.num_wmasks = 0
@@ -284,7 +284,7 @@ class sram_base(design, verilog, lef):
         self.data_dff = dff_array(name="data_dff", rows=1, columns=self.word_size)
         self.add_mod(self.data_dff)
 
-        if self.write_size is not None:
+        if self.write_size:
             self.wmask_dff = dff_array(name="wmask_dff", rows=1, columns=self.num_wmasks)
             self.add_mod(self.wmask_dff)
 

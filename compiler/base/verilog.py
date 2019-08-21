@@ -22,7 +22,7 @@ class verilog:
         self.vf.write("// OpenRAM SRAM model\n")
         self.vf.write("// Words: {0}\n".format(self.num_words))
         self.vf.write("// Word size: {0}\n".format(self.word_size))
-        if self.write_size is not None:
+        if self.write_size:
             self.vf.write("// Write size: {0}\n\n".format(self.write_size))
         else:
             self.vf.write("\n")
@@ -37,12 +37,12 @@ class verilog:
                 self.vf.write("// Port {0}: W\n".format(port))
             if port in self.readwrite_ports:
                 self.vf.write("    clk{0},csb{0},web{0},".format(port))
-                if self.write_size is not None:
+                if self.write_size:
                     self.vf.write("wmask{},".format(port))
                 self.vf.write("addr{0},din{0},dout{0}".format(port))
             elif port in self.write_ports:
                 self.vf.write("    clk{0},csb{0},".format(port))
-                if self.write_size is not None:
+                if self.write_size:
                     self.vf.write("wmask{},".format(port))
                 self.vf.write("addr{0},din{0}".format(port))
             elif port in self.read_ports:
@@ -52,7 +52,7 @@ class verilog:
                 self.vf.write(",\n")
         self.vf.write("\n  );\n\n")
 
-        if self.write_size is not None:
+        if self.write_size:
             self.num_wmasks = int(self.word_size/self.write_size)
             self.vf.write("  parameter NUM_WMASKS = {0} ;\n".format(self.num_wmasks))
         self.vf.write("  parameter DATA_WIDTH = {0} ;\n".format(self.word_size))
@@ -99,7 +99,7 @@ class verilog:
         if port in self.readwrite_ports:
             self.vf.write("  reg  web{0}_reg;\n".format(port))
         if port in self.write_ports:
-            if self.write_size is not None:
+            if self.write_size:
                 self.vf.write("  reg [NUM_WMASKS-1:0]   wmask{0}_reg;\n".format(port))
         self.vf.write("  reg [ADDR_WIDTH-1:0]  addr{0}_reg;\n".format(port))
         if port in self.write_ports:
@@ -119,7 +119,7 @@ class verilog:
         if port in self.readwrite_ports:
             self.vf.write("    web{0}_reg = web{0};\n".format(port))
         if port in self.write_ports:
-            if self.write_size is not None:
+            if self.write_size:
                 self.vf.write("    wmask{0}_reg = wmask{0};\n".format(port))
         self.vf.write("    addr{0}_reg = addr{0};\n".format(port))
         if port in self.write_ports:
@@ -134,13 +134,13 @@ class verilog:
             self.vf.write("      $display($time,\" Reading %m addr{0}=%b dout{0}=%b\",addr{0}_reg,mem[addr{0}_reg]);\n".format(port))
         if port in self.readwrite_ports:
             self.vf.write("    if ( !csb{0}_reg && !web{0}_reg )\n".format(port))
-            if self.write_size is not None:
+            if self.write_size:
                 self.vf.write("      $display($time,\" Writing %m addr{0}=%b din{0}=%b wmask{0}=%b\",addr{0}_reg,din{0}_reg,wmask{0}_reg);\n".format(port))
             else:
                 self.vf.write("      $display($time,\" Writing %m addr{0}=%b din{0}=%b\",addr{0}_reg,din{0}_reg);\n".format(port))
         elif port in self.write_ports:
             self.vf.write("    if ( !csb{0}_reg )\n".format(port))
-            if self.write_size is not None:
+            if self.write_size:
                 self.vf.write("      $display($time,\" Writing %m addr{0}=%b din{0}=%b wmask{0}=%b\",addr{0}_reg,din{0}_reg,wmask{0}_reg);\n".format(port))
             else:
                 self.vf.write("      $display($time,\" Writing %m addr{0}=%b din{0}=%b\",addr{0}_reg,din{0}_reg);\n".format(port))
@@ -156,7 +156,7 @@ class verilog:
         self.vf.write("  input   csb{0}; // active low chip select\n".format(port))
         if port in self.readwrite_ports:
             self.vf.write("  input  web{0}; // active low write control\n".format(port))
-            if self.write_size is not None:
+            if self.write_size:
                 self.vf.write("  input [NUM_WMASKS-1:0]   wmask{0}; // write mask\n".format(port))
         self.vf.write("  input [ADDR_WIDTH-1:0]  addr{0};\n".format(port))
         if port in self.write_ports:
@@ -175,17 +175,17 @@ class verilog:
         self.vf.write("  always @ (negedge clk{0})\n".format(port))
         self.vf.write("  begin : MEM_WRITE{0}\n".format(port))
         if port in self.readwrite_ports:
-            if self.write_size is not None:
+            if self.write_size:
                 self.vf.write("    if ( !csb{0}_reg && !web{0}_reg ) begin\n".format(port))
             else:
                 self.vf.write("    if ( !csb{0}_reg && !web{0}_reg )\n".format(port))
         else:
-            if self.write_size is not None:
+            if self.write_size:
                 self.vf.write("    if (!csb{0}_reg) begin\n".format(port))
             else:
                 self.vf.write("    if (!csb{0}_reg)\n".format(port))
 
-        if self.write_size is not None:
+        if self.write_size:
             for mask in range(0,self.num_wmasks):
                 lower = mask * self.write_size
                 upper = lower + self.write_size-1

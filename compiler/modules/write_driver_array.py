@@ -30,7 +30,7 @@ class write_driver_array(design.design):
         self.write_size = write_size
         self.words_per_row = int(columns / word_size)
 
-        if self.write_size is not None:
+        if self.write_size:
             self.num_wmasks = int(self.word_size/self.write_size)
 
         self.create_netlist()
@@ -89,7 +89,7 @@ class write_driver_array(design.design):
             self.driver_insts[index]=self.add_inst(name=name,
                                                    mod=self.driver)
 
-            if self.write_size is not None:
+            if self.write_size:
                 self.connect_inst(["data_{0}".format(index),
                                    "bl_{0}".format(index),
                                    "br_{0}".format(index),

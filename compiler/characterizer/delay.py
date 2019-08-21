@@ -46,7 +46,7 @@ class delay(simulation):
         self.targ_read_ports = []
         self.targ_write_ports = []
         self.period = 0
-        if self.write_size is not None:
+        if self.write_size:
             self.num_wmasks = int(self.word_size / self.write_size)
         else:
             self.num_wmasks = 0

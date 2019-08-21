@@ -31,7 +31,7 @@ class simulation():
         self.readwrite_ports = self.sram.readwrite_ports
         self.read_ports = self.sram.read_ports
         self.write_ports = self.sram.write_ports
-        if self.write_size is not None:
+        if self.write_size:
             self.num_wmasks = int(self.word_size/self.write_size)
         else:
             self.num_wmasks = 0
@@ -303,7 +303,7 @@ class simulation():
         for port in range(total_ports):
             pin_names.append("{0}{1}".format(tech.spice["clk"], port))
 
-        if self.write_size is not None:
+        if self.write_size:
             for port in write_index:
                 for bit in range(self.num_wmasks):
                     pin_names.append("WMASK{0}_{1}".format(port,bit))

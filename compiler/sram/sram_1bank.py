@@ -81,12 +81,12 @@ class sram_1bank(sram_base):
             if port in self.write_ports:
                 # Add the write mask flops below the write mask AND array.
                 wmask_pos[port] = vector(self.bank.bank_array_ll.x,
-                                         - max_gap_size - self.dff.height)
+                                         -0.5*max_gap_size - self.dff.height)
                 self.wmask_dff_insts[port].place(wmask_pos[port])
 
                 # Add the data flops below the write mask flops.
                 data_pos[port] = vector(self.bank.bank_array_ll.x,
-                                        -2*max_gap_size - 2*self.dff.height)
+                                        -1.5*max_gap_size - 2*self.dff.height)
                 self.data_dff_insts[port].place(data_pos[port])
             else:
                 wmask_pos[port] = vector(self.bank.bank_array_ll.x, 0)
@@ -355,7 +355,7 @@ class sram_1bank(sram_base):
             if port%2:
                 offset = self.data_dff_insts[port].ll() - vector(0, (self.word_size+2)*self.m1_pitch) 
             else:
-                offset = self.data_dff_insts[port].ul() + vector(0, 2*self.m1_pitch)                                
+                offset = self.data_dff_insts[port].ul() + vector(0, 2*self.m1_pitch)
 
 
             dff_names = ["dout_{}".format(x) for x in range(self.word_size)]
@@ -369,10 +369,12 @@ class sram_1bank(sram_base):
             bank_names = ["din{0}_{1}".format(port,x) for x in range(self.word_size)]
             bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
             for x in bank_names:
+                pin_offset = vector(self.bank_inst.get_pin(x).cx(),
+                                self.bank_inst.get_pin(x).by() - 0.75*drc('minwidth_metal1'))
                 self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                    offset=self.bank_inst.get_pin(x).bc())
+                                    offset=pin_offset)
                 self.add_via_center(layers=("metal2", "via2", "metal3"),
-                                    offset=self.bank_inst.get_pin(x).bc())
+                                    offset=pin_offset)
             
             route_map = list(zip(bank_pins, dff_pins))
             self.create_horizontal_channel_route(netlist=route_map,

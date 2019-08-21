@@ -108,8 +108,6 @@ class write_mask_and_array(design.design):
 
 
     def add_layout_pins(self):
-        self.nand2 = factory.create(module_type="pnand2")
-        supply_pin=self.nand2.get_pin("vdd")
         for i in range(self.num_wmasks):
             wmask_in_pin = self.and2_insts[i].get_pin("A")
             self.add_layout_pin(text="wmask_in_{0}".format(i),
@@ -117,6 +115,8 @@ class write_mask_and_array(design.design):
                                 offset=wmask_in_pin.ll(),
                                 width=wmask_in_pin.width(),
                                 height=wmask_in_pin.height())
+            self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                offset=wmask_in_pin.center())
 
             en_pin = self.and2_insts[i].get_pin("B")
             # Add the M1->M2 stack
@@ -143,7 +143,7 @@ class write_mask_and_array(design.design):
             for n in ["vdd", "gnd"]:
                 pin_list = self.and2_insts[i].get_pins(n)
                 for pin in pin_list:
-                    pin_pos = pin.lc()
+                    pin_pos = vector(pin.lx()-0.75*drc('minwidth_metal1'), pin.cy())
                     # Add the M1->M2 stack
                     self.add_via_center(layers=("metal1", "via1", "metal2"),
                                         offset=pin_pos)

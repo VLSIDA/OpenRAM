@@ -123,6 +123,7 @@ class write_mask_and_array(design.design):
             self.add_via_center(layers=("metal2", "via2", "metal3"),
                                 offset=en_pin.center())
 
+            # Route en pin between AND gates
             if i < self.num_wmasks-1:
                 self.add_layout_pin(text="en",
                                     layer="metal3",
@@ -137,10 +138,15 @@ class write_mask_and_array(design.design):
                                 width=wmask_out_pin.width(),
                                 height=wmask_out_pin.height())
 
-            self.add_power_pin("gnd", vector((supply_pin.lx() - 0.75 *drc('minwidth_metal1'))+i*self.wmask_en_len,
+            self.add_power_pin("gnd", vector((supply_pin.lx() - 0.75*drc('minwidth_metal1'))+i*self.wmask_en_len,
                                                     0))
             self.add_power_pin("vdd", vector((supply_pin.lx() - 0.75*drc('minwidth_metal1'))+i*self.wmask_en_len,
                                                     self.height))
+            if i < self.num_wmasks-1:
+                for n in ["gnd","vdd"]:
+                    pin = self.and2_insts[i].get_pin(n)
+                    next_pin = self.and2_insts[i+1].get_pin(n)
+                    self.add_path("metal1",[pin.center(),next_pin.center()])
 
 
     def en_width(self, pin):

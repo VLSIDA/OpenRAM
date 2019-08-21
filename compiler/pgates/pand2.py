@@ -36,7 +36,6 @@ class pand2(pgate.pgate):
         self.nand = factory.create(module_type="pnand2",height=self.height) 
         self.add_mod(self.nand)
 
-        # Assume stage effort of 3
         self.inv = factory.create(module_type="pdriver", neg_polarity=True, fanout=3*self.size, height=self.height)
         self.add_mod(self.inv)
 

@@ -63,8 +63,9 @@ class write_mask_and_array(design.design):
 
     def add_modules(self):
         # Size the AND gate for the number of write drivers it drives, which is equal to the write size.
+        # Assume stage effort of 3 to compute the size
         self.and2 = factory.create(module_type="pand2",
-                                   size=self.write_size)
+                                   size=self.write_size/4.0)
         self.add_mod(self.and2)
 
 
@@ -92,18 +93,12 @@ class write_mask_and_array(design.design):
         else:
             self.driver_spacing = self.driver.width
 
-        if (self.words_per_row == 1):
-            wmask_en_len = (self.write_size * self.driver_spacing)
-            if self.driver_spacing * self.write_size < self.and2.width:
-                debug.error("Cannot layout write mask AND array. One pand2 is longer than the corresponding write drivers.")
-        else:
-            wmask_en_len = self.words_per_row * (self.write_size * self.driver_spacing)
-            if wmask_en_len < self.and2.width:
-                debug.error("Cannot layout write mask AND array. One pand2 is longer than the corresponding write drivers.")
-        self.wmask_en_len = wmask_en_len
+        self.wmask_en_len = self.words_per_row * (self.write_size * self.driver_spacing)
+        debug.check(self.wmask_en_len >= self.and2.width,
+                    "Write mask AND is wider than the corresponding write drivers {0} vs {1}.".format(self.and2.width,self.wmask_en_len))
 
         for i in range(self.num_wmasks):
-            base = vector(i * wmask_en_len, 0)
+            base = vector(i * self.wmask_en_len, 0)
             self.and2_insts[i].place(base)
 
 

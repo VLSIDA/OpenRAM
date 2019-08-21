@@ -362,24 +362,25 @@ class sram_1bank(sram_base):
             dff_names = ["dout_{}".format(x) for x in range(self.word_size)]
             dff_pins = [self.data_dff_insts[port].get_pin(x) for x in dff_names]
             for x in dff_names:
-                offset = self.data_dff_insts[port].get_pin(x).center()
+                pin_offset = self.data_dff_insts[port].get_pin(x).center()
                 self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                    offset=offset)
+                                    offset=pin_offset)
                 self.add_via_center(layers=("metal2", "via2", "metal3"),
-                                    offset=offset)
+                                    offset=pin_offset)
                 self.add_via_center(layers=("metal3", "via3", "metal4"),
-                                    offset=offset)
+                                    offset=pin_offset)
             
             bank_names = ["din{0}_{1}".format(port,x) for x in range(self.word_size)]
             bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
             for x in bank_names:
-                offset = self.bank_inst.get_pin(x).center()
+                pin_offset = vector(self.bank_inst.get_pin(x).cx(),
+                                    self.bank_inst.get_pin(x).by() - 0.75 * drc('minwidth_metal1'))
                 self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                    offset=offset)
+                                    offset=pin_offset)
                 self.add_via_center(layers=("metal2", "via2", "metal3"),
-                                    offset=offset)
+                                    offset=pin_offset)
                 self.add_via_center(layers=("metal3", "via3", "metal4"),
-                                    offset=offset)      .
+                                    offset=pin_offset)
             
             route_map = list(zip(bank_pins, dff_pins))
             self.create_horizontal_channel_route(netlist=route_map,
@@ -398,16 +399,16 @@ class sram_1bank(sram_base):
             dff_names = ["dout_{}".format(x) for x in range(self.num_wmasks)]
             dff_pins = [self.wmask_dff_insts[port].get_pin(x) for x in dff_names]
             for x in dff_names:
-                offset = self.wmask_dff_insts[port].get_pin(x).center()
+                offset_pin = self.wmask_dff_insts[port].get_pin(x).center()
                 self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                    offset=offset)
+                                    offset=offset_pin)
 
             bank_names = ["bank_wmask{0}_{1}".format(port, x) for x in range(self.num_wmasks)]
             bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
             for x in bank_names:
-                offset = self.bank_inst.get_pin(x).center()
+                offset_pin = self.bank_inst.get_pin(x).center()
                 self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                    offset=offset)
+                                    offset=offset_pin)
             
 
             route_map = list(zip(bank_pins, dff_pins))

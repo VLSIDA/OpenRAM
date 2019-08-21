@@ -103,6 +103,8 @@ class write_mask_and_array(design.design):
 
 
     def add_layout_pins(self):
+        self.nand2 = factory.create(module_type="pnand2")
+        supply_pin=self.nand2.get_pin("vdd")
         for i in range(self.num_wmasks):
             wmask_in_pin = self.and2_insts[i].get_pin("A")
             self.add_layout_pin(text="wmask_in_{0}".format(i),
@@ -135,8 +137,10 @@ class write_mask_and_array(design.design):
                                 width=wmask_out_pin.width(),
                                 height=wmask_out_pin.height())
 
-            self.add_power_pin("gnd", vector(supply_pin.width()+i*self.wmask_en_len,0))
-            self.add_power_pin("vdd", vector(supply_pin.width()+i*self.wmask_en_len,self.height))
+            self.add_power_pin("gnd", vector((supply_pin.lx() - 0.75 *drc('minwidth_metal1'))+i*self.wmask_en_len,
+                                                    0))
+            self.add_power_pin("vdd", vector((supply_pin.lx() - 0.75*drc('minwidth_metal1'))+i*self.wmask_en_len,
+                                                    self.height))
 
 
     def en_width(self, pin):

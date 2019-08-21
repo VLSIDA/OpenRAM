@@ -76,7 +76,7 @@ class functional(simulation):
         self.write_functional_stimulus()
         self.stim.run_sim()
         
-        # read DOUT values from SPICE simulation. If the values do not fall within the noise margins, return the error.
+        # read dout values from SPICE simulation. If the values do not fall within the noise margins, return the error.
         (success, error) = self.read_stim_results()
         if not success:
             return (0, error)
@@ -189,7 +189,7 @@ class functional(simulation):
         self.add_noop_all_ports(comment, "0"*self.addr_size, "0"*self.word_size, "0"*self.num_wmasks)
             
     def read_stim_results(self):
-        # Extrat DOUT values from spice timing.lis
+        # Extrat dout values from spice timing.lis
         for (word, dout_port, eo_period, check) in self.write_check:
             sp_read_value = ""
             for bit in range(self.word_size):
@@ -359,7 +359,7 @@ class functional(simulation):
                                 t_rise=self.slew,
                                 t_fall=self.slew)
         
-        # Generate DOUT value measurements
+        # Generate dout value measurements
         self.sf.write("\n * Generation of dout measurements\n")
         for (word, dout_port, eo_period, check) in self.write_check:
             t_intital = eo_period - 0.01*self.period

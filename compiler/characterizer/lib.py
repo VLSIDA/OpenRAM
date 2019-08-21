@@ -278,10 +278,10 @@ class lib:
         #     self.lib.write("    }\n\n")
     
     def write_bus(self):
-        """ Adds format of DATA and ADDR bus."""
+        """ Adds format of data and addr bus."""
     
         self.lib.write("\n\n")
-        self.lib.write("    type (DATA){\n")
+        self.lib.write("    type (data){\n")
         self.lib.write("    base_type : array;\n")
         self.lib.write("    data_type : bit;\n")
         self.lib.write("    bit_width : {0};\n".format(self.sram.word_size))
@@ -289,7 +289,7 @@ class lib:
         self.lib.write("    bit_to : {0};\n".format(self.sram.word_size - 1))
         self.lib.write("    }\n\n")
 
-        self.lib.write("    type (ADDR){\n")
+        self.lib.write("    type (addr){\n")
         self.lib.write("    base_type : array;\n")
         self.lib.write("    data_type : bit;\n")
         self.lib.write("    bit_width : {0};\n".format(self.sram.addr_size))
@@ -329,18 +329,18 @@ class lib:
     def write_data_bus_output(self, read_port):
         """ Adds data bus timing results."""
 
-        self.lib.write("    bus(DOUT{0}){{\n".format(read_port))
-        self.lib.write("        bus_type  : DATA; \n")
+        self.lib.write("    bus(dout{0}){{\n".format(read_port))
+        self.lib.write("        bus_type  : data; \n")
         self.lib.write("        direction  : output; \n")
         # This is conservative, but limit to range that we characterized.
         self.lib.write("        max_capacitance : {0};  \n".format(max(self.loads)/1000))
         self.lib.write("        min_capacitance : {0};  \n".format(min(self.loads)/1000))        
         self.lib.write("        memory_read(){ \n")
-        self.lib.write("            address : ADDR{0}; \n".format(read_port))
+        self.lib.write("            address : addr{0}; \n".format(read_port))
         self.lib.write("        }\n")
         
 
-        self.lib.write("        pin(DOUT{0}[{1}:0]){{\n".format(read_port,self.sram.word_size-1))
+        self.lib.write("        pin(dout{0}[{1}:0]){{\n".format(read_port,self.sram.word_size-1))
         self.lib.write("        timing(){ \n")
         self.lib.write("            timing_sense : non_unate; \n")
         self.lib.write("            related_pin : \"clk{0}\"; \n".format(read_port))
@@ -362,18 +362,18 @@ class lib:
         self.lib.write("    }\n\n") # bus
 
     def write_data_bus_input(self, write_port):
-        """ Adds DIN data bus timing results."""
+        """ Adds din data bus timing results."""
 
-        self.lib.write("    bus(DIN{0}){{\n".format(write_port))
-        self.lib.write("        bus_type  : DATA; \n")
+        self.lib.write("    bus(din{0}){{\n".format(write_port))
+        self.lib.write("        bus_type  : data; \n")
         self.lib.write("        direction  : input; \n")
         # This is conservative, but limit to range that we characterized.
         self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]/1000))
         self.lib.write("        memory_write(){ \n")
-        self.lib.write("            address : ADDR{0}; \n".format(write_port))
+        self.lib.write("            address : addr{0}; \n".format(write_port))
         self.lib.write("            clocked_on  : clk{0}; \n".format(write_port))
         self.lib.write("        }\n") 
-        self.lib.write("        pin(DIN{0}[{1}:0]){{\n".format(write_port,self.sram.word_size-1))
+        self.lib.write("        pin(din{0}[{1}:0]){{\n".format(write_port,self.sram.word_size-1))
         self.write_FF_setuphold(write_port)
         self.lib.write("        }\n") # pin  
         self.lib.write("    }\n") #bus
@@ -388,12 +388,12 @@ class lib:
     def write_addr_bus(self, port):
         """ Adds addr bus timing results."""
         
-        self.lib.write("    bus(ADDR{0}){{\n".format(port))
-        self.lib.write("        bus_type  : ADDR; \n")
+        self.lib.write("    bus(addr{0}){{\n".format(port))
+        self.lib.write("        bus_type  : addr; \n")
         self.lib.write("        direction  : input; \n")
         self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]/1000))
         self.lib.write("        max_transition       : {0};\n".format(self.slews[-1]))
-        self.lib.write("        pin(ADDR{0}[{1}:0])".format(port,self.sram.addr_size-1))
+        self.lib.write("        pin(addr{0}[{1}:0])".format(port,self.sram.addr_size-1))
         self.lib.write("{\n")
         
         self.write_FF_setuphold(port)
@@ -577,10 +577,10 @@ class lib:
         datasheet.write(str(self.sram.width * self.sram.height)+',')
         # write timing information for all ports
         for port in self.all_ports:
-            #DIN timings
+            #din timings
             if port in self.write_ports:
                 datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
-                        "DIN{1}[{0}:0]".format(self.sram.word_size - 1, port),
+                        "din{1}[{0}:0]".format(self.sram.word_size - 1, port),
                         min(list(map(round_time,self.times["setup_times_LH"]))),
                         max(list(map(round_time,self.times["setup_times_LH"]))),
 
@@ -596,10 +596,10 @@ class lib:
                         ))
 
         for port in self.all_ports:
-            #DOUT timing
+            #dout timing
             if port in self.read_ports:
                 datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
-                        "DOUT{1}[{0}:0]".format(self.sram.word_size - 1, port),
+                        "dout{1}[{0}:0]".format(self.sram.word_size - 1, port),
                         min(list(map(round_time,self.char_port_results[port]["delay_lh"]))),
                         max(list(map(round_time,self.char_port_results[port]["delay_lh"]))),
 
@@ -634,9 +634,9 @@ class lib:
                     ))
 
         for port in self.all_ports:
-            #ADDR timings
+            #addr timings
             datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
-                    "ADDR{1}[{0}:0]".format(self.sram.addr_size - 1, port),
+                    "addr{1}[{0}:0]".format(self.sram.addr_size - 1, port),
                     min(list(map(round_time,self.times["setup_times_LH"]))),
                     max(list(map(round_time,self.times["setup_times_LH"]))),
 

@@ -88,7 +88,7 @@ class sram_2bank(sram_base):
                                               mod=self.msb_address,
                                               offset=self.msb_address_position,
                                               rotate=270)
-        self.msb_bank_sel_addr = "ADDR[{}]".format(self.addr_size-1)
+        self.msb_bank_sel_addr = "addr[{}]".format(self.addr_size-1)
         self.connect_inst([self.msb_bank_sel_addr,"bank_sel[1]","bank_sel[0]","clk_buf", "vdd", "gnd"])
         
 

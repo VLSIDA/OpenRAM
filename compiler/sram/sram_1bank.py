@@ -208,18 +208,18 @@ class sram_1bank(sram_base):
 
             if port in self.read_ports:
                 for bit in range(self.word_size):
-                    self.copy_layout_pin(self.bank_inst, "dout{0}_{1}".format(port,bit), "DOUT{0}[{1}]".format(port,bit))
+                    self.copy_layout_pin(self.bank_inst, "dout{0}_{1}".format(port,bit), "dout{0}[{1}]".format(port,bit))
 
             # Lower address bits
             for bit in range(self.col_addr_size):
-                self.copy_layout_pin(self.col_addr_dff_insts[port], "din_{}".format(bit),"ADDR{0}[{1}]".format(port,bit))
+                self.copy_layout_pin(self.col_addr_dff_insts[port], "din_{}".format(bit),"addr{0}[{1}]".format(port,bit))
             # Upper address bits
             for bit in range(self.row_addr_size):
-                self.copy_layout_pin(self.row_addr_dff_insts[port], "din_{}".format(bit),"ADDR{0}[{1}]".format(port,bit+self.col_addr_size))
+                self.copy_layout_pin(self.row_addr_dff_insts[port], "din_{}".format(bit),"addr{0}[{1}]".format(port,bit+self.col_addr_size))
 
             if port in self.write_ports:
                 for bit in range(self.word_size):
-                    self.copy_layout_pin(self.data_dff_insts[port], "din_{}".format(bit), "DIN{0}[{1}]".format(port,bit))
+                    self.copy_layout_pin(self.data_dff_insts[port], "din_{}".format(bit), "din{0}[{1}]".format(port,bit))
             
     def route_layout(self):
         """ Route a single bank SRAM """

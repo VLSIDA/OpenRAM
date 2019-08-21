@@ -19,14 +19,14 @@ module sram_1rw_1r_tb;
    reg 	     csb1;
    wire [1:0] dout1;
    
-   sram_1rw_1r_2_16_scn4m_subm U0 (.DIN0(din0),
-				   .DOUT0(dout0),
-				   .ADDR0(addr0),
+   sram_1rw_1r_2_16_scn4m_subm U0 (.din0(din0),
+				   .dout0(dout0),
+				   .addr0(addr0),
 				   .csb0(csb0), 
 				   .web0(web0), 
 				   .clk0(clk),
-				   .DOUT1(dout1),
-				   .ADDR1(addr1),
+				   .dout1(dout1),
+				   .addr1(addr1),
 				   .csb1(csb1),
 				   .clk1(clk)
 				   ); 

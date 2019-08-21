@@ -53,9 +53,9 @@ class simulation():
         self.gnd_voltage = 0
         
     def create_signal_names(self):
-        self.addr_name = "A"
-        self.din_name = "DIN"
-        self.dout_name = "DOUT"
+        self.addr_name = "a"
+        self.din_name = "din"
+        self.dout_name = "dout"
         self.pins = self.gen_pin_names(port_signal_names=(self.addr_name,self.din_name,self.dout_name),
                                        port_info=(len(self.all_ports),self.write_ports,self.read_ports),
                                        abits=self.addr_size,

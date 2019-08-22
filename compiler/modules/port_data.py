@@ -109,7 +109,7 @@ class port_data(design.design):
 
         
     def route_layout(self):
-        """ Create routing amoung the modules """
+        """ Create routing among the modules """
         self.route_data_lines()
         self.route_layout_pins()
         self.route_supplies()
@@ -123,7 +123,9 @@ class port_data(design.design):
         """ Route the bitlines depending on the port type rw, w, or r. """
         
         if self.port in self.readwrite_ports:
-            # write_driver -> sense_amp -> (column_mux) -> precharge -> bitcell_array
+            # (write_mask_and ->) write_driver -> sense_amp -> (column_mux ->) precharge -> bitcell_array
+            self.route_write_mask_and_array_in(self.port)
+            self.route_write_mask_and_array_to_write_driver(self.port)
             self.route_write_driver_in(self.port)    
             self.route_sense_amp_out(self.port)
             self.route_write_driver_to_sense_amp(self.port)
@@ -135,8 +137,10 @@ class port_data(design.design):
             self.route_sense_amp_to_column_mux_or_precharge_array(self.port)
             self.route_column_mux_to_precharge_array(self.port)
         else:
-            # write_driver -> (column_mux ->) precharge -> bitcell_array
-            self.route_write_driver_in(self.port)    
+            # (write_mask_and ->) write_driver -> (column_mux ->) precharge -> bitcell_array
+            self.route_write_mask_and_array_in(self.port)
+            self.route_write_mask_and_array_to_write_driver(self.port)
+            self.route_write_driver_in(self.port)
             self.route_write_driver_to_column_mux_or_precharge_array(self.port)
             self.route_column_mux_to_precharge_array(self.port)            
         
@@ -298,23 +302,23 @@ class port_data(design.design):
         """ Placing Sense amp  """
         self.sense_amp_array_inst.place(offset=offset, mirror="MX")
 
-            
+
     def create_write_driver_array(self):
         """ Creating Write Driver  """
-        self.write_driver_array_inst = self.add_inst(name="write_driver_array{}".format(self.port), 
+        self.write_driver_array_inst = self.add_inst(name="write_driver_array{}".format(self.port),
                                                      mod=self.write_driver_array)
 
         temp = []
         for bit in range(self.word_size):
             temp.append("din_{}".format(bit))
 
-        for bit in range(self.word_size):            
+        for bit in range(self.word_size):
             if (self.words_per_row == 1):
-                temp.append(self.bl_names[self.port]+"_{0}".format(bit))
-                temp.append(self.br_names[self.port]+"_{0}".format(bit))
+                temp.append(self.bl_names[self.port] + "_{0}".format(bit))
+                temp.append(self.br_names[self.port] + "_{0}".format(bit))
             else:
-                temp.append(self.bl_names[self.port]+"_out_{0}".format(bit))
-                temp.append(self.br_names[self.port]+"_out_{0}".format(bit))
+                temp.append(self.bl_names[self.port] + "_out_{0}".format(bit))
+                temp.append(self.br_names[self.port] + "_out_{0}".format(bit))
 
         if self.write_size:
             for i in range(self.num_wmasks):
@@ -326,10 +330,15 @@ class port_data(design.design):
         self.connect_inst(temp)
 
 
+    def place_write_driver_array(self, offset):
+        """ Placing Write Driver  """
+        self.write_driver_array_inst.place(offset=offset, mirror="MX")
+
+
     def create_write_mask_and_array(self):
-        """ Creating Write Masks  """
+        """ Creating Write Mask AND Array  """
         self.write_mask_and_array_inst = self.add_inst(name="write_mask_and_array{}".format(self.port),
-                                                   mod=self.write_mask_and_array)
+                                                       mod=self.write_mask_and_array)
 
         temp = []
         for bit in range(self.num_wmasks):
@@ -341,10 +350,10 @@ class port_data(design.design):
         self.connect_inst(temp)
 
 
-    def place_write_driver_array(self, offset):
-        """ Placing Write Driver  """
-        self .write_driver_array_inst.place(offset=offset, mirror="MX")
-            
+    def place_write_mask_and_array(self, offset):
+        """ Placing Write Mask AND array  """
+        self.write_mask_and_array_inst.place(offset=offset, mirror="MX")
+
 
     def compute_instance_offsets(self):
         """
@@ -356,41 +365,41 @@ class port_data(design.design):
         vertical_port_order.append(self.column_mux_array_inst)
         vertical_port_order.append(self.sense_amp_array_inst)
         vertical_port_order.append(self.write_driver_array_inst)
+        vertical_port_order.append(self.write_mask_and_array_inst)
 
         # Add one column for the the RBL
         if self.port==0:
             x_offset = self.bitcell.width
         else:
             x_offset = 0
-            
-        vertical_port_offsets = 4*[None]
+
+        vertical_port_offsets = 5 * [None]
         self.width = x_offset
         self.height = 0
-        for i,p in enumerate(vertical_port_order):
-            if p==None:
+        for i, p in enumerate(vertical_port_order):
+            if p == None:
                 continue
             self.height += (p.height + self.m2_gap)
             self.width = max(self.width, p.width)
-            vertical_port_offsets[i]=vector(x_offset,self.height)
+            vertical_port_offsets[i] = vector(x_offset, self.height)
 
         # Reversed order
+        self.write_mask_and_offset = vertical_port_offsets[4]
         self.write_driver_offset = vertical_port_offsets[3]
         self.sense_amp_offset = vertical_port_offsets[2]
         self.column_mux_offset = vertical_port_offsets[1]
         self.precharge_offset = vertical_port_offsets[0]
         # Shift the precharge left if port 0
-        if self.precharge_offset and self.port==0:
-            self.precharge_offset -= vector(x_offset,0)
-            
+        if self.precharge_offset and self.port == 0:
+            self.precharge_offset -= vector(x_offset, 0)
 
-
-
-            
     def place_instances(self):
         """ Place the instances. """
 
-        # These are fixed in the order: write driver, sense amp, clumn mux, precharge,
+        # These are fixed in the order: write mask ANDs, write driver, sense amp, column mux, precharge,
         # even if the item is not used in a given port (it will be None then)
+        if self.write_mask_and_offset:
+            self.place_write_mask_and_array(self.write_mask_and_offset)
         if self.write_driver_offset:
             self.place_write_driver_array(self.write_driver_offset)
         if self.sense_amp_offset:
@@ -399,6 +408,7 @@ class port_data(design.design):
             self.place_precharge_array(self.precharge_offset)
         if self.column_mux_offset:
             self.place_column_mux_array(self.column_mux_offset)
+
 
     def route_sense_amp_out(self, port):
         """ Add pins for the sense amp output """
@@ -410,7 +420,8 @@ class port_data(design.design):
                                             offset=data_pin.center(),
                                             height=data_pin.height(),
                                             width=data_pin.width())
-            
+
+
     def route_write_driver_in(self, port):
         """ Connecting write driver   """
 
@@ -418,7 +429,58 @@ class port_data(design.design):
             data_name = "data_{}".format(row)
             din_name = "din_{}".format(row)
             self.copy_layout_pin(self.write_driver_array_inst, data_name, din_name)
-            
+
+
+    def route_write_mask_and_array_in(self, port):
+        """ Add pins for the write mask and array input """
+
+        for bit in range(self.num_wmasks):
+            wmask_in_name = "wmask_in_{}".format(bit)
+            bank_wmask_name = "bank_wmask_{}".format(bit)
+            self.copy_layout_pin(self.write_mask_and_array_inst, wmask_in_name, bank_wmask_name)
+
+
+    def route_write_mask_and_array_to_write_driver(self,port):
+        """ Routing of wdriver_sel_{} between write mask AND array and write driver array. Adds layout pin for write
+            mask AND array output and via for write driver enable """
+
+        inst1 = self.write_mask_and_array_inst
+        inst2 = self.write_driver_array_inst
+
+        loc = 0
+        for bit in range(self.num_wmasks):
+            # Bring write mask AND array output pin to port data level
+            self.copy_layout_pin(inst1, "wmask_out_{0}".format(bit), "wdriver_sel_{0}".format(bit))
+
+            wmask_out_pin = inst1.get_pin("wmask_out_{0}".format(bit))
+            wdriver_en_pin = inst2.get_pin("en_{0}".format(bit))
+
+            # The metal2 wdriver_sel_{} wire must hit the en_{} pin after the closest bitline pin that's right of the
+            # the wdriver_sel_{} pin in the write driver AND array.
+            if bit == 0:
+                # When the write mask output pin is right of the bitline, the target is found
+                while (wmask_out_pin.lx() + self.m2_pitch > inst2.get_pin("data_{0}".format(loc)).rx()):
+                    loc += 1
+                length = inst2.get_pin("data_{0}".format(loc)).rx() + self.m2_pitch
+                debug.check(loc<=self.num_wmasks,"Couldn't route the write mask select.")
+            else:
+                # Stride by the write size rather than finding the next pin to the right
+                loc += self.write_size
+                length =  inst2.get_pin("data_{0}".format(loc)).rx() + self.m2_pitch
+
+
+            beg_pos = wmask_out_pin.center()
+            middle_pos = vector(length,wmask_out_pin.cy())
+            end_pos = vector(length, wdriver_en_pin.cy())
+
+            # Add via for the write driver array's enable input
+            self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                offset=end_pos)
+
+            # Route between write mask AND array and write driver array
+            self.add_wire(("metal1","via1","metal2"), [beg_pos, middle_pos, end_pos])
+
+
     def route_column_mux_to_precharge_array(self, port):
         """ Routing of BL and BR between col mux and precharge array """
 
@@ -434,7 +496,6 @@ class port_data(design.design):
             self.connect_bitlines(inst1, inst2, self.num_cols)
 
 
-                                        
     def route_sense_amp_to_column_mux_or_precharge_array(self, port):
         """ Routing of BL and BR between sense_amp and column mux or precharge array """
         inst2 = self.sense_amp_array_inst
@@ -459,6 +520,7 @@ class port_data(design.design):
         self.channel_route_bitlines(inst1=inst1, inst2=inst2, num_bits=self.word_size,
                                     inst1_bl_name=inst1_bl_name, inst1_br_name=inst1_br_name, inst1_start_bit=start_bit)
 
+
     def route_write_driver_to_column_mux_or_precharge_array(self, port):
         """ Routing of BL and BR between sense_amp and column mux or precharge array """
         inst2 = self.write_driver_array_inst
@@ -481,10 +543,11 @@ class port_data(design.design):
             
         self.channel_route_bitlines(inst1=inst1, inst2=inst2, num_bits=self.word_size,
                                     inst1_bl_name=inst1_bl_name, inst1_br_name=inst1_br_name, inst1_start_bit=start_bit)
-        
+
+
     def route_write_driver_to_sense_amp(self, port):
         """ Routing of BL and BR between write driver and sense amp """
-        
+
         inst1 = self.write_driver_array_inst
         inst2 = self.sense_amp_array_inst
 
@@ -508,13 +571,13 @@ class port_data(design.design):
         else:
             bit_offset=0
 
-        
         for bit in range(self.num_cols):
             if self.precharge_array_inst:
                 self.copy_layout_pin(self.precharge_array_inst, "bl_{}".format(bit+bit_offset), "bl_{}".format(bit))
                 self.copy_layout_pin(self.precharge_array_inst, "br_{}".format(bit+bit_offset), "br_{}".format(bit))
             else:
-                debug.error("Didn't find precharge arra.")
+                debug.error("Didn't find precharge array.")
+
 
     def route_control_pins(self):
         """ Add the control pins: s_en, p_en_bar, w_en """
@@ -527,7 +590,15 @@ class port_data(design.design):
         if self.sense_amp_array_inst:
             self.copy_layout_pin(self.sense_amp_array_inst, "en", "s_en")
         if self.write_driver_array_inst:
-            self.copy_layout_pin(self.write_driver_array_inst, "en", "w_en")
+            if self.write_mask_and_array_inst:
+                for bit in range(self.num_wmasks):
+                    # Add write driver's en_{} pins
+                    self.copy_layout_pin(self.write_driver_array_inst, "en_{}".format(bit), "wdriver_sel_{}".format(bit))
+            else:
+                self.copy_layout_pin(self.write_driver_array_inst, "en", "w_en")
+        if self.write_mask_and_array_inst:
+            self.copy_layout_pin(self.write_mask_and_array_inst, "en", "w_en")
+
             
         
     def channel_route_bitlines(self, inst1, inst2, num_bits,

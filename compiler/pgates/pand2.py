@@ -35,8 +35,8 @@ class pand2(pgate.pgate):
         # Shield the cap, but have at least a stage effort of 4
         self.nand = factory.create(module_type="pnand2",height=self.height) 
         self.add_mod(self.nand)
-        
-        self.inv = factory.create(module_type="pinv", size=self.size, height=self.height)
+
+        self.inv = factory.create(module_type="pdriver", neg_polarity=True, fanout=3*self.size, height=self.height)
         self.add_mod(self.inv)
 
     def create_layout(self):

@@ -35,7 +35,7 @@ class pand3(pgate.pgate):
         # Shield the cap, but have at least a stage effort of 4
         self.nand = factory.create(module_type="pnand3",height=self.height) 
         self.add_mod(self.nand)
-        
+
         self.inv = factory.create(module_type="pinv", size=self.size, height=self.height)
         self.add_mod(self.inv)
 

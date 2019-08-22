@@ -49,7 +49,6 @@ class write_driver_array(design.design):
             self.width = self.columns * self.bitcell.width
         else:
             self.width = self.columns * self.driver.width
-        
         self.height = self.driver.height
         
         self.place_write_array()
@@ -63,9 +62,9 @@ class write_driver_array(design.design):
         for i in range(self.word_size):            
             self.add_pin("bl_{0}".format(i), "OUTPUT")
             self.add_pin("br_{0}".format(i), "OUTPUT")
-        if self.write_size != None:
+        if self.write_size is not None:
             for i in range(self.num_wmasks):
-                self.add_pin("en_{}".format(i), "INPUT")
+                self.add_pin("en_{0}".format(i), "INPUT")
         else:
             self.add_pin("en", "INPUT")
         self.add_pin("vdd", "POWER")
@@ -95,6 +94,7 @@ class write_driver_array(design.design):
                                    "br_{0}".format(index),
                                    "en_{0}".format(windex), "vdd", "gnd"])
                 w+=1
+                # when w equals write size, the next en pin can be connected since we are now at the next wmask bit
                 if w == self.write_size:
                     w = 0
                     windex+=1
@@ -107,13 +107,12 @@ class write_driver_array(design.design):
 
     def place_write_array(self):
         if self.bitcell.width > self.driver.width:
-            driver_spacing = self.bitcell.width
+            self.driver_spacing = self.bitcell.width
         else:
-            driver_spacing = self.driver.width
-    
+            self.driver_spacing = self.driver.width
         for i in range(0,self.columns,self.words_per_row):
-            index = int(i/self.words_per_row)            
-            base = vector(i * driver_spacing,0)
+            index = int(i/self.words_per_row)
+            base = vector(i * self.driver_spacing, 0)
             self.driver_insts[index].place(base)
 
             
@@ -149,15 +148,28 @@ class write_driver_array(design.design):
                     self.add_layout_pin_rect_center(text=n,
                                                     layer="metal3",
                                                     offset=pin_pos)
+        if self.write_size is not None:
+            for bit in range(self.num_wmasks):
+                en_pin = self.driver_insts[bit*self.write_size].get_pin("en")
+                # Determine width of wmask modified en_pin with/without col mux
+                wmask_en_len = self.words_per_row*(self.write_size * self.driver_spacing)
+                if (self.words_per_row == 1):
+                    en_gap = self.driver_spacing - en_pin.width()
+                else:
+                    en_gap = self.driver_spacing
+
+                self.add_layout_pin(text="en_{0}".format(bit),
+                                    layer=en_pin.layer,
+                                    offset=en_pin.ll(),
+                                    width=wmask_en_len-en_gap,
+                                    height=en_pin.height())
+        else:
+            self.add_layout_pin(text="en",
+                                layer="metal1",
+                                offset=self.driver_insts[0].get_pin("en").ll().scale(0,1),
+                                width=self.width)
 
 
-
-        self.add_layout_pin(text="en",
-                            layer="metal1",
-                            offset=self.driver_insts[0].get_pin("en").ll().scale(0,1),
-                            width=self.width,
-                            height=drc('minwidth_metal1'))
-                       
                        
 
     def get_w_en_cin(self):

@@ -121,7 +121,7 @@ class bank(design.design):
             self.route_column_address_lines(port)
             self.route_control_lines(port)
             if self.num_banks > 1:
-                self.route_bank_select(port)            
+                self.route_bank_select(port)
         
         self.route_supplies()
 
@@ -711,8 +711,9 @@ class bank(design.design):
             decoder_name = "addr_{}".format(row)
             addr_name = "addr{0}_{1}".format(port,addr_idx)
             self.copy_layout_pin(self.port_address_inst[port], decoder_name, addr_name)
-            
-            
+
+
+
     def route_port_data_in(self, port):
         """ Connecting port data in   """
 
@@ -720,6 +721,14 @@ class bank(design.design):
             data_name = "din_{}".format(row)
             din_name = "din{0}_{1}".format(port,row)
             self.copy_layout_pin(self.port_data_inst[port], data_name, din_name)
+
+        if self.word_size is not None:
+            for row in range(self.num_wmasks):
+                wmask_name = "bank_wmask_{}".format(row)
+                bank_wmask_name = "bank_wmask{0}_{1}".format(port, row)
+                self.copy_layout_pin(self.port_data_inst[port], wmask_name, bank_wmask_name)
+
+
             
     def channel_route_bitlines(self, inst1, inst2, num_bits,
                                inst1_bl_name="bl_{}", inst1_br_name="br_{}",

@@ -501,7 +501,7 @@ class sram_base(design, verilog, lef):
             temp.append("clk{}".format(port))
             temp.append("rbl_bl{}".format(port))
 
-            # Ouputs
+            # Outputs
             if port in self.read_ports:
                 temp.append("s_en{}".format(port))
             if port in self.write_ports:

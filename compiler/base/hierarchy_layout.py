@@ -683,34 +683,37 @@ class layout():
     def get_layer_pitch(self, layer):
         """ Return the track pitch on a given layer """
         if layer=="metal1":
-            return self.m1_pitch
+            return (self.m1_pitch,self.m1_pitch-self.m1_space,self.m1_space)
         elif layer=="metal2":
-            return self.m2_pitch
+            return (self.m2_pitch,self.m2_pitch-self.m2_space,self.m2_space)
         elif layer=="metal3":
-            return self.m3_pitch
+            return (self.m3_pitch,self.m3_pitch-self.m3_space,self.m3_space)
         elif layer=="metal4":
-            return self.m4_pitch
+            from tech import layer as tech_layer
+            if "metal4" in tech_layer:
+                return (self.m3_pitch,self.m3_pitch-self.m4_space,self.m4_space)
+            else:
+                return (self.m3_pitch,self.m3_pitch-self.m3_space,self.m3_space)
         else:
             debug.error("Cannot find layer pitch.")
             
     def add_horizontal_trunk_route(self,
                                    pins,
                                    trunk_offset,
-                                   layer_stack=("metal1", "via1", "metal2"),
-                                   pitch=None):
+                                   layer_stack,
+                                   pitch):
         """
         Create a trunk route for all pins with  the trunk located at the given y offset. 
         """
-        if not pitch:
-            pitch = self.get_layer_pitch(layer_stack[0])
-        
         max_x = max([pin.center().x for pin in pins])
         min_x = min([pin.center().x for pin in pins])
-        
-        half_minwidth = 0.5*drc["minwidth_{}".format(layer_stack[0])]
+
+        # Add the vertical trunk
+        half_minwidth = 0.5*self.vertical_width
 
         # if we are less than a pitch, just create a non-preferred layer jog
-        if max_x-min_x < pitch:
+        if max_x-min_x <= pitch:
+
             # Add the horizontal trunk on the vertical layer!
             self.add_path(layer_stack[2],[vector(min_x-half_minwidth,trunk_offset.y), vector(max_x+half_minwidth,trunk_offset.y)])
 
@@ -734,22 +737,20 @@ class layout():
     def add_vertical_trunk_route(self,
                                  pins,
                                  trunk_offset,
-                                 layer_stack=("metal1", "via1", "metal2"),
-                                 pitch=None):
+                                 layer_stack,
+                                 pitch):
         """
         Create a trunk route for all pins with the trunk located at the given x offset. 
         """
-        if not pitch:
-            pitch = self.get_layer_pitch(layer_stack[2])
-            
         max_y = max([pin.center().y for pin in pins])
         min_y = min([pin.center().y for pin in pins])
 
         # Add the vertical trunk
-        half_minwidth = 0.5*drc["minwidth_{}".format(layer_stack[2])]
+        half_minwidth = 0.5*self.horizontal_width
 
         # if we are less than a pitch, just create a non-preferred layer jog
-        if max_y-min_y < pitch:
+        if max_y-min_y <= pitch:
+            
             # Add the horizontal trunk on the vertical layer!
             self.add_path(layer_stack[0],[vector(trunk_offset.x,min_y-half_minwidth), vector(trunk_offset.x,max_y+half_minwidth)])
 
@@ -824,10 +825,15 @@ class layout():
             overlaps = (not vertical and x_overlap) or (vertical and y_overlap)
             return overlaps
 
-        if vertical:
-            pitch = self.get_layer_pitch(layer_stack[2])
+        if self.get_preferred_direction(layer_stack[0])=="V":
+            self.vertical_layer = layer_stack[0]
+            self.horizontal_layer = layer_stack[2]
         else:
-            pitch = self.get_layer_pitch(layer_stack[0])
+            self.vertical_layer = layer_stack[2]
+            self.horizontal_layer = layer_stack[0]
+
+        (self.vertical_pitch,self.vertical_width,self.vertical_space) = self.get_layer_pitch(self.vertical_layer)
+        (self.horizontal_pitch,self.horizontal_width,self.horizontal_space) = self.get_layer_pitch(self.horizontal_layer)
 
 
         # FIXME: Must extend this to a horizontal conflict graph too if we want to minimize the
@@ -857,7 +863,9 @@ class layout():
                 # Skip yourself
                 if net_name1 == net_name2:
                     continue
-                if vcg_nets_overlap(nets[net_name1], nets[net_name2], vertical, pitch):
+                if vertical and vcg_nets_overlap(nets[net_name1], nets[net_name2], vertical, self.vertical_pitch):
+                    vcg[net_name2].append(net_name1)
+                elif not vertical and vcg_nets_overlap(nets[net_name1], nets[net_name2], vertical, self.horizontal_pitch):
                     vcg[net_name2].append(net_name1)
                     
         # list of routes to do
@@ -885,11 +893,11 @@ class layout():
             
             # Add the trunk routes from the bottom up for horizontal or the left to right for vertical
             if vertical:
-                self.add_vertical_trunk_route(pin_list, offset, layer_stack, pitch)
-                offset += vector(pitch,0)
+                self.add_vertical_trunk_route(pin_list, offset, layer_stack, self.vertical_pitch)
+                offset += vector(self.vertical_pitch,0)
             else:
-                self.add_horizontal_trunk_route(pin_list, offset, layer_stack, pitch)
-                offset += vector(0,pitch)
+                self.add_horizontal_trunk_route(pin_list, offset, layer_stack, self.horizontal_pitch)
+                offset += vector(0,self.horizontal_pitch)
 
 
     def create_vertical_channel_route(self, netlist, offset, 

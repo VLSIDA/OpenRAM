@@ -708,29 +708,30 @@ class layout():
         max_x = max([pin.center().x for pin in pins])
         min_x = min([pin.center().x for pin in pins])
 
-        # Add the vertical trunk
-        half_minwidth = 0.5*self.vertical_width
-
         # if we are less than a pitch, just create a non-preferred layer jog
         if max_x-min_x <= pitch:
 
+            # Recalculate the far left and right of the pins for the trunk
+            max_x = max([pin.rx() for pin in pins])
+            min_x = min([pin.lx() for pin in pins])
+            
             # Add the horizontal trunk on the vertical layer!
-            self.add_path(layer_stack[2],[vector(min_x-half_minwidth,trunk_offset.y), vector(max_x+half_minwidth,trunk_offset.y)])
+            self.add_path(self.vertical_layer,[vector(min_x,trunk_offset.y), vector(max_x,trunk_offset.y)])
 
             # Route each pin to the trunk
             for pin in pins:
                 # No bend needed here
                 mid = vector(pin.center().x, trunk_offset.y)
-                self.add_path(layer_stack[2], [pin.center(), mid])
+                self.add_path(self.vertical_layer, [pin.center(), mid])
         else:
             # Add the horizontal trunk
-            self.add_path(layer_stack[0],[vector(min_x,trunk_offset.y), vector(max_x,trunk_offset.y)])
+            self.add_path(self.horizontal_layer,[vector(min_x,trunk_offset.y), vector(max_x,trunk_offset.y)])
             trunk_mid = vector(0.5*(max_x+min_x),trunk_offset.y)
 
             # Route each pin to the trunk
             for pin in pins:
                 mid = vector(pin.center().x, trunk_offset.y)
-                self.add_path(layer_stack[2], [pin.center(), mid])
+                self.add_path(self.vertical_layer, [pin.center(), mid])
                 self.add_via_center(layers=layer_stack,
                                     offset=mid)
 
@@ -745,29 +746,30 @@ class layout():
         max_y = max([pin.center().y for pin in pins])
         min_y = min([pin.center().y for pin in pins])
 
-        # Add the vertical trunk
-        half_minwidth = 0.5*self.horizontal_width
-
         # if we are less than a pitch, just create a non-preferred layer jog
         if max_y-min_y <= pitch:
+
+            # Recalculate the far left and right of the pins for the trunk
+            max_y = max([pin.uy() for pin in pins])
+            min_y = min([pin.by() for pin in pins])
             
-            # Add the horizontal trunk on the vertical layer!
-            self.add_path(layer_stack[0],[vector(trunk_offset.x,min_y-half_minwidth), vector(trunk_offset.x,max_y+half_minwidth)])
+            # Add the vertical trunk on the horizontal layer!
+            self.add_path(self.horizontal_layer,[vector(trunk_offset.x,min_y), vector(trunk_offset.x,max_y)])
 
             # Route each pin to the trunk
             for pin in pins:
                 # No bend needed here
                 mid = vector(trunk_offset.x, pin.center().y)
-                self.add_path(layer_stack[0], [pin.center(), mid])
+                self.add_path(self.horizontal_layer, [pin.center(), mid])
         else:
             # Add the vertical trunk
-            self.add_path(layer_stack[2],[vector(trunk_offset.x,min_y), vector(trunk_offset.x,max_y)])
+            self.add_path(self.vertical_layer,[vector(trunk_offset.x,min_y), vector(trunk_offset.x,max_y)])
             trunk_mid = vector(trunk_offset.x,0.5*(max_y+min_y),)
 
             # Route each pin to the trunk
             for pin in pins:
                 mid = vector(trunk_offset.x, pin.center().y)
-                self.add_path(layer_stack[0], [pin.center(), mid])
+                self.add_path(self.horizontal_layer, [pin.center(), mid])
                 self.add_via_center(layers=layer_stack,
                                     offset=mid)
         

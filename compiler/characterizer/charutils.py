@@ -1,15 +1,15 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import re
 import debug
 from globals import OPTS
 
-        
+    
 def relative_compare(value1,value2,error_tolerance=0.001):
     """ This is used to compare relative values for convergence. """
     return (abs(value1 - value2) / abs(max(value1,value2)) <= error_tolerance)
@@ -32,7 +32,6 @@ def parse_spice_list(filename, key):
     f.close()
     # val = re.search(r"{0}\s*=\s*(-?\d+.?\d*\S*)\s+.*".format(key), contents)
     val = re.search(r"{0}\s*=\s*(-?\d+.?\d*[e]?[-+]?[0-9]*\S*)\s+.*".format(key), contents)
-    
     if val != None:
         debug.info(4, "Key = " + key + " Val = " + val.group(1))
         return convert_to_float(val.group(1))

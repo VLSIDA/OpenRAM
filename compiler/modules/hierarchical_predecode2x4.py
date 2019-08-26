@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 from tech import drc
 import debug
@@ -47,6 +47,7 @@ class hierarchical_predecode2x4(hierarchical_predecode):
         self.place_output_inverters()
         self.place_nand_array()
         self.route()
+        self.add_boundary()
         self.DRC_LVS()        
 
     def get_nand_input_line_combination(self):
@@ -56,20 +57,3 @@ class hierarchical_predecode2x4(hierarchical_predecode):
                        ["Abar_0", "A_1"],
                        ["A_0",    "A_1"]]
         return combination 
-
-
-    def analytical_delay(self, corner, slew, load = 0.0 ):
-        # in -> inbar
-        a_t_b_delay = self.inv.analytical_delay(corner, slew=slew, load=self.nand.input_load())
-
-        # inbar -> z
-        b_t_z_delay = self.nand.analytical_delay(corner, slew=a_t_b_delay.slew, load=self.inv.input_load())
-
-        # Z -> out
-        a_t_out_delay = self.inv.analytical_delay(corner, slew=b_t_z_delay.slew, load=load)
-
-        return a_t_b_delay + b_t_z_delay + a_t_out_delay
-
-        
-    def input_load(self):
-        return self.nand.input_load()

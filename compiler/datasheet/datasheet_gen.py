@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 #!/usr/bin/env python3
 """
@@ -161,7 +161,7 @@ def parse_characterizer_csv(f, pages):
                     # check current .lib file produces the slowest timing results
                     while(True):
                         col_start = col
-                        if(row[col].startswith('DIN')):
+                        if(row[col].startswith('din')):
                             start = col
                             for item in sheet.timing_table.rows:
                                 if item[0].startswith(row[col]):
@@ -200,7 +200,7 @@ def parse_characterizer_csv(f, pages):
 
                             col += 1
 
-                        elif(row[col].startswith('DOUT')):
+                        elif(row[col].startswith('dout')):
                             start = col
                             for item in sheet.timing_table.rows:
                                 if item[0].startswith(row[col]):
@@ -239,7 +239,7 @@ def parse_characterizer_csv(f, pages):
 
                             col += 1
 
-                        elif(row[col].startswith('CSb')):
+                        elif(row[col].startswith('csb')):
                             start = col
                             for item in sheet.timing_table.rows:
                                 if item[0].startswith(row[col]):
@@ -278,7 +278,7 @@ def parse_characterizer_csv(f, pages):
 
                             col += 1
 
-                        elif(row[col].startswith('WEb')):
+                        elif(row[col].startswith('web')):
                             start = col
                             for item in sheet.timing_table.rows:
                                 if item[0].startswith(row[col]):
@@ -317,7 +317,7 @@ def parse_characterizer_csv(f, pages):
 
                             col += 1
 
-                        elif(row[col].startswith('ADDR')):
+                        elif(row[col].startswith('addr')):
                             start = col
                             for item in sheet.timing_table.rows:
                                 if item[0].startswith(row[col]):
@@ -441,7 +441,7 @@ def parse_characterizer_csv(f, pages):
                 # parse initial timing information
                 while(True):
                     col_start = col
-                    if(row[col].startswith('DIN')):
+                    if(row[col].startswith('din')):
                         start = col
 
                         new_sheet.timing_table.add_row(
@@ -465,7 +465,7 @@ def parse_characterizer_csv(f, pages):
 
                         col += 1
 
-                    elif(row[col].startswith('DOUT')):
+                    elif(row[col].startswith('dout')):
                         start = col
 
                         new_sheet.timing_table.add_row(
@@ -489,7 +489,7 @@ def parse_characterizer_csv(f, pages):
 
                         col += 1
 
-                    elif(row[col].startswith('CSb')):
+                    elif(row[col].startswith('csb')):
                         start = col
 
                         new_sheet.timing_table.add_row(
@@ -513,7 +513,7 @@ def parse_characterizer_csv(f, pages):
 
                         col += 1
 
-                    elif(row[col].startswith('WEb')):
+                    elif(row[col].startswith('web')):
                         start = col
 
                         new_sheet.timing_table.add_row(
@@ -537,7 +537,7 @@ def parse_characterizer_csv(f, pages):
 
                         col += 1
 
-                    elif(row[col].startswith('ADDR')):
+                    elif(row[col].startswith('addr')):
                         start = col
 
                         new_sheet.timing_table.add_row(

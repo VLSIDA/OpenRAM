@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import os
 import debug
@@ -13,9 +13,7 @@ from .lib import *
 from .delay import *
 from .setup_hold import *
 from .functional import *
-from .worst_case import *
 from .simulation import *
-from .bitline_delay import *
 from .measurements import *
 from .model_check import *
 

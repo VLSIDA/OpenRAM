@@ -1,6 +1,6 @@
 magic
 tech scmos
-timestamp 1556015973
+timestamp 1565304081
 << nwell >>
 rect -3 101 37 138
 rect -3 0 37 51
@@ -10,7 +10,6 @@ rect -3 51 37 101
 << ntransistor >>
 rect 9 178 11 190
 rect 17 178 19 190
-rect 15 163 27 165
 rect 9 144 11 148
 rect 17 144 19 148
 rect 10 82 12 89
@@ -31,10 +30,6 @@ rect 8 178 9 190
 rect 11 178 12 190
 rect 16 178 17 190
 rect 19 178 20 190
-rect 15 165 27 166
-rect 15 162 27 163
-rect 12 158 15 161
-rect 12 156 16 158
 rect 8 144 9 148
 rect 11 144 12 148
 rect 16 144 17 148
@@ -71,8 +66,6 @@ rect 3 35 7 38
 rect 4 178 8 190
 rect 12 178 16 190
 rect 20 178 24 190
-rect 15 166 27 170
-rect 15 158 27 162
 rect 4 144 8 148
 rect 12 144 16 148
 rect 20 144 24 148
@@ -95,7 +88,6 @@ rect 11 38 15 45
 rect 19 38 23 45
 rect 27 38 31 45
 << psubstratepcontact >>
-rect 12 152 16 156
 rect 26 82 30 89
 << nsubstratencontact >>
 rect 12 118 16 122
@@ -109,8 +101,6 @@ rect 9 176 11 178
 rect 17 173 19 178
 rect 6 171 19 173
 rect 6 168 8 171
-rect 13 163 15 165
-rect 27 163 33 165
 rect 9 148 11 150
 rect 17 148 19 150
 rect 9 132 11 144
@@ -133,12 +123,9 @@ rect 18 89 20 90
 rect 10 81 12 82
 rect 10 79 13 81
 rect 2 71 3 75
-rect 11 71 13 79
+rect 11 67 13 79
 rect 18 79 20 82
 rect 18 77 23 79
-rect 31 71 33 163
-rect 11 69 33 71
-rect 11 67 13 69
 rect 8 65 13 67
 rect 8 64 10 65
 rect 16 64 18 66
@@ -164,13 +151,9 @@ rect 15 10 19 14
 rect 5 193 10 197
 rect 5 190 8 193
 rect 32 182 33 186
-rect 13 170 16 178
-rect 13 166 15 170
 rect 4 148 8 164
-rect 12 158 15 162
-rect 12 156 16 158
-rect 23 157 27 158
-rect 12 148 16 152
+rect 12 163 16 178
+rect 12 148 16 159
 rect 4 132 8 144
 rect 20 142 24 144
 rect 30 142 33 182
@@ -194,12 +177,12 @@ rect 27 45 31 60
 rect 3 35 7 38
 rect 19 35 23 38
 rect 7 31 19 35
-rect 0 24 7 28
-rect 11 24 36 28
+rect 3 24 7 28
+rect 11 24 31 28
 << m2contact >>
 rect 10 193 14 197
 rect 20 190 24 194
-rect 23 153 27 157
+rect 12 159 16 163
 rect 16 118 20 122
 rect 26 89 30 90
 rect 26 86 30 89
@@ -215,12 +198,12 @@ rect 15 0 19 6
 rect 0 0 34 203
 << labels >>
 rlabel metal2 15 1 15 1 1 din
-rlabel metal1 2 25 2 25 3 en
 rlabel m2contact 21 66 21 66 1 gnd
 rlabel m2contact 28 88 28 88 1 gnd
 rlabel m2contact 21 33 21 33 1 vdd
 rlabel m2contact 18 120 18 120 1 vdd
-rlabel m2contact 25 155 25 155 1 gnd
 rlabel metal2 12 201 12 201 5 bl
 rlabel metal2 22 201 22 201 5 br
+rlabel m2contact 14 161 14 161 1 gnd
+rlabel metal1 17 26 17 26 1 en
 << end >>

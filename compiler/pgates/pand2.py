@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import debug
 from tech import drc
@@ -18,7 +18,7 @@ class pand2(pgate.pgate):
     This is a simple buffer used for driving loads. 
     """
     def __init__(self, name, size=1, height=None):
-        debug.info(1, "reating pnand2 {}".format(name))
+        debug.info(1, "Creating pnand2 {}".format(name))
         self.add_comment("size: {}".format(size))
         
         self.size = size
@@ -35,8 +35,8 @@ class pand2(pgate.pgate):
         # Shield the cap, but have at least a stage effort of 4
         self.nand = factory.create(module_type="pnand2",height=self.height) 
         self.add_mod(self.nand)
-        
-        self.inv = factory.create(module_type="pinv", size=self.size, height=self.height)
+
+        self.inv = factory.create(module_type="pdriver", neg_polarity=True, fanout=3*self.size, height=self.height)
         self.add_mod(self.inv)
 
     def create_layout(self):
@@ -47,11 +47,11 @@ class pand2(pgate.pgate):
         self.DRC_LVS()
         
     def add_pins(self):
-        self.add_pin("A")
-        self.add_pin("B")
-        self.add_pin("Z")
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+        self.add_pin("A", "INPUT")
+        self.add_pin("B", "INPUT")
+        self.add_pin("Z", "OUTPUT")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
     def create_insts(self):
         self.nand_inst=self.add_inst(name="pand2_nand",
@@ -110,14 +110,6 @@ class pand2(pgate.pgate):
                                             width=pin.width(),
                                             height=pin.height())
         
-        
-
-    def analytical_delay(self, corner, slew, load=0.0):
-        """ Calculate the analytical delay of DFF-> INV -> INV """
-        nand_delay = self.nand.analytical_delay(corner, slew=slew, load=self.inv.input_load()) 
-        inv_delay = self.inv.analytical_delay(corner, slew=nand_delay.slew, load=load)
-        return nand_delay + inv_delay
-    
     def get_stage_efforts(self, external_cout, inp_is_rise=False):
         """Get the stage efforts of the A or B -> Z path"""
         stage_effort_list = []

@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import debug
 import pgate
@@ -178,15 +178,7 @@ class pinvbuf(pgate.pgate):
                                         offset=a_pin.center())
         self.add_via_center(layers=("metal1","via1","metal2"),
                             offset=a_pin.center())
-        
-        
-
-    def analytical_delay(self, corner, slew, load=0.0):
-        """ Calculate the analytical delay of DFF-> INV -> INV """
-        inv1_delay = self.inv1.analytical_delay(corner, slew=slew, load=self.inv2.input_load()) 
-        inv2_delay = self.inv2.analytical_delay(corner, slew=inv1_delay.slew, load=load)
-        return inv1_delay + inv2_delay
-            
+             
     def determine_clk_buf_stage_efforts(self, external_cout, inp_is_rise=False):
         """Get the stage efforts of the clk -> clk_buf path"""
         stage_effort_list = []

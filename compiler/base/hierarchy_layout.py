@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import itertools
 import geometry
@@ -214,18 +214,35 @@ class layout():
             return self.pin_map[text]
         else:
             return set()
-    
+
+    def get_pin_names(self):
+        """ 
+        Return a pin list of all pins
+        """
+        return self.pin_map.keys()
+        
     def copy_layout_pin(self, instance, pin_name, new_name=""):
         """ 
         Create a copied version of the layout pin at the current level.
         You can optionally rename the pin to a new name. 
         """
         pins=instance.get_pins(pin_name)
+        
+        debug.check(len(pins)>0,"Could not find pin {}".format(pin_name))
+        
         for pin in pins:
             if new_name=="":
                 new_name = pin.name
             self.add_layout_pin(new_name, pin.layer, pin.ll(), pin.width(), pin.height())
 
+    def copy_layout_pins(self, instance, prefix=""):
+        """ 
+        Create a copied version of the layout pin at the current level.
+        You can optionally rename the pin to a new name. 
+        """
+        for pin_name in self.pin_map.keys():
+            self.copy_layout_pin(instance, pin_name, prefix+pin_name)
+            
     def add_layout_pin_segment_center(self, text, layer, start, end):
         """ 
         Creates a path like pin with center-line convention 
@@ -663,81 +680,92 @@ class layout():
                 self.add_via_center(layers=layer_stack,
                                     offset=bus_pos,
                                     rotate=90)
-
+    def get_layer_pitch(self, layer):
+        """ Return the track pitch on a given layer """
+        if layer=="metal1":
+            return (self.m1_pitch,self.m1_pitch-self.m1_space,self.m1_space)
+        elif layer=="metal2":
+            return (self.m2_pitch,self.m2_pitch-self.m2_space,self.m2_space)
+        elif layer=="metal3":
+            return (self.m3_pitch,self.m3_pitch-self.m3_space,self.m3_space)
+        elif layer=="metal4":
+            from tech import layer as tech_layer
+            if "metal4" in tech_layer:
+                return (self.m3_pitch,self.m3_pitch-self.m4_space,self.m4_space)
+            else:
+                return (self.m3_pitch,self.m3_pitch-self.m3_space,self.m3_space)
+        else:
+            debug.error("Cannot find layer pitch.")
+            
     def add_horizontal_trunk_route(self,
                                    pins,
                                    trunk_offset,
-                                   layer_stack=("metal1", "via1", "metal2"),
-                                   pitch=None):
+                                   layer_stack,
+                                   pitch):
         """
         Create a trunk route for all pins with  the trunk located at the given y offset. 
         """
-        if not pitch:
-            pitch = self.m1_pitch
-        
         max_x = max([pin.center().x for pin in pins])
         min_x = min([pin.center().x for pin in pins])
-        
-        half_minwidth = 0.5*drc["minwidth_{}".format(layer_stack[0])]
 
         # if we are less than a pitch, just create a non-preferred layer jog
-        if max_x-min_x < pitch:
+        if max_x-min_x <= pitch:
+
+            half_layer_width = 0.5*drc["minwidth_{0}".format(self.vertical_layer)]
+            
             # Add the horizontal trunk on the vertical layer!
-            self.add_path(layer_stack[2],[vector(min_x-half_minwidth,trunk_offset.y), vector(max_x+half_minwidth,trunk_offset.y)])
+            self.add_path(self.vertical_layer,[vector(min_x-half_layer_width,trunk_offset.y), vector(max_x+half_layer_width,trunk_offset.y)])
 
             # Route each pin to the trunk
             for pin in pins:
                 # No bend needed here
                 mid = vector(pin.center().x, trunk_offset.y)
-                self.add_path(layer_stack[2], [pin.center(), mid])
+                self.add_path(self.vertical_layer, [pin.center(), mid])
         else:
             # Add the horizontal trunk
-            self.add_path(layer_stack[0],[vector(min_x,trunk_offset.y), vector(max_x,trunk_offset.y)])
+            self.add_path(self.horizontal_layer,[vector(min_x,trunk_offset.y), vector(max_x,trunk_offset.y)])
             trunk_mid = vector(0.5*(max_x+min_x),trunk_offset.y)
 
             # Route each pin to the trunk
             for pin in pins:
                 mid = vector(pin.center().x, trunk_offset.y)
-                self.add_path(layer_stack[2], [pin.center(), mid])
+                self.add_path(self.vertical_layer, [pin.center(), mid])
                 self.add_via_center(layers=layer_stack,
                                     offset=mid)
 
     def add_vertical_trunk_route(self,
                                  pins,
                                  trunk_offset,
-                                 layer_stack=("metal1", "via1", "metal2"),
-                                 pitch=None):
+                                 layer_stack,
+                                 pitch):
         """
         Create a trunk route for all pins with the trunk located at the given x offset. 
         """
-        if not pitch:
-            pitch = self.m2_pitch
-            
         max_y = max([pin.center().y for pin in pins])
         min_y = min([pin.center().y for pin in pins])
 
-        # Add the vertical trunk
-        half_minwidth = 0.5*drc["minwidth_{}".format(layer_stack[2])]
-
         # if we are less than a pitch, just create a non-preferred layer jog
-        if max_y-min_y < pitch:
-            # Add the horizontal trunk on the vertical layer!
-            self.add_path(layer_stack[0],[vector(trunk_offset.x,min_y-half_minwidth), vector(trunk_offset.x,max_y+half_minwidth)])
+        if max_y-min_y <= pitch:
+
+            half_layer_width = 0.5*drc["minwidth_{0}".format(self.horizontal_layer)]
+            
+            # Add the vertical trunk on the horizontal layer!
+            self.add_path(self.horizontal_layer,[vector(trunk_offset.x,min_y-half_layer_width), vector(trunk_offset.x,max_y+half_layer_width)])
 
             # Route each pin to the trunk
             for pin in pins:
                 # No bend needed here
                 mid = vector(trunk_offset.x, pin.center().y)
-                self.add_path(layer_stack[0], [pin.center(), mid])
+                self.add_path(self.horizontal_layer, [pin.center(), mid])
         else:
             # Add the vertical trunk
-            self.add_path(layer_stack[2],[vector(trunk_offset.x,min_y), vector(trunk_offset.x,max_y)])
+            self.add_path(self.vertical_layer,[vector(trunk_offset.x,min_y), vector(trunk_offset.x,max_y)])
             trunk_mid = vector(trunk_offset.x,0.5*(max_y+min_y),)
 
             # Route each pin to the trunk
             for pin in pins:
                 mid = vector(trunk_offset.x, pin.center().y)
-                self.add_path(layer_stack[0], [pin.center(), mid])
+                self.add_path(self.horizontal_layer, [pin.center(), mid])
                 self.add_via_center(layers=layer_stack,
                                     offset=mid)
         
@@ -745,7 +773,6 @@ class layout():
     def create_channel_route(self, netlist,
                              offset, 
                              layer_stack=("metal1", "via1", "metal2"),
-                             pitch=None,
                              vertical=False):
         """
         The net list is a list of the nets. Each net is a list of pins
@@ -769,7 +796,7 @@ class layout():
                     g[other_pin]=conflicts
             return g
 
-        def vcg_nets_overlap(net1, net2, vertical):
+        def vcg_nets_overlap(net1, net2, vertical, pitch):
             """ 
             Check all the pin pairs on two nets and return a pin
             overlap if any pin overlaps 
@@ -777,12 +804,12 @@ class layout():
             
             for pin1 in net1:
                 for pin2 in net2:
-                    if vcg_pin_overlap(pin1, pin2, vertical):
+                    if vcg_pin_overlap(pin1, pin2, vertical, pitch):
                         return True
 
             return False
                             
-        def vcg_pin_overlap(pin1, pin2, vertical):
+        def vcg_pin_overlap(pin1, pin2, vertical, pitch):
             """ Check for vertical or horizontal overlap of the two pins """
             # FIXME: If the pins are not in a row, this may break.
             # However, a top pin shouldn't overlap another top pin, for example, so the
@@ -796,10 +823,15 @@ class layout():
             overlaps = (not vertical and x_overlap) or (vertical and y_overlap)
             return overlaps
 
+        if self.get_preferred_direction(layer_stack[0])=="V":
+            self.vertical_layer = layer_stack[0]
+            self.horizontal_layer = layer_stack[2]
+        else:
+            self.vertical_layer = layer_stack[2]
+            self.horizontal_layer = layer_stack[0]
 
-
-        if not pitch:
-            pitch = self.m2_pitch
+        (self.vertical_pitch,self.vertical_width,self.vertical_space) = self.get_layer_pitch(self.vertical_layer)
+        (self.horizontal_pitch,self.horizontal_width,self.horizontal_space) = self.get_layer_pitch(self.horizontal_layer)
 
 
         # FIXME: Must extend this to a horizontal conflict graph too if we want to minimize the
@@ -829,7 +861,9 @@ class layout():
                 # Skip yourself
                 if net_name1 == net_name2:
                     continue
-                if vcg_nets_overlap(nets[net_name1], nets[net_name2], vertical):
+                if vertical and vcg_nets_overlap(nets[net_name1], nets[net_name2], vertical, self.vertical_pitch):
+                    vcg[net_name2].append(net_name1)
+                elif not vertical and vcg_nets_overlap(nets[net_name1], nets[net_name2], vertical, self.horizontal_pitch):
                     vcg[net_name2].append(net_name1)
                     
         # list of routes to do
@@ -857,28 +891,33 @@ class layout():
             
             # Add the trunk routes from the bottom up for horizontal or the left to right for vertical
             if vertical:
-                self.add_vertical_trunk_route(pin_list, offset, layer_stack, pitch)
-                offset += vector(pitch,0)
+                self.add_vertical_trunk_route(pin_list, offset, layer_stack, self.vertical_pitch)
+                offset += vector(self.vertical_pitch,0)
             else:
-                self.add_horizontal_trunk_route(pin_list, offset, layer_stack, pitch)
-                offset += vector(0,pitch)
+                self.add_horizontal_trunk_route(pin_list, offset, layer_stack, self.horizontal_pitch)
+                offset += vector(0,self.horizontal_pitch)
 
 
     def create_vertical_channel_route(self, netlist, offset, 
-                                      layer_stack=("metal1", "via1", "metal2"),
-                                      pitch=None):
+                                      layer_stack=("metal1", "via1", "metal2")):
         """
         Wrapper to create a vertical channel route
         """
-        self.create_channel_route(netlist, offset, layer_stack, pitch, vertical=True)
+        self.create_channel_route(netlist, offset, layer_stack, vertical=True)
 
     def create_horizontal_channel_route(self, netlist, offset, 
-                                        layer_stack=("metal1", "via1", "metal2"),
-                                        pitch=None):
+                                        layer_stack=("metal1", "via1", "metal2")):
         """
         Wrapper to create a horizontal channel route
         """
-        self.create_channel_route(netlist, offset, layer_stack, pitch, vertical=False)
+        self.create_channel_route(netlist, offset, layer_stack, vertical=False)
+
+    def add_boundary(self, offset=vector(0,0)):
+        """ Add boundary for debugging dimensions """
+        self.add_rect(layer="boundary",
+                      offset=offset,
+                      height=self.height,
+                      width=self.width)
         
     def add_enclosure(self, insts, layer="nwell"):
         """ Add a layer that surrounds the given instances. Useful

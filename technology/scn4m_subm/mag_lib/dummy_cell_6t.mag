@@ -1,0 +1,115 @@
+magic
+tech scmos
+timestamp 1560809362
+<< nwell >>
+rect -8 35 42 57
+<< pwell >>
+rect -8 -2 42 35
+<< ntransistor >>
+rect 7 16 9 24
+rect 29 16 31 24
+rect 10 9 14 11
+rect 24 9 28 11
+<< ptransistor >>
+rect 7 43 11 46
+rect 27 43 31 46
+<< ndiffusion >>
+rect -2 22 7 24
+rect 2 18 7 22
+rect -2 16 7 18
+rect 9 20 10 24
+rect 9 16 14 20
+rect 28 20 29 24
+rect 24 16 29 20
+rect 31 22 36 24
+rect 31 18 32 22
+rect 31 16 36 18
+rect 10 11 14 16
+rect 24 11 28 16
+rect 10 8 14 9
+rect 24 8 28 9
+<< pdiffusion >>
+rect 2 43 7 46
+rect 11 43 12 46
+rect 26 43 27 46
+rect 31 43 32 46
+<< ndcontact >>
+rect -2 18 2 22
+rect 10 20 14 24
+rect 24 20 28 24
+rect 32 18 36 22
+rect 10 4 14 8
+rect 24 4 28 8
+<< pdcontact >>
+rect -2 42 2 46
+rect 12 42 16 46
+rect 22 42 26 46
+rect 32 42 36 46
+<< psubstratepcontact >>
+rect -2 28 2 32
+rect 32 28 36 32
+<< nsubstratencontact >>
+rect 32 50 36 54
+<< polysilicon >>
+rect 7 46 11 48
+rect 27 46 31 48
+rect 7 41 11 43
+rect 7 27 9 41
+rect 27 40 31 43
+rect 15 39 31 40
+rect 19 38 31 39
+rect 7 26 21 27
+rect 7 25 24 26
+rect 7 24 9 25
+rect 29 24 31 38
+rect 7 14 9 16
+rect 17 11 21 12
+rect 29 14 31 16
+rect -2 9 10 11
+rect 14 9 24 11
+rect 28 9 36 11
+<< polycontact >>
+rect 15 35 19 39
+rect 21 26 25 30
+rect 17 12 21 16
+<< metal1 >>
+rect -2 50 15 54
+rect 19 50 32 54
+rect -2 46 2 50
+rect 32 46 36 50
+rect 11 42 12 46
+rect 26 42 27 46
+rect -2 32 2 35
+rect -2 22 2 28
+rect 11 24 15 42
+rect 23 30 27 42
+rect 25 26 27 30
+rect 14 20 15 24
+rect 23 24 27 26
+rect 32 32 36 35
+rect 23 20 24 24
+rect 32 22 36 28
+rect -2 12 17 15
+rect 21 12 36 15
+rect -2 11 36 12
+<< m2contact >>
+rect 15 50 19 54
+rect -2 35 2 39
+rect 32 35 36 39
+<< metal2 >>
+rect -2 39 2 54
+rect -2 0 2 35
+rect 6 0 10 54
+rect 24 0 28 54
+rect 32 39 36 54
+rect 32 0 36 35
+<< bb >>
+rect 0 0 34 52
+<< labels >>
+rlabel metal2 0 6 0 6 1 gnd
+rlabel metal2 34 6 34 6 1 gnd
+rlabel m2contact 17 52 17 52 5 vdd
+rlabel metal2 8 49 8 49 1 bl
+rlabel metal2 26 49 26 49 1 br
+rlabel metal1 4 13 4 13 1 wl
+<< end >>

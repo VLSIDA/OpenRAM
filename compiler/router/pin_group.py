@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 from direction import direction
 from pin_layout import pin_layout
@@ -470,9 +470,9 @@ class pin_group:
         # Now, make sure each pin touches an enclosure. If not, add another (diagonal) connector.
         # This could only happen when there was no enclosure in any cardinal direction from a pin
         if not self.overlap_any_shape(self.pins, self.enclosures):
-            connector = self.find_smallest_connector(pin_list, self.enclosures)
+            connector = self.find_smallest_connector(self.pins, self.enclosures)
             if connector==None:
-                debug.error("Could not find a connector for {} with {}".format(pin_list, self.enclosures))
+                debug.error("Could not find a connector for {} with {}".format(self.pins, self.enclosures))
                 self.router.write_debug_gds("no_connector.gds")
             self.enclosures.append(connector)
                     

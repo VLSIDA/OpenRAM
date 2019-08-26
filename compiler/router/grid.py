@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import numpy as np
 import string
@@ -50,7 +50,7 @@ class grid:
                 self.add_map(vector3d(x,y,1))
         
     def set_blocked(self,n,value=True):
-        if isinstance(n, (list,tuple,set,frozenset)):
+        if not isinstance(n, vector3d):
             for item in n:
                 self.set_blocked(item,value)
         else:
@@ -58,7 +58,7 @@ class grid:
             self.map[n].blocked=value
 
     def is_blocked(self,n):
-        if isinstance(n, (list,tuple,set,frozenset)):
+        if not isinstance(n, vector3d):
             for item in n:
                 if self.is_blocked(item):
                     return True
@@ -82,7 +82,7 @@ class grid:
             self.map[k].blocked=False
             
     def set_source(self,n,value=True):
-        if isinstance(n, (list,tuple,set,frozenset)):
+        if not isinstance(n, vector3d):
             for item in n:
                 self.set_source(item,value)
         else:
@@ -91,7 +91,7 @@ class grid:
             self.source.add(n)
         
     def set_target(self,n,value=True):
-        if isinstance(n, (list,tuple,set,frozenset)):
+        if not isinstance(n, vector3d):
             for item in n:
                 self.set_target(item,value)
         else:
@@ -125,7 +125,7 @@ class grid:
         """
         Add a point to the map if it doesn't exist.
         """
-        if isinstance(n, (list,tuple,set,frozenset)):
+        if not isinstance(n, vector3d):
             for item in n:
                 self.add_map(item)
         else:

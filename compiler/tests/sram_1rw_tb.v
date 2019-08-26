@@ -13,9 +13,9 @@ module sram_1rw_tb;
    reg 	     web0;
    wire [1:0] dout0;
 
-   sram_2_16_scn4m_subm U0 (.DIN0(din0),
-			    .DOUT0(dout0),
-			    .ADDR0(addr0),
+   sram_2_16_scn4m_subm U0 (.din0(din0),
+			    .dout0(dout0),
+			    .addr0(addr0),
 			    .csb0(csb0), 
 			    .web0(web0), 
 			    .clk0(clk)

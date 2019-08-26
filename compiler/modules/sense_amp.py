@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import design
 import debug
@@ -20,6 +20,7 @@ class sense_amp(design.design):
     """
 
     pin_names = ["bl", "br", "dout", "en", "vdd", "gnd"]
+    type_list = ["INPUT", "INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
     (width,height) = utils.get_libcell_size("sense_amp", GDS["unit"], layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "sense_amp", GDS["unit"])
 
@@ -30,16 +31,20 @@ class sense_amp(design.design):
         self.width = sense_amp.width
         self.height = sense_amp.height
         self.pin_map = sense_amp.pin_map
-
-    def input_load(self):
+        self.add_pin_types(self.type_list)
+        
+    def get_cin(self):
+    
+        # FIXME: This input load will be applied to both the s_en timing and bitline timing.
+        
         #Input load for the bitlines which are connected to the source/drain of a TX. Not the selects.
         from tech import spice, parameter
         # Default is 8x. Per Samira and Hodges-Jackson book:
         # "Column-mux transistors driven by the decoder must be sized for optimal speed"
         bitline_pmos_size = 8 #FIXME: This should be set somewhere and referenced. Probably in tech file.
-        return spice["min_tx_drain_c"]*(bitline_pmos_size/parameter["min_tx_size"])#ff   
+        return spice["min_tx_drain_c"]*(bitline_pmos_size)#ff   
         
-    def analytical_delay(self, corner, slew, load):
+    def get_stage_effort(self, load):
         #Delay of the sense amp will depend on the size of the amp and the output load.
         parasitic_delay = 1
         cin = (parameter["sa_inv_pmos_size"] + parameter["sa_inv_nmos_size"])/drc("minwidth_tx")
@@ -59,3 +64,15 @@ class sense_amp(design.design):
         nmos_cin = parameter["sa_en_nmos_size"]/drc("minwidth_tx")
         #sen is connected to 2 pmos isolation TX and 1 nmos per sense amp.
         return 2*pmos_cin + nmos_cin
+    
+    def get_enable_name(self):
+        """Returns name used for enable net"""
+        #FIXME: A better programmatic solution to designate pins
+        enable_name = "en"
+        debug.check(enable_name in self.pin_names, "Enable name {} not found in pin list".format(enable_name))
+        return enable_name
+    
+    def build_graph(self, graph, inst_name, port_nets):        
+        """Adds edges based on inputs/outputs. Overrides base class function."""
+        self.add_graph_edges(graph, port_nets) 
+        

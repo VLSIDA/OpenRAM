@@ -1,16 +1,16 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 """
-This is a DRC/LVS/PEX interface file for magic + netgen. 
+This is a DRC/LVS/PEX interface file for magic + netgen.
 
 We include the tech file for SCN4M_SUBM in the tech directory,
-that is included in OpenRAM during DRC. 
-You can use this interactively by appending the magic system path in 
+that is included in OpenRAM during DRC.
+You can use this interactively by appending the magic system path in
 your .magicrc file
 path sys /Users/mrg/openram/technology/scn3me_subm/tech
 
@@ -33,7 +33,7 @@ num_drc_runs = 0
 num_lvs_runs = 0
 num_pex_runs = 0
 
-    
+
 def write_magic_script(cell_name, extract=False, final_verification=False):
     """ Write a magic script to perform DRC and optionally extraction. """
 
@@ -69,7 +69,7 @@ def write_magic_script(cell_name, extract=False, final_verification=False):
     if final_verification:
         f.write(pre+"extract unique all\n".format(cell_name))
     f.write(pre+"extract\n".format(cell_name))
-    #f.write(pre+"ext2spice hierarchy on\n")        
+    #f.write(pre+"ext2spice hierarchy on\n")
     #f.write(pre+"ext2spice scale off\n")
     # lvs exists in 8.2.79, but be backword compatible for now
     #f.write(pre+"ext2spice lvs\n")
@@ -82,18 +82,18 @@ def write_magic_script(cell_name, extract=False, final_verification=False):
     f.write(pre+"ext2spice blackbox on\n")
     f.write(pre+"ext2spice subcircuit top auto\n")
     f.write(pre+"ext2spice global off\n")
-    
+
     # Can choose hspice, ngspice, or spice3,
     # but they all seem compatible enough.
     #f.write(pre+"ext2spice format ngspice\n")
     f.write(pre+"ext2spice {}\n".format(cell_name))
     f.write("quit -noprompt\n")
     f.write("EOF\n")
-        
+
     f.close()
     os.system("chmod u+x {}".format(run_file))
 
-    
+
 def write_netgen_script(cell_name):
     """ Write a netgen script to perform LVS. """
 
@@ -119,7 +119,7 @@ def write_netgen_script(cell_name):
     f.close()
     os.system("chmod u+x {}".format(run_file))
 
-    
+
 def run_drc(cell_name, gds_name, extract=True, final_verification=False):
     """Run DRC check on a cell which is implemented in gds_name."""
 
@@ -129,7 +129,7 @@ def run_drc(cell_name, gds_name, extract=True, final_verification=False):
     # Copy file to local dir if it isn't already
     if os.path.dirname(gds_name)!=OPTS.openram_temp.rstrip('/'):
         shutil.copy(gds_name, OPTS.openram_temp)
-    
+
     # Copy .magicrc file into temp dir
     magic_file = OPTS.openram_tech + "mag_lib/.magicrc"
     if os.path.exists(magic_file):
@@ -151,7 +151,7 @@ def run_drc(cell_name, gds_name, extract=True, final_verification=False):
         f = open(outfile, "r")
     except FileNotFoundError:
         debug.error("Unable to load DRC results file from {}. Is magic set up?".format(outfile),1)
-        
+
     results = f.readlines()
     f.close()
     errors=1
@@ -162,7 +162,7 @@ def run_drc(cell_name, gds_name, extract=True, final_verification=False):
             break
     else:
         debug.error("Unable to find the total error line in Magic output.",1)
-            
+
 
     # always display this summary
     if errors > 0:
@@ -189,19 +189,19 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
         shutil.copy(gds_name, OPTS.openram_temp)
     if os.path.dirname(sp_name)!=OPTS.openram_temp.rstrip('/'):
         shutil.copy(sp_name, OPTS.openram_temp)
-    
+
     write_netgen_script(cell_name)
 
     (outfile, errfile, resultsfile) = run_script(cell_name, "lvs")
-    
+
     total_errors = 0
-    
+
     # check the result for these lines in the summary:
     try:
         f = open(resultsfile, "r")
     except FileNotFoundError:
         debug.error("Unable to load LVS results from {}".format(resultsfile),1)
-                    
+
     results = f.readlines()
     f.close()
     # Look for the results after the final "Subcircuit summary:"
@@ -217,14 +217,14 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     test = re.compile("Property errors were found.")
     propertyerrors = list(filter(test.search, results))
     total_errors += len(propertyerrors)
-    
+
     # Require pins to match?
     # Cell pin lists for pnand2_1.spice and pnand2_1 altered to match.
     # test = re.compile(".*altered to match.")
     # pinerrors = list(filter(test.search, results))
     # if len(pinerrors)>0:
     #     debug.warning("Pins altered to match in {}.".format(cell_name))
-    
+
     #if len(propertyerrors)>0:
     #    debug.warning("Property errors found, but not checking them.")
 
@@ -232,7 +232,7 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     test = re.compile("Netlists do not match.")
     incorrect = list(filter(test.search, final_results))
     total_errors += len(incorrect)
-    
+
     # Netlists match uniquely.
     test = re.compile("match uniquely.")
     correct = list(filter(test.search, final_results))
@@ -244,7 +244,7 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
         # Just print out the whole file, it is short.
         for e in results:
             debug.info(1,e.strip("\n"))
-        debug.error("{0}\tLVS mismatch (results in {1})".format(cell_name,resultsfile)) 
+        debug.error("{0}\tLVS mismatch (results in {1})".format(cell_name,resultsfile))
     else:
         debug.info(1, "{0}\tLVS matches".format(cell_name))
 
@@ -257,9 +257,9 @@ def run_pex(name, gds_name, sp_name, output=None, final_verification=False):
 
     global num_pex_runs
     num_pex_runs += 1
-    
-    debug.warning("PEX using magic not implemented.")
-    return 1
+    #debug.warning("PEX using magic not implemented.")
+    #return 1
+    os.chdir(OPTS.openram_temp)
 
     from tech import drc
     if output == None:
@@ -271,25 +271,67 @@ def run_pex(name, gds_name, sp_name, output=None, final_verification=False):
         run_drc(name, gds_name)
         run_lvs(name, gds_name, sp_name)
 
-        """
-        2. magic can perform extraction with the following:
-        #!/bin/sh
-        rm -f $1.ext
-        rm -f $1.spice
-        magic -dnull -noconsole << EOF
-        tech load SCN3ME_SUBM.30
-        #scalegrid 1 2
-        gds rescale no
-        gds polygon subcell true
-        gds warning default
-        gds read $1
-        extract
-        ext2spice scale off
-        ext2spice
-        quit -noprompt
-        EOF
-        """
-        
+    # pex_fix did run the pex using a script while dev orignial method
+    # use batch mode.
+    # the dev old code using batch mode does not run and is split into functions
+    #pex_runset = write_batch_pex_rule(gds_name,name,sp_name,output)
+    pex_runset = write_script_pex_rule(gds_name,name,output)
+
+    errfile = "{0}{1}.pex.err".format(OPTS.openram_temp, name)
+    outfile = "{0}{1}.pex.out".format(OPTS.openram_temp, name)
+
+    # bash mode command from dev branch
+    #batch_cmd = "{0} -gui -pex {1}pex_runset -batch 2> {2} 1> {3}".format(OPTS.pex_exe,
+    #                                                                OPTS.openram_temp,
+    #                                                                errfile,
+    #                                                                outfile)
+    script_cmd = "{0} 2> {1} 1> {2}".format(pex_runset,
+                                            errfile,
+                                            outfile)
+    cmd = script_cmd
+    debug.info(2, cmd)
+    os.system(cmd)
+
+    # rename technology models
+    pex_nelist = open(output, 'r')
+    s = pex_nelist.read()
+    pex_nelist.close()
+    s = s.replace('pfet','p')
+    s = s.replace('nfet','n')
+    f = open(output, 'w')
+    f.write(s)
+    f.close()
+
+    # also check the output file
+    f = open(outfile, "r")
+    results = f.readlines()
+    f.close()
+    out_errors = find_error(results)
+    debug.check(os.path.isfile(output),"Couldn't find PEX extracted output.")
+
+    correct_port(name,output,sp_name)
+    return out_errors
+
+def write_batch_pex_rule(gds_name,name,sp_name,output):
+    """
+    The dev branch old batch mode runset
+    2. magic can perform extraction with the following:
+    #!/bin/sh
+    rm -f $1.ext
+    rm -f $1.spice
+    magic -dnull -noconsole << EOF
+    tech load SCN3ME_SUBM.30
+    #scalegrid 1 2
+    gds rescale no
+    gds polygon subcell true
+    gds warning default
+    gds read $1
+    extract
+    ext2spice scale off
+    ext2spice
+    quit -noprompt
+    EOF
+    """
     pex_rules = drc["xrc_rules"]
     pex_runset = {
         'pexRulesFile': pex_rules,
@@ -307,41 +349,88 @@ def run_pex(name, gds_name, sp_name, output=None, final_verification=False):
     }
 
     # write the runset file
-    f = open(OPTS.openram_temp + "pex_runset", "w")
-    for k in sorted(pex_runset.iterkeys()):
+    file = OPTS.openram_temp + "pex_runset"
+    f = open(file, "w")
+    for k in sorted(pex_runset.keys()):
         f.write("*{0}: {1}\n".format(k, pex_runset[k]))
     f.close()
+    return file
 
-    # run pex
-    cwd = os.getcwd()
-    os.chdir(OPTS.openram_temp)
-    errfile = "{0}{1}.pex.err".format(OPTS.openram_temp, name)
-    outfile = "{0}{1}.pex.out".format(OPTS.openram_temp, name)
+def write_script_pex_rule(gds_name,cell_name,output):
+    global OPTS
+    run_file = OPTS.openram_temp + "run_pex.sh"
+    f = open(run_file, "w")
+    f.write("#!/bin/sh\n")
+    f.write("{} -dnull -noconsole << eof\n".format(OPTS.drc_exe[1]))
+    f.write("gds polygon subcell true\n")
+    f.write("gds warning default\n")
+    f.write("gds read {}\n".format(gds_name))
+    f.write("load {}\n".format(cell_name))
+    f.write("select top cell\n")
+    f.write("expand\n")
+    f.write("port makeall\n")
+    extract = True
+    if not extract:
+        pre = "#"
+    else:
+        pre = ""
+    f.write(pre+"extract\n".format(cell_name))
+    #f.write(pre+"ext2spice hierarchy on\n")
+    #f.write(pre+"ext2spice format ngspice\n")
+    #f.write(pre+"ext2spice renumber off\n")
+    #f.write(pre+"ext2spice scale off\n")
+    #f.write(pre+"ext2spice blackbox on\n")
+    f.write(pre+"ext2spice subcircuit top on\n")
+    #f.write(pre+"ext2spice global off\n")
+    f.write(pre+"ext2spice {}\n".format(cell_name))
+    f.write("quit -noprompt\n")
+    f.write("eof\n")
+    f.write("mv {0}.spice {1}\n".format(cell_name,output))
 
-    cmd = "{0} -gui -pex {1}pex_runset -batch 2> {2} 1> {3}".format(OPTS.pex_exe,
-                                                                    OPTS.openram_temp,
-                                                                    errfile,
-                                                                    outfile)
-    debug.info(2, cmd)
-    os.system(cmd)
-    os.chdir(cwd)
-
-    # also check the output file
-    f = open(outfile, "r")
-    results = f.readlines()
     f.close()
+    os.system("chmod u+x {}".format(run_file))
+    return run_file
 
+def find_error(results):
     # Errors begin with "ERROR:"
     test = re.compile("ERROR:")
     stdouterrors = list(filter(test.search, results))
     for e in stdouterrors:
         debug.error(e.strip("\n"))
-
     out_errors = len(stdouterrors)
-
-    debug.check(os.path.isfile(output),"Couldn't find PEX extracted output.")
-
     return out_errors
+
+def correct_port(name, output_file_name, ref_file_name):
+    pex_file = open(output_file_name, "r")
+    contents = pex_file.read()
+    # locate the start of circuit definition line
+    match = re.search(".subckt " + str(name) + ".*", contents)
+    match_index_start = match.start()
+    pex_file.seek(match_index_start)
+    rest_text = pex_file.read()
+    # locate the end of circuit definition line
+    match = re.search(r'\n', rest_text)
+    match_index_end = match.start()
+    # store the unchanged part of pex file in memory
+    pex_file.seek(0)
+    part1 = pex_file.read(match_index_start)
+    pex_file.seek(match_index_start + match_index_end)
+    part2 = pex_file.read()
+    pex_file.close()
+
+    # obtain the correct definition line from the original spice file
+    sp_file = open(ref_file_name, "r")
+    contents = sp_file.read()
+    circuit_title = re.search(".SUBCKT " + str(name) + ".*\n", contents)
+    circuit_title = circuit_title.group()
+    sp_file.close()
+
+    # write the new pex file with info in the memory
+    output_file = open(output_file_name, "w")
+    output_file.write(part1)
+    output_file.write(circuit_title)
+    output_file.write(part2)
+    output_file.close()
 
 def print_drc_stats():
     debug.info(1,"DRC runs: {0}".format(num_drc_runs))

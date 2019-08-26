@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 """
 This is a DRC/LVS interface for calibre. It implements completely
@@ -93,11 +93,11 @@ def write_calibre_lvs_script(cell_name, final_verification):
         'cmnFDIUseLayerMap': 1,
         'cmnTranscriptFile': './lvs.log',
         'cmnTranscriptEchoToFile': 1,
-        'lvsRecognizeGates': 'NONE',        
+        'lvsRecognizeGates': 'NONE',
     }
         # FIXME: Remove when vdd/gnd connected
         #'cmnVConnectNamesState' : 'ALL', #connects all nets with the same namee
-        # FIXME: Remove when vdd/gnd connected        
+        # FIXME: Remove when vdd/gnd connected
         #'lvsAbortOnSupplyError' : 0
 
     if not final_verification:
@@ -106,7 +106,7 @@ def write_calibre_lvs_script(cell_name, final_verification):
         lvs_runset['cmnVConnectNames']='vdd gnd'
     else:
         lvs_runset['lvsAbortOnSupplyError']=1
-        
+
 
 
     # write the runset file
@@ -127,20 +127,23 @@ def write_calibre_lvs_script(cell_name, final_verification):
     f.write("\n")
     f.close()
     os.system("chmod u+x {}".format(run_file))
-    
+
     return lvs_runset
 
 def write_calibre_pex_script(cell_name, extract, output, final_verification):
-    
+
     if output == None:
         output = name + ".pex.netlist"
 
     # check if lvs report has been done
     # if not run drc and lvs
     if not os.path.isfile(cell_name + ".lvs.report"):
+        gds_name = OPTS.openram_temp +"/"+ cell_name + ".gds"
+        sp_name = OPTS.openram_temp +"/"+ cell_name + ".sp"
         run_drc(cell_name, gds_name)
         run_lvs(cell_name, gds_name, sp_name)
 
+    from tech import drc
     pex_rules = drc["xrc_rules"]
     pex_runset = {
         'pexRulesFile': pex_rules,
@@ -175,18 +178,18 @@ def write_calibre_pex_script(cell_name, extract, output, final_verification):
     os.system("chmod u+x {}".format(run_file))
 
     return pex_runset
-    
+
 def run_drc(cell_name, gds_name, extract=False, final_verification=False):
     """Run DRC check on a given top-level name which is
        implemented in gds_name."""
-    
+
     global num_drc_runs
     num_drc_runs += 1
 
     # Copy file to local dir if it isn't already
     if os.path.dirname(gds_name)!=OPTS.openram_temp.rstrip('/'):
         shutil.copy(gds_name, OPTS.openram_temp)
-        
+
     drc_runset = write_calibre_drc_script(cell_name, extract, final_verification)
 
     (outfile, errfile, resultsfile) = run_script(cell_name, "drc")
@@ -209,12 +212,12 @@ def run_drc(cell_name, gds_name, extract=False, final_verification=False):
 
     # always display this summary
     if errors > 0:
-        debug.error("{0}\tGeometries: {1}\tChecks: {2}\tErrors: {3}".format(cell_name, 
+        debug.error("{0}\tGeometries: {1}\tChecks: {2}\tErrors: {3}".format(cell_name,
                                                                             geometries,
                                                                             rulechecks,
                                                                             errors))
     else:
-        debug.info(1, "{0}\tGeometries: {1}\tChecks: {2}\tErrors: {3}".format(cell_name, 
+        debug.info(1, "{0}\tGeometries: {1}\tChecks: {2}\tErrors: {3}".format(cell_name,
                                                                               geometries,
                                                                               rulechecks,
                                                                               errors))
@@ -225,10 +228,10 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     """Run LVS check on a given top-level name which is
     implemented in gds_name and sp_name. Final verification will
     ensure that there are no remaining virtual conections. """
-    
+
     global num_lvs_runs
     num_lvs_runs += 1
-    
+
     lvs_runset = write_calibre_lvs_script(cell_name, final_verification)
 
     # Copy file to local dir if it isn't already
@@ -280,7 +283,7 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     # MRG - 9/26/17 - Change this to exclude warnings because of
     # multiple labels on different pins in column mux.
     ext_errors = len(exterrors)
-    ext_warnings = len(extwarnings) 
+    ext_warnings = len(extwarnings)
 
     # also check the output file
     f = open(outfile, "r")
@@ -297,16 +300,16 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     total_errors = summary_errors + out_errors + ext_errors
 
     if total_errors > 0:
-        debug.error("{0}\tSummary: {1}\tOutput: {2}\tExtraction: {3}".format(cell_name, 
+        debug.error("{0}\tSummary: {1}\tOutput: {2}\tExtraction: {3}".format(cell_name,
                                                                             summary_errors,
                                                                             out_errors,
                                                                             ext_errors))
     else:
-        debug.info(1, "{0}\tSummary: {1}\tOutput: {2}\tExtraction: {3}".format(cell_name, 
+        debug.info(1, "{0}\tSummary: {1}\tOutput: {2}\tExtraction: {3}".format(cell_name,
                                                                               summary_errors,
                                                                               out_errors,
                                                                               ext_errors))
-        
+
     return total_errors
 
 
@@ -317,10 +320,10 @@ def run_pex(cell_name, gds_name, sp_name, output=None, final_verification=False)
     global num_pex_runs
     num_pex_runs += 1
 
-    write_calibre_pex_script()
+    write_calibre_pex_script(cell_name,True,output,final_verification)
 
     (outfile, errfile, resultsfile) = run_script(cell_name, "pex")
-        
+
 
     # also check the output file
     f = open(outfile, "r")

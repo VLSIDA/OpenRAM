@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import sys,re,shutil
 import debug
@@ -38,7 +38,7 @@ class model_check(delay):
         self.bl_meas_name, self.bl_slew_name = "bl_measures", "bl_slews"
         self.power_name = "total_power"
         
-    def create_measurement_names(self):
+    def create_measurement_names(self, port):
         """Create measurement names. The names themselves currently define the type of measurement"""
         #Create delay measurement names
         wl_en_driver_delay_names = ["delay_wl_en_dvr_{}".format(stage) for stage in range(1,self.get_num_wl_en_driver_stages())]
@@ -49,7 +49,10 @@ class model_check(delay):
         else:
             dc_delay_names = ["delay_delay_chain_stage_{}".format(stage) for stage in range(1,self.get_num_delay_stages()+1)]
         self.wl_delay_meas_names = wl_en_driver_delay_names+["delay_wl_en", "delay_wl_bar"]+wl_driver_delay_names+["delay_wl"]
-        self.rbl_delay_meas_names = ["delay_gated_clk_nand", "delay_delay_chain_in"]+dc_delay_names
+        if port not in self.sram.readonly_ports:
+            self.rbl_delay_meas_names = ["delay_gated_clk_nand", "delay_delay_chain_in"]+dc_delay_names
+        else:
+            self.rbl_delay_meas_names = ["delay_gated_clk_nand"]+dc_delay_names
         self.sae_delay_meas_names = ["delay_pre_sen"]+sen_driver_delay_names+["delay_sen"]
 
         # if self.custom_delaychain:
@@ -65,45 +68,54 @@ class model_check(delay):
         else:
             dc_slew_names = ["slew_delay_chain_stage_{}".format(stage) for stage in range(1,self.get_num_delay_stages()+1)]
         self.wl_slew_meas_names = ["slew_wl_gated_clk_bar"]+wl_en_driver_slew_names+["slew_wl_en", "slew_wl_bar"]+wl_driver_slew_names+["slew_wl"]
-        self.rbl_slew_meas_names = ["slew_rbl_gated_clk_bar","slew_gated_clk_nand", "slew_delay_chain_in"]+dc_slew_names
+        if port not in self.sram.readonly_ports:
+            self.rbl_slew_meas_names = ["slew_rbl_gated_clk_bar","slew_gated_clk_nand", "slew_delay_chain_in"]+dc_slew_names
+        else:
+            self.rbl_slew_meas_names = ["slew_rbl_gated_clk_bar"]+dc_slew_names
         self.sae_slew_meas_names = ["slew_replica_bl0", "slew_pre_sen"]+sen_driver_slew_names+["slew_sen"]
        
         self.bitline_meas_names = ["delay_wl_to_bl", "delay_bl_to_dout"]
         self.power_meas_names = ['read0_power']
        
-    def create_signal_names(self):
+    def create_signal_names(self, port):
         """Creates list of the signal names used in the spice file along the wl and sen paths.
            Names are re-harded coded here; i.e. the names are hardcoded in most of OpenRAM and are
            replicated here.
         """
         delay.create_signal_names(self)
         #Signal names are all hardcoded, need to update to make it work for probe address and different configurations.
-        wl_en_driver_signals = ["Xsram.Xcontrol0.Xbuf_wl_en.Zb{}_int".format(stage) for stage in range(1,self.get_num_wl_en_driver_stages())]
-        wl_driver_signals = ["Xsram.Xbank0.Xwordline_driver0.Xwl_driver_inv{}.Zb{}_int".format(self.wordline_row, stage) for stage in range(1,self.get_num_wl_driver_stages())]
-        sen_driver_signals = ["Xsram.Xcontrol0.Xbuf_s_en.Zb{}_int".format(stage) for stage in range(1,self.get_num_sen_driver_stages())]
+        wl_en_driver_signals = ["Xsram.Xcontrol{}.Xbuf_wl_en.Zb{}_int".format('{}', stage) for stage in range(1,self.get_num_wl_en_driver_stages())]
+        wl_driver_signals = ["Xsram.Xbank0.Xwordline_driver{}.Xwl_driver_inv{}.Zb{}_int".format('{}', self.wordline_row, stage) for stage in range(1,self.get_num_wl_driver_stages())]
+        sen_driver_signals = ["Xsram.Xcontrol{}.Xbuf_s_en.Zb{}_int".format('{}',stage) for stage in range(1,self.get_num_sen_driver_stages())]
         if self.custom_delaychain:
             delay_chain_signal_names = []
         else:
-            delay_chain_signal_names = ["Xsram.Xcontrol0.Xreplica_bitline.Xdelay_chain.dout_{}".format(stage) for stage in range(1,self.get_num_delay_stages())] 
-        
-        self.wl_signal_names = ["Xsram.Xcontrol0.gated_clk_bar"]+\
+            delay_chain_signal_names = ["Xsram.Xcontrol{}.Xreplica_bitline.Xdelay_chain.dout_{}".format('{}', stage) for stage in range(1,self.get_num_delay_stages())] 
+        if len(self.sram.all_ports) > 1:
+            port_format = '{}'
+        else:
+            port_format = ''
+        self.wl_signal_names = ["Xsram.Xcontrol{}.gated_clk_bar".format('{}')]+\
                                wl_en_driver_signals+\
-                               ["Xsram.wl_en0", "Xsram.Xbank0.Xwordline_driver0.wl_bar_{}".format(self.wordline_row)]+\
+                               ["Xsram.wl_en{}".format('{}'), "Xsram.Xbank0.Xwordline_driver{}.wl_bar_{}".format('{}',self.wordline_row)]+\
                                wl_driver_signals+\
-                               ["Xsram.Xbank0.wl_{}".format(self.wordline_row)]
-        pre_delay_chain_names = ["Xsram.Xcontrol0.gated_clk_bar", "Xsram.Xcontrol0.Xand2_rbl_in.zb_int", "Xsram.Xcontrol0.rbl_in"]
+                               ["Xsram.Xbank0.wl{}_{}".format(port_format, self.wordline_row)]
+        pre_delay_chain_names = ["Xsram.Xcontrol{}.gated_clk_bar".format('{}')]
+        if port not in self.sram.readonly_ports:
+            pre_delay_chain_names+= ["Xsram.Xcontrol{}.Xand2_rbl_in.zb_int".format('{}'), "Xsram.Xcontrol{}.rbl_in".format('{}')]
+            
         self.rbl_en_signal_names = pre_delay_chain_names+\
                                    delay_chain_signal_names+\
-                                   ["Xsram.Xcontrol0.Xreplica_bitline.delayed_en"]
+                                   ["Xsram.Xcontrol{}.Xreplica_bitline.delayed_en".format('{}')]
         
             
-        self.sae_signal_names = ["Xsram.Xcontrol0.Xreplica_bitline.bl0_0", "Xsram.Xcontrol0.pre_s_en"]+\
+        self.sae_signal_names = ["Xsram.Xcontrol{}.Xreplica_bitline.bl0_0".format('{}'), "Xsram.Xcontrol{}.pre_s_en".format('{}')]+\
                                 sen_driver_signals+\
-                                ["Xsram.s_en0"]
+                                ["Xsram.s_en{}".format('{}')]
         
         dout_name = "{0}{1}_{2}".format(self.dout_name,"{}",self.probe_data) #Empty values are the port and probe data bit
-        self.bl_signal_names = ["Xsram.Xbank0.wl_{}".format(self.wordline_row),\
-                                "Xsram.Xbank0.bl_{}".format(self.bitline_column),\
+        self.bl_signal_names = ["Xsram.Xbank0.wl{}_{}".format(port_format, self.wordline_row),\
+                                "Xsram.Xbank0.bl{}_{}".format(port_format, self.bitline_column),\
                                 dout_name]
     
     def create_measurement_objects(self):
@@ -369,17 +381,18 @@ class model_check(delay):
         errors = self.calculate_error_l2_norm(scaled_meas, scaled_model)
         debug.info(1, "Errors:\n{}\n".format(errors))
         
-    def analyze(self, probe_address, probe_data, slews, loads):
+    def analyze(self, probe_address, probe_data, slews, loads, port):
         """Measures entire delay path along the wordline and sense amp enable and compare it to the model delays."""
         self.load=max(loads)
         self.slew=max(slews)
         self.set_probe(probe_address, probe_data)
-        self.create_signal_names()
-        self.create_measurement_names()
+        self.create_signal_names(port)
+        self.create_measurement_names(port)
         self.create_measurement_objects()
         data_dict = {}
         
         read_port = self.read_ports[0] #only test the first read port
+        read_port = port
         self.targ_read_ports = [read_port]
         self.targ_write_ports = [self.write_ports[0]]
         debug.info(1,"Model test: corner {}".format(self.corner))

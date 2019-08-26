@@ -1,14 +1,12 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import debug
 from globals import OPTS
-from importlib import reload
-    
 
 class sram_factory:
     """
@@ -46,16 +44,15 @@ class sram_factory:
         if hasattr(OPTS, module_type):
             # Retrieve the name from OPTS if it exists,
             # otherwise just use the name
-            module_name = getattr(OPTS, module_type)
-        else:
-            module_name = module_type
-        
+            module_type = getattr(OPTS, module_type)
+            
         # Either retrieve the already loaded module or load it
         try:
             mod = self.modules[module_type]
         except KeyError:
-            c = reload(__import__(module_name))
-            mod = getattr(c, module_name)
+            import importlib
+            c = importlib.reload(__import__(module_type))
+            mod = getattr(c, module_type)
             self.modules[module_type] = mod
             self.module_indices[module_type] = 0
             self.objects[module_type] = []
@@ -75,15 +72,29 @@ class sram_factory:
         # This is especially for library cells so that the spice and gds files can be found.
         if len(kwargs)>0:
             # Create a unique name and increment the index
-            module_name = "{0}_{1}".format(module_name, self.module_indices[module_type])
+            module_name = "{0}_{1}".format(module_type, self.module_indices[module_type])
             self.module_indices[module_type] += 1
+        else:
+            module_name = module_type
             
         #debug.info(0, "New module: type={0} name={1} kwargs={2}".format(module_type,module_name,str(kwargs)))
         obj = mod(name=module_name,**kwargs)
         self.objects[module_type].append((kwargs,obj))
         return obj
 
-        
+    def get_mods(self, module_type):
+        """Returns list of all objects of module name's type."""
+        if hasattr(OPTS, module_type):
+            # Retrieve the name from OPTS if it exists,
+            # otherwise just use the input
+            module_type = getattr(OPTS, module_type)
+        try:
+            mod_tuples = self.objects[module_type]
+            mods = [mod for kwargs,mod in mod_tuples]
+        except KeyError:
+            mods = []
+        return mods
+            
 # Make a factory
 factory = sram_factory()
 

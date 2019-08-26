@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import contact
 import design
@@ -31,17 +31,18 @@ class pgate(design.design):
         self.create_netlist()
         if not OPTS.netlist_only:        
             self.create_layout()
+            self.add_boundary()
             self.DRC_LVS()
         
 
-    def create_netlist():
+    def create_netlist(self):
         """ Pure virtual function """
         debug.error("Must over-ride create_netlist.",-1)
         
-    def create_layout():
+    def create_layout(self):
         """ Pure virtual function """
         debug.error("Must over-ride create_layout.",-1)
-        
+
     def connect_pin_to_rail(self,inst,pin,supply):
         """ Connects a ptx pin to a supply rail. """
         source_pin = inst.get_pin(pin)
@@ -245,4 +246,3 @@ class pgate(design.design):
         #               offset=implant_offset,
         #               width=implant_width,
         #               height=implant_height)
-        

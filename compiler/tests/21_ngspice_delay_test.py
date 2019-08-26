@@ -1,19 +1,15 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
-"""
-Run a regression test on various srams
-"""
-
 import unittest
-from testutils import header,openram_test
+from testutils import *
 import sys,os
-sys.path.append(os.path.join(sys.path[0],".."))
+sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 from sram_factory import factory
@@ -58,28 +54,27 @@ class timing_sram_test(openram_test):
         data.update(port_data[0])
 
         if OPTS.tech_name == "freepdk45":
-            golden_data = {'delay_hl': [0.2108836],
-                         'delay_lh': [0.2108836],
-                         'leakage_power': 0.001564799,
-                         'min_period': 0.508,
-                         'read0_power': [0.43916689999999997],
-                         'read1_power': [0.4198608],
-                         'slew_hl': [0.0455126],
-                         'slew_lh': [0.0455126],
-                         'write0_power': [0.40681890000000004],
-                         'write1_power': [0.4198608]}
+            golden_data = {'delay_hl': [0.2264205],
+                           'delay_lh': [0.2264205],
+                           'leakage_power': 0.0021017429999999997,
+                           'min_period': 0.859,
+                           'read0_power': [0.3339161],
+                           'read1_power': [0.31329440000000003],
+                           'slew_hl': [0.2590786],
+                           'slew_lh': [0.2590786],
+                           'write0_power': [0.36360849999999995],
+                           'write1_power': [0.3486931]}
         elif OPTS.tech_name == "scn4m_subm":
-            golden_data = {'delay_hl': [1.5747600000000002],
-                         'delay_lh': [1.5747600000000002],
-                         'leakage_power': 0.00195795,
-                         'min_period': 3.281,
-                         'read0_power': [14.92874],
-                         'read1_power': [14.369810000000001],
-                         'slew_hl': [0.49631959999999997],
-                         'slew_lh': [0.49631959999999997],
-                         'write0_power': [13.79953],
-                         'write1_power': [14.369810000000001]}
-
+            golden_data = {'delay_hl': [1.7083549999999998],
+                           'delay_lh': [1.7083549999999998],
+                           'leakage_power': 0.001119657,
+                           'min_period': 7.812,
+                           'read0_power': [8.013845],
+                           'read1_power': [7.6889389999999995],
+                           'slew_hl': [1.31918],
+                           'slew_lh': [1.31918],
+                           'write0_power': [8.791557000000001],
+                           'write1_power': [8.70443]}
         else:
             self.assertTrue(False) # other techs fail
 
@@ -95,4 +90,4 @@ if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
-    unittest.main()
+    unittest.main(testRunner=debugTestRunner())

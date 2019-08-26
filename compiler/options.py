@@ -1,13 +1,14 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import optparse
 import getpass 
 import os
+#import sram_config
 
 class options(optparse.Values):
     """
@@ -28,6 +29,9 @@ class options(optparse.Values):
     num_rw_ports = 1
     num_r_ports = 0
     num_w_ports = 0
+
+    # Write mask size, default will be overwritten with word_size if not user specified
+    write_size = None
     
     # These will get initialized by the user or the tech file
     supply_voltages = ""
@@ -42,10 +46,15 @@ class options(optparse.Values):
 
     ###################
     # Optimization options
-    ###################    
-    # Uses the delay chain size in the tech.py file rather automatic sizing.
+    ###################
+    rbl_delay_percentage = 0.5  #Approximate percentage of delay compared to bitlines
+    
+    # Allow manual adjustment of the delay chain over automatic
     use_tech_delay_chain_size = False
-
+    delay_chain_stages = 9
+    delay_chain_fanout_per_stage = 4
+    
+    
 
     ###################
     # Debug options.
@@ -75,7 +84,7 @@ class options(optparse.Values):
     # This determines whether LVS and DRC is checked for every submodule.
     inline_lvsdrc = False
     # Remove noncritical memory cells for characterization speed-up
-    trim_netlist = True
+    trim_netlist = False
     # Run with extracted parasitics
     use_pex = False
 
@@ -122,6 +131,7 @@ class options(optparse.Values):
     delay_chain = "delay_chain"
     dff_array = "dff_array"
     dff = "dff"
+    dummy_bitcell = "dummy_bitcell"
     precharge_array = "precharge_array"
     ptx = "ptx"
     replica_bitcell = "replica_bitcell"
@@ -133,4 +143,5 @@ class options(optparse.Values):
     wordline_driver = "wordline_driver"
     write_driver_array = "write_driver_array"
     write_driver = "write_driver"
+    write_mask_and_array = "write_mask_and_array"
 

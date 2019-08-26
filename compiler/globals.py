@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 """
 This is called globals.py, but it actually parses all the arguments and performs
@@ -19,9 +19,10 @@ import re
 import copy
 import importlib
 
-USAGE = "Usage: openram.py [options] <config file>\nUse -h for help.\n"
+VERSION = "1.1.0"
+NAME = "OpenRAM v{}".format(VERSION)
+USAGE = "openram.py [options] <config file>\nUse -h for help.\n"
 
-# Anonymous object that will be the options
 OPTS = options.options()
 CHECKPOINT_OPTS=None
 
@@ -57,9 +58,9 @@ def parse_args():
     }
 
     parser = optparse.OptionParser(option_list=option_list,
-                                   description="Compile and/or characterize an SRAM.",
+                                   description=NAME,
                                    usage=USAGE,
-                                   version="OpenRAM")
+                                   version=VERSION)
 
     (options, args) = parser.parse_args(values=OPTS)
     # If we don't specify a tech, assume scmos.
@@ -79,8 +80,7 @@ def print_banner():
         return
 
     debug.print_raw("|==============================================================================|")
-    name = "OpenRAM Compiler"
-    debug.print_raw("|=========" + name.center(60) + "=========|")
+    debug.print_raw("|=========" + NAME.center(60) + "=========|")
     debug.print_raw("|=========" + " ".center(60) + "=========|")
     debug.print_raw("|=========" + "VLSI Design and Automation Lab".center(60) + "=========|")
     debug.print_raw("|=========" + "Computer Science and Engineering Department".center(60) + "=========|")
@@ -169,11 +169,12 @@ def setup_bitcell():
     # If we have non-1rw ports,
     # and the user didn't over-ride the bitcell manually,
     # figure out the right bitcell to use
-    if (OPTS.bitcell=="bitcell" and OPTS.replica_bitcell=="replica_bitcell"):
+    if (OPTS.bitcell=="bitcell"):
         
         if (OPTS.num_rw_ports==1 and OPTS.num_w_ports==0 and OPTS.num_r_ports==0):
             OPTS.bitcell = "bitcell"
             OPTS.replica_bitcell = "replica_bitcell"
+            OPTS.dummy_bitcell = "dummy_bitcell"
         else:
             ports = ""
             if OPTS.num_rw_ports>0:
@@ -185,21 +186,26 @@ def setup_bitcell():
 
             OPTS.bitcell = "bitcell_"+ports
             OPTS.replica_bitcell = "replica_bitcell_"+ports
-
-        # See if a custom bitcell exists
-        from importlib import find_loader
-        try:
-            __import__(OPTS.bitcell)
-            __import__(OPTS.replica_bitcell)
-        except ImportError:
-            # Use the pbitcell if we couldn't find a custom bitcell
-            # or its custom replica  bitcell
-            # Use the pbitcell (and give a warning if not in unit test mode)
-            OPTS.bitcell = "pbitcell"
-            OPTS.replica_bitcell = "replica_pbitcell"
-            if not OPTS.is_unit_test:
-                debug.warning("Using the parameterized bitcell which may have suboptimal density.")
+            OPTS.dummy_bitcell = "dummy_bitcell_"+ports
+    else:
+         OPTS.replica_bitcell = "replica_" + OPTS.bitcell       
+         OPTS.replica_bitcell = "dummy_" + OPTS.bitcell
                 
+    # See if bitcell exists
+    from importlib import find_loader
+    try:
+        __import__(OPTS.bitcell)
+        __import__(OPTS.replica_bitcell)
+        __import__(OPTS.dummy_bitcell)
+    except ImportError:
+        # Use the pbitcell if we couldn't find a custom bitcell
+        # or its custom replica  bitcell
+        # Use the pbitcell (and give a warning if not in unit test mode)
+        OPTS.bitcell = "pbitcell"
+        OPTS.replica_bitcell = "replica_pbitcell"
+        OPTS.replica_bitcell = "dummy_pbitcell"
+        if not OPTS.is_unit_test:
+            debug.warning("Using the parameterized bitcell which may have suboptimal density.")
     debug.info(1,"Using bitcell: {}".format(OPTS.bitcell))    
 
 
@@ -464,6 +470,20 @@ def report_status():
         debug.error("{0} is not an integer in config file.".format(OPTS.word_size))
     if type(OPTS.num_words)!=int:
         debug.error("{0} is not an integer in config file.".format(OPTS.sram_size))
+    if type(OPTS.write_size) is not int and OPTS.write_size is not None:
+        debug.error("{0} is not an integer in config file.".format(OPTS.write_size))
+
+    # If a write mask is specified by the user, the mask write size should be the same as
+    # the word size so that an entire word is written at once.
+    if OPTS.write_size is not None:
+        if (OPTS.word_size % OPTS.write_size != 0):
+            debug.error("Write size needs to be an integer multiple of word size.")
+        # If write size is more than half of the word size, then it doesn't need a write mask. It would be writing
+        # the whole word.
+        if (OPTS.write_size < 1 or OPTS.write_size > OPTS.word_size/2):
+            debug.error("Write size needs to be between 1 bit and {0} bits/2.".format(OPTS.word_size))
+
+
 
     if not OPTS.tech_name:
         debug.error("Tech name must be specified in config file.")
@@ -477,9 +497,12 @@ def report_status():
     debug.print_raw("Word size: {0}\nWords: {1}\nBanks: {2}".format(OPTS.word_size,
                                                           OPTS.num_words,
                                                           OPTS.num_banks))
+    if (OPTS.write_size != OPTS.word_size):
+        debug.print_raw("Write size: {}".format(OPTS.write_size))
     debug.print_raw("RW ports: {0}\nR-only ports: {1}\nW-only ports: {2}".format(OPTS.num_rw_ports,
                                                                        OPTS.num_r_ports,
                                                                        OPTS.num_w_ports))
+
     if OPTS.netlist_only:
         debug.print_raw("Netlist only mode (no physical design is being done, netlist_only=False to disable).")
     

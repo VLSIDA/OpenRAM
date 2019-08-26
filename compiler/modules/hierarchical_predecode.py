@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import debug
 import design
@@ -26,11 +26,11 @@ class hierarchical_predecode(design.design):
     
     def add_pins(self):
         for k in range(self.number_of_inputs):
-            self.add_pin("in_{0}".format(k))
+            self.add_pin("in_{0}".format(k), "INPUT")
         for i in range(self.number_of_outputs):
-            self.add_pin("out_{0}".format(i))
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+            self.add_pin("out_{0}".format(i), "OUTPUT")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
     def add_modules(self):
         """ Add the INV and NAND gate modules """

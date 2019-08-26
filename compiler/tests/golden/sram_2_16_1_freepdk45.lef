@@ -3,7 +3,7 @@ NAMESCASESENSITIVE ON ;
 BUSBITCHARS "[]" ;
 DIVIDERCHAR "/" ;
 UNITS
-  DATABASE MICRONS 1000 ;
+  dataBASE MICRONS 1000 ;
 END UNITS
 SITE  MacroSite
    CLASS Core ;
@@ -14,48 +14,48 @@ MACRO sram_2_16_1_freepdk45
    SIZE 12145.0 BY 43967.5 ;
    SYMMETRY X Y R90 ;
    SITE MacroSite ;
-   PIN DATA[0]
+   PIN data[0]
       DIRECTION INOUT ;
       PORT
          LAYER metal2 ;
          RECT  10260.0 67.5 10330.0 207.5 ;
       END
-   END DATA[0]
-   PIN DATA[1]
+   END data[0]
+   PIN data[1]
       DIRECTION INOUT ;
       PORT
          LAYER metal2 ;
          RECT  10965.0 67.5 11035.0 207.5 ;
       END
-   END DATA[1]
-   PIN ADDR[0]
+   END data[1]
+   PIN addr[0]
       DIRECTION INPUT ;
       PORT
          LAYER metal3 ;
          RECT  67.5 8370.0 837.5 8440.0 ;
       END
-   END ADDR[0]
-   PIN ADDR[1]
+   END addr[0]
+   PIN addr[1]
       DIRECTION INPUT ;
       PORT
          LAYER metal3 ;
          RECT  67.5 7665.0 837.5 7735.0 ;
       END
-   END ADDR[1]
-   PIN ADDR[2]
+   END addr[1]
+   PIN addr[2]
       DIRECTION INPUT ;
       PORT
          LAYER metal3 ;
          RECT  67.5 6960.0 837.5 7030.0 ;
       END
-   END ADDR[2]
-   PIN ADDR[3]
+   END addr[2]
+   PIN addr[3]
       DIRECTION INPUT ;
       PORT
          LAYER metal3 ;
          RECT  67.5 6255.0 837.5 6325.0 ;
       END
-   END ADDR[3]
+   END addr[3]
    PIN CSb
       DIRECTION INPUT ;
       PORT

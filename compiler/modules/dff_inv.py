@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import debug
 import design
@@ -53,6 +53,7 @@ class dff_inv(design.design):
         self.add_wires()
         self.add_layout_pins()
         
+        self.add_boundary()
         self.DRC_LVS()
         
     def add_pins(self):
@@ -149,15 +150,7 @@ class dff_inv(design.design):
                                         offset=dout_pin.center())
         self.add_via_center(layers=("metal1","via1","metal2"),
                             offset=dout_pin.center())
-        
-        
-
-    def analytical_delay(self, corner, slew, load=0.0):
-        """ Calculate the analytical delay of DFF-> INV -> INV """
-        dff_delay=self.dff.analytical_delay(corner, slew=slew, load=self.inv1.input_load())
-        inv1_delay = self.inv1.analytical_delay(corner, slew=dff_delay.slew, load=load) 
-        return dff_delay + inv1_delay 
-            
+    
     def get_clk_cin(self):
         """Return the total capacitance (in relative units) that the clock is loaded by in the dff"""
         return self.dff.get_clk_cin()

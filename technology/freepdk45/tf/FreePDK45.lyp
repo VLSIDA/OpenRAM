@@ -493,6 +493,23 @@
   <name>metal10.drawing - 29/0</name>
   <source>29/0@1</source>
  </properties>
+ <properties>
+  <frame-color>#9900e6</frame-color>
+  <fill-color>#9900e6</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C0</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>comment.drawing - 239/0</name>
+  <source>239/0@1</source>
+ </properties>
  <name/>
  <custom-dither-pattern>
   <pattern>

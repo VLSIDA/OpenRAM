@@ -1223,6 +1223,7 @@ drDefinePacket(
  ( display       prBoundary           blank      solid       purple     purple     )
  ( display       prBoundaryBnd        blank      solid       cyan       cyan       )
  ( display       prBoundaryLbl        blank      solid       purple     purple     )
+ ( display       comment              blank      solid       purple     purple     )
  ( display       align                blank      solid       tan        tan        )
  ( display       hardFence            blank      solid       red        red        )
  ( display       softFence            blank      solid       yellow     yellow     )

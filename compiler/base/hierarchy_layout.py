@@ -6,6 +6,7 @@
 # All rights reserved.
 #
 import itertools
+import collections
 import geometry
 import gdsMill
 import debug
@@ -839,10 +840,10 @@ class layout():
         #hcg = {}
         
         # Initialize the vertical conflict graph (vcg) and make a list of all pins
-        vcg = {}
+        vcg = collections.OrderedDict()
 
         # Create names for the nets for the graphs
-        nets = {}
+        nets = collections.OrderedDict()
         index = 0
         #print(netlist)
         for pin_list in netlist:

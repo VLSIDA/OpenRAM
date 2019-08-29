@@ -31,7 +31,7 @@ class simulation():
         self.readwrite_ports = self.sram.readwrite_ports
         self.read_ports = self.sram.read_ports
         self.write_ports = self.sram.write_ports
-        if self.write_size is not None:
+        if self.write_size:
             self.num_wmasks = int(self.word_size/self.write_size)
         else:
             self.num_wmasks = 0
@@ -53,9 +53,9 @@ class simulation():
         self.gnd_voltage = 0
         
     def create_signal_names(self):
-        self.addr_name = "A"
-        self.din_name = "DIN"
-        self.dout_name = "DOUT"
+        self.addr_name = "a"
+        self.din_name = "din"
+        self.dout_name = "dout"
         self.pins = self.gen_pin_names(port_signal_names=(self.addr_name,self.din_name,self.dout_name),
                                        port_info=(len(self.all_ports),self.write_ports,self.read_ports),
                                        abits=self.addr_size,
@@ -303,7 +303,7 @@ class simulation():
         for port in range(total_ports):
             pin_names.append("{0}{1}".format(tech.spice["clk"], port))
 
-        if self.write_size is not None:
+        if self.write_size:
             for port in write_index:
                 for bit in range(self.num_wmasks):
                     pin_names.append("WMASK{0}_{1}".format(port,bit))

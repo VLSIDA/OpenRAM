@@ -30,7 +30,7 @@ class write_driver_array(design.design):
         self.write_size = write_size
         self.words_per_row = int(columns / word_size)
 
-        if self.write_size is not None:
+        if self.write_size:
             self.num_wmasks = int(self.word_size/self.write_size)
 
         self.create_netlist()
@@ -62,7 +62,7 @@ class write_driver_array(design.design):
         for i in range(self.word_size):            
             self.add_pin("bl_{0}".format(i), "OUTPUT")
             self.add_pin("br_{0}".format(i), "OUTPUT")
-        if self.write_size is not None:
+        if self.write_size:
             for i in range(self.num_wmasks):
                 self.add_pin("en_{0}".format(i), "INPUT")
         else:
@@ -88,7 +88,7 @@ class write_driver_array(design.design):
             self.driver_insts[index]=self.add_inst(name=name,
                                                    mod=self.driver)
 
-            if self.write_size is not None:
+            if self.write_size:
                 self.connect_inst(["data_{0}".format(index),
                                    "bl_{0}".format(index),
                                    "br_{0}".format(index),
@@ -148,7 +148,7 @@ class write_driver_array(design.design):
                     self.add_layout_pin_rect_center(text=n,
                                                     layer="metal3",
                                                     offset=pin_pos)
-        if self.write_size is not None:
+        if self.write_size:
             for bit in range(self.num_wmasks):
                 en_pin = self.driver_insts[bit*self.write_size].get_pin("en")
                 # Determine width of wmask modified en_pin with/without col mux

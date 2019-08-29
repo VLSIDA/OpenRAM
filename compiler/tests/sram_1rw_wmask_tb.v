@@ -14,9 +14,9 @@ module sram_1rw_wmask_tb;
    reg  [1:0]    wmask0;
    wire [1:0] dout0;
 
-   sram_2b_16_1rw_freepdk45 U0 (.DIN0(din0),
-			    .DOUT0(dout0),
-			    .ADDR0(addr0),
+   sram_2b_16_1rw_freepdk45 U0 (.din0(din0),
+			    .dout0(dout0),
+			    .addr0(addr0),
 			    .csb0(csb0),
 			    .web0(web0),
 			    .wmask0(wmask0),

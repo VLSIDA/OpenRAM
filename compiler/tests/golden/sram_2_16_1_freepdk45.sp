@@ -136,10 +136,10 @@ Xpmos1 vdd A net1 vdd nor_2_pmos121
 Xpmos2 net1 B Z vdd nor_2_pmos222
 .ENDS nor2
 
-.SUBCKT msf_control DATA[0] DATA[1] DATA[2] data_in[0] data_in_bar[0] data_in[1] data_in_bar[1] data_in[2] data_in_bar[2] clk vdd gnd
-XXdff0 DATA[0] data_in[0] data_in_bar[0] clk vdd gnd ms_flop
-XXdff1 DATA[1] data_in[1] data_in_bar[1] clk vdd gnd ms_flop
-XXdff2 DATA[2] data_in[2] data_in_bar[2] clk vdd gnd ms_flop
+.SUBCKT msf_control data[0] data[1] data[2] data_in[0] data_in_bar[0] data_in[1] data_in_bar[1] data_in[2] data_in_bar[2] clk vdd gnd
+XXdff0 data[0] data_in[0] data_in_bar[0] clk vdd gnd ms_flop
+XXdff1 data[1] data_in[1] data_in_bar[1] clk vdd gnd ms_flop
+XXdff2 data[2] data_in[2] data_in_bar[2] clk vdd gnd ms_flop
 .ENDS msf_control
 
 .SUBCKT replica_cell_6t bl br wl vdd gnd
@@ -524,16 +524,16 @@ XINVERTER_[14] Z[14] decode_out[14] vdd gnd INVERTER
 XINVERTER_[15] Z[15] decode_out[15] vdd gnd INVERTER
 .ENDS hierarchical_decoder
 
-.SUBCKT msf_address ADDR[0] ADDR[1] ADDR[2] ADDR[3] A[0] A_bar[0] A[1] A_bar[1] A[2] A_bar[2] A[3] A_bar[3] addr_clk vdd gnd
-XXdff0 ADDR[0] A[0] A_bar[0] addr_clk vdd gnd ms_flop
-XXdff1 ADDR[1] A[1] A_bar[1] addr_clk vdd gnd ms_flop
-XXdff2 ADDR[2] A[2] A_bar[2] addr_clk vdd gnd ms_flop
-XXdff3 ADDR[3] A[3] A_bar[3] addr_clk vdd gnd ms_flop
+.SUBCKT msf_address addr[0] addr[1] addr[2] addr[3] A[0] A_bar[0] A[1] A_bar[1] A[2] A_bar[2] A[3] A_bar[3] addr_clk vdd gnd
+XXdff0 addr[0] A[0] A_bar[0] addr_clk vdd gnd ms_flop
+XXdff1 addr[1] A[1] A_bar[1] addr_clk vdd gnd ms_flop
+XXdff2 addr[2] A[2] A_bar[2] addr_clk vdd gnd ms_flop
+XXdff3 addr[3] A[3] A_bar[3] addr_clk vdd gnd ms_flop
 .ENDS msf_address
 
-.SUBCKT msf_data_in DATA[0] DATA[1] data_in[0] data_in_bar[0] data_in[1] data_in_bar[1] clk vdd gnd
-XXdff0 DATA[0] data_in[0] data_in_bar[0] clk vdd gnd ms_flop
-XXdff1 DATA[1] data_in[1] data_in_bar[1] clk vdd gnd ms_flop
+.SUBCKT msf_data_in data[0] data[1] data_in[0] data_in_bar[0] data_in[1] data_in_bar[1] clk vdd gnd
+XXdff0 data[0] data_in[0] data_in_bar[0] clk vdd gnd ms_flop
+XXdff1 data[1] data_in[1] data_in_bar[1] clk vdd gnd ms_flop
 .ENDS msf_data_in
 
 .SUBCKT msf_data_out data_out[0] data_out[1] tri_in[0] tri_in_bar[0] tri_in[1] tri_in_bar[1] sclk vdd gnd
@@ -551,9 +551,9 @@ M_6 in_inv in gnd gnd NMOS_VTG W=90.000000n L=50.000000n
 .ENDS
 
 
-.SUBCKT tri_gate_array tri_in[0] tri_in[1] DATA[0] DATA[1] en en_bar vdd gnd
-XXtri_gate0 tri_in[0] DATA[0] en en_bar vdd gnd tri_gate
-XXtri_gate1 tri_in[1] DATA[1] en en_bar vdd gnd tri_gate
+.SUBCKT tri_gate_array tri_in[0] tri_in[1] data[0] data[1] en en_bar vdd gnd
+XXtri_gate0 tri_in[0] data[0] en en_bar vdd gnd tri_gate
+XXtri_gate1 tri_in[1] data[1] en en_bar vdd gnd tri_gate
 .ENDS tri_gate_array
 
 .SUBCKT wordline_driver decode_out[0] decode_out[1] decode_out[2] decode_out[3] decode_out[4] decode_out[5] decode_out[6] decode_out[7] decode_out[8] decode_out[9] decode_out[10] decode_out[11] decode_out[12] decode_out[13] decode_out[14] decode_out[15] wl[0] wl[1] wl[2] wl[3] wl[4] wl[5] wl[6] wl[7] wl[8] wl[9] wl[10] wl[11] wl[12] wl[13] wl[14] wl[15] clk vdd gnd
@@ -643,19 +643,19 @@ Xpmos1 vdd A net1 vdd nor_2_pmos185
 Xpmos2 net1 B Z vdd nor_2_pmos286
 .ENDS NOR2
 
-.SUBCKT test_bank1 DATA[0] DATA[1] ADDR[0] ADDR[1] ADDR[2] ADDR[3] s_en w_en tri_en_bar tri_en clk_bar clk vdd gnd
+.SUBCKT test_bank1 data[0] data[1] addr[0] addr[1] addr[2] addr[3] s_en w_en tri_en_bar tri_en clk_bar clk vdd gnd
 Xbitcell_array bl[0] br[0] bl[1] br[1] wl[0] wl[1] wl[2] wl[3] wl[4] wl[5] wl[6] wl[7] wl[8] wl[9] wl[10] wl[11] wl[12] wl[13] wl[14] wl[15] vdd gnd bitcell_array
 Xprecharge_array bl[0] br[0] bl[1] br[1] clk_bar vdd precharge_array
 Xsense_amp_array bl[0] br[0] bl[1] br[1] data_out[0] data_out[1] s_en vdd gnd sense_amp_array
 Xwrite_driver_array data_in[0] data_in[1] bl[0] br[0] bl[1] br[1] w_en vdd gnd write_driver_array
-Xdata_in_flop_array DATA[0] DATA[1] data_in[0] data_in_bar[0] data_in[1] data_in_bar[1] clk_bar vdd gnd msf_data_in
-Xtrigate_data_array data_out[0] data_out[1] DATA[0] DATA[1] tri_en tri_en_bar vdd gnd tri_gate_array
+Xdata_in_flop_array data[0] data[1] data_in[0] data_in_bar[0] data_in[1] data_in_bar[1] clk_bar vdd gnd msf_data_in
+Xtrigate_data_array data_out[0] data_out[1] data[0] data[1] tri_en tri_en_bar vdd gnd tri_gate_array
 Xaddress_decoder A[0] A[1] A[2] A[3] decode_out[0] decode_out[1] decode_out[2] decode_out[3] decode_out[4] decode_out[5] decode_out[6] decode_out[7] decode_out[8] decode_out[9] decode_out[10] decode_out[11] decode_out[12] decode_out[13] decode_out[14] decode_out[15] vdd gnd hierarchical_decoder
 Xwordline_driver decode_out[0] decode_out[1] decode_out[2] decode_out[3] decode_out[4] decode_out[5] decode_out[6] decode_out[7] decode_out[8] decode_out[9] decode_out[10] decode_out[11] decode_out[12] decode_out[13] decode_out[14] decode_out[15] wl[0] wl[1] wl[2] wl[3] wl[4] wl[5] wl[6] wl[7] wl[8] wl[9] wl[10] wl[11] wl[12] wl[13] wl[14] wl[15] clk vdd gnd wordline_driver
-Xaddress_flop_array ADDR[0] ADDR[1] ADDR[2] ADDR[3] A[0] A_bar[0] A[1] A_bar[1] A[2] A_bar[2] A[3] A_bar[3] clk vdd gnd msf_address
+Xaddress_flop_array addr[0] addr[1] addr[2] addr[3] A[0] A_bar[0] A[1] A_bar[1] A[2] A_bar[2] A[3] A_bar[3] clk vdd gnd msf_address
 .ENDS test_bank1
 
-.SUBCKT testsram DATA[0] DATA[1] ADDR[0] ADDR[1] ADDR[2] ADDR[3] CSb WEb OEb clk vdd gnd
-Xbank0 DATA[0] DATA[1] ADDR[0] ADDR[1] ADDR[2] ADDR[3] s_en w_en tri_en_bar tri_en clk_bar clk vdd gnd test_bank1
+.SUBCKT testsram data[0] data[1] addr[0] addr[1] addr[2] addr[3] CSb WEb OEb clk vdd gnd
+Xbank0 data[0] data[1] addr[0] addr[1] addr[2] addr[3] s_en w_en tri_en_bar tri_en clk_bar clk vdd gnd test_bank1
 Xcontrol CSb WEb OEb s_en w_en tri_en tri_en_bar clk_bar clk vdd gnd control_logic
 .ENDS testsram

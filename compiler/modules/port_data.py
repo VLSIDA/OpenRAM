@@ -22,7 +22,7 @@ class port_data(design.design):
         
         sram_config.set_local_config(self)
         self.port = port
-        if self.write_size is not None:
+        if self.write_size:
             self.num_wmasks = int(self.word_size/self.write_size)
         else:
             self.num_wmasks = 0
@@ -58,7 +58,7 @@ class port_data(design.design):
 
         if self.write_driver_array:
             self.create_write_driver_array()
-            if self.write_size is not None:
+            if self.write_size:
                 self.create_write_mask_and_array()
             else:
                 self.write_mask_and_array_inst = None
@@ -187,7 +187,7 @@ class port_data(design.design):
                                                      word_size=self.word_size,
                                                      write_size=self.write_size)
             self.add_mod(self.write_driver_array)
-            if self.write_size is not None:
+            if self.write_size:
                 self.write_mask_and_array = factory.create(module_type="write_mask_and_array",
                                                            columns=self.num_cols,
                                                            word_size=self.word_size,
@@ -320,7 +320,7 @@ class port_data(design.design):
                 temp.append(self.bl_names[self.port] + "_out_{0}".format(bit))
                 temp.append(self.br_names[self.port] + "_out_{0}".format(bit))
 
-        if self.write_size is not None:
+        if self.write_size:
             for i in range(self.num_wmasks):
                 temp.append("wdriver_sel_{}".format(i))
         else:

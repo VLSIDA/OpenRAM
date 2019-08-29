@@ -46,7 +46,7 @@ class delay(simulation):
         self.targ_read_ports = []
         self.targ_write_ports = []
         self.period = 0
-        if self.write_size is not None:
+        if self.write_size:
             self.num_wmasks = int(self.word_size / self.write_size)
         else:
             self.num_wmasks = 0
@@ -1191,7 +1191,7 @@ class delay(simulation):
         self.measure_cycles[write_port][sram_op.WRITE_ZERO] = len(self.cycle_times)-1
         
         # This also ensures we will have a H->L transition on the next read
-        self.add_read("R data 1 address {} to set DOUT caps".format(inverse_address),
+        self.add_read("R data 1 address {} to set dout caps".format(inverse_address),
                       inverse_address,data_zeros,wmask_ones,read_port)
 
         self.add_read("R data 0 address {} to check W0 worked".format(self.probe_address),
@@ -1205,11 +1205,11 @@ class delay(simulation):
                        self.probe_address,data_ones,wmask_ones,write_port)
         self.measure_cycles[write_port][sram_op.WRITE_ONE] = len(self.cycle_times)-1
 
-        self.add_write("W data 0 address {} to clear DIN caps".format(inverse_address),
+        self.add_write("W data 0 address {} to clear din caps".format(inverse_address),
                        inverse_address,data_zeros,wmask_ones,write_port)
 
         # This also ensures we will have a L->H transition on the next read
-        self.add_read("R data 0 address {} to clear DOUT caps".format(inverse_address),
+        self.add_read("R data 0 address {} to clear dout caps".format(inverse_address),
                       inverse_address,data_zeros,wmask_ones,read_port)
         
         self.add_read("R data 1 address {} to check W1 worked".format(self.probe_address),

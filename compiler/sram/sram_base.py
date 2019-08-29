@@ -35,7 +35,7 @@ class sram_base(design, verilog, lef):
 
         self.bank_insts = []
 
-        if self.write_size is not None:
+        if self.write_size:
             self.num_wmasks = int(self.word_size/self.write_size)
         else:
             self.num_wmasks = 0
@@ -48,11 +48,11 @@ class sram_base(design, verilog, lef):
 
         for port in self.write_ports:
             for bit in range(self.word_size):
-                self.add_pin("DIN{0}[{1}]".format(port,bit),"INPUT")
+                self.add_pin("din{0}[{1}]".format(port,bit),"INPUT")
                 
         for port in self.all_ports:
             for bit in range(self.addr_size):
-                self.add_pin("ADDR{0}[{1}]".format(port,bit),"INPUT")
+                self.add_pin("addr{0}[{1}]".format(port,bit),"INPUT")
 
         # These are used to create the physical pins
         self.control_logic_inputs = []
@@ -80,7 +80,7 @@ class sram_base(design, verilog, lef):
                 self.add_pin("wmask{0}[{1}]".format(port,bit),"INPUT")
         for port in self.read_ports:
             for bit in range(self.word_size):
-                self.add_pin("DOUT{0}[{1}]".format(port,bit),"OUTPUT")
+                self.add_pin("dout{0}[{1}]".format(port,bit),"OUTPUT")
         
         self.add_pin("vdd","POWER")
         self.add_pin("gnd","GROUND")
@@ -284,7 +284,7 @@ class sram_base(design, verilog, lef):
         self.data_dff = dff_array(name="data_dff", rows=1, columns=self.word_size)
         self.add_mod(self.data_dff)
 
-        if self.write_size is not None:
+        if self.write_size:
             self.wmask_dff = dff_array(name="wmask_dff", rows=1, columns=self.num_wmasks)
             self.add_mod(self.wmask_dff)
 
@@ -338,15 +338,15 @@ class sram_base(design, verilog, lef):
         temp = []
         for port in self.read_ports:
             for bit in range(self.word_size):
-                temp.append("DOUT{0}[{1}]".format(port,bit))
+                temp.append("dout{0}[{1}]".format(port,bit))
         for port in self.all_ports:
             temp.append("rbl_bl{0}".format(port))
         for port in self.write_ports:
             for bit in range(self.word_size):
-                temp.append("BANK_DIN{0}[{1}]".format(port,bit))
+                temp.append("bank_din{0}[{1}]".format(port,bit))
         for port in self.all_ports:
             for bit in range(self.bank_addr_size):
-                temp.append("A{0}[{1}]".format(port,bit))
+                temp.append("a{0}[{1}]".format(port,bit))
         if(self.num_banks > 1):
             for port in self.all_ports:
                 temp.append("bank_sel{0}[{1}]".format(port,bank_num))
@@ -408,8 +408,8 @@ class sram_base(design, verilog, lef):
             inputs = []
             outputs = []
             for bit in range(self.row_addr_size):
-                inputs.append("ADDR{}[{}]".format(port,bit+self.col_addr_size))
-                outputs.append("A{}[{}]".format(port,bit+self.col_addr_size))
+                inputs.append("addr{}[{}]".format(port,bit+self.col_addr_size))
+                outputs.append("a{}[{}]".format(port,bit+self.col_addr_size))
 
             self.connect_inst(inputs + outputs + ["clk_buf{}".format(port), "vdd", "gnd"])
         
@@ -427,8 +427,8 @@ class sram_base(design, verilog, lef):
             inputs = []
             outputs = []
             for bit in range(self.col_addr_size):
-                inputs.append("ADDR{}[{}]".format(port,bit))
-                outputs.append("A{}[{}]".format(port,bit))
+                inputs.append("addr{}[{}]".format(port,bit))
+                outputs.append("a{}[{}]".format(port,bit))
 
             self.connect_inst(inputs + outputs + ["clk_buf{}".format(port), "vdd", "gnd"])
         
@@ -450,8 +450,8 @@ class sram_base(design, verilog, lef):
             inputs = []
             outputs = []
             for bit in range(self.word_size):
-                inputs.append("DIN{}[{}]".format(port,bit))
-                outputs.append("BANK_DIN{}[{}]".format(port,bit))
+                inputs.append("din{}[{}]".format(port,bit))
+                outputs.append("bank_din{}[{}]".format(port,bit))
 
             self.connect_inst(inputs + outputs + ["clk_buf{}".format(port), "vdd", "gnd"])
         

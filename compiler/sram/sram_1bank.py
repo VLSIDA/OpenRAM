@@ -44,7 +44,7 @@ class sram_1bank(sram_base):
         if self.col_addr_dff:
             self.col_addr_dff_insts = self.create_col_addr_dff()
 
-        if self.write_size is not None:
+        if self.write_size:
             self.wmask_dff_insts = self.create_wmask_dff()
             self.data_dff_insts = self.create_data_dff()
         else:
@@ -77,7 +77,7 @@ class sram_1bank(sram_base):
         # Port 0
         port = 0
 
-        if self.write_size is not None:
+        if self.write_size:
             if port in self.write_ports:
                 # Add the write mask flops below the write mask AND array.
                 wmask_pos[port] = vector(self.bank.bank_array_ll.x,
@@ -135,7 +135,7 @@ class sram_1bank(sram_base):
             port = 1
 
             if port in self.write_ports:
-                if self.write_size is not None:
+                if self.write_size:
                     # Add the write mask flops below the write mask AND array.
                     wmask_pos[port] = vector(self.bank.bank_array_ur.x - self.data_dff_insts[port].width,
                                              self.bank.height + 0.5*max_gap_size + self.dff.height)
@@ -195,19 +195,20 @@ class sram_1bank(sram_base):
 
             if port in self.read_ports:
                 for bit in range(self.word_size):
-                    self.copy_layout_pin(self.bank_inst, "dout{0}_{1}".format(port,bit), "DOUT{0}[{1}]".format(port,bit))
+                    self.copy_layout_pin(self.bank_inst, "dout{0}_{1}".format(port,bit), "dout{0}[{1}]".format(port,bit))
 
             # Lower address bits
             for bit in range(self.col_addr_size):
-                self.copy_layout_pin(self.col_addr_dff_insts[port], "din_{}".format(bit),"ADDR{0}[{1}]".format(port,bit))
+                self.copy_layout_pin(self.col_addr_dff_insts[port], "din_{}".format(bit),"addr{0}[{1}]".format(port,bit))
             # Upper address bits
             for bit in range(self.row_addr_size):
-                self.copy_layout_pin(self.row_addr_dff_insts[port], "din_{}".format(bit),"ADDR{0}[{1}]".format(port,bit+self.col_addr_size))
+                self.copy_layout_pin(self.row_addr_dff_insts[port], "din_{}".format(bit),"addr{0}[{1}]".format(port,bit+self.col_addr_size))
 
             if port in self.write_ports:
                 for bit in range(self.word_size):
-                    self.copy_layout_pin(self.data_dff_insts[port], "din_{}".format(bit), "DIN{0}[{1}]".format(port,bit))
-                if self.write_size is not None:
+                    self.copy_layout_pin(self.data_dff_insts[port], "din_{}".format(bit), "din{0}[{1}]".format(port,bit))
+                    
+                if self.write_size:
                     for bit in range(self.num_wmasks):
                         self.copy_layout_pin(self.wmask_dff_insts[port], "din_{}".format(bit), "wmask{0}[{1}]".format(port,bit))
 
@@ -228,7 +229,7 @@ class sram_1bank(sram_base):
         
         self.route_data_dff()
         
-        if self.write_size is not None:
+        if self.write_size:
             self.route_wmask_dff()
 
     def route_clk(self):
@@ -282,7 +283,7 @@ class sram_1bank(sram_base):
                 self.add_path("metal2",[mid_pos, clk_steiner_pos], width=max(m2m3.width,m2m3.height))
                 self.add_wire(("metal3","via2","metal2"),[data_dff_clk_pos, mid_pos, clk_steiner_pos])
 
-                if self.write_size is not None:
+                if self.write_size:
                     wmask_dff_clk_pin = self.wmask_dff_insts[port].get_pin("clk")
                     wmask_dff_clk_pos = wmask_dff_clk_pin.center()
                     mid_pos = vector(clk_steiner_pos.x, wmask_dff_clk_pos.y)
@@ -362,7 +363,7 @@ class sram_1bank(sram_base):
 
             dff_names = ["dout_{}".format(x) for x in range(self.word_size)]
             dff_pins = [self.data_dff_insts[port].get_pin(x) for x in dff_names]
-            if self.write_size is not None:
+            if self.write_size:
                 for x in dff_names:
                     pin_offset = self.data_dff_insts[port].get_pin(x).center()
                     self.add_via_center(layers=("metal1", "via1", "metal2"),
@@ -375,7 +376,7 @@ class sram_1bank(sram_base):
             
             bank_names = ["din{0}_{1}".format(port,x) for x in range(self.word_size)]
             bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
-            if self.write_size is not None:
+            if self.write_size:
                 for x in bank_names:
                     pin_offset = self.bank_inst.get_pin(x).bc()
                     self.add_via_center(layers=("metal1", "via1", "metal2"),
@@ -386,7 +387,7 @@ class sram_1bank(sram_base):
                                         offset=pin_offset)
 
             route_map = list(zip(bank_pins, dff_pins))
-            if self.write_size is not None:
+            if self.write_size:
                 self.create_horizontal_channel_route(netlist=route_map,
                                                      offset=offset,
                                                      layer_stack=("metal3", "via3", "metal4"))
@@ -440,7 +441,7 @@ class sram_1bank(sram_base):
         #Data dffs and wmask dffs are only for writing so are not useful for evaluating read delay.
         for inst in self.data_dff_insts:
             self.graph_inst_exclude.add(inst)
-        if self.write_size is not None:
+        if self.write_size:
             for inst in self.wmask_dff_insts:
                 self.graph_inst_exclude.add(inst)
     

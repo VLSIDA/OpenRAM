@@ -106,6 +106,7 @@ class write_mask_and_array(design.design):
         self.nand2 = factory.create(module_type="pnand2")
         supply_pin=self.nand2.get_pin("vdd")
 
+        # Create the enable pin that connects all write mask AND array's B pins
         beg_en_pin = self.and2_insts[0].get_pin("B")
         end_en_pin = self.and2_insts[self.num_wmasks-1].get_pin("B")
         self.add_layout_pin(text="en",
@@ -114,21 +115,16 @@ class write_mask_and_array(design.design):
                             width = end_en_pin.cx() - beg_en_pin.cx())
 
         for i in range(self.num_wmasks):
+            # Copy remaining layout pins
             self.copy_layout_pin(self.and2_insts[i],"A","wmask_in_{0}".format(i))
-            wmask_in_pin = self.and2_insts[i].get_pin("A")
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=wmask_in_pin.center())
+            self.copy_layout_pin(self.and2_insts[i],"Z","wmask_out_{0}".format(i))
 
+            # Add via connections to metal3 for AND array's B pin
             en_pin = self.and2_insts[i].get_pin("B")
-            # Add the M1->M2 stack
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=en_pin.center())
-            # Add the M2->M3 stack
             self.add_via_center(layers=("metal2", "via2", "metal3"),
                                 offset=en_pin.center())
-
-
-            self.copy_layout_pin(self.and2_insts[i],"Z","wmask_out_{0}".format(i))
 
             self.add_power_pin("gnd", vector(supply_pin.width() + i * self.wmask_en_len, 0))
             self.add_power_pin("vdd", vector(supply_pin.width() + i * self.wmask_en_len, self.height))

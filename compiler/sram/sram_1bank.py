@@ -77,38 +77,35 @@ class sram_1bank(sram_base):
         # Port 0
         port = 0
 
-        if self.write_size:
-            if port in self.write_ports:
+        if port in self.write_ports:
+            if self.write_size:
                 # Add the write mask flops below the write mask AND array.
                 wmask_pos[port] = vector(self.bank.bank_array_ll.x,
-                                         -0.5*max_gap_size - self.dff.height)
+                                         -0.5 * max_gap_size - self.dff.height)
                 self.wmask_dff_insts[port].place(wmask_pos[port])
 
                 # Add the data flops below the write mask flops.
                 data_pos[port] = vector(self.bank.bank_array_ll.x,
-                                        -1.5*max_gap_size - 2*self.dff.height)
+                                        -1.5 * max_gap_size - 2 * self.dff.height)
                 self.data_dff_insts[port].place(data_pos[port])
             else:
-                wmask_pos[port] = vector(self.bank.bank_array_ll.x, 0)
-                data_pos[port] = vector(self.bank.bank_array_ll.x,0)
-
+                # Add the data flops below the bank to the right of the lower-left of bank array
+                # This relies on the lower-left of the array of the bank
+                # decoder in upper left, bank in upper right, sensing in lower right.
+                # These flops go below the sensing and leave a gap to channel route to the
+                # sense amps.
+                if port in self.write_ports:
+                    data_pos[port] = vector(self.bank.bank_array_ll.x,
+                                            -max_gap_size - self.dff.height)
+                    self.data_dff_insts[port].place(data_pos[port])
         else:
-            # Add the data flops below the bank to the right of the lower-left of bank array
-            # This relies on the lower-left of the array of the bank
-            # decoder in upper left, bank in upper right, sensing in lower right.
-            # These flops go below the sensing and leave a gap to channel route to the
-            # sense amps.
-            if port in self.write_ports:
-                data_pos[port] = vector(self.bank.bank_array_ll.x,
-                                        -max_gap_size - self.dff.height)
-                self.data_dff_insts[port].place(data_pos[port])
+            wmask_pos[port] = vector(self.bank.bank_array_ll.x, 0)
+            data_pos[port] = vector(self.bank.bank_array_ll.x,0)
 
-            else:
-                data_pos[port] = vector(self.bank.bank_array_ll.x,0)
 
         # Add the col address flops below the bank to the left of the lower-left of bank array
         if self.col_addr_dff:
-            if self.write_size is not None:
+            if self.write_size:
                 col_addr_pos[port] = vector(self.bank.bank_array_ll.x - self.col_addr_dff_insts[port].width - self.bank.m2_gap,
                                             -0.5*max_gap_size - self.col_addr_dff_insts[port].height)
             else:
@@ -145,7 +142,6 @@ class sram_1bank(sram_base):
                     data_pos[port] = vector(self.bank.bank_array_ur.x - self.data_dff_insts[port].width,
                                             self.bank.height + 1.5*max_gap_size + 2*self.dff.height)
                     self.data_dff_insts[port].place(data_pos[port], mirror="MX")
-
                 else:
                     # Add the data flops above the bank to the left of the upper-right of bank array
                     # This relies on the upper-right of the array of the bank
@@ -158,7 +154,7 @@ class sram_1bank(sram_base):
 
             # Add the col address flops above the bank to the right of the upper-right of bank array
             if self.col_addr_dff:
-                if self.write_size is not None:
+                if self.write_size:
                     col_addr_pos[port] = vector(self.bank.bank_array_ur.x + self.bank.m2_gap,
                                                 self.bank.height + 0.5*max_gap_size + self.dff.height)
                 else:

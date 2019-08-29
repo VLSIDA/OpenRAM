@@ -110,8 +110,8 @@ class write_mask_and_array(design.design):
         end_en_pin = self.and2_insts[self.num_wmasks-1].get_pin("B")
         self.add_layout_pin(text="en",
                             layer="metal3",
-                            offset=beg_en_pin.ll(),
-                            width = end_en_pin.rx() - beg_en_pin.lx())
+                            offset=beg_en_pin.bc(),
+                            width = end_en_pin.cx() - beg_en_pin.cx())
 
         for i in range(self.num_wmasks):
             self.copy_layout_pin(self.and2_insts[i],"A","wmask_in_{0}".format(i))

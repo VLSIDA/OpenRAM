@@ -108,8 +108,12 @@ class sram_1bank(sram_base):
 
         # Add the col address flops below the bank to the left of the lower-left of bank array
         if self.col_addr_dff:
-            col_addr_pos[port] = vector(self.bank.bank_array_ll.x - self.col_addr_dff_insts[port].width - self.bank.m2_gap,
-                                        -max_gap_size - self.col_addr_dff_insts[port].height)
+            if self.write_size is not None:
+                col_addr_pos[port] = vector(self.bank.bank_array_ll.x - self.col_addr_dff_insts[port].width - self.bank.m2_gap,
+                                            -0.5*max_gap_size - self.col_addr_dff_insts[port].height)
+            else:
+                col_addr_pos[port] = vector(self.bank.bank_array_ll.x - self.col_addr_dff_insts[port].width - self.bank.m2_gap,
+                                            -max_gap_size - self.col_addr_dff_insts[port].height)
             self.col_addr_dff_insts[port].place(col_addr_pos[port])
         else:
             col_addr_pos[port] = vector(self.bank.bank_array_ll.x,0)
@@ -125,13 +129,6 @@ class sram_1bank(sram_base):
         y_offset = max(self.control_logic_insts[port].uy(), self.bank_inst.uy() - self.row_addr_dff_insts[port].height)
         row_addr_pos[port] = vector(x_offset, y_offset)
         self.row_addr_dff_insts[port].place(row_addr_pos[port])
-        
-        # Add the col address flops below the bank to the left of the lower-left of bank array
-        if self.col_addr_dff:
-            col_addr_pos[port] = vector(self.bank.bank_array_ll.x - self.col_addr_dff_insts[port].width - self.bank.m2_gap,
-                                        -max_gap_size - self.col_addr_dff_insts[port].height)
-            self.col_addr_dff_insts[port].place(col_addr_pos[port])
-
 
         if len(self.all_ports)>1:
             # Port 1
@@ -161,8 +158,12 @@ class sram_1bank(sram_base):
 
             # Add the col address flops above the bank to the right of the upper-right of bank array
             if self.col_addr_dff:
-                col_addr_pos[port] = vector(self.bank.bank_array_ur.x + self.bank.m2_gap,
-                                            self.bank.height + max_gap_size + self.dff.height)
+                if self.write_size is not None:
+                    col_addr_pos[port] = vector(self.bank.bank_array_ur.x + self.bank.m2_gap,
+                                                self.bank.height + 0.5*max_gap_size + self.dff.height)
+                else:
+                    col_addr_pos[port] = vector(self.bank.bank_array_ur.x + self.bank.m2_gap,
+                                                    self.bank.height + max_gap_size + self.dff.height)
                 self.col_addr_dff_insts[port].place(col_addr_pos[port], mirror="MX")
             else:
                 col_addr_pos[port] = self.bank_inst.ur()

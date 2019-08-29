@@ -86,7 +86,7 @@ class sram_1bank(sram_base):
 
                 # Add the data flops below the write mask flops.
                 data_pos[port] = vector(self.bank.bank_array_ll.x,
-                                        -1.5 * max_gap_size - 2 * self.dff.height)
+                                        -2 * max_gap_size - 2 * self.dff.height)
                 self.data_dff_insts[port].place(data_pos[port])
             else:
                 # Add the data flops below the bank to the right of the lower-left of bank array
@@ -140,7 +140,7 @@ class sram_1bank(sram_base):
 
                     # Add the data flops below the write mask flops
                     data_pos[port] = vector(self.bank.bank_array_ur.x - self.data_dff_insts[port].width,
-                                            self.bank.height + 1.5*max_gap_size + 2*self.dff.height)
+                                            self.bank.height + 2*max_gap_size + 2*self.dff.height)
                     self.data_dff_insts[port].place(data_pos[port], mirror="MX")
                 else:
                     # Add the data flops above the bank to the left of the upper-right of bank array

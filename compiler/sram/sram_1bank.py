@@ -71,8 +71,8 @@ class sram_1bank(sram_base):
         data_pos = [None]*len(self.all_ports)
 
         if self.write_size:
-            max_gap_size = self.m3_pitch*max(self.word_size+1,self.col_addr_size+1) + 2*self.m1_pitch
-            max_gap_size_wmask = self.m2_pitch*self.num_wmasks + 2*self.m1_pitch
+            max_gap_size = self.m3_pitch*self.word_size + 2*self.m1_pitch
+            max_gap_size_wmask = self.m2_pitch*max(self.num_wmasks+1,self.col_addr_size+1) + 2*self.m1_pitch
         else:
             # This is M2 pitch even though it is on M1 to help stem via spacings on the trunk
             # The M1 pitch is for supply rail spacings
@@ -90,7 +90,7 @@ class sram_1bank(sram_base):
 
                 # Add the data flops below the write mask flops.
                 data_pos[port] = vector(self.bank.bank_array_ll.x,
-                                        -max_gap_size - max_gap_size_wmask - 2 * self.dff.height)
+                                        -max_gap_size - max_gap_size_wmask - 2*self.dff.height)
                 self.data_dff_insts[port].place(data_pos[port])
             else:
                 # Add the data flops below the bank to the right of the lower-left of bank array
@@ -160,7 +160,7 @@ class sram_1bank(sram_base):
             if self.col_addr_dff:
                 if self.write_size:
                     col_addr_pos[port] = vector(self.bank.bank_array_ur.x + self.bank.m2_gap,
-                                                self.bank.height + 0.5*max_gap_size + self.dff.height)
+                                                self.bank.height + max_gap_size_wmask + self.dff.height)
                 else:
                     col_addr_pos[port] = vector(self.bank.bank_array_ur.x + self.bank.m2_gap,
                                                     self.bank.height + max_gap_size + self.dff.height)

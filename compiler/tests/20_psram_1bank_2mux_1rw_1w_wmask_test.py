@@ -17,8 +17,8 @@ from sram_factory import factory
 import debug
 
 
-# @unittest.skip("SKIPPING 20_psram_1bank_test, multiport layout not complete")
-class psram_1bank_2mux_1rw_1w_test(openram_test):
+# @unittest.skip("SKIPPING psram_1bank_2mux_1rw_1w_wmask_test, multiport layout not complete")
+class psram_1bank_2mux_1rw_1w_wmask_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_{0}".format(OPTS.tech_name))

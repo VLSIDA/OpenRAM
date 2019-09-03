@@ -383,7 +383,10 @@ class sram_1bank(sram_base):
             bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
             if self.write_size:
                 for x in bank_names:
-                    pin_offset = self.bank_inst.get_pin(x).bc()
+                    if port % 2:
+                        pin_offset = self.bank_inst.get_pin(x).uc()
+                    else:
+                        pin_offset = self.bank_inst.get_pin(x).bc()
                     self.add_via_center(layers=("metal1", "via1", "metal2"),
                                         offset=pin_offset)
                     self.add_via_center(layers=("metal2", "via2", "metal3"),

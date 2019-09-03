@@ -319,13 +319,13 @@ class spice():
         corner_slew = SLEW_APPROXIMATION*corner_delay
         return delay_data(corner_delay, corner_slew)
 
-    def get_stage_effort(self, corner, slew, load=0.0):
+    def get_stage_effort(self, cout, inp_is_rise=True):
         """Inform users undefined delay module while building new modules"""
         debug.warning("Design Class {0} logical effort function needs to be defined"
                       .format(self.__class__.__name__))
         debug.warning("Class {0} name {1}"
-                      .format(self.__class__.__name__, 
-                              self.name))         
+                      .format(self.__class__.__name__,
+                              self.name))
         return None   
         
     def get_cin(self):

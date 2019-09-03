@@ -22,11 +22,11 @@ class port_data(design.design):
         
         sram_config.set_local_config(self)
         self.port = port
-        if self.write_size:
+        if self.write_size is not None:
             self.num_wmasks = int(self.word_size/self.write_size)
         else:
             self.num_wmasks = 0
-        
+
         if name == "":
             name = "port_data_{0}".format(self.port)
         design.design.__init__(self, name)
@@ -58,7 +58,7 @@ class port_data(design.design):
 
         if self.write_driver_array:
             self.create_write_driver_array()
-            if self.write_size:
+            if self.write_size is not None:
                 self.create_write_mask_and_array()
             else:
                 self.write_mask_and_array_inst = None
@@ -70,9 +70,9 @@ class port_data(design.design):
             self.create_column_mux_array()
         else:
             self.column_mux_array_inst = None
-            
-        
-        
+
+
+
     def create_layout(self):
         self.compute_instance_offsets()
         self.place_instances()
@@ -81,7 +81,7 @@ class port_data(design.design):
 
     def add_pins(self):
         """ Adding pins for port address module"""
-        
+
         self.add_pin("rbl_bl","INOUT")
         self.add_pin("rbl_br","INOUT")
         for bit in range(self.num_cols):
@@ -107,7 +107,7 @@ class port_data(design.design):
         self.add_pin("vdd","POWER")
         self.add_pin("gnd","GROUND")
 
-        
+
     def route_layout(self):
         """ Create routing among the modules """
         self.route_data_lines()
@@ -118,15 +118,15 @@ class port_data(design.design):
         """ Add the pins """
         self.route_bitline_pins()
         self.route_control_pins()
-        
+
     def route_data_lines(self):
         """ Route the bitlines depending on the port type rw, w, or r. """
-        
+
         if self.port in self.readwrite_ports:
             # (write_mask_and ->) write_driver -> sense_amp -> (column_mux ->) precharge -> bitcell_array
             self.route_write_mask_and_array_in(self.port)
             self.route_write_mask_and_array_to_write_driver(self.port)
-            self.route_write_driver_in(self.port)    
+            self.route_write_driver_in(self.port)
             self.route_sense_amp_out(self.port)
             self.route_write_driver_to_sense_amp(self.port)
             self.route_sense_amp_to_column_mux_or_precharge_array(self.port)
@@ -142,15 +142,15 @@ class port_data(design.design):
             self.route_write_mask_and_array_to_write_driver(self.port)
             self.route_write_driver_in(self.port)
             self.route_write_driver_to_column_mux_or_precharge_array(self.port)
-            self.route_column_mux_to_precharge_array(self.port)            
-        
+            self.route_column_mux_to_precharge_array(self.port)
+
     def route_supplies(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """
-        
+
         for inst in self.insts:
             self.copy_power_pins(inst,"vdd")
             self.copy_power_pins(inst,"gnd")
-        
+
     def add_modules(self):
 
         # Extra column +1 is for RBL
@@ -163,23 +163,23 @@ class port_data(design.design):
 
         if self.port in self.read_ports:
             self.sense_amp_array = factory.create(module_type="sense_amp_array",
-                                                  word_size=self.word_size, 
+                                                  word_size=self.word_size,
                                                   words_per_row=self.words_per_row)
             self.add_mod(self.sense_amp_array)
         else:
             self.sense_amp_array = None
-            
+
 
         if self.col_addr_size > 0:
             self.column_mux_array = factory.create(module_type="column_mux_array",
-                                                   columns=self.num_cols, 
+                                                   columns=self.num_cols,
                                                    word_size=self.word_size,
                                                    bitcell_bl=self.bl_names[self.port],
                                                    bitcell_br=self.br_names[self.port])
             self.add_mod(self.column_mux_array)
         else:
             self.column_mux_array = None
-                
+
 
         if self.port in self.write_ports:
             self.write_driver_array = factory.create(module_type="write_driver_array",
@@ -187,11 +187,12 @@ class port_data(design.design):
                                                      word_size=self.word_size,
                                                      write_size=self.write_size)
             self.add_mod(self.write_driver_array)
-            if self.write_size:
+            if self.write_size is not None:
                 self.write_mask_and_array = factory.create(module_type="write_mask_and_array",
                                                            columns=self.num_cols,
                                                            word_size=self.word_size,
-                                                           write_size=self.write_size)
+                                                           write_size=self.write_size,
+                                                           port = self.port)
                 self.add_mod(self.write_mask_and_array)
             else:
                 self.write_mask_and_array = None
@@ -207,8 +208,8 @@ class port_data(design.design):
         if self.col_addr_size>0:
             self.num_col_addr_lines = 2**self.col_addr_size
         else:
-            self.num_col_addr_lines = 0            
-        
+            self.num_col_addr_lines = 0
+
 
         # A space for wells or jogging m2 between modules
         self.m2_gap = max(2*drc("pwell_to_nwell") + drc("well_enclosure_active"),
@@ -216,7 +217,7 @@ class port_data(design.design):
 
 
         # create arrays of bitline and bitline_bar names for read, write, or all ports
-        self.bitcell = factory.create(module_type="bitcell") 
+        self.bitcell = factory.create(module_type="bitcell")
         self.bl_names = self.bitcell.get_all_bl_names()
         self.br_names = self.bitcell.get_all_br_names()
         self.wl_names = self.bitcell.get_all_wl_names()
@@ -226,7 +227,7 @@ class port_data(design.design):
         if not self.precharge_array:
             self.precharge_array_inst = None
             return
-        
+
         self.precharge_array_inst = self.add_inst(name="precharge_array{}".format(self.port),
                                                   mod=self.precharge_array)
 
@@ -245,16 +246,16 @@ class port_data(design.design):
         temp.extend(["p_en_bar", "vdd"])
         self.connect_inst(temp)
 
-            
+
     def place_precharge_array(self, offset):
         """ Placing Precharge """
-        
+
         self.precharge_array_inst.place(offset=offset, mirror="MX")
 
-            
+
     def create_column_mux_array(self):
         """ Creating Column Mux when words_per_row > 1 . """
-        
+
         self.column_mux_array_inst = self.add_inst(name="column_mux_array{}".format(self.port),
                                                    mod=self.column_mux_array)
 
@@ -270,15 +271,15 @@ class port_data(design.design):
         temp.append("gnd")
         self.connect_inst(temp)
 
-            
+
     def place_column_mux_array(self, offset):
         """ Placing Column Mux when words_per_row > 1 . """
         if self.col_addr_size == 0:
             return
-        
+
         self.column_mux_array_inst.place(offset=offset, mirror="MX")
 
-            
+
     def create_sense_amp_array(self):
         """ Creating Sense amp  """
         self.sense_amp_array_inst = self.add_inst(name="sense_amp_array{}".format(self.port),
@@ -293,11 +294,11 @@ class port_data(design.design):
             else:
                 temp.append(self.bl_names[self.port]+"_out_{0}".format(bit))
                 temp.append(self.br_names[self.port]+"_out_{0}".format(bit))
-               
+
         temp.extend(["s_en", "vdd", "gnd"])
         self.connect_inst(temp)
 
-            
+
     def place_sense_amp_array(self, offset):
         """ Placing Sense amp  """
         self.sense_amp_array_inst.place(offset=offset, mirror="MX")
@@ -320,7 +321,7 @@ class port_data(design.design):
                 temp.append(self.bl_names[self.port] + "_out_{0}".format(bit))
                 temp.append(self.br_names[self.port] + "_out_{0}".format(bit))
 
-        if self.write_size:
+        if self.write_size is not None:
             for i in range(self.num_wmasks):
                 temp.append("wdriver_sel_{}".format(i))
         else:

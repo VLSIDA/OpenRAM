@@ -17,26 +17,34 @@ from sram_factory import factory
 import debug
 
 
-@unittest.skip("SKIPPING sram_1bank_32b_1024_wmask_test")
-class sram_1bank_32b_1024_wmask_test(openram_test):
+# @unittest.skip("SKIPPING 20_psram_1bank_test, multiport layout not complete")
+class psram_1bank_2mux_1rw_1w_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_{0}".format(OPTS.tech_name))
         from sram_config import sram_config
-        c = sram_config(word_size=32,
-                        write_size=8,
-                        num_words=1024,
-                        num_banks=1)
 
+        OPTS.bitcell = "pbitcell"
+        OPTS.replica_bitcell = "replica_pbitcell"
+        OPTS.dummy_bitcell = "dummy_pbitcell"
+        OPTS.num_rw_ports = 1
+        OPTS.num_w_ports = 1
+        OPTS.num_r_ports = 0
+
+        c = sram_config(word_size=8,
+                        write_size=4,
+                        num_words=32,
+                        num_banks=1)
+        c.num_words = 32
+        c.words_per_row = 2
         c.recompute_sizes()
-        debug.info(1, "Layout test for {}rw,{}r,{}w sram "
-                      "with {} bit words, {} words, {} bit writes, {} words per "
+        debug.info(1, "Layout test for {}rw,{}r,{}w psram "
+                      "with {} bit words, {} words, {} words per "
                       "row, {} banks".format(OPTS.num_rw_ports,
                                              OPTS.num_r_ports,
                                              OPTS.num_w_ports,
                                              c.word_size,
                                              c.num_words,
-                                             c.write_size,
                                              c.words_per_row,
                                              c.num_banks))
         a = factory.create(module_type="sram", sram_config=c)

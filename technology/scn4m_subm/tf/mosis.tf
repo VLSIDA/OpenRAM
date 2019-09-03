@@ -552,6 +552,8 @@ layerRules(
   ( ("P1Con" "drawing")		47        	0       	t	 )
   ( ("Metal1" "drawing")	49        	0       	t	 )
   ( ("Metal2" "drawing")	51        	0       	t	 )
+  ( ("Metal3" "drawing")	62        	0       	t	 )	
+  ( ("Metal4" "drawing")	31        	0       	t	 )	
   ( ("annotate" "drawing")	0         	0       	nil	 )
   ( ("annotate" "drawing1")	0         	0       	nil	 )
   ( ("annotate" "drawing2")	0         	0       	nil	 )
@@ -562,7 +564,6 @@ layerRules(
   ( ("annotate" "drawing7")	0         	0       	nil	 )
   ( ("annotate" "drawing8")	0         	0       	nil	 )
   ( ("annotate" "drawing9")	0         	0       	nil	 )
-  ( ("Via" "drawing")		50        	0       	t	 )
   ( ("Glass" "drawing")		52        	0       	t	 )
   ( ("XP" "drawing")		60        	0       	t	 )
   ( ("Metal2" "pin")		0         	0       	nil	 )
@@ -590,8 +591,9 @@ layerRules(
   ( ("P1Con" "net")		0         	0       	nil	 )
   ( ("Metal1" "net")		0         	0       	nil	 )
   ( ("Metal2" "net")		0         	0       	nil	 )
+  ( ("Metal3" "net")		0         	0       	nil	 )
+  ( ("Metal4" "net")		0         	0       	nil	 )
   ( ("device" "label")		0         	0       	nil	 )
-  ( ("Via" "net")		0         	0       	nil	 )
   ( ("pin" "label")		0         	0       	nil	 )
   ( ("text" "drawing")		63        	0       	t	 )
   ( ("pin" "drawing")		0         	0       	nil	 )
@@ -649,11 +651,12 @@ layerRules(
   ( Metal2			0         	0       	nil	 )
   ( Glass			0         	0       	nil	 )
   ( XP				0         	0       	nil	 )
-  ( ("Via2" "drawing")		50              0               t        )
+  ( ("Via" "drawing")		50              0               t        )
+  ( ("Via" "net")		0               0               nil      )
+  ( ("Via2" "drawing")		61              0               t        )
   ( ("Via2" "net")		0               0               nil      )
-  ( ("Metal3" "drawing")        50              0               t        )
-  ( ("Metal3" "net")		0               0               nil      )
-  ( ("Metal3" "pin")		0               0               nil      )
+  ( ("Via3" "drawing")		30              0               t        )
+  ( ("Via3" "net")		0               0               nil      )
   ( ("CapWell" "drawing")       0               0               nil      )
   ( ("CapWell" "net")		0               0               nil      )
   ( ("SiBlock" "drawing")	0               0               nil      )
@@ -665,6 +668,7 @@ layerRules(
  viaLayers(
  ;( layer1      viaLayer        layer2     )
  ;( ------      --------        ------     )
+  ( Metal3    	Via3      	Metal4     )
   ( Metal2    	Via2      	Metal3     )
   ( Metal1    	Via      	Metal2     )
   ( Active    	ActX      	Poly1      )
@@ -798,6 +802,10 @@ electricalRules(
   ( currentDensity      	"Metal1"			1.0	 )
   ( currentDensity      	"Via"				1.0	 )
   ( currentDensity      	"Metal2"			1.0	 )
+  ( currentDensity      	"Via2"				1.0	 )
+  ( currentDensity      	"Metal3"			1.0	 )
+  ( currentDensity      	"Via3"				1.0	 )
+  ( currentDensity      	"Metal4"			1.0	 )
  ) ;characterizationRules
 
 ) ;electricalRules
@@ -824,10 +832,13 @@ leRules(
    ( Metal2                    drawing    )
    ( Via2                      drawing    )
    ( Metal3                    drawing    )
+   ( Via3                      drawing    )
+   ( Metal4                    drawing    )
    ( Poly1                     pin        )
    ( Metal1                    pin        )
    ( Metal2                    pin        )
    ( Metal3                    pin        )
+   ( Metal4                    pin        )
    ( Poly2                     drawing    )
    ( P2Con                     drawing    )
    ( instance                  drawing    )
@@ -853,7 +864,7 @@ leRules(
 
 lxRules(
  lxExtractLayers(
-  (Metal1 Metal2 Metal3)
+  (Metal1 Metal2 Metal3 Metal4)
  ) ;lxExtractLayers
 ) ;lxRules
 

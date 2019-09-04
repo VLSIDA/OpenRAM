@@ -61,15 +61,10 @@ class openram_front_end_test(openram_test):
         os.system(cmd)
         
         # assert an error until we actually check a result
-        for extension in ["v", "lef", "sp"]:
+        for extension in ["v", "lef", "sp", "gds"]:
             filename = "{0}/{1}.{2}".format(out_path,out_file,extension)
             debug.info(1,"Checking for file: " + filename)
             self.assertEqual(os.path.exists(filename),True)
-        # assert an error if we output the incomplete gds!
-        for extension in ["gds"]:
-            filename = "{0}/{1}.{2}".format(out_path,out_file,extension)
-            debug.info(1,"Checking file does NOT exist: " + filename)
-            self.assertEqual(os.path.exists(filename),False)
 
         # Make sure there is any .lib file
         import glob

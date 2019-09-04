@@ -20,7 +20,7 @@ class write_mask_and_array(design.design):
     The write mask AND array goes between the write driver array and the sense amp array.
     """
 
-    def __init__(self, name, columns, word_size, write_size, port):
+    def __init__(self, name, columns, word_size, write_size, port=0):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("columns: {0}".format(columns))
@@ -122,9 +122,10 @@ class write_mask_and_array(design.design):
                                 layer="metal3",
                                 offset=beg_en_pin.bc(),
                                 width=end_en_pin.cx() - beg_en_pin.cx() + en_to_edge)
+            self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                offset=vector(end_en_pin.cx() + en_to_edge, end_en_pin.cy()))
             self.add_via_center(layers=("metal2", "via2", "metal3"),
                                 offset=vector(end_en_pin.cx() + en_to_edge, end_en_pin.cy()))
-
 
         for i in range(self.num_wmasks):
             # Copy remaining layout pins

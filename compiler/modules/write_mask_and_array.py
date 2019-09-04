@@ -107,16 +107,11 @@ class write_mask_and_array(design.design):
         self.nand2 = factory.create(module_type="pnand2")
         supply_pin=self.nand2.get_pin("vdd")
 
-
         # Create the enable pin that connects all write mask AND array's B pins
         beg_en_pin = self.and2_insts[0].get_pin("B")
         end_en_pin = self.and2_insts[self.num_wmasks-1].get_pin("B")
-        if self.port == 0:
-            self.add_layout_pin(text="en",
-                                layer="metal3",
-                                offset=beg_en_pin.bc(),
-                                width=end_en_pin.cx() - beg_en_pin.cx())
-        else:
+        if self.port % 2:
+            # Extend metal3 to edge of AND array in multiport
             en_to_edge = self.and2.width - beg_en_pin.cx()
             self.add_layout_pin(text="en",
                                 layer="metal3",
@@ -126,6 +121,11 @@ class write_mask_and_array(design.design):
                                 offset=vector(end_en_pin.cx() + en_to_edge, end_en_pin.cy()))
             self.add_via_center(layers=("metal2", "via2", "metal3"),
                                 offset=vector(end_en_pin.cx() + en_to_edge, end_en_pin.cy()))
+        else:
+            self.add_layout_pin(text="en",
+                                layer="metal3",
+                                offset=beg_en_pin.bc(),
+                                width=end_en_pin.cx() - beg_en_pin.cx())
 
         for i in range(self.num_wmasks):
             # Copy remaining layout pins

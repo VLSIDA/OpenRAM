@@ -303,37 +303,18 @@ spice["fall_time"] = 0.005           # fall time in [Nano-seconds]
 spice["temperatures"] = [0, 25, 100] # Temperature corners (celcius)
 spice["nom_temperature"] = 25        # Nominal temperature (celcius)
 
-
-#sram signal names
-#FIXME: We don't use these everywhere...
-spice["vdd_name"] = "vdd"
-spice["gnd_name"] = "gnd"
-spice["control_signals"] = ["CSB", "WEB"]
-spice["data_name"] = "DATA"
-spice["addr_name"] = "ADDR"
-spice["minwidth_tx"] = drc["minwidth_tx"]
-spice["channel"] = drc["minlength_channel"]
-spice["clk"] = "clk"
-
 # analytical delay parameters
 spice["vdd_nominal"] = 1.0    # Typical Threshold voltage in Volts
 spice["temp_nominal"] = 25.0   # Typical Threshold voltage in Volts
 spice["v_threshold_typical"] = 0.4    # Typical Threshold voltage in Volts
 spice["wire_unit_r"] = 0.075     # Unit wire resistance in ohms/square
 spice["wire_unit_c"] = 0.64      # Unit wire capacitance ff/um^2
-spice["min_tx_r"] = 9250.0       # Minimum transistor on resistance in ohms
 spice["min_tx_drain_c"] = 0.7    # Minimum transistor drain capacitance in ff
 spice["min_tx_gate_c"] = 0.2     # Minimum transistor gate capacitance in ff
-spice["msflop_setup"] = 9        # DFF setup time in ps
-spice["msflop_hold"] = 1         # DFF hold time in ps
-spice["msflop_delay"] = 20.5     # DFF Clk-to-q delay in ps
-spice["msflop_slew"] = 13.1      # DFF output slew in ps w/ no load
-spice["msflop_in_cap"] = 0.2091  # Input capacitance of ms_flop (Din) [Femto-farad]
 spice["dff_setup"] = 9        # DFF setup time in ps
 spice["dff_hold"] = 1         # DFF hold time in ps
-spice["dff_delay"] = 20.5     # DFF Clk-to-q delay in ps
-spice["dff_slew"] = 13.1      # DFF output slew in ps w/ no load
-spice["dff_in_cap"] = 0.2091  # Input capacitance of ms_flop (Din) [Femto-farad]
+spice["dff_in_cap"] = 0.2091  # Input capacitance (D) [Femto-farad]
+spice["dff_out_cap"] = 2       # Output capacitance (Q) [Femto-farad]
 
 # analytical power parameters, many values are temporary
 spice["bitcell_leakage"] = 1     # Leakage power of a single bitcell in nW
@@ -341,19 +322,13 @@ spice["inv_leakage"] = 1         # Leakage power of inverter in nW
 spice["nand2_leakage"] = 1       # Leakage power of 2-input nand in nW
 spice["nand3_leakage"] = 1       # Leakage power of 3-input nand in nW
 spice["nor2_leakage"] = 1        # Leakage power of 2-input nor in nW
-spice["msflop_leakage"] = 1      # Leakage power of flop in nW
-spice["flop_para_cap"] = 2       # Parasitic Output capacitance in fF
+spice["dff_leakage"] = 1      # Leakage power of flop in nW
 
-spice["default_event_rate"] = 100           # Default event activity of every gate. MHz
-spice["flop_transition_prob"] = 0.5        # Transition probability of inverter.
-spice["inv_transition_prob"] = 0.5         # Transition probability of inverter.
-spice["nand2_transition_prob"] = 0.1875    # Transition probability of 2-input nand.
-spice["nand3_transition_prob"] = 0.1094    # Transition probability of 3-input nand.
-spice["nor2_transition_prob"] = 0.1875     # Transition probability of 2-input nor.
+spice["default_event_frequency"] = 100     # Default event activity of every gate. MHz
 
 #Parameters related to sense amp enable timing and delay chain/RBL sizing
-parameter['le_tau'] = 2.25                  #In pico-seconds.
-parameter['cap_relative_per_ff'] = 7.5      #Units of Relative Capacitance/ Femto-Farad
+parameter["le_tau"] = 2.25                  #In pico-seconds.
+parameter["cap_relative_per_ff"] = 7.5      #Units of Relative Capacitance/ Femto-Farad
 parameter["dff_clk_cin"] = 30.6             #relative capacitance
 parameter["6tcell_wl_cin"] = 3              #relative capacitance
 parameter["min_inv_para_delay"] = 2.4        #Tau delay units
@@ -361,7 +336,7 @@ parameter["sa_en_pmos_size"] = 0.72          #micro-meters
 parameter["sa_en_nmos_size"] = 0.27          #micro-meters
 parameter["sa_inv_pmos_size"] = 0.54          #micro-meters
 parameter["sa_inv_nmos_size"] = 0.27          #micro-meters
-parameter['bitcell_drain_cap'] = 0.1        #In Femto-Farad, approximation of drain capacitance
+parameter["bitcell_drain_cap"] = 0.1        #In Femto-Farad, approximation of drain capacitance
 
 ###################################################
 ##END Spice Simulation Parameters

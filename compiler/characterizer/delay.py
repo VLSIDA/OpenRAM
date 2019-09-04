@@ -259,7 +259,7 @@ class delay(simulation):
         """Sets important names for characterization such as Sense amp enable and internal bit nets."""
         
         port = self.read_ports[0]
-        self.graph.get_all_paths('{}{}'.format(tech.spice["clk"], port), 
+        self.graph.get_all_paths('{}{}'.format("clk", port), 
                                  '{}{}_{}'.format(self.dout_name, port, self.probe_data))
         
         self.sen_name = self.get_sen_name(self.graph.all_paths)    
@@ -1291,7 +1291,7 @@ class delay(simulation):
         self.create_measurement_names()
         
         port = self.read_ports[0]
-        self.graph.get_all_paths('{}{}'.format(tech.spice["clk"], port), 
+        self.graph.get_all_paths('{}{}'.format("clk", port), 
                                  '{}{}_{}'.format(self.dout_name, port, self.probe_data))
         
         # Select the path with the bitline (bl)

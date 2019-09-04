@@ -382,7 +382,7 @@ class replica_bitcell_array(design.design):
         bl_wire = self.gen_bl_wire()
         cell_load = 2 * bl_wire.return_input_cap() 
         bl_swing = OPTS.rbl_delay_percentage
-        freq = spice["default_event_rate"]
+        freq = spice["default_event_frequency"]
         bitline_dynamic = self.calc_dynamic_power(corner, cell_load, freq, swing=bl_swing)
         
         #Calculate the bitcell power which currently only includes leakage 

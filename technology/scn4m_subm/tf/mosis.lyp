@@ -337,8 +337,8 @@
   <marked>false</marked>
   <xfill>false</xfill>
   <animation>0</animation>
-  <name>Via2.drawing - 50/0</name>
-  <source>50/0@1</source>
+  <name>Via2.drawing - 61/0</name>
+  <source>61/0@1</source>
  </properties>
  <properties>
   <frame-color>#5e00e6</frame-color>
@@ -354,8 +354,42 @@
   <marked>false</marked>
   <xfill>false</xfill>
   <animation>0</animation>
-  <name>Metal3.drawing - 50/0</name>
-  <source>50/0@1</source>
+  <name>Metal3.drawing - 62/0</name>
+  <source>62/0@1</source>
+ </properties>
+ <properties>
+  <frame-color>#ffe6bf</frame-color>
+  <fill-color>#ffe6bf</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>I1</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>Via3.drawing - 30/0</name>
+  <source>30/0@1</source>
+ </properties>
+ <properties>
+  <frame-color>#ffe6bf</frame-color>
+  <fill-color>#ffe6bf</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C5</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>Metal4.drawing - 31/0</name>
+  <source>31/0@1</source>
  </properties>
  <properties>
   <frame-color>#ff8000</frame-color>
@@ -576,23 +610,6 @@
   <xfill>false</xfill>
   <animation>0</animation>
   <name>Metal2.pin - 0/0</name>
-  <source>0/0@1</source>
- </properties>
- <properties>
-  <frame-color>#333399</frame-color>
-  <fill-color>#333399</fill-color>
-  <frame-brightness>0</frame-brightness>
-  <fill-brightness>0</fill-brightness>
-  <dither-pattern>C16</dither-pattern>
-  <line-style>C0</line-style>
-  <valid>true</valid>
-  <visible>true</visible>
-  <transparent>false</transparent>
-  <width>1</width>
-  <marked>false</marked>
-  <xfill>false</xfill>
-  <animation>0</animation>
-  <name>Metal3.pin - 0/0</name>
   <source>0/0@1</source>
  </properties>
  <properties>
@@ -1120,6 +1137,23 @@
   <xfill>false</xfill>
   <animation>0</animation>
   <name>Via2.net - 0/0</name>
+  <source>0/0@1</source>
+ </properties>
+ <properties>
+  <frame-color>#ffe6bf</frame-color>
+  <fill-color>#ffe6bf</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C29</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>false</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>Metal4.net - 0/0</name>
   <source>0/0@1</source>
  </properties>
  <properties>

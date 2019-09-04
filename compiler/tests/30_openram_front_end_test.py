@@ -39,10 +39,12 @@ class openram_front_end_test(openram_test):
                 os.chmod(out_path, 0o0750)
 
         # specify the same verbosity for the system call
-        verbosity = ""
+        options = ""
         for i in range(OPTS.debug_level):
-            verbosity += " -v"
+            options += " -v"
 
+        if OPTS.spice_name:
+            options += " -s {}".format(OPTS.spice_name)
             
         # Always perform code coverage
         if OPTS.coverage == 0:
@@ -54,7 +56,7 @@ class openram_front_end_test(openram_test):
         cmd = "{0} -n -o {1} -p {2} {3} {4} 2>&1 > {5}/output.log".format(exe_name,
                                                                           out_file,
                                                                           out_path,
-                                                                          verbosity,
+                                                                          options,
                                                                           config_name,
                                                                           out_path)
         debug.info(1, cmd)
@@ -84,10 +86,11 @@ class openram_front_end_test(openram_test):
         self.assertEqual(len(re.findall('WARNING',output)),0)
 
 
-        # now clean up the directory
-        if os.path.exists(out_path):
-            shutil.rmtree(out_path, ignore_errors=True)
-        self.assertEqual(os.path.exists(out_path),False)
+       # now clean up the directory
+        if OPTS.purge_temp:
+            if os.path.exists(out_path):
+                shutil.rmtree(out_path, ignore_errors=True)
+            self.assertEqual(os.path.exists(out_path),False)
 
         globals.end_openram()
 

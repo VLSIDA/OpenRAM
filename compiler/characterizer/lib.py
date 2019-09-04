@@ -299,6 +299,15 @@ class lib:
         self.lib.write("    bit_to : {0};\n".format(self.sram.addr_size - 1))
         self.lib.write("    }\n\n")
 
+        if self.sram.write_size:
+            self.lib.write("    type (wmask){\n")
+            self.lib.write("    base_type : array;\n")
+            self.lib.write("    data_type : bit;\n")
+            self.lib.write("    bit_width : {0};\n".format(self.sram.num_wmasks))
+            self.lib.write("    bit_from : 0;\n")
+            self.lib.write("    bit_to : {0};\n".format(self.sram.num_wmasks - 1))
+            self.lib.write("    }\n\n")
+
 
     def write_FF_setuphold(self, port):
         """ Adds Setup and Hold timing results"""

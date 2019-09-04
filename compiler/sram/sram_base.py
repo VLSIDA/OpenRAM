@@ -27,7 +27,7 @@ class sram_base(design, verilog, lef):
     """
     def __init__(self, name, sram_config):
         design.__init__(self, name)
-        lef.__init__(self, ["metal1", "metal2", "metal3"])
+        lef.__init__(self, ["metal1", "metal2", "metal3", "metal4"])
         verilog.__init__(self)
         
         self.sram_config = sram_config
@@ -36,7 +36,7 @@ class sram_base(design, verilog, lef):
         self.bank_insts = []
 
         if self.write_size:
-            self.num_wmasks = int(self.word_size/self.write_size)
+            self.num_wmass = int(self.word_size/self.write_size)
         else:
             self.num_wmasks = 0
 

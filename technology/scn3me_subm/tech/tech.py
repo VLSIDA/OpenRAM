@@ -219,8 +219,6 @@ spice["nmos"]="n"
 spice["pmos"]="p"
 # This is a map of corners to model files
 SPICE_MODEL_DIR=os.environ.get("SPICE_MODEL_DIR")
-# FIXME: Uncomment when we have the new spice models
-#spice["fet_models"] = { "TT" : [SPICE_MODEL_DIR+"/nom/pmos.sp",SPICE_MODEL_DIR+"/nom/nmos.sp"] }
 spice["fet_models"] = { "TT" : [SPICE_MODEL_DIR+"/nom/pmos.sp",SPICE_MODEL_DIR+"/nom/nmos.sp"],
                         "FF" : [SPICE_MODEL_DIR+"/ff/pmos.sp",SPICE_MODEL_DIR+"/ff/nmos.sp"],
                         "FS" : [SPICE_MODEL_DIR+"/ff/pmos.sp",SPICE_MODEL_DIR+"/ss/nmos.sp"],
@@ -243,10 +241,8 @@ spice["temperatures"] = [0, 25, 100]  # Temperature corners (celcius)
 spice["nom_temperature"] = 25        # Nominal temperature (celcius)
 
 # analytical delay parameters
+spice["nom_threshold"] = 1.3   # Typical Threshold voltage in Volts
 # FIXME: These need to be updated for SCMOS, they are copied from FreePDK45.
-spice["vdd_nominal"] = 5.0    # Typical Threshold voltage in Volts
-spice["temp_nominal"] = 25.0   # Typical Threshold voltage in Volts
-spice["v_threshold_typical"] = 1.3   # Typical Threshold voltage in Volts
 spice["wire_unit_r"] = 0.075    # Unit wire resistance in ohms/square
 spice["wire_unit_c"] = 0.64     # Unit wire capacitance ff/um^2
 spice["min_tx_drain_c"] = 0.7   # Minimum transistor drain capacitance in ff

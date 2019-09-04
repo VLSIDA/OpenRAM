@@ -304,9 +304,7 @@ spice["temperatures"] = [0, 25, 100] # Temperature corners (celcius)
 spice["nom_temperature"] = 25        # Nominal temperature (celcius)
 
 # analytical delay parameters
-spice["vdd_nominal"] = 1.0    # Typical Threshold voltage in Volts
-spice["temp_nominal"] = 25.0   # Typical Threshold voltage in Volts
-spice["v_threshold_typical"] = 0.4    # Typical Threshold voltage in Volts
+spice["nom_threshold"] = 0.4    # Typical Threshold voltage in Volts
 spice["wire_unit_r"] = 0.075     # Unit wire resistance in ohms/square
 spice["wire_unit_c"] = 0.64      # Unit wire capacitance ff/um^2
 spice["min_tx_drain_c"] = 0.7    # Minimum transistor drain capacitance in ff

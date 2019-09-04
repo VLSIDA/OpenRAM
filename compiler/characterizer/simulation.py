@@ -48,8 +48,8 @@ class simulation():
         self.slew = tech.spice["rise_time"]*2
         self.load = tech.spice["dff_in_cap"]*4
 
-        self.v_high = self.vdd_voltage - tech.spice["v_threshold_typical"]
-        self.v_low = tech.spice["v_threshold_typical"]        
+        self.v_high = self.vdd_voltage - tech.spice["nom_threshold"]
+        self.v_low = tech.spice["nom_threshold"]        
         self.gnd_voltage = 0
         
     def create_signal_names(self):

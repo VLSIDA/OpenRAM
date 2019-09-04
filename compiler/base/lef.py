@@ -55,6 +55,9 @@ class lef:
         self.lef.write("{0}MACRO {1}\n".format(self.indent,self.name))
         self.indent += "   "
         self.lef.write("{0}CLASS BLOCK ;\n".format(self.indent))
+        self.lef.write("{0}ORIGIN {1} {2} ;\n".format(self.indent,
+                                                       round(self.origin_offset[0], self.round_grid),
+                                                       round(self.origin_offset[1], self.round_grid)))
         self.lef.write("{0}SIZE {1} BY {2} ;\n" .format(self.indent,
                                                         round(self.width,self.round_grid),
                                                         round(self.height,self.round_grid)))

@@ -27,7 +27,7 @@ class sram_base(design, verilog, lef):
     """
     def __init__(self, name, sram_config):
         design.__init__(self, name)
-        lef.__init__(self, ["metal1", "metal2", "metal3", "metal4","poly"])
+        lef.__init__(self, ["metal1", "metal2", "metal3", "metal4"])
         verilog.__init__(self)
         
         self.sram_config = sram_config
@@ -36,7 +36,7 @@ class sram_base(design, verilog, lef):
         self.bank_insts = []
 
         if self.write_size:
-            self.num_wmasks = int(self.word_size/self.write_size)
+            self.num_wmasks =nt(self.word_size/self.write_size)
         else:
             self.num_wmasks = 0
 
@@ -123,8 +123,10 @@ class sram_base(design, verilog, lef):
         #self.offset_all_coordinates()
 
         highest_coord = self.find_highest_coords()
-        self.width = highest_coord[0]
-        self.height = highest_coord[1]
+        lowest_coord = self.find_lowest_coords()
+        self.width = highest_coord[0] - lowest_coord[0]
+        self.height = highest_coord[1] -lowest_coord[1]
+        self.origin_offset = vector(- lowest_coord[0], - lowest_coord[1])
 
         start_time = datetime.now()
         # We only enable final verification if we have routed the design

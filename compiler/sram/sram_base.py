@@ -36,7 +36,7 @@ class sram_base(design, verilog, lef):
         self.bank_insts = []
 
         if self.write_size:
-            self.num_wmasks =nt(self.word_size/self.write_size)
+            self.num_wmasks = int(self.word_size/self.write_size)
         else:
             self.num_wmasks = 0
 
@@ -120,13 +120,11 @@ class sram_base(design, verilog, lef):
 
         self.add_lvs_correspondence_points()
         
-        #self.offset_all_coordinates()
+        self.offset_all_coordinates()
 
         highest_coord = self.find_highest_coords()
-        lowest_coord = self.find_lowest_coords()
-        self.width = highest_coord[0] - lowest_coord[0]
-        self.height = highest_coord[1] -lowest_coord[1]
-        self.origin_offset = vector(- lowest_coord[0], - lowest_coord[1])
+        self.width = highest_coord[0]
+        self.height = highest_coord[1]
 
         start_time = datetime.now()
         # We only enable final verification if we have routed the design

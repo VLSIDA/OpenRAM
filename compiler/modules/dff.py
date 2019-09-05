@@ -33,9 +33,9 @@ class dff(design.design):
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""
         c_eff = self.calculate_effective_capacitance(load)
-        freq = spice["default_event_rate"]
+        freq = spice["default_event_frequency"]
         power_dyn = self.calc_dynamic_power(corner, c_eff, freq)
-        power_leak = spice["msflop_leakage"]
+        power_leak = spice["dff_leakage"]
         
         total_power = self.return_power(power_dyn, power_leak)
         return total_power
@@ -44,8 +44,8 @@ class dff(design.design):
         """Computes effective capacitance. Results in fF"""
         from tech import parameter
         c_load = load
-        c_para = spice["flop_para_cap"]#ff
-        transition_prob = spice["flop_transition_prob"]
+        c_para = spice["dff_out_cap"]#ff
+        transition_prob = 0.5
         return transition_prob*(c_load + c_para) 
 
     def get_clk_cin(self):

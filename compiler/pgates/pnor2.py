@@ -230,7 +230,7 @@ class pnor2(pgate.pgate):
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""
         c_eff = self.calculate_effective_capacitance(load)
-        freq = spice["default_event_rate"]
+        freq = spice["default_event_frequency"]
         power_dyn = self.calc_dynamic_power(corner, c_eff, freq)
         power_leak = spice["nor2_leakage"]
         
@@ -241,7 +241,7 @@ class pnor2(pgate.pgate):
         """Computes effective capacitance. Results in fF"""
         c_load = load
         c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff
-        transition_prob = spice["nor2_transition_prob"]
+        transition_prob = 0.1875
         return transition_prob*(c_load + c_para) 
         
     def build_graph(self, graph, inst_name, port_nets):        

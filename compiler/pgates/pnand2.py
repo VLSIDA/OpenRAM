@@ -233,7 +233,7 @@ class pnand2(pgate.pgate):
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""
         c_eff = self.calculate_effective_capacitance(load)
-        freq = spice["default_event_rate"]
+        freq = spice["default_event_frequency"]
         power_dyn = self.calc_dynamic_power(corner, c_eff, freq)
         power_leak = spice["nand2_leakage"]
         
@@ -244,7 +244,7 @@ class pnand2(pgate.pgate):
         """Computes effective capacitance. Results in fF"""
         c_load = load
         c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff
-        transition_prob = spice["nand2_transition_prob"]
+        transition_prob = 0.1875
         return transition_prob*(c_load + c_para) 
 
     def input_load(self):

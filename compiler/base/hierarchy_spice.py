@@ -392,7 +392,7 @@ class spice():
         """Returns delay increase due to voltage.
            Implemented as linear factor based off nominal voltage.
         """
-        return tech.spice['vdd_nominal']/voltage
+        return tech.spice["nom_supply_voltage"]/voltage
         
     def get_temp_delay_factor(self, temp):
         """Returns delay increase due to temperature (in C).
@@ -400,11 +400,11 @@ class spice():
         """
         #Some portions of equation condensed (phi_t = k*T/q for T in Kelvin) in mV
         #(k/q)/100 = .008625, The division 100 simplifies the conversion from C to K and mV to V
-        thermal_voltage_nom = .008625*tech.spice["temp_nominal"]
-        thermal_voltage = .008625*temp
-        vthresh = (tech.spice["v_threshold_typical"]+2*(thermal_voltage-thermal_voltage_nom))
+        thermal_voltage_nom = 0.008625*tech.spice["nom_temperature"]
+        thermal_voltage = 0.008625*temp
+        vthresh = (tech.spice["nom_threshold"]+2*(thermal_voltage-thermal_voltage_nom))
         #Calculate effect on Vdd-Vth. The current vdd is not used here. A separate vdd factor is calculated.
-        return (tech.spice['vdd_nominal'] - tech.spice["v_threshold_typical"])/(tech.spice['vdd_nominal']-vthresh)
+        return (tech.spice["nom_supply_voltage"] - tech.spice["nom_threshold"])/(tech.spice["nom_supply_voltage"]-vthresh)
 
     def return_delay(self, delay, slew):
         return delay_data(delay, slew)

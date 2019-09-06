@@ -96,22 +96,6 @@ class stimuli():
         self.sf.write(".ENDS test_{0}\n\n".format(buffer_name))
 
 
-    def inst_buffer(self, buffer_name, signal_list):
-        """ Adds buffers to each top level signal that is in signal_list (only for sim purposes) """
-        for signal in signal_list:
-            self.sf.write("X{0}_buffer {0} {0}_buf {1} {2} test_{3}\n".format(signal,
-                                                                              "test"+self.vdd_name,
-                                                                              "test"+self.gnd_name,
-                                                                              buffer_name))
-
-
-    def inst_inverter(self, signal_list):
-        """ Adds inv for each signal that needs its inverted version (only for sim purposes) """
-        for signal in signal_list:
-            self.sf.write("X{0}_inv {0} {0}_inv {1} {2} test_inv\n".format(signal,
-                                                                           "test"+self.vdd_name,
-                                                                           "test"+self.gnd_name))
-
 
     def gen_pulse(self, sig_name, v1, v2, offset, period, t_rise, t_fall):
         """ 
@@ -276,9 +260,6 @@ class stimuli():
         """ Writes supply voltage statements """
         gnd_node_name = "0"
         self.sf.write("V{0} {0} {1} {2}\n".format(self.vdd_name, gnd_node_name, self.voltage))
-        # This is for the test power supply
-        self.sf.write("V{0} {0} {1} {2}\n".format("test"+self.vdd_name, gnd_node_name, self.voltage))
-        self.sf.write("V{0} {0} {1} {2}\n".format("test"+self.gnd_name, gnd_node_name, 0.0))
 
         #Adding a commented out supply for simulators where gnd and 0 are not global grounds.
         self.sf.write("\n*Nodes gnd and 0 are the same global ground node in ngspice/hspice/xa. Otherwise, this source may be needed.\n")

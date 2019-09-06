@@ -639,14 +639,11 @@ class control_logic(design.design):
         
     def create_sen_row(self):
         """ Create the sense enable buffer. """
-        if self.port_type=="rw":
-            input_name = "we_bar"
-        else:
-            input_name = "cs_bar"
         # GATE FOR S_EN
+        # Uses cs_bar (not we_bar) for feed-thru reads
         self.s_en_gate_inst = self.add_inst(name="buf_s_en_and",
                                             mod=self.sen_and3)
-        self.connect_inst(["rbl_bl_delay", "gated_clk_bar", input_name, "s_en", "vdd", "gnd"])
+        self.connect_inst(["rbl_bl_delay", "gated_clk_bar", "cs_bar", "s_en", "vdd", "gnd"])
         
         
     def place_sen_row(self,row):
@@ -659,12 +656,7 @@ class control_logic(design.design):
         
     def route_sen(self):
 
-        if self.port_type=="rw":
-            input_name = "we_bar"
-        else:
-            input_name = "cs_bar"
-            
-        sen_map = zip(["A", "B", "C"], ["rbl_bl_delay", "gated_clk_bar", input_name])
+        sen_map = zip(["A", "B", "C"], ["rbl_bl_delay", "gated_clk_bar", "cs_bar"])
         self.connect_vertical_bus(sen_map, self.s_en_gate_inst, self.rail_offsets)
         
         self.connect_output(self.s_en_gate_inst, "Z", "s_en")

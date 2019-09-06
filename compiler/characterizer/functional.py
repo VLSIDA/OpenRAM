@@ -70,7 +70,7 @@ class functional(simulation):
         if feasible_period: #period defaults to tech.py feasible period otherwise.
             self.period = feasible_period
         # Generate a random sequence of reads and writes
-        self.write_random_memory_sequence()
+        self.create_random_memory_sequence()
     
         # Run SPICE simulation
         self.write_functional_stimulus()
@@ -84,7 +84,7 @@ class functional(simulation):
         # Check read values with written values. If the values do not match, return an error.
         return self.check_stim_results()
     
-    def write_random_memory_sequence(self):
+    def create_random_memory_sequence(self):
         if self.write_size:
             rw_ops = ["noop", "write", "partial_write", "read"]
             w_ops = ["noop", "write", "partial_write"]
@@ -187,7 +187,7 @@ class functional(simulation):
         self.add_noop_all_ports(comment, "0"*self.addr_size, "0"*self.word_size, "0"*self.num_wmasks)
             
     def read_stim_results(self):
-        # Extrat dout values from spice timing.lis
+        # Extract dout values from spice timing.lis
         for (word, dout_port, eo_period, check) in self.write_check:
             sp_read_value = ""
             for bit in range(self.word_size):

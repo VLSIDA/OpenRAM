@@ -42,7 +42,7 @@ class control_logic(design.design):
         self.enable_delay_chain_resizing = False
         self.inv_parasitic_delay = logical_effort.logical_effort.pinv
         
-        #Determines how much larger the sen delay should be. Accounts for possible error in model.
+        # Determines how much larger the sen delay should be. Accounts for possible error in model.
         self.wl_timing_tolerance = 1 
         self.wl_stage_efforts = None
         self.sen_stage_efforts = None
@@ -66,7 +66,7 @@ class control_logic(design.design):
         """ Create layout and route between modules """
         self.place_instances()
         self.route_all()
-        #self.add_lvs_correspondence_points()
+        # self.add_lvs_correspondence_points()
         self.add_boundary()
         self.DRC_LVS()
 
@@ -343,7 +343,7 @@ class control_logic(design.design):
         
         # list of output control signals (for making a vertical bus)
         if self.port_type == "rw":
-            self.internal_bus_list = ["rbl_bl_delay_bar", "rbl_bl_delay", "gated_clk_bar", "gated_clk_buf", "we", "clk_buf", "we_bar", "cs"]
+            self.internal_bus_list = ["rbl_bl_delay_bar", "rbl_bl_delay", "gated_clk_bar", "gated_clk_buf", "we", "clk_buf", "cs_bar", "cs"]
         elif self.port_type == "r":
             self.internal_bus_list = ["rbl_bl_delay_bar", "rbl_bl_delay", "gated_clk_bar", "gated_clk_buf", "clk_buf", "cs_bar", "cs"]
         else:
@@ -733,7 +733,7 @@ class control_logic(design.design):
         
     def route_dffs(self):
         if self.port_type == "rw":
-            dff_out_map = zip(["dout_bar_0", "dout_bar_1", "dout_1"], ["cs", "we", "we_bar"])
+            dff_out_map = zip(["dout_bar_0", "dout_bar_1", "dout_0"], ["cs", "we", "cs_bar"])
         elif self.port_type == "r":
             dff_out_map = zip(["dout_bar_0", "dout_0"], ["cs", "cs_bar"])            
         else:

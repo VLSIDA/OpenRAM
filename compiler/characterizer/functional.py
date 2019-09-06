@@ -121,20 +121,27 @@ class functional(simulation):
 
         # The read port should not be the same as the write port being written.
         other_read_ports = copy.copy(self.read_ports)
-        other_read_ports.remove(first_write_port)
-        other_ports = copy.copy(self.all_ports)
-        other_ports.remove(first_write_port)
+        try:
+            other_read_ports.remove(first_write_port)
+        except:
+            pass
         # If we have one, check the feedthru read worked.
         if len(other_read_ports)>0:
             first_read_port = other_read_ports[0]
             comment = self.gen_cycle_comment("read (feedthru)", word, addr, "0"*self.num_wmasks, first_read_port, self.t_current)
             self.add_read_one_port(comment, addr, first_read_port)
             self.add_read_check(word, first_read_port)
-            other_ports.remove(first_read_port)
         
         # All other ports are noops.
+        other_ports = copy.copy(self.all_ports)
+        other_ports.remove(first_write_port)
+        try:
+            other_ports.remove(first_read_port)
+        except:
+            pass
+        
         for port in other_ports:
-            self.add_nop_one_port(port)
+            self.add_noop_one_port(port)
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
         self.check_lengths()

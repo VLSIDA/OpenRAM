@@ -66,7 +66,7 @@ class control_logic(design.design):
         """ Create layout and route between modules """
         self.place_instances()
         self.route_all()
-        # self.add_lvs_correspondence_points()
+        #self.add_lvs_correspondence_points()
         self.add_boundary()
         self.DRC_LVS()
 
@@ -201,7 +201,7 @@ class control_logic(design.design):
 
     def get_heuristic_delay_chain_size(self):
         """Use a basic heuristic to determine the size of the delay chain used for the Sense Amp Enable """
-        #FIXME: The minimum was 2 fanout, now it will not pass DRC unless it is 3. Why?
+        # FIXME: The minimum was 2 fanout, now it will not pass DRC unless it is 3. Why?
         delay_fanout = 3 # This can be anything >=3
         # Model poorly captures delay of the column mux. Be pessismistic for column mux
         if self.words_per_row >= 2:
@@ -209,8 +209,8 @@ class control_logic(design.design):
         else:
             delay_stages = 2
         
-        #Read ports have a shorter s_en delay. The model is not accurate enough to catch this difference
-        #on certain sram configs.
+        # Read ports have a shorter s_en delay. The model is not accurate enough to catch this difference
+        # on certain sram configs.
         if self.port_type == "r":
             delay_stages+=2
         
@@ -226,7 +226,7 @@ class control_logic(design.design):
     def does_sen_rise_fall_timing_match(self):
         """Compare the relative rise/fall delays of the sense amp enable and wordline"""
         self.set_sen_wl_delays()
-        #This is not necessarily more reliable than total delay in some cases.
+        # This is not necessarily more reliable than total delay in some cases.
         if (self.wl_delay_rise*self.wl_timing_tolerance >= self.sen_delay_rise or 
             self.wl_delay_fall*self.wl_timing_tolerance >= self.sen_delay_fall):
             return False
@@ -236,8 +236,9 @@ class control_logic(design.design):
     def does_sen_total_timing_match(self):
         """Compare the total delays of the sense amp enable and wordline"""
         self.set_sen_wl_delays()
-        #The sen delay must always be bigger than than the wl delay. This decides how much larger the sen delay must be before 
-        #a re-size is warranted.
+        # The sen delay must always be bigger than than the wl
+        # delay. This decides how much larger the sen delay must be
+        # before a re-size is warranted.
         if self.wl_delay*self.wl_timing_tolerance >= self.sen_delay:
             return False
         else:
@@ -250,14 +251,14 @@ class control_logic(design.design):
         debug.info(2, "Previous delay chain produced {} delay units".format(previous_delay_chain_delay))
         
         delay_fanout = 3 # This can be anything >=2
-        #The delay chain uses minimum sized inverters. There are (fanout+1)*stages inverters and each
-        #inverter adds 1 unit of delay (due to minimum size). This also depends on the pinv value
+        # The delay chain uses minimum sized inverters. There are (fanout+1)*stages inverters and each
+        # inverter adds 1 unit of delay (due to minimum size). This also depends on the pinv value
         required_delay = self.wl_delay*self.wl_timing_tolerance - (self.sen_delay-previous_delay_chain_delay)
         debug.check(required_delay > 0, "Cannot size delay chain to have negative delay")
         delay_stages = ceil(required_delay/(delay_fanout+1+self.inv_parasitic_delay))
         if delay_stages%2 == 1: #force an even number of stages. 
             delay_stages+=1
-            #Fanout can be varied as well but is a little more complicated but potentially optimal.
+            # Fanout can be varied as well but is a little more complicated but potentially optimal.
         debug.info(1, "Setting delay chain to {} stages with {} fanout to match {} delay".format(delay_stages, delay_fanout, required_delay))
         return (delay_stages, delay_fanout)
     
@@ -268,16 +269,16 @@ class control_logic(design.design):
         debug.info(2, "Previous delay chain produced {} delay units".format(previous_delay_chain_delay))
         
         fanout_rise = fanout_fall = 2 # This can be anything >=2
-        #The delay chain uses minimum sized inverters. There are (fanout+1)*stages inverters and each
-        #inverter adds 1 unit of delay (due to minimum size). This also depends on the pinv value
+        # The delay chain uses minimum sized inverters. There are (fanout+1)*stages inverters and each
+        # inverter adds 1 unit of delay (due to minimum size). This also depends on the pinv value
         required_delay_fall = self.wl_delay_fall*self.wl_timing_tolerance - (self.sen_delay_fall-previous_delay_chain_delay/2)
         required_delay_rise = self.wl_delay_rise*self.wl_timing_tolerance - (self.sen_delay_rise-previous_delay_chain_delay/2)
         debug.info(2,"Required delays from chain: fall={}, rise={}".format(required_delay_fall,required_delay_rise))
         
-        #If the fanout is different between rise/fall by this amount. Stage algorithm is made more pessimistic.
+        # If the fanout is different between rise/fall by this amount. Stage algorithm is made more pessimistic.
         WARNING_FANOUT_DIFF = 5
         stages_close = False
-        #The stages need to be equal (or at least a even number of stages with matching rise/fall delays)
+        # The stages need to be equal (or at least a even number of stages with matching rise/fall delays)
         while True:
             stages_fall = self.calculate_stages_with_fixed_fanout(required_delay_fall,fanout_fall)
             stages_rise = self.calculate_stages_with_fixed_fanout(required_delay_rise,fanout_rise)
@@ -294,8 +295,8 @@ class control_logic(design.design):
                 fanout_rise = safe_fanout_rise
                 fanout_fall = safe_fanout_fall
                 break
-            #There should also be a condition to make sure the fanout does not get too large.    
-            #Otherwise, increase the fanout of delay with the most stages, calculate new stages
+            # There should also be a condition to make sure the fanout does not get too large.    
+            # Otherwise, increase the fanout of delay with the most stages, calculate new stages
             elif stages_fall>stages_rise:
                 fanout_fall+=1
             else:
@@ -304,13 +305,13 @@ class control_logic(design.design):
         total_stages = max(stages_fall,stages_rise)*2
         debug.info(1, "New Delay chain: stages={}, fanout_rise={}, fanout_fall={}".format(total_stages, fanout_rise, fanout_fall))
         
-        #Creates interleaved fanout list of rise/fall delays. Assumes fall is the first stage.
+        # Creates interleaved fanout list of rise/fall delays. Assumes fall is the first stage.
         stage_list = [fanout_fall if i%2==0 else fanout_rise for i in range(total_stages)]
         return stage_list
     
     def calculate_stages_with_fixed_fanout(self, required_delay, fanout):
         from math import ceil
-        #Delay being negative is not an error. It implies that any amount of stages would have a negative effect on the overall delay
+        # Delay being negative is not an error. It implies that any amount of stages would have a negative effect on the overall delay
         if required_delay <= 3+self.inv_parasitic_delay: #3 is the minimum delay per stage (with pinv=0).
             return 1
         delay_stages = ceil(required_delay/(fanout+1+self.inv_parasitic_delay))
@@ -343,7 +344,7 @@ class control_logic(design.design):
         
         # list of output control signals (for making a vertical bus)
         if self.port_type == "rw":
-            self.internal_bus_list = ["rbl_bl_delay_bar", "rbl_bl_delay", "gated_clk_bar", "gated_clk_buf", "we", "clk_buf", "cs_bar", "cs"]
+            self.internal_bus_list = ["rbl_bl_delay_bar", "rbl_bl_delay", "gated_clk_bar", "gated_clk_buf", "we", "clk_buf", "we_bar", "cs"]
         elif self.port_type == "r":
             self.internal_bus_list = ["rbl_bl_delay_bar", "rbl_bl_delay", "gated_clk_bar", "gated_clk_buf", "clk_buf", "cs_bar", "cs"]
         else:
@@ -639,11 +640,14 @@ class control_logic(design.design):
         
     def create_sen_row(self):
         """ Create the sense enable buffer. """
+        if self.port_type=="rw":
+            input_name = "we_bar"
+        else:
+            input_name = "cs_bar"
         # GATE FOR S_EN
-        # Uses cs_bar (not we_bar) for feed-thru reads
         self.s_en_gate_inst = self.add_inst(name="buf_s_en_and",
                                             mod=self.sen_and3)
-        self.connect_inst(["rbl_bl_delay", "gated_clk_bar", "cs_bar", "s_en", "vdd", "gnd"])
+        self.connect_inst(["rbl_bl_delay", "gated_clk_bar", input_name, "s_en", "vdd", "gnd"])
         
         
     def place_sen_row(self,row):
@@ -656,7 +660,12 @@ class control_logic(design.design):
         
     def route_sen(self):
 
-        sen_map = zip(["A", "B", "C"], ["rbl_bl_delay", "gated_clk_bar", "cs_bar"])
+        if self.port_type=="rw":
+            input_name = "we_bar"
+        else:
+            input_name = "cs_bar"
+            
+        sen_map = zip(["A", "B", "C"], ["rbl_bl_delay", "gated_clk_bar", input_name])
         self.connect_vertical_bus(sen_map, self.s_en_gate_inst, self.rail_offsets)
         
         self.connect_output(self.s_en_gate_inst, "Z", "s_en")
@@ -733,7 +742,7 @@ class control_logic(design.design):
         
     def route_dffs(self):
         if self.port_type == "rw":
-            dff_out_map = zip(["dout_bar_0", "dout_bar_1", "dout_0"], ["cs", "we", "cs_bar"])
+            dff_out_map = zip(["dout_bar_0", "dout_bar_1", "dout_1"], ["cs", "we", "we_bar"])
         elif self.port_type == "r":
             dff_out_map = zip(["dout_bar_0", "dout_0"], ["cs", "cs_bar"])            
         else:

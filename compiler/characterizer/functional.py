@@ -196,14 +196,7 @@ class functional(simulation):
                     else:
                         word = self.gen_data()
                         wmask  = self.gen_wmask()
-                        new_word = word
-                        for bit in range(len(wmask)):
-                            # When the write mask's bits are 0, the old data values should appear in the new word
-                            # as to not overwrite the old values
-                            if wmask[bit] == "0":
-                                lower = bit * self.write_size
-                                upper = lower + self.write_size - 1
-                                new_word = new_word[:lower] + old_word[lower:upper+1] + new_word[upper + 1:]
+                        new_word = self.gen_masked_data(old_word, word, wmask)
                         comment = self.gen_cycle_comment("partial_write", word, addr, wmask, port, self.t_current)
                         self.add_write_one_port(comment, addr, word, wmask, port)
                         self.stored_words[addr] = new_word
@@ -226,6 +219,21 @@ class functional(simulation):
         comment = self.gen_cycle_comment("noop", "0"*self.word_size, "0"*self.addr_size, "0"*self.num_wmasks, 0, self.t_current)
         self.add_noop_all_ports(comment)
 
+    def gen_masked_data(self, old_word, word, wmask):
+        """ Create the masked data word """
+        # Start with the new word
+        new_word = word
+        
+        # When the write mask's bits are 0, the old data values should appear in the new word
+        # as to not overwrite the old values
+        for bit in range(len(wmask)):
+            if wmask[bit] == "0":
+                lower = bit * self.write_size
+                upper = lower + self.write_size - 1
+                new_word = new_word[:lower] + old_word[lower:upper+1] + new_word[upper + 1:]
+                
+        return new_word
+        
     def add_read_check(self, word, port):
         """ Add to the check array to ensure a read works. """
         try:

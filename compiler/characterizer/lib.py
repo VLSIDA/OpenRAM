@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import os,sys,re
 import debug
@@ -148,9 +148,9 @@ class lib:
         self.lib.write("    area : {};\n\n".format(self.sram.width * self.sram.height))
 
         #Build string of all control signals. 
-        control_str = 'CSb0' #assume at least 1 port
+        control_str = 'csb0' #assume at least 1 port
         for i in range(1, self.total_port_num):
-            control_str += ' & CSb{0}'.format(i)
+            control_str += ' & csb{0}'.format(i)
             
         # Leakage is included in dynamic when macro is enabled
         self.lib.write("    leakage_power () {\n")
@@ -161,13 +161,17 @@ class lib:
         
     
     def write_units(self):
-        """ Adds default units for time, voltage, current,..."""
-        
+        """ Adds default units for time, voltage, current,...
+            Valid values are 1mV, 10mV, 100mV, and 1V. 
+            For time: Valid values are 1ps, 10ps, 100ps, and 1ns.
+            For power: Valid values are 1mW, 100uW (for 100mW), 10uW (for 10mW), 
+                       1uW (for 1mW), 100nW, 10nW, 1nW, 100pW, 10pW, and 1pW.
+        """   
         self.lib.write("    time_unit : \"1ns\" ;\n")
-        self.lib.write("    voltage_unit : \"1v\" ;\n")
+        self.lib.write("    voltage_unit : \"1V\" ;\n")
         self.lib.write("    current_unit : \"1mA\" ;\n")
         self.lib.write("    resistance_unit : \"1kohm\" ;\n")
-        self.lib.write("    capacitive_load_unit(1 ,fF) ;\n")
+        self.lib.write("    capacitive_load_unit(1, pF) ;\n")
         self.lib.write("    leakage_power_unit : \"1mW\" ;\n")
         self.lib.write("    pulling_resistance_unit :\"1kohm\" ;\n")
         self.lib.write("    operating_conditions(OC){\n")
@@ -239,7 +243,9 @@ class lib:
             self.lib.write("        variable_1 : input_net_transition;\n")
             self.lib.write("        variable_2 : total_output_net_capacitance;\n")
             self.write_index(1,self.slews)
-            self.write_index(2,self.loads)
+            # Dividing by 1000 to all cap values since output of .sp is in fF, 
+            # and it needs to be in pF for Innovus. 
+            self.write_index(2,self.loads/1000)
             self.lib.write("    }\n\n")
 
         CONS = ["CONSTRAINT_TABLE"]
@@ -272,10 +278,10 @@ class lib:
         #     self.lib.write("    }\n\n")
     
     def write_bus(self):
-        """ Adds format of DATA and ADDR bus."""
+        """ Adds format of data and addr bus."""
     
         self.lib.write("\n\n")
-        self.lib.write("    type (DATA){\n")
+        self.lib.write("    type (data){\n")
         self.lib.write("    base_type : array;\n")
         self.lib.write("    data_type : bit;\n")
         self.lib.write("    bit_width : {0};\n".format(self.sram.word_size))
@@ -283,7 +289,7 @@ class lib:
         self.lib.write("    bit_to : {0};\n".format(self.sram.word_size - 1))
         self.lib.write("    }\n\n")
 
-        self.lib.write("    type (ADDR){\n")
+        self.lib.write("    type (addr){\n")
         self.lib.write("    base_type : array;\n")
         self.lib.write("    data_type : bit;\n")
         self.lib.write("    bit_width : {0};\n".format(self.sram.addr_size))
@@ -323,18 +329,18 @@ class lib:
     def write_data_bus_output(self, read_port):
         """ Adds data bus timing results."""
 
-        self.lib.write("    bus(DOUT{0}){{\n".format(read_port))
-        self.lib.write("        bus_type  : DATA; \n")
+        self.lib.write("    bus(dout{0}){{\n".format(read_port))
+        self.lib.write("        bus_type  : data; \n")
         self.lib.write("        direction  : output; \n")
         # This is conservative, but limit to range that we characterized.
-        self.lib.write("        max_capacitance : {0};  \n".format(max(self.loads)))
-        self.lib.write("        min_capacitance : {0};  \n".format(min(self.loads)))        
+        self.lib.write("        max_capacitance : {0};  \n".format(max(self.loads)/1000))
+        self.lib.write("        min_capacitance : {0};  \n".format(min(self.loads)/1000))        
         self.lib.write("        memory_read(){ \n")
-        self.lib.write("            address : ADDR{0}; \n".format(read_port))
+        self.lib.write("            address : addr{0}; \n".format(read_port))
         self.lib.write("        }\n")
         
 
-        self.lib.write("        pin(DOUT{0}[{1}:0]){{\n".format(read_port,self.sram.word_size-1))
+        self.lib.write("        pin(dout{0}[{1}:0]){{\n".format(read_port,self.sram.word_size-1))
         self.lib.write("        timing(){ \n")
         self.lib.write("            timing_sense : non_unate; \n")
         self.lib.write("            related_pin : \"clk{0}\"; \n".format(read_port))
@@ -356,18 +362,18 @@ class lib:
         self.lib.write("    }\n\n") # bus
 
     def write_data_bus_input(self, write_port):
-        """ Adds DIN data bus timing results."""
+        """ Adds din data bus timing results."""
 
-        self.lib.write("    bus(DIN{0}){{\n".format(write_port))
-        self.lib.write("        bus_type  : DATA; \n")
+        self.lib.write("    bus(din{0}){{\n".format(write_port))
+        self.lib.write("        bus_type  : data; \n")
         self.lib.write("        direction  : input; \n")
         # This is conservative, but limit to range that we characterized.
-        self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]))
+        self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]/1000))
         self.lib.write("        memory_write(){ \n")
-        self.lib.write("            address : ADDR{0}; \n".format(write_port))
+        self.lib.write("            address : addr{0}; \n".format(write_port))
         self.lib.write("            clocked_on  : clk{0}; \n".format(write_port))
         self.lib.write("        }\n") 
-        self.lib.write("        pin(DIN{0}[{1}:0]){{\n".format(write_port,self.sram.word_size-1))
+        self.lib.write("        pin(din{0}[{1}:0]){{\n".format(write_port,self.sram.word_size-1))
         self.write_FF_setuphold(write_port)
         self.lib.write("        }\n") # pin  
         self.lib.write("    }\n") #bus
@@ -382,12 +388,12 @@ class lib:
     def write_addr_bus(self, port):
         """ Adds addr bus timing results."""
         
-        self.lib.write("    bus(ADDR{0}){{\n".format(port))
-        self.lib.write("        bus_type  : ADDR; \n")
+        self.lib.write("    bus(addr{0}){{\n".format(port))
+        self.lib.write("        bus_type  : addr; \n")
         self.lib.write("        direction  : input; \n")
-        self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]))
+        self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]/1000))
         self.lib.write("        max_transition       : {0};\n".format(self.slews[-1]))
-        self.lib.write("        pin(ADDR{0}[{1}:0])".format(port,self.sram.addr_size-1))
+        self.lib.write("        pin(addr{0}[{1}:0])".format(port,self.sram.addr_size-1))
         self.lib.write("{\n")
         
         self.write_FF_setuphold(port)
@@ -398,15 +404,15 @@ class lib:
     def write_control_pins(self, port):
         """ Adds control pins timing results."""
         #The control pins are still to be determined. This is a placeholder for what could be.
-        ctrl_pin_names = ["CSb{0}".format(port)]
+        ctrl_pin_names = ["csb{0}".format(port)]
         if port in self.readwrite_ports:
-            ctrl_pin_names.append("WEb{0}".format(port))
+            ctrl_pin_names.append("web{0}".format(port))
             
         for i in ctrl_pin_names:
             self.lib.write("    pin({0})".format(i))
             self.lib.write("{\n")
             self.lib.write("        direction  : input; \n")
-            self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]))
+            self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]/1000))
             self.write_FF_setuphold(port)
             self.lib.write("    }\n\n")
 
@@ -417,7 +423,7 @@ class lib:
         self.lib.write("        clock             : true;\n")
         self.lib.write("        direction  : input; \n")
         # FIXME: This depends on the clock buffer size in the control logic
-        self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]))
+        self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]/1000))
 
         self.add_clk_control_power(port)
 
@@ -452,10 +458,10 @@ class lib:
             
         if port in self.write_ports:
             if port in self.read_ports:
-                web_name = " & !WEb{0}".format(port)
+                web_name = " & !web{0}".format(port)
             avg_write_power = np.mean(self.char_port_results[port]["write1_power"] + self.char_port_results[port]["write0_power"])
             self.lib.write("        internal_power(){\n")
-            self.lib.write("            when : \"!CSb{0} & clk{0}{1}\"; \n".format(port, web_name))
+            self.lib.write("            when : \"!csb{0} & clk{0}{1}\"; \n".format(port, web_name))
             self.lib.write("            rise_power(scalar){\n")
             self.lib.write("                values(\"{0}\");\n".format(avg_write_power/2.0))
             self.lib.write("            }\n")
@@ -466,10 +472,10 @@ class lib:
 
         if port in self.read_ports:
             if port in self.write_ports:
-                web_name = " & WEb{0}".format(port)
+                web_name = " & web{0}".format(port)
             avg_read_power = np.mean(self.char_port_results[port]["read1_power"] + self.char_port_results[port]["read0_power"])
             self.lib.write("        internal_power(){\n")
-            self.lib.write("            when : \"!CSb{0} & !clk{0}{1}\"; \n".format(port, web_name))
+            self.lib.write("            when : \"!csb{0} & !clk{0}{1}\"; \n".format(port, web_name))
             self.lib.write("            rise_power(scalar){\n")
             self.lib.write("                values(\"{0}\");\n".format(avg_read_power/2.0))
             self.lib.write("            }\n")
@@ -480,7 +486,7 @@ class lib:
             
         # Have 0 internal power when disabled, this will be represented as leakage power.
         self.lib.write("        internal_power(){\n")
-        self.lib.write("            when : \"CSb{0}\"; \n".format(port))
+        self.lib.write("            when : \"csb{0}\"; \n".format(port))
         self.lib.write("            rise_power(scalar){\n")
         self.lib.write("                values(\"0\");\n")
         self.lib.write("            }\n")
@@ -571,10 +577,10 @@ class lib:
         datasheet.write(str(self.sram.width * self.sram.height)+',')
         # write timing information for all ports
         for port in self.all_ports:
-            #DIN timings
+            #din timings
             if port in self.write_ports:
                 datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
-                        "DIN{1}[{0}:0]".format(self.sram.word_size - 1, port),
+                        "din{1}[{0}:0]".format(self.sram.word_size - 1, port),
                         min(list(map(round_time,self.times["setup_times_LH"]))),
                         max(list(map(round_time,self.times["setup_times_LH"]))),
 
@@ -590,10 +596,10 @@ class lib:
                         ))
 
         for port in self.all_ports:
-            #DOUT timing
+            #dout timing
             if port in self.read_ports:
                 datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
-                        "DOUT{1}[{0}:0]".format(self.sram.word_size - 1, port),
+                        "dout{1}[{0}:0]".format(self.sram.word_size - 1, port),
                         min(list(map(round_time,self.char_port_results[port]["delay_lh"]))),
                         max(list(map(round_time,self.char_port_results[port]["delay_lh"]))),
 
@@ -610,9 +616,9 @@ class lib:
                         ))
 
         for port in self.all_ports:
-            #CSb timings
+            #csb timings
             datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
-                    "CSb{0}".format(port),
+                    "csb{0}".format(port),
                     min(list(map(round_time,self.times["setup_times_LH"]))),
                     max(list(map(round_time,self.times["setup_times_LH"]))),
 
@@ -628,9 +634,9 @@ class lib:
                     ))
 
         for port in self.all_ports:
-            #ADDR timings
+            #addr timings
             datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
-                    "ADDR{1}[{0}:0]".format(self.sram.addr_size - 1, port),
+                    "addr{1}[{0}:0]".format(self.sram.addr_size - 1, port),
                     min(list(map(round_time,self.times["setup_times_LH"]))),
                     max(list(map(round_time,self.times["setup_times_LH"]))),
 
@@ -649,9 +655,9 @@ class lib:
         for port in self.all_ports:
             if port in self.readwrite_ports:
 
-            #WEb timings
+            #web timings
                 datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
-                        "WEb{0}".format(port),
+                        "web{0}".format(port),
                         min(list(map(round_time,self.times["setup_times_LH"]))),
                         max(list(map(round_time,self.times["setup_times_LH"]))),
 
@@ -673,8 +679,8 @@ class lib:
 
             # write dynamic power usage
             if port in self.read_ports:
-                web_name = " & !WEb{0}".format(port)
-                name = "!CSb{0} & clk{0}{1}".format(port, web_name)
+                web_name = " & !web{0}".format(port)
+                name = "!csb{0} & clk{0}{1}".format(port, web_name)
                 read_write = 'Read'
 
                 datasheet.write("{0},{1},{2},{3},".format(
@@ -686,8 +692,8 @@ class lib:
                     ))
 
             if port in self.write_ports:
-                web_name = " & WEb{0}".format(port)
-                name = "!CSb{0} & !clk{0}{1}".format(port, web_name)
+                web_name = " & web{0}".format(port)
+                name = "!csb{0} & !clk{0}{1}".format(port, web_name)
                 read_write = 'Write'
 
                 datasheet.write("{0},{1},{2},{3},".format(
@@ -699,9 +705,9 @@ class lib:
                         ))
 
         # write leakage power
-        control_str = 'CSb0'
+        control_str = 'csb0'
         for i in range(1, self.total_port_num):
-            control_str += ' & CSb{0}'.format(i)
+            control_str += ' & csb{0}'.format(i)
         
         datasheet.write("{0},{1},{2},".format('leak', control_str, self.char_sram_results["leakage_power"]))
                 

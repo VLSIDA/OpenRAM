@@ -1,10 +1,10 @@
 library (sram_2_16_1_scn4m_subm_SS_5p0V_25C_lib){
     delay_model : "table_lookup";
     time_unit : "1ns" ;
-    voltage_unit : "1v" ;
+    voltage_unit : "1V" ;
     current_unit : "1mA" ;
     resistance_unit : "1kohm" ;
-    capacitive_load_unit(1 ,fF) ;
+    capacitive_load_unit(1, pF) ;
     leakage_power_unit : "1mW" ;
     pulling_resistance_unit :"1kohm" ;
     operating_conditions(OC){
@@ -52,7 +52,7 @@ library (sram_2_16_1_scn4m_subm_SS_5p0V_25C_lib){
     default_operating_conditions : OC; 
 
 
-    type (DATA){
+    type (data){
     base_type : array;
     data_type : bit;
     bit_width : 2;
@@ -60,7 +60,7 @@ library (sram_2_16_1_scn4m_subm_SS_5p0V_25C_lib){
     bit_to : 1;
     }
 
-    type (ADDR){
+    type (addr){
     base_type : array;
     data_type : bit;
     bit_width : 4;
@@ -81,19 +81,19 @@ cell (sram_2_16_1_scn4m_subm){
     area : 73068.14000000001;
 
     leakage_power () {
-      when : "CSb0";
+      when : "csb0";
       value : 0.000167;
     }
     cell_leakage_power : 0;
-    bus(DIN0){
-        bus_type  : DATA; 
+    bus(din0){
+        bus_type  : data; 
         direction  : input; 
         capacitance : 9.8242;  
         memory_write(){ 
-            address : ADDR0; 
+            address : addr0; 
             clocked_on  : clk0; 
         }
-        pin(DIN0[1:0]){
+        pin(din0[1:0]){
         timing(){ 
             timing_type : setup_rising; 
             related_pin  : "clk0"; 
@@ -124,15 +124,15 @@ cell (sram_2_16_1_scn4m_subm){
         }
         }
     }
-    bus(DOUT0){
-        bus_type  : DATA; 
+    bus(dout0){
+        bus_type  : data; 
         direction  : output; 
         max_capacitance : 78.5936;  
         min_capacitance : 2.45605;  
         memory_read(){ 
-            address : ADDR0; 
+            address : addr0; 
         }
-        pin(DOUT0[1:0]){
+        pin(dout0[1:0]){
         timing(){ 
             timing_sense : non_unate; 
             related_pin : "clk0"; 
@@ -161,12 +161,12 @@ cell (sram_2_16_1_scn4m_subm){
         }
     }
 
-    bus(ADDR0){
-        bus_type  : ADDR; 
+    bus(addr0){
+        bus_type  : addr; 
         direction  : input; 
         capacitance : 9.8242;  
         max_transition       : 0.4;
-        pin(ADDR0[3:0]){
+        pin(addr0[3:0]){
         timing(){ 
             timing_type : setup_rising; 
             related_pin  : "clk0"; 
@@ -198,7 +198,7 @@ cell (sram_2_16_1_scn4m_subm){
         }
     }
 
-    pin(CSb0){
+    pin(csb0){
         direction  : input; 
         capacitance : 9.8242;  
         timing(){ 
@@ -231,7 +231,7 @@ cell (sram_2_16_1_scn4m_subm){
         }
     }
 
-    pin(WEb0){
+    pin(web0){
         direction  : input; 
         capacitance : 9.8242;  
         timing(){ 
@@ -269,7 +269,7 @@ cell (sram_2_16_1_scn4m_subm){
         direction  : input; 
         capacitance : 9.8242;  
         internal_power(){
-            when : "!CSb0 & clk0 & !WEb0"; 
+            when : "!csb0 & clk0 & !web0"; 
             rise_power(scalar){
                 values("4.99880645");
             }
@@ -278,7 +278,7 @@ cell (sram_2_16_1_scn4m_subm){
             }
         }
         internal_power(){
-            when : "!CSb0 & !clk0 & WEb0"; 
+            when : "!csb0 & !clk0 & web0"; 
             rise_power(scalar){
                 values("4.99880645");
             }
@@ -287,7 +287,7 @@ cell (sram_2_16_1_scn4m_subm){
             }
         }
         internal_power(){
-            when : "CSb0"; 
+            when : "csb0"; 
             rise_power(scalar){
                 values("0");
             }

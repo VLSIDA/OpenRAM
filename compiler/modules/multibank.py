@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import sys
 from tech import drc, parameter
@@ -65,11 +65,11 @@ class multibank(design.design):
     def add_pins(self):
         """ Adding pins for Bank module"""
         for i in range(self.word_size):
-            self.add_pin("DOUT_{0}".format(i),"OUT")
+            self.add_pin("dout_{0}".format(i),"OUT")
         for i in range(self.word_size):
-            self.add_pin("BANK_DIN_{0}".format(i),"IN")
+            self.add_pin("bank_din_{0}".format(i),"IN")
         for i in range(self.addr_size):
-            self.add_pin("A_{0}".format(i),"INPUT")
+            self.add_pin("a_{0}".format(i),"INPUT")
 
         # For more than one bank, we have a bank select and name
         # the signals gated_*.
@@ -187,9 +187,15 @@ class multibank(design.design):
                                                         words_per_row=self.words_per_row)
         self.add_mod(self.sense_amp_array)
 
-        self.write_driver_array = self.mod_write_driver_array(columns=self.num_cols,
-                                                              word_size=self.word_size)
-        self.add_mod(self.write_driver_array)
+        if self.write_size:
+            self.write_mask_driver_array = self.mod_write_mask_driver_array(columns=self.num_cols,
+                                                                  word_size=self.word_size,
+                                                                  write_size=self.write_size)
+            self.add_mod(self.write_mask_driver_array)
+        else:
+            self.write_driver_array = self.mod_write_driver_array(columns=self.num_cols,
+                                                                  word_size=self.word_size)
+            self.add_mod(self.write_driver_array)
 
         self.row_decoder = self.mod_decoder(rows=self.num_rows)
         self.add_mod(self.row_decoder)
@@ -296,7 +302,7 @@ class multibank(design.design):
 
         temp = []
         for i in range(self.word_size):
-            temp.append("BANK_DIN_{0}".format(i))
+            temp.append("bank_din_{0}".format(i))
         for i in range(self.word_size):            
             if (self.words_per_row == 1):            
                 temp.append("bl_{0}".format(i))
@@ -319,7 +325,7 @@ class multibank(design.design):
         for i in range(self.word_size):
             temp.append("sa_out_{0}".format(i))
         for i in range(self.word_size):
-            temp.append("DOUT_{0}".format(i))
+            temp.append("dout_{0}".format(i))
         temp.extend([self.prefix+"tri_en", self.prefix+"tri_en_bar", "vdd", "gnd"])
         self.connect_inst(temp)
 
@@ -590,7 +596,7 @@ class multibank(design.design):
         """ Add pins for the sense amp output """
         for i in range(self.word_size):
             data_pin = self.sense_amp_array_inst.get_pin("data_{}".format(i))
-            self.add_layout_pin_rect_center(text="DOUT_{}".format(i),
+            self.add_layout_pin_rect_center(text="dout_{}".format(i),
                                             layer=data_pin.layer, 
                                             offset=data_pin.center(),
                                             height=data_pin.height(),
@@ -600,7 +606,7 @@ class multibank(design.design):
         """ Metal 3 routing of tri_gate output data """
         for i in range(self.word_size):
             data_pin = self.tri_gate_array_inst.get_pin("out_{}".format(i))
-            self.add_layout_pin_rect_center(text="DOUT_{}".format(i),
+            self.add_layout_pin_rect_center(text="dout_{}".format(i),
                                             layer=data_pin.layer, 
                                             offset=data_pin.center(),
                                             height=data_pin.height(),
@@ -613,8 +619,8 @@ class multibank(design.design):
         # Create inputs for the row address lines
         for i in range(self.row_addr_size):
             addr_idx = i + self.col_addr_size
-            decoder_name = "A_{}".format(i)
-            addr_name = "A_{}".format(addr_idx)
+            decoder_name = "a_{}".format(i)
+            addr_name = "a_{}".format(addr_idx)
             self.copy_layout_pin(self.row_decoder_inst, decoder_name, addr_name)
             
             
@@ -623,7 +629,7 @@ class multibank(design.design):
         
         for i in range(self.word_size):
             data_name = "data_{}".format(i)            
-            din_name = "BANK_DIN_{}".format(i)
+            din_name = "bank_din_{}".format(i)
             self.copy_layout_pin(self.write_driver_array_inst, data_name, din_name)
                         
 
@@ -662,7 +668,7 @@ class multibank(design.design):
             decode_names = ["Zb", "Z"]
             
             # The Address LSB
-            self.copy_layout_pin(self.col_decoder_inst, "A", "A[0]") 
+            self.copy_layout_pin(self.col_decoder_inst, "A", "a[0]") 
             
         elif self.col_addr_size > 1:
             decode_names = []
@@ -671,7 +677,7 @@ class multibank(design.design):
 
             for i in range(self.col_addr_size):
                 decoder_name = "in_{}".format(i)
-                addr_name = "A_{}".format(i)
+                addr_name = "a_{}".format(i)
                 self.copy_layout_pin(self.col_decoder_inst, decoder_name, addr_name)
                 
 
@@ -822,21 +828,3 @@ class multibank(design.design):
         self.add_via(layers=("metal2","via2","metal3"),
                      offset=in_pin + self.m2m3_via_offset,
                      rotate=90)
-        
-    def analytical_delay(self, corner, slew, load):
-        """ return  analytical delay of the bank"""
-        decoder_delay = self.row_decoder.analytical_delay(corner, slew, self.wordline_driver.input_load())
-
-        word_driver_delay = self.wordline_driver.analytical_delay(corner, decoder_delay.slew, self.bitcell_array.input_load())
-
-        bitcell_array_delay = self.bitcell_array.analytical_delay(corner, word_driver_delay.slew)
-
-        bl_t_data_out_delay = self.sense_amp_array.analytical_delay(corner, bitcell_array_delay.slew,
-                                                                    self.bitcell_array.output_load())
-        # output load of bitcell_array is set to be only small part of bl for sense amp.
-
-        data_t_DATA_delay = self.tri_gate_array.analytical_delay(corner, bl_t_data_out_delay.slew, load)
-
-        result = decoder_delay + word_driver_delay + bitcell_array_delay + bl_t_data_out_delay + data_t_DATA_delay
-        return result
-        

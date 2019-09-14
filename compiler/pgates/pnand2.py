@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import contact
 import pgate
@@ -37,8 +37,7 @@ class pnand2(pgate.pgate):
 
         # Creates the netlist and layout
         pgate.pgate.__init__(self, name, height)
-
-        
+   
     def create_netlist(self):
         self.add_pins()
         self.add_ptx()
@@ -58,7 +57,9 @@ class pnand2(pgate.pgate):
 
     def add_pins(self):
         """ Adds pins for spice netlist """
-        self.add_pin_list(["A", "B", "Z", "vdd", "gnd"])
+        pin_list = ["A", "B", "Z", "vdd", "gnd"]
+        dir_list = ["INPUT", "INPUT", "OUTPUT", "POWER", "GROUND"]
+        self.add_pin_list(pin_list, dir_list)
 
         
     def add_ptx(self):
@@ -229,17 +230,6 @@ class pnand2(pgate.pgate):
                                         width=contact.m1m2.first_layer_height,
                                         height=contact.m1m2.first_layer_width)
 
-
-
-
-    def input_load(self):
-        return ((self.nmos_size+self.pmos_size)/parameter["min_tx_size"])*spice["min_tx_gate_c"]
-
-    def analytical_delay(self, corner, slew, load=0.0):
-        r = spice["min_tx_r"]/(self.nmos_size/parameter["min_tx_size"])
-        c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff
-        return self.cal_delay_with_rc(corner, r = r, c =  c_para+load, slew = slew)
-        
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""
         c_eff = self.calculate_effective_capacitance(load)
@@ -257,13 +247,17 @@ class pnand2(pgate.pgate):
         transition_prob = spice["nand2_transition_prob"]
         return transition_prob*(c_load + c_para) 
 
-    def get_cin(self):
+    def input_load(self):
         """Return the relative input capacitance of a single input"""
         return self.nmos_size+self.pmos_size
-        
+    
     def get_stage_effort(self, cout, inp_is_rise=True):
         """Returns an object representing the parameters for delay in tau units.
            Optional is_rise refers to the input direction rise/fall. Input inverted by this stage.
         """
         parasitic_delay = 2 
-        return logical_effort.logical_effort(self.name, self.size, self.get_cin(), cout, parasitic_delay, not inp_is_rise)
+        return logical_effort.logical_effort(self.name, self.size, self.input_load(), cout, parasitic_delay, not inp_is_rise)
+
+    def build_graph(self, graph, inst_name, port_nets):        
+        """Adds edges based on inputs/outputs. Overrides base class function."""
+        self.add_graph_edges(graph, port_nets) 

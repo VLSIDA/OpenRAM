@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import design
 import debug
@@ -26,7 +26,7 @@ class ptx(design.design):
         # will use the last record with a given name. I.e., you will
         # over-write a design in GDS if one has and the other doesn't
         # have poly connected, for example.
-        name = "{0}_m{1}_w{2}".format(tx_type, mults, width)
+        name = "{0}_m{1}_w{2:.3f}".format(tx_type, mults, width)
         if connect_active:
             name += "_a"
         if connect_poly:
@@ -68,7 +68,13 @@ class ptx(design.design):
         #self.DRC()
 
     def create_netlist(self):
-        self.add_pin_list(["D", "G", "S", "B"])
+        pin_list = ["D", "G", "S", "B"]
+        if self.tx_type=="nmos":
+            body_dir = 'GROUND'
+        else: #Assumed that the check for either pmos or nmos is done elsewhere.
+            body_dir = 'POWER'
+        dir_list = ['INOUT', 'INPUT', 'INOUT', body_dir]
+        self.add_pin_list(pin_list, dir_list)
         
         # self.spice.append("\n.SUBCKT {0} {1}".format(self.name,
         #                                              " ".join(self.pins)))
@@ -366,3 +372,8 @@ class ptx(design.design):
     def get_cin(self):
         """Returns the relative gate cin of the tx"""
         return self.tx_width/drc("minwidth_tx")
+
+    def build_graph(self, graph, inst_name, port_nets):        
+        """Adds edges based on inputs/outputs. Overrides base class function."""
+        self.add_graph_edges(graph, port_nets) 
+        

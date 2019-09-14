@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import debug
 import design
@@ -55,6 +55,7 @@ class dff_buf(design.design):
         self.place_instances()
         self.route_wires()
         self.add_layout_pins()
+        self.add_boundary()
         self.DRC_LVS()
 
     def add_modules(self):
@@ -74,12 +75,12 @@ class dff_buf(design.design):
         
         
     def add_pins(self):
-        self.add_pin("D")
-        self.add_pin("Q")
-        self.add_pin("Qb")
-        self.add_pin("clk")
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+        self.add_pin("D", "INPUT")
+        self.add_pin("Q", "OUTPUT")
+        self.add_pin("Qb", "OUTPUT")
+        self.add_pin("clk", "INPUT")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
     def create_instances(self):
         self.dff_inst=self.add_inst(name="dff_buf_dff",
@@ -176,16 +177,7 @@ class dff_buf(design.design):
         self.add_path("metal1", [self.mid_qb_pos, qb_pos])
         self.add_via_center(layers=("metal1","via1","metal2"),
                             offset=qb_pos)
-        
-        
-
-    def analytical_delay(self, corner, slew, load=0.0):
-        """ Calculate the analytical delay of DFF-> INV -> INV """
-        dff_delay=self.dff.analytical_delay(corner, slew=slew, load=self.inv1.input_load())
-        inv1_delay = self.inv1.analytical_delay(corner, slew=dff_delay.slew, load=self.inv2.input_load()) 
-        inv2_delay = self.inv2.analytical_delay(corner, slew=inv1_delay.slew, load=load)
-        return dff_delay + inv1_delay + inv2_delay
-            
+         
     def get_clk_cin(self):
         """Return the total capacitance (in relative units) that the clock is loaded by in the dff"""
         #This is a handmade cell so the value must be entered in the tech.py file or estimated.

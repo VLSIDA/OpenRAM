@@ -1,0 +1,5 @@
+path sys +$::env(OPENRAM_TECH)/scn3me_subm/tech
+tech load SCN3ME_SUBM.30 -noprompt
+scalegrid 1 4
+set GND gnd
+set VDD vdd

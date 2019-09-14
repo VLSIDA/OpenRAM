@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import design
 import debug
@@ -35,10 +35,11 @@ class precharge_array(design.design):
     def add_pins(self):
         """Adds pins for spice file"""
         for i in range(self.columns):
-            self.add_pin("bl_{0}".format(i))
-            self.add_pin("br_{0}".format(i))
-        self.add_pin("en_bar")
-        self.add_pin("vdd")
+            # These are outputs from the precharge only
+            self.add_pin("bl_{0}".format(i), "OUTPUT")
+            self.add_pin("br_{0}".format(i), "OUTPUT")
+        self.add_pin("en_bar", "INPUT")
+        self.add_pin("vdd", "POWER")
 
     def create_netlist(self):
         self.add_modules()
@@ -51,6 +52,7 @@ class precharge_array(design.design):
 
         self.place_insts()
         self.add_layout_pins()
+        self.add_boundary()
         self.DRC_LVS()
 
     def add_modules(self):
@@ -114,3 +116,4 @@ class precharge_array(design.design):
         #Assume single port
         precharge_en_cin = self.pc_cell.get_en_cin()
         return precharge_en_cin*self.columns  
+        

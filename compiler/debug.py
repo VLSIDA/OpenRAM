@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import os
 import inspect
@@ -85,7 +85,7 @@ def log(str):
 
 # use a static list of strings to store messages until the global paths are set up
 log.setup_output = []
-log.create_file = 1
+log.create_file = True
 
 
 def info(lev, str):

@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 """
 This file generates simple spice cards for simulation.  There are
@@ -36,51 +36,15 @@ class stimuli():
         (self.process, self.voltage, self.temperature) = corner
         self.device_models = tech.spice["fet_models"][self.process]
     
-    def inst_sram(self, sram, port_signal_names, port_info, abits, dbits, sram_name):
+        self.sram_name = "Xsram"
+    
+    def inst_sram(self, pins, inst_name):
         """ Function to instatiate an SRAM subckt. """
-        pin_names = self.gen_pin_names(port_signal_names, port_info, abits, dbits)
-        #Only checking length. This should check functionality as well (TODO) and/or import that information from the SRAM
-        debug.check(len(sram.pins) == len(pin_names), "Number of pins generated for characterization do match pins of SRAM\nsram.pins = {0}\npin_names = {1}".format(sram.pins,pin_names))
-        
-        self.sf.write("Xsram ")
-        for pin in pin_names:
+
+        self.sf.write("{} ".format(self.sram_name))
+        for pin in self.sram_pins:
             self.sf.write("{0} ".format(pin))  
-        self.sf.write("{0}\n".format(sram_name))
-
-    def gen_pin_names(self, port_signal_names, port_info, abits, dbits):
-        """Creates the pins names of the SRAM based on the no. of ports."""
-        #This may seem redundant as the pin names are already defined in the sram. However, it is difficult to extract the
-        #functionality from the names, so they are recreated. As the order is static, changing the order of the pin names
-        #will cause issues here.
-        pin_names = []
-        (addr_name, din_name, dout_name) = port_signal_names
-        (total_ports, write_index, read_index) = port_info
-        
-        for write_input in write_index:
-            for i in range(dbits):
-                pin_names.append("{0}{1}_{2}".format(din_name,write_input, i))
-        
-        for port in range(total_ports):
-            for i in range(abits):
-                pin_names.append("{0}{1}_{2}".format(addr_name,port,i))    
-
-        #Control signals not finalized.
-        for port in range(total_ports):
-            pin_names.append("CSB{0}".format(port))
-        for port in range(total_ports):
-            if (port in read_index) and (port in write_index):
-                pin_names.append("WEB{0}".format(port))
-            
-        for port in range(total_ports):
-            pin_names.append("{0}{1}".format(tech.spice["clk"], port))
-            
-        for read_output in read_index:
-            for i in range(dbits):
-                pin_names.append("{0}{1}_{2}".format(dout_name,read_output, i))
-                
-        pin_names.append("{0}".format(self.vdd_name))
-        pin_names.append("{0}".format(self.gnd_name))
-        return pin_names
+        self.sf.write("{0}\n".format(inst_name))
         
     def inst_model(self, pins, model_name):
         """ Function to instantiate a generic model with a set of pins """
@@ -233,6 +197,13 @@ class stimuli():
                                             trig_dir,
                                             trig_td))
     
+    def gen_meas_find_voltage_at_time(self, meas_name, targ_name, time_at):
+        """ Creates the .meas statement for voltage at time"""
+        measure_string=".meas tran {0} FIND v({1}) AT={2}n \n\n"
+        self.sf.write(measure_string.format(meas_name,
+                                            targ_name,
+                                            time_at))
+
     def gen_meas_power(self, meas_name, t_initial, t_final):
         """ Creates the .meas statement for the measurement of avg power """
         # power mea cmd is different in different spice:

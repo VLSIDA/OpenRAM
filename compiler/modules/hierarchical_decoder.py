@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 from tech import drc
 import debug
@@ -54,6 +54,7 @@ class hierarchical_decoder(design.design):
         self.route_predecode_rails()
         self.route_vdd_gnd()
         self.offset_all_coordinates()
+        self.add_boundary()
         self.DRC_LVS()
                 
     def add_modules(self):
@@ -230,12 +231,12 @@ class hierarchical_decoder(design.design):
         """ Add the module pins """
         
         for i in range(self.num_inputs):
-            self.add_pin("addr_{0}".format(i))
+            self.add_pin("addr_{0}".format(i), "INPUT")
 
         for j in range(self.rows):
-            self.add_pin("decode_{0}".format(j))
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+            self.add_pin("decode_{0}".format(j), "OUTPUT")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
 
     def create_pre_decoder(self):
@@ -595,31 +596,10 @@ class hierarchical_decoder(design.design):
         self.add_via_center(layers=("metal2", "via2", "metal3"),
                             offset=rail_pos)
 
-        
-    def analytical_delay(self, corner, slew, load = 0.0):
-        # A -> out
-        if self.determine_predecodes(self.num_inputs)[1]==0:
-            pre = self.pre2_4
-            nand = self.nand2
-        else:
-            pre = self.pre3_8
-            nand = self.nand3
-        a_t_out_delay = pre.analytical_delay(corner, slew=slew,load = nand.input_load())
-
-        # out -> z
-        out_t_z_delay = nand.analytical_delay(corner, slew= a_t_out_delay.slew,
-                                  load = self.inv.input_load())
-        result = a_t_out_delay + out_t_z_delay
-
-        # Z -> decode_out
-        z_t_decodeout_delay = self.inv.analytical_delay(corner, slew = out_t_z_delay.slew , load = load)
-        result = result + z_t_decodeout_delay
-        return result
-
-        
     def input_load(self):
         if self.determine_predecodes(self.num_inputs)[1]==0:
             pre = self.pre2_4
         else:
             pre = self.pre3_8
         return pre.input_load()
+        

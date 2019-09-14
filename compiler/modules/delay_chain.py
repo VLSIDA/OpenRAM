@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import debug
 import design
@@ -52,14 +52,15 @@ class delay_chain(design.design):
         self.place_inverters()
         self.route_inverters()
         self.add_layout_pins()
+        self.add_boundary()
         self.DRC_LVS()
-
+        
     def add_pins(self):
         """ Add the pins of the delay chain"""
-        self.add_pin("in")
-        self.add_pin("out")
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+        self.add_pin("in", "INPUT")
+        self.add_pin("out", "OUTPUT")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
     def add_modules(self):
         self.inv = factory.create(module_type="pinv", route_output=False)

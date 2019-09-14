@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import debug
 import design
@@ -49,6 +49,7 @@ class dff_inv_array(design.design):
 
         self.place_dff_array()
         self.add_layout_pins()
+        self.add_boundary()
         self.DRC_LVS()
 
     def add_modules(self):
@@ -58,14 +59,14 @@ class dff_inv_array(design.design):
     def add_pins(self):
         for row in range(self.rows):  
             for col in range(self.columns):
-                self.add_pin(self.get_din_name(row,col))
+                self.add_pin(self.get_din_name(row,col), "INPUT")
         for row in range(self.rows):  
             for col in range(self.columns):
-                self.add_pin(self.get_dout_name(row,col))
-                self.add_pin(self.get_dout_bar_name(row,col))
-        self.add_pin("clk")
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+                self.add_pin(self.get_dout_name(row,col), "OUTPUT")
+                self.add_pin(self.get_dout_bar_name(row,col), "OUTPUT")
+        self.add_pin("clk", "INPUT")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
     def create_dff_array(self):
         self.dff_insts={}
@@ -189,12 +190,6 @@ class dff_inv_array(design.design):
                 self.add_via_center(layers=("metal2","via2","metal3"),
                                     offset=vector(clk_pin.cx(),clk_ypos))
                 
-                
-        
-
-    def analytical_delay(self, corner, slew, load=0.0):
-        return self.dff.analytical_delay(corner, slew=slew, load=load)
-
     def get_clk_cin(self):
         """Return the total capacitance (in relative units) that the clock is loaded by in the dff array"""
         dff_clk_cin = self.dff.get_clk_cin()

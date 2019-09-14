@@ -1,19 +1,15 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
-"""
-Run a regression test on 1rw 1r sram bank
-"""
-
 import unittest
-from testutils import header,openram_test
+from testutils import *
 import sys,os
-sys.path.append(os.path.join(sys.path[0],".."))
+sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 from sram_factory import factory
@@ -23,13 +19,15 @@ class single_bank_1rw_1r_test(openram_test):
 
     def runTest(self):
         globals.init_openram("config_{0}".format(OPTS.tech_name))
+        from sram_config import sram_config
 
         OPTS.bitcell = "bitcell_1rw_1r"
+        OPTS.replica_bitcell = "replica_bitcell_1rw_1r"
+        OPTS.dummy_bitcell="dummy_bitcell_1rw_1r"
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
         
-        from sram_config import sram_config
         c = sram_config(word_size=4,
                         num_words=16)
 
@@ -72,4 +70,4 @@ if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
-    unittest.main()
+    unittest.main(testRunner=debugTestRunner())

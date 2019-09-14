@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 class grid_cell:
     """
@@ -36,16 +36,21 @@ class grid_cell:
         
         
     def get_type(self):
+        type_string = ""
+        
         if self.blocked:
-            return "X"
+            type_string += "X"
 
         if self.source:
-            return "S"
+            type_string += "S"
 
         if self.target:
-            return "T"
+            type_string += "T"
 
         if self.path:
-            return "P"
+            type_string += "P"
 
+        if type_string != "":
+            return type_string
+        
         return None

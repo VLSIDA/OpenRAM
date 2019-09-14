@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import sys
 from tech import drc, parameter
@@ -42,6 +42,7 @@ class bank_select(design.design):
         self.place_instances()
         self.route_instances()
 
+        self.add_boundary()
         self.DRC_LVS()
 
 
@@ -88,7 +89,7 @@ class bank_select(design.design):
         self.inv4x_nor = factory.create(module_type="pinv", height=height, size=4)
         self.add_mod(self.inv4x_nor)
 
-        self.nand2 = factory.create(module_type="pnand2")
+        self.nand2 = factory.create(module_type="pnand2", height=height)
         self.add_mod(self.nand2)
 
     def calculate_module_offsets(self):

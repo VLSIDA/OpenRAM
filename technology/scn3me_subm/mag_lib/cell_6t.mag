@@ -1,0 +1,117 @@
+magic
+tech scmos
+timestamp 1536091415
+<< nwell >>
+rect -8 29 42 51
+<< pwell >>
+rect -8 -8 42 29
+<< ntransistor >>
+rect 7 10 9 18
+rect 29 10 31 18
+rect 10 3 14 5
+rect 24 3 28 5
+<< ptransistor >>
+rect 7 37 11 40
+rect 27 37 31 40
+<< ndiffusion >>
+rect -2 16 7 18
+rect 2 12 7 16
+rect -2 10 7 12
+rect 9 14 10 18
+rect 9 10 14 14
+rect 28 14 29 18
+rect 24 10 29 14
+rect 31 16 36 18
+rect 31 12 32 16
+rect 31 10 36 12
+rect 10 5 14 10
+rect 24 5 28 10
+rect 10 2 14 3
+rect 24 2 28 3
+<< pdiffusion >>
+rect 2 37 7 40
+rect 11 37 12 40
+rect 26 37 27 40
+rect 31 37 32 40
+<< ndcontact >>
+rect -2 12 2 16
+rect 10 14 14 18
+rect 24 14 28 18
+rect 32 12 36 16
+rect 10 -2 14 2
+rect 24 -2 28 2
+<< pdcontact >>
+rect -2 36 2 40
+rect 12 36 16 40
+rect 22 36 26 40
+rect 32 36 36 40
+<< psubstratepcontact >>
+rect -2 22 2 26
+rect 32 22 36 26
+<< nsubstratencontact >>
+rect 32 44 36 48
+<< polysilicon >>
+rect 7 40 11 42
+rect 27 40 31 42
+rect 7 35 11 37
+rect 7 21 9 35
+rect 27 34 31 37
+rect 15 33 31 34
+rect 19 32 31 33
+rect 7 20 21 21
+rect 7 19 24 20
+rect 7 18 9 19
+rect 29 18 31 32
+rect 7 8 9 10
+rect 17 5 21 6
+rect 29 8 31 10
+rect -2 3 10 5
+rect 14 3 24 5
+rect 28 3 36 5
+<< polycontact >>
+rect 15 29 19 33
+rect 21 20 25 24
+rect 17 6 21 10
+<< metal1 >>
+rect -2 44 15 48
+rect 19 44 32 48
+rect -2 40 2 44
+rect 32 40 36 44
+rect 11 36 12 40
+rect 26 36 27 40
+rect -2 26 2 29
+rect -2 16 2 22
+rect 11 18 15 36
+rect 23 24 27 36
+rect 25 20 27 24
+rect 14 14 15 18
+rect 23 18 27 20
+rect 32 26 36 29
+rect 23 14 24 18
+rect 32 16 36 22
+rect -2 6 17 9
+rect 21 6 36 9
+rect -2 5 36 6
+<< m2contact >>
+rect 15 44 19 48
+rect -2 29 2 33
+rect 32 29 36 33
+rect 6 -2 10 2
+rect 20 -2 24 2
+<< metal2 >>
+rect -2 33 2 48
+rect -2 -2 2 29
+rect 6 2 10 48
+rect 24 -2 28 48
+rect 32 33 36 48
+rect 32 -2 36 29
+<< bb >>
+rect 0 0 34 46
+<< labels >>
+rlabel metal2 0 0 0 0 1 gnd
+rlabel metal2 34 0 34 0 1 gnd
+rlabel m2contact 17 46 17 46 5 vdd
+rlabel metal2 8 43 8 43 1 bl
+rlabel metal2 26 43 26 43 1 br
+rlabel metal1 4 7 4 7 1 wl
+<< end >>

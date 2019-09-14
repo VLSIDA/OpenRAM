@@ -1,15 +1,15 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import os
 from design_rules import *
 
 """
-File containing the process technology parameters for SCMOS 3me, subm, 180nm.
+File containing the process technology parameters for SCMOS 4m, 0.35um
 """
 
 #GDS file info
@@ -86,8 +86,8 @@ drc["has_nwell"] = True
 drc["grid"]=0.5*_lambda_
 
 #DRC/LVS test set_up
-drc["drc_rules"]=drclvs_home+"/calibreDRC_scn3me_subm.rul"
-drc["lvs_rules"]=drclvs_home+"/calibreLVS_scn3me_subm.rul"
+drc["drc_rules"]=None #drclvs_home+"/calibreDRC_scn3me_subm.rul"
+drc["lvs_rules"]=None #drclvs_home+"/calibreLVS_scn3me_subm.rul"
 drc["layer_map"]=os.environ.get("OPENRAM_TECH")+"/scn3me_subm/layers.map"
         	      					
 # minwidth_tx with contact (no dog bone transistors)
@@ -321,16 +321,12 @@ spice["nor2_transition_prob"] = .1875     # Transition probability of 2-input no
 parameter['le_tau'] = 23                     #In pico-seconds. 
 parameter["min_inv_para_delay"] = .73        #In relative delay units
 parameter['cap_relative_per_ff'] = .91       #Units of Relative Capacitance/ Femto-Farad
-parameter["static_delay_stages"] = 4
-parameter["static_fanout_per_stage"] = 3
-parameter["static_fanout_list"] = parameter["static_delay_stages"]*[parameter["static_fanout_per_stage"]]
 parameter["dff_clk_cin"] = 27.5              #In relative capacitance units
 parameter["6tcell_wl_cin"] = 2               #In relative capacitance units
 parameter["sa_en_pmos_size"] = 24*_lambda_
 parameter["sa_en_nmos_size"] = 9*_lambda_
 parameter["sa_inv_pmos_size"] = 18*_lambda_
 parameter["sa_inv_nmos_size"] = 9*_lambda_
-parameter["rbl_height_percentage"] = .5     #Height of RBL compared to bitcell array 
 parameter['bitcell_drain_cap'] = 0.2        #In Femto-Farad, approximation of drain capacitance
 
 ###################################################

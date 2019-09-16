@@ -4,13 +4,13 @@
 [![License: BSD 3-clause](./images/license_badge.svg)](./LICENSE)
 
 Master: 
-[![Pipeline Status](https://scone.soe.ucsc.edu:8888/mrg/OpenRAM/badges/master/pipeline.svg?private_token=ynB6rSFLzvKUseoBPcwV)](https://github.com/VLSIDA/OpenRAM/commits/master)
-![Coverage](https://scone.soe.ucsc.edu:8888/mrg/OpenRAM/badges/master/coverage.svg?private_token=ynB6rSFLzvKUseoBPcwV)
+%[![Pipeline Status](https://scone.soe.ucsc.edu:8888/mrg/OpenRAM/badges/master/pipeline.svg)](https://github.com/VLSIDA/OpenRAM/commits/master)
+![Coverage](https://scone.soe.ucsc.edu:8888/mrg/OpenRAM/badges/master/coverage.svg)
 [![Download](./images/download-stable-blue.svg)](https://github.com/VLSIDA/OpenRAM/archive/master.zip)
 
 Dev: 
-[![Pipeline Status](https://scone.soe.ucsc.edu:8888/mrg/OpenRAM/badges/dev/pipeline.svg?private_token=ynB6rSFLzvKUseoBPcwV)](https://github.com/VLSIDA/OpenRAM/commits/dev)
-![Coverage](https://scone.soe.ucsc.edu:8888/mrg/OpenRAM/badges/dev/coverage.svg?private_token=ynB6rSFLzvKUseoBPcwV)
+[![Pipeline Status](https://scone.soe.ucsc.edu:8888/mrg/OpenRAM/badges/dev/pipeline.svg)](https://github.com/VLSIDA/OpenRAM/commits/dev)
+![Coverage](https://scone.soe.ucsc.edu:8888/mrg/OpenRAM/badges/dev/coverage.svg)
 [![Download](./images/download-unstable-blue.svg)](https://github.com/VLSIDA/OpenRAM/archive/dev.zip)
 
 An open-source static random access memory (SRAM) compiler.
@@ -23,6 +23,13 @@ netlists, timing and power models, placement and routing models, and
 other views necessary to use SRAMs in ASIC design. OpenRAM supports
 integration in both commercial and open-source flows with both
 predictive and fabricable technologies.
+
+# Documentation
+
+Please take a look at our presentation We have created a detailed
+presentation that serves as our [documentation][documentation].
+This is the most up-to-date information, so please let us know if you see
+things that need to be fixed.
 
 # Basic Setup
 
@@ -67,7 +74,7 @@ You may also wish to add OPENRAM\_HOME to your PYTHONPATH:
   export PYTHONPATH="$PYTHONPATH:$OPENRAM_HOME"
 ```
 
-We include the tech files necessary for [FreePDK45] and [SCMOS]
+We include the tech files necessary for [SCMOS]
 SCN4M_SUBM. The [SCMOS] spice models, however, are generic and should
 be replaced with foundry models.  If you are using [FreePDK45], you
 should also have that set up and have the environment variable point
@@ -196,6 +203,7 @@ Each specific technology (e.g., [FreePDK45]) should be a subdirectory
 # Further Help
 
 + [Additional hints](./HINTS.md)
++ [Documentation][documentation]
 + [OpenRAM Slack Workspace][Slack]
 + [OpenRAM Users Group][user-group] ([subscribe here][user-group-subscribe])
 + [OpenRAM Developers Group][dev-group] ([subscribe here][dev-group-subscribe])
@@ -232,7 +240,7 @@ If I forgot to add you, please let me know!
 [Github pull request]:   https://github.com/VLSIDA/OpenRAM/pulls
 [Github projects]:       https://github.com/VLSIDA/OpenRAM/projects
 
-[email me]:              mailto:mrg+openram@ucsc.edu
+[documentation]:         https://docs.google.com/presentation/d/10InGB33N51I6oBHnqpU7_w9DXlx-qe9zdrlco2Yc5co/edit?usp=sharing
 [dev-group]:             mailto:openram-dev-group@ucsc.edu
 [user-group]:            mailto:openram-user-group@ucsc.edu
 [dev-group-subscribe]:   mailto:openram-dev-group+subscribe@ucsc.edu

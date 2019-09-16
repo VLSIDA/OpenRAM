@@ -11,4 +11,12 @@ load tri_gate
 gds write tri_gate.gds
 load write_driver
 gds write write_driver.gds
+load replica_cell_1w_1r
+gds write replica_cell_1w_1r
+load replica_cell_1rw_1r
+gds write replica_cell_1rw_1r
+load cell_1rw_1r
+gds write cell_1rw_1r
+load cell_1w_1r
+gds write cell_1w_1r
 EOF

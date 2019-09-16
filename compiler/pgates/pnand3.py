@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
+#
 import contact
 import pgate
 import debug
@@ -14,8 +21,8 @@ class pnand3(pgate.pgate):
     """
     def __init__(self, name, size=1, height=None):
         """ Creates a cell for a simple 3 input nand """
-        pgate.pgate.__init__(self, name, height)
-        debug.info(2, "create pnand3 structure {0} with size of {1}".format(name, size))
+
+        debug.info(2, "creating pnand3 structure {0} with size of {1}".format(name, size))
         self.add_comment("size: {}".format(size))
 
         # We have trouble pitch matching a 3x sizes to the bitcell...
@@ -30,14 +37,15 @@ class pnand3(pgate.pgate):
         debug.check(size==1,"Size 1 pnand3 is only supported now.")
         self.tx_mults = 1
 
-        self.create_netlist()
-        if not OPTS.netlist_only:
-            self.create_layout()
+        # Creates the netlist and layout
+        pgate.pgate.__init__(self, name, height)
 
         
     def add_pins(self):
         """ Adds pins for spice netlist """
-        self.add_pin_list(["A", "B", "C", "Z", "vdd", "gnd"])
+        pin_list = ["A", "B", "C", "Z", "vdd", "gnd"]
+        dir_list = ["INPUT", "INPUT", "INPUT", "OUTPUT", "POWER", "GROUND"]
+        self.add_pin_list(pin_list, dir_list)
 
     def create_netlist(self):
         self.add_pins()
@@ -213,12 +221,12 @@ class pnand3(pgate.pgate):
         nmos3_pin = self.nmos3_inst.get_pin("D")        
 
         # Go up to metal2 for ease on all output pins
-        self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                offset=pmos1_pin.center())
-        self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                offset=pmos3_pin.center())
-        self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                offset=nmos3_pin.center())
+        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                            offset=pmos1_pin.center())
+        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                            offset=pmos3_pin.center())
+        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                            offset=nmos3_pin.center())
         
         # PMOS3 and NMOS3 are drain aligned
         self.add_path("metal2",[pmos3_pin.bc(), nmos3_pin.uc()])
@@ -227,28 +235,18 @@ class pnand3(pgate.pgate):
         self.add_path("metal2",[pmos1_pin.bc(), mid_offset, nmos3_pin.uc()])        
 
         # This extends the output to the edge of the cell
-        self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                offset=mid_offset)
+        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                            offset=mid_offset)
         self.add_layout_pin_rect_center(text="Z",
                                         layer="metal1",
                                         offset=mid_offset,
                                         width=contact.m1m2.first_layer_width,
                                         height=contact.m1m2.first_layer_height)
 
-
-
-    def input_load(self):
-        return ((self.nmos_size+self.pmos_size)/parameter["min_tx_size"])*spice["min_tx_gate_c"]
-
-    def analytical_delay(self, corner, slew, load=0.0):
-        r = spice["min_tx_r"]/(self.nmos_size/parameter["min_tx_size"])
-        c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff
-        return self.cal_delay_with_rc(corner, r = r, c =  c_para+load, slew = slew)
-        
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""
         c_eff = self.calculate_effective_capacitance(load)
-        freq = spice["default_event_rate"]
+        freq = spice["default_event_frequency"]
         power_dyn = self.calc_dynamic_power(corner, c_eff, freq)
         power_leak = spice["nand3_leakage"]
         
@@ -259,10 +257,10 @@ class pnand3(pgate.pgate):
         """Computes effective capacitance. Results in fF"""
         c_load = load
         c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff
-        transition_prob = spice["nand3_transition_prob"]
+        transition_prob = 0.1094
         return transition_prob*(c_load + c_para) 
 
-    def get_cin(self):
+    def input_load(self):
         """Return the relative input capacitance of a single input"""
         return self.nmos_size+self.pmos_size
         
@@ -271,4 +269,8 @@ class pnand3(pgate.pgate):
            Optional is_rise refers to the input direction rise/fall. Input inverted by this stage.
         """
         parasitic_delay = 3 
-        return logical_effort.logical_effort(self.name, self.size, self.get_cin(), cout, parasitic_delay, not inp_is_rise)
+        return logical_effort.logical_effort(self.name, self.size, self.input_load(), cout, parasitic_delay, not inp_is_rise)
+
+    def build_graph(self, graph, inst_name, port_nets):        
+        """Adds edges based on inputs/outputs. Overrides base class function."""
+        self.add_graph_edges(graph, port_nets) 

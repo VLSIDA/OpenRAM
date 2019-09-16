@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
+#
 #!/usr/bin/env python3
 """
 This is a script to load data from the characterization and layout processes into
@@ -154,7 +161,7 @@ def parse_characterizer_csv(f, pages):
                     # check current .lib file produces the slowest timing results
                     while(True):
                         col_start = col
-                        if(row[col].startswith('DIN')):
+                        if(row[col].startswith('din')):
                             start = col
                             for item in sheet.timing_table.rows:
                                 if item[0].startswith(row[col]):
@@ -193,7 +200,7 @@ def parse_characterizer_csv(f, pages):
 
                             col += 1
 
-                        elif(row[col].startswith('DOUT')):
+                        elif(row[col].startswith('dout')):
                             start = col
                             for item in sheet.timing_table.rows:
                                 if item[0].startswith(row[col]):
@@ -232,7 +239,7 @@ def parse_characterizer_csv(f, pages):
 
                             col += 1
 
-                        elif(row[col].startswith('CSb')):
+                        elif(row[col].startswith('csb')):
                             start = col
                             for item in sheet.timing_table.rows:
                                 if item[0].startswith(row[col]):
@@ -271,7 +278,7 @@ def parse_characterizer_csv(f, pages):
 
                             col += 1
 
-                        elif(row[col].startswith('WEb')):
+                        elif(row[col].startswith('web')):
                             start = col
                             for item in sheet.timing_table.rows:
                                 if item[0].startswith(row[col]):
@@ -310,7 +317,7 @@ def parse_characterizer_csv(f, pages):
 
                             col += 1
 
-                        elif(row[col].startswith('ADDR')):
+                        elif(row[col].startswith('addr')):
                             start = col
                             for item in sheet.timing_table.rows:
                                 if item[0].startswith(row[col]):
@@ -386,6 +393,9 @@ def parse_characterizer_csv(f, pages):
                         [PROC, VOLT, TEMP, LIB_NAME.replace(OUT_DIR, '').replace(NAME, '')])
                     new_sheet.dlv_table.add_row(
                         ['.lib', 'Synthesis models', '<a href="file://{0}">{1}</a>'.format(LIB_NAME, LIB_NAME.replace(OUT_DIR, ''))])
+                    new_sheet.dlv_table.add_row(
+                        ['.db', 'Compiled .lib', '<a href="{1}">{1}</a>'.format(LIB_NAME[:-3] + 'db', LIB_NAME.replace(OUT_DIR, '')[:-3] + 'db')])
+
 
             if found == 0:
 
@@ -431,7 +441,7 @@ def parse_characterizer_csv(f, pages):
                 # parse initial timing information
                 while(True):
                     col_start = col
-                    if(row[col].startswith('DIN')):
+                    if(row[col].startswith('din')):
                         start = col
 
                         new_sheet.timing_table.add_row(
@@ -455,7 +465,7 @@ def parse_characterizer_csv(f, pages):
 
                         col += 1
 
-                    elif(row[col].startswith('DOUT')):
+                    elif(row[col].startswith('dout')):
                         start = col
 
                         new_sheet.timing_table.add_row(
@@ -479,7 +489,7 @@ def parse_characterizer_csv(f, pages):
 
                         col += 1
 
-                    elif(row[col].startswith('CSb')):
+                    elif(row[col].startswith('csb')):
                         start = col
 
                         new_sheet.timing_table.add_row(
@@ -503,7 +513,7 @@ def parse_characterizer_csv(f, pages):
 
                         col += 1
 
-                    elif(row[col].startswith('WEb')):
+                    elif(row[col].startswith('web')):
                         start = col
 
                         new_sheet.timing_table.add_row(
@@ -527,7 +537,7 @@ def parse_characterizer_csv(f, pages):
 
                         col += 1
 
-                    elif(row[col].startswith('ADDR')):
+                    elif(row[col].startswith('addr')):
                         start = col
 
                         new_sheet.timing_table.add_row(
@@ -603,6 +613,8 @@ def parse_characterizer_csv(f, pages):
                     ['.html', 'This datasheet', '<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name, 'html')])
                 new_sheet.dlv_table.add_row(
                     ['.lib', 'Synthesis models', '<a href="{1}">{1}</a>'.format(LIB_NAME, LIB_NAME.replace(OUT_DIR, ''))])
+                new_sheet.dlv_table.add_row(
+                    ['.db', 'Compiled .lib', '<a href="{1}">{1}</a>'.format(LIB_NAME[:-3] + 'db', LIB_NAME.replace(OUT_DIR, '')[:-3] + 'db')])
                 new_sheet.dlv_table.add_row(
                     ['.py', 'OpenRAM configuration file', '<a href="{0}.{1}">{0}.{1}</a>'.format(OPTS.output_name, 'py')])
                 new_sheet.dlv_table.add_row(

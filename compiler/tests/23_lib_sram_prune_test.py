@@ -1,20 +1,24 @@
 #!/usr/bin/env python3
-"""
-Check the .lib file for an SRAM with pruning
-"""
-
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
+#
 import unittest
-from testutils import header,openram_test
+from testutils import *
 import sys,os,re
-sys.path.append(os.path.join(sys.path[0],".."))
+sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 import debug
 
-class lib_test(openram_test):
+@unittest.skip("SKIPPING 23_lib_sram_prune_test")
+class lib_sram_prune_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
         OPTS.analytical_delay = False
         OPTS.trim_netlist = True
 
@@ -34,6 +38,9 @@ class lib_test(openram_test):
         c.words_per_row=1
         c.recompute_sizes()
         debug.info(1, "Testing pruned timing for sample 2 bit, 16 words SRAM with 1 bank")
+
+        # This doesn't have to use the factory since worst case
+        # it will just replaece the top-level module of the same name
         s = sram(c, "sram_2_16_1_{0}".format(OPTS.tech_name))
 
         tempspice = OPTS.openram_temp + "temp.sp"
@@ -61,7 +68,7 @@ if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
-    unittest.main()
+    unittest.main(testRunner=debugTestRunner())
 
 
 

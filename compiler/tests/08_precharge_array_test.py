@@ -1,26 +1,28 @@
 #!/usr/bin/env python3
-"""
-Run a regression test on a precharge array
-"""
-
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
+#
 import unittest
-from testutils import header,openram_test
+from testutils import *
 import sys,os
-sys.path.append(os.path.join(sys.path[0],".."))
+sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
-import debug
 from sram_factory import factory
+import debug
 
 class precharge_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        import precharge_array
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
 
         # check precharge array in single port
         debug.info(2, "Checking 3 column precharge")
-        pc = precharge_array.precharge_array(name="pre1", columns=3)
+        pc = factory.create(module_type="precharge_array", columns=3)
         self.local_check(pc)
         
         # check precharge array in multi-port
@@ -31,7 +33,7 @@ class precharge_test(openram_test):
 
         factory.reset()
         debug.info(2, "Checking 3 column precharge array for 1RW/1R bitcell")
-        pc = precharge_array.precharge_array(name="pre2", columns=3, bitcell_bl="bl0", bitcell_br="br0")
+        pc = factory.create(module_type="precharge_array", columns=3, bitcell_bl="bl0", bitcell_br="br0")
         self.local_check(pc)
         
         # debug.info(2, "Checking 3 column precharge array for pbitcell (innermost connections)")
@@ -49,4 +51,4 @@ if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
-    unittest.main()
+    unittest.main(testRunner=debugTestRunner())

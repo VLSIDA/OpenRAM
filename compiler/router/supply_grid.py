@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
+#
 import debug
 from vector3d import vector3d
 from grid import grid
@@ -27,7 +34,7 @@ class supply_grid(signal_grid):
             p.reset()
         
 
-    def find_start_wave(self, wave, width, direct):
+    def find_start_wave(self, wave, direct):
         """ 
         Finds the first loc  starting at loc and up that is open.
         Returns None if it reaches max size first.

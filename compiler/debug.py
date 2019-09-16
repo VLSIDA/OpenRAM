@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
+#
 import os
 import inspect
 import globals
@@ -58,6 +65,8 @@ def log(str):
             # in another log file if the path or name changes.
             if not globals.OPTS.output_path.endswith('/'):
                 globals.OPTS.output_path += "/"
+            if not os.path.isdir(globals.OPTS.output_path):
+                os.mkdir(globals.OPTS.output_path)
             compile_log = open(globals.OPTS.output_path +
                                globals.OPTS.output_name + '.log', "w+")
             log.create_file = 0
@@ -76,7 +85,7 @@ def log(str):
 
 # use a static list of strings to store messages until the global paths are set up
 log.setup_output = []
-log.create_file = 1
+log.create_file = True
 
 
 def info(lev, str):

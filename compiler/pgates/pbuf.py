@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
+#
 import debug
 from tech import drc
 from math import log
@@ -12,17 +19,15 @@ class pbuf(pgate.pgate):
     """
     def __init__(self, name, size=4, height=None):
         
+        debug.info(1, "creating {0} with size of {1}".format(name,size))
+        self.add_comment("size: {}".format(size))
+
         self.stage_effort = 4
         self.size = size
         self.height = height
 
+        # Creates the netlist and layout
         pgate.pgate.__init__(self, name, height)
-        debug.info(1, "creating {0} with size of {1}".format(self.name,self.size))
-        self.add_comment("size: {}".format(size))
-        
-        self.create_netlist()
-        if not OPTS.netlist_only:
-            self.create_layout()
 
 
     def create_netlist(self):
@@ -37,10 +42,10 @@ class pbuf(pgate.pgate):
         self.add_layout_pins()
         
     def add_pins(self):
-        self.add_pin("A")
-        self.add_pin("Z")
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+        self.add_pin("A", "INPUT")
+        self.add_pin("Z", "OUTPUT")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
     def create_modules(self):
         # Shield the cap, but have at least a stage effort of 4
@@ -108,14 +113,6 @@ class pbuf(pgate.pgate):
                                         width=a_pin.width(),
                                         height=a_pin.height())
         
-        
-
-    def analytical_delay(self, corner, slew, load=0.0):
-        """ Calculate the analytical delay of DFF-> INV -> INV """
-        inv1_delay = self.inv1.analytical_delay(corner, slew=slew, load=self.inv2.input_load()) 
-        inv2_delay = self.inv2.analytical_delay(corner, slew=inv1_delay.slew, load=load)
-        return inv1_delay + inv2_delay
-    
     def get_stage_efforts(self, external_cout, inp_is_rise=False):
         """Get the stage efforts of the A -> Z path"""
         stage_effort_list = []

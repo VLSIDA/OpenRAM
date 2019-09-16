@@ -28,9 +28,8 @@ M_14 din_gated_bar din_gated gnd gnd n W=0.8u L=0.4u
 
 ************************************************
 * pull down with en enable
-M_15 bl din_gated_bar net_5 gnd n W=2.4u L=0.4u
-M_16 br din_bar_gated_bar net_5 gnd n W=2.4u L=0.4u
-M_17 net_5 en gnd gnd n W=2.4u L=0.4u
+M_15 bl din_gated_bar gnd gnd n W=2.4u L=0.4u
+M_16 br din_bar_gated_bar gnd gnd n W=2.4u L=0.4u
 
 
 

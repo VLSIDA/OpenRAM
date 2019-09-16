@@ -1,17 +1,27 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
+#
 import debug
-import design
+import pgate
 from tech import drc
 from math import log
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
 
-class pinvbuf(design.design):
+class pinvbuf(pgate.pgate):
     """
     This is a simple inverter/buffer used for driving loads. It is
     used in the column decoder for 1:2 decoding and as the clock buffer.
     """
     def __init__(self, name, size=4, height=None):
+
+        debug.info(1, "creating pinvbuf {}".format(name))
+        self.add_comment("size: {}".format(size))
 
         self.stage_effort = 4
         self.row_height = height
@@ -23,13 +33,8 @@ class pinvbuf(design.design):
         self.size = size
         self.predriver_size = max(int(self.size/(self.stage_effort/2)),1)
 
-        design.design.__init__(self, name) 
-        debug.info(1, "Creating {}".format(self.name))
-        self.add_comment("size: {}".format(size))
-
-        self.create_netlist()
-        if not OPTS.netlist_only:
-            self.create_layout()
+        # Creates the netlist and layout        
+        pgate.pgate.__init__(self, name) 
 
 
     def create_netlist(self):
@@ -48,7 +53,6 @@ class pinvbuf(design.design):
         
         self.offset_all_coordinates()
         
-        self.DRC_LVS()
         
     def add_pins(self):
         self.add_pin("A")
@@ -174,15 +178,7 @@ class pinvbuf(design.design):
                                         offset=a_pin.center())
         self.add_via_center(layers=("metal1","via1","metal2"),
                             offset=a_pin.center())
-        
-        
-
-    def analytical_delay(self, corner, slew, load=0.0):
-        """ Calculate the analytical delay of DFF-> INV -> INV """
-        inv1_delay = self.inv1.analytical_delay(corner, slew=slew, load=self.inv2.input_load()) 
-        inv2_delay = self.inv2.analytical_delay(corner, slew=inv1_delay.slew, load=load)
-        return inv1_delay + inv2_delay
-            
+             
     def determine_clk_buf_stage_efforts(self, external_cout, inp_is_rise=False):
         """Get the stage efforts of the clk -> clk_buf path"""
         stage_effort_list = []

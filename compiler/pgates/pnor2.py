@@ -1,9 +1,17 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
+#
+import contact
 import pgate
 import debug
 from tech import drc, parameter, spice
 from vector import vector
 from globals import OPTS
-import contact
+import logical_effort
 from sram_factory import factory
 
 class pnor2(pgate.pgate):
@@ -13,8 +21,8 @@ class pnor2(pgate.pgate):
     """
     def __init__(self, name, size=1, height=None):
         """ Creates a cell for a simple 2 input nor """
-        pgate.pgate.__init__(self, name, height)
-        debug.info(2, "create pnor2 structure {0} with size of {1}".format(name, size))
+
+        debug.info(2, "creating pnor2 structure {0} with size of {1}".format(name, size))
         self.add_comment("size: {}".format(size))
 
         self.nmos_size = size
@@ -27,32 +35,34 @@ class pnor2(pgate.pgate):
         debug.check(size==1,"Size 1 pnor2 is only supported now.")
         self.tx_mults = 1
 
-        self.create_netlist()
-        self.create_layout()
-        #self.DRC_LVS()
+        # Creates the netlist and layout
+        pgate.pgate.__init__(self, name, height)
 
         
-    def add_pins(self):
-        """ Adds pins for spice netlist """
-        self.add_pin_list(["A", "B", "Z", "vdd", "gnd"])
-
     def create_netlist(self):
         self.add_pins()
+        self.add_ptx()
+        self.create_ptx()
         
     def create_layout(self):
         """ Calls all functions related to the generation of the layout """
-
-        self.create_ptx()
+        
         self.setup_layout_constants()
-        self.add_supply_rails()
-        self.add_ptx()
+        self.route_supply_rails()
+        self.place_ptx()
         self.connect_rails()
         self.add_well_contacts()
         self.extend_wells(self.well_pos)
         self.route_inputs()
         self.route_output()
 
-    def create_ptx(self):
+    def add_pins(self):
+        """ Adds pins for spice netlist """
+        pin_list = ["A", "B", "Z", "vdd", "gnd"]
+        dir_list = ["INPUT", "INPUT", "OUTPUT", "INOUT", "INOUT"]
+        self.add_pin_list(pin_list, dir_list)
+
+    def add_ptx(self):
         """ Create the PMOS and NMOS transistors. """
         self.nmos = factory.create(module_type="ptx",
                                    width=self.nmos_width,
@@ -97,7 +107,7 @@ class pnor2(pgate.pgate):
         self.top_bottom_space = max(0.5*self.m1_width + self.m1_space + extra_contact_space, 
                                     drc("poly_extend_active"), self.poly_space)
         
-    def add_supply_rails(self):
+    def route_supply_rails(self):
         """ Add vdd/gnd rails to the top and bottom. """
         self.add_layout_pin_rect_center(text="gnd",
                                         layer="metal1",
@@ -109,7 +119,31 @@ class pnor2(pgate.pgate):
                                         offset=vector(0.5*self.width,self.height),
                                         width=self.width)
 
-    def add_ptx(self):
+    def create_ptx(self):
+        """ 
+        Add PMOS and NMOS to the layout at the upper-most and lowest position
+        to provide maximum routing in channel
+        """
+
+        self.pmos1_inst=self.add_inst(name="pnor2_pmos1",
+                                      mod=self.pmos)
+        self.connect_inst(["vdd", "A", "net1", "vdd"])
+
+        self.pmos2_inst = self.add_inst(name="pnor2_pmos2",
+                                        mod=self.pmos)
+        self.connect_inst(["net1", "B", "Z", "vdd"])
+
+        
+        self.nmos1_inst=self.add_inst(name="pnor2_nmos1",
+                                      mod=self.nmos)
+        self.connect_inst(["Z", "A", "gnd", "gnd"])
+
+        self.nmos2_inst=self.add_inst(name="pnor2_nmos2",
+                                      mod=self.nmos)
+        self.connect_inst(["Z", "B", "gnd", "gnd"])
+        
+
+    def place_ptx(self):
         """ 
         Add PMOS and NMOS to the layout at the upper-most and lowest position
         to provide maximum routing in channel
@@ -117,29 +151,16 @@ class pnor2(pgate.pgate):
 
         pmos1_pos = vector(self.pmos.active_offset.x,
                            self.height - self.pmos.active_height - self.top_bottom_space)
-        self.pmos1_inst=self.add_inst(name="pnor2_pmos1",
-                                      mod=self.pmos,
-                                      offset=pmos1_pos)
-        self.connect_inst(["vdd", "A", "net1", "vdd"])
+        self.pmos1_inst.place(pmos1_pos)
 
         self.pmos2_pos = pmos1_pos + self.overlap_offset
-        self.pmos2_inst = self.add_inst(name="pnor2_pmos2",
-                                        mod=self.pmos,
-                                        offset=self.pmos2_pos)
-        self.connect_inst(["net1", "B", "Z", "vdd"])
-
+        self.pmos2_inst.place(self.pmos2_pos)
         
         nmos1_pos = vector(self.pmos.active_offset.x, self.top_bottom_space)
-        self.nmos1_inst=self.add_inst(name="pnor2_nmos1",
-                                      mod=self.nmos,
-                                      offset=nmos1_pos)
-        self.connect_inst(["Z", "A", "gnd", "gnd"])
-
+        self.nmos1_inst.place(nmos1_pos)
+        
         self.nmos2_pos = nmos1_pos + self.overlap_offset
-        self.nmos2_inst=self.add_inst(name="pnor2_nmos2",
-                                      mod=self.nmos,
-                                      offset=self.nmos2_pos)
-        self.connect_inst(["Z", "B", "gnd", "gnd"])
+        self.nmos2_inst.place(self.nmos2_pos)
         
         # Output position will be in between the PMOS and NMOS        
         self.output_pos = vector(0,0.5*(pmos1_pos.y+nmos1_pos.y+self.nmos.active_height))
@@ -184,11 +205,11 @@ class pnor2(pgate.pgate):
         nmos2_pin = self.nmos2_inst.get_pin("D")
 
         # Go up to metal2 for ease on all output pins
-        self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                offset=pmos_pin.center())
-        m1m2_contact=self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                             offset=nmos_pin.center(),
-                                             rotate=90)
+        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                            offset=pmos_pin.center())
+        m1m2_contact=self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                         offset=nmos_pin.center())
+
         
         mid1_offset = vector(pmos_pin.center().x,nmos2_pin.center().y)
         mid2_offset = vector(pmos_pin.center().x,self.inputA_yoffset)
@@ -198,29 +219,18 @@ class pnor2(pgate.pgate):
         self.add_path("metal2",[pmos_pin.bc(), mid2_offset, mid3_offset])
         self.add_path("metal2",[nmos_pin.rc(), mid1_offset, mid2_offset])
         # This extends the output to the edge of the cell
-        self.add_contact_center(layers=("metal1", "via1", "metal2"),
-                                offset=mid3_offset,
-                                rotate=90)
+        self.add_via_center(layers=("metal1", "via1", "metal2"),
+                            offset=mid3_offset)
         self.add_layout_pin_rect_center(text="Z",
                                         layer="metal1",
                                         offset=mid3_offset,
                                         width=contact.m1m2.first_layer_height,
                                         height=contact.m1m2.first_layer_width)
 
-
-
-    def input_load(self):
-        return ((self.nmos_size+self.pmos_size)/parameter["min_tx_size"])*spice["min_tx_gate_c"]
-
-    def analytical_delay(self, corner, slew, load=0.0):
-        r = spice["min_tx_r"]/(self.nmos_size/parameter["min_tx_size"])
-        c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff
-        return self.cal_delay_with_rc(corner, r = r, c =  c_para+load, slew = slew)
-        
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""
         c_eff = self.calculate_effective_capacitance(load)
-        freq = spice["default_event_rate"]
+        freq = spice["default_event_frequency"]
         power_dyn = self.calc_dynamic_power(corner, c_eff, freq)
         power_leak = spice["nor2_leakage"]
         
@@ -231,6 +241,9 @@ class pnor2(pgate.pgate):
         """Computes effective capacitance. Results in fF"""
         c_load = load
         c_para = spice["min_tx_drain_c"]*(self.nmos_size/parameter["min_tx_size"])#ff
-        transition_prob = spice["nor2_transition_prob"]
+        transition_prob = 0.1875
         return transition_prob*(c_load + c_para) 
         
+    def build_graph(self, graph, inst_name, port_nets):        
+        """Adds edges based on inputs/outputs. Overrides base class function."""
+        self.add_graph_edges(graph, port_nets) 

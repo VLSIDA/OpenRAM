@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
+#
 import debug
 import pgate
 import math
@@ -13,27 +20,24 @@ class pdriver(pgate.pgate):
     """
     def __init__(self, name, neg_polarity=False, fanout=0, size_list=None, height=None):
 
+        debug.info(1, "creating pdriver {}".format(name))
+
         self.stage_effort = 3
         self.height = height 
         self.neg_polarity = neg_polarity
         self.size_list = size_list
         self.fanout = fanout
 
+        if size_list == None and self.fanout == 0:
+            debug.error("Either fanout or size list must be specified.", -1)
         if self.size_list and self.fanout != 0:
             debug.error("Cannot specify both size_list and fanout.", -1)
         if self.size_list and self.neg_polarity:
             debug.error("Cannot specify both size_list and neg_polarity.", -1)
  
+        # Creates the netlist and layout
         pgate.pgate.__init__(self, name, height) 
-        debug.info(1, "Creating {}".format(self.name))
         
-        self.compute_sizes()
-
-        self.add_comment("sizes: {}".format(str(self.size_list)))
-        
-        self.create_netlist()
-        if not OPTS.netlist_only:
-            self.create_layout()
 
     def compute_sizes(self):
         # size_list specified
@@ -41,7 +45,7 @@ class pdriver(pgate.pgate):
             self.num_stages = len(self.size_list)
         else:
             # Find the optimal number of stages for the given effort
-            self.num_stages = max(1,int(round(log(self.fanout)/log(self.stage_effort))))
+            self.num_stages = max(1,int(round(self.fanout**(1/self.stage_effort))))
 
             # Increase the number of stages if we need to fix polarity
             if self.neg_polarity and (self.num_stages%2==0):
@@ -49,18 +53,20 @@ class pdriver(pgate.pgate):
             elif not self.neg_polarity and (self.num_stages%2): 
                 self.num_stages += 1
 
-        self.size_list = []
-        # compute sizes backwards from the fanout
-        fanout_prev = self.fanout
-        for x in range(self.num_stages):
-            fanout_prev = max(round(fanout_prev/self.stage_effort),1)
-            self.size_list.append(fanout_prev)
+            self.size_list = []
+            # compute sizes backwards from the fanout
+            fanout_prev = self.fanout
+            for x in range(self.num_stages):
+                fanout_prev = max(round(fanout_prev/self.stage_effort),1)
+                self.size_list.append(fanout_prev)
 
-        # reverse the sizes to be from input to output
-        self.size_list.reverse()
+            # reverse the sizes to be from input to output
+            self.size_list.reverse()
 
 
     def create_netlist(self):
+        self.compute_sizes()
+        self.add_comment("sizes: {}".format(str(self.size_list)))
         self.add_pins()
         self.add_modules()
         self.create_insts()
@@ -73,13 +79,12 @@ class pdriver(pgate.pgate):
         self.width = self.inv_inst_list[-1].rx()
         self.height = self.inv_inst_list[0].height
         
-        self.DRC_LVS()
         
     def add_pins(self):
-        self.add_pin("A")
-        self.add_pin("Z")
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+        self.add_pin("A", "INPUT")
+        self.add_pin("Z", "OUTPUT")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
     def add_modules(self):     
         self.inv_list = []
@@ -168,34 +173,13 @@ class pdriver(pgate.pgate):
                                         offset=a_pin.center(),
                                         width = a_pin.width(),
                                         height = a_pin.height())
-        
-    def input_load(self):
-        return self.inv_list[0].input_load()
 
-    def analytical_delay(self, corner, slew, load=0.0):
-        """Calculate the analytical delay of INV1 -> ... -> INVn"""
-
-        cout_list = []
-        for prev_inv,inv in zip(self.inv_list, self.inv_list[1:]):
-            cout_list.append(inv.input_load())
-        cout_list.append(load)
-        
-        input_slew = slew
-        
-        delays = []
-        for inv,cout in zip(self.inv_list,cout_list):
-            delays.append(inv.analytical_delay(corner, slew=input_slew, load=cout))
-            input_slew = delays[-1].slew
-
-        delay = delays[0]
-        for i in range(len(delays)-1):
-            delay += delays[i]
-            
-        return delay
-
-
+    def get_sizes(self):
+        """ Return the relative sizes of the buffers """
+        return self.size_list
+    
     def get_stage_efforts(self, external_cout, inp_is_rise=False):
-        """Get the stage efforts of the A -> Z path"""
+        """ Get the stage efforts of the A -> Z path """
         cout_list = []
         for prev_inv,inv in zip(self.inv_list, self.inv_list[1:]):
             cout_list.append(inv.get_cin())
@@ -212,5 +196,5 @@ class pdriver(pgate.pgate):
         return stage_effort_list
 
     def get_cin(self):
-        """Returns the relative capacitance of the input"""
+        """ Returns the relative capacitance of the input """
         return self.inv_list[0].get_cin()

@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
+#
 from tech import drc
 import debug
 import design
@@ -47,6 +54,7 @@ class hierarchical_decoder(design.design):
         self.route_predecode_rails()
         self.route_vdd_gnd()
         self.offset_all_coordinates()
+        self.add_boundary()
         self.DRC_LVS()
                 
     def add_modules(self):
@@ -213,11 +221,9 @@ class hierarchical_decoder(design.design):
         """ Route a vertical M2 coordinate to another vertical M2 coordinate to the predecode inputs """
         
         self.add_via_center(layers=("metal2", "via2", "metal3"),
-                            offset=input_offset,
-                            rotate=90)
+                            offset=input_offset)
         self.add_via_center(layers=("metal2", "via2", "metal3"),
-                            offset=output_offset,
-                            rotate=90)
+                            offset=output_offset)
         self.add_path(("metal3"), [input_offset, output_offset])
 
     
@@ -225,12 +231,12 @@ class hierarchical_decoder(design.design):
         """ Add the module pins """
         
         for i in range(self.num_inputs):
-            self.add_pin("addr_{0}".format(i))
+            self.add_pin("addr_{0}".format(i), "INPUT")
 
         for j in range(self.rows):
-            self.add_pin("decode_{0}".format(j))
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+            self.add_pin("decode_{0}".format(j), "OUTPUT")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
 
     def create_pre_decoder(self):
@@ -575,8 +581,7 @@ class hierarchical_decoder(design.design):
         rail_pos = vector(self.predecode_rails[rail_name].x,pin.lc().y)
         self.add_path("metal1", [rail_pos, pin.lc()])
         self.add_via_center(layers=("metal1", "via1", "metal2"),
-                            offset=rail_pos,
-                            rotate=90)
+                            offset=rail_pos)
 
 
     def route_predecode_rail_m3(self, rail_name, pin):
@@ -586,38 +591,15 @@ class hierarchical_decoder(design.design):
         mid_point = vector(pin.cx(), pin.cy()+self.inv.height/2)
         rail_pos = vector(self.predecode_rails[rail_name].x,mid_point.y)
         self.add_via_center(layers=("metal1", "via1", "metal2"),
-                            offset=pin.center(),
-                            rotate=90)
+                            offset=pin.center())
         self.add_wire(("metal3","via2","metal2"), [rail_pos, mid_point, pin.uc()])
         self.add_via_center(layers=("metal2", "via2", "metal3"),
-                            offset=rail_pos,
-                            rotate=90)
+                            offset=rail_pos)
 
-        
-    def analytical_delay(self, corner, slew, load = 0.0):
-        # A -> out
-        if self.determine_predecodes(self.num_inputs)[1]==0:
-            pre = self.pre2_4
-            nand = self.nand2
-        else:
-            pre = self.pre3_8
-            nand = self.nand3
-        a_t_out_delay = pre.analytical_delay(corner, slew=slew,load = nand.input_load())
-
-        # out -> z
-        out_t_z_delay = nand.analytical_delay(corner, slew= a_t_out_delay.slew,
-                                  load = self.inv.input_load())
-        result = a_t_out_delay + out_t_z_delay
-
-        # Z -> decode_out
-        z_t_decodeout_delay = self.inv.analytical_delay(corner, slew = out_t_z_delay.slew , load = load)
-        result = result + z_t_decodeout_delay
-        return result
-
-        
     def input_load(self):
         if self.determine_predecodes(self.num_inputs)[1]==0:
             pre = self.pre2_4
         else:
             pre = self.pre3_8
         return pre.input_load()
+        

@@ -2,6 +2,7 @@ from .gdsPrimitives import *
 from datetime import *
 #from mpmath import matrix
 #from numpy import matrix
+from vector import vector
 import numpy as np
 #import gdsPrimitives
 import debug
@@ -725,12 +726,26 @@ class VlsiLayout:
                 self.pins[label_text] = []
             self.pins[label_text].append(pin_shapes)
         
-        
+    
+    def getBlockages(self,layer):
+        """
+        Return all blockages on a given layer in [coordinate 1, coordinate 2,...] format and
+        user units.
+        """
+        blockages = []
+
+        shapes = self.getAllShapes(layer)
+        for boundary in shapes:
+            vectors = []
+            for i in range(0,len(boundary),2):
+                vectors.append(vector(boundary[i],boundary[i+1]))
+            blockages.append(vectors)
+        return blockages    
 
     def getAllShapes(self,layer):
         """
-        Return all gshapes on a given layer in [llx, lly, urx, ury] format and 
-        user units.
+        Return all shapes on a given layer in [llx, lly, urx, ury] format and user units for rectangles
+        and [coordinate 1, coordinate 2,...] format and user units for polygons.
         """
         boundaries = set()
         for TreeUnit in self.xyTree:
@@ -740,42 +755,67 @@ class VlsiLayout:
         # Convert to user units
         user_boundaries = []
         for boundary in boundaries:
-            user_boundaries.append([boundary[0]*self.units[0],boundary[1]*self.units[0],
-                                    boundary[2]*self.units[0],boundary[3]*self.units[0]])
-                
+            boundaries_list = []
+            for i in range(0,len(boundary)):
+                boundaries_list.append(boundary[i]*self.units[0])
+            user_boundaries.append(boundaries_list)
         return user_boundaries
 
 
     def getShapesInStructure(self,layer,structure):
         """ 
         Go through all the shapes in a structure and return the list of shapes in
-        the form [llx, lly, urx, ury]
+        the form [llx, lly, urx, ury] for rectangles and [coordinate 1, coordinate 2,...] for polygons.
         """
-
         (structureName,structureOrigin,structureuVector,structurevVector)=structure
         #print(structureName,"u",structureuVector.transpose(),"v",structurevVector.transpose(),"o",structureOrigin.transpose())
         boundaries = []
         for boundary in self.structures[str(structureName)].boundaries:
-            # FIXME: Right now, this only supports rectangular shapes!
-            # We should trigger an error but some FreePDK45 library cells contain paths.
-            # These get saved fine, but we cannot parse them as blockages... 
-            #debug.check(len(boundary.coordinates)==5,"Non-rectangular shapes are not supported.")
-            if len(boundary.coordinates)!=5:
-                continue
             if layer==boundary.drawingLayer:
-                left_bottom=boundary.coordinates[0]
-                right_top=boundary.coordinates[2]
-                # Rectangle is [leftx, bottomy, rightx, topy].
-                boundaryRect=[left_bottom[0],left_bottom[1],right_top[0],right_top[1]]
-                # perform the rotation
-                boundaryRect=self.transformRectangle(boundaryRect,structureuVector,structurevVector)
-                # add the offset and make it a tuple
-                boundaryRect=(boundaryRect[0]+structureOrigin[0].item(),boundaryRect[1]+structureOrigin[1].item(),
-                              boundaryRect[2]+structureOrigin[0].item(),boundaryRect[3]+structureOrigin[1].item())
-                boundaries.append(boundaryRect)
-                    
+                if len(boundary.coordinates)!=5:
+                    # if shape is a polygon (used in DFF)
+                    boundaryPolygon = []
+                    # Polygon is a list of coordinates going ccw
+                    for coord in range(0,len(boundary.coordinates)):
+                        boundaryPolygon.append(boundary.coordinates[coord][0])
+                        boundaryPolygon.append(boundary.coordinates[coord][1])
+                    # perform the rotation
+                    boundaryPolygon=self.transformPolygon(boundaryPolygon,structureuVector,structurevVector)
+                    # add the offset 
+                    polygon = []
+                    for i in range(0,len(boundaryPolygon),2):
+                        polygon.append(boundaryPolygon[i]+structureOrigin[0].item())
+                        polygon.append(boundaryPolygon[i+1]+structureOrigin[1].item())
+                    # make it a tuple
+                    polygon = tuple(polygon)
+                    boundaries.append(polygon)
+                else:
+                    # else shape is a rectangle
+                    left_bottom=boundary.coordinates[0]
+                    right_top=boundary.coordinates[2]
+                    # Rectangle is [leftx, bottomy, rightx, topy].
+                    boundaryRect=[left_bottom[0],left_bottom[1],right_top[0],right_top[1]]
+                    # perform the rotation
+                    boundaryRect=self.transformRectangle(boundaryRect,structureuVector,structurevVector)
+                    # add the offset and make it a tuple
+                    boundaryRect=(boundaryRect[0]+structureOrigin[0].item(),boundaryRect[1]+structureOrigin[1].item(),
+                                  boundaryRect[2]+structureOrigin[0].item(),boundaryRect[3]+structureOrigin[1].item())
+                    boundaries.append(boundaryRect)
         return boundaries
-    
+
+
+    def transformPolygon(self,originalPolygon,uVector,vVector):
+        """
+        Transforms the coordinates of a polygon in space.
+        """
+        polygon = []
+        newPolygon = []
+        for i in range(0,len(originalPolygon),2):
+            polygon.append(self.transformCoordinate([originalPolygon[i],originalPolygon[i+1]],uVector,vVector))
+            newPolygon.append(polygon[int(i/2)][0])
+            newPolygon.append(polygon[int(i/2)][1])
+        return newPolygon
+
     def transformRectangle(self,originalRectangle,uVector,vVector):
         """
         Transforms the four coordinates of a rectangle in space
@@ -799,7 +839,7 @@ class VlsiLayout:
         """
         Rotate a coordinate in space.
         """
-        # MRG: 9/3/18 Incorrect matrixi multiplication! 
+        # MRG: 9/3/18 Incorrect matrix multiplication! 
         # This is fixed to be:
         # |u[0] v[0]| |x| |x'|
         # |u[1] v[1]|x|y|=|y'|

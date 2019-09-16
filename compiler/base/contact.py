@@ -1,7 +1,14 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
+#
 import hierarchy_design
 import debug
 import utils
-from tech import drc
+from tech import drc,layer
 from vector import vector
 
 
@@ -9,44 +16,36 @@ class contact(hierarchy_design.hierarchy_design):
     """
     Object for a contact shape with its conductor enclosures.
     Creates a contact array minimum active or poly enclosure and metal1 enclosure.
-    This class has enclosure on multiple sides of the contact whereas a via may
-    have extension on two or four sides.
+    This class has enclosure on two or four sides of the contact.
+    The direction specifies whether the first and second layer have asymmetric extension in the H or V direction.
+
     The well/implant_type is an option to add a select/implant layer enclosing the contact. This is
     necessary to import layouts into Magic which requires the select to be in the same GDS
     hierarchy as the contact.
     """
 
-    def __init__(self, layer_stack, dimensions=[1,1], implant_type=None, well_type=None, name=""):
+    def __init__(self, layer_stack, dimensions=(1,1), directions=("V","V"), implant_type=None, well_type=None, name=""):
         # This will ignore the name parameter since we can guarantee a unique name here
         
-        if implant_type or well_type:
-            name = "{0}_{1}_{2}_{3}x{4}_{5}{6}".format(layer_stack[0],
-                                                       layer_stack[1],
-                                                       layer_stack[2],
-                                                       dimensions[0],
-                                                       dimensions[1],
-                                                       implant_type,
-                                                       well_type)
-                                                       
-        else:
-            name = "{0}_{1}_{2}_{3}x{4}".format(layer_stack[0],
-                                                layer_stack[1],
-                                                layer_stack[2],
-                                                dimensions[0],
-                                                dimensions[1])
-
         hierarchy_design.hierarchy_design.__init__(self, name)
         debug.info(4, "create contact object {0}".format(name))
-
+        self.add_comment("layers: {0}".format(layer_stack))
+        self.add_comment("dimensions: {0}".format(dimensions))
+        if implant_type or well_type:
+            self.add_comment("implant type: {0}\nwell_type: {1}".format(implant_type,well_type))
+        
         self.layer_stack = layer_stack
         self.dimensions = dimensions
+        self.directions = directions
         self.offset = vector(0,0)
         self.implant_type = implant_type
         self.well_type = well_type        
-        self.pins = [] # used for matching parm lengths
+        # Module does not have pins, but has empty pin list.
+        self.pins = []
         self.create_layout()
 
     def create_layout(self):
+
         self.setup_layers()
         self.setup_layout_constants()
         self.create_contact_array()
@@ -63,6 +62,8 @@ class contact(hierarchy_design.hierarchy_design):
             debug.error(-1,"Must define both implant and well type or none at all.")
 
     def setup_layers(self):
+        """ Locally assign the layer names. """
+
         (first_layer, via_layer, second_layer) = self.layer_stack
         self.first_layer_name = first_layer
         self.via_layer_name = via_layer
@@ -75,37 +76,58 @@ class contact(hierarchy_design.hierarchy_design):
         self.second_layer_name = second_layer
 
     def setup_layout_constants(self):
+        """ Determine the design rules for the enclosure layers """
+        
         self.contact_width = drc("minwidth_{0}". format(self.via_layer_name))
         contact_to_contact = drc("{0}_to_{0}".format(self.via_layer_name))
         self.contact_pitch = self.contact_width + contact_to_contact
+
         self.contact_array_width = self.contact_width + (self.dimensions[0] - 1) * self.contact_pitch
         self.contact_array_height = self.contact_width + (self.dimensions[1] - 1) * self.contact_pitch
 
         # DRC rules
+        # The extend rule applies to asymmetric enclosures in one direction.
+        # The enclosure rule applies to symmetric enclosure component.
+        
         first_layer_minwidth = drc("minwidth_{0}".format(self.first_layer_name))
-        first_layer_minarea = drc("minarea_{0}".format(self.first_layer_name))
         first_layer_enclosure = drc("{0}_enclosure_{1}".format(self.first_layer_name, self.via_layer_name))
         first_layer_extend = drc("{0}_extend_{1}".format(self.first_layer_name, self.via_layer_name))
+
         second_layer_minwidth = drc("minwidth_{0}".format(self.second_layer_name))
-        second_layer_minarea = drc("minarea_{0}".format(self.second_layer_name))
         second_layer_enclosure = drc("{0}_enclosure_{1}".format(self.second_layer_name, self.via_layer_name))
         second_layer_extend = drc("{0}_extend_{1}".format(self.second_layer_name, self.via_layer_name))
 
-        self.first_layer_horizontal_enclosure = max((first_layer_minwidth - self.contact_array_width) / 2,
-                                                    first_layer_enclosure)
-        self.first_layer_vertical_enclosure = max(utils.ceil((first_layer_minarea
-                                                              / (self.contact_array_width + 2*self.first_layer_horizontal_enclosure)
-                                                              - self.contact_array_height)/2),
-                                                  (first_layer_minwidth - self.contact_array_height)/2,
-                                                  first_layer_extend)
 
-        self.second_layer_horizontal_enclosure = max((second_layer_minwidth - self.contact_array_width)/2,
-                                                     second_layer_enclosure)
-        self.second_layer_vertical_enclosure = max(utils.ceil((second_layer_minarea
-                                                               / (self.contact_array_width + 2*self.second_layer_horizontal_enclosure) 
-                                                               - self.contact_array_height)/2),
-                                                   (second_layer_minwidth - self.contact_array_height)/2,
-                                                   second_layer_extend)
+        # In some technologies, the minimum width may be larger than the overlap requirement around the via, so
+        # check this for each dimension.
+        if self.directions[0] == "V":
+            self.first_layer_horizontal_enclosure = max(first_layer_enclosure,
+                                                        (first_layer_minwidth - self.contact_array_width)/2)
+            self.first_layer_vertical_enclosure = max(first_layer_extend,
+                                                      (first_layer_minwidth - self.contact_array_height)/2)
+        elif self.directions[0] == "H":
+            self.first_layer_horizontal_enclosure = max(first_layer_extend,
+                                                        (first_layer_minwidth - self.contact_array_width)/2)
+            self.first_layer_vertical_enclosure = max(first_layer_enclosure,
+                                                      (first_layer_minwidth - self.contact_array_height)/2)
+        else:
+            debug.error("Invalid first layer direction.", -1)
+
+        # In some technologies, the minimum width may be larger than the overlap requirement around the via, so
+        # check this for each dimension.
+        if self.directions[1] == "V":
+            self.second_layer_horizontal_enclosure = max(second_layer_enclosure,
+                                                         (second_layer_minwidth - self.contact_array_width)/2)
+            self.second_layer_vertical_enclosure = max(second_layer_extend,
+                                                       (second_layer_minwidth - self.contact_array_height)/2)
+        elif self.directions[1] == "H":
+            self.second_layer_horizontal_enclosure = max(second_layer_extend,
+                                                         (second_layer_minwidth - self.contact_array_height)/2)
+            self.second_layer_vertical_enclosure = max(second_layer_enclosure,
+                                                       (second_layer_minwidth - self.contact_array_width)/2)
+        else:
+            debug.error("Invalid second layer direction.", -1)
+            
         
     def create_contact_array(self):
         """ Create the contact array at the origin"""
@@ -169,10 +191,13 @@ class contact(hierarchy_design.hierarchy_design):
 from sram_factory import factory
 # This is not instantiated and used for calculations only.
 # These are static 1x1 contacts to reuse in all the design modules.
-well = factory.create(module_type="contact", layer_stack=("active", "contact", "metal1"))
-active = factory.create(module_type="contact", layer_stack=("active", "contact", "poly"))
-poly = factory.create(module_type="contact", layer_stack=("poly", "contact", "metal1"))
-m1m2 = factory.create(module_type="contact", layer_stack=("metal1", "via1", "metal2"))
-m2m3 = factory.create(module_type="contact", layer_stack=("metal2", "via2", "metal3"))
-m3m4 = factory.create(module_type="contact", layer_stack=("metal3", "via3", "metal4"))
+well = factory.create(module_type="contact", layer_stack=("active", "contact", "metal1"), directions=("H","V"))
+active = factory.create(module_type="contact", layer_stack=("active", "contact", "metal1"), directions=("H","V"))
+poly = factory.create(module_type="contact", layer_stack=("poly", "contact", "metal1"), directions=("V","H"))
+m1m2 = factory.create(module_type="contact", layer_stack=("metal1", "via1", "metal2"), directions=("H","V"))
+m2m3 = factory.create(module_type="contact", layer_stack=("metal2", "via2", "metal3"), directions=("V","H"))
+if "metal4" in layer.keys():
+    m3m4 = factory.create(module_type="contact", layer_stack=("metal3", "via3", "metal4"), directions=("H","V"))
+else:
+    m3m4 = None
 

@@ -1,20 +1,24 @@
 #!/usr/bin/env python3
-"""
-Run a regression test on various srams
-"""
-
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
+#
 import unittest
-from testutils import header,openram_test
+from testutils import *
 import sys,os
-sys.path.append(os.path.join(sys.path[0],".."))
+sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
 class timing_sram_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
         OPTS.spice_name="ngspice"
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
@@ -24,7 +28,6 @@ class timing_sram_test(openram_test):
         import characterizer
         reload(characterizer)
         from characterizer import delay
-        from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=1,
                         num_words=16,
@@ -32,7 +35,7 @@ class timing_sram_test(openram_test):
         c.words_per_row=1
         c.recompute_sizes()
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
-        s = sram(c, name="sram1")
+        s = factory.create(module_type="sram", sram_config=c)
 
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)
@@ -44,43 +47,34 @@ class timing_sram_test(openram_test):
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         d = delay(s.s, tempspice, corner)
         import tech
-        loads = [tech.spice["msflop_in_cap"]*4]
+        loads = [tech.spice["dff_in_cap"]*4]
         slews = [tech.spice["rise_time"]*2]
         data, port_data = d.analyze(probe_address, probe_data, slews, loads)
         #Combine info about port into all data
         data.update(port_data[0])
 
         if OPTS.tech_name == "freepdk45":
-            golden_data = {'delay_bl': [0.2003652],
-                         'delay_br': [0.198698],
-                         'delay_hl': [0.2108836],
-                         'delay_lh': [0.2108836],
-                         'leakage_power': 0.001564799,
-                         'min_period': 0.508,
-                         'read0_power': [0.43916689999999997],
-                         'read1_power': [0.4198608],
-                         'slew_hl': [0.0455126],
-                         'slew_lh': [0.0455126],
-                         'volt_bl': [0.6472883],
-                         'volt_br': [1.114024],
-                         'write0_power': [0.40681890000000004],
-                         'write1_power': [0.4198608]}
+            golden_data = {'delay_hl': [0.2264205],
+                           'delay_lh': [0.2264205],
+                           'leakage_power': 0.0021017429999999997,
+                           'min_period': 0.859,
+                           'read0_power': [0.3339161],
+                           'read1_power': [0.31329440000000003],
+                           'slew_hl': [0.2590786],
+                           'slew_lh': [0.2590786],
+                           'write0_power': [0.36360849999999995],
+                           'write1_power': [0.3486931]}
         elif OPTS.tech_name == "scn4m_subm":
-            golden_data = {'delay_bl': [1.3937359999999999],
-                         'delay_br': [1.2596429999999998],
-                         'delay_hl': [1.5747600000000002],
-                         'delay_lh': [1.5747600000000002],
-                         'leakage_power': 0.00195795,
-                         'min_period': 3.281,
-                         'read0_power': [14.92874],
-                         'read1_power': [14.369810000000001],
-                         'slew_hl': [0.49631959999999997],
-                         'slew_lh': [0.49631959999999997],
-                         'volt_bl': [4.132618],
-                         'volt_br': [5.573099],
-                         'write0_power': [13.79953],
-                         'write1_power': [14.369810000000001]}
-
+            golden_data = {'delay_hl': [1.7083549999999998],
+                           'delay_lh': [1.7083549999999998],
+                           'leakage_power': 0.001119657,
+                           'min_period': 7.812,
+                           'read0_power': [8.013845],
+                           'read1_power': [7.6889389999999995],
+                           'slew_hl': [1.31918],
+                           'slew_lh': [1.31918],
+                           'write0_power': [8.791557000000001],
+                           'write1_power': [8.70443]}
         else:
             self.assertTrue(False) # other techs fail
 
@@ -96,4 +90,4 @@ if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
-    unittest.main()
+    unittest.main(testRunner=debugTestRunner())

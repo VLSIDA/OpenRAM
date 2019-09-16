@@ -1,27 +1,27 @@
 #!/usr/bin/env python3
-"""
-Run a regression test on a 2-row buffer cell
-"""
-
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
+#
 import unittest
-from testutils import header,openram_test
+from testutils import *
 import sys,os
-sys.path.append(os.path.join(sys.path[0],".."))
+sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
 class pbuf_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        global verify
-        import verify
-
-        import pbuf
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
 
         debug.info(2, "Testing inverter/buffer 4x 8x")
-        a = pbuf.pbuf(name="pbufx8", size=8)
+        a = factory.create(module_type="pbuf", size=8)
         self.local_check(a)
 
         globals.end_openram()
@@ -31,4 +31,4 @@ if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
-    unittest.main()
+    unittest.main(testRunner=debugTestRunner())

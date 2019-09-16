@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
+#
 import debug
 import design
 from tech import drc, spice,parameter
@@ -67,8 +74,7 @@ class replica_pbitcell(design.design):
         self.connect_inst(temp)
         
     def place_pbitcell(self):
-        offset = [0,0]
-        self.prbc_inst.place(offset=offset)
+        self.prbc_inst.place(offset=vector(0,0))
         
     def route_rbc_connections(self):        
         for port in range(self.total_ports):
@@ -79,7 +85,3 @@ class replica_pbitcell(design.design):
         self.copy_layout_pin(self.prbc_inst, "vdd")
         self.copy_layout_pin(self.prbc_inst, "gnd")
     
-    def get_wl_cin(self):
-        """Return the relative capacitance of the access transistor gates"""
-        #This module is made using a pbitcell. Get the cin from that module
-        return self.prbc.get_wl_cin()

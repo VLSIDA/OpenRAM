@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
+#
 import sys,re,shutil
 import debug
 import tech
@@ -18,69 +25,113 @@ class model_check(delay):
 
     """
 
-    def __init__(self, sram, spfile, corner):
+    def __init__(self, sram, spfile, corner, custom_delaychain=False):
         delay.__init__(self,sram,spfile,corner)
         self.period = tech.spice["feasible_period"]
         self.create_data_names()
+        self.custom_delaychain=custom_delaychain
         
     def create_data_names(self):
         self.wl_meas_name, self.wl_model_name = "wl_measures", "wl_model"
         self.sae_meas_name, self.sae_model_name = "sae_measures", "sae_model"
         self.wl_slew_name, self.sae_slew_name = "wl_slews", "sae_slews"
+        self.bl_meas_name, self.bl_slew_name = "bl_measures", "bl_slews"
+        self.power_name = "total_power"
         
-    def create_measurement_names(self):
+    def create_measurement_names(self, port):
         """Create measurement names. The names themselves currently define the type of measurement"""
         #Create delay measurement names
         wl_en_driver_delay_names = ["delay_wl_en_dvr_{}".format(stage) for stage in range(1,self.get_num_wl_en_driver_stages())]
         wl_driver_delay_names = ["delay_wl_dvr_{}".format(stage) for stage in range(1,self.get_num_wl_driver_stages())]
         sen_driver_delay_names = ["delay_sen_dvr_{}".format(stage) for stage in range(1,self.get_num_sen_driver_stages())]
-        dc_delay_names = ["delay_delay_chain_stage_{}".format(stage) for stage in range(1,self.get_num_delay_stages()+1)]
+        if self.custom_delaychain:
+            dc_delay_names = ['delay_dc_out_final']
+        else:
+            dc_delay_names = ["delay_delay_chain_stage_{}".format(stage) for stage in range(1,self.get_num_delay_stages()+1)]
         self.wl_delay_meas_names = wl_en_driver_delay_names+["delay_wl_en", "delay_wl_bar"]+wl_driver_delay_names+["delay_wl"]
-        self.rbl_delay_meas_names = ["delay_gated_clk_nand", "delay_delay_chain_in"]+dc_delay_names
+        if port not in self.sram.readonly_ports:
+            self.rbl_delay_meas_names = ["delay_gated_clk_nand", "delay_delay_chain_in"]+dc_delay_names
+        else:
+            self.rbl_delay_meas_names = ["delay_gated_clk_nand"]+dc_delay_names
         self.sae_delay_meas_names = ["delay_pre_sen"]+sen_driver_delay_names+["delay_sen"]
 
+        # if self.custom_delaychain:
+            # self.delay_chain_indices = (len(self.rbl_delay_meas_names), len(self.rbl_delay_meas_names)+1)
+        # else:
         self.delay_chain_indices = (len(self.rbl_delay_meas_names)-len(dc_delay_names), len(self.rbl_delay_meas_names))
         #Create slew measurement names
         wl_en_driver_slew_names = ["slew_wl_en_dvr_{}".format(stage) for stage in range(1,self.get_num_wl_en_driver_stages())]
         wl_driver_slew_names = ["slew_wl_dvr_{}".format(stage) for stage in range(1,self.get_num_wl_driver_stages())]
         sen_driver_slew_names = ["slew_sen_dvr_{}".format(stage) for stage in range(1,self.get_num_sen_driver_stages())]
-        dc_slew_names = ["slew_delay_chain_stage_{}".format(stage) for stage in range(1,self.get_num_delay_stages()+1)]
+        if self.custom_delaychain:
+            dc_slew_names = ['slew_dc_out_final']
+        else:
+            dc_slew_names = ["slew_delay_chain_stage_{}".format(stage) for stage in range(1,self.get_num_delay_stages()+1)]
         self.wl_slew_meas_names = ["slew_wl_gated_clk_bar"]+wl_en_driver_slew_names+["slew_wl_en", "slew_wl_bar"]+wl_driver_slew_names+["slew_wl"]
-        self.rbl_slew_meas_names = ["slew_rbl_gated_clk_bar","slew_gated_clk_nand", "slew_delay_chain_in"]+dc_slew_names
+        if port not in self.sram.readonly_ports:
+            self.rbl_slew_meas_names = ["slew_rbl_gated_clk_bar","slew_gated_clk_nand", "slew_delay_chain_in"]+dc_slew_names
+        else:
+            self.rbl_slew_meas_names = ["slew_rbl_gated_clk_bar"]+dc_slew_names
         self.sae_slew_meas_names = ["slew_replica_bl0", "slew_pre_sen"]+sen_driver_slew_names+["slew_sen"]
        
-    def create_signal_names(self):
+        self.bitline_meas_names = ["delay_wl_to_bl", "delay_bl_to_dout"]
+        self.power_meas_names = ['read0_power']
+       
+    def create_signal_names(self, port):
         """Creates list of the signal names used in the spice file along the wl and sen paths.
            Names are re-harded coded here; i.e. the names are hardcoded in most of OpenRAM and are
            replicated here.
         """
         delay.create_signal_names(self)
         #Signal names are all hardcoded, need to update to make it work for probe address and different configurations.
-        wl_en_driver_signals = ["Xsram.Xcontrol0.Xbuf_wl_en.Zb{}_int".format(stage) for stage in range(1,self.get_num_wl_en_driver_stages())]
-        wl_driver_signals = ["Xsram.Xbank0.Xwordline_driver0.Xwl_driver_inv{}.Zb{}_int".format(self.wordline_row, stage) for stage in range(1,self.get_num_wl_driver_stages())]
-        sen_driver_signals = ["Xsram.Xcontrol0.Xbuf_s_en.Zb{}_int".format(stage) for stage in range(1,self.get_num_sen_driver_stages())]
-        delay_chain_signal_names = ["Xsram.Xcontrol0.Xreplica_bitline.Xdelay_chain.dout_{}".format(stage) for stage in range(1,self.get_num_delay_stages())] 
-        
-        self.wl_signal_names = ["Xsram.Xcontrol0.gated_clk_bar"]+\
+        wl_en_driver_signals = ["Xsram.Xcontrol{}.Xbuf_wl_en.Zb{}_int".format('{}', stage) for stage in range(1,self.get_num_wl_en_driver_stages())]
+        wl_driver_signals = ["Xsram.Xbank0.Xwordline_driver{}.Xwl_driver_inv{}.Zb{}_int".format('{}', self.wordline_row, stage) for stage in range(1,self.get_num_wl_driver_stages())]
+        sen_driver_signals = ["Xsram.Xcontrol{}.Xbuf_s_en.Zb{}_int".format('{}',stage) for stage in range(1,self.get_num_sen_driver_stages())]
+        if self.custom_delaychain:
+            delay_chain_signal_names = []
+        else:
+            delay_chain_signal_names = ["Xsram.Xcontrol{}.Xreplica_bitline.Xdelay_chain.dout_{}".format('{}', stage) for stage in range(1,self.get_num_delay_stages())] 
+        if len(self.sram.all_ports) > 1:
+            port_format = '{}'
+        else:
+            port_format = ''
+        self.wl_signal_names = ["Xsram.Xcontrol{}.gated_clk_bar".format('{}')]+\
                                wl_en_driver_signals+\
-                               ["Xsram.wl_en0", "Xsram.Xbank0.Xwordline_driver0.wl_bar_{}".format(self.wordline_row)]+\
+                               ["Xsram.wl_en{}".format('{}'), "Xsram.Xbank0.Xwordline_driver{}.wl_bar_{}".format('{}',self.wordline_row)]+\
                                wl_driver_signals+\
-                               ["Xsram.Xbank0.wl_{}".format(self.wordline_row)]
-        pre_delay_chain_names = ["Xsram.Xcontrol0.gated_clk_bar", "Xsram.Xcontrol0.Xand2_rbl_in.zb_int", "Xsram.Xcontrol0.rbl_in"]
+                               ["Xsram.Xbank0.wl{}_{}".format(port_format, self.wordline_row)]
+        pre_delay_chain_names = ["Xsram.Xcontrol{}.gated_clk_bar".format('{}')]
+        if port not in self.sram.readonly_ports:
+            pre_delay_chain_names+= ["Xsram.Xcontrol{}.Xand2_rbl_in.zb_int".format('{}'), "Xsram.Xcontrol{}.rbl_in".format('{}')]
+            
         self.rbl_en_signal_names = pre_delay_chain_names+\
                                    delay_chain_signal_names+\
-                                   ["Xsram.Xcontrol0.Xreplica_bitline.delayed_en"]
-        self.sae_signal_names = ["Xsram.Xcontrol0.Xreplica_bitline.bl0_0", "Xsram.Xcontrol0.pre_s_en"]+\
+                                   ["Xsram.Xcontrol{}.Xreplica_bitline.delayed_en".format('{}')]
+        
+            
+        self.sae_signal_names = ["Xsram.Xcontrol{}.Xreplica_bitline.bl0_0".format('{}'), "Xsram.Xcontrol{}.pre_s_en".format('{}')]+\
                                 sen_driver_signals+\
-                                ["Xsram.s_en0"]
+                                ["Xsram.s_en{}".format('{}')]
+        
+        dout_name = "{0}{1}_{2}".format(self.dout_name,"{}",self.probe_data) #Empty values are the port and probe data bit
+        self.bl_signal_names = ["Xsram.Xbank0.wl{}_{}".format(port_format, self.wordline_row),\
+                                "Xsram.Xbank0.bl{}_{}".format(port_format, self.bitline_column),\
+                                dout_name]
     
     def create_measurement_objects(self):
         """Create the measurements used for read and write ports"""
-        self.create_wordline_measurement_objects()
-        self.create_sae_measurement_objects()
-        self.all_measures = self.wl_meas_objs+self.sae_meas_objs
+        self.create_wordline_meas_objs()
+        self.create_sae_meas_objs()
+        self.create_bl_meas_objs()
+        self.create_power_meas_objs()
+        self.all_measures = self.wl_meas_objs+self.sae_meas_objs+self.bl_meas_objs+self.power_meas_objs
     
-    def create_wordline_measurement_objects(self):
+    def create_power_meas_objs(self):
+        """Create power measurement object. Only one."""
+        self.power_meas_objs = []
+        self.power_meas_objs.append(power_measure(self.power_meas_names[0], "FALL", measure_scale=1e3))
+    
+    def create_wordline_meas_objs(self):
         """Create the measurements to measure the wordline path from the gated_clk_bar signal"""
         self.wl_meas_objs = []
         trig_dir = "RISE"
@@ -102,7 +153,19 @@ class model_check(delay):
             targ_dir = temp_dir
         self.wl_meas_objs.append(slew_measure(self.wl_slew_meas_names[-1], self.wl_signal_names[-1], trig_dir, measure_scale=1e9))
         
-    def create_sae_measurement_objects(self):
+    def create_bl_meas_objs(self):
+        """Create the measurements to measure the bitline to dout, static stages"""
+        #Bitline has slightly different measurements, objects appends hardcoded.
+        self.bl_meas_objs = []
+        trig_dir, targ_dir = "RISE", "FALL" #Only check read 0
+        self.bl_meas_objs.append(delay_measure(self.bitline_meas_names[0], 
+                                                   self.bl_signal_names[0], 
+                                                   self.bl_signal_names[-1], 
+                                                   trig_dir, 
+                                                   targ_dir, 
+                                                   measure_scale=1e9))
+
+    def create_sae_meas_objs(self):
         """Create the measurements to measure the sense amp enable path from the gated_clk_bar signal. The RBL splits this path into two."""
         
         self.sae_meas_objs = []
@@ -123,6 +186,13 @@ class model_check(delay):
             temp_dir = trig_dir
             trig_dir = targ_dir
             targ_dir = temp_dir
+        if self.custom_delaychain: #Hack for custom delay chains
+            self.sae_meas_objs[-2] = delay_measure(self.rbl_delay_meas_names[-1], 
+                                                    self.rbl_en_signal_names[-2], 
+                                                    self.rbl_en_signal_names[-1], 
+                                                    "RISE", 
+                                                    "RISE", 
+                                                    measure_scale=1e9)
         self.sae_meas_objs.append(slew_measure(self.rbl_slew_meas_names[-1], 
                                                self.rbl_en_signal_names[-1], 
                                                trig_dir, 
@@ -131,7 +201,6 @@ class model_check(delay):
         #Add measurements from rbl_out to sae. Trigger directions do not invert from previous stage due to RBL.
         trig_dir = "FALL"
         targ_dir = "RISE"
-        #Add measurements from gated_clk_bar to RBL
         for i in range(1, len(self.sae_signal_names)):
             self.sae_meas_objs.append(delay_measure(self.sae_delay_meas_names[i-1], 
                                                     self.sae_signal_names[i-1], 
@@ -169,10 +238,22 @@ class model_check(delay):
            or port to port (time delays)"""
         #Return value is intended to match the delay measure format:  trig_td, targ_td, vdd, port
         #Assuming only read 0 for now
-        if not (type(measure_obj) is delay_measure or type(measure_obj) is slew_measure):
+        debug.info(3,"Power measurement={}".format(measure_obj))
+        if (type(measure_obj) is delay_measure or type(measure_obj) is slew_measure):
+            meas_cycle_delay = self.cycle_times[self.measure_cycles[port]["read0"]] + self.period/2
+            return (meas_cycle_delay, meas_cycle_delay, self.vdd_voltage, port)
+        elif type(measure_obj) is power_measure:
+            return self.get_power_measure_variants(port, measure_obj, "read")
+        else:
             debug.error("Measurement not recognized by the model checker.",1)
-        meas_cycle_delay = self.cycle_times[self.measure_cycles[port]["read0"]] + self.period/2
-        return (meas_cycle_delay, meas_cycle_delay, self.vdd_voltage, port)
+    
+    def get_power_measure_variants(self, port, power_obj, operation):
+        """Get the measurement values that can either vary port to port (time delays)"""
+        #Return value is intended to match the power measure format:  t_initial, t_final, port
+        t_initial = self.cycle_times[self.measure_cycles[port]["read0"]]
+        t_final = self.cycle_times[self.measure_cycles[port]["read0"]+1]
+    
+        return (t_initial, t_final, port)
     
     def write_measures_read_port(self, port):
         """
@@ -186,7 +267,8 @@ class model_check(delay):
     def get_measurement_values(self, meas_objs, port):
         """Gets the delays and slews from a specified port from the spice output file and returns them as lists."""
         delay_meas_list = []  
-        slew_meas_list = [] 
+        slew_meas_list = []
+        power_meas_list=[]
         for measure in meas_objs:
             measure_value = measure.retrieve_measure(port=port)
             if type(measure_value) != float:
@@ -195,9 +277,11 @@ class model_check(delay):
                 delay_meas_list.append(measure_value)
             elif type(measure)is slew_measure:
                 slew_meas_list.append(measure_value)
+            elif type(measure)is power_measure:
+                power_meas_list.append(measure_value)
             else:
                 debug.error("Measurement object not recognized.",1)
-        return delay_meas_list, slew_meas_list
+        return delay_meas_list, slew_meas_list,power_meas_list
         
     def run_delay_simulation(self):
         """
@@ -213,6 +297,9 @@ class model_check(delay):
         wl_slew_result = [[] for i in self.all_ports]
         sae_delay_result = [[] for i in self.all_ports]
         sae_slew_result = [[] for i in self.all_ports]
+        bl_delay_result = [[] for i in self.all_ports]
+        bl_slew_result = [[] for i in self.all_ports]
+        power_result = [[] for i in self.all_ports]
         # Checking from not data_value to data_value
         self.write_delay_stimulus()
 
@@ -221,9 +308,11 @@ class model_check(delay):
         #Retrieve the results from the output file
         for port in self.targ_read_ports:  
             #Parse and check the voltage measurements
-            wl_delay_result[port], wl_slew_result[port] = self.get_measurement_values(self.wl_meas_objs, port)
-            sae_delay_result[port], sae_slew_result[port] = self.get_measurement_values(self.sae_meas_objs, port)
-        return (True,wl_delay_result, sae_delay_result, wl_slew_result, sae_slew_result)
+            wl_delay_result[port], wl_slew_result[port],_ = self.get_measurement_values(self.wl_meas_objs, port)
+            sae_delay_result[port], sae_slew_result[port],_ = self.get_measurement_values(self.sae_meas_objs, port)
+            bl_delay_result[port], bl_slew_result[port],_ = self.get_measurement_values(self.bl_meas_objs, port)
+            _,__,power_result[port] = self.get_measurement_values(self.power_meas_objs, port)
+        return (True,wl_delay_result, sae_delay_result, wl_slew_result, sae_slew_result, bl_delay_result, bl_slew_result, power_result)
   
     def get_model_delays(self, port):
         """Get model delays based on port. Currently assumes single RW port."""
@@ -292,37 +381,43 @@ class model_check(delay):
         errors = self.calculate_error_l2_norm(scaled_meas, scaled_model)
         debug.info(1, "Errors:\n{}\n".format(errors))
         
-    def analyze(self, probe_address, probe_data, slews, loads):
+    def analyze(self, probe_address, probe_data, slews, loads, port):
         """Measures entire delay path along the wordline and sense amp enable and compare it to the model delays."""
         self.load=max(loads)
         self.slew=max(slews)
         self.set_probe(probe_address, probe_data)
-        self.create_signal_names()
-        self.create_measurement_names()
+        self.create_signal_names(port)
+        self.create_measurement_names(port)
         self.create_measurement_objects()
         data_dict = {}
         
         read_port = self.read_ports[0] #only test the first read port
+        read_port = port
         self.targ_read_ports = [read_port]
         self.targ_write_ports = [self.write_ports[0]]
         debug.info(1,"Model test: corner {}".format(self.corner))
-        (success, wl_delays, sae_delays, wl_slews, sae_slews)=self.run_delay_simulation()
+        (success, wl_delays, sae_delays, wl_slews, sae_slews, bl_delays, bl_slews, powers)=self.run_delay_simulation()
         debug.check(success, "Model measurements Failed: period={}".format(self.period))
-        wl_model_delays, sae_model_delays = self.get_model_delays(read_port)
         
         debug.info(1,"Measured Wordline delays (ns):\n\t {}".format(wl_delays[read_port]))
-        debug.info(1,"Wordline model delays:\n\t {}".format(wl_model_delays))
         debug.info(1,"Measured Wordline slews:\n\t {}".format(wl_slews[read_port]))
         debug.info(1,"Measured SAE delays (ns):\n\t {}".format(sae_delays[read_port]))
-        debug.info(1,"SAE model delays:\n\t {}".format(sae_model_delays))
         debug.info(1,"Measured SAE slews:\n\t {}".format(sae_slews[read_port]))
+        debug.info(1,"Measured Bitline delays (ns):\n\t {}".format(bl_delays[read_port]))
         
         data_dict[self.wl_meas_name] = wl_delays[read_port]
-        data_dict[self.wl_model_name] = wl_model_delays
         data_dict[self.sae_meas_name] = sae_delays[read_port]
-        data_dict[self.sae_model_name] = sae_model_delays
         data_dict[self.wl_slew_name] = wl_slews[read_port]
         data_dict[self.sae_slew_name] = sae_slews[read_port]
+        data_dict[self.bl_meas_name] = bl_delays[read_port]
+        data_dict[self.power_name] = powers[read_port]
+        
+        if not OPTS.use_tech_delay_chain_size: #Model is not used in this case
+            wl_model_delays, sae_model_delays = self.get_model_delays(read_port)
+            debug.info(1,"Wordline model delays:\n\t {}".format(wl_model_delays))
+            debug.info(1,"SAE model delays:\n\t {}".format(sae_model_delays))
+            data_dict[self.wl_model_name] = wl_model_delays
+            data_dict[self.sae_model_name] = sae_model_delays
         
         #Some evaluations of the model and measured values
         # debug.info(1, "Comparing wordline measurements and model.")
@@ -337,11 +432,17 @@ class model_check(delay):
         name_dict = {}
         #Signal names are more descriptive than the measurement names, first value trimmed to match size of measurements names.
         name_dict[self.wl_meas_name] = self.wl_signal_names[1:]
-        name_dict[self.wl_model_name] = name_dict["wl_measures"] #model uses same names as measured.
         name_dict[self.sae_meas_name] = self.rbl_en_signal_names[1:]+self.sae_signal_names[1:]
-        name_dict[self.sae_model_name] = name_dict["sae_measures"]
         name_dict[self.wl_slew_name] = self.wl_slew_meas_names
         name_dict[self.sae_slew_name] = self.rbl_slew_meas_names+self.sae_slew_meas_names
+        name_dict[self.bl_meas_name] = self.bitline_meas_names[0:1]
+        name_dict[self.power_name] = self.power_meas_names
+        #name_dict[self.wl_slew_name] = self.wl_slew_meas_names
+        
+        if not OPTS.use_tech_delay_chain_size:
+            name_dict[self.wl_model_name] = name_dict["wl_measures"] #model uses same names as measured.
+            name_dict[self.sae_model_name] = name_dict["sae_measures"]
+            
         return name_dict
     
     

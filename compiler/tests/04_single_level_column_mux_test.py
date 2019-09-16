@@ -1,29 +1,30 @@
 #!/usr/bin/env python3
-"""
-Run a regression test on a wordline_driver array
-"""
-
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
+#
 import unittest
-from testutils import header,openram_test
+from testutils import *
 import sys,os
-sys.path.append(os.path.join(sys.path[0],".."))
+sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
-import debug
 from sram_factory import factory
+import debug
 
 #@unittest.skip("SKIPPING 04_driver_test")
 
 class single_level_column_mux_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        import single_level_column_mux
-        import tech
+        globals.init_openram("config_{0}".format(OPTS.tech_name))
         
         # check single level column mux in single port
         debug.info(2, "Checking column mux")
-        tx = single_level_column_mux.single_level_column_mux(name="mux8", tx_size=8)
+        tx = factory.create(module_type="single_level_column_mux", tx_size=8)
         self.local_check(tx)
         
         # check single level column mux in multi-port
@@ -34,12 +35,12 @@ class single_level_column_mux_test(openram_test):
 
         factory.reset()
         debug.info(2, "Checking column mux for pbitcell (innermost connections)")
-        tx = single_level_column_mux.single_level_column_mux(name="mux8_2", tx_size=8, bitcell_bl="bl0", bitcell_br="br0")
+        tx = factory.create(module_type="single_level_column_mux", tx_size=8, bitcell_bl="bl0", bitcell_br="br0")
         self.local_check(tx)
         
         factory.reset()
         debug.info(2, "Checking column mux for pbitcell (outermost connections)")
-        tx = single_level_column_mux.single_level_column_mux(name="mux8_3", tx_size=8, bitcell_bl="bl2", bitcell_br="br2")
+        tx = factory.create(module_type="single_level_column_mux",tx_size=8, bitcell_bl="bl2", bitcell_br="br2")
         self.local_check(tx)
 
         globals.end_openram()
@@ -49,4 +50,4 @@ if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
-    unittest.main()
+    unittest.main(testRunner=debugTestRunner())

@@ -1,10 +1,10 @@
 tech
-  format 32
+  format 29
  scmos
 end
 
 version
- version 2002a
+ version 2001a
  description "SCMOS: Submit as technology.lambda: SCN3ME_SUBM.30 [to process: AMIc5]"
 end
 
@@ -34,8 +34,7 @@ types
   select nselect,ns
   select pselect,ps
   cap electrode,poly2,el,p2
-  cap electrodecontact,poly2contact,poly2c,p2c,elc
-  cap p2m12contact,p2m12c
+  metal1 electrodecontact,poly2contact,poly2c,p2c,elc
   cap electrodecap,ecap,poly2cap,p2cap,pcap
   contact genericpoly2contact,gc2
   active ntransistor,nfet
@@ -104,12 +103,7 @@ contact
   psc psd metal1
   m2c metal1 metal2
   m3c metal2 metal3
-  stackable pc m2c pm12contact,pm12c
-  stackable pdc m2c pdm12contact,pdm12c
-  stackable psc m2c psm12contact,psm12c,pom12c,pwm12c
-  stackable ndc m2c ndm12contact,ndm12c
-  stackable nsc m2c nsm12contact,nsm12c,nom12c,nwm12c
-  stackable m2c m3c m123contact,m123c
+  stackable
 end
 
 styles
@@ -147,7 +141,6 @@ styles
   fapm  1 20 21 34
   gv1  55
   m2contact  20 21 55
-  p2m12contact  14 20 21 32 55
   metal2  21
   rm2  21 48
   prm2  48
@@ -218,10 +211,6 @@ compose
   paint  nsc  pwell  psc
   paint  poly2 poly  ecap
   erase  ecap   poly  poly2
-  paint  p2c poly2 p2c
-  paint  p2c ecap p2c
-  paint  p2m12c poly2 p2m12c
-  paint  p2m12c ecap p2m12c
   paint  pad  m3  pad
   compose  phr  poly2  hr
   paint  hr  poly2  phr
@@ -246,18 +235,15 @@ end
 connect
   nwell,nsc/a,nsd  nwell,nsc/a,nsd
   pwell,psc/a,psd  pwell,psc/a,psd
-  m1,fm1,fapm,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1  m1,fm1,fapm,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1
+  m1,fm1,fapm,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1  m1,fm1,fapm,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1
   m2,fm2,fapm,m2c/m2,m3c/m2,m3c/m2  m2,fm2,fapm,m2c/m2,m3c/m2,m3c/m2
   m3,fm3,fapm,m3c/m3  m3,fm3,fapm,m3c/m3
   ndiff,ndc/a,pdiff,pdc/a  ndiff,ndc/a,pdiff,pdc/a
   poly,fp,nfet,pfet,fet,fapm,pc/a  poly,fp,nfet,pfet,fet,fapm,pc/a
+  poly2,ecap,p2c  poly2,ecap,p2c
   gc2 poly2,ecap,metal1
-  p2c  poly2,ecap,m1,fm1,fapm,m2c/m1
-  p2m12c  poly2,ecap,m1,fm1,fapm,m2c/m1,m2,fm2,fapm,m2c/m2,m3c/m2
-  poly2,ecap,p2c,p2m12c  poly2,ecap,p2c,p2m12c
-  gc2  poly2,ecap,m1,fm1,fapm,m2c/m1
   gc  poly,fp,ndiff,pdiff,nsd,psd,m1,fm1,fapm,m2c/m1
-  gv1  m1,fm1,fapm,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2,fm2,fapm,m3c/m2
+  gv1  m1,fm1,fapm,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2,fm2,fapm,m3c/m2
   gv2  m2,fm2,fapm,m2c/m2,m3c/m2,m3,fm3,fapm
   pad  m1,fm1,m2,fm2,m3,fm3
   rm1  prm1
@@ -275,12 +261,8 @@ cifoutput
 
 style  lambda=0.30(p)
  scalefactor  30 15
+ options calma-permissive-labels
 
- # This is a custom section to add bounding boxes in OpenRAM
- layer BB bb
- labels bb
- calma 63 0
-  
  layer CWN nwell,rnw
  bloat-or pdiff,rpd,pdc/a,pfet * 180
  bloat-or nsd,nsc/a * 90
@@ -377,7 +359,7 @@ style  lambda=0.30(p)
  squares 0 60 90
  calma 55 0
 
- layer CCE p2c,p2m12c
+ layer CCE p2c
  squares 30 60 90
  calma 55 0
 
@@ -389,7 +371,7 @@ style  lambda=0.30(p)
  squares 0 60 90
  calma 25 0
 
- layer CV1 m2c/m1,p2m12c
+ layer CV1 m2c/m1
  squares 30 60 90
  calma 50 0
 
@@ -431,12 +413,12 @@ style  lambda=0.30(p)
  layer CM1 pad
  calma 49 0
 
- layer CM1 m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1,p2c,p2m12c
- labels m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1,p2c,p2m12c
+ layer CM1 m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1
+ labels m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1
  calma 49 0
 
- layer CM2 m2,rm2,m2c/m2,m3c/m2,m3c/m2,p2m12c
- labels m2,rm2,m2c/m2,m3c/m2,m3c/m2,p2m12c
+ layer CM2 m2,rm2,m2c/m2,m3c/m2,m3c/m2
+ labels m2,rm2,m2c/m2,m3c/m2,m3c/m2
  calma 51 0
 
  layer CMFP m1p
@@ -527,8 +509,8 @@ style  lambda=0.30(p)
  labels hr,phr
  calma 34 0
 
- layer CEL poly2,ecap,phr,p2c,p2m12c
- labels poly2,ecap,phr,p2c,p2m12c
+ layer CEL poly2,ecap,phr,p2c
+ labels poly2,ecap,phr,p2c
  calma 56 0
 
 #CRE/CRM
@@ -559,8 +541,8 @@ style  lambda=0.30(p)
 #CRE/CRM layer CRM rm1,prm1,rm2,prm2,rm3,prm3
 #CRE/CRM calma 70 0
 
- layer CX comment
- labels comment
+ layer CX comment,bb
+ labels comment,bb
  calma 63 0
 
  layer XP pad,xp
@@ -606,9 +588,9 @@ style fapm-boxes
 
  scalefactor  30 15
 
- templayer CRIT fapm,fn,diff,ndiff,rnd,nfet,nsd,pdiff,rpd,pfet,psd,ndc/a,nsc/a,pdc/a,psc/a,pfet,pfet,fet,poly,rp,nfet,pfet,fet,pc/a,poly2,ecap,phr,p2c,p2m12c
- or fm1,m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1,p2c,p2m12c
- or fm2,m2,rm2,m2c/m2,m3c/m2,m3c/m2,p2m12c
+ templayer CRIT fapm,fn,diff,ndiff,rnd,nfet,nsd,pdiff,rpd,pfet,psd,ndc/a,nsc/a,pdc/a,psc/a,pfet,pfet,fet,poly,rp,nfet,pfet,fet,pc/a,poly2,ecap,phr,p2c
+ or fm1,m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1
+ or fm2,m2,rm2,m2c/m2,m3c/m2,m3c/m2
  or fm3,m3,rm3,m3c/m3
  or glass,pad
  grow 510
@@ -631,9 +613,9 @@ style fapm-stripes
 # and then *replacing* the left side (1-lambda wide) stripe of each 'fa' box
 # to be a 1-lambda wide layer 'fb' box -- else you won't get strips!
 
- templayer CRIT fapm,fn,diff,ndiff,rnd,nfet,nsd,pdiff,rpd,pfet,psd,ndc/a,nsc/a,pdc/a,psc/a,pfet,pfet,fet,poly,rp,nfet,pfet,fet,pc/a,poly2,ecap,phr,p2c,p2m12c
- or fm1,m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1,p2c,p2m12c
- or fm2,m2,rm2,m2c/m2,m3c/m2,m3c/m2,p2m12c
+ templayer CRIT fapm,fn,diff,ndiff,rnd,nfet,nsd,pdiff,rpd,pfet,psd,ndc/a,nsc/a,pdc/a,psc/a,pfet,pfet,fet,poly,rp,nfet,pfet,fet,pc/a,poly2,ecap,phr,p2c
+ or fm1,m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1
+ or fm2,m2,rm2,m2c/m2,m3c/m2,m3c/m2
  or fm3,m3,rm3,m3c/m3
  or glass,pad
  grow 510
@@ -754,7 +736,7 @@ style  lambda=0.30(cp)
  squares 0 60 90
  calma 25 0
 
- layer CCC p2c,p2m12c
+ layer CCC p2c
  squares 30 60 90
  calma 25 0
 
@@ -766,7 +748,7 @@ style  lambda=0.30(cp)
  squares 0 60 90
  calma 25 0
 
- layer CV1 m2c/m1,p2m12c
+ layer CV1 m2c/m1
  squares 30 60 90
  calma 50 0
 
@@ -808,12 +790,12 @@ style  lambda=0.30(cp)
  layer CM1 pad
  calma 49 0
 
- layer CM1 m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1,p2c,p2m12c
- labels m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1,p2c,p2m12c
+ layer CM1 m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1
+ labels m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1
  calma 49 0
 
- layer CM2 m2,rm2,m2c/m2,m3c/m2,m3c/m2,p2m12c
- labels m2,rm2,m2c/m2,m3c/m2,m3c/m2,p2m12c
+ layer CM2 m2,rm2,m2c/m2,m3c/m2,m3c/m2
+ labels m2,rm2,m2c/m2,m3c/m2,m3c/m2
  calma 51 0
 
  layer CMFP m1p
@@ -904,8 +886,8 @@ style  lambda=0.30(cp)
  labels hr,phr
  calma 34 0
 
- layer CEL poly2,ecap,phr,p2c,p2m12c
- labels poly2,ecap,phr,p2c,p2m12c
+ layer CEL poly2,ecap,phr,p2c
+ labels poly2,ecap,phr,p2c
  calma 56 0
 
 #CRE/CRM
@@ -936,8 +918,8 @@ style  lambda=0.30(cp)
 #CRE/CRM layer CRM rm1,prm1,rm2,prm2,rm3,prm3
 #CRE/CRM calma 70 0
 
- layer CX comment
- labels comment
+ layer CX comment,bb
+ labels comment,bb
  calma 63 0
 
  layer XP pad,xp
@@ -1034,7 +1016,7 @@ style  lambda=0.30(c)
  squares 0 60 90
  calma 25 0
 
- layer CCC p2c,p2m12c
+ layer CCC p2c
  squares 30 60 90
  calma 25 0
 
@@ -1046,7 +1028,7 @@ style  lambda=0.30(c)
  squares 0 60 90
  calma 25 0
 
- layer CV1 m2c/m1,p2m12c
+ layer CV1 m2c/m1
  squares 30 60 90
  calma 50 0
 
@@ -1088,12 +1070,12 @@ style  lambda=0.30(c)
  layer CM1 pad
  calma 49 0
 
- layer CM1 m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1,p2c,p2m12c
- labels m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1,p2c,p2m12c
+ layer CM1 m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1
+ labels m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1
  calma 49 0
 
- layer CM2 m2,rm2,m2c/m2,m3c/m2,m3c/m2,p2m12c
- labels m2,rm2,m2c/m2,m3c/m2,m3c/m2,p2m12c
+ layer CM2 m2,rm2,m2c/m2,m3c/m2,m3c/m2
+ labels m2,rm2,m2c/m2,m3c/m2,m3c/m2
  calma 51 0
 
  layer CMFP m1p
@@ -1184,8 +1166,8 @@ style  lambda=0.30(c)
  labels hr,phr
  calma 34 0
 
- layer CEL poly2,ecap,phr,p2c,p2m12c
- labels poly2,ecap,phr,p2c,p2m12c
+ layer CEL poly2,ecap,phr,p2c
+ labels poly2,ecap,phr,p2c
  calma 56 0
 
 #CRE/CRM
@@ -1216,8 +1198,8 @@ style  lambda=0.30(c)
 #CRE/CRM layer CRM rm1,prm1,rm2,prm2,rm3,prm3
 #CRE/CRM calma 70 0
 
- layer CX comment
- labels comment
+ layer CX comment,bb
+ labels comment,bb
  calma 63 0
 
  layer XP pad,xp
@@ -1314,7 +1296,7 @@ style  lambda=0.30()
  squares 0 60 90
  calma 55 0
 
- layer CCE p2c,p2m12c
+ layer CCE p2c
  squares 30 60 90
  calma 55 0
 
@@ -1326,7 +1308,7 @@ style  lambda=0.30()
  squares 0 60 90
  calma 25 0
 
- layer CV1 m2c/m1,p2m12c
+ layer CV1 m2c/m1
  squares 30 60 90
  calma 50 0
 
@@ -1368,12 +1350,12 @@ style  lambda=0.30()
  layer CM1 pad
  calma 49 0
 
- layer CM1 m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1,p2c,p2m12c
- labels m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1,p2c,p2m12c
+ layer CM1 m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1
+ labels m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1
  calma 49 0
 
- layer CM2 m2,rm2,m2c/m2,m3c/m2,m3c/m2,p2m12c
- labels m2,rm2,m2c/m2,m3c/m2,m3c/m2,p2m12c
+ layer CM2 m2,rm2,m2c/m2,m3c/m2,m3c/m2
+ labels m2,rm2,m2c/m2,m3c/m2,m3c/m2
  calma 51 0
 
  layer CMFP m1p
@@ -1464,8 +1446,8 @@ style  lambda=0.30()
  labels hr,phr
  calma 34 0
 
- layer CEL poly2,ecap,phr,p2c,p2m12c
- labels poly2,ecap,phr,p2c,p2m12c
+ layer CEL poly2,ecap,phr,p2c
+ labels poly2,ecap,phr,p2c
  calma 56 0
 
 #CRE/CRM
@@ -1496,8 +1478,8 @@ style  lambda=0.30()
 #CRE/CRM layer CRM rm1,prm1,rm2,prm2,rm3,prm3
 #CRE/CRM calma 70 0
 
- layer CX comment
- labels comment
+ layer CX comment,bb
+ labels comment,bb
  calma 63 0
 
  layer XP pad,xp
@@ -1514,7 +1496,7 @@ style  lambda=0.30(p)
  # This is a custom section to add bounding boxes in OpenRAM
  layer bb BB
  labels BB
- calma 63 0
+ calma BB 63 0
 
 layer nwell CWN
  and-not CWNR
@@ -1721,7 +1703,6 @@ layer nwell CWN
  layer ndc CAA
  and CSN
  and CCA
- and-not CV1
  and-not CWNR
  and-not CTA
 
@@ -1735,7 +1716,6 @@ layer nwell CWN
  layer ndc CAA
  and CSN
  and CCC
- and-not CV1
  and-not CWNR
  and-not CTA
 
@@ -1749,7 +1729,6 @@ layer nwell CWN
  layer nsc CAA
  and CSN
  and CCA
- and-not CV1
  and-not CWNR
  and-not CTA
 
@@ -1763,7 +1742,6 @@ layer nwell CWN
  layer nsc CAA
  and CSN
  and CCC
- and-not CV1
  and-not CWNR
  and-not CTA
 
@@ -1777,7 +1755,6 @@ layer nwell CWN
  layer pdc CAA
  and CSP
  and CCA
- and-not CV1
  and-not CTA
 
  and-not CPS
@@ -1791,7 +1768,6 @@ layer nwell CWN
  layer pdc CAA
  and CSP
  and CCC
- and-not CV1
  and-not CTA
 
  and-not CPS
@@ -1805,7 +1781,6 @@ layer nwell CWN
  layer psc CAA
  and CSP
  and CCA
- and-not CV1
  and-not CTA
 
  and-not CPS
@@ -1819,128 +1794,6 @@ layer nwell CWN
  layer psc CAA
  and CSP
  and CCC
- and-not CV1
- and-not CWNR
- and-not CTA
-
- and-not CPS
- and-not CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer ndc CAA
- and CSN
- and CCA
- and CV1
- and CV2
- and-not CWNR
- and-not CTA
-
- and-not CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCA 48 *
-
- layer ndc CAA
- and CSN
- and CCC
- and CV1
- and CV2
- and-not CWNR
- and-not CTA
-
- and-not CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer nsc CAA
- and CSN
- and CCA
- and CV1
- and CV2
- and-not CWNR
- and-not CTA
-
- and CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCA 48 *
-
- layer nsc CAA
- and CSN
- and CCC
- and CV1
- and CV2
- and-not CWNR
- and-not CTA
-
- and CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer pdc CAA
- and CSP
- and CCA
- and CV1
- and CV2
- and-not CTA
-
- and-not CPS
- and CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCA 48 *
-
- layer pdc CAA
- and CSP
- and CCC
- and CV1
- and CV2
- and-not CTA
-
- and-not CPS
- and CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer psc CAA
- and CSP
- and CCA
- and CV1
- and CV2
- and-not CTA
-
- and-not CPS
- and-not CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCA 48 *
-
- layer psc CAA
- and CSP
- and CCC
- and CV1
- and CV2
  and-not CWNR
  and-not CTA
 
@@ -1971,7 +1824,6 @@ layer nwell CWN
  calma CRG 67 *
 
  layer pc CCP
- and-not CV1
  and CPG
  and-not CPC
  and-not CEL
@@ -1983,86 +1835,9 @@ layer nwell CWN
  calma CCP 47 *
 
  layer pc CCC
- and-not CV1
  and CPG
  and-not CPC
  and-not CEL
- and-not CAA
- grow 30
- and CM1
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer pc CCP
- and CV1
- and CV2
- and CPG
- and-not CPC
- and-not CEL
- and-not CAA
- grow 30
- and CM1
- grow 15
- shrink 15
- calma CCP 47 *
-
- layer pc CCC
- and CV1
- and CV2
- and CPG
- and-not CPC
- and-not CEL
- and-not CAA
- grow 30
- and CM1
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer p2c CCE
- and-not CV1
- and CPG
- and CEL
- and-not CPC
- and-not CAA
- grow 30
- and CM1
- grow 15
- shrink 15
- calma CCE 55 *
-
- layer p2c CCC
- and-not CV1
- and CPG
- and CEL
- and-not CPC
- and-not CAA
- grow 30
- and CM1
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer p2c CCE
- and CV1
- and CV2
- and CPG
- and CEL
- and-not CPC
- and-not CAA
- grow 30
- and CM1
- grow 15
- shrink 15
- calma CCE 55 *
-
- layer p2c CCC
- and CV1
- and CV2
- and CPG
- and CEL
- and-not CPC
  and-not CAA
  grow 30
  and CM1
@@ -2134,41 +1909,10 @@ layer nwell CWN
  calma CV2 61 *
 
  layer m2c CV1
- and-not CV2
- and-not CCC
- and-not CCE
- and-not CCP
- and-not CCA
  and-not XP
  grow 30
  and CM2
  and CM1
- grow 15
- shrink 15
- calma CV1 50 *
-
-
-
- layer p2m12c CV1
- and-not CV2
- and CCE
- grow 30
- and CM2
- and CM1
- and CPG
- and CEL
- grow 15
- shrink 15
- calma CV1 50 *
-
- layer p2m12c CV1
- and-not CV2
- and CCC
- grow 30
- and CM2
- and CM1
- and CPG
- and CEL
  grow 15
  shrink 15
  calma CV1 50 *
@@ -2219,14 +1963,6 @@ layer nwell CWN
  labels CMSP
  calma CMSP 82 *
 
-
-
-
-
-
-
-
-
  layer fp 100
  calma 100 100 *
 
@@ -2249,8 +1985,6 @@ layer nwell CWN
  calma 110 110 *
 
  layer m3c CV2
-
- and-not CV1
  and-not XP
  grow 30
  and CM3
@@ -2258,7 +1992,6 @@ layer nwell CWN
  grow 15
  shrink 15
  calma CV2 61 *
-
 
  layer m3 CM3
  and-not CRM
@@ -2329,6 +2062,20 @@ layer nwell CWN
  and-not CRE
  calma CRG2 68 *
 
+ layer elc CCE
+ grow 30
+ and CM1
+ and CEL
+ labels CM1
+ calma CCE 55 *
+
+ layer elc CCC
+ grow 30
+ and CM1
+ and CEL
+ labels CM1
+ calma CCC 25 *
+
  layer comment CX
  labels CX
  calma CX 63 *
@@ -2347,6 +2094,11 @@ layer nwell CWN
 
 style  lambda=0.30(s)
  scalefactor  30
+
+ # This is a custom section to add bounding boxes in OpenRAM
+ layer bb BB
+ labels BB
+ calma BB 63 0
 
  layer nwell CWN
  and-not CWNR
@@ -2554,7 +2306,6 @@ style  lambda=0.30(s)
  layer ndc CAA
  and CSN
  and CCA
- and-not CV1
  and-not CWNR
  and-not CTA
 
@@ -2568,7 +2319,6 @@ style  lambda=0.30(s)
  layer ndc CAA
  and CSN
  and CCC
- and-not CV1
  and-not CWNR
  and-not CTA
 
@@ -2582,7 +2332,6 @@ style  lambda=0.30(s)
  layer nsc CAA
  and CSN
  and CCA
- and-not CV1
  and-not CWNR
  and-not CTA
 
@@ -2596,7 +2345,6 @@ style  lambda=0.30(s)
  layer nsc CAA
  and CSN
  and CCC
- and-not CV1
  and-not CWNR
  and-not CTA
 
@@ -2610,7 +2358,6 @@ style  lambda=0.30(s)
  layer pdc CAA
  and CSP
  and CCA
- and-not CV1
  and-not CTA
 
  and-not CPS
@@ -2624,7 +2371,6 @@ style  lambda=0.30(s)
  layer pdc CAA
  and CSP
  and CCC
- and-not CV1
  and-not CTA
 
  and-not CPS
@@ -2638,7 +2384,6 @@ style  lambda=0.30(s)
  layer psc CAA
  and CSP
  and CCA
- and-not CV1
  and-not CTA
 
  and-not CPS
@@ -2652,128 +2397,6 @@ style  lambda=0.30(s)
  layer psc CAA
  and CSP
  and CCC
- and-not CV1
- and-not CWNR
- and-not CTA
-
- and-not CPS
- and-not CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer ndc CAA
- and CSN
- and CCA
- and CV1
- and CV2
- and-not CWNR
- and-not CTA
-
- and-not CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCA 48 *
-
- layer ndc CAA
- and CSN
- and CCC
- and CV1
- and CV2
- and-not CWNR
- and-not CTA
-
- and-not CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer nsc CAA
- and CSN
- and CCA
- and CV1
- and CV2
- and-not CWNR
- and-not CTA
-
- and CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCA 48 *
-
- layer nsc CAA
- and CSN
- and CCC
- and CV1
- and CV2
- and-not CWNR
- and-not CTA
-
- and CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer pdc CAA
- and CSP
- and CCA
- and CV1
- and CV2
- and-not CTA
-
- and-not CPS
- and CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCA 48 *
-
- layer pdc CAA
- and CSP
- and CCC
- and CV1
- and CV2
- and-not CTA
-
- and-not CPS
- and CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer psc CAA
- and CSP
- and CCA
- and CV1
- and CV2
- and-not CTA
-
- and-not CPS
- and-not CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCA 48 *
-
- layer psc CAA
- and CSP
- and CCC
- and CV1
- and CV2
  and-not CWNR
  and-not CTA
 
@@ -2804,7 +2427,6 @@ style  lambda=0.30(s)
  calma CRG 67 *
 
  layer pc CCP
- and-not CV1
  and CPG
  and-not CPC
  and-not CEL
@@ -2816,86 +2438,9 @@ style  lambda=0.30(s)
  calma CCP 47 *
 
  layer pc CCC
- and-not CV1
  and CPG
  and-not CPC
  and-not CEL
- and-not CAA
- grow 30
- and CM1
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer pc CCP
- and CV1
- and CV2
- and CPG
- and-not CPC
- and-not CEL
- and-not CAA
- grow 30
- and CM1
- grow 15
- shrink 15
- calma CCP 47 *
-
- layer pc CCC
- and CV1
- and CV2
- and CPG
- and-not CPC
- and-not CEL
- and-not CAA
- grow 30
- and CM1
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer p2c CCE
- and-not CV1
- and CPG
- and CEL
- and-not CPC
- and-not CAA
- grow 30
- and CM1
- grow 15
- shrink 15
- calma CCE 55 *
-
- layer p2c CCC
- and-not CV1
- and CPG
- and CEL
- and-not CPC
- and-not CAA
- grow 30
- and CM1
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer p2c CCE
- and CV1
- and CV2
- and CPG
- and CEL
- and-not CPC
- and-not CAA
- grow 30
- and CM1
- grow 15
- shrink 15
- calma CCE 55 *
-
- layer p2c CCC
- and CV1
- and CV2
- and CPG
- and CEL
- and-not CPC
  and-not CAA
  grow 30
  and CM1
@@ -2967,41 +2512,10 @@ style  lambda=0.30(s)
  calma CV2 61 *
 
  layer m2c CV1
- and-not CV2
- and-not CCC
- and-not CCE
- and-not CCP
- and-not CCA
  and-not XP
  grow 30
  and CM2
  and CM1
- grow 15
- shrink 15
- calma CV1 50 *
-
-
-
- layer p2m12c CV1
- and-not CV2
- and CCE
- grow 30
- and CM2
- and CM1
- and CPG
- and CEL
- grow 15
- shrink 15
- calma CV1 50 *
-
- layer p2m12c CV1
- and-not CV2
- and CCC
- grow 30
- and CM2
- and CM1
- and CPG
- and CEL
  grow 15
  shrink 15
  calma CV1 50 *
@@ -3052,14 +2566,6 @@ style  lambda=0.30(s)
  labels CMSP
  calma CMSP 82 *
 
-
-
-
-
-
-
-
-
  layer fp 100
  calma 100 100 *
 
@@ -3082,8 +2588,6 @@ style  lambda=0.30(s)
  calma 110 110 *
 
  layer m3c CV2
-
- and-not CV1
  and-not XP
  grow 30
  and CM3
@@ -3091,7 +2595,6 @@ style  lambda=0.30(s)
  grow 15
  shrink 15
  calma CV2 61 *
-
 
  layer m3 CM3
  and-not CRM
@@ -3162,6 +2665,20 @@ style  lambda=0.30(s)
  and-not CRE
  calma CRG2 68 *
 
+ layer elc CCE
+ grow 30
+ and CM1
+ and CEL
+ labels CM1
+ calma CCE 55 *
+
+ layer elc CCC
+ grow 30
+ and CM1
+ and CEL
+ labels CM1
+ calma CCC 25 *
+
  layer comment CX
  labels CX
  calma CX 63 *
@@ -3180,6 +2697,11 @@ style  lambda=0.30(s)
 
 style  lambda=0.30(ps)
  scalefactor  30
+
+ # This is a custom section to add bounding boxes in OpenRAM
+ layer bb BB
+ labels BB
+ calma BB 63 0
 
  layer nwell CWN
  and-not CWNR
@@ -3388,7 +2910,6 @@ style  lambda=0.30(ps)
  layer ndc CAA
  and CSN
  and CCA
- and-not CV1
  and-not CWNR
  and-not CTA
 
@@ -3402,7 +2923,6 @@ style  lambda=0.30(ps)
  layer ndc CAA
  and CSN
  and CCC
- and-not CV1
  and-not CWNR
  and-not CTA
 
@@ -3416,7 +2936,6 @@ style  lambda=0.30(ps)
  layer nsc CAA
  and CSN
  and CCA
- and-not CV1
  and-not CWNR
  and-not CTA
 
@@ -3430,7 +2949,6 @@ style  lambda=0.30(ps)
  layer nsc CAA
  and CSN
  and CCC
- and-not CV1
  and-not CWNR
  and-not CTA
 
@@ -3444,7 +2962,6 @@ style  lambda=0.30(ps)
  layer pdc CAA
  and CSP
  and CCA
- and-not CV1
  and-not CTA
 
  and-not CPS
@@ -3458,7 +2975,6 @@ style  lambda=0.30(ps)
  layer pdc CAA
  and CSP
  and CCC
- and-not CV1
  and-not CTA
 
  and-not CPS
@@ -3472,7 +2988,6 @@ style  lambda=0.30(ps)
  layer psc CAA
  and CSP
  and CCA
- and-not CV1
  and-not CTA
 
  and-not CPS
@@ -3486,128 +3001,6 @@ style  lambda=0.30(ps)
  layer psc CAA
  and CSP
  and CCC
- and-not CV1
- and-not CWNR
- and-not CTA
-
- and-not CPS
- and-not CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer ndc CAA
- and CSN
- and CCA
- and CV1
- and CV2
- and-not CWNR
- and-not CTA
-
- and-not CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCA 48 *
-
- layer ndc CAA
- and CSN
- and CCC
- and CV1
- and CV2
- and-not CWNR
- and-not CTA
-
- and-not CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer nsc CAA
- and CSN
- and CCA
- and CV1
- and CV2
- and-not CWNR
- and-not CTA
-
- and CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCA 48 *
-
- layer nsc CAA
- and CSN
- and CCC
- and CV1
- and CV2
- and-not CWNR
- and-not CTA
-
- and CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer pdc CAA
- and CSP
- and CCA
- and CV1
- and CV2
- and-not CTA
-
- and-not CPS
- and CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCA 48 *
-
- layer pdc CAA
- and CSP
- and CCC
- and CV1
- and CV2
- and-not CTA
-
- and-not CPS
- and CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer psc CAA
- and CSP
- and CCA
- and CV1
- and CV2
- and-not CTA
-
- and-not CPS
- and-not CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCA 48 *
-
- layer psc CAA
- and CSP
- and CCC
- and CV1
- and CV2
  and-not CWNR
  and-not CTA
 
@@ -3638,7 +3031,6 @@ style  lambda=0.30(ps)
  calma CRG 67 *
 
  layer pc CCP
- and-not CV1
  and CPG
  and-not CPC
  and-not CEL
@@ -3650,86 +3042,9 @@ style  lambda=0.30(ps)
  calma CCP 47 *
 
  layer pc CCC
- and-not CV1
  and CPG
  and-not CPC
  and-not CEL
- and-not CAA
- grow 30
- and CM1
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer pc CCP
- and CV1
- and CV2
- and CPG
- and-not CPC
- and-not CEL
- and-not CAA
- grow 30
- and CM1
- grow 15
- shrink 15
- calma CCP 47 *
-
- layer pc CCC
- and CV1
- and CV2
- and CPG
- and-not CPC
- and-not CEL
- and-not CAA
- grow 30
- and CM1
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer p2c CCE
- and-not CV1
- and CPG
- and CEL
- and-not CPC
- and-not CAA
- grow 30
- and CM1
- grow 15
- shrink 15
- calma CCE 55 *
-
- layer p2c CCC
- and-not CV1
- and CPG
- and CEL
- and-not CPC
- and-not CAA
- grow 30
- and CM1
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer p2c CCE
- and CV1
- and CV2
- and CPG
- and CEL
- and-not CPC
- and-not CAA
- grow 30
- and CM1
- grow 15
- shrink 15
- calma CCE 55 *
-
- layer p2c CCC
- and CV1
- and CV2
- and CPG
- and CEL
- and-not CPC
  and-not CAA
  grow 30
  and CM1
@@ -3801,41 +3116,10 @@ style  lambda=0.30(ps)
  calma CV2 61 *
 
  layer m2c CV1
- and-not CV2
- and-not CCC
- and-not CCE
- and-not CCP
- and-not CCA
  and-not XP
  grow 30
  and CM2
  and CM1
- grow 15
- shrink 15
- calma CV1 50 *
-
-
-
- layer p2m12c CV1
- and-not CV2
- and CCE
- grow 30
- and CM2
- and CM1
- and CPG
- and CEL
- grow 15
- shrink 15
- calma CV1 50 *
-
- layer p2m12c CV1
- and-not CV2
- and CCC
- grow 30
- and CM2
- and CM1
- and CPG
- and CEL
  grow 15
  shrink 15
  calma CV1 50 *
@@ -3886,14 +3170,6 @@ style  lambda=0.30(ps)
  labels CMSP
  calma CMSP 82 *
 
-
-
-
-
-
-
-
-
  layer fp 100
  calma 100 100 *
 
@@ -3916,8 +3192,6 @@ style  lambda=0.30(ps)
  calma 110 110 *
 
  layer m3c CV2
-
- and-not CV1
  and-not XP
  grow 30
  and CM3
@@ -3925,7 +3199,6 @@ style  lambda=0.30(ps)
  grow 15
  shrink 15
  calma CV2 61 *
-
 
  layer m3 CM3
  and-not CRM
@@ -3996,6 +3269,20 @@ style  lambda=0.30(ps)
  and-not CRE
  calma CRG2 68 *
 
+ layer elc CCE
+ grow 30
+ and CM1
+ and CEL
+ labels CM1
+ calma CCE 55 *
+
+ layer elc CCC
+ grow 30
+ and CM1
+ and CEL
+ labels CM1
+ calma CCC 25 *
+
  layer comment CX
  labels CX
  calma CX 63 *
@@ -4014,6 +3301,11 @@ style  lambda=0.30(ps)
 
 style  lambda=0.30()
  scalefactor  30
+
+ # This is a custom section to add bounding boxes in OpenRAM
+ layer bb BB
+ labels BB
+ calma BB 63 0
 
  layer nwell CWN
  and-not CWNR
@@ -4219,7 +3511,6 @@ style  lambda=0.30()
  layer ndc CAA
  and CSN
  and CCA
- and-not CV1
  and-not CWNR
  and-not CTA
 
@@ -4233,7 +3524,6 @@ style  lambda=0.30()
  layer ndc CAA
  and CSN
  and CCC
- and-not CV1
  and-not CWNR
  and-not CTA
 
@@ -4247,7 +3537,6 @@ style  lambda=0.30()
  layer nsc CAA
  and CSN
  and CCA
- and-not CV1
  and-not CWNR
  and-not CTA
 
@@ -4261,7 +3550,6 @@ style  lambda=0.30()
  layer nsc CAA
  and CSN
  and CCC
- and-not CV1
  and-not CWNR
  and-not CTA
 
@@ -4275,7 +3563,6 @@ style  lambda=0.30()
  layer pdc CAA
  and CSP
  and CCA
- and-not CV1
  and-not CTA
 
  and-not CPS
@@ -4289,7 +3576,6 @@ style  lambda=0.30()
  layer pdc CAA
  and CSP
  and CCC
- and-not CV1
  and-not CTA
 
  and-not CPS
@@ -4303,7 +3589,6 @@ style  lambda=0.30()
  layer psc CAA
  and CSP
  and CCA
- and-not CV1
  and-not CTA
 
  and-not CPS
@@ -4317,128 +3602,6 @@ style  lambda=0.30()
  layer psc CAA
  and CSP
  and CCC
- and-not CV1
- and-not CWNR
- and-not CTA
-
- and-not CPS
- and-not CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer ndc CAA
- and CSN
- and CCA
- and CV1
- and CV2
- and-not CWNR
- and-not CTA
-
- and-not CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCA 48 *
-
- layer ndc CAA
- and CSN
- and CCC
- and CV1
- and CV2
- and-not CWNR
- and-not CTA
-
- and-not CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer nsc CAA
- and CSN
- and CCA
- and CV1
- and CV2
- and-not CWNR
- and-not CTA
-
- and CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCA 48 *
-
- layer nsc CAA
- and CSN
- and CCC
- and CV1
- and CV2
- and-not CWNR
- and-not CTA
-
- and CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer pdc CAA
- and CSP
- and CCA
- and CV1
- and CV2
- and-not CTA
-
- and-not CPS
- and CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCA 48 *
-
- layer pdc CAA
- and CSP
- and CCC
- and CV1
- and CV2
- and-not CTA
-
- and-not CPS
- and CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer psc CAA
- and CSP
- and CCA
- and CV1
- and CV2
- and-not CTA
-
- and-not CPS
- and-not CWN
- and CM1
- grow 30
- grow 15
- shrink 15
- calma CCA 48 *
-
- layer psc CAA
- and CSP
- and CCC
- and CV1
- and CV2
  and-not CWNR
  and-not CTA
 
@@ -4469,7 +3632,6 @@ style  lambda=0.30()
  calma CRG 67 *
 
  layer pc CCP
- and-not CV1
  and CPG
  and-not CPC
  and-not CEL
@@ -4481,86 +3643,9 @@ style  lambda=0.30()
  calma CCP 47 *
 
  layer pc CCC
- and-not CV1
  and CPG
  and-not CPC
  and-not CEL
- and-not CAA
- grow 30
- and CM1
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer pc CCP
- and CV1
- and CV2
- and CPG
- and-not CPC
- and-not CEL
- and-not CAA
- grow 30
- and CM1
- grow 15
- shrink 15
- calma CCP 47 *
-
- layer pc CCC
- and CV1
- and CV2
- and CPG
- and-not CPC
- and-not CEL
- and-not CAA
- grow 30
- and CM1
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer p2c CCE
- and-not CV1
- and CPG
- and CEL
- and-not CPC
- and-not CAA
- grow 30
- and CM1
- grow 15
- shrink 15
- calma CCE 55 *
-
- layer p2c CCC
- and-not CV1
- and CPG
- and CEL
- and-not CPC
- and-not CAA
- grow 30
- and CM1
- grow 15
- shrink 15
- calma CCC 25 *
-
- layer p2c CCE
- and CV1
- and CV2
- and CPG
- and CEL
- and-not CPC
- and-not CAA
- grow 30
- and CM1
- grow 15
- shrink 15
- calma CCE 55 *
-
- layer p2c CCC
- and CV1
- and CV2
- and CPG
- and CEL
- and-not CPC
  and-not CAA
  grow 30
  and CM1
@@ -4632,41 +3717,10 @@ style  lambda=0.30()
  calma CV2 61 *
 
  layer m2c CV1
- and-not CV2
- and-not CCC
- and-not CCE
- and-not CCP
- and-not CCA
  and-not XP
  grow 30
  and CM2
  and CM1
- grow 15
- shrink 15
- calma CV1 50 *
-
-
-
- layer p2m12c CV1
- and-not CV2
- and CCE
- grow 30
- and CM2
- and CM1
- and CPG
- and CEL
- grow 15
- shrink 15
- calma CV1 50 *
-
- layer p2m12c CV1
- and-not CV2
- and CCC
- grow 30
- and CM2
- and CM1
- and CPG
- and CEL
  grow 15
  shrink 15
  calma CV1 50 *
@@ -4717,14 +3771,6 @@ style  lambda=0.30()
  labels CMSP
  calma CMSP 82 *
 
-
-
-
-
-
-
-
-
  layer fp 100
  calma 100 100 *
 
@@ -4747,8 +3793,6 @@ style  lambda=0.30()
  calma 110 110 *
 
  layer m3c CV2
-
- and-not CV1
  and-not XP
  grow 30
  and CM3
@@ -4756,7 +3800,6 @@ style  lambda=0.30()
  grow 15
  shrink 15
  calma CV2 61 *
-
 
  layer m3 CM3
  and-not CRM
@@ -4827,6 +3870,20 @@ style  lambda=0.30()
  and-not CRE
  calma CRG2 68 *
 
+ layer elc CCE
+ grow 30
+ and CM1
+ and CEL
+ labels CM1
+ calma CCE 55 *
+
+ layer elc CCC
+ grow 30
+ and CM1
+ and CEL
+ labels CM1
+ calma CCC 25 *
+
  layer comment CX
  labels CX
  calma CX 63 *
@@ -4845,6 +3902,11 @@ style  lambda=0.30()
 
 style  lambda=0.30(c)
  scalefactor  30
+
+ # This is a custom section to add bounding boxes in OpenRAM
+ layer bb BB
+ labels BB
+ calma BB 63 0
 
  layer nwell CWN
  and-not CWNR
@@ -5300,6 +4362,11 @@ style  lambda=0.30(c)
 
 style  lambda=0.30(cs)
  scalefactor  30
+
+ # This is a custom section to add bounding boxes in OpenRAM
+ layer bb BB
+ labels BB
+ calma BB 63 0
 
  layer nwell CWN
  and-not CWNR
@@ -5758,6 +4825,11 @@ style  lambda=0.30(cs)
 style  lambda=0.30(cps)
  scalefactor  30
 
+ # This is a custom section to add bounding boxes in OpenRAM
+ layer bb BB
+ labels BB
+ calma BB 63 0
+
  layer nwell CWN
  and-not CWNR
  and-not CTA
@@ -6215,6 +5287,11 @@ style  lambda=0.30(cps)
 
 style  lambda=0.30(cp)
  scalefactor  30
+
+ # This is a custom section to add bounding boxes in OpenRAM
+ layer bb BB
+ labels BB
+ calma BB 63 0
 
  layer nwell CWN
  and-not CWNR
@@ -6740,27 +5817,22 @@ drc
  width pc/m1 4 \
  "Poly contact width < 4 (Mosis #5.1)"
 
-
  width gc 2 \
  "GC contact width < 2 (Mosis #6.1)"
 
  width ndc/m1 4 \
  "Diffusion contact width < 4 (Mosis #6.1)"
 
-
  width nsc/m1 4 \
  "Diffusion contact width < 4 (Mosis #6.1)"
-
 
  width pdc/m1 4 \
  "Diffusion contact width < 4 (Mosis #6.1)"
 
-
  width psc/m1 4 \
  "Diffusion contact width < 4 (Mosis #6.1)"
 
-
- width m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1 3 \
+ width m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1 3 \
  "Metal1 width < 3 (Mosis #7.1)"
 
  width gv1 2 \
@@ -6769,22 +5841,13 @@ drc
  width m2c/m1 4 \
  "Metal2 contact width < 4 (Mosis #8.1)"
 
-
-
-
-
-
-
- width p2m12c 4 \
- "Metal2 contact width < 4 (Mosis #8.1)"
-
- width p2m12c 4 \
- "stacked p2m12c width < 4 (Mosis #8.1)"
-
  width m2,fm2,rm2,m2c/m2,m3c/m2 3 \
  "Metal2 width < 3 (Mosis #9.1)"
 
- width poly2,ecap,phr,p2c,p2m12c,p2c,p2m12c 5 \
+ width ecap 8 \
+ "Ecap width < 8 (Mosis #11.1)"
+
+ width poly2,ecap,phr 5 \
  "Poly2 width < 5 (Mosis #11.1)"
 
  width gc2 2 \
@@ -6793,15 +5856,11 @@ drc
  width p2c 4 \
  "Poly2 contact width < 4 (Mosis #13.1)"
 
- width p2m12c 4 \
- "Poly2 contact width < 4 (Mosis #13.1)"
-
  width gv2 2 \
  "GV2 via width < 2 (Mosis #14.1)"
 
  width m3c/m2 4 \
  "Metal3 contact width < 4 (Mosis #14.1)"
-
 
  width m3,fm3,rm3,m3c/m3,pad 5 \
  "Metal3 width < 5 (Mosis #15.1)"
@@ -6890,7 +5949,7 @@ drc
  edge4way nfet,pfet,fet space/active,ndiff,rnd,ndc/a,pdiff,rpd,pdc/a 3 ndiff,rnd,ndc/a,pdiff,rpd,pdc/a,nfet,pfet,fet 0 0 \
  "N-Diffusion,P-Diffusion overhang of Transistor < 3 (Mosis #3.4)" active
 
- edge4way poly,fp,rp,pc/a ~(poly,fp,rp,pc/a,nfet,pfet,fet,prp)/active 1 space space 1 \
+ edge4way poly,fp,rp,pc/a ~(poly,fp,rp,pc/a,nfet,pfet,fet,prp)/active 1 space/a space/a 1 \
  "Poly spacing to Diffusion < 1 (Mosis #3.5)"
 
  edge4way nfet ~(nfet)/active 3 ~(pselect)/select ~(nfet)/active 3 \
@@ -6977,11 +6036,8 @@ drc
  spacing gc gc 3 touching_ok \
  "Generic contact spacing < 3 (Mosis #5.3)"
 
- edge4way ~(gc)/contact gc 1 ~(ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1)/metal1 0 0 \
+ edge4way ~(gc)/contact gc 1 ~(ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c)/metal1 0 0 \
  "GC contact cannot touch Metal1 contacts (Mosis #0)" metal1
-
- edge4way ~(gc2)/contact gc2 1 ~(ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1)/metal1 0 0 \
- "Generic contact2 cannot touch Metal1 contacts (Mosis #0)" metal1
 
  spacing gv1 m2c/m2 2 touching_illegal \
  "GV1 via spacing to Metal2 contacts < 2 (Mosis #14.2)"
@@ -7001,12 +6057,6 @@ drc
  spacing psc/m1 ndc/m1 1 touching_illegal \
  "psc spacing to ndc < 1 (Mosis #6.3)"
 
-
-
-
-
-
-
  spacing nfet,pfet ndc/a,pdc/a,psc/a,nsc/a 1 touching_illegal \
  "N-Transistor,P-Transistor spacing to Diffusion contact < 1 (Mosis #6.4)"
 
@@ -7020,34 +6070,43 @@ drc
  "Diffusion spacing to Diffusion contact < 4 (Mosis #6.5.b)"
 
  spacing pc/a ndc/a,pdc/a,psc/a,nsc/a 2 touching_illegal \
- "pc/a,pm12c/a spacing to ndc/a,pdc/a,psc/a,nsc/a < 2 (Mosis #6.7)"
+ "pc/a spacing to ndc/a,pdc/a,psc/a,nsc/a < 2 (Mosis #6.7)"
 
- spacing m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1 m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1 3 touching_ok \
+ spacing m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1 m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1 3 touching_ok \
  "Metal1 spacing < 3 (Mosis #7.2)"
 
- spacing m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1 fm1,fapm 3 touching_illegal \
+ spacing m1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1 fm1,fapm 3 touching_illegal \
  "Metal1 spacing to fill layer (fm1) < 3 (Mosis #7.2)"
 
  spacing fm1 fm1 4 touching_ok \
  "Metal1 fill layer (fm1) spacing < 4 (Mosis #0)"
 
- edge4way gc space 1 m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1 space 1 \
+ edge4way gc space 1 m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1 space 1 \
  "Metal1 must overlap GC contact by 1 (Mosis #7.3,7.4)" metal1
 
- edge4way ~(m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1)/metal1 m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1 1 ~(gc)/contact 0 0 \
+ edge4way ~(m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1)/metal1 m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1 1 ~(gc)/contact 0 0 \
  "Metal1(edge) cannot touch GC contact (Mosis #7.3+7.4)" contact
 
  spacing gv1 gv1 3 touching_ok \
  "GV1 via spacing < 3 (Mosis #8.2)"
 
- edge4way gv1 ~(gv1)/via1 1 m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1 ~(gv1)/via1 1 \
+ edge4way gv1 ~(gv1)/via1 1 m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1 ~(gv1)/via1 1 \
  "Metal1 overlap of GV1 via < 1 (Mosis #8.3)" metal1
 
- edge4way gv1 space 1 m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1 space 1 \
+ edge4way gv1 space 1 m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1 space 1 \
  "Metal1 must overlap GV1 via by 1 (Mosis #8.3)" metal1
 
- edge4way ~(m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1)/metal1 m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1 1 ~(gv1)/via1 0 0 \
+ edge4way ~(m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1)/metal1 m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1 1 ~(gv1)/via1 0 0 \
  "Metal1(edge) cannot touch GV1 via (Mosis #8.3)" via1
+
+ spacing gc gv1 2 touching_illegal \
+ "GC contact spacing to GV1 via < 2 (Mosis #8.4)"
+
+ spacing gc m2c/m2 2 touching_illegal \
+ " spacing to Metal2 contacts < 2 (Mosis #14.2)"
+
+ spacing gc m2c/m2 2 touching_illegal \
+ "GC contact spacing to Metal2 contacts < 2 (Mosis #8.4)"
 
  spacing m2,rm2,m2c/m2,m3c/m2 m2,rm2,m2c/m2,m3c/m2 3 touching_ok \
  "Metal2 spacing < 3 (Mosis #9.2)"
@@ -7079,7 +6138,7 @@ drc
  edge4way ~(ecap)/cap ecap 1 poly,fp,rp,pc/a 0 0 \
  "Ecap must touch Poly (Mosis #11.3x)" active
 
- edge4way poly2,phr,p2c,p2m12c space 5 ~(poly,fp,rp,pc/a)/active space 5 \
+ edge4way poly2,phr space 5 ~(poly,fp,rp,pc/a)/active space 5 \
  "Poly2 spacing to Poly < 5 (Mosis #11.3c)" active
 
  spacing ecap pc/a 2 touching_illegal \
@@ -7088,13 +6147,13 @@ drc
  spacing ecap gc 3 touching_illegal \
  "Ecap spacing to Generic contact < 3 (Mosis #11.5)"
 
- spacing poly2,ecap,phr,p2c,p2m12c poly2,ecap,phr,p2c,p2m12c 3 touching_ok \
+ spacing poly2,ecap,phr poly2,ecap,phr 3 touching_ok \
  "Poly2 spacing < 3 (Mosis #11.2)"
 
- spacing poly2,ecap,phr,p2c,p2m12c pc/a,ndc/a,pdc/a,psc/a,nsc/a 2 touching_illegal \
+ spacing poly2,ecap,phr pc/a,ndc/a,pdc/a,psc/a,nsc/a 2 touching_illegal \
  "Poly2 spacing to Poly contact,Diffusion contact < 2 (Mosis #11.5)"
 
- spacing poly2,ecap,phr,p2c,p2m12c gc,gc 3 touching_illegal \
+ spacing poly2,ecap,phr gc,gc 3 touching_illegal \
  "Poly2 spacing to GC contact < 3 (Mosis #11.5)"
 
  spacing gc2 gc2 3 touching_ok \
@@ -7103,17 +6162,17 @@ drc
  edge4way ~(ecap)/cap ecap 3 ~(gc2)/contact ecap 3 \
  "Ecap overlap of Generic contact2 < 3 (Mosis #13.3)" contact
 
- edge4way ~(ecap)/cap ecap 2 ~(p2c,p2m12c)/cap ecap 2 \
- "Ecap overlap of Poly2 contact < 2 (Mosis #13.3)" cap
+ edge4way ~(ecap)/cap ecap 2 ~(p2c)/metal1 ecap 2 \
+ "Ecap overlap of Poly2 contact < 2 (Mosis #13.3)" metal1
 
- edge4way gc2 space 1 m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1 space 1 \
+ edge4way gc2 space 1 m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1 space 1 \
  "Metal1 must overlap Generic contact2 by 1 (Mosis #13.4)" metal1
 
- edge4way ~(m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1)/metal1 m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1 1 ~(gc2)/contact 0 0 \
+ edge4way ~(m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1)/metal1 m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1 1 ~(gc2)/contact 0 0 \
  "Metal1(edge) cannot touch Generic contact2 (Mosis #13.4)" contact
 
- edge4way ~(poly2,ecap,phr,p2c,p2m12c)/cap poly2,ecap,phr,p2c,p2m12c 1 ~(p2c,p2m12c)/cap poly2,ecap,phr,p2c,p2m12c 1 \
- "Poly2 overlap of Poly2 contact < 1 (Mosis #13.4)" cap
+ edge4way ~(poly2,ecap,phr)/cap poly2,ecap,phr 1 ~(p2c)/metal1 poly2,ecap,phr 1 \
+ "Poly2 overlap of Poly2 contact < 1 (Mosis #13.4)" metal1
 
  spacing gv2 gv2 3 touching_ok \
  "GV2 via spacing < 3 (Mosis #14.2)"
@@ -7126,6 +6185,12 @@ drc
 
  edge4way ~(m2,fm2,rm2,m2c/m2,m3c/m2)/metal2 m2,fm2,rm2,m2c/m2,m3c/m2 1 ~(gv2)/via2 0 0 \
  "Metal2(edge) cannot touch GV2 via (Mosis #14.3)" via2
+
+ spacing gv1 gv2 2 touching_illegal \
+ "GV1 via spacing to GV2 via < 2 (Mosis #14.4)"
+
+ spacing gv1 m3c/m2 1 touching_illegal \
+ "GV1 via spacing to Metal3 contact < 1 (Mosis #14.4)"
 
  spacing m3,rm3,m3c/m3,pad m3,rm3,m3c/m3,pad 3 touching_ok \
  "Metal3 spacing < 3 (Mosis #15.2)"
@@ -7148,7 +6213,7 @@ drc
  spacing hr,phr hr,phr 4 touching_ok \
  "High-Resist spacing < 4 (Mosis #27.2)"
 
- spacing hr,phr,phr p2c,p2m12c 2 touching_illegal \
+ spacing hr,phr,phr p2c 2 touching_illegal \
  "High-Resist spacing to Poly2 contact < 2 (Mosis #27.3)"
 
  spacing hr,phr,phr gc 2 touching_illegal \
@@ -7157,10 +6222,10 @@ drc
  edge4way hr,phr space 2 ~(ndiff,rnd,ndc/a,pdiff,rpd,pdc/a)/active 0 2 \
  "High-Resist space to Diffusion < 2 (Mosis #27.4)" active
 
- spacing hr,phr,phr poly2,ecap,phr,p2c,p2m12c 2 touching_ok \
+ spacing hr,phr,phr poly2,ecap,phr 2 touching_ok \
  "High-Resist spacing to other Poly2 < 2 (Mosis #27.5)"
 
- edge4way hr,phr space 2 ~(poly2,ecap,phr,p2c,p2m12c)/contact hr,phr 2 \
+ edge4way hr,phr space 2 ~(poly2,ecap,phr)/contact hr,phr 2 \
  "High-Resist space to Poly2 < 2 (Mosis #27.5x)" contact
 
  spacing nwell phr 4 touching_illegal \
@@ -7271,7 +6336,7 @@ drc
  edge4way gc2 ~(gc2)/contact 1 ~(gc2)/contact (~(gc2),gc2)/contact 1 \
  "Contact not rectangular (Magic rule)"
 
- edge4way p2c,p2m12c ~(p2c,p2m12c)/cap 1 ~(p2c,p2m12c)/cap (~(p2c,p2m12c),p2c,p2m12c)/cap 1 \
+ edge4way p2c ~(p2c)/metal1 1 ~(p2c)/metal1 (~(p2c),p2c)/metal1 1 \
  "Contact not rectangular (Magic rule)"
 
  edge4way gc ~(gc)/contact 1 ~(gc)/contact (~(gc),gc)/contact 1 \
@@ -7291,12 +6356,12 @@ drc
 
  exact_overlap gc,ndc/a,pdc/a,psc/a,nsc/a,gc,pc/a,gc
 
- exact_overlap gc2,p2c,p2m12c
+ exact_overlap gc2,p2c
 
  edge4way pad ~(pad)/m3 1 ~(pad)/m3 (~(pad),pad)/m3 1 \
  "Contact not rectangular (Magic rule)"
 
- exact_overlap ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1
+ exact_overlap ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c
 
  exact_overlap m2c/m2
 
@@ -7356,17 +6421,17 @@ lef
 ignore PC
 ignore CA
 
-routing m1   M1 m1 met1
-routing m2   M2 m2 met2
-routing m3   M3 m3 met3
+routing m1   metal1 M1 m1 met1
+routing m2   metal2 M2 m2 met2
+routing m3   metal3 M3 m3 met3
 
-contact m2c via via1 V1 v1
+contact m2c via1 via V1 v1
 contact m3c via2 V2 v2
 
 end
 
 extract
- style AMI0.5um(amic5)from:T24H
+ style AMI0.5um(amic5)from:T11Z
  cscale 1
  lambda 30
  step   100
@@ -7387,162 +6452,164 @@ extract
  planeorder via2 13
  planeorder fill 14
 
- resist (ndiff,rnd,ndc,nsd,nsc)/active 82200
- resist (pdiff,rpd,pdc,psd,psc)/active 105200
- resist (nwell)/well 808000
- resist (rnw)/active 808000
- resist (pwell)/well 1
- resist (poly,fp,rp,pc,pc,nfet,pfet,fet)/active 22000
- resist (poly2,ecap,p2c,p2m12c,p2c,p2m12c)/cap 40300
- resist (phr)/cap 40300
- resist (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,m2c,m2c)/metal1  90
- resist (m2,fm2,rm2,m2c,m3c,m3c)/metal2  90
- resist (m3,fm3,rm3,m3c,pad)/metal3  50
+ substrate *psd,space/w,pwell well
 
- contact ndc 4 62700
- contact pdc 4 160000
- contact pc 4 15600
- contact p2c 4 26100
- contact m2c 4 910
- contact m3c 4 830
+ resist (ndiff,rnd,ndc,nsd,nsc)/active 82400
+ resist (pdiff,rpd,pdc,psd,psc)/active 102700
+ resist (nwell)/well 816000
+ resist (rnw)/active 816000 0.5
+ resist (pwell)/well 1
+ resist (poly,fp,rp,pc,pc,nfet,pfet,fet)/active 22300
+ resist (poly2,ecap,p2c)/cap 41300
+ resist (phr)/cap 41300 0.5
+ resist (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,p2c,m2c,m2c)/metal1  90
+ resist (m2,fm2,rm2,m2c,m3c,m3c)/metal2  90
+ resist (m3,fm3,rm3,m3c,pad)/metal3  60
+
+ contact ndc 4 58700
+ contact pdc 4 141000
+ contact pc 4 15800
+ contact p2c 4 26800
+ contact m2c 4 760
+ contact m3c 4 730
 
 
 #poly2
- overlap (poly,fp,rp,pc,pc)/active (poly2,ecap,phr,p2c,p2m12c,p2c,p2m12c)/cap	 84.960
+ overlap (poly,fp,rp,pc,pc)/active (poly2,ecap,phr,p2c)/cap	 82.260
 
 #nwell,cwell,pwell
- areacap (nwell)/well   3.600
+ areacap (nwell)/well   3.510
 
 #rnw
- areacap (rnw)/active   3.600
+ areacap (rnw)/active   3.510
 
 #ndiff
-# MODEL HANDLES THIS: areacap (ndiff,ndc)/active  38.430
-# MODEL HANDLES THIS: overlap (ndiff,ndc)/active ~space/w  38.430
-# MODEL HANDLES THIS: perimc (ndiff,ndc)/active ~(ndiff,ndc,nfet,pfet,fet)/active  94.800
-# MODEL HANDLES THIS: sideoverlap (ndiff,ndc)/active ~(ndiff,ndc,nfet,pfet,fet)/active ~space/w  94.800
+# MODEL HANDLES THIS: areacap (ndiff,ndc)/active  38.070
+# MODEL HANDLES THIS: overlap (ndiff,ndc)/active ~space/w  38.070
+# MODEL HANDLES THIS: perimc (ndiff,ndc)/active ~(ndiff,ndc,nfet,pfet,fet)/active  95.700
+# MODEL HANDLES THIS: sideoverlap (ndiff,ndc)/active ~(ndiff,ndc,nfet,pfet,fet)/active ~space/w  95.700
 
- areacap (rnd)/active  38.430
- overlap (rnd)/active ~space/w  38.430
- perimc (rnd)/active ~(rnd)/active  94.800
- sideoverlap (rnd)/active ~(rnd)/active ~space/w  94.800
+ areacap (rnd)/active  38.070
+ overlap (rnd)/active ~space/w  38.070
+ perimc (rnd)/active ~(rnd)/active  95.700
+ sideoverlap (rnd)/active ~(rnd)/active ~space/w  95.700
 
 #pdiff
-# MODEL HANDLES THIS: areacap (pdiff,pdc)/active  65.880
-# MODEL HANDLES THIS: overlap (pdiff,pdc)/active ~space/w  65.880
-# MODEL HANDLES THIS: perimc (pdiff,pdc)/active ~(pdiff,pdc,nfet,pfet,fet)/active  75.300
-# MODEL HANDLES THIS: sideoverlap (pdiff,pdc)/active ~(pdiff,pdc,nfet,pfet,fet)/active ~space/w  75.300
+# MODEL HANDLES THIS: areacap (pdiff,pdc)/active  65.610
+# MODEL HANDLES THIS: overlap (pdiff,pdc)/active ~space/w  65.610
+# MODEL HANDLES THIS: perimc (pdiff,pdc)/active ~(pdiff,pdc,nfet,pfet,fet)/active  73.800
+# MODEL HANDLES THIS: sideoverlap (pdiff,pdc)/active ~(pdiff,pdc,nfet,pfet,fet)/active ~space/w  73.800
 
- areacap (rpd)/active  65.880
- overlap (rpd)/active ~space/w  65.880
- perimc (rpd)/active ~(rpd)/active  75.300
- sideoverlap (rpd)/active ~(rpd)/active ~space/w  75.300
+ areacap (rpd)/active  65.610
+ overlap (rpd)/active ~space/w  65.610
+ perimc (rpd)/active ~(rpd)/active  73.800
+ sideoverlap (rpd)/active ~(rpd)/active ~space/w  73.800
 
 #rnw
 
 #poly
-# MODEL HANDLES THIS: overlap (nfet)/active (ndiff,rnd,ndc)/active 221.670
-# MODEL HANDLES THIS: sideoverlap (nfet)/active ~(nfet)/active (ndiff,rnd,ndc)/active  58.500
-# MODEL HANDLES THIS: overlap (pfet)/active (pdiff,rpd,pdc)/active 213.480
-# MODEL HANDLES THIS: sideoverlap (pfet)/active ~(pfet)/active (pdiff,rpd,pdc)/active  82.800
+# MODEL HANDLES THIS: overlap (nfet)/active (ndiff,rnd,ndc)/active 225.450
+# MODEL HANDLES THIS: sideoverlap (nfet)/active ~(nfet)/active (ndiff,rnd,ndc)/active  65.700
+# MODEL HANDLES THIS: overlap (pfet)/active (pdiff,rpd,pdc)/active 219.060
+# MODEL HANDLES THIS: sideoverlap (pfet)/active ~(pfet)/active (pdiff,rpd,pdc)/active  69
 
- areacap (poly,fp,rp,pc)/active   7.740
- overlap (poly,fp,rp,pc)/active ~space/w   7.740
+ areacap (poly,fp,rp,pc)/active   7.920
+ overlap (poly,fp,rp,pc)/active ~space/w   7.920
 
 #poly2
 
 #rnw
 
 #metal1
- areacap (m1,fm1,rm1,ndc,pdc,pc,m2c)/metal1   2.700
+ areacap (m1,fm1,rm1,ndc,pdc,pc,p2c,m2c)/metal1   2.790
 
 #metal1-sub blocked by ~space/a,~space/c
- overlap (m1,fm1,rm1,ndc,pdc,pc,m2c)/metal1 ~space/w   2.700 ~space/a,~space/c
- perimc (m1,fm1,rm1,ndc,pdc,pc,m2c)/metal1 ~(m1,fm1,rm1,ndc,pdc,pc,m2c)/metal1  20.700
- sideoverlap (m1,fm1,rm1,ndc,pdc,pc,m2c)/metal1 ~(m1,fm1,rm1,ndc,pdc,pc,m2c)/metal1 ~space/w  20.700 ~space/a,~space/c
+ overlap (m1,fm1,rm1,ndc,pdc,pc,p2c,m2c)/metal1 ~space/w   2.790 ~space/a,~space/c
+ perimc (m1,fm1,rm1,ndc,pdc,pc,p2c,m2c)/metal1 ~(m1,fm1,rm1,ndc,pdc,pc,p2c,m2c)/metal1  22.200
+ sideoverlap (m1,fm1,rm1,ndc,pdc,pc,p2c,m2c)/metal1 ~(m1,fm1,rm1,ndc,pdc,pc,p2c,m2c)/metal1 ~space/w  22.200 ~space/a,~space/c
 
 #rnw
- overlap (m1,fm1,rm1,ndc,pdc,pc,m2c)/metal1 rnw/active   2.700 ~space/c
- sideoverlap (m1,fm1,rm1,ndc,pdc,pc,m2c)/metal1 ~(m1,fm1,rm1,ndc,pdc,pc,m2c)/metal1 rnw/active  20.700 ~space/c
+ overlap (m1,fm1,rm1,ndc,pdc,pc,p2c,m2c)/metal1 rnw/active   2.790 ~space/c
+ sideoverlap (m1,fm1,rm1,ndc,pdc,pc,p2c,m2c)/metal1 ~(m1,fm1,rm1,ndc,pdc,pc,p2c,m2c)/metal1 rnw/active  22.200 ~space/c
 
 #metal1-diff blocked by ~space/c
- overlap (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,m2c)/metal1 (ndiff,rnd,ndc)/active   3.150 ~space/c
- sideoverlap (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,m2c)/metal1 ~(m1,fm1,rm1,ndc,nsc,pdc,psc,pc,m2c)/metal1 (ndiff,rnd,ndc)/active  20.700 ~space/c
- overlap (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,m2c)/metal1 (pdiff,rpd,pdc)/active   3.150 ~space/c
- sideoverlap (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,m2c)/metal1 ~(m1,fm1,rm1,ndc,nsc,pdc,psc,pc,m2c)/metal1 (pdiff,rpd,pdc)/active  20.700 ~space/c
+ overlap (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,p2c,m2c)/metal1 (ndiff,rnd,ndc)/active   3.150 ~space/c
+ sideoverlap (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,p2c,m2c)/metal1 ~(m1,fm1,rm1,ndc,nsc,pdc,psc,pc,p2c,m2c)/metal1 (ndiff,rnd,ndc)/active  22.200 ~space/c
+ overlap (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,p2c,m2c)/metal1 (pdiff,rpd,pdc)/active   3.150 ~space/c
+ sideoverlap (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,p2c,m2c)/metal1 ~(m1,fm1,rm1,ndc,nsc,pdc,psc,pc,p2c,m2c)/metal1 (pdiff,rpd,pdc)/active  22.200 ~space/c
 
 #metal1-poly blocked by ~space/c
- overlap (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,m2c)/metal1 (poly,fp,rp,pc,nfet,pfet,fet)/active   4.590 ~space/c
- sideoverlap (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,m2c)/metal1 ~(m1,fm1,rm1,ndc,nsc,pdc,psc,pc,m2c)/metal1 (poly,fp,rp,pc,nfet,pfet,fet)/active  15.900 ~space/c
- sideoverlap (poly,fp,rp,pc,nfet,pfet,fet)/active ~(poly,fp,rp,pc,nfet,pfet,fet)/active (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,m2c)/metal1  15.900 ~space/c
+ overlap (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,p2c,m2c)/metal1 (poly,fp,rp,pc,nfet,pfet,fet)/active   4.680 ~space/c
+ sideoverlap (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,p2c,m2c)/metal1 ~(m1,fm1,rm1,ndc,nsc,pdc,psc,pc,p2c,m2c)/metal1 (poly,fp,rp,pc,nfet,pfet,fet)/active  18 ~space/c
+ sideoverlap (poly,fp,rp,pc,nfet,pfet,fet)/active ~(poly,fp,rp,pc,nfet,pfet,fet)/active (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,p2c,m2c)/metal1  18 ~space/c
 
 #metal1-poly2 not blocked
- overlap (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,m2c)/metal1 (poly2,ecap,phr,p2c,p2m12c)/cap   3.960
+ overlap (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,p2c,m2c)/metal1 (poly2,ecap,phr)/cap   4.320
 
 #metal2
- areacap (m2,fm2,rm2,m3c)/metal2   1.350
+ areacap (m2,fm2,rm2,m3c)/metal2   1.440
 
 #metal2-sub blocked by 
- overlap (m2,fm2,rm2,m3c)/metal2 ~space/w   1.350 ~space/a,~space/m1,~space/c
- perimc (m2,fm2,rm2,m2c,m3c)/metal2 ~(m2,fm2,rm2,m2c,m3c)/metal2  15.900
- sideoverlap (m2,fm2,rm2,m2c,m3c)/metal2 ~(m2,fm2,rm2,m2c,m3c)/metal2 ~space/w  15.900 ~space/a,~space/m1,~space/c
- overlap (m2,fm2,rm2,m3c)/metal2 rnw/active   1.350 ~space/m1,~space/c
- sideoverlap (m2,fm2,rm2,m2c,m3c)/metal2 ~(m2,fm2,rm2,m2c,m3c)/metal2 rnw/active  15.900 ~space/m1,~space/c
+ overlap (m2,fm2,rm2,m3c)/metal2 ~space/w   1.440 ~space/a,~space/m1,~space/c
+ perimc (m2,fm2,rm2,m2c,m3c)/metal2 ~(m2,fm2,rm2,m2c,m3c)/metal2  17.400
+ sideoverlap (m2,fm2,rm2,m2c,m3c)/metal2 ~(m2,fm2,rm2,m2c,m3c)/metal2 ~space/w  17.400 ~space/a,~space/m1,~space/c
+ overlap (m2,fm2,rm2,m3c)/metal2 rnw/active   1.440 ~space/m1,~space/c
+ sideoverlap (m2,fm2,rm2,m2c,m3c)/metal2 ~(m2,fm2,rm2,m2c,m3c)/metal2 rnw/active  17.400 ~space/m1,~space/c
 
 #metal2-*diff blocked by ~space/m1,~space/c
- overlap (m2,fm2,rm2,m3c)/metal2 (ndiff,rnd,ndc)/active   1.350 ~space/m1,~space/c
- sideoverlap (m2,fm2,rm2,m2c,m3c)/metal2 ~(m2,fm2,rm2,m2c,m3c)/metal2 (ndiff,rnd,ndc)/active  15.900 ~space/m1,~space/c
- overlap (m2,fm2,rm2,m2c,m3c)/metal2 (pdiff,rpd,pdc)/active   1.350 ~space/m1,~space/c
- sideoverlap (m2,fm2,rm2,m2c,m3c)/metal2 ~(m2,fm2,rm2,m2c,m3c)/metal2 (pdiff,rpd,pdc)/active  15.900 ~space/m1,~space/c
+ overlap (m2,fm2,rm2,m3c)/metal2 (ndiff,rnd,ndc)/active   1.440 ~space/m1,~space/c
+ sideoverlap (m2,fm2,rm2,m2c,m3c)/metal2 ~(m2,fm2,rm2,m2c,m3c)/metal2 (ndiff,rnd,ndc)/active  17.400 ~space/m1,~space/c
+ overlap (m2,fm2,rm2,m2c,m3c)/metal2 (pdiff,rpd,pdc)/active   1.440 ~space/m1,~space/c
+ sideoverlap (m2,fm2,rm2,m2c,m3c)/metal2 ~(m2,fm2,rm2,m2c,m3c)/metal2 (pdiff,rpd,pdc)/active  17.400 ~space/m1,~space/c
 
 #metal2-poly blocked by ~space/m1,~space/c
  overlap (m2,fm2,rm2,m3c)/metal2 (poly,fp,rp,pc,nfet,pfet,fet)/active   1.350 ~space/m1,~space/c
- sideoverlap (m2,fm2,rm2,m2c,m3c)/metal2 ~(m2,fm2,rm2,m2c,m3c)/metal2 (poly,fp,rp,pc,nfet,pfet,fet)/active  10.800 ~space/m1,~space/c
- sideoverlap (poly,fp,rp,pc,nfet,pfet,fet)/active ~(poly,fp,rp,pc,nfet,pfet,fet)/active (m2,fm2,rm2,m2c,m3c)/metal2  10.800 ~space/m1,~space/c
+ sideoverlap (m2,fm2,rm2,m2c,m3c)/metal2 ~(m2,fm2,rm2,m2c,m3c)/metal2 (poly,fp,rp,pc,nfet,pfet,fet)/active  11.400 ~space/m1,~space/c
+ sideoverlap (poly,fp,rp,pc,nfet,pfet,fet)/active ~(poly,fp,rp,pc,nfet,pfet,fet)/active (m2,fm2,rm2,m2c,m3c)/metal2  11.400 ~space/m1,~space/c
 
 #metal2-poly2 blocked by ~space/m1
 
 #M2->M1
- overlap (m2,fm2,rm2,m3c)/metal2 (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,m2c)/metal1   2.520
- sideoverlap (m2,fm2,rm2,m2c,m3c)/metal2 ~(m2,fm2,rm2,m2c,m3c)/metal2 (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,m2c)/metal1  14.700
- sideoverlap (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,m2c)/metal1 ~(m1,fm1,rm1,ndc,nsc,pdc,psc,pc,m2c)/metal1 (m2,fm2,rm2,m2c,m3c)/metal2  14.700
+ overlap (m2,fm2,rm2,m3c)/metal2 (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,p2c,m2c)/metal1   2.700
+ sideoverlap (m2,fm2,rm2,m2c,m3c)/metal2 ~(m2,fm2,rm2,m2c,m3c)/metal2 (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,p2c,m2c)/metal1  15
+ sideoverlap (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,p2c,m2c)/metal1 ~(m1,fm1,rm1,ndc,nsc,pdc,psc,pc,p2c,m2c)/metal1 (m2,fm2,rm2,m2c,m3c)/metal2  15
 
 #metal3
  areacap (m3,fm3,rm3,pad)/metal3   0.900
 
 #metal3-sub blocked by ~space/a,~space/m1,~space/m2,~space/c
  overlap (m3,fm3,rm3,pad)/metal3 ~space/w   0.900 ~space/a,~space/m1,~space/m2,~space/c
- perimc (m3,fm3,rm3,m3c,pad)/metal3 ~(m3,fm3,rm3,m3c,pad)/metal3  10.500
- sideoverlap (m3,fm3,rm3,m3c,pad)/metal3 ~(m3,fm3,rm3,m3c,pad)/metal3 ~space/w  10.500 ~space/a,~space/m1,~space/m2,~space/c
+ perimc (m3,fm3,rm3,m3c,pad)/metal3 ~(m3,fm3,rm3,m3c,pad)/metal3  11.400
+ sideoverlap (m3,fm3,rm3,m3c,pad)/metal3 ~(m3,fm3,rm3,m3c,pad)/metal3 ~space/w  11.400 ~space/a,~space/m1,~space/m2,~space/c
 
 #rnw
  overlap (m3,fm3,rm3,pad)/metal3 rnw/active   0.900 ~space/m1,~space/m2,~space/c
- sideoverlap (m3,fm3,rm3,m3c,pad)/metal3 ~(m3,fm3,rm3,m3c,pad)/metal3 rnw/active  10.500 ~space/m1,~space/m2,~space/c
+ sideoverlap (m3,fm3,rm3,m3c,pad)/metal3 ~(m3,fm3,rm3,m3c,pad)/metal3 rnw/active  11.400 ~space/m1,~space/m2,~space/c
 
 #metal3-*diff blocked by ~space/m1,~space/m2,~space/c
  overlap (m3,fm3,rm3,pad)/metal3 (ndiff,rnd,ndc)/active   0.990 ~space/m1,~space/m2,~space/c
- sideoverlap (m3,fm3,rm3,m3c,pad)/metal3 ~(m3,fm3,rm3,m3c,pad)/metal3 (ndiff,rnd,ndc)/active  10.500 ~space/m1,~space/m2,~space/c
+ sideoverlap (m3,fm3,rm3,m3c,pad)/metal3 ~(m3,fm3,rm3,m3c,pad)/metal3 (ndiff,rnd,ndc)/active  11.400 ~space/m1,~space/m2,~space/c
  overlap (m3,fm3,rm3,pad)/metal3 (pdiff,rpd,pdc)/active   0.990 ~space/m1,~space/m2,~space/c
- sideoverlap (m3,fm3,rm3,m3c,pad)/metal3 ~(m3,fm3,rm3,m3c,pad)/metal3 (pdiff,rpd,pdc)/active  10.500 ~space/m1,~space/m2,~space/c
+ sideoverlap (m3,fm3,rm3,m3c,pad)/metal3 ~(m3,fm3,rm3,m3c,pad)/metal3 (pdiff,rpd,pdc)/active  11.400 ~space/m1,~space/m2,~space/c
 
 #metal3-poly blocked by ~space/m1,~space/m2,~space/c
  overlap (m3,fm3,rm3,pad)/metal3 (poly,fp,rp,pc,nfet,pfet,fet)/active   0.810 ~space/m1,~space/m2,~space/c
- sideoverlap (m3,fm3,rm3,m3c,pad)/metal3 ~(m3,fm3,rm3,m3c,pad)/metal3 (poly,fp,rp,pc,nfet,pfet,fet)/active   8.100 ~space/m1,~space/m2,~space/c
- sideoverlap (poly,fp,rp,pc,nfet,pfet,fet)/active ~(poly,fp,rp,pc,nfet,pfet,fet)/active (m3,fm3,rm3,m3c,pad)/metal3   8.100 ~space/m1,~space/m2,~space/c
+ sideoverlap (m3,fm3,rm3,m3c,pad)/metal3 ~(m3,fm3,rm3,m3c,pad)/metal3 (poly,fp,rp,pc,nfet,pfet,fet)/active   8.400 ~space/m1,~space/m2,~space/c
+ sideoverlap (poly,fp,rp,pc,nfet,pfet,fet)/active ~(poly,fp,rp,pc,nfet,pfet,fet)/active (m3,fm3,rm3,m3c,pad)/metal3   8.400 ~space/m1,~space/m2,~space/c
 
 #metal3-poly2 blocked by ~space/m1,~space/m2
 
 #M3->M1
- overlap (m3,fm3,rm3,pad)/metal3 (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,m2c)/metal1   1.080 ~space/m2
+ overlap (m3,fm3,rm3,pad)/metal3 (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,p2c,m2c)/metal1   1.080 ~space/m2
 
 #metal3-metal1 blocked by ~space/m2
- sideoverlap (m3,fm3,rm3,m3c,pad)/metal3 ~(m3,fm3,rm3,m3c,pad)/metal3 (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,m2c)/metal1   9.900 ~space/m2
- sideoverlap (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,m2c)/metal1 ~(m1,fm1,rm1,ndc,nsc,pdc,psc,pc,m2c)/metal1 (m3,fm3,rm3,m3c,pad)/metal3   9.900 ~space/m2
+ sideoverlap (m3,fm3,rm3,m3c,pad)/metal3 ~(m3,fm3,rm3,m3c,pad)/metal3 (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,p2c,m2c)/metal1   9.600 ~space/m2
+ sideoverlap (m1,fm1,rm1,ndc,nsc,pdc,psc,pc,p2c,m2c)/metal1 ~(m1,fm1,rm1,ndc,nsc,pdc,psc,pc,p2c,m2c)/metal1 (m3,fm3,rm3,m3c,pad)/metal3   9.600 ~space/m2
 
 #M3->M2
- overlap (m3,fm3,rm3,pad)/metal3 (m2,fm2,rm2,m2c,m3c)/metal2   3.060
- sideoverlap (m3,fm3,rm3,m3c,pad)/metal3 ~(m3,fm3,rm3,m3c,pad)/metal3 (m2,fm2,rm2,m2c,m3c)/metal2  16.800
- sideoverlap (m2,fm2,rm2,m2c,m3c)/metal2 ~(m2,fm2,rm2,m2c,m3c)/metal2 (m3,fm3,rm3,m3c,pad)/metal3  16.800
+ overlap (m3,fm3,rm3,pad)/metal3 (m2,fm2,rm2,m2c,m3c)/metal2   2.880
+ sideoverlap (m3,fm3,rm3,m3c,pad)/metal3 ~(m3,fm3,rm3,m3c,pad)/metal3 (m2,fm2,rm2,m2c,m3c)/metal2  15.600
+ sideoverlap (m2,fm2,rm2,m2c,m3c)/metal2 ~(m2,fm2,rm2,m2c,m3c)/metal2 (m3,fm3,rm3,m3c,pad)/metal3  15.600
 
 #metal4
 
@@ -7554,44 +6621,28 @@ extract
 
 #metali
 
-#fets
+#devices
 
-# fet  pfet pdiff,pdc 2 pfet Vdd! nwell 83 213
-# fet  pfet pdiff,pdc 1 pfet Vdd! nwell 83 213
+ device mosfet pfet pfet pdiff,pdc nwell ERROR 69 219
+ device mosfet nfet nfet ndiff,ndc pwell,space/w ERROR 66 225
 
-  device mosfet pfet pfet pdiff,pdc nwell $VDD 83 213
+ fetresis  pfet linear		21001
+ fetresis  pfet saturation	21001
+ fetresis  nfet linear		6020
+ fetresis  nfet saturation	6020
 
-# fet  nfet ndiff,ndc 2 nfet Gnd! pwell 59 222
-# fet  nfet ndiff,ndc 1 nfet Gnd! pwell 59 222
+ device resistor nwellResistor rnwell *nsd
+ device resistor polyResistor rpoly *poly
+ device resistor poly2Resistor rpoly2 *poly2
+ device resistor ndiffResistor rndiff *ndiff
+ device resistor pdiffResistor rpdiff *pdiff
 
-  device mosfet nfet nfet ndiff,ndc pwell $GND 59 222
+ device resistor metal1Resistor rmetal1 *metal1
+ device resistor metal2Resistor rmetal2 *metal2
+ device resistor metal3Resistor rmetal3 *metal3
 
-  fetresis  pfet linear		20996
-  fetresis  pfet saturation	20996
-  fetresis  nfet linear		6144
-  fetresis  nfet saturation	6144
+ device resistor presResistor phr *poly2
 
-# fet  rnwell	nsd,nsc	2	nwellResistor	Gnd!	nwell,pwell 0 0
-# fet  rpoly	poly,pc	2	polyResistor	Gnd!	nwell,pwell 0 0
-# fet  rpoly2	poly2,p2c	2	poly2Resistor	Gnd!	nwell,pwell 0 0
-# fet  rndiff	ndiff,ndc	2	ndiffResistor	Gnd!	nwell,pwell 0 0
-# fet  rpdiff	pdiff,pdc	2	pdiffResistor	Gnd!	nwell,pwell 0 0
-
-  device resistor None rnwell nsd,nsc
-  device resistor None rpoly  poly,pc
-  device resistor None rpoly2 poly2,p2c
-  device resistor None rndiff ndiff,ndc
-  device resistor None rpdiff pdiff,pdc
-
-# fet  rmetal1	metal1	2	metal1Resistor	Gnd!	nwell,pwell 0 0
-# fet  rmetal2	metal2	2	metal2Resistor	Gnd!	nwell,pwell 0 0
-# fet  rmetal3	metal3	2	metal3Resistor	Gnd!	nwell,pwell 0 0
-# fet  phr	poly2,p2c	2	phrResistor	Gnd!	nwell,pwell 0 0
-
-  device resistor None rmetal1 *metal1
-  device resistor None rmetal2 *metal2
-  device resistor None rmetal3 *metal3
-  device resistor None phr     poly2,p2c
 
 end
 
@@ -7606,7 +6657,7 @@ end
 
 router
  layer2 metal2 3 m2,fm2,rm2,m2c/m2,m3c/m2,m3c/m2 4 poly,fp,rp,ndiff,rnd,nsd,pdiff,rpd,psd,m1,fm1,rm1 1
- layer1 metal1 3 m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1 3
+ layer1 metal1 3 m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1 3
  contacts m2contact 4
  gridspacing 8
 
@@ -7706,12 +6757,12 @@ style colorversatec
  4949 A0A0 5252 2828 \
  9494 0A0A 2525 8282 \
  4949 A0A0 5252 2828
- poly2,ecap,phr,p2c,p2m12c yellow \
+ poly2,ecap,phr yellow \
  FFFF FFFF FFFF FFFF \
  FFFF FFFF FFFF FFFF \
  FFFF FFFF FFFF FFFF \
  FFFF FFFF FFFF FFFF
- m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1 cyan \
+ m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1 cyan \
  AAAA 0000 AAAA 0000 \
  AAAA 0000 AAAA 0000 \
  AAAA 0000 AAAA 0000 \
@@ -7834,7 +6885,7 @@ style versatec
  8080 4000 2020 1010 \
  0808 0004 0202 0101 \
  8080 0040 2020 1010
- m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,m2c/m1 \
+ m1,fm1,rm1,ndc/m1,nsc/m1,pdc/m1,psc/m1,pc/m1,p2c,m2c/m1 \
  8080 0000 0000 0000 \
  0808 0000 0000 0000 \
  8080 0000 0000 0000 \

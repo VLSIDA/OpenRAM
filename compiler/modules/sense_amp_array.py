@@ -1,9 +1,17 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
+#
 import design
 from tech import drc
 from vector import vector
 from sram_factory import factory
 import debug
 from globals import OPTS
+import logical_effort
 
 class sense_amp_array(design.design):
     """
@@ -42,16 +50,17 @@ class sense_amp_array(design.design):
         self.place_sense_amp_array()
         self.add_layout_pins()
         self.route_rails()
+        self.add_boundary()
         self.DRC_LVS()
 
     def add_pins(self):
         for i in range(0,self.word_size):
-            self.add_pin("data_{0}".format(i))
-            self.add_pin("bl_{0}".format(i))
-            self.add_pin("br_{0}".format(i))
-        self.add_pin("en")
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+            self.add_pin("data_{0}".format(i), "OUTPUT")
+            self.add_pin("bl_{0}".format(i), "INPUT")
+            self.add_pin("br_{0}".format(i), "INPUT")
+        self.add_pin("en", "INPUT")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
         
     def add_modules(self):
         self.amp = factory.create(module_type="sense_amp")
@@ -135,11 +144,15 @@ class sense_amp_array(design.design):
 
     def input_load(self):
         return self.amp.input_load()
-    
-    def analytical_delay(self, corner, slew, load=0.0):
-        return self.amp.analytical_delay(corner, slew=slew, load=load)
-        
+      
     def get_en_cin(self):
         """Get the relative capacitance of all the sense amp enable connections in the array"""
         sense_amp_en_cin = self.amp.get_en_cin()
         return sense_amp_en_cin * self.word_size
+        
+    def get_drain_cin(self):
+        """Get the relative capacitance of the drain of the PMOS isolation TX"""
+        from tech import parameter
+        #Bitcell drain load being used to estimate PMOS drain load
+        drain_load = logical_effort.convert_farad_to_relative_c(parameter['bitcell_drain_cap'])
+        return drain_load

@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
+#
 class table_gen:
     """small library of functions to generate the html tables"""
 
@@ -22,27 +29,38 @@ class table_gen:
         html += '</thead>'
         return html
 
-    def gen_table_body(self):
+    def gen_table_body(self,comments):
         """generate html body (used after gen_table_head)"""
         html = ''
 
         html += '<tbody>'
         html += '<tr>'
         for row in self.rows[1:]:
-            html += '<tr>'
-            for col in row:
-                html += '<td>' + str(col) + '</td>'
-            html += '</tr>'
+
+            if row[0] not in comments:
+                html += '<tr>'
+                for col in row:
+                    html += '<td>' + str(col) + '</td>'
+                html += '</tr>'
+
+            else:
+                html += '<!--'+row[0]+'<tr>'
+                for col in row:
+                    html += '<td>' + str(col) + '</td>'
+                html += '</tr>'+row[0]+'-->'
+
         html += '</tr>'
         html += '</tbody>'
         return html
+    def sort(self):
+        self.rows[1:] = sorted(self.rows[1:], key=lambda x : x[0])
 
-    def to_html(self):
+    def to_html(self,comments):
         """writes table_gen object to inline html"""
         html = ''
         html += '<table id= \"'+self.table_id+'\">'
         html += self.gen_table_head()
-        html += self.gen_table_body()
-        html += '</table>'
+        html += self.gen_table_body(comments)
+        html += '</table>\n'
 
         return html

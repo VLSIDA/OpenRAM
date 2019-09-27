@@ -180,14 +180,16 @@ class functional(simulation):
                         w_addrs.append(addr)
                 else:
                     (addr,word) = random.choice(list(self.stored_words.items()))
-                    ## cannot read from an address that is currently being written to
-                    # Yes, you can!!
-                    #if addr in w_addrs:
-                    #    self.add_noop_one_port(port)
-                    #else:
-                    comment = self.gen_cycle_comment("read", word, addr, "0"*self.num_wmasks, port, self.t_current)
-                    self.add_read_one_port(comment, addr, port)
-                    self.add_read_check(word, port)
+                    # The write driver is not sized sufficiently to drive through the two
+                    # bitcell access transistors to the read port. So, for now, we do not allow
+                    # a simultaneous write and read to the same address on different ports. This
+                    # could be even more difficult with multiple simultaneous read ports.
+                    if addr in w_addrs:
+                        self.add_noop_one_port(port)
+                    else:
+                        comment = self.gen_cycle_comment("read", word, addr, "0"*self.num_wmasks, port, self.t_current)
+                        self.add_read_one_port(comment, addr, port)
+                        self.add_read_check(word, port)
                 
             self.cycle_times.append(self.t_current)
             self.t_current += self.period

@@ -4,19 +4,18 @@
 [![License: BSD 3-clause](./images/license_badge.svg)](./LICENSE)
 
 Master: 
-[![Pipeline Status](https://scone.soe.ucsc.edu:8888/mrg/PrivateRAM/badges/master/pipeline.svg)](https://github.com/VLSIDA/PrivateRAM/commits/master)
-![Coverage](https://scone.soe.ucsc.edu:8888/mrg/PrivateRAM/badges/master/coverage.svg)
-[![Download](./images/download-stable-blue.svg)](https://github.com/VLSIDA/PrivateRAM/archive/master.zip)
+[![Pipeline Status](https://scone.soe.ucsc.edu:8888/mrg/OpenRAM/badges/master/pipeline.svg)](https://github.com/VLSIDA/OpenRAM/commits/master)
+![Coverage](https://scone.soe.ucsc.edu:8888/mrg/OpenRAM/badges/master/coverage.svg)
+[![Download](./images/download-stable-blue.svg)](https://github.com/VLSIDA/OpenRAM/archive/master.zip)
 
 Dev: 
-[![Pipeline Status](https://scone.soe.ucsc.edu:8888/mrg/PrivateRAM/badges/dev/pipeline.svg)](https://github.com/VLSIDA/PrivateRAM/commits/dev)
-![Coverage](https://scone.soe.ucsc.edu:8888/mrg/PrivateRAM/badges/dev/coverage.svg)
-[![Download](./images/download-unstable-blue.svg)](https://github.com/VLSIDA/PrivateRAM/archive/dev.zip)
+[![Pipeline Status](https://scone.soe.ucsc.edu:8888/mrg/OpenRAM/badges/dev/pipeline.svg)](https://github.com/VLSIDA/OpenRAM/commits/dev)
+![Coverage](https://scone.soe.ucsc.edu:8888/mrg/OpenRAM/badges/dev/coverage.svg)
+[![Download](./images/download-unstable-blue.svg)](https://github.com/VLSIDA/OpenRAM/archive/dev.zip)
 
 An open-source static random access memory (SRAM) compiler.
 
 # What is OpenRAM?
-
 <img align="right" width="25%" src="images/SCMOS_16kb_sram.jpg">
 
 OpenRAM is an open-source Python framework to create the layout,
@@ -165,18 +164,8 @@ If you want to support a enw technology, you will need to create:
 + a setup script for each technology you want to use
 + a technology directory for each technology with the base cells 
 
-All setup scripts should be in the setup\_scripts directory under the
-$OPENRAM\_TECH directory.  We provide two technology examples for
-[SCMOS] and [FreePDK45].  Please look at the following file for an
-example of what is needed for OpenRAM:
-
-```
-  $OPENRAM_TECH/setup_scripts/setup_openram_freepdk45.py
-```
-
-Each setup script should be named as: setup\_openram\_{tech name}.py.
-
-Each specific technology (e.g., [FreePDK45]) should be a subdirectory
+We provide two technology examples for [SCMOS] and [FreePDK45]. Each
+specific technology (e.g., [FreePDK45]) should be a subdirectory
 (e.g., $OPENRAM_TECH/freepdk45) and include certain folders and files:
 * gds_lib folder with all the .gds (premade) library cells:
   * dff.gds
@@ -184,6 +173,7 @@ Each specific technology (e.g., [FreePDK45]) should be a subdirectory
   * write_driver.gds
   * cell_6t.gds
   * replica\_cell\_6t.gds 
+  * dummy\_cell\_6t.gds 
 * sp_lib folder with all the .sp (premade) library netlists for the above cells.
 * layers.map 
 * A valid tech Python module (tech directory with \_\_init\_\_.py and tech.py) with:
@@ -237,9 +227,9 @@ If I forgot to add you, please let me know!
 [VLSIARCH]:              https://vlsiarch.ecen.okstate.edu/
 [OpenRAMpaper]:          https://ieeexplore.ieee.org/document/7827670/
 
-[Github issues]:         https://github.com/VLSIDA/PrivateRAM/issues
-[Github pull request]:   https://github.com/VLSIDA/PrivateRAM/pulls
-[Github projects]:       https://github.com/VLSIDA/PrivateRAM
+[Github issues]:         https://github.com/VLSIDA/OpenRAM/issues
+[Github pull request]:   https://github.com/VLSIDA/OpenRAM/pulls
+[Github projects]:       https://github.com/VLSIDA/OpenRAM/projects
 
 [documentation]:         https://docs.google.com/presentation/d/10InGB33N51I6oBHnqpU7_w9DXlx-qe9zdrlco2Yc5co/edit?usp=sharing
 [dev-group]:             mailto:openram-dev-group@ucsc.edu

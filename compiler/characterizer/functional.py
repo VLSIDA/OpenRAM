@@ -349,7 +349,7 @@ class functional(simulation):
 
         # Generate CLK signals
         for port in self.all_ports:
-            self.stim.gen_pulse(sig_name="{0}{1}".format(tech.spice["clk"], port),
+            self.stim.gen_pulse(sig_name="{0}{1}".format("clk", port),
                                 v1=self.gnd_voltage,
                                 v2=self.vdd_voltage,
                                 offset=self.period,
@@ -402,7 +402,7 @@ class functional(simulation):
         
         # For now, only testing these using first read port.
         port = self.read_ports[0]
-        self.graph.get_all_paths('{}{}'.format(tech.spice["clk"], port), 
+        self.graph.get_all_paths('{}{}'.format("clk", port), 
                                  '{}{}_{}'.format(self.dout_name, port, 0).lower())
 
         self.sen_name = self.get_sen_name(self.graph.all_paths)    

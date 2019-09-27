@@ -109,6 +109,8 @@ class lib:
             #set the read and write port as inputs.
             self.write_data_bus(port)
             self.write_addr_bus(port)
+            if self.sram.write_size:
+                self.write_wmask_bus(port)
             self.write_control_pins(port) #need to split this into sram and port control signals
             self.write_clk_timing_power(port)
 
@@ -297,6 +299,15 @@ class lib:
         self.lib.write("    bit_to : {0};\n".format(self.sram.addr_size - 1))
         self.lib.write("    }\n\n")
 
+        if self.sram.write_size:
+            self.lib.write("    type (wmask){\n")
+            self.lib.write("    base_type : array;\n")
+            self.lib.write("    data_type : bit;\n")
+            self.lib.write("    bit_width : {0};\n".format(self.sram.num_wmasks))
+            self.lib.write("    bit_from : 0;\n")
+            self.lib.write("    bit_to : {0};\n".format(self.sram.num_wmasks - 1))
+            self.lib.write("    }\n\n")
+
 
     def write_FF_setuphold(self, port):
         """ Adds Setup and Hold timing results"""
@@ -400,6 +411,20 @@ class lib:
         self.lib.write("        }\n")        
         self.lib.write("    }\n\n")
 
+    def write_wmask_bus(self, port):
+        """ Adds addr bus timing results."""
+
+        self.lib.write("    bus(wmask{0}){{\n".format(port))
+        self.lib.write("        bus_type  : wmask; \n")
+        self.lib.write("        direction  : input; \n")
+        self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"] / 1000))
+        self.lib.write("        max_transition       : {0};\n".format(self.slews[-1]))
+        self.lib.write("        pin(wmask{0}[{1}:0])".format(port, self.sram.num_wmasks - 1))
+        self.lib.write("{\n")
+
+        self.write_FF_setuphold(port)
+        self.lib.write("        }\n")
+        self.lib.write("    }\n\n")
 
     def write_control_pins(self, port):
         """ Adds control pins timing results."""

@@ -46,10 +46,10 @@ class simulation():
         """ sets feasible timing parameters """
         self.period = tech.spice["feasible_period"]
         self.slew = tech.spice["rise_time"]*2
-        self.load = tech.spice["msflop_in_cap"]*4
+        self.load = tech.spice["dff_in_cap"]*4
 
-        self.v_high = self.vdd_voltage - tech.spice["v_threshold_typical"]
-        self.v_low = tech.spice["v_threshold_typical"]        
+        self.v_high = self.vdd_voltage - tech.spice["nom_threshold"]
+        self.v_low = tech.spice["nom_threshold"]        
         self.gnd_voltage = 0
         
     def create_signal_names(self):
@@ -301,7 +301,7 @@ class simulation():
                 pin_names.append("WEB{0}".format(port))
 
         for port in range(total_ports):
-            pin_names.append("{0}{1}".format(tech.spice["clk"], port))
+            pin_names.append("{0}{1}".format("clk", port))
 
         if self.write_size:
             for port in write_index:
@@ -312,7 +312,7 @@ class simulation():
             for i in range(dbits):
                 pin_names.append("{0}{1}_{2}".format(dout_name,read_output, i))
                 
-        pin_names.append("{0}".format(tech.spice["vdd_name"]))
-        pin_names.append("{0}".format(tech.spice["gnd_name"]))
+        pin_names.append("{0}".format("vdd"))
+        pin_names.append("{0}".format("gnd"))
         return pin_names
         

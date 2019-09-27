@@ -336,10 +336,10 @@ class setup_hold():
         for self.related_input_slew in related_slews:
             for self.constrained_input_slew in constrained_slews:
                 # convert from ps to ns
-                LH_setup.append(tech.spice["msflop_setup"]/1e3)
-                HL_setup.append(tech.spice["msflop_setup"]/1e3)
-                LH_hold.append(tech.spice["msflop_hold"]/1e3)
-                HL_hold.append(tech.spice["msflop_hold"]/1e3)
+                LH_setup.append(tech.spice["dff_setup"]/1e3)
+                HL_setup.append(tech.spice["dff_setup"]/1e3)
+                LH_hold.append(tech.spice["dff_hold"]/1e3)
+                HL_hold.append(tech.spice["dff_hold"]/1e3)
                 
         times = {"setup_times_LH": LH_setup,
                  "setup_times_HL": HL_setup,

@@ -259,7 +259,7 @@ class delay(simulation):
         """Sets important names for characterization such as Sense amp enable and internal bit nets."""
         
         port = self.read_ports[0]
-        self.graph.get_all_paths('{}{}'.format(tech.spice["clk"], port), 
+        self.graph.get_all_paths('{}{}'.format("clk", port), 
                                  '{}{}_{}'.format(self.dout_name, port, self.probe_data))
         
         self.sen_name = self.get_sen_name(self.graph.all_paths)    
@@ -1050,7 +1050,7 @@ class delay(simulation):
 
     def get_address_row_number(self, probe_address):
         """Calculates wordline row number of data bit under test using address and column mux size"""
-        
+
         return int(probe_address[self.sram.col_addr_size:],2)
 
     def prepare_netlist(self):
@@ -1285,13 +1285,13 @@ class delay(simulation):
             debug.warning("Analytical characterization results are not supported for multiport.")
         
         # Probe set to 0th bit, does not matter for analytical delay.
-        self.set_probe('0', 0)
+        self.set_probe('0'*self.addr_size, 0)
         self.create_graph()
         self.set_internal_spice_names()
         self.create_measurement_names()
         
         port = self.read_ports[0]
-        self.graph.get_all_paths('{}{}'.format(tech.spice["clk"], port), 
+        self.graph.get_all_paths('{}{}'.format("clk", port), 
                                  '{}{}_{}'.format(self.dout_name, port, self.probe_data))
         
         # Select the path with the bitline (bl)

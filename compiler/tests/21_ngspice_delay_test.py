@@ -47,7 +47,7 @@ class timing_sram_test(openram_test):
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         d = delay(s.s, tempspice, corner)
         import tech
-        loads = [tech.spice["msflop_in_cap"]*4]
+        loads = [tech.spice["dff_in_cap"]*4]
         slews = [tech.spice["rise_time"]*2]
         data, port_data = d.analyze(probe_address, probe_data, slews, loads)
         #Combine info about port into all data

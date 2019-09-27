@@ -164,18 +164,8 @@ If you want to support a enw technology, you will need to create:
 + a setup script for each technology you want to use
 + a technology directory for each technology with the base cells 
 
-All setup scripts should be in the setup\_scripts directory under the
-$OPENRAM\_TECH directory.  We provide two technology examples for
-[SCMOS] and [FreePDK45].  Please look at the following file for an
-example of what is needed for OpenRAM:
-
-```
-  $OPENRAM_TECH/setup_scripts/setup_openram_freepdk45.py
-```
-
-Each setup script should be named as: setup\_openram\_{tech name}.py.
-
-Each specific technology (e.g., [FreePDK45]) should be a subdirectory
+We provide two technology examples for [SCMOS] and [FreePDK45]. Each
+specific technology (e.g., [FreePDK45]) should be a subdirectory
 (e.g., $OPENRAM_TECH/freepdk45) and include certain folders and files:
 * gds_lib folder with all the .gds (premade) library cells:
   * dff.gds
@@ -183,6 +173,7 @@ Each specific technology (e.g., [FreePDK45]) should be a subdirectory
   * write_driver.gds
   * cell_6t.gds
   * replica\_cell\_6t.gds 
+  * dummy\_cell\_6t.gds 
 * sp_lib folder with all the .sp (premade) library netlists for the above cells.
 * layers.map 
 * A valid tech Python module (tech directory with \_\_init\_\_.py and tech.py) with:

@@ -24,12 +24,12 @@ class stimuli():
     """ Class for providing stimuli functions """
 
     def __init__(self, stim_file, corner):
-        self.vdd_name = tech.spice["vdd_name"]
-        self.gnd_name = tech.spice["gnd_name"]
+        self.vdd_name = "vdd"
+        self.gnd_name = "gnd"
         self.pmos_name = tech.spice["pmos"]
         self.nmos_name = tech.spice["nmos"]
-        self.tx_width = tech.spice["minwidth_tx"]
-        self.tx_length = tech.spice["channel"]
+        self.tx_width = tech.drc["minwidth_tx"]
+        self.tx_length = tech.drc["minlength_channel"]
 
         self.sf = stim_file
         

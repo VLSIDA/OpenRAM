@@ -20,7 +20,7 @@ class write_mask_and_array(design.design):
     The write mask AND array goes between the write driver array and the sense amp array.
     """
 
-    def __init__(self, name, columns, word_size, write_size):
+    def __init__(self, name, columns, word_size, write_size, port=0):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("columns: {0}".format(columns))
@@ -30,6 +30,7 @@ class write_mask_and_array(design.design):
         self.columns = columns
         self.word_size = word_size
         self.write_size = write_size
+        self.port = port
         self.words_per_row = int(columns / word_size)
         self.num_wmasks = int(word_size / write_size)
 
@@ -105,56 +106,47 @@ class write_mask_and_array(design.design):
     def add_layout_pins(self):
         self.nand2 = factory.create(module_type="pnand2")
         supply_pin=self.nand2.get_pin("vdd")
-        for i in range(self.num_wmasks):
-            wmask_in_pin = self.and2_insts[i].get_pin("A")
-            self.add_layout_pin(text="wmask_in_{0}".format(i),
-                                layer=wmask_in_pin.layer,
-                                offset=wmask_in_pin.ll(),
-                                width=wmask_in_pin.width(),
-                                height=wmask_in_pin.height())
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=wmask_in_pin.center())
 
+        # Create the enable pin that connects all write mask AND array's B pins
+        beg_en_pin = self.and2_insts[0].get_pin("B")
+        end_en_pin = self.and2_insts[self.num_wmasks-1].get_pin("B")
+        if self.port % 2:
+            # Extend metal3 to edge of AND array in multiport
+            en_to_edge = self.and2.width - beg_en_pin.cx()
+            self.add_layout_pin(text="en",
+                                layer="metal3",
+                                offset=beg_en_pin.bc(),
+                                width=end_en_pin.cx() - beg_en_pin.cx() + en_to_edge)
+            self.add_via_center(layers=("metal1", "via1", "metal2"),
+                                offset=vector(end_en_pin.cx() + en_to_edge, end_en_pin.cy()))
+            self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                offset=vector(end_en_pin.cx() + en_to_edge, end_en_pin.cy()))
+        else:
+            self.add_layout_pin(text="en",
+                                layer="metal3",
+                                offset=beg_en_pin.bc(),
+                                width=end_en_pin.cx() - beg_en_pin.cx())
+
+        for i in range(self.num_wmasks):
+            # Copy remaining layout pins
+            self.copy_layout_pin(self.and2_insts[i],"A","wmask_in_{0}".format(i))
+            self.copy_layout_pin(self.and2_insts[i],"Z","wmask_out_{0}".format(i))
+
+            # Add via connections to metal3 for AND array's B pin
             en_pin = self.and2_insts[i].get_pin("B")
-            # Add the M1->M2 stack
             self.add_via_center(layers=("metal1", "via1", "metal2"),
                                 offset=en_pin.center())
-            # Add the M2->M3 stack
             self.add_via_center(layers=("metal2", "via2", "metal3"),
                                 offset=en_pin.center())
 
-            # Route en pin between AND gates
-            if i < self.num_wmasks-1:
-                self.add_layout_pin(text="en",
-                                    layer="metal3",
-                                    offset=en_pin.bc(),
-                                    width = self.en_width(i),
-                                    height = drc('minwidth_metal3'))
-
-            wmask_out_pin = self.and2_insts[i].get_pin("Z")
-            self.add_layout_pin(text="wmask_out_{0}".format(i),
-                                layer=wmask_out_pin.layer,
-                                offset=wmask_out_pin.ll(),
-                                width=wmask_out_pin.width(),
-                                height=wmask_out_pin.height())
-
             self.add_power_pin("gnd", vector(supply_pin.width() + i * self.wmask_en_len, 0))
             self.add_power_pin("vdd", vector(supply_pin.width() + i * self.wmask_en_len, self.height))
-
+            # Route power and ground rails together
             if i < self.num_wmasks-1:
                 for n in ["gnd","vdd"]:
                     pin = self.and2_insts[i].get_pin(n)
                     next_pin = self.and2_insts[i+1].get_pin(n)
                     self.add_path("metal1",[pin.center(),next_pin.center()])
-
-
-    def en_width(self, pin):
-        en_pin = self.and2_insts[pin].get_pin("B")
-        next_en_pin = self.and2_insts[pin+1].get_pin("B")
-        width = next_en_pin.center() - en_pin.center()
-        # Return x coordinates only
-        return width[0]
-
 
     def get_cin(self):
         """Get the relative capacitance of all the input connections in the bank"""

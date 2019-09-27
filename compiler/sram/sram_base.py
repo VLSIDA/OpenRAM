@@ -27,7 +27,7 @@ class sram_base(design, verilog, lef):
     """
     def __init__(self, name, sram_config):
         design.__init__(self, name)
-        lef.__init__(self, ["metal1", "metal2", "metal3"])
+        lef.__init__(self, ["metal1", "metal2", "metal3", "metal4"])
         verilog.__init__(self)
         
         self.sram_config = sram_config
@@ -120,7 +120,7 @@ class sram_base(design, verilog, lef):
 
         self.add_lvs_correspondence_points()
         
-        #self.offset_all_coordinates()
+        self.offset_all_coordinates()
 
         highest_coord = self.find_highest_coords()
         self.width = highest_coord[0]

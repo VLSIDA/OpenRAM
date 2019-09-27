@@ -74,7 +74,9 @@ class bank(design.design):
         # Remember the bank center for further placement
         self.bank_array_ll = self.offset_all_coordinates().scale(-1,-1)
         self.bank_array_ur = self.bitcell_array_inst.ur()
-        
+        self.bank_array_ul = self.bitcell_array_inst.ul()
+
+
         self.DRC_LVS()
 
     def add_pins(self):
@@ -928,7 +930,10 @@ class bank(design.design):
         connection.append((self.prefix+"wl_en{}".format(port), self.bitcell_array_inst.get_pin(rbl_wl_name).lc()))
             
         if port in self.write_ports:
-            connection.append((self.prefix+"w_en{}".format(port), self.port_data_inst[port].get_pin("w_en").lc()))
+            if port % 2:
+                connection.append((self.prefix+"w_en{}".format(port), self.port_data_inst[port].get_pin("w_en").rc()))
+            else:
+                connection.append((self.prefix+"w_en{}".format(port), self.port_data_inst[port].get_pin("w_en").lc()))
                 
         if port in self.read_ports:
             connection.append((self.prefix+"s_en{}".format(port), self.port_data_inst[port].get_pin("s_en").lc()))

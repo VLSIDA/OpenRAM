@@ -44,4 +44,14 @@ Contributions and modifications to this kit are welcomed and encouraged.
 ncsu_basekit/     Base kit for custom design
 osu_soc/          Standard-cell kit for synthesis, place, & route
 
+FreePDK45.lyp is converted automatically from the .tf using:
+https://github.com/klayoutmatthias/tf_import
+Command line:
+klayout -z -rd tf_file=FreePDK45.tf -rd lyp_file=FreePDK45.lyp
+You can then view layouts with:
+klayout file.gds -l mosis.lyp
 
+glade_freepdk45.py is a script for Glade:
+https://peardrop.co.uk/
+to load the .tf using:
+glade -script ~/openram/technology/freepdk45/tf/glade_freepdk45.py -gds file.gds

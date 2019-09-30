@@ -42,10 +42,10 @@ class timing_setup_test(openram_test):
                            'setup_times_HL': [0.026855499999999997],
                            'setup_times_LH': [0.032959]}
         elif OPTS.tech_name == "scn4m_subm":
-            golden_data = {'hold_times_HL': [-0.0891113],
-                            'hold_times_LH': [-0.0769043],
-                            'setup_times_HL': [0.1184082],
-                            'setup_times_LH': [0.1733398]}
+            golden_data = {'hold_times_HL': [-0.0805664],
+                           'hold_times_LH': [-0.11718749999999999],
+                           'setup_times_HL': [0.16357419999999998],
+                           'setup_times_LH': [0.1757812]}
         else:
             self.assertTrue(False) # other techs fail
 

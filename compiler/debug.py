@@ -94,7 +94,7 @@ def info(lev, str):
         frm = inspect.stack()[1]
         mod = inspect.getmodule(frm[0])
         # classname = frm.f_globals['__name__']
-        if mod.__name__ == None:
+        if mod.__name__ is None:
             class_name = ""
         else:
             class_name = mod.__name__

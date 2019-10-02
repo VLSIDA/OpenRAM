@@ -6,6 +6,7 @@
 # All rights reserved.
 #
 
+
 class delay_data():
     """
     This is the delay class to represent the delay information
@@ -20,13 +21,13 @@ class delay_data():
 
     def __str__(self):
         """ override print function output """
-        return "Delay Data: Delay "+str(self.delay)+", Slew "+str(self.slew)+""
+        return "Delta Data: Delay {} Slew {}".format(self.delay, self.slew)
 
     def __add__(self, other):
         """
         Override - function (left), for delay_data: a+b != b+a
         """
-        assert isinstance(other,delay_data)
+        assert isinstance(other, delay_data)
         return delay_data(other.delay + self.delay,
                           other.slew)
 
@@ -34,7 +35,7 @@ class delay_data():
         """
         Override - function (right), for delay_data: a+b != b+a
         """
-        assert isinstance(other,delay_data)
+        assert isinstance(other, delay_data)
         return delay_data(other.delay + self.delay,
                           self.slew)
                           

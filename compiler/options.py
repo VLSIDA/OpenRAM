@@ -6,13 +6,13 @@
 # All rights reserved.
 #
 import optparse
-import getpass 
+import getpass
 import os
-#import sram_config
 
 class options(optparse.Values):
     """
-    Class for holding all of the OpenRAM options. All of these options can be over-riden in a configuration file
+    Class for holding all of the OpenRAM options. All
+    of these options can be over-riden in a configuration file
     that is the sole required command-line positional argument for openram.py.
     """
 
@@ -39,15 +39,16 @@ class options(optparse.Values):
     process_corners = ""
 
     # Size parameters must be specified by user in config file.
-    #num_words = 0
-    #word_size = 0
+    # num_words = 0
+    # word_size = 0
     # You can manually specify banks, but it is better to auto-detect it.
     num_banks = 1
 
     ###################
     # Optimization options
     ###################
-    rbl_delay_percentage = 0.5  #Approximate percentage of delay compared to bitlines
+    # Approximate percentage of delay compared to bitlines
+    rbl_delay_percentage = 0.5
     
     # Allow manual adjustment of the delay chain over automatic
     use_tech_delay_chain_size = False
@@ -65,7 +66,8 @@ class options(optparse.Values):
         openram_temp = os.path.abspath(os.environ.get("OPENRAM_TMP"))
     except:
         # Else use a unique temporary directory
-        openram_temp = "/tmp/openram_{0}_{1}_temp/".format(getpass.getuser(),os.getpid())
+        openram_temp = "/tmp/openram_{0}_{1}_temp/".format(getpass.getuser(),
+                                                           os.getpid())
     # This is the verbosity level to control debug information. 0 is none, 1
     # is minimal, etc.
     debug_level = 0
@@ -100,7 +102,8 @@ class options(optparse.Values):
     drc_name = ""
     lvs_name = ""
     pex_name = ""
-    # The DRC/LVS/PEX executable being used which is derived from the user PATH.
+    # The DRC/LVS/PEX executable being used
+    # which is derived from the user PATH.
     drc_exe = None
     lvs_exe = None
     pex_exe = None
@@ -113,15 +116,14 @@ class options(optparse.Values):
     output_path = "."
     # Define the output file base name
     output_name = ""
-    # Use analytical delay models by default rather than (slow) characterization
+    # Use analytical delay models by default
+    # rather than (slow) characterization
     analytical_delay = True
-    # Purge the temp directory after a successful run (doesn't purge on errors, anyhow)
+    # Purge the temp directory after a successful
+    # run (doesn't purge on errors, anyhow)
     purge_temp = True
 
-
-    ###################    
     # These are the default modules that can be over-riden
-    ###################    
     bank_select = "bank_select"
     bitcell_array = "bitcell_array"
     bitcell = "bitcell"

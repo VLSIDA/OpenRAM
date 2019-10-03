@@ -13,10 +13,7 @@ created without re-running the entire process. Right now, it assumes the nominal
 corner, but should probably be extended.
 """
 
-import sys,os
-import datetime
-import re
-import importlib
+import sys
 from globals import *
 
 (OPTS, args) = parse_args()

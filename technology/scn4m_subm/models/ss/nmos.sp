@@ -3,11 +3,12 @@
 * Note: These models are approximate 
 *       and should be substituted with actual
 *       models from MOSIS or SCN4ME
+*       SS model is a copy of nominal with +10% vth0
 *********************************************
 
 .MODEL n NMOS (     LEVEL   = 49
 +VERSION = 3.1            TNOM    = 27             TOX     = 7.6E-9
-+XJ      = 1.5E-7         NCH     = 1.7E17         VTH0    = 0.4964448
++XJ      = 1.5E-7         NCH     = 1.7E17         VTH0    = 0.5108928
 +K1      = 0.5307769      K2      = 0.0199705      K3      = 0.2963637
 +K3B     = 0.2012165      W0      = 2.836319E-6    NLX     = 2.894802E-7
 +DVT0W   = 0              DVT1W   = 5.3E6          DVT2W   = -0.032

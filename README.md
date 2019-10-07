@@ -246,4 +246,4 @@ If I forgot to add you, please let me know!
 [FreePDK45]:             https://www.eda.ncsu.edu/wiki/FreePDK45:Contents
 [SCMOS]:                 https://www.mosis.com/files/scmos/scmos.pdf
 
-[Slack]:                 https://join.slack.com/t/openram/shared_invite/enQtNDgxMjc3NzU5NTI1LTE4ODMyM2I0Mzk2ZmFiMjgwYTYyMTQ4NTgwMmUwMDhiM2E1MDViNDRjYzU1NjJhZTQxNWZjMzE3M2FlODBmZjA
+[Slack]:                 https://join.slack.com/t/openram/shared_invite/enQtNDgxMjc3NzU5NTI1LWZiYWMwNjNkZThmYTdkODc3NDE1NDhjNzUxNDhmMDQ4ZTM3NDgwNWFlNjM5NWFiZDkyMzBlNzc1NTg3ZjllNTY

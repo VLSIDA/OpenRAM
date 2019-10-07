@@ -16,34 +16,32 @@ a LEF (.lef) file for preliminary P&R (real one should be from layout)
 a Liberty (.lib) file for timing analysis/optimization
 """
 
-import sys,os
+import sys
 import datetime
-import re
-import importlib
-from globals import *
+import globals as g
 
-(OPTS, args) = parse_args()
+(OPTS, args) = g.parse_args()
 
 # Check that we are left with a single configuration file as argument.
 if len(args) != 1:
-    print(USAGE)
+    print(g.USAGE)
     sys.exit(2)
 
 
 # These depend on arguments, so don't load them until now.
 import debug
 
-init_openram(config_file=args[0], is_unit_test=False)
+g.init_openram(config_file=args[0], is_unit_test=False)
 
 # Only print banner here so it's not in unit tests
-print_banner()
+g.print_banner()
 
 # Keep track of running stats
 start_time = datetime.datetime.now()
-print_time("Start",start_time)
+g.print_time("Start", start_time)
 
 # Output info about this run
-report_status()
+g.report_status()
 
 from sram_config import sram_config
 
@@ -54,15 +52,16 @@ c = sram_config(word_size=OPTS.word_size,
                 write_size=OPTS.write_size)
 debug.print_raw("Words per row: {}".format(c.words_per_row))
 
-#from parser import *
-output_extensions = ["sp","v","lib","py","html","log"]
+output_extensions = ["sp", "v", "lib", "py", "html", "log"]
 # Only output lef/gds if back-end
 if not OPTS.netlist_only:
-    output_extensions.extend(["lef","gds"])
+    output_extensions.extend(["lef", "gds"])
         
-output_files = ["{0}{1}.{2}".format(OPTS.output_path,OPTS.output_name,x) for x in output_extensions]
+output_files = ["{0}{1}.{2}".format(OPTS.output_path,
+                                    OPTS.output_name, x)
+                for x in output_extensions]
 debug.print_raw("Output files are: ")
-for path  in output_files:
+for path in output_files:
     debug.print_raw(path)
 
 
@@ -74,7 +73,7 @@ s = sram(sram_config=c,
 s.save()
 
 # Delete temp files etc.
-end_openram()
-print_time("End",datetime.datetime.now(), start_time)
+g.end_openram()
+g.print_time("End", datetime.datetime.now(), start_time)
 
 

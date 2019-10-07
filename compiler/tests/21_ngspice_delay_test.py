@@ -65,16 +65,16 @@ class timing_sram_test(openram_test):
                            'write0_power': [0.36360849999999995],
                            'write1_power': [0.3486931]}
         elif OPTS.tech_name == "scn4m_subm":
-            golden_data = {'delay_hl': [1.7083549999999998],
-                           'delay_lh': [1.7083549999999998],
-                           'leakage_power': 0.001119657,
-                           'min_period': 7.812,
-                           'read0_power': [8.013845],
-                           'read1_power': [7.6889389999999995],
-                           'slew_hl': [1.31918],
-                           'slew_lh': [1.31918],
-                           'write0_power': [8.791557000000001],
-                           'write1_power': [8.70443]}
+            golden_data = {'delay_hl': [1.85985],
+                           'delay_lh': [1.85985],
+                           'leakage_power': 0.008613619,
+                           'min_period': 6.875,
+                           'read0_power': [12.656310000000001],
+                           'read1_power': [12.11682],
+                           'slew_hl': [1.868942],
+                           'slew_lh': [1.868942],
+                           'write0_power': [13.978110000000001],
+                           'write1_power': [11.437930000000001]}
         else:
             self.assertTrue(False) # other techs fail
 

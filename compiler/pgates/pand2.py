@@ -6,16 +6,14 @@
 # All rights reserved.
 #
 import debug
-from tech import drc
-from math import log
 from vector import vector
-from globals import OPTS
 import pgate
 from sram_factory import factory
 
+
 class pand2(pgate.pgate):
     """
-    This is a simple buffer used for driving loads. 
+    This is a simple buffer used for driving loads.
     """
     def __init__(self, name, size=1, height=None):
         debug.info(1, "Creating pnand2 {}".format(name))
@@ -23,7 +21,7 @@ class pand2(pgate.pgate):
         
         self.size = size
         
-        # Creates the netlist and layout        
+        # Creates the netlist and layout
         pgate.pgate.__init__(self, name, height)
 
     def create_netlist(self):
@@ -33,10 +31,13 @@ class pand2(pgate.pgate):
 
     def create_modules(self):
         # Shield the cap, but have at least a stage effort of 4
-        self.nand = factory.create(module_type="pnand2",height=self.height) 
+        self.nand = factory.create(module_type="pnand2", height=self.height)
         self.add_mod(self.nand)
 
-        self.inv = factory.create(module_type="pdriver", neg_polarity=True, fanout=3*self.size, height=self.height)
+        self.inv = factory.create(module_type="pdriver",
+                                  neg_polarity=True,
+                                  fanout=3*self.size,
+                                  height=self.height)
         self.add_mod(self.inv)
 
     def create_layout(self):
@@ -54,44 +55,44 @@ class pand2(pgate.pgate):
         self.add_pin("gnd", "GROUND")
 
     def create_insts(self):
-        self.nand_inst=self.add_inst(name="pand2_nand",
-                                     mod=self.nand)
-        self.connect_inst(["A", "B", "zb_int",  "vdd", "gnd"])
+        self.nand_inst = self.add_inst(name="pand2_nand",
+                                       mod=self.nand)
+        self.connect_inst(["A", "B", "zb_int", "vdd", "gnd"])
         
-        self.inv_inst=self.add_inst(name="pand2_inv",
-                                    mod=self.inv)
-        self.connect_inst(["zb_int", "Z",  "vdd", "gnd"])
+        self.inv_inst = self.add_inst(name="pand2_inv",
+                                      mod=self.inv)
+        self.connect_inst(["zb_int", "Z", "vdd", "gnd"])
 
     def place_insts(self):
-        # Add NAND to the right 
-        self.nand_inst.place(offset=vector(0,0))
+        # Add NAND to the right
+        self.nand_inst.place(offset=vector(0, 0))
 
         # Add INV to the right
-        self.inv_inst.place(offset=vector(self.nand_inst.rx(),0))
+        self.inv_inst.place(offset=vector(self.nand_inst.rx(), 0))
         
     def add_wires(self):
         # nand Z to inv A
         z1_pin = self.nand_inst.get_pin("Z")
         a2_pin = self.inv_inst.get_pin("A")
-        mid1_point = vector(0.5*(z1_pin.cx()+a2_pin.cx()), z1_pin.cy())
+        mid1_point = vector(0.5 * (z1_pin.cx() + a2_pin.cx()), z1_pin.cy())
         mid2_point = vector(mid1_point, a2_pin.cy())
-        self.add_path("metal1", [z1_pin.center(), mid1_point, mid2_point, a2_pin.center()])
-        
+        self.add_path("metal1",
+                      [z1_pin.center(), mid1_point, mid2_point, a2_pin.center()])
         
     def add_layout_pins(self):
         # Continous vdd rail along with label.
-        vdd_pin=self.inv_inst.get_pin("vdd")
+        vdd_pin = self.inv_inst.get_pin("vdd")
         self.add_layout_pin(text="vdd",
                             layer="metal1",
-                            offset=vdd_pin.ll().scale(0,1),
+                            offset=vdd_pin.ll().scale(0, 1),
                             width=self.width,
                             height=vdd_pin.height())
         
         # Continous gnd rail along with label.
-        gnd_pin=self.inv_inst.get_pin("gnd")
+        gnd_pin = self.inv_inst.get_pin("gnd")
         self.add_layout_pin(text="gnd",
                             layer="metal1",
-                            offset=gnd_pin.ll().scale(0,1),
+                            offset=gnd_pin.ll().scale(0, 1),
                             width=self.width,
                             height=vdd_pin.height())
             
@@ -102,7 +103,7 @@ class pand2(pgate.pgate):
                                         width=pin.width(),
                                         height=pin.height())
 
-        for pin_name in ["A","B"]:
+        for pin_name in ["A", "B"]:
             pin = self.nand_inst.get_pin(pin_name)
             self.add_layout_pin_rect_center(text=pin_name,
                                             layer=pin.layer,

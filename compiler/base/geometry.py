@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 """
-This provides a set of useful generic types for the gdsMill interface. 
+This provides a set of useful generic types for the gdsMill interface.
 """
 import debug
 from vector import vector
@@ -14,6 +14,7 @@ import tech
 import math
 from globals import OPTS
 from utils import round_to_grid
+
 
 class geometry:
     """
@@ -27,11 +28,11 @@ class geometry:
 
     def __str__(self):
         """ override print function output """
-        debug.error("__str__ must be overridden by all geometry types.",1)
+        debug.error("__str__ must be overridden by all geometry types.", 1)
 
     def __repr__(self):
         """ override print function output """
-        debug.error("__repr__ must be overridden by all geometry types.",1)
+        debug.error("__repr__ must be overridden by all geometry types.", 1)
 
     # def translate_coords(self, coords, mirr, angle, xyShift):
     #     """Calculate coordinates after flip, rotate, and shift"""
@@ -46,50 +47,52 @@ class geometry:
         """Calculate coordinates after flip, rotate, and shift"""
         coordinate = []
         for item in coords:
-            x = item[0]*math.cos(angle) - item[1]*mirr*math.sin(angle) + offset[0]
-            y = item[0]*math.sin(angle) + item[1]*mirr*math.cos(angle) + offset[1]
+            x = item[0] * math.cos(angle) - item[1] * mirr * math.sin(angle) + offset[0]
+            y = item[0] * math.sin(angle) + item[1] * mirr * math.cos(angle) + offset[1]
             coordinate += [[x, y]]
         return coordinate
     
     def normalize(self):
         """ Re-find the LL and UR points after a transform """
-        (first,second)=self.boundary
-        ll = vector(min(first[0],second[0]),min(first[1],second[1])).snap_to_grid()
-        ur = vector(max(first[0],second[0]),max(first[1],second[1])).snap_to_grid()
-        self.boundary=[ll,ur]
+        (first, second) = self.boundary
+        ll = vector(min(first[0], second[0]),
+                    min(first[1], second[1])).snap_to_grid()
+        ur = vector(max(first[0], second[0]),
+                    max(first[1], second[1])).snap_to_grid()
+        self.boundary = [ll, ur]
 
     def update_boundary(self):
         """ Update the boundary with a new placement. """
-        self.compute_boundary(self.offset,self.mirror,self.rotate)
+        self.compute_boundary(self.offset, self.mirror, self.rotate)
         
-    def compute_boundary(self,offset=vector(0,0),mirror="",rotate=0):
-        """ Transform with offset, mirror and rotation to get the absolute pin location. 
+    def compute_boundary(self, offset=vector(0, 0), mirror="", rotate=0):
+        """ Transform with offset, mirror and rotation to get the absolute pin location.
         We must then re-find the ll and ur. The master is the cell instance. """
         if OPTS.netlist_only:
             return
-        (ll,ur) = [vector(0,0),vector(self.width,self.height)]
+        (ll, ur) = [vector(0, 0), vector(self.width, self.height)]
 
-        if mirror=="MX":
-            ll=ll.scale(1,-1)
-            ur=ur.scale(1,-1)
-        elif mirror=="MY":
-            ll=ll.scale(-1,1)
-            ur=ur.scale(-1,1)
-        elif mirror=="XY":
-            ll=ll.scale(-1,-1)
-            ur=ur.scale(-1,-1)
+        if mirror == "MX":
+            ll = ll.scale(1, -1)
+            ur = ur.scale(1, -1)
+        elif mirror == "MY":
+            ll = ll.scale(-1, 1)
+            ur = ur.scale(-1, 1)
+        elif mirror == "XY":
+            ll = ll.scale(-1, -1)
+            ur = ur.scale(-1, -1)
             
-        if rotate==90:
-            ll=ll.rotate_scale(-1,1)
-            ur=ur.rotate_scale(-1,1)
-        elif rotate==180:
-            ll=ll.scale(-1,-1)
-            ur=ur.scale(-1,-1)
-        elif rotate==270:
-            ll=ll.rotate_scale(1,-1)
-            ur=ur.rotate_scale(1,-1)
+        if rotate == 90:
+            ll = ll.rotate_scale(-1, 1)
+            ur = ur.rotate_scale(-1, 1)
+        elif rotate == 180:
+            ll = ll.scale(-1, -1)
+            ur = ur.scale(-1, -1)
+        elif rotate == 270:
+            ll = ll.rotate_scale(1, -1)
+            ur = ur.rotate_scale(1, -1)
 
-        self.boundary=[offset+ll,offset+ur]
+        self.boundary = [offset + ll, offset + ur]
         self.normalize()
         
     def ll(self):
@@ -107,7 +110,6 @@ class geometry:
     def ul(self):
         """ Return the upper left corner """
         return vector(self.boundary[0].x, self.boundary[1].y)
-
 
     def uy(self):
         """ Return the upper edge """
@@ -127,11 +129,11 @@ class geometry:
 
     def cx(self):
         """ Return the center x """
-        return 0.5*(self.boundary[0].x + self.boundary[1].x)
+        return 0.5 * (self.boundary[0].x + self.boundary[1].x)
     
     def cy(self):
         """ Return the center y """
-        return 0.5*(self.boundary[0].y + self.boundary[1].y)
+        return 0.5 * (self.boundary[0].y + self.boundary[1].y)
     
         
 class instance(geometry):
@@ -139,10 +141,11 @@ class instance(geometry):
     An instance of an instance/module with a specified location and
     rotation
     """
-    def __init__(self, name, mod, offset=[0,0], mirror="R0", rotate=0):
+    def __init__(self, name, mod, offset=[0, 0], mirror="R0", rotate=0):
         """Initializes an instance to represent a module"""
         geometry.__init__(self)
-        debug.check(mirror not in ["R90","R180","R270"], "Please use rotation and not mirroring during instantiation.")
+        debug.check(mirror not in ["R90", "R180", "R270"],
+                    "Please use rotation and not mirroring during instantiation.")
         
         self.name = name
         self.mod = mod
@@ -154,13 +157,13 @@ class instance(geometry):
             self.width = 0
             self.height = 0
         else:
-            if mirror in ["R90","R270"] or rotate in [90,270]:
+            if mirror in ["R90", "R270"] or rotate in [90, 270]:
                 self.width = round_to_grid(mod.height)
                 self.height = round_to_grid(mod.width)
             else:
                 self.width = round_to_grid(mod.width)
                 self.height = round_to_grid(mod.height)
-        self.compute_boundary(offset,mirror,rotate)
+        self.compute_boundary(offset, mirror, rotate)
         
         debug.info(4, "creating instance: " + self.name)
 
@@ -169,18 +172,18 @@ class instance(geometry):
         Apply the transform of the instance placement to give absolute blockages."""
         angle = math.radians(float(self.rotate))
         mirr = 1
-        if self.mirror=="R90":
+        if self.mirror == "R90":
             angle += math.radians(90.0)
-        elif self.mirror=="R180":
+        elif self.mirror == "R180":
             angle += math.radians(180.0)
-        elif self.mirror=="R270":
+        elif self.mirror == "R270":
             angle += math.radians(270.0)
-        elif self.mirror=="MX":
+        elif self.mirror == "MX":
             mirr = -1
-        elif self.mirror=="MY":
+        elif self.mirror == "MY":
             mirr = -1
             angle += math.radians(180.0)
-        elif self.mirror=="XY":
+        elif self.mirror == "XY":
             mirr = 1
             angle += math.radians(180.0)
 
@@ -226,7 +229,7 @@ class instance(geometry):
         this instance location. Index will return one of several pins."""
 
         import copy
-        if index==-1:
+        if index == -1:
             pin = copy.deepcopy(self.mod.get_pin(name))
             pin.transform(self.offset,self.mirror,self.rotate)
             return pin
@@ -339,6 +342,7 @@ class label(geometry):
         """ override print function output """
         return "( label: " + self.text + " @" + str(self.offset) + " layer=" + str(self.layerNumber) + " )"
 
+    
 class rectangle(geometry):
     """Represents a rectangular shape"""
 
@@ -351,22 +355,23 @@ class rectangle(geometry):
         self.size = vector(width, height).snap_to_grid()
         self.width = round_to_grid(self.size.x)
         self.height = round_to_grid(self.size.y)
-        self.compute_boundary(offset,"",0)
+        self.compute_boundary(offset, "", 0)
 
-        debug.info(4, "creating rectangle (" + str(self.layerNumber) + "): " 
+        debug.info(4, "creating rectangle (" + str(self.layerNumber) + "): "
                    + str(self.width) + "x" + str(self.height) + " @ " + str(self.offset))
-
         
     def get_blockages(self, layer):
         """ Returns a list of one rectangle if it is on this layer"""
         if self.layerNumber == layer:
-            return [[self.offset, vector(self.offset.x+self.width,self.offset.y+self.height)]]
+            return [[self.offset,
+                     vector(self.offset.x + self.width,
+                            self.offset.y + self.height)]]
         else:
             return []
 
     def gds_write_file(self, new_layout):
         """Writes the rectangular shape to GDS"""
-        debug.info(4, "writing rectangle (" + str(self.layerNumber) + "):" 
+        debug.info(4, "writing rectangle (" + str(self.layerNumber) + "):"
                    + str(self.width) + "x" + str(self.height) + " @ " + str(self.offset))
         new_layout.addBox(layerNumber=self.layerNumber,
                           purposeNumber=0,

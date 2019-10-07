@@ -10,16 +10,12 @@ import pgate
 import debug
 from tech import drc, parameter, spice
 from vector import vector
-from math import ceil
-from globals import OPTS
-from utils import round_to_grid
-import logical_effort
 from sram_factory import factory
+
 
 class ptristate_inv(pgate.pgate):
     """
-    ptristate generates gds of a parametrically sized tristate inverter. 
-
+    ptristate generates gds of a parametrically sized tristate inverter.
     There is some flexibility in the size, but we do not allow multiple fingers
     to fit in the cell height.
 
@@ -27,14 +23,16 @@ class ptristate_inv(pgate.pgate):
 
     def __init__(self, name, size=1, height=None):
 
-        debug.info(2, "creating ptristate inv {0} with size of {1}".format(name, size))
+        debug.info(2,
+                   "creating ptristate inv {0} with size of {1}".format(name,
+                                                                        size))
         self.add_comment("size: {}".format(size))
 
         # We are 2x since there are two series devices
-        self.size = 2*size
+        self.size = 2 * size
         self.nmos_size = size
         self.beta = parameter["beta"]
-        self.pmos_size = self.beta*size
+        self.pmos_size = self.beta * size
 
         self.nmos_width = self.nmos_size * drc("minwidth_tx")
         self.pmos_width = self.pmos_size * drc("minwidth_tx")
@@ -75,10 +73,10 @@ class ptristate_inv(pgate.pgate):
 
         # Two PMOS devices and a well contact. Separation between each.
         # Enclosure space on the sides.
-        self.well_width = 2*self.pmos.active_width + drc("well_enclosure_active") 
+        self.well_width = 2 * self.pmos.active_width + drc("well_enclosure_active") 
 
         # Add an extra space because we route the output on the right of the S/D
-        self.width = self.well_width + 0.5*self.m1_space
+        self.width = self.well_width + 0.5 * self.m1_space
         # Height is an input parameter, so it is not recomputed.
         
         # Make sure we can put a well above and below
@@ -104,43 +102,44 @@ class ptristate_inv(pgate.pgate):
         """ Add vdd/gnd rails to the top and bottom. """
         self.add_layout_pin_rect_center(text="gnd",
                                         layer="metal1",
-                                        offset=vector(0.5*self.width,0),
+                                        offset=vector(0.5 * self.width, 0),
                                         width=self.width)
 
         self.add_layout_pin_rect_center(text="vdd",
                                         layer="metal1",
-                                        offset=vector(0.5*self.width,self.height),
+                                        offset=vector(0.5 * self.width, self.height),
                                         width=self.width)
 
-
     def create_ptx(self):
-        """ 
+        """
         Create the PMOS and NMOS netlist.
         """
 
         # These are the inverter PMOS/NMOS
-        self.pmos1_inst=self.add_inst(name="ptri_pmos1", mod=self.pmos)
+        self.pmos1_inst = self.add_inst(name="ptri_pmos1",
+                                        mod=self.pmos)
         self.connect_inst(["vdd", "in", "n1", "vdd"])
-        self.nmos1_inst=self.add_inst(name="ptri_nmos1", mod=self.nmos)
+        self.nmos1_inst = self.add_inst(name="ptri_nmos1",
+                                        mod=self.nmos)
         self.connect_inst(["gnd", "in", "n2", "gnd"])
 
 
         # These are the tristate PMOS/NMOS
         self.pmos2_inst = self.add_inst(name="ptri_pmos2", mod=self.pmos)
         self.connect_inst(["out", "en_bar", "n1", "vdd"])
-        self.nmos2_inst=self.add_inst(name="ptri_nmos2", mod=self.nmos)
+        self.nmos2_inst = self.add_inst(name="ptri_nmos2",
+                                        mod=self.nmos)
         self.connect_inst(["out", "en", "n2", "gnd"])
 
-
-
     def place_ptx(self):
-        """ 
+        """
         Place PMOS and NMOS to the layout at the upper-most and lowest position
         to provide maximum routing in channel
         """
 
-        pmos_yoff = self.height - self.pmos.active_height - self.top_bottom_space - 0.5*contact.well.height
-        nmos_yoff = self.top_bottom_space + 0.5*contact.well.height
+        pmos_yoff = self.height - self.pmos.active_height \
+                    - self.top_bottom_space - 0.5 * contact.well.height
+        nmos_yoff = self.top_bottom_space + 0.5 * contact.well.height
 
         # Tristate transistors
         pmos1_pos = vector(self.pmos.active_offset.x, pmos_yoff)
@@ -154,20 +153,23 @@ class ptristate_inv(pgate.pgate):
         self.nmos2_pos = nmos1_pos + self.overlap_offset
         self.nmos2_inst.place(self.nmos2_pos)
 
-        # Output position will be in between the PMOS and NMOS        
-        self.output_pos = vector(0, 0.5*(pmos_yoff + nmos_yoff + self.nmos.height))
+        # Output position will be in between the PMOS and NMOS
+        self.output_pos = vector(0,
+                                 0.5 * (pmos_yoff + nmos_yoff + self.nmos.height))
         
-        # This will help with the wells 
-        self.well_pos = vector(0,self.nmos1_inst.uy())
-
+        # This will help with the wells
+        self.well_pos = vector(0, self.nmos1_inst.uy())
 
     def route_inputs(self):
         """ Route the gates """
         
-        self.route_input_gate(self.pmos1_inst, self.nmos1_inst, self.output_pos.y, "in", position="farleft")
+        self.route_input_gate(self.pmos1_inst,
+                              self.nmos1_inst,
+                              self.output_pos.y,
+                              "in",
+                              position="farleft")
         self.route_single_gate(self.pmos2_inst, "en_bar", position="left")
         self.route_single_gate(self.nmos2_inst, "en", position="left")
-
 
     def route_outputs(self):
         """ Route the output (drains) together. """
@@ -181,40 +183,41 @@ class ptristate_inv(pgate.pgate):
         self.add_layout_pin(text="out",
                             layer="metal1",
                             offset=nmos_drain_pos,
-                            height=pmos_drain_pos.y-nmos_drain_pos.y)
-
+                            height=pmos_drain_pos.y - nmos_drain_pos.y)
 
     def add_well_contacts(self):
-        """ Add n/p well taps to the layout and connect to supplies AFTER the wells are created """
+        """ 
+        Add n/p well taps to the layout and connect to
+        supplies AFTER the wells are created
+        """
 
         layer_stack = ("active", "contact", "metal1")
 
         drain_pos = self.nmos1_inst.get_pin("S").center()
         vdd_pos = self.get_pin("vdd").center()
-        self.nwell_contact=self.add_via_center(layers=layer_stack,
-                                               offset=vector(drain_pos.x,vdd_pos.y),
-                                               implant_type="n",
-                                               well_type="n")
+        self.nwell_contact = self.add_via_center(layers=layer_stack,
+                                                 offset=vector(drain_pos.x, vdd_pos.y),
+                                                 implant_type="n",
+                                                 well_type="n")
 
         gnd_pos = self.get_pin("gnd").center()
-        self.pwell_contact=self.add_via_center(layers=layer_stack,
-                                               offset=vector(drain_pos.x,gnd_pos.y),
-                                               implant_type="p",
-                                               well_type="p")
-
-        
+        self.pwell_contact = self.add_via_center(layers=layer_stack,
+                                                 offset=vector(drain_pos.x, gnd_pos.y),
+                                                 implant_type="p",
+                                                 well_type="p")
 
     def connect_rails(self):
         """ Connect the nmos and pmos to its respective power rails """
 
-        self.connect_pin_to_rail(self.nmos1_inst,"S","gnd")
-        self.connect_pin_to_rail(self.pmos1_inst,"S","vdd")
+        self.connect_pin_to_rail(self.nmos1_inst, "S", "gnd")
+        self.connect_pin_to_rail(self.pmos1_inst, "S", "vdd")
         
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""
-        #Power in this module currently not defined. Returns 0 nW (leakage and dynamic).
-        total_power = self.return_power() 
+        # Power in this module currently not defined.
+        # Returns 0 nW (leakage and dynamic).
+        total_power = self.return_power()
         return total_power
 
     def get_cin(self):
-        return 9*spice["min_tx_gate_c"]
+        return 9 * spice["min_tx_gate_c"]

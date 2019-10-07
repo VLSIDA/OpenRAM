@@ -5,8 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
 from globals import OPTS
+
 
 class sram_factory:
     """
@@ -19,7 +19,7 @@ class sram_factory:
     """
 
     def __init__(self):
-        # A dictionary of modules indexed by module type 
+        # A dictionary of modules indexed by module type
         self.modules = {}
         # These are the indices to append to name to make unique object names
         self.module_indices = {}
@@ -34,8 +34,8 @@ class sram_factory:
         
     def create(self, module_type, **kwargs):
         """
-        A generic function to create a module with a given module_type. The args
-        are passed directly to the module constructor.
+        A generic function to create a module with a given module_type.
+        The args are passed directly to the module constructor.
         """
         # if name!="":
         #     # This is a special case where the name and type don't match
@@ -58,28 +58,30 @@ class sram_factory:
             self.objects[module_type] = []
             
         # Either retreive a previous object or create a new one
-        #print("new",kwargs)
         for obj in self.objects[module_type]:
             (obj_kwargs, obj_item) = obj
             # Must have the same dictionary exactly (conservative)
             if obj_kwargs == kwargs:
-                #debug.info(0, "Existing module: type={0} name={1} kwargs={2}".format(module_type, obj_item.name, str(kwargs)))
                 return obj_item
-            #else:
-            #    print("obj",obj_kwargs)
 
         # Use the default  name if there are default arguments
-        # This is especially for library cells so that the spice and gds files can be found.
-        if len(kwargs)>0:
+        # This is especially for library cells so that the
+        # spice and gds files can be found.
+        if len(kwargs) > 0:
             # Create a unique name and increment the index
-            module_name = "{0}_{1}".format(module_type, self.module_indices[module_type])
+            module_name = "{0}_{1}".format(module_type,
+                                           self.module_indices[module_type])
             self.module_indices[module_type] += 1
         else:
             module_name = module_type
-            
-        #debug.info(0, "New module: type={0} name={1} kwargs={2}".format(module_type,module_name,str(kwargs)))
-        obj = mod(name=module_name,**kwargs)
-        self.objects[module_type].append((kwargs,obj))
+
+        # type_str = "type={}".format(module_type)
+        # name_str = "name={}".format(module_name)
+        # kwargs_str = "kwargs={}".format(str(kwargs))
+        # import debug
+        # debug.info(0, "New module:" + type_str + name_str + kwargs_str)
+        obj = mod(name=module_name, **kwargs)
+        self.objects[module_type].append((kwargs, obj))
         return obj
 
     def get_mods(self, module_type):
@@ -90,11 +92,11 @@ class sram_factory:
             module_type = getattr(OPTS, module_type)
         try:
             mod_tuples = self.objects[module_type]
-            mods = [mod for kwargs,mod in mod_tuples]
+            mods = [mod for kwargs, mod in mod_tuples]
         except KeyError:
             mods = []
         return mods
-            
+
+    
 # Make a factory
 factory = sram_factory()
-

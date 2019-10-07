@@ -1180,44 +1180,57 @@ class delay(simulation):
         wmask_zeroes = "0"*self.num_wmasks
         
         if self.t_current == 0:
-            self.add_noop_all_ports("Idle cycle (no positive clock edge)",
-                      inverse_address, data_zeros,wmask_zeroes)
+            self.add_noop_all_ports("Idle cycle (no positive clock edge)")
         
         self.add_write("W data 1 address {}".format(inverse_address),
-                       inverse_address,data_ones,wmask_ones,write_port)
+                       inverse_address,
+                       data_ones,
+                       wmask_ones,
+                       write_port)
 
         self.add_write("W data 0 address {} to write value".format(self.probe_address),
-                       self.probe_address,data_zeros,wmask_ones,write_port)
+                       self.probe_address,
+                       data_zeros,
+                       wmask_ones,
+                       write_port)
         self.measure_cycles[write_port][sram_op.WRITE_ZERO] = len(self.cycle_times)-1
         
         # This also ensures we will have a H->L transition on the next read
         self.add_read("R data 1 address {} to set dout caps".format(inverse_address),
-                      inverse_address,data_zeros,wmask_ones,read_port)
+                      inverse_address,
+                      read_port)
 
         self.add_read("R data 0 address {} to check W0 worked".format(self.probe_address),
-                      self.probe_address,data_zeros,wmask_ones,read_port)
+                      self.probe_address,
+                      read_port)
         self.measure_cycles[read_port][sram_op.READ_ZERO] = len(self.cycle_times)-1              
         
-        self.add_noop_all_ports("Idle cycle (if read takes >1 cycle)",
-                      inverse_address,data_zeros,wmask_zeroes)
+        self.add_noop_all_ports("Idle cycle (if read takes >1 cycle)")
 
         self.add_write("W data 1 address {} to write value".format(self.probe_address),
-                       self.probe_address,data_ones,wmask_ones,write_port)
+                       self.probe_address,
+                       data_ones,
+                       wmask_ones,
+                       write_port)
         self.measure_cycles[write_port][sram_op.WRITE_ONE] = len(self.cycle_times)-1
 
         self.add_write("W data 0 address {} to clear din caps".format(inverse_address),
-                       inverse_address,data_zeros,wmask_ones,write_port)
+                       inverse_address,
+                       data_zeros,
+                       wmask_ones,
+                       write_port)
 
         # This also ensures we will have a L->H transition on the next read
         self.add_read("R data 0 address {} to clear dout caps".format(inverse_address),
-                      inverse_address,data_zeros,wmask_ones,read_port)
+                      inverse_address,
+                      read_port)
         
         self.add_read("R data 1 address {} to check W1 worked".format(self.probe_address),
-                      self.probe_address,data_zeros,wmask_ones,read_port)
+                      self.probe_address,
+                      read_port)
         self.measure_cycles[read_port][sram_op.READ_ONE] = len(self.cycle_times)-1                
         
-        self.add_noop_all_ports("Idle cycle (if read takes >1 cycle))",
-                      self.probe_address,data_zeros,wmask_zeroes)
+        self.add_noop_all_ports("Idle cycle (if read takes >1 cycle))")
                       
     def get_available_port(self,get_read_port):
         

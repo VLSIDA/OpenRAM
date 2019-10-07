@@ -291,8 +291,8 @@ spice["dff_leakage"] = 1      # Leakage power of flop in nW
 spice["default_event_frequency"] = 100         # Default event activity of every gate. MHz
 
 #Logical Effort relative values for the Handmade cells
-parameter["le_tau"] = 23                     #In pico-seconds. 
-parameter["min_inv_para_delay"] = .73        #In relative delay units
+parameter["le_tau"] = 18.17                  #In pico-seconds. 
+parameter["min_inv_para_delay"] = 2.07       #In relative delay units
 parameter["cap_relative_per_ff"] = .91       #Units of Relative Capacitance/ Femto-Farad
 parameter["dff_clk_cin"] = 27.5              #In relative capacitance units
 parameter["6tcell_wl_cin"] = 2               #In relative capacitance units

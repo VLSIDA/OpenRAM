@@ -122,6 +122,9 @@ class verilog:
             if self.write_size:
                 self.vf.write("    wmask{0}_reg = wmask{0};\n".format(port))
         self.vf.write("    addr{0}_reg = addr{0};\n".format(port))
+        if port in self.read_ports:
+            self.add_write_read_checks(port)
+        
         if port in self.write_ports:
             self.vf.write("    din{0}_reg = din{0};\n".format(port))
         if port in self.read_ports:
@@ -211,4 +214,29 @@ class verilog:
             self.vf.write("    if (!csb{0}_reg)\n".format(port))
         self.vf.write("       dout{0} <= #(DELAY) mem[addr{0}_reg];\n".format(port))
         self.vf.write("  end\n")
-        
+
+    def add_address_check(self, wport, rport):
+        """ Output a warning if the two addresses match """
+        # If the rport is actually reading... and addresses match.
+        if rport in self.readwrite_ports:
+            rport_control = "!csb{0} && web{0}".format(rport)
+        else:
+            rport_control = "!csb{0}".format(rport)
+        if wport in self.readwrite_ports:
+            wport_control = "!csb{0} && !web{0}".format(wport)
+        else:
+            wport_control = "!csb{0}".format(wport)
+            
+        self.vf.write("    if ({1} && {3} && (addr{0} == addr{2}))\n".format(wport,wport_control,rport,rport_control))
+        self.vf.write("         $display($time,\" WARNING: Writing and reading addr{0}=%b and addr{1}=%b simultaneously!\",addr{0},addr{1});\n".format(wport,rport))
+
+    def add_write_read_checks(self, rport):
+        """ 
+        Add a warning if we read from an address that we are currently writing.
+        Can be fixed if we appropriately size the write drivers to do this .
+        """
+        for wport in self.write_ports:
+            if wport == rport:
+                continue
+            else:
+                self.add_address_check(wport,rport)

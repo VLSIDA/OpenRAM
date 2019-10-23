@@ -17,7 +17,7 @@ import debug
 class single_level_column_mux_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        globals.init_openram("{}/config".format(OPTS.tech_name))
         import single_level_column_mux_array
         
         # check single level column mux array in single port

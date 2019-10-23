@@ -21,7 +21,7 @@ class bitcell_1rw_1r_array_test(openram_test):
 
     def runTest(self):
 
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        globals.init_openram("{}/config".format(OPTS.tech_name))
         
         OPTS.bitcell = "bitcell_1rw_1r"
         OPTS.replica_bitcell = "replica_bitcell_1rw_1r"

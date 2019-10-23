@@ -16,7 +16,7 @@ import debug
 class replica_bitcell_array_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        globals.init_openram("{}/config".format(OPTS.tech_name))
 
         debug.info(2, "Testing 4x4 array for 6t_cell")
         a = factory.create(module_type="replica_bitcell_array", cols=4, rows=4, left_rbl=1, right_rbl=0, bitcell_ports=[0])

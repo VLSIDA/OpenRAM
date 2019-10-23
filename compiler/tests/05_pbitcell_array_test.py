@@ -19,7 +19,7 @@ import debug
 class pbitcell_array_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        globals.init_openram("{}/config".format(OPTS.tech_name))
 
         debug.info(2, "Testing 4x4 array for multiport bitcell, with read ports at the edge of the bit cell")
         OPTS.bitcell = "pbitcell"

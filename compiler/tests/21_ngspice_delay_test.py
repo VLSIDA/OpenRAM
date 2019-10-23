@@ -18,7 +18,7 @@ import debug
 class timing_sram_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        globals.init_openram("{}/config".format(OPTS.tech_name))
         OPTS.spice_name="ngspice"
         OPTS.analytical_delay = False
         OPTS.netlist_only = True

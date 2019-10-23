@@ -16,7 +16,7 @@ import debug
 class replica_bitcell_array_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        globals.init_openram("{}/config".format(OPTS.tech_name))
 
         OPTS.bitcell = "pbitcell"
         OPTS.replica_bitcell = "replica_pbitcell"

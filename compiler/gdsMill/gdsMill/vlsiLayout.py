@@ -193,17 +193,21 @@ class VlsiLayout:
             delegateFunction(startingStructureName, transformPath)
         #starting with a particular structure, we will recursively traverse the tree
         #********might have to set the recursion level deeper for big layouts!
-        if(len(self.structures[startingStructureName].srefs)>0): #does this structure reference any others?
-            #if so, go through each and call this function again
-            #if not, return back to the caller (caller can be this function)            
-            for sref in self.structures[startingStructureName].srefs:
-                #here, we are going to modify the sref coordinates based on the parent objects rotation                
-                self.traverseTheHierarchy(startingStructureName = sref.sName,                                    
-                                          delegateFunction = delegateFunction,
-                                          transformPath = transformPath,
-                                          rotateAngle = sref.rotateAngle,
-                                          transFlags = sref.transFlags,
-                                          coordinates = sref.coordinates)
+        try:
+            if(len(self.structures[startingStructureName].srefs)>0): #does this structure reference any others?
+                #if so, go through each and call this function again
+                #if not, return back to the caller (caller can be this function)            
+                for sref in self.structures[startingStructureName].srefs:
+                    #here, we are going to modify the sref coordinates based on the parent objects rotation                
+                    self.traverseTheHierarchy(startingStructureName = sref.sName,                                    
+                                              delegateFunction = delegateFunction,
+                                              transformPath = transformPath,
+                                              rotateAngle = sref.rotateAngle,
+                                              transFlags = sref.transFlags,
+                                              coordinates = sref.coordinates)
+        except KeyError:
+            debug.error("Could not find structure {} in GDS file.".format(startingStructureName),-1)
+            
             #MUST HANDLE AREFs HERE AS WELL
         #when we return, drop the last transform from the transformPath
         del transformPath[-1]

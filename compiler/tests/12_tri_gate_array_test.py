@@ -18,7 +18,7 @@ import debug
 class tri_gate_array_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        globals.init_openram("{}/config".format(OPTS.tech_name))
 
         debug.info(1, "Testing tri_gate_array for columns=8, word_size=8")
         a = factory.create(module_type="tri_gate_array", columns=8, word_size=8)

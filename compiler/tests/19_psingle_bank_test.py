@@ -19,7 +19,7 @@ import debug
 class psingle_bank_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        globals.init_openram("{}/config".format(OPTS.tech_name))
         from sram_config import sram_config
         
         OPTS.bitcell = "pbitcell"

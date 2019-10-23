@@ -20,7 +20,7 @@ import debug
 class wordline_driver_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        globals.init_openram("{}/config".format(OPTS.tech_name))
 
         # check wordline driver for single port
         debug.info(2, "Checking driver")

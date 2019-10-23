@@ -18,7 +18,7 @@ import debug
 class pbuf_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        globals.init_openram("{}/config".format(OPTS.tech_name))
 
         debug.info(2, "Testing inverter/buffer 4x 8x")
         a = factory.create(module_type="pbuf", size=8)

@@ -19,7 +19,7 @@ import debug
 class sram_1bank_nomux_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        globals.init_openram("{}/config".format(OPTS.tech_name))
         from sram_config import sram_config
         c = sram_config(word_size=4,
                         num_words=16,

@@ -22,7 +22,7 @@ import debug
 class control_logic_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        globals.init_openram("{}/config".format(OPTS.tech_name))
         import control_logic
         import tech
 

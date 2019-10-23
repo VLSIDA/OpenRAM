@@ -18,7 +18,7 @@ import debug
 class lib_sram_prune_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        globals.init_openram("{}/config".format(OPTS.tech_name))
         OPTS.analytical_delay = False
         OPTS.trim_netlist = True
 

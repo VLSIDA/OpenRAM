@@ -17,7 +17,7 @@ class pin_layout:
     single shape.
     """
 
-    def __init__(self, name, rect, layer_name_num):
+    def __init__(self, name, rect, layer_name_pp):
         self.name = name
         # repack the rect as a vector, just in case
         if type(rect[0])==vector:
@@ -30,12 +30,19 @@ class pin_layout:
         debug.check(self.width()>0,"Zero width pin.")
         debug.check(self.height()>0,"Zero height pin.")
         
-        # if it's a layer number look up the layer name. this assumes a unique layer number.
-        if type(layer_name_num)==int:
-            self.layer = list(layer.keys())[list(layer.values()).index(layer_name_num)]
+        # if it's a string, use the name
+        if type(layer_name_pp)==str:
+            self.layer=layer_name_pp
+        # else it is required to be a lpp
         else:
-            self.layer=layer_name_num
-        self.layer_num = layer[self.layer]
+            for (layer_name, lpp) in layer.items():
+                if layer_name_pp[0]==lpp[0] and (layer_name_pp[1]==None or layer_name_pp[1]==lpp[1]):
+                    self.layer=layer_name
+                    break
+            else:
+                debug.error("Couldn't find layer {}".format(layer_name_pp),-1)
+
+        self.lpp = layer[self.layer]
 
     def __str__(self):
         """ override print function output """
@@ -310,8 +317,9 @@ class pin_layout:
         """Writes the pin shape and label to GDS"""
         debug.info(4, "writing pin (" + str(self.layer) + "):" 
                    + str(self.width()) + "x" + str(self.height()) + " @ " + str(self.ll()))
-        newLayout.addBox(layerNumber=layer[self.layer],
-                         purposeNumber=0,
+        (layer_num,purpose) = layer[self.layer]
+        newLayout.addBox(layerNumber=layer_num,
+                         purposeNumber=purpose,
                          offsetInMicrons=self.ll(),
                          width=self.width(),
                          height=self.height(),
@@ -319,8 +327,8 @@ class pin_layout:
         # Add the tet in the middle of the pin.
         # This fixes some pin label offsetting when GDS gets imported into Magic.
         newLayout.addText(text=self.name,
-                          layerNumber=layer[self.layer],
-                          purposeNumber=0,
+                          layerNumber=layer_num,
+                          purposeNumber=purpose,
                           offsetInMicrons=self.center(),
                           magnification=GDS["zoom"],
                           rotate=None)

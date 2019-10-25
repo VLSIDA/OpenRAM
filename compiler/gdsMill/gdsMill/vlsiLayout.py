@@ -19,7 +19,8 @@ class VlsiLayout:
         self.layerNumbersInUse = []
         self.debug = False
         if name:
-            self.rootStructureName=name
+            #take the root structure and copy it to a new structure with the new name
+            self.rootStructureName=self.padText(name)
             #create the ROOT structure
             self.structures[self.rootStructureName] = GdsStructure()
             self.structures[self.rootStructureName].name = name
@@ -82,13 +83,9 @@ class VlsiLayout:
         return coordinatesRotate
     
     def rename(self,newName):
-        #make sure the newName is a multiple of 2 characters
-        if(len(newName)%2 == 1):
-            #pad with a zero
-            newName = newName + '\x00'
         #take the root structure and copy it to a new structure with the new name
         self.structures[newName] = self.structures[self.rootStructureName]
-        self.structures[newName].name = newName
+        self.structures[newName].name = self.padText(newName)
         #and delete the old root
         del self.structures[self.rootStructureName]
         self.rootStructureName = newName
@@ -159,13 +156,14 @@ class VlsiLayout:
         debug.check(len(structureNames)==1,"Multiple possible root structures in the layout: {}".format(str(structureNames)))
         self.rootStructureName = structureNames[0]
 
+        
     def traverseTheHierarchy(self, startingStructureName=None, delegateFunction = None, 
                              transformPath = [], rotateAngle = 0, transFlags = [0,0,0], coordinates = (0,0)):
         #since this is a recursive function, must deal with the default
         #parameters explicitly      
         if startingStructureName == None:
             startingStructureName = self.rootStructureName            
-            
+
         #set up the rotation matrix        
         if(rotateAngle == None or rotateAngle == ""):
             angle = 0
@@ -219,7 +217,7 @@ class VlsiLayout:
         self.populateCoordinateMap()
 
         for layerNumber in self.layerNumbersInUse:
-            self.processLabelPins(layerNumber)
+            self.processLabelPins((layerNumber,None))
         
     
     def populateCoordinateMap(self):
@@ -400,10 +398,10 @@ class VlsiLayout:
             cY = self.userUnits(coordinate[1])
             layoutUnitCoordinates.append((cX,cY))
         pathToAdd = GdsPath()
-        pathToAdd.drawingLayer=layerNumber
+        pathToAdd.drawingLayer = layerNumber
         pathToAdd.purposeLayer = purposeNumber
-        pathToAdd.pathWidth=widthInLayoutUnits
-        pathToAdd.coordinates=layoutUnitCoordinates
+        pathToAdd.pathWidth = widthInLayoutUnits
+        pathToAdd.coordinates = layoutUnitCoordinates
         #add the sref to the root structure
         self.structures[self.rootStructureName].paths.append(pathToAdd)
         
@@ -414,10 +412,8 @@ class VlsiLayout:
         textToAdd.purposeLayer = purposeNumber
         textToAdd.dataType = 0
         textToAdd.coordinates = [offsetInLayoutUnits]
-        textToAdd.transFlags = [0,0,0]  
-        if(len(text)%2 == 1):
-            text = text + '\x00'
-        textToAdd.textString = text
+        textToAdd.transFlags = [0,0,0]
+        textToAdd.textString = self.padText(text)
         #textToAdd.transFlags[1] = 1
         textToAdd.magFactor = magnification
         if rotate:
@@ -425,7 +421,13 @@ class VlsiLayout:
             textToAdd.rotateAngle = rotate
         #add the sref to the root structure
         self.structures[self.rootStructureName].texts.append(textToAdd)
-            
+
+    def padText(self, text):
+        if(len(text)%2 == 1):
+            return text + '\x00'
+        else:
+            return text
+
     def isBounded(self,testPoint,startPoint,endPoint):
         #these arguments are touples of (x,y) coordinates
         if testPoint == None:
@@ -591,22 +593,23 @@ class VlsiLayout:
                 passFailIndex += 1
         print("Done\n\n")
 
-    def getLayoutBorder(self,borderlayer):
+    def getLayoutBorder(self,lpp):
         cellSizeMicron=None
         for boundary in self.structures[self.rootStructureName].boundaries:
-            if boundary.drawingLayer==borderlayer:
+            if boundary.drawingLayer==lpp[0] and \
+            (lpp[1]==None or boundary.purposeLayer==None or boundary.purposeLayer==lpp[1]):
                 if self.debug:
                     debug.info(1,"Find border "+str(boundary.coordinates))
                 left_bottom=boundary.coordinates[0]
                 right_top=boundary.coordinates[2]
                 cellSize=[right_top[0]-left_bottom[0],right_top[1]-left_bottom[1]]
                 cellSizeMicron=[cellSize[0]*self.units[0],cellSize[1]*self.units[0]]
-        if not(cellSizeMicron):
-            print("Error: "+str(self.rootStructureName)+".cell_size information not found yet")
+        debug.check(cellSizeMicron,
+                    "Error: "+str(self.rootStructureName)+".cell_size information not found yet")
         return cellSizeMicron
 
     def measureSize(self,startStructure):
-        self.rootStructureName=startStructure
+        self.rootStructureName=self.padText(startStructure)
         self.populateCoordinateMap()
         cellBoundary = [None, None, None, None]
         for TreeUnit in self.xyTree:
@@ -616,7 +619,7 @@ class VlsiLayout:
         return cellSizeMicron
 
     def measureBoundary(self,startStructure):
-        self.rootStructureName=startStructure
+        self.rootStructureName=self.padText(startStructure)
         self.populateCoordinateMap()
         cellBoundary = [None, None, None, None]
         for TreeUnit in self.xyTree:
@@ -653,13 +656,13 @@ class VlsiLayout:
         return cellBoundary
 
 
-    def getTexts(self, layer):
+    def getTexts(self, lpp):
         """
         Get all of the labels on a given layer only at the root level.
         """
         text_list = []
         for Text in self.structures[self.rootStructureName].texts:
-            if Text.drawingLayer == layer:
+            if Text.drawingLayer==lpp[0] and (lpp[1]==None or Text.purposeLayer==lpp[1]):
                 text_list.append(Text)
         return text_list
     
@@ -700,16 +703,16 @@ class VlsiLayout:
         return shape_list
             
 
-    def processLabelPins(self, layer):
+    def processLabelPins(self, lpp):
         """
         Find all text labels and create a map to a list of shapes that
         they enclose on the given layer.
         """
         # Get the labels on a layer in the root level
-        labels = self.getTexts(layer)
+        labels = self.getTexts(lpp)
         # Get all of the shapes on the layer at all levels
         # and transform them to the current level
-        shapes =  self.getAllShapes(layer)
+        shapes =  self.getAllShapes(lpp)
 
         for label in labels:
             label_coordinate = label.coordinates[0]
@@ -717,7 +720,7 @@ class VlsiLayout:
             pin_shapes = []
             for boundary in shapes:
                 if self.labelInRectangle(user_coordinate,boundary):
-                    pin_shapes.append((layer, boundary))
+                    pin_shapes.append((lpp, boundary))
 
             label_text = label.textString
             # Remove the padding if it exists
@@ -731,14 +734,14 @@ class VlsiLayout:
             self.pins[label_text].append(pin_shapes)
         
     
-    def getBlockages(self,layer):
+    def getBlockages(self, lpp):
         """
         Return all blockages on a given layer in [coordinate 1, coordinate 2,...] format and
         user units.
         """
         blockages = []
 
-        shapes = self.getAllShapes(layer)
+        shapes = self.getAllShapes(lpp)
         for boundary in shapes:
             vectors = []
             for i in range(0,len(boundary),2):
@@ -746,7 +749,7 @@ class VlsiLayout:
             blockages.append(vectors)
         return blockages    
 
-    def getAllShapes(self,layer):
+    def getAllShapes(self, lpp):
         """
         Return all shapes on a given layer in [llx, lly, urx, ury] format and user units for rectangles
         and [coordinate 1, coordinate 2,...] format and user units for polygons.
@@ -754,7 +757,7 @@ class VlsiLayout:
         boundaries = set()
         for TreeUnit in self.xyTree:
             #print(TreeUnit[0])
-            boundaries.update(self.getShapesInStructure(layer,TreeUnit))
+            boundaries.update(self.getShapesInStructure(lpp,TreeUnit))
 
         # Convert to user units
         user_boundaries = []
@@ -766,7 +769,7 @@ class VlsiLayout:
         return user_boundaries
 
 
-    def getShapesInStructure(self,layer,structure):
+    def getShapesInStructure(self, lpp, structure):
         """ 
         Go through all the shapes in a structure and return the list of shapes in
         the form [llx, lly, urx, ury] for rectangles and [coordinate 1, coordinate 2,...] for polygons.
@@ -775,7 +778,7 @@ class VlsiLayout:
         #print(structureName,"u",structureuVector.transpose(),"v",structurevVector.transpose(),"o",structureOrigin.transpose())
         boundaries = []
         for boundary in self.structures[str(structureName)].boundaries:
-            if layer==boundary.drawingLayer:
+            if boundary.drawingLayer==lpp[0] and (lpp[1]==None or boundary.purposeLayer==lpp[1]):
                 if len(boundary.coordinates)!=5:
                     # if shape is a polygon (used in DFF)
                     boundaryPolygon = []

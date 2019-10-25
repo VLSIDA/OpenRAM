@@ -686,10 +686,6 @@ class Gds2reader:
             if idBits==('\x07','\x00'): break; #we've reached the end of the structure
             elif(idBits==('\x06','\x06')):
                 structName = self.stripNonASCII(record[2::]) #(record[2:1] + record[1::]).rstrip()
-#		print(''.[x for x in structName if ord(x) < 128])
-#	        stripped = (c for c in structName if 0 < ord(c) < 127)
-#	        structName = "".join(stripped)
-#                print(self.stripNonASCII(structName)) ##FIXME: trimming by Tom g.  ##could be an issue here with string trimming!
                 thisStructure.name = structName
                 if(findStructName==thisStructure.name):
                     wantedStruct=1
@@ -767,10 +763,6 @@ class Gds2reader:
             if idBits==('\x07','\x00'): break; #we've reached the end of the structure
             elif(idBits==('\x06','\x06')):
                 structName = self.stripNonASCII(record[2::]) #(record[2:1] + record[1::]).rstrip()
-#		print(''.[x for x in structName if ord(x) < 128])
-#	        stripped = (c for c in structName if 0 < ord(c) < 127)
-#	        structName = "".join(stripped)
-#                print(self.stripNonASCIIx(structName)) ##FIXME: trimming by Tom g.  ##could be an issue here with string trimming!
                 thisStructure.name = structName
                 if(self.debugToTerminal==1):
                     print("\tStructure Name: "+structName)

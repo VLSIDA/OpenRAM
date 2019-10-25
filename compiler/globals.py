@@ -438,7 +438,6 @@ def import_tech():
 
     OPTS.openram_tech = os.path.dirname(tech_mod.__file__) + "/"
 
-
     # Add the tech directory
     tech_path = OPTS.openram_tech
     sys.path.append(tech_path)

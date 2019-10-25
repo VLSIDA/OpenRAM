@@ -150,9 +150,9 @@ class layout():
         if not height:
             height=drc["minwidth_{}".format(layer)]
         # negative layers indicate "unused" layers in a given technology
-        layer_num = techlayer[layer]
-        if layer_num >= 0:
-            self.objs.append(geometry.rectangle(layer_num, offset, width, height))
+        lpp = techlayer[layer]
+        if lpp[0] >= 0:
+            self.objs.append(geometry.rectangle(lpp, offset, width, height))
             return self.objs[-1]
         return None
 
@@ -165,10 +165,10 @@ class layout():
         if not height:
             height=drc["minwidth_{}".format(layer)]
         # negative layers indicate "unused" layers in a given technology
-        layer_num = techlayer[layer]
+        lpp = techlayer[layer]
         corrected_offset = offset - vector(0.5*width,0.5*height)
-        if layer_num >= 0:
-            self.objs.append(geometry.rectangle(layer_num, corrected_offset, width, height))
+        if lpp[0] >= 0:
+            self.objs.append(geometry.rectangle(lpp, corrected_offset, width, height))
             return self.objs[-1]
         return None
 
@@ -334,9 +334,9 @@ class layout():
         """Adds a text label on the given layer,offset, and zoom level"""
         # negative layers indicate "unused" layers in a given technology
         debug.info(5,"add label " + str(text) + " " + layer + " " + str(offset))
-        layer_num = techlayer[layer]
-        if layer_num >= 0:
-            self.objs.append(geometry.label(text, layer_num, offset, zoom))
+        lpp = techlayer[layer]
+        if lpp[0] >= 0:
+            self.objs.append(geometry.label(text, lpp, offset, zoom))
             return self.objs[-1]
         return None
 
@@ -347,9 +347,9 @@ class layout():
         import wire_path
         # NOTE: (UNTESTED) add_path(...) is currently not used
         # negative layers indicate "unused" layers in a given technology
-        #layer_num = techlayer[layer]
-        #if layer_num >= 0:
-        #    self.objs.append(geometry.path(layer_num, coordinates, width))
+        #lpp = techlayer[layer]
+        #if lpp[0] >= 0:
+        #    self.objs.append(geometry.path(lpp, coordinates, width))
 
         wire_path.wire_path(obj=self,
                             layer=layer, 
@@ -539,7 +539,7 @@ class layout():
         Do not write the pins since they aren't obstructions.
         """
         if type(layer)==str:
-            layer_num = techlayer[layer]
+            layer_num = techlayer[layer][0]
         else:
             layer_num = layer
             

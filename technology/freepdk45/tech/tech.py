@@ -67,7 +67,7 @@ layer["via9"]    = (28, 0)
 layer["metal10"] = (29, 0)
 layer["text"]    = (239, 0)
 layer["boundary"]= (239, 0)
-layer["blockage"]= (239, 0)
+#layer["blockage"]= (239, 0)
 
 ###################################################
 ##END GDS Layer Map

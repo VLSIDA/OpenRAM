@@ -65,9 +65,9 @@ class wordline_driver(design.design):
         self.add_mod(self.nand2)
         
     def route_vdd_gnd(self):
-        """ 
-        Add a pin for each row of vdd/gnd which 
-        are must-connects next level up. 
+        """
+        Add a pin for each row of vdd/gnd which
+        are must-connects next level up.
         """
 
         # Find the x offsets for where the vias/pins should be placed
@@ -91,8 +91,8 @@ class wordline_driver(design.design):
                     self.add_power_pin(name, pin_pos)
             
     def create_drivers(self):
-        self.nand_inst = []            
-        self.inv2_inst = []            
+        self.nand_inst = []
+        self.inv2_inst = []
         for row in range(self.rows):
             name_nand = "wl_driver_nand{}".format(row)
             name_inv2 = "wl_driver_inv{}".format(row)
@@ -164,7 +164,7 @@ class wordline_driver(design.design):
             # Nand2 out to 2nd inv
             zr_pos = nand_inst.get_pin("Z").rc()
             al_pos = inv2_inst.get_pin("A").lc()
-            # ensure the bend is in the middle 
+            # ensure the bend is in the middle
             mid1_pos = vector(0.5*(zr_pos.x+al_pos.x), zr_pos.y)
             mid2_pos = vector(0.5*(zr_pos.x+al_pos.x), al_pos.y)
             self.add_path("metal1", [zr_pos, mid1_pos, mid2_pos, al_pos])

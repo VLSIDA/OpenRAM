@@ -447,7 +447,7 @@ class router(router_tech):
         """
         # Inflate the blockage by half a spacing rule
         [ll, ur] = self.convert_blockage_to_tracks(blockage.inflate())
-        zlayer = self.get_zindex(blockage.layer_num)
+        zlayer = self.get_zindex(blockage.lpp[0])
         blockage_tracks = self.get_blockage_tracks(ll, ur, zlayer)
         return blockage_tracks
         
@@ -529,7 +529,7 @@ class router(router_tech):
         sufficient_list = set()
         insufficient_list = set()
 
-        zindex = self.get_zindex(pin.layer_num)
+        zindex = self.get_zindex(pin.lpp[0])
         for x in range(int(ll[0]) + expansion, int(ur[0]) + 1 + expansion):
             for y in range(int(ll[1] + expansion), int(ur[1]) + 1 + expansion):
                 (full_overlap, partial_overlap) = self.convert_pin_coord_to_tracks(pin,

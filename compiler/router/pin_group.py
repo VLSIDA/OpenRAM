@@ -360,7 +360,7 @@ class pin_group:
         """
 
         smallest_shape = None
-        zindex = self.router.get_zindex(pin.layer_num)
+        zindex = self.router.get_zindex(pin.lpp[0])
         (min_width, min_space) = self.router.get_layer_width_space(zindex)
 
         # Now compare it with every other shape to check how much they overlap
@@ -469,7 +469,7 @@ class pin_group:
                               right_connector,
                               above_connector,
                               below_connector]
-            filtered_list = list(filter(lambda x: not x, connector_list))
+            filtered_list = list(filter(lambda x: x!=None, connector_list))
             if (len(filtered_list) > 0):
                 import copy
                 bbox_connector = copy.copy(pin)

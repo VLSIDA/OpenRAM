@@ -18,16 +18,17 @@ class pin_group:
     determine how pin shapes get mapped to tracks.
     It is initially constructed with a single set of (touching) pins.
     """
+
     def __init__(self, name, pin_set, router):
         self.name = name
         # Flag for when it is routed
         self.routed = False
         # Flag for when it is enclosed
         self.enclosed = False
-        
+
         # Remove any redundant pins (i.e. contained in other pins)
         irredundant_pin_set = self.remove_redundant_shapes(list(pin_set))
-        
+
         # This is a list because we can have a pin
         # group of disconnected sets of pins
         # and these are represented by separate lists
@@ -39,7 +40,7 @@ class pin_group:
         # These are the secondary grids that could
         # or could not be part of the pin
         self.secondary_grids = set()
-        
+
         # The corresponding set of partially blocked grids for each pin group.
         # These are blockages for other nets but unblocked
         # for routing this group. These are also blockages if we
@@ -52,16 +53,16 @@ class pin_group:
     def __str__(self):
         """ override print function output """
         total_string = "(pg {} ".format(self.name)
-        
+
         pin_string = "\n  pins={}".format(self.pins)
         total_string += pin_string
-        
+
         grids_string = "\n  grids={}".format(self.grids)
         total_string += grids_string
 
         grids_string = "\n  secondary={}".format(self.secondary_grids)
         total_string += grids_string
-        
+
         if self.enclosed:
             enclosure_string = "\n  enclose={}".format(self.enclosures)
             total_string += enclosure_string
@@ -72,7 +73,7 @@ class pin_group:
     def __repr__(self):
         """ override repr function output """
         return str(self)
-    
+
     def size(self):
         return len(self.grids)
 
@@ -81,7 +82,7 @@ class pin_group:
 
     def is_routed(self):
         return self.routed
-        
+
     def remove_redundant_shapes(self, pin_list):
         """
         Remove any pin layout that is contained within another.
@@ -90,7 +91,7 @@ class pin_group:
         local_debug = False
         if local_debug:
             debug.info(0, "INITIAL: {}".format(pin_list))
-        
+
         # Make a copy of the list to start
         new_pin_list = pin_list.copy()
 
@@ -100,7 +101,7 @@ class pin_group:
             # If we remove this pin, it can't contain other pins
             if index1 in remove_indices:
                 continue
-            
+
             for index2, pin2 in enumerate(pin_list):
                 # Can't contain yourself,
                 # but compare the indices and not the pins
@@ -110,7 +111,7 @@ class pin_group:
                 # If we already removed it, can't remove it again...
                 if index2 in remove_indices:
                     continue
-                
+
                 if pin1.contains(pin2):
                     if local_debug:
                         debug.info(0, "{0} contains {1}".format(pin1, pin2))
@@ -119,10 +120,10 @@ class pin_group:
         # Remove them in decreasing order to not invalidate the indices
         for i in sorted(remove_indices, reverse=True):
             del new_pin_list[i]
-                        
+
         if local_debug:
             debug.info(0, "FINAL  : {}".format(new_pin_list))
-            
+
         return new_pin_list
 
     def compute_enclosures(self):
@@ -144,11 +145,17 @@ class pin_group:
             enclosure = self.router.compute_pin_enclosure(ll, ur, ll.z)
             pin_list.append(enclosure)
 
-        # Now simplify the enclosure list 
+        debug.check(len(pin_list) > 0,
+                    "Did not find any enclosures.")
+
+        # Now simplify the enclosure list
         new_pin_list = self.remove_redundant_shapes(pin_list)
-            
-        return new_pin_list
+
+        debug.check(len(new_pin_list) > 0,
+                    "Did not find any enclosures.")
         
+        return new_pin_list
+
     def compute_connector(self, pin, enclosure):
         """
         Compute a shape to connect the pin to the enclosure shape.
@@ -200,7 +207,7 @@ class pin_group:
         for shape in enclosures:
             if shape.xcontains(pin):
                 edge_list.append(shape)
-        
+
         # Sort them by their bottom edge
         edge_list.sort(key=lambda x: x.by(), reverse=True)
 
@@ -233,7 +240,7 @@ class pin_group:
         for shape in enclosures:
             if shape.xcontains(pin):
                 edge_list.append(shape)
-        
+
         # Sort them by their upper edge
         edge_list.sort(key=lambda x: x.uy())
 
@@ -251,13 +258,13 @@ class pin_group:
         # If it already overlaps, no connector needed
         if bottom_item.overlaps(pin):
             return None
-        
+
         # Otherwise, make a connector to the item
         p = self.compute_connector(pin, bottom_item)
         return p
-    
+
     def find_left_connector(self, pin, enclosures):
-        """ 
+        """
         Find the enclosure that is to the left of the pin
         and make a connector to it's right edge.
         """
@@ -266,14 +273,14 @@ class pin_group:
         for shape in enclosures:
             if shape.ycontains(pin):
                 edge_list.append(shape)
-        
+
         # Sort them by their right edge
         edge_list.sort(key=lambda x: x.rx())
 
         # Find the right edge that is to the pin's left edge
         left_item = None
         for item in edge_list:
-            if item.rx()<=pin.lx():
+            if item.rx() <= pin.lx():
                 left_item = item
             else:
                 break
@@ -284,13 +291,13 @@ class pin_group:
         # If it already overlaps, no connector needed
         if left_item.overlaps(pin):
             return None
-        
+
         # Otherwise, make a connector to the item
         p = self.compute_connector(pin, left_item)
         return p
-    
+
     def find_right_connector(self, pin, enclosures):
-        """ 
+        """
         Find the enclosure that is to the right of the pin
         and make a connector to it's left edge.
         """
@@ -299,7 +306,7 @@ class pin_group:
         for shape in enclosures:
             if shape.ycontains(pin):
                 edge_list.append(shape)
-        
+
         # Sort them by their right edge
         edge_list.sort(key=lambda x: x.lx(), reverse=True)
 
@@ -317,11 +324,11 @@ class pin_group:
         # If it already overlaps, no connector needed
         if right_item.overlaps(pin):
             return None
-        
+
         # Otherwise, make a connector to the item
         p = self.compute_connector(pin, right_item)
         return p
-    
+
     def find_smallest_connector(self, pin_list, shape_list):
         """
         Compute all of the connectors between the overlapping
@@ -334,7 +341,7 @@ class pin_group:
                 new_enclosure = self.compute_connector(pin, enclosure)
                 if not smallest or new_enclosure.area() < smallest.area():
                     smallest = new_enclosure
-                    
+
         return smallest
 
     def find_smallest_overlapping(self, pin_list, shape_list):
@@ -350,7 +357,7 @@ class pin_group:
                 # overlap_length = pin.overlap_length(overlap_shape)
                 if not smallest_shape or overlap_shape.area() < smallest_shape.area():
                     smallest_shape = overlap_shape
-                        
+
         return smallest_shape
 
     def find_smallest_overlapping_pin(self, pin, shape_list):
@@ -369,9 +376,9 @@ class pin_group:
             if overlap_length > min_width:
                 if not smallest_shape or other.area() < smallest_shape.area():
                     smallest_shape = other
-                        
+
         return smallest_shape
-    
+
     def overlap_any_shape(self, pin_list, shape_list):
         """
         Does the given pin overlap any of the shapes in the pin list.
@@ -391,7 +398,7 @@ class pin_group:
         for pin in pin_list:
             if pin.area() > biggest.area():
                 biggest = pin
-                
+
         return pin
 
     def enclose_pin_grids(self, ll, dir1=direction.NORTH, dir2=direction.EAST):
@@ -406,8 +413,7 @@ class pin_group:
         offset2 = direction.get_offset(dir2)
 
         # We may have started with an empty set
-        if not self.grids:
-            return None
+        debug.check(len(self.grids) > 0, "Cannot seed an grid empty set.")
 
         # Start with the ll and make the widest row
         row = [ll]
@@ -436,7 +442,7 @@ class pin_group:
         # Add a shape from ll to ur
         ur = row[-1]
         return (ll, ur)
-    
+
     def enclose_pin(self):
         """
         If there is one set of connected pin shapes,
@@ -445,13 +451,13 @@ class pin_group:
         If there is not, it simply returns all the enclosures.
         """
         self.enclosed = True
-        
+
         # Compute the enclosure pin_layout list of the set of tracks
         self.enclosures = self.compute_enclosures()
 
         # Find a connector to every pin and add it to the enclosures
         for pin in self.pins:
-                
+
             # If it is contained, it won't need a connector
             if pin.contained_by_any(self.enclosures):
                 continue
@@ -469,7 +475,7 @@ class pin_group:
                               right_connector,
                               above_connector,
                               below_connector]
-            filtered_list = list(filter(lambda x: x!=None, connector_list))
+            filtered_list = list(filter(lambda x: x != None, connector_list))
             if (len(filtered_list) > 0):
                 import copy
                 bbox_connector = copy.copy(pin)
@@ -487,8 +493,9 @@ class pin_group:
                 debug.error("Could not find a connector for {} with {}".format(self.pins,
                                                                                self.enclosures))
                 self.router.write_debug_gds("no_connector.gds")
+                import pdb; pdb.set_trace()
             self.enclosures.append(connector)
-                    
+
         # At this point, the pins are overlapping,
         # but there might be more than one!
         overlap_set = set()
@@ -505,12 +512,11 @@ class pin_group:
                 (sufficient, insufficient) = self.router.convert_pin_to_tracks(self.name,
                                                                                enclosure)
                 self.grids.update(sufficient)
-            
-                        
-        debug.info(3,"Computed enclosure(s) {0}\n  {1}\n  {2}\n  {3}".format(self.name,
-                                                                             self.pins,
-                                                                             self.grids,
-                                                                             self.enclosures))
+
+        debug.info(3, "Computed enclosure(s) {0}\n  {1}\n  {2}\n  {3}".format(self.name,
+                                                                              self.pins,
+                                                                              self.grids,
+                                                                              self.enclosures))
 
     def transitive_overlap(self, shape, shape_list):
         """
@@ -532,22 +538,22 @@ class pin_group:
 
         # Remove the original shape
         connected_set.remove(shape)
-        
+
         # if len(connected_set)<len(shape_list):
         #     import pprint
         #     print("S: ",shape)
         #     pprint.pprint(shape_list)
         #     pprint.pprint(connected_set)
-            
+
         return connected_set
-        
+
     def add_enclosure(self, cell):
         """
         Add the enclosure shape to the given cell.
         """
         for enclosure in self.enclosures:
             debug.info(2, "Adding enclosure {0} {1}".format(self.name,
-                                                            enclosure))  
+                                                            enclosure))
             cell.add_rect(layer=enclosure.layer,
                           offset=enclosure.ll(),
                           width=enclosure.width(),
@@ -566,9 +572,9 @@ class pin_group:
             # If we aren't completely enclosed, we are on the perimeter
             if neighbor_count < 4:
                 perimeter_set.add(g1)
-                
+
         return perimeter_set
-    
+
     def adjacent(self, other):
         """
         Chck if the two pin groups have at least one adjacent pin grid.
@@ -594,11 +600,11 @@ class pin_group:
                     adj_grids.add(g1)
 
         return adj_grids
-    
+
     def convert_pin(self):
         """
         Convert the list of pin shapes into sets of routing grids.
-        The secondary set of grids are "optional" pin shapes that could be
+        The secondary set of grids are "optional" pin shapes that
         should be either blocked or part of the pin.
         """
         pin_set = set()
@@ -608,11 +614,11 @@ class pin_group:
         for pin in self.pins:
             debug.info(2, "  Converting {0}".format(pin))
             # Determine which tracks the pin overlaps
-            (sufficient, insufficient)=self.router.convert_pin_to_tracks(self.name,
-                                                                         pin)
+            (sufficient, insufficient) = self.router.convert_pin_to_tracks(self.name,
+                                                                           pin)
             pin_set.update(sufficient)
             partial_set.update(insufficient)
-                
+
             # Blockages will be a super-set of pins since
             # it uses the inflated pin shape.
             blockage_in_tracks = self.router.convert_blockage(pin)
@@ -632,20 +638,20 @@ class pin_group:
         if len(shared_set) > 0:
             debug.info(2, "Removing blocks {}".format(shared_set))
         blockage_set.difference_update(shared_set)
-        
+
         # At least one of the groups must have some valid tracks
         if (len(pin_set) == 0 and len(partial_set) == 0 and len(blockage_set) == 0):
             # debug.warning("Pin is very close to metal blockage.\nAttempting to expand blocked pin {}".format(self.pins))
-            
+
             for pin in self.pins:
                 debug.warning("  Expanding conversion {0}".format(pin))
                 # Determine which tracks the pin overlaps
-                (sufficient,insufficient)=self.router.convert_pin_to_tracks(self.name,
-                                                                            pin,
-                                                                            expansion=1)
+                (sufficient, insufficient) = self.router.convert_pin_to_tracks(self.name,
+                                                                               pin,
+                                                                               expansion=1)
                 pin_set.update(sufficient)
                 partial_set.update(insufficient)
-                    
+
             if len(pin_set) == 0 and len(partial_set) == 0:
                 debug.error("Unable to find unblocked pin {} {}".format(self.name,
                                                                         self.pins))
@@ -653,11 +659,12 @@ class pin_group:
 
         # Consider all the grids that would be blocked
         self.grids = pin_set | partial_set
+        if len(self.grids) < 0:
+            debug.error("Did not find any unblocked grids: {}".format(str(self.pins)))
+            self.router.write_debug_gds("blocked_pin.gds")
+        
         # Remember the secondary grids for removing adjacent pins
         self.secondary_grids = partial_set
 
         debug.info(2, "     pins   {}".format(self.grids))
         debug.info(2, "     secondary {}".format(self.secondary_grids))
-        
-        
-            

@@ -5,12 +5,10 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import globals
 import design
-from math import log
-import design
-from tech import GDS,layer,spice,parameter
+from tech import GDS, layer, spice, parameter
 import utils
+
 
 class dff(design.design):
     """
@@ -19,7 +17,9 @@ class dff(design.design):
 
     pin_names = ["D", "Q", "clk", "vdd", "gnd"]
     type_list = ["INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
-    (width,height) = utils.get_libcell_size("dff", GDS["unit"], layer["boundary"])
+    (width, height) = utils.get_libcell_size("dff",
+                                             GDS["unit"],
+                                             layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "dff", GDS["unit"])
     
     def __init__(self, name="dff"):

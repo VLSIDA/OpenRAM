@@ -27,11 +27,10 @@ class router(router_tech):
     route on a given layer. This is limited to two layer routes.
     It populates blockages on a grid class.
     """
-
     def __init__(self, layers, design, gds_filename=None, rail_track_width=1):
         """
         This will instantiate a copy of the gds file or the module at (0,0) and
-        route on top of this. The blockages from the gds/module will be 
+        route on top of this. The blockages from the gds/module will be
         considered.
         """
         router_tech.__init__(self, layers, rail_track_width)
@@ -84,7 +83,7 @@ class router(router_tech):
         self.boundary = self.layout.measureBoundary(self.top_name)
         # These must be un-indexed to get rid of the matrix type
         self.ll = vector(self.boundary[0][0], self.boundary[0][1])
-        self.ur = vector(self.boundary[1][0], self.boundary[1][1]) 
+        self.ur = vector(self.boundary[1][0], self.boundary[1][1])
 
     def clear_pins(self):
         """
@@ -93,7 +92,7 @@ class router(router_tech):
         """
         self.pins = {}
         self.all_pins = set()
-        self.pin_groups = {}        
+        self.pin_groups = {}
         # DO NOT clear the blockages as these don't change
         self.rg.reinit()
         
@@ -112,7 +111,7 @@ class router(router_tech):
         """
         Retrieve the pin shapes on metal 3 from the layout.
         """
-        debug.info(2, "Retrieving pins for {}.".format(pin_name))        
+        debug.info(2, "Retrieving pins for {}.".format(pin_name))
         shape_list = self.layout.getAllPinShapes(str(pin_name))
         pin_set = set()
         for shape in shape_list:
@@ -140,13 +139,13 @@ class router(router_tech):
         This doesn't consider whether the obstacles will be pins or not.
         They get reset later if they are not actually a blockage.
         """
-        debug.info(1, "Finding blockages.")        
-        for layer in [self.vert_layer_number, self.horiz_layer_number]:
-            self.retrieve_blockages(layer)
+        debug.info(1, "Finding blockages.")
+        for lpp in [self.vert_lpp, self.horiz_lpp]:
+            self.retrieve_blockages(lpp)
             
     def find_pins_and_blockages(self, pin_list):
         """
-        Find the pins and blockages in the design 
+        Find the pins and blockages in the design
         """
         # This finds the pin shapes and sorts them into "groups" that
         # are connected. This must come before the blockages, so we
@@ -447,7 +446,7 @@ class router(router_tech):
         """
         # Inflate the blockage by half a spacing rule
         [ll, ur] = self.convert_blockage_to_tracks(blockage.inflate())
-        zlayer = self.get_zindex(blockage.lpp[0])
+        zlayer = self.get_zindex(blockage.lpp)
         blockage_tracks = self.get_blockage_tracks(ll, ur, zlayer)
         return blockage_tracks
         
@@ -459,19 +458,19 @@ class router(router_tech):
             blockage_list = self.convert_blockage(blockage)
             self.blocked_grids.update(blockage_list)
         
-    def retrieve_blockages(self, layer_num):
+    def retrieve_blockages(self, lpp):
         """
         Recursive find boundaries as blockages to the routing grid.
         """
 
-        shapes = self.layout.getAllShapes(layer_num)
+        shapes = self.layout.getAllShapes(lpp)
         for boundary in shapes:
             ll = vector(boundary[0], boundary[1])
             ur = vector(boundary[2], boundary[3])
             rect = [ll, ur]
             new_pin = pin_layout("blockage{}".format(len(self.blockages)),
                                  rect,
-                                 layer_num)
+                                 lpp)
             
             # If there is a rectangle that is the same in the pins,
             # it isn't a blockage!
@@ -529,7 +528,7 @@ class router(router_tech):
         sufficient_list = set()
         insufficient_list = set()
 
-        zindex = self.get_zindex(pin.lpp[0])
+        zindex = self.get_zindex(pin.lpp)
         for x in range(int(ll[0]) + expansion, int(ur[0]) + 1 + expansion):
             for y in range(int(ll[1] + expansion), int(ur[1]) + 1 + expansion):
                 (full_overlap, partial_overlap) = self.convert_pin_coord_to_tracks(pin,
@@ -622,7 +621,6 @@ class router(router_tech):
         """
         Return all tracks that an inflated pin overlaps
         """
-
         # This is using the full track shape rather
         # than a single track pin shape
         # because we will later patch a connector if there isn't overlap.
@@ -807,8 +805,8 @@ class router(router_tech):
     def enclose_pins(self):
         """
         This will find the biggest rectangle enclosing some grid squares and
-        put a rectangle over it. It does not enclose grid squares that are blocked
-        by other shapes.
+        put a rectangle over it. It does not enclose grid squares
+        that are blocked by other shapes.
         """
         for pin_name in self.pin_groups:
             debug.info(1, "Enclosing pins for {}".format(pin_name))

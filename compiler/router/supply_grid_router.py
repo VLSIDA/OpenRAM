@@ -55,7 +55,7 @@ class supply_grid_router(router):
         self.rg = supply_grid.supply_grid(self.ll, self.ur, self.track_width)
     
     def route(self, vdd_name="vdd", gnd_name="gnd"):
-        """ 
+        """
         Add power supply rails and connect all pins to these rails.
         """
         debug.info(1,"Running supply router on {0} and {1}...".format(vdd_name, gnd_name))
@@ -75,7 +75,6 @@ class supply_grid_router(router):
         start_time = datetime.now()
         self.find_pins_and_blockages([self.vdd_name, self.gnd_name])
         print_time("Finding pins and blockages",datetime.now(), start_time, 3)
-
         # Add the supply rails in a mesh network and connect H/V with vias
         start_time = datetime.now()
         # Block everything

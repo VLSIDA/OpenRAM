@@ -27,9 +27,9 @@ def check(check, str):
             os.path.basename(filename), line_number, str))
 
         if globals.OPTS.debug_level > 0:
-            import pdb; pdb.set_trace()
-        else:
-            assert 0
+            import pdb
+            pdb.set_trace()
+        assert 0
 
 
 def error(str, return_value=0):
@@ -41,9 +41,9 @@ def error(str, return_value=0):
         os.path.basename(filename), line_number, str))
 
     if globals.OPTS.debug_level > 0:
-        import pdb; pdb.set_trace()
-    else:
-        assert return_value == 0
+        import pdb
+        pdb.set_trace()
+    assert return_value == 0
 
 
 def warning(str):

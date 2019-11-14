@@ -28,8 +28,8 @@ class pin_layout:
         # snap the rect to the grid
         self.rect = [x.snap_to_grid() for x in self.rect]
 
-        debug.check(self.width() > 0,"Zero width pin.")
-        debug.check(self.height() > 0,"Zero height pin.")
+        debug.check(self.width() > 0, "Zero width pin.")
+        debug.check(self.height() > 0, "Zero height pin.")
         
         # if it's a string, use the name
         if type(layer_name_pp) == str:
@@ -37,7 +37,7 @@ class pin_layout:
         # else it is required to be a lpp
         else:
             for (layer_name, lpp) in layer.items():
-                if layer_name_pp[0] == lpp[0] and (not layer_name_pp[1] or layer_name_pp[1]==lpp[1]):
+                if self.same_lpp(layer_name_pp, lpp):
                     self.layer = layer_name
                     break
             else:
@@ -78,7 +78,7 @@ class pin_layout:
     def __eq__(self, other):
         """ Check if these are the same pins for duplicate checks """
         if isinstance(other, self.__class__):
-            return (self.layer == other.layer and self.rect == other.rect)
+            return (self.lpp == other.lpp and self.rect == other.rect)
         else:
             return False
 
@@ -177,7 +177,7 @@ class pin_layout:
             return True
         
         # Can only overlap on the same layer
-        if self.layer != other.layer:
+        if not self.same_lpp(self.lpp, other.lpp):
             return False
 
         if not self.xcontains(other):
@@ -198,7 +198,7 @@ class pin_layout:
     def overlaps(self, other):
         """ Check if a shape overlaps with a rectangle  """
         # Can only overlap on the same layer
-        if self.layer != other.layer:
+        if not self.same_lpp(self.lpp, other.lpp):
             return False
         
         x_overlaps = self.xoverlaps(other)
@@ -506,3 +506,13 @@ class pin_layout:
                 return r
            
         return None
+
+    def same_lpp(self, lpp1, lpp2):
+        """
+        Check if the layers and purposes are the same.
+        Ignore if purpose is a None.
+        """
+        if lpp1[1] == None or lpp2[1] == None:
+            return lpp1[0] == lpp2[0]
+        
+        return lpp1[0] == lpp2[0] and lpp1[1] == lpp2[1]

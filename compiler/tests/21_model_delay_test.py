@@ -20,7 +20,8 @@ class model_delay_test(openram_test):
     """ Compare the accuracy of the analytical model with a spice simulation. """
     
     def runTest(self):
-        globals.init_openram("{}/config".format(OPTS.tech_name))
+        config_file = "{}/tests/{}/config".format(os.getenv("OPENRAM_HOME"), OPTS.tech_name)
+        globals.init_openram(config_file)
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
         

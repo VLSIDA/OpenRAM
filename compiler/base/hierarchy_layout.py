@@ -539,21 +539,21 @@ class layout():
         Do not write the pins since they aren't obstructions.
         """
         if type(layer)==str:
-            layer_num = techlayer[layer][0]
+            lpp = techlayer[layer]
         else:
-            layer_num = layer
+            lpp = layer
             
         blockages = []
         for i in self.objs:
-            blockages += i.get_blockages(layer_num)
+            blockages += i.get_blockages(lpp)
         for i in self.insts:
-            blockages += i.get_blockages(layer_num)
+            blockages += i.get_blockages(lpp)
         # Must add pin blockages to non-top cells
         if not top_level:
-            blockages += self.get_pin_blockages(layer_num)
+            blockages += self.get_pin_blockages(lpp)
         return blockages
 
-    def get_pin_blockages(self, layer_num):
+    def get_pin_blockages(self, lpp):
         """ Return the pin shapes as blockages for non-top-level blocks. """
         # FIXME: We don't have a body contact in ptx, so just ignore it for now
         import copy
@@ -565,33 +565,57 @@ class layout():
         for pin_name in pin_names:
             pin_list = self.get_pins(pin_name)
             for pin in pin_list:
-                if pin.layer_num==layer_num:
+                if pin.same_lpp(pin.lpp, lpp):
                     blockages += [pin.rect]
 
         return blockages
 
     def create_horizontal_pin_bus(self, layer, pitch, offset, names, length):
         """ Create a horizontal bus of pins. """
-        return self.create_bus(layer,pitch,offset,names,length,vertical=False,make_pins=True)
+        return self.create_bus(layer,
+                               pitch,
+                               offset,
+                               names,
+                               length,
+                               vertical=False,
+                               make_pins=True)
 
     def create_vertical_pin_bus(self, layer, pitch, offset, names, length):
         """ Create a horizontal bus of pins. """
-        return self.create_bus(layer,pitch,offset,names,length,vertical=True,make_pins=True)
+        return self.create_bus(layer,
+                               pitch,
+                               offset,
+                               names,
+                               length,
+                               vertical=True,
+                               make_pins=True)
 
     def create_vertical_bus(self, layer, pitch, offset, names, length):
         """ Create a horizontal bus. """
-        return self.create_bus(layer,pitch,offset,names,length,vertical=True,make_pins=False)
+        return self.create_bus(layer,
+                               pitch,
+                               offset,
+                               names,
+                               length,
+                               vertical=True,
+                               make_pins=False)
 
     def create_horizontal_bus(self, layer, pitch, offset, names, length):
         """ Create a horizontal bus. """
-        return self.create_bus(layer,pitch,offset,names,length,vertical=False,make_pins=False)
+        return self.create_bus(layer,
+                               pitch,
+                               offset,
+                               names,
+                               length,
+                               vertical=False,
+                               make_pins=False)
 
 
     def create_bus(self, layer, pitch, offset, names, length, vertical, make_pins):
-        """ 
+        """
         Create a horizontal or vertical bus. It can be either just rectangles, or actual
         layout pins. It returns an map of line center line positions indexed by name.  
-        The other coordinate is a 0 since the bus provides a range. 
+        The other coordinate is a 0 since the bus provides a range.
         TODO: combine with channel router.
         """
 

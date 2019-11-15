@@ -18,7 +18,8 @@ import debug
 class contact_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("{}/config".format(OPTS.tech_name))
+        config_file = "{}/tests/{}/config".format(os.getenv("OPENRAM_HOME"), OPTS.tech_name)
+        globals.init_openram(config_file)
 
         for layer_stack in [("metal1", "via1", "metal2"), ("poly", "contact", "metal1")]:
             stack_name = ":".join(map(str, layer_stack))

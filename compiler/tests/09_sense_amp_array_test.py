@@ -18,7 +18,8 @@ import debug
 class sense_amp_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("{}/config".format(OPTS.tech_name))
+        config_file = "{}/tests/{}/config".format(os.getenv("OPENRAM_HOME"), OPTS.tech_name)
+        globals.init_openram(config_file)
 
         # check sense amp array for single port
         debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=2")

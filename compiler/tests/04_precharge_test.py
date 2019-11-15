@@ -18,7 +18,8 @@ import debug
 class precharge_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("{}/config".format(OPTS.tech_name))
+        config_file = "{}/tests/{}/config".format(os.getenv("OPENRAM_HOME"), OPTS.tech_name)
+        globals.init_openram(config_file)
         
         # check precharge in single port
         debug.info(2, "Checking precharge for handmade bitcell")

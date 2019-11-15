@@ -18,8 +18,9 @@ import debug
 #@unittest.skip("SKIPPING 20_psram_1bank_2mux_1w_1r_test, odd supply routing error")
 class psram_1bank_2mux_1w_1r_test(openram_test):
 
-    def runTest(self):        
-        globals.init_openram("{}/config".format(OPTS.tech_name))
+    def runTest(self):
+        config_file = "{}/tests/{}/config".format(os.getenv("OPENRAM_HOME"), OPTS.tech_name)
+        globals.init_openram(config_file)
         from sram_config import sram_config
 
         OPTS.bitcell = "pbitcell"

@@ -16,7 +16,8 @@ import debug
 class port_address_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("{}/config".format(OPTS.tech_name))
+        config_file = "{}/tests/{}/config".format(os.getenv("OPENRAM_HOME"), OPTS.tech_name)
+        globals.init_openram(config_file)
 
         debug.info(1, "Port address 16 rows")
         a = factory.create("port_address", cols=16, rows=16)

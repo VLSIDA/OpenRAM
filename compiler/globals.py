@@ -282,13 +282,9 @@ def read_config(config_file, is_unit_test=True):
 
     # it is already not an abs path, make it one
     if not os.path.isabs(config_file):
-        try:
-            OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
-        except:
-            debug.error("$OPENRAM_HOME is not properly defined.", 1)
-        config_file = OPENRAM_HOME + "/tests/" + config_file + ".py"
-        debug.check(os.path.isfile(config_file),
-                    "{} is not a valid config file".format(config_file))
+        config_file = os.getcwd() + "/" +  config_file
+        # Make it a python file if the base name was only given
+        config_file = re.sub(r'\.py$', "", config_file)
         
     
     # Expand the user if it is used
@@ -297,16 +293,14 @@ def read_config(config_file, is_unit_test=True):
     # Add the path to the system path
     # so we can import things in the other directory
     dir_name = os.path.dirname(config_file)
-    file_name = os.path.basename(config_file)
-    # Remove the py from the module name
-    file_name = re.sub(r'\.py$', "", file_name)
+    module_name = os.path.basename(config_file)
 
     # Prepend the path to avoid if we are using the example config
     sys.path.insert(0, dir_name)
     # Import the configuration file of which modules to use
     debug.info(1, "Configuration file is " + config_file + ".py")
     try:
-        config = importlib.import_module(file_name)
+        config = importlib.import_module(module_name)
     except:
         debug.error("Unable to read configuration file: {0}".format(config_file),2)
 
@@ -315,7 +309,7 @@ def read_config(config_file, is_unit_test=True):
         # except in the case of the tech name! This is because the tech name
         # is sometimes used to specify the config file itself (e.g. unit tests)
         # Note that if we re-read a config file, nothing will get read again!
-        if not k in OPTS.__dict__ or k == "tech_name":
+        if k not in OPTS.__dict__ or k == "tech_name":
             OPTS.__dict__[k] = v
 
     # Massage the output path to be an absolute one

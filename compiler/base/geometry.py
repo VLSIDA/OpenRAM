@@ -167,7 +167,7 @@ class instance(geometry):
         
         debug.info(4, "creating instance: " + self.name)
 
-    def get_blockages(self, layer, top=False):
+    def get_blockages(self, lpp, top=False):
         """ Retrieve blockages of all modules in this instance.
         Apply the transform of the instance placement to give absolute blockages."""
         angle = math.radians(float(self.rotate))
@@ -191,11 +191,11 @@ class instance(geometry):
         if self.mod.is_library_cell:
             # Writes library cell blockages as shapes instead of a large metal blockage
             blockages = []
-            blockages = self.mod.gds.getBlockages(layer)
+            blockages = self.mod.gds.getBlockages(lpp)
             for b in blockages:
                 new_blockages.append(self.transform_coords(b,self.offset, mirr, angle))
         else:
-            blockages = self.mod.get_blockages(layer)
+            blockages = self.mod.get_blockages(lpp)
             for b in blockages:
                 new_blockages.append(self.transform_coords(b,self.offset, mirr, angle))
         return new_blockages

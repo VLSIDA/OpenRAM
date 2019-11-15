@@ -19,7 +19,8 @@ from sram_factory import factory
 class pbitcell_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("{}/config".format(OPTS.tech_name))
+        config_file = "{}/tests/{}/config".format(os.getenv("OPENRAM_HOME"), OPTS.tech_name)
+        globals.init_openram(config_file)
 
         OPTS.num_rw_ports=1
         OPTS.num_w_ports=1

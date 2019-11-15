@@ -18,7 +18,8 @@ import debug
 class pinv_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("{}/config".format(OPTS.tech_name))
+        config_file = "{}/tests/{}/config".format(os.getenv("OPENRAM_HOME"), OPTS.tech_name)
+        globals.init_openram(config_file)
 
         debug.info(2, "Checking 2x size inverter")
         tx = factory.create(module_type="pinv", size=2)

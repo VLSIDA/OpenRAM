@@ -20,7 +20,8 @@ import debug
 class write_mask_and_array_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("{}/config".format(OPTS.tech_name))
+        config_file = "{}/tests/{}/config".format(os.getenv("OPENRAM_HOME"), OPTS.tech_name)
+        globals.init_openram(config_file)
 
         # check write driver array for single port
         debug.info(2, "Testing write_mask_and_array for columns=8, word_size=8, write_size=4")

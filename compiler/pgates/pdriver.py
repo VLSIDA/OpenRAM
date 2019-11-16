@@ -27,12 +27,12 @@ class pdriver(pgate.pgate):
         self.size_list = size_list
         self.fanout = fanout
 
-        debug.check(self.size_list or self.fanout > 0,
-                    "Either fanout or size list must be specified.")
-        debug.check(not (self.size_list and self.fanout > 0),
-                    "Cannot specify both size_list and fanout.")
-        debug.check(not (self.size_list and self.neg_polarity),
-                    "Cannot specify both size_list and neg_polarity.")
+        if not size_list and self.fanout == 0:
+            debug.error("Either fanout or size list must be specified.", -1)
+        if self.size_list and self.fanout != 0:
+            debug.error("Cannot specify both size_list and fanout.", -1)
+        if self.size_list and self.neg_polarity:
+            debug.error("Cannot specify both size_list and neg_polarity.", -1)
  
         # Creates the netlist and layout
         pgate.pgate.__init__(self, name, height)
@@ -43,44 +43,21 @@ class pdriver(pgate.pgate):
             self.num_stages = len(self.size_list)
         else:
             # Find the optimal number of stages for the given effort
-            optimal_stages = self.fanout ** (1 / self.stage_effort)
-            rounded_stages = int(round(optimal_stages))
-            difference = optimal_stages - rounded_stages
+            self.num_stages = max(1,
+                                  int(round(self.fanout ** (1 / self.stage_effort))))
 
-            
-            # Determine if we need to fix the polarity
-            if self.neg_polarity and (rounded_stages % 2 == 0):
-                wrong_polarity = True
-            elif not self.neg_polarity and (optimal_stages % 2):
-                wrong_polarity = True
-            else:
-                wrong_polarity = False
-            
-            # Depending on the difference, round up or down.
-            if wrong_polarity:
-                # If we rounded up and can round down, do it.
-                if difference < 0 and rounded_stages > 1:
-                    rounded_stages -= 1
-                else:
-                    # Otherwise, we must round up
-                    rounded_stages += 1
-            
-            if self.neg_polarity:
-                # Need at least one stage for negative
-                self.num_stages = max(1, rounded_stages)
-            else:
-                # Need at least two stages for positive
-                self.num_stages = max(2, rounded_stages)
+            # Increase the number of stages if we need to fix polarity
+            if self.neg_polarity and (self.num_stages % 2 == 0):
+                self.num_stages += 1
+            elif not self.neg_polarity and (self.num_stages % 2):
+                self.num_stages += 1
 
-            # Use the actual stage effort
-            actual_stage_effort = self.fanout / self.num_stages
-                                
             self.size_list = []
             # compute sizes backwards from the fanout
             fanout_prev = self.fanout
             for x in range(self.num_stages):
-                fanout_prev = fanout_prev / actual_stage_effort
-                self.size_list.append(max(round(fanout_prev), 1))
+                fanout_prev = max(round(fanout_prev / self.stage_effort), 1)
+                self.size_list.append(fanout_prev)
 
             # reverse the sizes to be from input to output
             self.size_list.reverse()

@@ -112,7 +112,7 @@ class sram():
         # Write the config file
         start_time = datetime.datetime.now()
         from shutil import copyfile
-        copyfile(OPTS.config_file + '.py', OPTS.output_path + OPTS.output_name + '.py')
+        copyfile(OPTS.config_file, OPTS.output_path + OPTS.output_name + '.py')
         debug.print_raw("Config: Writing to {0}".format(OPTS.output_path + OPTS.output_name + '.py'))
         print_time("Config", datetime.datetime.now(), start_time)
 

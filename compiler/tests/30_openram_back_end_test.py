@@ -20,7 +20,7 @@ class openram_back_end_test(openram_test):
 
     def runTest(self):
         OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
-        config_file = "{}/tests/{}/config".format(os.getenv("OPENRAM_HOME"), OPTS.tech_name)
+        config_file = "{}/tests/{}/config_back_end".format(os.getenv("OPENRAM_HOME"), OPTS.tech_name)
         globals.init_openram(config_file)
 
         debug.info(1, "Testing top-level back-end openram.py with 2-bit, 16 word SRAM.")

@@ -283,13 +283,15 @@ def read_config(config_file, is_unit_test=True):
     # it is already not an abs path, make it one
     if not os.path.isabs(config_file):
         config_file = os.getcwd() + "/" +  config_file
-        # Make it a python file if the base name was only given
-        config_file = re.sub(r'\.py$', "", config_file)
+        
+    # Make it a python file if the base name was only given
+    config_file = re.sub(r'\.py$', "", config_file)
         
     
     # Expand the user if it is used
     config_file = os.path.expanduser(config_file)
-    OPTS.config_file = config_file
+    
+    OPTS.config_file = config_file + ".py"
     # Add the path to the system path
     # so we can import things in the other directory
     dir_name = os.path.dirname(config_file)

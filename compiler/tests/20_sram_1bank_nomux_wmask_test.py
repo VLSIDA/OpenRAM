@@ -21,7 +21,7 @@ import debug
 class sram_1bank_nomux_wmask_test(openram_test):
 
     def runTest(self):
-        config_file = "{}/tests/{}/config".format(os.getenv("OPENRAM_HOME"), OPTS.tech_name)
+        config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
         from sram_config import sram_config
         c = sram_config(word_size=8,

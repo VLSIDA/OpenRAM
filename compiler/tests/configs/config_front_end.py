@@ -14,7 +14,13 @@ process_corners = ["TT"]
 supply_voltages = [5.0]
 temperatures = [25]
 
-drc_name = "magic"
-lvs_name = "netgen"
-pex_name = "magic"
+if tech_name == "freepdk45":
+    drc_name = "calibre"
+    lvs_name = "calibre"
+    pex_name = "calibre"
+else:
+    drc_name = "magic"
+    lvs_name = "netgen"
+    pex_name = "magic"
+
 

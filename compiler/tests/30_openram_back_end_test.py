@@ -52,7 +52,7 @@ class openram_back_end_test(openram_test):
             exe_name = "{0}/openram.py ".format(OPENRAM_HOME)
         else:
             exe_name = "coverage run -p {0}/openram.py ".format(OPENRAM_HOME) 
-        config_name = "{0}/tests/{1}/config_back_end.py".format(OPENRAM_HOME,OPTS.tech_name)
+        config_name = "{0}/tests/configs/config_back_end.py".format(OPENRAM_HOME)
         cmd = "{0} -n -o {1} -p {2} {3} {4} 2>&1 > {5}/output.log".format(exe_name,
                                                                           out_file,
                                                                           out_path,

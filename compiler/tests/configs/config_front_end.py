@@ -15,6 +15,7 @@ supply_voltages = [5.0]
 temperatures = [25]
 
 if tech_name == "freepdk45":
+    supply_voltages = [1.0]
     drc_name = "calibre"
     lvs_name = "calibre"
     pex_name = "calibre"

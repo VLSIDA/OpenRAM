@@ -20,6 +20,7 @@ inline_lvsdrc = True
 analytical_delay = False
 
 if tech_name == "freepdk45":
+    supply_voltages = [1.0]
     drc_name = "calibre"
     lvs_name = "calibre"
     pex_name = "calibre"

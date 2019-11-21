@@ -398,7 +398,8 @@ def setup_paths():
         full_path = "{0}/{1}".format(OPENRAM_HOME, subdir)
         debug.check(os.path.isdir(full_path),
                     "$OPENRAM_HOME/{0} does not exist: {1}".format(subdir, full_path))
-        sys.path.append("{0}".format(full_path)) 
+        if "__pycache__" not in full_path:
+            sys.path.append("{0}".format(full_path)) 
 
     if not OPTS.openram_temp.endswith('/'):
         OPTS.openram_temp += "/"
@@ -483,7 +484,7 @@ def import_tech():
     try:
         tech_mod = __import__(OPTS.tech_name)
     except ImportError:
-        debug.error("Nonexistent technology_setup_file: {0}.py".format(filename), -1)
+        debug.error("Nonexistent technology module: {0}".format(OPTS.tech_name), -1)
 
     OPTS.openram_tech = os.path.dirname(tech_mod.__file__) + "/"
 

@@ -17,8 +17,9 @@ import debug
 
 class psram_1bank_4mux_1rw_1r_test(openram_test):
 
-    def runTest(self):        
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+    def runTest(self):
+        config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
+        globals.init_openram(config_file)
         from sram_config import sram_config
 
         OPTS.bitcell = "pbitcell"

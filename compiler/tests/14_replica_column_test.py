@@ -16,7 +16,8 @@ import debug
 class replica_column_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
+        globals.init_openram(config_file)
 
         debug.info(2, "Testing replica column for 6t_cell")
         a = factory.create(module_type="replica_column", rows=4, left_rbl=1, right_rbl=0, replica_bit=1)

@@ -5,15 +5,26 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+from globals import OPTS
 word_size = 1
 num_words = 16
 
-tech_name = "scn4m_subm"
+tech_name = OPTS.tech_name
+
 process_corners = ["TT"]
 supply_voltages = [5.0]
 temperatures = [25]
 
-drc_name = "magic"
-lvs_name = "netgen"
-pex_name = "magic"
+route_supplies = True
+check_lvsdrc = True
+
+if tech_name == "freepdk45":
+    supply_voltages = [1.0]
+    drc_name = "calibre"
+    lvs_name = "calibre"
+    pex_name = "calibre"
+else:
+    drc_name = "magic"
+    lvs_name = "netgen"
+    pex_name = "magic"
 

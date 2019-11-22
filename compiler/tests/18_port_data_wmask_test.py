@@ -18,7 +18,8 @@ import debug
 class port_data_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
+        globals.init_openram(config_file)
         from sram_config import sram_config
 
         c = sram_config(word_size=16,

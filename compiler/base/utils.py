@@ -5,7 +5,6 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import os
 import gdsMill
 import tech
 import math
@@ -16,6 +15,7 @@ from pin_layout import pin_layout
 
 OPTS = globals.OPTS
 
+
 def ceil(decimal):
     """
     Performs a ceiling function on the decimal place specified by the DRC grid.
@@ -23,29 +23,35 @@ def ceil(decimal):
     grid = tech.drc["grid"]
     return math.ceil(decimal * 1 / grid) / (1 / grid)
 
+
 def round_to_grid(number):
     """
     Rounds an arbitrary number to the grid.
     """
-    grid = tech.drc["grid"]  
+    grid = tech.drc["grid"]
     # this gets the nearest integer value
     number_grid = int(round(round((number / grid), 2), 0))
     number_off = number_grid * grid
     return number_off
 
+
 def snap_to_grid(offset):
     """
     Changes the coodrinate to match the grid settings
     """
-    return [round_to_grid(offset[0]),round_to_grid(offset[1])]
+    return [round_to_grid(offset[0]),
+            round_to_grid(offset[1])]
+
 
 def pin_center(boundary):
     """
     This returns the center of a pin shape in the vlsiLayout border format.
     """
-    return [0.5 * (boundary[0] + boundary[2]), 0.5 * (boundary[1] + boundary[3])]
+    return [0.5 * (boundary[0] + boundary[2]),
+            0.5 * (boundary[1] + boundary[3])]
 
-def auto_measure_libcell(pin_list, name, units, layer):
+
+def auto_measure_libcell(pin_list, name, units, lpp):
     """
     Open a GDS file and find the pins in pin_list as text on a given layer.
     Return these as a set of properties including the cell width/height too.
@@ -56,43 +62,42 @@ def auto_measure_libcell(pin_list, name, units, layer):
     reader.loadFromFile(cell_gds)
 
     cell = {}
-    measure_result = cell_vlsi.getLayoutBorder(layer)
-    if measure_result == None:
+    measure_result = cell_vlsi.getLayoutBorder(lpp[0])
+    if measure_result:
         measure_result = cell_vlsi.measureSize(name)
     [cell["width"], cell["height"]] = measure_result
 
     for pin in pin_list:
-        (name,layer,boundary)=cell_vlsi.getPinShapeByLabel(str(pin))        
+        (name, lpp, boundary) = cell_vlsi.getPinShapeByLabel(str(pin))
         cell[str(pin)] = pin_center(boundary)
     return cell
 
 
-
-def get_gds_size(name, gds_filename, units, layer):
+def get_gds_size(name, gds_filename, units, lpp):
     """
     Open a GDS file and return the size from either the
     bounding box or a border layer.
     """
-    debug.info(4,"Creating VLSI layout for {}".format(name))
+    debug.info(4, "Creating VLSI layout for {}".format(name))
     cell_vlsi = gdsMill.VlsiLayout(units=units)
     reader = gdsMill.Gds2reader(cell_vlsi)
     reader.loadFromFile(gds_filename)
 
-    cell = {}
-    measure_result = cell_vlsi.getLayoutBorder(layer)
-    if measure_result == None:
-        debug.info(2,"Layout border failed. Trying to measure size for {}".format(name))
+    measure_result = cell_vlsi.getLayoutBorder(lpp)
+    if not measure_result:
+        debug.info(2, "Layout border failed. Trying to measure size for {}".format(name))
         measure_result = cell_vlsi.measureSize(name)
     # returns width,height
     return measure_result
 
-def get_libcell_size(name, units, layer):
+
+def get_libcell_size(name, units, lpp):
     """
     Open a GDS file and return the library cell size from either the
     bounding box or a border layer.
     """
     cell_gds = OPTS.openram_tech + "gds_lib/" + str(name) + ".gds"
-    return(get_gds_size(name, cell_gds, units, layer))
+    return(get_gds_size(name, cell_gds, units, lpp))
 
 
 def get_gds_pins(pin_names, name, gds_filename, units):
@@ -106,14 +111,17 @@ def get_gds_pins(pin_names, name, gds_filename, units):
 
     cell = {}
     for pin_name in pin_names:
-        cell[str(pin_name)]=[]
-        pin_list=cell_vlsi.getPinShape(str(pin_name))
+        cell[str(pin_name)] = []
+        pin_list = cell_vlsi.getPinShape(str(pin_name))
         for pin_shape in pin_list:
-            (layer,boundary)=pin_shape
-            rect=[vector(boundary[0],boundary[1]),vector(boundary[2],boundary[3])]
-            # this is a list because other cells/designs may have must-connect pins
-            cell[str(pin_name)].append(pin_layout(pin_name, rect, layer))
+            (lpp, boundary) = pin_shape
+            rect = [vector(boundary[0], boundary[1]),
+                    vector(boundary[2], boundary[3])]
+            # this is a list because other cells/designs
+            # may have must-connect pins
+            cell[str(pin_name)].append(pin_layout(pin_name, rect, lpp))
     return cell
+
 
 def get_libcell_pins(pin_list, name, units):
     """

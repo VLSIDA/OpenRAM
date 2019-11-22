@@ -20,7 +20,8 @@ import debug
 class array_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
+        globals.init_openram(config_file)
 
         debug.info(2, "Testing 4x4 array for 6t_cell")
         a = factory.create(module_type="bitcell_array", cols=4, rows=4)

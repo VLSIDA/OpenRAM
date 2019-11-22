@@ -19,7 +19,8 @@ class VlsiLayout:
         self.layerNumbersInUse = []
         self.debug = False
         if name:
-            self.rootStructureName=name
+            #take the root structure and copy it to a new structure with the new name
+            self.rootStructureName=self.padText(name)
             #create the ROOT structure
             self.structures[self.rootStructureName] = GdsStructure()
             self.structures[self.rootStructureName].name = name
@@ -82,13 +83,9 @@ class VlsiLayout:
         return coordinatesRotate
     
     def rename(self,newName):
-        #make sure the newName is a multiple of 2 characters
-        if(len(newName)%2 == 1):
-            #pad with a zero
-            newName = newName + '\x00'
         #take the root structure and copy it to a new structure with the new name
         self.structures[newName] = self.structures[self.rootStructureName]
-        self.structures[newName].name = newName
+        self.structures[newName].name = self.padText(newName)
         #and delete the old root
         del self.structures[self.rootStructureName]
         self.rootStructureName = newName
@@ -159,13 +156,14 @@ class VlsiLayout:
         debug.check(len(structureNames)==1,"Multiple possible root structures in the layout: {}".format(str(structureNames)))
         self.rootStructureName = structureNames[0]
 
+        
     def traverseTheHierarchy(self, startingStructureName=None, delegateFunction = None, 
                              transformPath = [], rotateAngle = 0, transFlags = [0,0,0], coordinates = (0,0)):
         #since this is a recursive function, must deal with the default
         #parameters explicitly      
         if startingStructureName == None:
             startingStructureName = self.rootStructureName            
-            
+
         #set up the rotation matrix        
         if(rotateAngle == None or rotateAngle == ""):
             angle = 0
@@ -193,17 +191,21 @@ class VlsiLayout:
             delegateFunction(startingStructureName, transformPath)
         #starting with a particular structure, we will recursively traverse the tree
         #********might have to set the recursion level deeper for big layouts!
-        if(len(self.structures[startingStructureName].srefs)>0): #does this structure reference any others?
-            #if so, go through each and call this function again
-            #if not, return back to the caller (caller can be this function)            
-            for sref in self.structures[startingStructureName].srefs:
-                #here, we are going to modify the sref coordinates based on the parent objects rotation                
-                self.traverseTheHierarchy(startingStructureName = sref.sName,                                    
-                                          delegateFunction = delegateFunction,
-                                          transformPath = transformPath,
-                                          rotateAngle = sref.rotateAngle,
-                                          transFlags = sref.transFlags,
-                                          coordinates = sref.coordinates)
+        try:
+            if(len(self.structures[startingStructureName].srefs)>0): #does this structure reference any others?
+                #if so, go through each and call this function again
+                #if not, return back to the caller (caller can be this function)            
+                for sref in self.structures[startingStructureName].srefs:
+                    #here, we are going to modify the sref coordinates based on the parent objects rotation                
+                    self.traverseTheHierarchy(startingStructureName = sref.sName,                                    
+                                              delegateFunction = delegateFunction,
+                                              transformPath = transformPath,
+                                              rotateAngle = sref.rotateAngle,
+                                              transFlags = sref.transFlags,
+                                              coordinates = sref.coordinates)
+        except KeyError:
+            debug.error("Could not find structure {} in GDS file.".format(startingStructureName),-1)
+            
             #MUST HANDLE AREFs HERE AS WELL
         #when we return, drop the last transform from the transformPath
         del transformPath[-1]
@@ -211,11 +213,11 @@ class VlsiLayout:
     
     def initialize(self):
         self.deduceHierarchy()
-        #self.traverseTheHierarchy()
+        # self.traverseTheHierarchy()
         self.populateCoordinateMap()
 
         for layerNumber in self.layerNumbersInUse:
-            self.processLabelPins(layerNumber)
+            self.processLabelPins((layerNumber, None))
         
     
     def populateCoordinateMap(self):
@@ -243,21 +245,24 @@ class VlsiLayout:
             self.xyTree.append((startingStructureName,origin,uVector,vVector))
         self.traverseTheHierarchy(delegateFunction = addToXyTree)
         
-    def microns(self,userUnits):
+    def microns(self, userUnits):
         """Utility function to convert user units to microns"""
         userUnit = self.units[1]/self.units[0]
-        userUnitsPerMicron = userUnit / (userunit)
+        userUnitsPerMicron = userUnit / userunit
         layoutUnitsPerMicron = userUnitsPerMicron / self.units[0]
         return userUnits / layoutUnitsPerMicron
         
-    def userUnits(self,microns):
+    def userUnits(self, microns):
         """Utility function to convert microns to user units"""
         userUnit = self.units[1]/self.units[0]
-        #userUnitsPerMicron = userUnit / 1e-6
+        # userUnitsPerMicron = userUnit / 1e-6
         userUnitsPerMicron = userUnit / (userUnit)
         layoutUnitsPerMicron = userUnitsPerMicron / self.units[0]
-        #print("userUnit:",userUnit,"userUnitsPerMicron",userUnitsPerMicron,"layoutUnitsPerMicron",layoutUnitsPerMicron,[microns,microns*layoutUnitsPerMicron])
-        return round(microns*layoutUnitsPerMicron,0)
+        # print("userUnit:",userUnit,
+        # "userUnitsPerMicron",userUnitsPerMicron,
+        # "layoutUnitsPerMicron",layoutUnitsPerMicron,
+        # [microns,microns*layoutUnitsPerMicron])
+        return round(microns*layoutUnitsPerMicron, 0)
 
     def changeRoot(self,newRoot, create=False):
         """
@@ -384,7 +389,7 @@ class VlsiLayout:
         #add the sref to the root structure
         self.structures[self.rootStructureName].boundaries.append(boundaryToAdd)
     
-    def addPath(self, layerNumber=0, purposeNumber = None, coordinates=[(0,0)], width=1.0):
+    def addPath(self, layerNumber=0, purposeNumber=None, coordinates=[(0,0)], width=1.0):
         """
         Method to add a path to a layout
         """
@@ -396,24 +401,22 @@ class VlsiLayout:
             cY = self.userUnits(coordinate[1])
             layoutUnitCoordinates.append((cX,cY))
         pathToAdd = GdsPath()
-        pathToAdd.drawingLayer=layerNumber
+        pathToAdd.drawingLayer = layerNumber
         pathToAdd.purposeLayer = purposeNumber
-        pathToAdd.pathWidth=widthInLayoutUnits
-        pathToAdd.coordinates=layoutUnitCoordinates
+        pathToAdd.pathWidth = widthInLayoutUnits
+        pathToAdd.coordinates = layoutUnitCoordinates
         #add the sref to the root structure
         self.structures[self.rootStructureName].paths.append(pathToAdd)
         
-    def addText(self, text, layerNumber=0, purposeNumber = None, offsetInMicrons=(0,0), magnification=0.1, rotate = None):
+    def addText(self, text, layerNumber=0, purposeNumber=None, offsetInMicrons=(0,0), magnification=0.1, rotate = None):
         offsetInLayoutUnits = (self.userUnits(offsetInMicrons[0]),self.userUnits(offsetInMicrons[1]))
         textToAdd = GdsText()
         textToAdd.drawingLayer = layerNumber
         textToAdd.purposeLayer = purposeNumber
         textToAdd.dataType = 0
         textToAdd.coordinates = [offsetInLayoutUnits]
-        textToAdd.transFlags = [0,0,0]  
-        if(len(text)%2 == 1):
-            text = text + '\x00'
-        textToAdd.textString = text
+        textToAdd.transFlags = [0,0,0]
+        textToAdd.textString = self.padText(text)
         #textToAdd.transFlags[1] = 1
         textToAdd.magFactor = magnification
         if rotate:
@@ -421,7 +424,13 @@ class VlsiLayout:
             textToAdd.rotateAngle = rotate
         #add the sref to the root structure
         self.structures[self.rootStructureName].texts.append(textToAdd)
-            
+
+    def padText(self, text):
+        if(len(text)%2 == 1):
+            return text + '\x00'
+        else:
+            return text
+
     def isBounded(self,testPoint,startPoint,endPoint):
         #these arguments are touples of (x,y) coordinates
         if testPoint == None:
@@ -587,41 +596,50 @@ class VlsiLayout:
                 passFailIndex += 1
         print("Done\n\n")
 
-    def getLayoutBorder(self,borderlayer):
-        cellSizeMicron=None
+    def getLayoutBorder(self, lpp):
+        cellSizeMicron = None
         for boundary in self.structures[self.rootStructureName].boundaries:
-            if boundary.drawingLayer==borderlayer:
+            if sameLPP((boundary.drawingLayer, boundary.purposeLayer),
+                       lpp):
                 if self.debug:
-                    debug.info(1,"Find border "+str(boundary.coordinates))
-                left_bottom=boundary.coordinates[0]
-                right_top=boundary.coordinates[2]
-                cellSize=[right_top[0]-left_bottom[0],right_top[1]-left_bottom[1]]
-                cellSizeMicron=[cellSize[0]*self.units[0],cellSize[1]*self.units[0]]
-        if not(cellSizeMicron):
-            print("Error: "+str(self.rootStructureName)+".cell_size information not found yet")
+                    debug.info(1, "Find border "+str(boundary.coordinates))
+                left_bottom = boundary.coordinates[0]
+                right_top = boundary.coordinates[2]
+                cellSize = [right_top[0]-left_bottom[0],
+                            right_top[1]-left_bottom[1]]
+                cellSizeMicron = [cellSize[0]*self.units[0],
+                                  cellSize[1]*self.units[0]]
+        debug.check(cellSizeMicron,
+                    "Error: "+str(self.rootStructureName)+".cell_size information not found yet")
+
         return cellSizeMicron
 
-    def measureSize(self,startStructure):
-        self.rootStructureName=startStructure
+    def measureSize(self, startStructure):
+        self.rootStructureName = self.padText(startStructure)
         self.populateCoordinateMap()
         cellBoundary = [None, None, None, None]
         for TreeUnit in self.xyTree:
-            cellBoundary=self.measureSizeInStructure(TreeUnit,cellBoundary)
-        cellSize=[cellBoundary[2]-cellBoundary[0],cellBoundary[3]-cellBoundary[1]]
-        cellSizeMicron=[cellSize[0]*self.units[0],cellSize[1]*self.units[0]]
+            cellBoundary = self.measureSizeInStructure(TreeUnit, cellBoundary)
+        cellSize = [cellBoundary[2]-cellBoundary[0],
+                    cellBoundary[3]-cellBoundary[1]]
+        cellSizeMicron = [cellSize[0]*self.units[0],
+                          cellSize[1]*self.units[0]]
         return cellSizeMicron
 
-    def measureBoundary(self,startStructure):
-        self.rootStructureName=startStructure
+    def measureBoundary(self, startStructure):
+        self.rootStructureName = self.padText(startStructure)
         self.populateCoordinateMap()
         cellBoundary = [None, None, None, None]
         for TreeUnit in self.xyTree:
-            cellBoundary=self.measureSizeInStructure(TreeUnit,cellBoundary)
-        return [[self.units[0]*cellBoundary[0],self.units[0]*cellBoundary[1]],
-                [self.units[0]*cellBoundary[2],self.units[0]*cellBoundary[3]]]
+            cellBoundary = self.measureSizeInStructure(TreeUnit, cellBoundary)
+        return [[self.units[0]*cellBoundary[0],
+                 self.units[0]*cellBoundary[1]],
+                [self.units[0]*cellBoundary[2],
+                 self.units[0]*cellBoundary[3]]]
     
-    def measureSizeInStructure(self,structure,cellBoundary):
-        (structureName,structureOrigin,structureuVector,structurevVector)=structure
+    def measureSizeInStructure(self, structure, cellBoundary):
+        (structureName, structureOrigin,
+         structureuVector, structurevVector) = structure
         for boundary in self.structures[str(structureName)].boundaries:
             left_bottom=boundary.coordinates[0]
             right_top=boundary.coordinates[2]
@@ -648,14 +666,14 @@ class VlsiLayout:
                 cellBoundary[3]=right_top_Y
         return cellBoundary
 
-
-    def getTexts(self, layer):
+    def getTexts(self, lpp):
         """
         Get all of the labels on a given layer only at the root level.
         """
         text_list = []
         for Text in self.structures[self.rootStructureName].texts:
-            if Text.drawingLayer == layer:
+            if sameLPP((Text.drawingLayer, Text.purposeLayer),
+                       lpp):
                 text_list.append(Text)
         return text_list
     
@@ -671,9 +689,9 @@ class VlsiLayout:
             max_pin = None
             max_area = 0
             for pin in pin_list:
-                (layer,boundary) = pin
+                (layer, boundary) = pin
                 new_area = boundaryArea(boundary)
-                if max_pin == None or new_area>max_area:
+                if not max_pin or new_area > max_area:
                     max_pin = pin
                     max_area = new_area
             max_pins.append(max_pin)
@@ -690,32 +708,33 @@ class VlsiLayout:
         pin_map = self.pins[pin_name]
         for pin_list in pin_map:
             for pin in pin_list:
-                (pin_layer, boundary) = pin            
+                (pin_layer, boundary) = pin
                 shape_list.append(pin)
 
         return shape_list
-            
 
-    def processLabelPins(self, layer):
+    def processLabelPins(self, lpp):
         """
         Find all text labels and create a map to a list of shapes that
         they enclose on the given layer.
         """
         # Get the labels on a layer in the root level
-        labels = self.getTexts(layer)
+        labels = self.getTexts(lpp)
+        
         # Get all of the shapes on the layer at all levels
         # and transform them to the current level
-        shapes =  self.getAllShapes(layer)
+        shapes = self.getAllShapes(lpp)
 
         for label in labels:
             label_coordinate = label.coordinates[0]
             user_coordinate = [x*self.units[0] for x in label_coordinate]
             pin_shapes = []
             for boundary in shapes:
-                if self.labelInRectangle(user_coordinate,boundary):
-                    pin_shapes.append((layer, boundary))
+                if self.labelInRectangle(user_coordinate, boundary):
+                    pin_shapes.append((lpp, boundary))
 
             label_text = label.textString
+            
             # Remove the padding if it exists
             if label_text[-1] == "\x00":
                 label_text = label_text[0:-1]
@@ -725,81 +744,97 @@ class VlsiLayout:
             except KeyError:
                 self.pins[label_text] = []
             self.pins[label_text].append(pin_shapes)
-        
     
-    def getBlockages(self,layer):
+    def getBlockages(self, lpp):
         """
-        Return all blockages on a given layer in [coordinate 1, coordinate 2,...] format and
+        Return all blockages on a given layer in
+        [coordinate 1, coordinate 2,...] format and
         user units.
         """
         blockages = []
 
-        shapes = self.getAllShapes(layer)
+        shapes = self.getAllShapes(lpp)
         for boundary in shapes:
             vectors = []
-            for i in range(0,len(boundary),2):
-                vectors.append(vector(boundary[i],boundary[i+1]))
+            for i in range(0, len(boundary), 2):
+                vectors.append(vector(boundary[i], boundary[i+1]))
             blockages.append(vectors)
-        return blockages    
+            
+        return blockages
 
-    def getAllShapes(self,layer):
+    def getAllShapes(self, lpp):
         """
-        Return all shapes on a given layer in [llx, lly, urx, ury] format and user units for rectangles
-        and [coordinate 1, coordinate 2,...] format and user units for polygons.
+        Return all shapes on a given layer in [llx, lly, urx, ury]
+        format and user units for rectangles
+        and [coordinate 1, coordinate 2,...] format and user
+        units for polygons.
         """
         boundaries = set()
         for TreeUnit in self.xyTree:
-            #print(TreeUnit[0])
-            boundaries.update(self.getShapesInStructure(layer,TreeUnit))
+            # print(TreeUnit[0])
+            boundaries.update(self.getShapesInStructure(lpp, TreeUnit))
 
         # Convert to user units
         user_boundaries = []
         for boundary in boundaries:
             boundaries_list = []
-            for i in range(0,len(boundary)):
+            for i in range(0, len(boundary)):
                 boundaries_list.append(boundary[i]*self.units[0])
             user_boundaries.append(boundaries_list)
         return user_boundaries
 
-
-    def getShapesInStructure(self,layer,structure):
-        """ 
-        Go through all the shapes in a structure and return the list of shapes in
-        the form [llx, lly, urx, ury] for rectangles and [coordinate 1, coordinate 2,...] for polygons.
+    def getShapesInStructure(self, lpp, structure):
         """
-        (structureName,structureOrigin,structureuVector,structurevVector)=structure
-        #print(structureName,"u",structureuVector.transpose(),"v",structurevVector.transpose(),"o",structureOrigin.transpose())
+        Go through all the shapes in a structure and
+        return the list of shapes in
+        the form [llx, lly, urx, ury] for rectangles
+        and [coordinate 1, coordinate 2,...] for polygons.
+        """
+        (structureName, structureOrigin,
+         structureuVector, structurevVector) = structure
+        # print(structureName,
+        # "u", structureuVector.transpose(),
+        # "v",structurevVector.transpose(),
+        # "o",structureOrigin.transpose())
         boundaries = []
         for boundary in self.structures[str(structureName)].boundaries:
-            if layer==boundary.drawingLayer:
-                if len(boundary.coordinates)!=5:
+            if sameLPP((boundary.drawingLayer, boundary.purposeLayer),
+                       lpp):
+                if len(boundary.coordinates) != 5:
                     # if shape is a polygon (used in DFF)
                     boundaryPolygon = []
                     # Polygon is a list of coordinates going ccw
-                    for coord in range(0,len(boundary.coordinates)):
+                    for coord in range(0, len(boundary.coordinates)):
                         boundaryPolygon.append(boundary.coordinates[coord][0])
                         boundaryPolygon.append(boundary.coordinates[coord][1])
                     # perform the rotation
-                    boundaryPolygon=self.transformPolygon(boundaryPolygon,structureuVector,structurevVector)
-                    # add the offset 
+                    boundaryPolygon = self.transformPolygon(boundaryPolygon,
+                                                            structureuVector,
+                                                            structurevVector)
+                    # add the offset
                     polygon = []
-                    for i in range(0,len(boundaryPolygon),2):
-                        polygon.append(boundaryPolygon[i]+structureOrigin[0].item())
-                        polygon.append(boundaryPolygon[i+1]+structureOrigin[1].item())
+                    for i in range(0, len(boundaryPolygon), 2):
+                        polygon.append(boundaryPolygon[i] + structureOrigin[0].item())
+                        polygon.append(boundaryPolygon[i+1] + structureOrigin[1].item())
                     # make it a tuple
                     polygon = tuple(polygon)
                     boundaries.append(polygon)
                 else:
                     # else shape is a rectangle
-                    left_bottom=boundary.coordinates[0]
-                    right_top=boundary.coordinates[2]
+                    left_bottom = boundary.coordinates[0]
+                    right_top = boundary.coordinates[2]
                     # Rectangle is [leftx, bottomy, rightx, topy].
-                    boundaryRect=[left_bottom[0],left_bottom[1],right_top[0],right_top[1]]
+                    boundaryRect = [left_bottom[0], left_bottom[1],
+                                    right_top[0], right_top[1]]
                     # perform the rotation
-                    boundaryRect=self.transformRectangle(boundaryRect,structureuVector,structurevVector)
+                    boundaryRect = self.transformRectangle(boundaryRect,
+                                                           structureuVector,
+                                                           structurevVector)
                     # add the offset and make it a tuple
-                    boundaryRect=(boundaryRect[0]+structureOrigin[0].item(),boundaryRect[1]+structureOrigin[1].item(),
-                                  boundaryRect[2]+structureOrigin[0].item(),boundaryRect[3]+structureOrigin[1].item())
+                    boundaryRect = (boundaryRect[0]+structureOrigin[0].item(),
+                                    boundaryRect[1]+structureOrigin[1].item(),
+                                    boundaryRect[2]+structureOrigin[0].item(),
+                                    boundaryRect[3]+structureOrigin[1].item())
                     boundaries.append(boundaryRect)
         return boundaries
 
@@ -861,6 +896,17 @@ class VlsiLayout:
         else:
             return False
 
+        
+def sameLPP(lpp1, lpp2):
+    """
+    Check if the layers and purposes are the same.
+    Ignore if purpose is a None.
+    """
+    if lpp1[1] == None or lpp2[1] == None:
+        return lpp1[0] == lpp2[0]
+    
+    return lpp1[0] == lpp2[0] and lpp1[1] == lpp2[1]
+    
     
 def boundaryArea(A):
     """

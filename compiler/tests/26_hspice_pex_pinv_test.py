@@ -20,7 +20,8 @@ import debug
 class hspice_pex_pinv_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
+        globals.init_openram(config_file)
         import pinv
 
         # load the hspice

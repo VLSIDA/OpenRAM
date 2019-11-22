@@ -167,7 +167,7 @@ class instance(geometry):
         
         debug.info(4, "creating instance: " + self.name)
 
-    def get_blockages(self, layer, top=False):
+    def get_blockages(self, lpp, top=False):
         """ Retrieve blockages of all modules in this instance.
         Apply the transform of the instance placement to give absolute blockages."""
         angle = math.radians(float(self.rotate))
@@ -191,11 +191,11 @@ class instance(geometry):
         if self.mod.is_library_cell:
             # Writes library cell blockages as shapes instead of a large metal blockage
             blockages = []
-            blockages = self.mod.gds.getBlockages(layer)
+            blockages = self.mod.gds.getBlockages(lpp)
             for b in blockages:
                 new_blockages.append(self.transform_coords(b,self.offset, mirr, angle))
         else:
-            blockages = self.mod.get_blockages(layer)
+            blockages = self.mod.get_blockages(lpp)
             for b in blockages:
                 new_blockages.append(self.transform_coords(b,self.offset, mirr, angle))
         return new_blockages
@@ -266,11 +266,12 @@ class instance(geometry):
 class path(geometry):
     """Represents a Path"""
 
-    def __init__(self, layerNumber, coordinates, path_width):
+    def __init__(self, lpp, coordinates, path_width):
         """Initializes a path for the specified layer"""
         geometry.__init__(self)
         self.name = "path"
-        self.layerNumber = layerNumber
+        self.layerNumber = lpp[0]
+        self.layerPurpose = lpp[1]
         self.coordinates = map(lambda x: [x[0], x[1]], coordinates)
         self.coordinates = vector(self.coordinates).snap_to_grid()
         self.path_width = path_width
@@ -283,7 +284,7 @@ class path(geometry):
         """Writes the path to GDS"""
         debug.info(4, "writing path (" + str(self.layerNumber) +  "): " + self.coordinates)
         new_layout.addPath(layerNumber=self.layerNumber,
-                           purposeNumber=0,
+                           purposeNumber=self.layerPurpose,
                            coordinates=self.coordinates,
                            width=self.path_width)
 
@@ -303,12 +304,13 @@ class path(geometry):
 class label(geometry):
     """Represents a text label"""
 
-    def __init__(self, text, layerNumber, offset, zoom=-1):
+    def __init__(self, text, lpp, offset, zoom=-1):
         """Initializes a text label for specified layer"""
         geometry.__init__(self)
         self.name = "label"
         self.text = text
-        self.layerNumber = layerNumber
+        self.layerNumber = lpp[0]
+        self.layerPurpose = lpp[1]
         self.offset = vector(offset).snap_to_grid()
 
         if zoom<0:
@@ -325,7 +327,7 @@ class label(geometry):
         debug.info(4, "writing label (" + str(self.layerNumber) + "): " + self.text)
         new_layout.addText(text=self.text,
                            layerNumber=self.layerNumber,
-                           purposeNumber=0,
+                           purposeNumber=self.layerPurpose,
                            offsetInMicrons=self.offset,
                            magnification=self.zoom,
                            rotate=None)
@@ -346,11 +348,12 @@ class label(geometry):
 class rectangle(geometry):
     """Represents a rectangular shape"""
 
-    def __init__(self, layerNumber, offset, width, height):
+    def __init__(self, lpp, offset, width, height):
         """Initializes a rectangular shape for specified layer"""
         geometry.__init__(self)
         self.name = "rect"
-        self.layerNumber = layerNumber
+        self.layerNumber = lpp[0]
+        self.layerPurpose = lpp[1]
         self.offset = vector(offset).snap_to_grid()
         self.size = vector(width, height).snap_to_grid()
         self.width = round_to_grid(self.size.x)
@@ -374,7 +377,7 @@ class rectangle(geometry):
         debug.info(4, "writing rectangle (" + str(self.layerNumber) + "):"
                    + str(self.width) + "x" + str(self.height) + " @ " + str(self.offset))
         new_layout.addBox(layerNumber=self.layerNumber,
-                          purposeNumber=0,
+                          purposeNumber=self.layerPurpose,
                           offsetInMicrons=self.offset,
                           width=self.width,
                           height=self.height,

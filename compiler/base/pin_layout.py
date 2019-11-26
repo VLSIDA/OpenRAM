@@ -37,6 +37,8 @@ class pin_layout:
         # else it is required to be a lpp
         else:
             for (layer_name, lpp) in layer.items():
+                if not lpp:
+                    continue
                 if self.same_lpp(layer_name_pp, lpp):
                     self.layer = layer_name
                     break

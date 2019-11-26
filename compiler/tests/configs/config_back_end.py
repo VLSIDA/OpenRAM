@@ -19,13 +19,13 @@ check_lvsdrc = True
 inline_lvsdrc = True
 analytical_delay = False
 
-if tech_name == "freepdk45":
+if tech_name.startswith("scn"):
+    drc_name = "magic"
+    lvs_name = "netgen"
+    pex_name = "magic"
+else:
     supply_voltages = [1.0]
     drc_name = "calibre"
     lvs_name = "calibre"
     pex_name = "calibre"
-else:
-    drc_name = "magic"
-    lvs_name = "netgen"
-    pex_name = "magic"
 

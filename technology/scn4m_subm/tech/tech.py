@@ -35,8 +35,8 @@ GDS["zoom"] = 0.5
 
 # create the GDS layer map
 layer={} 
-layer["vtg"]            = (-1, 0)
-layer["vth"]            = (-1, 0)
+layer["vtg"]            = None
+layer["vth"]            = None
 layer["pwell"]          = (41, 0)
 layer["nwell"]          = (42, 0)
 layer["active"]         = (43, 0)

@@ -7,7 +7,7 @@
 #
 import design
 import debug
-from tech import drc, spice
+from tech import layer, drc, spice
 from vector import vector
 from sram_factory import factory
 
@@ -319,11 +319,13 @@ class ptx(design.design):
         """
         Add an (optional) well and implant for the type of transistor.
         """
-        if drc("has_{}well".format(self.well_type)):
-            self.add_rect(layer="{}well".format(self.well_type),
+        well_name = "{}well".format(self.well_type)
+        if layer[well_name]:
+            self.add_rect(layer=well_name,
                           offset=(0,0),
                           width=self.cell_well_width,
                           height=self.cell_well_height)
+        if layer["vtg"]:
             self.add_rect(layer="vtg",
                           offset=(0,0),
                           width=self.cell_well_width,

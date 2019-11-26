@@ -168,8 +168,6 @@ def init_openram(config_file, is_unit_test=True):
     from sram_factory import factory
     factory.reset()
 
-    setup_bitcell()
-    
     global OPTS
     global CHECKPOINT_OPTS
 

@@ -153,7 +153,7 @@ class ptx(design.design):
 
         # Well enclosure of active, ensure minwidth as well
         well_name = "{}well".format(self.well_type)
-        if layer[well_name]):
+        if layer[well_name]:
             self.cell_well_width = max(self.active_width + 2 * self.well_enclose_active,
                                        self.well_width)
             self.cell_well_height = max(self.tx_width + 2 * self.well_enclose_active,

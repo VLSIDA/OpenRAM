@@ -37,13 +37,14 @@ GDS["zoom"] = 0.5
 layer={} 
 layer["vtg"]            = (-1, 0)
 layer["vth"]            = (-1, 0)
-layer["contact"]        = (47, 0)
 layer["pwell"]          = (41, 0)
 layer["nwell"]          = (42, 0)
 layer["active"]         = (43, 0)
 layer["pimplant"]       = (44, 0)
 layer["nimplant"]       = (45, 0)
 layer["poly"]           = (46, 0)
+layer["poly_contact"]   = None
+layer["contact"]        = (47, 0)
 layer["active_contact"] = (48, 0)
 layer["metal1"]         = (49, 0) 
 layer["via1"]           = (50, 0)
@@ -77,10 +78,6 @@ parameter["6T_access_size"] = 4*_lambda_
 drclvs_home=os.environ.get("DRCLVS_HOME")
 
 drc = design_rules("scn4me_sub")
-
-drc["body_tie_down"] = 0
-drc["has_pwell"] = True
-drc["has_nwell"] = True
 
 #grid size is 1/2 a lambda
 drc["grid"]=0.5*_lambda_

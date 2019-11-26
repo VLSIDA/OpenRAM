@@ -46,6 +46,7 @@ layer["thkox"]   = (8, 0)
 layer["poly"]    = (9, 0)
 layer["contact"] = (10, 0)
 layer["active_contact"] = (10, 0)
+layer["poly_contact"] = None
 layer["metal1"]  = (11, 0)
 layer["via1"]    = (12, 0)
 layer["metal2"]  = (13, 0)
@@ -88,10 +89,6 @@ parameter["6T_access_size"] = 0.135
 drclvs_home=os.environ.get("DRCLVS_HOME")
 
 drc = design_rules("freepdk45")
-
-drc["body_tie_down"] = 0
-drc["has_pwell"] = True
-drc["has_nwell"] = True
 
 #grid size
 drc["grid"] = 0.0025

@@ -152,7 +152,8 @@ class ptx(design.design):
         self.active_offset = vector([self.well_enclose_active] * 2)
 
         # Well enclosure of active, ensure minwidth as well
-        if drc("has_{}well".format(self.well_type)):
+        well_name = "{}well".format(self.well_type)
+        if layer[well_name]):
             self.cell_well_width = max(self.active_width + 2 * self.well_enclose_active,
                                        self.well_width)
             self.cell_well_height = max(self.tx_width + 2 * self.well_enclose_active,

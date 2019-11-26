@@ -8,7 +8,7 @@
 import contact
 import design
 import debug
-from tech import drc
+from tech import layers
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
@@ -141,7 +141,7 @@ class pgate(design.design):
         max_y_offset = self.height + 0.5 * self.m1_width
         self.nwell_position = middle_position
         nwell_height = max_y_offset - middle_position.y
-        if drc("has_nwell"):
+        if layers["nwell"]:
             self.add_rect(layer="nwell",
                           offset=middle_position,
                           width=self.well_width,
@@ -153,7 +153,7 @@ class pgate(design.design):
 
         pwell_position = vector(0, -0.5 * self.m1_width)
         pwell_height = middle_position.y - pwell_position.y
-        if drc("has_pwell"):
+        if layers["pwell"]:
             self.add_rect(layer="pwell",
                           offset=pwell_position,
                           width=self.well_width,

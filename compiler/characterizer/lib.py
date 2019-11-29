@@ -82,15 +82,16 @@ class lib:
 
         # Nominal corner
         self.add_corner(nom_process, nom_supply, nom_temperature)
-        # Temperature corners
-        self.add_corner(nom_process, nom_supply, min_temperature)
-        self.add_corner(nom_process, nom_supply, max_temperature)
-        # Supply corners
-        self.add_corner(nom_process, min_supply, nom_temperature)
-        self.add_corner(nom_process, max_supply, nom_temperature)
-        # Process corners
-        self.add_corner(min_process, nom_supply, nom_temperature)
-        self.add_corner(max_process, nom_supply, nom_temperature)
+        if not OPTS.nominal_corner_only:
+            # Temperature corners
+            self.add_corner(nom_process, nom_supply, min_temperature)
+            self.add_corner(nom_process, nom_supply, max_temperature)
+            # Supply corners
+            self.add_corner(nom_process, min_supply, nom_temperature)
+            self.add_corner(nom_process, max_supply, nom_temperature)
+            # Process corners
+            self.add_corner(min_process, nom_supply, nom_temperature)
+            self.add_corner(max_process, nom_supply, nom_temperature)
 
     def add_corner(self, proc, volt, temp):
         self.corner_name = "{0}_{1}_{2}V_{3}C".format(self.sram.name,
@@ -107,6 +108,7 @@ class lib:
         
     def characterize_corners(self):
         """ Characterize the list of corners. """
+        debug.info(1,"Characterizing corners: " + str(self.corners))        
         for (self.corner,lib_name) in zip(self.corners,self.lib_files):
             debug.info(1,"Corner: " + str(self.corner))
             (self.process, self.voltage, self.temperature) = self.corner

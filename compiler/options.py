@@ -86,8 +86,6 @@ class options(optparse.Values):
     check_lvsdrc = False
     # This determines whether LVS and DRC is checked for every submodule.
     inline_lvsdrc = False
-    # Treat the bitcell as a black box (no DRC, LVS, or extraction)
-    blackbox_bitcell = False
     # Remove noncritical memory cells for characterization speed-up
     trim_netlist = False
     # Run with extracted parasitics

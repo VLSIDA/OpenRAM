@@ -344,6 +344,8 @@ drc_name = "calibre"
 lvs_name = "calibre"
 pex_name = "calibre"
 
+blackbox_bitcell = False
+
 ###################################################
 ##END Technology Tool Preferences
 ###################################################

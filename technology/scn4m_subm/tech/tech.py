@@ -310,6 +310,8 @@ drc_name = "magic"
 lvs_name = "netgen"
 pex_name = "magic"
 
+blackbox_bitcell = False
+
 ###################################################
 ##END Technology Tool Preferences
 ###################################################

@@ -2,6 +2,7 @@ word_size = 2
 num_words = 16
 
 tech_name = "freepdk45"
+nominal_corners_only = False
 process_corners = ["TT"]
 supply_voltages = [1.0]
 temperatures = [25]

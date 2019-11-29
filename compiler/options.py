@@ -34,7 +34,7 @@ class options(optparse.Values):
     write_size = None
     
     # These will get initialized by the user or the tech file
-    nominal_corner_only = True
+    nominal_corner_only = False
     supply_voltages = ""
     temperatures = ""
     process_corners = ""

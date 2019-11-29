@@ -34,6 +34,7 @@ class options(optparse.Values):
     write_size = None
     
     # These will get initialized by the user or the tech file
+    nominal_corner_only = True
     supply_voltages = ""
     temperatures = ""
     process_corners = ""
@@ -85,6 +86,8 @@ class options(optparse.Values):
     check_lvsdrc = False
     # This determines whether LVS and DRC is checked for every submodule.
     inline_lvsdrc = False
+    # Treat the bitcell as a black box (no DRC, LVS, or extraction)
+    blackbox_bitcell = False
     # Remove noncritical memory cells for characterization speed-up
     trim_netlist = False
     # Run with extracted parasitics
@@ -110,8 +113,7 @@ class options(optparse.Values):
     
     # Should we print out the banner at startup
     print_banner = True
-    # Use detailed LEF blockages
-    detailed_blockages = True
+
     # Define the output file paths
     output_path = "."
     # Define the output file base name

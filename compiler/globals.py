@@ -448,14 +448,24 @@ def init_paths():
         
 def set_default_corner():
     """ Set the default corner. """
-    
+
+    import tech
     # Set some default options now based on the technology...
     if (OPTS.process_corners == ""):
-        OPTS.process_corners = tech.spice["fet_models"].keys()
+        if OPTS.nominal_corner_only:
+            OPTS.process_corners = ["TT"]
+        else:
+            OPTS.process_corners = tech.spice["fet_models"].keys()
     if (OPTS.supply_voltages == ""):
-        OPTS.supply_voltages = tech.spice["supply_voltages"]
+        if OPTS.nominal_corner_only:
+            OPTS.supply_voltages = [tech.spice["supply_voltages"][1]]
+        else:
+            OPTS.supply_voltages = tech.spice["supply_voltages"]
     if (OPTS.temperatures == ""):
-        OPTS.temperatures = tech.spice["temperatures"]
+        if OPTS.nominal_corner_only:
+            OPTS.temperatures = [tech.spice["temperatures"][1]]
+        else:
+            OPTS.temperatures = tech.spice["temperatures"]
     
     
 def import_tech():

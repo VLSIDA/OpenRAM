@@ -301,3 +301,15 @@ parameter["bitcell_drain_cap"] = 0.2        #In Femto-Farad, approximation of dr
 ###################################################
 ##END Spice Simulation Parameters
 ###################################################
+
+###################################################
+##BEGIN Technology Tool Preferences
+###################################################
+
+drc_name = "magic"
+lvs_name = "netgen"
+pex_name = "magic"
+
+###################################################
+##END Technology Tool Preferences
+###################################################

@@ -35,9 +35,5 @@ except:
     DRCLVS_HOME=OPENRAM_TECH+"/scn3me_subm/tech"
 os.environ["DRCLVS_HOME"] = DRCLVS_HOME
 
-# try:
-#     SPICE_MODEL_DIR = os.path.abspath(os.environ.get("SPICE_MODEL_DIR"))
-# except:
-OPENRAM_TECH=os.path.abspath(os.environ.get("OPENRAM_TECH"))
-os.environ["SPICE_MODEL_DIR"] = "{0}/{1}/models".format(OPENRAM_TECH, TECHNOLOGY)
+os.environ["SPICE_MODEL_DIR"] = "{0}/models".format(os.path.dirname(__file__))
 

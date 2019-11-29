@@ -336,3 +336,14 @@ parameter["bitcell_drain_cap"] = 0.1        #In Femto-Farad, approximation of dr
 ##END Spice Simulation Parameters
 ###################################################
 
+###################################################
+##BEGIN Technology Tool Preferences
+###################################################
+
+drc_name = "calibre"
+lvs_name = "calibre"
+pex_name = "calibre"
+
+###################################################
+##END Technology Tool Preferences
+###################################################

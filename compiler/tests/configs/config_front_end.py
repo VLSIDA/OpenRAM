@@ -10,18 +10,5 @@ word_size = 1
 num_words = 16
 
 tech_name = OPTS.tech_name
-process_corners = ["TT"]
-supply_voltages = [5.0]
-temperatures = [25]
-
-if tech_name.startswith("scn"):
-    drc_name = "magic"
-    lvs_name = "netgen"
-    pex_name = "magic"
-else:
-    supply_voltages = [1.0]
-    drc_name = "calibre"
-    lvs_name = "calibre"
-    pex_name = "calibre"
 
 

@@ -20,6 +20,7 @@ class lib_test(openram_test):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
         OPTS.analytical_delay = False
+        OPTS.netlist_only = True
         OPTS.trim_netlist = False
 
         # This is a hack to reload the characterizer __init__ with the spice version

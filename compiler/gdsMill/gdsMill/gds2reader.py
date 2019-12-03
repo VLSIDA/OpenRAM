@@ -164,7 +164,7 @@ class Gds2reader:
                     print("Mask: "+mask)
             elif(idBits==b'\x03\x05'):  #this is also wrong b/c python doesn't natively have an 8 byte float
                 userUnits=self.ieeeDoubleFromIbmData(record[2:10])
-                dbUnits=self.ieeeDoubleFromIbmData
+                dbUnits=self.ieeeDoubleFromIbmData(record[10:18])
                 self.layoutObject.info["units"] = (userUnits,dbUnits)
                 if(self.debugToTerminal==1):
                     print("Units: 1 user unit="+str(userUnits)+" database units, 1 database unit="+str(dbUnits)+" meters.")

@@ -48,7 +48,6 @@ class contact(hierarchy_design.hierarchy_design):
         # Module does not have pins, but has empty pin list.
         self.pins = []
         self.create_layout()
-        self.add_boundary()
         
     def create_layout(self):
 
@@ -72,12 +71,15 @@ class contact(hierarchy_design.hierarchy_design):
 
         (first_layer, via_layer, second_layer) = self.layer_stack
         self.first_layer_name = first_layer
+        self.second_layer_name = second_layer
         # Contacts will have unique per first layer
         if via_layer == "contact":
-            self.via_layer_name = first_layer + "_" + via_layer
+            if first_layer in ("active", "poly"):
+                self.via_layer_name = first_layer + "_" + via_layer
+            else:
+                self.via_layer_name = second_layer + "_" + via_layer            
         else:
             self.via_layer_name = via_layer
-        self.second_layer_name = second_layer
 
     def setup_layout_constants(self):
         """ Determine the design rules for the enclosure layers """

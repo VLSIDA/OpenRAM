@@ -58,7 +58,14 @@ class ptx(design.design):
         # We must always create ptx layout for pbitcell
         # some transistor sizes in other netlist depend on pbitcell
         self.create_layout()
-    
+
+        ll = self.find_lowest_coords()
+        ur = self.find_highest_coords()
+        self.add_boundary(ll, ur)
+
+        # (0,0) will be the corner ofthe active area (not the larger well)
+        self.translate_all(self.active_offset)
+        
     def create_layout(self):
         """Calls all functions related to the generation of the layout"""
         self.setup_layout_constants()
@@ -66,7 +73,6 @@ class ptx(design.design):
         self.add_well_implant()
         self.add_poly()
         self.add_active_contacts()
-        self.translate_all(self.active_offset)
 
         # for run-time, we won't check every transitor DRC independently
         # but this may be uncommented for debug purposes

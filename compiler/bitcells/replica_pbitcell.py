@@ -30,6 +30,7 @@ class replica_pbitcell(design.design):
                                                                                                                       
         self.create_netlist()
         self.create_layout()
+        self.add_boundary()
         
     def create_netlist(self):
         self.add_pins()

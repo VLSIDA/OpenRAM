@@ -32,6 +32,7 @@ class layout():
         self.name = name
         self.width = None
         self.height = None
+        self.boundary = None
         self.insts = []      # Holds module/cell layout instances
         self.objs = []       # Holds all other objects (labels, geometries, etc)
         self.pin_map = {}    # Holds name->pin_layout map for all pins
@@ -80,7 +81,10 @@ class layout():
             lowesty2 = min(inst.by() for inst in self.insts)
         else:
             lowestx2=lowesty2=None
-        if lowestx1==None:
+            
+        if lowestx1==None and lowestx2==None:
+            return None
+        elif lowestx1==None:
             return vector(lowestx2,lowesty2)
         elif lowestx2==None:
             return vector(lowestx1,lowesty1)            
@@ -101,7 +105,9 @@ class layout():
             highesty2 = max(inst.uy() for inst in self.insts)
         else:
             highestx2=highesty2=None
-        if highestx1==None:
+        if highestx1==None and highestx2==None:
+            return None
+        elif highestx1==None:
             return vector(highestx2,highesty2)
         elif highestx2==None:
             return vector(highestx1,highesty1)            
@@ -500,6 +506,33 @@ class layout():
         for pin_name in self.pin_map.keys():
             for pin in self.pin_map[pin_name]:
                 pin.gds_write_file(gds_layout)
+
+        # If it's not a premade cell
+        # and we didn't add our own boundary,
+        # we should add a boundary just for DRC in some technologies
+        if not self.is_library_cell and not self.boundary:
+            # If there is a boundary layer, and we didn't create one, add one.
+            if "stdc" in techlayer.keys():
+                boundary_layer = "stdc"
+            elif "boundary" in techlayer.keys():
+                boundary_layer = "boundary"
+            else:
+                boundary_layer = None
+            
+            if boundary_layer:
+                boundary = [self.find_lowest_coords(), self.find_highest_coords()]
+                height = boundary[1][1] - boundary[0][1]
+                width = boundary[1][0] - boundary[0][0]
+                (layer_number, layer_purpose) = techlayer[boundary_layer]
+                gds_layout.addBox(layerNumber=layer_number,
+                                  purposeNumber=layer_purpose,
+                                  offsetInMicrons=boundary[0],
+                                  width=width,
+                                  height=height,
+                                  center=False)
+                debug.info(0, "Adding {0} boundary {1}".format(self.name, boundary))
+        
+                
         self.visited.append(self.name)
 
     def gds_write(self, gds_name):
@@ -937,16 +970,22 @@ class layout():
         """
         self.create_channel_route(netlist, offset, layer_stack, vertical=False)
 
-    def add_boundary(self, offset=vector(0,0)):
+    def add_boundary(self, ll=vector(0,0), ur=None):
         """ Add boundary for debugging dimensions """
         if "stdc" in techlayer.keys():
             boundary_layer = "stdc"
         else:
             boundary_layer = "boundary"
-        self.add_rect(layer=boundary_layer,
-                      offset=offset,
-                      height=self.height,
-                      width=self.width)
+        if ur == None:
+            self.boundary = self.add_rect(layer=boundary_layer,
+                                          offset=ll,
+                                          height=self.height,
+                                          width=self.width)
+        else:
+            self.boundary = self.add_rect(layer=boundary_layer,
+                                          offset=ll,
+                                          height=ur.y-ll.y,
+                                          width=ur.x-ll.x)
         
     def add_enclosure(self, insts, layer="nwell"):
         """ Add a layer that surrounds the given instances. Useful

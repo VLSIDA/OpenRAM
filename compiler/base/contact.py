@@ -48,7 +48,6 @@ class contact(hierarchy_design.hierarchy_design):
         # Module does not have pins, but has empty pin list.
         self.pins = []
         self.create_layout()
-        self.add_boundary()
         
     def create_layout(self):
 

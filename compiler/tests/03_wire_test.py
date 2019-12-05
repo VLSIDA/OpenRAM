@@ -42,7 +42,7 @@ class wire_test(openram_test):
 
         min_space = 2 * (tech.drc["minwidth_poly"] +
                          tech.drc["minwidth_metal1"])
-        layer_stack = ("metal1", "contact", "poly")
+        layer_stack = ("poly", "contact", "metal1")
         old_position_list = [[0, 0],
                              [0, 3 * min_space],
                              [1 * min_space, 3 * min_space],

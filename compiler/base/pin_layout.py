@@ -344,7 +344,6 @@ class pin_layout:
         # imported into Magic.
         newLayout.addText(text=self.name,
                           layerNumber=layer_num,
-                          purposeNumber=purpose,
                           offsetInMicrons=self.center(),
                           magnification=GDS["zoom"],
                           rotate=None)

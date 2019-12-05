@@ -187,27 +187,25 @@ class Gds2writer:
         idBits=b'\x08\x00'  #record Type
         self.writeRecord(idBits)
         if(thisBoundary.elementFlags!=""):
-            idBits=b'\x26\x01' #ELFLAGS
+            idBits=b'\x26\x01' # ELFLAGS
             elementFlags = struct.pack(">h",thisBoundary.elementFlags)
             self.writeRecord(idBits+elementFlags)
         if(thisBoundary.plex!=""):
-            idBits=b'\x2F\x03'  #PLEX
+            idBits=b'\x2F\x03'  # PLEX
             plex = struct.pack(">i",thisBoundary.plex)
             self.writeRecord(idBits+plex)
         if(thisBoundary.drawingLayer!=""):
-            idBits=b'\x0D\x02' #drawig layer
+            idBits=b'\x0D\x02' # drawing layer
             drawingLayer = struct.pack(">h",thisBoundary.drawingLayer)
             self.writeRecord(idBits+drawingLayer)
-        if(thisBoundary.purposeLayer):
-            idBits=b'\x16\x02' #purpose layer
-            purposeLayer = struct.pack(">h",thisBoundary.purposeLayer)
-            self.writeRecord(idBits+purposeLayer)
-        if(thisBoundary.dataType!=""):
-            idBits=b'\x0E\x02'#DataType
-            dataType = struct.pack(">h",thisBoundary.dataType)
+        if(thisBoundary.purposeLayer!=""):
+            idBits=b'\x0E\x02' # DataType
+            if type(thisBoundary.purposeLayer)!=int:
+                import pdb; pdb.set_trace()
+            dataType = struct.pack(">h",thisBoundary.purposeLayer)
             self.writeRecord(idBits+dataType)
         if(thisBoundary.coordinates!=""):
-            idBits=b'\x10\x03' #XY Data Points
+            idBits=b'\x10\x03' # XY Data Points
             coordinateRecord = idBits
             for coordinate in thisBoundary.coordinates:
                 x=struct.pack(">i",int(coordinate[0]))
@@ -377,9 +375,9 @@ class Gds2writer:
             idBits=b'\x0D\x02' #drawing layer
             drawingLayer = struct.pack(">h",thisText.drawingLayer)
             self.writeRecord(idBits+drawingLayer)
-        #if(thisText.purposeLayer):
+            # TextType is always a 0 per GDS specification
             idBits=b'\x16\x02' #purpose layer
-            purposeLayer = struct.pack(">h",thisText.purposeLayer)
+            purposeLayer = struct.pack(">h",0)
             self.writeRecord(idBits+purposeLayer)
         if(thisText.transFlags != ""):
             idBits=b'\x1A\x01'

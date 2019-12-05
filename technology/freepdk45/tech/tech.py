@@ -44,9 +44,8 @@ layer["vtg"]     = (6, 0)
 layer["vth"]     = (7, 0)
 layer["thkox"]   = (8, 0)
 layer["poly"]    = (9, 0)
-layer["contact"] = (10, 0)
 layer["active_contact"] = (10, 0)
-layer["poly_contact"] = None
+layer["poly_contact"] = (10, 0)
 layer["metal1"]  = (11, 0)
 layer["via1"]    = (12, 0)
 layer["metal2"]  = (13, 0)
@@ -117,7 +116,7 @@ drc["poly_to_poly"] = 0.14
 # POLY.3 Minimum poly extension beyond active
 drc["poly_extend_active"] = 0.055
 # Not a rule
-drc["poly_to_polycontact"] = 0.075
+drc["poly_to_poly_contact"] = 0.075
 # POLY.4 Minimum enclosure of active around gate
 drc["active_enclosure_gate"] = 0.07
 # POLY.5 Minimum spacing of field poly to active
@@ -154,30 +153,51 @@ drc["implant_to_implant"] = 0.045
 drc["minwidth_implant"] = 0.045
 
 # CONTACT.1 Minimum width of contact
-drc["minwidth_contact"] = 0.065
+drc["minwidth_active_contact"] = 0.065
 # CONTACT.2 Minimum spacing of contact
-drc["contact_to_contact"] = 0.075
+drc["active_contact_to_active_contact"] = 0.075
 # CONTACT.4 Minimum enclosure of active around contact
-drc["active_enclosure_contact"] = 0.005
+drc["active_enclosure_active_contact"] = 0.005
+# Reserved for asymmetric enclosures
+drc["active_extend_active_contact"] = 0.005
+# CONTACT.5 Minimum enclosure of poly around contact
+drc["poly_enclosure_active_contact"] = 0.005
+# Reserved for asymmetric enclosures
+drc["poly_extend_active_contact"] = 0.005
+# CONTACT.6 Minimum spacing of contact and gate
+drc["active_contact_to_gate"] = 0.0375 #changed from 0.035
+# CONTACT.7 Minimum spacing of contact and poly
+drc["active_contact_to_poly"] = 0.090
+
+# CONTACT.1 Minimum width of contact
+drc["minwidth_poly_contact"] = 0.065
+# CONTACT.2 Minimum spacing of contact
+drc["poly_contact_to_poly_contact"] = 0.075
+# CONTACT.4 Minimum enclosure of active around contact
+drc["active_enclosure_poly_contact"] = 0.005
 # Reserved for asymmetric enclosures
 drc["active_extend_contact"] = 0.005
 # CONTACT.5 Minimum enclosure of poly around contact
-drc["poly_enclosure_contact"] = 0.005
+drc["poly_enclosure_poly_contact"] = 0.005
 # Reserved for asymmetric enclosures
-drc["poly_extend_contact"] = 0.005
+drc["poly_extend_poly_contact"] = 0.005
 # CONTACT.6 Minimum spacing of contact and gate
-drc["contact_to_gate"] = 0.0375 #changed from 0.035
+drc["poly_contact_to_gate"] = 0.0375 #changed from 0.035
 # CONTACT.7 Minimum spacing of contact and poly
-drc["contact_to_poly"] = 0.090
+drc["poly_contact_to_poly"] = 0.090
 
 # METAL1.1 Minimum width of metal1
 drc["minwidth_metal1"] = 0.065
 # METAL1.2 Minimum spacing of metal1
 drc["metal1_to_metal1"] = 0.065
 # METAL1.3 Minimum enclosure around contact on two opposite sides
-drc["metal1_enclosure_contact"] = 0
+drc["metal1_enclosure_active_contact"] = 0
 # Reserved for asymmetric enclosures
-drc["metal1_extend_contact"] = 0.035
+drc["metal1_extend_active_contact"] = 0.035
+# METAL1.3 Minimum enclosure around contact on two opposite sides
+drc["metal1_enclosure_poly_contact"] = 0
+# Reserved for asymmetric enclosures
+drc["metal1_extend_poly_contact"] = 0.035
 # METAL1.4 inimum enclosure around via1 on two opposite sides
 drc["metal1_extend_via1"] = 0.035
 # Reserved for asymmetric enclosures

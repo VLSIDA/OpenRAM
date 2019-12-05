@@ -43,9 +43,8 @@ layer["active"]         = (43, 0)
 layer["pimplant"]       = (44, 0)
 layer["nimplant"]       = (45, 0)
 layer["poly"]           = (46, 0)
-layer["poly_contact"]   = None
-layer["contact"]        = (47, 0)
 layer["active_contact"] = (48, 0)
+layer["poly_contact"]   = (47, 0)
 layer["metal1"]         = (49, 0) 
 layer["via1"]           = (50, 0)
 layer["metal2"]         = (51, 0) 
@@ -105,7 +104,7 @@ drc["poly_to_poly"] = 3*_lambda_
 # 3.3 Minimum gate extension of active 
 drc["poly_extend_active"] = 2*_lambda_
 # 5.5.b Minimum spacing between poly contact and other poly (alternative rules)
-drc["poly_to_polycontact"] = 4*_lambda_
+drc["poly_to_poly_contact"] = 4*_lambda_
 # ??
 drc["active_enclosure_gate"] = 0.0
 # 3.5 Minimum field poly to active 
@@ -142,30 +141,51 @@ drc["implant_to_implant"] = 0
 drc["minwidth_implant"] = 0
 
 # 6.1 Exact contact size
-drc["minwidth_contact"] = 2*_lambda_
+drc["minwidth_active_contact"] = 2*_lambda_
 # 5.3 Minimum contact spacing
-drc["contact_to_contact"] = 3*_lambda_               
+drc["active_contact_to_active_contact"] = 3*_lambda_               
 # 6.2.b Minimum active overlap 
-drc["active_enclosure_contact"] = _lambda_
+drc["active_enclosure_active_contact"] = _lambda_
 # Reserved for asymmetric enclosure
-drc["active_extend_contact"] = _lambda_
+drc["active_extend_active_contact"] = _lambda_
 # 5.2.b Minimum poly overlap 
-drc["poly_enclosure_contact"] = _lambda_
+drc["poly_enclosure_active_contact"] = _lambda_
 # Reserved for asymmetric enclosures
-drc["poly_extend_contact"] = _lambda_
+drc["poly_extend_active_contact"] = _lambda_
 # Reserved for other technologies
-drc["contact_to_gate"] = 2*_lambda_
+drc["active_contact_to_gate"] = 2*_lambda_
 # 5.4 Minimum spacing to gate of transistor
-drc["contact_to_poly"] = 2*_lambda_
-        
+drc["active_contact_to_poly"] = 2*_lambda_
+
+# 6.1 Exact contact size
+drc["minwidth_poly_contact"] = 2*_lambda_
+# 5.3 Minimum contact spacing
+drc["poly_contact_to_poly_contact"] = 3*_lambda_               
+# 6.2.b Minimum active overlap 
+drc["active_enclosure_poly_contact"] = _lambda_
+# Reserved for asymmetric enclosure
+drc["active_extend_poly_contact"] = _lambda_
+# 5.2.b Minimum poly overlap 
+drc["poly_enclosure_poly_contact"] = _lambda_
+# Reserved for asymmetric enclosures
+drc["poly_extend_poly_contact"] = _lambda_
+# Reserved for other technologies
+drc["poly_contact_to_gate"] = 2*_lambda_
+# 5.4 Minimum spacing to gate of transistor
+drc["poly_contact_to_poly"] = 2*_lambda_
+
 # 7.1 Minimum width 
 drc["minwidth_metal1"] = 3*_lambda_
 # 7.2 Minimum spacing 
 drc["metal1_to_metal1"] = 3*_lambda_
 # 7.3 Minimum overlap of any contact 
-drc["metal1_enclosure_contact"] = _lambda_
+drc["metal1_enclosure_active_contact"] = _lambda_
 # Reserved for asymmetric enclosure
-drc["metal1_extend_contact"] = _lambda_
+drc["metal1_extend_active_contact"] = _lambda_
+# 7.3 Minimum overlap of any contact 
+drc["metal1_enclosure_poly_contact"] = _lambda_
+# Reserved for asymmetric enclosure
+drc["metal1_extend_poly_contact"] = _lambda_
 # 8.3 Minimum overlap by metal1 
 drc["metal1_enclosure_via1"] = _lambda_           
 # Reserve for asymmetric enclosures

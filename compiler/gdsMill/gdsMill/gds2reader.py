@@ -175,6 +175,8 @@ class Gds2reader:
     
     def readBoundary(self):
         ##reads in a boundary type structure = a filled polygon
+        if(self.debugToTerminal==1):
+            print("\t\t\tBeginBoundary")        
         thisBoundary=GdsBoundary()
         while 1:
             record = self.readNextRecord()
@@ -201,11 +203,6 @@ class Gds2reader:
                 thisBoundary.purposeLayer=purposeLayer                
                 if(self.debugToTerminal==1):
                     print("\t\tPurpose Layer: "+str(purposeLayer))
-            elif(idBits==b'\x0E\x02'):  #DataType
-                dataType = struct.unpack(">h",record[2:4])[0]
-                thisBoundary.dataType=dataType
-                if(self.debugToTerminal==1):
-                    print("\t\t\tData Type: "+str(dataType))
             elif(idBits==b'\x10\x03'):  #XY Data Points
                 numDataPoints = len(record)-2  #packed as XY coordinates 4 bytes each
                 thisBoundary.coordinates=[]
@@ -216,10 +213,15 @@ class Gds2reader:
                     if(self.debugToTerminal==1):
                         print("\t\t\tXY Point: "+str(x)+","+str(y))
             elif(idBits==b'\x11\x00'):  #End Of Element
+                if(self.debugToTerminal==1):
+                    print("\t\t\tEndBoundary")
                 break;
         return thisBoundary
     
     def readPath(self):  #reads in a path structure
+        if(self.debugToTerminal==1):
+            print("\t\t\tBeginPath")
+        
         thisPath=GdsPath()
         while 1:
             record = self.readNextRecord()
@@ -266,10 +268,15 @@ class Gds2reader:
                     if(self.debugToTerminal==1):
                         print("\t\t\tXY Point: "+str(x)+","+str(y))
             elif(idBits==b'\x11\x00'):  #End Of Element
+                if(self.debugToTerminal==1):
+                    print("\t\t\tEndPath")
                 break;
         return thisPath
     
     def readSref(self):  #reads in a reference to another structure
+        if(self.debugToTerminal==1):
+            print("\t\t\tBeginSref")
+
         thisSref=GdsSref()
         while 1:
             record = self.readNextRecord()
@@ -317,10 +324,15 @@ class Gds2reader:
                 if(self.debugToTerminal==1):
                     print("\t\t\tXY Point: "+str(x)+","+str(y))
             elif(idBits==b'\x11\x00'):  #End Of Element
+                if(self.debugToTerminal==1):
+                    print("\t\t\tEndSref")
                 break;
         return thisSref
     
     def readAref(self):  #an array of references
+        if(self.debugToTerminal==1):
+            print("\t\t\tBeginAref")
+        
         thisAref = GdsAref()
         while 1:
             record = self.readNextRecord()
@@ -372,11 +384,15 @@ class Gds2reader:
                     print("\t\t\t\tArray Width: "+str(rightMostX-topLeftX))
                     print("\t\t\t\tArray Height: "+str(topLeftY-bottomMostY))
             elif(idBits==b'\x11\x00'):  #End Of Element
+                if(self.debugToTerminal==1):
+                    print("\t\t\tEndAref")
                 break;
         return thisAref
     
     def readText(self):
-        ##reads in a text structure
+        if(self.debugToTerminal==1):
+            print("\t\t\tBeginText")
+        
         thisText=GdsText()
         while 1:
             record = self.readNextRecord()
@@ -472,10 +488,15 @@ class Gds2reader:
                 if(self.debugToTerminal==1):
                     print("\t\t\tText String: "+textString)
             elif(idBits==b'\x11\x00'):  #End Of Element
+                if(self.debugToTerminal==1):
+                    print("\t\t\tEndText")
                 break;
         return thisText
     
     def readNode(self):
+        if(self.debugToTerminal==1):
+            print("\t\t\tBeginNode")
+        
         ##reads in a node type structure = an electrical net
         thisNode = GdsNode()
         while 1:
@@ -513,10 +534,15 @@ class Gds2reader:
                     if(self.debugToTerminal==1):
                         print("\t\t\tXY Point: "+str(x)+","+str(y))
             elif(idBits==b'\x11\x00'):  #End Of Element
+                if(self.debugToTerminal==1):
+                    print("\t\t\tEndNode")
                 break;
         return thisNode
     
     def readBox(self):
+        if(self.debugToTerminal==1):
+            print("\t\t\tBeginBox")
+        
         ##reads in a gds BOX structure
         thisBox = GdsBox()
         while 1:
@@ -559,6 +585,8 @@ class Gds2reader:
                     if(self.debugToTerminal==1):
                         print("\t\t\tXY Point: "+str(x)+","+str(y))
             elif(idBits==b'\x11\x00'):  #End Of Element
+                if(self.debugToTerminal==1):
+                    print("\t\t\tEndBox")
                 break;
         return thisBox
     
@@ -566,6 +594,7 @@ class Gds2reader:
         thisStructure = GdsStructure()        
         record = self.readNextRecord()
         idBits = record[0:2]
+        # Begin structure
         if(idBits==b'\x05\x02' and len(record)==26):
             createYear = struct.unpack(">h",record[2:4])[0]            
             createMonth = struct.unpack(">h",record[4:6])[0]
@@ -581,6 +610,10 @@ class Gds2reader:
             modSecond = struct.unpack(">h",record[24:26])[0]
             thisStructure.createDate=(createYear,createMonth,createDay,createHour,createMinute,createSecond)
             thisStructure.modDate=(modYear,modMonth,modDay,modHour,modMinute,modSecond)
+            if(self.debugToTerminal==1):
+                print("Date Created:"+str(createYear)+","+str(createMonth)+","+str(createDay)+\
+                      ","+str(createHour)+","+str(createMinute)+","+str(createSecond))
+                print("Date Modified:"+str(modYear)+","+str(modMonth)+","+str(modDay)+","+str(modHour)+","+str(modMinute)+","+str(modSecond))
         else:
             #means we have hit the last structure, so return the record
             #to whoever called us to do something with it

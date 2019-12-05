@@ -939,7 +939,11 @@ class layout():
 
     def add_boundary(self, offset=vector(0,0)):
         """ Add boundary for debugging dimensions """
-        self.add_rect(layer="boundary",
+        if "stdc" in techlayer.keys():
+            boundary_layer = "stdc"
+        else:
+            boundary_layer = "boundary"
+        self.add_rect(layer=boundary_layer,
                       offset=offset,
                       height=self.height,
                       width=self.width)

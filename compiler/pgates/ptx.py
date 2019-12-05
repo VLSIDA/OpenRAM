@@ -124,18 +124,18 @@ class ptx(design.design):
 
         
         # The contacted poly pitch (or uncontacted in an odd technology)
-        self.poly_pitch = max(2 * self.contact_to_gate + self.contact_width + self.poly_width,
+        self.poly_pitch = max(2 * self.active_contact_to_gate + self.contact_width + self.poly_width,
                               self.poly_space)
 
         # The contacted poly pitch (or uncontacted in an odd technology)
-        self.contact_pitch = 2 * self.contact_to_gate + self.contact_width + self.poly_width
+        self.contact_pitch = 2 * self.active_contact_to_gate + self.contact_width + self.poly_width
         
         # The enclosure of an active contact. Not sure about second term.
-        active_enclose_contact = max(drc("active_enclosure_contact"),
+        active_enclose_contact = max(drc("active_enclosure_active_contact"),
                                      (self.active_width - self.contact_width) / 2)
                                                                   
         # This is the distance from the edge of poly to the contacted end of active
-        self.end_to_poly = active_enclose_contact + self.contact_width + self.contact_to_gate
+        self.end_to_poly = active_enclose_contact + self.contact_width + self.active_contact_to_gate
         
 
         # Active width is determined by enclosure on both ends and contacted pitch,

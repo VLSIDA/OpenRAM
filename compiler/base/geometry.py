@@ -193,7 +193,7 @@ class instance(geometry):
             blockages = []
             blockages = self.mod.gds.getBlockages(lpp)
             for b in blockages:
-                new_blockages.append(self.transform_coords(b,self.offset, mirr, angle))
+                new_blockages.append(self.transform_coords(vector(b),self.offset, mirr, angle))
         else:
             blockages = self.mod.get_blockages(lpp)
             for b in blockages:
@@ -327,7 +327,6 @@ class label(geometry):
         debug.info(4, "writing label (" + str(self.layerNumber) + "): " + self.text)
         new_layout.addText(text=self.text,
                            layerNumber=self.layerNumber,
-                           purposeNumber=self.layerPurpose,
                            offsetInMicrons=self.offset,
                            magnification=self.zoom,
                            rotate=None)

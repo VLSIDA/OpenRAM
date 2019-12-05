@@ -48,7 +48,8 @@ class contact(hierarchy_design.hierarchy_design):
         # Module does not have pins, but has empty pin list.
         self.pins = []
         self.create_layout()
-
+        self.add_boundary()
+        
     def create_layout(self):
 
         self.setup_layers()
@@ -71,14 +72,11 @@ class contact(hierarchy_design.hierarchy_design):
 
         (first_layer, via_layer, second_layer) = self.layer_stack
         self.first_layer_name = first_layer
-        self.via_layer_name = via_layer
-        # Some technologies have a separate active
-        # contact from the poly contact
-        # We will use contact for DRC, but active_contact for output
-        if first_layer == "active" or second_layer == "active":
-            self.via_layer_name_expanded = "active_" + via_layer
+        # Contacts will have unique per first layer
+        if via_layer == "contact":
+            self.via_layer_name = first_layer + "_" + via_layer
         else:
-            self.via_layer_name_expanded = via_layer
+            self.via_layer_name = via_layer
         self.second_layer_name = second_layer
 
     def setup_layout_constants(self):
@@ -144,7 +142,7 @@ class contact(hierarchy_design.hierarchy_design):
         for i in range(self.dimensions[1]):
             offset = self.via_layer_position + vector(0, self.contact_pitch * i)
             for j in range(self.dimensions[0]):
-                self.add_rect(layer=self.via_layer_name_expanded,
+                self.add_rect(layer=self.via_layer_name,
                               offset=offset,
                               width=self.contact_width,
                               height=self.contact_width)

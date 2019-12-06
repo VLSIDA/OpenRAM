@@ -33,15 +33,6 @@ things that need to be fixed.
 
 # Basic Setup
 
-## Docker Image
-
-We have a pre-configured Ubuntu [Docker](https://www.docker.com/) image
-available that has all tools installed for the [SCMOS] process. It is
-available at [docker hub](https://hub.docker.com/r/vlsida/openram-ubuntu).
-Please see 
-[our README.md](https://github.com/VLSIDA/openram-docker-images/blob/master/README.md)
-for information on how to use this docker image.
-
 ## Dependencies
 
 The OpenRAM compiler has very few dependencies:
@@ -87,6 +78,23 @@ to the PDK. For example add this to your .bashrc:
 You may get the entire [FreePDK45 PDK here][FreePDK45].
 If you are using [SCMOS], you should install [Magic] and [Netgen].
 We have included the most recent SCN4M_SUBM design rules from [Qflow].
+
+## Docker Image
+
+We have a pre-configured Ubuntu [Docker](https://www.docker.com/) image
+available that has all tools installed for the [SCMOS] process. It is
+available at [docker hub](https://hub.docker.com/r/vlsida/openram-ubuntu).
+Please see 
+[our README.md](https://github.com/VLSIDA/openram-docker-images/blob/master/README.md)
+for information on how to use this docker image.
+
+## Vagrant Image
+
+We have a pre-configured Ubuntu [Vagrant](https://www.vagrantup.com/) image
+available that has all tools installed for the [SCMOS] process. 
+Please see 
+[our README.md](https://github.com/VLSIDA/openram-vagrant-image/blob/master/README.md)
+for information on how to use this image.
 
 # Basic Usage
 

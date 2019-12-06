@@ -167,8 +167,10 @@ drc["active_contact_to_poly"] = 0.090
 
 # CONTACT.1 Minimum width of contact
 drc["minwidth_poly_contact"] = 0.065
+# CONTACT.2 Minimum spacing of contact
+drc["poly_contact_to_poly_contact"] = 0.075
 # Reserved for asymmetric enclosures
-drc["active_extend_contact"] = 0.005
+drc["poly_extend_contact"] = 0.005
 # CONTACT.5 Minimum enclosure of poly around contact
 drc["poly_enclosure_poly_contact"] = 0.005
 # Reserved for asymmetric enclosures

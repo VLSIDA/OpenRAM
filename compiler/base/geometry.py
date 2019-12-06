@@ -193,7 +193,7 @@ class instance(geometry):
             blockages = []
             blockages = self.mod.gds.getBlockages(lpp)
             for b in blockages:
-                new_blockages.append(self.transform_coords(vector(b),self.offset, mirr, angle))
+                new_blockages.append(self.transform_coords(b,self.offset, mirr, angle))
         else:
             blockages = self.mod.get_blockages(lpp)
             for b in blockages:

@@ -59,9 +59,9 @@ class ptx(design.design):
         # some transistor sizes in other netlist depend on pbitcell
         self.create_layout()
 
-        ll = self.find_lowest_coords()
-        ur = self.find_highest_coords()
-        self.add_boundary(ll, ur)
+        #ll = self.find_lowest_coords()
+        #ur = self.find_highest_coords()
+        #self.add_boundary(ll, ur)
 
         # (0,0) will be the corner ofthe active area (not the larger well)
         self.translate_all(self.active_offset)

@@ -514,12 +514,6 @@ class layout():
             # If there is a boundary layer, and we didn't create one, add one.
             if "stdc" in techlayer.keys():
                 boundary_layer = "stdc"
-            elif "boundary" in techlayer.keys():
-                boundary_layer = "boundary"
-            else:
-                boundary_layer = None
-            
-            if boundary_layer:
                 boundary = [self.find_lowest_coords(), self.find_highest_coords()]
                 height = boundary[1][1] - boundary[0][1]
                 width = boundary[1][0] - boundary[0][0]

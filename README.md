@@ -33,15 +33,6 @@ things that need to be fixed.
 
 # Basic Setup
 
-## Docker Image
-
-We have a pre-configured Ubuntu [Docker](https://www.docker.com/) image
-available that has all tools installed for the [SCMOS] process. It is
-available at [docker hub](https://hub.docker.com/r/vlsida/openram-ubuntu).
-Please see 
-[our README.md](https://github.com/VLSIDA/openram-docker-images/blob/master/README.md)
-for information on how to use this docker image.
-
 ## Dependencies
 
 The OpenRAM compiler has very few dependencies:
@@ -88,6 +79,23 @@ You may get the entire [FreePDK45 PDK here][FreePDK45].
 If you are using [SCMOS], you should install [Magic] and [Netgen].
 We have included the most recent SCN4M_SUBM design rules from [Qflow].
 
+## Docker Image
+
+We have a pre-configured Ubuntu [Docker](https://www.docker.com/) image
+available that has all tools installed for the [SCMOS] process. It is
+available at [docker hub](https://hub.docker.com/r/vlsida/openram-ubuntu).
+Please see 
+[our README.md](https://github.com/VLSIDA/openram-docker-images/blob/master/README.md)
+for information on how to use this docker image.
+
+## Vagrant Image
+
+We have a pre-configured Ubuntu [Vagrant](https://www.vagrantup.com/) image
+available that has all tools installed for the [SCMOS] process. 
+Please see 
+[our README.md](https://github.com/VLSIDA/openram-vagrant-image/blob/master/README.md)
+for information on how to use this image.
+
 # Basic Usage
 
 Once you have defined the environment, you can run OpenRAM from the command line 
@@ -104,12 +112,16 @@ num_words = 16
 
 # Technology to use in $OPENRAM_TECH
 tech_name = "scn4m_subm"
+
+# You can use the technology nominal corner only
+nominal_corner_only = True
+# Or you can specify particular corners
 # Process corners to characterize
-process_corners = ["TT"]
+# process_corners = ["SS", "TT", "FF"]
 # Voltage corners to characterize
-supply_voltages = [ 3.3 ]
+# supply_voltages = [ 3.0, 3.3, 3.5 ]
 # Temperature corners to characterize
-temperatures = [ 25 ]
+# temperatures = [ 0, 25 100]
 
 # Output directory for the results
 output_path = "temp"
@@ -119,11 +131,6 @@ output_name = "sram_{0}_{1}_{2}".format(word_size,num_words,tech_name)
 # Disable analytical models for full characterization (WARNING: slow!)
 # analytical_delay = False
 
-# To force this to use magic and netgen for DRC/LVS/PEX
-# Could be calibre for FreePDK45
-drc_name = "magic"
-lvs_name = "netgen"
-pex_name = "magic"
 ```
 
 You can then run OpenRAM by executing:

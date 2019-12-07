@@ -243,7 +243,7 @@ class pbitcell(bitcell_base.bitcell_base):
                                           (self.inverter_nmos.active_contact.height - self.inverter_nmos.active_height)
         self.inverter_gap = max(self.poly_to_active,
                                 self.m1_space + inverter_nmos_contact_extension) \
-                                + self.poly_to_polycontact + 2 * contact.poly.width \
+                                + self.poly_to_poly_contact + 2 * contact.poly.width \
                                 + self.m1_space + inverter_pmos_contact_extension
         self.cross_couple_lower_ypos = self.inverter_nmos_ypos \
                                        + self.inverter_nmos.active_height \
@@ -254,7 +254,7 @@ class pbitcell(bitcell_base.bitcell_base):
                                        + self.inverter_nmos.active_height \
                                        + max(self.poly_to_active,
                                              self.m1_space + inverter_nmos_contact_extension) \
-                                       + self.poly_to_polycontact \
+                                       + self.poly_to_poly_contact \
                                        + 1.5 * contact.poly.width
 
         # spacing between wordlines (and gnd)
@@ -926,14 +926,14 @@ class pbitcell(bitcell_base.bitcell_base):
         """
         # add poly to metal1 contacts for gates of the inverters
         left_storage_contact =  vector(self.inverter_nmos_left.get_pin("G").lc().x \
-                                       - self.poly_to_polycontact - 0.5*contact.poly.width,
+                                       - self.poly_to_poly_contact - 0.5*contact.poly.width,
                                        self.cross_couple_upper_ypos)
         self.add_via_center(layers=("poly", "contact", "metal1"),
                             offset=left_storage_contact,
                             directions=("H", "H"))
 
         right_storage_contact =  vector(self.inverter_nmos_right.get_pin("G").rc().x \
-                                        + self.poly_to_polycontact + 0.5*contact.poly.width,
+                                        + self.poly_to_poly_contact + 0.5*contact.poly.width,
                                         self.cross_couple_upper_ypos)
         self.add_via_center(layers=("poly", "contact", "metal1"),
                             offset=right_storage_contact,

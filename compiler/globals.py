@@ -168,8 +168,6 @@ def init_openram(config_file, is_unit_test=True):
     from sram_factory import factory
     factory.reset()
 
-    setup_bitcell()
-    
     global OPTS
     global CHECKPOINT_OPTS
 
@@ -398,7 +396,8 @@ def setup_paths():
         full_path = "{0}/{1}".format(OPENRAM_HOME, subdir)
         debug.check(os.path.isdir(full_path),
                     "$OPENRAM_HOME/{0} does not exist: {1}".format(subdir, full_path))
-        sys.path.append("{0}".format(full_path)) 
+        if "__pycache__" not in full_path:
+            sys.path.append("{0}".format(full_path)) 
 
     if not OPTS.openram_temp.endswith('/'):
         OPTS.openram_temp += "/"
@@ -449,14 +448,24 @@ def init_paths():
         
 def set_default_corner():
     """ Set the default corner. """
-    
+
+    import tech
     # Set some default options now based on the technology...
     if (OPTS.process_corners == ""):
-        OPTS.process_corners = tech.spice["fet_models"].keys()
+        if OPTS.nominal_corner_only:
+            OPTS.process_corners = ["TT"]
+        else:
+            OPTS.process_corners = tech.spice["fet_models"].keys()
     if (OPTS.supply_voltages == ""):
-        OPTS.supply_voltages = tech.spice["supply_voltages"]
+        if OPTS.nominal_corner_only:
+            OPTS.supply_voltages = [tech.spice["supply_voltages"][1]]
+        else:
+            OPTS.supply_voltages = tech.spice["supply_voltages"]
     if (OPTS.temperatures == ""):
-        OPTS.temperatures = tech.spice["temperatures"]
+        if OPTS.nominal_corner_only:
+            OPTS.temperatures = [tech.spice["temperatures"][1]]
+        else:
+            OPTS.temperatures = tech.spice["temperatures"]
     
     
 def import_tech():
@@ -483,7 +492,7 @@ def import_tech():
     try:
         tech_mod = __import__(OPTS.tech_name)
     except ImportError:
-        debug.error("Nonexistent technology_setup_file: {0}.py".format(filename), -1)
+        debug.error("Nonexistent technology module: {0}".format(OPTS.tech_name), -1)
 
     OPTS.openram_tech = os.path.dirname(tech_mod.__file__) + "/"
 
@@ -572,5 +581,5 @@ def report_status():
             debug.print_raw("Performing simulation-based characterization with {}".format(OPTS.spice_name))
         if OPTS.trim_netlist:
             debug.print_raw("Trimming netlist to speed up characterization (trim_netlist=False to disable).")
-        
-        
+    if OPTS.nominal_corner_only:
+        debug.print_raw("Only characterizing nominal corner.")        

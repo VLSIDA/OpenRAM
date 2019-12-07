@@ -34,6 +34,7 @@ class options(optparse.Values):
     write_size = None
     
     # These will get initialized by the user or the tech file
+    nominal_corner_only = False
     supply_voltages = ""
     temperatures = ""
     process_corners = ""
@@ -110,8 +111,7 @@ class options(optparse.Values):
     
     # Should we print out the banner at startup
     print_banner = True
-    # Use detailed LEF blockages
-    detailed_blockages = True
+
     # Define the output file paths
     output_path = "."
     # Define the output file base name

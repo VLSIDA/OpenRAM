@@ -66,25 +66,49 @@ class lib:
         self.supply_voltages = OPTS.supply_voltages
         self.process_corners = OPTS.process_corners
 
-        # Enumerate all possible corners
+        # Corner values
+        min_temperature = min(self.temperatures)
+        nom_temperature = tech.spice["nom_temperature"]
+        max_temperature = max(self.temperatures)
+        min_supply = min(self.supply_voltages)
+        nom_supply = tech.spice["nom_supply_voltage"]
+        max_supply = max(self.supply_voltages)
+        min_process = "FF"
+        nom_process = "TT"
+        max_process = "SS"
+        
         self.corners = []
         self.lib_files = []
-        for proc in self.process_corners:
-            for temp in self.temperatures:
-                for volt in self.supply_voltages:
-                    self.corner_name = "{0}_{1}_{2}V_{3}C".format(self.sram.name,
-                                                                  proc,
-                                                                  volt,
-                                                                  temp)
-                    self.corner_name = self.corner_name.replace(".","p") # Remove decimals
-                    lib_name = self.out_dir+"{}.lib".format(self.corner_name)
+
+        # Nominal corner
+        self.add_corner(nom_process, nom_supply, nom_temperature)
+        if not OPTS.nominal_corner_only:
+            # Temperature corners
+            self.add_corner(nom_process, nom_supply, min_temperature)
+            self.add_corner(nom_process, nom_supply, max_temperature)
+            # Supply corners
+            self.add_corner(nom_process, min_supply, nom_temperature)
+            self.add_corner(nom_process, max_supply, nom_temperature)
+            # Process corners
+            self.add_corner(min_process, nom_supply, nom_temperature)
+            self.add_corner(max_process, nom_supply, nom_temperature)
+
+    def add_corner(self, proc, volt, temp):
+        self.corner_name = "{0}_{1}_{2}V_{3}C".format(self.sram.name,
+                                                      proc,
+                                                      volt,
+                                                      temp)
+        self.corner_name = self.corner_name.replace(".","p") # Remove decimals
+        lib_name = self.out_dir+"{}.lib".format(self.corner_name)
+        
+        # A corner is a tuple of PVT
+        self.corners.append((proc, volt, temp))
+        self.lib_files.append(lib_name)
                     
-                    # A corner is a tuple of PVT
-                    self.corners.append((proc, volt, temp))
-                    self.lib_files.append(lib_name)
         
     def characterize_corners(self):
         """ Characterize the list of corners. """
+        debug.info(1,"Characterizing corners: " + str(self.corners))        
         for (self.corner,lib_name) in zip(self.corners,self.lib_files):
             debug.info(1,"Corner: " + str(self.corner))
             (self.process, self.voltage, self.temperature) = self.corner

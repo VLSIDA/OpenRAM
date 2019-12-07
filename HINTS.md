@@ -37,7 +37,15 @@ to run Calibre or Magic+Netgen.
 To debug, you will need a layout viewer. I prefer to use Glade 
 on my Mac, but you can also use Calibre, Magic, etc. 
 
-1. Calibre
+1. Klayout
+
+   You can view the designs in [Klayout](https://www.klayout.de/) with the configuration
+   file provided in the tech directories. For example,
+```
+  klayout temp.gds -l /home/vagrant/openram/technology/freepdk45/tf/FreePDK45.lyp
+```
+
+2. Calibre
 
    Start the Calibre DESIGNrev viewer in the temp directory and load your GDS file:
 ```
@@ -52,10 +60,9 @@ on my Mac, but you can also use Calibre, Magic, etc.
 
    In the viewer ">" opens the layout down a level.
 
-2. Glade
+3. Glade
 
-   You can view errors in Glade as well. I like this because it is on my laptop.
-   You can get it from:  http://www.peardrop.co.uk/glade/
+   You can view errors in [Glade](http://www.peardrop.co.uk/glade/) as well. 
 
    To remote display over X windows, you need to disable OpenGL acceleration or use vnc
    or something. You can disable by adding this to your .bashrc in bash:
@@ -82,16 +89,16 @@ ui().importCds("default",
    To load the errors, you simply do Verify->Import Calibre Errors select
    the .results file from Calibre.
 
-3. Magic
+4. Magic
 
    Magic is only supported in SCMOS. You will need to install the MOSIS SCMOS rules
-   and Magic from: http://opencircuitdesign.com/
+   and [Magic](http://opencircuitdesign.com/)
 
    When running DRC or extraction, OpenRAM will load the GDS file, save
    the .ext/.mag files, and export an extracted netlist (.spice).
 
-4. It is possible to use other viewers as well, such as:
-   * LayoutEditor http://www.layouteditor.net/ 
+5. It is possible to use other viewers as well, such as:
+   * [LayoutEditor](http://www.layouteditor.net/)
 
 
 # Example to output/input .gds layout files from/to Cadence

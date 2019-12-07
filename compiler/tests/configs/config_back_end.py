@@ -10,22 +10,11 @@ word_size = 1
 num_words = 16
 
 tech_name = OPTS.tech_name
-process_corners = ["TT"]
-supply_voltages = [5.0]
-temperatures = [25]
 
+nominal_corner_only = True
 route_supplies = True
 check_lvsdrc = True
 inline_lvsdrc = True
 analytical_delay = False
 
-if tech_name == "freepdk45":
-    supply_voltages = [1.0]
-    drc_name = "calibre"
-    lvs_name = "calibre"
-    pex_name = "calibre"
-else:
-    drc_name = "magic"
-    lvs_name = "netgen"
-    pex_name = "magic"
 

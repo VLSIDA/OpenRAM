@@ -7,7 +7,7 @@
 #
 import design
 import debug
-from tech import drc, spice
+from tech import layer, drc, spice
 from vector import vector
 from sram_factory import factory
 
@@ -58,7 +58,14 @@ class ptx(design.design):
         # We must always create ptx layout for pbitcell
         # some transistor sizes in other netlist depend on pbitcell
         self.create_layout()
-    
+
+        #ll = self.find_lowest_coords()
+        #ur = self.find_highest_coords()
+        #self.add_boundary(ll, ur)
+
+        # (0,0) will be the corner ofthe active area (not the larger well)
+        self.translate_all(self.active_offset)
+        
     def create_layout(self):
         """Calls all functions related to the generation of the layout"""
         self.setup_layout_constants()
@@ -66,7 +73,6 @@ class ptx(design.design):
         self.add_well_implant()
         self.add_poly()
         self.add_active_contacts()
-        self.translate_all(self.active_offset)
 
         # for run-time, we won't check every transitor DRC independently
         # but this may be uncommented for debug purposes
@@ -124,18 +130,18 @@ class ptx(design.design):
 
         
         # The contacted poly pitch (or uncontacted in an odd technology)
-        self.poly_pitch = max(2 * self.contact_to_gate + self.contact_width + self.poly_width,
+        self.poly_pitch = max(2 * self.active_contact_to_gate + self.contact_width + self.poly_width,
                               self.poly_space)
 
         # The contacted poly pitch (or uncontacted in an odd technology)
-        self.contact_pitch = 2 * self.contact_to_gate + self.contact_width + self.poly_width
+        self.contact_pitch = 2 * self.active_contact_to_gate + self.contact_width + self.poly_width
         
         # The enclosure of an active contact. Not sure about second term.
-        active_enclose_contact = max(drc("active_enclosure_contact"),
+        active_enclose_contact = max(drc("active_enclosure_active_contact"),
                                      (self.active_width - self.contact_width) / 2)
                                                                   
         # This is the distance from the edge of poly to the contacted end of active
-        self.end_to_poly = active_enclose_contact + self.contact_width + self.contact_to_gate
+        self.end_to_poly = active_enclose_contact + self.contact_width + self.active_contact_to_gate
         
 
         # Active width is determined by enclosure on both ends and contacted pitch,
@@ -152,7 +158,8 @@ class ptx(design.design):
         self.active_offset = vector([self.well_enclose_active] * 2)
 
         # Well enclosure of active, ensure minwidth as well
-        if drc("has_{}well".format(self.well_type)):
+        well_name = "{}well".format(self.well_type)
+        if layer[well_name]:
             self.cell_well_width = max(self.active_width + 2 * self.well_enclose_active,
                                        self.well_width)
             self.cell_well_height = max(self.tx_width + 2 * self.well_enclose_active,
@@ -318,11 +325,13 @@ class ptx(design.design):
         """
         Add an (optional) well and implant for the type of transistor.
         """
-        if drc("has_{}well".format(self.well_type)):
-            self.add_rect(layer="{}well".format(self.well_type),
+        well_name = "{}well".format(self.well_type)
+        if layer[well_name]:
+            self.add_rect(layer=well_name,
                           offset=(0,0),
                           width=self.cell_well_width,
                           height=self.cell_well_height)
+        if layer["vtg"]:
             self.add_rect(layer="vtg",
                           offset=(0,0),
                           width=self.cell_well_width,

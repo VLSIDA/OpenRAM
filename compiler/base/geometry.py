@@ -327,7 +327,6 @@ class label(geometry):
         debug.info(4, "writing label (" + str(self.layerNumber) + "): " + self.text)
         new_layout.addText(text=self.text,
                            layerNumber=self.layerNumber,
-                           purposeNumber=self.layerPurpose,
                            offsetInMicrons=self.offset,
                            magnification=self.zoom,
                            rotate=None)

@@ -2,7 +2,6 @@ from .gdsPrimitives import *
 from datetime import *
 #from mpmath import matrix
 #from numpy import matrix
-from vector import vector
 import numpy as np
 #import gdsPrimitives
 import debug
@@ -358,7 +357,7 @@ class VlsiLayout:
         #add the sref to the root structure
         self.structures[self.rootStructureName].srefs.append(layoutToAddSref)
         
-    def addBox(self,layerNumber=0, purposeNumber=None, offsetInMicrons=(0,0), width=1.0, height=1.0,center=False):
+    def addBox(self,layerNumber=0, purposeNumber=0, offsetInMicrons=(0,0), width=1.0, height=1.0,center=False):
         """
         Method to add a box to a layout
         """
@@ -383,13 +382,12 @@ class VlsiLayout:
 
         boundaryToAdd = GdsBoundary()
         boundaryToAdd.drawingLayer = layerNumber
-        boundaryToAdd.dataType = 0
         boundaryToAdd.coordinates = coordinates
         boundaryToAdd.purposeLayer = purposeNumber
         #add the sref to the root structure
         self.structures[self.rootStructureName].boundaries.append(boundaryToAdd)
     
-    def addPath(self, layerNumber=0, purposeNumber=None, coordinates=[(0,0)], width=1.0):
+    def addPath(self, layerNumber=0, purposeNumber=0, coordinates=[(0,0)], width=1.0):
         """
         Method to add a path to a layout
         """
@@ -408,12 +406,10 @@ class VlsiLayout:
         #add the sref to the root structure
         self.structures[self.rootStructureName].paths.append(pathToAdd)
         
-    def addText(self, text, layerNumber=0, purposeNumber=None, offsetInMicrons=(0,0), magnification=0.1, rotate = None):
+    def addText(self, text, layerNumber=0, offsetInMicrons=(0,0), magnification=0.1, rotate = None):
         offsetInLayoutUnits = (self.userUnits(offsetInMicrons[0]),self.userUnits(offsetInMicrons[1]))
         textToAdd = GdsText()
         textToAdd.drawingLayer = layerNumber
-        textToAdd.purposeLayer = purposeNumber
-        textToAdd.dataType = 0
         textToAdd.coordinates = [offsetInLayoutUnits]
         textToAdd.transFlags = [0,0,0]
         textToAdd.textString = self.padText(text)
@@ -757,7 +753,7 @@ class VlsiLayout:
         for boundary in shapes:
             vectors = []
             for i in range(0, len(boundary), 2):
-                vectors.append(vector(boundary[i], boundary[i+1]))
+                vectors.append((boundary[i], boundary[i+1]))
             blockages.append(vectors)
             
         return blockages

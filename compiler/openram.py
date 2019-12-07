@@ -31,7 +31,11 @@ if len(args) != 1:
 # These depend on arguments, so don't load them until now.
 import debug
 
+# Parse config file and set up all the options
 g.init_openram(config_file=args[0], is_unit_test=False)
+
+# Ensure that the right bitcell exists or use the parameterised one
+g.setup_bitcell()
 
 # Only print banner here so it's not in unit tests
 g.print_banner()

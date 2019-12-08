@@ -264,8 +264,9 @@ class replica_bitcell_array(design.design):
 
         # Far top dummy row (first row above array is NOT flipped)
         flip_dummy = self.right_rbl%2
-        self.dummy_row_top_inst.place(offset=offset.scale(0,self.right_rbl+flip_dummy)+self.bitcell_array_inst.ul(),
-                                         mirror="MX" if flip_dummy else "R0")
+        odd_rows = self.row_size%2
+        self.dummy_row_top_inst.place(offset=offset.scale(0,self.right_rbl+(flip_dummy ^ odd_rows))+self.bitcell_array_inst.ul(),
+                                         mirror="MX" if (flip_dummy ^ odd_rows) else "R0")
         # Far bottom dummy row (first row below array IS flipped)
         flip_dummy = (self.left_rbl+1)%2
         self.dummy_row_bot_inst.place(offset=offset.scale(0,-self.left_rbl-1+flip_dummy),
@@ -280,8 +281,8 @@ class replica_bitcell_array(design.design):
             self.dummy_row_replica_inst[bit].place(offset=offset.scale(0,-bit-bit%2),
                                                    mirror="R0" if bit%2 else "MX")
         for bit in range(self.right_rbl):
-            self.dummy_row_replica_inst[self.left_rbl+bit].place(offset=offset.scale(0,bit+bit%2)+self.bitcell_array_inst.ul(),
-                                                                 mirror="MX" if bit%2 else "R0")
+            self.dummy_row_replica_inst[self.left_rbl+bit].place(offset=offset.scale(0,bit+bit%2+odd_rows)+self.bitcell_array_inst.ul(),
+                                                                 mirror="MX" if (bit%2 or odd_rows) else "R0")
             
 
         self.translate_all(offset.scale(-1-self.left_rbl,-1-self.left_rbl))

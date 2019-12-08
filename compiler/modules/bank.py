@@ -289,13 +289,14 @@ class bank(design.design):
         """  Computes the required sizes to create the bank """
 
         self.num_cols = int(self.words_per_row*self.word_size)
-        self.num_rows = int(self.num_words / self.words_per_row)
+        self.num_rows_temp = int(self.num_words / self.words_per_row)
+        self.num_rows = self.num_rows_temp + self.num_spare_rows
 
-        self.row_addr_size = int(log(self.num_rows, 2))
+        self.row_addr_size = ceil(log(self.num_rows, 2))
         self.col_addr_size = int(log(self.words_per_row, 2))
         self.addr_size = self.col_addr_size + self.row_addr_size
 
-        debug.check(self.num_rows*self.num_cols==self.word_size*self.num_words,"Invalid bank sizes.")
+        debug.check(self.num_rows_temp*self.num_cols==self.word_size*self.num_words,"Invalid bank sizes.")
         debug.check(self.addr_size==self.col_addr_size + self.row_addr_size,"Invalid address break down.")
 
         # The order of the control signals on the control bus:

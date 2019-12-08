@@ -5,7 +5,7 @@
 #
 import sys
 from tech import drc, parameter
-from math import log
+from math import log, ceil
 import debug
 import design
 from sram_factory import factory
@@ -22,7 +22,7 @@ class port_address(design.design):
         
         self.num_cols = cols
         self.num_rows = rows
-        self.addr_size = int(log(self.num_rows, 2))
+        self.addr_size = ceil(log(self.num_rows, 2))
         
         if name == "":
             name = "port_address_{0}_{1}".format(cols,rows)

@@ -56,6 +56,7 @@ class contact(hierarchy_design.hierarchy_design):
         self.create_contact_array()
         self.create_first_layer_enclosure()
         self.create_second_layer_enclosure()
+        self.create_nitride_cut_enclosure()
         
         self.height = max(obj.offset.y + obj.height for obj in self.objs)
         self.width = max(obj.offset.x + obj.width for obj in self.objs)
@@ -72,6 +73,7 @@ class contact(hierarchy_design.hierarchy_design):
         (first_layer, via_layer, second_layer) = self.layer_stack
         self.first_layer_name = first_layer
         self.second_layer_name = second_layer
+        
         # Contacts will have unique per first layer
         if via_layer == "contact":
             if first_layer in ("active", "poly"):
@@ -80,6 +82,7 @@ class contact(hierarchy_design.hierarchy_design):
                 self.via_layer_name = second_layer + "_" + via_layer            
         else:
             self.via_layer_name = via_layer
+
 
     def setup_layout_constants(self):
         """ Determine the design rules for the enclosure layers """
@@ -150,6 +153,25 @@ class contact(hierarchy_design.hierarchy_design):
                               height=self.contact_width)
                 offset = offset + vector(self.contact_pitch, 0)
 
+    def create_nitride_cut_enclosure(self):
+        """ Special layer that encloses poly contacts in some processes """
+        # Check if there is a special poly nitride cut layer
+        if "npc" not in layer.keys():
+            return
+
+        # Only add for poly layers
+        if self.first_layer_name == "poly":
+            self.add_rect(layer="npc",
+                          offset=self.first_layer_position,
+                          width=self.first_layer_width,
+                          height=self.first_layer_height)
+        elif self.second_layer_name == "poly":
+            self.add_rect(layer="npc",
+                          offset=self.second_layer_position,
+                          width=self.second_layer_width,
+                          height=self.second_layer_height)
+
+    
     def create_first_layer_enclosure(self):
         # this is if the first and second layers are different
         self.first_layer_position = vector(

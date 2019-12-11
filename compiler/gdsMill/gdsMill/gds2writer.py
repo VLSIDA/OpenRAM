@@ -238,6 +238,10 @@ class Gds2writer:
             idBits=b'\x16\x02' #purpose layer
             purposeLayer = struct.pack(">h",thisPath.purposeLayer)
             self.writeRecord(idBits+purposeLayer)
+        if(thisPath.dataType is not None):
+            idBits=b'\x0E\x02'  #Data type
+            dataType = struct.pack(">h",thisPath.dataType)
+            self.writeRecord(idBits+dataType)
         if(thisPath.pathType):
             idBits=b'\x21\x02'  #Path type
             pathType = struct.pack(">h",thisPath.pathType)

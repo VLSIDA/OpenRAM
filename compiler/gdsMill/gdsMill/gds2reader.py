@@ -251,6 +251,11 @@ class Gds2reader:
                 thisPath.pathType=pathType
                 if(self.debugToTerminal==1):
                     print("\t\t\tPath Type: "+str(pathType))
+            elif(idBits==b'\x0E\x02'):  #Data type
+                dataType = struct.unpack(">h",record[2:4])[0]
+                thisPath.dataType=dataType
+                if(self.debugToTerminal==1):
+                    print("\t\t\tData Type: "+str(dataType))
             elif(idBits==b'\x0F\x03'):  #Path width
                 pathWidth = struct.unpack(">i",record[2:6])[0]
                 thisPath.pathWidth=pathWidth

@@ -43,6 +43,20 @@ class design_rules():
         else:
             debug.error("Must call complex DRC rule {} with arguments.".format(b),-1)
 
+
+    def add_layer(self, name, width, spacing, area=0):
+        # Minimum width
+        self.add("minwidth_{}".format(name), width)
+        # Minimum spacing (could be a table too)
+        self.add("{0}_to_{0}".format(name), spacing)
+        # Minimum area
+        self.add("minarea_{}".format(name), area)
         
-        
+    def add_enclosure(self, name, layer, enclosure, extension=None):
+        self.add("{0}_enclosure_{1}".format(name, layer), enclosure)
+        # Reserved for asymmetric enclosures
+        if extension:
+            self.add("{0}_extend_{1}".format(name, layer), extension)
+        else:
+            self.add("{0}_extend_{1}".format(name, layer), enclosure)
     

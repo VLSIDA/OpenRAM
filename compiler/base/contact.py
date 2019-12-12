@@ -7,7 +7,7 @@
 #
 import hierarchy_design
 import debug
-from tech import drc, layer
+from tech import *
 from vector import vector
 
 
@@ -75,13 +75,18 @@ class contact(hierarchy_design.hierarchy_design):
         self.second_layer_name = second_layer
         
         # Contacts will have unique per first layer
-        if via_layer == "contact":
+        if via_layer in layer.keys():
+            self.via_layer_name = via_layer
+        elif via_layer == "contact":
             if first_layer in ("active", "poly"):
                 self.via_layer_name = first_layer + "_" + via_layer
+            elif second_layer in ("active", "poly"):
+                self.via_layer_name = second_layer + "_" + via_layer
             else:
-                self.via_layer_name = second_layer + "_" + via_layer            
+                debug.error("Invalid via layer {}".format(via_layer), -1)
         else:
-            self.via_layer_name = via_layer
+            debug.error("Invalid via layer {}".format(via_layer), -1)
+        
 
 
     def setup_layout_constants(self):
@@ -224,23 +229,30 @@ from sram_factory import factory
 # This is not instantiated and used for calculations only.
 # These are static 1x1 contacts to reuse in all the design modules.
 well = factory.create(module_type="contact",
-                      layer_stack=("active", "contact", "metal1"),
+                      layer_stack=active_stack,
                       directions=("H", "V"))
 active = factory.create(module_type="contact",
-                        layer_stack=("active", "contact", "metal1"),
+                        layer_stack=active_stack,
                         directions=("H", "V"))
 poly = factory.create(module_type="contact",
-                      layer_stack=("poly", "contact", "metal1"),
+                      layer_stack=poly_stack,
                       directions=("V", "H"))
+if "li" in layer.keys():
+    lim1 = factory.create(module_type="contact",
+                          layer_stack=li_stack,
+                          directions=("V", "H"))
+else:
+    lim1 = None
+    
 m1m2 = factory.create(module_type="contact",
-                      layer_stack=("metal1", "via1", "metal2"),
+                      layer_stack=metal1_stack,
                       directions=("H", "V"))
 m2m3 = factory.create(module_type="contact",
-                      layer_stack=("metal2", "via2", "metal3"),
+                      layer_stack=metal2_stack,
                       directions=("V", "H"))
 if "metal4" in layer.keys():
     m3m4 = factory.create(module_type="contact",
-                          layer_stack=("metal3", "via3", "metal4"),
+                          layer_stack=metal3_stack,
                           directions=("H", "V"))
 else:
     m3m4 = None

@@ -21,7 +21,9 @@ class contact_test(openram_test):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
 
-        for layer_stack in [("metal1", "via1", "metal2"), ("poly", "contact", "metal1")]:
+        from tech import poly_stack, beol_stacks
+
+        for layer_stack in [poly_stack] + beol_stacks:
             stack_name = ":".join(map(str, layer_stack))
 
             # Check single 1 x 1 contact"
@@ -43,6 +45,10 @@ class contact_test(openram_test):
             debug.info(2, "1 x 1 {} test".format(stack_name))
             c = factory.create(module_type="contact", layer_stack=layer_stack, dimensions=(1, 1), directions=("V","V"))
             self.local_drc_check(c)
+
+        # Only do multiple contacts for BEOL
+        for layer_stack in beol_stacks:
+            stack_name = ":".join(map(str, layer_stack))
             
             # check vertical array with one in the middle and two ends
             debug.info(2, "1 x 3 {} test".format(stack_name))

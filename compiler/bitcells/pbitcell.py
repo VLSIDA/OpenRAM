@@ -1019,7 +1019,7 @@ class pbitcell(bitcell_base.bitcell_base):
         # add well contacts
         # connect pimplants to gnd
         offset = vector(0, self.gnd_position.y)
-        self.add_via_center(layers=("active", "contact", "metal1"),
+        self.add_via_center(layers=self.active_stack,
                             offset=offset,
                             directions=("H", "H"),
                             implant_type="p",
@@ -1027,7 +1027,7 @@ class pbitcell(bitcell_base.bitcell_base):
 
         # connect nimplants to vdd
         offset = vector(0, self.vdd_position.y)
-        self.add_via_center(layers=("active", "contact", "metal1"),
+        self.add_via_center(layers=self.active_stack,
                             offset=offset,
                             directions=("H", "H"),
                             implant_type="n",

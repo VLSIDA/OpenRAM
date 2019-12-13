@@ -175,7 +175,7 @@ class single_level_column_mux(pgate.pgate):
         # Add it to the right, aligned in between the two tx
         active_pos = vector(self.bitcell.width,
                             self.nmos_upper.by() - 0.5 * self.poly_space)
-        self.add_via_center(layers=("active", "contact", "metal1"),
+        self.add_via_center(layers=self.active_stack,
                             offset=active_pos,
                             implant_type="p",
                             well_type="p")

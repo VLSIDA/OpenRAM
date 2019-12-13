@@ -168,7 +168,7 @@ class pgate(design.design):
     def add_nwell_contact(self, pmos, pmos_pos):
         """ Add an nwell contact next to the given pmos device. """
         
-        layer_stack = ("active", "contact", "metal1")
+        layer_stack = self.active_stack
         
         # To the right a spacing away from the pmos right active edge
         contact_xoffset = pmos_pos.x + pmos.active_width \
@@ -221,7 +221,7 @@ class pgate(design.design):
     def add_pwell_contact(self, nmos, nmos_pos):
         """ Add an pwell contact next to the given nmos device. """
 
-        layer_stack = ("active", "contact", "metal1")
+        layer_stack = self.active_stack
 
         pwell_position = vector(0, -0.5 * self.m1_width)
         

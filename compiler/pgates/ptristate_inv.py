@@ -191,7 +191,7 @@ class ptristate_inv(pgate.pgate):
         supplies AFTER the wells are created
         """
 
-        layer_stack = ("active", "contact", "metal1")
+        layer_stack = self.active_stack
 
         drain_pos = self.nmos1_inst.get_pin("S").center()
         vdd_pos = self.get_pin("vdd").center()

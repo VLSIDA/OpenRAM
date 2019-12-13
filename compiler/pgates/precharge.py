@@ -177,7 +177,7 @@ class precharge(design.design):
         well_contact_pos = self.upper_pmos1_inst.get_pin("D").center().scale(1, 0) \
                            + vector(0, self.upper_pmos1_inst.uy() + contact.well.height / 2 \
                                     + drc("well_extend_active"))
-        self.add_via_center(layers=("active", "contact", "metal1"),
+        self.add_via_center(layers=self.active_stack,
                             offset=well_contact_pos,
                             implant_type="n",
                             well_type="n")

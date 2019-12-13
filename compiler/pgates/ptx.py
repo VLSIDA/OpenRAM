@@ -124,7 +124,7 @@ class ptx(design.design):
             
         # This is not actually instantiated but used for calculations
         self.active_contact = factory.create(module_type="contact",
-                                             layer_stack=("active", "contact", "metal1"),
+                                             layer_stack=self.active_stack,
                                              dimensions=(1, self.num_contacts))
 
         
@@ -373,7 +373,7 @@ class ptx(design.design):
         [source_positions,drain_positions] = self.get_contact_positions()
 
         for pos in source_positions:
-            contact=self.add_via_center(layers=("active", "contact", "metal1"),
+            contact=self.add_via_center(layers=self.active_stack,
                                         offset=pos,
                                         size=(1, self.num_contacts),
                                         directions=("H","V"),
@@ -387,7 +387,7 @@ class ptx(design.design):
 
                 
         for pos in drain_positions:
-            contact=self.add_via_center(layers=("active", "contact", "metal1"),
+            contact=self.add_via_center(layers=self.active_stack,
                                         offset=pos,
                                         size=(1, self.num_contacts),
                                         directions=("H","V"),

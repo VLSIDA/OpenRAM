@@ -34,18 +34,18 @@ GDS["zoom"] = 0.05
 
 poly_stack = ("poly", "contact", "metal1")
 active_stack = ("active", "contact", "metal1")
-metal1_stack = ("metal1", "via1", "metal2")
-metal2_stack = ("metal2", "via2", "metal3")
-metal3_stack = ("metal3", "via3", "metal4")
+m1_stack = ("metal1", "via1", "metal2")
+m2_stack = ("metal2", "via2", "metal3")
+m3_stack = ("metal3", "via3", "metal4")
 
 # The FEOL stacks get us up to metal1
 feol_stacks = [poly_stack,
                active_stack]
 
 # The BEOL stacks are metal1 and up
-beol_stacks = [metal1_stack,
-               metal2_stack,
-               metal3_stack]
+beol_stacks = [m1_stack,
+               m2_stack,
+               m3_stack]
 
 layer_stacks = feol_stacks + beol_stacks
 

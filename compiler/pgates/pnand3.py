@@ -237,11 +237,11 @@ class pnand3(pgate.pgate):
         nmos3_pin = self.nmos3_inst.get_pin("D")
 
         # Go up to metal2 for ease on all output pins
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=pmos1_pin.center())
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=pmos3_pin.center())
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=nmos3_pin.center())
         
         # PMOS3 and NMOS3 are drain aligned
@@ -251,7 +251,7 @@ class pnand3(pgate.pgate):
         self.add_path("metal2", [pmos1_pin.bc(), mid_offset, nmos3_pin.uc()])
 
         # This extends the output to the edge of the cell
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=mid_offset)
         self.add_layout_pin_rect_center(text="Z",
                                         layer="metal1",

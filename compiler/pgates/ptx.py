@@ -52,7 +52,6 @@ class ptx(design.design):
         self.connect_poly = connect_poly
         self.num_contacts = num_contacts
 
-        # Do NOT create the netlist and layout (not a pgate)
         # Since it has variable height, it is not a pgate.
         self.create_netlist()
         # We must always create ptx layout for pbitcell

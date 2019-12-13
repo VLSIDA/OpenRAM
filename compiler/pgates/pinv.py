@@ -115,8 +115,8 @@ class pinv(pgate.pgate):
         # Divide the height in half. Could divide proportional to beta,
         # but this makes connecting wells of multiple cells easier.
         # Subtract the poly space under the rail of the tx
-        nmos_height_available = 0.5 * tx_height_available - 0.5 * drc("poly_to_poly")
-        pmos_height_available = 0.5 * tx_height_available - 0.5 * drc("poly_to_poly")
+        nmos_height_available = 0.5 * tx_height_available - 0.5 * self.poly_space
+        pmos_height_available = 0.5 * tx_height_available - 0.5 * self.poly_space
 
         debug.info(2,
                    "Height avail {0:.4f} PMOS {1:.4f} NMOS {2:.4f}".format(tx_height_available,

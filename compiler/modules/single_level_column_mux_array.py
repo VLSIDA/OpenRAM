@@ -191,11 +191,11 @@ class single_level_column_mux_array(design.design):
                                                    
 
                 # This via is on the right of the wire                
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                self.add_via_center(layers=self.m1_stack,
                                     offset=bl_out_offset)
 
                 # This via is on the left of the wire
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                self.add_via_center(layers=self.m1_stack,
                                     offset=br_out_offset)
 
             else:
@@ -204,10 +204,10 @@ class single_level_column_mux_array(design.design):
                 self.add_path("metal2", [ br_out_offset, br_out_offset_end])
                                           
                 # This via is on the right of the wire
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                self.add_via_center(layers=self.m1_stack,
                                     offset=bl_out_offset)
                 # This via is on the left of the wire                
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                self.add_via_center(layers=self.m1_stack,
                                     offset=br_out_offset)
 
     def get_drain_cin(self):

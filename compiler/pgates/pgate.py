@@ -115,7 +115,7 @@ class pgate(design.design):
 
         # Non-preferred direction via
 
-        self.add_via_center(layers=("poly", "contact", "metal1"),
+        self.add_via_center(layers=self.poly_stack,
                             offset=contact_offset,
                             directions=directions)
 

@@ -159,7 +159,7 @@ class precharge(design.design):
         # adds the en contact to connect the gates to the en rail on metal1
         offset = self.lower_pmos_inst.get_pin("G").ul() \
                  + vector(0, 0.5 * self.poly_space)
-        self.add_via_center(layers=("poly", "contact", "metal1"),
+        self.add_via_center(layers=self.poly_stack,
                             offset=offset)
 
         # adds the en rail on metal1
@@ -202,7 +202,6 @@ class precharge(design.design):
         self.bl_pin = self.add_layout_pin(text="bl",
                                           layer="metal2",
                                           offset=offset,
-                                          width=drc("minwidth_metal2"),
                                           height=self.height)
 
         # adds the BR on metal 2
@@ -211,7 +210,6 @@ class precharge(design.design):
         self.br_pin = self.add_layout_pin(text="br",
                                           layer="metal2",
                                           offset=offset,
-                                          width=drc("minwidth_metal2"),
                                           height=self.height)
 
     def connect_to_bitlines(self):
@@ -233,23 +231,22 @@ class precharge(design.design):
         Adds contacts/via from metal1 to metal2 for bit-lines
         """
 
-        stack = ("metal1", "via1", "metal2")
         upper_pin = self.upper_pmos1_inst.get_pin("S")
         lower_pin = self.lower_pmos_inst.get_pin("S")
         
         # BL goes up to M2 at the transistor
-        self.bl_contact =self.add_via_center(layers=stack,
+        self.bl_contact =self.add_via_center(layers=self.m1_stack,
                                              offset=upper_pin.center(),
                                              directions=("V", "V"))
-        self.add_via_center(layers=stack,
+        self.add_via_center(layers=self.m1_stack,
                             offset=lower_pin.center(),
                             directions=("V", "V"))
 
         # BR routes over on M1 first
-        self.add_via_center(layers=stack,
+        self.add_via_center(layers=self.m1_stack,
                             offset=vector(self.br_pin.cx(), upper_pin.cy()),
                             directions=("V", "V"))
-        self.add_via_center(layers=stack,
+        self.add_via_center(layers=self.m1_stack,
                             offset=vector(self.br_pin.cx(), lower_pin.cy()),
                             directions=("V", "V"))
 

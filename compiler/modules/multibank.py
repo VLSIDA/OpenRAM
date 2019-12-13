@@ -452,13 +452,13 @@ class multibank(design.design):
             out_pos = self.bank_select_inst.get_pin(gated_name).rc()
             bus_pos = vector(self.bus_xoffset[gated_name], out_pos.y)
             self.add_path("metal3",[out_pos, bus_pos])
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
+            self.add_via_center(layers=self.m2_stack,
                                 offset=bus_pos,
                                 rotate=90)
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=self.m1_stack,
                                 offset=out_pos,
                                 rotate=90)
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
+            self.add_via_center(layers=self.m2_stack,
                                 offset=out_pos,
                                 rotate=90)
         
@@ -586,9 +586,9 @@ class multibank(design.design):
             tri_gate_in = self.tri_gate_array_inst.get_pin("in_{}".format(i)).lc()
             sa_data_out = self.sense_amp_array_inst.get_pin("data_{}".format(i)).bc()
 
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
+            self.add_via_center(layers=self.m2_stack,
                                 offset=tri_gate_in)
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
+            self.add_via_center(layers=self.m2_stack,
                                 offset=sa_data_out)
             self.add_path("metal3",[sa_data_out,tri_gate_in])
 
@@ -766,7 +766,7 @@ class multibank(design.design):
         for (control_signal, pin_pos) in connection:
             control_pos = vector(self.bus_xoffset[control_signal].x ,pin_pos.y)
             self.add_path("metal1", [control_pos, pin_pos])
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=self.m1_stack,
                                 offset=control_pos,
                                 rotate=90)
 
@@ -778,7 +778,7 @@ class multibank(design.design):
         control_pos = vector(control_x_offset + self.m1_width, mid_pos.y)
         self.add_wire(("metal1","via1","metal2"),[pin_pos, mid_pos, control_pos])
         control_via_pos = vector(control_x_offset, mid_pos.y)
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=control_via_pos,
                             rotate=90)
         

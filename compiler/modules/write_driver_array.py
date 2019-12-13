@@ -143,7 +143,7 @@ class write_driver_array(design.design):
                 for pin in pin_list:
                     pin_pos = pin.center()
                     # Add the M2->M3 stack 
-                    self.add_via_center(layers=("metal2", "via2", "metal3"),
+                    self.add_via_center(layers=self.m2_stack,
                                         offset=pin_pos)
                     self.add_layout_pin_rect_center(text=n,
                                                     layer="metal3",

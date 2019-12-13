@@ -824,7 +824,7 @@ class layout():
     
     def create_channel_route(self, netlist,
                              offset, 
-                             layer_stack=("metal1", "via1", "metal2"),
+                             layer_stack,
                              vertical=False):
         """
         The net list is a list of the nets. Each net is a list of pins
@@ -950,15 +950,13 @@ class layout():
                 offset += vector(0,self.horizontal_pitch)
 
 
-    def create_vertical_channel_route(self, netlist, offset, 
-                                      layer_stack=("metal1", "via1", "metal2")):
+    def create_vertical_channel_route(self, netlist, offset, layer_stack):
         """
         Wrapper to create a vertical channel route
         """
         self.create_channel_route(netlist, offset, layer_stack, vertical=True)
 
-    def create_horizontal_channel_route(self, netlist, offset, 
-                                        layer_stack=("metal1", "via1", "metal2")):
+    def create_horizontal_channel_route(self, netlist, offset, layer_stack):
         """
         Wrapper to create a horizontal channel route
         """
@@ -1028,13 +1026,13 @@ class layout():
             direction=("H","H")
             
         if start_layer=="metal1":
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=self.m1_stack,
                                 offset=loc,
                                 directions=direction)
 
 
         if start_layer=="metal1" or start_layer=="metal2":
-            via=self.add_via_center(layers=("metal2", "via2", "metal3"),
+            via=self.add_via_center(layers=self.m2_stack,
                                     offset=loc,
                                     directions=direction) 
 
@@ -1159,7 +1157,7 @@ class layout():
                       vector(self.right_vdd_x_center, self.top_vdd_y_center)]
                       
         for pt in via_points:
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=self.m1_stack,
                                 offset=pt,
                                 size = (self.supply_vias, self.supply_vias))
 

@@ -126,9 +126,9 @@ class pinvbuf(pgate.pgate):
         z1_pin = self.inv1_inst.get_pin("Z")
         a4_pin = self.inv4_inst.get_pin("A")
         mid_point = vector(z1_pin.cx(), a4_pin.cy())
-        self.add_wire(("metal1", "via1", "metal2"),
+        self.add_wire(self.m1_stack,
                       [z1_pin.center(), mid_point, a4_pin.center()])
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=z1_pin.center())
         
     def add_layout_pins(self):
@@ -161,21 +161,21 @@ class pinvbuf(pgate.pgate):
         self.add_layout_pin_rect_center(text="Z",
                                         layer="metal2",
                                         offset=z_pin.center())
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=z_pin.center())
 
         zb_pin = self.inv3_inst.get_pin("Z")
         self.add_layout_pin_rect_center(text="Zb",
                                         layer="metal2",
                                         offset=zb_pin.center())
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=zb_pin.center())
         
         a_pin = self.inv1_inst.get_pin("A")
         self.add_layout_pin_rect_center(text="A",
                                         layer="metal2",
                                         offset=a_pin.center())
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=a_pin.center())
              
     def determine_clk_buf_stage_efforts(self, external_cout, inp_is_rise=False):

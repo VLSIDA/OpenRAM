@@ -371,12 +371,12 @@ class sram_1bank(sram_base):
             if self.write_size:
                 for x in dff_names:
                     pin_offset = self.data_dff_insts[port].get_pin(x).center()
-                    self.add_via_center(layers=("metal1", "via1", "metal2"),
+                    self.add_via_center(layers=self.m1_stack,
                                         offset=pin_offset,
                                         directions = ("V", "V"))
-                    self.add_via_center(layers=("metal2", "via2", "metal3"),
+                    self.add_via_center(layers=self.m2_stack,
                                         offset=pin_offset)
-                    self.add_via_center(layers=("metal3", "via3", "metal4"),
+                    self.add_via_center(layers=self.m3_stack,
                                         offset=pin_offset)
             
             bank_names = ["din{0}_{1}".format(port,x) for x in range(self.word_size)]
@@ -387,20 +387,21 @@ class sram_1bank(sram_base):
                         pin_offset = self.bank_inst.get_pin(x).uc()
                     else:
                         pin_offset = self.bank_inst.get_pin(x).bc()
-                    self.add_via_center(layers=("metal1", "via1", "metal2"),
+                    self.add_via_center(layers=self.m1_stack,
                                         offset=pin_offset)
-                    self.add_via_center(layers=("metal2", "via2", "metal3"),
+                    self.add_via_center(layers=self.m2_stack,
                                         offset=pin_offset)
-                    self.add_via_center(layers=("metal3", "via3", "metal4"),
+                    self.add_via_center(layers=self.m3_stack,
                                         offset=pin_offset)
 
             route_map = list(zip(bank_pins, dff_pins))
             if self.write_size:
-                self.create_horizontal_channel_route(netlist=route_map,
-                                                     offset=offset,
-                                                     layer_stack=("metal3", "via3", "metal4"))
+                layer_stack = self.m3_stack
             else:
-                self.create_horizontal_channel_route(route_map, offset)
+                layer_stack = self.m1_stack
+            self.create_horizontal_channel_route(netlist=route_map,
+                                                 offset=offset,
+                                                 layer_stack=layer_stack)
 
     def route_wmask_dff(self):
         """ Connect the output of the wmask flops to the write mask AND array """
@@ -415,7 +416,7 @@ class sram_1bank(sram_base):
             dff_pins = [self.wmask_dff_insts[port].get_pin(x) for x in dff_names]
             for x in dff_names:
                 offset_pin = self.wmask_dff_insts[port].get_pin(x).center()
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                self.add_via_center(layers=self.m1_stack,
                                     offset=offset_pin,
                                     directions=("V", "V"))
 
@@ -423,12 +424,14 @@ class sram_1bank(sram_base):
             bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
             for x in bank_names:
                 offset_pin = self.bank_inst.get_pin(x).center()
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                self.add_via_center(layers=self.m1_stack,
                                     offset=offset_pin)
 
 
             route_map = list(zip(bank_pins, dff_pins))
-            self.create_horizontal_channel_route(route_map,offset)
+            self.create_horizontal_channel_route(netlist=route_map,
+                                                 offset=offset,
+                                                 layer_stack=self.m1_stack)
 
 
     def add_lvs_correspondence_points(self):

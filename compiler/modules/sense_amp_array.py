@@ -99,13 +99,13 @@ class sense_amp_array(design.design):
             inst = self.local_insts[i]
             
             gnd_pos = inst.get_pin("gnd").center()
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
+            self.add_via_center(layers=self.m2_stack,
                                 offset=gnd_pos)
             self.add_layout_pin_rect_center(text="gnd",
                                             layer="metal3",
                                             offset=gnd_pos)
             vdd_pos = inst.get_pin("vdd").center()
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
+            self.add_via_center(layers=self.m2_stack,
                                 offset=vdd_pos)
             self.add_layout_pin_rect_center(text="vdd",
                                             layer="metal3",

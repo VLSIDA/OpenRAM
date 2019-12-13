@@ -221,9 +221,9 @@ class hierarchical_decoder(design.design):
     def route_input_rail(self, input_offset, output_offset):
         """ Route a vertical M2 coordinate to another vertical M2 coordinate to the predecode inputs """
         
-        self.add_via_center(layers=("metal2", "via2", "metal3"),
+        self.add_via_center(layers=self.m2_stack,
                             offset=input_offset)
-        self.add_via_center(layers=("metal2", "via2", "metal3"),
+        self.add_via_center(layers=self.m2_stack,
                             offset=output_offset)
         self.add_path(("metal3"), [input_offset, output_offset])
 
@@ -585,7 +585,7 @@ class hierarchical_decoder(design.design):
         """ Connect the routing rail to the given metal1 pin  """
         rail_pos = vector(self.predecode_rails[rail_name].x,pin.lc().y)
         self.add_path("metal1", [rail_pos, pin.lc()])
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=rail_pos)
 
 
@@ -595,10 +595,10 @@ class hierarchical_decoder(design.design):
         # It would be fixed with a channel router.
         mid_point = vector(pin.cx(), pin.cy()+self.inv.height/2)
         rail_pos = vector(self.predecode_rails[rail_name].x,mid_point.y)
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=pin.center())
         self.add_wire(("metal3","via2","metal2"), [rail_pos, mid_point, pin.uc()])
-        self.add_via_center(layers=("metal2", "via2", "metal3"),
+        self.add_via_center(layers=self.m2_stack,
                             offset=rail_pos)
 
     def input_load(self):

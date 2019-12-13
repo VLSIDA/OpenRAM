@@ -258,7 +258,7 @@ class bank_select(design.design):
             logic_pos = logic_inst.get_pin("B").lc() - vector(0.5*contact.m1m2.height,0)
             input_pos = vector(xoffset_bank_signal, logic_pos.y)
             self.add_path("metal2",[logic_pos, input_pos])
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=self.m1_stack,
                                 offset=logic_pos,
                                 directions=("H","H"))
 
@@ -266,10 +266,10 @@ class bank_select(design.design):
             # Connect the logic A input to the input pin
             logic_pos = logic_inst.get_pin("A").lc()
             input_pos = vector(0,logic_pos.y)
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=self.m1_stack,
                                 offset=logic_pos,
                                 directions=("H","H"))
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
+            self.add_via_center(layers=self.m2_stack,
                                 offset=logic_pos,
                                 directions=("H","H"))
             self.add_layout_pin_segment_center(text=input_name,
@@ -301,10 +301,10 @@ class bank_select(design.design):
                 # Add pins in two locations
                 for xoffset in [a_xoffset, b_xoffset]:
                     pin_pos = vector(xoffset, supply_pin.cy())
-                    self.add_via_center(layers=("metal1", "via1", "metal2"),
+                    self.add_via_center(layers=self.m1_stack,
                                         offset=pin_pos,
                                         directions=("H","H"))
-                    self.add_via_center(layers=("metal2", "via2", "metal3"),
+                    self.add_via_center(layers=self.m2_stack,
                                         offset=pin_pos,
                                         directions=("H","H"))
                     self.add_layout_pin_rect_center(text=n,

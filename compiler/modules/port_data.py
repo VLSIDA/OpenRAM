@@ -475,7 +475,7 @@ class port_data(design.design):
             end_pos = vector(length, wdriver_en_pin.cy())
 
             # Add via for the write driver array's enable input
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=self.m1_stack,
                                 offset=end_pos)
 
             # Route between write mask AND array and write driver array
@@ -626,7 +626,7 @@ class port_data(design.design):
             bottom_names = [bottom_inst.get_pin(bottom_bl_name.format(bit+bottom_start_bit)), bottom_inst.get_pin(bottom_br_name.format(bit+bottom_start_bit))]
             top_names = [top_inst.get_pin(top_bl_name.format(bit+top_start_bit)), top_inst.get_pin(top_br_name.format(bit+top_start_bit))]
             route_map = list(zip(bottom_names, top_names))
-            self.create_horizontal_channel_route(route_map, offset)
+            self.create_horizontal_channel_route(route_map, offset, self.m1_stack)
             
 
     def connect_bitlines(self, inst1, inst2, num_bits,

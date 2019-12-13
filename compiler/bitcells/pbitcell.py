@@ -378,7 +378,7 @@ class pbitcell(bitcell_base.bitcell_base):
         contact_offset_left =  vector(self.inverter_nmos_left.get_pin("D").rc().x \
                                       + 0.5 * contact.poly.height,
                                       self.cross_couple_upper_ypos)
-        self.add_via_center(layers=("poly", "contact", "metal1"),
+        self.add_via_center(layers=self.poly_stack,
                             offset=contact_offset_left,
                             directions=("H", "H"))
 
@@ -386,7 +386,7 @@ class pbitcell(bitcell_base.bitcell_base):
         contact_offset_right =  vector(self.inverter_nmos_right.get_pin("S").lc().x \
                                        - 0.5*contact.poly.height,
                                        self.cross_couple_lower_ypos)
-        self.add_via_center(layers=("poly", "contact", "metal1"),
+        self.add_via_center(layers=self.poly_stack,
                             offset=contact_offset_right,
                             directions=("H", "H"))
 
@@ -771,7 +771,7 @@ class pbitcell(bitcell_base.bitcell_base):
             # first transistor on either side of the cross coupled inverters
             # does not need to route to wordline on metal2
             if (k == 0) or (k == 1):
-                self.add_via_center(layers=("poly", "contact", "metal1"),
+                self.add_via_center(layers=self.poly_stack,
                                     offset=port_contact_offset)
 
                 self.add_path("poly", [gate_offset, port_contact_offset])
@@ -779,12 +779,12 @@ class pbitcell(bitcell_base.bitcell_base):
                               [port_contact_offset, wl_contact_offset])
 
             else:
-                self.add_via_center(layers=("poly", "contact", "metal1"),
+                self.add_via_center(layers=self.poly_stack,
                                     offset=port_contact_offset)
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                self.add_via_center(layers=self.m1_stack,
                                     offset=port_contact_offset)
 
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                self.add_via_center(layers=self.m1_stack,
                                     offset=wl_contact_offset,
                                     directions=("H", "H"))
 
@@ -824,7 +824,7 @@ class pbitcell(bitcell_base.bitcell_base):
 
             # Leave bitline disconnected if a dummy cell
             if not self.dummy_bitcell:
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                self.add_via_center(layers=self.m1_stack,
                                     offset=port_contact_offest)
 
             self.add_path("metal2",
@@ -836,7 +836,7 @@ class pbitcell(bitcell_base.bitcell_base):
 
             # Leave bitline disconnected if a dummy cell
             if not self.dummy_bitcell:
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                self.add_via_center(layers=self.m1_stack,
                                     offset=port_contact_offest)
 
             self.add_path("metal2",
@@ -853,7 +853,7 @@ class pbitcell(bitcell_base.bitcell_base):
             nmos_contact_positions.append(self.read_access_nmos_right[k].get_pin("S").center())
 
         for position in nmos_contact_positions:
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=self.m1_stack,
                                 offset=position)
 
             if position.x > 0:
@@ -862,7 +862,7 @@ class pbitcell(bitcell_base.bitcell_base):
                 contact_correct = -0.5 * contact.m1m2.height
             supply_offset = vector(position.x + contact_correct,
                                    self.gnd_position.y)
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=self.m1_stack,
                                 offset=supply_offset,
                                 directions=("H", "H"))
 
@@ -928,14 +928,14 @@ class pbitcell(bitcell_base.bitcell_base):
         left_storage_contact =  vector(self.inverter_nmos_left.get_pin("G").lc().x \
                                        - self.poly_to_contact - 0.5*contact.poly.width,
                                        self.cross_couple_upper_ypos)
-        self.add_via_center(layers=("poly", "contact", "metal1"),
+        self.add_via_center(layers=self.poly_stack,
                             offset=left_storage_contact,
                             directions=("H", "H"))
 
         right_storage_contact =  vector(self.inverter_nmos_right.get_pin("G").rc().x \
                                         + self.poly_to_contact + 0.5*contact.poly.width,
                                         self.cross_couple_upper_ypos)
-        self.add_via_center(layers=("poly", "contact", "metal1"),
+        self.add_via_center(layers=self.poly_stack,
                             offset=right_storage_contact,
                             directions=("H", "H"))
 
@@ -952,7 +952,7 @@ class pbitcell(bitcell_base.bitcell_base):
                                   + vector(0,
                                            self.gate_contact_yoffset - self.poly_extend_active)
 
-            self.add_via_center(layers=("poly", "contact", "metal1"),
+            self.add_via_center(layers=self.poly_stack,
                                 offset=port_contact_offset)
 
             self.add_path("poly",
@@ -967,7 +967,7 @@ class pbitcell(bitcell_base.bitcell_base):
                                   + vector(0,
                                            self.gate_contact_yoffset - self.poly_extend_active)
 
-            self.add_via_center(layers=("poly", "contact", "metal1"),
+            self.add_via_center(layers=self.poly_stack,
                                 offset=port_contact_offset)
 
             self.add_path("poly",

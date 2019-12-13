@@ -606,11 +606,11 @@ class bank(design.design):
             name = self.control_signals[port][signal]
             bus_pos = vector(self.bus_xoffset[port][name].x, out_pos.y)
             self.add_path("metal3",[out_pos, bus_pos])
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
+            self.add_via_center(layers=self.m2_stack,
                                 offset=bus_pos)
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=self.m1_stack,
                                 offset=out_pos)
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
+            self.add_via_center(layers=self.m2_stack,
                                 offset=out_pos)
         
     
@@ -756,7 +756,7 @@ class bank(design.design):
             bottom_names = [bottom_inst.get_pin(bottom_bl_name.format(bit)), bottom_inst.get_pin(bottom_br_name.format(bit))]
             top_names = [top_inst.get_pin(top_bl_name.format(bit)), top_inst.get_pin(top_br_name.format(bit))]            
             route_map = list(zip(bottom_names, top_names))
-            self.create_horizontal_channel_route(route_map, offset)
+            self.create_horizontal_channel_route(route_map, offset, self.m1_stack)
             
     def connect_bitline(self, inst1, inst2, inst1_name, inst2_name):
         """
@@ -865,7 +865,7 @@ class bank(design.design):
         column_mux_pins = [self.port_data_inst[port].get_pin(x) for x in sel_names]
         
         route_map = list(zip(decode_pins, column_mux_pins))
-        self.create_vertical_channel_route(route_map, offset)
+        self.create_vertical_channel_route(route_map, offset, self.m1_stack)
 
 
     def add_lvs_correspondence_points(self):
@@ -942,7 +942,7 @@ class bank(design.design):
             control_mid_pos = self.bus_xoffset[port][control_signal]
             control_pos = vector(self.bus_xoffset[port][control_signal].x ,pin_pos.y)
             self.add_wire(("metal1","via1","metal2"), [control_mid_pos, control_pos, pin_pos])
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=self.m1_stack,
                                 offset=control_pos)
 
         
@@ -957,7 +957,7 @@ class bank(design.design):
         control_x_offset = self.bus_xoffset[port][control_signal].x
         control_pos = vector(control_x_offset, mid_pos.y)
         self.add_wire(("metal1","via1","metal2"),[pin_pos, mid_pos, control_pos])
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=control_pos)
  
     def determine_wordline_stage_efforts(self, external_cout, inp_is_rise=True):    

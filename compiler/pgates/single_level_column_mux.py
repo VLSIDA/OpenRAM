@@ -126,16 +126,16 @@ class single_level_column_mux(pgate.pgate):
         nmos_upper_d_pin = self.nmos_upper.get_pin("D")
 
         # Add vias to bl, br_out, nmos_upper/S, nmos_lower/D
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=bl_pin.bc(),
                             directions=("V", "V"))
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=br_out_pin.uc(),
                             directions=("V", "V"))
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=nmos_upper_s_pin.center(),
                             directions=("V", "V"))
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=nmos_lower_d_pin.center(),
                             directions=("V", "V"))
         
@@ -181,9 +181,9 @@ class single_level_column_mux(pgate.pgate):
                             well_type="p")
 
         # Add the M1->M2->M3 stack
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=active_pos)
-        self.add_via_center(layers=("metal2", "via2", "metal3"),
+        self.add_via_center(layers=self.m2_stack,
                             offset=active_pos)
         self.add_layout_pin_rect_center(text="gnd",
                                         layer="metal3",

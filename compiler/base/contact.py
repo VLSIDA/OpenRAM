@@ -245,14 +245,14 @@ else:
     lim1 = None
     
 m1m2 = factory.create(module_type="contact",
-                      layer_stack=metal1_stack,
+                      layer_stack=m1_stack,
                       directions=("H", "V"))
 m2m3 = factory.create(module_type="contact",
-                      layer_stack=metal2_stack,
+                      layer_stack=m2_stack,
                       directions=("V", "H"))
 if "metal4" in layer.keys():
     m3m4 = factory.create(module_type="contact",
-                          layer_stack=metal3_stack,
+                          layer_stack=m3_stack,
                           directions=("H", "V"))
 else:
     m3m4 = None

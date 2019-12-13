@@ -117,9 +117,9 @@ class write_mask_and_array(design.design):
                                 layer="metal3",
                                 offset=beg_en_pin.bc(),
                                 width=end_en_pin.cx() - beg_en_pin.cx() + en_to_edge)
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=self.m1_stack,
                                 offset=vector(end_en_pin.cx() + en_to_edge, end_en_pin.cy()))
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
+            self.add_via_center(layers=self.m2_stack,
                                 offset=vector(end_en_pin.cx() + en_to_edge, end_en_pin.cy()))
         else:
             self.add_layout_pin(text="en",
@@ -134,9 +134,9 @@ class write_mask_and_array(design.design):
 
             # Add via connections to metal3 for AND array's B pin
             en_pin = self.and2_insts[i].get_pin("B")
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=self.m1_stack,
                                 offset=en_pin.center())
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
+            self.add_via_center(layers=self.m2_stack,
                                 offset=en_pin.center())
 
             self.add_power_pin("gnd", vector(supply_pin.width() + i * self.wmask_en_len, 0))

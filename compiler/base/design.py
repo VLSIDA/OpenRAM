@@ -13,7 +13,7 @@ from globals import OPTS
 class design(hierarchy_design):
     """
     This is the same as the hierarchy_design class except it contains
-    some DRC constants and analytical models for other modules to reuse.
+    some DRC/layer constants and analytical models for other modules to reuse.
 
     """
 
@@ -21,16 +21,28 @@ class design(hierarchy_design):
         hierarchy_design.__init__(self, name)
         
         self.setup_drc_constants()
+        self.setup_layer_constants()
         self.setup_multiport_constants()
 
-        from tech import layer
+
+    def setup_layer_constants(self):
+        """ These are some layer constants used in many places in the compiler."""
+        
+        import tech
+        
         self.m1_pitch = max(contact.m1m2.width, contact.m1m2.height) + max(self.m1_space, self.m2_space)
         self.m2_pitch = max(contact.m2m3.width, contact.m2m3.height) + max(self.m2_space, self.m3_space)
-        if "metal4" in layer:
+        if "metal4" in tech.layer:
             self.m3_pitch = max(contact.m3m4.width, contact.m3m4.height) + max(self.m3_space, self.m4_space)
         else:
             self.m3_pitch = self.m2_pitch
 
+        self.poly_stack = tech.poly_stack
+        self.active_stack = tech.active_stack
+        self.m1_stack = tech.m1_stack
+        self.m2_stack = tech.m2_stack
+        self.m3_stack = tech.m3_stack
+        
     def setup_drc_constants(self):
         """ These are some DRC constants used in many places in the compiler."""
         from tech import drc, layer

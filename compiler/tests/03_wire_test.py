@@ -25,7 +25,7 @@ class wire_test(openram_test):
         
         min_space = 2 * (tech.drc["minwidth_poly"] +
                          tech.drc["minwidth_metal1"])
-        layer_stack = ("poly", "contact", "metal1")
+        layer_stack = tech.poly_stack
         old_position_list = [[0, 0],
                              [0, 3 * min_space],
                              [1 * min_space, 3 * min_space],
@@ -42,7 +42,7 @@ class wire_test(openram_test):
 
         min_space = 2 * (tech.drc["minwidth_poly"] +
                          tech.drc["minwidth_metal1"])
-        layer_stack = ("poly", "contact", "metal1")
+        layer_stack = tech.poly_stack
         old_position_list = [[0, 0],
                              [0, 3 * min_space],
                              [1 * min_space, 3 * min_space],
@@ -59,7 +59,7 @@ class wire_test(openram_test):
 
         min_space = 2 * (tech.drc["minwidth_metal2"] +
                          tech.drc["minwidth_metal1"])
-        layer_stack = ("metal1", "via1", "metal2")
+        layer_stack = tech.m1_stack
         position_list = [[0, 0],
                          [0, 3 * min_space],
                          [1 * min_space, 3 * min_space],
@@ -76,7 +76,7 @@ class wire_test(openram_test):
 
         min_space = 2 * (tech.drc["minwidth_metal2"] +
                          tech.drc["minwidth_metal1"])
-        layer_stack = ("metal2", "via1", "metal1")
+        layer_stack = tech.m2_stack[::-1]
         position_list = [[0, 0],
                          [0, 3 * min_space],
                          [1 * min_space, 3 * min_space],
@@ -92,7 +92,7 @@ class wire_test(openram_test):
 
         min_space = 2 * (tech.drc["minwidth_metal2"] +
                          tech.drc["minwidth_metal3"])
-        layer_stack = ("metal2", "via2", "metal3")
+        layer_stack = tech.m2_stack
         position_list = [[0, 0],
                          [0, 3 * min_space],
                          [1 * min_space, 3 * min_space],
@@ -109,7 +109,7 @@ class wire_test(openram_test):
 
         min_space = 2 * (tech.drc["minwidth_metal2"] +
                          tech.drc["minwidth_metal3"])
-        layer_stack = ("metal3", "via2", "metal2")
+        layer_stack = tech.m2_stack[::-1]
         position_list = [[0, 0],
                          [0, 3 * min_space],
                          [1 * min_space, 3 * min_space],

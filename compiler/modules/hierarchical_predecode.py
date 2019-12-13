@@ -184,9 +184,9 @@ class hierarchical_predecode(design.design):
             in_pos = vector(self.input_rails[in_pin].x,y_offset)
             a_pos = vector(self.decode_rails[a_pin].x,y_offset)            
             self.add_path("metal1",[in_pos, a_pos])
-            self.add_via_center(layers = ("metal1", "via1", "metal2"),
+            self.add_via_center(layers = self.m1_stack,
                                 offset=[self.input_rails[in_pin].x, y_offset])
-            self.add_via_center(layers = ("metal1", "via1", "metal2"),
+            self.add_via_center(layers = self.m1_stack,
                                 offset=[self.decode_rails[a_pin].x, y_offset])
 
     def route_output_inverters(self):
@@ -227,7 +227,7 @@ class hierarchical_predecode(design.design):
             right_pos = inv_out_pos + vector(self.inv.width - self.inv.get_pin("Z").lx(),0)
             rail_pos = vector(self.decode_rails[out_pin].x,y_offset)
             self.add_path("metal1", [inv_out_pos, right_pos, vector(right_pos.x, y_offset), rail_pos])
-            self.add_via_center(layers = ("metal1", "via1", "metal2"),
+            self.add_via_center(layers = self.m1_stack,
                                 offset=rail_pos)
 
             
@@ -235,7 +235,7 @@ class hierarchical_predecode(design.design):
             inv_in_pos = self.in_inst[inv_num].get_pin("A").lc()
             in_pos = vector(self.input_rails[in_pin].x,inv_in_pos.y)
             self.add_path("metal1", [in_pos, inv_in_pos])
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=self.m1_stack,
                                 offset=in_pos)
             
 
@@ -256,7 +256,7 @@ class hierarchical_predecode(design.design):
                 pin_pos = self.nand_inst[k].get_pin(gate_pin).lc()
                 rail_pos = vector(self.decode_rails[rail_pin].x, pin_pos.y)
                 self.add_path("metal1", [rail_pos, pin_pos])
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                self.add_via_center(layers=self.m1_stack,
                                     offset=rail_pos)
 
 

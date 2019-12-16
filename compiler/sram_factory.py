@@ -36,18 +36,16 @@ class sram_factory:
         A generic function to create a module with a given module_type.
         The args are passed directly to the module constructor.
         """
-        real_module_type = module_type
-        
         try:
             from tech import tech_modules
             real_module_type = tech_modules[module_type]
         except ImportError:
             # If they didn't define these, then don't use the option types.
             # Primarily for backward compatibility and simplicity of tech files.
-            pass
+            real_module_type = module_type
         except KeyError:
             # If it wasn't a tech  module type, we can ignore that too.
-            pass
+            real_module_type = module_type
         
         if hasattr(OPTS, module_type):
             # Retrieve the name from OPTS if it exists,

@@ -36,12 +36,14 @@ class sram_factory:
         A generic function to create a module with a given module_type.
         The args are passed directly to the module constructor.
         """
-        from tech import tech_modules
-        real_module_type = tech_modules[module_type]
-        # if name!="":
-        #     # This is a special case where the name and type don't match
-        #     # Can't be overridden in the config file
-        #     module_name = name
+        try:
+            from tech import tech_modules
+            real_module_type = tech_modules[module_type]
+        except ImportError:
+            # If they didn't define these, then don't use the option types.
+            # Primarily for backward compatibility and simplicity of tech files.
+            pass
+        
         if hasattr(OPTS, module_type):
             # Retrieve the name from OPTS if it exists,
             # otherwise just use the name
@@ -49,8 +51,10 @@ class sram_factory:
             
         # Either retrieve the already loaded module or load it
         try:
+            # Load a cached version from previous usage
             mod = self.modules[real_module_type]
         except KeyError:
+            # Dynamically load the module
             import importlib
             c = importlib.reload(__import__(real_module_type))
             mod = getattr(c, real_module_type)

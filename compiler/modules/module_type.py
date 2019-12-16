@@ -67,4 +67,8 @@ class ModuleType():
         self.names[b] = c
 
     def __getitem__(self, b):
+        if b not in self.names.keys():
+            raise KeyError
+        
         return self.names[b]
+        

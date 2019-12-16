@@ -42,11 +42,13 @@ def setup_files():
     files = os.listdir(gds_dir)
     nametest = re.compile("\.gds$", re.IGNORECASE)
     gds_files = list(filter(nametest.search, files))
-    import tech
-    if tech.blackbox_bitcell:
-        # Ignore DRC of all bitcells
-        nametest = re.compile("cell", re.IGNORECASE)
-        gds_files = list(filter(lambda v: not nametest.search(v), gds_files))
+    
+    try:
+        from tech import blackbox_cells
+        gds_files = list(set(gds_files) - set(blackbox_cells))
+    except ImportError:
+        pass
+    
     return (gds_dir, gds_files)
 
 

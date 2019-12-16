@@ -7,10 +7,17 @@
 #
 import os
 from design_rules import *
+from module_type import *
 
 """
 File containing the process technology parameters for FreePDK 45nm.
 """
+# This uses the default classes to instantiate module from
+# '$OPENRAM_HOME/compiler/modules'.
+# Using tech_modules['cellname'] you can override each class by providing a custom
+# implementation in '$OPENRAM_TECHDIR/modules/'
+# For example: tech_modules['contact'] = 'contact_freepdk45'
+tech_modules = ModuleType()
 
 #GDS file info
 GDS = {}

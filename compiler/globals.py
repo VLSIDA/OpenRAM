@@ -504,6 +504,11 @@ def import_tech():
     except ImportError:
         debug.error("Could not load tech module.", -1)
 
+    # Add custom modules of the technology to the path, if they exist
+    custom_mod_path = os.path.join(tech_path, "modules/")
+    if os.path.exists(custom_mod_path):
+        sys.path.append(custom_mod_path)
+
 
 def print_time(name, now_time, last_time=None, indentation=2):
     """ Print a statement about the time delta. """

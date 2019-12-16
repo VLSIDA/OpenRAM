@@ -6,6 +6,7 @@
 # All rights reserved.
 #
 from globals import OPTS
+from tech import tech_modules
 
 
 class sram_factory:
@@ -37,6 +38,8 @@ class sram_factory:
         A generic function to create a module with a given module_type.
         The args are passed directly to the module constructor.
         """
+
+        module_type = tech_modules[module_type]
         # if name!="":
         #     # This is a special case where the name and type don't match
         #     # Can't be overridden in the config file

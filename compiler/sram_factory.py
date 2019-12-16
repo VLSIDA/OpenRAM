@@ -6,8 +6,6 @@
 # All rights reserved.
 #
 from globals import OPTS
-from tech import tech_modules
-
 
 class sram_factory:
     """
@@ -38,8 +36,8 @@ class sram_factory:
         A generic function to create a module with a given module_type.
         The args are passed directly to the module constructor.
         """
-
-        module_type = tech_modules[module_type]
+        from tech import tech_modules
+        real_module_type = tech_modules[module_type]
         # if name!="":
         #     # This is a special case where the name and type don't match
         #     # Can't be overridden in the config file
@@ -47,21 +45,21 @@ class sram_factory:
         if hasattr(OPTS, module_type):
             # Retrieve the name from OPTS if it exists,
             # otherwise just use the name
-            module_type = getattr(OPTS, module_type)
+            real_module_type = getattr(OPTS, module_type)
             
         # Either retrieve the already loaded module or load it
         try:
-            mod = self.modules[module_type]
+            mod = self.modules[real_module_type]
         except KeyError:
             import importlib
-            c = importlib.reload(__import__(module_type))
-            mod = getattr(c, module_type)
-            self.modules[module_type] = mod
-            self.module_indices[module_type] = 0
-            self.objects[module_type] = []
+            c = importlib.reload(__import__(real_module_type))
+            mod = getattr(c, real_module_type)
+            self.modules[real_module_type] = mod
+            self.module_indices[real_module_type] = 0
+            self.objects[real_module_type] = []
             
         # Either retreive a previous object or create a new one
-        for obj in self.objects[module_type]:
+        for obj in self.objects[real_module_type]:
             (obj_kwargs, obj_item) = obj
             # Must have the same dictionary exactly (conservative)
             if obj_kwargs == kwargs:
@@ -72,19 +70,19 @@ class sram_factory:
         # spice and gds files can be found.
         if len(kwargs) > 0:
             # Create a unique name and increment the index
-            module_name = "{0}_{1}".format(module_type,
-                                           self.module_indices[module_type])
-            self.module_indices[module_type] += 1
+            module_name = "{0}_{1}".format(real_module_type,
+                                           self.module_indices[real_module_type])
+            self.module_indices[real_module_type] += 1
         else:
-            module_name = module_type
+            module_name = real_module_type
 
-        # type_str = "type={}".format(module_type)
+        # type_str = "type={}".format(real_module_type)
         # name_str = "name={}".format(module_name)
         # kwargs_str = "kwargs={}".format(str(kwargs))
         # import debug
         # debug.info(0, "New module:" + type_str + name_str + kwargs_str)
         obj = mod(name=module_name, **kwargs)
-        self.objects[module_type].append((kwargs, obj))
+        self.objects[real_module_type].append((kwargs, obj))
         return obj
 
     def get_mods(self, module_type):

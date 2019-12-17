@@ -95,8 +95,8 @@ class pinv(pgate.pgate):
                               tx_type="pmos")
         tx_height = nmos.poly_height + pmos.poly_height
         # rotated m1 pitch or poly to active spacing
-        min_channel = max(contact.poly.width + self.m1_space,
-                          contact.poly.width + 2 * self.poly_to_active)
+        min_channel = max(contact.polym1.width + self.m1_space,
+                          contact.polym1.width + 2 * self.poly_to_active)
         
         # This is the extra space needed to ensure DRC rules
         # to the active contacts

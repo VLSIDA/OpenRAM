@@ -84,7 +84,7 @@ class pnor2(pgate.pgate):
         """ Pre-compute some handy layout parameters. """
 
         # metal spacing to allow contacts on any layer
-        self.input_spacing = max(self.poly_space + contact.poly.first_layer_width,
+        self.input_spacing = max(self.poly_space + contact.polym1.first_layer_width,
                                  self.m1_space + contact.m1m2.first_layer_width,
                                  self.m2_space + contact.m2m3.first_layer_width, 
                                  self.m3_space + contact.m2m3.second_layer_width)

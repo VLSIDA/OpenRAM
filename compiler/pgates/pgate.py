@@ -88,14 +88,14 @@ class pgate(design.design):
 
         # Center is completely symmetric.
         if rotate:
-            contact_width = contact.poly.height
-            contact_m1_width = contact.poly.second_layer_height
-            contact_m1_height = contact.poly.second_layer_width
+            contact_width = contact.polym1.height
+            contact_m1_width = contact.polym1.second_layer_height
+            contact_m1_height = contact.polym1.second_layer_width
             directions = ("H", "V")
         else:
-            contact_width = contact.poly.width
-            contact_m1_width = contact.poly.second_layer_width
-            contact_m1_height = contact.poly.second_layer_height
+            contact_width = contact.polym1.width
+            contact_m1_width = contact.polym1.second_layer_width
+            contact_m1_height = contact.polym1.second_layer_height
             directions = ("V", "H")
             
         if position == "center":
@@ -103,7 +103,7 @@ class pgate(design.design):
                              + vector(0.5 * self.poly_width, 0)
         elif position == "farleft":
             contact_offset = left_gate_offset \
-                             - vector(0.5 * contact.poly.width, 0)
+                             - vector(0.5 * contact.polym1.width, 0)
         elif position == "left":
             contact_offset = left_gate_offset \
                              - vector(0.5 * contact_width - 0.5 * self.poly_width, 0)
@@ -131,7 +131,7 @@ class pgate(design.design):
                     + left_gate_offset.scale(0.5, 0)
         self.add_rect_center(layer="poly",
                              offset=mid_point,
-                             height=contact.poly.first_layer_width,
+                             height=contact.polym1.first_layer_width,
                              width=left_gate_offset.x - contact_offset.x)
 
     def extend_wells(self, middle_position):

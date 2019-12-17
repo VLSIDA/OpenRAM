@@ -80,7 +80,7 @@ class ptristate_inv(pgate.pgate):
         # Height is an input parameter, so it is not recomputed.
         
         # Make sure we can put a well above and below
-        self.top_bottom_space = max(contact.well.width, contact.well.height)
+        self.top_bottom_space = max(contact.activem1.width, contact.activem1.height)
 
         
     def add_ptx(self):
@@ -138,8 +138,8 @@ class ptristate_inv(pgate.pgate):
         """
 
         pmos_yoff = self.height - self.pmos.active_height \
-                    - self.top_bottom_space - 0.5 * contact.well.height
-        nmos_yoff = self.top_bottom_space + 0.5 * contact.well.height
+                    - self.top_bottom_space - 0.5 * contact.activem1.height
+        nmos_yoff = self.top_bottom_space + 0.5 * contact.activem1.height
 
         # Tristate transistors
         pmos1_pos = vector(self.pmos.active_offset.x, pmos_yoff)

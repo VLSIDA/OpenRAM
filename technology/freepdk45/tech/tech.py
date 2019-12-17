@@ -152,12 +152,11 @@ drc["poly_to_field_poly"] = 0.075
 # Not a rule
 drc["minarea_poly"] = 0.0
 
-# ACTIVE.2 Minimum spacing of active
-drc["active_to_active"] = 0.08
 # ACTIVE.1 Minimum width of active
+# ACTIVE.2 Minimum spacing of active
 drc.add_layer("active",
               width = 0.09,
-              spacing = 0)
+              spacing = 0.08)
 # ACTIVE.3 Minimum enclosure/spacing of nwell/pwell to active
 drc.add_enclosure("well",
                   layer = "active",

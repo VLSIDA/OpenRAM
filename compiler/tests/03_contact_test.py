@@ -23,7 +23,9 @@ class contact_test(openram_test):
 
         from tech import poly_stack, beol_stacks
 
-        for layer_stack in [poly_stack] + beol_stacks:
+        # Don't do active because of nwell contact rules
+        # Don't do metal3 because of min area rules
+        for layer_stack in [poly_stack] + [beol_stacks[0]]:
             stack_name = ":".join(map(str, layer_stack))
 
             # Check single 1 x 1 contact"

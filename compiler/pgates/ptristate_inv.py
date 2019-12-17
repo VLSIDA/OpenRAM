@@ -73,7 +73,7 @@ class ptristate_inv(pgate.pgate):
 
         # Two PMOS devices and a well contact. Separation between each.
         # Enclosure space on the sides.
-        self.well_width = 2 * self.pmos.active_width + drc("well_enclosure_active") 
+        self.well_width = 2 * self.pmos.active_width + self.well_enclose_active
 
         # Add an extra space because we route the output on the right of the S/D
         self.width = self.well_width + 0.5 * self.m1_space
@@ -101,12 +101,12 @@ class ptristate_inv(pgate.pgate):
     def route_supply_rails(self):
         """ Add vdd/gnd rails to the top and bottom. """
         self.add_layout_pin_rect_center(text="gnd",
-                                        layer="metal1",
+                                        layer="m1",
                                         offset=vector(0.5 * self.width, 0),
                                         width=self.width)
 
         self.add_layout_pin_rect_center(text="vdd",
-                                        layer="metal1",
+                                        layer="m1",
                                         offset=vector(0.5 * self.width, self.height),
                                         width=self.width)
 
@@ -181,7 +181,7 @@ class ptristate_inv(pgate.pgate):
         pmos_drain_pos = pmos_drain_pin.ur()
 
         self.add_layout_pin(text="out",
-                            layer="metal1",
+                            layer="m1",
                             offset=nmos_drain_pos,
                             height=pmos_drain_pos.y - nmos_drain_pos.y)
 

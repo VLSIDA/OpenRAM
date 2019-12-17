@@ -39,17 +39,17 @@ GDS["zoom"] = 0.05
 # Interconnect stacks
 ###################################################
 
-poly_stack = ("poly", "contact", "metal1")
-active_stack = ("active", "contact", "metal1")
-m1_stack = ("metal1", "via1", "metal2")
-m2_stack = ("metal2", "via2", "metal3")
-m3_stack = ("metal3", "via3", "metal4")
+poly_stack = ("poly", "contact", "m1")
+active_stack = ("active", "contact", "m1")
+m1_stack = ("m1", "via1", "m2")
+m2_stack = ("m2", "via2", "m3")
+m3_stack = ("m3", "via3", "m4")
 
-# The FEOL stacks get us up to metal1
+# The FEOL stacks get us up to m1
 feol_stacks = [poly_stack,
                active_stack]
 
-# The BEOL stacks are metal1 and up
+# The BEOL stacks are m1 and up
 beol_stacks = [m1_stack,
                m2_stack,
                m3_stack]
@@ -73,25 +73,25 @@ layer["vth"]     = (7, 0)
 layer["thkox"]   = (8, 0)
 layer["poly"]    = (9, 0)
 layer["contact"] = (10, 0)
-layer["metal1"]  = (11, 0)
+layer["m1"]  = (11, 0)
 layer["via1"]    = (12, 0)
-layer["metal2"]  = (13, 0)
+layer["m2"]  = (13, 0)
 layer["via2"]    = (14, 0)
-layer["metal3"]  = (15, 0)
+layer["m3"]  = (15, 0)
 layer["via3"]    = (16, 0)
-layer["metal4"]  = (17, 0)
+layer["m4"]  = (17, 0)
 layer["via4"]    = (18, 0)
-layer["metal5"]  = (19, 0)
+layer["m5"]  = (19, 0)
 layer["via5"]    = (20, 0)
-layer["metal6"]  = (21, 0)
+layer["m6"]  = (21, 0)
 layer["via6"]    = (22, 0)
-layer["metal7"]  = (23, 0)
+layer["m7"]  = (23, 0)
 layer["via7"]    = (24, 0)
-layer["metal8"]  = (25, 0)
+layer["m8"]  = (25, 0)
 layer["via8"]    = (26, 0)
-layer["metal9"]  = (27, 0)
+layer["m9"]  = (27, 0)
 layer["via9"]    = (28, 0)
-layer["metal10"] = (29, 0)
+layer["m10"] = (29, 0)
 layer["text"]    = (239, 0)
 layer["boundary"]= (239, 0)
 
@@ -144,7 +144,7 @@ drc["poly_extend_active"] = 0.055
 # Not a rule
 drc["poly_to_contact"] = 0.075
 # POLY.4 Minimum enclosure of active around gate
-drc["active_enclosure_gate"] = 0.07
+drc["active_enclose_gate"] = 0.07
 # POLY.5 Minimum spacing of field poly to active
 drc["poly_to_active"] = 0.05
 # POLY.6 Minimum Minimum spacing of field poly
@@ -153,7 +153,7 @@ drc["poly_to_field_poly"] = 0.075
 drc["minarea_poly"] = 0.0
 
 # ACTIVE.2 Minimum spacing of active
-drc["active_to_body_active"] = 0.08
+drc["active_to_active"] = 0.08
 # ACTIVE.1 Minimum width of active
 drc.add_layer("active",
               width = 0.09,
@@ -212,17 +212,17 @@ drc["contact_to_poly"] = 0.090
 
 # METAL1.1 Minimum width of metal1
 # METAL1.2 Minimum spacing of metal1
-drc.add_layer("metal1",
+drc.add_layer("m1",
               width = 0.065,
               spacing = 0.065)
 
 # METAL1.3 Minimum enclosure around contact on two opposite sides
-drc.add_enclosure("metal1",
+drc.add_enclosure("m1",
                   layer = "contact",
                   enclosure = 0,
                   extension = 0.035)
 # METAL1.4 inimum enclosure around via1 on two opposite sides
-drc.add_enclosure("metal1",
+drc.add_enclosure("m1",
                   layer = "via1",
                   enclosure = 0,
                   extension = 0.035)
@@ -236,18 +236,18 @@ drc.add_layer("via1",
 
 # METALINT.1 Minimum width of intermediate metal
 # METALINT.2 Minimum spacing of intermediate metal
-drc.add_layer("metal2",
+drc.add_layer("m2",
               width = 0.07,
               spacing = 0.07)
 
 # METALINT.3 Minimum enclosure around via1 on two opposite sides
-drc.add_enclosure("metal2",
+drc.add_enclosure("m2",
                   layer = "via1",
                   enclosure = 0,
                   extension = 0.035)
 
 # METALINT.4 Minimum enclosure around via[2-3] on two opposite sides
-drc.add_enclosure("metal2",
+drc.add_enclosure("m2",
                   layer = "via2",
                   enclosure = 0,
                   extension = 0.035)
@@ -260,12 +260,12 @@ drc.add_layer("via2",
 
 # METALINT.1 Minimum width of intermediate metal
 # METALINT.2 Minimum spacing of intermediate metal
-# Minimum spacing of metal3 wider than 0.09 & longer than 0.3 = 0.09
-# Minimum spacing of metal3 wider than 0.27 & longer than 0.9 = 0.27
-# Minimum spacing of metal3 wider than 0.5 & longer than 1.8 = 0.5
-# Minimum spacing of metal3 wider than 0.9 & longer than 2.7 = 0.9
-# Minimum spacing of metal3 wider than 1.5 & longer than 4.0 = 1.5
-drc.add_layer("metal3",
+# Minimum spacing of m3 wider than 0.09 & longer than 0.3 = 0.09
+# Minimum spacing of m3 wider than 0.27 & longer than 0.9 = 0.27
+# Minimum spacing of m3 wider than 0.5 & longer than 1.8 = 0.5
+# Minimum spacing of m3 wider than 0.9 & longer than 2.7 = 0.9
+# Minimum spacing of m3 wider than 1.5 & longer than 4.0 = 1.5
+drc.add_layer("m3",
               width = 0.07,
               spacing = drc_lut({(0.00, 0.0) : 0.07,
                                  (0.09, 0.3) : 0.09,
@@ -274,13 +274,13 @@ drc.add_layer("metal3",
                                  (0.90, 2.7) : 0.9,
                                  (1.50, 4.0) : 1.5}))
 # METALINT.3 Minimum enclosure around via1 on two opposite sides
-drc.add_enclosure("metal3",
+drc.add_enclosure("m3",
                   layer = "via2",
                   enclosure = 0,
                   extension = 0.035)
 
 # METALINT.4 Minimum enclosure around via[2-3] on two opposite sides
-drc.add_enclosure("metal3",
+drc.add_enclosure("m3",
                   layer = "via3",
                   enclosure = 0,
                   extension = 0.035)
@@ -293,11 +293,11 @@ drc.add_layer("via3",
 
 # METALSMG.1 Minimum width of semi-global metal
 # METALSMG.2 Minimum spacing of semi-global metal
-# Minimum spacing of metal4 wider than 0.27 & longer than 0.9 = 0.27
-# Minimum spacing of metal4 wider than 0.5 & longer than 1.8 = 0.5
-# Minimum spacing of metal4 wider than 0.9 & longer than 2.7 = 0.9
-# Minimum spacing of metal4 wider than 1.5 & longer than 4.0 = 1.5
-drc.add_layer("metal4",
+# Minimum spacing of m4 wider than 0.27 & longer than 0.9 = 0.27
+# Minimum spacing of m4 wider than 0.5 & longer than 1.8 = 0.5
+# Minimum spacing of m4 wider than 0.9 & longer than 2.7 = 0.9
+# Minimum spacing of m4 wider than 1.5 & longer than 4.0 = 1.5
+drc.add_layer("m4",
               width = 0.14,
               spacing = drc_lut({(0.00, 0.0) : 0.14,
                                  (0.27, 0.9) : 0.27,
@@ -305,7 +305,7 @@ drc.add_layer("metal4",
                                  (0.90, 2.7) : 0.9,
                                  (1.50, 4.0) : 1.5}))
 # METALSMG.3 Minimum enclosure around via[3-6] on two opposite sides
-drc.add_enclosure("metal4",
+drc.add_enclosure("m4",
                   layer = "via3",
                   enclosure = 0.0025)
 

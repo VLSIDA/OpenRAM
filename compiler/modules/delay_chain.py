@@ -132,11 +132,11 @@ class delay_chain(design.design):
         pin1_pos = pin1.center()
         pin2_pos = pin2.center()
         if pin1_pos.y == pin2_pos.y:
-            self.add_path("metal2", [pin1_pos, pin2_pos])
+            self.add_path("m2", [pin1_pos, pin2_pos])
         else:
             mid_point = vector(pin2_pos.x, 0.5*(pin1_pos.y+pin2_pos.y))
             # Written this way to guarantee it goes right first if we are switching rows
-            self.add_path("metal2", [pin1_pos, vector(pin1_pos.x,mid_point.y), mid_point, vector(mid_point.x,pin2_pos.y), pin2_pos])
+            self.add_path("m2", [pin1_pos, vector(pin1_pos.x,mid_point.y), mid_point, vector(mid_point.x,pin2_pos.y), pin2_pos])
     
     def route_inverters(self):
         """ Add metal routing for each of the fanout stages """
@@ -146,22 +146,22 @@ class delay_chain(design.design):
             for load in self.load_inst_map[inv]:
                 # Drop a via on each A pin
                 a_pin = load.get_pin("A")      
-                self.add_via_center(layers=("metal1","via1","metal2"),
+                self.add_via_center(layers=self.m1_stack,
                                     offset=a_pin.center())
-                self.add_via_center(layers=("metal2","via2","metal3"),
+                self.add_via_center(layers=self.m2_stack,
                                     offset=a_pin.center())
 
             # Route an M3 horizontal wire to the furthest
             z_pin = inv.get_pin("Z")
             a_pin = inv.get_pin("A")
             a_max = self.rightest_load_inst[inv].get_pin("A")
-            self.add_via_center(layers=("metal1","via1","metal2"),
+            self.add_via_center(layers=self.m1_stack,
                                 offset=a_pin.center())
-            self.add_via_center(layers=("metal1","via1","metal2"),
+            self.add_via_center(layers=self.m1_stack,
                                 offset=z_pin.center())
-            self.add_via_center(layers=("metal2","via2","metal3"),
+            self.add_via_center(layers=self.m2_stack,
                                 offset=z_pin.center())
-            self.add_path("metal3",[z_pin.center(), a_max.center()])
+            self.add_path("m3",[z_pin.center(), a_max.center()])
 
             
             # Route Z to the A of the next stage
@@ -172,7 +172,7 @@ class delay_chain(design.design):
                 y_mid = (z_pin.cy() + next_a_pin.cy())/2
                 mid1_point = vector(z_pin.cx(), y_mid)
                 mid2_point = vector(next_a_pin.cx(), y_mid)
-                self.add_path("metal2",[z_pin.center(), mid1_point, mid2_point, next_a_pin.center()])  
+                self.add_path("m2",[z_pin.center(), mid1_point, mid2_point, next_a_pin.center()])  
             
                 
     def add_layout_pins(self):
@@ -205,10 +205,10 @@ class delay_chain(design.design):
 
         # input is A pin of first inverter
         a_pin = self.driver_inst_list[0].get_pin("A")
-        self.add_via_center(layers=("metal1","via1","metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=a_pin.center())
         self.add_layout_pin(text="in",
-                            layer="metal2",
+                            layer="m2",
                             offset=a_pin.ll().scale(1,0),
                             height=a_pin.cy())
         
@@ -216,12 +216,12 @@ class delay_chain(design.design):
         # output is A pin of last load inverter
         last_driver_inst = self.driver_inst_list[-1]
         a_pin = self.rightest_load_inst[last_driver_inst].get_pin("A")
-        self.add_via_center(layers=("metal1","via1","metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=a_pin.center())
         mid_point = vector(a_pin.cx()+3*self.m2_width,a_pin.cy())
-        self.add_path("metal2",[a_pin.center(), mid_point, mid_point.scale(1,0)])
+        self.add_path("m2",[a_pin.center(), mid_point, mid_point.scale(1,0)])
         self.add_layout_pin_segment_center(text="out",
-                                           layer="metal2",
+                                           layer="m2",
                                            start=mid_point,
                                            end=mid_point.scale(1,0))
 

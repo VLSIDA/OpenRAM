@@ -59,7 +59,7 @@ class pgate(design.design):
             debug.error("Invalid supply name.", -1)
         
         if abs(height) > 0:
-            self.add_rect(layer="metal1",
+            self.add_rect(layer="m1",
                           offset=source_pin.ll(),
                           height=height,
                           width=source_pin.width())
@@ -120,7 +120,7 @@ class pgate(design.design):
                             directions=directions)
 
         self.add_layout_pin_rect_center(text=name,
-                                        layer="metal1",
+                                        layer="m1",
                                         offset=contact_offset,
                                         width=contact_m1_width,
                                         height=contact_m1_height)
@@ -172,7 +172,7 @@ class pgate(design.design):
         
         # To the right a spacing away from the pmos right active edge
         contact_xoffset = pmos_pos.x + pmos.active_width \
-                          + drc("active_to_body_active")
+                          + self.active_space
         
         # Must be at least an well enclosure of active down
         # from the top of the well
@@ -189,7 +189,7 @@ class pgate(design.design):
                                                  directions=("H", "V"),
                                                  implant_type="n",
                                                  well_type="n")
-        self.add_rect_center(layer="metal1",
+        self.add_rect_center(layer="m1",
                              offset=contact_offset + vector(0, 0.5 * (self.height-contact_offset.y)),
                              width=self.nwell_contact.mod.second_layer_width,
                              height=self.height - contact_offset.y)
@@ -227,7 +227,7 @@ class pgate(design.design):
         
         # To the right a spacing away from the nmos right active edge
         contact_xoffset = nmos_pos.x + nmos.active_width \
-                          + drc("active_to_body_active")
+                          + self.active_space
         # Must be at least an well enclosure of active up
         # from the bottom of the well
         contact_yoffset = max(nmos_pos.y,
@@ -243,7 +243,7 @@ class pgate(design.design):
                                                 directions=("H", "V"),
                                                 implant_type="p",
                                                 well_type="p")
-        self.add_rect_center(layer="metal1",
+        self.add_rect_center(layer="m1",
                              offset=contact_offset.scale(1,0.5),
                              width=self.pwell_contact.mod.second_layer_width,
                              height=contact_offset.y)

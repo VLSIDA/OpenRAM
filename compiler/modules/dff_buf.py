@@ -112,12 +112,12 @@ class dff_buf(design.design):
         mid_x_offset = 0.5*(a1_pin.cx() + q_pin.cx())
         mid1 = vector(mid_x_offset, q_pin.cy())
         mid2 = vector(mid_x_offset, a1_pin.cy())
-        self.add_path("metal3", [q_pin.center(), mid1, mid2, a1_pin.center()])
-        self.add_via_center(layers=("metal2","via2","metal3"),
+        self.add_path("m3", [q_pin.center(), mid1, mid2, a1_pin.center()])
+        self.add_via_center(layers=self.m2_stack,
                             offset=q_pin.center())
-        self.add_via_center(layers=("metal2","via2","metal3"),
+        self.add_via_center(layers=self.m2_stack,
                             offset=a1_pin.center())
-        self.add_via_center(layers=("metal1","via1","metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=a1_pin.center())
 
         # Route inv1 z to inv2 a
@@ -126,14 +126,14 @@ class dff_buf(design.design):
         mid_x_offset = 0.5*(z1_pin.cx() + a2_pin.cx())
         self.mid_qb_pos = vector(mid_x_offset, z1_pin.cy())
         mid2 = vector(mid_x_offset, a2_pin.cy())
-        self.add_path("metal1", [z1_pin.center(), self.mid_qb_pos, mid2, a2_pin.center()])
+        self.add_path("m1", [z1_pin.center(), self.mid_qb_pos, mid2, a2_pin.center()])
         
     def add_layout_pins(self):
 
         # Continous vdd rail along with label.
         vdd_pin=self.dff_inst.get_pin("vdd")
         self.add_layout_pin(text="vdd",
-                            layer="metal1",
+                            layer="m1",
                             offset=vdd_pin.ll(),
                             width=self.width,
                             height=vdd_pin.height())
@@ -141,7 +141,7 @@ class dff_buf(design.design):
         # Continous gnd rail along with label.
         gnd_pin=self.dff_inst.get_pin("gnd")
         self.add_layout_pin(text="gnd",
-                            layer="metal1",
+                            layer="m1",
                             offset=gnd_pin.ll(),
                             width=self.width,
                             height=vdd_pin.height())
@@ -164,18 +164,18 @@ class dff_buf(design.design):
         mid_pos = dout_pin.center() + vector(self.m1_pitch,0)
         q_pos = mid_pos - vector(0,self.m2_pitch)
         self.add_layout_pin_rect_center(text="Q",
-                                        layer="metal2",
+                                        layer="m2",
                                         offset=q_pos)
-        self.add_path("metal1", [dout_pin.center(), mid_pos, q_pos])
-        self.add_via_center(layers=("metal1","via1","metal2"),
+        self.add_path("m1", [dout_pin.center(), mid_pos, q_pos])
+        self.add_via_center(layers=self.m1_stack,
                             offset=q_pos)
 
         qb_pos = self.mid_qb_pos + vector(0,self.m2_pitch)
         self.add_layout_pin_rect_center(text="Qb",
-                                        layer="metal2",
+                                        layer="m2",
                                         offset=qb_pos)
-        self.add_path("metal1", [self.mid_qb_pos, qb_pos])
-        self.add_via_center(layers=("metal1","via1","metal2"),
+        self.add_path("m1", [self.mid_qb_pos, qb_pos])
+        self.add_via_center(layers=self.m1_stack,
                             offset=qb_pos)
          
     def get_clk_cin(self):

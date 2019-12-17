@@ -122,7 +122,7 @@ class dummy_array(design.design):
             for cell_column in column_list:
                 bl_pin = self.cell_inst[0,col].get_pin(cell_column)
                 self.add_layout_pin(text=cell_column+"_{0}".format(col),
-                                    layer="metal2",
+                                    layer="m2",
                                     offset=bl_pin.ll(),
                                     width=bl_pin.width(),
                                     height=self.height)
@@ -131,7 +131,7 @@ class dummy_array(design.design):
             for cell_row in row_list:
                 wl_pin = self.cell_inst[row,0].get_pin(cell_row)
                 self.add_layout_pin(text=cell_row+"_{0}".format(row),
-                                    layer="metal1",
+                                    layer="m1",
                                     offset=wl_pin.ll(),
                                     width=self.width,
                                     height=wl_pin.height())

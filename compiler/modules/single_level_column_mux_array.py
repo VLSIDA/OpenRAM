@@ -113,13 +113,13 @@ class single_level_column_mux_array(design.design):
             mux_inst = self.mux_inst[col_num]
             offset = mux_inst.get_pin("bl").ll()
             self.add_layout_pin(text="bl_{}".format(col_num),
-                                layer="metal2",
+                                layer="m2",
                                 offset=offset,
                                 height=self.height-offset.y)
 
             offset = mux_inst.get_pin("br").ll()
             self.add_layout_pin(text="br_{}".format(col_num),
-                                layer="metal2",
+                                layer="m2",
                                 offset=offset,
                                 height=self.height-offset.y)
 
@@ -137,7 +137,7 @@ class single_level_column_mux_array(design.design):
         for j in range(self.words_per_row):
             offset = vector(0, self.route_height + (j-self.words_per_row)*self.m1_pitch)
             self.add_layout_pin(text="sel_{}".format(j),
-                                layer="metal1",
+                                layer="m1",
                                 offset=offset,
                                 width=self.mux.width * self.columns)
 
@@ -155,7 +155,7 @@ class single_level_column_mux_array(design.design):
             # use the y offset from the sel pin and the x offset from the gate
             offset = vector(gate_offset.x,self.get_pin("sel_{}".format(sel_index)).cy())
             # Add the poly contact with a shift to account for the rotation
-            self.add_via_center(layers=("metal1", "contact", "poly"),
+            self.add_via_center(layers=("m1", "contact", "poly"),
                                 offset=offset)
             self.add_path("poly", [offset, gate_offset])
 
@@ -176,16 +176,16 @@ class single_level_column_mux_array(design.design):
                 # These will be located below the select lines. Yes, these are M2 width
                 # to ensure vias are enclosed and M1 min width rules.
                 width = self.m2_width + self.mux.width * (self.words_per_row - 1)
-                self.add_path("metal1", [bl_out_offset, bl_out_offset+vector(width,0)])
-                self.add_path("metal1", [br_out_offset, br_out_offset+vector(width,0)])
+                self.add_path("m1", [bl_out_offset, bl_out_offset+vector(width,0)])
+                self.add_path("m1", [br_out_offset, br_out_offset+vector(width,0)])
 
                 # Extend the bitline output rails and gnd downward on the first bit of each n-way mux
                 self.add_layout_pin_segment_center(text="bl_out_{}".format(int(j/self.words_per_row)),
-                                                   layer="metal2",
+                                                   layer="m2",
                                                    start=bl_out_offset,
                                                    end=bl_out_offset_end)
                 self.add_layout_pin_segment_center(text="br_out_{}".format(int(j/self.words_per_row)),
-                                                   layer="metal2",
+                                                   layer="m2",
                                                    start=br_out_offset,
                                                    end=br_out_offset_end)
                                                    
@@ -200,8 +200,8 @@ class single_level_column_mux_array(design.design):
 
             else:
                 
-                self.add_path("metal2", [ bl_out_offset, bl_out_offset_end])
-                self.add_path("metal2", [ br_out_offset, br_out_offset_end])
+                self.add_path("m2", [ bl_out_offset, bl_out_offset_end])
+                self.add_path("m2", [ br_out_offset, br_out_offset_end])
                                           
                 # This via is on the right of the wire
                 self.add_via_center(layers=self.m1_stack,

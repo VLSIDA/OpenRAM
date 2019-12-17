@@ -102,13 +102,13 @@ class sense_amp_array(design.design):
             self.add_via_center(layers=self.m2_stack,
                                 offset=gnd_pos)
             self.add_layout_pin_rect_center(text="gnd",
-                                            layer="metal3",
+                                            layer="m3",
                                             offset=gnd_pos)
             vdd_pos = inst.get_pin("vdd").center()
             self.add_via_center(layers=self.m2_stack,
                                 offset=vdd_pos)
             self.add_layout_pin_rect_center(text="vdd",
-                                            layer="metal3",
+                                            layer="m3",
                                             offset=vdd_pos)
 
             bl_pin = inst.get_pin("bl")            
@@ -116,18 +116,18 @@ class sense_amp_array(design.design):
             dout_pin = inst.get_pin("dout")
             
             self.add_layout_pin(text="bl_{0}".format(i),
-                                layer="metal2",
+                                layer="m2",
                                 offset=bl_pin.ll(),
                                 width=bl_pin.width(),
                                 height=bl_pin.height())
             self.add_layout_pin(text="br_{0}".format(i),
-                                layer="metal2",
+                                layer="m2",
                                 offset=br_pin.ll(),
                                 width=br_pin.width(),
                                 height=br_pin.height())
                            
             self.add_layout_pin(text="data_{0}".format(i),
-                                layer="metal2",
+                                layer="m2",
                                 offset=dout_pin.ll(),
                                 width=dout_pin.width(),
                                 height=dout_pin.height())
@@ -137,10 +137,10 @@ class sense_amp_array(design.design):
         # add sclk rail across entire array
         sclk_offset = self.amp.get_pin("en").ll().scale(0,1)
         self.add_layout_pin(text="en",
-                      layer="metal1",
+                      layer="m1",
                       offset=sclk_offset,
                       width=self.width,
-                      height=drc("minwidth_metal1"))
+                      height=drc("minwidth_m1"))
 
     def input_load(self):
         return self.amp.input_load()

@@ -99,8 +99,8 @@ class pnand2(pgate.pgate):
         # Two PMOS devices and a well contact. Separation between each.
         # Enclosure space on the sides.
         self.well_width = 2 * self.pmos.active_width + contact.active.width \
-                          + 2 * drc("active_to_body_active") \
-                          + 2 * drc("well_enclosure_active")
+                          + 2 * self.active_space \
+                          + 2 * self.well_enclose_active
 
         self.width = self.well_width
         # Height is an input parameter, so it is not recomputed.
@@ -110,17 +110,17 @@ class pnand2(pgate.pgate):
         extra_contact_space = max(-self.nmos.get_pin("D").by(), 0)
         # This is a poly-to-poly of a flipped cell
         self.top_bottom_space = max(0.5 * self.m1_width + self.m1_space + extra_contact_space, 
-                                    drc("poly_extend_active"), self.poly_space)
+                                    self.poly_extend_active, self.poly_space)
         
     def route_supply_rails(self):
         """ Add vdd/gnd rails to the top and bottom. """
         self.add_layout_pin_rect_center(text="gnd",
-                                        layer="metal1",
+                                        layer="m1",
                                         offset=vector(0.5*self.width, 0),
                                         width=self.width)
 
         self.add_layout_pin_rect_center(text="vdd",
-                                        layer="metal1",
+                                        layer="m1",
                                         offset=vector(0.5 * self.width, self.height),
                                         width=self.width)
 
@@ -235,13 +235,13 @@ class pnand2(pgate.pgate):
                             offset=out_offset)
         
         # PMOS1 to mid-drain to NMOS2 drain
-        self.add_path("metal2",
+        self.add_path("m2",
                       [top_pin_offset, mid1_offset, out_offset,
                        mid2_offset, bottom_pin_offset])
 
         # This extends the output to the edge of the cell
         self.add_layout_pin_rect_center(text="Z",
-                                        layer="metal1",
+                                        layer="m1",
                                         offset=out_offset,
                                         width=contact.m1m2.first_layer_height,
                                         height=contact.m1m2.first_layer_width)

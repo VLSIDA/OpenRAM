@@ -73,7 +73,7 @@ class hierarchical_predecode(design.design):
         """ Create all of the rails for the inputs and vdd/gnd/inputs_bar/inputs """
         input_names = ["in_{}".format(x) for x in range(self.number_of_inputs)]
         offset = vector(0.5*self.m2_width,2*self.m1_width)
-        self.input_rails = self.create_vertical_pin_bus(layer="metal2",
+        self.input_rails = self.create_vertical_pin_bus(layer="m2",
                                                         pitch=self.m2_pitch,
                                                         offset=offset,
                                                         names=input_names,
@@ -83,7 +83,7 @@ class hierarchical_predecode(design.design):
         non_invert_names = ["A_{}".format(x) for x in range(self.number_of_inputs)]
         decode_names = invert_names + non_invert_names
         offset = vector(self.x_off_inv_1 + self.inv.width + 2*self.m2_pitch, 2*self.m1_width)
-        self.decode_rails = self.create_vertical_bus(layer="metal2",
+        self.decode_rails = self.create_vertical_bus(layer="m2",
                                                      pitch=self.m2_pitch,
                                                      offset=offset,
                                                      names=decode_names,
@@ -183,7 +183,7 @@ class hierarchical_predecode(design.design):
             a_pin = "A_{}".format(num)
             in_pos = vector(self.input_rails[in_pin].x,y_offset)
             a_pos = vector(self.decode_rails[a_pin].x,y_offset)            
-            self.add_path("metal1",[in_pos, a_pos])
+            self.add_path("m1",[in_pos, a_pos])
             self.add_via_center(layers = self.m1_stack,
                                 offset=[self.input_rails[in_pin].x, y_offset])
             self.add_via_center(layers = self.m1_stack,
@@ -201,11 +201,11 @@ class hierarchical_predecode(design.design):
             # ensure the bend is in the middle 
             mid1_pos = vector(0.5*(zr_pos.x+al_pos.x), zr_pos.y)
             mid2_pos = vector(0.5*(zr_pos.x+al_pos.x), al_pos.y)
-            self.add_path("metal1", [zr_pos, mid1_pos, mid2_pos, al_pos])
+            self.add_path("m1", [zr_pos, mid1_pos, mid2_pos, al_pos])
 
             z_pin = self.inv_inst[num].get_pin("Z")
             self.add_layout_pin(text="out_{}".format(num),
-                                layer="metal1",
+                                layer="m1",
                                 offset=z_pin.ll(),
                                 height=z_pin.height(),
                                 width=z_pin.width())
@@ -226,7 +226,7 @@ class hierarchical_predecode(design.design):
             inv_out_pos = self.in_inst[inv_num].get_pin("Z").rc()
             right_pos = inv_out_pos + vector(self.inv.width - self.inv.get_pin("Z").lx(),0)
             rail_pos = vector(self.decode_rails[out_pin].x,y_offset)
-            self.add_path("metal1", [inv_out_pos, right_pos, vector(right_pos.x, y_offset), rail_pos])
+            self.add_path("m1", [inv_out_pos, right_pos, vector(right_pos.x, y_offset), rail_pos])
             self.add_via_center(layers = self.m1_stack,
                                 offset=rail_pos)
 
@@ -234,7 +234,7 @@ class hierarchical_predecode(design.design):
             #route input
             inv_in_pos = self.in_inst[inv_num].get_pin("A").lc()
             in_pos = vector(self.input_rails[in_pin].x,inv_in_pos.y)
-            self.add_path("metal1", [in_pos, inv_in_pos])
+            self.add_path("m1", [in_pos, inv_in_pos])
             self.add_via_center(layers=self.m1_stack,
                                 offset=in_pos)
             
@@ -255,7 +255,7 @@ class hierarchical_predecode(design.design):
             for rail_pin,gate_pin in zip(index_lst,gate_lst):
                 pin_pos = self.nand_inst[k].get_pin(gate_pin).lc()
                 rail_pos = vector(self.decode_rails[rail_pin].x, pin_pos.y)
-                self.add_path("metal1", [rail_pos, pin_pos])
+                self.add_path("m1", [rail_pos, pin_pos])
                 self.add_via_center(layers=self.m1_stack,
                                     offset=rail_pos)
 
@@ -275,7 +275,7 @@ class hierarchical_predecode(design.design):
             for n in ["vdd", "gnd"]:
                 nand_pin = self.nand_inst[num].get_pin(n)
                 supply_offset = nand_pin.ll().scale(0,1)
-                self.add_rect(layer="metal1",
+                self.add_rect(layer="m1",
                               offset=supply_offset,
                               width=self.inv_inst[num].rx())
 

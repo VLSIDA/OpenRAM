@@ -114,7 +114,7 @@ class write_mask_and_array(design.design):
             # Extend metal3 to edge of AND array in multiport
             en_to_edge = self.and2.width - beg_en_pin.cx()
             self.add_layout_pin(text="en",
-                                layer="metal3",
+                                layer="m3",
                                 offset=beg_en_pin.bc(),
                                 width=end_en_pin.cx() - beg_en_pin.cx() + en_to_edge)
             self.add_via_center(layers=self.m1_stack,
@@ -123,7 +123,7 @@ class write_mask_and_array(design.design):
                                 offset=vector(end_en_pin.cx() + en_to_edge, end_en_pin.cy()))
         else:
             self.add_layout_pin(text="en",
-                                layer="metal3",
+                                layer="m3",
                                 offset=beg_en_pin.bc(),
                                 width=end_en_pin.cx() - beg_en_pin.cx())
 
@@ -146,7 +146,7 @@ class write_mask_and_array(design.design):
                 for n in ["gnd","vdd"]:
                     pin = self.and2_insts[i].get_pin(n)
                     next_pin = self.and2_insts[i+1].get_pin(n)
-                    self.add_path("metal1",[pin.center(),next_pin.center()])
+                    self.add_path("m1",[pin.center(),next_pin.center()])
 
     def get_cin(self):
         """Get the relative capacitance of all the input connections in the bank"""

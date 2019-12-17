@@ -212,7 +212,7 @@ class port_data(design.design):
 
 
         # A space for wells or jogging m2 between modules
-        self.m2_gap = max(2*drc("pwell_to_nwell") + drc("well_enclosure_active"),
+        self.m2_gap = max(2*drc("pwell_to_nwell") + drc("well_enclose_active"),
                           3*self.m2_pitch)
 
 
@@ -479,7 +479,7 @@ class port_data(design.design):
                                 offset=end_pos)
 
             # Route between write mask AND array and write driver array
-            self.add_wire(("metal1","via1","metal2"), [beg_pos, middle_pos, end_pos])
+            self.add_wire(self.m1_stack, [beg_pos, middle_pos, end_pos])
 
 
     def route_column_mux_to_precharge_array(self, port):
@@ -655,9 +655,9 @@ class port_data(design.design):
             top_br = top_inst.get_pin(top_br_name.format(col+top_start_bit)).bc()
 
             yoffset = 0.5*(top_bl.y+bottom_bl.y)
-            self.add_path("metal2",[bottom_bl, vector(bottom_bl.x,yoffset),
+            self.add_path("m2",[bottom_bl, vector(bottom_bl.x,yoffset),
                                     vector(top_bl.x,yoffset), top_bl])
-            self.add_path("metal2",[bottom_br, vector(bottom_br.x,yoffset),
+            self.add_path("m2",[bottom_br, vector(bottom_br.x,yoffset),
                                     vector(top_br.x,yoffset), top_br])
         
     def graph_exclude_precharge(self):

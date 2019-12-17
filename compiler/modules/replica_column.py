@@ -116,7 +116,7 @@ class replica_column(design.design):
         for bl_name in self.cell.get_all_bitline_names():
             bl_pin = self.cell_inst[0].get_pin(bl_name)
             self.add_layout_pin(text=bl_name,
-                                layer="metal2",
+                                layer="m2",
                                 offset=bl_pin.ll(),
                                 width=bl_pin.width(),
                                 height=self.height)
@@ -125,7 +125,7 @@ class replica_column(design.design):
             for wl_name in self.cell.get_all_wl_names():
                 wl_pin = self.cell_inst[row].get_pin(wl_name)
                 self.add_layout_pin(text="{0}_{1}".format(wl_name,row),
-                                    layer="metal1",
+                                    layer="m1",
                                     offset=wl_pin.ll().scale(0,1),
                                     width=self.width,
                                     height=wl_pin.height())

@@ -131,26 +131,26 @@ class pwrite_driver(design.design):
         bl_xoffset = left_x
         bl_out=vector(bl_xoffset, self.height)
         bl_in=self.bl_inst.get_pin("out").center()
-        self.add_via_center(layers=("metal1","via1","metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=bl_in)
 
         bl_mid = vector(bl_out.x,bl_in.y)
-        self.add_path("metal2", [bl_in, bl_mid, bl_out])
+        self.add_path("m2", [bl_in, bl_mid, bl_out])
         
         self.add_layout_pin_rect_center(text="bl",
-                                        layer="metal2",
+                                        layer="m2",
                                         offset=bl_out)
         
         br_xoffset = right_x
         br_out=vector(br_xoffset, self.height)
         br_in=self.br_inst.get_pin("out").center()
-        self.add_via_center(layers=("metal1","via1","metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=br_in)
 
         br_mid = vector(br_out.x,br_in.y)
-        self.add_path("metal2", [br_in, br_mid, br_out])
+        self.add_path("m2", [br_in, br_mid, br_out])
         self.add_layout_pin_rect_center(text="br",
-                                        layer="metal2",
+                                        layer="m2",
                                         offset=br_out)
         
         #br_xoffset = b.get_pin("br".cx()
@@ -162,19 +162,19 @@ class pwrite_driver(design.design):
         track_xoff = self.get_m2_track(1)
         
         din_loc = self.din_inst.get_pin("A").center()
-        self.add_via_stack("metal1", "metal2", din_loc)
+        self.add_via_stack("m1", "m2", din_loc)
         din_track = vector(track_xoff,din_loc.y)
         
         br_in = self.br_inst.get_pin("in").center()
-        self.add_via_stack("metal1", "metal2", br_in)
+        self.add_via_stack("m1", "m2", br_in)
         br_track = vector(track_xoff,br_in.y)
         
         din_in = vector(track_xoff,0)
         
-        self.add_path("metal2", [din_in,  din_track, din_loc, din_track, br_track, br_in])
+        self.add_path("m2", [din_in,  din_track, din_loc, din_track, br_track, br_in])
 
         self.add_layout_pin_rect_center(text="din",
-                                        layer="metal2",
+                                        layer="m2",
                                         offset=din_in)
 
     def route_din_bar(self):
@@ -183,19 +183,19 @@ class pwrite_driver(design.design):
         track_xoff = self.get_m4_track(self.din_bar_track)
         
         din_bar_in = self.din_inst.get_pin("Z").center()
-        self.add_via_stack("metal1", "metal3", din_bar_in)
+        self.add_via_stack("m1", "m3", din_bar_in)
         din_bar_track = vector(track_xoff,din_bar_in.y)
         
         bl_in = self.bl_inst.get_pin("in").center()
-        self.add_via_stack("metal1", "metal3", bl_in)
+        self.add_via_stack("m1", "m3", bl_in)
         bl_track = vector(track_xoff,bl_in.y)
         
         din_in = vector(track_xoff,0)
         
-        self.add_wire(("metal3","via3","metal4"), [din_bar_in, din_bar_track, bl_track, bl_in])
+        self.add_wire(self.m3_stack, [din_bar_in, din_bar_track, bl_track, bl_in])
 
         self.add_layout_pin_rect_center(text="din",
-                                        layer="metal4",
+                                        layer="m4",
                                         offset=din_in)
         
 
@@ -206,22 +206,22 @@ class pwrite_driver(design.design):
         # This M2 pitch is a hack since the A and Z pins align horizontally
         en_bar_loc = self.en_inst.get_pin("Z").uc()
         en_bar_track = vector(track_xoff, en_bar_loc.y)
-        self.add_via_stack("metal1", "metal3", en_bar_loc)
+        self.add_via_stack("m1", "m3", en_bar_loc)
         
         # This is a U route to the right down then left
         bl_en_loc = self.bl_inst.get_pin("en_bar").center()
         bl_en_track = vector(track_xoff, bl_en_loc.y)
-        self.add_via_stack("metal1", "metal3", bl_en_loc)
+        self.add_via_stack("m1", "m3", bl_en_loc)
         br_en_loc = self.br_inst.get_pin("en_bar").center()
         br_en_track = vector(track_xoff, bl_en_loc.y)
-        self.add_via_stack("metal1", "metal3", br_en_loc)
+        self.add_via_stack("m1", "m3", br_en_loc)
 
         
         # L shape
-        self.add_wire(("metal3","via3","metal4"),
+        self.add_wire(self.m3_stack,
                       [en_bar_loc, en_bar_track, bl_en_track])
         # U shape
-        self.add_wire(("metal3","via3","metal4"),
+        self.add_wire(self.m3_stack,
                       [bl_en_loc, bl_en_track, br_en_track, br_en_loc])
 
     
@@ -233,30 +233,30 @@ class pwrite_driver(design.design):
         # The en pin will be over the vdd rail
         vdd_yloc = self.en_inst.get_pin("vdd").cy()
         self.add_layout_pin_segment_center(text="en",
-                                           layer="metal3",
+                                           layer="m3",
                                            start=vector(0,vdd_yloc),
                                            end=vector(self.width,vdd_yloc))
 
         en_loc = self.en_inst.get_pin("A").center()
         en_rail = vector(en_loc.x, vdd_yloc)        
-        self.add_via_stack("metal1", "metal2", en_loc)
-        self.add_path("metal2", [en_loc, en_rail])
-        self.add_via_stack("metal2", "metal3", en_rail)
+        self.add_via_stack("m1", "m2", en_loc)
+        self.add_path("m2", [en_loc, en_rail])
+        self.add_via_stack("m2", "m3", en_rail)
 
         # Start point in the track on the pin rail
         en_track = vector(track_xoff, vdd_yloc)
-        self.add_via_stack("metal3", "metal4", en_track)
+        self.add_via_stack("m3", "m4", en_track)
         
         # This is a U route to the right down then left
         bl_en_loc = self.bl_inst.get_pin("en").center()
         bl_en_track = vector(track_xoff, bl_en_loc.y)
-        self.add_via_stack("metal1", "metal3", bl_en_loc)
+        self.add_via_stack("m1", "m3", bl_en_loc)
         br_en_loc = self.br_inst.get_pin("en").center()
         br_en_track = vector(track_xoff, bl_en_loc.y)
-        self.add_via_stack("metal1", "metal3", br_en_loc)
+        self.add_via_stack("m1", "m3", br_en_loc)
 
         # U shape
-        self.add_wire(("metal3","via3","metal4"),
+        self.add_wire(self.m3_stack,
                       [en_track, bl_en_track, bl_en_loc, bl_en_track, br_en_track, br_en_loc])
 
 
@@ -284,7 +284,7 @@ class pwrite_driver(design.design):
             # Continous vdd rail along with label.
             vdd_pin=inst.get_pin("vdd")
             self.add_layout_pin(text="vdd",
-                                layer="metal1",
+                                layer="m1",
                                 offset=vdd_pin.ll().scale(0,1),
                                 width=self.width,
                                 height=vdd_pin.height())
@@ -292,7 +292,7 @@ class pwrite_driver(design.design):
             # Continous gnd rail along with label.
             gnd_pin=inst.get_pin("gnd")
             self.add_layout_pin(text="gnd",
-                                layer="metal1",
+                                layer="m1",
                                 offset=gnd_pin.ll().scale(0,1),
                                 width=self.width,
                                 height=vdd_pin.height())

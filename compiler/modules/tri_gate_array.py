@@ -83,14 +83,14 @@ class tri_gate_array(design.design):
 
             in_pin = self.tri_inst[i].get_pin("in")
             self.add_layout_pin(text="in_{0}".format(index),
-                                layer="metal2",
+                                layer="m2",
                                 offset=in_pin.ll(),
                                 width=in_pin.width(),
                                 height=in_pin.height())
 
             out_pin = self.tri_inst[i].get_pin("out")
             self.add_layout_pin(text="out_{0}".format(index),
-                                layer="metal2",
+                                layer="m2",
                                 offset=out_pin.ll(),
                                 width=out_pin.width(),
                                 height=out_pin.height())
@@ -103,21 +103,21 @@ class tri_gate_array(design.design):
                     self.add_via_center(layers=self.m2_stack,
                                         offset=pin_pos)
                     self.add_layout_pin_rect_center(text=n,
-                                                    layer="metal3",
+                                                    layer="m3",
                                                     offset=pin_pos)
             
 
         width = self.tri.width * self.columns - (self.words_per_row - 1) * self.tri.width
         en_pin = self.tri_inst[0].get_pin("en")
         self.add_layout_pin(text="en",
-                            layer="metal1",
+                            layer="m1",
                             offset=en_pin.ll().scale(0, 1),
                             width=width,
-                            height=drc("minwidth_metal1"))
+                            height=drc("minwidth_m1"))
         
         enbar_pin = self.tri_inst[0].get_pin("en_bar")
         self.add_layout_pin(text="en_bar",
-                            layer="metal1",
+                            layer="m1",
                             offset=enbar_pin.ll().scale(0, 1),
                             width=width,
-                            height=drc("minwidth_metal1"))
+                            height=drc("minwidth_m1"))

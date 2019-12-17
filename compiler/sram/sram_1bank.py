@@ -261,18 +261,18 @@ class sram_1bank(sram_base):
 
             # This is the steiner point where the net branches out
             clk_steiner_pos = vector(mid1_pos.x, control_clk_buf_pos.y)
-            self.add_path("metal1", [control_clk_buf_pos, clk_steiner_pos])
-            self.add_via_center(layers=("metal1","via1","metal2"),
+            self.add_path("m1", [control_clk_buf_pos, clk_steiner_pos])
+            self.add_via_center(layers=self.m1_stack,
                                 offset=clk_steiner_pos)
             
             # Note, the via to the control logic is taken care of above
-            self.add_wire(("metal3","via2","metal2"),[row_addr_clk_pos, mid1_pos, clk_steiner_pos])
+            self.add_wire(("m3","via2","m2"),[row_addr_clk_pos, mid1_pos, clk_steiner_pos])
         
             if self.col_addr_dff:
                 dff_clk_pin = self.col_addr_dff_insts[port].get_pin("clk")
                 dff_clk_pos = dff_clk_pin.center()
                 mid_pos = vector(clk_steiner_pos.x, dff_clk_pos.y)
-                self.add_wire(("metal3","via2","metal2"),[dff_clk_pos, mid_pos, clk_steiner_pos])
+                self.add_wire(("m3","via2","m2"),[dff_clk_pos, mid_pos, clk_steiner_pos])
 
             if port in self.write_ports:
                 data_dff_clk_pin = self.data_dff_insts[port].get_pin("clk")
@@ -280,8 +280,8 @@ class sram_1bank(sram_base):
                 mid_pos = vector(clk_steiner_pos.x, data_dff_clk_pos.y)
                 # In some designs, the steiner via will be too close to the mid_pos via
                 # so make the wire as wide as the contacts
-                self.add_path("metal2",[mid_pos, clk_steiner_pos], width=max(m2m3.width,m2m3.height))
-                self.add_wire(("metal3","via2","metal2"),[data_dff_clk_pos, mid_pos, clk_steiner_pos])
+                self.add_path("m2",[mid_pos, clk_steiner_pos], width=max(m2m3.width,m2m3.height))
+                self.add_wire(("m3","via2","m2"),[data_dff_clk_pos, mid_pos, clk_steiner_pos])
 
                 if self.write_size:
                     wmask_dff_clk_pin = self.wmask_dff_insts[port].get_pin("clk")
@@ -289,8 +289,8 @@ class sram_1bank(sram_base):
                     mid_pos = vector(clk_steiner_pos.x, wmask_dff_clk_pos.y)
                     # In some designs, the steiner via will be too close to the mid_pos via
                     # so make the wire as wide as the contacts
-                    self.add_path("metal2", [mid_pos, clk_steiner_pos], width=max(m2m3.width, m2m3.height))
-                    self.add_wire(("metal3", "via2", "metal2"), [wmask_dff_clk_pos, mid_pos, clk_steiner_pos])
+                    self.add_path("m2", [mid_pos, clk_steiner_pos], width=max(m2m3.width, m2m3.height))
+                    self.add_wire(("m3", "via2", "m2"), [wmask_dff_clk_pos, mid_pos, clk_steiner_pos])
 
             
     def route_control_logic(self):
@@ -323,8 +323,8 @@ class sram_1bank(sram_base):
                 flop_pos = flop_pin.center()
                 bank_pos = bank_pin.center()
                 mid_pos = vector(bank_pos.x,flop_pos.y)
-                self.add_wire(("metal3","via2","metal2"),[flop_pos, mid_pos,bank_pos])
-                self.add_via_center(layers=("metal2","via2","metal3"),
+                self.add_wire(("m3","via2","m2"),[flop_pos, mid_pos,bank_pos])
+                self.add_via_center(layers=self.m2_stack,
                                     offset=flop_pos)
 
     def route_col_addr_dff(self):
@@ -336,7 +336,7 @@ class sram_1bank(sram_base):
                 offset = self.col_addr_dff_insts[port].ul() + vector(0, 2*self.m1_pitch)
 
             bus_names = ["addr_{}".format(x) for x in range(self.col_addr_size)]        
-            col_addr_bus_offsets = self.create_horizontal_bus(layer="metal1",
+            col_addr_bus_offsets = self.create_horizontal_bus(layer="m1",
                                                               pitch=self.m1_pitch,
                                                               offset=offset,
                                                               names=bus_names,

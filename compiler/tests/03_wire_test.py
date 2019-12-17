@@ -24,7 +24,7 @@ class wire_test(openram_test):
         import design
         
         min_space = 2 * (tech.drc["minwidth_poly"] +
-                         tech.drc["minwidth_metal1"])
+                         tech.drc["minwidth_m1"])
         layer_stack = tech.poly_stack
         old_position_list = [[0, 0],
                              [0, 3 * min_space],
@@ -41,7 +41,7 @@ class wire_test(openram_test):
         self.local_drc_check(w)
 
         min_space = 2 * (tech.drc["minwidth_poly"] +
-                         tech.drc["minwidth_metal1"])
+                         tech.drc["minwidth_m1"])
         layer_stack = tech.poly_stack
         old_position_list = [[0, 0],
                              [0, 3 * min_space],
@@ -57,8 +57,8 @@ class wire_test(openram_test):
         wire.wire(w, layer_stack, position_list)
         self.local_drc_check(w)
 
-        min_space = 2 * (tech.drc["minwidth_metal2"] +
-                         tech.drc["minwidth_metal1"])
+        min_space = 2 * (tech.drc["minwidth_m2"] +
+                         tech.drc["minwidth_m1"])
         layer_stack = tech.m1_stack
         position_list = [[0, 0],
                          [0, 3 * min_space],
@@ -74,8 +74,8 @@ class wire_test(openram_test):
         self.local_drc_check(w)
 
 
-        min_space = 2 * (tech.drc["minwidth_metal2"] +
-                         tech.drc["minwidth_metal1"])
+        min_space = 2 * (tech.drc["minwidth_m2"] +
+                         tech.drc["minwidth_m1"])
         layer_stack = tech.m2_stack[::-1]
         position_list = [[0, 0],
                          [0, 3 * min_space],
@@ -90,8 +90,8 @@ class wire_test(openram_test):
         wire.wire(w, layer_stack, position_list)
         self.local_drc_check(w)
 
-        min_space = 2 * (tech.drc["minwidth_metal2"] +
-                         tech.drc["minwidth_metal3"])
+        min_space = 2 * (tech.drc["minwidth_m2"] +
+                         tech.drc["minwidth_m3"])
         layer_stack = tech.m2_stack
         position_list = [[0, 0],
                          [0, 3 * min_space],
@@ -107,8 +107,8 @@ class wire_test(openram_test):
         wire.wire(w, layer_stack, position_list)
         self.local_drc_check(w)
 
-        min_space = 2 * (tech.drc["minwidth_metal2"] +
-                         tech.drc["minwidth_metal3"])
+        min_space = 2 * (tech.drc["minwidth_m2"] +
+                         tech.drc["minwidth_m3"])
         layer_stack = tech.m2_stack[::-1]
         position_list = [[0, 0],
                          [0, 3 * min_space],

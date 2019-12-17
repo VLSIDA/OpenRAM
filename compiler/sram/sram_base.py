@@ -27,7 +27,7 @@ class sram_base(design, verilog, lef):
     """
     def __init__(self, name, sram_config):
         design.__init__(self, name)
-        lef.__init__(self, ["metal1", "metal2", "metal3", "metal4"])
+        lef.__init__(self, ["m1", "m2", "m3", "m4"])
         verilog.__init__(self)
         
         self.sram_config = sram_config
@@ -148,13 +148,13 @@ class sram_base(design, verilog, lef):
         if not OPTS.route_supplies:
             # Do not route the power supply (leave as must-connect pins)
             return
-        elif "metal4" in tech.layer:
+        elif "m4" in tech.layer:
             # Route a M3/M4 grid
             from supply_grid_router import supply_grid_router as router
-            rtr=router(("metal3","via3","metal4"), self)
-        elif "metal3" in tech.layer:
+            rtr=router(self.m3_stack, self)
+        elif "m3" in tech.layer:
             from supply_tree_router import supply_tree_router as router
-            rtr=router(("metal3",), self)
+            rtr=router(("m3",), self)
 
         rtr.route()
 
@@ -200,14 +200,14 @@ class sram_base(design, verilog, lef):
                 self.control_bus_names[port].extend([wen, pen])
             else:
                 self.control_bus_names[port].extend([sen, wen, pen])
-            self.vert_control_bus_positions = self.create_vertical_bus(layer="metal2",
+            self.vert_control_bus_positions = self.create_vertical_bus(layer="m2",
                                                                        pitch=self.m2_pitch,
                                                                        offset=self.vertical_bus_offset,
                                                                        names=self.control_bus_names[port],
                                                                        length=self.vertical_bus_height)
 
             self.addr_bus_names=["A{0}[{1}]".format(port,i) for i in range(self.addr_size)]
-            self.vert_control_bus_positions.update(self.create_vertical_pin_bus(layer="metal2",
+            self.vert_control_bus_positions.update(self.create_vertical_pin_bus(layer="m2",
                                                                                 pitch=self.m2_pitch,
                                                                                 offset=self.addr_bus_offset,
                                                                                 names=self.addr_bus_names,
@@ -215,7 +215,7 @@ class sram_base(design, verilog, lef):
 
             
             self.bank_sel_bus_names = ["bank_sel{0}_{1}".format(port,i) for i in range(self.num_banks)]
-            self.vert_control_bus_positions.update(self.create_vertical_pin_bus(layer="metal2",
+            self.vert_control_bus_positions.update(self.create_vertical_pin_bus(layer="m2",
                                                                                 pitch=self.m2_pitch,
                                                                                 offset=self.bank_sel_bus_offset,
                                                                                 names=self.bank_sel_bus_names,
@@ -224,7 +224,7 @@ class sram_base(design, verilog, lef):
 
             # Horizontal data bus
             self.data_bus_names = ["DATA{0}[{1}]".format(port,i) for i in range(self.word_size)]
-            self.data_bus_positions = self.create_horizontal_pin_bus(layer="metal3",
+            self.data_bus_positions = self.create_horizontal_pin_bus(layer="m3",
                                                                      pitch=self.m3_pitch,
                                                                      offset=self.data_bus_offset,
                                                                      names=self.data_bus_names,
@@ -233,19 +233,19 @@ class sram_base(design, verilog, lef):
             # Horizontal control logic bus
             # vdd/gnd in bus go along whole SRAM
             # FIXME: Fatten these wires?
-            self.horz_control_bus_positions = self.create_horizontal_bus(layer="metal1",
+            self.horz_control_bus_positions = self.create_horizontal_bus(layer="m1",
                                                                          pitch=self.m1_pitch,
                                                                          offset=self.supply_bus_offset,
                                                                          names=["vdd"],
                                                                          length=self.supply_bus_width)
             # The gnd rail must not be the entire width since we protrude the right-most vdd rail up for
             # the decoder in 4-bank SRAMs
-            self.horz_control_bus_positions.update(self.create_horizontal_bus(layer="metal1",
+            self.horz_control_bus_positions.update(self.create_horizontal_bus(layer="m1",
                                                                               pitch=self.m1_pitch,
                                                                               offset=self.supply_bus_offset+vector(0,self.m1_pitch),
                                                                               names=["gnd"],
                                                                               length=self.supply_bus_width))
-            self.horz_control_bus_positions.update(self.create_horizontal_bus(layer="metal1",
+            self.horz_control_bus_positions.update(self.create_horizontal_bus(layer="m1",
                                                                               pitch=self.m1_pitch,
                                                                               offset=self.control_bus_offset,
                                                                               names=self.control_bus_names[port],
@@ -529,12 +529,12 @@ class sram_base(design, verilog, lef):
             out_pos = dest_pin.uc()
 
         # move horizontal first
-        self.add_wire(("metal3","via2","metal2"),[in_pos, vector(out_pos.x,in_pos.y),out_pos])
-        if src_pin.layer=="metal1":
-            self.add_via_center(layers=("metal1","via1","metal2"),
+        self.add_wire(("m3","via2","m2"),[in_pos, vector(out_pos.x,in_pos.y),out_pos])
+        if src_pin.layer=="m1":
+            self.add_via_center(layers=self.m1_stack,
                                 offset=in_pos)
-        if src_pin.layer in ["metal1","metal2"]:
-            self.add_via_center(layers=("metal2","via2","metal3"),
+        if src_pin.layer in ["m1","m2"]:
+            self.add_via_center(layers=self.m2_stack,
                                 offset=in_pos)
 
             

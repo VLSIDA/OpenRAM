@@ -39,17 +39,17 @@ GDS["zoom"] = 0.5
 # Interconnect stacks
 ###################################################
 
-poly_stack = ("poly", "poly_contact", "metal1")
-active_stack = ("active", "active_contact", "metal1")
-m1_stack = ("metal1", "via1", "metal2")
-m2_stack = ("metal2", "via2", "metal3")
-m3_stack = ("metal3", "via3", "metal4")
+poly_stack = ("poly", "poly_contact", "m1")
+active_stack = ("active", "active_contact", "m1")
+m1_stack = ("m1", "via1", "m2")
+m2_stack = ("m2", "via2", "m3")
+m3_stack = ("m3", "via3", "m4")
 
-# The FEOL stacks get us up to metal1
+# The FEOL stacks get us up to m1
 feol_stacks = [poly_stack,
                active_stack]
 
-# The BEOL stacks are metal1 and up
+# The BEOL stacks are m1 and up
 beol_stacks = [m1_stack,
                m2_stack,
                m3_stack]
@@ -73,13 +73,13 @@ layer["nimplant"]       = (45, 0)
 layer["poly"]           = (46, 0)
 layer["poly_contact"]   = (47, 0)
 layer["active_contact"] = (48, 0)
-layer["metal1"]         = (49, 0) 
+layer["m1"]         = (49, 0) 
 layer["via1"]           = (50, 0)
-layer["metal2"]         = (51, 0) 
+layer["m2"]         = (51, 0) 
 layer["via2"]           = (61, 0)
-layer["metal3"]         = (62, 0)
+layer["m3"]         = (62, 0)
 layer["via3"]           = (30, 0)
-layer["metal4"]         = (31, 0)
+layer["m4"]         = (31, 0)
 layer["text"]           = (63, 0)
 layer["boundary"]       = (63, 0)
 
@@ -132,19 +132,18 @@ drc["poly_extend_active"] = 2*_lambda_
 # 5.5.b Minimum spacing between poly contact and other poly (alternative rules)
 drc["poly_to_contact"] = 4*_lambda_
 # ??
-drc["active_enclosure_gate"] = 0.0
+drc["active_enclose_gate"] = 0.0
 # 3.5 Minimum field poly to active 
 drc["poly_to_active"] = _lambda_
 # 3.2.a Minimum spacing over field poly
 drc["poly_to_field_poly"] = 3*_lambda_
 
-# ??
-drc["active_to_body_active"] = 4*_lambda_  # Fix me
 # 2.1 Minimum width 
 # 2.2 Minimum spacing
 drc.add_layer("active",
               width = 3*_lambda_,
-              spacing = 3*_lambda_)
+              spacing = 4*_lambda_)
+
 # 2.3 Source/drain active to well edge 
 drc.add_enclosure("well",
                   layer = "active",
@@ -200,18 +199,18 @@ drc["poly_contact_to_poly"] = 2*_lambda_
 
 # 7.1 Minimum width 
 # 7.2 Minimum spacing 
-drc.add_layer("metal1",
+drc.add_layer("m1",
               width = 3*_lambda_,
               spacing = 3*_lambda_)
 # 7.3 Minimum overlap of any contact 
-drc.add_enclosure("metal1",
+drc.add_enclosure("m1",
                   layer = "poly_contact",
                   enclosure = _lambda_)
-drc.add_enclosure("metal1",
+drc.add_enclosure("m1",
                   layer = "active_contact",
                   enclosure = _lambda_)
-# 8.3 Minimum overlap by metal1
-drc.add_enclosure("metal1",
+# 8.3 Minimum overlap by m1
+drc.add_enclosure("m1",
                   layer = "via1",
                   enclosure = _lambda_)
 
@@ -223,15 +222,15 @@ drc.add_layer("via1",
 
 # 9.1 Minimum width
 # 9.2 Minimum spacing 
-drc.add_layer("metal2",
+drc.add_layer("m2",
               width = 3*_lambda_,
               spacing = 3*_lambda_)
 # 9.3 Minimum overlap of via1 
-drc.add_enclosure("metal2",
+drc.add_enclosure("m2",
                   layer = "via1",
                   enclosure = _lambda_)
-# 14.3 Minimum overlap by metal2
-drc.add_enclosure("metal2",
+# 14.3 Minimum overlap by m2
+drc.add_enclosure("m2",
                   layer = "via2",
                   enclosure = _lambda_)
 
@@ -242,18 +241,18 @@ drc.add_layer("via2",
               spacing = 3*_lambda_)
 
 # 15.1 Minimum width
-# 15.2 Minimum spacing to metal3
-drc.add_layer("metal3",
+# 15.2 Minimum spacing to m3
+drc.add_layer("m3",
               width = 3*_lambda_,
               spacing = 3*_lambda_)
 
 # 15.3 Minimum overlap of via 2
-drc.add_enclosure("metal3",
+drc.add_enclosure("m3",
                   layer = "via2",
                   enclosure = _lambda_)
 
-# 21.3 Minimum overlap by metal3
-drc.add_enclosure("metal3",
+# 21.3 Minimum overlap by m3
+drc.add_enclosure("m3",
                   layer = "via3",
                   enclosure = _lambda_)
 
@@ -264,13 +263,13 @@ drc.add_layer("via3",
               spacing = 3*_lambda_)
 
 # 22.1 Minimum width
-# 22.2 Minimum spacing to metal4
-drc.add_layer("metal4",
+# 22.2 Minimum spacing to m4
+drc.add_layer("m4",
               width = 6*_lambda_,
               spacing = 6*_lambda_)
 
 # 22.3 Minimum overlap of via 3
-drc.add_enclosure("metal4",
+drc.add_enclosure("m4",
                   layer = "via3",
                   enclosure = 2*_lambda_)
 

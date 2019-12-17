@@ -104,11 +104,11 @@ class contact(hierarchy_design.hierarchy_design):
         # The enclosure rule applies to symmetric enclosure component.
         
         first_layer_minwidth = drc("minwidth_{0}".format(self.first_layer_name))
-        first_layer_enclosure = drc("{0}_enclosure_{1}".format(self.first_layer_name, self.via_layer_name))
+        first_layer_enclosure = drc("{0}_enclose_{1}".format(self.first_layer_name, self.via_layer_name))
         first_layer_extend = drc("{0}_extend_{1}".format(self.first_layer_name, self.via_layer_name))
 
         second_layer_minwidth = drc("minwidth_{0}".format(self.second_layer_name))
-        second_layer_enclosure = drc("{0}_enclosure_{1}".format(self.second_layer_name, self.via_layer_name))
+        second_layer_enclosure = drc("{0}_enclose_{1}".format(self.second_layer_name, self.via_layer_name))
         second_layer_extend = drc("{0}_extend_{1}".format(self.second_layer_name, self.via_layer_name))
 
         # In some technologies, the minimum width may be larger
@@ -204,16 +204,16 @@ class contact(hierarchy_design.hierarchy_design):
                       height=self.second_layer_height)
 
     def create_implant_well_enclosures(self):
-        implant_position = self.first_layer_position - [drc("implant_enclosure_active")] * 2
-        implant_width = self.first_layer_width + 2 * drc("implant_enclosure_active")
-        implant_height = self.first_layer_height + 2 * drc("implant_enclosure_active")
+        implant_position = self.first_layer_position - [drc("implant_enclose_active")] * 2
+        implant_width = self.first_layer_width + 2 * drc("implant_enclose_active")
+        implant_height = self.first_layer_height + 2 * drc("implant_enclose_active")
         self.add_rect(layer="{}implant".format(self.implant_type),
                       offset=implant_position,
                       width=implant_width,
                       height=implant_height)
-        well_position = self.first_layer_position - [drc("well_enclosure_active")] * 2
-        well_width = self.first_layer_width + 2 * drc("well_enclosure_active")
-        well_height = self.first_layer_height + 2 * drc("well_enclosure_active")
+        well_position = self.first_layer_position - [drc("well_enclose_active")] * 2
+        well_width = self.first_layer_width + 2 * drc("well_enclose_active")
+        well_height = self.first_layer_height + 2 * drc("well_enclose_active")
         self.add_rect(layer="{}well".format(self.well_type),
                       offset=well_position,
                       width=well_width,
@@ -250,7 +250,7 @@ m1m2 = factory.create(module_type="contact",
 m2m3 = factory.create(module_type="contact",
                       layer_stack=m2_stack,
                       directions=("V", "H"))
-if "metal4" in layer.keys():
+if "m4" in layer.keys():
     m3m4 = factory.create(module_type="contact",
                           layer_stack=m3_stack,
                           directions=("H", "V"))

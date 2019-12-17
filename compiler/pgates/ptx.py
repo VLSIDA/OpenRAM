@@ -91,8 +91,8 @@ class ptx(design.design):
         #                                              " ".join(self.pins)))
         # Just make a guess since these will actually
         # be decided in the layout later.
-        area_sd = 2.5 * drc("minwidth_poly") * self.tx_width
-        perimeter_sd = 2 * drc("minwidth_poly") + 2 * self.tx_width
+        area_sd = 2.5 * self.poly_width * self.tx_width
+        perimeter_sd = 2 * self.poly_width + 2 * self.tx_width
         main_str = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(spice[self.tx_type],
                                                                   self.mults,
                                                                   self.tx_width,
@@ -136,7 +136,7 @@ class ptx(design.design):
         self.contact_pitch = 2 * self.contact_to_gate + self.contact_width + self.poly_width
         
         # The enclosure of an active contact. Not sure about second term.
-        active_enclose_contact = max(drc("active_enclosure_contact"),
+        active_enclose_contact = max(self.active_enclose_contact,
                                      (self.active_width - self.contact_width) / 2)
                                                                   
         # This is the distance from the edge of poly to the contacted end of active
@@ -180,11 +180,11 @@ class ptx(design.design):
                                      
         
         # Min area results are just flagged for now.
-        debug.check(self.active_width * self.active_height >= drc("minarea_active"),
+        debug.check(self.active_width * self.active_height >= self.minarea_active,
                     "Minimum active area violated.")
         # We do not want to increase the poly dimensions to fix
         # an area problem as it would cause an LVS issue.
-        debug.check(self.poly_width * self.poly_height >= drc("minarea_poly"),
+        debug.check(self.poly_width * self.poly_height >= self.minarea_poly,
                     "Minimum poly area violated.")
 
     def connect_fingered_poly(self, poly_positions):
@@ -219,7 +219,7 @@ class ptx(design.design):
                             layer="poly",
                             offset=poly_offset,
                             width=poly_width,
-                            height=drc("minwidth_poly"))
+                            height=self.poly_width)
 
 
     def connect_fingered_active(self, drain_positions, source_positions):
@@ -249,12 +249,12 @@ class ptx(design.design):
             self.remove_layout_pin("S") # remove the individual connections
             # Add each vertical segment
             for a in source_positions:
-                self.add_path(("metal1"),
+                self.add_path(("m1"),
                               [a, a + pin_offset.scale(source_dir,
                                                        source_dir)])
             # Add a single horizontal pin
             self.add_layout_pin_segment_center(text="S",
-                                               layer="metal1",
+                                               layer="m1",
                                                start=source_positions[0] + source_offset - end_offset,
                                                end=source_positions[-1] + source_offset + end_offset)
 
@@ -263,10 +263,10 @@ class ptx(design.design):
             self.remove_layout_pin("D") # remove the individual connections
             # Add each vertical segment
             for a in drain_positions:
-                self.add_path(("metal1"), [a,a+drain_offset])
+                self.add_path(("m1"), [a,a+drain_offset])
             # Add a single horizontal pin
             self.add_layout_pin_segment_center(text="D",
-                                               layer="metal1",
+                                               layer="m1",
                                                start=drain_positions[0] + drain_offset - end_offset,
                                                end=drain_positions[-1] + drain_offset + end_offset)
             
@@ -313,7 +313,7 @@ class ptx(design.design):
                       height=self.active_height)
         # If the implant must enclose the active, shift offset
         # and increase width/height
-        enclose_width = drc("implant_enclosure_active")
+        enclose_width = self.implant_enclose_active
         enclose_offset = [enclose_width] * 2
         self.add_rect(layer="{}implant".format(self.implant_type),
                       offset=self.active_offset - enclose_offset,
@@ -380,7 +380,7 @@ class ptx(design.design):
                                         implant_type=self.implant_type,
                                         well_type=self.well_type)
             self.add_layout_pin_rect_center(text="S",
-                                            layer="metal1",
+                                            layer="m1",
                                             offset=pos,
                                             width=contact.mod.second_layer_width,
                                             height=contact.mod.second_layer_height)
@@ -394,7 +394,7 @@ class ptx(design.design):
                                         implant_type=self.implant_type,
                                         well_type=self.well_type)
             self.add_layout_pin_rect_center(text="D",
-                                            layer="metal1",
+                                            layer="m1",
                                             offset=pos,
                                             width=contact.mod.second_layer_width,
                                             height=contact.mod.second_layer_height)

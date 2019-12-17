@@ -208,18 +208,18 @@ class bank_select(design.design):
         xoffset_bank_sel = bank_sel_inv_pin.lx()
         bank_sel_line_pos = vector(xoffset_bank_sel, 0)
         bank_sel_line_end = vector(xoffset_bank_sel, self.yoffset_maxpoint)
-        self.add_path("metal2", [bank_sel_line_pos, bank_sel_line_end])
-        self.add_via_center(layers=("metal1","via1","metal2"),
+        self.add_path("m2", [bank_sel_line_pos, bank_sel_line_end])
+        self.add_via_center(layers=self.m1_stack,
                             offset=bank_sel_inv_pin.lc())
 
         # Route the pin to the left edge as well
         bank_sel_pin_pos=vector(0, 0)
         bank_sel_pin_end=vector(bank_sel_line_pos.x, bank_sel_pin_pos.y)
         self.add_layout_pin_segment_center(text="bank_sel",
-                                           layer="metal3",
+                                           layer="m3",
                                            start=bank_sel_pin_pos,
                                            end=bank_sel_pin_end)
-        self.add_via_center(layers=("metal2","via2","metal3"),
+        self.add_via_center(layers=self.m2_stack,
                             offset=bank_sel_pin_end,
                             directions=("H","H"))
 
@@ -227,10 +227,10 @@ class bank_select(design.design):
         bank_sel_bar_pin = self.bank_sel_inv.get_pin("Z")
         xoffset_bank_sel_bar = bank_sel_bar_pin.rx()
         self.add_label_pin(text="bank_sel_bar",
-                           layer="metal2",  
+                           layer="m2",  
                            offset=vector(xoffset_bank_sel_bar, 0), 
                            height=self.inv4x.height)
-        self.add_via_center(layers=("metal1","via1","metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=bank_sel_bar_pin.rc())
             
             
@@ -251,13 +251,13 @@ class bank_select(design.design):
             out_position = logic_inst.get_pin("Z").rc() + vector(0.5*self.m1_width,0)
             in_position = inv_inst.get_pin("A").lc() + vector(0.5*self.m1_width,0)
             post = inv_inst.get_pin("A").rc()
-            self.add_path("metal1", [pre, out_position, in_position, post])
+            self.add_path("m1", [pre, out_position, in_position, post])
             
             
             # Connect the logic B input to bank_sel/bank_sel_bar
             logic_pos = logic_inst.get_pin("B").lc() - vector(0.5*contact.m1m2.height,0)
             input_pos = vector(xoffset_bank_signal, logic_pos.y)
-            self.add_path("metal2",[logic_pos, input_pos])
+            self.add_path("m2",[logic_pos, input_pos])
             self.add_via_center(layers=self.m1_stack,
                                 offset=logic_pos,
                                 directions=("H","H"))
@@ -273,7 +273,7 @@ class bank_select(design.design):
                                 offset=logic_pos,
                                 directions=("H","H"))
             self.add_layout_pin_segment_center(text=input_name,
-                                               layer="metal3",
+                                               layer="m3",
                                                start=input_pos,
                                                end=logic_pos)
 
@@ -294,7 +294,7 @@ class bank_select(design.design):
             for n in ["vdd", "gnd"]:
                 supply_pin = self.inv_inst[num].get_pin(n)
                 supply_offset = supply_pin.ll().scale(0,1)
-                self.add_rect(layer="metal1",
+                self.add_rect(layer="m1",
                               offset=supply_offset,
                               width=self.width)
 
@@ -308,20 +308,20 @@ class bank_select(design.design):
                                         offset=pin_pos,
                                         directions=("H","H"))
                     self.add_layout_pin_rect_center(text=n,
-                                                    layer="metal3",
+                                                    layer="m3",
                                                     offset=pin_pos)
             
             # Add vdd/gnd supply rails
             gnd_pin = inv_inst.get_pin("gnd")
             left_gnd_pos = vector(0, gnd_pin.cy())
             self.add_layout_pin_segment_center(text="gnd",
-                                               layer="metal1",
+                                               layer="m1",
                                                start=left_gnd_pos,
                                                end=gnd_pin.rc())
             
             vdd_pin = inv_inst.get_pin("vdd")
             left_vdd_pos = vector(0, vdd_pin.cy())
             self.add_layout_pin_segment_center(text="vdd",
-                                               layer="metal1",
+                                               layer="m1",
                                                start=left_vdd_pos,
                                                end=vdd_pin.rc())

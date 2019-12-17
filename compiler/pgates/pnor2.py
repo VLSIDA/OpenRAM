@@ -97,9 +97,8 @@ class pnor2(pgate.pgate):
         # Enclosure space on the sides.
         self.well_width = 2 * self.pmos.active_width \
                           + self.pmos.active_contact.width \
-                          + 2 * drc("active_to_body_active") \
-                          + 2 * drc("well_enclosure_active")
-
+                          + 2 * self.active_space \
+                          + 2 * self.well_enclose_active
         self.width = self.well_width
         # Height is an input parameter, so it is not recomputed.
 
@@ -108,18 +107,18 @@ class pnor2(pgate.pgate):
         extra_contact_space = max(-self.nmos.get_pin("D").by(), 0)
         # This is a poly-to-poly of a flipped cell
         self.top_bottom_space = max(0.5 * self.m1_width + self.m1_space + extra_contact_space, 
-                                    drc("poly_extend_active"),
+                                    self.poly_extend_active,
                                     self.poly_space)
         
     def route_supply_rails(self):
         """ Add vdd/gnd rails to the top and bottom. """
         self.add_layout_pin_rect_center(text="gnd",
-                                        layer="metal1",
+                                        layer="m1",
                                         offset=vector(0.5 * self.width, 0),
                                         width=self.width)
 
         self.add_layout_pin_rect_center(text="vdd",
-                                        layer="metal1",
+                                        layer="m1",
                                         offset=vector(0.5 * self.width, self.height),
                                         width=self.width)
 
@@ -226,15 +225,15 @@ class pnor2(pgate.pgate):
         mid3_offset = mid2_offset + vector(self.m2_width, 0)
         
         # PMOS1 to mid-drain to NMOS2 drain
-        self.add_path("metal2",
+        self.add_path("m2",
                       [pmos_pin.bc(), mid2_offset, mid3_offset])
-        self.add_path("metal2",
+        self.add_path("m2",
                       [nmos_pin.rc(), mid1_offset, mid2_offset])
         # This extends the output to the edge of the cell
         self.add_via_center(layers=self.m1_stack,
                             offset=mid3_offset)
         self.add_layout_pin_rect_center(text="Z",
-                                        layer="metal1",
+                                        layer="m1",
                                         offset=mid3_offset,
                                         width=contact.m1m2.first_layer_height,
                                         height=contact.m1m2.first_layer_width)

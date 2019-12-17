@@ -142,7 +142,7 @@ class wordline_driver(design.design):
         # Wordline enable connection
         en_offset = [self.m1_width + 2 * self.m1_space, 0]
         en_pin = self.add_layout_pin(text="en",
-                                     layer="metal2",
+                                     layer="m2",
                                      offset=en_offset,
                                      width=self.m2_width,
                                      height=self.height)
@@ -155,7 +155,7 @@ class wordline_driver(design.design):
             a_pin = nand_inst.get_pin("A")
             a_pos = a_pin.lc()
             clk_offset = vector(en_pin.bc().x, a_pos.y)
-            self.add_segment_center(layer="metal1",
+            self.add_segment_center(layer="m1",
                                     start=clk_offset,
                                     end=a_pos)
             self.add_via_center(layers=self.m1_stack,
@@ -167,7 +167,7 @@ class wordline_driver(design.design):
             # ensure the bend is in the middle
             mid1_pos = vector(0.5*(zr_pos.x+al_pos.x), zr_pos.y)
             mid2_pos = vector(0.5*(zr_pos.x+al_pos.x), al_pos.y)
-            self.add_path("metal1", [zr_pos, mid1_pos, mid2_pos, al_pos])
+            self.add_path("m1", [zr_pos, mid1_pos, mid2_pos, al_pos])
 
             # connect the decoder input pin to nand2 B
             b_pin = nand_inst.get_pin("B")
@@ -182,7 +182,7 @@ class wordline_driver(design.design):
 
             # must under the clk line in M1
             self.add_layout_pin_segment_center(text="in_{0}".format(row),
-                                               layer="metal1",
+                                               layer="m1",
                                                start=input_offset,
                                                end=mid_via_offset)
             self.add_via_center(layers=self.m1_stack,
@@ -190,7 +190,7 @@ class wordline_driver(design.design):
                                 directions=("V", "V"))
 
             # now connect to the nand2 B
-            self.add_path("metal2", [mid_via_offset, b_pos])
+            self.add_path("m2", [mid_via_offset, b_pos])
             contact_offset = b_pos - vector(0.5 * contact.m1m2.height, 0)
             self.add_via_center(layers=self.m1_stack,
                                 offset=contact_offset,
@@ -199,7 +199,7 @@ class wordline_driver(design.design):
             # output each WL on the right
             wl_offset = inv2_inst.get_pin("Z").rc()
             self.add_layout_pin_segment_center(text="wl_{0}".format(row),
-                                               layer="metal1",
+                                               layer="m1",
                                                start=wl_offset,
                                                end=wl_offset - vector(self.m1_width, 0))
 

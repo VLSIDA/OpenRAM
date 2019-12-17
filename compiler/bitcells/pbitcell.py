@@ -364,11 +364,11 @@ class pbitcell(bitcell_base.bitcell_base):
                        self.inverter_pmos_right.get_pin("G").bc()])
 
         # connect output (drain/source) of inverters
-        self.add_path("metal1",
+        self.add_path("m1",
                       [self.inverter_nmos_left.get_pin("D").uc(),
                        self.inverter_pmos_left.get_pin("D").bc()],
                       width=contact.active.second_layer_width)
-        self.add_path("metal1",
+        self.add_path("m1",
                       [self.inverter_nmos_right.get_pin("S").uc(),
                        self.inverter_pmos_right.get_pin("S").bc()],
                       width=contact.active.second_layer_width)
@@ -404,7 +404,7 @@ class pbitcell(bitcell_base.bitcell_base):
         # Add rails for vdd and gnd
         gnd_ypos = self.m1_offset - self.total_ports * self.m1_pitch
         self.gnd_position = vector(0, gnd_ypos)
-        self.add_rect_center(layer="metal1",
+        self.add_rect_center(layer="m1",
                              offset=self.gnd_position,
                              width=self.width)
         self.add_power_pin("gnd", vector(0, gnd_ypos))
@@ -416,7 +416,7 @@ class pbitcell(bitcell_base.bitcell_base):
                    + self.inverter_pmos.active_height \
                    + self.vdd_offset
         self.vdd_position = vector(0, vdd_ypos)
-        self.add_rect_center(layer="metal1",
+        self.add_rect_center(layer="m1",
                              offset=self.vdd_position,
                              width=self.width)
         self.add_power_pin("vdd", vector(0, vdd_ypos))
@@ -489,7 +489,7 @@ class pbitcell(bitcell_base.bitcell_base):
             rwwl_ypos = self.m1_offset - k * self.m1_pitch
             self.rwwl_positions[k] = vector(0, rwwl_ypos)
             self.add_layout_pin_rect_center(text=self.rw_wl_names[k],
-                                            layer="metal1",
+                                            layer="m1",
                                             offset=self.rwwl_positions[k],
                                             width=self.width)
 
@@ -499,7 +499,7 @@ class pbitcell(bitcell_base.bitcell_base):
                         + 0.5 * self.m2_width
             self.rwbl_positions[k] = vector(rwbl_xpos, self.center_ypos)
             self.add_layout_pin_rect_center(text=self.rw_bl_names[k],
-                                            layer="metal2",
+                                            layer="m2",
                                             offset=self.rwbl_positions[k],
                                             height=self.height)
 
@@ -509,7 +509,7 @@ class pbitcell(bitcell_base.bitcell_base):
                         - 0.5 * self.m2_width
             self.rwbr_positions[k] = vector(rwbr_xpos, self.center_ypos)
             self.add_layout_pin_rect_center(text=self.rw_br_names[k],
-                                            layer="metal2",
+                                            layer="m2",
                                             offset=self.rwbr_positions[k],
                                             height=self.height)
 
@@ -586,7 +586,7 @@ class pbitcell(bitcell_base.bitcell_base):
                                    - k * self.m1_pitch
             self.wwl_positions[k] = vector(0, wwl_ypos)
             self.add_layout_pin_rect_center(text=self.w_wl_names[k],
-                                            layer="metal1",
+                                            layer="m1",
                                             offset=self.wwl_positions[k],
                                             width=self.width)
 
@@ -596,7 +596,7 @@ class pbitcell(bitcell_base.bitcell_base):
                        + 0.5 * self.m2_width
             self.wbl_positions[k] = vector(wbl_xpos, self.center_ypos)
             self.add_layout_pin_rect_center(text=self.w_bl_names[k],
-                                            layer="metal2",
+                                            layer="m2",
                                             offset=self.wbl_positions[k],
                                             height=self.height)
 
@@ -606,7 +606,7 @@ class pbitcell(bitcell_base.bitcell_base):
                        - 0.5 * self.m2_width
             self.wbr_positions[k] = vector(wbr_xpos, self.center_ypos)
             self.add_layout_pin_rect_center(text=self.w_br_names[k],
-                                            layer="metal2",
+                                            layer="m2",
                                             offset=self.wbr_positions[k],
                                             height=self.height)
 
@@ -713,7 +713,7 @@ class pbitcell(bitcell_base.bitcell_base):
                                    - k * self.m1_pitch
             self.rwl_positions[k] = vector(0, rwl_ypos)
             self.add_layout_pin_rect_center(text=self.r_wl_names[k],
-                                            layer="metal1",
+                                            layer="m1",
                                             offset=self.rwl_positions[k],
                                             width=self.width)
 
@@ -723,7 +723,7 @@ class pbitcell(bitcell_base.bitcell_base):
                        + 0.5 * self.m2_width
             self.rbl_positions[k] = vector(rbl_xpos, self.center_ypos)
             self.add_layout_pin_rect_center(text=self.r_bl_names[k],
-                                            layer="metal2",
+                                            layer="m2",
                                             offset=self.rbl_positions[k],
                                             height=self.height)
 
@@ -733,7 +733,7 @@ class pbitcell(bitcell_base.bitcell_base):
                        - 0.5 * self.m2_width
             self.rbr_positions[k] = vector(rbr_xpos, self.center_ypos)
             self.add_layout_pin_rect_center(text=self.r_br_names[k],
-                                            layer="metal2",
+                                            layer="m2",
                                             offset=self.rbr_positions[k],
                                             height=self.height)
 
@@ -775,7 +775,7 @@ class pbitcell(bitcell_base.bitcell_base):
                                     offset=port_contact_offset)
 
                 self.add_path("poly", [gate_offset, port_contact_offset])
-                self.add_path("metal1",
+                self.add_path("m1",
                               [port_contact_offset, wl_contact_offset])
 
             else:
@@ -789,7 +789,7 @@ class pbitcell(bitcell_base.bitcell_base):
                                     directions=("H", "H"))
 
                 self.add_path("poly", [gate_offset, port_contact_offset])
-                self.add_path("metal2",
+                self.add_path("m2",
                               [port_contact_offset, wl_contact_offset])
 
     def route_bitlines(self):
@@ -827,7 +827,7 @@ class pbitcell(bitcell_base.bitcell_base):
                 self.add_via_center(layers=self.m1_stack,
                                     offset=port_contact_offest)
 
-            self.add_path("metal2",
+            self.add_path("m2",
                           [port_contact_offest, bl_offset], width=contact.m1m2.height)
 
         for k in range(self.total_ports):
@@ -839,7 +839,7 @@ class pbitcell(bitcell_base.bitcell_base):
                 self.add_via_center(layers=self.m1_stack,
                                     offset=port_contact_offest)
 
-            self.add_path("metal2",
+            self.add_path("m2",
                           [port_contact_offest, br_offset], width=contact.m1m2.height)
 
     def route_supply(self):
@@ -866,17 +866,17 @@ class pbitcell(bitcell_base.bitcell_base):
                                 offset=supply_offset,
                                 directions=("H", "H"))
 
-            self.add_path("metal2", [position, supply_offset])
+            self.add_path("m2", [position, supply_offset])
 
         # route inverter pmos to vdd
         vdd_pos_left = vector(self.inverter_nmos_left.get_pin("S").uc().x,
                               self.vdd_position.y)
-        self.add_path("metal1",
+        self.add_path("m1",
                       [self.inverter_pmos_left.get_pin("S").uc(), vdd_pos_left])
 
         vdd_pos_right = vector(self.inverter_nmos_right.get_pin("D").uc().x,
                                self.vdd_position.y)
-        self.add_path("metal1",
+        self.add_path("m1",
                       [self.inverter_pmos_right.get_pin("D").uc(), vdd_pos_right])
 
     def route_readwrite_access(self):
@@ -889,14 +889,14 @@ class pbitcell(bitcell_base.bitcell_base):
                          self.cross_couple_lower_ypos)
             Q_pos = vector(self.inverter_nmos_left.get_pin("D").lx(),
                            self.cross_couple_lower_ypos)
-            self.add_path("metal1",
+            self.add_path("m1",
                           [self.readwrite_nmos_left[k].get_pin("D").uc(), mid, Q_pos])
 
             mid = vector(self.readwrite_nmos_right[k].get_pin("S").uc().x,
                          self.cross_couple_lower_ypos)
             Q_bar_pos = vector(self.inverter_nmos_right.get_pin("S").rx(),
                                self.cross_couple_lower_ypos)
-            self.add_path("metal1",
+            self.add_path("m1",
                           [self.readwrite_nmos_right[k].get_pin("S").uc(), mid, Q_bar_pos])
 
     def route_write_access(self):
@@ -909,14 +909,14 @@ class pbitcell(bitcell_base.bitcell_base):
                          self.cross_couple_lower_ypos)
             Q_pos = vector(self.inverter_nmos_left.get_pin("D").lx(),
                            self.cross_couple_lower_ypos)
-            self.add_path("metal1",
+            self.add_path("m1",
                           [self.write_nmos_left[k].get_pin("D").uc(), mid, Q_pos])
 
             mid = vector(self.write_nmos_right[k].get_pin("S").uc().x,
                          self.cross_couple_lower_ypos)
             Q_bar_pos = vector(self.inverter_nmos_right.get_pin("S").rx(),
                                self.cross_couple_lower_ypos)
-            self.add_path("metal1",
+            self.add_path("m1",
                           [self.write_nmos_right[k].get_pin("S").uc(), mid, Q_bar_pos])
 
     def route_read_access(self):
@@ -960,7 +960,7 @@ class pbitcell(bitcell_base.bitcell_base):
 
             mid = vector(self.read_access_nmos_left[k].get_pin("G").uc().x,
                          self.cross_couple_upper_ypos)
-            self.add_path("metal1",
+            self.add_path("m1",
                           [port_contact_offset, mid, left_storage_contact])
 
             port_contact_offset = self.read_access_nmos_right[k].get_pin("G").uc() \
@@ -975,7 +975,7 @@ class pbitcell(bitcell_base.bitcell_base):
 
             mid = vector(self.read_access_nmos_right[k].get_pin("G").uc().x,
                          self.cross_couple_upper_ypos)
-            self.add_path("metal1",
+            self.add_path("m1",
                           [port_contact_offset, mid, right_storage_contact])
 
     def extend_well(self):
@@ -1076,7 +1076,7 @@ class pbitcell(bitcell_base.bitcell_base):
         """
         Q_bar_pos = self.inverter_pmos_right.get_pin("S").center()
         vdd_pos = self.inverter_pmos_right.get_pin("D").center()
-        self.add_path("metal1", [Q_bar_pos, vdd_pos])
+        self.add_path("m1", [Q_bar_pos, vdd_pos])
         
     def get_storage_net_names(self):
         """

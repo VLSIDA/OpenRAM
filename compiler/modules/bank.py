@@ -333,7 +333,7 @@ class bank(design.design):
         self.col_addr_bus_width = self.m2_pitch*self.num_col_addr_lines
 
         # A space for wells or jogging m2
-        self.m2_gap = max(2*drc("pwell_to_nwell") + drc("well_enclosure_active"),
+        self.m2_gap = max(2*drc("pwell_to_nwell") + drc("well_enclose_active"),
                           3*self.m2_pitch)
 
 
@@ -605,7 +605,7 @@ class bank(design.design):
             out_pos = self.bank_select_inst[port].get_pin(gated_bank_sel_signals[signal]).rc()
             name = self.control_signals[port][signal]
             bus_pos = vector(self.bus_xoffset[port][name].x, out_pos.y)
-            self.add_path("metal3",[out_pos, bus_pos])
+            self.add_path("m3",[out_pos, bus_pos])
             self.add_via_center(layers=self.m2_stack,
                                 offset=bus_pos)
             self.add_via_center(layers=self.m1_stack,
@@ -648,7 +648,7 @@ class bank(design.design):
         control_bus_offset = vector(-self.m2_pitch * self.num_control_lines[0] - self.m2_pitch, self.min_y_offset)
         # The control bus is routed up to two pitches below the bitcell array
         control_bus_length = self.main_bitcell_array_bottom - self.min_y_offset - 2*self.m1_pitch
-        self.bus_xoffset[0] = self.create_bus(layer="metal2",
+        self.bus_xoffset[0] = self.create_bus(layer="m2",
                                               pitch=self.m2_pitch,
                                               offset=control_bus_offset,
                                               names=self.control_signals[0],
@@ -663,7 +663,7 @@ class bank(design.design):
             control_bus_offset = vector(self.bitcell_array_right + self.m2_pitch,
                                         self.max_y_offset - control_bus_length)
             # The bus for the right port is reversed so that the rbl_wl is closest to the array
-            self.bus_xoffset[1] = self.create_bus(layer="metal2",
+            self.bus_xoffset[1] = self.create_bus(layer="m2",
                                                   pitch=self.m2_pitch,
                                                   offset=control_bus_offset,
                                                   names=list(reversed(self.control_signals[1])),
@@ -817,7 +817,7 @@ class bank(design.design):
             bitcell_wl_pos = self.bitcell_array_inst.get_pin(self.wl_names[port]+"_{}".format(row)).lc()
             mid1 = driver_wl_pos.scale(0,1) + vector(0.5*self.port_address_inst[port].rx() + 0.5*self.bitcell_array_inst.lx(),0)
             mid2 = mid1.scale(1,0)+bitcell_wl_pos.scale(0.5,1)
-            self.add_path("metal1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
+            self.add_path("m1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
 
 
     def route_port_address_right(self, port):
@@ -829,7 +829,7 @@ class bank(design.design):
             bitcell_wl_pos = self.bitcell_array_inst.get_pin(self.wl_names[port]+"_{}".format(row)).rc()
             mid1 = driver_wl_pos.scale(0,1) + vector(0.5*self.port_address_inst[port].lx() + 0.5*self.bitcell_array_inst.rx(),0)
             mid2 = mid1.scale(1,0)+bitcell_wl_pos.scale(0,1)
-            self.add_path("metal1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
+            self.add_path("m1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
 
     def route_column_address_lines(self, port):
         """ Connecting the select lines of column mux to the address bus """
@@ -878,7 +878,7 @@ class bank(design.design):
             wl_name = "wl_{}".format(i)
             wl_pin = self.bitcell_array_inst.get_pin(wl_name)
             self.add_label(text=wl_name,
-                           layer="metal1",  
+                           layer="m1",  
                            offset=wl_pin.center())
         
         # Add the bitline names
@@ -888,10 +888,10 @@ class bank(design.design):
             bl_pin = self.bitcell_array_inst.get_pin(bl_name)
             br_pin = self.bitcell_array_inst.get_pin(br_name)
             self.add_label(text=bl_name,
-                           layer="metal2",  
+                           layer="m2",  
                            offset=bl_pin.center())
             self.add_label(text=br_name,
-                           layer="metal2",  
+                           layer="m2",  
                            offset=br_pin.center())
 
         # # Add the data output names to the sense amp output     
@@ -899,7 +899,7 @@ class bank(design.design):
         #     data_name = "data_{}".format(i)
         #     data_pin = self.sense_amp_array_inst.get_pin(data_name)
         #     self.add_label(text="sa_out_{}".format(i),
-        #                    layer="metal2",  
+        #                    layer="m2",  
         #                    offset=data_pin.center())
 
         # Add labels on the decoder
@@ -909,7 +909,7 @@ class bank(design.design):
                 pin_name = "in_{}".format(i)            
                 data_pin = self.wordline_driver_inst[port].get_pin(pin_name)
                 self.add_label(text=data_name,
-                               layer="metal1",  
+                               layer="m1",  
                                offset=data_pin.center())
             
             
@@ -941,7 +941,7 @@ class bank(design.design):
         for (control_signal, pin_pos) in connection:
             control_mid_pos = self.bus_xoffset[port][control_signal]
             control_pos = vector(self.bus_xoffset[port][control_signal].x ,pin_pos.y)
-            self.add_wire(("metal1","via1","metal2"), [control_mid_pos, control_pos, pin_pos])
+            self.add_wire(self.m1_stack, [control_mid_pos, control_pos, pin_pos])
             self.add_via_center(layers=self.m1_stack,
                                 offset=control_pos)
 
@@ -956,7 +956,7 @@ class bank(design.design):
             mid_pos = pin_pos - vector(0,2*self.m2_gap) # to route down to the top of the bus
         control_x_offset = self.bus_xoffset[port][control_signal].x
         control_pos = vector(control_x_offset, mid_pos.y)
-        self.add_wire(("metal1","via1","metal2"),[pin_pos, mid_pos, control_pos])
+        self.add_wire(self.m1_stack,[pin_pos, mid_pos, control_pos])
         self.add_via_center(layers=self.m1_stack,
                             offset=control_pos)
  

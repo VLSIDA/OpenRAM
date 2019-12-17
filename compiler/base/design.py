@@ -8,7 +8,7 @@
 from hierarchy_design import hierarchy_design
 import contact
 from globals import OPTS
-
+import re
 
 class design(hierarchy_design):
     """
@@ -32,7 +32,7 @@ class design(hierarchy_design):
         
         self.m1_pitch = max(contact.m1m2.width, contact.m1m2.height) + max(self.m1_space, self.m2_space)
         self.m2_pitch = max(contact.m2m3.width, contact.m2m3.height) + max(self.m2_space, self.m3_space)
-        if "metal4" in tech.layer:
+        if "m4" in tech.layer:
             self.m3_pitch = max(contact.m3m4.width, contact.m3m4.height) + max(self.m3_space, self.m4_space)
         else:
             self.m3_pitch = self.m2_pitch
@@ -46,36 +46,62 @@ class design(hierarchy_design):
     def setup_drc_constants(self):
         """ These are some DRC constants used in many places in the compiler."""
         from tech import drc, layer
-        self.well_width = drc("minwidth_well")
-        self.poly_width = drc("minwidth_poly")
-        self.poly_space = drc("poly_to_poly")
-        self.m1_width = drc("minwidth_metal1")
-        self.m1_space = drc("metal1_to_metal1")
-        self.m2_width = drc("minwidth_metal2")
-        self.m2_space = drc("metal2_to_metal2")
-        self.m3_width = drc("minwidth_metal3")
-        self.m3_space = drc("metal3_to_metal3")
-        if "metal4" in layer:
-            self.m4_width = drc("minwidth_metal4")
-            self.m4_space = drc("metal4_to_metal4")
-        self.active_width = drc("minwidth_active")
-        self.active_space = drc("active_to_body_active")
-        if "contact" in layer:
-            self.contact_width = drc("minwidth_contact")
-        else:
-            self.contact_width = drc("minwidth_active_contact")
 
-        self.poly_to_active = drc("poly_to_active")
-        self.poly_extend_active = drc("poly_extend_active")
-        if "contact" in layer:
-            self.poly_to_contact = drc("poly_to_contact")
-        else:
-            self.poly_to_contact = drc("poly_to_active_contact")
-        self.contact_to_gate = drc("contact_to_gate")
-        self.well_enclose_active = drc("well_enclosure_active")
-        self.implant_enclose_active = drc("implant_enclosure_active")
-        self.implant_space = drc("implant_to_implant")
-        
+        # Make some local rules for convenience
+        for rule in drc.keys():
+            # Single layer width rules
+            match = re.search(r"minwidth_(.*)", rule)
+            if match:
+                if match.group(1)=="active_contact":
+                    setattr(self, "contact_width", drc(match.group(0)))
+                else:
+                    setattr(self, match.group(1)+"_width", drc(match.group(0)))
+
+            # Single layer area rules
+            match = re.search(r"minarea_(.*)", rule)
+            if match:
+                setattr(self, match.group(0), drc(match.group(0)))
+                    
+            # Single layer spacing rules
+            match = re.search(r"(.*)_to_(.*)", rule)
+            if match and match.group(1)==match.group(2):
+                setattr(self, match.group(1)+"_space", drc(match.group(0)))
+            elif match and match.group(1)!=match.group(2):
+                if match.group(2)=="poly_active":
+                    setattr(self, match.group(1)+"_to_contact", drc(match.group(0)))
+                else:
+                    setattr(self, match.group(0), drc(match.group(0)))
+                
+            match = re.search(r"(.*)_enclose_(.*)", rule)
+            if match:
+                setattr(self, match.group(0), drc(match.group(0)))
+
+            match = re.search(r"(.*)_extend_(.*)", rule)
+            if match:
+                setattr(self, match.group(0), drc(match.group(0)))
+
+        # These are for debugging previous manual rules
+        # print("poly_width", self.poly_width)
+        # print("poly_space", self.poly_space)
+        # print("m1_width", self.m1_width)
+        # print("m1_space", self.m1_space)
+        # print("m2_width", self.m2_width)
+        # print("m2_space", self.m2_space)
+        # print("m3_width", self.m3_width)
+        # print("m3_space", self.m3_space)
+        # print("m4_width", self.m4_width)
+        # print("m4_space", self.m4_space)
+        # print("active_width", self.active_width)
+        # print("active_space", self.active_space)
+        # print("contact_width", self.contact_width)
+        # print("poly_to_active", self.poly_to_active)
+        # print("poly_extend_active", self.poly_extend_active)
+        # print("poly_to_contact", self.poly_to_contact)
+        # print("contact_to_gate", self.contact_to_gate)
+        # print("well_enclose_active", self.well_enclose_active)
+        # print("implant_enclose_active", self.implant_enclose_active)
+        # print("implant_space", self.implant_space)
+
     def setup_multiport_constants(self):
         """ 
         These are contants and lists that aid multiport design.

@@ -92,7 +92,7 @@ class pnand3(pgate.pgate):
         # Two PMOS devices and a well contact. Separation between each.
         # Enclosure space on the sides.
         self.well_width = 3 * self.pmos.active_width + self.pmos.active_contact.width \
-                          + 2 * drc("active_to_body_active") + 2 * drc("well_enclosure_active") \
+                          + 2 * self.active_space + 2 * self.well_enclose_active \
                           - self.overlap_offset.x
         self.width = self.well_width
         # Height is an input parameter, so it is not recomputed.
@@ -107,18 +107,18 @@ class pnand3(pgate.pgate):
         # This is a poly-to-poly of a flipped cell
         self.top_bottom_space = max(0.5 * self.m1_width + self.m1_space \
                                     + extra_contact_space,
-                                    drc("poly_extend_active"),
+                                    self.poly_extend_active,
                                     self.poly_space)
         
     def route_supply_rails(self):
         """ Add vdd/gnd rails to the top and bottom. """
         self.add_layout_pin_rect_center(text="gnd",
-                                        layer="metal1",
+                                        layer="m1",
                                         offset=vector(0.5 * self.width, 0),
                                         width=self.width)
 
         self.add_layout_pin_rect_center(text="vdd",
-                                        layer="metal1",
+                                        layer="m1",
                                         offset=vector(0.5 * self.width, self.height),
                                         width=self.width)
 
@@ -205,7 +205,7 @@ class pnand3(pgate.pgate):
                             self.m1_space + 0.5 *contact.poly.width + 0.5 * self.m1_width)
 
         active_spacing = max(self.m1_space,
-                             0.5 * contact.poly.first_layer_width + drc("poly_to_active"))
+                             0.5 * contact.poly.first_layer_width + self.poly_to_active)
         inputC_yoffset = self.nmos3_pos.y + self.nmos.active_height + active_spacing
         self.route_input_gate(self.pmos3_inst,
                               self.nmos3_inst,
@@ -245,16 +245,16 @@ class pnand3(pgate.pgate):
                             offset=nmos3_pin.center())
         
         # PMOS3 and NMOS3 are drain aligned
-        self.add_path("metal2", [pmos3_pin.bc(), nmos3_pin.uc()])
+        self.add_path("m2", [pmos3_pin.bc(), nmos3_pin.uc()])
         # Route in the A input track (top track)
         mid_offset = vector(nmos3_pin.center().x, self.inputA_yoffset)
-        self.add_path("metal2", [pmos1_pin.bc(), mid_offset, nmos3_pin.uc()])
+        self.add_path("m2", [pmos1_pin.bc(), mid_offset, nmos3_pin.uc()])
 
         # This extends the output to the edge of the cell
         self.add_via_center(layers=self.m1_stack,
                             offset=mid_offset)
         self.add_layout_pin_rect_center(text="Z",
-                                        layer="metal1",
+                                        layer="m1",
                                         offset=mid_offset,
                                         width=contact.m1m2.first_layer_width,
                                         height=contact.m1m2.first_layer_height)

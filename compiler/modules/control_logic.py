@@ -371,7 +371,7 @@ class control_logic(design.design):
         height = self.control_logic_center.y - self.m2_pitch
         offset = vector(self.ctrl_dff_array.width,0)
         
-        self.rail_offsets = self.create_vertical_bus("metal2", self.m2_pitch, offset, self.internal_bus_list, height)
+        self.rail_offsets = self.create_vertical_bus("m2", self.m2_pitch, offset, self.internal_bus_list, height)
             
             
     def create_instances(self):
@@ -483,8 +483,8 @@ class control_logic(design.design):
         vdd_ypos = self.p_en_bar_nand_inst.get_pin("vdd").by()
         in_pos = vector(self.rail_offsets["rbl_bl_delay"].x,vdd_ypos)
         mid1 = vector(out_pos.x,in_pos.y)
-        self.add_wire(("metal1","via1","metal2"),[out_pos, mid1, in_pos])
-        self.add_via_center(layers=("metal1","via1","metal2"),
+        self.add_wire(self.m1_stack,[out_pos, mid1, in_pos])
+        self.add_via_center(layers=self.m1_stack,
                             offset=in_pos)
         
 
@@ -509,10 +509,10 @@ class control_logic(design.design):
         clk_pin = self.clk_buf_inst.get_pin("A")
         clk_pos = clk_pin.center()
         self.add_layout_pin_segment_center(text="clk",
-                                           layer="metal2",
+                                           layer="m2",
                                            start=clk_pos,
                                            end=clk_pos.scale(1,0))
-        self.add_via_center(layers=("metal1","via1","metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=clk_pos)
 
 
@@ -521,9 +521,9 @@ class control_logic(design.design):
         mid1 = vector(out_pos.x,2*self.m2_pitch)
         mid2 = vector(self.rail_offsets["clk_buf"].x, mid1.y)
         bus_pos = self.rail_offsets["clk_buf"]
-        self.add_wire(("metal3","via2","metal2"),[out_pos, mid1, mid2, bus_pos])
+        self.add_wire(("m3","via2","m2"),[out_pos, mid1, mid2, bus_pos])
         # The pin is on M1, so we need another via as well
-        self.add_via_center(layers=("metal1","via1","metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=self.clk_buf_inst.get_pin("Z").center())
 
         self.connect_output(self.clk_buf_inst, "Z", "clk_buf")
@@ -552,21 +552,21 @@ class control_logic(design.design):
         out_pos = self.clk_bar_inst.get_pin("Z").center()
         in_pos = self.gated_clk_bar_inst.get_pin("B").center()
         mid1 = vector(in_pos.x,out_pos.y)
-        self.add_path("metal1",[out_pos, mid1, in_pos])
+        self.add_path("m1",[out_pos, mid1, in_pos])
 
         # This is the second gate over, so it needs to be on M3
         clkbuf_map = zip(["A"], ["cs"])
-        self.connect_vertical_bus(clkbuf_map, self.gated_clk_bar_inst, self.rail_offsets, ("metal3", "via2", "metal2"))  
+        self.connect_vertical_bus(clkbuf_map, self.gated_clk_bar_inst, self.rail_offsets, ("m3", "via2", "m2"))  
         # The pin is on M1, so we need another via as well
-        self.add_via_center(layers=("metal1","via1","metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=self.gated_clk_bar_inst.get_pin("A").center())
 
 
         # This is the second gate over, so it needs to be on M3
         clkbuf_map = zip(["Z"], ["gated_clk_bar"])
-        self.connect_vertical_bus(clkbuf_map, self.gated_clk_bar_inst, self.rail_offsets, ("metal3", "via2", "metal2"))  
+        self.connect_vertical_bus(clkbuf_map, self.gated_clk_bar_inst, self.rail_offsets, ("m3", "via2", "m2"))  
         # The pin is on M1, so we need another via as well
-        self.add_via_center(layers=("metal1","via1","metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=self.gated_clk_bar_inst.get_pin("Z").center())
 
     def create_gated_clk_buf_row(self):
@@ -587,9 +587,9 @@ class control_logic(design.design):
 
         
         clkbuf_map = zip(["Z"], ["gated_clk_buf"])
-        self.connect_vertical_bus(clkbuf_map, self.gated_clk_buf_inst, self.rail_offsets, ("metal3", "via2", "metal2"))  
+        self.connect_vertical_bus(clkbuf_map, self.gated_clk_buf_inst, self.rail_offsets, ("m3", "via2", "m2"))  
         # The pin is on M1, so we need another via as well
-        self.add_via_center(layers=("metal1","via1","metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=self.gated_clk_buf_inst.get_pin("Z").center())
         
     def create_wlen_row(self):
@@ -637,7 +637,7 @@ class control_logic(design.design):
         out_pos = self.p_en_bar_nand_inst.get_pin("Z").rc()
         in_pos = self.p_en_bar_driver_inst.get_pin("A").lc()
         mid1 = vector(out_pos.x,in_pos.y)
-        self.add_wire(("metal1","via1","metal2"),[out_pos, mid1,in_pos])                
+        self.add_wire(self.m1_stack,[out_pos, mid1,in_pos])                
         
         self.connect_output(self.p_en_bar_driver_inst, "Z", "p_en_bar")
         
@@ -694,9 +694,9 @@ class control_logic(design.design):
         # Connect to rail
 
         rbl_map = zip(["Z"], ["rbl_bl_delay_bar"])
-        self.connect_vertical_bus(rbl_map, self.rbl_bl_delay_inv_inst, self.rail_offsets, ("metal3", "via2", "metal2"))
+        self.connect_vertical_bus(rbl_map, self.rbl_bl_delay_inv_inst, self.rail_offsets, ("m3", "via2", "m2"))
         # The pin is on M1, so we need another via as well
-        self.add_via_center(layers=("metal1","via1","metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=self.rbl_bl_delay_inv_inst.get_pin("Z").center())
         
         
@@ -754,14 +754,14 @@ class control_logic(design.design):
             dff_out_map = zip(["dout_bar_0", "dout_0"], ["cs", "cs_bar"])            
         else:
             dff_out_map = zip(["dout_bar_0"], ["cs"])
-        self.connect_vertical_bus(dff_out_map, self.ctrl_dff_inst, self.rail_offsets, ("metal3", "via2", "metal2"))
+        self.connect_vertical_bus(dff_out_map, self.ctrl_dff_inst, self.rail_offsets, ("m3", "via2", "m2"))
         
         # Connect the clock rail to the other clock rail
         in_pos = self.ctrl_dff_inst.get_pin("clk").uc()
         mid_pos = in_pos + vector(0,2*self.m2_pitch)
         rail_pos = vector(self.rail_offsets["clk_buf"].x, mid_pos.y)
-        self.add_wire(("metal1","via1","metal2"),[in_pos, mid_pos, rail_pos])
-        self.add_via_center(layers=("metal1","via1","metal2"),
+        self.add_wire(self.m1_stack,[in_pos, mid_pos, rail_pos])
+        self.add_via_center(layers=self.m1_stack,
                             offset=rail_pos)
 
         self.copy_layout_pin(self.ctrl_dff_inst, "din_0", "csb")
@@ -786,7 +786,7 @@ class control_logic(design.design):
         out_pin = inst.get_pin(pin_name)
         right_pos=out_pin.center() + vector(self.width-out_pin.cx(),0)
         self.add_layout_pin_segment_center(text=out_name,
-                                           layer="metal1",
+                                           layer="m1",
                                            start=out_pin.center(),
                                            end=right_pos)
 
@@ -799,19 +799,19 @@ class control_logic(design.design):
         for inst in self.row_end_inst:
             pins = inst.get_pins("vdd")
             for pin in pins:
-                if pin.layer == "metal1":
+                if pin.layer == "m1":
                     row_loc = pin.rc()
                     pin_loc = vector(max_row_x_loc, pin.rc().y)
                     self.add_power_pin("vdd", pin_loc)
-                    self.add_path("metal1", [row_loc, pin_loc])
+                    self.add_path("m1", [row_loc, pin_loc])
 
             pins = inst.get_pins("gnd")
             for pin in pins:
-                if pin.layer == "metal1":
+                if pin.layer == "m1":
                     row_loc = pin.rc()
                     pin_loc = vector(max_row_x_loc, pin.rc().y)
                     self.add_power_pin("gnd", pin_loc)
-                    self.add_path("metal1", [row_loc, pin_loc])
+                    self.add_path("m1", [row_loc, pin_loc])
             
         self.copy_layout_pin(self.delay_inst,"gnd")
         self.copy_layout_pin(self.delay_inst,"vdd")        
@@ -828,14 +828,14 @@ class control_logic(design.design):
         """
         # pin=self.clk_inv1.get_pin("Z")
         # self.add_label_pin(text="clk1_bar",
-        #                    layer="metal1",
+        #                    layer="m1",
         #                    offset=pin.ll(),
         #                    height=pin.height(),
         #                    width=pin.width())
 
         # pin=self.clk_inv2.get_pin("Z")
         # self.add_label_pin(text="clk2",
-        #                    layer="metal1",
+        #                    layer="m1",
         #                    offset=pin.ll(),
         #                    height=pin.height(),
         #                    width=pin.width())

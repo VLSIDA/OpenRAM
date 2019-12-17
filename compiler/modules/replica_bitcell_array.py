@@ -399,7 +399,7 @@ class replica_bitcell_array(design.design):
         else:
             height = self.height
         bl_pos = 0
-        bl_wire = self.generate_rc_net(int(self.row_size-bl_pos), height, drc("minwidth_metal1"))
+        bl_wire = self.generate_rc_net(int(self.row_size-bl_pos), height, drc("minwidth_m1"))
         bl_wire.wire_c =spice["min_tx_drain_c"] + bl_wire.wire_c # 1 access tx d/s per cell
         return bl_wire
 

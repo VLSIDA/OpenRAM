@@ -61,7 +61,7 @@ class layout():
             y_dir = 1
         else:
             # we lose a rail after every 2 gates            
-            base_offset=vector(x_offset, (inv_num+1) * height - (inv_num%2)*drc["minwidth_metal1"])
+            base_offset=vector(x_offset, (inv_num+1) * height - (inv_num%2)*drc["minwidth_m1"])
             y_dir = -1
             
         return (base_offset,y_dir)
@@ -388,9 +388,9 @@ class layout():
 
     def get_preferred_direction(self, layer):
         """ Return the preferred routing directions """
-        if layer in ["metal1", "metal3", "metal5"]:
+        if layer in ["m1", "m3", "m5"]:
             return "H"
-        elif layer in ["active", "poly", "metal2", "metal4"]:
+        elif layer in ["active", "poly", "m2", "m4"]:
             return "V"
         else:
             return "N"
@@ -682,12 +682,12 @@ class layout():
         return line_positions
 
     def connect_horizontal_bus(self, mapping, inst, bus_offsets,
-                               layer_stack=("metal1","via1","metal2")):
+                               layer_stack=("m1", "via1", "m2")):
         """ Horizontal version of connect_bus. """
         self.connect_bus(mapping, inst, bus_offsets, layer_stack, True)
 
     def connect_vertical_bus(self, mapping, inst, bus_offsets,
-                               layer_stack=("metal1","via1","metal2")):
+                               layer_stack=("m1", "via1", "m2")):
         """ Vertical version of connect_bus. """
         self.connect_bus(mapping, inst, bus_offsets, layer_stack, False)
         
@@ -734,15 +734,15 @@ class layout():
                                     rotate=90)
     def get_layer_pitch(self, layer):
         """ Return the track pitch on a given layer """
-        if layer=="metal1":
+        if layer=="m1":
             return (self.m1_pitch,self.m1_pitch-self.m1_space,self.m1_space)
-        elif layer=="metal2":
+        elif layer=="m2":
             return (self.m2_pitch,self.m2_pitch-self.m2_space,self.m2_space)
-        elif layer=="metal3":
+        elif layer=="m3":
             return (self.m3_pitch,self.m3_pitch-self.m3_space,self.m3_space)
-        elif layer=="metal4":
+        elif layer=="m4":
             from tech import layer as tech_layer
-            if "metal4" in tech_layer:
+            if "m4" in tech_layer:
                 return (self.m3_pitch,self.m3_pitch-self.m4_space,self.m4_space)
             else:
                 return (self.m3_pitch,self.m3_pitch-self.m3_space,self.m3_space)
@@ -1006,16 +1006,16 @@ class layout():
         """
         pins=inst.get_pins(name)
         for pin in pins:
-            if pin.layer=="metal3":
+            if pin.layer=="m3":
                 self.add_layout_pin(name, pin.layer, pin.ll(), pin.width(), pin.height())
-            elif pin.layer=="metal1":
+            elif pin.layer=="m1":
                 self.add_power_pin(name, pin.center())
             else:
                 debug.warning("{0} pins of {1} should be on metal3 or metal1 for supply router.".format(name,inst.name))
 
                 
         
-    def add_power_pin(self, name, loc, vertical=False, start_layer="metal1"):
+    def add_power_pin(self, name, loc, vertical=False, start_layer="m1"):
         """ 
         Add a single power pin from M3 down to M1 at the given center location.
         The starting layer is specified to determine which vias are needed.
@@ -1025,24 +1025,24 @@ class layout():
         else:
             direction=("H","H")
             
-        if start_layer=="metal1":
+        if start_layer=="m1":
             self.add_via_center(layers=self.m1_stack,
                                 offset=loc,
                                 directions=direction)
 
 
-        if start_layer=="metal1" or start_layer=="metal2":
+        if start_layer=="m1" or start_layer=="m2":
             via=self.add_via_center(layers=self.m2_stack,
                                     offset=loc,
                                     directions=direction) 
 
-        if start_layer=="metal3":
+        if start_layer=="m3":
             self.add_layout_pin_rect_center(text=name,
-                                            layer="metal3",
+                                            layer="m3",
                                             offset=loc)
         else:
             self.add_layout_pin_rect_center(text=name,
-                                            layer="metal3",
+                                            layer="m3",
                                             offset=loc,
                                             width=via.width,
                                             height=via.height)
@@ -1064,7 +1064,7 @@ class layout():
         # LEFT vertical rails
         offset = ll + vector(-2*self.supply_rail_pitch, -2*self.supply_rail_pitch)
         left_gnd_pin=self.add_layout_pin(text="gnd",
-                                         layer="metal2", 
+                                         layer="m2", 
                                          offset=offset, 
                                          width=self.supply_rail_width,
                                          height=height)
@@ -1072,7 +1072,7 @@ class layout():
 
         offset = ll + vector(-1*self.supply_rail_pitch, -1*self.supply_rail_pitch)
         left_vdd_pin=self.add_layout_pin(text="vdd",
-                                         layer="metal2", 
+                                         layer="m2", 
                                          offset=offset, 
                                          width=self.supply_rail_width,
                                          height=height)
@@ -1080,14 +1080,14 @@ class layout():
         # RIGHT vertical rails        
         offset = vector(ur.x,ll.y) + vector(0,-2*self.supply_rail_pitch)
         right_gnd_pin = self.add_layout_pin(text="gnd",
-                                            layer="metal2", 
+                                            layer="m2", 
                                             offset=offset,
                                             width=self.supply_rail_width,
                                             height=height)
 
         offset = vector(ur.x,ll.y) + vector(self.supply_rail_pitch,-1*self.supply_rail_pitch)
         right_vdd_pin=self.add_layout_pin(text="vdd",
-                                          layer="metal2", 
+                                          layer="m2", 
                                           offset=offset, 
                                           width=self.supply_rail_width,
                                           height=height)
@@ -1095,14 +1095,14 @@ class layout():
         # BOTTOM horizontal rails
         offset = ll + vector(-2*self.supply_rail_pitch, -2*self.supply_rail_pitch)
         bottom_gnd_pin=self.add_layout_pin(text="gnd",
-                                           layer="metal1", 
+                                           layer="m1", 
                                            offset=offset, 
                                            width=width,
                                            height=self.supply_rail_width)
 
         offset = ll + vector(-1*self.supply_rail_pitch, -1*self.supply_rail_pitch)
         bottom_vdd_pin=self.add_layout_pin(text="vdd",
-                                           layer="metal1", 
+                                           layer="m1", 
                                            offset=offset, 
                                            width=width,
                                            height=self.supply_rail_width)
@@ -1110,14 +1110,14 @@ class layout():
         # TOP horizontal rails        
         offset = vector(ll.x, ur.y) + vector(-2*self.supply_rail_pitch,0)
         top_gnd_pin=self.add_layout_pin(text="gnd",
-                                        layer="metal1", 
+                                        layer="m1", 
                                         offset=offset, 
                                         width=width,
                                         height=self.supply_rail_width)
 
         offset = vector(ll.x, ur.y) + vector(-1*self.supply_rail_pitch, self.supply_rail_pitch)
         top_vdd_pin=self.add_layout_pin(text="vdd",
-                                        layer="metal1", 
+                                        layer="m1", 
                                         offset=offset, 
                                         width=width,
                                         height=self.supply_rail_width)
@@ -1139,7 +1139,7 @@ class layout():
         from sram_factory import factory
         while True:
             c=factory.create(module_type="contact",
-                             layer_stack=("metal1","via1","metal2"),
+                             layer_stack=self.m1_stack,
                              dimensions=(self.supply_vias, self.supply_vias))
             if c.second_layer_width < self.supply_rail_width and c.second_layer_height < self.supply_rail_width:
                 self.supply_vias += 1

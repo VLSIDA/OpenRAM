@@ -120,20 +120,20 @@ class write_driver_array(design.design):
         for i in range(self.word_size):
             din_pin = self.driver_insts[i].get_pin("din")
             self.add_layout_pin(text="data_{0}".format(i),
-                                layer="metal2",
+                                layer="m2",
                                 offset=din_pin.ll(),
                                 width=din_pin.width(),
                                 height=din_pin.height())
             bl_pin = self.driver_insts[i].get_pin("bl")            
             self.add_layout_pin(text="bl_{0}".format(i),
-                                layer="metal2",
+                                layer="m2",
                                 offset=bl_pin.ll(),
                                 width=bl_pin.width(),
                                 height=bl_pin.height())
                            
             br_pin = self.driver_insts[i].get_pin("br")
             self.add_layout_pin(text="br_{0}".format(i),
-                                layer="metal2",
+                                layer="m2",
                                 offset=br_pin.ll(),
                                 width=br_pin.width(),
                                 height=br_pin.height())
@@ -146,7 +146,7 @@ class write_driver_array(design.design):
                     self.add_via_center(layers=self.m2_stack,
                                         offset=pin_pos)
                     self.add_layout_pin_rect_center(text=n,
-                                                    layer="metal3",
+                                                    layer="m3",
                                                     offset=pin_pos)
         if self.write_size:
             for bit in range(self.num_wmasks):
@@ -165,7 +165,7 @@ class write_driver_array(design.design):
                                     height=en_pin.height())
         else:
             self.add_layout_pin(text="en",
-                                layer="metal1",
+                                layer="m1",
                                 offset=self.driver_insts[0].get_pin("en").ll().scale(0,1),
                                 width=self.width)
 

@@ -96,14 +96,14 @@ class pinv(pgate.pgate):
         tx_height = nmos.poly_height + pmos.poly_height
         # rotated m1 pitch or poly to active spacing
         min_channel = max(contact.poly.width + self.m1_space,
-                          contact.poly.width + 2 * drc("poly_to_active"))
+                          contact.poly.width + 2 * self.poly_to_active)
         
         # This is the extra space needed to ensure DRC rules
         # to the active contacts
         extra_contact_space = max(-nmos.get_pin("D").by(), 0)
         # This is a poly-to-poly of a flipped cell
         self.top_bottom_space = max(0.5*self.m1_width + self.m1_space + extra_contact_space, 
-                                    drc("poly_extend_active"), self.poly_space)
+                                    self.poly_extend_active, self.poly_space)
         total_height = tx_height + min_channel + 2 * self.top_bottom_space
         debug.check(self.height > total_height,
                     "Cell height {0} too small for simple min height {1}.".format(self.height,
@@ -153,7 +153,7 @@ class pinv(pgate.pgate):
         # the well width is determined the multi-finger PMOS device width plus
         # the well contact width and half well enclosure on both sides
         self.well_width = self.pmos.active_width + self.pmos.active_contact.width \
-                          + drc("active_to_body_active") + 2*drc("well_enclosure_active")
+                          + self.active_space + 2*self.well_enclose_active
         self.width = self.well_width
         # Height is an input parameter, so it is not recomputed.
         
@@ -178,12 +178,12 @@ class pinv(pgate.pgate):
     def route_supply_rails(self):
         """ Add vdd/gnd rails to the top and bottom. """
         self.add_layout_pin_rect_center(text="gnd",
-                                        layer="metal1",
+                                        layer="m1",
                                         offset=vector(0.5 * self.width, 0),
                                         width=self.width)
 
         self.add_layout_pin_rect_center(text="vdd",
-                                        layer="metal1",
+                                        layer="m1",
                                         offset=vector(0.5 * self.width, self.height),
                                         width=self.width)
 
@@ -238,7 +238,7 @@ class pinv(pgate.pgate):
         # Pick point at right most of NMOS and connect down to PMOS
         nmos_drain_pos = nmos_drain_pin.bc()
         pmos_drain_pos = vector(nmos_drain_pos.x, pmos_drain_pin.uc().y)
-        self.add_path("metal1", [nmos_drain_pos, pmos_drain_pos])
+        self.add_path("m1", [nmos_drain_pos, pmos_drain_pos])
 
         # Remember the mid for the output
         mid_drain_offset = vector(nmos_drain_pos.x, self.output_pos.y)
@@ -247,13 +247,13 @@ class pinv(pgate.pgate):
             # This extends the output to the edge of the cell
             output_offset = mid_drain_offset.scale(0, 1) + vector(self.width, 0)
             self.add_layout_pin_segment_center(text="Z",
-                                               layer="metal1",
+                                               layer="m1",
                                                start=mid_drain_offset,
                                                end=output_offset)
         else:
             # This leaves the output as an internal pin (min sized)
             self.add_layout_pin_rect_center(text="Z",
-                                            layer="metal1",
+                                            layer="m1",
                                             offset=mid_drain_offset \
                                             + vector(0.5 * self.m1_width, 0))
 

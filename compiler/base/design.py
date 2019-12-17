@@ -26,30 +26,41 @@ class design(hierarchy_design):
         self.setup_multiport_constants()
 
     def setup_layer_constants(self):
-        """ 
+        """
         These are some layer constants used
         in many places in the compiler.
         """
         
         import tech
+        for key in dir(tech):
+            # Single layer width rules
+            match = re.match(r".*_stack$", key)
+            if match:
+                layer_stack = getattr(tech, key)
 
-        # This is contact direction independent pitch,
-        # i.e. we take the maximum contact dimension
-        max_m1m2_contact = max(contact.m1m2.width, contact.m1m2.height)
-        self.m1_pitch = max_m1m2_contact + max(self.m1_space, self.m2_space)
-        max_m2m3_contact = max(contact.m2m3.width, contact.m2m3.height)
-        self.m2_pitch = max_m2m3_contact + max(self.m2_space, self.m3_space)
-        if "m4" in tech.layer:
-            max_m3m4_contact = max(contact.m3m4.width, contact.m3m4.height)
-            self.m3_pitch = max_m3m4_contact + max(self.m3_space, self.m4_space)
-        else:
-            self.m3_pitch = self.m2_pitch
+                # Set the stack as a local helper
+                setattr(self, key, layer_stack)
 
-        self.poly_stack = tech.poly_stack
-        self.active_stack = tech.active_stack
-        self.m1_stack = tech.m1_stack
-        self.m2_stack = tech.m2_stack
-        self.m3_stack = tech.m3_stack
+                # Add the pitch
+                setattr(self,
+                        "{}_pitch".format(layer_stack[0]),
+                        self.compute_pitch(layer_stack))
+
+    def compute_pitch(self, layer_stack):
+        
+        """
+        This is contact direction independent pitch,
+        i.e. we take the maximum contact dimension
+        """
+        (layer1, via, layer2) = layer_stack
+
+        contact1 = getattr(contact, layer1 + layer2)
+        max_contact = max(contact1.width, contact1.height)
+        layer1_space = getattr(self, layer1+"_space")
+        layer2_space = getattr(self, layer2+"_space")
+        pitch = max_contact + max(layer1_space, layer2_space)
+
+        return pitch
         
     def setup_drc_constants(self):
         """ 

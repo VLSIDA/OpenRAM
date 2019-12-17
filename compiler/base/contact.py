@@ -11,6 +11,7 @@ from tech import drc
 import tech
 from vector import vector
 from sram_factory import factory
+import sys
 
 
 class contact(hierarchy_design.hierarchy_design):
@@ -28,7 +29,7 @@ class contact(hierarchy_design.hierarchy_design):
 
     """
 
-    def __init__(self, layer_stack, dimensions=(1, 1), directions=("V", "V"),
+    def __init__(self, layer_stack, dimensions=(1, 1), directions=None,
                  implant_type=None, well_type=None, name=""):
         # This will ignore the name parameter since
         # we can guarantee a unique name here
@@ -43,7 +44,11 @@ class contact(hierarchy_design.hierarchy_design):
         
         self.layer_stack = layer_stack
         self.dimensions = dimensions
-        self.directions = directions
+        if directions:
+            self.directions = directions
+        else:
+            self.directions = (tech.preferred_directions[layer_stack[0]],
+                               tech.preferred_directions[layer_stack[2]])
         self.offset = vector(0, 0)
         self.implant_type = implant_type
         self.well_type = well_type
@@ -228,35 +233,14 @@ class contact(hierarchy_design.hierarchy_design):
         """ Get total power of a module  """
         return self.return_power()
 
-    
-# This is not instantiated and used for calculations only.
-# These are static 1x1 contacts to reuse in all the design modules.
-well = factory.create(module_type="contact",
-                      layer_stack=tech.active_stack,
-                      directions=("H", "V"))
-active = factory.create(module_type="contact",
-                        layer_stack=tech.active_stack,
-                        directions=("H", "V"))
-poly = factory.create(module_type="contact",
-                      layer_stack=tech.poly_stack,
-                      directions=("V", "H"))
-if "li" in tech.layer.keys():
-    lim1 = factory.create(module_type="contact",
-                          layer_stack=tech.li_stack,
-                          directions=("V", "H"))
-else:
-    lim1 = None
-    
-m1m2 = factory.create(module_type="contact",
-                      layer_stack=tech.m1_stack,
-                      directions=("H", "V"))
-m2m3 = factory.create(module_type="contact",
-                      layer_stack=tech.m2_stack,
-                      directions=("V", "H"))
-if "m4" in tech.layer.keys():
-    m3m4 = factory.create(module_type="contact",
-                          layer_stack=tech.m3_stack,
-                          directions=("H", "V"))
-else:
-    m3m4 = None
+
+# Set up a static for each layer to be used for measurements
+for layer_stack in tech.layer_stacks:
+    (layer1, via, layer2) = layer_stack
+    cont = factory.create(module_type="contact",
+                          layer_stack=layer_stack)
+    module = sys.modules[__name__]
+    # Create the contact as just the concat of the layer names
+    setattr(module, layer1 + layer2, cont)
+                              
 

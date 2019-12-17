@@ -67,7 +67,10 @@ class design(hierarchy_design):
 
         self.poly_to_active = drc("poly_to_active")
         self.poly_extend_active = drc("poly_extend_active")
-        self.poly_to_contact = drc("poly_to_contact")
+        if "contact" in layer:
+            self.poly_to_contact = drc("poly_to_contact")
+        else:
+            self.poly_to_contact = drc("poly_to_active_contact")
         self.contact_to_gate = drc("contact_to_gate")
         self.well_enclose_active = drc("well_enclosure_active")
         self.implant_enclose_active = drc("implant_enclosure_active")

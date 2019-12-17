@@ -390,10 +390,10 @@ class layout():
         """ Return the preferred routing directions """
         if layer in ["m1", "m3", "m5"]:
             return "H"
-        elif layer in ["active", "poly", "m2", "m4"]:
+        elif layer in ["active", "poly", "li", "m2", "m4"]:
             return "V"
         else:
-            return "N"
+            debug.error("Unable to find preferred direction for {}".format(layer))
 
         
     def add_via(self, layers, offset, size=[1,1], directions=None, implant_type=None, well_type=None):

@@ -10,6 +10,7 @@ import contact
 from globals import OPTS
 import re
 
+
 class design(hierarchy_design):
     """
     This is the same as the hierarchy_design class except it contains
@@ -24,16 +25,23 @@ class design(hierarchy_design):
         self.setup_layer_constants()
         self.setup_multiport_constants()
 
-
     def setup_layer_constants(self):
-        """ These are some layer constants used in many places in the compiler."""
+        """ 
+        These are some layer constants used
+        in many places in the compiler.
+        """
         
         import tech
-        
-        self.m1_pitch = max(contact.m1m2.width, contact.m1m2.height) + max(self.m1_space, self.m2_space)
-        self.m2_pitch = max(contact.m2m3.width, contact.m2m3.height) + max(self.m2_space, self.m3_space)
+
+        # This is contact direction independent pitch,
+        # i.e. we take the maximum contact dimension
+        max_m1m2_contact = max(contact.m1m2.width, contact.m1m2.height)
+        self.m1_pitch = max_m1m2_contact + max(self.m1_space, self.m2_space)
+        max_m2m3_contact = max(contact.m2m3.width, contact.m2m3.height)
+        self.m2_pitch = max_m2m3_contact + max(self.m2_space, self.m3_space)
         if "m4" in tech.layer:
-            self.m3_pitch = max(contact.m3m4.width, contact.m3m4.height) + max(self.m3_space, self.m4_space)
+            max_m3m4_contact = max(contact.m3m4.width, contact.m3m4.height)
+            self.m3_pitch = max_m3m4_contact + max(self.m3_space, self.m4_space)
         else:
             self.m3_pitch = self.m2_pitch
 
@@ -44,15 +52,17 @@ class design(hierarchy_design):
         self.m3_stack = tech.m3_stack
         
     def setup_drc_constants(self):
-        """ These are some DRC constants used in many places in the compiler."""
-        from tech import drc, layer
-
+        """ 
+        These are some DRC constants used in many places
+        in the compiler.
+        """
         # Make some local rules for convenience
+        from tech import drc
         for rule in drc.keys():
             # Single layer width rules
             match = re.search(r"minwidth_(.*)", rule)
             if match:
-                if match.group(1)=="active_contact":
+                if match.group(1) == "active_contact":
                     setattr(self, "contact_width", drc(match.group(0)))
                 else:
                     setattr(self, match.group(1)+"_width", drc(match.group(0)))
@@ -64,11 +74,12 @@ class design(hierarchy_design):
                     
             # Single layer spacing rules
             match = re.search(r"(.*)_to_(.*)", rule)
-            if match and match.group(1)==match.group(2):
+            if match and match.group(1) == match.group(2):
                 setattr(self, match.group(1)+"_space", drc(match.group(0)))
-            elif match and match.group(1)!=match.group(2):
-                if match.group(2)=="poly_active":
-                    setattr(self, match.group(1)+"_to_contact", drc(match.group(0)))
+            elif match and match.group(1) != match.group(2):
+                if match.group(2) == "poly_active":
+                    setattr(self, match.group(1)+"_to_contact",
+                            drc(match.group(0)))
                 else:
                     setattr(self, match.group(0), drc(match.group(0)))
                 
@@ -102,7 +113,8 @@ class design(hierarchy_design):
             print("well_enclose_active", self.well_enclose_active)
             print("implant_enclose_active", self.implant_enclose_active)
             print("implant_space", self.implant_space)
-            import sys; sys.exit(1)
+            import sys
+            sys.exit(1)
         
     def setup_multiport_constants(self):
         """ 

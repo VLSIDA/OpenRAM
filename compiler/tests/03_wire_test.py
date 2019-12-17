@@ -8,11 +8,11 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys
+import os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
-from globals import OPTS
-import debug
+
 
 class wire_test(openram_test):
 
@@ -31,7 +31,8 @@ class wire_test(openram_test):
                     layer_stack = stack[::-1]
                 else:
                     layer_stack = stack
-                    
+
+                # Just make a conservative spacing. Make it wire pitch instead?
                 min_space = 2 * (tech.drc["minwidth_{}".format(layer_stack[0])] +
                                  tech.drc["minwidth_{}".format(layer_stack[2])])
 

@@ -7,8 +7,10 @@
 #
 import hierarchy_design
 import debug
-from tech import *
+from tech import drc
+import tech
 from vector import vector
+from sram_factory import factory
 
 
 class contact(hierarchy_design.hierarchy_design):
@@ -65,7 +67,8 @@ class contact(hierarchy_design.hierarchy_design):
         if self.implant_type and self.well_type:
             self.create_implant_well_enclosures()
         elif self.implant_type or self.well_type:
-            debug.error(-1, "Must define both implant and well type or none at all.")
+            debug.error(-1,
+                        "Must define both implant and well type or none.")
 
     def setup_layers(self):
         """ Locally assign the layer names. """
@@ -75,7 +78,7 @@ class contact(hierarchy_design.hierarchy_design):
         self.second_layer_name = second_layer
         
         # Contacts will have unique per first layer
-        if via_layer in layer.keys():
+        if via_layer in tech.layer.keys():
             self.via_layer_name = via_layer
         elif via_layer == "contact":
             if first_layer in ("active", "poly"):
@@ -86,8 +89,6 @@ class contact(hierarchy_design.hierarchy_design):
                 debug.error("Invalid via layer {}".format(via_layer), -1)
         else:
             debug.error("Invalid via layer {}".format(via_layer), -1)
-        
-
 
     def setup_layout_constants(self):
         """ Determine the design rules for the enclosure layers """
@@ -127,7 +128,9 @@ class contact(hierarchy_design.hierarchy_design):
         else:
             debug.error("Invalid first layer direction.", -1)
 
-        # In some technologies, the minimum width may be larger than the overlap requirement around the via, so
+        # In some technologies,
+        # the minimum width may be larger than
+        # the overlap requirement around the via, so
         # check this for each dimension.
         if self.directions[1] == "V":
             self.second_layer_horizontal_enclosure = max(second_layer_enclosure,
@@ -146,11 +149,14 @@ class contact(hierarchy_design.hierarchy_design):
         """ Create the contact array at the origin"""
         # offset for the via array
         self.via_layer_position = vector(
-            max(self.first_layer_horizontal_enclosure, self.second_layer_horizontal_enclosure),
-            max(self.first_layer_vertical_enclosure, self.second_layer_vertical_enclosure))
+            max(self.first_layer_horizontal_enclosure,
+                self.second_layer_horizontal_enclosure),
+            max(self.first_layer_vertical_enclosure,
+                self.second_layer_vertical_enclosure))
 
         for i in range(self.dimensions[1]):
-            offset = self.via_layer_position + vector(0, self.contact_pitch * i)
+            offset = self.via_layer_position + vector(0,
+                                                      self.contact_pitch * i)
             for j in range(self.dimensions[0]):
                 self.add_rect(layer=self.via_layer_name,
                               offset=offset,
@@ -161,7 +167,7 @@ class contact(hierarchy_design.hierarchy_design):
     def create_nitride_cut_enclosure(self):
         """ Special layer that encloses poly contacts in some processes """
         # Check if there is a special poly nitride cut layer
-        if "npc" not in layer.keys():
+        if "npc" not in tech.layer.keys():
             return
 
         # Only add for poly layers
@@ -175,7 +181,6 @@ class contact(hierarchy_design.hierarchy_design):
                           offset=self.second_layer_position,
                           width=self.second_layer_width,
                           height=self.second_layer_height)
-
     
     def create_first_layer_enclosure(self):
         # this is if the first and second layers are different
@@ -224,35 +229,33 @@ class contact(hierarchy_design.hierarchy_design):
         return self.return_power()
 
     
-from sram_factory import factory
-
 # This is not instantiated and used for calculations only.
 # These are static 1x1 contacts to reuse in all the design modules.
 well = factory.create(module_type="contact",
-                      layer_stack=active_stack,
+                      layer_stack=tech.active_stack,
                       directions=("H", "V"))
 active = factory.create(module_type="contact",
-                        layer_stack=active_stack,
+                        layer_stack=tech.active_stack,
                         directions=("H", "V"))
 poly = factory.create(module_type="contact",
-                      layer_stack=poly_stack,
+                      layer_stack=tech.poly_stack,
                       directions=("V", "H"))
-if "li" in layer.keys():
+if "li" in tech.layer.keys():
     lim1 = factory.create(module_type="contact",
-                          layer_stack=li_stack,
+                          layer_stack=tech.li_stack,
                           directions=("V", "H"))
 else:
     lim1 = None
     
 m1m2 = factory.create(module_type="contact",
-                      layer_stack=m1_stack,
+                      layer_stack=tech.m1_stack,
                       directions=("H", "V"))
 m2m3 = factory.create(module_type="contact",
-                      layer_stack=m2_stack,
+                      layer_stack=tech.m2_stack,
                       directions=("V", "H"))
-if "m4" in layer.keys():
+if "m4" in tech.layer.keys():
     m3m4 = factory.create(module_type="contact",
-                          layer_stack=m3_stack,
+                          layer_stack=tech.m3_stack,
                           directions=("H", "V"))
 else:
     m3m4 = None

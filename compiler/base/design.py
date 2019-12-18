@@ -46,6 +46,13 @@ class design(hierarchy_design):
                         "{}_pitch".format(layer_stack[0]),
                         self.compute_pitch(layer_stack))
 
+        if False:
+            print("m1_pitch", self.m1_pitch)
+            print("m2_pitch", self.m2_pitch)
+            print("m3_pitch", self.m3_pitch)
+            import sys
+            sys.exit(1)
+
     def compute_pitch(self, layer_stack):
         
         """

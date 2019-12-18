@@ -109,44 +109,43 @@ class contact(hierarchy_design.hierarchy_design):
         # The extend rule applies to asymmetric enclosures in one direction.
         # The enclosure rule applies to symmetric enclosure component.
         
-        first_layer_minwidth = drc("minwidth_{0}".format(self.first_layer_name))
-        first_layer_enclosure = drc("{0}_enclose_{1}".format(self.first_layer_name, self.via_layer_name))
-        first_layer_extend = drc("{0}_extend_{1}".format(self.first_layer_name, self.via_layer_name))
+        self.first_layer_minwidth = drc("minwidth_{0}".format(self.first_layer_name))
+        self.first_layer_enclosure = drc("{0}_enclose_{1}".format(self.first_layer_name, self.via_layer_name))
+        self.first_layer_extend = drc("{0}_extend_{1}".format(self.first_layer_name, self.via_layer_name))
 
-        second_layer_minwidth = drc("minwidth_{0}".format(self.second_layer_name))
-        second_layer_enclosure = drc("{0}_enclose_{1}".format(self.second_layer_name, self.via_layer_name))
-        second_layer_extend = drc("{0}_extend_{1}".format(self.second_layer_name, self.via_layer_name))
+        self.second_layer_minwidth = drc("minwidth_{0}".format(self.second_layer_name))
+        self.second_layer_enclosure = drc("{0}_enclose_{1}".format(self.second_layer_name, self.via_layer_name))
+        self.second_layer_extend = drc("{0}_extend_{1}".format(self.second_layer_name, self.via_layer_name))
 
         # In some technologies, the minimum width may be larger
         # than the overlap requirement around the via, so
         # check this for each dimension.
         if self.directions[0] == "V":
-            self.first_layer_horizontal_enclosure = max(first_layer_enclosure,
-                                                        (first_layer_minwidth - self.contact_array_width) / 2)
-            self.first_layer_vertical_enclosure = max(first_layer_extend,
-                                                      (first_layer_minwidth - self.contact_array_height) / 2)
+            self.first_layer_horizontal_enclosure = max(self.first_layer_enclosure,
+                                                        (self.first_layer_minwidth - self.contact_array_width) / 2)
+            self.first_layer_vertical_enclosure = max(self.first_layer_extend,
+                                                      (self.first_layer_minwidth - self.contact_array_height) / 2)
         elif self.directions[0] == "H":
-            self.first_layer_horizontal_enclosure = max(first_layer_extend,
-                                                        (first_layer_minwidth - self.contact_array_width) / 2)
-            self.first_layer_vertical_enclosure = max(first_layer_enclosure,
-                                                      (first_layer_minwidth - self.contact_array_height) / 2)
+            self.first_layer_horizontal_enclosure = max(self.first_layer_extend,
+                                                        (self.first_layer_minwidth - self.contact_array_width) / 2)
+            self.first_layer_vertical_enclosure = max(self.first_layer_enclosure,
+                                                      (self.first_layer_minwidth - self.contact_array_height) / 2)
         else:
             debug.error("Invalid first layer direction.", -1)
 
-        # In some technologies,
-        # the minimum width may be larger than
-        # the overlap requirement around the via, so
+        # In some technologies, the minimum width may be larger
+        # than the overlap requirement around the via, so
         # check this for each dimension.
         if self.directions[1] == "V":
-            self.second_layer_horizontal_enclosure = max(second_layer_enclosure,
-                                                         (second_layer_minwidth - self.contact_array_width) / 2)
-            self.second_layer_vertical_enclosure = max(second_layer_extend,
-                                                       (second_layer_minwidth - self.contact_array_height) / 2)
+            self.second_layer_horizontal_enclosure = max(self.second_layer_enclosure,
+                                                         (self.second_layer_minwidth - self.contact_array_width) / 2)
+            self.second_layer_vertical_enclosure = max(self.second_layer_extend,
+                                                       (self.second_layer_minwidth - self.contact_array_height) / 2)
         elif self.directions[1] == "H":
-            self.second_layer_horizontal_enclosure = max(second_layer_extend,
-                                                         (second_layer_minwidth - self.contact_array_height) / 2)
-            self.second_layer_vertical_enclosure = max(second_layer_enclosure,
-                                                       (second_layer_minwidth - self.contact_array_width) / 2)
+            self.second_layer_horizontal_enclosure = max(self.second_layer_extend,
+                                                         (self.second_layer_minwidth - self.contact_array_height) / 2)
+            self.second_layer_vertical_enclosure = max(self.second_layer_enclosure,
+                                                       (self.second_layer_minwidth - self.contact_array_width) / 2)
         else:
             debug.error("Invalid second layer direction.", -1)
             
@@ -193,8 +192,10 @@ class contact(hierarchy_design.hierarchy_design):
             max(self.second_layer_horizontal_enclosure - self.first_layer_horizontal_enclosure, 0),
             max(self.second_layer_vertical_enclosure - self.first_layer_vertical_enclosure, 0))
 
-        self.first_layer_width = self.contact_array_width + 2 * self.first_layer_horizontal_enclosure
-        self.first_layer_height = self.contact_array_height + 2 * self.first_layer_vertical_enclosure
+        self.first_layer_width = max(self.contact_array_width + 2 * self.first_layer_horizontal_enclosure,
+                                     self.first_layer_minwidth)
+        self.first_layer_height = max(self.contact_array_height + 2 * self.first_layer_vertical_enclosure,
+                                      self.first_layer_minwidth)
         self.add_rect(layer=self.first_layer_name,
                       offset=self.first_layer_position,
                       width=self.first_layer_width,
@@ -206,8 +207,10 @@ class contact(hierarchy_design.hierarchy_design):
             max(self.first_layer_horizontal_enclosure - self.second_layer_horizontal_enclosure, 0),
             max(self.first_layer_vertical_enclosure - self.second_layer_vertical_enclosure, 0))
 
-        self.second_layer_width = self.contact_array_width + 2 * self.second_layer_horizontal_enclosure
-        self.second_layer_height = self.contact_array_height + 2 * self.second_layer_vertical_enclosure
+        self.second_layer_width = max(self.contact_array_width + 2 * self.second_layer_horizontal_enclosure,
+                                      self.second_layer_minwidth)
+        self.second_layer_height = max(self.contact_array_height + 2 * self.second_layer_vertical_enclosure,
+                                       self.second_layer_minwidth)
         self.add_rect(layer=self.second_layer_name,
                       offset=self.second_layer_position,
                       width=self.second_layer_width,
@@ -242,5 +245,5 @@ for layer_stack in tech.layer_stacks:
     module = sys.modules[__name__]
     # Create the contact as just the concat of the layer names
     setattr(module, layer1 + layer2, cont)
-                              
+
 

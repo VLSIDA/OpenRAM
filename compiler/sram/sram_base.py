@@ -112,11 +112,13 @@ class sram_base(design, verilog, lef):
 
         # add pex labels for control logic
         for i in range  (0,len(self.control_logic_insts)):
-                control_logic_offset = self.control_logic_insts[i].offset
-                for output in self.control_logic_insts[i].mod.output_list:
-                    pin = self.control_logic_insts[i].mod.get_pin(output)
-                    offset = [control_logic_offset[0] + pin.center()[0], control_logic_offset[1] + pin.center()[1]]
-                    self.add_layout_pin_rect_center("{0}{1}".format(pin.name,i), "metal1", offset)
+            instance = self.control_logic_insts[i]
+            control_logic_offset = instance.offset
+            for output in instance.mod.output_list:
+                pin = instance.mod.get_pin(output)
+                pin.transform([0,0], instance.mirror, instance.rotate)
+                offset = [control_logic_offset[0] + pin.center()[0], control_logic_offset[1] + pin.center()[1]]
+                self.add_layout_pin_rect_center("{0}{1}".format(pin.name,i), "metal1", offset)
 
              
             

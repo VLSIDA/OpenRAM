@@ -62,6 +62,7 @@ class ModuleType():
         self.names['pwrite_driver']                 = 'pwrite_driver'
         self.names['ptristate_inv']                 = 'ptristate_inv'
         self.names['ptristate_buf']                 = 'ptristate_buf'
+        self.names['dff_array']                     = 'dff_array'
 
     def __setitem__(self, b, c):
         self.names[b] = c

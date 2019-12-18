@@ -271,28 +271,25 @@ class sram_base(design, verilog, lef):
         self.dff = factory.create(module_type="dff")
 
         # Create the address and control flops (but not the clk)
-        from dff_array import dff_array
-        self.row_addr_dff = dff_array(name="row_addr_dff", rows=self.row_addr_size, columns=1)
+        self.row_addr_dff = factory.create("dff_array", module_name="row_addr_dff", rows=self.row_addr_size, columns=1)
         self.add_mod(self.row_addr_dff)
 
         if self.col_addr_size > 0:
-            self.col_addr_dff = dff_array(name="col_addr_dff", rows=1, columns=self.col_addr_size)
+            self.col_addr_dff = factory.create("dff_array", module_name="col_addr_dff", rows=1, columns=self.col_addr_size)
             self.add_mod(self.col_addr_dff)
         else:
             self.col_addr_dff = None
 
-        self.data_dff = dff_array(name="data_dff", rows=1, columns=self.word_size)
+        self.data_dff = factory.create("dff_array", module_name="data_dff", rows=1, columns=self.word_size)
         self.add_mod(self.data_dff)
 
         if self.write_size:
-            self.wmask_dff = dff_array(name="wmask_dff", rows=1, columns=self.num_wmasks)
+            self.wmask_dff = factory.create("dff_array", module_name="wmask_dff", rows=1, columns=self.num_wmasks)
             self.add_mod(self.wmask_dff)
 
         
         # Create the bank module (up to four are instantiated)
-        from bank import bank
-        self.bank = bank(self.sram_config,
-                         name="bank")
+        self.bank = factory.create("bank", sram_config=self.sram_config, module_name="bank")
         self.add_mod(self.bank)
 
         # Create bank decoder

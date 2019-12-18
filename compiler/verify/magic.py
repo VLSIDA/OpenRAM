@@ -80,12 +80,12 @@ def write_magic_script(cell_name, extract=False, final_verification=False):
     f.write(pre+"ext2spice renumber off\n")
     f.write(pre+"ext2spice scale off\n")
     f.write(pre+"ext2spice blackbox on\n")
-    f.write(pre+"ext2spice subcircuit top auto\n")
+    f.write(pre+"ext2spice subcircuit top on\n")
     f.write(pre+"ext2spice global off\n")
 
     # Can choose hspice, ngspice, or spice3,
     # but they all seem compatible enough.
-    #f.write(pre+"ext2spice format ngspice\n")
+    f.write(pre+"ext2spice format ngspice\n")
     f.write(pre+"ext2spice {}\n".format(cell_name))
     f.write("quit -noprompt\n")
     f.write("EOF\n")
@@ -309,7 +309,7 @@ def run_pex(name, gds_name, sp_name, output=None, final_verification=False):
     out_errors = find_error(results)
     debug.check(os.path.isfile(output),"Couldn't find PEX extracted output.")
 
-    correct_port(name,output,sp_name)
+    #correct_port(name,output,sp_name)
     return out_errors
 
 def write_batch_pex_rule(gds_name,name,sp_name,output):
@@ -375,13 +375,13 @@ def write_script_pex_rule(gds_name,cell_name,output):
     else:
         pre = ""
     f.write(pre+"extract\n".format(cell_name))
-    #f.write(pre+"ext2spice hierarchy on\n")
-    #f.write(pre+"ext2spice format ngspice\n")
-    #f.write(pre+"ext2spice renumber off\n")
-    #f.write(pre+"ext2spice scale off\n")
-    #f.write(pre+"ext2spice blackbox on\n")
+    f.write(pre+"ext2spice hierarchy on\n")
+    f.write(pre+"ext2spice format ngspice\n")
+    f.write(pre+"ext2spice renumber off\n")
+    f.write(pre+"ext2spice scale off\n")
+    f.write(pre+"ext2spice blackbox on\n")
     f.write(pre+"ext2spice subcircuit top on\n")
-    #f.write(pre+"ext2spice global off\n")
+    f.write(pre+"ext2spice global off\n")
     f.write(pre+"ext2spice {}\n".format(cell_name))
     f.write("quit -noprompt\n")
     f.write("eof\n")
@@ -404,31 +404,37 @@ def correct_port(name, output_file_name, ref_file_name):
     pex_file = open(output_file_name, "r")
     contents = pex_file.read()
     # locate the start of circuit definition line
-    match = re.search(".subckt " + str(name) + ".*", contents)
+    match = re.search(r'^\.subckt+[^M]*', contents, re.MULTILINE)
     match_index_start = match.start()
-    pex_file.seek(match_index_start)
-    rest_text = pex_file.read()
-    # locate the end of circuit definition line
-    match = re.search(r'\n', rest_text)
-    match_index_end = match.start()
+    match_index_end = match.end()
     # store the unchanged part of pex file in memory
     pex_file.seek(0)
     part1 = pex_file.read(match_index_start)
-    pex_file.seek(match_index_start + match_index_end)
+    pex_file.seek(match_index_end)
     part2 = pex_file.read()
+
+    bitcell_list = "+ "
+    for row in range(0,OPTS.num_words):
+        for col in range(0,OPTS.word_size):
+            bitcell_list += "bitcell_Q_r{0}_c{1} ".format(row,col)
+            bitcell_list += "bitcell_Q_bar_r{0}_c{1} ".format(row,col)
+    bitcell_list += "\n"
+
+
+    part2 = bitcell_list + part2
     pex_file.close()
 
     # obtain the correct definition line from the original spice file
     sp_file = open(ref_file_name, "r")
     contents = sp_file.read()
-    circuit_title = re.search(".SUBCKT " + str(name) + ".*\n", contents)
+    circuit_title = re.search(".SUBCKT " + str(name) + ".*", contents)
     circuit_title = circuit_title.group()
     sp_file.close()
 
     # write the new pex file with info in the memory
     output_file = open(output_file_name, "w")
     output_file.write(part1)
-    output_file.write(circuit_title)
+    output_file.write(circuit_title+'\n')
     output_file.write(part2)
     output_file.close()
 

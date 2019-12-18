@@ -75,8 +75,7 @@ class bank(design.design):
         self.bank_array_ll = self.offset_all_coordinates().scale(-1,-1)
         self.bank_array_ur = self.bitcell_array_inst.ur()
         self.bank_array_ul = self.bitcell_array_inst.ul()
-
-
+        
         self.DRC_LVS()
 
     def add_pins(self):
@@ -968,7 +967,7 @@ class bank(design.design):
         stage_effort_list += self.port_address.wordline_driver.determine_wordline_stage_efforts(wordline_cout,inp_is_rise)
         
         return stage_effort_list
-        
+
     def get_wl_en_cin(self):
         """Get the relative capacitance of all the clk connections in the bank"""
         #wl_en only used in the wordline driver.

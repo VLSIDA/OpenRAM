@@ -8,6 +8,7 @@
 
 import debug
 import design
+from globals import OPTS
 import logical_effort
 from tech import parameter, drc
 
@@ -78,7 +79,39 @@ class bitcell_base(design.design):
             fmt_str = "Storage nodes={} not found in spice file."
             debug.info(1, fmt_str.format(self.storage_nets))
             return None
-    
+
+    def get_storage_net_offset(self):
+        """
+        Gets the location of the storage net labels to add top level 
+        labels for pex simulation.
+        """
+        #TODO: use getTexts to support custom bitcells
+        # If we generated the bitcell, we already know where Q and Q_bar are
+        #if OPTS.bitcell is not "pbitcell":
+        #    self.storage_net_offsets = []
+        #    for net in get_storage_net_names:
+        #        if net is "Q" or "Q_bar":
+        #            for text in self.getTexts("metal1"):
+        #               self.storage_net_offsets.append(text.offsetInMicrons)
+        return(self.storage_net_offsets)
+
+    def get_normalized_storage_net_offset(self):               
+        """
+        Convert storage net offset to be relative to the bottom left corner
+        of the bitcell. This is useful for making sense of offsets outside 
+        of the bitcell.
+        """     
+
+        Q_x = self.storage_net_offsets[0][0] - self.leftmost_xpos
+        Q_y = self.storage_net_offsets[0][1] - self.botmost_ypos
+        Q_bar_x = self.storage_net_offsets[1][0] - self.leftmost_xpos
+        Q_bar_y = self.storage_net_offsets[1][1] - self.botmost_ypos
+
+        normalized_storage_net_offset = [[Q_x,Q_y],[Q_bar_x,Q_bar_y]]
+
+        return normalized_storage_net_offset
+
+
     def build_graph(self, graph, inst_name, port_nets):
         """
         By default, bitcells won't be part of the graph.

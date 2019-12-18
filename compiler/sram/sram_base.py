@@ -18,6 +18,7 @@ from design import design
 from verilog import verilog
 from lef import lef
 from sram_factory import factory
+from tech import drc
 import logical_effort
 
 class sram_base(design, verilog, lef):
@@ -85,6 +86,41 @@ class sram_base(design, verilog, lef):
         self.add_pin("vdd","POWER")
         self.add_pin("gnd","GROUND")
 
+    def add_global_pex_labels(self):
+        """
+        Add pex labels at the sram level for spice analysis
+        """
+
+        # add pex labels for bitcell
+        for bank_num in range(0,len(self.bank_insts)):
+            bank = self.bank_insts[bank_num]
+            pex_offsets = bank.reverse_bitcell_transformation()
+
+            bank_offset = pex_offsets[0] # offset bank relative to sram
+            Q_offset = pex_offsets[1] # offset of storage relative to bank
+            Q_bar_offset = pex_offsets[2] # offset of storage relative to bank
+            
+            layer = "metal1"
+
+            for i in range(0,len(bank_offset)):
+                
+                Q = [bank_offset[i][0] + Q_offset[i][0], bank_offset[i][1] + Q_offset[i][1]]
+                Q_bar = [bank_offset[i][0] + Q_bar_offset[i][0], bank_offset[i][1] + Q_bar_offset[i][1]]
+
+                self.add_layout_pin_rect_center("bitcell_Q_b{0}_r{1}_c{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)) , layer, Q) 
+                self.add_layout_pin_rect_center("bitcell_Q_bar_b{0}_r{1}_c{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)), layer, Q_bar)
+
+        # add pex labels for control logic
+        for i in range  (0,len(self.control_logic_insts)):
+                control_logic_offset = self.control_logic_insts[i].offset
+                for output in self.control_logic_insts[i].mod.output_list:
+                    pin = self.control_logic_insts[i].mod.get_pin(output)
+                    offset = [control_logic_offset[0] + pin.center()[0], control_logic_offset[1] + pin.center()[1]]
+                    self.add_layout_pin_rect_center("{0}{1}".format(pin.name,i), "metal1", offset)
+
+             
+            
+
 
     def create_netlist(self):
         """ Netlist creation """
@@ -125,6 +161,8 @@ class sram_base(design, verilog, lef):
         highest_coord = self.find_highest_coords()
         self.width = highest_coord[0]
         self.height = highest_coord[1]
+
+        self.add_global_pex_labels()
 
         start_time = datetime.now()
         # We only enable final verification if we have routed the design

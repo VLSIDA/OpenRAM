@@ -12,6 +12,8 @@ import debug
 from vector import vector
 import tech
 import math
+import copy
+import numpy as np
 from globals import OPTS
 from utils import round_to_grid
 
@@ -221,9 +223,8 @@ class instance(geometry):
         self.mirror = mirror
         self.rotate = rotate
         self.update_boundary()
-        debug.info(3, "placing instance {}".format(self))
-        
-    
+        debug.info(3, "placing instance {}".format(self))       
+
     def get_pin(self,name,index=-1):
         """ Return an absolute pin that is offset and transformed based on
         this instance location. Index will return one of several pins."""
@@ -241,20 +242,109 @@ class instance(geometry):
     def get_num_pins(self, name):
         """ Return the number of pins of a given name """
         return len(self.mod.get_pins(name))
-    
+
     def get_pins(self,name):
         """ Return an absolute pin that is offset and transformed based on
         this instance location. """
-        
+
         import copy
         pin = copy.deepcopy(self.mod.get_pins(name))
-        
+
         new_pins = []
         for p in pin:
             p.transform(self.offset,self.mirror,self.rotate)                
             new_pins.append(p)
         return new_pins
+
+    def reverse_bitcell_transformation(self):
+        path = []
+        bitcell_paths = []
+        pex_offsets = []
+        Q_offsets = []
+        Q_bar_offsets = []
+
+        def walk_subtree(node):
+            path.append(node)
+            
+            if node.mod.name == 'pbitcell':
+                bitcell_paths.append(copy.copy(path))
+
+                Q_x = node.mod.get_normalized_storage_net_offset()[0][0]
+                Q_y = node.mod.get_normalized_storage_net_offset()[0][1]
+
+                Q_bar_x = node.mod.get_normalized_storage_net_offset()[1][0]
+                Q_bar_y = node.mod.get_normalized_storage_net_offset()[1][1]
+                
+                if node.mirror == 'MX':
+                    Q_y = -1 * Q_y
+                    Q_bar_y = -1 * Q_bar_y
+
+                Q_offsets.append([Q_x, Q_y])    
+                Q_bar_offsets.append([Q_bar_x, Q_bar_y])
+
+
+            elif node.mod.insts is not []:
+                for instance in node.mod.insts:
+                    walk_subtree(instance)
+            path.pop(-1)
+
+        def calculate_transform(node):
+            #set up the rotation matrix        
+            angle = math.radians(float(node.rotate))
+            mRotate = np.array([[math.cos(angle),-math.sin(angle),0.0],
+                                [math.sin(angle),math.cos(angle),0.0],
+                                [0.0,0.0,1.0]])
+
+            #set up translation matrix
+            translateX = float(node.offset[0])
+            translateY = float(node.offset[1])
+            mTranslate = np.array([[1.0,0.0,translateX],
+                                   [0.0,1.0,translateY],
+                                   [0.0,0.0,1.0]])
+            
+            #set up the scale matrix (handles mirror X)
+            scaleX = 1.0
+            if(node.mirror == 'MX'):
+                scaleY = -1.0
+            else:
+                scaleY = 1.0
+            mScale = np.array([[scaleX,0.0,0.0],
+                               [0.0,scaleY,0.0],
+                               [0.0,0.0,1.0]])
+            
+            return (mRotate, mScale, mTranslate)
+
+        def apply_transform(mtransforms, uVector, vVector, origin):
+            origin = np.dot(mtransforms[0], origin)  #rotate
+            uVector = np.dot(mtransforms[0], uVector)  #rotate
+            vVector = np.dot(mtransforms[0], vVector)  #rotate
+            origin = np.dot(mtransforms[1], origin)  #scale
+            uVector = np.dot(mtransforms[1], uVector)  #scale
+            vVector = np.dot(mtransforms[1], vVector)  #scale
+            origin = np.dot(mtransforms[2], origin)
+
+            return(uVector, vVector, origin)
+
+        def apply_path_transform(path):
+            uVector = np.array([[1.0],[0.0],[0.0]])
+            vVector = np.array([[0.0],[1.0],[0.0]])
+            origin = np.array([[0.0],[0.0],[1.0]]) 
+
+            while(path):
+                instance = path.pop(-1)
+                mtransforms = calculate_transform(instance)
+                (uVector, vVector, origin) = apply_transform(mtransforms, uVector, vVector, origin)
+            
+            return (uVector, vVector, origin)
+
+        walk_subtree(self)
+        for path in bitcell_paths:
+            vector_spaces = apply_path_transform(path)
+            origin = vector_spaces[2]
+            pex_offsets.append([origin[0], origin[1]])
         
+        return(pex_offsets, Q_offsets, Q_bar_offsets)
+
     def __str__(self):
         """ override print function output """
         return "( inst: " + self.name + " @" + str(self.offset) + " mod=" + self.mod.name + " " + self.mirror + " R=" + str(self.rotate) + ")"

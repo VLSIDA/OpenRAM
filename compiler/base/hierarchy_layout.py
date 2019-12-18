@@ -1124,6 +1124,8 @@ class layout():
         pdf.drawLayout()
         pdf.writeToFile(pdf_name)
 
+
+
     def print_attr(self):
         """Prints a list of attributes for the current layout object"""
         debug.info(0, 

@@ -217,8 +217,12 @@ class delay(simulation):
         storage_names = cell_inst.mod.get_storage_net_names()
         debug.check(len(storage_names) == 2, ("Only inverting/non-inverting storage nodes"
                                               "supported for characterization. Storage nets={}").format(storage_names))
-        q_name = cell_name+'.'+str(storage_names[0])
-        qbar_name = cell_name+'.'+str(storage_names[1])
+        if not OPTS.use_pex:                                              
+            q_name = cell_name+'.'+str(storage_names[0])
+            qbar_name = cell_name+'.'+str(storage_names[1])
+        else:
+            q_name = "bitcell_Q_r{0}_c{1}".format(OPTS.num_words -1, OPTS.word_size-1)
+            qbar_name = "bitcell_Q_r{0}_c{1}".format(OPTS.num_words -1, OPTS.word_size-1)
         
         # Bit measures, measurements times to be defined later. The measurement names must be unique
         # but they is enforced externally

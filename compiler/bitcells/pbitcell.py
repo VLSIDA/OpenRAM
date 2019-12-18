@@ -26,7 +26,7 @@ class pbitcell(bitcell_base.bitcell_base):
         self.num_w_ports = OPTS.num_w_ports
         self.num_r_ports = OPTS.num_r_ports
         self.total_ports = self.num_rw_ports + self.num_w_ports + self.num_r_ports
-
+        
         self.replica_bitcell = replica_bitcell
         self.dummy_bitcell = dummy_bitcell
 
@@ -152,7 +152,7 @@ class pbitcell(bitcell_base.bitcell_base):
             self.Q_bar = "Q_bar"
         self.Q = "Q"
         self.storage_nets = [self.Q, self.Q_bar]
-        
+
     def add_modules(self):
         """ Determine size of transistors and add ptx modules """
         # if there are any read/write ports,
@@ -353,6 +353,11 @@ class pbitcell(bitcell_base.bitcell_base):
         self.right_building_edge = right_inverter_xpos \
                                    + self.inverter_nmos.active_width
 
+    def add_pex_labels(self, left_inverter_offset, right_inverter_offset):
+        self.add_label("Q", "metal1", left_inverter_offset)
+        self.add_label("Q_bar", "metal1", right_inverter_offset)
+        self.storage_net_offsets = [left_inverter_offset, right_inverter_offset]
+
     def route_storage(self):
         """ Routes inputs and outputs of inverters to cross couple them """
         # connect input (gate) of inverters
@@ -398,6 +403,16 @@ class pbitcell(bitcell_base.bitcell_base):
         gate_offset_left = vector(self.inverter_nmos_left.get_pin("G").rc().x,
                                   contact_offset_right.y)
         self.add_path("poly", [contact_offset_right, gate_offset_left])
+
+        # add labels to cross couple inverter for extracted simulation
+        contact_offset_left_output =  vector(self.inverter_nmos_left.get_pin("D").rc().x \
+                                + 0.5 * contact.poly.height,
+                                self.cross_couple_upper_ypos)
+        
+        contact_offset_right_output =  vector(self.inverter_nmos_right.get_pin("S").lc().x \
+                                - 0.5*contact.poly.height,
+                                self.cross_couple_lower_ypos)
+        self.add_pex_labels(contact_offset_left_output, contact_offset_right_output)
 
     def route_rails(self):
         """ Adds gnd and vdd rails and connects them to the inverters """

@@ -31,7 +31,7 @@ class sram_factory:
         """
         self.__init__()
         
-    def create(self, module_type, **kwargs):
+    def create(self, module_type, module_name=None, **kwargs):
         """
         A generic function to create a module with a given module_type.
         The args are passed directly to the module constructor.
@@ -72,16 +72,18 @@ class sram_factory:
             if obj_kwargs == kwargs:
                 return obj_item
 
-        # Use the default  name if there are default arguments
-        # This is especially for library cells so that the
-        # spice and gds files can be found.
-        if len(kwargs) > 0:
-            # Create a unique name and increment the index
-            module_name = "{0}_{1}".format(real_module_type,
-                                           self.module_indices[real_module_type])
-            self.module_indices[real_module_type] += 1
-        else:
-            module_name = real_module_type
+        # If no prefered module name is provided, we generate one.
+        if module_name is None:
+            # Use the default  name if there are default arguments
+            # This is especially for library cells so that the
+            # spice and gds files can be found.
+            if len(kwargs) > 0:
+                # Create a unique name and increment the index
+                module_name = "{0}_{1}".format(real_module_type,
+                                               self.module_indices[real_module_type])
+                self.module_indices[real_module_type] += 1
+            else:
+                module_name = real_module_type
 
         # type_str = "type={}".format(real_module_type)
         # name_str = "name={}".format(module_name)

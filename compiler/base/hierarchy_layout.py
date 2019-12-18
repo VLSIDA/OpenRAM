@@ -1015,7 +1015,7 @@ class layout():
 
                 
         
-    def add_power_pin(self, name, loc, vertical=False, start_layer="m1"):
+    def add_power_pin(self, name, loc, size=[1,1], vertical=False, start_layer="m1"):
         """ 
         Add a single power pin from M3 down to M1 at the given center location.
         The starting layer is specified to determine which vias are needed.
@@ -1027,12 +1027,14 @@ class layout():
             
         if start_layer=="m1":
             self.add_via_center(layers=self.m1_stack,
+                                size=size,
                                 offset=loc,
                                 directions=direction)
 
 
         if start_layer=="m1" or start_layer=="m2":
             via=self.add_via_center(layers=self.m2_stack,
+                                    size=size,
                                     offset=loc,
                                     directions=direction) 
 

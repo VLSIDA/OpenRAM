@@ -226,11 +226,9 @@ class pnand2(pgate.pgate):
         mid2_offset = vector(out_offset.x, bottom_pin_offset.y)
         
         self.add_via_center(layers=self.m1_stack,
-                            offset=pmos_pin.center(),
-                            directions=("V", "H"))
+                            offset=pmos_pin.center())
         self.add_via_center(layers=self.m1_stack,
-                            offset=nmos_pin.center(),
-                            directions=("V", "H"))
+                            offset=nmos_pin.center())
         self.add_via_center(layers=self.m1_stack,
                             offset=out_offset)
         

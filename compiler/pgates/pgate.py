@@ -106,11 +106,8 @@ class pgate(design.design):
         else:
             debug.error("Invalid contact placement option.", -1)
 
-        # Non-preferred direction via
-
         v=self.add_via_center(layers=self.poly_stack,
-                              offset=contact_offset,
-                              directions = ("V", "H"))
+                              offset=contact_offset)
 
         self.add_layout_pin_rect_center(text=name,
                                         layer="m1",

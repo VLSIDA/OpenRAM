@@ -378,16 +378,14 @@ class pbitcell(bitcell_base.bitcell_base):
                                       + 0.5 * contact.polym1.height,
                                       self.cross_couple_upper_ypos)
         self.add_via_center(layers=self.poly_stack,
-                            offset=contact_offset_left,
-                            directions=("H", "H"))
+                            offset=contact_offset_left)
 
 
         contact_offset_right =  vector(self.inverter_nmos_right.get_pin("S").lc().x \
                                        - 0.5*contact.polym1.height,
                                        self.cross_couple_lower_ypos)
         self.add_via_center(layers=self.poly_stack,
-                            offset=contact_offset_right,
-                            directions=("H", "H"))
+                            offset=contact_offset_right)
 
         # connect contacts to gate poly (cross couple connections)
         gate_offset_right = vector(self.inverter_nmos_right.get_pin("G").lc().x,
@@ -784,8 +782,7 @@ class pbitcell(bitcell_base.bitcell_base):
                                     offset=port_contact_offset)
 
                 self.add_via_center(layers=self.m1_stack,
-                                    offset=wl_contact_offset,
-                                    directions=("H", "H"))
+                                    offset=wl_contact_offset)
 
                 self.add_path("poly", [gate_offset, port_contact_offset])
                 self.add_path("m2",
@@ -862,8 +859,7 @@ class pbitcell(bitcell_base.bitcell_base):
             supply_offset = vector(position.x + contact_correct,
                                    self.gnd_position.y)
             self.add_via_center(layers=self.m1_stack,
-                                offset=supply_offset,
-                                directions=("H", "H"))
+                                offset=supply_offset)
 
             self.add_path("m2", [position, supply_offset])
 
@@ -928,15 +924,13 @@ class pbitcell(bitcell_base.bitcell_base):
                                        - self.poly_to_contact - 0.5*contact.polym1.width,
                                        self.cross_couple_upper_ypos)
         self.add_via_center(layers=self.poly_stack,
-                            offset=left_storage_contact,
-                            directions=("H", "H"))
+                            offset=left_storage_contact)
 
         right_storage_contact =  vector(self.inverter_nmos_right.get_pin("G").rc().x \
                                         + self.poly_to_contact + 0.5*contact.polym1.width,
                                         self.cross_couple_upper_ypos)
         self.add_via_center(layers=self.poly_stack,
-                            offset=right_storage_contact,
-                            directions=("H", "H"))
+                            offset=right_storage_contact)
 
         inverter_gate_offset_left = vector(self.inverter_nmos_left.get_pin("G").lc().x, self.cross_couple_upper_ypos)
         self.add_path("poly", [left_storage_contact, inverter_gate_offset_left])

@@ -63,6 +63,13 @@ class sram_factory:
             overridden = module_type in OPTS.overridden.keys()
         return (module_type, overridden)
 
+    def is_duplicate_name(self, name):
+        for mods in self.objects.values():
+            for insts in mods:
+                if insts[1].name == name:
+                    return True
+        return False
+
     def create(self, module_type, module_name=None, **kwargs):
         """
         A generic function to create a module with a given module_type.
@@ -113,6 +120,10 @@ class sram_factory:
                 self.module_indices[real_module_type] += 1
             else:
                 module_name = real_module_type
+        else:
+            if self.is_duplicate_name(module_name):
+                raise ValueError("Modules with duplicate name are not allowed." \
+                                 " '{}'".format(module_name))
 
         # type_str = "type={}".format(real_module_type)
         # name_str = "name={}".format(module_name)

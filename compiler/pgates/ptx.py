@@ -125,6 +125,7 @@ class ptx(design.design):
         # This is not actually instantiated but used for calculations
         self.active_contact = factory.create(module_type="contact",
                                              layer_stack=self.active_stack,
+                                             directions = ("V", "V"),
                                              dimensions=(1, self.num_contacts))
 
         

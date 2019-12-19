@@ -64,7 +64,7 @@ class pgate(design.design):
                           height=height,
                           width=source_pin.width())
     
-    def route_input_gate(self, pmos_inst, nmos_inst, ypos, name, position="left", rotate=False):
+    def route_input_gate(self, pmos_inst, nmos_inst, ypos, name, position="left"):
         """ 
         Route the input gate to the left side of the cell for access.
         Position specifies to place the contact the left, center, or
@@ -87,16 +87,9 @@ class pgate(design.design):
         left_gate_offset = vector(nmos_gate_pin.lx(), ypos)
 
         # Center is completely symmetric.
-        if rotate:
-            contact_width = contact.polym1.height
-            contact_m1_width = contact.polym1.second_layer_height
-            contact_m1_height = contact.polym1.second_layer_width
-            directions = ("H", "V")
-        else:
-            contact_width = contact.polym1.width
-            contact_m1_width = contact.polym1.second_layer_width
-            contact_m1_height = contact.polym1.second_layer_height
-            directions = ("V", "H")
+        contact_width = contact.polym1.width
+        contact_m1_width = contact.polym1.second_layer_width
+        contact_m1_height = contact.polym1.second_layer_height
             
         if position == "center":
             contact_offset = left_gate_offset \
@@ -115,16 +108,15 @@ class pgate(design.design):
 
         # Non-preferred direction via
 
-        self.add_via_center(layers=self.poly_stack,
-                            offset=contact_offset,
-                            directions=directions)
+        v=self.add_via_center(layers=self.poly_stack,
+                              offset=contact_offset,
+                              directions = ("V", "H"))
 
         self.add_layout_pin_rect_center(text=name,
                                         layer="m1",
                                         offset=contact_offset,
                                         width=contact_m1_width,
                                         height=contact_m1_height)
-        
         # This is to ensure that the contact is
         # connected to the gate
         mid_point = contact_offset.scale(0.5, 1) \

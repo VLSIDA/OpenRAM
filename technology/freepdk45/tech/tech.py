@@ -57,7 +57,7 @@ beol_stacks = [m1_stack,
 layer_stacks = feol_stacks + beol_stacks
 
 preferred_directions = {"poly": "V",
-                        "active": "H",
+                        "active": "V",
                         "m1": "H",
                         "m2": "V",
                         "m3": "H",

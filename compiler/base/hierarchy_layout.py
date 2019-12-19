@@ -388,19 +388,15 @@ class layout():
 
     def get_preferred_direction(self, layer):
         """ Return the preferred routing directions """
-        if layer in ["m1", "m3", "m5"]:
-            return "H"
-        elif layer in ["active", "poly", "li", "m2", "m4"]:
-            return "V"
-        else:
-            debug.error("Unable to find preferred direction for {}".format(layer))
-
+        from tech import preferred_directions
+        return preferred_directions[layer]
         
     def add_via(self, layers, offset, size=[1,1], directions=None, implant_type=None, well_type=None):
         """ Add a three layer via structure. """
 
         if directions==None:
-            directions = (self.get_preferred_direction(layers[0]), self.get_preferred_direction(layers[2]))
+            directions = (self.get_preferred_direction(layers[0]),
+                          self.get_preferred_direction(layers[2]))
             
         from sram_factory import factory
         via = factory.create(module_type="contact",
@@ -421,7 +417,8 @@ class layout():
         """ Add a three layer via structure by the center coordinate accounting for mirroring and rotation. """
 
         if directions==None:
-            directions = (self.get_preferred_direction(layers[0]), self.get_preferred_direction(layers[2]))
+            directions = (self.get_preferred_direction(layers[0]),
+                          self.get_preferred_direction(layers[2]))
             
         from sram_factory import factory
         via = factory.create(module_type="contact",

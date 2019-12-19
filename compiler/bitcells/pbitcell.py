@@ -199,7 +199,6 @@ class pbitcell(bitcell_base.bitcell_base):
 
     def calculate_spacing(self):
         """ Calculate transistor spacings """
-        
         # calculate metal contact extensions over transistor active
         readwrite_nmos_contact_extension = 0.5 * \
                                            (self.readwrite_nmos.active_contact.height - self.readwrite_nmos.active_height)
@@ -263,7 +262,7 @@ class pbitcell(bitcell_base.bitcell_base):
         # spacing for vdd
         implant_constraint = max(inverter_pmos_contact_extension, 0) \
                              + 2 * self.implant_enclose_active \
-                             + 0.5 * (contact.activem1.width - self.m1_width)
+                             + 0.5*(self.inverter_pmos.active_contact.height - self.m1_width)
         metal1_constraint = max(inverter_pmos_contact_extension, 0) + self.m1_space
         self.vdd_offset = max(implant_constraint, metal1_constraint)  + 0.5*self.m1_width
 
@@ -367,11 +366,11 @@ class pbitcell(bitcell_base.bitcell_base):
         self.add_path("m1",
                       [self.inverter_nmos_left.get_pin("D").uc(),
                        self.inverter_pmos_left.get_pin("D").bc()],
-                      width=contact.activem1.second_layer_width)
+                      width=self.inverter_nmos_left.get_pin("D").width())
         self.add_path("m1",
                       [self.inverter_nmos_right.get_pin("S").uc(),
                        self.inverter_pmos_right.get_pin("S").bc()],
-                      width=contact.activem1.second_layer_width)
+                      width=self.inverter_nmos_right.get_pin("S").width())
 
         # add contacts to connect gate poly to drain/source
         # metal1 (to connect Q to Q_bar)

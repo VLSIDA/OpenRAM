@@ -30,7 +30,7 @@ class contact_test(openram_test):
 
             # Check single 1 x 1 contact"
             debug.info(2, "1 x 1 {} test".format(stack_name))
-            c = factory.create(module_type="contact", layer_stack=layer_stack, dimensions=(1, 1))
+            c = factory.create(module_type="contact", layer_stack=layer_stack, dimensions=(1, 1), directions=("H", "H"))
             self.local_drc_check(c)
             
             # Check single 1 x 1 contact"

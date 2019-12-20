@@ -224,10 +224,14 @@ class pnand2(pgate.pgate):
         # Midpoints of the L routes go horizontal first then vertical
         mid1_offset = vector(out_offset.x, top_pin_offset.y)
         mid2_offset = vector(out_offset.x, bottom_pin_offset.y)
-        
+
+        # Non-preferred active contacts
         self.add_via_center(layers=self.m1_stack,
+                            directions=("V","H"),
                             offset=pmos_pin.center())
+        # Non-preferred active contacts
         self.add_via_center(layers=self.m1_stack,
+                            directions=("V","H"),
                             offset=nmos_pin.center())
         self.add_via_center(layers=self.m1_stack,
                             offset=out_offset)

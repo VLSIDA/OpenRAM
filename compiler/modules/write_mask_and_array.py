@@ -139,7 +139,7 @@ class write_mask_and_array(design.design):
 
             for supply in ["gnd", "vdd"]:
                 supply_pin=self.and2_insts[i].get_pin(supply)
-                self.add_power_pin(supply, supply_pin.rc())
+                self.add_power_pin(supply, supply_pin.center())
 
 
         for supply in ["gnd", "vdd"]:

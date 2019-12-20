@@ -104,8 +104,6 @@ class write_mask_and_array(design.design):
 
 
     def add_layout_pins(self):
-        self.nand2 = factory.create(module_type="pnand2")
-        supply_pin=self.nand2.get_pin("vdd")
 
         # Create the enable pin that connects all write mask AND array's B pins
         beg_en_pin = self.and2_insts[0].get_pin("B")
@@ -139,15 +137,16 @@ class write_mask_and_array(design.design):
             self.add_via_center(layers=self.m2_stack,
                                 offset=en_pin.center())
 
-            self.add_power_pin("gnd", vector(supply_pin.width() + i * self.wmask_en_len, 0))
-            self.add_power_pin("vdd", vector(supply_pin.width() + i * self.wmask_en_len, self.height))
-            # Route power and ground rails together
-            if i < self.num_wmasks-1:
-                for n in ["gnd","vdd"]:
-                    pin = self.and2_insts[i].get_pin(n)
-                    next_pin = self.and2_insts[i+1].get_pin(n)
-                    self.add_path("m1",[pin.center(),next_pin.center()])
+            for supply in ["gnd", "vdd"]:
+                supply_pin=self.and2_insts[i].get_pin(supply)
+                self.add_power_pin(supply, supply_pin.rc())
 
+
+        for supply in ["gnd", "vdd"]:
+            supply_pin_left = self.and2_insts[0].get_pin(supply)
+            supply_pin_right = self.and2_insts[self.num_wmasks-1].get_pin(supply)
+            self.add_path("m1",[supply_pin_left.lc(), supply_pin_right.rc()])
+            
     def get_cin(self):
         """Get the relative capacitance of all the input connections in the bank"""
         # The enable is connected to an and2 for every row.

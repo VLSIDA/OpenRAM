@@ -42,6 +42,10 @@ class bank_select(design.design):
         self.place_instances()
         self.route_instances()
 
+        self.height = max([x.uy() for x in self.inv_inst]) + self.m1_width
+        self.width = max([x.rx() for x in self.inv_inst])
+        
+
         self.add_boundary()
         self.DRC_LVS()
 
@@ -96,14 +100,11 @@ class bank_select(design.design):
         
         self.xoffset_nand =  self.inv4x.width + 2*self.m2_pitch + drc("pwell_to_nwell")
         self.xoffset_nor =  self.inv4x.width + 2*self.m2_pitch + drc("pwell_to_nwell")
-        self.xoffset_inv = max(self.xoffset_nand + self.nand2.width, self.xoffset_nor + self.nor2.width) 
         self.xoffset_bank_sel_inv = 0 
         self.xoffset_inputs = 0
 
         self.yoffset_maxpoint = self.num_control_lines * self.inv4x.height
-        # Include the M1 pitches for the supply rails and spacing
-        self.height = self.yoffset_maxpoint + 2*self.m1_pitch
-        self.width = self.xoffset_inv + self.inv4x.width
+
         
     def create_instances(self):
         
@@ -197,7 +198,7 @@ class bank_select(design.design):
                                  mirror=mirror)
 
             # They all get inverters on the output
-            inv_inst.place(offset=[self.xoffset_inv, y_offset],
+            inv_inst.place(offset=[logic_inst.rx(), y_offset],
                            mirror=mirror)
             
 
@@ -312,14 +313,14 @@ class bank_select(design.design):
                                                     offset=pin_pos)
             
             # Add vdd/gnd supply rails
-            gnd_pin = inv_inst.get_pin("gnd")
+            gnd_pin = self.inv_inst[num].get_pin("gnd")
             left_gnd_pos = vector(0, gnd_pin.cy())
             self.add_layout_pin_segment_center(text="gnd",
                                                layer="m1",
                                                start=left_gnd_pos,
                                                end=gnd_pin.rc())
             
-            vdd_pin = inv_inst.get_pin("vdd")
+            vdd_pin = self.inv_inst[num].get_pin("vdd")
             left_vdd_pos = vector(0, vdd_pin.cy())
             self.add_layout_pin_segment_center(text="vdd",
                                                layer="m1",

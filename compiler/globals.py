@@ -304,6 +304,7 @@ def read_config(config_file, is_unit_test=True):
     except:
         debug.error("Unable to read configuration file: {0}".format(config_file),2)
 
+    OPTS.overridden = {}
     for k, v in config.__dict__.items():
         # The command line will over-ride the config file
         # except in the case of the tech name! This is because the tech name
@@ -311,6 +312,7 @@ def read_config(config_file, is_unit_test=True):
         # Note that if we re-read a config file, nothing will get read again!
         if k not in OPTS.__dict__ or k == "tech_name":
             OPTS.__dict__[k] = v
+            OPTS.overridden[k] = True
 
     # Massage the output path to be an absolute one
     if not OPTS.output_path.endswith('/'):

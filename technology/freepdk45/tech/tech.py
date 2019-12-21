@@ -12,6 +12,11 @@ from module_type import *
 """
 File containing the process technology parameters for FreePDK 45nm.
 """
+
+###################################################
+# Custom modules
+###################################################
+
 # This uses the default classes to instantiate module from
 # '$OPENRAM_HOME/compiler/modules'.
 # Using tech_modules['cellname'] you can override each class by providing a custom
@@ -19,7 +24,11 @@ File containing the process technology parameters for FreePDK 45nm.
 # For example: tech_modules['contact'] = 'contact_freepdk45'
 tech_modules = ModuleType()
 
-#GDS file info
+
+###################################################
+# GDS file info
+###################################################
+
 GDS = {}
 # gds units 
 # From http://www.cnf.cornell.edu/cnf_spie9.html: "The first

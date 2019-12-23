@@ -130,12 +130,12 @@ class pgate(design.design):
         max_y_offset = self.height + 0.5 * self.m1_width
         self.nwell_position = middle_position
         nwell_height = max_y_offset - middle_position.y
-        if layer["nwell"]:
+        if "nwell" in layer:
             self.add_rect(layer="nwell",
                           offset=middle_position,
                           width=self.well_width,
                           height=nwell_height)
-        if layer["vtg"]:
+        if "vtg" in layer:
             self.add_rect(layer="vtg",
                           offset=self.nwell_position,
                           width=self.well_width,
@@ -143,12 +143,12 @@ class pgate(design.design):
 
         pwell_position = vector(0, -0.5 * self.m1_width)
         pwell_height = middle_position.y - pwell_position.y
-        if layer["pwell"]:
+        if "pwell" in layer:
             self.add_rect(layer="pwell",
                           offset=pwell_position,
                           width=self.well_width,
                           height=pwell_height)
-        if layer["vtg"]:
+        if "vtg" in layer:
             self.add_rect(layer="vtg",
                           offset=pwell_position,
                           width=self.well_width,

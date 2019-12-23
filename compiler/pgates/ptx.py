@@ -146,11 +146,11 @@ class ptx(design.design):
         
         # Active width is determined by enclosure on both ends and contacted pitch,
         # at least one poly and n-1 poly pitches
-        self.ptx_active_width = 2 * self.end_to_poly + self.poly_width + \
+        self.active_width = 2 * self.end_to_poly + self.poly_width + \
                             (self.mults - 1) * self.poly_pitch
 
         # Active height is just the transistor width
-        self.ptx_active_height = self.tx_width
+        self.active_height = self.tx_width
 
         # Poly height must include poly extension over active
         self.poly_height = self.tx_width + 2 * self.poly_extend_active
@@ -178,11 +178,11 @@ class ptx(design.design):
 
         # This is the center of the first active contact offset (centered vertically)
         self.contact_offset = self.active_offset + vector(active_enclose_contact + 0.5 * self.contact_width,
-                                                          0.5 * self.ptx_active_height)
+                                                          0.5 * self.active_height)
                                      
         
         # Min area results are just flagged for now.
-        debug.check(self.ptx_active_width * self.ptx_active_height >= self.minarea_active,
+        debug.check(self.active_width * self.active_height >= self.minarea_active,
                     "Minimum active area violated.")
         # We do not want to increase the poly dimensions to fix
         # an area problem as it would cause an LVS issue.
@@ -312,16 +312,16 @@ class ptx(design.design):
         """
         self.add_rect(layer="active",
                       offset=self.active_offset,
-                      width=self.ptx_active_width,
-                      height=self.ptx_active_height)
+                      width=self.active_width,
+                      height=self.active_height)
         # If the implant must enclose the active, shift offset
         # and increase width/height
         enclose_width = self.implant_enclose_active
         enclose_offset = [enclose_width] * 2
         self.add_rect(layer="{}implant".format(self.implant_type),
                       offset=self.active_offset - enclose_offset,
-                      width=self.ptx_active_width + 2 * enclose_width,
-                      height=self.ptx_active_height + 2 * enclose_width)
+                      width=self.active_width + 2 * enclose_width,
+                      height=self.active_height + 2 * enclose_width)
 
     def add_well_implant(self):
         """

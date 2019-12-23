@@ -159,7 +159,7 @@ class ptx(design.design):
 
         # Well enclosure of active, ensure minwidth as well
         well_name = "{}well".format(self.well_type)
-        if layer[well_name]:
+        if well_name in layer:
             self.cell_well_width = max(self.active_width + 2 * self.well_enclose_active,
                                        self.well_width)
             self.cell_well_height = max(self.tx_width + 2 * self.well_enclose_active,
@@ -326,12 +326,12 @@ class ptx(design.design):
         Add an (optional) well and implant for the type of transistor.
         """
         well_name = "{}well".format(self.well_type)
-        if layer[well_name]:
+        if well_name in layer:
             self.add_rect(layer=well_name,
                           offset=(0,0),
                           width=self.cell_well_width,
                           height=self.cell_well_height)
-        if layer["vtg"]:
+        if "vtg" in layer:
             self.add_rect(layer="vtg",
                           offset=(0,0),
                           width=self.cell_well_width,

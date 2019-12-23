@@ -83,7 +83,7 @@ class contact(hierarchy_design.hierarchy_design):
         self.second_layer_name = second_layer
         
         # Contacts will have unique per first layer
-        if via_layer in tech.layer.keys():
+        if via_layer in tech.layer:
             self.via_layer_name = via_layer
         elif via_layer == "contact":
             if first_layer in ("active", "poly"):
@@ -171,7 +171,7 @@ class contact(hierarchy_design.hierarchy_design):
     def create_nitride_cut_enclosure(self):
         """ Special layer that encloses poly contacts in some processes """
         # Check if there is a special poly nitride cut layer
-        if "npc" not in tech.layer.keys():
+        if "npc" not in tech.layer:
             return
 
         # Only add for poly layers
@@ -224,13 +224,17 @@ class contact(hierarchy_design.hierarchy_design):
                       offset=implant_position,
                       width=implant_width,
                       height=implant_height)
-        well_position = self.first_layer_position - [drc("well_enclose_active")] * 2
-        well_width = self.first_layer_width + 2 * drc("well_enclose_active")
-        well_height = self.first_layer_height + 2 * drc("well_enclose_active")
-        self.add_rect(layer="{}well".format(self.well_type),
-                      offset=well_position,
-                      width=well_width,
-                      height=well_height)
+
+        # Optionally implant well if layer exists
+        well_layer = "{}well".format(self.well_type)
+        if well_layer in tech.layer:
+            well_position = self.first_layer_position - [drc("well_enclose_active")] * 2
+            well_width = self.first_layer_width + 2 * drc("well_enclose_active")
+            well_height = self.first_layer_height + 2 * drc("well_enclose_active")
+            self.add_rect(layer=well_layer,
+                          offset=well_position,
+                          width=well_width,
+                          height=well_height)
         
     def analytical_power(self, corner, load):
         """ Get total power of a module  """

@@ -141,13 +141,10 @@ class write_driver_array(design.design):
             for n in ["vdd", "gnd"]:
                 pin_list = self.driver_insts[i].get_pins(n)
                 for pin in pin_list:
-                    pin_pos = pin.center()
-                    # Add the M2->M3 stack 
-                    self.add_via_center(layers=self.m2_stack,
-                                        offset=pin_pos)
-                    self.add_layout_pin_rect_center(text=n,
-                                                    layer="m3",
-                                                    offset=pin_pos)
+                    self.add_power_pin(name = n,
+                                       loc = pin.center(),
+                                       vertical=True,
+                                       start_layer = "m2")
         if self.write_size:
             for bit in range(self.num_wmasks):
                 en_pin = self.driver_insts[bit*self.write_size].get_pin("en")

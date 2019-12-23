@@ -98,18 +98,15 @@ class sense_amp_array(design.design):
         for i in range(len(self.local_insts)):
             inst = self.local_insts[i]
             
-            gnd_pos = inst.get_pin("gnd").center()
-            self.add_via_center(layers=self.m2_stack,
-                                offset=gnd_pos)
-            self.add_layout_pin_rect_center(text="gnd",
-                                            layer="m3",
-                                            offset=gnd_pos)
-            vdd_pos = inst.get_pin("vdd").center()
-            self.add_via_center(layers=self.m2_stack,
-                                offset=vdd_pos)
-            self.add_layout_pin_rect_center(text="vdd",
-                                            layer="m3",
-                                            offset=vdd_pos)
+            self.add_power_pin(name = "gnd",
+                               loc = inst.get_pin("gnd").center(),
+                               start_layer="m2",
+                               vertical=True)
+
+            self.add_power_pin(name = "vdd",
+                               loc = inst.get_pin("vdd").center(),
+                               start_layer="m2",
+                               vertical=True)
 
             bl_pin = inst.get_pin("bl")            
             br_pin = inst.get_pin("br")

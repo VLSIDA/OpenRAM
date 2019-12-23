@@ -180,14 +180,10 @@ class single_level_column_mux(pgate.pgate):
                             implant_type="p",
                             well_type="p")
 
-        # Add the M1->M2->M3 stack
-        self.add_via_center(layers=self.m1_stack,
-                            offset=active_pos)
-        self.add_via_center(layers=self.m2_stack,
-                            offset=active_pos)
-        self.add_layout_pin_rect_center(text="gnd",
-                                        layer="m3",
-                                        offset=active_pos)
+        # Add the M1->..->power_grid_layer stack
+        self.add_power_pin(name = "gnd",
+                           loc = active_pos,
+                           start_layer="m1")
 
         # Add well enclosure over all the tx and contact
         self.add_rect(layer="pwell",

@@ -94,21 +94,21 @@ class sram_base(design, verilog, lef):
         # add pex labels for bitcell
         for bank_num in range(0,len(self.bank_insts)):
             bank = self.bank_insts[bank_num]
-            pex_offsets = bank.reverse_bitcell_transformation()
+            pex_offsets = bank.reverse_transformation(bank.mod.bitcell.name)
 
             bank_offset = pex_offsets[0] # offset bank relative to sram
             Q_offset = pex_offsets[1] # offset of storage relative to bank
             Q_bar_offset = pex_offsets[2] # offset of storage relative to bank
             
-            layer = "metal1"
+            layer_name = "metal1"
 
             for i in range(0,len(bank_offset)):
                 
                 Q = [bank_offset[i][0] + Q_offset[i][0], bank_offset[i][1] + Q_offset[i][1]]
                 Q_bar = [bank_offset[i][0] + Q_bar_offset[i][0], bank_offset[i][1] + Q_bar_offset[i][1]]
 
-                self.add_layout_pin_rect_center("bitcell_Q_b{0}_r{1}_c{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)) , layer, Q) 
-                self.add_layout_pin_rect_center("bitcell_Q_bar_b{0}_r{1}_c{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)), layer, Q_bar)
+                self.add_layout_pin_rect_center("bitcell_Q_b{0}_r{1}_c{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)) , layer_name, Q) 
+                self.add_layout_pin_rect_center("bitcell_Q_bar_b{0}_r{1}_c{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)), layer_name, Q_bar)
 
         # add pex labels for control logic
         for i in range  (0,len(self.control_logic_insts)):

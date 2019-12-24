@@ -256,18 +256,19 @@ class instance(geometry):
             new_pins.append(p)
         return new_pins
 
-    def reverse_bitcell_transformation(self):
+    def reverse_transformation(self, cell_name):
         path = []
-        bitcell_paths = []
+        cell_paths = []
         pex_offsets = []
         Q_offsets = []
         Q_bar_offsets = []
 
         def walk_subtree(node):
             path.append(node)
-            
-            if node.mod.name == 'pbitcell':
-                bitcell_paths.append(copy.copy(path))
+
+            if node.mod.name == cell_name:
+                print("bitcell found")
+                cell_paths.append(copy.copy(path))
 
                 Q_x = node.mod.get_normalized_storage_net_offset()[0][0]
                 Q_y = node.mod.get_normalized_storage_net_offset()[0][1]
@@ -338,7 +339,7 @@ class instance(geometry):
             return (uVector, vVector, origin)
 
         walk_subtree(self)
-        for path in bitcell_paths:
+        for path in cell_paths:
             vector_spaces = apply_path_transform(path)
             origin = vector_spaces[2]
             pex_offsets.append([origin[0], origin[1]])

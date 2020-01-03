@@ -22,30 +22,46 @@ class pin_layout:
         self.name = name
         # repack the rect as a vector, just in case
         if type(rect[0]) == vector:
-            self.rect = rect
+            self._rect = rect
         else:
-            self.rect = [vector(rect[0]), vector(rect[1])]
+            self._rect = [vector(rect[0]), vector(rect[1])]
         # snap the rect to the grid
-        self.rect = [x.snap_to_grid() for x in self.rect]
+        self._rect = [x.snap_to_grid() for x in self.rect]
 
         debug.check(self.width() > 0, "Zero width pin.")
         debug.check(self.height() > 0, "Zero height pin.")
         
         # if it's a string, use the name
         if type(layer_name_pp) == str:
-            self.layer = layer_name_pp
+            self._layer = layer_name_pp
         # else it is required to be a lpp
         else:
             for (layer_name, lpp) in layer.items():
                 if not lpp:
                     continue
                 if self.same_lpp(layer_name_pp, lpp):
-                    self.layer = layer_name
+                    self._layer = layer_name
                     break
             else:
                 debug.error("Couldn't find layer {}".format(layer_name_pp), -1)
 
         self.lpp = layer[self.layer]
+
+    @property
+    def layer(self):
+        return self._layer
+
+    @layer.setter
+    def layer(self, l):
+        self._layer = l
+
+    @property
+    def rect(self):
+        return self._rect
+
+    @rect.setter
+    def rect(self, r):
+        self._rect = r
 
     def __str__(self):
         """ override print function output """

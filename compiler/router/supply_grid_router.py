@@ -31,6 +31,8 @@ class supply_grid_router(router):
         This will route on layers in design. It will get the blockages from
         either the gds file name or the design itself (by saving to a gds file).
         """
+        start_time = datetime.now()
+
         # Power rail width in minimum wire widths
         self.rail_track_width = 3
         
@@ -40,8 +42,8 @@ class supply_grid_router(router):
         self.supply_rails = {}
         # This is the same as above but as a sigle set for the all the rails
         self.supply_rail_tracks = {}
-        
 
+        print_time("Init supply router", datetime.now(), start_time, 3)
 
         
     def create_routing_grid(self):

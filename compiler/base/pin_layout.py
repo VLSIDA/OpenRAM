@@ -46,6 +46,7 @@ class pin_layout:
                 debug.error("Couldn't find layer {}".format(layer_name_pp), -1)
 
         self.lpp = layer[self.layer]
+        self._recompute_hash()
 
     @property
     def layer(self):
@@ -54,6 +55,7 @@ class pin_layout:
     @layer.setter
     def layer(self, l):
         self._layer = l
+        self._recompute_hash()
 
     @property
     def rect(self):
@@ -62,6 +64,11 @@ class pin_layout:
     @rect.setter
     def rect(self, r):
         self._rect = r
+        self._recompute_hash()
+
+    def _recompute_hash(self):
+        """ Recompute the hash for our hash cache """
+        self._hash = hash(repr(self))
 
     def __str__(self):
         """ override print function output """
@@ -80,8 +87,12 @@ class pin_layout:
                                                self.rect[1])
 
     def __hash__(self):
-        """ Implement the hash function for sets etc. """
-        return hash(repr(self))
+        """
+        Implement the hash function for sets etc. We only return a cached
+        value, that is updated when either 'rect' or 'layer' are changed. This
+        is a major speedup, if pin_layout is used as a key for dicts.
+        """
+        return self._hash
     
     def __lt__(self, other):
         """ Provide a function for ordering items by the ll point """

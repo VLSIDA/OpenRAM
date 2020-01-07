@@ -90,8 +90,8 @@ class bitcell_base(design.design):
             self.storage_net_offsets = []
             for i in range(0, len(self.get_storage_net_names())):
                 for text in self.gds.getTexts(layer["metal1"]):
-                    if self.storage_nets[i] == text:
-                        print(text)
+                    if self.storage_nets[i] == text.textString.rstrip('\x00'):
+                        print(text.textString + "sucess")
                     
 
         return(self.storage_net_offsets)

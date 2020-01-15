@@ -267,14 +267,15 @@ class instance(geometry):
             path.append(node)
 
             if node.mod.name == cell_name:
-                print("bitcell found")
                 cell_paths.append(copy.copy(path))
+                
+                normalized_storage_nets = node.mod.get_normalized_storage_nets_offset()
 
-                Q_x = node.mod.get_normalized_storage_net_offset()[0][0]
-                Q_y = node.mod.get_normalized_storage_net_offset()[0][1]
+                Q_x = normalized_storage_nets[0][0]
+                Q_y = normalized_storage_nets[0][1]
 
-                Q_bar_x = node.mod.get_normalized_storage_net_offset()[1][0]
-                Q_bar_y = node.mod.get_normalized_storage_net_offset()[1][1]
+                Q_bar_x = normalized_storage_nets[1][0]
+                Q_bar_y = normalized_storage_nets[1][1]
                 
                 if node.mirror == 'MX':
                     Q_y = -1 * Q_y

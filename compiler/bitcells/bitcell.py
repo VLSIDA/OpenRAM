@@ -18,9 +18,9 @@ class bitcell(bitcell_base.bitcell_base):
     the layout and netlist should be available in the technology
     library.
     """
-
+    
     pin_names = ["bl", "br", "wl", "vdd", "gnd"]
-    storage_nets = ['Q', 'Qbar']
+    storage_nets = ['Q', 'Q_bar']
     type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
     (width, height) = utils.get_libcell_size("cell_6t",
                                              GDS["unit"],

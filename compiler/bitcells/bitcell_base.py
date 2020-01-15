@@ -88,27 +88,34 @@ class bitcell_base(design.design):
         # If we generated the bitcell, we already know where Q and Q_bar are
         if OPTS.bitcell is not "pbitcell":
             self.storage_net_offsets = []
-            for i in range(0, len(self.get_storage_net_names())):
+            for i in range(len(self.get_storage_net_names())):
                 for text in self.gds.getTexts(layer["metal1"]):
                     if self.storage_nets[i] == text.textString.rstrip('\x00'):
-                        print(text.textString + "sucess")
+                        self.storage_net_offsets.append(text.coordinates[0])
                     
+            for i in range(len(self.storage_net_offsets)):
+                self.storage_net_offsets[i]  = tuple([self.gds.info["units"][0] * x for x in self.storage_net_offsets[i]])
+
 
         return(self.storage_net_offsets)
 
-    def get_normalized_storage_net_offset(self):               
+    def get_normalized_storage_nets_offset(self):               
         """
         Convert storage net offset to be relative to the bottom left corner
         of the bitcell. This is useful for making sense of offsets outside 
         of the bitcell.
         """     
-        print("get normalized")
-        Q_x = self.get_storage_net_offset()[0][0] - self.leftmost_xpos
-        Q_y = self.get_storage_net_offset()[0][1] - self.botmost_ypos
-        Q_bar_x = self.get_storage_net_offset()[1][0] - self.leftmost_xpos
-        Q_bar_y = self.get_storage_net_offset()[1][1] - self.botmost_ypos
+        if OPTS.bitcell is not "pbitcell":
+            normalized_storage_net_offset = self.get_storage_net_offset()
 
-        normalized_storage_net_offset = [[Q_x,Q_y],[Q_bar_x,Q_bar_y]]
+        else:
+            net_offset = self.get_storage_net_offset()
+            Q_x = net_offset[0][0] - self.leftmost_xpos
+            Q_y = net_offset[0][1] - self.botmost_ypos
+            Q_bar_x = net_offset[1][0] - self.leftmost_xpos
+            Q_bar_y = net_offset[1][1] - self.botmost_ypos
+
+            normalized_storage_net_offset = [[Q_x,Q_y],[Q_bar_x,Q_bar_y]]
 
         return normalized_storage_net_offset
 

@@ -309,7 +309,7 @@ def run_pex(name, gds_name, sp_name, output=None, final_verification=False):
     out_errors = find_error(results)
     debug.check(os.path.isfile(output),"Couldn't find PEX extracted output.")
 
-    #correct_port(name,output,sp_name)
+    correct_port(name,output,sp_name)
     return out_errors
 
 def write_batch_pex_rule(gds_name,name,sp_name,output):
@@ -375,7 +375,7 @@ def write_script_pex_rule(gds_name,cell_name,output):
     else:
         pre = ""
     f.write(pre+"extract\n".format(cell_name))
-    f.write(pre+"ext2spice hierarchy on\n")
+    f.write(pre+"ext2spice hierarchy off\n")
     f.write(pre+"ext2spice format ngspice\n")
     f.write(pre+"ext2spice renumber off\n")
     f.write(pre+"ext2spice scale off\n")
@@ -414,14 +414,20 @@ def correct_port(name, output_file_name, ref_file_name):
     part2 = pex_file.read()
 
     bitcell_list = "+ "
-    for row in range(0,OPTS.num_words):
-        for col in range(0,OPTS.word_size):
-            bitcell_list += "bitcell_Q_r{0}_c{1} ".format(row,col)
-            bitcell_list += "bitcell_Q_bar_r{0}_c{1} ".format(row,col)
+    for bank in range(OPTS.num_banks):
+        for row in range(OPTS.num_words):
+            for col in range(OPTS.word_size):
+                bitcell_list += "bitcell_Q_b{0}_r{1}_c{2} ".format(bank, row,col)
+                bitcell_list += "bitcell_Q_bar_b{0}_r{1}_c{2} ".format(bank, row,col)
     bitcell_list += "\n"
 
+    control_list = "+ "
+    for bank in range(OPTS.num_banks):
+        control_list += "s_en{0}".format(bank)
+    control_list += '\n'
 
-    part2 = bitcell_list + part2
+    part2 = bitcell_list + control_list + part2
+
     pex_file.close()
 
     # obtain the correct definition line from the original spice file

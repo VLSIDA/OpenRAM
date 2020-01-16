@@ -52,10 +52,12 @@ class stimuli():
         for pin in pins:
             self.sf.write("{0} ".format(pin))
         if OPTS.use_pex:
-            for row in range(0,OPTS.num_words):
-                for col in range(0,OPTS.word_size):
-                    self.sf.write("bitcell_Q_r{0}_c{1} ".format(row,col))
-                    self.sf.write("bitcell_Q_bar_r{0}_c{1} ".format(row,col))
+            for bank in range(OPTS.num_banks):
+                for row in range(OPTS.num_words):
+                    for col in range(OPTS.word_size):
+                        self.sf.write("bitcell_Q_b{0}_r{1}_c{2} ".format(bank,row,col))
+                        self.sf.write("bitcell_Q_bar_b{0}_r{1}_c{2} ".format(bank,row,col))
+                self.sf.write("s_en{0} ".format(bank))
         self.sf.write("{0}\n".format(model_name))
 
 

@@ -221,8 +221,9 @@ class delay(simulation):
             q_name = cell_name+'.'+str(storage_names[0])
             qbar_name = cell_name+'.'+str(storage_names[1])
         else:
-            q_name = "bitcell_Q_r{0}_c{1}".format(OPTS.num_words -1, OPTS.word_size-1)
-            qbar_name = "bitcell_Q_r{0}_c{1}".format(OPTS.num_words -1, OPTS.word_size-1)
+            bank_num = self.sram.get_bank_num(self.sram.name, bit_row, bit_col)
+            q_name = "bitcell_Q_b{0}_r{1}_c{2}".format(bank_num, bit_row, bit_col)
+            qbar_name = "bitcell_Q_bar_b{0}_r{1}_c{2}".format(bank_num, bit_row, bit_col)
         
         # Bit measures, measurements times to be defined later. The measurement names must be unique
         # but they is enforced externally
@@ -284,6 +285,8 @@ class delay(simulation):
         debug.check(len(sa_mods) == 1, "Only expected one type of Sense Amp. Cannot perform s_en checks.")
         enable_name = sa_mods[0].get_enable_name()
         sen_name = self.get_alias_in_path(paths, enable_name, sa_mods[0])
+        if OPTS.use_pex:
+            #get sense amp multi bank
         return sen_name        
      
     def get_bl_name(self, paths, port):

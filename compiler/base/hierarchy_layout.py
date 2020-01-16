@@ -533,7 +533,6 @@ class layout():
                 height = boundary[1][1] - boundary[0][1]
                 width = boundary[1][0] - boundary[0][0]
                 (layer_number, layer_purpose) = techlayer[boundary_layer]
-                print(self.name, boundary, height, width)
                 gds_layout.addBox(layerNumber=layer_number,
                                   purposeNumber=layer_purpose,
                                   offsetInMicrons=boundary[0],
@@ -1019,7 +1018,7 @@ class layout():
             boundary_layer = "stdc"
         else:
             boundary_layer = "boundary"
-        if ur == None:
+        if not ur:
             self.boundary = self.add_rect(layer=boundary_layer,
                                           offset=ll,
                                           height=self.height,

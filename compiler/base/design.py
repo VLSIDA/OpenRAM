@@ -63,8 +63,8 @@ class design(hierarchy_design):
 
         contact1 = getattr(contact, layer1 + layer2)
         max_contact = max(contact1.width, contact1.height)
-        layer1_space = getattr(self, layer1+"_space")
-        layer2_space = getattr(self, layer2+"_space")
+        layer1_space = getattr(self, layer1 + "_space")
+        layer2_space = getattr(self, layer2 + "_space")
         pitch = max_contact + max(layer1_space, layer2_space)
 
         return pitch
@@ -83,7 +83,7 @@ class design(hierarchy_design):
                 if match.group(1) == "active_contact":
                     setattr(self, "contact_width", drc(match.group(0)))
                 else:
-                    setattr(self, match.group(1)+"_width", drc(match.group(0)))
+                    setattr(self, match.group(1) + "_width", drc(match.group(0)))
 
             # Single layer area rules
             match = re.search(r"minarea_(.*)", rule)
@@ -93,10 +93,10 @@ class design(hierarchy_design):
             # Single layer spacing rules
             match = re.search(r"(.*)_to_(.*)", rule)
             if match and match.group(1) == match.group(2):
-                setattr(self, match.group(1)+"_space", drc(match.group(0)))
+                setattr(self, match.group(1) + "_space", drc(match.group(0)))
             elif match and match.group(1) != match.group(2):
                 if match.group(2) == "poly_active":
-                    setattr(self, match.group(1)+"_to_contact",
+                    setattr(self, match.group(1) + "_to_contact",
                             drc(match.group(0)))
                 else:
                     setattr(self, match.group(0), drc(match.group(0)))

@@ -55,7 +55,7 @@ class contact(hierarchy_design.hierarchy_design):
         # Module does not have pins, but has empty pin list.
         self.pins = []
         self.create_layout()
-        
+
     def create_layout(self):
 
         self.setup_layers()
@@ -65,8 +65,10 @@ class contact(hierarchy_design.hierarchy_design):
         self.create_second_layer_enclosure()
         self.create_nitride_cut_enclosure()
         
-        self.height = max(obj.offset.y + obj.height for obj in self.objs)
-        self.width = max(obj.offset.x + obj.width for obj in self.objs)
+        self.height = max(self.first_layer_position.y + self.first_layer_height,
+                          self.second_layer_position.y + self.second_layer_height)
+        self.width = max(self.first_layer_position.x + self.first_layer_width,
+                         self.second_layer_position.x + self.second_layer_width)
 
         # Do not include the select layer in the height/width
         if self.implant_type and self.well_type:
@@ -228,9 +230,10 @@ class contact(hierarchy_design.hierarchy_design):
         # Optionally implant well if layer exists
         well_layer = "{}well".format(self.well_type)
         if well_layer in tech.layer:
-            well_position = self.first_layer_position - [drc("well_enclose_active")] * 2
-            well_width = self.first_layer_width + 2 * drc("well_enclose_active")
-            well_height = self.first_layer_height + 2 * drc("well_enclose_active")
+            well_enclose_active = drc(well_layer + "_enclose_active")
+            well_position = self.first_layer_position - [well_enclose_active] * 2
+            well_width = self.first_layer_width + 2 * well_enclose_active
+            well_height = self.first_layer_height + 2 * well_enclose_active
             self.add_rect(layer=well_layer,
                           offset=well_position,
                           width=well_width,

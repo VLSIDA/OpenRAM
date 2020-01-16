@@ -480,7 +480,7 @@ class sram_1bank(sram_base):
             debug.error("Signal={} not contained in control logic connections={}"\
                                                  .format(sen_name, control_conns))
         if sen_name in self.pins:
-            debug.error("Internal signal={} contained in port list. Name defined by the parent.")                
+            debug.error("Internal signal={} contained in port list. Name defined by the parent.")           
         return "X{}.{}".format(sram_name, sen_name)
         
     def get_cell_name(self, inst_name, row, col):

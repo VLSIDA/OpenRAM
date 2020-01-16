@@ -286,7 +286,7 @@ class delay(simulation):
         enable_name = sa_mods[0].get_enable_name()
         sen_name = self.get_alias_in_path(paths, enable_name, sa_mods[0])
         if OPTS.use_pex:
-            #get sense amp multi bank
+            sen_name = sen_name.split('.')[-1]
         return sen_name        
      
     def get_bl_name(self, paths, port):

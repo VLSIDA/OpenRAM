@@ -91,34 +91,45 @@ class sram_base(design, verilog, lef):
         Add pex labels at the sram level for spice analysis
         """
 
-        # add pex labels for bitcell
-        for bank_num in range(0,len(self.bank_insts)):
+        # add pex labels for bitcells
+        for bank_num in range(len(self.bank_insts)):
             bank = self.bank_insts[bank_num]
-            pex_offsets = bank.reverse_transformation(bank.mod.bitcell.name)
+            pex_offsets = bank.reverse_transformation_bitcell(bank.mod.bitcell.name)
 
             bank_offset = pex_offsets[0] # offset bank relative to sram
             Q_offset = pex_offsets[1] # offset of storage relative to bank
             Q_bar_offset = pex_offsets[2] # offset of storage relative to bank
+            bl_offsets = pex_offsets[3]
+            br_offsets = pex_offsets[4]
             
-            layer_name = "metal1"
+            storage_layer_name = "metal1"
+            bitline_layer_name = "metal2"
 
             for i in range(0,len(bank_offset)):
                 
                 Q = [bank_offset[i][0] + Q_offset[i][0], bank_offset[i][1] + Q_offset[i][1]]
                 Q_bar = [bank_offset[i][0] + Q_bar_offset[i][0], bank_offset[i][1] + Q_bar_offset[i][1]]
+                bl = [bank_offset[i][0] + bl_offsets[i][0], bank_offset[i][1] + bl_offsets[i][1]]
+                br = [bank_offset[i][0] + br_offsets[i][0], bank_offset[i][1] + br_offsets[i][1]]
 
-                self.add_layout_pin_rect_center("bitcell_Q_b{0}_r{1}_c{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)) , layer_name, Q) 
-                self.add_layout_pin_rect_center("bitcell_Q_bar_b{0}_r{1}_c{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)), layer_name, Q_bar)
+                self.add_layout_pin_rect_center("bitcell_Q_b{0}_r{1}_c{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)) , storage_layer_name, Q) 
+                self.add_layout_pin_rect_center("bitcell_Q_bar_b{0}_r{1}_c{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)), storage_layer_name, Q_bar)
+
+                self.add_layout_pin_rect_center("bitcell_bl_b{0}_c{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)) , bitline_layer_name, bl) 
+                self.add_layout_pin_rect_center("bitcell_br_b{0}_c{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)), bitline_layer_name, br)
+
+           
+            
 
         # add pex labels for control logic
-        for i in range  (0,len(self.control_logic_insts)):
+        for i in range  (len(self.control_logic_insts)):
             instance = self.control_logic_insts[i]
             control_logic_offset = instance.offset
             for output in instance.mod.output_list:
                 pin = instance.mod.get_pin(output)
                 pin.transform([0,0], instance.mirror, instance.rotate)
                 offset = [control_logic_offset[0] + pin.center()[0], control_logic_offset[1] + pin.center()[1]]
-                self.add_layout_pin_rect_center("{0}{1}".format(pin.name,i), "metal1", offset)
+                self.add_layout_pin_rect_center("{0}{1}".format(pin.name,i), storage_layer_name, offset)
 
              
             

@@ -255,13 +255,64 @@ class instance(geometry):
             p.transform(self.offset,self.mirror,self.rotate)                
             new_pins.append(p)
         return new_pins
+    
+    def calculate_transform(self, node):
+        #set up the rotation matrix        
+        angle = math.radians(float(node.rotate))
+        mRotate = np.array([[math.cos(angle),-math.sin(angle),0.0],
+                            [math.sin(angle),math.cos(angle),0.0],
+                            [0.0,0.0,1.0]])
 
-    def reverse_transformation(self, cell_name):
+        #set up translation matrix
+        translateX = float(node.offset[0])
+        translateY = float(node.offset[1])
+        mTranslate = np.array([[1.0,0.0,translateX],
+                                [0.0,1.0,translateY],
+                                [0.0,0.0,1.0]])
+        
+        #set up the scale matrix (handles mirror X)
+        scaleX = 1.0
+        if(node.mirror == 'MX'):
+            scaleY = -1.0
+        else:
+            scaleY = 1.0
+        mScale = np.array([[scaleX,0.0,0.0],
+                            [0.0,scaleY,0.0],
+                            [0.0,0.0,1.0]])
+        
+        return (mRotate, mScale, mTranslate)
+
+    def apply_transform(self, mtransforms, uVector, vVector, origin):
+        origin = np.dot(mtransforms[0], origin)  #rotate
+        uVector = np.dot(mtransforms[0], uVector)  #rotate
+        vVector = np.dot(mtransforms[0], vVector)  #rotate
+        origin = np.dot(mtransforms[1], origin)  #scale
+        uVector = np.dot(mtransforms[1], uVector)  #scale
+        vVector = np.dot(mtransforms[1], vVector)  #scale
+        origin = np.dot(mtransforms[2], origin)
+
+        return(uVector, vVector, origin)
+
+    def apply_path_transform(self, path):
+        uVector = np.array([[1.0],[0.0],[0.0]])
+        vVector = np.array([[0.0],[1.0],[0.0]])
+        origin = np.array([[0.0],[0.0],[1.0]]) 
+
+        while(path):
+            instance = path.pop(-1)
+            mtransforms = self.calculate_transform(instance)
+            (uVector, vVector, origin) = self.apply_transform(mtransforms, uVector, vVector, origin)
+        
+        return (uVector, vVector, origin)
+
+    def reverse_transformation_bitcell(self, cell_name):
         path = []
         cell_paths = []
-        pex_offsets = []
+        origin_offsets = []
         Q_offsets = []
         Q_bar_offsets = []
+        bl_offsets = []
+        br_offsets = []
 
         def walk_subtree(node):
             path.append(node)
@@ -270,6 +321,7 @@ class instance(geometry):
                 cell_paths.append(copy.copy(path))
                 
                 normalized_storage_nets = node.mod.get_normalized_storage_nets_offset()
+                normalized_bitline_nets = node.mod.get_normalized_bitline_offset()
 
                 Q_x = normalized_storage_nets[0][0]
                 Q_y = normalized_storage_nets[0][1]
@@ -277,75 +329,35 @@ class instance(geometry):
                 Q_bar_x = normalized_storage_nets[1][0]
                 Q_bar_y = normalized_storage_nets[1][1]
                 
+                bl_x = normalized_bitline_nets[0][0]
+                bl_y = normalized_bitline_nets[0][1]
+
+                br_x = normalized_bitline_nets[1][0]
+                br_y = normalized_bitline_nets[1][1]
+
                 if node.mirror == 'MX':
                     Q_y = -1 * Q_y
                     Q_bar_y = -1 * Q_bar_y
+                    bl_y = -1 * bl_y
+                    br_y = -1 * br_y
 
                 Q_offsets.append([Q_x, Q_y])    
                 Q_bar_offsets.append([Q_bar_x, Q_bar_y])
-
+                bl_offsets.append([bl_x, bl_y])
+                br_offsets.append([br_x, br_y])
 
             elif node.mod.insts is not []:
                 for instance in node.mod.insts:
                     walk_subtree(instance)
             path.pop(-1)
 
-        def calculate_transform(node):
-            #set up the rotation matrix        
-            angle = math.radians(float(node.rotate))
-            mRotate = np.array([[math.cos(angle),-math.sin(angle),0.0],
-                                [math.sin(angle),math.cos(angle),0.0],
-                                [0.0,0.0,1.0]])
-
-            #set up translation matrix
-            translateX = float(node.offset[0])
-            translateY = float(node.offset[1])
-            mTranslate = np.array([[1.0,0.0,translateX],
-                                   [0.0,1.0,translateY],
-                                   [0.0,0.0,1.0]])
-            
-            #set up the scale matrix (handles mirror X)
-            scaleX = 1.0
-            if(node.mirror == 'MX'):
-                scaleY = -1.0
-            else:
-                scaleY = 1.0
-            mScale = np.array([[scaleX,0.0,0.0],
-                               [0.0,scaleY,0.0],
-                               [0.0,0.0,1.0]])
-            
-            return (mRotate, mScale, mTranslate)
-
-        def apply_transform(mtransforms, uVector, vVector, origin):
-            origin = np.dot(mtransforms[0], origin)  #rotate
-            uVector = np.dot(mtransforms[0], uVector)  #rotate
-            vVector = np.dot(mtransforms[0], vVector)  #rotate
-            origin = np.dot(mtransforms[1], origin)  #scale
-            uVector = np.dot(mtransforms[1], uVector)  #scale
-            vVector = np.dot(mtransforms[1], vVector)  #scale
-            origin = np.dot(mtransforms[2], origin)
-
-            return(uVector, vVector, origin)
-
-        def apply_path_transform(path):
-            uVector = np.array([[1.0],[0.0],[0.0]])
-            vVector = np.array([[0.0],[1.0],[0.0]])
-            origin = np.array([[0.0],[0.0],[1.0]]) 
-
-            while(path):
-                instance = path.pop(-1)
-                mtransforms = calculate_transform(instance)
-                (uVector, vVector, origin) = apply_transform(mtransforms, uVector, vVector, origin)
-            
-            return (uVector, vVector, origin)
-
         walk_subtree(self)
         for path in cell_paths:
-            vector_spaces = apply_path_transform(path)
+            vector_spaces = self.apply_path_transform(path)
             origin = vector_spaces[2]
-            pex_offsets.append([origin[0], origin[1]])
+            origin_offsets.append([origin[0], origin[1]])
         
-        return(pex_offsets, Q_offsets, Q_bar_offsets)
+        return(origin_offsets, Q_offsets, Q_bar_offsets, bl_offsets, br_offsets)
 
     def __str__(self):
         """ override print function output """

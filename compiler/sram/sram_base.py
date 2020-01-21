@@ -115,8 +115,8 @@ class sram_base(design, verilog, lef):
                 self.add_layout_pin_rect_center("bitcell_Q_b{0}_r{1}_c{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)) , storage_layer_name, Q) 
                 self.add_layout_pin_rect_center("bitcell_Q_bar_b{0}_r{1}_c{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)), storage_layer_name, Q_bar)
 
-                self.add_layout_pin_rect_center("bitcell_bl_b{0}_c{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)) , bitline_layer_name, bl) 
-                self.add_layout_pin_rect_center("bitcell_br_b{0}_c{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)), bitline_layer_name, br)
+                self.add_layout_pin_rect_center("bl_b{0}_{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)) , bitline_layer_name, bl)
+                self.add_layout_pin_rect_center("br_b{0}_{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)), bitline_layer_name, br)
 
            
             

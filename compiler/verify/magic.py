@@ -419,6 +419,9 @@ def correct_port(name, output_file_name, ref_file_name):
             for col in range(OPTS.word_size):
                 bitcell_list += "bitcell_Q_b{0}_r{1}_c{2} ".format(bank, row,col)
                 bitcell_list += "bitcell_Q_bar_b{0}_r{1}_c{2} ".format(bank, row,col)
+        for col in range(OPTS.word_size):
+                bitcell_list += "bl_b{0}_c{2} ".format(bank, row,col)
+                bitcell_list += "br_b{0}_c{2} ".format(bank, row,col)
     bitcell_list += "\n"
 
     control_list = "+ "

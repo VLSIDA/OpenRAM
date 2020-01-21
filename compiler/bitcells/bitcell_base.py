@@ -101,11 +101,15 @@ class bitcell_base(design.design):
 
     def get_bitline_offset(self):
         self.bitline_names = ["bl", "br"]
+        found_bitlines = []
         self.bitline_offsets = []
         for i in range(len(self.bitline_names)):
             for text in self.gds.getTexts(layer["metal2"]):
-                if self.bitline_names[i] == text.textString.rstrip('\x00'):
-                    self.bitline_offsets.append(text.coordinates[0])
+                if not self.bitline_names[i] in found_bitlines:
+                    if self.bitline_names[i] == text.textString.rstrip('\x00'):
+                        self.bitline_offsets.append(text.coordinates[0])
+                        found_bitlines.append(self.bitline_names[i])
+                        continue
                 
         for i in range(len(self.bitline_offsets)):
             self.bitline_offsets[i]  = tuple([self.gds.info["units"][0] * x for x in self.bitline_offsets[i]])

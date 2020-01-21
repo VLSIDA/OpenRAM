@@ -51,18 +51,27 @@ class stimuli():
         self.sf.write("X{0} ".format(model_name))
         for pin in pins:
             self.sf.write("{0} ".format(pin))
-        if OPTS.use_pex:
-            for bank in range(OPTS.num_banks):
-                for row in range(OPTS.num_words):
-                    for col in range(OPTS.word_size):
-                        self.sf.write("bitcell_Q_b{0}_r{1}_c{2} ".format(bank,row,col))
-                        self.sf.write("bitcell_Q_bar_b{0}_r{1}_c{2} ".format(bank,row,col))
-                for col in range(OPTS.word_size):
-                    self.sf.write("bl_b{0}_c{2} ".format(bank, row,col))
-                    self.sf.write("br_b{0}_c{2} ".format(bank, row,col))
-                self.sf.write("s_en{0} ".format(bank))
         self.sf.write("{0}\n".format(model_name))
+    
+    def inst_sram_pex(self, pins, model_name):
+        self.sf.write("X{0} ".format(model_name))
+        for pin in pins:
+            self.sf.write("{0} ".format(pin))
+        for bank in range(OPTS.num_banks):
+            for row in range(OPTS.num_words):
+                for col in range(OPTS.word_size):
+                    self.sf.write("bitcell_Q_b{0}_r{1}_c{2} ".format(bank,row,col))
+                    self.sf.write("bitcell_Q_bar_b{0}_r{1}_c{2} ".format(bank,row,col))
+            for col in range(OPTS.word_size):
+                if OPTS.num_banks == 1:
+                    self.sf.write("bl_{2} ".format(bank, row,col))
+                    self.sf.write("br_{2} ".format(bank, row,col))
+                else:
+                    self.sf.write("bl{0}_{2} ".format(bank, row,col))
+                    self.sf.write("br{0}_{2} ".format(bank, row,col))
 
+            self.sf.write("s_en{0} ".format(bank))
+        self.sf.write("{0}\n".format(model_name))
 
     def create_inverter(self, size=1, beta=2.5):
         """ Generates inverter for the top level signals (only for sim purposes) """

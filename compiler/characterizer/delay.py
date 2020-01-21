@@ -302,10 +302,9 @@ class delay(simulation):
         exclude_set = self.get_bl_name_search_exclusions()
         for int_net in [cell_bl, cell_br]:
             bl_names.append(self.get_alias_in_path(paths, int_net, cell_mod, exclude_set))
-        #if OPTS.use_pex:
-        #    bank_num = 0
-        #    bl_names[0] = "bl_b{0}_{1}".format(bank_num, )
-        #    bl_names[1] = "br_b{0}_{1}".format(bank_num, )
+        if OPTS.use_pex:
+            for i in range(len(bl_names)):
+                bl_names[i] = bl_names[i].split('.')[-1]
         return bl_names[0], bl_names[1]         
 
     
@@ -396,8 +395,13 @@ class delay(simulation):
 
         # instantiate the sram
         self.sf.write("\n* Instantiation of the SRAM\n")
-        self.stim.inst_model(pins=self.pins,
-                             model_name=self.sram.name)
+        if not OPTS.use_pex:
+            self.stim.inst_model(pins=self.pins,
+                            model_name=self.sram.name)
+        else:
+            self.stim.inst_sram_pex(pins=self.pins, 
+                            model_name=self.sram.name)
+
         self.sf.write("\n* SRAM output loads\n")
         for port in self.read_ports:
             for i in range(self.word_size):

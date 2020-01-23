@@ -92,13 +92,10 @@ class pnand3(pgate.pgate):
         # Two PMOS devices and a well contact. Separation between each.
         # Enclosure space on the sides.
         self.well_width = 3 * self.pmos.active_width + self.pmos.active_contact.width \
-                          + 2 * self.active_space + 2 * self.well_enclose_active \
+                          + 2 * self.active_space + 2 * self.nwell_enclose_active \
                           - self.overlap_offset.x
         self.width = self.well_width
         # Height is an input parameter, so it is not recomputed.
-
-        # This will help with the wells and the input/output placement
-        self.output_pos = vector(0, 0.5*self.height)
 
         # This is the extra space needed to ensure DRC rules
         # to the active contacts
@@ -178,9 +175,12 @@ class pnand3(pgate.pgate):
         
         self.nmos3_pos = nmos2_pos + self.overlap_offset
         self.nmos3_inst.place(self.nmos3_pos)
-        
+
+        # This will help with the wells and the input/output placement
+        self.output_pos = vector(0, 0.5*self.height)
+
         # This should be placed at the top of the NMOS well
-        self.well_pos = vector(0, self.nmos1_inst.uy())
+        self.well_pos = self.output_pos
         
     def add_well_contacts(self):
         """ Add n/p well taps to the layout and connect to supplies """

@@ -116,7 +116,7 @@ class precharge(design.design):
         # adds the lower pmos to layout
         bl_xoffset = self.bitcell.get_pin(self.bitcell_bl).lx()
         self.lower_pmos_position = vector(max(bl_xoffset - contact_xdiff,
-                                              self.well_enclose_active),
+                                              self.nwell_enclose_active),
                                           self.pmos.active_offset.y)
         self.lower_pmos_inst.place(self.lower_pmos_position)
 
@@ -176,7 +176,7 @@ class precharge(design.design):
         # adds the contact from active to metal1
         well_contact_pos = self.upper_pmos1_inst.get_pin("D").center().scale(1, 0) \
                            + vector(0, self.upper_pmos1_inst.uy() + contact.activem1.height / 2 \
-                                    + self.well_extend_active)
+                                    + self.nwell_extend_active)
         self.add_via_center(layers=self.active_stack,
                             offset=well_contact_pos,
                             implant_type="n",

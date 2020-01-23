@@ -126,11 +126,14 @@ drc["layer_map"]=os.environ.get("OPENRAM_TECH")+"/scn3me_subm/layers.map"
 drc["minwidth_tx"] = 4*_lambda_
 drc["minlength_channel"] = 2*_lambda_
 
-# 1.4 Minimum spacing between wells of different type (if both are drawn) 
+# 1.4 Minimum spacing between wells of different type (if both are drawn)
 drc["pwell_to_nwell"] = 0
 # 1.3 Minimum spacing between wells of same type (if both are drawn)
-# 1.1 Minimum width 
-drc.add_layer("well",
+# 1.1 Minimum width
+drc.add_layer("nwell",
+              width = 12*_lambda_,
+              spacing = 6*_lambda_)
+drc.add_layer("pwell",
               width = 12*_lambda_,
               spacing = 6*_lambda_)
 
@@ -157,7 +160,10 @@ drc.add_layer("active",
               spacing = 4*_lambda_)
 
 # 2.3 Source/drain active to well edge 
-drc.add_enclosure("well",
+drc.add_enclosure("nwell",
+                  layer = "active",
+                  enclosure = 6*_lambda_)
+drc.add_enclosure("pwell",
                   layer = "active",
                   enclosure = 6*_lambda_)
 

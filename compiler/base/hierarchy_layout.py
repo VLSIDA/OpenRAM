@@ -68,8 +68,10 @@ class layout():
         return (base_offset, y_dir)
 
     def find_lowest_coords(self):
-        """Finds the lowest set of 2d cartesian coordinates within
-        this layout"""
+        """
+        Finds the lowest set of 2d cartesian coordinates within
+        this layout
+        """
 
         if len(self.objs) > 0:
             lowestx1 = min(obj.lx() for obj in self.objs if obj.name != "label")
@@ -116,6 +118,54 @@ class layout():
             return vector(max(highestx1, highestx2),
                           max(highesty1, highesty2))
 
+    def find_highest_layer_coords(self, layer):
+        """
+        Finds the highest set of 2d cartesian coordinates within
+        this layout on a layer
+        """
+        # Only consider the layer not the purpose for now
+        layerNumber = techlayer[layer][0]
+        try:
+            highestx = max(obj.rx() for obj in self.objs if obj.layerNumber == layerNumber)
+        except ValueError:
+            highestx =0
+        try:
+            highesty = max(obj.uy() for obj in self.objs if obj.layerNumber == layerNumber)
+        except ValueError:
+            highesty = 0
+
+        for inst in self.insts:
+            # This really should be rotated/mirrored etc...
+            subcoord = inst.mod.find_highest_layer_coords(layer) + inst.offset
+            highestx = max(highestx, subcoord.x)
+            highesty = max(highesty, subcoord.y)
+            
+        return vector(highestx, highesty)
+
+    def find_lowest_layer_coords(self, layer):
+        """
+        Finds the highest set of 2d cartesian coordinates within
+        this layout on a layer
+        """
+        # Only consider the layer not the purpose for now
+        layerNumber = techlayer[layer][0]
+        try:
+            lowestx = min(obj.lx() for obj in self.objs if obj.layerNumber == layerNumber)
+        except ValueError:
+            lowestx = 0
+        try:
+            lowesty = min(obj.by() for obj in self.objs if obj.layerNumber == layerNumber)
+        except ValueError:
+            lowesty = 0
+
+        for inst in self.insts:
+            # This really should be rotated/mirrored etc...
+            subcoord = inst.mod.find_lowest_layer_coords(layer) + inst.offset
+            lowestx = min(lowestx, subcoord.x)
+            lowesty = min(lowesty, subcoord.y)
+
+        return vector(lowestx, lowesty)
+        
     def translate_all(self, offset):
         """
         Translates all objects, instances, and pins by the given (x,y) offset
@@ -429,7 +479,7 @@ class layout():
         return inst
 
     def add_via_center(self, layers, offset, directions=None, size=[1,1], implant_type=None, well_type=None):
-        """ 
+        """
         Add a three layer via structure by the center coordinate
         accounting for mirroring and rotation.
         """
@@ -466,7 +516,7 @@ class layout():
                       mults=mults,
                       tx_type=tx_type)
         self.add_mod(mos)
-        inst = self.add_inst(name=mos.name, 
+        inst = self.add_inst(name=mos.name,
                              mod=mos,
                              offset=offset,
                              mirror=mirror,
@@ -652,22 +702,21 @@ class layout():
                                vertical=False,
                                make_pins=False)
 
-
     def create_bus(self, layer, pitch, offset, names, length, vertical, make_pins):
         """
         Create a horizontal or vertical bus. It can be either just rectangles, or actual
-        layout pins. It returns an map of line center line positions indexed by name.  
+        layout pins. It returns an map of line center line positions indexed by name.
         The other coordinate is a 0 since the bus provides a range.
         TODO: combine with channel router.
         """
 
         # half minwidth so we can return the center line offsets
-        half_minwidth = 0.5*drc["minwidth_{}".format(layer)]
+        half_minwidth = 0.5 * drc["minwidth_{}".format(layer)]
         
         line_positions = {}
         if vertical:
             for i in range(len(names)):
-                line_offset = offset + vector(i*pitch,0)
+                line_offset = offset + vector(i * pitch, 0)
                 if make_pins:
                     self.add_layout_pin(text=names[i],
                                         layer=layer,
@@ -885,7 +934,7 @@ class layout():
             return g
 
         def vcg_nets_overlap(net1, net2, vertical, pitch):
-            """ 
+            """
             Check all the pin pairs on two nets and return a pin
             overlap if any pin overlaps.
             """

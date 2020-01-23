@@ -333,7 +333,7 @@ class bank(design.design):
         self.col_addr_bus_width = self.m2_pitch*self.num_col_addr_lines
 
         # A space for wells or jogging m2
-        self.m2_gap = max(2*drc("pwell_to_nwell") + drc("well_enclose_active"),
+        self.m2_gap = max(2*drc("pwell_to_nwell") + drc("nwell_enclose_active"),
                           3*self.m2_pitch)
 
 

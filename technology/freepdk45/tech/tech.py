@@ -145,7 +145,10 @@ drc["minlength_channel"] = 0.05
 drc["pwell_to_nwell"] = 0.225
 # WELL.3 Minimum spacing of nwell/pwell at the same potential
 # WELL.4 Minimum width of nwell/pwell
-drc.add_layer("well",
+drc.add_layer("nwell",
+              width = 0.2,
+              spacing = 0.135)
+drc.add_layer("pwell",
               width = 0.2,
               spacing = 0.135)
 
@@ -174,7 +177,10 @@ drc.add_layer("active",
               width = 0.09,
               spacing = 0.08)
 # ACTIVE.3 Minimum enclosure/spacing of nwell/pwell to active
-drc.add_enclosure("well",
+drc.add_enclosure("nwell",
+                  layer = "active",
+                  enclosure = 0.055)
+drc.add_enclosure("pwell",
                   layer = "active",
                   enclosure = 0.055)
 

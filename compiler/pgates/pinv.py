@@ -153,7 +153,7 @@ class pinv(pgate.pgate):
         # the well width is determined the multi-finger PMOS device width plus
         # the well contact width and half well enclosure on both sides
         self.well_width = self.pmos.active_width + self.pmos.active_contact.width \
-                          + self.active_space + 2*self.well_enclose_active
+                          + self.active_space + 2*self.nwell_enclose_active
         self.width = self.well_width
         # Height is an input parameter, so it is not recomputed.
         
@@ -223,7 +223,7 @@ class pinv(pgate.pgate):
         self.output_pos = vector(0, 0.5 * (pmos_drain_pos.y + nmos_drain_pos.y))
 
         # This will help with the wells
-        self.well_pos = vector(0, self.nmos_inst.uy())
+        self.well_pos = self.output_pos
 
     def route_outputs(self):
         """

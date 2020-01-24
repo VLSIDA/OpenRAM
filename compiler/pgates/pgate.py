@@ -126,6 +126,8 @@ class pgate(design.design):
     def extend_wells(self, middle_position):
         """ Extend the n/p wells to cover whole cell """
 
+        # FIXME: float rounding problem
+        middle_position = middle_position.snap_to_grid()
         # Add a rail width to extend the well to the top of the rail
         nwell_max_offset = max(self.find_highest_layer_coords("nwell").y,
                                self.height + 0.5 * self.m1_width)

@@ -983,10 +983,12 @@ class pbitcell(bitcell_base.bitcell_base):
                                    self.read_nmos.well_height)
         well_height = max_nmos_well_height + self.port_ypos \
                       - self.nwell_enclose_active - self.gnd_position.y
-        offset = vector(self.leftmost_xpos, self.botmost_ypos)
+        # FIXME fudge factor xpos
+        well_width = self.width + 2*self.nwell_enclose_active
+        offset = vector(self.leftmost_xpos - self.nwell_enclose_active, self.botmost_ypos)
         self.add_rect(layer="pwell",
                       offset=offset,
-                      width=self.width,
+                      width=well_width,
                       height=well_height)
 
         # extend nwell to encompass inverter_pmos
@@ -1003,7 +1005,8 @@ class pbitcell(bitcell_base.bitcell_base):
         well_height = self.vdd_position.y - inverter_well_ypos \
                       + self.nwell_enclose_active + drc["minwidth_tx"]
 
-        offset = [inverter_well_xpos, inverter_well_ypos]
+        # FIXME fudge factor xpos
+        offset = [inverter_well_xpos + 2*self.nwell_enclose_active, inverter_well_ypos]
         self.add_rect(layer="nwell",
                       offset=offset,
                       width=well_width,

@@ -321,7 +321,7 @@ class instance(geometry):
                 cell_paths.append(copy.copy(path))
                 
                 normalized_storage_nets = node.mod.get_normalized_storage_nets_offset()
-                normalized_bitline_nets = node.mod.get_normalized_bitline_offset()
+                (normalized_bl_offsets, normalized_br_offsets) = node.mod.get_normalized_bitline_offset()
 
                 Q_x = normalized_storage_nets[0][0]
                 Q_y = normalized_storage_nets[0][1]
@@ -329,22 +329,26 @@ class instance(geometry):
                 Q_bar_x = normalized_storage_nets[1][0]
                 Q_bar_y = normalized_storage_nets[1][1]
                 
-                bl_x = normalized_bitline_nets[0][0]
-                bl_y = normalized_bitline_nets[0][1]
-
-                br_x = normalized_bitline_nets[1][0]
-                br_y = normalized_bitline_nets[1][1]
 
                 if node.mirror == 'MX':
                     Q_y = -1 * Q_y
                     Q_bar_y = -1 * Q_bar_y
-                    bl_y = -1 * bl_y
-                    br_y = -1 * br_y
+                    for pair in range(len(normalized_bl_offsets)):
+                        for offset in range(len(offset)):
+                            normalized_bl_offsets[pair][offset] = -1 * normalized_bl_offsets[pair][offset]
+
+                    for pair in range(len(normalized_br_offsets)):
+                        for offset in range(len(offset)):
+                            normalized_br_offsets[pair][offset] = -1 * normalized_br_offsets[pair][offset]
+                            
 
                 Q_offsets.append([Q_x, Q_y])    
                 Q_bar_offsets.append([Q_bar_x, Q_bar_y])
-                bl_offsets.append([bl_x, bl_y])
-                br_offsets.append([br_x, br_y])
+                
+                for offset in bl_offset:
+                    bl_offsets.append(offset)
+                for offset in br.offset:
+                    br_offsets.append(offset)
 
             elif node.mod.insts is not []:
                 for instance in node.mod.insts:

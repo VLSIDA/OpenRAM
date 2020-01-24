@@ -104,23 +104,31 @@ class sram_base(design, verilog, lef):
             
             storage_layer_name = "metal1"
             bitline_layer_name = "metal2"
-
-            for i in range(0,len(bank_offset)):
                 
-                Q = [bank_offset[i][0] + Q_offset[i][0], bank_offset[i][1] + Q_offset[i][1]]
-                Q_bar = [bank_offset[i][0] + Q_bar_offset[i][0], bank_offset[i][1] + Q_bar_offset[i][1]]
-                bl = [bank_offset[i][0] + bl_offsets[i][0], bank_offset[i][1] + bl_offsets[i][1]]
-                br = [bank_offset[i][0] + br_offsets[i][0], bank_offset[i][1] + br_offsets[i][1]]
+            Q = [bank_offset[bank_num][0] + Q_offset[bank_num][0], bank_offset[bank_num][1] + Q_offset[bank_num][1]]
+            Q_bar = [bank_offset[bank_num][0] + Q_bar_offset[bank_num][0], bank_offset[bank_num][1] + Q_bar_offset[bank_num][1]]
+            
+            bl = []
+            br = []
 
-                self.add_layout_pin_rect_center("bitcell_Q_b{0}_r{1}_c{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)) , storage_layer_name, Q) 
-                self.add_layout_pin_rect_center("bitcell_Q_bar_b{0}_r{1}_c{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)), storage_layer_name, Q_bar)
+            for i in range(len(bl_offsets)):
+                bl.append([bank_offset[bank_num][1] + bl_offsets[bank_num][2*(i)], bank_offset[bank_num][1] + bl_offsets[bank_num][2*(i)+1]])
 
-                if OPTS.num_banks == 1:
+            for i in range(len(br_offsets)):
+                br.append([bank_offset[bank_num][1] + br_offsets[bank_num][2*(i)], bank_offset[bank_num][1] + br_offsets[bank_num][2*(i)+1]])
+
+            self.add_layout_pin_rect_center("bitcell_Q_b{0}_r{1}_c{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)) , storage_layer_name, Q) 
+            self.add_layout_pin_rect_center("bitcell_Q_bar_b{0}_r{1}_c{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)), storage_layer_name, Q_bar)
+
+            if OPTS.num_banks == 1:
+                for i in range(len(bl_offsets)):
                     self.add_layout_pin_rect_center("bl_{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)) , bitline_layer_name, bl)
+
+                for i in range(len(br_offsets)):
                     self.add_layout_pin_rect_center("br_{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)), bitline_layer_name, br)
-                else:
-                    self.add_layout_pin_rect_center("bl{0}_{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)) , bitline_layer_name, bl)
-                    self.add_layout_pin_rect_center("br{0}_{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)), bitline_layer_name, br)                    
+            else:
+                self.add_layout_pin_rect_center("bl{0}_{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)) , bitline_layer_name, bl)
+                self.add_layout_pin_rect_center("br{0}_{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)), bitline_layer_name, br)                    
 
            
             
@@ -178,8 +186,8 @@ class sram_base(design, verilog, lef):
         highest_coord = self.find_highest_coords()
         self.width = highest_coord[0]
         self.height = highest_coord[1]
-
-        self.add_global_pex_labels()
+        if OPTS.use_pex:
+            self.add_global_pex_labels()
 
         start_time = datetime.now()
         # We only enable final verification if we have routed the design

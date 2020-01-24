@@ -100,21 +100,39 @@ class bitcell_base(design.design):
         return(self.storage_net_offsets)
 
     def get_bitline_offset(self):
-        self.bitline_names = ["bl", "br"]
-        found_bitlines = []
-        self.bitline_offsets = []
-        for i in range(len(self.bitline_names)):
+
+        bl_names = self.get_all_bl_names()
+        br_names = self.get_all_br_names()
+
+        found_bl = []
+        found_br = []
+
+        self.bl_offsets = []
+        self.br_offsets = []
+
+        for i in range(len(bl_names)):
             for text in self.gds.getTexts(layer["metal2"]):
-                if not self.bitline_names[i] in found_bitlines:
-                    if self.bitline_names[i] == text.textString.rstrip('\x00'):
-                        self.bitline_offsets.append(text.coordinates[0])
-                        found_bitlines.append(self.bitline_names[i])
+                if not bl_names[i] in found_bl:
+                    if bl_names[i] == text.textString.rstrip('\x00'):
+                        self.bl_offsets.append(text.coordinates[0])
+                        found_bl.append(bl_names[i])
                         continue
-                
-        for i in range(len(self.bitline_offsets)):
-            self.bitline_offsets[i]  = tuple([self.gds.info["units"][0] * x for x in self.bitline_offsets[i]])
-        
-        return(self.bitline_offsets)
+
+        for i in range(len(br_names)):
+            for text in self.gds.getTexts(layer["metal2"]):
+                if not br_names[i] in found_br:
+                    if br_names[i] == text.textString.rstrip('\x00'):
+                        self.br_offsets.append(text.coordinates[0])
+                        found_br.append(br_names[i])
+                        continue
+
+        for i in range(len(self.bl_offsets)):
+            self.bl_offsets[i]  = tuple([self.gds.info["units"][0] * x for x in self.bl_offsets[i]])
+
+        for i in range(len(self.br_offsets)):
+            self.br_offsets[i]  = tuple([self.gds.info["units"][0] * x for x in self.br_offsets[i]]) 
+
+        return(self.bl_offsets, self.br_offsets)
 
     def get_normalized_storage_nets_offset(self):               
         """

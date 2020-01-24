@@ -31,7 +31,7 @@ class layout():
         self.name = name
         self.width = None
         self.height = None
-        self.boundary = None
+        self.bounding_box = None
         self.insts = []      # Holds module/cell layout instances
         self.objs = []       # Holds all other objects (labels, geometries, etc)
         self.pin_map = {}    # Holds name->pin_layout map for all pins
@@ -574,7 +574,7 @@ class layout():
         # If it's not a premade cell
         # and we didn't add our own boundary,
         # we should add a boundary just for DRC in some technologies
-        if not self.is_library_cell and not self.boundary:
+        if not self.is_library_cell and not self.bounding_box:
             # If there is a boundary layer, and we didn't create one, add one.
             if "stdc" in techlayer.keys():
                 boundary_layer = "stdc"
@@ -1063,20 +1063,23 @@ class layout():
 
     def add_boundary(self, ll=vector(0, 0), ur=None):
         """ Add boundary for debugging dimensions """
+        if OPTS.netlist_only:
+            return
+        
         if "stdc" in techlayer.keys():
             boundary_layer = "stdc"
         else:
             boundary_layer = "boundary"
         if not ur:
-            self.boundary = self.add_rect(layer=boundary_layer,
-                                          offset=ll,
-                                          height=self.height,
-                                          width=self.width)
+            self.bounding_box = self.add_rect(layer=boundary_layer,
+                                              offset=ll,
+                                              height=self.height,
+                                              width=self.width)
         else:
-            self.boundary = self.add_rect(layer=boundary_layer,
-                                          offset=ll,
-                                          height=ur.y-ll.y,
-                                          width=ur.x-ll.x)
+            self.bounding_box = self.add_rect(layer=boundary_layer,
+                                              offset=ll,
+                                              height=ur.y-ll.y,
+                                              width=ur.x-ll.x)
         
     def add_enclosure(self, insts, layer="nwell"):
         """ Add a layer that surrounds the given instances. Useful

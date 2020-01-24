@@ -69,7 +69,9 @@ class geometry:
         """ Transform with offset, mirror and rotation to get the absolute pin location.
         We must then re-find the ll and ur. The master is the cell instance. """
         if OPTS.netlist_only:
+            self.boundary = [vector(0,0), vector(0,0)]
             return
+        
         (ll, ur) = [vector(0, 0), vector(self.width, self.height)]
 
         if mirror == "MX":

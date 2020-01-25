@@ -100,7 +100,7 @@ class pnand2(pgate.pgate):
         # Enclosure space on the sides.
         self.well_width = 2 * self.pmos.active_width + contact.activem1.width \
                           + 2 * self.active_space \
-                          + 2 * self.well_enclose_active
+                          + 2 * self.nwell_enclose_active
 
         self.width = self.well_width
         # Height is an input parameter, so it is not recomputed.
@@ -171,7 +171,7 @@ class pnand2(pgate.pgate):
                                  0.5 * (pmos1_pos.y + nmos1_pos.y + self.nmos.active_height))
 
         # This will help with the wells
-        self.well_pos = vector(0, self.nmos1_inst.uy())
+        self.well_pos = self.output_pos
         
     def add_well_contacts(self):
         """ 

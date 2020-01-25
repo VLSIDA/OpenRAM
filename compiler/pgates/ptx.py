@@ -58,11 +58,11 @@ class ptx(design.design):
         # some transistor sizes in other netlist depend on pbitcell
         self.create_layout()
 
-        #ll = self.find_lowest_coords()
-        #ur = self.find_highest_coords()
-        #self.add_boundary(ll, ur)
+        ll = self.find_lowest_coords()
+        ur = self.find_highest_coords()
+        self.add_boundary(ll, ur)
 
-        # (0,0) will be the corner ofthe active area (not the larger well)
+        # (0,0) will be the corner of the active area (not the larger well)
         self.translate_all(self.active_offset)
         
     def create_layout(self):
@@ -99,7 +99,7 @@ class ptx(design.design):
                                                                   drc("minwidth_poly"))
         area_str = "pd={0:.2f}u ps={0:.2f}u as={1:.2f}p ad={1:.2f}p".format(perimeter_sd,
                                                                             area_sd)
-        self.spice_device= main_str + area_str
+        self.spice_device = main_str + area_str
         self.spice.append("\n* ptx " + self.spice_device)
         # self.spice.append(".ENDS {0}".format(self.name))
 
@@ -108,8 +108,8 @@ class ptx(design.design):
         Pre-compute some handy layout parameters.
         """
 
-        if self.num_contacts==None:
-            self.num_contacts=self.calculate_num_contacts()
+        if not self.num_contacts:
+            self.num_contacts = self.calculate_num_contacts()
 
         # Determine layer types needed
         if self.tx_type == "nmos":
@@ -119,34 +119,35 @@ class ptx(design.design):
             self.implant_type = "p"
             self.well_type = "n"
         else:
-            self.error("Invalid transitor type.",-1)
-            
+            self.error("Invalid transitor type.", -1)
             
         # This is not actually instantiated but used for calculations
         self.active_contact = factory.create(module_type="contact",
                                              layer_stack=self.active_stack,
-                                             directions = ("V", "V"),
+                                             directions=("V", "V"),
                                              dimensions=(1, self.num_contacts))
 
-        
-        # The contacted poly pitch (or uncontacted in an odd technology)
+        # The contacted poly pitch
         self.poly_pitch = max(2 * self.contact_to_gate + self.contact_width + self.poly_width,
                               self.poly_space)
 
-        # The contacted poly pitch (or uncontacted in an odd technology)
-        self.contact_pitch = 2 * self.contact_to_gate + self.contact_width + self.poly_width
-        
-        # The enclosure of an active contact. Not sure about second term.
-        active_enclose_contact = max(self.active_enclose_contact,
-                                     (self.active_width - self.contact_width) / 2)
-                                                                  
-        # This is the distance from the edge of poly to the contacted end of active
-        self.end_to_poly = active_enclose_contact + self.contact_width + self.contact_to_gate
-        
+        # The contacted poly pitch
+        self.contact_spacing = 2 * self.contact_to_gate + \
+                               self.contact_width + self.poly_width
 
+        # This is measured because of asymmetric enclosure rules
+        active_enclose_contact = 0.5*(self.active_contact.width - self.contact_width)
+        
+        # This is the distance from the side of
+        # poly gate to the contacted end of active
+        # (i.e. the "outside" contacted diffusion sizes)
+        self.end_to_poly = self.active_contact.width - active_enclose_contact + \
+                           self.contact_to_gate
+        
         # Active width is determined by enclosure on both ends and contacted pitch,
         # at least one poly and n-1 poly pitches
-        self.active_width = 2 * self.end_to_poly + self.poly_width + (self.mults - 1) * self.poly_pitch
+        self.active_width = 2 * self.end_to_poly + self.poly_width + \
+                                 (self.mults - 1) * self.poly_pitch
 
         # Active height is just the transistor width
         self.active_height = self.tx_width
@@ -154,32 +155,35 @@ class ptx(design.design):
         # Poly height must include poly extension over active
         self.poly_height = self.tx_width + 2 * self.poly_extend_active
 
+        well_name = "{}well".format(self.well_type)
+        
         # The active offset is due to the well extension
-        self.active_offset = vector([self.well_enclose_active] * 2)
+        if well_name in layer:
+            well_enclose_active = drc(well_name + "_enclose_active")
+            self.active_offset = vector([well_enclose_active] * 2)
+        else:
+            self.active_offset = vector(0, 0)
 
         # Well enclosure of active, ensure minwidth as well
-        well_name = "{}well".format(self.well_type)
-        if layer[well_name]:
-            self.cell_well_width = max(self.active_width + 2 * self.well_enclose_active,
-                                       self.well_width)
-            self.cell_well_height = max(self.tx_width + 2 * self.well_enclose_active,
-                                        self.well_width)
+        if well_name in layer:
+            well_width_rule = drc("minwidth_" + well_name)
+            well_enclose_active = drc(well_name + "_enclose_active")
+            self.well_width = max(self.active_width + 2 * well_enclose_active,
+                                  well_width_rule)
+            self.well_height = max(self.active_height + 2 * well_enclose_active,
+                                   well_width_rule)
             # We are going to shift the 0,0, so include that in the width and height
-            self.height = self.cell_well_height - self.active_offset.y
-            self.width = self.cell_well_width - self.active_offset.x
+            self.height = self.well_height - self.active_offset.y
+            self.width = self.well_width - self.active_offset.x
         else:
-            # If no well, use the boundary of the active and poly
+            # The well is not included in the height and width
             self.height = self.poly_height
             self.width = self.active_width
         
-        # The active offset is due to the well extension
-        self.active_offset = vector([self.well_enclose_active] * 2)
-
         # This is the center of the first active contact offset (centered vertically)
-        self.contact_offset = self.active_offset + vector(active_enclose_contact + 0.5 * self.contact_width,
+        self.contact_offset = self.active_offset + vector(0.5 * self.active_contact.width,
                                                           0.5 * self.active_height)
                                      
-        
         # Min area results are just flagged for now.
         debug.check(self.active_width * self.active_height >= self.minarea_active,
                     "Minimum active area violated.")
@@ -215,13 +219,13 @@ class ptx(design.design):
             poly_offset = poly_positions[0] + vector(-0.5 * self.poly_width,
                                                      distance_above_active)
         # Remove the old pin and add the new one
-        self.remove_layout_pin("G") # only keep the main pin
+        # only keep the main pin
+        self.remove_layout_pin("G")
         self.add_layout_pin(text="G",
                             layer="poly",
                             offset=poly_offset,
                             width=poly_width,
                             height=self.poly_width)
-
 
     def connect_fingered_active(self, drain_positions, source_positions):
         """
@@ -230,10 +234,10 @@ class ptx(design.design):
         
         # This is the distance that we must route up or down from the center
         # of the contacts to avoid DRC violations to the other contacts
-        pin_offset = vector(0, 0.5 * self.active_contact.second_layer_height \
-                            + self.m1_space + 0.5 * self.m1_width)
+        pin_offset = vector(0,
+                            0.5 * self.active_contact.second_layer_height + self.m1_space + 0.5 * self.m1_width)
         # This is the width of a m1 extend the ends of the pin
-        end_offset = vector(self.m1_width/2,0)
+        end_offset = vector(self.m1_width / 2.0, 0)
 
         # drains always go to the MIDDLE of the cell,
         # so top of NMOS, bottom of PMOS
@@ -246,8 +250,9 @@ class ptx(design.design):
             source_dir = -1
             
         if len(source_positions) > 1:
-            source_offset = pin_offset.scale(source_dir,source_dir)
-            self.remove_layout_pin("S") # remove the individual connections
+            source_offset = pin_offset.scale(source_dir, source_dir)
+            # remove the individual connections
+            self.remove_layout_pin("S")
             # Add each vertical segment
             for a in source_positions:
                 self.add_path(("m1"),
@@ -326,25 +331,33 @@ class ptx(design.design):
         Add an (optional) well and implant for the type of transistor.
         """
         well_name = "{}well".format(self.well_type)
-        if layer[well_name]:
-            self.add_rect(layer=well_name,
-                          offset=(0,0),
-                          width=self.cell_well_width,
-                          height=self.cell_well_height)
-        if layer["vtg"]:
-            self.add_rect(layer="vtg",
-                          offset=(0,0),
-                          width=self.cell_well_width,
-                          height=self.cell_well_height)
+        if not (well_name in layer or "vtg" in layer):
+            return
 
+        center_pos = self.active_offset + vector(self.width / 2.0,
+                                                 self.height / 2.0)
+        well_ll = center_pos - vector(self.well_width / 2.0,
+                                      self.well_height / 2.0)
+        well_ll = well_ll - vector(0,
+                                   self.poly_extend_active)
+            
+        if well_name in layer:
+            self.add_rect(layer=well_name,
+                          offset=well_ll,
+                          width=self.well_width,
+                          height=self.well_height)
+        if "vtg" in layer:
+            self.add_rect(layer="vtg",
+                          offset=well_ll,
+                          width=self.well_width,
+                          height=self.well_height)
 
     def calculate_num_contacts(self):
-        """ 
+        """
         Calculates the possible number of source/drain contacts in a finger.
         For now, it is hard set as 1.
         """
         return 1
-
 
     def get_contact_positions(self):
         """
@@ -359,10 +372,10 @@ class ptx(design.design):
         for i in range(self.mults):
             if i%2:
                 # It's a source... so offset from previous drain.
-                source_positions.append(drain_positions[-1] + vector(self.contact_pitch, 0))
+                source_positions.append(drain_positions[-1] + vector(self.contact_spacing, 0))
             else:
                 # It's a drain... so offset from previous source.
-                drain_positions.append(source_positions[-1] + vector(self.contact_pitch, 0))
+                drain_positions.append(source_positions[-1] + vector(self.contact_spacing, 0))
 
         return [source_positions,drain_positions]
         
@@ -377,7 +390,7 @@ class ptx(design.design):
             contact=self.add_via_center(layers=self.active_stack,
                                         offset=pos,
                                         size=(1, self.num_contacts),
-                                        directions=("H","V"),
+                                        directions=("V","V"),
                                         implant_type=self.implant_type,
                                         well_type=self.well_type)
             self.add_layout_pin_rect_center(text="S",
@@ -391,7 +404,7 @@ class ptx(design.design):
             contact=self.add_via_center(layers=self.active_stack,
                                         offset=pos,
                                         size=(1, self.num_contacts),
-                                        directions=("H","V"),
+                                        directions=("V","V"),
                                         implant_type=self.implant_type,
                                         well_type=self.well_type)
             self.add_layout_pin_rect_center(text="D",

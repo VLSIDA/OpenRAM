@@ -977,33 +977,36 @@ class pbitcell(bitcell_base.bitcell_base):
         """
         # extend pwell to encompass entire nmos region of the cell up to the
         # height of the tallest nmos transistor
-        max_nmos_well_height = max(self.inverter_nmos.cell_well_height,
-                                   self.readwrite_nmos.cell_well_height,
-                                   self.write_nmos.cell_well_height,
-                                   self.read_nmos.cell_well_height)
+        max_nmos_well_height = max(self.inverter_nmos.well_height,
+                                   self.readwrite_nmos.well_height,
+                                   self.write_nmos.well_height,
+                                   self.read_nmos.well_height)
         well_height = max_nmos_well_height + self.port_ypos \
-                      - self.well_enclose_active - self.gnd_position.y
-        offset = vector(self.leftmost_xpos, self.botmost_ypos)
+                      - self.nwell_enclose_active - self.gnd_position.y
+        # FIXME fudge factor xpos
+        well_width = self.width + 2*self.nwell_enclose_active
+        offset = vector(self.leftmost_xpos - self.nwell_enclose_active, self.botmost_ypos)
         self.add_rect(layer="pwell",
                       offset=offset,
-                      width=self.width,
+                      width=well_width,
                       height=well_height)
 
         # extend nwell to encompass inverter_pmos
         # calculate offset of the left pmos well
         inverter_well_xpos = -(self.inverter_nmos.active_width + 0.5 * self.inverter_to_inverter_spacing) \
-                             - self.well_enclose_active
+                             - self.nwell_enclose_active
         inverter_well_ypos = self.inverter_nmos_ypos + self.inverter_nmos.active_height \
-                             + self.inverter_gap - self.well_enclose_active
+                             + self.inverter_gap - self.nwell_enclose_active
 
         # calculate width of the two combined nwells
         # calculate height to encompass nimplant connected to vdd
         well_width = 2 * (self.inverter_nmos.active_width + 0.5 * self.inverter_to_inverter_spacing) \
-                     + 2 * self.well_enclose_active
+                     + 2 * self.nwell_enclose_active
         well_height = self.vdd_position.y - inverter_well_ypos \
-                      + self.well_enclose_active + drc["minwidth_tx"]
+                      + self.nwell_enclose_active + drc["minwidth_tx"]
 
-        offset = [inverter_well_xpos, inverter_well_ypos]
+        # FIXME fudge factor xpos
+        offset = [inverter_well_xpos + 2*self.nwell_enclose_active, inverter_well_ypos]
         self.add_rect(layer="nwell",
                       offset=offset,
                       width=well_width,

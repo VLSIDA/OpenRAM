@@ -12,6 +12,11 @@ from module_type import *
 """
 File containing the process technology parameters for SCMOS 4m, 0.35um
 """
+
+###################################################
+# Custom modules
+###################################################
+
 # This uses the default classes to instantiate module from
 # '$OPENRAM_HOME/compiler/modules'.
 # Using tech_modules['cellname'] you can override each class by providing a custom
@@ -19,7 +24,10 @@ File containing the process technology parameters for SCMOS 4m, 0.35um
 # For example: tech_modules['contact'] = 'contact_scn4m'
 tech_modules = ModuleType()
 
-#GDS file info
+
+###################################################
+# GDS file info
+###################################################
 GDS={}
 # gds units
 # From http://www.cnf.cornell.edu/cnf_spie9.html: "The first
@@ -69,8 +77,6 @@ preferred_directions = {"poly": "V",
 
 # create the GDS layer map
 layer={} 
-layer["vtg"]            = None
-layer["vth"]            = None
 layer["pwell"]          = (41, 0)
 layer["nwell"]          = (42, 0)
 layer["active"]         = (43, 0)
@@ -120,11 +126,14 @@ drc["layer_map"]=os.environ.get("OPENRAM_TECH")+"/scn3me_subm/layers.map"
 drc["minwidth_tx"] = 4*_lambda_
 drc["minlength_channel"] = 2*_lambda_
 
-# 1.4 Minimum spacing between wells of different type (if both are drawn) 
+# 1.4 Minimum spacing between wells of different type (if both are drawn)
 drc["pwell_to_nwell"] = 0
 # 1.3 Minimum spacing between wells of same type (if both are drawn)
-# 1.1 Minimum width 
-drc.add_layer("well",
+# 1.1 Minimum width
+drc.add_layer("nwell",
+              width = 12*_lambda_,
+              spacing = 6*_lambda_)
+drc.add_layer("pwell",
               width = 12*_lambda_,
               spacing = 6*_lambda_)
 
@@ -151,7 +160,10 @@ drc.add_layer("active",
               spacing = 4*_lambda_)
 
 # 2.3 Source/drain active to well edge 
-drc.add_enclosure("well",
+drc.add_enclosure("nwell",
+                  layer = "active",
+                  enclosure = 6*_lambda_)
+drc.add_enclosure("pwell",
                   layer = "active",
                   enclosure = 6*_lambda_)
 

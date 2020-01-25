@@ -98,7 +98,7 @@ class pnor2(pgate.pgate):
         self.well_width = 2 * self.pmos.active_width \
                           + self.pmos.active_contact.width \
                           + 2 * self.active_space \
-                          + 2 * self.well_enclose_active
+                          + 2 * self.nwell_enclose_active
         self.width = self.well_width
         # Height is an input parameter, so it is not recomputed.
 
@@ -136,7 +136,6 @@ class pnor2(pgate.pgate):
                                         mod=self.pmos)
         self.connect_inst(["net1", "B", "Z", "vdd"])
 
-        
         self.nmos1_inst = self.add_inst(name="pnor2_nmos1",
                                         mod=self.nmos)
         self.connect_inst(["Z", "A", "gnd", "gnd"])
@@ -170,7 +169,7 @@ class pnor2(pgate.pgate):
                                  0.5 * (pmos1_pos.y + nmos1_pos.y + self.nmos.active_height))
 
         # This will help with the wells
-        self.well_pos = vector(0, self.nmos1_inst.uy())
+        self.well_pos = self.output_pos
         
     def add_well_contacts(self):
         """ Add n/p well taps to the layout and connect to supplies """

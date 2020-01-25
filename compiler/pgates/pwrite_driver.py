@@ -40,11 +40,9 @@ class pwrite_driver(design.design):
         # Creates the netlist and layout
         # Since it has variable height, it is not a pgate.
         self.create_netlist()
-        if not OPTS.netlist_only:        
+        if not OPTS.netlist_only:
             self.create_layout()
             self.DRC_LVS()
-
-
 
     def create_netlist(self):
         self.add_pins()
@@ -55,8 +53,6 @@ class pwrite_driver(design.design):
         self.place_modules()
         self.route_wires()
         self.route_supplies()
-
-        
         
     def add_pins(self):
         self.add_pin("din", "INPUT")
@@ -66,17 +62,19 @@ class pwrite_driver(design.design):
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
-        
     def add_modules(self):
 
         # Tristate inverter
         self.tri = factory.create(module_type="ptristate_inv", height="min")
         self.add_mod(self.tri)
-        debug.check(self.tri.width<self.width,"Could not create tristate inverter to match bitcell width")
+        debug.check(self.tri.width<self.width,
+                    "Could not create tristate inverter to match bitcell width")
 
-        #self.tbuf = factory.create(module_type="ptristate_buf", height="min")
+        #self.tbuf = factory.create(module_type="ptristate_buf",
+        #height="min")
         #self.add_mod(self.tbuf)
-        #debug.check(self.tbuf.width<self.width,"Could not create tristate buffer to match bitcell width")
+        #debug.check(self.tbuf.width<self.width,
+        #"Could not create tristate buffer to match bitcell width")
         
         # Inverter for din and en
         self.inv = factory.create(module_type="pinv", under_rail_vias=True)

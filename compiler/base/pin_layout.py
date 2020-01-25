@@ -128,7 +128,14 @@ class pin_layout:
             max_y = max(max_y, pin.ur().y)
 
         self.rect = [vector(min_x, min_y), vector(max_x, max_y)]
-             
+        
+    def fix_minarea(self):
+        """
+        Try to fix minimum area rule.
+        """
+        min_area = drc("{}_minarea".format(self.layer))
+        pass
+    
     def inflate(self, spacing=None):
         """
         Inflate the rectangle by the spacing (or other rule)

@@ -8,7 +8,7 @@
 import contact
 import design
 import debug
-from tech import layer, drc
+from tech import layer
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
@@ -126,29 +126,35 @@ class pgate(design.design):
     def extend_wells(self, middle_position):
         """ Extend the n/p wells to cover whole cell """
 
+        # FIXME: float rounding problem
+        middle_position = middle_position.snap_to_grid()
         # Add a rail width to extend the well to the top of the rail
-        max_y_offset = self.height + 0.5 * self.m1_width
-        self.nwell_position = middle_position
-        nwell_height = max_y_offset - middle_position.y
-        if layer["nwell"]:
+        nwell_max_offset = max(self.find_highest_layer_coords("nwell").y,
+                               self.height + 0.5 * self.m1_width)
+        nwell_position = middle_position
+        nwell_height = nwell_max_offset - middle_position.y
+        if "nwell" in layer:
             self.add_rect(layer="nwell",
                           offset=middle_position,
                           width=self.well_width,
                           height=nwell_height)
-        if layer["vtg"]:
+        if "vtg" in layer:
             self.add_rect(layer="vtg",
-                          offset=self.nwell_position,
+                          offset=nwell_position,
                           width=self.well_width,
                           height=nwell_height)
 
-        pwell_position = vector(0, -0.5 * self.m1_width)
+        # Start this half a rail width below the cell
+        pwell_min_offset = min(self.find_lowest_layer_coords("pwell").y,
+                               -0.5 * self.m1_width)
+        pwell_position = vector(0, pwell_min_offset)
         pwell_height = middle_position.y - pwell_position.y
-        if layer["pwell"]:
+        if "pwell" in layer:
             self.add_rect(layer="pwell",
                           offset=pwell_position,
                           width=self.well_width,
                           height=pwell_height)
-        if layer["vtg"]:
+        if "vtg" in layer:
             self.add_rect(layer="vtg",
                           offset=pwell_position,
                           width=self.well_width,
@@ -168,7 +174,7 @@ class pgate(design.design):
         # OR align the active with the top of PMOS active.
         max_y_offset = self.height + 0.5 * self.m1_width
         contact_yoffset = min(pmos_pos.y + pmos.active_height - pmos.active_contact.first_layer_height,
-                              max_y_offset - pmos.active_contact.first_layer_height / 2 - self.well_enclose_active)
+                              max_y_offset - pmos.active_contact.first_layer_height / 2 - self.nwell_enclose_active)
         contact_offset = vector(contact_xoffset, contact_yoffset)
         # Offset by half a contact in x and y
         contact_offset += vector(0.5 * pmos.active_contact.first_layer_width,
@@ -220,7 +226,7 @@ class pgate(design.design):
         # Must be at least an well enclosure of active up
         # from the bottom of the well
         contact_yoffset = max(nmos_pos.y,
-                              self.well_enclose_active \
+                              self.nwell_enclose_active \
                               - nmos.active_contact.first_layer_height / 2)
         contact_offset = vector(contact_xoffset, contact_yoffset)
 

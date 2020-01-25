@@ -44,7 +44,7 @@ class ptristate_inv(pgate.pgate):
         """ Calls all functions related to the generation of the netlist """
         self.add_pins()
         self.add_ptx()
-        self.create_ptx()        
+        self.create_ptx()
         
     def create_layout(self):
         """ Calls all functions related to the generation of the layout """
@@ -61,7 +61,6 @@ class ptristate_inv(pgate.pgate):
         """ Adds pins for spice netlist """
         self.add_pin_list(["in", "out", "en", "en_bar", "vdd", "gnd"])
 
-
     def setup_layout_constants(self):
         """
         Pre-compute some handy layout parameters.
@@ -73,7 +72,7 @@ class ptristate_inv(pgate.pgate):
 
         # Two PMOS devices and a well contact. Separation between each.
         # Enclosure space on the sides.
-        self.well_width = 2 * self.pmos.active_width + self.well_enclose_active
+        self.well_width = 2 * self.pmos.active_width + self.nwell_enclose_active
 
         # Add an extra space because we route the output on the right of the S/D
         self.width = self.well_width + 0.5 * self.m1_space
@@ -81,7 +80,6 @@ class ptristate_inv(pgate.pgate):
         
         # Make sure we can put a well above and below
         self.top_bottom_space = max(contact.activem1.width, contact.activem1.height)
-
         
     def add_ptx(self):
         """ Create the PMOS and NMOS transistors. """
@@ -95,7 +93,6 @@ class ptristate_inv(pgate.pgate):
                                    width=self.pmos_width,
                                    mults=1,
                                    tx_type="pmos")
-
         self.add_mod(self.pmos)
         
     def route_supply_rails(self):

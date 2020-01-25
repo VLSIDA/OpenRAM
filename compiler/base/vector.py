@@ -50,7 +50,7 @@ class vector():
         else:
             self.x=float(value[0])
             self.y=float(value[1])
-
+            
     def __getitem__(self, index):
         """
         override getitem function 

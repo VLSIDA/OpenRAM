@@ -12,6 +12,11 @@ from module_type import *
 """
 File containing the process technology parameters for FreePDK 45nm.
 """
+
+###################################################
+# Custom modules
+###################################################
+
 # This uses the default classes to instantiate module from
 # '$OPENRAM_HOME/compiler/modules'.
 # Using tech_modules['cellname'] you can override each class by providing a custom
@@ -19,7 +24,11 @@ File containing the process technology parameters for FreePDK 45nm.
 # For example: tech_modules['contact'] = 'contact_freepdk45'
 tech_modules = ModuleType()
 
-#GDS file info
+
+###################################################
+# GDS file info
+###################################################
+
 GDS = {}
 # gds units 
 # From http://www.cnf.cornell.edu/cnf_spie9.html: "The first
@@ -136,7 +145,10 @@ drc["minlength_channel"] = 0.05
 drc["pwell_to_nwell"] = 0.225
 # WELL.3 Minimum spacing of nwell/pwell at the same potential
 # WELL.4 Minimum width of nwell/pwell
-drc.add_layer("well",
+drc.add_layer("nwell",
+              width = 0.2,
+              spacing = 0.135)
+drc.add_layer("pwell",
               width = 0.2,
               spacing = 0.135)
 
@@ -165,7 +177,10 @@ drc.add_layer("active",
               width = 0.09,
               spacing = 0.08)
 # ACTIVE.3 Minimum enclosure/spacing of nwell/pwell to active
-drc.add_enclosure("well",
+drc.add_enclosure("nwell",
+                  layer = "active",
+                  enclosure = 0.055)
+drc.add_enclosure("pwell",
                   layer = "active",
                   enclosure = 0.055)
 

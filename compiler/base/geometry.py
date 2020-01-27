@@ -333,22 +333,22 @@ class instance(geometry):
                 if node.mirror == 'MX':
                     Q_y = -1 * Q_y
                     Q_bar_y = -1 * Q_bar_y
+
                     for pair in range(len(normalized_bl_offsets)):
-                        for offset in range(len(offset)):
-                            normalized_bl_offsets[pair][offset] = -1 * normalized_bl_offsets[pair][offset]
+                        normalized_bl_offsets[pair] = (normalized_bl_offsets[pair][0], 
+                                -1 * normalized_bl_offsets[pair][1])
 
                     for pair in range(len(normalized_br_offsets)):
-                        for offset in range(len(offset)):
-                            normalized_br_offsets[pair][offset] = -1 * normalized_br_offsets[pair][offset]
+                        normalized_br_offsets[pair] = (normalized_br_offsets[pair][0], 
+                                -1 * normalized_br_offsets[pair][1])
                             
 
                 Q_offsets.append([Q_x, Q_y])    
                 Q_bar_offsets.append([Q_bar_x, Q_bar_y])
                 
-                for offset in bl_offset:
-                    bl_offsets.append(offset)
-                for offset in br.offset:
-                    br_offsets.append(offset)
+                
+                bl_offsets.append(normalized_bl_offsets)
+                br_offsets.append(normalized_br_offsets)
 
             elif node.mod.insts is not []:
                 for instance in node.mod.insts:
@@ -360,7 +360,7 @@ class instance(geometry):
             vector_spaces = self.apply_path_transform(path)
             origin = vector_spaces[2]
             origin_offsets.append([origin[0], origin[1]])
-        
+
         return(origin_offsets, Q_offsets, Q_bar_offsets, bl_offsets, br_offsets)
 
     def __str__(self):

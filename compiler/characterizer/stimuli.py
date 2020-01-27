@@ -63,10 +63,6 @@ class stimuli():
                     self.sf.write("bitcell_Q_b{0}_r{1}_c{2} ".format(bank,row,col))
                     self.sf.write("bitcell_Q_bar_b{0}_r{1}_c{2} ".format(bank,row,col))
             for col in range(OPTS.word_size):
-                if OPTS.num_banks == 1:
-                    self.sf.write("bl_{2} ".format(bank, row,col))
-                    self.sf.write("br_{2} ".format(bank, row,col))
-                else:
                     self.sf.write("bl{0}_{2} ".format(bank, row,col))
                     self.sf.write("br{0}_{2} ".format(bank, row,col))
 

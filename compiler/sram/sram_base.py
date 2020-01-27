@@ -19,6 +19,7 @@ from verilog import verilog
 from lef import lef
 from sram_factory import factory
 from tech import drc
+import numpy as np
 import logical_effort
 
 class sram_base(design, verilog, lef):
@@ -102,33 +103,38 @@ class sram_base(design, verilog, lef):
             bl_offsets = pex_offsets[3]
             br_offsets = pex_offsets[4]
             
-            storage_layer_name = "metal1"
-            bitline_layer_name = "metal2"
-                
-            Q = [bank_offset[bank_num][0] + Q_offset[bank_num][0], bank_offset[bank_num][1] + Q_offset[bank_num][1]]
-            Q_bar = [bank_offset[bank_num][0] + Q_bar_offset[bank_num][0], bank_offset[bank_num][1] + Q_bar_offset[bank_num][1]]
-            
             bl = []
             br = []
 
-            for i in range(len(bl_offsets)):
-                bl.append([bank_offset[bank_num][1] + bl_offsets[bank_num][2*(i)], bank_offset[bank_num][1] + bl_offsets[bank_num][2*(i)+1]])
+            storage_layer_name = "metal1"
+            bitline_layer_name = "metal2"
+            
+            for cell in range(len(bank_offset)):
+                Q = [bank_offset[cell][0] + Q_offset[cell][0], bank_offset[cell][1] + Q_offset[cell][1]]
+                Q_bar = [bank_offset[cell][0] + Q_bar_offset[cell][0], bank_offset[cell][1] + Q_bar_offset[cell][1]]
 
-            for i in range(len(br_offsets)):
-                br.append([bank_offset[bank_num][1] + br_offsets[bank_num][2*(i)], bank_offset[bank_num][1] + br_offsets[bank_num][2*(i)+1]])
+                self.add_layout_pin_rect_center("bitcell_Q_b{0}_r{1}_c{2}".format(bank_num, cell % OPTS.num_words, int(cell / OPTS.num_words)) , storage_layer_name, Q) 
+                self.add_layout_pin_rect_center("bitcell_Q_bar_b{0}_r{1}_c{2}".format(bank_num, cell % OPTS.num_words, int(cell / OPTS.num_words)), storage_layer_name, Q_bar)
+            
+                for bitline in range(len(bl_offsets[cell])):
+                    bitline_location = [float(bank_offset[cell][0]) + bl_offsets[cell][bitline][0], float(bank_offset[cell][1]) + bl_offsets[cell][bitline][1]]
+                    bl.append(bitline_location)
 
-            self.add_layout_pin_rect_center("bitcell_Q_b{0}_r{1}_c{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)) , storage_layer_name, Q) 
-            self.add_layout_pin_rect_center("bitcell_Q_bar_b{0}_r{1}_c{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)), storage_layer_name, Q_bar)
+                for bitline in range(len(br_offsets[0])):
+                    bitline_location = [float(bank_offset[cell][0]) + br_offsets[cell][bitline][0], float(bank_offset[cell][1]) + br_offsets[cell][bitline][1]]
+                    br.append(bitline_location)
+                        
+            for col in range(len(bl)):
+                if OPTS.num_banks == 1:
+                    self.add_layout_pin_rect_center("bl0_{0}".format(int(col / OPTS.num_words)), bitline_layer_name, bl[col])
+                else:
+                    self.add_layout_pin_rect_center("bl{0}_{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)) , bitline_layer_name, bl)
 
-            if OPTS.num_banks == 1:
-                for i in range(len(bl_offsets)):
-                    self.add_layout_pin_rect_center("bl_{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)) , bitline_layer_name, bl)
-
-                for i in range(len(br_offsets)):
-                    self.add_layout_pin_rect_center("br_{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)), bitline_layer_name, br)
-            else:
-                self.add_layout_pin_rect_center("bl{0}_{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)) , bitline_layer_name, bl)
-                self.add_layout_pin_rect_center("br{0}_{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)), bitline_layer_name, br)                    
+            for col in range(len(br)):
+                if OPTS.num_banks == 1:
+                    self.add_layout_pin_rect_center("br0_{0}".format(int(col / OPTS.num_words)), bitline_layer_name, br[col])
+                else:
+                    self.add_layout_pin_rect_center("br{0}_{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)) , bitline_layer_name, br)                 
 
            
             

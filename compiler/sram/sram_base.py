@@ -125,16 +125,11 @@ class sram_base(design, verilog, lef):
                     br.append(bitline_location)
                         
             for col in range(len(bl)):
-                if OPTS.num_banks == 1:
-                    self.add_layout_pin_rect_center("bl0_{0}".format(int(col / OPTS.num_words)), bitline_layer_name, bl[col])
-                else:
-                    self.add_layout_pin_rect_center("bl{0}_{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)) , bitline_layer_name, bl)
+                self.add_layout_pin_rect_center("bl{0}_{1}".format(bank_num, int(col / OPTS.num_words)), bitline_layer_name, bl[col])               
 
             for col in range(len(br)):
-                if OPTS.num_banks == 1:
-                    self.add_layout_pin_rect_center("br0_{0}".format(int(col / OPTS.num_words)), bitline_layer_name, br[col])
-                else:
-                    self.add_layout_pin_rect_center("br{0}_{2}".format(bank_num, i % OPTS.num_words, int(i / OPTS.num_words)) , bitline_layer_name, br)                 
+                self.add_layout_pin_rect_center("br{0}_{1}".format(bank_num, int(col / OPTS.num_words)), bitline_layer_name, br[col])
+                
 
            
             

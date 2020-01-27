@@ -63,8 +63,9 @@ class stimuli():
                     self.sf.write("bitcell_Q_b{0}_r{1}_c{2} ".format(bank,row,col))
                     self.sf.write("bitcell_Q_bar_b{0}_r{1}_c{2} ".format(bank,row,col))
             for col in range(OPTS.word_size):
-                    self.sf.write("bl{0}_{2} ".format(bank, row,col))
-                    self.sf.write("br{0}_{2} ".format(bank, row,col))
+                    self.sf.write("bl{0}_{2} ".format(bank, row, col))
+                    self.sf.write("br{0}_{2} ".format(bank, row, col))
+                  
 
             self.sf.write("s_en{0} ".format(bank))
         self.sf.write("{0}\n".format(model_name))

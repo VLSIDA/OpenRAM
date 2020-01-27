@@ -130,19 +130,18 @@ class delay(simulation):
         """
         
         self.bitline_volt_meas = []
-
         self.bitline_volt_meas.append(voltage_at_measure("v_bl_READ_ZERO", 
-                                                         self.bl_name))
+                                                        self.bl_name))
         self.bitline_volt_meas[-1].meta_str = sram_op.READ_ZERO
         self.bitline_volt_meas.append(voltage_at_measure("v_br_READ_ZERO", 
-                                                         self.br_name))
+                                                        self.br_name))
         self.bitline_volt_meas[-1].meta_str = sram_op.READ_ZERO
         
         self.bitline_volt_meas.append(voltage_at_measure("v_bl_READ_ONE", 
-                                                         self.bl_name)) 
+                                                        self.bl_name)) 
         self.bitline_volt_meas[-1].meta_str = sram_op.READ_ONE
         self.bitline_volt_meas.append(voltage_at_measure("v_br_READ_ONE", 
-                                                         self.br_name)) 
+                                                        self.br_name)) 
         self.bitline_volt_meas[-1].meta_str = sram_op.READ_ONE
         return self.bitline_volt_meas
         
@@ -264,14 +263,26 @@ class delay(simulation):
         """Sets important names for characterization such as Sense amp enable and internal bit nets."""
         
         port = self.read_ports[0]
-        self.graph.get_all_paths('{}{}'.format("clk", port), 
-                                 '{}{}_{}'.format(self.dout_name, port, self.probe_data))
-        
-        self.sen_name = self.get_sen_name(self.graph.all_paths)    
-        debug.info(2,"s_en name = {}".format(self.sen_name))
-        
-        self.bl_name,self.br_name = self.get_bl_name(self.graph.all_paths, port)
-        debug.info(2,"bl name={}, br name={}".format(self.bl_name,self.br_name))
+        if not OPTS.use_pex:
+            self.graph.get_all_paths('{}{}'.format("clk", port), 
+                                    '{}{}_{}'.format(self.dout_name, port, self.probe_data))
+            
+            self.sen_name = self.get_sen_name(self.graph.all_paths)    
+            debug.info(2,"s_en name = {}".format(self.sen_name))
+            
+            self.bl_name,self.br_name = self.get_bl_name(self.graph.all_paths, port)
+            debug.info(2,"bl name={}, br name={}".format(self.bl_name,self.br_name))
+        else:
+            self.graph.get_all_paths('{}{}'.format("clk", port), 
+                        '{}{}_{}'.format(self.dout_name, port, self.probe_data))
+            
+            self.sen_name = self.get_sen_name(self.graph.all_paths)    
+            debug.info(2,"s_en name = {}".format(self.sen_name))
+
+            
+            self.bl_name = "bl{0}_{1}".format(port, OPTS.word_size-1)
+            self.br_name = "br{0}_{1}".format(port, OPTS.word_size-1)
+            debug.info(2,"bl name={}, br name={}".format(self.bl_name,self.br_name))
         
     def get_sen_name(self, paths):
         """

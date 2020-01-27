@@ -13,13 +13,14 @@ class bitcell_base_array(design.design):
     """
     Abstract base class for bitcell-arrays -- bitcell, dummy
     """
-    def __init__(self, cols, rows, name):
+    def __init__(self, cols, rows, name, column_offset):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0} {1} x {2}".format(self.name, rows, cols))
         self.add_comment("rows: {0} cols: {1}".format(rows, cols))
 
         self.column_size = cols
         self.row_size = rows
+        self.column_offset = column_offset
 
     def add_pins(self):
         row_list = self.cell.get_all_wl_names()
@@ -82,6 +83,23 @@ class bitcell_base_array(design.design):
                     for pin in inst.get_pins(pin_name):
                         self.add_power_pin(name=pin_name, loc=pin.center(), vertical=True, start_layer=pin.layer)
 
+    def _adjust_x_offset(self, xoffset, col, col_offset):
+        tempx = xoffset
+        dir_y = False
+        # If we mirror the current cell on the y axis adjust the x position
+        if cell_properties.bitcell.mirror.y and (col + col_offset) % 2:
+            tempx = xoffset + self.cell.width
+            dir_y = True
+        return (tempx, dir_y)
+
+    def _adjust_y_offset(self, yoffset, row, row_offset):
+        tempy = yoffset
+        dir_x = False
+        # If we mirror the current cell on the x axis adjust the y position
+        if cell_properties.bitcell.mirror.x and (row + row_offset) % 2:
+            tempy = yoffset + self.cell.height
+            dir_x = True
+        return (tempy, dir_x)
 
 
     def place_array(self, name_template, row_offset=0):
@@ -92,16 +110,22 @@ class bitcell_base_array(design.design):
         xoffset = 0.0
         for col in range(self.column_size):
             yoffset = 0.0
+            tempx, dir_y = self._adjust_x_offset(xoffset, col, self.column_offset)
+
             for row in range(self.row_size):
                 name = name_template.format(row, col)
-                if cell_properties.bitcell.mirror.x and (row + row_offset) % 2:
-                    tempy = yoffset + self.cell.height
+                tempy, dir_x = self._adjust_y_offset(yoffset, row, row_offset)
+
+                if dir_x and dir_y:
+                    dir_key = "XY"
+                elif dir_x:
                     dir_key = "MX"
+                elif dir_y:
+                    dir_key = "MY"
                 else:
-                    tempy = yoffset
                     dir_key = ""
 
-                self.cell_inst[row,col].place(offset=[xoffset, tempy],
+                self.cell_inst[row,col].place(offset=[tempx, tempy],
                                               mirror=dir_key)
                 yoffset += self.cell.height
             xoffset += self.cell.width

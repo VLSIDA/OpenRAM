@@ -16,8 +16,8 @@ class dummy_array(bitcell_base_array):
     """
     Generate a dummy row/column for the replica array.
     """
-    def __init__(self, cols, rows, mirror=0, name=""):
-        super().__init__(cols, rows, name)
+    def __init__(self, cols, rows, column_offset=0, mirror=0, name=""):
+        super().__init__(cols, rows, name, column_offset)
         self.mirror = mirror
 
         self.create_netlist()

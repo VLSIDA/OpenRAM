@@ -20,8 +20,8 @@ class bitcell_array(bitcell_base_array):
     and word line is connected by abutment.
     Connects the word lines and bit lines.
     """
-    def __init__(self, cols, rows, name):
-        super().__init__(cols, rows, name)
+    def __init__(self, cols, rows, name, column_offset=0):
+        super().__init__(cols, rows, name, column_offset)
 
         self.create_netlist()
         if not OPTS.netlist_only:

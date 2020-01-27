@@ -99,11 +99,19 @@ class single_level_column_mux_array(design.design):
                                "gnd"])
 
     def place_array(self):
+        from tech import cell_properties
         # For every column, add a pass gate
         for col_num in range(self.columns):
+            xoffset = col_num * self.mux.width
+            if cell_properties.bitcell.mirror.y and col_num % 2:
+                mirror = "MY"
+                xoffset = xoffset + self.mux.width
+            else:
+                mirror = ""
+
             name = "XMUX{0}".format(col_num)
-            x_off = vector(col_num * self.mux.width, self.route_height)
-            self.mux_inst[col_num].place(x_off)
+            offset = vector(xoffset, self.route_height)
+            self.mux_inst[col_num].place(offset=offset, mirror=mirror)
             
 
     def add_layout_pins(self):
@@ -161,6 +169,7 @@ class single_level_column_mux_array(design.design):
 
     def route_bitlines(self):
         """  Connect the output bit-lines to form the appropriate width mux """
+        from tech import cell_properties
         for j in range(self.columns):
             bl_offset = self.mux_inst[j].get_pin("bl_out").bc()
             br_offset = self.mux_inst[j].get_pin("br_out").bc()
@@ -171,23 +180,38 @@ class single_level_column_mux_array(design.design):
             bl_out_offset_end = bl_out_offset + vector(0,self.route_height)
             br_out_offset_end = br_out_offset + vector(0,self.route_height)
 
+            if cell_properties.bitcell.mirror.y and j % 2:
+                tmp_bl_out_end = br_out_offset_end
+                tmp_br_out_end = bl_out_offset_end
+            else:
+                tmp_bl_out_end = bl_out_offset_end
+                tmp_br_out_end = br_out_offset_end
+
             if (j % self.words_per_row) == 0:
                 # Create the metal1 to connect the n-way mux output from the pass gate
                 # These will be located below the select lines. Yes, these are M2 width
                 # to ensure vias are enclosed and M1 min width rules.
                 width = self.m2_width + self.mux.width * (self.words_per_row - 1)
-                self.add_path("m1", [bl_out_offset, bl_out_offset+vector(width,0)])
-                self.add_path("m1", [br_out_offset, br_out_offset+vector(width,0)])
+
+                if cell_properties.bitcell.mirror.y and (j % 2) == 0:
+                    bl = self.mux.get_pin("bl")
+                    br = self.mux.get_pin("br")
+                    dist = abs(bl.ll().x - br.ll().x)
+                else:
+                    dist = 0
+
+                self.add_path("m1", [bl_out_offset, bl_out_offset+vector(width+dist,0)])
+                self.add_path("m1", [br_out_offset, br_out_offset+vector(width-dist,0)])
 
                 # Extend the bitline output rails and gnd downward on the first bit of each n-way mux
                 self.add_layout_pin_segment_center(text="bl_out_{}".format(int(j/self.words_per_row)),
                                                    layer="m2",
                                                    start=bl_out_offset,
-                                                   end=bl_out_offset_end)
+                                                   end=tmp_bl_out_end)
                 self.add_layout_pin_segment_center(text="br_out_{}".format(int(j/self.words_per_row)),
                                                    layer="m2",
                                                    start=br_out_offset,
-                                                   end=br_out_offset_end)
+                                                   end=tmp_br_out_end)
                                                    
 
                 # This via is on the right of the wire                
@@ -200,8 +224,8 @@ class single_level_column_mux_array(design.design):
 
             else:
                 
-                self.add_path("m2", [ bl_out_offset, bl_out_offset_end])
-                self.add_path("m2", [ br_out_offset, br_out_offset_end])
+                self.add_path("m2", [ bl_out_offset, tmp_bl_out_end])
+                self.add_path("m2", [ br_out_offset, tmp_br_out_end])
                                           
                 # This via is on the right of the wire
                 self.add_via_center(layers=self.m1_stack,

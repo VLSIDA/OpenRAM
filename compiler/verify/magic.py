@@ -420,6 +420,7 @@ def correct_port(name, output_file_name, ref_file_name):
                 bitcell_list += "bitcell_Q_b{0}_r{1}_c{2} ".format(bank, row, col)
                 bitcell_list += "bitcell_Q_bar_b{0}_r{1}_c{2} ".format(bank, row, col)
         for col in range(OPTS.word_size):
+            for port in range(OPTS.num_r_ports + OPTS.num_w_ports + OPTS.num_rw_ports):
                 bitcell_list += "bl{0}_{2} ".format(bank, row, col)
                 bitcell_list += "br{0}_{2} ".format(bank, row, col)
     bitcell_list += "\n"

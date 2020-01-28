@@ -128,19 +128,13 @@ class sram_base(design, verilog, lef):
                 col = br_meta[cell][0][2]
                 for bitline in range(len(br_offsets[cell])):
                     bitline_location = [float(bank_offset[cell][0]) + br_offsets[cell][bitline][0], float(bank_offset[cell][1]) + br_offsets[cell][bitline][1]]
-                    br.append([bitline_location, br_meta[cell][bitline][3], col])
-
-            
-            
+                    br.append([bitline_location, br_meta[cell][bitline][3], col])           
 
             for i in range(len(bl)):
                 self.add_layout_pin_rect_center("bl{0}_{1}".format(bl[i][1], bl[i][2]), bitline_layer_name, bl[i][0])               
 
             for i in range(len(br)):
-                self.add_layout_pin_rect_center("br{0}_{1}".format(br[i][1], br[i][2]), bitline_layer_name, br[i][0])                  
-
-           
-            
+                self.add_layout_pin_rect_center("br{0}_{1}".format(br[i][1], br[i][2]), bitline_layer_name, br[i][0])                           
 
         # add pex labels for control logic
         for i in range  (len(self.control_logic_insts)):

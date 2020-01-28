@@ -7,6 +7,7 @@
 #
 import debug
 import design
+from tech import cell_properties
 
 class bitcell_base_array(design.design):
     """
@@ -93,8 +94,7 @@ class bitcell_base_array(design.design):
             yoffset = 0.0
             for row in range(self.row_size):
                 name = name_template.format(row, col)
-
-                if (row + row_offset) % 2:
+                if cell_properties.bitcell.mirror.x and (row + row_offset) % 2:
                     tempy = yoffset + self.cell.height
                     dir_key = "MX"
                 else:

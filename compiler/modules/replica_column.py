@@ -92,7 +92,7 @@ class replica_column(design.design):
             self.connect_inst(self.get_bitcell_pins(0, row))
             
     def place_instances(self):
-
+        from tech import cell_properties
         # Flip the mirrors if we have an odd number of replica+dummy rows at the bottom
         # so that we will start with mirroring rather than not mirroring
         rbl_offset = (self.left_rbl+1)%2
@@ -100,7 +100,7 @@ class replica_column(design.design):
         for row in range(self.total_size):
             name = "bit_r{0}_{1}".format(row,"rbl")
             offset = vector(0,self.cell.height*(row+(row+rbl_offset)%2))
-            if (row+rbl_offset)%2:
+            if cell_properties.bitcell.mirror.x and (row+rbl_offset)%2:
                 dir_key = "MX"
             else:
                 dir_key = "R0"

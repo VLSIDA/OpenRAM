@@ -8,6 +8,7 @@
 import os
 from design_rules import *
 from module_type import *
+from custom_cell_properties import CellProperties
 
 """
 File containing the process technology parameters for SCMOS 4m, 0.35um
@@ -24,6 +25,12 @@ File containing the process technology parameters for SCMOS 4m, 0.35um
 # For example: tech_modules['contact'] = 'contact_scn4m'
 tech_modules = ModuleType()
 
+###################################################
+# Custom cell properties
+###################################################
+cell_properties = CellProperties()
+cell_properties.bitcell.mirror.x = True
+cell_properties.bitcell.mirror.y = False
 
 ###################################################
 # GDS file info

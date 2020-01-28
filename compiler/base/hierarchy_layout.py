@@ -11,6 +11,7 @@ import gdsMill
 import debug
 from tech import drc, GDS
 from tech import layer as techlayer
+from tech import layer_stacks
 import os
 from globals import OPTS
 from vector import vector
@@ -508,6 +509,71 @@ class layout():
         # We don't model the logical connectivity of wires/paths
         self.connect_inst([])
         return inst
+
+    def add_via_stack(self, offset, direction, from_layer, to_layer,
+                      size=[1,1]):
+        """
+        Punch a stack of vias from a start layer to a target layer.
+        """
+
+        return self.__add_via_stack_internal(offset=offset,
+                                             direction=direction,
+                                             from_layer=from_layer,
+                                             to_layer=to_layer,
+                                             via_func=self.add_via,
+                                             last_via=None,
+                                             size=size)
+
+    def add_via_stack_center(self, offset, direction, from_layer, to_layer,
+                             size=[1,1]):
+        """
+        Punch a stack of vias from a start layer to a target layer by the center
+        coordinate accounting for mirroring and rotation.
+        """
+        return self.__add_via_stack_internal(offset=offset,
+                                             direction=direction,
+                                             from_layer=from_layer,
+                                             to_layer=to_layer,
+                                             via_func=self.add_via_center,
+                                             last_via=None,
+                                             size=size)
+
+
+    def __add_via_stack_internal(self, offset, direction, from_layer, to_layer,
+                                 via_func, last_via, size):
+        """
+        Punch a stack of vias from a start layer to a target layer. Here we
+        figure out whether to punch it up or down the stack.
+        """
+
+        if from_layer == to_layer:
+            return last_via
+
+        from_id = int(from_layer[1])
+        to_id   = int(to_layer[1])
+
+        if from_id < to_id: # grow the stack up
+            search_id = 0
+            next_id = 2
+        else: # grow the stack down
+            search_id = 2
+            next_id = 0
+
+        curr_stack = next(filter(lambda stack: stack[search_id] == from_layer, layer_stacks), None)
+        if curr_stack is None:
+            raise ValueError("Cannot create via from '{0}' to '{1}'." \
+                             "Layer '{0}' not defined"
+                             .format(from_layer, to_layer))
+
+        via = via_func(layers=curr_stack, size=size, offset=offset, directions=direction)
+        return self.__add_via_stack_internal(offset=offset,
+                                             direction=direction,
+                                             from_layer=curr_stack[next_id],
+                                             to_layer=to_layer,
+                                             via_func=via_func,
+                                             last_via=via,
+                                             size=size)
+
     
     def add_ptx(self, offset, mirror="R0", rotate=0, width=1, mults=1, tx_type="nmos"):
         """Adds a ptx module to the design."""
@@ -1131,17 +1197,12 @@ class layout():
         else:
             direction = ("H", "H")
             
-        if start_layer == "m1":
-            self.add_via_center(layers=self.m1_stack,
-                                size=size,
-                                offset=loc,
-                                directions=direction)
+        via = self.add_via_stack_center(from_layer=start_layer,
+                                        to_layer="m3",
+                                        size=size,
+                                        offset=loc,
+                                        direction=direction)
 
-        if start_layer == "m1" or start_layer == "m2":
-            via = self.add_via_center(layers=self.m2_stack,
-                                      size=size,
-                                      offset=loc,
-                                      directions=direction)
         if start_layer == "m3":
             self.add_layout_pin_rect_center(text=name,
                                             layer="m3",

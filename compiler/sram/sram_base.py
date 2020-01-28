@@ -148,14 +148,21 @@ class sram_base(design, verilog, lef):
         if not OPTS.route_supplies:
             # Do not route the power supply (leave as must-connect pins)
             return
-        elif "m4" in tech.layer:
-            # Route a M3/M4 grid
-            from supply_grid_router import supply_grid_router as router
-            rtr=router(self.m3_stack, self)
-        elif "m3" in tech.layer:
-            from supply_tree_router import supply_tree_router as router
-            rtr=router(("m3",), self)
 
+        grid_stack = set()
+        try:
+            from tech import power_grid
+            grid_stack = power_grid
+        except ImportError:
+            # if no power_grid is specified by tech we use sensible defaults
+            if "m4" in tech.layer:
+                # Route a M3/M4 grid
+                grid_stack = self.m3_stack
+            elif "m3" in tech.layer:
+                grid_stack =("m3",)
+
+        from supply_grid_router import supply_grid_router as router
+        rtr=router(grid_stack, self)
         rtr.route()
 
         

@@ -39,6 +39,12 @@ class layout():
         self.visited = []    # List of modules we have already visited
         self.is_library_cell = False # Flag for library cells 
         self.gds_read()
+        try:
+            from tech import power_grid
+            self.pwr_grid_layer = power_grid[0]
+        except ImportError:
+            self.pwr_grid_layer = "m3"
+
 
     ############################################################
     # GDS layout
@@ -1169,12 +1175,12 @@ class layout():
 
     def copy_power_pins(self, inst, name):
         """
-        This will copy a power pin if it is on M3.
+        This will copy a power pin if it is on the lowest power_grid layer.
         If it is on M1, it will add a power via too.
         """
         pins = inst.get_pins(name)
         for pin in pins:
-            if pin.layer == "m3":
+            if pin.layer == self.pwr_grid_layer:
                 self.add_layout_pin(name,
                                     pin.layer,
                                     pin.ll(),
@@ -1183,14 +1189,17 @@ class layout():
             elif pin.layer == "m1":
                 self.add_power_pin(name, pin.center())
             else:
-                debug.warning("{0} pins of {1} should be on metal3 or metal1 for supply router.".format(name,inst.name))
+                debug.warning("{0} pins of {1} should be on {2} or metal1 for "\
+                              "supply router."
+                              .format(name,inst.name,self.pwr_grid_layer))
 
                 
         
     def add_power_pin(self, name, loc, size=[1, 1], vertical=False, start_layer="m1"):
         """
-        Add a single power pin from M3 down to M1 at the given center location.
-        The starting layer is specified to determine which vias are needed.
+        Add a single power pin from the lowest power_grid layer down to M1 at
+        the given center location. The starting layer is specified to determine
+        which vias are needed.
         """
         if vertical:
             direction = ("V", "V")
@@ -1198,18 +1207,18 @@ class layout():
             direction = ("H", "H")
             
         via = self.add_via_stack_center(from_layer=start_layer,
-                                        to_layer="m3",
+                                        to_layer=self.pwr_grid_layer,
                                         size=size,
                                         offset=loc,
                                         direction=direction)
 
-        if start_layer == "m3":
+        if start_layer == self.pwr_grid_layer:
             self.add_layout_pin_rect_center(text=name,
-                                            layer="m3",
+                                            layer=self.pwr_grid_layer,
                                             offset=loc)
         else:
             self.add_layout_pin_rect_center(text=name,
-                                            layer="m3",
+                                            layer=self.pwr_grid_layer,
                                             offset=loc,
                                             width=via.width,
                                             height=via.height)

@@ -5,7 +5,7 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from tech import drc, layer
+from tech import drc, layer, preferred_directions
 from contact import contact
 from vector import vector
 import debug
@@ -26,6 +26,9 @@ class router_tech:
         self.rail_track_width = rail_track_width
 
         if len(self.layers) == 1:
+            if preferred_directions[self.layers[0]] != "H":
+                debug.warning("Using '{}' for horizontal routing, but it " \
+                              "prefers vertical routing".format(self.layers[0]))
             self.horiz_layer_name = self.vert_layer_name = self.layers[0]
             self.horiz_lpp = self.vert_lpp = layer[self.layers[0]]
             
@@ -35,7 +38,17 @@ class router_tech:
             self.horiz_track_width = self.horiz_layer_minwidth + self.horiz_layer_spacing
             self.vert_track_width = self.vert_layer_minwidth + self.vert_layer_spacing
         else:
-            (self.horiz_layer_name, self.via_layer_name, self.vert_layer_name) = self.layers
+            (try_horiz_layer, self.via_layer_name, try_vert_layer) = self.layers
+
+            # figure out wich of the two layers prefers horizontal/vertical
+            # routing
+            if preferred_directions[try_horiz_layer] == "H" and preferred_directions[try_vert_layer] == "V":
+                self.horiz_layer_name = try_horiz_layer
+                self.vert_layer_name = try_vert_layer
+            else:
+                raise ValueError("Layer '{}' and '{}' are using the wrong " \
+                            "preferred_directions '{}' and '{}'. Only "\
+                            "('H', 'V') are supported")
 
             via_connect = contact(self.layers, (1, 1))
             max_via_size = max(via_connect.width,via_connect.height)

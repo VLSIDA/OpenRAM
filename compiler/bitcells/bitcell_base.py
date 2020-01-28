@@ -116,6 +116,7 @@ class bitcell_base(design.design):
                     if bl_names[i] == text.textString.rstrip('\x00'):
                         self.bl_offsets.append(text.coordinates[0])
                         found_bl.append(bl_names[i])
+                        
                         continue
 
         for i in range(len(br_names)):
@@ -132,7 +133,7 @@ class bitcell_base(design.design):
         for i in range(len(self.br_offsets)):
             self.br_offsets[i]  = tuple([self.gds.info["units"][0] * x for x in self.br_offsets[i]]) 
 
-        return(self.bl_offsets, self.br_offsets)
+        return(self.bl_offsets, self.br_offsets, found_bl, found_br)
 
     def get_normalized_storage_nets_offset(self):               
         """

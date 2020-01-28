@@ -1,9 +1,9 @@
 word_size = 2
 num_words = 16
 
-num_rw_ports = 1
+num_rw_ports = 0
 num_r_ports = 1
-num_w_ports = 0
+num_w_ports = 1
 
 tech_name = "scn4m_subm"
 process_corners = ["TT"]

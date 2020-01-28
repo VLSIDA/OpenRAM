@@ -136,8 +136,7 @@ class geometry:
     def cy(self):
         """ Return the center y """
         return 0.5 * (self.boundary[0].y + self.boundary[1].y)
-    
-        
+
 class instance(geometry):
     """
     An instance of an instance/module with a specified location and
@@ -306,29 +305,47 @@ class instance(geometry):
         return (uVector, vVector, origin)
 
     def reverse_transformation_bitcell(self, cell_name):
-        path = []
-        cell_paths = []
-        origin_offsets = []
-        Q_offsets = []
-        Q_bar_offsets = []
-        bl_offsets = []
-        br_offsets = []
+        path = [] # path currently follwed in bitcell search
+        cell_paths = [] # saved paths to bitcells
+        origin_offsets = [] # cell to bank offset
+        Q_offsets = [] # Q to cell offet
+        Q_bar_offsets = [] # Q_bar to cell offset
+        bl_offsets = [] # bl to cell offset
+        br_offsets = [] # br to cell offset
+        bl_meta = [] # bl offset metadata (row,col,name)
+        br_meta  = [] #br offset metadata (row,col,name)
 
         def walk_subtree(node):
             path.append(node)
 
             if node.mod.name == cell_name:
                 cell_paths.append(copy.copy(path))
+
+                inst_name = path[-1].name
                 
+                # get the row and col names from the path
+                row = int(path[-1].name.split('_')[-2][1:])
+                col = int(path[-1].name.split('_')[-1][1:])
+
+                cell_bl_meta = []
+                cell_br_meta = []
+
                 normalized_storage_nets = node.mod.get_normalized_storage_nets_offset()
-                (normalized_bl_offsets, normalized_br_offsets) = node.mod.get_normalized_bitline_offset()
+                (normalized_bl_offsets, normalized_br_offsets, bl_names, br_names) = node.mod.get_normalized_bitline_offset()
+                
+                for offset in range(len(normalized_bl_offsets)):
+                    for port in range(len(bl_names)):
+                        cell_bl_meta.append([bl_names[offset], row, col, port])
+
+                for offset in range(len(normalized_br_offsets)):
+                    for port in range(len(br_names)):
+                        cell_br_meta.append([br_names[offset], row, col, port])
 
                 Q_x = normalized_storage_nets[0][0]
                 Q_y = normalized_storage_nets[0][1]
 
                 Q_bar_x = normalized_storage_nets[1][0]
                 Q_bar_y = normalized_storage_nets[1][1]
-                
 
                 if node.mirror == 'MX':
                     Q_y = -1 * Q_y
@@ -350,6 +367,9 @@ class instance(geometry):
                 bl_offsets.append(normalized_bl_offsets)
                 br_offsets.append(normalized_br_offsets)
 
+                bl_meta.append(cell_bl_meta)
+                br_meta.append(cell_br_meta)
+
             elif node.mod.insts is not []:
                 for instance in node.mod.insts:
                     walk_subtree(instance)
@@ -361,7 +381,7 @@ class instance(geometry):
             origin = vector_spaces[2]
             origin_offsets.append([origin[0], origin[1]])
 
-        return(origin_offsets, Q_offsets, Q_bar_offsets, bl_offsets, br_offsets)
+        return(origin_offsets, Q_offsets, Q_bar_offsets, bl_offsets, br_offsets, bl_meta, br_meta)
 
     def __str__(self):
         """ override print function output """

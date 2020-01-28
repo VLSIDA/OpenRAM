@@ -95,13 +95,15 @@ class sram_base(design, verilog, lef):
         # add pex labels for bitcells
         for bank_num in range(len(self.bank_insts)):
             bank = self.bank_insts[bank_num]
-            pex_offsets = bank.reverse_transformation_bitcell(bank.mod.bitcell.name)
+            pex_data = bank.reverse_transformation_bitcell(bank.mod.bitcell.name)
 
-            bank_offset = pex_offsets[0] # offset bank relative to sram
-            Q_offset = pex_offsets[1] # offset of storage relative to bank
-            Q_bar_offset = pex_offsets[2] # offset of storage relative to bank
-            bl_offsets = pex_offsets[3]
-            br_offsets = pex_offsets[4]
+            bank_offset = pex_data[0] # offset bank relative to sram
+            Q_offset = pex_data[1] # offset of storage relative to bank
+            Q_bar_offset = pex_data[2] # offset of storage relative to bank
+            bl_offsets = pex_data[3]
+            br_offsets = pex_data[4]
+            bl_meta = pex_data[5]
+            br_meta = pex_data[6]
             
             bl = []
             br = []
@@ -116,20 +118,26 @@ class sram_base(design, verilog, lef):
                 self.add_layout_pin_rect_center("bitcell_Q_b{0}_r{1}_c{2}".format(bank_num, cell % OPTS.num_words, int(cell / OPTS.num_words)) , storage_layer_name, Q) 
                 self.add_layout_pin_rect_center("bitcell_Q_bar_b{0}_r{1}_c{2}".format(bank_num, cell % OPTS.num_words, int(cell / OPTS.num_words)), storage_layer_name, Q_bar)
             
+            for cell in range(len(bl_offsets)):
+                col = bl_meta[cell][0][2]
                 for bitline in range(len(bl_offsets[cell])):
                     bitline_location = [float(bank_offset[cell][0]) + bl_offsets[cell][bitline][0], float(bank_offset[cell][1]) + bl_offsets[cell][bitline][1]]
-                    bl.append(bitline_location)
+                    bl.append([bitline_location, bl_meta[cell][bitline][3], col])
 
-                for bitline in range(len(br_offsets[0])):
+            for cell in range(len(br_offsets)):
+                col = br_meta[cell][0][2]
+                for bitline in range(len(br_offsets[cell])):
                     bitline_location = [float(bank_offset[cell][0]) + br_offsets[cell][bitline][0], float(bank_offset[cell][1]) + br_offsets[cell][bitline][1]]
-                    br.append(bitline_location)
-                        
-            for col in range(len(bl)):
-                self.add_layout_pin_rect_center("bl{0}_{1}".format(bank_num, int(col / OPTS.num_words)), bitline_layer_name, bl[col])               
+                    br.append([bitline_location, br_meta[cell][bitline][3], col])
 
-            for col in range(len(br)):
-                self.add_layout_pin_rect_center("br{0}_{1}".format(bank_num, int(col / OPTS.num_words)), bitline_layer_name, br[col])
-                
+            
+            
+
+            for i in range(len(bl)):
+                self.add_layout_pin_rect_center("bl{0}_{1}".format(bl[i][1], bl[i][2]), bitline_layer_name, bl[i][0])               
+
+            for i in range(len(br)):
+                self.add_layout_pin_rect_center("br{0}_{1}".format(br[i][1], br[i][2]), bitline_layer_name, br[i][0])                  
 
            
             

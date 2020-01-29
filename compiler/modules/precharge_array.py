@@ -107,9 +107,19 @@ class precharge_array(design.design):
 
     def place_insts(self):
         """ Places precharge array by horizontally tiling the precharge cell"""
+        from tech import cell_properties
+        xoffset = 0
         for i in range(self.columns):
-            offset = vector(self.pc_cell.width * i, 0)
-            self.local_insts[i].place(offset)                                   
+            tempx = xoffset
+            if cell_properties.bitcell.mirror.y and (i + 1) % 2:
+                mirror = "MY"
+                tempx = tempx + self.pc_cell.width
+            else:
+                mirror = ""
+
+            offset = vector(tempx, 0)
+            self.local_insts[i].place(offset=offset, mirror=mirror)
+            xoffset = xoffset + self.pc_cell.width
 
     def get_en_cin(self):
         """Get the relative capacitance of all the clk connections in the precharge array"""        

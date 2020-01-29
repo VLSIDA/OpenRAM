@@ -84,14 +84,27 @@ class sense_amp_array(design.design):
                                "en", "vdd", "gnd"])
 
     def place_sense_amp_array(self):
-            
+        from tech import cell_properties
         if self.bitcell.width > self.amp.width:
             amp_spacing = self.bitcell.width * self.words_per_row
         else:
             amp_spacing = self.amp.width * self.words_per_row
+
         for i in range(0,self.word_size):
-            amp_position = vector(amp_spacing * i, 0)
-            self.local_insts[i].place(amp_position)
+            xoffset = amp_spacing * i
+
+            # align the xoffset to the grid of bitcells. This way we
+            # know when to do the mirroring.
+            grid_x = int(xoffset / self.amp.width)
+
+            if cell_properties.bitcell.mirror.y and grid_x % 2:
+                mirror = "MY"
+                xoffset = xoffset + self.amp.width
+            else:
+                mirror = ""
+
+            amp_position = vector(xoffset, 0)
+            self.local_insts[i].place(offset=amp_position,mirror=mirror)
 
         
     def add_layout_pins(self):

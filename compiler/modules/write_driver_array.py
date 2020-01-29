@@ -106,14 +106,23 @@ class write_driver_array(design.design):
 
 
     def place_write_array(self):
+        from tech import cell_properties
         if self.bitcell.width > self.driver.width:
             self.driver_spacing = self.bitcell.width
         else:
             self.driver_spacing = self.driver.width
         for i in range(0,self.columns,self.words_per_row):
             index = int(i/self.words_per_row)
-            base = vector(i * self.driver_spacing, 0)
-            self.driver_insts[index].place(base)
+            xoffset = i * self.driver_spacing
+
+            if cell_properties.bitcell.mirror.y and i % 2:
+                mirror = "MY"
+                xoffset = xoffset + self.driver.width
+            else:
+                mirror = ""
+
+            base = vector(xoffset, 0)
+            self.driver_insts[index].place(offset=base, mirror=mirror)
 
             
     def add_layout_pins(self):

@@ -10,10 +10,7 @@ from tech import drc, spice
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
-import logical_effort
-import bitcell_array
-import replica_column
-import dummy_array
+
 
 class replica_bitcell_array(design.design):
     """

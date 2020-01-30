@@ -3,14 +3,10 @@
 # Copyright (c) 2016-2019 Regents of the University of California 
 # All rights reserved.
 #
-import debug
-import design
-from base_array import bitcell_base_array
-from tech import drc
-import contact
+from bitcell_base_array import bitcell_base_array
 from sram_factory import factory
-from vector import vector
 from globals import OPTS
+
 
 class dummy_array(bitcell_base_array):
     """
@@ -23,7 +19,6 @@ class dummy_array(bitcell_base_array):
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
-
         
     def create_netlist(self):
         """ Create and connect the netlist """

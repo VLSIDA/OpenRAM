@@ -56,12 +56,16 @@ class wordline_driver(design.design):
         self.add_pin("gnd", "GROUND")
 
     def add_modules(self):
+        b = factory.create(module_type="bitcell")
+        
         self.inv = factory.create(module_type="pdriver",
                                   fanout=self.cols,
-                                  neg_polarity=True)
+                                  neg_polarity=True,
+                                  height=b.height)
         self.add_mod(self.inv)
 
-        self.nand2 = factory.create(module_type="pnand2")
+        self.nand2 = factory.create(module_type="pnand2",
+                                    height=b.height)
         self.add_mod(self.nand2)
         
     def route_vdd_gnd(self):

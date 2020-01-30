@@ -27,8 +27,8 @@ class pgate(design.design):
         if height:
             self.height = height
         elif not height:
-            b = factory.create(module_type="bitcell")
-            self.height = b.height
+            # By default, we make it 8 M1 pitch tall
+            self.height = 8*self.m1_pitch
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -128,37 +128,37 @@ class pgate(design.design):
 
         # FIXME: float rounding problem
         middle_position = middle_position.snap_to_grid()
-        # Add a rail width to extend the well to the top of the rail
-        nwell_max_offset = max(self.find_highest_layer_coords("nwell").y,
-                               self.height + 0.5 * self.m1_width)
-        nwell_position = middle_position
-        nwell_height = nwell_max_offset - middle_position.y
         if "nwell" in layer:
+            # Add a rail width to extend the well to the top of the rail
+            nwell_max_offset = max(self.find_highest_layer_coords("nwell").y,
+                                   self.height + 0.5 * self.m1_width)
+            nwell_position = middle_position
+            nwell_height = nwell_max_offset - middle_position.y
             self.add_rect(layer="nwell",
                           offset=middle_position,
                           width=self.well_width,
                           height=nwell_height)
-        if "vtg" in layer:
-            self.add_rect(layer="vtg",
-                          offset=nwell_position,
-                          width=self.well_width,
-                          height=nwell_height)
+            if "vtg" in layer:
+                self.add_rect(layer="vtg",
+                              offset=nwell_position,
+                              width=self.well_width,
+                              height=nwell_height)
 
         # Start this half a rail width below the cell
-        pwell_min_offset = min(self.find_lowest_layer_coords("pwell").y,
-                               -0.5 * self.m1_width)
-        pwell_position = vector(0, pwell_min_offset)
-        pwell_height = middle_position.y - pwell_position.y
         if "pwell" in layer:
+            pwell_min_offset = min(self.find_lowest_layer_coords("pwell").y,
+                                   -0.5 * self.m1_width)
+            pwell_position = vector(0, pwell_min_offset)
+            pwell_height = middle_position.y - pwell_position.y
             self.add_rect(layer="pwell",
                           offset=pwell_position,
                           width=self.well_width,
                           height=pwell_height)
-        if "vtg" in layer:
-            self.add_rect(layer="vtg",
-                          offset=pwell_position,
-                          width=self.well_width,
-                          height=pwell_height)
+            if "vtg" in layer:
+                self.add_rect(layer="vtg",
+                              offset=pwell_position,
+                              width=self.well_width,
+                              height=pwell_height)
 
     def add_nwell_contact(self, pmos, pmos_pos):
         """ Add an nwell contact next to the given pmos device. """

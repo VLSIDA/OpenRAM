@@ -21,7 +21,7 @@ class hierarchical_decoder(design.design):
     """
     Dynamically generated hierarchical decoder.
     """
-    def __init__(self, name, rows, height=None):
+    def __init__(self, name, rows):
         design.design.__init__(self, name)
 
         self.NAND_FORMAT = "DEC_NAND_{0}"
@@ -30,7 +30,8 @@ class hierarchical_decoder(design.design):
         self.pre2x4_inst = []
         self.pre3x8_inst = []
 
-        self.cell_height = height        
+        b = factory.create(module_type="bitcell")
+        self.cell_height = b.height
         self.rows = rows
         self.num_inputs = math.ceil(math.log(self.rows, 2))
         (self.no_of_pre2x4,self.no_of_pre3x8)=self.determine_predecodes(self.num_inputs)

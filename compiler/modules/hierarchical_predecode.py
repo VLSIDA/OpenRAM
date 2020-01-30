@@ -178,7 +178,7 @@ class hierarchical_predecode(design.design):
             # route one signal next to each vdd/gnd rail since this is
             # typically where the p/n devices are and there are no
             # pins in the nand gates. 
-            y_offset = (num+self.number_of_inputs) * self.inv.height + contact.m1m2.width + self.m1_space
+            y_offset = (num+self.number_of_inputs) * self.inv.height + contact.m1_via.width + self.m1_space
             in_pin = "in_{}".format(num)            
             a_pin = "A_{}".format(num)
             in_pos = vector(self.input_rails[in_pin].x,y_offset)

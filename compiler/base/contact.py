@@ -36,6 +36,7 @@ class contact(hierarchy_design.hierarchy_design):
         
         hierarchy_design.hierarchy_design.__init__(self, name)
         debug.info(4, "create contact object {0}".format(name))
+
         self.add_comment("layers: {0}".format(layer_stack))
         self.add_comment("dimensions: {0}".format(dimensions))
         if implant_type or well_type:
@@ -243,14 +244,19 @@ class contact(hierarchy_design.hierarchy_design):
         """ Get total power of a module  """
         return self.return_power()
 
-
+    
 # Set up a static for each layer to be used for measurements
 for layer_stack in tech.layer_stacks:
     (layer1, via, layer2) = layer_stack
     cont = factory.create(module_type="contact",
                           layer_stack=layer_stack)
     module = sys.modules[__name__]
-    # Create the contact as just the concat of the layer names
-    setattr(module, layer1 + layer2, cont)
+    # Also create a contact that is just the first layer
+    if layer1 == "poly" or layer1 == "active":
+        setattr(module, layer1 + "_contact", cont)
+    else:
+        setattr(module, layer1 + "_via", cont)
+
+
 
 

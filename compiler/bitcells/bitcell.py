@@ -7,7 +7,8 @@
 #
 import debug
 import utils
-from tech import GDS, layer
+from tech import GDS, layer, parameter
+from tech import cell_properties
 import bitcell_base
 
 
@@ -19,7 +20,14 @@ class bitcell(bitcell_base.bitcell_base):
     library.
     """
 
-    pin_names = ["bl", "br", "wl", "vdd", "gnd"]
+    # If we have a split WL bitcell, if not be backwards
+    # compatible in the tech file
+    
+    if cell_properties.bitcell.split_wl:
+        pin_names = ["bl", "br", "wl0", "wl1", "vdd", "gnd"]
+    else:
+        pin_names = ["bl", "br", "wl", "vdd", "gnd"]
+            
     storage_nets = ['Q', 'Qbar']
     type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
     (width, height) = utils.get_libcell_size("cell_6t",
@@ -40,7 +48,10 @@ class bitcell(bitcell_base.bitcell_base):
         
     def get_all_wl_names(self):
         """ Creates a list of all wordline pin names """
-        row_pins = ["wl"]
+        if cell_properties.bitcell.split_wl:
+            row_pins = ["wl0", "wl1"]
+        else:
+            row_pins = ["wl"]
         return row_pins
     
     def get_all_bitline_names(self):

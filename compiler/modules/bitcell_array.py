@@ -5,14 +5,11 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-import design
-from base_array import bitcell_base_array
+from bitcell_base_array import bitcell_base_array
 from tech import drc, spice
-from vector import vector
 from globals import OPTS
 from sram_factory import factory
-import logical_effort
+
 
 class bitcell_array(bitcell_base_array):
     """
@@ -29,7 +26,7 @@ class bitcell_array(bitcell_base_array):
 
         # We don't offset this because we need to align
         # the replica bitcell in the control logic
-        #self.offset_all_coordinates()
+        # self.offset_all_coordinates()
         
         
     def create_netlist(self):
@@ -48,13 +45,11 @@ class bitcell_array(bitcell_base_array):
         
         self.DRC_LVS()
 
-
     def add_modules(self):
         """ Add the modules used in this design """
         self.cell = factory.create(module_type="bitcell")
         self.add_mod(self.cell)
 
-    
     def create_instances(self):
         """ Create the module instances used in this design """
         self.cell_inst = {}
@@ -65,7 +60,6 @@ class bitcell_array(bitcell_base_array):
                                                       mod=self.cell)
                 self.connect_inst(self.get_bitcell_pins(col, row))
         
-
     def analytical_power(self, corner, load):
         """Power of Bitcell array and bitline in nW."""
         from tech import drc, parameter
@@ -77,10 +71,10 @@ class bitcell_array(bitcell_base_array):
         freq = spice["default_event_frequency"]
         bitline_dynamic = self.calc_dynamic_power(corner, cell_load, freq, swing=bl_swing)
         
-        #Calculate the bitcell power which currently only includes leakage 
+        # Calculate the bitcell power which currently only includes leakage 
         cell_power = self.cell.analytical_power(corner, load)
         
-        #Leakage power grows with entire array and bitlines.
+        # Leakage power grows with entire array and bitlines.
         total_power = self.return_power(cell_power.dynamic + bitline_dynamic * self.column_size,
                                         cell_power.leakage * self.column_size * self.row_size)
         return total_power

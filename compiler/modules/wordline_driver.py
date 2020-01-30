@@ -177,7 +177,7 @@ class wordline_driver(design.design):
             up_or_down = self.m2_space if row % 2 else -self.m2_space
             input_offset = vector(0, b_pos.y + up_or_down)
             base_offset = vector(clk_offset.x, input_offset.y)
-            contact_offset = vector(0.5 * self.m2_width + self.m2_space + 0.5 * contact.m1m2.width, 0) 
+            contact_offset = vector(0.5 * self.m2_width + self.m2_space + 0.5 * contact.m1_via.width, 0) 
             mid_via_offset = base_offset + contact_offset
 
             # must under the clk line in M1
@@ -191,7 +191,7 @@ class wordline_driver(design.design):
 
             # now connect to the nand2 B
             self.add_path("m2", [mid_via_offset, b_pos])
-            contact_offset = b_pos - vector(0.5 * contact.m1m2.height, 0)
+            contact_offset = b_pos - vector(0.5 * contact.m1_via.height, 0)
             self.add_via_center(layers=self.m1_stack,
                                 offset=contact_offset,
                                 directions=("H", "H"))

@@ -202,10 +202,10 @@ class pnand3(pgate.pgate):
         # wire space or wire and one contact space
         metal_spacing = max(self.m1_space + self.m1_width,
                             self.m2_space + self.m2_width,
-                            self.m1_space + 0.5 *contact.polym1.width + 0.5 * self.m1_width)
+                            self.m1_space + 0.5 *contact.poly_contact.width + 0.5 * self.m1_width)
 
         active_spacing = max(self.m1_space,
-                             0.5 * contact.polym1.first_layer_width + self.poly_to_active)
+                             0.5 * contact.poly_contact.first_layer_width + self.poly_to_active)
         inputC_yoffset = self.nmos3_pos.y + self.nmos.active_height + active_spacing
         self.route_input_gate(self.pmos3_inst,
                               self.nmos3_inst,
@@ -256,8 +256,8 @@ class pnand3(pgate.pgate):
         self.add_layout_pin_rect_center(text="Z",
                                         layer="m1",
                                         offset=mid_offset,
-                                        width=contact.m1m2.first_layer_width,
-                                        height=contact.m1m2.first_layer_height)
+                                        width=contact.m1_via.first_layer_width,
+                                        height=contact.m1_via.first_layer_height)
 
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""

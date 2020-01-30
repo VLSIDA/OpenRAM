@@ -256,7 +256,7 @@ class bank_select(design.design):
             
             
             # Connect the logic B input to bank_sel/bank_sel_bar
-            logic_pos = logic_inst.get_pin("B").lc() - vector(0.5*contact.m1m2.height,0)
+            logic_pos = logic_inst.get_pin("B").lc() - vector(0.5*contact.m1_via.height,0)
             input_pos = vector(xoffset_bank_signal, logic_pos.y)
             self.add_path("m2",[logic_pos, input_pos])
             self.add_via_center(layers=self.m1_stack,

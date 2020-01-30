@@ -61,8 +61,12 @@ class design(hierarchy_design):
         """
         (layer1, via, layer2) = layer_stack
 
-        contact1 = getattr(contact, layer1 + layer2)
+        if layer1 == "poly" or layer1 == "active":
+            contact1 = getattr(contact, layer1 + "_contact")
+        else:
+            contact1 = getattr(contact, layer1 + "_via")
         max_contact = max(contact1.width, contact1.height)
+        
         layer1_space = getattr(self, layer1 + "_space")
         layer2_space = getattr(self, layer2 + "_space")
         pitch = max_contact + max(layer1_space, layer2_space)

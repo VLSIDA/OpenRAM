@@ -84,10 +84,10 @@ class pnor2(pgate.pgate):
         """ Pre-compute some handy layout parameters. """
 
         # metal spacing to allow contacts on any layer
-        self.input_spacing = max(self.poly_space + contact.polym1.first_layer_width,
-                                 self.m1_space + contact.m1m2.first_layer_width,
-                                 self.m2_space + contact.m2m3.first_layer_width, 
-                                 self.m3_space + contact.m2m3.second_layer_width)
+        self.input_spacing = max(self.poly_space + contact.poly_contact.first_layer_width,
+                                 self.m1_space + contact.m1_via.first_layer_width,
+                                 self.m2_space + contact.m2_via.first_layer_width, 
+                                 self.m3_space + contact.m2_via.second_layer_width)
         
         # Compute the other pmos2 location, but determining
         # offset to overlap the source and drain pins
@@ -234,8 +234,8 @@ class pnor2(pgate.pgate):
         self.add_layout_pin_rect_center(text="Z",
                                         layer="m1",
                                         offset=mid3_offset,
-                                        width=contact.m1m2.first_layer_height,
-                                        height=contact.m1m2.first_layer_width)
+                                        width=contact.m1_via.first_layer_height,
+                                        height=contact.m1_via.first_layer_width)
 
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""

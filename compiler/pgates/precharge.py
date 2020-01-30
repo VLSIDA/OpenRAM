@@ -121,7 +121,7 @@ class precharge(design.design):
         self.lower_pmos_inst.place(self.lower_pmos_position)
 
         # adds the upper pmos(s) to layout
-        ydiff = self.pmos.height + 2 * self.m1_space + contact.polym1.width
+        ydiff = self.pmos.height + 2 * self.m1_space + contact.poly_contact.width
         self.upper_pmos1_pos = self.lower_pmos_position + vector(0, ydiff)
         self.upper_pmos1_inst.place(self.upper_pmos1_pos)
 
@@ -175,7 +175,7 @@ class precharge(design.design):
         
         # adds the contact from active to metal1
         well_contact_pos = self.upper_pmos1_inst.get_pin("D").center().scale(1, 0) \
-                           + vector(0, self.upper_pmos1_inst.uy() + contact.activem1.height / 2 \
+                           + vector(0, self.upper_pmos1_inst.uy() + contact.active_contact.height / 2 \
                                     + self.nwell_extend_active)
         self.add_via_center(layers=self.active_stack,
                             offset=well_contact_pos,
@@ -183,7 +183,7 @@ class precharge(design.design):
                             well_type="n")
 
         # leave an extra pitch for the height
-        self.height = well_contact_pos.y + contact.activem1.height + self.m1_pitch
+        self.height = well_contact_pos.y + contact.active_contact.height + self.m1_pitch
 
         # nwell should span the whole design since it is pmos only
         self.add_rect(layer="nwell",

@@ -87,16 +87,16 @@ class pgate(design.design):
         left_gate_offset = vector(nmos_gate_pin.lx(), ypos)
 
         # Center is completely symmetric.
-        contact_width = contact.polym1.width
-        contact_m1_width = contact.polym1.second_layer_width
-        contact_m1_height = contact.polym1.second_layer_height
+        contact_width = contact.poly_contact.width
+        contact_m1_width = contact.poly_contact.second_layer_width
+        contact_m1_height = contact.poly_contact.second_layer_height
             
         if position == "center":
             contact_offset = left_gate_offset \
                              + vector(0.5 * self.poly_width, 0)
         elif position == "farleft":
             contact_offset = left_gate_offset \
-                             - vector(0.5 * contact.polym1.width, 0)
+                             - vector(0.5 * contact.poly_contact.width, 0)
         elif position == "left":
             contact_offset = left_gate_offset \
                              - vector(0.5 * contact_width - 0.5 * self.poly_width, 0)
@@ -120,7 +120,7 @@ class pgate(design.design):
                     + left_gate_offset.scale(0.5, 0)
         self.add_rect_center(layer="poly",
                              offset=mid_point,
-                             height=contact.polym1.first_layer_width,
+                             height=contact.poly_contact.first_layer_width,
                              width=left_gate_offset.x - contact_offset.x)
 
     def extend_wells(self, middle_position):

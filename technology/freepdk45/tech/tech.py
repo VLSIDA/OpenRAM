@@ -8,7 +8,7 @@
 import os
 from design_rules import *
 from module_type import *
-from custom_cell_properties import CellProperties
+from custom_cell_properties import cell_properties
 
 """
 File containing the process technology parameters for FreePDK 45nm.
@@ -23,14 +23,15 @@ File containing the process technology parameters for FreePDK 45nm.
 # Using tech_modules['cellname'] you can override each class by providing a custom
 # implementation in '$OPENRAM_TECHDIR/modules/'
 # For example: tech_modules['contact'] = 'contact_freepdk45'
-tech_modules = ModuleType()
+tech_modules = module_type()
 
 ###################################################
 # Custom cell properties
 ###################################################
-cell_properties = CellProperties()
+cell_properties = cell_properties()
 cell_properties.bitcell.mirror.x = True
 cell_properties.bitcell.mirror.y = False
+
 
 ###################################################
 # GDS file info

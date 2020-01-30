@@ -810,7 +810,7 @@ class multibank(design.design):
         self.add_wire(("m3","via2","m2"),[in_pin, rail_pos, rail_pos - vector(0,self.m2_pitch)])
         # Bring it up to M2 for M2/M3 routing
         self.add_via(layers=self.m1_stack,
-                     offset=in_pin + contact.m1m2.offset,
+                     offset=in_pin + contact.m1_via.offset,
                      rotate=90)
         self.add_via(layers=self.m2_stack,
                      offset=in_pin + self.m2m3_via_offset,
@@ -823,7 +823,7 @@ class multibank(design.design):
         rail_pos = vector(self.rail_1_x_offsets[rail], in_pin.y)
         self.add_wire(("m3","via2","m2"),[in_pin, rail_pos, rail_pos - vector(0,self.m2_pitch)])
         self.add_via(layers=self.m1_stack,
-                     offset=in_pin + contact.m1m2.offset,
+                     offset=in_pin + contact.m1_via.offset,
                      rotate=90)
         self.add_via(layers=self.m2_stack,
                      offset=in_pin + self.m2m3_via_offset,

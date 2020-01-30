@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 
-class ModuleType():
+class module_type():
     """
     This is a class that maps cell names to python classes implementing them.
     """

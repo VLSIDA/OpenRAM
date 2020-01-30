@@ -89,14 +89,15 @@ class pinv(pgate.pgate):
         # Assume we need 3 metal 1 pitches (2 power rails, one
         # between the tx for the drain)
         # plus the tx height
-        nmos = factory.create(module_type="ptx", tx_type="nmos")
+        nmos = factory.create(module_type="ptx",
+                              tx_type="nmos")
         pmos = factory.create(module_type="ptx",
                               width=drc("minwidth_tx"),
                               tx_type="pmos")
         tx_height = nmos.poly_height + pmos.poly_height
         # rotated m1 pitch or poly to active spacing
-        min_channel = max(contact.polym1.width + self.m1_space,
-                          contact.polym1.width + 2 * self.poly_to_active)
+        min_channel = max(contact.poly_contact.width + self.m1_space,
+                          contact.poly_contact.width + 2 * self.poly_to_active)
         
         # This is the extra space needed to ensure DRC rules
         # to the active contacts

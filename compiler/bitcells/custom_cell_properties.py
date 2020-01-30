@@ -6,22 +6,24 @@
 # All rights reserved.
 #
 
-class _MirrorAxis:
+class _mirror_axis:
     def __init__(self, x, y):
         self.x = x
         self.y = y
 
-class _Bitcell:
-    def __init__(self, mirror):
+class _bitcell:
+    def __init__(self, mirror, split_wl):
         self.mirror = mirror
+        self.split_wl = split_wl
 
-class CellProperties():
+class cell_properties():
     """
     TODO
     """
     def __init__(self):
         self.names = {}
-        self._bitcell = _Bitcell(_MirrorAxis(True, False))
+        self._bitcell = _bitcell(mirror = _mirror_axis(True, False),
+                                 split_wl = False)
 
     @property
     def bitcell(self):

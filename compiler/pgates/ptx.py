@@ -156,13 +156,17 @@ class ptx(design.design):
         self.poly_height = self.tx_width + 2 * self.poly_extend_active
         
         # The active offset is due to the well extension
-        # but we need to do the active offset for the other tx type too
-        # so that they align in pgates.
-        well_enclose_active = 0
-        if self.well_type=="p" and "pwell" in layer:
-            well_enclose_active = max(drc("pwell_enclose_active"), well_enclose_active)
-        if self.well_type=="n" and "nwell" in layer:
-            well_enclose_active = max(drc("nwell_enclose_active"), well_enclose_active)
+        if "pwell" in layer:
+            pwell_enclose_active = drc("pwell_enclose_active")
+        else:
+            pwell_enclose_active = 0
+        if "nwell" in layer:
+            nwell_enclose_active = drc("nwell_enclose_active")
+        else:
+            nwell_enclose_active = 0
+        # Use the max of either so that the poly gates will align properly
+        well_enclose_active = max(pwell_enclose_active,
+                                  nwell_enclose_active)
         self.active_offset = vector([well_enclose_active] * 2)
 
         # Well enclosure of active, ensure minwidth as well

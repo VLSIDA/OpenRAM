@@ -75,8 +75,10 @@ class pgate(design.design):
         pmos_gate_pin = pmos_inst.get_pin("G")
 
         # Check if the gates are aligned and give an error if they aren't!
+        if nmos_gate_pin.ll().x != pmos_gate_pin.ll().x:
+            self.gds_write("unaliged_gates.gds")
         debug.check(nmos_gate_pin.ll().x == pmos_gate_pin.ll().x,
-                    "Connecting unaligned gates not supported.")
+                    "Connecting unaligned gates not supported. See unaligned_gates.gds.")
         
         # Pick point on the left of NMOS and connect down to PMOS
         nmos_gate_pos = nmos_gate_pin.ll() + vector(0.5 * self.poly_width, 0)

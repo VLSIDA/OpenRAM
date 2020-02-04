@@ -231,10 +231,14 @@ class contact(hierarchy_design.hierarchy_design):
         # Optionally implant well if layer exists
         well_layer = "{}well".format(self.well_type)
         if well_layer in tech.layer:
+            well_width_rule = drc("minwidth_" + well_layer)
             well_enclose_active = drc(well_layer + "_enclose_active")
-            well_position = self.first_layer_position - [well_enclose_active] * 2
-            well_width = self.first_layer_width + 2 * well_enclose_active
-            well_height = self.first_layer_height + 2 * well_enclose_active
+            well_width = max(self.first_layer_width + 2 * well_enclose_active,
+                             well_width_rule)
+            well_height = max(self.first_layer_height + 2 * well_enclose_active,
+                              well_width_rule)
+            center_pos = vector(0.5*self.width, 0.5*self.height)
+            well_position = center_pos - vector(0.5*well_width, 0.5*well_height)
             self.add_rect(layer=well_layer,
                           offset=well_position,
                           width=well_width,

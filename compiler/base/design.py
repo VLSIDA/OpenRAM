@@ -113,6 +113,15 @@ class design(hierarchy_design):
             if match:
                 setattr(self, match.group(0), drc(match.group(0)))
 
+        # Create the maximum well extend active that gets used
+        # by cells to extend the wells for interaction with other cells
+        from tech import layer
+        self.well_extend_active = 0
+        if "nwell" in layer:
+            self.well_extend_active = max(self.well_extend_active, self.nwell_extend_active)
+        if "pwell" in layer:
+            self.well_extend_active = max(self.well_extend_active, self.pwell_extend_active)
+            
         # These are for debugging previous manual rules
         if False:
             print("poly_width", self.poly_width)

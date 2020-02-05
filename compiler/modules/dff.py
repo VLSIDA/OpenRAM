@@ -18,9 +18,11 @@ class dff(design.design):
     if not module_properties.dff.use_custom_ports:
         pin_names = ["D", "Q", "clk", "vdd", "gnd"]
         type_list = ["INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
+        clk_pin = "clk"
     else:
         pin_names = module_properties.dff.custom_port_list
         type_list = module_properties.dff.custom_type_list
+        clk_pin = module_properties.dff.clk_pin
 
     (width, height) = utils.get_libcell_size("dff",
                                              GDS["unit"],

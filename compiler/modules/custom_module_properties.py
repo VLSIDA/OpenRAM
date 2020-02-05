@@ -7,10 +7,11 @@
 #
 
 class _dff:
-    def __init__(self, use_custom_ports, custom_port_list, custom_type_list):
+    def __init__(self, use_custom_ports, custom_port_list, custom_type_list, clk_pin):
         self.use_custom_ports = use_custom_ports
         self.custom_port_list = custom_port_list
         self.custom_type_list = custom_type_list
+        self.clk_pin = clk_pin
 
 class module_properties():
     """
@@ -19,8 +20,9 @@ class module_properties():
     def __init__(self):
         self.names = {}
         self._dff = _dff(use_custom_ports = False,
-                         custom_port_list = [],
-                         custom_type_list = [])
+                         custom_port_list = ["D", "Q", "clk", "vdd", "gnd"],
+                         custom_type_list = ["INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"],
+                         clk_pin= "clk")
 
     @property
     def dff(self):

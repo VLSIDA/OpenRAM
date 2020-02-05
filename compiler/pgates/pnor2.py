@@ -95,11 +95,11 @@ class pnor2(pgate.pgate):
 
         # Two PMOS devices and a well contact. Separation between each.
         # Enclosure space on the sides.
-        self.well_width = 2 * self.pmos.active_width \
+        self.width = 2 * self.pmos.active_width \
                           + self.pmos.active_contact.width \
                           + 2 * self.active_space \
-                          + 2 * self.nwell_enclose_active
-        self.width = self.well_width
+                          + 0.5 * self.nwell_enclose_active
+        self.well_width = self.width + 2 * self.nwell_enclose_active
         # Height is an input parameter, so it is not recomputed.
 
         # This is the extra space needed to ensure DRC rules
@@ -225,7 +225,7 @@ class pnor2(pgate.pgate):
         
         # PMOS1 to mid-drain to NMOS2 drain
         self.add_path("m2",
-                      [pmos_pin.bc(), mid2_offset, mid3_offset])
+                      [pmos_pin.center(), mid2_offset, mid3_offset])
         self.add_path("m2",
                       [nmos_pin.rc(), mid1_offset, mid2_offset])
         # This extends the output to the edge of the cell

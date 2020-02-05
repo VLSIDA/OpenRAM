@@ -52,10 +52,10 @@ class pinv(pgate.pgate):
     def create_layout(self):
         """ Calls all functions related to the generation of the layout """
         self.setup_layout_constants()
-        self.route_supply_rails()
         self.place_ptx()
         self.add_well_contacts()
         self.extend_wells(self.well_pos)
+        self.route_supply_rails()
         self.connect_rails()
         self.route_input_gate(self.pmos_inst,
                               self.nmos_inst,
@@ -104,8 +104,9 @@ class pinv(pgate.pgate):
         extra_contact_space = max(-nmos.get_pin("D").by(), 0)
         # This is a poly-to-poly of a flipped cell
         self.top_bottom_space = max(0.5*self.m1_width + self.m1_space + extra_contact_space, 
-                                    self.poly_extend_active, self.poly_space)
+                                    self.poly_extend_active + self.poly_space)
         total_height = tx_height + min_channel + 2 * self.top_bottom_space
+
         debug.check(self.height > total_height,
                     "Cell height {0} too small for simple min height {1}.".format(self.height,
                                                                                   total_height))
@@ -148,14 +149,15 @@ class pinv(pgate.pgate):
 
     def setup_layout_constants(self):
         """
-        Pre-compute some handy layout parameters.
+        Compute the width and height
         """
 
-        # the well width is determined the multi-finger PMOS device width plus
-        # the well contact width and half well enclosure on both sides
-        self.well_width = self.pmos.active_width + self.pmos.active_contact.width \
-                          + self.active_space + 2*self.nwell_enclose_active
-        self.width = self.well_width
+        # the width is determined the multi-finger PMOS device width plus
+        # the well contact width, spacing between them
+        self.width = self.pmos.active_offset.x + self.pmos.active_width \
+                     + contact.nwell_contact.width + self.active_space + 0.5 * self.nwell_enclose_active
+        # This includes full enclosures on each end
+        self.well_width = self.width + 2*self.nwell_enclose_active
         # Height is an input parameter, so it is not recomputed.
         
     def add_ptx(self):

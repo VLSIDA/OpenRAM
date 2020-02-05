@@ -98,11 +98,11 @@ class pnand2(pgate.pgate):
 
         # Two PMOS devices and a well contact. Separation between each.
         # Enclosure space on the sides.
-        self.well_width = 2 * self.pmos.active_width + contact.active_contact.width \
+        self.width = 2 * self.pmos.active_width + contact.active_contact.width \
                           + 2 * self.active_space \
-                          + 2 * self.nwell_enclose_active
+                          + 0.5 * self.nwell_enclose_active
 
-        self.width = self.well_width
+        self.well_width = self.width + 2 * self.nwell_enclose_active
         # Height is an input parameter, so it is not recomputed.
 
         # This is the extra space needed to ensure DRC rules

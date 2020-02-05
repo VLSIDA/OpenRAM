@@ -91,10 +91,10 @@ class pnand3(pgate.pgate):
 
         # Two PMOS devices and a well contact. Separation between each.
         # Enclosure space on the sides.
-        self.well_width = 3 * self.pmos.active_width + self.pmos.active_contact.width \
-                          + 2 * self.active_space + 2 * self.nwell_enclose_active \
+        self.width = 3 * self.pmos.active_width + self.pmos.active_contact.width \
+                          + 2 * self.active_space + 0.5 * self.nwell_enclose_active \
                           - self.overlap_offset.x
-        self.width = self.well_width
+        self.well_width = self.width + 2 * self.nwell_enclose_active
         # Height is an input parameter, so it is not recomputed.
 
         # This is the extra space needed to ensure DRC rules
@@ -245,10 +245,10 @@ class pnand3(pgate.pgate):
                             offset=nmos3_pin.center())
         
         # PMOS3 and NMOS3 are drain aligned
-        self.add_path("m2", [pmos3_pin.bc(), nmos3_pin.uc()])
+        self.add_path("m2", [pmos3_pin.center(), nmos3_pin.uc()])
         # Route in the A input track (top track)
         mid_offset = vector(nmos3_pin.center().x, self.inputA_yoffset)
-        self.add_path("m2", [pmos1_pin.bc(), mid_offset, nmos3_pin.uc()])
+        self.add_path("m2", [pmos1_pin.center(), mid_offset, nmos3_pin.uc()])
 
         # This extends the output to the edge of the cell
         self.add_via_center(layers=self.m1_stack,

@@ -134,10 +134,10 @@ class pgate(design.design):
             # Add a rail width to extend the well to the top of the rail
             nwell_max_offset = max(self.find_highest_layer_coords("nwell").y,
                                    self.height + 0.5 * self.m1_width)
-            nwell_position = middle_position
+            nwell_position = middle_position - vector(self.well_extend_active, 0)
             nwell_height = nwell_max_offset - middle_position.y
             self.add_rect(layer="nwell",
-                          offset=middle_position,
+                          offset=nwell_position,
                           width=self.well_width,
                           height=nwell_height)
             if "vtg" in layer:
@@ -150,7 +150,7 @@ class pgate(design.design):
         if "pwell" in layer:
             pwell_min_offset = min(self.find_lowest_layer_coords("pwell").y,
                                    -0.5 * self.m1_width)
-            pwell_position = vector(0, pwell_min_offset)
+            pwell_position = vector(-self.well_extend_active, pwell_min_offset)
             pwell_height = middle_position.y - pwell_position.y
             self.add_rect(layer="pwell",
                           offset=pwell_position,
@@ -183,7 +183,6 @@ class pgate(design.design):
                                0.5 * pmos.active_contact.first_layer_height)
         self.nwell_contact = self.add_via_center(layers=layer_stack,
                                                  offset=contact_offset,
-                                                 directions=("H", "V"),
                                                  implant_type="n",
                                                  well_type="n")
         self.add_rect_center(layer="m1",
@@ -237,7 +236,6 @@ class pgate(design.design):
                                  0.5 * nmos.active_contact.first_layer_height)
         self.pwell_contact= self.add_via_center(layers=layer_stack,
                                                 offset=contact_offset,
-                                                directions=("H", "V"),
                                                 implant_type="p",
                                                 well_type="p")
         self.add_rect_center(layer="m1",

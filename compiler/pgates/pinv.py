@@ -54,7 +54,7 @@ class pinv(pgate.pgate):
         self.setup_layout_constants()
         self.place_ptx()
         self.add_well_contacts()
-        self.extend_wells(self.well_pos)
+        self.extend_wells()
         self.route_supply_rails()
         self.connect_rails()
         self.route_input_gate(self.pmos_inst,
@@ -154,8 +154,11 @@ class pinv(pgate.pgate):
 
         # the width is determined the multi-finger PMOS device width plus
         # the well contact width, spacing between them
+        # space is for power supply contact to nwell m1 spacing
         self.width = self.pmos.active_offset.x + self.pmos.active_width \
-                     + contact.nwell_contact.width + self.active_space + 0.5 * self.nwell_enclose_active
+                     + self.active_space + contact.nwell_contact.width \
+                     + 0.5 * self.nwell_enclose_active \
+                     + self.m1_space
         # This includes full enclosures on each end
         self.well_width = self.width + 2*self.nwell_enclose_active
         # Height is an input parameter, so it is not recomputed.
@@ -224,9 +227,6 @@ class pinv(pgate.pgate):
         pmos_drain_pos = self.pmos_inst.get_pin("D").ll()
         nmos_drain_pos = self.nmos_inst.get_pin("D").ul()
         self.output_pos = vector(0, 0.5 * (pmos_drain_pos.y + nmos_drain_pos.y))
-
-        # This will help with the wells
-        self.well_pos = self.output_pos
 
     def route_outputs(self):
         """

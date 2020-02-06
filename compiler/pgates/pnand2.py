@@ -53,7 +53,7 @@ class pnand2(pgate.pgate):
         self.place_ptx()
         self.connect_rails()
         self.add_well_contacts()
-        self.extend_wells(self.well_pos)
+        self.extend_wells()
         self.route_inputs()
         self.route_output()
 
@@ -110,7 +110,7 @@ class pnand2(pgate.pgate):
         extra_contact_space = max(-self.nmos.get_pin("D").by(), 0)
         # This is a poly-to-poly of a flipped cell
         self.top_bottom_space = max(0.5 * self.m1_width + self.m1_space + extra_contact_space, 
-                                    self.poly_extend_active, self.poly_space)
+                                    self.poly_extend_active + self.poly_space)
         
     def route_supply_rails(self):
         """ Add vdd/gnd rails to the top and bottom. """
@@ -170,9 +170,6 @@ class pnand2(pgate.pgate):
         self.output_pos = vector(0,
                                  0.5 * (pmos1_pos.y + nmos1_pos.y + self.nmos.active_height))
 
-        # This will help with the wells
-        self.well_pos = self.output_pos
-        
     def add_well_contacts(self):
         """ 
         Add n/p well taps to the layout and connect to supplies

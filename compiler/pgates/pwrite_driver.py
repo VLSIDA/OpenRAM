@@ -6,13 +6,12 @@
 #All rights reserved.
 #
 import design
-from tech import drc, parameter, spice
+from tech import parameter
 import debug
-import math
-from tech import drc
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
+
 
 class pwrite_driver(design.design):
     """

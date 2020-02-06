@@ -8,7 +8,7 @@
 import contact
 import design
 import debug
-from tech import drc, parameter
+from tech import parameter
 from vector import vector
 from globals import OPTS
 from sram_factory import factory

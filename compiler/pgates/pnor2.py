@@ -52,7 +52,7 @@ class pnor2(pgate.pgate):
         self.place_ptx()
         self.connect_rails()
         self.add_well_contacts()
-        self.extend_wells(self.well_pos)
+        self.extend_wells()
         self.route_inputs()
         self.route_output()
 
@@ -168,9 +168,6 @@ class pnor2(pgate.pgate):
         self.output_pos = vector(0,
                                  0.5 * (pmos1_pos.y + nmos1_pos.y + self.nmos.active_height))
 
-        # This will help with the wells
-        self.well_pos = self.output_pos
-        
     def add_well_contacts(self):
         """ Add n/p well taps to the layout and connect to supplies """
 

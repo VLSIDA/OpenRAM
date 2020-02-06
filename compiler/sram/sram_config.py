@@ -38,6 +38,7 @@ class sram_config:
         # Copy all the variables to the local module
         for member in members:
             setattr(module,member,getattr(self,member))
+            
     def compute_simple_sram_sizes(self):
         self.row_addr_size = int(log(OPTS.num_words, 2))
         self.col_addr_size = int(log(OPTS.word_size, 2))

@@ -23,9 +23,12 @@ class sram_config:
         # This will get over-written when we determine the organization
         self.words_per_row = words_per_row
 
+        if not OPTS.netlist_only:
+            self.compute_sizes()
+        else:
+            self.compute_simple_sram_sizes()
 
-        self.compute_sizes()
-
+        
 
     def set_local_config(self, module):
         """ Copy all of the member variables to the given module for convenience """
@@ -35,6 +38,14 @@ class sram_config:
         # Copy all the variables to the local module
         for member in members:
             setattr(module,member,getattr(self,member))
+    def compute_simple_sram_sizes(self):
+        self.row_addr_size = int(log(OPTS.num_words, 2))
+        self.col_addr_size = int(log(OPTS.word_size, 2))
+        self.words_per_row = 1
+        self.num_rows = OPTS.num_words
+        self.num_cols = OPTS.word_size
+        self.bank_addr_size = self.col_addr_size + self.row_addr_size
+        self.addr_size = self.bank_addr_size + int(log(self.num_banks, 2))
 
     def compute_sizes(self):
         """  Computes the organization of the memory using bitcell size by trying to make it square."""

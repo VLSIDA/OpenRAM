@@ -224,11 +224,11 @@ class pnand2(pgate.pgate):
 
         # Non-preferred active contacts
         self.add_via_center(layers=self.m1_stack,
-                            directions=("V","H"),
+                            directions=("V", "H"),
                             offset=pmos_pin.center())
         # Non-preferred active contacts
         self.add_via_center(layers=self.m1_stack,
-                            directions=("V","H"),
+                            directions=("V", "H"),
                             offset=nmos_pin.center())
         self.add_via_center(layers=self.m1_stack,
                             offset=out_offset)

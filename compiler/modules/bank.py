@@ -5,18 +5,14 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import sys
-from tech import drc, parameter
 import debug
 import design
-import math
-from math import log,sqrt,ceil
-import contact
-import pgates
 from sram_factory import factory
+from math import log
+from tech import drc
 from vector import vector
-
 from globals import OPTS
+
 
 class bank(design.design):
     """
@@ -499,6 +495,8 @@ class bank(design.design):
         Create a 2:4 or 3:8 column address decoder.
         """
 
+        # Height is a multiple of DFF so that it can be staggered
+        # and rows do not align with the control logic module
         self.dff = factory.create(module_type="dff")
         
         if self.col_addr_size == 0:
@@ -867,7 +865,6 @@ class bank(design.design):
         route_map = list(zip(decode_pins, column_mux_pins))
         self.create_vertical_channel_route(route_map, offset, self.m1_stack)
 
-
     def add_lvs_correspondence_points(self):
         """ This adds some points for easier debugging if LVS goes wrong. 
         These should probably be turned off by default though, since extraction
@@ -912,7 +909,6 @@ class bank(design.design):
                                layer="m1",  
                                offset=data_pin.center())
             
-            
     def route_control_lines(self, port):
         """ Route the control lines of the entire bank """
         
@@ -920,23 +916,25 @@ class bank(design.design):
         # From control signal to the module pin 
         # Connection from the central bus to the main control block crosses
         # pre-decoder and this connection is in metal3
-        write_inst = 0
-        read_inst = 0
-        
         connection = []
-        connection.append((self.prefix+"p_en_bar{}".format(port), self.port_data_inst[port].get_pin("p_en_bar").lc()))
+        connection.append((self.prefix + "p_en_bar{}".format(port),
+                           self.port_data_inst[port].get_pin("p_en_bar").lc()))
 
         rbl_wl_name = self.bitcell_array.get_rbl_wl_name(self.port_rbl_map[port])
-        connection.append((self.prefix+"wl_en{}".format(port), self.bitcell_array_inst.get_pin(rbl_wl_name).lc()))
+        connection.append((self.prefix + "wl_en{}".format(port),
+                           self.bitcell_array_inst.get_pin(rbl_wl_name).lc()))
             
         if port in self.write_ports:
             if port % 2:
-                connection.append((self.prefix+"w_en{}".format(port), self.port_data_inst[port].get_pin("w_en").rc()))
+                connection.append((self.prefix + "w_en{}".format(port),
+                                   self.port_data_inst[port].get_pin("w_en").rc()))
             else:
-                connection.append((self.prefix+"w_en{}".format(port), self.port_data_inst[port].get_pin("w_en").lc()))
+                connection.append((self.prefix + "w_en{}".format(port),
+                                   self.port_data_inst[port].get_pin("w_en").lc()))
                 
         if port in self.read_ports:
-            connection.append((self.prefix+"s_en{}".format(port), self.port_data_inst[port].get_pin("s_en").lc()))
+            connection.append((self.prefix + "s_en{}".format(port),
+                               self.port_data_inst[port].get_pin("s_en").lc()))
 
         for (control_signal, pin_pos) in connection:
             control_mid_pos = self.bus_xoffset[port][control_signal]
@@ -960,7 +958,7 @@ class bank(design.design):
         self.add_via_center(layers=self.m1_stack,
                             offset=control_pos)
  
-    def determine_wordline_stage_efforts(self, external_cout, inp_is_rise=True):    
+    def determine_wordline_stage_efforts(self, external_cout, inp_is_rise=True):
         """Get the all the stage efforts for each stage in the path within the bank clk_buf to a wordline"""
         #Decoder is assumed to have settled before the negative edge of the clock. Delay model relies on this assumption
         stage_effort_list = []

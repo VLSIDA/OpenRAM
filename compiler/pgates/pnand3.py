@@ -233,11 +233,14 @@ class pnand3(pgate.pgate):
 
         # Go up to metal2 for ease on all output pins
         self.add_via_center(layers=self.m1_stack,
-                            offset=pmos1_pin.center())
+                            offset=pmos1_pin.center(),
+                            directions=("V", "V"))
         self.add_via_center(layers=self.m1_stack,
-                            offset=pmos3_pin.center())
+                            offset=pmos3_pin.center(),
+                            directions=("V", "V"))
         self.add_via_center(layers=self.m1_stack,
-                            offset=nmos3_pin.center())
+                            offset=nmos3_pin.center(),
+                            directions=("V", "V"))
         
         # PMOS3 and NMOS3 are drain aligned
         self.add_path("m2", [pmos3_pin.center(), nmos3_pin.uc()])

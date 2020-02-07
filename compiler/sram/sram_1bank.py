@@ -320,7 +320,7 @@ class sram_1bank(sram_base):
         """ Connect the output of the col flops to the bank pins """
         for port in self.all_ports:
             if port%2:
-                offset = self.col_addr_dff_insts[port].ll() - vector(0, (self.word_size+2)*self.m1_pitch) 
+                offset = self.col_addr_dff_insts[port].ll() - vector(0, (self.col_addr_size+2)*self.m1_pitch) 
             else:
                 offset = self.col_addr_dff_insts[port].ul() + vector(0, 2*self.m1_pitch)
 

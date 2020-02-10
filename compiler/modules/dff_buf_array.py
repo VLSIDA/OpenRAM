@@ -70,6 +70,12 @@ class dff_buf_array(design.design):
                                   inv2_size=self.inv2_size)
         self.add_mod(self.dff)
 
+        well_spacing = max(self.nwell_space,
+                           self.pwell_space,
+                           self.pwell_to_nwell)
+
+        self.dff_pitch = self.dff.width + well_spacing + self.well_extend_active
+
     def create_dff_array(self):
         self.dff_insts={}
         for row in range(self.rows):  
@@ -89,10 +95,10 @@ class dff_buf_array(design.design):
             for col in range(self.columns):
                 name = "Xdff_r{0}_c{1}".format(row,col)
                 if (row % 2 == 0):
-                    base = vector(col*self.dff.width,row*self.dff.height)
+                    base = vector(col*self.dff_pitch,row*self.dff.height)
                     mirror = "R0"
                 else:
-                    base = vector(col*self.dff.width,(row+1)*self.dff.height)
+                    base = vector(col*self.dff_pitch,(row+1)*self.dff.height)
                     mirror = "MX"
                 self.dff_insts[row,col].place(offset=base, 
                                               mirror=mirror)

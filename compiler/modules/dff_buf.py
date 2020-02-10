@@ -49,10 +49,11 @@ class dff_buf(design.design):
         self.create_instances()
 
     def create_layout(self):
-        self.width = self.dff.width + self.inv1.width + self.inv2.width
+        self.place_instances()
+        self.width = self.inv2_inst.rx()
         self.height = self.dff.height
         
-        self.place_instances()
+        
         self.route_wires()
         self.add_layout_pins()
         self.add_boundary()
@@ -100,7 +101,10 @@ class dff_buf(design.design):
         self.dff_inst.place(vector(0,0))
 
         # Add INV1 to the right
-        self.inv1_inst.place(vector(self.dff_inst.rx(),0))
+        well_spacing = max(self.nwell_space,
+                           self.pwell_space,
+                           self.pwell_to_nwell)
+        self.inv1_inst.place(vector(self.dff_inst.rx() + well_spacing + self.well_extend_active,0))
         
         # Add INV2 to the right
         self.inv2_inst.place(vector(self.inv1_inst.rx(),0))

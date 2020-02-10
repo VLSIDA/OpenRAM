@@ -25,11 +25,12 @@ class bitcell(bitcell_base.bitcell_base):
     
     if cell_properties.bitcell.split_wl:
         pin_names = ["bl", "br", "wl0", "wl1", "vdd", "gnd"]
+        type_list = ["OUTPUT", "OUTPUT", "INPUT", "INPUT", "POWER", "GROUND"]
     else:
         pin_names = ["bl", "br", "wl", "vdd", "gnd"]
-            
+        type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
     storage_nets = ['Q', 'Qbar']
-    type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
+    
     (width, height) = utils.get_libcell_size("cell_6t",
                                              GDS["unit"],
                                              layer["boundary"])

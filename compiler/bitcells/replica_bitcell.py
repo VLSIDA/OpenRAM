@@ -20,10 +20,10 @@ class replica_bitcell(design.design):
 
     if cell_properties.bitcell.split_wl:
         pin_names = ["bl", "br", "wl0", "wl1", "vdd", "gnd"]
+        type_list = ["OUTPUT", "OUTPUT", "INPUT", "INPUT" , "POWER", "GROUND"] 
     else:
         pin_names = ["bl", "br", "wl", "vdd", "gnd"]
-
-    type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"] 
+        type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"] 
     
     if not OPTS.netlist_only:
         (width,height) = utils.get_libcell_size("replica_cell_6t", GDS["unit"], layer["boundary"])

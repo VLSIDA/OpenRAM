@@ -7,6 +7,7 @@
 #
 import design
 from tech import GDS, layer, spice, parameter
+from tech import module_properties
 import utils
 
 
@@ -14,9 +15,15 @@ class dff(design.design):
     """
     Memory address flip-flop
     """
+    if not module_properties.dff.use_custom_ports:
+        pin_names = ["D", "Q", "clk", "vdd", "gnd"]
+        type_list = ["INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
+        clk_pin = "clk"
+    else:
+        pin_names = module_properties.dff.custom_port_list
+        type_list = module_properties.dff.custom_type_list
+        clk_pin = module_properties.dff.clk_pin
 
-    pin_names = ["D", "Q", "clk", "vdd", "gnd"]
-    type_list = ["INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
     (width, height) = utils.get_libcell_size("dff",
                                              GDS["unit"],
                                              layer["boundary"])

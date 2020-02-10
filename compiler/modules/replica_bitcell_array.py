@@ -158,7 +158,7 @@ class replica_bitcell_array(design.design):
         # Left port WLs (one dummy for each port when we allow >1 port)
         for port in range(self.left_rbl):
             # Make names for all RBLs
-            wl_names=["rbl_{0}_{1}".format(self.cell.get_wl_name(x),port) for x in range(len(self.all_ports))]
+            wl_names=["rbl_{0}_{1}".format(self.cell.get_wl_name(x),port) for x in range(len(self.cell.get_all_wl_names()))]
             # Keep track of the pin that is the RBL
             self.rbl_wl_names[port]=wl_names[self.bitcell_ports[port]]
             self.replica_col_wl_names.extend(wl_names)
@@ -167,7 +167,7 @@ class replica_bitcell_array(design.design):
         # Right port WLs (one dummy for each port when we allow >1 port)
         for port in range(self.left_rbl,self.left_rbl+self.right_rbl):
             # Make names for all RBLs
-            wl_names=["rbl_{0}_{1}".format(self.cell.get_wl_name(x),port) for x in range(len(self.all_ports))]
+            wl_names=["rbl_{0}_{1}".format(self.cell.get_wl_name(x),port) for x in range(len(self.cell.get_all_wl_names()))]
             # Keep track of the pin that is the RBL
             self.rbl_wl_names[port]=wl_names[self.bitcell_ports[port]]
             self.replica_col_wl_names.extend(wl_names)

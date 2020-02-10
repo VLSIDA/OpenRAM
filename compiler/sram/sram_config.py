@@ -23,9 +23,9 @@ class sram_config:
         # This will get over-written when we determine the organization
         self.words_per_row = words_per_row
 
-
         self.compute_sizes()
 
+        
 
     def set_local_config(self, module):
         """ Copy all of the member variables to the given module for convenience """

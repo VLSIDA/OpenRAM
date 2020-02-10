@@ -25,11 +25,12 @@ class bitcell(bitcell_base.bitcell_base):
     
     if cell_properties.bitcell.split_wl:
         pin_names = ["bl", "br", "wl0", "wl1", "vdd", "gnd"]
+        type_list = ["OUTPUT", "OUTPUT", "INPUT", "INPUT", "POWER", "GROUND"]
     else:
         pin_names = ["bl", "br", "wl", "vdd", "gnd"]
-            
+        type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
     storage_nets = ['Q', 'Qbar']
-    type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
+    
     (width, height) = utils.get_libcell_size("cell_6t",
                                              GDS["unit"],
                                              layer["boundary"])
@@ -81,8 +82,11 @@ class bitcell(bitcell_base.bitcell_base):
 
     def get_wl_name(self, port=0):
         """Get wl name"""
-        debug.check(port == 0, "One port for bitcell only.")
-        return "wl"
+        if cell_properties.bitcell.split_wl:
+            return "wl{}".format(port)
+        else:
+            debug.check(port == 0, "One port for bitcell only.")
+            return "wl"
     
     def build_graph(self, graph, inst_name, port_nets):
         """

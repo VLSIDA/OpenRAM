@@ -53,6 +53,7 @@ class bank(design.design):
 
 
     def create_netlist(self):
+
         self.compute_sizes()
         self.add_modules()
         self.add_pins() # Must create the replica bitcell array first

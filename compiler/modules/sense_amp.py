@@ -9,6 +9,7 @@ import design
 import debug
 import utils
 from tech import GDS,layer, parameter,drc
+from globals import OPTS
 import logical_effort
 
 class sense_amp(design.design):
@@ -21,8 +22,12 @@ class sense_amp(design.design):
 
     pin_names = ["bl", "br", "dout", "en", "vdd", "gnd"]
     type_list = ["INPUT", "INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
-    (width,height) = utils.get_libcell_size("sense_amp", GDS["unit"], layer["boundary"])
-    pin_map = utils.get_libcell_pins(pin_names, "sense_amp", GDS["unit"])
+    if not OPTS.netlist_only:
+        (width,height) = utils.get_libcell_size("sense_amp", GDS["unit"], layer["boundary"])
+        pin_map = utils.get_libcell_pins(pin_names, "sense_amp", GDS["unit"])
+    else:
+        (width, height) = (0,0)
+        pin_map = []
 
     def __init__(self, name):
         design.design.__init__(self, name)

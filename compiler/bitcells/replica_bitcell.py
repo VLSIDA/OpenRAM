@@ -8,7 +8,8 @@
 import design
 import debug
 import utils
-from tech import GDS,layer,drc,parameter
+from tech import GDS,layer,drc,parameter,cell_properties
+from globals import OPTS
 
 class replica_bitcell(design.design):
     """
@@ -17,10 +18,19 @@ class replica_bitcell(design.design):
     is a hand-made cell, so the layout and netlist should be available in
     the technology library. """
 
-    pin_names = ["bl", "br", "wl", "vdd", "gnd"]
+    if cell_properties.bitcell.split_wl:
+        pin_names = ["bl", "br", "wl0", "wl1", "vdd", "gnd"]
+    else:
+        pin_names = ["bl", "br", "wl", "vdd", "gnd"]
+
     type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"] 
-    (width,height) = utils.get_libcell_size("replica_cell_6t", GDS["unit"], layer["boundary"])
-    pin_map = utils.get_libcell_pins(pin_names, "replica_cell_6t", GDS["unit"])
+    
+    if not OPTS.netlist_only:
+        (width,height) = utils.get_libcell_size("replica_cell_6t", GDS["unit"], layer["boundary"])
+        pin_map = utils.get_libcell_pins(pin_names, "replica_cell_6t", GDS["unit"])
+    else:
+        (width,height) = (0,0)
+        pin_map = []
 
     def __init__(self, name=""):
         # Ignore the name argument

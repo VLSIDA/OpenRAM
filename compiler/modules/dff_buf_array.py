@@ -7,7 +7,7 @@
 #
 import debug
 import design
-from tech import drc
+from tech import drc, module_properties
 from math import log
 from vector import vector
 from globals import OPTS
@@ -64,6 +64,10 @@ class dff_buf_array(design.design):
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
+        if module_properties.dff_buff_array.add_body_contacts:
+            self.add_pin("vpb", "INPUT")
+            self.add_pin("vnb", "INPUT")
+
     def add_modules(self):
         self.dff = factory.create(module_type="dff_buf",
                                   inv1_size=self.inv1_size,
@@ -77,12 +81,16 @@ class dff_buf_array(design.design):
                 name = "dff_r{0}_c{1}".format(row,col)
                 self.dff_insts[row,col]=self.add_inst(name=name,
                                                       mod=self.dff)
-                self.connect_inst([self.get_din_name(row,col),
+                inst_ports = [self.get_din_name(row,col),
                                    self.get_dout_name(row,col),
                                    self.get_dout_bar_name(row,col),  
                                    "clk",
                                    "vdd",
-                                   "gnd"])
+                                   "gnd"]
+                if module_properties.dff_buff_array.add_body_contacts:
+                    inst_ports.append("vpb")
+                    inst_ports.append("vnb")
+                self.connect_inst(inst_ports)
 
     def place_dff_array(self):
         for row in range(self.rows):  

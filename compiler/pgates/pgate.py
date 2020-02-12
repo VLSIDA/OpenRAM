@@ -11,7 +11,6 @@ import debug
 from tech import layer
 from vector import vector
 from globals import OPTS
-from sram_factory import factory
 
 
 class pgate(design.design):
@@ -29,7 +28,7 @@ class pgate(design.design):
         elif not height:
             # By default, we make it 8 M1 pitch tall
             self.height = 8*self.m1_pitch
-
+            
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -75,11 +74,13 @@ class pgate(design.design):
         pmos_gate_pin = pmos_inst.get_pin("G")
 
         # Check if the gates are aligned and give an error if they aren't!
+        if nmos_gate_pin.ll().x != pmos_gate_pin.ll().x:
+            self.gds_write("unaliged_gates.gds")
         debug.check(nmos_gate_pin.ll().x == pmos_gate_pin.ll().x,
-                    "Connecting unaligned gates not supported.")
+                    "Connecting unaligned gates not supported. See unaligned_gates.gds.")
         
-        # Pick point on the left of NMOS and connect down to PMOS
-        nmos_gate_pos = nmos_gate_pin.ll() + vector(0.5 * self.poly_width, 0)
+        # Pick point on the left of NMOS and up to PMOS
+        nmos_gate_pos = nmos_gate_pin.ul() + vector(0.5 * self.poly_width, 0)
         pmos_gate_pos = vector(nmos_gate_pos.x, pmos_gate_pin.bc().y)
         self.add_path("poly", [nmos_gate_pos, pmos_gate_pos])
 
@@ -123,19 +124,22 @@ class pgate(design.design):
                              height=contact.poly_contact.first_layer_width,
                              width=left_gate_offset.x - contact_offset.x)
 
-    def extend_wells(self, middle_position):
+    def extend_wells(self):
         """ Extend the n/p wells to cover whole cell """
 
+        # This should match the cells in the cell library
+        nwell_y_offset = 0.48 * self.height
+        full_height = self.height + 0.5*self.m1_width
+        
         # FIXME: float rounding problem
-        middle_position = middle_position.snap_to_grid()
         if "nwell" in layer:
             # Add a rail width to extend the well to the top of the rail
             nwell_max_offset = max(self.find_highest_layer_coords("nwell").y,
-                                   self.height + 0.5 * self.m1_width)
-            nwell_position = middle_position
-            nwell_height = nwell_max_offset - middle_position.y
+                                   full_height)
+            nwell_position = vector(0, nwell_y_offset) - vector(self.well_extend_active, 0)
+            nwell_height = nwell_max_offset - nwell_y_offset
             self.add_rect(layer="nwell",
-                          offset=middle_position,
+                          offset=nwell_position,
                           width=self.well_width,
                           height=nwell_height)
             if "vtg" in layer:
@@ -148,8 +152,8 @@ class pgate(design.design):
         if "pwell" in layer:
             pwell_min_offset = min(self.find_lowest_layer_coords("pwell").y,
                                    -0.5 * self.m1_width)
-            pwell_position = vector(0, pwell_min_offset)
-            pwell_height = middle_position.y - pwell_position.y
+            pwell_position = vector(-self.well_extend_active, pwell_min_offset)
+            pwell_height = nwell_y_offset - pwell_position.y
             self.add_rect(layer="pwell",
                           offset=pwell_position,
                           width=self.well_width,
@@ -181,7 +185,6 @@ class pgate(design.design):
                                0.5 * pmos.active_contact.first_layer_height)
         self.nwell_contact = self.add_via_center(layers=layer_stack,
                                                  offset=contact_offset,
-                                                 directions=("H", "V"),
                                                  implant_type="n",
                                                  well_type="n")
         self.add_rect_center(layer="m1",
@@ -235,7 +238,6 @@ class pgate(design.design):
                                  0.5 * nmos.active_contact.first_layer_height)
         self.pwell_contact= self.add_via_center(layers=layer_stack,
                                                 offset=contact_offset,
-                                                directions=("H", "V"),
                                                 implant_type="p",
                                                 well_type="p")
         self.add_rect_center(layer="m1",

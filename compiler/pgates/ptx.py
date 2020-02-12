@@ -154,17 +154,23 @@ class ptx(design.design):
 
         # Poly height must include poly extension over active
         self.poly_height = self.tx_width + 2 * self.poly_extend_active
-
-        well_name = "{}well".format(self.well_type)
         
         # The active offset is due to the well extension
-        if well_name in layer:
-            well_enclose_active = drc(well_name + "_enclose_active")
-            self.active_offset = vector([well_enclose_active] * 2)
+        if "pwell" in layer:
+            pwell_enclose_active = drc("pwell_enclose_active")
         else:
-            self.active_offset = vector(0, 0)
+            pwell_enclose_active = 0
+        if "nwell" in layer:
+            nwell_enclose_active = drc("nwell_enclose_active")
+        else:
+            nwell_enclose_active = 0
+        # Use the max of either so that the poly gates will align properly
+        well_enclose_active = max(pwell_enclose_active,
+                                  nwell_enclose_active)
+        self.active_offset = vector([well_enclose_active] * 2)
 
         # Well enclosure of active, ensure minwidth as well
+        well_name = "{}well".format(self.well_type)
         if well_name in layer:
             well_width_rule = drc("minwidth_" + well_name)
             well_enclose_active = drc(well_name + "_enclose_active")
@@ -179,7 +185,7 @@ class ptx(design.design):
             # The well is not included in the height and width
             self.height = self.poly_height
             self.width = self.active_width
-        
+
         # This is the center of the first active contact offset (centered vertically)
         self.contact_offset = self.active_offset + vector(0.5 * self.active_contact.width,
                                                           0.5 * self.active_height)
@@ -334,13 +340,10 @@ class ptx(design.design):
         if not (well_name in layer or "vtg" in layer):
             return
 
-        center_pos = self.active_offset + vector(self.width / 2.0,
-                                                 self.height / 2.0)
-        well_ll = center_pos - vector(self.well_width / 2.0,
-                                      self.well_height / 2.0)
-        well_ll = well_ll - vector(0,
-                                   self.poly_extend_active)
-            
+        center_pos = self.active_offset + vector(0.5*self.active_width,
+                                                 0.5*self.active_height)
+        well_ll = center_pos - vector(0.5*self.well_width,
+                                      0.5*self.well_height)
         if well_name in layer:
             self.add_rect(layer=well_name,
                           offset=well_ll,

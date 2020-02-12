@@ -8,11 +8,10 @@
 import debug
 import design
 import math
-from tech import drc
 import contact
 from vector import vector
-from globals import OPTS
 from sram_factory import factory
+
 
 class hierarchical_predecode(design.design):
     """
@@ -42,7 +41,7 @@ class hierarchical_predecode(design.design):
         self.add_nand(self.number_of_inputs)
         self.add_mod(self.nand)
 
-    def add_nand(self,inputs):
+    def add_nand(self, inputs):
         """ Create the NAND for the predecode input stage """
         if inputs==2:
             self.nand = factory.create(module_type="pnand2",
@@ -51,7 +50,7 @@ class hierarchical_predecode(design.design):
             self.nand = factory.create(module_type="pnand3",
                                        height=self.cell_height)
         else:
-            debug.error("Invalid number of predecode inputs: {}".format(inputs),-1)
+            debug.error("Invalid number of predecode inputs: {}".format(inputs), -1)
             
     def setup_layout_constraints(self):
 
@@ -89,7 +88,6 @@ class hierarchical_predecode(design.design):
                                                      names=decode_names,
                                                      length=self.height - 2*self.m1_width)
 
-        
     def create_input_inverters(self):
         """ Create the input inverters to invert input signals for the decode stage. """
         self.in_inst = []
@@ -266,7 +264,7 @@ class hierarchical_predecode(design.design):
         """ Add a pin for each row of vdd/gnd which are must-connects next level up. """
 
         # Find the x offsets for where the vias/pins should be placed
-        in_xoffset = self.in_inst[0].rx()
+        in_xoffset = self.in_inst[0].rx() + self.m1_space
         out_xoffset = self.inv_inst[0].lx() - self.m1_space
         for num in range(0,self.number_of_outputs):
             # this will result in duplicate polygons for rails, but who cares

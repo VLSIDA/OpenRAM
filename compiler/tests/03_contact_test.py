@@ -21,7 +21,7 @@ class contact_test(openram_test):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
 
-        from tech import poly_stack, beol_stacks
+        from tech import active_stack, poly_stack, beol_stacks
 
         # Don't do active because of nwell contact rules
         # Don't do metal3 because of min area rules
@@ -67,6 +67,25 @@ class contact_test(openram_test):
             c = factory.create(module_type="contact", layer_stack=layer_stack, dimensions=(3, 3))
             self.local_drc_check(c)
 
+        # Test the well taps
+        # check vertical array with one in the middle and two ends
+        layer_stack = active_stack
+        stack_name = ":".join(map(str, layer_stack))
+        
+        debug.info(2, "1 x 1 {} nwell".format(stack_name))
+        c = factory.create(module_type="contact",
+                           layer_stack=layer_stack,
+                           implant_type="n",
+                           well_type="n")
+        self.local_drc_check(c)
+
+        debug.info(2, "1 x 1 {} pwell".format(stack_name))
+        c = factory.create(module_type="contact",
+                           layer_stack=layer_stack,
+                           implant_type="p",
+                           well_type="p")
+        self.local_drc_check(c)
+        
         globals.end_openram()
         
 

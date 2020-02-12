@@ -5,17 +5,13 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from tech import drc
 import debug
 import design
-from math import log
-from math import sqrt
-from math import ceil
 import math
-import contact
 from sram_factory import factory
 from vector import vector
 from globals import OPTS
+
 
 class hierarchical_decoder(design.design):
     """
@@ -34,12 +30,11 @@ class hierarchical_decoder(design.design):
         self.cell_height = b.height
         self.rows = rows
         self.num_inputs = math.ceil(math.log(self.rows, 2))
-        (self.no_of_pre2x4,self.no_of_pre3x8)=self.determine_predecodes(self.num_inputs)
+        (self.no_of_pre2x4, self.no_of_pre3x8)=self.determine_predecodes(self.num_inputs)
 
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
-
 
     def create_netlist(self):
         self.add_modules()
@@ -308,7 +303,6 @@ class hierarchical_decoder(design.design):
             base= vector(-self.pre2_4.width, num * self.pre2_4.height)
 
         self.pre2x4_inst[num].place(base)
-
         
     def place_pre3x8(self,num):
         """ Place 3x8 predecoder to the left of the origin and above any 2x4 decoders """
@@ -321,14 +315,12 @@ class hierarchical_decoder(design.design):
 
         self.pre3x8_inst[num].place(offset)
 
-
     def create_row_decoder(self):
         """ Create the row-decoder by placing NAND2/NAND3 and Inverters
         and add the primary decoder output pins. """
         if (self.num_inputs >= 4):
             self.create_decoder_nand_array()
             self.create_decoder_inv_array()
-
 
     def create_decoder_nand_array(self):
         """ Add a column of NAND gates for final decode """
@@ -556,7 +548,7 @@ class hierarchical_decoder(design.design):
         """ Add a pin for each row of vdd/gnd which are must-connects next level up. """
 
         # The vias will be placed in the center and right of the cells, respectively.
-        xoffset = self.nand_inst[0].cx()
+        xoffset = self.nand_inst[0].rx()
         for num in range(0,self.rows):
             for pin_name in ["vdd", "gnd"]:
                 # The nand and inv are the same height rows...

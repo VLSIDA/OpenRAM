@@ -5,21 +5,10 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import sys
-from tech import drc, spice
 import debug
-from math import log,sqrt,ceil
-import datetime
-import getpass
-import numpy as np
 from vector import vector
-from globals import OPTS, print_time
-
 from sram_base import sram_base
-from bank import bank
 from contact import m2_via
-from dff_buf_array import dff_buf_array
-from dff_array import dff_array
 
 
 class sram_1bank(sram_base):
@@ -328,10 +317,10 @@ class sram_1bank(sram_base):
                                     offset=flop_pos)
 
     def route_col_addr_dff(self):
-        """ Connect the output of the row flops to the bank pins """
+        """ Connect the output of the col flops to the bank pins """
         for port in self.all_ports:
             if port%2:
-                offset = self.col_addr_dff_insts[port].ll() - vector(0, (self.word_size+2)*self.m1_pitch) 
+                offset = self.col_addr_dff_insts[port].ll() - vector(0, (self.col_addr_size+2)*self.m1_pitch) 
             else:
                 offset = self.col_addr_dff_insts[port].ul() + vector(0, 2*self.m1_pitch)
 

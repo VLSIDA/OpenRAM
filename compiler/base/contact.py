@@ -42,6 +42,8 @@ class contact(hierarchy_design.hierarchy_design):
         if implant_type or well_type:
             self.add_comment("implant type: {}\n".format(implant_type))
             self.add_comment("well_type: {}\n".format(well_type))
+
+        self.is_well_contact = implant_type == well_type
         
         self.layer_stack = layer_stack
         self.dimensions = dimensions
@@ -114,7 +116,12 @@ class contact(hierarchy_design.hierarchy_design):
         
         self.first_layer_minwidth = drc("minwidth_{0}".format(self.first_layer_name))
         self.first_layer_enclosure = drc("{0}_enclose_{1}".format(self.first_layer_name, self.via_layer_name))
-        self.first_layer_extend = drc("{0}_extend_{1}".format(self.first_layer_name, self.via_layer_name))
+        # If there's a different rule for active
+        # FIXME: Make this more elegant
+        if self.is_well_contact and self.first_layer_name == "active" and "tap_extend_contact" in drc.keys():
+            self.first_layer_extend = drc("tap_extend_contact")
+        else:
+            self.first_layer_extend = drc("{0}_extend_{1}".format(self.first_layer_name, self.via_layer_name))
 
         self.second_layer_minwidth = drc("minwidth_{0}".format(self.second_layer_name))
         self.second_layer_enclosure = drc("{0}_enclose_{1}".format(self.second_layer_name, self.via_layer_name))
@@ -231,14 +238,18 @@ class contact(hierarchy_design.hierarchy_design):
         # Optionally implant well if layer exists
         well_layer = "{}well".format(self.well_type)
         if well_layer in tech.layer:
-            well_enclose_active = drc(well_layer + "_enclose_active")
-            well_position = self.first_layer_position - [well_enclose_active] * 2
-            well_width = self.first_layer_width + 2 * well_enclose_active
-            well_height = self.first_layer_height + 2 * well_enclose_active
+            well_width_rule = drc("minwidth_" + well_layer)
+            self.well_enclose_active = drc(well_layer + "_enclose_active")
+            self.well_width = max(self.first_layer_width + 2 * self.well_enclose_active,
+                                  well_width_rule)
+            self.well_height = max(self.first_layer_height + 2 * self.well_enclose_active,
+                                   well_width_rule)
+            center_pos = vector(0.5*self.width, 0.5*self.height)
+            well_position = center_pos - vector(0.5*self.well_width, 0.5*self.well_height)
             self.add_rect(layer=well_layer,
                           offset=well_position,
-                          width=well_width,
-                          height=well_height)
+                          width=self.well_width,
+                          height=self.well_height)
         
     def analytical_power(self, corner, load):
         """ Get total power of a module  """
@@ -257,6 +268,21 @@ for layer_stack in tech.layer_stacks:
     else:
         setattr(module, layer1 + "_via", cont)
 
-
+# Set up a static for each well contact for measurements
+if "nwell" in tech.layer:
+    cont = factory.create(module_type="contact",
+                          layer_stack=tech.active_stack,
+                          implant_type="n",
+                          well_type="n")
+    module = sys.modules[__name__]
+    setattr(module, "nwell_contact", cont)
+    
+if "pwell" in tech.layer:
+    cont = factory.create(module_type="contact",
+                          layer_stack=tech.active_stack,
+                          implant_type="p",
+                          well_type="p")
+    module = sys.modules[__name__]
+    setattr(module, "pwell_contact", cont)
 
 

@@ -61,7 +61,7 @@ class pnand3(pgate.pgate):
         self.place_ptx()
         self.connect_rails()
         self.add_well_contacts()
-        self.extend_wells(self.well_pos)
+        self.extend_wells()
         self.route_inputs()
         self.route_output()
 
@@ -91,10 +91,10 @@ class pnand3(pgate.pgate):
 
         # Two PMOS devices and a well contact. Separation between each.
         # Enclosure space on the sides.
-        self.well_width = 3 * self.pmos.active_width + self.pmos.active_contact.width \
-                          + 2 * self.active_space + 2 * self.nwell_enclose_active \
+        self.width = 3 * self.pmos.active_width + self.pmos.active_contact.width \
+                          + 2 * self.active_space + 0.5 * self.nwell_enclose_active \
                           - self.overlap_offset.x
-        self.width = self.well_width
+        self.well_width = self.width + 2 * self.nwell_enclose_active
         # Height is an input parameter, so it is not recomputed.
 
         # This is the extra space needed to ensure DRC rules
@@ -102,10 +102,8 @@ class pnand3(pgate.pgate):
         nmos = factory.create(module_type="ptx", tx_type="nmos")
         extra_contact_space = max(-nmos.get_pin("D").by(), 0)
         # This is a poly-to-poly of a flipped cell
-        self.top_bottom_space = max(0.5 * self.m1_width + self.m1_space \
-                                    + extra_contact_space,
-                                    self.poly_extend_active,
-                                    self.poly_space)
+        self.top_bottom_space = max(0.5 * self.m1_width + self.m1_space + extra_contact_space,
+                                    self.poly_extend_active + self.poly_space)
         
     def route_supply_rails(self):
         """ Add vdd/gnd rails to the top and bottom. """
@@ -179,9 +177,6 @@ class pnand3(pgate.pgate):
         # This will help with the wells and the input/output placement
         self.output_pos = vector(0, 0.5*self.height)
 
-        # This should be placed at the top of the NMOS well
-        self.well_pos = self.output_pos
-        
     def add_well_contacts(self):
         """ Add n/p well taps to the layout and connect to supplies """
 
@@ -238,17 +233,20 @@ class pnand3(pgate.pgate):
 
         # Go up to metal2 for ease on all output pins
         self.add_via_center(layers=self.m1_stack,
-                            offset=pmos1_pin.center())
+                            offset=pmos1_pin.center(),
+                            directions=("V", "V"))
         self.add_via_center(layers=self.m1_stack,
-                            offset=pmos3_pin.center())
+                            offset=pmos3_pin.center(),
+                            directions=("V", "V"))
         self.add_via_center(layers=self.m1_stack,
-                            offset=nmos3_pin.center())
+                            offset=nmos3_pin.center(),
+                            directions=("V", "V"))
         
         # PMOS3 and NMOS3 are drain aligned
-        self.add_path("m2", [pmos3_pin.bc(), nmos3_pin.uc()])
+        self.add_path("m2", [pmos3_pin.center(), nmos3_pin.uc()])
         # Route in the A input track (top track)
         mid_offset = vector(nmos3_pin.center().x, self.inputA_yoffset)
-        self.add_path("m2", [pmos1_pin.bc(), mid_offset, nmos3_pin.uc()])
+        self.add_path("m2", [pmos1_pin.center(), mid_offset, nmos3_pin.uc()])
 
         # This extends the output to the edge of the cell
         self.add_via_center(layers=self.m1_stack,

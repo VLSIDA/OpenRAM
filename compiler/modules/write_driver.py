@@ -37,6 +37,12 @@ class write_driver(design.design):
         self.pin_map = write_driver.pin_map
         self.add_pin_types(self.type_list)
 
+    def get_bl_names(self):
+        return "bl"
+
+    def get_br_names(self):
+        return "br"
+
     def get_w_en_cin(self):
         """Get the relative capacitance of a single input"""
         # This is approximated from SCMOS. It has roughly 5 3x transistor gates.

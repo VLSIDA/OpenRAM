@@ -29,6 +29,12 @@ class sense_amp(design.design):
         (width, height) = (0,0)
         pin_map = []
 
+    def get_bl_names(self):
+        return "bl"
+
+    def get_br_names(self):
+        return "br"
+
     def __init__(self, name):
         design.design.__init__(self, name)
         debug.info(2, "Create sense_amp")

@@ -37,6 +37,19 @@ class write_driver_array(design.design):
         if not OPTS.netlist_only:
             self.create_layout()
 
+    def get_bl_name(self, port=0):
+        bl_name = self.driver.get_bl_names()
+        if len(self.all_ports) == 1:
+            return bl_name
+        else:
+            return bl_name + "{}".format(port)
+
+    def get_br_name(self, port=0):
+        br_name = self.driver.get_br_names()
+        if len(self.all_ports) == 1:
+            return br_name
+        else:
+            return br_name + "{}".format(port)
 
     def create_netlist(self):
         self.add_modules()

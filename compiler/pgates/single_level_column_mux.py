@@ -31,6 +31,12 @@ class single_level_column_mux(pgate.pgate):
         
         pgate.pgate.__init__(self, name)
 
+    def get_bl_names(self):
+        return "bl"
+
+    def get_br_names(self):
+        return "br"
+
     def create_netlist(self):
         self.add_modules()
         self.add_pins()

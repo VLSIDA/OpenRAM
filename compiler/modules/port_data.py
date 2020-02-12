@@ -94,8 +94,10 @@ class port_data(design.design):
         self.add_pin("rbl_bl","INOUT")
         self.add_pin("rbl_br","INOUT")
         for bit in range(self.num_cols):
-            self.add_pin("{0}_{1}".format(self.bl_names[self.port], bit),"INOUT")
-            self.add_pin("{0}_{1}".format(self.br_names[self.port], bit),"INOUT")
+            bl_name = self.precharge_array.get_bl_name(self.port)
+            br_name = self.precharge_array.get_br_name(self.port)
+            self.add_pin("{0}_{1}".format(bl_name, bit),"INOUT")
+            self.add_pin("{0}_{1}".format(br_name, bit),"INOUT")
         if self.port in self.read_ports:
             for bit in range(self.word_size):
                 self.add_pin("dout_{}".format(bit),"OUTPUT")
@@ -234,6 +236,13 @@ class port_data(design.design):
         self.precharge = factory.create(module_type="precharge",
                                         bitcell_bl = self.bl_names[0],
                                         bitcell_br = self.br_names[0])
+        # We create a dummy here to get bl/br names to add those pins to this
+        # module, which happens before we create the real precharge_array
+        self.precharge_array = factory.create(module_type="precharge_array",
+                                       columns=self.num_cols + 1,
+                                       bitcell_bl=self.bl_names[self.port],
+                                       bitcell_br=self.br_names[self.port])
+
 
 
     def create_precharge_array(self):
@@ -244,6 +253,8 @@ class port_data(design.design):
 
         self.precharge_array_inst = self.add_inst(name="precharge_array{}".format(self.port),
                                                   mod=self.precharge_array)
+        bl_name = self.precharge_array.get_bl_name(self.port)
+        br_name = self.precharge_array.get_br_name(self.port)
 
         temp = []
         # Use left BLs for RBL
@@ -251,8 +262,9 @@ class port_data(design.design):
             temp.append("rbl_bl")
             temp.append("rbl_br")
         for bit in range(self.num_cols):
-            temp.append(self.bl_names[self.port]+"_{0}".format(bit))
-            temp.append(self.br_names[self.port]+"_{0}".format(bit))
+            temp.append("{0}_{1}".format(bl_name, bit))
+            temp.append("{0}_{1}".format(br_name, bit))
+
         # Use right BLs for RBL
         if self.port==1:
             temp.append("rbl_bl")
@@ -273,15 +285,19 @@ class port_data(design.design):
         self.column_mux_array_inst = self.add_inst(name="column_mux_array{}".format(self.port),
                                                    mod=self.column_mux_array)
 
+        bl_name = self.column_mux_array.get_bl_name(self.port)
+        br_name = self.column_mux_array.get_br_name(self.port)
         temp = []
         for col in range(self.num_cols):
-            temp.append(self.bl_names[self.port]+"_{0}".format(col))
-            temp.append(self.br_names[self.port]+"_{0}".format(col))
+            temp.append("{0}_{1}".format(bl_name, col))
+            temp.append("{0}_{1}".format(br_name, col))
+
         for word in range(self.words_per_row):
             temp.append("sel_{}".format(word))
         for bit in range(self.word_size):
-            temp.append(self.bl_names[self.port]+"_out_{0}".format(bit))
-            temp.append(self.br_names[self.port]+"_out_{0}".format(bit))
+            temp.append("{0}_out_{1}".format(bl_name, bit))
+            temp.append("{0}_out_{1}".format(br_name, bit))
+
         temp.append("gnd")
         self.connect_inst(temp)
 
@@ -299,15 +315,18 @@ class port_data(design.design):
         self.sense_amp_array_inst = self.add_inst(name="sense_amp_array{}".format(self.port),
                                                   mod=self.sense_amp_array)
 
+        bl_name = self.sense_amp_array.get_bl_name(self.port)
+        br_name = self.sense_amp_array.get_br_name(self.port)
         temp = []
         for bit in range(self.word_size):
             temp.append("dout_{}".format(bit))
             if self.words_per_row == 1:
-                temp.append(self.bl_names[self.port]+"_{0}".format(bit))
-                temp.append(self.br_names[self.port]+"_{0}".format(bit))
+                temp.append("{0}_{1}".format(bl_name, bit))
+                temp.append("{0}_{1}".format(br_name, bit))
             else:
-                temp.append(self.bl_names[self.port]+"_out_{0}".format(bit))
-                temp.append(self.br_names[self.port]+"_out_{0}".format(bit))
+                temp.append("{0}_out_{1}".format(bl_name, bit))
+                temp.append("{0}_out_{1}".format(br_name, bit))
+
 
         temp.extend(["s_en", "vdd", "gnd"])
         self.connect_inst(temp)
@@ -322,6 +341,8 @@ class port_data(design.design):
         """ Creating Write Driver  """
         self.write_driver_array_inst = self.add_inst(name="write_driver_array{}".format(self.port),
                                                      mod=self.write_driver_array)
+        bl_name = self.write_driver_array.get_bl_name(self.port)
+        br_name = self.write_driver_array.get_br_name(self.port)
 
         temp = []
         for bit in range(self.word_size):
@@ -329,11 +350,11 @@ class port_data(design.design):
 
         for bit in range(self.word_size):
             if (self.words_per_row == 1):
-                temp.append(self.bl_names[self.port] + "_{0}".format(bit))
-                temp.append(self.br_names[self.port] + "_{0}".format(bit))
+                temp.append("{0}_{1}".format(bl_name, bit))
+                temp.append("{0}_{1}".format(br_name, bit))
             else:
-                temp.append(self.bl_names[self.port] + "_out_{0}".format(bit))
-                temp.append(self.br_names[self.port] + "_out_{0}".format(bit))
+                temp.append("{0}_out_{1}".format(bl_name, bit))
+                temp.append("{0}_out_{1}".format(br_name, bit))
 
         if self.write_size is not None:
             for i in range(self.num_wmasks):

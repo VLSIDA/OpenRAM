@@ -138,11 +138,10 @@ class replica_bitcell_array(design.design):
         
 
     def add_pins(self):
+        self.bitcell_array_wl_names = self.bitcell_array.get_all_wordline_names()
+        self.bitcell_array_bl_names = self.bitcell_array.get_all_bitline_names()
 
-        self.bitcell_array_wl_names = [x for x in self.bitcell_array.pins if x.startswith("w")]
-        self.bitcell_array_bl_names = [x for x in self.bitcell_array.pins if x.startswith("b")]
-        
-        # These are the non-indexed names 
+        # These are the non-indexed names
         self.dummy_cell_wl_names = ["dummy_"+x for x in self.cell.get_all_wl_names()]
         self.dummy_cell_bl_names = ["dummy_"+x for x in self.cell.get_all_bitline_names()]
         self.dummy_row_bl_names = self.bitcell_array_bl_names
@@ -316,22 +315,24 @@ class replica_bitcell_array(design.design):
         # Main array wl and bl/br
         pin_names = self.bitcell_array.get_pin_names()
         for pin_name in pin_names:
-            if pin_name.startswith("wl"):
-                pin_list = self.bitcell_array_inst.get_pins(pin_name)
-                for pin in pin_list:
-                    self.add_layout_pin(text=pin_name,
-                                        layer=pin.layer,
-                                        offset=pin.ll().scale(0,1),
-                                        width=self.width,
-                                        height=pin.height())
-            elif pin_name.startswith("bl") or pin_name.startswith("br"):
-                pin_list = self.bitcell_array_inst.get_pins(pin_name)
-                for pin in pin_list:
-                    self.add_layout_pin(text=pin_name,
-                                        layer=pin.layer,
-                                        offset=pin.ll().scale(1,0),
-                                        width=pin.width(),
-                                        height=self.height)
+            for wl in self.bitcell_array_wl_names:
+                if wl in pin_name:
+                    pin_list = self.bitcell_array_inst.get_pins(pin_name)
+                    for pin in pin_list:
+                        self.add_layout_pin(text=pin_name,
+                                            layer=pin.layer,
+                                            offset=pin.ll().scale(0,1),
+                                            width=self.width,
+                                            height=pin.height())
+            for bitline in self.bitcell_array_bl_names:
+                if bitline in pin_name:
+                    pin_list = self.bitcell_array_inst.get_pins(pin_name)
+                    for pin in pin_list:
+                        self.add_layout_pin(text=pin_name,
+                                            layer=pin.layer,
+                                            offset=pin.ll().scale(1,0),
+                                            width=pin.width(),
+                                            height=self.height)
 
 
         # Replica wordlines

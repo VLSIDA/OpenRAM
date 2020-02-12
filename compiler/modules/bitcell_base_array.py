@@ -22,6 +22,32 @@ class bitcell_base_array(design.design):
         self.row_size = rows
         self.column_offset = column_offset
 
+    def get_all_bitline_names(self):
+
+        res = list()
+        bitline_names = self.cell.get_all_bitline_names()
+
+        # We have to keep the order of self.pins, otherwise we connect
+        # it wrong in the spice netlist
+        for pin in self.pins:
+            for bl_name in bitline_names:
+                if bl_name in pin:
+                    res.append(pin)
+        return res
+
+    def get_all_wordline_names(self):
+
+        res = list()
+        wordline_names = self.cell.get_all_wl_names()
+
+        # We have to keep the order of self.pins, otherwise we connect
+        # it wrong in the spice netlist
+        for pin in self.pins:
+            for wl_name in wordline_names:
+                if wl_name in pin:
+                    res.append(pin)
+        return res
+
     def add_pins(self):
         row_list = self.cell.get_all_wl_names()
         column_list = self.cell.get_all_bitline_names()

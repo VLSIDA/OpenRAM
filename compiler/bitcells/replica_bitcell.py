@@ -9,6 +9,8 @@ import design
 import debug
 import utils
 from tech import GDS,layer,drc,parameter,cell_properties
+from tech import cell_properties as props
+
 from globals import OPTS
 
 class replica_bitcell(design.design):
@@ -22,7 +24,12 @@ class replica_bitcell(design.design):
         pin_names = ["bl", "br", "wl0", "wl1", "vdd", "gnd"]
         type_list = ["OUTPUT", "OUTPUT", "INPUT", "INPUT" , "POWER", "GROUND"] 
     else:
-        pin_names = ["bl", "br", "wl", "vdd", "gnd"]
+        pin_names = [props.bitcell.cell_6t.pin.bl,
+                     props.bitcell.cell_6t.pin.br,
+                     props.bitcell.cell_6t.pin.wl,
+                     props.bitcell.cell_6t.pin.vdd,
+                     props.bitcell.cell_6t.pin.gnd]
+
         type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"] 
     
     if not OPTS.netlist_only:
@@ -66,4 +73,4 @@ class replica_bitcell(design.design):
 
     def build_graph(self, graph, inst_name, port_nets):        
         """Adds edges based on inputs/outputs. Overrides base class function."""
-        self.add_graph_edges(graph, port_nets) 
+        self.add_graph_edges(graph, port_nets)

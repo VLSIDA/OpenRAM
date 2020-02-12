@@ -38,6 +38,15 @@ class port_data(design.design):
             self.create_layout()
             self.add_boundary()
 
+    def get_bl_names(self):
+        # bl lines are connect from the precharger
+        return self.precharge.get_bl_names()
+
+    def get_br_names(self):
+        # br lines are connect from the precharger
+        return self.precharge.get_br_names()
+
+
 
     def create_netlist(self):
         self.precompute_constants()
@@ -221,6 +230,11 @@ class port_data(design.design):
         self.bl_names = self.bitcell.get_all_bl_names()
         self.br_names = self.bitcell.get_all_br_names()
         self.wl_names = self.bitcell.get_all_wl_names()
+        # used for bl/br names
+        self.precharge = factory.create(module_type="precharge",
+                                        bitcell_bl = self.bl_names[0],
+                                        bitcell_br = self.br_names[0])
+
 
     def create_precharge_array(self):
         """ Creating Precharge """

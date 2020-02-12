@@ -38,6 +38,12 @@ class precharge(design.design):
             self.create_layout()
             self.DRC_LVS()
 
+    def get_bl_names(self):
+        return "bl"
+
+    def get_br_names(self):
+        return "br"
+
     def create_netlist(self):
         self.add_pins()
         self.add_ptx()

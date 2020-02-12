@@ -679,9 +679,13 @@ class bank(design.design):
         inst1 = self.bitcell_array_inst
         inst1_bl_name = self.bl_names[port]+"_{}"
         inst1_br_name = self.br_names[port]+"_{}"
+
+        inst2_bl_name = inst2.mod.get_bl_names()+"_{}"
+        inst2_br_name = inst2.mod.get_br_names()+"_{}"
         
         self.connect_bitlines(inst1=inst1, inst2=inst2, num_bits=self.num_cols,
-                              inst1_bl_name=inst1_bl_name, inst1_br_name=inst1_br_name)
+                              inst1_bl_name=inst1_bl_name, inst1_br_name=inst1_br_name,
+                              inst2_bl_name=inst2_bl_name, inst2_br_name=inst2_br_name)
 
         # Connect the replica bitlines
         rbl_bl_name=self.bitcell_array.get_rbl_bl_name(self.port_rbl_map[port])
@@ -786,8 +790,8 @@ class bank(design.design):
         
 
     def connect_bitlines(self, inst1, inst2, num_bits,
-                         inst1_bl_name="bl_{}", inst1_br_name="br_{}",
-                         inst2_bl_name="bl_{}", inst2_br_name="br_{}"):
+                         inst1_bl_name, inst1_br_name,
+                         inst2_bl_name, inst2_br_name):
         """
         Connect the bl and br of two modules.
         """

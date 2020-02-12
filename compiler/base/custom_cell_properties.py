@@ -5,15 +5,75 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+
+class _pins:
+    def __init__(self, pin_dict):
+        # make the pins elements of the class to allow "." access.
+        # For example: props.bitcell.cell_6t.pin.bl = "foobar"
+        for k,v in pin_dict.items():
+            self.__dict__[k] = v
+
+class _cell:
+    def __init__(self, pin_dict):
+        pin_dict.update(self._default_power_pins())
+        self._pins = _pins(pin_dict)
+
+    @property
+    def pin(self):
+        return self._pins
+
+    def _default_power_pins(self):
+        return { 'vdd' : 'vdd', 'gnd' : 'gnd' }
+
 class _mirror_axis:
     def __init__(self, x, y):
         self.x = x
         self.y = y
 
 class _bitcell:
-    def __init__(self, mirror, split_wl):
+    def __init__(self, mirror, split_wl, cell_6t, cell_1rw1r, cell_1w1r):
         self.mirror = mirror
         self.split_wl = split_wl
+        self._6t = cell_6t
+        self._1rw1r = cell_1rw1r
+        self._1w1r = cell_1w1r
+
+    def _default():
+        axis = _mirror_axis(True, False)
+        cell_6t = _cell({'bl' : 'bl',
+                         'br' : 'br',
+                         'wl' : 'wl'})
+
+        cell_1rw1r = _cell({'bl0' : 'bl0',
+                       'br0' : 'br0',
+                       'bl1' : 'bl1',
+                       'br1' : 'br1',
+                       'wl0' : 'wl0',
+                       'wl1' : 'wl1'})
+        cell_1w1r =  _cell({'bl0' : 'bl0',
+                       'br0' : 'br0',
+                       'bl1' : 'bl1',
+                       'br1' : 'br1',
+                       'wl0' : 'wl0',
+                       'wl1' : 'wl1'})
+        return _bitcell(cell_6t=cell_6t,
+                        cell_1rw1r=cell_1rw1r,
+                        cell_1w1r=cell_1w1r,
+                        split_wl = False,
+                        mirror=axis)
+
+    @property
+    def cell_6t(self):
+        return self._6t
+
+    @property
+    def cell_1rw1r(self):
+        return self._1rw1r
+
+    @property
+    def cell_1w1r(self):
+        return self._1w1r
+
 
 class _dff:
     def __init__(self, use_custom_ports, custom_port_list, custom_type_list, clk_pin):
@@ -35,13 +95,14 @@ class _dff_buff_array:
 
 class cell_properties():
     """
-    TODO
+    This contains meta information about the custom designed cells. For
+    instance, pin names, or the axis on which they need to be mirrored. These
+    can be overriden in the tech.py file.
     """
     def __init__(self):
         self.names = {}
 
-        self._bitcell = _bitcell(mirror = _mirror_axis(True, False),
-                                 split_wl = False)
+        self._bitcell = _bitcell._default()
                                  
         self._dff = _dff(use_custom_ports = False,
                          custom_port_list = ["D", "Q", "clk", "vdd", "gnd"],

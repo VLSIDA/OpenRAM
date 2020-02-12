@@ -9,7 +9,6 @@ import os
 from design_rules import *
 from module_type import *
 from custom_cell_properties import cell_properties
-from custom_module_properties import module_properties
 
 """
 File containing the process technology parameters for SCMOS 4m, 0.35um
@@ -25,7 +24,6 @@ File containing the process technology parameters for SCMOS 4m, 0.35um
 # implementation in '$OPENRAM_TECHDIR/modules/'
 # For example: tech_modules['contact'] = 'contact_scn4m'
 tech_modules = module_type()
-module_properties = module_properties()
 
 ###################################################
 # Custom cell properties

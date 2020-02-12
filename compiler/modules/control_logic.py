@@ -7,7 +7,8 @@
 #
 from math import log
 import design
-from tech import drc, parameter, module_properties
+from tech import drc, parameter
+from tech import cell_properties as props
 import debug
 import contact
 from sram_factory import factory
@@ -743,7 +744,7 @@ class control_logic(design.design):
         self.ctrl_dff_inst=self.add_inst(name="ctrl_dffs",
                                          mod=self.ctrl_dff_array)
         inst_pins = self.input_list + self.dff_output_list + ["clk_buf"] + self.supply_list
-        if module_properties.dff_buff_array.add_body_contacts:
+        if props.dff_buff_array.add_body_contacts:
             inst_pins.append("vpb")
             inst_pins.append("vnb")
         self.connect_inst(inst_pins)

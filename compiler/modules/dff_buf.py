@@ -7,7 +7,8 @@
 #
 import debug
 import design
-from tech import drc,parameter,module_properties
+from tech import drc,parameter
+from tech import cell_properties as props
 from math import log
 from vector import vector
 from globals import OPTS
@@ -82,14 +83,14 @@ class dff_buf(design.design):
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
-        if module_properties.dff_buff.add_body_contacts:
+        if props.dff_buff.add_body_contacts:
             self.add_pin("vpb", "INPUT")
             self.add_pin("vpn", "INPUT")
 
     def create_instances(self):
         self.dff_inst=self.add_inst(name="dff_buf_dff",
                                     mod=self.dff)
-        self.connect_inst(module_properties.dff_buff.buf_ports)                                    
+        self.connect_inst(props.dff_buff.buf_ports)                                    
         #self.connect_inst(["D", "qint", "clk", "vdd", "gnd"])
 
         self.inv1_inst=self.add_inst(name="dff_buf_inv1",

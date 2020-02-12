@@ -5,6 +5,15 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+class _mirror_axis:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+class _bitcell:
+    def __init__(self, mirror, split_wl):
+        self.mirror = mirror
+        self.split_wl = split_wl
 
 class _dff:
     def __init__(self, use_custom_ports, custom_port_list, custom_type_list, clk_pin):
@@ -24,13 +33,16 @@ class _dff_buff_array:
         self.use_custom_ports = use_custom_ports
         self.add_body_contacts = add_body_contacts
 
-class module_properties():
+class cell_properties():
     """
     TODO
     """
     def __init__(self):
         self.names = {}
-        
+
+        self._bitcell = _bitcell(mirror = _mirror_axis(True, False),
+                                 split_wl = False)
+                                 
         self._dff = _dff(use_custom_ports = False,
                          custom_port_list = ["D", "Q", "clk", "vdd", "gnd"],
                          custom_type_list = ["INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"],
@@ -44,6 +56,10 @@ class module_properties():
                                                add_body_contacts = False)
 
     @property
+    def bitcell(self):
+        return self._bitcell
+
+    @property
     def dff(self):
         return self._dff
     
@@ -54,3 +70,4 @@ class module_properties():
     @property
     def dff_buff_array(self):
         return self._dff_buff_array
+

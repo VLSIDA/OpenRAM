@@ -7,7 +7,8 @@
 #
 import debug
 import design
-from tech import drc, module_properties
+from tech import drc
+from tech import cell_properties as props
 from math import log
 from vector import vector
 from globals import OPTS
@@ -64,7 +65,7 @@ class dff_buf_array(design.design):
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
-        if module_properties.dff_buff_array.add_body_contacts:
+        if props.dff_buff_array.add_body_contacts:
             self.add_pin("vpb", "INPUT")
             self.add_pin("vnb", "INPUT")
 
@@ -87,7 +88,7 @@ class dff_buf_array(design.design):
                                    "clk",
                                    "vdd",
                                    "gnd"]
-                if module_properties.dff_buff_array.add_body_contacts:
+                if props.dff_buff_array.add_body_contacts:
                     inst_ports.append("vpb")
                     inst_ports.append("vnb")
                 self.connect_inst(inst_ports)

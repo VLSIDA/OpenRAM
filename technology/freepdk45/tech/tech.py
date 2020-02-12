@@ -9,7 +9,7 @@ import os
 from design_rules import *
 from module_type import *
 from custom_cell_properties import cell_properties
-from custom_module_properties import module_properties
+
 """
 File containing the process technology parameters for FreePDK 45nm.
 """
@@ -25,7 +25,7 @@ File containing the process technology parameters for FreePDK 45nm.
 # For example: tech_modules['contact'] = 'contact_freepdk45'
 tech_modules = module_type()
 
-module_properties = module_properties()
+
 ###################################################
 # Custom cell properties
 ###################################################

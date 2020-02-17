@@ -35,6 +35,14 @@ class sense_amp(design.design):
     def get_br_names(self):
         return "br"
 
+    @property
+    def dout_name(self):
+        return "dout"
+
+    @property
+    def en_name(self):
+        return "en"
+
     def __init__(self, name):
         design.design.__init__(self, name)
         debug.info(2, "Create sense_amp")
@@ -79,11 +87,10 @@ class sense_amp(design.design):
     def get_enable_name(self):
         """Returns name used for enable net"""
         #FIXME: A better programmatic solution to designate pins
-        enable_name = "en"
+        enable_name = self.en_name
         debug.check(enable_name in self.pin_names, "Enable name {} not found in pin list".format(enable_name))
         return enable_name
     
     def build_graph(self, graph, inst_name, port_nets):        
         """Adds edges based on inputs/outputs. Overrides base class function."""
         self.add_graph_edges(graph, port_nets) 
-        

@@ -10,6 +10,7 @@ import design
 import utils
 from globals import OPTS
 from tech import GDS,layer
+from tech import cell_properties as props
 
 class write_driver(design.design):
     """
@@ -19,7 +20,13 @@ class write_driver(design.design):
     the technology library.
     """
 
-    pin_names = ["din", "bl", "br", "en", "vdd", "gnd"]
+    pin_names = [props.write_driver.pin.din,
+                 props.write_driver.pin.bl,
+                 props.write_driver.pin.br,
+                 props.write_driver.pin.en,
+                 props.write_driver.pin.vdd,
+                 props.write_driver.pin.gnd]
+
     type_list = ["INPUT", "OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
     if not OPTS.netlist_only:
         (width,height) = utils.get_libcell_size("write_driver", GDS["unit"], layer["boundary"])
@@ -38,18 +45,18 @@ class write_driver(design.design):
         self.add_pin_types(self.type_list)
 
     def get_bl_names(self):
-        return "bl"
+        return props.write_driver.pin.bl
 
     def get_br_names(self):
-        return "br"
+        return props.write_driver.pin.br
 
     @property
     def din_name(self):
-        return "din"
+        return props.write_driver.pin.din
 
     @property
     def en_name(self):
-        return "en"
+        return props.write_driver.pin.en
 
     def get_w_en_cin(self):
         """Get the relative capacitance of a single input"""

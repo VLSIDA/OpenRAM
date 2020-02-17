@@ -116,6 +116,12 @@ class cell_properties():
         self._dff_buff_array = _dff_buff_array(use_custom_ports = False,
                                                add_body_contacts = False)
 
+        self._write_driver = _cell({'din': 'din',
+                                    'bl' : 'bl',
+                                    'br' : 'br',
+                                    'en' : 'en'})
+
+
     @property
     def bitcell(self):
         return self._bitcell
@@ -132,3 +138,6 @@ class cell_properties():
     def dff_buff_array(self):
         return self._dff_buff_array
 
+    @property
+    def write_driver(self):
+        return self._write_driver

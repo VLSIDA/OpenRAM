@@ -46,7 +46,19 @@ class port_data(design.design):
         # br lines are connect from the precharger
         return self.precharge.get_br_names()
 
+    def get_bl_name(self, port=0):
+        bl_name = "bl"
+        if len(self.all_ports) == 1:
+            return bl_name
+        else:
+            return bl_name + "{}".format(port)
 
+    def get_br_name(self, port=0):
+        br_name = "br"
+        if len(self.all_ports) == 1:
+            return br_name
+        else:
+            return br_name + "{}".format(port)
 
     def create_netlist(self):
         self.precompute_constants()
@@ -94,8 +106,8 @@ class port_data(design.design):
         self.add_pin("rbl_bl","INOUT")
         self.add_pin("rbl_br","INOUT")
         for bit in range(self.num_cols):
-            bl_name = self.precharge_array.get_bl_name(self.port)
-            br_name = self.precharge_array.get_br_name(self.port)
+            bl_name = self.get_bl_name(self.port)
+            br_name = self.get_br_name(self.port)
             self.add_pin("{0}_{1}".format(bl_name, bit),"INOUT")
             self.add_pin("{0}_{1}".format(br_name, bit),"INOUT")
         if self.port in self.read_ports:
@@ -253,8 +265,8 @@ class port_data(design.design):
 
         self.precharge_array_inst = self.add_inst(name="precharge_array{}".format(self.port),
                                                   mod=self.precharge_array)
-        bl_name = self.precharge_array.get_bl_name(self.port)
-        br_name = self.precharge_array.get_br_name(self.port)
+        bl_name = self.get_bl_name(self.port)
+        br_name = self.get_br_name(self.port)
 
         temp = []
         # Use left BLs for RBL
@@ -285,8 +297,8 @@ class port_data(design.design):
         self.column_mux_array_inst = self.add_inst(name="column_mux_array{}".format(self.port),
                                                    mod=self.column_mux_array)
 
-        bl_name = self.column_mux_array.get_bl_name(self.port)
-        br_name = self.column_mux_array.get_br_name(self.port)
+        bl_name = self.get_bl_name(self.port)
+        br_name = self.get_br_name(self.port)
         temp = []
         for col in range(self.num_cols):
             temp.append("{0}_{1}".format(bl_name, col))
@@ -315,8 +327,8 @@ class port_data(design.design):
         self.sense_amp_array_inst = self.add_inst(name="sense_amp_array{}".format(self.port),
                                                   mod=self.sense_amp_array)
 
-        bl_name = self.sense_amp_array.get_bl_name(self.port)
-        br_name = self.sense_amp_array.get_br_name(self.port)
+        bl_name = self.get_bl_name(self.port)
+        br_name = self.get_br_name(self.port)
         temp = []
         for bit in range(self.word_size):
             temp.append("dout_{}".format(bit))
@@ -341,8 +353,8 @@ class port_data(design.design):
         """ Creating Write Driver  """
         self.write_driver_array_inst = self.add_inst(name="write_driver_array{}".format(self.port),
                                                      mod=self.write_driver_array)
-        bl_name = self.write_driver_array.get_bl_name(self.port)
-        br_name = self.write_driver_array.get_br_name(self.port)
+        bl_name = self.get_bl_name(self.port)
+        br_name = self.get_br_name(self.port)
 
         temp = []
         for bit in range(self.word_size):

@@ -120,7 +120,10 @@ class cell_properties():
                                     'bl' : 'bl',
                                     'br' : 'br',
                                     'en' : 'en'})
-
+        self._sense_amp = _cell({'bl'   : 'bl',
+                                 'br'   : 'br',
+                                 'dout' : 'dout',
+                                 'en'   : 'en'})
 
     @property
     def bitcell(self):
@@ -141,3 +144,7 @@ class cell_properties():
     @property
     def write_driver(self):
         return self._write_driver
+
+    @property
+    def sense_amp(self):
+        return self._sense_amp

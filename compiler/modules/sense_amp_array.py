@@ -34,11 +34,11 @@ class sense_amp_array(design.design):
             self.create_layout()
 
     def get_bl_name(self):
-        bl_name = self.amp.get_bl_names()
+        bl_name = "bl"
         return bl_name
 
     def get_br_name(self):
-        br_name = self.amp.get_br_names()
+        br_name = "br"
         return br_name
 
     @property

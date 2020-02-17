@@ -9,6 +9,7 @@ import design
 import debug
 import utils
 from tech import GDS,layer, parameter,drc
+from tech import cell_properties as props
 from globals import OPTS
 import logical_effort
 
@@ -19,8 +20,12 @@ class sense_amp(design.design):
     the technology library.
     Sense amplifier to read a pair of bit-lines.
     """
-
-    pin_names = ["bl", "br", "dout", "en", "vdd", "gnd"]
+    pin_names = [props.sense_amp.pin.bl,
+                 props.sense_amp.pin.br,
+                 props.sense_amp.pin.dout,
+                 props.sense_amp.pin.en,
+                 props.sense_amp.pin.vdd,
+                 props.sense_amp.pin.gnd]
     type_list = ["INPUT", "INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
     if not OPTS.netlist_only:
         (width,height) = utils.get_libcell_size("sense_amp", GDS["unit"], layer["boundary"])
@@ -30,18 +35,18 @@ class sense_amp(design.design):
         pin_map = []
 
     def get_bl_names(self):
-        return "bl"
+        return props.sense_amp.pin.bl
 
     def get_br_names(self):
-        return "br"
+        return props.sense_amp.pin.br
 
     @property
     def dout_name(self):
-        return "dout"
+        return props.sense_amp.pin.dout
 
     @property
     def en_name(self):
-        return "en"
+        return props.sense_amp.pin.en
 
     def __init__(self, name):
         design.design.__init__(self, name)

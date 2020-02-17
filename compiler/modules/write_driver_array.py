@@ -45,6 +45,14 @@ class write_driver_array(design.design):
         br_name = self.driver.get_br_names()
         return br_name
 
+    @property
+    def data_name(self):
+        return "data"
+
+    @property
+    def en_name(self):
+        return "en"
+
     def create_netlist(self):
         self.add_modules()
         self.add_pins()
@@ -65,15 +73,15 @@ class write_driver_array(design.design):
 
     def add_pins(self):
         for i in range(self.word_size):
-            self.add_pin("data_{0}".format(i), "INPUT")
-        for i in range(self.word_size):            
-            self.add_pin("bl_{0}".format(i), "OUTPUT")
-            self.add_pin("br_{0}".format(i), "OUTPUT")
+            self.add_pin(self.data_name + "_{0}".format(i), "INPUT")
+        for i in range(self.word_size):
+            self.add_pin(self.get_bl_name() + "_{0}".format(i), "OUTPUT")
+            self.add_pin(self.get_br_name() + "_{0}".format(i), "OUTPUT")
         if self.write_size:
             for i in range(self.num_wmasks):
-                self.add_pin("en_{0}".format(i), "INPUT")
+                self.add_pin(self.en_name + "_{0}".format(i), "INPUT")
         else:
-            self.add_pin("en", "INPUT")
+            self.add_pin(self.en_name, "INPUT")
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
@@ -96,20 +104,20 @@ class write_driver_array(design.design):
                                                    mod=self.driver)
 
             if self.write_size:
-                self.connect_inst(["data_{0}".format(index),
-                                   "bl_{0}".format(index),
-                                   "br_{0}".format(index),
-                                   "en_{0}".format(windex), "vdd", "gnd"])
+                self.connect_inst([self.data_name + "_{0}".format(index),
+                                   self.get_bl_name() + "_{0}".format(index),
+                                   self.get_br_name() + "_{0}".format(index),
+                                   self.en_name + "_{0}".format(windex), "vdd", "gnd"])
                 w+=1
                 # when w equals write size, the next en pin can be connected since we are now at the next wmask bit
                 if w == self.write_size:
                     w = 0
                     windex+=1
             else:
-                self.connect_inst(["data_{0}".format(index),
-                                   "bl_{0}".format(index),
-                                   "br_{0}".format(index),
-                                   "en", "vdd", "gnd"])
+                self.connect_inst([self.data_name + "_{0}".format(index),
+                                   self.get_bl_name() + "_{0}".format(index),
+                                   self.get_br_name() + "_{0}".format(index),
+                                   self.en_name, "vdd", "gnd"])
 
 
     def place_write_array(self):
@@ -134,21 +142,22 @@ class write_driver_array(design.design):
             
     def add_layout_pins(self):
         for i in range(self.word_size):
-            din_pin = self.driver_insts[i].get_pin("din")
-            self.add_layout_pin(text="data_{0}".format(i),
+            inst = self.driver_insts[i]
+            din_pin = inst.get_pin(inst.mod.din_name)
+            self.add_layout_pin(text=self.data_name + "_{0}".format(i),
                                 layer="m2",
                                 offset=din_pin.ll(),
                                 width=din_pin.width(),
                                 height=din_pin.height())
-            bl_pin = self.driver_insts[i].get_pin("bl")            
-            self.add_layout_pin(text="bl_{0}".format(i),
+            bl_pin = inst.get_pin(inst.mod.get_bl_names())
+            self.add_layout_pin(text=self.get_bl_name() + "_{0}".format(i),
                                 layer="m2",
                                 offset=bl_pin.ll(),
                                 width=bl_pin.width(),
                                 height=bl_pin.height())
-                           
-            br_pin = self.driver_insts[i].get_pin("br")
-            self.add_layout_pin(text="br_{0}".format(i),
+
+            br_pin = inst.get_pin(inst.mod.get_br_names())
+            self.add_layout_pin(text=self.get_br_name() + "_{0}".format(i),
                                 layer="m2",
                                 offset=br_pin.ll(),
                                 width=br_pin.width(),
@@ -163,7 +172,8 @@ class write_driver_array(design.design):
                                        start_layer = "m2")
         if self.write_size:
             for bit in range(self.num_wmasks):
-                en_pin = self.driver_insts[bit*self.write_size].get_pin("en")
+                inst = self.driver_insts[bit*self.write_size]
+                en_pin = inst.get_pin(inst.mod.en_name)
                 # Determine width of wmask modified en_pin with/without col mux
                 wmask_en_len = self.words_per_row*(self.write_size * self.driver_spacing)
                 if (self.words_per_row == 1):
@@ -171,15 +181,16 @@ class write_driver_array(design.design):
                 else:
                     en_gap = self.driver_spacing
 
-                self.add_layout_pin(text="en_{0}".format(bit),
+                self.add_layout_pin(text=self.en_name + "_{0}".format(bit),
                                     layer=en_pin.layer,
                                     offset=en_pin.ll(),
                                     width=wmask_en_len-en_gap,
                                     height=en_pin.height())
         else:
-            self.add_layout_pin(text="en",
+            inst = self.driver_insts[0]
+            self.add_layout_pin(text=self.en_name,
                                 layer="m1",
-                                offset=self.driver_insts[0].get_pin("en").ll().scale(0,1),
+                                offset=inst.get_pin(inst.mod.en_name).ll().scale(0,1),
                                 width=self.width)
 
 

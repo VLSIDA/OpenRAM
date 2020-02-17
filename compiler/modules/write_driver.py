@@ -43,6 +43,14 @@ class write_driver(design.design):
     def get_br_names(self):
         return "br"
 
+    @property
+    def din_name(self):
+        return "din"
+
+    @property
+    def en_name(self):
+        return "en"
+
     def get_w_en_cin(self):
         """Get the relative capacitance of a single input"""
         # This is approximated from SCMOS. It has roughly 5 3x transistor gates.

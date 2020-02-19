@@ -81,17 +81,25 @@ class lib:
         self.lib_files = []
 
         # Nominal corner
-        self.add_corner(nom_process, nom_supply, nom_temperature)
+        corner_set = set()
+        nom_corner = (nom_process, nom_supply, nom_temperature)
+        corner_set.add(nom_corner)
         if not OPTS.nominal_corner_only:
             # Temperature corners
-            self.add_corner(nom_process, nom_supply, min_temperature)
-            self.add_corner(nom_process, nom_supply, max_temperature)
+            corner_set.add((nom_process, nom_supply, min_temperature))
+            corner_set.add((nom_process, nom_supply, max_temperature))
             # Supply corners
-            self.add_corner(nom_process, min_supply, nom_temperature)
-            self.add_corner(nom_process, max_supply, nom_temperature)
+            corner_set.add((nom_process, min_supply, nom_temperature))
+            corner_set.add((nom_process, max_supply, nom_temperature))
             # Process corners
-            self.add_corner(min_process, nom_supply, nom_temperature)
-            self.add_corner(max_process, nom_supply, nom_temperature)
+            corner_set.add((min_process, nom_supply, nom_temperature))
+            corner_set.add((max_process, nom_supply, nom_temperature))
+
+        # Enforce that nominal corner is the first to be characterized
+        self.add_corner(*nom_corner)
+        corner_set.remove(nom_corner)
+        for corner_tuple in corner_set:
+            self.add_corner(*corner_tuple)
 
     def add_corner(self, proc, volt, temp):
         self.corner_name = "{0}_{1}_{2}V_{3}C".format(self.sram.name,

@@ -650,7 +650,7 @@ class delay(simulation):
                 debug.error("Timed out, could not find a feasible period.",2)
             
             # Clear any write target ports and set read port
-            self.targ_write_ports = [port]
+            self.targ_write_ports = []
             self.targ_read_ports = [port]
            
             debug.info(1, "Trying feasible period: {0}ns on Port {1}".format(feasible_period, port))

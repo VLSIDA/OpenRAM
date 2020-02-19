@@ -647,7 +647,7 @@ class control_logic(design.design):
         if self.port_type=="rw":
             input_name = "we_bar"
         else:
-            input_name = "cs_bar"
+            input_name = "cs"
         # GATE FOR S_EN
         self.s_en_gate_inst = self.add_inst(name="buf_s_en_and",
                                             mod=self.sen_and3)

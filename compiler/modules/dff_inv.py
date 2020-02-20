@@ -97,13 +97,13 @@ class dff_inv(design.design):
         mid_x_offset = 0.5*(a1_pin.cx() + q_pin.cx())
         mid1 = vector(mid_x_offset, q_pin.cy())
         mid2 = vector(mid_x_offset, a1_pin.cy())
-        self.add_path("metal3",
+        self.add_path("m3",
                       [q_pin.center(), mid1, mid2, a1_pin.center()])
-        self.add_via_center(layers=("metal2","via2","metal3"),
+        self.add_via_center(layers=self.m2_stack,
                             offset=q_pin.center())
-        self.add_via_center(layers=("metal2","via2","metal3"),
+        self.add_via_center(layers=self.m2_stack,
                             offset=a1_pin.center())
-        self.add_via_center(layers=("metal1","via1","metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=a1_pin.center())
 
         
@@ -112,7 +112,7 @@ class dff_inv(design.design):
         # Continous vdd rail along with label.
         vdd_pin=self.dff_inst.get_pin("vdd")
         self.add_layout_pin(text="vdd",
-                            layer="metal1",
+                            layer="m1",
                             offset=vdd_pin.ll(),
                             width=self.width,
                             height=vdd_pin.height())
@@ -120,7 +120,7 @@ class dff_inv(design.design):
         # Continous gnd rail along with label.
         gnd_pin=self.dff_inst.get_pin("gnd")
         self.add_layout_pin(text="gnd",
-                            layer="metal1",
+                            layer="m1",
                             offset=gnd_pin.ll(),
                             width=self.width,
                             height=vdd_pin.height())
@@ -146,9 +146,9 @@ class dff_inv(design.design):
 
         dout_pin = self.inv1_inst.get_pin("Z")
         self.add_layout_pin_rect_center(text="Qb",
-                                        layer="metal2",
+                                        layer="m2",
                                         offset=dout_pin.center())
-        self.add_via_center(layers=("metal1","via1","metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=dout_pin.center())
     
     def get_clk_cin(self):

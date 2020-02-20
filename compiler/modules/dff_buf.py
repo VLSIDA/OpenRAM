@@ -8,6 +8,7 @@
 import debug
 import design
 from tech import drc,parameter
+from tech import cell_properties as props
 from math import log
 from vector import vector
 from globals import OPTS
@@ -49,10 +50,11 @@ class dff_buf(design.design):
         self.create_instances()
 
     def create_layout(self):
-        self.width = self.dff.width + self.inv1.width + self.inv2.width
+        self.place_instances()
+        self.width = self.inv2_inst.rx()
         self.height = self.dff.height
         
-        self.place_instances()
+        
         self.route_wires()
         self.add_layout_pins()
         self.add_boundary()
@@ -82,10 +84,15 @@ class dff_buf(design.design):
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
+        if props.dff_buff.add_body_contacts:
+            self.add_pin("vpb", "INPUT")
+            self.add_pin("vpn", "INPUT")
+
     def create_instances(self):
         self.dff_inst=self.add_inst(name="dff_buf_dff",
                                     mod=self.dff)
-        self.connect_inst(["D", "qint", "clk", "vdd", "gnd"])
+        self.connect_inst(props.dff_buff.buf_ports)                                    
+        #self.connect_inst(["D", "qint", "clk", "vdd", "gnd"])
 
         self.inv1_inst=self.add_inst(name="dff_buf_inv1",
                                      mod=self.inv1)
@@ -100,7 +107,10 @@ class dff_buf(design.design):
         self.dff_inst.place(vector(0,0))
 
         # Add INV1 to the right
-        self.inv1_inst.place(vector(self.dff_inst.rx(),0))
+        well_spacing = max(self.nwell_space,
+                           self.pwell_space,
+                           self.pwell_to_nwell)
+        self.inv1_inst.place(vector(self.dff_inst.rx() + well_spacing + self.well_extend_active,0))
         
         # Add INV2 to the right
         self.inv2_inst.place(vector(self.inv1_inst.rx(),0))
@@ -112,12 +122,12 @@ class dff_buf(design.design):
         mid_x_offset = 0.5*(a1_pin.cx() + q_pin.cx())
         mid1 = vector(mid_x_offset, q_pin.cy())
         mid2 = vector(mid_x_offset, a1_pin.cy())
-        self.add_path("metal3", [q_pin.center(), mid1, mid2, a1_pin.center()])
-        self.add_via_center(layers=("metal2","via2","metal3"),
+        self.add_path("m3", [q_pin.center(), mid1, mid2, a1_pin.center()])
+        self.add_via_center(layers=self.m2_stack,
                             offset=q_pin.center())
-        self.add_via_center(layers=("metal2","via2","metal3"),
+        self.add_via_center(layers=self.m2_stack,
                             offset=a1_pin.center())
-        self.add_via_center(layers=("metal1","via1","metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=a1_pin.center())
 
         # Route inv1 z to inv2 a
@@ -126,14 +136,14 @@ class dff_buf(design.design):
         mid_x_offset = 0.5*(z1_pin.cx() + a2_pin.cx())
         self.mid_qb_pos = vector(mid_x_offset, z1_pin.cy())
         mid2 = vector(mid_x_offset, a2_pin.cy())
-        self.add_path("metal1", [z1_pin.center(), self.mid_qb_pos, mid2, a2_pin.center()])
+        self.add_path("m1", [z1_pin.center(), self.mid_qb_pos, mid2, a2_pin.center()])
         
     def add_layout_pins(self):
 
         # Continous vdd rail along with label.
         vdd_pin=self.dff_inst.get_pin("vdd")
         self.add_layout_pin(text="vdd",
-                            layer="metal1",
+                            layer="m1",
                             offset=vdd_pin.ll(),
                             width=self.width,
                             height=vdd_pin.height())
@@ -141,7 +151,7 @@ class dff_buf(design.design):
         # Continous gnd rail along with label.
         gnd_pin=self.dff_inst.get_pin("gnd")
         self.add_layout_pin(text="gnd",
-                            layer="metal1",
+                            layer="m1",
                             offset=gnd_pin.ll(),
                             width=self.width,
                             height=vdd_pin.height())
@@ -164,18 +174,18 @@ class dff_buf(design.design):
         mid_pos = dout_pin.center() + vector(self.m1_pitch,0)
         q_pos = mid_pos - vector(0,self.m2_pitch)
         self.add_layout_pin_rect_center(text="Q",
-                                        layer="metal2",
+                                        layer="m2",
                                         offset=q_pos)
-        self.add_path("metal1", [dout_pin.center(), mid_pos, q_pos])
-        self.add_via_center(layers=("metal1","via1","metal2"),
+        self.add_path("m1", [dout_pin.center(), mid_pos, q_pos])
+        self.add_via_center(layers=self.m1_stack,
                             offset=q_pos)
 
         qb_pos = self.mid_qb_pos + vector(0,self.m2_pitch)
         self.add_layout_pin_rect_center(text="Qb",
-                                        layer="metal2",
+                                        layer="m2",
                                         offset=qb_pos)
-        self.add_path("metal1", [self.mid_qb_pos, qb_pos])
-        self.add_via_center(layers=("metal1","via1","metal2"),
+        self.add_path("m1", [self.mid_qb_pos, qb_pos])
+        self.add_via_center(layers=self.m1_stack,
                             offset=qb_pos)
          
     def get_clk_cin(self):

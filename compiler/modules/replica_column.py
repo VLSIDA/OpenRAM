@@ -20,7 +20,8 @@ class replica_column(design.design):
     replica cell.
     """
 
-    def __init__(self, name, rows, left_rbl, right_rbl, replica_bit):
+    def __init__(self, name, rows, left_rbl, right_rbl, replica_bit,
+                 column_offset=0):
         design.design.__init__(self, name)
 
         self.rows = rows
@@ -29,6 +30,7 @@ class replica_column(design.design):
         self.replica_bit = replica_bit
         # left, right, regular rows plus top/bottom dummy cells
         self.total_size = self.left_rbl+rows+self.right_rbl+2
+        self.column_offset = column_offset
         
         debug.check(replica_bit!=0 and replica_bit!=rows,"Replica bit cannot be the dummy row.")
         debug.check(replica_bit<=left_rbl or replica_bit>=self.total_size-right_rbl-1,
@@ -92,18 +94,35 @@ class replica_column(design.design):
             self.connect_inst(self.get_bitcell_pins(0, row))
             
     def place_instances(self):
-
+        from tech import cell_properties
         # Flip the mirrors if we have an odd number of replica+dummy rows at the bottom
         # so that we will start with mirroring rather than not mirroring
         rbl_offset = (self.left_rbl+1)%2
-            
+
+        # if our bitcells are mirrored on the y axis, check if we are in global
+        # column that needs to be flipped.
+        dir_y = False
+        xoffset = 0
+        if cell_properties.bitcell.mirror.y and self.column_offset % 2:
+            dir_y = True
+            xoffset = self.replica_cell.width
+
         for row in range(self.total_size):
+            dir_x = False
             name = "bit_r{0}_{1}".format(row,"rbl")
-            offset = vector(0,self.cell.height*(row+(row+rbl_offset)%2))
-            if (row+rbl_offset)%2:
+            if cell_properties.bitcell.mirror.x and (row+rbl_offset)%2:
+                dir_x = True
+
+            offset = vector(xoffset,self.cell.height*(row+(row+rbl_offset)%2))
+
+            if dir_x and dir_y:
+                dir_key = "XY"
+            elif dir_x:
                 dir_key = "MX"
+            elif dir_y:
+                dir_key = "MY"
             else:
-                dir_key = "R0"
+                dir_key = ""
 
             self.cell_inst[row].place(offset=offset,
                                       mirror=dir_key)
@@ -116,7 +135,7 @@ class replica_column(design.design):
         for bl_name in self.cell.get_all_bitline_names():
             bl_pin = self.cell_inst[0].get_pin(bl_name)
             self.add_layout_pin(text=bl_name,
-                                layer="metal2",
+                                layer="m2",
                                 offset=bl_pin.ll(),
                                 width=bl_pin.width(),
                                 height=self.height)
@@ -125,7 +144,7 @@ class replica_column(design.design):
             for wl_name in self.cell.get_all_wl_names():
                 wl_pin = self.cell_inst[row].get_pin(wl_name)
                 self.add_layout_pin(text="{0}_{1}".format(wl_name,row),
-                                    layer="metal1",
+                                    layer="m1",
                                     offset=wl_pin.ll().scale(0,1),
                                     width=self.width,
                                     height=wl_pin.height())

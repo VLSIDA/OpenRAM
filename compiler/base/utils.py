@@ -96,8 +96,10 @@ def get_libcell_size(name, units, lpp):
     Open a GDS file and return the library cell size from either the
     bounding box or a border layer.
     """
+
     cell_gds = OPTS.openram_tech + "gds_lib/" + str(name) + ".gds"
     return(get_gds_size(name, cell_gds, units, lpp))
+
 
 
 def get_gds_pins(pin_names, name, gds_filename, units):
@@ -128,6 +130,7 @@ def get_libcell_pins(pin_list, name, units):
     Open a GDS file and find the pins in pin_list as text on a given layer.
     Return these as a rectangle layer pair for each pin.
     """
+
     cell_gds = OPTS.openram_tech + "gds_lib/" + str(name) + ".gds"
     return(get_gds_pins(pin_list, name, cell_gds, units))
 

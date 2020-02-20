@@ -104,8 +104,6 @@ class write_mask_and_array(design.design):
 
 
     def add_layout_pins(self):
-        self.nand2 = factory.create(module_type="pnand2")
-        supply_pin=self.nand2.get_pin("vdd")
 
         # Create the enable pin that connects all write mask AND array's B pins
         beg_en_pin = self.and2_insts[0].get_pin("B")
@@ -114,16 +112,16 @@ class write_mask_and_array(design.design):
             # Extend metal3 to edge of AND array in multiport
             en_to_edge = self.and2.width - beg_en_pin.cx()
             self.add_layout_pin(text="en",
-                                layer="metal3",
+                                layer="m3",
                                 offset=beg_en_pin.bc(),
                                 width=end_en_pin.cx() - beg_en_pin.cx() + en_to_edge)
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=self.m1_stack,
                                 offset=vector(end_en_pin.cx() + en_to_edge, end_en_pin.cy()))
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
+            self.add_via_center(layers=self.m2_stack,
                                 offset=vector(end_en_pin.cx() + en_to_edge, end_en_pin.cy()))
         else:
             self.add_layout_pin(text="en",
-                                layer="metal3",
+                                layer="m3",
                                 offset=beg_en_pin.bc(),
                                 width=end_en_pin.cx() - beg_en_pin.cx())
 
@@ -134,20 +132,21 @@ class write_mask_and_array(design.design):
 
             # Add via connections to metal3 for AND array's B pin
             en_pin = self.and2_insts[i].get_pin("B")
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=self.m1_stack,
                                 offset=en_pin.center())
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
+            self.add_via_center(layers=self.m2_stack,
                                 offset=en_pin.center())
 
-            self.add_power_pin("gnd", vector(supply_pin.width() + i * self.wmask_en_len, 0))
-            self.add_power_pin("vdd", vector(supply_pin.width() + i * self.wmask_en_len, self.height))
-            # Route power and ground rails together
-            if i < self.num_wmasks-1:
-                for n in ["gnd","vdd"]:
-                    pin = self.and2_insts[i].get_pin(n)
-                    next_pin = self.and2_insts[i+1].get_pin(n)
-                    self.add_path("metal1",[pin.center(),next_pin.center()])
+            for supply in ["gnd", "vdd"]:
+                supply_pin=self.and2_insts[i].get_pin(supply)
+                self.add_power_pin(supply, supply_pin.center())
 
+
+        for supply in ["gnd", "vdd"]:
+            supply_pin_left = self.and2_insts[0].get_pin(supply)
+            supply_pin_right = self.and2_insts[self.num_wmasks-1].get_pin(supply)
+            self.add_path("m1",[supply_pin_left.lc(), supply_pin_right.rc()])
+            
     def get_cin(self):
         """Get the relative capacitance of all the input connections in the bank"""
         # The enable is connected to an and2 for every row.

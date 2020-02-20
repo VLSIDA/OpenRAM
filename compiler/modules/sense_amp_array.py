@@ -34,6 +34,20 @@ class sense_amp_array(design.design):
             self.create_layout()
 
 
+    def get_bl_name(self, port=0):
+        bl_name = self.amp.get_bl_names()
+        if len(self.all_ports) == 1:
+            return bl_name
+        else:
+            return bl_name + "{}".format(port)
+
+    def get_br_name(self, port=0):
+        br_name = self.amp.get_br_names()
+        if len(self.all_ports) == 1:
+            return br_name
+        else:
+            return br_name + "{}".format(port)
+
     def create_netlist(self):
         self.add_modules()
         self.add_pins()
@@ -84,50 +98,60 @@ class sense_amp_array(design.design):
                                "en", "vdd", "gnd"])
 
     def place_sense_amp_array(self):
-            
+        from tech import cell_properties
         if self.bitcell.width > self.amp.width:
             amp_spacing = self.bitcell.width * self.words_per_row
         else:
             amp_spacing = self.amp.width * self.words_per_row
+
         for i in range(0,self.word_size):
-            amp_position = vector(amp_spacing * i, 0)
-            self.local_insts[i].place(amp_position)
+            xoffset = amp_spacing * i
+
+            # align the xoffset to the grid of bitcells. This way we
+            # know when to do the mirroring.
+            grid_x = int(xoffset / self.amp.width)
+
+            if cell_properties.bitcell.mirror.y and grid_x % 2:
+                mirror = "MY"
+                xoffset = xoffset + self.amp.width
+            else:
+                mirror = ""
+
+            amp_position = vector(xoffset, 0)
+            self.local_insts[i].place(offset=amp_position,mirror=mirror)
 
         
     def add_layout_pins(self):
         for i in range(len(self.local_insts)):
             inst = self.local_insts[i]
             
-            gnd_pos = inst.get_pin("gnd").center()
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
-                                offset=gnd_pos)
-            self.add_layout_pin_rect_center(text="gnd",
-                                            layer="metal3",
-                                            offset=gnd_pos)
-            vdd_pos = inst.get_pin("vdd").center()
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
-                                offset=vdd_pos)
-            self.add_layout_pin_rect_center(text="vdd",
-                                            layer="metal3",
-                                            offset=vdd_pos)
+            self.add_power_pin(name = "gnd",
+                               loc = inst.get_pin("gnd").center(),
+                               start_layer="m2",
+                               vertical=True)
+
+            self.add_power_pin(name = "vdd",
+                               loc = inst.get_pin("vdd").center(),
+                               start_layer="m2",
+                               vertical=True)
 
             bl_pin = inst.get_pin("bl")            
             br_pin = inst.get_pin("br")
             dout_pin = inst.get_pin("dout")
             
             self.add_layout_pin(text="bl_{0}".format(i),
-                                layer="metal2",
+                                layer="m2",
                                 offset=bl_pin.ll(),
                                 width=bl_pin.width(),
                                 height=bl_pin.height())
             self.add_layout_pin(text="br_{0}".format(i),
-                                layer="metal2",
+                                layer="m2",
                                 offset=br_pin.ll(),
                                 width=br_pin.width(),
                                 height=br_pin.height())
                            
             self.add_layout_pin(text="data_{0}".format(i),
-                                layer="metal2",
+                                layer="m2",
                                 offset=dout_pin.ll(),
                                 width=dout_pin.width(),
                                 height=dout_pin.height())
@@ -137,10 +161,10 @@ class sense_amp_array(design.design):
         # add sclk rail across entire array
         sclk_offset = self.amp.get_pin("en").ll().scale(0,1)
         self.add_layout_pin(text="en",
-                      layer="metal1",
+                      layer="m1",
                       offset=sclk_offset,
                       width=self.width,
-                      height=drc("minwidth_metal1"))
+                      height=drc("minwidth_m1"))
 
     def input_load(self):
         return self.amp.input_load()

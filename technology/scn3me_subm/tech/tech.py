@@ -1,9 +1,24 @@
 import os
 from design_rules import *
+from module_type import *
+from custom_cell_properties import CellProperties
 
 """
 File containing the process technology parameters for SCMOS 3me, subm, 180nm.
 """
+# This uses the default classes to instantiate module from
+# '$OPENRAM_HOME/compiler/modules'.
+# Using tech_modules['cellname'] you can override each class by providing a custom
+# implementation in '$OPENRAM_TECHDIR/modules/'
+# For example: tech_modules['contact'] = 'contact_scn3me'
+tech_modules = ModuleType()
+
+###################################################
+# Custom cell properties
+###################################################
+cell_properties = CellProperties()
+cell_properties.bitcell.mirror.x = True
+cell_properties.bitcell.mirror.y = False
 
 #GDS file info
 GDS={}

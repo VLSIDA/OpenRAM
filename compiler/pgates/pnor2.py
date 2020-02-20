@@ -52,7 +52,7 @@ class pnor2(pgate.pgate):
         self.place_ptx()
         self.connect_rails()
         self.add_well_contacts()
-        self.extend_wells(self.well_pos)
+        self.extend_wells()
         self.route_inputs()
         self.route_output()
 
@@ -84,10 +84,10 @@ class pnor2(pgate.pgate):
         """ Pre-compute some handy layout parameters. """
 
         # metal spacing to allow contacts on any layer
-        self.input_spacing = max(self.poly_space + contact.poly.first_layer_width,
-                                 self.m1_space + contact.m1m2.first_layer_width,
-                                 self.m2_space + contact.m2m3.first_layer_width, 
-                                 self.m3_space + contact.m2m3.second_layer_width)
+        self.input_spacing = max(self.poly_space + contact.poly_contact.first_layer_width,
+                                 self.m1_space + contact.m1_via.first_layer_width,
+                                 self.m2_space + contact.m2_via.first_layer_width, 
+                                 self.m3_space + contact.m2_via.second_layer_width)
         
         # Compute the other pmos2 location, but determining
         # offset to overlap the source and drain pins
@@ -95,12 +95,11 @@ class pnor2(pgate.pgate):
 
         # Two PMOS devices and a well contact. Separation between each.
         # Enclosure space on the sides.
-        self.well_width = 2 * self.pmos.active_width \
+        self.width = 2 * self.pmos.active_width \
                           + self.pmos.active_contact.width \
-                          + 2 * drc("active_to_body_active") \
-                          + 2 * drc("well_enclosure_active")
-
-        self.width = self.well_width
+                          + 2 * self.active_space \
+                          + 0.5 * self.nwell_enclose_active
+        self.well_width = self.width + 2 * self.nwell_enclose_active
         # Height is an input parameter, so it is not recomputed.
 
         # This is the extra space needed to ensure DRC rules
@@ -108,18 +107,18 @@ class pnor2(pgate.pgate):
         extra_contact_space = max(-self.nmos.get_pin("D").by(), 0)
         # This is a poly-to-poly of a flipped cell
         self.top_bottom_space = max(0.5 * self.m1_width + self.m1_space + extra_contact_space, 
-                                    drc("poly_extend_active"),
+                                    self.poly_extend_active,
                                     self.poly_space)
         
     def route_supply_rails(self):
         """ Add vdd/gnd rails to the top and bottom. """
         self.add_layout_pin_rect_center(text="gnd",
-                                        layer="metal1",
+                                        layer="m1",
                                         offset=vector(0.5 * self.width, 0),
                                         width=self.width)
 
         self.add_layout_pin_rect_center(text="vdd",
-                                        layer="metal1",
+                                        layer="m1",
                                         offset=vector(0.5 * self.width, self.height),
                                         width=self.width)
 
@@ -137,7 +136,6 @@ class pnor2(pgate.pgate):
                                         mod=self.pmos)
         self.connect_inst(["net1", "B", "Z", "vdd"])
 
-        
         self.nmos1_inst = self.add_inst(name="pnor2_nmos1",
                                         mod=self.nmos)
         self.connect_inst(["Z", "A", "gnd", "gnd"])
@@ -170,9 +168,6 @@ class pnor2(pgate.pgate):
         self.output_pos = vector(0,
                                  0.5 * (pmos1_pos.y + nmos1_pos.y + self.nmos.active_height))
 
-        # This will help with the wells
-        self.well_pos = vector(0, self.nmos1_inst.uy())
-        
     def add_well_contacts(self):
         """ Add n/p well taps to the layout and connect to supplies """
 
@@ -216,9 +211,9 @@ class pnor2(pgate.pgate):
         nmos2_pin = self.nmos2_inst.get_pin("D")
 
         # Go up to metal2 for ease on all output pins
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=pmos_pin.center())
-        m1m2_contact = self.add_via_center(layers=("metal1", "via1", "metal2"),
+        m1m2_contact = self.add_via_center(layers=self.m1_stack,
                                            offset=nmos_pin.center())
         
         mid1_offset = vector(pmos_pin.center().x, nmos2_pin.center().y)
@@ -226,18 +221,18 @@ class pnor2(pgate.pgate):
         mid3_offset = mid2_offset + vector(self.m2_width, 0)
         
         # PMOS1 to mid-drain to NMOS2 drain
-        self.add_path("metal2",
-                      [pmos_pin.bc(), mid2_offset, mid3_offset])
-        self.add_path("metal2",
+        self.add_path("m2",
+                      [pmos_pin.center(), mid2_offset, mid3_offset])
+        self.add_path("m2",
                       [nmos_pin.rc(), mid1_offset, mid2_offset])
         # This extends the output to the edge of the cell
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=mid3_offset)
         self.add_layout_pin_rect_center(text="Z",
-                                        layer="metal1",
+                                        layer="m1",
                                         offset=mid3_offset,
-                                        width=contact.m1m2.first_layer_height,
-                                        height=contact.m1m2.first_layer_width)
+                                        width=contact.m1_via.first_layer_height,
+                                        height=contact.m1_via.first_layer_width)
 
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""

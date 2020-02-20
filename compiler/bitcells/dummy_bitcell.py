@@ -8,6 +8,7 @@
 import debug
 import utils
 from tech import GDS, layer
+from tech import cell_properties as props
 import bitcell_base
 
 
@@ -18,8 +19,12 @@ class dummy_bitcell(bitcell_base.bitcell_base):
     the layout and netlist should be available in the technology
     library.
     """
+    pin_names = [props.bitcell.cell_6t.pin.bl,
+                 props.bitcell.cell_6t.pin.br,
+                 props.bitcell.cell_6t.pin.wl,
+                 props.bitcell.cell_6t.pin.vdd,
+                 props.bitcell.cell_6t.pin.gnd]
 
-    pin_names = ["bl", "br", "wl", "vdd", "gnd"]
     (width, height) = utils.get_libcell_size("dummy_cell_6t",
                                              GDS["unit"],
                                              layer["boundary"])

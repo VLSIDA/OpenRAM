@@ -8,7 +8,10 @@
 import design
 import debug
 import utils
-from tech import GDS,layer,drc,parameter
+from tech import GDS,layer,drc,parameter,cell_properties
+from tech import cell_properties as props
+
+from globals import OPTS
 
 class replica_bitcell(design.design):
     """
@@ -17,10 +20,24 @@ class replica_bitcell(design.design):
     is a hand-made cell, so the layout and netlist should be available in
     the technology library. """
 
-    pin_names = ["bl", "br", "wl", "vdd", "gnd"]
-    type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"] 
-    (width,height) = utils.get_libcell_size("replica_cell_6t", GDS["unit"], layer["boundary"])
-    pin_map = utils.get_libcell_pins(pin_names, "replica_cell_6t", GDS["unit"])
+    if cell_properties.bitcell.split_wl:
+        pin_names = ["bl", "br", "wl0", "wl1", "vdd", "gnd"]
+        type_list = ["OUTPUT", "OUTPUT", "INPUT", "INPUT" , "POWER", "GROUND"] 
+    else:
+        pin_names = [props.bitcell.cell_6t.pin.bl,
+                     props.bitcell.cell_6t.pin.br,
+                     props.bitcell.cell_6t.pin.wl,
+                     props.bitcell.cell_6t.pin.vdd,
+                     props.bitcell.cell_6t.pin.gnd]
+
+        type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"] 
+    
+    if not OPTS.netlist_only:
+        (width,height) = utils.get_libcell_size("replica_cell_6t", GDS["unit"], layer["boundary"])
+        pin_map = utils.get_libcell_pins(pin_names, "replica_cell_6t", GDS["unit"])
+    else:
+        (width,height) = (0,0)
+        pin_map = []
 
     def __init__(self, name=""):
         # Ignore the name argument
@@ -56,4 +73,4 @@ class replica_bitcell(design.design):
 
     def build_graph(self, graph, inst_name, port_nets):        
         """Adds edges based on inputs/outputs. Overrides base class function."""
-        self.add_graph_edges(graph, port_nets) 
+        self.add_graph_edges(graph, port_nets)

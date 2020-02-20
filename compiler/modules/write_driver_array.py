@@ -37,6 +37,19 @@ class write_driver_array(design.design):
         if not OPTS.netlist_only:
             self.create_layout()
 
+    def get_bl_name(self, port=0):
+        bl_name = self.driver.get_bl_names()
+        if len(self.all_ports) == 1:
+            return bl_name
+        else:
+            return bl_name + "{}".format(port)
+
+    def get_br_name(self, port=0):
+        br_name = self.driver.get_br_names()
+        if len(self.all_ports) == 1:
+            return br_name
+        else:
+            return br_name + "{}".format(port)
 
     def create_netlist(self):
         self.add_modules()
@@ -106,34 +119,43 @@ class write_driver_array(design.design):
 
 
     def place_write_array(self):
+        from tech import cell_properties
         if self.bitcell.width > self.driver.width:
             self.driver_spacing = self.bitcell.width
         else:
             self.driver_spacing = self.driver.width
         for i in range(0,self.columns,self.words_per_row):
             index = int(i/self.words_per_row)
-            base = vector(i * self.driver_spacing, 0)
-            self.driver_insts[index].place(base)
+            xoffset = i * self.driver_spacing
+
+            if cell_properties.bitcell.mirror.y and i % 2:
+                mirror = "MY"
+                xoffset = xoffset + self.driver.width
+            else:
+                mirror = ""
+
+            base = vector(xoffset, 0)
+            self.driver_insts[index].place(offset=base, mirror=mirror)
 
             
     def add_layout_pins(self):
         for i in range(self.word_size):
             din_pin = self.driver_insts[i].get_pin("din")
             self.add_layout_pin(text="data_{0}".format(i),
-                                layer="metal2",
+                                layer="m2",
                                 offset=din_pin.ll(),
                                 width=din_pin.width(),
                                 height=din_pin.height())
             bl_pin = self.driver_insts[i].get_pin("bl")            
             self.add_layout_pin(text="bl_{0}".format(i),
-                                layer="metal2",
+                                layer="m2",
                                 offset=bl_pin.ll(),
                                 width=bl_pin.width(),
                                 height=bl_pin.height())
                            
             br_pin = self.driver_insts[i].get_pin("br")
             self.add_layout_pin(text="br_{0}".format(i),
-                                layer="metal2",
+                                layer="m2",
                                 offset=br_pin.ll(),
                                 width=br_pin.width(),
                                 height=br_pin.height())
@@ -141,13 +163,10 @@ class write_driver_array(design.design):
             for n in ["vdd", "gnd"]:
                 pin_list = self.driver_insts[i].get_pins(n)
                 for pin in pin_list:
-                    pin_pos = pin.center()
-                    # Add the M2->M3 stack 
-                    self.add_via_center(layers=("metal2", "via2", "metal3"),
-                                        offset=pin_pos)
-                    self.add_layout_pin_rect_center(text=n,
-                                                    layer="metal3",
-                                                    offset=pin_pos)
+                    self.add_power_pin(name = n,
+                                       loc = pin.center(),
+                                       vertical=True,
+                                       start_layer = "m2")
         if self.write_size:
             for bit in range(self.num_wmasks):
                 en_pin = self.driver_insts[bit*self.write_size].get_pin("en")
@@ -165,7 +184,7 @@ class write_driver_array(design.design):
                                     height=en_pin.height())
         else:
             self.add_layout_pin(text="en",
-                                layer="metal1",
+                                layer="m1",
                                 offset=self.driver_insts[0].get_pin("en").ll().scale(0,1),
                                 width=self.width)
 

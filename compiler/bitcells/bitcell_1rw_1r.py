@@ -8,6 +8,7 @@
 import debug
 import utils
 from tech import GDS, layer, parameter, drc
+from tech import cell_properties as props
 import logical_effort
 import bitcell_base
 
@@ -20,7 +21,15 @@ class bitcell_1rw_1r(bitcell_base.bitcell_base):
     library.
     """
 
-    pin_names = ["bl0", "br0", "bl1", "br1", "wl0", "wl1", "vdd", "gnd"]
+    pin_names = [props.bitcell.cell_1rw1r.pin.bl0,
+                 props.bitcell.cell_1rw1r.pin.br0,
+                 props.bitcell.cell_1rw1r.pin.bl1,
+                 props.bitcell.cell_1rw1r.pin.br1,
+                 props.bitcell.cell_1rw1r.pin.wl0,
+                 props.bitcell.cell_1rw1r.pin.wl1,
+                 props.bitcell.cell_1rw1r.pin.vdd,
+                 props.bitcell.cell_1rw1r.pin.gnd]
+
     type_list = ["OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", 
                  "INPUT", "INPUT", "POWER", "GROUND"] 
     storage_nets = ['Q', 'Q_bar']
@@ -39,85 +48,92 @@ class bitcell_1rw_1r(bitcell_base.bitcell_base):
         self.pin_map = bitcell_1rw_1r.pin_map
         self.add_pin_types(self.type_list)
         self.nets_match = self.do_nets_exist(self.storage_nets)
-        
+
+        pin_names = bitcell_1rw_1r.pin_names
+        self.bl_names = [pin_names[0], pin_names[2]]
+        self.br_names = [pin_names[1], pin_names[3]]
+        self.wl_names = [pin_names[4], pin_names[5]]
+
     def get_bitcell_pins(self, col, row):
         """ 
         Creates a list of connections in the bitcell,
         indexed by column and row, for instance use in bitcell_array
         """
-        bitcell_pins = ["bl0_{0}".format(col),
-                        "br0_{0}".format(col),
-                        "bl1_{0}".format(col),
-                        "br1_{0}".format(col),
-                        "wl0_{0}".format(row),
-                        "wl1_{0}".format(row),
+        pin_name = props.bitcell.cell_1rw1r.pin
+        bitcell_pins = ["{0}_{1}".format(pin_name.bl0, col),
+                        "{0}_{1}".format(pin_name.br0, col),
+                        "{0}_{1}".format(pin_name.bl1, col),
+                        "{0}_{1}".format(pin_name.br1, col),
+                        "{0}_{1}".format(pin_name.wl0, row),
+                        "{0}_{1}".format(pin_name.wl1, row),
                         "vdd",
                         "gnd"]
         return bitcell_pins
-    
+
     def get_all_wl_names(self):
         """ Creates a list of all wordline pin names """
-        row_pins = ["wl0", "wl1"]
-        return row_pins
-    
+        return [props.bitcell.cell_1rw1r.pin.wl0,
+                props.bitcell.cell_1rw1r.pin.wl1]
+
     def get_all_bitline_names(self):
         """ Creates a list of all bitline pin names (both bl and br) """
-        column_pins = ["bl0", "br0", "bl1", "br1"]
-        return column_pins
-    
+        return [props.bitcell.cell_1rw1r.pin.bl0,
+                props.bitcell.cell_1rw1r.pin.br0,
+                props.bitcell.cell_1rw1r.pin.bl1,
+                props.bitcell.cell_1rw1r.pin.br1]
+
     def get_all_bl_names(self):
         """ Creates a list of all bl pins names """
-        column_pins = ["bl0", "bl1"]
-        return column_pins
-        
+        return [props.bitcell.cell_1rw1r.pin.bl0,
+                props.bitcell.cell_1rw1r.pin.bl1]
+
     def get_all_br_names(self):
         """ Creates a list of all br pins names """
-        column_pins = ["br0", "br1"]
-        return column_pins
-        
+        return [props.bitcell.cell_1rw1r.pin.br0,
+                props.bitcell.cell_1rw1r.pin.br1]
+
     def get_read_bl_names(self):
         """ Creates a list of bl pin names associated with read ports """
-        column_pins = ["bl0", "bl1"]
-        return column_pins
-    
+        return [props.bitcell.cell_1rw1r.pin.bl0,
+                props.bitcell.cell_1rw1r.pin.bl1]
+
     def get_read_br_names(self):
         """ Creates a list of br pin names associated with read ports """
-        column_pins = ["br0", "br1"]
-        return column_pins
-        
+        return [props.bitcell.cell_1rw1r.pin.br0,
+                props.bitcell.cell_1rw1r.pin.br1]
+
     def get_write_bl_names(self):
         """ Creates a list of bl pin names associated with write ports """
-        column_pins = ["bl0"]
-        return column_pins
-    
+        return [props.bitcell.cell_1rw1r.pin.bl0]
+
     def get_write_br_names(self):
         """ Creates a list of br pin names asscociated with write ports"""
-        column_pins = ["br0"]
-        return column_pins
-    
+        return [props.bitcell.cell_1rw1r.pin.br1]
+
     def get_bl_name(self, port=0):
         """Get bl name by port"""
         debug.check(port < 2, "Two ports for bitcell_1rw_1r only.")
-        return "bl{}".format(port)
-    
+        return self.bl_names[port]
+
     def get_br_name(self, port=0):
         """Get bl name by port"""
         debug.check(port < 2, "Two ports for bitcell_1rw_1r only.")
-        return "br{}".format(port)
+        return self.br_names[port]
 
     def get_wl_name(self, port=0):
         """Get wl name by port"""
         debug.check(port < 2, "Two ports for bitcell_1rw_1r only.")
-        return "wl{}".format(port)
-    
+        return self.wl_names[port]
+
     def build_graph(self, graph, inst_name, port_nets):
         """Adds edges to graph. Multiport bitcell timing graph is too complex
            to use the add_graph_edges function."""
         pin_dict = {pin: port for pin, port in zip(self.pins, port_nets)}
         # Edges hardcoded here. Essentially wl->bl/br for both ports.
         # Port 0 edges
-        graph.add_edge(pin_dict["wl0"], pin_dict["bl0"], self)
-        graph.add_edge(pin_dict["wl0"], pin_dict["br0"], self)
+        pins = props.bitcell.cell_1rw1r.pin
+        graph.add_edge(pin_dict[pins.wl0], pin_dict[pins.bl0], self)
+        graph.add_edge(pin_dict[pins.wl0], pin_dict[pins.br0], self)
         # Port 1 edges
-        graph.add_edge(pin_dict["wl1"], pin_dict["bl1"], self)
-        graph.add_edge(pin_dict["wl1"], pin_dict["br1"], self)
+        graph.add_edge(pin_dict[pins.wl1], pin_dict[pins.bl1], self)
+        graph.add_edge(pin_dict[pins.wl1], pin_dict[pins.br1], self)

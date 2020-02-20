@@ -180,30 +180,30 @@ class delay(simulation):
     def create_read_bit_measures(self):
         """ Adds bit measurements for read0 and read1 cycles """
         
-        self.bit_meas = {bit_polarity.NONINVERTING:[], bit_polarity.INVERTING:[]}
+        self.read_bit_meas = {bit_polarity.NONINVERTING:[], bit_polarity.INVERTING:[]}
         meas_cycles = (sram_op.READ_ZERO, sram_op.READ_ONE)
         for cycle in meas_cycles:
             meas_tag = "a{}_b{}_{}".format(self.probe_address, self.probe_data, cycle.name)
             single_bit_meas = self.get_bit_measures(meas_tag, self.probe_address, self.probe_data)
             for polarity,meas in single_bit_meas.items():
                 meas.meta_str = cycle
-                self.bit_meas[polarity].append(meas)
+                self.read_bit_meas[polarity].append(meas)
         # Dictionary values are lists, reduce to a single list of measurements
-        return [meas for meas_list in self.bit_meas.values() for meas in meas_list] 
+        return [meas for meas_list in self.read_bit_meas.values() for meas in meas_list] 
 
     def create_write_bit_measures(self):
         """ Adds bit measurements for write0 and write1 cycles """
         
-        self.bit_meas = {bit_polarity.NONINVERTING:[], bit_polarity.INVERTING:[]}
+        self.write_bit_meas = {bit_polarity.NONINVERTING:[], bit_polarity.INVERTING:[]}
         meas_cycles = (sram_op.WRITE_ZERO, sram_op.WRITE_ONE)
         for cycle in meas_cycles:
             meas_tag = "a{}_b{}_{}".format(self.probe_address, self.probe_data, cycle.name)
             single_bit_meas = self.get_bit_measures(meas_tag, self.probe_address, self.probe_data)
             for polarity,meas in single_bit_meas.items():
                 meas.meta_str = cycle
-                self.bit_meas[polarity].append(meas)
+                self.write_bit_meas[polarity].append(meas)
         # Dictionary values are lists, reduce to a single list of measurements
-        return [meas for meas_list in self.bit_meas.values() for meas in meas_list] 
+        return [meas for meas_list in self.write_bit_meas.values() for meas in meas_list] 
     
     def get_bit_measures(self, meas_tag, probe_address, probe_data):
         """
@@ -649,8 +649,9 @@ class delay(simulation):
             if (time_out <= 0):
                 debug.error("Timed out, could not find a feasible period.",2)
             
-            # Clear any write target ports and set read port
-            self.targ_write_ports = [port]
+            # Write ports are assumed non-critical to timing, so the first available is used
+            self.targ_write_ports = [self.write_ports[0]]
+            # Set target read port for simulation
             self.targ_read_ports = [port]
            
             debug.info(1, "Trying feasible period: {0}ns on Port {1}".format(feasible_period, port))
@@ -733,7 +734,8 @@ class delay(simulation):
 
         
         # First, check that the memory has the right values at the right times
-        if not self.check_bit_measures():
+        if not self.check_bit_measures(self.read_bit_meas) or \
+           not self.check_bit_measures(self.write_bit_meas):
             return(False,{})
 
         for port in self.targ_write_ports:
@@ -824,13 +826,13 @@ class delay(simulation):
         return dout_success
         
     
-    def check_bit_measures(self):
+    def check_bit_measures(self, bit_measures):
         """
         Checks the measurements which represent the internal storage voltages
         at the end of the read cycle.
         """
         success = False
-        for polarity, meas_list in self.bit_meas.items():
+        for polarity, meas_list in bit_measures.items():
             for meas in meas_list:
                 val = meas.retrieve_measure()
                 debug.info(2,"{}={}".format(meas.name, val))
@@ -965,7 +967,8 @@ class delay(simulation):
         
         # Binary search algorithm to find the min period (max frequency) of input port
         time_out = 25
-        self.targ_write_ports = [port]
+        # Write ports are assumed non-critical to timing, so the first available is used
+        self.targ_write_ports = [self.write_ports[0]]
         self.targ_read_ports = [port]
         while True:
             time_out -= 1
@@ -1254,8 +1257,8 @@ class delay(simulation):
         """
         
         # Using this requires setting at least one port to target for simulation.
-        if len(self.targ_write_ports) == 0 and len(self.targ_read_ports) == 0:
-            debug.error("No port selected for characterization.",1)
+        if len(self.targ_write_ports) == 0 or len(self.targ_read_ports) == 0:
+            debug.error("Write and read port must be specified for characterization.",1)
         self.set_stimulus_variables()
      
         # Get any available read/write port in case only a single write or read ports is being characterized.

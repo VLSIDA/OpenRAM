@@ -92,7 +92,7 @@ class port_address(design.design):
             driver_in_pos = self.wordline_driver_inst.get_pin("in_{}".format(row)).lc()
             mid1 = decoder_out_pos.scale(0.5,1)+driver_in_pos.scale(0.5,0)
             mid2 = decoder_out_pos.scale(0.5,0)+driver_in_pos.scale(0.5,1)
-            self.add_path("metal1", [decoder_out_pos, mid1, mid2, driver_in_pos])
+            self.add_path("m1", [decoder_out_pos, mid1, mid2, driver_in_pos])
 
 
             
@@ -149,7 +149,7 @@ class port_address(design.design):
         """
 
         # A space for wells or jogging m2
-        self.m2_gap = max(2*drc("pwell_to_nwell") + drc("well_enclosure_active"),
+        self.m2_gap = max(2*drc("pwell_to_nwell") + drc("nwell_enclose_active"),
                           3*self.m2_pitch)
         
         row_decoder_offset = vector(0,0)

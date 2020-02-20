@@ -8,6 +8,7 @@
 import debug
 import utils
 from tech import GDS, layer
+from tech import cell_properties as props
 import bitcell_base
 
 
@@ -18,7 +19,14 @@ class dummy_bitcell_1w_1r(bitcell_base.bitcell_base):
     is a hand-made cell, so the layout and netlist should be available in
     the technology library. """
 
-    pin_names = ["bl0", "br0", "bl1", "br1", "wl0", "wl1", "vdd", "gnd"]
+    pin_names = [props.bitcell.cell_1w1r.pin.bl0,
+                 props.bitcell.cell_1w1r.pin.br0,
+                 props.bitcell.cell_1w1r.pin.bl1,
+                 props.bitcell.cell_1w1r.pin.br1,
+                 props.bitcell.cell_1w1r.pin.wl0,
+                 props.bitcell.cell_1w1r.pin.wl1,
+                 props.bitcell.cell_1w1r.pin.vdd,
+                 props.bitcell.cell_1w1r.pin.gnd]
     type_list = ["OUTPUT", "OUTPUT", "INPUT", "INPUT",
                  "INPUT", "INPUT", "POWER", "GROUND"]
     (width, height) = utils.get_libcell_size("dummy_cell_1w_1r",

@@ -38,6 +38,15 @@ class port_data(design.design):
             self.create_layout()
             self.add_boundary()
 
+    def get_bl_names(self):
+        # bl lines are connect from the precharger
+        return self.precharge.get_bl_names()
+
+    def get_br_names(self):
+        # br lines are connect from the precharger
+        return self.precharge.get_br_names()
+
+
 
     def create_netlist(self):
         self.precompute_constants()
@@ -85,8 +94,10 @@ class port_data(design.design):
         self.add_pin("rbl_bl","INOUT")
         self.add_pin("rbl_br","INOUT")
         for bit in range(self.num_cols):
-            self.add_pin("{0}_{1}".format(self.bl_names[self.port], bit),"INOUT")
-            self.add_pin("{0}_{1}".format(self.br_names[self.port], bit),"INOUT")
+            bl_name = self.precharge_array.get_bl_name(self.port)
+            br_name = self.precharge_array.get_br_name(self.port)
+            self.add_pin("{0}_{1}".format(bl_name, bit),"INOUT")
+            self.add_pin("{0}_{1}".format(br_name, bit),"INOUT")
         if self.port in self.read_ports:
             for bit in range(self.word_size):
                 self.add_pin("dout_{}".format(bit),"OUTPUT")
@@ -212,7 +223,7 @@ class port_data(design.design):
 
 
         # A space for wells or jogging m2 between modules
-        self.m2_gap = max(2*drc("pwell_to_nwell") + drc("well_enclosure_active"),
+        self.m2_gap = max(2*drc("pwell_to_nwell") + drc("nwell_enclose_active"),
                           3*self.m2_pitch)
 
 
@@ -221,6 +232,18 @@ class port_data(design.design):
         self.bl_names = self.bitcell.get_all_bl_names()
         self.br_names = self.bitcell.get_all_br_names()
         self.wl_names = self.bitcell.get_all_wl_names()
+        # used for bl/br names
+        self.precharge = factory.create(module_type="precharge",
+                                        bitcell_bl = self.bl_names[0],
+                                        bitcell_br = self.br_names[0])
+        # We create a dummy here to get bl/br names to add those pins to this
+        # module, which happens before we create the real precharge_array
+        self.precharge_array = factory.create(module_type="precharge_array",
+                                       columns=self.num_cols + 1,
+                                       bitcell_bl=self.bl_names[self.port],
+                                       bitcell_br=self.br_names[self.port])
+
+
 
     def create_precharge_array(self):
         """ Creating Precharge """
@@ -230,6 +253,8 @@ class port_data(design.design):
 
         self.precharge_array_inst = self.add_inst(name="precharge_array{}".format(self.port),
                                                   mod=self.precharge_array)
+        bl_name = self.precharge_array.get_bl_name(self.port)
+        br_name = self.precharge_array.get_br_name(self.port)
 
         temp = []
         # Use left BLs for RBL
@@ -237,8 +262,9 @@ class port_data(design.design):
             temp.append("rbl_bl")
             temp.append("rbl_br")
         for bit in range(self.num_cols):
-            temp.append(self.bl_names[self.port]+"_{0}".format(bit))
-            temp.append(self.br_names[self.port]+"_{0}".format(bit))
+            temp.append("{0}_{1}".format(bl_name, bit))
+            temp.append("{0}_{1}".format(br_name, bit))
+
         # Use right BLs for RBL
         if self.port==1:
             temp.append("rbl_bl")
@@ -259,15 +285,19 @@ class port_data(design.design):
         self.column_mux_array_inst = self.add_inst(name="column_mux_array{}".format(self.port),
                                                    mod=self.column_mux_array)
 
+        bl_name = self.column_mux_array.get_bl_name(self.port)
+        br_name = self.column_mux_array.get_br_name(self.port)
         temp = []
         for col in range(self.num_cols):
-            temp.append(self.bl_names[self.port]+"_{0}".format(col))
-            temp.append(self.br_names[self.port]+"_{0}".format(col))
+            temp.append("{0}_{1}".format(bl_name, col))
+            temp.append("{0}_{1}".format(br_name, col))
+
         for word in range(self.words_per_row):
             temp.append("sel_{}".format(word))
         for bit in range(self.word_size):
-            temp.append(self.bl_names[self.port]+"_out_{0}".format(bit))
-            temp.append(self.br_names[self.port]+"_out_{0}".format(bit))
+            temp.append("{0}_out_{1}".format(bl_name, bit))
+            temp.append("{0}_out_{1}".format(br_name, bit))
+
         temp.append("gnd")
         self.connect_inst(temp)
 
@@ -285,15 +315,18 @@ class port_data(design.design):
         self.sense_amp_array_inst = self.add_inst(name="sense_amp_array{}".format(self.port),
                                                   mod=self.sense_amp_array)
 
+        bl_name = self.sense_amp_array.get_bl_name(self.port)
+        br_name = self.sense_amp_array.get_br_name(self.port)
         temp = []
         for bit in range(self.word_size):
             temp.append("dout_{}".format(bit))
             if self.words_per_row == 1:
-                temp.append(self.bl_names[self.port]+"_{0}".format(bit))
-                temp.append(self.br_names[self.port]+"_{0}".format(bit))
+                temp.append("{0}_{1}".format(bl_name, bit))
+                temp.append("{0}_{1}".format(br_name, bit))
             else:
-                temp.append(self.bl_names[self.port]+"_out_{0}".format(bit))
-                temp.append(self.br_names[self.port]+"_out_{0}".format(bit))
+                temp.append("{0}_out_{1}".format(bl_name, bit))
+                temp.append("{0}_out_{1}".format(br_name, bit))
+
 
         temp.extend(["s_en", "vdd", "gnd"])
         self.connect_inst(temp)
@@ -308,6 +341,8 @@ class port_data(design.design):
         """ Creating Write Driver  """
         self.write_driver_array_inst = self.add_inst(name="write_driver_array{}".format(self.port),
                                                      mod=self.write_driver_array)
+        bl_name = self.write_driver_array.get_bl_name(self.port)
+        br_name = self.write_driver_array.get_br_name(self.port)
 
         temp = []
         for bit in range(self.word_size):
@@ -315,11 +350,11 @@ class port_data(design.design):
 
         for bit in range(self.word_size):
             if (self.words_per_row == 1):
-                temp.append(self.bl_names[self.port] + "_{0}".format(bit))
-                temp.append(self.br_names[self.port] + "_{0}".format(bit))
+                temp.append("{0}_{1}".format(bl_name, bit))
+                temp.append("{0}_{1}".format(br_name, bit))
             else:
-                temp.append(self.bl_names[self.port] + "_out_{0}".format(bit))
-                temp.append(self.br_names[self.port] + "_out_{0}".format(bit))
+                temp.append("{0}_out_{1}".format(bl_name, bit))
+                temp.append("{0}_out_{1}".format(br_name, bit))
 
         if self.write_size is not None:
             for i in range(self.num_wmasks):
@@ -475,11 +510,11 @@ class port_data(design.design):
             end_pos = vector(length, wdriver_en_pin.cy())
 
             # Add via for the write driver array's enable input
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=self.m1_stack,
                                 offset=end_pos)
 
             # Route between write mask AND array and write driver array
-            self.add_wire(("metal1","via1","metal2"), [beg_pos, middle_pos, end_pos])
+            self.add_wire(self.m1_stack, [beg_pos, middle_pos, end_pos])
 
 
     def route_column_mux_to_precharge_array(self, port):
@@ -626,7 +661,7 @@ class port_data(design.design):
             bottom_names = [bottom_inst.get_pin(bottom_bl_name.format(bit+bottom_start_bit)), bottom_inst.get_pin(bottom_br_name.format(bit+bottom_start_bit))]
             top_names = [top_inst.get_pin(top_bl_name.format(bit+top_start_bit)), top_inst.get_pin(top_br_name.format(bit+top_start_bit))]
             route_map = list(zip(bottom_names, top_names))
-            self.create_horizontal_channel_route(route_map, offset)
+            self.create_horizontal_channel_route(route_map, offset, self.m1_stack)
             
 
     def connect_bitlines(self, inst1, inst2, num_bits,
@@ -655,9 +690,9 @@ class port_data(design.design):
             top_br = top_inst.get_pin(top_br_name.format(col+top_start_bit)).bc()
 
             yoffset = 0.5*(top_bl.y+bottom_bl.y)
-            self.add_path("metal2",[bottom_bl, vector(bottom_bl.x,yoffset),
+            self.add_path("m2",[bottom_bl, vector(bottom_bl.x,yoffset),
                                     vector(top_bl.x,yoffset), top_bl])
-            self.add_path("metal2",[bottom_br, vector(bottom_br.x,yoffset),
+            self.add_path("m2",[bottom_br, vector(bottom_br.x,yoffset),
                                     vector(top_br.x,yoffset), top_br])
         
     def graph_exclude_precharge(self):

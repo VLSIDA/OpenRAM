@@ -44,7 +44,7 @@ class ptristate_inv(pgate.pgate):
         """ Calls all functions related to the generation of the netlist """
         self.add_pins()
         self.add_ptx()
-        self.create_ptx()        
+        self.create_ptx()
         
     def create_layout(self):
         """ Calls all functions related to the generation of the layout """
@@ -61,7 +61,6 @@ class ptristate_inv(pgate.pgate):
         """ Adds pins for spice netlist """
         self.add_pin_list(["in", "out", "en", "en_bar", "vdd", "gnd"])
 
-
     def setup_layout_constants(self):
         """
         Pre-compute some handy layout parameters.
@@ -73,15 +72,14 @@ class ptristate_inv(pgate.pgate):
 
         # Two PMOS devices and a well contact. Separation between each.
         # Enclosure space on the sides.
-        self.well_width = 2 * self.pmos.active_width + drc("well_enclosure_active") 
+        self.well_width = 2 * self.pmos.active_width + self.nwell_enclose_active
 
         # Add an extra space because we route the output on the right of the S/D
         self.width = self.well_width + 0.5 * self.m1_space
         # Height is an input parameter, so it is not recomputed.
         
         # Make sure we can put a well above and below
-        self.top_bottom_space = max(contact.well.width, contact.well.height)
-
+        self.top_bottom_space = max(contact.active_contact.width, contact.active_contact.height)
         
     def add_ptx(self):
         """ Create the PMOS and NMOS transistors. """
@@ -95,18 +93,17 @@ class ptristate_inv(pgate.pgate):
                                    width=self.pmos_width,
                                    mults=1,
                                    tx_type="pmos")
-
         self.add_mod(self.pmos)
         
     def route_supply_rails(self):
         """ Add vdd/gnd rails to the top and bottom. """
         self.add_layout_pin_rect_center(text="gnd",
-                                        layer="metal1",
+                                        layer="m1",
                                         offset=vector(0.5 * self.width, 0),
                                         width=self.width)
 
         self.add_layout_pin_rect_center(text="vdd",
-                                        layer="metal1",
+                                        layer="m1",
                                         offset=vector(0.5 * self.width, self.height),
                                         width=self.width)
 
@@ -138,8 +135,8 @@ class ptristate_inv(pgate.pgate):
         """
 
         pmos_yoff = self.height - self.pmos.active_height \
-                    - self.top_bottom_space - 0.5 * contact.well.height
-        nmos_yoff = self.top_bottom_space + 0.5 * contact.well.height
+                    - self.top_bottom_space - 0.5 * contact.active_contact.height
+        nmos_yoff = self.top_bottom_space + 0.5 * contact.active_contact.height
 
         # Tristate transistors
         pmos1_pos = vector(self.pmos.active_offset.x, pmos_yoff)
@@ -181,7 +178,7 @@ class ptristate_inv(pgate.pgate):
         pmos_drain_pos = pmos_drain_pin.ur()
 
         self.add_layout_pin(text="out",
-                            layer="metal1",
+                            layer="m1",
                             offset=nmos_drain_pos,
                             height=pmos_drain_pos.y - nmos_drain_pos.y)
 
@@ -191,7 +188,7 @@ class ptristate_inv(pgate.pgate):
         supplies AFTER the wells are created
         """
 
-        layer_stack = ("active", "contact", "metal1")
+        layer_stack = self.active_stack
 
         drain_pos = self.nmos1_inst.get_pin("S").center()
         vdd_pos = self.get_pin("vdd").center()

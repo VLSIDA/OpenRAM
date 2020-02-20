@@ -31,6 +31,12 @@ class single_level_column_mux(pgate.pgate):
         
         pgate.pgate.__init__(self, name)
 
+    def get_bl_names(self):
+        return "bl"
+
+    def get_br_names(self):
+        return "br"
+
     def create_netlist(self):
         self.add_modules()
         self.add_pins()
@@ -65,21 +71,21 @@ class single_level_column_mux(pgate.pgate):
 
         # bl and br
         self.add_layout_pin(text="bl",
-                            layer="metal2",
+                            layer="m2",
                             offset=bl_pos + vector(0, self.height - self.pin_height),
                             height=self.pin_height)
         self.add_layout_pin(text="br",
-                            layer="metal2",
+                            layer="m2",
                             offset=br_pos + vector(0, self.height - self.pin_height),
                             height=self.pin_height)
         
         # bl_out and br_out
         self.add_layout_pin(text="bl_out",
-                            layer="metal2",
+                            layer="m2",
                             offset=bl_pos,
                             height=self.pin_height)
         self.add_layout_pin(text="br_out",
-                            layer="metal2",
+                            layer="m2",
                             offset=br_pos,
                             height=self.pin_height)
 
@@ -126,22 +132,22 @@ class single_level_column_mux(pgate.pgate):
         nmos_upper_d_pin = self.nmos_upper.get_pin("D")
 
         # Add vias to bl, br_out, nmos_upper/S, nmos_lower/D
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=bl_pin.bc(),
                             directions=("V", "V"))
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=br_out_pin.uc(),
                             directions=("V", "V"))
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=nmos_upper_s_pin.center(),
                             directions=("V", "V"))
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=nmos_lower_d_pin.center(),
                             directions=("V", "V"))
         
         # bl -> nmos_upper/D on metal1
         # bl_out -> nmos_upper/S on metal2
-        self.add_path("metal1",
+        self.add_path("m1",
                       [bl_pin.ll(), vector(nmos_upper_d_pin.cx(), bl_pin.by()),
                        nmos_upper_d_pin.center()])
         # halfway up, move over
@@ -149,12 +155,12 @@ class single_level_column_mux(pgate.pgate):
                + nmos_upper_s_pin.bc().scale(0, 0.4)
         mid2 = bl_out_pin.uc().scale(0, 0.4) \
                + nmos_upper_s_pin.bc().scale(1, 0.4)        
-        self.add_path("metal2",
+        self.add_path("m2",
                       [bl_out_pin.uc(), mid1, mid2, nmos_upper_s_pin.bc()])
         
         # br -> nmos_lower/D on metal2
         # br_out -> nmos_lower/S on metal1
-        self.add_path("metal1",
+        self.add_path("m1",
                       [br_out_pin.uc(),
                        vector(nmos_lower_s_pin.cx(), br_out_pin.uy()),
                        nmos_lower_s_pin.center()])
@@ -163,7 +169,7 @@ class single_level_column_mux(pgate.pgate):
                + nmos_lower_d_pin.uc().scale(0,0.5)
         mid2 = br_pin.bc().scale(0,0.5) \
                + nmos_lower_d_pin.uc().scale(1,0.5)
-        self.add_path("metal2",
+        self.add_path("m2",
                       [br_pin.bc(), mid1, mid2, nmos_lower_d_pin.uc()])
         
     def add_wells(self):
@@ -175,19 +181,15 @@ class single_level_column_mux(pgate.pgate):
         # Add it to the right, aligned in between the two tx
         active_pos = vector(self.bitcell.width,
                             self.nmos_upper.by() - 0.5 * self.poly_space)
-        self.add_via_center(layers=("active", "contact", "metal1"),
+        self.add_via_center(layers=self.active_stack,
                             offset=active_pos,
                             implant_type="p",
                             well_type="p")
 
-        # Add the M1->M2->M3 stack
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
-                            offset=active_pos)
-        self.add_via_center(layers=("metal2", "via2", "metal3"),
-                            offset=active_pos)
-        self.add_layout_pin_rect_center(text="gnd",
-                                        layer="metal3",
-                                        offset=active_pos)
+        # Add the M1->..->power_grid_layer stack
+        self.add_power_pin(name = "gnd",
+                           loc = active_pos,
+                           start_layer="m1")
 
         # Add well enclosure over all the tx and contact
         self.add_rect(layer="pwell",

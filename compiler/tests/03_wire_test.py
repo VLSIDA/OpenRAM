@@ -8,11 +8,11 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys
+import os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
-from globals import OPTS
-import debug
+
 
 class wire_test(openram_test):
 
@@ -22,107 +22,33 @@ class wire_test(openram_test):
         import wire
         import tech
         import design
-        
-        min_space = 2 * (tech.drc["minwidth_poly"] +
-                         tech.drc["minwidth_metal1"])
-        layer_stack = ("poly", "contact", "metal1")
-        old_position_list = [[0, 0],
-                             [0, 3 * min_space],
-                             [1 * min_space, 3 * min_space],
-                             [4 * min_space, 3 * min_space],
-                             [4 * min_space, 0],
-                             [7 * min_space, 0],
-                             [7 * min_space, 4 * min_space],
-                             [-1 * min_space, 4 * min_space],
-                             [-1 * min_space, 0]]
-        position_list  = [[x-min_space, y-min_space] for x,y in old_position_list]        
-        w = design.design("wire_test1")
-        wire.wire(w, layer_stack, position_list)
-        self.local_drc_check(w)
 
-        min_space = 2 * (tech.drc["minwidth_poly"] +
-                         tech.drc["minwidth_metal1"])
-        layer_stack = ("poly", "contact", "metal1")
-        old_position_list = [[0, 0],
-                             [0, 3 * min_space],
-                             [1 * min_space, 3 * min_space],
-                             [4 * min_space, 3 * min_space],
-                             [4 * min_space, 0],
-                             [7 * min_space, 0],
-                             [7 * min_space, 4 * min_space],
-                             [-1 * min_space, 4 * min_space],
-                             [-1 * min_space, 0]]
-        position_list  = [[x+min_space, y+min_space] for x,y in old_position_list]
-        w = design.design("wire_test2")        
-        wire.wire(w, layer_stack, position_list)
-        self.local_drc_check(w)
+        layer_stacks = [tech.poly_stack] + tech.beol_stacks
 
-        min_space = 2 * (tech.drc["minwidth_metal2"] +
-                         tech.drc["minwidth_metal1"])
-        layer_stack = ("metal1", "via1", "metal2")
-        position_list = [[0, 0],
-                         [0, 3 * min_space],
-                         [1 * min_space, 3 * min_space],
-                         [4 * min_space, 3 * min_space],
-                         [4 * min_space, 0],
-                         [7 * min_space, 0],
-                         [7 * min_space, 4 * min_space],
-                         [-1 * min_space, 4 * min_space],
-                         [-1 * min_space, 0]]
-        w = design.design("wire_test3")
-        wire.wire(w, layer_stack, position_list)
-        self.local_drc_check(w)
+        for reverse in [False, True]:
+            for stack in layer_stacks:
+                if reverse:
+                    layer_stack = stack[::-1]
+                else:
+                    layer_stack = stack
 
+                # Just make a conservative spacing. Make it wire pitch instead?
+                min_space = 2 * (tech.drc["minwidth_{}".format(layer_stack[0])] +
+                                 tech.drc["minwidth_{}".format(layer_stack[2])])
 
-        min_space = 2 * (tech.drc["minwidth_metal2"] +
-                         tech.drc["minwidth_metal1"])
-        layer_stack = ("metal2", "via1", "metal1")
-        position_list = [[0, 0],
-                         [0, 3 * min_space],
-                         [1 * min_space, 3 * min_space],
-                         [4 * min_space, 3 * min_space],
-                         [4 * min_space, 0],
-                         [7 * min_space, 0],
-                         [7 * min_space, 4 * min_space],
-                         [-1 * min_space, 4 * min_space],
-                         [-1 * min_space, 0]]
-        w = design.design("wire_test4")
-        wire.wire(w, layer_stack, position_list)
-        self.local_drc_check(w)
-
-        min_space = 2 * (tech.drc["minwidth_metal2"] +
-                         tech.drc["minwidth_metal3"])
-        layer_stack = ("metal2", "via2", "metal3")
-        position_list = [[0, 0],
-                         [0, 3 * min_space],
-                         [1 * min_space, 3 * min_space],
-                         [4 * min_space, 3 * min_space],
-                         [4 * min_space, 0],
-                         [7 * min_space, 0],
-                         [7 * min_space, 4 * min_space],
-                         [-1 * min_space, 4 * min_space],
-                         [-1 * min_space, 0]]
-        position_list.reverse()
-        w = design.design("wire_test5")
-        wire.wire(w, layer_stack, position_list)
-        self.local_drc_check(w)
-
-        min_space = 2 * (tech.drc["minwidth_metal2"] +
-                         tech.drc["minwidth_metal3"])
-        layer_stack = ("metal3", "via2", "metal2")
-        position_list = [[0, 0],
-                         [0, 3 * min_space],
-                         [1 * min_space, 3 * min_space],
-                         [4 * min_space, 3 * min_space],
-                         [4 * min_space, 0],
-                         [7 * min_space, 0],
-                         [7 * min_space, 4 * min_space],
-                         [-1 * min_space, 4 * min_space],
-                         [-1 * min_space, 0]]
-        position_list.reverse()
-        w = design.design("wire_test6")
-        wire.wire(w, layer_stack, position_list)
-        self.local_drc_check(w)
+                position_list = [[0, 0],
+                                 [0, 3 * min_space],
+                                 [1 * min_space, 3 * min_space],
+                                 [4 * min_space, 3 * min_space],
+                                 [4 * min_space, 0],
+                                 [7 * min_space, 0],
+                                 [7 * min_space, 4 * min_space],
+                                 [-1 * min_space, 4 * min_space],
+                                 [-1 * min_space, 0]]
+                position_list  = [[x - min_space, y - min_space] for x, y in position_list]
+                w = design.design("wire_test_{}".format("_".join(layer_stack)))
+                wire.wire(w, layer_stack, position_list)
+                self.local_drc_check(w)
 
         globals.end_openram()
         

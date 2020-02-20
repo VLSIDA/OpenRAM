@@ -8,12 +8,13 @@
 from hierarchy_design import hierarchy_design
 import contact
 from globals import OPTS
+import re
 
 
 class design(hierarchy_design):
     """
     This is the same as the hierarchy_design class except it contains
-    some DRC constants and analytical models for other modules to reuse.
+    some DRC/layer constants and analytical models for other modules to reuse.
 
     """
 
@@ -21,42 +22,130 @@ class design(hierarchy_design):
         hierarchy_design.__init__(self, name)
         
         self.setup_drc_constants()
+        self.setup_layer_constants()
         self.setup_multiport_constants()
 
-        from tech import layer
-        self.m1_pitch = max(contact.m1m2.width, contact.m1m2.height) + max(self.m1_space, self.m2_space)
-        self.m2_pitch = max(contact.m2m3.width, contact.m2m3.height) + max(self.m2_space, self.m3_space)
-        if "metal4" in layer:
-            self.m3_pitch = max(contact.m3m4.width, contact.m3m4.height) + max(self.m3_space, self.m4_space)
+    def setup_layer_constants(self):
+        """
+        These are some layer constants used
+        in many places in the compiler.
+        """
+        
+        import tech
+        for key in dir(tech):
+            # Single layer width rules
+            match = re.match(r".*_stack$", key)
+            if match:
+                layer_stack = getattr(tech, key)
+
+                # Set the stack as a local helper
+                setattr(self, key, layer_stack)
+
+                # Add the pitch
+                setattr(self,
+                        "{}_pitch".format(layer_stack[0]),
+                        self.compute_pitch(layer_stack))
+
+        if False:
+            print("m1_pitch", self.m1_pitch)
+            print("m2_pitch", self.m2_pitch)
+            print("m3_pitch", self.m3_pitch)
+            import sys
+            sys.exit(1)
+
+    def compute_pitch(self, layer_stack):
+        
+        """
+        This is contact direction independent pitch,
+        i.e. we take the maximum contact dimension
+        """
+        (layer1, via, layer2) = layer_stack
+
+        if layer1 == "poly" or layer1 == "active":
+            contact1 = getattr(contact, layer1 + "_contact")
         else:
-            self.m3_pitch = self.m2_pitch
+            contact1 = getattr(contact, layer1 + "_via")
+        max_contact = max(contact1.width, contact1.height)
+        
+        layer1_space = getattr(self, layer1 + "_space")
+        layer2_space = getattr(self, layer2 + "_space")
+        pitch = max_contact + max(layer1_space, layer2_space)
 
+        return pitch
+        
     def setup_drc_constants(self):
-        """ These are some DRC constants used in many places in the compiler."""
-        from tech import drc, layer
-        self.well_width = drc("minwidth_well")
-        self.poly_width = drc("minwidth_poly")
-        self.poly_space = drc("poly_to_poly")
-        self.m1_width = drc("minwidth_metal1")
-        self.m1_space = drc("metal1_to_metal1")
-        self.m2_width = drc("minwidth_metal2")
-        self.m2_space = drc("metal2_to_metal2")
-        self.m3_width = drc("minwidth_metal3")
-        self.m3_space = drc("metal3_to_metal3")
-        if "metal4" in layer:
-            self.m4_width = drc("minwidth_metal4")
-            self.m4_space = drc("metal4_to_metal4")
-        self.active_width = drc("minwidth_active")
-        self.active_space = drc("active_to_body_active")
-        self.contact_width = drc("minwidth_active_contact")
+        """ 
+        These are some DRC constants used in many places
+        in the compiler.
+        """
+        # Make some local rules for convenience
+        from tech import drc
+        for rule in drc.keys():
+            # Single layer width rules
+            match = re.search(r"minwidth_(.*)", rule)
+            if match:
+                if match.group(1) == "active_contact":
+                    setattr(self, "contact_width", drc(match.group(0)))
+                else:
+                    setattr(self, match.group(1) + "_width", drc(match.group(0)))
 
-        self.poly_to_active = drc("poly_to_active")
-        self.poly_extend_active = drc("poly_extend_active")
-        self.poly_to_poly_contact = drc("poly_to_poly_contact")
-        self.active_contact_to_gate = drc("active_contact_to_gate")
-        self.well_enclose_active = drc("well_enclosure_active")
-        self.implant_enclose_active = drc("implant_enclosure_active")
-        self.implant_space = drc("implant_to_implant")
+            # Single layer area rules
+            match = re.search(r"minarea_(.*)", rule)
+            if match:
+                setattr(self, match.group(0), drc(match.group(0)))
+                    
+            # Single layer spacing rules
+            match = re.search(r"(.*)_to_(.*)", rule)
+            if match and match.group(1) == match.group(2):
+                setattr(self, match.group(1) + "_space", drc(match.group(0)))
+            elif match and match.group(1) != match.group(2):
+                if match.group(2) == "poly_active":
+                    setattr(self, match.group(1) + "_to_contact",
+                            drc(match.group(0)))
+                else:
+                    setattr(self, match.group(0), drc(match.group(0)))
+                
+            match = re.search(r"(.*)_enclose_(.*)", rule)
+            if match:
+                setattr(self, match.group(0), drc(match.group(0)))
+
+            match = re.search(r"(.*)_extend_(.*)", rule)
+            if match:
+                setattr(self, match.group(0), drc(match.group(0)))
+
+        # Create the maximum well extend active that gets used
+        # by cells to extend the wells for interaction with other cells
+        from tech import layer
+        self.well_extend_active = 0
+        if "nwell" in layer:
+            self.well_extend_active = max(self.well_extend_active, self.nwell_extend_active)
+        if "pwell" in layer:
+            self.well_extend_active = max(self.well_extend_active, self.pwell_extend_active)
+            
+        # These are for debugging previous manual rules
+        if False:
+            print("poly_width", self.poly_width)
+            print("poly_space", self.poly_space)
+            print("m1_width", self.m1_width)
+            print("m1_space", self.m1_space)
+            print("m2_width", self.m2_width)
+            print("m2_space", self.m2_space)
+            print("m3_width", self.m3_width)
+            print("m3_space", self.m3_space)
+            print("m4_width", self.m4_width)
+            print("m4_space", self.m4_space)
+            print("active_width", self.active_width)
+            print("active_space", self.active_space)
+            print("contact_width", self.contact_width)
+            print("poly_to_active", self.poly_to_active)
+            print("poly_extend_active", self.poly_extend_active)
+            print("poly_to_contact", self.poly_to_contact)
+            print("contact_to_gate", self.contact_to_gate)
+            print("well_enclose_active", self.well_enclose_active)
+            print("implant_enclose_active", self.implant_enclose_active)
+            print("implant_space", self.implant_space)
+            import sys
+            sys.exit(1)
         
     def setup_multiport_constants(self):
         """ 

@@ -5,18 +5,14 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import sys
-from tech import drc, parameter
 import debug
 import design
-import math
-from math import log,sqrt,ceil
-import contact
-import pgates
 from sram_factory import factory
+from math import log
+from tech import drc
 from vector import vector
-
 from globals import OPTS
+
 
 class bank(design.design):
     """
@@ -57,6 +53,7 @@ class bank(design.design):
 
 
     def create_netlist(self):
+
         self.compute_sizes()
         self.add_modules()
         self.add_pins() # Must create the replica bitcell array first
@@ -334,7 +331,7 @@ class bank(design.design):
         self.col_addr_bus_width = self.m2_pitch*self.num_col_addr_lines
 
         # A space for wells or jogging m2
-        self.m2_gap = max(2*drc("pwell_to_nwell") + drc("well_enclosure_active"),
+        self.m2_gap = max(2*drc("pwell_to_nwell") + drc("nwell_enclose_active"),
                           3*self.m2_pitch)
 
 
@@ -500,6 +497,8 @@ class bank(design.design):
         Create a 2:4 or 3:8 column address decoder.
         """
 
+        # Height is a multiple of DFF so that it can be staggered
+        # and rows do not align with the control logic module
         self.dff = factory.create(module_type="dff")
         
         if self.col_addr_size == 0:
@@ -606,12 +605,12 @@ class bank(design.design):
             out_pos = self.bank_select_inst[port].get_pin(gated_bank_sel_signals[signal]).rc()
             name = self.control_signals[port][signal]
             bus_pos = vector(self.bus_xoffset[port][name].x, out_pos.y)
-            self.add_path("metal3",[out_pos, bus_pos])
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
+            self.add_path("m3",[out_pos, bus_pos])
+            self.add_via_center(layers=self.m2_stack,
                                 offset=bus_pos)
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=self.m1_stack,
                                 offset=out_pos)
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
+            self.add_via_center(layers=self.m2_stack,
                                 offset=out_pos)
         
     
@@ -649,7 +648,7 @@ class bank(design.design):
         control_bus_offset = vector(-self.m2_pitch * self.num_control_lines[0] - self.m2_pitch, self.min_y_offset)
         # The control bus is routed up to two pitches below the bitcell array
         control_bus_length = self.main_bitcell_array_bottom - self.min_y_offset - 2*self.m1_pitch
-        self.bus_xoffset[0] = self.create_bus(layer="metal2",
+        self.bus_xoffset[0] = self.create_bus(layer="m2",
                                               pitch=self.m2_pitch,
                                               offset=control_bus_offset,
                                               names=self.control_signals[0],
@@ -664,7 +663,7 @@ class bank(design.design):
             control_bus_offset = vector(self.bitcell_array_right + self.m2_pitch,
                                         self.max_y_offset - control_bus_length)
             # The bus for the right port is reversed so that the rbl_wl is closest to the array
-            self.bus_xoffset[1] = self.create_bus(layer="metal2",
+            self.bus_xoffset[1] = self.create_bus(layer="m2",
                                                   pitch=self.m2_pitch,
                                                   offset=control_bus_offset,
                                                   names=list(reversed(self.control_signals[1])),
@@ -681,9 +680,13 @@ class bank(design.design):
         inst1 = self.bitcell_array_inst
         inst1_bl_name = self.bl_names[port]+"_{}"
         inst1_br_name = self.br_names[port]+"_{}"
+
+        inst2_bl_name = inst2.mod.get_bl_names()+"_{}"
+        inst2_br_name = inst2.mod.get_br_names()+"_{}"
         
         self.connect_bitlines(inst1=inst1, inst2=inst2, num_bits=self.num_cols,
-                              inst1_bl_name=inst1_bl_name, inst1_br_name=inst1_br_name)
+                              inst1_bl_name=inst1_bl_name, inst1_br_name=inst1_br_name,
+                              inst2_bl_name=inst2_bl_name, inst2_br_name=inst2_br_name)
 
         # Connect the replica bitlines
         rbl_bl_name=self.bitcell_array.get_rbl_bl_name(self.port_rbl_map[port])
@@ -757,7 +760,7 @@ class bank(design.design):
             bottom_names = [bottom_inst.get_pin(bottom_bl_name.format(bit)), bottom_inst.get_pin(bottom_br_name.format(bit))]
             top_names = [top_inst.get_pin(top_bl_name.format(bit)), top_inst.get_pin(top_br_name.format(bit))]            
             route_map = list(zip(bottom_names, top_names))
-            self.create_horizontal_channel_route(route_map, offset)
+            self.create_horizontal_channel_route(route_map, offset, self.m1_stack)
             
     def connect_bitline(self, inst1, inst2, inst1_name, inst2_name):
         """
@@ -788,8 +791,8 @@ class bank(design.design):
         
 
     def connect_bitlines(self, inst1, inst2, num_bits,
-                         inst1_bl_name="bl_{}", inst1_br_name="br_{}",
-                         inst2_bl_name="bl_{}", inst2_br_name="br_{}"):
+                         inst1_bl_name, inst1_br_name,
+                         inst2_bl_name, inst2_br_name):
         """
         Connect the bl and br of two modules.
         """
@@ -818,7 +821,7 @@ class bank(design.design):
             bitcell_wl_pos = self.bitcell_array_inst.get_pin(self.wl_names[port]+"_{}".format(row)).lc()
             mid1 = driver_wl_pos.scale(0,1) + vector(0.5*self.port_address_inst[port].rx() + 0.5*self.bitcell_array_inst.lx(),0)
             mid2 = mid1.scale(1,0)+bitcell_wl_pos.scale(0.5,1)
-            self.add_path("metal1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
+            self.add_path("m1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
 
 
     def route_port_address_right(self, port):
@@ -830,7 +833,7 @@ class bank(design.design):
             bitcell_wl_pos = self.bitcell_array_inst.get_pin(self.wl_names[port]+"_{}".format(row)).rc()
             mid1 = driver_wl_pos.scale(0,1) + vector(0.5*self.port_address_inst[port].lx() + 0.5*self.bitcell_array_inst.rx(),0)
             mid2 = mid1.scale(1,0)+bitcell_wl_pos.scale(0,1)
-            self.add_path("metal1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
+            self.add_path("m1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
 
     def route_column_address_lines(self, port):
         """ Connecting the select lines of column mux to the address bus """
@@ -866,8 +869,7 @@ class bank(design.design):
         column_mux_pins = [self.port_data_inst[port].get_pin(x) for x in sel_names]
         
         route_map = list(zip(decode_pins, column_mux_pins))
-        self.create_vertical_channel_route(route_map, offset)
-
+        self.create_vertical_channel_route(route_map, offset, self.m1_stack)
 
     def add_lvs_correspondence_points(self):
         """ This adds some points for easier debugging if LVS goes wrong. 
@@ -879,7 +881,7 @@ class bank(design.design):
             wl_name = "wl_{}".format(i)
             wl_pin = self.bitcell_array_inst.get_pin(wl_name)
             self.add_label(text=wl_name,
-                           layer="metal1",  
+                           layer="m1",  
                            offset=wl_pin.center())
         
         # Add the bitline names
@@ -889,10 +891,10 @@ class bank(design.design):
             bl_pin = self.bitcell_array_inst.get_pin(bl_name)
             br_pin = self.bitcell_array_inst.get_pin(br_name)
             self.add_label(text=bl_name,
-                           layer="metal2",  
+                           layer="m2",  
                            offset=bl_pin.center())
             self.add_label(text=br_name,
-                           layer="metal2",  
+                           layer="m2",  
                            offset=br_pin.center())
 
         # # Add the data output names to the sense amp output     
@@ -900,7 +902,7 @@ class bank(design.design):
         #     data_name = "data_{}".format(i)
         #     data_pin = self.sense_amp_array_inst.get_pin(data_name)
         #     self.add_label(text="sa_out_{}".format(i),
-        #                    layer="metal2",  
+        #                    layer="m2",  
         #                    offset=data_pin.center())
 
         # Add labels on the decoder
@@ -910,9 +912,8 @@ class bank(design.design):
                 pin_name = "in_{}".format(i)            
                 data_pin = self.wordline_driver_inst[port].get_pin(pin_name)
                 self.add_label(text=data_name,
-                               layer="metal1",  
+                               layer="m1",  
                                offset=data_pin.center())
-            
             
     def route_control_lines(self, port):
         """ Route the control lines of the entire bank """
@@ -921,29 +922,31 @@ class bank(design.design):
         # From control signal to the module pin 
         # Connection from the central bus to the main control block crosses
         # pre-decoder and this connection is in metal3
-        write_inst = 0
-        read_inst = 0
-        
         connection = []
-        connection.append((self.prefix+"p_en_bar{}".format(port), self.port_data_inst[port].get_pin("p_en_bar").lc()))
+        connection.append((self.prefix + "p_en_bar{}".format(port),
+                           self.port_data_inst[port].get_pin("p_en_bar").lc()))
 
         rbl_wl_name = self.bitcell_array.get_rbl_wl_name(self.port_rbl_map[port])
-        connection.append((self.prefix+"wl_en{}".format(port), self.bitcell_array_inst.get_pin(rbl_wl_name).lc()))
+        connection.append((self.prefix + "wl_en{}".format(port),
+                           self.bitcell_array_inst.get_pin(rbl_wl_name).lc()))
             
         if port in self.write_ports:
             if port % 2:
-                connection.append((self.prefix+"w_en{}".format(port), self.port_data_inst[port].get_pin("w_en").rc()))
+                connection.append((self.prefix + "w_en{}".format(port),
+                                   self.port_data_inst[port].get_pin("w_en").rc()))
             else:
-                connection.append((self.prefix+"w_en{}".format(port), self.port_data_inst[port].get_pin("w_en").lc()))
+                connection.append((self.prefix + "w_en{}".format(port),
+                                   self.port_data_inst[port].get_pin("w_en").lc()))
                 
         if port in self.read_ports:
-            connection.append((self.prefix+"s_en{}".format(port), self.port_data_inst[port].get_pin("s_en").lc()))
+            connection.append((self.prefix + "s_en{}".format(port),
+                               self.port_data_inst[port].get_pin("s_en").lc()))
 
         for (control_signal, pin_pos) in connection:
             control_mid_pos = self.bus_xoffset[port][control_signal]
             control_pos = vector(self.bus_xoffset[port][control_signal].x ,pin_pos.y)
-            self.add_wire(("metal1","via1","metal2"), [control_mid_pos, control_pos, pin_pos])
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
+            self.add_wire(self.m1_stack, [control_mid_pos, control_pos, pin_pos])
+            self.add_via_center(layers=self.m1_stack,
                                 offset=control_pos)
 
         
@@ -957,11 +960,11 @@ class bank(design.design):
             mid_pos = pin_pos - vector(0,2*self.m2_gap) # to route down to the top of the bus
         control_x_offset = self.bus_xoffset[port][control_signal].x
         control_pos = vector(control_x_offset, mid_pos.y)
-        self.add_wire(("metal1","via1","metal2"),[pin_pos, mid_pos, control_pos])
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_wire(self.m1_stack,[pin_pos, mid_pos, control_pos])
+        self.add_via_center(layers=self.m1_stack,
                             offset=control_pos)
  
-    def determine_wordline_stage_efforts(self, external_cout, inp_is_rise=True):    
+    def determine_wordline_stage_efforts(self, external_cout, inp_is_rise=True):
         """Get the all the stage efforts for each stage in the path within the bank clk_buf to a wordline"""
         #Decoder is assumed to have settled before the negative edge of the clock. Delay model relies on this assumption
         stage_effort_list = []

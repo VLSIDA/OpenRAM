@@ -22,30 +22,53 @@ class pin_layout:
         self.name = name
         # repack the rect as a vector, just in case
         if type(rect[0]) == vector:
-            self.rect = rect
+            self._rect = rect
         else:
-            self.rect = [vector(rect[0]), vector(rect[1])]
+            self._rect = [vector(rect[0]), vector(rect[1])]
         # snap the rect to the grid
-        self.rect = [x.snap_to_grid() for x in self.rect]
+        self._rect = [x.snap_to_grid() for x in self.rect]
 
         debug.check(self.width() > 0, "Zero width pin.")
         debug.check(self.height() > 0, "Zero height pin.")
         
         # if it's a string, use the name
         if type(layer_name_pp) == str:
-            self.layer = layer_name_pp
+            self._layer = layer_name_pp
         # else it is required to be a lpp
         else:
             for (layer_name, lpp) in layer.items():
                 if not lpp:
                     continue
                 if self.same_lpp(layer_name_pp, lpp):
-                    self.layer = layer_name
+                    self._layer = layer_name
                     break
             else:
                 debug.error("Couldn't find layer {}".format(layer_name_pp), -1)
 
         self.lpp = layer[self.layer]
+        self._recompute_hash()
+
+    @property
+    def layer(self):
+        return self._layer
+
+    @layer.setter
+    def layer(self, l):
+        self._layer = l
+        self._recompute_hash()
+
+    @property
+    def rect(self):
+        return self._rect
+
+    @rect.setter
+    def rect(self, r):
+        self._rect = r
+        self._recompute_hash()
+
+    def _recompute_hash(self):
+        """ Recompute the hash for our hash cache """
+        self._hash = hash(repr(self))
 
     def __str__(self):
         """ override print function output """
@@ -64,8 +87,12 @@ class pin_layout:
                                                self.rect[1])
 
     def __hash__(self):
-        """ Implement the hash function for sets etc. """
-        return hash(repr(self))
+        """
+        Implement the hash function for sets etc. We only return a cached
+        value, that is updated when either 'rect' or 'layer' are changed. This
+        is a major speedup, if pin_layout is used as a key for dicts.
+        """
+        return self._hash
     
     def __lt__(self, other):
         """ Provide a function for ordering items by the ll point """
@@ -101,7 +128,14 @@ class pin_layout:
             max_y = max(max_y, pin.ur().y)
 
         self.rect = [vector(min_x, min_y), vector(max_x, max_y)]
-             
+        
+    def fix_minarea(self):
+        """
+        Try to fix minimum area rule.
+        """
+        min_area = drc("{}_minarea".format(self.layer))
+        pass
+    
     def inflate(self, spacing=None):
         """
         Inflate the rectangle by the spacing (or other rule)

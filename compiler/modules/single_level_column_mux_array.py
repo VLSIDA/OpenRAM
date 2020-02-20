@@ -37,6 +37,21 @@ class single_level_column_mux_array(design.design):
         if not OPTS.netlist_only:
             self.create_layout()
 
+    def get_bl_name(self, port=0):
+        bl_name = self.mux.get_bl_names()
+        if len(self.all_ports) == 1:
+            return bl_name
+        else:
+            return bl_name + "{}".format(port)
+
+    def get_br_name(self, port=0):
+        br_name = self.mux.get_br_names()
+        if len(self.all_ports) == 1:
+            return br_name
+        else:
+            return br_name + "{}".format(port)
+
+
     def create_netlist(self):
         self.add_modules()
         self.add_pins()
@@ -99,11 +114,19 @@ class single_level_column_mux_array(design.design):
                                "gnd"])
 
     def place_array(self):
+        from tech import cell_properties
         # For every column, add a pass gate
         for col_num in range(self.columns):
+            xoffset = col_num * self.mux.width
+            if cell_properties.bitcell.mirror.y and col_num % 2:
+                mirror = "MY"
+                xoffset = xoffset + self.mux.width
+            else:
+                mirror = ""
+
             name = "XMUX{0}".format(col_num)
-            x_off = vector(col_num * self.mux.width, self.route_height)
-            self.mux_inst[col_num].place(x_off)
+            offset = vector(xoffset, self.route_height)
+            self.mux_inst[col_num].place(offset=offset, mirror=mirror)
             
 
     def add_layout_pins(self):
@@ -113,13 +136,13 @@ class single_level_column_mux_array(design.design):
             mux_inst = self.mux_inst[col_num]
             offset = mux_inst.get_pin("bl").ll()
             self.add_layout_pin(text="bl_{}".format(col_num),
-                                layer="metal2",
+                                layer="m2",
                                 offset=offset,
                                 height=self.height-offset.y)
 
             offset = mux_inst.get_pin("br").ll()
             self.add_layout_pin(text="br_{}".format(col_num),
-                                layer="metal2",
+                                layer="m2",
                                 offset=offset,
                                 height=self.height-offset.y)
 
@@ -137,7 +160,7 @@ class single_level_column_mux_array(design.design):
         for j in range(self.words_per_row):
             offset = vector(0, self.route_height + (j-self.words_per_row)*self.m1_pitch)
             self.add_layout_pin(text="sel_{}".format(j),
-                                layer="metal1",
+                                layer="m1",
                                 offset=offset,
                                 width=self.mux.width * self.columns)
 
@@ -155,12 +178,13 @@ class single_level_column_mux_array(design.design):
             # use the y offset from the sel pin and the x offset from the gate
             offset = vector(gate_offset.x,self.get_pin("sel_{}".format(sel_index)).cy())
             # Add the poly contact with a shift to account for the rotation
-            self.add_via_center(layers=("metal1", "contact", "poly"),
+            self.add_via_center(layers=("m1", "contact", "poly"),
                                 offset=offset)
             self.add_path("poly", [offset, gate_offset])
 
     def route_bitlines(self):
         """  Connect the output bit-lines to form the appropriate width mux """
+        from tech import cell_properties
         for j in range(self.columns):
             bl_offset = self.mux_inst[j].get_pin("bl_out").bc()
             br_offset = self.mux_inst[j].get_pin("br_out").bc()
@@ -171,43 +195,58 @@ class single_level_column_mux_array(design.design):
             bl_out_offset_end = bl_out_offset + vector(0,self.route_height)
             br_out_offset_end = br_out_offset + vector(0,self.route_height)
 
+            if cell_properties.bitcell.mirror.y and j % 2:
+                tmp_bl_out_end = br_out_offset_end
+                tmp_br_out_end = bl_out_offset_end
+            else:
+                tmp_bl_out_end = bl_out_offset_end
+                tmp_br_out_end = br_out_offset_end
+
             if (j % self.words_per_row) == 0:
                 # Create the metal1 to connect the n-way mux output from the pass gate
                 # These will be located below the select lines. Yes, these are M2 width
                 # to ensure vias are enclosed and M1 min width rules.
                 width = self.m2_width + self.mux.width * (self.words_per_row - 1)
-                self.add_path("metal1", [bl_out_offset, bl_out_offset+vector(width,0)])
-                self.add_path("metal1", [br_out_offset, br_out_offset+vector(width,0)])
+
+                if cell_properties.bitcell.mirror.y and (j % 2) == 0:
+                    bl = self.mux.get_pin("bl")
+                    br = self.mux.get_pin("br")
+                    dist = abs(bl.ll().x - br.ll().x)
+                else:
+                    dist = 0
+
+                self.add_path("m1", [bl_out_offset, bl_out_offset+vector(width+dist,0)])
+                self.add_path("m1", [br_out_offset, br_out_offset+vector(width-dist,0)])
 
                 # Extend the bitline output rails and gnd downward on the first bit of each n-way mux
                 self.add_layout_pin_segment_center(text="bl_out_{}".format(int(j/self.words_per_row)),
-                                                   layer="metal2",
+                                                   layer="m2",
                                                    start=bl_out_offset,
-                                                   end=bl_out_offset_end)
+                                                   end=tmp_bl_out_end)
                 self.add_layout_pin_segment_center(text="br_out_{}".format(int(j/self.words_per_row)),
-                                                   layer="metal2",
+                                                   layer="m2",
                                                    start=br_out_offset,
-                                                   end=br_out_offset_end)
+                                                   end=tmp_br_out_end)
                                                    
 
                 # This via is on the right of the wire                
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                self.add_via_center(layers=self.m1_stack,
                                     offset=bl_out_offset)
 
                 # This via is on the left of the wire
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                self.add_via_center(layers=self.m1_stack,
                                     offset=br_out_offset)
 
             else:
                 
-                self.add_path("metal2", [ bl_out_offset, bl_out_offset_end])
-                self.add_path("metal2", [ br_out_offset, br_out_offset_end])
+                self.add_path("m2", [ bl_out_offset, tmp_bl_out_end])
+                self.add_path("m2", [ br_out_offset, tmp_br_out_end])
                                           
                 # This via is on the right of the wire
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                self.add_via_center(layers=self.m1_stack,
                                     offset=bl_out_offset)
                 # This via is on the left of the wire                
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                self.add_via_center(layers=self.m1_stack,
                                     offset=br_out_offset)
 
     def get_drain_cin(self):

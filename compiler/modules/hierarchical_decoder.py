@@ -5,23 +5,19 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from tech import drc
 import debug
 import design
-from math import log
-from math import sqrt
-from math import ceil
 import math
-import contact
 from sram_factory import factory
 from vector import vector
 from globals import OPTS
+
 
 class hierarchical_decoder(design.design):
     """
     Dynamically generated hierarchical decoder.
     """
-    def __init__(self, name, rows, height=None):
+    def __init__(self, name, rows):
         design.design.__init__(self, name)
 
         self.NAND_FORMAT = "DEC_NAND_{0}"
@@ -30,15 +26,15 @@ class hierarchical_decoder(design.design):
         self.pre2x4_inst = []
         self.pre3x8_inst = []
 
-        self.cell_height = height        
+        b = factory.create(module_type="bitcell")
+        self.cell_height = b.height
         self.rows = rows
         self.num_inputs = math.ceil(math.log(self.rows, 2))
-        (self.no_of_pre2x4,self.no_of_pre3x8)=self.determine_predecodes(self.num_inputs)
+        (self.no_of_pre2x4, self.no_of_pre3x8)=self.determine_predecodes(self.num_inputs)
 
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
-
 
     def create_netlist(self):
         self.add_modules()
@@ -173,7 +169,7 @@ class hierarchical_decoder(design.design):
         input_offset=vector(min_x - self.input_routing_width,0)
 
         input_bus_names = ["addr_{0}".format(i) for i in range(self.num_inputs)]
-        self.input_rails = self.create_vertical_pin_bus(layer="metal2",
+        self.input_rails = self.create_vertical_pin_bus(layer="m2",
                                                         pitch=self.m2_pitch,
                                                         offset=input_offset,
                                                         names=input_bus_names,
@@ -221,11 +217,11 @@ class hierarchical_decoder(design.design):
     def route_input_rail(self, input_offset, output_offset):
         """ Route a vertical M2 coordinate to another vertical M2 coordinate to the predecode inputs """
         
-        self.add_via_center(layers=("metal2", "via2", "metal3"),
+        self.add_via_center(layers=self.m2_stack,
                             offset=input_offset)
-        self.add_via_center(layers=("metal2", "via2", "metal3"),
+        self.add_via_center(layers=self.m2_stack,
                             offset=output_offset)
-        self.add_path(("metal3"), [input_offset, output_offset])
+        self.add_path(("m3"), [input_offset, output_offset])
 
     
     def add_pins(self):
@@ -307,7 +303,6 @@ class hierarchical_decoder(design.design):
             base= vector(-self.pre2_4.width, num * self.pre2_4.height)
 
         self.pre2x4_inst[num].place(base)
-
         
     def place_pre3x8(self,num):
         """ Place 3x8 predecoder to the left of the origin and above any 2x4 decoders """
@@ -320,14 +315,12 @@ class hierarchical_decoder(design.design):
 
         self.pre3x8_inst[num].place(offset)
 
-
     def create_row_decoder(self):
         """ Create the row-decoder by placing NAND2/NAND3 and Inverters
         and add the primary decoder output pins. """
         if (self.num_inputs >= 4):
             self.create_decoder_nand_array()
             self.create_decoder_inv_array()
-
 
     def create_decoder_nand_array(self):
         """ Add a column of NAND gates for final decode """
@@ -467,11 +460,11 @@ class hierarchical_decoder(design.design):
             # ensure the bend is in the middle 
             mid1_pos = vector(0.5*(zr_pos.x+al_pos.x), zr_pos.y)
             mid2_pos = vector(0.5*(zr_pos.x+al_pos.x), al_pos.y)
-            self.add_path("metal1", [zr_pos, mid1_pos, mid2_pos, al_pos])
+            self.add_path("m1", [zr_pos, mid1_pos, mid2_pos, al_pos])
             
             z_pin = self.inv_inst[row].get_pin("Z")
             self.add_layout_pin(text="decode_{0}".format(row),
-                                layer="metal1",
+                                layer="m1",
                                 offset=z_pin.ll(),
                                 width=z_pin.width(),
                                 height=z_pin.height())
@@ -485,7 +478,7 @@ class hierarchical_decoder(design.design):
         if (self.num_inputs >= 4):
             input_offset = vector(0.5*self.m2_width,0)
             input_bus_names = ["predecode_{0}".format(i) for i in range(self.total_number_of_predecoder_outputs)]
-            self.predecode_rails = self.create_vertical_pin_bus(layer="metal2",
+            self.predecode_rails = self.create_vertical_pin_bus(layer="m2",
                                                                 pitch=self.m2_pitch,
                                                                 offset=input_offset,
                                                                 names=input_bus_names,
@@ -555,7 +548,7 @@ class hierarchical_decoder(design.design):
         """ Add a pin for each row of vdd/gnd which are must-connects next level up. """
 
         # The vias will be placed in the center and right of the cells, respectively.
-        xoffset = self.nand_inst[0].cx()
+        xoffset = self.nand_inst[0].rx()
         for num in range(0,self.rows):
             for pin_name in ["vdd", "gnd"]:
                 # The nand and inv are the same height rows...
@@ -570,7 +563,7 @@ class hierarchical_decoder(design.design):
                 start = self.nand_inst[num].get_pin(pin_name).lc()
                 end = self.inv_inst[num].get_pin(pin_name).rc()
                 mid = (start+end).scale(0.5,0.5)
-                self.add_rect_center(layer="metal1",
+                self.add_rect_center(layer="m1",
                                      offset=mid,
                                      width=end.x-start.x)
                 
@@ -584,8 +577,8 @@ class hierarchical_decoder(design.design):
     def route_predecode_rail(self, rail_name, pin):
         """ Connect the routing rail to the given metal1 pin  """
         rail_pos = vector(self.predecode_rails[rail_name].x,pin.lc().y)
-        self.add_path("metal1", [rail_pos, pin.lc()])
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_path("m1", [rail_pos, pin.lc()])
+        self.add_via_center(layers=self.m1_stack,
                             offset=rail_pos)
 
 
@@ -595,10 +588,10 @@ class hierarchical_decoder(design.design):
         # It would be fixed with a channel router.
         mid_point = vector(pin.cx(), pin.cy()+self.inv.height/2)
         rail_pos = vector(self.predecode_rails[rail_name].x,mid_point.y)
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=pin.center())
-        self.add_wire(("metal3","via2","metal2"), [rail_pos, mid_point, pin.uc()])
-        self.add_via_center(layers=("metal2", "via2", "metal3"),
+        self.add_wire(("m3","via2","m2"), [rail_pos, mid_point, pin.uc()])
+        self.add_via_center(layers=self.m2_stack,
                             offset=rail_pos)
 
     def input_load(self):

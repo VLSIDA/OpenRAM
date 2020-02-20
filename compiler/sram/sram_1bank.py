@@ -5,21 +5,10 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import sys
-from tech import drc, spice
 import debug
-from math import log,sqrt,ceil
-import datetime
-import getpass
-import numpy as np
 from vector import vector
-from globals import OPTS, print_time
-
 from sram_base import sram_base
-from bank import bank
-from contact import m2m3
-from dff_buf_array import dff_buf_array
-from dff_array import dff_array
+from contact import m2_via
 
 
 class sram_1bank(sram_base):
@@ -261,18 +250,18 @@ class sram_1bank(sram_base):
 
             # This is the steiner point where the net branches out
             clk_steiner_pos = vector(mid1_pos.x, control_clk_buf_pos.y)
-            self.add_path("metal1", [control_clk_buf_pos, clk_steiner_pos])
-            self.add_via_center(layers=("metal1","via1","metal2"),
+            self.add_path("m1", [control_clk_buf_pos, clk_steiner_pos])
+            self.add_via_center(layers=self.m1_stack,
                                 offset=clk_steiner_pos)
             
             # Note, the via to the control logic is taken care of above
-            self.add_wire(("metal3","via2","metal2"),[row_addr_clk_pos, mid1_pos, clk_steiner_pos])
+            self.add_wire(("m3","via2","m2"),[row_addr_clk_pos, mid1_pos, clk_steiner_pos])
         
             if self.col_addr_dff:
                 dff_clk_pin = self.col_addr_dff_insts[port].get_pin("clk")
                 dff_clk_pos = dff_clk_pin.center()
                 mid_pos = vector(clk_steiner_pos.x, dff_clk_pos.y)
-                self.add_wire(("metal3","via2","metal2"),[dff_clk_pos, mid_pos, clk_steiner_pos])
+                self.add_wire(("m3","via2","m2"),[dff_clk_pos, mid_pos, clk_steiner_pos])
 
             if port in self.write_ports:
                 data_dff_clk_pin = self.data_dff_insts[port].get_pin("clk")
@@ -280,8 +269,8 @@ class sram_1bank(sram_base):
                 mid_pos = vector(clk_steiner_pos.x, data_dff_clk_pos.y)
                 # In some designs, the steiner via will be too close to the mid_pos via
                 # so make the wire as wide as the contacts
-                self.add_path("metal2",[mid_pos, clk_steiner_pos], width=max(m2m3.width,m2m3.height))
-                self.add_wire(("metal3","via2","metal2"),[data_dff_clk_pos, mid_pos, clk_steiner_pos])
+                self.add_path("m2",[mid_pos, clk_steiner_pos], width=max(m2_via.width,m2_via.height))
+                self.add_wire(("m3","via2","m2"),[data_dff_clk_pos, mid_pos, clk_steiner_pos])
 
                 if self.write_size:
                     wmask_dff_clk_pin = self.wmask_dff_insts[port].get_pin("clk")
@@ -289,8 +278,8 @@ class sram_1bank(sram_base):
                     mid_pos = vector(clk_steiner_pos.x, wmask_dff_clk_pos.y)
                     # In some designs, the steiner via will be too close to the mid_pos via
                     # so make the wire as wide as the contacts
-                    self.add_path("metal2", [mid_pos, clk_steiner_pos], width=max(m2m3.width, m2m3.height))
-                    self.add_wire(("metal3", "via2", "metal2"), [wmask_dff_clk_pos, mid_pos, clk_steiner_pos])
+                    self.add_path("m2", [mid_pos, clk_steiner_pos], width=max(m2_via.width, m2_via.height))
+                    self.add_wire(("m3", "via2", "m2"), [wmask_dff_clk_pos, mid_pos, clk_steiner_pos])
 
             
     def route_control_logic(self):
@@ -323,20 +312,20 @@ class sram_1bank(sram_base):
                 flop_pos = flop_pin.center()
                 bank_pos = bank_pin.center()
                 mid_pos = vector(bank_pos.x,flop_pos.y)
-                self.add_wire(("metal3","via2","metal2"),[flop_pos, mid_pos,bank_pos])
-                self.add_via_center(layers=("metal2","via2","metal3"),
+                self.add_wire(("m3","via2","m2"),[flop_pos, mid_pos,bank_pos])
+                self.add_via_center(layers=self.m2_stack,
                                     offset=flop_pos)
 
     def route_col_addr_dff(self):
-        """ Connect the output of the row flops to the bank pins """
+        """ Connect the output of the col flops to the bank pins """
         for port in self.all_ports:
             if port%2:
-                offset = self.col_addr_dff_insts[port].ll() - vector(0, (self.word_size+2)*self.m1_pitch) 
+                offset = self.col_addr_dff_insts[port].ll() - vector(0, (self.col_addr_size+2)*self.m1_pitch) 
             else:
                 offset = self.col_addr_dff_insts[port].ul() + vector(0, 2*self.m1_pitch)
 
             bus_names = ["addr_{}".format(x) for x in range(self.col_addr_size)]        
-            col_addr_bus_offsets = self.create_horizontal_bus(layer="metal1",
+            col_addr_bus_offsets = self.create_horizontal_bus(layer="m1",
                                                               pitch=self.m1_pitch,
                                                               offset=offset,
                                                               names=bus_names,
@@ -371,12 +360,12 @@ class sram_1bank(sram_base):
             if self.write_size:
                 for x in dff_names:
                     pin_offset = self.data_dff_insts[port].get_pin(x).center()
-                    self.add_via_center(layers=("metal1", "via1", "metal2"),
+                    self.add_via_center(layers=self.m1_stack,
                                         offset=pin_offset,
                                         directions = ("V", "V"))
-                    self.add_via_center(layers=("metal2", "via2", "metal3"),
+                    self.add_via_center(layers=self.m2_stack,
                                         offset=pin_offset)
-                    self.add_via_center(layers=("metal3", "via3", "metal4"),
+                    self.add_via_center(layers=self.m3_stack,
                                         offset=pin_offset)
             
             bank_names = ["din{0}_{1}".format(port,x) for x in range(self.word_size)]
@@ -387,20 +376,21 @@ class sram_1bank(sram_base):
                         pin_offset = self.bank_inst.get_pin(x).uc()
                     else:
                         pin_offset = self.bank_inst.get_pin(x).bc()
-                    self.add_via_center(layers=("metal1", "via1", "metal2"),
+                    self.add_via_center(layers=self.m1_stack,
                                         offset=pin_offset)
-                    self.add_via_center(layers=("metal2", "via2", "metal3"),
+                    self.add_via_center(layers=self.m2_stack,
                                         offset=pin_offset)
-                    self.add_via_center(layers=("metal3", "via3", "metal4"),
+                    self.add_via_center(layers=self.m3_stack,
                                         offset=pin_offset)
 
             route_map = list(zip(bank_pins, dff_pins))
             if self.write_size:
-                self.create_horizontal_channel_route(netlist=route_map,
-                                                     offset=offset,
-                                                     layer_stack=("metal3", "via3", "metal4"))
+                layer_stack = self.m3_stack
             else:
-                self.create_horizontal_channel_route(route_map, offset)
+                layer_stack = self.m1_stack
+            self.create_horizontal_channel_route(netlist=route_map,
+                                                 offset=offset,
+                                                 layer_stack=layer_stack)
 
     def route_wmask_dff(self):
         """ Connect the output of the wmask flops to the write mask AND array """
@@ -415,7 +405,7 @@ class sram_1bank(sram_base):
             dff_pins = [self.wmask_dff_insts[port].get_pin(x) for x in dff_names]
             for x in dff_names:
                 offset_pin = self.wmask_dff_insts[port].get_pin(x).center()
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                self.add_via_center(layers=self.m1_stack,
                                     offset=offset_pin,
                                     directions=("V", "V"))
 
@@ -423,12 +413,14 @@ class sram_1bank(sram_base):
             bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
             for x in bank_names:
                 offset_pin = self.bank_inst.get_pin(x).center()
-                self.add_via_center(layers=("metal1", "via1", "metal2"),
+                self.add_via_center(layers=self.m1_stack,
                                     offset=offset_pin)
 
 
             route_map = list(zip(bank_pins, dff_pins))
-            self.create_horizontal_channel_route(route_map,offset)
+            self.create_horizontal_channel_route(netlist=route_map,
+                                                 offset=offset,
+                                                 layer_stack=self.m1_stack)
 
 
     def add_lvs_correspondence_points(self):

@@ -8,7 +8,7 @@
 import contact
 import design
 import debug
-from tech import drc, parameter
+from tech import parameter
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
@@ -37,6 +37,12 @@ class precharge(design.design):
         if not OPTS.netlist_only:
             self.create_layout()
             self.DRC_LVS()
+
+    def get_bl_names(self):
+        return "bl"
+
+    def get_br_names(self):
+        return "br"
 
     def create_netlist(self):
         self.add_pins()
@@ -72,7 +78,7 @@ class precharge(design.design):
         
         # Adds the rail across the width of the cell
         vdd_position = vector(0.5 * self.width, self.height)
-        self.add_rect_center(layer="metal1",
+        self.add_rect_center(layer="m1",
                              offset=vdd_position,
                              width=self.width,
                              height=self.m1_width)
@@ -80,7 +86,7 @@ class precharge(design.design):
         pmos_pin = self.upper_pmos2_inst.get_pin("S")
         # center of vdd rail
         pmos_vdd_pos = vector(pmos_pin.cx(), vdd_position.y)
-        self.add_path("metal1", [pmos_pin.uc(), pmos_vdd_pos])
+        self.add_path("m1", [pmos_pin.uc(), pmos_vdd_pos])
 
         # Add vdd pin above the transistor
         self.add_power_pin("vdd", pmos_pin.center(), vertical=True)
@@ -116,12 +122,12 @@ class precharge(design.design):
         # adds the lower pmos to layout
         bl_xoffset = self.bitcell.get_pin(self.bitcell_bl).lx()
         self.lower_pmos_position = vector(max(bl_xoffset - contact_xdiff,
-                                              self.well_enclose_active),
+                                              self.nwell_enclose_active),
                                           self.pmos.active_offset.y)
         self.lower_pmos_inst.place(self.lower_pmos_position)
 
         # adds the upper pmos(s) to layout
-        ydiff = self.pmos.height + 2 * self.m1_space + contact.poly.width
+        ydiff = self.pmos.height + 2 * self.m1_space + contact.poly_contact.width
         self.upper_pmos1_pos = self.lower_pmos_position + vector(0, ydiff)
         self.upper_pmos1_inst.place(self.upper_pmos1_pos)
 
@@ -159,12 +165,12 @@ class precharge(design.design):
         # adds the en contact to connect the gates to the en rail on metal1
         offset = self.lower_pmos_inst.get_pin("G").ul() \
                  + vector(0, 0.5 * self.poly_space)
-        self.add_via_center(layers=("poly", "contact", "metal1"),
+        self.add_via_center(layers=self.poly_stack,
                             offset=offset)
 
         # adds the en rail on metal1
         self.add_layout_pin_segment_center(text="en_bar",
-                                           layer="metal1",
+                                           layer="m1",
                                            start=offset.scale(0, 1),
                                            end=offset.scale(0, 1) + vector(self.width, 0))
                      
@@ -175,15 +181,15 @@ class precharge(design.design):
         
         # adds the contact from active to metal1
         well_contact_pos = self.upper_pmos1_inst.get_pin("D").center().scale(1, 0) \
-                           + vector(0, self.upper_pmos1_inst.uy() + contact.well.height / 2 \
-                                    + drc("well_extend_active"))
-        self.add_via_center(layers=("active", "contact", "metal1"),
+                           + vector(0, self.upper_pmos1_inst.uy() + contact.active_contact.height / 2 \
+                                    + self.nwell_extend_active)
+        self.add_via_center(layers=self.active_stack,
                             offset=well_contact_pos,
                             implant_type="n",
                             well_type="n")
 
         # leave an extra pitch for the height
-        self.height = well_contact_pos.y + contact.well.height + self.m1_pitch
+        self.height = well_contact_pos.y + contact.active_contact.height + self.m1_pitch
 
         # nwell should span the whole design since it is pmos only
         self.add_rect(layer="nwell",
@@ -200,18 +206,16 @@ class precharge(design.design):
         offset = vector(self.bitcell.get_pin(self.bitcell_bl).cx(), 0) \
                  - vector(0.5 * self.m2_width, 0)
         self.bl_pin = self.add_layout_pin(text="bl",
-                                          layer="metal2",
+                                          layer="m2",
                                           offset=offset,
-                                          width=drc("minwidth_metal2"),
                                           height=self.height)
 
         # adds the BR on metal 2
         offset = vector(self.bitcell.get_pin(self.bitcell_br).cx(), 0) \
                  - vector(0.5 * self.m2_width, 0)
         self.br_pin = self.add_layout_pin(text="br",
-                                          layer="metal2",
+                                          layer="m2",
                                           offset=offset,
-                                          width=drc("minwidth_metal2"),
                                           height=self.height)
 
     def connect_to_bitlines(self):
@@ -233,23 +237,22 @@ class precharge(design.design):
         Adds contacts/via from metal1 to metal2 for bit-lines
         """
 
-        stack = ("metal1", "via1", "metal2")
         upper_pin = self.upper_pmos1_inst.get_pin("S")
         lower_pin = self.lower_pmos_inst.get_pin("S")
         
         # BL goes up to M2 at the transistor
-        self.bl_contact =self.add_via_center(layers=stack,
+        self.bl_contact =self.add_via_center(layers=self.m1_stack,
                                              offset=upper_pin.center(),
                                              directions=("V", "V"))
-        self.add_via_center(layers=stack,
+        self.add_via_center(layers=self.m1_stack,
                             offset=lower_pin.center(),
                             directions=("V", "V"))
 
         # BR routes over on M1 first
-        self.add_via_center(layers=stack,
+        self.add_via_center(layers=self.m1_stack,
                             offset=vector(self.br_pin.cx(), upper_pin.cy()),
                             directions=("V", "V"))
-        self.add_via_center(layers=stack,
+        self.add_via_center(layers=self.m1_stack,
                             offset=vector(self.br_pin.cx(), lower_pin.cy()),
                             directions=("V", "V"))
 
@@ -261,7 +264,7 @@ class precharge(design.design):
         left_pos = vector(min(pmos_pin.cx(), bit_pin.cx()), pmos_pin.cy())
         right_pos = vector(max(pmos_pin.cx(), bit_pin.cx()), pmos_pin.cy())
 
-        self.add_path("metal1", [left_pos, right_pos] )
+        self.add_path("m1", [left_pos, right_pos] )
 
     def connect_pmos_m2(self, pmos_pin, bit_pin):
         """
@@ -271,7 +274,7 @@ class precharge(design.design):
         left_pos = vector(min(pmos_pin.cx(), bit_pin.cx()), pmos_pin.cy())
         right_pos = vector(max(pmos_pin.cx(), bit_pin.cx()), pmos_pin.cy())
 
-        self.add_path("metal2", [left_pos, right_pos], self.bl_contact.height)
+        self.add_path("m2", [left_pos, right_pos], self.bl_contact.height)
         
     def get_en_cin(self):
         """Get the relative capacitance of the enable in the precharge cell"""

@@ -52,10 +52,10 @@ class pinv(pgate.pgate):
     def create_layout(self):
         """ Calls all functions related to the generation of the layout """
         self.setup_layout_constants()
-        self.route_supply_rails()
         self.place_ptx()
         self.add_well_contacts()
-        self.extend_wells(self.well_pos)
+        self.extend_wells()
+        self.route_supply_rails()
         self.connect_rails()
         self.route_input_gate(self.pmos_inst,
                               self.nmos_inst,
@@ -89,22 +89,24 @@ class pinv(pgate.pgate):
         # Assume we need 3 metal 1 pitches (2 power rails, one
         # between the tx for the drain)
         # plus the tx height
-        nmos = factory.create(module_type="ptx", tx_type="nmos")
+        nmos = factory.create(module_type="ptx",
+                              tx_type="nmos")
         pmos = factory.create(module_type="ptx",
                               width=drc("minwidth_tx"),
                               tx_type="pmos")
         tx_height = nmos.poly_height + pmos.poly_height
         # rotated m1 pitch or poly to active spacing
-        min_channel = max(contact.poly.width + self.m1_space,
-                          contact.poly.width + 2 * drc("poly_to_active"))
+        min_channel = max(contact.poly_contact.width + self.m1_space,
+                          contact.poly_contact.width + 2 * self.poly_to_active)
         
         # This is the extra space needed to ensure DRC rules
         # to the active contacts
         extra_contact_space = max(-nmos.get_pin("D").by(), 0)
         # This is a poly-to-poly of a flipped cell
         self.top_bottom_space = max(0.5*self.m1_width + self.m1_space + extra_contact_space, 
-                                    drc("poly_extend_active"), self.poly_space)
+                                    self.poly_extend_active + self.poly_space)
         total_height = tx_height + min_channel + 2 * self.top_bottom_space
+
         debug.check(self.height > total_height,
                     "Cell height {0} too small for simple min height {1}.".format(self.height,
                                                                                   total_height))
@@ -115,8 +117,8 @@ class pinv(pgate.pgate):
         # Divide the height in half. Could divide proportional to beta,
         # but this makes connecting wells of multiple cells easier.
         # Subtract the poly space under the rail of the tx
-        nmos_height_available = 0.5 * tx_height_available - 0.5 * drc("poly_to_poly")
-        pmos_height_available = 0.5 * tx_height_available - 0.5 * drc("poly_to_poly")
+        nmos_height_available = 0.5 * tx_height_available - 0.5 * self.poly_space
+        pmos_height_available = 0.5 * tx_height_available - 0.5 * self.poly_space
 
         debug.info(2,
                    "Height avail {0:.4f} PMOS {1:.4f} NMOS {2:.4f}".format(tx_height_available,
@@ -147,14 +149,18 @@ class pinv(pgate.pgate):
 
     def setup_layout_constants(self):
         """
-        Pre-compute some handy layout parameters.
+        Compute the width and height
         """
 
-        # the well width is determined the multi-finger PMOS device width plus
-        # the well contact width and half well enclosure on both sides
-        self.well_width = self.pmos.active_width + self.pmos.active_contact.width \
-                          + drc("active_to_body_active") + 2*drc("well_enclosure_active")
-        self.width = self.well_width
+        # the width is determined the multi-finger PMOS device width plus
+        # the well contact width, spacing between them
+        # space is for power supply contact to nwell m1 spacing
+        self.width = self.pmos.active_offset.x + self.pmos.active_width \
+                     + self.active_space + contact.nwell_contact.width \
+                     + 0.5 * self.nwell_enclose_active \
+                     + self.m1_space
+        # This includes full enclosures on each end
+        self.well_width = self.width + 2*self.nwell_enclose_active
         # Height is an input parameter, so it is not recomputed.
         
     def add_ptx(self):
@@ -178,12 +184,12 @@ class pinv(pgate.pgate):
     def route_supply_rails(self):
         """ Add vdd/gnd rails to the top and bottom. """
         self.add_layout_pin_rect_center(text="gnd",
-                                        layer="metal1",
+                                        layer="m1",
                                         offset=vector(0.5 * self.width, 0),
                                         width=self.width)
 
         self.add_layout_pin_rect_center(text="vdd",
-                                        layer="metal1",
+                                        layer="m1",
                                         offset=vector(0.5 * self.width, self.height),
                                         width=self.width)
 
@@ -222,9 +228,6 @@ class pinv(pgate.pgate):
         nmos_drain_pos = self.nmos_inst.get_pin("D").ul()
         self.output_pos = vector(0, 0.5 * (pmos_drain_pos.y + nmos_drain_pos.y))
 
-        # This will help with the wells
-        self.well_pos = vector(0, self.nmos_inst.uy())
-
     def route_outputs(self):
         """
         Route the output (drains) together.
@@ -238,7 +241,7 @@ class pinv(pgate.pgate):
         # Pick point at right most of NMOS and connect down to PMOS
         nmos_drain_pos = nmos_drain_pin.bc()
         pmos_drain_pos = vector(nmos_drain_pos.x, pmos_drain_pin.uc().y)
-        self.add_path("metal1", [nmos_drain_pos, pmos_drain_pos])
+        self.add_path("m1", [nmos_drain_pos, pmos_drain_pos])
 
         # Remember the mid for the output
         mid_drain_offset = vector(nmos_drain_pos.x, self.output_pos.y)
@@ -247,13 +250,13 @@ class pinv(pgate.pgate):
             # This extends the output to the edge of the cell
             output_offset = mid_drain_offset.scale(0, 1) + vector(self.width, 0)
             self.add_layout_pin_segment_center(text="Z",
-                                               layer="metal1",
+                                               layer="m1",
                                                start=mid_drain_offset,
                                                end=output_offset)
         else:
             # This leaves the output as an internal pin (min sized)
             self.add_layout_pin_rect_center(text="Z",
-                                            layer="metal1",
+                                            layer="m1",
                                             offset=mid_drain_offset \
                                             + vector(0.5 * self.m1_width, 0))
 

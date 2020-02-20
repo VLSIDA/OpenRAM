@@ -62,8 +62,13 @@ def setup_files():
         tempnames[i] = re.sub('\.gds$', '', tempnames[i])
         tempnames[i] = re.sub('\.sp$', '', tempnames[i])
 
-    # remove duplicate base names
-    nameset = set(tempnames)
+    try:
+        from tech import blackbox_cells
+        nameset = list(set(tempnames) - set(blackbox_cells))
+    except ImportError:
+        # remove duplicate base names
+        nameset = set(tempnames)
+
     allnames = list(nameset)
 
     return (gds_dir, sp_dir, allnames)

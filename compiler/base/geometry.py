@@ -51,7 +51,7 @@ class geometry:
             y = item[0] * math.sin(angle) + item[1] * mirr * math.cos(angle) + offset[1]
             coordinate += [[x, y]]
         return coordinate
-    
+
     def normalize(self):
         """ Re-find the LL and UR points after a transform """
         (first, second) = self.boundary
@@ -64,14 +64,14 @@ class geometry:
     def update_boundary(self):
         """ Update the boundary with a new placement. """
         self.compute_boundary(self.offset, self.mirror, self.rotate)
-        
+
     def compute_boundary(self, offset=vector(0, 0), mirror="", rotate=0):
         """ Transform with offset, mirror and rotation to get the absolute pin location.
         We must then re-find the ll and ur. The master is the cell instance. """
         if OPTS.netlist_only:
             self.boundary = [vector(0,0), vector(0,0)]
             return
-        
+
         (ll, ur) = [vector(0, 0), vector(self.width, self.height)]
 
         if mirror == "MX":
@@ -83,7 +83,7 @@ class geometry:
         elif mirror == "XY":
             ll = ll.scale(-1, -1)
             ur = ur.scale(-1, -1)
-            
+
         if rotate == 90:
             ll = ll.rotate_scale(-1, 1)
             ur = ur.rotate_scale(-1, 1)
@@ -96,19 +96,19 @@ class geometry:
 
         self.boundary = [offset + ll, offset + ur]
         self.normalize()
-        
+
     def ll(self):
         """ Return the lower left corner """
         return self.boundary[0]
-    
+
     def ur(self):
         """ Return the upper right corner """
         return self.boundary[1]
-    
+
     def lr(self):
         """ Return the lower right corner """
         return vector(self.boundary[1].x, self.boundary[0].y)
-    
+
     def ul(self):
         """ Return the upper left corner """
         return vector(self.boundary[0].x, self.boundary[1].y)
@@ -132,12 +132,12 @@ class geometry:
     def cx(self):
         """ Return the center x """
         return 0.5 * (self.boundary[0].x + self.boundary[1].x)
-    
+
     def cy(self):
         """ Return the center y """
         return 0.5 * (self.boundary[0].y + self.boundary[1].y)
-    
-        
+
+
 class instance(geometry):
     """
     An instance of an instance/module with a specified location and
@@ -148,7 +148,7 @@ class instance(geometry):
         geometry.__init__(self)
         debug.check(mirror not in ["R90", "R180", "R270"],
                     "Please use rotation and not mirroring during instantiation.")
-        
+
         self.name = name
         self.mod = mod
         self.gds = mod.gds
@@ -166,7 +166,7 @@ class instance(geometry):
                 self.width = round_to_grid(mod.width)
                 self.height = round_to_grid(mod.height)
         self.compute_boundary(offset, mirror, rotate)
-        
+
         debug.info(4, "creating instance: " + self.name)
 
     def get_blockages(self, lpp, top=False):
@@ -202,11 +202,11 @@ class instance(geometry):
                 new_blockages.append(self.transform_coords(b,self.offset, mirr, angle))
         return new_blockages
 
-        
+
     def gds_write_file(self, new_layout):
         """Recursively writes all the sub-modules in this instance"""
         debug.info(4, "writing instance: " + self.name)
-        # make sure to write out my module/structure 
+        # make sure to write out my module/structure
         # (it will only be written the first time though)
         self.mod.gds_write_file(self.gds)
         # now write an instance of my module/structure
@@ -215,7 +215,7 @@ class instance(geometry):
                                offsetInMicrons=self.offset,
                                mirror=self.mirror,
                                rotate=self.rotate)
-        
+
     def place(self, offset, mirror="R0", rotate=0):
         """ This updates the placement of an instance. """
         # Update the placement of an already added instance
@@ -224,8 +224,8 @@ class instance(geometry):
         self.rotate = rotate
         self.update_boundary()
         debug.info(3, "placing instance {}".format(self))
-        
-    
+
+
     def get_pin(self,name,index=-1):
         """ Return an absolute pin that is offset and transformed based on
         this instance location. Index will return one of several pins."""
@@ -243,20 +243,20 @@ class instance(geometry):
     def get_num_pins(self, name):
         """ Return the number of pins of a given name """
         return len(self.mod.get_pins(name))
-    
+
     def get_pins(self,name):
         """ Return an absolute pin that is offset and transformed based on
         this instance location. """
-        
+
         import copy
         pin = copy.deepcopy(self.mod.get_pins(name))
-        
+
         new_pins = []
         for p in pin:
-            p.transform(self.offset,self.mirror,self.rotate)                
+            p.transform(self.offset,self.mirror,self.rotate)
             new_pins.append(p)
         return new_pins
-        
+
     def __str__(self):
         """ override print function output """
         return "( inst: " + self.name + " @" + str(self.offset) + " mod=" + self.mod.name + " " + self.mirror + " R=" + str(self.rotate) + ")"
@@ -293,7 +293,7 @@ class path(geometry):
     def get_blockages(self, layer):
         """ Fail since we don't support paths yet. """
         assert(0)
-        
+
     def __str__(self):
         """ override print function output """
         return "path: layer=" + self.layerNumber + " w=" + self.width
@@ -329,6 +329,7 @@ class label(geometry):
         debug.info(4, "writing label (" + str(self.layerNumber) + "): " + self.text)
         new_layout.addText(text=self.text,
                            layerNumber=self.layerNumber,
+                           layerPurpose=self.layerPurpose,
                            offsetInMicrons=self.offset,
                            magnification=self.zoom,
                            rotate=None)
@@ -336,7 +337,7 @@ class label(geometry):
     def get_blockages(self, layer):
         """ Returns an empty list since text cannot be blockages. """
         return []
-    
+
     def __str__(self):
         """ override print function output """
         return "label: " + self.text + " layer=" + str(self.layerNumber)
@@ -345,7 +346,7 @@ class label(geometry):
         """ override print function output """
         return "( label: " + self.text + " @" + str(self.offset) + " layer=" + str(self.layerNumber) + " )"
 
-    
+
 class rectangle(geometry):
     """Represents a rectangular shape"""
 
@@ -363,7 +364,7 @@ class rectangle(geometry):
 
         debug.info(4, "creating rectangle (" + str(self.layerNumber) + "): "
                    + str(self.width) + "x" + str(self.height) + " @ " + str(self.offset))
-        
+
     def get_blockages(self, layer):
         """ Returns a list of one rectangle if it is on this layer"""
         if self.layerNumber == layer:

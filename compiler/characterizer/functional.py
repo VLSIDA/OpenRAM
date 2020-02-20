@@ -287,7 +287,10 @@ class functional(simulation):
 
     def gen_addr(self):
         """ Generates a random address value to write to. """
-        random_value = random.randint(0,(2**self.addr_size)-1)  
+        if (self.num_spare_rows == 0):
+            random_value = random.randint(0,(2**self.addr_size)-1)
+        else:
+            random_value = random.randint(0,((2**(self.addr_size-1)-1))+(self.num_spare_rows * self.words_per_row))
         addr_bits = self.convert_to_bin(random_value,True)
         return addr_bits
         

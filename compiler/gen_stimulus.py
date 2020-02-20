@@ -52,11 +52,12 @@ import sram
 class fake_sram(sram.sram):
     """ This is an SRAM that doesn't actually create itself, just computes
     the sizes. """
-    def __init__(self, word_size, num_words, num_banks, name):
+    def __init__(self, word_size, num_words, num_banks, name, num_spare_rows):
         self.name = name
         self.word_size = word_size
         self.num_words = num_words
         self.num_banks = num_banks
+        self.num_spare_rows = num_spare_rows
         c = reload(__import__(OPTS.bitcell))
         self.mod_bitcell = getattr(c, OPTS.bitcell)
         self.bitcell = self.mod_bitcell()

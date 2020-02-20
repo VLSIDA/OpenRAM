@@ -25,12 +25,14 @@ class simulation():
         self.word_size = self.sram.word_size
         self.addr_size = self.sram.addr_size
         self.write_size = self.sram.write_size
+        self.num_spare_rows = self.sram.num_spare_rows
         self.sp_file = spfile
         
         self.all_ports = self.sram.all_ports
         self.readwrite_ports = self.sram.readwrite_ports
         self.read_ports = self.sram.read_ports
         self.write_ports = self.sram.write_ports
+        self.words_per_row = self.sram.words_per_row
         if self.write_size:
             self.num_wmasks = int(self.word_size/self.write_size)
         else:
@@ -135,7 +137,10 @@ class simulation():
             if c=="0":
                 self.addr_values[port][bit].append(0)
             elif c=="1":
-                self.addr_values[port][bit].append(1)
+                if((self.num_spare_rows != 0) and (bit == (self.addr_size - 1))):
+                    self.addr_values[port][bit].append(0)
+                else:
+                    self.addr_values[port][bit].append(1)
             else:
                 debug.error("Non-binary address string",1)
             bit -= 1

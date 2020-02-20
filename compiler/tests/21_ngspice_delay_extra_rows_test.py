@@ -33,7 +33,7 @@ class timing_sram_test(openram_test):
         c = sram_config(word_size=1,
                         num_words=16,
                         num_banks=1,
-                        num_spare_rows=5)
+                        num_spare_rows=3)
         c.words_per_row=1
         c.recompute_sizes()
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")

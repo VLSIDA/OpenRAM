@@ -8,7 +8,7 @@
 import debug
 import design
 from sram_factory import factory
-from math import log
+from math import log, ceil
 from tech import drc
 from vector import vector
 from globals import OPTS

@@ -9,6 +9,7 @@ import design
 import debug
 import utils
 from tech import GDS,layer, parameter,drc
+from tech import cell_properties as props
 from globals import OPTS
 import logical_effort
 
@@ -19,8 +20,12 @@ class sense_amp(design.design):
     the technology library.
     Sense amplifier to read a pair of bit-lines.
     """
-
-    pin_names = ["bl", "br", "dout", "en", "vdd", "gnd"]
+    pin_names = [props.sense_amp.pin.bl,
+                 props.sense_amp.pin.br,
+                 props.sense_amp.pin.dout,
+                 props.sense_amp.pin.en,
+                 props.sense_amp.pin.vdd,
+                 props.sense_amp.pin.gnd]
     type_list = ["INPUT", "INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
     if not OPTS.netlist_only:
         (width,height) = utils.get_libcell_size("sense_amp", GDS["unit"], layer["boundary"])
@@ -30,10 +35,18 @@ class sense_amp(design.design):
         pin_map = []
 
     def get_bl_names(self):
-        return "bl"
+        return props.sense_amp.pin.bl
 
     def get_br_names(self):
-        return "br"
+        return props.sense_amp.pin.br
+
+    @property
+    def dout_name(self):
+        return props.sense_amp.pin.dout
+
+    @property
+    def en_name(self):
+        return props.sense_amp.pin.en
 
     def __init__(self, name):
         design.design.__init__(self, name)
@@ -79,11 +92,10 @@ class sense_amp(design.design):
     def get_enable_name(self):
         """Returns name used for enable net"""
         #FIXME: A better programmatic solution to designate pins
-        enable_name = "en"
+        enable_name = self.en_name
         debug.check(enable_name in self.pin_names, "Enable name {} not found in pin list".format(enable_name))
         return enable_name
     
     def build_graph(self, graph, inst_name, port_nets):        
         """Adds edges based on inputs/outputs. Overrides base class function."""
         self.add_graph_edges(graph, port_nets) 
-        

@@ -38,11 +38,11 @@ class write_driver_array(design.design):
             self.create_layout()
 
     def get_bl_name(self):
-        bl_name = "bl"
+        bl_name = self.driver.get_bl_names()
         return bl_name
 
     def get_br_name(self):
-        br_name = "br"
+        br_name = self.driver.get_br_names()
         return br_name
 
     @property

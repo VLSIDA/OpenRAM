@@ -8,6 +8,7 @@ from tech import drc, parameter
 import debug
 import design
 from sram_factory import factory
+from collections import namedtuple
 from vector import vector
 
 from globals import OPTS
@@ -46,7 +47,19 @@ class port_data(design.design):
         # br lines are connect from the precharger
         return self.precharge.get_br_names()
 
+    def get_bl_name(self, port=0):
+        bl_name = "bl"
+        if len(self.all_ports) == 1:
+            return bl_name
+        else:
+            return bl_name + "{}".format(port)
 
+    def get_br_name(self, port=0):
+        br_name = "br"
+        if len(self.all_ports) == 1:
+            return br_name
+        else:
+            return br_name + "{}".format(port)
 
     def create_netlist(self):
         self.precompute_constants()
@@ -94,8 +107,8 @@ class port_data(design.design):
         self.add_pin("rbl_bl","INOUT")
         self.add_pin("rbl_br","INOUT")
         for bit in range(self.num_cols):
-            bl_name = self.precharge_array.get_bl_name(self.port)
-            br_name = self.precharge_array.get_br_name(self.port)
+            bl_name = self.get_bl_name(self.port)
+            br_name = self.get_br_name(self.port)
             self.add_pin("{0}_{1}".format(bl_name, bit),"INOUT")
             self.add_pin("{0}_{1}".format(br_name, bit),"INOUT")
         if self.port in self.read_ports:
@@ -253,8 +266,8 @@ class port_data(design.design):
 
         self.precharge_array_inst = self.add_inst(name="precharge_array{}".format(self.port),
                                                   mod=self.precharge_array)
-        bl_name = self.precharge_array.get_bl_name(self.port)
-        br_name = self.precharge_array.get_br_name(self.port)
+        bl_name = self.get_bl_name(self.port)
+        br_name = self.get_br_name(self.port)
 
         temp = []
         # Use left BLs for RBL
@@ -285,8 +298,8 @@ class port_data(design.design):
         self.column_mux_array_inst = self.add_inst(name="column_mux_array{}".format(self.port),
                                                    mod=self.column_mux_array)
 
-        bl_name = self.column_mux_array.get_bl_name(self.port)
-        br_name = self.column_mux_array.get_br_name(self.port)
+        bl_name = self.get_bl_name(self.port)
+        br_name = self.get_br_name(self.port)
         temp = []
         for col in range(self.num_cols):
             temp.append("{0}_{1}".format(bl_name, col))
@@ -315,8 +328,8 @@ class port_data(design.design):
         self.sense_amp_array_inst = self.add_inst(name="sense_amp_array{}".format(self.port),
                                                   mod=self.sense_amp_array)
 
-        bl_name = self.sense_amp_array.get_bl_name(self.port)
-        br_name = self.sense_amp_array.get_br_name(self.port)
+        bl_name = self.get_bl_name(self.port)
+        br_name = self.get_br_name(self.port)
         temp = []
         for bit in range(self.word_size):
             temp.append("dout_{}".format(bit))
@@ -341,8 +354,8 @@ class port_data(design.design):
         """ Creating Write Driver  """
         self.write_driver_array_inst = self.add_inst(name="write_driver_array{}".format(self.port),
                                                      mod=self.write_driver_array)
-        bl_name = self.write_driver_array.get_bl_name(self.port)
-        br_name = self.write_driver_array.get_br_name(self.port)
+        bl_name = self.get_bl_name(self.port)
+        br_name = self.get_br_name(self.port)
 
         temp = []
         for bit in range(self.word_size):
@@ -523,13 +536,16 @@ class port_data(design.design):
         # Only do this if we have a column mux!
         if self.col_addr_size==0:
             return
-        
+
         inst1 = self.column_mux_array_inst
         inst2 = self.precharge_array_inst
-        if self.port==0:
-            self.connect_bitlines(inst1, inst2, self.num_cols, inst2_start_bit=1)
-        else:
-            self.connect_bitlines(inst1, inst2, self.num_cols)
+
+        insn2_start_bit = 1 if self.port == 0 else 0
+
+        self.connect_bitlines(inst1=inst1,
+                              inst2=inst2,
+                              num_bits=self.num_cols,
+                              inst2_start_bit=insn2_start_bit)
 
 
     def route_sense_amp_to_column_mux_or_precharge_array(self, port):
@@ -539,46 +555,49 @@ class port_data(design.design):
         if self.col_addr_size>0:
             # Sense amp is connected to the col mux
             inst1 = self.column_mux_array_inst
-            inst1_bl_name = "bl_out_{}"
-            inst1_br_name = "br_out_{}"
+            inst1_bls_templ = "{inst}_out_{bit}"
             start_bit = 0
         else:
             # Sense amp is directly connected to the precharge array
             inst1 = self.precharge_array_inst
-            inst1_bl_name = "bl_{}"
-            inst1_br_name = "br_{}"
+            inst1_bls_templ="{inst}_{bit}"
+
             if self.port==0:
                 start_bit=1
             else:
                 start_bit=0
 
-
-        self.channel_route_bitlines(inst1=inst1, inst2=inst2, num_bits=self.word_size,
-                                    inst1_bl_name=inst1_bl_name, inst1_br_name=inst1_br_name, inst1_start_bit=start_bit)
+        self.channel_route_bitlines(inst1=inst1,
+                                    inst1_bls_template=inst1_bls_templ,
+                                    inst2=inst2,
+                                    num_bits=self.word_size,
+                                    inst1_start_bit=start_bit)
 
 
     def route_write_driver_to_column_mux_or_precharge_array(self, port):
         """ Routing of BL and BR between sense_amp and column mux or precharge array """
         inst2 = self.write_driver_array_inst
-        
+        inst2_bl_name = inst2.mod.get_bl_name()
+        inst2_br_name = inst2.mod.get_br_name()
+
         if self.col_addr_size>0:
             # Write driver is connected to the col mux
             inst1 = self.column_mux_array_inst
-            inst1_bl_name = "bl_out_{}"
-            inst1_br_name = "br_out_{}"
+            inst1_bls_templ = "{inst}_out_{bit}"
             start_bit = 0
         else:
             # Sense amp is directly connected to the precharge array
             inst1 = self.precharge_array_inst
-            inst1_bl_name = "bl_{}"
-            inst1_br_name = "br_{}"
+            inst1_bls_templ="{inst}_{bit}"
             if self.port==0:
                 start_bit=1
             else:
                 start_bit=0
-            
-        self.channel_route_bitlines(inst1=inst1, inst2=inst2, num_bits=self.word_size,
-                                    inst1_bl_name=inst1_bl_name, inst1_br_name=inst1_br_name, inst1_start_bit=start_bit)
+
+        self.channel_route_bitlines(inst1=inst1, inst2=inst2,
+                                    num_bits=self.word_size,
+                                    inst1_bls_template=inst1_bls_templ,
+                                    inst1_start_bit=start_bit)
 
 
     def route_write_driver_to_sense_amp(self, port):
@@ -589,7 +608,9 @@ class port_data(design.design):
 
         # These should be pitch matched in the cell library,
         # but just in case, do a channel route.
-        self.channel_route_bitlines(inst1=inst1, inst2=inst2, num_bits=self.word_size)
+        self.channel_route_bitlines(inst1=inst1,
+                                    inst2=inst2,
+                                    num_bits=self.word_size)
 
 
     def route_bitline_pins(self):
@@ -635,64 +656,108 @@ class port_data(design.design):
         if self.write_mask_and_array_inst:
             self.copy_layout_pin(self.write_mask_and_array_inst, "en", "w_en")
 
-            
-        
-    def channel_route_bitlines(self, inst1, inst2, num_bits,
-                               inst1_bl_name="bl_{}", inst1_br_name="br_{}", inst1_start_bit=0,
-                               inst2_bl_name="bl_{}", inst2_br_name="br_{}", inst2_start_bit=0):
+
+
+    def _group_bitline_instances(self, inst1, inst2, num_bits,
+                                 inst1_bls_template,
+                                 inst1_start_bit,
+                                 inst2_bls_template,
+                                 inst2_start_bit):
         """
-        Route the bl and br of two modules using the channel router.
+        Groups all the parameters into a named tuple and seperates them into
+        top and bottom instances.
         """
-        
+        inst_group = namedtuple('InstanceGroup', ('inst', 'bls_template',
+                                                  'bl_name', 'br_name', 'start_bit'))
+
+        inst1_group = inst_group(inst1, inst1_bls_template,
+                                 inst1.mod.get_bl_name(),
+                                 inst1.mod.get_br_name(),
+                                 inst1_start_bit)
+        inst2_group = inst_group(inst2, inst2_bls_template,
+                                 inst2.mod.get_bl_name(),
+                                 inst2.mod.get_br_name(),
+                                 inst2_start_bit)
         # determine top and bottom automatically.
         # since they don't overlap, we can just check the bottom y coordinate.
         if inst1.by() < inst2.by():
-            (bottom_inst, bottom_bl_name, bottom_br_name, bottom_start_bit) = (inst1, inst1_bl_name, inst1_br_name, inst1_start_bit)
-            (top_inst, top_bl_name, top_br_name, top_start_bit) = (inst2, inst2_bl_name, inst2_br_name, inst2_start_bit)
+            bot_inst_group = inst1_group
+            top_inst_group = inst2_group
         else:
-            (bottom_inst, bottom_bl_name, bottom_br_name, bottom_start_bit) = (inst2, inst2_bl_name, inst2_br_name, inst2_start_bit)
-            (top_inst, top_bl_name, top_br_name, top_start_bit) = (inst1, inst1_bl_name, inst1_br_name, inst1_start_bit)
+            bot_inst_group = inst2_group
+            top_inst_group = inst1_group
 
+        return (bot_inst_group, top_inst_group)
+
+    def _get_bitline_pins(self, inst_group, bit):
+        """
+        Extracts bl/br pins from an InstanceGroup based on the bit modifier.
+        """
+        full_bl_name = inst_group.bls_template.format(
+                           **{'inst' : inst_group.bl_name,
+                              'bit'  : inst_group.start_bit + bit}
+                           )
+        full_br_name = inst_group.bls_template.format(
+                             **{'inst' : inst_group.br_name,
+                               'bit' : inst_group.start_bit + bit}
+                             )
+        return (inst_group.inst.get_pin(full_bl_name),
+                inst_group.inst.get_pin(full_br_name))
+
+
+    def channel_route_bitlines(self, inst1, inst2, num_bits,
+                               inst1_bls_template="{inst}_{bit}",
+                               inst1_start_bit=0,
+                               inst2_bls_template="{inst}_{bit}",
+                               inst2_start_bit=0):
+        """
+        Route the bl and br of two modules using the channel router.
+        """
+
+        bot_inst_group, top_inst_group = self._group_bitline_instances(
+                                           inst1, inst2, num_bits,
+                                           inst1_bls_template, inst1_start_bit,
+                                           inst2_bls_template, inst2_start_bit)
 
         # Channel route each mux separately since we don't minimize the number
         # of tracks in teh channel router yet. If we did, we could route all the bits at once!
-        offset = bottom_inst.ul() + vector(0,self.m1_pitch)
+        offset = bot_inst_group.inst.ul() + vector(0,self.m1_pitch)
         for bit in range(num_bits):
-            bottom_names = [bottom_inst.get_pin(bottom_bl_name.format(bit+bottom_start_bit)), bottom_inst.get_pin(bottom_br_name.format(bit+bottom_start_bit))]
-            top_names = [top_inst.get_pin(top_bl_name.format(bit+top_start_bit)), top_inst.get_pin(top_br_name.format(bit+top_start_bit))]
+            bottom_names = self._get_bitline_pins(bot_inst_group, bit)
+            top_names = self._get_bitline_pins(top_inst_group, bit)
+
             route_map = list(zip(bottom_names, top_names))
             self.create_horizontal_channel_route(route_map, offset, self.m1_stack)
             
 
     def connect_bitlines(self, inst1, inst2, num_bits,
-                         inst1_bl_name="bl_{}", inst1_br_name="br_{}", inst1_start_bit=0,
-                         inst2_bl_name="bl_{}", inst2_br_name="br_{}", inst2_start_bit=0):
-
+                         inst1_bls_template="{inst}_{bit}",
+                         inst1_start_bit=0,
+                         inst2_bls_template="{inst}_{bit}",
+                         inst2_start_bit=0):
         """
         Connect the bl and br of two modules.
         This assumes that they have sufficient space to create a jog
         in the middle between the two modules (if needed).
         """
         
-        # determine top and bottom automatically.
-        # since they don't overlap, we can just check the bottom y coordinate.
-        if inst1.by() < inst2.by():
-            (bottom_inst, bottom_bl_name, bottom_br_name, bottom_start_bit) = (inst1, inst1_bl_name, inst1_br_name, inst1_start_bit)
-            (top_inst, top_bl_name, top_br_name, top_start_bit) = (inst2, inst2_bl_name, inst2_br_name, inst2_start_bit)
-        else:
-            (bottom_inst, bottom_bl_name, bottom_br_name, bottom_start_bit) = (inst2, inst2_bl_name, inst2_br_name, inst2_start_bit)
-            (top_inst, top_bl_name, top_br_name, top_start_bit) = (inst1, inst1_bl_name, inst1_br_name, inst1_start_bit)
+        bot_inst_group, top_inst_group = self._group_bitline_instances(
+                                           inst1, inst2, num_bits,
+                                           inst1_bls_template, inst1_start_bit,
+                                           inst2_bls_template, inst2_start_bit)
+        bottom_inst = bot_inst_group.inst
+        top_inst = top_inst_group.inst
 
         for col in range(num_bits):
-            bottom_bl = bottom_inst.get_pin(bottom_bl_name.format(col+bottom_start_bit)).uc()
-            bottom_br = bottom_inst.get_pin(bottom_br_name.format(col+bottom_start_bit)).uc()
-            top_bl = top_inst.get_pin(top_bl_name.format(col+top_start_bit)).bc()
-            top_br = top_inst.get_pin(top_br_name.format(col+top_start_bit)).bc()
+            bot_bl_pin, bot_br_pin = self._get_bitline_pins(bot_inst_group, col)
+            top_bl_pin, top_br_pin = self._get_bitline_pins(top_inst_group, col)
+            bot_bl, bot_br = bot_bl_pin.uc(), bot_br_pin.uc()
+            top_bl, top_br = top_bl_pin.bc(), top_br_pin.bc()
 
-            yoffset = 0.5*(top_bl.y+bottom_bl.y)
-            self.add_path("m2",[bottom_bl, vector(bottom_bl.x,yoffset),
+            yoffset = 0.5*(top_bl.y+bot_bl.y)
+            self.add_path("m2",[bot_bl, vector(bot_bl.x,yoffset),
                                     vector(top_bl.x,yoffset), top_bl])
-            self.add_path("m2",[bottom_br, vector(bottom_br.x,yoffset),
+            self.add_path("m2",[bot_br, vector(bot_br.x,yoffset),
                                     vector(top_br.x,yoffset), top_br])
         
     def graph_exclude_precharge(self):

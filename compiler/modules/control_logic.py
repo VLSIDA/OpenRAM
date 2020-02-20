@@ -670,7 +670,7 @@ class control_logic(design.design):
         if self.port_type=="rw":
             input_name = "we_bar"
         else:
-            input_name = "cs_bar"
+            input_name = "cs"
             
         sen_map = zip(["A", "B", "C"], ["rbl_bl_delay", "gated_clk_bar", input_name])
         self.connect_vertical_bus(sen_map, self.s_en_gate_inst, self.rail_offsets)

@@ -35,7 +35,7 @@ class VlsiLayout:
                                                                modDate.hour,
                                                                modDate.minute,
                                                                modDate.second)
-        
+
         self.info = dict()  #information gathered from the GDSII header
         self.info['units']=self.units
         self.info['dates']=(modDate.year,
@@ -52,12 +52,12 @@ class VlsiLayout:
                             modDate.second)
         self.info['libraryName']=libraryName
         self.info['gdsVersion']=gdsVersion
-        
+
         self.xyTree = [] #This will contain a list of all structure names
                         #expanded to include srefs / arefs separately.
                         #each structure will have an X,Y,offset, and rotate associated
                         #with it.  Populate via traverseTheHierarchy method.
-        
+
         #temp variables used in delegate functions
         self.tempCoordinates=None
         self.tempPassFail = True
@@ -73,14 +73,14 @@ class VlsiLayout:
         if(rotateAngle):
             angle = math.radians(float(rotateAngle))
 
-        coordinatesRotate = []    #this will hold the rotated values        
+        coordinatesRotate = []    #this will hold the rotated values
         for coordinate in coordinatesToRotate:
             # This is the CCW rotation matrix
             newX = coordinate[0]*math.cos(angle) - coordinate[1]*math.sin(angle)
             newY = coordinate[0]*math.sin(angle) + coordinate[1]*math.cos(angle)
             coordinatesRotate.extend((newX,newY))
         return coordinatesRotate
-    
+
     def rename(self,newName):
         #take the root structure and copy it to a new structure with the new name
         self.structures[newName] = self.structures[self.rootStructureName]
@@ -129,8 +129,8 @@ class VlsiLayout:
                                                                modDate.hour,
                                                                modDate.minute,
                                                                modDate.second)
-        
-             
+
+
         #repopulate the 2d map so drawing occurs correctly
         self.prepareForWrite()
 
@@ -155,15 +155,15 @@ class VlsiLayout:
         debug.check(len(structureNames)==1,"Multiple possible root structures in the layout: {}".format(str(structureNames)))
         self.rootStructureName = structureNames[0]
 
-        
-    def traverseTheHierarchy(self, startingStructureName=None, delegateFunction = None, 
+
+    def traverseTheHierarchy(self, startingStructureName=None, delegateFunction = None,
                              transformPath = [], rotateAngle = 0, transFlags = [0,0,0], coordinates = (0,0)):
         #since this is a recursive function, must deal with the default
-        #parameters explicitly      
+        #parameters explicitly
         if startingStructureName == None:
-            startingStructureName = self.rootStructureName            
+            startingStructureName = self.rootStructureName
 
-        #set up the rotation matrix        
+        #set up the rotation matrix
         if(rotateAngle == None or rotateAngle == ""):
             angle = 0
         else:
@@ -193,10 +193,10 @@ class VlsiLayout:
         try:
             if(len(self.structures[startingStructureName].srefs)>0): #does this structure reference any others?
                 #if so, go through each and call this function again
-                #if not, return back to the caller (caller can be this function)            
+                #if not, return back to the caller (caller can be this function)
                 for sref in self.structures[startingStructureName].srefs:
-                    #here, we are going to modify the sref coordinates based on the parent objects rotation                
-                    self.traverseTheHierarchy(startingStructureName = sref.sName,                                    
+                    #here, we are going to modify the sref coordinates based on the parent objects rotation
+                    self.traverseTheHierarchy(startingStructureName = sref.sName,
                                               delegateFunction = delegateFunction,
                                               transformPath = transformPath,
                                               rotateAngle = sref.rotateAngle,
@@ -204,12 +204,12 @@ class VlsiLayout:
                                               coordinates = sref.coordinates)
         except KeyError:
             debug.error("Could not find structure {} in GDS file.".format(startingStructureName),-1)
-            
+
             #MUST HANDLE AREFs HERE AS WELL
         #when we return, drop the last transform from the transformPath
         del transformPath[-1]
         return
-    
+
     def initialize(self):
         self.deduceHierarchy()
         # self.traverseTheHierarchy()
@@ -217,17 +217,17 @@ class VlsiLayout:
 
         for layerNumber in self.layerNumbersInUse:
             self.processLabelPins((layerNumber, None))
-        
-    
+
+
     def populateCoordinateMap(self):
         def addToXyTree(startingStructureName = None,transformPath = None):
             uVector = np.array([[1.0],[0.0],[0.0]]) #start with normal basis vectors
             vVector = np.array([[0.0],[1.0],[0.0]])
             origin = np.array([[0.0],[0.0],[1.0]]) #and an origin (Z component is 1.0 to indicate position instead of vector)
-            #make a copy of all the transforms and reverse it            
+            #make a copy of all the transforms and reverse it
             reverseTransformPath = transformPath[:]
             if len(reverseTransformPath) > 1:
-                reverseTransformPath.reverse()      
+                reverseTransformPath.reverse()
             #now go through each transform and apply them to our basis and origin in succession
             for transform in reverseTransformPath:
                 origin = np.dot(transform[0], origin)  #rotate
@@ -237,20 +237,20 @@ class VlsiLayout:
                 uVector = np.dot(transform[1], uVector)  #scale
                 vVector = np.dot(transform[1], vVector)  #scale
                 origin = np.dot(transform[2], origin)  #translate
-                #we don't need to do a translation on the basis vectors            
+                #we don't need to do a translation on the basis vectors
                 #uVector = transform[2] * uVector  #translate
                 #vVector = transform[2] * vVector  #translate
             #populate the xyTree with each structureName and coordinate space
             self.xyTree.append((startingStructureName,origin,uVector,vVector))
         self.traverseTheHierarchy(delegateFunction = addToXyTree)
-        
+
     def microns(self, userUnits):
         """Utility function to convert user units to microns"""
         userUnit = self.units[1]/self.units[0]
         userUnitsPerMicron = userUnit / userunit
         layoutUnitsPerMicron = userUnitsPerMicron / self.units[0]
         return userUnits / layoutUnitsPerMicron
-        
+
     def userUnits(self, microns):
         """Utility function to convert microns to user units"""
         userUnit = self.units[1]/self.units[0]
@@ -270,7 +270,7 @@ class VlsiLayout:
 
         if self.debug:
             debug.info(0,"DEBUG:  GdsMill vlsiLayout: changeRoot: %s "%newRoot)
-    
+
         # Determine if newRoot exists
         #  layoutToAdd (default) or nameOfLayout
         if (newRoot == 0 | ((newRoot not in self.structures) & ~create)):
@@ -282,19 +282,19 @@ class VlsiLayout:
             self.rootStructureName = newRoot
 
 
-    
+
     def addInstance(self,layoutToAdd,nameOfLayout=0,offsetInMicrons=(0,0),mirror=None,rotate=None):
         """
         Method to insert one layout into another at a particular offset.
         """
         offsetInLayoutUnits = (self.userUnits(offsetInMicrons[0]),self.userUnits(offsetInMicrons[1]))
-        if self.debug: 
+        if self.debug:
             debug.info(0,"DEBUG:  GdsMill vlsiLayout: addInstance: type {0}, nameOfLayout {1}".format(type(layoutToAdd),nameOfLayout))
             debug.info(0,"DEBUG: name={0} offset={1} mirror={2} rotate={3}".format(layoutToAdd.rootStructureName,offsetInMicrons, mirror, rotate))
 
 
 
-        # Determine if we are instantiating the root design of 
+        # Determine if we are instantiating the root design of
         #  layoutToAdd (default) or nameOfLayout
         if nameOfLayout == 0:
             StructureFound = True
@@ -303,7 +303,7 @@ class VlsiLayout:
             StructureName = nameOfLayout #layoutToAdd
             StructureFound = False
             for structure in layoutToAdd.structures:
-                if StructureName in structure: 
+                if StructureName in structure:
                     if self.debug:
                         debug.info(1,"DEBUG:  Structure %s Found"%StructureName)
                     StructureFound = True
@@ -311,7 +311,7 @@ class VlsiLayout:
         debug.check(StructureFound,"Could not find layout to instantiate {}".format(StructureName))
 
 
-        # If layoutToAdd is a unique object (not this), then copy hierarchy, 
+        # If layoutToAdd is a unique object (not this), then copy hierarchy,
         #  otherwise, if it is a text name of an internal structure, use it.
 
         if layoutToAdd != self:
@@ -330,7 +330,7 @@ class VlsiLayout:
         layoutToAddSref.coordinates = offsetInLayoutUnits
 
         if mirror or rotate:
-                
+
             layoutToAddSref.transFlags = [0,0,0]
             # transFlags = (mirror around x-axis, magnification, rotation)
             # If magnification or rotation is true, it is the flags are then
@@ -356,7 +356,7 @@ class VlsiLayout:
 
         #add the sref to the root structure
         self.structures[self.rootStructureName].srefs.append(layoutToAddSref)
-        
+
     def addBox(self,layerNumber=0, purposeNumber=0, offsetInMicrons=(0,0), width=1.0, height=1.0,center=False):
         """
         Method to add a box to a layout
@@ -373,7 +373,7 @@ class VlsiLayout:
                          (offsetInLayoutUnits[0],offsetInLayoutUnits[1]+heightInLayoutUnits),
                          offsetInLayoutUnits]
         else:
-            startPoint = (offsetInLayoutUnits[0]-widthInLayoutUnits/2.0, offsetInLayoutUnits[1]-heightInLayoutUnits/2.0) 
+            startPoint = (offsetInLayoutUnits[0]-widthInLayoutUnits/2.0, offsetInLayoutUnits[1]-heightInLayoutUnits/2.0)
             coordinates=[startPoint,
                          (startPoint[0]+widthInLayoutUnits,startPoint[1]),
                          (startPoint[0]+widthInLayoutUnits,startPoint[1]+heightInLayoutUnits),
@@ -386,7 +386,7 @@ class VlsiLayout:
         boundaryToAdd.purposeLayer = purposeNumber
         #add the sref to the root structure
         self.structures[self.rootStructureName].boundaries.append(boundaryToAdd)
-    
+
     def addPath(self, layerNumber=0, purposeNumber=0, coordinates=[(0,0)], width=1.0):
         """
         Method to add a path to a layout
@@ -405,11 +405,12 @@ class VlsiLayout:
         pathToAdd.coordinates = layoutUnitCoordinates
         #add the sref to the root structure
         self.structures[self.rootStructureName].paths.append(pathToAdd)
-        
-    def addText(self, text, layerNumber=0, offsetInMicrons=(0,0), magnification=0.1, rotate = None):
+
+    def addText(self, text, layerNumber=0, purposeNumber=0, offsetInMicrons=(0,0), magnification=0.1, rotate = None):
         offsetInLayoutUnits = (self.userUnits(offsetInMicrons[0]),self.userUnits(offsetInMicrons[1]))
         textToAdd = GdsText()
         textToAdd.drawingLayer = layerNumber
+        textToAdd.purposeLayer = purposeNumber
         textToAdd.coordinates = [offsetInLayoutUnits]
         textToAdd.transFlags = [0,0,0]
         textToAdd.textString = self.padText(text)
@@ -438,7 +439,7 @@ class VlsiLayout:
             return 1
         else:
             return 0
-        
+
     def intersectionPoint(self,startPoint1,endPoint1,startPoint2,endPoint2):
         if((endPoint1[0]-startPoint1[0])!=0 and (endPoint2[0]-startPoint2[0])!=0):
             pSlope = (endPoint1[1]-startPoint1[1])/(endPoint1[0]-startPoint1[0])
@@ -458,7 +459,7 @@ class VlsiLayout:
             newY = None
         elif((endPoint1[0]-startPoint1[0])==0 and (endPoint2[0]-startPoint2[0])!=0):
             qSlope = (endPoint2[1]-startPoint2[1])/(endPoint2[0]-startPoint2[0])
-            qIntercept = startPoint2[1]-qSlope*startPoint2[0]        
+            qIntercept = startPoint2[1]-qSlope*startPoint2[0]
             newX=endPoint1[0]
             newY=qSlope*newX+qIntercept
         elif((endPoint1[0]-startPoint1[0])!=0 and (endPoint2[0]-startPoint2[0])==0):
@@ -467,14 +468,14 @@ class VlsiLayout:
             newX=endPoint2[0]
             newY=pSlope*newX+pIntercept
         return (newX,newY)
-        
+
     def isCollinear(self,testPoint,point1,point2):
         slope1 = (testPoint[1]-point1[1])/(testPoint[0]-point1[0])
         slope2 = (point2[1]-point1[1])/(point2[0]-point1[0])
         if slope1 == slope2:
             return True
         return False
-    
+
     def doShapesIntersect(self,shape1Coordinates, shape2Coordinates):
         """
         Utility function to determine if 2 arbitrary shapes intersect.
@@ -491,7 +492,7 @@ class VlsiLayout:
                 if(self.isBounded(intersect,startPoint1,endPoint1) and self.isBounded(intersect,startPoint2,endPoint2)):
                     return True  #these shapes overlap!
         return False #these shapes are ok
-    
+
     def isPointInsideOfBox(self,pointCoordinates,boxCoordinates):
         """
         Check if a point is contained in the shape
@@ -516,7 +517,7 @@ class VlsiLayout:
            pointCoordinates[1]<bottomBound):
             return False
         return True
-    
+
     def isShapeInsideOfBox(self,shapeCoordinates, boxCoordinates):
         """
         Go through every point in the shape to test if they are all inside the box.
@@ -525,8 +526,8 @@ class VlsiLayout:
             if not self.isPointInsideOfBox(point,boxCoordinates):
                 return False
         return True
-        
-                
+
+
     def fillAreaDensity(self, layerToFill = 0, offsetInMicrons = (0,0), coverageWidth = 100.0, coverageHeight = 100.0, minSpacing = 0.22, blockSize = 1.0):
         effectiveBlock = blockSize+minSpacing
         widthInBlocks = int(coverageWidth/effectiveBlock)
@@ -545,7 +546,7 @@ class VlsiLayout:
                         shiftedBoundaryCoordinates.append((shapeCoordinate[0]+coordinates[0],shapeCoordinate[1]+coordinates[1]))
                     joint = self.doShapesIntersect(self.tempCoordinates, shiftedBoundaryCoordinates)
                     if joint:
-                        self.tempPassFail = False                    
+                        self.tempPassFail = False
                     common = self.isShapeInsideOfBox(shiftedBoundaryCoordinates,self.tempCoordinates)
                     if common:
                         self.tempPassFail = False
@@ -558,11 +559,11 @@ class VlsiLayout:
                         shiftedBoundaryCoordinates.append((shapeCoordinate[0]+coordinates[0],shapeCoordinate[1]+coordinates[1]))
                     joint = self.doShapesIntersect(self.tempCoordinates, shiftedBoundaryCoordinates)
                     if joint:
-                        self.tempPassFail = False                    
+                        self.tempPassFail = False
                     common = self.isShapeInsideOfBox(shiftedBoundaryCoordinates,self.tempCoordinates)
                     if common:
                         self.tempPassFail = False
-        
+
         for yIndex in range(0,heightInBlocks):
             for xIndex in range(0,widthInBlocks):
                 percentDone = (float((yIndex*heightInBlocks)+xIndex) / (heightInBlocks*widthInBlocks))*100
@@ -581,7 +582,7 @@ class VlsiLayout:
                 passFailRecord.append(self.tempPassFail)
             print("Percent Complete:"+str(percentDone))
 
-                
+
         passFailIndex=0
         for yIndex in range(0,heightInBlocks):
             for xIndex in range(0,widthInBlocks):
@@ -632,7 +633,7 @@ class VlsiLayout:
                  self.units[0]*cellBoundary[1]],
                 [self.units[0]*cellBoundary[2],
                  self.units[0]*cellBoundary[3]]]
-    
+
     def measureSizeInStructure(self, structure, cellBoundary):
         (structureName, structureOrigin,
          structureuVector, structurevVector) = structure
@@ -645,7 +646,7 @@ class VlsiLayout:
             thisBoundary[2]+structureOrigin[0],thisBoundary[3]+structureOrigin[1]]
             cellBoundary=self.updateBoundary(thisBoundary,cellBoundary)
         return cellBoundary
-        
+
     def updateBoundary(self,thisBoundary,cellBoundary):
         [left_bott_X,left_bott_Y,right_top_X,right_top_Y]=thisBoundary
         # If any are None
@@ -672,7 +673,7 @@ class VlsiLayout:
                        lpp):
                 text_list.append(Text)
         return text_list
-    
+
     def getPinShape(self, pin_name):
         """
         Search for a pin label and return the largest enclosing rectangle
@@ -693,7 +694,7 @@ class VlsiLayout:
             max_pins.append(max_pin)
 
         return max_pins
-        
+
 
     def getAllPinShapes(self, pin_name):
         """
@@ -716,7 +717,7 @@ class VlsiLayout:
         """
         # Get the labels on a layer in the root level
         labels = self.getTexts(lpp)
-        
+
         # Get all of the shapes on the layer at all levels
         # and transform them to the current level
         shapes = self.getAllShapes(lpp)
@@ -730,7 +731,7 @@ class VlsiLayout:
                     pin_shapes.append((lpp, boundary))
 
             label_text = label.textString
-            
+
             # Remove the padding if it exists
             if label_text[-1] == "\x00":
                 label_text = label_text[0:-1]
@@ -740,7 +741,7 @@ class VlsiLayout:
             except KeyError:
                 self.pins[label_text] = []
             self.pins[label_text].append(pin_shapes)
-    
+
     def getBlockages(self, lpp):
         """
         Return all blockages on a given layer in
@@ -755,7 +756,7 @@ class VlsiLayout:
             for i in range(0, len(boundary), 2):
                 vectors.append((boundary[i], boundary[i+1]))
             blockages.append(vectors)
-            
+
         return blockages
 
     def getAllShapes(self, lpp):
@@ -870,7 +871,7 @@ class VlsiLayout:
         """
         Rotate a coordinate in space.
         """
-        # MRG: 9/3/18 Incorrect matrix multiplication! 
+        # MRG: 9/3/18 Incorrect matrix multiplication!
         # This is fixed to be:
         # |u[0] v[0]| |x| |x'|
         # |u[1] v[1]|x|y|=|y'|
@@ -892,7 +893,7 @@ class VlsiLayout:
         else:
             return False
 
-        
+
 def sameLPP(lpp1, lpp2):
     """
     Check if the layers and purposes are the same.
@@ -900,14 +901,13 @@ def sameLPP(lpp1, lpp2):
     """
     if lpp1[1] == None or lpp2[1] == None:
         return lpp1[0] == lpp2[0]
-    
+
     return lpp1[0] == lpp2[0] and lpp1[1] == lpp2[1]
-    
-    
+
+
 def boundaryArea(A):
     """
     Returns boundary area for sorting.
     """
     area_A=(A[2]-A[0])*(A[3]-A[1])
     return area_A
-

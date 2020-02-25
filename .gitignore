@@ -1,5 +1,7 @@
 .DS_Store
 *~
+*.orig
+*.rej
 *.pyc
 *.aux
 *.out

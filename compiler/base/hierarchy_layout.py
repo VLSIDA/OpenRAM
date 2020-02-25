@@ -322,9 +322,10 @@ class layout():
         """
         Creates a path like pin with center-line convention
         """
-
-        debug.check(start.x == end.x or start.y == end.y,
-                    "Cannot have a non-manhatten layout pin.")
+        if start.x != end.x and start.y != end.y:
+            file_name = "non_rectilinear.gds"
+            self.gds_write(file_name)
+            debug.error("Cannot have a non-manhatten layout pin: {}".format(file_name), -1)
         
         minwidth_layer = drc["minwidth_{}".format(layer)]
         

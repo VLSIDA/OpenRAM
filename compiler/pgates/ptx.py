@@ -10,6 +10,7 @@ import debug
 from tech import layer, drc, spice
 from vector import vector
 from sram_factory import factory
+import contact
 
 
 class ptx(design.design):
@@ -28,6 +29,7 @@ class ptx(design.design):
                  tx_type="nmos",
                  connect_active=False,
                  connect_poly=False,
+                 series_devices=False,
                  num_contacts=None):
         # We need to keep unique names because outputting to GDSII
         # will use the last record with a given name. I.e., you will
@@ -50,6 +52,7 @@ class ptx(design.design):
         self.tx_width = width
         self.connect_active = connect_active
         self.connect_poly = connect_poly
+        self.series_devices = series_devices
         self.num_contacts = num_contacts
 
         # Since it has variable height, it is not a pgate.
@@ -127,27 +130,25 @@ class ptx(design.design):
                                              directions=("V", "V"),
                                              dimensions=(1, self.num_contacts))
 
-        # The contacted poly pitch
-        self.poly_pitch = max(2 * self.contact_to_gate + self.contact_width + self.poly_width,
-                              self.poly_space)
-
-        # The contacted poly pitch
-        self.contact_spacing = 2 * self.contact_to_gate + \
-                               self.contact_width + self.poly_width
-
-        # This is measured because of asymmetric enclosure rules
-        active_enclose_contact = 0.5*(self.active_contact.width - self.contact_width)
+        # This is the extra poly spacing due to the poly contact to poly contact pitch
+        # of contacted gates
+        extra_poly_contact_width = contact.poly_contact.width - self.poly_width
         
-        # This is the distance from the side of
-        # poly gate to the contacted end of active
-        # (i.e. the "outside" contacted diffusion sizes)
-        self.end_to_poly = self.active_contact.width - active_enclose_contact + \
-                           self.contact_to_gate
+        # This is the spacing between S/D contacts
+        # This is the spacing between the poly gates
+        self.min_poly_pitch = self.poly_space + self.poly_width
+        self.contacted_poly_pitch = self.poly_space + contact.poly_contact.width
+        self.contact_pitch = 2 * self.contact_to_gate + self.poly_width + self.contact_width
+        self.poly_pitch = max(self.min_poly_pitch,
+                              self.contacted_poly_pitch,
+                              self.contact_pitch)
+
+        self.end_to_contact = 0.5 * self.active_contact.width
         
         # Active width is determined by enclosure on both ends and contacted pitch,
         # at least one poly and n-1 poly pitches
-        self.active_width = 2 * self.end_to_poly + self.poly_width + \
-                                 (self.mults - 1) * self.poly_pitch
+        self.active_width = 2 * self.end_to_contact + self.active_contact.width \
+                            + 2 * self.contact_to_gate + self.poly_width + (self.mults - 1) * self.poly_pitch
 
         # Active height is just the transistor width
         self.active_height = self.tx_width
@@ -287,12 +288,11 @@ class ptx(design.design):
         Add the poly gates(s) and (optionally) connect them.
         """
         # poly is one contacted spacing from the end and down an extension
-        poly_offset = self.active_offset \
-                      + vector(self.poly_width, self.poly_height).scale(0.5, 0.5) \
-                      + vector(self.end_to_poly, -self.poly_extend_active)
-
+        poly_offset = self.contact_offset \
+                      + vector(0.5 * self.active_contact.width + 0.5 * self.poly_width + self.contact_to_gate, 0)
+        
         # poly_positions are the bottom center of the poly gates
-        poly_positions = []
+        self.poly_positions = []
 
         # It is important that these are from left to right,
         # so that the pins are in the right
@@ -309,11 +309,11 @@ class ptx(design.design):
                                             offset=poly_offset,
                                             height=self.poly_height,
                                             width=self.poly_width)
-            poly_positions.append(poly_offset)
+            self.poly_positions.append(poly_offset)
             poly_offset = poly_offset + vector(self.poly_pitch,0)
 
         if self.connect_poly:
-            self.connect_fingered_poly(poly_positions)
+            self.connect_fingered_poly(self.poly_positions)
             
     def add_active(self):
         """
@@ -362,59 +362,74 @@ class ptx(design.design):
         """
         return 1
 
-    def get_contact_positions(self):
-        """
-        Create a list of the centers of drain and source contact positions.
-        """
-        # The first one will always be a source
-        source_positions = [self.contact_offset]
-        drain_positions = []
-        # It is important that these are from left to right,
-        # so that the pins are in the right
-        # order for the accessors.
-        for i in range(self.mults):
-            if i%2:
-                # It's a source... so offset from previous drain.
-                source_positions.append(drain_positions[-1] + vector(self.contact_spacing, 0))
-            else:
-                # It's a drain... so offset from previous source.
-                drain_positions.append(source_positions[-1] + vector(self.contact_spacing, 0))
-
-        return [source_positions,drain_positions]
-        
     def add_active_contacts(self):
         """
         Add the active contacts to the transistor.
         """
+        drain_positions = []
+        source_positions = []
 
-        [source_positions,drain_positions] = self.get_contact_positions()
-
-        for pos in source_positions:
-            contact=self.add_via_center(layers=self.active_stack,
+        # First one is always a SOURCE
+        label = "S"
+        pos = self.contact_offset
+        contact=self.add_via_center(layers=self.active_stack,
+                                    offset=pos,
+                                    size=(1, self.num_contacts),
+                                    directions=("V","V"),
+                                    implant_type=self.implant_type,
+                                    well_type=self.well_type)
+        self.add_layout_pin_rect_center(text=label,
+                                        layer="m1",
                                         offset=pos,
-                                        size=(1, self.num_contacts),
-                                        directions=("V","V"),
-                                        implant_type=self.implant_type,
-                                        well_type=self.well_type)
-            self.add_layout_pin_rect_center(text="S",
-                                            layer="m1",
-                                            offset=pos,
-                                            width=contact.mod.second_layer_width,
-                                            height=contact.mod.second_layer_height)
+                                        width=contact.mod.second_layer_width,
+                                        height=contact.mod.second_layer_height)
+        source_positions.append(pos)
 
-                
-        for pos in drain_positions:
-            contact=self.add_via_center(layers=self.active_stack,
-                                        offset=pos,
-                                        size=(1, self.num_contacts),
-                                        directions=("V","V"),
-                                        implant_type=self.implant_type,
-                                        well_type=self.well_type)
-            self.add_layout_pin_rect_center(text="D",
-                                            layer="m1",
+        # Skip these if they are going to be in series
+        if not self.series_devices:
+            for (poly1, poly2) in zip(self.poly_positions, self.poly_positions[1:]):
+                pos = vector(0.5 * (poly1.x + poly2.x),
+                             self.contact_offset.y)
+                # Alternate source and drains
+                if label == "S":
+                    label = "D"
+                    drain_positions.append(pos)
+                else:
+                    label = "S"
+                    source_positions.append(pos)
+                    
+                contact=self.add_via_center(layers=self.active_stack,
                                             offset=pos,
-                                            width=contact.mod.second_layer_width,
-                                            height=contact.mod.second_layer_height)
+                                            size=(1, self.num_contacts),
+                                            directions=("V","V"),
+                                            implant_type=self.implant_type,
+                                            well_type=self.well_type)
+                self.add_layout_pin_rect_center(text=label,
+                                                layer="m1",
+                                                offset=pos,
+                                                width=contact.mod.second_layer_width,
+                                                height=contact.mod.second_layer_height)
+
+        pos = vector(self.active_offset.x + self.active_width - 0.5 * self.active_contact.width,
+                     self.contact_offset.y)
+        # Last one is the opposite of previous
+        if label == "S":
+            label = "D"
+            drain_positions.append(pos)
+        else:
+            label = "S"
+            source_positions.append(pos)
+        contact=self.add_via_center(layers=self.active_stack,
+                                    offset=pos,
+                                    size=(1, self.num_contacts),
+                                    directions=("V","V"),
+                                    implant_type=self.implant_type,
+                                    well_type=self.well_type)
+        self.add_layout_pin_rect_center(text=label,
+                                        layer="m1",
+                                        offset=pos,
+                                        width=contact.mod.second_layer_width,
+                                        height=contact.mod.second_layer_height)
                 
         if self.connect_active:
             self.connect_fingered_active(drain_positions, source_positions)

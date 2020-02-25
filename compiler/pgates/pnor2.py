@@ -48,10 +48,11 @@ class pnor2(pgate.pgate):
         """ Calls all functions related to the generation of the layout """
         
         self.setup_layout_constants()
-        self.route_supply_rails()
         self.place_ptx()
-        self.connect_rails()
         self.add_well_contacts()
+        self.determine_width()
+        self.route_supply_rails()
+        self.connect_rails()
         self.extend_wells()
         self.route_inputs()
         self.route_output()

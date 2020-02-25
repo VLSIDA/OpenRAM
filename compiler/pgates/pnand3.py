@@ -57,13 +57,15 @@ class pnand3(pgate.pgate):
         """ Calls all functions related to the generation of the layout """
 
         self.setup_layout_constants()
-        self.route_supply_rails()
         self.place_ptx()
-        self.connect_rails()
         self.add_well_contacts()
+        self.determine_width()
+        self.route_supply_rails()
+        self.connect_rails()
         self.extend_wells()
         self.route_inputs()
         self.route_output()
+        
 
     def add_ptx(self):
         """ Create the PMOS and NMOS transistors. """
@@ -90,14 +92,6 @@ class pnand3(pgate.pgate):
         overlap_xoffset = self.pmos.get_pin("D").ll().x - self.pmos.get_pin("S").ll().x
         self.ptx_offset = vector(overlap_xoffset, 0)
         
-        # Two PMOS devices and a well contact. Separation between each.
-        # Enclosure space on the sides.
-        self.width = 3 * self.pmos.active_width + self.pmos.active_contact.width \
-                          + 2 * self.active_space + 0.5 * self.nwell_enclose_active \
-                          - self.ptx_offset.x
-        self.well_width = self.width + 2 * self.nwell_enclose_active
-        # Height is an input parameter, so it is not recomputed.
-
         # This is the extra space needed to ensure DRC rules
         # to the active contacts
         nmos = factory.create(module_type="ptx", tx_type="nmos")
@@ -164,7 +158,6 @@ class pnand3(pgate.pgate):
         self.pmos3_pos = pmos2_pos + self.ptx_offset
         self.pmos3_inst.place(self.pmos3_pos)
         
-        
         nmos1_pos = vector(self.pmos.active_offset.x,
                            self.top_bottom_space)
         self.nmos1_inst.place(nmos1_pos)
@@ -189,7 +182,7 @@ class pnand3(pgate.pgate):
 
         self.connect_pin_to_rail(self.nmos1_inst, "S", "gnd")
 
-        self.connect_pin_to_rail(self.pmos1_inst, "S", "vdd")        
+        self.connect_pin_to_rail(self.pmos1_inst, "S", "vdd")
 
         self.connect_pin_to_rail(self.pmos2_inst, "D", "vdd")
 

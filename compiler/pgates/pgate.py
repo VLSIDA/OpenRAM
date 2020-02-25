@@ -264,3 +264,12 @@ class pgate(design.design):
         #               offset=implant_offset,
         #               width=implant_width,
         #               height=implant_height)
+
+    def determine_width(self):
+        """ Determine the width based on the well contacts (assumed to be on the right side) """
+        # Width is determined by well contact and spacing
+        self.width = max(self.nwell_contact.rx(), self.pwell_contact.rx()) + self.m1_space
+        self.well_width = self.width + 2 * self.nwell_enclose_active
+        # Height is an input parameter, so it is not recomputed.
+
+        

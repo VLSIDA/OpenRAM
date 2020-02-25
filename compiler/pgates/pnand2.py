@@ -49,10 +49,11 @@ class pnand2(pgate.pgate):
         """ Calls all functions related to the generation of the layout """
 
         self.setup_layout_constants()
-        self.route_supply_rails()
         self.place_ptx()
-        self.connect_rails()
         self.add_well_contacts()
+        self.determine_width()
+        self.route_supply_rails()
+        self.connect_rails()
         self.extend_wells()
         self.route_inputs()
         self.route_output()
@@ -95,15 +96,6 @@ class pnand2(pgate.pgate):
         # but determining offset to overlap the
         # source and drain pins
         self.overlap_offset = self.pmos.get_pin("D").ll() - self.pmos.get_pin("S").ll()
-
-        # Two PMOS devices and a well contact. Separation between each.
-        # Enclosure space on the sides.
-        self.width = 2 * self.pmos.active_width + contact.active_contact.width \
-                          + 2 * self.active_space \
-                          + 0.5 * self.nwell_enclose_active
-
-        self.well_width = self.width + 2 * self.nwell_enclose_active
-        # Height is an input parameter, so it is not recomputed.
 
         # This is the extra space needed to ensure DRC rules
         # to the active contacts

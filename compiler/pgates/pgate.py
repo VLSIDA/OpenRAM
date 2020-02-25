@@ -26,8 +26,8 @@ class pgate(design.design):
         if height:
             self.height = height
         elif not height:
-            # By default, we make it 8 M1 pitch tall
-            self.height = 8*self.m1_pitch
+            # By default, we make it 10 M1 pitch tall
+            self.height = 10*self.m1_pitch
             
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -103,7 +103,7 @@ class pgate(design.design):
                              - vector(0.5 * contact_width - 0.5 * self.poly_width, 0)
         elif position == "right":
             contact_offset = left_gate_offset \
-                             + vector(0.5 * contact.width + 0.5 * self.poly_width, 0)
+                             + vector(0.5 * contact_width + 0.5 * self.poly_width, 0)
         else:
             debug.error("Invalid contact placement option.", -1)
 

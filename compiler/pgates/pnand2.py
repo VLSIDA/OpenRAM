@@ -190,16 +190,16 @@ class pnand2(pgate.pgate):
 
     def route_inputs(self):
         """ Route the A and B inputs """
-        inputB_yoffset = self.nmos2_pos.y + self.nmos.active_height \
-                         + self.m2_space + 0.5 * self.m2_width
+        inputB_yoffset = self.nmos2_inst.uy() + 0.5 * contact.poly_contact.height
         self.route_input_gate(self.pmos2_inst,
                               self.nmos2_inst,
                               inputB_yoffset,
                               "B",
-                              position="center")
+                              position="right")
         
         # This will help with the wells and the input/output placement
-        self.inputA_yoffset = inputB_yoffset + self.input_spacing
+        self.inputA_yoffset = self.pmos2_inst.by() - self.poly_extend_active \
+                              - contact.poly_contact.height
         self.route_input_gate(self.pmos1_inst,
                               self.nmos1_inst,
                               self.inputA_yoffset,

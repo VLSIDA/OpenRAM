@@ -195,7 +195,7 @@ specific technology (e.g., [FreePDK45]) should be a subdirectory
 + Report bugs by submitting [Github issues].
 + Develop new features (see [how to contribute](./CONTRIBUTING.md))
 + Submit code/fixes using a [Github pull request] 
-+ Follow our [project][Github projects].
++ Follow our [project][Github project].
 + Read and cite our [ICCAD paper][OpenRAMpaper]
 
 # Further Help
@@ -214,15 +214,7 @@ OpenRAM is licensed under the [BSD 3-clause License](./LICENSE).
 
 - [Matthew Guthaus] from [VLSIDA] created the OpenRAM project and is the lead architect.
 - [James Stine] from [VLSIARCH] co-founded the project.
-- Hunter Nichols maintains and updates the timing characterization.
-- Michael Grimes created and maintains the multiport netlist code.
-- Jennifer Sowash is creating the OpenRAM IP library.
-- Jesse Cirimelli-Low created the datasheet generation.
-- Samira Ataei created early multi-bank layouts and control logic.
-- Bin Wu created early parameterized cells.
-- Yusu Wang is porting parameterized cells to new technologies.
-- Brian Chen created early prototypes of the timing characterizer.
-- Jeff Butera created early prototypes of the bank layout.
+- Many students: Hunter Nichols, Michael Grimes, Jennifer Sowash, Yusu Wang, Joey Kunzler, Jesse Cirimelli-Low, Samira Ataei, Bin Wu, Brian Chen, Jeff Butera
 
 If I forgot to add you, please let me know!
 
@@ -236,7 +228,7 @@ If I forgot to add you, please let me know!
 
 [Github issues]:         https://github.com/VLSIDA/OpenRAM/issues
 [Github pull request]:   https://github.com/VLSIDA/OpenRAM/pulls
-[Github projects]:       https://github.com/VLSIDA/OpenRAM/projects
+[Github project]:       https://github.com/VLSIDA/OpenRAM
 
 [documentation]:         https://docs.google.com/presentation/d/10InGB33N51I6oBHnqpU7_w9DXlx-qe9zdrlco2Yc5co/edit?usp=sharing
 [dev-group]:             mailto:openram-dev-group@ucsc.edu

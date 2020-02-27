@@ -18,7 +18,7 @@ An open-source static random access memory (SRAM) compiler.
 # What is OpenRAM?
 <img align="right" width="25%" src="images/SCMOS_16kb_sram.jpg">
 
-OpenRAM is an open-source Python framework to create the layout,
+OpenRAM is an award winning open-source Python framework to create the layout,
 netlists, timing and power models, placement and routing models, and
 other views necessary to use SRAMs in ASIC design. OpenRAM supports
 integration in both commercial and open-source flows with both

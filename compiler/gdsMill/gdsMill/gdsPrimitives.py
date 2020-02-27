@@ -1,12 +1,5 @@
 import math
 
-from globals import OPTS
-# default purpose layer is used for addText() in vlsiLayout.py
-if OPTS.tech_name == "s8":
-    purposeLayer=20
-else:
-    purposeLayer=0
-
 class GdsStructure:
     """Class represent a GDS Structure Object"""
     def __init__(self):
@@ -147,7 +140,7 @@ class GdsText:
         self.elementFlags=""
         self.plex=""
         self.drawingLayer=""
-        self.purposeLayer=purposeLayer
+        self.purposeLayer=0
         self.transFlags=[0,0,0]
         self.magFactor=""
         self.rotateAngle=""

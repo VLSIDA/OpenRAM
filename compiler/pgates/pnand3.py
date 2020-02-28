@@ -36,7 +36,8 @@ class pnand3(pgate.pgate):
         self.pmos_width = self.pmos_size * drc("minwidth_tx")
 
         # FIXME: Allow these to be sized
-        debug.check(size == 1,"Size 1 pnand3 is only supported now.")
+        debug.check(size == 1,
+                    "Size 1 pnand3 is only supported now.")
         self.tx_mults = 1
 
         # Creates the netlist and layout
@@ -66,7 +67,6 @@ class pnand3(pgate.pgate):
         self.route_inputs()
         self.route_output()
         
-
     def add_ptx(self):
         """ Create the PMOS and NMOS transistors. """
         self.nmos = factory.create(module_type="ptx",
@@ -148,8 +148,7 @@ class pnand3(pgate.pgate):
         """
 
         pmos1_pos = vector(self.pmos.active_offset.x,
-                           self.height - self.pmos.active_height \
-                           - self.top_bottom_space)
+                           self.height - self.pmos.active_height - self.top_bottom_space)
         self.pmos1_inst.place(pmos1_pos)
 
         pmos2_pos = pmos1_pos + self.ptx_offset
@@ -168,9 +167,6 @@ class pnand3(pgate.pgate):
         self.nmos3_pos = nmos2_pos + self.ptx_offset
         self.nmos3_inst.place(self.nmos3_pos)
 
-        # This will help with the wells and the input/output placement
-        self.output_pos = vector(0, 0.5*self.height)
-
     def add_well_contacts(self):
         """ Add n/p well taps to the layout and connect to supplies """
 
@@ -187,29 +183,30 @@ class pnand3(pgate.pgate):
         self.connect_pin_to_rail(self.pmos2_inst, "D", "vdd")
 
     def route_inputs(self):
-        """ Route the A and B inputs """
-        self.inputC_yoffset = self.nmos3_inst.uy() + 0.5 * contact.poly_contact.height
+        """ Route the A and B and C inputs """
+
+        # Put B right on the well line
+        self.inputB_yoffset = self.nwell_y_offset
+        self.route_input_gate(self.pmos2_inst,
+                              self.nmos2_inst,
+                              self.inputB_yoffset,
+                              "B",
+                              position="center")
+        
+        self.inputC_yoffset = self.inputB_yoffset - self.m1_pitch
         self.route_input_gate(self.pmos3_inst,
                               self.nmos3_inst,
                               self.inputC_yoffset,
                               "C",
                               position="center")
 
-        self.inputA_yoffset = self.pmos1_inst.by() - self.poly_extend_active \
-                              - contact.poly_contact.height
+        self.inputA_yoffset = self.inputB_yoffset + self.m1_pitch
         self.route_input_gate(self.pmos1_inst,
                               self.nmos1_inst,
                               self.inputA_yoffset,
                               "A",
                               position="center")
 
-
-        self.inputB_yoffset = 0.5*(self.inputA_yoffset + self.inputC_yoffset)
-        self.route_input_gate(self.pmos2_inst,
-                              self.nmos2_inst,
-                              self.inputB_yoffset,
-                              "B",
-                              position="center")
         
     def route_output(self):
         """ Route the Z output """

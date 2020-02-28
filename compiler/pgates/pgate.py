@@ -128,16 +128,16 @@ class pgate(design.design):
         """ Extend the n/p wells to cover whole cell """
 
         # This should match the cells in the cell library
-        nwell_y_offset = 0.48 * self.height
-        full_height = self.height + 0.5*self.m1_width
+        self.nwell_y_offset = 0.48 * self.height
+        full_height = self.height + 0.5* self.m1_width
         
         # FIXME: float rounding problem
         if "nwell" in layer:
             # Add a rail width to extend the well to the top of the rail
             nwell_max_offset = max(self.find_highest_layer_coords("nwell").y,
                                    full_height)
-            nwell_position = vector(0, nwell_y_offset) - vector(self.well_extend_active, 0)
-            nwell_height = nwell_max_offset - nwell_y_offset
+            nwell_position = vector(0, self.nwell_y_offset) - vector(self.well_extend_active, 0)
+            nwell_height = nwell_max_offset - self.nwell_y_offset
             self.add_rect(layer="nwell",
                           offset=nwell_position,
                           width=self.well_width,
@@ -153,7 +153,7 @@ class pgate(design.design):
             pwell_min_offset = min(self.find_lowest_layer_coords("pwell").y,
                                    -0.5 * self.m1_width)
             pwell_position = vector(-self.well_extend_active, pwell_min_offset)
-            pwell_height = nwell_y_offset - pwell_position.y
+            pwell_height = self.nwell_y_offset - pwell_position.y
             self.add_rect(layer="pwell",
                           offset=pwell_position,
                           width=self.well_width,

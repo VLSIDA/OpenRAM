@@ -293,7 +293,8 @@ class ptx(design.design):
         
         # poly_positions are the bottom center of the poly gates
         self.poly_positions = []
-
+        self.poly_gates = []
+        
         # It is important that these are from left to right,
         # so that the pins are in the right
         # order for the accessors
@@ -304,13 +305,15 @@ class ptx(design.design):
                                  offset=poly_offset,
                                  height=self.poly_height,
                                  width=self.poly_width)
-            self.add_layout_pin_rect_center(text="G",
-                                            layer="poly",
-                                            offset=poly_offset,
-                                            height=self.poly_height,
-                                            width=self.poly_width)
+            gate = self.add_layout_pin_rect_center(text="G",
+                                                   layer="poly",
+                                                   offset=poly_offset,
+                                                   height=self.poly_height,
+                                                   width=self.poly_width)
             self.poly_positions.append(poly_offset)
-            poly_offset = poly_offset + vector(self.poly_pitch,0)
+            self.poly_gates.append(gate)
+            
+            poly_offset = poly_offset + vector(self.poly_pitch, 0)
 
         if self.connect_poly:
             self.connect_fingered_poly(self.poly_positions)
@@ -369,6 +372,10 @@ class ptx(design.design):
         drain_positions = []
         source_positions = []
 
+        # Keep a list of the source/drain contacts
+        self.source_contacts = []
+        self.drain_contacts = []
+        
         # First one is always a SOURCE
         label = "S"
         pos = self.contact_offset
@@ -383,6 +390,7 @@ class ptx(design.design):
                                         offset=pos,
                                         width=contact.mod.second_layer_width,
                                         height=contact.mod.second_layer_height)
+        self.source_contacts.append(contact)
         source_positions.append(pos)
 
         # Skip these if they are going to be in series
@@ -409,6 +417,11 @@ class ptx(design.design):
                                                 offset=pos,
                                                 width=contact.mod.second_layer_width,
                                                 height=contact.mod.second_layer_height)
+                
+                if label == "S":
+                    self.source_contacts.append(contact)
+                else:
+                    self.drain_contacts.append(contact)
 
         pos = vector(self.active_offset.x + self.active_width - 0.5 * self.active_contact.width,
                      self.contact_offset.y)
@@ -430,6 +443,10 @@ class ptx(design.design):
                                         offset=pos,
                                         width=contact.mod.second_layer_width,
                                         height=contact.mod.second_layer_height)
+        if label == "S":
+            self.source_contacts.append(contact)
+        else:
+            self.drain_contacts.append(contact)
                 
         if self.connect_active:
             self.connect_fingered_active(drain_positions, source_positions)

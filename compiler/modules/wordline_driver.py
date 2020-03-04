@@ -75,8 +75,7 @@ class wordline_driver(design.design):
         """
 
         # Find the x offsets for where the vias/pins should be placed
-        a_xoffset = self.nand_inst[0].rx()
-        b_xoffset = self.inv2_inst[0].lx()
+        a_xoffset = self.nand_inst[0].lx()
         for num in range(self.rows):
             # this will result in duplicate polygons for rails, but who cares
             
@@ -90,7 +89,7 @@ class wordline_driver(design.design):
                 supply_pin = self.inv2_inst[num].get_pin(name)
 
                 # Add pins in two locations
-                for xoffset in [a_xoffset, b_xoffset]:
+                for xoffset in [a_xoffset]:
                     pin_pos = vector(xoffset, supply_pin.cy())
                     self.add_power_pin(name, pin_pos)
             

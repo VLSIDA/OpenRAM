@@ -267,8 +267,8 @@ class pgate(design.design):
 
     def determine_width(self):
         """ Determine the width based on the well contacts (assumed to be on the right side) """
-        # Width is determined by well contact and spacing
-        self.width = max(self.nwell_contact.rx(), self.pwell_contact.rx()) + self.m1_space
+        # Width is determined by well contact and spacing and allowing a supply via between each cell
+        self.width = max(self.nwell_contact.rx(), self.pwell_contact.rx()) + self.m1_space + 0.5 * contact.m1_via.width
         self.well_width = self.width + 2 * self.nwell_enclose_active
         # Height is an input parameter, so it is not recomputed.
 

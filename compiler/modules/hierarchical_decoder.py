@@ -521,7 +521,7 @@ class hierarchical_decoder(design.design):
         """ Add a pin for each row of vdd/gnd which are must-connects next level up. """
 
         # The vias will be placed in the center and right of the cells, respectively.
-        xoffset = self.nand_inst[0].cx()
+        xoffset = self.nand_inst[0].rx()
         for num in range(0, self.rows):
             for pin_name in ["vdd", "gnd"]:
                 # The nand and inv are the same height rows...

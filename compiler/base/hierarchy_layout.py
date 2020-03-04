@@ -517,12 +517,12 @@ class layout():
         self.connect_inst([])
         return inst
 
-    def add_via_stack(self, offset, direction, from_layer, to_layer,
-                      size=[1,1]):
+    def add_via_stack(self, offset, from_layer, to_layer,
+                      direction=None,
+                      size=[1, 1]):
         """
         Punch a stack of vias from a start layer to a target layer.
         """
-
         return self.__add_via_stack_internal(offset=offset,
                                              direction=direction,
                                              from_layer=from_layer,
@@ -531,8 +531,9 @@ class layout():
                                              last_via=None,
                                              size=size)
 
-    def add_via_stack_center(self, offset, direction, from_layer, to_layer,
-                             size=[1,1]):
+    def add_via_stack_center(self, offset, from_layer, to_layer,
+                             direction=None,
+                             size=[1, 1]):
         """
         Punch a stack of vias from a start layer to a target layer by the center
         coordinate accounting for mirroring and rotation.
@@ -544,7 +545,6 @@ class layout():
                                              via_func=self.add_via_center,
                                              last_via=None,
                                              size=size)
-
 
     def __add_via_stack_internal(self, offset, direction, from_layer, to_layer,
                                  via_func, last_via, size):
@@ -581,7 +581,6 @@ class layout():
                                              last_via=via,
                                              size=size)
 
-    
     def add_ptx(self, offset, mirror="R0", rotate=0, width=1, mults=1, tx_type="nmos"):
         """Adds a ptx module to the design."""
         import ptx

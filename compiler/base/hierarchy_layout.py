@@ -316,7 +316,7 @@ class layout():
         You can optionally rename the pin to a new name.
         """
         for pin_name in self.pin_map.keys():
-            self.copy_layout_pin(instance, pin_name, prefix+pin_name)
+            self.copy_layout_pin(instance, pin_name, prefix + pin_name)
             
     def add_layout_pin_segment_center(self, text, layer, start, end):
         """

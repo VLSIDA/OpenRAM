@@ -101,13 +101,20 @@ class bitcell_base_array(design.design):
                                     width=self.width,
                                     height=wl_pin.height())
 
-        # For every second row and column, add a via for gnd and vdd
+        # For non-square via stacks, vertical/horizontal direction refers to the stack orientation in 2d space
+        # Default uses prefered directions for each layer; this cell property is only currently used by s8 tech (03/20)
+        try:
+            force_power_pins_vertical = cell_properties.bitcell_force_power_pins_vertical
+        except AttributeError:
+            force_power_pins_vertical = None
+
+        # Add vdd/gnd via stacks
         for row in range(self.row_size):
             for col in range(self.column_size):
                 inst = self.cell_inst[row,col]
                 for pin_name in ["vdd", "gnd"]:
                     for pin in inst.get_pins(pin_name):
-                        self.add_power_pin(name=pin_name, loc=pin.center(), vertical=True, start_layer=pin.layer)
+                        self.add_power_pin(name=pin_name, loc=pin.center(), vertical=force_power_pins_vertical, start_layer=pin.layer)
 
     def _adjust_x_offset(self, xoffset, col, col_offset):
         tempx = xoffset

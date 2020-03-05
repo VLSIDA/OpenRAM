@@ -228,32 +228,25 @@ class precharge(design.design):
         layer_width = drc("minwidth_" + self.bitline_layer)
         layer_space = drc("{0}_to_{0}".format(self.bitline_layer))
 
-        yoffset = self.initial_yoffset - 0.5 * self.m2_pitch
         # adds the BL
         self.bl_xoffset = layer_space + 0.5 * layer_width
         top_pos = vector(self.bl_xoffset, self.height)
-        mid1_pos = vector(self.bl_xoffset, yoffset)
-        mid2_pos = vector(self.bitcell_bl_pin.cx(), yoffset)
-        pin_pos = vector(self.bitcell_bl_pin.cx(), 0)
-        self.add_path(self.bitline_layer,
-                      [top_pos, mid1_pos, mid2_pos, pin_pos])
+        pin_pos = vector(self.bl_xoffset, 0)
+        self.add_path(self.bitline_layer, [top_pos, pin_pos])
         self.bl_pin = self.add_layout_pin_segment_center(text="bl",
                                                          layer=self.bitline_layer,
                                                          start=pin_pos,
-                                                         end=mid2_pos)
+                                                         end=top_pos)
         
         # adds the BR
         self.br_xoffset = self.width - layer_space - 0.5 * layer_width
         top_pos = vector(self.br_xoffset, self.height)
-        mid1_pos = vector(self.br_xoffset, yoffset)
-        mid2_pos = vector(self.bitcell_br_pin.cx(), yoffset)
-        pin_pos = vector(self.bitcell_br_pin.cx(), 0)
-        self.add_path(self.bitline_layer,
-                      [top_pos, mid1_pos, mid2_pos, pin_pos])
+        pin_pos = vector(self.br_xoffset, 0)
+        self.add_path(self.bitline_layer, [top_pos, pin_pos])
         self.br_pin = self.add_layout_pin_segment_center(text="br",
                                                          layer=self.bitline_layer,
                                                          start=pin_pos,
-                                                         end=mid2_pos)
+                                                         end=top_pos)
 
     def connect_to_bitlines(self):
         """

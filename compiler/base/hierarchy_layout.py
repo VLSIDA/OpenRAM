@@ -37,7 +37,7 @@ class layout():
         self.objs = []       # Holds all other objects (labels, geometries, etc)
         self.pin_map = {}    # Holds name->pin_layout map for all pins
         self.visited = []    # List of modules we have already visited
-        self.is_library_cell = False # Flag for library cells 
+        self.is_library_cell = False # Flag for library cells
         self.gds_read()
         try:
             from tech import power_grid
@@ -71,7 +71,7 @@ class layout():
                                  (inv_num + 1) * height - \
                                  (inv_num % 2) * drc["minwidth_m1"])
             y_dir = -1
-            
+
         return (base_offset, y_dir)
 
     def find_lowest_coords(self):
@@ -90,7 +90,7 @@ class layout():
             lowesty2 = min(inst.by() for inst in self.insts)
         else:
             lowestx2 = lowesty2 = None
-            
+
         if lowestx1 == None and lowestx2 == None:
             return None
         elif lowestx1 == None:
@@ -146,7 +146,7 @@ class layout():
             subcoord = inst.mod.find_highest_layer_coords(layer) + inst.offset
             highestx = max(highestx, subcoord.x)
             highesty = max(highesty, subcoord.y)
-            
+
         return vector(highestx, highesty)
 
     def find_lowest_layer_coords(self, layer):
@@ -172,7 +172,7 @@ class layout():
             lowesty = min(lowesty, subcoord.y)
 
         return vector(lowestx, lowesty)
-        
+
     def translate_all(self, offset):
         """
         Translates all objects, instances, and pins by the given (x,y) offset
@@ -189,7 +189,7 @@ class layout():
             pin_list = self.pin_map[pin_name]
             for pin in pin_list:
                 pin.rect = [pin.ll() - offset, pin.ur() - offset]
-            
+
     def add_inst(self, name, mod, offset=[0, 0], mirror="R0", rotate=0):
         """ Adds an instance of a mod to this module """
         self.insts.append(geometry.instance(name, mod, offset, mirror, rotate))
@@ -204,7 +204,7 @@ class layout():
             if inst.name == name:
                 return inst
         return None
-    
+
     def add_rect(self, layer, offset, width=None, height=None):
         """
         Adds a rectangle on a given layer,offset with width and height
@@ -260,7 +260,7 @@ class layout():
                                  start-offset,
                                  minwidth_layer,
                                  end.y-start.y)
-    
+
     def get_pin(self, text):
         """
         Return the pin or list of pins
@@ -275,7 +275,7 @@ class layout():
         except Exception:
             self.gds_write("missing_pin.gds")
             debug.error("No pin found with name {0} on {1}. Saved as missing_pin.gds.".format(text,self.name),-1)
-            
+
     def get_pins(self, text):
         """
         Return a pin list (instead of a single pin)
@@ -290,17 +290,17 @@ class layout():
         Return a pin list of all pins
         """
         return self.pin_map.keys()
-        
+
     def copy_layout_pin(self, instance, pin_name, new_name=""):
         """
         Create a copied version of the layout pin at the current level.
         You can optionally rename the pin to a new name.
         """
         pins = instance.get_pins(pin_name)
-        
+
         debug.check(len(pins) > 0,
                     "Could not find pin {}".format(pin_name))
-        
+
         for pin in pins:
             if new_name == "":
                 new_name = pin.name
@@ -317,7 +317,7 @@ class layout():
         """
         for pin_name in self.pin_map.keys():
             self.copy_layout_pin(instance, pin_name, prefix + pin_name)
-            
+
     def add_layout_pin_segment_center(self, text, layer, start, end):
         """
         Creates a path like pin with center-line convention
@@ -326,9 +326,9 @@ class layout():
             file_name = "non_rectilinear.gds"
             self.gds_write(file_name)
             debug.error("Cannot have a non-manhatten layout pin: {}".format(file_name), -1)
-        
+            
         minwidth_layer = drc["minwidth_{}".format(layer)]
-        
+
         # one of these will be zero
         width = max(start.x, end.x) - min(start.x, end.x)
         height = max(start.y, end.y) - min(start.y, end.y)
@@ -342,7 +342,7 @@ class layout():
         # This makes sure it is long enough, but also it is not 0 width!
         height = max(minwidth_layer, height)
         width = max(minwidth_layer, width)
-        
+
         return self.add_layout_pin(text,
                                    layer,
                                    ll_offset,
@@ -359,13 +359,13 @@ class layout():
         ll_offset = offset - vector(0.5 * width, 0.5 * height)
 
         return self.add_layout_pin(text, layer, ll_offset, width, height)
-    
+
     def remove_layout_pin(self, text):
         """
         Delete a labeled pin (or all pins of the same name)
         """
         self.pin_map[text] = set()
-        
+
     def add_layout_pin(self, text, layer, offset, width=None, height=None):
         """
         Create a labeled pin
@@ -409,7 +409,7 @@ class layout():
                        layer=layer,
                        offset=offset + vector(0.5 * width,
                                               0.5 * height))
-            
+
     def add_label(self, text, layer, offset=[0, 0], zoom=-1):
         """Adds a text label on the given layer,offset, and zoom level"""
         # negative layers indicate "unused" layers in a given technology
@@ -448,7 +448,7 @@ class layout():
                     layer_stack=layers,
                     path=coordinates,
                     layer_widths=layer_widths)
-    
+
     def add_wire(self, layers, coordinates):
         """Connects a routing path on given layer,coordinates,width.
         The layers are the (horizontal, via, vertical). """
@@ -463,14 +463,14 @@ class layout():
         """ Return the preferred routing directions """
         from tech import preferred_directions
         return preferred_directions[layer]
-        
+
     def add_via(self, layers, offset, size=[1,1], directions=None, implant_type=None, well_type=None):
         """ Add a three layer via structure. """
 
         if not directions:
             directions = (self.get_preferred_direction(layers[0]),
                           self.get_preferred_direction(layers[2]))
-            
+
         from sram_factory import factory
         via = factory.create(module_type="contact",
                              layer_stack=layers,
@@ -495,7 +495,7 @@ class layout():
         if not directions:
             directions = (self.get_preferred_direction(layers[0]),
                           self.get_preferred_direction(layers[2]))
-            
+
         from sram_factory import factory
         via = factory.create(module_type="contact",
                              layer_stack=layers,
@@ -505,7 +505,7 @@ class layout():
                              well_type=well_type)
         height = via.height
         width = via.width
-        
+
         corrected_offset = offset + vector(-0.5 * width,
                                            -0.5 * height)
 
@@ -602,11 +602,11 @@ class layout():
         # This must be done for netlist only mode too
         if os.path.isfile(self.gds_file):
             self.is_library_cell = True
-            
+
         if OPTS.netlist_only:
             self.gds = None
             return
-        
+
         # open the gds file if it exists or else create a blank layout
         if os.path.isfile(self.gds_file):
             debug.info(3, "opening {}".format(self.gds_file))
@@ -662,7 +662,7 @@ class layout():
                                   height=height,
                                   center=False)
                 debug.info(2, "Adding {0} boundary {1}".format(self.name, boundary))
-                
+
         self.visited.append(self.name)
 
     def gds_write(self, gds_name):
@@ -681,10 +681,10 @@ class layout():
         # which may have been previously processed!
         # MRG: 10/4/18 We need to clear if we make changes and write a second GDS!
         self.clear_visited()
-        
+
         # recursively create all the remaining objects
         self.gds_write_file(self.gds)
-        
+
         # populates the xyTree data structure for gds
         # self.gds.prepareForWrite()
         writer.writeToFile(gds_name)
@@ -706,7 +706,7 @@ class layout():
             lpp = techlayer[layer]
         else:
             lpp = layer
-            
+
         blockages = []
         for i in self.objs:
             blockages += i.get_blockages(lpp)
@@ -724,7 +724,7 @@ class layout():
         pin_names = copy.deepcopy(self.pins)
         if self.name.startswith("pmos") or self.name.startswith("nmos"):
             pin_names.remove("B")
-            
+
         blockages = []
         for pin_name in pin_names:
             pin_list = self.get_pins(pin_name)
@@ -784,7 +784,7 @@ class layout():
 
         # half minwidth so we can return the center line offsets
         half_minwidth = 0.5 * drc["minwidth_{}".format(layer)]
-        
+
         line_positions = {}
         if vertical:
             for i in range(len(names)):
@@ -829,7 +829,7 @@ class layout():
                              layer_stack=("m1", "via1", "m2")):
         """ Vertical version of connect_bus. """
         self.connect_bus(mapping, inst, bus_offsets, layer_stack, False)
-        
+
     def connect_bus(self, mapping, inst, bus_offsets, layer_stack, horizontal):
         """
         Connect a mapping of pin -> name for a bus. This could be
@@ -842,7 +842,7 @@ class layout():
             route_layer = vertical_layer
         else:
             route_layer = horizontal_layer
-        
+
         for (pin_name, bus_name) in mapping:
             pin = inst.get_pin(pin_name)
             pin_pos = pin.center()
@@ -854,7 +854,7 @@ class layout():
             else:
                 # left/right then up/down
                 mid_pos = vector(bus_pos.x, pin_pos.y)
-                
+
             self.add_wire(layer_stack,
                           [bus_pos, mid_pos, pin_pos])
 
@@ -865,7 +865,7 @@ class layout():
                                     offset=pin_pos)
             # FIXME: output pins tend to not be rotate,
             # but supply pins are. Make consistent?
-            
+
             # We only need a via if they happened to align perfectly
             # so the add_wire didn't add a via
             if (horizontal and bus_pos.y == pin_pos.y) or (not horizontal and bus_pos.x == pin_pos.x):
@@ -899,7 +899,7 @@ class layout():
                         self.m3_space)
         else:
             debug.error("Cannot find layer pitch.")
-            
+
     def add_horizontal_trunk_route(self,
                                    pins,
                                    trunk_offset,
@@ -915,7 +915,7 @@ class layout():
         # if we are less than a pitch, just create a non-preferred layer jog
         if max_x-min_x <= pitch:
             half_layer_width = 0.5 * drc["minwidth_{0}".format(self.vertical_layer)]
-            
+
             # Add the horizontal trunk on the vertical layer!
             self.add_path(self.vertical_layer,
                           [vector(min_x - half_layer_width, trunk_offset.y),
@@ -955,7 +955,7 @@ class layout():
         if max_y-min_y <= pitch:
 
             half_layer_width = 0.5 * drc["minwidth_{0}".format(self.horizontal_layer)]
-            
+
             # Add the vertical trunk on the horizontal layer!
             self.add_path(self.horizontal_layer,
                           [vector(trunk_offset.x, min_y - half_layer_width),
@@ -978,7 +978,7 @@ class layout():
                 self.add_path(self.horizontal_layer, [pin.center(), mid])
                 self.add_via_center(layers=layer_stack,
                                     offset=mid)
-    
+
     def create_channel_route(self, netlist,
                              offset,
                              layer_stack,
@@ -996,7 +996,7 @@ class layout():
             Remove the pin from the graph and all conflicts
             """
             g.pop(pin, None)
-            
+
             # Remove the pin from all conflicts
             # FIXME: This is O(n^2), so maybe optimize it.
             for other_pin,conflicts in g.items():
@@ -1010,21 +1010,21 @@ class layout():
             Check all the pin pairs on two nets and return a pin
             overlap if any pin overlaps.
             """
-            
+
             for pin1 in net1:
                 for pin2 in net2:
                     if vcg_pin_overlap(pin1, pin2, vertical, pitch):
                         return True
 
             return False
-                            
+
         def vcg_pin_overlap(pin1, pin2, vertical, pitch):
             """ Check for vertical or horizontal overlap of the two pins """
             # FIXME: If the pins are not in a row, this may break.
             # However, a top pin shouldn't overlap another top pin,
             # for example, so the
             # extra comparison *shouldn't* matter.
-            
+
             # Pin 1 must be in the "BOTTOM" set
             x_overlap = pin1.by() < pin2.by() and abs(pin1.center().x-pin2.center().x)<pitch
 
@@ -1049,7 +1049,7 @@ class layout():
         # too if we want to minimize the
         # number of tracks!
         # hcg = {}
-        
+
         # Initialize the vertical conflict graph (vcg)
         # and make a list of all pins
         vcg = collections.OrderedDict()
@@ -1084,7 +1084,7 @@ class layout():
                                                        vertical,
                                                        self.horizontal_pitch):
                     vcg[net_name2].append(net_name1)
-                    
+
         # list of routes to do
         while vcg:
             # from pprint import pformat
@@ -1105,7 +1105,7 @@ class layout():
 
             # Remove the net from other constriants in the VCG
             vcg = remove_net_from_graph(net_name, vcg)
-            
+
             # Add the trunk routes from the bottom up for
             # horizontal or the left to right for vertical
             if vertical:
@@ -1137,7 +1137,7 @@ class layout():
         """ Add boundary for debugging dimensions """
         if OPTS.netlist_only:
             return
-        
+
         if "stdc" in techlayer.keys():
             boundary_layer = "stdc"
         else:
@@ -1152,7 +1152,7 @@ class layout():
                                               offset=ll,
                                               height=ur.y-ll.y,
                                               width=ur.x-ll.x)
-        
+
     def add_enclosure(self, insts, layer="nwell"):
         """ Add a layer that surrounds the given instances. Useful
         for creating wells, for example. Doesn't check for minimum widths or
@@ -1193,19 +1193,25 @@ class layout():
                               "supply router."
                               .format(name,inst.name,self.pwr_grid_layer))
 
-                
-        
+
+
     def add_power_pin(self, name, loc, size=[1, 1], vertical=False, start_layer="m1"):
         """
         Add a single power pin from the lowest power_grid layer down to M1 at
         the given center location. The starting layer is specified to determine
         which vias are needed.
         """
+
+        # Force vdd/gnd via stack to be vertically or horizontally oriented
+        # Default: None, uses prefered metal directions
         if vertical:
             direction = ("V", "V")
-        else:
+        elif not vertical and vertical is not None:
             direction = ("H", "H")
-            
+        else:
+            direction = None
+
+
         via = self.add_via_stack_center(from_layer=start_layer,
                                         to_layer=self.pwr_grid_layer,
                                         size=size,
@@ -1222,7 +1228,7 @@ class layout():
                                             offset=loc,
                                             width=via.width,
                                             height=via.height)
-        
+
     def add_power_ring(self, bbox):
         """
         Create vdd and gnd power rings around an area of the bounding box
@@ -1287,7 +1293,7 @@ class layout():
                                              offset=offset,
                                              width=width,
                                              height=self.supply_rail_width)
-        
+
         # TOP horizontal rails
         offset = vector(ll.x, ur.y) + vector(-2 * self.supply_rail_pitch,
                                              0)
@@ -1328,7 +1334,7 @@ class layout():
             else:
                 self.supply_vias -= 1
                 break
-        
+
         via_points = [vector(self.left_gnd_x_center, self.bottom_gnd_y_center),
                       vector(self.left_gnd_x_center, self.top_gnd_y_center),
                       vector(self.right_gnd_x_center, self.bottom_gnd_y_center),
@@ -1337,7 +1343,7 @@ class layout():
                       vector(self.left_vdd_x_center, self.top_vdd_y_center),
                       vector(self.right_vdd_x_center, self.bottom_vdd_y_center),
                       vector(self.right_vdd_x_center, self.top_vdd_y_center)]
-                      
+
         for pt in via_points:
             self.add_via_center(layers=self.m1_stack,
                                 offset=pt,
@@ -1390,4 +1396,3 @@ class layout():
             debug.info(0, "name={0} : mod={1} : offset={2}".format(inst.name,
                                                                    inst.mod.name,
                                                                    inst.offset))
-

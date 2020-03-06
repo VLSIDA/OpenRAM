@@ -126,11 +126,22 @@ class bank(design.design):
         
         bl_pin_name = self.bitcell_array.get_rbl_bl_name(self.port_rbl_map[port])
         bl_pin = self.bitcell_array_inst.get_pin(bl_pin_name)
-        self.add_layout_pin(text="rbl_bl{0}".format(port),
-                            layer=bl_pin.layer,
-                            offset=bl_pin.ll(),
-                            height=bl_pin.height(),
-                            width=bl_pin.width())
+        # This will ensure the pin is only on the top or bottom edge
+        if port % 2:
+            via_offset = bl_pin.uc()
+            left_right_offset = vector(self.max_x_offset, via_offset.y)
+        else:
+            via_offset = bl_pin.bc()
+            left_right_offset = vector(self.min_x_offset, via_offset.y)
+        if bl_pin == "m1":
+            self.add_via_center(layers=self.m1_stack,
+                                offset=via_offset)
+        self.add_via_center(layers=self.m2_stack,
+                            offset=via_offset)
+        self.add_layout_pin_segment_center(text="rbl_bl{0}".format(port),
+                                           layer="m3",
+                                           start=left_right_offset,
+                                           end=via_offset)
             
     def route_bitlines(self, port):
         """ Route the bitlines depending on the port type rw, w, or r. """
@@ -662,9 +673,13 @@ class bank(design.design):
         inst2_bl_name = inst2.mod.get_bl_names() + "_{}"
         inst2_br_name = inst2.mod.get_br_names() + "_{}"
         
-        self.connect_bitlines(inst1=inst1, inst2=inst2, num_bits=self.num_cols,
-                              inst1_bl_name=inst1_bl_name, inst1_br_name=inst1_br_name,
-                              inst2_bl_name=inst2_bl_name, inst2_br_name=inst2_br_name)
+        self.connect_bitlines(inst1=inst1,
+                              inst2=inst2,
+                              num_bits=self.num_cols,
+                              inst1_bl_name=inst1_bl_name,
+                              inst1_br_name=inst1_br_name,
+                              inst2_bl_name=inst2_bl_name,
+                              inst2_br_name=inst2_br_name)
 
         # Connect the replica bitlines
         rbl_bl_name=self.bitcell_array.get_rbl_bl_name(self.port_rbl_map[port])

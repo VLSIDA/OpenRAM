@@ -84,7 +84,7 @@ class sram_base(design, verilog, lef):
     def create_netlist(self):
         """ Netlist creation """
         
-        start_time = datetime.now()
+        start_time = datetime.datetime.now()
         
         # Must create the control logic before pins to get the pins
         self.add_modules()
@@ -96,20 +96,20 @@ class sram_base(design, verilog, lef):
         self.height=0
         
         if not OPTS.is_unit_test:
-            print_time("Submodules", datetime.now(), start_time)
+            print_time("Submodules", datetime.datetime.now(), start_time)
         
     def create_layout(self):
         """ Layout creation """
-        start_time = datetime.now()
+        start_time = datetime.datetime.now()
         self.place_instances()
         if not OPTS.is_unit_test:
-            print_time("Placement", datetime.now(), start_time)
+            print_time("Placement", datetime.datetime.now(), start_time)
 
-        start_time = datetime.now()
+        start_time = datetime.datetime.now()
         self.route_layout()
         self.route_supplies()
         if not OPTS.is_unit_test:
-            print_time("Routing", datetime.now(), start_time)
+            print_time("Routing", datetime.datetime.now(), start_time)
 
         self.add_lvs_correspondence_points()
         
@@ -119,11 +119,11 @@ class sram_base(design, verilog, lef):
         self.width = highest_coord[0]
         self.height = highest_coord[1]
 
-        start_time = datetime.now()
+        start_time = datetime.datetime.now()
         # We only enable final verification if we have routed the design
         self.DRC_LVS(final_verification=OPTS.route_supplies, top_level=True)
         if not OPTS.is_unit_test:
-            print_time("Verification", datetime.now(), start_time)
+            print_time("Verification", datetime.datetime.now(), start_time)
 
     def create_modules(self):
         debug.error("Must override pure virtual function.", -1)
@@ -526,6 +526,41 @@ class sram_base(design, verilog, lef):
             self.add_via_center(layers=self.m2_stack,
                                 offset=in_pos)
 
+    def connect_hbus_m2m3(self, src_pin, dest_pin):
+        """
+        Helper routine to connect an instance to a horizontal bus.
+        Routes horizontal then vertical L shape.
+        Dest pin is on M1/M2/M3.
+        Src pin can be on M1/M2/M3.
+        """
+        
+        if src_pin.cx()<dest_pin.cx():
+            in_pos = src_pin.rc()
+        else:
+            in_pos = src_pin.lc()
+        if src_pin.cy() < dest_pin.cy():
+            out_pos = dest_pin.lc()
+        else:
+            out_pos = dest_pin.rc()
+
+        # move horizontal first
+        self.add_wire(("m3", "via2", "m2"),
+                      [in_pos,
+                       vector(out_pos.x, in_pos.y),
+                       out_pos])
+        if src_pin.layer=="m1":
+            self.add_via_center(layers=self.m1_stack,
+                                offset=in_pos)
+        if src_pin.layer in ["m1", "m2"]:
+            self.add_via_center(layers=self.m2_stack,
+                                offset=in_pos)
+        if dest_pin.layer=="m1":
+            self.add_via_center(layers=self.m1_stack,
+                                offset=out_pos)
+        if dest_pin.layer=="m3":
+            self.add_via_center(layers=self.m2_stack,
+                                offset=out_pos)
+            
     def sp_write(self, sp_name):
         # Write the entire spice of the object to the file
         ############################################################

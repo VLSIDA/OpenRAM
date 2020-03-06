@@ -128,10 +128,10 @@ class bank(design.design):
         bl_pin = self.bitcell_array_inst.get_pin(bl_pin_name)
         # This will ensure the pin is only on the top or bottom edge
         if port % 2:
-            via_offset = bl_pin.uc()
+            via_offset = bl_pin.uc() + vector(0, self.m2_pitch)
             left_right_offset = vector(self.max_x_offset, via_offset.y)
         else:
-            via_offset = bl_pin.bc()
+            via_offset = bl_pin.bc() - vector(0, self.m2_pitch)
             left_right_offset = vector(self.min_x_offset, via_offset.y)
         if bl_pin == "m1":
             self.add_via_center(layers=self.m1_stack,

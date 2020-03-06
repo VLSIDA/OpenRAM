@@ -316,16 +316,17 @@ class layout():
         You can optionally rename the pin to a new name.
         """
         for pin_name in self.pin_map.keys():
-            self.copy_layout_pin(instance, pin_name, prefix+pin_name)
+            self.copy_layout_pin(instance, pin_name, prefix + pin_name)
 
     def add_layout_pin_segment_center(self, text, layer, start, end):
         """
         Creates a path like pin with center-line convention
         """
-
-        debug.check(start.x == end.x or start.y == end.y,
-                    "Cannot have a non-manhatten layout pin.")
-
+        if start.x != end.x and start.y != end.y:
+            file_name = "non_rectilinear.gds"
+            self.gds_write(file_name)
+            debug.error("Cannot have a non-manhatten layout pin: {}".format(file_name), -1)
+            
         minwidth_layer = drc["minwidth_{}".format(layer)]
 
         # one of these will be zero
@@ -516,12 +517,12 @@ class layout():
         self.connect_inst([])
         return inst
 
-    def add_via_stack(self, offset, direction, from_layer, to_layer,
-                      size=[1,1]):
+    def add_via_stack(self, offset, from_layer, to_layer,
+                      direction=None,
+                      size=[1, 1]):
         """
         Punch a stack of vias from a start layer to a target layer.
         """
-
         return self.__add_via_stack_internal(offset=offset,
                                              direction=direction,
                                              from_layer=from_layer,
@@ -530,8 +531,9 @@ class layout():
                                              last_via=None,
                                              size=size)
 
-    def add_via_stack_center(self, offset, direction, from_layer, to_layer,
-                             size=[1,1]):
+    def add_via_stack_center(self, offset, from_layer, to_layer,
+                             direction=None,
+                             size=[1, 1]):
         """
         Punch a stack of vias from a start layer to a target layer by the center
         coordinate accounting for mirroring and rotation.
@@ -543,7 +545,6 @@ class layout():
                                              via_func=self.add_via_center,
                                              last_via=None,
                                              size=size)
-
 
     def __add_via_stack_internal(self, offset, direction, from_layer, to_layer,
                                  via_func, last_via, size):
@@ -579,7 +580,6 @@ class layout():
                                              via_func=via_func,
                                              last_via=via,
                                              size=size)
-
 
     def add_ptx(self, offset, mirror="R0", rotate=0, width=1, mults=1, tx_type="nmos"):
         """Adds a ptx module to the design."""

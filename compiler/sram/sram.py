@@ -5,13 +5,11 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import sys
 import datetime
-import getpass
 import debug
 from globals import OPTS, print_time
-from sram_config import sram_config
-    
+
+
 class sram():
     """
     This is not a design module, but contains an SRAM design instance.
@@ -28,7 +26,7 @@ class sram():
         from design import design
         design.name_map=[]
 
-        debug.info(2, "create sram of size {0} with {1} num of words {2} banks".format(self.word_size, 
+        debug.info(2, "create sram of size {0} with {1} num of words {2} banks".format(self.word_size,
                                                                                        self.num_words,
                                                                                        self.num_banks))
         start_time = datetime.datetime.now()
@@ -40,29 +38,27 @@ class sram():
         elif self.num_banks == 2:
             from sram_2bank import sram_2bank as sram
         else:
-            debug.error("Invalid number of banks.",-1)
+            debug.error("Invalid number of banks.", -1)
 
-        self.s = sram(name, sram_config)  
+        self.s = sram(name, sram_config)
         self.s.create_netlist()
         if not OPTS.netlist_only:
             self.s.create_layout()
         
         if not OPTS.is_unit_test:
             print_time("SRAM creation", datetime.datetime.now(), start_time)
-
     
-    def sp_write(self,name):
+    def sp_write(self, name):
         self.s.sp_write(name)
 
-    def lef_write(self,name):
+    def lef_write(self, name):
         self.s.lef_write(name)
 
-    def gds_write(self,name):
+    def gds_write(self, name):
         self.s.gds_write(name)
 
-    def verilog_write(self,name):
+    def verilog_write(self, name):
         self.s.verilog_write(name)
-
 
     def save(self):
         """ Save all the output files while reporting time to do it as well. """
@@ -107,7 +103,6 @@ class sram():
         debug.print_raw("LIB: Characterizing... ")
         lib(out_dir=OPTS.output_path, sram=self.s, sp_file=sp_file)
         print_time("Characterization", datetime.datetime.now(), start_time)
-       
 
         # Write the config file
         start_time = datetime.datetime.now()

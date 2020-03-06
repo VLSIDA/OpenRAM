@@ -234,8 +234,8 @@ class pnand2(pgate.pgate):
         self.add_layout_pin_rect_center(text="Z",
                                         layer="m1",
                                         offset=out_offset,
-                                        width=contact.m1_via.first_layer_height,
-                                        height=contact.m1_via.first_layer_width)
+                                        width=contact.m1_via.first_layer_width,
+                                        height=contact.m1_via.first_layer_height)
 
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""

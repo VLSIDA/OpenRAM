@@ -115,7 +115,7 @@ class wordline_driver(design.design):
                                "vdd", "gnd"])
             
     def place_drivers(self):
-        nand2_xoffset = 2*self.m1_width + 5*self.m1_space 
+        nand2_xoffset = 2 * self.m1_width + 5 * self.m1_space
         inv2_xoffset = nand2_xoffset + self.nand2.width
         
         self.width = inv2_xoffset + self.inv.width
@@ -123,10 +123,10 @@ class wordline_driver(design.design):
         
         for row in range(self.rows):
             if (row % 2):
-                y_offset = self.inv.height*(row + 1)
+                y_offset = self.inv.height * (row + 1)
                 inst_mirror = "MX"
             else:
-                y_offset = self.inv.height*row
+                y_offset = self.inv.height * row
                 inst_mirror = "R0"
 
             nand2_offset = [nand2_xoffset, y_offset]
@@ -168,8 +168,8 @@ class wordline_driver(design.design):
             zr_pos = nand_inst.get_pin("Z").rc()
             al_pos = inv2_inst.get_pin("A").lc()
             # ensure the bend is in the middle
-            mid1_pos = vector(0.5*(zr_pos.x+al_pos.x), zr_pos.y)
-            mid2_pos = vector(0.5*(zr_pos.x+al_pos.x), al_pos.y)
+            mid1_pos = vector(0.5 * (zr_pos.x + al_pos.x), zr_pos.y)
+            mid2_pos = vector(0.5 * (zr_pos.x + al_pos.x), al_pos.y)
             self.add_path("m1", [zr_pos, mid1_pos, mid2_pos, al_pos])
 
             # connect the decoder input pin to nand2 B
@@ -180,7 +180,7 @@ class wordline_driver(design.design):
             up_or_down = self.m2_space if row % 2 else -self.m2_space
             input_offset = vector(0, b_pos.y + up_or_down)
             base_offset = vector(clk_offset.x, input_offset.y)
-            contact_offset = vector(0.5 * self.m2_width + self.m2_space + 0.5 * contact.m1_via.width, 0) 
+            contact_offset = vector(0.5 * self.m2_width + self.m2_space + 0.5 * contact.m1_via.width, 0)
             mid_via_offset = base_offset + contact_offset
 
             # must under the clk line in M1
@@ -207,7 +207,7 @@ class wordline_driver(design.design):
                                                end=wl_offset - vector(self.m1_width, 0))
 
     def determine_wordline_stage_efforts(self, external_cout, inp_is_rise=True):
-        """ 
+        """
         Follows the clk_buf to a wordline signal adding
         each stages stage effort to a list.
         """
@@ -224,7 +224,7 @@ class wordline_driver(design.design):
         return stage_effort_list
         
     def get_wl_en_cin(self):
-        """ 
+        """
         Get the relative capacitance of all
         the enable connections in the bank
         """

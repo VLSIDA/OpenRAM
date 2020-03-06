@@ -259,7 +259,7 @@ class pnand3(pgate.pgate):
         # In fF
         c_para = spice["min_tx_drain_c"] * (self.nmos_size / parameter["min_tx_size"])
         transition_prob = 0.1094
-        return transition_prob *(c_load + c_para) 
+        return transition_prob * (c_load + c_para) 
 
     def input_load(self):
         """Return the relative input capacitance of a single input"""

@@ -20,8 +20,7 @@ class hierarchical_decoder(design.design):
     def __init__(self, name, rows):
         design.design.__init__(self, name)
 
-        self.NAND_FORMAT = "DEC_NAND_{0}"
-        self.INV_FORMAT = "DEC_INV_{0}"
+        self.AND_FORMAT = "DEC_AND_{0}"
         
         self.pre2x4_inst = []
         self.pre3x8_inst = []
@@ -58,12 +57,12 @@ class hierarchical_decoder(design.design):
         self.inv = factory.create(module_type="pinv",
                                   height=self.cell_height)
         self.add_mod(self.inv)
-        self.nand2 = factory.create(module_type="pnand2",
+        self.and2 = factory.create(module_type="pand2",
+                                   height=self.cell_height)
+        self.add_mod(self.and2)
+        self.and3 = factory.create(module_type="pand3",
                                     height=self.cell_height)
-        self.add_mod(self.nand2)
-        self.nand3 = factory.create(module_type="pnand3",
-                                    height=self.cell_height)
-        self.add_mod(self.nand3)
+        self.add_mod(self.and3)
         
         self.add_decoders()
 
@@ -143,9 +142,9 @@ class hierarchical_decoder(design.design):
 
         # Calculates height and width of row-decoder
         if (self.num_inputs == 4 or self.num_inputs == 5):
-            nand_width = self.nand2.width
+            nand_width = self.and2.width
         else:
-            nand_width = self.nand3.width
+            nand_width = self.and3.width
         self.internal_routing_width = self.m2_pitch * self.total_number_of_predecoder_outputs
         self.row_decoder_height = self.inv.height * self.rows
 
@@ -309,33 +308,32 @@ class hierarchical_decoder(design.design):
         self.pre3x8_inst[num].place(offset)
 
     def create_row_decoder(self):
-        """ Create the row-decoder by placing NAND2/NAND3 and Inverters
+        """ Create the row-decoder by placing AND2/AND3 and Inverters
         and add the primary decoder output pins. """
         if (self.num_inputs >= 4):
-            self.create_decoder_nand_array()
-            self.create_decoder_inv_array()
+            self.create_decoder_and_array()
 
-    def create_decoder_nand_array(self):
-        """ Add a column of NAND gates for final decode """
+    def create_decoder_and_array(self):
+        """ Add a column of AND gates for final decode """
 
-        self.nand_inst = []
+        self.and_inst = []
         
-        # Row Decoder NAND GATE array for address inputs <5.
+        # Row Decoder AND GATE array for address inputs <5.
         if (self.num_inputs == 4 or self.num_inputs == 5):
             for i in range(len(self.predec_groups[0])):
                 for j in range(len(self.predec_groups[1])):
                     row = len(self.predec_groups[0]) * j + i
                     if (row < self.rows):
-                        name = self.NAND_FORMAT.format(row)
-                        self.nand_inst.append(self.add_inst(name=name,
-                                                            mod=self.nand2))
+                        name = self.AND_FORMAT.format(row)
+                        self.and_inst.append(self.add_inst(name=name,
+                                                           mod=self.and2))
                         pins =["out_{0}".format(i),
                                "out_{0}".format(j + len(self.predec_groups[0])),
-                               "Z_{0}".format(row),
+                               "decode_{0}".format(row),
                                "vdd", "gnd"]
                         self.connect_inst(pins)
 
-        # Row Decoder NAND GATE array for address inputs >5.
+        # Row Decoder AND GATE array for address inputs >5.
         elif (self.num_inputs > 5):
             for i in range(len(self.predec_groups[0])):
                 for j in range(len(self.predec_groups[1])):
@@ -344,104 +342,57 @@ class hierarchical_decoder(design.design):
                             + len(self.predec_groups[0]) * j + i
 
                         if (row < self.rows):
-                            name = self.NAND_FORMAT.format(row)
-                            self.nand_inst.append(self.add_inst(name=name,
-                                                                mod=self.nand3))
+                            name = self.AND_FORMAT.format(row)
+                            self.and_inst.append(self.add_inst(name=name,
+                                                               mod=self.and3))
                         
                             pins = ["out_{0}".format(i),
                                     "out_{0}".format(j + len(self.predec_groups[0])),
                                     "out_{0}".format(k + len(self.predec_groups[0]) + len(self.predec_groups[1])),
-                                    "Z_{0}".format(row),
+                                    "decode_{0}".format(row),
                                     "vdd", "gnd"]
                             self.connect_inst(pins)
 
-    def create_decoder_inv_array(self):
-        """
-        Add a column of INV gates for the decoder.
-        """
-        
-        self.inv_inst = []
-        for row in range(self.rows):
-            name = self.INV_FORMAT.format(row)
-            self.inv_inst.append(self.add_inst(name=name,
-                                               mod=self.inv))
-            self.connect_inst(args=["Z_{0}".format(row),
-                                    "decode_{0}".format(row),
-                                    "vdd", "gnd"])
-
-    def place_decoder_inv_array(self):
-        """
-        Place the column of INV gates for the decoder above the predecoders
-        and to the right of the NAND decoders.
-        """
-        
-        if (self.num_inputs == 4 or self.num_inputs == 5):
-            x_off = self.internal_routing_width + self.nand2.width
-        else:
-            x_off = self.internal_routing_width + self.nand3.width
-
-        for row in range(self.rows):
-            if (row % 2 == 0):
-                inv_row_height = self.inv.height * row
-                mirror = "R0"
-            else:
-                inv_row_height = self.inv.height * (row + 1)
-                mirror = "MX"
-            y_off = inv_row_height
-            offset = vector(x_off, y_off)
-            self.inv_inst[row].place(offset=offset,
-                                     mirror=mirror)
-
     def place_row_decoder(self):
         """
-        Place the row-decoder by placing NAND2/NAND3 and Inverters
+        Place the row-decoder by placing AND2/AND3 and Inverters
         and add the primary decoder output pins.
         """
         if (self.num_inputs >= 4):
-            self.place_decoder_nand_array()
-            self.place_decoder_inv_array()
+            self.place_decoder_and_array()
             self.route_decoder()
 
-    def place_decoder_nand_array(self):
-        """ Add a column of NAND gates for final decode """
+    def place_decoder_and_array(self):
+        """ Add a column of AND gates for final decode """
         
-        # Row Decoder NAND GATE array for address inputs <5.
+        # Row Decoder AND GATE array for address inputs <5.
         if (self.num_inputs == 4 or self.num_inputs == 5):
-            self.place_nand_array(nand_mod=self.nand2)
+            self.place_and_array(and_mod=self.and2)
 
-        # Row Decoder NAND GATE array for address inputs >5.
+        # Row Decoder AND GATE array for address inputs >5.
         # FIXME: why this correct offset?)
         elif (self.num_inputs > 5):
-            self.place_nand_array(nand_mod=self.nand3)
+            self.place_and_array(and_mod=self.and3)
 
-    def place_nand_array(self, nand_mod):
-        """ Add a column of NAND gates for the decoder above the predecoders."""
+    def place_and_array(self, and_mod):
+        """ Add a column of AND gates for the decoder above the predecoders."""
         
         for row in range(self.rows):
             if ((row % 2) == 0):
-                y_off = nand_mod.height * row
+                y_off = and_mod.height * row
                 mirror = "R0"
             else:
-                y_off = nand_mod.height * (row + 1)
+                y_off = and_mod.height * (row + 1)
                 mirror = "MX"
 
-            self.nand_inst[row].place(offset=[self.internal_routing_width, y_off],
-                                      mirror=mirror)
+            self.and_inst[row].place(offset=[self.internal_routing_width, y_off],
+                                     mirror=mirror)
 
     def route_decoder(self):
-        """ Route the nand to inverter in the decoder and add the pins. """
+        """ Add the pins. """
 
         for row in range(self.rows):
-
-            # route nand output to output inv input
-            zr_pos = self.nand_inst[row].get_pin("Z").rc()
-            al_pos = self.inv_inst[row].get_pin("A").lc()
-            # ensure the bend is in the middle
-            mid1_pos = vector(0.5 * (zr_pos.x + al_pos.x), zr_pos.y)
-            mid2_pos = vector(0.5 * (zr_pos.x + al_pos.x), al_pos.y)
-            self.add_path("m1", [zr_pos, mid1_pos, mid2_pos, al_pos])
-            
-            z_pin = self.inv_inst[row].get_pin("Z")
+            z_pin = self.and_inst[row].get_pin("Z")
             self.add_layout_pin(text="decode_{0}".format(row),
                                 layer="m1",
                                 offset=z_pin.ll(),
@@ -484,12 +435,12 @@ class hierarchical_decoder(design.design):
                 self.route_predecode_rail_m3(predecode_name, pin)
             
     def route_rails_to_decoder(self):
-        """ Use the self.predec_groups to determine the connections to the decoder NAND gates.
-        Inputs of NAND2/NAND3 gates come from different groups.
+        """ Use the self.predec_groups to determine the connections to the decoder AND gates.
+        Inputs of AND2/AND3 gates come from different groups.
         For example for these groups [ [0,1,2,3] ,[4,5,6,7],
-        [8,9,10,11,12,13,14,15] ] the first NAND3 inputs are connected to
-        [0,4,8] and second NAND3 is connected to [0,4,9]  ........... and the
-        128th NAND3 is connected to [3,7,15]
+        [8,9,10,11,12,13,14,15] ] the first AND3 inputs are connected to
+        [0,4,8] and second AND3 is connected to [0,4,9]  ........... and the
+        128th AND3 is connected to [3,7,15]
         """
         row_index = 0
         if (self.num_inputs == 4 or self.num_inputs == 5):
@@ -498,9 +449,9 @@ class hierarchical_decoder(design.design):
                     # FIXME: convert to connect_bus?
                     if (row_index < self.rows):
                         predecode_name = "predecode_{}".format(index_A)
-                        self.route_predecode_rail(predecode_name, self.nand_inst[row_index].get_pin("A"))
-                        predecode_name = "predecode_{}".format(index_B)                    
-                        self.route_predecode_rail(predecode_name, self.nand_inst[row_index].get_pin("B"))
+                        self.route_predecode_rail(predecode_name, self.and_inst[row_index].get_pin("A"))
+                        predecode_name = "predecode_{}".format(index_B)
+                        self.route_predecode_rail(predecode_name, self.and_inst[row_index].get_pin("B"))
                     row_index = row_index + 1
 
         elif (self.num_inputs > 5):
@@ -510,35 +461,25 @@ class hierarchical_decoder(design.design):
                         # FIXME: convert to connect_bus?
                         if (row_index < self.rows):
                             predecode_name = "predecode_{}".format(index_A)
-                            self.route_predecode_rail(predecode_name, self.nand_inst[row_index].get_pin("A"))
+                            self.route_predecode_rail(predecode_name, self.and_inst[row_index].get_pin("A"))
                             predecode_name = "predecode_{}".format(index_B)
-                            self.route_predecode_rail(predecode_name, self.nand_inst[row_index].get_pin("B"))
+                            self.route_predecode_rail(predecode_name, self.and_inst[row_index].get_pin("B"))
                             predecode_name = "predecode_{}".format(index_C)
-                            self.route_predecode_rail(predecode_name, self.nand_inst[row_index].get_pin("C"))
+                            self.route_predecode_rail(predecode_name, self.and_inst[row_index].get_pin("C"))
                         row_index = row_index + 1
 
     def route_vdd_gnd(self):
         """ Add a pin for each row of vdd/gnd which are must-connects next level up. """
 
         # The vias will be placed in the center and right of the cells, respectively.
-        xoffset = self.nand_inst[0].rx()
+        xoffset = self.and_inst[0].rx()
         for num in range(0, self.rows):
             for pin_name in ["vdd", "gnd"]:
                 # The nand and inv are the same height rows...
-                supply_pin = self.nand_inst[num].get_pin(pin_name)
+                supply_pin = self.and_inst[num].get_pin(pin_name)
                 pin_pos = vector(xoffset, supply_pin.cy())
                 self.add_power_pin(name=pin_name,
                                    loc=pin_pos)
-
-        # Make a redundant rail too
-        for num in range(0, self.rows, 2):
-            for pin_name in ["vdd", "gnd"]:
-                start = self.nand_inst[num].get_pin(pin_name).lc()
-                end = self.inv_inst[num].get_pin(pin_name).rc()
-                mid = (start + end).scale(0.5, 0.5)
-                self.add_rect_center(layer="m1",
-                                     offset=mid,
-                                     width=end.x - start.x)
                 
         # Copy the pins from the predecoders
         for pre in self.pre2x4_inst + self.pre3x8_inst:

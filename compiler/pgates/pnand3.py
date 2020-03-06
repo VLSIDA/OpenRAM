@@ -185,6 +185,7 @@ class pnand3(pgate.pgate):
     def route_inputs(self):
         """ Route the A and B and C inputs """
 
+        m1_pitch = self.m1_space + contact.m1_via.first_layer_height
         # Put B right on the well line
         self.inputB_yoffset = self.nwell_y_offset
         self.route_input_gate(self.pmos2_inst,
@@ -193,20 +194,19 @@ class pnand3(pgate.pgate):
                               "B",
                               position="center")
         
-        self.inputC_yoffset = self.inputB_yoffset - self.m1_pitch
+        self.inputC_yoffset = self.inputB_yoffset - m1_pitch
         self.route_input_gate(self.pmos3_inst,
                               self.nmos3_inst,
                               self.inputC_yoffset,
                               "C",
                               position="center")
 
-        self.inputA_yoffset = self.inputB_yoffset + self.m1_pitch
+        self.inputA_yoffset = self.inputB_yoffset + m1_pitch
         self.route_input_gate(self.pmos1_inst,
                               self.nmos1_inst,
                               self.inputA_yoffset,
                               "A",
                               position="center")
-
         
     def route_output(self):
         """ Route the Z output """

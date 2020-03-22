@@ -32,61 +32,58 @@ class hierarchical_predecode(design.design):
         self.add_pin("gnd", "GROUND")
 
     def add_modules(self):
-        """ Add the INV and NAND gate modules """
+        """ Add the INV and AND gate modules """
         
         self.inv = factory.create(module_type="pinv",
                                   height=self.cell_height)
         self.add_mod(self.inv)
         
-        self.add_nand(self.number_of_inputs)
-        self.add_mod(self.nand)
+        self.add_and(self.number_of_inputs)
+        self.add_mod(self.and_mod)
 
-    def add_nand(self, inputs):
+    def add_and(self, inputs):
         """ Create the NAND for the predecode input stage """
         if inputs==2:
-            self.nand = factory.create(module_type="pnand2",
-                                       height=self.cell_height)
+            self.and_mod = factory.create(module_type="pand2",
+                                          height=self.cell_height)
         elif inputs==3:
-            self.nand = factory.create(module_type="pnand3",
-                                       height=self.cell_height)
+            self.and_mod = factory.create(module_type="pand3",
+                                          height=self.cell_height)
         else:
             debug.error("Invalid number of predecode inputs: {}".format(inputs), -1)
             
     def setup_layout_constraints(self):
 
-        self.height = self.number_of_outputs * self.nand.height
+        self.height = self.number_of_outputs * self.and_mod.height
 
         # x offset for input inverters
         self.x_off_inv_1 = self.number_of_inputs*self.m2_pitch 
 
-        # x offset to NAND decoder includes the left rails, mid rails and inverters, plus two extra m2 pitches
-        self.x_off_nand = self.x_off_inv_1 + self.inv.width + (2*self.number_of_inputs + 2) * self.m2_pitch
+        # x offset to AND decoder includes the left rails, mid rails and inverters, plus two extra m2 pitches
+        self.x_off_and = self.x_off_inv_1 + self.inv.width + (2*self.number_of_inputs + 2) * self.m2_pitch
 
         # x offset to output inverters
-        self.x_off_inv_2 = self.x_off_nand + self.nand.width
-
-        # Height width are computed 
-        self.width = self.x_off_inv_2 + self.inv.width
+        self.width = self.x_off_and + self.and_mod.width
 
     def route_rails(self):
         """ Create all of the rails for the inputs and vdd/gnd/inputs_bar/inputs """
         input_names = ["in_{}".format(x) for x in range(self.number_of_inputs)]
-        offset = vector(0.5*self.m2_width,2*self.m1_width)
+        offset = vector(0.5 * self.m2_width, self.m1_pitch)
         self.input_rails = self.create_vertical_pin_bus(layer="m2",
                                                         pitch=self.m2_pitch,
                                                         offset=offset,
                                                         names=input_names,
-                                                        length=self.height - 2*self.m1_width)
+                                                        length=self.height - 2 * self.m1_pitch)
 
         invert_names = ["Abar_{}".format(x) for x in range(self.number_of_inputs)]
         non_invert_names = ["A_{}".format(x) for x in range(self.number_of_inputs)]
         decode_names = invert_names + non_invert_names
-        offset = vector(self.x_off_inv_1 + self.inv.width + 2*self.m2_pitch, 2*self.m1_width)
+        offset = vector(self.x_off_inv_1 + self.inv.width + 2 * self.m2_pitch, self.m1_pitch)
         self.decode_rails = self.create_vertical_bus(layer="m2",
                                                      pitch=self.m2_pitch,
                                                      offset=offset,
                                                      names=decode_names,
-                                                     length=self.height - 2*self.m1_width)
+                                                     length=self.height - 2 * self.m1_pitch)
 
     def create_input_inverters(self):
         """ Create the input inverters to invert input signals for the decode stage. """
@@ -112,62 +109,35 @@ class hierarchical_predecode(design.design):
             self.in_inst[inv_num].place(offset=offset,
                                         mirror=mirror)
             
-    def create_output_inverters(self):
-        """ Create inverters for the inverted output decode signals. """
-        self.inv_inst = []
-        for inv_num in range(self.number_of_outputs):
-            name = "pre_nand_inv_{}".format(inv_num)
-            self.inv_inst.append(self.add_inst(name=name,
-                                               mod=self.inv))
-            self.connect_inst(["Z_{}".format(inv_num),
-                               "out_{}".format(inv_num),
-                               "vdd", "gnd"])
+    def create_and_array(self, connections):
+        """ Create the AND stage for the decodes """
+        self.and_inst = []
+        for and_input in range(self.number_of_outputs):
+            inout = str(self.number_of_inputs) + "x" + str(self.number_of_outputs)
+            name = "Xpre{0}_and_{1}".format(inout, and_input)
+            self.and_inst.append(self.add_inst(name=name,
+                                               mod=self.and_mod))
+            self.connect_inst(connections[and_input])
 
-
-    def place_output_inverters(self):
-        """ Place inverters for the inverted output decode signals. """
-        for inv_num in range(self.number_of_outputs):
-            if (inv_num % 2 == 0):
-                y_off = inv_num * self.inv.height
+    def place_and_array(self):
+        """ Place the AND stage for the decodes """
+        for and_input in range(self.number_of_outputs):
+            # inout = str(self.number_of_inputs) + "x" + str(self.number_of_outputs)
+            if (and_input % 2 == 0):
+                y_off = and_input * self.and_mod.height
                 mirror = "R0"
             else:
-                y_off =(inv_num + 1)*self.inv.height
+                y_off = (and_input + 1) * self.and_mod.height
                 mirror = "MX"
-            offset = vector(self.x_off_inv_2, y_off)   
-            self.inv_inst[inv_num].place(offset=offset,
-                                         mirror=mirror)
-
-    def create_nand_array(self,connections):
-        """ Create the NAND stage for the decodes """
-        self.nand_inst = []        
-        for nand_input in range(self.number_of_outputs):
-            inout = str(self.number_of_inputs)+"x"+str(self.number_of_outputs)
-            name = "Xpre{0}_nand_{1}".format(inout,nand_input)
-            self.nand_inst.append(self.add_inst(name=name,
-                                                mod=self.nand))
-            self.connect_inst(connections[nand_input])
-
-
-    def place_nand_array(self):
-        """ Place the NAND stage for the decodes """
-        for nand_input in range(self.number_of_outputs):
-            inout = str(self.number_of_inputs)+"x"+str(self.number_of_outputs)
-            if (nand_input % 2 == 0):
-                y_off = nand_input * self.inv.height
-                mirror = "R0"
-            else:
-                y_off = (nand_input + 1) * self.inv.height
-                mirror = "MX"
-            offset = vector(self.x_off_nand, y_off)
-            self.nand_inst[nand_input].place(offset=offset,
-                                             mirror=mirror)
-            
+            offset = vector(self.x_off_and, y_off)
+            self.and_inst[and_input].place(offset=offset,
+                                           mirror=mirror)
 
     def route(self):
         self.route_input_inverters()
         self.route_inputs_to_rails()
-        self.route_nand_to_rails()
-        self.route_output_inverters()        
+        self.route_and_to_rails()
+        self.route_output_and()
         self.route_vdd_gnd()
 
     def route_inputs_to_rails(self):
@@ -175,39 +145,30 @@ class hierarchical_predecode(design.design):
         for num in range(self.number_of_inputs):
             # route one signal next to each vdd/gnd rail since this is
             # typically where the p/n devices are and there are no
-            # pins in the nand gates. 
-            y_offset = (num+self.number_of_inputs) * self.inv.height + contact.m1_via.width + self.m1_space
-            in_pin = "in_{}".format(num)            
+            # pins in the and gates.
+            y_offset = (num + self.number_of_inputs) * self.inv.height + contact.m1_via.width + self.m1_space
+            in_pin = "in_{}".format(num)
             a_pin = "A_{}".format(num)
-            in_pos = vector(self.input_rails[in_pin].x,y_offset)
-            a_pos = vector(self.decode_rails[a_pin].x,y_offset)            
-            self.add_path("m1",[in_pos, a_pos])
-            self.add_via_center(layers = self.m1_stack,
+            in_pos = vector(self.input_rails[in_pin].x, y_offset)
+            a_pos = vector(self.decode_rails[a_pin].x, y_offset)
+            self.add_path("m1", [in_pos, a_pos])
+            self.add_via_center(layers=self.m1_stack,
                                 offset=[self.input_rails[in_pin].x, y_offset])
-            self.add_via_center(layers = self.m1_stack,
+            self.add_via_center(layers=self.m1_stack,
                                 offset=[self.decode_rails[a_pin].x, y_offset])
 
-    def route_output_inverters(self):
+    def route_output_and(self):
         """
-        Route all conections of the outputs inverters 
+        Route all conections of the outputs and gates
         """
         for num in range(self.number_of_outputs):
 
-            # route nand output to output inv input
-            zr_pos = self.nand_inst[num].get_pin("Z").rc()
-            al_pos = self.inv_inst[num].get_pin("A").lc()
-            # ensure the bend is in the middle 
-            mid1_pos = vector(0.5*(zr_pos.x+al_pos.x), zr_pos.y)
-            mid2_pos = vector(0.5*(zr_pos.x+al_pos.x), al_pos.y)
-            self.add_path("m1", [zr_pos, mid1_pos, mid2_pos, al_pos])
-
-            z_pin = self.inv_inst[num].get_pin("Z")
+            z_pin = self.and_inst[num].get_pin("Z")
             self.add_layout_pin(text="out_{}".format(num),
                                 layer="m1",
                                 offset=z_pin.ll(),
                                 height=z_pin.height(),
                                 width=z_pin.width())
-
     
     def route_input_inverters(self):
         """
@@ -219,7 +180,7 @@ class hierarchical_predecode(design.design):
             
             #add output so that it is just below the vdd or gnd rail
             # since this is where the p/n devices are and there are no
-            # pins in the nand gates.
+            # pins in the and gates.
             y_offset = (inv_num+1) * self.inv.height - 3*self.m1_space
             inv_out_pos = self.in_inst[inv_num].get_pin("Z").rc()
             right_pos = inv_out_pos + vector(self.inv.width - self.inv.get_pin("Z").lx(),0)
@@ -236,13 +197,12 @@ class hierarchical_predecode(design.design):
             self.add_via_center(layers=self.m1_stack,
                                 offset=in_pos)
             
-
-    def route_nand_to_rails(self):
-        # This 2D array defines the connection mapping 
-        nand_input_line_combination = self.get_nand_input_line_combination()
+    def route_and_to_rails(self):
+        # This 2D array defines the connection mapping
+        and_input_line_combination = self.get_and_input_line_combination()
         for k in range(self.number_of_outputs):
-            # create x offset list         
-            index_lst= nand_input_line_combination[k]
+            # create x offset list
+            index_lst= and_input_line_combination[k]
 
             if self.number_of_inputs == 2:
                 gate_lst = ["A","B"]
@@ -251,35 +211,32 @@ class hierarchical_predecode(design.design):
 
             # this will connect pins A,B or A,B,C
             for rail_pin,gate_pin in zip(index_lst,gate_lst):
-                pin_pos = self.nand_inst[k].get_pin(gate_pin).lc()
+                pin_pos = self.and_inst[k].get_pin(gate_pin).lc()
                 rail_pos = vector(self.decode_rails[rail_pin].x, pin_pos.y)
                 self.add_path("m1", [rail_pos, pin_pos])
                 self.add_via_center(layers=self.m1_stack,
                                     offset=rail_pos)
-
-
-
 
     def route_vdd_gnd(self):
         """ Add a pin for each row of vdd/gnd which are must-connects next level up. """
 
         # Find the x offsets for where the vias/pins should be placed
         in_xoffset = self.in_inst[0].rx() + self.m1_space
-        out_xoffset = self.inv_inst[0].lx() - self.m1_space
-        for num in range(0,self.number_of_outputs):
+        # out_xoffset = self.and_inst[0].cx() + self.m1_space
+        for num in range(0, self.number_of_outputs):
             # this will result in duplicate polygons for rails, but who cares
             
             # Route both supplies
             for n in ["vdd", "gnd"]:
-                nand_pin = self.nand_inst[num].get_pin(n)
-                supply_offset = nand_pin.ll().scale(0,1)
+                and_pin = self.and_inst[num].get_pin(n)
+                supply_offset = and_pin.ll().scale(0, 1)
                 self.add_rect(layer="m1",
                               offset=supply_offset,
-                              width=self.inv_inst[num].rx())
+                              width=self.and_inst[num].rx())
 
                 # Add pins in two locations
-                for xoffset in [in_xoffset, out_xoffset]:
-                    pin_pos = vector(xoffset, nand_pin.cy())
+                for xoffset in [in_xoffset]:
+                    pin_pos = vector(xoffset, and_pin.cy())
                     self.add_power_pin(n, pin_pos)
             
 

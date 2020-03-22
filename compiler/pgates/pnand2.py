@@ -49,10 +49,11 @@ class pnand2(pgate.pgate):
         """ Calls all functions related to the generation of the layout """
 
         self.setup_layout_constants()
-        self.route_supply_rails()
         self.place_ptx()
-        self.connect_rails()
         self.add_well_contacts()
+        self.determine_width()
+        self.route_supply_rails()
+        self.connect_rails()
         self.extend_wells()
         self.route_inputs()
         self.route_output()
@@ -95,15 +96,6 @@ class pnand2(pgate.pgate):
         # but determining offset to overlap the
         # source and drain pins
         self.overlap_offset = self.pmos.get_pin("D").ll() - self.pmos.get_pin("S").ll()
-
-        # Two PMOS devices and a well contact. Separation between each.
-        # Enclosure space on the sides.
-        self.width = 2 * self.pmos.active_width + contact.active_contact.width \
-                          + 2 * self.active_space \
-                          + 0.5 * self.nwell_enclose_active
-
-        self.well_width = self.width + 2 * self.nwell_enclose_active
-        # Height is an input parameter, so it is not recomputed.
 
         # This is the extra space needed to ensure DRC rules
         # to the active contacts
@@ -190,16 +182,16 @@ class pnand2(pgate.pgate):
 
     def route_inputs(self):
         """ Route the A and B inputs """
-        inputB_yoffset = self.nmos2_pos.y + self.nmos.active_height \
-                         + self.m2_space + 0.5 * self.m2_width
+        inputB_yoffset = self.nmos2_inst.uy() + 0.5 * contact.poly_contact.height
         self.route_input_gate(self.pmos2_inst,
                               self.nmos2_inst,
                               inputB_yoffset,
                               "B",
-                              position="center")
+                              position="right")
         
         # This will help with the wells and the input/output placement
-        self.inputA_yoffset = inputB_yoffset + self.input_spacing
+        self.inputA_yoffset = self.pmos2_inst.by() - self.poly_extend_active \
+                              - contact.poly_contact.height
         self.route_input_gate(self.pmos1_inst,
                               self.nmos1_inst,
                               self.inputA_yoffset,
@@ -242,8 +234,8 @@ class pnand2(pgate.pgate):
         self.add_layout_pin_rect_center(text="Z",
                                         layer="m1",
                                         offset=out_offset,
-                                        width=contact.m1_via.first_layer_height,
-                                        height=contact.m1_via.first_layer_width)
+                                        width=contact.m1_via.first_layer_width,
+                                        height=contact.m1_via.first_layer_height)
 
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""

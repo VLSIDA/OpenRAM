@@ -33,20 +33,21 @@ class sense_amp_array(design.design):
         if not OPTS.netlist_only:
             self.create_layout()
 
+    def get_bl_name(self):
+        bl_name = "bl"
+        return bl_name
 
-    def get_bl_name(self, port=0):
-        bl_name = self.amp.get_bl_names()
-        if len(self.all_ports) == 1:
-            return bl_name
-        else:
-            return bl_name + "{}".format(port)
+    def get_br_name(self):
+        br_name = "br"
+        return br_name
 
-    def get_br_name(self, port=0):
-        br_name = self.amp.get_br_names()
-        if len(self.all_ports) == 1:
-            return br_name
-        else:
-            return br_name + "{}".format(port)
+    @property
+    def data_name(self):
+        return "data"
+
+    @property
+    def en_name(self):
+        return "en"
 
     def create_netlist(self):
         self.add_modules()
@@ -69,10 +70,10 @@ class sense_amp_array(design.design):
 
     def add_pins(self):
         for i in range(0,self.word_size):
-            self.add_pin("data_{0}".format(i), "OUTPUT")
-            self.add_pin("bl_{0}".format(i), "INPUT")
-            self.add_pin("br_{0}".format(i), "INPUT")
-        self.add_pin("en", "INPUT")
+            self.add_pin(self.data_name + "_{0}".format(i), "OUTPUT")
+            self.add_pin(self.get_bl_name() + "_{0}".format(i), "INPUT")
+            self.add_pin(self.get_br_name() + "_{0}".format(i), "INPUT")
+        self.add_pin(self.en_name, "INPUT")
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
         
@@ -92,10 +93,10 @@ class sense_amp_array(design.design):
             name = "sa_d{0}".format(i)
             self.local_insts.append(self.add_inst(name=name,
                                                   mod=self.amp))
-            self.connect_inst(["bl_{0}".format(i),
-                               "br_{0}".format(i), 
-                               "data_{0}".format(i), 
-                               "en", "vdd", "gnd"])
+            self.connect_inst([self.get_bl_name() + "_{0}".format(i),
+                               self.get_br_name() + "_{0}".format(i),
+                               self.data_name + "_{0}".format(i),
+                               self.en_name, "vdd", "gnd"])
 
     def place_sense_amp_array(self):
         from tech import cell_properties
@@ -135,22 +136,22 @@ class sense_amp_array(design.design):
                                start_layer="m2",
                                vertical=True)
 
-            bl_pin = inst.get_pin("bl")            
-            br_pin = inst.get_pin("br")
-            dout_pin = inst.get_pin("dout")
-            
-            self.add_layout_pin(text="bl_{0}".format(i),
+            bl_pin = inst.get_pin(inst.mod.get_bl_names())
+            br_pin = inst.get_pin(inst.mod.get_br_names())
+            dout_pin = inst.get_pin(inst.mod.dout_name)
+
+            self.add_layout_pin(text=self.get_bl_name() + "_{0}".format(i),
                                 layer="m2",
                                 offset=bl_pin.ll(),
                                 width=bl_pin.width(),
                                 height=bl_pin.height())
-            self.add_layout_pin(text="br_{0}".format(i),
+            self.add_layout_pin(text=self.get_br_name() + "_{0}".format(i),
                                 layer="m2",
                                 offset=br_pin.ll(),
                                 width=br_pin.width(),
                                 height=br_pin.height())
-                           
-            self.add_layout_pin(text="data_{0}".format(i),
+
+            self.add_layout_pin(text=self.data_name + "_{0}".format(i),
                                 layer="m2",
                                 offset=dout_pin.ll(),
                                 width=dout_pin.width(),
@@ -159,8 +160,8 @@ class sense_amp_array(design.design):
             
     def route_rails(self):
         # add sclk rail across entire array
-        sclk_offset = self.amp.get_pin("en").ll().scale(0,1)
-        self.add_layout_pin(text="en",
+        sclk_offset = self.amp.get_pin(self.amp.en_name).ll().scale(0,1)
+        self.add_layout_pin(text=self.en_name,
                       layer="m1",
                       offset=sclk_offset,
                       width=self.width,

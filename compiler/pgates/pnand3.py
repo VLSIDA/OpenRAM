@@ -36,7 +36,8 @@ class pnand3(pgate.pgate):
         self.pmos_width = self.pmos_size * drc("minwidth_tx")
 
         # FIXME: Allow these to be sized
-        debug.check(size == 1,"Size 1 pnand3 is only supported now.")
+        debug.check(size == 1,
+                    "Size 1 pnand3 is only supported now.")
         self.tx_mults = 1
 
         # Creates the netlist and layout
@@ -57,14 +58,15 @@ class pnand3(pgate.pgate):
         """ Calls all functions related to the generation of the layout """
 
         self.setup_layout_constants()
-        self.route_supply_rails()
         self.place_ptx()
-        self.connect_rails()
         self.add_well_contacts()
+        self.determine_width()
+        self.route_supply_rails()
+        self.connect_rails()
         self.extend_wells()
         self.route_inputs()
         self.route_output()
-
+        
     def add_ptx(self):
         """ Create the PMOS and NMOS transistors. """
         self.nmos = factory.create(module_type="ptx",
@@ -87,16 +89,9 @@ class pnand3(pgate.pgate):
         """ Pre-compute some handy layout parameters. """
         
         # Compute the overlap of the source and drain pins
-        self.overlap_offset = self.pmos.get_pin("D").ll() - self.pmos.get_pin("S").ll()
-
-        # Two PMOS devices and a well contact. Separation between each.
-        # Enclosure space on the sides.
-        self.width = 3 * self.pmos.active_width + self.pmos.active_contact.width \
-                          + 2 * self.active_space + 0.5 * self.nwell_enclose_active \
-                          - self.overlap_offset.x
-        self.well_width = self.width + 2 * self.nwell_enclose_active
-        # Height is an input parameter, so it is not recomputed.
-
+        overlap_xoffset = self.pmos.get_pin("D").ll().x - self.pmos.get_pin("S").ll().x
+        self.ptx_offset = vector(overlap_xoffset, 0)
+        
         # This is the extra space needed to ensure DRC rules
         # to the active contacts
         nmos = factory.create(module_type="ptx", tx_type="nmos")
@@ -153,29 +148,24 @@ class pnand3(pgate.pgate):
         """
 
         pmos1_pos = vector(self.pmos.active_offset.x,
-                           self.height - self.pmos.active_height \
-                           - self.top_bottom_space)
+                           self.height - self.pmos.active_height - self.top_bottom_space)
         self.pmos1_inst.place(pmos1_pos)
 
-        pmos2_pos = pmos1_pos + self.overlap_offset
+        pmos2_pos = pmos1_pos + self.ptx_offset
         self.pmos2_inst.place(pmos2_pos)
 
-        self.pmos3_pos = pmos2_pos + self.overlap_offset
+        self.pmos3_pos = pmos2_pos + self.ptx_offset
         self.pmos3_inst.place(self.pmos3_pos)
-        
         
         nmos1_pos = vector(self.pmos.active_offset.x,
                            self.top_bottom_space)
         self.nmos1_inst.place(nmos1_pos)
 
-        nmos2_pos = nmos1_pos + self.overlap_offset
+        nmos2_pos = nmos1_pos + self.ptx_offset
         self.nmos2_inst.place(nmos2_pos)
         
-        self.nmos3_pos = nmos2_pos + self.overlap_offset
+        self.nmos3_pos = nmos2_pos + self.ptx_offset
         self.nmos3_inst.place(self.nmos3_pos)
-
-        # This will help with the wells and the input/output placement
-        self.output_pos = vector(0, 0.5*self.height)
 
     def add_well_contacts(self):
         """ Add n/p well taps to the layout and connect to supplies """
@@ -188,40 +178,36 @@ class pnand3(pgate.pgate):
 
         self.connect_pin_to_rail(self.nmos1_inst, "S", "gnd")
 
-        self.connect_pin_to_rail(self.pmos1_inst, "S", "vdd")        
+        self.connect_pin_to_rail(self.pmos1_inst, "S", "vdd")
 
         self.connect_pin_to_rail(self.pmos2_inst, "D", "vdd")
 
     def route_inputs(self):
-        """ Route the A and B inputs """
-        # wire space or wire and one contact space
-        metal_spacing = max(self.m1_space + self.m1_width,
-                            self.m2_space + self.m2_width,
-                            self.m1_space + 0.5 *contact.poly_contact.width + 0.5 * self.m1_width)
+        """ Route the A and B and C inputs """
 
-        active_spacing = max(self.m1_space,
-                             0.5 * contact.poly_contact.first_layer_width + self.poly_to_active)
-        inputC_yoffset = self.nmos3_pos.y + self.nmos.active_height + active_spacing
+        m1_pitch = self.m1_space + contact.m1_via.first_layer_height
+        # Put B right on the well line
+        self.inputB_yoffset = self.nwell_y_offset
+        self.route_input_gate(self.pmos2_inst,
+                              self.nmos2_inst,
+                              self.inputB_yoffset,
+                              "B",
+                              position="center")
+        
+        self.inputC_yoffset = self.inputB_yoffset - m1_pitch
         self.route_input_gate(self.pmos3_inst,
                               self.nmos3_inst,
-                              inputC_yoffset,
+                              self.inputC_yoffset,
                               "C",
                               position="center")
 
-        inputB_yoffset = inputC_yoffset + metal_spacing
-        self.route_input_gate(self.pmos2_inst,
-                              self.nmos2_inst,
-                              inputB_yoffset,
-                              "B",
-                              position="center")
-
-        self.inputA_yoffset = inputB_yoffset + metal_spacing
+        self.inputA_yoffset = self.inputB_yoffset + m1_pitch
         self.route_input_gate(self.pmos1_inst,
                               self.nmos1_inst,
                               self.inputA_yoffset,
                               "A",
                               position="center")
-
+        
     def route_output(self):
         """ Route the Z output """
         # PMOS1 drain
@@ -243,7 +229,7 @@ class pnand3(pgate.pgate):
                             directions=("V", "V"))
         
         # PMOS3 and NMOS3 are drain aligned
-        self.add_path("m2", [pmos3_pin.center(), nmos3_pin.uc()])
+        self.add_path("m2", [pmos3_pin.center(), nmos3_pin.center()])
         # Route in the A input track (top track)
         mid_offset = vector(nmos3_pin.center().x, self.inputA_yoffset)
         self.add_path("m2", [pmos1_pin.center(), mid_offset, nmos3_pin.uc()])
@@ -273,7 +259,7 @@ class pnand3(pgate.pgate):
         # In fF
         c_para = spice["min_tx_drain_c"] * (self.nmos_size / parameter["min_tx_size"])
         transition_prob = 0.1094
-        return transition_prob *(c_load + c_para) 
+        return transition_prob * (c_load + c_para) 
 
     def input_load(self):
         """Return the relative input capacitance of a single input"""

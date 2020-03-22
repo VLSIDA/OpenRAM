@@ -539,9 +539,7 @@ def report_status():
         debug.error("{0} is not an integer in config file.".format(OPTS.sram_size))
     if type(OPTS.write_size) is not int and OPTS.write_size is not None:
         debug.error("{0} is not an integer in config file.".format(OPTS.write_size))
-    if type(OPTS.num_spare_rows) is not int and OPT.num_spare_rows is not None:
-        debug.error("{0} is not an integer in config file.".format(OPTS.num_spare_rows))
-
+    
     # If a write mask is specified by the user, the mask write size should be the same as
     # the word size so that an entire word is written at once.
     if OPTS.write_size is not None:

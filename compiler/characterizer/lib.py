@@ -559,7 +559,10 @@ class lib:
             char_results = self.d.analytical_delay(self.slews,self.loads)
             self.char_sram_results, self.char_port_results = char_results  
         else:
-            probe_address = "1" * self.sram.addr_size
+            if (self.sram.num_spare_rows == 0):
+                probe_address = "1" * self.sram.addr_size
+            else:
+                probe_address = "0" + "1" * (self.sram.addr_size - 1)
             probe_data = self.sram.word_size - 1
             char_results = self.d.analyze(probe_address, probe_data, self.slews, self.loads)
             self.char_sram_results, self.char_port_results = char_results  

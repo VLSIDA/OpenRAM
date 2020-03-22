@@ -81,7 +81,7 @@ class sram_config:
         self.num_cols = int(self.words_per_row*self.word_size)
         self.num_rows_temp = int(self.num_words_per_bank/self.words_per_row)
         self.num_rows = self.num_rows_temp + self.num_spare_rows
-        debug.info(1,"Rows: {} Cols: {}".format(self.num_rows,self.num_cols))
+        debug.info(1,"Rows: {} Cols: {}".format(self.num_rows_temp,self.num_cols))
 
         # Compute the address and bank sizes
         self.row_addr_size = ceil(log(self.num_rows, 2))

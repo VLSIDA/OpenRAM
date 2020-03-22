@@ -76,7 +76,10 @@ d.period = period
 # Set the load of outputs and slew of inputs
 d.set_load_slew(load,slew)
 # Set the probe address/bit
-probe_address = "1" * sram.addr_size
+if (self.num_spare_rows == 0):
+    probe_address = "1" * sram.addr_size
+else:
+    probe_address = "0" + ("1" * sram.addr_size - 1)
 probe_data = sram.word_size - 1
 d.set_probe(probe_address, probe_data)
 

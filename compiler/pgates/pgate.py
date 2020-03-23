@@ -64,7 +64,7 @@ class pgate(design.design):
                           width=source_pin.width())
     
     def route_input_gate(self, pmos_inst, nmos_inst, ypos, name, position="left"):
-        """ 
+        """
         Route the input gate to the left side of the cell for access.
         Position specifies to place the contact the left, center, or
         right of gate.
@@ -107,8 +107,12 @@ class pgate(design.design):
         else:
             debug.error("Invalid contact placement option.", -1)
 
-        v=self.add_via_center(layers=self.poly_stack,
-                              offset=contact_offset)
+        if hasattr(self, "li_stack"):
+            self.add_via_center(layers=self.li_stack,
+                                offset=contact_offset)
+            
+        self.add_via_center(layers=self.poly_stack,
+                            offset=contact_offset)
 
         self.add_layout_pin_rect_center(text=name,
                                         layer="m1",
@@ -182,13 +186,17 @@ class pgate(design.design):
         contact_offset = vector(contact_xoffset, contact_yoffset)
         # Offset by half a contact in x and y
         contact_offset += vector(0.5 * pmos.active_contact.first_layer_width,
-                               0.5 * pmos.active_contact.first_layer_height)
+                                 0.5 * pmos.active_contact.first_layer_height)
         self.nwell_contact = self.add_via_center(layers=layer_stack,
                                                  offset=contact_offset,
                                                  implant_type="n",
                                                  well_type="n")
+        if hasattr(self, "li_stack"):
+            self.add_via_center(layers=self.li_stack,
+                                offset=contact_offset)
+        
         self.add_rect_center(layer="m1",
-                             offset=contact_offset + vector(0, 0.5 * (self.height-contact_offset.y)),
+                             offset=contact_offset + vector(0, 0.5 * (self.height - contact_offset.y)),
                              width=self.nwell_contact.mod.second_layer_width,
                              height=self.height - contact_offset.y)
         
@@ -221,8 +229,6 @@ class pgate(design.design):
 
         layer_stack = self.active_stack
 
-        pwell_position = vector(0, -0.5 * self.m1_width)
-        
         # To the right a spacing away from the nmos right active edge
         contact_xoffset = nmos_pos.x + nmos.active_width \
                           + self.active_space
@@ -240,8 +246,13 @@ class pgate(design.design):
                                                 offset=contact_offset,
                                                 implant_type="p",
                                                 well_type="p")
+
+        if hasattr(self, "li_stack"):
+            self.add_via_center(layers=self.li_stack,
+                                offset=contact_offset)
+
         self.add_rect_center(layer="m1",
-                             offset=contact_offset.scale(1,0.5),
+                             offset=contact_offset.scale(1, 0.5),
                              width=self.pwell_contact.mod.second_layer_width,
                              height=contact_offset.y)
         

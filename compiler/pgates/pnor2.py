@@ -187,8 +187,7 @@ class pnor2(pgate.pgate):
     def route_inputs(self):
         """ Route the A and B inputs """
         # Use M2 spaces so we can drop vias on the pins later!
-        inputB_yoffset = self.nmos2_pos.y + self.nmos.active_height \
-                         + self.m2_space + self.m2_width
+        inputB_yoffset = self.nmos2_inst.uy() + 0.5 * contact.poly_contact.height
         self.route_input_gate(self.pmos2_inst,
                               self.nmos2_inst,
                               inputB_yoffset,

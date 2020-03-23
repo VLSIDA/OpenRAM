@@ -27,15 +27,23 @@ class ptx(design.design):
                  width=drc("minwidth_tx"),
                  mults=1,
                  tx_type="nmos",
+                 add_source_contact=True,
+                 add_drain_contact=True,
+                 series_devices=False,
                  connect_active=False,
                  connect_poly=False,
-                 series_devices=False,
                  num_contacts=None):
         # We need to keep unique names because outputting to GDSII
         # will use the last record with a given name. I.e., you will
         # over-write a design in GDS if one has and the other doesn't
         # have poly connected, for example.
         name = "{0}_m{1}_w{2:.3f}".format(tx_type, mults, width)
+        if not add_source_contact:
+            name += "_ns"
+        if not add_drain_contact:
+            name += "_nd"
+        if series_devices:
+            name += "_sd"
         if connect_active:
             name += "_a"
         if connect_poly:
@@ -52,6 +60,8 @@ class ptx(design.design):
         self.tx_width = width
         self.connect_active = connect_active
         self.connect_poly = connect_poly
+        self.add_source_contact = add_source_contact
+        self.add_drain_contact = add_drain_contact
         self.series_devices = series_devices
         self.num_contacts = num_contacts
 
@@ -379,18 +389,24 @@ class ptx(design.design):
         # First one is always a SOURCE
         label = "S"
         pos = self.contact_offset
-        contact=self.add_via_center(layers=self.active_stack,
-                                    offset=pos,
-                                    size=(1, self.num_contacts),
-                                    directions=("V","V"),
-                                    implant_type=self.implant_type,
-                                    well_type=self.well_type)
-        self.add_layout_pin_rect_center(text=label,
-                                        layer="m1",
+        if self.add_source_contact:
+            contact=self.add_via_center(layers=self.active_stack,
                                         offset=pos,
-                                        width=contact.mod.second_layer_width,
-                                        height=contact.mod.second_layer_height)
-        self.source_contacts.append(contact)
+                                        size=(1, self.num_contacts),
+                                        directions=("V","V"),
+                                        implant_type=self.implant_type,
+                                        well_type=self.well_type)
+            self.source_contacts.append(contact)
+        if self.add_source_contact:
+            self.add_layout_pin_rect_center(text=label,
+                                            layer="m1",
+                                            offset=pos,
+                                            width=contact.mod.second_layer_width,
+                                            height=contact.mod.second_layer_height)
+        else:
+            self.add_layout_pin_rect_center(text=label,
+                                            layer="active",
+                                            offset=pos)
         source_positions.append(pos)
 
         # Skip these if they are going to be in series
@@ -406,22 +422,26 @@ class ptx(design.design):
                     label = "S"
                     source_positions.append(pos)
                     
-                contact=self.add_via_center(layers=self.active_stack,
-                                            offset=pos,
-                                            size=(1, self.num_contacts),
-                                            directions=("V","V"),
-                                            implant_type=self.implant_type,
-                                            well_type=self.well_type)
-                self.add_layout_pin_rect_center(text=label,
-                                                layer="m1",
+                if (label=="S" and self.add_source_contact) or (label=="D" and self.add_drain_contact):
+                    contact=self.add_via_center(layers=self.active_stack,
                                                 offset=pos,
-                                                width=contact.mod.second_layer_width,
-                                                height=contact.mod.second_layer_height)
-                
-                if label == "S":
-                    self.source_contacts.append(contact)
+                                                size=(1, self.num_contacts),
+                                                directions=("V", "V"),
+                                                implant_type=self.implant_type,
+                                                well_type=self.well_type)
+                    self.add_layout_pin_rect_center(text=label,
+                                                    layer="m1",
+                                                    offset=pos,
+                                                    width=contact.mod.second_layer_width,
+                                                    height=contact.mod.second_layer_height)
+                    if label == "S":
+                        self.source_contacts.append(contact)
+                    else:
+                        self.drain_contacts.append(contact)
                 else:
-                    self.drain_contacts.append(contact)
+                    self.add_layout_pin_rect_center(text=label,
+                                                    layer="active",
+                                                    offset=pos)
 
         pos = vector(self.active_offset.x + self.active_width - 0.5 * self.active_contact.width,
                      self.contact_offset.y)
@@ -432,21 +452,28 @@ class ptx(design.design):
         else:
             label = "S"
             source_positions.append(pos)
-        contact=self.add_via_center(layers=self.active_stack,
-                                    offset=pos,
-                                    size=(1, self.num_contacts),
-                                    directions=("V","V"),
-                                    implant_type=self.implant_type,
-                                    well_type=self.well_type)
-        self.add_layout_pin_rect_center(text=label,
-                                        layer="m1",
+
+        if (label=="S" and self.add_source_contact) or (label=="D" and self.add_drain_contact):
+            contact=self.add_via_center(layers=self.active_stack,
                                         offset=pos,
-                                        width=contact.mod.second_layer_width,
-                                        height=contact.mod.second_layer_height)
-        if label == "S":
-            self.source_contacts.append(contact)
+                                        size=(1, self.num_contacts),
+                                        directions=("V", "V"),
+                                        implant_type=self.implant_type,
+                                        well_type=self.well_type)
+            if label == "S":
+                self.source_contacts.append(contact)
+            else:
+                self.drain_contacts.append(contact)
+        if (label=="S" and self.add_source_contact) or (label=="D" and self.add_drain_contact):
+            self.add_layout_pin_rect_center(text=label,
+                                            layer="m1",
+                                            offset=pos,
+                                            width=contact.mod.second_layer_width,
+                                            height=contact.mod.second_layer_height)
         else:
-            self.drain_contacts.append(contact)
+            self.add_layout_pin_rect_center(text=label,
+                                            layer="active",
+                                            offset=pos)
                 
         if self.connect_active:
             self.connect_fingered_active(drain_positions, source_positions)

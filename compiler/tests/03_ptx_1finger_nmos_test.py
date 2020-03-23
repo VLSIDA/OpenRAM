@@ -15,6 +15,7 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
+
 class ptx_1finger_nmos_test(openram_test):
 
     def runTest(self):

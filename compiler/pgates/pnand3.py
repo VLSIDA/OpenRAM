@@ -69,14 +69,34 @@ class pnand3(pgate.pgate):
         
     def add_ptx(self):
         """ Create the PMOS and NMOS transistors. """
-        self.nmos = factory.create(module_type="ptx",
-                                   width=self.nmos_width,
-                                   mults=self.tx_mults,
-                                   tx_type="nmos",
-                                   connect_poly=True,
-                                   connect_active=True)
-        self.add_mod(self.nmos)
+        self.nmos_nsnd = factory.create(module_type="ptx",
+                                        width=self.nmos_width,
+                                        mults=self.tx_mults,
+                                        tx_type="nmos",
+                                        add_source_contact=False,
+                                        add_drain_contact=False,
+                                        connect_poly=True,
+                                        connect_active=True)
+        self.add_mod(self.nmos_nsnd)
 
+        self.nmos_ns = factory.create(module_type="ptx",
+                                      width=self.nmos_width,
+                                      mults=self.tx_mults,
+                                      tx_type="nmos",
+                                      add_source_contact=False,
+                                      connect_poly=True,
+                                      connect_active=True)
+        self.add_mod(self.nmos_ns)
+
+        self.nmos_nd = factory.create(module_type="ptx",
+                                      width=self.nmos_width,
+                                      mults=self.tx_mults,
+                                      tx_type="nmos",
+                                      add_drain_contact=False,
+                                      connect_poly=True,
+                                      connect_active=True)
+        self.add_mod(self.nmos_nd)
+        
         self.pmos = factory.create(module_type="ptx",
                                    width=self.pmos_width,
                                    mults=self.tx_mults,
@@ -130,15 +150,15 @@ class pnand3(pgate.pgate):
         self.connect_inst(["Z", "C", "vdd", "vdd"])
         
         self.nmos1_inst = self.add_inst(name="pnand3_nmos1",
-                                        mod=self.nmos)
+                                        mod=self.nmos_nd)
         self.connect_inst(["Z", "C", "net1", "gnd"])
 
         self.nmos2_inst = self.add_inst(name="pnand3_nmos2",
-                                        mod=self.nmos)
+                                        mod=self.nmos_nsnd)
         self.connect_inst(["net1", "B", "net2", "gnd"])
         
         self.nmos3_inst = self.add_inst(name="pnand3_nmos3",
-                                        mod=self.nmos)
+                                        mod=self.nmos_ns)
         self.connect_inst(["net2", "A", "gnd", "gnd"])
 
     def place_ptx(self):
@@ -171,7 +191,7 @@ class pnand3(pgate.pgate):
         """ Add n/p well taps to the layout and connect to supplies """
 
         self.add_nwell_contact(self.pmos, self.pmos3_pos)
-        self.add_pwell_contact(self.nmos, self.nmos3_pos)
+        self.add_pwell_contact(self.nmos_ns, self.nmos3_pos)
 
     def connect_rails(self):
         """ Connect the nmos and pmos to its respective power rails """
@@ -259,7 +279,7 @@ class pnand3(pgate.pgate):
         # In fF
         c_para = spice["min_tx_drain_c"] * (self.nmos_size / parameter["min_tx_size"])
         transition_prob = 0.1094
-        return transition_prob * (c_load + c_para) 
+        return transition_prob * (c_load + c_para)
 
     def input_load(self):
         """Return the relative input capacitance of a single input"""

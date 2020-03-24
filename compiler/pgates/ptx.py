@@ -99,7 +99,7 @@ class ptx(design.design):
             body_dir = 'POWER'
         dir_list = ['INOUT', 'INPUT', 'INOUT', body_dir]
         self.add_pin_list(pin_list, dir_list)
-        
+
         # self.spice.append("\n.SUBCKT {0} {1}".format(self.name,
         #                                              " ".join(self.pins)))
         # Just make a guess since these will actually

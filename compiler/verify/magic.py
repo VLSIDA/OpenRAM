@@ -22,7 +22,6 @@ and include its appropriate license.
 
 import os
 import re
-import time
 import shutil
 import debug
 from globals import OPTS
@@ -67,26 +66,29 @@ def write_magic_script(cell_name, extract=False, final_verification=False):
     else:
         pre = ""
     if final_verification:
-        f.write(pre+"extract unique all\n".format(cell_name))
-    f.write(pre+"extract\n".format(cell_name))
-    #f.write(pre+"ext2spice hierarchy on\n")
-    #f.write(pre+"ext2spice scale off\n")
+        f.write(pre + "extract unique all\n".format(cell_name))
+    # Hack to work around unit scales in SkyWater
+    if OPTS.tech_name=="s8":
+        f.write(pre + "extract style ngspice(si)\n")
+    f.write(pre + "extract\n".format(cell_name))
+    # f.write(pre + "ext2spice hierarchy on\n")
+    # f.write(pre + "ext2spice scale off\n")
     # lvs exists in 8.2.79, but be backword compatible for now
-    #f.write(pre+"ext2spice lvs\n")
-    f.write(pre+"ext2spice hierarchy on\n")
-    f.write(pre+"ext2spice format ngspice\n")
-    f.write(pre+"ext2spice cthresh infinite\n")
-    f.write(pre+"ext2spice rthresh infinite\n")
-    f.write(pre+"ext2spice renumber off\n")
-    f.write(pre+"ext2spice scale off\n")
-    f.write(pre+"ext2spice blackbox on\n")
-    f.write(pre+"ext2spice subcircuit top auto\n")
-    f.write(pre+"ext2spice global off\n")
+    # f.write(pre + "ext2spice lvs\n")
+    f.write(pre + "ext2spice hierarchy on\n")
+    f.write(pre + "ext2spice format ngspice\n")
+    f.write(pre + "ext2spice cthresh infinite\n")
+    f.write(pre + "ext2spice rthresh infinite\n")
+    f.write(pre + "ext2spice renumber off\n")
+    f.write(pre + "ext2spice scale off\n")
+    f.write(pre + "ext2spice blackbox on\n")
+    f.write(pre + "ext2spice subcircuit top auto\n")
+    f.write(pre + "ext2spice global off\n")
 
     # Can choose hspice, ngspice, or spice3,
     # but they all seem compatible enough.
-    #f.write(pre+"ext2spice format ngspice\n")
-    f.write(pre+"ext2spice {}\n".format(cell_name))
+    #f.write(pre + "ext2spice format ngspice\n")
+    f.write(pre + "ext2spice {}\n".format(cell_name))
     f.write("quit -noprompt\n")
     f.write("EOF\n")
 

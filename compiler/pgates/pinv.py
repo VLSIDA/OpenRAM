@@ -51,9 +51,9 @@ class pinv(pgate.pgate):
         
     def create_layout(self):
         """ Calls all functions related to the generation of the layout """
-        self.setup_layout_constants()
         self.place_ptx()
         self.add_well_contacts()
+        self.determine_width()
         self.extend_wells()
         self.route_supply_rails()
         self.connect_rails()
@@ -147,21 +147,6 @@ class pinv(pgate.pgate):
         debug.check(self.pmos_width >= drc("minwidth_tx"),
                     "Cannot finger PMOS transistors to fit cell height.")
 
-    def setup_layout_constants(self):
-        """
-        Compute the width and height
-        """
-
-        # the width is determined the multi-finger PMOS device width plus
-        # the well contact width, spacing between them
-        # space is for power supply contact to nwell m1 spacing
-        self.width = self.pmos.active_offset.x + self.pmos.active_width \
-                     + self.active_space + contact.nwell_contact.width \
-                     + 0.5 * self.nwell_enclose_active \
-                     + self.m1_space
-        # This includes full enclosures on each end
-        self.well_width = self.width + 2*self.nwell_enclose_active
-        # Height is an input parameter, so it is not recomputed.
         
     def add_ptx(self):
         """ Create the PMOS and NMOS transistors. """

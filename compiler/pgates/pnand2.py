@@ -49,10 +49,11 @@ class pnand2(pgate.pgate):
         """ Calls all functions related to the generation of the layout """
 
         self.setup_layout_constants()
-        self.route_supply_rails()
         self.place_ptx()
-        self.connect_rails()
         self.add_well_contacts()
+        self.determine_width()
+        self.route_supply_rails()
+        self.connect_rails()
         self.extend_wells()
         self.route_inputs()
         self.route_output()
@@ -65,13 +66,23 @@ class pnand2(pgate.pgate):
 
     def add_ptx(self):
         """ Create the PMOS and NMOS transistors. """
-        self.nmos = factory.create(module_type="ptx",
-                                   width=self.nmos_width,
-                                   mults=self.tx_mults,
-                                   tx_type="nmos",
-                                   connect_poly=True,
-                                   connect_active=True)
-        self.add_mod(self.nmos)
+        self.nmos_nd = factory.create(module_type="ptx",
+                                      width=self.nmos_width,
+                                      mults=self.tx_mults,
+                                      tx_type="nmos",
+                                      add_drain_contact=False,
+                                      connect_poly=True,
+                                      connect_active=True)
+        self.add_mod(self.nmos_nd)
+        
+        self.nmos_ns = factory.create(module_type="ptx",
+                                      width=self.nmos_width,
+                                      mults=self.tx_mults,
+                                      tx_type="nmos",
+                                      add_source_contact=False,
+                                      connect_poly=True,
+                                      connect_active=True)
+        self.add_mod(self.nmos_ns)
 
         self.pmos = factory.create(module_type="ptx",
                                    width=self.pmos_width,
@@ -96,20 +107,11 @@ class pnand2(pgate.pgate):
         # source and drain pins
         self.overlap_offset = self.pmos.get_pin("D").ll() - self.pmos.get_pin("S").ll()
 
-        # Two PMOS devices and a well contact. Separation between each.
-        # Enclosure space on the sides.
-        self.width = 2 * self.pmos.active_width + contact.active_contact.width \
-                          + 2 * self.active_space \
-                          + 0.5 * self.nwell_enclose_active
-
-        self.well_width = self.width + 2 * self.nwell_enclose_active
-        # Height is an input parameter, so it is not recomputed.
-
         # This is the extra space needed to ensure DRC rules
         # to the active contacts
-        extra_contact_space = max(-self.nmos.get_pin("D").by(), 0)
+        extra_contact_space = max(-self.nmos_nd.get_pin("D").by(), 0)
         # This is a poly-to-poly of a flipped cell
-        self.top_bottom_space = max(0.5 * self.m1_width + self.m1_space + extra_contact_space, 
+        self.top_bottom_space = max(0.5 * self.m1_width + self.m1_space + extra_contact_space,
                                     self.poly_extend_active + self.poly_space)
         
     def route_supply_rails(self):
@@ -138,11 +140,11 @@ class pnand2(pgate.pgate):
         self.connect_inst(["Z", "B", "vdd", "vdd"])
 
         self.nmos1_inst = self.add_inst(name="pnand2_nmos1",
-                                        mod=self.nmos)
+                                        mod=self.nmos_nd)
         self.connect_inst(["Z", "B", "net1", "gnd"])
 
         self.nmos2_inst = self.add_inst(name="pnand2_nmos2",
-                                        mod=self.nmos)
+                                        mod=self.nmos_ns)
         self.connect_inst(["net1", "A", "gnd", "gnd"])
 
     def place_ptx(self):
@@ -168,7 +170,7 @@ class pnand2(pgate.pgate):
 
         # Output position will be in between the PMOS and NMOS
         self.output_pos = vector(0,
-                                 0.5 * (pmos1_pos.y + nmos1_pos.y + self.nmos.active_height))
+                                 0.5 * (pmos1_pos.y + nmos1_pos.y + self.nmos_nd.active_height))
 
     def add_well_contacts(self):
         """ 
@@ -177,7 +179,7 @@ class pnand2(pgate.pgate):
         """
 
         self.add_nwell_contact(self.pmos, self.pmos2_pos)
-        self.add_pwell_contact(self.nmos, self.nmos2_pos)
+        self.add_pwell_contact(self.nmos_nd, self.nmos2_pos)
         
     def connect_rails(self):
         """ Connect the nmos and pmos to its respective power rails """
@@ -190,16 +192,16 @@ class pnand2(pgate.pgate):
 
     def route_inputs(self):
         """ Route the A and B inputs """
-        inputB_yoffset = self.nmos2_pos.y + self.nmos.active_height \
-                         + self.m2_space + 0.5 * self.m2_width
+        inputB_yoffset = self.nmos2_inst.uy() + 0.5 * contact.poly_contact.height
         self.route_input_gate(self.pmos2_inst,
                               self.nmos2_inst,
                               inputB_yoffset,
                               "B",
-                              position="center")
+                              position="right")
         
         # This will help with the wells and the input/output placement
-        self.inputA_yoffset = inputB_yoffset + self.input_spacing
+        self.inputA_yoffset = self.pmos2_inst.by() - self.poly_extend_active \
+                              - contact.poly_contact.height
         self.route_input_gate(self.pmos1_inst,
                               self.nmos1_inst,
                               self.inputA_yoffset,
@@ -242,8 +244,8 @@ class pnand2(pgate.pgate):
         self.add_layout_pin_rect_center(text="Z",
                                         layer="m1",
                                         offset=out_offset,
-                                        width=contact.m1_via.first_layer_height,
-                                        height=contact.m1_via.first_layer_width)
+                                        width=contact.m1_via.first_layer_width,
+                                        height=contact.m1_via.first_layer_height)
 
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""

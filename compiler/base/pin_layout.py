@@ -30,7 +30,7 @@ class pin_layout:
 
         debug.check(self.width() > 0, "Zero width pin.")
         debug.check(self.height() > 0, "Zero height pin.")
-        
+
         # if it's a string, use the name
         if type(layer_name_pp) == str:
             self._layer = layer_name_pp
@@ -93,17 +93,17 @@ class pin_layout:
         is a major speedup, if pin_layout is used as a key for dicts.
         """
         return self._hash
-    
+
     def __lt__(self, other):
         """ Provide a function for ordering items by the ll point """
         (ll, ur) = self.rect
         (oll, our) = other.rect
-        
+
         if ll.x < oll.x and ll.y < oll.y:
             return True
-            
+
         return False
-    
+
     def __eq__(self, other):
         """ Check if these are the same pins for duplicate checks """
         if isinstance(other, self.__class__):
@@ -128,14 +128,14 @@ class pin_layout:
             max_y = max(max_y, pin.ur().y)
 
         self.rect = [vector(min_x, min_y), vector(max_x, max_y)]
-        
+
     def fix_minarea(self):
         """
         Try to fix minimum area rule.
         """
         min_area = drc("{}_minarea".format(self.layer))
         pass
-    
+
     def inflate(self, spacing=None):
         """
         Inflate the rectangle by the spacing (or other rule)
@@ -143,12 +143,12 @@ class pin_layout:
         """
         if not spacing:
             spacing = 0.5*drc("{0}_to_{0}".format(self.layer))
-            
+
         (ll, ur) = self.rect
         spacing = vector(spacing, spacing)
         newll = ll - spacing
         newur = ur + spacing
-        
+
         return (newll, newur)
 
     def intersection(self, other):
@@ -191,7 +191,7 @@ class pin_layout:
             y_overlaps = True
 
         return y_overlaps
-    
+
     def xcontains(self, other):
         """ Check if shape contains the x overlap """
         (ll, ur) = self.rect
@@ -205,13 +205,13 @@ class pin_layout:
         (oll, our) = other.rect
 
         return (oll.y >= ll.y and our.y <= ur.y)
-    
+
     def contains(self, other):
         """ Check if a shape contains another rectangle  """
         # If it is the same shape entirely, it is contained!
         if self == other:
             return True
-        
+
         # Can only overlap on the same layer
         if not self.same_lpp(self.lpp, other.lpp):
             return False
@@ -230,13 +230,13 @@ class pin_layout:
             if shape.contains(self):
                 return True
         return False
-    
+
     def overlaps(self, other):
         """ Check if a shape overlaps with a rectangle  """
         # Can only overlap on the same layer
         if not self.same_lpp(self.lpp, other.lpp):
             return False
-        
+
         x_overlaps = self.xoverlaps(other)
         y_overlaps = self.yoverlaps(other)
 
@@ -245,11 +245,11 @@ class pin_layout:
     def area(self):
         """ Return the area. """
         return self.height()*self.width()
-    
+
     def height(self):
         """ Return height. Abs is for pre-normalized value."""
         return abs(self.rect[1].y-self.rect[0].y)
-    
+
     def width(self):
         """ Return width. Abs is for pre-normalized value."""
         return abs(self.rect[1].x-self.rect[0].x)
@@ -260,7 +260,7 @@ class pin_layout:
         ll = vector(min(first[0], second[0]), min(first[1], second[1]))
         ur = vector(max(first[0], second[0]), max(first[1], second[1]))
         self.rect=[ll, ur]
-        
+
     def transform(self, offset, mirror, rotate):
         """
         Transform with offset, mirror and rotation
@@ -278,7 +278,7 @@ class pin_layout:
         elif mirror == "XY":
             ll = ll.scale(-1, -1)
             ur = ur.scale(-1, -1)
-            
+
         if rotate == 90:
             ll = ll.rotate_scale(-1, 1)
             ur = ur.rotate_scale(-1, 1)
@@ -303,7 +303,7 @@ class pin_layout:
     def cy(self):
         """ Center y """
         return 0.5*(self.rect[0].y+self.rect[1].y)
-    
+
     # The four possible corners
     def ll(self):
         """ Lower left point """
@@ -320,7 +320,7 @@ class pin_layout:
     def ur(self):
         """ Upper right point """
         return self.rect[1]
-    
+
     # The possible y edge values
     def uy(self):
         """ Upper y value """
@@ -331,15 +331,15 @@ class pin_layout:
         return self.rect[0].y
 
     # The possible x edge values
-    
+
     def lx(self):
         """ Left x value """
         return self.rect[0].x
-    
+
     def rx(self):
         """ Right x value """
         return self.rect[1].x
-    
+
     # The edge centers
     def rc(self):
         """ Right center point """
@@ -350,7 +350,7 @@ class pin_layout:
         """ Left center point """
         return vector(self.rect[0].x,
                       0.5*(self.rect[0].y+self.rect[1].y))
-    
+
     def uc(self):
         """ Upper center point """
         return vector(0.5*(self.rect[0].x+self.rect[1].x),
@@ -378,6 +378,7 @@ class pin_layout:
         # imported into Magic.
         newLayout.addText(text=self.name,
                           layerNumber=layer_num,
+                          purposeNumber=purpose,
                           offsetInMicrons=self.center(),
                           magnification=GDS["zoom"],
                           rotate=None)
@@ -392,7 +393,7 @@ class pin_layout:
 
         dy = min(r1_ur.y, r2_ur.y) - max(r1_ll.y, r2_ll.y)
         dx = min(r1_ur.x, r2_ur.x) - max(r1_ll.x, r2_ll.x)
-        
+
         if dx >= 0 and dy >= 0:
             return [dx, dy]
         else:
@@ -407,7 +408,7 @@ class pin_layout:
 
         def dist(x1, y1, x2, y2):
             return math.sqrt((x2-x1)**2 + (y2-y1)**2)
-        
+
         left = r2_ur.x < r1_ll.x
         right = r1_ur.x < r2_ll.x
         bottom = r2_ur.y < r1_ll.y
@@ -432,7 +433,7 @@ class pin_layout:
         else:
             # rectangles intersect
             return 0
-        
+
     def overlap_length(self, other):
         """
         Calculate the intersection segment and determine its length
@@ -453,7 +454,7 @@ class pin_layout:
                 # This is where we had a corner intersection or none
                 return 0
 
-    
+
     def compute_overlap_segment(self, other):
         """
         Calculate the intersection segment of two rectangles
@@ -469,19 +470,19 @@ class pin_layout:
         r2_lr = vector(r2_ur.x, r2_ll.y)
 
         from itertools import tee
-        
+
         def pairwise(iterable):
             "s -> (s0,s1), (s1,s2), (s2, s3), ..."
             a, b = tee(iterable)
             next(b, None)
             return zip(a, b)
-        
+
         # R1 edges CW
         r1_cw_points = [r1_ll, r1_ul, r1_ur, r1_lr, r1_ll]
         r1_edges = []
         for (p, q) in pairwise(r1_cw_points):
             r1_edges.append([p, q])
-        
+
         # R2 edges CW
         r2_cw_points = [r2_ll, r2_ul, r2_ur, r2_lr, r2_ll]
         r2_edges = []
@@ -509,9 +510,9 @@ class pin_layout:
            q.y <= max(p.y, r.y) and \
            q.y >= min(p.y, r.y):
             return True
-        
+
         return False
-    
+
     def segment_intersection(self, s1, s2):
         """
         Determine the intersection point of two segments
@@ -524,22 +525,22 @@ class pin_layout:
         a1 = b.y - a.y
         b1 = a.x - b.x
         c1 = a1*a.x + b1*a.y
-        
+
         # Line CD represented as a2x + b2y = c2
         a2 = d.y - c.y
         b2 = c.x - d.x
         c2 = a2*c.x + b2*c.y
-        
+
         determinant = a1*b2 - a2*b1
 
         if determinant != 0:
             x = (b2*c1 - b1*c2)/determinant
             y = (a1*c2 - a2*c1)/determinant
-            
+
             r = vector(x, y).snap_to_grid()
             if self.on_segment(a, r, b) and self.on_segment(c, r, d):
                 return r
-           
+
         return None
 
     def same_lpp(self, lpp1, lpp2):
@@ -549,5 +550,5 @@ class pin_layout:
         """
         if lpp1[1] == None or lpp2[1] == None:
             return lpp1[0] == lpp2[0]
-        
+
         return lpp1[0] == lpp2[0] and lpp1[1] == lpp2[1]

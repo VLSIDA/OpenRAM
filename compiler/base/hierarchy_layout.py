@@ -1215,19 +1215,17 @@ class layout():
                                         size=size,
                                         offset=loc,
                                         direction=direction)
-        # Hack for min area
-        if OPTS.tech_name == "s8":
-            height = width = sqrt(drc["minarea_m3"])
-        else:
-            width = via.width
-            height = via.height
         if start_layer == self.pwr_grid_layer:
             self.add_layout_pin_rect_center(text=name,
                                             layer=self.pwr_grid_layer,
-                                            offset=loc,
-                                            width=width,
-                                            height=height)
+                                            offset=loc)
         else:
+            # Hack for min area
+            if OPTS.tech_name == "s8":
+                height = width = sqrt(drc["minarea_m3"])
+            else:
+                width = via.width
+                height = via.height
             self.add_layout_pin_rect_center(text=name,
                                             layer=self.pwr_grid_layer,
                                             offset=loc,

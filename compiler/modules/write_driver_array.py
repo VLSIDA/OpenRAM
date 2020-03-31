@@ -23,7 +23,7 @@ class write_driver_array(design.design):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("columns: {0}".format(columns))
-        self.add_comment("word_size {0}".format(word_size))        
+        self.add_comment("word_size {0}".format(word_size))
 
         self.columns = columns
         self.word_size = word_size
@@ -57,15 +57,15 @@ class write_driver_array(design.design):
         self.add_modules()
         self.add_pins()
         self.create_write_array()
-        
+
     def create_layout(self):
-    
+
         if self.bitcell.width > self.driver.width:
             self.width = self.columns * self.bitcell.width
         else:
             self.width = self.columns * self.driver.width
         self.height = self.driver.height
-        
+
         self.place_write_array()
         self.add_layout_pins()
         self.add_boundary()
@@ -139,26 +139,26 @@ class write_driver_array(design.design):
             base = vector(xoffset, 0)
             self.driver_insts[index].place(offset=base, mirror=mirror)
 
-            
+
     def add_layout_pins(self):
         for i in range(self.word_size):
             inst = self.driver_insts[i]
             din_pin = inst.get_pin(inst.mod.din_name)
             self.add_layout_pin(text=self.data_name + "_{0}".format(i),
-                                layer="m2",
+                                layer=din_pin.layer,
                                 offset=din_pin.ll(),
                                 width=din_pin.width(),
                                 height=din_pin.height())
             bl_pin = inst.get_pin(inst.mod.get_bl_names())
             self.add_layout_pin(text=self.get_bl_name() + "_{0}".format(i),
-                                layer="m2",
+                                layer=bl_pin.layer,
                                 offset=bl_pin.ll(),
                                 width=bl_pin.width(),
                                 height=bl_pin.height())
 
             br_pin = inst.get_pin(inst.mod.get_br_names())
             self.add_layout_pin(text=self.get_br_name() + "_{0}".format(i),
-                                layer="m2",
+                                layer=br_pin.layer,
                                 offset=br_pin.ll(),
                                 width=br_pin.width(),
                                 height=br_pin.height())
@@ -194,7 +194,7 @@ class write_driver_array(design.design):
                                 width=self.width)
 
 
-                       
+
 
     def get_w_en_cin(self):
         """Get the relative capacitance of all the enable connections in the bank"""

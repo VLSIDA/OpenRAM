@@ -22,6 +22,10 @@ class sense_amp_test(openram_test):
         globals.init_openram(config_file)
 
         # check sense amp array for single port
+        debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=1")
+        a = factory.create(module_type="sense_amp_array", word_size=4, words_per_row=1)
+        self.local_check(a)
+
         debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=2")
         a = factory.create(module_type="sense_amp_array", word_size=4, words_per_row=2)
         self.local_check(a)
@@ -29,7 +33,7 @@ class sense_amp_test(openram_test):
         debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=4")
         a = factory.create(module_type="sense_amp_array", word_size=4, words_per_row=4)
         self.local_check(a)
-        
+
         # check sense amp array for multi-port
         OPTS.bitcell = "pbitcell"
         OPTS.num_rw_ports = 1
@@ -44,9 +48,9 @@ class sense_amp_test(openram_test):
         debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=4 (multi-port case)")
         a = factory.create(module_type="sense_amp_array", word_size=4, words_per_row=4)
         self.local_check(a)
-        
+
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

@@ -13,6 +13,7 @@ import debug
 from globals import OPTS
 import logical_effort
 
+
 class sense_amp_array(design.design):
     """
     Array of sense amplifiers to read the bitlines through the column mux.
@@ -69,7 +70,7 @@ class sense_amp_array(design.design):
         self.DRC_LVS()
 
     def add_pins(self):
-        for i in range(0,self.word_size):
+        for i in range(0, self.word_size):
             self.add_pin(self.data_name + "_{0}".format(i), "OUTPUT")
             self.add_pin(self.get_bl_name() + "_{0}".format(i), "INPUT")
             self.add_pin(self.get_br_name() + "_{0}".format(i), "INPUT")
@@ -88,7 +89,7 @@ class sense_amp_array(design.design):
 
     def create_sense_amp_array(self):
         self.local_insts = []
-        for i in range(0,self.word_size):
+        for i in range(0, self.word_size):
 
             name = "sa_d{0}".format(i)
             self.local_insts.append(self.add_inst(name=name,
@@ -105,7 +106,7 @@ class sense_amp_array(design.design):
         else:
             amp_spacing = self.amp.width * self.words_per_row
 
-        for i in range(0,self.word_size):
+        for i in range(0, self.word_size):
             xoffset = amp_spacing * i
 
             # align the xoffset to the grid of bitcells. This way we
@@ -119,20 +120,19 @@ class sense_amp_array(design.design):
                 mirror = ""
 
             amp_position = vector(xoffset, 0)
-            self.local_insts[i].place(offset=amp_position,mirror=mirror)
-
+            self.local_insts[i].place(offset=amp_position, mirror=mirror)
 
     def add_layout_pins(self):
         for i in range(len(self.local_insts)):
             inst = self.local_insts[i]
 
-            self.add_power_pin(name = "gnd",
-                               loc = inst.get_pin("gnd").center(),
+            self.add_power_pin(name="gnd",
+                               loc=inst.get_pin("gnd").center(),
                                start_layer="m2",
                                vertical=True)
 
-            self.add_power_pin(name = "vdd",
-                               loc = inst.get_pin("vdd").center(),
+            self.add_power_pin(name="vdd",
+                               loc=inst.get_pin("vdd").center(),
                                start_layer="m2",
                                vertical=True)
 
@@ -157,16 +157,15 @@ class sense_amp_array(design.design):
                                 width=dout_pin.width(),
                                 height=dout_pin.height())
 
-
     def route_rails(self):
         # add sclk rail across entire array
         sclk = self.amp.get_pin(self.amp.en_name)
-        sclk_offset = self.amp.get_pin(self.amp.en_name).ll().scale(0,1)
+        sclk_offset = self.amp.get_pin(self.amp.en_name).ll().scale(0, 1)
         self.add_layout_pin(text=self.en_name,
-                      layer=sclk.layer,
-                      offset=sclk_offset,
-                      width=self.width,
-                      height=drc("minwidth_" + sclk.layer))
+                            layer=sclk.layer,
+                            offset=sclk_offset,
+                            width=self.width,
+                            height=drc("minwidth_" + sclk.layer))
 
     def input_load(self):
         return self.amp.input_load()
@@ -179,6 +178,6 @@ class sense_amp_array(design.design):
     def get_drain_cin(self):
         """Get the relative capacitance of the drain of the PMOS isolation TX"""
         from tech import parameter
-        #Bitcell drain load being used to estimate PMOS drain load
+        # Bitcell drain load being used to estimate PMOS drain load
         drain_load = logical_effort.convert_farad_to_relative_c(parameter['bitcell_drain_cap'])
         return drain_load

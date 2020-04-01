@@ -111,7 +111,7 @@ class precharge(design.design):
                            vertical=True)
         
         # Hack for li layers
-        if OPTS.tech_name == "s8":
+        if hasattr(self, "li_stack"):
             self.add_via_center(layers=self.li_stack,
                                 offset=self.well_contact_pos)
         
@@ -166,7 +166,7 @@ class precharge(design.design):
         Connects the upper and lower pmos together
         """
 
-        offset = self.lower_pmos_inst.get_pin("G").ll()
+        offset = self.lower_pmos_inst.get_pin("G").ul()
         # connects the top and bottom pmos' gates together
         ylength = self.upper_pmos1_inst.get_pin("G").ll().y - offset.y
         self.add_rect(layer="poly",

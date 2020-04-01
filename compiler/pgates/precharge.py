@@ -96,17 +96,24 @@ class precharge(design.design):
                              height=layer_width)
 
         pmos_pin = self.upper_pmos2_inst.get_pin("S")
+        
         # center of vdd rail
         pmos_vdd_pos = vector(pmos_pin.cx(), vdd_position.y)
         self.add_path("m1", [pmos_pin.uc(), pmos_vdd_pos])
+        
+        # if enable is not on M1, the supply can be
         if self.en_layer != "m1":
             self.add_via_center(layers=self.m1_stack,
                                 offset=pmos_vdd_pos)
 
+        self.add_power_pin("vdd",
+                           self.well_contact_pos,
+                           vertical=True)
         
-
-        # Add vdd pin above the transistor
-        self.add_power_pin("vdd", self.well_contact_pos, vertical=True)
+        # Hack for li layers
+        if OPTS.tech_name == "s8":
+            self.add_via_center(layers=self.li_stack,
+                                offset=self.well_contact_pos)
         
     def create_ptx(self):
         """
@@ -191,7 +198,6 @@ class precharge(design.design):
         if self.en_layer == "m2":
             self.add_via_center(layers=self.m1_stack,
                                 offset=offset)
-
         
         # adds the en rail on metal1
         self.add_layout_pin_segment_center(text="en_bar",
@@ -205,9 +211,11 @@ class precharge(design.design):
         """
         
         # adds the contact from active to metal1
-        self.well_contact_pos = self.upper_pmos1_inst.get_pin("D").center().scale(1, 0) \
-                                + vector(0, self.upper_pmos1_inst.uy() + contact.active_contact.height / 2 \
-                                         + self.nwell_extend_active)
+        offset_height = self.upper_pmos1_inst.uy() + \
+                        0.5 * contact.active_contact.height + \
+                        self.nwell_extend_active
+        self.well_contact_pos = self.upper_pmos1_inst.get_pin("D").center().scale(1, 0) + \
+                                vector(0, offset_height)
         self.add_via_center(layers=self.active_stack,
                             offset=self.well_contact_pos,
                             implant_type="n",

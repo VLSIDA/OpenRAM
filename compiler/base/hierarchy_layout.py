@@ -9,6 +9,7 @@ import collections
 import geometry
 import gdsMill
 import debug
+from math import sqrt
 from tech import drc, GDS
 from tech import layer as techlayer
 from tech import layer_stacks
@@ -1193,11 +1194,9 @@ class layout():
                               "supply router."
                               .format(name,inst.name,self.pwr_grid_layer))
 
-
-
     def add_power_pin(self, name, loc, size=[1, 1], vertical=False, start_layer="m1"):
         """
-        Add a single power pin from the lowest power_grid layer down to M1 at
+        Add a single power pin from the lowest power_grid layer down to M1 (or li) at
         the given center location. The starting layer is specified to determine
         which vias are needed.
         """
@@ -1211,23 +1210,27 @@ class layout():
         else:
             direction = None
 
-
         via = self.add_via_stack_center(from_layer=start_layer,
                                         to_layer=self.pwr_grid_layer,
                                         size=size,
                                         offset=loc,
                                         direction=direction)
-
         if start_layer == self.pwr_grid_layer:
             self.add_layout_pin_rect_center(text=name,
                                             layer=self.pwr_grid_layer,
                                             offset=loc)
         else:
+            # Hack for min area
+            if OPTS.tech_name == "s8":
+                height = width = sqrt(drc["minarea_m3"])
+            else:
+                width = via.width
+                height = via.height
             self.add_layout_pin_rect_center(text=name,
                                             layer=self.pwr_grid_layer,
                                             offset=loc,
-                                            width=via.width,
-                                            height=via.height)
+                                            width=width,
+                                            height=height)
 
     def add_power_ring(self, bbox):
         """

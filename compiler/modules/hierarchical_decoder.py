@@ -25,8 +25,7 @@ class hierarchical_decoder(design.design):
         self.pre2x4_inst = []
         self.pre3x8_inst = []
 
-        b = factory.create(module_type="bitcell")
-        self.cell_height = b.height
+        (self.cell_height, self.cell_multiple) = self.find_decoder_height()
         self.rows = rows
         self.num_inputs = math.ceil(math.log(self.rows, 2))
         (self.no_of_pre2x4, self.no_of_pre3x8)=self.determine_predecodes(self.num_inputs)
@@ -35,6 +34,17 @@ class hierarchical_decoder(design.design):
         if not OPTS.netlist_only:
             self.create_layout()
 
+    def find_decoder_height(self):
+        b = factory.create(module_type="bitcell")
+
+        cell_height = b.height
+        and3 = factory.create(module_type="pand3",
+                              height=cell_height)
+        
+        # Try to make a nand with a given height
+        # Default
+        return (b.height, 1)
+        
     def create_netlist(self):
         self.add_modules()
         self.setup_netlist_constants()

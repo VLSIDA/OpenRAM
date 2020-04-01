@@ -7,15 +7,11 @@
 #
 import hierarchy_layout
 import hierarchy_spice
-import globals
 import verify
 import debug
 import os
 from globals import OPTS
-import graph_util
 
-total_drc_errors = 0 
-total_lvs_errors = 0
 
 class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
     """
@@ -51,14 +47,12 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         # Final verification option does not allow nets to be connected by label.
         # Unit tests will check themselves.
         if OPTS.is_unit_test:
-            return
+            return ("skipped", "skipped")
         if not OPTS.check_lvsdrc:
-            return
+            return ("skipped", "skipped")
         # Do not run if disabled in options.
         if (OPTS.inline_lvsdrc or top_level):
 
-            global total_drc_errors
-            global total_lvs_errors
             tempspice = "{0}/{1}.sp".format(OPTS.openram_temp,self.name)
             tempgds = "{0}/{1}.gds".format(OPTS.openram_temp,self.name)
             self.sp_write(tempspice)
@@ -68,11 +62,11 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             num_lvs_errors = verify.run_lvs(self.name, tempgds, tempspice, final_verification=final_verification) 
             debug.check(num_drc_errors == 0,"DRC failed for {0} with {1} error(s)".format(self.name,num_drc_errors))
             debug.check(num_lvs_errors == 0,"LVS failed for {0} with {1} errors(s)".format(self.name,num_lvs_errors))
-            total_drc_errors += num_drc_errors
-            total_lvs_errors += num_lvs_errors
 
             os.remove(tempspice)
             os.remove(tempgds)
+            
+            return (num_drc_errors, num_lvs_errors)
 
     def DRC(self, final_verification=False):
         """Checks DRC for a module"""
@@ -80,14 +74,16 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         # Do not run if disabled in options.
 
         if (not OPTS.is_unit_test and OPTS.check_lvsdrc and (OPTS.inline_lvsdrc or final_verification)):
-            global total_drc_errors
             tempgds = "{0}/{1}.gds".format(OPTS.openram_temp,self.name)
             self.gds_write(tempgds)
             num_errors = verify.run_drc(self.name, tempgds, final_verification=final_verification)  
-            total_drc_errors += num_errors
             debug.check(num_errors == 0,"DRC failed for {0} with {1} error(s)".format(self.name,num_error))
 
             os.remove(tempgds)
+
+            return num_errors
+        else:
+            return "skipped"
 
     def LVS(self, final_verification=False):
         """Checks LVS for a module"""
@@ -95,16 +91,18 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         # Do not run if disabled in options.
 
         if (not OPTS.is_unit_test and OPTS.check_lvsdrc and (OPTS.inline_lvsdrc or final_verification)):
-            global total_lvs_errors
             tempspice = "{0}/{1}.sp".format(OPTS.openram_temp,self.name)
             tempgds = "{0}/{1}.gds".format(OPTS.openram_temp,self.name)
             self.sp_write(tempspice)
             self.gds_write(tempgds)
             num_errors = verify.run_lvs(self.name, tempgds, tempspice, final_verification=final_verification)
-            total_lvs_errors += num_errors
             debug.check(num_errors == 0,"LVS failed for {0} with {1} error(s)".format(self.name,num_errors))
             os.remove(tempspice)
-            os.remove(tempgds) 
+            os.remove(tempgds)
+
+            return num_errors
+        else:
+            return "skipped"
             
     def init_graph_params(self):
         """Initializes parameters relevant to the graph creation"""

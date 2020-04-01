@@ -196,6 +196,8 @@ class ptx(design.design):
             # The well is not included in the height and width
             self.height = self.poly_height
             self.width = self.active_width
+            self.well_height = self.height
+            self.well_width = self.width
 
         # This is the center of the first active contact offset (centered vertically)
         self.contact_offset = self.active_offset + vector(0.5 * self.active_contact.width,
@@ -353,10 +355,10 @@ class ptx(design.design):
         if not (well_name in layer or "vtg" in layer):
             return
 
-        center_pos = self.active_offset + vector(0.5*self.active_width,
-                                                 0.5*self.active_height)
-        well_ll = center_pos - vector(0.5*self.well_width,
-                                      0.5*self.well_height)
+        center_pos = self.active_offset + vector(0.5 * self.active_width,
+                                                 0.5 * self.active_height)
+        well_ll = center_pos - vector(0.5 * self.well_width,
+                                      0.5 * self.well_height)
         if well_name in layer:
             self.add_rect(layer=well_name,
                           offset=well_ll,
@@ -450,7 +452,7 @@ class ptx(design.design):
         contact=self.add_via_center(layers=self.active_stack,
                                     offset=pos,
                                     size=(1, self.num_contacts),
-                                    directions=("V","V"),
+                                    directions=("V", "V"),
                                     implant_type=self.implant_type,
                                     well_type=self.well_type)
         

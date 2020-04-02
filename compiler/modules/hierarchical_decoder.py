@@ -37,13 +37,19 @@ class hierarchical_decoder(design.design):
     def find_decoder_height(self):
         b = factory.create(module_type="bitcell")
 
-        cell_height = b.height
-        and3 = factory.create(module_type="pand3",
-                              height=cell_height)
-        
-        # Try to make a nand with a given height
-        # Default
         return (b.height, 1)
+    
+        cell_multiple = 1
+        while cell_multiple < 3:
+            cell_height = cell_multiple * b.height
+            and3 = factory.create(module_type="pand3",
+                                  height=cell_height)
+            (drc_errors, lvs_errors) = and3.DRC_LVS(force_check=True)
+            if drc_errors + lvs_errors == 0:
+                return (cell_height, cell_multiple)
+            cell_multiple += 1
+        else:
+            debug.error("Couldn't find a valid decoder height multiple.", -1)
         
     def create_netlist(self):
         self.add_modules()

@@ -19,7 +19,9 @@ class verilog_test(openram_test):
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
-
+        OPTS.route_supplies=False
+        OPTS.check_lvsdrc=False
+        
         from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=2,

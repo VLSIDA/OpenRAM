@@ -621,7 +621,7 @@ class lib:
                         ))
 
         # information of checks
-        (drc_errors, lvs_errors) = self.sram.DRC_LVS(final_verification=True, top_level=True)
+        (drc_errors, lvs_errors) = self.sram.DRC_LVS(final_verification=True, force_check=True)
         datasheet.write("{0},{1},".format(drc_errors, lvs_errors))
         
         # write area

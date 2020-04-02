@@ -21,7 +21,7 @@ class verilog_test(openram_test):
         globals.init_openram(config_file)
         OPTS.route_supplies=False
         OPTS.check_lvsdrc=False
-        
+        OPTS.netlist_only=True
         from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=2,

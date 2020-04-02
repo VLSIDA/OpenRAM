@@ -52,7 +52,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         if not force_check and not OPTS.check_lvsdrc:
             return ("skipped", "skipped")
         # Do not run if disabled in options.
-        if (OPTS.inline_lvsdrc or force_check):
+        if (OPTS.inline_lvsdrc or force_check or final_verification):
 
             tempspice = "{0}/{1}.sp".format(OPTS.openram_temp, self.name)
             tempgds = "{0}/{1}.gds".format(OPTS.openram_temp, self.name)
@@ -61,12 +61,16 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             # Final verification option does not allow nets to be connected by label.
             num_drc_errors = verify.run_drc(self.name, tempgds, extract=True, final_verification=final_verification)
             num_lvs_errors = verify.run_lvs(self.name, tempgds, tempspice, final_verification=final_verification)
-            debug.check(num_drc_errors == 0,
-                        "DRC failed for {0} with {1} error(s)".format(self.name,
-                                                                      num_drc_errors))
-            debug.check(num_lvs_errors == 0,
-                        "LVS failed for {0} with {1} errors(s)".format(self.name,
-                                                                       num_lvs_errors))
+
+            # force_check is used to determine decoder height and other things, so we shouldn't fail
+            # if that flag is set
+            if OPTS.inline_lvsdrc and not force_check:
+                debug.check(num_drc_errors == 0,
+                            "DRC failed for {0} with {1} error(s)".format(self.name,
+                                                                          num_drc_errors))
+                debug.check(num_lvs_errors == 0,
+                            "LVS failed for {0} with {1} errors(s)".format(self.name,
+                                                                           num_lvs_errors))
 
             os.remove(tempspice)
             os.remove(tempgds)

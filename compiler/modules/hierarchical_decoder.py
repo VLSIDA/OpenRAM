@@ -36,9 +36,10 @@ class hierarchical_decoder(design.design):
 
     def find_decoder_height(self):
         b = factory.create(module_type="bitcell")
-
+        # Old behavior
         return (b.height, 1)
-    
+
+        # Search for the smallest multiple that works
         cell_multiple = 1
         while cell_multiple < 3:
             cell_height = cell_multiple * b.height

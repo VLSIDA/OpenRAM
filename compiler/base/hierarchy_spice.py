@@ -43,7 +43,7 @@ class spice():
         # Keep track of any comments to add the the spice
         try:
             self.commments
-        except NameError:
+        except AttributeError:
             self.comments = []
 
         self.sp_read()
@@ -57,7 +57,7 @@ class spice():
 
         try:
             self.commments
-        except NameError:
+        except AttributeError:
             self.comments = []
 
         self.comments.append(comment)
@@ -210,6 +210,24 @@ class spice():
         else:
             self.spice = []
 
+        # We don't define self.lvs and will use self.spice if dynamically created
+        # or they are the same file
+        if self.lvs_file!=self.sp_file and os.path.isfile(self.lvs_file):
+            debug.info(3, "opening {0}".format(self.lvs_file))
+            f = open(self.lvs_file)
+            self.lvs = f.readlines()
+            for i in range(len(self.lvs)):
+                self.lvs[i] = self.lvs[i].rstrip(" \n")
+            f.close()
+
+            # pins and subckt should be the same
+            # find the correct subckt line in the file
+            subckt = re.compile("^.subckt {}".format(self.name), re.IGNORECASE)
+            subckt_line = list(filter(subckt.search, self.lvs))[0]
+            # parses line into ports and remove subckt
+            lvs_pins = subckt_line.split(" ")[2:]
+            debug.check(lvs_pins == self.pins, "LVS and spice file pin mismatch.", -1)
+            
     def check_net_in_spice(self, net_name):
         """Checks if a net name exists in the current. Intended to be check nets in hand-made cells."""
         # Remove spaces and lower case then add spaces.
@@ -239,16 +257,18 @@ class spice():
                 return True
         return False
 
-    def sp_write_file(self, sp, usedMODS):
-        """ Recursive spice subcircuit write;
-            Writes the spice subcircuit from the library or the dynamically generated one"""
+    def sp_write_file(self, sp, usedMODS, lvs_netlist=False):
+        """
+        Recursive spice subcircuit write;
+        Writes the spice subcircuit from the library or the dynamically generated one
+        """
         if not self.spice:
             # recursively write the modules
             for i in self.mods:
                 if self.contains(i, usedMODS):
                     continue
                 usedMODS.append(i)
-                i.sp_write_file(sp, usedMODS)
+                i.sp_write_file(sp, usedMODS, lvs_netlist)
 
             if len(self.insts) == 0:
                 return
@@ -296,7 +316,10 @@ class spice():
             # Including the file path makes the unit test fail for other users.
             # if os.path.isfile(self.sp_file):
             #    sp.write("\n* {0}\n".format(self.sp_file))
-            sp.write("\n".join(self.spice))
+            if lvs_netlist:
+                sp.write("\n".join(self.lvs))
+            else:
+                sp.write("\n".join(self.spice))
             
             sp.write("\n")
 
@@ -310,6 +333,16 @@ class spice():
         del usedMODS
         spfile.close()
 
+    def lvs_write(self, spname):
+        """Writes the lvs to files"""
+        debug.info(3, "Writing to {0}".format(spname))
+        spfile = open(spname, 'w')
+        spfile.write("*FIRST LINE IS A COMMENT\n")
+        usedMODS = list()
+        self.sp_write_file(spfile, usedMODS, True)
+        del usedMODS
+        spfile.close()
+        
     def analytical_delay(self, corner, slew, load=0.0):
         """Inform users undefined delay module while building new modules"""
         

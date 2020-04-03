@@ -24,6 +24,14 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         self.gds_file = OPTS.openram_tech + "gds_lib/" + name + ".gds"
         self.sp_file = OPTS.openram_tech + "sp_lib/" + name + ".sp"
 
+        # If we have a separate lvs directory, then all the lvs files
+        # should be in there (all or nothing!)
+        lvs_dir = OPTS.openram_tech + "lvs_lib/"
+        if os.path.exists(lvs_dir):
+            self.lvs_file = lvs_dir + name + ".sp"
+        else:
+            self.lvs_file = self.sp_file
+
         self.name = name
         hierarchy_spice.spice.__init__(self, name)
         hierarchy_layout.layout.__init__(self, name)
@@ -56,7 +64,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
 
             tempspice = "{0}/{1}.sp".format(OPTS.openram_temp, self.name)
             tempgds = "{0}/{1}.gds".format(OPTS.openram_temp, self.name)
-            self.sp_write(tempspice)
+            self.lvs_write(tempspice)
             self.gds_write(tempgds)
             # Final verification option does not allow nets to be connected by label.
             num_drc_errors = verify.run_drc(self.name, tempgds, extract=True, final_verification=final_verification)
@@ -114,7 +122,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         if (not OPTS.is_unit_test and OPTS.check_lvsdrc and (OPTS.inline_lvsdrc or final_verification)):
             tempspice = "{0}/{1}.sp".format(OPTS.openram_temp, self.name)
             tempgds = "{0}/{1}.gds".format(OPTS.openram_temp, self.name)
-            self.sp_write(tempspice)
+            self.lvs_write(tempspice)
             self.gds_write(tempgds)
             num_errors = verify.run_lvs(self.name, tempgds, tempspice, final_verification=final_verification)
             debug.check(num_errors == 0,

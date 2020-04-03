@@ -11,6 +11,8 @@ from tech import layer, drc, spice
 from vector import vector
 from sram_factory import factory
 import contact
+import os
+from globals import OPTS
 
 
 class ptx(design.design):
@@ -100,8 +102,6 @@ class ptx(design.design):
         dir_list = ['INOUT', 'INPUT', 'INOUT', body_dir]
         self.add_pin_list(pin_list, dir_list)
 
-        # self.spice.append("\n.SUBCKT {0} {1}".format(self.name,
-        #                                              " ".join(self.pins)))
         # Just make a guess since these will actually
         # be decided in the layout later.
         area_sd = 2.5 * self.poly_width * self.tx_width
@@ -114,7 +114,13 @@ class ptx(design.design):
                                                                             area_sd)
         self.spice_device = main_str + area_str
         self.spice.append("\n* ptx " + self.spice_device)
-        # self.spice.append(".ENDS {0}".format(self.name))
+
+        if os.path.exists(OPTS.openram_tech + "lvs_lib"):
+            self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2} l={3} ".format(spice[self.tx_type],
+                                                                           self.mults,
+                                                                           self.tx_width,
+                                                                           drc("minwidth_poly"))
+        
 
     def setup_layout_constants(self):
         """

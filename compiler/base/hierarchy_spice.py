@@ -299,11 +299,14 @@ class spice():
                 # these are wires and paths
                 if self.conns[i] == []:
                     continue
-                if hasattr(self.insts[i].mod, "spice_device"):
+                if lvs_netlist and hasattr(self.insts[i].mod, "lvs_device"):
+                    sp.write(self.insts[i].mod.lvs_device.format(self.insts[i].name,
+                                                                   " ".join(self.conns[i])))
+                    sp.write("\n")
+                elif hasattr(self.insts[i].mod, "spice_device"):
                     sp.write(self.insts[i].mod.spice_device.format(self.insts[i].name,
                                                                    " ".join(self.conns[i])))
                     sp.write("\n")
-
                 else:
                     sp.write("X{0} {1} {2}\n".format(self.insts[i].name,
                                                      " ".join(self.conns[i]),

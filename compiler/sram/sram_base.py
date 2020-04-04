@@ -121,7 +121,7 @@ class sram_base(design, verilog, lef):
 
         start_time = datetime.datetime.now()
         # We only enable final verification if we have routed the design
-        self.DRC_LVS(final_verification=OPTS.route_supplies, top_level=True)
+        self.DRC_LVS(final_verification=OPTS.route_supplies)
         if not OPTS.is_unit_test:
             print_time("Verification", datetime.datetime.now(), start_time)
 
@@ -574,11 +574,11 @@ class sram_base(design, verilog, lef):
         sp.write("* Data bits: {}\n".format(self.word_size))
         sp.write("* Banks: {}\n".format(self.num_banks))
         sp.write("* Column mux: {}:1\n".format(self.words_per_row))
-        sp.write("**************************************************\n")        
+        sp.write("**************************************************\n")
         # This causes unit test mismatch
         # sp.write("* Created: {0}\n".format(datetime.datetime.now()))
         # sp.write("* User: {0}\n".format(getpass.getuser()))
-        # sp.write(".global {0} {1}\n".format(spice["vdd_name"], 
+        # sp.write(".global {0} {1}\n".format(spice["vdd_name"],
         #                                     spice["gnd_name"]))
         usedMODS = list()
         self.sp_write_file(sp, usedMODS)

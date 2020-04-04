@@ -15,18 +15,33 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-
 class precharge_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
         
-        # check precharge in single port
-        debug.info(2, "Checking precharge for handmade bitcell")
-        tx = factory.create(module_type="precharge", size=1)
+        # check precharge in multi-port
+        OPTS.bitcell = "pbitcell"
+        OPTS.num_rw_ports = 1
+        OPTS.num_r_ports = 1
+        OPTS.num_w_ports = 1
+
+        factory.reset()
+        debug.info(2, "Checking precharge for pbitcell (innermost connections)")
+        tx = factory.create(module_type="precharge", size=1, bitcell_bl="bl0", bitcell_br="br0")
+        self.local_check(tx)
+
+        factory.reset()
+        debug.info(2, "Checking precharge for pbitcell (innermost connections)")
+        tx = factory.create(module_type="precharge", size=1, bitcell_bl="bl1", bitcell_br="br1")
         self.local_check(tx)
         
+        factory.reset()
+        debug.info(2, "Checking precharge for pbitcell (outermost connections)")
+        tx = factory.create(module_type="precharge", size=1, bitcell_bl="bl2", bitcell_br="br2")
+        self.local_check(tx)
+
         globals.end_openram()
         
 # run the test from the command line

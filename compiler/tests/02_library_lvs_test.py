@@ -45,7 +45,9 @@ class library_lvs_test(openram_test):
 
 def setup_files():
     gds_dir = OPTS.openram_tech + "/gds_lib"
-    sp_dir = OPTS.openram_tech + "/sp_lib"
+    sp_dir = OPTS.openram_tech + "/lvs_lib"
+    if not os.path.exists(sp_dir):
+        sp_dir = OPTS.openram_tech + "/sp_lib"
     files = os.listdir(gds_dir)
     nametest = re.compile("\.gds$", re.IGNORECASE)
     gds_files = list(filter(nametest.search, files))

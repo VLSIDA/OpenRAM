@@ -91,7 +91,7 @@ class dff_buf(design.design):
     def create_instances(self):
         self.dff_inst=self.add_inst(name="dff_buf_dff",
                                     mod=self.dff)
-        #self.connect_inst(props.dff_buff.buf_ports)                                    
+
         self.connect_inst(["D", "qint", "clk", "vdd", "gnd"])
 
         self.inv1_inst=self.add_inst(name="dff_buf_inv1",

@@ -561,7 +561,7 @@ class sram_base(design, verilog, lef):
             self.add_via_center(layers=self.m2_stack,
                                 offset=out_pos)
             
-    def sp_write(self, sp_name):
+    def sp_write(self, sp_name, lvs_netlist=False):
         # Write the entire spice of the object to the file
         ############################################################
         # Spice circuit
@@ -581,10 +581,13 @@ class sram_base(design, verilog, lef):
         # sp.write(".global {0} {1}\n".format(spice["vdd_name"],
         #                                     spice["gnd_name"]))
         usedMODS = list()
-        self.sp_write_file(sp, usedMODS)
+        self.sp_write_file(sp, usedMODS, lvs_netlist=lvs_netlist)
         del usedMODS
         sp.close()
- 
+
+    def lvs_write(self, sp_name):
+        self.sp_write(sp_name, lvs_netlist=True)
+        
     def get_wordline_stage_efforts(self, inp_is_rise=True):
         """Get the all the stage efforts for each stage in the path from clk_buf to a wordline"""
         stage_effort_list = []

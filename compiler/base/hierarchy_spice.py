@@ -226,7 +226,7 @@ class spice():
             subckt_line = list(filter(subckt.search, self.lvs))[0]
             # parses line into ports and remove subckt
             lvs_pins = subckt_line.split(" ")[2:]
-            debug.check(lvs_pins == self.pins, "LVS and spice file pin mismatch.", -1)
+            debug.check(lvs_pins == self.pins, "LVS and spice file pin mismatch.")
             
     def check_net_in_spice(self, net_name):
         """Checks if a net name exists in the current. Intended to be check nets in hand-made cells."""
@@ -319,7 +319,7 @@ class spice():
             # Including the file path makes the unit test fail for other users.
             # if os.path.isfile(self.sp_file):
             #    sp.write("\n* {0}\n".format(self.sp_file))
-            if lvs_netlist:
+            if lvs_netlist and hasattr(self, "lvs"):
                 sp.write("\n".join(self.lvs))
             else:
                 sp.write("\n".join(self.spice))

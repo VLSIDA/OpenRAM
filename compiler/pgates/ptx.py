@@ -106,20 +106,33 @@ class ptx(design.design):
         # be decided in the layout later.
         area_sd = 2.5 * self.poly_width * self.tx_width
         perimeter_sd = 2 * self.poly_width + 2 * self.tx_width
-        main_str = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(spice[self.tx_type],
-                                                                  self.mults,
-                                                                  self.tx_width,
-                                                                  drc("minwidth_poly"))
-        area_str = "pd={0:.2f}u ps={0:.2f}u as={1:.2f}p ad={1:.2f}p".format(perimeter_sd,
-                                                                            area_sd)
+        if OPTS.tech_name == "s8":
+            print("here {0}".format(self.name))
+            # s8 technology is in microns
+            main_str = "M{{0}} {{1}} {0} m={1} w={2} l={3} ".format(spice[self.tx_type],
+                                                                      self.mults,
+                                                                      self.tx_width,
+                                                                      drc("minwidth_poly"))
+            # Perimeters are in microns
+            # Area is in u since it is microns square
+            area_str = "pd={0:.2f} ps={0:.2f} as={1:.2f}u ad={1:.2f}u".format(perimeter_sd,
+                                                                              area_sd)
+        else:
+            main_str = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(spice[self.tx_type],
+                                                                      self.mults,
+                                                                      self.tx_width,
+                                                                      drc("minwidth_poly"))
+            area_str = "pd={0:.2f}u ps={0:.2f}u as={1:.2f}p ad={1:.2f}p".format(perimeter_sd,
+                                                                                area_sd)
         self.spice_device = main_str + area_str
         self.spice.append("\n* ptx " + self.spice_device)
 
+        # LVS lib is always in SI units
         if os.path.exists(OPTS.openram_tech + "lvs_lib"):
-            self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2} l={3} ".format(spice[self.tx_type],
-                                                                           self.mults,
-                                                                           self.tx_width,
-                                                                           drc("minwidth_poly"))
+            self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(spice[self.tx_type],
+                                                                             self.mults,
+                                                                             self.tx_width,
+                                                                             drc("minwidth_poly"))
         
 
     def setup_layout_constants(self):

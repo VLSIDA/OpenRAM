@@ -11,6 +11,7 @@ import math
 from sram_factory import factory
 from vector import vector
 from globals import OPTS
+from errors import drc_error
 
 
 class hierarchical_decoder(design.design):
@@ -37,18 +38,28 @@ class hierarchical_decoder(design.design):
     def find_decoder_height(self):
         b = factory.create(module_type="bitcell")
         # Old behavior
-        return (b.height, 1)
+        # return (b.height, 1)
 
         # Search for the smallest multiple that works
         cell_multiple = 1
-        while cell_multiple < 3:
+        while cell_multiple < 5:
             cell_height = cell_multiple * b.height
-            and3 = factory.create(module_type="pand3",
-                                  height=cell_height)
-            (drc_errors, lvs_errors) = and3.DRC_LVS(force_check=True)
-            if drc_errors + lvs_errors == 0:
-                return (cell_height, cell_multiple)
+            # debug.info(2,"Trying mult = {0} height={1}".format(cell_multiple, cell_height))
+            try:
+                and3 = factory.create(module_type="pand3",
+                                      height=cell_height)
+            except drc_error:
+                # debug.info(1, "Incrementing decoder height by 1 bitcell height {}".format(b.height))
+                pass
+            else:
+                (drc_errors, lvs_errors) = and3.DRC_LVS(force_check=True)
+                total_errors = drc_errors + lvs_errors
+                if total_errors == 0:
+                    debug.info(1, "Decoder height is multiple of {} bitcells.".format(cell_multiple))
+                    return (cell_height, cell_multiple)
+
             cell_multiple += 1
+            
         else:
             debug.error("Couldn't find a valid decoder height multiple.", -1)
         

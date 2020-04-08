@@ -108,7 +108,6 @@ class ptx(design.design):
         area_sd = 2.5 * self.poly_width * self.tx_width
         perimeter_sd = 2 * self.poly_width + 2 * self.tx_width
         if OPTS.tech_name == "s8":
-            print("here {0}".format(self.name))
             # s8 technology is in microns
             main_str = "M{{0}} {{1}} {0} m={1} w={2} l={3} ".format(spice[self.tx_type],
                                                                       self.mults,

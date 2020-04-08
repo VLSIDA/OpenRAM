@@ -111,7 +111,7 @@ class precharge(design.design):
                            vertical=True)
         
         # Hack for li layers
-        if OPTS.tech_name == "s8":
+        if hasattr(self, "li_stack"):
             self.add_via_center(layers=self.li_stack,
                                 offset=self.well_contact_pos)
         
@@ -166,7 +166,7 @@ class precharge(design.design):
         Connects the upper and lower pmos together
         """
 
-        offset = self.lower_pmos_inst.get_pin("G").ll()
+        offset = self.lower_pmos_inst.get_pin("G").ul()
         # connects the top and bottom pmos' gates together
         ylength = self.upper_pmos1_inst.get_pin("G").ll().y - offset.y
         self.add_rect(layer="poly",
@@ -198,6 +198,9 @@ class precharge(design.design):
         if self.en_layer == "m2":
             self.add_via_center(layers=self.m1_stack,
                                 offset=offset)
+            if hasattr(self, "li_stack"):
+                self.add_via_center(layers=self.li_stack,
+                                    offset=offset)
         
         # adds the en rail on metal1
         self.add_layout_pin_segment_center(text="en_bar",
@@ -220,6 +223,9 @@ class precharge(design.design):
                             offset=self.well_contact_pos,
                             implant_type="n",
                             well_type="n")
+        if hasattr(self, "li_stack"):
+            self.add_via_center(layers=self.li_stack,
+                                offset=self.well_contact_pos)
 
         self.height = self.well_contact_pos.y + contact.active_contact.height + self.m1_space
 

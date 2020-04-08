@@ -51,6 +51,9 @@ class sram():
     def sp_write(self, name):
         self.s.sp_write(name)
 
+    def lvs_write(self, name):
+        self.s.lvs_write(name)
+        
     def lef_write(self, name):
         self.s.lef_write(name)
 

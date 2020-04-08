@@ -45,7 +45,7 @@ class lib:
         """ Determine the load/slews if they aren't specified in the config file. """
         # These are the parameters to determine the table sizes
         #self.load_scales = np.array([0.1, 0.25, 0.5, 1, 2, 4, 8])
-        self.load_scales = np.array([0.25, 1, 8])
+        self.load_scales = np.array([0.25, 1, 4])
         #self.load_scales = np.array([0.25, 1])
         self.load = tech.spice["dff_in_cap"]
         self.loads = self.load_scales*self.load
@@ -621,17 +621,12 @@ class lib:
                         ))
 
         # information of checks
-        from hierarchy_design import total_drc_errors
-        from hierarchy_design import total_lvs_errors
-        DRC = 'skipped'
-        LVS = 'skipped'
-        if OPTS.check_lvsdrc:
-            DRC = str(total_drc_errors)
-            LVS = str(total_lvs_errors)
-
-        datasheet.write("{0},{1},".format(DRC, LVS))
+        (drc_errors, lvs_errors) = self.sram.DRC_LVS(final_verification=True)
+        datasheet.write("{0},{1},".format(drc_errors, lvs_errors))
+        
         # write area
-        datasheet.write(str(self.sram.width * self.sram.height)+',')
+        datasheet.write(str(self.sram.width * self.sram.height) + ',')
+        
         # write timing information for all ports
         for port in self.all_ports:
             #din timings

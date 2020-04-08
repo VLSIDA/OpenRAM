@@ -73,11 +73,12 @@ class precharge_array(design.design):
 
     def add_layout_pins(self):
 
+        en_bar_pin = self.pc_cell.get_pin("en_bar")
         self.add_layout_pin(text="en_bar",
-                            layer="m1",
-                            offset=self.pc_cell.get_pin("en_bar").ll(),
+                            layer=en_bar_pin.layer,
+                            offset=en_bar_pin.ll(),
                             width=self.width,
-                            height=drc("minwidth_m1"))
+                            height=en_bar_pin.height())
 
         for inst in self.local_insts:
             self.copy_layout_pin(inst, "vdd")

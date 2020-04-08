@@ -12,6 +12,8 @@ from vector import vector
 from sram_factory import factory
 import contact
 import logical_effort
+import os
+from globals import OPTS
 
 
 class ptx(design.design):
@@ -101,21 +103,38 @@ class ptx(design.design):
         dir_list = ['INOUT', 'INPUT', 'INOUT', body_dir]
         self.add_pin_list(pin_list, dir_list)
 
-        # self.spice.append("\n.SUBCKT {0} {1}".format(self.name,
-        #                                              " ".join(self.pins)))
         # Just make a guess since these will actually
         # be decided in the layout later.
         area_sd = 2.5 * self.poly_width * self.tx_width
         perimeter_sd = 2 * self.poly_width + 2 * self.tx_width
-        main_str = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(spice[self.tx_type],
-                                                                  self.mults,
-                                                                  self.tx_width,
-                                                                  drc("minwidth_poly"))
-        area_str = "pd={0:.2f}u ps={0:.2f}u as={1:.2f}p ad={1:.2f}p".format(perimeter_sd,
-                                                                            area_sd)
+        if OPTS.tech_name == "s8":
+            print("here {0}".format(self.name))
+            # s8 technology is in microns
+            main_str = "M{{0}} {{1}} {0} m={1} w={2} l={3} ".format(spice[self.tx_type],
+                                                                      self.mults,
+                                                                      self.tx_width,
+                                                                      drc("minwidth_poly"))
+            # Perimeters are in microns
+            # Area is in u since it is microns square
+            area_str = "pd={0:.2f} ps={0:.2f} as={1:.2f}u ad={1:.2f}u".format(perimeter_sd,
+                                                                              area_sd)
+        else:
+            main_str = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(spice[self.tx_type],
+                                                                      self.mults,
+                                                                      self.tx_width,
+                                                                      drc("minwidth_poly"))
+            area_str = "pd={0:.2f}u ps={0:.2f}u as={1:.2f}p ad={1:.2f}p".format(perimeter_sd,
+                                                                                area_sd)
         self.spice_device = main_str + area_str
         self.spice.append("\n* ptx " + self.spice_device)
-        # self.spice.append(".ENDS {0}".format(self.name))
+
+        # LVS lib is always in SI units
+        if os.path.exists(OPTS.openram_tech + "lvs_lib"):
+            self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(spice[self.tx_type],
+                                                                             self.mults,
+                                                                             self.tx_width,
+                                                                             drc("minwidth_poly"))
+        
 
     def setup_layout_constants(self):
         """
@@ -197,6 +216,8 @@ class ptx(design.design):
             # The well is not included in the height and width
             self.height = self.poly_height
             self.width = self.active_width
+            self.well_height = self.height
+            self.well_width = self.width
 
         # This is the center of the first active contact offset (centered vertically)
         self.contact_offset = self.active_offset + vector(0.5 * self.active_contact.width,
@@ -354,10 +375,10 @@ class ptx(design.design):
         if not (well_name in layer or "vtg" in layer):
             return
 
-        center_pos = self.active_offset + vector(0.5*self.active_width,
-                                                 0.5*self.active_height)
-        well_ll = center_pos - vector(0.5*self.well_width,
-                                      0.5*self.well_height)
+        center_pos = self.active_offset + vector(0.5 * self.active_width,
+                                                 0.5 * self.active_height)
+        well_ll = center_pos - vector(0.5 * self.well_width,
+                                      0.5 * self.well_height)
         if well_name in layer:
             self.add_rect(layer=well_name,
                           offset=well_ll,
@@ -471,7 +492,7 @@ class ptx(design.design):
         contact=self.add_via_center(layers=self.active_stack,
                                     offset=pos,
                                     size=(1, self.num_contacts),
-                                    directions=("V","V"),
+                                    directions=("V", "V"),
                                     implant_type=self.implant_type,
                                     well_type=self.well_type)
         

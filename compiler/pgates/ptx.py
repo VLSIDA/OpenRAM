@@ -11,6 +11,7 @@ from tech import layer, drc, spice
 from vector import vector
 from sram_factory import factory
 import contact
+import logical_effort
 
 
 class ptx(design.design):
@@ -445,6 +446,26 @@ class ptx(design.design):
                 
         if self.connect_active:
             self.connect_fingered_active(drain_positions, source_positions)
+            
+    def get_stage_effort(self, cout):
+        """Returns an object representing the parameters for delay in tau units."""
+        
+        # FIXME: Using the same definition as the pinv.py.
+        parasitic_delay = 1 
+        size = self.mults*self.tx_width/drc("minwidth_tx")
+        return logical_effort.logical_effort(self.name, 
+                                             size, 
+                                             self.input_load(), 
+                                             cout, 
+                                             parasitic_delay)        
+                                             
+    def input_load(self):
+        """
+        Returns the relative gate cin of the tx
+        """
+        
+        # FIXME: this will be applied for the loads of the drain/source
+        return self.mults*self.tx_width/drc("minwidth_tx")                                         
 
     def add_diff_contact(self, label, pos):
         contact=self.add_via_center(layers=self.active_stack,

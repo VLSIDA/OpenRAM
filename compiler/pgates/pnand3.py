@@ -223,7 +223,10 @@ class pnand3(pgate.pgate):
                               position="center")
 
         # FIXME: constant hack
-        self.inputA_yoffset = self.inputB_yoffset + 1.15 * m1_pitch
+        if OPTS.tech_name == "s8":
+            self.inputA_yoffset = self.inputB_yoffset + 1.15 * m1_pitch
+        else:
+            self.inputA_yoffset = self.inputB_yoffset + 1.12 * m1_pitch            
         self.route_input_gate(self.pmos1_inst,
                               self.nmos1_inst,
                               self.inputA_yoffset,

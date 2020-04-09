@@ -12,6 +12,7 @@ from sram_factory import factory
 from vector import vector
 from globals import OPTS
 from errors import drc_error
+from tech import cell_properties
 
 
 class hierarchical_decoder(design.design):
@@ -26,7 +27,13 @@ class hierarchical_decoder(design.design):
         self.pre2x4_inst = []
         self.pre3x8_inst = []
 
-        (self.cell_height, self.cell_multiple) = self.find_decoder_height()
+        b = factory.create(module_type="bitcell")
+        try:
+            self.cell_multiple = cell_properties.bitcell.decoder_bitcell_multiple
+        except AttributeError:
+            self.cell_multiple = 1
+        self.cell_height = self.cell_multiple * b.height
+        
         self.num_outputs = num_outputs
         # We may have more than one bitcell per decoder row
         self.rows = math.ceil(num_outputs / self.cell_multiple)
@@ -38,11 +45,12 @@ class hierarchical_decoder(design.design):
             self.create_layout()
 
     def find_decoder_height(self):
-            
+        """
+        Dead code. This would dynamically determine the bitcell multiple,
+        but I just decided to hard code it in the tech file if it is not 1
+        because a DRC tool would be required even to run in front-end mode.
+        """
         b = factory.create(module_type="bitcell")
-        # Old behavior
-        if OPTS.netlist_only:
-            return (b.height, 1)
 
         # Search for the smallest multiple that works
         cell_multiple = 1

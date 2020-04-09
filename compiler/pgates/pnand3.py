@@ -12,6 +12,7 @@ from tech import drc, parameter, spice
 from vector import vector
 import logical_effort
 from sram_factory import factory
+from globals import OPTS
 
 
 class pnand3(pgate.pgate):
@@ -226,7 +227,7 @@ class pnand3(pgate.pgate):
         if OPTS.tech_name == "s8":
             self.inputA_yoffset = self.inputB_yoffset + 1.15 * m1_pitch
         else:
-            self.inputA_yoffset = self.inputB_yoffset + 1.12 * m1_pitch            
+            self.inputA_yoffset = self.inputB_yoffset + 1.12 * m1_pitch
         self.route_input_gate(self.pmos1_inst,
                               self.nmos1_inst,
                               self.inputA_yoffset,

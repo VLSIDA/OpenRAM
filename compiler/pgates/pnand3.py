@@ -221,7 +221,7 @@ class pnand3(pgate.pgate):
                               self.nmos3_inst,
                               self.inputC_yoffset,
                               "C",
-                              position="center")
+                              position="left")
 
         # FIXME: constant hack
         if OPTS.tech_name == "s8":
@@ -232,7 +232,7 @@ class pnand3(pgate.pgate):
                               self.nmos1_inst,
                               self.inputA_yoffset,
                               "A",
-                              position="center")
+                              position="left")
         
     def route_output(self):
         """ Route the Z output """
@@ -255,10 +255,10 @@ class pnand3(pgate.pgate):
                             directions=("V", "V"))
         
         # PMOS3 and NMOS3 are drain aligned
-        self.add_path("m2", [pmos3_pin.center(), nmos3_pin.center()])
+        self.add_path("m1", [pmos3_pin.center(), nmos3_pin.center()])
         # Route in the A input track (top track)
         mid_offset = vector(nmos3_pin.center().x, self.inputA_yoffset)
-        self.add_path("m2", [pmos1_pin.center(), mid_offset, nmos3_pin.uc()])
+        self.add_path("m1", [pmos1_pin.center(), mid_offset, nmos3_pin.uc()])
 
         # This extends the output to the edge of the cell
         self.add_via_center(layers=self.m1_stack,

@@ -20,15 +20,6 @@ class hierarchical_decoder_test(openram_test):
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
-        # Doesn't require hierarchical decoder
-        # debug.info(1, "Testing 4 row sample for hierarchical_decoder")
-        # a = hierarchical_decoder.hierarchical_decoder(name="hd1, num_outputs=4)
-        # self.local_check(a)
-
-        # Doesn't require hierarchical decoder
-        # debug.info(1, "Testing 8 row sample for hierarchical_decoder")
-        # a = hierarchical_decoder.hierarchical_decoder(name="hd2", num_outputs=8)
-        # self.local_check(a)
 
         # check hierarchical decoder for single port
         debug.info(1, "Testing 16 row sample for hierarchical_decoder")

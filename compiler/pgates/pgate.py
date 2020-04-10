@@ -8,10 +8,14 @@
 import contact
 import design
 import debug
-from tech import layer
+import math
+from bisect import bisect_left
+from tech import layer, drc
 from vector import vector
 from globals import OPTS
 
+if(OPTS.tech_name == "s8"):
+    from tech import nmos_bins, pmos_bins
 
 class pgate(design.design):
     """
@@ -282,5 +286,48 @@ class pgate(design.design):
         self.width = max(self.nwell_contact.rx(), self.pwell_contact.rx()) + self.m1_space + 0.5 * contact.m1_via.width
         self.well_width = self.width + 2 * self.nwell_enclose_active
         # Height is an input parameter, so it is not recomputed.
+    
+    def bin_width(self, tx_type, target_width):
+
+        if tx_type == "nmos":
+            bins = nmos_bins[drc("minwidth_poly")]
+        elif tx_type == "pmos":
+            bins = pmos_bins[drc("minwidth_poly")]
+        else:
+            debug.error("invalid tx type")
+        
+        
+        bins = bins[0:bisect_left(bins, target_width) + 1]
+        if len(bins) == 1:
+            selected_bin = bins[0]
+            scaling_factor = 1
+            scaled_bin = bins[0]
+            
+        else:
+            scaled_bins = []
+            scaling_factors = []
+            for width in bins[0:-1]:
+                m = math.ceil(target_width / width)
+                scaling_factors.append(m)
+                scaled_bins.append(m * width)
+
+            scaled_bins.append(bins[-1])
+            scaling_factors.append(1)
+            select = bisect_left(scaled_bins, target_width)
+
+            selected_bin = bins[select]
+            scaling_factor = scaling_factors[select]
+            scaled_bin = scaled_bins[select]
+
+        debug.info(2, "binning {0} tx, target: {4}, found {1} x {2} = {3}".format(tx_type, selected_bin, scaling_factor, scaled_bin, target_width))
+
+        return(selected_bin, scaling_factor)
+
+
+
+
+            
+        
+
 
         

@@ -34,6 +34,10 @@ class stimuli():
         self.sf = stim_file
         
         (self.process, self.voltage, self.temperature) = corner
+        try:
+            self.device_libraries = tech.spice["fet_libraries"][self.process]
+        except:
+            debug.info(2, "Not using spice library")
         self.device_models = tech.spice["fet_models"][self.process]
     
         self.sram_name = "Xsram"
@@ -247,8 +251,15 @@ class stimuli():
 
     def write_include(self, circuit):
         """Writes include statements, inputs are lists of model files"""
+        libraries = self.device_libraries
         includes = self.device_models + [circuit]
         self.sf.write("* {} process corner\n".format(self.process))
+        for item in list(libraries):
+            if os.path.isfile(item[0]):
+                self.sf.write(".lib \"{0}\" {1}\n".format(item[0], item[1]))
+            else:
+                debug.error("Could not find spice library: {0}\nSet SPICE_MODEL_DIR to over-ride path.\n".format(item[0]))
+
         for item in list(includes):
             if os.path.isfile(item):
                 self.sf.write(".include \"{0}\"\n".format(item))

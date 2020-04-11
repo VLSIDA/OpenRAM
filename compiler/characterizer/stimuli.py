@@ -251,14 +251,16 @@ class stimuli():
 
     def write_include(self, circuit):
         """Writes include statements, inputs are lists of model files"""
-        libraries = self.device_libraries
+
         includes = self.device_models + [circuit]
         self.sf.write("* {} process corner\n".format(self.process))
-        for item in list(libraries):
-            if os.path.isfile(item[0]):
-                self.sf.write(".lib \"{0}\" {1}\n".format(item[0], item[1]))
-            else:
-                debug.error("Could not find spice library: {0}\nSet SPICE_MODEL_DIR to over-ride path.\n".format(item[0]))
+        if OPTS.tech_name == "s8":
+            libraries = self.device_libraries
+            for item in list(libraries):
+                if os.path.isfile(item[0]):
+                    self.sf.write(".lib \"{0}\" {1}\n".format(item[0], item[1]))
+                else:
+                    debug.error("Could not find spice library: {0}\nSet SPICE_MODEL_DIR to over-ride path.\n".format(item[0]))
 
         for item in list(includes):
             if os.path.isfile(item):

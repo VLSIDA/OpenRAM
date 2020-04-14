@@ -199,7 +199,8 @@ class hierarchical_decoder(design.design):
 
         self.input_routing_width = (self.num_inputs + 1) * self.m2_pitch
         # Calculates height and width of hierarchical decoder
-        self.height = max(self.predecoder_height, self.row_decoder_height)
+        # Add extra pitch for good measure
+        self.height = max(self.predecoder_height, self.row_decoder_height) + self.m3_pitch
         self.width = self.input_routing_width + self.predecoder_width \
                      + self.internal_routing_width \
                      + self.decoders_per_row * nand_width + self.inv.width
@@ -261,7 +262,10 @@ class hierarchical_decoder(design.design):
                 self.route_input_bus(decoder_offset, input_offset)
 
     def route_input_bus(self, input_offset, output_offset):
-        """ Route a vertical M2 coordinate to another vertical M2 coordinate to the predecode inputs """
+        """
+        Route a vertical M2 coordinate to another
+        vertical M2 coordinate to the predecode inputs
+        """
         
         self.add_via_center(layers=self.m2_stack,
                             offset=input_offset)
@@ -471,10 +475,10 @@ class hierarchical_decoder(design.design):
                                                               names=input_bus_names,
                                                               length=self.height)
 
-            self.route_bus_to_predecodes()
+            self.route_predecodes_to_bus()
             self.route_bus_to_decoder()
 
-    def route_bus_to_predecodes(self):
+    def route_predecodes_to_bus(self):
         """
         Iterates through all of the predecodes
         and connects to the rails including the offsets
@@ -517,7 +521,7 @@ class hierarchical_decoder(design.design):
                     if (output_index < self.num_outputs):
                         row_index = math.floor(output_index / self.decoders_per_row)
                         row_remainder = (output_index % self.decoders_per_row)
-                        row_offset = row_index * self.and_inst[0].height + (2 * row_remainder + 4) * self.m1_pitch
+                        row_offset = row_index * self.and_inst[0].height + (2 * row_remainder + 1) * self.m3_pitch
                         predecode_name = "predecode_{}".format(index_A)
                         self.route_predecode_bus_outputs(predecode_name,
                                                          self.and_inst[output_index].get_pin("A"),
@@ -525,7 +529,7 @@ class hierarchical_decoder(design.design):
                         predecode_name = "predecode_{}".format(index_B)
                         self.route_predecode_bus_outputs(predecode_name,
                                                          self.and_inst[output_index].get_pin("B"),
-                                                         row_offset + self.m1_pitch)
+                                                         row_offset + self.m3_pitch)
                     output_index = output_index + 1
 
         elif (self.num_inputs > 5):
@@ -536,7 +540,7 @@ class hierarchical_decoder(design.design):
                         if (output_index < self.num_outputs):
                             row_index = math.floor(output_index / self.decoders_per_row)
                             row_remainder = (output_index % self.decoders_per_row)
-                            row_offset = row_index * self.and_inst[0].height + (3 * row_remainder + 4) * self.m1_pitch
+                            row_offset = row_index * self.and_inst[0].height + (3 * row_remainder + 1) * self.m3_pitch
                             predecode_name = "predecode_{}".format(index_A)
                             self.route_predecode_bus_outputs(predecode_name,
                                                              self.and_inst[output_index].get_pin("A"),
@@ -544,11 +548,11 @@ class hierarchical_decoder(design.design):
                             predecode_name = "predecode_{}".format(index_B)
                             self.route_predecode_bus_outputs(predecode_name,
                                                              self.and_inst[output_index].get_pin("B"),
-                                                             row_offset + self.m1_pitch)
+                                                             row_offset + self.m3_pitch)
                             predecode_name = "predecode_{}".format(index_C)
                             self.route_predecode_bus_outputs(predecode_name,
                                                              self.and_inst[output_index].get_pin("C"),
-                                                             row_offset + 2 * self.m1_pitch)
+                                                             row_offset + 2 * self.m3_pitch)
                         output_index = output_index + 1
 
     def route_vdd_gnd(self):
@@ -557,13 +561,19 @@ class hierarchical_decoder(design.design):
         must-connects next level up.
         """
 
-        # The vias will be placed in the center and right of the cells, respectively.
-        xoffset = self.and_inst[0].rx()
+        # The vias will be placed at the right of the cells.
+        xoffset = max(x.rx() for x in self.and_inst)
         for num in range(0, self.num_outputs):
+            # Only add the power pin for the 1st in each row
+            if num % self.decoders_per_row:
+                continue
+                
             for pin_name in ["vdd", "gnd"]:
                 # The nand and inv are the same height rows...
                 supply_pin = self.and_inst[num].get_pin(pin_name)
                 pin_pos = vector(xoffset, supply_pin.cy())
+                self.add_path("m1",
+                              [supply_pin.lc(), vector(xoffset, supply_pin.cy())])
                 self.add_power_pin(name=pin_name,
                                    loc=pin_pos)
                 

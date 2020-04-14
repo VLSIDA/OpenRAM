@@ -471,13 +471,13 @@ class ptx(design.design):
         """Returns an object representing the parameters for delay in tau units."""
         
         # FIXME: Using the same definition as the pinv.py.
-        parasitic_delay = 1 
-        size = self.mults*self.tx_width/drc("minwidth_tx")
-        return logical_effort.logical_effort(self.name, 
-                                             size, 
-                                             self.input_load(), 
-                                             cout, 
-                                             parasitic_delay)        
+        parasitic_delay = 1
+        size = self.mults * self.tx_width / drc("minwidth_tx")
+        return logical_effort.logical_effort(self.name,
+                                             size,
+                                             self.input_load(),
+                                             cout,
+                                             parasitic_delay)
                                              
     def input_load(self):
         """
@@ -485,7 +485,7 @@ class ptx(design.design):
         """
         
         # FIXME: this will be applied for the loads of the drain/source
-        return self.mults*self.tx_width/drc("minwidth_tx")                                         
+        return self.mults * self.tx_width / drc("minwidth_tx")
 
     def add_diff_contact(self, label, pos):
         contact=self.add_via_center(layers=self.active_stack,
@@ -496,14 +496,25 @@ class ptx(design.design):
                                     well_type=self.well_type)
         
         if hasattr(self, "li_stack"):
-            self.add_via_center(layers=self.li_stack,
-                                offset=pos)
-        
+            contact=self.add_via_center(layers=self.li_stack,
+                                        offset=pos,
+                                        directions=("V", "V"))
+
+        # contact_area = contact.mod.second_layer_width * contact.mod.second_layer_height
+        # min_area = drc("minarea_m1")
+        # width = contact.mod.second_layer_width
+        # if contact_area < min_area:
+        #     height = min_area / width
+        # else:
+        #     height = contact.mod.second_layer_height
+        width = contact.mod.second_layer_width
+        height = contact.mod.second_layer_height
         self.add_layout_pin_rect_center(text=label,
                                         layer="m1",
                                         offset=pos,
-                                        width=contact.mod.second_layer_width,
-                                        height=contact.mod.second_layer_height)
+                                        width=width,
+                                        height=height)
+
         return(contact)
         
     def get_cin(self):

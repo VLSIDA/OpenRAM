@@ -9,6 +9,7 @@ import contact
 import pgate
 import debug
 from tech import drc, parameter, spice
+from globals import OPTS
 from vector import vector
 import logical_effort
 from sram_factory import factory
@@ -37,6 +38,10 @@ class pnand2(pgate.pgate):
         debug.check(size == 1, "Size 1 pnand2 is only supported now.")
         self.tx_mults = 1
 
+        if OPTS.tech_name == "s8":
+            (self.nmos_width, self.tx_mults) = self.bin_width("nmos", self.nmos_width)
+            (self.pmos_width, self.tx_mults) = self.bin_width("pmos", self.pmos_width)
+            
         # Creates the netlist and layout
         pgate.pgate.__init__(self, name, height)
    

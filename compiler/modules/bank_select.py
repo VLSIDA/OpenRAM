@@ -95,8 +95,8 @@ class bank_select(design.design):
 
     def calculate_module_offsets(self):
         
-        self.xoffset_nand = self.inv4x.width + 2 * self.m2_pitch + drc("pwell_to_nwell")
-        self.xoffset_nor = self.inv4x.width + 2 * self.m2_pitch + drc("pwell_to_nwell")
+        self.xoffset_nand = self.inv4x.width + 3 * self.m2_pitch + drc("pwell_to_nwell")
+        self.xoffset_nor = self.inv4x.width + 3 * self.m2_pitch + drc("pwell_to_nwell")
         self.xoffset_bank_sel_inv = 0
         self.xoffset_inputs = 0
         self.yoffset_maxpoint = self.num_control_lines * self.inv4x.height

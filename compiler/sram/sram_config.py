@@ -14,19 +14,18 @@ from sram_factory import factory
 class sram_config:
     """ This is a structure that is used to hold the SRAM configuration options. """
     
-    def __init__(self, word_size, num_words, write_size = None, num_banks=1, words_per_row=None, num_spare_rows=0):
+    def __init__(self, word_size, num_words, write_size = None, num_banks=1, words_per_row=None, num_spare_rows=0, num_spare_cols=None):
         self.word_size = word_size
         self.num_words = num_words
         self.write_size = write_size
         self.num_banks = num_banks
         self.num_spare_rows = num_spare_rows
+        self.num_spare_cols = num_spare_cols
 
         # This will get over-written when we determine the organization
         self.words_per_row = words_per_row
 
-        self.compute_sizes()
-
-        
+        self.compute_sizes()       
 
     def set_local_config(self, module):
         """ Copy all of the member variables to the given module for convenience """

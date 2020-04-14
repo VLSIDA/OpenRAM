@@ -19,7 +19,7 @@ class sense_amp_array(design.design):
     Dynamically generated sense amp array for all bitlines.
     """
 
-    def __init__(self, name, word_size, words_per_row):
+    def __init__(self, name, word_size, words_per_row, num_spare_cols=None):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("word_size {0}".format(word_size))        
@@ -27,8 +27,12 @@ class sense_amp_array(design.design):
 
         self.word_size = word_size
         self.words_per_row = words_per_row
-        self.row_size = self.word_size * self.words_per_row
-
+        
+        if not num_spare_cols:
+            self.num_spare_cols = 0
+        else:
+            self.num_spare_cols = num_spare_cols
+                
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -58,9 +62,9 @@ class sense_amp_array(design.design):
         self.height = self.amp.height
         
         if self.bitcell.width > self.amp.width:
-            self.width = self.bitcell.width * self.word_size * self.words_per_row
+            self.width = self.bitcell.width * (self.word_size * self.words_per_row + self.num_spare_cols)
         else:
-            self.width = self.amp.width * self.word_size * self.words_per_row
+            self.width = self.amp.width * (self.word_size * self.words_per_row + self.num_spare_cols)
 
         self.place_sense_amp_array()
         self.add_layout_pins()
@@ -69,7 +73,7 @@ class sense_amp_array(design.design):
         self.DRC_LVS()
 
     def add_pins(self):
-        for i in range(0,self.word_size):
+        for i in range(0,self.word_size + self.num_spare_cols):
             self.add_pin(self.data_name + "_{0}".format(i), "OUTPUT")
             self.add_pin(self.get_bl_name() + "_{0}".format(i), "INPUT")
             self.add_pin(self.get_br_name() + "_{0}".format(i), "INPUT")
@@ -88,8 +92,7 @@ class sense_amp_array(design.design):
         
     def create_sense_amp_array(self):
         self.local_insts = []
-        for i in range(0,self.word_size):
-
+        for i in range(0,self.word_size + self.num_spare_cols):
             name = "sa_d{0}".format(i)
             self.local_insts.append(self.add_inst(name=name,
                                                   mod=self.amp))
@@ -102,13 +105,14 @@ class sense_amp_array(design.design):
         from tech import cell_properties
         if self.bitcell.width > self.amp.width:
             amp_spacing = self.bitcell.width * self.words_per_row
+            spare_cols_spacing = self.bitcell.width
         else:
             amp_spacing = self.amp.width * self.words_per_row
+            spare_cols_spacing = self.amp.width
 
         for i in range(0,self.word_size):
             xoffset = amp_spacing * i
-
-            # align the xoffset to the grid of bitcells. This way we
+             # align the xoffset to the grid of bitcells. This way we
             # know when to do the mirroring.
             grid_x = int(xoffset / self.amp.width)
 
@@ -120,6 +124,23 @@ class sense_amp_array(design.design):
 
             amp_position = vector(xoffset, 0)
             self.local_insts[i].place(offset=amp_position,mirror=mirror)
+            
+        # place spare sense amps (will share the same enable as regular sense amps)
+        for i in range(0,self.num_spare_cols):
+            index = self.word_size + i
+            xoffset = ((self.word_size * self.words_per_row) + i) * spare_cols_spacing
+            # align the xoffset to the grid of bitcells. This way we
+            # know when to do the mirroring.
+            grid_x = int(xoffset / self.amp.width)
+
+            if cell_properties.bitcell.mirror.y and grid_x % 2:
+                mirror = "MY"
+                xoffset = xoffset + self.amp.width
+            else:
+                mirror = ""
+
+            amp_position = vector(xoffset, 0)
+            self.local_insts[index].place(offset=amp_position,mirror=mirror)
 
         
     def add_layout_pins(self):
@@ -173,7 +194,7 @@ class sense_amp_array(design.design):
     def get_en_cin(self):
         """Get the relative capacitance of all the sense amp enable connections in the array"""
         sense_amp_en_cin = self.amp.get_en_cin()
-        return sense_amp_en_cin * self.word_size
+        return sense_amp_en_cin * (self.word_size + self.num_spare_cols)
         
     def get_drain_cin(self):
         """Get the relative capacitance of the drain of the PMOS isolation TX"""

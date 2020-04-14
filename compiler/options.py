@@ -45,6 +45,7 @@ class options(optparse.Values):
     # You can manually specify banks, but it is better to auto-detect it.
     num_banks = 1
     num_spare_rows = 0
+    # num_spare_cols = 0
 
     ###################
     # Optimization options

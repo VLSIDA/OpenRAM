@@ -74,8 +74,8 @@ class wire(wire_path):
             contact1 = getattr(contact, layer1 + "_via")
         max_contact = max(contact1.width, contact1.height)
         
-        layer1_space = drc["{0}_to_{0}".format(layer1)]
-        layer2_space = drc["{0}_to_{0}".format(layer2)]
+        layer1_space = drc("{0}_to_{0}".format(layer1))
+        layer2_space = drc("{0}_to_{0}".format(layer2))
         pitch = max_contact + max(layer1_space, layer2_space)
 
         return pitch

@@ -71,7 +71,10 @@ class wire(wire_path):
         if layer1 == "poly" or layer1 == "active":
             contact1 = getattr(contact, layer1 + "_contact")
         else:
-            contact1 = getattr(contact, layer1 + "_via")
+            try:
+                contact1 = getattr(contact, layer1 + "_via")
+            except AttributeError:
+                contact1 = getattr(contact, layer2 + "_via")
         max_contact = max(contact1.width, contact1.height)
         
         layer1_space = drc("{0}_to_{0}".format(layer1))

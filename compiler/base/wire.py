@@ -6,6 +6,7 @@
 # All rights reserved.
 #
 from tech import drc
+import contact
 from wire_path import wire_path
 from sram_factory import factory
 
@@ -57,8 +58,29 @@ class wire(wire_path):
         
         self.node_to_node = [drc("minwidth_" + str(self.horiz_layer_name)) + via_connect.width,
                              drc("minwidth_" + str(self.horiz_layer_name)) + via_connect.height]
-        self.pitch = max(self.node_to_node)
+        self.pitch = self.compute_pitch(self.layer_stack)
 
+    def compute_pitch(self, layer_stack):
+        
+        """
+        This is contact direction independent pitch,
+        i.e. we take the maximum contact dimension
+        """
+        (layer1, via, layer2) = layer_stack
+
+        if layer1 == "poly" or layer1 == "active":
+            contact1 = getattr(contact, layer1 + "_contact")
+        else:
+            contact1 = getattr(contact, layer1 + "_via")
+        max_contact = max(contact1.width, contact1.height)
+        
+        layer1_space = drc["{0}_to_{0}".format(layer1)]
+        layer2_space = drc["{0}_to_{0}".format(layer2)]
+        pitch = max_contact + max(layer1_space, layer2_space)
+
+        return pitch
+        
+        
     # create a 1x1 contact
     def create_vias(self):
         """ Add a via and corner square at every corner of the path."""

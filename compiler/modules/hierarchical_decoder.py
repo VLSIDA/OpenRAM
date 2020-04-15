@@ -33,7 +33,6 @@ class hierarchical_decoder(design.design):
         except AttributeError:
             self.cell_multiple = 1
         # For debugging
-        # self.cell_multiple = 2
         self.cell_height = self.cell_multiple * b.height
         
         self.num_outputs = num_outputs

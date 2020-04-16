@@ -7,9 +7,10 @@
 #
 import debug
 
+
 class drc_lut():
-    """ 
-    Implement a lookup table of rules. 
+    """
+    Implement a lookup table of rules.
     Each element is a tuple with the last value being the rule.
     It searches through backwards until all of the key values are
     met and returns the rule value.
@@ -31,7 +32,6 @@ class drc_lut():
         for table_key in sorted(self.table.keys(), reverse=True):
             if self.match(key, table_key):
                 return self.table[table_key]
-                
 
     def match(self, key1, key2):
         """
@@ -39,8 +39,8 @@ class drc_lut():
         (i.e. return false if key1<key2 for any pair.)
         """
         # If any one pair is less than, return False
-        debug.check(len(key1)==len(key2),"Comparing invalid key lengths.")
-        for k1,k2 in zip(key1,key2):
+        debug.check(len(key1) == len(key2), "Comparing invalid key lengths.")
+        for k1, k2 in zip(key1, key2):
             if k1 < k2:
                 return False
         return True

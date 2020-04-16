@@ -6,8 +6,9 @@
 # All rights reserved.
 #
 
+
 class drc_value():
-    """ 
+    """
     A single DRC value.
     """
     def __init__(self, value):

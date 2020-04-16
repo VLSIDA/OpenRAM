@@ -126,14 +126,16 @@ class sense_amp_array(design.design):
         for i in range(len(self.local_insts)):
             inst = self.local_insts[i]
 
+            gnd_pin = inst.get_pin("gnd")
             self.add_power_pin(name="gnd",
-                               loc=inst.get_pin("gnd").center(),
-                               start_layer="m2",
+                               loc=gnd_pin.center(),
+                               start_layer=gnd_pin.layer,
                                vertical=True)
-
+            
+            vdd_pin = inst.get_pin("vdd")
             self.add_power_pin(name="vdd",
-                               loc=inst.get_pin("vdd").center(),
-                               start_layer="m2",
+                               loc=vdd_pin.center(),
+                               start_layer=vdd_pin.layer,
                                vertical=True)
 
             bl_pin = inst.get_pin(inst.mod.get_bl_names())

@@ -11,6 +11,7 @@ from tech import layer, drc, spice
 from vector import vector
 from sram_factory import factory
 import contact
+import logical_effort
 import os
 from globals import OPTS
 
@@ -106,20 +107,32 @@ class ptx(design.design):
         # be decided in the layout later.
         area_sd = 2.5 * self.poly_width * self.tx_width
         perimeter_sd = 2 * self.poly_width + 2 * self.tx_width
-        main_str = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(spice[self.tx_type],
-                                                                  self.mults,
-                                                                  self.tx_width,
-                                                                  drc("minwidth_poly"))
-        area_str = "pd={0:.2f}u ps={0:.2f}u as={1:.2f}p ad={1:.2f}p".format(perimeter_sd,
-                                                                            area_sd)
+        if OPTS.tech_name == "s8":
+            # s8 technology is in microns
+            main_str = "M{{0}} {{1}} {0} m={1} w={2} l={3} ".format(spice[self.tx_type],
+                                                                      self.mults,
+                                                                      self.tx_width,
+                                                                      drc("minwidth_poly"))
+            # Perimeters are in microns
+            # Area is in u since it is microns square
+            area_str = "pd={0:.2f} ps={0:.2f} as={1:.2f}u ad={1:.2f}u".format(perimeter_sd,
+                                                                              area_sd)
+        else:
+            main_str = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(spice[self.tx_type],
+                                                                      self.mults,
+                                                                      self.tx_width,
+                                                                      drc("minwidth_poly"))
+            area_str = "pd={0:.2f}u ps={0:.2f}u as={1:.2f}p ad={1:.2f}p".format(perimeter_sd,
+                                                                                area_sd)
         self.spice_device = main_str + area_str
         self.spice.append("\n* ptx " + self.spice_device)
 
+        # LVS lib is always in SI units
         if os.path.exists(OPTS.openram_tech + "lvs_lib"):
-            self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2} l={3} ".format(spice[self.tx_type],
-                                                                           self.mults,
-                                                                           self.tx_width,
-                                                                           drc("minwidth_poly"))
+            self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(spice[self.tx_type],
+                                                                             self.mults,
+                                                                             self.tx_width,
+                                                                             drc("minwidth_poly"))
         
 
     def setup_layout_constants(self):
@@ -453,6 +466,26 @@ class ptx(design.design):
                 
         if self.connect_active:
             self.connect_fingered_active(drain_positions, source_positions)
+            
+    def get_stage_effort(self, cout):
+        """Returns an object representing the parameters for delay in tau units."""
+        
+        # FIXME: Using the same definition as the pinv.py.
+        parasitic_delay = 1
+        size = self.mults * self.tx_width / drc("minwidth_tx")
+        return logical_effort.logical_effort(self.name,
+                                             size,
+                                             self.input_load(),
+                                             cout,
+                                             parasitic_delay)
+                                             
+    def input_load(self):
+        """
+        Returns the relative gate cin of the tx
+        """
+        
+        # FIXME: this will be applied for the loads of the drain/source
+        return self.mults * self.tx_width / drc("minwidth_tx")
 
     def add_diff_contact(self, label, pos):
         contact=self.add_via_center(layers=self.active_stack,
@@ -463,14 +496,25 @@ class ptx(design.design):
                                     well_type=self.well_type)
         
         if hasattr(self, "li_stack"):
-            self.add_via_center(layers=self.li_stack,
-                                offset=pos)
-        
+            contact=self.add_via_center(layers=self.li_stack,
+                                        offset=pos,
+                                        directions=("V", "V"))
+
+        # contact_area = contact.mod.second_layer_width * contact.mod.second_layer_height
+        # min_area = drc("minarea_m1")
+        # width = contact.mod.second_layer_width
+        # if contact_area < min_area:
+        #     height = min_area / width
+        # else:
+        #     height = contact.mod.second_layer_height
+        width = contact.mod.second_layer_width
+        height = contact.mod.second_layer_height
         self.add_layout_pin_rect_center(text=label,
                                         layer="m1",
                                         offset=pos,
-                                        width=contact.mod.second_layer_width,
-                                        height=contact.mod.second_layer_height)
+                                        width=width,
+                                        height=height)
+
         return(contact)
         
     def get_cin(self):

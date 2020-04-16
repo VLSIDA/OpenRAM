@@ -15,6 +15,7 @@ from globals import OPTS
 from utils import round_to_grid
 import logical_effort
 from sram_factory import factory
+from errors import drc_error
 
 
 class pinv(pgate.pgate):
@@ -108,11 +109,14 @@ class pinv(pgate.pgate):
         # This is a poly-to-poly of a flipped cell
         self.top_bottom_space = max(0.5*self.m1_width + self.m1_space + extra_contact_space, 
                                     self.poly_extend_active + self.poly_space)
-        total_height = tx_height + min_channel + 2 * self.top_bottom_space
 
-        debug.check(self.height > total_height,
-                    "Cell height {0} too small for simple min height {1}.".format(self.height,
-                                                                                  total_height))
+        total_height = tx_height + min_channel + 2 * self.top_bottom_space
+        # debug.check(self.height > total_height,
+        #             "Cell height {0} too small for simple min height {1}.".format(self.height,
+        # total_height))
+        if total_height > self.height:
+            msg = "Cell height {0} too small for simple min height {1}.".format(self.height, total_height)
+            raise drc_error(msg)
 
         # Determine the height left to the transistors to determine
         # the number of fingers
@@ -144,12 +148,16 @@ class pinv(pgate.pgate):
         # with LVS property mismatch errors when fingers are not a grid
         # length and get rounded in the offset geometry.
         self.nmos_width = round_to_grid(self.nmos_width / self.tx_mults)
-        debug.check(self.nmos_width >= drc("minwidth_tx"),
-                    "Cannot finger NMOS transistors to fit cell height.")
-        self.pmos_width = round_to_grid(self.pmos_width / self.tx_mults)
-        debug.check(self.pmos_width >= drc("minwidth_tx"),
-                    "Cannot finger PMOS transistors to fit cell height.")
+        # debug.check(self.nmos_width >= drc("minwidth_tx"),
+        #            "Cannot finger NMOS transistors to fit cell height.")
+        if self.nmos_width < drc("minwidth_tx"):
+            raise drc_error("Cannot finger NMOS transistors to fit cell height.")
 
+        self.pmos_width = round_to_grid(self.pmos_width / self.tx_mults)
+        #debug.check(self.pmos_width >= drc("minwidth_tx"),
+        #            "Cannot finger PMOS transistors to fit cell height.")
+        if self.pmos_width < drc("minwidth_tx"):
+            raise drc_error("Cannot finger NMOS transistors to fit cell height.")
         
     def add_ptx(self):
         """ Create the PMOS and NMOS transistors. """

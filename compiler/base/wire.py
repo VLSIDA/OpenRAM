@@ -83,7 +83,6 @@ class wire(wire_path):
 
         return pitch
         
-        
     # create a 1x1 contact
     def create_vias(self):
         """ Add a via and corner square at every corner of the path."""
@@ -113,7 +112,9 @@ class wire(wire_path):
             # Horizontal wire segment
             if pl[index][0] != pl[index + 1][0]:
                 line_length = pl[index + 1][0] - pl[index][0]
-                if abs(line_length) < self.pitch:
+                # Make the wire wider to avoid via-to-via spacing problems
+                # But don't make it wider if it is shorter than one via
+                if abs(line_length) < self.pitch and abs(line_length) > self.horiz_layer_contact_width:
                     width = self.horiz_layer_contact_width
                 else:
                     width = self.horiz_layer_width
@@ -131,7 +132,9 @@ class wire(wire_path):
             # Vertical wire segment
             elif pl[index][1] != pl[index + 1][1]:
                 line_length = pl[index + 1][1] - pl[index][1]
-                if abs(line_length) < self.pitch:
+                # Make the wire wider to avoid via-to-via spacing problems
+                # But don't make it wider if it is shorter than one via
+                if abs(line_length) < self.pitch and abs(line_length) > self.vert_layer_contact_width:
                     width = self.vert_layer_contact_width
                 else:
                     width = self.vert_layer_width

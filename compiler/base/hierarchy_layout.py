@@ -46,7 +46,6 @@ class layout():
         except ImportError:
             self.pwr_grid_layer = "m3"
 
-
     ############################################################
     # GDS layout
     ############################################################
@@ -196,7 +195,7 @@ class layout():
         self.insts.append(geometry.instance(name, mod, offset, mirror, rotate))
         debug.info(3, "adding instance {}".format(self.insts[-1]))
         # This is commented out for runtime reasons
-        #debug.info(4, "instance list: " + ",".join(x.name for x in self.insts))
+        # debug.info(4, "instance list: " + ",".join(x.name for x in self.insts))
         return self.insts[-1]
 
     def get_inst(self, name):
@@ -214,12 +213,14 @@ class layout():
             width = drc["minwidth_{}".format(layer)]
         if not height:
             height = drc["minwidth_{}".format(layer)]
-        # negative layers indicate "unused" layers in a given technology
         lpp = techlayer[layer]
-        if lpp[0] >= 0:
-            self.objs.append(geometry.rectangle(lpp, offset, width, height))
-            return self.objs[-1]
-        return None
+        if abs(offset[0]-5.16250)<0.01 and abs(offset[1]-8.70750)<0.01:
+            import pdb; pdb.set_trace()
+        self.objs.append(geometry.rectangle(lpp,
+                                            offset,
+                                            width,
+                                            height))
+        return self.objs[-1]
 
     def add_rect_center(self, layer, offset, width=None, height=None):
         """
@@ -230,16 +231,13 @@ class layout():
             width = drc["minwidth_{}".format(layer)]
         if not height:
             height = drc["minwidth_{}".format(layer)]
-        # negative layers indicate "unused" layers in a given technology
         lpp = techlayer[layer]
         corrected_offset = offset - vector(0.5 * width, 0.5 * height)
-        if lpp[0] >= 0:
-            self.objs.append(geometry.rectangle(lpp,
-                                                corrected_offset,
-                                                width,
-                                                height))
-            return self.objs[-1]
-        return None
+        self.objs.append(geometry.rectangle(lpp,
+                                            corrected_offset,
+                                            width,
+                                            height))
+        return self.objs[-1]
 
     def add_segment_center(self, layer, start, end):
         """
@@ -252,15 +250,15 @@ class layout():
         elif start.x != end.x:
             offset = vector(0, 0.5 * minwidth_layer)
             return self.add_rect(layer,
-                                 start-offset,
-                                 end.x-start.x,
+                                 start - offset,
+                                 end.x - start.x,
                                  minwidth_layer)
         else:
             offset = vector(0.5 * minwidth_layer, 0)
             return self.add_rect(layer,
-                                 start-offset,
+                                 start - offset,
                                  minwidth_layer,
-                                 end.y-start.y)
+                                 end.y - start.y)
 
     def get_pin(self, text):
         """
@@ -268,14 +266,14 @@ class layout():
         """
         try:
             if len(self.pin_map[text]) > 1:
-                debug.error("Should use a pin iterator since more than one pin {}".format(text),-1)
+                debug.error("Should use a pin iterator since more than one pin {}".format(text), -1)
             # If we have one pin, return it and not the list.
             # Otherwise, should use get_pins()
             any_pin = next(iter(self.pin_map[text]))
             return any_pin
         except Exception:
             self.gds_write("missing_pin.gds")
-            debug.error("No pin found with name {0} on {1}. Saved as missing_pin.gds.".format(text,self.name),-1)
+            debug.error("No pin found with name {0} on {1}. Saved as missing_pin.gds.".format(text, self.name), -1)
 
     def get_pins(self, text):
         """
@@ -377,7 +375,7 @@ class layout():
             height = drc["minwidth_{0}".format(layer)]
 
         new_pin = pin_layout(text,
-                             [offset, offset+vector(width, height)],
+                             [offset, offset + vector(width, height)],
                              layer)
 
         try:
@@ -413,23 +411,18 @@ class layout():
 
     def add_label(self, text, layer, offset=[0, 0], zoom=-1):
         """Adds a text label on the given layer,offset, and zoom level"""
-        # negative layers indicate "unused" layers in a given technology
         debug.info(5, "add label " + str(text) + " " + layer + " " + str(offset))
         lpp = techlayer[layer]
-        if lpp[0] >= 0:
-            self.objs.append(geometry.label(text, lpp, offset, zoom))
-            return self.objs[-1]
-        return None
+        self.objs.append(geometry.label(text, lpp, offset, zoom))
+        return self.objs[-1]
 
     def add_path(self, layer, coordinates, width=None):
         """Connects a routing path on given layer,coordinates,width."""
         debug.info(4, "add path " + str(layer) + " " + str(coordinates))
         import wire_path
         # NOTE: (UNTESTED) add_path(...) is currently not used
-        # negative layers indicate "unused" layers in a given technology
         # lpp = techlayer[layer]
-        # if lpp[0] >= 0:
-        #     self.objs.append(geometry.path(lpp, coordinates, width))
+        # self.objs.append(geometry.path(lpp, coordinates, width))
 
         wire_path.wire_path(obj=self,
                             layer=layer,
@@ -465,7 +458,7 @@ class layout():
         from tech import preferred_directions
         return preferred_directions[layer]
 
-    def add_via(self, layers, offset, size=[1,1], directions=None, implant_type=None, well_type=None):
+    def add_via(self, layers, offset, size=[1, 1], directions=None, implant_type=None, well_type=None):
         """ Add a three layer via structure. """
 
         if not directions:
@@ -487,7 +480,7 @@ class layout():
         self.connect_inst([])
         return inst
 
-    def add_via_center(self, layers, offset, directions=None, size=[1,1], implant_type=None, well_type=None):
+    def add_via_center(self, layers, offset, directions=None, size=[1, 1], implant_type=None, well_type=None):
         """
         Add a three layer via structure by the center coordinate
         accounting for mirroring and rotation.
@@ -799,9 +792,7 @@ class layout():
                     self.add_rect(layer=layer,
                                   offset=line_offset,
                                   height=length)
-                # Make this the center of the rail
-                line_positions[names[i]] = line_offset + vector(half_minwidth,
-                                                                0.5 * length)
+                line_positions[names[i]] = line_offset + vector(half_minwidth, 0)
         else:
             for i in range(len(names)):
                 line_offset = offset + vector(0,
@@ -953,14 +944,14 @@ class layout():
         min_y = min([pin.center().y for pin in pins])
 
         # if we are less than a pitch, just create a non-preferred layer jog
-        if max_y-min_y <= pitch:
+        if max_y - min_y <= pitch:
 
             half_layer_width = 0.5 * drc["minwidth_{0}".format(self.horizontal_layer)]
 
             # Add the vertical trunk on the horizontal layer!
             self.add_path(self.horizontal_layer,
                           [vector(trunk_offset.x, min_y - half_layer_width),
-                           vector(trunk_offset.x,max_y + half_layer_width)])
+                           vector(trunk_offset.x, max_y + half_layer_width)])
 
             # Route each pin to the trunk
             for pin in pins:
@@ -1000,7 +991,7 @@ class layout():
 
             # Remove the pin from all conflicts
             # FIXME: This is O(n^2), so maybe optimize it.
-            for other_pin,conflicts in g.items():
+            for other_pin, conflicts in g.items():
                 if pin in conflicts:
                     conflicts.remove(pin)
                     g[other_pin]=conflicts
@@ -1151,8 +1142,8 @@ class layout():
         else:
             self.bounding_box = self.add_rect(layer=boundary_layer,
                                               offset=ll,
-                                              height=ur.y-ll.y,
-                                              width=ur.x-ll.x)
+                                              height=ur.y - ll.y,
+                                              width=ur.x - ll.x)
 
     def add_enclosure(self, insts, layer="nwell"):
         """ Add a layer that surrounds the given instances. Useful
@@ -1171,8 +1162,8 @@ class layout():
 
         self.add_rect(layer=layer,
                       offset=vector(xmin, ymin),
-                      width=xmax-xmin,
-                      height=ymax-ymin)
+                      width=xmax - xmin,
+                      height=ymax - ymin)
 
     def copy_power_pins(self, inst, name):
         """
@@ -1192,7 +1183,7 @@ class layout():
             else:
                 debug.warning("{0} pins of {1} should be on {2} or metal1 for "\
                               "supply router."
-                              .format(name,inst.name,self.pwr_grid_layer))
+                              .format(name, inst.name, self.pwr_grid_layer))
 
     def add_power_pin(self, name, loc, size=[1, 1], vertical=False, start_layer="m1"):
         """
@@ -1244,8 +1235,8 @@ class layout():
         [ll, ur] = bbox
 
         supply_rail_spacing = self.supply_rail_pitch - self.supply_rail_width
-        height = (ur.y-ll.y) + 3 * self.supply_rail_pitch - supply_rail_spacing
-        width = (ur.x-ll.x) + 3 * self.supply_rail_pitch - supply_rail_spacing
+        height = (ur.y - ll.y) + 3 * self.supply_rail_pitch - supply_rail_spacing
+        width = (ur.x - ll.x) + 3 * self.supply_rail_pitch - supply_rail_spacing
 
         # LEFT vertical rails
         offset = ll + vector(-2 * self.supply_rail_pitch,

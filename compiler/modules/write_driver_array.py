@@ -166,7 +166,7 @@ class write_driver_array(design.design):
                     self.add_power_pin(name=n,
                                        loc=pin.center(),
                                        vertical=True,
-                                       start_layer="m2")
+                                       start_layer=pin.layer)
         if self.write_size:
             for bit in range(self.num_wmasks):
                 inst = self.driver_insts[bit * self.write_size]

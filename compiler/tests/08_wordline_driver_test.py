@@ -28,19 +28,8 @@ class wordline_driver_test(openram_test):
         tx = factory.create(module_type="wordline_driver", rows=8, cols=32)
         self.local_check(tx)
 
-        # check wordline driver for multi-port
-        OPTS.bitcell = "pbitcell"
-        OPTS.num_rw_ports = 1
-        OPTS.num_w_ports = 0
-        OPTS.num_r_ports = 0
-
-        factory.reset()
-        debug.info(2, "Checking driver (multi-port case)")
-        tx = factory.create(module_type="wordline_driver", rows=8, cols=64)
-        self.local_check(tx)
-
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

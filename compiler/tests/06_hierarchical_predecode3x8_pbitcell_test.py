@@ -26,7 +26,7 @@ class hierarchical_predecode3x8_test(openram_test):
         OPTS.num_rw_ports = 1
         OPTS.num_w_ports = 0
         OPTS.num_r_ports = 0
-        
+
         debug.info(1, "Testing sample for hierarchy_predecode3x8 (multi-port case)")
         a = factory.create(module_type="hierarchical_predecode3x8")
         self.local_check(a)

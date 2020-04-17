@@ -534,6 +534,19 @@ class lib:
             self.lib.write("            }\n")
             self.lib.write("        }\n")
 
+            # Disabled power.
+            disabled_read1_power = np.mean(self.char_port_results[port]["disabled_read1_power"])
+            disabled_read0_power = np.mean(self.char_port_results[port]["disabled_raed0_power"])
+            self.lib.write("        internal_power(){\n")
+            self.lib.write("            when : \"csb{0}{1}\"; \n".format(port, web_name))
+            self.lib.write("            rise_power(scalar){\n")
+            self.lib.write("                values(\"{0:.6e}\");\n".format(disabled_read1_power))
+            self.lib.write("            }\n")
+            self.lib.write("            fall_power(scalar){\n")
+            self.lib.write("                values(\"{0:.6e}\");\n".format(disabled_read0_power))
+            self.lib.write("            }\n")
+            self.lib.write("        }\n")
+
         if port in self.read_ports:
             if port in self.write_ports:
                 web_name = " & web{0}".format(port)
@@ -549,18 +562,18 @@ class lib:
             self.lib.write("            }\n")
             self.lib.write("        }\n")
             
-        # Disabled power.
-        disabled_read1_power = np.mean(self.char_port_results[port]["disabled_read1_power"])
-        disabled_read0_power = np.mean(self.char_port_results[port]["disabled_read0_power"])
-        self.lib.write("        internal_power(){\n")
-        self.lib.write("            when : \"csb{0}\"; \n".format(port))
-        self.lib.write("            rise_power(scalar){\n")
-        self.lib.write("                values(\"{0:.6e}\");\n".format(disabled_read1_power))
-        self.lib.write("            }\n")
-        self.lib.write("            fall_power(scalar){\n")
-        self.lib.write("                values(\"{0:.6e}\");\n".format(disabled_read0_power))
-        self.lib.write("            }\n")
-        self.lib.write("        }\n")
+            # Disabled power.
+            disabled_write1_power = np.mean(self.char_port_results[port]["disabled_write1_power"])
+            disabled_write0_power = np.mean(self.char_port_results[port]["disabled_write0_power"])
+            self.lib.write("        internal_power(){\n")
+            self.lib.write("            when : \"csb{0}{1}\"; \n".format(port, web_name))
+            self.lib.write("            rise_power(scalar){\n")
+            self.lib.write("                values(\"{0:.6e}\");\n".format(disabled_write1_power))
+            self.lib.write("            }\n")
+            self.lib.write("            fall_power(scalar){\n")
+            self.lib.write("                values(\"{0:.6e}\");\n".format(disabled_write0_power))
+            self.lib.write("            }\n")
+            self.lib.write("        }\n")
         
     def write_pg_pin(self):
         self.lib.write("    pg_pin(vdd) {\n")

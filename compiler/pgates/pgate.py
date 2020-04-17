@@ -300,7 +300,7 @@ class pgate(design.design):
         bins = bins[0:bisect_left(bins, target_width) + 1]
         if len(bins) == 1:
             selected_bin = bins[0]
-            scaling_factor = math.ceil(target_width / width)
+            scaling_factor = math.ceil(target_width / selected_bin)
             scaled_bin = bins[0] * scaling_factor
             
         else:

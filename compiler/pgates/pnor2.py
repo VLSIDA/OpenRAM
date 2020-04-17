@@ -8,6 +8,7 @@
 import contact
 import pgate
 import debug
+from globals import OPTS
 from tech import drc, parameter, spice
 from vector import vector
 from sram_factory import factory

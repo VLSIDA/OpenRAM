@@ -44,21 +44,29 @@ class openram_test(unittest.TestCase):
         if not OPTS.netlist_only:
             a.gds_write(tempgds)
 
+            # Run both DRC and LVS even if DRC might fail
+            # Magic can still extract despite DRC failing, so it might be ok in some techs
+            # if we ignore things like minimum metal area of pins
             import verify
-            result=verify.run_drc(a.name, tempgds, extract=True, final_verification=final_verification)
-            if result != 0:
+            drc_result=verify.run_drc(a.name, tempgds, extract=True, final_verification=final_verification)
+            lvs_result=verify.run_lvs(a.name, tempgds, tempspice, final_verification=final_verification)
+            
+            if lvs_result != 0:
+                #zip_file = "/tmp/{0}_{1}".format(a.name,os.getpid())
+                #debug.info(0,"Archiving failed files to {}.zip".format(zip_file))
+                #shutil.make_archive(zip_file, 'zip', OPTS.openram_temp)
+                self.fail("LVS mismatch: {}".format(a.name))
+            if lvs_result == 0 and drc_result != 0:
+                #zip_file = "/tmp/{0}_{1}".format(a.name,os.getpid())
+                #debug.info(0,"Archiving failed files to {}.zip".format(zip_file))
+                #shutil.make_archive(zip_file, 'zip', OPTS.openram_temp)
+                debug.warning("DRC failed but LVS passed: {}".format(a.name))
+            elif drc_result != 0:
                 #zip_file = "/tmp/{0}_{1}".format(a.name,os.getpid())
                 #debug.info(0,"Archiving failed files to {}.zip".format(zip_file))
                 #shutil.make_archive(zip_file, 'zip', OPTS.openram_temp)
                 self.fail("DRC failed: {}".format(a.name))
 
-
-            result=verify.run_lvs(a.name, tempgds, tempspice, final_verification=final_verification)
-            if result != 0:
-                #zip_file = "/tmp/{0}_{1}".format(a.name,os.getpid())
-                #debug.info(0,"Archiving failed files to {}.zip".format(zip_file))
-                #shutil.make_archive(zip_file, 'zip', OPTS.openram_temp)
-                self.fail("LVS mismatch: {}".format(a.name))
 
         # For debug...
         #import pdb; pdb.set_trace()

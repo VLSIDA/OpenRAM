@@ -522,39 +522,43 @@ class lib:
         if port in self.write_ports:
             if port in self.read_ports:
                 web_name = " & !web{0}".format(port)
-            avg_write_power = np.mean(self.char_port_results[port]["write1_power"] + self.char_port_results[port]["write0_power"])
+            write1_power = np.mean(self.char_port_results[port]["write1_power"])
+            write0_power = np.mean(self.char_port_results[port]["write0_power"])
             self.lib.write("        internal_power(){\n")
             self.lib.write("            when : \"!csb{0}{1}\"; \n".format(port, web_name))
             self.lib.write("            rise_power(scalar){\n")
-            self.lib.write("                values(\"{0}\");\n".format(avg_write_power/2.0))
+            self.lib.write("                values(\"{0:.6e}\");\n".format(write1_power))
             self.lib.write("            }\n")
             self.lib.write("            fall_power(scalar){\n")
-            self.lib.write("                values(\"{0}\");\n".format(avg_write_power/2.0))
+            self.lib.write("                values(\"{0:.6e}\");\n".format(write0_power))
             self.lib.write("            }\n")
             self.lib.write("        }\n")
 
         if port in self.read_ports:
             if port in self.write_ports:
                 web_name = " & web{0}".format(port)
-            avg_read_power = np.mean(self.char_port_results[port]["read1_power"] + self.char_port_results[port]["read0_power"])
+            read1_power = np.mean(self.char_port_results[port]["read1_power"])
+            read0_power = np.mean(self.char_port_results[port]["read0_power"])
             self.lib.write("        internal_power(){\n")
             self.lib.write("            when : \"!csb{0}{1}\"; \n".format(port, web_name))
             self.lib.write("            rise_power(scalar){\n")
-            self.lib.write("                values(\"{0}\");\n".format(avg_read_power/2.0))
+            self.lib.write("                values(\"{0:.6e}\");\n".format(read1_power))
             self.lib.write("            }\n")
             self.lib.write("            fall_power(scalar){\n")
-            self.lib.write("                values(\"{0}\");\n".format(avg_read_power/2.0))
+            self.lib.write("                values(\"{0:.6e}\");\n".format(read0_power))
             self.lib.write("            }\n")
             self.lib.write("        }\n")
             
-        # Have 0 internal power when disabled, this will be represented as leakage power.
+        # Disabled power.
+        disabled_read1_power = np.mean(self.char_port_results[port]["disabled_read1_power"])
+        disabled_read0_power = np.mean(self.char_port_results[port]["disabled_read0_power"])
         self.lib.write("        internal_power(){\n")
         self.lib.write("            when : \"csb{0}\"; \n".format(port))
         self.lib.write("            rise_power(scalar){\n")
-        self.lib.write("                values(\"0\");\n")
+        self.lib.write("                values(\"{0:.6e}\");\n".format(disabled_read1_power))
         self.lib.write("            }\n")
         self.lib.write("            fall_power(scalar){\n")
-        self.lib.write("                values(\"0\");\n")
+        self.lib.write("                values(\"{0:.6e}\");\n".format(disabled_read0_power))
         self.lib.write("            }\n")
         self.lib.write("        }\n")
         

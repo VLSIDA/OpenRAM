@@ -59,7 +59,7 @@ class delay(simulation):
         """ Create measurement names. The names themselves currently define the type of measurement """
 
         self.delay_meas_names = ["delay_lh", "delay_hl", "slew_lh", "slew_hl"]
-        self.power_meas_names = ["read0_power", "read1_power", "write0_power", "write1_power"]
+        self.power_meas_names = ["read0_power", "read1_power", "write0_power", "write1_power", "disabled_read0_power", "disabled_read1_power"]
         # self.voltage_when_names = ["volt_bl", "volt_br"]
         # self.bitline_delay_names = ["delay_bl", "delay_br"]
        
@@ -108,6 +108,11 @@ class delay(simulation):
         self.read_lib_meas.append(power_measure("read0_power", "FALL", measure_scale=1e3))
         self.read_lib_meas[-1].meta_str = sram_op.READ_ZERO
         
+        self.read_lib_meas.append(power_measure("disabled_read1_power", "RISE", measure_scale=1e3))
+        self.read_lib_meas[-1].meta_str = "disabled_read1"
+        self.read_lib_meas.append(power_measure("disabled_read0_power", "FALL", measure_scale=1e3))
+        self.read_lib_meas[-1].meta_str = "disabled_read0"
+
         # This will later add a half-period to the spice time delay. Only for reading 0.
         for obj in self.read_lib_meas:
             if obj.meta_str is sram_op.READ_ZERO:
@@ -665,7 +670,7 @@ class delay(simulation):
             if not success:
                 feasible_period = 2 * feasible_period
                 continue
-            
+
             # Positions of measurements currently hardcoded. First 2 are delays, next 2 are slews
             feasible_delays = [results[port][mname] for mname in self.delay_meas_names if "delay" in mname]
             feasible_slews = [results[port][mname] for mname in self.delay_meas_names if "slew" in mname]
@@ -1208,6 +1213,9 @@ class delay(simulation):
                       read_port)
         self.measure_cycles[read_port][sram_op.READ_ZERO] = len(self.cycle_times)-1              
         
+        self.add_nop(self.probe_address, data_zeros, read_port)
+        self.measure_cycles[write_port]["disabled_read0"] = len(self.cycle_times) - 1
+
         self.add_noop_all_ports("Idle cycle (if read takes >1 cycle)")
 
         self.add_write("W data 1 address {} to write value".format(self.probe_address),
@@ -1222,6 +1230,9 @@ class delay(simulation):
                        data_zeros,
                        wmask_ones,
                        write_port)
+
+        self.add_nop(self.probe_address, data_zeros, read_port)
+        self.measure_cycles[write_port]["disabled_read1"] = len(self.cycle_times) - 1
 
         # This also ensures we will have a L->H transition on the next read
         self.add_read("R data 0 address {} to clear dout caps".format(inverse_address),

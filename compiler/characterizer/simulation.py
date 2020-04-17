@@ -210,6 +210,22 @@ class simulation():
             if unselected_port != port:
                 self.add_noop_one_port(unselected_port)
 
+    def add_nop(self, address, din_data, port):
+        """ Add the control values for a cycle with clock only. Does not increment the period. """
+        debug.check(port in self.read_ports or port in self.write_ports,
+            "Cannot add read cycle to a write port. Port {0}, Read Ports {1}".format(port, self.read_ports))
+        debug.info(2, 'Clock only on port {}'.format(port))
+        self.fn_cycle_comments.append('Clock only on port {}'.format(port))
+        self.append_cycle_comment(port, 'Clock only on port {}'.format(port))
+
+        self.cycle_times.append(self.t_current)
+        self.t_current += self.period
+        self.add_control_one_port(port, "noop")
+        # If the port is also a readwrite then add data.
+        if port in self.write_ports:
+            self.add_data(din_data, port)
+        self.add_address(address, port)
+
     def add_noop_all_ports(self, comment):
         """ Add the control values for a noop to all ports. """
         debug.info(2, comment)

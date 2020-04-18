@@ -183,14 +183,17 @@ class pinv(pgate.pgate):
 
             for bin in valid_pmos:
                 if bin[0]/bin[1] < pmos_height_available:
-                    self.pmos_width = valid_nmos[0][0]
-                    self.tx_mults = valid_pmos[0][1]
+                    self.pmos_width = bin[0]/bin[1]
+                    pmos_mults = valid_pmos[0][1]
                     break
 
             for bin in valid_nmos:
                 if bin[0]/bin[1] < nmos_height_available:
-                    self.nmos_width = valid_nmos[0][0]
+                    self.nmos_width = bin[0]/bin[1]
+                    nmos_mults = valid_pmos[0][1]
                     break
+
+            self.tx_mults = max(pmos_mults, nmos_mults)
         
     def add_ptx(self):
         """ Create the PMOS and NMOS transistors. """

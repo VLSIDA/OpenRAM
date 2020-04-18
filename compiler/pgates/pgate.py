@@ -296,7 +296,6 @@ class pgate(design.design):
         else:
             debug.error("invalid tx type")
         
-        
         bins = bins[0:bisect_left(bins, target_width) + 1]
         if len(bins) == 1:
             selected_bin = bins[0]
@@ -330,11 +329,8 @@ class pgate(design.design):
         elif tx_type == "pmos":
             bins = pmos_bins[drc("minwidth_poly")]
         else:
-            debug.error("invalid tx type")
-        
-        
+            debug.error("invalid tx type")       
         bins = bins[0:bisect_left(bins, target_width) + 1]
-
         if len(bins) == 1:
             selected_bins = (bins[0], math.ceil(target_width / bins[0]))
         else:

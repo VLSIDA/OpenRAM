@@ -332,7 +332,7 @@ class pgate(design.design):
             debug.error("invalid tx type")       
         bins = bins[0:bisect_left(bins, target_width) + 1]
         if len(bins) == 1:
-            selected_bins = (bins[0], math.ceil(target_width / bins[0]))
+            scaled_bins = [(bins[0], math.ceil(target_width / bins[0]))]
         else:
             scaled_bins = []
             scaled_bins.append((bins[-1], 1))

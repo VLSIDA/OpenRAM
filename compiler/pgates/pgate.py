@@ -15,7 +15,7 @@ from vector import vector
 from globals import OPTS
 
 if(OPTS.tech_name == "s8"):
-    from tech import nmos_bins, pmos_bins
+    from tech import nmos_bins, pmos_bins, accuracy_requirement
 
 class pgate(design.design):
     """
@@ -323,11 +323,28 @@ class pgate(design.design):
 
         return(selected_bin, scaling_factor)
 
+    def permute_widths(self, tx_type, target_width):
 
-
-
-            
+        if tx_type == "nmos":
+            bins = nmos_bins[drc("minwidth_poly")]
+        elif tx_type == "pmos":
+            bins = pmos_bins[drc("minwidth_poly")]
+        else:
+            debug.error("invalid tx type")
         
-
-
         
+        bins = bins[0:bisect_left(bins, target_width) + 1]
+
+        if len(bins) == 1:
+            selected_bins = (bins[0], math.ceil(target_width / bins[0]))
+        else:
+            scaled_bins = []
+            scaled_bins.append((bins[-1], 1))
+            for width in bins[:-1]:
+                m = math.ceil(target_width / width)
+                scaled_bins.append((m * width, m))
+
+        return(scaled_bins)
+        
+    def bin_accuracy(self, ideal_width, width):
+        return abs(1-(ideal_width - width)/ideal_width)

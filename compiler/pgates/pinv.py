@@ -8,15 +8,19 @@
 import contact
 import pgate
 import debug
+import operator
 from tech import drc, parameter, spice
 from vector import vector
 from math import ceil
 from globals import OPTS
 from utils import round_to_grid
+from bisect import bisect_left
 import logical_effort
 from sram_factory import factory
 from errors import drc_error
 
+if(OPTS.tech_name == "s8"):
+    from tech import nmos_bins, pmos_bins, accuracy_requirement
 
 class pinv(pgate.pgate):
     """
@@ -134,30 +138,59 @@ class pinv(pgate.pgate):
 
         # Determine the number of mults for each to fit width
         # into available space
-        self.nmos_width = self.nmos_size * drc("minwidth_tx")
-        self.pmos_width = self.pmos_size * drc("minwidth_tx")
-        nmos_required_mults = max(int(ceil(self.nmos_width / nmos_height_available)), 1)
-        pmos_required_mults = max(int(ceil(self.pmos_width / pmos_height_available)), 1)
-        # The mults must be the same for easy connection of poly
-        self.tx_mults = max(nmos_required_mults, pmos_required_mults)
+        if OPTS.tech_name != "s8":
+            self.nmos_width = self.nmos_size * drc("minwidth_tx")
+            self.pmos_width = self.pmos_size * drc("minwidth_tx")
+            nmos_required_mults = max(int(ceil(self.nmos_width / nmos_height_available)), 1)
+            pmos_required_mults = max(int(ceil(self.pmos_width / pmos_height_available)), 1)
+            # The mults must be the same for easy connection of poly
+            self.tx_mults = max(nmos_required_mults, pmos_required_mults)
 
-        # Recompute each mult width and check it isn't too small
-        # This could happen if the height is narrow and the size is small
-        # User should pick a bigger size to fix it...
-        # We also need to round the width to the grid or we will end up
-        # with LVS property mismatch errors when fingers are not a grid
-        # length and get rounded in the offset geometry.
-        self.nmos_width = round_to_grid(self.nmos_width / self.tx_mults)
-        # debug.check(self.nmos_width >= drc("minwidth_tx"),
-        #            "Cannot finger NMOS transistors to fit cell height.")
-        if self.nmos_width < drc("minwidth_tx"):
-            raise drc_error("Cannot finger NMOS transistors to fit cell height.")
+            # Recompute each mult width and check it isn't too small
+            # This could happen if the height is narrow and the size is small
+            # User should pick a bigger size to fix it...
+            # We also need to round the width to the grid or we will end up
+            # with LVS property mismatch errors when fingers are not a grid
+            # length and get rounded in the offset geometry.
+            self.nmos_width = round_to_grid(self.nmos_width / self.tx_mults)
+            # debug.check(self.nmos_width >= drc("minwidth_tx"),
+            #            "Cannot finger NMOS transistors to fit cell height.")
+            if self.nmos_width < drc("minwidth_tx"):
+                raise drc_error("Cannot finger NMOS transistors to fit cell height.")
 
-        self.pmos_width = round_to_grid(self.pmos_width / self.tx_mults)
-        #debug.check(self.pmos_width >= drc("minwidth_tx"),
-        #            "Cannot finger PMOS transistors to fit cell height.")
-        if self.pmos_width < drc("minwidth_tx"):
-            raise drc_error("Cannot finger NMOS transistors to fit cell height.")
+            self.pmos_width = round_to_grid(self.pmos_width / self.tx_mults)
+            #debug.check(self.pmos_width >= drc("minwidth_tx"),
+            #            "Cannot finger PMOS transistors to fit cell height.")
+            if self.pmos_width < drc("minwidth_tx"):
+                raise drc_error("Cannot finger NMOS transistors to fit cell height.")
+        else:
+            self.nmos_width = self.nmos_size * drc("minwidth_tx")
+            self.pmos_width = self.pmos_size * drc("minwidth_tx")
+            nmos_bins = self.permute_widths("nmos", self.nmos_width)
+            pmos_bins = self.permute_widths("pmos", self.pmos_width)
+
+            valid_pmos = []
+            for bin in pmos_bins:
+                if self.bin_accuracy(self.pmos_width, bin[0]) > accuracy_requirement:
+                    valid_pmos.append(bin)
+            valid_pmos.sort(key = operator.itemgetter(1))
+
+            valid_nmos = []
+            for bin in nmos_bins:
+                if self.bin_accuracy(self.nmos_width, bin[0]) > accuracy_requirement:
+                    valid_nmos.append(bin)
+            valid_nmos.sort(key = operator.itemgetter(1))
+
+            for bin in valid_pmos:
+                if bin[0]/bin[1] < pmos_height_available:
+                    self.pmos_width = valid_nmos[0][0]
+                    self.tx_mults = valid_pmos[0][1]
+                    break
+
+            for bin in valid_nmos:
+                if bin[0]/bin[1] < nmos_height_available:
+                    self.nmos_width = valid_nmos[0][0]
+                    break
         
     def add_ptx(self):
         """ Create the PMOS and NMOS transistors. """

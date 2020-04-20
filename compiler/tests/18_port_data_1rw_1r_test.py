@@ -20,6 +20,11 @@ class port_data_test(openram_test):
         globals.init_openram(config_file)
         from sram_config import sram_config
 
+        OPTS.bitcell = "bitcell_1w_1r"
+        OPTS.num_rw_ports = 0
+        OPTS.num_r_ports = 1
+        OPTS.num_w_ports = 1
+
         c = sram_config(word_size=4,
                         num_words=16)
 
@@ -29,13 +34,17 @@ class port_data_test(openram_test):
         debug.info(1, "No column mux")
         a = factory.create("port_data", sram_config=c, port=0)
         self.local_check(a)
-
+        a = factory.create("port_data", sram_config=c, port=1)
+        self.local_check(a)
+        
         c.num_words=32
         c.words_per_row=2
         factory.reset()
         c.recompute_sizes()
         debug.info(1, "Two way column mux")
         a = factory.create("port_data", sram_config=c, port=0)
+        self.local_check(a)
+        a = factory.create("port_data", sram_config=c, port=1)
         self.local_check(a)
 
         c.num_words=64
@@ -45,6 +54,8 @@ class port_data_test(openram_test):
         debug.info(1, "Four way column mux")
         a = factory.create("port_data", sram_config=c, port=0)
         self.local_check(a)
+        a = factory.create("port_data", sram_config=c, port=1)
+        self.local_check(a)
 
         c.word_size=2
         c.num_words=128
@@ -53,6 +64,8 @@ class port_data_test(openram_test):
         c.recompute_sizes()
         debug.info(1, "Eight way column mux")
         a = factory.create("port_data", sram_config=c, port=0)
+        self.local_check(a)
+        a = factory.create("port_data", sram_config=c, port=1)
         self.local_check(a)
         
         globals.end_openram()

@@ -243,8 +243,8 @@ class lib:
         self.lib.write("    default_max_fanout   : 4.0 ;\n")
         self.lib.write("    default_connection_class : universal ;\n\n")
 
-        self.lib.write("    voltage_map ( vdd, {} );\n".format(tech.spice["nom_supply_voltage"]))
-        self.lib.write("    voltage_map ( gnd, 0 );\n\n")
+        self.lib.write("    voltage_map ( VDD, {} );\n".format(tech.spice["nom_supply_voltage"]))
+        self.lib.write("    voltage_map ( GND, 0 );\n\n")
 
     def create_list(self,values):
         """ Helper function to create quoted, line wrapped list """

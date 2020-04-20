@@ -7,12 +7,11 @@
 #
 import debug
 import design
-from tech import drc
 from tech import cell_properties as props
-from math import log
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
+
 
 class dff_buf_array(design.design):
     """
@@ -54,13 +53,13 @@ class dff_buf_array(design.design):
         self.DRC_LVS()
 
     def add_pins(self):
-        for row in range(self.rows):  
+        for row in range(self.rows):
             for col in range(self.columns):
-                self.add_pin(self.get_din_name(row,col), "INPUT")
-        for row in range(self.rows):  
+                self.add_pin(self.get_din_name(row, col), "INPUT")
+        for row in range(self.rows):
             for col in range(self.columns):
-                self.add_pin(self.get_dout_name(row,col), "OUTPUT")
-                self.add_pin(self.get_dout_bar_name(row,col), "OUTPUT")
+                self.add_pin(self.get_dout_name(row, col), "OUTPUT")
+                self.add_pin(self.get_dout_bar_name(row, col), "OUTPUT")
         self.add_pin("clk", "INPUT")
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
@@ -75,17 +74,16 @@ class dff_buf_array(design.design):
                                   inv2_size=self.inv2_size)
         self.add_mod(self.dff)
 
-
     def create_dff_array(self):
         self.dff_insts={}
-        for row in range(self.rows):  
+        for row in range(self.rows):
             for col in range(self.columns):
-                name = "dff_r{0}_c{1}".format(row,col)
-                self.dff_insts[row,col]=self.add_inst(name=name,
-                                                      mod=self.dff)
-                inst_ports = [self.get_din_name(row,col),
-                                   self.get_dout_name(row,col),
-                                   self.get_dout_bar_name(row,col),  
+                name = "dff_r{0}_c{1}".format(row, col)
+                self.dff_insts[row, col]=self.add_inst(name=name,
+                                                       mod=self.dff)
+                inst_ports = [self.get_din_name(row, col),
+                                   self.get_dout_name(row, col),
+                                   self.get_dout_bar_name(row, col),
                                    "clk",
                                    "vdd",
                                    "gnd"]
@@ -102,17 +100,17 @@ class dff_buf_array(design.design):
 
         dff_pitch = self.dff.width + well_spacing + self.well_extend_active
         
-        for row in range(self.rows):  
+        for row in range(self.rows):
             for col in range(self.columns):
-                name = "Xdff_r{0}_c{1}".format(row,col)
+                name = "Xdff_r{0}_c{1}".format(row, col)
                 if (row % 2 == 0):
-                    base = vector(col*dff_pitch,row*self.dff.height)
+                    base = vector(col * dff_pitch, row * self.dff.height)
                     mirror = "R0"
                 else:
-                    base = vector(col*dff_pitch,(row+1)*self.dff.height)
+                    base = vector(col * dff_pitch, (row + 1) * self.dff.height)
                     mirror = "MX"
-                self.dff_insts[row,col].place(offset=base, 
-                                              mirror=mirror)
+                self.dff_insts[row, col].place(offset=base,
+                                               mirror=mirror)
                 
     def get_din_name(self, row, col):
         if self.columns == 1:
@@ -120,7 +118,7 @@ class dff_buf_array(design.design):
         elif self.rows == 1:
             din_name = "din_{0}".format(col)
         else:
-            din_name = "din_{0}_{1}".format(row,col)
+            din_name = "din_{0}_{1}".format(row, col)
 
         return din_name
     
@@ -130,7 +128,7 @@ class dff_buf_array(design.design):
         elif self.rows == 1:
             dout_name = "dout_{0}".format(col)
         else:
-            dout_name = "dout_{0}_{1}".format(row,col)
+            dout_name = "dout_{0}_{1}".format(row, col)
 
         return dout_name
     
@@ -140,75 +138,73 @@ class dff_buf_array(design.design):
         elif self.rows == 1:
             dout_bar_name = "dout_bar_{0}".format(col)
         else:
-            dout_bar_name = "dout_bar_{0}_{1}".format(row,col)
+            dout_bar_name = "dout_bar_{0}_{1}".format(row, col)
 
         return dout_bar_name
     
     def add_layout_pins(self):
         for row in range(self.rows):
-            for col in range(self.columns):                        
+            for col in range(self.columns):
                 # Continous vdd rail along with label.
-                vdd_pin=self.dff_insts[row,col].get_pin("vdd")
+                vdd_pin=self.dff_insts[row, col].get_pin("vdd")
                 self.add_power_pin("vdd", vdd_pin.lc())
 
                 # Continous gnd rail along with label.
-                gnd_pin=self.dff_insts[row,col].get_pin("gnd")
+                gnd_pin=self.dff_insts[row, col].get_pin("gnd")
                 self.add_power_pin("gnd", gnd_pin.lc())
             
-
-        for row in range(self.rows):            
-            for col in range(self.columns):            
-                din_pin = self.dff_insts[row,col].get_pin("D")
-                debug.check(din_pin.layer=="m2","DFF D pin not on metal2")
-                self.add_layout_pin(text=self.get_din_name(row,col),
+        for row in range(self.rows):
+            for col in range(self.columns):
+                din_pin = self.dff_insts[row, col].get_pin("D")
+                debug.check(din_pin.layer=="m2", "DFF D pin not on metal2")
+                self.add_layout_pin(text=self.get_din_name(row, col),
                                     layer=din_pin.layer,
                                     offset=din_pin.ll(),
                                     width=din_pin.width(),
                                     height=din_pin.height())
 
-                dout_pin = self.dff_insts[row,col].get_pin("Q")
-                debug.check(dout_pin.layer=="m2","DFF Q pin not on metal2")
-                self.add_layout_pin(text=self.get_dout_name(row,col),
+                dout_pin = self.dff_insts[row, col].get_pin("Q")
+                debug.check(dout_pin.layer=="m2", "DFF Q pin not on metal2")
+                self.add_layout_pin(text=self.get_dout_name(row, col),
                                     layer=dout_pin.layer,
                                     offset=dout_pin.ll(),
                                     width=dout_pin.width(),
                                     height=dout_pin.height())
 
-                dout_bar_pin = self.dff_insts[row,col].get_pin("Qb")
-                debug.check(dout_bar_pin.layer=="m2","DFF Qb pin not on metal2")
-                self.add_layout_pin(text=self.get_dout_bar_name(row,col),
+                dout_bar_pin = self.dff_insts[row, col].get_pin("Qb")
+                debug.check(dout_bar_pin.layer=="m2", "DFF Qb pin not on metal2")
+                self.add_layout_pin(text=self.get_dout_bar_name(row, col),
                                     layer=dout_bar_pin.layer,
                                     offset=dout_bar_pin.ll(),
                                     width=dout_bar_pin.width(),
                                     height=dout_bar_pin.height())
-
                 
         # Create vertical spines to a single horizontal rail
-        clk_pin = self.dff_insts[0,0].get_pin("clk")
-        clk_ypos = 2*self.m3_pitch+self.m3_width
-        debug.check(clk_pin.layer=="m2","DFF clk pin not on metal2")
+        clk_pin = self.dff_insts[0, 0].get_pin("clk")
+        clk_ypos = 2 * self.m3_pitch + self.m3_width
+        debug.check(clk_pin.layer=="m2", "DFF clk pin not on metal2")
         if self.columns==1:
             self.add_layout_pin(text="clk",
                                 layer="m2",
-                                offset=clk_pin.ll().scale(1,0),
+                                offset=clk_pin.ll().scale(1, 0),
                                 width=self.m2_width,
                                 height=self.height)
         else:
             self.add_layout_pin_segment_center(text="clk",
-                                            layer="m3",
-                                            start=vector(0,clk_ypos),
-                                            end=vector(self.width,clk_ypos))
+                                               layer="m3",
+                                               start=vector(0, clk_ypos),
+                                               end=vector(self.width, clk_ypos))
             for col in range(self.columns):
-                clk_pin = self.dff_insts[0,col].get_pin("clk")
+                clk_pin = self.dff_insts[0, col].get_pin("clk")
 
                 # Make a vertical strip for each column
                 self.add_rect(layer="m2",
-                              offset=clk_pin.ll().scale(1,0),
+                              offset=clk_pin.ll().scale(1, 0),
                               width=self.m2_width,
                               height=self.height)
                 # Drop a via to the M3 pin
                 self.add_via_center(layers=self.m2_stack,
-                                    offset=vector(clk_pin.cx(),clk_ypos))
+                                    offset=vector(clk_pin.cx(), clk_ypos))
                 
     def get_clk_cin(self):
         """Return the total capacitance (in relative units) that the clock is loaded by in the dff array"""

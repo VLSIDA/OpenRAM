@@ -13,7 +13,7 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class port_data_test(openram_test):
+class port_data_1rw_1r_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))

@@ -699,8 +699,13 @@ class port_data(design.design):
             bottom_names = self._get_bitline_pins(bot_inst_group, bit)
             top_names = self._get_bitline_pins(top_inst_group, bit)
 
+            if bottom_names[0].layer == "m2":
+                bitline_dirs = ("H", "V")
+            elif bottom_names[0].layer == "m1":
+                bitline_dirs = ("V", "H")
+            
             route_map = list(zip(bottom_names, top_names))
-            self.create_horizontal_channel_route(route_map, offset, self.m1_stack)
+            self.create_horizontal_channel_route(route_map, offset, self.m1_stack, bitline_dirs)
 
     def connect_bitlines(self, inst1, inst2, num_bits,
                          inst1_bls_template="{inst}_{bit}",

@@ -1127,13 +1127,13 @@ class layout():
                                                 self.horizontal_pitch)
                 offset += vector(0, self.horizontal_pitch)
 
-    def create_vertical_channel_route(self, netlist, offset, layer_stack, layer_dirs):
+    def create_vertical_channel_route(self, netlist, offset, layer_stack, layer_dirs=None):
         """
         Wrapper to create a vertical channel route
         """
         self.create_channel_route(netlist, offset, layer_stack, layer_dirs, vertical=True)
 
-    def create_horizontal_channel_route(self, netlist, offset, layer_stack, layer_dirs):
+    def create_horizontal_channel_route(self, netlist, offset, layer_stack, layer_dirs=None):
         """
         Wrapper to create a horizontal channel route
         """

@@ -45,6 +45,7 @@ class pand2(pgate.pgate):
         self.place_insts()
         self.add_wires()
         self.add_layout_pins()
+        self.add_boundary()
         self.DRC_LVS()
         
     def add_pins(self):

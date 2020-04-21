@@ -68,7 +68,8 @@ class precharge(design.design):
         self.route_vdd_rail()
         self.route_bitlines()
         self.connect_to_bitlines()
-
+        self.add_boundary()
+        
     def add_pins(self):
         self.add_pin_list(["bl", "br", "en_bar", "vdd"],
                           ["OUTPUT", "OUTPUT", "INPUT", "POWER"])

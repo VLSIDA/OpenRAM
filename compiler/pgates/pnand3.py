@@ -67,6 +67,7 @@ class pnand3(pgate.pgate):
         self.extend_wells()
         self.route_inputs()
         self.route_output()
+        self.add_boundary()
         
     def add_ptx(self):
         """ Create the PMOS and NMOS transistors. """

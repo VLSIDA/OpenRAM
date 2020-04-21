@@ -64,6 +64,7 @@ class pinv(pgate.pgate):
                               "A",
                               position="farleft")
         self.route_outputs()
+        self.add_boundary()
         
     def add_pins(self):
         """ Adds pins for spice netlist """

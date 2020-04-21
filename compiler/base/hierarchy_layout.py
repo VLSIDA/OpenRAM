@@ -17,6 +17,7 @@ import os
 from globals import OPTS
 from vector import vector
 from pin_layout import pin_layout
+from utils import round_to_grid
 
 
 class layout():
@@ -325,7 +326,7 @@ class layout():
             file_name = "non_rectilinear.gds"
             self.gds_write(file_name)
             debug.error("Cannot have a non-manhatten layout pin: {}".format(file_name), -1)
-            
+
         minwidth_layer = drc["minwidth_{}".format(layer)]
 
         # one of these will be zero
@@ -1213,7 +1214,8 @@ class layout():
         else:
             # Hack for min area
             if OPTS.tech_name == "s8":
-                height = width = sqrt(drc["minarea_m3"])
+                width = round_to_grid(sqrt(drc["minarea_m3"]))
+                height = round_to_grid(drc["minarea_m3"]/width)
             else:
                 width = via.width
                 height = via.height

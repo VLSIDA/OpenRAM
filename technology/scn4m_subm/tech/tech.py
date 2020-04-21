@@ -89,7 +89,7 @@ power_grid = m3_stack
 ###################################################
 
 # create the GDS layer map
-layer={} 
+layer={}
 layer["pwell"]          = (41, 0)
 layer["nwell"]          = (42, 0)
 layer["active"]         = (43, 0)
@@ -98,9 +98,9 @@ layer["nimplant"]       = (45, 0)
 layer["poly"]           = (46, 0)
 layer["poly_contact"]   = (47, 0)
 layer["active_contact"] = (48, 0)
-layer["m1"]         = (49, 0) 
+layer["m1"]         = (49, 0)
 layer["via1"]           = (50, 0)
-layer["m2"]         = (51, 0) 
+layer["m2"]         = (51, 0)
 layer["via2"]           = (61, 0)
 layer["m3"]         = (62, 0)
 layer["via3"]           = (30, 0)

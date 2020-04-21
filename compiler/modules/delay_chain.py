@@ -49,6 +49,7 @@ class delay_chain(design.design):
 
         self.place_inverters()
         self.route_inverters()
+        self.route_supplies()
         self.add_layout_pins()
         self.add_boundary()
         self.DRC_LVS()
@@ -67,7 +68,6 @@ class delay_chain(design.design):
     def create_inverters(self):
         """ Create the inverters and connect them based on the stage list """
         self.driver_inst_list = []
-        self.rightest_load_inst = {}
         self.load_inst_map = {}
         for stage_num, fanout_size in zip(range(len(self.fanout_list)), self.fanout_list):
             # Add the inverter
@@ -98,9 +98,6 @@ class delay_chain(design.design):
             
                 # Keep track of all the loads to connect their inputs as a load
                 self.load_inst_map[cur_driver].append(cur_load)
-            else:
-                # Keep track of the last one so we can add the the wire later
-                self.rightest_load_inst[cur_driver]=cur_load
 
     def place_inverters(self):
         """ Place the inverters and connect them based on the stage list """
@@ -151,7 +148,7 @@ class delay_chain(design.design):
             # Route an M3 horizontal wire to the furthest
             z_pin = inv.get_pin("Z")
             a_pin = inv.get_pin("A")
-            a_max = self.rightest_load_inst[inv].get_pin("A")
+            a_max = self.load_inst_map[inv][-1].get_pin("A")
             self.add_via_center(layers=self.m1_stack,
                                 offset=a_pin.center())
             self.add_via_center(layers=self.m1_stack,
@@ -169,33 +166,24 @@ class delay_chain(design.design):
                 mid1_point = vector(z_pin.cx(), y_mid)
                 mid2_point = vector(next_a_pin.cx(), y_mid)
                 self.add_path("m2", [z_pin.center(), mid1_point, mid2_point, next_a_pin.center()])
-                
-    def add_layout_pins(self):
-        """ Add vdd and gnd rails and the input/output. Connect the gnd rails internally on
-        the top end with no input/output to obstruct. """
 
+    def route_supplies(self):
         # Add power and ground to all the cells except:
         # the fanout driver, the right-most load
         # The routing to connect the loads is over the first and last cells
         # We have an even number of drivers and must only do every other
         # supply rail
-        for i in range(0, len(self.driver_inst_list), 2):
-            inv = self.driver_inst_list[i]
-            for load in self.load_inst_map[inv]:
-                if load==self.rightest_load_inst[inv]:
-                    continue
-                for pin_name in ["vdd", "gnd"]:
-                    pin = load.get_pin(pin_name)
-                    self.add_power_pin(pin_name, pin.rc())
-        else:
-            # We have an even number of rows, so need to get the last gnd rail
-            inv = self.driver_inst_list[-1]
-            for load in self.load_inst_map[inv]:
-                if load==self.rightest_load_inst[inv]:
-                    continue
-                pin_name = "gnd"
-                pin = load.get_pin(pin_name)
-                self.add_power_pin(pin_name, pin.rc())
+
+        for inst in self.driver_inst_list:
+            load_list = self.load_inst_map[inst]
+            for pin_name in ["vdd", "gnd"]:
+                pin = load_list[0].get_pin(pin_name)
+                self.add_power_pin(pin_name, pin.rc() - vector(self.m1_pitch, 0))
+                
+                pin = load_list[-1].get_pin(pin_name)
+                self.add_power_pin(pin_name, pin.rc() - vector(0.5 * self.m1_pitch, 0))
+                
+    def add_layout_pins(self):
 
         # input is A pin of first inverter
         a_pin = self.driver_inst_list[0].get_pin("A")
@@ -208,7 +196,7 @@ class delay_chain(design.design):
 
         # output is A pin of last load inverter
         last_driver_inst = self.driver_inst_list[-1]
-        a_pin = self.rightest_load_inst[last_driver_inst].get_pin("A")
+        a_pin = self.load_inst_map[last_driver_inst][-1].get_pin("A")
         self.add_via_center(layers=self.m1_stack,
                             offset=a_pin.center())
         mid_point = vector(a_pin.cx() + 3 * self.m2_width, a_pin.cy())

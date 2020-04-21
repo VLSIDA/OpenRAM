@@ -108,7 +108,7 @@ class single_level_column_mux(pgate.pgate):
 
         # This aligns it directly above the other tx with gates abutting
         nmos_upper_position = nmos_lower_position \
-                                + vector(0, self.nmos.active_height + self.active_space)
+                                + vector(0, self.nmos.active_height + max(self.active_space,self.poly_space))
         self.nmos_upper = self.add_inst(name="mux_tx2",
                                         mod=self.nmos,
                                         offset=nmos_upper_position)
@@ -117,10 +117,14 @@ class single_level_column_mux(pgate.pgate):
     def connect_poly(self):
         """ Connect the poly gate of the two pass transistors """
 
+        # offset is the top of the lower nmos' diffusion
+        # height is the distance between the nmos' diffusions, which depends on max(self.active_space,self.poly_space)
+        offset = self.nmos_lower.get_pin("G").ul() - vector(0,self.poly_extend_active)
+        height = self.nmos_upper.get_pin("G").by() + self.poly_extend_active - offset.y
         self.add_layout_pin(text="sel",
                             layer="poly",
-                            offset=self.nmos_lower.get_pin("G").ul() - vector(0,self.poly_extend_active),
-                            height=self.active_space)
+                            offset=offset,
+                            height=height)
 
     def connect_bitlines(self):
         """ Connect the bitlines to the mux transistors """

@@ -48,6 +48,7 @@ class dff_buf_array(design.design):
         self.width = self.columns * self.dff.width
         self.height = self.rows * self.dff.height
         self.place_dff_array()
+        self.route_supplies()
         self.add_layout_pins()
         self.add_boundary()
         self.DRC_LVS()
@@ -94,15 +95,25 @@ class dff_buf_array(design.design):
 
     def place_dff_array(self):
 
-        well_spacing = max(self.nwell_space,
-                           self.pwell_space,
-                           self.pwell_to_nwell)
+        well_spacing = 0
+        try:
+            well_spacing = max(self.nwell_space, well_spacing)
+        except AttributeError:
+            pass
+        try:
+            well_spacing = max(self.pwell_space, well_spacing)
+        except AttributeError:
+            pass
+        try:
+            well_spacing = max(self.pwell_to_nwell, well_spacing)
+        except AttributeError:
+            pass
 
         dff_pitch = self.dff.width + well_spacing + self.well_extend_active
         
         for row in range(self.rows):
             for col in range(self.columns):
-                name = "Xdff_r{0}_c{1}".format(row, col)
+                # name = "Xdff_r{0}_c{1}".format(row, col)
                 if (row % 2 == 0):
                     base = vector(col * dff_pitch, row * self.dff.height)
                     mirror = "R0"
@@ -141,8 +152,17 @@ class dff_buf_array(design.design):
             dout_bar_name = "dout_bar_{0}_{1}".format(row, col)
 
         return dout_bar_name
-    
-    def add_layout_pins(self):
+
+    def route_supplies(self):
+        for row in range(self.rows):
+            vdd0_pin=self.dff_insts[row, 0].get_pin("vdd")
+            vddn_pin=self.dff_insts[row, self.columns - 1].get_pin("vdd")
+            self.add_path(vdd0_pin.layer, [vdd0_pin.lc(), vddn_pin.rc()], width=vdd0_pin.height())
+            
+            gnd0_pin=self.dff_insts[row, 0].get_pin("gnd")
+            gndn_pin=self.dff_insts[row, self.columns - 1].get_pin("gnd")
+            self.add_path(gnd0_pin.layer, [gnd0_pin.lc(), gndn_pin.rc()], width=gnd0_pin.height())
+                
         for row in range(self.rows):
             for col in range(self.columns):
                 # Continous vdd rail along with label.
@@ -152,6 +172,8 @@ class dff_buf_array(design.design):
                 # Continous gnd rail along with label.
                 gnd_pin=self.dff_insts[row, col].get_pin("gnd")
                 self.add_power_pin("gnd", gnd_pin.lc())
+        
+    def add_layout_pins(self):
             
         for row in range(self.rows):
             for col in range(self.columns):

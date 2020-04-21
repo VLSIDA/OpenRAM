@@ -57,7 +57,10 @@ class single_level_column_mux(pgate.pgate):
 
         # Adds nmos_lower,nmos_upper to the module
         self.ptx_width = self.tx_size * drc("minwidth_tx")
-        self.nmos = factory.create(module_type="ptx", width=self.ptx_width)
+        self.nmos = factory.create(module_type="ptx",
+                                    width=self.ptx_width,
+                                    add_source_contact=False,
+                                    add_drain_contact=False)
         self.add_mod(self.nmos)
 
     def add_pins(self):
@@ -152,6 +155,30 @@ class single_level_column_mux(pgate.pgate):
         self.add_via_center(layers=col_mux_stack,
                             offset=nmos_lower_d_pin.center(),
                             directions=("V", "V"))
+
+        # Add diffusion contacts
+        # These were previously omitted with the options: add_source_contact=False, add_drain_contact=False
+        # They are added now and not previously due to a s8 tech special case in which the contacts intersected the mux intraconnect
+        self.add_via_center(layers=self.active_stack,
+                            offset=nmos_upper_d_pin.center(),
+                            directions=("V", "V"),
+                            implant_type="n",
+                            well_type="nwell")
+        self.add_via_center(layers=self.active_stack,
+                            offset=nmos_lower_s_pin.center(),
+                            directions=("V", "V"),
+                            implant_type="n",
+                            well_type="nwell")
+        self.add_via_center(layers=self.active_stack,
+                            offset=nmos_upper_s_pin.center(),
+                            directions=("V", "V"),
+                            implant_type="n",
+                            well_type="nwell")
+        self.add_via_center(layers=self.active_stack,
+                            offset=nmos_lower_d_pin.center(),
+                            directions=("V", "V"),
+                            implant_type="n",
+                            well_type="nwell")
 
         # bl -> nmos_upper/D on metal1
         # bl_out -> nmos_upper/S on metal2

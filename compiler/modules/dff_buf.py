@@ -7,12 +7,12 @@
 #
 import debug
 import design
-from tech import drc,parameter
+from tech import parameter
 from tech import cell_properties as props
-from math import log
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
+
 
 class dff_buf(design.design):
     """
@@ -107,13 +107,23 @@ class dff_buf(design.design):
         self.dff_inst.place(vector(0,0))
 
         # Add INV1 to the right
-        well_spacing = max(self.nwell_space,
-                           self.pwell_space,
-                           self.pwell_to_nwell)
-        self.inv1_inst.place(vector(self.dff_inst.rx() + well_spacing + self.well_extend_active,0))
+        well_spacing = 0
+        try:
+            well_spacing = max(well_spacing, self.nwell_space)
+        except AttributeError:
+            pass
+        try:
+            well_spacing = max(well_spacing, self.pwell_space)
+        except AttributeError:
+            pass
+        try:
+            well_spacing = max(well_spacing, self.pwell_to_nwell)
+        except AttributeError:
+            pass
+        self.inv1_inst.place(vector(self.dff_inst.rx() + well_spacing + self.well_extend_active, 0))
         
         # Add INV2 to the right
-        self.inv2_inst.place(vector(self.inv1_inst.rx(),0))
+        self.inv2_inst.place(vector(self.inv1_inst.rx(), 0))
         
     def route_wires(self):
         # Route dff q to inv1 a

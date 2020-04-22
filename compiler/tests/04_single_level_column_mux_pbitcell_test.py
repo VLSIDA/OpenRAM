@@ -15,16 +15,29 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class hierarchical_predecode2x4_test(openram_test):
+#@unittest.skip("SKIPPING 04_driver_test")
+
+class single_level_column_mux_pbitcell_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
+        
+        # check single level column mux in multi-port
+        OPTS.bitcell = "pbitcell"
+        OPTS.num_rw_ports = 1
+        OPTS.num_r_ports = 1
+        OPTS.num_w_ports = 1
 
-        # checking hierarchical precode 2x4 for single port
-        debug.info(1, "Testing sample for hierarchy_predecode2x4")
-        a = factory.create(module_type="hierarchical_predecode2x4")
-        self.local_check(a)
+        factory.reset()
+        debug.info(2, "Checking column mux for pbitcell (innermost connections)")
+        tx = factory.create(module_type="single_level_column_mux", tx_size=8, bitcell_bl="bl0", bitcell_br="br0")
+        self.local_check(tx)
+        
+        factory.reset()
+        debug.info(2, "Checking column mux for pbitcell (outermost connections)")
+        tx = factory.create(module_type="single_level_column_mux",tx_size=8, bitcell_bl="bl2", bitcell_br="br2")
+        self.local_check(tx)
 
         globals.end_openram()
         

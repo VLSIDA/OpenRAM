@@ -17,7 +17,7 @@ from sram_factory import factory
 import debug
 
 
-class write_mask_and_array_test(openram_test):
+class write_mask_and_array_pbitcell_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))

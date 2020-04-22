@@ -17,7 +17,7 @@ import debug
 
 #@unittest.skip("SKIPPING 04_driver_test")
 
-class wordline_driver_test(openram_test):
+class wordline_driver_pbitcell_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))

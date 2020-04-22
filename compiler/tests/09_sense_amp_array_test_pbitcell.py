@@ -15,7 +15,7 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class sense_amp_test(openram_test):
+class sense_amp_pbitcell_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))

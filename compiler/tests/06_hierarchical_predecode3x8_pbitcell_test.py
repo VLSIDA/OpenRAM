@@ -15,7 +15,7 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class hierarchical_predecode3x8_test(openram_test):
+class hierarchical_predecode3x8_pbitcell_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))

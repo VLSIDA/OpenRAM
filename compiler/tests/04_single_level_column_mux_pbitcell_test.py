@@ -17,7 +17,7 @@ import debug
 
 #@unittest.skip("SKIPPING 04_driver_test")
 
-class single_level_column_mux_test(openram_test):
+class single_level_column_mux_pbitcell_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))

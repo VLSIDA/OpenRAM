@@ -32,7 +32,6 @@ class hierarchical_decoder(design.design):
             self.cell_multiple = cell_properties.bitcell.decoder_bitcell_multiple
         except AttributeError:
             self.cell_multiple = 1
-        # For debugging
         self.cell_height = self.cell_multiple * b.height
         
         self.num_outputs = num_outputs

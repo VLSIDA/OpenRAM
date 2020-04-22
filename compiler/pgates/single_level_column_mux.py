@@ -121,13 +121,25 @@ class single_level_column_mux(pgate.pgate):
         # height is the distance between the nmos' diffusions, which depends on max(self.active_space,self.poly_space)
         offset = self.nmos_lower.get_pin("G").ul() - vector(0,self.poly_extend_active)
         height = self.nmos_upper.get_pin("G").by() + self.poly_extend_active - offset.y
-        self.add_layout_pin(text="sel",
-                            layer="poly",
+        self.add_rect(layer="poly",
                             offset=offset,
                             height=height)
 
+        # Add the sel pin to the bottom of the mux
+        self.add_layout_pin(text="sel",
+                            layer="poly",
+                            offset=self.nmos_lower.get_pin("G").ll(),
+                            height=self.poly_extend_active)
+
     def connect_bitlines(self):
         """ Connect the bitlines to the mux transistors """
+        
+        # If li exists, use li and m1 for the mux, otherwise use m1 and m2
+        if "li" in layer:
+            self.col_mux_stack = self.li_stack
+        else:
+            self.col_mux_stack = self.m1_stack
+
         # These are on metal2
         bl_pin = self.get_pin("bl")
         br_pin = self.get_pin("br")
@@ -140,29 +152,24 @@ class single_level_column_mux(pgate.pgate):
         nmos_upper_s_pin = self.nmos_upper.get_pin("S")
         nmos_upper_d_pin = self.nmos_upper.get_pin("D")
 
-        # If li exists, use li and m1 for the mux, otherwise use m1 and m2
-        if "li" in layer:
-            col_mux_stack = self.li_stack
-        else:
-            col_mux_stack = self.m1_stack
-
         # Add vias to bl, br_out, nmos_upper/S, nmos_lower/D
-        self.add_via_center(layers=col_mux_stack,
+        self.add_via_center(layers=self.col_mux_stack,
                             offset=bl_pin.bc(),
                             directions=("V", "V"))
-        self.add_via_center(layers=col_mux_stack,
+        self.add_via_center(layers=self.col_mux_stack,
                             offset=br_out_pin.uc(),
                             directions=("V", "V"))
-        self.add_via_center(layers=col_mux_stack,
+        self.add_via_center(layers=self.col_mux_stack,
                             offset=nmos_upper_s_pin.center(),
                             directions=("V", "V"))
-        self.add_via_center(layers=col_mux_stack,
+        self.add_via_center(layers=self.col_mux_stack,
                             offset=nmos_lower_d_pin.center(),
                             directions=("V", "V"))
 
         # Add diffusion contacts
         # These were previously omitted with the options: add_source_contact=False, add_drain_contact=False
-        # They are added now and not previously due to a s8 tech special case in which the contacts intersected the mux intraconnect
+        # They are added now and not previously so that they do not include m1 (which is usually included by default)
+        # This is only a concern when the local interconnect (li) layer is being used
         self.add_via_center(layers=self.active_stack,
                             offset=nmos_upper_d_pin.center(),
                             directions=("V", "V"),
@@ -186,7 +193,7 @@ class single_level_column_mux(pgate.pgate):
 
         # bl -> nmos_upper/D on metal1
         # bl_out -> nmos_upper/S on metal2
-        self.add_path(col_mux_stack[0],
+        self.add_path(self.col_mux_stack[0],
                       [bl_pin.ll(), vector(nmos_upper_d_pin.cx(), bl_pin.by()),
                        nmos_upper_d_pin.center()])
         # halfway up, move over
@@ -194,12 +201,12 @@ class single_level_column_mux(pgate.pgate):
                + nmos_upper_s_pin.bc().scale(0, 0.4)
         mid2 = bl_out_pin.uc().scale(0, 0.4) \
                + nmos_upper_s_pin.bc().scale(1, 0.4)
-        self.add_path(col_mux_stack[2],
+        self.add_path(self.col_mux_stack[2],
                       [bl_out_pin.uc(), mid1, mid2, nmos_upper_s_pin.center()])
 
         # br -> nmos_lower/D on metal2
         # br_out -> nmos_lower/S on metal1
-        self.add_path(col_mux_stack[0],
+        self.add_path(self.col_mux_stack[0],
                       [br_out_pin.uc(),
                        vector(nmos_lower_s_pin.cx(), br_out_pin.uy()),
                        nmos_lower_s_pin.center()])
@@ -208,7 +215,7 @@ class single_level_column_mux(pgate.pgate):
                + nmos_lower_d_pin.uc().scale(0,0.5)
         mid2 = br_pin.bc().scale(0,0.5) \
                + nmos_lower_d_pin.uc().scale(1,0.5)
-        self.add_path(col_mux_stack[2],
+        self.add_path(self.col_mux_stack[2],
                       [br_pin.bc(), mid1, mid2, nmos_lower_d_pin.center()])
 
     def add_wells(self):
@@ -224,6 +231,10 @@ class single_level_column_mux(pgate.pgate):
                             offset=active_pos,
                             implant_type="p",
                             well_type="p")
+
+        # If there is a li layer, include it in the power stack
+        self.add_via_center(layers=self.col_mux_stack,
+                            offset=active_pos)
 
         # Add the M1->..->power_grid_layer stack
         self.add_power_pin(name = "gnd",

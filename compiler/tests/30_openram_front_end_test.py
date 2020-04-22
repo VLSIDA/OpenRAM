@@ -51,7 +51,7 @@ class openram_front_end_test(openram_test):
             debug.warning("Failed to find coverage installation. This can be installed with pip3 install coverage")
             exe_name = "{0}/openram.py ".format(OPENRAM_HOME)
         else:
-            exe_name = "coverage run -p {0}/openram.py ".format(OPENRAM_HOME) 
+            exe_name = "coverage run -p {0}/openram.py ".format(OPENRAM_HOME)
         config_name = "{0}/tests/configs/config_front_end.py".format(OPENRAM_HOME)
         cmd = "{0} -n -o {1} -p {2} {3} {4} 2>&1 > {5}/output.log".format(exe_name,
                                                                           out_file,
@@ -64,33 +64,32 @@ class openram_front_end_test(openram_test):
         
         # assert an error until we actually check a result
         for extension in ["v", "lef", "sp", "gds"]:
-            filename = "{0}/{1}.{2}".format(out_path,out_file,extension)
-            debug.info(1,"Checking for file: " + filename)
-            self.assertEqual(os.path.exists(filename),True)
+            filename = "{0}/{1}.{2}".format(out_path, out_file, extension)
+            debug.info(1, "Checking for file: " + filename)
+            self.assertEqual(os.path.exists(filename), True)
 
         # Make sure there is any .lib file
         import glob
         files = glob.glob('{0}/*.lib'.format(out_path))
         self.assertTrue(len(files)>0)
         
-        # Make sure there is any .html file 
+        # Make sure there is any .html file
         if os.path.exists(out_path):
             datasheets = glob.glob('{0}/*html'.format(out_path))
             self.assertTrue(len(datasheets)>0)
         
         # grep any errors from the output
-        output_log = open("{0}/output.log".format(out_path),"r")
+        output_log = open("{0}/output.log".format(out_path), "r")
         output = output_log.read()
         output_log.close()
-        self.assertEqual(len(re.findall('ERROR',output)),0)
-        self.assertEqual(len(re.findall('WARNING',output)),0)
+        self.assertEqual(len(re.findall('ERROR', output)), 0)
+        self.assertEqual(len(re.findall('WARNING', output)), 0)
 
-
-       # now clean up the directory
+        # now clean up the directory
         if OPTS.purge_temp:
             if os.path.exists(out_path):
                 shutil.rmtree(out_path, ignore_errors=True)
-            self.assertEqual(os.path.exists(out_path),False)
+            self.assertEqual(os.path.exists(out_path), False)
 
         globals.end_openram()
 

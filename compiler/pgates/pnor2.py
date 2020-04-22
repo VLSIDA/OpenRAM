@@ -8,6 +8,7 @@
 import contact
 import pgate
 import debug
+from globals import OPTS
 from tech import drc, parameter, spice
 from vector import vector
 from sram_factory import factory
@@ -35,6 +36,10 @@ class pnor2(pgate.pgate):
         # FIXME: Allow these to be sized
         debug.check(size==1, "Size 1 pnor2 is only supported now.")
         self.tx_mults = 1
+
+        if OPTS.tech_name == "s8":
+            (self.nmos_width, self.tx_mults) = self.bin_width("nmos", self.nmos_width)
+            (self.pmos_width, self.tx_mults) = self.bin_width("pmos", self.pmos_width)
 
         # Creates the netlist and layout
         pgate.pgate.__init__(self, name, height)

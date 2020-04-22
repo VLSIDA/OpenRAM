@@ -12,7 +12,7 @@ from tech import drc, parameter, spice
 from vector import vector
 import logical_effort
 from sram_factory import factory
-
+from globals import OPTS
 
 class pnand3(pgate.pgate):
     """
@@ -39,6 +39,10 @@ class pnand3(pgate.pgate):
         debug.check(size == 1,
                     "Size 1 pnand3 is only supported now.")
         self.tx_mults = 1
+
+        if OPTS.tech_name == "s8":
+            (self.nmos_width, self.tx_mults) = self.bin_width("nmos", self.nmos_width)
+            (self.pmos_width, self.tx_mults) = self.bin_width("pmos", self.pmos_width)
 
         # Creates the netlist and layout
         pgate.pgate.__init__(self, name, height)
@@ -190,8 +194,10 @@ class pnand3(pgate.pgate):
     def add_well_contacts(self):
         """ Add n/p well taps to the layout and connect to supplies """
 
-        self.add_nwell_contact(self.pmos, self.pmos3_pos)
-        self.add_pwell_contact(self.nmos_ns, self.nmos3_pos)
+        self.add_nwell_contact(self.pmos,
+                               self.pmos3_pos + vector(self.m1_pitch, 0))
+        self.add_pwell_contact(self.nmos_ns,
+                               self.nmos3_pos + vector(self.m1_pitch, 0))
 
     def connect_rails(self):
         """ Connect the nmos and pmos to its respective power rails """
@@ -220,18 +226,22 @@ class pnand3(pgate.pgate):
                               self.nmos3_inst,
                               self.inputC_yoffset,
                               "C",
-                              position="center")
+                              position="right")
 
         # FIXME: constant hack
-        self.inputA_yoffset = self.inputB_yoffset + 1.12 * m1_pitch
+        if OPTS.tech_name == "s8":
+            self.inputA_yoffset = self.inputB_yoffset + 1.15 * m1_pitch
+        else:
+            self.inputA_yoffset = self.inputB_yoffset + 1.12 * m1_pitch
         self.route_input_gate(self.pmos1_inst,
                               self.nmos1_inst,
                               self.inputA_yoffset,
                               "A",
-                              position="center")
+                              position="left")
         
     def route_output(self):
         """ Route the Z output """
+        
         # PMOS1 drain
         pmos1_pin = self.pmos1_inst.get_pin("D")
         # PMOS3 drain
@@ -239,29 +249,56 @@ class pnand3(pgate.pgate):
         # NMOS3 drain
         nmos3_pin = self.nmos3_inst.get_pin("D")
 
-        # Go up to metal2 for ease on all output pins
-        self.add_via_center(layers=self.m1_stack,
-                            offset=pmos1_pin.center(),
-                            directions=("V", "V"))
-        self.add_via_center(layers=self.m1_stack,
-                            offset=pmos3_pin.center(),
-                            directions=("V", "V"))
-        self.add_via_center(layers=self.m1_stack,
-                            offset=nmos3_pin.center(),
-                            directions=("V", "V"))
+        # midpoint for routing
+        mid_offset = vector(nmos3_pin.cx() + self.m1_pitch,
+                            self.inputA_yoffset)
+
+        # Aligned with the well taps
+        out_offset = vector(self.nwell_contact.cx(),
+                            self.inputA_yoffset)
         
-        # PMOS3 and NMOS3 are drain aligned
-        self.add_path("m2", [pmos3_pin.center(), nmos3_pin.center()])
-        # Route in the A input track (top track)
-        mid_offset = vector(nmos3_pin.center().x, self.inputA_yoffset)
-        self.add_path("m2", [pmos1_pin.center(), mid_offset, nmos3_pin.uc()])
+        # Go up to metal2 for ease on all output pins
+        # self.add_via_center(layers=self.m1_stack,
+        #                     offset=pmos1_pin.center(),
+        #                     directions=("V", "V"))
+        # self.add_via_center(layers=self.m1_stack,
+        #                     offset=pmos3_pin.center(),
+        #                     directions=("V", "V"))
+        # self.add_via_center(layers=self.m1_stack,
+        #                     offset=nmos3_pin.center(),
+        #                     directions=("V", "V"))
+        
+        # # Route in the A input track (top track)
+        # mid_offset = vector(nmos3_pin.center().x, self.inputA_yoffset)
+        # self.add_path("m1", [pmos1_pin.center(), mid_offset, nmos3_pin.uc()])
 
         # This extends the output to the edge of the cell
-        self.add_via_center(layers=self.m1_stack,
-                            offset=mid_offset)
+        # self.add_via_center(layers=self.m1_stack,
+        #                     offset=mid_offset)
+
+        top_left_pin_offset = pmos1_pin.center()
+        top_right_pin_offset = pmos3_pin.center()
+        bottom_pin_offset = nmos3_pin.center()
+        
+        # PMOS1 to output
+        self.add_path("m1", [top_left_pin_offset,
+                             vector(top_left_pin_offset.x, out_offset.y),
+                             out_offset])
+        # PMOS3 to output
+        self.add_path("m1", [top_right_pin_offset,
+                             vector(top_right_pin_offset.x, mid_offset.y),
+                             mid_offset])
+        # NMOS3 to output
+        mid2_offset = vector(mid_offset.x, bottom_pin_offset.y)
+        self.add_path("m1",
+                      [bottom_pin_offset, mid2_offset],
+                      width=nmos3_pin.height())
+        mid3_offset = vector(mid_offset.x, nmos3_pin.by())
+        self.add_path("m1", [mid3_offset, mid_offset])
+        
         self.add_layout_pin_rect_center(text="Z",
                                         layer="m1",
-                                        offset=mid_offset,
+                                        offset=out_offset,
                                         width=contact.m1_via.first_layer_width,
                                         height=contact.m1_via.first_layer_height)
 

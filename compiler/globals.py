@@ -589,4 +589,4 @@ def report_status():
         if OPTS.trim_netlist:
             debug.print_raw("Trimming netlist to speed up characterization (trim_netlist=False to disable).")
     if OPTS.nominal_corner_only:
-        debug.print_raw("Only characterizing nominal corner.")        
+        debug.print_raw("Only characterizing nominal corner.")

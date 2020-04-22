@@ -9,9 +9,10 @@ import debug
 from drc_value import *
 from drc_lut import *
 
+
 class design_rules(dict):
-    """ 
-    This is a class that implements the design rules structures. 
+    """
+    This is a class that implements the design rules structures.
     """
     def __init__(self, name):
         self.tech_name = name

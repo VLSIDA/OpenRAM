@@ -8,6 +8,7 @@
 import contact
 import design
 import debug
+from pgate import pgate
 from tech import parameter
 from vector import vector
 from globals import OPTS
@@ -28,6 +29,7 @@ class precharge(design.design):
         self.bitcell = factory.create(module_type="bitcell")
         self.beta = parameter["beta"]
         self.ptx_width = self.beta * parameter["min_tx_size"]
+        self.ptx_mults = 1
         self.width = self.bitcell.width
         self.bitcell_bl = bitcell_bl
         self.bitcell_br = bitcell_br
@@ -77,8 +79,11 @@ class precharge(design.design):
         """
         Initializes the upper and lower pmos
         """
+        if(OPTS.tech_name == "s8"):
+            (self.ptx_width, self.ptx_mults) = pgate.bin_width(self, "pmos", self.ptx_width)
         self.pmos = factory.create(module_type="ptx",
                                    width=self.ptx_width,
+                                   mults=self.ptx_mults,
                                    tx_type="pmos")
         self.add_mod(self.pmos)
 

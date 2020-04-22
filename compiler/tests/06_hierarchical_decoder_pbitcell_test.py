@@ -28,39 +28,39 @@ class hierarchical_decoder_test(openram_test):
 
         factory.reset()
         debug.info(1, "Testing 16 row sample for hierarchical_decoder (multi-port case)")
-        a = factory.create(module_type="hierarchical_decoder", rows=16)
+        a = factory.create(module_type="hierarchical_decoder", num_outputs=16)
         self.local_check(a)
 
         factory.reset()
         debug.info(1, "Testing 17 row sample for hierarchical_decoder (multi-port case)")
-        a = factory.create(module_type="hierarchical_decoder", rows=17)
+        a = factory.create(module_type="hierarchical_decoder", num_outputs=17)
         self.local_check(a)
 
         factory.reset()
         debug.info(1, "Testing 23 row sample for hierarchical_decoder (multi-port case)")
-        a = factory.create(module_type="hierarchical_decoder", rows=23)
+        a = factory.create(module_type="hierarchical_decoder", num_outputs=23)
         self.local_check(a)
 
         debug.info(1, "Testing 32 row sample for hierarchical_decoder (multi-port case)")
-        a = factory.create(module_type="hierarchical_decoder", rows=32)
+        a = factory.create(module_type="hierarchical_decoder", num_outputs=32)
         self.local_check(a)
 
         factory.reset()
         debug.info(1, "Testing 65 row sample for hierarchical_decoder (multi-port case)")
-        a = factory.create(module_type="hierarchical_decoder", rows=65)
+        a = factory.create(module_type="hierarchical_decoder", num_outputs=65)
         self.local_check(a)
 
         debug.info(1, "Testing 128 row sample for hierarchical_decoder (multi-port case)")
-        a = factory.create(module_type="hierarchical_decoder", rows=128)
+        a = factory.create(module_type="hierarchical_decoder", num_outputs=128)
         self.local_check(a)
 
         factory.reset()
         debug.info(1, "Testing 341 row sample for hierarchical_decoder (multi-port case)")
-        a = factory.create(module_type="hierarchical_decoder", rows=341)
+        a = factory.create(module_type="hierarchical_decoder", num_outputs=341)
         self.local_check(a)
 
         debug.info(1, "Testing 512 row sample for hierarchical_decoder (multi-port case)")
-        a = factory.create(module_type="hierarchical_decoder", rows=512)
+        a = factory.create(module_type="hierarchical_decoder", num_outputs=512)
         self.local_check(a)
 
         globals.end_openram()

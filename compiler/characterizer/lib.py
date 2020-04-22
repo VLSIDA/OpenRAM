@@ -181,17 +181,20 @@ class lib:
         self.lib.write("    dont_touch : true;\n")
         self.lib.write("    area : {};\n\n".format(self.sram.width * self.sram.height))
 
-        #Build string of all control signals. 
+        self.write_pg_pin()
+
+        #Build string of all control signals.
         control_str = 'csb0' #assume at least 1 port
         for i in range(1, self.total_port_num):
             control_str += ' & csb{0}'.format(i)
             
         # Leakage is included in dynamic when macro is enabled
         self.lib.write("    leakage_power () {\n")
-        self.lib.write("      when : \"{0}\";\n".format(control_str))
+        # 'when' condition unnecessary when cs pin does not turn power to devices
+        # self.lib.write("      when : \"{0}\";\n".format(control_str))
         self.lib.write("      value : {};\n".format(self.char_sram_results["leakage_power"]))
         self.lib.write("    }\n")
-        self.lib.write("    cell_leakage_power : {};\n".format(0))
+        self.lib.write("    cell_leakage_power : {};\n".format(self.char_sram_results["leakage_power"]))
         
     
     def write_units(self):
@@ -239,6 +242,9 @@ class lib:
         self.lib.write("    default_fanout_load      : 1.0 ;\n")
         self.lib.write("    default_max_fanout   : 4.0 ;\n")
         self.lib.write("    default_connection_class : universal ;\n\n")
+
+        self.lib.write("    voltage_map ( VDD, {} );\n".format(tech.spice["nom_supply_voltage"]))
+        self.lib.write("    voltage_map ( GND, 0 );\n\n")
 
     def create_list(self,values):
         """ Helper function to create quoted, line wrapped list """
@@ -516,42 +522,69 @@ class lib:
         if port in self.write_ports:
             if port in self.read_ports:
                 web_name = " & !web{0}".format(port)
-            avg_write_power = np.mean(self.char_port_results[port]["write1_power"] + self.char_port_results[port]["write0_power"])
+            write1_power = np.mean(self.char_port_results[port]["write1_power"])
+            write0_power = np.mean(self.char_port_results[port]["write0_power"])
             self.lib.write("        internal_power(){\n")
-            self.lib.write("            when : \"!csb{0} & clk{0}{1}\"; \n".format(port, web_name))
+            self.lib.write("            when : \"!csb{0}{1}\"; \n".format(port, web_name))
             self.lib.write("            rise_power(scalar){\n")
-            self.lib.write("                values(\"{0}\");\n".format(avg_write_power/2.0))
+            self.lib.write("                values(\"{0:.6e}\");\n".format(write1_power))
             self.lib.write("            }\n")
             self.lib.write("            fall_power(scalar){\n")
-            self.lib.write("                values(\"{0}\");\n".format(avg_write_power/2.0))
+            self.lib.write("                values(\"{0:.6e}\");\n".format(write0_power))
+            self.lib.write("            }\n")
+            self.lib.write("        }\n")
+
+            # Disabled power.
+            disabled_write1_power = np.mean(self.char_port_results[port]["disabled_write1_power"])
+            disabled_write0_power = np.mean(self.char_port_results[port]["disabled_write0_power"])
+            self.lib.write("        internal_power(){\n")
+            self.lib.write("            when : \"csb{0}{1}\"; \n".format(port, web_name))
+            self.lib.write("            rise_power(scalar){\n")
+            self.lib.write("                values(\"{0:.6e}\");\n".format(disabled_write1_power))
+            self.lib.write("            }\n")
+            self.lib.write("            fall_power(scalar){\n")
+            self.lib.write("                values(\"{0:.6e}\");\n".format(disabled_write0_power))
             self.lib.write("            }\n")
             self.lib.write("        }\n")
 
         if port in self.read_ports:
             if port in self.write_ports:
                 web_name = " & web{0}".format(port)
-            avg_read_power = np.mean(self.char_port_results[port]["read1_power"] + self.char_port_results[port]["read0_power"])
+            read1_power = np.mean(self.char_port_results[port]["read1_power"])
+            read0_power = np.mean(self.char_port_results[port]["read0_power"])
             self.lib.write("        internal_power(){\n")
-            self.lib.write("            when : \"!csb{0} & !clk{0}{1}\"; \n".format(port, web_name))
+            self.lib.write("            when : \"!csb{0}{1}\"; \n".format(port, web_name))
             self.lib.write("            rise_power(scalar){\n")
-            self.lib.write("                values(\"{0}\");\n".format(avg_read_power/2.0))
+            self.lib.write("                values(\"{0:.6e}\");\n".format(read1_power))
             self.lib.write("            }\n")
             self.lib.write("            fall_power(scalar){\n")
-            self.lib.write("                values(\"{0}\");\n".format(avg_read_power/2.0))
+            self.lib.write("                values(\"{0:.6e}\");\n".format(read0_power))
             self.lib.write("            }\n")
             self.lib.write("        }\n")
             
-        # Have 0 internal power when disabled, this will be represented as leakage power.
-        self.lib.write("        internal_power(){\n")
-        self.lib.write("            when : \"csb{0}\"; \n".format(port))
-        self.lib.write("            rise_power(scalar){\n")
-        self.lib.write("                values(\"0\");\n")
-        self.lib.write("            }\n")
-        self.lib.write("            fall_power(scalar){\n")
-        self.lib.write("                values(\"0\");\n")
-        self.lib.write("            }\n")
-        self.lib.write("        }\n")
-        
+            # Disabled power.
+            disabled_read1_power = np.mean(self.char_port_results[port]["disabled_read1_power"])
+            disabled_read0_power = np.mean(self.char_port_results[port]["disabled_read0_power"])
+            self.lib.write("        internal_power(){\n")
+            self.lib.write("            when : \"csb{0}{1}\"; \n".format(port, web_name))
+            self.lib.write("            rise_power(scalar){\n")
+            self.lib.write("                values(\"{0:.6e}\");\n".format(disabled_read1_power))
+            self.lib.write("            }\n")
+            self.lib.write("            fall_power(scalar){\n")
+            self.lib.write("                values(\"{0:.6e}\");\n".format(disabled_read0_power))
+            self.lib.write("            }\n")
+            self.lib.write("        }\n")
+
+    def write_pg_pin(self):
+        self.lib.write("    pg_pin(vdd) {\n")
+        self.lib.write("         voltage_name : VDD;\n")
+        self.lib.write("         pg_type : primary_power;\n")
+        self.lib.write("    }\n\n")
+        self.lib.write("    pg_pin(gnd) {\n")
+        self.lib.write("         voltage_name : GND;\n")
+        self.lib.write("         pg_type : primary_ground;\n")
+        self.lib.write("    }\n\n")
+
     def compute_delay(self):
         """Compute SRAM delays for current corner"""
         self.d = delay(self.sram, self.sp_file, self.corner)

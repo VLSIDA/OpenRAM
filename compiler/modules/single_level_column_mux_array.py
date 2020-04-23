@@ -151,7 +151,7 @@ class single_level_column_mux_array(design.design):
     def add_horizontal_input_rail(self):
         """ Create address input rails on M1 below the mux transistors  """
         for j in range(self.words_per_row):
-            offset = vector(0, self.route_height + (j - self.words_per_row) * self.col_mux_stack_pitch) #edit
+            offset = vector(0, self.route_height + (j - self.words_per_row) * self.col_mux_stack_pitch)
             self.add_layout_pin(text="sel_{}".format(j),
                                 layer=self.col_mux_stack[0],
                                 offset=offset,

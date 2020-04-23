@@ -8,3 +8,5 @@
 *.toc
 *.synctex.gz
 **/model_data
+outputs
+technology/freepdk45/ncsu_basekit

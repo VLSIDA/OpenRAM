@@ -47,6 +47,7 @@ class pinvbuf(pgate.pgate):
         self.place_modules()
         self.route_wires()
         self.add_layout_pins()
+        self.add_boundary()
         
         self.offset_all_coordinates()
         

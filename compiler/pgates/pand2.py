@@ -30,13 +30,12 @@ class pand2(pgate.pgate):
         self.create_insts()
 
     def create_modules(self):
-        # Shield the cap, but have at least a stage effort of 4
         self.nand = factory.create(module_type="pnand2", height=self.height)
         self.add_mod(self.nand)
 
         self.inv = factory.create(module_type="pdriver",
                                   neg_polarity=True,
-                                  fanout=3*self.size,
+                                  fanout=self.size,
                                   height=self.height)
         self.add_mod(self.inv)
 
@@ -45,6 +44,7 @@ class pand2(pgate.pgate):
         self.place_insts()
         self.add_wires()
         self.add_layout_pins()
+        self.add_boundary()
         self.DRC_LVS()
         
     def add_pins(self):

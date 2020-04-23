@@ -56,6 +56,7 @@ class ptristate_inv(pgate.pgate):
         self.connect_rails()
         self.route_inputs()
         self.route_outputs()
+        self.add_boundary()
         
     def add_pins(self):
         """ Adds pins for spice netlist """

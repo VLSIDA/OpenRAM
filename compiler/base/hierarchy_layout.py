@@ -41,11 +41,18 @@ class layout():
         self.visited = []    # List of modules we have already visited
         self.is_library_cell = False # Flag for library cells
         self.gds_read()
+        
         try:
             from tech import power_grid
             self.pwr_grid_layer = power_grid[0]
         except ImportError:
             self.pwr_grid_layer = "m3"
+            
+        if "li" in techlayer:
+            self.layer_indices = ["active", "li", "m1", "m2", "m3", "m4"]
+        else:
+            self.layer_indices = ["active", "m1", "m2", "m3", "m4"]
+            
 
     ############################################################
     # GDS layout
@@ -462,7 +469,12 @@ class layout():
     def add_via(self, layers, offset, size=[1, 1], directions=None, implant_type=None, well_type=None):
         """ Add a three layer via structure. """
 
-        if not directions:
+        # Non-preferred directions
+        if directions == "nonpref":
+            directions = (self.get_preferred_direction(layers[2]),
+                          self.get_preferred_direction(layers[0]))
+        # Preferred if not specified
+        elif not directions or directions == "pref":
             directions = (self.get_preferred_direction(layers[0]),
                           self.get_preferred_direction(layers[2]))
 
@@ -487,7 +499,12 @@ class layout():
         accounting for mirroring and rotation.
         """
 
-        if not directions:
+        # Non-preferred directions
+        if directions == "nonpref":
+            directions = (self.get_preferred_direction(layers[2]),
+                          self.get_preferred_direction(layers[0]))
+        # Preferred if not specified
+        elif not directions or directions == "pref":
             directions = (self.get_preferred_direction(layers[0]),
                           self.get_preferred_direction(layers[2]))
 
@@ -513,36 +530,54 @@ class layout():
         return inst
 
     def add_via_stack(self, offset, from_layer, to_layer,
-                      direction=None,
-                      size=[1, 1]):
+                      directions=None,
+                      size=[1, 1],
+                      implant_type=None,
+                      well_type=None):
         """
         Punch a stack of vias from a start layer to a target layer.
         """
         return self.__add_via_stack_internal(offset=offset,
-                                             direction=direction,
+                                             directions=directions,
                                              from_layer=from_layer,
                                              to_layer=to_layer,
                                              via_func=self.add_via,
                                              last_via=None,
-                                             size=size)
+                                             size=size,
+                                             implant_type=implant_type,
+                                             well_type=well_type)
 
-    def add_via_stack_center(self, offset, from_layer, to_layer,
-                             direction=None,
-                             size=[1, 1]):
+    def get_layer_index(self, layer_name):
+        """
+        Return a layer index from bottom up in this tech.
+        """
+        
+        return self.layer_indices.index(layer_name)
+    
+    def add_via_stack_center(self,
+                             offset,
+                             from_layer,
+                             to_layer,
+                             directions=None,
+                             size=[1, 1],
+                             implant_type=None,
+                             well_type=None):
         """
         Punch a stack of vias from a start layer to a target layer by the center
         coordinate accounting for mirroring and rotation.
         """
         return self.__add_via_stack_internal(offset=offset,
-                                             direction=direction,
+                                             directions=directions,
                                              from_layer=from_layer,
                                              to_layer=to_layer,
                                              via_func=self.add_via_center,
                                              last_via=None,
-                                             size=size)
+                                             size=size,
+                                             implant_type=implant_type,
+                                             well_type=well_type)
 
-    def __add_via_stack_internal(self, offset, direction, from_layer, to_layer,
-                                 via_func, last_via, size):
+    def __add_via_stack_internal(self, offset, directions, from_layer, to_layer,
+                                 via_func, last_via, size, implant_type=None, well_type=None):
         """
         Punch a stack of vias from a start layer to a target layer. Here we
         figure out whether to punch it up or down the stack.
@@ -551,8 +586,8 @@ class layout():
         if from_layer == to_layer:
             return last_via
 
-        from_id = int(from_layer[1])
-        to_id   = int(to_layer[1])
+        from_id = self.get_layer_index(from_layer)
+        to_id   = self.get_layer_index(to_layer)
 
         if from_id < to_id: # grow the stack up
             search_id = 0
@@ -563,19 +598,36 @@ class layout():
 
         curr_stack = next(filter(lambda stack: stack[search_id] == from_layer, layer_stacks), None)
         if curr_stack is None:
-            raise ValueError("Cannot create via from '{0}' to '{1}'." \
-                             "Layer '{0}' not defined"
-                             .format(from_layer, to_layer))
+            raise ValueError("Cannot create via from '{0}' to '{1}'."
+                             "Layer '{0}' not defined".format(from_layer, to_layer))
 
-        via = via_func(layers=curr_stack, size=size, offset=offset, directions=direction)
-        return self.__add_via_stack_internal(offset=offset,
-                                             direction=direction,
-                                             from_layer=curr_stack[next_id],
-                                             to_layer=to_layer,
-                                             via_func=via_func,
-                                             last_via=via,
-                                             size=size)
+        via = via_func(layers=curr_stack,
+                       size=size,
+                       offset=offset,
+                       directions=directions,
+                       implant_type=implant_type,
+                       well_type=well_type)
 
+        if from_layer == "active":
+            via = self.__add_via_stack_internal(offset=offset,
+                                                directions=directions,
+                                                from_layer=curr_stack[next_id],
+                                                to_layer=to_layer,
+                                                via_func=via_func,
+                                                last_via=via,
+                                                size=size,
+                                                implant_type=implant_type,
+                                                well_type=well_type)
+        else:
+            via = self.__add_via_stack_internal(offset=offset,
+                                                directions=directions,
+                                                from_layer=curr_stack[next_id],
+                                                to_layer=to_layer,
+                                                via_func=via_func,
+                                                last_via=via,
+                                                size=size)
+        return via
+    
     def add_ptx(self, offset, mirror="R0", rotate=0, width=1, mults=1, tx_type="nmos"):
         """Adds a ptx module to the design."""
         import ptx
@@ -1200,27 +1252,18 @@ class layout():
                               "supply router."
                               .format(name, inst.name, self.pwr_grid_layer))
 
-    def add_power_pin(self, name, loc, size=[1, 1], vertical=False, start_layer="m1"):
+    def add_power_pin(self, name, loc, size=[1, 1], directions=None, start_layer="m1"):
         """
         Add a single power pin from the lowest power_grid layer down to M1 (or li) at
         the given center location. The starting layer is specified to determine
         which vias are needed.
         """
 
-        # Force vdd/gnd via stack to be vertically or horizontally oriented
-        # Default: None, uses prefered metal directions
-        if vertical:
-            direction = ("V", "V")
-        elif not vertical and vertical is not None:
-            direction = ("H", "H")
-        else:
-            direction = None
-
         via = self.add_via_stack_center(from_layer=start_layer,
                                         to_layer=self.pwr_grid_layer,
                                         size=size,
                                         offset=loc,
-                                        direction=direction)
+                                        directions=directions)
         if start_layer == self.pwr_grid_layer:
             self.add_layout_pin_rect_center(text=name,
                                             layer=self.pwr_grid_layer,

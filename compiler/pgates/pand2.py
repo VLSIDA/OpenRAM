@@ -76,7 +76,7 @@ class pand2(pgate.pgate):
         a2_pin = self.inv_inst.get_pin("A")
         mid1_point = vector(0.5 * (z1_pin.cx() + a2_pin.cx()), z1_pin.cy())
         mid2_point = vector(mid1_point, a2_pin.cy())
-        self.add_path("m1",
+        self.add_path(self.route_layer,
                       [z1_pin.center(), mid1_point, mid2_point, a2_pin.center()])
         
     def add_layout_pins(self):

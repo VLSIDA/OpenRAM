@@ -33,6 +33,14 @@ class pgate(design.design):
             # By default, we make it 10 M1 pitch tall
             self.height = 10*self.m1_pitch
             
+        if "li" in layer:
+            self.route_layer = "li"
+        else:
+            self.route_layer = "m1"
+        self.route_layer_width = getattr(self, "{}_width".format(self.route_layer))
+        self.route_layer_space = getattr(self, "{}_space".format(self.route_layer))
+        self.route_layer_pitch = getattr(self, "{}_pitch".format(self.route_layer))
+            
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -47,22 +55,21 @@ class pgate(design.design):
         """ Pure virtual function """
         debug.error("Must over-ride create_layout.", -1)
 
-    def connect_pin_to_rail(self, inst, pin, supply):
+    def connect_pin_to_rail(self, inst, pin_name, supply_name):
         """ Connects a ptx pin to a supply rail. """
-        source_pin = inst.get_pin(pin)
-        supply_pin = self.get_pin(supply)
-        if supply_pin.overlaps(source_pin):
-            return
-            
-        if supply == "gnd":
-            height = supply_pin.by() - source_pin.by()
-        elif supply == "vdd":
-            height = supply_pin.uy() - source_pin.by()
-        else:
-            debug.error("Invalid supply name.", -1)
+        supply_pin = self.get_pin(supply_name)
         
-        if abs(height) > 0:
-            self.add_rect(layer="m1",
+        source_pins = inst.get_pins(pin_name)
+        for source_pin in source_pins:
+            
+            if supply_name == "gnd":
+                height = supply_pin.by() - source_pin.by()
+            elif supply_name == "vdd":
+                height = supply_pin.uy() - source_pin.by()
+            else:
+                debug.error("Invalid supply name.", -1)
+        
+            self.add_rect(layer=source_pin.layer,
                           offset=source_pin.ll(),
                           height=height,
                           width=source_pin.width())

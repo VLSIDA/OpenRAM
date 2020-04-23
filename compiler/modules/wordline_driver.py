@@ -26,8 +26,8 @@ class wordline_driver(design.design):
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("rows: {0} cols: {1}".format(rows, cols))
         
-        self.rows = rows
-        self.cols = cols
+        self.bitcell_rows = rows
+        self.bitcell_cols = cols
 
         b = factory.create(module_type="bitcell")
         try:
@@ -35,6 +35,11 @@ class wordline_driver(design.design):
         except AttributeError:
             self.cell_multiple = 1
         self.cell_height = self.cell_multiple * b.height
+        
+        # We may have more than one bitcell per decoder row
+        self.num_rows = math.ceil(self.bitcell_rows / self.cell_multiple)
+        # We will place this many final decoders per row
+        self.decoders_per_row = math.ceil(self.bitcell_rows / self.num_rows)
         
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -56,10 +61,10 @@ class wordline_driver(design.design):
         
     def add_pins(self):
         # inputs to wordline_driver.
-        for i in range(self.rows):
+        for i in range(self.bitcell_rows):
             self.add_pin("in_{0}".format(i), "INPUT")
         # Outputs from wordline_driver.
-        for i in range(self.rows):
+        for i in range(self.bitcell_rows):
             self.add_pin("wl_{0}".format(i), "OUTPUT")
         self.add_pin("en", "INPUT")
         self.add_pin("vdd", "POWER")
@@ -68,7 +73,7 @@ class wordline_driver(design.design):
     def add_modules(self):
         self.and2 = factory.create(module_type="pand2",
                                    height=self.cell_height,
-                                   size=self.cols)
+                                   size=self.bitcell_cols)
         self.add_mod(self.and2)
         
     def route_vdd_gnd(self):
@@ -79,7 +84,7 @@ class wordline_driver(design.design):
 
         # Find the x offsets for where the vias/pins should be placed
         xoffset_list = [self.and_inst[0].lx()]
-        for num in range(self.rows):
+        for num in range(self.bitcell_rows):
             # this will result in duplicate polygons for rails, but who cares
             
             # use the inverter offset even though it will be the and's too
@@ -97,32 +102,32 @@ class wordline_driver(design.design):
             
     def create_drivers(self):
         self.and_inst = []
-        for row in range(self.rows):
+        for row in range(self.bitcell_rows):
             name_and = "wl_driver_and{}".format(row)
 
             # add and2
             self.and_inst.append(self.add_inst(name=name_and,
                                                 mod=self.and2))
-            self.connect_inst(["en",
-                               "in_{0}".format(row),
+            self.connect_inst(["in_{0}".format(row),
+                               "en",
                                "wl_{0}".format(row),
                                "vdd", "gnd"])
 
     def setup_layout_constants(self):
         # We may have more than one bitcell per decoder row
-        self.num_rows = math.ceil(self.rows / self.cell_multiple)
+        self.driver_rows = math.ceil(self.bitcell_rows / self.cell_multiple)
         # We will place this many final decoders per row
-        self.decoders_per_row = math.ceil(self.rows / self.num_rows)
+        self.decoders_per_row = math.ceil(self.bitcell_rows / self.driver_rows)
             
     def place_drivers(self):
         and2_xoffset = 2 * self.m1_width + 5 * self.m1_space
         
-        self.width = and2_xoffset + self.and2.width
-        self.height = self.and2.height * self.num_rows
+        self.width = and2_xoffset + self.decoders_per_row * self.and2.width
+        self.height = self.and2.height * self.driver_rows
         
-        for row in range(self.rows):
-            #row = math.floor(inst_index / self.decoders_per_row)
-            #dec = inst_index % self.decoders_per_row
+        for inst_index in range(self.bitcell_rows):
+            row = math.floor(inst_index / self.decoders_per_row)
+            dec = inst_index % self.decoders_per_row
             
             if (row % 2):
                 y_offset = self.and2.height * (row + 1)
@@ -131,12 +136,12 @@ class wordline_driver(design.design):
                 y_offset = self.and2.height * row
                 inst_mirror = "R0"
 
-            # x_off = self.internal_routing_width + dec * and_mod.width
-            and2_offset = [and2_xoffset, y_offset]
+            x_offset = and2_xoffset + dec * self.and2.width
+            and2_offset = [x_offset, y_offset]
             
             # add and2
-            self.and_inst[row].place(offset=and2_offset,
-                                      mirror=inst_mirror)
+            self.and_inst[inst_index].place(offset=and2_offset,
+                                            mirror=inst_mirror)
 
     def route_layout(self):
         """ Route all of the signals """
@@ -149,45 +154,30 @@ class wordline_driver(design.design):
                                      width=self.m2_width,
                                      height=self.height)
         
-        for row in range(self.rows):
-            and_inst = self.and_inst[row]
+        for inst_index in range(self.bitcell_rows):
+            and_inst = self.and_inst[inst_index]
+            row = math.floor(inst_index / self.decoders_per_row)
+            dec = inst_index % self.decoders_per_row
             
             # en connection
-            a_pin = and_inst.get_pin("A")
-            a_pos = a_pin.lc()
-            clk_offset = vector(en_pin.bc().x, a_pos.y)
-            self.add_segment_center(layer="m1",
-                                    start=clk_offset,
-                                    end=a_pos)
-            self.add_via_center(layers=self.m1_stack,
-                                offset=clk_offset)
-
-            # connect the decoder input pin to and2 B
             b_pin = and_inst.get_pin("B")
-            b_pos = b_pin.lc()
-            # needs to move down since B and input is
-            # nearly aligned with A inv input
-            up_or_down = self.m2_space if row % 2 else -self.m2_space
-            input_offset = vector(0, b_pos.y + up_or_down)
-            base_offset = vector(clk_offset.x, input_offset.y)
-            contact_offset = vector(0.5 * self.m2_width + self.m2_space + 0.5 * contact.m1_via.width, 0)
-            mid_via_offset = base_offset + contact_offset
+            b_pos = b_pin.center()
+            clk_offset = vector(en_pin.bc().x, b_pos.y)
+            self.add_segment_center(layer="m2",
+                                    start=clk_offset,
+                                    end=b_pos)
+            self.add_via_center(layers=self.m1_stack,
+                                offset=b_pos)
 
+            # connect the decoder input pin to and2 A
+            a_pin = and_inst.get_pin("A")
+            a_pos = a_pin.center()
+            a_offset = vector(clk_offset.x, a_pos.y)
             # must under the clk line in M1
             self.add_layout_pin_segment_center(text="in_{0}".format(row),
                                                layer="m1",
-                                               start=input_offset,
-                                               end=mid_via_offset)
-            self.add_via_center(layers=self.m1_stack,
-                                offset=mid_via_offset,
-                                directions=("V", "V"))
-
-            # now connect to the and2 B
-            self.add_path("m2", [mid_via_offset, b_pos])
-            contact_offset = b_pos - vector(0.5 * contact.m1_via.height, 0)
-            self.add_via_center(layers=self.m1_stack,
-                                offset=contact_offset,
-                                directions=("H", "H"))
+                                               start=vector(0, a_pos.y),
+                                               end=a_pos)
 
             # output each WL on the right
             wl_offset = and_inst.get_pin("Z").rc()

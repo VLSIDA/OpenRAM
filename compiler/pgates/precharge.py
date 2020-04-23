@@ -114,7 +114,7 @@ class precharge(design.design):
 
         self.add_power_pin("vdd",
                            self.well_contact_pos,
-                           vertical=True)
+                           directions=("V", "V"))
         
         # Hack for li layers
         if hasattr(self, "li_stack"):

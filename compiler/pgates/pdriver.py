@@ -141,7 +141,7 @@ class pdriver(pgate.pgate):
             z_inst_list.append(self.inv_inst_list[x].get_pin("Z"))
             a_inst_list.append(self.inv_inst_list[x + 1].get_pin("A"))
             mid_point = vector(z_inst_list[x].cx(), a_inst_list[x].cy())
-            self.add_path("m1",
+            self.add_path(self.route_layer,
                           [z_inst_list[x].center(), mid_point,
                            a_inst_list[x].center()])
 

@@ -23,32 +23,44 @@ class ptx(design.design):
     the transistor width. Mults is the number of transistors of the
     given width. Total width is therefore mults*width.  Options allow
     you to connect the fingered gates and active for parallel devices.
-
+    The add_*_contact option tells which layer to bring source/drain up to.
     """
     def __init__(self,
                  name="",
                  width=drc("minwidth_tx"),
                  mults=1,
                  tx_type="nmos",
-                 add_source_contact=True,
-                 add_drain_contact=True,
+                 add_source_contact=None,
+                 add_drain_contact=None,
                  series_devices=False,
-                 connect_active=False,
+                 connect_drain_active=False,
+                 connect_source_active=False,
                  connect_poly=False,
                  num_contacts=None):
+
+        if not add_source_contact and "li" in layer:
+            add_source_contact = "li"
+        elif not add_source_contact:
+            add_source_contact = "m1"
+
+        if not add_drain_contact and "li" in layer:
+            add_drain_contact = "li"
+        elif not add_drain_contact:
+            add_drain_contact = "m1"
+
         # We need to keep unique names because outputting to GDSII
         # will use the last record with a given name. I.e., you will
         # over-write a design in GDS if one has and the other doesn't
         # have poly connected, for example.
         name = "{0}_m{1}_w{2:.3f}".format(tx_type, mults, width)
-        if not add_source_contact:
-            name += "_ns"
-        if not add_drain_contact:
-            name += "_nd"
+        name += "_s{}".format(add_source_contact)
+        name += "_d{}".format(add_drain_contact)
         if series_devices:
             name += "_sd"
-        if connect_active:
-            name += "_a"
+        if connect_drain_active:
+            name += "_da"
+        if connect_source_active:
+            name += "_sa"
         if connect_poly:
             name += "_p"
         if num_contacts:
@@ -61,13 +73,21 @@ class ptx(design.design):
         self.tx_type = tx_type
         self.mults = mults
         self.tx_width = width
-        self.connect_active = connect_active
+        self.connect_drain_active = connect_drain_active
+        self.connect_source_active = connect_source_active
         self.connect_poly = connect_poly
         self.add_source_contact = add_source_contact
         self.add_drain_contact = add_drain_contact
         self.series_devices = series_devices
         self.num_contacts = num_contacts
 
+        if "li" in layer:
+            self.route_layer = "li"
+        else:
+            self.route_layer = "m1"
+        self.route_layer_width = drc("minwidth_{}".format(self.route_layer))
+        self.route_layer_space = drc("{0}_to_{0}".format(self.route_layer))
+        
         # Since it has variable height, it is not a pgate.
         self.create_netlist()
         # We must always create ptx layout for pbitcell
@@ -266,55 +286,44 @@ class ptx(design.design):
                             width=poly_width,
                             height=self.poly_width)
 
-    def connect_fingered_active(self, drain_positions, source_positions):
+    def connect_fingered_active(self, positions, pin_name, layer, top):
         """
         Connect each contact  up/down to a source or drain pin
         """
+
+        if top:
+            dir = 1
+        else:
+            dir = -1
+            
+        if len(positions) <= 1:
+            return
+
+        debug.check(layer != "active", "Must specify a metal for source connections.")
         
+        layer_space = getattr(self, "{}_space".format(layer))
+        layer_width = getattr(self, "{}_width".format(layer))
+
         # This is the distance that we must route up or down from the center
         # of the contacts to avoid DRC violations to the other contacts
         pin_offset = vector(0,
-                            0.5 * self.active_contact.second_layer_height + self.m1_space + 0.5 * self.m1_width)
+                            0.5 * self.active_contact.second_layer_height + layer_space + 0.5 * layer_width)
         # This is the width of a m1 extend the ends of the pin
-        end_offset = vector(self.m1_width / 2.0, 0)
+        end_offset = vector(layer_width / 2.0, 0)
 
-        # drains always go to the MIDDLE of the cell,
-        # so top of NMOS, bottom of PMOS
-        # so reverse the directions for NMOS compared to PMOS.
-        if self.tx_type == "pmos":
-            drain_dir = -1
-            source_dir = 1
-        else:
-            drain_dir = 1
-            source_dir = -1
-            
-        if len(source_positions) > 1:
-            source_offset = pin_offset.scale(source_dir, source_dir)
-            # remove the individual connections
-            self.remove_layout_pin("S")
-            # Add each vertical segment
-            for a in source_positions:
-                self.add_path(("m1"),
-                              [a, a + pin_offset.scale(source_dir,
-                                                       source_dir)])
-            # Add a single horizontal pin
-            self.add_layout_pin_segment_center(text="S",
-                                               layer="m1",
-                                               start=source_positions[0] + source_offset - end_offset,
-                                               end=source_positions[-1] + source_offset + end_offset)
+        offset = pin_offset.scale(dir, dir)
+        # remove the individual connections
+        self.remove_layout_pin(pin_name)
+        # Add each vertical segment
+        for a in positions:
+            self.add_path(self.add_source_contact,
+                          [a, a + pin_offset.scale(dir, dir)])
+        # Add a single horizontal pin
+        self.add_layout_pin_segment_center(text=pin_name,
+                                           layer=layer,
+                                           start=positions[0] + offset - end_offset,
+                                           end=positions[-1] + offset + end_offset)
 
-        if len(drain_positions)>1:
-            drain_offset = pin_offset.scale(drain_dir,drain_dir)
-            self.remove_layout_pin("D") # remove the individual connections
-            # Add each vertical segment
-            for a in drain_positions:
-                self.add_path(("m1"), [a,a+drain_offset])
-            # Add a single horizontal pin
-            self.add_layout_pin_segment_center(text="D",
-                                               layer="m1",
-                                               start=drain_positions[0] + drain_offset - end_offset,
-                                               end=drain_positions[-1] + drain_offset + end_offset)
-            
     def add_poly(self):
         """
         Add the poly gates(s) and (optionally) connect them.
@@ -433,12 +442,12 @@ class ptx(design.design):
                     label = "S"
                     source_positions.append(pos)
                     
-                if (label=="S" and self.add_source_contact) or (label=="D" and self.add_drain_contact):
+                if (label=="S" and self.add_source_contact):
                     contact = self.add_diff_contact(label, pos)
-                    if label == "S":
-                        self.source_contacts.append(contact)
-                    else:
-                        self.drain_contacts.append(contact)
+                    self.source_contacts.append(contact)
+                elif (label=="D" and self.add_drain_contact):
+                    contact = self.add_diff_contact(label, pos)
+                    self.drain_contacts.append(contact)
                 else:
                     self.add_layout_pin_rect_center(text=label,
                                                     layer="active",
@@ -454,19 +463,22 @@ class ptx(design.design):
             label = "S"
             source_positions.append(pos)
 
-        if (label=="S" and self.add_source_contact) or (label=="D" and self.add_drain_contact):
+        if (label=="S" and self.add_source_contact):
             contact = self.add_diff_contact(label, pos)
-            if label == "S":
-                self.source_contacts.append(contact)
-            else:
-                self.drain_contacts.append(contact)
+            self.source_contacts.append(contact)
+        elif (label=="D" and self.add_drain_contact):
+            contact = self.add_diff_contact(label, pos)
+            self.drain_contacts.append(contact)
         else:
             self.add_layout_pin_rect_center(text=label,
                                             layer="active",
                                             offset=pos)
                 
-        if self.connect_active:
-            self.connect_fingered_active(drain_positions, source_positions)
+        if self.connect_source_active:
+            self.connect_fingered_active(source_positions, "S", self.add_source_contact, top=(self.tx_type=="pmos"))
+
+        if self.connect_drain_active:
+            self.connect_fingered_active(drain_positions, "D", self.add_drain_contact, top=(self.tx_type=="nmos"))
             
     def get_stage_effort(self, cout):
         """Returns an object representing the parameters for delay in tau units."""
@@ -489,34 +501,36 @@ class ptx(design.design):
         return self.mults * self.tx_width / drc("minwidth_tx")
 
     def add_diff_contact(self, label, pos):
-        contact=self.add_via_center(layers=self.active_stack,
-                                    offset=pos,
-                                    size=(1, self.num_contacts),
-                                    directions=("V", "V"),
-                                    implant_type=self.implant_type,
-                                    well_type=self.well_type)
-        
-        if hasattr(self, "li_stack"):
-            contact=self.add_via_center(layers=self.li_stack,
-                                        offset=pos,
-                                        directions=("V", "V"))
 
-        # contact_area = contact.mod.second_layer_width * contact.mod.second_layer_height
-        # min_area = drc("minarea_m1")
-        # width = contact.mod.second_layer_width
-        # if contact_area < min_area:
-        #     height = min_area / width
-        # else:
-        #     height = contact.mod.second_layer_height
-        width = contact.mod.second_layer_width
-        height = contact.mod.second_layer_height
+        if label == "S":
+            layer = self.add_source_contact
+        elif label == "D":
+            layer = self.add_drain_contact
+        else:
+            debug.error("Invalid source drain name.")
+
+        via=self.add_via_stack_center(offset=pos,
+                                      from_layer="active",
+                                      to_layer=layer,
+                                      size=(1, self.num_contacts),
+                                      directions=("V", "V"),
+                                      implant_type=self.implant_type,
+                                      well_type=self.well_type)
+
+        if layer == "active":
+            source_via = getattr(contact, "{}_contact".format(layer))
+        else:
+            source_via = getattr(contact, "{}_via".format(layer))
+        # Source drain vias are all vertical
+        pin_height = source_via.first_layer_width
+        pin_width = source_via.first_layer_height
         self.add_layout_pin_rect_center(text=label,
-                                        layer="m1",
+                                        layer=layer,
                                         offset=pos,
-                                        width=width,
-                                        height=height)
+                                        width=pin_width,
+                                        height=pin_height)
 
-        return(contact)
+        return(via)
         
     def get_cin(self):
         """Returns the relative gate cin of the tx"""

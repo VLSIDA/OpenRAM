@@ -905,8 +905,11 @@ class layout():
         max_x = max([pin.center().x for pin in pins])
         min_x = min([pin.center().x for pin in pins])
 
+        max_x_lc = max([pin.lc().x for pin in pins])
+        min_x_rc = min([pin.rc().x for pin in pins])
+
         # if we are less than a pitch, just create a non-preferred layer jog
-        if max_x-min_x <= pitch:
+        if max_x - min_x <= pitch:
             half_layer_width = 0.5 * drc["minwidth_{0}".format(self.vertical_layer)]
 
             # Add the horizontal trunk on the vertical layer!
@@ -927,7 +930,15 @@ class layout():
 
             # Route each pin to the trunk
             for pin in pins:
-                mid = vector(pin.center().x, trunk_offset.y)
+                # If there is sufficient space, Route from the edge of the pins
+                # Otherwise, route from the center of the pins
+                if max_x_lc - min_x_rc > pitch:
+                    if pin.center().x == max_x:
+                        mid = vector(pin.lc().x, trunk_offset.y)
+                    else:
+                        mid = vector(pin.rc().x, trunk_offset.y)
+                else:
+                    mid = vector(pin.center().x, trunk_offset.y)
                 self.add_path(self.vertical_layer, [pin.center(), mid])
                 self.add_via_center(layers=layer_stack,
                                     offset=mid)
@@ -1014,7 +1025,7 @@ class layout():
 
         def vcg_pin_overlap(pin1, pin2, vertical, pitch):
             """ Check for vertical or horizontal overlap of the two pins """
-            
+
             # FIXME: If the pins are not in a row, this may break.
             # However, a top pin shouldn't overlap another top pin,
             # for example, so the
@@ -1095,7 +1106,7 @@ class layout():
         # list of routes to do
         while vcg:
             # from pprint import pformat
-            # print("VCG:\n",pformat(vcg))
+            # print("VCG:\n", pformat(vcg))
             # get a route from conflict graph with empty fanout set
             net_name = None
             for net_name, conflicts in vcg.items():

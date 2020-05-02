@@ -284,6 +284,23 @@ class simulation():
             except:
                 self.add_wmask("0"*self.num_wmasks, port)
 
+    def add_noop_clock_one_port(self, port):
+        """ Add the control values for a noop to a single port. Increments the period. """
+        debug.info(2, 'Clock only on port {}'.format(port))
+        self.fn_cycle_comments.append('Clock only on port {}'.format(port))
+        self.append_cycle_comment(port, 'Clock only on port {}'.format(port))
+
+        self.cycle_times.append(self.t_current)
+        self.t_current += self.period
+
+        self.add_noop_one_port(port)
+
+        #Add noops to all other ports.
+        for unselected_port in self.all_ports:
+            if unselected_port != port:
+                self.add_noop_one_port(unselected_port)
+
+
     def append_cycle_comment(self, port, comment):
         """Add comment to list to be printed in stimulus file"""
         #Clean up time before appending. Make spacing dynamic as well.

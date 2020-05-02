@@ -74,7 +74,7 @@ class design(hierarchy_design):
         return pitch
         
     def setup_drc_constants(self):
-        """ 
+        """
         These are some DRC constants used in many places
         in the compiler.
         """

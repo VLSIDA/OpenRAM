@@ -11,6 +11,9 @@ from tech import layer, drc, spice
 from vector import vector
 from sram_factory import factory
 import contact
+import logical_effort
+import os
+from globals import OPTS
 
 
 class ptx(design.design):
@@ -27,15 +30,23 @@ class ptx(design.design):
                  width=drc("minwidth_tx"),
                  mults=1,
                  tx_type="nmos",
+                 add_source_contact=True,
+                 add_drain_contact=True,
+                 series_devices=False,
                  connect_active=False,
                  connect_poly=False,
-                 series_devices=False,
                  num_contacts=None):
         # We need to keep unique names because outputting to GDSII
         # will use the last record with a given name. I.e., you will
         # over-write a design in GDS if one has and the other doesn't
         # have poly connected, for example.
         name = "{0}_m{1}_w{2:.3f}".format(tx_type, mults, width)
+        if not add_source_contact:
+            name += "_ns"
+        if not add_drain_contact:
+            name += "_nd"
+        if series_devices:
+            name += "_sd"
         if connect_active:
             name += "_a"
         if connect_poly:
@@ -52,6 +63,8 @@ class ptx(design.design):
         self.tx_width = width
         self.connect_active = connect_active
         self.connect_poly = connect_poly
+        self.add_source_contact = add_source_contact
+        self.add_drain_contact = add_drain_contact
         self.series_devices = series_devices
         self.num_contacts = num_contacts
 
@@ -89,22 +102,38 @@ class ptx(design.design):
             body_dir = 'POWER'
         dir_list = ['INOUT', 'INPUT', 'INOUT', body_dir]
         self.add_pin_list(pin_list, dir_list)
-        
-        # self.spice.append("\n.SUBCKT {0} {1}".format(self.name,
-        #                                              " ".join(self.pins)))
+
         # Just make a guess since these will actually
         # be decided in the layout later.
         area_sd = 2.5 * self.poly_width * self.tx_width
         perimeter_sd = 2 * self.poly_width + 2 * self.tx_width
-        main_str = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(spice[self.tx_type],
-                                                                  self.mults,
-                                                                  self.tx_width,
-                                                                  drc("minwidth_poly"))
-        area_str = "pd={0:.2f}u ps={0:.2f}u as={1:.2f}p ad={1:.2f}p".format(perimeter_sd,
-                                                                            area_sd)
+        if OPTS.tech_name == "s8":
+            # s8 technology is in microns
+            main_str = "M{{0}} {{1}} {0} m={1} w={2} l={3} ".format(spice[self.tx_type],
+                                                                      self.mults,
+                                                                      self.tx_width,
+                                                                      drc("minwidth_poly"))
+            # Perimeters are in microns
+            # Area is in u since it is microns square
+            area_str = "pd={0:.2f} ps={0:.2f} as={1:.2f}u ad={1:.2f}u".format(perimeter_sd,
+                                                                              area_sd)
+        else:
+            main_str = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(spice[self.tx_type],
+                                                                      self.mults,
+                                                                      self.tx_width,
+                                                                      drc("minwidth_poly"))
+            area_str = "pd={0:.2f}u ps={0:.2f}u as={1:.2f}p ad={1:.2f}p".format(perimeter_sd,
+                                                                                area_sd)
         self.spice_device = main_str + area_str
         self.spice.append("\n* ptx " + self.spice_device)
-        # self.spice.append(".ENDS {0}".format(self.name))
+
+        # LVS lib is always in SI units
+        if os.path.exists(OPTS.openram_tech + "lvs_lib"):
+            self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(spice[self.tx_type],
+                                                                             self.mults,
+                                                                             self.tx_width,
+                                                                             drc("minwidth_poly"))
+        
 
     def setup_layout_constants(self):
         """
@@ -186,6 +215,8 @@ class ptx(design.design):
             # The well is not included in the height and width
             self.height = self.poly_height
             self.width = self.active_width
+            self.well_height = self.height
+            self.well_width = self.width
 
         # This is the center of the first active contact offset (centered vertically)
         self.contact_offset = self.active_offset + vector(0.5 * self.active_contact.width,
@@ -343,10 +374,10 @@ class ptx(design.design):
         if not (well_name in layer or "vtg" in layer):
             return
 
-        center_pos = self.active_offset + vector(0.5*self.active_width,
-                                                 0.5*self.active_height)
-        well_ll = center_pos - vector(0.5*self.well_width,
-                                      0.5*self.well_height)
+        center_pos = self.active_offset + vector(0.5 * self.active_width,
+                                                 0.5 * self.active_height)
+        well_ll = center_pos - vector(0.5 * self.well_width,
+                                      0.5 * self.well_height)
         if well_name in layer:
             self.add_rect(layer=well_name,
                           offset=well_ll,
@@ -379,18 +410,13 @@ class ptx(design.design):
         # First one is always a SOURCE
         label = "S"
         pos = self.contact_offset
-        contact=self.add_via_center(layers=self.active_stack,
-                                    offset=pos,
-                                    size=(1, self.num_contacts),
-                                    directions=("V","V"),
-                                    implant_type=self.implant_type,
-                                    well_type=self.well_type)
-        self.add_layout_pin_rect_center(text=label,
-                                        layer="m1",
-                                        offset=pos,
-                                        width=contact.mod.second_layer_width,
-                                        height=contact.mod.second_layer_height)
-        self.source_contacts.append(contact)
+        if self.add_source_contact:
+            contact = self.add_diff_contact(label, pos)
+            self.source_contacts.append(contact)
+        else:
+            self.add_layout_pin_rect_center(text=label,
+                                            layer="active",
+                                            offset=pos)
         source_positions.append(pos)
 
         # Skip these if they are going to be in series
@@ -406,22 +432,16 @@ class ptx(design.design):
                     label = "S"
                     source_positions.append(pos)
                     
-                contact=self.add_via_center(layers=self.active_stack,
-                                            offset=pos,
-                                            size=(1, self.num_contacts),
-                                            directions=("V","V"),
-                                            implant_type=self.implant_type,
-                                            well_type=self.well_type)
-                self.add_layout_pin_rect_center(text=label,
-                                                layer="m1",
-                                                offset=pos,
-                                                width=contact.mod.second_layer_width,
-                                                height=contact.mod.second_layer_height)
-                
-                if label == "S":
-                    self.source_contacts.append(contact)
+                if (label=="S" and self.add_source_contact) or (label=="D" and self.add_drain_contact):
+                    contact = self.add_diff_contact(label, pos)
+                    if label == "S":
+                        self.source_contacts.append(contact)
+                    else:
+                        self.drain_contacts.append(contact)
                 else:
-                    self.drain_contacts.append(contact)
+                    self.add_layout_pin_rect_center(text=label,
+                                                    layer="active",
+                                                    offset=pos)
 
         pos = vector(self.active_offset.x + self.active_width - 0.5 * self.active_contact.width,
                      self.contact_offset.y)
@@ -432,25 +452,71 @@ class ptx(design.design):
         else:
             label = "S"
             source_positions.append(pos)
-        contact=self.add_via_center(layers=self.active_stack,
-                                    offset=pos,
-                                    size=(1, self.num_contacts),
-                                    directions=("V","V"),
-                                    implant_type=self.implant_type,
-                                    well_type=self.well_type)
-        self.add_layout_pin_rect_center(text=label,
-                                        layer="m1",
-                                        offset=pos,
-                                        width=contact.mod.second_layer_width,
-                                        height=contact.mod.second_layer_height)
-        if label == "S":
-            self.source_contacts.append(contact)
+
+        if (label=="S" and self.add_source_contact) or (label=="D" and self.add_drain_contact):
+            contact = self.add_diff_contact(label, pos)
+            if label == "S":
+                self.source_contacts.append(contact)
+            else:
+                self.drain_contacts.append(contact)
         else:
-            self.drain_contacts.append(contact)
+            self.add_layout_pin_rect_center(text=label,
+                                            layer="active",
+                                            offset=pos)
                 
         if self.connect_active:
             self.connect_fingered_active(drain_positions, source_positions)
+            
+    def get_stage_effort(self, cout):
+        """Returns an object representing the parameters for delay in tau units."""
+        
+        # FIXME: Using the same definition as the pinv.py.
+        parasitic_delay = 1
+        size = self.mults * self.tx_width / drc("minwidth_tx")
+        return logical_effort.logical_effort(self.name,
+                                             size,
+                                             self.input_load(),
+                                             cout,
+                                             parasitic_delay)
+                                             
+    def input_load(self):
+        """
+        Returns the relative gate cin of the tx
+        """
+        
+        # FIXME: this will be applied for the loads of the drain/source
+        return self.mults * self.tx_width / drc("minwidth_tx")
 
+    def add_diff_contact(self, label, pos):
+        contact=self.add_via_center(layers=self.active_stack,
+                                    offset=pos,
+                                    size=(1, self.num_contacts),
+                                    directions=("V", "V"),
+                                    implant_type=self.implant_type,
+                                    well_type=self.well_type)
+        
+        if hasattr(self, "li_stack"):
+            contact=self.add_via_center(layers=self.li_stack,
+                                        offset=pos,
+                                        directions=("V", "V"))
+
+        # contact_area = contact.mod.second_layer_width * contact.mod.second_layer_height
+        # min_area = drc("minarea_m1")
+        # width = contact.mod.second_layer_width
+        # if contact_area < min_area:
+        #     height = min_area / width
+        # else:
+        #     height = contact.mod.second_layer_height
+        width = contact.mod.second_layer_width
+        height = contact.mod.second_layer_height
+        self.add_layout_pin_rect_center(text=label,
+                                        layer="m1",
+                                        offset=pos,
+                                        width=width,
+                                        height=height)
+
+        return(contact)
+        
     def get_cin(self):
         """Returns the relative gate cin of the tx"""
         return self.tx_width / drc("minwidth_tx")

@@ -8,6 +8,7 @@
 import contact
 import design
 import debug
+from pgate import pgate
 from tech import parameter
 from vector import vector
 from globals import OPTS
@@ -28,6 +29,7 @@ class precharge(design.design):
         self.bitcell = factory.create(module_type="bitcell")
         self.beta = parameter["beta"]
         self.ptx_width = self.beta * parameter["min_tx_size"]
+        self.ptx_mults = 1
         self.width = self.bitcell.width
         self.bitcell_bl = bitcell_bl
         self.bitcell_br = bitcell_br
@@ -68,7 +70,8 @@ class precharge(design.design):
         self.route_vdd_rail()
         self.route_bitlines()
         self.connect_to_bitlines()
-
+        self.add_boundary()
+        
     def add_pins(self):
         self.add_pin_list(["bl", "br", "en_bar", "vdd"],
                           ["OUTPUT", "OUTPUT", "INPUT", "POWER"])
@@ -77,8 +80,11 @@ class precharge(design.design):
         """
         Initializes the upper and lower pmos
         """
+        if(OPTS.tech_name == "s8"):
+            (self.ptx_width, self.ptx_mults) = pgate.bin_width(self, "pmos", self.ptx_width)
         self.pmos = factory.create(module_type="ptx",
                                    width=self.ptx_width,
+                                   mults=self.ptx_mults,
                                    tx_type="pmos")
         self.add_mod(self.pmos)
 
@@ -96,17 +102,24 @@ class precharge(design.design):
                              height=layer_width)
 
         pmos_pin = self.upper_pmos2_inst.get_pin("S")
+        
         # center of vdd rail
         pmos_vdd_pos = vector(pmos_pin.cx(), vdd_position.y)
         self.add_path("m1", [pmos_pin.uc(), pmos_vdd_pos])
+        
+        # if enable is not on M1, the supply can be
         if self.en_layer != "m1":
             self.add_via_center(layers=self.m1_stack,
                                 offset=pmos_vdd_pos)
 
+        self.add_power_pin("vdd",
+                           self.well_contact_pos,
+                           vertical=True)
         
-
-        # Add vdd pin above the transistor
-        self.add_power_pin("vdd", self.well_contact_pos, vertical=True)
+        # Hack for li layers
+        if hasattr(self, "li_stack"):
+            self.add_via_center(layers=self.li_stack,
+                                offset=self.well_contact_pos)
         
     def create_ptx(self):
         """
@@ -159,7 +172,7 @@ class precharge(design.design):
         Connects the upper and lower pmos together
         """
 
-        offset = self.lower_pmos_inst.get_pin("G").ll()
+        offset = self.lower_pmos_inst.get_pin("G").ul()
         # connects the top and bottom pmos' gates together
         ylength = self.upper_pmos1_inst.get_pin("G").ll().y - offset.y
         self.add_rect(layer="poly",
@@ -191,7 +204,9 @@ class precharge(design.design):
         if self.en_layer == "m2":
             self.add_via_center(layers=self.m1_stack,
                                 offset=offset)
-
+            if hasattr(self, "li_stack"):
+                self.add_via_center(layers=self.li_stack,
+                                    offset=offset)
         
         # adds the en rail on metal1
         self.add_layout_pin_segment_center(text="en_bar",
@@ -205,13 +220,18 @@ class precharge(design.design):
         """
         
         # adds the contact from active to metal1
-        self.well_contact_pos = self.upper_pmos1_inst.get_pin("D").center().scale(1, 0) \
-                                + vector(0, self.upper_pmos1_inst.uy() + contact.active_contact.height / 2 \
-                                         + self.nwell_extend_active)
+        offset_height = self.upper_pmos1_inst.uy() + \
+                        0.5 * contact.active_contact.height + \
+                        self.nwell_extend_active
+        self.well_contact_pos = self.upper_pmos1_inst.get_pin("D").center().scale(1, 0) + \
+                                vector(0, offset_height)
         self.add_via_center(layers=self.active_stack,
                             offset=self.well_contact_pos,
                             implant_type="n",
                             well_type="n")
+        if hasattr(self, "li_stack"):
+            self.add_via_center(layers=self.li_stack,
+                                offset=self.well_contact_pos)
 
         self.height = self.well_contact_pos.y + contact.active_contact.height + self.m1_space
 

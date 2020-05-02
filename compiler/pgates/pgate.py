@@ -8,10 +8,14 @@
 import contact
 import design
 import debug
-from tech import layer
+import math
+from bisect import bisect_left
+from tech import layer, drc
 from vector import vector
 from globals import OPTS
 
+if(OPTS.tech_name == "s8"):
+    from tech import nmos_bins, pmos_bins, accuracy_requirement
 
 class pgate(design.design):
     """
@@ -64,7 +68,7 @@ class pgate(design.design):
                           width=source_pin.width())
     
     def route_input_gate(self, pmos_inst, nmos_inst, ypos, name, position="left"):
-        """ 
+        """
         Route the input gate to the left side of the cell for access.
         Position specifies to place the contact the left, center, or
         right of gate.
@@ -107,8 +111,12 @@ class pgate(design.design):
         else:
             debug.error("Invalid contact placement option.", -1)
 
-        v=self.add_via_center(layers=self.poly_stack,
-                              offset=contact_offset)
+        if hasattr(self, "li_stack"):
+            self.add_via_center(layers=self.li_stack,
+                                offset=contact_offset)
+            
+        self.add_via_center(layers=self.poly_stack,
+                            offset=contact_offset)
 
         self.add_layout_pin_rect_center(text=name,
                                         layer="m1",
@@ -182,13 +190,17 @@ class pgate(design.design):
         contact_offset = vector(contact_xoffset, contact_yoffset)
         # Offset by half a contact in x and y
         contact_offset += vector(0.5 * pmos.active_contact.first_layer_width,
-                               0.5 * pmos.active_contact.first_layer_height)
+                                 0.5 * pmos.active_contact.first_layer_height)
         self.nwell_contact = self.add_via_center(layers=layer_stack,
                                                  offset=contact_offset,
                                                  implant_type="n",
                                                  well_type="n")
+        if hasattr(self, "li_stack"):
+            self.add_via_center(layers=self.li_stack,
+                                offset=contact_offset)
+        
         self.add_rect_center(layer="m1",
-                             offset=contact_offset + vector(0, 0.5 * (self.height-contact_offset.y)),
+                             offset=contact_offset + vector(0, 0.5 * (self.height - contact_offset.y)),
                              width=self.nwell_contact.mod.second_layer_width,
                              height=self.height - contact_offset.y)
         
@@ -221,8 +233,6 @@ class pgate(design.design):
 
         layer_stack = self.active_stack
 
-        pwell_position = vector(0, -0.5 * self.m1_width)
-        
         # To the right a spacing away from the nmos right active edge
         contact_xoffset = nmos_pos.x + nmos.active_width \
                           + self.active_space
@@ -240,8 +250,13 @@ class pgate(design.design):
                                                 offset=contact_offset,
                                                 implant_type="p",
                                                 well_type="p")
+
+        if hasattr(self, "li_stack"):
+            self.add_via_center(layers=self.li_stack,
+                                offset=contact_offset)
+
         self.add_rect_center(layer="m1",
-                             offset=contact_offset.scale(1,0.5),
+                             offset=contact_offset.scale(1, 0.5),
                              width=self.pwell_contact.mod.second_layer_width,
                              height=contact_offset.y)
         
@@ -271,5 +286,61 @@ class pgate(design.design):
         self.width = max(self.nwell_contact.rx(), self.pwell_contact.rx()) + self.m1_space + 0.5 * contact.m1_via.width
         self.well_width = self.width + 2 * self.nwell_enclose_active
         # Height is an input parameter, so it is not recomputed.
+    
+    def bin_width(self, tx_type, target_width):
 
+        if tx_type == "nmos":
+            bins = nmos_bins[drc("minwidth_poly")]
+        elif tx_type == "pmos":
+            bins = pmos_bins[drc("minwidth_poly")]
+        else:
+            debug.error("invalid tx type")
         
+        bins = bins[0:bisect_left(bins, target_width) + 1]
+        if len(bins) == 1:
+            selected_bin = bins[0]
+            scaling_factor = math.ceil(target_width / selected_bin)
+            scaled_bin = bins[0] * scaling_factor
+            
+        else:
+            scaled_bins = []
+            scaling_factors = []
+            scaled_bins.append(bins[-1])
+            scaling_factors.append(1)
+            for width in bins[0:-1]:
+                m = math.ceil(target_width / width)
+                scaling_factors.append(m)
+                scaled_bins.append(m * width)
+
+            select = bisect_left(scaled_bins, target_width)
+            scaling_factor = scaling_factors[select]
+            scaled_bin = scaled_bins[select]
+            select = (select + 1) % len(scaled_bins)
+            selected_bin = bins[select]
+
+        debug.info(2, "binning {0} tx, target: {4}, found {1} x {2} = {3}".format(tx_type, selected_bin, scaling_factor, scaled_bin, target_width))
+
+        return(selected_bin, scaling_factor)
+
+    def permute_widths(self, tx_type, target_width):
+
+        if tx_type == "nmos":
+            bins = nmos_bins[drc("minwidth_poly")]
+        elif tx_type == "pmos":
+            bins = pmos_bins[drc("minwidth_poly")]
+        else:
+            debug.error("invalid tx type")       
+        bins = bins[0:bisect_left(bins, target_width) + 1]
+        if len(bins) == 1:
+            scaled_bins = [(bins[0], math.ceil(target_width / bins[0]))]
+        else:
+            scaled_bins = []
+            scaled_bins.append((bins[-1], 1))
+            for width in bins[:-1]:
+                m = math.ceil(target_width / width)
+                scaled_bins.append((m * width, m))
+
+        return(scaled_bins)
+        
+    def bin_accuracy(self, ideal_width, width):
+        return abs(1-(ideal_width - width)/ideal_width)

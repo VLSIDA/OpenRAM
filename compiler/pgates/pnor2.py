@@ -8,6 +8,7 @@
 import contact
 import pgate
 import debug
+from globals import OPTS
 from tech import drc, parameter, spice
 from vector import vector
 from sram_factory import factory
@@ -36,6 +37,10 @@ class pnor2(pgate.pgate):
         debug.check(size==1, "Size 1 pnor2 is only supported now.")
         self.tx_mults = 1
 
+        if OPTS.tech_name == "s8":
+            (self.nmos_width, self.tx_mults) = self.bin_width("nmos", self.nmos_width)
+            (self.pmos_width, self.tx_mults) = self.bin_width("pmos", self.pmos_width)
+
         # Creates the netlist and layout
         pgate.pgate.__init__(self, name, height)
         
@@ -56,6 +61,7 @@ class pnor2(pgate.pgate):
         self.extend_wells()
         self.route_inputs()
         self.route_output()
+        self.add_boundary()
 
     def add_pins(self):
         """ Adds pins for spice netlist """
@@ -73,33 +79,43 @@ class pnor2(pgate.pgate):
                                    connect_active=True)
         self.add_mod(self.nmos)
 
-        self.pmos = factory.create(module_type="ptx",
-                                   width=self.pmos_width,
-                                   mults=self.tx_mults,
-                                   tx_type="pmos",
-                                   connect_poly=True,
-                                   connect_active=True)
-        self.add_mod(self.pmos)
+        self.pmos_nd = factory.create(module_type="ptx",
+                                      width=self.pmos_width,
+                                      mults=self.tx_mults,
+                                      tx_type="pmos",
+                                      add_drain_contact=False,
+                                      connect_poly=True,
+                                      connect_active=True)
+        self.add_mod(self.pmos_nd)
 
+        self.pmos_ns = factory.create(module_type="ptx",
+                                      width=self.pmos_width,
+                                      mults=self.tx_mults,
+                                      tx_type="pmos",
+                                      add_source_contact=False,
+                                      connect_poly=True,
+                                      connect_active=True)
+        self.add_mod(self.pmos_ns)
+        
     def setup_layout_constants(self):
         """ Pre-compute some handy layout parameters. """
 
         # metal spacing to allow contacts on any layer
         self.input_spacing = max(self.poly_space + contact.poly_contact.first_layer_width,
                                  self.m1_space + contact.m1_via.first_layer_width,
-                                 self.m2_space + contact.m2_via.first_layer_width, 
+                                 self.m2_space + contact.m2_via.first_layer_width,
                                  self.m3_space + contact.m2_via.second_layer_width)
         
         # Compute the other pmos2 location, but determining
         # offset to overlap the source and drain pins
-        self.overlap_offset = self.pmos.get_pin("D").ll() - self.pmos.get_pin("S").ll()
+        self.overlap_offset = self.pmos_ns.get_pin("D").ll() - self.pmos_nd.get_pin("S").ll()
 
         # Two PMOS devices and a well contact. Separation between each.
         # Enclosure space on the sides.
-        self.width = 2 * self.pmos.active_width \
-                          + self.pmos.active_contact.width \
-                          + 2 * self.active_space \
-                          + 0.5 * self.nwell_enclose_active
+        self.width = 2 * self.pmos_ns.active_width \
+                     + self.pmos_ns.active_contact.width \
+                     + 2 * self.active_space \
+                     + 0.5 * self.nwell_enclose_active
         self.well_width = self.width + 2 * self.nwell_enclose_active
         # Height is an input parameter, so it is not recomputed.
 
@@ -107,7 +123,7 @@ class pnor2(pgate.pgate):
         # to the active contacts
         extra_contact_space = max(-self.nmos.get_pin("D").by(), 0)
         # This is a poly-to-poly of a flipped cell
-        self.top_bottom_space = max(0.5 * self.m1_width + self.m1_space + extra_contact_space, 
+        self.top_bottom_space = max(0.5 * self.m1_width + self.m1_space + extra_contact_space,
                                     self.poly_extend_active,
                                     self.poly_space)
         
@@ -130,11 +146,11 @@ class pnor2(pgate.pgate):
         """
 
         self.pmos1_inst = self.add_inst(name="pnor2_pmos1",
-                                        mod=self.pmos)
+                                        mod=self.pmos_nd)
         self.connect_inst(["vdd", "A", "net1", "vdd"])
 
         self.pmos2_inst = self.add_inst(name="pnor2_pmos2",
-                                        mod=self.pmos)
+                                        mod=self.pmos_ns)
         self.connect_inst(["net1", "B", "Z", "vdd"])
 
         self.nmos1_inst = self.add_inst(name="pnor2_nmos1",
@@ -151,15 +167,15 @@ class pnor2(pgate.pgate):
         to provide maximum routing in channel
         """
 
-        pmos1_pos = vector(self.pmos.active_offset.x,
-                           self.height - self.pmos.active_height \
+        pmos1_pos = vector(self.pmos_ns.active_offset.x,
+                           self.height - self.pmos_ns.active_height \
                            - self.top_bottom_space)
         self.pmos1_inst.place(pmos1_pos)
 
         self.pmos2_pos = pmos1_pos + self.overlap_offset
         self.pmos2_inst.place(self.pmos2_pos)
         
-        nmos1_pos = vector(self.pmos.active_offset.x, self.top_bottom_space)
+        nmos1_pos = vector(self.pmos_ns.active_offset.x, self.top_bottom_space)
         self.nmos1_inst.place(nmos1_pos)
         
         self.nmos2_pos = nmos1_pos + self.overlap_offset
@@ -172,7 +188,7 @@ class pnor2(pgate.pgate):
     def add_well_contacts(self):
         """ Add n/p well taps to the layout and connect to supplies """
 
-        self.add_nwell_contact(self.pmos, self.pmos2_pos)
+        self.add_nwell_contact(self.pmos_ns, self.pmos2_pos)
         self.add_pwell_contact(self.nmos, self.nmos2_pos)
         
     def connect_rails(self):
@@ -187,8 +203,7 @@ class pnor2(pgate.pgate):
     def route_inputs(self):
         """ Route the A and B inputs """
         # Use M2 spaces so we can drop vias on the pins later!
-        inputB_yoffset = self.nmos2_pos.y + self.nmos.active_height \
-                         + self.m2_space + self.m2_width
+        inputB_yoffset = self.nmos2_inst.uy() + contact.poly_contact.height
         self.route_input_gate(self.pmos2_inst,
                               self.nmos2_inst,
                               inputB_yoffset,

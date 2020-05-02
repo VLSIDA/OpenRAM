@@ -35,11 +35,14 @@ library (sram_2_16_1_scn4m_subm_FF_5p0V_25C_lib){
     default_max_fanout   : 4.0 ;
     default_connection_class : universal ;
 
+    voltage_map ( VDD, 5.0 );
+    voltage_map ( GND, 0 );
+
     lu_table_template(CELL_TABLE){
         variable_1 : input_net_transition;
         variable_2 : total_output_net_capacitance;
         index_1("0.0125, 0.05, 0.4");
-        index_2("2.45605, 9.8242, 78.5936");
+        index_2("0.00245605, 0.0098242, 0.0392968");
     }
 
     lu_table_template(CONSTRAINT_TABLE){
@@ -78,17 +81,26 @@ cell (sram_2_16_1_scn4m_subm){
     dont_use  : true;
     map_only   : true;
     dont_touch : true;
-    area : 73068.14000000001;
+    area : 0;
+
+    pg_pin(vdd) {
+         voltage_name : VDD;
+         pg_type : primary_power;
+    }
+
+    pg_pin(gnd) {
+         voltage_name : GND;
+         pg_type : primary_ground;
+    }
 
     leakage_power () {
-      when : "csb0";
-      value : 0.000167;
+      value : 0.000198;
     }
-    cell_leakage_power : 0;
+    cell_leakage_power : 0.000198;
     bus(din0){
         bus_type  : data; 
         direction  : input; 
-        capacitance : 9.8242;  
+        capacitance : 0.0098242;  
         memory_write(){ 
             address : addr0; 
             clocked_on  : clk0; 
@@ -127,8 +139,8 @@ cell (sram_2_16_1_scn4m_subm){
     bus(dout0){
         bus_type  : data; 
         direction  : output; 
-        max_capacitance : 78.5936;  
-        min_capacitance : 2.45605;  
+        max_capacitance : 0.0392968;  
+        min_capacitance : 0.00245605;  
         memory_read(){ 
             address : addr0; 
         }
@@ -138,24 +150,24 @@ cell (sram_2_16_1_scn4m_subm){
             related_pin : "clk0"; 
             timing_type : falling_edge; 
             cell_rise(CELL_TABLE) {
-            values("0.241, 0.241, 0.241",\
-                   "0.241, 0.241, 0.241",\
-                   "0.241, 0.241, 0.241");
+            values("1.183, 1.199, 1.264",\
+                   "1.183, 1.199, 1.264",\
+                   "1.183, 1.199, 1.264");
             }
             cell_fall(CELL_TABLE) {
-            values("0.241, 0.241, 0.241",\
-                   "0.241, 0.241, 0.241",\
-                   "0.241, 0.241, 0.241");
+            values("1.183, 1.199, 1.264",\
+                   "1.183, 1.199, 1.264",\
+                   "1.183, 1.199, 1.264");
             }
             rise_transition(CELL_TABLE) {
-            values("0.004, 0.004, 0.004",\
-                   "0.004, 0.004, 0.004",\
-                   "0.004, 0.004, 0.004");
+            values("0.006, 0.007, 0.014",\
+                   "0.006, 0.007, 0.014",\
+                   "0.006, 0.007, 0.014");
             }
             fall_transition(CELL_TABLE) {
-            values("0.004, 0.004, 0.004",\
-                   "0.004, 0.004, 0.004",\
-                   "0.004, 0.004, 0.004");
+            values("0.006, 0.007, 0.014",\
+                   "0.006, 0.007, 0.014",\
+                   "0.006, 0.007, 0.014");
             }
         }
         }
@@ -164,7 +176,7 @@ cell (sram_2_16_1_scn4m_subm){
     bus(addr0){
         bus_type  : addr; 
         direction  : input; 
-        capacitance : 9.8242;  
+        capacitance : 0.0098242;  
         max_transition       : 0.4;
         pin(addr0[3:0]){
         timing(){ 
@@ -200,7 +212,7 @@ cell (sram_2_16_1_scn4m_subm){
 
     pin(csb0){
         direction  : input; 
-        capacitance : 9.8242;  
+        capacitance : 0.0098242;  
         timing(){ 
             timing_type : setup_rising; 
             related_pin  : "clk0"; 
@@ -233,7 +245,7 @@ cell (sram_2_16_1_scn4m_subm){
 
     pin(web0){
         direction  : input; 
-        capacitance : 9.8242;  
+        capacitance : 0.0098242;  
         timing(){ 
             timing_type : setup_rising; 
             related_pin  : "clk0"; 
@@ -267,52 +279,61 @@ cell (sram_2_16_1_scn4m_subm){
     pin(clk0){
         clock             : true;
         direction  : input; 
-        capacitance : 9.8242;  
+        capacitance : 0.0098242;  
         internal_power(){
-            when : "!csb0 & clk0 & !web0"; 
+            when : "!csb0 & !web0"; 
             rise_power(scalar){
-                values("4.99880645");
+                values("7.797263e+00");
             }
             fall_power(scalar){
-                values("4.99880645");
+                values("7.797263e+00");
             }
         }
         internal_power(){
-            when : "!csb0 & !clk0 & web0"; 
+            when : "csb0 & !web0"; 
             rise_power(scalar){
-                values("4.99880645");
+                values("7.797263e+00");
             }
             fall_power(scalar){
-                values("4.99880645");
+                values("7.797263e+00");
             }
         }
         internal_power(){
-            when : "csb0"; 
+            when : "!csb0 & web0"; 
             rise_power(scalar){
-                values("0");
+                values("7.797263e+00");
             }
             fall_power(scalar){
-                values("0");
+                values("7.797263e+00");
+            }
+        }
+        internal_power(){
+            when : "csb0 & web0"; 
+            rise_power(scalar){
+                values("7.797263e+00");
+            }
+            fall_power(scalar){
+                values("7.797263e+00");
             }
         }
         timing(){ 
             timing_type :"min_pulse_width"; 
             related_pin  : clk0; 
             rise_constraint(scalar) {
-                values("0.024"); 
+                values("0.1265"); 
             }
             fall_constraint(scalar) {
-                values("0.024"); 
+                values("0.1265"); 
             }
          }
         timing(){ 
             timing_type :"minimum_period"; 
             related_pin  : clk0; 
             rise_constraint(scalar) {
-                values("0.048"); 
+                values("0.253"); 
             }
             fall_constraint(scalar) {
-                values("0.048"); 
+                values("0.253"); 
             }
          }
     }

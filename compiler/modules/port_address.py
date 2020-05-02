@@ -90,17 +90,14 @@ class port_address(design.design):
             # The pre/post is to access the pin from "outside" the cell to avoid DRCs
             decoder_out_pos = self.row_decoder_inst.get_pin("decode_{}".format(row)).rc()
             driver_in_pos = self.wordline_driver_inst.get_pin("in_{}".format(row)).lc()
-            mid1 = decoder_out_pos.scale(0.5,1)+driver_in_pos.scale(0.5,0)
-            mid2 = decoder_out_pos.scale(0.5,0)+driver_in_pos.scale(0.5,1)
+            mid1 = decoder_out_pos.scale(0.5, 1) + driver_in_pos.scale(0.5, 0)
+            mid2 = decoder_out_pos.scale(0.5, 0) + driver_in_pos.scale(0.5, 1)
             self.add_path("m1", [decoder_out_pos, mid1, mid2, driver_in_pos])
-
-
-            
         
     def add_modules(self):
 
         self.row_decoder = factory.create(module_type="decoder",
-                                          rows=self.num_rows)
+                                          num_outputs=self.num_rows)
         self.add_mod(self.row_decoder)
         
         self.wordline_driver = factory.create(module_type="wordline_driver",
@@ -108,11 +105,10 @@ class port_address(design.design):
                                               cols=self.num_cols)
         self.add_mod(self.wordline_driver)
         
-
     def create_row_decoder(self):
         """  Create the hierarchical row decoder  """
         
-        self.row_decoder_inst = self.add_inst(name="row_decoder", 
+        self.row_decoder_inst = self.add_inst(name="row_decoder",
                                               mod=self.row_decoder)
 
         temp = []

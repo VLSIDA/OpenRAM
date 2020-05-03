@@ -31,6 +31,9 @@ class bank(design.design):
         else:
             self.num_wmasks = 0
         
+        if not self.num_spare_cols:
+            self.num_spare_cols = 0
+                
         if name == "":
             name = "bank_{0}_{1}".format(self.word_size, self.num_words)
         design.design.__init__(self, name)
@@ -77,12 +80,12 @@ class bank(design.design):
     def add_pins(self):
         """ Adding pins for Bank module"""
         for port in self.read_ports:
-            for bit in range(self.word_size):
+            for bit in range(self.word_size + self.num_spare_cols):
                 self.add_pin("dout{0}_{1}".format(port, bit), "OUTPUT")
         for port in self.all_ports:
             self.add_pin(self.bitcell_array.get_rbl_bl_name(self.port_rbl_map[port]), "OUTPUT")
         for port in self.write_ports:
-            for bit in range(self.word_size):
+            for bit in range(self.word_size + self.num_spare_cols):
                 self.add_pin("din{0}_{1}".format(port,bit), "INPUT")
         for port in self.all_ports:
             for bit in range(self.addr_size):
@@ -101,6 +104,8 @@ class bank(design.design):
             self.add_pin("w_en{0}".format(port), "INPUT")
             for bit in range(self.num_wmasks):
                 self.add_pin("bank_wmask{0}_{1}".format(port, bit), "INPUT")
+            for bit in range(self.num_spare_cols):
+                self.add_pin("spare_wen{0}_{1}".format(port, bit), "INPUT")
         for port in self.all_ports:
             self.add_pin("wl_en{0}".format(port), "INPUT")
         self.add_pin("vdd", "POWER")
@@ -359,7 +364,7 @@ class bank(design.design):
             self.add_mod(self.port_data[port])
 
         self.port_address = factory.create(module_type="port_address",
-                                           cols=self.num_cols,
+                                           cols=self.num_cols + self.num_spare_cols,
                                            rows=self.num_rows)
         self.add_mod(self.port_address)
 
@@ -367,7 +372,7 @@ class bank(design.design):
         self.num_rbl = len(self.all_ports)
                 
         self.bitcell_array = factory.create(module_type="replica_bitcell_array",
-                                            cols=self.num_cols,
+                                            cols=self.num_cols + self.num_spare_cols,
                                             rows=self.num_rows,
                                             left_rbl=1,
                                             right_rbl=1 if len(self.all_ports)>1 else 0,
@@ -385,7 +390,7 @@ class bank(design.design):
                                               mod=self.bitcell_array)
                     
         temp = []
-        for col in range(self.num_cols):
+        for col in range(self.num_cols + self.num_spare_cols):
             for bitline in self.bitline_names:
                 temp.append("{0}_{1}".format(bitline, col))
         for rbl in range(self.num_rbl):
@@ -419,14 +424,14 @@ class bank(design.design):
             rbl_br_name=self.bitcell_array.get_rbl_br_name(self.port_rbl_map[port])
             temp.append(rbl_bl_name)
             temp.append(rbl_br_name)
-            for col in range(self.num_cols):
+            for col in range(self.num_cols + self.num_spare_cols):
                 temp.append("{0}_{1}".format(self.bl_names[port], col))
                 temp.append("{0}_{1}".format(self.br_names[port], col))
             if port in self.read_ports:
-                for bit in range(self.word_size):
+                for bit in range(self.word_size + self.num_spare_cols):
                     temp.append("dout{0}_{1}".format(port, bit))
             if port in self.write_ports:
-                for bit in range(self.word_size):
+                for bit in range(self.word_size + self.num_spare_cols):
                     temp.append("din{0}_{1}".format(port, bit))
             # Will be empty if no col addr lines
             sel_names = ["sel{0}_{1}".format(port, x) for x in range(self.num_col_addr_lines)]
@@ -438,6 +443,8 @@ class bank(design.design):
                 temp.append("w_en{0}".format(port))
                 for bit in range(self.num_wmasks):
                     temp.append("bank_wmask{0}_{1}".format(port, bit))
+                for bit in range(self.num_spare_cols):
+                    temp.append("spare_wen{0}_{1}".format(port, bit))
             temp.extend(["vdd", "gnd"])
             
             self.connect_inst(temp)
@@ -676,7 +683,7 @@ class bank(design.design):
         
         self.connect_bitlines(inst1=inst1,
                               inst2=inst2,
-                              num_bits=self.num_cols,
+                              num_bits=self.num_cols + self.num_spare_cols,
                               inst1_bl_name=inst1_bl_name,
                               inst1_br_name=inst1_br_name,
                               inst2_bl_name=inst2_bl_name,
@@ -691,7 +698,7 @@ class bank(design.design):
     def route_port_data_out(self, port):
         """ Add pins for the port data out """
 
-        for bit in range(self.word_size):
+        for bit in range(self.word_size + self.num_spare_cols):
             data_pin = self.port_data_inst[port].get_pin("dout_{0}".format(bit))
             self.add_layout_pin_rect_center(text="dout{0}_{1}".format(port, bit),
                                             layer=data_pin.layer,
@@ -712,7 +719,7 @@ class bank(design.design):
     def route_port_data_in(self, port):
         """ Connecting port data in   """
 
-        for row in range(self.word_size):
+        for row in range(self.word_size + self.num_spare_cols):
             data_name = "din_{}".format(row)
             din_name = "din{0}_{1}".format(port, row)
             self.copy_layout_pin(self.port_data_inst[port], data_name, din_name)
@@ -722,6 +729,11 @@ class bank(design.design):
                 wmask_name = "bank_wmask_{}".format(row)
                 bank_wmask_name = "bank_wmask{0}_{1}".format(port, row)
                 self.copy_layout_pin(self.port_data_inst[port], wmask_name, bank_wmask_name)
+        
+        for col in range(self.num_spare_cols):
+            sparecol_name = "spare_wen{}".format(col)
+            bank_sparecol_name = "spare_wen{0}_{1}".format(port, col)
+            self.copy_layout_pin(self.port_data_inst[port], sparecol_name, bank_sparecol_name)
             
     def channel_route_bitlines(self, inst1, inst2, num_bits,
                                inst1_bl_name="bl_{}", inst1_br_name="br_{}",

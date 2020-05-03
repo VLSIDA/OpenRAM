@@ -110,17 +110,11 @@ class port_data(design.design):
 
         self.add_pin("rbl_bl", "INOUT")
         self.add_pin("rbl_br", "INOUT")
-        for bit in range(self.num_cols):
+        for bit in range(self.num_cols + self.num_spare_cols):
             bl_name = self.get_bl_name(self.port)
             br_name = self.get_br_name(self.port)
             self.add_pin("{0}_{1}".format(bl_name, bit), "INOUT")
             self.add_pin("{0}_{1}".format(br_name, bit), "INOUT")
-        
-        for bit in range(self.num_spare_cols):
-            bl_name = self.get_bl_name(self.port)
-            br_name = self.get_br_name(self.port)
-            self.add_pin("spare{0}_{1}".format(bl_name, bit), "INOUT")
-            self.add_pin("spare{0}_{1}".format(br_name, bit), "INOUT")
         
         if self.port in self.read_ports:
             for bit in range(self.word_size + self.num_spare_cols):

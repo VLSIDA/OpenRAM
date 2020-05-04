@@ -58,11 +58,11 @@ class stimuli():
         for pin in pins:
             self.sf.write("{0} ".format(pin))
         for bank in range(OPTS.num_banks):
-            for row in range(OPTS.num_words):
-                for col in range(OPTS.word_size):
+            for row in range(int(OPTS.num_words / OPTS.words_per_row)):
+                for col in range(int(OPTS.word_size * OPTS.words_per_row)):
                     self.sf.write("bitcell_Q_b{0}_r{1}_c{2} ".format(bank,row,col))
                     self.sf.write("bitcell_Q_bar_b{0}_r{1}_c{2} ".format(bank,row,col))
-            for col in range(OPTS.word_size):
+            for col in range(OPTS.word_size * OPTS.words_per_row):
                 for port in range(OPTS.num_r_ports + OPTS.num_w_ports + OPTS.num_rw_ports):
                     self.sf.write("bl{0}_{2} ".format(port, row, col))
                     self.sf.write("br{0}_{2} ".format(port, row, col))

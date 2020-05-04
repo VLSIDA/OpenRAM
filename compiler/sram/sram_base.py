@@ -114,9 +114,9 @@ class sram_base(design, verilog, lef):
             for cell in range(len(bank_offset)):
                 Q = [bank_offset[cell][0] + Q_offset[cell][0], bank_offset[cell][1] + Q_offset[cell][1]]
                 Q_bar = [bank_offset[cell][0] + Q_bar_offset[cell][0], bank_offset[cell][1] + Q_bar_offset[cell][1]]
-
-                self.add_layout_pin_rect_center("bitcell_Q_b{0}_r{1}_c{2}".format(bank_num, cell % (OPTS.num_words * self.words_per_row), int(cell / (OPTS.num_words / self.words_per_row))) , storage_layer_name, Q) 
-                self.add_layout_pin_rect_center("bitcell_Q_bar_b{0}_r{1}_c{2}".format(bank_num, cell % (OPTS.num_words * self.words_per_row), int(cell / (OPTS.num_words / self.words_per_row))), storage_layer_name, Q_bar)
+                OPTS.words_per_row = self.words_per_row
+                self.add_layout_pin_rect_center("bitcell_Q_b{0}_r{1}_c{2}".format(bank_num, int(cell % (OPTS.num_words / self.words_per_row)), int(cell / (OPTS.word_size * self.words_per_row))) , storage_layer_name, Q) 
+                self.add_layout_pin_rect_center("bitcell_Q_bar_b{0}_r{1}_c{2}".format(bank_num, int(cell % (OPTS.num_words / self.words_per_row)), int(cell / (OPTS.word_size * self.words_per_row))), storage_layer_name, Q_bar)
             
             for cell in range(len(bl_offsets)):
                 col = bl_meta[cell][0][2]

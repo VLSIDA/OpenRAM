@@ -286,9 +286,10 @@ class pgate(design.design):
         self.width = max(self.nwell_contact.rx(), self.pwell_contact.rx()) + self.m1_space + 0.5 * contact.m1_via.width
         self.well_width = self.width + 2 * self.nwell_enclose_active
         # Height is an input parameter, so it is not recomputed.
-    
-    def bin_width(self, tx_type, target_width):
 
+    @staticmethod
+    def bin_width(tx_type, target_width):
+        
         if tx_type == "nmos":
             bins = nmos_bins[drc("minwidth_poly")]
         elif tx_type == "pmos":

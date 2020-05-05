@@ -80,7 +80,7 @@ class precharge(design.design):
         Initializes the upper and lower pmos
         """
         if(OPTS.tech_name == "s8"):
-            (self.ptx_width, self.ptx_mults) = pgate.bin_width(self, "pmos", self.ptx_width)
+            (self.ptx_width, self.ptx_mults) = pgate.bin_width("pmos", self.ptx_width)
         self.pmos = factory.create(module_type="ptx",
                                    width=self.ptx_width,
                                    mults=self.ptx_mults,

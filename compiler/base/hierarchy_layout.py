@@ -955,6 +955,9 @@ class layout():
         max_y = max([pin.center().y for pin in pins])
         min_y = min([pin.center().y for pin in pins])
 
+        max_y_uc = max([pin.uc().y for pin in pins])
+        min_y_bc = min([pin.bc().y for pin in pins])
+
         # if we are less than a pitch, just create a non-preferred layer jog
         if max_y - min_y <= pitch:
 
@@ -978,7 +981,15 @@ class layout():
 
             # Route each pin to the trunk
             for pin in pins:
-                mid = vector(trunk_offset.x, pin.center().y)
+                # If there is sufficient space, Route from the edge of the pins
+                # Otherwise, route from the center of the pins
+                if max_y_uc - min_y_bc > pitch:
+                    if pin.center().y == max_y:
+                        mid = vector(trunk_offset.x, pin.bc().y)
+                    else:
+                        mid = vector(trunk_offset.x, pin.uc().y)
+                else:
+                    mid = vector(trunk_offset.x, pin.center().y)
                 self.add_path(self.horizontal_layer, [pin.center(), mid])
                 self.add_via_center(layers=layer_stack,
                                     offset=mid)

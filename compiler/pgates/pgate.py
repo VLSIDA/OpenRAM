@@ -304,22 +304,24 @@ class pgate(design.design):
             scaled_bin = bins[0] * scaling_factor
             
         else:
+            base_bins = []
             scaled_bins = []
             scaling_factors = []
             scaled_bins.append(bins[-1])
+            base_bins.append(bins[-1])
             scaling_factors.append(1)
             for width in bins[0:-1]:
                 m = math.ceil(target_width / width)
+                base_bins.append(width)
                 scaling_factors.append(m)
                 scaled_bins.append(m * width)
 
             select = bisect_left(scaled_bins, target_width)
             scaling_factor = scaling_factors[select]
             scaled_bin = scaled_bins[select]
-            select = (select + 1) % len(scaled_bins)
-            selected_bin = bins[select]
+            selected_bin = base_bins[select]
 
-        debug.info(2, "binning {0} tx, target: {4}, found {1} x {2} = {3}".format(tx_type, selected_bin, scaling_factor, scaled_bin, target_width))
+        debug.info(2, "binning {0} tx, target: {4}, found {1} x {2} = {3}".format(tx_type, selected_bin, scaling_factor, selected_bin * scaling_factor, target_width))
 
         return(selected_bin, scaling_factor)
 

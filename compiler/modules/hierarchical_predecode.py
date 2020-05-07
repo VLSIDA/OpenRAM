@@ -11,6 +11,7 @@ import math
 import contact
 from vector import vector
 from sram_factory import factory
+from tech import cell_properties
 
 
 class hierarchical_predecode(design.design):
@@ -19,7 +20,17 @@ class hierarchical_predecode(design.design):
     """
     def __init__(self, name, input_number, height=None):
         self.number_of_inputs = input_number
-        self.cell_height = height
+
+        if not height:
+            b = factory.create(module_type="bitcell")
+            try:
+                self.cell_multiple = cell_properties.bitcell.decoder_bitcell_multiple
+            except AttributeError:
+                self.cell_multiple = 1
+            self.cell_height = self.cell_multiple * b.height
+        else:
+            self.cell_height = height
+        
         self.number_of_outputs = int(math.pow(2, self.number_of_inputs))
         design.design.__init__(self, name)
     
@@ -57,10 +68,10 @@ class hierarchical_predecode(design.design):
         self.height = self.number_of_outputs * self.and_mod.height
 
         # x offset for input inverters
-        self.x_off_inv_1 = self.number_of_inputs*self.m3_pitch 
+        self.x_off_inv_1 = self.number_of_inputs * self.m2_pitch + self.m2_space
 
         # x offset to AND decoder includes the left rails, mid rails and inverters, plus two extra m2 pitches
-        self.x_off_and = self.x_off_inv_1 + self.inv.width + (2*self.number_of_inputs + 2) * self.m3_pitch
+        self.x_off_and = self.x_off_inv_1 + self.inv.width + (2 * self.number_of_inputs + 2) * self.m2_pitch
 
         # x offset to output inverters
         self.width = self.x_off_and + self.and_mod.width
@@ -68,9 +79,8 @@ class hierarchical_predecode(design.design):
     def route_rails(self):
         """ Create all of the rails for the inputs and vdd/gnd/inputs_bar/inputs """
         input_names = ["in_{}".format(x) for x in range(self.number_of_inputs)]
-        offset = vector(0.5 * self.m3_width, self.m1_pitch)
-        self.input_rails = self.create_vertical_pin_bus(layer="m3",
-                                                        pitch=self.m3_pitch,
+        offset = vector(0.5 * self.m2_width, self.m3_pitch)
+        self.input_rails = self.create_vertical_pin_bus(layer="m2",
                                                         offset=offset,
                                                         names=input_names,
                                                         length=self.height - 2 * self.m1_pitch)
@@ -78,9 +88,8 @@ class hierarchical_predecode(design.design):
         invert_names = ["Abar_{}".format(x) for x in range(self.number_of_inputs)]
         non_invert_names = ["A_{}".format(x) for x in range(self.number_of_inputs)]
         decode_names = invert_names + non_invert_names
-        offset = vector(self.x_off_inv_1 + self.inv.width + 2 * self.m3_pitch, self.m1_pitch)
-        self.decode_rails = self.create_vertical_bus(layer="m3",
-                                                     pitch=self.m3_pitch,
+        offset = vector(self.x_off_inv_1 + self.inv.width + 2 * self.m2_pitch, self.m3_pitch)
+        self.decode_rails = self.create_vertical_bus(layer="m2",
                                                      offset=offset,
                                                      names=decode_names,
                                                      length=self.height - 2 * self.m1_pitch)
@@ -151,11 +160,13 @@ class hierarchical_predecode(design.design):
             a_pin = "A_{}".format(num)
             in_pos = vector(self.input_rails[in_pin].x, y_offset)
             a_pos = vector(self.decode_rails[a_pin].x, y_offset)
-            self.add_path("m2", [in_pos, a_pos])
-            self.add_via_center(layers=self.m2_stack,
-                                offset=[self.input_rails[in_pin].x, y_offset])
-            self.add_via_center(layers=self.m2_stack,
-                                offset=[self.decode_rails[a_pin].x, y_offset])
+            self.add_path("m1", [in_pos, a_pos])
+            self.add_via_stack_center(from_layer="m1",
+                                      to_layer="m2",
+                                      offset=[self.input_rails[in_pin].x, y_offset])
+            self.add_via_stack_center(from_layer="m1",
+                                      to_layer="m2",
+                                      offset=[self.decode_rails[a_pin].x, y_offset])
 
     def route_output_and(self):
         """
@@ -188,21 +199,20 @@ class hierarchical_predecode(design.design):
             rail_pos = vector(self.decode_rails[out_pin].x, y_offset)
             self.add_path(inv_out_pin.layer, [inv_out_pos, right_pos, vector(right_pos.x, y_offset), rail_pos])
             self.add_via_stack_center(from_layer=inv_out_pin.layer,
-                                      to_layer="m3",
-                                      offset=rail_pos,
-                                      directions="nonpref")
+                                      to_layer="m2",
+                                      offset=rail_pos)
             
             # route input
             pin = self.in_inst[inv_num].get_pin("A")
             inv_in_pos = pin.lc()
             in_pos = vector(self.input_rails[in_pin].x, inv_in_pos.y)
-            self.add_path("m2", [in_pos, inv_in_pos])
+            self.add_path("m1", [in_pos, inv_in_pos])
             self.add_via_stack_center(from_layer=pin.layer,
+                                      to_layer="m1",
+                                      offset=inv_in_pos)
+            self.add_via_stack_center(from_layer="m1",
                                       to_layer="m2",
-                                      offset=inv_in_pos,
-                                      directions="nonpref")
-            self.add_via_center(layers=self.m2_stack,
-                                offset=in_pos)
+                                      offset=in_pos)
             
     def route_and_to_rails(self):
         # This 2D array defines the connection mapping
@@ -221,14 +231,19 @@ class hierarchical_predecode(design.design):
                 pin = self.and_inst[k].get_pin(gate_pin)
                 pin_pos = pin.center()
                 rail_pos = vector(self.decode_rails[rail_pin].x, pin_pos.y)
-                self.add_path("m2", [rail_pos, pin_pos])
-                self.add_via_center(layers=self.m2_stack,
-                                    offset=rail_pos,
-                                    directions="nonpref")
-                self.add_via_stack_center(from_layer=pin.layer,
+                self.add_path("m1", [rail_pos, pin_pos])
+                self.add_via_stack_center(from_layer="m1",
                                           to_layer="m2",
+                                          offset=rail_pos)
+                if gate_pin == "A":
+                    direction = None
+                else:
+                    direction = ("H", "H")
+                    
+                self.add_via_stack_center(from_layer=pin.layer,
+                                          to_layer="m1",
                                           offset=pin_pos,
-                                          directions=("H", "H"))
+                                          directions=direction)
 
     def route_vdd_gnd(self):
         """ Add a pin for each row of vdd/gnd which are must-connects next level up. """
@@ -243,14 +258,16 @@ class hierarchical_predecode(design.design):
             for n in ["vdd", "gnd"]:
                 and_pin = self.and_inst[num].get_pin(n)
                 supply_offset = and_pin.ll().scale(0, 1)
-                self.add_rect(layer="m1",
+                self.add_rect(layer=and_pin.layer,
                               offset=supply_offset,
                               width=self.and_inst[num].rx())
 
                 # Add pins in two locations
                 for xoffset in [in_xoffset]:
                     pin_pos = vector(xoffset, and_pin.cy())
-                    self.add_power_pin(n, pin_pos)
+                    self.add_power_pin(name=n,
+                                       loc=pin_pos,
+                                       start_layer=and_pin.layer)
             
 
 

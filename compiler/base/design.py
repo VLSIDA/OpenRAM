@@ -6,6 +6,7 @@
 # All rights reserved.
 #
 from hierarchy_design import hierarchy_design
+from utils import round_to_grid
 import contact
 from globals import OPTS
 import re
@@ -31,48 +32,98 @@ class design(hierarchy_design):
         in many places in the compiler.
         """
         
+        from tech import layer_indices
         import tech
-        for key in dir(tech):
-            # Single layer width rules
-            match = re.match(r".*_stack$", key)
-            if match:
+        for layer in layer_indices:
+            key = "{}_stack".format(layer)
+
+            # Set the stack as a local helper
+            try:
                 layer_stack = getattr(tech, key)
-
-                # Set the stack as a local helper
                 setattr(self, key, layer_stack)
+            except AttributeError:
+                pass
 
-                # Add the pitch
-                setattr(self,
-                        "{}_pitch".format(layer_stack[0]),
-                        self.compute_pitch(layer_stack))
-
+            # Skip computing the pitch for active
+            if layer == "active":
+                continue
+            
+            # Add the pitch
+            setattr(self,
+                    "{}_pitch".format(layer),
+                    self.compute_pitch(layer, True))
+            
+            # Add the non-preferrd pitch (which has vias in the "wrong" way)
+            setattr(self,
+                    "{}_nonpref_pitch".format(layer),
+                    self.compute_pitch(layer, False))
+                
         if False:
-            print("m1_pitch", self.m1_pitch)
-            print("m2_pitch", self.m2_pitch)
-            print("m3_pitch", self.m3_pitch)
+            from tech import preferred_directions
+            print(preferred_directions)
+            from tech import layer, layer_indices
+            for name in layer_indices:
+                if name == "active":
+                    continue
+                try:
+                    print("{0} width {1} space {2}".format(name,
+                                                           getattr(self, "{}_width".format(name)),
+                                                           getattr(self, "{}_space".format(name))))
+
+                    print("pitch {0} nonpref {1}".format(getattr(self, "{}_pitch".format(name)),
+                                                         getattr(self, "{}_nonpref_pitch".format(name))))
+                except AttributeError:
+                    pass
             import sys
             sys.exit(1)
 
-    def compute_pitch(self, layer_stack):
+    def compute_pitch(self, layer, preferred=True):
         
         """
-        This is contact direction independent pitch,
-        i.e. we take the maximum contact dimension
+        This is the preferred direction pitch
+        i.e. we take the minimum or maximum contact dimension
         """
+        # Find the layer stacks this is used in
+        from tech import layer_stacks
+        pitches = []
+        for stack in layer_stacks:
+            # Compute the pitch with both vias above and below (if they exist)
+            if stack[0] == layer:
+                pitches.append(self.compute_layer_pitch(stack, preferred))
+            if stack[2] == layer:
+                pitches.append(self.compute_layer_pitch(stack[::-1], True))
+
+        return max(pitches)
+
+    def compute_layer_pitch(self, layer_stack, preferred):
+
         (layer1, via, layer2) = layer_stack
+        try:
+            if layer1 == "poly" or layer1 == "active":
+                contact1 = getattr(contact, layer1 + "_contact")
+            else:
+                contact1 = getattr(contact, layer1 + "_via")
+        except AttributeError:
+            contact1 = getattr(contact, layer2 + "_via")
 
-        if layer1 == "poly" or layer1 == "active":
-            contact1 = getattr(contact, layer1 + "_contact")
+        if preferred:
+            if self.get_preferred_direction(layer1) == "V":
+                contact_width = contact1.first_layer_width
+            else:
+                contact_width = contact1.first_layer_height
         else:
-            contact1 = getattr(contact, layer1 + "_via")
-        max_contact = max(contact1.width, contact1.height)
-        
-        layer1_space = getattr(self, layer1 + "_space")
-        layer2_space = getattr(self, layer2 + "_space")
-        pitch = max_contact + max(layer1_space, layer2_space)
+            if self.get_preferred_direction(layer1) == "V":
+                contact_width = contact1.first_layer_height
+            else:
+                contact_width = contact1.first_layer_width
+        layer_space = getattr(self, layer1 + "_space")
 
-        return pitch
-        
+        #print(layer_stack)
+        #print(contact1)
+        pitch = contact_width + layer_space
+
+        return round_to_grid(pitch)
+    
     def setup_drc_constants(self):
         """
         These are some DRC constants used in many places

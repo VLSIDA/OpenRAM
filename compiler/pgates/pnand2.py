@@ -76,7 +76,7 @@ class pnand2(pgate.pgate):
                                         width=self.nmos_width,
                                         mults=self.tx_mults,
                                         tx_type="nmos",
-                                        add_source_contact="m1",
+                                        add_source_contact=self.route_layer,
                                         add_drain_contact="active")
         self.add_mod(self.nmos_left)
         
@@ -92,7 +92,7 @@ class pnand2(pgate.pgate):
                                         width=self.pmos_width,
                                         mults=self.tx_mults,
                                         tx_type="pmos",
-                                        add_source_contact="m1",
+                                        add_source_contact=self.route_layer,
                                         add_drain_contact=self.route_layer)
         self.add_mod(self.pmos_left)
 
@@ -101,42 +101,16 @@ class pnand2(pgate.pgate):
                                          mults=self.tx_mults,
                                          tx_type="pmos",
                                          add_source_contact=self.route_layer,
-                                         add_drain_contact="m1")
+                                         add_drain_contact=self.route_layer)
         self.add_mod(self.pmos_right)
         
     def setup_layout_constants(self):
         """ Pre-compute some handy layout parameters. """
 
-        # metal spacing to allow contacts on any layer
-        self.input_spacing = max(self.poly_space + contact.poly_contact.first_layer_width,
-                                 self.m1_space + contact.m1_via.first_layer_width,
-                                 self.m2_space + contact.m2_via.first_layer_width,
-                                 self.m3_space + contact.m2_via.second_layer_width)
-
-        
         # Compute the other pmos2 location,
         # but determining offset to overlap the
         # source and drain pins
         self.overlap_offset = self.pmos_left.get_pin("D").center() - self.pmos_left.get_pin("S").center()
-
-        # This is the extra space needed to ensure DRC rules
-        # to the active contacts
-        extra_contact_space = max(-self.nmos_left.get_pin("D").by(), 0)
-        # This is a poly-to-poly of a flipped cell
-        self.top_bottom_space = max(0.5 * self.m1_width + self.m1_space + extra_contact_space,
-                                    self.poly_extend_active + self.poly_space)
-        
-    def route_supply_rails(self):
-        """ Add vdd/gnd rails to the top and bottom. """
-        self.add_layout_pin_rect_center(text="gnd",
-                                        layer="m1",
-                                        offset=vector(0.5*self.width, 0),
-                                        width=self.width)
-
-        self.add_layout_pin_rect_center(text="vdd",
-                                        layer="m1",
-                                        offset=vector(0.5 * self.width, self.height),
-                                        width=self.width)
 
     def create_ptx(self):
         """
@@ -200,35 +174,46 @@ class pnand2(pgate.pgate):
 
     def route_inputs(self):
         """ Route the A and B inputs """
+
+
+        # Top of NMOS drain
+        nmos_pin = self.nmos2_inst.get_pin("D")
+        bottom_pin_offset = nmos_pin.uy()
+        self.inputA_yoffset = bottom_pin_offset + self.m1_pitch
+
+        self.inputB_yoffset = self.inputA_yoffset + self.m3_pitch
+
         # This will help with the wells and the input/output placement
-        inputB_yoffset = self.pmos2_inst.by() - max(self.poly_extend_active + contact.poly_contact.height,
-                                                    self.m1_space + 0.5 * contact.m1_via.height)
         self.route_input_gate(self.pmos2_inst,
                               self.nmos2_inst,
-                              inputB_yoffset,
+                              self.inputB_yoffset,
                               "B",
-                              position="right")
+                              position="center")
         
-        self.inputA_yoffset = self.nmos2_inst.uy() + max(self.poly_extend_active + contact.poly_contact.height,
-                                                         self.m1_space + 0.5 * contact.m1_via.height)
         self.route_input_gate(self.pmos1_inst,
                               self.nmos1_inst,
                               self.inputA_yoffset,
-                              "A")
+                              "A",
+                              position="center")
 
     def route_output(self):
         """ Route the Z output """
+        
+        # One routing track layer below the PMOS contacts
+        route_layer_offset = 0.5 * self.route_layer_width + self.route_layer_space
+        output_yoffset = self.pmos1_inst.get_pin("D").by() - route_layer_offset
+
 
         # PMOS1 drain
         pmos_pin = self.pmos1_inst.get_pin("D")
-        top_pin_offset = pmos_pin.center()
+        top_pin_offset = pmos_pin.bc()
         # NMOS2 drain
         nmos_pin = self.nmos2_inst.get_pin("D")
-        bottom_pin_offset = nmos_pin.center()
+        bottom_pin_offset = nmos_pin.uc()
         
         # Output pin
-        out_offset = vector(nmos_pin.cx(),
-                            self.inputA_yoffset)
+        out_offset = vector(nmos_pin.cx() + self.route_layer_pitch,
+                            output_yoffset)
 
         # This routes on M2
         # # Midpoints of the L routes go horizontal first then vertical
@@ -253,10 +238,15 @@ class pnand2(pgate.pgate):
 
         # This routes on route_layer
         # Midpoints of the L routes goes vertical first then horizontal
-        mid1_offset = vector(top_pin_offset.x, out_offset.y)
-
+        top_mid_offset = vector(top_pin_offset.x, out_offset.y)
+        # Top transistors
         self.add_path(self.route_layer,
-                      [top_pin_offset, mid1_offset, out_offset, bottom_pin_offset])
+                      [top_pin_offset, top_mid_offset, out_offset])
+
+        bottom_mid_offset = bottom_pin_offset + vector(0, self.route_layer_pitch)
+        # Bottom transistors
+        self.add_path(self.route_layer,
+                      [out_offset, bottom_mid_offset, bottom_pin_offset])
         
         # This extends the output to the edge of the cell
         self.add_layout_pin_rect_center(text="Z",

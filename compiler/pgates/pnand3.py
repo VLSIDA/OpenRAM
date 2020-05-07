@@ -5,7 +5,6 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import contact
 import pgate
 import debug
 from tech import drc, parameter, spice
@@ -13,6 +12,7 @@ from vector import vector
 import logical_effort
 from sram_factory import factory
 from globals import OPTS
+
 
 class pnand3(pgate.pgate):
     """
@@ -94,7 +94,7 @@ class pnand3(pgate.pgate):
                                         width=self.nmos_width,
                                         mults=self.tx_mults,
                                         tx_type="nmos",
-                                        add_source_contact="m1",
+                                        add_source_contact=self.route_layer,
                                         add_drain_contact="active")
         self.add_mod(self.nmos_left)
         
@@ -102,7 +102,7 @@ class pnand3(pgate.pgate):
                                         width=self.pmos_width,
                                         mults=self.tx_mults,
                                         tx_type="pmos",
-                                        add_source_contact="m1",
+                                        add_source_contact=self.route_layer,
                                         add_drain_contact=self.route_layer)
         self.add_mod(self.pmos_left)
 
@@ -111,14 +111,14 @@ class pnand3(pgate.pgate):
                                           mults=self.tx_mults,
                                           tx_type="pmos",
                                           add_source_contact=self.route_layer,
-                                          add_drain_contact="m1")
+                                          add_drain_contact=self.route_layer)
         self.add_mod(self.pmos_center)
 
         self.pmos_right = factory.create(module_type="ptx",
                                          width=self.pmos_width,
                                          mults=self.tx_mults,
                                          tx_type="pmos",
-                                         add_source_contact="m1",
+                                         add_source_contact=self.route_layer,
                                          add_drain_contact=self.route_layer)
         self.add_mod(self.pmos_right)
         
@@ -132,21 +132,6 @@ class pnand3(pgate.pgate):
         # to the active contacts
         nmos = factory.create(module_type="ptx", tx_type="nmos")
         extra_contact_space = max(-nmos.get_pin("D").by(), 0)
-        # This is a poly-to-poly of a flipped cell
-        self.top_bottom_space = max(0.5 * self.m1_width + self.m1_space + extra_contact_space,
-                                    self.poly_extend_active + self.poly_space)
-        
-    def route_supply_rails(self):
-        """ Add vdd/gnd rails to the top and bottom. """
-        self.add_layout_pin_rect_center(text="gnd",
-                                        layer="m1",
-                                        offset=vector(0.5 * self.width, 0),
-                                        width=self.width)
-
-        self.add_layout_pin_rect_center(text="vdd",
-                                        layer="m1",
-                                        offset=vector(0.5 * self.width, self.height),
-                                        width=self.width)
 
     def create_ptx(self):
         """
@@ -223,37 +208,34 @@ class pnand3(pgate.pgate):
     def route_inputs(self):
         """ Route the A and B and C inputs """
 
-        m1_pitch = self.m1_space + contact.m1_via.first_layer_height
-        # Put B right on the well line
-        self.inputB_yoffset = self.nwell_y_offset
-        self.route_input_gate(self.pmos2_inst,
-                              self.nmos2_inst,
-                              self.inputB_yoffset,
-                              "B",
-                              position="center")
-        
-        # FIXME: constant hack
-        self.inputC_yoffset = self.inputB_yoffset - 1.15 * m1_pitch
-        self.route_input_gate(self.pmos3_inst,
-                              self.nmos3_inst,
-                              self.inputC_yoffset,
-                              "C",
-                              position="right")
+        pmos_drain_bottom = self.pmos1_inst.get_pin("D").by()
+        self.output_yoffset = pmos_drain_bottom - 0.5 * self.route_layer_width - self.route_layer_space
 
-        # FIXME: constant hack
-        if OPTS.tech_name == "s8":
-            self.inputA_yoffset = self.inputB_yoffset + 1.15 * m1_pitch
-        else:
-            self.inputA_yoffset = self.inputB_yoffset + 1.12 * m1_pitch
+        self.inputA_yoffset = self.output_yoffset - 0.5 * self.route_layer_width - self.route_layer_space
         self.route_input_gate(self.pmos1_inst,
                               self.nmos1_inst,
                               self.inputA_yoffset,
                               "A",
                               position="left")
+
+        # Put B right on the well line
+        self.inputB_yoffset = self.inputA_yoffset - self.m1_pitch
+        self.route_input_gate(self.pmos2_inst,
+                              self.nmos2_inst,
+                              self.inputB_yoffset,
+                              "B",
+                              position="center")
+
+        self.inputC_yoffset = self.inputB_yoffset - self.m1_pitch
+        self.route_input_gate(self.pmos3_inst,
+                              self.nmos3_inst,
+                              self.inputC_yoffset,
+                              "C",
+                              position="right")
         
     def route_output(self):
         """ Route the Z output """
-        
+
         # PMOS1 drain
         pmos1_pin = self.pmos1_inst.get_pin("D")
         # PMOS3 drain
@@ -262,7 +244,7 @@ class pnand3(pgate.pgate):
         nmos3_pin = self.nmos3_inst.get_pin("D")
 
         out_offset = vector(nmos3_pin.cx() + self.route_layer_pitch,
-                            self.inputA_yoffset)
+                            self.output_yoffset)
 
         # Go up to metal2 for ease on all output pins
         # self.add_via_center(layers=self.m1_stack,

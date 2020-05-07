@@ -159,7 +159,7 @@ class precharge(design.design):
         self.lower_pmos_inst.place(self.lower_pmos_position)
 
         # adds the upper pmos(s) to layout with 2 M2 tracks
-        ydiff = self.pmos.height + self.m2_pitch
+        ydiff = self.pmos.height + 2 * self.m2_pitch
         self.upper_pmos1_pos = self.lower_pmos_position + vector(0, ydiff)
         self.upper_pmos1_inst.place(self.upper_pmos1_pos)
 

@@ -8,7 +8,7 @@
 import debug
 import design
 import math
-import contact
+from tech import drc
 from vector import vector
 from sram_factory import factory
 from globals import OPTS
@@ -120,9 +120,11 @@ class wordline_driver(design.design):
         self.decoders_per_row = math.ceil(self.bitcell_rows / self.driver_rows)
             
     def place_drivers(self):
-        and2_xoffset = 2 * self.m1_width + 5 * self.m1_space
+
+        # Leave a well gap to separate the bitcell array well from this well
+        well_gap = 2 * drc("pwell_to_nwell") + drc("nwell_enclose_active")
         
-        self.width = and2_xoffset + self.decoders_per_row * self.and2.width
+        self.width = self.decoders_per_row * self.and2.width + well_gap
         self.height = self.and2.height * self.driver_rows
         
         for inst_index in range(self.bitcell_rows):
@@ -136,7 +138,7 @@ class wordline_driver(design.design):
                 y_offset = self.and2.height * row
                 inst_mirror = "R0"
 
-            x_offset = and2_xoffset + dec * self.and2.width
+            x_offset = dec * self.and2.width
             and2_offset = [x_offset, y_offset]
             
             # add and2
@@ -147,32 +149,26 @@ class wordline_driver(design.design):
         """ Route all of the signals """
 
         # Wordline enable connection
-        en_offset = [self.m1_width + 2 * self.m1_space, 0]
+        en_pin = self.and_inst[0].get_pin("B")
+        en_bottom_pos = vector(en_pin.lx(), 0)
         en_pin = self.add_layout_pin(text="en",
                                      layer="m2",
-                                     offset=en_offset,
-                                     width=self.m2_width,
+                                     offset=en_bottom_pos,
                                      height=self.height)
         
         for inst_index in range(self.bitcell_rows):
             and_inst = self.and_inst[inst_index]
             row = math.floor(inst_index / self.decoders_per_row)
-            dec = inst_index % self.decoders_per_row
-            
-            # en connection
-            b_pin = and_inst.get_pin("B")
-            b_pos = b_pin.center()
-            clk_offset = vector(en_pin.bc().x, b_pos.y)
-            self.add_segment_center(layer="m2",
-                                    start=clk_offset,
-                                    end=b_pos)
-            self.add_via_center(layers=self.m1_stack,
-                                offset=b_pos)
 
+            # Drop a via
+            b_pin = and_inst.get_pin("B")
+            self.add_via_stack_center(from_layer=b_pin.layer,
+                                      to_layer="m2",
+                                      offset=b_pin.center())
+            
             # connect the decoder input pin to and2 A
             a_pin = and_inst.get_pin("A")
             a_pos = a_pin.center()
-            a_offset = vector(clk_offset.x, a_pos.y)
             # must under the clk line in M1
             self.add_layout_pin_segment_center(text="in_{0}".format(row),
                                                layer="m1",

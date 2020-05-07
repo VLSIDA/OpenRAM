@@ -47,8 +47,16 @@ class contact(hierarchy_design.hierarchy_design):
         
         self.layer_stack = layer_stack
         self.dimensions = dimensions
-        if directions:
+
+        # Non-preferred directions
+        if directions == "nonpref":
+            first_dir = "H" if self.get_preferred_direction(layer_stack[0])=="V" else "V"
+            second_dir = "H" if self.get_preferred_direction(layer_stack[2])=="V" else "V"
+            self.directions = (first_dir, second_dir)
+        # User directions
+        elif directions:
             self.directions = directions
+        # Preferred directions
         else:
             self.directions = (tech.preferred_directions[layer_stack[0]],
                                tech.preferred_directions[layer_stack[2]])

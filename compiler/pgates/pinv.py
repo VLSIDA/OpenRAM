@@ -107,13 +107,6 @@ class pinv(pgate.pgate):
         min_channel = max(contact.poly_contact.width + self.m1_space,
                           contact.poly_contact.width + 2 * self.poly_to_active)
         
-        # This is the extra space needed to ensure DRC rules
-        # to the active contacts
-        extra_contact_space = max(-nmos.get_pin("D").by(), 0)
-        # This is a poly-to-poly of a flipped cell
-        self.top_bottom_space = max(0.5*self.m1_width + self.m1_space + extra_contact_space, 
-                                    self.poly_extend_active + self.poly_space)
-
         total_height = tx_height + min_channel + 2 * self.top_bottom_space
         # debug.check(self.height > total_height,
         #             "Cell height {0} too small for simple min height {1}.".format(self.height,
@@ -201,7 +194,7 @@ class pinv(pgate.pgate):
                                    width=self.nmos_width,
                                    mults=self.tx_mults,
                                    tx_type="nmos",
-                                   add_source_contact="m1",
+                                   add_source_contact=self.route_layer,
                                    add_drain_contact=self.route_layer,
                                    connect_poly=True,
                                    connect_drain_active=True)
@@ -211,24 +204,12 @@ class pinv(pgate.pgate):
                                    width=self.pmos_width,
                                    mults=self.tx_mults,
                                    tx_type="pmos",
-                                   add_source_contact="m1",
+                                   add_source_contact=self.route_layer,
                                    add_drain_contact=self.route_layer,
                                    connect_poly=True,
                                    connect_drain_active=True)
         self.add_mod(self.pmos)
         
-    def route_supply_rails(self):
-        """ Add vdd/gnd rails to the top and bottom. """
-        self.add_layout_pin_rect_center(text="gnd",
-                                        layer="m1",
-                                        offset=vector(0.5 * self.width, 0),
-                                        width=self.width)
-        
-        self.add_layout_pin_rect_center(text="vdd",
-                                        layer="m1",
-                                        offset=vector(0.5 * self.width, self.height),
-                                        width=self.width)
-
     def create_ptx(self):
         """
         Create the PMOS and NMOS netlist.

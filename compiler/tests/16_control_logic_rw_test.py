@@ -8,32 +8,25 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 from sram_factory import factory
 import debug
 
+
 class control_logic_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
-        import control_logic
-        import tech
 
         debug.info(1, "Testing sample for control_logic_rw")
         a = factory.create(module_type="control_logic", num_rows=128, words_per_row=1, word_size=32)
         self.local_check(a)
-
-        debug.info(1, "Testing sample for control_logic_r")
-        a = factory.create(module_type="control_logic", num_rows=128, words_per_row=1, word_size=32, port_type="r")
-        self.local_check(a)
-
-        debug.info(1, "Testing sample for control_logic_w")
-        a = factory.create(module_type="control_logic", num_rows=128, words_per_row=1, word_size=32, port_type="w")
-        self.local_check(a)
+        
+        globals.end_openram()
         
 # run the test from the command line
 if __name__ == "__main__":

@@ -180,7 +180,7 @@ class dff_buf(design.design):
                             height=din_pin.height())
 
         dout_pin = self.inv2_inst.get_pin("Z")
-        mid_pos = dout_pin.center() + vector(self.m1_pitch, 0)
+        mid_pos = dout_pin.center() + vector(self.m1_nonpref_pitch, 0)
         q_pos = mid_pos - vector(0, self.m2_pitch)
         self.add_layout_pin_rect_center(text="Q",
                                         layer="m2",

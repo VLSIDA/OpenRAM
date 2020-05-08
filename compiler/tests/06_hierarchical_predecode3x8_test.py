@@ -25,7 +25,7 @@ class hierarchical_predecode3x8_test(openram_test):
         debug.info(1, "Testing sample for hierarchy_predecode3x8")
         a = factory.create(module_type="hierarchical_predecode3x8")
         self.local_check(a)
-        
+
         globals.end_openram()
 
 # run the test from the command line

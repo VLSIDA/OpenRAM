@@ -37,6 +37,7 @@ class pbuf(pgate.pgate):
         self.place_insts()
         self.add_wires()
         self.add_layout_pins()
+        self.add_boundary()
         
     def add_pins(self):
         self.add_pin("A", "INPUT")

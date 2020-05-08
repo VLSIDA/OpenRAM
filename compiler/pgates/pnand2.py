@@ -62,7 +62,8 @@ class pnand2(pgate.pgate):
         self.extend_wells()
         self.route_inputs()
         self.route_output()
-
+        self.add_boundary()
+        
     def add_pins(self):
         """ Adds pins for spice netlist """
         pin_list = ["A", "B", "Z", "vdd", "gnd"]

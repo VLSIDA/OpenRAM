@@ -90,7 +90,7 @@ class control_logic(design.design):
         self.add_mod(self.ctrl_dff_array)
         
         self.and2 = factory.create(module_type="pand2",
-                                   size=4,
+                                   size=12,
                                    height=dff_height)
         self.add_mod(self.and2)
 

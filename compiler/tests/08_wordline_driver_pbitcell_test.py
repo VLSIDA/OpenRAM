@@ -8,36 +8,33 @@
 #
 import unittest
 from testutils import *
-import sys, os
-
+import sys,os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 from sram_factory import factory
 import debug
 
+#@unittest.skip("SKIPPING 04_driver_test")
 
-class write_driver_test(openram_test):
+class wordline_driver_pbitcell_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
 
-        # check write driver array for single port
-        debug.info(2, "Testing write_driver_array for columns=8, word_size=8, write_size=4")
-        a = factory.create(module_type="write_driver_array", columns=8, word_size=8, write_size=4)
-        self.local_check(a)
+        # check wordline driver for multi-port
+        OPTS.bitcell = "pbitcell"
+        OPTS.num_rw_ports = 1
+        OPTS.num_w_ports = 0
+        OPTS.num_r_ports = 0
 
-        debug.info(2, "Testing write_driver_array for columns=16, word_size=16, write_size=2")
-        a = factory.create(module_type="write_driver_array", columns=16, word_size=16, write_size=2)
-        self.local_check(a)
-
-        debug.info(2, "Testing write_driver_array for columns=16, word_size=8, write_size=4")
-        a = factory.create(module_type="write_driver_array", columns=16, word_size=8, write_size=4)
-        self.local_check(a)
+        factory.reset()
+        debug.info(2, "Checking driver (multi-port case)")
+        tx = factory.create(module_type="wordline_driver", rows=8, cols=64)
+        self.local_check(tx)
 
         globals.end_openram()
-
 
 # run the test from the command line
 if __name__ == "__main__":

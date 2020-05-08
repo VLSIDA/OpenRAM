@@ -76,6 +76,7 @@ class pdriver(pgate.pgate):
 
         self.width = self.inv_inst_list[-1].rx()
         self.height = self.inv_inst_list[0].height
+        self.add_boundary()
         
     def add_pins(self):
         self.add_pin("A", "INPUT")

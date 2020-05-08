@@ -296,11 +296,11 @@ class path(geometry):
 
     def __str__(self):
         """ override print function output """
-        return "path: layer=" + self.layerNumber + " w=" + self.width
+        return "path: layer=" + self.layerNumber + " purpose=" + str(self.layerPurpose) + " w=" + self.width
 
     def __repr__(self):
         """ override print function output """
-        return "( path: layer=" + self.layerNumber + " w=" + self.width + " coords=" + str(self.coordinates) + " )"
+        return "( path: layer=" + self.layerNumber + " purpose=" + str(self.layerPurpose) + " w=" + self.width + " coords=" + str(self.coordinates) + " )"
 
 
 class label(geometry):
@@ -340,11 +340,11 @@ class label(geometry):
 
     def __str__(self):
         """ override print function output """
-        return "label: " + self.text + " layer=" + str(self.layerNumber)
+        return "label: " + self.text + " layer=" + str(self.layerNumber) + " purpose=" + str(self.layerPurpose) 
 
     def __repr__(self):
         """ override print function output """
-        return "( label: " + self.text + " @" + str(self.offset) + " layer=" + str(self.layerNumber) + " )"
+        return "( label: " + self.text + " @" + str(self.offset) + " layer=" + str(self.layerNumber) + " purpose=" + str(self.layerPurpose) + " )"
 
 
 class rectangle(geometry):
@@ -391,4 +391,4 @@ class rectangle(geometry):
 
     def __repr__(self):
         """ override print function output """
-        return "( rect: @" + str(self.offset) + " WxH=" + str(self.width) + "x" + str(self.height) + " layer=" + str(self.layerNumber) + " )"
+        return "( rect: @" + str(self.offset) + " WxH=" + str(self.width) + "x" + str(self.height) + " layer=" + str(self.layerNumber) + " purpose=" + str(self.layerPurpose) + " )"

@@ -52,6 +52,7 @@ class pwrite_driver(design.design):
         self.place_modules()
         self.route_wires()
         self.route_supplies()
+        self.add_boundary()
         
     def add_pins(self):
         self.add_pin("din", "INPUT")

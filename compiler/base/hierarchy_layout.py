@@ -17,6 +17,7 @@ import os
 from globals import OPTS
 from vector import vector
 from pin_layout import pin_layout
+from utils import round_to_grid
 
 
 class layout():
@@ -325,7 +326,7 @@ class layout():
             file_name = "non_rectilinear.gds"
             self.gds_write(file_name)
             debug.error("Cannot have a non-manhatten layout pin: {}".format(file_name), -1)
-            
+
         minwidth_layer = drc["minwidth_{}".format(layer)]
 
         # one of these will be zero
@@ -974,6 +975,7 @@ class layout():
     def create_channel_route(self, netlist,
                              offset,
                              layer_stack,
+                             layer_dirs=None,
                              vertical=False):
         """
         The net list is a list of the nets. Each net is a list of pins
@@ -1012,25 +1014,38 @@ class layout():
 
         def vcg_pin_overlap(pin1, pin2, vertical, pitch):
             """ Check for vertical or horizontal overlap of the two pins """
+            
             # FIXME: If the pins are not in a row, this may break.
             # However, a top pin shouldn't overlap another top pin,
             # for example, so the
             # extra comparison *shouldn't* matter.
 
             # Pin 1 must be in the "BOTTOM" set
-            x_overlap = pin1.by() < pin2.by() and abs(pin1.center().x-pin2.center().x)<pitch
+            x_overlap = pin1.by() < pin2.by() and abs(pin1.center().x - pin2.center().x) < pitch
 
             # Pin 1 must be in the "LEFT" set
-            y_overlap = pin1.lx() < pin2.lx() and abs(pin1.center().y-pin2.center().y)<pitch
+            y_overlap = pin1.lx() < pin2.lx() and abs(pin1.center().y - pin2.center().y) < pitch
             overlaps = (not vertical and x_overlap) or (vertical and y_overlap)
             return overlaps
 
-        if self.get_preferred_direction(layer_stack[0]) == "V":
-            self.vertical_layer = layer_stack[0]
-            self.horizontal_layer = layer_stack[2]
+        if not layer_dirs:
+            # Use the preferred layer directions
+            if self.get_preferred_direction(layer_stack[0]) == "V":
+                self.vertical_layer = layer_stack[0]
+                self.horizontal_layer = layer_stack[2]
+            else:
+                self.vertical_layer = layer_stack[2]
+                self.horizontal_layer = layer_stack[0]
         else:
-            self.vertical_layer = layer_stack[2]
-            self.horizontal_layer = layer_stack[0]
+            # Use the layer directions specified to the router rather than
+            # the preferred directions
+            debug.check(layer_dirs[0] != layer_dirs[1], "Must have unique layer directions.")
+            if layer_dirs[0] == "V":
+                self.vertical_layer = layer_stack[0]
+                self.horizontal_layer = layer_stack[2]
+            else:
+                self.horizontal_layer = layer_stack[0]
+                self.vertical_layer = layer_stack[2]
 
         layer_stuff = self.get_layer_pitch(self.vertical_layer)
         (self.vertical_pitch, self.vertical_width, self.vertical_space) = layer_stuff
@@ -1113,17 +1128,17 @@ class layout():
                                                 self.horizontal_pitch)
                 offset += vector(0, self.horizontal_pitch)
 
-    def create_vertical_channel_route(self, netlist, offset, layer_stack):
+    def create_vertical_channel_route(self, netlist, offset, layer_stack, layer_dirs=None):
         """
         Wrapper to create a vertical channel route
         """
-        self.create_channel_route(netlist, offset, layer_stack, vertical=True)
+        self.create_channel_route(netlist, offset, layer_stack, layer_dirs, vertical=True)
 
-    def create_horizontal_channel_route(self, netlist, offset, layer_stack):
+    def create_horizontal_channel_route(self, netlist, offset, layer_stack, layer_dirs=None):
         """
         Wrapper to create a horizontal channel route
         """
-        self.create_channel_route(netlist, offset, layer_stack, vertical=False)
+        self.create_channel_route(netlist, offset, layer_stack, layer_dirs, vertical=False)
 
     def add_boundary(self, ll=vector(0, 0), ur=None):
         """ Add boundary for debugging dimensions """
@@ -1213,7 +1228,8 @@ class layout():
         else:
             # Hack for min area
             if OPTS.tech_name == "s8":
-                height = width = sqrt(drc["minarea_m3"])
+                width = round_to_grid(sqrt(drc["minarea_m3"]))
+                height = round_to_grid(drc["minarea_m3"]/width)
             else:
                 width = via.width
                 height = via.height

@@ -683,11 +683,16 @@ class bank(design.design):
         
         self.connect_bitlines(inst1=inst1,
                               inst2=inst2,
-                              num_bits=self.num_cols + self.num_spare_cols,
+                              num_bits=self.num_cols,
                               inst1_bl_name=inst1_bl_name,
                               inst1_br_name=inst1_br_name,
                               inst2_bl_name=inst2_bl_name,
                               inst2_br_name=inst2_br_name)
+        
+        # connect spare bitlines
+        for i in range(self.num_spare_cols):
+            self.connect_bitline(inst1, inst2, inst1_bl_name.format(self.num_cols+i), "spare" + inst2_bl_name.format(i))
+            self.connect_bitline(inst1, inst2, inst1_br_name.format(self.num_cols+i), "spare" + inst2_br_name.format(i))
 
         # Connect the replica bitlines
         rbl_bl_name=self.bitcell_array.get_rbl_bl_name(self.port_rbl_map[port])

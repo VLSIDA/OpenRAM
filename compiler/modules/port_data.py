@@ -30,7 +30,6 @@ class port_data(design.design):
         if self.num_spare_cols is None:
             self.num_spare_cols = 0
 
-
         if name == "":
             name = "port_data_{0}".format(self.port)
         design.design.__init__(self, name)
@@ -110,12 +109,17 @@ class port_data(design.design):
 
         self.add_pin("rbl_bl", "INOUT")
         self.add_pin("rbl_br", "INOUT")
-        for bit in range(self.num_cols + self.num_spare_cols):
+        for bit in range(self.num_cols):
             bl_name = self.get_bl_name(self.port)
             br_name = self.get_br_name(self.port)
             self.add_pin("{0}_{1}".format(bl_name, bit), "INOUT")
             self.add_pin("{0}_{1}".format(br_name, bit), "INOUT")
-        
+        for bit in range(self.num_spare_cols):
+            bl_name = self.get_bl_name(self.port)
+            br_name = self.get_br_name(self.port)
+            self.add_pin("spare{0}_{1}".format(bl_name, bit), "INOUT")
+            self.add_pin("spare{0}_{1}".format(br_name, bit), "INOUT")
+
         if self.port in self.read_ports:
             for bit in range(self.word_size + self.num_spare_cols):
                 self.add_pin("dout_{}".format(bit), "OUTPUT")
@@ -283,8 +287,8 @@ class port_data(design.design):
             temp.append("{0}_{1}".format(br_name, bit))
         
         for bit in range(self.num_spare_cols):
-            temp.append("sparebl{0}_{1}".format(self.port, bit))
-            temp.append("sparebr{0}_{1}".format(self.port, bit))
+            temp.append("spare{0}_{1}".format(bl_name, bit))
+            temp.append("spare{0}_{1}".format(br_name, bit))
 
         # Use right BLs for RBL
         if self.port==1:
@@ -345,8 +349,8 @@ class port_data(design.design):
         
         for bit in range(self.num_spare_cols):
             temp.append("dout_{}".format(self.word_size + bit))
-            temp.append("sparebl{0}_{1}".format(self.port, bit))
-            temp.append("sparebr{0}_{1}".format(self.port, bit)) 
+            temp.append("spare{0}_{1}".format(bl_name, bit))
+            temp.append("spare{0}_{1}".format(br_name, bit)) 
         
         temp.append("s_en")
         temp.extend(["vdd", "gnd"])
@@ -376,8 +380,8 @@ class port_data(design.design):
                 temp.append("{0}_out_{1}".format(br_name, bit))        
 
         for bit in range(self.num_spare_cols):   
-            temp.append("sparebl{0}_{1}".format(self.port, bit))
-            temp.append("sparebr{0}_{1}".format(self.port, bit)) 
+            temp.append("spare{0}_{1}".format(bl_name, bit))
+            temp.append("spare{0}_{1}".format(br_name, bit)) 
 
         if self.write_size is not None:
             for i in range(self.num_wmasks):
@@ -675,7 +679,7 @@ class port_data(design.design):
         else:
             bit_offset=0
 
-        for bit in range(self.num_cols + self.num_spare_cols):
+        for bit in range(self.num_cols):
             if self.precharge_array_inst:
                 self.copy_layout_pin(self.precharge_array_inst,
                                      "bl_{}".format(bit + bit_offset),
@@ -685,6 +689,19 @@ class port_data(design.design):
                                      "br_{}".format(bit))
             else:
                 debug.error("Didn't find precharge array.")
+        
+        # Copy layout pins of spare columns
+        for bit in range(self.num_spare_cols):
+            if self.precharge_array_inst:
+                self.copy_layout_pin(self.precharge_array_inst,
+                                     "bl_{}".format(self.num_cols + bit + bit_offset),
+                                     "sparebl_{}".format(bit))
+                self.copy_layout_pin(self.precharge_array_inst,
+                                     "br_{}".format(self.num_cols + bit + bit_offset),
+                                     "sparebr_{}".format(bit))
+            else:
+                debug.error("Didn't find precharge array.")
+
 
     def route_control_pins(self):
         """ Add the control pins: s_en, p_en_bar, w_en """

@@ -87,10 +87,13 @@ class pdriver(pgate.pgate):
 
     def add_modules(self):
         self.inv_list = []
+        add_well = True
         for size in self.size_list:
             temp_inv = factory.create(module_type="pinv",
                                       size=size,
-                                      height=self.height)
+                                      height=self.height,
+                                      add_wells=add_well)
+            add_well=False
             self.inv_list.append(temp_inv)
             self.add_mod(temp_inv)
     

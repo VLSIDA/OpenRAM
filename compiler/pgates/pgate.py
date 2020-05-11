@@ -24,7 +24,7 @@ class pgate(design.design):
     functions for parameterized gates.
     """
 
-    def __init__(self, name, height=None):
+    def __init__(self, name, height=None, add_wells=True):
         """ Creates a generic cell """
         design.design.__init__(self, name)
 
@@ -33,7 +33,8 @@ class pgate(design.design):
         elif not height:
             # By default, something simple
             self.height = 14 * self.m1_pitch
-            
+        self.add_wells = add_wells
+        
         if "li" in layer:
             self.route_layer = "li"
         else:
@@ -150,7 +151,7 @@ class pgate(design.design):
 
         # This should match the cells in the cell library
         self.nwell_y_offset = 0.48 * self.height
-        full_height = self.height + 0.5* self.m1_width
+        full_height = self.height + 0.5 * self.m1_width
         
         # FIXME: float rounding problem
         if "nwell" in layer:
@@ -302,10 +303,17 @@ class pgate(design.design):
 
     def determine_width(self):
         """ Determine the width based on the well contacts (assumed to be on the right side) """
+
         # Width is determined by well contact and spacing and allowing a supply via between each cell
-        self.width = max(self.nwell_contact.rx(), self.pwell_contact.rx()) + self.m1_space + 0.5 * contact.m1_via.width
+        if self.add_wells:
+            self.width = max(self.nwell_contact.rx(), self.pwell_contact.rx()) + self.m1_space + 0.5 * contact.m1_via.width
+            # Height is an input parameter, so it is not recomputed.
+        else:
+            max_active_xoffset = self.find_highest_layer_coords("active").x
+            max_route_xoffset = self.find_highest_layer_coords(self.route_layer).x + 0.5 * self.m1_space
+            self.width = max(max_active_xoffset, max_route_xoffset)
+
         self.well_width = self.width + 2 * self.nwell_enclose_active
-        # Height is an input parameter, so it is not recomputed.
 
     @staticmethod
     def bin_width(tx_type, target_width):

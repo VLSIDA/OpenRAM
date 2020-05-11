@@ -19,7 +19,7 @@ class pnand3(pgate.pgate):
     This module generates gds of a parametrically sized 2-input nand.
     This model use ptx to generate a 2-input nand within a cetrain height.
     """
-    def __init__(self, name, size=1, height=None):
+    def __init__(self, name, size=1, height=None, add_wells=True):
         """ Creates a cell for a simple 3 input nand """
 
         debug.info(2,
@@ -45,7 +45,7 @@ class pnand3(pgate.pgate):
             (self.pmos_width, self.tx_mults) = self.bin_width("pmos", self.pmos_width)
 
         # Creates the netlist and layout
-        pgate.pgate.__init__(self, name, height)
+        pgate.pgate.__init__(self, name, height, add_wells)
         
     def add_pins(self):
         """ Adds pins for spice netlist """
@@ -63,7 +63,8 @@ class pnand3(pgate.pgate):
 
         self.setup_layout_constants()
         self.place_ptx()
-        self.add_well_contacts()
+        if self.add_wells:
+            self.add_well_contacts()
         self.determine_width()
         self.route_supply_rails()
         self.connect_rails()

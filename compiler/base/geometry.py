@@ -66,14 +66,17 @@ class geometry:
         self.compute_boundary(self.offset, self.mirror, self.rotate)
 
     def compute_boundary(self, offset=vector(0, 0), mirror="", rotate=0):
-        """ Transform with offset, mirror and rotation to get the absolute pin location.
-        We must then re-find the ll and ur. The master is the cell instance. """
+        """
+        Transform with offset, mirror and rotation to get the absolute pin location.
+        We must then re-find the ll and ur. The master is the cell instance.
+        """
         if OPTS.netlist_only:
-            self.boundary = [vector(0,0), vector(0,0)]
+            self.boundary = [vector(0, 0), vector(0, 0)]
             return
 
         (ll, ur) = [vector(0, 0), vector(self.width, self.height)]
 
+        # Mirroring is performed before rotation
         if mirror == "MX":
             ll = ll.scale(1, -1)
             ur = ur.scale(1, -1)
@@ -195,13 +198,12 @@ class instance(geometry):
             blockages = []
             blockages = self.mod.gds.getBlockages(lpp)
             for b in blockages:
-                new_blockages.append(self.transform_coords(b,self.offset, mirr, angle))
+                new_blockages.append(self.transform_coords(b, self.offset, mirr, angle))
         else:
             blockages = self.mod.get_blockages(lpp)
             for b in blockages:
-                new_blockages.append(self.transform_coords(b,self.offset, mirr, angle))
+                new_blockages.append(self.transform_coords(b, self.offset, mirr, angle))
         return new_blockages
-
 
     def gds_write_file(self, new_layout):
         """Recursively writes all the sub-modules in this instance"""
@@ -225,26 +227,25 @@ class instance(geometry):
         self.update_boundary()
         debug.info(3, "placing instance {}".format(self))
 
-
-    def get_pin(self,name,index=-1):
+    def get_pin(self, name, index=-1):
         """ Return an absolute pin that is offset and transformed based on
         this instance location. Index will return one of several pins."""
 
         import copy
         if index == -1:
             pin = copy.deepcopy(self.mod.get_pin(name))
-            pin.transform(self.offset,self.mirror,self.rotate)
+            pin.transform(self.offset, self.mirror, self.rotate)
             return pin
         else:
             pins = copy.deepcopy(self.mod.get_pin(name))
-            pin.transform(self.offset,self.mirror,self.rotate)
+            pins.transform(self.offset, self.mirror, self.rotate)
             return pin[index]
 
     def get_num_pins(self, name):
         """ Return the number of pins of a given name """
         return len(self.mod.get_pins(name))
 
-    def get_pins(self,name):
+    def get_pins(self, name):
         """ Return an absolute pin that is offset and transformed based on
         this instance location. """
 
@@ -253,7 +254,7 @@ class instance(geometry):
 
         new_pins = []
         for p in pin:
-            p.transform(self.offset,self.mirror,self.rotate)
+            p.transform(self.offset, self.mirror, self.rotate)
             new_pins.append(p)
         return new_pins
 
@@ -265,6 +266,7 @@ class instance(geometry):
         """ override print function output """
         return "( inst: " + self.name + " @" + str(self.offset) + " mod=" + self.mod.name + " " + self.mirror + " R=" + str(self.rotate) + ")"
 
+    
 class path(geometry):
     """Represents a Path"""
 
@@ -322,7 +324,7 @@ class label(geometry):
 
         self.size = 0
 
-        debug.info(4,"creating label " + self.text + " " + str(self.layerNumber) + " " + str(self.offset))
+        debug.info(4, "creating label " + self.text + " " + str(self.layerNumber) + " " + str(self.offset))
 
     def gds_write_file(self, new_layout):
         """Writes the text label to GDS"""
@@ -340,7 +342,7 @@ class label(geometry):
 
     def __str__(self):
         """ override print function output """
-        return "label: " + self.text + " layer=" + str(self.layerNumber) + " purpose=" + str(self.layerPurpose) 
+        return "label: " + self.text + " layer=" + str(self.layerNumber) + " purpose=" + str(self.layerPurpose)
 
     def __repr__(self):
         """ override print function output """

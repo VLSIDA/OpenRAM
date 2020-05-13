@@ -65,12 +65,12 @@ class pnand3(pgate.pgate):
         self.place_ptx()
         if self.add_wells:
             self.add_well_contacts()
+        self.route_inputs()
+        self.route_output()
         self.determine_width()
         self.route_supply_rails()
         self.connect_rails()
         self.extend_wells()
-        self.route_inputs()
-        self.route_output()
         self.add_boundary()
         
     def add_ptx(self):

@@ -40,6 +40,7 @@ class pinv(pgate.pgate):
         self.add_comment("size: {}".format(size))
 
         self.size = size
+        debug.check(self.size >= 1, "Must have a size greater than or equal to 1.")
         self.nmos_size = size
         self.pmos_size = beta * size
         self.beta = beta

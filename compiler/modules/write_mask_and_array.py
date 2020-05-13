@@ -60,7 +60,7 @@ class write_mask_and_array(design.design):
         # Size the AND gate for the number of write drivers it drives, which is equal to the write size.
         # Assume stage effort of 3 to compute the size
         self.and2 = factory.create(module_type="pand2",
-                                   size=self.write_size / 4.0)
+                                   size=max(self.write_size / 4.0, 1))
         self.add_mod(self.and2)
 
     def create_and2_array(self):

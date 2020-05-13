@@ -34,7 +34,7 @@ class pand3(pgate.pgate):
         # Shield the cap, but have at least a stage effort of 4
         self.nand = factory.create(module_type="pnand3",
                                    height=self.height,
-                                   add_wells=False)
+                                   add_wells=self.vertical)
 
         # Add the well tap to the inverter because when stacked
         # vertically it is sometimes narrower

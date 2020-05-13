@@ -3,8 +3,6 @@
 # Copyright (c) 2016-2019 Regents of the University of California
 # All rights reserved.
 #
-import sys
-from tech import drc, parameter
 from math import log, ceil
 import debug
 import design
@@ -12,6 +10,7 @@ from sram_factory import factory
 from vector import vector
 
 from globals import OPTS
+
 
 class port_address(design.design):
     """
@@ -25,16 +24,15 @@ class port_address(design.design):
         self.addr_size = ceil(log(self.num_rows, 2))
         
         if name == "":
-            name = "port_address_{0}_{1}".format(cols,rows)
+            name = "port_address_{0}_{1}".format(cols, rows)
         design.design.__init__(self, name)
-        debug.info(2, "create data port of cols {0} rows {1}".format(cols,rows))
+        debug.info(2, "create data port of cols {0} rows {1}".format(cols, rows))
 
         self.create_netlist()
         if not OPTS.netlist_only:
-            debug.check(len(self.all_ports)<=2,"Bank layout cannot handle more than two ports.")
+            debug.check(len(self.all_ports) <= 2, "Bank layout cannot handle more than two ports.")
             self.create_layout()
             self.add_boundary()
-
 
     def create_netlist(self):
         self.add_pins()
@@ -51,16 +49,15 @@ class port_address(design.design):
         """ Adding pins for port address module"""
 
         for bit in range(self.addr_size):
-            self.add_pin("addr_{0}".format(bit),"INPUT")
+            self.add_pin("addr_{0}".format(bit), "INPUT")
         
         self.add_pin("wl_en", "INPUT")
 
         for bit in range(self.num_rows):
-            self.add_pin("wl_{0}".format(bit),"OUTPUT")
+            self.add_pin("wl_{0}".format(bit), "OUTPUT")
         
-        self.add_pin("vdd","POWER")
-        self.add_pin("gnd","GROUND")
-
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
         
     def route_layout(self):
         """ Create routing amoung the modules """
@@ -71,8 +68,8 @@ class port_address(design.design):
     def route_supplies(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """
         for inst in self.insts:
-            self.copy_power_pins(inst,"vdd")
-            self.copy_power_pins(inst,"gnd")
+            self.copy_power_pins(inst, "vdd")
+            self.copy_power_pins(inst, "gnd")
 
     def route_pins(self):
         for row in range(self.addr_size):
@@ -119,12 +116,10 @@ class port_address(design.design):
         temp.extend(["vdd", "gnd"])
         self.connect_inst(temp)
 
-
-            
     def create_wordline_driver(self):
         """ Create the Wordline Driver """
 
-        self.wordline_driver_inst = self.add_inst(name="wordline_driver", 
+        self.wordline_driver_inst = self.add_inst(name="wordline_driver",
                                                   mod=self.wordline_driver)
 
         temp = []
@@ -137,19 +132,13 @@ class port_address(design.design):
         temp.append("gnd")
         self.connect_inst(temp)
 
-            
-
     def place_instances(self):
         """
         Compute the offsets and place the instances.
         """
 
-        # A space for wells or jogging m2
-        self.m2_gap = max(2*drc("pwell_to_nwell") + drc("nwell_enclose_active"),
-                          3*self.m2_pitch)
-        
-        row_decoder_offset = vector(0,0)
-        wordline_driver_offset = vector(self.row_decoder.width + self.m2_gap,0)
+        row_decoder_offset = vector(0, 0)
+        wordline_driver_offset = vector(self.row_decoder.width, 0)
         
         self.wordline_driver_inst.place(wordline_driver_offset)
         self.row_decoder_inst.place(row_decoder_offset)

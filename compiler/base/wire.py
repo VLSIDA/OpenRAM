@@ -19,11 +19,14 @@ class wire(wire_path):
     not, it will always go down first.
     The points are the center of the wire.
     The layer stack is the vertical, contact/via, and horizontal layers, respectively.
+    The widen option will avoid via-to-via spacing problems for really short segments
+    (added as an option so we can disable it in bus connections)
     """
-    def __init__(self, obj, layer_stack, position_list):
+    def __init__(self, obj, layer_stack, position_list, widen_short_wires=True):
         self.obj = obj
         self.layer_stack = layer_stack
         self.position_list = position_list
+        self.widen_short_wires = widen_short_wires
         self.pins = [] # used for matching parm lengths
         self.switch_pos_list = []
 
@@ -114,7 +117,7 @@ class wire(wire_path):
                 line_length = pl[index + 1][0] - pl[index][0]
                 # Make the wire wider to avoid via-to-via spacing problems
                 # But don't make it wider if it is shorter than one via
-                if abs(line_length) < self.pitch and abs(line_length) > self.horiz_layer_contact_width:
+                if self.widen_short_wires and abs(line_length) < self.pitch and abs(line_length) > self.horiz_layer_contact_width:
                     width = self.horiz_layer_contact_width
                 else:
                     width = self.horiz_layer_width
@@ -134,7 +137,7 @@ class wire(wire_path):
                 line_length = pl[index + 1][1] - pl[index][1]
                 # Make the wire wider to avoid via-to-via spacing problems
                 # But don't make it wider if it is shorter than one via
-                if abs(line_length) < self.pitch and abs(line_length) > self.vert_layer_contact_width:
+                if self.widen_short_wires and abs(line_length) < self.pitch and abs(line_length) > self.vert_layer_contact_width:
                     width = self.vert_layer_contact_width
                 else:
                     width = self.vert_layer_width

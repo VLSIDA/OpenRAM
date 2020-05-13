@@ -789,7 +789,7 @@ class port_data(design.design):
 
         # Channel route each mux separately since we don't minimize the number
         # of tracks in teh channel router yet. If we did, we could route all the bits at once!
-        offset = bot_inst_group.inst.ul() + vector(0, self.m1_pitch)
+        offset = bot_inst_group.inst.ul() + vector(0, self.m1_nonpref_pitch)
         for bit in range(num_bits):
             bottom_names = self._get_bitline_pins(bot_inst_group, bit)
             top_names = self._get_bitline_pins(top_inst_group, bit)

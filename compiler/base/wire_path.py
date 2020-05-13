@@ -24,11 +24,12 @@ def create_rectilinear_route(my_list):
             my_list.append(vector(pl[index][0], pl[index + 1][1]))
     my_list.append(vector(pl[-1]))
     return my_list
-        
+
+
 class wire_path():
     """
     Object metal wire_path; given the layer type
-    Add a wire_path of minimium metal width between a set of points. 
+    Add a wire_path of minimium metal width between a set of points.
     The points should be rectilinear to control the bend points. If
     not, it will always go down first. The points are the center of the wire_path.
     If width is not given, it uses minimum layer width.
@@ -37,7 +38,7 @@ class wire_path():
         self.obj = obj
         self.layer_name = layer
         self.layer_id = techlayer[layer]
-        if width==None:
+        if width == None:
             self.layer_width = drc["minwidth_{0}".format(layer)]
         else:
             self.layer_width = width
@@ -45,7 +46,6 @@ class wire_path():
         self.pins = [] # used for matching parm lengths
         self.switch_pos_list = []
         self.create_layout()
-
 
     def create_layout(self):
         self.create_rectilinear()
@@ -60,9 +60,9 @@ class wire_path():
 
     def connect_corner(self):
         """ Add a corner square at every corner of the wire_path."""
-        from itertools import tee,islice
-        nwise = lambda g,n=2: zip(*(islice(g,i,None) for i,g in enumerate(tee(g,n))))
-        threewise=nwise(self.position_list,3)
+        from itertools import tee, islice
+        nwise = lambda g, n=2: zip(*(islice(g, i, None) for i, g in enumerate(tee(g, n))))
+        threewise=nwise(self.position_list, 3)
 
         for (a, offset, c) in list(threewise):
             # add a exceptions to prevent a corner when we retrace back in the same direction
@@ -73,7 +73,6 @@ class wire_path():
             corner_offset = [offset[0] - 0.5 * self.layer_width,
                              offset[1] - 0.5 * self.layer_width]
             self.draw_corner_wire(corner_offset)
-
 
     def draw_corner_wire(self, offset):
         """ This function adds the corner squares since the center
@@ -117,7 +116,7 @@ class wire_path():
 
     def add_line(self, layer_name, length, offset, orientation, layer_width):
         """
-        straight line object with layer_minwidth 
+        straight line object with layer_minwidth
         (orientation: "vertical" or "horizontal") default is vertical
         """
 

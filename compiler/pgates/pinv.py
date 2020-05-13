@@ -22,17 +22,17 @@ from errors import drc_error
 if(OPTS.tech_name == "s8"):
     from tech import nmos_bins, pmos_bins, accuracy_requirement
 
+    
 class pinv(pgate.pgate):
     """
     Pinv generates gds of a parametrically sized inverter. The
     size is specified as the drive size (relative to minimum NMOS) and
     a beta value for choosing the pmos size.  The inverter's cell
     height is usually the same as the 6t library cell and is measured
-    from center of rail to rail..  The route_output will route the
-    output to the right side of the cell for easier access.
+    from center of rail to rail.
     """
 
-    def __init__(self, name, size=1, beta=parameter["beta"], height=None, route_output=True):
+    def __init__(self, name, size=1, beta=parameter["beta"], height=None):
 
         debug.info(2,
                    "creating pinv structure {0} with size of {1}".format(name,
@@ -43,7 +43,6 @@ class pinv(pgate.pgate):
         self.nmos_size = size
         self.pmos_size = beta * size
         self.beta = beta
-        self.route_output = False
         
         pgate.pgate.__init__(self, name, height)
 
@@ -108,13 +107,6 @@ class pinv(pgate.pgate):
         min_channel = max(contact.poly_contact.width + self.m1_space,
                           contact.poly_contact.width + 2 * self.poly_to_active)
         
-        # This is the extra space needed to ensure DRC rules
-        # to the active contacts
-        extra_contact_space = max(-nmos.get_pin("D").by(), 0)
-        # This is a poly-to-poly of a flipped cell
-        self.top_bottom_space = max(0.5*self.m1_width + self.m1_space + extra_contact_space, 
-                                    self.poly_extend_active + self.poly_space)
-
         total_height = tx_height + min_channel + 2 * self.top_bottom_space
         # debug.check(self.height > total_height,
         #             "Cell height {0} too small for simple min height {1}.".format(self.height,
@@ -202,30 +194,22 @@ class pinv(pgate.pgate):
                                    width=self.nmos_width,
                                    mults=self.tx_mults,
                                    tx_type="nmos",
+                                   add_source_contact=self.route_layer,
+                                   add_drain_contact=self.route_layer,
                                    connect_poly=True,
-                                   connect_active=True)
+                                   connect_drain_active=True)
         self.add_mod(self.nmos)
         
         self.pmos = factory.create(module_type="ptx",
                                    width=self.pmos_width,
                                    mults=self.tx_mults,
                                    tx_type="pmos",
+                                   add_source_contact=self.route_layer,
+                                   add_drain_contact=self.route_layer,
                                    connect_poly=True,
-                                   connect_active=True)
+                                   connect_drain_active=True)
         self.add_mod(self.pmos)
         
-    def route_supply_rails(self):
-        """ Add vdd/gnd rails to the top and bottom. """
-        self.add_layout_pin_rect_center(text="gnd",
-                                        layer="m1",
-                                        offset=vector(0.5 * self.width, 0),
-                                        width=self.width)
-
-        self.add_layout_pin_rect_center(text="vdd",
-                                        layer="m1",
-                                        offset=vector(0.5 * self.width, self.height),
-                                        width=self.width)
-
     def create_ptx(self):
         """
         Create the PMOS and NMOS netlist.
@@ -266,7 +250,7 @@ class pinv(pgate.pgate):
         Route the output (drains) together.
         Optionally, routes output to edge.
         """
-
+            
         # Get the drain pins
         nmos_drain_pin = self.nmos_inst.get_pin("D")
         pmos_drain_pin = self.pmos_inst.get_pin("D")
@@ -274,24 +258,16 @@ class pinv(pgate.pgate):
         # Pick point at right most of NMOS and connect down to PMOS
         nmos_drain_pos = nmos_drain_pin.bc()
         pmos_drain_pos = vector(nmos_drain_pos.x, pmos_drain_pin.uc().y)
-        self.add_path("m1", [nmos_drain_pos, pmos_drain_pos])
+        self.add_path(self.route_layer, [nmos_drain_pos, pmos_drain_pos])
 
         # Remember the mid for the output
         mid_drain_offset = vector(nmos_drain_pos.x, self.output_pos.y)
 
-        if self.route_output:
-            # This extends the output to the edge of the cell
-            output_offset = mid_drain_offset.scale(0, 1) + vector(self.width, 0)
-            self.add_layout_pin_segment_center(text="Z",
-                                               layer="m1",
-                                               start=mid_drain_offset,
-                                               end=output_offset)
-        else:
-            # This leaves the output as an internal pin (min sized)
-            self.add_layout_pin_rect_center(text="Z",
-                                            layer="m1",
-                                            offset=mid_drain_offset \
-                                            + vector(0.5 * self.m1_width, 0))
+        # This leaves the output as an internal pin (min sized)
+        output_offset = mid_drain_offset + vector(0.5 * self.route_layer_width, 0)
+        self.add_layout_pin_rect_center(text="Z",
+                                        layer=self.route_layer,
+                                        offset=output_offset)
 
     def add_well_contacts(self):
         """ Add n/p well taps to the layout and connect to supplies """

@@ -355,32 +355,30 @@ class replica_bitcell_array(design.design):
                                         width=self.width,
                                         height=pin.height())
 
-
         # Replica bitlines
-        for port in range(self.left_rbl+self.right_rbl):
+        for port in range(self.left_rbl + self.right_rbl):
             inst = self.replica_col_inst[port]
-            for (pin_name, bl_name) in zip(self.cell.get_all_bitline_names(),self.replica_bl_names[port]):
+            for (pin_name, bl_name) in zip(self.cell.get_all_bitline_names(), self.replica_bl_names[port]):
                 pin = inst.get_pin(pin_name)
                 if bl_name in self.rbl_bl_names or bl_name in self.rbl_br_names:
                     name = bl_name
                 else:
-                    name = "rbl_{0}_{1}".format(pin_name,port)
+                    name = "rbl_{0}_{1}".format(pin_name, port)
                 self.add_layout_pin(text=name,
                                     layer=pin.layer,
-                                    offset=pin.ll().scale(1,0),
+                                    offset=pin.ll().scale(1, 0),
                                     width=pin.width(),
                                     height=self.height)
-
                     
-        for pin_name in ["vdd","gnd"]:
+        for pin_name in ["vdd", "gnd"]:
             for inst in self.insts:
                 pin_list = inst.get_pins(pin_name)
                 for pin in pin_list:
-                    self.add_power_pin(name=pin_name, loc=pin.center(), vertical=True, start_layer=pin.layer)
+                    self.add_power_pin(name=pin_name,
+                                       loc=pin.center(),
+                                       directions=("V", "V"),
+                                       start_layer=pin.layer)
 
-
-
-                        
     def get_rbl_wl_name(self, port):
         """ Return the WL for the given RBL port """
         return self.rbl_wl_names[port]
@@ -399,7 +397,7 @@ class replica_bitcell_array(design.design):
         
         # Dynamic Power from Bitline
         bl_wire = self.gen_bl_wire()
-        cell_load = 2 * bl_wire.return_input_cap() 
+        cell_load = 2 * bl_wire.return_input_cap()
         bl_swing = OPTS.rbl_delay_percentage
         freq = spice["default_event_frequency"]
         bitline_dynamic = self.calc_dynamic_power(corner, cell_load, freq, swing=bl_swing)

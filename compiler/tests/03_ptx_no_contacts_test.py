@@ -15,23 +15,40 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class ptx_3finger_nmos_test(openram_test):
+
+class ptx_no_contacts_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
         import tech
 
-        debug.info(2, "Checking three fingers NMOS")
+        debug.info(2, "Checking single finger no source/drain")
         fet = factory.create(module_type="ptx",
                              width=tech.drc["minwidth_tx"],
-                             mults=3,
-                             tx_type="nmos",
-                             connect_source_active=True,
-                             connect_drain_active=True,
-                             connect_poly=True)
+                             mults=1,
+                             add_source_contact=False,
+                             add_drain_contact=False,
+                             tx_type="nmos")
         self.local_drc_check(fet)
 
+        debug.info(2, "Checking multifinger no source/drain")
+        fet = factory.create(module_type="ptx",
+                             width=tech.drc["minwidth_tx"],
+                             mults=4,
+                             add_source_contact=False,
+                             add_drain_contact=False,
+                             tx_type="nmos")
+        self.local_drc_check(fet)
+
+        debug.info(2, "Checking series ptx")
+        fet = factory.create(module_type="ptx",
+                             width=tech.drc["minwidth_tx"],
+                             mults=4,
+                             series_devices=True,
+                             tx_type="nmos")
+        self.local_drc_check(fet)
+        
         globals.end_openram()
 
 

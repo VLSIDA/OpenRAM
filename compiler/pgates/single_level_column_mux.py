@@ -50,7 +50,7 @@ class single_level_column_mux(pgate.pgate):
         self.connect_poly()
         self.add_bitline_pins()
         self.connect_bitlines()
-        self.add_wells()
+        self.add_pn_wells()
 
     def add_modules(self):
         self.bitcell = factory.create(module_type="bitcell")
@@ -218,7 +218,7 @@ class single_level_column_mux(pgate.pgate):
         self.add_path(self.col_mux_stack[2],
                       [br_pin.bc(), mid1, mid2, nmos_lower_d_pin.center()])
 
-    def add_wells(self):
+    def add_pn_wells(self):
         """
         Add a well and implant over the whole cell. Also, add the
         pwell contact (if it exists)

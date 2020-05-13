@@ -5,7 +5,6 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import contact
 import pgate
 import debug
 from tech import drc, parameter, spice

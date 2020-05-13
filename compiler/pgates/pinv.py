@@ -60,14 +60,14 @@ class pinv(pgate.pgate):
             self.add_well_contacts()
         self.determine_width()
         self.extend_wells()
-        self.route_supply_rails()
-        self.connect_rails()
         self.route_input_gate(self.pmos_inst,
                               self.nmos_inst,
                               self.output_pos.y,
                               "A",
                               position="farleft")
         self.route_outputs()
+        self.route_supply_rails()
+        self.connect_rails()
         self.add_boundary()
         
     def add_pins(self):

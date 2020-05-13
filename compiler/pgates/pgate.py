@@ -162,12 +162,12 @@ class pgate(design.design):
             nwell_height = nwell_max_offset - self.nwell_y_offset
             self.add_rect(layer="nwell",
                           offset=nwell_position,
-                          width=self.well_width,
+                          width=self.width + 2 * self.well_extend_active,
                           height=nwell_height)
             if "vtg" in layer:
                 self.add_rect(layer="vtg",
                               offset=nwell_position,
-                              width=self.well_width,
+                              width=self.width + 2 * self.well_extend_active,
                               height=nwell_height)
 
         # Start this half a rail width below the cell
@@ -178,12 +178,12 @@ class pgate(design.design):
             pwell_height = self.nwell_y_offset - pwell_position.y
             self.add_rect(layer="pwell",
                           offset=pwell_position,
-                          width=self.well_width,
+                          width=self.width + 2 * self.well_extend_active,
                           height=pwell_height)
             if "vtg" in layer:
                 self.add_rect(layer="vtg",
                               offset=pwell_position,
-                              width=self.well_width,
+                              width=self.width + 2 * self.well_extend_active,
                               height=pwell_height)
 
     def add_nwell_contact(self, pmos, pmos_pos):
@@ -304,16 +304,17 @@ class pgate(design.design):
     def determine_width(self):
         """ Determine the width based on the well contacts (assumed to be on the right side) """
 
+        # It was already set or is left as default (minimum)
         # Width is determined by well contact and spacing and allowing a supply via between each cell
         if self.add_wells:
-            self.width = max(self.nwell_contact.rx(), self.pwell_contact.rx()) + self.m1_space + 0.5 * contact.m1_via.width
+            width = max(self.nwell_contact.rx(), self.pwell_contact.rx()) + self.m1_space + 0.5 * contact.m1_via.width
             # Height is an input parameter, so it is not recomputed.
         else:
             max_active_xoffset = self.find_highest_layer_coords("active").x
             max_route_xoffset = self.find_highest_layer_coords(self.route_layer).x + 0.5 * self.m1_space
-            self.width = max(max_active_xoffset, max_route_xoffset)
-
-        self.well_width = self.width + 2 * self.nwell_enclose_active
+            width = max(max_active_xoffset, max_route_xoffset)
+            
+        self.width = width
 
     @staticmethod
     def bin_width(tx_type, target_width):

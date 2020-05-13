@@ -15,14 +15,14 @@ class pand2(pgate.pgate):
     """
     This is a simple buffer used for driving loads.
     """
-    def __init__(self, name, size=1, height=None, vertical=False):
+    def __init__(self, name, size=1, height=None, vertical=False, add_wells=True):
         debug.info(1, "Creating pand2 {}".format(name))
         self.add_comment("size: {}".format(size))
 
         self.vertical = vertical
         self.size = size
 
-        pgate.pgate.__init__(self, name)
+        pgate.pgate.__init__(self, name, height, add_wells)
 
     def create_netlist(self):
         self.add_pins()
@@ -31,12 +31,15 @@ class pand2(pgate.pgate):
 
     def create_modules(self):
         self.nand = factory.create(module_type="pnand2",
-                                   height=self.height)
-        self.add_mod(self.nand)
+                                   height=self.height,
+                                   add_wells=False)
 
         self.inv = factory.create(module_type="pdriver",
                                   size_list=[self.size],
-                                  height=self.height)
+                                  height=self.height,
+                                  add_wells=self.add_wells)
+            
+        self.add_mod(self.nand)
         self.add_mod(self.inv)
 
     def create_layout(self):

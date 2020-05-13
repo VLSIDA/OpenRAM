@@ -17,7 +17,7 @@ class pdriver(pgate.pgate):
     sized for driving a load.
     """
     
-    def __init__(self, name, neg_polarity=False, fanout=0, size_list=None, height=None):
+    def __init__(self, name, neg_polarity=False, fanout=0, size_list=None, height=None, add_wells=True):
 
         debug.info(1, "creating pdriver {}".format(name))
 
@@ -35,7 +35,7 @@ class pdriver(pgate.pgate):
             debug.error("Cannot specify both size_list and neg_polarity.", -1)
  
         # Creates the netlist and layout
-        pgate.pgate.__init__(self, name, height)
+        pgate.pgate.__init__(self, name, height, add_wells)
         
     def compute_sizes(self):
         # size_list specified
@@ -73,9 +73,9 @@ class pdriver(pgate.pgate):
         self.place_modules()
         self.route_wires()
         self.add_layout_pins()
-
         self.width = self.inv_inst_list[-1].rx()
         self.height = self.inv_inst_list[0].height
+        self.extend_wells()
         self.route_supply_rails()
         self.add_boundary()
         
@@ -87,7 +87,7 @@ class pdriver(pgate.pgate):
 
     def add_modules(self):
         self.inv_list = []
-        add_well = True
+        add_well = self.add_wells
         for size in self.size_list:
             temp_inv = factory.create(module_type="pinv",
                                       size=size,

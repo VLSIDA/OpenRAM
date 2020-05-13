@@ -15,7 +15,7 @@ class pand3(pgate.pgate):
     """
     This is a simple buffer used for driving loads.
     """
-    def __init__(self, name, size=1, height=None, vertical=False):
+    def __init__(self, name, size=1, height=None, vertical=False, add_wells=True):
         debug.info(1, "Creating pand3 {}".format(name))
         self.add_comment("size: {}".format(size))
 
@@ -23,7 +23,7 @@ class pand3(pgate.pgate):
         self.size = size
         
         # Creates the netlist and layout
-        pgate.pgate.__init__(self, name, height)
+        pgate.pgate.__init__(self, name, height, add_wells)
 
     def create_netlist(self):
         self.add_pins()
@@ -33,12 +33,17 @@ class pand3(pgate.pgate):
     def create_modules(self):
         # Shield the cap, but have at least a stage effort of 4
         self.nand = factory.create(module_type="pnand3",
-                                   height=self.height)
-        self.add_mod(self.nand)
+                                   height=self.height,
+                                   add_wells=False)
 
+        # Add the well tap to the inverter because when stacked
+        # vertically it is sometimes narrower
         self.inv = factory.create(module_type="pdriver",
                                   size_list=[self.size],
-                                  height=self.height)
+                                  height=self.height,
+                                  add_wells=self.add_wells)
+
+        self.add_mod(self.nand)
         self.add_mod(self.inv)
 
     def create_layout(self):

@@ -7,7 +7,7 @@
 #
 import debug
 import utils
-from tech import GDS, layer, parameter
+from tech import GDS, layer
 from tech import cell_properties as props
 import bitcell_base
 

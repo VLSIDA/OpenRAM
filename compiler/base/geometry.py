@@ -86,8 +86,14 @@ class geometry:
         elif mirror == "XY":
             ll = ll.scale(-1, -1)
             ur = ur.scale(-1, -1)
+        elif mirror == "" or mirror == "R0":
+            pass
+        else:
+            debug.error("Invalid mirroring: {}".format(mirror), -1)
 
-        if rotate == 90:
+        if rotate == 0:
+            pass
+        elif rotate == 90:
             ll = ll.rotate_scale(-1, 1)
             ur = ur.rotate_scale(-1, 1)
         elif rotate == 180:
@@ -96,6 +102,8 @@ class geometry:
         elif rotate == 270:
             ll = ll.rotate_scale(1, -1)
             ur = ur.rotate_scale(1, -1)
+        else:
+            debug.error("Invalid rotation: {}".format(rotate), -1)
 
         self.boundary = [offset + ll, offset + ur]
         self.normalize()
@@ -139,6 +147,10 @@ class geometry:
     def cy(self):
         """ Return the center y """
         return 0.5 * (self.boundary[0].y + self.boundary[1].y)
+
+    def center(self):
+        """ Return the center coordinate """
+        return vector(self.cx(), self.cy())
     
 
 class instance(geometry):

@@ -44,7 +44,6 @@ class pgate(design.design):
         self.route_layer_pitch = getattr(self, "{}_pitch".format(self.route_layer))
 
         # This is the space from a S/D contact to the supply rail
-        # Assume the contact starts at the active edge
         contact_to_vdd_rail_space = 0.5 * self.m1_width + self.m1_space
         # This is a poly-to-poly of a flipped cell
         poly_to_poly_gate_space = self.poly_extend_active + self.poly_space

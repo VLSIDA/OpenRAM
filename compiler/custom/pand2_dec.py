@@ -9,17 +9,17 @@ import debug
 from vector import vector
 import pgate
 from sram_factory import factory
+from globals import OPTS
 
 
-class pand2(pgate.pgate):
+class pand2_dec(pgate.pgate):
     """
-    This is an AND (or NAND) with configurable drive strength.
+    This is an AND with configurable drive strength.
     """
-    def __init__(self, name, size=1, height=None, vertical=False, add_wells=True):
-        debug.info(1, "Creating pand2 {}".format(name))
+    def __init__(self, name, size=1, height=None, add_wells=True):
+        debug.info(1, "Creating pand2_dec {}".format(name))
         self.add_comment("size: {}".format(size))
 
-        self.vertical = vertical
         self.size = size
 
         pgate.pgate.__init__(self, name, height, add_wells)
@@ -30,24 +30,21 @@ class pand2(pgate.pgate):
         self.create_insts()
 
     def create_modules(self):
-        self.nand = factory.create(module_type="pnand2",
-                                   height=self.height,
-                                   add_wells=self.vertical)
-
-        self.inv = factory.create(module_type="pdriver",
-                                  size_list=[self.size],
+        if OPTS.tech_name == "s8":
+            self.nand = factory.create(module_type="nand2_dec")
+        else:
+            self.nand = factory.create(module_type="nand2_dec",
+                                       height=self.height)
+            
+        self.inv = factory.create(module_type="inv_dec",
                                   height=self.height,
-                                  add_wells=self.add_wells)
+                                  size=self.size)
             
         self.add_mod(self.nand)
         self.add_mod(self.inv)
-
+        
     def create_layout(self):
-        if self.vertical:
-            self.height = 2 * self.nand.height
-            self.width = max(self.nand.width, self.inv.width)
-        else:
-            self.width = self.nand.width + self.inv.width
+        self.width = self.nand.width + self.inv.width
             
         self.place_insts()
         self.add_wires()
@@ -64,11 +61,11 @@ class pand2(pgate.pgate):
         self.add_pin("gnd", "GROUND")
 
     def create_insts(self):
-        self.nand_inst = self.add_inst(name="pand2_nand",
+        self.nand_inst = self.add_inst(name="pand2_dec_nand",
                                        mod=self.nand)
         self.connect_inst(["A", "B", "zb_int", "vdd", "gnd"])
         
-        self.inv_inst = self.add_inst(name="pand2_inv",
+        self.inv_inst = self.add_inst(name="pand2_dec_inv",
                                       mod=self.inv)
         self.connect_inst(["zb_int", "Z", "vdd", "gnd"])
 
@@ -76,60 +73,35 @@ class pand2(pgate.pgate):
         # Add NAND to the right
         self.nand_inst.place(offset=vector(0, 0))
 
-        if self.vertical:
-            # Add INV above
-            self.inv_inst.place(offset=vector(self.inv.width,
-                                              2 * self.nand.height),
-                                mirror="XY")
-        else:
-            # Add INV to the right
-            self.inv_inst.place(offset=vector(self.nand_inst.rx(), 0))
+        # Add INV to the right
+        self.inv_inst.place(offset=vector(self.nand_inst.rx(), 0))
 
     def route_supply_rails(self):
         """ Add vdd/gnd rails to the top, (middle), and bottom. """
-        self.add_layout_pin_rect_center(text="gnd",
-                                        layer=self.route_layer,
-                                        offset=vector(0.5 * self.width, 0),
-                                        width=self.width)
-
-        # Second gnd of the inverter gate
-        if self.vertical:
+        if OPTS.tech_name == "s8":
+            for name in ["vdd", "gnd"]:
+                for inst in [self.nand_inst, self.inv_inst]:
+                    self.copy_layout_pin(inst, name)
+        else:
             self.add_layout_pin_rect_center(text="gnd",
+                                            layer=self.route_layer,
+                                            offset=vector(0.5 * self.width, 0),
+                                            width=self.width)
+            self.add_layout_pin_rect_center(text="vdd",
                                             layer=self.route_layer,
                                             offset=vector(0.5 * self.width, self.height),
                                             width=self.width)
-        
-        if self.vertical:
-            # Shared between two gates
-            y_offset = 0.5 * self.height
-        else:
-            y_offset = self.height
-        self.add_layout_pin_rect_center(text="vdd",
-                                        layer=self.route_layer,
-                                        offset=vector(0.5 * self.width, y_offset),
-                                        width=self.width)
             
     def add_wires(self):
         # nand Z to inv A
         z1_pin = self.nand_inst.get_pin("Z")
         a2_pin = self.inv_inst.get_pin("A")
-        if self.vertical:
-            route_layer = "m2"
-            self.add_via_stack_center(offset=z1_pin.center(),
-                                      from_layer=z1_pin.layer,
-                                      to_layer=route_layer)
-            self.add_zjog(route_layer,
-                          z1_pin.uc(),
-                          a2_pin.bc(),
-                          "V")
-            self.add_via_stack_center(offset=a2_pin.center(),
-                                      from_layer=a2_pin.layer,
-                                      to_layer=route_layer)
+        if OPTS.tech_name == "s8":
+            mid1_point = vector(a2_pin.cx(), z1_pin.cy())
         else:
-            route_layer = self.route_layer
             mid1_point = vector(z1_pin.cx(), a2_pin.cy())
-            self.add_path(route_layer,
-                          [z1_pin.center(), mid1_point, a2_pin.center()])
+        self.add_path(self.route_layer,
+                      [z1_pin.center(), mid1_point, a2_pin.center()])
         
     def add_layout_pins(self):
         pin = self.inv_inst.get_pin("Z")

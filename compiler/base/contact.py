@@ -53,6 +53,10 @@ class contact(hierarchy_design.hierarchy_design):
             first_dir = "H" if self.get_preferred_direction(layer_stack[0])=="V" else "V"
             second_dir = "H" if self.get_preferred_direction(layer_stack[2])=="V" else "V"
             self.directions = (first_dir, second_dir)
+        # Preferred directions
+        elif directions == "pref":
+            self.directions = (tech.preferred_directions[layer_stack[0]],
+                               tech.preferred_directions[layer_stack[2]])
         # User directions
         elif directions:
             self.directions = directions
@@ -149,7 +153,7 @@ class contact(hierarchy_design.hierarchy_design):
             self.first_layer_vertical_enclosure = max(self.first_layer_enclosure,
                                                       (self.first_layer_minwidth - self.contact_array_height) / 2)
         else:
-            debug.error("Invalid first layer direction.", -1)
+            debug.error("Invalid first layer direction: ".format(self.directions[0]), -1)
 
         # In some technologies, the minimum width may be larger
         # than the overlap requirement around the via, so
@@ -165,7 +169,7 @@ class contact(hierarchy_design.hierarchy_design):
             self.second_layer_vertical_enclosure = max(self.second_layer_enclosure,
                                                        (self.second_layer_minwidth - self.contact_array_width) / 2)
         else:
-            debug.error("Invalid second layer direction.", -1)
+            debug.error("Invalid secon layer direction: ".format(self.directions[1]), -1)
             
     def create_contact_array(self):
         """ Create the contact array at the origin"""

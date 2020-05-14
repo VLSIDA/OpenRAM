@@ -134,6 +134,10 @@ class options(optparse.Values):
     dff_array = "dff_array"
     dff = "dff"
     dummy_bitcell = "dummy_bitcell"
+    inv_dec = "pinv"
+    nand2_dec = "pnand2"
+    nand3_dec = "pnand3"
+    nand4_dec = "pnand4" # Not available right now
     precharge_array = "precharge_array"
     ptx = "ptx"
     replica_bitcell = "replica_bitcell"
